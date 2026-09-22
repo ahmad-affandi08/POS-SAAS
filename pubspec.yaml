@@ -24,14 +24,22 @@ melos:
     analisis:
       description: Analisis statis seluruh paket (fatal pada info).
       run: flutter analyze --fatal-infos --fatal-warnings Paket Aplikasi
-    tes:
-      description: Test seluruh paket yang punya folder test.
+    tes:dart:
+      description: Test paket Dart murni (Inti, MesinKasir) dengan `dart test` agar dependensi Flutter tidak terselip.
+      exec: dart test
+      packageFilters:
+        dirExists: test
+        flutter: false
+    tes:flutter:
+      description: Test paket & aplikasi Flutter.
       exec: flutter test
       packageFilters:
         dirExists: test
+        flutter: true
     periksa:
       description: Format + analisis + test (sama dengan job CI Flutter).
       steps:
         - format
         - analisis
-        - tes
+        - tes:dart
+        - tes:flutter

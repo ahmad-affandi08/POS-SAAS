@@ -31,7 +31,7 @@ final class Kuantitas implements Comparable<Kuantitas> {
   Kuantitas Kurangi(Kuantitas lain) => Kuantitas._(_nilai - lain._nilai);
 
   /// Mengalikan (misal konversi satuan) lalu membulatkan ke 4 desimal dengan mode yang disebut eksplisit.
-  Kuantitas Kali(Decimal faktor, {ModePembulatan mode = ModePembulatan.setengahMenjauhiNol}) =>
+  Kuantitas Kali(Decimal faktor, {ModePembulatan mode = ModePembulatan.SetengahMenjauhiNol}) =>
       Kuantitas._(BulatkanKeSkala(_nilai * faktor, skala, mode));
 
   Kuantitas Negasi() => Kuantitas._(-_nilai);

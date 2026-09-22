@@ -18,7 +18,7 @@ void main() {
       expect(gram.Negasi().BernilaiNegatif(), isTrue);
       expect(Kuantitas.DariBulat(1).Kali(Decimal.parse('0.33333')).KeString(), '0.3333');
       expect(
-        Kuantitas.Dari('0.0001').Kali(Decimal.parse('0.5'), mode: ModePembulatan.setengahGenap).KeString(),
+        Kuantitas.Dari('0.0001').Kali(Decimal.parse('0.5'), mode: ModePembulatan.SetengahGenap).KeString(),
         '0.0000',
       );
     });

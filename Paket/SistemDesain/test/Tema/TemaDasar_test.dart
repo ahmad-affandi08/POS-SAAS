@@ -16,7 +16,7 @@ void main() {
 
     test('skala tipografi mengikuti mode kepadatan', () {
       final nyaman = BuatTema(kecerahan: Brightness.light).textTheme;
-      final ringkas = BuatTema(kecerahan: Brightness.light, kepadatan: KepadatanTipografi.ringkas).textTheme;
+      final ringkas = BuatTema(kecerahan: Brightness.light, kepadatan: KepadatanTipografi.Ringkas).textTheme;
       expect(nyaman.displayMedium!.fontSize, 36);
       expect(nyaman.bodyMedium!.fontSize, 16);
       expect(ringkas.displayMedium!.fontSize, 30);

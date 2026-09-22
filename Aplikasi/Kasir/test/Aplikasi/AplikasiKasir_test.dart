@@ -5,13 +5,13 @@ import 'package:kasir/Aplikasi/Lingkungan.dart';
 
 void main() {
   testWidgets('menampilkan penanda lingkungan selain produksi', (tester) async {
-    await tester.pumpWidget(const AplikasiKasir(lingkungan: Lingkungan.staging));
+    await tester.pumpWidget(const AplikasiKasir(lingkungan: Lingkungan.Staging));
     expect(find.text('Kasir'), findsOneWidget);
     expect(find.byType(Banner), findsOneWidget);
   });
 
   testWidgets('tanpa penanda lingkungan di produksi', (tester) async {
-    await tester.pumpWidget(const AplikasiKasir(lingkungan: Lingkungan.produksi));
+    await tester.pumpWidget(const AplikasiKasir(lingkungan: Lingkungan.Produksi));
     expect(find.byType(Banner), findsNothing);
   });
 }

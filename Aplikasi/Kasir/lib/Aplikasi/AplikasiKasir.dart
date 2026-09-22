@@ -20,7 +20,7 @@ class AplikasiKasir extends StatelessWidget {
           ? Banner(
               message: lingkungan.label,
               location: BannerLocation.topEnd,
-              color: TokenWarna.Dari(context).peringatan,
+              color: TokenWarna.AmbilDari(context).peringatan,
               child: anak,
             )
           : anak!,

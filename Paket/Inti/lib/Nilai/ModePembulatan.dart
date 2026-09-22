@@ -5,25 +5,25 @@ import 'package:decimal/decimal.dart';
 /// Setiap operasi yang bisa kehilangan presisi wajib menyebut mode ini agar hasil PHP dan Dart identik.
 enum ModePembulatan {
   /// Padanan `RoundingMode::Down`: dipotong menuju nol.
-  menujuNol,
+  MenujuNol,
 
   /// Padanan `RoundingMode::Up`: menjauhi nol.
-  menjauhiNol,
+  MenjauhiNol,
 
   /// Padanan `RoundingMode::Floor`: menuju minus tak hingga.
-  keBawah,
+  KeBawah,
 
   /// Padanan `RoundingMode::Ceiling`: menuju plus tak hingga.
-  keAtas,
+  KeAtas,
 
   /// Padanan `RoundingMode::HalfUp`: ke tetangga terdekat, jika tepat di tengah menjauhi nol.
-  setengahMenjauhiNol,
+  SetengahMenjauhiNol,
 
   /// Padanan `RoundingMode::HalfDown`: ke tetangga terdekat, jika tepat di tengah menuju nol.
-  setengahMenujuNol,
+  SetengahMenujuNol,
 
   /// Padanan `RoundingMode::HalfEven`: ke tetangga terdekat, jika tepat di tengah ke angka genap (banker's rounding).
-  setengahGenap,
+  SetengahGenap,
 }
 
 /// Membagi bilangan bulat dengan pembulatan sesuai [mode]. [penyebut] wajib positif.
@@ -40,13 +40,13 @@ BigInt BagiBulat(BigInt pembilang, BigInt penyebut, ModePembulatan mode) {
   final langkah = negatif ? -BigInt.one : BigInt.one;
   final posisiTengah = (sisa.abs() * BigInt.two).compareTo(penyebut);
   final menjauh = switch (mode) {
-    ModePembulatan.menujuNol => false,
-    ModePembulatan.menjauhiNol => true,
-    ModePembulatan.keBawah => negatif,
-    ModePembulatan.keAtas => !negatif,
-    ModePembulatan.setengahMenjauhiNol => posisiTengah >= 0,
-    ModePembulatan.setengahMenujuNol => posisiTengah > 0,
-    ModePembulatan.setengahGenap => posisiTengah > 0 || (posisiTengah == 0 && hasilBagi.isOdd),
+    ModePembulatan.MenujuNol => false,
+    ModePembulatan.MenjauhiNol => true,
+    ModePembulatan.KeBawah => negatif,
+    ModePembulatan.KeAtas => !negatif,
+    ModePembulatan.SetengahMenjauhiNol => posisiTengah >= 0,
+    ModePembulatan.SetengahMenujuNol => posisiTengah > 0,
+    ModePembulatan.SetengahGenap => posisiTengah > 0 || (posisiTengah == 0 && hasilBagi.isOdd),
   };
   return menjauh ? hasilBagi + langkah : hasilBagi;
 }

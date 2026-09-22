@@ -6,7 +6,7 @@ const String fontUtama = 'AtkinsonHyperlegibleNext';
 const String fontMono = 'AtkinsonHyperlegibleMono';
 
 /// Mode kepadatan tipografi (PRD §17.5): Nyaman untuk POS/KDS/Owner, Ringkas untuk back-office.
-enum KepadatanTipografi { nyaman, ringkas }
+enum KepadatanTipografi { Nyaman, Ringkas }
 
 /// Satu token skala tipografi: ukuran & tinggi baris dalam logical pixel.
 @immutable
@@ -67,30 +67,30 @@ final class SkalaTipografi {
   final TokenTeks label;
   final TokenTeks keterangan;
 
-  static SkalaTipografi Untuk(KepadatanTipografi kepadatan) => switch (kepadatan) {
-    KepadatanTipografi.nyaman => nyaman,
-    KepadatanTipografi.ringkas => ringkas,
+  static SkalaTipografi AmbilUntuk(KepadatanTipografi kepadatan) => switch (kepadatan) {
+    KepadatanTipografi.Nyaman => nyaman,
+    KepadatanTipografi.Ringkas => ringkas,
   };
 
   /// Memetakan token ke slot Material agar widget bawaan Flutter ikut memakai skala ini.
   TextTheme KeTemaTeks(Color warnaUtama, Color warnaSekunder) {
-    TextStyle Gaya(TokenTeks token, Color warna) => token.KeGaya().copyWith(color: warna);
+    TextStyle BuatGaya(TokenTeks token, Color warna) => token.KeGaya().copyWith(color: warna);
     return TextTheme(
-      displayLarge: Gaya(tampilan, warnaUtama),
-      displayMedium: Gaya(tampilan, warnaUtama),
-      displaySmall: Gaya(tampilan, warnaUtama),
-      headlineLarge: Gaya(judul, warnaUtama),
-      headlineMedium: Gaya(judul, warnaUtama),
-      headlineSmall: Gaya(judul, warnaUtama),
-      titleLarge: Gaya(judul, warnaUtama),
-      titleMedium: Gaya(subjudul, warnaUtama),
-      titleSmall: Gaya(label, warnaUtama),
-      bodyLarge: Gaya(isi, warnaUtama),
-      bodyMedium: Gaya(isi, warnaUtama),
-      bodySmall: Gaya(keterangan, warnaSekunder),
-      labelLarge: Gaya(label, warnaUtama),
-      labelMedium: Gaya(label, warnaUtama),
-      labelSmall: Gaya(keterangan, warnaSekunder),
+      displayLarge: BuatGaya(tampilan, warnaUtama),
+      displayMedium: BuatGaya(tampilan, warnaUtama),
+      displaySmall: BuatGaya(tampilan, warnaUtama),
+      headlineLarge: BuatGaya(judul, warnaUtama),
+      headlineMedium: BuatGaya(judul, warnaUtama),
+      headlineSmall: BuatGaya(judul, warnaUtama),
+      titleLarge: BuatGaya(judul, warnaUtama),
+      titleMedium: BuatGaya(subjudul, warnaUtama),
+      titleSmall: BuatGaya(label, warnaUtama),
+      bodyLarge: BuatGaya(isi, warnaUtama),
+      bodyMedium: BuatGaya(isi, warnaUtama),
+      bodySmall: BuatGaya(keterangan, warnaSekunder),
+      labelLarge: BuatGaya(label, warnaUtama),
+      labelMedium: BuatGaya(label, warnaUtama),
+      labelSmall: BuatGaya(keterangan, warnaSekunder),
     );
   }
 }

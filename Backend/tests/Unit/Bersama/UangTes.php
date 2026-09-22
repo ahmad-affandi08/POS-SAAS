@@ -33,7 +33,19 @@ describe('Uang (PRD §8 F-07, CLAUDE.md #7)', function (): void {
 
     it('membulatkan perkalian dengan mode yang disebut eksplisit', function (): void {
         expect(Uang::Dari('10.05')->Kali('0.5')->KeString())->toBe('5.03')
-            ->and(Uang::Dari('10.05')->Kali('0.5', RoundingMode::HalfEven)->KeString())->toBe('5.02');
+            ->and(Uang::Dari('10.05')->Kali('0.5', RoundingMode::HalfEven)->KeString())->toBe('5.02')
+            ->and(Uang::Dari('-10.05')->Kali('0.5')->KeString())->toBe('-5.03');
+    });
+
+    it('membulatkan ke kelipatan dengan semua arah (paritas dengan Paket/Inti Dart)', function (): void {
+        $nilai = Uang::Dari(63550);
+
+        expect($nilai->BulatkanKeKelipatan(100, RoundingMode::Down)->KeString())->toBe('63500.00')
+            ->and($nilai->BulatkanKeKelipatan(100, RoundingMode::Ceiling)->KeString())->toBe('63600.00')
+            ->and($nilai->BulatkanKeKelipatan(100, RoundingMode::HalfUp)->KeString())->toBe('63600.00')
+            ->and($nilai->BulatkanKeKelipatan(100, RoundingMode::HalfEven)->KeString())->toBe('63600.00')
+            ->and(Uang::Dari(63450)->BulatkanKeKelipatan(100, RoundingMode::HalfEven)->KeString())->toBe('63400.00')
+            ->and(Uang::Dari(-63525)->BulatkanKeKelipatan(100, RoundingMode::Floor)->KeString())->toBe('-63600.00');
     });
 
     it('membandingkan dan memeriksa tanda nilai', function (): void {
@@ -47,6 +59,7 @@ describe('Uang (PRD §8 F-07, CLAUDE.md #7)', function (): void {
         expect(Uang::Dari(1250000)->FormatRupiah())->toBe('Rp 1.250.000')
             ->and(Uang::Dari(-6000)->FormatRupiah())->toBe('−Rp 6.000')
             ->and(Uang::Dari('1234.5')->FormatRupiah())->toBe('Rp 1.234,50')
+            ->and(Uang::Dari('999.05')->FormatRupiah())->toBe('Rp 999,05')
             ->and(Uang::Nol()->FormatRupiah())->toBe('Rp 0');
     });
 });

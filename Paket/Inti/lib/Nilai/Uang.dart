@@ -33,7 +33,7 @@ final class Uang implements Comparable<Uang> {
   Uang Kurangi(Uang lain) => Uang._(_nilai - lain._nilai);
 
   /// Mengalikan dengan jumlah/tarif lalu membulatkan ke 2 desimal dengan mode yang disebut eksplisit.
-  Uang Kali(Decimal faktor, {ModePembulatan mode = ModePembulatan.setengahMenjauhiNol}) =>
+  Uang Kali(Decimal faktor, {ModePembulatan mode = ModePembulatan.SetengahMenjauhiNol}) =>
       Uang._(BulatkanKeSkala(_nilai * faktor, skala, mode));
 
   /// Pembulatan ke kelipatan tertentu, misal pembulatan tunai ke Rp 100 (PRD Lampiran D).

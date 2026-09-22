@@ -1,7 +1,7 @@
 import 'package:inti/Inti.dart';
 import 'package:test/test.dart';
 
-Decimal D(String nilai) => Decimal.parse(nilai);
+Decimal BuatDesimal(String nilai) => Decimal.parse(nilai);
 
 void main() {
   group('Uang (PRD §8 F-07, CLAUDE.md #7)', () {
@@ -17,11 +17,14 @@ void main() {
     });
 
     test('menghitung contoh struk kafe PRD Lampiran D dengan tepat', () {
-      final subtotal = Uang.DariBulat(18000).Kali(D('2')).Tambah(Uang.DariBulat(25000)).Kurangi(Uang.DariBulat(6000));
-      final biayaLayanan = subtotal.Kali(D('0.05'));
-      final pb1 = subtotal.Tambah(biayaLayanan).Kali(D('0.10'));
+      final subtotal = Uang.DariBulat(18000)
+          .Kali(BuatDesimal('2'))
+          .Tambah(Uang.DariBulat(25000))
+          .Kurangi(Uang.DariBulat(6000));
+      final biayaLayanan = subtotal.Kali(BuatDesimal('0.05'));
+      final pb1 = subtotal.Tambah(biayaLayanan).Kali(BuatDesimal('0.10'));
       final sebelumPembulatan = subtotal.Tambah(biayaLayanan).Tambah(pb1);
-      final totalAkhir = sebelumPembulatan.BulatkanKeKelipatan(100, ModePembulatan.menujuNol);
+      final totalAkhir = sebelumPembulatan.BulatkanKeKelipatan(100, ModePembulatan.MenujuNol);
 
       expect(subtotal.KeString(), '55000.00');
       expect(biayaLayanan.KeString(), '2750.00');
@@ -32,20 +35,20 @@ void main() {
     });
 
     test('membulatkan perkalian dengan mode yang disebut eksplisit', () {
-      expect(Uang.Dari('10.05').Kali(D('0.5')).KeString(), '5.03');
-      expect(Uang.Dari('10.05').Kali(D('0.5'), mode: ModePembulatan.setengahGenap).KeString(), '5.02');
-      expect(Uang.Dari('-10.05').Kali(D('0.5')).KeString(), '-5.03');
+      expect(Uang.Dari('10.05').Kali(BuatDesimal('0.5')).KeString(), '5.03');
+      expect(Uang.Dari('10.05').Kali(BuatDesimal('0.5'), mode: ModePembulatan.SetengahGenap).KeString(), '5.02');
+      expect(Uang.Dari('-10.05').Kali(BuatDesimal('0.5')).KeString(), '-5.03');
     });
 
     test('membulatkan ke kelipatan dengan semua arah', () {
       final nilai = Uang.DariBulat(63550);
-      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.menujuNol).KeString(), '63500.00');
-      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.keAtas).KeString(), '63600.00');
-      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.setengahMenjauhiNol).KeString(), '63600.00');
-      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.setengahGenap).KeString(), '63600.00');
-      expect(Uang.DariBulat(63450).BulatkanKeKelipatan(100, ModePembulatan.setengahGenap).KeString(), '63400.00');
-      expect(Uang.DariBulat(-63525).BulatkanKeKelipatan(100, ModePembulatan.keBawah).KeString(), '-63600.00');
-      expect(() => nilai.BulatkanKeKelipatan(0, ModePembulatan.menujuNol), throwsArgumentError);
+      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.MenujuNol).KeString(), '63500.00');
+      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.KeAtas).KeString(), '63600.00');
+      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.SetengahMenjauhiNol).KeString(), '63600.00');
+      expect(nilai.BulatkanKeKelipatan(100, ModePembulatan.SetengahGenap).KeString(), '63600.00');
+      expect(Uang.DariBulat(63450).BulatkanKeKelipatan(100, ModePembulatan.SetengahGenap).KeString(), '63400.00');
+      expect(Uang.DariBulat(-63525).BulatkanKeKelipatan(100, ModePembulatan.KeBawah).KeString(), '-63600.00');
+      expect(() => nilai.BulatkanKeKelipatan(0, ModePembulatan.MenujuNol), throwsArgumentError);
     });
 
     test('membandingkan dan memeriksa tanda nilai', () {

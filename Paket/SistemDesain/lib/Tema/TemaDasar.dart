@@ -4,9 +4,9 @@ import '../Token/TokenTipografi.dart';
 import '../Token/TokenWarna.dart';
 
 /// Membuat [ThemeData] dari token (PRD §17.6). Aplikasi tidak menyusun tema sendiri.
-ThemeData BuatTema({required Brightness kecerahan, KepadatanTipografi kepadatan = KepadatanTipografi.nyaman}) {
+ThemeData BuatTema({required Brightness kecerahan, KepadatanTipografi kepadatan = KepadatanTipografi.Nyaman}) {
   final warna = kecerahan == Brightness.light ? TokenWarna.terang : TokenWarna.gelap;
-  final skala = SkalaTipografi.Untuk(kepadatan);
+  final skala = SkalaTipografi.AmbilUntuk(kepadatan);
   final skemaWarna = ColorScheme(
     brightness: kecerahan,
     primary: warna.brand,

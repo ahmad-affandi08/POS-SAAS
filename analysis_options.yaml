@@ -23,6 +23,8 @@ linter:
     # D-05: file & function PascalCase Bahasa Indonesia (dijaga Alat/CekKonvensi.py).
     file_names: false
     non_constant_identifier_names: false
+    # D-05: nilai enum PascalCase (enum StatusPenjualan { Draf, Lunas }), PRD §13.7.
+    constant_identifier_names: false
     # Nama folder PascalCase membuat import relatif lebih jelas daripada package: di dalam paket sendiri.
     always_use_package_imports: false
     prefer_relative_imports: true
