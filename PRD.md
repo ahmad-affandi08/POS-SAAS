@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.5 |
+| Versi | 1.6 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -26,6 +26,7 @@
 | 1.3 | Keputusan D-05: **nama database (tabel, kolom, indeks), folder, file, dan function/method memakai Bahasa Indonesia dengan PascalCase** di semua stack. Konvensi, kamus istilah, pengecualian framework, dan konfigurasi di §13.7. Skema §15, struktur folder, contoh kode, dan nama enum/status diperbarui. |
 | 1.4 | Keputusan D-06: **URL/endpoint memakai Bahasa Indonesia** (huruf kecil, kebab-case). Semua rute web, API POS, API Pemilik (`/api/pemilik/v1`), API publik, parameter query, dan scope token diperbarui. |
 | 1.5 | Perluasan D-06: nama **event webhook**, **header HTTP kustom**, dan **nama permission** memakai Bahasa Indonesia. Header standar protokol tetap. |
+| 1.6 | Keputusan D-07: **Platform Pengelola** (konsol tim internal {{APP}}) dirancang sebagai lapisan pertama sebelum modul tenant: flow P-01 s.d. P-12 (§8 Bagian A), modul PGL (§10.0), arsitektur (§13.8), tabel (§15.3), peran internal (§19.3), dan Fase 0 roadmap direvisi. |
 
 ---
 
@@ -38,7 +39,7 @@
 5. [Sektor Usaha & Persona](#5-sektor-usaha--persona)
 6. [Prinsip Pengembangan: Flow-First](#6-prinsip-pengembangan-flow-first)
 7. [Peta Flow Bisnis Induk (Master Business Flow)](#7-peta-flow-bisnis-induk-master-business-flow)
-8. [Spesifikasi Flow Bisnis Detail (F-00 s.d. F-20)](#8-spesifikasi-flow-bisnis-detail)
+8. [Spesifikasi Flow Bisnis Detail (Platform Pengelola P-01 s.d. P-12, Tenant F-00 s.d. F-20)](#8-spesifikasi-flow-bisnis-detail)
 9. [Flow Khusus per Sektor](#9-flow-khusus-per-sektor)
 10. [Katalog Modul & Fitur (dengan Prioritas)](#10-katalog-modul--fitur)
 11. [Akuntansi Otomatis & Pemetaan Jurnal](#11-akuntansi-otomatis--pemetaan-jurnal)
@@ -268,7 +269,8 @@ Mode kasir menentukan layout layar POS (§17.4):
 | **Staf Gudang (Anto)** | Terima barang, transfer, opname | Scan barcode, form cepat, jelas selisih | HP Android |
 | **Akuntan/Konsultan Pajak** | Eksternal, akses baca | Jurnal, buku besar, export e-Faktur, tutup buku | Laptop |
 | **Pelanggan Akhir** | Pembeli | Struk digital, poin, self-order, booking | HP |
-| **Super Admin {{APP}}** | Tim internal | Kelola tenant, langganan, dukungan, monitoring | Laptop |
+| **Tim Pengelola {{APP}}** (Super Admin, Keuangan, Dukungan, Teknis, Konten & Legal, Mitra & Penjualan, Analis) | Tim internal pengelola SaaS | Menyiapkan paket, template sektor & regulasi; mengelola tenant, tagihan, dukungan, rilis aplikasi, mitra (§8 Bagian A) | Laptop |
+| **Mitra/Reseller** | Agen daerah & perujuk | Mendaftarkan dan mendampingi tenant, memantau komisi | HP, laptop |
 
 ---
 
@@ -289,8 +291,8 @@ Flow Bisnis (F-xx)
 
 ### 6.2 Aturan Tim
 
-1. **Tidak ada fitur tanpa ID Flow.** Setiap issue/PR mencantumkan `F-xx.langkah`.
-2. **Urutan implementasi mengikuti urutan flow induk** (§7). Sebuah flow hanya boleh dikerjakan setelah flow prasyaratnya berstatus *Done*. Contoh: Penjualan (F-07) butuh Master Produk (F-03) dan Shift (F-06).
+1. **Tidak ada fitur tanpa ID Flow.** Setiap issue/PR mencantumkan `P-xx.langkah` (Platform Pengelola) atau `F-xx.langkah` (Tenant).
+2. **Urutan implementasi mengikuti urutan flow induk** (§7). Sebuah flow hanya boleh dikerjakan setelah flow prasyaratnya berstatus *Done*. Contoh: Penjualan (F-07) butuh Master Produk (F-03) dan Shift (F-06). **Flow tenant F-00 baru boleh dikerjakan setelah flow persiapan Platform Pengelola P-01 s.d. P-06 selesai.**
 3. **Setiap flow wajib memiliki**: diagram alur, state machine dokumen, daftar aturan bisnis (BR-xx), dampak stok, dampak jurnal, hak akses, acceptance criteria (Gherkin), dan test otomatis.
 4. **Dokumen transaksi bersifat immutable setelah *posted*.** Koreksi dilakukan dengan dokumen pembalik (void/retur/adjustment), bukan edit/hapus.
 5. **Stok dan akuntansi adalah turunan (derived) dari event.** Tidak ada input manual ke tabel saldo stok atau saldo akun.
@@ -313,8 +315,20 @@ Setiap flow di §8 memakai struktur berikut:
 
 ### 7.1 Diagram Induk
 
+Sistem punya **dua lapisan flow**: lapisan **Platform Pengelola** (dijalankan tim internal {{APP}}) yang menyiapkan dan mengoperasikan platform, lalu lapisan **Tenant** (dijalankan pemilik usaha) yang memakai platform tersebut.
+
 ```mermaid
 flowchart TD
+    subgraph PGL["Lapisan Platform Pengelola (tim internal)"]
+      PA[P-01 Tim Internal & Peran] --> PB[P-02 Regulasi & Referensi]
+      PB --> PC[P-03 Template Sektor]
+      PA --> PD[P-04 Paket & Fitur]
+      PA --> PE[P-05 Integrasi Platform]
+      PA --> PF[P-06 Legal & Template Pesan]
+      PG[P-07 Siklus Hidup Tenant · P-08 Billing · P-09 Dukungan · P-10 Rilis & Flag · P-11 Monitoring · P-12 Mitra]
+    end
+    PC & PD & PE & PF --> A
+    A -.-> PG
     A[F-00 Registrasi Tenant & Langganan] --> B[F-01 Onboarding Wizard & Template Sektor]
     B --> C[F-02 Setup Organisasi: Outlet, Gudang, User, Role, Perangkat]
     C --> D[F-03 Master Produk, Harga & Pajak]
@@ -336,6 +350,7 @@ flowchart TD
     H -.-> R[F-17 Online Order & Self-Order]
     G -.-> S[F-18 Karyawan: Jadwal, Absensi, Komisi]
     A -.-> T[F-19 Billing Langganan SaaS]
+    T <-.-> PG
     C -.-> U[F-20 Integrasi & API]
 ```
 
@@ -343,7 +358,14 @@ flowchart TD
 
 | Urutan | Flow | Bergantung pada | Fase |
 |---|---|---|---|
-| 1 | F-00 Registrasi & Tenant | — | 0 |
+| P1 | P-01 Tim Internal & Peran | — | 0 |
+| P2 | P-02 Master Regulasi & Referensi (wilayah, PPN, PBJT, hari libur) | P-01 | 0 |
+| P3 | P-04 Katalog Paket & Fitur | P-01 | 0 |
+| P4 | P-03 Template Sektor (3 template MVP) | P-02, P-04 | 0 |
+| P5 | P-05 Integrasi Platform (email, CAPTCHA, storage) | P-01 | 0 |
+| P6 | P-06 Dokumen Legal | P-01 | 0 |
+| P7 | P-07 Siklus Hidup Tenant (dasar) + P-08 Tagihan manual + P-09 Tiket dasar + P-11 Monitoring dasar | P-04 | 0 |
+| 1 | F-00 Registrasi & Tenant | P-02 s.d. P-06 | 0 |
 | 2 | F-02 Organisasi (outlet, user, role) | F-00 | 0 |
 | 3 | F-01 Onboarding & Template Sektor | F-00, F-02 | 1 |
 | 4 | F-03 Master Produk, Harga, Pajak | F-02 | 1 |
@@ -366,7 +388,10 @@ flowchart TD
 | 21 | F-13b Akuntansi penuh + F-15 Tutup Buku | F-13a | 3 |
 | 22 | F-05c Produksi/Resep lanjutan, Konsinyasi | F-05 | 3 |
 | 23 | F-20 Open API & Webhook | semua | 3 |
-| 24 | F-19 Billing SaaS otomatis | F-00 | 1 (manual) → 3 (otomatis) |
+| 24 | F-19 Billing SaaS otomatis | F-00, P-08 | 1 (manual) → 3 (otomatis) |
+| — | P-09 Akses Dukungan & P-10 Rilis Aplikasi | P-07 | 1 (sebelum beta tertutup) |
+| — | P-08 Billing otomatis, skor kesehatan, analitik platform, insiden | P-07, P-08 | 2 |
+| — | P-12 Mitra, portal mitra, faktur pajak langganan | P-08 | 3 |
 
 ---
 
@@ -375,16 +400,385 @@ flowchart TD
 > Konvensi: **BR** = Business Rule, **AC** = Acceptance Criteria, **Dr/Cr** = Debit/Kredit.
 > Semua nominal dalam Rupiah (IDR). Semua waktu disimpan dalam UTC dan ditampilkan sesuai zona waktu outlet (WIB/WITA/WIT).
 
+### Bagian A — Flow Platform Pengelola (P-01 s.d. P-12)
+
+> **Platform Pengelola** adalah lapisan yang dipakai **tim internal {{APP}}** (bukan tenant) untuk mengoperasikan bisnis SaaS: menyiapkan data master, paket, template, regulasi, mengelola tenant, tagihan, dukungan, rilis aplikasi, dan mitra. Flow P-01 s.d. P-06 **wajib selesai sebelum** flow tenant F-00 bisa berjalan. Flow P-07 s.d. P-12 berjalan paralel selama platform beroperasi.
+>
+> Diakses melalui `https://pengelola.{{app}}.id` (atau `/pengelola`), dengan akun, autentikasi, dan layout terpisah dari back-office tenant (§13.8).
+
+```mermaid
+flowchart LR
+    subgraph Persiapan["Persiapan (sebelum tenant pertama)"]
+      P1[P-01 Tim Internal & Peran] --> P2[P-02 Master Regulasi & Referensi]
+      P2 --> P3[P-03 Template Sektor]
+      P1 --> P4[P-04 Katalog Paket & Fitur]
+      P1 --> P5[P-05 Konfigurasi Integrasi]
+      P1 --> P6[P-06 Legal & Template Komunikasi]
+    end
+    P3 & P4 & P5 & P6 --> F0[F-00 Registrasi Tenant]
+    subgraph Operasi["Operasi (paralel, terus-menerus)"]
+      P7[P-07 Siklus Hidup Tenant]
+      P8[P-08 Billing & Dunning]
+      P9[P-09 Dukungan & Akses Dukungan]
+      P10[P-10 Rilis Aplikasi & Flag Fitur]
+      P11[P-11 Monitoring Operasional]
+      P12[P-12 Mitra, Reseller & Referral]
+    end
+    F0 --> P7
+    P7 <--> P8
+    P7 <--> P9
+```
+
+---
+
+### P-01 · Setup Tim Internal & Peran
+
+**Tujuan:** Hanya orang yang berwenang yang bisa mengakses Platform Pengelola, dengan hak sesuai tugasnya.
+**Aktor:** Pemilik platform, Super Admin.
+**Pemicu:** Instalasi pertama sistem, atau penambahan anggota tim.
+
+**Langkah:**
+1. Super Admin pertama dibuat lewat perintah server `php artisan pengelola:buat-super-admin` (tidak ada halaman daftar publik untuk pengelola).
+2. Sistem membuat peran internal default (§19.3): Super Admin, Keuangan, Dukungan, Teknis, Konten & Legal, Mitra & Penjualan, Analis.
+3. Super Admin mengundang anggota tim lewat email. Undangan berlaku 48 jam.
+4. Anggota tim membuat kata sandi dan **wajib mengaktifkan 2FA** sebelum bisa membuka menu apa pun.
+5. Super Admin menetapkan peran. Satu orang boleh punya lebih dari satu peran.
+6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.
+
+**Aturan Bisnis:**
+- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat (sistem menolak menonaktifkan Super Admin terakhir kedua).
+- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional per peran.
+- BR-P01.3 Tidak ada akun bersama. Setiap aksi pengelola tercatat di `LogAuditPengelola` (siapa, apa, kapan, tenant terdampak, nilai lama/baru, alasan, IP).
+- BR-P01.4 Akun pengelola **terpisah** dari akun tenant (tabel `PenggunaPengelola`, guard `pengelola`). Email yang sama boleh dipakai di keduanya, tetapi sesinya tidak pernah tercampur.
+
+**AC:**
+```gherkin
+Given anggota tim baru menerima undangan dan membuat kata sandi
+When ia mencoba membuka menu Manajemen Tenant sebelum mengaktifkan 2FA
+Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
+```
+
+---
+
+### P-02 · Master Regulasi & Referensi
+
+**Tujuan:** Data acuan nasional (wilayah, pajak, hari libur, bank) dikelola terpusat, bertanggal berlaku, dan otomatis dipakai semua tenant.
+**Aktor:** Konten & Legal, Keuangan (peninjau), Super Admin.
+**Pemicu:** Persiapan awal, perubahan regulasi (PMK, Perda PBJT), pergantian tahun (hari libur).
+
+**Data yang dikelola:**
+
+| Data | Isi | Dipakai oleh |
+|---|---|---|
+| Wilayah | Provinsi & kabupaten/kota (kode wilayah resmi), zona waktu (WIB/WITA/WIT) | Profil outlet, tarif PBJT, zona waktu laporan |
+| Tarif pajak nasional | PPN (tarif + `PengaliDpp`), jenis pajak lain | Kalkulasi penjualan & pembelian (§12) |
+| Tarif pajak daerah | PBJT makanan & minuman per kabupaten/kota, aturan service charge masuk DPP | Outlet F&B sesuai kota |
+| Hari libur | Libur nasional & cuti bersama per tahun | Forecast restock, jadwal kerja, laporan |
+| Referensi pembayaran | Bank, e-wallet, jaringan EDC, penerbit QRIS | Pilihan metode pembayaran tenant |
+| Satuan standar | pcs, kg, liter, meter, dus, dll. | Template sektor & import produk |
+
+**Langkah (perubahan tarif pajak):**
+1. Konten & Legal membuat **draf tarif baru** dengan `BerlakuMulai` (tarif lama tidak diedit, hanya diberi `BerlakuSampai`).
+2. Melampirkan dasar hukum (nomor PMK/Perda, tautan dokumen).
+3. **Peninjau kedua** (Keuangan/Super Admin) menyetujui (*four-eyes principle*).
+4. Tarif terbit. Sistem menghitung tenant/outlet terdampak dan mengirim pemberitahuan ("Tarif PBJT Kota X berubah menjadi 10% mulai 1 Januari 2027").
+5. Aplikasi POS menerima tarif baru lewat delta sinkron sebelum tanggal berlaku, sehingga perpindahan tarif tetap benar walaupun perangkat offline pada hari H.
+
+**State Machine data master bertanggal:** `Draf → MenungguTinjauan → Terbit → (Berakhir saat BerlakuSampai lewat)`. `Ditolak` kembali ke `Draf`.
+
+**Aturan Bisnis:**
+- BR-P02.1 Tarif yang sudah terbit tidak pernah diedit atau dihapus. Koreksi = tarif baru.
+- BR-P02.2 Perubahan tarif nasional butuh 2 persetujuan. Perubahan tarif daerah butuh 1 peninjau.
+- BR-P02.3 Tenant boleh **override** tarif daerah untuk outletnya (misal Perda baru belum masuk ke master) dengan konfirmasi dan catatan. Override terlihat di Platform Pengelola sebagai sinyal untuk memperbarui master.
+- BR-P02.4 Hari libur tahun berikutnya wajib terbit paling lambat 1 Desember (pengingat otomatis ke Konten & Legal).
+
+---
+
+### P-03 · Template Sektor
+
+**Tujuan:** Setiap sektor usaha (§5.1) punya paket konfigurasi siap pakai yang dipelihara terpusat dan berversi.
+**Aktor:** Konten & Legal (isi bisnis), Keuangan (COA & pemetaan akun), Teknis (validasi).
+**Pemicu:** Persiapan awal (3 template MVP: RTL-GEN, FNB-CAF, FNB-QSR), penambahan sektor baru, perbaikan template.
+
+**Isi satu template:**
+- Modul/fitur aktif (kunci fitur) dan **mode kasir** default
+- **COA** (inti + ekstensi sektor) dan **pemetaan akun** untuk semua jenis peristiwa (§11.3)
+- Kategori contoh, produk contoh (opsional), satuan, kelompok pajak default
+- Pengaturan default: pembulatan, service charge, stok boleh minus, metode HPP
+- Stasiun dapur default (F&B), alasan void/penyesuaian default, laporan unggulan di dasbor
+
+**Langkah:**
+1. Buat template baru atau **duplikasi** versi terbit untuk membuat versi baru (status `Draf`).
+2. Ubah isi melalui editor terstruktur (bukan JSON mentah).
+3. **Validasi otomatis:** COA seimbang & tanpa kode ganda, setiap kunci `PemetaanAkun` terisi, kelompok pajak merujuk tarif yang ada di P-02, fitur yang diaktifkan ada di katalog P-04.
+4. **Pratinjau sandbox:** sistem membuat tenant uji sementara, menjalankan onboarding F-01 dengan template ini, dan membuat beberapa transaksi contoh untuk memeriksa jurnal & laporan.
+5. Terbitkan. Versi sebelumnya menjadi `Usang` untuk tenant baru.
+6. (Opsional) **Tawarkan pembaruan** ke tenant yang memakai versi lama. Tenant memilih "Terapkan", dan penerapannya bersifat aditif (BR-01.1).
+
+**State Machine `TemplateSektorVersi.Status`:** `Draf → Terbit → Usang`.
+
+**Aturan Bisnis:**
+- BR-P03.1 Tenant menyimpan versi template yang diterapkan. Versi baru **tidak pernah** mengubah data tenant tanpa persetujuan tenant.
+- BR-P03.2 Versi yang sedang dipakai tenant tidak bisa dihapus.
+- BR-P03.3 Template tidak bisa terbit jika validasi otomatis gagal.
+
+---
+
+### P-04 · Katalog Paket & Fitur
+
+**Tujuan:** Paket langganan, batas pemakaian, dan fitur ditentukan lewat data, bukan hard-code, sehingga harga dan isi paket bisa diubah tanpa rilis kode.
+**Aktor:** Super Admin, Keuangan.
+
+**Komponen:**
+- **Katalog fitur**: setiap fitur punya kunci unik (misal `pos.mode-meja`, `promo.mesin`, `api.publik`, `persetujuan.jarak-jauh`), nama, modul, keterangan.
+- **Paket**: kode, nama, harga bulanan & tahunan, masa trial, fitur yang termasuk, dan **batas**: jumlah outlet, perangkat per outlet, pengguna, SKU, kuota pesan WA, penyimpanan file.
+- **Add-on**: fitur atau batas tambahan yang bisa dibeli terpisah (outlet tambahan, self-order QR, WA, insight).
+- **Kupon langganan**: kode, diskon (% atau nominal), durasi (bulan), kuota, paket yang berlaku, masa berlaku.
+
+**Evaluasi fitur untuk tenant:**
+```
+FiturAktif(tenant, kunci) =
+    (fitur ada di paket tenant  ATAU  add-on aktif  ATAU  override pengelola aktif)
+    DAN flag fitur global mengizinkan (P-10)
+    DAN template/outlet mengaktifkan modul tersebut
+```
+
+**Aturan Bisnis:**
+- BR-P04.1 Perubahan harga paket hanya berlaku untuk **tagihan berikutnya**. Tenant lama dapat dikunci pada harga lama (*grandfathering*) sesuai pilihan saat perubahan.
+- BR-P04.2 Paket yang diarsipkan tidak bisa dipilih tenant baru, tetapi tenant yang sudah memakainya tidak terdampak.
+- BR-P04.3 Batas ditegakkan di backend (perantara `PastikanBatasPaket`) dan dikirim ke aplikasi lewat `konfigurasi-aplikasi`. Penegakan di aplikasi hanya untuk UX, server tetap penentu.
+- BR-P04.4 Saat downgrade melebihi batas (misal 5 outlet ke paket 1 outlet), **data tidak dihapus**. Tenant diminta memilih outlet/perangkat yang tetap aktif, sisanya menjadi hanya-baca.
+
+---
+
+### P-05 · Konfigurasi Integrasi Platform
+
+**Tujuan:** Semua layanan pihak ketiga milik platform terhubung, aman, dan terpantau.
+**Aktor:** Teknis, Super Admin.
+
+| Integrasi | Milik | Keterangan |
+|---|---|---|
+| Payment gateway untuk **tagihan langganan** | Platform | Akun merchant {{APP}} sendiri (P-08) |
+| Payment gateway untuk **transaksi tenant** | Tenant | Kredensial per tenant, diisi tenant di back-office. Pengelola hanya mengatur daftar gateway yang didukung |
+| Email transaksional (SMTP/layanan email) | Platform | Verifikasi, tagihan, notifikasi |
+| WhatsApp BSP | Platform | Nomor pengirim, **status persetujuan template pesan** dari Meta |
+| FCM (push Android & iOS) | Platform | Service account, sertifikat APNs |
+| Penyimpanan objek | Platform | File installer, lampiran besar, backup |
+| CAPTCHA, Sentry, uptime monitor | Platform | Anti-spam, error tracking, pemantauan |
+
+**Langkah:** input kredensial (langsung terenkripsi) → **tes koneksi** → aktifkan per lingkungan (staging/produksi) → pemantauan berkala (P-11) → **rotasi kunci** terjadwal.
+
+**Aturan Bisnis:**
+- BR-P05.1 Kredensial tidak pernah ditampilkan ulang secara utuh (hanya 4 karakter terakhir).
+- BR-P05.2 Perubahan kredensial produksi hanya oleh Super Admin/Teknis, wajib alasan, tercatat di audit.
+- BR-P05.3 Kegagalan tes koneksi berkala memicu alert ke Teknis dan banner status di Platform Pengelola.
+
+---
+
+### P-06 · Legal & Template Komunikasi
+
+**Tujuan:** Dokumen hukum dan semua pesan ke tenant/pelanggan dikelola terpusat, berversi, dan tercatat persetujuannya.
+**Aktor:** Konten & Legal.
+
+**Dokumen legal:** Syarat & Ketentuan, Kebijakan Privasi, **Perjanjian Pemrosesan Data** (UU PDP: {{APP}} bertindak sebagai *pemroses* data pelanggan milik tenant, tenant sebagai *pengendali*), SLA per paket.
+- Setiap dokumen punya versi dan tanggal berlaku.
+- Saat registrasi (F-00), calon tenant menyetujui versi yang berlaku. Versi baru yang **materiil** diumumkan minimal 30 hari sebelum berlaku, lalu Owner diminta menyetujui saat login berikutnya.
+- Persetujuan disimpan: tenant, pengguna, versi, waktu, IP.
+
+**Template komunikasi:** email, WhatsApp, push, dan notifikasi in-app per peristiwa (verifikasi, OTP, tagihan, dunning, struk digital, pengingat piutang, booking, approval), dalam Bahasa Indonesia & Inggris, dengan variabel (`{NamaUsaha}`, `{TotalTagihan}`, dll.) dan pratinjau. Template WA menampilkan status persetujuan dari BSP (`MenungguPersetujuan`, `Disetujui`, `Ditolak`).
+
+**Help center:** artikel bantuan, video, dan tautan kontekstual dari halaman aplikasi.
+
+**Aturan Bisnis:**
+- BR-P06.1 Versi dokumen legal yang sudah terbit tidak bisa diubah.
+- BR-P06.2 Registrasi tenant ditolak jika belum ada S&K dan Kebijakan Privasi berstatus terbit (prasyarat F-00).
+
+---
+
+### P-07 · Siklus Hidup Tenant
+
+**Tujuan:** Tim melihat kondisi setiap tenant secara utuh dan mengambil tindakan yang tepat dan terkendali.
+**Aktor:** Dukungan, Mitra & Penjualan, Keuangan, Super Admin.
+
+**Tampilan 360° tenant:** profil usaha, sektor & versi template, paket & add-on, pemakaian vs batas, outlet & perangkat (platform, versi aplikasi, outbox tertunda), riwayat tagihan & pembayaran, tiket dukungan, riwayat akses dukungan, mitra perujuk, catatan internal, dan **skor kesehatan**.
+
+**State Machine `Langganan.Status`** (sama dengan F-00): `Trial → Aktif → Tertunggak → Ditangguhkan → Berhenti`, cabang `Gratis`. Tenant juga bisa diberi penanda `Uji`, `Demo`, atau `Internal` (dikecualikan dari metrik bisnis & tagihan).
+
+**Tindakan pengelola:**
+
+| Tindakan | Peran | Syarat |
+|---|---|---|
+| Perpanjang trial | Dukungan, Penjualan | Maks 2 kali, alasan wajib |
+| Override batas/fitur sementara | Dukungan, Super Admin | Wajib tanggal berakhir & alasan. Berakhir otomatis |
+| Ganti paket manual | Keuangan | Proration otomatis |
+| Tangguhkan manual | Super Admin | Alasan wajib (penipuan, penyalahgunaan, permintaan hukum). Owner diberi notifikasi |
+| Aktifkan kembali | Keuangan, Super Admin | Tagihan lunas atau keputusan tertulis |
+| Catatan internal | Semua peran | Tidak terlihat tenant |
+| Permintaan penghapusan data (UU PDP) | Super Admin | Lihat langkah di bawah |
+
+**Skor kesehatan** (dihitung harian): hari aktif 14 hari terakhir, tren transaksi, jumlah fitur utama yang dipakai, perangkat yang lama offline, tiket terbuka, tagihan telat. Hasil: **Sehat / Perlu Perhatian / Berisiko**. Skor memicu tugas otomatis, misalnya tenant baru yang belum bertransaksi 48 jam setelah daftar masuk daftar "hubungi untuk bantuan onboarding".
+
+**Langkah permintaan penghapusan data:** verifikasi identitas Owner → tenant mengunduh export lengkap → masa tunggu 14 hari (bisa dibatalkan) → penghapusan data pribadi & anonimisasi (data transaksi dipertahankan sesuai kewajiban retensi pajak dengan identitas dianonimkan) → bukti penghapusan dikirim ke Owner.
+
+**Aturan Bisnis:**
+- BR-P07.1 Pengelola tidak pernah menghapus dokumen transaksi tenant.
+- BR-P07.2 Transaksi offline yang dibuat sebelum penangguhan tetap diterima saat sinkron.
+- BR-P07.3 Semua tindakan pada tabel di atas tercatat di `LogAuditPengelola` dan terlihat di riwayat tenant.
+
+---
+
+### P-08 · Billing & Dunning Platform
+
+**Tujuan:** Tagihan langganan terbit tepat waktu, pembayaran tercatat benar, dan tunggakan ditangani konsisten. Ini sisi pengelola dari F-19.
+**Aktor:** Keuangan, Sistem (cron).
+
+**Langkah:**
+1. Cron harian membuat tagihan untuk langganan yang periodenya akan berakhir (H-7), termasuk add-on, kupon, proration, dan **PPN** atas jasa langganan (sesuai status PKP {{APP}}).
+2. Tagihan dikirim via email & WA dan tampil di back-office tenant.
+3. Pembayaran:
+   - **Gateway** (VA/QRIS/e-wallet/kartu): webhook → verifikasi → `Lunas` → periode diperpanjang otomatis.
+   - **Transfer manual** (Fase 0–1): tenant mengunggah bukti → Keuangan memverifikasi di antrean "Menunggu Verifikasi" → `Lunas`.
+4. **Dunning:** pengingat H-7, H-3, H0, H+3. Setelah jatuh tempo status langganan `Tertunggak` (masa tenggang 7 hari), lalu `Ditangguhkan`.
+5. **Refund/kredit:** nota kredit untuk tagihan berikutnya, atau refund ke rekening.
+6. **Faktur pajak** untuk tenant PKP yang meminta (export format Coretax, fase 3).
+7. **Laporan platform:** MRR, ARR, churn (logo & pendapatan), ARPA, piutang langganan & umurnya, pendapatan per paket, per sektor, dan per mitra.
+
+**State Machine `TagihanLangganan.Status`:** `Draf → Terbit → Lunas`. `Terbit → JatuhTempo → Dihapuskan`. `Terbit → Dibatalkan`. `Lunas → Dikembalikan` (refund).
+
+**Aturan Bisnis:**
+- BR-P08.1 Nomor tagihan platform berurutan tanpa celah per tahun (kebutuhan pajak).
+- BR-P08.2 Refund di atas Rp 1.000.000 butuh persetujuan kedua (Super Admin).
+- BR-P08.3 Pembukuan pendapatan platform dapat dilakukan dengan menjadikan {{APP}} sendiri sebagai **tenant internal** (*dogfooding*), atau diexport ke software akuntansi.
+
+---
+
+### P-09 · Dukungan & Akses Dukungan
+
+**Tujuan:** Masalah tenant cepat selesai, tanpa mengorbankan privasi dan keamanan data tenant.
+**Aktor:** Dukungan (L1/L2), Teknis, Super Admin, Owner tenant.
+
+**Tiket dukungan:**
+- Kanal: in-app (tombol Bantuan di back-office & aplikasi), email, WhatsApp. Tiket dari aplikasi otomatis melampirkan konteks: tenant, outlet, perangkat, versi aplikasi, jumlah outbox tertunda, log singkat.
+- Prioritas & **SLA per paket** (misal respons pertama: Gratis 2 hari kerja, Starter 1 hari, Pro 8 jam, Bisnis 4 jam).
+- Eskalasi L1 → L2 → Teknis.
+- **State Machine `TiketDukungan.Status`:** `Baru → Ditangani → MenungguPelanggan → Selesai → Ditutup`. `Selesai` bisa dibuka lagi dalam 7 hari.
+
+**Akses dukungan ("Masuk sebagai tenant"):**
+1. Owner memberi izin dari back-office: *"Izinkan tim dukungan mengakses akun saya"* dengan pilihan durasi (1/24/72 jam) dan cakupan (**Baca saja** atau **Baca & Ubah**). Izin juga bisa diberikan melalui tiket.
+2. Petugas dukungan membuka sesi akses. Layar menampilkan **banner merah** "Anda mengakses akun {NamaUsaha} sebagai Dukungan".
+3. Setiap aksi dalam sesi tercatat di `LogAudit` tenant dengan penanda pelaku pengelola, dan di `LogAuditPengelola`.
+4. Owner dapat melihat riwayat akses dan mencabut izin kapan saja.
+5. **Akses darurat tanpa izin** hanya untuk Super Admin, dengan alasan insiden keamanan atau permintaan hukum. Owner diberi notifikasi setelahnya.
+
+**Alat bantu dukungan:** cabut/reset perangkat, minta perangkat mengunggah log sinkron, lihat status outbox per perangkat, **bangun ulang `SaldoStok` dari `MutasiStok`**, jalankan ulang ringkasan harian, kirim ulang email/WA, bantu import data.
+
+**Aturan Bisnis:**
+- BR-P09.1 Pengelola tidak pernah bisa melihat kata sandi, PIN, atau kredensial integrasi tenant. Data pribadi pelanggan tenant ditampilkan tersamar (masked) secara default.
+- BR-P09.2 Aksi ubah dalam sesi dukungan hanya jika cakupan izin "Baca & Ubah".
+- BR-P09.3 Alat bantu yang mengubah data (bangun ulang saldo, ringkasan) mencatat hasil sebelum/sesudah.
+
+**AC:**
+```gherkin
+Given Owner tenant memberi izin akses dukungan "Baca saja" selama 24 jam
+When petugas dukungan mencoba mengubah harga produk dalam sesi akses
+Then aksi ditolak dengan pesan "Izin akses hanya baca"
+And percobaan tersebut tercatat di log audit tenant dan log audit pengelola
+```
+
+---
+
+### P-10 · Rilis Aplikasi & Flag Fitur
+
+**Tujuan:** Versi baru Aplikasi POS dan Aplikasi Owner sampai ke pengguna dengan aman, bertahap, dan bisa dihentikan bila bermasalah.
+**Aktor:** Teknis, Super Admin.
+
+**Langkah rilis:**
+1. CI mengunggah build dan membuat catatan `RilisAplikasi` (status `Draf`).
+2. Uji internal di kanal `Beta` (perangkat lab & tenant uji).
+3. **Rollout bertahap** 10% → 50% → 100% (Play Store staged rollout. Windows lewat `RilisAplikasi.PersenRollout`).
+4. Pantau crash-free sessions, galat sinkron, dan tiket terkait versi.
+5. Bila bermasalah: **hentikan rollout** dan matikan fitur bermasalah lewat flag (*kill switch*) tanpa menunggu review store.
+6. Naikkan `VersiMinimum` bila diperlukan (§14.6).
+
+**Flag fitur:** cakupan global, per paket, per tenant, atau persentase tenant. Dipakai untuk peluncuran bertahap fitur baru dan kill switch.
+
+**Pengumuman & pemeliharaan:** banner in-app per segmen (paket, sektor, platform, versi), jadwal pemeliharaan, catatan rilis ("Yang baru").
+
+**Aturan Bisnis:**
+- BR-P10.1 Menaikkan `VersiMinimum` wajib diumumkan ≥ 7 hari sebelumnya, kecuali perbaikan keamanan.
+- BR-P10.2 Sebelum menaikkan `VersiMinimum`, sistem menampilkan jumlah perangkat di versi lama yang masih punya outbox tertunda. Perangkat tersebut tetap diizinkan mengirim outbox (§14.6).
+- BR-P10.3 Setiap perubahan flag produksi tercatat di audit, dengan alasan.
+
+---
+
+### P-11 · Monitoring Operasional
+
+**Tujuan:** Tim Teknis tahu lebih dulu sebelum tenant mengeluh.
+**Aktor:** Teknis.
+
+**Dasbor operasional:**
+- Detak scheduler (cron terakhir berjalan), umur job antrean tertua, job gagal (lihat detail, coba ulang, buang)
+- Error rate & p95 API (POS, Owner, internal), endpoint terlambat
+- Perangkat dengan outbox macet > 2 jam (semua tenant), galat sinkron terbanyak
+- Webhook keluar gagal, status integrasi (P-05)
+- Backup terakhir yang berhasil & hasil uji restore terakhir
+- Ukuran database per tenant, tenant dengan beban tertinggi, pemakaian disk/inode hosting
+- Crash-free sessions per platform & versi aplikasi
+
+**Alert:** ambang batas per metrik → email/WA/Telegram ke Teknis yang bertugas, dengan tautan ke *runbook*.
+
+**Manajemen insiden:** catat insiden (tingkat, dampak, kronologi), perbarui **halaman status publik** (`status.{{app}}.id`, di-hosting terpisah dari Hostinger agar tetap hidup saat server bermasalah), post-mortem setelah selesai.
+
+**Aturan Bisnis:**
+- BR-P11.1 Umur job tertua > 5 menit atau scheduler tidak berdetak > 3 menit = alert kritis (§20.3).
+- BR-P11.2 Insiden yang berdampak ke > 10% tenant aktif wajib diumumkan di halaman status dalam 15 menit.
+
+---
+
+### P-12 · Mitra, Reseller & Referral
+
+**Tujuan:** Mempercepat akuisisi tenant lewat mitra daerah dan rujukan, dengan komisi yang transparan.
+**Aktor:** Mitra & Penjualan, Keuangan, Mitra (eksternal).
+
+**Jenis mitra:**
+
+| Jenis | Peran | Imbalan |
+|---|---|---|
+| Reseller/Agen daerah | Menjual, onboarding, dukungan tingkat pertama | Komisi berulang (% dari tagihan lunas) |
+| Referral | Tenant atau individu yang merekomendasikan | Kredit langganan / komisi sekali |
+| Mitra hardware | Distributor perangkat POS & printer | Bundel, masuk daftar perangkat kompatibel (HCL) |
+| Mitra implementasi | Migrasi data & pelatihan berbayar | Tarif jasa |
+
+**Langkah:**
+1. Pendaftaran mitra → verifikasi identitas (KTP/NPWP, rekening) → persetujuan kontrak (P-06).
+2. Mitra mendapat **kode mitra** dan tautan pendaftaran.
+3. **Atribusi:** tenant yang mendaftar dengan kode/tautan mitra tercatat di `AtribusiMitra` (berlaku 90 hari sejak klik pertama).
+4. Komisi dihitung otomatis dari **tagihan langganan yang lunas** (P-08).
+5. Pencairan bulanan oleh Keuangan, dengan pemotongan pajak sesuai ketentuan (dikonsultasikan dengan konsultan pajak).
+6. **Portal mitra** (`/mitra`, fase 3): daftar tenant rujukan, status, komisi, materi pemasaran.
+
+**Aturan Bisnis:**
+- BR-P12.1 Komisi hanya dari tagihan lunas. Jika tagihan di-refund, komisi terkait dibatalkan (*clawback*).
+- BR-P12.2 Satu tenant hanya diatribusikan ke satu mitra.
+- BR-P12.3 Mitra tidak otomatis punya akses ke data tenant. Akses mengikuti mekanisme izin P-09.
+
+---
+
+### Bagian B — Flow Tenant (F-00 s.d. F-20)
+
+> Flow berikut dijalankan oleh tenant (pemilik usaha dan stafnya), di atas data master yang disiapkan Platform Pengelola.
+
 ### F-00 · Registrasi Tenant & Langganan
 
 **Tujuan:** Calon pelanggan membuat akun usaha (tenant) dan memulai masa trial.
 **Aktor:** Calon Owner, Sistem.
-**Pemicu:** Klik "Daftar Gratis" di landing page.
+**Pemicu:** Klik "Daftar Gratis" di landing page (atau tautan mitra/referral, P-12).
+**Prasyarat:** P-02 s.d. P-06 selesai: paket & batas tersedia (P-04), template sektor terbit (P-03), tarif pajak & wilayah (P-02), email & CAPTCHA aktif (P-05), S&K dan Kebijakan Privasi terbit (P-06).
 
 **Langkah:**
-1. Isi nama, email, no. WhatsApp, password, nama usaha.
+1. Isi nama, email, no. WhatsApp, password, nama usaha, (opsional) kode mitra/referral, lalu **centang persetujuan S&K dan Kebijakan Privasi** versi yang berlaku (tercatat di `PersetujuanDokumenLegal`).
 2. Verifikasi email (link) **atau** OTP WhatsApp.
-3. Sistem membuat baris di tabel `Tenant`, `Pengguna` (peran Owner), `Langganan` (status `Trial`, 14 hari, paket Pro), outlet default "Outlet Utama", gudang default.
+3. Sistem membuat baris di tabel `Tenant`, `Pengguna` (peran Owner), `Langganan` (status `Trial`, durasi & paket sesuai konfigurasi P-04), `AtribusiMitra` bila ada kode mitra, outlet default "Outlet Utama", gudang default.
 4. Redirect ke Onboarding Wizard (F-01).
 
 **Aturan Bisnis:**
@@ -419,8 +813,8 @@ And ia diarahkan ke Onboarding Wizard
 
 **Langkah (Wizard 6 langkah, bisa dilewati & dilanjutkan):**
 1. **Profil usaha**: nama, alamat, provinsi/kota (untuk zona waktu & tarif PBJT), logo, NPWP (opsional), status PKP (ya/tidak).
-2. **Pilih sektor** (bisa lebih dari satu), lalu pilih template untuk **Outlet Utama**.
-3. **Pajak**: sistem mengusulkan default sesuai sektor & status PKP (F&B: PB1/PBJT 10% + service charge opsional; Retail PKP: PPN). Owner mengonfirmasi atau mengubah.
+2. **Pilih sektor** (bisa lebih dari satu), lalu pilih template untuk **Outlet Utama**. Yang ditampilkan hanya template berstatus `Terbit` versi terbaru dari P-03.
+3. **Pajak**: sistem mengusulkan default sesuai sektor, status PKP, dan tarif kota outlet dari master P-02 (F&B: PB1/PBJT 10% + service charge opsional; Retail PKP: PPN). Owner mengonfirmasi atau mengubah.
 4. **Produk awal** (pilih salah satu): (a) contoh produk dari template, (b) import Excel/CSV, (c) import dari export aplikasi lain (majoo/Moka/Pawoon/dll. via mapper kolom), (d) tambah manual cepat (nama + harga).
 5. **Metode pembayaran**: tunai (default), QRIS (statis upload gambar dulu, dinamis via payment gateway nanti), EDC bank, transfer.
 6. **Perangkat & printer**: daftarkan perangkat ini sebagai kasir, tes cetak struk.
@@ -826,10 +1220,12 @@ promo:
 
 ### F-19 · Billing Langganan SaaS
 
+> Ini sisi tenant. Sisi pengelola (pembuatan tagihan, verifikasi, dunning, laporan MRR) ada di **P-08**, dan komisi mitra di **P-12**.
+
 - Paket & add-on (§21). Tagihan bulanan/tahunan, invoice PDF, pembayaran via payment gateway (VA, QRIS, e-wallet, kartu).
 - Proration saat upgrade di tengah periode, downgrade berlaku periode berikutnya.
 - Dunning: pengingat H-7, H-3, H0, H+3 via email & WA; `Tertunggak` 7 hari → `Ditangguhkan`.
-- Fase 1: tagihan dan aktivasi manual oleh Super Admin (konfirmasi transfer). Fase 3: otomatis penuh.
+- Fase 0–1: tagihan dan aktivasi manual oleh tim Keuangan di Platform Pengelola (verifikasi bukti transfer). Fase 2: gateway & dunning otomatis. Fase 3: faktur pajak langganan.
 - Kode referral & reseller/agen (komisi agen).
 
 ---
@@ -966,6 +1362,37 @@ Booking online/WA → Konfirmasi → Reminder H-1 (WA) → Check-in
 
 Prioritas: **P0** = MVP wajib, **P1** = penting (fase 2), **P2** = pembeda (fase 3), **P3** = lanjutan (fase 4).
 
+### 10.0 Modul Platform Pengelola
+
+Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
+
+| ID | Fitur | Flow | Prioritas / Fase |
+|---|---|---|---|
+| PGL-01 | Akun tim internal, peran, 2FA wajib, pembatasan IP, log audit pengelola | P-01 | P0 · Fase 0 |
+| PGL-02 | Master wilayah, tarif PPN & PBJT bertanggal berlaku dengan alur tinjauan, hari libur, referensi bank/EDC, satuan standar | P-02 | P0 · Fase 0 |
+| PGL-03 | Template sektor berversi + validasi otomatis + pratinjau sandbox (3 template MVP) | P-03 | P0 · Fase 0 (template lain bertahap) |
+| PGL-04 | Katalog fitur, paket, batas, add-on, kupon langganan, evaluasi `FiturAktif` | P-04 | P0 · Fase 0 (kupon: P1) |
+| PGL-05 | Konfigurasi integrasi platform (email, CAPTCHA, storage di Fase 0. Gateway billing, WA, FCM menyusul) + tes koneksi | P-05 | P0 · Fase 0–2 |
+| PGL-06 | Dokumen legal berversi + persetujuan tenant | P-06 | P0 · Fase 0 |
+| PGL-07 | Template email/WA/push/in-app + help center | P-06 | P1 · Fase 1–2 |
+| PGL-08 | Daftar & 360° tenant, perpanjang trial, override, tangguhkan/aktifkan, catatan internal | P-07 | P0 · Fase 0 |
+| PGL-09 | Skor kesehatan tenant & tugas otomatis | P-07 | P1 · Fase 2 |
+| PGL-10 | Permintaan penghapusan data (UU PDP) | P-07 | P1 · Fase 2 |
+| PGL-11 | Tagihan langganan + verifikasi transfer manual | P-08 | P0 · Fase 0 |
+| PGL-12 | Pembayaran gateway otomatis + dunning otomatis | P-08 | P1 · Fase 2 |
+| PGL-13 | Laporan MRR/ARR/churn/piutang langganan | P-08 | P1 · Fase 2 |
+| PGL-14 | Faktur pajak langganan (export Coretax), refund & nota kredit | P-08 | P2 · Fase 3 |
+| PGL-15 | Tiket dukungan + SLA per paket | P-09 | P0 (dasar) · Fase 0 → P1 (SLA & kanal WA) · Fase 2 |
+| PGL-16 | Akses dukungan berizin (baca saja / baca & ubah) + alat bantu dukungan | P-09 | P0 · Fase 1 (sebelum beta tertutup) |
+| PGL-17 | Manajemen rilis aplikasi, rollout, versi minimum | P-10 | P0 · Fase 1 |
+| PGL-18 | Flag fitur (global/paket/tenant/persentase) & kill switch | P-10 | P1 · Fase 1 |
+| PGL-19 | Pengumuman, banner pemeliharaan, catatan rilis | P-10 | P1 · Fase 2 |
+| PGL-20 | Dasbor operasional (scheduler, antrean, job gagal, outbox macet, backup) + alert | P-11 | P0 (dasar) · Fase 0 → lengkap Fase 2 |
+| PGL-21 | Manajemen insiden & halaman status publik | P-11 | P1 · Fase 2 |
+| PGL-22 | Mitra, atribusi, komisi, pencairan | P-12 | P2 · Fase 3 |
+| PGL-23 | Portal mitra `/mitra` | P-12 | P2 · Fase 3 |
+| PGL-24 | Analitik platform: funnel daftar → transaksi pertama → bayar, adopsi fitur per sektor, retensi kohort | — | P1 · Fase 2 |
+
 ### 10.1 Modul Platform & Tenant
 
 | ID | Fitur | Prioritas |
@@ -980,7 +1407,7 @@ Prioritas: **P0** = MVP wajib, **P1** = penting (fase 2), **P2** = pembeda (fase
 | PLT-08 | Notifikasi in-app + email + WA | P1 |
 | PLT-09 | Pusat unduhan (export antrian) | P0 |
 | PLT-10 | Import massal (produk, pelanggan, supplier, stok awal) | P0 |
-| PLT-11 | Super Admin panel (tenant, langganan, impersonate dengan izin & audit, monitoring) | P0 |
+| PLT-11 | Platform Pengelola (lihat §10.0 dan §8 Bagian A) | P0 |
 | PLT-12 | Help center in-app, tur produk, live chat | P1 |
 
 ### 10.2 Modul POS
@@ -1432,6 +1859,7 @@ Backend/app/
 │   ├── Karyawan/         # Karyawan, JadwalKerja, Absensi, Komisi            (F-18)
 │   ├── Laporan/          # Kueri laporan, tabel ringkasan                    (F-14)
 │   ├── Integrasi/        # GerbangPembayaran, WhatsApp, Webhook, ApiPublik   (F-20)
+│   ├── Pengelola/        # Platform Pengelola: tim internal, referensi, template, paket, tagihan, dukungan, rilis, mitra (P-01–P-12, §13.8)
 │   └── Bersama/          # Uang, Kuantitas, NomorDokumen, ModelDasar, LogAudit
 │
 │   Di dalam setiap domain:
@@ -1451,6 +1879,7 @@ Backend/app/
 │   ├── Kontroler/Pemilik/V1/   # API Aplikasi Owner: dasbor, laporan ringkas, persetujuan, notifikasi (user token)
 │   ├── Kontroler/Api/V1/       # API publik (token Sanctum)
 │   ├── Kontroler/Webhook/      # Gerbang pembayaran, WA gateway
+│   ├── Kontroler/Pengelola/    # Platform Pengelola (subdomain pengelola., guard pengelola)
 │   ├── Perantara/              # IdentifikasiTenant, PastikanAksesOutlet, PastikanFiturAktif, PastikanLanggananAktif
 │   └── Permintaan/             # Form request: SimpanProdukPermintaan, ...
 └── Providers/            # (pengecualian)
@@ -1540,7 +1969,8 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 /{slugTenant}                   Toko online publik
 /{slugTenant}/meja/{tokenMeja}  Self-order meja
 /{slugTenant}/reservasi         Booking layanan
-/admin/...                      Super Admin
+pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
+/mitra                          Portal mitra/reseller (fase 3)
 ```
 
 ### 13.7 Konvensi Penamaan: Bahasa Indonesia + PascalCase (Keputusan D-05)
@@ -1726,6 +2156,48 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 - Beberapa perilaku "otomatis" Laravel (tebakan nama tabel, foreign key, timestamp) diganti konfigurasi eksplisit di `ModelDasar`.
 - Nama tabel case-sensitive menuntut disiplin lingkungan dev (MySQL Linux).
 - Lint bawaan Dart & TS perlu disesuaikan. Hasil analisis statis tetap dijaga ketat untuk aturan lain.
+
+### 13.8 Arsitektur Platform Pengelola
+
+Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu database) tetapi **dipisahkan tegas** dari area tenant.
+
+| Aspek | Tenant (back-office) | Platform Pengelola |
+|---|---|---|
+| Alamat | `https://{{app}}.id/kelola/...` | `https://pengelola.{{app}}.id` (subdomain Hostinger) |
+| Tabel akun | `Pengguna` | `PenggunaPengelola` |
+| Guard autentikasi | `web` (sesi tenant) | `pengelola` (sesi terpisah, cookie berbeda) |
+| 2FA | Wajib untuk Owner/Admin di paket Bisnis | **Wajib untuk semua akun** |
+| Scope data | Selalu dibatasi `MilikTenant` (satu tenant) | Lintas tenant, **hanya lewat layanan `Pengelola`** yang diaudit |
+| Entry frontend | `resources/js/Aplikasi.tsx` | `resources/js/Pengelola.tsx` (bundle terpisah, kode pengelola tidak pernah terkirim ke browser tenant) |
+| Layout | `TataLetakAplikasi` | `TataLetakPengelola` (warna berbeda, penanda lingkungan staging/produksi) |
+
+**Struktur kode:**
+
+```
+Backend/app/Domain/Pengelola/
+├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
+├── Referensi/          # Wilayah, TarifPajak nasional & daerah, HariLibur, ReferensiBank (P-02)
+├── TemplateSektor/     # TemplateSektor, TemplateSektorVersi, ValidatorTemplate, Sandbox (P-03)
+├── Katalog/            # Fitur, Paket, Addon, KuponLangganan, EvaluatorFitur          (P-04)
+├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)
+├── Konten/             # DokumenLegal, TemplatePesan, ArtikelBantuan                   (P-06)
+├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
+├── Tagihan/            # TagihanLangganan, PembayaranLangganan, Dunning, LaporanMrr    (P-08)
+├── Dukungan/           # TiketDukungan, AksesDukungan, AlatBantu                       (P-09)
+├── Rilis/              # RilisAplikasi, FlagFitur, Pengumuman                          (P-10)
+├── Operasional/        # DasborOperasional, Insiden, Alert                             (P-11)
+└── Mitra/              # Mitra, AtribusiMitra, KomisiMitra, PencairanKomisi            (P-12)
+
+Backend/app/Http/Kontroler/Pengelola/      # Kontroler Inertia untuk pengelola
+Backend/routes/Pengelola.php               # rute subdomain pengelola
+Backend/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
+```
+
+**Aturan keamanan arsitektur:**
+- Melewati scope `MilikTenant` hanya boleh dilakukan melalui `KonteksPengelola::JalankanLintasTenant(alasan, fn)`, yang **mencatat audit** setiap pemanggilan. Aturan ini ditegakkan dengan **test arsitektur Pest** (`arch()`): kelas di luar `App\Domain\Pengelola` dilarang memanggilnya.
+- Perantara rute pengelola: `PastikanPenggunaPengelola`, `WajibDuaFaktor`, `BatasiIpPengelola` (opsional), `CatatAuditPengelola`.
+- Akses dukungan (P-09) diimplementasikan sebagai **sesi tenant terbatas** yang dibuat dari izin `AksesDukungan` (bukan login memakai akun Owner), dengan cakupan dan waktu berakhir yang ditegakkan oleh perantara.
+- Hostinger mendukung subdomain. Subdomain `pengelola.` diarahkan ke folder `public` yang sama, dan rute dibedakan dengan `Route::domain()`.
 
 ---
 
@@ -2039,6 +2511,43 @@ erDiagram
 | `RingkasanPenjualanHarian` | IdTenant, IdOutlet, TanggalBisnis, Kotor, Diskon, Bersih, Pajak, Hpp, JumlahTransaksi, PerMetodeBayar JSON, PerKanal JSON |
 | `RingkasanProdukHarian` | IdTenant, IdOutlet, TanggalBisnis, IdProduk, Jumlah, Bersih, Hpp |
 | `jobs`, `failed_jobs`, `cache`, `sessions`, `migrations`, `personal_access_tokens`, tabel spatie | **Pengecualian:** tabel bawaan framework/paket tetap memakai nama asli (§13.7.4) |
+
+**Platform Pengelola** (tabel tanpa `IdTenant` kecuali disebut, §13.8)
+
+| Tabel | Kolom kunci |
+|---|---|
+| `PenggunaPengelola` | Id, Uuid, Nama, Email, KataSandi, Rahasia2fa, Aktif, DaftarIpDiizinkan JSON, TerakhirMasukPada |
+| `PeranPengelola` / `PeranPengelolaIzin` / `PenggunaPengelolaPeran` | Kode, Nama / IdPeranPengelola, KunciIzin / IdPenggunaPengelola, IdPeranPengelola |
+| `LogAuditPengelola` | IdPenggunaPengelola, Aksi, JenisObjek, IdObjek, IdTenant (nullable), NilaiLama JSON, NilaiBaru JSON, Alasan, Ip, DibuatPada (**append-only**) |
+| `Wilayah` | Kode, Nama, Tingkat (Provinsi/KabupatenKota), KodeInduk, ZonaWaktu |
+| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status |
+| `ReferensiBank` | Kode, Nama, Jenis (Bank/Ewallet/JaringanEdc/PenerbitQris), Aktif |
+| `TinjauanDataMaster` | JenisObjek, IdObjek, DiajukanOleh, DitinjauOleh, Status (MenungguTinjauan/Disetujui/Ditolak), DasarHukum, Catatan |
+| `TemplateSektor` / `TemplateSektorVersi` | Kode, Nama / IdTemplateSektor, Versi, Status (Draf/Terbit/Usang), Isi JSON, HasilValidasi JSON, DiterbitkanOleh, DiterbitkanPada |
+| `Fitur` | Kunci, Nama, Modul, Keterangan |
+| `Addon` / `LanggananAddon` | Kode, Nama, Harga, KunciFitur, TambahanBatas JSON / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada |
+| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, IdPaket JSON, BerlakuSampai / IdKupon, IdTenant, IdTagihanLangganan |
+| `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
+| `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
+| `KonfigurasiIntegrasi` | Jenis, Lingkungan (Staging/Produksi), Kredensial (terenkripsi), Status, TerakhirDiujiPada, HasilUji |
+| `DokumenLegal` / `PersetujuanDokumenLegal` | Jenis (SyaratKetentuan/KebijakanPrivasi/PerjanjianPemrosesanData/Sla/KontrakMitra), Versi, Isi, Materiil, BerlakuMulai, Status / IdDokumenLegal, IdTenant, IdPengguna, DisetujuiPada, Ip |
+| `TemplatePesan` | Kunci, Kanal (Email/Wa/Push/InApp), Bahasa, Subjek, Isi, StatusPersetujuanWa |
+| `ArtikelBantuan` | Judul, Slug, Isi, Kategori, KunciHalamanTerkait, Status |
+| `CatatanTenant` | IdTenant, Isi, DibuatOleh |
+| `SkorKesehatanTenant` | IdTenant, Tanggal, Skor, Kategori (Sehat/PerluPerhatian/Berisiko), Faktor JSON |
+| `PermintaanPenghapusanData` | IdTenant, DimintaOleh, Status, DiverifikasiPada, DijadwalkanPada, SelesaiPada |
+| `PembayaranLangganan` | IdTagihanLangganan, Metode (Gateway/TransferManual), Jumlah, RefGateway, PathBukti, Status, DiverifikasiOleh |
+| `NotaKreditLangganan` | IdTenant, IdTagihanLangganan, Jumlah, Alasan, DisetujuiOleh |
+| `TiketDukungan` / `TiketDukunganPesan` | Nomor, IdTenant, IdPelapor, Kanal, Kategori, Prioritas, Status, IdPenanggungJawab, BatasSlaPada, Konteks JSON / IdTiketDukungan, Pengirim, Isi, Lampiran |
+| `AksesDukungan` | IdTenant, IdPenggunaPengelola, DiizinkanOleh, Cakupan (BacaSaja/BacaUbah), Alasan, MulaiPada, BerakhirPada, DicabutPada, Darurat |
+| `Pengumuman` | Judul, Isi, Jenis (Info/Pemeliharaan/CatatanRilis), Segmen JSON, MulaiPada, SelesaiPada |
+| `Insiden` | Judul, Tingkat, Status, Dampak, MulaiPada, SelesaiPada, Kronologi, PascaInsiden |
+| `PerangkatKerasTerverifikasi` (HCL) | Merek, Model, Jenis (AllInOne/Printer/Pemindai/LaciKas), StatusKompatibilitas (Tersertifikasi/Kompatibel/Terbatas), VersiAdaptor, Catatan |
+| `Mitra` | Kode, Nama, Jenis (Reseller/Referral/Hardware/Implementasi), Status, Npwp, Rekening (terenkripsi), PersenKomisi |
+| `AtribusiMitra` | IdMitra, IdTenant, Sumber, MulaiPada, BerakhirPada |
+| `KomisiMitra` / `PencairanKomisi` | IdMitra, IdTagihanLangganan, Jumlah, Status (Tertunda/Disetujui/Dibayar/Dibatalkan) / IdMitra, Periode, Total, PotonganPajak, DibayarPada |
+
+Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `JenisPajak`, dan `RilisAplikasi` (sudah di atas) juga dikelola dari Platform Pengelola.
 
 ### 15.4 Strategi Volume Data
 
@@ -2521,6 +3030,20 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.ca
 
 **Approval jarak jauh (X4):** jika supervisor tidak di tempat, permintaan dikirim ke HP supervisor/owner lewat **push notification** di **Aplikasi {{APP}} Owner** (fallback: link WA) untuk disetujui dengan satu ketukan, lengkap dengan detail (kasir, item, nominal, alasan). Butuh online di kedua sisi.
 
+### 19.3 Peran Internal Platform Pengelola
+
+| Peran | Cakupan | Tidak boleh |
+|---|---|---|
+| **Super Admin** | Semua menu pengelola, akses darurat, kredensial integrasi produksi, tangguhkan tenant, persetujuan kedua | — (semua aksi tetap diaudit) |
+| **Keuangan** | Paket & harga (usul), tagihan, verifikasi pembayaran, refund (≤ batas), laporan MRR, komisi mitra | Akses dukungan ke data tenant, kredensial integrasi |
+| **Dukungan** | Tiket, tampilan 360° tenant, perpanjang trial, override sementara, akses dukungan berizin, alat bantu | Mengubah harga paket, refund, data master pajak |
+| **Teknis** | Monitoring, job gagal, rilis aplikasi, flag fitur, integrasi, insiden, alat bantu teknis | Tagihan & refund |
+| **Konten & Legal** | Data master regulasi (pengaju), template sektor (isi), dokumen legal, template pesan, help center | Tenant & tagihan |
+| **Mitra & Penjualan** | Mitra, atribusi, perpanjang trial prospek, analitik funnel | Akses dukungan, tagihan |
+| **Analis** | Baca saja: laporan platform & analitik (data agregat, tanpa data pribadi) | Semua aksi ubah |
+
+Peran dapat digabung untuk tim kecil (misal satu orang Keuangan + Dukungan). Aturan *four-eyes* (P-02, P-08) tetap berlaku: pengaju dan penyetuju harus orang berbeda.
+
 ---
 
 ## 20. Kebutuhan Non-Fungsional
@@ -2551,7 +3074,8 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.ca
 - Device token per perangkat dengan *abilities* sesuai tipe perangkat (kasir tidak bisa memanggil endpoint gudang, dsb.), bisa dicabut kapan saja dari back-office.
 - Keamanan aplikasi Flutter: secure storage, SQLCipher, obfuscation, lihat §17.2.6.
 - Dependabot + `composer audit` + `npm audit` + `dart pub outdated`/audit dependensi di CI.
-- Pentest eksternal sebelum GA.
+- Platform Pengelola: 2FA wajib semua akun, sesi 30 menit, allowlist IP opsional, akses lintas tenant hanya lewat `KonteksPengelola` yang diaudit, akses dukungan berizin & berbatas waktu (§13.8, P-09).
+- Pentest eksternal sebelum GA (termasuk Platform Pengelola dan uji eskalasi hak dari tenant ke pengelola).
 
 ### 20.3 Keandalan & Observabilitas
 
@@ -2632,20 +3156,30 @@ Resolusi: HP 360 dp s.d. desktop 1920 px. Dioptimalkan untuk tablet 8–11" dan 
 
 > Asumsi tim: 2 backend (Laravel), **3 Flutter** (2 Aplikasi POS, 1 Aplikasi Owner mulai Fase 2), 1 frontend (React/TS, back-office & web publik), 1 fullstack/devops (CI backend + pipeline rilis aplikasi), 1 QA (termasuk uji perangkat & printer), 1 product/UX. Sprint 2 minggu. Estimasi bersifat indikatif.
 
-### Fase 0 — Fondasi (Sprint 1–3, ±6 minggu)
+### Fase 0 — Fondasi & Platform Pengelola Inti (Sprint 1–5, ±10 minggu)
 
 - Monorepo (`Backend/`, `Aplikasi/Kasir/`, `Aplikasi/Pemilik/`, `Paket/`, `Spesifikasi/`) dengan konvensi penamaan §13.7 (termasuk `ModelDasar`, konfigurasi lint, dan MySQL dev berbasis Linux), CI/CD backend ke Hostinger (staging), standar kode (Larastan/Pint/ESLint/Vitest/Pest, `flutter analyze`/`dart test`).
 - Kerangka aplikasi Flutter: flavor dev/staging/prod, router, tema dari design token, Drift, dio, Sentry, pipeline build Android & Windows di CI.
 - Akun developer: Google Play Console, Apple Developer, sertifikat code signing Windows, proyek Firebase.
 - Kerangka modular monolith, domain `Bersama` (Uang, Kuantitas, NomorDokumen, ModelDasar), multi-tenancy + isolation test.
-- Auth (register, login, verifikasi, reset, 2FA), tenant, subscription dasar (manual), Super Admin minimal.
+- Auth tenant (register, login, verifikasi, reset, 2FA).
+- **Platform Pengelola inti** (dibangun sebelum registrasi tenant dibuka):
+  - P-01 tim internal, peran, 2FA wajib, `LogAuditPengelola`, guard & subdomain `pengelola.`
+  - P-02 master wilayah, tarif PPN & PBJT (alur tinjauan), hari libur, referensi bank
+  - P-04 katalog fitur, paket, batas, add-on, evaluator `FiturAktif`, perantara `PastikanBatasPaket`
+  - P-03 template sektor berversi + validasi otomatis (RTL-GEN, FNB-CAF, FNB-QSR)
+  - P-05 integrasi email, CAPTCHA, storage + tes koneksi
+  - P-06 S&K, Kebijakan Privasi, Perjanjian Pemrosesan Data + pencatatan persetujuan
+  - P-07 daftar & detail tenant, perpanjang trial, override, tangguhkan/aktifkan, catatan
+  - P-08 tagihan langganan manual + verifikasi bukti transfer
+  - P-09 tiket dukungan dasar (email) · P-11 dasbor operasional dasar (scheduler, antrean, job gagal, backup)
 - F-02 Organisasi: outlet, gudang, user, role/permission, perangkat, PIN, **aktivasi perangkat (kode/QR → device token)**.
 - Design system (Tailwind 4 + shadcn/ui), layout back-office, komponen inti.
 - Audit log.
 
-**Exit criteria:** tenant bisa daftar, membuat outlet & user, isolasi tenant terbukti lewat test, dan aplikasi Flutter (Android & Windows) bisa diaktivasi ke outlet.
+**Exit criteria:** tim internal bisa login ke Platform Pengelola dengan 2FA; paket, 3 template sektor, dan tarif pajak sudah terbit; tenant bisa daftar (menyetujui S&K), membuat outlet & user; tim bisa melihat, memperpanjang trial, dan menagih tenant; isolasi tenant & batas akses pengelola terbukti lewat test (termasuk test arsitektur); aplikasi Flutter (Android & Windows) bisa diaktivasi ke outlet.
 
-### Fase 1 — MVP "Bisa Jualan & Tahu Untung" (Sprint 4–11, ±16 minggu)
+### Fase 1 — MVP "Bisa Jualan & Tahu Untung" (Sprint 6–13, ±16 minggu)
 
 Urutan mengikuti flow:
 1. F-01 Onboarding wizard + template sektor (RTL-GEN, FNB-CAF, FNB-QSR dulu) + import produk.
@@ -2668,7 +3202,7 @@ Urutan mengikuti flow:
 
 **Exit criteria:** 30 tenant beta memakai sistem ≥ 4 minggu berturut-turut, 0 kehilangan transaksi offline, jurnal selalu seimbang.
 
-### Fase 2 — Paritas Majoo (Sprint 12–19, ±16 minggu)
+### Fase 2 — Paritas Majoo (Sprint 14–21, ±16 minggu)
 
 - Aplikasi POS mode table (denah, open bill, split/merge), mode **Pelayan** (HP), mode **KDS**, printer dapur per station, customer display (dual-screen Android & monitor kedua desktop).
 - Modul **Gudang** di aplikasi (scan GRN, transfer, opname).
@@ -2687,7 +3221,7 @@ Urutan mengikuti flow:
 - Neraca, arus kas, piutang/hutang aging, tutup periode.
 - **Launch publik (GA)** + billing semi-otomatis.
 
-### Fase 3 — Melampaui Majoo (Sprint 20–27, ±16 minggu)
+### Fase 3 — Melampaui Majoo (Sprint 22–29, ±16 minggu)
 
 - Smart restock & forecast (X6), menu engineering, analisis ABC, insight otomatis mingguan ke owner.
 - Open API v1 + webhook + portal developer (X7).
@@ -2714,7 +3248,7 @@ gantt
     dateFormat  YYYY-MM-DD
     title Roadmap Indikatif
     section Fondasi
-    Fase 0            :f0, 2026-10-05, 42d
+    Fase 0            :f0, 2026-10-05, 70d
     section MVP
     Fase 1            :f1, after f0, 112d
     Beta tertutup     :milestone, after f1, 0d
@@ -2741,6 +3275,7 @@ gantt
 | Unit (TS) | Vitest | Komponen & util back-office, format uang |
 | **Test vector bersama** | JSON fixtures di `Spesifikasi/VektorUjiKalkulasi` dijalankan oleh Pest **dan** `dart test` | Menjamin kalkulasi aplikasi POS (offline) = server. Minimal 200 kasus: pajak inklusif/eksklusif, DPP nilai lain, PB1+SC, pembulatan, promo bertumpuk, split bill |
 | Feature/Integration | Pest + MySQL (bukan SQLite, agar perilaku lock & tipe sama) | Setiap flow F-xx: happy path + edge case; tenant isolation; idempotensi sync |
+| **Test arsitektur** | Pest `arch()` | Hanya `App\Domain\Pengelola` yang boleh melewati scope `MilikTenant`; domain tidak saling query tabel; kontroler tidak memanggil model domain lain secara langsung |
 | **Invariant test** | Pest | Setelah setiap skenario: Σ debit = Σ kredit; saldo `SaldoStok` = Σ `MutasiStok`; nilai persediaan di neraca = Σ nilai stok; kas shift = ekspektasi |
 | E2E Web | Playwright | Daftar → onboarding → produk → aktivasi perangkat → laporan; self-order QR |
 | E2E Aplikasi | `integration_test` / **Patrol** di emulator Android & Windows (CI), iOS simulator (nightly) | Aktivasi → login PIN → buka shift → jual (online & **offline** dengan API mock dimatikan) → sinkron (API staging) → tutup shift |
@@ -2787,6 +3322,8 @@ gantt
 | R13 | Review App Store/Play memperlambat rilis perbaikan kritis | Sedang | Tinggi | Feature flag remote (`konfigurasi-aplikasi`), perbaikan logika bisnis sebisa mungkin di server, TestFlight/track internal untuk hotfix, rilis desktop via auto-updater lebih cepat. |
 | R14 | Aplikasi versi lama masih beredar & tidak kompatibel dengan API baru | Tinggi | Tinggi | API POS berversi, kompatibel mundur 2 versi minor, `min_supported_version` + pengiriman outbox tetap diizinkan sebelum update wajib. |
 | R15 | Batasan background di iOS (sinkron tertunda saat aplikasi di latar) | Sedang | Sedang | Sinkron saat aplikasi aktif, anjuran kiosk/Guided Access untuk iPad kasir, indikator outbox tertunda, push sebagai pemicu. |
+| R17 | Penyalahgunaan akses internal (pengelola melihat/mengubah data tenant tanpa hak) | Rendah | Sangat tinggi | Akses dukungan berizin tenant & berbatas waktu, `LogAuditPengelola` append-only, 2FA wajib, peran minimum, akses darurat hanya Super Admin + notifikasi Owner, test arsitektur, tinjauan log berkala. |
+| R18 | Data master salah (tarif pajak, template) berdampak ke banyak tenant sekaligus | Sedang | Tinggi | Alur tinjauan dua orang (P-02), validasi otomatis & sandbox template (P-03), tanggal berlaku ke depan, override tenant tercatat sebagai sinyal koreksi. |
 | R16 | Beban tim lebih besar (dua basis kode klien: Flutter & React) | Sedang | Sedang | Back-office React fokus CRUD/laporan dengan shadcn/ui. Kalkulasi hanya di PHP & Dart (web publik hitung via server). Design token & OpenAPI bersama. |
 | R7 | Kebocoran data antar tenant | Rendah | Sangat tinggi | Global scope + test isolasi otomatis + ULID + code review checklist + pentest. |
 | R8 | Scope creep karena banyak sektor | Tinggi | Tinggi | Flow-first + prioritas P0–P3 + template sektor bertahap (3 sektor di MVP). |
@@ -2822,6 +3359,7 @@ gantt
 | D-04 | **Aplikasi Mobile Owner tersendiri** (Flutter, Android & iOS) | 22/09/2026 | §1, §3.3 (X19), §10.2a, §13, §16.1, §17.3, §22 |
 | D-05 | **Database, folder, file, dan function memakai Bahasa Indonesia + PascalCase.** Turunan yang diputuskan untuk konsistensi: class/enum PascalCase, key JSON API = nama kolom (PascalCase), variabel lokal camelCase Indonesia. Pengecualian hanya untuk nama yang diwajibkan framework/alat (§13.7.4) | 22/09/2026 | §8 (status/enum), §12.2, §13.0–§13.4, §13.7, §14.3, §15, §16.2, §17, §18, §23, Lampiran D |
 | D-06 | **URL/endpoint memakai Bahasa Indonesia**, huruf kecil kebab-case, kata benda tunggal (§13.7.1). Prefix API Owner menjadi `/api/pemilik/v1`. Diperluas ke nama event webhook, header HTTP kustom, dan nama permission | 22/09/2026 | §11–§13.6, §13.7, §14, §16, §17.3.4, §17.4, §18, §20, Lampiran C |
+| D-07 | **Platform Pengelola** dibangun sebagai lapisan pertama (Fase 0) sebelum modul tenant: flow P-01 s.d. P-12, subdomain `pengelola.`, akun & guard terpisah, akses dukungan berizin | 22/09/2026 | §5.2, §6.2, §7, §8 Bagian A, §10.0, §13.6, §13.8, §15.3, §19.3, §20.2, §22, §24 |
 
 ---
 
