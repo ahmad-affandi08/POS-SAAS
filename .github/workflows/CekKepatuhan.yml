@@ -40,5 +40,55 @@ jobs:
             exit 1
           fi
 
-  # Job backend, web, dan Flutter (Pint, Larastan, Pest + arch(), tsc, ESLint, Vitest,
-  # dart format, flutter analyze, flutter test) ditambahkan saat scaffolding Fase 0.
+  backend:
+    name: Backend (PHP 8.3, MySQL 8)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: PosSaasTes
+          MYSQL_USER: pos_saas
+          MYSQL_PASSWORD: rahasia-lokal-tes
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd
+          coverage: none
+      - name: Pasang dependensi (sesuai composer.lock)
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Pint + Larastan level 8
+        run: composer analisis
+      - name: Pest (Unit, Fitur di MySQL, Arsitektur)
+        run: composer tes:cepat
+
+  web:
+    name: Web (TypeScript, ESLint, Prettier, Vitest, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+      - run: npm ci
+      - name: tsc + ESLint (penamaan) + Prettier + Vitest
+        run: npm run periksa
+      - name: Build produksi
+        run: npm run build
+
+  # Job Flutter (dart format, flutter analyze, flutter test) ditambahkan bersama scaffolding Flutter.

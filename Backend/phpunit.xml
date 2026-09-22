@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Test WAJIB memakai MySQL, bukan SQLite: perilaku lock, tipe, dan nama tabel
+    case-sensitive harus sama dengan produksi (PRD §23.1, .claude/rules/Pengujian.md).
+    File test berakhiran Tes.php (konvensi Bahasa Indonesia, PRD §13.7.5).
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         failOnRisky="true"
+         failOnWarning="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Tes.php">tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Fitur">
+            <directory suffix="Tes.php">tests/Fitur</directory>
+        </testsuite>
+        <testsuite name="Arsitektur">
+            <directory suffix="Tes.php">tests/Arsitektur</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:dGVzLWt1bmNpLXBvcy1zYWFzLWhhbnlhLXVudHVrLXQ="/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_DATABASE" value="PosSaasTes"/>
+        <env name="DB_USERNAME" value="pos_saas"/>
+        <env name="DB_PASSWORD" value="rahasia-lokal-tes"/>
+        <env name="DB_URL" value=""/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

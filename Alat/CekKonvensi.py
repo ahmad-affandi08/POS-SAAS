@@ -125,19 +125,26 @@ def CekMigrasi(PathRelatif, Isi):
     if not Cocok or not PolaPascal.match(Cocok.group(1)):
         Hasil.append(Pelanggaran(PathRelatif, 0, "nama migrasi harus 'YYYY_MM_DD_HHMMSS_NamaPascalCase.php' (misal ..._BuatTabelPenjualan.php)", "§13.7.1"))
     TabelFramework = set(Pengecualian["TabelFramework"])
+    TabelAktif = ""
     for NomorBaris, Baris in enumerate(Isi.splitlines(), 1):
         if BarisKomentar(Baris):
             continue
         for CocokTabel in re.finditer(r"Schema::(?:create|table|drop|dropIfExists)\(\s*'([^']+)'", Baris):
             Tabel = CocokTabel.group(1)
+            TabelAktif = Tabel
             if Tabel not in TabelFramework and not PolaPascal.match(Tabel):
                 Hasil.append(Pelanggaran(PathRelatif, NomorBaris, f"nama tabel '{Tabel}' harus PascalCase tunggal Bahasa Indonesia", "§15.1"))
+        if TabelAktif in TabelFramework:
+            # Kolom tabel bawaan framework/paket mengikuti skema aslinya (§13.7.4).
+            continue
         for CocokKolom in re.finditer(r"->(?:id|string|char|text|mediumText|longText|integer|bigInteger|unsignedBigInteger|unsignedInteger|tinyInteger|smallInteger|boolean|decimal|date|dateTime|timestamp|time|json|foreignId|foreignUlid|ulid|uuid|enum|binary|year|ipAddress|dropColumn)\(\s*'([^']+)'", Baris):
             Kolom = CocokKolom.group(1)
             if not PolaPascal.match(Kolom):
                 Hasil.append(Pelanggaran(PathRelatif, NomorBaris, f"nama kolom '{Kolom}' harus PascalCase (misal IdOutlet, TanggalBisnis)", "§15.1"))
         if re.search(r"->(?:float|double)\(", Baris):
             Hasil.append(Pelanggaran(PathRelatif, NomorBaris, "kolom float/double dilarang; pakai decimal (uang 18,2, HPP 19,6, jumlah 18,4)", "§15.1"))
+        if re.search(r"->(?:uuid|ulid|Uuid|Ulid|UUID|ULID)\(\s*\)", Baris):
+            Hasil.append(Pelanggaran(PathRelatif, NomorBaris, "->uuid()/->ulid() tanpa nama membuat kolom huruf kecil (nama method PHP tidak case-sensitive); pakai ->UuidPublik()", "§13.7.2"))
         if re.search(r"->id\(\s*\)", Baris):
             Hasil.append(Pelanggaran(PathRelatif, NomorBaris, "gunakan ->id('Id') agar primary key bernama 'Id'", "§15.1"))
         if re.search(r"->(?:timestamps|softDeletes|rememberToken)\(\s*\)", Baris):
@@ -217,7 +224,7 @@ def CekFile(PathRelatif):
         Isi = open(PathAbsolut, encoding="utf-8").read()
     except (UnicodeDecodeError, OSError):
         return Hasil
-    if PathRelatif.startswith("Backend/database/migrations/") and NamaFile.endswith(".php"):
+    if PathRelatif.startswith(("Backend/database/migrations/", "Backend/tests/Pendukung/Migrasi/")) and NamaFile.endswith(".php"):
         Hasil += CekMigrasi(PathRelatif, Isi)
     elif PathRelatif.startswith("Backend/routes/") and NamaFile.endswith(".php"):
         Hasil += CekRute(PathRelatif, Isi)

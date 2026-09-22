@@ -1,0 +1,14 @@
+# Analisis statis (PRD §13.1, §23.2). File penjaga: perubahan wajib disetujui pemilik produk.
+# Level hanya boleh naik, tidak boleh turun. Baseline tidak dipakai: perbaiki kodenya.
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - app
+        - database
+        - routes
+        - tests/Pendukung
+    tmpDir: storage/framework/cache/phpstan
+    treatPhpDocTypesAsCertain: false

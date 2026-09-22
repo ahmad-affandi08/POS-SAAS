@@ -1,0 +1,52 @@
+/*
+ * Token desain (PRD §17.5 tipografi, §17.6 warna/bentuk). Warna di bawah adalah nilai SEMENTARA
+ * dari §17.6.3; warna final belum diputuskan. Komponen wajib memakai token, bukan hex lepas.
+ */
+@import '@fontsource-variable/atkinson-hyperlegible-next';
+@import '@fontsource-variable/atkinson-hyperlegible-mono';
+@import 'tailwindcss';
+
+@source '../views';
+
+@theme {
+    --font-sans: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+    --font-mono: 'Atkinson Hyperlegible Mono Variable', ui-monospace, monospace;
+
+    /* Skala tipografi mode Ringkas (back-office). Mode Nyaman ada di aplikasi Flutter. */
+    --text-tampilan: 30px;
+    --text-tampilan--line-height: 38px;
+    --text-judul: 20px;
+    --text-judul--line-height: 28px;
+    --text-subjudul: 16px;
+    --text-subjudul--line-height: 24px;
+    --text-isi: 14px;
+    --text-isi--line-height: 20px;
+    --text-label: 13px;
+    --text-label--line-height: 18px;
+    --text-keterangan: 12px;
+    --text-keterangan--line-height: 16px;
+
+    --color-latar: #fafaf7;
+    --color-permukaan: #ffffff;
+    --color-garis: #e4e2dc;
+    --color-garis-input: #8a877f;
+    --color-teks-utama: #1c1b19;
+    --color-teks-sekunder: #5c5a55;
+    --color-brand: #0b6468;
+    --color-sukses: #2e7d32;
+    --color-peringatan: #9a5b00;
+    --color-bahaya: #b3261e;
+    --color-info: #1f5fad;
+
+    --radius-kontrol: 6px;
+    --radius-panel: 8px;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-latar);
+        color: var(--color-teks-utama);
+        font-family: var(--font-sans);
+        font-variant-numeric: tabular-nums;
+    }
+}

@@ -1,0 +1,6 @@
+public/build
+vendor
+node_modules
+storage
+bootstrap/cache
+resources/js/Komponen/Ui
