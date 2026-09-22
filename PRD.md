@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.4 |
+| Versi | 1.5 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -25,6 +25,7 @@
 | 1.2 | Keputusan pemilik produk: **platform POS = Android, iOS/iPadOS, Windows** (Linux & macOS tidak ditargetkan). Kanal distribusi desktop **ditentukan setelah sistem stabil**. **Semua perangkat POS Android all-in-one** didukung lewat lapisan adaptor vendor. **Aplikasi Mobile Owner** terpisah (Flutter, Android & iOS). |
 | 1.3 | Keputusan D-05: **nama database (tabel, kolom, indeks), folder, file, dan function/method memakai Bahasa Indonesia dengan PascalCase** di semua stack. Konvensi, kamus istilah, pengecualian framework, dan konfigurasi di §13.7. Skema §15, struktur folder, contoh kode, dan nama enum/status diperbarui. |
 | 1.4 | Keputusan D-06: **URL/endpoint memakai Bahasa Indonesia** (huruf kecil, kebab-case). Semua rute web, API POS, API Pemilik (`/api/pemilik/v1`), API publik, parameter query, dan scope token diperbarui. |
+| 1.5 | Perluasan D-06: nama **event webhook**, **header HTTP kustom**, dan **nama permission** memakai Bahasa Indonesia. Header standar protokol tetap. |
 
 ---
 
@@ -490,7 +491,7 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 **Harga (Price Engine):**
 
 Harga final ditentukan berlapis (prioritas tinggi ke rendah):
-1. Harga manual kasir (butuh izin `pos.price.override`)
+1. Harga manual kasir (butuh izin `pos.harga.timpa`)
 2. Promo aktif (Promo Engine, F-16)
 3. **Price List** yang cocok (kombinasi outlet × channel × tier pelanggan × rentang waktu)
 4. Harga bertingkat qty (tiered): 1–11 = Rp 5.000, 12+ = Rp 4.500
@@ -1567,6 +1568,9 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 | Parameter route & query | Parameter route camelCase (`{idOutlet}`, `{slugTenant}`), query huruf kecil (`?sejak=`, `?kata=`, `saring[...]`, `urut=`) | `/internal/outlet/{idOutlet}/perangkat?sejak=…` |
 | Nama route Laravel | Titik + kebab-case Indonesia | `kelola.produk.daftar`, `pos.sinkron.kirim` |
 | Scope token API | `{objek}:{aksi}` | `produk:baca`, `stok:tulis` |
+| Nama permission | `{modul}.{objek}.{aksi}` huruf kecil kebab-case | `penjualan.void`, `produk.harga.ubah`, `laporan.keuangan.lihat` |
+| Nama event webhook | `{objek}.{kata-kerja-pasif}` huruf kecil kebab-case | `penjualan.selesai`, `stok.menipis`, `pesanan-pembelian.disetujui` |
+| Header HTTP kustom | `X-` + kata Indonesia, Title-Case dengan tanda hubung | `X-Id-Kasir`, `X-Versi-Aplikasi`, `X-Skema-Sinkron`, `X-Tanda-Tangan` |
 
 **Kamus istilah** (satu istilah untuk satu konsep, dipakai konsisten di tabel, class, dan UI):
 
@@ -1702,7 +1706,7 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 | Folder wajib Flutter | `lib/`, `test/`, `integration_test/`, `android/`, `ios/`, `windows/`, `assets/` | Path bawaan Flutter tooling & platform |
 | Tabel bawaan framework/paket | `migrations`, `jobs`, `job_batches`, `failed_jobs`, `cache`, `cache_locks`, `sessions`, `password_reset_tokens`, `personal_access_tokens`, tabel spatie (`roles`, `permissions`, `model_has_roles`, `activity_log`, dsb.) | Dikelola paket. Mengganti nama menambah risiko upgrade. Dapat ditinjau ulang kelak |
 | Kode hasil generate & vendor | `*.g.dart`, `*.freezed.dart`, provider Riverpod hasil generate, file shadcn/ui hasil CLI, tipe TS hasil generate | Dibuat ulang oleh alat. Tidak diedit manual |
-| Header HTTP & standar | `Idempotency-Key`, `Authorization`, `X-App-Version`, nama field OpenAPI standar | Standar protokol |
+| Header HTTP standar | `Idempotency-Key`, `Authorization`, `Content-Type`, `X-Frame-Options`, `Referrer-Policy`, nama field OpenAPI standar | Standar protokol. Header **kustom** tetap berbahasa Indonesia (§13.7.1) |
 | Bagian URL yang merupakan standar/akronim | `/api`, versi `/v1`, akronim `pos`, `kds`, `qris`, `otp`, serta segmen serapan `internal`, `admin`, `webhook`, `tenant`, `outlet` | Standar umum atau sudah menjadi kata serapan |
 
 #### 13.7.5 Konfigurasi agar Konvensi Berjalan
@@ -2052,7 +2056,7 @@ erDiagram
 | Lapisan | Prefix | Auth | Konsumen | Versi |
 |---|---|---|---|---|
 | Internal | `/internal/*` | Sesi + CSRF (Sanctum stateful) | Back-office web & web publik {{APP}} (TanStack Query) | Tidak diversi, berubah bersama frontend |
-| POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Cashier-Id` + `Idempotency-Key` + `X-App-Version` | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Sync-Schema`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
+| POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Id-Kasir` + `Idempotency-Key` + `X-Versi-Aplikasi` | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Skema-Sinkron`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
 | Owner | `/api/pemilik/v1/*` | **User token** (Sanctum, berumur terbatas + refresh) | Aplikasi Owner Flutter | Berversi URL, kompatibel mundur 2 versi minor aplikasi (§17.3.4) |
 | Publik | `/api/v1/*` | Sanctum Personal Access Token dengan scope (`produk:baca`, `penjualan:baca`, `stok:tulis`, ...) | Integrasi pihak ketiga | Semantic, deprecation ≥ 6 bulan |
 
@@ -2087,9 +2091,9 @@ erDiagram
 
 ### 16.4 Webhook Keluar (X7)
 
-Event: `sale.completed`, `sale.voided`, `sale.returned`, `payment.received`, `stock.low`, `stock.adjusted`, `product.updated`, `customer.created`, `purchase_order.approved`, `goods_receipt.posted`, `shift.closed`.
+Event: `penjualan.selesai`, `penjualan.divoid`, `penjualan.diretur`, `pembayaran.diterima`, `stok.menipis`, `stok.disesuaikan`, `produk.diubah`, `pelanggan.dibuat`, `pesanan-pembelian.disetujui`, `penerimaan-barang.diposting`, `shift.ditutup`.
 
-- Payload ditandatangani HMAC-SHA256 (`X-Signature`), berisi `IdPeristiwa` unik untuk dedup di sisi penerima.
+- Payload ditandatangani HMAC-SHA256 (`X-Tanda-Tangan`), berisi `IdPeristiwa` unik untuk dedup di sisi penerima.
 - Retry eksponensial (1m, 5m, 30m, 2j, 12j), dikirim oleh queue via cron.
 - Log pengiriman terlihat oleh tenant, tersedia tombol "kirim ulang".
 
@@ -2498,7 +2502,7 @@ Masalah yang diselesaikan: di restoran, jika internet mati, order dari tablet pe
 | **Apoteker** | Penjualan obat keras & input resep (RTL-PHR) |
 | **Sales/Salesman** | Sales order, pelanggan miliknya, piutang pelanggan |
 
-Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.scope]`, misal `sales.void`, `sales.discount.manual`, `inventory.adjustment.approve`, `reports.finance.view`, `products.price.update`.
+Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.cakupan]`, misal `penjualan.void`, `penjualan.diskon.manual`, `persediaan.penyesuaian.setujui`, `laporan.keuangan.lihat`, `produk.harga.ubah`.
 
 ### 19.2 Batas & Approval yang Bisa Dikonfigurasi
 
@@ -2512,7 +2516,7 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.sc
 | Selisih tutup shift | > Rp 10.000 | Supervisor/Manajer |
 | Penyesuaian stok | > Rp 500.000 nilai | Manajer |
 | PO | > Rp 5.000.000 | Owner |
-| Ubah harga jual | — | Permission `products.price.update` |
+| Ubah harga jual | — | Permission `produk.harga.ubah` |
 | Buka laci tanpa transaksi | Selalu dicatat | Opsional PIN |
 
 **Approval jarak jauh (X4):** jika supervisor tidak di tempat, permintaan dikirim ke HP supervisor/owner lewat **push notification** di **Aplikasi {{APP}} Owner** (fallback: link WA) untuk disetujui dengan satu ketukan, lengkap dengan detail (kasir, item, nominal, alasan). Butuh online di kedua sisi.
@@ -2817,7 +2821,7 @@ gantt
 | D-03 | **Semua perangkat POS all-in-one** didukung melalui lapisan adaptor vendor + adaptor generik + Wizard Uji Perangkat + HCL | 22/09/2026 | §10.2 (POS-22), §17.2.5a, §22, §23 |
 | D-04 | **Aplikasi Mobile Owner tersendiri** (Flutter, Android & iOS) | 22/09/2026 | §1, §3.3 (X19), §10.2a, §13, §16.1, §17.3, §22 |
 | D-05 | **Database, folder, file, dan function memakai Bahasa Indonesia + PascalCase.** Turunan yang diputuskan untuk konsistensi: class/enum PascalCase, key JSON API = nama kolom (PascalCase), variabel lokal camelCase Indonesia. Pengecualian hanya untuk nama yang diwajibkan framework/alat (§13.7.4) | 22/09/2026 | §8 (status/enum), §12.2, §13.0–§13.4, §13.7, §14.3, §15, §16.2, §17, §18, §23, Lampiran D |
-| D-06 | **URL/endpoint memakai Bahasa Indonesia**, huruf kecil kebab-case, kata benda tunggal (§13.7.1). Prefix API Owner menjadi `/api/pemilik/v1` | 22/09/2026 | §11–§13.6, §13.7, §14, §16, §17.3.4, §17.4, §18, §20, Lampiran C |
+| D-06 | **URL/endpoint memakai Bahasa Indonesia**, huruf kecil kebab-case, kata benda tunggal (§13.7.1). Prefix API Owner menjadi `/api/pemilik/v1`. Diperluas ke nama event webhook, header HTTP kustom, dan nama permission | 22/09/2026 | §11–§13.6, §13.7, §14, §16, §17.3.4, §17.4, §18, §20, Lampiran C |
 
 ---
 
