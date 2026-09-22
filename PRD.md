@@ -6,12 +6,13 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.1 |
+| Versi | 1.2 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
 | Stack Backend & Back-office | Laravel 13 · PHP 8.3 · MySQL 8 · Inertia.js + React + TypeScript · Tailwind CSS 4 · TanStack Query |
-| Stack Aplikasi POS | **Flutter** (Dart) untuk **Android, iOS/iPadOS, Windows, macOS** (Linux: best-effort) · Drift (SQLite) untuk offline |
+| Stack Aplikasi POS | **Flutter** (Dart) untuk **Android, iOS/iPadOS, dan Windows** · Drift (SQLite) untuk offline |
+| Stack Aplikasi Owner | **Flutter** (Dart) untuk **Android & iOS** |
 | Hosting | Hostinger (Web/Cloud Hosting) untuk backend & web, dengan jalur upgrade ke VPS. Aplikasi POS didistribusikan via Google Play, App Store, dan installer desktop |
 | Bahasa produk | Bahasa Indonesia (utama), English (sekunder) |
 
@@ -21,6 +22,7 @@
 |---|---|
 | 1.0 | Draf awal: POS sebagai PWA (React) |
 | 1.1 | **Aplikasi POS (kasir, KDS, operasional gudang) dibangun dengan Flutter** untuk iOS, Android, dan Desktop. Back-office tetap web (Laravel + Inertia React). API sinkron POS berbasis token perangkat. Offline memakai SQLite (Drift). Integrasi hardware native. Mode LAN lokal ditambahkan. |
+| 1.2 | Keputusan pemilik produk: **platform POS = Android, iOS/iPadOS, Windows** (Linux & macOS tidak ditargetkan). Kanal distribusi desktop **ditentukan setelah sistem stabil**. **Semua perangkat POS Android all-in-one** didukung lewat lapisan adaptor vendor. **Aplikasi Mobile Owner** terpisah (Flutter, Android & iOS). |
 
 ---
 
@@ -70,15 +72,16 @@ Daftar → Setup Usaha → Master Data → Pembelian & Stok Masuk → Buka Shift
 
 Setiap transaksi operasional (jual, beli, mutasi stok, kas) **otomatis menghasilkan jurnal akuntansi**. Dengan begitu laporan keuangan (Laba Rugi, Neraca, Arus Kas) selalu siap tanpa input ganda.
 
-**Tiga komponen produk:**
+**Empat komponen produk:**
 
 | Komponen | Teknologi | Pengguna | Platform |
 |---|---|---|---|
-| **Aplikasi POS {{APP}}** (kasir, KDS, operasional gudang, absensi) | **Flutter** | Kasir, pelayan, dapur, gudang, supervisor | Android (tablet, HP, perangkat POS all-in-one), iOS/iPadOS, Windows, macOS, (Linux best-effort) |
+| **Aplikasi POS {{APP}}** (kasir, KDS, operasional gudang, absensi) | **Flutter** | Kasir, pelayan, dapur, gudang, supervisor | Android (tablet, HP, semua perangkat POS all-in-one), iOS/iPadOS, Windows |
+| **Aplikasi {{APP}} Owner** (dashboard, laporan, approval, notifikasi, kontrol outlet) | **Flutter** | Owner, manajer area, manajer outlet | Android & iOS (HP) |
 | **Back-office Web** (produk, stok, pembelian, laporan, akuntansi, pengaturan) | Laravel 13 + Inertia React + TypeScript + Tailwind 4 + TanStack Query | Owner, manajer, akuntan, admin | Browser desktop & mobile |
 | **Web Publik** (self-order QR meja, toko online, struk digital, booking) | Laravel + React (ringan) | Pelanggan akhir | Browser HP |
 
-Ketiganya memakai satu backend Laravel dan satu database MySQL di Hostinger.
+Keempatnya memakai satu backend Laravel dan satu database MySQL di Hostinger.
 
 **Pembeda utama dibanding majoo dan pemain lain** (rinci di §3):
 
@@ -89,8 +92,9 @@ Ketiganya memakai satu backend Laravel dan satu database MySQL di Hostinger.
 5. **Audit trail dan approval berlapis.** Void, diskon manual, refund, dan penyesuaian stok wajib beralasan, bisa perlu PIN supervisor, dan tercatat permanen.
 6. **Open API dan webhook** untuk integrasi ERP, marketplace, dan akuntansi pihak ketiga.
 7. **Insight cerdas**: saran restock berbasis prediksi, deteksi anomali kasir, menu engineering (F&B), dan analisis ABC (retail).
-8. **Satu aplikasi POS untuk semua perangkat.** Satu basis kode Flutter berjalan di Android, iPad/iPhone, Windows, dan Mac, termasuk perangkat POS Android all-in-one (printer bawaan) dan printer LAN dapur tanpa aplikasi tambahan.
-9. **Biaya infrastruktur rendah.** Arsitektur dirancang agar bisa berjalan di shared/cloud hosting Hostinger, sehingga harga langganan bisa lebih kompetitif.
+8. **Satu aplikasi POS untuk semua perangkat.** Satu basis kode Flutter berjalan di Android, iPad/iPhone, dan Windows, termasuk **semua perangkat POS Android all-in-one** (printer & layar pelanggan bawaan) dan printer LAN dapur tanpa aplikasi tambahan.
+9. **Aplikasi Mobile Owner.** Owner memantau omzet, laba, stok, dan kasir semua outlet dari HP, menyetujui void/diskon dari jarak jauh, dan menerima notifikasi anomali secara real-time.
+10. **Biaya infrastruktur rendah.** Arsitektur dirancang agar bisa berjalan di shared/cloud hosting Hostinger, sehingga harga langganan bisa lebih kompetitif.
 
 ---
 
@@ -151,7 +155,7 @@ Fitur berikut **harus ada** agar {{APP}} layak dibandingkan:
 - Akuntansi: jurnal otomatis, Laba Rugi, Neraca, Arus Kas
 - Laporan penjualan, stok, kas, per outlet/karyawan/produk
 - Toko online / pesan online, integrasi ojol (fase lanjut)
-- Aplikasi owner (dashboard mobile)
+- Aplikasi owner (dashboard mobile) — di {{APP}} dibuat sebagai aplikasi Flutter tersendiri (§17.3)
 
 ### 3.3 Pembeda (Beyond Majoo)
 
@@ -171,10 +175,11 @@ Fitur berikut **harus ada** agar {{APP}} layak dibandingkan:
 | X12 | **Self-order QR Meja** | Pelanggan scan QR di meja, pesan dan bayar (QRIS) sendiri, order masuk ke KDS. | 2 |
 | X13 | **Booking & Antrian (Jasa)** | Booking online salon/barbershop/bengkel, antrian digital, pemilihan staf, reminder otomatis. | 2 |
 | X14 | **Audit Trail Permanen** | Setiap perubahan data penting tercatat (siapa, kapan, nilai lama/baru, perangkat, IP). Tidak bisa dihapus tenant. | 1 |
-| X15 | **Multi-platform & hardware-agnostic** | Satu aplikasi Flutter untuk Android (tablet murah, HP, perangkat POS all-in-one seperti Sunmi/iMin), iPad/iPhone, Windows (PC bekas), dan Mac. Printer thermal via Bluetooth, USB, LAN, atau printer bawaan. Tidak mewajibkan beli hardware tertentu. | 1 |
+| X15 | **Multi-platform & hardware-agnostic** | Satu aplikasi Flutter untuk Android (tablet murah, HP, **semua perangkat POS all-in-one**: Sunmi, iMin, PAX, Telpo, dan merek lain), iPad/iPhone, dan Windows (PC bekas). Printer thermal via Bluetooth, USB, LAN, atau printer bawaan. Tidak mewajibkan beli hardware tertentu. | 1 |
 | X16 | **Import massal & migrasi dari kompetitor** | Template Excel + importer yang memetakan export dari aplikasi lain agar pindah platform mudah. | 1 |
 | X17 | **Mode LAN Lokal (Outlet Hub)** | Saat internet mati, perangkat dalam satu outlet (kasir, tablet pelayan, KDS) tetap saling bertukar order lewat Wi-Fi lokal. Satu perangkat bertindak sebagai hub, lalu hub menyinkronkan ke cloud saat online. | 3 |
 | X18 | **Push notification native** | Approval jarak jauh, stok kritis, dan order online masuk dikirim sebagai push (FCM/APNs) ke aplikasi, tanpa bergantung pada WebSocket server. | 2 |
+| X19 | **Aplikasi Mobile Owner** | Aplikasi Flutter khusus owner (Android & iOS): dashboard real-time multi-outlet, laporan ringkas, approval jarak jauh satu ketukan, notifikasi anomali kasir/stok/selisih kas, cek stok & harga, kelola promo cepat. | 2 |
 
 ---
 
@@ -185,7 +190,7 @@ Fitur berikut **harus ada** agar {{APP}} layak dibandingkan:
 | ID | Tujuan |
 |---|---|
 | G1 | Tenant baru bisa melakukan transaksi pertama dalam **≤ 15 menit** setelah daftar (onboarding wizard + template sektor). |
-| G2 | Kasir bisa menyelesaikan transaksi retail 5 item dalam **≤ 20 detik** di aplikasi POS (Android, iOS, Windows, macOS), dan tetap bisa beroperasi offline. |
+| G2 | Kasir bisa menyelesaikan transaksi retail 5 item dalam **≤ 20 detik** di aplikasi POS (Android, iOS, Windows), dan tetap bisa beroperasi offline. |
 | G3 | Laporan keuangan (L/R, Neraca) tersedia **real-time** tanpa input akuntansi manual. |
 | G4 | Selisih stok sistem vs fisik turun (target tenant aktif: selisih opname < 2% nilai persediaan). |
 | G5 | Biaya infra per tenant cukup rendah untuk paket mikro ≤ Rp 99.000/bulan. |
@@ -194,9 +199,9 @@ Fitur berikut **harus ada** agar {{APP}} layak dibandingkan:
 
 - ERP manufaktur penuh (MRP, routing, work center). Hanya produksi sederhana/rakitan (BOM 1 level + multi-level terbatas).
 - Payroll lengkap dengan PPh 21 dan BPJS otomatis. v1 hanya rekap gaji, komisi, dan absensi; payroll penuh di fase 4.
-- Back-office sebagai aplikasi native. Back-office tetap **web responsif**. Aplikasi native (Flutter) difokuskan untuk operasional outlet: kasir, KDS, gudang, dan absensi. Ringkasan dashboard owner di aplikasi Flutter adalah P2.
+- Back-office lengkap sebagai aplikasi native. Pengaturan & master data lengkap tetap di **web responsif**. Aplikasi Flutter dibagi dua: **Aplikasi POS** (operasional outlet) dan **Aplikasi Owner** (pemantauan, approval, aksi cepat). Aplikasi Owner tidak menggantikan back-office untuk pekerjaan berat seperti import, akuntansi, dan pengaturan pajak.
 - POS berbasis browser (PWA). Kasir hanya lewat aplikasi Flutter. Web hanya untuk back-office dan halaman publik pelanggan.
-- Dukungan penuh Linux desktop di v1. Linux dibangun best-effort (fase 3) dan tidak masuk SLA.
+- Aplikasi POS untuk **Linux dan macOS**. Tidak ditargetkan. Pengguna Mac dapat memakai iPad atau back-office web. Karena Flutter mendukung keduanya, platform ini bisa ditambahkan kelak jika ada permintaan pasar.
 - Rumah sakit/klinik dengan rekam medis (butuh regulasi SATUSEHAT). Hanya apotek/toko obat ringan.
 - Hotel dengan channel manager OTA.
 
@@ -999,13 +1004,30 @@ Prioritas: **P0** = MVP wajib, **P1** = penting (fase 2), **P2** = pembeda (fase
 | POS-18 | Mode latihan (training mode, tidak memengaruhi data) | P1 |
 | POS-19 | Multi-bahasa layar kasir (ID/EN) | P2 |
 | POS-20 | Aplikasi Flutter Android + Windows (rilis pertama) | P0 |
-| POS-21 | Aplikasi Flutter iOS/iPadOS + macOS | P0 (akhir Fase 1) |
-| POS-22 | Dukungan perangkat POS Android all-in-one (printer & layar pelanggan bawaan, SDK vendor) | P1 |
+| POS-21 | Aplikasi Flutter iOS/iPadOS | P0 (akhir Fase 1) |
+| POS-22 | Dukungan **semua** perangkat POS Android all-in-one (printer, laci, layar pelanggan, scanner bawaan) via adaptor vendor (§17.2.5) | P0 (Sunmi, iMin, adaptor generik) → P1 (vendor lain) |
 | POS-23 | Update otomatis aplikasi (store & desktop auto-updater) + versi minimum wajib | P0 |
 | POS-24 | Mode LAN Lokal / Outlet Hub (X17) | P2 |
 | POS-25 | Modul Gudang di aplikasi (scan GRN, transfer, opname via kamera/scanner) | P1 |
-| POS-26 | Ringkasan dashboard owner di aplikasi | P2 |
-| POS-27 | Linux desktop (best-effort) | P3 |
+
+
+### 10.2a Modul Aplikasi Owner (Flutter, Android & iOS)
+
+| ID | Fitur | Prioritas |
+|---|---|---|
+| OWN-01 | Login aman (email/WA OTP + PIN/biometrik perangkat), pilih tenant & outlet | P0 |
+| OWN-02 | Dashboard real-time: omzet, laba kotor, transaksi, rata-rata keranjang, per outlet & konsolidasi, perbandingan kemarin/minggu lalu | P0 |
+| OWN-03 | Notifikasi push: selisih kas tutup shift, void/diskon/refund di atas batas, stok kritis, perangkat offline lama, piutang jatuh tempo, order online masuk | P0 |
+| OWN-04 | **Approval jarak jauh** (void, diskon, refund, kas keluar, PO, penyesuaian stok) satu ketukan dengan detail & alasan | P0 |
+| OWN-05 | Laporan ringkas: penjualan per produk/kategori/jam/kasir/channel, laporan shift, L/R sederhana | P0 |
+| OWN-06 | Cek stok & nilai persediaan per outlet, riwayat kartu stok | P1 |
+| OWN-07 | Aksi cepat: ubah harga, tandai produk habis (86), aktif/nonaktif promo, tambah pengeluaran dengan foto nota | P1 |
+| OWN-08 | Status perangkat POS per outlet (online, outbox tertunda, versi app) & cabut perangkat | P1 |
+| OWN-09 | Laporan anti-fraud & skor risiko kasir | P1 |
+| OWN-10 | Pantau karyawan: absensi, komisi, target | P2 |
+| OWN-11 | Insight mingguan otomatis (tren, produk turun, saran restock) | P2 |
+| OWN-12 | Widget layar utama (omzet hari ini) Android & iOS | P2 |
+| OWN-13 | Kelola langganan & tagihan {{APP}} | P2 |
 
 ### 10.3 Modul Produk & Harga
 
@@ -1273,7 +1295,7 @@ product.tax_group_id, outlet.tax_profile (PKP? kota?), price_includes_tax (per t
 ```mermaid
 flowchart LR
     subgraph Outlet
-      POS1[Aplikasi POS Flutter<br/>Android / iOS / Windows / macOS]
+      POS1[Aplikasi POS Flutter<br/>Android / iOS / Windows]
       KDS[Aplikasi Flutter mode KDS]
       WH[Aplikasi Flutter mode Gudang]
       PRN[Printer thermal<br/>BT / USB / LAN / bawaan]
@@ -1295,6 +1317,8 @@ flowchart LR
     KDS -- HTTPS --> API
     WH -- HTTPS --> API
     OWNER[Owner / Akuntan<br/>Browser] --> WEB
+    OAPP[Aplikasi Owner Flutter<br/>Android / iOS] -- HTTPS + user token --> API
+    FCM --> OAPP
     CUST[Pelanggan<br/>Browser HP] --> PUB
     API -- push --> FCM[FCM / APNs]
     FCM --> POS1
@@ -1306,8 +1330,13 @@ flowchart LR
 ```
 /
 ├── backend/                 # Laravel 13 (API + back-office Inertia React + web publik)
-├── apps/pos/                # Aplikasi Flutter (Android, iOS, Windows, macOS, Linux)
+├── apps/pos/                # Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)
+├── apps/owner/              # Aplikasi Owner Flutter (Android, iOS)
 ├── packages/pos_engine/     # Paket Dart murni: kalkulator keranjang, pajak, promo, pembulatan
+├── packages/core/           # Paket Dart bersama: Money, format Rupiah, ULID, error, logger
+├── packages/api_client/     # Klien API (dio + DTO freezed) untuk /api/pos/v1 & /api/owner/v1
+├── packages/design_system/  # Tema, token, widget bersama (MoneyText, StatusBadge, grafik)
+├── packages/device_adapters/ # Adaptor hardware: printer, laci, layar pelanggan, scanner, per vendor
 ├── spec/
 │   ├── calc-vectors/        # Test vector JSON bersama (dipakai Pest & dart test)
 │   ├── openapi/             # Spesifikasi OpenAPI API POS & publik (dihasilkan dari Laravel)
@@ -1349,7 +1378,8 @@ flowchart LR
 
 | Lapisan | Teknologi | Alasan |
 |---|---|---|
-| Framework | **Flutter (channel stable terbaru) + Dart 3** | Satu basis kode untuk Android, iOS/iPadOS, Windows, macOS, Linux. Performa native, akses hardware penuh. |
+| Framework | **Flutter (channel stable terbaru) + Dart 3** | Satu basis kode untuk Android, iOS/iPadOS, dan Windows (POS) serta Android & iOS (Owner). Performa native, akses hardware penuh. |
+| Monorepo Dart | **Melos** (atau Dart pub workspaces) | Mengelola `apps/*` & `packages/*`: bootstrap, test, analyze serentak. |
 | State management & DI | **Riverpod** (dengan `riverpod_generator`) | Teruji, mudah diuji, mendukung async & dependency override untuk test. |
 | Database lokal | **Drift** (SQLite) + `sqlite3_flutter_libs`. Enkripsi opsional **SQLCipher** (`sqlcipher_flutter_libs`) | SQL bertipe, migrasi skema, query reaktif (stream), jalan di semua platform, cepat untuk 10.000+ SKU. |
 | HTTP | **dio** + interceptor (auth token, retry, `Idempotency-Key`, log) | Kontrol penuh timeout & retry. |
@@ -1362,11 +1392,13 @@ flowchart LR
 | Background sync | Isolate/timer saat aplikasi aktif. **workmanager** (Android) untuk sinkron saat di latar. iOS terbatas (sinkron saat aplikasi dibuka/aktif) | Sesuai batasan OS. |
 | Printer | **esc_pos_utils_plus** (builder perintah ESC/POS) + transport per platform (§17.6) | Struk & tiket dapur. |
 | Scanner | Scanner HID (keyboard) via `HardwareKeyboard`, kamera via **mobile_scanner** | Retail & gudang. |
-| Layar pelanggan | **desktop_multi_window** (Windows/macOS), plugin *presentation display* Android untuk perangkat dual-screen | Customer display. |
+| Layar pelanggan | **desktop_multi_window** (Windows), *presentation display* Android untuk perangkat dual-screen all-in-one | Customer display. |
 | Push | **firebase_messaging** | Approval jarak jauh, order baru, pemicu sinkron. |
 | Lokalisasi | `flutter_localizations` + `intl` (ARB) | ID default, EN. |
 | Crash & log | **sentry_flutter** | Konteks tenant/device, breadcrumb sinkron. |
-| Update | Play Store in-app update (Android), App Store (iOS), **auto_updater** (Sparkle/WinSparkle) untuk Windows/macOS di luar store | §14.6. |
+| Update | Play Store in-app update (Android), App Store (iOS), mekanisme update Windows sesuai kanal distribusi yang dipilih kelak | §14.6. |
+| Grafik (Owner) | **fl_chart** (atau setara) | Grafik omzet & tren di Aplikasi Owner. |
+| Biometrik (Owner) | **local_auth** | Membuka Aplikasi Owner & konfirmasi approval dengan sidik jari/Face ID. |
 | Testing | `flutter_test`, **golden test**, `integration_test` / **Patrol** | §23. |
 | Kualitas | `flutter analyze` (lint ketat, `very_good_analysis` atau setara), `dart format`, `custom_lint`/`riverpod_lint` | CI gate. |
 
@@ -1410,7 +1442,8 @@ backend/app/
 ├── Http/
 │   ├── Controllers/Web/        # Controller Inertia (return Inertia::render)
 │   ├── Controllers/Internal/   # JSON endpoint untuk TanStack Query back-office (session auth)
-│   ├── Controllers/Pos/V1/     # API aplikasi Flutter: aktivasi, bootstrap, delta, sync push (device token)
+│   ├── Controllers/Pos/V1/     # API aplikasi POS Flutter: aktivasi, bootstrap, delta, sync push (device token)
+│   ├── Controllers/Owner/V1/   # API Aplikasi Owner: dashboard, laporan ringkas, approval, notifikasi (user token)
 │   ├── Controllers/Api/V1/     # Public API (Sanctum token)
 │   ├── Controllers/Webhooks/   # Payment gateway, WA gateway
 │   ├── Middleware/             # IdentifyTenant, EnsureOutletAccess, EnsureFeatureEnabled, EnsureSubscriptionActive
@@ -1462,7 +1495,7 @@ Alasan: di Hostinger jumlah database MySQL per akun terbatas dan pembuatan datab
 Implementasi:
 - Semua tabel milik tenant punya `tenant_id BIGINT UNSIGNED NOT NULL` + indeks komposit yang **diawali `tenant_id`**.
 - Trait `BelongsToTenant`: global scope `where tenant_id = current()`, dan otomatis mengisi `tenant_id` saat `creating`.
-- `TenantContext` di-resolve oleh middleware `IdentifyTenant` dari **sesi user** (back-office, tenant aktif), **device token** (aplikasi Flutter: tenant & outlet perangkat), **token API** (tenant pemilik token), atau **slug** (self-order/toko online publik).
+- `TenantContext` di-resolve oleh middleware `IdentifyTenant` dari **sesi user** (back-office, tenant aktif), **device token** (aplikasi Flutter: tenant & outlet perangkat), **token API** (tenant pemilik token), **user token** (Aplikasi Owner: user + tenant aktif yang dipilih, dengan pengecekan akses outlet), atau **slug** (self-order/toko online publik).
 - Job queue membawa `tenant_id` (middleware job `WithTenant`) sehingga scope tetap aktif di worker.
 - **Guard ganda:** test otomatis "tenant isolation" untuk setiap model/endpoint (user tenant A tidak bisa membaca/mengubah data tenant B, termasuk via ID yang ditebak). Route model binding selalu lewat scope tenant.
 - ID publik di URL memakai **ULID/UUID**, bukan auto-increment, untuk mencegah enumerasi.
@@ -1475,13 +1508,14 @@ Implementasi:
 | Kasir, open bill, pembayaran, shift, struk | **Aplikasi Flutter** | Drift (SQLite) sebagai sumber data lokal + outbox, sinkron ke `/api/pos/v1` (§18) |
 | KDS, antrian dapur | **Aplikasi Flutter** (mode KDS) | Polling delta 5 detik + push sebagai pemicu. Mode LAN di fase 3 |
 | Operasional gudang (terima barang, transfer, opname via scan) | **Aplikasi Flutter** (mode Gudang) | Online-first dengan draft lokal. Posting saat online |
+| Dashboard owner, approval jarak jauh, notifikasi, aksi cepat | **Aplikasi Owner (Flutter)** | Online-first + cache lokal ringan (Drift) untuk dibuka cepat & dibaca saat sinyal lemah. `/api/owner/v1` |
 | Navigasi halaman back-office, form CRUD, pengaturan | **Web (Inertia)** | Props dari controller, `useForm`, partial reload, deferred props |
 | Tabel laporan besar dengan filter/pagination server | **Web (TanStack Query)** | `placeholderData: keepPreviousData` + TanStack Table, endpoint `/internal/reports/*` |
 | Data back-office yang di-polling (dashboard, notifikasi) | **Web (TanStack Query)** | `refetchInterval` adaptif |
 | Pencarian/autocomplete di back-office | **Web (TanStack Query)** | Debounce |
 | Self-order, toko online, struk digital | **Web publik (React ringan)** | TanStack Query. Kalkulasi harga lewat server |
 
-Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA stateful). Endpoint `/api/pos/v1/*` memakai **device token** (Bearer).
+Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA stateful). Endpoint `/api/pos/v1/*` memakai **device token** (Bearer). Endpoint `/api/owner/v1/*` memakai **user token** (Sanctum, masa berlaku terbatas + refresh, dicabut saat logout/ganti password).
 
 ### 13.6 Struktur Rute
 
@@ -1491,9 +1525,9 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 /app/...                  Back-office (Inertia) — prefix per modul
 /download                 Halaman unduh aplikasi POS (link store + installer desktop)
 /internal/...             JSON untuk TanStack Query back-office (session auth)
-/api/pos/v1/...           API aplikasi Flutter (device token)
+/api/pos/v1/...           API aplikasi POS Flutter (device token)
+/api/owner/v1/...         API Aplikasi Owner (user token)
 /api/v1/...               Public API (token)
-/updates/{platform}/appcast.xml   Feed auto-update aplikasi desktop
 /webhooks/{provider}      Webhook masuk (signature verified)
 /{tenant_slug}            Toko online publik
 /{tenant_slug}/t/{table_token}  Self-order meja
@@ -1593,26 +1627,27 @@ Isi `routes/console.php` (contoh):
 
 ### 14.6 Build, Distribusi & Update Aplikasi Flutter
 
-Aplikasi POS **tidak di-hosting di Hostinger**. Hostinger hanya menjadi backend API, halaman unduh, dan (opsional) feed update desktop.
+Aplikasi POS dan Aplikasi Owner **tidak di-hosting di Hostinger**. Hostinger hanya menjadi backend API dan halaman unduh.
 
 | Platform | Build (CI) | Distribusi | Update |
 |---|---|---|---|
-| Android | GitHub Actions (runner Linux) → **AAB** (Play) + **APK** (perangkat tanpa Play Store, misal sebagian POS all-in-one) | Google Play (track internal → closed → production), APK di halaman `/download` / app store vendor perangkat | Play in-app update. APK: cek versi via API + unduh |
-| iOS / iPadOS | Runner **macOS** (GitHub Actions atau Codemagic) → IPA, code signing via fastlane match | **App Store** (TestFlight untuk beta) | App Store. Paksa update lewat `min_supported_version` |
-| Windows | Runner **Windows** → **MSIX** (dan/atau installer `.exe` Inno Setup), ditandatangani sertifikat code signing | Microsoft Store dan/atau unduhan langsung | Store, atau **auto_updater** (WinSparkle) dengan appcast |
-| macOS | Runner macOS → `.app` → **DMG** ter-*notarize* Apple | Mac App Store dan/atau unduhan langsung | Store, atau **auto_updater** (Sparkle) |
-| Linux (best-effort) | Runner Linux → AppImage / `.deb` | Unduhan langsung | Manual / cek versi |
+| Android — POS | GitHub Actions (runner Linux) → **AAB** (Play) + **APK** (perangkat all-in-one tanpa Play Store) | Google Play (track internal → closed → production), APK di halaman `/download` dan **app store vendor** perangkat all-in-one (misal Sunmi Store) bila tersedia | Play in-app update. APK: cek versi via API + unduh |
+| Android — Owner | Runner Linux → AAB | Google Play | Play in-app update |
+| iOS / iPadOS — POS & Owner | Runner **macOS** (GitHub Actions atau Codemagic) → IPA, code signing via fastlane match | **App Store** (TestFlight untuk beta) | App Store. Paksa update lewat `min_supported_version` |
+| Windows — POS | Runner **Windows** → installer bertanda tangan (MSIX dan/atau `.exe`) | **Selama pengembangan & beta:** unduhan langsung terbatas untuk tester. **Kanal produksi (Microsoft Store, unduhan langsung, atau keduanya) diputuskan setelah sistem stabil** | Selama beta: cek versi via `app-config` + unduh installer baru. Mekanisme final mengikuti kanal yang dipilih |
+
+> **Keputusan tertunda (D-01):** kanal distribusi & mekanisme update Windows ditetapkan setelah Fase 1 berjalan stabil. Arsitektur tidak bergantung pada pilihan ini: aplikasi hanya membaca `app-config` (versi terbaru, `min_supported_version`, `download_url`).
 
 **Kebijakan versi:**
 - Versi semantik `MAJOR.MINOR.PATCH+BUILD`. Setiap rilis membawa `sync_schema_version`.
 - Endpoint `GET /api/pos/v1/app-config` mengembalikan `latest_version`, `min_supported_version`, dan feature flag remote per platform.
 - Aplikasi di bawah `min_supported_version` **tetap boleh mengirim outbox yang tertunda** (agar tidak kehilangan transaksi), lalu mengunci layar jual sampai diperbarui.
 - **Update tidak boleh dipasang saat ada shift terbuka dengan outbox belum terkirim** (aplikasi menunda dan mengingatkan).
-- Rilis bertahap (staged rollout) 10% → 50% → 100% di Play Store. Di desktop, lewat kanal `beta`/`stable` di appcast.
+- Rilis bertahap (staged rollout) 10% → 50% → 100% di Play Store. Di Windows, lewat kanal `beta`/`stable` pada `app_releases` (mekanisme final mengikuti D-02).
 
-**Biaya & akun yang perlu disiapkan:** Google Play Console (sekali bayar), Apple Developer Program (tahunan), sertifikat code signing Windows (tahunan), proyek Firebase (FCM), dan runner macOS di CI (menit berbayar).
+**Biaya & akun yang perlu disiapkan:** Google Play Console (sekali bayar), Apple Developer Program (tahunan), sertifikat code signing Windows (tahunan), proyek Firebase (FCM), runner macOS di CI (menit berbayar, dibutuhkan untuk build iOS), serta akun developer di app store vendor perangkat all-in-one bila dipakai.
 
-Binary installer (puluhan MB) sebaiknya disimpan di **GitHub Releases** atau object storage (R2/S3-compatible), bukan di disk Hostinger, agar tidak menghabiskan kuota inode/bandwidth. Halaman `/download` dan appcast cukup menautkannya.
+Binary installer (puluhan MB) sebaiknya disimpan di **GitHub Releases** atau object storage (R2/S3-compatible), bukan di disk Hostinger, agar tidak menghabiskan kuota inode/bandwidth. Halaman `/download` dan `app-config` cukup menautkannya.
 
 ---
 
@@ -1673,9 +1708,10 @@ erDiagram
 | `outlets` | tenant_id, brand_id, code, name, address, city_code, timezone, sector_template, business_day_cutoff (misal 04:00), tax_profile JSON |
 | `outlet_features` | tenant_id, outlet_id, feature_key, enabled, config JSON |
 | `warehouses` | tenant_id, outlet_id, code, name, type (store/kitchen/bar/warehouse/damaged/in_transit) |
-| `devices` | tenant_id, outlet_id, uuid, code, name, type (pos/kds/warehouse/waiter/salesman), platform (android/ios/windows/macos/linux), os_version, app_version, sync_schema_version, push_token, hardware_profile JSON (printer, drawer, layar kedua), last_seen_at, pending_outbox_count, revoked_at |
+| `devices` | tenant_id, outlet_id, uuid, code, name, type (pos/kds/warehouse/waiter/salesman), platform (android/ios/windows), os_version, app_version, sync_schema_version, push_token, hardware_profile JSON (printer, drawer, layar kedua), last_seen_at, pending_outbox_count, revoked_at |
+| `user_devices` | user_id, tenant_id, app (owner/pos), platform (android/ios/windows), push_token, app_version, last_seen_at, revoked_at |
 | `device_activation_codes` | tenant_id, outlet_id, device_id, code_hash, expires_at, used_at |
-| `app_releases` | platform, channel (beta/stable), version, build, min_supported_version, download_url, release_notes, rollout_pct |
+| `app_releases` | app (pos/owner), platform, channel (beta/stable), version, build, min_supported_version, download_url, release_notes, rollout_pct |
 | `outlet_user` | tenant_id, outlet_id, user_id, role_id |
 
 **Katalog & Harga**
@@ -1821,6 +1857,7 @@ erDiagram
 |---|---|---|---|---|
 | Internal | `/internal/*` | Sesi + CSRF (Sanctum stateful) | Back-office web & web publik {{APP}} (TanStack Query) | Tidak diversi, berubah bersama frontend |
 | POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Cashier-Id` + `Idempotency-Key` + `X-App-Version` | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Sync-Schema`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
+| Owner | `/api/owner/v1/*` | **User token** (Sanctum, berumur terbatas + refresh) | Aplikasi Owner Flutter | Berversi URL, kompatibel mundur 2 versi minor aplikasi (§17.3.4) |
 | Publik | `/api/v1/*` | Sanctum Personal Access Token dengan scope (`products:read`, `sales:read`, `stock:write`, ...) | Integrasi pihak ketiga | Semantic, deprecation ≥ 6 bulan |
 
 ### 16.2 Konvensi
@@ -1882,7 +1919,8 @@ Event: `sale.completed`, `sale.voided`, `sale.returned`, `payment.received`, `st
 
 | Klien | Teknologi | Isi |
 |---|---|---|
-| **Aplikasi POS {{APP}}** | Flutter | Mode **Kasir** (retail/quick/table/service/wholesale), **Pelayan** (ambil order meja), **KDS**, **Gudang** (GRN, transfer, opname), **Absensi**, **Salesman** (fase 3), ringkasan **Owner** (P2). Mode ditentukan oleh tipe perangkat & role user. |
+| **Aplikasi POS {{APP}}** | Flutter | Mode **Kasir** (retail/quick/table/service/wholesale), **Pelayan** (ambil order meja), **KDS**, **Gudang** (GRN, transfer, opname), **Absensi**, **Salesman** (fase 3). Mode ditentukan oleh tipe perangkat & role user. Platform: Android, iOS/iPadOS, Windows. |
+| **Aplikasi {{APP}} Owner** | Flutter | Dashboard multi-outlet, laporan ringkas, approval jarak jauh, notifikasi, aksi cepat (§17.3). Platform: Android & iOS. |
 | **Back-office Web** | Laravel + Inertia React + TS + Tailwind 4 + TanStack Query | Master data, pembelian, stok, pelanggan, promo, karyawan, keuangan, pajak, laporan, pengaturan, langganan |
 | **Web Publik** | React ringan (Inertia/halaman terpisah) | Self-order QR meja, toko online, struk digital, booking |
 
@@ -1924,7 +1962,6 @@ apps/pos/
 │   │   ├── activation/  auth_pin/  shift/  catalog/  cart/  checkout/
 │   │   ├── orders/  tables/  kds/  customers/  returns/  cash/
 │   │   ├── warehouse/  attendance/  approvals/  sync_status/  settings/
-│   │   └── owner_summary/          # P2
 │   └── shared_widgets/             # design system: MoneyText, NumericKeypad, PinPad, QtyStepper, ...
 ├── test/                           # unit, widget, golden
 ├── integration_test/               # alur end-to-end di device/emulator
@@ -1962,7 +1999,7 @@ flowchart TD
 |---|---|---|
 | < 600 dp | HP (pelayan, salesman, kasir mikro) | Satu kolom. Keranjang sebagai bottom sheet. Tombol Bayar menempel di bawah |
 | 600–1024 dp | Tablet 8–11", POS Android all-in-one | Dua panel: katalog (kiri) + keranjang (kanan) |
-| > 1024 dp | PC Windows, Mac, POS layar 15" | Dua/tiga panel + **shortcut keyboard** (F1 cari, F2 pelanggan, F8 bayar, F9 uang pas, Esc hapus item) dan dukungan mouse |
+| > 1024 dp | PC Windows, POS all-in-one layar 15" | Dua/tiga panel + **shortcut keyboard** (F1 cari, F2 pelanggan, F8 bayar, F9 uang pas, Esc hapus item) dan dukungan mouse |
 
 ```
 ┌───────────────────────────────────────────────┬──────────────────────────┐
@@ -2002,28 +2039,57 @@ flowchart TD
 
 #### 17.2.5 Integrasi Hardware (Native)
 
-| Perangkat | Android | iOS / iPadOS | Windows | macOS |
-|---|---|---|---|---|
-| Printer Bluetooth Classic (SPP, printer 58 mm murah) | ✅ | ❌ (iOS tidak mendukung SPP kecuali printer MFi) | ✅ (via COM port virtual) | ⚠️ terbatas |
-| Printer Bluetooth LE | ✅ | ✅ | ✅ | ✅ |
-| Printer USB | ✅ (USB host) | ❌ | ✅ (driver/spooler RAW) | ✅ (CUPS RAW) |
-| Printer LAN/Wi-Fi (port 9100) | ✅ | ✅ | ✅ | ✅ |
-| Printer bawaan POS all-in-one (Sunmi, iMin, dsb.) | ✅ via SDK vendor | — | — | — |
-| Fallback printer sistem (PDF/AirPrint/driver OS) | ✅ (paket `printing`) | ✅ | ✅ | ✅ |
-| Laci kas | Kick via printer (ESC p) | Kick via printer LAN/BLE | Kick via printer | Kick via printer |
-| Scanner HID (USB/Bluetooth) | ✅ | ✅ | ✅ | ✅ |
-| Scanner kamera | ✅ | ✅ | ⚠️ webcam | ⚠️ webcam |
-| Layar pelanggan | Dual-screen bawaan (presentation display) | ⚠️ layar eksternal | Jendela kedua (monitor 2) | Jendela kedua |
-| Timbangan | Barcode timbangan (P1). Serial/USB (P3) | Barcode | Barcode, COM port (P3) | Barcode |
-| NFC (kartu member) | ✅ (P3) | ✅ terbatas (P3) | — | — |
+| Perangkat | Android | iOS / iPadOS | Windows |
+|---|---|---|---|
+| Printer Bluetooth Classic (SPP, printer 58 mm murah) | ✅ | ❌ (iOS tidak mendukung SPP kecuali printer MFi) | ✅ (via COM port virtual) |
+| Printer Bluetooth LE | ✅ | ✅ | ✅ |
+| Printer USB | ✅ (USB host) | ❌ | ✅ (driver/spooler RAW) |
+| Printer LAN/Wi-Fi (port 9100) | ✅ | ✅ | ✅ |
+| Printer bawaan POS all-in-one | ✅ via adaptor vendor (lihat di bawah) | — | ✅ untuk POS all-in-one Windows (driver/COM) |
+| Fallback printer sistem (PDF/AirPrint/driver OS) | ✅ (paket `printing`) | ✅ | ✅ |
+| Laci kas | Kick via printer (ESC p) atau API vendor | Kick via printer LAN/BLE | Kick via printer |
+| Scanner HID (USB/Bluetooth) | ✅ | ✅ | ✅ |
+| Scanner bawaan all-in-one | ✅ via adaptor vendor (broadcast/intent atau HID) | — | ✅ (HID) |
+| Scanner kamera | ✅ | ✅ | ⚠️ webcam |
+| Layar pelanggan | Dual-screen bawaan (presentation display / API vendor) | ⚠️ layar eksternal | Jendela kedua (monitor 2 / VFD via COM) |
+| Timbangan | Barcode timbangan (P1). Serial/USB (P3) | Barcode | Barcode, COM port (P3) |
+| NFC (kartu member) | ✅ (P3) | ✅ terbatas (P3) | — |
 
 - **Abstraksi `PrinterTransport`** (`BluetoothClassic`, `Ble`, `Usb`, `Network`, `VendorSdk`, `SystemPrint`) dengan satu `ReceiptBuilder` (ESC/POS, lebar 58/80 mm, logo raster, QR struk digital). Tiket dapur dikirim ke printer per *station*.
-- Rekomendasi untuk iPad: printer **LAN atau BLE**. Daftar printer & perangkat yang sudah diuji (**Hardware Compatibility List**) dipublikasikan di help center.
+- Rekomendasi untuk iPad: printer **LAN atau BLE**.
 - Setiap perangkat menyimpan profil hardware sendiri dan melaporkannya ke server (`devices.hardware_profile`) untuk dukungan teknis.
+
+#### 17.2.5a Dukungan Semua Perangkat POS All-in-One (Keputusan D-03)
+
+Target: **semua** perangkat POS Android all-in-one yang beredar di Indonesia bisa dipakai, bukan satu merek saja. Karena setiap vendor punya SDK berbeda, dukungan dibangun berlapis di paket `packages/device_adapters`:
+
+```
+DeviceCapabilities (antarmuka)
+├── printer: PrinterPort        (cetak teks/raster/QR, potong kertas, status kertas habis)
+├── cashDrawer: DrawerPort      (buka laci, status laci)
+├── customerDisplay: DisplayPort(layar kedua: teks/total/QRIS/gambar promo)
+├── scanner: ScannerPort        (barcode bawaan)
+└── nfc / scale (opsional)
+
+Implementasi (adaptor):
+├── SunmiAdapter        (SDK Sunmi: printer, laci, layar kedua, scanner)
+├── IminAdapter         (SDK iMin)
+├── PaxAdapter, TelpoAdapter, ... (vendor lain, ditambah bertahap)
+├── GenericInnerPrinterAdapter  (banyak perangkat mengekspos printer bawaan sebagai printer
+│                                Bluetooth virtual / port serial / ESC/POS standar)
+└── GenericAndroidAdapter       (HID scanner + presentation display + printer eksternal)
+```
+
+- **Deteksi otomatis:** saat aplikasi pertama dibuka, sistem membaca `Build.MANUFACTURER`/`MODEL` dan memeriksa ketersediaan layanan vendor, lalu memilih adaptor yang cocok. Jika tidak dikenali, dipakai **adaptor generik**, dan pengguna menjalankan **Wizard Uji Perangkat** (tes cetak, potong, laci, layar kedua, scan). Hasil wizard disimpan sebagai profil.
+- **Integrasi SDK vendor** dilakukan lewat *platform channel* (Kotlin) di dalam plugin internal. SDK vendor tidak bocor ke kode fitur.
+- **Prioritas penambahan adaptor:** P0 = Sunmi, iMin, dan adaptor generik. P1 = vendor lain berdasarkan data pasar & permintaan tenant (telemetri `hardware_profile` menunjukkan merek yang paling banyak jatuh ke adaptor generik).
+- **Hardware Compatibility List (HCL):** daftar publik perangkat & printer dengan status *Tersertifikasi* (diuji di lab), *Kompatibel* (lolos wizard di lapangan), atau *Terbatas*. Diperbarui setiap rilis.
+- **Program mitra hardware:** kerja sama dengan distributor untuk unit uji dan, opsional, bundel perangkat + langganan.
+- Perangkat POS all-in-one **berbasis Windows** didukung lewat jalur Windows biasa (driver printer, COM port, monitor kedua/VFD).
 
 #### 17.2.6 Keamanan Aplikasi
 
-- Device token disimpan di **secure storage** (Android Keystore, iOS Keychain, Windows DPAPI, macOS Keychain).
+- Device token disimpan di **secure storage** (Android Keystore, iOS Keychain, Windows DPAPI).
 - Database lokal dapat dienkripsi (**SQLCipher**) dengan kunci acak di secure storage. **Wajib aktif** untuk HP pribadi (mode absensi/salesman) & tenant paket Bisnis.
 - Hash PIN kasir & supervisor yang tersinkron ke perangkat memakai algoritme lambat (bcrypt/argon2) dan hanya berada di DB terenkripsi. Salah PIN 5 kali mengunci 5 menit.
 - Kasir otomatis terkunci (kembali ke layar PIN) setelah tidak aktif N menit.
@@ -2032,9 +2098,70 @@ flowchart TD
 
 ---
 
-### 17.3 Back-office Web
+### 17.3 Aplikasi Mobile Owner (Flutter, Android & iOS) — Keputusan D-04
 
-#### 17.3.1 Struktur Folder (di `backend/`)
+#### 17.3.1 Tujuan
+
+Owner (dan manajer area/outlet) memantau dan mengendalikan usaha dari HP tanpa membuka laptop: melihat angka hari ini, menerima peringatan, dan menyetujui aksi kasir dari jarak jauh.
+
+#### 17.3.2 Layar Utama
+
+| Tab | Isi |
+|---|---|
+| **Beranda** | Kartu omzet hari ini (vs kemarin & minggu lalu), laba kotor, transaksi, rata-rata keranjang, grafik per jam, pilih outlet atau "Semua Outlet" |
+| **Laporan** | Penjualan per produk/kategori/kasir/channel/metode bayar, laporan shift & selisih kas, L/R sederhana, filter periode cepat. Export dikirim sebagai file/tautan |
+| **Persetujuan** | Antrean approval jarak jauh (void, diskon, refund, kas keluar, PO, penyesuaian stok) dengan detail & tombol Setujui/Tolak + alasan. Konfirmasi dengan biometrik |
+| **Notifikasi** | Pusat notifikasi (selisih kas, anomali kasir, stok kritis, perangkat offline, piutang jatuh tempo, order online) dengan pengaturan per jenis & per outlet |
+| **Lainnya** | Stok & harga (cek, ubah harga, tandai habis), promo (aktif/nonaktif), pengeluaran cepat (foto nota), status perangkat POS, karyawan & absensi, langganan, pengaturan akun |
+
+#### 17.3.3 Arsitektur
+
+```
+apps/owner/
+├── lib/
+│   ├── app/            # router (go_router), tema dari packages/design_system, l10n
+│   ├── features/
+│   │   ├── auth/  tenant_switcher/  dashboard/  reports/  approvals/
+│   │   ├── notifications/  inventory_quick/  promotions_quick/  expenses/
+│   │   ├── devices/  employees/  subscription/  settings/
+│   └── data/           # repository → packages/api_client (/api/owner/v1), cache Drift ringan
+└── test/ integration_test/
+```
+
+- **Online-first dengan cache**: data dashboard & laporan terakhir disimpan di cache lokal sehingga aplikasi terbuka instan dan tetap bisa dibaca saat sinyal lemah (ditandai "terakhir diperbarui"). Aksi (approval, ubah harga) wajib online.
+- **Data dashboard** diambil dari tabel ringkasan (`daily_sales_summaries`, dsb.) + delta hari berjalan agar ringan untuk Hostinger. Refresh: tarik-untuk-refresh, polling 60 detik saat layar aktif, dan push sebagai pemicu.
+- **Autentikasi:** login email/WA OTP (+ 2FA bila aktif) → user token Sanctum berumur terbatas + refresh token di secure storage. Aplikasi dikunci dengan PIN/biometrik saat dibuka. Hak akses mengikuti role & outlet yang sama dengan back-office.
+- **Push:** token FCM per perangkat user disimpan di `user_devices`. Notifikasi approval membawa deep link ke layar persetujuan.
+- **Batas cakupan:** pengaturan berat (import, COA, pajak, template sektor, penomoran) tetap di back-office web. Aplikasi menautkan ke halaman web terkait bila perlu.
+
+#### 17.3.4 Endpoint `/api/owner/v1` (ringkas)
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| POST | `/auth/login`, `/auth/otp/verify`, `/auth/refresh`, `/auth/logout` | Autentikasi |
+| GET | `/me`, `/tenants`, `/outlets` | Profil, pilihan tenant & outlet |
+| GET | `/dashboard?outlet=&date=` | Kartu KPI + grafik per jam |
+| GET | `/reports/{name}?filters` | Laporan ringkas |
+| GET/POST | `/approvals`, `/approvals/{id}/approve`, `/approvals/{id}/reject` | Approval jarak jauh |
+| GET/PATCH | `/notifications`, `/notification-settings` | Notifikasi |
+| GET/PATCH | `/products/{id}` (harga, 86), `/promotions/{id}` (aktif/nonaktif) | Aksi cepat |
+| POST | `/expenses` | Pengeluaran + foto nota |
+| GET/POST | `/devices`, `/devices/{id}/revoke` | Status & cabut perangkat POS |
+| POST | `/push-token` | Daftar token FCM |
+
+#### 17.3.5 Target Kualitas
+
+| Metrik | Target |
+|---|---|
+| Buka aplikasi sampai dashboard tampil (dari cache) | < 1,5 detik |
+| Waktu dari kasir meminta approval sampai notifikasi diterima owner | < 10 detik (bergantung FCM/APNs & cron queue, lihat §14) |
+| Crash-free sessions | ≥ 99,5% |
+
+---
+
+### 17.4 Back-office Web
+
+#### 17.4.1 Struktur Folder (di `backend/`)
 
 ```
 resources/js/
@@ -2052,7 +2179,7 @@ resources/js/
 └── css/app.css                # Tailwind 4: @import "tailwindcss"; @theme { ...token... }
 ```
 
-#### 17.3.2 Pola TanStack Query
+#### 17.4.2 Pola TanStack Query
 
 ```ts
 // lib/queryKeys.ts — key factory terpusat
@@ -2076,7 +2203,7 @@ useQuery({
 - `staleTime` 30 detik untuk master, 0 untuk data transaksi. `retry` 2 dengan backoff.
 - Setelah mutasi Inertia, panggil `queryClient.invalidateQueries` untuk key terkait.
 
-#### 17.3.3 Design System Web
+#### 17.4.3 Design System Web
 
 - Token dari `spec/design-tokens` di `@theme` Tailwind 4, light/dark, warna brand per tenant (struk & toko online).
 - Komponen wajib: `MoneyInput`, `DataTable` (server-side), `DateRangePicker` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `StatusBadge`, `ApprovalDialog`, `EmptyState`, `ImportWizard`, `DeviceActivationDialog` (menampilkan QR aktivasi).
@@ -2190,7 +2317,7 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.sc
 | Ubah harga jual | — | Permission `products.price.update` |
 | Buka laci tanpa transaksi | Selalu dicatat | Opsional PIN |
 
-**Approval jarak jauh (X4):** jika supervisor tidak di tempat, permintaan dikirim ke HP supervisor/owner lewat **push notification** di aplikasi {{APP}} (fallback: link WA) untuk disetujui dengan satu ketukan, lengkap dengan detail (kasir, item, nominal, alasan). Butuh online di kedua sisi.
+**Approval jarak jauh (X4):** jika supervisor tidak di tempat, permintaan dikirim ke HP supervisor/owner lewat **push notification** di **Aplikasi {{APP}} Owner** (fallback: link WA) untuk disetujui dengan satu ketukan, lengkap dengan detail (kasir, item, nominal, alasan). Butuh online di kedua sisi.
 
 ---
 
@@ -2246,8 +2373,15 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.sc
 | Android (tablet, HP, POS all-in-one) | Android 7.0 (API 24), arsitektur arm64-v8a & armeabi-v7a | Utama (rilis pertama) |
 | Windows | Windows 10 64-bit | Utama (rilis pertama) |
 | iPadOS / iOS | iOS/iPadOS 15 | Utama (akhir Fase 1) |
-| macOS | macOS 12 | Utama (akhir Fase 1) |
-| Linux | Ubuntu 22.04 LTS (x64) | Best-effort (Fase 3), tanpa SLA |
+| Windows POS all-in-one | Windows 10 64-bit | Didukung via jalur Windows (driver/COM) |
+| macOS, Linux | — | **Tidak ditargetkan** (keputusan D-01). Bisa ditambah kelak |
+
+**Aplikasi Owner (Flutter)**
+
+| Platform | Versi minimum (usulan) |
+|---|---|
+| Android | Android 8.0 (API 26) |
+| iOS | iOS 15 |
 
 Resolusi: HP 360 dp s.d. desktop 1920 px. Dioptimalkan untuk tablet 8–11" dan layar POS 15". Mendukung orientasi lanskap & potret (tablet).
 
@@ -2294,7 +2428,7 @@ Resolusi: HP 360 dp s.d. desktop 1920 px. Dioptimalkan untuk tablet 8–11" dan 
 
 ## 22. Roadmap & Fase Pengembangan
 
-> Asumsi tim: 2 backend (Laravel), **2 mobile/desktop (Flutter)**, 1 frontend (React/TS, back-office & web publik), 1 fullstack/devops (CI backend + pipeline rilis aplikasi), 1 QA (termasuk uji perangkat & printer), 1 product/UX. Sprint 2 minggu. Estimasi bersifat indikatif.
+> Asumsi tim: 2 backend (Laravel), **3 Flutter** (2 Aplikasi POS, 1 Aplikasi Owner mulai Fase 2), 1 frontend (React/TS, back-office & web publik), 1 fullstack/devops (CI backend + pipeline rilis aplikasi), 1 QA (termasuk uji perangkat & printer), 1 product/UX. Sprint 2 minggu. Estimasi bersifat indikatif.
 
 ### Fase 0 — Fondasi (Sprint 1–3, ±6 minggu)
 
@@ -2325,7 +2459,8 @@ Urutan mengikuti flow:
 11. F-05b Transfer, opname, penyesuaian.
 12. F-14a Laporan inti + dashboard owner + L/R.
 13. Cetak struk native (Bluetooth, USB, LAN, printer bawaan Sunmi/iMin, fallback printer sistem), struk digital link.
-14. **Rilis iOS/iPadOS & macOS** (TestFlight & notarized DMG) setelah alur Android/Windows stabil. Auto-update & `min_supported_version`.
+14. **Rilis iOS/iPadOS** (TestFlight) setelah alur Android/Windows stabil. Mekanisme cek versi & `min_supported_version`. Distribusi Windows selama beta lewat unduhan terbatas (kanal final diputuskan kemudian, D-02).
+    Adaptor all-in-one P0: Sunmi, iMin, generik + Wizard Uji Perangkat.
 15. Hardware Compatibility List awal (minimal 5 printer & 2 perangkat all-in-one teruji).
 16. Beta tertutup dengan 20–30 UMKM (retail & kafe) di campuran Android, Windows, dan iPad.
 
@@ -2336,7 +2471,9 @@ Urutan mengikuti flow:
 - Aplikasi POS mode table (denah, open bill, split/merge), mode **Pelayan** (HP), mode **KDS**, printer dapur per station, customer display (dual-screen Android & monitor kedua desktop).
 - Modul **Gudang** di aplikasi (scan GRN, transfer, opname).
 - Push notification (FCM/APNs): approval jarak jauh, order online masuk.
-- Rilis publik di Google Play, App Store, Microsoft Store/unduhan langsung, dan Mac.
+- **Aplikasi {{APP}} Owner v1** (Android & iOS): OWN-01 s.d. OWN-09 (dashboard, notifikasi, approval jarak jauh, laporan ringkas, cek stok, aksi cepat, status perangkat, anti-fraud).
+- Adaptor all-in-one vendor tambahan (P1) berdasarkan telemetri perangkat.
+- Rilis publik di Google Play & App Store (POS dan Owner). Windows memakai kanal yang diputuskan setelah evaluasi stabilitas Fase 1–2.
 - Promo engine + voucher + loyalti + tier + deposit + paket sesi.
 - Price list & harga tier (X8), harga per channel ojol (input manual).
 - Mode service (booking, staf, komisi) + laundry + wholesale (SO/DO/invoice, piutang, limit kredit).
@@ -2358,7 +2495,6 @@ Urutan mengikuti flow:
 - Export e-Faktur/Coretax, laporan PPN.
 - Modul Salesman di aplikasi Flutter (kanvas & kunjungan, offline).
 - **Mode LAN Lokal / Outlet Hub** (X17).
-- Build Linux best-effort.
 - Billing SaaS otomatis penuh + referral/reseller.
 - Evaluasi migrasi ke VPS (Redis, Supervisor, Reverb) sesuai metrik beban.
 
@@ -2367,7 +2503,7 @@ Urutan mengikuti flow:
 - Franchise & royalti (X10), multi-brand lanjutan.
 - Payroll penuh (PPh 21, BPJS).
 - Integrasi ojol/marketplace via API resmi (jika tersedia), agregator ekspedisi.
-- Ringkasan dashboard owner di aplikasi, NFC kartu member, timbangan serial/USB.
+- Aplikasi Owner lanjutan (OWN-10 s.d. OWN-13: karyawan, insight, widget, langganan), NFC kartu member, timbangan serial/USB.
 - Marketplace add-on/integrasi pihak ketiga.
 - Integrasi Coretax via PJAP.
 
@@ -2407,7 +2543,7 @@ gantt
 | E2E Web | Playwright | Daftar → onboarding → produk → aktivasi perangkat → laporan; self-order QR |
 | E2E Aplikasi | `integration_test` / **Patrol** di emulator Android & Windows (CI), iOS simulator (nightly) | Aktivasi → login PIN → buka shift → jual (online & **offline** dengan API mock dimatikan) → sinkron (API staging) → tutup shift |
 | **Kontrak API** | OpenAPI diff (Scramble) + test DTO Dart | Mencegah perubahan API POS yang merusak aplikasi versi lama |
-| Uji perangkat nyata | Lab kecil: 2 tablet Android murah, 1 POS all-in-one, 1 iPad, 1 PC Windows, 1 Mac, 4 printer | Checklist manual per rilis (cetak, laci, scanner, layar kedua) |
+| Uji perangkat nyata | Lab kecil: 2 tablet Android murah, 1 POS all-in-one, 1 iPad, 1 iPhone, 1 PC Windows, 4 printer, serta perangkat all-in-one dari merek berbeda (bertambah sesuai adaptor) | Checklist manual per rilis (cetak, laci, scanner, layar kedua) |
 | Load | k6 | Simulasi 300 tenant × 3 perangkat, polling KDS, sync burst pagi hari, di lingkungan staging paket Hostinger yang sama dengan produksi |
 | Keamanan | Larastan rules, `composer audit`, OWASP ZAP baseline, pentest | Sebelum GA |
 
@@ -2418,7 +2554,7 @@ gantt
 - `pest --parallel` (coverage minimum 80% untuk `app/Domain/*/Actions` dan kalkulator)
 - `vitest run`, Playwright smoke (web)
 - `dart format --set-exit-if-changed`, `flutter analyze`, `dart test packages/pos_engine`, `flutter test` (termasuk golden)
-- Build Android (AAB/APK) & Windows sukses di setiap PR aplikasi. Build iOS/macOS di branch rilis & nightly
+- Build Android (AAB/APK) & Windows sukses di setiap PR aplikasi. Build iOS di branch rilis & nightly. CI Aplikasi Owner (analyze, test, build Android/iOS) setara Aplikasi POS
 - Integration test aplikasi (alur jual online + offline)
 - Build Vite sukses dan ukuran bundle web publik di bawah anggaran
 
@@ -2470,10 +2606,17 @@ gantt
 8. **Target launch** dan ukuran tim riil. Roadmap §22 menyesuaikan.
 9. Apakah dibutuhkan **white-label** untuk reseller/franchise sejak awal?
 10. Apakah perlu dukungan **multi-mata uang** (turis/perbatasan)? Default: tidak.
-11. **Urutan platform aplikasi POS.** Usulan: Android + Windows dulu, lalu iPad/iOS + macOS di akhir Fase 1. Linux perlu atau tidak?
-12. **Distribusi desktop:** lewat Microsoft Store/Mac App Store, unduhan langsung dengan auto-updater, atau keduanya?
-13. **Perangkat POS all-in-one** mana yang diprioritaskan (Sunmi, iMin, dll.) dan apakah ada rencana bundel hardware?
-14. Apakah owner juga butuh **aplikasi mobile** (Flutter) untuk dashboard, atau cukup back-office web responsif di v1?
+11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
+12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
+
+### 25.1 Keputusan yang Sudah Diambil
+
+| ID | Keputusan | Tanggal | Dampak di PRD |
+|---|---|---|---|
+| D-01 | Platform Aplikasi POS: **Android, iOS/iPadOS, Windows**. **Linux tidak.** macOS tidak ditargetkan | 22/09/2026 | §1, §4.2, §13, §14.6, §17.2, §20.5, §22 |
+| D-02 | Kanal distribusi & mekanisme update aplikasi **Windows ditentukan setelah semua sistem jadi dan berjalan stabil**. Selama pengembangan & beta: unduhan langsung terbatas untuk tester | 22/09/2026 | §14.6, §22 |
+| D-03 | **Semua perangkat POS all-in-one** didukung melalui lapisan adaptor vendor + adaptor generik + Wizard Uji Perangkat + HCL | 22/09/2026 | §10.2 (POS-22), §17.2.5a, §22, §23 |
+| D-04 | **Aplikasi Mobile Owner tersendiri** (Flutter, Android & iOS) | 22/09/2026 | §1, §3.3 (X19), §10.2a, §13, §16.1, §17.3, §22 |
 
 ---
 
@@ -2500,7 +2643,7 @@ gantt
 | Outbox | Antrean data lokal di perangkat yang menunggu dikirim ke server |
 | Idempotensi | Sifat operasi yang aman diulang tanpa efek ganda |
 | 86 | Istilah F&B untuk menu habis |
-| Flutter | Framework UI Google untuk membangun aplikasi native Android, iOS, Windows, macOS, Linux dari satu basis kode Dart |
+| Flutter | Framework UI Google untuk membangun aplikasi native Android, iOS, Windows, macOS, Linux dari satu basis kode Dart. Di {{APP}} dipakai untuk Aplikasi POS (Android, iOS, Windows) dan Aplikasi Owner (Android, iOS) |
 | Drift | Library database SQLite bertipe untuk Dart/Flutter |
 | Device token | Token autentikasi unik per perangkat aplikasi POS, diterbitkan saat aktivasi |
 | FCM / APNs | Layanan push notification Google (Firebase) / Apple |
@@ -2611,7 +2754,9 @@ Poin didapat: 6   Total poin: 128
 - [ ] Dokumentasi pengguna & video onboarding
 - [ ] Rencana migrasi ke VPS terdokumentasi (pemicu & langkah)
 - [ ] Aplikasi lolos review Google Play & App Store (kebijakan privasi, izin kamera/lokasi/Bluetooth dijelaskan)
-- [ ] Installer Windows ditandatangani, DMG macOS ter-notarize, feed auto-update aktif
+- [ ] Installer Windows ditandatangani & kanal distribusi Windows sudah diputuskan (D-02)
+- [ ] Aplikasi Owner lolos review Google Play & App Store, push approval teruji end-to-end
+- [ ] Adaptor all-in-one P0 (Sunmi, iMin, generik) lolos uji lab & HCL terbit
 - [ ] `min_supported_version` & feature flag remote teruji
 - [ ] Hardware Compatibility List dipublikasikan
 - [ ] Crash-free sessions aplikasi ≥ 99,5% selama beta
