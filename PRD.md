@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.7 |
+| Versi | 1.8 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -28,6 +28,7 @@
 | 1.5 | Perluasan D-06: nama **event webhook**, **header HTTP kustom**, dan **nama permission** memakai Bahasa Indonesia. Header standar protokol tetap. |
 | 1.6 | Keputusan D-07: **Platform Pengelola** (konsol tim internal {{APP}}) dirancang sebagai lapisan pertama sebelum modul tenant: flow P-01 s.d. P-12 (§8 Bagian A), modul PGL (§10.0), arsitektur (§13.8), tabel (§15.3), peran internal (§19.3), dan Fase 0 roadmap direvisi. |
 | 1.7 | Keputusan D-08: font resmi **Atkinson Hyperlegible Next** (UI) + **Atkinson Hyperlegible Mono** (kode & nomor dokumen), skala tipografi dua mode kepadatan, aturan pemakaian, dan implementasi web/Flutter (§17.5). |
+| 1.8 | Keputusan D-09: **Pedoman UI/UX & Design System** (§17.6): prinsip "alat kerja, bukan brosur", arah per klien, token warna (lolos WCAG AA), bentuk & kepadatan, pola layar, keadaan wajib, microcopy, visualisasi data, aksesibilitas, proses desain, dan checklist review anti-slop. |
 
 ---
 
@@ -2967,6 +2968,160 @@ Format `ukuran/tinggi baris` dalam px (web) atau logical pixel (Flutter). KDS me
 
 Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web dan Flutter selalu sama.
 
+### 17.6 Pedoman UI/UX & Design System (Keputusan D-09)
+
+#### 17.6.1 Prinsip Dasar: Alat Kerja, Bukan Brosur
+
+{{APP}} adalah **alat kerja** yang dipakai berjam-jam setiap hari, sering di bawah tekanan antrean. Desain dinilai dari **kecepatan, ketepatan, dan ketenangan**, bukan dari seberapa "keren" tampilannya di tangkapan layar.
+
+1. **Desain mengikuti flow.** Setiap layar berasal dari langkah flow P-xx/F-xx (§8): tugas apa, seberapa sering, di perangkat apa, dalam tekanan waktu atau tidak.
+2. **Isi lebih dulu dari hiasan.** Kalau semua warna dihapus, layar tetap harus bisa dipahami.
+3. **Warna berarti sesuatu.** Warna hanya untuk aksi utama dan status. Sisanya netral.
+4. **Keadaan sulit adalah keadaan normal.** Offline, antrean sinkron, printer terputus, stok minus, dan menunggu persetujuan didesain sejak awal, bukan ditambal belakangan.
+5. **Data nyata, bukan data sempurna.** Nama produk panjang, angka jutaan, ribuan SKU, dan kolom kosong menjadi bahan desain dan pengujian.
+6. **Konsisten lintas klien.** Web dan Flutter memakai token yang sama (`Spesifikasi/TokenDesain`), sehingga istilah, warna status, dan pola interaksi sama di semua aplikasi.
+
+#### 17.6.2 Arah per Klien
+
+| Klien | Pertanyaan utama pengguna | Arah desain |
+|---|---|---|
+| **Aplikasi POS (Kasir)** | "Bisa selesai bayar dalam 20 detik tanpa salah?" | Target sentuh besar, kontras tinggi, TOTAL & tombol BAYAR dominan, dekorasi nol, status koneksi/sinkron/printer selalu terlihat, bisa dipakai penuh dengan keyboard/scanner di desktop |
+| **KDS** | "Pesanan mana yang harus dibuat sekarang?" | Mode gelap, huruf besar (1,25×), urutan waktu, warna umur tiket (normal → kuning → merah), satu ketukan untuk ubah status |
+| **Aplikasi Owner** | "Hari ini untung berapa, ada masalah apa?" | Satu angka besar + perbandingan, lalu daftar hal yang butuh tindakan (persetujuan, selisih kas, stok kritis). Bukan dinding widget |
+| **Back-office** | "Bisa cari, bandingkan, dan ubah banyak data dengan cepat?" | Padat data, tabel lebih utama dari kartu, filter di atas, aksi massal, detail di panel/halaman terpisah |
+| **Platform Pengelola** | "Tenant mana yang perlu ditangani?" | Seperti back-office, dengan penanda lingkungan (Staging/Produksi) yang mencolok di bagian atas |
+| **Web Publik** | "Bisa pesan/bayar tanpa bingung di HP?" | Satu kolom, tombol utama menempel di bawah, harga final jelas sebelum bayar, ringan (< 150 KB JS) |
+
+#### 17.6.3 Warna
+
+**Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
+
+**Token warna (usulan awal, bisa disesuaikan saat identitas brand & nama sistem final):**
+
+| Token | Terang | Gelap | Fungsi |
+|---|---|---|---|
+| `Latar` | `#FAFAF7` | `#151514` | Latar halaman (abu-abu hangat, bukan abu kebiruan) |
+| `Permukaan` | `#FFFFFF` | `#1E1E1C` | Panel, tabel, dialog |
+| `Garis` | `#E4E2DC` | `#34332F` | Pemisah dekoratif |
+| `GarisInput` | `#8A877F` | `#7A776F` | Tepi input & kontrol (kontras ≥ 3:1) |
+| `TeksUtama` | `#1C1B19` | `#EDEBE6` | Teks utama |
+| `TeksSekunder` | `#5C5A55` | `#A8A59E` | Keterangan, label sekunder |
+| `Brand` | `#0B6468` (teal tua) | `#5BB8BB` | Aksi utama, penanda aktif |
+| `Sukses` | `#2E7D32` | `#6FBF73` | Lunas, berhasil, tersinkron |
+| `Peringatan` | `#9A5B00` | `#E3A13B` | Menunggu, tertunda, stok menipis |
+| `Bahaya` | `#B3261E` | `#F28B82` | Void, gagal, selisih kas, offline lama |
+| `Info` | `#1F5FAD` | `#8AB4F0` | Informasi netral, tautan |
+
+Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1, dihitung saat penyusunan). Teks putih di atas `Brand` dan `Bahaya` (mode terang) juga ≥ 4,5:1. Setiap warna semantik punya varian latar lembut (misal `SuksesLatar`) untuk lencana dan baris tabel.
+
+**Aturan warna:**
+- **Status tidak pernah hanya warna.** Selalu disertai teks atau ikon ("Lunas", "Tertunda 3"), agar tetap jelas bagi pengguna buta warna dan di layar murah.
+- Makna warna **sama di semua klien**: hijau selalu lunas/berhasil, merah selalu void/gagal, dan seterusnya.
+- Tanpa gradien, efek kaca, atau warna dekoratif.
+- **Mode gelap** wajib untuk KDS, opsional untuk klien lain (mengikuti sistem).
+- Warna brand tenant (logo/warna struk & toko online) hanya berlaku di struk dan web publik tenant, **tidak** mengubah warna UI {{APP}}.
+
+#### 17.6.4 Bentuk, Ruang & Kepadatan
+
+| Aspek | Aturan |
+|---|---|
+| Radius | 6px untuk tombol, input, lencana. 8px untuk panel/dialog. Tidak ada kartu super-bulat |
+| Pemisah | Garis 1px (`Garis`). Bayangan hanya untuk elemen melayang (popover, dialog, menu) |
+| Spasi | Kelipatan 4 (4, 8, 12, 16, 24, 32) |
+| Ikon | Satu set: **Lucide** (web & Flutter), garis 1,5–2px, ukuran 16/20/24. Ikon hanya bila membantu mengenali. Tanpa emoji di UI |
+| Ilustrasi | Tidak memakai ilustrasi 3D/blob. Foto produk nyata di katalog. Tampilan kosong cukup ikon sederhana + teks + tombol aksi |
+| Animasi | Singkat (100–200 ms) dan fungsional (umpan balik tekan, masuk/keluar panel). Hormati pengaturan "kurangi gerakan" |
+
+**Dua mode kepadatan** (terhubung dengan skala tipografi §17.5):
+
+| Mode | Dipakai di | Target sentuh / tinggi baris | Padding kontrol |
+|---|---|---|---|
+| **Nyaman** | Aplikasi POS, KDS, Aplikasi Owner, Web Publik | Target sentuh ≥ 48dp. Baris daftar 56–64 | 12–16 |
+| **Ringkas** | Back-office, Platform Pengelola | Baris tabel 36–40px, kontrol 32–36px | 8–12 |
+
+#### 17.6.5 Pola Layar
+
+**Aplikasi POS:**
+- Tata letak dua panel (katalog | keranjang) di tablet/desktop, satu kolom + *bottom sheet* di HP (§17.2.3).
+- **Bilah status permanen** di bawah: koneksi, jumlah transaksi tertunda, printer, nama kasir & shift.
+- Layar bayar: TOTAL memakai token `Tampilan`, tombol pecahan uang cepat, metode bayar sebagai tombol besar, **kembalian ditampilkan paling besar** setelah bayar tunai.
+- Aksi berisiko (void, hapus item terkirim, diskon di atas batas) selalu lewat **dialog PIN supervisor** dengan ringkasan apa yang akan terjadi.
+- Tidak ada konfirmasi "Apakah Anda yakin?" untuk aksi rutin. Sediakan **urungkan (undo)** beberapa detik untuk hapus item dari keranjang.
+
+**Back-office & Platform Pengelola:**
+- Navigasi samping dikelompokkan mengikuti flow: **Penjualan · Persediaan · Pembelian · Pelanggan & Promo · Karyawan · Keuangan · Laporan · Pengaturan**.
+- **Halaman daftar:** judul + tombol aksi utama → bilah filter & pencarian (filter tersimpan di URL) → tabel (kolom bisa diatur, angka rata kanan, urut, pilih banyak untuk aksi massal) → paginasi.
+- **Halaman detail dokumen:** kepala berisi nomor dokumen (font Mono), lencana status, dan aksi sesuai status (misal PO `Disetujui` → "Terima Barang") → isi → tab riwayat & log audit.
+- **Form:** satu kolom untuk form pendek, dua kolom untuk form panjang, dikelompokkan per bagian. Validasi langsung di bawah field. Tombol Simpan tetap terlihat (menempel) di form panjang.
+- **Laporan:** filter periode dengan preset (Hari ini, Kemarin, 7 hari, Bulan ini, Bulan lalu) → angka ringkasan (maks 4) → tabel rinci. Grafik hanya bila tren/perbandingan memang penting.
+
+**Aplikasi Owner:**
+- Beranda: pilih outlet → **omzet hari ini** (token `Tampilan`) + perbandingan kemarin & minggu lalu → laba kotor & jumlah transaksi → **"Perlu tindakan"** (persetujuan menunggu, selisih kas, stok kritis, perangkat offline) → grafik per jam.
+- Persetujuan: kartu per permintaan berisi kasir, outlet, item, nominal, alasan, lalu tombol **Tolak** dan **Setujui** (dengan biometrik).
+
+#### 17.6.6 Keadaan (States) yang Wajib Didesain
+
+Setiap layar/komponen wajib punya desain untuk keadaan berikut sebelum dianggap selesai:
+
+| Keadaan | Contoh |
+|---|---|
+| Memuat | Kerangka (skeleton) sesuai bentuk isi, bukan pemutar di tengah layar kosong |
+| Kosong | "Belum ada produk. **Import dari Excel** atau **Tambah produk**" |
+| Galat | Apa yang terjadi + apa yang bisa dilakukan: "Printer dapur tidak tersambung. Cek kabel/Wi-Fi, lalu **Coba lagi**" |
+| Offline | Banner tenang (bukan merah menyala) + fitur yang tetap bisa dipakai. Tombol yang butuh online dinonaktifkan dengan penjelasan |
+| Tertunda sinkron | Jumlah item tertunda + waktu sinkron terakhir, bisa diketuk untuk detail |
+| Butuh persetujuan | Dialog PIN atau status "Menunggu persetujuan Supervisor" |
+| Tanpa izin | Menu disembunyikan. Jika dibuka lewat tautan: "Anda tidak punya akses ke halaman ini. Hubungi Owner" |
+| Data ekstrem | Nama 60 karakter, angka Rp 1.250.000.000, 2.000 baris, nilai negatif, kolom kosong |
+
+#### 17.6.7 Bahasa & Microcopy
+
+- **Bahasa Indonesia sehari-hari yang sopan dan jelas.** Sapaan "Anda", kalimat aktif, tanpa jargon teknis ("Sinkron gagal" → "Transaksi belum terkirim ke server. Akan dicoba lagi otomatis").
+- **Tombol memakai kata kerja spesifik:** "Simpan produk", "Terima barang", "Tutup shift". Hindari "OK", "Submit", "Proses".
+- **Konkret dengan angka dan nama:** "Stok Kopi Susu tinggal 3", "3 transaksi belum terkirim".
+- **Tanpa emoji, tanpa seru berlebihan, tanpa "Oops!"**.
+- **Format Indonesia:** Rupiah `Rp 1.250.000`, tanggal `22 Sep 2026` (tampilan) atau `22/09/2026` (tabel), jam `14.32`, zona waktu outlet (WIB/WITA/WIT) bila relevan.
+- **Glosarium istilah UI** mengikuti kamus §13.7.1 (misal "Pemasok", bukan campuran "Supplier/Vendor/Pemasok").
+
+#### 17.6.8 Visualisasi Data
+
+- Grafik hanya bila menjawab pertanyaan tren atau perbandingan. Angka tunggal cukup ditampilkan sebagai angka.
+- **Bar/kolom** untuk perbandingan, **garis** untuk tren waktu. Hindari donut/pie untuk lebih dari 3 bagian.
+- Label langsung pada grafik, tanpa legenda terpisah bila memungkinkan. Sumbu Rupiah diringkas ("1,2 jt").
+- Warna grafik memakai palet kategori netral dan terbatas. Warna semantik hanya untuk makna (misal minus = `Bahaya`).
+- *Sparkline* di dalam sel tabel untuk tren per produk/outlet.
+
+#### 17.6.9 Aksesibilitas & Perangkat
+
+- Kontras WCAG AA untuk semua teks. Kontrol & tepi input ≥ 3:1.
+- Target sentuh ≥ 48dp di klien sentuh. Fokus keyboard terlihat jelas di web & desktop Windows.
+- Mendukung pembesaran teks sistem hingga 130% tanpa tata letak rusak (Flutter `textScaler`, web `rem`).
+- Diuji di **tablet Android murah (RAM 3 GB), layar 8"**, di bawah cahaya terang, dari jarak lengan. Ini perangkat acuan, bukan MacBook desainer.
+
+#### 17.6.10 Proses Desain
+
+1. **Flow → tugas:** daftar tugas per layar dari flow P-xx/F-xx, lengkap dengan frekuensi, perangkat, dan tekanan waktu.
+2. **Wireframe abu-abu** tanpa warna untuk menguji tata letak dan urutan informasi.
+3. **Data nyata & keadaan sulit** (§17.6.6) dimasukkan sejak wireframe.
+4. **Uji dengan 5 pengguna nyata** per klien (kasir, staf gudang, owner) memakai prototipe sebelum desain visual final.
+5. **Visual dari token**, bukan warna/ukuran lepas. Komponen shadcn/ui dan tema Flutter diturunkan dari token, tidak dipakai dengan tampilan bawaannya.
+6. **Referensi dari produk kerja nyata**, misalnya Square POS, Toast, Shopify POS, Loyverse (kasir); Linear, Stripe Dashboard, Xero (back-office); majoo & Moka (pembanding lokal). **Bukan** dari galeri inspirasi visual.
+7. **Jika memakai AI untuk desain/kode UI**, sertakan batasan: token §17.5–§17.6, tanpa gradien/bayangan dekoratif, data Indonesia nyata, dan daftar keadaan wajib.
+
+#### 17.6.11 Checklist Review Desain ("Anti-Slop")
+
+Wajib lolos sebelum layar masuk implementasi:
+
+- [ ] Layar tetap bisa dipahami jika semua warna dihapus
+- [ ] Warna hanya muncul untuk aksi utama dan status, status selalu disertai teks/ikon
+- [ ] Tidak ada gradien, efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
+- [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel
+- [ ] Font & ukuran hanya dari token §17.5. Angka uang tabular & rata kanan. Kode memakai font Mono
+- [ ] Semua keadaan di §17.6.6 sudah didesain
+- [ ] Diuji dengan data ekstrem dan di perangkat acuan
+- [ ] Microcopy mengikuti §17.6.7 dan kamus istilah
+- [ ] Setiap elemen dekoratif yang tidak membantu tugas sudah dibuang
+
 ---
 
 ## 18. Offline-First POS & Sinkronisasi
@@ -3349,6 +3504,7 @@ gantt
 - [ ] UI tablet & desktop, state kosong/loading/error. Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
 - [ ] Audit log & permission
 - [ ] Nama tabel, kolom, folder, file, dan function sesuai konvensi §13.7 (istilah baru sudah masuk kamus)
+- [ ] Desain lolos checklist review §17.6.11 dan semua keadaan wajib §17.6.6 terimplementasi
 - [ ] Test (unit, feature, E2E untuk alur kritis)
 - [ ] Dokumentasi pengguna singkat (help center)
 - [ ] Demo di staging
@@ -3407,6 +3563,7 @@ gantt
 | D-06 | **URL/endpoint memakai Bahasa Indonesia**, huruf kecil kebab-case, kata benda tunggal (§13.7.1). Prefix API Owner menjadi `/api/pemilik/v1`. Diperluas ke nama event webhook, header HTTP kustom, dan nama permission | 22/09/2026 | §11–§13.6, §13.7, §14, §16, §17.3.4, §17.4, §18, §20, Lampiran C |
 | D-07 | **Platform Pengelola** dibangun sebagai lapisan pertama (Fase 0) sebelum modul tenant: flow P-01 s.d. P-12, subdomain `pengelola.`, akun & guard terpisah, akses dukungan berizin | 22/09/2026 | §5.2, §6.2, §7, §8 Bagian A, §10.0, §13.6, §13.8, §15.3, §19.3, §20.2, §22, §24 |
 | D-08 | Font resmi: **Atkinson Hyperlegible Next** untuk UI dan **Atkinson Hyperlegible Mono** untuk kode, di semua klien | 22/09/2026 | §17.5, `Spesifikasi/TokenDesain` |
+| D-09 | Pedoman UI/UX & Design System: prinsip alat kerja, aturan warna 90/10, token warna, dua mode kepadatan, keadaan wajib, microcopy Indonesia, checklist anti-slop | 22/09/2026 | §17.6, `Spesifikasi/TokenDesain`, §23.3 |
 
 ---
 
