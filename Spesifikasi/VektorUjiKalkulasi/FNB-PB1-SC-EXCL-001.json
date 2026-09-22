@@ -1,0 +1,18 @@
+{
+  "Id": "FNB-PB1-SC-EXCL-001",
+  "Keterangan": "Kafe, harga belum termasuk pajak, SC 5% masuk DPP PB1 10%, pembulatan tunai ke 100 ke bawah",
+  "Pengaturan": { "HargaTermasukPajak": false, "PersenBiayaLayanan": "5", "BiayaLayananMasukDpp": true, "PembulatanTunai": { "Kelipatan": 100, "Arah": "Bawah" } },
+  "Baris": [
+    { "Sku": "EKS", "Jumlah": "2", "HargaSatuan": "18000" },
+    { "Sku": "CRS", "Jumlah": "1", "HargaSatuan": "25000" }
+  ],
+  "Promo": [ { "Jenis": "DiskonTetapItem", "Sku": "EKS", "Jumlah": "6000" } ],
+  "Pembayaran": { "Metode": "Tunai" },
+  "Harapan": {
+    "Subtotal": "55000.00",
+    "BiayaLayanan": "2750.00",
+    "TotalPajak": "5775.00",
+    "Pembulatan": "-25.00",
+    "TotalAkhir": "63500.00"
+  }
+}

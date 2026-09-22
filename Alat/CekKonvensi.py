@@ -24,7 +24,8 @@ Pengecualian = json.load(open(os.path.join(AkarRepo, "Alat", "KonvensiPengecuali
 PolaPascal = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 PolaKebab = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 PolaParamRute = re.compile(r"^\{[a-z][A-Za-z0-9]*\??\}$")
-KataUang = re.compile(r"(Harga|Total|Uang|Diskon|Pajak|Bayar|Kembalian|Subtotal|Saldo|Hpp|Biaya|Nominal)")
+# Tanpa membedakan huruf besar/kecil: variabel lokal camelCase (hargaJual, totalBayar) juga harus tertangkap.
+KataUang = re.compile(r"(Harga|Total|Uang|Diskon|Pajak|Bayar|Kembalian|Subtotal|Saldo|Hpp|Biaya|Nominal)", re.IGNORECASE)
 
 FolderAbaikan = {".git", "vendor", "node_modules", "build", ".dart_tool", "storage", "bootstrap", "public",
                  ".idea", ".vscode", "coverage", "Pods", ".gradle", "ephemeral"}

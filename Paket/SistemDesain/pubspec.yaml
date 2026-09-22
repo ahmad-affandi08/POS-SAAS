@@ -1,0 +1,33 @@
+name: sistem_desain
+description: Token desain, tema, dan font bundel untuk aplikasi Kasir & Pemilik (PRD §17.5, §17.6).
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  inti:
+    path: ../Inti
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/fonts/LisensiOFL.txt
+  fonts:
+    - family: AtkinsonHyperlegibleNext
+      fonts:
+        - asset: assets/fonts/AtkinsonHyperlegibleNextVariable.ttf
+        - asset: assets/fonts/AtkinsonHyperlegibleNextVariableMiring.ttf
+          style: italic
+    - family: AtkinsonHyperlegibleMono
+      fonts:
+        - asset: assets/fonts/AtkinsonHyperlegibleMonoVariable.ttf

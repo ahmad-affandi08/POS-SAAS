@@ -65,7 +65,7 @@ python3 Alat/PecahPrd.py --cek          # Dokumen/ sinkron dengan PRD.md
 Perintah per stack (aktif setelah scaffolding Fase 0; lihat `.claude/rules/`):
 - Backend: `composer tes:cepat`, `composer analisis` (Pint, Larastan, Pest termasuk `arch()`)
 - Web: `npm run periksa` (tsc, ESLint, Vitest)
-- Flutter: `melos run periksa` (dart format, flutter analyze, test)
+- Flutter: `melos run periksa` dari akar (dart format, flutter analyze, test; sekali: `dart pub global activate melos 7.8.2`)
 
 ## Peta repo (target, lihat §13.0)
 

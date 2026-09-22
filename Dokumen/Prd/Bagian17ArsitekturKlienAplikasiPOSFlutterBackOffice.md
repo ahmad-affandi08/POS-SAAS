@@ -56,7 +56,7 @@ Aplikasi/Kasir/                     # paket Dart: kasir
 
 Paket/MesinKasir/                   # paket Dart: mesin_kasir (Dart murni, tanpa import Flutter)
 ├── lib/  KalkulatorKeranjang.dart, KalkulatorPajak.dart, MesinPromo.dart, Pembulatan.dart
-└── test/ VektorUjiTes.dart         # membaca Spesifikasi/VektorUjiKalkulasi/*.json
+└── test/ VektorUji_test.dart       # membaca Spesifikasi/VektorUjiKalkulasi/*.json
 ```
 
 - `MesinKasir` adalah paket Dart murni. Ia diuji dengan `dart test` di CI tanpa emulator, memakai test vector yang sama dengan Pest (PHP).

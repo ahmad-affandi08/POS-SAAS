@@ -16,3 +16,4 @@ paths:
 - Font di-bundle (bukan paket `google_fonts`). Ukuran & warna dari token `SistemDesain`. Target sentuh ≥ 48dp.
 - Hardware lewat abstraksi `Paket/AdaptorPerangkat` (`TransportPrinter`, `KemampuanPerangkat`). Kode fitur tidak memanggil SDK vendor langsung.
 - Test: unit (MesinKasir, repositori, sinkron), widget/golden, integration (alur jual online & offline).
+- File test berakhiran `_test.dart` (syarat `flutter test`), misal `test/Nilai/Uang_test.dart`. Pengecekan: `melos run periksa` dari akar repo (sekali: `dart pub global activate melos 7.8.2`).

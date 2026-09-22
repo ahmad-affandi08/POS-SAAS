@@ -1,0 +1,16 @@
+name: mesin_kasir
+description: Engine kalkulasi keranjang, promo, pajak, dan pembulatan (PRD §8 F-07). Dart murni, wajib lolos test vector bersama.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  inti:
+    path: ../Inti
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

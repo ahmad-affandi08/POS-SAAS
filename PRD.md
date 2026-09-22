@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.9 |
+| Versi | 1.10 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -30,6 +30,7 @@
 | 1.7 | Keputusan D-08: font resmi **Atkinson Hyperlegible Next** (UI) + **Atkinson Hyperlegible Mono** (kode & nomor dokumen), skala tipografi dua mode kepadatan, aturan pemakaian, dan implementasi web/Flutter (§17.5). |
 | 1.8 | Keputusan D-09: **Pedoman UI/UX & Design System** (§17.6): prinsip "alat kerja, bukan brosur", arah per klien, token warna (lolos WCAG AA), bentuk & kepadatan, pola layar, keadaan wajib, microcopy, visualisasi data, aksesibilitas, proses desain, dan checklist review anti-slop. |
 | 1.9 | Keputusan D-10: **Tata kelola AI agent** (§23.4): `CLAUDE.md`, `.claude/rules/`, hook, skill `/mulai-flow` & `/cek-dod`, subagent `penjaga-konvensi`, `Alat/CekKonvensi.py`, `Dokumen/` hasil generate, CI kepatuhan, CODEOWNERS, template PR. Pengecualian penamaan untuk file yang namanya diwajibkan alat ditambahkan (§13.7.4). |
+| 1.10 | Penyelarasan hasil scaffolding Fase 0: macro `UuidPublik()` (§13.7.4), test Dart berakhiran `_test.dart` (§13.7.4, §17.2.1), ruang kerja pub + melos di `pubspec.yaml` akar (§13.7.4). Tidak ada perubahan flow. |
 
 ---
 
@@ -2131,7 +2132,7 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 | Area | Pengecualian | Alasan |
 |---|---|---|
 | Folder root Laravel & Composer | `app/`, `bootstrap/`, `config/`, `database/`, `routes/`, `resources/`, `public/`, `storage/`, `tests/`, `vendor/`, `lang/`, `app/Http/`, `app/Providers/`, `app/Console/` | Konvensi & path bawaan Laravel/Composer/Artisan |
-| File konfigurasi | `composer.json`, `package.json`, `vite.config.ts`, `tsconfig.json`, `phpunit.xml`, `.env`, `config/*.php`, `routes/web.php`, `routes/api.php`, `routes/console.php`, `bootstrap/app.php`, `pubspec.yaml`, `analysis_options.yaml`, `build.yaml`, `l10n.yaml`, `melos.yaml`, `.github/workflows/*` | Nama dicari otomatis oleh alat masing-masing. File route tambahan boleh PascalCase: `routes/Pos.php`, `routes/Pemilik.php` |
+| File konfigurasi | `composer.json`, `package.json`, `vite.config.ts`, `tsconfig.json`, `phpunit.xml`, `.env`, `config/*.php`, `routes/web.php`, `routes/api.php`, `routes/console.php`, `bootstrap/app.php`, `pubspec.yaml`, `analysis_options.yaml`, `build.yaml`, `l10n.yaml`, `pubspec.lock`, `.github/workflows/*`, test Dart `*_test.dart` (akhiran wajib `flutter test`, misal `Uang_test.dart`) | Nama dicari otomatis oleh alat masing-masing. File route tambahan boleh PascalCase: `routes/Pos.php`, `routes/Pemilik.php` |
 | Method hook framework (PHP) | `up`, `down`, `handle`, `boot`, `register`, `rules`, `authorize`, `messages`, `toArray`, `casts`, `render`, `broadcastOn`, `via`, `toMail`, `__construct`, `__invoke` | Dipanggil otomatis oleh Laravel/PHP |
 | Method hook framework (Flutter/Dart) | `main`, `build`, `createState`, `initState`, `dispose`, `didChangeDependencies`, `toJson`, `fromJson`, `copyWith`, `==`, `hashCode`, `toString` | Dipanggil/digenerate oleh Dart, Flutter, freezed, json_serializable |
 | Hook React | Awalan `use` (camelCase): `useDaftarProduk`, `useKeranjang` | Aturan React Hooks & lint `react-hooks` mendeteksi hook dari awalan `use` |
@@ -2147,10 +2148,10 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 
 | Stack | Pengaturan |
 |---|---|
-| Laravel | `ModelDasar` (PK `Id`, `DibuatPada`/`DiubahPada`/`DihapusPada`, `getForeignKey()`), macro Blueprint `WaktuStandar()` & `IdTenant()`, relasi `belongsTo` selalu menyebut kolom eksplisit, `phpunit.xml` suffix test `Tes.php` (misal `SelesaikanPenjualanTes.php`), aturan Pint/PHPStan untuk nama method PascalCase |
+| Laravel | `ModelDasar` (PK `Id`, `DibuatPada`/`DiubahPada`/`DihapusPada`, `getForeignKey()`), macro Blueprint `WaktuStandar()`, `UuidPublik()` & `IdTenant()` (bukan `Uuid()`: nama method PHP tidak peka huruf besar sehingga bentrok dengan `uuid()` bawaan), relasi `belongsTo` selalu menyebut kolom eksplisit, `phpunit.xml` suffix test `Tes.php` (misal `SelesaikanPenjualanTes.php`), aturan Pint/PHPStan untuk nama method PascalCase |
 | spatie/laravel-data | Tidak memakai mapper `snake_case`. Properti DTO = nama kolom PascalCase, sehingga JSON API PascalCase |
 | React/TypeScript | Resolver Inertia diarahkan ke `./Halaman/**/*.tsx`, entry Vite `resources/js/Aplikasi.tsx`, alias `@/` ke `resources/js`, ESLint `@typescript-eslint/naming-convention` (function PascalCase, pengecualian `use*`), `components.json` shadcn diarahkan ke `Komponen/Ui` |
-| Flutter/Dart | `analysis_options.yaml`: nonaktifkan lint `file_names` dan `non_constant_identifier_names`. Drift `build.yaml`: `case_from_dart_to_sql: preserve`. `json_serializable`: `field_rename: none` (key JSON = nama field PascalCase). Flavor entrypoint `lib/UtamaDev.dart`, `lib/UtamaStaging.dart`, `lib/UtamaProduksi.dart` (fungsi `main()` di dalamnya tetap `main`) |
+| Flutter/Dart | `analysis_options.yaml`: nonaktifkan lint `file_names` dan `non_constant_identifier_names`. Drift `build.yaml`: `case_from_dart_to_sql: preserve`. `json_serializable`: `field_rename: none` (key JSON = nama field PascalCase). Flavor entrypoint `lib/UtamaDev.dart`, `lib/UtamaStaging.dart`, `lib/UtamaProduksi.dart` (fungsi `main()` di dalamnya tetap `main`). Satu ruang kerja pub (`workspace:`) di `pubspec.yaml` akar dengan satu `pubspec.lock`; skrip melos (`melos run periksa`) di bagian `melos:` pubspec akar |
 | MySQL | **Nama tabel case-sensitive di Linux** (Hostinger: `lower_case_table_names = 0`). Query harus memakai huruf besar/kecil persis. Lingkungan dev **wajib** MySQL Linux (Docker/WSL2), bukan MySQL bawaan Windows/macOS yang mengubah nama tabel jadi huruf kecil. CI punya test yang membandingkan `SHOW TABLES` dengan daftar nama PascalCase yang diharapkan |
 | Review kode | Checklist PR: nama baru mengikuti kamus istilah §13.7.1. Istilah baru ditambahkan ke kamus dulu |
 
@@ -2682,7 +2683,7 @@ Aplikasi/Kasir/                     # paket Dart: kasir
 
 Paket/MesinKasir/                   # paket Dart: mesin_kasir (Dart murni, tanpa import Flutter)
 ├── lib/  KalkulatorKeranjang.dart, KalkulatorPajak.dart, MesinPromo.dart, Pembulatan.dart
-└── test/ VektorUjiTes.dart         # membaca Spesifikasi/VektorUjiKalkulasi/*.json
+└── test/ VektorUji_test.dart       # membaca Spesifikasi/VektorUjiKalkulasi/*.json
 ```
 
 - `MesinKasir` adalah paket Dart murni. Ia diuji dengan `dart test` di CI tanpa emulator, memakai test vector yang sama dengan Pest (PHP).

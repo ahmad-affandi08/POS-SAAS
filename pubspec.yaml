@@ -1,0 +1,37 @@
+# Ruang kerja pub (Dart workspace) untuk seluruh aplikasi & paket Flutter (PRD §13.0, §17.2).
+# Satu pubspec.lock di akar. Pengecekan: `dart pub global activate melos 7.8.2` sekali, lalu `melos run periksa`.
+name: pos_saas_ruang_kerja
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - Paket/Inti
+  - Paket/MesinKasir
+  - Paket/SistemDesain
+  - Aplikasi/Kasir
+  - Aplikasi/Pemilik
+
+dev_dependencies:
+  melos: ^7.0.0
+
+melos:
+  scripts:
+    format:
+      description: Cek format Dart (lebar 120).
+      run: dart format --line-length 120 --set-exit-if-changed Paket Aplikasi
+    analisis:
+      description: Analisis statis seluruh paket (fatal pada info).
+      run: flutter analyze --fatal-infos --fatal-warnings Paket Aplikasi
+    tes:
+      description: Test seluruh paket yang punya folder test.
+      exec: flutter test
+      packageFilters:
+        dirExists: test
+    periksa:
+      description: Format + analisis + test (sama dengan job CI Flutter).
+      steps:
+        - format
+        - analisis
+        - tes

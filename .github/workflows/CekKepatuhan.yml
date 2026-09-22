@@ -91,4 +91,19 @@ jobs:
       - name: Build produksi
         run: npm run build
 
-  # Job Flutter (dart format, flutter analyze, flutter test) ditambahkan bersama scaffolding Flutter.
+  flutter:
+    name: Flutter (format, analyze, test, vektor uji)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.5"
+          channel: stable
+          cache: true
+      - name: Pasang dependensi ruang kerja (sesuai pubspec.lock)
+        run: dart pub get --enforce-lockfile
+      - name: Pasang melos
+        run: dart pub global activate melos 7.8.2
+      - name: dart format + flutter analyze + test (Inti, MesinKasir + vektor uji, SistemDesain, Kasir, Pemilik)
+        run: melos run periksa

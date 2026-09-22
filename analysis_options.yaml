@@ -1,0 +1,40 @@
+# Analisis statis Dart untuk seluruh ruang kerja (PRD §13.7, §17.2). File penjaga: perubahan wajib disetujui pemilik produk.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/build/**"
+
+formatter:
+  page_width: 120
+
+linter:
+  rules:
+    # D-05: file & function PascalCase Bahasa Indonesia (dijaga Alat/CekKonvensi.py).
+    file_names: false
+    non_constant_identifier_names: false
+    # Nama folder PascalCase membuat import relatif lebih jelas daripada package: di dalam paket sendiri.
+    always_use_package_imports: false
+    prefer_relative_imports: true
+    avoid_print: true
+    avoid_dynamic_calls: true
+    prefer_final_locals: true
+    prefer_final_fields: true
+    prefer_const_constructors: true
+    require_trailing_commas: false
+    unawaited_futures: true
+    discarded_futures: true
+    only_throw_errors: true
+    avoid_double_and_int_checks: true
+    use_named_constants: true
+    public_member_api_docs: false
