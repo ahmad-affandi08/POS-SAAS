@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.3 |
+| Versi | 1.4 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -24,6 +24,7 @@
 | 1.1 | **Aplikasi POS (kasir, KDS, operasional gudang) dibangun dengan Flutter** untuk iOS, Android, dan Desktop. Back-office tetap web (Laravel + Inertia React). API sinkron POS berbasis token perangkat. Offline memakai SQLite (Drift). Integrasi hardware native. Mode LAN lokal ditambahkan. |
 | 1.2 | Keputusan pemilik produk: **platform POS = Android, iOS/iPadOS, Windows** (Linux & macOS tidak ditargetkan). Kanal distribusi desktop **ditentukan setelah sistem stabil**. **Semua perangkat POS Android all-in-one** didukung lewat lapisan adaptor vendor. **Aplikasi Mobile Owner** terpisah (Flutter, Android & iOS). |
 | 1.3 | Keputusan D-05: **nama database (tabel, kolom, indeks), folder, file, dan function/method memakai Bahasa Indonesia dengan PascalCase** di semua stack. Konvensi, kamus istilah, pengecualian framework, dan konfigurasi di §13.7. Skema §15, struktur folder, contoh kode, dan nama enum/status diperbarui. |
+| 1.4 | Keputusan D-06: **URL/endpoint memakai Bahasa Indonesia** (huruf kecil, kebab-case). Semua rute web, API POS, API Pemilik (`/api/pemilik/v1`), API publik, parameter query, dan scope token diperbarui. |
 
 ---
 
@@ -387,7 +388,7 @@ flowchart TD
 
 **Aturan Bisnis:**
 - BR-00.1 Email dan nomor WA unik per user. Satu user **boleh** menjadi anggota beberapa tenant (konsultan/akuntan), dengan pemilih tenant setelah login.
-- BR-00.2 Slug tenant unik, dibuat otomatis dari nama usaha. Dipakai untuk URL toko online `/{slug}`.
+- BR-00.2 Slug tenant unik, dibuat otomatis dari nama usaha. Dipakai untuk URL toko online `/{slugTenant}`.
 - BR-00.3 Trial tidak butuh kartu kredit. Di akhir trial, tenant turun ke paket Gratis (fitur terbatas), bukan dihapus.
 - BR-00.4 Rate-limit registrasi per IP (anti-spam) + CAPTCHA (Cloudflare Turnstile).
 
@@ -641,7 +642,7 @@ stateDiagram-v2
 9. Pembulatan          = pembulatan tunai (mis. ke Rp 100 terdekat), dicatat terpisah
 10. TotalAkhir         = Subtotal − DiskonPesanan + BiayaLayanan + TotalPajak(eksklusif) + Pembulatan
 ```
-- Aritmatika uang memakai **decimal presisi tetap** (bukan float/`double`) di server (brick/math) dan di aplikasi POS (paket Dart `decimal`). Engine kalkulasi ada dua implementasi, **PHP (server)** dan **Dart (aplikasi POS, offline)**, yang wajib lulus **test vector JSON** yang sama (Lampiran D). Web publik (self-order/toko online) **tidak** menghitung sendiri. Web publik meminta kalkulasi ke endpoint server (`/cart/quote`).
+- Aritmatika uang memakai **decimal presisi tetap** (bukan float/`double`) di server (brick/math) dan di aplikasi POS (paket Dart `decimal`). Engine kalkulasi ada dua implementasi, **PHP (server)** dan **Dart (aplikasi POS, offline)**, yang wajib lulus **test vector JSON** yang sama (Lampiran D). Web publik (self-order/toko online) **tidak** menghitung sendiri. Web publik meminta kalkulasi ke endpoint server (`/{slugTenant}/keranjang/hitung`).
 
 **Aturan Bisnis:**
 - BR-07.1 Nomor dokumen: `{PREFIX}/{OUTLET}/{YYMMDD}/{DEVICE}-{SEQ}`, misal `INV/JKT1/260922/K02-0042`. Sekuens per perangkat agar aman offline.
@@ -803,7 +804,7 @@ promo:
 ### F-17 · Online Order & Self-Order
 
 - **Self-Order QR Meja (X12):** QR unik per meja → web ringan (tanpa login) → menu (stok & ketersediaan real-time) → keranjang → catatan → bayar QRIS dinamis **atau** "bayar di kasir" → order masuk ke POS (status `MenungguKonfirmasi` jika belum bayar) dan KDS.
-- **Toko Online (Web Store):** `/{slug}` katalog, keranjang, checkout, pilih ambil sendiri/kirim, pembayaran gateway, status pesanan. SEO dasar.
+- **Toko Online (Web Store):** `/{slugTenant}` katalog, keranjang, checkout, pilih ambil sendiri/kirim, pembayaran gateway, status pesanan. SEO dasar.
 - **Integrasi Ojol & Marketplace (fase 3+):** sinkron menu & stok, order masuk otomatis (bergantung ketersediaan API mitra). Sebelum API tersedia: input manual sebagai channel dengan harga channel (X8) + laporan settlement.
 - BR-17.1 Order online memakai "shift virtual" harian per outlet. Pembayaran online masuk ke akun clearing gateway.
 - BR-17.2 Menu dapat ditandai habis (86) langsung dari aplikasi POS/KDS, segera tercermin di self-order web (TanStack Query polling 15–30 detik).
@@ -1074,7 +1075,7 @@ Prioritas: **P0** = MVP wajib, **P1** = penting (fase 2), **P2** = pembeda (fase
 | SLS-02 | Pre-order & DP | P1 |
 | SLS-03 | KDS & printer dapur per station | P1 |
 | SLS-04 | Self-order QR meja | P1 |
-| SLS-05 | Toko online `/{slug}` | P2 |
+| SLS-05 | Toko online `/{slugTenant}` | P2 |
 | SLS-06 | Pengiriman & kurir internal | P2 |
 | SLS-07 | Booking & antrian (jasa) | P1 |
 | SLS-08 | Work order (bengkel/servis) | P2 |
@@ -1304,7 +1305,7 @@ flowchart LR
       POS1 -. LAN lokal (fase 3) .- KDS
     end
     subgraph Hostinger
-      API[Laravel 13 API<br/>/api/pos/v1, /api/v1]
+      API[Laravel 13 API<br/>/api/pos/v1, /api/pemilik/v1, /api/v1]
       WEB[Back-office Web<br/>Inertia React]
       PUB[Web Publik<br/>self-order, toko online]
       DB[(MySQL 8)]
@@ -1337,7 +1338,7 @@ flowchart LR
 ├── Paket/
 │   ├── MesinKasir/              # Dart murni: kalkulator keranjang, pajak, promo, pembulatan · mesin_kasir
 │   ├── Inti/                    # Uang, format Rupiah, ULID, galat, log                        · inti
-│   ├── KlienApi/                # Klien API (dio + DTO freezed) /api/pos/v1 & /api/owner/v1    · klien_api
+│   ├── KlienApi/                # Klien API (dio + DTO freezed) /api/pos/v1 & /api/pemilik/v1    · klien_api
 │   ├── SistemDesain/            # Tema, token, widget bersama (TeksUang, LencanaStatus, grafik) · sistem_desain
 │   └── AdaptorPerangkat/        # Adaptor hardware: printer, laci, layar pelanggan, scanner      · adaptor_perangkat
 ├── Spesifikasi/
@@ -1512,30 +1513,33 @@ Implementasi:
 | Kasir, open bill, pembayaran, shift, struk | **Aplikasi Flutter** | Drift (SQLite) sebagai sumber data lokal + outbox, sinkron ke `/api/pos/v1` (§18) |
 | KDS, antrian dapur | **Aplikasi Flutter** (mode KDS) | Polling delta 5 detik + push sebagai pemicu. Mode LAN di fase 3 |
 | Operasional gudang (terima barang, transfer, opname via scan) | **Aplikasi Flutter** (mode Gudang) | Online-first dengan draft lokal. Posting saat online |
-| Dashboard owner, approval jarak jauh, notifikasi, aksi cepat | **Aplikasi Owner (Flutter)** | Online-first + cache lokal ringan (Drift) untuk dibuka cepat & dibaca saat sinyal lemah. `/api/owner/v1` |
+| Dashboard owner, approval jarak jauh, notifikasi, aksi cepat | **Aplikasi Owner (Flutter)** | Online-first + cache lokal ringan (Drift) untuk dibuka cepat & dibaca saat sinyal lemah. `/api/pemilik/v1` |
 | Navigasi halaman back-office, form CRUD, pengaturan | **Web (Inertia)** | Props dari controller, `useForm`, partial reload, deferred props |
-| Tabel laporan besar dengan filter/pagination server | **Web (TanStack Query)** | `placeholderData: keepPreviousData` + TanStack Table, endpoint `/internal/reports/*` |
+| Tabel laporan besar dengan filter/pagination server | **Web (TanStack Query)** | `placeholderData: keepPreviousData` + TanStack Table, endpoint `/internal/laporan/*` |
 | Data back-office yang di-polling (dashboard, notifikasi) | **Web (TanStack Query)** | `refetchInterval` adaptif |
 | Pencarian/autocomplete di back-office | **Web (TanStack Query)** | Debounce |
 | Self-order, toko online, struk digital | **Web publik (React ringan)** | TanStack Query. Kalkulasi harga lewat server |
 
-Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA stateful). Endpoint `/api/pos/v1/*` memakai **device token** (Bearer). Endpoint `/api/owner/v1/*` memakai **user token** (Sanctum, masa berlaku terbatas + refresh, dicabut saat logout/ganti password).
+Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA stateful). Endpoint `/api/pos/v1/*` memakai **device token** (Bearer). Endpoint `/api/pemilik/v1/*` memakai **user token** (Sanctum, masa berlaku terbatas + refresh, dicabut saat logout/ganti password).
 
 ### 13.6 Struktur Rute
 
 ```
 /                         Landing (marketing)
-/register, /login, ...    Auth
-/app/...                  Back-office (Inertia) — prefix per modul
-/download                 Halaman unduh aplikasi POS (link store + installer desktop)
-/internal/...             JSON untuk TanStack Query back-office (session auth)
-/api/pos/v1/...           API aplikasi POS Flutter (device token)
-/api/owner/v1/...         API Aplikasi Owner (user token)
-/api/v1/...               Public API (token)
-/webhooks/{provider}      Webhook masuk (signature verified)
-/{tenant_slug}            Toko online publik
-/{tenant_slug}/t/{table_token}  Self-order meja
-/admin/...                Super Admin
+/daftar, /masuk, /lupa-kata-sandi, ...   Autentikasi
+/kelola/...                     Back-office (Inertia), prefix per modul: /kelola/produk, /kelola/stok-opname, /kelola/laporan/penjualan
+/unduh                          Halaman unduh aplikasi POS & Owner (link store + installer Windows)
+/internal/...                   JSON untuk TanStack Query back-office (session auth)
+/api/pos/v1/...                 API Aplikasi POS Flutter (device token)
+/api/pemilik/v1/...             API Aplikasi Owner (user token)
+/api/v1/...                     API publik (token)
+/webhook/{penyedia}             Webhook masuk (signature diverifikasi)
+/sehat                          Health check (dikonfigurasi di bootstrap/app.php, pengganti /up)
+/s/{kodeStruk}                  Struk digital
+/{slugTenant}                   Toko online publik
+/{slugTenant}/meja/{tokenMeja}  Self-order meja
+/{slugTenant}/reservasi         Booking layanan
+/admin/...                      Super Admin
 ```
 
 ### 13.7 Konvensi Penamaan: Bahasa Indonesia + PascalCase (Keputusan D-05)
@@ -1559,6 +1563,10 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 | Migration | Stempel waktu Laravel + PascalCase | `2026_10_01_000000_BuatTabelPenjualan.php` |
 | Key JSON API & properti DTO | PascalCase, **sama persis dengan nama kolom** agar tidak ada lapisan pemetaan | `{"TotalAkhir": "63500.00", "IdOutlet": "01J…"}` |
 | Variabel lokal & parameter | camelCase Bahasa Indonesia | `$totalBayar`, `jumlahItem` |
+| **URL / endpoint** (D-06) | Bahasa Indonesia, **huruf kecil kebab-case**, kata benda tunggal, aksi sebagai sub-segmen kata kerja | `/kelola/produk`, `/api/pos/v1/sinkron/kirim`, `/api/pemilik/v1/persetujuan/{id}/setujui` |
+| Parameter route & query | Parameter route camelCase (`{idOutlet}`, `{slugTenant}`), query huruf kecil (`?sejak=`, `?kata=`, `saring[...]`, `urut=`) | `/internal/outlet/{idOutlet}/perangkat?sejak=…` |
+| Nama route Laravel | Titik + kebab-case Indonesia | `kelola.produk.daftar`, `pos.sinkron.kirim` |
+| Scope token API | `{objek}:{aksi}` | `produk:baca`, `stok:tulis` |
 
 **Kamus istilah** (satu istilah untuk satu konsep, dipakai konsisten di tabel, class, dan UI):
 
@@ -1695,7 +1703,7 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 | Tabel bawaan framework/paket | `migrations`, `jobs`, `job_batches`, `failed_jobs`, `cache`, `cache_locks`, `sessions`, `password_reset_tokens`, `personal_access_tokens`, tabel spatie (`roles`, `permissions`, `model_has_roles`, `activity_log`, dsb.) | Dikelola paket. Mengganti nama menambah risiko upgrade. Dapat ditinjau ulang kelak |
 | Kode hasil generate & vendor | `*.g.dart`, `*.freezed.dart`, provider Riverpod hasil generate, file shadcn/ui hasil CLI, tipe TS hasil generate | Dibuat ulang oleh alat. Tidak diedit manual |
 | Header HTTP & standar | `Idempotency-Key`, `Authorization`, `X-App-Version`, nama field OpenAPI standar | Standar protokol |
-| URL/endpoint | Mengikuti §13.6 & §16 (huruf kecil) | Belum termasuk keputusan D-05. Lihat §25 |
+| Bagian URL yang merupakan standar/akronim | `/api`, versi `/v1`, akronim `pos`, `kds`, `qris`, `otp`, serta segmen serapan `internal`, `admin`, `webhook`, `tenant`, `outlet` | Standar umum atau sudah menjadi kata serapan |
 
 #### 13.7.5 Konfigurasi agar Konvensi Berjalan
 
@@ -1770,7 +1778,7 @@ jobs:
       - ssh: ln -sfn Rilis/{Stempel} Aktif   # switch atomik
       - ssh: php artisan queue:restart
       - ssh: hapus rilis lama (simpan 5 terakhir)
-      - smoke test: curl /up (health check) → gagal = rollback symlink
+      - smoke test: curl /sehat (health check) → gagal = rollback symlink
 ```
 
 - **Zero-downtime:** switch symlink atomik + migrasi *expand/contract* (kolom baru nullable dulu, hapus kolom lama di rilis berikutnya).
@@ -1812,23 +1820,23 @@ Aplikasi POS dan Aplikasi Owner **tidak di-hosting di Hostinger**. Hostinger han
 
 | Platform | Build (CI) | Distribusi | Update |
 |---|---|---|---|
-| Android — POS | GitHub Actions (runner Linux) → **AAB** (Play) + **APK** (perangkat all-in-one tanpa Play Store) | Google Play (track internal → closed → production), APK di halaman `/download` dan **app store vendor** perangkat all-in-one (misal Sunmi Store) bila tersedia | Play in-app update. APK: cek versi via API + unduh |
+| Android — POS | GitHub Actions (runner Linux) → **AAB** (Play) + **APK** (perangkat all-in-one tanpa Play Store) | Google Play (track internal → closed → production), APK di halaman `/unduh` dan **app store vendor** perangkat all-in-one (misal Sunmi Store) bila tersedia | Play in-app update. APK: cek versi via API + unduh |
 | Android — Owner | Runner Linux → AAB | Google Play | Play in-app update |
 | iOS / iPadOS — POS & Owner | Runner **macOS** (GitHub Actions atau Codemagic) → IPA, code signing via fastlane match | **App Store** (TestFlight untuk beta) | App Store. Paksa update lewat `min_supported_version` |
-| Windows — POS | Runner **Windows** → installer bertanda tangan (MSIX dan/atau `.exe`) | **Selama pengembangan & beta:** unduhan langsung terbatas untuk tester. **Kanal produksi (Microsoft Store, unduhan langsung, atau keduanya) diputuskan setelah sistem stabil** | Selama beta: cek versi via `app-config` + unduh installer baru. Mekanisme final mengikuti kanal yang dipilih |
+| Windows — POS | Runner **Windows** → installer bertanda tangan (MSIX dan/atau `.exe`) | **Selama pengembangan & beta:** unduhan langsung terbatas untuk tester. **Kanal produksi (Microsoft Store, unduhan langsung, atau keduanya) diputuskan setelah sistem stabil** | Selama beta: cek versi via `konfigurasi-aplikasi` + unduh installer baru. Mekanisme final mengikuti kanal yang dipilih |
 
-> **Keputusan tertunda (D-01):** kanal distribusi & mekanisme update Windows ditetapkan setelah Fase 1 berjalan stabil. Arsitektur tidak bergantung pada pilihan ini: aplikasi hanya membaca `app-config` (versi terbaru, `min_supported_version`, `download_url`).
+> **Keputusan tertunda (D-01):** kanal distribusi & mekanisme update Windows ditetapkan setelah Fase 1 berjalan stabil. Arsitektur tidak bergantung pada pilihan ini: aplikasi hanya membaca `konfigurasi-aplikasi` (versi terbaru, `min_supported_version`, `download_url`).
 
 **Kebijakan versi:**
 - Versi semantik `MAJOR.MINOR.PATCH+BUILD`. Setiap rilis membawa `VersiSkemaSinkron`.
-- Endpoint `GET /api/pos/v1/app-config` mengembalikan `latest_version`, `min_supported_version`, dan feature flag remote per platform.
+- Endpoint `GET /api/pos/v1/konfigurasi-aplikasi` mengembalikan `latest_version`, `min_supported_version`, dan feature flag remote per platform.
 - Aplikasi di bawah `min_supported_version` **tetap boleh mengirim outbox yang tertunda** (agar tidak kehilangan transaksi), lalu mengunci layar jual sampai diperbarui.
 - **Update tidak boleh dipasang saat ada shift terbuka dengan outbox belum terkirim** (aplikasi menunda dan mengingatkan).
 - Rilis bertahap (staged rollout) 10% → 50% → 100% di Play Store. Di Windows, lewat kanal `Beta`/`Stabil` pada tabel `RilisAplikasi` (mekanisme final mengikuti D-02).
 
 **Biaya & akun yang perlu disiapkan:** Google Play Console (sekali bayar), Apple Developer Program (tahunan), sertifikat code signing Windows (tahunan), proyek Firebase (FCM), runner macOS di CI (menit berbayar, dibutuhkan untuk build iOS), serta akun developer di app store vendor perangkat all-in-one bila dipakai.
 
-Binary installer (puluhan MB) sebaiknya disimpan di **GitHub Releases** atau object storage (R2/S3-compatible), bukan di disk Hostinger, agar tidak menghabiskan kuota inode/bandwidth. Halaman `/download` dan `app-config` cukup menautkannya.
+Binary installer (puluhan MB) sebaiknya disimpan di **GitHub Releases** atau object storage (R2/S3-compatible), bukan di disk Hostinger, agar tidak menghabiskan kuota inode/bandwidth. Halaman `/unduh` dan `konfigurasi-aplikasi` cukup menautkannya.
 
 ---
 
@@ -2045,13 +2053,13 @@ erDiagram
 |---|---|---|---|---|
 | Internal | `/internal/*` | Sesi + CSRF (Sanctum stateful) | Back-office web & web publik {{APP}} (TanStack Query) | Tidak diversi, berubah bersama frontend |
 | POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Cashier-Id` + `Idempotency-Key` + `X-App-Version` | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Sync-Schema`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
-| Owner | `/api/owner/v1/*` | **User token** (Sanctum, berumur terbatas + refresh) | Aplikasi Owner Flutter | Berversi URL, kompatibel mundur 2 versi minor aplikasi (§17.3.4) |
-| Publik | `/api/v1/*` | Sanctum Personal Access Token dengan scope (`products:read`, `sales:read`, `stock:write`, ...) | Integrasi pihak ketiga | Semantic, deprecation ≥ 6 bulan |
+| Owner | `/api/pemilik/v1/*` | **User token** (Sanctum, berumur terbatas + refresh) | Aplikasi Owner Flutter | Berversi URL, kompatibel mundur 2 versi minor aplikasi (§17.3.4) |
+| Publik | `/api/v1/*` | Sanctum Personal Access Token dengan scope (`produk:baca`, `penjualan:baca`, `stok:tulis`, ...) | Integrasi pihak ketiga | Semantic, deprecation ≥ 6 bulan |
 
 ### 16.2 Konvensi
 
 - Key JSON **PascalCase Bahasa Indonesia, sama dengan nama kolom** (§13.7), tanggal ISO-8601 UTC, uang sebagai **string desimal** (`"15000.00"`) agar tidak kehilangan presisi.
-- Pagination berbasis cursor untuk list besar. Filter mengikuti gaya `filter[Status]=Lunas&sort=-DibuatPada` (spatie/laravel-query-builder).
+- Pagination berbasis cursor untuk list besar. Filter mengikuti gaya `saring[Status]=Lunas&urut=-DibuatPada&sertakan=Detail` (spatie/laravel-query-builder, nama parameter `filter`/`sort`/`include` diganti lewat `config/query-builder.php`).
 - Error format seragam:
   ```json
   { "Galat": { "Kode": "StokTidakCukup", "Pesan": "Stok Kopi Susu tidak cukup", "Detail": { "UuidProduk": "...", "Tersedia": "2.0000" } } }
@@ -2062,18 +2070,18 @@ erDiagram
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/api/pos/v1/devices/activate` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet |
-| GET | `/api/pos/v1/app-config` | Versi terbaru, `min_supported_version`, feature flag remote, konfigurasi outlet |
-| GET | `/api/pos/v1/bootstrap` | Paket data awal (dapat berupa file JSON terkompresi gzip untuk katalog besar): produk, harga, modifier, pajak, promo aktif, metode bayar, meja, pengaturan, staf + hash PIN, pelanggan yang sering datang (terbatas) |
-| GET | `/api/pos/v1/changes?since={cursor}` | Delta perubahan master sejak cursor (produk/harga/promo/stok ringkas/86/staf) |
-| POST | `/api/pos/v1/sync/push` | Kirim batch outbox (shift, sale, payment, cash movement, void, retur, approval). Respons per item: `accepted` / `duplicate` / `rejected` + alasan |
-| POST | `/api/pos/v1/heartbeat` | Status perangkat, versi app, platform, jumlah outbox tertunda, status printer |
-| POST | `/api/pos/v1/push-token` | Daftarkan/perbarui token FCM perangkat |
-| GET | `/api/pos/v1/customers/search?q=` | Cari pelanggan di server (online) |
-| POST | `/api/pos/v1/payments/qris` · `GET .../{id}` | Buat QRIS dinamis & cek status |
-| POST | `/api/pos/v1/approvals/remote` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
-| GET | `/api/pos/v1/kds/tickets?station=&since=` | Antrean tiket dapur (mode KDS) |
-| POST | `/api/pos/v1/warehouse/grn`, `/transfers`, `/opnames` | Operasi gudang dari aplikasi |
+| POST | `/api/pos/v1/perangkat/aktivasi` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet |
+| GET | `/api/pos/v1/konfigurasi-aplikasi` | Versi terbaru, `min_supported_version`, feature flag remote, konfigurasi outlet |
+| GET | `/api/pos/v1/data-awal` | Paket data awal (dapat berupa file JSON terkompresi gzip untuk katalog besar): produk, harga, modifier, pajak, promo aktif, metode bayar, meja, pengaturan, staf + hash PIN, pelanggan yang sering datang (terbatas) |
+| GET | `/api/pos/v1/perubahan?sejak={kursor}` | Delta perubahan master sejak cursor (produk/harga/promo/stok ringkas/86/staf) |
+| POST | `/api/pos/v1/sinkron/kirim` | Kirim batch outbox (shift, sale, payment, cash movement, void, retur, approval). Respons per item: `accepted` / `duplicate` / `rejected` + alasan |
+| POST | `/api/pos/v1/detak` | Status perangkat, versi app, platform, jumlah outbox tertunda, status printer |
+| POST | `/api/pos/v1/token-notifikasi` | Daftarkan/perbarui token FCM perangkat |
+| GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
+| POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
+| POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
+| GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |
+| POST | `/api/pos/v1/gudang/penerimaan-barang`, `/gudang/transfer-stok`, `/gudang/stok-opname` | Operasi gudang dari aplikasi |
 
 **Kontrak API** didokumentasikan otomatis dalam OpenAPI (`Spesifikasi/OpenApi/PosV1.yaml`, dihasilkan Scramble di CI). Model DTO Dart di-generate/diverifikasi dari spesifikasi tersebut. CI gagal jika kontrak berubah tanpa kenaikan versi.
 
@@ -2312,7 +2320,7 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 │   │   ├── Autentikasi/  PilihTenant/  Dasbor/  Laporan/  Persetujuan/
 │   │   ├── Notifikasi/  StokCepat/  PromoCepat/  Pengeluaran/
 │   │   ├── Perangkat/  Karyawan/  Langganan/  Pengaturan/
-│   └── Data/           # Repositori → Paket/KlienApi (/api/owner/v1), cache Drift ringan
+│   └── Data/           # Repositori → Paket/KlienApi (/api/pemilik/v1), cache Drift ringan
 └── test/ integration_test/
 ```
 
@@ -2322,20 +2330,20 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 - **Push:** token FCM per perangkat user disimpan di tabel `PerangkatPengguna`. Notifikasi approval membawa deep link ke layar persetujuan.
 - **Batas cakupan:** pengaturan berat (import, COA, pajak, template sektor, penomoran) tetap di back-office web. Aplikasi menautkan ke halaman web terkait bila perlu.
 
-#### 17.3.4 Endpoint `/api/owner/v1` (ringkas)
+#### 17.3.4 Endpoint `/api/pemilik/v1` (ringkas)
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/auth/login`, `/auth/otp/verify`, `/auth/refresh`, `/auth/logout` | Autentikasi |
-| GET | `/me`, `/tenants`, `/outlets` | Profil, pilihan tenant & outlet |
-| GET | `/dashboard?outlet=&date=` | Kartu KPI + grafik per jam |
-| GET | `/reports/{name}?filters` | Laporan ringkas |
-| GET/POST | `/approvals`, `/approvals/{id}/approve`, `/approvals/{id}/reject` | Approval jarak jauh |
-| GET/PATCH | `/notifications`, `/notification-settings` | Notifikasi |
-| GET/PATCH | `/products/{id}` (harga, 86), `/promotions/{id}` (aktif/nonaktif) | Aksi cepat |
-| POST | `/expenses` | Pengeluaran + foto nota |
-| GET/POST | `/devices`, `/devices/{id}/revoke` | Status & cabut perangkat POS |
-| POST | `/push-token` | Daftar token FCM |
+| POST | `/autentikasi/masuk`, `/autentikasi/otp/verifikasi`, `/autentikasi/perbarui-token`, `/autentikasi/keluar` | Autentikasi |
+| GET | `/saya`, `/tenant`, `/outlet` | Profil, pilihan tenant & outlet |
+| GET | `/dasbor?outlet=&tanggal=` | Kartu KPI + grafik per jam |
+| GET | `/laporan/{nama}?saring[...]` | Laporan ringkas |
+| GET/POST | `/persetujuan`, `/persetujuan/{id}/setujui`, `/persetujuan/{id}/tolak` | Approval jarak jauh |
+| GET/PATCH | `/notifikasi`, `/pengaturan-notifikasi` | Notifikasi |
+| GET/PATCH | `/produk/{id}` (harga, 86), `/promo/{id}` (aktif/nonaktif) | Aksi cepat |
+| POST | `/pengeluaran` | Pengeluaran + foto nota |
+| GET/POST | `/perangkat`, `/perangkat/{id}/cabut` | Status & cabut perangkat POS |
+| POST | `/token-notifikasi` | Daftar token FCM |
 
 #### 17.3.5 Target Kualitas
 
@@ -2384,7 +2392,7 @@ export const KunciKueri = {
 export function useStatusPerangkat(idOutlet: string) {
   return useQuery({
     queryKey: KunciKueri.Perangkat(idOutlet),
-    queryFn: () => KlienApi.Ambil(`/internal/outlets/${idOutlet}/devices`),
+    queryFn: () => KlienApi.Ambil(`/internal/outlet/${idOutlet}/perangkat`),
     refetchInterval: () => (document.hidden ? 120_000 : 30_000),
   });
 }
@@ -2420,8 +2428,8 @@ flowchart LR
       OB --> SYNC[Sync Service<br/>isolate/timer]
       PULL[Delta Puller] --> DB
     end
-    SYNC -- POST /api/pos/v1/sync/push + Idempotency-Key --> API[Laravel]
-    PULL -- GET /api/pos/v1/changes?since --> API
+    SYNC -- POST /api/pos/v1/sinkron/kirim + Idempotency-Key --> API[Laravel]
+    PULL -- GET /api/pos/v1/perubahan?sejak --> API
     API -- push pemicu --> FCM[FCM/APNs] -.-> PULL
     API --> MY[(MySQL)]
 ```
@@ -2543,7 +2551,7 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.sc
 
 ### 20.3 Keandalan & Observabilitas
 
-- Health check `/up`, uptime monitor eksternal (ping tiap 1 menit).
+- Health check `/sehat`, uptime monitor eksternal (ping tiap 1 menit).
 - Error tracking (Sentry) dengan konteks `IdTenant`, `IdPerangkat`, dan tanpa PII berlebih.
 - Log terstruktur harian, retensi 14 hari.
 - Metrik bisnis internal: transaksi/menit, antrean outbox global, job gagal, keterlambatan queue (umur job tertua). Alert jika job tertua > 5 menit (indikasi cron macet).
@@ -2680,7 +2688,7 @@ Urutan mengikuti flow:
 - Smart restock & forecast (X6), menu engineering, analisis ABC, insight otomatis mingguan ke owner.
 - Open API v1 + webhook + portal developer (X7).
 - Konsinyasi (X9), landed cost, rekonsiliasi bank, aset tetap & penyusutan.
-- Toko online `/{slug}`, pengiriman & kurir internal.
+- Toko online `/{slugTenant}`, pengiriman & kurir internal.
 - Work order bengkel, template sektor lengkap (apotek, elektronik, bahan bangunan, bakery).
 - Export e-Faktur/Coretax, laporan PPN.
 - Modul Salesman di aplikasi Flutter (kanvas & kunjungan, offline).
@@ -2772,7 +2780,7 @@ gantt
 | R4 | Selisih kalkulasi klien vs server | Sedang | Tinggi | Test vector bersama, server re-kalkulasi dan menyimpan selisih (jika ada) untuk investigasi. |
 | R5 | Perubahan regulasi pajak | Tinggi | Sedang | Tarif berbasis tanggal efektif, konsultan pajak sebagai reviewer, fitur tax rate dikelola Super Admin. |
 | R6 | Fragmentasi printer & hardware (merek, protokol, Bluetooth Classic tidak didukung iOS) | Tinggi | Sedang | Abstraksi `TransportPrinter`, Hardware Compatibility List, rekomendasi printer LAN/BLE untuk iPad, fallback printer sistem, lab uji perangkat. |
-| R13 | Review App Store/Play memperlambat rilis perbaikan kritis | Sedang | Tinggi | Feature flag remote (`app-config`), perbaikan logika bisnis sebisa mungkin di server, TestFlight/track internal untuk hotfix, rilis desktop via auto-updater lebih cepat. |
+| R13 | Review App Store/Play memperlambat rilis perbaikan kritis | Sedang | Tinggi | Feature flag remote (`konfigurasi-aplikasi`), perbaikan logika bisnis sebisa mungkin di server, TestFlight/track internal untuk hotfix, rilis desktop via auto-updater lebih cepat. |
 | R14 | Aplikasi versi lama masih beredar & tidak kompatibel dengan API baru | Tinggi | Tinggi | API POS berversi, kompatibel mundur 2 versi minor, `min_supported_version` + pengiriman outbox tetap diizinkan sebelum update wajib. |
 | R15 | Batasan background di iOS (sinkron tertunda saat aplikasi di latar) | Sedang | Sedang | Sinkron saat aplikasi aktif, anjuran kiosk/Guided Access untuk iPad kasir, indikator outbox tertunda, push sebagai pemicu. |
 | R16 | Beban tim lebih besar (dua basis kode klien: Flutter & React) | Sedang | Sedang | Back-office React fokus CRUD/laporan dengan shadcn/ui. Kalkulasi hanya di PHP & Dart (web publik hitung via server). Design token & OpenAPI bersama. |
@@ -2799,7 +2807,6 @@ gantt
 10. Apakah perlu dukungan **multi-mata uang** (turis/perbatasan)? Default: tidak.
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
-13. **Penamaan URL/endpoint API** (misal `/api/pos/v1/sync/push`): tetap seperti sekarang (huruf kecil, Inggris), atau diubah ke Bahasa Indonesia (misal `/api/pos/v1/sinkron/kirim`)? Tidak termasuk cakupan D-05.
 
 ### 25.1 Keputusan yang Sudah Diambil
 
@@ -2810,6 +2817,7 @@ gantt
 | D-03 | **Semua perangkat POS all-in-one** didukung melalui lapisan adaptor vendor + adaptor generik + Wizard Uji Perangkat + HCL | 22/09/2026 | §10.2 (POS-22), §17.2.5a, §22, §23 |
 | D-04 | **Aplikasi Mobile Owner tersendiri** (Flutter, Android & iOS) | 22/09/2026 | §1, §3.3 (X19), §10.2a, §13, §16.1, §17.3, §22 |
 | D-05 | **Database, folder, file, dan function memakai Bahasa Indonesia + PascalCase.** Turunan yang diputuskan untuk konsistensi: class/enum PascalCase, key JSON API = nama kolom (PascalCase), variabel lokal camelCase Indonesia. Pengecualian hanya untuk nama yang diwajibkan framework/alat (§13.7.4) | 22/09/2026 | §8 (status/enum), §12.2, §13.0–§13.4, §13.7, §14.3, §15, §16.2, §17, §18, §23, Lampiran D |
+| D-06 | **URL/endpoint memakai Bahasa Indonesia**, huruf kecil kebab-case, kata benda tunggal (§13.7.1). Prefix API Owner menjadi `/api/pemilik/v1` | 22/09/2026 | §11–§13.6, §13.7, §14, §16, §17.3.4, §17.4, §18, §20, Lampiran C |
 
 ---
 
@@ -2905,7 +2913,7 @@ Tunai                             100.000
 Kembali                            36.500
 ------------------------------------------
 Poin didapat: 6   Total poin: 128
-   Struk digital: kopisenja.{{app}}.id/r/8KQ2
+   Struk digital: kopisenja.{{app}}.id/s/8KQ2
         Terima kasih, sampai jumpa!
 ```
 
