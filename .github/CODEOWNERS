@@ -1,0 +1,21 @@
+# File penjaga aturan proyek: setiap perubahan wajib ditinjau pemilik produk.
+# Aktifkan "Require review from Code Owners" di branch protection main agar ini berlaku.
+
+/CLAUDE.md                          @ahmad-affandi08
+/.claude/                           @ahmad-affandi08
+/Alat/                              @ahmad-affandi08
+/.github/                           @ahmad-affandi08
+/PRD.md                             @ahmad-affandi08
+/Dokumen/                           @ahmad-affandi08
+/Spesifikasi/VektorUjiKalkulasi/    @ahmad-affandi08
+/Backend/tests/Arsitektur/          @ahmad-affandi08
+/Backend/phpstan.neon               @ahmad-affandi08
+/Backend/phpstan.neon.dist          @ahmad-affandi08
+/Backend/pint.json                  @ahmad-affandi08
+/Backend/rector.php                 @ahmad-affandi08
+/Backend/phpunit.xml                @ahmad-affandi08
+/Backend/eslint.config.js           @ahmad-affandi08
+/Backend/database/migrations/       @ahmad-affandi08
+**/analysis_options.yaml            @ahmad-affandi08
+**/dart_test.yaml                   @ahmad-affandi08
+/melos.yaml                         @ahmad-affandi08

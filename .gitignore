@@ -1,0 +1,17 @@
+# Rahasia
+.env
+.env.*
+!.env.example
+
+# Cache & hasil build
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+vendor/
+build/
+.dart_tool/
+coverage/
+
+# Pengaturan lokal Claude Code per developer
+.claude/settings.local.json

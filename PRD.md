@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.8 |
+| Versi | 1.9 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -29,6 +29,7 @@
 | 1.6 | Keputusan D-07: **Platform Pengelola** (konsol tim internal {{APP}}) dirancang sebagai lapisan pertama sebelum modul tenant: flow P-01 s.d. P-12 (§8 Bagian A), modul PGL (§10.0), arsitektur (§13.8), tabel (§15.3), peran internal (§19.3), dan Fase 0 roadmap direvisi. |
 | 1.7 | Keputusan D-08: font resmi **Atkinson Hyperlegible Next** (UI) + **Atkinson Hyperlegible Mono** (kode & nomor dokumen), skala tipografi dua mode kepadatan, aturan pemakaian, dan implementasi web/Flutter (§17.5). |
 | 1.8 | Keputusan D-09: **Pedoman UI/UX & Design System** (§17.6): prinsip "alat kerja, bukan brosur", arah per klien, token warna (lolos WCAG AA), bentuk & kepadatan, pola layar, keadaan wajib, microcopy, visualisasi data, aksesibilitas, proses desain, dan checklist review anti-slop. |
+| 1.9 | Keputusan D-10: **Tata kelola AI agent** (§23.4): `CLAUDE.md`, `.claude/rules/`, hook, skill `/mulai-flow` & `/cek-dod`, subagent `penjaga-konvensi`, `Alat/CekKonvensi.py`, `Dokumen/` hasil generate, CI kepatuhan, CODEOWNERS, template PR. Pengecualian penamaan untuk file yang namanya diwajibkan alat ditambahkan (§13.7.4). |
 
 ---
 
@@ -2137,6 +2138,7 @@ Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan me
 | Nama paket Dart (`name:` di pubspec) | huruf kecil + underscore: `kasir`, `pemilik`, `mesin_kasir`, `inti`, `klien_api`, `sistem_desain`, `adaptor_perangkat` | Syarat wajib Dart pub. **Folder** paket tetap PascalCase |
 | Folder wajib Flutter | `lib/`, `test/`, `integration_test/`, `android/`, `ios/`, `windows/`, `assets/` | Path bawaan Flutter tooling & platform |
 | Tabel bawaan framework/paket | `migrations`, `jobs`, `job_batches`, `failed_jobs`, `cache`, `cache_locks`, `sessions`, `password_reset_tokens`, `personal_access_tokens`, tabel spatie (`roles`, `permissions`, `model_has_roles`, `activity_log`, dsb.) | Dikelola paket. Mengganti nama menambah risiko upgrade. Dapat ditinjau ulang kelak |
+| Nama yang diwajibkan alat AI & GitHub | Nama skill & subagent Claude Code (`.claude/skills/mulai-flow/SKILL.md`, `.claude/agents/penjaga-konvensi.md`: huruf kecil + tanda hubung), `.github/pull_request_template.md`, `.github/CODEOWNERS`, `.github/workflows/` | Format nama ditentukan Claude Code & GitHub |
 | Kode hasil generate & vendor | `*.g.dart`, `*.freezed.dart`, provider Riverpod hasil generate, file shadcn/ui hasil CLI, tipe TS hasil generate | Dibuat ulang oleh alat. Tidak diedit manual |
 | Header HTTP standar | `Idempotency-Key`, `Authorization`, `Content-Type`, `X-Frame-Options`, `Referrer-Policy`, nama field OpenAPI standar | Standar protokol. Header **kustom** tetap berbahasa Indonesia (§13.7.1) |
 | Bagian URL yang merupakan standar/akronim | `/api`, versi `/v1`, akronim `pos`, `kds`, `qris`, `otp`, serta segmen serapan `internal`, `admin`, `webhook`, `tenant`, `outlet` | Standar umum atau sudah menjadi kata serapan |
@@ -3509,6 +3511,33 @@ gantt
 - [ ] Dokumentasi pengguna singkat (help center)
 - [ ] Demo di staging
 
+### 23.4 Tata Kelola AI Agent (Keputusan D-10)
+
+PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomatis adalah hukum.** Kepatuhan dijaga tiga lapis:
+
+| Lapis | Mekanisme | Lokasi |
+|---|---|---|
+| **1. Konteks** | Aturan emas ringkas (< 200 baris) dibaca setiap sesi | `CLAUDE.md` |
+| | Aturan per jenis file, dimuat hanya saat file yang cocok dibuka (`paths:`) | `.claude/rules/*.md` |
+| | Potongan PRD per bagian & per flow (hasil generate, bukan diedit) | `Dokumen/` via `Alat/PecahPrd.py` |
+| **2. Penjaga otomatis** | Pengecek konvensi: penamaan PascalCase/kebab-case, migrasi, float/double untuk uang, bypass scope tenant, URL & nama route | `Alat/CekKonvensi.py` (+ `Alat/KonvensiPengecualian.json`) |
+| | Hook `PreToolUse`: tolak edit `.env`, `Dokumen/`, lockfile, migrasi yang sudah di-merge; minta persetujuan manusia untuk file penjaga; tolak force push, `--no-verify`, `migrate:fresh` di luar test | `.claude/hooks/LindungiFile.py`, `CekPerintah.py` |
+| | Hook `PostToolUse`: format + cek konvensi setiap file yang diedit, pelanggaran dikirim balik ke agent | `.claude/hooks/CekSetelahEdit.py` |
+| | Hook `Stop`: agent tidak boleh menyatakan selesai selama konvensi/dokumen melanggar | `.claude/hooks/CekSebelumSelesai.py` |
+| | CI wajib hijau + CODEOWNERS untuk file penjaga | `.github/workflows/CekKepatuhan.yml`, `.github/CODEOWNERS` |
+| | (Fase 0) Larastan, Pint, ESLint, lint Dart, test arsitektur Pest `arch()`, invariant test, test vector, test isolasi tenant | `Backend/`, `Aplikasi/`, `Paket/` |
+| **3. Alur kerja** | Tugas terikat ID flow & BR, rencana dulu | skill `/mulai-flow` |
+| | Pemeriksaan DoD sebelum selesai | skill `/cek-dod` |
+| | Peninjau read-only yang terpisah dari penulis kode (menangkap kata Inggris, hard-code, perluasan cakupan) | subagent `penjaga-konvensi` |
+| | Template PR menyebut Flow, BR, D-xx, dan bukti pengecekan | `.github/pull_request_template.md` |
+
+**Aturan tata kelola:**
+- File penjaga (`CLAUDE.md`, `.claude/`, `Alat/`, `.github/`, `PRD.md`, `Dokumen/`, konfigurasi lint/test, test arsitektur, test vector) hanya diubah atas persetujuan manusia dan ditinjau CODEOWNERS.
+- Agent yang menemukan aturan bertabrakan atau tidak masuk akal **tidak menyimpang diam-diam**. Ia berhenti dan bertanya, atau menulis usulan di bagian "Usulan perubahan keputusan" pada PR.
+- Setiap aturan baru di PRD yang penting **wajib punya pengecek otomatis**. Aturan yang tidak bisa dicek dimasukkan ke daftar tinjauan subagent `penjaga-konvensi`.
+- Branch protection `main`: wajib PR, CI hijau, dan "Require review from Code Owners".
+- Batasan yang diketahui: pengecek hanya memeriksa **format** nama, bukan bahasanya. Kata Bahasa Inggris dalam nama berformat benar ditangkap oleh subagent peninjau dan review manusia.
+
 ---
 
 ## 24. Risiko & Mitigasi
@@ -3564,6 +3593,7 @@ gantt
 | D-07 | **Platform Pengelola** dibangun sebagai lapisan pertama (Fase 0) sebelum modul tenant: flow P-01 s.d. P-12, subdomain `pengelola.`, akun & guard terpisah, akses dukungan berizin | 22/09/2026 | §5.2, §6.2, §7, §8 Bagian A, §10.0, §13.6, §13.8, §15.3, §19.3, §20.2, §22, §24 |
 | D-08 | Font resmi: **Atkinson Hyperlegible Next** untuk UI dan **Atkinson Hyperlegible Mono** untuk kode, di semua klien | 22/09/2026 | §17.5, `Spesifikasi/TokenDesain` |
 | D-09 | Pedoman UI/UX & Design System: prinsip alat kerja, aturan warna 90/10, token warna, dua mode kepadatan, keadaan wajib, microcopy Indonesia, checklist anti-slop | 22/09/2026 | §17.6, `Spesifikasi/TokenDesain`, §23.3 |
+| D-10 | Tata kelola AI agent tiga lapis: konteks (`CLAUDE.md`, `.claude/rules/`, `Dokumen/`), penjaga otomatis (hook, `Alat/CekKonvensi.py`, CI, CODEOWNERS), alur kerja (`/mulai-flow`, `/cek-dod`, subagent peninjau, template PR) | 22/09/2026 | §23.4, §13.7.4 |
 
 ---
 

@@ -1,0 +1,28 @@
+<!-- DIBUAT OTOMATIS dari PRD.md oleh Alat/PecahPrd.py. JANGAN DIEDIT LANGSUNG: ubah PRD.md lalu jalankan ulang skrip. -->
+
+### P-01 · Setup Tim Internal & Peran
+
+**Tujuan:** Hanya orang yang berwenang yang bisa mengakses Platform Pengelola, dengan hak sesuai tugasnya.
+**Aktor:** Pemilik platform, Super Admin.
+**Pemicu:** Instalasi pertama sistem, atau penambahan anggota tim.
+
+**Langkah:**
+1. Super Admin pertama dibuat lewat perintah server `php artisan pengelola:buat-super-admin` (tidak ada halaman daftar publik untuk pengelola).
+2. Sistem membuat peran internal default (§19.3): Super Admin, Keuangan, Dukungan, Teknis, Konten & Legal, Mitra & Penjualan, Analis.
+3. Super Admin mengundang anggota tim lewat email. Undangan berlaku 48 jam.
+4. Anggota tim membuat kata sandi dan **wajib mengaktifkan 2FA** sebelum bisa membuka menu apa pun.
+5. Super Admin menetapkan peran. Satu orang boleh punya lebih dari satu peran.
+6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.
+
+**Aturan Bisnis:**
+- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat (sistem menolak menonaktifkan Super Admin terakhir kedua).
+- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional per peran.
+- BR-P01.3 Tidak ada akun bersama. Setiap aksi pengelola tercatat di `LogAuditPengelola` (siapa, apa, kapan, tenant terdampak, nilai lama/baru, alasan, IP).
+- BR-P01.4 Akun pengelola **terpisah** dari akun tenant (tabel `PenggunaPengelola`, guard `pengelola`). Email yang sama boleh dipakai di keduanya, tetapi sesinya tidak pernah tercampur.
+
+**AC:**
+```gherkin
+Given anggota tim baru menerima undangan dan membuat kata sandi
+When ia mencoba membuka menu Manajemen Tenant sebelum mengaktifkan 2FA
+Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
+```

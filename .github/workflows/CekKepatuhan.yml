@@ -1,0 +1,44 @@
+name: Cek Kepatuhan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  konvensi:
+    name: Konvensi & dokumen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Konvensi penamaan & pola terlarang (seluruh repo)
+        run: python3 Alat/CekKonvensi.py --semua
+      - name: Dokumen/ sinkron dengan PRD.md
+        run: python3 Alat/PecahPrd.py --cek
+      - name: Migrasi yang sudah ada di main tidak diubah
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          DIUBAH=$(git diff --name-only --diff-filter=MDR "origin/${{ github.base_ref }}"...HEAD -- 'Backend/database/migrations/' || true)
+          if [ -n "$DIUBAH" ]; then
+            echo "Migrasi yang sudah di-merge tidak boleh diubah/dihapus (CLAUDE.md #15):"
+            echo "$DIUBAH"
+            exit 1
+          fi
+      - name: Tidak ada test yang di-skip
+        run: |
+          if grep -rnE -- '->skip\(|markTestSkipped|skip: true|@Skip' Backend/tests Aplikasi Paket 2>/dev/null; then
+            echo "Test yang di-skip terdeteksi. Hapus skip atau minta persetujuan pemilik produk."
+            exit 1
+          fi
+
+  # Job backend, web, dan Flutter (Pint, Larastan, Pest + arch(), tsc, ESLint, Vitest,
+  # dart format, flutter analyze, flutter test) ditambahkan saat scaffolding Fase 0.
