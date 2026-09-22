@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.2 |
+| Versi | 1.3 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -23,6 +23,7 @@
 | 1.0 | Draf awal: POS sebagai PWA (React) |
 | 1.1 | **Aplikasi POS (kasir, KDS, operasional gudang) dibangun dengan Flutter** untuk iOS, Android, dan Desktop. Back-office tetap web (Laravel + Inertia React). API sinkron POS berbasis token perangkat. Offline memakai SQLite (Drift). Integrasi hardware native. Mode LAN lokal ditambahkan. |
 | 1.2 | Keputusan pemilik produk: **platform POS = Android, iOS/iPadOS, Windows** (Linux & macOS tidak ditargetkan). Kanal distribusi desktop **ditentukan setelah sistem stabil**. **Semua perangkat POS Android all-in-one** didukung lewat lapisan adaptor vendor. **Aplikasi Mobile Owner** terpisah (Flutter, Android & iOS). |
+| 1.3 | Keputusan D-05: **nama database (tabel, kolom, indeks), folder, file, dan function/method memakai Bahasa Indonesia dengan PascalCase** di semua stack. Konvensi, kamus istilah, pengecualian framework, dan konfigurasi di §13.7. Skema §15, struktur folder, contoh kode, dan nama enum/status diperbarui. |
 
 ---
 
@@ -277,7 +278,7 @@ Mode kasir menentukan layout layar POS (§17.4):
 
 ```
 Flow Bisnis (F-xx)
-   └─ State Machine dokumen (draft → posted → ...)
+   └─ State Machine dokumen (Draf → Diposting → ...)
         └─ Domain Events (SaleCompleted, GoodsReceived, ...)
              └─ Efek samping: Stok (ledger) + Jurnal (akuntansi) + Notifikasi
                   └─ Skema DB + Action class + Test
@@ -381,7 +382,7 @@ flowchart TD
 **Langkah:**
 1. Isi nama, email, no. WhatsApp, password, nama usaha.
 2. Verifikasi email (link) **atau** OTP WhatsApp.
-3. Sistem membuat: `tenant`, `user` (role Owner), `subscription` (status `trialing`, 14 hari, paket Pro), outlet default "Outlet Utama", gudang default.
+3. Sistem membuat baris di tabel `Tenant`, `Pengguna` (peran Owner), `Langganan` (status `Trial`, 14 hari, paket Pro), outlet default "Outlet Utama", gudang default.
 4. Redirect ke Onboarding Wizard (F-01).
 
 **Aturan Bisnis:**
@@ -390,20 +391,20 @@ flowchart TD
 - BR-00.3 Trial tidak butuh kartu kredit. Di akhir trial, tenant turun ke paket Gratis (fitur terbatas), bukan dihapus.
 - BR-00.4 Rate-limit registrasi per IP (anti-spam) + CAPTCHA (Cloudflare Turnstile).
 
-**State Machine `subscription`:**
+**State Machine `Langganan.Status`:**
 ```
-trialing → active → past_due → suspended → cancelled
-    ↘ free (jika trial habis tanpa bayar)
+Trial → Aktif → Tertunggak → Ditangguhkan → Berhenti
+    ↘ Gratis (jika trial habis tanpa bayar)
 ```
-- `past_due`: grace period 7 hari. Semua fitur jalan, tampil banner.
-- `suspended`: hanya bisa login, melihat laporan, export data, dan membayar tagihan. POS terkunci, kecuali tenant memilih turun ke paket Gratis (maks 1 outlet, 1 perangkat). Data tenant **tidak pernah dihapus** selama 12 bulan setelah `cancelled`, dan tenant selalu bisa export datanya.
+- `Tertunggak`: grace period 7 hari. Semua fitur jalan, tampil banner.
+- `Ditangguhkan`: hanya bisa login, melihat laporan, export data, dan membayar tagihan. POS terkunci, kecuali tenant memilih turun ke paket Gratis (maks 1 outlet, 1 perangkat). Data tenant **tidak pernah dihapus** selama 12 bulan setelah `Berhenti`, dan tenant selalu bisa export datanya.
 - Transaksi offline yang dibuat sebelum status berubah tetap diterima saat sinkron.
 
 **AC:**
 ```gherkin
 Given calon pengguna mengisi form registrasi dengan data valid
 When ia menekan "Daftar"
-Then tenant, user owner, outlet "Outlet Utama", gudang default, dan subscription trialing 14 hari terbentuk
+Then tenant, user owner, outlet "Outlet Utama", gudang default, dan langganan berstatus Trial 14 hari terbentuk
 And ia diarahkan ke Onboarding Wizard
 ```
 
@@ -426,7 +427,7 @@ And ia diarahkan ke Onboarding Wizard
 **Aturan Bisnis:**
 - BR-01.1 Menerapkan template bersifat **idempoten dan aditif**: menambah modul/COA/kategori yang belum ada, tidak menghapus data yang sudah ada.
 - BR-01.2 COA dibuat dari gabungan COA inti + ekstensi sektor (§11.2).
-- BR-01.3 Feature flag per outlet disimpan di `outlet_features` sehingga layar POS & menu menyesuaikan.
+- BR-01.3 Feature flag per outlet disimpan di tabel `OutletFitur` sehingga layar POS & menu menyesuaikan.
 
 ---
 
@@ -447,7 +448,7 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 2. Tambah gudang/lokasi stok per outlet (default: 1 lokasi "Toko"). Bisa tambah "Gudang Belakang", "Dapur", "Bar".
 3. Undang user via email/WA dengan role & outlet yang ditugaskan.
 4. Kasir mendapat **PIN 6 digit** untuk login cepat di perangkat kasir bersama.
-5. **Aktivasi perangkat**: di back-office, admin membuat perangkat (tipe: Kasir / KDS / Gudang / Pelayan) dan mendapat **kode aktivasi 8 karakter + QR** (berlaku 15 menit). Di aplikasi Flutter, pengguna memindai QR atau mengetik kode. Server mengembalikan **device token** (disimpan di secure storage) dan `device_code` (misal `JKT1-K02`) untuk penomoran offline. Satu instalasi aplikasi = satu perangkat terdaftar.
+5. **Aktivasi perangkat**: di back-office, admin membuat perangkat (tipe: Kasir / KDS / Gudang / Pelayan) dan mendapat **kode aktivasi 8 karakter + QR** (berlaku 15 menit). Di aplikasi Flutter, pengguna memindai QR atau mengetik kode. Server mengembalikan **device token** (disimpan di secure storage) dan kode perangkat `Perangkat.Kode` (misal `JKT1-K02`) untuk penomoran offline. Satu instalasi aplikasi = satu perangkat terdaftar.
 
 **Aturan Bisnis:**
 - BR-02.1 Jumlah outlet, perangkat, dan user dibatasi paket langganan.
@@ -461,26 +462,26 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 
 **Tujuan:** Katalog lengkap yang mendukung semua sektor.
 
-**Tipe produk:**
+**Jenis produk (`Produk.Jenis`, enum):**
 
 | Tipe | Keterangan | Punya stok? | Contoh |
 |---|---|---|---|
-| `stock` | Barang dagang biasa | Ya | Sabun, kaos |
-| `variant_parent` | Induk varian (tidak dijual langsung) | Tidak (anak yang punya stok) | Kaos → S/M/L × Merah/Biru |
-| `recipe` | Produk jadi dari resep; stok bahan berkurang saat terjual | Tidak (bahan yang berkurang) | Es kopi susu |
-| `manufactured` | Diproduksi dulu (batch), lalu punya stok | Ya | Roti, kue |
-| `bundle` | Paket beberapa produk; stok komponen berkurang | Tidak | Paket hemat |
-| `service` | Jasa | Tidak | Potong rambut, cuci motor |
-| `non_inventory` | Tanpa stok | Tidak | Biaya kirim, kantong plastik gratis |
-| `raw_material` | Bahan baku (tidak tampil di POS) | Ya | Susu, gula, biji kopi |
-| `consignment` | Titipan | Ya (bukan aset) | Kue titipan |
+| `Stok` | Barang dagang biasa | Ya | Sabun, kaos |
+| `IndukVarian` | Induk varian (tidak dijual langsung) | Tidak (anak yang punya stok) | Kaos → S/M/L × Merah/Biru |
+| `Resep` | Produk jadi dari resep; stok bahan berkurang saat terjual | Tidak (bahan yang berkurang) | Es kopi susu |
+| `Produksi` | Diproduksi dulu (batch), lalu punya stok | Ya | Roti, kue |
+| `Paket` | Paket beberapa produk; stok komponen berkurang | Tidak | Paket hemat |
+| `Jasa` | Jasa | Tidak | Potong rambut, cuci motor |
+| `NonStok` | Tanpa stok | Tidak | Biaya kirim, kantong plastik gratis |
+| `BahanBaku` | Bahan baku (tidak tampil di POS) | Ya | Susu, gula, biji kopi |
+| `Konsinyasi` | Titipan | Ya (bukan aset) | Kue titipan |
 
 **Atribut penting produk:**
 - SKU (unik per tenant), barcode (bisa banyak per produk/satuan), nama, nama struk (pendek), kategori (bertingkat), brand, gambar.
 - **Satuan & konversi:** satuan dasar (pcs) + satuan alternatif (pak = 10 pcs, dus = 12 pak). Harga & barcode boleh berbeda per satuan. Qty desimal diizinkan per produk (kg, meter).
 - **Modifier group:** misal "Level Gula" (wajib, pilih 1), "Topping" (opsional, maks 3, masing-masing berharga & opsional mengurangi stok bahan).
 - **Resep/BOM:** daftar bahan × qty × satuan, termasuk *yield* & *waste %*. Contoh: 1 cup Es Kopi Susu = 18 g kopi + 150 ml susu + 20 ml gula aren + 1 cup + 1 sedotan.
-- **Pelacakan:** `none` | `batch_expiry` | `serial`.
+- **Pelacakan (`Produk.Pelacakan`):** `Tidak` | `Batch` (dengan tanggal kedaluwarsa) | `Seri`.
 - **Pajak:** kategori pajak produk (Kena PPN, Bebas PPN, Kena PB1, Non-pajak) dan flag harga *termasuk pajak* / *belum termasuk pajak*.
 - **HPP:** metode per tenant: **Moving Average (default)** atau **FIFO**.
 - Min/Max stok per lokasi (untuk restock), flag "tampil di POS", "tampil di toko online", "boleh jual saat stok kosong".
@@ -497,7 +498,7 @@ Harga final ditentukan berlapis (prioritas tinggi ke rendah):
 **Aturan Bisnis:**
 - BR-03.1 SKU unik per tenant. Barcode unik per tenant (boleh sama lintas tenant).
 - BR-03.2 Produk yang sudah punya transaksi tidak bisa dihapus, hanya diarsipkan.
-- BR-03.3 Perubahan harga dicatat di `price_histories` (kapan, siapa, lama/baru).
+- BR-03.3 Perubahan harga dicatat di tabel `RiwayatHarga` (kapan, siapa, lama/baru).
 - BR-03.4 Perubahan resep **tidak** mengubah transaksi lampau (resep di-snapshot saat penjualan untuk kalkulasi HPP).
 - BR-03.5 HPP produk resep = Σ (qty bahan × HPP bahan saat itu) / yield.
 - BR-03.6 Import massal memakai validasi baris per baris dengan laporan error yang bisa diunduh. Import besar diproses di antrian (queue).
@@ -535,7 +536,7 @@ flowchart LR
 
 **Pembelian langsung (UMKM mikro):** mode sederhana "Belanja Stok". Satu form berisi supplier (opsional), item, total, dan bayar tunai. Sistem otomatis membuat GRN + faktur + pembayaran dalam satu langkah.
 
-**State Machine PO:** `draft → pending_approval → approved → partially_received → received → closed` (+ `cancelled` hanya bila belum ada GRN).
+**State Machine `PesananPembelian.Status`:** `Draf → MenungguPersetujuan → Disetujui → DiterimaSebagian → Diterima → Ditutup` (+ `Dibatalkan` hanya bila belum ada penerimaan barang).
 
 **Aturan Bisnis:**
 - BR-04.1 GRN tidak boleh melebihi qty PO kecuali toleransi (%) yang disetel.
@@ -549,14 +550,14 @@ flowchart LR
 
 ### F-05 · Inventori
 
-**Sumber kebenaran:** tabel `stock_movements` (ledger append-only). Saldo di `stock_levels` adalah cache yang bisa dibangun ulang dari ledger.
+**Sumber kebenaran:** tabel `MutasiStok` (ledger append-only). Saldo di tabel `SaldoStok` adalah cache yang bisa dibangun ulang dari ledger.
 
 **Sub-flow:**
 
 | Kode | Sub-flow | Keterangan |
 |---|---|---|
 | F-05a | **Stok Awal** | Input/import saldo awal per lokasi + HPP awal. Jurnal: Dr Persediaan, Cr Ekuitas Saldo Awal. |
-| F-05b | **Transfer Antar Lokasi/Outlet** | `draft → sent (in-transit) → received` (parsial boleh). Selisih kirim vs terima → penyesuaian dengan alasan. |
+| F-05b | **Transfer Antar Lokasi/Outlet** | `Draf → Dikirim (DalamPerjalanan) → Diterima` (parsial boleh). Selisih kirim vs terima → penyesuaian dengan alasan. |
 | F-05c | **Stock Opname** | Snapshot stok sistem saat mulai; hitung fisik (scan/input, bisa beberapa orang, per rak/kategori); review selisih; approve → penyesuaian otomatis. Opsi *blind count* (penghitung tidak melihat qty sistem). |
 | F-05d | **Penyesuaian Stok** | Rusak, hilang, kadaluarsa, sampel, konsumsi internal. Wajib alasan + approval di atas nilai tertentu. |
 | F-05e | **Produksi / Rakitan** | Order produksi: konsumsi bahan (resep) → hasil produk jadi. HPP produk jadi = total HPP bahan + biaya overhead opsional. |
@@ -565,8 +566,8 @@ flowchart LR
 | F-05h | **Serial/IMEI** | Setiap unit punya serial. Penjualan wajib pilih serial. Riwayat serial dari masuk hingga garansi. |
 | F-05i | **Konsinyasi** | Stok titipan tidak menambah aset. Saat terjual → hutang konsinyasi ke penitip. Settlement periodik. |
 
-**Tipe pergerakan stok (`movement_type`):**
-`opening`, `purchase_receipt`, `purchase_return`, `sale`, `sale_return`, `transfer_out`, `transfer_in`, `adjustment_in`, `adjustment_out`, `opname_gain`, `opname_loss`, `production_consume`, `production_output`, `waste`, `consignment_in`, `consignment_return`.
+**Jenis mutasi stok (`MutasiStok.JenisMutasi`, enum):**
+`StokAwal`, `PenerimaanPembelian`, `ReturPembelian`, `Penjualan`, `ReturPenjualan`, `TransferKeluar`, `TransferMasuk`, `PenyesuaianMasuk`, `PenyesuaianKeluar`, `OpnameLebih`, `OpnameKurang`, `ProduksiPakai`, `ProduksiHasil`, `Susut`, `KonsinyasiMasuk`, `KonsinyasiRetur`.
 
 **Aturan Bisnis:**
 - BR-05.1 Setiap movement menyimpan: produk, lokasi, qty (±, dalam satuan dasar), HPP per unit saat itu, nilai, referensi dokumen (polymorphic), batch/serial, user, waktu.
@@ -583,7 +584,7 @@ flowchart LR
 **Langkah:**
 1. Kasir login dengan PIN di aplikasi POS pada perangkat terdaftar. PIN diverifikasi lokal (hash PIN tersinkron ke perangkat, lihat §18) sehingga login tetap bisa saat offline.
 2. Jika belum ada shift terbuka untuk perangkat tersebut → layar "Buka Shift": input **modal awal (kas awal)**, opsional hitung per pecahan.
-3. Shift aktif. Semua transaksi menempel ke `shift_id`.
+3. Shift aktif. Semua transaksi menempel ke `IdShift`.
 4. Selama shift: **Kas Masuk/Keluar** non-penjualan (beli es batu, bayar parkir, setor ke owner) dengan kategori & foto bukti.
 
 **Aturan Bisnis:**
@@ -592,7 +593,7 @@ flowchart LR
 - BR-06.3 Shift bisa dibuka offline (lihat §18).
 - BR-06.4 Kas keluar di atas batas butuh PIN supervisor.
 
-**State Machine Shift:** `open → closing (hitung kas) → closed → (reopened oleh supervisor, dengan alasan)`.
+**State Machine `Shift.Status`:** `Terbuka → Menutup (hitung kas) → Tertutup → (DibukaUlang oleh supervisor, dengan alasan)`.
 
 ---
 
@@ -603,19 +604,19 @@ flowchart LR
 **Alur umum:**
 ```mermaid
 stateDiagram-v2
-    [*] --> draft: Kasir tambah item
-    draft --> held: Simpan (parkir / open bill)
-    held --> draft: Buka kembali
-    draft --> pending_payment: Checkout
-    pending_payment --> paid: Pembayaran lunas
-    pending_payment --> partially_paid: Bayar sebagian / DP
-    partially_paid --> paid: Pelunasan
-    partially_paid --> credit: Sisa jadi piutang (tempo)
-    credit --> paid: Pelunasan piutang
-    paid --> completed: Terpenuhi (diambil/diantar/disajikan)
-    paid --> voided: Void (hari yang sama, approval)
-    completed --> returned: Retur sebagian/penuh (dokumen retur)
-    draft --> cancelled: Batal sebelum bayar
+    [*] --> Draf: Kasir tambah item
+    Draf --> Ditahan: Simpan (parkir / open bill)
+    Ditahan --> Draf: Buka kembali
+    Draf --> MenungguPembayaran: Checkout
+    MenungguPembayaran --> Lunas: Pembayaran lunas
+    MenungguPembayaran --> DibayarSebagian: Bayar sebagian / DP
+    DibayarSebagian --> Lunas: Pelunasan
+    DibayarSebagian --> Tempo: Sisa jadi piutang
+    Tempo --> Lunas: Pelunasan piutang
+    Lunas --> Selesai: Terpenuhi (diambil/diantar/disajikan)
+    Lunas --> Void: Void (hari yang sama, approval)
+    Selesai --> Diretur: Retur sebagian/penuh (dokumen retur)
+    Draf --> Dibatalkan: Batal sebelum bayar
 ```
 
 **Langkah (mode retail):**
@@ -628,17 +629,17 @@ stateDiagram-v2
 
 **Urutan kalkulasi (wajib konsisten server & klien):**
 ```
-1. line_gross      = unit_price × qty (+ harga modifier)
-2. line_discount   = promo item + diskon item manual
-3. line_net        = line_gross − line_discount
-4. subtotal        = Σ line_net
-5. order_discount  = promo order + diskon order manual (dialokasikan pro-rata ke baris)
-6. service_charge  = % × (subtotal − order_discount)       [jika aktif]
-7. tax_base (DPP)  = per baris, sesuai kategori pajak & mode inklusif/eksklusif
-                     (service charge ikut DPP PB1 sesuai konfigurasi daerah)
-8. tax             = Σ tarif × DPP (per jenis pajak, dibulatkan per dokumen)
-9. rounding        = pembulatan tunai (mis. ke Rp 100 terdekat), dicatat terpisah
-10. grand_total    = subtotal − order_discount + service_charge + tax(eksklusif) + rounding
+1. BrutoBaris          = HargaSatuan × Jumlah (+ harga pilihan/modifier)
+2. DiskonBaris         = promo item + diskon item manual
+3. NettoBaris          = BrutoBaris − DiskonBaris
+4. Subtotal            = Σ NettoBaris
+5. DiskonPesanan       = promo pesanan + diskon pesanan manual (dialokasikan pro-rata ke baris)
+6. BiayaLayanan        = % × (Subtotal − DiskonPesanan)          [jika aktif]
+7. DasarPengenaanPajak = per baris, sesuai kategori pajak & mode inklusif/eksklusif
+                         (biaya layanan ikut DPP PB1 sesuai konfigurasi daerah)
+8. TotalPajak          = Σ Tarif × DPP (per jenis pajak, dibulatkan per dokumen)
+9. Pembulatan          = pembulatan tunai (mis. ke Rp 100 terdekat), dicatat terpisah
+10. TotalAkhir         = Subtotal − DiskonPesanan + BiayaLayanan + TotalPajak(eksklusif) + Pembulatan
 ```
 - Aritmatika uang memakai **decimal presisi tetap** (bukan float/`double`) di server (brick/math) dan di aplikasi POS (paket Dart `decimal`). Engine kalkulasi ada dua implementasi, **PHP (server)** dan **Dart (aplikasi POS, offline)**, yang wajib lulus **test vector JSON** yang sama (Lampiran D). Web publik (self-order/toko online) **tidak** menghitung sendiri. Web publik meminta kalkulasi ke endpoint server (`/cart/quote`).
 
@@ -648,9 +649,9 @@ stateDiagram-v2
 - BR-07.3 Diskon manual melebihi batas role (misal kasir maks 10%) memicu approval PIN supervisor.
 - BR-07.4 Penjualan tidak bisa dibuat tanpa shift aktif (kecuali channel online/self-order yang memakai "shift virtual" per hari).
 - BR-07.5 Open bill (held) otomatis mengunci baris yang sudah dikirim ke dapur. Pengurangan item setelah dikirim = **void item** dengan alasan (masuk laporan void).
-- BR-07.6 Semua transaksi punya `client_uuid` (dibuat di perangkat) untuk idempotensi sinkron.
+- BR-07.6 Semua transaksi punya `UuidKlien` (dibuat di perangkat) untuk idempotensi sinkron.
 
-**Dampak Stok:** movement `sale` untuk produk `stock`/`manufactured`, bahan resep, komponen bundle, dan modifier yang berbahan (diposting saat status `paid` atau, untuk F&B, saat `sent_to_kitchen` sesuai konfigurasi).
+**Dampak Stok:** mutasi `Penjualan` untuk produk `Stok`/`Produksi`, bahan resep, komponen bundle, dan modifier yang berbahan (diposting saat status `Lunas` atau, untuk F&B, saat item berstatus `DikirimKeDapur` sesuai konfigurasi).
 **Dampak Jurnal:** J-07.x (§11.3).
 
 ---
@@ -677,7 +678,7 @@ stateDiagram-v2
 - BR-08.2 **Split bill** (F&B): per item, per orang (bagi rata), atau per nominal. Menghasilkan beberapa dokumen pembayaran untuk satu order.
 - BR-08.3 Setiap metode pembayaran terhubung ke **akun kas/bank/clearing** di COA. Contoh: QRIS → "Piutang Settlement QRIS" sampai dana masuk rekening.
 - BR-08.4 MDR/biaya (QRIS, EDC, ojol) dicatat otomatis sebagai beban saat settlement (§11).
-- BR-08.5 QRIS dinamis: timeout default 15 menit. Jika webhook terlambat, kasir bisa "Cek Status". Pembayaran ganda terdeteksi via `external_ref` unik.
+- BR-08.5 QRIS dinamis: timeout default 15 menit. Jika webhook terlambat, kasir bisa "Cek Status". Pembayaran ganda terdeteksi via kolom unik `PenjualanPembayaran.RefEksternal`.
 - BR-08.6 Pembulatan tunai hanya untuk bagian tunai.
 
 ---
@@ -700,12 +701,12 @@ stateDiagram-v2
 
 ### F-10 · Pemenuhan Pesanan (Fulfillment)
 
-- **F&B Dine-in/Takeaway:** order dikirim ke **KDS** atau **printer dapur** per *station* (Dapur, Bar, Pastry) berdasarkan kategori produk. Status item: `queued → cooking → ready → served`. Tampilkan timer & warna (hijau < 10 menit, kuning, merah).
+- **F&B Dine-in/Takeaway:** order dikirim ke **KDS** atau **printer dapur** per *station* (Dapur, Bar, Pastry) berdasarkan kategori produk. Status item: `Antre → Dimasak → Siap → Disajikan`. Tampilkan timer & warna (hijau < 10 menit, kuning, merah).
 - **Nomor antrian / pager:** layar *Customer Display* menampilkan nomor siap.
-- **Pengiriman (retail/grosir):** status `to_pack → packed → shipped → delivered`, surat jalan, kurir internal/pihak ketiga, bukti foto.
+- **Pengiriman (retail/grosir):** status `SiapKemas → Dikemas → Dikirim → Diterima`, surat jalan, kurir internal/pihak ketiga, bukti foto.
 - **Pre-order & Pesanan kustom (bakery, percetakan):** DP, tanggal ambil, status produksi, pelunasan saat ambil.
-- **Laundry:** status `received → washing → drying → ironing → ready → picked_up`, notifikasi WA saat `ready`.
-- **Bengkel:** Work Order `check_in → diagnosis → waiting_approval → in_progress → qc → done → picked_up`.
+- **Laundry:** status `Diterima → Dicuci → Dikeringkan → Disetrika → Siap → Diambil`, notifikasi WA saat `Siap`.
+- **Bengkel:** Perintah Kerja `Masuk → Diagnosis → MenungguPersetujuan → Dikerjakan → Qc → Selesai → Diambil`.
 
 ---
 
@@ -734,7 +735,7 @@ stateDiagram-v2
 
 ### F-13 · Akuntansi Otomatis & Kas/Bank
 
-- Setiap domain event yang punya dampak keuangan menghasilkan **Jurnal** melalui `JournalPostingService` memakai **Posting Rules** (pemetaan event → akun) yang dapat dikonfigurasi per tenant (§11.3).
+- Setiap domain event yang punya dampak keuangan menghasilkan **Jurnal** melalui layanan `LayananPostingJurnal` memakai **Aturan Posting** (pemetaan event → akun) yang dapat dikonfigurasi per tenant (§11.3).
 - **Kas & Bank:** akun kas per outlet, rekening bank, transfer antar akun, penerimaan/pengeluaran lain, **rekonsiliasi bank** (import mutasi CSV, fase 3).
 - **Biaya operasional:** input pengeluaran (listrik, sewa, gaji) dengan kategori beban & lampiran.
 - **Jurnal manual/umum** hanya untuk role Akuntan/Owner, wajib seimbang.
@@ -752,8 +753,8 @@ Dirinci di §10 (modul Laporan). Prinsip:
 
 ### F-15 · Tutup Buku (Harian & Bulanan)
 
-- **Tutup Harian (End of Day)** per outlet: memastikan semua shift tertutup, sinkron offline tuntas, lalu membuat ringkasan harian (tabel agregat `daily_sales_summaries` untuk laporan cepat).
-- **Tutup Bulan:** kunci periode (`period_locks`). Transaksi dengan tanggal di periode terkunci ditolak, kecuali oleh Akuntan dengan *reopen* yang dicatat audit. Jurnal penyesuaian (penyusutan, akrual) diposting.
+- **Tutup Harian (End of Day)** per outlet: memastikan semua shift tertutup, sinkron offline tuntas, lalu membuat ringkasan harian (tabel agregat `RingkasanPenjualanHarian` untuk laporan cepat).
+- **Tutup Bulan:** kunci periode (tabel `KunciPeriode`). Transaksi dengan tanggal di periode terkunci ditolak, kecuali oleh Akuntan dengan *reopen* yang dicatat audit. Jurnal penyesuaian (penyusutan, akrual) diposting.
 - **Tutup Tahun:** jurnal penutup: saldo pendapatan & beban → Laba Ditahan.
 
 ---
@@ -801,7 +802,7 @@ promo:
 
 ### F-17 · Online Order & Self-Order
 
-- **Self-Order QR Meja (X12):** QR unik per meja → web ringan (tanpa login) → menu (stok & ketersediaan real-time) → keranjang → catatan → bayar QRIS dinamis **atau** "bayar di kasir" → order masuk ke POS (status `pending_confirmation` jika belum bayar) dan KDS.
+- **Self-Order QR Meja (X12):** QR unik per meja → web ringan (tanpa login) → menu (stok & ketersediaan real-time) → keranjang → catatan → bayar QRIS dinamis **atau** "bayar di kasir" → order masuk ke POS (status `MenungguKonfirmasi` jika belum bayar) dan KDS.
 - **Toko Online (Web Store):** `/{slug}` katalog, keranjang, checkout, pilih ambil sendiri/kirim, pembayaran gateway, status pesanan. SEO dasar.
 - **Integrasi Ojol & Marketplace (fase 3+):** sinkron menu & stok, order masuk otomatis (bergantung ketersediaan API mitra). Sebelum API tersedia: input manual sebagai channel dengan harga channel (X8) + laporan settlement.
 - BR-17.1 Order online memakai "shift virtual" harian per outlet. Pembayaran online masuk ke akun clearing gateway.
@@ -825,7 +826,7 @@ promo:
 
 - Paket & add-on (§21). Tagihan bulanan/tahunan, invoice PDF, pembayaran via payment gateway (VA, QRIS, e-wallet, kartu).
 - Proration saat upgrade di tengah periode, downgrade berlaku periode berikutnya.
-- Dunning: pengingat H-7, H-3, H0, H+3 via email & WA; `past_due` 7 hari → `suspended`.
+- Dunning: pengingat H-7, H-3, H0, H+3 via email & WA; `Tertunggak` 7 hari → `Ditangguhkan`.
 - Fase 1: tagihan dan aktivasi manual oleh Super Admin (konfirmasi transfer). Fase 3: otomatis penuh.
 - Kode referral & reseller/agen (komisi agen).
 
@@ -1158,7 +1159,7 @@ Prioritas: **P0** = MVP wajib, **P1** = penting (fase 2), **P2** = pembeda (fase
 ### 11.1 Prinsip
 
 - **Double-entry penuh.** Setiap jurnal wajib seimbang (Σ debit = Σ kredit). Ini dicek oleh constraint aplikasi dan test invariant.
-- Jurnal dibuat oleh `PostingRule` per `event_type`. Pemetaan akun disimpan di `account_mappings` (default dari template, bisa diubah Akuntan).
+- Jurnal dibuat oleh `AturanPosting` per jenis peristiwa. Pemetaan akun disimpan di tabel `PemetaanAkun` (default dari template, bisa diubah Akuntan).
 - Jurnal otomatis **tidak bisa diedit**. Koreksi dilakukan dengan membatalkan dokumen sumber (jurnal pembalik otomatis).
 - Mode posting: **real-time per transaksi** (default). Untuk tenant bervolume tinggi tersedia opsi **ringkasan per shift** (satu jurnal per shift per outlet) agar tabel jurnal tidak membengkak.
 - Standar pelaporan: **SAK EMKM** (default UMKM) dengan opsi struktur akun sesuai **SAK EP** untuk entitas lebih besar.
@@ -1249,13 +1250,13 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 
 ## 12. Perpajakan & Regulasi Indonesia
 
-> ⚠️ Aturan pajak di Indonesia sering berubah. **Tidak ada tarif yang di-hard-code.** Semua tarif disimpan di tabel `tax_rates` dengan `effective_from`/`effective_to`, dan diperbarui oleh Super Admin (default nasional) atau tenant (tarif daerah). Nilai di bawah adalah default awal yang **wajib diverifikasi ulang oleh konsultan pajak** sebelum rilis.
+> ⚠️ Aturan pajak di Indonesia sering berubah. **Tidak ada tarif yang di-hard-code.** Semua tarif disimpan di tabel `TarifPajak` dengan `BerlakuMulai`/`BerlakuSampai`, dan diperbarui oleh Super Admin (default nasional) atau tenant (tarif daerah). Nilai di bawah adalah default awal yang **wajib diverifikasi ulang oleh konsultan pajak** sebelum rilis.
 
 ### 12.1 Jenis Pajak yang Didukung
 
 | Pajak | Berlaku untuk | Default | Catatan implementasi |
 |---|---|---|---|
-| **PPN** | Tenant berstatus PKP yang menjual BKP/JKP (retail, grosir, jasa kena pajak) | Tarif 12% dengan **DPP nilai lain 11/12** dari harga jual untuk barang/jasa non-mewah, sehingga beban efektif 11% | Model pajak mendukung `rate` + `base_multiplier` (DPP). Barang mewah memakai DPP penuh. |
+| **PPN** | Tenant berstatus PKP yang menjual BKP/JKP (retail, grosir, jasa kena pajak) | Tarif 12% dengan **DPP nilai lain 11/12** dari harga jual untuk barang/jasa non-mewah, sehingga beban efektif 11% | Model pajak mendukung `Tarif` + `PengaliDpp` (DPP). Barang mewah memakai DPP penuh. |
 | **PB1 / PBJT Makanan & Minuman** | Restoran/kafe (pajak daerah, UU HKPD) | 10% (maksimal, tarif ditetapkan Perda masing-masing kab/kota) | Tarif per outlet sesuai kota. Restoran yang dikenai PBJT **tidak dikenai PPN** atas makanan/minuman tersebut. |
 | **Service Charge** | F&B (bukan pajak) | 0–10% (konfigurasi) | Bisa masuk DPP PB1 sesuai konfigurasi daerah. |
 | **PPh Final UMKM** | Info untuk owner (0,5% omzet bagi WP yang memenuhi syarat) | Laporan pendukung omzet bulanan | v1 hanya **laporan estimasi**, bukan pemotongan otomatis. |
@@ -1264,15 +1265,15 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 ### 12.2 Struktur Model Pajak
 
 ```
-tax_types:  PPN, PBJT_FNB, CUSTOM...
-tax_rates:  tax_type_id, rate (decimal), base_multiplier (decimal, default 1),
-            region_code (nullable), effective_from, effective_to
-tax_groups: kombinasi pajak untuk satu kategori produk (misal "F&B Dine-in" = PBJT 10% + SC 5%)
-product.tax_group_id, outlet.tax_profile (PKP? kota?), price_includes_tax (per tenant/outlet)
+JenisPajak:     Ppn, PbjtMakananMinuman, Kustom...
+TarifPajak:     IdJenisPajak, Tarif (decimal), PengaliDpp (decimal, default 1),
+                KodeWilayah (nullable), BerlakuMulai, BerlakuSampai
+KelompokPajak:  kombinasi pajak untuk satu kategori produk (misal "F&B Dine-in" = PBJT 10% + SC 5%)
+Produk.IdKelompokPajak, Outlet.ProfilPajak (PKP? kota?), HargaTermasukPajak (per tenant/outlet)
 ```
 
 - Perhitungan pajak dilakukan **per baris**, dan pembulatan dilakukan **per dokumen per jenis pajak** agar sesuai dengan cara pelaporan.
-- Transaksi menyimpan snapshot `tax_rate`, `base_multiplier`, `tax_base`, dan `tax_amount` per baris.
+- Transaksi menyimpan snapshot `TarifPajak`, `PengaliDpp`, `DasarPengenaanPajak`, dan `JumlahPajak` per baris (`PenjualanDetail.SnapshotPajak`).
 
 ### 12.3 Kepatuhan Lain
 
@@ -1325,23 +1326,25 @@ flowchart LR
     API <--> PG[Payment Gateway / WA BSP]
 ```
 
-**Struktur repositori (monorepo):**
+**Struktur repositori (monorepo, penamaan sesuai §13.7):**
 
 ```
 /
-├── backend/                 # Laravel 13 (API + back-office Inertia React + web publik)
-├── apps/pos/                # Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)
-├── apps/owner/              # Aplikasi Owner Flutter (Android, iOS)
-├── packages/pos_engine/     # Paket Dart murni: kalkulator keranjang, pajak, promo, pembulatan
-├── packages/core/           # Paket Dart bersama: Money, format Rupiah, ULID, error, logger
-├── packages/api_client/     # Klien API (dio + DTO freezed) untuk /api/pos/v1 & /api/owner/v1
-├── packages/design_system/  # Tema, token, widget bersama (MoneyText, StatusBadge, grafik)
-├── packages/device_adapters/ # Adaptor hardware: printer, laci, layar pelanggan, scanner, per vendor
-├── spec/
-│   ├── calc-vectors/        # Test vector JSON bersama (dipakai Pest & dart test)
-│   ├── openapi/             # Spesifikasi OpenAPI API POS & publik (dihasilkan dari Laravel)
-│   └── design-tokens/       # Token desain JSON → Tailwind @theme & Flutter ThemeExtension
-└── .github/workflows/       # CI backend, CI Flutter, rilis aplikasi, deploy Hostinger
+├── Backend/                     # Laravel 13 (API + back-office Inertia React + web publik)
+├── Aplikasi/
+│   ├── Kasir/                   # Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)   · paket Dart: kasir
+│   └── Pemilik/                 # Aplikasi Owner Flutter (Android, iOS)                  · paket Dart: pemilik
+├── Paket/
+│   ├── MesinKasir/              # Dart murni: kalkulator keranjang, pajak, promo, pembulatan · mesin_kasir
+│   ├── Inti/                    # Uang, format Rupiah, ULID, galat, log                        · inti
+│   ├── KlienApi/                # Klien API (dio + DTO freezed) /api/pos/v1 & /api/owner/v1    · klien_api
+│   ├── SistemDesain/            # Tema, token, widget bersama (TeksUang, LencanaStatus, grafik) · sistem_desain
+│   └── AdaptorPerangkat/        # Adaptor hardware: printer, laci, layar pelanggan, scanner      · adaptor_perangkat
+├── Spesifikasi/
+│   ├── VektorUjiKalkulasi/      # Test vector JSON bersama (dipakai Pest & dart test)
+│   ├── OpenApi/                 # Spesifikasi OpenAPI API POS, Owner & publik (dihasilkan dari Laravel)
+│   └── TokenDesain/             # Token desain JSON → Tailwind @theme & Flutter ThemeExtension
+└── .github/workflows/           # CI backend, CI Flutter, rilis aplikasi, deploy Hostinger (pengecualian)
 ```
 
 ### 13.1 Stack
@@ -1379,13 +1382,13 @@ flowchart LR
 | Lapisan | Teknologi | Alasan |
 |---|---|---|
 | Framework | **Flutter (channel stable terbaru) + Dart 3** | Satu basis kode untuk Android, iOS/iPadOS, dan Windows (POS) serta Android & iOS (Owner). Performa native, akses hardware penuh. |
-| Monorepo Dart | **Melos** (atau Dart pub workspaces) | Mengelola `apps/*` & `packages/*`: bootstrap, test, analyze serentak. |
+| Monorepo Dart | **Melos** (atau Dart pub workspaces) | Mengelola `Aplikasi/*` & `Paket/*`: bootstrap, test, analyze serentak. |
 | State management & DI | **Riverpod** (dengan `riverpod_generator`) | Teruji, mudah diuji, mendukung async & dependency override untuk test. |
 | Database lokal | **Drift** (SQLite) + `sqlite3_flutter_libs`. Enkripsi opsional **SQLCipher** (`sqlcipher_flutter_libs`) | SQL bertipe, migrasi skema, query reaktif (stream), jalan di semua platform, cepat untuk 10.000+ SKU. |
 | HTTP | **dio** + interceptor (auth token, retry, `Idempotency-Key`, log) | Kontrol penuh timeout & retry. |
 | Model/serialisasi | **freezed** + **json_serializable** (sebagian digenerate dari OpenAPI) | Immutable, `copyWith`, union type untuk state. |
 | Routing | **go_router** | Deep link (misal dari notifikasi), guard login/shift. |
-| Uang/angka | Paket **`decimal`** + value object `Money` sendiri | Konsisten dengan brick/money di server. Dilarang `double` untuk uang. |
+| Uang/angka | Paket **`decimal`** + value object `Uang` sendiri | Konsisten dengan brick/money di server. Dilarang `double` untuk uang. |
 | ID | **ULID** (paket `ulid`) | ID dibuat di perangkat untuk offline. |
 | Penyimpanan rahasia | **flutter_secure_storage** (Keychain/Keystore/DPAPI) | Device token & kunci enkripsi DB. |
 | Konektivitas | **connectivity_plus** + heartbeat ke server | Status online yang sebenarnya, bukan sekadar Wi-Fi tersambung. |
@@ -1404,102 +1407,103 @@ flowchart LR
 
 ### 13.2 Gaya Arsitektur: Modular Monolith Berbasis Domain
 
-Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. Batas antar modul tegas: modul lain hanya boleh memakai **Action/Service publik** atau **Event** milik modul tersebut, bukan query langsung ke tabelnya.
+Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. Batas antar modul tegas: modul lain hanya boleh memakai **Aksi/Layanan publik** atau **Peristiwa** milik modul tersebut, bukan query langsung ke tabelnya. Semua nama folder, file, class, dan method mengikuti §13.7.
 
 ```
-backend/app/
+Backend/app/
 ├── Domain/
-│   ├── Tenancy/          # Tenant, Subscription, Plan, Feature flags     (F-00, F-19)
-│   ├── Organization/     # Outlet, Warehouse, Device, User, Role          (F-02)
-│   ├── Onboarding/       # Wizard, SectorTemplate, Importer               (F-01)
-│   ├── Catalog/          # Product, Variant, Unit, Modifier, Recipe, PriceList (F-03)
-│   ├── Tax/              # TaxType, TaxRate, TaxCalculator                (§12)
-│   ├── Purchasing/       # Supplier, PO, GRN, PurchaseInvoice, Payable    (F-04)
-│   ├── Inventory/        # StockMovement, StockLevel, Transfer, Opname, Production (F-05)
-│   ├── Cashier/          # Shift, CashMovement, Device session            (F-06, F-11)
-│   ├── Sales/            # Order, OrderLine, Payment, Return, Void        (F-07–F-09)
-│   ├── Fulfillment/      # KDS ticket, Delivery, WorkOrder, LaundryTicket (F-10)
-│   ├── Receivables/      # Invoice, Receivable, Collection                (F-12)
-│   ├── Accounting/       # Account, Journal, PostingRule, PeriodLock      (F-13, F-15)
-│   ├── Crm/              # Customer, Loyalty, Deposit, Membership         (F-16)
-│   ├── Promotion/        # Promo engine, Voucher                          (F-16)
-│   ├── Channel/          # SelfOrder, WebStore, Marketplace               (F-17)
-│   ├── Workforce/        # Employee, Schedule, Attendance, Commission     (F-18)
-│   ├── Reporting/        # Query objects, summary tables                  (F-14)
-│   ├── Integration/      # Payment gateway, WhatsApp, Webhook, Public API (F-20)
-│   └── Shared/           # Money, Quantity, DocumentNumber, Enums, Audit
+│   ├── Tenant/           # Tenant, Langganan, Paket, OutletFitur            (F-00, F-19)
+│   ├── Organisasi/       # Outlet, Gudang, Perangkat, Pengguna, Peran        (F-02)
+│   ├── PanduanAwal/      # Wizard onboarding, TemplateSektor, Importir       (F-01)
+│   ├── Katalog/          # Produk, Varian, Satuan, Pilihan, Resep, DaftarHarga (F-03)
+│   ├── Pajak/            # JenisPajak, TarifPajak, KalkulatorPajak           (§12)
+│   ├── Pembelian/        # Pemasok, PesananPembelian, PenerimaanBarang, FakturPembelian, Hutang (F-04)
+│   ├── Persediaan/       # MutasiStok, SaldoStok, TransferStok, StokOpname, Produksi (F-05)
+│   ├── Kasir/            # Shift, MutasiKas, SesiPerangkat                   (F-06, F-11)
+│   ├── Penjualan/        # Penjualan, PenjualanDetail, Pembayaran, Retur, Void (F-07–F-09)
+│   ├── Pemenuhan/        # TiketDapur, Pengiriman, PerintahKerja, TiketLaundry (F-10)
+│   ├── Piutang/          # Faktur, Piutang, Penagihan                        (F-12)
+│   ├── Akuntansi/        # Akun, Jurnal, AturanPosting, KunciPeriode         (F-13, F-15)
+│   ├── Pelanggan/        # Pelanggan, Poin, Deposit, Keanggotaan             (F-16)
+│   ├── Promo/            # MesinPromo, Voucher                               (F-16)
+│   ├── Kanal/            # PesanSendiri, TokoOnline, Marketplace             (F-17)
+│   ├── Karyawan/         # Karyawan, JadwalKerja, Absensi, Komisi            (F-18)
+│   ├── Laporan/          # Kueri laporan, tabel ringkasan                    (F-14)
+│   ├── Integrasi/        # GerbangPembayaran, WhatsApp, Webhook, ApiPublik   (F-20)
+│   └── Bersama/          # Uang, Kuantitas, NomorDokumen, ModelDasar, LogAudit
 │
 │   Di dalam setiap domain:
-│   ├── Actions/          # Satu use case = satu class (CreateSaleAction, PostGoodsReceiptAction)
+│   ├── Aksi/             # Satu use case = satu class (SelesaikanPenjualan, PostingPenerimaanBarang), method Jalankan()
 │   ├── Data/             # DTO (spatie/laravel-data) → juga jadi tipe TS
-│   ├── Enums/            # Status, tipe (backed enum + state transition)
-│   ├── Events/           # SaleCompleted, GoodsReceived, ...
-│   ├── Listeners/        # PostSaleJournal, DeductStockForSale, ...
-│   ├── Models/
-│   ├── Policies/
-│   ├── Queries/          # Query objects untuk laporan/list
-│   └── States/           # State machine dokumen
-├── Http/
-│   ├── Controllers/Web/        # Controller Inertia (return Inertia::render)
-│   ├── Controllers/Internal/   # JSON endpoint untuk TanStack Query back-office (session auth)
-│   ├── Controllers/Pos/V1/     # API aplikasi POS Flutter: aktivasi, bootstrap, delta, sync push (device token)
-│   ├── Controllers/Owner/V1/   # API Aplikasi Owner: dashboard, laporan ringkas, approval, notifikasi (user token)
-│   ├── Controllers/Api/V1/     # Public API (Sanctum token)
-│   ├── Controllers/Webhooks/   # Payment gateway, WA gateway
-│   ├── Middleware/             # IdentifyTenant, EnsureOutletAccess, EnsureFeatureEnabled, EnsureSubscriptionActive
-│   └── Requests/
-└── Support/
+│   ├── Enum/             # Status, jenis (backed enum + transisi status)
+│   ├── Peristiwa/        # PenjualanSelesai, BarangDiterima, ...
+│   ├── Penangan/         # PostingJurnalPenjualan, KurangiStokPenjualan, ...
+│   ├── Model/
+│   ├── Kebijakan/
+│   ├── Kueri/            # Objek kueri untuk laporan/daftar
+│   └── Status/           # State machine dokumen
+├── Http/                 # (pengecualian nama folder, §13.7.4)
+│   ├── Kontroler/Web/          # Kontroler Inertia (return Inertia::render)
+│   ├── Kontroler/Internal/     # JSON untuk TanStack Query back-office (session auth)
+│   ├── Kontroler/Pos/V1/       # API Aplikasi POS: aktivasi, bootstrap, delta, sinkron (device token)
+│   ├── Kontroler/Pemilik/V1/   # API Aplikasi Owner: dasbor, laporan ringkas, persetujuan, notifikasi (user token)
+│   ├── Kontroler/Api/V1/       # API publik (token Sanctum)
+│   ├── Kontroler/Webhook/      # Gerbang pembayaran, WA gateway
+│   ├── Perantara/              # IdentifikasiTenant, PastikanAksesOutlet, PastikanFiturAktif, PastikanLanggananAktif
+│   └── Permintaan/             # Form request: SimpanProdukPermintaan, ...
+└── Providers/            # (pengecualian)
 ```
 
 ### 13.3 Pola Inti
 
-**Action + Event + Listener:**
+**Aksi + Peristiwa + Penangan:**
 
 ```php
-final class CompleteSaleAction
+// Backend/app/Domain/Penjualan/Aksi/SelesaikanPenjualan.php
+final class SelesaikanPenjualan
 {
     public function __construct(
-        private readonly SaleCalculator $calculator,
-        private readonly DocumentNumberGenerator $numbers,
+        private readonly KalkulatorPenjualan $kalkulator,
+        private readonly GeneratorNomorDokumen $nomorDokumen,
     ) {}
 
-    public function execute(CompleteSaleData $data): Sale
+    public function Jalankan(DataSelesaikanPenjualan $data): Penjualan
     {
         return DB::transaction(function () use ($data) {
-            // 1. Idempotensi: jika client_uuid sudah ada, kembalikan sale yang ada
+            // 1. Idempotensi: jika UuidKlien sudah ada, kembalikan Penjualan yang ada
             // 2. Validasi shift, harga, promo (re-kalkulasi server)
-            // 3. Simpan sale + lines + payments (snapshot harga/pajak/HPP)
-            // 4. Dispatch event di dalam transaksi (listener sinkron: stok & jurnal)
-            SaleCompleted::dispatch($sale);
-            return $sale;
+            // 3. Simpan Penjualan + PenjualanDetail + PenjualanPembayaran (snapshot harga/pajak/HPP)
+            // 4. Picu peristiwa di dalam transaksi (penangan sinkron: stok & jurnal)
+            PenjualanSelesai::dispatch($penjualan);
+            return $penjualan;
         });
     }
 }
 ```
 
-- Listener **stok** dan **jurnal** berjalan **sinkron di dalam transaksi DB yang sama** agar tidak ada penjualan tanpa jurnal/stok (konsistensi kuat, karena queue di shared hosting tidak real-time).
-- Listener non-kritis (notifikasi WA, update poin agregat, webhook keluar, ringkasan laporan) memakai **queue** (`ShouldQueue` + `afterCommit`).
+- Penangan **stok** dan **jurnal** berjalan **sinkron di dalam transaksi DB yang sama** agar tidak ada penjualan tanpa jurnal/stok (konsistensi kuat, karena queue di shared hosting tidak real-time).
+- Penangan non-kritis (notifikasi WA, update poin agregat, webhook keluar, ringkasan laporan) memakai **queue** (`ShouldQueue` + `afterCommit`).
 
-**State machine dokumen:** backed enum dengan method `canTransitionTo()`, dan setiap transisi dicatat di `document_status_histories`.
+**State machine dokumen:** backed enum dengan method `BisaBerubahKe()`, dan setiap transisi dicatat di tabel `RiwayatStatusDokumen`.
 
-**Idempotensi:** semua endpoint mutasi dari POS menerima header `Idempotency-Key` (= `client_uuid`). Unique index `(tenant_id, client_uuid)`.
+**Idempotensi:** semua endpoint mutasi dari POS menerima header `Idempotency-Key` (= `UuidKlien`). Unique index `(IdTenant, UuidKlien)`.
 
-**Konkurensi stok:** update `stock_levels` memakai `SELECT ... FOR UPDATE` per (produk, lokasi), dengan urutan penguncian konsisten (urut `product_id`) untuk menghindari deadlock. Nomor dokumen server-side memakai tabel `document_sequences` dengan row lock.
+**Konkurensi stok:** update `SaldoStok` memakai `SELECT ... FOR UPDATE` per (produk, gudang), dengan urutan penguncian konsisten (urut `IdProduk`) untuk menghindari deadlock. Nomor dokumen server-side memakai tabel `NomorUrutDokumen` dengan row lock.
 
 ### 13.4 Multi-Tenancy
 
-**Strategi: single database, shared schema, kolom `tenant_id`.**
+**Strategi: single database, shared schema, kolom `IdTenant`.**
 
 Alasan: di Hostinger jumlah database MySQL per akun terbatas dan pembuatan database tidak bisa diotomatisasi dengan mudah dari aplikasi. Model ini paling murah dan paling sederhana di-backup.
 
 Implementasi:
-- Semua tabel milik tenant punya `tenant_id BIGINT UNSIGNED NOT NULL` + indeks komposit yang **diawali `tenant_id`**.
-- Trait `BelongsToTenant`: global scope `where tenant_id = current()`, dan otomatis mengisi `tenant_id` saat `creating`.
-- `TenantContext` di-resolve oleh middleware `IdentifyTenant` dari **sesi user** (back-office, tenant aktif), **device token** (aplikasi Flutter: tenant & outlet perangkat), **token API** (tenant pemilik token), **user token** (Aplikasi Owner: user + tenant aktif yang dipilih, dengan pengecekan akses outlet), atau **slug** (self-order/toko online publik).
-- Job queue membawa `tenant_id` (middleware job `WithTenant`) sehingga scope tetap aktif di worker.
-- **Guard ganda:** test otomatis "tenant isolation" untuk setiap model/endpoint (user tenant A tidak bisa membaca/mengubah data tenant B, termasuk via ID yang ditebak). Route model binding selalu lewat scope tenant.
+- Semua tabel milik tenant punya `IdTenant BIGINT UNSIGNED NOT NULL` + indeks komposit yang **diawali `IdTenant`**.
+- Trait `MilikTenant`: global scope `where IdTenant = Sekarang()`, dan otomatis mengisi `IdTenant` saat `creating`.
+- `KonteksTenant` di-resolve oleh perantara `IdentifikasiTenant` dari **sesi user** (back-office, tenant aktif), **device token** (Aplikasi POS: tenant & outlet perangkat), **token API** (tenant pemilik token), **user token** (Aplikasi Owner: user + tenant aktif yang dipilih, dengan pengecekan akses outlet), atau **slug** (self-order/toko online publik).
+- Job queue membawa `IdTenant` (middleware job `DenganTenant`) sehingga scope tetap aktif di worker.
+- **Guard ganda:** test otomatis "isolasi tenant" untuk setiap model/endpoint (user tenant A tidak bisa membaca/mengubah data tenant B, termasuk via ID yang ditebak). Route model binding selalu lewat scope tenant.
 - ID publik di URL memakai **ULID/UUID**, bukan auto-increment, untuk mencegah enumerasi.
-- Jalur migrasi masa depan: tenant enterprise bisa dipindah ke database terdedikasi (VPS) karena `tenant_id` sudah ada di semua tabel.
+- Jalur migrasi masa depan: tenant enterprise bisa dipindah ke database terdedikasi (VPS) karena `IdTenant` sudah ada di semua tabel.
 
 ### 13.5 Pembagian Tugas Klien
 
@@ -1534,6 +1538,183 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 /admin/...                Super Admin
 ```
 
+### 13.7 Konvensi Penamaan: Bahasa Indonesia + PascalCase (Keputusan D-05)
+
+#### 13.7.1 Aturan Utama
+
+**Database, folder, file, dan function/method memakai Bahasa Indonesia dengan PascalCase**, di semua komponen: Backend Laravel, back-office React, Aplikasi Kasir, dan Aplikasi Pemilik (Flutter).
+
+| Objek | Aturan | Contoh |
+|---|---|---|
+| Nama tabel (MySQL & SQLite lokal) | PascalCase, kata benda **tunggal** | `Penjualan`, `PenjualanDetail`, `MutasiStok`, `SaldoStok` |
+| Nama kolom | PascalCase | `Id`, `Uuid`, `IdOutlet`, `TanggalBisnis`, `TotalAkhir`, `DibuatPada` |
+| Primary key / foreign key | `Id` / `Id{Tabel}` (+ peran bila perlu) | `IdPenjualan`, `IdGudangAsal` |
+| Indeks & constraint | `Idx…`, `Uniq…`, `Fk…` + PascalCase | `UniqPenjualanIdTenantUuidKlien` |
+| Folder | PascalCase | `Domain/Penjualan/Aksi/`, `Fitur/Keranjang/` |
+| File | PascalCase, sama dengan nama class/komponen utama di dalamnya | `SelesaikanPenjualan.php`, `KalkulatorKeranjang.dart`, `FormProduk.tsx` |
+| Function / method | PascalCase, diawali **kata kerja** | `Jalankan()`, `HitungTotal()`, `SimpanPenjualan()`, `AmbilSaldoStok()` |
+| Class / komponen React / widget Flutter | PascalCase, kata benda | `KalkulatorPenjualan`, `TabelData`, `LayarPembayaran` |
+| Relasi Eloquent | PascalCase, nama objek relasi | `Outlet()`, `Detail()`, `Pembayaran()` |
+| Enum & nilainya | PascalCase | `enum StatusPenjualan { Draf, Ditahan, Lunas, Void }` |
+| Migration | Stempel waktu Laravel + PascalCase | `2026_10_01_000000_BuatTabelPenjualan.php` |
+| Key JSON API & properti DTO | PascalCase, **sama persis dengan nama kolom** agar tidak ada lapisan pemetaan | `{"TotalAkhir": "63500.00", "IdOutlet": "01J…"}` |
+| Variabel lokal & parameter | camelCase Bahasa Indonesia | `$totalBayar`, `jumlahItem` |
+
+**Kamus istilah** (satu istilah untuk satu konsep, dipakai konsisten di tabel, class, dan UI):
+
+| Konsep | Nama | Konsep | Nama |
+|---|---|---|---|
+| tenant | `Tenant` (serapan) | sale / sale line | `Penjualan` / `PenjualanDetail` |
+| outlet | `Outlet` (serapan) | payment | `PenjualanPembayaran`, `Pembayaran` |
+| warehouse / location | `Gudang` | sale return / void | `ReturPenjualan` / `VoidPenjualan` |
+| device | `Perangkat` | shift | `Shift` (serapan) |
+| hardware | `PerangkatKeras` | cash movement | `MutasiKas` |
+| user / role / permission | `Pengguna` / `Peran` / `Izin` | stock level / stock movement | `SaldoStok` / `MutasiStok` |
+| product / category / unit | `Produk` / `Kategori` / `Satuan` | stock transfer / opname / adjustment | `TransferStok` / `StokOpname` / `PenyesuaianStok` |
+| modifier group / modifier | `KelompokPilihan` / `Pilihan` | recipe / production | `Resep` / `Produksi` |
+| price list / price history | `DaftarHarga` / `RiwayatHarga` | supplier | `Pemasok` |
+| customer | `Pelanggan` | purchase order | `PesananPembelian` |
+| promotion / voucher | `Promo` / `Voucher` | goods receipt | `PenerimaanBarang` |
+| loyalty points / deposit | `MutasiPoin` / `MutasiDeposit` | purchase invoice | `FakturPembelian` |
+| employee / attendance / commission | `Karyawan` / `Absensi` / `Komisi` | receivable / payable | `Piutang` / `Hutang` |
+| account / journal / journal line | `Akun` / `Jurnal` / `JurnalDetail` | account mapping / posting rule | `PemetaanAkun` / `AturanPosting` |
+| tax type / rate / group | `JenisPajak` / `TarifPajak` / `KelompokPajak` | period lock | `KunciPeriode` |
+| approval | `Persetujuan` | audit log | `LogAudit` |
+| subscription / plan | `Langganan` / `Paket` | document number sequence | `NomorUrutDokumen` |
+| table (resto) / table area | `Meja` / `AreaMeja` | kitchen station / ticket | `StasiunDapur` / `TiketDapur` |
+| booking / work order | `Reservasi` / `PerintahKerja` | daily summary | `RingkasanPenjualanHarian` |
+| sync / outbox | `Sinkron` / `Outbox` (serapan) | action / event / listener | `Aksi` / `Peristiwa` / `Penangan` |
+| controller / middleware / request | `Kontroler` / `Perantara` / `Permintaan` | policy / query / service | `Kebijakan` / `Kueri` / `Layanan` |
+| job | `Tugas` | repository | `Repositori` |
+| Owner app | `Pemilik` (folder `Aplikasi/Pemilik`) | POS app | `Kasir` (folder `Aplikasi/Kasir`) |
+
+Pola penamaan class per jenis (**{Objek}{Jenis}**, agar file satu domain berdekatan saat diurutkan):
+`PenjualanKontroler`, `PenjualanKebijakan`, `SimpanProdukPermintaan`, `ProdukRespons`, `KirimStrukWaTugas`. Pengecualian: class **Aksi** dan **Peristiwa** memakai kalimat langsung, misal Aksi `SelesaikanPenjualan`, Peristiwa `PenjualanSelesai`, Penangan `KurangiStokPenjualan`.
+
+#### 13.7.2 Contoh Backend (Laravel)
+
+```php
+// Backend/app/Domain/Bersama/Model/ModelDasar.php
+abstract class ModelDasar extends Model
+{
+    protected $primaryKey = 'Id';
+    const CREATED_AT = 'DibuatPada';
+    const UPDATED_AT = 'DiubahPada';
+    const DELETED_AT = 'DihapusPada';
+
+    // hasMany() menebak foreign key "Id{NamaModel}", misal IdPenjualan
+    public function getForeignKey(): string
+    {
+        return 'Id' . class_basename($this);
+    }
+}
+
+// Backend/app/Domain/Penjualan/Model/Penjualan.php
+final class Penjualan extends ModelDasar
+{
+    use MilikTenant;                       // global scope IdTenant
+    protected $table = 'Penjualan';
+
+    public function Outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class, 'IdOutlet', 'Id');   // selalu eksplisit
+    }
+
+    public function Detail(): HasMany
+    {
+        return $this->hasMany(PenjualanDetail::class);            // → IdPenjualan
+    }
+
+    public function HitungSisaTagihan(): Uang
+    {
+        return Uang::Dari($this->TotalAkhir)->Kurangi($this->TotalDibayar);
+    }
+}
+
+// Backend/database/migrations/2026_10_01_000000_BuatTabelPenjualan.php
+return new class extends Migration {
+    public function up(): void                       // up/down: wajib oleh Laravel
+    {
+        Schema::create('Penjualan', function (Blueprint $tabel) {
+            $tabel->id('Id');
+            $tabel->char('Uuid', 26)->unique('UniqPenjualanUuid');
+            $tabel->foreignId('IdTenant')->constrained('Tenant', 'Id');
+            $tabel->foreignId('IdOutlet')->constrained('Outlet', 'Id');
+            $tabel->char('UuidKlien', 26);
+            $tabel->date('TanggalBisnis');
+            $tabel->decimal('TotalAkhir', 18, 2);
+            $tabel->WaktuStandar();                  // macro Blueprint: DibuatPada, DiubahPada
+            $tabel->unique(['IdTenant', 'UuidKlien'], 'UniqPenjualanIdTenantUuidKlien');
+            $tabel->index(['IdTenant', 'IdOutlet', 'TanggalBisnis'], 'IdxPenjualanTenantOutletTanggal');
+        });
+    }
+};
+```
+
+#### 13.7.3 Contoh Flutter & React
+
+```dart
+// Aplikasi/Kasir/lib/Fitur/Keranjang/KalkulatorKeranjang.dart
+class KalkulatorKeranjang {
+  Uang HitungSubtotal(List<ItemKeranjang> daftarItem) { ... }
+  Uang HitungPajak(Uang dasarPengenaan, TarifPajak tarif) { ... }
+}
+
+// Aplikasi/Kasir/lib/Data/Db/Tabel/Produk.dart  (Drift, build.yaml: case_from_dart_to_sql: preserve)
+class Produk extends Table {
+  IntColumn get Id => integer().autoIncrement()();
+  TextColumn get Nama => text()();
+  TextColumn get HargaDasar => text()();   // decimal disimpan sebagai string
+}
+```
+
+```tsx
+// Backend/resources/js/Halaman/Katalog/Produk/Daftar.tsx
+export default function Daftar({ Filter }: Props) {
+  const { data } = useDaftarProduk(Filter);          // hook wajib diawali "use" (aturan React)
+  return <TabelData Kolom={KolomProduk} Data={data?.Data ?? []} />;
+}
+
+// Backend/resources/js/Pustaka/Format.ts
+export function FormatRupiah(nilai: string): string { ... }
+```
+
+#### 13.7.4 Pengecualian (Wajib oleh Framework, Bahasa, atau Alat)
+
+Nama-nama berikut **tidak** diubah karena diwajibkan oleh framework/alat, dan mengubahnya akan merusak build atau fitur bawaan:
+
+| Area | Pengecualian | Alasan |
+|---|---|---|
+| Folder root Laravel & Composer | `app/`, `bootstrap/`, `config/`, `database/`, `routes/`, `resources/`, `public/`, `storage/`, `tests/`, `vendor/`, `lang/`, `app/Http/`, `app/Providers/`, `app/Console/` | Konvensi & path bawaan Laravel/Composer/Artisan |
+| File konfigurasi | `composer.json`, `package.json`, `vite.config.ts`, `tsconfig.json`, `phpunit.xml`, `.env`, `config/*.php`, `routes/web.php`, `routes/api.php`, `routes/console.php`, `bootstrap/app.php`, `pubspec.yaml`, `analysis_options.yaml`, `build.yaml`, `l10n.yaml`, `melos.yaml`, `.github/workflows/*` | Nama dicari otomatis oleh alat masing-masing. File route tambahan boleh PascalCase: `routes/Pos.php`, `routes/Pemilik.php` |
+| Method hook framework (PHP) | `up`, `down`, `handle`, `boot`, `register`, `rules`, `authorize`, `messages`, `toArray`, `casts`, `render`, `broadcastOn`, `via`, `toMail`, `__construct`, `__invoke` | Dipanggil otomatis oleh Laravel/PHP |
+| Method hook framework (Flutter/Dart) | `main`, `build`, `createState`, `initState`, `dispose`, `didChangeDependencies`, `toJson`, `fromJson`, `copyWith`, `==`, `hashCode`, `toString` | Dipanggil/digenerate oleh Dart, Flutter, freezed, json_serializable |
+| Hook React | Awalan `use` (camelCase): `useDaftarProduk`, `useKeranjang` | Aturan React Hooks & lint `react-hooks` mendeteksi hook dari awalan `use` |
+| Nama paket Dart (`name:` di pubspec) | huruf kecil + underscore: `kasir`, `pemilik`, `mesin_kasir`, `inti`, `klien_api`, `sistem_desain`, `adaptor_perangkat` | Syarat wajib Dart pub. **Folder** paket tetap PascalCase |
+| Folder wajib Flutter | `lib/`, `test/`, `integration_test/`, `android/`, `ios/`, `windows/`, `assets/` | Path bawaan Flutter tooling & platform |
+| Tabel bawaan framework/paket | `migrations`, `jobs`, `job_batches`, `failed_jobs`, `cache`, `cache_locks`, `sessions`, `password_reset_tokens`, `personal_access_tokens`, tabel spatie (`roles`, `permissions`, `model_has_roles`, `activity_log`, dsb.) | Dikelola paket. Mengganti nama menambah risiko upgrade. Dapat ditinjau ulang kelak |
+| Kode hasil generate & vendor | `*.g.dart`, `*.freezed.dart`, provider Riverpod hasil generate, file shadcn/ui hasil CLI, tipe TS hasil generate | Dibuat ulang oleh alat. Tidak diedit manual |
+| Header HTTP & standar | `Idempotency-Key`, `Authorization`, `X-App-Version`, nama field OpenAPI standar | Standar protokol |
+| URL/endpoint | Mengikuti §13.6 & §16 (huruf kecil) | Belum termasuk keputusan D-05. Lihat §25 |
+
+#### 13.7.5 Konfigurasi agar Konvensi Berjalan
+
+| Stack | Pengaturan |
+|---|---|
+| Laravel | `ModelDasar` (PK `Id`, `DibuatPada`/`DiubahPada`/`DihapusPada`, `getForeignKey()`), macro Blueprint `WaktuStandar()` & `IdTenant()`, relasi `belongsTo` selalu menyebut kolom eksplisit, `phpunit.xml` suffix test `Tes.php` (misal `SelesaikanPenjualanTes.php`), aturan Pint/PHPStan untuk nama method PascalCase |
+| spatie/laravel-data | Tidak memakai mapper `snake_case`. Properti DTO = nama kolom PascalCase, sehingga JSON API PascalCase |
+| React/TypeScript | Resolver Inertia diarahkan ke `./Halaman/**/*.tsx`, entry Vite `resources/js/Aplikasi.tsx`, alias `@/` ke `resources/js`, ESLint `@typescript-eslint/naming-convention` (function PascalCase, pengecualian `use*`), `components.json` shadcn diarahkan ke `Komponen/Ui` |
+| Flutter/Dart | `analysis_options.yaml`: nonaktifkan lint `file_names` dan `non_constant_identifier_names`. Drift `build.yaml`: `case_from_dart_to_sql: preserve`. `json_serializable`: `field_rename: none` (key JSON = nama field PascalCase). Flavor entrypoint `lib/UtamaDev.dart`, `lib/UtamaStaging.dart`, `lib/UtamaProduksi.dart` (fungsi `main()` di dalamnya tetap `main`) |
+| MySQL | **Nama tabel case-sensitive di Linux** (Hostinger: `lower_case_table_names = 0`). Query harus memakai huruf besar/kecil persis. Lingkungan dev **wajib** MySQL Linux (Docker/WSL2), bukan MySQL bawaan Windows/macOS yang mengubah nama tabel jadi huruf kecil. CI punya test yang membandingkan `SHOW TABLES` dengan daftar nama PascalCase yang diharapkan |
+| Review kode | Checklist PR: nama baru mengikuti kamus istilah §13.7.1. Istilah baru ditambahkan ke kamus dulu |
+
+#### 13.7.6 Konsekuensi yang Diterima
+
+- Contoh dan dokumentasi Laravel/Flutter umumnya berbahasa Inggris dan snake_case/camelCase, sehingga developer baru perlu adaptasi. Kamus istilah dan `ModelDasar` mengurangi gesekan.
+- Beberapa perilaku "otomatis" Laravel (tebakan nama tabel, foreign key, timestamp) diganti konfigurasi eksplisit di `ModelDasar`.
+- Nama tabel case-sensitive menuntut disiplin lingkungan dev (MySQL Linux).
+- Lint bawaan Dart & TS perlu disesuaikan. Hasil analisis statis tetap dijaga ketat untuk aturan lain.
+
 ---
 
 ## 14. Strategi Hosting di Hostinger
@@ -1551,7 +1732,7 @@ Hostinger Web/Cloud Hosting (berbasis LiteSpeed, hPanel) **tidak** menyediakan p
 | Batas memori & waktu eksekusi PHP per request | Export/import besar gagal | Import/export **streaming (OpenSpout)** + **chunk** + diproses di queue per batch; PDF besar dipecah; laporan berat dari **tabel ringkasan** (`daily_*_summaries`). |
 | Batas koneksi MySQL & entry process | Lonjakan trafik bisa error 503/508 | Query efisien (indeks tepat, tanpa N+1: `Model::preventLazyLoading()` di dev), cache props yang jarang berubah, polling adaptif (melambat saat tab tidak aktif), POS offline-first mengurangi request. |
 | Batas inode/disk | Upload gambar menumpuk | Kompres & resize gambar saat upload (WebP), batas ukuran; opsi disk **S3-compatible** (Cloudflare R2/sejenis) via `FILESYSTEM_DISK`. |
-| Document root = `public_html` | Struktur Laravel berbeda | Kode aplikasi di luar `public_html` (misal `~/apps/{{app}}/current`). `public_html` menjadi **symlink** ke `current/public` (atau domain di-set ke folder tersebut di hPanel). |
+| Document root = `public_html` | Struktur Laravel berbeda | Kode aplikasi di luar `public_html` (misal `~/Aplikasi/{{APP}}/Aktif`). `public_html` (nama wajib Hostinger) menjadi **symlink** ke `Aktif/public` (atau domain di-set ke folder tersebut di hPanel). |
 | Cron minimal per menit | Scheduler granular menit | Cukup untuk queue, pengingat, tutup harian, dunning, forecast malam hari. |
 
 ### 14.2 Rekomendasi Paket
@@ -1582,11 +1763,11 @@ jobs:
   deploy:
     needs: build
     steps:
-      - upload artefak via scp/rsync ke ~/apps/app/releases/{timestamp}
-      - ssh: symlink shared (.env, storage) ke rilis baru
+      - upload artefak via scp/rsync ke ~/Aplikasi/{{APP}}/Rilis/{Stempel}
+      - ssh: symlink Bersama/ (.env, storage) ke rilis baru
       - ssh: php artisan migrate --force   # migrasi harus backward-compatible (expand → contract)
       - ssh: php artisan optimize          # config, route, view, event cache
-      - ssh: ln -sfn releases/{timestamp} current   # switch atomik
+      - ssh: ln -sfn Rilis/{Stempel} Aktif   # switch atomik
       - ssh: php artisan queue:restart
       - ssh: hapus rilis lama (simpan 5 terakhir)
       - smoke test: curl /up (health check) → gagal = rollback symlink
@@ -1594,14 +1775,14 @@ jobs:
 
 - **Zero-downtime:** switch symlink atomik + migrasi *expand/contract* (kolom baru nullable dulu, hapus kolom lama di rilis berikutnya).
 - **Kompatibilitas mundur API POS wajib.** Aplikasi Flutter versi lama masih beredar di perangkat selama berminggu-minggu. Backend harus melayani minimal **2 versi minor aplikasi terakhir**. Perubahan yang merusak kontrak hanya lewat `/api/pos/v2` atau pemaksaan update lewat `min_supported_version` (§14.6).
-- **Rollback:** arahkan `current` ke rilis sebelumnya.
+- **Rollback:** arahkan symlink `Aktif` ke rilis sebelumnya.
 - **Environment:** `production`, `staging` (subdomain `staging.`), dengan database terpisah.
 - **Secret** disimpan di GitHub Secrets (SSH key, host). `.env` produksi hanya ada di server.
 
 ### 14.4 Crontab di hPanel
 
 ```
-* * * * * cd ~/apps/app/current && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd ~/Aplikasi/{{APP}}/Aktif && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 Isi `routes/console.php` (contoh):
@@ -1639,11 +1820,11 @@ Aplikasi POS dan Aplikasi Owner **tidak di-hosting di Hostinger**. Hostinger han
 > **Keputusan tertunda (D-01):** kanal distribusi & mekanisme update Windows ditetapkan setelah Fase 1 berjalan stabil. Arsitektur tidak bergantung pada pilihan ini: aplikasi hanya membaca `app-config` (versi terbaru, `min_supported_version`, `download_url`).
 
 **Kebijakan versi:**
-- Versi semantik `MAJOR.MINOR.PATCH+BUILD`. Setiap rilis membawa `sync_schema_version`.
+- Versi semantik `MAJOR.MINOR.PATCH+BUILD`. Setiap rilis membawa `VersiSkemaSinkron`.
 - Endpoint `GET /api/pos/v1/app-config` mengembalikan `latest_version`, `min_supported_version`, dan feature flag remote per platform.
 - Aplikasi di bawah `min_supported_version` **tetap boleh mengirim outbox yang tertunda** (agar tidak kehilangan transaksi), lalu mengunci layar jual sampai diperbarui.
 - **Update tidak boleh dipasang saat ada shift terbuka dengan outbox belum terkirim** (aplikasi menunda dan mengingatkan).
-- Rilis bertahap (staged rollout) 10% → 50% → 100% di Play Store. Di Windows, lewat kanal `beta`/`stable` pada `app_releases` (mekanisme final mengikuti D-02).
+- Rilis bertahap (staged rollout) 10% → 50% → 100% di Play Store. Di Windows, lewat kanal `Beta`/`Stabil` pada tabel `RilisAplikasi` (mekanisme final mengikuti D-02).
 
 **Biaya & akun yang perlu disiapkan:** Google Play Console (sekali bayar), Apple Developer Program (tahunan), sertifikat code signing Windows (tahunan), proyek Firebase (FCM), runner macOS di CI (menit berbayar, dibutuhkan untuk build iOS), serta akun developer di app store vendor perangkat all-in-one bila dipakai.
 
@@ -1653,43 +1834,49 @@ Binary installer (puluhan MB) sebaiknya disimpan di **GitHub Releases** atau obj
 
 ## 15. Model Data (Skema Database)
 
+> Semua nama tabel dan kolom memakai **Bahasa Indonesia, PascalCase, bentuk tunggal** (keputusan D-05, aturan lengkap di §13.7). Contoh: tabel `Penjualan`, kolom `IdOutlet`, `TanggalBisnis`, `TotalAkhir`.
+
 ### 15.1 Konvensi
 
-- PK `id BIGINT UNSIGNED AUTO_INCREMENT` (internal) + `uuid CHAR(26)` ULID (publik, offline, dan API).
-- `tenant_id` di semua tabel tenant. Indeks komposit diawali `tenant_id`.
-- Uang: `DECIMAL(18,2)`. Harga pokok per unit: `DECIMAL(19,6)`. Qty: `DECIMAL(18,4)`. Persen/tarif: `DECIMAL(9,6)`.
-- Waktu: `TIMESTAMP` UTC + `business_date DATE` (tanggal bisnis menurut zona waktu outlet & jam tutup buku, misal kafe yang tutup jam 02:00 tetap masuk tanggal kemarin).
-- Soft delete **hanya** untuk master data. Dokumen transaksi tidak pernah dihapus.
+- PK `Id BIGINT UNSIGNED AUTO_INCREMENT` (internal) + `Uuid CHAR(26)` ULID (publik, offline, dan API).
+- Foreign key: `Id` + nama tabel rujukan, misal `IdTenant`, `IdOutlet`, `IdProduk`. Jika satu tabel merujuk tabel yang sama dua kali, tambahkan peran: `IdGudangAsal`, `IdGudangTujuan`.
+- `IdTenant` di semua tabel milik tenant. Indeks komposit diawali `IdTenant`.
+- Nama indeks: `Idx{Tabel}{Kolom...}`, unique: `Uniq{Tabel}{Kolom...}`, foreign key: `Fk{Tabel}{Kolom}`. Contoh: `IdxPenjualanIdTenantIdOutletTanggalBisnis`. Jika melebihi 64 karakter (batas MySQL), singkat secara konsisten.
+- Uang: `DECIMAL(18,2)`. Harga pokok per unit: `DECIMAL(19,6)`. Jumlah (qty): `DECIMAL(18,4)`. Persen/tarif: `DECIMAL(9,6)`.
+- Waktu: `TIMESTAMP` UTC + `TanggalBisnis DATE` (tanggal bisnis menurut zona waktu outlet & jam tutup buku, misal kafe yang tutup jam 02:00 tetap masuk tanggal kemarin).
+- Kolom waktu standar: `DibuatPada`, `DiubahPada`, `DihapusPada` (soft delete, **hanya** untuk master data). Dokumen transaksi tidak pernah dihapus.
+- Kolom boolean diawali `Is`/`Apakah` **tidak** dipakai. Gunakan kata sifat/status yang jelas: `Aktif`, `Pkp`, `Otomatis`, `BolehMinus`.
 - Kolom snapshot (nama produk, harga, pajak) di baris transaksi agar laporan historis stabil.
-- `created_by`, `updated_by`, `device_id` di dokumen transaksi.
+- `DibuatOleh`, `DiubahOleh`, `IdPerangkat` di dokumen transaksi.
+- Tabel detail memakai pola `{Induk}Detail` (misal `PenjualanDetail`, `JurnalDetail`) agar berurutan dengan induknya saat diurutkan.
 
 ### 15.2 ERD Inti
 
 ```mermaid
 erDiagram
-    TENANTS ||--o{ OUTLETS : has
-    TENANTS ||--o{ USERS_TENANTS : has
-    TENANTS ||--|| SUBSCRIPTIONS : has
-    OUTLETS ||--o{ WAREHOUSES : has
-    OUTLETS ||--o{ DEVICES : has
-    OUTLETS ||--o{ SHIFTS : has
-    PRODUCTS ||--o{ PRODUCT_UNITS : has
-    PRODUCTS ||--o{ PRODUCT_BARCODES : has
-    PRODUCTS ||--o{ RECIPE_ITEMS : "is made of"
-    PRODUCTS ||--o{ STOCK_LEVELS : "stocked in"
-    WAREHOUSES ||--o{ STOCK_LEVELS : holds
-    STOCK_MOVEMENTS }o--|| PRODUCTS : moves
-    STOCK_MOVEMENTS }o--|| WAREHOUSES : at
-    SHIFTS ||--o{ SALES : contains
-    SALES ||--o{ SALE_LINES : has
-    SALES ||--o{ SALE_PAYMENTS : "paid by"
-    SALES }o--o| CUSTOMERS : for
-    SALE_LINES }o--|| PRODUCTS : sells
-    SUPPLIERS ||--o{ PURCHASE_ORDERS : receives
-    PURCHASE_ORDERS ||--o{ GOODS_RECEIPTS : fulfilled_by
-    GOODS_RECEIPTS ||--o{ PURCHASE_INVOICES : billed_by
-    JOURNALS ||--o{ JOURNAL_LINES : has
-    JOURNAL_LINES }o--|| ACCOUNTS : posts_to
+    Tenant ||--o{ Outlet : memiliki
+    Tenant ||--o{ TenantPengguna : memiliki
+    Tenant ||--|| Langganan : memiliki
+    Outlet ||--o{ Gudang : memiliki
+    Outlet ||--o{ Perangkat : memiliki
+    Outlet ||--o{ Shift : memiliki
+    Produk ||--o{ ProdukSatuan : memiliki
+    Produk ||--o{ ProdukBarcode : memiliki
+    Produk ||--o{ ResepDetail : "dibuat dari"
+    Produk ||--o{ SaldoStok : "disimpan di"
+    Gudang ||--o{ SaldoStok : menyimpan
+    MutasiStok }o--|| Produk : memindahkan
+    MutasiStok }o--|| Gudang : di
+    Shift ||--o{ Penjualan : berisi
+    Penjualan ||--o{ PenjualanDetail : memiliki
+    Penjualan ||--o{ PenjualanPembayaran : "dibayar dengan"
+    Penjualan }o--o| Pelanggan : untuk
+    PenjualanDetail }o--|| Produk : menjual
+    Pemasok ||--o{ PesananPembelian : menerima
+    PesananPembelian ||--o{ PenerimaanBarang : "dipenuhi oleh"
+    PenerimaanBarang ||--o{ FakturPembelian : "ditagih oleh"
+    Jurnal ||--o{ JurnalDetail : memiliki
+    JurnalDetail }o--|| Akun : "diposting ke"
 ```
 
 ### 15.3 Tabel Utama (ringkas)
@@ -1698,152 +1885,153 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `tenants` | id, uuid, name, slug, npwp, is_pkp, timezone, settings JSON, status |
-| `plans` / `plan_features` | kode paket, harga, limit (outlet, device, user, SKU), fitur |
-| `subscriptions` | tenant_id, plan_id, status, trial_ends_at, current_period_start/end, billing_cycle |
-| `subscription_invoices` | tenant_id, number, amount, status, paid_at, gateway_ref |
-| `users` | id, uuid, name, email, phone, password, two_factor_secret |
-| `tenant_user` | tenant_id, user_id, is_owner, pin_hash, status |
-| `brands` | tenant_id, name |
-| `outlets` | tenant_id, brand_id, code, name, address, city_code, timezone, sector_template, business_day_cutoff (misal 04:00), tax_profile JSON |
-| `outlet_features` | tenant_id, outlet_id, feature_key, enabled, config JSON |
-| `warehouses` | tenant_id, outlet_id, code, name, type (store/kitchen/bar/warehouse/damaged/in_transit) |
-| `devices` | tenant_id, outlet_id, uuid, code, name, type (pos/kds/warehouse/waiter/salesman), platform (android/ios/windows), os_version, app_version, sync_schema_version, push_token, hardware_profile JSON (printer, drawer, layar kedua), last_seen_at, pending_outbox_count, revoked_at |
-| `user_devices` | user_id, tenant_id, app (owner/pos), platform (android/ios/windows), push_token, app_version, last_seen_at, revoked_at |
-| `device_activation_codes` | tenant_id, outlet_id, device_id, code_hash, expires_at, used_at |
-| `app_releases` | app (pos/owner), platform, channel (beta/stable), version, build, min_supported_version, download_url, release_notes, rollout_pct |
-| `outlet_user` | tenant_id, outlet_id, user_id, role_id |
+| `Tenant` | Id, Uuid, Nama, Slug, Npwp, Pkp, ZonaWaktu, Pengaturan JSON, Status |
+| `Paket` / `PaketFitur` | Kode, Harga, Batas (outlet, perangkat, pengguna, SKU), Fitur |
+| `Langganan` | IdTenant, IdPaket, Status, TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan |
+| `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
+| `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
+| `TenantPengguna` | IdTenant, IdPengguna, Pemilik, HashPin, Status |
+| `Merek` | IdTenant, Nama |
+| `Outlet` | IdTenant, IdMerek, Kode, Nama, Alamat, KodeKota, ZonaWaktu, TemplateSektor, JamTutupBuku (misal 04:00), ProfilPajak JSON |
+| `OutletFitur` | IdTenant, IdOutlet, KunciFitur, Aktif, Konfigurasi JSON |
+| `Gudang` | IdTenant, IdOutlet, Kode, Nama, Jenis (Toko/Dapur/Bar/Gudang/Rusak/DalamPerjalanan) |
+| `Perangkat` | IdTenant, IdOutlet, Uuid, Kode, Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada |
+| `PerangkatPengguna` | IdPengguna, IdTenant, Aplikasi (Owner/Pos), Platform (Android/Ios/Windows), TokenPush, VersiAplikasi, TerakhirAktifPada, DicabutPada |
+| `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode, KedaluwarsaPada, DipakaiPada |
+| `RilisAplikasi` | Aplikasi (Pos/Owner), Platform, Kanal (Beta/Stabil), Versi, Build, VersiMinimum, UrlUnduh, CatatanRilis, PersenRollout |
+| `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran |
 
 **Katalog & Harga**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `categories` | tenant_id, parent_id, name, kitchen_station_id, sort |
-| `products` | tenant_id, uuid, sku, name, receipt_name, type, category_id, brand, base_unit_id, tracking (none/batch/serial), tax_group_id, cost_method, allow_negative, is_active, show_in_pos, show_online, parent_id (varian), variant_attributes JSON |
-| `units` | tenant_id, name, symbol, allow_decimal |
-| `product_units` | product_id, unit_id, conversion_to_base, is_default_sale, is_default_purchase |
-| `product_barcodes` | tenant_id, product_id, product_unit_id, barcode (unique per tenant) |
-| `product_prices` | tenant_id, product_id, product_unit_id, price_list_id (null = dasar), min_qty, price |
-| `price_lists` | tenant_id, name, outlet_ids JSON, channel, customer_tier, starts_at, ends_at, priority |
-| `modifier_groups` / `modifiers` | min_select, max_select / name, price, product_id (bahan, opsional), qty |
-| `product_modifier_group` | product_id, modifier_group_id, sort |
-| `recipes` / `recipe_items` | product_id, yield_qty, version / ingredient_product_id, qty, unit_id, waste_pct |
-| `bundle_items` | bundle_product_id, component_product_id, qty, price_allocation |
-| `price_histories` | product_id, old_price, new_price, changed_by |
+| `Kategori` | IdTenant, IdInduk, Nama, IdStasiunDapur, Urutan |
+| `Produk` | IdTenant, Uuid, Sku, Nama, NamaStruk, Jenis, IdKategori, Merek, IdSatuanDasar, Pelacakan (Tidak/Batch/Seri), IdKelompokPajak, MetodeHpp, BolehMinus, Aktif, TampilDiPos, TampilOnline, IdInduk (varian), AtributVarian JSON |
+| `Satuan` | IdTenant, Nama, Simbol, BolehDesimal |
+| `ProdukSatuan` | IdProduk, IdSatuan, KonversiKeDasar, DefaultJual, DefaultBeli |
+| `ProdukBarcode` | IdTenant, IdProduk, IdProdukSatuan, Barcode (unik per tenant) |
+| `ProdukHarga` | IdTenant, IdProduk, IdProdukSatuan, IdDaftarHarga (null = dasar), JumlahMinimum, Harga |
+| `DaftarHarga` | IdTenant, Nama, IdOutlet JSON, Kanal, TierPelanggan, MulaiPada, SelesaiPada, Prioritas |
+| `KelompokPilihan` / `Pilihan` (modifier) | MinimalPilih, MaksimalPilih / Nama, Harga, IdProduk (bahan, opsional), Jumlah |
+| `ProdukKelompokPilihan` | IdProduk, IdKelompokPilihan, Urutan |
+| `Resep` / `ResepDetail` | IdProduk, JumlahHasil, Versi / IdProdukBahan, Jumlah, IdSatuan, PersenSusut |
+| `PaketProdukDetail` (bundle) | IdProdukPaket, IdProdukKomponen, Jumlah, AlokasiHarga |
+| `RiwayatHarga` | IdProduk, HargaLama, HargaBaru, DiubahOleh |
 
 **Inventori**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `stock_levels` | tenant_id, product_id, warehouse_id, qty_on_hand, qty_reserved, avg_cost, updated_at. **Unique (tenant_id, product_id, warehouse_id)** |
-| `stock_movements` | tenant_id, product_id, warehouse_id, batch_id, serial_id, movement_type, qty (±, satuan dasar), unit_cost, total_cost, balance_qty_after, reference_type, reference_id, business_date, created_by |
-| `stock_batches` | product_id, warehouse_id, batch_no, expiry_date, qty_remaining, unit_cost |
-| `stock_serials` | product_id, serial_no, status, warehouse_id, sale_line_id |
-| `stock_transfers` / `_lines` | from_warehouse_id, to_warehouse_id, status, sent_at, received_at / qty_sent, qty_received |
-| `stock_opnames` / `_lines` | warehouse_id, status, is_blind, snapshot_at / system_qty, counted_qty, difference, counted_by |
-| `stock_adjustments` / `_lines` | reason_code, status, approved_by |
-| `production_orders` / `_lines` | output_product_id, qty, status / consumed items |
-| `fifo_layers` (jika FIFO) | product_id, warehouse_id, qty_remaining, unit_cost, source_movement_id |
+| `SaldoStok` | IdTenant, IdProduk, IdGudang, JumlahTersedia, JumlahDipesan, HppRataRata, DiubahPada. **Unik (IdTenant, IdProduk, IdGudang)** |
+| `MutasiStok` | IdTenant, IdProduk, IdGudang, IdBatch, IdNomorSeri, JenisMutasi, Jumlah (±, satuan dasar), HppSatuan, TotalHpp, SaldoSetelah, JenisReferensi, IdReferensi, TanggalBisnis, DibuatOleh |
+| `BatchStok` | IdProduk, IdGudang, NomorBatch, TanggalKedaluwarsa, JumlahSisa, HppSatuan |
+| `NomorSeri` | IdProduk, Nomor, Status, IdGudang, IdPenjualanDetail |
+| `TransferStok` / `TransferStokDetail` | IdGudangAsal, IdGudangTujuan, Status, DikirimPada, DiterimaPada / JumlahDikirim, JumlahDiterima |
+| `StokOpname` / `StokOpnameDetail` | IdGudang, Status, HitungButa, SnapshotPada / JumlahSistem, JumlahFisik, Selisih, DihitungOleh |
+| `PenyesuaianStok` / `PenyesuaianStokDetail` | KodeAlasan, Status, DisetujuiOleh |
+| `Produksi` / `ProduksiDetail` | IdProdukHasil, Jumlah, Status / bahan terpakai |
+| `LapisanFifo` (jika FIFO) | IdProduk, IdGudang, JumlahSisa, HppSatuan, IdMutasiSumber |
 
 **Pembelian**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `suppliers` | tenant_id, name, phone, npwp, payment_term_days, is_consignor |
-| `purchase_orders` / `_lines` | number, supplier_id, warehouse_id, status, expected_at, subtotal, discount, tax, shipping, total, approved_by / product_id, unit_id, qty, price, discount, tax_rate, qty_received |
-| `goods_receipts` / `_lines` | purchase_order_id, number, status, received_at, delivery_note_no, attachment / po_line_id, qty, batch_no, expiry, unit_cost |
-| `purchase_invoices` / `_lines` | supplier_invoice_no, due_date, total, paid_amount, status |
-| `purchase_returns` / `_lines` | goods_receipt_id, reason, status |
-| `supplier_payments` / `_allocations` | account_id, amount / purchase_invoice_id, amount |
+| `Pemasok` | IdTenant, Nama, NoHp, Npwp, TerminHari, Penitip (konsinyasi) |
+| `PesananPembelian` / `PesananPembelianDetail` | Nomor, IdPemasok, IdGudang, Status, PerkiraanTiba, Subtotal, Diskon, Pajak, Ongkir, Total, DisetujuiOleh / IdProduk, IdSatuan, Jumlah, Harga, Diskon, TarifPajak, JumlahDiterima |
+| `PenerimaanBarang` / `PenerimaanBarangDetail` | IdPesananPembelian, Nomor, Status, DiterimaPada, NomorSuratJalan, Lampiran / IdPesananPembelianDetail, Jumlah, NomorBatch, TanggalKedaluwarsa, HppSatuan |
+| `FakturPembelian` / `FakturPembelianDetail` | NomorFakturPemasok, JatuhTempo, Total, JumlahDibayar, Status |
+| `ReturPembelian` / `ReturPembelianDetail` | IdPenerimaanBarang, Alasan, Status |
+| `PembayaranHutang` / `PembayaranHutangAlokasi` | IdAkun, Jumlah / IdFakturPembelian, Jumlah |
 
 **Kasir & Penjualan**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `shifts` | tenant_id, outlet_id, device_id, uuid, opened_by, opened_at, opening_cash, closed_by, closed_at, expected_cash, counted_cash, difference, denominations JSON, status |
-| `cash_movements` | shift_id, type (in/out/deposit), category, amount, note, attachment, approved_by |
-| `sales` | tenant_id, outlet_id, shift_id, device_id, uuid, **client_uuid (unique)**, number, channel (dine_in/takeaway/delivery/online/self_order/marketplace), table_id, customer_id, status, business_date, subtotal, discount_total, service_charge, tax_total, rounding, grand_total, paid_total, change_amount, cost_total, guest_count, notes, synced_at, offline_created_at |
-| `sale_lines` | sale_id, uuid, product_id, product_name (snapshot), unit_id, qty, unit_price, discount_amount, promo_id, tax_group_snapshot JSON, tax_amount, line_total, unit_cost, cost_total, modifiers JSON, note, kitchen_status, staff_id (komisi), void_reason |
-| `sale_payments` | sale_id, uuid, payment_method_id, amount, status, reference (approval code/gateway ref), external_ref (unique), paid_at |
-| `payment_methods` | tenant_id, type (cash/qris_static/qris_dynamic/edc/transfer/ewallet/credit/deposit/points/voucher/marketplace), name, account_id, clearing_account_id, fee_pct, fee_fixed, is_active |
-| `sale_returns` / `_lines` | original_sale_id, number, reason, refund_method, status / sale_line_id, qty, restock_warehouse_id, condition |
-| `sale_voids` | sale_id, reason, approved_by, voided_by |
-| `approvals` | tenant_id, type, subject_type, subject_id, requested_by, approved_by, method (pin/otp/remote), reason, amount |
+| `Shift` | IdTenant, IdOutlet, IdPerangkat, Uuid, DibukaOleh, DibukaPada, KasAwal, DitutupOleh, DitutupPada, KasSeharusnya, KasAktual, Selisih, Pecahan JSON, Status |
+| `MutasiKas` | IdShift, Jenis (Masuk/Keluar/Setoran), Kategori, Jumlah, Catatan, Lampiran, DisetujuiOleh |
+| `Penjualan` | IdTenant, IdOutlet, IdShift, IdPerangkat, Uuid, **UuidKlien (unik)**, Nomor, Kanal (MakanDiTempat/BawaPulang/Antar/Online/PesanSendiri/Marketplace), IdMeja, IdPelanggan, Status, TanggalBisnis, Subtotal, TotalDiskon, BiayaLayanan, TotalPajak, Pembulatan, TotalAkhir, TotalDibayar, Kembalian, TotalHpp, JumlahTamu, Catatan, DisinkronPada, DibuatOfflinePada |
+| `PenjualanDetail` | IdPenjualan, Uuid, IdProduk, NamaProduk (snapshot), IdSatuan, Jumlah, HargaSatuan, JumlahDiskon, IdPromo, SnapshotPajak JSON, JumlahPajak, TotalBaris, HppSatuan, TotalHpp, Pilihan JSON, Catatan, StatusDapur, IdKaryawan (komisi), AlasanVoid |
+| `PenjualanPembayaran` | IdPenjualan, Uuid, IdMetodePembayaran, Jumlah, Status, Referensi (kode approval/ref gateway), RefEksternal (unik), DibayarPada |
+| `MetodePembayaran` | IdTenant, Jenis (Tunai/QrisStatis/QrisDinamis/Edc/Transfer/Ewallet/Tempo/Deposit/Poin/Voucher/Marketplace), Nama, IdAkun, IdAkunKliring, PersenBiaya, BiayaTetap, Aktif |
+| `ReturPenjualan` / `ReturPenjualanDetail` | IdPenjualanAsal, Nomor, Alasan, MetodeRefund, Status / IdPenjualanDetail, Jumlah, IdGudangRestok, Kondisi |
+| `VoidPenjualan` | IdPenjualan, Alasan, DisetujuiOleh, DivoidOleh |
+| `Persetujuan` | IdTenant, Jenis, JenisSubjek, IdSubjek, DimintaOleh, DisetujuiOleh, Metode (Pin/Otp/JarakJauh), Alasan, Jumlah |
 
 **Meja, Dapur, Layanan**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `table_areas` / `tables` | outlet_id, name, capacity, pos_x, pos_y, shape, qr_token, status |
-| `kitchen_stations` | outlet_id, name, printer_config JSON |
-| `kitchen_tickets` / `_items` | sale_id, station_id, round_no, status, fired_at, ready_at |
-| `bookings` | outlet_id, customer_id, staff_id, service_product_id, start_at, end_at, status, deposit |
-| `work_orders` | outlet_id, customer_id, vehicle_id, status, complaint, estimate JSON, sale_id |
-| `laundry_tickets` | sale_id, weight, items JSON, status, due_at, picked_up_at |
-| `vehicles` | customer_id, plate_no, brand, model, year, last_km |
+| `AreaMeja` / `Meja` | IdOutlet, Nama, Kapasitas, PosisiX, PosisiY, Bentuk, TokenQr, Status |
+| `StasiunDapur` | IdOutlet, Nama, KonfigurasiPrinter JSON |
+| `TiketDapur` / `TiketDapurDetail` | IdPenjualan, IdStasiunDapur, Ronde, Status, DikirimPada, SiapPada |
+| `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
+| `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |
+| `TiketLaundry` | IdPenjualan, Berat, Item JSON, Status, SelesaiPada, DiambilPada |
+| `Kendaraan` | IdPelanggan, NomorPolisi, Merek, Tipe, Tahun, KmTerakhir |
 
 **CRM & Promo**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `customers` | tenant_id, uuid, name, phone (unique per tenant), email, birth_date, tier_id, price_level, credit_limit, marketing_consent, tags JSON |
-| `loyalty_ledgers` | customer_id, points (±), source_type, source_id, expires_at |
-| `customer_deposits` | customer_id, amount (±), balance_after, source |
-| `memberships` / `membership_usages` | customer_id, package_product_id, sessions_total, sessions_used, expires_at |
-| `promotions` | tenant_id, name, definition JSON (sesuai skema §F-16), priority, is_exclusive, starts_at, ends_at, status, quota_used |
-| `vouchers` | promotion_id, code, max_uses, used_count, expires_at |
-| `promotion_usages` | promotion_id, sale_id, customer_id, discount_amount |
+| `Pelanggan` | IdTenant, Uuid, Nama, NoHp (unik per tenant), Email, TanggalLahir, IdTier, LevelHarga, LimitKredit, SetujuPemasaran, Tag JSON |
+| `MutasiPoin` | IdPelanggan, Poin (±), JenisSumber, IdSumber, KedaluwarsaPada |
+| `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
+| `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
+| `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |
+| `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada |
+| `PromoPemakaian` | IdPromo, IdPenjualan, IdPelanggan, JumlahDiskon |
 
 **Piutang & Akuntansi**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `receivables` | customer_id, source (sale/invoice), amount, paid_amount, due_date, status |
-| `receivable_payments` / `_allocations` | account_id, amount |
-| `accounts` | tenant_id, code, name, type (asset/liability/equity/revenue/cogs/expense), parent_id, is_system, outlet_id (opsional), normal_balance |
-| `account_mappings` | tenant_id, key (misal `sales.revenue`, `payment.qris.clearing`), account_id, outlet_id (override) |
-| `journals` | tenant_id, number, date, source_type, source_id, description, is_auto, reversed_journal_id, period |
-| `journal_lines` | journal_id, account_id, outlet_id, debit, credit, memo |
-| `period_locks` | tenant_id, period (YYYY-MM), locked_at, locked_by |
-| `expenses` | outlet_id, account_id, amount, paid_from_account_id, attachment |
-| `bank_statements` / `_lines` | fase 3 (rekonsiliasi) |
+| `Piutang` | IdPelanggan, Sumber (Penjualan/Faktur), Jumlah, JumlahDibayar, JatuhTempo, Status |
+| `PembayaranPiutang` / `PembayaranPiutangAlokasi` | IdAkun, Jumlah |
+| `Akun` | IdTenant, Kode, Nama, Jenis (Aset/Kewajiban/Ekuitas/Pendapatan/Hpp/Beban), IdInduk, Sistem, IdOutlet (opsional), SaldoNormal |
+| `PemetaanAkun` | IdTenant, Kunci (misal `Penjualan.Pendapatan`, `Pembayaran.Qris.Kliring`), IdAkun, IdOutlet (override) |
+| `Jurnal` | IdTenant, Nomor, Tanggal, JenisSumber, IdSumber, Keterangan, Otomatis, IdJurnalDibalik, Periode |
+| `JurnalDetail` | IdJurnal, IdAkun, IdOutlet, Debit, Kredit, Memo |
+| `KunciPeriode` | IdTenant, Periode (YYYY-MM), DikunciPada, DikunciOleh |
+| `Pengeluaran` | IdOutlet, IdAkun, Jumlah, IdAkunSumberDana, Lampiran |
+| `MutasiBank` / `MutasiBankDetail` | fase 3 (rekonsiliasi) |
 
 **Pajak**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `tax_types` | code, name, scope (national/regional/custom) |
-| `tax_rates` | tax_type_id, rate, base_multiplier, region_code, effective_from, effective_to |
-| `tax_groups` / `tax_group_items` | tenant_id, name / tax_rate_id, apply_on (subtotal/subtotal_plus_sc), sequence |
+| `JenisPajak` | Kode, Nama, Cakupan (Nasional/Daerah/Kustom) |
+| `TarifPajak` | IdJenisPajak, Tarif, PengaliDpp, KodeWilayah, BerlakuMulai, BerlakuSampai |
+| `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Nama / IdTarifPajak, DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan |
 
 **Karyawan**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `employees` | tenant_id, user_id (opsional), outlet_id, name, position, base_salary |
-| `work_schedules` | employee_id, date, start, end |
-| `attendances` | employee_id, clock_in_at, clock_out_at, selfie_path, lat, lng, device_id |
-| `commission_rules` | scope (product/category/service), type (pct/fixed), value, staff_level |
-| `commissions` | employee_id, sale_line_id, amount, period |
-| `payroll_runs` / `_lines` | period, status / earnings JSON, deductions JSON |
+| `Karyawan` | IdTenant, IdPengguna (opsional), IdOutlet, Nama, Jabatan, GajiPokok |
+| `JadwalKerja` | IdKaryawan, Tanggal, JamMulai, JamSelesai |
+| `Absensi` | IdKaryawan, MasukPada, KeluarPada, PathSwafoto, Lintang, Bujur, IdPerangkat |
+| `AturanKomisi` | Cakupan (Produk/Kategori/Layanan), Jenis (Persen/Tetap), Nilai, LevelStaf |
+| `Komisi` | IdKaryawan, IdPenjualanDetail, Jumlah, Periode |
+| `Penggajian` / `PenggajianDetail` | Periode, Status / Pendapatan JSON, Potongan JSON |
 
 **Sistem**
 
 | Tabel | Kolom kunci |
 |---|---|
-| `document_sequences` | tenant_id, outlet_id, device_id, doc_type, period, last_number |
-| `audit_logs` | tenant_id, user_id, device_id, event, auditable_type, auditable_id, old_values JSON, new_values JSON, ip, user_agent, created_at (**append-only**) |
-| `sync_batches` | device_id, received_at, item_count, status, errors JSON |
-| `webhook_endpoints` / `webhook_deliveries` | url, secret, events / payload, status, attempts, next_retry_at |
-| `export_jobs` / `import_jobs` | type, params, status, file_path, error_report_path |
-| `daily_sales_summaries` | tenant_id, outlet_id, business_date, gross, discount, net, tax, cost, transactions, by_payment JSON, by_channel JSON |
-| `daily_product_summaries` | tenant_id, outlet_id, business_date, product_id, qty, net, cost |
-| `jobs`, `failed_jobs`, `cache`, `sessions` | Tabel bawaan Laravel (driver database) |
+| `NomorUrutDokumen` | IdTenant, IdOutlet, IdPerangkat, JenisDokumen, Periode, NomorTerakhir |
+| `LogAudit` | IdTenant, IdPengguna, IdPerangkat, Peristiwa, JenisObjek, IdObjek, NilaiLama JSON, NilaiBaru JSON, Ip, AgenPengguna, DibuatPada (**append-only**) |
+| `RiwayatStatusDokumen` | JenisDokumen, IdDokumen, StatusDari, StatusKe, DiubahOleh, DiubahPada |
+| `BatchSinkron` | IdPerangkat, DiterimaPada, JumlahItem, Status, Galat JSON |
+| `WebhookTujuan` / `WebhookPengiriman` | Url, Rahasia, Peristiwa / Payload, Status, JumlahPercobaan, CobaLagiPada |
+| `TugasEkspor` / `TugasImpor` | Jenis, Parameter, Status, PathFile, PathLaporanGalat |
+| `RingkasanPenjualanHarian` | IdTenant, IdOutlet, TanggalBisnis, Kotor, Diskon, Bersih, Pajak, Hpp, JumlahTransaksi, PerMetodeBayar JSON, PerKanal JSON |
+| `RingkasanProdukHarian` | IdTenant, IdOutlet, TanggalBisnis, IdProduk, Jumlah, Bersih, Hpp |
+| `jobs`, `failed_jobs`, `cache`, `sessions`, `migrations`, `personal_access_tokens`, tabel spatie | **Pengecualian:** tabel bawaan framework/paket tetap memakai nama asli (§13.7.4) |
 
 ### 15.4 Strategi Volume Data
 
-- Laporan periode panjang dibaca dari **tabel ringkasan** yang diperbarui secara inkremental (listener queue + rekonsiliasi malam), bukan dari `sale_lines` mentah.
-- Indeks utama: `sales (tenant_id, outlet_id, business_date)`, `sale_lines (tenant_id, product_id, business_date)`, `stock_movements (tenant_id, product_id, warehouse_id, id)`, `journal_lines (tenant_id, account_id, date)`.
+- Laporan periode panjang dibaca dari **tabel ringkasan** yang diperbarui secara inkremental (listener queue + rekonsiliasi malam), bukan dari `PenjualanDetail` mentah.
+- Indeks utama: `Penjualan (IdTenant, IdOutlet, TanggalBisnis)`, `PenjualanDetail (IdTenant, IdProduk, TanggalBisnis)`, `MutasiStok (IdTenant, IdProduk, IdGudang, Id)`, `JurnalDetail (IdTenant, IdAkun, Tanggal)`.
 - Arsip: data > 3 tahun dapat dipindah ke tabel arsip (tetap bisa diakses via laporan arsip).
 - Target: satu tenant dengan 1 juta transaksi/tahun tetap mendapatkan laporan harian < 1 detik.
 
@@ -1862,11 +2050,11 @@ erDiagram
 
 ### 16.2 Konvensi
 
-- JSON `snake_case`, tanggal ISO-8601 UTC, uang sebagai **string desimal** (`"15000.00"`) agar tidak kehilangan presisi.
-- Pagination berbasis cursor untuk list besar. Filter mengikuti gaya `filter[status]=paid&sort=-created_at` (spatie/laravel-query-builder).
+- Key JSON **PascalCase Bahasa Indonesia, sama dengan nama kolom** (§13.7), tanggal ISO-8601 UTC, uang sebagai **string desimal** (`"15000.00"`) agar tidak kehilangan presisi.
+- Pagination berbasis cursor untuk list besar. Filter mengikuti gaya `filter[Status]=Lunas&sort=-DibuatPada` (spatie/laravel-query-builder).
 - Error format seragam:
   ```json
-  { "error": { "code": "STOCK_INSUFFICIENT", "message": "Stok Kopi Susu tidak cukup", "details": { "product_uuid": "...", "available": "2.0000" } } }
+  { "Galat": { "Kode": "StokTidakCukup", "Pesan": "Stok Kopi Susu tidak cukup", "Detail": { "UuidProduk": "...", "Tersedia": "2.0000" } } }
   ```
 - Rate limit per token/tenant (misal 120 req/menit untuk paket standar).
 
@@ -1874,7 +2062,7 @@ erDiagram
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/api/pos/v1/devices/activate` | Tukar kode aktivasi → device token, `device_code`, info outlet |
+| POST | `/api/pos/v1/devices/activate` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet |
 | GET | `/api/pos/v1/app-config` | Versi terbaru, `min_supported_version`, feature flag remote, konfigurasi outlet |
 | GET | `/api/pos/v1/bootstrap` | Paket data awal (dapat berupa file JSON terkompresi gzip untuk katalog besar): produk, harga, modifier, pajak, promo aktif, metode bayar, meja, pengaturan, staf + hash PIN, pelanggan yang sering datang (terbatas) |
 | GET | `/api/pos/v1/changes?since={cursor}` | Delta perubahan master sejak cursor (produk/harga/promo/stok ringkas/86/staf) |
@@ -1887,13 +2075,13 @@ erDiagram
 | GET | `/api/pos/v1/kds/tickets?station=&since=` | Antrean tiket dapur (mode KDS) |
 | POST | `/api/pos/v1/warehouse/grn`, `/transfers`, `/opnames` | Operasi gudang dari aplikasi |
 
-**Kontrak API** didokumentasikan otomatis dalam OpenAPI (`spec/openapi/pos-v1.yaml`, dihasilkan Scramble di CI). Model DTO Dart di-generate/diverifikasi dari spesifikasi tersebut. CI gagal jika kontrak berubah tanpa kenaikan versi.
+**Kontrak API** didokumentasikan otomatis dalam OpenAPI (`Spesifikasi/OpenApi/PosV1.yaml`, dihasilkan Scramble di CI). Model DTO Dart di-generate/diverifikasi dari spesifikasi tersebut. CI gagal jika kontrak berubah tanpa kenaikan versi.
 
 ### 16.4 Webhook Keluar (X7)
 
 Event: `sale.completed`, `sale.voided`, `sale.returned`, `payment.received`, `stock.low`, `stock.adjusted`, `product.updated`, `customer.created`, `purchase_order.approved`, `goods_receipt.posted`, `shift.closed`.
 
-- Payload ditandatangani HMAC-SHA256 (`X-Signature`), berisi `event_id` unik untuk dedup di sisi penerima.
+- Payload ditandatangani HMAC-SHA256 (`X-Signature`), berisi `IdPeristiwa` unik untuk dedup di sisi penerima.
 - Retry eksponensial (1m, 5m, 30m, 2j, 12j), dikirim oleh queue via cron.
 - Log pengiriman terlihat oleh tenant, tersedia tombol "kirim ulang".
 
@@ -1901,8 +2089,8 @@ Event: `sale.completed`, `sale.voided`, `sale.returned`, `payment.received`, `st
 
 | Integrasi | Tujuan | Pola | Fase |
 |---|---|---|---|
-| Payment Gateway (Midtrans / Xendit / DOKU / sejenis, **abstraksi `PaymentGateway` interface**) | QRIS dinamis, VA, e-wallet, kartu, refund, billing SaaS | Create charge → webhook (verifikasi signature) + polling fallback | 2 |
-| WhatsApp (WA Business API via BSP resmi; abstraksi `MessagingChannel`) | Struk, OTP, pengingat piutang/booking, broadcast (dengan opt-in) | Queue + template pesan | 2 |
+| Payment Gateway (Midtrans / Xendit / DOKU / sejenis, **abstraksi antarmuka `GerbangPembayaran`**) | QRIS dinamis, VA, e-wallet, kartu, refund, billing SaaS | Create charge → webhook (verifikasi signature) + polling fallback | 2 |
+| WhatsApp (WA Business API via BSP resmi; abstraksi `KanalPesan`) | Struk, OTP, pengingat piutang/booking, broadcast (dengan opt-in) | Queue + template pesan | 2 |
 | Email (SMTP Hostinger / layanan transaksional) | Verifikasi, invoice, laporan terjadwal | Queue | 1 |
 | Firebase Cloud Messaging (FCM, termasuk APNs untuk iOS) | Push ke aplikasi POS: approval jarak jauh, order online/self-order baru, stok kritis, pemicu sinkron | HTTP v1 API dari queue Laravel | 2 |
 | Printer thermal | Struk, dapur | Lihat §17.6 | 1 |
@@ -1924,7 +2112,7 @@ Event: `sale.completed`, `sale.voided`, `sale.returned`, `payment.received`, `st
 | **Back-office Web** | Laravel + Inertia React + TS + Tailwind 4 + TanStack Query | Master data, pembelian, stok, pelanggan, promo, karyawan, keuangan, pajak, laporan, pengaturan, langganan |
 | **Web Publik** | React ringan (Inertia/halaman terpisah) | Self-order QR meja, toko online, struk digital, booking |
 
-Satu **design token** (`spec/design-tokens/tokens.json`: warna, radius, spacing, tipografi) digenerate menjadi Tailwind `@theme` (web) dan `ThemeExtension` (Flutter), sehingga tampilan brand konsisten.
+Satu **design token** (`Spesifikasi/TokenDesain/Token.json`: warna, radius, spacing, tipografi) digenerate menjadi Tailwind `@theme` (web) dan `ThemeExtension` (Flutter), sehingga tampilan brand konsisten.
 
 ---
 
@@ -1932,47 +2120,47 @@ Satu **design token** (`spec/design-tokens/tokens.json`: warna, radius, spacing,
 
 #### 17.2.1 Arsitektur
 
-**Feature-first + layered**: `presentation` (widget & controller Riverpod) → `application` (use case) → `domain` (entity, value object, aturan) → `data` (Drift DAO, API client, repository).
+**Feature-first + berlapis**: `Tampilan` (widget & controller Riverpod) → `Aplikasi` (use case) → `Domain` (entitas, value object, aturan) → `Data` (DAO Drift, klien API, repositori). Penamaan mengikuti §13.7 (folder & file PascalCase, pengecualian folder wajib Flutter).
 
 ```
-apps/pos/
-├── lib/
-│   ├── main_dev.dart / main_staging.dart / main_prod.dart   # flavor
-│   ├── bootstrap.dart              # init Sentry, DB, secure storage, DI
-│   ├── app/
-│   │   ├── router.dart             # go_router + guard (aktivasi → login PIN → shift)
-│   │   ├── theme/                  # ThemeData + token hasil generate
-│   │   └── l10n/                   # ARB id/en
-│   ├── core/
-│   │   ├── money/                  # Money, Quantity (decimal), formatter Rupiah
-│   │   ├── ids/                    # ULID, DocumentNumber (per device)
-│   │   ├── result/, errors/, logger/
-│   │   └── platform/               # deteksi platform & kemampuan hardware
-│   ├── data/
-│   │   ├── db/                     # Drift: tables/, daos/, migrations/, app_database.dart
-│   │   ├── api/                    # dio client, interceptor, DTO (freezed)
-│   │   ├── sync/                   # bootstrap, delta pull, outbox pusher, conflict handler
-│   │   └── repositories/
-│   ├── hardware/
-│   │   ├── printer/                # ReceiptBuilder (ESC/POS), transports: bluetooth/, usb/, network/, vendor/, system/
-│   │   ├── scanner/                # HID listener, camera scanner
-│   │   ├── cash_drawer/
-│   │   └── customer_display/
-│   ├── features/
-│   │   ├── activation/  auth_pin/  shift/  catalog/  cart/  checkout/
-│   │   ├── orders/  tables/  kds/  customers/  returns/  cash/
-│   │   ├── warehouse/  attendance/  approvals/  sync_status/  settings/
-│   └── shared_widgets/             # design system: MoneyText, NumericKeypad, PinPad, QtyStepper, ...
-├── test/                           # unit, widget, golden
-├── integration_test/               # alur end-to-end di device/emulator
+Aplikasi/Kasir/                     # paket Dart: kasir
+├── lib/                            # (wajib Flutter)
+│   ├── UtamaDev.dart / UtamaStaging.dart / UtamaProduksi.dart   # flavor (berisi fungsi main())
+│   ├── Persiapan.dart              # inisialisasi Sentry, DB, secure storage, DI
+│   ├── Aplikasi/
+│   │   ├── Rute.dart               # go_router + guard (aktivasi → login PIN → shift)
+│   │   ├── Tema/                   # ThemeData + token hasil generate
+│   │   └── Bahasa/                 # ARB id/en
+│   ├── Inti/
+│   │   ├── Uang/                   # Uang, Kuantitas (decimal), FormatRupiah
+│   │   ├── Id/                     # ULID, NomorDokumen (per perangkat)
+│   │   ├── Hasil/, Galat/, Log/
+│   │   └── Platform/               # deteksi platform & kemampuan hardware
+│   ├── Data/
+│   │   ├── Db/                     # Drift: Tabel/, Dao/, Migrasi/, BasisData.dart
+│   │   ├── Api/                    # klien dio, interceptor, DTO (freezed)
+│   │   ├── Sinkron/                # Bootstrap, TarikDelta, PengirimOutbox, PenanganKonflik
+│   │   └── Repositori/
+│   ├── PerangkatKeras/
+│   │   ├── Printer/                # PenyusunStruk (ESC/POS), Transport/: Bluetooth/, Usb/, Jaringan/, Vendor/, Sistem/
+│   │   ├── Pemindai/               # pendengar HID, pemindai kamera
+│   │   ├── LaciKas/
+│   │   └── LayarPelanggan/
+│   ├── Fitur/
+│   │   ├── Aktivasi/  LoginPin/  Shift/  Katalog/  Keranjang/  Pembayaran/
+│   │   ├── Pesanan/  Meja/  Kds/  Pelanggan/  Retur/  Kas/
+│   │   ├── Gudang/  Absensi/  Persetujuan/  StatusSinkron/  Pengaturan/
+│   └── WidgetBersama/              # TeksUang, PapanAngka, PapanPin, PengaturJumlah, ...
+├── test/                           # (wajib) unit, widget, golden
+├── integration_test/               # (wajib) alur end-to-end di device/emulator
 └── pubspec.yaml
 
-packages/pos_engine/                # Dart murni (tanpa import Flutter)
-├── lib/  cart_calculator.dart, tax_calculator.dart, promo_engine.dart, rounding.dart
-└── test/ vectors_test.dart         # membaca spec/calc-vectors/*.json
+Paket/MesinKasir/                   # paket Dart: mesin_kasir (Dart murni, tanpa import Flutter)
+├── lib/  KalkulatorKeranjang.dart, KalkulatorPajak.dart, MesinPromo.dart, Pembulatan.dart
+└── test/ VektorUjiTes.dart         # membaca Spesifikasi/VektorUjiKalkulasi/*.json
 ```
 
-- `pos_engine` adalah paket Dart murni. Ia diuji dengan `dart test` di CI tanpa emulator, memakai test vector yang sama dengan Pest (PHP).
+- `MesinKasir` adalah paket Dart murni. Ia diuji dengan `dart test` di CI tanpa emulator, memakai test vector yang sama dengan Pest (PHP).
 - Semua akses database lewat DAO Drift. UI berlangganan **stream query** (misal keranjang, daftar order meja, antrean KDS) sehingga UI otomatis ter-update saat data lokal berubah, termasuk hasil sinkron.
 
 #### 17.2.2 Alur Layar
@@ -2055,34 +2243,34 @@ flowchart TD
 | Timbangan | Barcode timbangan (P1). Serial/USB (P3) | Barcode | Barcode, COM port (P3) |
 | NFC (kartu member) | ✅ (P3) | ✅ terbatas (P3) | — |
 
-- **Abstraksi `PrinterTransport`** (`BluetoothClassic`, `Ble`, `Usb`, `Network`, `VendorSdk`, `SystemPrint`) dengan satu `ReceiptBuilder` (ESC/POS, lebar 58/80 mm, logo raster, QR struk digital). Tiket dapur dikirim ke printer per *station*.
+- **Abstraksi `TransportPrinter`** (`BluetoothKlasik`, `Ble`, `Usb`, `Jaringan`, `SdkVendor`, `CetakSistem`) dengan satu `PenyusunStruk` (ESC/POS, lebar 58/80 mm, logo raster, QR struk digital). Tiket dapur dikirim ke printer per *station*.
 - Rekomendasi untuk iPad: printer **LAN atau BLE**.
-- Setiap perangkat menyimpan profil hardware sendiri dan melaporkannya ke server (`devices.hardware_profile`) untuk dukungan teknis.
+- Setiap perangkat menyimpan profil hardware sendiri dan melaporkannya ke server (kolom `Perangkat.ProfilHardware`) untuk dukungan teknis.
 
 #### 17.2.5a Dukungan Semua Perangkat POS All-in-One (Keputusan D-03)
 
-Target: **semua** perangkat POS Android all-in-one yang beredar di Indonesia bisa dipakai, bukan satu merek saja. Karena setiap vendor punya SDK berbeda, dukungan dibangun berlapis di paket `packages/device_adapters`:
+Target: **semua** perangkat POS Android all-in-one yang beredar di Indonesia bisa dipakai, bukan satu merek saja. Karena setiap vendor punya SDK berbeda, dukungan dibangun berlapis di paket `Paket/AdaptorPerangkat`:
 
 ```
-DeviceCapabilities (antarmuka)
-├── printer: PrinterPort        (cetak teks/raster/QR, potong kertas, status kertas habis)
-├── cashDrawer: DrawerPort      (buka laci, status laci)
-├── customerDisplay: DisplayPort(layar kedua: teks/total/QRIS/gambar promo)
-├── scanner: ScannerPort        (barcode bawaan)
-└── nfc / scale (opsional)
+KemampuanPerangkat (antarmuka)
+├── Printer: PortPrinter        (cetak teks/raster/QR, potong kertas, status kertas habis)
+├── LaciKas: PortLaci           (buka laci, status laci)
+├── LayarPelanggan: PortLayar   (layar kedua: teks/total/QRIS/gambar promo)
+├── Pemindai: PortPemindai      (barcode bawaan)
+└── Nfc / Timbangan (opsional)
 
 Implementasi (adaptor):
-├── SunmiAdapter        (SDK Sunmi: printer, laci, layar kedua, scanner)
-├── IminAdapter         (SDK iMin)
-├── PaxAdapter, TelpoAdapter, ... (vendor lain, ditambah bertahap)
-├── GenericInnerPrinterAdapter  (banyak perangkat mengekspos printer bawaan sebagai printer
-│                                Bluetooth virtual / port serial / ESC/POS standar)
-└── GenericAndroidAdapter       (HID scanner + presentation display + printer eksternal)
+├── AdaptorSunmi        (SDK Sunmi: printer, laci, layar kedua, scanner)
+├── AdaptorImin         (SDK iMin)
+├── AdaptorPax, AdaptorTelpo, ... (vendor lain, ditambah bertahap)
+├── AdaptorPrinterInternalGenerik (banyak perangkat mengekspos printer bawaan sebagai printer
+│                                  Bluetooth virtual / port serial / ESC/POS standar)
+└── AdaptorAndroidGenerik         (scanner HID + presentation display + printer eksternal)
 ```
 
 - **Deteksi otomatis:** saat aplikasi pertama dibuka, sistem membaca `Build.MANUFACTURER`/`MODEL` dan memeriksa ketersediaan layanan vendor, lalu memilih adaptor yang cocok. Jika tidak dikenali, dipakai **adaptor generik**, dan pengguna menjalankan **Wizard Uji Perangkat** (tes cetak, potong, laci, layar kedua, scan). Hasil wizard disimpan sebagai profil.
 - **Integrasi SDK vendor** dilakukan lewat *platform channel* (Kotlin) di dalam plugin internal. SDK vendor tidak bocor ke kode fitur.
-- **Prioritas penambahan adaptor:** P0 = Sunmi, iMin, dan adaptor generik. P1 = vendor lain berdasarkan data pasar & permintaan tenant (telemetri `hardware_profile` menunjukkan merek yang paling banyak jatuh ke adaptor generik).
+- **Prioritas penambahan adaptor:** P0 = Sunmi, iMin, dan adaptor generik. P1 = vendor lain berdasarkan data pasar & permintaan tenant (telemetri `ProfilHardware` menunjukkan merek yang paling banyak jatuh ke adaptor generik).
 - **Hardware Compatibility List (HCL):** daftar publik perangkat & printer dengan status *Tersertifikasi* (diuji di lab), *Kompatibel* (lolos wizard di lapangan), atau *Terbatas*. Diperbarui setiap rilis.
 - **Program mitra hardware:** kerja sama dengan distributor untuk unit uji dan, opsional, bundel perangkat + langganan.
 - Perangkat POS all-in-one **berbasis Windows** didukung lewat jalur Windows biasa (driver printer, COM port, monitor kedua/VFD).
@@ -2117,21 +2305,21 @@ Owner (dan manajer area/outlet) memantau dan mengendalikan usaha dari HP tanpa m
 #### 17.3.3 Arsitektur
 
 ```
-apps/owner/
+Aplikasi/Pemilik/                   # paket Dart: pemilik
 ├── lib/
-│   ├── app/            # router (go_router), tema dari packages/design_system, l10n
-│   ├── features/
-│   │   ├── auth/  tenant_switcher/  dashboard/  reports/  approvals/
-│   │   ├── notifications/  inventory_quick/  promotions_quick/  expenses/
-│   │   ├── devices/  employees/  subscription/  settings/
-│   └── data/           # repository → packages/api_client (/api/owner/v1), cache Drift ringan
+│   ├── Aplikasi/       # Rute (go_router), tema dari Paket/SistemDesain, Bahasa
+│   ├── Fitur/
+│   │   ├── Autentikasi/  PilihTenant/  Dasbor/  Laporan/  Persetujuan/
+│   │   ├── Notifikasi/  StokCepat/  PromoCepat/  Pengeluaran/
+│   │   ├── Perangkat/  Karyawan/  Langganan/  Pengaturan/
+│   └── Data/           # Repositori → Paket/KlienApi (/api/owner/v1), cache Drift ringan
 └── test/ integration_test/
 ```
 
 - **Online-first dengan cache**: data dashboard & laporan terakhir disimpan di cache lokal sehingga aplikasi terbuka instan dan tetap bisa dibaca saat sinyal lemah (ditandai "terakhir diperbarui"). Aksi (approval, ubah harga) wajib online.
-- **Data dashboard** diambil dari tabel ringkasan (`daily_sales_summaries`, dsb.) + delta hari berjalan agar ringan untuk Hostinger. Refresh: tarik-untuk-refresh, polling 60 detik saat layar aktif, dan push sebagai pemicu.
+- **Data dashboard** diambil dari tabel ringkasan (`RingkasanPenjualanHarian`, dsb.) + delta hari berjalan agar ringan untuk Hostinger. Refresh: tarik-untuk-refresh, polling 60 detik saat layar aktif, dan push sebagai pemicu.
 - **Autentikasi:** login email/WA OTP (+ 2FA bila aktif) → user token Sanctum berumur terbatas + refresh token di secure storage. Aplikasi dikunci dengan PIN/biometrik saat dibuka. Hak akses mengikuti role & outlet yang sama dengan back-office.
-- **Push:** token FCM per perangkat user disimpan di `user_devices`. Notifikasi approval membawa deep link ke layar persetujuan.
+- **Push:** token FCM per perangkat user disimpan di tabel `PerangkatPengguna`. Notifikasi approval membawa deep link ke layar persetujuan.
 - **Batas cakupan:** pengaturan berat (import, COA, pajak, template sektor, penomoran) tetap di back-office web. Aplikasi menautkan ke halaman web terkait bila perlu.
 
 #### 17.3.4 Endpoint `/api/owner/v1` (ringkas)
@@ -2161,43 +2349,45 @@ apps/owner/
 
 ### 17.4 Back-office Web
 
-#### 17.4.1 Struktur Folder (di `backend/`)
+#### 17.4.1 Struktur Folder (di `Backend/`)
 
 ```
-resources/js/
-├── app.tsx                    # Inertia bootstrap + QueryClientProvider
-├── pages/                     # Halaman Inertia back-office (per domain)
-│   ├── dashboard/  catalog/  inventory/  purchasing/  sales/  devices/
-│   ├── customers/  promotions/  employees/  finance/  reports/  settings/
-├── public/                    # Web publik: self-order, toko online, struk digital, booking
-├── features/                  # Hooks & komponen per domain (useProducts, ProductForm, ...)
-├── components/ui/             # shadcn/ui
-├── components/                # DataTable, MoneyInput, DateRangePicker, ...
-├── layouts/                   # AppLayout (sidebar), AuthLayout, PublicLayout
-├── lib/                       # api client (fetch + CSRF), queryKeys, money, format, permissions
-├── types/                     # Tipe hasil generate dari PHP (laravel-data) + tipe manual
-└── css/app.css                # Tailwind 4: @import "tailwindcss"; @theme { ...token... }
+resources/js/                  # (pengecualian path Laravel/Vite)
+├── Aplikasi.tsx               # entry: Inertia bootstrap + QueryClientProvider
+├── Halaman/                   # Halaman Inertia back-office (resolver diarahkan ke folder ini)
+│   ├── Dasbor/  Katalog/  Persediaan/  Pembelian/  Penjualan/  Perangkat/
+│   ├── Pelanggan/  Promo/  Karyawan/  Keuangan/  Laporan/  Pengaturan/
+├── Publik/                    # Web publik: PesanSendiri, TokoOnline, StrukDigital, Reservasi
+├── Fitur/                     # Hook & komponen per domain (useDaftarProduk, FormProduk, ...)
+├── Komponen/Ui/               # shadcn/ui (file hasil CLI: pengecualian)
+├── Komponen/                  # TabelData, InputUang, PemilihRentangTanggal, ...
+├── TataLetak/                 # TataLetakAplikasi (sidebar), TataLetakAutentikasi, TataLetakPublik
+├── Pustaka/                   # KlienApi.ts (fetch + CSRF), KunciKueri.ts, Uang.ts, Format.ts, Izin.ts
+├── Tipe/                      # Tipe hasil generate dari PHP (laravel-data) + tipe manual
+└── Gaya/Aplikasi.css          # Tailwind 4: @import "tailwindcss"; @theme { ...token... }
 ```
 
 #### 17.4.2 Pola TanStack Query
 
 ```ts
-// lib/queryKeys.ts — key factory terpusat
-export const qk = {
-  products: {
-    list: (filters: ProductFilters) => ['products', 'list', filters] as const,
-    search: (q: string) => ['products', 'search', q] as const,
+// Pustaka/KunciKueri.ts — pabrik key terpusat
+export const KunciKueri = {
+  Produk: {
+    Daftar: (filter: FilterProduk) => ['Produk', 'Daftar', filter] as const,
+    Cari: (kata: string) => ['Produk', 'Cari', kata] as const,
   },
-  devices: (outletId: string) => ['devices', outletId] as const,
-  report: (name: string, filters: ReportFilters) => ['report', name, filters] as const,
+  Perangkat: (idOutlet: string) => ['Perangkat', idOutlet] as const,
+  Laporan: (nama: string, filter: FilterLaporan) => ['Laporan', nama, filter] as const,
 };
 
-// Contoh: status perangkat POS (online, outbox tertunda) dengan polling adaptif
-useQuery({
-  queryKey: qk.devices(outletId),
-  queryFn: () => api.get(`/internal/outlets/${outletId}/devices`),
-  refetchInterval: () => (document.hidden ? 120_000 : 30_000),
-});
+// Fitur/Perangkat/useStatusPerangkat.ts — status perangkat POS (online, outbox tertunda), polling adaptif
+export function useStatusPerangkat(idOutlet: string) {
+  return useQuery({
+    queryKey: KunciKueri.Perangkat(idOutlet),
+    queryFn: () => KlienApi.Ambil(`/internal/outlets/${idOutlet}/devices`),
+    refetchInterval: () => (document.hidden ? 120_000 : 30_000),
+  });
+}
 ```
 
 - `staleTime` 30 detik untuk master, 0 untuk data transaksi. `retry` 2 dengan backoff.
@@ -2205,8 +2395,8 @@ useQuery({
 
 #### 17.4.3 Design System Web
 
-- Token dari `spec/design-tokens` di `@theme` Tailwind 4, light/dark, warna brand per tenant (struk & toko online).
-- Komponen wajib: `MoneyInput`, `DataTable` (server-side), `DateRangePicker` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `StatusBadge`, `ApprovalDialog`, `EmptyState`, `ImportWizard`, `DeviceActivationDialog` (menampilkan QR aktivasi).
+- Token dari `Spesifikasi/TokenDesain` di `@theme` Tailwind 4, light/dark, warna brand per tenant (struk & toko online).
+- Komponen wajib: `InputUang`, `TabelData` (server-side), `PemilihRentangTanggal` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `LencanaStatus`, `DialogPersetujuan`, `KeadaanKosong`, `WizardImpor`, `DialogAktivasiPerangkat` (menampilkan QR aktivasi).
 - Bahasa Indonesia sederhana, i18n key siap Inggris. Kontras WCAG AA.
 - Code splitting per halaman (`import.meta.glob` lazy). Halaman web publik self-order ditargetkan < 150 KB JS gzip.
 
@@ -2223,7 +2413,7 @@ Aplikasi POS dapat menjalankan **seluruh** alur inti tanpa internet selama minim
 ```mermaid
 flowchart LR
     subgraph APP["Aplikasi POS Flutter"]
-      UI[UI Flutter + Riverpod] --> ENG[pos_engine: cart/tax/promo]
+      UI[UI Flutter + Riverpod] --> ENG[MesinKasir: keranjang/pajak/promo]
       UI --> DAO[Drift DAO]
       DAO --> DB[(SQLite lokal)]
       DB --> OB[Tabel outbox]
@@ -2236,12 +2426,12 @@ flowchart LR
     API --> MY[(MySQL)]
 ```
 
-**Tabel lokal utama (Drift):** `products`, `product_units`, `barcodes`, `prices`, `modifiers`, `recipes` (untuk HPP estimasi), `tax_rates`, `promotions`, `payment_methods`, `tables`, `customers_cache`, `staff_pins`, `settings`, `shifts`, `sales`, `sale_lines`, `sale_payments`, `cash_movements`, `approvals`, `outbox`, `sync_state` (cursor per entitas), `print_jobs`.
+**Tabel lokal utama (Drift/SQLite, penamaan sama dengan server §15):** `Produk`, `ProdukSatuan`, `ProdukBarcode`, `ProdukHarga`, `Pilihan`, `Resep` (untuk HPP estimasi), `TarifPajak`, `Promo`, `MetodePembayaran`, `Meja`, `CachePelanggan`, `PinStaf`, `Pengaturan`, `Shift`, `Penjualan`, `PenjualanDetail`, `PenjualanPembayaran`, `MutasiKas`, `Persetujuan`, `Outbox`, `StatusSinkron` (cursor per entitas), `AntreanCetak`.
 
 ### 18.3 Aturan Sinkronisasi
 
-1. **ID dibuat di perangkat** (ULID) untuk shift, sale, line, payment. Server memakai ID tersebut sebagai `client_uuid` unik, sehingga push ulang aman (idempoten).
-2. **Nomor dokumen** dibuat di perangkat dengan sekuens per `device_code`, sehingga tidak bentrok antar perangkat.
+1. **ID dibuat di perangkat** (ULID) untuk shift, sale, line, payment. Server memakai ID tersebut sebagai `UuidKlien` unik, sehingga push ulang aman (idempoten).
+2. **Nomor dokumen** dibuat di perangkat dengan sekuens per kode perangkat (`Perangkat.Kode`), sehingga tidak bentrok antar perangkat.
 3. **Transaksi lokal atomik.** Simpan sale + lines + payments + entri outbox dalam **satu transaksi SQLite**, jadi tidak ada transaksi yang tersimpan tanpa antrean kirim.
 4. **Outbox FIFO per perangkat.** Item dikirim berurutan dalam batch (maks 50). Shift dikirim sebelum sale-nya (dependency order). Retry dengan backoff eksponensial. Item yang ditolak permanen dipindah ke daftar "Perlu Tindakan" di layar Status Sinkron.
 5. **Server adalah otoritas akhir** untuk stok, jurnal, HPP, dan poin. Aplikasi hanya menyimpan *snapshot* yang dipakai saat transaksi.
@@ -2251,14 +2441,14 @@ flowchart LR
 | Situasi | Kebijakan |
 |---|---|
 | Harga berubah di server saat perangkat offline | Transaksi tetap memakai harga saat dijual (snapshot). Tidak dianggap konflik. |
-| Stok tidak cukup saat sinkron | Diterima (stok bisa negatif) + flag `needs_review` + notifikasi manajer. Kecuali produk serial yang sudah terjual di tempat lain → masuk antrean review. |
+| Stok tidak cukup saat sinkron | Diterima (stok bisa negatif) + flag `PerluTinjauan` + notifikasi manajer. Kecuali produk serial yang sudah terjual di tempat lain → masuk antrean review. |
 | Promo sudah berakhir/kuota habis | Diterima dengan snapshot promo. Laporan menandai "promo di luar kuota". |
 | Voucher sekali pakai dipakai di dua perangkat offline | Transaksi kedua diterima + flag fraud-review (tidak bisa dicegah saat offline). Voucher bernilai tinggi dapat disetel "wajib online". |
 | Saldo deposit/poin tidak cukup | Metode bayar deposit/poin **wajib online** secara default (atau batas offline kecil yang bisa dikonfigurasi). |
 | Perangkat di-revoke | Batch yang sudah dibuat sebelum revoke diterima + review. Batch setelahnya ditolak. |
-| Periode sudah dikunci | Transaksi diterima dengan `business_date` asli dan flag untuk review Akuntan (jurnal diposting ke periode terbuka berikutnya dengan catatan). |
+| Periode sudah dikunci | Transaksi diterima dengan `TanggalBisnis` asli dan flag untuk review Akuntan (jurnal diposting ke periode terbuka berikutnya dengan catatan). |
 | Open bill meja yang sama diubah dari dua perangkat (fase 2, tanpa LAN) | Perubahan per baris (tambah/void item) bersifat *append-only* dengan ULID per baris sehingga digabung tanpa saling menimpa. Header (pindah meja, jumlah tamu) memakai *last-writer-wins* berdasarkan waktu server + log. Pembayaran open bill hanya di satu perangkat (kunci bill online, atau via hub LAN di fase 3). |
-| Jam perangkat salah | Server menyimpan `offline_created_at` dari perangkat dan `received_at` dari server. Selisih > 10 menit ditandai. Aplikasi menampilkan peringatan jam perangkat. |
+| Jam perangkat salah | Server menyimpan `DibuatOfflinePada` dari perangkat dan `DiterimaPada` dari server. Selisih > 10 menit ditandai. Aplikasi menampilkan peringatan jam perangkat. |
 
 8. **Delta pull** master data tiap 60 detik saat online, plus pull langsung saat aplikasi dibuka atau saat menerima push.
 9. **Migrasi skema lokal** dikelola oleh Drift (`schemaVersion` + langkah migrasi teruji). Migrasi **tidak boleh** menghapus outbox yang belum terkirim.
@@ -2354,7 +2544,7 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.sc
 ### 20.3 Keandalan & Observabilitas
 
 - Health check `/up`, uptime monitor eksternal (ping tiap 1 menit).
-- Error tracking (Sentry) dengan konteks `tenant_id`, `device_id`, dan tanpa PII berlebih.
+- Error tracking (Sentry) dengan konteks `IdTenant`, `IdPerangkat`, dan tanpa PII berlebih.
 - Log terstruktur harian, retensi 14 hari.
 - Metrik bisnis internal: transaksi/menit, antrean outbox global, job gagal, keterlambatan queue (umur job tertua). Alert jika job tertua > 5 menit (indikasi cron macet).
 
@@ -2432,10 +2622,10 @@ Resolusi: HP 360 dp s.d. desktop 1920 px. Dioptimalkan untuk tablet 8–11" dan 
 
 ### Fase 0 — Fondasi (Sprint 1–3, ±6 minggu)
 
-- Monorepo (`backend/`, `apps/pos/`, `packages/pos_engine/`, `spec/`), CI/CD backend ke Hostinger (staging), standar kode (Larastan/Pint/ESLint/Vitest/Pest, `flutter analyze`/`dart test`).
+- Monorepo (`Backend/`, `Aplikasi/Kasir/`, `Aplikasi/Pemilik/`, `Paket/`, `Spesifikasi/`) dengan konvensi penamaan §13.7 (termasuk `ModelDasar`, konfigurasi lint, dan MySQL dev berbasis Linux), CI/CD backend ke Hostinger (staging), standar kode (Larastan/Pint/ESLint/Vitest/Pest, `flutter analyze`/`dart test`).
 - Kerangka aplikasi Flutter: flavor dev/staging/prod, router, tema dari design token, Drift, dio, Sentry, pipeline build Android & Windows di CI.
 - Akun developer: Google Play Console, Apple Developer, sertifikat code signing Windows, proyek Firebase.
-- Kerangka modular monolith, `Shared` (Money, Quantity, DocumentNumber), multi-tenancy + isolation test.
+- Kerangka modular monolith, domain `Bersama` (Uang, Kuantitas, NomorDokumen, ModelDasar), multi-tenancy + isolation test.
 - Auth (register, login, verifikasi, reset, 2FA), tenant, subscription dasar (manual), Super Admin minimal.
 - F-02 Organisasi: outlet, gudang, user, role/permission, perangkat, PIN, **aktivasi perangkat (kode/QR → device token)**.
 - Design system (Tailwind 4 + shadcn/ui), layout back-office, komponen inti.
@@ -2450,7 +2640,7 @@ Urutan mengikuti flow:
 2. F-03 Master produk (satuan, varian, modifier, resep, pajak, harga dasar).
 3. F-05a Ledger stok + stok awal.
 4. F-06 Shift & kas.
-5. F-07 **Aplikasi POS Flutter** mode retail & quick + `pos_engine` Dart (dengan test vector bersama PHP/Dart).
+5. F-07 **Aplikasi POS Flutter** mode retail & quick + paket `MesinKasir` Dart (dengan test vector bersama PHP/Dart).
 6. F-08 Pembayaran (tunai, QRIS statis, EDC, transfer manual, split).
 7. **Offline-first** (Drift/SQLite, outbox, bootstrap & delta sync, `/api/pos/v1`).
 8. F-09 Void & retur. F-11 Tutup shift.
@@ -2533,13 +2723,13 @@ gantt
 
 | Level | Tool | Cakupan |
 |---|---|---|
-| Unit (PHP) | Pest | Money, TaxCalculator, SaleCalculator, PromoEngine, HPP (moving average/FIFO), state machine, posting rules |
-| Unit (Dart) | `dart test` (paket `pos_engine`), `flutter_test` | Engine keranjang/pajak/promo, Money, penomoran dokumen, repository & sync service (dengan mock API) |
+| Unit (PHP) | Pest | Uang, KalkulatorPajak, KalkulatorPenjualan, MesinPromo, HPP (moving average/FIFO), state machine, posting rules |
+| Unit (Dart) | `dart test` (paket `MesinKasir`), `flutter_test` | Mesin keranjang/pajak/promo, Uang, penomoran dokumen, repository & sync service (dengan mock API) |
 | Widget & Golden (Flutter) | `flutter_test` + golden files | Layar jual, bayar, struk (render ESC/POS ke gambar), di ukuran HP/tablet/desktop |
 | Unit (TS) | Vitest | Komponen & util back-office, format uang |
-| **Test vector bersama** | JSON fixtures di `spec/calc-vectors` dijalankan oleh Pest **dan** `dart test` | Menjamin kalkulasi aplikasi POS (offline) = server. Minimal 200 kasus: pajak inklusif/eksklusif, DPP nilai lain, PB1+SC, pembulatan, promo bertumpuk, split bill |
+| **Test vector bersama** | JSON fixtures di `Spesifikasi/VektorUjiKalkulasi` dijalankan oleh Pest **dan** `dart test` | Menjamin kalkulasi aplikasi POS (offline) = server. Minimal 200 kasus: pajak inklusif/eksklusif, DPP nilai lain, PB1+SC, pembulatan, promo bertumpuk, split bill |
 | Feature/Integration | Pest + MySQL (bukan SQLite, agar perilaku lock & tipe sama) | Setiap flow F-xx: happy path + edge case; tenant isolation; idempotensi sync |
-| **Invariant test** | Pest | Setelah setiap skenario: Σ debit = Σ kredit; saldo `stock_levels` = Σ `stock_movements`; nilai persediaan di neraca = Σ nilai stok; kas shift = ekspektasi |
+| **Invariant test** | Pest | Setelah setiap skenario: Σ debit = Σ kredit; saldo `SaldoStok` = Σ `MutasiStok`; nilai persediaan di neraca = Σ nilai stok; kas shift = ekspektasi |
 | E2E Web | Playwright | Daftar → onboarding → produk → aktivasi perangkat → laporan; self-order QR |
 | E2E Aplikasi | `integration_test` / **Patrol** di emulator Android & Windows (CI), iOS simulator (nightly) | Aktivasi → login PIN → buka shift → jual (online & **offline** dengan API mock dimatikan) → sinkron (API staging) → tutup shift |
 | **Kontrak API** | OpenAPI diff (Scramble) + test DTO Dart | Mencegah perubahan API POS yang merusak aplikasi versi lama |
@@ -2551,9 +2741,9 @@ gantt
 
 - `pint --test`, `phpstan` (Larastan), `rector --dry-run`
 - `tsc --noEmit`, `eslint`, `prettier --check`
-- `pest --parallel` (coverage minimum 80% untuk `app/Domain/*/Actions` dan kalkulator)
+- `pest --parallel` (coverage minimum 80% untuk `app/Domain/*/Aksi` dan kalkulator)
 - `vitest run`, Playwright smoke (web)
-- `dart format --set-exit-if-changed`, `flutter analyze`, `dart test packages/pos_engine`, `flutter test` (termasuk golden)
+- `dart format --set-exit-if-changed`, `flutter analyze`, `dart test Paket/MesinKasir`, `flutter test` (termasuk golden)
 - Build Android (AAB/APK) & Windows sukses di setiap PR aplikasi. Build iOS di branch rilis & nightly. CI Aplikasi Owner (analyze, test, build Android/iOS) setara Aplikasi POS
 - Integration test aplikasi (alur jual online + offline)
 - Build Vite sukses dan ukuran bundle web publik di bawah anggaran
@@ -2565,6 +2755,7 @@ gantt
 - [ ] Dampak stok & jurnal sesuai tabel §11.3, dengan invariant test lulus
 - [ ] UI tablet & desktop, state kosong/loading/error. Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
 - [ ] Audit log & permission
+- [ ] Nama tabel, kolom, folder, file, dan function sesuai konvensi §13.7 (istilah baru sudah masuk kamus)
 - [ ] Test (unit, feature, E2E untuk alur kritis)
 - [ ] Dokumentasi pengguna singkat (help center)
 - [ ] Demo di staging
@@ -2580,7 +2771,7 @@ gantt
 | R3 | Konflik/duplikasi data offline | Sedang | Tinggi | ULID klien, idempotency key, outbox FIFO, test E2E offline, dashboard outbox per perangkat. |
 | R4 | Selisih kalkulasi klien vs server | Sedang | Tinggi | Test vector bersama, server re-kalkulasi dan menyimpan selisih (jika ada) untuk investigasi. |
 | R5 | Perubahan regulasi pajak | Tinggi | Sedang | Tarif berbasis tanggal efektif, konsultan pajak sebagai reviewer, fitur tax rate dikelola Super Admin. |
-| R6 | Fragmentasi printer & hardware (merek, protokol, Bluetooth Classic tidak didukung iOS) | Tinggi | Sedang | Abstraksi `PrinterTransport`, Hardware Compatibility List, rekomendasi printer LAN/BLE untuk iPad, fallback printer sistem, lab uji perangkat. |
+| R6 | Fragmentasi printer & hardware (merek, protokol, Bluetooth Classic tidak didukung iOS) | Tinggi | Sedang | Abstraksi `TransportPrinter`, Hardware Compatibility List, rekomendasi printer LAN/BLE untuk iPad, fallback printer sistem, lab uji perangkat. |
 | R13 | Review App Store/Play memperlambat rilis perbaikan kritis | Sedang | Tinggi | Feature flag remote (`app-config`), perbaikan logika bisnis sebisa mungkin di server, TestFlight/track internal untuk hotfix, rilis desktop via auto-updater lebih cepat. |
 | R14 | Aplikasi versi lama masih beredar & tidak kompatibel dengan API baru | Tinggi | Tinggi | API POS berversi, kompatibel mundur 2 versi minor, `min_supported_version` + pengiriman outbox tetap diizinkan sebelum update wajib. |
 | R15 | Batasan background di iOS (sinkron tertunda saat aplikasi di latar) | Sedang | Sedang | Sinkron saat aplikasi aktif, anjuran kiosk/Guided Access untuk iPad kasir, indikator outbox tertunda, push sebagai pemicu. |
@@ -2608,6 +2799,7 @@ gantt
 10. Apakah perlu dukungan **multi-mata uang** (turis/perbatasan)? Default: tidak.
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
+13. **Penamaan URL/endpoint API** (misal `/api/pos/v1/sync/push`): tetap seperti sekarang (huruf kecil, Inggris), atau diubah ke Bahasa Indonesia (misal `/api/pos/v1/sinkron/kirim`)? Tidak termasuk cakupan D-05.
 
 ### 25.1 Keputusan yang Sudah Diambil
 
@@ -2617,6 +2809,7 @@ gantt
 | D-02 | Kanal distribusi & mekanisme update aplikasi **Windows ditentukan setelah semua sistem jadi dan berjalan stabil**. Selama pengembangan & beta: unduhan langsung terbatas untuk tester | 22/09/2026 | §14.6, §22 |
 | D-03 | **Semua perangkat POS all-in-one** didukung melalui lapisan adaptor vendor + adaptor generik + Wizard Uji Perangkat + HCL | 22/09/2026 | §10.2 (POS-22), §17.2.5a, §22, §23 |
 | D-04 | **Aplikasi Mobile Owner tersendiri** (Flutter, Android & iOS) | 22/09/2026 | §1, §3.3 (X19), §10.2a, §13, §16.1, §17.3, §22 |
+| D-05 | **Database, folder, file, dan function memakai Bahasa Indonesia + PascalCase.** Turunan yang diputuskan untuk konsistensi: class/enum PascalCase, key JSON API = nama kolom (PascalCase), variabel lokal camelCase Indonesia. Pengecualian hanya untuk nama yang diwajibkan framework/alat (§13.7.4) | 22/09/2026 | §8 (status/enum), §12.2, §13.0–§13.4, §13.7, §14.3, §15, §16.2, §17, §18, §23, Lampiran D |
 
 ---
 
@@ -2720,21 +2913,21 @@ Poin didapat: 6   Total poin: 128
 
 ```json
 {
-  "id": "FNB-PB1-SC-EXCL-001",
-  "description": "Kafe, harga belum termasuk pajak, SC 5% masuk DPP PB1 10%, pembulatan tunai ke 100 ke bawah",
-  "settings": { "price_includes_tax": false, "service_charge_pct": "5", "sc_in_tax_base": true, "cash_rounding": { "unit": 100, "mode": "down" } },
-  "lines": [
-    { "sku": "EKS", "qty": "2", "unit_price": "18000" },
-    { "sku": "CRS", "qty": "1", "unit_price": "25000" }
+  "Id": "FNB-PB1-SC-EXCL-001",
+  "Keterangan": "Kafe, harga belum termasuk pajak, SC 5% masuk DPP PB1 10%, pembulatan tunai ke 100 ke bawah",
+  "Pengaturan": { "HargaTermasukPajak": false, "PersenBiayaLayanan": "5", "BiayaLayananMasukDpp": true, "PembulatanTunai": { "Kelipatan": 100, "Arah": "Bawah" } },
+  "Baris": [
+    { "Sku": "EKS", "Jumlah": "2", "HargaSatuan": "18000" },
+    { "Sku": "CRS", "Jumlah": "1", "HargaSatuan": "25000" }
   ],
-  "promotions": [ { "type": "fixed_discount_item", "sku": "EKS", "amount": "6000" } ],
-  "payment": { "method": "cash" },
-  "expected": {
-    "subtotal": "55000.00",
-    "service_charge": "2750.00",
-    "tax_total": "5775.00",
-    "rounding": "-25.00",
-    "grand_total": "63500.00"
+  "Promo": [ { "Jenis": "DiskonTetapItem", "Sku": "EKS", "Jumlah": "6000" } ],
+  "Pembayaran": { "Metode": "Tunai" },
+  "Harapan": {
+    "Subtotal": "55000.00",
+    "BiayaLayanan": "2750.00",
+    "TotalPajak": "5775.00",
+    "Pembulatan": "-25.00",
+    "TotalAkhir": "63500.00"
   }
 }
 ```
