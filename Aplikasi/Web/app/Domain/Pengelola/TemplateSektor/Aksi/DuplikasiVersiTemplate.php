@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\TemplateSektor\Aksi;
 
+use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektor;
@@ -40,12 +41,19 @@ final class DuplikasiVersiTemplate
             }
 
             $versiBaru = (int) $template->Versi()->max('Versi') + 1;
+            $isi = $asal->Isi;
+
+            // Draf baru memakai kunci peran terbaru; versi asal tetap apa adanya (BR-P03.4).
+            if (is_array($isi['PemetaanAkun'] ?? null)) {
+                $isi['PemetaanAkun'] = PeranAkun::NormalisasiPemetaan($isi['PemetaanAkun']);
+            }
+
             $draf = $template->Versi()->create([
                 'Versi' => $versiBaru,
                 'Status' => StatusTemplateSektor::Draf,
-                'Isi' => $asal->Isi,
+                'Isi' => $isi,
                 'IdVersiAsal' => $asal->Id,
-                'HasilValidasi' => $this->validator->Validasi($asal->Isi),
+                'HasilValidasi' => $this->validator->Validasi($isi),
                 'DivalidasiPada' => now(),
             ]);
 

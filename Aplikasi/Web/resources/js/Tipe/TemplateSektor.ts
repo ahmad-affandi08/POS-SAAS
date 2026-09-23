@@ -17,6 +17,17 @@ export type PengaturanTemplate = {
     HargaTermasukPajak: boolean;
 };
 
+export type JenisProdukContoh = 'Stok' | 'NonStok' | 'Jasa';
+
+/** Produk contoh untuk panduan awal tenant (F-01 langkah 4). Harga string desimal Rupiah, bukan number. */
+export type ProdukContohTemplate = {
+    Nama: string;
+    Kategori: string | null;
+    Harga: string;
+    KodeSatuan: string;
+    Jenis: JenisProdukContoh;
+};
+
 export type IsiBisnisTemplate = {
     ModeKasir: string[];
     ModeKasirDefault: string | null;
@@ -28,6 +39,7 @@ export type IsiBisnisTemplate = {
     AlasanVoid: string[];
     AlasanPenyesuaian: string[];
     LaporanUnggulan: string[];
+    ProdukContoh: ProdukContohTemplate[];
 };
 
 export type IsiAkunTemplate = {
@@ -52,4 +64,5 @@ export type PilihanEditorTemplate = {
     Fitur: (Pilihan & { Kelompok: string })[];
     Satuan: Pilihan[];
     JenisPajak: Pilihan[];
+    JenisProdukContoh: Pilihan[];
 };

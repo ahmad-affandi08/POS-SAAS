@@ -43,7 +43,7 @@
                     },
                     {
                         "Kode": "1-1300",
-                        "Nama": "Piutang Settlement (QRIS/EDC/Gateway/Ojol)",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
                         "Tipe": "Aset",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -260,7 +260,7 @@
                     },
                     {
                         "Kode": "5-1200",
-                        "Nama": "Waste / Barang Rusak",
+                        "Nama": "Susut & Barang Rusak",
                         "Tipe": "Hpp",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -332,14 +332,14 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
-                    "PiutangSettlement": "1-1300",
+                    "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
-                    "UangMukaPelanggan": "2-1400",
-                    "Waste": "5-1200"
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400"
                 },
                 "Kategori": [
                     "Sembako",
@@ -398,6 +398,92 @@
                     "PenjualanPerProduk",
                     "StokMenipis",
                     "LabaRugiSederhana"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Beras Premium Pulen Wangi Kemasan 5 kg",
+                        "Kategori": "Sembako",
+                        "Harga": "78500",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Minyak Goreng Sawit Kemasan Pouch 2 Liter",
+                        "Kategori": "Sembako",
+                        "Harga": "38000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Gula Pasir Kristal Putih Kemasan 1 kg",
+                        "Kategori": "Sembako",
+                        "Harga": "18500",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Telur Ayam Ras Curah",
+                        "Kategori": "Sembako",
+                        "Harga": "29000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Mi Instan Goreng Rasa Original 85 g",
+                        "Kategori": "Sembako",
+                        "Harga": "3500",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Air Mineral Botol 600 ml",
+                        "Kategori": "Minuman",
+                        "Harga": "3500",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Air Mineral Botol 600 ml Isi 24 per Dus",
+                        "Kategori": "Minuman",
+                        "Harga": "48000",
+                        "KodeSatuan": "DUS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Keripik Singkong Pedas Manis 200 g",
+                        "Kategori": "Makanan ringan",
+                        "Harga": "12000",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kecap Manis Botol Kaca 520 ml",
+                        "Kategori": "Bumbu dapur",
+                        "Harga": "24500",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Sabun Mandi Batang Aroma Sereh 110 g Isi 4",
+                        "Kategori": "Perlengkapan mandi",
+                        "Harga": "17500",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Deterjen Bubuk Wangi Lavender 800 g",
+                        "Kategori": "Kebutuhan rumah tangga",
+                        "Harga": "21000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Ongkos Antar Belanja Radius 3 km",
+                        "Kategori": null,
+                        "Harga": "5000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    }
                 ]
             }
         },
@@ -444,7 +530,7 @@
                     },
                     {
                         "Kode": "1-1300",
-                        "Nama": "Piutang Settlement (QRIS/EDC/Gateway/Ojol)",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
                         "Tipe": "Aset",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -675,7 +761,7 @@
                     },
                     {
                         "Kode": "5-1200",
-                        "Nama": "Waste / Barang Rusak",
+                        "Nama": "Susut & Barang Rusak",
                         "Tipe": "Hpp",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -747,14 +833,14 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
-                    "PiutangSettlement": "1-1300",
+                    "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
-                    "UangMukaPelanggan": "2-1400",
-                    "Waste": "5-1200"
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400"
                 },
                 "Kategori": [
                     "Kopi",
@@ -815,6 +901,92 @@
                     "PenjualanPerJam",
                     "PenjualanPerProduk",
                     "PenjualanPerKategori"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Es Kopi Susu Gula Aren",
+                        "Kategori": "Kopi",
+                        "Harga": "22000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Americano Panas Single Origin Gayo",
+                        "Kategori": "Kopi",
+                        "Harga": "25000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Cafe Latte Dingin dengan Susu Oat",
+                        "Kategori": "Kopi",
+                        "Harga": "32000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Kopi Susu Gula Aren Botol 1 Liter",
+                        "Kategori": "Kopi",
+                        "Harga": "95000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Es Cokelat Premium Susu Segar",
+                        "Kategori": "Non-kopi",
+                        "Harga": "27000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Matcha Latte Dingin",
+                        "Kategori": "Non-kopi",
+                        "Harga": "30000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Air Mineral Botol 600 ml",
+                        "Kategori": "Non-kopi",
+                        "Harga": "8000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Es Teh Leci dengan Potongan Buah",
+                        "Kategori": "Teh",
+                        "Harga": "20000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Teh Tarik Panas",
+                        "Kategori": "Teh",
+                        "Harga": "18000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Nasi Goreng Kampung Telur Mata Sapi",
+                        "Kategori": "Makanan",
+                        "Harga": "35000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Roti Bakar Cokelat Keju Susu",
+                        "Kategori": "Camilan",
+                        "Harga": "22000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Pisang Goreng Madu Taburan Keju",
+                        "Kategori": "Camilan",
+                        "Harga": "20000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    }
                 ]
             }
         },
@@ -857,7 +1029,7 @@
                     },
                     {
                         "Kode": "1-1300",
-                        "Nama": "Piutang Settlement (QRIS/EDC/Gateway/Ojol)",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
                         "Tipe": "Aset",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -1088,7 +1260,7 @@
                     },
                     {
                         "Kode": "5-1200",
-                        "Nama": "Waste / Barang Rusak",
+                        "Nama": "Susut & Barang Rusak",
                         "Tipe": "Hpp",
                         "SaldoNormal": "Debit",
                         "Kontra": false
@@ -1160,14 +1332,14 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
-                    "PiutangSettlement": "1-1300",
+                    "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
-                    "UangMukaPelanggan": "2-1400",
-                    "Waste": "5-1200"
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400"
                 },
                 "Kategori": [
                     "Makanan",
@@ -1223,6 +1395,92 @@
                     "PenjualanPerJam",
                     "PenjualanPerProduk",
                     "LaporanShift"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Ayam Goreng Krispi Paha Atas",
+                        "Kategori": "Makanan",
+                        "Harga": "16000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Nasi Ayam Geprek Sambal Bawang Level 1-5",
+                        "Kategori": "Makanan",
+                        "Harga": "18000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Burger Ayam Krispi Keju",
+                        "Kategori": "Makanan",
+                        "Harga": "25000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Kentang Goreng Ukuran Sedang",
+                        "Kategori": "Makanan",
+                        "Harga": "15000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Paket Hemat Nasi + Ayam Goreng + Es Teh Manis",
+                        "Kategori": "Paket hemat",
+                        "Harga": "28000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Paket Keluarga Ayam Goreng 5 Potong + 3 Nasi",
+                        "Kategori": "Paket hemat",
+                        "Harga": "85000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Es Teh Manis Jumbo",
+                        "Kategori": "Minuman",
+                        "Harga": "6000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Es Jeruk Peras Segar",
+                        "Kategori": "Minuman",
+                        "Harga": "10000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Teh Melati Kemasan Botol 350 ml",
+                        "Kategori": "Minuman",
+                        "Harga": "6000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Nasi Putih",
+                        "Kategori": "Tambahan",
+                        "Harga": "5000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Sambal Bawang Ekstra",
+                        "Kategori": "Tambahan",
+                        "Harga": "3000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Telur Dadar Tambahan",
+                        "Kategori": "Tambahan",
+                        "Harga": "5000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    }
                 ]
             }
         }

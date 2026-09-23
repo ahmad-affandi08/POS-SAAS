@@ -8,8 +8,14 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalat from '@/Komponen/Pengelola/TemplateSektor/RingkasanGalat';
+import { FormatRupiah } from '@/Pustaka/Format';
 import type { Pilihan } from '@/Tipe/Pengelola';
-import type { IsiBisnisTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
+import type {
+    IsiBisnisTemplate,
+    JenisProdukContoh,
+    PilihanEditorTemplate,
+    ProdukContohTemplate,
+} from '@/Tipe/TemplateSektor';
 
 type PropsFormIsiBisnis = {
     url: string;
@@ -20,11 +26,25 @@ type PropsFormIsiBisnis = {
 
 const bagianDaftar = ['Kategori', 'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian'] as const;
 
+const jumlahProdukContohMaksimal = 100;
+const polaHarga = /^\d{1,16}(\.\d{1,2})?$/;
+const kelasSel = 'px-2 py-2 align-top';
+const kelasInput =
+    'h-10 w-full rounded-kontrol border border-garis-input bg-permukaan px-2 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:bg-latar disabled:text-teks-sekunder';
+
 function KeOpsi(daftar: Pilihan[]) {
     return daftar.map((item) => ({ nilai: item.Nilai, label: item.Label }));
 }
 
-/** Isi bisnis template: mode kasir, fitur, kategori, satuan, pengaturan default (BR-P03.5, Konten & Legal). */
+/** Usaha retail/grosir menjual barang berstok; F&B umumnya menu tanpa stok (DesainF01 H14). */
+function TentukanJenisAwal(modeKasir: string[]): JenisProdukContoh {
+    return modeKasir.includes('Retail') || modeKasir.includes('Grosir') ? 'Stok' : 'NonStok';
+}
+
+/**
+ * Isi bisnis template: mode kasir, fitur, kategori, satuan, pengaturan default, dan produk contoh
+ * (BR-P03.5, Konten & Legal).
+ */
 export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFormIsiBisnis) {
     const formulir = useForm<IsiBisnisTemplate>(isi);
     const galat = formulir.errors as Record<string, string | undefined>;
@@ -34,6 +54,30 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
         nilai: IsiBisnisTemplate['Pengaturan'][K],
     ) => formulir.setData('Pengaturan', { ...data.Pengaturan, [kunci]: nilai });
 
+    const kategoriTemplate = data.Kategori.map((nama) => nama.trim()).filter((nama) => nama !== '');
+    const satuanTemplate = pilihan.Satuan.filter((satuan) => data.KodeSatuan.includes(satuan.Nilai));
+    const UbahProdukContoh = (indeks: number, perubahan: Partial<ProdukContohTemplate>) =>
+        formulir.setData(
+            'ProdukContoh',
+            data.ProdukContoh.map((produk, posisi) => (posisi === indeks ? { ...produk, ...perubahan } : produk)),
+        );
+    const TambahProdukContoh = () =>
+        formulir.setData('ProdukContoh', [
+            ...data.ProdukContoh,
+            {
+                Nama: '',
+                Kategori: null,
+                Harga: '',
+                KodeSatuan: data.KodeSatuan[0] ?? '',
+                Jenis: TentukanJenisAwal(data.ModeKasir),
+            },
+        ]);
+    const HapusProdukContoh = (indeks: number) =>
+        formulir.setData(
+            'ProdukContoh',
+            data.ProdukContoh.filter((_, posisi) => posisi !== indeks),
+        );
+
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
         formulir.transform((isian) => {
@@ -42,6 +86,13 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
             for (const bagian of bagianDaftar) {
                 bersih[bagian] = isian[bagian].map((nama) => nama.trim()).filter((nama) => nama !== '');
             }
+
+            bersih.ProdukContoh = isian.ProdukContoh.map((produk) => ({
+                ...produk,
+                Nama: produk.Nama.trim(),
+                Kategori: produk.Kategori === null || produk.Kategori.trim() === '' ? null : produk.Kategori,
+                Harga: produk.Harga.trim(),
+            }));
 
             return bersih;
         });
@@ -186,6 +237,191 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                         />
                     </div>
                 </fieldset>
+                <section className="flex flex-col gap-2 sm:col-span-2" aria-labelledby="judul-produk-contoh">
+                    <div>
+                        <h3 id="judul-produk-contoh" className="text-label font-semibold text-teks-utama">
+                            Produk contoh
+                        </h3>
+                        <p className="text-keterangan text-teks-sekunder">
+                            Ditawarkan ke tenant di langkah produk awal panduan. Kategori dan satuan diambil dari isian
+                            di atas. Harga dalam Rupiah tanpa titik ribuan, misal 22000.
+                        </p>
+                    </div>
+                    {data.ProdukContoh.length === 0 ? (
+                        <p className="text-keterangan text-teks-sekunder">
+                            Belum ada produk contoh. Tenant yang memakai template ini menambah produknya sendiri.
+                        </p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[48rem] text-left text-isi">
+                                <caption className="sr-only">Produk contoh template</caption>
+                                <thead className="border-b border-garis text-label text-teks-sekunder">
+                                    <tr>
+                                        <th scope="col" className={`${kelasSel} font-semibold`}>
+                                            Nama produk
+                                        </th>
+                                        <th scope="col" className={`${kelasSel} w-44 font-semibold`}>
+                                            Kategori
+                                        </th>
+                                        <th scope="col" className={`${kelasSel} w-40 text-right font-semibold`}>
+                                            Harga (Rp)
+                                        </th>
+                                        <th scope="col" className={`${kelasSel} w-36 font-semibold`}>
+                                            Satuan
+                                        </th>
+                                        <th scope="col" className={`${kelasSel} w-44 font-semibold`}>
+                                            Jenis
+                                        </th>
+                                        <th scope="col" className={kelasSel}>
+                                            <span className="sr-only">Aksi</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.ProdukContoh.map((produk, indeks) => {
+                                        const awalan = `ProdukContoh.${indeks}`;
+                                        const hargaValid = polaHarga.test(produk.Harga.trim());
+                                        const kategoriAsing =
+                                            produk.Kategori !== null && !kategoriTemplate.includes(produk.Kategori);
+                                        const satuanAsing =
+                                            produk.KodeSatuan !== '' &&
+                                            !satuanTemplate.some((satuan) => satuan.Nilai === produk.KodeSatuan);
+
+                                        return (
+                                            <tr key={indeks} className="border-b border-garis last:border-b-0">
+                                                <td className={kelasSel}>
+                                                    <input
+                                                        aria-label={`Nama produk contoh baris ${indeks + 1}`}
+                                                        aria-invalid={galat[`${awalan}.Nama`] ? true : undefined}
+                                                        className={kelasInput}
+                                                        maxLength={150}
+                                                        value={produk.Nama}
+                                                        onChange={(peristiwa) =>
+                                                            UbahProdukContoh(indeks, { Nama: peristiwa.target.value })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td className={kelasSel}>
+                                                    <select
+                                                        aria-label={`Kategori produk contoh baris ${indeks + 1}`}
+                                                        aria-invalid={galat[`${awalan}.Kategori`] ? true : undefined}
+                                                        className={kelasInput}
+                                                        value={produk.Kategori ?? ''}
+                                                        onChange={(peristiwa) =>
+                                                            UbahProdukContoh(indeks, {
+                                                                Kategori:
+                                                                    peristiwa.target.value === ''
+                                                                        ? null
+                                                                        : peristiwa.target.value,
+                                                            })
+                                                        }
+                                                    >
+                                                        <option value="">Tanpa kategori</option>
+                                                        {kategoriAsing ? (
+                                                            <option value={produk.Kategori ?? ''}>
+                                                                {produk.Kategori} (tidak ada di daftar)
+                                                            </option>
+                                                        ) : null}
+                                                        {kategoriTemplate.map((nama) => (
+                                                            <option key={nama} value={nama}>
+                                                                {nama}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                                <td className={kelasSel}>
+                                                    <input
+                                                        aria-label={`Harga produk contoh baris ${indeks + 1}`}
+                                                        aria-invalid={galat[`${awalan}.Harga`] ? true : undefined}
+                                                        className={`${kelasInput} text-right tabular-nums`}
+                                                        inputMode="decimal"
+                                                        value={produk.Harga}
+                                                        onChange={(peristiwa) =>
+                                                            UbahProdukContoh(indeks, { Harga: peristiwa.target.value })
+                                                        }
+                                                    />
+                                                    {hargaValid ? (
+                                                        <span className="mt-1 block text-right text-keterangan text-teks-sekunder tabular-nums">
+                                                            {FormatRupiah(produk.Harga)}
+                                                        </span>
+                                                    ) : null}
+                                                </td>
+                                                <td className={kelasSel}>
+                                                    <select
+                                                        aria-label={`Satuan produk contoh baris ${indeks + 1}`}
+                                                        aria-invalid={galat[`${awalan}.KodeSatuan`] ? true : undefined}
+                                                        className={kelasInput}
+                                                        value={produk.KodeSatuan}
+                                                        onChange={(peristiwa) =>
+                                                            UbahProdukContoh(indeks, {
+                                                                KodeSatuan: peristiwa.target.value,
+                                                            })
+                                                        }
+                                                    >
+                                                        <option value="">Pilih satuan</option>
+                                                        {satuanAsing ? (
+                                                            <option value={produk.KodeSatuan}>
+                                                                {produk.KodeSatuan} (tidak ada di daftar)
+                                                            </option>
+                                                        ) : null}
+                                                        {satuanTemplate.map((satuan) => (
+                                                            <option key={satuan.Nilai} value={satuan.Nilai}>
+                                                                {satuan.Label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                                <td className={kelasSel}>
+                                                    <select
+                                                        aria-label={`Jenis produk contoh baris ${indeks + 1}`}
+                                                        aria-invalid={galat[`${awalan}.Jenis`] ? true : undefined}
+                                                        className={kelasInput}
+                                                        value={produk.Jenis}
+                                                        onChange={(peristiwa) =>
+                                                            UbahProdukContoh(indeks, {
+                                                                Jenis: peristiwa.target.value as JenisProdukContoh,
+                                                            })
+                                                        }
+                                                    >
+                                                        {pilihan.JenisProdukContoh.map((jenis) => (
+                                                            <option key={jenis.Nilai} value={jenis.Nilai}>
+                                                                {jenis.Label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                                <td className={`${kelasSel} text-right`}>
+                                                    {bolehUbah ? (
+                                                        <Tombol
+                                                            varian="bahaya"
+                                                            onClick={() => HapusProdukContoh(indeks)}
+                                                        >
+                                                            Hapus
+                                                        </Tombol>
+                                                    ) : null}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    {bolehUbah ? (
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Tombol
+                                varian="sekunder"
+                                onClick={TambahProdukContoh}
+                                disabled={data.ProdukContoh.length >= jumlahProdukContohMaksimal}
+                            >
+                                Tambah produk contoh
+                            </Tombol>
+                            <span className="text-keterangan text-teks-sekunder tabular-nums">
+                                {data.ProdukContoh.length} dari {jumlahProdukContohMaksimal} produk
+                            </span>
+                        </div>
+                    ) : null}
+                </section>
             </fieldset>
             {bolehUbah ? (
                 <div>

@@ -17,7 +17,7 @@
 | 1-1100 | Kas Outlet (per outlet) | Aset |
 | 1-1150 | Kas Brankas | Aset |
 | 1-1200 | Bank (per rekening) | Aset |
-| 1-1300 | Piutang Settlement (QRIS/EDC/Gateway/Ojol) | Aset |
+| 1-1300 | Piutang Pencairan (QRIS/EDC/Gateway/Ojol) | Aset |
 | 1-1400 | Piutang Usaha | Aset |
 | 1-1450 | Piutang Karyawan (Kasbon) | Aset |
 | 1-1500 | Persediaan Barang Dagang | Aset |
@@ -47,7 +47,7 @@
 | 4-9000 | Pendapatan Lain (selisih kas lebih, pembulatan) | Pendapatan |
 | 5-1000 | Harga Pokok Penjualan | HPP |
 | 5-1100 | Selisih HPP / Penyesuaian Persediaan | HPP |
-| 5-1200 | Waste / Barang Rusak | HPP |
+| 5-1200 | Susut & Barang Rusak | HPP |
 | 6-1000 | Beban Gaji & Komisi | Beban |
 | 6-2000 | Beban Sewa, Listrik, Air, Internet | Beban |
 | 6-3000 | Beban Biaya Pembayaran (MDR QRIS/EDC, komisi ojol) | Beban |
@@ -67,19 +67,19 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-04.3 | Belanja stok tunai (mode UMKM) | Persediaan (+ PPN Masukan) | Kas/Bank |
 | J-04.4 | Bayar hutang | Hutang Usaha | Kas/Bank |
 | J-04.5 | Retur pembelian | Hutang Usaha | Persediaan (+ PPN Masukan kontra) |
-| J-07.1 | Penjualan (pendapatan) | Kas / Piutang Settlement / Piutang Usaha / Uang Muka Pelanggan / Deposit Pelanggan (sesuai metode) + Diskon Penjualan | Penjualan / Pendapatan Jasa + Pendapatan Service Charge + PPN Keluaran / Hutang PB1 + Pendapatan Lain (pembulatan) |
+| J-07.1 | Penjualan (pendapatan) | Kas / Piutang Pencairan / Piutang Usaha / Uang Muka Pelanggan / Deposit Pelanggan (sesuai metode) + Diskon Penjualan | Penjualan / Pendapatan Jasa + Pendapatan Service Charge + PPN Keluaran / Hutang PB1 + Pendapatan Lain (pembulatan) |
 | J-07.2 | Penjualan (HPP) | HPP | Persediaan (barang/bahan) |
 | J-07.3 | DP pre-order diterima | Kas | Uang Muka Pelanggan |
 | J-09.1 | Void | Pembalik penuh J-07.1 & J-07.2 | |
 | J-09.2 | Retur penjualan | Retur Penjualan + PPN/PB1 (kontra) ; Persediaan | Kas/Piutang/Nota Kredit ; HPP |
-| J-08.1 | Settlement QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Settlement |
+| J-08.1 | Pencairan QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Pencairan |
 | J-06.1 | Kas keluar (beban) | Beban terkait | Kas Outlet |
 | J-11.1 | Selisih kas kurang | Beban Selisih Kas | Kas Outlet |
 | J-11.2 | Selisih kas lebih | Kas Outlet | Pendapatan Lain |
 | J-11.3 | Setoran kas ke bank | Bank/Kas Brankas | Kas Outlet |
 | J-05.2 | Transfer stok dikirim | Persediaan Dalam Perjalanan | Persediaan (lokasi asal) |
 | J-05.3 | Transfer stok diterima | Persediaan (lokasi tujuan) | Persediaan Dalam Perjalanan |
-| J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Waste | Persediaan |
+| J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Susut & Barang Rusak | Persediaan |
 | J-05.5 | Opname/penyesuaian lebih | Persediaan | Selisih HPP |
 | J-05.6 | Produksi | Persediaan Barang Jadi | Persediaan Bahan Baku (+ Overhead Dibebankan) |
 | J-05.7 | Konsinyasi terjual | HPP | Hutang Konsinyasi |

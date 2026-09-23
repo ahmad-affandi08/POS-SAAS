@@ -13,6 +13,7 @@ use App\Domain\Pajak\Enum\CakupanPajak;
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
+use App\Domain\Pengelola\TemplateSektor\Enum\JenisProdukContoh;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
 use App\Domain\Penjualan\Enum\ModeKasir;
 use App\Domain\Persediaan\Enum\MetodeHpp;
@@ -31,6 +32,14 @@ final class ValidatorTemplate
     public const POLA_KODE_AKUN = '/^[1-6]-\d{4}$/';
 
     public const PERSEN_BIAYA_LAYANAN_MAKSIMAL = '10';
+
+    /** Harga produk contoh: string desimal Rupiah (DECIMAL(18,2)), tanpa pemisah ribuan. Tidak pernah float. */
+    public const POLA_HARGA = '/^\d{1,16}(\.\d{1,2})?$/';
+
+    public const JUMLAH_PRODUK_CONTOH_MAKSIMAL = 100;
+
+    /** Sama dengan panjang kolom `Produk.Nama` (§15). */
+    public const PANJANG_NAMA_PRODUK_MAKSIMAL = 150;
 
     /** @var list<array{Bagian: string, Pesan: string}> */
     private array $galat = [];
@@ -61,7 +70,96 @@ final class ValidatorTemplate
             }
         }
 
+        $this->ValidasiProdukContoh($isi);
+
         return ['Lolos' => $this->galat === [], 'Galat' => $this->galat];
+    }
+
+    /**
+     * Produk contoh untuk langkah produk awal panduan (F-01 langkah 4a, DesainF01 C3). Kunci boleh tidak ada
+     * (versi lama) dan dianggap daftar kosong. Kategori dan satuan harus merujuk isi template ini sendiri agar
+     * penerapan ke tenant selalu menemukan kategori/satuan yang sudah dibuat dari template yang sama.
+     *
+     * @param  array<mixed>  $isi
+     */
+    private function ValidasiProdukContoh(array $isi): void
+    {
+        $daftar = $isi['ProdukContoh'] ?? [];
+
+        if (! is_array($daftar) || ! array_is_list($daftar)) {
+            $this->Catat('ProdukContoh', 'Produk contoh harus berupa daftar.');
+
+            return;
+        }
+
+        if (count($daftar) > self::JUMLAH_PRODUK_CONTOH_MAKSIMAL) {
+            $this->Catat('ProdukContoh', 'Produk contoh paling banyak '.self::JUMLAH_PRODUK_CONTOH_MAKSIMAL.' item.');
+        }
+
+        $kategori = [];
+
+        foreach (is_array($isi['Kategori'] ?? null) ? $isi['Kategori'] : [] as $nama) {
+            if (is_string($nama)) {
+                $kategori[mb_strtolower(trim($nama))] = true;
+            }
+        }
+
+        $kodeSatuan = is_array($isi['KodeSatuan'] ?? null) ? array_filter($isi['KodeSatuan'], 'is_string') : [];
+        $namaTerlihat = [];
+
+        foreach ($daftar as $indeks => $produk) {
+            $baris = 'baris '.($indeks + 1);
+
+            if (! is_array($produk)) {
+                $this->Catat('ProdukContoh', "Produk contoh {$baris} tidak berbentuk isian produk.");
+
+                continue;
+            }
+
+            $nama = is_string($produk['Nama'] ?? null) ? trim($produk['Nama']) : '';
+
+            if ($nama === '') {
+                $this->Catat('ProdukContoh', "Nama produk contoh {$baris} wajib diisi.");
+            } elseif (mb_strlen($nama) > self::PANJANG_NAMA_PRODUK_MAKSIMAL) {
+                $this->Catat('ProdukContoh', "Nama produk contoh {$baris} paling panjang ".self::PANJANG_NAMA_PRODUK_MAKSIMAL.' karakter.');
+            } elseif (isset($namaTerlihat[mb_strtolower($nama)])) {
+                $this->Catat('ProdukContoh', "Produk contoh {$nama} ganda.");
+            }
+
+            $label = $nama === '' ? $baris : $nama;
+
+            if ($nama !== '') {
+                $namaTerlihat[mb_strtolower($nama)] = true;
+            }
+
+            $namaKategori = $produk['Kategori'] ?? null;
+
+            if ($namaKategori !== null && (! is_string($namaKategori) || ! isset($kategori[mb_strtolower(trim($namaKategori))]))) {
+                $teks = is_string($namaKategori) ? $namaKategori : '(bukan teks)';
+                $this->Catat('ProdukContoh', "Produk contoh {$label}: kategori {$teks} tidak ada di daftar kategori template.");
+            }
+
+            $harga = $produk['Harga'] ?? null;
+
+            if (! is_string($harga) || preg_match(self::POLA_HARGA, $harga) !== 1) {
+                $this->Catat('ProdukContoh', "Produk contoh {$label}: harga harus angka Rupiah tanpa titik ribuan, paling banyak 2 desimal (misal 22000).");
+            }
+
+            $satuan = $produk['KodeSatuan'] ?? null;
+
+            if (! is_string($satuan) || ! in_array($satuan, $kodeSatuan, true)) {
+                $teks = is_string($satuan) && $satuan !== '' ? $satuan : '(kosong)';
+                $this->Catat('ProdukContoh', "Produk contoh {$label}: satuan {$teks} tidak ada di daftar satuan template.");
+            }
+
+            $jenis = $produk['Jenis'] ?? null;
+
+            if (! is_string($jenis) || JenisProdukContoh::tryFrom($jenis) === null) {
+                $teks = is_string($jenis) && $jenis !== '' ? $jenis : '(kosong)';
+                $pilihan = implode(', ', array_map(fn (JenisProdukContoh $jenisContoh) => $jenisContoh->value, JenisProdukContoh::cases()));
+                $this->Catat('ProdukContoh', "Produk contoh {$label}: jenis {$teks} tidak dikenal. Pilih salah satu: {$pilihan}.");
+            }
+        }
     }
 
     /**
@@ -170,12 +268,28 @@ final class ValidatorTemplate
     private function ValidasiPemetaanAkun(mixed $pemetaan, array $akun): void
     {
         $pemetaan = is_array($pemetaan) ? $pemetaan : [];
+        $kunciPerPeran = [];
 
-        foreach (array_keys($pemetaan) as $peran) {
-            if (PeranAkun::tryFrom((string) $peran) === null) {
-                $this->Catat('PemetaanAkun', "Peran akun {$peran} tidak dikenal.");
+        foreach (array_keys($pemetaan) as $kunci) {
+            $peran = PeranAkun::DariKunci((string) $kunci);
+
+            if ($peran === null) {
+                $this->Catat('PemetaanAkun', "Peran akun {$kunci} tidak dikenal.");
+
+                continue;
+            }
+
+            $kunciPerPeran[$peran->value][] = (string) $kunci;
+        }
+
+        foreach ($kunciPerPeran as $nilaiPeran => $daftarKunci) {
+            if (count($daftarKunci) > 1) {
+                $this->Catat('PemetaanAkun', 'Peran "'.PeranAkun::from($nilaiPeran)->AmbilLabel().'" dipetakan dua kali (kunci '.implode(' dan ', $daftarKunci).'). Hapus salah satunya.');
             }
         }
+
+        // Versi terbit lama masih memakai kunci lama (BR-P03.4 melarang menulis ulang), jadi dibaca lewat alias.
+        $pemetaan = PeranAkun::NormalisasiPemetaan($pemetaan);
 
         foreach (PeranAkun::cases() as $peran) {
             $kode = $pemetaan[$peran->value] ?? null;

@@ -13,6 +13,7 @@ use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
+use App\Domain\Pengelola\TemplateSektor\Enum\JenisProdukContoh;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
 use App\Domain\Penjualan\Enum\ModeKasir;
 use App\Domain\Persediaan\Enum\MetodeHpp;
@@ -59,7 +60,7 @@ final class DaftarTemplateSektor
             'Versi' => [
                 'Versi' => $versi->Versi,
                 'Status' => $versi->Status->value,
-                'Isi' => $versi->Isi,
+                'Isi' => self::AmbilIsiTampil($versi->Isi),
                 'HasilValidasi' => $versi->HasilValidasi,
                 'DivalidasiPada' => $versi->DivalidasiPada?->toIso8601String(),
                 'DiterbitkanPada' => $versi->DiterbitkanPada?->toIso8601String(),
@@ -111,6 +112,25 @@ final class DaftarTemplateSektor
             'JenisPajak' => array_values(JenisPajak::query()->orderBy('Kode')->get()->map(
                 fn (JenisPajak $jenis) => ['Nilai' => $jenis->Kode, 'Label' => $jenis->Nama],
             )->all()),
+            'JenisProdukContoh' => array_map(fn (JenisProdukContoh $jenis) => ['Nilai' => $jenis->value, 'Label' => $jenis->AmbilLabel()], JenisProdukContoh::cases()),
         ];
+    }
+
+    /**
+     * Isi untuk editor. Versi lama bisa belum punya `ProdukContoh` atau masih memakai kunci peran lama; keduanya
+     * dirapikan hanya untuk tampilan, isi tersimpan tidak diubah (BR-P03.4).
+     *
+     * @param  array<string, mixed>  $isi
+     * @return array<string, mixed>
+     */
+    private static function AmbilIsiTampil(array $isi): array
+    {
+        $isi['ProdukContoh'] = is_array($isi['ProdukContoh'] ?? null) ? $isi['ProdukContoh'] : [];
+
+        if (is_array($isi['PemetaanAkun'] ?? null)) {
+            $isi['PemetaanAkun'] = PeranAkun::NormalisasiPemetaan($isi['PemetaanAkun']);
+        }
+
+        return $isi;
     }
 }

@@ -223,3 +223,92 @@ describe('Versi template tidak berubah setelah terbit (BR-P03.4)', function (): 
             ->and(fn () => $versi->update(['Status' => StatusTemplateSektor::Terbit]))->toThrow(LogicException::class);
     });
 });
+
+describe('Produk contoh template (F-01 langkah 4a, DesainF01 C3)', function (): void {
+    it('ketiga template awal membawa 8–12 produk contoh berharga string desimal Rupiah', function (): void {
+        foreach (['RTL-GEN', 'FNB-CAF', 'FNB-QSR'] as $kode) {
+            $isi = AmbilIsiTemplateAwal($kode);
+
+            expect(count($isi['ProdukContoh']))->toBeGreaterThanOrEqual(8)->toBeLessThanOrEqual(12)
+                ->and(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe([]);
+
+            foreach ($isi['ProdukContoh'] as $produk) {
+                expect($produk['Harga'])->toBeString()->toMatch(ValidatorTemplate::POLA_HARGA);
+            }
+        }
+
+        expect(AmbilIsiTemplateAwal('FNB-CAF')['ProdukContoh'])->toContain(
+            ['Nama' => 'Es Kopi Susu Gula Aren', 'Harga' => '22000', 'Jenis' => 'NonStok', 'Kategori' => 'Kopi', 'KodeSatuan' => 'PCS'],
+        );
+    });
+
+    it('kunci ProdukContoh boleh tidak ada (versi lama) dan daftar kosong juga lolos', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-QSR');
+        unset($isi['ProdukContoh']);
+        expect(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe([]);
+
+        $isi['ProdukContoh'] = [];
+        expect(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe([]);
+    });
+
+    it('menolak kategori & satuan di luar isi template, nama ganda, harga bukan string desimal, dan jenis tak dikenal', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-CAF');
+        $isi['ProdukContoh'] = [
+            ['Nama' => 'Es Kopi Susu Gula Aren', 'Kategori' => 'kopi ', 'Harga' => '22000.50', 'KodeSatuan' => 'PCS', 'Jenis' => 'NonStok'],
+            ['Nama' => ' es kopi susu gula aren', 'Kategori' => null, 'Harga' => '23000', 'KodeSatuan' => 'PCS', 'Jenis' => 'NonStok'],
+            ['Nama' => 'Croissant Mentega Prancis', 'Kategori' => 'Roti', 'Harga' => '28.000', 'KodeSatuan' => 'LUSIN', 'Jenis' => 'Paket'],
+            ['Nama' => 'Kue Lapis Legit Sepotong', 'Kategori' => 'Camilan', 'Harga' => 18500.5, 'KodeSatuan' => 'PORSI', 'Jenis' => 'Stok'],
+            ['Nama' => '', 'Kategori' => null, 'Harga' => '-5000', 'KodeSatuan' => null, 'Jenis' => 'Jasa'],
+            'bukan produk',
+        ];
+
+        expect(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe([
+            'Produk contoh es kopi susu gula aren ganda.',
+            'Produk contoh Croissant Mentega Prancis: kategori Roti tidak ada di daftar kategori template.',
+            'Produk contoh Croissant Mentega Prancis: harga harus angka Rupiah tanpa titik ribuan, paling banyak 2 desimal (misal 22000).',
+            'Produk contoh Croissant Mentega Prancis: satuan LUSIN tidak ada di daftar satuan template.',
+            'Produk contoh Croissant Mentega Prancis: jenis Paket tidak dikenal. Pilih salah satu: Stok, NonStok, Jasa.',
+            'Produk contoh Kue Lapis Legit Sepotong: harga harus angka Rupiah tanpa titik ribuan, paling banyak 2 desimal (misal 22000).',
+            'Nama produk contoh baris 5 wajib diisi.',
+            'Produk contoh baris 5: harga harus angka Rupiah tanpa titik ribuan, paling banyak 2 desimal (misal 22000).',
+            'Produk contoh baris 5: satuan (kosong) tidak ada di daftar satuan template.',
+            'Produk contoh baris 6 tidak berbentuk isian produk.',
+        ]);
+    });
+
+    it('menolak ProdukContoh yang bukan daftar dan yang melebihi 100 item', function (): void {
+        $isi = AmbilIsiTemplateAwal('RTL-GEN');
+        $isi['ProdukContoh'] = ['Nama' => 'Beras Premium Pulen Wangi Kemasan 5 kg'];
+        expect(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe(['Produk contoh harus berupa daftar.']);
+
+        $isi['ProdukContoh'] = array_map(
+            fn (int $nomor) => ['Nama' => "Air Mineral Botol 600 ml Varian {$nomor}", 'Kategori' => 'Minuman', 'Harga' => '3500', 'KodeSatuan' => 'BOTOL', 'Jenis' => 'Stok'],
+            range(1, 101),
+        );
+        expect(AmbilPesanValidasi($isi, 'ProdukContoh'))->toBe(['Produk contoh paling banyak 100 item.']);
+    });
+});
+
+describe('Kunci peran lama di versi terbit (BR-P03.4, DesainF01 H1)', function (): void {
+    it('pemetaan dengan kunci lama PiutangSettlement/Waste tetap lolos dan terhitung terisi', function (): void {
+        TerbitkanPpnUji();
+        $isi = AmbilIsiTemplateAwal('FNB-QSR');
+        $isi['PemetaanAkun']['PiutangSettlement'] = $isi['PemetaanAkun'][PeranAkun::PiutangPencairan->value];
+        $isi['PemetaanAkun']['Waste'] = $isi['PemetaanAkun'][PeranAkun::SusutPersediaan->value];
+        unset($isi['PemetaanAkun'][PeranAkun::PiutangPencairan->value], $isi['PemetaanAkun'][PeranAkun::SusutPersediaan->value]);
+
+        expect(AmbilPesanValidasi($isi))->toBe([]);
+    });
+
+    it('kunci lama tetap diperiksa tipe akunnya, dan kunci lama + baru sekaligus dilaporkan ganda', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-QSR');
+        unset($isi['PemetaanAkun'][PeranAkun::SusutPersediaan->value]);
+        $isi['PemetaanAkun']['Waste'] = '6-3000';
+        $isi['PemetaanAkun']['PiutangSettlement'] = '1-1300';
+
+        expect(AmbilPesanValidasi($isi, 'PemetaanAkun'))->toBe([
+            'Peran "Piutang pencairan (QRIS/EDC/gateway/ojol)" dipetakan dua kali (kunci PiutangPencairan dan PiutangSettlement). Hapus salah satunya.',
+            'Peran "Susut & barang rusak" harus memakai akun HPP, bukan Beban (6-3000).',
+        ]);
+    });
+});
