@@ -1,0 +1,197 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Pengelola\Tenant\Kueri;
+
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Organisasi\Model\Gudang;
+use App\Domain\Organisasi\Model\Merek;
+use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\TenantPengguna;
+use App\Domain\Pengelola\Tenant\Aksi\AktifkanKembaliTenant;
+use App\Domain\Pengelola\Tenant\Aksi\PerpanjangTrial;
+use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
+use App\Domain\Pengelola\Tenant\Model\CatatanTenant;
+use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
+use App\Domain\Tenant\Enum\JenisOverride;
+use App\Domain\Tenant\Enum\StatusLangganan;
+use App\Domain\Tenant\Kueri\SumberFiturTenant;
+use App\Domain\Tenant\Layanan\EvaluatorFitur;
+use App\Domain\Tenant\Model\DokumenLegal;
+use App\Domain\Tenant\Model\OverrideTenant;
+use App\Domain\Tenant\Model\PersetujuanDokumenLegal;
+use App\Domain\Tenant\Model\Tenant;
+
+/**
+ * Tampilan 360° dasar satu tenant (P-07). Data usaha tenant (outlet, gudang, merek) dibaca lewat
+ * `KonteksPengelola::JalankanLintasTenant` sehingga setiap pembukaan tercatat di log audit (CLAUDE.md #11).
+ * Bagian yang modulnya belum dibangun (tagihan, tiket, perangkat, skor kesehatan, mitra) tidak diisi di sini;
+ * halaman menampilkannya sebagai keadaan kosong.
+ */
+final class TampilanTenant
+{
+    public const BATAS_RIWAYAT = 50;
+
+    public const BATAS_CATATAN = 100;
+
+    public function __construct(
+        private readonly KonteksPengelola $konteks,
+        private readonly PencatatAuditPengelola $audit,
+        private readonly SumberFiturTenant $sumberFitur,
+        private readonly EvaluatorFitur $evaluator,
+    ) {}
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function Ambil(Tenant $tenant): array
+    {
+        $tenant->loadMissing('Langganan.Paket');
+        $organisasi = $this->konteks->JalankanLintasTenant(
+            'Membuka tampilan 360° tenant',
+            fn (): array => [
+                'Outlet' => array_values(Outlet::query()->orderBy('Id')->get(['Id', 'Kode', 'Nama', 'TemplateSektor', 'KodeKota'])
+                    ->map(fn (Outlet $outlet): array => [
+                        'Kode' => $outlet->Kode,
+                        'Nama' => $outlet->Nama,
+                        'TemplateSektor' => $outlet->TemplateSektor,
+                        'KodeKota' => $outlet->KodeKota,
+                    ])->all()),
+                'JumlahGudang' => Gudang::query()->count(),
+                'JumlahMerek' => Merek::query()->count(),
+            ],
+            $tenant->Id,
+        );
+
+        $anggota = TenantPengguna::query()->with('Pengguna')->where('IdTenant', $tenant->Id)->orderByDesc('Pemilik')->orderBy('Id')->get();
+        $jumlahAnggotaAktif = $anggota->filter(fn (TenantPengguna $baris) => $baris->Status === StatusKeanggotaan::Aktif)->count();
+        $batas = $this->evaluator->HitungBatasEfektif($this->sumberFitur->Ambil($tenant->Id));
+
+        return [
+            'Profil' => [
+                'Uuid' => $tenant->Uuid,
+                'Nama' => $tenant->Nama,
+                'Slug' => $tenant->Slug,
+                'Npwp' => $tenant->Npwp,
+                'Pkp' => $tenant->Pkp,
+                'ZonaWaktu' => $tenant->ZonaWaktu,
+                'Status' => $tenant->Status->value,
+                'Penanda' => $tenant->Penanda?->value,
+                'DibuatPada' => $tenant->DibuatPada->toIso8601String(),
+                'TemplateSektor' => array_values(array_unique(array_filter(array_column($organisasi['Outlet'], 'TemplateSektor')))),
+            ],
+            'Langganan' => $this->PetakanLangganan($tenant),
+            'Pemakaian' => [
+                ['Label' => 'Outlet', 'Pakai' => count($organisasi['Outlet']), 'Batas' => $batas['BatasOutlet'] ?? null],
+                ['Label' => 'Pengguna', 'Pakai' => $jumlahAnggotaAktif, 'Batas' => $batas['BatasPengguna'] ?? null],
+            ],
+            'Organisasi' => $organisasi,
+            'Anggota' => array_values($anggota->map(fn (TenantPengguna $baris): array => [
+                'Nama' => $baris->Pengguna->Nama,
+                'Email' => $baris->Pengguna->Email,
+                'NoHp' => $baris->Pengguna->NoHp,
+                'EmailTerverifikasi' => $baris->Pengguna->EmailDiverifikasiPada !== null,
+                'Pemilik' => $baris->Pemilik,
+                'Status' => $baris->Status->value,
+            ])->all()),
+            'PersetujuanLegal' => $this->AmbilPersetujuanLegal($tenant->Id),
+            'Override' => $this->AmbilOverride($tenant->Id),
+            'Catatan' => $this->AmbilCatatan($tenant->Id),
+            'Riwayat' => $this->audit->AmbilRiwayatTenant($tenant->Id, self::BATAS_RIWAYAT, [KonteksPengelola::AKSI_AUDIT]),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function PetakanLangganan(Tenant $tenant): ?array
+    {
+        $langganan = $tenant->Langganan;
+
+        if ($langganan === null) {
+            return null;
+        }
+
+        $perpanjangan = OverrideTenant::query()->where('IdTenant', $tenant->Id)->where('Jenis', JenisOverride::Trial->value)->count();
+
+        return [
+            'Status' => $langganan->Status->value,
+            'StatusSebelumDitangguhkan' => $langganan->StatusSebelumDitangguhkan?->value,
+            'StatusSetelahDiaktifkan' => $langganan->Status === StatusLangganan::Ditangguhkan
+                ? AktifkanKembaliTenant::TentukanTujuan($langganan)->value
+                : null,
+            'KodePaket' => $langganan->Paket->Kode,
+            'NamaPaket' => $langganan->Paket->Nama,
+            'TrialBerakhirPada' => $langganan->TrialBerakhirPada?->toIso8601String(),
+            'PeriodeMulai' => $langganan->PeriodeMulai?->toIso8601String(),
+            'PeriodeSelesai' => $langganan->PeriodeSelesai?->toIso8601String(),
+            'SiklusTagihan' => $langganan->SiklusTagihan->value,
+            'PerpanjanganTrial' => $perpanjangan,
+            'SisaPerpanjanganTrial' => max(0, PerpanjangTrial::MAKS_KALI - $perpanjangan),
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function AmbilPersetujuanLegal(int $idTenant): array
+    {
+        $persetujuan = PersetujuanDokumenLegal::query()->where('IdTenant', $idTenant)->orderByDesc('DisetujuiPada')->get();
+        $dokumen = DokumenLegal::query()->whereKey($persetujuan->pluck('IdDokumenLegal')->all())->get()->keyBy('Id');
+        $pengguna = Pengguna::query()->whereKey($persetujuan->pluck('IdPengguna')->all())->pluck('Nama', 'Id');
+
+        return array_values($persetujuan->map(function (PersetujuanDokumenLegal $baris) use ($dokumen, $pengguna): array {
+            $dokumenLegal = $dokumen->get($baris->IdDokumenLegal);
+
+            return [
+                'Jenis' => $dokumenLegal?->Jenis->AmbilLabel() ?? '—',
+                'Versi' => $dokumenLegal?->Versi,
+                'Pengguna' => $pengguna->get($baris->IdPengguna, '—'),
+                'DisetujuiPada' => $baris->DisetujuiPada->toIso8601String(),
+            ];
+        })->all());
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function AmbilOverride(int $idTenant): array
+    {
+        $override = OverrideTenant::query()->where('IdTenant', $idTenant)->orderByDesc('Id')->limit(self::BATAS_RIWAYAT)->get();
+        $nama = PenggunaPengelola::query()->whereKey($override->pluck('DibuatOleh')->all())->pluck('Nama', 'Id');
+
+        return array_values($override->map(fn (OverrideTenant $baris): array => [
+            'Uuid' => $baris->Uuid,
+            'Jenis' => $baris->Jenis->value,
+            'Kunci' => $baris->Kunci,
+            'Nilai' => $baris->Nilai,
+            'BerakhirPada' => $baris->BerakhirPada->toIso8601String(),
+            'Aktif' => $baris->CekAktif(),
+            'Alasan' => $baris->Alasan,
+            'DibuatOleh' => $nama->get($baris->DibuatOleh, '—'),
+            'DibuatPada' => $baris->DibuatPada->toIso8601String(),
+        ])->all());
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function AmbilCatatan(int $idTenant): array
+    {
+        return array_values(CatatanTenant::query()
+            ->with('Penulis:Id,Nama')
+            ->where('IdTenant', $idTenant)
+            ->orderByDesc('Id')
+            ->limit(self::BATAS_CATATAN)
+            ->get()
+            ->map(fn (CatatanTenant $catatan): array => [
+                'Uuid' => $catatan->Uuid,
+                'Isi' => $catatan->Isi,
+                'Penulis' => $catatan->Penulis->Nama,
+                'DibuatPada' => $catatan->DibuatPada->toIso8601String(),
+            ])->all());
+    }
+}

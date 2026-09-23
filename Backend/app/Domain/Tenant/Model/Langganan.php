@@ -19,6 +19,7 @@ use LogicException;
  * @property int $IdTenant
  * @property int $IdPaket
  * @property StatusLangganan $Status
+ * @property StatusLangganan|null $StatusSebelumDitangguhkan diisi saat ditangguhkan manual (P-07), dipulihkan saat diaktifkan kembali
  * @property Carbon|null $TrialBerakhirPada
  * @property Carbon|null $PeriodeMulai
  * @property Carbon|null $PeriodeSelesai
@@ -32,6 +33,7 @@ final class Langganan extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = [
+        'StatusSebelumDitangguhkan' => null,
         'TrialBerakhirPada' => null,
         'PeriodeMulai' => null,
         'PeriodeSelesai' => null,
@@ -72,6 +74,7 @@ final class Langganan extends ModelDasar
     {
         return [
             'Status' => StatusLangganan::class,
+            'StatusSebelumDitangguhkan' => StatusLangganan::class,
             'TrialBerakhirPada' => 'datetime',
             'PeriodeMulai' => 'datetime',
             'PeriodeSelesai' => 'datetime',

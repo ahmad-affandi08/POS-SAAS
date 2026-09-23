@@ -49,6 +49,15 @@ enum IzinPengelola: string
     case LegalLihat = 'legal.lihat';
     case LegalKelola = 'legal.kelola';
 
+    // P-07 Siklus hidup tenant (§19.3).
+    case TenantLihat = 'tenant.lihat';
+    case TenantCatatanTulis = 'tenant.catatan.tulis';
+    case TenantTrialPerpanjang = 'tenant.trial.perpanjang';
+    case TenantOverrideKelola = 'tenant.override.kelola';
+    case TenantTangguhkan = 'tenant.tangguhkan';
+    case TenantAktifkan = 'tenant.aktifkan';
+    case TenantPenandaUbah = 'tenant.penanda.ubah';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -80,6 +89,14 @@ enum IzinPengelola: string
             self::IntegrasiKelola => 'Mengubah kredensial, menguji, dan mengaktifkan integrasi platform',
             self::LegalLihat => 'Melihat dokumen legal',
             self::LegalKelola => 'Menyusun dan menerbitkan dokumen legal',
+            // P-07 Siklus hidup tenant.
+            self::TenantLihat => 'Melihat daftar & tampilan 360° tenant',
+            self::TenantCatatanTulis => 'Menulis catatan internal tenant',
+            self::TenantTrialPerpanjang => 'Memperpanjang trial tenant',
+            self::TenantOverrideKelola => 'Membuat & mencabut override batas/fitur sementara',
+            self::TenantTangguhkan => 'Menangguhkan tenant',
+            self::TenantAktifkan => 'Mengaktifkan kembali tenant yang ditangguhkan',
+            self::TenantPenandaUbah => 'Mengubah penanda tenant Uji/Demo/Internal',
         };
     }
 }

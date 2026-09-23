@@ -13,6 +13,7 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
  * P-03 (BR-P03.5): Konten & Legal mengubah isi bisnis template, Keuangan COA & pemetaan akun, Teknis menerbitkan.
  * P-06: Konten & Legal menyusun dan menerbitkan dokumen legal; semua peran boleh membaca (dokumen publik).
  * P-05 (BR-P05.2): kredensial integrasi hanya Teknis & Super Admin; Keuangan dan Dukungan dilarang (§19.3).
+ * P-07: lihat `AmbilIzinSiklusTenant()`.
  */
 enum PeranPengelolaBawaan: string
 {
@@ -42,7 +43,7 @@ enum PeranPengelolaBawaan: string
      */
     public function AmbilIzin(): array
     {
-        return match ($this) {
+        $izin = match ($this) {
             self::SuperAdmin => IzinPengelola::cases(),
             self::KontenLegal => [
                 IzinPengelola::ReferensiLihat,
@@ -88,6 +89,30 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::TemplateLihat,
                 IzinPengelola::LegalLihat,
             ],
+        };
+
+        // P-07 Siklus hidup tenant.
+        return [...$izin, ...$this->AmbilIzinSiklusTenant()];
+    }
+
+    /**
+     * P-07 (§19.3): tampilan 360° & catatan internal untuk semua peran yang bekerja dengan tenant (Konten & Legal
+     * "tidak boleh: tenant", Analis hanya data agregat tanpa data pribadi). Perpanjang trial: Dukungan & Mitra
+     * Penjualan; override: Dukungan; aktifkan kembali: Keuangan. Tangguhkan & penanda hanya Super Admin (sudah
+     * memegang semua izin).
+     *
+     * @return list<IzinPengelola>
+     */
+    private function AmbilIzinSiklusTenant(): array
+    {
+        $dasar = [IzinPengelola::TenantLihat, IzinPengelola::TenantCatatanTulis];
+
+        return match ($this) {
+            self::SuperAdmin, self::KontenLegal, self::Analis => [],
+            self::Keuangan => [...$dasar, IzinPengelola::TenantAktifkan],
+            self::Dukungan => [...$dasar, IzinPengelola::TenantTrialPerpanjang, IzinPengelola::TenantOverrideKelola],
+            self::MitraPenjualan => [...$dasar, IzinPengelola::TenantTrialPerpanjang],
+            self::Teknis => $dasar,
         };
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Tenant\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
+use App\Domain\Tenant\Enum\PenandaTenant;
 use App\Domain\Tenant\Enum\StatusTenant;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * Akun usaha (F-00, PRD §15.3). Tabel induk isolasi data: tabel data tenant memakai `MilikTenant` dengan kolom
@@ -21,6 +23,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $ZonaWaktu
  * @property array<string, mixed>|null $Pengaturan
  * @property StatusTenant $Status
+ * @property PenandaTenant|null $Penanda Uji/Demo/Internal, dikecualikan dari metrik bisnis & tagihan (P-07)
+ * @property Carbon $DibuatPada
  * @property-read Langganan|null $Langganan
  */
 final class Tenant extends ModelDasar
@@ -34,6 +38,7 @@ final class Tenant extends ModelDasar
         'ZonaWaktu' => 'Asia/Jakarta',
         'Pengaturan' => null,
         'Status' => 'Aktif',
+        'Penanda' => null,
     ];
 
     /**
@@ -53,6 +58,7 @@ final class Tenant extends ModelDasar
             'Pkp' => 'boolean',
             'Pengaturan' => 'array',
             'Status' => StatusTenant::class,
+            'Penanda' => PenandaTenant::class,
         ];
     }
 }

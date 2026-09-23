@@ -22,6 +22,8 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
+    // P-07 Siklus hidup tenant.
+    { label: 'Tenant', href: '/tenant', izin: IzinPengelola.TenantLihat },
 ];
 
 /**

@@ -107,12 +107,13 @@ describe('Pendaftaran tenant (F-00)', function (): void {
     it('BR-00.7: tabel transisi status langganan', function (StatusLangganan $asal, StatusLangganan $tujuan, bool $sah): void {
         expect($asal->BisaBerubahKe($tujuan))->toBe($sah);
     })->with(function (): array {
+        // P-07 (BR-P07.4, BR-P07.5) menambah tangguhkan manual dari Trial/Aktif/Gratis dan pemulihan ke Trial/Tertunggak.
         $sah = [
-            'Trial' => ['Aktif', 'Gratis'],
-            'Aktif' => ['Tertunggak', 'Berhenti'],
+            'Trial' => ['Aktif', 'Gratis', 'Ditangguhkan'],
+            'Aktif' => ['Tertunggak', 'Berhenti', 'Ditangguhkan'],
             'Tertunggak' => ['Aktif', 'Ditangguhkan'],
-            'Ditangguhkan' => ['Aktif', 'Gratis', 'Berhenti'],
-            'Gratis' => ['Aktif'],
+            'Ditangguhkan' => ['Aktif', 'Gratis', 'Berhenti', 'Trial', 'Tertunggak'],
+            'Gratis' => ['Aktif', 'Ditangguhkan'],
             'Berhenti' => [],
         ];
         $kasus = [];
@@ -130,7 +131,8 @@ describe('Pendaftaran tenant (F-00)', function (): void {
         $tenant = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Tenant'];
         $langganan = Langganan::query()->where('IdTenant', $tenant->Id)->sole();
 
-        expect(fn () => $langganan->update(['Status' => StatusLangganan::Ditangguhkan]))->toThrow(LogicException::class);
+        // Trial → Ditangguhkan sah sejak P-07 (tangguhkan manual); Trial → Tertunggak tetap tidak sah.
+        expect(fn () => $langganan->update(['Status' => StatusLangganan::Tertunggak]))->toThrow(LogicException::class);
         $langganan->update(['Status' => StatusLangganan::Gratis]);
         expect($langganan->refresh()->Status)->toBe(StatusLangganan::Gratis);
     });

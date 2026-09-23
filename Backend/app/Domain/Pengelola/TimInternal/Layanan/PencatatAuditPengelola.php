@@ -52,4 +52,34 @@ final class PencatatAuditPengelola
             'Ip' => $this->ip,
         ]);
     }
+
+    // P-07 Siklus hidup tenant: riwayat tindakan pengelola pada satu tenant (BR-P07.3). Dibaca lewat kelas ini karena
+    // `LogAuditPengelola` hanya boleh disentuh di sini dan di halaman log audit (test arsitektur Pengelola).
+
+    /**
+     * Tindakan terbaru pada satu tenant, tanpa log akses baca (`$kecualiAksi`).
+     *
+     * @param  list<string>  $kecualiAksi
+     * @return list<array{Id: int, Aksi: string, Pelaku: string, NilaiLama: array<string, mixed>|null, NilaiBaru: array<string, mixed>|null, Alasan: string|null, DibuatPada: string}>
+     */
+    public function AmbilRiwayatTenant(int $idTenant, int $batas, array $kecualiAksi = []): array
+    {
+        return array_values(LogAuditPengelola::query()
+            ->with('Pelaku:Id,Nama')
+            ->where('IdTenant', $idTenant)
+            ->when($kecualiAksi !== [], fn ($kueri) => $kueri->whereNotIn('Aksi', $kecualiAksi))
+            ->orderByDesc('Id')
+            ->limit($batas)
+            ->get()
+            ->map(fn (LogAuditPengelola $log): array => [
+                'Id' => $log->Id,
+                'Aksi' => $log->Aksi,
+                'Pelaku' => $log->Pelaku->Nama ?? 'Sistem',
+                'NilaiLama' => $log->NilaiLama,
+                'NilaiBaru' => $log->NilaiBaru,
+                'Alasan' => $log->Alasan,
+                'DibuatPada' => $log->DibuatPada->toIso8601String(),
+            ])
+            ->all());
+    }
 }

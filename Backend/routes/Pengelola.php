@@ -22,6 +22,8 @@ use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\TemplateSektor\TemplateSektorKontroler;
+use App\Http\Kontroler\Pengelola\Tenant\TenantKontroler;
+use App\Http\Kontroler\Pengelola\Tenant\TindakanTenantKontroler;
 use App\Http\Kontroler\Pengelola\TimInternalKontroler;
 use App\Http\Kontroler\Pengelola\UndanganKontroler;
 use App\Http\Perantara\Pengelola\PastikanPenggunaPengelola;
@@ -240,6 +242,32 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 ->whereNumber('tahun')
                 ->middleware($izin(IzinPengelola::ReferensiHariLiburSetujui))
                 ->name('pengelola.referensi.hari-libur.tinjau');
+        });
+
+        // P-07 Siklus hidup tenant (§19.3: izin per tindakan).
+        Route::middleware($izin(IzinPengelola::TenantLihat))->group(function () use ($izin): void {
+            Route::get('/tenant', [TenantKontroler::class, 'Daftar'])->name('pengelola.tenant.daftar');
+            Route::get('/tenant/{tenant}', [TenantKontroler::class, 'Tampilkan'])->name('pengelola.tenant.tampil');
+            Route::post('/tenant/{tenant}/catatan', [TindakanTenantKontroler::class, 'TulisCatatan'])
+                ->middleware($izin(IzinPengelola::TenantCatatanTulis))
+                ->name('pengelola.tenant.catatan.tulis');
+            Route::post('/tenant/{tenant}/trial/perpanjang', [TindakanTenantKontroler::class, 'PerpanjangTrial'])
+                ->middleware($izin(IzinPengelola::TenantTrialPerpanjang))
+                ->name('pengelola.tenant.trial.perpanjang');
+            Route::middleware($izin(IzinPengelola::TenantOverrideKelola))->group(function (): void {
+                Route::post('/tenant/{tenant}/override', [TindakanTenantKontroler::class, 'BuatOverride'])->name('pengelola.tenant.override.buat');
+                Route::post('/tenant/{tenant}/override/{overrideTenant}/cabut', [TindakanTenantKontroler::class, 'CabutOverride'])
+                    ->name('pengelola.tenant.override.cabut');
+            });
+            Route::post('/tenant/{tenant}/tangguhkan', [TindakanTenantKontroler::class, 'Tangguhkan'])
+                ->middleware($izin(IzinPengelola::TenantTangguhkan))
+                ->name('pengelola.tenant.tangguhkan');
+            Route::post('/tenant/{tenant}/aktifkan', [TindakanTenantKontroler::class, 'Aktifkan'])
+                ->middleware($izin(IzinPengelola::TenantAktifkan))
+                ->name('pengelola.tenant.aktifkan');
+            Route::put('/tenant/{tenant}/penanda', [TindakanTenantKontroler::class, 'UbahPenanda'])
+                ->middleware($izin(IzinPengelola::TenantPenandaUbah))
+                ->name('pengelola.tenant.penanda.ubah');
         });
     });
 });

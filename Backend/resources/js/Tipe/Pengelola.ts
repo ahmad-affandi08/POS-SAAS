@@ -49,6 +49,14 @@ export const IzinPengelola = {
     IntegrasiKelola: 'integrasi.kelola',
     LegalLihat: 'legal.lihat',
     LegalKelola: 'legal.kelola',
+    // P-07 Siklus hidup tenant.
+    TenantLihat: 'tenant.lihat',
+    TenantCatatanTulis: 'tenant.catatan.tulis',
+    TenantTrialPerpanjang: 'tenant.trial.perpanjang',
+    TenantOverrideKelola: 'tenant.override.kelola',
+    TenantTangguhkan: 'tenant.tangguhkan',
+    TenantAktifkan: 'tenant.aktifkan',
+    TenantPenandaUbah: 'tenant.penanda.ubah',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */
