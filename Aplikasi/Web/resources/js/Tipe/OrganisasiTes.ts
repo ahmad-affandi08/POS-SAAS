@@ -23,3 +23,12 @@ describe('Izin tenant untuk menu (UX saja, server tetap penentu)', () => {
         expect(PunyaIzinTenant(null, IzinTenant.OutletLihat)).toBe(false);
     });
 });
+
+describe('Izin panduan awal F-01 (sama dengan IzinTenant::PanduanAwalKelola di Backend)', () => {
+    it('memakai kunci panduan-awal.kelola', () => {
+        expect(IzinTenant.PanduanAwalKelola).toBe('panduan-awal.kelola');
+        expect(PunyaIzinTenant({ Pemilik: false, Izin: ['panduan-awal.kelola'] }, IzinTenant.PanduanAwalKelola)).toBe(
+            true,
+        );
+    });
+});
