@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +18,7 @@ final class PenyediaAplikasi extends ServiceProvider
     {
         // "scoped": dibuat ulang untuk setiap request/job sehingga tenant tidak terbawa antar-request.
         $this->app->scoped(KonteksTenant::class);
+        $this->app->scoped(PencatatAuditPengelola::class);
     }
 
     public function boot(): void

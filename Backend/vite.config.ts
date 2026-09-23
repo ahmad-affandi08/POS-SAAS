@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/js/Aplikasi.tsx"],
+            input: ["resources/js/Aplikasi.tsx", "resources/js/Pengelola.tsx"],
             refresh: true,
         }),
         react(),

@@ -9,7 +9,8 @@ import { BuatKlienKueri } from './Pustaka/KlienKueri';
 
 const NamaAplikasi = import.meta.env.VITE_APP_NAME ?? 'POS SaaS';
 const klienKueri = BuatKlienKueri();
-const daftarHalaman = import.meta.glob<{ default: ComponentType }>('./Halaman/**/*.tsx');
+// Halaman Platform Pengelola dikecualikan: bundle-nya terpisah (Pengelola.tsx, PRD §13.8).
+const daftarHalaman = import.meta.glob<{ default: ComponentType }>(['./Halaman/**/*.tsx', '!./Halaman/Pengelola/**']);
 
 async function MuatHalaman(nama: string): Promise<ComponentType> {
     const MuatModul = daftarHalaman[`./Halaman/${nama}.tsx`];

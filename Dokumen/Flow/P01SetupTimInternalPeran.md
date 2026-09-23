@@ -15,8 +15,8 @@
 6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.
 
 **Aturan Bisnis:**
-- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat (sistem menolak menonaktifkan Super Admin terakhir kedua).
-- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional per peran.
+- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat: sistem menolak menonaktifkan atau mencabut peran Super Admin bila jumlah Super Admin aktif ≤ 2. Selama Super Admin aktif < 2 (misal setelah instalasi pertama), Platform Pengelola menampilkan peringatan untuk segera mengundang Super Admin kedua.
+- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional **ditunda** sampai cakupannya diputuskan (§25 no. 13).
 - BR-P01.3 Tidak ada akun bersama. Setiap aksi pengelola tercatat di `LogAuditPengelola` (siapa, apa, kapan, tenant terdampak, nilai lama/baru, alasan, IP).
 - BR-P01.4 Akun pengelola **terpisah** dari akun tenant (tabel `PenggunaPengelola`, guard `pengelola`). Email yang sama boleh dipakai di keduanya, tetapi sesinya tidak pernah tercampur.
 

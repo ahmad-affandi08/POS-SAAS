@@ -14,6 +14,7 @@
 10. Apakah perlu dukungan **multi-mata uang** (turis/perbatasan)? Default: tidak.
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
+13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

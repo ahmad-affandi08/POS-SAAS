@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Pengelola;
+
+use App\Domain\Pengelola\TimInternal\Aksi\NonaktifkanAnggotaTim;
+use App\Domain\Pengelola\TimInternal\Aksi\TetapkanPeran;
+use App\Domain\Pengelola\TimInternal\Aksi\UndangAnggotaTim;
+use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
+use App\Domain\Pengelola\TimInternal\Model\PeranPengelola;
+use App\Domain\Pengelola\TimInternal\Model\UndanganPengelola;
+use App\Http\Kontroler\Kontroler;
+use App\Http\Perantara\Pengelola\SesiPengelola;
+use App\Http\Permintaan\Pengelola\NonaktifkanAnggotaTimPermintaan;
+use App\Http\Permintaan\Pengelola\TetapkanPeranPermintaan;
+use App\Http\Permintaan\Pengelola\UndangAnggotaTimPermintaan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * Manajemen tim internal: daftar, undang, tetapkan peran, nonaktifkan (P-01 langkah 3, 5, 6).
+ */
+final class TimInternalKontroler extends Kontroler
+{
+    public function Daftar(): Response
+    {
+        $anggota = PenggunaPengelola::query()
+            ->with('Peran')
+            ->orderByDesc('Aktif')
+            ->orderBy('Nama')
+            ->get()
+            ->map(fn (PenggunaPengelola $pengguna): array => [
+                'Uuid' => $pengguna->Uuid,
+                'Nama' => $pengguna->Nama,
+                'Email' => $pengguna->Email,
+                'KodePeran' => $pengguna->DaftarKodePeran(),
+                'Aktif' => $pengguna->Aktif,
+                'DuaFaktorAktif' => $pengguna->DuaFaktorAktif(),
+                'TerakhirMasukPada' => $pengguna->TerakhirMasukPada?->toIso8601String(),
+                'DinonaktifkanPada' => $pengguna->DinonaktifkanPada?->toIso8601String(),
+            ]);
+
+        $undangan = UndanganPengelola::query()
+            ->whereNull('DiterimaPada')
+            ->whereNull('DibatalkanPada')
+            ->where('BerlakuSampai', '>', now())
+            ->orderByDesc('DibuatPada')
+            ->get()
+            ->map(fn (UndanganPengelola $undangan): array => [
+                'Uuid' => $undangan->Uuid,
+                'Email' => $undangan->Email,
+                'KodePeran' => $undangan->KodePeran,
+                'BerlakuSampai' => $undangan->BerlakuSampai->toIso8601String(),
+            ]);
+
+        $peran = PeranPengelola::query()
+            ->orderBy('Id')
+            ->get()
+            ->map(fn (PeranPengelola $peran): array => ['Kode' => $peran->Kode, 'Nama' => $peran->Nama]);
+
+        return Inertia::render('Pengelola/TimInternal/Daftar', [
+            'Anggota' => $anggota,
+            'Undangan' => $undangan,
+            'Peran' => $peran,
+        ]);
+    }
+
+    public function Undang(UndangAnggotaTimPermintaan $permintaan, UndangAnggotaTim $undang): RedirectResponse
+    {
+        /** @var list<string> $kodePeran */
+        $kodePeran = $permintaan->array('KodePeran');
+        $email = $permintaan->string('Email')->toString();
+
+        $undang->Jalankan($this->Pelaku(), $email, $kodePeran);
+
+        return back()->with('Kilat', "Undangan terkirim ke {$email}. Berlaku 48 jam.");
+    }
+
+    public function TetapkanPeran(
+        PenggunaPengelola $penggunaPengelola,
+        TetapkanPeranPermintaan $permintaan,
+        TetapkanPeran $tetapkan,
+    ): RedirectResponse {
+        /** @var list<string> $kodePeran */
+        $kodePeran = $permintaan->array('KodePeran');
+        $alasan = $permintaan->filled('Alasan') ? $permintaan->string('Alasan')->toString() : null;
+
+        $tetapkan->Jalankan($this->Pelaku(), $penggunaPengelola, $kodePeran, $alasan);
+
+        return back()->with('Kilat', "Peran {$penggunaPengelola->Nama} diperbarui.");
+    }
+
+    public function Nonaktifkan(
+        PenggunaPengelola $penggunaPengelola,
+        NonaktifkanAnggotaTimPermintaan $permintaan,
+        NonaktifkanAnggotaTim $nonaktifkan,
+    ): RedirectResponse {
+        $nonaktifkan->Jalankan($this->Pelaku(), $penggunaPengelola, $permintaan->string('Alasan')->toString());
+
+        return back()->with('Kilat', "{$penggunaPengelola->Nama} dinonaktifkan. Sesinya langsung terputus.");
+    }
+
+    private function Pelaku(): PenggunaPengelola
+    {
+        $pengguna = Auth::guard(SesiPengelola::GUARD)->user();
+        abort_unless($pengguna instanceof PenggunaPengelola, 403);
+
+        return $pengguna;
+    }
+}

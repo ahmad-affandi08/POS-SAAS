@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.10 |
+| Versi | 1.11 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -31,6 +31,7 @@
 | 1.8 | Keputusan D-09: **Pedoman UI/UX & Design System** (§17.6): prinsip "alat kerja, bukan brosur", arah per klien, token warna (lolos WCAG AA), bentuk & kepadatan, pola layar, keadaan wajib, microcopy, visualisasi data, aksesibilitas, proses desain, dan checklist review anti-slop. |
 | 1.9 | Keputusan D-10: **Tata kelola AI agent** (§23.4): `CLAUDE.md`, `.claude/rules/`, hook, skill `/mulai-flow` & `/cek-dod`, subagent `penjaga-konvensi`, `Alat/CekKonvensi.py`, `Dokumen/` hasil generate, CI kepatuhan, CODEOWNERS, template PR. Pengecualian penamaan untuk file yang namanya diwajibkan alat ditambahkan (§13.7.4). |
 | 1.10 | Penyelarasan hasil scaffolding Fase 0: macro `UuidPublik()` (§13.7.4), test Dart berakhiran `_test.dart` (§13.7.4, §17.2.1), ruang kerja pub + melos di `pubspec.yaml` akar (§13.7.4). Lint `constant_identifier_names` dimatikan agar nilai enum PascalCase (§13.7.4). Paket Dart murni diuji dengan `dart test`. Tidak ada perubahan flow. |
+| 1.11 | Rincian P-01 hasil perencanaan `/mulai-flow`: BR-P01.1 ditegaskan (tolak menurunkan Super Admin bila aktif ≤ 2), allowlist IP ditunda (§25 no. 13), skema `PenggunaPengelola` (+`DuaFaktorAktifPada`, `KodePemulihan2fa`, `DinonaktifkanPada`) dan tabel baru `UndanganPengelola` (§15.3). |
 
 ---
 
@@ -450,8 +451,8 @@ flowchart LR
 6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.
 
 **Aturan Bisnis:**
-- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat (sistem menolak menonaktifkan Super Admin terakhir kedua).
-- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional per peran.
+- BR-P01.1 Minimal **2 Super Admin aktif** setiap saat: sistem menolak menonaktifkan atau mencabut peran Super Admin bila jumlah Super Admin aktif ≤ 2. Selama Super Admin aktif < 2 (misal setelah instalasi pertama), Platform Pengelola menampilkan peringatan untuk segera mengundang Super Admin kedua.
+- BR-P01.2 2FA wajib untuk semua akun pengelola. Sesi berakhir setelah 30 menit tidak aktif. Pembatasan IP (allowlist) opsional **ditunda** sampai cakupannya diputuskan (§25 no. 13).
 - BR-P01.3 Tidak ada akun bersama. Setiap aksi pengelola tercatat di `LogAuditPengelola` (siapa, apa, kapan, tenant terdampak, nilai lama/baru, alasan, IP).
 - BR-P01.4 Akun pengelola **terpisah** dari akun tenant (tabel `PenggunaPengelola`, guard `pengelola`). Email yang sama boleh dipakai di keduanya, tetapi sesinya tidak pernah tercampur.
 
@@ -2521,7 +2522,8 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `PenggunaPengelola` | Id, Uuid, Nama, Email, KataSandi, Rahasia2fa, Aktif, DaftarIpDiizinkan JSON, TerakhirMasukPada |
+| `PenggunaPengelola` | Id, Uuid, Nama, Email, KataSandi, Rahasia2fa, KodePemulihan2fa (terenkripsi), DuaFaktorAktifPada, Aktif, DinonaktifkanPada, TerakhirMasukPada |
+| `UndanganPengelola` | Id, Uuid, Email, HashToken, KodePeran JSON, IdPenggunaPengelolaPengundang, BerlakuSampai (48 jam), DiterimaPada, DibatalkanPada. Baris `PenggunaPengelola` baru dibuat saat undangan diterima |
 | `PeranPengelola` / `PeranPengelolaIzin` / `PenggunaPengelolaPeran` | Kode, Nama / IdPeranPengelola, KunciIzin / IdPenggunaPengelola, IdPeranPengelola |
 | `LogAuditPengelola` | IdPenggunaPengelola, Aksi, JenisObjek, IdObjek, IdTenant (nullable), NilaiLama JSON, NilaiBaru JSON, Alasan, Ip, DibuatPada (**append-only**) |
 | `Wilayah` | Kode, Nama, Tingkat (Provinsi/KabupatenKota), KodeInduk, ZonaWaktu |
@@ -3580,6 +3582,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 10. Apakah perlu dukungan **multi-mata uang** (turis/perbatasan)? Default: tidak.
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
+13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

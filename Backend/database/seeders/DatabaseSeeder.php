@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Pengelola\TimInternal\Aksi\SiapkanPeranBawaan;
 use Illuminate\Database\Seeder;
 
 /**
@@ -12,8 +13,9 @@ use Illuminate\Database\Seeder;
  */
 final class DatabaseSeeder extends Seeder
 {
-    public function run(): void
+    public function run(SiapkanPeranBawaan $siapkanPeranBawaan): void
     {
-        //
+        // P-01 langkah 2: tujuh peran internal bawaan (PRD §19.3).
+        $siapkanPeranBawaan->Jalankan();
     }
 }

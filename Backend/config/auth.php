@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 
 return [
 
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Platform Pengelola: akun & sesi terpisah dari tenant (BR-P01.4, PRD §13.8).
+        'pengelola' => [
+            'driver' => 'session',
+            'provider' => 'pengelola',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', Pengguna::class),
+        ],
+
+        'pengelola' => [
+            'driver' => 'eloquent',
+            'model' => PenggunaPengelola::class,
         ],
 
         // 'users' => [
