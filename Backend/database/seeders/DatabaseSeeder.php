@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanSatuanStandarBawaan;
+use App\Domain\Pengelola\TemplateSektor\Aksi\SiapkanTemplateSektorBawaan;
 use App\Domain\Pengelola\TimInternal\Aksi\SiapkanPeranBawaan;
 use Illuminate\Database\Seeder;
 
@@ -21,6 +22,7 @@ final class DatabaseSeeder extends Seeder
         SiapkanSatuanStandarBawaan $siapkanSatuanStandar,
         SiapkanPajakBawaan $siapkanPajak,
         SiapkanKatalogBawaan $siapkanKatalog,
+        SiapkanTemplateSektorBawaan $siapkanTemplateSektor,
     ): void {
         // P-01 langkah 2: tujuh peran internal bawaan beserta izinnya (PRD §19.3). Idempoten.
         $siapkanPeranBawaan->Jalankan();
@@ -33,5 +35,8 @@ final class DatabaseSeeder extends Seeder
 
         // P-04: katalog fitur & paket awal (§21) sebagai draf; harga wajib ditinjau.
         $siapkanKatalog->Jalankan();
+
+        // P-03: tiga template sektor MVP sebagai draf versi 1 (wajib lolos validasi sebelum terbit).
+        $siapkanTemplateSektor->Jalankan();
     }
 }
