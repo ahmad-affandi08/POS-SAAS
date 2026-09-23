@@ -7,6 +7,8 @@ namespace App\Domain\Pengelola\Tenant\Layanan;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Bersama\Tenant\LingkupTenant;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Domain\Tenant\Model\PembayaranLangganan;
+use App\Domain\Tenant\Model\TagihanLangganan;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,14 @@ use LogicException;
 final class KonteksPengelola
 {
     public const AKSI_AUDIT = 'tenant.data.akses';
+
+    /**
+     * Model `MilikTenant` yang isinya catatan milik platform tentang tenant (bukan data usaha tenant), sehingga boleh
+     * dibaca pengelola tanpa log akses per kueri (PRD §13.4). Aksi yang mengubahnya tetap diaudit oleh aksinya.
+     *
+     * @var list<class-string<Model>>
+     */
+    public const MODEL_DATA_PLATFORM = [TagihanLangganan::class, PembayaranLangganan::class];
 
     private int $kedalamanLintas = 0;
 
@@ -72,6 +82,25 @@ final class KonteksPengelola
         } finally {
             $konteksSebelumnya === null ? $this->konteksTenant->Kosongkan() : $this->konteksTenant->Atur($konteksSebelumnya);
         }
+    }
+
+    /**
+     * Kueri catatan platform (lihat `MODEL_DATA_PLATFORM`) lintas tenant, misal antrean verifikasi tagihan P-08.
+     *
+     * @template TModel of Model
+     *
+     * @param  class-string<TModel>  $kelasModel
+     * @return Builder<TModel>
+     */
+    public function KueriDataPlatform(string $kelasModel): Builder
+    {
+        $namaKelas = ltrim($kelasModel, '\\');
+
+        if (! in_array($namaKelas, self::MODEL_DATA_PLATFORM, true)) {
+            throw new LogicException("{$kelasModel} adalah data usaha tenant; baca lewat JalankanLintasTenant.");
+        }
+
+        return $kelasModel::query()->withoutGlobalScope(LingkupTenant::class);
     }
 
     /**

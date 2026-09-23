@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Tagihan\Kueri;
 
-use App\Domain\Bersama\Tenant\LingkupTenant;
+use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Tagihan & pembayaran langganan lintas tenant untuk Keuangan/Super Admin (P-08). Tagihan adalah data platform ke
- * tenant, bukan data operasional tenant; lingkup tenant dilepas hanya di sini (CLAUDE.md #11, Domain/Pengelola).
+ * tenant, bukan data operasional tenant; lingkup tenant dilepas lewat `KonteksPengelola::KueriDataPlatform`
+ * (CLAUDE.md #11, PRD §13.4).
  * Data yang tampil terbatas pada nama usaha, angka tagihan, dan bukti transfer.
  */
 final class DaftarTagihanPlatform
@@ -28,7 +29,7 @@ final class DaftarTagihanPlatform
      */
     public static function KueriTagihan(): Builder
     {
-        return TagihanLangganan::query()->withoutGlobalScope(LingkupTenant::class);
+        return app(KonteksPengelola::class)->KueriDataPlatform(TagihanLangganan::class);
     }
 
     /**
@@ -36,7 +37,7 @@ final class DaftarTagihanPlatform
      */
     public static function KueriPembayaran(): Builder
     {
-        return PembayaranLangganan::query()->withoutGlobalScope(LingkupTenant::class);
+        return app(KonteksPengelola::class)->KueriDataPlatform(PembayaranLangganan::class);
     }
 
     /**
