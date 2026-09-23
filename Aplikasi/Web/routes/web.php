@@ -115,6 +115,11 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Perangkat.php'));
             // F-01 Panduan awal (onboarding wizard & template sektor).
             Route::group([], base_path('routes/PanduanAwal.php'));
+            // F-03 Master produk, harga & pajak (satu file rute per tim).
+            Route::group([], base_path('routes/Katalog.php'));
+            Route::group([], base_path('routes/KatalogHarga.php'));
+            Route::group([], base_path('routes/KatalogKomposisi.php'));
+            Route::group([], base_path('routes/KatalogImpor.php'));
         });
     });
 });
