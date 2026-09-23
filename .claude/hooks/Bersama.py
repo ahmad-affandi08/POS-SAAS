@@ -2,6 +2,7 @@
 import fnmatch
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -40,7 +41,14 @@ def JadikanRelatif(Path):
     if not Path:
         return ""
     PathAbsolut = os.path.abspath(os.path.join(AkarRepo, Path)) if not os.path.isabs(Path) else os.path.abspath(Path)
-    return os.path.relpath(PathAbsolut, AkarRepo).replace(os.sep, "/")
+    Relatif = os.path.relpath(PathAbsolut, AkarRepo).replace(os.sep, "/")
+    # File di worktree subagent (.claude/worktrees/<nama>/...) dinilai relatif terhadap akar worktree itu, agar kode
+    # biasa tidak dianggap file penjaga `.claude/*`; file penjaga di dalam worktree tetap terlindungi.
+    return BuangAwalanWorktree(Relatif)
+
+
+def BuangAwalanWorktree(Teks):
+    return re.sub(r"(?<![\w.-])\.claude/worktrees/[^/\s'\"]+/", "", Teks)
 
 
 def Cocok(PathRelatif, DaftarPola):
