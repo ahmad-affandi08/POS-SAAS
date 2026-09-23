@@ -31,10 +31,11 @@ final class PastikanBatasPaket
 
     /**
      * @param  Closure(): int  $hitungPemakaian  dihitung setelah langganan terkunci
+     * @param  int  $jumlahTambahan  jumlah yang akan ditambahkan sekaligus (F-01: beberapa produk dalam satu simpan)
      *
-     * @throws PelanggaranAturanBisnis bila penambahan satu lagi melewati batas efektif
+     * @throws PelanggaranAturanBisnis bila penambahan melewati batas efektif
      */
-    public function Pastikan(int $idTenant, string $kolomBatas, Closure $hitungPemakaian): void
+    public function Pastikan(int $idTenant, string $kolomBatas, Closure $hitungPemakaian, int $jumlahTambahan = 1): void
     {
         if (! array_key_exists($kolomBatas, self::NAMA_OBJEK)) {
             throw new InvalidArgumentException("Kolom batas {$kolomBatas} tidak dikenal.");
@@ -44,7 +45,7 @@ final class PastikanBatasPaket
         $sumber = $this->sumberFitur->Ambil($idTenant, kunci: true);
         $pemakaian = $hitungPemakaian();
 
-        if ($this->evaluator->CekMasihDalamBatas($sumber, $kolomBatas, $pemakaian)) {
+        if ($this->evaluator->CekMasihDalamBatas($sumber, $kolomBatas, $pemakaian, $jumlahTambahan)) {
             return;
         }
 

@@ -11,6 +11,7 @@ use App\Domain\Organisasi\Aksi\BuatPemilikTenant;
 use App\Domain\Organisasi\Aksi\SiapkanOrganisasiAwal;
 use App\Domain\Organisasi\Galat\IdentitasSudahTerdaftar;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Penjualan\Aksi\SiapkanMetodePembayaranBawaan;
 use App\Domain\Tenant\Data\DataPendaftaran;
 use App\Domain\Tenant\Enum\JenisDokumenLegal;
 use App\Domain\Tenant\Enum\StatusLangganan;
@@ -40,6 +41,7 @@ final class DaftarkanTenant
         private readonly BuatPemilikTenant $buatPemilik,
         private readonly SiapkanOrganisasiAwal $siapkanOrganisasi,
         private readonly BeritahuUpayaPendaftaranGanda $beritahuPendaftaranGanda,
+        private readonly SiapkanMetodePembayaranBawaan $siapkanMetodePembayaran,
     ) {}
 
     public const PERCOBAAN_SLUG = 3;
@@ -110,6 +112,8 @@ final class DaftarkanTenant
             $this->siapkanOrganisasi->Jalankan($tenant->Id, $tenant->Nama, $tenant->ZonaWaktu);
             // F-02: log audit pendaftaran (§25 no. 17).
             app(PencatatAudit::class)->CatatSesi('tenant.daftar', $tenant->Id, $pengguna->Id, $data->ip, null, ['Nama' => $tenant->Nama, 'Paket' => $paket->Kode]);
+            // F-01: Tunai selalu tersedia di kasir sejak tenant dibuat.
+            $this->siapkanMetodePembayaran->Jalankan($tenant->Id);
 
             return ['Tenant' => $tenant, 'Pengguna' => $pengguna];
         });

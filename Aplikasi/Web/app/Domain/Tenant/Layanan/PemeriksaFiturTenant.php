@@ -23,4 +23,10 @@ final class PemeriksaFiturTenant
     {
         return $this->evaluator->CekFiturAktif($this->sumber->Ambil($idTenant), $kunci);
     }
+
+    /** F-01 (BR-01.3): fitur aktif di satu outlet = paket/add-on/override ∩ modul yang diaktifkan template outlet. */
+    public function CekAktifDiOutlet(int $idTenant, int $idOutlet, string $kunci): bool
+    {
+        return $this->evaluator->CekFiturAktif($this->sumber->Ambil($idTenant, idOutlet: $idOutlet), $kunci);
+    }
 }

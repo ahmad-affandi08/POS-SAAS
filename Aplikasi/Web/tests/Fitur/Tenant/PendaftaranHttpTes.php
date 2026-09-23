@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 /**
@@ -44,6 +45,7 @@ function IsianDaftarUji(array $ubah = []): array
 beforeEach(function (): void {
     $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     BantuanPendaftaran::SiapkanPrasyarat();
+    BantuanPanduanAwal::SiapkanHalaman();
     Mail::fake();
 });
 
@@ -61,7 +63,8 @@ describe('Registrasi lewat web (F-00)', function (): void {
 
         $this->get('/kelola/panduan-awal')
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->component('Kelola/PanduanAwal')
+                // F-01: halaman panduan awal (berkas TSX tim frontend; diperiksa begitu sudah digabung).
+                ->component('Kelola/PanduanAwal/Indeks', BantuanPanduanAwal::HalamanTersedia())
                 ->where('TenantAktif.Nama', 'Kopi Nusantara')
                 ->where('Pengguna.EmailTerverifikasi', false));
     });

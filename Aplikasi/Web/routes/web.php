@@ -75,7 +75,6 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         // F-00: saat langganan Ditangguhkan, perubahan data ditolak kecuali langganan, keamanan, bantuan, dan legal.
         Route::middleware([IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class])->prefix('kelola')->group(function () use ($izin): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
-            Route::get('/panduan-awal', [BerandaKelolaKontroler::class, 'PanduanAwal'])->name('kelola.panduan-awal');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
                 // P-08 Langganan & tagihan (transfer manual + bukti). Izin `langganan.kelola` khusus Pemilik (§19.1).
@@ -114,6 +113,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Organisasi.php'));
             // F-02b Perangkat POS & PIN kasir.
             Route::group([], base_path('routes/Perangkat.php'));
+            // F-01 Panduan awal (onboarding wizard & template sektor).
+            Route::group([], base_path('routes/PanduanAwal.php'));
         });
     });
 });

@@ -42,6 +42,8 @@ final class SimpanOutlet
     {
         return DB::transaction(function () use ($outlet, $data): Outlet {
             $kode = mb_strtoupper(trim($data->kode));
+            // F-01: kunci lain di ProfilPajak (service charge, harga termasuk pajak) tidak boleh hilang saat outlet diubah.
+            $profilPajakLama = $outlet === null ? [] : (Outlet::query()->whereKey($outlet->Id)->value('ProfilPajak') ?? []);
             $isian = [
                 'Nama' => trim($data->nama),
                 'Kode' => $kode,
@@ -51,6 +53,7 @@ final class SimpanOutlet
                 'ZonaWaktu' => $this->TentukanZonaWaktu($data),
                 'JamTutupBuku' => $data->jamTutupBuku,
                 'ProfilPajak' => [
+                    ...(is_array($profilPajakLama) ? $profilPajakLama : []),
                     'Pkp' => $data->pkp,
                     'Nitku' => $data->pkp && $data->nitku !== null && trim($data->nitku) !== '' ? trim($data->nitku) : null,
                     'PungutPbjt' => $data->pungutPbjt,

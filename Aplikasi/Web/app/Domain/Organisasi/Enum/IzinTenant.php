@@ -26,6 +26,8 @@ enum IzinTenant: string
     case PerangkatLihat = 'perangkat.lihat';
     case PerangkatKelola = 'perangkat.kelola';
     case PenggunaPinAtur = 'pengguna.pin.atur';
+    // F-01 Panduan awal (onboarding wizard).
+    case PanduanAwalKelola = 'panduan-awal.kelola';
 
     // Flow berikutnya (§19.1 & §19.2); penegakan dibangun bersama flow-nya.
     case ProdukLihat = 'produk.lihat';
@@ -62,6 +64,7 @@ enum IzinTenant: string
             self::PerangkatLihat => 'Melihat perangkat POS',
             self::PerangkatKelola => 'Menambah, mengaktifkan, dan mencabut perangkat POS',
             self::PenggunaPinAtur => 'Mengatur ulang PIN kasir anggota',
+            self::PanduanAwalKelola => 'Menjalankan panduan awal (profil usaha, template sektor, pajak, produk awal, metode pembayaran)',
             self::ProdukLihat => 'Melihat produk',
             self::ProdukKelola => 'Mengelola produk',
             self::ProdukHargaUbah => 'Mengubah harga jual',
@@ -85,7 +88,7 @@ enum IzinTenant: string
     public function AmbilKelompok(): string
     {
         return match ($this) {
-            self::OutletLihat, self::OutletKelola, self::PerangkatLihat, self::PerangkatKelola => 'Organisasi',
+            self::OutletLihat, self::OutletKelola, self::PerangkatLihat, self::PerangkatKelola, self::PanduanAwalKelola => 'Organisasi',
             self::PenggunaLihat, self::PenggunaUndang, self::PenggunaUbah, self::PenggunaNonaktifkan,
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',

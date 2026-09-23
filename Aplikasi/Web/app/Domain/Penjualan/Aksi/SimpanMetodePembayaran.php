@@ -1,0 +1,137 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Penjualan\Aksi;
+
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Penjualan\Data\DataMetodePembayaran;
+use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Layanan\PenyimpanGambarQris;
+use App\Domain\Penjualan\Model\MetodePembayaran;
+use App\Domain\Referensi\Kueri\ReferensiBankAktif;
+use App\Domain\Tenant\Layanan\PenguncianTenant;
+use Brick\Math\BigDecimal;
+use Brick\Math\Exception\MathException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+
+/**
+ * F-01 langkah 5: menambah QRIS statis (unggah gambar QR dari penerbit), EDC per bank, atau transfer bank.
+ * - QRIS statis wajib gambar; disimpan di disk privat dan dihapus lagi bila transaksi gagal.
+ * - EDC wajib bank/jaringan EDC aktif; transfer wajib bank/dompet digital aktif + nomor & nama pemilik rekening.
+ * - Biaya (MDR) 0–10 persen, string desimal (tidak pernah float).
+ * - Tunai dipastikan ada lebih dulu (idempoten).
+ */
+final class SimpanMetodePembayaran
+{
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly PenguncianTenant $penguncian,
+        private readonly SiapkanMetodePembayaranBawaan $siapkanBawaan,
+        private readonly ReferensiBankAktif $referensiBank,
+        private readonly PenyimpanGambarQris $penyimpanGambar,
+        private readonly PencatatAudit $audit,
+    ) {}
+
+    public function Jalankan(DataMetodePembayaran $data, ?UploadedFile $gambarQris): MetodePembayaran
+    {
+        $idTenant = $this->konteks->Wajib();
+        $isian = $this->SusunIsian($data, $gambarQris);
+        $path = $data->jenis === JenisMetodePembayaran::QrisStatis && $gambarQris !== null ? $this->penyimpanGambar->Simpan($idTenant, $gambarQris) : null;
+
+        try {
+            return DB::transaction(function () use ($idTenant, $isian, $path, $data): MetodePembayaran {
+                $this->penguncian->Kunci($idTenant);
+                $this->siapkanBawaan->Jalankan($idTenant);
+                $urutan = (int) MetodePembayaran::query()->max('Urutan');
+
+                $metode = MetodePembayaran::query()->create([...$isian, 'PathGambarQris' => $path, 'Urutan' => $urutan + 1, 'Aktif' => true]);
+                $this->audit->Catat('metode-pembayaran.buat', $metode, nilaiBaru: [
+                    'Jenis' => $metode->Jenis->value,
+                    'Nama' => $metode->Nama,
+                    'KodeBank' => $data->kodeBank,
+                    'NomorRekening' => $metode->NomorRekening,
+                    'PersenBiaya' => $metode->PersenBiaya,
+                ]);
+
+                return $metode;
+            });
+        } catch (Throwable $galat) {
+            $this->penyimpanGambar->Hapus($path);
+
+            throw $galat;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function SusunIsian(DataMetodePembayaran $data, ?UploadedFile $gambarQris): array
+    {
+        $jenis = $data->jenis;
+
+        if (! $jenis->CekBisaDibuatPanduan()) {
+            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, kartu (EDC), atau transfer bank.', 'Jenis');
+        }
+
+        if ($jenis === JenisMetodePembayaran::QrisStatis && $gambarQris === null) {
+            throw new PelanggaranAturanBisnis('GambarQrisWajib', 'Unggah gambar QRIS dari bank atau penyedia QRIS Anda.', 'GambarQris');
+        }
+
+        $idBank = null;
+
+        if ($jenis->AmbilJenisBankBoleh() !== []) {
+            $bank = $data->kodeBank === null ? null : $this->referensiBank->CariKode($data->kodeBank);
+            $jenisBoleh = array_map(fn ($satu) => $satu->value, $jenis->AmbilJenisBankBoleh());
+
+            if ($bank === null || ! in_array($bank['Jenis'], $jenisBoleh, true)) {
+                throw new PelanggaranAturanBisnis('BankTidakDikenal', 'Pilih bank dari daftar.', 'KodeBank');
+            }
+
+            $idBank = $bank['Id'];
+        }
+
+        $nomorRekening = $data->nomorRekening === null ? null : trim($data->nomorRekening);
+        $namaPemilik = $data->namaPemilikRekening === null ? null : trim($data->namaPemilikRekening);
+
+        if ($jenis === JenisMetodePembayaran::Transfer && ($nomorRekening === null || $nomorRekening === '')) {
+            throw new PelanggaranAturanBisnis('NomorRekeningWajib', 'Isi nomor rekening tujuan transfer.', 'NomorRekening');
+        }
+
+        if ($jenis === JenisMetodePembayaran::Transfer && ($namaPemilik === null || $namaPemilik === '')) {
+            throw new PelanggaranAturanBisnis('NamaPemilikRekeningWajib', 'Isi nama pemilik rekening.', 'NamaPemilikRekening');
+        }
+
+        return [
+            'Jenis' => $jenis,
+            'Nama' => trim($data->nama),
+            'IdReferensiBank' => $idBank,
+            'NomorRekening' => $jenis === JenisMetodePembayaran::Transfer ? $nomorRekening : null,
+            'NamaPemilikRekening' => $jenis === JenisMetodePembayaran::Transfer ? $namaPemilik : null,
+            'PersenBiaya' => $this->AmbilPersenBiaya($data->persenBiaya),
+        ];
+    }
+
+    private function AmbilPersenBiaya(?string $persen): string
+    {
+        if ($persen === null || trim($persen) === '') {
+            return '0';
+        }
+
+        try {
+            $nilai = BigDecimal::of(trim($persen));
+        } catch (MathException) {
+            $nilai = null;
+        }
+
+        if ($nilai === null || $nilai->isNegative() || $nilai->isGreaterThan((string) config('pembayaran.PersenBiayaMaksimal')) || $nilai->getScale() > 4) {
+            throw new PelanggaranAturanBisnis('PersenBiayaTidakSah', 'Biaya 0 sampai '.config('pembayaran.PersenBiayaMaksimal').' persen, maksimal 4 angka di belakang titik.', 'PersenBiaya');
+        }
+
+        return (string) $nilai;
+    }
+}
