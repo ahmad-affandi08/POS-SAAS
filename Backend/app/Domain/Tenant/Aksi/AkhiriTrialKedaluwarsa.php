@@ -30,11 +30,12 @@ final class AkhiriTrialKedaluwarsa
             ->where('Status', StatusLangganan::Trial->value)
             ->where('TrialBerakhirPada', '<=', now())
             ->orderBy('Id')
-            ->pluck('Id');
+            ->pluck('Id')
+            ->map(fn (mixed $id): int => (int) $id);
 
         foreach ($idKedaluwarsa as $id) {
             $diturunkan = DB::transaction(function () use ($id, $paketGratis): bool {
-                $langganan = Langganan::query()->lockForUpdate()->find($id);
+                $langganan = Langganan::query()->lockForUpdate()->whereKey($id)->first();
 
                 if ($langganan === null || $langganan->Status !== StatusLangganan::Trial || $langganan->TrialBerakhirPada?->isFuture()) {
                     return false;
