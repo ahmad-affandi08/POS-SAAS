@@ -7,7 +7,7 @@ type PropsBidangTeksPanjang = {
     galat?: string | undefined;
     keterangan?: string;
     baris?: number;
-    maxLength?: number;
+    maksimal?: number;
     required?: boolean;
 };
 
@@ -19,7 +19,7 @@ export default function BidangTeksPanjang({
     galat,
     keterangan,
     baris = 5,
-    maxLength,
+    maksimal,
     required,
 }: PropsBidangTeksPanjang) {
     const id = useId();
@@ -36,7 +36,7 @@ export default function BidangTeksPanjang({
                 id={id}
                 value={nilai}
                 rows={baris}
-                maxLength={maxLength}
+                maxLength={maksimal}
                 required={required}
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}

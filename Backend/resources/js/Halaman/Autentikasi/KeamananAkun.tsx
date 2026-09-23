@@ -31,7 +31,7 @@ export default function HalamanKeamananAkun({ DuaFaktor, Aktivasi, KodePemulihan
                     </p>
                 </header>
                 {DuaFaktor.Wajib && !DuaFaktor.Aktif ? (
-                    <Pemberitahuan jenis="peringatan" judul="Wajib untuk Owner di paket Anda">
+                    <Pemberitahuan jenis="peringatan" judul="Wajib untuk peran Anda di paket ini">
                         Aktifkan verifikasi dua langkah sebelum membuka menu lain di back-office.
                     </Pemberitahuan>
                 ) : null}
@@ -120,8 +120,8 @@ function FormulirNonaktifkan({ wajib, sisaKode }: { wajib: boolean; sisaKode: nu
             </p>
             {wajib ? (
                 <p className="text-isi text-teks-sekunder">
-                    Paket langganan usaha ini mewajibkan verifikasi dua langkah untuk Owner, jadi tidak bisa
-                    dinonaktifkan.
+                    Paket langganan usaha tempat Anda bergabung mewajibkan verifikasi dua langkah untuk peran Anda
+                    (Owner, Admin, atau Akuntan), jadi tidak bisa dinonaktifkan.
                 </p>
             ) : (
                 <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>

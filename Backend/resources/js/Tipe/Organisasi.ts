@@ -1,6 +1,6 @@
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 
-/** Kunci izin tenant yang dipakai layar F-02 (enum IzinTenant di Backend, format D-06). */
+/** Kunci izin tenant yang dipakai layar back-office (enum IzinTenant di Backend, format D-06). */
 export const IzinTenant = {
     OutletLihat: 'outlet.lihat',
     OutletKelola: 'outlet.kelola',
@@ -10,6 +10,9 @@ export const IzinTenant = {
     PenggunaNonaktifkan: 'pengguna.nonaktifkan',
     PeranKelola: 'peran.kelola',
     AuditLihat: 'audit.lihat',
+    LanggananKelola: 'langganan.kelola',
+    BantuanTiketLihat: 'bantuan.tiket.lihat',
+    BantuanTiketKelola: 'bantuan.tiket.kelola',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

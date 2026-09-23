@@ -3,23 +3,64 @@ import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
-import { FormatTanggal } from '@/Pustaka/FormatWaktu';
-import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
-// F-02: menu back-office berbasis izin (hanya UX; server tetap memeriksa izin).
+// Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
 const daftarMenu: { label: string; href: string; izin: KunciIzinTenant | null }[] = [
     { label: 'Beranda', href: '/kelola', izin: null },
     { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat },
     { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat },
     { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat },
+    { label: 'Langganan', href: '/kelola/langganan', izin: IzinTenant.LanggananKelola },
+    { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat },
 ];
+
+/** F-00: banner selama langganan Tertunggak (masa tenggang) atau Ditangguhkan (hanya lihat, export, bayar). */
+function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBayar: boolean }) {
+    const ajakan = bolehBayar ? (
+        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+            Bayar tagihan di menu Langganan
+        </Link>
+    ) : (
+        <span>Hubungi pemilik usaha untuk membayar tagihan.</span>
+    );
+
+    if (tenant.StatusLangganan === 'Tertunggak') {
+        return (
+            <Pemberitahuan jenis="peringatan" judul="Tagihan langganan belum dibayar">
+                <p>
+                    Periode langganan berakhir {FormatTanggalWaktu(tenant.PeriodeSelesai)}. Semua fitur tetap berjalan
+                    {tenant.BatasTenggangPada ? ` sampai ${FormatTanggalWaktu(tenant.BatasTenggangPada)}` : ''}; setelah
+                    itu langganan ditangguhkan dan data tidak bisa diubah.
+                </p>
+                <p className="mt-1">{ajakan}</p>
+            </Pemberitahuan>
+        );
+    }
+
+    if (tenant.StatusLangganan === 'Ditangguhkan') {
+        return (
+            <Pemberitahuan jenis="bahaya" judul="Langganan ditangguhkan">
+                <p>
+                    Anda masih bisa masuk, melihat data dan laporan, serta mengekspor data. Menambah atau mengubah data
+                    dan berjualan di POS terkunci sampai tagihan dibayar.
+                </p>
+                <p className="mt-1">{ajakan}</p>
+            </Pemberitahuan>
+        );
+    }
+
+    return null;
+}
 
 /** Tata letak back-office tenant (/kelola). Menu modul ditambahkan per flow (F-01 dst.). */
 export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
+    const tenantAktif = props.TenantAktif;
     const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
     const [mengirim, AturMengirim] = useState(false);
     const KirimUlangVerifikasi = () =>
@@ -34,23 +75,8 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
             <Head title={judul} />
             <header className="border-b border-garis bg-permukaan">
                 <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-                    <p className="text-subjudul font-bold text-teks-utama">
-                        {props.TenantAktif?.Nama ?? props.NamaAplikasi}
-                    </p>
+                    <p className="text-subjudul font-bold text-teks-utama">{tenantAktif?.Nama ?? props.NamaAplikasi}</p>
                     <div className="flex items-center gap-3">
-                        {/* P-08 Langganan & tagihan (sementara di kepala sampai menu /kelola F-02 tersedia). */}
-                        <Link href="/kelola/langganan" className="text-label font-semibold text-brand underline">
-                            Langganan
-                        </Link>
-                        {/* P-09: tombol Bantuan (tiket dukungan). TODO F-02: menu modul lengkap & izin peran tenant. */}
-                        {props.TenantAktif ? (
-                            <Link
-                                href="/kelola/bantuan"
-                                className="rounded-kontrol px-2 py-1 text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                            >
-                                Bantuan
-                            </Link>
-                        ) : null}
                         <span className="text-label text-teks-sekunder">{props.Pengguna?.Nama}</span>
                         {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
                         <Link
@@ -64,7 +90,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         </Tombol>
                     </div>
                 </div>
-                {props.Akses ? (
+                {tenantAktif && props.Akses ? (
                     <nav aria-label="Menu utama" className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4">
                         {menuTerlihat.map((menu) => {
                             const aktif =
@@ -120,6 +146,12 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         </ul>
                         <p className="mt-1">Anda akan diminta menyetujuinya setelah tanggal berlaku.</p>
                     </Pemberitahuan>
+                ) : null}
+                {tenantAktif ? (
+                    <BannerLangganan
+                        tenant={tenantAktif}
+                        bolehBayar={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
+                    />
                 ) : null}
                 {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}
                 {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
