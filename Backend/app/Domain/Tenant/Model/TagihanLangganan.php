@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Tenant\Model;
+
+use App\Domain\Bersama\Model\ModelDasar;
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Tenant\Enum\JenisTagihanLangganan;
+use App\Domain\Tenant\Enum\SiklusTagihan;
+use App\Domain\Tenant\Enum\StatusTagihanLangganan;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+use LogicException;
+
+/**
+ * Tagihan langganan platform ke tenant (P-08, F-19, PRD §15.3). Dokumen keuangan: tidak pernah dihapus, dan angka
+ * tagihan (paket, harga, kupon, pajak, total) tidak berubah setelah terbit (CLAUDE.md #8). Yang boleh berubah hanya
+ * status beserta cap waktunya dan periode layanan yang diisi saat Lunas. Status hanya lewat transisi sah.
+ *
+ * Invariant: Total = Subtotal − Diskon + JumlahPpn; DasarPengenaanPajak = ⌊(Subtotal − Diskon) × PengaliDpp⌋.
+ *
+ * @property int $Id
+ * @property string $Uuid
+ * @property int $IdTenant
+ * @property string $Nomor
+ * @property JenisTagihanLangganan $Jenis
+ * @property StatusTagihanLangganan $Status
+ * @property int $IdPaket
+ * @property int $IdHargaPaket
+ * @property SiklusTagihan $Siklus
+ * @property int $JumlahBulan
+ * @property string $Subtotal
+ * @property int|null $IdKuponLangganan
+ * @property string|null $KodeKupon
+ * @property string $Diskon
+ * @property int|null $IdTarifPajak
+ * @property string $TarifPpn
+ * @property int $PengaliDppPembilang
+ * @property int $PengaliDppPenyebut
+ * @property string $DasarPengenaanPajak
+ * @property string $JumlahPpn
+ * @property string $Total
+ * @property Carbon $TerbitPada
+ * @property Carbon $JatuhTempoPada
+ * @property Carbon|null $DibayarPada
+ * @property Carbon|null $DibatalkanPada
+ * @property string|null $AlasanBatal
+ * @property Carbon|null $PeriodeMulai
+ * @property Carbon|null $PeriodeSelesai
+ * @property Carbon|null $MulaiLanggananPaket
+ * @property string|null $RefGateway
+ * @property int|null $IdPenggunaPembuat
+ * @property Carbon|null $DibuatPada
+ * @property-read Paket $Paket
+ * @property-read Collection<int, PembayaranLangganan> $Pembayaran
+ */
+final class TagihanLangganan extends ModelDasar
+{
+    use MilikTenant;
+
+    /** Kolom yang boleh berubah setelah terbit. */
+    public const KOLOM_BOLEH_BERUBAH = [
+        'Status', 'DibayarPada', 'DibatalkanPada', 'AlasanBatal', 'PeriodeMulai', 'PeriodeSelesai', 'MulaiLanggananPaket',
+        'RefGateway', self::UPDATED_AT,
+    ];
+
+    protected $table = 'TagihanLangganan';
+
+    /** @var array<string, mixed> */
+    protected $attributes = [
+        'IdKuponLangganan' => null,
+        'KodeKupon' => null,
+        'Diskon' => '0.00',
+        'IdTarifPajak' => null,
+        'TarifPpn' => '0.000000',
+        'PengaliDppPembilang' => 1,
+        'PengaliDppPenyebut' => 1,
+        'DasarPengenaanPajak' => '0.00',
+        'JumlahPpn' => '0.00',
+        'DibayarPada' => null,
+        'DibatalkanPada' => null,
+        'AlasanBatal' => null,
+        'PeriodeMulai' => null,
+        'PeriodeSelesai' => null,
+        'MulaiLanggananPaket' => null,
+        'RefGateway' => null,
+        'IdPenggunaPembuat' => null,
+    ];
+
+    protected static function booted(): void
+    {
+        self::updating(static function (TagihanLangganan $tagihan): void {
+            $kolomBerubah = array_diff(array_keys($tagihan->getDirty()), self::KOLOM_BOLEH_BERUBAH);
+
+            if ($kolomBerubah !== []) {
+                throw new LogicException('Angka tagihan langganan tidak boleh diubah setelah terbit: '.implode(', ', $kolomBerubah).'.');
+            }
+
+            $asal = $tagihan->getOriginal('Status');
+
+            if ($tagihan->isDirty('Status') && $asal instanceof StatusTagihanLangganan && ! $asal->BisaBerubahKe($tagihan->Status)) {
+                throw new LogicException("Tagihan {$asal->value} tidak bisa berubah menjadi {$tagihan->Status->value} (P-08).");
+            }
+        });
+
+        self::deleting(static function (): void {
+            throw new LogicException('Tagihan langganan tidak boleh dihapus; batalkan lewat status Dibatalkan.');
+        });
+    }
+
+    /**
+     * @return BelongsTo<Paket, $this>
+     */
+    public function Paket(): BelongsTo
+    {
+        return $this->belongsTo(Paket::class, 'IdPaket', 'Id');
+    }
+
+    /**
+     * @return HasMany<PembayaranLangganan, $this>
+     */
+    public function Pembayaran(): HasMany
+    {
+        return $this->hasMany(PembayaranLangganan::class, 'IdTagihanLangganan', 'Id');
+    }
+
+    public function AmbilTotal(): Uang
+    {
+        return Uang::Dari($this->Total);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'Jenis' => JenisTagihanLangganan::class,
+            'Status' => StatusTagihanLangganan::class,
+            'Siklus' => SiklusTagihan::class,
+            'JumlahBulan' => 'integer',
+            'Subtotal' => 'decimal:2',
+            'Diskon' => 'decimal:2',
+            'TarifPpn' => 'decimal:6',
+            'PengaliDppPembilang' => 'integer',
+            'PengaliDppPenyebut' => 'integer',
+            'DasarPengenaanPajak' => 'decimal:2',
+            'JumlahPpn' => 'decimal:2',
+            'Total' => 'decimal:2',
+            'TerbitPada' => 'datetime',
+            'JatuhTempoPada' => 'datetime',
+            'DibayarPada' => 'datetime',
+            'DibatalkanPada' => 'datetime',
+            'PeriodeMulai' => 'datetime',
+            'PeriodeSelesai' => 'datetime',
+            'MulaiLanggananPaket' => 'date',
+        ];
+    }
+}

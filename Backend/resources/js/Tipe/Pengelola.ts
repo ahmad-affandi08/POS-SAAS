@@ -57,6 +57,9 @@ export const IzinPengelola = {
     TenantTangguhkan: 'tenant.tangguhkan',
     TenantAktifkan: 'tenant.aktifkan',
     TenantPenandaUbah: 'tenant.penanda.ubah',
+    // P-08 Tagihan langganan.
+    TagihanLihat: 'tagihan.lihat',
+    TagihanVerifikasi: 'tagihan.verifikasi',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */

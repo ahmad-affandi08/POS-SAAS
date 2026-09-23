@@ -6,6 +6,7 @@ use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
 use App\Http\Kontroler\Autentikasi\SesiKontroler;
 use App\Http\Kontroler\Autentikasi\VerifikasiEmailKontroler;
 use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
+use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\IdentifikasiTenantSesi;
@@ -46,6 +47,14 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         Route::middleware(IdentifikasiTenantSesi::class)->prefix('kelola')->group(function (): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
             Route::get('/panduan-awal', [BerandaKelolaKontroler::class, 'PanduanAwal'])->name('kelola.panduan-awal');
+
+            // P-08 Langganan & tagihan (transfer manual + bukti). Hanya Owner; TODO F-02: izin tenant.
+            Route::get('/langganan', [LanggananKontroler::class, 'Tampilkan'])->name('kelola.langganan.tampil');
+            Route::post('/langganan/tagihan', [LanggananKontroler::class, 'BuatTagihan'])->name('kelola.langganan.tagihan.buat');
+            Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
+            Route::post('/langganan/tagihan/{tagihan}/pembayaran', [LanggananKontroler::class, 'UnggahBukti'])->name('kelola.langganan.tagihan.pembayaran.buat');
+            Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');
+            Route::get('/langganan/pembayaran/{pembayaran}/bukti', [LanggananKontroler::class, 'LihatBukti'])->name('kelola.langganan.pembayaran.bukti');
         });
     });
 });

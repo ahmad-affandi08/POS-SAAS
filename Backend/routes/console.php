@@ -16,3 +16,6 @@ Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
 
 // BR-00.3: trial yang berakhir turun ke paket Gratis.
 Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
+
+// P-08: tagihan lewat jatuh tempo, langganan Tertunggak lalu Ditangguhkan setelah masa tenggang.
+Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();

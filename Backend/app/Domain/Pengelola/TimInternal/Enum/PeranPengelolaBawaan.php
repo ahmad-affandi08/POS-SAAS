@@ -72,6 +72,9 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::TemplateDrafKelola,
                 IzinPengelola::TemplateAkunUbah,
                 IzinPengelola::LegalLihat,
+                // P-08: tagihan & verifikasi pembayaran (§19.3).
+                IzinPengelola::TagihanLihat,
+                IzinPengelola::TagihanVerifikasi,
             ],
             self::Teknis => [
                 IzinPengelola::ReferensiLihat,

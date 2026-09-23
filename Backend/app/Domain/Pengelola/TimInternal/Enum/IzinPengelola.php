@@ -57,6 +57,9 @@ enum IzinPengelola: string
     case TenantTangguhkan = 'tenant.tangguhkan';
     case TenantAktifkan = 'tenant.aktifkan';
     case TenantPenandaUbah = 'tenant.penanda.ubah';
+    // P-08 Tagihan langganan & verifikasi pembayaran (§19.3: Keuangan & Super Admin).
+    case TagihanLihat = 'tagihan.lihat';
+    case TagihanVerifikasi = 'tagihan.verifikasi';
 
     public function AmbilLabel(): string
     {
@@ -97,6 +100,9 @@ enum IzinPengelola: string
             self::TenantTangguhkan => 'Menangguhkan tenant',
             self::TenantAktifkan => 'Mengaktifkan kembali tenant yang ditangguhkan',
             self::TenantPenandaUbah => 'Mengubah penanda tenant Uji/Demo/Internal',
+            // P-08
+            self::TagihanLihat => 'Melihat tagihan langganan & bukti transfer',
+            self::TagihanVerifikasi => 'Menerima atau menolak pembayaran langganan',
         };
     }
 }
