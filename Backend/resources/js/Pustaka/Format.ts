@@ -4,6 +4,22 @@
  * Uang dari API selalu berupa string desimal ("1250000.00"). Fungsi ini TIDAK mengubahnya
  * ke number/float (CLAUDE.md #7): pemisah ribuan disisipkan langsung pada teks.
  */
+/**
+ * Format persen dari string desimal API ("12.000000" → "12", "10.500000" → "10,5"). Tanpa konversi ke number.
+ */
+export function FormatPersen(nilai: string): string {
+    const cocok = /^(-?\d+)(?:\.(\d+))?$/.exec(nilai.trim());
+
+    if (!cocok) {
+        throw new Error(`Nilai persen tidak valid: "${nilai}"`);
+    }
+
+    const [, bulat = '0', pecahan = ''] = cocok;
+    const pecahanRingkas = pecahan.replace(/0+$/, '');
+
+    return pecahanRingkas === '' ? bulat : `${bulat},${pecahanRingkas}`;
+}
+
 export function FormatRupiah(nilai: string): string {
     const cocok = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(nilai.trim());
 

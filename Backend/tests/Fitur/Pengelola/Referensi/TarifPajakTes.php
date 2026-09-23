@@ -17,6 +17,7 @@ use App\Domain\Referensi\Model\Wilayah;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\TestCase;
 
@@ -81,7 +82,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         expect($tarif->Status)->toBe(StatusDataMaster::MenungguTinjauan)
             ->and($tarif->PengaliDppPembilang)->toBe(11)
             ->and($tarif->PengaliDppPenyebut)->toBe(12)
-            ->and($tarif->Tarif)->toBe('12.0000');
+            ->and($tarif->Tarif)->toBe('12.000000');
 
         Tinjau($this, $keuangan, $tarif)->assertSessionHasNoErrors();
         expect($tarif->refresh()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
@@ -127,7 +128,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         Tinjau($this, $superAdmin, $tarif, 'Tolak', 'Nomor PMK salah')->assertSessionHasNoErrors();
         expect($tarif->refresh()->Status)->toBe(StatusDataMaster::Draf);
 
-        $this->travel(1)->minutes();
+        // Tanpa jeda waktu: persetujuan putaran lama tidak boleh terbawa walau terjadi di detik yang sama.
         SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url("/referensi/tarif-pajak/{$tarif->Uuid}/ajukan"))->assertSessionHasNoErrors();
         Tinjau($this, $keuangan, $tarif)->assertSessionHasNoErrors();
 
@@ -146,7 +147,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
 
         expect(fn () => $tarif->refresh()->update(['Tarif' => '5']))->toThrow(LogicException::class)
             ->and(fn () => $tarif->refresh()->delete())->toThrow(LogicException::class)
-            ->and($tarif->refresh()->Tarif)->toBe('10.0000');
+            ->and($tarif->refresh()->Tarif)->toBe('10.000000');
     });
 
     it('tarif pengganti mengakhiri tarif lama sehari sebelum tanggal berlaku baru', function (): void {
@@ -160,7 +161,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         Tinjau($this, $keuangan, $baru);
 
         expect($lama->refresh()->BerlakuSampai?->toDateString())->toBe('2026-12-31')
-            ->and($lama->Tarif)->toBe('10.0000');
+            ->and($lama->Tarif)->toBe('10.000000');
 
         $kueri = app(TarifPajakBerlaku::class);
         expect($kueri->Cari('PbjtMakananMinuman', '33.74', Carbon::parse('2026-12-31'))?->Id)->toBe($lama->Id)
@@ -232,7 +233,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
 
         $ppn = TarifPajak::query()->where('IdJenisPajak', JenisPajak::query()->where('Kode', 'Ppn')->sole()->Id)->sole();
         expect($ppn->Status)->toBe(StatusDataMaster::Draf)
-            ->and($ppn->Tarif)->toBe('12.0000')
+            ->and($ppn->Tarif)->toBe('12.000000')
             ->and([$ppn->PengaliDppPembilang, $ppn->PengaliDppPenyebut])->toBe([11, 12]);
     });
 
@@ -242,5 +243,31 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         Tinjau($this, $keuangan, AjukanTarifBaru($this, $pengaju));
 
         expect(fn () => PersetujuanDataMaster::query()->sole()->delete())->toThrow(LogicException::class);
+    });
+    it('dua draf untuk pajak & wilayah sama: yang terbit belakangan mengakhiri yang pertama, tanggal sama ditolak', function (): void {
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $daerah = ['KodeJenisPajak' => 'PbjtMakananMinuman', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => '33.74'];
+        $pertama = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => '2027-01-01']);
+        $kedua = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '9', 'BerlakuMulai' => '2027-07-01']);
+        $kembar = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '8', 'BerlakuMulai' => '2027-07-01']);
+
+        Tinjau($this, $keuangan, $pertama)->assertSessionHasNoErrors();
+        Tinjau($this, $keuangan, $kedua)->assertSessionHasNoErrors();
+        Tinjau($this, $keuangan, $kembar)->assertSessionHasErrors('Umum');
+
+        expect($pertama->refresh()->BerlakuSampai?->toDateString())->toBe('2027-06-30')
+            ->and($kembar->refresh()->Status)->toBe(StatusDataMaster::MenungguTinjauan)
+            ->and(TarifPajak::query()->where('Status', 'Terbit')->count())->toBe(2);
+    });
+
+    it('menerima tarif dengan 6 desimal dan menyaring daftar dengan saring[Status]', function (): void {
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        AjukanTarifBaru($this, $pengaju, ['Tarif' => '11.123456']);
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif(['BerlakuMulai' => '2028-01-01']));
+
+        expect(TarifPajak::query()->where('Status', 'MenungguTinjauan')->sole()->Tarif)->toBe('11.123456');
+        $this->get(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Draf'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Tarif.Data', 1)->where('Tarif.Data.0.Status', 'Draf'));
     });
 });

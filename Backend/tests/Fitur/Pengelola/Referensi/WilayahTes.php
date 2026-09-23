@@ -86,6 +86,17 @@ describe('Data wilayah (P-02)', function (): void {
         [PeranPengelolaBawaan::Analis, false],
     ]);
 
+    it('menyaring tingkat dengan saring[Tingkat] dan meng-escape karakter wildcard pada pencarian kode', function (): void {
+        BuatProvinsiJateng();
+        Wilayah::query()->create(['Kode' => '33.74', 'Nama' => 'Kota Semarang', 'Tingkat' => TingkatWilayah::KabupatenKota, 'KodeInduk' => '33', 'ZonaWaktu' => ZonaWaktu::Wib]);
+        $this->actingAs(BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Analis), 'pengelola')->withSession(BantuanPengelola::SesiTerverifikasi());
+
+        $this->get(BantuanPengelola::Url('/referensi/wilayah?saring[Tingkat]=KabupatenKota'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Wilayah.Data', 1)->where('Wilayah.Data.0.Kode', '33.74'));
+        $this->get(BantuanPengelola::Url('/referensi/wilayah?kata=%25'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Wilayah.Data', 0));
+    });
+
     it('tidak bisa dibuka dari domain tenant', function (): void {
         $this->get('http://localhost/referensi/wilayah')->assertNotFound();
     });

@@ -22,7 +22,7 @@ type HariLibur = {
 type PropsHariLibur = {
     Tahun: number;
     HariLibur: HariLibur[];
-    IdPengajuMenunggu: number | null;
+    IdPengajuMenunggu: number[];
     PeninjauMenunggu: number[];
     IdPengguna: number;
     PilihanJenis: Pilihan[];
@@ -59,9 +59,13 @@ export default function HalamanHariLibur({
     const adaDraf = HariLibur.some((hari) => hari.Status === 'Draf');
     const adaMenunggu = HariLibur.some((hari) => hari.Status === 'MenungguTinjauan');
     const bisaTinjau =
-        bolehSetujui && adaMenunggu && IdPengajuMenunggu !== IdPengguna && !PeninjauMenunggu.includes(IdPengguna);
+        bolehSetujui &&
+        adaMenunggu &&
+        !IdPengajuMenunggu.includes(IdPengguna) &&
+        !PeninjauMenunggu.includes(IdPengguna);
 
-    const PilihTahun = (tahun: string) => router.get('/referensi/hari-libur', { tahun }, { preserveState: false });
+    const PilihTahun = (tahun: string) =>
+        router.get('/referensi/hari-libur', { saring: { Tahun: tahun } }, { preserveState: false });
     const AjukanTahun = () => router.post(`/referensi/hari-libur/tahun/${Tahun}/ajukan`, {}, { preserveScroll: true });
     const HapusDraf = (hari: HariLibur) =>
         router.delete(`/referensi/hari-libur/${hari.Uuid}`, { preserveScroll: true });
@@ -280,7 +284,7 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
                     Terbitkan hari libur
                 </Tombol>
                 <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
-                    Tolak
+                    Tolak pengajuan
                 </Tombol>
                 <Tombol varian="sekunder" onClick={saatSelesai}>
                     Batal

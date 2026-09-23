@@ -49,7 +49,7 @@ final class SimpanDrafTarifPajak
             $tarif ??= new TarifPajak(['Status' => StatusDataMaster::Draf, 'IdPenggunaPengelolaPengaju' => $pelaku->Id]);
             $tarif->fill([
                 'IdJenisPajak' => $jenis->Id,
-                'Tarif' => (string) BigDecimal::of($data->tarif)->toScale(4),
+                'Tarif' => (string) BigDecimal::of($data->tarif)->toScale(6),
                 'PengaliDppPembilang' => $data->pengaliDppPembilang,
                 'PengaliDppPenyebut' => $data->pengaliDppPenyebut,
                 'KodeWilayah' => $data->kodeWilayah,
@@ -85,8 +85,8 @@ final class SimpanDrafTarifPajak
             throw new PelanggaranAturanBisnis('TarifTidakValid', 'Tarif harus berupa angka desimal, misal 10 atau 10.5.', 'Tarif');
         }
 
-        if ($tarif->getScale() > 4 || $tarif->isNegativeOrZero() || $tarif->isGreaterThan(100)) {
-            throw new PelanggaranAturanBisnis('TarifTidakValid', 'Tarif harus lebih dari 0 dan paling tinggi 100 persen, maksimal 4 desimal.', 'Tarif');
+        if ($tarif->getScale() > 6 || $tarif->isNegativeOrZero() || $tarif->isGreaterThan(100)) {
+            throw new PelanggaranAturanBisnis('TarifTidakValid', 'Tarif harus lebih dari 0 dan paling tinggi 100 persen, maksimal 6 desimal.', 'Tarif');
         }
 
         if ($data->pengaliDppPembilang < 1 || $data->pengaliDppPenyebut < 1 || $data->pengaliDppPembilang > $data->pengaliDppPenyebut) {

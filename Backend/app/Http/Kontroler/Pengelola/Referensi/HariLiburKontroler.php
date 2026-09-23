@@ -8,7 +8,7 @@ use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pengelola\Referensi\Aksi\AjukanHariLiburTahun;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafHariLibur;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauHariLiburTahun;
-use App\Domain\Pengelola\Referensi\Model\PersetujuanDataMaster;
+use App\Domain\Pengelola\Referensi\Kueri\DaftarHariLibur;
 use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Model\HariLibur;
 use App\Http\Kontroler\Kontroler;
@@ -27,30 +27,14 @@ final class HariLiburKontroler extends Kontroler
 {
     use PelakuPengelola;
 
-    public function Daftar(Request $permintaan): Response
+    public function Daftar(Request $permintaan, DaftarHariLibur $kueri): Response
     {
-        $tahun = $permintaan->integer('tahun', (int) now('Asia/Jakarta')->addYear()->year);
+        $tahun = (int) $permintaan->input('saring.Tahun', now('Asia/Jakarta')->addYear()->year);
         $tahun = max(2000, min(2100, $tahun));
-        $hari = HariLibur::query()->whereYear('Tanggal', $tahun)->orderBy('Tanggal')->get();
-        $menunggu = $hari->firstWhere('Status', StatusDataMaster::MenungguTinjauan);
 
         return Inertia::render('Pengelola/Referensi/HariLibur', [
             'Tahun' => $tahun,
-            'HariLibur' => $hari->map(fn (HariLibur $item): array => [
-                'Uuid' => $item->Uuid,
-                'Tanggal' => $item->Tanggal->toDateString(),
-                'Nama' => $item->Nama,
-                'Jenis' => $item->Jenis->value,
-                'Status' => $item->Status->value,
-                'NomorDasarHukum' => $item->NomorDasarHukum,
-            ])->values()->all(),
-            'IdPengajuMenunggu' => $menunggu?->IdPenggunaPengelolaPengaju,
-            'PeninjauMenunggu' => $menunggu?->DiajukanPada === null ? [] : PersetujuanDataMaster::query()
-                ->where('JenisData', TinjauHariLiburTahun::JENIS_DATA)
-                ->where('IdData', $tahun)
-                ->where('DibuatPada', '>=', $menunggu->DiajukanPada)
-                ->pluck('IdPenggunaPengelola')
-                ->all(),
+            ...$kueri->AmbilTahun($tahun),
             'IdPengguna' => $this->AmbilPelaku()->Id,
             'PilihanJenis' => array_map(fn (JenisHariLibur $jenis) => ['Nilai' => $jenis->value, 'Label' => $jenis->AmbilLabel()], JenisHariLibur::cases()),
         ]);

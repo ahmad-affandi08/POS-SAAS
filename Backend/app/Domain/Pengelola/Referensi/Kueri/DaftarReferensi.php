@@ -25,7 +25,7 @@ final class DaftarReferensi
     {
         return Wilayah::query()
             ->when($kata !== '', fn (Builder $kueri) => $kueri->where(
-                fn (Builder $dalam) => $dalam->where('Nama', 'like', self::BuatPolaLike($kata))->orWhere('Kode', 'like', $kata.'%'),
+                fn (Builder $dalam) => $dalam->where('Nama', 'like', self::BuatPolaLike($kata))->orWhere('Kode', 'like', addcslashes($kata, '%_\\').'%'),
             ))
             ->when($tingkat !== null, fn (Builder $kueri) => $kueri->where('Tingkat', $tingkat?->value))
             ->orderBy('Kode')

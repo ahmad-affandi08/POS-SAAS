@@ -9,6 +9,8 @@ import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { FormatPersen } from '@/Pustaka/Format';
+import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type DaftarBerhalaman, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
@@ -60,7 +62,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
     const Ajukan = (tarif: Tarif) =>
         router.post(`/referensi/tarif-pajak/${tarif.Uuid}/ajukan`, {}, { preserveScroll: true });
     const SaringStatus = (status: string) =>
-        router.get('/referensi/tarif-pajak', status ? { status } : {}, { preserveState: true });
+        router.get('/referensi/tarif-pajak', status ? { saring: { Status: status } } : {}, { preserveState: true });
 
     return (
         <TataLetakPengelola
@@ -156,16 +158,15 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
                                                 {tarif.BiayaLayananMasukDpp ? ' · biaya layanan masuk DPP' : ''}
                                             </p>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <p className="text-teks-utama">
-                                                {tarif.Tarif.replace(/\.?0+$/, '').replace('.', ',')}%
-                                            </p>
+                                        <td className="px-4 py-3 text-right tabular-nums">
+                                            <p className="text-teks-utama">{FormatPersen(tarif.Tarif)}%</p>
                                             <p className="text-keterangan text-teks-sekunder">
                                                 DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}
                                             </p>
                                         </td>
                                         <td className="px-4 py-3 text-teks-sekunder">
-                                            {tarif.BerlakuMulai} – {tarif.BerlakuSampai ?? 'seterusnya'}
+                                            {FormatTanggal(tarif.BerlakuMulai)} –{' '}
+                                            {tarif.BerlakuSampai ? FormatTanggal(tarif.BerlakuSampai) : 'seterusnya'}
                                         </td>
                                         <td className="px-4 py-3 text-teks-sekunder">
                                             {tarif.TautanDasarHukum ? (
@@ -220,7 +221,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
             )}
             <Paginasi
                 alamat="/referensi/tarif-pajak"
-                saring={Saring.Status ? { status: Saring.Status } : {}}
+                saring={Saring.Status ? { 'saring[Status]': Saring.Status } : {}}
                 halamanSaatIni={Tarif.HalamanSaatIni}
                 halamanTerakhir={Tarif.HalamanTerakhir}
                 total={Tarif.Total}
@@ -241,7 +242,7 @@ function FormTarif({
 }) {
     const formulir = useForm({
         KodeJenisPajak: tarif?.KodeJenisPajak ?? jenisPajak[0]?.Kode ?? '',
-        Tarif: tarif?.Tarif.replace(/\.?0+$/, '') ?? '',
+        Tarif: tarif ? FormatPersen(tarif.Tarif).replace(',', '.') : '',
         PengaliDppPembilang: String(tarif?.PengaliDppPembilang ?? 1),
         PengaliDppPenyebut: String(tarif?.PengaliDppPenyebut ?? 1),
         KodeWilayah: tarif?.KodeWilayah ?? '',
@@ -364,8 +365,7 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
     return (
         <section className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
             <h2 className="text-subjudul font-semibold text-teks-utama">
-                Tinjau {tarif.NamaJenisPajak} {tarif.Tarif.replace(/\.?0+$/, '').replace('.', ',')}% mulai{' '}
-                {tarif.BerlakuMulai}
+                Tinjau {tarif.NamaJenisPajak} {FormatPersen(tarif.Tarif)}% mulai {FormatTanggal(tarif.BerlakuMulai)}
             </h2>
             <p className="text-isi text-teks-sekunder">
                 Periksa tarif, pengali DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}, tanggal berlaku, dan
@@ -383,7 +383,7 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
                     Setujui tarif
                 </Tombol>
                 <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
-                    Tolak
+                    Tolak tarif
                 </Tombol>
                 <Tombol varian="sekunder" onClick={saatSelesai}>
                     Batal

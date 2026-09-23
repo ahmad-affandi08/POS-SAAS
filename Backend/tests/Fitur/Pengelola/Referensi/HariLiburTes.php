@@ -2,15 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafHariLibur;
+use App\Domain\Pengelola\Referensi\Data\DataHariLibur;
 use App\Domain\Pengelola\Referensi\Surel\PengingatHariLibur;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Kueri\HariLiburTerbit;
 use App\Domain\Referensi\Model\HariLibur;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\TestCase;
 
@@ -101,6 +107,57 @@ describe('Hari libur (P-02, BR-P02.2)', function (): void {
             ->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju'])
             ->assertForbidden();
     });
+    it('BR-P02.2: tidak bisa mengajukan lagi selama pengajuan tahun yang sama belum ditinjau (pengaju kedua tidak bisa menyetujui dirinya)', function (): void {
+        $pengajuA = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $pengajuB = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        BuatDrafLibur($this, $pengajuA, '2027-01-01', 'Tahun Baru');
+        MasukSebagaiPengelola($this, $pengajuA)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'))->assertSessionHasNoErrors();
+
+        BuatDrafLibur($this, $pengajuB, '2027-08-17', 'Hari Kemerdekaan');
+        MasukSebagaiPengelola($this, $pengajuB)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'))->assertSessionHasErrors('Umum');
+        expect(HariLibur::query()->where('Nama', 'Hari Kemerdekaan')->sole()->Status)->toBe(StatusDataMaster::Draf);
+
+        // B boleh meninjau ajuan A, tetapi draf B tidak ikut terbit.
+        $this->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju'])->assertSessionHasNoErrors();
+        expect(HariLibur::query()->where('Nama', 'Hari Kemerdekaan')->sole()->Status)->toBe(StatusDataMaster::Draf);
+    });
+
+    it('ubah/hapus memakai data terbaru: model basi tidak bisa mengubah hari libur yang sudah terbit', function (): void {
+        $konten = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        BuatDrafLibur($this, $konten, '2027-01-01', 'Tahun Baru');
+        $basi = HariLibur::query()->sole();
+        MasukSebagaiPengelola($this, $konten)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'));
+        MasukSebagaiPengelola($this, $keuangan)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju']);
+
+        $aksi = app(SimpanDrafHariLibur::class);
+        $data = new DataHariLibur(CarbonImmutable::parse('2027-01-02'), 'Ubah', JenisHariLibur::Nasional, 'SKB');
+
+        expect(fn () => $aksi->Jalankan($konten, $data, $basi))->toThrow(PelanggaranAturanBisnis::class)
+            ->and(fn () => $aksi->Hapus($konten, $basi))->toThrow(PelanggaranAturanBisnis::class)
+            ->and(HariLibur::query()->sole()->Status)->toBe(StatusDataMaster::Terbit);
+    });
+
+    it('audit ubah draf menyimpan nilai lama dan baru', function (): void {
+        $konten = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        BuatDrafLibur($this, $konten, '2027-01-01', 'Tahun Baru');
+        $hari = HariLibur::query()->sole();
+
+        MasukSebagaiPengelola($this, $konten)
+            ->put(BantuanPengelola::Url("/referensi/hari-libur/{$hari->Uuid}"), ['Tanggal' => '2027-01-01', 'Nama' => 'Tahun Baru Masehi', 'Jenis' => 'Nasional'])
+            ->assertSessionHasNoErrors();
+
+        $log = LogAuditPengelola::query()->where('Aksi', 'referensi.hari-libur.ubah-draf')->sole();
+        expect($log->NilaiLama['Nama'] ?? null)->toBe('Tahun Baru')->and($log->NilaiBaru['Nama'] ?? null)->toBe('Tahun Baru Masehi');
+    });
+
+    it('memilih tahun lewat saring[Tahun]', function (): void {
+        $konten = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        BuatDrafLibur($this, $konten, '2028-01-01', 'Tahun Baru 2028');
+
+        $this->get(BantuanPengelola::Url('/referensi/hari-libur?saring[Tahun]=2028'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tahun', 2028)->has('HariLibur', 1));
+    });
 });
 
 describe('Pengingat hari libur (BR-P02.4)', function (): void {
@@ -149,5 +206,15 @@ describe('Pengingat hari libur (BR-P02.4)', function (): void {
 
         Mail::assertSent(PengingatHariLibur::class, fn (PengingatHariLibur $surel) => $surel->hasTo($superAdmin->Email));
         $this->artisan('schedule:list')->expectsOutputToContain('pengelola:ingatkan-hari-libur')->assertSuccessful();
+    });
+    it('1 Desember masih tepat waktu, 2 Desember terlambat', function (): void {
+        Mail::fake();
+        BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+
+        $this->travelTo(Carbon::parse('2026-12-01 08:00', 'Asia/Jakarta'));
+        $this->artisan('pengelola:ingatkan-hari-libur')->assertSuccessful();
+
+        Mail::assertSent(PengingatHariLibur::class, fn (PengingatHariLibur $surel) => ! $surel->terlambat);
+        Mail::assertNotSent(PengingatHariLibur::class, fn (PengingatHariLibur $surel) => $surel->terlambat);
     });
 });

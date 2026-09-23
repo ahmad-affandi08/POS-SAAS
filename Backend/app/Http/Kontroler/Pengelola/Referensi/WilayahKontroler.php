@@ -28,7 +28,7 @@ final class WilayahKontroler extends Kontroler
     public function Daftar(Request $permintaan, DaftarReferensi $kueri): Response
     {
         $kata = trim($permintaan->string('kata')->toString());
-        $tingkat = TingkatWilayah::tryFrom($permintaan->string('tingkat')->toString());
+        $tingkat = TingkatWilayah::tryFrom((string) $permintaan->input('saring.Tingkat', ''));
 
         return Inertia::render('Pengelola/Referensi/Wilayah', [
             'Wilayah' => DaftarBerhalaman::Buat($kueri->CariWilayah($kata, $tingkat), fn (Wilayah $wilayah): array => [

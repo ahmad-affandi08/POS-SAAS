@@ -35,44 +35,52 @@ final class DaftarTarifPajak
     }
 
     /**
-     * @return array<string, mixed>
+     * Memetakan satu halaman tarif; keputusan peninjau putaran berjalan dimuat dalam satu kueri (tanpa N+1).
+     *
+     * @param  LengthAwarePaginator<int, TarifPajak>  $halaman
+     * @return list<array<string, mixed>>
      */
-    public function Petakan(TarifPajak $tarif): array
+    public function PetakanHalaman(LengthAwarePaginator $halaman): array
     {
-        $putaran = $tarif->DiajukanPada === null ? collect() : PersetujuanDataMaster::query()
+        $daftar = array_values($halaman->items());
+
+        $keputusan = PersetujuanDataMaster::query()
             ->with('Peninjau:Id,Nama')
             ->where('JenisData', TinjauTarifPajak::JENIS_DATA)
-            ->where('IdData', $tarif->Id)
-            ->where('DibuatPada', '>=', $tarif->DiajukanPada)
+            ->whereIn('IdData', array_map(fn (TarifPajak $tarif) => $tarif->Id, $daftar))
             ->orderBy('Id')
-            ->get();
+            ->get()
+            ->groupBy(fn (PersetujuanDataMaster $item) => $item->IdData.':'.$item->Putaran);
 
-        $berakhir = $tarif->Status === StatusDataMaster::Terbit && $tarif->BerlakuSampai?->isPast() === true && ! $tarif->BerlakuSampai->isToday();
+        return array_map(function (TarifPajak $tarif) use ($keputusan): array {
+            $putaran = $tarif->Status === StatusDataMaster::Draf ? collect() : $keputusan->get($tarif->Id.':'.$tarif->PutaranTinjauan, collect());
+            $berakhir = $tarif->Status === StatusDataMaster::Terbit && $tarif->BerlakuSampai !== null && $tarif->BerlakuSampai->lt(today());
 
-        return [
-            'Uuid' => $tarif->Uuid,
-            'KodeJenisPajak' => $tarif->JenisPajak->Kode,
-            'NamaJenisPajak' => $tarif->JenisPajak->Nama,
-            'Tarif' => $tarif->Tarif,
-            'PengaliDppPembilang' => $tarif->PengaliDppPembilang,
-            'PengaliDppPenyebut' => $tarif->PengaliDppPenyebut,
-            'KodeWilayah' => $tarif->KodeWilayah,
-            'BiayaLayananMasukDpp' => $tarif->BiayaLayananMasukDpp,
-            'BerlakuMulai' => $tarif->BerlakuMulai->toDateString(),
-            'BerlakuSampai' => $tarif->BerlakuSampai?->toDateString(),
-            'Status' => $berakhir ? 'Berakhir' : $tarif->Status->value,
-            'NomorDasarHukum' => $tarif->NomorDasarHukum,
-            'TautanDasarHukum' => $tarif->TautanDasarHukum,
-            'IdPengaju' => $tarif->IdPenggunaPengelolaPengaju,
-            'PersetujuanDibutuhkan' => $tarif->CekNasional() ? TinjauTarifPajak::PENYETUJU_NASIONAL : TinjauTarifPajak::PENYETUJU_DAERAH,
-            'Persetujuan' => $putaran->map(fn (PersetujuanDataMaster $keputusan): array => [
-                'Peninjau' => $keputusan->Peninjau->Nama,
-                'IdPeninjau' => $keputusan->IdPenggunaPengelola,
-                'Keputusan' => $keputusan->Keputusan->value,
-                'Catatan' => $keputusan->Catatan,
-            ])->values()->all(),
-            'JumlahSetuju' => $putaran->where('Keputusan', KeputusanTinjauan::Setuju)->count(),
-        ];
+            return [
+                'Uuid' => $tarif->Uuid,
+                'KodeJenisPajak' => $tarif->JenisPajak->Kode,
+                'NamaJenisPajak' => $tarif->JenisPajak->Nama,
+                'Tarif' => $tarif->Tarif,
+                'PengaliDppPembilang' => $tarif->PengaliDppPembilang,
+                'PengaliDppPenyebut' => $tarif->PengaliDppPenyebut,
+                'KodeWilayah' => $tarif->KodeWilayah,
+                'BiayaLayananMasukDpp' => $tarif->BiayaLayananMasukDpp,
+                'BerlakuMulai' => $tarif->BerlakuMulai->toDateString(),
+                'BerlakuSampai' => $tarif->BerlakuSampai?->toDateString(),
+                'Status' => $berakhir ? 'Berakhir' : $tarif->Status->value,
+                'NomorDasarHukum' => $tarif->NomorDasarHukum,
+                'TautanDasarHukum' => $tarif->TautanDasarHukum,
+                'IdPengaju' => $tarif->IdPenggunaPengelolaPengaju,
+                'PersetujuanDibutuhkan' => $tarif->CekNasional() ? TinjauTarifPajak::PENYETUJU_NASIONAL : TinjauTarifPajak::PENYETUJU_DAERAH,
+                'Persetujuan' => $putaran->map(fn (PersetujuanDataMaster $item): array => [
+                    'Peninjau' => $item->Peninjau->Nama,
+                    'IdPeninjau' => $item->IdPenggunaPengelola,
+                    'Keputusan' => $item->Keputusan->value,
+                    'Catatan' => $item->Catatan,
+                ])->values()->all(),
+                'JumlahSetuju' => $putaran->where('Keputusan', KeputusanTinjauan::Setuju)->count(),
+            ];
+        }, $daftar);
     }
 
     /**

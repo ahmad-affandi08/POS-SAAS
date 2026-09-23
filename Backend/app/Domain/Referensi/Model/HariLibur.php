@@ -23,6 +23,7 @@ use LogicException;
  * @property string|null $NomorDasarHukum
  * @property int|null $IdPenggunaPengelolaPengaju
  * @property Carbon|null $DiajukanPada
+ * @property int $PutaranTinjauan
  */
 final class HariLibur extends ModelDasar
 {
@@ -34,6 +35,7 @@ final class HariLibur extends ModelDasar
         'NomorDasarHukum' => null,
         'IdPenggunaPengelolaPengaju' => null,
         'DiajukanPada' => null,
+        'PutaranTinjauan' => 0,
     ];
 
     protected static function booted(): void
@@ -61,6 +63,7 @@ final class HariLibur extends ModelDasar
             'Jenis' => JenisHariLibur::class,
             'Status' => StatusDataMaster::class,
             'DiajukanPada' => 'datetime',
+            'PutaranTinjauan' => 'integer',
         ];
     }
 }

@@ -13,7 +13,7 @@ use LogicException;
 /**
  * Tarif pajak master platform, bertanggal berlaku (P-02, PRD §12.2, §15.3).
  *
- * - `Tarif` dalam persen (string desimal, misal "12.0000"). Tidak pernah float.
+ * - `Tarif` dalam persen (string desimal 6 angka, misal "12.000000"). Tidak pernah float.
  * - `PengaliDpp` = PengaliDppPembilang / PengaliDppPenyebut (pecahan eksak, misal 11/12).
  * - `KodeWilayah` null berarti tarif nasional.
  * - BR-P02.1: tarif Terbit tidak pernah diubah; satu-satunya pengecualian adalah `BerlakuSampai` yang diisi sistem
@@ -34,6 +34,7 @@ use LogicException;
  * @property string|null $TautanDasarHukum
  * @property int|null $IdPenggunaPengelolaPengaju
  * @property Carbon|null $DiajukanPada
+ * @property int $PutaranTinjauan
  * @property-read JenisPajak $JenisPajak
  */
 final class TarifPajak extends ModelDasar
@@ -52,6 +53,7 @@ final class TarifPajak extends ModelDasar
         'TautanDasarHukum' => null,
         'IdPenggunaPengelolaPengaju' => null,
         'DiajukanPada' => null,
+        'PutaranTinjauan' => 0,
     ];
 
     protected static function booted(): void
@@ -91,7 +93,7 @@ final class TarifPajak extends ModelDasar
     protected function casts(): array
     {
         return [
-            'Tarif' => 'decimal:4',
+            'Tarif' => 'decimal:6',
             'PengaliDppPembilang' => 'integer',
             'PengaliDppPenyebut' => 'integer',
             'BiayaLayananMasukDpp' => 'boolean',
@@ -99,6 +101,7 @@ final class TarifPajak extends ModelDasar
             'BerlakuSampai' => 'date',
             'Status' => StatusDataMaster::class,
             'DiajukanPada' => 'datetime',
+            'PutaranTinjauan' => 'integer',
         ];
     }
 }

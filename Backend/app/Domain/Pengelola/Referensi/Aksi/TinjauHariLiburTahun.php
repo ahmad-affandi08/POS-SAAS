@@ -35,17 +35,22 @@ final class TinjauHariLiburTahun
                 ->where('Status', StatusDataMaster::MenungguTinjauan->value)
                 ->lockForUpdate()
                 ->get();
-            $contoh = $diajukan->first();
 
-            if ($contoh === null || $contoh->DiajukanPada === null) {
+            if ($diajukan->isEmpty()) {
                 throw new PelanggaranAturanBisnis('StatusTidakSesuai', "Tidak ada hari libur tahun {$tahun} yang menunggu tinjauan.");
             }
+
+            // Semua pengaju baris yang ditinjau diperiksa, bukan hanya baris pertama.
+            $idPengaju = array_values(array_unique(array_filter(
+                $diajukan->pluck('IdPenggunaPengelolaPengaju')->all(),
+                fn ($id) => is_int($id),
+            )));
 
             $jumlahSetuju = $this->tinjauan->CatatKeputusan(
                 self::JENIS_DATA,
                 $tahun,
-                $contoh->IdPenggunaPengelolaPengaju,
-                $contoh->DiajukanPada,
+                (int) $diajukan->max('PutaranTinjauan'),
+                $idPengaju,
                 $peninjau,
                 $keputusan,
                 $catatan,
@@ -64,7 +69,12 @@ final class TinjauHariLiburTahun
             }
 
             $this->audit->Catat(
-                $statusBaru === StatusDataMaster::Terbit ? 'referensi.hari-libur.terbit' : 'referensi.hari-libur.tolak',
+                match ($statusBaru) {
+                    StatusDataMaster::Terbit => 'referensi.hari-libur.terbit',
+                    StatusDataMaster::Draf => 'referensi.hari-libur.tolak',
+                    StatusDataMaster::MenungguTinjauan => 'referensi.hari-libur.setujui',
+                },
+                nilaiLama: ['Status' => StatusDataMaster::MenungguTinjauan->value],
                 nilaiBaru: ['Tahun' => $tahun, 'Jumlah' => $diajukan->count(), 'Status' => $statusBaru->value],
                 alasan: $catatan,
                 idPelaku: $peninjau->Id,

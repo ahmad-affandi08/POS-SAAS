@@ -40,7 +40,8 @@ final class KirimPengingatHariLibur
             $penerima = $this->AmbilPenerima(PeranPengelolaBawaan::SuperAdmin);
         }
 
-        $terlambat = $hariIni->month === 12;
+        // "Paling lambat 1 Desember": tanggal 1 Desember masih tepat waktu.
+        $terlambat = $hariIni->month === 12 && $hariIni->day > 1;
 
         foreach ($penerima as $email) {
             Mail::to($email)->send(new PengingatHariLibur($tahunDepan, $terlambat));

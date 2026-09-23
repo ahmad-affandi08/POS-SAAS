@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Membuat, mengubah, atau menghapus DRAF hari libur (P-02). Yang sudah diajukan/terbit tidak bisa diubah.
+ * Baris diambil ulang dengan kunci di dalam transaksi, sehingga ubah/hapus tidak bisa menyalip penerbitan.
  */
 final class SimpanDrafHariLibur
 {
@@ -22,8 +23,11 @@ final class SimpanDrafHariLibur
     public function Jalankan(PenggunaPengelola $pelaku, DataHariLibur $data, ?HariLibur $hariLibur = null): HariLibur
     {
         return DB::transaction(function () use ($pelaku, $data, $hariLibur): HariLibur {
+            $nilaiLama = null;
+
             if ($hariLibur !== null) {
-                self::PastikanDraf($hariLibur);
+                $hariLibur = self::AmbilDrafTerkunci($hariLibur);
+                $nilaiLama = self::AmbilNilai($hariLibur);
             }
 
             $bentrok = HariLibur::query()
@@ -36,7 +40,6 @@ final class SimpanDrafHariLibur
                 throw new PelanggaranAturanBisnis('TanggalGanda', 'Sudah ada '.$data->jenis->AmbilLabel().' pada tanggal ini.', 'Tanggal');
             }
 
-            $baru = $hariLibur === null;
             $hariLibur ??= new HariLibur(['Status' => StatusDataMaster::Draf, 'IdPenggunaPengelolaPengaju' => $pelaku->Id]);
             $hariLibur->fill([
                 'Tanggal' => $data->tanggal->toDateString(),
@@ -46,9 +49,10 @@ final class SimpanDrafHariLibur
             ])->save();
 
             $this->audit->Catat(
-                $baru ? 'referensi.hari-libur.buat-draf' : 'referensi.hari-libur.ubah-draf',
+                $nilaiLama === null ? 'referensi.hari-libur.buat-draf' : 'referensi.hari-libur.ubah-draf',
                 $hariLibur,
-                nilaiBaru: ['Tanggal' => $data->tanggal->toDateString(), 'Nama' => $data->nama, 'Jenis' => $data->jenis->value],
+                nilaiLama: $nilaiLama,
+                nilaiBaru: self::AmbilNilai($hariLibur),
                 idPelaku: $pelaku->Id,
             );
 
@@ -59,21 +63,33 @@ final class SimpanDrafHariLibur
     public function Hapus(PenggunaPengelola $pelaku, HariLibur $hariLibur): void
     {
         DB::transaction(function () use ($pelaku, $hariLibur): void {
-            self::PastikanDraf($hariLibur);
-            $this->audit->Catat(
-                'referensi.hari-libur.hapus-draf',
-                $hariLibur,
-                nilaiLama: ['Tanggal' => $hariLibur->Tanggal->toDateString(), 'Nama' => $hariLibur->Nama],
-                idPelaku: $pelaku->Id,
-            );
+            $hariLibur = self::AmbilDrafTerkunci($hariLibur);
+            $this->audit->Catat('referensi.hari-libur.hapus-draf', $hariLibur, nilaiLama: self::AmbilNilai($hariLibur), idPelaku: $pelaku->Id);
             $hariLibur->delete();
         });
     }
 
-    private static function PastikanDraf(HariLibur $hariLibur): void
+    private static function AmbilDrafTerkunci(HariLibur $hariLibur): HariLibur
     {
-        if ($hariLibur->Status !== StatusDataMaster::Draf) {
+        $terkunci = HariLibur::query()->lockForUpdate()->findOrFail($hariLibur->Id);
+
+        if ($terkunci->Status !== StatusDataMaster::Draf) {
             throw new PelanggaranAturanBisnis('StatusTidakSesuai', 'Hanya hari libur berstatus draf yang bisa diubah atau dihapus.');
         }
+
+        return $terkunci;
+    }
+
+    /**
+     * @return array{Tanggal: string, Nama: string, Jenis: string, NomorDasarHukum: string|null}
+     */
+    private static function AmbilNilai(HariLibur $hariLibur): array
+    {
+        return [
+            'Tanggal' => $hariLibur->Tanggal->toDateString(),
+            'Nama' => $hariLibur->Nama,
+            'Jenis' => $hariLibur->Jenis->value,
+            'NomorDasarHukum' => $hariLibur->NomorDasarHukum,
+        ];
     }
 }

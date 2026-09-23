@@ -13,11 +13,12 @@ use LogicException;
 
 /**
  * Keputusan peninjau atas data master (four-eyes, BR-P02.2, PRD §15.3). Append-only.
- * Hanya keputusan setelah `DiajukanPada` terakhir data tersebut yang dihitung.
+ * Hanya keputusan pada putaran tinjauan yang sedang berjalan (`PutaranTinjauan` data) yang dihitung.
  *
  * @property int $Id
  * @property string $JenisData
  * @property int $IdData
+ * @property int $Putaran
  * @property int $IdPenggunaPengelola
  * @property KeputusanTinjauan $Keputusan
  * @property string|null $Catatan
@@ -56,6 +57,6 @@ final class PersetujuanDataMaster extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['Keputusan' => KeputusanTinjauan::class, 'DibuatPada' => 'datetime'];
+        return ['Putaran' => 'integer', 'Keputusan' => KeputusanTinjauan::class, 'DibuatPada' => 'datetime'];
     }
 }

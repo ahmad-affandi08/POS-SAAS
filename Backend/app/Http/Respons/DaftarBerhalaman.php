@@ -21,8 +21,20 @@ final class DaftarBerhalaman
      */
     public static function Buat(LengthAwarePaginator $halaman, callable $petakan): array
     {
+        return self::BuatDariData($halaman, array_values(array_map($petakan, $halaman->items())));
+    }
+
+    /**
+     * Untuk daftar yang datanya dipetakan sekaligus (misal memuat relasi tambahan tanpa N+1).
+     *
+     * @param  LengthAwarePaginator<int, mixed>  $halaman
+     * @param  list<array<string, mixed>>  $data
+     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     */
+    public static function BuatDariData(LengthAwarePaginator $halaman, array $data): array
+    {
         return [
-            'Data' => array_values(array_map($petakan, $halaman->items())),
+            'Data' => $data,
             'HalamanSaatIni' => $halaman->currentPage(),
             'HalamanTerakhir' => $halaman->lastPage(),
             'Total' => $halaman->total(),

@@ -27,7 +27,7 @@ return new class extends Migration
             $tabel->foreignId('IdJenisPajak')
                 ->constrained('JenisPajak', 'Id', 'FkTarifPajakIdJenisPajak')
                 ->restrictOnDelete();
-            $tabel->decimal('Tarif', 7, 4);
+            $tabel->decimal('Tarif', 9, 6);
             $tabel->unsignedInteger('PengaliDppPembilang')->default(1);
             $tabel->unsignedInteger('PengaliDppPenyebut')->default(1);
             $tabel->string('KodeWilayah', 13)->nullable();
@@ -42,6 +42,7 @@ return new class extends Migration
                 ->constrained('PenggunaPengelola', 'Id', 'FkTarifPajakIdPenggunaPengelolaPengaju')
                 ->restrictOnDelete();
             $tabel->timestamp('DiajukanPada')->nullable();
+            $tabel->unsignedInteger('PutaranTinjauan')->default(0);
             $tabel->WaktuStandar();
             $tabel->index(['IdJenisPajak', 'KodeWilayah', 'Status', 'BerlakuMulai'], 'IdxTarifPajakBerlaku');
         });
@@ -50,13 +51,15 @@ return new class extends Migration
             $tabel->id('Id');
             $tabel->string('JenisData', 50);
             $tabel->unsignedBigInteger('IdData');
+            $tabel->unsignedInteger('Putaran');
             $tabel->foreignId('IdPenggunaPengelola')
                 ->constrained('PenggunaPengelola', 'Id', 'FkPersetujuanDataMasterIdPenggunaPengelola')
                 ->restrictOnDelete();
             $tabel->string('Keputusan', 10);
             $tabel->string('Catatan', 500)->nullable();
             $tabel->timestamp('DibuatPada');
-            $tabel->index(['JenisData', 'IdData'], 'IdxPersetujuanDataMasterData');
+            // Satu orang satu keputusan per putaran, ditegakkan juga oleh database (tinjauan bersamaan).
+            $tabel->unique(['JenisData', 'IdData', 'Putaran', 'IdPenggunaPengelola'], 'UniqPersetujuanDataMasterPutaranPeninjau');
         });
     }
 

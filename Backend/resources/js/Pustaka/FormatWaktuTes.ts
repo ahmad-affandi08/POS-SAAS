@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FormatTanggalWaktu } from './FormatWaktu';
+import { FormatTanggal, FormatTanggalWaktu } from './FormatWaktu';
 
 describe('FormatTanggalWaktu (PRD §17.6.7)', () => {
     it('menampilkan waktu UTC dari API dalam WIB', () => {
@@ -13,5 +13,16 @@ describe('FormatTanggalWaktu (PRD §17.6.7)', () => {
 
     it('menolak teks yang bukan waktu', () => {
         expect(() => FormatTanggalWaktu('kemarin')).toThrow();
+    });
+});
+
+describe('FormatTanggal', () => {
+    it('menampilkan tanggal kalender gaya Indonesia', () => {
+        expect(FormatTanggal('2027-01-01')).toBe('1 Jan 2027');
+        expect(FormatTanggal(null)).toBe('—');
+    });
+
+    it('menolak format selain TTTT-BB-HH', () => {
+        expect(() => FormatTanggal('01-01-2027')).toThrow();
     });
 });

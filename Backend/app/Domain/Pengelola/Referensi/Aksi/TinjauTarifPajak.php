@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pajak\Peristiwa\TarifPajakTerbit;
 use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
@@ -36,16 +37,19 @@ final class TinjauTarifPajak
     {
         $hasil = DB::transaction(function () use ($peninjau, $tarif, $keputusan, $catatan): StatusDataMaster {
             $tarif = TarifPajak::query()->lockForUpdate()->findOrFail($tarif->Id);
+            // Kunci per jenis pajak: penerbitan tarif jenis yang sama berjalan berurutan, sehingga dua tarif
+            // tidak bisa terbit bersamaan tanpa saling mengakhiri.
+            JenisPajak::query()->whereKey($tarif->IdJenisPajak)->lockForUpdate()->firstOrFail();
 
-            if ($tarif->Status !== StatusDataMaster::MenungguTinjauan || $tarif->DiajukanPada === null) {
+            if ($tarif->Status !== StatusDataMaster::MenungguTinjauan) {
                 throw new PelanggaranAturanBisnis('StatusTidakSesuai', 'Tarif ini tidak sedang menunggu tinjauan.');
             }
 
             $jumlahSetuju = $this->tinjauan->CatatKeputusan(
                 self::JENIS_DATA,
                 $tarif->Id,
-                $tarif->IdPenggunaPengelolaPengaju,
-                $tarif->DiajukanPada,
+                $tarif->PutaranTinjauan,
+                array_values(array_filter([$tarif->IdPenggunaPengelolaPengaju])),
                 $peninjau,
                 $keputusan,
                 $catatan,
@@ -53,7 +57,14 @@ final class TinjauTarifPajak
 
             if ($keputusan === KeputusanTinjauan::Tolak) {
                 $tarif->update(['Status' => StatusDataMaster::Draf]);
-                $this->audit->Catat('referensi.tarif-pajak.tolak', $tarif, alasan: $catatan, idPelaku: $peninjau->Id);
+                $this->audit->Catat(
+                    'referensi.tarif-pajak.tolak',
+                    $tarif,
+                    nilaiLama: ['Status' => StatusDataMaster::MenungguTinjauan->value],
+                    nilaiBaru: ['Status' => StatusDataMaster::Draf->value],
+                    alasan: $catatan,
+                    idPelaku: $peninjau->Id,
+                );
 
                 return StatusDataMaster::Draf;
             }
@@ -114,6 +125,12 @@ final class TinjauTarifPajak
         }
 
         $tarif->update(['Status' => StatusDataMaster::Terbit]);
-        $this->audit->Catat('referensi.tarif-pajak.terbit', $tarif, nilaiBaru: ['Status' => StatusDataMaster::Terbit->value], idPelaku: $peninjau->Id);
+        $this->audit->Catat(
+            'referensi.tarif-pajak.terbit',
+            $tarif,
+            nilaiLama: ['Status' => StatusDataMaster::MenungguTinjauan->value],
+            nilaiBaru: ['Status' => StatusDataMaster::Terbit->value],
+            idPelaku: $peninjau->Id,
+        );
     }
 }

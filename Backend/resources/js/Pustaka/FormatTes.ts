@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FormatRupiah } from './Format';
+import { FormatPersen, FormatRupiah } from './Format';
 
 describe('FormatRupiah (PRD §17.6.7)', () => {
     it('memformat string desimal dari API gaya Indonesia', () => {
@@ -22,5 +22,18 @@ describe('FormatRupiah (PRD §17.6.7)', () => {
     it('menolak masukan yang bukan string desimal uang', () => {
         expect(() => FormatRupiah('12,50')).toThrow();
         expect(() => FormatRupiah('1.005')).toThrow();
+    });
+});
+
+describe('FormatPersen (PRD §17.6.7)', () => {
+    it('meringkas nol di belakang dan memakai koma desimal', () => {
+        expect(FormatPersen('12.000000')).toBe('12');
+        expect(FormatPersen('10.500000')).toBe('10,5');
+        expect(FormatPersen('0.125000')).toBe('0,125');
+        expect(FormatPersen('100')).toBe('100');
+    });
+
+    it('menolak masukan yang bukan string desimal', () => {
+        expect(() => FormatPersen('12,5')).toThrow();
     });
 });

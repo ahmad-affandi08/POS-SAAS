@@ -35,9 +35,17 @@ final class AjukanTarifPajak
                 'Status' => StatusDataMaster::MenungguTinjauan,
                 'IdPenggunaPengelolaPengaju' => $pelaku->Id,
                 'DiajukanPada' => now(),
+                // Putaran baru: persetujuan dari pengajuan sebelumnya (yang ditolak) tidak ikut dihitung.
+                'PutaranTinjauan' => $tarif->PutaranTinjauan + 1,
             ]);
 
-            $this->audit->Catat('referensi.tarif-pajak.ajukan', $tarif, nilaiBaru: ['Status' => $tarif->Status->value], idPelaku: $pelaku->Id);
+            $this->audit->Catat(
+                'referensi.tarif-pajak.ajukan',
+                $tarif,
+                nilaiLama: ['Status' => StatusDataMaster::Draf->value],
+                nilaiBaru: ['Status' => $tarif->Status->value, 'Putaran' => $tarif->PutaranTinjauan],
+                idPelaku: $pelaku->Id,
+            );
         });
     }
 }

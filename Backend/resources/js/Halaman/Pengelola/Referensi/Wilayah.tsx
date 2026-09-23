@@ -35,14 +35,14 @@ export default function HalamanWilayah({ Wilayah, Saring, PilihanTingkat, Piliha
     const labelTingkat = new Map(PilihanTingkat.map((item) => [item.Nilai, item.Label]));
     const saringAktif = {
         ...(Saring.Kata ? { kata: Saring.Kata } : {}),
-        ...(Saring.Tingkat ? { tingkat: Saring.Tingkat } : {}),
+        ...(Saring.Tingkat ? { 'saring[Tingkat]': Saring.Tingkat } : {}),
     };
 
     const Cari = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
         router.get(
             '/referensi/wilayah',
-            { ...(kata ? { kata } : {}), ...(tingkat ? { tingkat } : {}) },
+            { ...(kata ? { kata } : {}), ...(tingkat ? { saring: { Tingkat: tingkat } } : {}) },
             { preserveState: true },
         );
     };

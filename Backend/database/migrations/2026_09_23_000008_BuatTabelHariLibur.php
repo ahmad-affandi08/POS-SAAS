@@ -26,6 +26,7 @@ return new class extends Migration
                 ->constrained('PenggunaPengelola', 'Id', 'FkHariLiburIdPenggunaPengelolaPengaju')
                 ->restrictOnDelete();
             $tabel->timestamp('DiajukanPada')->nullable();
+            $tabel->unsignedInteger('PutaranTinjauan')->default(0);
             $tabel->WaktuStandar();
             $tabel->unique(['Tanggal', 'Jenis'], 'UniqHariLiburTanggalJenis');
             $tabel->index(['Status', 'Tanggal'], 'IdxHariLiburStatusTanggal');

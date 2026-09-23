@@ -17,7 +17,7 @@ final class SimpanTarifPajakPermintaan extends FormRequest
     {
         return [
             'KodeJenisPajak' => ['required', 'string', 'exists:JenisPajak,Kode'],
-            'Tarif' => ['required', 'string', 'regex:/^\d{1,3}(\.\d{1,4})?$/'],
+            'Tarif' => ['required', 'string', 'regex:/^\d{1,3}(\.\d{1,6})?$/'],
             'PengaliDppPembilang' => ['required', 'integer', 'min:1', 'max:1000'],
             'PengaliDppPenyebut' => ['required', 'integer', 'min:1', 'max:1000'],
             'KodeWilayah' => ['nullable', 'string', 'max:13'],

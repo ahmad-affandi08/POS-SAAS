@@ -29,10 +29,11 @@ final class TarifPajakKontroler extends Kontroler
 
     public function Daftar(Request $permintaan, DaftarTarifPajak $kueri): Response
     {
-        $status = StatusDataMaster::tryFrom($permintaan->string('status')->toString());
+        $status = StatusDataMaster::tryFrom((string) $permintaan->input('saring.Status', ''));
+        $halaman = $kueri->Cari($status);
 
         return Inertia::render('Pengelola/Referensi/TarifPajak', [
-            'Tarif' => DaftarBerhalaman::Buat($kueri->Cari($status), fn (TarifPajak $tarif) => $kueri->Petakan($tarif)),
+            'Tarif' => DaftarBerhalaman::BuatDariData($halaman, $kueri->PetakanHalaman($halaman)),
             'JenisPajak' => $kueri->AmbilJenisPajak(),
             'Saring' => ['Status' => $status?->value],
             'IdPengguna' => $this->AmbilPelaku()->Id,

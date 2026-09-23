@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Mengajukan semua draf hari libur satu tahun untuk ditinjau (P-02). Dasar hukum (misal SKB 3 Menteri) wajib.
+ * Selama ada pengajuan tahun yang sama yang belum ditinjau, pengajuan baru ditolak: satu tahun satu putaran,
+ * sehingga semua baris dalam satu tinjauan punya pengaju yang sama (BR-P02.2).
  */
 final class AjukanHariLiburTahun
 {
@@ -21,11 +23,16 @@ final class AjukanHariLiburTahun
     public function Jalankan(PenggunaPengelola $pelaku, int $tahun): int
     {
         return DB::transaction(function () use ($pelaku, $tahun): int {
-            $draf = HariLibur::query()
-                ->whereYear('Tanggal', $tahun)
-                ->where('Status', StatusDataMaster::Draf->value)
-                ->lockForUpdate()
-                ->get();
+            $semua = HariLibur::query()->whereYear('Tanggal', $tahun)->lockForUpdate()->get();
+
+            if ($semua->contains(fn (HariLibur $hari) => $hari->Status === StatusDataMaster::MenungguTinjauan)) {
+                throw new PelanggaranAturanBisnis(
+                    'PengajuanBerjalan',
+                    "Masih ada pengajuan hari libur tahun {$tahun} yang menunggu tinjauan. Tunggu hasilnya sebelum mengajukan lagi.",
+                );
+            }
+
+            $draf = $semua->filter(fn (HariLibur $hari) => $hari->Status === StatusDataMaster::Draf);
 
             if ($draf->isEmpty()) {
                 throw new PelanggaranAturanBisnis('TidakAdaDraf', "Tidak ada draf hari libur tahun {$tahun} untuk diajukan.");
@@ -36,12 +43,23 @@ final class AjukanHariLiburTahun
             }
 
             $waktu = now();
+            $putaran = (int) $semua->max('PutaranTinjauan') + 1;
 
             foreach ($draf as $hari) {
-                $hari->update(['Status' => StatusDataMaster::MenungguTinjauan, 'IdPenggunaPengelolaPengaju' => $pelaku->Id, 'DiajukanPada' => $waktu]);
+                $hari->update([
+                    'Status' => StatusDataMaster::MenungguTinjauan,
+                    'IdPenggunaPengelolaPengaju' => $pelaku->Id,
+                    'DiajukanPada' => $waktu,
+                    'PutaranTinjauan' => $putaran,
+                ]);
             }
 
-            $this->audit->Catat('referensi.hari-libur.ajukan', nilaiBaru: ['Tahun' => $tahun, 'Jumlah' => $draf->count()], idPelaku: $pelaku->Id);
+            $this->audit->Catat(
+                'referensi.hari-libur.ajukan',
+                nilaiLama: ['Status' => StatusDataMaster::Draf->value],
+                nilaiBaru: ['Tahun' => $tahun, 'Jumlah' => $draf->count(), 'Putaran' => $putaran],
+                idPelaku: $pelaku->Id,
+            );
 
             return $draf->count();
         });
