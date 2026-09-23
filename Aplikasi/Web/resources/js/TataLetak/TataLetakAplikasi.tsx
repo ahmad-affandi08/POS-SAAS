@@ -9,10 +9,34 @@ import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organi
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
+type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null };
+
+// F-03: grup menu "Produk". Tampil sebagai sub-menu saat salah satu halamannya dibuka.
+const menuProduk: ItemMenu[] = [
+    { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
+    { label: 'Kategori', href: '/kelola/kategori', izin: IzinTenant.ProdukLihat },
+    { label: 'Satuan', href: '/kelola/satuan', izin: IzinTenant.ProdukLihat },
+    { label: 'Daftar harga', href: '/kelola/daftar-harga', izin: IzinTenant.ProdukLihat },
+    { label: 'Pilihan (modifier)', href: '/kelola/kelompok-pilihan', izin: IzinTenant.ProdukLihat },
+    { label: 'Kelompok pajak', href: '/kelola/kelompok-pajak', izin: IzinTenant.ProdukLihat },
+    { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
+];
+
+/** Item sub-menu Produk yang aktif untuk URL ini: awalan terpanjang menang (/kelola/produk/impor vs /kelola/produk). */
+export function CariMenuProdukAktif(url: string): string | null {
+    const jalur = url.split('?')[0] ?? url;
+    const cocok = menuProduk
+        .filter((menu) => jalur === menu.href || jalur.startsWith(`${menu.href}/`))
+        .sort((a, b) => b.href.length - a.href.length);
+
+    return cocok[0]?.href ?? null;
+}
+
 // Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
-const daftarMenu: { label: string; href: string; izin: KunciIzinTenant | null }[] = [
+const daftarMenu: ItemMenu[] = [
     { label: 'Beranda', href: '/kelola', izin: null },
     { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat },
+    { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
     // F-02b: perangkat POS.
     { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat },
     { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat },
@@ -64,6 +88,8 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
+    const menuProdukAktif = CariMenuProdukAktif(url);
+    const subMenuProduk = menuProduk.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
     const [mengirim, AturMengirim] = useState(false);
     const KirimUlangVerifikasi = () =>
         router.post(
@@ -98,8 +124,10 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                             const aktif =
                                 menu.href === '/kelola'
                                     ? url === '/kelola'
-                                    : url.startsWith(menu.href) ||
-                                      (menu.href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
+                                    : menu.href === '/kelola/produk'
+                                      ? menuProdukAktif !== null
+                                      : url.startsWith(menu.href) ||
+                                        (menu.href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
 
                             return (
                                 <Link
@@ -114,6 +142,27 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                                 </Link>
                             );
                         })}
+                    </nav>
+                ) : null}
+                {tenantAktif && props.Akses && menuProdukAktif !== null && subMenuProduk.length > 0 ? (
+                    <nav
+                        aria-label="Menu produk"
+                        className="mx-auto flex max-w-6xl gap-1 overflow-x-auto border-t border-garis px-4"
+                    >
+                        {subMenuProduk.map((menu) => (
+                            <Link
+                                key={menu.href}
+                                href={menu.href}
+                                aria-current={menuProdukAktif === menu.href ? 'page' : undefined}
+                                className={`shrink-0 px-3 py-2 text-label outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                    menuProdukAktif === menu.href
+                                        ? 'font-semibold text-teks-utama underline underline-offset-4'
+                                        : 'text-teks-sekunder'
+                                }`}
+                            >
+                                {menu.label}
+                            </Link>
+                        ))}
                     </nav>
                 ) : null}
             </header>
