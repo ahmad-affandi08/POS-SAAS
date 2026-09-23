@@ -44,18 +44,18 @@ final class ValidatorTemplate
         $this->galat = [];
 
         $this->ValidasiModeKasir($isi);
-        $this->ValidasiFitur(self::AmbilDaftarTeks($isi, 'KunciFitur'));
+        $this->ValidasiFitur($this->AmbilDaftarTeks($isi, 'KunciFitur'));
         $akun = $this->ValidasiAkun($isi['Akun'] ?? null);
         $this->ValidasiPemetaanAkun($isi['PemetaanAkun'] ?? null, $akun);
-        $this->ValidasiSatuan(self::AmbilDaftarTeks($isi, 'KodeSatuan'));
-        $this->ValidasiKelompokPajak($isi['KelompokPajak'] ?? null);
+        $this->ValidasiSatuan($this->AmbilDaftarTeks($isi, 'KodeSatuan'));
+        $this->ValidasiKelompokPajak($isi['KelompokPajak'] ?? [], is_array($isi['Pengaturan'] ?? null) && ($isi['Pengaturan']['BiayaLayananMasukDpp'] ?? false) === true);
         $this->ValidasiPengaturan($isi['Pengaturan'] ?? null);
 
         foreach (['Kategori', 'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian'] as $bagian) {
             $this->ValidasiDaftarNama($isi, $bagian);
         }
 
-        foreach (self::AmbilDaftarTeks($isi, 'LaporanUnggulan') as $laporan) {
+        foreach ($this->AmbilDaftarTeks($isi, 'LaporanUnggulan') as $laporan) {
             if (LaporanUnggulan::tryFrom($laporan) === null) {
                 $this->Catat('LaporanUnggulan', "Laporan {$laporan} tidak dikenal.");
             }
@@ -69,7 +69,7 @@ final class ValidatorTemplate
      */
     private function ValidasiModeKasir(array $isi): void
     {
-        $daftar = self::AmbilDaftarTeks($isi, 'ModeKasir');
+        $daftar = $this->AmbilDaftarTeks($isi, 'ModeKasir');
 
         if ($daftar === []) {
             $this->Catat('ModeKasir', 'Pilih minimal satu mode kasir.');
@@ -227,9 +227,11 @@ final class ValidatorTemplate
         }
     }
 
-    private function ValidasiKelompokPajak(mixed $daftar): void
+    private function ValidasiKelompokPajak(mixed $daftar, bool $biayaLayananMasukDpp): void
     {
         if (! is_array($daftar)) {
+            $this->Catat('KelompokPajak', 'Kelompok pajak harus berupa daftar (boleh kosong).');
+
             return;
         }
 
@@ -248,6 +250,7 @@ final class ValidatorTemplate
         $idPunyaTarifTerbit = $idNasional === [] ? [] : TarifPajak::query()
             ->whereIn('IdJenisPajak', $idNasional)
             ->where('Status', StatusDataMaster::Terbit->value)
+            ->where(fn ($kueri) => $kueri->whereNull('BerlakuSampai')->orWhereDate('BerlakuSampai', '>=', now('Asia/Jakarta')->toDateString()))
             ->distinct()
             ->pluck('IdJenisPajak')
             ->all();
@@ -275,6 +278,7 @@ final class ValidatorTemplate
             }
 
             $jenisTerlihat = [];
+            $urutanTerlihat = [];
 
             foreach ($detail as $baris) {
                 $kode = is_array($baris) && is_string($baris['KodeJenisPajak'] ?? null) ? $baris['KodeJenisPajak'] : '';
@@ -293,11 +297,25 @@ final class ValidatorTemplate
                 $jenisTerlihat[$kode] = true;
 
                 if ($jenis->Cakupan === CakupanPajak::Nasional && ! in_array($jenis->Id, $idPunyaTarifTerbit, true)) {
-                    $this->Catat('KelompokPajak', "Kelompok {$nama}: {$jenis->Nama} belum punya tarif terbit di P-02.");
+                    $this->Catat('KelompokPajak', "Kelompok {$nama}: {$jenis->Nama} belum punya tarif terbit yang masih berlaku.");
                 }
 
-                if (! is_string($baris['DasarPengenaan'] ?? null) || DasarPengenaanPajak::tryFrom($baris['DasarPengenaan']) === null) {
+                $dasar = is_string($baris['DasarPengenaan'] ?? null) ? DasarPengenaanPajak::tryFrom($baris['DasarPengenaan']) : null;
+
+                if ($dasar === null) {
                     $this->Catat('KelompokPajak', "Kelompok {$nama}: dasar pengenaan {$kode} tidak dikenal.");
+                } elseif ($dasar === DasarPengenaanPajak::SubtotalPlusLayanan && ! $biayaLayananMasukDpp) {
+                    $this->Catat('KelompokPajak', "Kelompok {$nama}: {$kode} memakai subtotal + service charge, padahal pengaturan service charge tidak masuk DPP.");
+                }
+
+                $urutan = $baris['Urutan'] ?? null;
+
+                if (! is_int($urutan) || $urutan < 1 || $urutan > 9 || isset($urutanTerlihat[$urutan])) {
+                    $this->Catat('KelompokPajak', "Kelompok {$nama}: urutan {$kode} harus angka 1–9 dan tidak ganda.");
+                }
+
+                if (is_int($urutan)) {
+                    $urutanTerlihat[$urutan] = true;
                 }
             }
         }
@@ -311,14 +329,15 @@ final class ValidatorTemplate
             return;
         }
 
-        $kelipatan = self::AmbilDesimal($pengaturan['KelipatanPembulatan'] ?? null);
+        $pembulatan = is_array($pengaturan['PembulatanTunai'] ?? null) ? $pengaturan['PembulatanTunai'] : [];
+        $kelipatan = $pembulatan['Kelipatan'] ?? null;
 
-        if ($kelipatan === null || ! $kelipatan->isPositive() || ! $kelipatan->getFractionalPart()->isZero()) {
-            $this->Catat('Pengaturan', 'Kelipatan pembulatan harus bilangan bulat Rupiah lebih dari 0 (misal 100).');
+        if (! is_int($kelipatan) || $kelipatan < 1) {
+            $this->Catat('Pengaturan', 'Kelipatan pembulatan tunai harus bilangan bulat Rupiah lebih dari 0 (misal 100).');
         }
 
-        if (! is_string($pengaturan['ArahPembulatan'] ?? null) || ArahPembulatan::tryFrom($pengaturan['ArahPembulatan']) === null) {
-            $this->Catat('Pengaturan', 'Arah pembulatan tidak dikenal.');
+        if (! is_string($pembulatan['Arah'] ?? null) || ArahPembulatan::tryFrom($pembulatan['Arah']) === null) {
+            $this->Catat('Pengaturan', 'Arah pembulatan tunai tidak dikenal.');
         }
 
         $persen = self::AmbilDesimal($pengaturan['PersenBiayaLayanan'] ?? null);
@@ -343,7 +362,7 @@ final class ValidatorTemplate
      */
     private function ValidasiDaftarNama(array $isi, string $bagian): void
     {
-        $daftar = self::AmbilDaftarTeks($isi, $bagian);
+        $daftar = $this->AmbilDaftarTeks($isi, $bagian);
 
         foreach ($daftar as $nama) {
             if (trim($nama) === '') {
@@ -370,14 +389,22 @@ final class ValidatorTemplate
     }
 
     /**
+     * Daftar teks pada isi. Elemen yang bukan teks dilaporkan, bukan dibuang diam-diam.
+     *
      * @param  array<mixed>  $isi
      * @return list<string>
      */
-    private static function AmbilDaftarTeks(array $isi, string $kunci): array
+    private function AmbilDaftarTeks(array $isi, string $kunci): array
     {
         $daftar = $isi[$kunci] ?? [];
 
-        return is_array($daftar) ? array_values(array_filter($daftar, 'is_string')) : [];
+        if (! is_array($daftar) || ! array_is_list($daftar) || count(array_filter($daftar, 'is_string')) !== count($daftar)) {
+            $this->Catat($kunci, 'Isian harus berupa daftar teks.');
+
+            return is_array($daftar) ? array_values(array_filter($daftar, 'is_string')) : [];
+        }
+
+        return $daftar;
     }
 
     private static function AmbilDesimal(mixed $nilai): ?BigDecimal

@@ -137,7 +137,7 @@ describe('Menyunting draf template (P-03 langkah 2)', function (): void {
         $this->put(UrlVersi('FNB-QSR', 1, '/isi-bisnis'), $isi)->assertSessionHasErrors($bidang);
     })->with([
         'mode kasir tidak dikenal' => [['ModeKasir' => ['Terbang']], 'ModeKasir.0'],
-        'kelipatan desimal' => [['Pengaturan' => ['KelipatanPembulatan' => '0.5']], 'Pengaturan.KelipatanPembulatan'],
+        'kelipatan desimal' => [['Pengaturan' => ['PembulatanTunai' => ['Kelipatan' => '0.5']]], 'Pengaturan.PembulatanTunai.Kelipatan'],
         'metode HPP tidak dikenal' => [['Pengaturan' => ['MetodeHpp' => 'Lifo']], 'Pengaturan.MetodeHpp'],
     ]);
 });
@@ -207,6 +207,29 @@ describe('Terbitkan template (BR-P03.3, BR-P03.4)', function (): void {
     });
 });
 
+describe('Versi usang (BR-P03.4)', function (): void {
+    it('versi usang tidak bisa diubah; duplikasi dicatat di log audit', function (): void {
+        MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin));
+        $this->post(UrlVersi('FNB-CAF', 1, '/terbitkan'))->assertSessionHasNoErrors();
+        $this->post(UrlVersi('FNB-CAF', 1, '/duplikasi'))->assertSessionHasNoErrors();
+        $this->post(UrlVersi('FNB-CAF', 2, '/terbitkan'))->assertSessionHasNoErrors();
+
+        expect(AmbilVersiUji('FNB-CAF', 1)->Status)->toBe(StatusTemplateSektor::Usang);
+        $this->put(UrlVersi('FNB-CAF', 1, '/isi-bisnis'), AmbilIsiBisnisUji('FNB-CAF'))->assertSessionHasErrors('Umum');
+        $this->post(UrlVersi('FNB-CAF', 1, '/terbitkan'))->assertSessionHasErrors('Umum');
+
+        $log = LogAuditPengelola::query()->where('Aksi', 'template.versi.duplikasi')->sole();
+        expect($log->NilaiBaru)->toBe(['Kode' => 'FNB-CAF', 'Versi' => 2, 'VersiAsal' => 1]);
+    });
+
+    it('Dukungan dan Mitra & Penjualan boleh melihat tetapi tidak mengubah', function (PeranPengelolaBawaan $peran): void {
+        MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota($peran));
+
+        $this->get(BantuanPengelola::Url('/template-sektor'))->assertOk();
+        $this->post(UrlVersi('FNB-CAF', 1, '/duplikasi'))->assertForbidden();
+    })->with([PeranPengelolaBawaan::Dukungan, PeranPengelolaBawaan::MitraPenjualan]);
+});
+
 describe('Hapus draf (BR-P03.2)', function (): void {
     it('versi terbit tidak bisa dihapus; draf bisa dihapus dan template kosong ikut terhapus', function (): void {
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin));
@@ -219,7 +242,8 @@ describe('Hapus draf (BR-P03.2)', function (): void {
 
         $this->delete(UrlVersi('FNB-QSR', 1))->assertSessionHasNoErrors();
         expect(TemplateSektor::query()->where('Kode', 'FNB-QSR')->exists())->toBeFalse()
-            ->and(LogAuditPengelola::query()->where('Aksi', 'template.draf.hapus')->count())->toBe(2);
+            ->and(LogAuditPengelola::query()->where('Aksi', 'template.draf.hapus')->count())->toBe(2)
+            ->and(LogAuditPengelola::query()->where('Aksi', 'template.hapus')->count())->toBe(1);
     });
 });
 

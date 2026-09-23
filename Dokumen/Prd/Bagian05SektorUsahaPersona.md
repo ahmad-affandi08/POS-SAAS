@@ -23,13 +23,13 @@ Template Sektor adalah paket konfigurasi yang diterapkan saat onboarding (dan bi
 | SVC-WRK | Bengkel | Bengkel motor/mobil | `service` + part | Work order, jasa + sparepart, mekanik, riwayat kendaraan |
 | SVC-GEN | Jasa Umum | Fotokopi, percetakan, rental | `service` | Order kustom, DP, status pengerjaan |
 
-Mode kasir menentukan layout layar POS (§17.4):
+Mode kasir menentukan layout layar POS (§17.4). Di kode dan data, nilainya memakai enum `ModeKasir` (D-05) yang tertulis dalam kurung:
 
-- `retail`: fokus scan barcode, daftar keranjang panjang.
-- `quick`: grid tombol produk besar, satu ketukan per item.
-- `table`: denah meja, order terbuka per meja.
-- `service`: pilih layanan + staf + jadwal.
-- `wholesale`: input cepat SKU × qty, harga per level, tempo.
+- `retail` (`Retail`): fokus scan barcode, daftar keranjang panjang.
+- `quick` (`Cepat`): grid tombol produk besar, satu ketukan per item.
+- `table` (`Meja`): denah meja, order terbuka per meja.
+- `service` (`Layanan`): pilih layanan + staf + jadwal.
+- `wholesale` (`Grosir`): input cepat SKU × qty, harga per level, tempo.
 
 ### 5.2 Persona
 

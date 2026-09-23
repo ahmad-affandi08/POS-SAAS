@@ -79,6 +79,11 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
             <fieldset disabled={!bolehUbah} className="flex flex-col gap-6">
                 <section className="flex flex-col gap-2">
                     <h3 className="text-label font-semibold text-teks-utama">Bagan akun (COA)</h3>
+                    {data.Akun.length === 0 ? (
+                        <p className="text-keterangan text-teks-sekunder">
+                            Belum ada akun. Tambahkan akun atau salin template yang sudah ada saat membuat template.
+                        </p>
+                    ) : null}
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[40rem] text-left text-isi">
                             <caption className="sr-only">Bagan akun template</caption>
@@ -177,7 +182,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                 </section>
 
                 <section className="flex flex-col gap-2">
-                    <h3 className="text-label font-semibold text-teks-utama">Pemetaan akun per peristiwa (§11.3)</h3>
+                    <h3 className="text-label font-semibold text-teks-utama">Pemetaan akun per jenis transaksi</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {pilihan.PeranAkun.map((peran) => (
                             <BidangPilihan

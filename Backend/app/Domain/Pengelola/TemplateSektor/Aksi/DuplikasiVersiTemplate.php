@@ -27,8 +27,9 @@ final class DuplikasiVersiTemplate
     public function Jalankan(PenggunaPengelola $pelaku, TemplateSektorVersi $asal): TemplateSektorVersi
     {
         return DB::transaction(function () use ($pelaku, $asal): TemplateSektorVersi {
+            // Urutan kunci sama di semua aksi template: baris TemplateSektor dulu, lalu versinya.
             $template = TemplateSektor::query()->lockForUpdate()->findOrFail($asal->IdTemplateSektor);
-            $asal->refresh();
+            $asal = TemplateSektorVersi::query()->lockForUpdate()->findOrFail($asal->Id);
 
             if ($asal->Status === StatusTemplateSektor::Draf) {
                 throw new PelanggaranAturanBisnis('BR-P03.4', 'Versi ini masih draf. Ubah draf itu langsung.');

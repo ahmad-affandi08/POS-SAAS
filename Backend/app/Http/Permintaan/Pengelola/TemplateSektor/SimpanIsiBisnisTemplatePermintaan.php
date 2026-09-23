@@ -41,8 +41,9 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
             'LaporanUnggulan' => ['present', 'array', 'max:8'],
             'LaporanUnggulan.*' => ['string', Rule::enum(LaporanUnggulan::class)],
             'Pengaturan' => ['required', 'array'],
-            'Pengaturan.KelipatanPembulatan' => ['required', 'string', 'regex:/^[1-9]\d{0,6}$/'],
-            'Pengaturan.ArahPembulatan' => ['required', 'string', Rule::enum(ArahPembulatan::class)],
+            'Pengaturan.PembulatanTunai' => ['required', 'array'],
+            'Pengaturan.PembulatanTunai.Kelipatan' => ['required', 'integer', 'min:1', 'max:1000000'],
+            'Pengaturan.PembulatanTunai.Arah' => ['required', 'string', Rule::enum(ArahPembulatan::class)],
             'Pengaturan.PersenBiayaLayanan' => ['required', 'string', 'regex:/^\d{1,2}(\.\d{1,2})?$/'],
             'Pengaturan.BiayaLayananMasukDpp' => ['required', 'boolean'],
             'Pengaturan.StokBolehMinus' => ['required', 'boolean'],
@@ -57,7 +58,7 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
     public function messages(): array
     {
         return [
-            'Pengaturan.KelipatanPembulatan.regex' => 'Kelipatan pembulatan bilangan bulat Rupiah, misal 100.',
+            'Pengaturan.PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan bilangan bulat Rupiah, misal 100.',
             'Pengaturan.PersenBiayaLayanan.regex' => 'Service charge berupa persen, misal 5 atau 7.5.',
         ];
     }
@@ -83,8 +84,10 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
             'AlasanPenyesuaian' => $daftar('AlasanPenyesuaian'),
             'LaporanUnggulan' => $daftar('LaporanUnggulan'),
             'Pengaturan' => [
-                'KelipatanPembulatan' => $this->string('Pengaturan.KelipatanPembulatan')->toString(),
-                'ArahPembulatan' => $this->string('Pengaturan.ArahPembulatan')->toString(),
+                'PembulatanTunai' => [
+                    'Kelipatan' => $this->integer('Pengaturan.PembulatanTunai.Kelipatan'),
+                    'Arah' => $this->string('Pengaturan.PembulatanTunai.Arah')->toString(),
+                ],
                 'PersenBiayaLayanan' => $this->string('Pengaturan.PersenBiayaLayanan')->toString(),
                 'BiayaLayananMasukDpp' => $this->boolean('Pengaturan.BiayaLayananMasukDpp'),
                 'StokBolehMinus' => $this->boolean('Pengaturan.StokBolehMinus'),

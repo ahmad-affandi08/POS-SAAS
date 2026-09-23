@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.16 |
+| Versi | 1.17 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -37,6 +37,7 @@
 | 1.14 | Rincian P-04 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus", disetujui pemilik produk 23/09/2026): harga paket berversi di tabel `HargaPaket` dengan four-eyes (Keuangan mengusulkan, Super Admin menyetujui) dan pilihan grandfathering (BR-P04.1); status paket Draf/Aktif/Diarsipkan; batas `null` = tak terbatas; model katalog di `Domain/Tenant`, aksi kelola di `Domain/Pengelola/Katalog`; data awal katalog dari file data sebagai draf; penegakan batas, `konfigurasi-aplikasi`, downgrade (BR-P04.4), dan pemakaian kupon ditunda ke F-00/F-19/P-08 (BR-P04.5–P04.7). |
 | 1.15 | Keputusan D-11 (harga langganan per paket, bukan per outlet; tambahan outlet/perangkat/kuota lewat add-on), batas paket §21 dilengkapi, add-on & kupon tanpa four-eyes, kunci fitur dipertahankan. Pertanyaan terbuka no. 14–17 ditutup. |
 | 1.16 | Rincian P-03 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus"): model `TemplateSektor`/`TemplateSektorVersi` di `Domain/PanduanAwal` (dibaca F-01), aksi kelola di `Domain/Pengelola/TemplateSektor`; satu draf per template, versi terbit tidak diubah (BR-P03.4); pembagian izin isi bisnis/akun/terbitkan (BR-P03.5); aturan validasi otomatis dirinci (BR-P03.3); nilai mode kasir `Retail`/`Cepat`/`Meja`/`Layanan`/`Grosir` (§5.1); data awal 3 template dari file data sebagai draf; pratinjau sandbox, tawarkan pembaruan, dan pelacakan versi tenant ditunda ke F-01 (BR-P03.6, §25 no. 15). |
+| 1.17 | Tindak lanjut tinjauan P-03: nilai enum mode kasir dicantumkan di §5.1, cakupan template sektor ditambahkan ke tabel peran §19.3, peran akun service charge bernama `PendapatanBiayaLayanan` (istilah `BiayaLayanan` Lampiran D), pengaturan pembulatan template memakai bentuk `PembulatanTunai {Kelipatan, Arah}` yang sama dengan test vector, dan aturan validasi BR-P03.3 dilengkapi (tarif nasional harus masih berlaku, urutan pajak, konsistensi service charge masuk DPP). |
 
 ---
 
@@ -260,13 +261,13 @@ Template Sektor adalah paket konfigurasi yang diterapkan saat onboarding (dan bi
 | SVC-WRK | Bengkel | Bengkel motor/mobil | `service` + part | Work order, jasa + sparepart, mekanik, riwayat kendaraan |
 | SVC-GEN | Jasa Umum | Fotokopi, percetakan, rental | `service` | Order kustom, DP, status pengerjaan |
 
-Mode kasir menentukan layout layar POS (§17.4):
+Mode kasir menentukan layout layar POS (§17.4). Di kode dan data, nilainya memakai enum `ModeKasir` (D-05) yang tertulis dalam kurung:
 
-- `retail`: fokus scan barcode, daftar keranjang panjang.
-- `quick`: grid tombol produk besar, satu ketukan per item.
-- `table`: denah meja, order terbuka per meja.
-- `service`: pilih layanan + staf + jadwal.
-- `wholesale`: input cepat SKU × qty, harga per level, tempo.
+- `retail` (`Retail`): fokus scan barcode, daftar keranjang panjang.
+- `quick` (`Cepat`): grid tombol produk besar, satu ketukan per item.
+- `table` (`Meja`): denah meja, order terbuka per meja.
+- `service` (`Layanan`): pilih layanan + staf + jadwal.
+- `wholesale` (`Grosir`): input cepat SKU × qty, harga per level, tempo.
 
 ### 5.2 Persona
 
@@ -535,9 +536,9 @@ Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
 - BR-P03.3 Template tidak bisa terbit jika validasi otomatis gagal. Validasi dijalankan ulang saat terbit (data P-02/P-04 bisa berubah sejak draf divalidasi). Aturannya:
   - **COA:** minimal satu akun, kode unik berformat `d-dddd`, digit pertama sesuai tipe (1 Aset, 2 Kewajiban, 3 Ekuitas, 4 Pendapatan, 5 HPP, 6 Beban), dan saldo normal konsisten dengan tipe (Aset/HPP/Beban = Debit, lainnya = Kredit; akun kontra kebalikannya). Inilah arti "COA seimbang" untuk template; keseimbangan Σ debit = Σ kredit diuji pada jurnal (F-13).
   - **Pemetaan akun:** setiap peran akun §11.3 (`PeranAkun`) terisi, merujuk akun yang ada di COA template, dengan tipe yang sesuai perannya.
-  - **Kelompok pajak:** merujuk `JenisPajak` P-02 yang ada. Jenis pajak nasional wajib punya minimal satu tarif terbit; jenis pajak daerah cukup ada, karena tarifnya dipilih per kota outlet saat F-02.
+  - **Kelompok pajak:** merujuk `JenisPajak` P-02 yang ada. Jenis pajak nasional wajib punya minimal satu tarif terbit yang masih berlaku; jenis pajak daerah cukup ada, karena tarifnya dipilih per kota outlet saat F-02. Urutan pajak 1–9 tidak ganda. Dasar pengenaan `SubtotalPlusLayanan` hanya boleh bila pengaturan `BiayaLayananMasukDpp` aktif.
   - **Fitur & satuan:** kunci fitur ada di katalog P-04, kode satuan ada dan aktif di `SatuanStandar`.
-  - **Mode kasir & pengaturan:** minimal satu mode kasir dan mode default termasuk di dalamnya; kelipatan pembulatan > 0; persen service charge 0–10; nama kategori, stasiun dapur, dan alasan tidak ganda.
+  - **Mode kasir & pengaturan:** minimal satu mode kasir dan mode default termasuk di dalamnya; `PembulatanTunai.Kelipatan` bilangan bulat > 0; persen service charge 0–10; daftar berisi teks saja; nama kategori, stasiun dapur, dan alasan tidak ganda.
 - BR-P03.4 Satu template hanya punya **satu draf** pada satu waktu. Versi `Terbit` dan `Usang` tidak diubah (koreksi = duplikasi menjadi draf versi baru). Hanya draf yang boleh dihapus; versi terbit/usang tidak pernah dihapus (memenuhi BR-P03.2 tanpa perlu menghitung pemakaian tenant).
 - BR-P03.5 Pembagian tugas (§19.3): Konten & Legal mengubah isi bisnis (fitur, mode kasir, kategori, satuan, pengaturan, stasiun dapur, alasan, laporan unggulan); Keuangan mengubah COA, pemetaan akun, dan kelompok pajak; Teknis/Super Admin menerbitkan. Semua peran bisa melihat. Setiap perubahan dicatat di log audit.
 - BR-P03.6 Pratinjau sandbox (langkah 4), tawarkan pembaruan ke tenant (langkah 6), pencatatan versi yang diterapkan tenant (BR-P03.1), dan produk contoh dibangun bersama F-01 karena membutuhkan data tenant.
@@ -3263,9 +3264,9 @@ Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.ca
 | Peran | Cakupan | Tidak boleh |
 |---|---|---|
 | **Super Admin** | Semua menu pengelola, akses darurat, kredensial integrasi produksi, tangguhkan tenant, persetujuan kedua | — (semua aksi tetap diaudit) |
-| **Keuangan** | Paket & harga (usul), tagihan, verifikasi pembayaran, refund (≤ batas), laporan MRR, komisi mitra | Akses dukungan ke data tenant, kredensial integrasi |
+| **Keuangan** | Paket & harga (usul), COA & pemetaan akun template sektor, tagihan, verifikasi pembayaran, refund (≤ batas), laporan MRR, komisi mitra | Akses dukungan ke data tenant, kredensial integrasi |
 | **Dukungan** | Tiket, tampilan 360° tenant, perpanjang trial, override sementara, akses dukungan berizin, alat bantu | Mengubah harga paket, refund, data master pajak |
-| **Teknis** | Monitoring, job gagal, rilis aplikasi, flag fitur, integrasi, insiden, alat bantu teknis | Tagihan & refund |
+| **Teknis** | Monitoring, job gagal, rilis aplikasi, flag fitur, integrasi, menerbitkan template sektor, insiden, alat bantu teknis | Tagihan & refund |
 | **Konten & Legal** | Data master regulasi (pengaju), template sektor (isi), dokumen legal, template pesan, help center | Tenant & tagihan |
 | **Mitra & Penjualan** | Mitra, atribusi, perpanjang trial prospek, analitik funnel | Akses dukungan, tagihan |
 | **Analis** | Baca saja: laporan platform & analitik (data agregat, tanpa data pribadi) | Semua aksi ubah |
@@ -3607,6 +3608,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
 14. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) dan BR-P04.4 (downgrade) wajib dibangun & diuji bersama `Langganan` di F-00/F-19.
 15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
+16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

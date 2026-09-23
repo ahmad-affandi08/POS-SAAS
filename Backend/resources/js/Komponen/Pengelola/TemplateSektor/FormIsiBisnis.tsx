@@ -133,18 +133,25 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                 <fieldset className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
                     <legend className="mb-2 text-label font-semibold text-teks-utama">Pengaturan default</legend>
                     <BidangTeks
-                        label="Kelipatan pembulatan (Rp)"
+                        label="Kelipatan pembulatan tunai (Rp)"
                         inputMode="numeric"
-                        nilai={data.Pengaturan.KelipatanPembulatan}
-                        saatBerubah={(nilai) => AturPengaturan('KelipatanPembulatan', nilai)}
-                        galat={galat['Pengaturan.KelipatanPembulatan']}
+                        nilai={String(data.Pengaturan.PembulatanTunai.Kelipatan)}
+                        saatBerubah={(nilai) =>
+                            AturPengaturan('PembulatanTunai', {
+                                ...data.Pengaturan.PembulatanTunai,
+                                Kelipatan: Number(nilai.replace(/\D/g, '')),
+                            })
+                        }
+                        galat={galat['Pengaturan.PembulatanTunai.Kelipatan']}
                     />
                     <BidangPilihan
-                        label="Arah pembulatan"
-                        nilai={data.Pengaturan.ArahPembulatan}
+                        label="Arah pembulatan tunai"
+                        nilai={data.Pengaturan.PembulatanTunai.Arah}
                         opsi={pilihan.ArahPembulatan}
-                        saatBerubah={(nilai) => AturPengaturan('ArahPembulatan', nilai)}
-                        galat={galat['Pengaturan.ArahPembulatan']}
+                        saatBerubah={(nilai) =>
+                            AturPengaturan('PembulatanTunai', { ...data.Pengaturan.PembulatanTunai, Arah: nilai })
+                        }
+                        galat={galat['Pengaturan.PembulatanTunai.Arah']}
                     />
                     <BidangPilihan
                         label="Metode HPP"

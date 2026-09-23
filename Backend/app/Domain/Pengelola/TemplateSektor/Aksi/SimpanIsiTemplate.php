@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\TemplateSektor\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
+use App\Domain\PanduanAwal\Model\TemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Pengelola\TemplateSektor\Enum\BagianTemplate;
 use App\Domain\Pengelola\TemplateSektor\Layanan\ValidatorTemplate;
@@ -32,6 +33,8 @@ final class SimpanIsiTemplate
     public function Jalankan(PenggunaPengelola $pelaku, TemplateSektorVersi $versi, BagianTemplate $bagian, array $isiBagian): TemplateSektorVersi
     {
         return DB::transaction(function () use ($pelaku, $versi, $bagian, $isiBagian): TemplateSektorVersi {
+            // Urutan kunci sama di semua aksi template: baris TemplateSektor dulu, lalu versinya.
+            TemplateSektor::query()->lockForUpdate()->findOrFail($versi->IdTemplateSektor);
             $versi = TemplateSektorVersi::query()->lockForUpdate()->findOrFail($versi->Id);
 
             if ($versi->Status !== StatusTemplateSektor::Draf) {

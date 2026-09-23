@@ -9,8 +9,7 @@ export type KelompokPajakTemplate = {
 };
 
 export type PengaturanTemplate = {
-    KelipatanPembulatan: string;
-    ArahPembulatan: string;
+    PembulatanTunai: { Kelipatan: number; Arah: string };
     PersenBiayaLayanan: string;
     BiayaLayananMasukDpp: boolean;
     StokBolehMinus: boolean;

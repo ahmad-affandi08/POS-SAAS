@@ -84,8 +84,7 @@ final class BuatTemplateSektor
             'KodeSatuan' => [],
             'KelompokPajak' => [],
             'Pengaturan' => [
-                'KelipatanPembulatan' => '100',
-                'ArahPembulatan' => 'Bawah',
+                'PembulatanTunai' => ['Kelipatan' => 100, 'Arah' => 'Bawah'],
                 'PersenBiayaLayanan' => '0',
                 'BiayaLayananMasukDpp' => false,
                 'StokBolehMinus' => false,
@@ -104,11 +103,10 @@ final class BuatTemplateSektor
      */
     private static function AmbilIsiDasar(string $kode): array
     {
-        $versi = TemplateSektorVersi::query()
-            ->whereHas('TemplateSektor', fn ($kueri) => $kueri->where('Kode', $kode))
-            ->orderByRaw("`Status` = 'Terbit' DESC")
-            ->orderByDesc('Versi')
-            ->first();
+        $kueri = TemplateSektorVersi::query()->whereHas('TemplateSektor', fn ($template) => $template->where('Kode', $kode));
+        // Utamakan versi terbit; bila belum ada, pakai versi terbaru (misal draf pertama).
+        $versi = (clone $kueri)->where('Status', StatusTemplateSektor::Terbit->value)->first()
+            ?? $kueri->orderByDesc('Versi')->first();
 
         if ($versi === null) {
             throw new PelanggaranAturanBisnis('TemplateDasarTidakAda', "Template dasar {$kode} tidak ditemukan.", 'KodeTemplateDasar');

@@ -148,7 +148,7 @@ function FormBuatTemplate({ template, saatSelesai }: PropsFormBuat) {
             <BidangTeks
                 label="Kode sektor"
                 kode
-                keterangan="Sesuai PRD §5.1, misal FNB-RST. Tidak bisa diubah."
+                keterangan="Tiga huruf kelompok dan tiga huruf sektor, misal FNB-RST. Tidak bisa diubah."
                 nilai={formulir.data.Kode}
                 saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                 galat={formulir.errors.Kode}

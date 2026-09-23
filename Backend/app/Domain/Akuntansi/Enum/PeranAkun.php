@@ -34,7 +34,7 @@ enum PeranAkun: string
     case DiskonPenjualan = 'DiskonPenjualan';
     case ReturPenjualan = 'ReturPenjualan';
     case PendapatanJasa = 'PendapatanJasa';
-    case PendapatanServiceCharge = 'PendapatanServiceCharge';
+    case PendapatanBiayaLayanan = 'PendapatanBiayaLayanan';
     case PendapatanLain = 'PendapatanLain';
     case Hpp = 'Hpp';
     case SelisihHpp = 'SelisihHpp';
@@ -53,7 +53,7 @@ enum PeranAkun: string
             self::PendapatanDiterimaDimuka => TipeAkun::Kewajiban,
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
-            self::PendapatanServiceCharge, self::PendapatanLain => TipeAkun::Pendapatan,
+            self::PendapatanBiayaLayanan, self::PendapatanLain => TipeAkun::Pendapatan,
             self::Hpp, self::SelisihHpp, self::Waste => TipeAkun::Hpp,
             self::BebanBiayaPembayaran, self::BebanSelisihKas => TipeAkun::Beban,
         };
@@ -92,7 +92,7 @@ enum PeranAkun: string
             self::DiskonPenjualan => 'Diskon penjualan',
             self::ReturPenjualan => 'Retur penjualan',
             self::PendapatanJasa => 'Pendapatan jasa',
-            self::PendapatanServiceCharge => 'Pendapatan service charge',
+            self::PendapatanBiayaLayanan => 'Pendapatan biaya layanan (service charge)',
             self::PendapatanLain => 'Pendapatan lain (selisih kas lebih, pembulatan)',
             self::Hpp => 'Harga pokok penjualan',
             self::SelisihHpp => 'Selisih HPP / penyesuaian persediaan',

@@ -52,10 +52,11 @@ final class TemplateSektorVersi extends ModelDasar
                 return;
             }
 
+            // Satu-satunya perubahan yang sah: Terbit → Usang beserta waktu pengusangannya.
             $kolomBerubah = array_diff(array_keys($versi->getDirty()), ['Status', 'DiusangkanPada', self::UPDATED_AT]);
-            $bolehDiusangkan = $statusLama === StatusTemplateSektor::Terbit && $versi->Status === StatusTemplateSektor::Usang;
+            $diusangkan = $statusLama === StatusTemplateSektor::Terbit && $versi->Status === StatusTemplateSektor::Usang;
 
-            if ($kolomBerubah !== [] || ($versi->isDirty('Status') && ! $bolehDiusangkan)) {
+            if ($kolomBerubah !== [] || ! $diusangkan) {
                 throw new LogicException('Versi template yang sudah terbit tidak boleh diubah (BR-P03.4).');
             }
         });

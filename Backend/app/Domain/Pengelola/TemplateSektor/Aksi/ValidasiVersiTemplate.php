@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\TemplateSektor\Aksi;
 
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
+use App\Domain\PanduanAwal\Model\TemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Pengelola\TemplateSektor\Layanan\ValidatorTemplate;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,8 @@ final class ValidasiVersiTemplate
     public function Jalankan(TemplateSektorVersi $versi): array
     {
         return DB::transaction(function () use ($versi): array {
+            // Urutan kunci sama di semua aksi template: baris TemplateSektor dulu, lalu versinya.
+            TemplateSektor::query()->lockForUpdate()->findOrFail($versi->IdTemplateSektor);
             $versi = TemplateSektorVersi::query()->lockForUpdate()->findOrFail($versi->Id);
             $hasil = $this->validator->Validasi($versi->Isi);
 

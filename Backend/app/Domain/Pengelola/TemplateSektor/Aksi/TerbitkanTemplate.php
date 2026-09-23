@@ -29,8 +29,9 @@ final class TerbitkanTemplate
     public function Jalankan(PenggunaPengelola $pelaku, TemplateSektorVersi $versi): TemplateSektorVersi
     {
         $hasil = DB::transaction(function () use ($pelaku, $versi): array {
+            // Urutan kunci sama di semua aksi template: baris TemplateSektor dulu, lalu versinya.
             $template = TemplateSektor::query()->lockForUpdate()->findOrFail($versi->IdTemplateSektor);
-            $versi = TemplateSektorVersi::query()->findOrFail($versi->Id);
+            $versi = TemplateSektorVersi::query()->lockForUpdate()->findOrFail($versi->Id);
 
             if ($versi->Status !== StatusTemplateSektor::Draf) {
                 throw new PelanggaranAturanBisnis('StatusTidakSesuai', "Versi {$versi->Versi} sudah {$versi->Status->AmbilLabel()}.");

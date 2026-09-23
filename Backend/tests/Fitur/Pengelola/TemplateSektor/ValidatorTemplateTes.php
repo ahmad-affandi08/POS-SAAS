@@ -87,7 +87,7 @@ describe('Data awal template sektor (P-03)', function (): void {
 describe('Validasi otomatis template (BR-P03.3)', function (): void {
     it('menolak kelompok pajak nasional yang belum punya tarif terbit di P-02', function (): void {
         expect(AmbilPesanValidasi(AmbilIsiTemplateAwal('RTL-GEN'), 'KelompokPajak'))
-            ->toBe(['Kelompok Barang kena PPN: PPN belum punya tarif terbit di P-02.']);
+            ->toBe(['Kelompok Barang kena PPN: PPN belum punya tarif terbit yang masih berlaku.']);
     });
 
     it('menerima pajak daerah tanpa tarif terbit karena tarifnya dipilih per kota outlet', function (): void {
@@ -154,7 +154,7 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
         $isi = AmbilIsiTemplateAwal('FNB-CAF');
         $isi['ModeKasir'] = ['Meja', 'Terbang'];
         $isi['ModeKasirDefault'] = 'Cepat';
-        $isi['Pengaturan']['KelipatanPembulatan'] = '0.5';
+        $isi['Pengaturan']['PembulatanTunai']['Kelipatan'] = 0;
         $isi['Pengaturan']['PersenBiayaLayanan'] = '12.5';
         $isi['Pengaturan']['MetodeHpp'] = 'Lifo';
         $isi['Pengaturan']['StokBolehMinus'] = 'ya';
@@ -165,12 +165,41 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
             'Mode kasir Terbang tidak dikenal.',
             'Mode kasir default harus salah satu mode yang dipilih.',
         ])->and(AmbilPesanValidasi($isi, 'Pengaturan'))->toBe([
-            'Kelipatan pembulatan harus bilangan bulat Rupiah lebih dari 0 (misal 100).',
+            'Kelipatan pembulatan tunai harus bilangan bulat Rupiah lebih dari 0 (misal 100).',
             'Service charge harus 0 sampai 10 persen.',
             'Metode HPP tidak dikenal.',
             'Pengaturan StokBolehMinus wajib ya atau tidak.',
         ])->and(AmbilPesanValidasi($isi, 'Kategori'))->toBe(['Nama kopi ganda.'])
             ->and(AmbilPesanValidasi($isi, 'LaporanUnggulan'))->toBe(['Laporan OmzetBulanan tidak dikenal.']);
+    });
+
+    it('melaporkan elemen daftar yang bukan teks, bukan membuangnya diam-diam', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-QSR');
+        $isi['KunciFitur'][] = 123;
+        $isi['LaporanUnggulan'][] = null;
+
+        expect(AmbilPesanValidasi($isi, 'KunciFitur'))->toBe(['Isian harus berupa daftar teks.'])
+            ->and(AmbilPesanValidasi($isi, 'LaporanUnggulan'))->toBe(['Isian harus berupa daftar teks.']);
+    });
+
+    it('memeriksa urutan pajak dan konsistensi service charge masuk DPP', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-QSR');
+        $isi['KelompokPajak'][0]['Detail'][0]['DasarPengenaan'] = 'SubtotalPlusLayanan';
+        $isi['KelompokPajak'][0]['Detail'][] = ['KodeJenisPajak' => 'Ppn', 'DasarPengenaan' => 'Subtotal', 'Urutan' => 1];
+        TerbitkanPpnUji();
+
+        expect(AmbilPesanValidasi($isi, 'KelompokPajak'))->toBe([
+            'Kelompok Makan & minum: PbjtMakananMinuman memakai subtotal + service charge, padahal pengaturan service charge tidak masuk DPP.',
+            'Kelompok Makan & minum: urutan Ppn harus angka 1–9 dan tidak ganda.',
+        ]);
+    });
+
+    it('tarif nasional yang sudah berakhir tidak dihitung sebagai tarif terbit', function (): void {
+        TerbitkanPpnUji();
+        TarifPajak::query()->update(['BerlakuSampai' => '2026-06-30']);
+
+        expect(AmbilPesanValidasi(AmbilIsiTemplateAwal('RTL-GEN'), 'KelompokPajak'))
+            ->toBe(['Kelompok Barang kena PPN: PPN belum punya tarif terbit yang masih berlaku.']);
     });
 
     it('melaporkan isi yang rusak sebagai galat, bukan exception', function (): void {
