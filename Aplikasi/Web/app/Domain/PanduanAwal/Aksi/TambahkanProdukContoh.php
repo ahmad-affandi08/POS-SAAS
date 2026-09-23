@@ -55,9 +55,9 @@ final class TambahkanProdukContoh
             $idKelompokPajak = $isi === null ? null : $this->penentu->TentukanIdKelompokPajak($isi);
             $daftar = [];
 
-            foreach ($pilihan as $satu) {
+            foreach ($pilihan as $indeks => $satu) {
                 $contoh = $contohPerNama[mb_strtolower(trim($satu['Nama']))]
-                    ?? throw new PelanggaranAturanBisnis('ProdukContohTidakDikenal', "Produk contoh {$satu['Nama']} tidak ada di template Anda. Muat ulang halaman ini.", 'ProdukContoh');
+                    ?? throw new PelanggaranAturanBisnis('ProdukContohTidakDikenal', "Produk contoh {$satu['Nama']} tidak ada di template Anda. Muat ulang halaman ini.", "ProdukContoh.{$indeks}.Nama");
 
                 $daftar[] = new DataProdukCepat(
                     nama: $contoh->nama,
