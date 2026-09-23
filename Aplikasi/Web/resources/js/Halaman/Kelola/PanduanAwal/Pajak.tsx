@@ -98,7 +98,8 @@ export default function HalamanPajak({
                     ) : null}
                     {Pkp && !TarifPpn ? (
                         <p className="text-isi text-teks-sekunder">
-                            Tarif PPN belum tersedia. Anda tetap bisa menyimpan; PPN belum dihitung sampai tarifnya tersedia.
+                            Tarif PPN belum tersedia. Anda tetap bisa menyimpan; PPN belum dihitung sampai tarifnya
+                            tersedia.
                         </p>
                     ) : null}
                 </section>
@@ -132,8 +133,8 @@ export default function HalamanPajak({
                         </p>
                     ) : formulir.data.PungutPbjt ? (
                         <Pemberitahuan jenis="peringatan" judul="Tarif PBJT belum tersedia">
-                            Tarif PBJT {Kota.Nama} belum tersedia. Anda tetap bisa menyimpan; PBJT belum dihitung
-                            sampai tarifnya tersedia.
+                            Tarif PBJT {Kota.Nama} belum tersedia. Anda tetap bisa menyimpan; PBJT belum dihitung sampai
+                            tarifnya tersedia.
                         </Pemberitahuan>
                     ) : null}
                 </section>
