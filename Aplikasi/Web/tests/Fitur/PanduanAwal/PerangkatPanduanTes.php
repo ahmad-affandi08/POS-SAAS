@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Enum\JenisPerangkat;
-use App\Domain\Organisasi\Model\Peran;
-use App\Domain\Organisasi\Model\PeranIzin;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\Peran;
 use App\Domain\Organisasi\Model\Perangkat;
+use App\Domain\Organisasi\Model\PeranIzin;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia;

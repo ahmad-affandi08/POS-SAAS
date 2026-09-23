@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Support\Facades\Mail;
@@ -22,7 +23,7 @@ beforeEach(function (): void {
 /**
  * Tenant kafe dengan outlet di Surakarta dan template FNB-CAF diterapkan.
  *
- * @return array{Tenant: Tenant, Pemilik: \App\Domain\Organisasi\Model\Pengguna, Outlet: Outlet}
+ * @return array{Tenant: Tenant, Pemilik: Pengguna, Outlet: Outlet}
  */
 function SiapkanKafeSoloUji(bool $denganKota = true): array
 {
