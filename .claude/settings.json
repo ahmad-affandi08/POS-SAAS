@@ -6,6 +6,72 @@
       "Read(./**/.env.local)",
       "Read(./**/.env.production)",
       "Read(./**/.env.staging)"
+    ],
+    "allow": [
+      "Edit(./Aplikasi/**)",
+      "Write(./Aplikasi/**)",
+      "Edit(./Paket/**)",
+      "Write(./Paket/**)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(sed -n:*)",
+      "Bash(find:*)",
+      "Bash(diff:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(cut:*)",
+      "Bash(awk:*)",
+      "Bash(echo:*)",
+      "Bash(which:*)",
+      "Bash(mkdir:*)",
+      "Bash(export COMPOSER_ALLOW_SUPERUSER=1:*)",
+      "Bash(COMPOSER_ALLOW_SUPERUSER=1 composer:*)",
+      "Bash(composer:*)",
+      "Bash(DB_DATABASE=PosSaasTes*)",
+      "Bash(vendor/bin/pest:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(vendor/bin/phpstan:*)",
+      "Bash(php artisan:*)",
+      "Bash(npm run:*)",
+      "Bash(npm ci)",
+      "Bash(npx prettier:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx vitest:*)",
+      "Bash(dart:*)",
+      "Bash(flutter:*)",
+      "Bash(melos:*)",
+      "Bash(python3 Alat/CekKonvensi.py:*)",
+      "Bash(python3 Alat/PecahPrd.py:*)",
+      "Bash(service mysql start)",
+      "Bash(service mysql status)",
+      "Bash(cp -al /home/user/POS-SAAS/Aplikasi/Web/*)",
+      "Bash(cp -a /home/user/POS-SAAS/Aplikasi/Web/vendor/composer*)",
+      "Bash(rm -rf .claude/worktrees/*)",
+      "Bash(rm -rf vendor/composer)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git push -u origin claude/*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git worktree:*)",
+      "Bash(git mv:*)",
+      "Bash(git grep:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(git rev-parse:*)"
     ]
   },
   "hooks": {
@@ -13,13 +79,19 @@
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/LindungiFile.py\"" }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/LindungiFile.py\""
+          }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekPerintah.py\"" }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekPerintah.py\""
+          }
         ]
       }
     ],
@@ -27,14 +99,20 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekSetelahEdit.py\"" }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekSetelahEdit.py\""
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekSebelumSelesai.py\"" }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/CekSebelumSelesai.py\""
+          }
         ]
       }
     ]
