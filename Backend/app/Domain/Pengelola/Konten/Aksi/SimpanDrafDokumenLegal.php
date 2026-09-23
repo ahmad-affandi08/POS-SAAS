@@ -69,7 +69,8 @@ final class SimpanDrafDokumenLegal
                 );
 
                 return $draf;
-            });
+                // Draf pertama suatu jenis hanya dilindungi gap lock; dua permintaan bersamaan bisa deadlock, maka dicoba ulang.
+            }, 3);
         } catch (UniqueConstraintViolationException) {
             throw new PelanggaranAturanBisnis('BR-P06.4', 'Draf jenis ini baru saja dibuat anggota lain. Muat ulang halaman.', 'Jenis');
         }

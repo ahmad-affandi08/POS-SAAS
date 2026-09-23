@@ -1,5 +1,5 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useId, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -30,14 +30,15 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
     const bolehUbah = Dokumen.Status === 'Draf' && PunyaIzin(props.Pengguna, IzinPengelola.LegalKelola);
     const url = `/legal/${Dokumen.Uuid}`;
 
-    const Terbitkan = () => {
-        if (window.confirm(`Terbitkan ${Dokumen.Label} versi ${Dokumen.Versi}? Versi terbit tidak bisa diubah lagi.`)) {
-            router.post(`${url}/terbitkan`, {}, { preserveScroll: true });
-        }
+    const [memproses, AturMemproses] = useState(false);
+    const opsiKirim = {
+        preserveScroll: true,
+        onStart: () => AturMemproses(true),
+        onFinish: () => AturMemproses(false),
     };
     const Hapus = () => {
         if (window.confirm(`Hapus draf ${Dokumen.Label} versi ${Dokumen.Versi}?`)) {
-            router.delete(url);
+            router.delete(url, opsiKirim);
         }
     };
 
@@ -46,12 +47,9 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
             judul={`${Dokumen.Label} · versi ${Dokumen.Versi}`}
             aksi={
                 bolehUbah ? (
-                    <div className="flex gap-2">
-                        <Tombol onClick={Terbitkan}>Terbitkan</Tombol>
-                        <Tombol varian="bahaya" onClick={Hapus}>
-                            Hapus draf
-                        </Tombol>
-                    </div>
+                    <Tombol varian="bahaya" memproses={memproses} onClick={Hapus}>
+                        Hapus draf
+                    </Tombol>
                 ) : null
             }
         >
@@ -65,7 +63,7 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
                 {Dokumen.DiterbitkanPada ? <span>Terbit {FormatTanggalWaktu(Dokumen.DiterbitkanPada)}</span> : null}
             </div>
             {bolehUbah ? (
-                <FormDraf dokumen={Dokumen} url={url} />
+                <FormDraf dokumen={Dokumen} url={url} galatHalaman={props.errors} />
             ) : (
                 <article className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-6">
                     <h2 className="text-subjudul font-semibold text-teks-utama">{Dokumen.Judul}</h2>
@@ -79,8 +77,11 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
     );
 }
 
-function FormDraf({ dokumen, url }: { dokumen: DokumenLegal; url: string }) {
+type PropsFormDraf = { dokumen: DokumenLegal; url: string; galatHalaman: Record<string, string> };
+
+function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
     const idIsi = useId();
+    const [menerbitkan, AturMenerbitkan] = useState(false);
     const formulir = useForm({
         Jenis: dokumen.Jenis,
         Judul: dokumen.Judul,
@@ -93,6 +94,16 @@ function FormDraf({ dokumen, url }: { dokumen: DokumenLegal; url: string }) {
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
         formulir.put(url, { preserveScroll: true });
+    };
+    // Terbitkan memakai versi tersimpan; perubahan yang belum disimpan harus disimpan dulu (BR-P06.1).
+    const Terbitkan = () => {
+        if (window.confirm(`Terbitkan ${dokumen.Label} versi ${dokumen.Versi}? Versi terbit tidak bisa diubah lagi.`)) {
+            router.post(
+                `${url}/terbitkan`,
+                {},
+                { preserveScroll: true, onStart: () => AturMenerbitkan(true), onFinish: () => AturMenerbitkan(false) },
+            );
+        }
     };
 
     return (
@@ -112,7 +123,7 @@ function FormDraf({ dokumen, url }: { dokumen: DokumenLegal; url: string }) {
                 keterangan="Perubahan materiil paling cepat 30 hari setelah terbit."
                 nilai={formulir.data.BerlakuMulai}
                 saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
-                galat={formulir.errors.BerlakuMulai}
+                galat={formulir.errors.BerlakuMulai ?? galatHalaman.BerlakuMulai}
             />
             <div className="sm:col-span-2">
                 <KotakCentang
@@ -148,10 +159,18 @@ function FormDraf({ dokumen, url }: { dokumen: DokumenLegal; url: string }) {
                     <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Isi}</p>
                 ) : null}
             </div>
-            <div className="sm:col-span-2">
+            <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan draf
                 </Tombol>
+                <Tombol varian="sekunder" memproses={menerbitkan} disabled={formulir.isDirty} onClick={Terbitkan}>
+                    Terbitkan
+                </Tombol>
+                {formulir.isDirty ? (
+                    <span className="text-keterangan text-teks-sekunder">
+                        Simpan perubahan dulu sebelum menerbitkan.
+                    </span>
+                ) : null}
             </div>
         </form>
     );

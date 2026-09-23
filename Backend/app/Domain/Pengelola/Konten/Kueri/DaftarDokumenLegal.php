@@ -17,10 +17,11 @@ final class DaftarDokumenLegal
     /**
      * @return list<array<string, mixed>>
      */
-    public function Ambil(): array
+    public function Ambil(bool $termasukDraf): array
     {
         $hariIni = now('Asia/Jakarta')->toDateString();
         $semua = DokumenLegal::query()
+            ->when(! $termasukDraf, fn ($kueri) => $kueri->where('Status', StatusDokumenLegal::Terbit->value))
             ->orderByDesc('Versi')
             ->get(['Id', 'Uuid', 'Jenis', 'Versi', 'Judul', 'RingkasanPerubahan', 'Materiil', 'BerlakuMulai', 'Status', 'DiterbitkanPada'])
             ->groupBy(fn (DokumenLegal $dokumen) => $dokumen->Jenis->value);

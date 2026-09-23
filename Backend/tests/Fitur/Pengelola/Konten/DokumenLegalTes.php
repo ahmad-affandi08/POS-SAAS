@@ -135,6 +135,19 @@ describe('Tanggal berlaku & pengumuman (BR-P06.3)', function (): void {
         $this->post(BantuanPengelola::Url("/legal/{$draf->Uuid}/terbitkan"))->assertSessionHasNoErrors();
     });
 
+    it('tanggal "hari ini" mengikuti WIB, bukan UTC', function (): void {
+        // 02:00 WIB tanggal 23 = 19:00 UTC tanggal 22.
+        $this->travelTo(Carbon::parse('2026-09-23 02:00:00', 'Asia/Jakarta'));
+        MasukSebagaiLegal($this);
+        $this->post(BantuanPengelola::Url('/legal'), ['Jenis' => 'SyaratKetentuan']);
+        $draf = DokumenLegal::query()->sole();
+
+        $this->put(BantuanPengelola::Url("/legal/{$draf->Uuid}"), IsianDokumenUji(JenisDokumenLegal::SyaratKetentuan, ['BerlakuMulai' => '2026-09-22']));
+        $this->post(BantuanPengelola::Url("/legal/{$draf->Uuid}/terbitkan"))->assertSessionHasErrors('BerlakuMulai');
+        $this->put(BantuanPengelola::Url("/legal/{$draf->Uuid}"), IsianDokumenUji(JenisDokumenLegal::SyaratKetentuan, ['BerlakuMulai' => '2026-09-23']));
+        $this->post(BantuanPengelola::Url("/legal/{$draf->Uuid}/terbitkan"))->assertSessionHasNoErrors();
+    });
+
     it('perubahan tidak materiil boleh berlaku keesokan harinya', function (): void {
         MasukSebagaiLegal($this);
         TerbitkanDokumenUji($this, JenisDokumenLegal::SyaratKetentuan);
@@ -191,5 +204,22 @@ describe('Izin dokumen legal', function (): void {
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/Legal/Dokumen')->where('Dokumen.Versi', 1));
         $this->post(BantuanPengelola::Url('/legal'), ['Jenis' => 'Sla'])->assertForbidden();
         $this->post(BantuanPengelola::Url("/legal/{$dokumen->Uuid}/terbitkan"))->assertForbidden();
-    })->with([PeranPengelolaBawaan::Keuangan, PeranPengelolaBawaan::Teknis, PeranPengelolaBawaan::Dukungan, PeranPengelolaBawaan::Analis]);
+        $this->put(BantuanPengelola::Url("/legal/{$dokumen->Uuid}"), IsianDokumenUji(JenisDokumenLegal::SyaratKetentuan))->assertForbidden();
+        $this->delete(BantuanPengelola::Url("/legal/{$dokumen->Uuid}"))->assertForbidden();
+    })->with([
+        PeranPengelolaBawaan::Keuangan, PeranPengelolaBawaan::Teknis, PeranPengelolaBawaan::Dukungan,
+        PeranPengelolaBawaan::Analis, PeranPengelolaBawaan::MitraPenjualan,
+    ]);
+
+    it('draf hanya terlihat oleh penyusun; Super Admin boleh menyusun', function (): void {
+        MasukSebagaiLegal($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin));
+        $this->post(BantuanPengelola::Url('/legal'), ['Jenis' => 'Sla'])->assertSessionHasNoErrors();
+        $draf = DokumenLegal::query()->sole();
+        $this->get(BantuanPengelola::Url("/legal/{$draf->Uuid}"))->assertOk();
+
+        MasukSebagaiLegal($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan));
+        $this->get(BantuanPengelola::Url("/legal/{$draf->Uuid}"))->assertNotFound();
+        $this->get(BantuanPengelola::Url('/legal'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Dokumen.3.Jenis', 'Sla')->has('Dokumen.3.Versi', 0));
+    });
 });

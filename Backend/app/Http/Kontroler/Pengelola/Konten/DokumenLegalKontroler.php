@@ -9,7 +9,9 @@ use App\Domain\Pengelola\Konten\Aksi\HapusDrafDokumenLegal;
 use App\Domain\Pengelola\Konten\Aksi\SimpanDrafDokumenLegal;
 use App\Domain\Pengelola\Konten\Aksi\TerbitkanDokumenLegal;
 use App\Domain\Pengelola\Konten\Kueri\DaftarDokumenLegal;
+use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Domain\Tenant\Enum\JenisDokumenLegal;
+use App\Domain\Tenant\Enum\StatusDokumenLegal;
 use App\Domain\Tenant\Model\DokumenLegal;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
@@ -29,11 +31,14 @@ final class DokumenLegalKontroler extends Kontroler
 
     public function Daftar(DaftarDokumenLegal $kueri): Response
     {
-        return Inertia::render('Pengelola/Legal/Daftar', ['Dokumen' => $kueri->Ambil()]);
+        // Draf belum publik: hanya penyusun (legal.kelola) yang melihatnya.
+        return Inertia::render('Pengelola/Legal/Daftar', ['Dokumen' => $kueri->Ambil($this->CekBolehLihatDraf())]);
     }
 
     public function Tampilkan(DokumenLegal $dokumenLegal): Response
     {
+        abort_if($dokumenLegal->Status === StatusDokumenLegal::Draf && ! $this->CekBolehLihatDraf(), 404);
+
         return Inertia::render('Pengelola/Legal/Dokumen', [
             'Dokumen' => [...DaftarDokumenLegal::Petakan($dokumenLegal), 'Isi' => $dokumenLegal->Isi, 'Label' => $dokumenLegal->Jenis->AmbilLabel()],
         ]);
@@ -75,5 +80,10 @@ final class DokumenLegalKontroler extends Kontroler
         $hapus->Jalankan($this->AmbilPelaku(), $dokumenLegal);
 
         return redirect()->route('pengelola.legal.daftar')->with('Kilat', 'Draf dihapus.');
+    }
+
+    private function CekBolehLihatDraf(): bool
+    {
+        return $this->AmbilPelaku()->PunyaIzin(IzinPengelola::LegalKelola);
     }
 }
