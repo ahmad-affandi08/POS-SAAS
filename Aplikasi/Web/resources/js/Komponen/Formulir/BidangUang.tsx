@@ -68,10 +68,7 @@ export default function BidangUang({
 
     return (
         <div className="flex flex-col gap-1">
-            <label
-                htmlFor={id}
-                className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}
-            >
+            <label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
                 {label}
             </label>
             <div

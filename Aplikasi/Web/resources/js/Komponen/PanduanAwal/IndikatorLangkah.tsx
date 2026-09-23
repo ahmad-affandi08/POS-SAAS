@@ -29,9 +29,7 @@ export default function IndikatorLangkah({ langkah, aktif }: PropsIndikatorLangk
     return (
         <nav aria-label="Langkah panduan awal" className="flex flex-col gap-2">
             <p className="text-label text-teks-sekunder">
-                {indeksAktif >= 0
-                    ? `Langkah ${String(indeksAktif + 1)} dari ${String(langkah.length)} · `
-                    : ''}
+                {indeksAktif >= 0 ? `Langkah ${String(indeksAktif + 1)} dari ${String(langkah.length)} · ` : ''}
                 {`${String(jumlahSelesai)} dari ${String(langkah.length)} langkah selesai`}
             </p>
             <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

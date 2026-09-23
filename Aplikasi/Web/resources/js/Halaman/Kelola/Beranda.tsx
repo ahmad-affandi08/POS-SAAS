@@ -1,18 +1,18 @@
-import { Link } from '@inertiajs/react';
-
+import DaftarLangkahBerikutnya from '@/Komponen/Kelola/DaftarLangkahBerikutnya';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBerandaKelola } from '@/Tipe/PanduanAwal';
 
-/** Beranda back-office sementara; dasbor dibangun F-14. */
-export default function HalamanBerandaKelola() {
+/** Beranda back-office: checklist "Langkah berikutnya" (F-01 langkah 7). Dasbor penjualan dibangun F-14. */
+export default function HalamanBerandaKelola({ LangkahBerikutnya }: PropsBerandaKelola) {
     return (
         <TataLetakAplikasi judul="Beranda">
-            <p className="text-isi text-teks-sekunder">
-                Lanjutkan penyiapan usaha Anda di{' '}
-                <Link href="/kelola/panduan-awal" className="font-semibold text-brand underline">
-                    panduan awal
-                </Link>
-                .
-            </p>
+            <DaftarLangkahBerikutnya daftar={LangkahBerikutnya} />
+            {LangkahBerikutnya.length === 0 ? (
+                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
+                    Belum ada ringkasan untuk ditampilkan. Ringkasan penjualan muncul di sini setelah outlet mulai
+                    berjualan.
+                </p>
+            ) : null}
         </TataLetakAplikasi>
     );
 }

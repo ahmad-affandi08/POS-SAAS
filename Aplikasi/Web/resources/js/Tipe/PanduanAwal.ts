@@ -69,7 +69,12 @@ export type PropsPajak = {
     TarifPpn: (TarifTampil & { PengaliDppPembilang: number; PengaliDppPenyebut: number }) | null;
     KelompokPajak: {
         Nama: string;
-        Pajak: { KodeJenisPajak: string; NamaJenisPajak: string; DasarPengenaan: string; LabelDasarPengenaan: string }[];
+        Pajak: {
+            KodeJenisPajak: string;
+            NamaJenisPajak: string;
+            DasarPengenaan: string;
+            LabelDasarPengenaan: string;
+        }[];
     }[];
     AlasanUsulan: string[];
 };
@@ -152,12 +157,7 @@ export type PropsPerangkatPanduan = {
 };
 
 export type KunciLangkahBerikutnya =
-    | 'PanduanAwal'
-    | 'TambahProduk'
-    | 'AturMetodePembayaran'
-    | 'AktifkanPerangkat'
-    | 'UndangStaf'
-    | 'AturPin';
+    'PanduanAwal' | 'TambahProduk' | 'AturMetodePembayaran' | 'AktifkanPerangkat' | 'UndangStaf' | 'AturPin';
 export type ItemLangkahBerikutnya = {
     Kunci: KunciLangkahBerikutnya;
     Judul: string;

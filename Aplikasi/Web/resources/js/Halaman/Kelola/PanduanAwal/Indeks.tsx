@@ -41,8 +41,8 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
 
             {Progres.SelesaiPada ? (
                 <Pemberitahuan jenis="sukses" judul="Panduan awal sudah selesai">
-                    Diselesaikan {FormatTanggalWaktu(Progres.SelesaiPada)}. Anda tetap bisa membuka dan mengubah
-                    setiap langkah di bawah.
+                    Diselesaikan {FormatTanggalWaktu(Progres.SelesaiPada)}. Anda tetap bisa membuka dan mengubah setiap
+                    langkah di bawah.
                 </Pemberitahuan>
             ) : null}
 
@@ -69,7 +69,10 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                                     {String(indeks + 1)}. {item.Judul}
                                 </td>
                                 <td className="px-4 py-2">
-                                    <LabelStatus jenis={jenisLabel[item.Status]} teks={teksStatusLangkah[item.Status]} />
+                                    <LabelStatus
+                                        jenis={jenisLabel[item.Status]}
+                                        teks={teksStatusLangkah[item.Status]}
+                                    />
                                 </td>
                                 <td className="px-4 py-2 text-right">
                                     <Link
@@ -94,7 +97,11 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                           }. Langkah yang belum selesai tetap muncul di Beranda.`}
                 </p>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                    <Tombol varian={langkahBerikutnya ? 'sekunder' : 'utama'} onClick={Selesaikan} memproses={memproses}>
+                    <Tombol
+                        varian={langkahBerikutnya ? 'sekunder' : 'utama'}
+                        onClick={Selesaikan}
+                        memproses={memproses}
+                    >
                         Selesaikan panduan
                     </Tombol>
                     {langkahBerikutnya ? (

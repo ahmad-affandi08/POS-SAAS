@@ -67,7 +67,11 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
             return;
         }
 
-        router.post(AmbilAlamatTandaiSelesai(sekarang.Slug), {}, { ...BuatOpsiKirim('lanjut'), onSuccess: SelesaikanPanduan });
+        router.post(
+            AmbilAlamatTandaiSelesai(sekarang.Slug),
+            {},
+            { ...BuatOpsiKirim('lanjut'), onSuccess: SelesaikanPanduan },
+        );
     };
 
     return (
