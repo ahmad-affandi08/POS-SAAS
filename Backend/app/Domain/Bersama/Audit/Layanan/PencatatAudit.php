@@ -36,6 +36,12 @@ final class PencatatAudit
         $this->idPerangkat = $idPerangkat;
     }
 
+    /** F-02b: perangkat pelaku diketahui setelah token/kode aktivasi diperiksa (API POS). */
+    public function AturPerangkat(?int $idPerangkat): void
+    {
+        $this->idPerangkat = $idPerangkat;
+    }
+
     /**
      * @param  array<string, mixed>|null  $nilaiLama
      * @param  array<string, mixed>|null  $nilaiBaru

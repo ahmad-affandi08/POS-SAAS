@@ -76,6 +76,10 @@ enum PeranTenantBawaan: string
                 IzinTenant::PenjualanVoid,
                 IzinTenant::PenjualanDiskonManual,
                 IzinTenant::LaporanPenjualanLihat,
+                // F-02b: perangkat & PIN kasir di outlet yang ditugaskan.
+                IzinTenant::PerangkatLihat,
+                IzinTenant::PerangkatKelola,
+                IzinTenant::PenggunaPinAtur,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,

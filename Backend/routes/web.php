@@ -95,6 +95,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::get('/bantuan/{tiketDukungan}/lampiran/{lampiran}', [BantuanKontroler::class, 'UnduhLampiran'])->name('kelola.bantuan.lampiran');
             // F-02 Setup organisasi: outlet, lokasi stok, merek, pengguna & peran, log audit.
             Route::group([], base_path('routes/Organisasi.php'));
+            // F-02b Perangkat POS & PIN kasir.
+            Route::group([], base_path('routes/Perangkat.php'));
         });
     });
 });
