@@ -6,6 +6,7 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\TenantPengguna;
+use App\Domain\Pengelola\Tenant\Aksi\AktifkanKembaliTenant;
 use App\Domain\Pengelola\Tenant\Surel\LanggananDiaktifkanKembali;
 use App\Domain\Pengelola\Tenant\Surel\LanggananDitangguhkan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
@@ -15,6 +16,7 @@ use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PersetujuanDokumenLegal;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
@@ -177,4 +179,70 @@ describe('P-07 aktifkan kembali (BR-P07.5)', function (): void {
 
         AktifkanUji($this, $tenant)->assertForbidden();
     })->with([PeranPengelolaBawaan::Dukungan, PeranPengelolaBawaan::MitraPenjualan]);
+});
+
+describe('P-07 × P-08: aktifkan kembali memeriksa tunggakan (BR-P07.5, BR-P08.10)', function (): void {
+    /** Langganan berbayar yang periodenya berakhir `$hariLalu` hari lalu, lalu ditangguhkan (manual atau otomatis). */
+    $siapkan = function (Tenant $tenant, int $hariLalu, ?StatusLangganan $asalManual): void {
+        DB::table('Langganan')->where('IdTenant', $tenant->Id)->update([
+            'Status' => StatusLangganan::Ditangguhkan->value,
+            'StatusSebelumDitangguhkan' => $asalManual?->value,
+            'PeriodeMulai' => now()->subDays($hariLalu + 30),
+            'PeriodeSelesai' => now()->subDays($hariLalu),
+        ]);
+    };
+
+    it('penangguhan karena tunggakan lewat masa tenggang tidak bisa diaktifkan kembali lewat tombol; jalannya pembayaran', function () use ($siapkan): void {
+        $tenant = BantuanTenantPengelola::BuatTenant();
+        $siapkan($tenant, 10, null);
+        BantuanTenantPengelola::Masuk($this, PeranPengelolaBawaan::Keuangan);
+
+        $this->get(BantuanPengelola::Url("/tenant/{$tenant->Uuid}"))
+            ->assertInertia(fn ($halaman) => $halaman->where('Tenant.Langganan.BisaDiaktifkan', false)->where('Tenant.Langganan.StatusSetelahDiaktifkan', null));
+        AktifkanUji($this, $tenant)->assertSessionHasErrors(['Umum']);
+
+        expect(StatusLanggananUji($tenant))->toBe(StatusLangganan::Ditangguhkan);
+        $this->artisan('tagihan:proses-tunggakan')->assertSuccessful();
+        expect(StatusLanggananUji($tenant))->toBe(StatusLangganan::Ditangguhkan);
+    });
+
+    it('periode habis tetapi masih dalam masa tenggang dipulihkan ke Tertunggak, bukan Aktif, dan tidak langsung tertangguh lagi', function () use ($siapkan): void {
+        $tenant = BantuanTenantPengelola::BuatTenant();
+        $siapkan($tenant, 2, StatusLangganan::Aktif);
+        BantuanTenantPengelola::Masuk($this, PeranPengelolaBawaan::SuperAdmin);
+
+        AktifkanUji($this, $tenant)->assertSessionHasNoErrors();
+        $this->artisan('tagihan:proses-tunggakan')->assertSuccessful();
+
+        expect(StatusLanggananUji($tenant))->toBe(StatusLangganan::Tertunggak);
+    });
+
+    it('penangguhan manual yang periodenya lewat masa tenggang dicabut menjadi penangguhan karena tunggakan; Owner tidak diberi email "aktif kembali"', function () use ($siapkan): void {
+        $tenant = BantuanTenantPengelola::BuatTenant();
+        $siapkan($tenant, 30, StatusLangganan::Tertunggak);
+        BantuanTenantPengelola::Masuk($this, PeranPengelolaBawaan::SuperAdmin);
+
+        $this->get(BantuanPengelola::Url("/tenant/{$tenant->Uuid}"))
+            ->assertInertia(fn ($halaman) => $halaman->where('Tenant.Langganan.StatusSetelahDiaktifkan', 'Ditangguhkan'));
+        AktifkanUji($this, $tenant)->assertSessionHasNoErrors();
+
+        $langganan = Langganan::query()->where('IdTenant', $tenant->Id)->sole();
+        expect($langganan->Status)->toBe(StatusLangganan::Ditangguhkan)
+            ->and($langganan->StatusSebelumDitangguhkan)->toBeNull()
+            ->and($langganan->CekDitangguhkanManual())->toBeFalse();
+        Mail::assertNotSent(LanggananDiaktifkanKembali::class);
+    });
+
+    it('status asal penangguhan manual dikosongkan begitu langganan keluar dari Ditangguhkan lewat jalur mana pun', function (): void {
+        $tenant = BantuanTenantPengelola::BuatTenant();
+        $langganan = Langganan::query()->where('IdTenant', $tenant->Id)->sole();
+        $langganan->update(['Status' => StatusLangganan::Ditangguhkan, 'StatusSebelumDitangguhkan' => StatusLangganan::Trial]);
+
+        $langganan->update(['Status' => StatusLangganan::Aktif]);
+        $langganan->update(['Status' => StatusLangganan::Tertunggak]);
+        $langganan->update(['Status' => StatusLangganan::Ditangguhkan]);
+
+        expect($langganan->refresh()->StatusSebelumDitangguhkan)->toBeNull()
+            ->and(AktifkanKembaliTenant::TentukanTujuan($langganan))->toBe(StatusLangganan::Aktif);
+    });
 });

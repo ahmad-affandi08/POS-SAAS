@@ -97,3 +97,15 @@ describe('Penjadwal tunggakan (P-08 langkah 4, F-00 state machine)', function ()
         expect(StatusLanggananTunggakanUji($this->tenant->Id))->toBe(StatusLangganan::Trial);
     });
 });
+
+describe('Penanda tenant (P-07)', function (): void {
+    it('tenant berpenanda Uji/Demo/Internal dikecualikan dari tunggakan otomatis', function (): void {
+        DB::table('Tenant')->where('Id', $this->tenant->Id)->update(['Penanda' => 'Demo']);
+
+        $this->travelTo(Carbon::parse('2026-10-20 10:00:00', 'Asia/Jakarta'));
+        $this->artisan('tagihan:proses-tunggakan')->assertSuccessful();
+        $this->artisan('tagihan:proses-tunggakan')->assertSuccessful();
+
+        expect(StatusLanggananTunggakanUji($this->tenant->Id))->toBe(StatusLangganan::Aktif);
+    });
+});

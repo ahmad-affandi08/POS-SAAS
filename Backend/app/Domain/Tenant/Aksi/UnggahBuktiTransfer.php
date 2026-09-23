@@ -10,6 +10,7 @@ use App\Domain\Tenant\Data\DataBuktiTransfer;
 use App\Domain\Tenant\Enum\MetodePembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Kueri\RekeningTujuanPlatform;
+use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ use Throwable;
 /**
  * Owner mengunggah bukti transfer untuk tagihan terbuka (P-08 langkah 3, transfer manual Fase 0–1).
  *
- * - Tagihan dikunci; satu tagihan hanya punya satu pembayaran `Menunggu` (klik ganda tidak menggandakan antrean).
+ * - Langganan lalu tagihan dikunci; satu tagihan hanya punya satu pembayaran `Menunggu` (klik ganda tidak menggandakan antrean).
  * - Pembayaran sebagian belum didukung: jumlah transfer harus sama dengan total tagihan.
  * - Berkas disimpan di disk privat dengan nama acak per tenant; tidak pernah di folder publik. Bila transaksi gagal,
  *   berkas yang terlanjur tersimpan dihapus lagi.
@@ -43,8 +44,12 @@ final class UnggahBuktiTransfer
 
         try {
             return DB::transaction(function () use ($uuidTagihan, $data, $idPengguna, $namaPengguna, $emailPengguna, $rekening, $disk, &$path): PembayaranLangganan {
-                $tagihan = TagihanLangganan::query()->where('Uuid', $uuidTagihan)->lockForUpdate()->first()
+                $awal = TagihanLangganan::query()->where('Uuid', $uuidTagihan)->first()
                     ?? throw new PelanggaranAturanBisnis('TagihanTidakDitemukan', 'Tagihan tidak ditemukan.');
+                // Urutan kunci Langganan → Tagihan sama dengan verifikasi & penjadwal tunggakan: bukti yang masuk
+                // bersamaan dengan proses penangguhan pasti terlihat olehnya (atau menunggu sampai proses itu selesai).
+                Langganan::query()->where('IdTenant', $awal->IdTenant)->lockForUpdate()->first();
+                $tagihan = TagihanLangganan::query()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
 
                 if (! $tagihan->Status->CekTerbuka()) {
                     throw new PelanggaranAturanBisnis('TagihanTidakTerbuka', "Tagihan {$tagihan->Nomor} sudah {$tagihan->Status->AmbilLabel()}.");

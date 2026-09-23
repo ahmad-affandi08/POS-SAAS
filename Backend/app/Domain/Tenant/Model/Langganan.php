@@ -19,7 +19,8 @@ use LogicException;
  * @property int $IdTenant
  * @property int $IdPaket
  * @property StatusLangganan $Status
- * @property StatusLangganan|null $StatusSebelumDitangguhkan diisi saat ditangguhkan manual (P-07), dipulihkan saat diaktifkan kembali
+ * @property StatusLangganan|null $StatusSebelumDitangguhkan diisi hanya saat ditangguhkan manual (P-07); null = ditangguhkan
+ *                                                           karena tunggakan (P-08). Dikosongkan otomatis begitu keluar dari Ditangguhkan.
  * @property Carbon|null $TrialBerakhirPada
  * @property Carbon|null $PeriodeMulai
  * @property Carbon|null $PeriodeSelesai
@@ -48,7 +49,23 @@ final class Langganan extends ModelDasar
             if ($langganan->isDirty('Status') && $asal instanceof StatusLangganan && ! $asal->BisaBerubahKe($langganan->Status)) {
                 throw new LogicException("Langganan {$asal->value} tidak bisa berubah menjadi {$langganan->Status->value} (BR-00.7).");
             }
+
+            // Status asal penangguhan manual hanya bermakna selama masih Ditangguhkan (BR-P07.5). Jalur apa pun yang
+            // mengeluarkan langganan dari Ditangguhkan (aktifkan kembali, pembayaran diterima) wajib mengosongkannya,
+            // agar penangguhan otomatis berikutnya tidak memulihkan status lama yang sudah basi.
+            if ($langganan->Status !== StatusLangganan::Ditangguhkan) {
+                $langganan->StatusSebelumDitangguhkan = null;
+            }
         });
+    }
+
+    /**
+     * Ditangguhkan manual oleh Super Admin (penipuan, penyalahgunaan, permintaan hukum). Penangguhan ini hanya bisa
+     * dicabut lewat "Aktifkan kembali" P-07, bukan lewat tagihan atau pembayaran (BR-P07.4).
+     */
+    public function CekDitangguhkanManual(): bool
+    {
+        return $this->Status === StatusLangganan::Ditangguhkan && $this->StatusSebelumDitangguhkan !== null;
     }
 
     /**

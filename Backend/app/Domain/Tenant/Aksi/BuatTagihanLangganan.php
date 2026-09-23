@@ -60,6 +60,10 @@ final class BuatTagihanLangganan
                 throw new PelanggaranAturanBisnis('LanggananBerhenti', 'Langganan usaha ini sudah berhenti. Hubungi tim kami untuk mengaktifkan kembali.');
             }
 
+            if ($langganan->CekDitangguhkanManual()) {
+                throw new PelanggaranAturanBisnis('BR-P07.4', 'Usaha ini sedang ditangguhkan oleh tim kami. Hubungi tim kami lewat menu Bantuan.');
+            }
+
             $terbuka = TagihanLangganan::query()->whereIn('Status', StatusTagihanLangganan::NilaiTerbuka())->first();
 
             if ($terbuka !== null) {

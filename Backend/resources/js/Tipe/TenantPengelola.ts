@@ -17,6 +17,7 @@ export type LanggananTenant = {
     Status: string;
     StatusSebelumDitangguhkan: string | null;
     StatusSetelahDiaktifkan: string | null;
+    BisaDiaktifkan: boolean;
     KodePaket: string;
     NamaPaket: string;
     TrialBerakhirPada: string | null;

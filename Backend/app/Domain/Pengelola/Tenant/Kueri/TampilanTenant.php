@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Tenant\Kueri;
 
-use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Organisasi\Kueri\PemakaianBatasOrganisasi;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
@@ -42,6 +42,7 @@ final class TampilanTenant
         private readonly PencatatAuditPengelola $audit,
         private readonly SumberFiturTenant $sumberFitur,
         private readonly EvaluatorFitur $evaluator,
+        private readonly PemakaianBatasOrganisasi $pemakaian,
     ) {}
 
     /**
@@ -62,12 +63,15 @@ final class TampilanTenant
                     ])->all()),
                 'JumlahGudang' => Gudang::query()->count(),
                 'JumlahMerek' => Merek::query()->count(),
+                // Pemakaian dihitung dengan kueri yang sama dengan penegak batas F-02a, agar angka yang dilihat
+                // Dukungan sama dengan yang menolak tenant (BR-02.1, BR-P04.3).
+                'PakaiOutlet' => $this->pemakaian->HitungOutlet(),
+                'PakaiPengguna' => $this->pemakaian->HitungPengguna($tenant->Id),
             ],
             $tenant->Id,
         );
 
         $anggota = TenantPengguna::query()->with('Pengguna')->where('IdTenant', $tenant->Id)->orderByDesc('Pemilik')->orderBy('Id')->get();
-        $jumlahAnggotaAktif = $anggota->filter(fn (TenantPengguna $baris) => $baris->Status === StatusKeanggotaan::Aktif)->count();
         $batas = $this->evaluator->HitungBatasEfektif($this->sumberFitur->Ambil($tenant->Id));
 
         return [
@@ -85,10 +89,14 @@ final class TampilanTenant
             ],
             'Langganan' => $this->PetakanLangganan($tenant),
             'Pemakaian' => [
-                ['Label' => 'Outlet', 'Pakai' => count($organisasi['Outlet']), 'Batas' => $batas['BatasOutlet'] ?? null],
-                ['Label' => 'Pengguna', 'Pakai' => $jumlahAnggotaAktif, 'Batas' => $batas['BatasPengguna'] ?? null],
+                ['Label' => 'Outlet', 'Pakai' => $organisasi['PakaiOutlet'], 'Batas' => $batas['BatasOutlet'] ?? null],
+                ['Label' => 'Pengguna', 'Pakai' => $organisasi['PakaiPengguna'], 'Batas' => $batas['BatasPengguna'] ?? null],
             ],
-            'Organisasi' => $organisasi,
+            'Organisasi' => [
+                'Outlet' => $organisasi['Outlet'],
+                'JumlahGudang' => $organisasi['JumlahGudang'],
+                'JumlahMerek' => $organisasi['JumlahMerek'],
+            ],
             'Anggota' => array_values($anggota->map(fn (TenantPengguna $baris): array => [
                 'Nama' => $baris->Pengguna->Nama,
                 'Email' => $baris->Pengguna->Email,
@@ -115,14 +123,14 @@ final class TampilanTenant
             return null;
         }
 
+        $tujuan = $langganan->Status === StatusLangganan::Ditangguhkan ? AktifkanKembaliTenant::TentukanTujuan($langganan) : null;
         $perpanjangan = OverrideTenant::query()->where('IdTenant', $tenant->Id)->where('Jenis', JenisOverride::Trial->value)->count();
 
         return [
             'Status' => $langganan->Status->value,
             'StatusSebelumDitangguhkan' => $langganan->StatusSebelumDitangguhkan?->value,
-            'StatusSetelahDiaktifkan' => $langganan->Status === StatusLangganan::Ditangguhkan
-                ? AktifkanKembaliTenant::TentukanTujuan($langganan)->value
-                : null,
+            'StatusSetelahDiaktifkan' => $tujuan?->value,
+            'BisaDiaktifkan' => $tujuan !== null,
             'KodePaket' => $langganan->Paket->Kode,
             'NamaPaket' => $langganan->Paket->Nama,
             'TrialBerakhirPada' => $langganan->TrialBerakhirPada?->toIso8601String(),

@@ -59,7 +59,7 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
         {
             kunci: 'aktifkan',
             label: 'Aktifkan kembali',
-            boleh: PunyaIzin(pengguna, IzinPengelola.TenantAktifkan) && status === 'Ditangguhkan',
+            boleh: PunyaIzin(pengguna, IzinPengelola.TenantAktifkan) && Langganan?.BisaDiaktifkan === true,
         },
         { kunci: 'penanda', label: 'Ubah penanda', boleh: PunyaIzin(pengguna, IzinPengelola.TenantPenandaUbah) },
         {
@@ -93,6 +93,13 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                 <Pemberitahuan jenis="peringatan" judul="Tenant ditangguhkan">
                     POS terkunci; Owner hanya bisa masuk, melihat laporan, mengekspor data, dan membayar. Alasan ada di
                     riwayat tindakan.
+                    {Langganan?.StatusSebelumDitangguhkan === null ? (
+                        <>
+                            {' '}
+                            Penangguhan ini karena tagihan belum dibayar: tenant aktif kembali otomatis saat
+                            pembayarannya diterima di menu Tagihan.
+                        </>
+                    ) : null}
                 </Pemberitahuan>
             ) : null}
 

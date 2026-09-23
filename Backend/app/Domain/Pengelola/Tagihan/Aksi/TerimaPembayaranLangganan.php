@@ -29,8 +29,9 @@ use Throwable;
  * Aktif dengan paket, siklus, dan periode baru (Trial/Gratis/Tertunggak/Ditangguhkan → Aktif, BR-00.7).
  *
  * - Jumlah yang benar-benar masuk ke rekening wajib diisi dan harus sama dengan total tagihan.
- * - Kunci berurutan Langganan → Tagihan → Pembayaran (sama dengan aksi tenant) lalu status diperiksa ulang, sehingga
- *   dua verifikator bersamaan atau klik ganda hanya menghasilkan satu penerimaan.
+ * - Kunci berurutan Langganan → Tagihan → Pembayaran (sama dengan `UnggahBuktiTransfer` dan penjadwal tunggakan) lalu
+ *   status diperiksa ulang, sehingga dua verifikator bersamaan atau klik ganda hanya menghasilkan satu penerimaan.
+ * - Penangguhan manual Super Admin (penipuan, permintaan hukum) tidak bisa dicabut lewat pembayaran (BR-P07.4).
  * - Tanpa four-eyes: verifikasi berbasis mutasi rekening dan tercatat di audit; persetujuan kedua P-08 hanya untuk
  *   refund > Rp 1.000.000 (BR-P08.2).
  * - Email pemberitahuan ke Owner dikirim setelah transaksi tersimpan; kegagalan email tidak membatalkan verifikasi.
@@ -69,6 +70,13 @@ final class TerimaPembayaranLangganan
                     'JumlahTidakCocok',
                     'Jumlah diterima harus sama dengan total tagihan '.$tagihan->AmbilTotal()->FormatRupiah().'. Bila berbeda, tolak dengan alasan.',
                     'JumlahDiterima',
+                );
+            }
+
+            if ($langganan->CekDitangguhkanManual()) {
+                throw new PelanggaranAturanBisnis(
+                    'BR-P07.4',
+                    'Tenant ini ditangguhkan manual oleh Super Admin. Penangguhan harus dicabut lewat "Aktifkan kembali" di halaman tenant sebelum pembayaran bisa diterima.',
                 );
             }
 

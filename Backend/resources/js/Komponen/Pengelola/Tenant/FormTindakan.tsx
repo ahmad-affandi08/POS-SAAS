@@ -267,10 +267,18 @@ export function FormAktifkan({ uuid, statusTujuan, saatSelesai }: PropsDasar & {
         <KerangkaForm
             judul="Aktifkan kembali"
             keterangan={
-                <p>
-                    Status langganan kembali menjadi <strong>{statusTujuan ?? 'Aktif'}</strong>. Tulis keputusan
-                    tertulisnya, misal tagihan sudah lunas atau hasil investigasi.
-                </p>
+                statusTujuan === 'Ditangguhkan' ? (
+                    <p>
+                        Penangguhan manual dicabut, tetapi tenant <strong>tetap ditangguhkan</strong> karena tagihannya
+                        sudah lewat masa tenggang. Tenant aktif kembali saat pembayarannya diterima. Tulis keputusan
+                        tertulisnya, misal hasil investigasi.
+                    </p>
+                ) : (
+                    <p>
+                        Status langganan kembali menjadi <strong>{statusTujuan ?? 'Aktif'}</strong>. Tulis keputusan
+                        tertulisnya, misal tagihan sudah lunas atau hasil investigasi.
+                    </p>
+                )
             }
             labelKirim="Aktifkan kembali"
             memproses={formulir.processing}

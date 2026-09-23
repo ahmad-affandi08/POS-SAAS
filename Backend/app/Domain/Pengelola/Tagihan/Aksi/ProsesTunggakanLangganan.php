@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
  * 2. Langganan Aktif yang periodenya habis → Tertunggak (semua fitur jalan, banner tampil).
  * 3. Tertunggak lewat masa tenggang (config `tagihan.HariMasaTenggang`, default 7 hari) → Ditangguhkan, kecuali ada
  *    bukti transfer yang sedang menunggu verifikasi (tenant sudah membayar, jangan dihukum karena antrean kami).
+ * Tenant berpenanda Uji/Demo/Internal dilewati (dikecualikan dari tagihan, P-07).
  * Tiap baris diproses dengan kunci dan status diperiksa ulang, sehingga aman berjalan bersamaan dengan verifikasi
  * pembayaran. Idempoten. Setiap perubahan tercatat di audit pengelola dengan pelaku Sistem.
  *
@@ -85,7 +86,9 @@ final class ProsesTunggakanLangganan
     private function UbahLangganan(StatusLangganan $asal, StatusLangganan $tujuan, CarbonImmutable $batasPeriodeSelesai): int
     {
         $jumlah = 0;
+        // Tenant berpenanda Uji/Demo/Internal dikecualikan dari tagihan (P-07, BR-P07.8): tidak pernah tertunggak.
         $daftarId = Langganan::query()
+            ->whereHas('Tenant', fn ($kueri) => $kueri->whereNull('Penanda'))
             ->where('Status', $asal->value)
             ->whereNotNull('PeriodeSelesai')
             ->where('PeriodeSelesai', '<=', $batasPeriodeSelesai)

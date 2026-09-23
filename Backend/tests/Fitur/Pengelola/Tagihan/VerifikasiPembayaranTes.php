@@ -24,6 +24,7 @@ use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
@@ -290,5 +291,36 @@ describe('Perpanjangan, tunggakan, dan grandfathering (BR-P04.1)', function (): 
 
         expect(TagihanLangganan::query()->withoutGlobalScopes()->findOrFail($perpanjangan->IdTagihanLangganan)->Subtotal)->toBe('199000.00')
             ->and(TagihanLangganan::query()->withoutGlobalScopes()->findOrFail($baru->IdTagihanLangganan)->Subtotal)->toBe('249000.00');
+    });
+});
+
+describe('Penangguhan manual tidak dicabut lewat tagihan (BR-P07.4 × BR-P08.9)', function (): void {
+    it('Keuangan tidak bisa menerima pembayaran tenant yang ditangguhkan manual; Owner tidak bisa membuat tagihan baru', function (): void {
+        $pembayaran = BayarTagihanUji($this, $this->pemilik, $this->tenant);
+        $langganan = LanggananTagihanUji($this->tenant);
+        $asal = $langganan->Status;
+        $langganan->update(['Status' => StatusLangganan::Ditangguhkan, 'StatusSebelumDitangguhkan' => $asal]);
+
+        expect(fn () => app(TerimaPembayaranLangganan::class)->Jalankan($this->keuangan, $pembayaran->Uuid, '220889'))
+            ->toThrow(PelanggaranAturanBisnis::class, 'ditangguhkan manual');
+        expect(LanggananTagihanUji($this->tenant)->Status)->toBe(StatusLangganan::Ditangguhkan)
+            ->and($pembayaran->refresh()->Status)->toBe(StatusPembayaranLangganan::Menunggu);
+
+        TagihanLangganan::query()->withoutGlobalScopes()->where('IdTenant', $this->tenant->Id)->update(['Status' => StatusTagihanLangganan::Dibatalkan->value]);
+        BantuanTagihan::Masuk($this, $this->pemilik, $this->tenant)
+            ->post(BantuanTagihan::Url('/kelola/langganan/tagihan'), ['KodePaket' => 'PRO', 'Siklus' => 'Bulanan'])
+            ->assertSessionHasErrors(['Umum']);
+    });
+
+    it('penangguhan karena tunggakan tetap pulih lewat pembayaran yang diterima', function (): void {
+        $pembayaran = BayarTagihanUji($this, $this->pemilik, $this->tenant);
+        DB::table('Langganan')->where('IdTenant', $this->tenant->Id)->update([
+            'Status' => StatusLangganan::Ditangguhkan->value,
+            'StatusSebelumDitangguhkan' => null,
+        ]);
+
+        app(TerimaPembayaranLangganan::class)->Jalankan($this->keuangan, $pembayaran->Uuid, '220889');
+
+        expect(LanggananTagihanUji($this->tenant)->Status)->toBe(StatusLangganan::Aktif);
     });
 });
