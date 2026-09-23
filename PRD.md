@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.13 |
+| Versi | 1.14 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -34,6 +34,7 @@
 | 1.11 | Rincian P-01 hasil perencanaan `/mulai-flow`: BR-P01.1 ditegaskan (tolak menurunkan Super Admin bila aktif ≤ 2), allowlist IP ditunda (§25 no. 13), skema `PenggunaPengelola` (+`DuaFaktorAktifPada`, `KodePemulihan2fa`, `DinonaktifkanPada`) dan tabel baru `UndanganPengelola` (§15.3). |
 | 1.12 | Rincian P-02 hasil perencanaan `/mulai-flow`: `PengaliDpp` disimpan sebagai pecahan (`PengaliDppPembilang`/`PengaliDppPenyebut`) agar DPP 11/12 eksak (§12.2), BR-P02.2 ditegaskan (nasional 2 penyetuju, daerah 1, pengaju tidak boleh menyetujui), tabel baru `SatuanStandar` & `PersetujuanDataMaster`, kolom status & dasar hukum pada `TarifPajak`/`HariLibur` (§15.3). Model data referensi berada di `Domain/Referensi` dan `Domain/Pajak` agar bisa dibaca tenant; aksi pengelolaannya di `Domain/Pengelola/Referensi` (§13.2, §13.8). |
 | 1.13 | Keputusan tinjauan P-02: data awal tarif dari file data (bukan kode), `BerlakuMulai` tarif tidak boleh di masa lalu saat diajukan/terbit, pembatalan hari libur terbit lewat pengajuan & tinjauan (status `Dibatalkan`), dan four-eyes berlaku untuk semua penyusun draf (BR-P02.2). |
+| 1.14 | Rincian P-04 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus", mohon ditinjau): harga paket berversi di tabel `HargaPaket` dengan four-eyes (Keuangan mengusulkan, Super Admin menyetujui) dan pilihan grandfathering (BR-P04.1); status paket Draf/Aktif/Diarsipkan; batas `null` = tak terbatas; model katalog di `Domain/Tenant`, aksi kelola di `Domain/Pengelola/Katalog`; data awal katalog dari file data sebagai draf; penegakan batas, `konfigurasi-aplikasi`, downgrade (BR-P04.4), dan pemakaian kupon ditunda ke F-00/F-19/P-08 (BR-P04.5–P04.7). |
 
 ---
 
@@ -557,6 +558,9 @@ FiturAktif(tenant, kunci) =
 - BR-P04.2 Paket yang diarsipkan tidak bisa dipilih tenant baru, tetapi tenant yang sudah memakainya tidak terdampak.
 - BR-P04.3 Batas ditegakkan di backend (perantara `PastikanBatasPaket`) dan dikirim ke aplikasi lewat `konfigurasi-aplikasi`. Penegakan di aplikasi hanya untuk UX, server tetap penentu.
 - BR-P04.4 Saat downgrade melebihi batas (misal 5 outlet ke paket 1 outlet), **data tidak dihapus**. Tenant diminta memilih outlet/perangkat yang tetap aktif, sisanya menjadi hanya-baca.
+- BR-P04.5 Harga paket berversi (`HargaPaket`): Keuangan/Super Admin menyusun & mengajukan, **1 penyetuju Super Admin** yang bukan penyusun (four-eyes §19.3). `BerlakuMulai` tidak boleh di masa lalu. Harga terbit tidak diubah; harga baru mengakhiri harga lama sehari sebelumnya. `TerapkanKePelangganLama = false` berarti langganan yang sudah berjalan tetap memakai harga lama (grandfathering).
+- BR-P04.6 Paket hanya bisa **diaktifkan** bila punya harga terbit atau ditandai `HargaNegosiasi` (Enterprise). Mengubah fitur/batas paket **Aktif** hanya oleh Super Admin dengan alasan wajib dan tercatat di audit, karena langsung berdampak ke tenant.
+- BR-P04.7 Penegakan batas (`PastikanBatasPaket`), `konfigurasi-aplikasi`, downgrade (BR-P04.4), dan pemakaian kupon dibangun bersama `Langganan` (F-00/F-19/P-08). P-04 menyediakan data katalog dan `EvaluatorFitur` murni (fitur aktif & batas efektif = paket + add-on + override).
 
 ---
 
@@ -1851,7 +1855,7 @@ Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. B
 ```
 Backend/app/
 ├── Domain/
-│   ├── Tenant/           # Tenant, Langganan, Paket, OutletFitur            (F-00, F-19)
+│   ├── Tenant/           # Tenant, Langganan, Paket, HargaPaket, Fitur, Addon, KuponLangganan, EvaluatorFitur, OutletFitur (P-04, F-00, F-19)
 │   ├── Organisasi/       # Outlet, Gudang, Perangkat, Pengguna, Peran        (F-02)
 │   ├── PanduanAwal/      # Wizard onboarding, TemplateSektor, Importir       (F-01)
 │   ├── Katalog/          # Produk, Varian, Satuan, Pilihan, Resep, DaftarHarga (F-03)
@@ -2190,7 +2194,7 @@ Backend/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
 ├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # TemplateSektor, TemplateSektorVersi, ValidatorTemplate, Sandbox (P-03)
-├── Katalog/            # Fitur, Paket, Addon, KuponLangganan, EvaluatorFitur          (P-04)
+├── Katalog/            # Aksi kelola fitur, paket, harga, add-on, kupon (P-04); modelnya di Domain/Tenant
 ├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)
 ├── Konten/             # DokumenLegal, TemplatePesan, ArtikelBantuan                   (P-06)
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
@@ -2382,7 +2386,8 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `Tenant` | Id, Uuid, Nama, Slug, Npwp, Pkp, ZonaWaktu, Pengaturan JSON, Status |
-| `Paket` / `PaketFitur` | Kode, Harga, Batas (outlet, perangkat, pengguna, SKU), Fitur |
+| `Paket` / `PaketFitur` | Kode, Nama, Status (Draf/Aktif/Diarsipkan), HargaNegosiasi, MasaTrialHari, BatasOutlet, BatasPerangkatPerOutlet, BatasPengguna, BatasSku, KuotaPesanWaBulanan, BatasPenyimpananMb (batas `null` = tak terbatas), Urutan / IdPaket, KunciFitur |
+| `HargaPaket` | IdPaket, HargaBulanan, HargaTahunan (decimal 18,2), BerlakuMulai, BerlakuSampai, TerapkanKePelangganLama, Status (Draf/MenungguTinjauan/Terbit), IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan, DaftarIdPenyusun JSON. Harga paket hanya ada di tabel ini (berversi, BR-P04.1) |
 | `Langganan` | IdTenant, IdPaket, Status, TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan |
 | `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
 | `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
@@ -2539,8 +2544,8 @@ erDiagram
 | `PersetujuanDataMaster` | JenisData, IdData, Putaran, IdPenggunaPengelola, Keputusan (Setuju/Tolak), Catatan, DibuatPada (append-only; unik per JenisData+IdData+Putaran+peninjau; hanya keputusan pada `PutaranTinjauan` data yang sedang berjalan yang dihitung) |
 | `TemplateSektor` / `TemplateSektorVersi` | Kode, Nama / IdTemplateSektor, Versi, Status (Draf/Terbit/Usang), Isi JSON, HasilValidasi JSON, DiterbitkanOleh, DiterbitkanPada |
 | `Fitur` | Kunci, Nama, Modul, Keterangan |
-| `Addon` / `LanggananAddon` | Kode, Nama, Harga, KunciFitur, TambahanBatas JSON / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada |
-| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, IdPaket JSON, BerlakuSampai / IdKupon, IdTenant, IdTagihanLangganan |
+| `Addon` / `LanggananAddon` | Kode, Nama, HargaBulanan, KunciFitur, TambahanBatas JSON, Status (Aktif/Diarsipkan) / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada (LanggananAddon dibuat di F-19) |
+| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08) |
 | `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
 | `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
 | `KonfigurasiIntegrasi` | Jenis, Lingkungan (Staging/Produksi), Kredensial (terenkripsi), Status, TerakhirDiujiPada, HasilUji |

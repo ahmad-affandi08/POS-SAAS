@@ -1,0 +1,32 @@
+{
+    "_Keterangan": "Katalog fitur awal (P-04, §10, §21). Kunci berformat D-06. Fitur baru ditambahkan bersama flow yang membangunnya.",
+    "Fitur": [
+        { "Kunci": "pos.retail", "Nama": "POS mode retail & quick", "Modul": "Penjualan" },
+        { "Kunci": "pos.mode-meja", "Nama": "POS mode meja & layanan", "Modul": "Penjualan" },
+        { "Kunci": "pos.kds", "Nama": "Kitchen display (KDS)", "Modul": "Pemenuhan" },
+        { "Kunci": "struk.tanpa-watermark", "Nama": "Struk tanpa watermark", "Modul": "Penjualan" },
+        { "Kunci": "stok.dasar", "Nama": "Stok & belanja stok", "Modul": "Persediaan" },
+        { "Kunci": "stok.opname", "Nama": "Stok opname", "Modul": "Persediaan" },
+        { "Kunci": "stok.multi-gudang", "Nama": "Multi-gudang", "Modul": "Persediaan" },
+        { "Kunci": "stok.transfer", "Nama": "Transfer stok", "Modul": "Persediaan" },
+        { "Kunci": "pembelian.po", "Nama": "Pesanan pembelian & pemasok", "Modul": "Pembelian" },
+        { "Kunci": "pelanggan.dasar", "Nama": "Data pelanggan", "Modul": "Pelanggan" },
+        { "Kunci": "pelanggan.loyalti", "Nama": "Loyalti & poin", "Modul": "Pelanggan" },
+        { "Kunci": "promo.mesin", "Nama": "Mesin promo", "Modul": "Promo" },
+        { "Kunci": "karyawan.komisi", "Nama": "Karyawan & komisi", "Modul": "Karyawan" },
+        { "Kunci": "laporan.dasar", "Nama": "Laporan dasar", "Modul": "Laporan" },
+        { "Kunci": "laporan.lengkap", "Nama": "Laporan lengkap & laba rugi sederhana", "Modul": "Laporan" },
+        { "Kunci": "akuntansi.penuh", "Nama": "Akuntansi penuh", "Modul": "Akuntansi" },
+        { "Kunci": "persetujuan.jarak-jauh", "Nama": "Persetujuan jarak jauh", "Modul": "Organisasi" },
+        { "Kunci": "keamanan.anti-fraud", "Nama": "Anti-fraud", "Modul": "Organisasi" },
+        { "Kunci": "keamanan.2fa-wajib", "Nama": "2FA wajib untuk owner/admin", "Modul": "Organisasi" },
+        { "Kunci": "harga.daftar-harga", "Nama": "Daftar harga (price list)", "Modul": "Katalog" },
+        { "Kunci": "piutang.grosir", "Nama": "Piutang & grosir", "Modul": "Piutang" },
+        { "Kunci": "api.publik", "Nama": "API publik & webhook", "Modul": "Integrasi" },
+        { "Kunci": "kanal.self-order", "Nama": "Self-order QR", "Modul": "Kanal" },
+        { "Kunci": "kanal.toko-online", "Nama": "Toko online", "Modul": "Kanal" },
+        { "Kunci": "integrasi.whatsapp", "Nama": "Pesan WhatsApp", "Modul": "Integrasi" },
+        { "Kunci": "laporan.insight", "Nama": "Forecast & insight", "Modul": "Laporan" },
+        { "Kunci": "franchise.royalti", "Nama": "Franchise & royalti", "Modul": "Organisasi" }
+    ]
+}

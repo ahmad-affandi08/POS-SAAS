@@ -26,6 +26,14 @@ enum IzinPengelola: string
     case ReferensiHariLiburAjukan = 'referensi.hari-libur.ajukan';
     case ReferensiHariLiburSetujui = 'referensi.hari-libur.setujui';
 
+    // P-04 Katalog paket & fitur.
+    case KatalogLihat = 'katalog.lihat';
+    case KatalogFiturKelola = 'katalog.fitur.kelola';
+    case KatalogPaketAjukan = 'katalog.paket.ajukan';
+    case KatalogPaketSetujui = 'katalog.paket.setujui';
+    case KatalogAddonKelola = 'katalog.addon.kelola';
+    case KatalogKuponKelola = 'katalog.kupon.kelola';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -42,6 +50,12 @@ enum IzinPengelola: string
             self::ReferensiTarifPajakSetujui => 'Menyetujui atau menolak tarif pajak',
             self::ReferensiHariLiburAjukan => 'Mengajukan hari libur',
             self::ReferensiHariLiburSetujui => 'Menyetujui atau menolak hari libur',
+            self::KatalogLihat => 'Melihat katalog paket & fitur',
+            self::KatalogFiturKelola => 'Mengelola katalog fitur',
+            self::KatalogPaketAjukan => 'Menyusun paket & mengusulkan harga',
+            self::KatalogPaketSetujui => 'Menyetujui harga, mengaktifkan/mengarsipkan paket, mengubah paket aktif',
+            self::KatalogAddonKelola => 'Mengelola add-on',
+            self::KatalogKuponKelola => 'Mengelola kupon langganan',
         };
     }
 }

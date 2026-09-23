@@ -15,7 +15,8 @@ type ItemMenu = { label: string; href: string; izin: KunciIzinPengelola | null }
 
 const daftarMenu: ItemMenu[] = [
     { label: 'Beranda', href: '/', izin: null },
-    { label: 'Referensi', href: '/referensi/wilayah', izin: IzinPengelola.ReferensiLihat },
+    { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat },
+    { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
 ];

@@ -54,7 +54,8 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `Tenant` | Id, Uuid, Nama, Slug, Npwp, Pkp, ZonaWaktu, Pengaturan JSON, Status |
-| `Paket` / `PaketFitur` | Kode, Harga, Batas (outlet, perangkat, pengguna, SKU), Fitur |
+| `Paket` / `PaketFitur` | Kode, Nama, Status (Draf/Aktif/Diarsipkan), HargaNegosiasi, MasaTrialHari, BatasOutlet, BatasPerangkatPerOutlet, BatasPengguna, BatasSku, KuotaPesanWaBulanan, BatasPenyimpananMb (batas `null` = tak terbatas), Urutan / IdPaket, KunciFitur |
+| `HargaPaket` | IdPaket, HargaBulanan, HargaTahunan (decimal 18,2), BerlakuMulai, BerlakuSampai, TerapkanKePelangganLama, Status (Draf/MenungguTinjauan/Terbit), IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan, DaftarIdPenyusun JSON. Harga paket hanya ada di tabel ini (berversi, BR-P04.1) |
 | `Langganan` | IdTenant, IdPaket, Status, TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan |
 | `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
 | `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
@@ -211,8 +212,8 @@ erDiagram
 | `PersetujuanDataMaster` | JenisData, IdData, Putaran, IdPenggunaPengelola, Keputusan (Setuju/Tolak), Catatan, DibuatPada (append-only; unik per JenisData+IdData+Putaran+peninjau; hanya keputusan pada `PutaranTinjauan` data yang sedang berjalan yang dihitung) |
 | `TemplateSektor` / `TemplateSektorVersi` | Kode, Nama / IdTemplateSektor, Versi, Status (Draf/Terbit/Usang), Isi JSON, HasilValidasi JSON, DiterbitkanOleh, DiterbitkanPada |
 | `Fitur` | Kunci, Nama, Modul, Keterangan |
-| `Addon` / `LanggananAddon` | Kode, Nama, Harga, KunciFitur, TambahanBatas JSON / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada |
-| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, IdPaket JSON, BerlakuSampai / IdKupon, IdTenant, IdTagihanLangganan |
+| `Addon` / `LanggananAddon` | Kode, Nama, HargaBulanan, KunciFitur, TambahanBatas JSON, Status (Aktif/Diarsipkan) / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada (LanggananAddon dibuat di F-19) |
+| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08) |
 | `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
 | `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
 | `KonfigurasiIntegrasi` | Jenis, Lingkungan (Staging/Produksi), Kredensial (terenkripsi), Status, TerakhirDiujiPada, HasilUji |

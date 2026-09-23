@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
+use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
+use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
@@ -62,6 +64,28 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
         Route::get('/log-audit', [LogAuditKontroler::class, 'Daftar'])
             ->middleware($izin(IzinPengelola::AuditLihat))
             ->name('pengelola.log-audit.daftar');
+
+        // P-04 Katalog paket & fitur.
+        Route::middleware($izin(IzinPengelola::KatalogLihat))->group(function () use ($izin): void {
+            Route::get('/katalog/fitur', [FiturKontroler::class, 'Daftar'])->name('pengelola.katalog.fitur.daftar');
+            Route::post('/katalog/fitur', [FiturKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::KatalogFiturKelola))
+                ->name('pengelola.katalog.fitur.simpan');
+            Route::put('/katalog/fitur/{fitur}', [FiturKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::KatalogFiturKelola))
+                ->name('pengelola.katalog.fitur.ubah');
+
+            Route::get('/katalog/paket', [PaketKontroler::class, 'Daftar'])->name('pengelola.katalog.paket.daftar');
+            Route::post('/katalog/paket', [PaketKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::KatalogPaketAjukan))
+                ->name('pengelola.katalog.paket.simpan');
+            Route::put('/katalog/paket/{paket}', [PaketKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::KatalogPaketAjukan))
+                ->name('pengelola.katalog.paket.ubah');
+            Route::post('/katalog/paket/{paket}/status', [PaketKontroler::class, 'UbahStatus'])
+                ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
+                ->name('pengelola.katalog.paket.status');
+        });
 
         // P-02 Master regulasi & referensi.
         Route::middleware($izin(IzinPengelola::ReferensiLihat))->group(function () use ($izin): void {

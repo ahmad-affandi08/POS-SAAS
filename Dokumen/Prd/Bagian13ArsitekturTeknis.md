@@ -123,7 +123,7 @@ Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. B
 ```
 Backend/app/
 ├── Domain/
-│   ├── Tenant/           # Tenant, Langganan, Paket, OutletFitur            (F-00, F-19)
+│   ├── Tenant/           # Tenant, Langganan, Paket, HargaPaket, Fitur, Addon, KuponLangganan, EvaluatorFitur, OutletFitur (P-04, F-00, F-19)
 │   ├── Organisasi/       # Outlet, Gudang, Perangkat, Pengguna, Peran        (F-02)
 │   ├── PanduanAwal/      # Wizard onboarding, TemplateSektor, Importir       (F-01)
 │   ├── Katalog/          # Produk, Varian, Satuan, Pilihan, Resep, DaftarHarga (F-03)
@@ -462,7 +462,7 @@ Backend/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
 ├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # TemplateSektor, TemplateSektorVersi, ValidatorTemplate, Sandbox (P-03)
-├── Katalog/            # Fitur, Paket, Addon, KuponLangganan, EvaluatorFitur          (P-04)
+├── Katalog/            # Aksi kelola fitur, paket, harga, add-on, kupon (P-04); modelnya di Domain/Tenant
 ├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)
 ├── Konten/             # DokumenLegal, TemplatePesan, ArtikelBantuan                   (P-06)
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)

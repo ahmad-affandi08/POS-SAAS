@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanSatuanStandarBawaan;
 use App\Domain\Pengelola\TimInternal\Aksi\SiapkanPeranBawaan;
@@ -19,6 +20,7 @@ final class DatabaseSeeder extends Seeder
         SiapkanPeranBawaan $siapkanPeranBawaan,
         SiapkanSatuanStandarBawaan $siapkanSatuanStandar,
         SiapkanPajakBawaan $siapkanPajak,
+        SiapkanKatalogBawaan $siapkanKatalog,
     ): void {
         // P-01 langkah 2: tujuh peran internal bawaan beserta izinnya (PRD §19.3). Idempoten.
         $siapkanPeranBawaan->Jalankan();
@@ -28,5 +30,8 @@ final class DatabaseSeeder extends Seeder
 
         // P-02: jenis pajak bawaan + DRAF tarif PPN (wajib ditinjau sebelum terbit, §12).
         $siapkanPajak->Jalankan();
+
+        // P-04: katalog fitur & paket awal (§21) sebagai draf; harga wajib ditinjau.
+        $siapkanKatalog->Jalankan();
     }
 }

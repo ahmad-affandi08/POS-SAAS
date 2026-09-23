@@ -33,6 +33,12 @@ export const IzinPengelola = {
     ReferensiTarifPajakSetujui: 'referensi.tarif-pajak.setujui',
     ReferensiHariLiburAjukan: 'referensi.hari-libur.ajukan',
     ReferensiHariLiburSetujui: 'referensi.hari-libur.setujui',
+    KatalogLihat: 'katalog.lihat',
+    KatalogFiturKelola: 'katalog.fitur.kelola',
+    KatalogPaketAjukan: 'katalog.paket.ajukan',
+    KatalogPaketSetujui: 'katalog.paket.setujui',
+    KatalogAddonKelola: 'katalog.addon.kelola',
+    KatalogKuponKelola: 'katalog.kupon.kelola',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */
