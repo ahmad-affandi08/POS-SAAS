@@ -13,6 +13,8 @@ type PropsTataLetak = { judul: string; children: ReactNode };
 const daftarMenu: { label: string; href: string; izin: KunciIzinTenant | null }[] = [
     { label: 'Beranda', href: '/kelola', izin: null },
     { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat },
+    // F-02b: perangkat POS.
+    { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat },
     { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat },
     { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat },
 ];

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -40,6 +40,14 @@ export default function HalamanKeamananAkun({ DuaFaktor, Aktivasi, KodePemulihan
                 {DuaFaktor.Aktif ? (
                     <FormulirNonaktifkan wajib={DuaFaktor.Wajib} sisaKode={DuaFaktor.SisaKodePemulihan} />
                 ) : null}
+            </section>
+            {/* F-02b: PIN kasir untuk masuk cepat di aplikasi kasir. */}
+            <section className="flex max-w-xl flex-col gap-2 rounded-panel border border-garis bg-permukaan p-6">
+                <h2 className="text-subjudul font-bold text-teks-utama">PIN kasir</h2>
+                <p className="text-isi text-teks-sekunder">PIN 6 angka untuk masuk cepat di perangkat kasir bersama.</p>
+                <Link href="/kelola/keamanan/pin" className="self-start text-label font-semibold text-brand underline">
+                    Atur PIN kasir
+                </Link>
             </section>
         </TataLetakAplikasi>
     );

@@ -10,6 +10,10 @@ export const IzinTenant = {
     PenggunaNonaktifkan: 'pengguna.nonaktifkan',
     PeranKelola: 'peran.kelola',
     AuditLihat: 'audit.lihat',
+    // F-02b perangkat POS & PIN kasir.
+    PerangkatLihat: 'perangkat.lihat',
+    PerangkatKelola: 'perangkat.kelola',
+    PenggunaPinAtur: 'pengguna.pin.atur',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];
