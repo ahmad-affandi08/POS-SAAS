@@ -52,7 +52,7 @@ final class SimpanIsiTemplate
                 'DivalidasiPada' => now(),
             ]);
 
-            $berubah = array_keys(array_filter($isiBaru, fn (mixed $nilai, string $nama) => json_encode($isiLama[$nama] ?? null) !== json_encode($nilai), ARRAY_FILTER_USE_BOTH));
+            $berubah = array_keys(array_filter($isiBaru, fn (mixed $nilai, string $nama) => json_encode(self::UrutkanKunci($isiLama[$nama] ?? null)) !== json_encode(self::UrutkanKunci($nilai)), ARRAY_FILTER_USE_BOTH));
 
             if ($berubah !== []) {
                 $this->audit->Catat(
@@ -66,5 +66,24 @@ final class SimpanIsiTemplate
 
             return $versi;
         });
+    }
+
+    /**
+     * Kolom JSON MySQL menyimpan kunci objek dalam urutan sendiri, jadi perbandingan isi lama & baru mengabaikan
+     * urutan kunci objek (urutan elemen daftar tetap berarti).
+     */
+    private static function UrutkanKunci(mixed $nilai): mixed
+    {
+        if (! is_array($nilai)) {
+            return $nilai;
+        }
+
+        $nilai = array_map(self::UrutkanKunci(...), $nilai);
+
+        if (! array_is_list($nilai)) {
+            ksort($nilai);
+        }
+
+        return $nilai;
     }
 }

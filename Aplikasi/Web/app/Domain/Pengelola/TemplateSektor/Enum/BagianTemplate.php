@@ -20,7 +20,7 @@ enum BagianTemplate: string
         return match ($this) {
             self::IsiBisnis => [
                 'ModeKasir', 'ModeKasirDefault', 'KunciFitur', 'Kategori', 'KodeSatuan', 'Pengaturan',
-                'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian', 'LaporanUnggulan',
+                'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian', 'LaporanUnggulan', 'ProdukContoh',
             ],
             self::Akun => ['Akun', 'PemetaanAkun', 'KelompokPajak'],
         };

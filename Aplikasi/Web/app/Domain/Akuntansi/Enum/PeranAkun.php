@@ -13,7 +13,7 @@ enum PeranAkun: string
     case KasOutlet = 'KasOutlet';
     case KasBrankas = 'KasBrankas';
     case Bank = 'Bank';
-    case PiutangSettlement = 'PiutangSettlement';
+    case PiutangPencairan = 'PiutangPencairan';
     case PiutangUsaha = 'PiutangUsaha';
     case PiutangKaryawan = 'PiutangKaryawan';
     case PersediaanBarangDagang = 'PersediaanBarangDagang';
@@ -38,14 +38,54 @@ enum PeranAkun: string
     case PendapatanLain = 'PendapatanLain';
     case Hpp = 'Hpp';
     case SelisihHpp = 'SelisihHpp';
-    case Waste = 'Waste';
+    case SusutPersediaan = 'SusutPersediaan';
     case BebanBiayaPembayaran = 'BebanBiayaPembayaran';
     case BebanSelisihKas = 'BebanSelisihKas';
+
+    /**
+     * Kunci lama sebelum istilah kamus §13.7.1 ditetapkan (DesainF01 H1). Versi template yang sudah terbit tidak boleh
+     * diubah (BR-P03.4), jadi kunci lama di dalamnya tetap dibaca lewat alias ini, bukan ditulis ulang.
+     */
+    public const KUNCI_LAMA = [
+        'PiutangSettlement' => 'PiutangPencairan',
+        'Waste' => 'SusutPersediaan',
+    ];
+
+    /** Peran dari kunci `PemetaanAkun`, termasuk kunci lama. Null bila kunci tidak dikenal. */
+    public static function DariKunci(string $kunci): ?self
+    {
+        return self::tryFrom(self::KUNCI_LAMA[$kunci] ?? $kunci);
+    }
+
+    /**
+     * Pemetaan dengan kunci peran terbaru. Kunci lama diganti kunci barunya; bila keduanya ada, kunci baru menang.
+     * Kunci yang tidak dikenal dibiarkan apa adanya agar tetap dilaporkan validator.
+     *
+     * @param  array<array-key, mixed>  $pemetaan
+     * @return array<array-key, mixed>
+     */
+    public static function NormalisasiPemetaan(array $pemetaan): array
+    {
+        $hasil = [];
+
+        foreach ($pemetaan as $kunci => $kode) {
+            $peran = self::DariKunci((string) $kunci);
+            $kunciBaru = $peran === null ? $kunci : $peran->value;
+
+            if ($peran !== null && $kunciBaru !== $kunci && array_key_exists($kunciBaru, $pemetaan)) {
+                continue;
+            }
+
+            $hasil[$kunciBaru] = $kode;
+        }
+
+        return $hasil;
+    }
 
     public function AmbilTipeAkun(): TipeAkun
     {
         return match ($this) {
-            self::KasOutlet, self::KasBrankas, self::Bank, self::PiutangSettlement, self::PiutangUsaha,
+            self::KasOutlet, self::KasBrankas, self::Bank, self::PiutangPencairan, self::PiutangUsaha,
             self::PiutangKaryawan, self::PersediaanBarangDagang, self::PersediaanBahanBaku,
             self::PersediaanDalamPerjalanan, self::PpnMasukan => TipeAkun::Aset,
             self::HutangUsaha, self::HutangBelumDifakturkan, self::HutangKonsinyasi, self::PpnKeluaran,
@@ -54,7 +94,7 @@ enum PeranAkun: string
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
             self::PendapatanBiayaLayanan, self::PendapatanLain => TipeAkun::Pendapatan,
-            self::Hpp, self::SelisihHpp, self::Waste => TipeAkun::Hpp,
+            self::Hpp, self::SelisihHpp, self::SusutPersediaan => TipeAkun::Hpp,
             self::BebanBiayaPembayaran, self::BebanSelisihKas => TipeAkun::Beban,
         };
     }
@@ -71,7 +111,7 @@ enum PeranAkun: string
             self::KasOutlet => 'Kas outlet',
             self::KasBrankas => 'Kas brankas',
             self::Bank => 'Bank',
-            self::PiutangSettlement => 'Piutang settlement (QRIS/EDC/gateway/ojol)',
+            self::PiutangPencairan => 'Piutang pencairan (QRIS/EDC/gateway/ojol)',
             self::PiutangUsaha => 'Piutang usaha',
             self::PiutangKaryawan => 'Piutang karyawan (kasbon)',
             self::PersediaanBarangDagang => 'Persediaan barang dagang',
@@ -96,7 +136,7 @@ enum PeranAkun: string
             self::PendapatanLain => 'Pendapatan lain (selisih kas lebih, pembulatan)',
             self::Hpp => 'Harga pokok penjualan',
             self::SelisihHpp => 'Selisih HPP / penyesuaian persediaan',
-            self::Waste => 'Waste / barang rusak',
+            self::SusutPersediaan => 'Susut & barang rusak',
             self::BebanBiayaPembayaran => 'Beban biaya pembayaran (MDR, komisi ojol)',
             self::BebanSelisihKas => 'Beban selisih kas',
         };

@@ -46,7 +46,7 @@ function AmbilIsiBisnisUji(string $kode, int $versi = 1): array
 {
     return array_intersect_key(AmbilVersiUji($kode, $versi)->Isi, array_flip([
         'ModeKasir', 'ModeKasirDefault', 'KunciFitur', 'Kategori', 'KodeSatuan', 'Pengaturan',
-        'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian', 'LaporanUnggulan',
+        'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuaian', 'LaporanUnggulan', 'ProdukContoh',
     ]));
 }
 
