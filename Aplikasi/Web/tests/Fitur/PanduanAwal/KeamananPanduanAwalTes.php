@@ -197,6 +197,21 @@ describe('Aksi publik template mengunci Tenant sendiri', function (): void {
     });
 });
 
+describe('Kirim ganda metode pembayaran', function (): void {
+    it('mengirim QRIS yang sama dua kali tidak membuat metode ganda maupun berkas yatim', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+        $isian = fn (): array => ['Jenis' => 'QrisStatis', 'Nama' => 'QRIS Kopi Nusantara', 'GambarQris' => UploadedFile::fake()->image('qris.png', 300, 300)];
+
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/metode-pembayaran', $isian())->assertSessionHasNoErrors();
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/metode-pembayaran', [...$isian(), 'Nama' => ' qris kopi nusantara '])
+            ->assertSessionHasErrors(['Nama' => 'Metode pembayaran dengan nama ini sudah ada.']);
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        expect(MetodePembayaran::query()->where('Jenis', 'QrisStatis')->count())->toBe(1)
+            ->and(Storage::disk('local')->allFiles("metode-pembayaran/{$tenant->Id}"))->toHaveCount(1);
+    });
+});
+
 describe('Langkah hanya Selesai lewat Aksinya', function (): void {
     it('profil usaha, sektor, dan pajak tidak bisa ditandai Selesai langsung (404); produk, metode pembayaran, perangkat bisa; semua bisa dilewati', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
