@@ -1,0 +1,145 @@
+{
+  "Id": "HRG-KANAL-TIER-001",
+  "Keterangan": "Daftar harga kanal Online + tier Grosir hanya berlaku bila kanal dan tier sama persis (tier peka huruf besar/kecil); outlet null = semua outlet.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-ONLINE-GROSIR",
+        "Nama": "Online grosir",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Online",
+        "TierPelanggan": "Grosir",
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-ONLINE-GROSIR",
+        "JumlahMinimum": "1.0000",
+        "Harga": "4600.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "Online tanpa tier: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "Online + Grosir: daftar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": "Grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4600.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-ONLINE-GROSIR",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "Online + Grosir di outlet lain: daftar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-CGK",
+        "Kanal": "Online",
+        "TierPelanggan": "Grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4600.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-ONLINE-GROSIR",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "MakanDiTempat + Grosir: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "MakanDiTempat",
+        "TierPelanggan": "Grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "tanpa kanal + Grosir: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": "Grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "Online + grosir huruf kecil: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": "grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

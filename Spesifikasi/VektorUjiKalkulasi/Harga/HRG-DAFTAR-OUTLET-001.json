@@ -1,0 +1,112 @@
+{
+  "Id": "HRG-DAFTAR-OUTLET-001",
+  "Keterangan": "Daftar harga \"Harga Bandara\" hanya untuk outlet O-CGK (Rp 5.500). Outlet lain atau tanpa outlet memakai harga dasar.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-BANDARA",
+        "Nama": "Harga Bandara",
+        "Aktif": true,
+        "UuidOutlet": [
+          "O-CGK",
+          "O-DPS"
+        ],
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-BANDARA",
+        "JumlahMinimum": "1.0000",
+        "Harga": "5500.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "outlet Solo harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "outlet Cengkareng daftar harga bandara",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-CGK",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-BANDARA",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "outlet Denpasar daftar harga bandara",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "3",
+        "UuidOutlet": "O-DPS",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-BANDARA",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "tanpa outlet harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

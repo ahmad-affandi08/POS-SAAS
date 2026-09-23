@@ -1,0 +1,80 @@
+{
+  "Id": "HRG-NOL-001",
+  "Keterangan": "Harga Rp 0 adalah harga yang sah (misal kantong plastik gratis), baik harga dasar maupun di daftar harga.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-ONLINE",
+        "Nama": "Online",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Online",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-KANTONG",
+        "UuidProdukSatuan": "PS-KANTONG-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "0.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-ONLINE",
+        "JumlahMinimum": "1.0000",
+        "Harga": "0.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "kantong gratis harga dasar Rp 0",
+      "Masukan": {
+        "UuidProduk": "P-KANTONG",
+        "UuidProdukSatuan": "PS-KANTONG-PCS",
+        "Jumlah": "3",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "0.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "sabun online Rp 0 dari daftar harga",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "0.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-ONLINE",
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

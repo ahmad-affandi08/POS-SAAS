@@ -1,0 +1,145 @@
+{
+  "Id": "HRG-DAFTAR-WAKTU-001",
+  "Keterangan": "Rentang waktu daftar harga setengah terbuka [2026-10-01T00:00Z, 2026-11-01T00:00Z): tepat di MulaiPada berlaku, tepat di SelesaiPada tidak, 1 detik sebelum MulaiPada tidak.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-OKTOBER",
+        "Nama": "Promo harga Oktober",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": "2026-10-01T00:00:00Z",
+        "SelesaiPada": "2026-11-01T00:00:00Z",
+        "Prioritas": 0
+      },
+      {
+        "Uuid": "DH-MULAI-SAJA",
+        "Nama": "Harga baru mulai 2027",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": "2027-01-01T00:00:00Z",
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-OKTOBER",
+        "JumlahMinimum": "1.0000",
+        "Harga": "4000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-MULAI-SAJA",
+        "JumlahMinimum": "1.0000",
+        "Harga": "5200.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "tepat di MulaiPada berlaku",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T00:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-OKTOBER",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "1 detik sebelum MulaiPada belum berlaku",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-09-30T23:59:59Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "1 detik sebelum SelesaiPada masih berlaku",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-31T23:59:59Z"
+      },
+      "Harapan": {
+        "Harga": "4000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-OKTOBER",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "tepat di SelesaiPada tidak berlaku",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-11-01T00:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "hanya MulaiPada: berlaku tanpa batas akhir",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2030-06-15T10:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5200.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-MULAI-SAJA",
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

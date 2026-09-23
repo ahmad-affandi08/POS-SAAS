@@ -1,0 +1,231 @@
+{
+  "Id": "HRG-DAFTAR-PRIORITAS-001",
+  "Keterangan": "Urutan daftar harga: Prioritas lebih tinggi menang; Prioritas sama maka yang lebih spesifik (jumlah kondisi terisi) menang; sama spesifik maka Uuid terkecil. Daftar tanpa baris untuk satuan itu dilewati.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-P05-UMUM",
+        "Nama": "Harga umum prioritas 5",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 5
+      },
+      {
+        "Uuid": "DH-P10-UMUM",
+        "Nama": "Harga umum prioritas 10",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 10
+      },
+      {
+        "Uuid": "DH-P03-ONLINE",
+        "Nama": "Online",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Online",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 3
+      },
+      {
+        "Uuid": "DH-P03-ONLINE-GROSIR",
+        "Nama": "Online grosir",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Online",
+        "TierPelanggan": "Grosir",
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 3
+      },
+      {
+        "Uuid": "DH-P01-SAMA-B",
+        "Nama": "Sama B",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Antar",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 1
+      },
+      {
+        "Uuid": "DH-P01-SAMA-A",
+        "Nama": "Sama A",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "Antar",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 1
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "18000.00"
+      },
+      {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "UuidDaftarHarga": "DH-P05-UMUM",
+        "JumlahMinimum": "1.0000",
+        "Harga": "16500.00"
+      },
+      {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "UuidDaftarHarga": "DH-P10-UMUM",
+        "JumlahMinimum": "1.0000",
+        "Harga": "16000.00"
+      },
+      {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "12000.00"
+      },
+      {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "UuidDaftarHarga": "DH-P03-ONLINE",
+        "JumlahMinimum": "1.0000",
+        "Harga": "11500.00"
+      },
+      {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "UuidDaftarHarga": "DH-P03-ONLINE-GROSIR",
+        "JumlahMinimum": "1.0000",
+        "Harga": "10500.00"
+      },
+      {
+        "UuidProduk": "P-ROTI",
+        "UuidProdukSatuan": "PS-ROTI-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "9000.00"
+      },
+      {
+        "UuidProduk": "P-ROTI",
+        "UuidProdukSatuan": "PS-ROTI-PCS",
+        "UuidDaftarHarga": "DH-P01-SAMA-B",
+        "JumlahMinimum": "1.0000",
+        "Harga": "8800.00"
+      },
+      {
+        "UuidProduk": "P-ROTI",
+        "UuidProdukSatuan": "PS-ROTI-PCS",
+        "UuidDaftarHarga": "DH-P01-SAMA-A",
+        "JumlahMinimum": "1.0000",
+        "Harga": "8700.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "prioritas 10 mengalahkan prioritas 5",
+      "Masukan": {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "16000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-P10-UMUM",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "prioritas sama: kanal+tier mengalahkan kanal saja",
+      "Masukan": {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": "Grosir",
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "10500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-P03-ONLINE-GROSIR",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "tier tidak cocok: daftar kanal saja",
+      "Masukan": {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Online",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "11500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-P03-ONLINE",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "daftar prioritas tinggi tanpa baris teh dilewati; kanal lain harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-TEH",
+        "UuidProdukSatuan": "PS-TEH-CUP",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "MakanDiTempat",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "12000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "prioritas & spesifik sama: Uuid terkecil",
+      "Masukan": {
+        "UuidProduk": "P-ROTI",
+        "UuidProdukSatuan": "PS-ROTI-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "Antar",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "8700.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-P01-SAMA-A",
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

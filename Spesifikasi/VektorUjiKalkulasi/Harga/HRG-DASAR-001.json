@@ -1,0 +1,145 @@
+{
+  "Id": "HRG-DASAR-001",
+  "Keterangan": "Harga dasar per satuan (lapis 5). Satuan desimal (kg): jumlah di bawah JumlahMinimum terkecil tetap memakai baris dasar terkecil (Sumber Dasar). Produk/satuan tanpa baris harga = HargaTidakDitemukan.",
+  "Katalog": {
+    "DaftarHarga": [],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-BERAS",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "14000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "1 pcs sabun harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "1 kg beras harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-BERAS",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "14000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "0,5 kg beras memakai baris dasar terkecil",
+      "Masukan": {
+        "UuidProduk": "P-BERAS",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "Jumlah": "0.5",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "14000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "2,75 kg beras harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-BERAS",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "Jumlah": "2.75",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "14000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "0,0001 kg beras tetap berharga dasar",
+      "Masukan": {
+        "UuidProduk": "P-BERAS",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "Jumlah": "0.0001",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "14000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "produk tanpa baris harga",
+      "Masukan": {
+        "UuidProduk": "P-TANPA-HARGA",
+        "UuidProdukSatuan": "PS-TANPA-HARGA-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Galat": "HargaTidakDitemukan"
+      }
+    },
+    {
+      "Nama": "satuan beras yang bukan milik produk sabun",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-BERAS-KG",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Galat": "HargaTidakDitemukan"
+      }
+    }
+  ]
+}
