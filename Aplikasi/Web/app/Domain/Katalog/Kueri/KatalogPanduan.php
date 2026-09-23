@@ -79,7 +79,7 @@ final class KatalogPanduan
             'Uuid' => $baris->Uuid,
             'Nama' => $baris->Nama,
             'NamaKategori' => $baris->Kategori?->Nama,
-            'Harga' => (string) ($harga->get($baris->Id)?->first()?->Harga ?? '0.00'),
+            'Harga' => $harga->get($baris->Id)?->first()->Harga ?? '0.00',
         ])->all());
     }
 }
