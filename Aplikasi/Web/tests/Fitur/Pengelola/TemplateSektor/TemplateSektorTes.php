@@ -139,7 +139,85 @@ describe('Menyunting draf template (P-03 langkah 2)', function (): void {
         'mode kasir tidak dikenal' => [['ModeKasir' => ['Terbang']], 'ModeKasir.0'],
         'kelipatan desimal' => [['Pengaturan' => ['PembulatanTunai' => ['Kelipatan' => '0.5']]], 'Pengaturan.PembulatanTunai.Kelipatan'],
         'metode HPP tidak dikenal' => [['Pengaturan' => ['MetodeHpp' => 'Lifo']], 'Pengaturan.MetodeHpp'],
+        'harga produk contoh bertitik ribuan' => [['ProdukContoh' => [0 => ['Harga' => '16.000']]], 'ProdukContoh.0.Harga'],
+        'harga produk contoh berupa number' => [['ProdukContoh' => [1 => ['Harga' => 18000]]], 'ProdukContoh.1.Harga'],
+        'jenis produk contoh paket' => [['ProdukContoh' => [2 => ['Jenis' => 'Paket']]], 'ProdukContoh.2.Jenis'],
+        'nama produk contoh kosong' => [['ProdukContoh' => [3 => ['Nama' => '']]], 'ProdukContoh.3.Nama'],
     ]);
+
+    it('produk contoh disimpan rapi (nama dipangkas, kategori kosong = null), dicatat di log audit, dan divalidasi', function (): void {
+        MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Analis));
+        $this->get(UrlVersi('FNB-QSR', 1))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman
+                ->has('Versi.Isi.ProdukContoh', 12)
+                ->where('Pilihan.JenisProdukContoh', [
+                    ['Nilai' => 'Stok', 'Label' => 'Barang dengan stok'],
+                    ['Nilai' => 'NonStok', 'Label' => 'Tanpa stok (persediaan tidak dihitung)'],
+                    ['Nilai' => 'Jasa', 'Label' => 'Jasa'],
+                ]));
+
+        MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal));
+        $isi = AmbilIsiBisnisUji('FNB-QSR');
+        $this->put(UrlVersi('FNB-QSR', 1, '/isi-bisnis'), $isi)->assertSessionHasNoErrors();
+        expect(LogAuditPengelola::query()->where('Aksi', 'template.isi.ubah')->count())->toBe(0);
+
+        $isi['ProdukContoh'][] = ['Nama' => '  Nasi Uduk Komplit Ayam Goreng Serundeng Tempe Orek  ', 'Kategori' => '', 'Harga' => '27500.50', 'KodeSatuan' => 'PORSI', 'Jenis' => 'NonStok'];
+        $this->put(UrlVersi('FNB-QSR', 1, '/isi-bisnis'), $isi)->assertSessionHasNoErrors();
+
+        $versi = AmbilVersiUji('FNB-QSR', 1);
+        expect($versi->Isi['ProdukContoh'])->toHaveCount(13)
+            ->and($versi->Isi['ProdukContoh'][12])->toEqual([
+                'Nama' => 'Nasi Uduk Komplit Ayam Goreng Serundeng Tempe Orek',
+                'Kategori' => null,
+                'Harga' => '27500.50',
+                'KodeSatuan' => 'PORSI',
+                'Jenis' => 'NonStok',
+            ])
+            ->and($versi->CekLolosValidasi())->toBeTrue()
+            ->and(array_keys(LogAuditPengelola::query()->where('Aksi', 'template.isi.ubah')->sole()->NilaiBaru ?? []))->toBe(['ProdukContoh']);
+
+        $isi['ProdukContoh'][12]['KodeSatuan'] = 'LUSIN';
+        $this->put(UrlVersi('FNB-QSR', 1, '/isi-bisnis'), $isi)->assertSessionHasNoErrors();
+
+        expect(array_column(AmbilVersiUji('FNB-QSR', 1)->HasilValidasi['Galat'] ?? [], 'Pesan'))
+            ->toBe(['Produk contoh Nasi Uduk Komplit Ayam Goreng Serundeng Tempe Orek: satuan LUSIN tidak ada di daftar satuan template.']);
+    });
+});
+
+describe('Kunci peran lama pada versi terbit (BR-P03.4, DesainF01 H1)', function (): void {
+    it('versi terbit berkunci lama tidak ditulis ulang, tampil dengan kunci baru, dan duplikasinya memakai kunci baru', function (): void {
+        $versi = AmbilVersiUji('FNB-CAF', 1);
+        $isi = $versi->Isi;
+        $isi['PemetaanAkun']['PiutangSettlement'] = $isi['PemetaanAkun']['PiutangPencairan'];
+        $isi['PemetaanAkun']['Waste'] = $isi['PemetaanAkun']['SusutPersediaan'];
+        unset($isi['PemetaanAkun']['PiutangPencairan'], $isi['PemetaanAkun']['SusutPersediaan'], $isi['ProdukContoh']);
+        $versi->update(['Isi' => $isi]);
+
+        MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin));
+        $this->post(UrlVersi('FNB-CAF', 1, '/terbitkan'))->assertSessionHasNoErrors();
+
+        $this->get(UrlVersi('FNB-CAF', 1))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman
+                ->where('Versi.Status', 'Terbit')
+                ->where('Versi.Isi.PemetaanAkun.PiutangPencairan', '1-1300')
+                ->where('Versi.Isi.PemetaanAkun.SusutPersediaan', '5-1200')
+                ->missing('Versi.Isi.PemetaanAkun.PiutangSettlement')
+                ->missing('Versi.Isi.PemetaanAkun.Waste')
+                ->where('Versi.Isi.ProdukContoh', []));
+
+        $terbit = AmbilVersiUji('FNB-CAF', 1);
+        expect($terbit->Isi['PemetaanAkun'])->toHaveKeys(['PiutangSettlement', 'Waste'])
+            ->and($terbit->Isi)->not->toHaveKey('ProdukContoh');
+
+        $this->post(UrlVersi('FNB-CAF', 1, '/duplikasi'))->assertSessionHasNoErrors();
+
+        $draf = AmbilVersiUji('FNB-CAF', 2);
+        expect($draf->Isi['PemetaanAkun'])->toHaveKeys(['PiutangPencairan', 'SusutPersediaan'])
+            ->and($draf->Isi['PemetaanAkun'])->not->toHaveKey('PiutangSettlement')
+            ->and($draf->Isi['PemetaanAkun'])->not->toHaveKey('Waste')
+            ->and($draf->CekLolosValidasi())->toBeTrue()
+            ->and(AmbilVersiUji('FNB-CAF', 1)->Isi['PemetaanAkun'])->toHaveKey('PiutangSettlement');
+    });
 });
 
 describe('Terbitkan template (BR-P03.3, BR-P03.4)', function (): void {
