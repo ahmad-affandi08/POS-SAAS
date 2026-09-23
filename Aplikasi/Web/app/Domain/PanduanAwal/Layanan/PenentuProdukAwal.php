@@ -8,8 +8,8 @@ use App\Domain\Katalog\Aksi\PastikanSatuanStandar;
 use App\Domain\Katalog\Data\DataSatuanStandar;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Kueri\KatalogPanduan;
-use App\Domain\PanduanAwal\Data\DataIsiTemplate;
 use App\Domain\Pajak\Kueri\DaftarKelompokPajak;
+use App\Domain\PanduanAwal\Data\DataIsiTemplate;
 use App\Domain\Penjualan\Enum\ModeKasir;
 use App\Domain\Referensi\Kueri\SatuanStandarAktif;
 

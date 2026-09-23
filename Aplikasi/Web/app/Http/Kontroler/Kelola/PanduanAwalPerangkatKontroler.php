@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Kelola;
+
+use App\Domain\Organisasi\Aksi\BuatKodeAktivasi;
+use App\Domain\Organisasi\Aksi\BuatPerangkat;
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Enum\JenisPerangkat;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
+use App\Domain\Organisasi\Kueri\DaftarPerangkat;
+use App\Domain\Organisasi\Kueri\PemakaianPerangkat;
+use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
+use App\Domain\Organisasi\Model\Perangkat;
+use App\Domain\Tenant\Layanan\PastikanBatasPaket;
+use App\Http\Permintaan\Kelola\PanduanAwal\SimpanPerangkatPanduanPermintaan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * F-01 langkah 6: perangkat kasir di outlet wizard, memakai Aksi F-02b (`BuatPerangkat`, `BuatKodeAktivasi`) dan kartu
+ * kode aktivasi + QR. Kode asli hanya ada di flash sesi sekali tampil. Tes cetak dilakukan di Aplikasi Kasir.
+ */
+final class PanduanAwalPerangkatKontroler extends DasarPanduanAwalKontroler
+{
+    private const KUNCI_KODE_BARU = 'KodeAktivasiBaru';
+
+    public function Tampilkan(Request $permintaan, DaftarPerangkat $daftar, PemakaianPerangkat $pemakaian, PastikanBatasPaket $batasPaket, PembuatQrKodeAktivasi $qr, AksesPengguna $akses): Response
+    {
+        $outlet = $this->OutletPanduan();
+        $kodeBaru = $permintaan->session()->get(self::KUNCI_KODE_BARU);
+
+        return Inertia::render('Kelola/PanduanAwal/Perangkat', [
+            'Progres' => $this->Progres(),
+            'Outlet' => [
+                'Uuid' => $outlet->Uuid,
+                'Kode' => $outlet->Kode,
+                'Nama' => $outlet->Nama,
+                'BatasPerangkat' => $batasPaket->AmbilRingkasan($this->IdTenant(), 'BatasPerangkatPerOutlet', $pemakaian->HitungAktifDiOutlet($outlet->Id)),
+            ],
+            'Perangkat' => array_map(fn (array $perangkat): array => [
+                'Uuid' => $perangkat['Uuid'],
+                'Kode' => $perangkat['Kode'],
+                'Nama' => $perangkat['Nama'],
+                'LabelJenis' => $perangkat['LabelJenis'],
+                'Status' => $perangkat['Status'],
+            ], $daftar->Ambil([$outlet->Id])),
+            'KodeAktivasiBaru' => is_array($kodeBaru) && is_string($kodeBaru['Kode'] ?? null) ? [
+                ...$kodeBaru,
+                'QrSvg' => $qr->BuatSvg($kodeBaru['Kode']),
+            ] : null,
+            'BolehKelolaPerangkat' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PerangkatKelola),
+        ]);
+    }
+
+    public function Simpan(SimpanPerangkatPanduanPermintaan $permintaan, BuatPerangkat $buat): RedirectResponse
+    {
+        $hasil = $buat->Jalankan($this->OutletPanduan(), $permintaan->string('Nama')->toString(), JenisPerangkat::Kasir, $this->Pelaku()->Id);
+
+        return $this->KembaliDenganKode($hasil['Perangkat'], $hasil['Kode'], $hasil['KedaluwarsaPada'], "Perangkat {$hasil['Perangkat']->Nama} ({$hasil['Perangkat']->Kode}) ditambahkan. Masukkan kode aktivasi di aplikasi kasir.");
+    }
+
+    public function BuatKodeAktivasi(string $perangkat, BuatKodeAktivasi $buatKode): RedirectResponse
+    {
+        $baris = Perangkat::query()->where('Uuid', $perangkat)->where('IdOutlet', $this->OutletPanduan()->Id)->first() ?? abort(404);
+        $kode = $buatKode->Jalankan($baris, $this->Pelaku()->Id);
+
+        return $this->KembaliDenganKode($baris, $kode['Kode'], $kode['KedaluwarsaPada'], "Kode aktivasi baru untuk {$baris->Nama} dibuat. Kode sebelumnya tidak berlaku lagi.");
+    }
+
+    private function KembaliDenganKode(Perangkat $perangkat, string $kode, Carbon $kedaluwarsa, string $pesan): RedirectResponse
+    {
+        return redirect()->route('kelola.panduan-awal.perangkat')
+            ->with('Kilat', $pesan)
+            ->with(self::KUNCI_KODE_BARU, [
+                'UuidPerangkat' => $perangkat->Uuid,
+                'NamaPerangkat' => $perangkat->Nama,
+                'KodePerangkat' => $perangkat->Kode,
+                'Kode' => $kode,
+                'KedaluwarsaPada' => $kedaluwarsa->toIso8601String(),
+            ]);
+    }
+}

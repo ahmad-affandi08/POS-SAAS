@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\PanduanAwal\Layanan;
 
 use App\Domain\Akuntansi\Data\DataAkunTemplate;
+use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Enum\SaldoNormal;
 use App\Domain\Akuntansi\Enum\TipeAkun;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Pajak\Data\DataKelompokPajakTemplate;
 use App\Domain\PanduanAwal\Data\DataIsiTemplate;
 use App\Domain\PanduanAwal\Data\DataPengaturanTemplate;
 use App\Domain\PanduanAwal\Data\DataProdukContohTemplate;
-use App\Domain\Pajak\Data\DataKelompokPajakTemplate;
 
 /**
  * Membaca `TemplateSektorVersi.Isi` menjadi DTO (F-01). Versi terbit sudah lolos validasi P-03, tetapi pembacaan
@@ -95,7 +96,8 @@ final class PembacaIsiTemplate
     {
         $hasil = [];
 
-        foreach (is_array($nilai) ? $nilai : [] as $kunci => $kode) {
+        // Kunci lama diganti kunci barunya; bila keduanya ada, kunci baru menang (§25 no. 16a).
+        foreach (is_array($nilai) ? PeranAkun::NormalisasiPemetaan($nilai) : [] as $kunci => $kode) {
             if (is_string($kunci) && is_string($kode) && $kode !== '') {
                 $hasil[$kunci] = $kode;
             }

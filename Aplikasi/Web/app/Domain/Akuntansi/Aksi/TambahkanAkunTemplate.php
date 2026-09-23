@@ -19,15 +19,6 @@ use Illuminate\Support\Facades\DB;
  */
 final class TambahkanAkunTemplate
 {
-    /**
-     * Kunci peran lama ↔ baru (§25 no. 16a). Versi template terbit tidak diubah (BR-P03.4), jadi kedua nama dibaca;
-     * hasilnya selalu nilai `PeranAkun` yang berlaku.
-     */
-    private const ALIAS_PERAN = [
-        'PiutangSettlement' => 'PiutangPencairan',
-        'Waste' => 'SusutPersediaan',
-    ];
-
     public function __construct(private readonly PencatatAudit $audit) {}
 
     /**
@@ -61,7 +52,8 @@ final class TambahkanAkunTemplate
             $pemetaanBaru = [];
 
             foreach ($pemetaan as $kunci => $kode) {
-                $peran = self::TerjemahkanPeran((string) $kunci);
+                // Kunci lama (PiutangSettlement, Waste) di versi terbit dibaca lewat alias (§25 no. 16a, BR-P03.4).
+                $peran = PeranAkun::DariKunci((string) $kunci);
                 $idAkun = $idPerKode[$kode] ?? null;
 
                 if ($peran === null || ! is_int($idAkun) || in_array($peran->value, $kunciAda, true)) {
@@ -79,12 +71,5 @@ final class TambahkanAkunTemplate
 
             return ['Akun' => $kodeBaru, 'Pemetaan' => $pemetaanBaru];
         });
-    }
-
-    private static function TerjemahkanPeran(string $kunci): ?PeranAkun
-    {
-        $alias = self::ALIAS_PERAN[$kunci] ?? array_search($kunci, self::ALIAS_PERAN, true);
-
-        return PeranAkun::tryFrom($kunci) ?? (is_string($alias) ? PeranAkun::tryFrom($alias) : null);
     }
 }

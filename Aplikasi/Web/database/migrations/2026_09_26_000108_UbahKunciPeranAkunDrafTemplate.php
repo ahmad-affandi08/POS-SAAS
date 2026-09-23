@@ -44,7 +44,13 @@ return new class extends Migration
             foreach ($isi['PemetaanAkun'] as $kunci => $kode) {
                 $kunciBaru = $ganti[$kunci] ?? $kunci;
                 $berubah = $berubah || $kunciBaru !== $kunci;
-                $pemetaan[$kunciBaru] = $pemetaan[$kunciBaru] ?? $kode;
+
+                // Bila kunci baru sudah ada, kunci baru yang menang (sama dengan PeranAkun::NormalisasiPemetaan).
+                if ($kunciBaru !== $kunci && array_key_exists($kunciBaru, $isi['PemetaanAkun'])) {
+                    continue;
+                }
+
+                $pemetaan[$kunciBaru] = $kode;
             }
 
             if ($berubah) {
