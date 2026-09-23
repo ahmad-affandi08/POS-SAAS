@@ -79,4 +79,4 @@ Alat/               Penjaga & skrip proyek (terlindungi)
 Dokumen/            Potongan PRD hasil generate (terlindungi)
 ```
 
-Status: **belum di-scaffold**. Pekerjaan pertama adalah Fase 0 (§22): fondasi + Platform Pengelola inti.
+Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi Backend/Web/Flutter, P-01 (tim internal), P-02 (regulasi & referensi).

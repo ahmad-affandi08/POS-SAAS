@@ -6,6 +6,7 @@ use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
+use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
@@ -97,6 +98,20 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::post('/referensi/tarif-pajak/{tarifPajak}/tinjau', [TarifPajakKontroler::class, 'Tinjau'])
                 ->middleware($izin(IzinPengelola::ReferensiTarifPajakSetujui))
                 ->name('pengelola.referensi.tarif-pajak.tinjau');
+
+            Route::get('/referensi/hari-libur', [HariLiburKontroler::class, 'Daftar'])->name('pengelola.referensi.hari-libur.daftar');
+            Route::middleware($izin(IzinPengelola::ReferensiHariLiburAjukan))->group(function (): void {
+                Route::post('/referensi/hari-libur', [HariLiburKontroler::class, 'Simpan'])->name('pengelola.referensi.hari-libur.simpan');
+                Route::put('/referensi/hari-libur/{hariLibur}', [HariLiburKontroler::class, 'Ubah'])->name('pengelola.referensi.hari-libur.ubah');
+                Route::delete('/referensi/hari-libur/{hariLibur}', [HariLiburKontroler::class, 'Hapus'])->name('pengelola.referensi.hari-libur.hapus');
+                Route::post('/referensi/hari-libur/tahun/{tahun}/ajukan', [HariLiburKontroler::class, 'Ajukan'])
+                    ->whereNumber('tahun')
+                    ->name('pengelola.referensi.hari-libur.ajukan');
+            });
+            Route::post('/referensi/hari-libur/tahun/{tahun}/tinjau', [HariLiburKontroler::class, 'Tinjau'])
+                ->whereNumber('tahun')
+                ->middleware($izin(IzinPengelola::ReferensiHariLiburSetujui))
+                ->name('pengelola.referensi.hari-libur.tinjau');
         });
     });
 });
