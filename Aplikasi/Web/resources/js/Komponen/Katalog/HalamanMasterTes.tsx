@@ -295,7 +295,7 @@ describe('Kelola/KelompokPilihan (E.9)', () => {
     afterEach(() => cleanup());
 
     it('aturan minimal/maksimal pilih dan nama unik', () => {
-        const pilihan = (nama: string, aktif = true) => ({
+        const BuatPilihan = (nama: string, aktif = true) => ({
             Uuid: null,
             Nama: nama,
             Harga: '0',
@@ -305,16 +305,24 @@ describe('Kelola/KelompokPilihan (E.9)', () => {
         });
 
         expect(
-            PeriksaKelompokPilihan({ MinimalPilih: '1', MaksimalPilih: '1', Pilihan: [pilihan('Normal')] }),
+            PeriksaKelompokPilihan({ MinimalPilih: '1', MaksimalPilih: '1', Pilihan: [BuatPilihan('Normal')] }),
         ).toBeNull();
         expect(
-            PeriksaKelompokPilihan({ MinimalPilih: '2', MaksimalPilih: '1', Pilihan: [pilihan('A'), pilihan('B')] }),
+            PeriksaKelompokPilihan({
+                MinimalPilih: '2',
+                MaksimalPilih: '1',
+                Pilihan: [BuatPilihan('A'), BuatPilihan('B')],
+            }),
         ).toBe('Minimal pilih tidak boleh lebih besar dari maksimal pilih.');
-        expect(PeriksaKelompokPilihan({ MinimalPilih: '1', MaksimalPilih: '2', Pilihan: [pilihan('A', false)] })).toBe(
-            'Minimal pilih 1, tetapi hanya 0 pilihan aktif.',
-        );
         expect(
-            PeriksaKelompokPilihan({ MinimalPilih: '0', MaksimalPilih: '2', Pilihan: [pilihan('A'), pilihan('a')] }),
+            PeriksaKelompokPilihan({ MinimalPilih: '1', MaksimalPilih: '2', Pilihan: [BuatPilihan('A', false)] }),
+        ).toBe('Minimal pilih 1, tetapi hanya 0 pilihan aktif.');
+        expect(
+            PeriksaKelompokPilihan({
+                MinimalPilih: '0',
+                MaksimalPilih: '2',
+                Pilihan: [BuatPilihan('A'), BuatPilihan('a')],
+            }),
         ).toBe('Setiap pilihan perlu nama, dan nama tidak boleh sama dalam satu kelompok.');
         expect(RingkasAturanPilih('1', '1')).toBe('Wajib pilih 1');
         expect(RingkasAturanPilih('0', '3')).toBe('Opsional, maks 3');
