@@ -19,7 +19,7 @@ describe('P-01 langkah 1–2: Super Admin pertama & peran bawaan', function (): 
 
         expect($pengguna->PunyaPeran(PeranPengelolaBawaan::SuperAdmin))->toBeTrue()
             ->and($pengguna->PunyaIzin(IzinPengelola::TimAnggotaUndang))->toBeTrue()
-            ->and($pengguna->DuaFaktorAktif())->toBeFalse()
+            ->and($pengguna->CekDuaFaktorAktif())->toBeFalse()
             ->and(PeranPengelola::query()->orderBy('Id')->pluck('Kode')->all())
             ->toBe(array_map(fn (PeranPengelolaBawaan $peran) => $peran->value, PeranPengelolaBawaan::cases()));
 

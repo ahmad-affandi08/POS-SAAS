@@ -20,7 +20,7 @@ enum PeranPengelolaBawaan: string
     case MitraPenjualan = 'MitraPenjualan';
     case Analis = 'Analis';
 
-    public function Nama(): string
+    public function AmbilNama(): string
     {
         return match ($this) {
             self::SuperAdmin => 'Super Admin',
@@ -36,7 +36,7 @@ enum PeranPengelolaBawaan: string
     /**
      * @return list<IzinPengelola>
      */
-    public function Izin(): array
+    public function AmbilIzin(): array
     {
         return match ($this) {
             self::SuperAdmin => IzinPengelola::cases(),

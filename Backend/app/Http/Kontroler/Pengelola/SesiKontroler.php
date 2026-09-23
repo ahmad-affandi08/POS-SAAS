@@ -58,6 +58,7 @@ final class SesiKontroler extends Kontroler
 
         $sesi = $permintaan->session();
         $sesi->regenerate();
+        $sesi->forget(SesiPengelola::DUA_FAKTOR_TERVERIFIKASI);
         $sesi->put(SesiPengelola::TERAKHIR_AKTIF, now()->getTimestamp());
 
         $pengguna = Auth::guard(SesiPengelola::GUARD)->user();

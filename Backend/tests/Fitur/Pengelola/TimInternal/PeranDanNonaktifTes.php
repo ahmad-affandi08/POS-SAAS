@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
+use App\Domain\Pengelola\TimInternal\Model\UndanganPengelola;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 
@@ -22,7 +23,7 @@ describe('Tetapkan peran & nonaktifkan anggota (P-01 langkah 5–6, BR-P01.1)', 
             ->assertSessionHasNoErrors();
 
         $anggota->LupakanIzin();
-        expect($anggota->DaftarKodePeran())->toEqualCanonicalizing(['Keuangan', 'Dukungan']);
+        expect($anggota->AmbilKodePeran())->toEqualCanonicalizing(['Keuangan', 'Dukungan']);
 
         $log = LogAuditPengelola::query()->where('Aksi', 'tim.peran.tetapkan')->sole();
         expect($log->IdPenggunaPengelola)->toBe($superAdmin->Id)
@@ -78,7 +79,7 @@ describe('Tetapkan peran & nonaktifkan anggota (P-01 langkah 5–6, BR-P01.1)', 
             ->assertSessionHasErrors('KodePeran');
 
         $target->LupakanIzin();
-        expect($target->DaftarKodePeran())->toBe(['SuperAdmin']);
+        expect($target->AmbilKodePeran())->toBe(['SuperAdmin']);
     });
 
     it('BR-P01.1: Super Admin yang sudah nonaktif tidak dihitung', function (): void {
@@ -130,5 +131,52 @@ describe('Tetapkan peran & nonaktifkan anggota (P-01 langkah 5–6, BR-P01.1)', 
                 ->where('PeringatanSuperAdmin', true)
                 ->missing('Anggota.0.KataSandi')
                 ->missing('Anggota.0.Rahasia2fa'));
+    });
+    it('peran selain Super Admin tidak bisa menetapkan peran atau menonaktifkan', function (PeranPengelolaBawaan $peran): void {
+        $pelaku = BantuanPengelola::BuatAnggota($peran);
+        $target = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Analis);
+        $this->actingAs($pelaku, 'pengelola')->withSession(BantuanPengelola::SesiTerverifikasi());
+
+        $this->put(BantuanPengelola::Url("/tim-internal/{$target->Uuid}/peran"), ['KodePeran' => ['SuperAdmin']])
+            ->assertForbidden()
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/Galat')->where('Judul', 'Tidak punya akses'));
+        $this->post(BantuanPengelola::Url("/tim-internal/{$target->Uuid}/nonaktifkan"), ['Alasan' => 'Coba'])
+            ->assertForbidden();
+
+        $target->refresh();
+        $target->LupakanIzin();
+        expect($target->AmbilKodePeran())->toBe(['Analis'])
+            ->and($target->Aktif)->toBeTrue();
+        $this->assertDatabaseMissing('LogAuditPengelola', ['Aksi' => 'tim.peran.tetapkan']);
+        $this->assertDatabaseMissing('LogAuditPengelola', ['Aksi' => 'tim.anggota.nonaktifkan']);
+    })->with(array_values(array_filter(
+        PeranPengelolaBawaan::cases(),
+        fn (PeranPengelolaBawaan $peran) => $peran !== PeranPengelolaBawaan::SuperAdmin,
+    )));
+
+    it('menonaktifkan anggota ikut mencabut undangan yang ia kirim', function (): void {
+        $pelaku = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $target = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $undangan = UndanganPengelola::query()->create([
+            'Email' => 'calon@contoh.id',
+            'HashToken' => UndanganPengelola::BuatHashToken('token-uji'),
+            'KodePeran' => ['Analis'],
+            'IdPenggunaPengelolaPengundang' => $target->Id,
+            'BerlakuSampai' => now()->addHours(48),
+        ]);
+
+        $this->actingAs($pelaku, 'pengelola')
+            ->withSession(BantuanPengelola::SesiTerverifikasi())
+            ->post(BantuanPengelola::Url("/tim-internal/{$target->Uuid}/nonaktifkan"), ['Alasan' => 'Keluar'])
+            ->assertSessionHasNoErrors();
+
+        expect($undangan->refresh()->DibatalkanPada)->not->toBeNull();
+    });
+
+    it('menampilkan halaman 404 berbahasa Indonesia di subdomain pengelola', function (): void {
+        $this->get(BantuanPengelola::Url('/tidak-ada'))
+            ->assertNotFound()
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/Galat')->where('Status', 404));
     });
 });

@@ -45,13 +45,13 @@ describe('2FA wajib Platform Pengelola (P-01 langkah 4, BR-P01.2)', function ():
 
         $this->post(BantuanPengelola::Url('/dua-faktor/aktifkan'), ['Kode' => '000000'])
             ->assertSessionHasErrors('Kode');
-        expect($pengguna->refresh()->DuaFaktorAktif())->toBeFalse();
+        expect($pengguna->refresh()->CekDuaFaktorAktif())->toBeFalse();
 
         $this->post(BantuanPengelola::Url('/dua-faktor/aktifkan'), ['Kode' => (new Google2FA)->getCurrentOtp($rahasia)])
             ->assertRedirect(route('pengelola.dua-faktor.kode-pemulihan'));
 
         $pengguna->refresh();
-        expect($pengguna->DuaFaktorAktif())->toBeTrue()
+        expect($pengguna->CekDuaFaktorAktif())->toBeTrue()
             ->and($pengguna->KodePemulihan2fa)->toHaveCount(8)
             ->and($pengguna->getRawOriginal('Rahasia2fa'))->not->toBe($rahasia);
 

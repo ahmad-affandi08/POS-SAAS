@@ -9,6 +9,7 @@ use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Kueri\SuperAdminAktif;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
+use App\Domain\Pengelola\TimInternal\Model\UndanganPengelola;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +26,9 @@ final class NonaktifkanAnggotaTim
     public function Jalankan(PenggunaPengelola $pelaku, PenggunaPengelola $anggota, string $alasan): void
     {
         DB::transaction(function () use ($pelaku, $anggota, $alasan): void {
+            $this->superAdminAktif->KunciPerubahan();
             $anggota->refresh();
+            $anggota->LupakanIzin();
 
             if (! $anggota->Aktif) {
                 throw new PelanggaranAturanBisnis('AnggotaSudahNonaktif', 'Anggota ini sudah nonaktif.');
@@ -41,11 +44,18 @@ final class NonaktifkanAnggotaTim
 
             $anggota->update(['Aktif' => false, 'DinonaktifkanPada' => now()]);
 
+            // Undangan yang dikirim akun ini dan belum diterima ikut dicabut (P-01 langkah 6).
+            $undanganDicabut = UndanganPengelola::query()
+                ->where('IdPenggunaPengelolaPengundang', $anggota->Id)
+                ->whereNull('DiterimaPada')
+                ->whereNull('DibatalkanPada')
+                ->update(['DibatalkanPada' => now()]);
+
             $this->audit->Catat(
                 'tim.anggota.nonaktifkan',
                 $anggota,
                 nilaiLama: ['Aktif' => true],
-                nilaiBaru: ['Aktif' => false],
+                nilaiBaru: ['Aktif' => false, 'UndanganDicabut' => $undanganDicabut],
                 alasan: $alasan,
                 idPelaku: $pelaku->Id,
             );

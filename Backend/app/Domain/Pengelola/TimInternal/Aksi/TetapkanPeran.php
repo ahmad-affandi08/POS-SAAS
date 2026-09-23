@@ -30,13 +30,16 @@ final class TetapkanPeran
         $kodePeran = array_values(array_unique($kodePeran));
 
         DB::transaction(function () use ($pelaku, $anggota, $kodePeran, $alasan): void {
+            $this->superAdminAktif->KunciPerubahan();
+            $anggota->refresh();
+            $anggota->LupakanIzin();
             $peran = PeranPengelola::query()->whereIn('Kode', $kodePeran)->get();
 
             if ($kodePeran === [] || $peran->count() !== count($kodePeran)) {
                 throw new PelanggaranAturanBisnis('PeranTidakDikenal', 'Pilih minimal satu peran yang tersedia.', 'KodePeran');
             }
 
-            $kodeLama = $anggota->DaftarKodePeran();
+            $kodeLama = $anggota->AmbilKodePeran();
             $superAdmin = PeranPengelolaBawaan::SuperAdmin->value;
             $superAdminDicabut = in_array($superAdmin, $kodeLama, true) && ! in_array($superAdmin, $kodePeran, true);
 

@@ -86,25 +86,25 @@ final class PenggunaPengelola extends ModelDasar implements KontrakDapatDiautent
         return $this->belongsToMany(PeranPengelola::class, 'PenggunaPengelolaPeran', 'IdPenggunaPengelola', 'IdPeranPengelola', 'Id', 'Id');
     }
 
-    public function DuaFaktorAktif(): bool
+    public function CekDuaFaktorAktif(): bool
     {
         return $this->DuaFaktorAktifPada !== null && $this->Rahasia2fa !== null;
     }
 
     public function PunyaIzin(IzinPengelola $izin): bool
     {
-        return in_array($izin->value, $this->DaftarIzin(), true);
+        return in_array($izin->value, $this->AmbilDaftarIzin(), true);
     }
 
     public function PunyaPeran(PeranPengelolaBawaan $peran): bool
     {
-        return in_array($peran->value, $this->DaftarKodePeran(), true);
+        return in_array($peran->value, $this->AmbilKodePeran(), true);
     }
 
     /**
      * @return list<string>
      */
-    public function DaftarKodePeran(): array
+    public function AmbilKodePeran(): array
     {
         return array_values($this->MuatPeran()->Peran->map(fn (PeranPengelola $peran): string => $peran->Kode)->all());
     }
@@ -112,7 +112,7 @@ final class PenggunaPengelola extends ModelDasar implements KontrakDapatDiautent
     /**
      * @return list<string>
      */
-    public function DaftarIzin(): array
+    public function AmbilDaftarIzin(): array
     {
         if ($this->izinTerhimpun === null) {
             $kunci = [];

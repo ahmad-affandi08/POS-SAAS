@@ -25,7 +25,7 @@ final class LogAuditKontroler extends Kontroler
             ->with('Pelaku:Id,Nama,Email')
             ->when($kata !== '', fn ($kueri) => $kueri->where('Aksi', 'like', '%'.addcslashes($kata, '%_\\').'%'))
             ->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN)
+            ->paginate(self::PER_HALAMAN, ['*'], 'halaman')
             ->withQueryString()
             ->through(fn (LogAuditPengelola $log): array => [
                 'Id' => $log->Id,

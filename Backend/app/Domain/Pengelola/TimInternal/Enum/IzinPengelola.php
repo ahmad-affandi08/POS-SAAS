@@ -16,7 +16,7 @@ enum IzinPengelola: string
     case TimPeranTetapkan = 'tim.peran.tetapkan';
     case AuditLihat = 'audit.lihat';
 
-    public function Label(): string
+    public function AmbilLabel(): string
     {
         return match ($this) {
             self::TimAnggotaLihat => 'Melihat anggota tim internal',

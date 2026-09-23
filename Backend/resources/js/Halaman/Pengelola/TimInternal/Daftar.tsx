@@ -108,7 +108,7 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                                             <LabelStatus jenis="netral" teks="Nonaktif" />
                                         )}
                                         {anggota.DuaFaktorAktif ? null : (
-                                            <LabelStatus jenis="peringatan" teks="2FA belum aktif" />
+                                            <LabelStatus jenis="peringatan" teks="Verifikasi dua langkah belum aktif" />
                                         )}
                                     </div>
                                 </td>

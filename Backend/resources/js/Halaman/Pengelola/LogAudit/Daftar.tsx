@@ -33,8 +33,8 @@ export default function Daftar({ Log, Saring }: PropsDaftar) {
         peristiwa.preventDefault();
         router.get('/log-audit', kata ? { kata } : {}, { preserveState: true });
     };
-    const TautanHalaman = (halaman: number) =>
-        `/log-audit?${new URLSearchParams({ ...(Saring.Kata ? { kata: Saring.Kata } : {}), page: String(halaman) }).toString()}`;
+    const BuatTautanHalaman = (halaman: number) =>
+        `/log-audit?${new URLSearchParams({ ...(Saring.Kata ? { kata: Saring.Kata } : {}), halaman: String(halaman) }).toString()}`;
 
     return (
         <TataLetakPengelola judul="Log audit">
@@ -127,7 +127,7 @@ export default function Daftar({ Log, Saring }: PropsDaftar) {
                     <div className="flex gap-2">
                         {Log.HalamanSaatIni > 1 ? (
                             <Link
-                                href={TautanHalaman(Log.HalamanSaatIni - 1)}
+                                href={BuatTautanHalaman(Log.HalamanSaatIni - 1)}
                                 className="font-semibold text-brand underline"
                             >
                                 Sebelumnya
@@ -135,7 +135,7 @@ export default function Daftar({ Log, Saring }: PropsDaftar) {
                         ) : null}
                         {Log.HalamanSaatIni < Log.HalamanTerakhir ? (
                             <Link
-                                href={TautanHalaman(Log.HalamanSaatIni + 1)}
+                                href={BuatTautanHalaman(Log.HalamanSaatIni + 1)}
                                 className="font-semibold text-brand underline"
                             >
                                 Berikutnya

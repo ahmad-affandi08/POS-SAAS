@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Http\Kontroler\Pengelola\GalatKontroler;
 use App\Http\Perantara\Pengelola\SiapkanSesiPengelola;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Galat di subdomain pengelola ditampilkan sebagai halaman berbahasa Indonesia (PRD §17.6.6).
+        $exceptions->respond(fn (SymfonyResponse $respons, Throwable $galat, Request $request) => GalatKontroler::UbahRespons($respons, $request));
 
         $exceptions->dontFlash(['KataSandi', 'KonfirmasiKataSandi', 'Kode']);
 

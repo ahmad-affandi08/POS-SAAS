@@ -24,7 +24,7 @@ return new class extends Migration
         Schema::create('PeranPengelolaIzin', function (Blueprint $tabel): void {
             $tabel->id('Id');
             $tabel->foreignId('IdPeranPengelola')
-                ->constrained('PeranPengelola', 'Id', 'FkPeranPengelolaIzinPeran')
+                ->constrained('PeranPengelola', 'Id', 'FkPeranPengelolaIzinIdPeranPengelola')
                 ->cascadeOnDelete();
             $tabel->string('KunciIzin', 100);
             $tabel->unique(['IdPeranPengelola', 'KunciIzin'], 'UniqPeranPengelolaIzin');
@@ -32,10 +32,10 @@ return new class extends Migration
 
         Schema::create('PenggunaPengelolaPeran', function (Blueprint $tabel): void {
             $tabel->foreignId('IdPenggunaPengelola')
-                ->constrained('PenggunaPengelola', 'Id', 'FkPenggunaPengelolaPeranPengguna')
+                ->constrained('PenggunaPengelola', 'Id', 'FkPenggunaPengelolaPeranIdPenggunaPengelola')
                 ->cascadeOnDelete();
             $tabel->foreignId('IdPeranPengelola')
-                ->constrained('PeranPengelola', 'Id', 'FkPenggunaPengelolaPeranPeran')
+                ->constrained('PeranPengelola', 'Id', 'FkPenggunaPengelolaPeranIdPeranPengelola')
                 ->restrictOnDelete();
             $tabel->primary(['IdPenggunaPengelola', 'IdPeranPengelola'], 'PkPenggunaPengelolaPeran');
         });

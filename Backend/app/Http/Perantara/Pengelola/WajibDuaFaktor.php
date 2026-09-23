@@ -23,7 +23,7 @@ final class WajibDuaFaktor
             abort(403);
         }
 
-        if (! $pengguna->DuaFaktorAktif()) {
+        if (! $pengguna->CekDuaFaktorAktif()) {
             return redirect()->route('pengelola.dua-faktor.aktifkan')
                 ->with('Kilat', 'Aktifkan verifikasi dua langkah sebelum membuka menu Platform Pengelola.');
         }

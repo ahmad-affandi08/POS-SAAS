@@ -39,7 +39,7 @@ final class UndanganPengelola extends ModelDasar
         'DibatalkanPada' => null,
     ];
 
-    public static function HashDariToken(string $token): string
+    public static function BuatHashToken(string $token): string
     {
         return hash('sha256', $token);
     }
@@ -52,7 +52,7 @@ final class UndanganPengelola extends ModelDasar
         return $this->belongsTo(PenggunaPengelola::class, 'IdPenggunaPengelolaPengundang', 'Id');
     }
 
-    public function MasihBerlaku(): bool
+    public function CekMasihBerlaku(): bool
     {
         return $this->DiterimaPada === null
             && $this->DibatalkanPada === null

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Pengelola\TimInternal\Model\UndanganPengelola;
 use App\Domain\Pengelola\TimInternal\Surel\UndanganTimInternal;
@@ -72,8 +73,11 @@ describe('Undangan anggota tim (P-01 langkah 3–5)', function (): void {
         ])->assertRedirect(route('pengelola.dua-faktor.aktifkan'));
 
         $anggota = PenggunaPengelola::query()->where('Email', 'budi@contoh.id')->sole();
-        expect($anggota->DaftarKodePeran())->toEqualCanonicalizing(['Dukungan', 'Keuangan'])
-            ->and($anggota->DuaFaktorAktif())->toBeFalse();
+        $log = LogAuditPengelola::query()->where('Aksi', 'tim.anggota.terima-undangan')->sole();
+        expect(json_encode($log->NilaiBaru))->not->toContain('rahasia-kuat-123')
+            ->and($log->NilaiBaru)->not->toHaveKey('KataSandi');
+        expect($anggota->AmbilKodePeran())->toEqualCanonicalizing(['Dukungan', 'Keuangan'])
+            ->and($anggota->CekDuaFaktorAktif())->toBeFalse();
         $this->assertAuthenticatedAs($anggota, 'pengelola');
         $this->get(BantuanPengelola::Url('/'))->assertRedirect(route('pengelola.dua-faktor.aktifkan'));
     });
@@ -116,6 +120,7 @@ describe('Undangan anggota tim (P-01 langkah 3–5)', function (): void {
 
         $this->get(BantuanPengelola::Url($pathLama))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Berlaku', false));
+        $this->assertDatabaseHas('LogAuditPengelola', ['Aksi' => 'tim.anggota.undangan-batal']);
     });
 
     it('menolak email yang sudah menjadi anggota tim', function (): void {

@@ -19,10 +19,10 @@ final class SiapkanPeranBawaan
             foreach (PeranPengelolaBawaan::cases() as $bawaan) {
                 $peran = PeranPengelola::query()->updateOrCreate(
                     ['Kode' => $bawaan->value],
-                    ['Nama' => $bawaan->Nama(), 'Bawaan' => true],
+                    ['Nama' => $bawaan->AmbilNama(), 'Bawaan' => true],
                 );
 
-                $kunciIzin = array_map(fn ($izin) => $izin->value, $bawaan->Izin());
+                $kunciIzin = array_map(fn ($izin) => $izin->value, $bawaan->AmbilIzin());
                 $peran->Izin()->whereNotIn('KunciIzin', $kunciIzin)->delete();
 
                 foreach ($kunciIzin as $kunci) {

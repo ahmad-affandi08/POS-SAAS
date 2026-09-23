@@ -19,9 +19,13 @@ final class SiapkanSesiPengelola
 
     public function handle(Request $request, Closure $next): Response
     {
-        $namaCookie = $request->getHost() === config('pengelola.Domain')
-            ? config('pengelola.CookieSesi')
-            : config('session.cookie');
+        $diPengelola = $request->getHost() === config('pengelola.Domain');
+        $namaCookie = $diPengelola ? config('pengelola.CookieSesi') : config('session.cookie');
+
+        if ($diPengelola) {
+            // Cookie pengelola selalu host-only, walau SESSION_DOMAIN kelak diisi domain induk.
+            config(['session.domain' => null]);
+        }
 
         $this->sesi->driver()->setName((string) $namaCookie);
 

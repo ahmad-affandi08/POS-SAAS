@@ -18,7 +18,7 @@ return new class extends Migration
             $tabel->id('Id');
             $tabel->foreignId('IdPenggunaPengelola')
                 ->nullable()
-                ->constrained('PenggunaPengelola', 'Id', 'FkLogAuditPengelolaPengguna')
+                ->constrained('PenggunaPengelola', 'Id', 'FkLogAuditPengelolaIdPenggunaPengelola')
                 ->restrictOnDelete();
             $tabel->string('Aksi', 100);
             $tabel->string('JenisObjek', 100)->nullable();

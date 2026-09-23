@@ -25,7 +25,7 @@ final class AktifkanDuaFaktor
      */
     public function Jalankan(PenggunaPengelola $pengguna, string $rahasia, string $kode): array
     {
-        if ($pengguna->DuaFaktorAktif()) {
+        if ($pengguna->CekDuaFaktorAktif()) {
             throw new PelanggaranAturanBisnis('DuaFaktorSudahAktif', 'Verifikasi dua langkah sudah aktif untuk akun ini.');
         }
 

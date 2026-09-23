@@ -40,15 +40,21 @@ final class UndangAnggotaTim
                 throw new PelanggaranAturanBisnis('PeranTidakDikenal', 'Pilih minimal satu peran yang tersedia.', 'KodePeran');
             }
 
-            UndanganPengelola::query()
+            $undanganLama = UndanganPengelola::query()
                 ->where('Email', $email)
                 ->whereNull('DiterimaPada')
                 ->whereNull('DibatalkanPada')
-                ->update(['DibatalkanPada' => now()]);
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($undanganLama as $lama) {
+                $lama->update(['DibatalkanPada' => now()]);
+                $this->audit->Catat('tim.anggota.undangan-batal', $lama, alasan: 'Diganti undangan baru', idPelaku: $pengundang->Id);
+            }
 
             $undangan = UndanganPengelola::query()->create([
                 'Email' => $email,
-                'HashToken' => UndanganPengelola::HashDariToken($token),
+                'HashToken' => UndanganPengelola::BuatHashToken($token),
                 'KodePeran' => $kodePeran,
                 'IdPenggunaPengelolaPengundang' => $pengundang->Id,
                 'BerlakuSampai' => now()->addHours((int) config('pengelola.JamBerlakuUndangan')),

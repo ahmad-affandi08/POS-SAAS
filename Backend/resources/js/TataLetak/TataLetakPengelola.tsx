@@ -74,7 +74,7 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                 {props.PeringatanSuperAdmin ? (
                     <Pemberitahuan jenis="peringatan" judul="Super Admin aktif kurang dari 2">
                         Undang minimal satu Super Admin lagi agar Platform Pengelola tetap bisa dikelola bila satu akun
-                        terkunci (BR-P01.1).
+                        terkunci.
                     </Pemberitahuan>
                 ) : null}
                 {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}

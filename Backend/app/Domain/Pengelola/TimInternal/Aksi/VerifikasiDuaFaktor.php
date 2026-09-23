@@ -23,7 +23,7 @@ final class VerifikasiDuaFaktor
 
     public function Jalankan(PenggunaPengelola $pengguna, string $kode): void
     {
-        if (! $pengguna->DuaFaktorAktif() || $pengguna->Rahasia2fa === null) {
+        if (! $pengguna->CekDuaFaktorAktif() || $pengguna->Rahasia2fa === null) {
             throw new PelanggaranAturanBisnis('DuaFaktorBelumAktif', 'Aktifkan verifikasi dua langkah terlebih dahulu.');
         }
 

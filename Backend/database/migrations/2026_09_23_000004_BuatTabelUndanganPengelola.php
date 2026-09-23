@@ -21,7 +21,7 @@ return new class extends Migration
             $tabel->char('HashToken', 64)->unique('UniqUndanganPengelolaHashToken');
             $tabel->json('KodePeran');
             $tabel->foreignId('IdPenggunaPengelolaPengundang')
-                ->constrained('PenggunaPengelola', 'Id', 'FkUndanganPengelolaPengundang')
+                ->constrained('PenggunaPengelola', 'Id', 'FkUndanganPengelolaIdPenggunaPengelolaPengundang')
                 ->restrictOnDelete();
             $tabel->timestamp('BerlakuSampai');
             $tabel->timestamp('DiterimaPada')->nullable();

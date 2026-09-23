@@ -36,8 +36,8 @@ final class BagikanDataInertiaPengelola extends Middleware
                 'Uuid' => $pengguna->Uuid,
                 'Nama' => $pengguna->Nama,
                 'Email' => $pengguna->Email,
-                'KodePeran' => $pengguna->DaftarKodePeran(),
-                'Izin' => $pengguna->DaftarIzin(),
+                'KodePeran' => $pengguna->AmbilKodePeran(),
+                'Izin' => $pengguna->AmbilDaftarIzin(),
             ] : null,
             // BR-P01.1: peringatan selama Super Admin aktif kurang dari 2.
             'PeringatanSuperAdmin' => fn () => $pengguna instanceof PenggunaPengelola

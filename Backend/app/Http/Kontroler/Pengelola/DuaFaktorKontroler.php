@@ -30,7 +30,7 @@ final class DuaFaktorKontroler extends Kontroler
     {
         $pengguna = $this->PenggunaMasuk();
 
-        if ($pengguna->DuaFaktorAktif()) {
+        if ($pengguna->CekDuaFaktorAktif()) {
             return redirect()->route('pengelola.beranda');
         }
 
@@ -84,7 +84,7 @@ final class DuaFaktorKontroler extends Kontroler
     {
         $pengguna = $this->PenggunaMasuk();
 
-        if (! $pengguna->DuaFaktorAktif()) {
+        if (! $pengguna->CekDuaFaktorAktif()) {
             return redirect()->route('pengelola.dua-faktor.aktifkan');
         }
 

@@ -36,9 +36,9 @@ final class TimInternalKontroler extends Kontroler
                 'Uuid' => $pengguna->Uuid,
                 'Nama' => $pengguna->Nama,
                 'Email' => $pengguna->Email,
-                'KodePeran' => $pengguna->DaftarKodePeran(),
+                'KodePeran' => $pengguna->AmbilKodePeran(),
                 'Aktif' => $pengguna->Aktif,
-                'DuaFaktorAktif' => $pengguna->DuaFaktorAktif(),
+                'DuaFaktorAktif' => $pengguna->CekDuaFaktorAktif(),
                 'TerakhirMasukPada' => $pengguna->TerakhirMasukPada?->toIso8601String(),
                 'DinonaktifkanPada' => $pengguna->DinonaktifkanPada?->toIso8601String(),
             ]);

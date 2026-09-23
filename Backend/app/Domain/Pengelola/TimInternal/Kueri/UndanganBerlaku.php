@@ -11,7 +11,7 @@ final class UndanganBerlaku
     /** Undangan yang belum diterima, belum dibatalkan, dan belum lewat 48 jam; null bila tidak ada. */
     public function Cari(string $token, bool $kunci = false): ?UndanganPengelola
     {
-        $kueri = UndanganPengelola::query()->where('HashToken', UndanganPengelola::HashDariToken($token));
+        $kueri = UndanganPengelola::query()->where('HashToken', UndanganPengelola::BuatHashToken($token));
 
         if ($kunci) {
             $kueri->lockForUpdate();
@@ -19,6 +19,6 @@ final class UndanganBerlaku
 
         $undangan = $kueri->first();
 
-        return $undangan?->MasihBerlaku() === true ? $undangan : null;
+        return $undangan?->CekMasihBerlaku() === true ? $undangan : null;
     }
 }
