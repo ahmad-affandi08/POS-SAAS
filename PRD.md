@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.23 |
+| Versi | 1.24 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -44,6 +44,7 @@
 | 1.21 | Tindak lanjut tinjauan F-00: akhir trial diproses tiap jam (BR-00.7), pengecualian `MilikTenant` untuk tabel data platform dicatat di §13.4, prasyarat email aktif ditegakkan di produksi, utang log audit tenant & pertanyaan enumerasi akun dicatat di §25 (no. 17–18). |
 | 1.22 | Penyelesaian Fase 0 oleh tim paralel (diputuskan agen atas mandat pemilik produk "langsung kerjakan semua kekurangannya"): P-07 dasar (BR-P07.4–BR-P07.10: tampilan 360°, perpanjang trial, override berakhir otomatis & terhubung `EvaluatorFitur`, tangguhkan/aktifkan kembali, catatan, penanda, `KonteksPengelola`), P-08 Fase 0 (BR-P08.4–BR-P08.10: tagihan manual ber-PPN dari `TarifPajak`, nomor `INV/tahun/bulan/urut`, bukti transfer, verifikasi Keuangan, kupon, penjadwal tunggakan), P-09 & P-11 dasar (tiket dukungan dengan SLA per paket, detak scheduler, antrean & job gagal, catatan backup, alert), autentikasi tenant (BR-00.8 2FA, BR-00.9 lupa kata sandi, BR-00.10 anti-enumerasi, persetujuan ulang & pengumuman dokumen materiil BR-P06.5), F-02a (peran & izin tenant, outlet/lokasi stok/merek, undangan pengguna, batas outlet & pengguna, `LogAudit` tenant). Transisi `Langganan.Status` diperluas untuk penangguhan manual (P-07) dan tunggakan (P-08). §25 no. 17 & 18 ditutup, no. 14 sebagian. |
 | 1.23 | Perbaikan temuan tinjauan integrasi Fase 0 (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): aktifkan kembali memeriksa tunggakan & masa tenggang (BR-P07.5), penangguhan manual tidak bisa dicabut lewat tagihan/pembayaran (BR-P07.4 × BR-P08.9), `StatusSebelumDitangguhkan` dikosongkan otomatis, penanda Uji/Demo/Internal dikecualikan dari tunggakan, pemakaian di tampilan 360° memakai penghitung batas F-02a (outlet aktif; pengguna aktif + undangan berlaku). |
+| 1.24 | Rincian F-02b (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): perangkat & kode perangkat `{KodeOutlet}-{Jenis}{NN}`, kode aktivasi 8 karakter sekali pakai (HMAC), device token sendiri `{IdTenant}\|{rahasia}` **menggantikan Sanctum** untuk API POS (§13.1/§16.1 disesuaikan), PIN kasir 6 angka dengan penguncian 5× salah/5 menit, `BatasPerangkatPerOutlet` ditegakkan, cabut perangkat (BR-02.3), key JSON `konfigurasi-aplikasi` PascalCase (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`). `KodeAktivasi` masuk daftar pengecualian `MilikTenant` §13.4. §25 no. 14 bertambah selesai. |
 
 ---
 
@@ -1888,7 +1889,7 @@ flowchart LR
 | Tabel/virtual list | **TanStack Table** + **TanStack Virtual** | Laporan besar & daftar ribuan SKU di back-office. |
 | Form & validasi | **react-hook-form** + **zod** (atau `useForm` Inertia untuk form sederhana) | Validasi klien. Server tetap sumber kebenaran (Form Request). |
 | Uang/angka | **brick/money** & **brick/math** (PHP), **big.js** (TS, hanya untuk tampilan) | Hindari float. |
-| Auth API POS | **Laravel Sanctum** (token perangkat dengan *abilities*) | Aplikasi Flutter tidak memakai cookie sesi. |
+| Auth API POS | **Device token sendiri** `{IdTenant}\|{rahasia}` (hanya hash SHA-256 disimpan; v1.24, menggantikan Sanctum agar pencarian token tidak melewati scope tenant) | Aplikasi Flutter tidak memakai cookie sesi. |
 | Dokumentasi API | **Scramble** (dedoc/scramble) → OpenAPI 3.1 | Kontrak API POS & publik tersinkron dengan kode. Dipakai untuk generate model Dart. |
 | Push notification | **FCM HTTP v1** (Firebase Cloud Messaging, meneruskan ke APNs untuk iOS) via queue | Tidak butuh WebSocket server. Cukup HTTP keluar dari Hostinger. |
 | Build | **Vite** | Default Laravel. Build dilakukan di CI, bukan di server hosting. |
@@ -2030,7 +2031,7 @@ Implementasi:
 - Job queue membawa `IdTenant` (middleware job `DenganTenant`) sehingga scope tetap aktif di worker.
 - **Guard ganda:** test otomatis "isolasi tenant" untuk setiap model/endpoint (user tenant A tidak bisa membaca/mengubah data tenant B, termasuk via ID yang ditebak). Route model binding selalu lewat scope tenant.
 - ID publik di URL memakai **ULID/UUID**, bukan auto-increment, untuk mencegah enumerasi.
-- **Tabel data platform yang memuat `IdTenant` tanpa `MilikTenant`** (usulan agen di v1.21, menunggu konfirmasi pemilik produk): `TenantPengguna` (dibaca lintas tenant untuk pemilih tenant, selalu disaring `IdPengguna` milik pengguna yang masuk), `Langganan` dan `PersetujuanDokumenLegal` (data hubungan platform–tenant yang dikelola sistem & Platform Pengelola, misal proses akhir trial). Tabel data usaha tenant tetap wajib `MilikTenant`. Dari P-07/P-08/F-02 bertambah: `OverrideTenant`, `CatatanTenant`, `KuponLanggananPemakaian`, dan `UndanganPengguna` (data platform tanpa `MilikTenant`); `TagihanLangganan` & `PembayaranLangganan` memakai `MilikTenant` agar tenant hanya melihat miliknya, dan pengelola membacanya lintas tenant hanya lewat `KonteksPengelola::KueriDataPlatform` (daftar putih catatan platform). Data usaha tenant dibaca pengelola lewat `KonteksPengelola::JalankanLintasTenant(alasan, fn, idTenant)` yang mencatat `tenant.data.akses`.
+- **Tabel data platform yang memuat `IdTenant` tanpa `MilikTenant`** (usulan agen di v1.21, menunggu konfirmasi pemilik produk): `TenantPengguna` (dibaca lintas tenant untuk pemilih tenant, selalu disaring `IdPengguna` milik pengguna yang masuk), `Langganan` dan `PersetujuanDokumenLegal` (data hubungan platform–tenant yang dikelola sistem & Platform Pengelola, misal proses akhir trial). Tabel data usaha tenant tetap wajib `MilikTenant`. Dari P-07/P-08/F-02 bertambah: `OverrideTenant`, `CatatanTenant`, `KuponLanggananPemakaian`, `UndanganPengguna`, dan `KodeAktivasi` (F-02b; ditukar sebelum tenant diketahui, dicari lewat hash kode) (data platform tanpa `MilikTenant`); `TagihanLangganan` & `PembayaranLangganan` memakai `MilikTenant` agar tenant hanya melihat miliknya, dan pengelola membacanya lintas tenant hanya lewat `KonteksPengelola::KueriDataPlatform` (daftar putih catatan platform). Data usaha tenant dibaca pengelola lewat `KonteksPengelola::JalankanLintasTenant(alasan, fn, idTenant)` yang mencatat `tenant.data.akses`.
 - Jalur migrasi masa depan: tenant enterprise bisa dipindah ke database terdedikasi (VPS) karena `IdTenant` sudah ada di semua tabel.
 
 ### 13.5 Pembagian Tugas Klien
@@ -3685,7 +3686,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
-14. **Utang implementasi P-04** (sebagian selesai v1.22): `PastikanBatasPaket` menegakkan `BatasOutlet` & `BatasPengguna` di F-02a. Sisa: `BatasPerangkatPerOutlet` & `konfigurasi-aplikasi` (F-02b), BR-P04.4 downgrade (F-19).
+14. **Utang implementasi P-04** (sebagian selesai v1.22): `PastikanBatasPaket` menegakkan `BatasOutlet` & `BatasPengguna` di F-02a. `BatasPerangkatPerOutlet` & `konfigurasi-aplikasi` selesai di F-02b (v1.24). Sisa: BR-P04.4 downgrade (F-19), termasuk nasib perangkat yang melebihi batas saat turun paket.
 15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
 16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
 17. ~~Utang log audit tenant~~ **Ditutup v1.22**: tabel `LogAudit` tenant (append-only) mencatat pendaftaran, masuk/keluar, pilih tenant, akhir trial, dan semua aksi F-02. Aksi autentikasi (2FA, reset kata sandi, persetujuan legal) & tagihan tenant disambungkan menyusul.
