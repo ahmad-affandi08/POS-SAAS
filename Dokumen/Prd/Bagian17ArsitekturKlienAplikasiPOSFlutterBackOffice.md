@@ -248,7 +248,7 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 
 ### 17.4 Back-office Web
 
-#### 17.4.1 Struktur Folder (di `Backend/`)
+#### 17.4.1 Struktur Folder (di `Aplikasi/Web/`)
 
 ```
 resources/js/                  # (pengecualian path Laravel/Vite)

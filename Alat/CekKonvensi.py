@@ -32,9 +32,9 @@ FolderAbaikan = {".git", "vendor", "node_modules", "build", ".dart_tool", "stora
 
 # Akar yang nama folder & file-nya wajib PascalCase
 AkarPascal = [
-    "Backend/app/",
-    "Backend/tests/",
-    "Backend/resources/js/",
+    "Aplikasi/Web/app/",
+    "Aplikasi/Web/tests/",
+    "Aplikasi/Web/resources/js/",
 ]
 PolaAkarDart = re.compile(r"^(Aplikasi|Paket)/[^/]+/(lib|test|integration_test)/")
 
@@ -99,9 +99,9 @@ def MetodePhpBoleh(Nama, Isi, Posisi):
 
 def CekPhp(PathRelatif, Isi):
     Hasil = []
-    DalamApp = PathRelatif.startswith("Backend/app/")
-    DalamDomain = PathRelatif.startswith("Backend/app/Domain/")
-    DalamPengelola = PathRelatif.startswith("Backend/app/Domain/Pengelola/") or PathRelatif.startswith("Backend/app/Http/Kontroler/Pengelola/")
+    DalamApp = PathRelatif.startswith("Aplikasi/Web/app/")
+    DalamDomain = PathRelatif.startswith("Aplikasi/Web/app/Domain/")
+    DalamPengelola = PathRelatif.startswith("Aplikasi/Web/app/Domain/Pengelola/") or PathRelatif.startswith("Aplikasi/Web/app/Http/Kontroler/Pengelola/")
     for NomorBaris, Baris in enumerate(Isi.splitlines(), 1):
         if BarisKomentar(Baris):
             continue
@@ -225,13 +225,13 @@ def CekFile(PathRelatif):
         Isi = open(PathAbsolut, encoding="utf-8").read()
     except (UnicodeDecodeError, OSError):
         return Hasil
-    if PathRelatif.startswith(("Backend/database/migrations/", "Backend/tests/Pendukung/Migrasi/")) and NamaFile.endswith(".php"):
+    if PathRelatif.startswith(("Aplikasi/Web/database/migrations/", "Aplikasi/Web/tests/Pendukung/Migrasi/")) and NamaFile.endswith(".php"):
         Hasil += CekMigrasi(PathRelatif, Isi)
-    elif PathRelatif.startswith("Backend/routes/") and NamaFile.endswith(".php"):
+    elif PathRelatif.startswith("Aplikasi/Web/routes/") and NamaFile.endswith(".php"):
         Hasil += CekRute(PathRelatif, Isi)
-    if NamaFile.endswith(".php") and PathRelatif.startswith(("Backend/app/", "Backend/tests/")):
+    if NamaFile.endswith(".php") and PathRelatif.startswith(("Aplikasi/Web/app/", "Aplikasi/Web/tests/")):
         Hasil += CekPhp(PathRelatif, Isi)
-    elif NamaFile.endswith((".ts", ".tsx")) and PathRelatif.startswith("Backend/resources/js/") and not FolderDibebaskan(PathRelatif):
+    elif NamaFile.endswith((".ts", ".tsx")) and PathRelatif.startswith("Aplikasi/Web/resources/js/") and not FolderDibebaskan(PathRelatif):
         Hasil += CekTypeScript(PathRelatif, Isi)
     elif NamaFile.endswith(".dart") and PolaAkarDart.match(PathRelatif):
         Hasil += CekDart(PathRelatif, Isi)

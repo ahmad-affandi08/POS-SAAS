@@ -63,14 +63,14 @@ python3 Alat/PecahPrd.py --cek          # Dokumen/ sinkron dengan PRD.md
 ```
 
 Perintah per stack (aktif setelah scaffolding Fase 0; lihat `.claude/rules/`):
-- Backend: `composer tes:cepat`, `composer analisis` (Pint, Larastan, Pest termasuk `arch()`)
-- Web: `npm run periksa` (tsc, ESLint, Vitest)
+- `Aplikasi/Web` (PHP): `composer tes:cepat`, `composer analisis` (Pint, Larastan, Pest termasuk `arch()`)
+- `Aplikasi/Web` (frontend): `npm run periksa` (tsc, ESLint, Vitest)
 - Flutter: `melos run periksa` dari akar (dart format, flutter analyze, test; sekali: `dart pub global activate melos 7.8.2`)
 
 ## Peta repo (target, lihat §13.0)
 
 ```
-Backend/            Laravel 13 (API, back-office Inertia React, web publik, Platform Pengelola)
+Aplikasi/Web/       Laravel 13 (API, back-office Inertia React, web publik, Platform Pengelola)
 Aplikasi/Kasir/     Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)
 Aplikasi/Pemilik/   Aplikasi Owner Flutter (Android, iOS)
 Paket/              Paket Dart bersama (MesinKasir, Inti, KlienApi, SistemDesain, AdaptorPerangkat)
@@ -79,4 +79,4 @@ Alat/               Penjaga & skrip proyek (terlindungi)
 Dokumen/            Potongan PRD hasil generate (terlindungi)
 ```
 
-Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi Backend/Web/Flutter, P-01 (tim internal), P-02 (regulasi & referensi).
+Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi `Aplikasi/Web` (Laravel + back-office) dan Flutter, P-01 (tim internal), P-02 (regulasi & referensi).

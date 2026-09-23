@@ -1,11 +1,11 @@
 ---
 paths:
-  - "Backend/app/**/*.php"
+  - "Aplikasi/Web/app/**/*.php"
 ---
 
 # Aturan kode domain Backend (PRD §13.2, §13.3, §13.4)
 
-- Struktur: `Backend/app/Domain/{Domain}/{Aksi,Data,Enum,Peristiwa,Penangan,Model,Kebijakan,Kueri,Status}/`.
+- Struktur: `Aplikasi/Web/app/Domain/{Domain}/{Aksi,Data,Enum,Peristiwa,Penangan,Model,Kebijakan,Kueri,Status}/`.
 - **Satu use case = satu class Aksi** di folder `Aksi/`, nama kalimat kerja (`SelesaikanPenjualan`), method publik tunggal `Jalankan(...)`. Kontroler hanya memvalidasi (Permintaan) lalu memanggil Aksi.
 - Aksi yang mengubah data membungkus pekerjaannya dalam `DB::transaction`. Idempotensi: cek `UuidKlien` dulu.
 - Model mewarisi `ModelDasar` (PK `Id`, `DibuatPada`/`DiubahPada`/`DihapusPada`, FK `Id{Model}`). Relasi `belongsTo` **selalu** menyebut kolom eksplisit.

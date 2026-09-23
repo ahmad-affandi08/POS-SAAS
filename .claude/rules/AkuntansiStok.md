@@ -1,11 +1,11 @@
 ---
 paths:
-  - "Backend/app/Domain/Akuntansi/**"
-  - "Backend/app/Domain/Persediaan/**"
-  - "Backend/app/Domain/Penjualan/**"
-  - "Backend/app/Domain/Pembelian/**"
-  - "Backend/app/Domain/Kasir/**"
-  - "Backend/app/Domain/Pajak/**"
+  - "Aplikasi/Web/app/Domain/Akuntansi/**"
+  - "Aplikasi/Web/app/Domain/Persediaan/**"
+  - "Aplikasi/Web/app/Domain/Penjualan/**"
+  - "Aplikasi/Web/app/Domain/Pembelian/**"
+  - "Aplikasi/Web/app/Domain/Kasir/**"
+  - "Aplikasi/Web/app/Domain/Pajak/**"
 ---
 
 # Aturan akuntansi, stok & pajak (PRD §8 F-04–F-15, §11, §12)

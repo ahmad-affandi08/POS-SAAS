@@ -55,13 +55,16 @@ def CariAlasanTerlarang(PathRelatif):
 
 
 def MigrasiSudahDiMerge(PathRelatif):
-    if not PathRelatif.startswith("Backend/database/migrations/"):
+    if not PathRelatif.startswith("Aplikasi/Web/database/migrations/"):
         return False
+    # D-13: sebelum pindah, folder ini bernama Backend/. Cabang main lama masih memakai jalur itu.
+    JalurLama = "Backend/" + PathRelatif[len("Aplikasi/Web/"):]
     for Cabang in ("origin/main", "main"):
-        Hasil = subprocess.run(["git", "cat-file", "-e", f"{Cabang}:{PathRelatif}"], cwd=AkarRepo,
-                               capture_output=True, check=False)
-        if Hasil.returncode == 0:
-            return True
+        for Jalur in (PathRelatif, JalurLama):
+            Hasil = subprocess.run(["git", "cat-file", "-e", f"{Cabang}:{Jalur}"], cwd=AkarRepo,
+                                   capture_output=True, check=False)
+            if Hasil.returncode == 0:
+                return True
     return False
 
 

@@ -10,8 +10,8 @@ Jalankan berurutan. Jangan melewati langkah yang gagal. Perbaiki kodenya, bukan 
 1. `python3 Alat/CekKonvensi.py --berubah` → harus "Konvensi OK".
 2. `python3 Alat/PecahPrd.py --cek` → harus sinkron (jika PRD.md berubah, manusia menjalankan ulang skripnya).
 3. Pengecekan stack yang tersedia (lewati yang belum di-scaffold, sebutkan di laporan):
-   - `Backend/`: `composer analisis` lalu `composer tes:cepat` (Pint, Larastan, Pest termasuk `arch()`)
-   - `Backend/` web: `npm run periksa`
+   - `Aplikasi/Web/`: `composer analisis` lalu `composer tes:cepat` (Pint, Larastan, Pest termasuk `arch()`)
+   - `Aplikasi/Web/` web: `npm run periksa`
    - Flutter: `melos run periksa`
 4. Delegasikan ke subagent **penjaga-konvensi** untuk meninjau diff terhadap PRD & aturan. Perbaiki semua temuan "Wajib".
 5. Periksa checklist DoD:

@@ -1,8 +1,8 @@
 ---
 paths:
-  - "Backend/resources/js/Halaman/**"
-  - "Backend/resources/js/Komponen/**"
-  - "Backend/resources/js/TataLetak/**"
+  - "Aplikasi/Web/resources/js/Halaman/**"
+  - "Aplikasi/Web/resources/js/Komponen/**"
+  - "Aplikasi/Web/resources/js/TataLetak/**"
   - "Aplikasi/*/lib/Fitur/**"
   - "Paket/SistemDesain/**"
 ---

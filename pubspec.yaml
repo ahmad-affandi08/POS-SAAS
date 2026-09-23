@@ -20,10 +20,10 @@ melos:
   scripts:
     format:
       description: Cek format Dart (lebar 120).
-      run: dart format --line-length 120 --set-exit-if-changed Paket Aplikasi
+      run: dart format --line-length 120 --set-exit-if-changed Paket Aplikasi/Kasir Aplikasi/Pemilik
     analisis:
       description: Analisis statis seluruh paket (fatal pada info).
-      run: flutter analyze --fatal-infos --fatal-warnings Paket Aplikasi
+      run: flutter analyze --fatal-infos --fatal-warnings Paket Aplikasi/Kasir Aplikasi/Pemilik
     tes:dart:
       description: Test paket Dart murni (Inti, MesinKasir) dengan `dart test` agar dependensi Flutter tidak terselip.
       exec: dart test

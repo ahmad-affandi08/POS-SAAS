@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Backend/resources/js/**"
-  - "Backend/resources/css/**"
+  - "Aplikasi/Web/resources/js/**"
+  - "Aplikasi/Web/resources/css/**"
 ---
 
 # Aturan back-office & web publik (PRD §13.5, §17.4, §17.5, §17.6)

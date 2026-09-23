@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Backend/database/**/*.php"
+  - "Aplikasi/Web/database/**/*.php"
 ---
 
 # Aturan migrasi & database (PRD §15, §13.7)

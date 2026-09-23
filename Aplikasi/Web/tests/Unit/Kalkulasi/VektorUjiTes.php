@@ -10,7 +10,7 @@ use App\Domain\Bersama\Nilai\Uang;
  * Fase 0: memastikan setiap vektor terbaca dan semua nilai uang valid sebagai Uang.
  * Saat engine F-07 dibangun, test ini menjalankan engine dan membandingkan hasilnya dengan Harapan.
  */
-$berkasVektor = glob(dirname(__DIR__, 4).'/Spesifikasi/VektorUjiKalkulasi/*.json') ?: [];
+$berkasVektor = glob(dirname(__DIR__, 5).'/Spesifikasi/VektorUjiKalkulasi/*.json') ?: [];
 
 it('menemukan minimal satu test vector', function () use ($berkasVektor): void {
     expect($berkasVektor)->not->toBeEmpty();

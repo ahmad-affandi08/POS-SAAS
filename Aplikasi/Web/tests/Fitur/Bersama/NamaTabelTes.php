@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
  */
 it('semua tabel di database bernama PascalCase atau tabel framework yang dikecualikan', function (): void {
     $pengecualian = json_decode(
-        (string) file_get_contents(base_path('../Alat/KonvensiPengecualian.json')),
+        (string) file_get_contents(base_path('../../Alat/KonvensiPengecualian.json')),
         true,
         flags: JSON_THROW_ON_ERROR,
     )['TabelFramework'];
@@ -29,7 +29,7 @@ it('semua tabel di database bernama PascalCase atau tabel framework yang dikecua
 
 it('semua kolom tabel proyek bernama PascalCase (menangkap kolom otomatis Laravel seperti uuid/created_at)', function (): void {
     $pengecualian = json_decode(
-        (string) file_get_contents(base_path('../Alat/KonvensiPengecualian.json')),
+        (string) file_get_contents(base_path('../../Alat/KonvensiPengecualian.json')),
         true,
         flags: JSON_THROW_ON_ERROR,
     )['TabelFramework'];

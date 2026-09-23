@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.26 |
+| Versi | 1.27 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -47,6 +47,7 @@
 | 1.24 | Rincian F-02b (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): perangkat & kode perangkat `{KodeOutlet}-{Jenis}{NN}`, kode aktivasi 8 karakter sekali pakai (HMAC), device token sendiri `{IdTenant}\|{rahasia}` **menggantikan Sanctum** untuk API POS (§13.1/§16.1 disesuaikan), PIN kasir 6 angka dengan penguncian 5× salah/5 menit, `BatasPerangkatPerOutlet` ditegakkan, cabut perangkat (BR-02.3), key JSON `konfigurasi-aplikasi` PascalCase (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`). `KodeAktivasi` masuk daftar pengecualian `MilikTenant` §13.4. §25 no. 14 bertambah selesai. |
 | 1.25 | Tindak lanjut tinjauan integrasi (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): `/kelola/langganan` memakai izin `langganan.kelola` (khusus Pemilik); izin tenant baru `bantuan.tiket.lihat` & `bantuan.tiket.kelola` (bawaan Pemilik, Admin, Manajer Outlet); 2FA wajib (§20.2, BR-00.8) berlaku untuk peran bawaan Pemilik, Admin, Akuntan di paket ber-`keamanan.2fa-wajib`, dan 2FA milik akun tidak bisa dimatikan selama satu keanggotaan aktif mewajibkannya; tenant `Ditangguhkan` hanya bisa membaca back-office, kecuali langganan/pembayaran, keamanan akun, bantuan, dan persetujuan legal (F-00); banner Tertunggak (dengan batas tenggang) & Ditangguhkan di back-office; `LogAudit` tenant untuk 2FA, atur ulang kata sandi, persetujuan legal, tagihan & bukti transfer (peristiwa tingkat akun dicatat di setiap tenant tempat pengguna aktif). Langkah rilis: jalankan `organisasi:siapkan-peran` agar peran bawaan tenant lama menerima izin baru. |
 | 1.26 | **Pemilik produk mendelegasikan semua pertanyaan terbuka agen kepada agen** dengan patokan "terbaik untuk kita dan terbaik untuk tenant" (23/09/2026). Keputusan agen v1.16–v1.25 yang bertanda "menunggu konfirmasi" dianggap **disetujui** lewat delegasi ini. Keputusan baru dicatat di §25.2 dan D-12; Perjanjian Pemrosesan Data kini wajib disetujui saat registrasi (BR-P06.2). |
+| 1.27 | D-13 (disetujui pemilik produk): folder `Backend/` dipindah ke `Aplikasi/Web/` karena berisi aplikasi Laravel utuh (API, back-office, web publik, Platform Pengelola), sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`. Semua jalur di PRD, `CLAUDE.md`, `.claude/`, `Alat/`, dan CI disesuaikan; penjaga migrasi mengenali jalur lama `Backend/` dan hanya mengizinkan pindah lokasi tanpa perubahan isi. |
 
 ---
 
@@ -1857,8 +1858,8 @@ flowchart LR
 
 ```
 /
-├── Backend/                     # Laravel 13 (API + back-office Inertia React + web publik)
 ├── Aplikasi/
+│   ├── Web/                     # Laravel 13: API POS & Owner, back-office Inertia React, web publik, Platform Pengelola (D-13)
 │   ├── Kasir/                   # Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)   · paket Dart: kasir
 │   └── Pemilik/                 # Aplikasi Owner Flutter (Android, iOS)                  · paket Dart: pemilik
 ├── Paket/
@@ -1937,7 +1938,7 @@ flowchart LR
 Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. Batas antar modul tegas: modul lain hanya boleh memakai **Aksi/Layanan publik** atau **Peristiwa** milik modul tersebut, bukan query langsung ke tabelnya. Semua nama folder, file, class, dan method mengikuti §13.7.
 
 ```
-Backend/app/
+Aplikasi/Web/app/
 ├── Domain/
 │   ├── Tenant/           # Tenant, Langganan, Paket, HargaPaket, Fitur, Addon, KuponLangganan, EvaluatorFitur, OutletFitur (P-04, F-00, F-19)
 │   ├── Organisasi/       # Outlet, Gudang, Perangkat, Pengguna, Peran        (F-02)
@@ -1989,7 +1990,7 @@ Backend/app/
 **Aksi + Peristiwa + Penangan:**
 
 ```php
-// Backend/app/Domain/Penjualan/Aksi/SelesaikanPenjualan.php
+// Aplikasi/Web/app/Domain/Penjualan/Aksi/SelesaikanPenjualan.php
 final class SelesaikanPenjualan
 {
     public function __construct(
@@ -2136,7 +2137,7 @@ Pola penamaan class per jenis (**{Objek}{Jenis}**, agar file satu domain berdeka
 #### 13.7.2 Contoh Backend (Laravel)
 
 ```php
-// Backend/app/Domain/Bersama/Model/ModelDasar.php
+// Aplikasi/Web/app/Domain/Bersama/Model/ModelDasar.php
 abstract class ModelDasar extends Model
 {
     protected $primaryKey = 'Id';
@@ -2151,7 +2152,7 @@ abstract class ModelDasar extends Model
     }
 }
 
-// Backend/app/Domain/Penjualan/Model/Penjualan.php
+// Aplikasi/Web/app/Domain/Penjualan/Model/Penjualan.php
 final class Penjualan extends ModelDasar
 {
     use MilikTenant;                       // global scope IdTenant
@@ -2173,7 +2174,7 @@ final class Penjualan extends ModelDasar
     }
 }
 
-// Backend/database/migrations/2026_10_01_000000_BuatTabelPenjualan.php
+// Aplikasi/Web/database/migrations/2026_10_01_000000_BuatTabelPenjualan.php
 return new class extends Migration {
     public function up(): void                       // up/down: wajib oleh Laravel
     {
@@ -2211,13 +2212,13 @@ class Produk extends Table {
 ```
 
 ```tsx
-// Backend/resources/js/Halaman/Katalog/Produk/Daftar.tsx
+// Aplikasi/Web/resources/js/Halaman/Katalog/Produk/Daftar.tsx
 export default function Daftar({ Filter }: Props) {
   const { data } = useDaftarProduk(Filter);          // hook wajib diawali "use" (aturan React)
   return <TabelData Kolom={KolomProduk} Data={data?.Data ?? []} />;
 }
 
-// Backend/resources/js/Pustaka/Format.ts
+// Aplikasi/Web/resources/js/Pustaka/Format.ts
 export function FormatRupiah(nilai: string): string { ... }
 ```
 
@@ -2275,7 +2276,7 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 **Struktur kode:**
 
 ```
-Backend/app/Domain/Pengelola/
+Aplikasi/Web/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
 ├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # Aksi kelola & terbitkan template, ValidatorTemplate (P-03); modelnya di Domain/PanduanAwal
@@ -2289,9 +2290,9 @@ Backend/app/Domain/Pengelola/
 ├── Operasional/        # DasborOperasional, Insiden, Alert                             (P-11)
 └── Mitra/              # Mitra, AtribusiMitra, KomisiMitra, PencairanKomisi            (P-12)
 
-Backend/app/Http/Kontroler/Pengelola/      # Kontroler Inertia untuk pengelola
-Backend/routes/Pengelola.php               # rute subdomain pengelola
-Backend/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
+Aplikasi/Web/app/Http/Kontroler/Pengelola/      # Kontroler Inertia untuk pengelola
+Aplikasi/Web/routes/Pengelola.php               # rute subdomain pengelola
+Aplikasi/Web/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
 ```
 
 **Aturan keamanan arsitektur:**
@@ -2980,7 +2981,7 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 
 ### 17.4 Back-office Web
 
-#### 17.4.1 Struktur Folder (di `Backend/`)
+#### 17.4.1 Struktur Folder (di `Aplikasi/Web/`)
 
 ```
 resources/js/                  # (pengecualian path Laravel/Vite)
@@ -3469,7 +3470,7 @@ Resolusi: HP 360 dp s.d. desktop 1920 px. Dioptimalkan untuk tablet 8–11" dan 
 
 ### Fase 0 — Fondasi & Platform Pengelola Inti (Sprint 1–5, ±10 minggu)
 
-- Monorepo (`Backend/`, `Aplikasi/Kasir/`, `Aplikasi/Pemilik/`, `Paket/`, `Spesifikasi/`) dengan konvensi penamaan §13.7 (termasuk `ModelDasar`, konfigurasi lint, dan MySQL dev berbasis Linux), CI/CD backend ke Hostinger (staging), standar kode (Larastan/Pint/ESLint/Vitest/Pest, `flutter analyze`/`dart test`).
+- Monorepo (`Aplikasi/Web/`, `Aplikasi/Kasir/`, `Aplikasi/Pemilik/`, `Paket/`, `Spesifikasi/`) dengan konvensi penamaan §13.7 (termasuk `ModelDasar`, konfigurasi lint, dan MySQL dev berbasis Linux), CI/CD backend ke Hostinger (staging), standar kode (Larastan/Pint/ESLint/Vitest/Pest, `flutter analyze`/`dart test`).
 - Kerangka aplikasi Flutter: flavor dev/staging/prod, router, tema dari design token, Drift, dio, Sentry, pipeline build Android & Windows di CI.
 - Akun developer: Google Play Console, Apple Developer, sertifikat code signing Windows, proyek Firebase.
 - Kerangka modular monolith, domain `Bersama` (Uang, Kuantitas, NomorDokumen, ModelDasar), multi-tenancy + isolation test.
@@ -3633,7 +3634,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | | Hook `PostToolUse`: format + cek konvensi setiap file yang diedit, pelanggaran dikirim balik ke agent | `.claude/hooks/CekSetelahEdit.py` |
 | | Hook `Stop`: agent tidak boleh menyatakan selesai selama konvensi/dokumen melanggar | `.claude/hooks/CekSebelumSelesai.py` |
 | | CI wajib hijau + CODEOWNERS untuk file penjaga | `.github/workflows/CekKepatuhan.yml`, `.github/CODEOWNERS` |
-| | (Fase 0) Larastan, Pint, ESLint, lint Dart, test arsitektur Pest `arch()`, invariant test, test vector, test isolasi tenant | `Backend/`, `Aplikasi/`, `Paket/` |
+| | (Fase 0) Larastan, Pint, ESLint, lint Dart, test arsitektur Pest `arch()`, invariant test, test vector, test isolasi tenant | `Aplikasi/Web/`, `Aplikasi/`, `Paket/` |
 | **3. Alur kerja** | Tugas terikat ID flow & BR, rencana dulu | skill `/mulai-flow` |
 | | Pemeriksaan DoD sebelum selesai | skill `/cek-dod` |
 | | Peninjau read-only yang terpisah dari penulis kode (menangkap kata Inggris, hard-code, perluasan cakupan) | subagent `penjaga-konvensi` |
@@ -3710,6 +3711,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-10 | Tata kelola AI agent tiga lapis: konteks (`CLAUDE.md`, `.claude/rules/`, `Dokumen/`), penjaga otomatis (hook, `Alat/CekKonvensi.py`, CI, CODEOWNERS), alur kerja (`/mulai-flow`, `/cek-dod`, subagent peninjau, template PR) | 22/09/2026 | §23.4, §13.7.4 |
 | D-11 | **Harga langganan per paket**, bukan per outlet. Outlet, perangkat, dan kuota WA di atas batas paket dijual sebagai add-on. Add-on & kupon tanpa four-eyes. Kunci fitur katalog dipertahankan apa adanya | 23/09/2026 | §8 P-04, §21, §25 |
 | D-12 | Pemilik produk mendelegasikan keputusan atas pertanyaan terbuka agen (v1.16–v1.26) kepada agen dengan patokan kepatuhan hukum Indonesia, keadilan bagi tenant, dan kesehatan bisnis {{APP}}. Rincian di §25.2 | 23/09/2026 | §8 P-06/P-07/P-08/P-09/P-11, F-00, F-02, F-06, F-19, §25.2 |
+| D-13 | Folder aplikasi Laravel bernama **`Aplikasi/Web/`** (sebelumnya `Backend/`): satu aplikasi berisi API POS & Owner, back-office Inertia React, web publik, dan Platform Pengelola, sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`; kode bersama tetap di `Paket/` | 23/09/2026 | §13.0, §13.7.2, §13.8, §17.4.1, §22, §23, `CLAUDE.md`, `.claude/`, `Alat/`, CI |
 
 
 ### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)

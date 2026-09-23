@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Backend/routes/**"
-  - "Backend/app/Http/**"
+  - "Aplikasi/Web/routes/**"
+  - "Aplikasi/Web/app/Http/**"
 ---
 
 # Aturan rute & API (PRD §13.6, §16, D-06)

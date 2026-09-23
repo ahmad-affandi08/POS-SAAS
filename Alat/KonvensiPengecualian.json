@@ -178,7 +178,7 @@
     "[0-9][0-9][0-9][0-9]_[0-9][0-9]_[0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]_*.php"
   ],
   "FolderBebas": [
-    "Backend/resources/js/Komponen/Ui",
-    "Backend/resources/js/Tipe/Dihasilkan"
+    "Aplikasi/Web/resources/js/Komponen/Ui",
+    "Aplikasi/Web/resources/js/Tipe/Dihasilkan"
   ]
 }

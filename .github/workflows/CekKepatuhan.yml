@@ -27,7 +27,9 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git fetch origin "${{ github.base_ref }}" --depth=1
-          DIUBAH=$(git diff --name-only --diff-filter=MDR "origin/${{ github.base_ref }}"...HEAD -- 'Backend/database/migrations/' || true)
+          # D-13: folder dipindah dari Backend/ ke Aplikasi/Web/. Pindah lokasi murni (R100, isi identik) diizinkan;
+          # perubahan isi, hapus, atau pindah yang disertai perubahan isi tetap ditolak.
+          DIUBAH=$(git diff --name-status -M --diff-filter=MDR "origin/${{ github.base_ref }}"...HEAD -- 'Aplikasi/Web/database/migrations/' 'Backend/database/migrations/' | awk '$1 != "R100"' || true)
           if [ -n "$DIUBAH" ]; then
             echo "Migrasi yang sudah di-merge tidak boleh diubah/dihapus (CLAUDE.md #15):"
             echo "$DIUBAH"
@@ -35,13 +37,13 @@ jobs:
           fi
       - name: Tidak ada test yang di-skip
         run: |
-          if grep -rnE -- '->skip\(|markTestSkipped|skip: true|@Skip' Backend/tests Aplikasi Paket 2>/dev/null; then
+          if grep -rnE -- '->skip\(|markTestSkipped|skip: true|@Skip' Aplikasi/Web/tests Aplikasi/Kasir Aplikasi/Pemilik Paket 2>/dev/null; then
             echo "Test yang di-skip terdeteksi. Hapus skip atau minta persetujuan pemilik produk."
             exit 1
           fi
 
   backend:
-    name: Backend (PHP 8.3, MySQL 8)
+    name: Aplikasi Web: PHP (8.3, MySQL 8)
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -57,7 +59,7 @@ jobs:
           --health-interval=5s --health-timeout=5s --health-retries=20
     defaults:
       run:
-        working-directory: Backend
+        working-directory: Aplikasi/Web
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -73,18 +75,18 @@ jobs:
         run: composer tes:cepat
 
   web:
-    name: Web (TypeScript, ESLint, Prettier, Vitest, build)
+    name: Aplikasi Web: frontend (TypeScript, ESLint, Prettier, Vitest, build)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Backend
+        working-directory: Aplikasi/Web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: Backend/package-lock.json
+          cache-dependency-path: Aplikasi/Web/package-lock.json
       - run: npm ci
       - name: tsc + ESLint (penamaan) + Prettier + Vitest
         run: npm run periksa

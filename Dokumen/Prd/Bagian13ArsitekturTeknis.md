@@ -41,8 +41,8 @@ flowchart LR
 
 ```
 /
-├── Backend/                     # Laravel 13 (API + back-office Inertia React + web publik)
 ├── Aplikasi/
+│   ├── Web/                     # Laravel 13: API POS & Owner, back-office Inertia React, web publik, Platform Pengelola (D-13)
 │   ├── Kasir/                   # Aplikasi POS Flutter (Android, iOS/iPadOS, Windows)   · paket Dart: kasir
 │   └── Pemilik/                 # Aplikasi Owner Flutter (Android, iOS)                  · paket Dart: pemilik
 ├── Paket/
@@ -121,7 +121,7 @@ flowchart LR
 Satu aplikasi Laravel, dibagi menjadi modul domain yang mengikuti flow bisnis. Batas antar modul tegas: modul lain hanya boleh memakai **Aksi/Layanan publik** atau **Peristiwa** milik modul tersebut, bukan query langsung ke tabelnya. Semua nama folder, file, class, dan method mengikuti §13.7.
 
 ```
-Backend/app/
+Aplikasi/Web/app/
 ├── Domain/
 │   ├── Tenant/           # Tenant, Langganan, Paket, HargaPaket, Fitur, Addon, KuponLangganan, EvaluatorFitur, OutletFitur (P-04, F-00, F-19)
 │   ├── Organisasi/       # Outlet, Gudang, Perangkat, Pengguna, Peran        (F-02)
@@ -173,7 +173,7 @@ Backend/app/
 **Aksi + Peristiwa + Penangan:**
 
 ```php
-// Backend/app/Domain/Penjualan/Aksi/SelesaikanPenjualan.php
+// Aplikasi/Web/app/Domain/Penjualan/Aksi/SelesaikanPenjualan.php
 final class SelesaikanPenjualan
 {
     public function __construct(
@@ -320,7 +320,7 @@ Pola penamaan class per jenis (**{Objek}{Jenis}**, agar file satu domain berdeka
 #### 13.7.2 Contoh Backend (Laravel)
 
 ```php
-// Backend/app/Domain/Bersama/Model/ModelDasar.php
+// Aplikasi/Web/app/Domain/Bersama/Model/ModelDasar.php
 abstract class ModelDasar extends Model
 {
     protected $primaryKey = 'Id';
@@ -335,7 +335,7 @@ abstract class ModelDasar extends Model
     }
 }
 
-// Backend/app/Domain/Penjualan/Model/Penjualan.php
+// Aplikasi/Web/app/Domain/Penjualan/Model/Penjualan.php
 final class Penjualan extends ModelDasar
 {
     use MilikTenant;                       // global scope IdTenant
@@ -357,7 +357,7 @@ final class Penjualan extends ModelDasar
     }
 }
 
-// Backend/database/migrations/2026_10_01_000000_BuatTabelPenjualan.php
+// Aplikasi/Web/database/migrations/2026_10_01_000000_BuatTabelPenjualan.php
 return new class extends Migration {
     public function up(): void                       // up/down: wajib oleh Laravel
     {
@@ -395,13 +395,13 @@ class Produk extends Table {
 ```
 
 ```tsx
-// Backend/resources/js/Halaman/Katalog/Produk/Daftar.tsx
+// Aplikasi/Web/resources/js/Halaman/Katalog/Produk/Daftar.tsx
 export default function Daftar({ Filter }: Props) {
   const { data } = useDaftarProduk(Filter);          // hook wajib diawali "use" (aturan React)
   return <TabelData Kolom={KolomProduk} Data={data?.Data ?? []} />;
 }
 
-// Backend/resources/js/Pustaka/Format.ts
+// Aplikasi/Web/resources/js/Pustaka/Format.ts
 export function FormatRupiah(nilai: string): string { ... }
 ```
 
@@ -459,7 +459,7 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 **Struktur kode:**
 
 ```
-Backend/app/Domain/Pengelola/
+Aplikasi/Web/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
 ├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # Aksi kelola & terbitkan template, ValidatorTemplate (P-03); modelnya di Domain/PanduanAwal
@@ -473,9 +473,9 @@ Backend/app/Domain/Pengelola/
 ├── Operasional/        # DasborOperasional, Insiden, Alert                             (P-11)
 └── Mitra/              # Mitra, AtribusiMitra, KomisiMitra, PencairanKomisi            (P-12)
 
-Backend/app/Http/Kontroler/Pengelola/      # Kontroler Inertia untuk pengelola
-Backend/routes/Pengelola.php               # rute subdomain pengelola
-Backend/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
+Aplikasi/Web/app/Http/Kontroler/Pengelola/      # Kontroler Inertia untuk pengelola
+Aplikasi/Web/routes/Pengelola.php               # rute subdomain pengelola
+Aplikasi/Web/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
 ```
 
 **Aturan keamanan arsitektur:**

@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "pos-saas/backend",
     "type": "project",
-    "description": "Backend POS SaaS multi-sektor Indonesia",
+    "description": "Aplikasi Web POS SaaS multi-sektor Indonesia: API, back-office, web publik, Platform Pengelola",
     "keywords": [
         "laravel",
         "framework"

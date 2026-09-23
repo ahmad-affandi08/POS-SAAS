@@ -1,7 +1,8 @@
-# Backend
+# Aplikasi Web
 
 Laravel 13 (PHP 8.3) untuk API, back-office Inertia React, web publik, dan Platform Pengelola.
-Aturan kerja ada di `../CLAUDE.md` dan `../.claude/rules/`. Spesifikasi di `../PRD.md` (potongan di `../Dokumen/`).
+Satu aplikasi Laravel yang juga menjadi server API untuk Aplikasi Kasir dan Aplikasi Pemilik (D-13).
+Aturan kerja ada di `../../CLAUDE.md` dan `../../.claude/rules/`. Spesifikasi di `../../PRD.md` (potongan di `../../Dokumen/`).
 
 ## Prasyarat
 

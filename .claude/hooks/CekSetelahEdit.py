@@ -18,14 +18,14 @@ if not PathRelatif or PathRelatif.startswith("..") or not os.path.isfile(os.path
 def FormatJikaTersedia(Path):
     """Formatter dijalankan hanya jika sudah terpasang; diam jika belum."""
     Absolut = os.path.join(AkarRepo, Path)
-    if Path.endswith(".php") and Path.startswith("Backend/"):
-        Pint = os.path.join(AkarRepo, "Backend", "vendor", "bin", "pint")
+    if Path.endswith(".php") and Path.startswith("Aplikasi/Web/"):
+        Pint = os.path.join(AkarRepo, "Aplikasi", "Web", "vendor", "bin", "pint")
         if os.path.isfile(Pint):
-            subprocess.run([Pint, Absolut], cwd=os.path.join(AkarRepo, "Backend"), capture_output=True, check=False)
+            subprocess.run([Pint, Absolut], cwd=os.path.join(AkarRepo, "Aplikasi", "Web"), capture_output=True, check=False)
     elif Path.endswith(".dart") and shutil.which("dart"):
         subprocess.run(["dart", "format", Absolut], capture_output=True, check=False)
-    elif Path.endswith((".ts", ".tsx", ".css")) and Path.startswith("Backend/"):
-        Prettier = os.path.join(AkarRepo, "Backend", "node_modules", ".bin", "prettier")
+    elif Path.endswith((".ts", ".tsx", ".css")) and Path.startswith("Aplikasi/Web/"):
+        Prettier = os.path.join(AkarRepo, "Aplikasi", "Web", "node_modules", ".bin", "prettier")
         if os.path.isfile(Prettier):
             subprocess.run([Prettier, "--write", Absolut], capture_output=True, check=False)
 

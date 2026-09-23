@@ -1,9 +1,9 @@
 ---
 paths:
-  - "Backend/app/Domain/Pengelola/**"
-  - "Backend/app/Http/Kontroler/Pengelola/**"
-  - "Backend/routes/Pengelola.php"
-  - "Backend/resources/js/Halaman/Pengelola/**"
+  - "Aplikasi/Web/app/Domain/Pengelola/**"
+  - "Aplikasi/Web/app/Http/Kontroler/Pengelola/**"
+  - "Aplikasi/Web/routes/Pengelola.php"
+  - "Aplikasi/Web/resources/js/Halaman/Pengelola/**"
 ---
 
 # Aturan Platform Pengelola (PRD §8 Bagian A, §13.8, §19.3)
