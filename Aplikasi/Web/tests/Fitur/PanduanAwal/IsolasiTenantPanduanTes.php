@@ -19,7 +19,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    BantuanPanduanAwal::SiapkanHalaman();
     Storage::fake('local');
     Mail::fake();
 });

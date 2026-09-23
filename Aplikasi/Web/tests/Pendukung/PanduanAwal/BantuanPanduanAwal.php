@@ -25,42 +25,9 @@ use Tests\TestCase;
 /**
  * Prasyarat F-01 untuk test: template sektor Terbit (isi dari `TemplateSektorAwal.json`), tarif pajak terbit, tenant
  * siap wizard, dan masuk sebagai anggota.
- *
- * Halaman Inertia panduan awal adalah berkas TSX milik tim frontend yang digabung terpisah. Selama berkasnya belum ada
- * di cabang ini, pemeriksaan keberadaan halaman (`inertia.pages.ensure_pages_exist`) dimatikan khusus test F-01; begitu
- * berkasnya ada, pemeriksaan otomatis aktif kembali (`HalamanTersedia`).
  */
 final class BantuanPanduanAwal
 {
-    public const HALAMAN = [
-        'Kelola/PanduanAwal/Indeks',
-        'Kelola/PanduanAwal/ProfilUsaha',
-        'Kelola/PanduanAwal/Sektor',
-        'Kelola/PanduanAwal/Pajak',
-        'Kelola/PanduanAwal/Produk',
-        'Kelola/PanduanAwal/MetodePembayaran',
-        'Kelola/PanduanAwal/Perangkat',
-    ];
-
-    public static function HalamanTersedia(): bool
-    {
-        foreach (self::HALAMAN as $halaman) {
-            if (! is_file(resource_path("js/Halaman/{$halaman}.tsx"))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /** Dipanggil di `beforeEach` test yang merender halaman panduan awal. */
-    public static function SiapkanHalaman(): void
-    {
-        if (! self::HalamanTersedia()) {
-            config(['inertia.pages.ensure_pages_exist' => false, 'inertia.testing.ensure_pages_exist' => false]);
-        }
-    }
-
     /**
      * @return array<string, mixed>
      */

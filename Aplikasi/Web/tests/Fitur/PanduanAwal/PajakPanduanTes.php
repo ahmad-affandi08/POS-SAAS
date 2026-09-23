@@ -15,7 +15,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    BantuanPanduanAwal::SiapkanHalaman();
     BantuanOrganisasi::BuatKota();
     Mail::fake();
 });

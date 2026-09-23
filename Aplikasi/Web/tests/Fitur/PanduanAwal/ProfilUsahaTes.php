@@ -18,7 +18,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    BantuanPanduanAwal::SiapkanHalaman();
     BantuanOrganisasi::BuatKota('73.71', 'Kota Makassar', ZonaWaktu::Wita);
     Storage::fake('local');
     Mail::fake();
