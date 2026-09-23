@@ -63,6 +63,21 @@ describe('Peran bawaan tenant (§19.1)', function (): void {
         expect(Peran::query()->count())->toBe(count(PeranTenantBawaan::cases()))
             ->and(PeranIzin::query()->where('IdPeran', BantuanOrganisasi::Peran($baru->Id, PeranTenantBawaan::Kasir)->Id)->count())->toBe(2);
     });
+
+    it('F-01: Admin tenant lama menerima izin panduan-awal.kelola setelah organisasi:siapkan-peran; Kasir tidak', function (): void {
+        $tenant = BantuanOrganisasi::BuatTenant()['Tenant'];
+        $admin = BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Admin);
+        // Tenant yang terdaftar sebelum F-01 belum memegang izin baru ini.
+        PeranIzin::query()->where('IdPeran', $admin->Id)->where('KunciIzin', IzinTenant::PanduanAwalKelola->value)->delete();
+        expect($admin->AmbilKunciIzin())->not->toContain('panduan-awal.kelola');
+
+        $this->artisan('organisasi:siapkan-peran')->assertSuccessful();
+
+        expect(BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Admin)->AmbilKunciIzin())->toContain('panduan-awal.kelola')
+            ->and(BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Kasir)->AmbilKunciIzin())->not->toContain('panduan-awal.kelola')
+            ->and(IzinTenant::PanduanAwalKelola->AmbilKelompok())->toBe('Organisasi')
+            ->and(IzinTenant::PanduanAwalKelola->CekKhususPemilik())->toBeFalse();
+    });
 });
 
 describe('Izin per peran di rute back-office (WajibIzinTenant)', function (): void {

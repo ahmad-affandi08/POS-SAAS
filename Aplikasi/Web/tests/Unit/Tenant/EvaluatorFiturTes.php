@@ -76,4 +76,30 @@ describe('EvaluatorFitur (P-04, BR-P04.3)', function (): void {
             ->and($evaluator->CekMasihDalamBatas($sumber, 'BatasOutlet', 1))->toBeFalse()
             ->and($evaluator->CekMasihDalamBatas($sumber, 'BatasSku', 999999))->toBeTrue();
     });
+
+    it('F-01: menambah beberapa sekaligus harus muat seluruhnya dalam batas', function (): void {
+        $evaluator = new EvaluatorFitur;
+        $sumber = BuatSumber(['batasPaket' => ['BatasOutlet' => 1, 'BatasPerangkatPerOutlet' => 2, 'BatasSku' => 100]]);
+
+        expect($evaluator->CekMasihDalamBatas($sumber, 'BatasSku', 98, 2))->toBeTrue()
+            ->and($evaluator->CekMasihDalamBatas($sumber, 'BatasSku', 99, 2))->toBeFalse()
+            ->and($evaluator->CekMasihDalamBatas($sumber, 'BatasSku', 0, 100))->toBeTrue()
+            ->and($evaluator->CekMasihDalamBatas($sumber, 'BatasSku', 0, 101))->toBeFalse();
+    });
+
+    it('BR-01.3: modul outlet membatasi fitur paket; null = tanpa batasan; override tetap dibatasi modul outlet', function (): void {
+        $evaluator = new EvaluatorFitur;
+        $tanpaModul = BuatSumber(['fiturPaket' => ['pos.retail', 'pos.kds']]);
+        $denganModul = BuatSumber(['fiturPaket' => ['pos.retail', 'pos.kds'], 'modulOutletAktif' => ['pos.retail', 'pos.mode-meja']]);
+        $modulKosong = BuatSumber(['fiturPaket' => ['pos.retail'], 'modulOutletAktif' => []]);
+        $override = BuatSumber(['fiturPaket' => ['pos.retail'], 'overrideFitur' => ['pos.mode-meja'], 'modulOutletAktif' => ['pos.retail', 'pos.mode-meja']]);
+
+        expect($evaluator->CekFiturAktif($tanpaModul, 'pos.kds'))->toBeTrue()
+            ->and($evaluator->CekFiturAktif($denganModul, 'pos.kds'))->toBeFalse()
+            ->and($evaluator->CekFiturAktif($denganModul, 'pos.retail'))->toBeTrue()
+            // Modul aktif di outlet tetapi tidak ada di paket = tidak aktif.
+            ->and($evaluator->CekFiturAktif($denganModul, 'pos.mode-meja'))->toBeFalse()
+            ->and($evaluator->CekFiturAktif($modulKosong, 'pos.retail'))->toBeFalse()
+            ->and($evaluator->CekFiturAktif($override, 'pos.mode-meja'))->toBeTrue();
+    });
 });
