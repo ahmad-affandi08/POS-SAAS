@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Organisasi\Kueri;
+
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Organisasi\Model\TenantPengguna;
+
+/**
+ * Tenant tempat seorang pengguna menjadi anggota aktif (BR-00.1: pemilih tenant setelah masuk).
+ */
+final class KeanggotaanPengguna
+{
+    /**
+     * @return list<int>
+     */
+    public function AmbilIdTenant(int $idPengguna): array
+    {
+        return array_values(array_map('intval', TenantPengguna::query()
+            ->where('IdPengguna', $idPengguna)
+            ->where('Status', StatusKeanggotaan::Aktif->value)
+            ->orderBy('Id')
+            ->pluck('IdTenant')
+            ->all()));
+    }
+
+    public function CekAnggota(int $idPengguna, int $idTenant): bool
+    {
+        return TenantPengguna::query()
+            ->where('IdPengguna', $idPengguna)
+            ->where('IdTenant', $idTenant)
+            ->where('Status', StatusKeanggotaan::Aktif->value)
+            ->exists();
+    }
+}
