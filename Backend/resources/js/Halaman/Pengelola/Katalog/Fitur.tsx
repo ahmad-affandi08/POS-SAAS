@@ -35,7 +35,8 @@ export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
             ) : null}
             {Fitur.length === 0 ? (
                 <Pemberitahuan jenis="info" judul="Belum ada fitur">
-                    Jalankan seeder database untuk memuat katalog fitur awal.
+                    Tambahkan fitur pertama. Kunci fitur dipakai kode aplikasi, jadi tulis sesuai modul yang sudah
+                    dibangun.
                 </Pemberitahuan>
             ) : (
                 <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">

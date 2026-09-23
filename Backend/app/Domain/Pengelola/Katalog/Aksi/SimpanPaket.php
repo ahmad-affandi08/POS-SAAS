@@ -10,8 +10,10 @@ use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Enum\StatusPaket;
+use App\Domain\Tenant\Kueri\HargaPaketBerlaku;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\Paket;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,79 +23,96 @@ use Illuminate\Support\Facades\DB;
  */
 final class SimpanPaket
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly HargaPaketBerlaku $hargaBerlaku,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, DataPaket $data, ?Paket $paket = null, ?string $alasan = null): Paket
     {
-        return DB::transaction(function () use ($pelaku, $data, $paket, $alasan): Paket {
-            if ($paket !== null) {
-                $paket = Paket::query()->lockForUpdate()->findOrFail($paket->Id);
+        try {
+            return DB::transaction(function () use ($pelaku, $data, $paket, $alasan): Paket {
+                if ($paket !== null) {
+                    $paket = Paket::query()->lockForUpdate()->findOrFail($paket->Id);
 
-                if ($paket->Kode !== $data->kode) {
-                    throw new PelanggaranAturanBisnis('KodeTidakBisaDiubah', 'Kode paket tidak bisa diubah.', 'Kode');
-                }
-
-                if ($paket->Status !== StatusPaket::Draf) {
-                    if (! $pelaku->PunyaIzin(IzinPengelola::KatalogPaketSetujui)) {
-                        throw new PelanggaranAturanBisnis('BR-P04.6', 'Paket yang sudah aktif hanya bisa diubah Super Admin.');
+                    if ($paket->Kode !== $data->kode) {
+                        throw new PelanggaranAturanBisnis('KodeTidakBisaDiubah', 'Kode paket tidak bisa diubah.', 'Kode');
                     }
 
-                    if ($alasan === null || trim($alasan) === '') {
-                        throw new PelanggaranAturanBisnis('BR-P04.6', 'Tulis alasan perubahan: paket aktif langsung berdampak ke tenant.', 'Alasan');
+                    if ($paket->Status !== StatusPaket::Draf) {
+                        if (! $pelaku->PunyaIzin(IzinPengelola::KatalogPaketSetujui)) {
+                            throw new PelanggaranAturanBisnis('BR-P04.6', 'Paket yang sudah aktif hanya bisa diubah Super Admin.');
+                        }
+
+                        if ($alasan === null || trim($alasan) === '') {
+                            throw new PelanggaranAturanBisnis('BR-P04.6', 'Tulis alasan perubahan: paket aktif langsung berdampak ke tenant.', 'Alasan');
+                        }
+
+                        $keluarDariNegosiasi = $paket->HargaNegosiasi && ! $data->hargaNegosiasi;
+
+                        if ($keluarDariNegosiasi && ! $this->hargaBerlaku->CekAdaHargaBerlaku($paket->Id, now('Asia/Jakarta'))) {
+                            throw new PelanggaranAturanBisnis(
+                                'BR-P04.6',
+                                'Paket aktif ini belum punya harga yang berlaku. Terbitkan harga dulu sebelum mematikan harga negosiasi.',
+                                'HargaNegosiasi',
+                            );
+                        }
+                    }
+                } elseif (Paket::query()->where('Kode', $data->kode)->exists()) {
+                    throw new PelanggaranAturanBisnis('KodeSudahAda', "Kode paket {$data->kode} sudah ada.", 'Kode');
+                }
+
+                if (preg_match('/^[A-Z0-9_]{2,30}$/', $data->kode) !== 1) {
+                    throw new PelanggaranAturanBisnis('KodeTidakValid', 'Kode paket huruf besar/angka/garis bawah, misal PRO.', 'Kode');
+                }
+
+                $kunciFitur = array_values(array_unique($data->kunciFitur));
+                $fiturAda = Fitur::query()->whereIn('Kunci', $kunciFitur)->count();
+
+                if ($fiturAda !== count($kunciFitur)) {
+                    throw new PelanggaranAturanBisnis('FiturTidakDikenal', 'Ada fitur yang tidak terdaftar di katalog.', 'KunciFitur');
+                }
+
+                foreach ($data->batas as $kolom => $nilai) {
+                    if (! in_array($kolom, Paket::KOLOM_BATAS, true) || ($nilai !== null && $nilai < 0)) {
+                        throw new PelanggaranAturanBisnis('BatasTidakValid', 'Batas harus angka 0 atau lebih, atau kosong untuk tak terbatas.', $kolom);
                     }
                 }
-            } elseif (Paket::query()->where('Kode', $data->kode)->exists()) {
-                throw new PelanggaranAturanBisnis('KodeSudahAda', "Kode paket {$data->kode} sudah ada.", 'Kode');
-            }
 
-            if (preg_match('/^[A-Z0-9_]{2,30}$/', $data->kode) !== 1) {
-                throw new PelanggaranAturanBisnis('KodeTidakValid', 'Kode paket huruf besar/angka/garis bawah, misal PRO.', 'Kode');
-            }
+                $nilaiLama = $paket === null ? null : self::AmbilNilai($paket);
+                $paket ??= new Paket(['Status' => StatusPaket::Draf]);
+                $paket->fill([
+                    'Kode' => $data->kode,
+                    'Nama' => $data->nama,
+                    'Keterangan' => $data->keterangan,
+                    'HargaNegosiasi' => $data->hargaNegosiasi,
+                    'MasaTrialHari' => max(0, $data->masaTrialHari),
+                    'Urutan' => $data->urutan,
+                    ...$data->batas,
+                ])->save();
 
-            $kunciFitur = array_values(array_unique($data->kunciFitur));
-            $fiturAda = Fitur::query()->whereIn('Kunci', $kunciFitur)->count();
+                $paket->Fitur()->whereNotIn('KunciFitur', $kunciFitur)->delete();
 
-            if ($fiturAda !== count($kunciFitur)) {
-                throw new PelanggaranAturanBisnis('FiturTidakDikenal', 'Ada fitur yang tidak terdaftar di katalog.', 'KunciFitur');
-            }
-
-            foreach ($data->batas as $kolom => $nilai) {
-                if (! in_array($kolom, Paket::KOLOM_BATAS, true) || ($nilai !== null && $nilai < 0)) {
-                    throw new PelanggaranAturanBisnis('BatasTidakValid', 'Batas harus angka 0 atau lebih, atau kosong untuk tak terbatas.', $kolom);
+                foreach ($kunciFitur as $kunci) {
+                    $paket->Fitur()->firstOrCreate(['KunciFitur' => $kunci]);
                 }
-            }
 
-            $nilaiLama = $paket === null ? null : self::AmbilNilai($paket);
-            $paket ??= new Paket(['Status' => StatusPaket::Draf]);
-            $paket->fill([
-                'Kode' => $data->kode,
-                'Nama' => $data->nama,
-                'Keterangan' => $data->keterangan,
-                'HargaNegosiasi' => $data->hargaNegosiasi,
-                'MasaTrialHari' => max(0, $data->masaTrialHari),
-                'Urutan' => $data->urutan,
-                ...$data->batas,
-            ])->save();
+                $paket->unsetRelation('Fitur');
 
-            $paket->Fitur()->whereNotIn('KunciFitur', $kunciFitur)->delete();
+                $this->audit->Catat(
+                    $nilaiLama === null ? 'katalog.paket.buat' : 'katalog.paket.ubah',
+                    $paket,
+                    nilaiLama: $nilaiLama,
+                    nilaiBaru: self::AmbilNilai($paket),
+                    alasan: $alasan,
+                    idPelaku: $pelaku->Id,
+                );
 
-            foreach ($kunciFitur as $kunci) {
-                $paket->Fitur()->firstOrCreate(['KunciFitur' => $kunci]);
-            }
-
-            $paket->unsetRelation('Fitur');
-
-            $this->audit->Catat(
-                $nilaiLama === null ? 'katalog.paket.buat' : 'katalog.paket.ubah',
-                $paket,
-                nilaiLama: $nilaiLama,
-                nilaiBaru: self::AmbilNilai($paket),
-                alasan: $alasan,
-                idPelaku: $pelaku->Id,
-            );
-
-            return $paket;
-        });
+                return $paket;
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw new PelanggaranAturanBisnis('KodeSudahAda', 'Kode paket ini baru saja dipakai. Muat ulang halaman lalu pakai kode lain.', 'Kode');
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Domain\Tenant\Enum\JenisKupon;
 use App\Domain\Tenant\Enum\StatusPaket;
 use App\Domain\Tenant\Model\Addon;
 use App\Domain\Tenant\Model\KuponLangganan;
+use Illuminate\Support\Carbon;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\TestCase;
 
@@ -19,6 +20,8 @@ function MasukSebagaiKatalog(TestCase $tes, PenggunaPengelola $pengguna): TestCa
 }
 
 beforeEach(function (): void {
+    // Waktu dibekukan agar tanggal di test tidak kedaluwarsa seiring waktu (BR tanggal berlaku tidak boleh lewat).
+    $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     app(SiapkanKatalogBawaan::class)->Jalankan();
 });
 
@@ -111,5 +114,17 @@ describe('Kupon langganan (P-04)', function (): void {
         $this->put(BantuanPengelola::Url('/katalog/kupon/HEMAT10'), [...$data, 'Kode' => 'HEMAT20'])->assertSessionHasErrors('Kode');
 
         expect(KuponLangganan::query()->where('Kode', 'HEMAT10')->sole()->Aktif)->toBeFalse();
+    });
+    it('kupon yang sudah kedaluwarsa tetap bisa dinonaktifkan, dan perubahannya tercatat di audit', function (): void {
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        MasukSebagaiKatalog($this, $keuangan);
+        $data = ['Kode' => 'AKHIR-TAHUN', 'Jenis' => 'Persen', 'Nilai' => '10', 'DurasiBulan' => 1, 'BerlakuSampai' => '2026-12-31', 'Aktif' => true];
+        $this->post(BantuanPengelola::Url('/katalog/kupon'), $data)->assertSessionHasNoErrors();
+
+        $this->travelTo(Carbon::parse('2027-02-01 09:00', 'Asia/Jakarta'));
+        MasukSebagaiKatalog($this, $keuangan)->put(BantuanPengelola::Url('/katalog/kupon/AKHIR-TAHUN'), [...$data, 'Aktif' => false])->assertSessionHasNoErrors();
+
+        expect(KuponLangganan::query()->where('Kode', 'AKHIR-TAHUN')->sole()->Aktif)->toBeFalse();
+        $this->assertDatabaseHas('LogAuditPengelola', ['Aksi' => 'katalog.kupon.ubah']);
     });
 });

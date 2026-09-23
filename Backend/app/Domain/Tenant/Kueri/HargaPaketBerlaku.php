@@ -12,7 +12,9 @@ use Carbon\CarbonInterface;
  * Harga paket untuk sebuah tagihan (dipakai penagihan P-08/F-19), BR-P04.1:
  * - hanya versi Terbit yang berlaku pada tanggal tagihan;
  * - langganan yang dimulai sebelum sebuah versi berlaku tetap memakai harga lamanya (grandfathering),
- *   kecuali versi itu ditandai `TerapkanKePelangganLama`.
+ *   kecuali versi itu ditandai `TerapkanKePelangganLama`;
+ * - bila langganan dimulai sebelum versi harga pertama, versi paling awal yang dipakai (tidak ada harga lebih lama
+ *   untuk dikunci), sehingga hasilnya tidak pernah kosong selama paket punya harga berlaku.
  */
 final class HargaPaketBerlaku
 {
@@ -33,6 +35,18 @@ final class HargaPaketBerlaku
             }
         }
 
-        return null;
+        // Langganan lebih tua dari semua versi: pakai versi paling awal yang sudah berlaku.
+        return $versi->last();
+    }
+
+    /** BR-P04.6: paket hanya boleh aktif bila sudah ada harga terbit yang BERLAKU pada tanggal tersebut. */
+    public function CekAdaHargaBerlaku(int $idPaket, CarbonInterface $tanggal): bool
+    {
+        return HargaPaket::query()
+            ->where('IdPaket', $idPaket)
+            ->where('Status', StatusDataMaster::Terbit->value)
+            ->whereDate('BerlakuMulai', '<=', $tanggal->toDateString())
+            ->where(fn ($kueri) => $kueri->whereNull('BerlakuSampai')->orWhereDate('BerlakuSampai', '>=', $tanggal->toDateString()))
+            ->exists();
     }
 }

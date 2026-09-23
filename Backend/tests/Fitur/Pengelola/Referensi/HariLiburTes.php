@@ -32,6 +32,11 @@ function BuatDrafLibur(TestCase $tes, PenggunaPengelola $pengaju, string $tangga
         ->assertSessionHasNoErrors();
 }
 
+beforeEach(function (): void {
+    // Waktu dibekukan agar tanggal di test tidak kedaluwarsa seiring waktu (BR tanggal berlaku tidak boleh lewat).
+    $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
+});
+
 describe('Hari libur (P-02, BR-P02.2)', function (): void {
     it('draf satu tahun diajukan lalu terbit dengan 1 penyetuju selain pengaju', function (): void {
         $konten = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);

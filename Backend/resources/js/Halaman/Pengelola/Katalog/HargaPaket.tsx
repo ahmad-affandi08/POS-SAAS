@@ -164,11 +164,11 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
                                                         <Tombol varian="sekunder" onClick={() => AturSunting(harga)}>
                                                             Ubah
                                                         </Tombol>
-                                                        <Tombol onClick={() => Ajukan(harga)}>Ajukan</Tombol>
+                                                        <Tombol onClick={() => Ajukan(harga)}>Ajukan harga</Tombol>
                                                     </>
                                                 ) : null}
                                                 {bisaTinjau ? (
-                                                    <Tombol onClick={() => AturDitinjau(harga)}>Tinjau</Tombol>
+                                                    <Tombol onClick={() => AturDitinjau(harga)}>Tinjau harga</Tombol>
                                                 ) : null}
                                             </div>
                                         </td>
@@ -235,7 +235,7 @@ function FormHarga({ alamat, harga, saatSelesai }: { alamat: string; harga: Harg
             />
             <div className="sm:col-span-3">
                 <KotakCentang
-                    label="Terapkan juga ke pelanggan lama (tanpa grandfathering)"
+                    label="Terapkan juga ke pelanggan lama (tanpa penguncian harga lama)"
                     nilai={formulir.data.TerapkanKePelangganLama}
                     saatBerubah={(nilai) => formulir.setData('TerapkanKePelangganLama', nilai)}
                 />

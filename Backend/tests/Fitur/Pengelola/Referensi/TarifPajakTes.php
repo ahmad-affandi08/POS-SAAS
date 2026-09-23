@@ -65,6 +65,8 @@ function Tinjau(TestCase $tes, PenggunaPengelola $peninjau, TarifPajak $tarif, s
 }
 
 beforeEach(function (): void {
+    // Waktu dibekukan agar tanggal di test tidak kedaluwarsa seiring waktu (BR tanggal berlaku tidak boleh lewat).
+    $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     app(SiapkanPajakBawaan::class)->Jalankan();
     TarifPajak::query()->delete();
     Wilayah::query()->create(['Kode' => '33', 'Nama' => 'Jawa Tengah', 'Tingkat' => TingkatWilayah::Provinsi, 'ZonaWaktu' => ZonaWaktu::Wib]);

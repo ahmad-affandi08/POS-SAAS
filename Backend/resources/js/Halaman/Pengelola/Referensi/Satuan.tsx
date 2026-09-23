@@ -38,7 +38,7 @@ export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
 
             {Satuan.length === 0 ? (
                 <Pemberitahuan jenis="info" judul="Belum ada satuan standar">
-                    Jalankan seeder database atau tambahkan satuan secara manual.
+                    Tambahkan satuan pertama, misal pcs atau kg.
                 </Pemberitahuan>
             ) : (
                 <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">

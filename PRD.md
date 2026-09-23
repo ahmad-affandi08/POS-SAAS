@@ -3595,6 +3595,11 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
+14. **Harga paket per outlet?** §21 menulis "harga/bulan per outlet", sedangkan `HargaPaket` menyimpan harga per paket. Perlu diputuskan sebelum F-19 (penagihan).
+15. **Batas paket yang belum disebut §21** (outlet paket Pro, kuota WA Starter/Pro/Bisnis, batas pengguna & penyimpanan) sementara bernilai tak terbatas di `database/Data/KatalogPaket.json` (draf). Tentukan sebelum paket diaktifkan.
+16. **Add-on & kupon tanpa four-eyes?** Saat ini Keuangan bisa langsung mengubah harga add-on dan membuat kupon. Apakah perlu persetujuan kedua seperti harga paket (BR-P04.5)?
+17. **Kunci fitur berbahasa campuran** (`kanal.self-order`, `pos.kds`, `keamanan.anti-fraud`, `struk.tanpa-watermark`, `laporan.insight`): istilah ini dipakai PRD; konfirmasi sebelum kode tenant memakainya karena kunci tidak bisa diubah.
+18. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) dan BR-P04.4 (downgrade) wajib dibangun & diuji bersama `Langganan` di F-00/F-19.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

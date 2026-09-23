@@ -11,8 +11,8 @@ use App\Domain\Tenant\Enum\StatusPaket;
 use App\Domain\Tenant\Model\Paket;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
+use App\Http\Permintaan\Pengelola\Katalog\ArsipkanPaketPermintaan;
 use App\Http\Permintaan\Pengelola\Katalog\SimpanPaketPermintaan;
-use App\Http\Permintaan\Pengelola\Katalog\UbahStatusPaketPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,13 +47,17 @@ final class PaketKontroler extends Kontroler
         return back()->with('Kilat', "Paket {$paket->Nama} diperbarui.");
     }
 
-    public function UbahStatus(Paket $paket, UbahStatusPaketPermintaan $permintaan, UbahStatusPaket $ubah): RedirectResponse
+    public function Aktifkan(Paket $paket, UbahStatusPaket $ubah): RedirectResponse
     {
-        $status = $permintaan->AmbilStatus();
-        $ubah->Jalankan($this->AmbilPelaku(), $paket, $status, $permintaan->AmbilAlasan());
+        $ubah->Jalankan($this->AmbilPelaku(), $paket, StatusPaket::Aktif);
 
-        return back()->with('Kilat', $status === StatusPaket::Aktif
-            ? "Paket {$paket->Nama} aktif dan bisa dipilih tenant baru."
-            : "Paket {$paket->Nama} diarsipkan. Tenant yang sudah memakainya tidak terdampak.");
+        return back()->with('Kilat', "Paket {$paket->Nama} aktif dan bisa dipilih tenant baru.");
+    }
+
+    public function Arsipkan(Paket $paket, ArsipkanPaketPermintaan $permintaan, UbahStatusPaket $ubah): RedirectResponse
+    {
+        $ubah->Jalankan($this->AmbilPelaku(), $paket, StatusPaket::Diarsipkan, $permintaan->AmbilAlasan());
+
+        return back()->with('Kilat', "Paket {$paket->Nama} diarsipkan. Tenant yang sudah memakainya tidak terdampak.");
     }
 }

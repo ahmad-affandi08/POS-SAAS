@@ -53,7 +53,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
     const [sunting, AturSunting] = useState<Paket | 'baru' | null>(null);
     const [arsip, AturArsip] = useState<Paket | null>(null);
     const Aktifkan = (paket: Paket) =>
-        router.post(`/katalog/paket/${paket.Uuid}/status`, { Status: 'Aktif' }, { preserveScroll: true });
+        router.post(`/katalog/paket/${paket.Uuid}/aktifkan`, {}, { preserveScroll: true });
 
     return (
         <TataLetakPengelola
@@ -77,7 +77,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
 
             {Paket.length === 0 ? (
                 <Pemberitahuan jenis="info" judul="Belum ada paket">
-                    Jalankan seeder database untuk memuat paket awal (§21) sebagai draf.
+                    Buat paket pertama. Paket baru tersimpan sebagai draf sampai harganya terbit dan paket diaktifkan.
                 </Pemberitahuan>
             ) : (
                 <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
@@ -117,7 +117,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
                                             ? 'Negosiasi'
                                             : paket.HargaBulananBerlaku !== null
                                               ? FormatRupiah(paket.HargaBulananBerlaku)
-                                              : 'Belum ada harga terbit'}
+                                              : 'Belum ada harga berlaku'}
                                     </td>
                                     <td className="px-4 py-3 text-keterangan text-teks-sekunder">
                                         {KolomBatas.map((kolom) => (
@@ -138,19 +138,19 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
                                                 href={`/katalog/paket/${paket.Uuid}/harga`}
                                                 className="text-label font-semibold text-brand underline"
                                             >
-                                                Harga
+                                                Kelola harga
                                             </Link>
                                             {bolehAjukan && (paket.Status === 'Draf' || bolehSetujui) ? (
                                                 <Tombol varian="sekunder" onClick={() => AturSunting(paket)}>
-                                                    Ubah
+                                                    Ubah paket
                                                 </Tombol>
                                             ) : null}
                                             {bolehSetujui && paket.Status !== 'Aktif' ? (
-                                                <Tombol onClick={() => Aktifkan(paket)}>Aktifkan</Tombol>
+                                                <Tombol onClick={() => Aktifkan(paket)}>Aktifkan paket</Tombol>
                                             ) : null}
                                             {bolehSetujui && paket.Status === 'Aktif' ? (
                                                 <Tombol varian="bahaya" onClick={() => AturArsip(paket)}>
-                                                    Arsipkan
+                                                    Arsipkan paket
                                                 </Tombol>
                                             ) : null}
                                         </div>
@@ -312,11 +312,11 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
 }
 
 function FormArsip({ paket, saatSelesai }: { paket: Paket; saatSelesai: () => void }) {
-    const formulir = useForm({ Status: 'Diarsipkan', Alasan: '' });
+    const formulir = useForm({ Alasan: '' });
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
-        formulir.post(`/katalog/paket/${paket.Uuid}/status`, { preserveScroll: true, onSuccess: saatSelesai });
+        formulir.post(`/katalog/paket/${paket.Uuid}/arsipkan`, { preserveScroll: true, onSuccess: saatSelesai });
     };
 
     return (

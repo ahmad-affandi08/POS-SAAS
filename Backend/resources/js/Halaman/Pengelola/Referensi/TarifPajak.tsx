@@ -110,7 +110,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
 
             {Tarif.Data.length === 0 ? (
                 <Pemberitahuan jenis="info" judul="Belum ada tarif pajak">
-                    Jalankan seeder untuk membuat draf PPN bawaan, atau buat draf tarif baru.
+                    Buat draf tarif pertama, lalu ajukan untuk ditinjau.
                 </Pemberitahuan>
             ) : (
                 <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">

@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Katalog\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
-use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Enum\StatusPaket;
-use App\Domain\Tenant\Model\HargaPaket;
+use App\Domain\Tenant\Kueri\HargaPaketBerlaku;
 use App\Domain\Tenant\Model\Paket;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class UbahStatusPaket
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly HargaPaketBerlaku $hargaBerlaku,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, Paket $paket, StatusPaket $tujuan, ?string $alasan = null): void
     {
@@ -32,8 +34,11 @@ final class UbahStatusPaket
             }
 
             if ($tujuan === StatusPaket::Aktif && ! $paket->HargaNegosiasi
-                && ! HargaPaket::query()->where('IdPaket', $paket->Id)->where('Status', StatusDataMaster::Terbit->value)->exists()) {
-                throw new PelanggaranAturanBisnis('BR-P04.6', 'Terbitkan harga paket dulu (atau tandai harga negosiasi) sebelum mengaktifkan.');
+                && ! $this->hargaBerlaku->CekAdaHargaBerlaku($paket->Id, now('Asia/Jakarta'))) {
+                throw new PelanggaranAturanBisnis(
+                    'BR-P04.6',
+                    'Paket belum punya harga yang berlaku hari ini. Terbitkan harga (atau tandai harga negosiasi) sebelum mengaktifkan.',
+                );
             }
 
             if ($tujuan === StatusPaket::Diarsipkan && ($alasan === null || trim($alasan) === '')) {

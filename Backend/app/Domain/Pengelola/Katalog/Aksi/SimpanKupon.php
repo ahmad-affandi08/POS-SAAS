@@ -14,6 +14,7 @@ use App\Domain\Tenant\Model\KuponLangganan;
 use App\Domain\Tenant\Model\Paket;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -27,60 +28,67 @@ final class SimpanKupon
 
     public function Jalankan(PenggunaPengelola $pelaku, DataKupon $data, ?KuponLangganan $kupon = null): KuponLangganan
     {
-        return DB::transaction(function () use ($pelaku, $data, $kupon): KuponLangganan {
-            if ($kupon !== null && $kupon->Kode !== $data->kode) {
-                throw new PelanggaranAturanBisnis('KodeTidakBisaDiubah', 'Kode kupon tidak bisa diubah.', 'Kode');
-            }
-
-            if (preg_match('/^[A-Z0-9-]{3,30}$/', $data->kode) !== 1) {
-                throw new PelanggaranAturanBisnis('KodeTidakValid', 'Kode kupon huruf besar/angka/tanda hubung, 3–30 karakter.', 'Kode');
-            }
-
-            if ($kupon === null && KuponLangganan::query()->where('Kode', $data->kode)->exists()) {
-                throw new PelanggaranAturanBisnis('KodeSudahAda', "Kode kupon {$data->kode} sudah ada.", 'Kode');
-            }
-
-            $nilai = self::PastikanNilai($data);
-
-            if ($data->durasiBulan < 1 || ($data->kuota !== null && $data->kuota < 1)) {
-                throw new PelanggaranAturanBisnis('DurasiTidakValid', 'Durasi minimal 1 bulan dan kuota minimal 1 (atau kosong = tanpa batas).', 'DurasiBulan');
-            }
-
-            if ($data->daftarKodePaket !== null) {
-                $kode = array_values(array_unique($data->daftarKodePaket));
-
-                if ($kode === [] || Paket::query()->whereIn('Kode', $kode)->count() !== count($kode)) {
-                    throw new PelanggaranAturanBisnis('PaketTidakDikenal', 'Pilih paket yang terdaftar, atau kosongkan untuk semua paket.', 'DaftarKodePaket');
+        try {
+            return DB::transaction(function () use ($pelaku, $data, $kupon): KuponLangganan {
+                if ($kupon !== null && $kupon->Kode !== $data->kode) {
+                    throw new PelanggaranAturanBisnis('KodeTidakBisaDiubah', 'Kode kupon tidak bisa diubah.', 'Kode');
                 }
-            }
 
-            if ($data->berlakuSampai !== null && $data->berlakuSampai->toDateString() < now('Asia/Jakarta')->toDateString()) {
-                throw new PelanggaranAturanBisnis('TanggalLewat', 'Tanggal berlaku kupon sudah lewat.', 'BerlakuSampai');
-            }
+                if (preg_match('/^[A-Z0-9-]{3,30}$/', $data->kode) !== 1) {
+                    throw new PelanggaranAturanBisnis('KodeTidakValid', 'Kode kupon huruf besar/angka/tanda hubung, 3–30 karakter.', 'Kode');
+                }
 
-            $nilaiLama = $kupon === null ? null : self::AmbilNilai($kupon);
-            $kupon ??= new KuponLangganan;
-            $kupon->fill([
-                'Kode' => $data->kode,
-                'Jenis' => $data->jenis,
-                'Nilai' => $nilai,
-                'DurasiBulan' => $data->durasiBulan,
-                'Kuota' => $data->kuota,
-                'DaftarKodePaket' => $data->daftarKodePaket,
-                'BerlakuSampai' => $data->berlakuSampai?->toDateString(),
-                'Aktif' => $data->aktif,
-            ])->save();
+                if ($kupon === null && KuponLangganan::query()->where('Kode', $data->kode)->exists()) {
+                    throw new PelanggaranAturanBisnis('KodeSudahAda', "Kode kupon {$data->kode} sudah ada.", 'Kode');
+                }
 
-            $this->audit->Catat(
-                $nilaiLama === null ? 'katalog.kupon.buat' : 'katalog.kupon.ubah',
-                $kupon,
-                nilaiLama: $nilaiLama,
-                nilaiBaru: self::AmbilNilai($kupon),
-                idPelaku: $pelaku->Id,
-            );
+                $nilai = self::PastikanNilai($data);
 
-            return $kupon;
-        });
+                if ($data->durasiBulan < 1 || ($data->kuota !== null && $data->kuota < 1)) {
+                    throw new PelanggaranAturanBisnis('DurasiTidakValid', 'Durasi minimal 1 bulan dan kuota minimal 1 (atau kosong = tanpa batas).', 'DurasiBulan');
+                }
+
+                if ($data->daftarKodePaket !== null) {
+                    $kode = array_values(array_unique($data->daftarKodePaket));
+
+                    if ($kode === [] || Paket::query()->whereIn('Kode', $kode)->count() !== count($kode)) {
+                        throw new PelanggaranAturanBisnis('PaketTidakDikenal', 'Pilih paket yang terdaftar, atau kosongkan untuk semua paket.', 'DaftarKodePaket');
+                    }
+                }
+
+                $berlakuSampaiBerubah = $kupon === null || $kupon->BerlakuSampai?->toDateString() !== $data->berlakuSampai?->toDateString();
+
+                // Kupon yang sudah kedaluwarsa tetap bisa diubah/dinonaktifkan selama tanggalnya tidak diubah ke masa lalu.
+                if ($berlakuSampaiBerubah && $data->berlakuSampai !== null && $data->berlakuSampai->toDateString() < now('Asia/Jakarta')->toDateString()) {
+                    throw new PelanggaranAturanBisnis('TanggalLewat', 'Tanggal berlaku kupon sudah lewat.', 'BerlakuSampai');
+                }
+
+                $nilaiLama = $kupon === null ? null : self::AmbilNilai($kupon);
+                $kupon ??= new KuponLangganan;
+                $kupon->fill([
+                    'Kode' => $data->kode,
+                    'Jenis' => $data->jenis,
+                    'Nilai' => $nilai,
+                    'DurasiBulan' => $data->durasiBulan,
+                    'Kuota' => $data->kuota,
+                    'DaftarKodePaket' => $data->daftarKodePaket,
+                    'BerlakuSampai' => $data->berlakuSampai?->toDateString(),
+                    'Aktif' => $data->aktif,
+                ])->save();
+
+                $this->audit->Catat(
+                    $nilaiLama === null ? 'katalog.kupon.buat' : 'katalog.kupon.ubah',
+                    $kupon,
+                    nilaiLama: $nilaiLama,
+                    nilaiBaru: self::AmbilNilai($kupon),
+                    idPelaku: $pelaku->Id,
+                );
+
+                return $kupon;
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw new PelanggaranAturanBisnis('KodeSudahAda', 'Kode kupon ini baru saja dipakai. Muat ulang halaman lalu pakai kode lain.', 'Kode');
+        }
     }
 
     private static function PastikanNilai(DataKupon $data): string

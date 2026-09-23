@@ -31,7 +31,7 @@ final class DaftarHargaPaket
 
         return array_values($daftar->map(function (HargaPaket $harga) use ($keputusan): array {
             $putaran = $harga->Status === StatusDataMaster::Draf ? collect() : $keputusan->get($harga->Id.':'.$harga->PutaranTinjauan, collect());
-            $berakhir = $harga->Status === StatusDataMaster::Terbit && $harga->BerlakuSampai !== null && $harga->BerlakuSampai->lt(today());
+            $berakhir = $harga->Status === StatusDataMaster::Terbit && $harga->BerlakuSampai !== null && $harga->BerlakuSampai->toDateString() < now('Asia/Jakarta')->toDateString();
 
             return [
                 'Uuid' => $harga->Uuid,

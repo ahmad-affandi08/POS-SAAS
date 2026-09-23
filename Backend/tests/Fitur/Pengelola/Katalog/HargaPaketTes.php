@@ -48,6 +48,8 @@ function TinjauHarga(TestCase $tes, PenggunaPengelola $peninjau, HargaPaket $har
 }
 
 beforeEach(function (): void {
+    // Waktu dibekukan agar tanggal di test tidak kedaluwarsa seiring waktu (BR tanggal berlaku tidak boleh lewat).
+    $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     app(SiapkanKatalogBawaan::class)->Jalankan();
     HargaPaket::query()->delete();
 });
@@ -154,5 +156,57 @@ describe('Harga paket berversi (P-04, BR-P04.1, BR-P04.5)', function (): void {
                 ->has('Harga', 1)
                 ->where('Harga.0.Status', 'MenungguTinjauan')
                 ->where('Harga.0.HargaBulanan', '199000.00'));
+    });
+    it('BR-P04.6: paket tidak bisa diaktifkan bila harga terbitnya baru berlaku nanti', function (): void {
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        TinjauHarga($this, $superAdmin, UsulkanHargaPro($this, $keuangan, '199000', '2026-10-01'));
+        $pro = Paket::query()->where('Kode', 'PRO')->sole();
+
+        MasukKatalog($this, $superAdmin)->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/aktifkan"))->assertSessionHasErrors('Umum');
+
+        $this->travelTo(Carbon::parse('2026-10-01 08:00', 'Asia/Jakarta'));
+        // Masuk ulang: lompatan waktu melewati batas sesi 30 menit tidak aktif (BR-P01.2).
+        MasukKatalog($this, $superAdmin)->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/aktifkan"))->assertSessionHasNoErrors();
+        expect($pro->refresh()->Status->value)->toBe('Aktif');
+    });
+
+    it('BR-P04.1: langganan yang dimulai sebelum versi harga pertama memakai versi paling awal (tidak pernah kosong)', function (): void {
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        TinjauHarga($this, $superAdmin, UsulkanHargaPro($this, $keuangan, '199000', '2026-10-01'));
+        $idPro = Paket::query()->where('Kode', 'PRO')->sole()->Id;
+
+        expect(app(HargaPaketBerlaku::class)->Cari($idPro, Carbon::parse('2026-11-01'), Carbon::parse('2026-01-01'))?->HargaBulanan)
+            ->toBe('199000.00');
+    });
+
+    it('harga kedua dengan tanggal berlaku sama ditolak; harga terbit tidak bisa dihapus', function (): void {
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $pertama = UsulkanHargaPro($this, $keuangan, '199000', '2026-10-01');
+        $kembar = UsulkanHargaPro($this, $keuangan, '189000', '2026-10-01');
+        TinjauHarga($this, $superAdmin, $pertama)->assertSessionHasNoErrors();
+        TinjauHarga($this, $superAdmin, $kembar)->assertSessionHasErrors('Umum');
+
+        expect(fn () => $pertama->refresh()->delete())->toThrow(LogicException::class);
+    });
+
+    it('§19.3: Dukungan tidak bisa mengusulkan harga; pengaju yang bukan penyusun juga tidak bisa meninjau', function (): void {
+        $dukungan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Dukungan);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $superAdminPengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $pro = Paket::query()->where('Kode', 'PRO')->sole();
+
+        MasukKatalog($this, $dukungan)->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga"), [
+            'HargaBulanan' => '1', 'HargaTahunan' => '1', 'BerlakuMulai' => '2026-10-01', 'TerapkanKePelangganLama' => false,
+        ])->assertForbidden();
+
+        MasukKatalog($this, $keuangan)->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga"), [
+            'HargaBulanan' => '199000', 'HargaTahunan' => '1910400', 'BerlakuMulai' => '2026-10-01', 'TerapkanKePelangganLama' => false,
+        ]);
+        $harga = HargaPaket::query()->sole();
+        MasukKatalog($this, $superAdminPengaju)->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga/{$harga->Uuid}/ajukan"))->assertSessionHasNoErrors();
+        TinjauHarga($this, $superAdminPengaju, $harga)->assertSessionHasErrors('Umum');
     });
 });

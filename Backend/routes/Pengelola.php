@@ -85,9 +85,12 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::put('/katalog/paket/{paket}', [PaketKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::KatalogPaketAjukan))
                 ->name('pengelola.katalog.paket.ubah');
-            Route::post('/katalog/paket/{paket}/status', [PaketKontroler::class, 'UbahStatus'])
+            Route::post('/katalog/paket/{paket}/aktifkan', [PaketKontroler::class, 'Aktifkan'])
                 ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
-                ->name('pengelola.katalog.paket.status');
+                ->name('pengelola.katalog.paket.aktifkan');
+            Route::post('/katalog/paket/{paket}/arsipkan', [PaketKontroler::class, 'Arsipkan'])
+                ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
+                ->name('pengelola.katalog.paket.arsipkan');
 
             Route::get('/katalog/paket/{paket}/harga', [HargaPaketKontroler::class, 'Daftar'])->name('pengelola.katalog.harga.daftar');
             Route::middleware($izin(IzinPengelola::KatalogPaketAjukan))->group(function (): void {
@@ -101,13 +104,13 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
                 ->name('pengelola.katalog.harga.tinjau');
 
-            Route::get('/katalog/add-on', [AddonKontroler::class, 'Daftar'])->name('pengelola.katalog.addon.daftar');
+            Route::get('/katalog/add-on', [AddonKontroler::class, 'Daftar'])->name('pengelola.katalog.add-on.daftar');
             Route::post('/katalog/add-on', [AddonKontroler::class, 'Simpan'])
                 ->middleware($izin(IzinPengelola::KatalogAddonKelola))
-                ->name('pengelola.katalog.addon.simpan');
+                ->name('pengelola.katalog.add-on.simpan');
             Route::put('/katalog/add-on/{addon}', [AddonKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::KatalogAddonKelola))
-                ->name('pengelola.katalog.addon.ubah');
+                ->name('pengelola.katalog.add-on.ubah');
 
             Route::get('/katalog/kupon', [KuponKontroler::class, 'Daftar'])->name('pengelola.katalog.kupon.daftar');
             Route::post('/katalog/kupon', [KuponKontroler::class, 'Simpan'])

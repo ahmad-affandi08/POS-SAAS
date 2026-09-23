@@ -12,6 +12,7 @@ use App\Domain\Tenant\Kueri\PaketTersedia;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\HargaPaket;
 use App\Domain\Tenant\Model\Paket;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\TestCase;
@@ -41,6 +42,8 @@ function DataPaketUji(array $ubah = []): array
 }
 
 beforeEach(function (): void {
+    // Waktu dibekukan agar tanggal di test tidak kedaluwarsa seiring waktu (BR tanggal berlaku tidak boleh lewat).
+    $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     app(SiapkanKatalogBawaan::class)->Jalankan();
 });
 
@@ -88,11 +91,11 @@ describe('Katalog paket (P-04)', function (): void {
         $enterprise = Paket::query()->where('Kode', 'ENTERPRISE')->sole();
         SebagaiAnggotaKatalog($this, $superAdmin);
 
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/status"), ['Status' => 'Aktif'])->assertSessionHasErrors('Umum');
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Aktif'])->assertSessionHasNoErrors();
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/aktifkan"))->assertSessionHasErrors('Umum');
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"))->assertSessionHasNoErrors();
 
         HargaPaket::query()->where('IdPaket', $pro->Id)->update(['Status' => StatusDataMaster::Terbit->value]);
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/status"), ['Status' => 'Aktif'])->assertSessionHasNoErrors();
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/aktifkan"))->assertSessionHasNoErrors();
 
         expect($pro->refresh()->Status)->toBe(StatusPaket::Aktif)->and($enterprise->refresh()->Status)->toBe(StatusPaket::Aktif);
     });
@@ -101,17 +104,17 @@ describe('Katalog paket (P-04)', function (): void {
         $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $enterprise = Paket::query()->where('Kode', 'ENTERPRISE')->sole();
         SebagaiAnggotaKatalog($this, $superAdmin);
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Aktif']);
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"));
         expect(array_map(fn (Paket $paket) => $paket->Kode, app(PaketTersedia::class)->AmbilUntukPendaftaran()))->toBe(['ENTERPRISE']);
 
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Diarsipkan'])->assertSessionHasErrors('Alasan');
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Diarsipkan', 'Alasan' => 'Diganti paket baru'])
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/arsipkan"))->assertSessionHasErrors('Alasan');
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/arsipkan"), ['Alasan' => 'Diganti paket baru'])
             ->assertSessionHasNoErrors();
 
         expect(app(PaketTersedia::class)->AmbilUntukPendaftaran())->toBe([])
             ->and($enterprise->refresh()->DiarsipkanPada)->not->toBeNull();
 
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Aktif'])->assertSessionHasNoErrors();
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"))->assertSessionHasNoErrors();
         expect($enterprise->refresh()->Status)->toBe(StatusPaket::Aktif)->and($enterprise->DiarsipkanPada)->toBeNull();
     });
 
@@ -119,7 +122,7 @@ describe('Katalog paket (P-04)', function (): void {
         $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
         $enterprise = Paket::query()->where('Kode', 'ENTERPRISE')->sole();
-        SebagaiAnggotaKatalog($this, $superAdmin)->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Aktif']);
+        SebagaiAnggotaKatalog($this, $superAdmin)->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"));
         $data = DataPaketUji(['Kode' => 'ENTERPRISE', 'Nama' => 'Enterprise', 'HargaNegosiasi' => true]);
 
         SebagaiAnggotaKatalog($this, $keuangan)->put(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}"), $data)->assertSessionHasErrors('Umum');
@@ -141,8 +144,29 @@ describe('Katalog paket (P-04)', function (): void {
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/Katalog/Paket')->has('Paket', 5));
         $this->post(BantuanPengelola::Url('/katalog/paket'), DataPaketUji())->assertForbidden();
 
-        SebagaiAnggotaKatalog($this, $keuangan)->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/status"), ['Status' => 'Aktif'])
+        SebagaiAnggotaKatalog($this, $keuangan)->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"))
             ->assertForbidden();
+    });
+    it('BR-P04.6: paket aktif tidak bisa keluar dari harga negosiasi tanpa harga berlaku', function (): void {
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $enterprise = Paket::query()->where('Kode', 'ENTERPRISE')->sole();
+        SebagaiAnggotaKatalog($this, $superAdmin)->post(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}/aktifkan"));
+
+        $this->put(BantuanPengelola::Url("/katalog/paket/{$enterprise->Uuid}"), [
+            ...DataPaketUji(['Kode' => 'ENTERPRISE', 'Nama' => 'Enterprise', 'HargaNegosiasi' => false]),
+            'Alasan' => 'Harga tetap',
+        ])->assertSessionHasErrors('HargaNegosiasi');
+
+        expect($enterprise->refresh()->HargaNegosiasi)->toBeTrue();
+    });
+
+    it('perubahan fitur tercatat di audit', function (): void {
+        SebagaiAnggotaKatalog($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin))
+            ->post(BantuanPengelola::Url('/katalog/fitur'), ['Kunci' => 'pos.uji', 'Nama' => 'Uji', 'Modul' => 'Penjualan']);
+        $this->put(BantuanPengelola::Url('/katalog/fitur/pos.uji'), ['Kunci' => 'pos.uji', 'Nama' => 'Uji baru', 'Modul' => 'Penjualan']);
+
+        $log = LogAuditPengelola::query()->where('Aksi', 'katalog.fitur.ubah')->sole();
+        expect($log->NilaiLama['Nama'] ?? null)->toBe('Uji')->and($log->NilaiBaru['Nama'] ?? null)->toBe('Uji baru');
     });
 });
 

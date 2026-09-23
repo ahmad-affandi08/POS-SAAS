@@ -54,7 +54,7 @@ final class DaftarTarifPajak
 
         return array_map(function (TarifPajak $tarif) use ($keputusan): array {
             $putaran = $tarif->Status === StatusDataMaster::Draf ? collect() : $keputusan->get($tarif->Id.':'.$tarif->PutaranTinjauan, collect());
-            $berakhir = $tarif->Status === StatusDataMaster::Terbit && $tarif->BerlakuSampai !== null && $tarif->BerlakuSampai->lt(today());
+            $berakhir = $tarif->Status === StatusDataMaster::Terbit && $tarif->BerlakuSampai !== null && $tarif->BerlakuSampai->toDateString() < now('Asia/Jakarta')->toDateString();
 
             return [
                 'Uuid' => $tarif->Uuid,
