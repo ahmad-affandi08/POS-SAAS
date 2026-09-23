@@ -686,6 +686,16 @@ FiturAktif(tenant, kunci) =
 - BR-P08.2 Refund di atas Rp 1.000.000 butuh persetujuan kedua (Super Admin).
 - BR-P08.3 Pembukuan pendapatan platform dapat dilakukan dengan menjadikan {{APP}} sendiri sebagai **tenant internal** (*dogfooding*), atau diexport ke software akuntansi.
 
+**Rincian Fase 0 — tagihan manual & verifikasi bukti transfer** (keputusan agen atas mandat pemilik produk, 24/09/2026; menunggu konfirmasi):
+- BR-P08.4 Owner membuat tagihan sendiri di back-office (`/kelola/langganan`): paket Aktif selain Gratis dan harga negosiasi, siklus Bulanan/Tahunan. Hanya **satu tagihan terbuka** (Terbit/JatuhTempo) per tenant. Saat langganan `Aktif` hanya perpanjangan paket berjalan (termasuk paket yang sudah diarsipkan, BR-P04.2); ganti paket saat Aktif menunggu proration F-19. Tagihan terbuka tanpa bukti yang sedang diverifikasi boleh dibatalkan Owner (nomor tetap terpakai).
+- BR-P08.5 Nomor tagihan `INV/{Tahun}/{Bulan}/{Urut 6 digit}` (awalan konfigurasi); urut berjalan per tahun tanpa celah, penghitung dikunci di transaksi yang sama sehingga percobaan gagal tidak memakan nomor.
+- BR-P08.6 Kalkulasi: Subtotal = harga siklus dari `HargaPaket` berlaku (grandfathering memakai tanggal mulai berlangganan paket yang sama dari tagihan lunas terakhir). Diskon kupon: Persen = Subtotal × Nilai% × BulanDiskon ÷ JumlahBulan; Nominal = Nilai per bulan × BulanDiskon; dibulatkan ke rupiah terdekat, maksimal Subtotal. DPP = ⌊(Subtotal − Diskon) × PengaliDpp⌋, PPN = ⌊DPP × Tarif⌋ (rupiah penuh, dibulatkan ke bawah), Total = Subtotal − Diskon + PPN. Tarif dari `TarifPajak` Ppn terbit; bila belum terbit tagihan tidak bisa dibuat. Status PKP {{APP}} dan rekening tujuan dari konfigurasi (`config/tagihan.php`), bukan kode.
+- BR-P08.7 Kupon: `Kuota` = jumlah tenant berbeda yang boleh memakai; `DurasiBulan` = total bulan berdiskon per tenant (tagihan tahunan memakai sebagian bulannya). Pemakaian dicatat saat tagihan terbit dan dilepas saat tagihan dibatalkan.
+- BR-P08.8 Jatuh tempo: aktivasi = terbit + 7 hari (konfigurasi); perpanjangan = akhir periode berjalan. Bukti transfer JPG/PNG/WEBP/PDF maks 5 MB (jenis diperiksa dari isi berkas), disimpan privat dan hanya disajikan ke Owner tenant itu serta Keuangan/Super Admin (setiap pembukaan oleh pengelola diaudit). Jumlah transfer harus sama dengan total (pembayaran sebagian belum didukung); satu bukti `Menunggu` per tagihan, bukti ditolak boleh diganti.
+- BR-P08.9 Verifikasi oleh Keuangan/Super Admin tanpa persetujuan kedua (four-eyes P-08 hanya untuk refund, BR-P08.2); jumlah yang masuk di mutasi rekening wajib diisi dan harus sama dengan total. Diterima → tagihan `Lunas` → `Langganan` `Aktif` dengan paket & siklus tagihan; periode perpanjangan menyambung dari akhir periode berjalan (Aktif/Tertunggak), selain itu mulai saat diterima. Ditolak wajib beralasan. Owner diberi email untuk keduanya; semua tercatat di `LogAuditPengelola` dengan IdTenant.
+- BR-P08.10 Tagihan `JatuhTempo` tetap bisa dilunasi atau dibatalkan (`JatuhTempo → Lunas/Dibatalkan`). Penjadwal tiap jam: tagihan Terbit lewat jatuh tempo → `JatuhTempo`; langganan Aktif lewat `PeriodeSelesai` → `Tertunggak`; Tertunggak lewat masa tenggang 7 hari → `Ditangguhkan`, kecuali ada bukti transfer yang sedang diverifikasi.
+- Ditunda: pengingat dunning (email/WA), tagihan otomatis H-7, gateway, add-on, proration, nota kredit & refund, faktur pajak, laporan MRR, tagihan Rp 0 (kupon 100%), pembayaran sebagian.
+
 ---
 
 ### P-09 · Dukungan & Akses Dukungan
@@ -2416,7 +2426,7 @@ erDiagram
 | `Paket` / `PaketFitur` | Kode, Nama, Status (Draf/Aktif/Diarsipkan), HargaNegosiasi, MasaTrialHari, BatasOutlet, BatasPerangkatPerOutlet, BatasPengguna, BatasSku, KuotaPesanWaBulanan, BatasPenyimpananMb (batas `null` = tak terbatas), Urutan / IdPaket, KunciFitur |
 | `HargaPaket` | IdPaket, HargaBulanan, HargaTahunan (decimal 18,2), BerlakuMulai, BerlakuSampai, TerapkanKePelangganLama, Status (Draf/MenungguTinjauan/Terbit), IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan, DaftarIdPenyusun JSON. Harga paket hanya ada di tabel ini (berversi, BR-P04.1) |
 | `Langganan` | IdTenant (unik), IdPaket, Status (Trial/Aktif/Tertunggak/Ditangguhkan/Berhenti/Gratis), TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan (Bulanan/Tahunan) |
-| `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
+| `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway. Rincian P-08 Fase 0: `Jumlah` disimpan sebagai `Total`; Jenis (Aktivasi/Perpanjangan), IdPaket, IdHargaPaket (snapshot), Siklus, JumlahBulan, Subtotal, IdKuponLangganan, KodeKupon, Diskon, IdTarifPajak, TarifPpn, PengaliDppPembilang/PengaliDppPenyebut, DasarPengenaanPajak, JumlahPpn, TerbitPada, JatuhTempoPada, DibatalkanPada, AlasanBatal, PeriodeMulai, PeriodeSelesai, MulaiLanggananPaket (jangkar grandfathering), IdPenggunaPembuat. `MilikTenant`; angka tidak berubah setelah terbit, tidak pernah dihapus. Penghitung nomor: `NomorUrutTagihanLangganan` (Tahun unik, NomorTerakhir) |
 | `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
 | `TenantPengguna` | IdTenant, IdPengguna, Pemilik, HashPin, Status |
 | `Merek` | IdTenant, Nama |
@@ -2572,7 +2582,7 @@ erDiagram
 | `TemplateSektor` / `TemplateSektorVersi` | Kode (misal FNB-CAF), Nama, Keterangan / IdTemplateSektor, Versi (unik per template), Status (Draf/Terbit/Usang), Isi JSON (ModeKasir, ModeKasirDefault, KunciFitur, Akun, PemetaanAkun, Kategori, KodeSatuan, KelompokPajak, Pengaturan, StasiunDapur, AlasanVoid, AlasanPenyesuaian, LaporanUnggulan), HasilValidasi JSON, DivalidasiPada, IdVersiAsal, IdPenggunaPengelolaPenerbit, DiterbitkanPada, DiusangkanPada |
 | `Fitur` | Kunci, Nama, Modul, Keterangan |
 | `Addon` / `LanggananAddon` | Kode, Nama, HargaBulanan, KunciFitur, TambahanBatas JSON, Status (Aktif/Diarsipkan) / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada (LanggananAddon dibuat di F-19) |
-| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08) |
+| `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08; rincian: BulanDiskon, Diskon, DibatalkanPada; tanpa `MilikTenant` karena kuota dihitung lintas tenant) |
 | `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
 | `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
 | `KonfigurasiIntegrasi` | Jenis (Email/Captcha/Penyimpanan, bertambah per flow), Lingkungan (Staging/Produksi), Penyedia (Smtp/Turnstile/S3), Pengaturan JSON (tidak rahasia), Kredensial (terenkripsi), PetunjukKredensial JSON (4 karakter terakhir, BR-P05.1), Aktif, Status (BelumDiuji/Terhubung/Gagal), TerakhirDiujiPada, HasilUji JSON, GagalBeruntun, KredensialDiubahPada, RotasiSetiapHari (unik per Jenis + Lingkungan) |
@@ -2582,7 +2592,7 @@ erDiagram
 | `CatatanTenant` | IdTenant, Isi, DibuatOleh |
 | `SkorKesehatanTenant` | IdTenant, Tanggal, Skor, Kategori (Sehat/PerluPerhatian/Berisiko), Faktor JSON |
 | `PermintaanPenghapusanData` | IdTenant, DimintaOleh, Status, DiverifikasiPada, DijadwalkanPada, SelesaiPada |
-| `PembayaranLangganan` | IdTagihanLangganan, Metode (Gateway/TransferManual), Jumlah, RefGateway, PathBukti, Status, DiverifikasiOleh |
+| `PembayaranLangganan` | IdTagihanLangganan, Metode (Gateway/TransferManual), Jumlah, RefGateway, PathBukti, Status, DiverifikasiOleh. Rincian P-08 Fase 0: IdTenant (`MilikTenant`), Status (Menunggu/Diterima/Ditolak), TanggalTransfer, BankPengirim, NamaPengirim, KodeRekeningTujuan/BankTujuan/NomorRekeningTujuan (snapshot), NamaFileBukti, MimeBukti, UkuranBukti, IdPenggunaPengunggah, EmailPemberitahuan/NamaPemberitahuan (tujuan email hasil verifikasi), `DiverifikasiOleh` = IdPenggunaPengelolaVerifikator, DiverifikasiPada, JumlahDiterima, AlasanTolak |
 | `NotaKreditLangganan` | IdTenant, IdTagihanLangganan, Jumlah, Alasan, DisetujuiOleh |
 | `TiketDukungan` / `TiketDukunganPesan` | Nomor, IdTenant, IdPelapor, Kanal, Kategori, Prioritas, Status, IdPenanggungJawab, BatasSlaPada, Konteks JSON / IdTiketDukungan, Pengirim, Isi, Lampiran |
 | `AksesDukungan` | IdTenant, IdPenggunaPengelola, DiizinkanOleh, Cakupan (BacaSaja/BacaUbah), Alasan, MulaiPada, BerakhirPada, DicabutPada, Darurat |
