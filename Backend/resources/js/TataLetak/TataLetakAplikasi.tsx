@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -27,6 +27,15 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         {props.TenantAktif?.Nama ?? props.NamaAplikasi}
                     </p>
                     <div className="flex items-center gap-3">
+                        {/* P-09: tombol Bantuan (tiket dukungan). TODO F-02: menu modul lengkap & izin peran tenant. */}
+                        {props.TenantAktif ? (
+                            <Link
+                                href="/kelola/bantuan"
+                                className="rounded-kontrol px-2 py-1 text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                            >
+                                Bantuan
+                            </Link>
+                        ) : null}
                         <span className="text-label text-teks-sekunder">{props.Pengguna?.Nama}</span>
                         <Tombol varian="sekunder" onClick={() => router.post('/keluar')}>
                             Keluar

@@ -13,6 +13,7 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
  * P-03 (BR-P03.5): Konten & Legal mengubah isi bisnis template, Keuangan COA & pemetaan akun, Teknis menerbitkan.
  * P-06: Konten & Legal menyusun dan menerbitkan dokumen legal; semua peran boleh membaca (dokumen publik).
  * P-05 (BR-P05.2): kredensial integrasi hanya Teknis & Super Admin; Keuangan dan Dukungan dilarang (§19.3).
+ * P-09: tiket dukungan untuk Dukungan (Super Admin lewat semua izin). P-11: monitoring & job gagal untuk Teknis.
  */
 enum PeranPengelolaBawaan: string
 {
@@ -81,8 +82,20 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::IntegrasiLihat,
                 IzinPengelola::IntegrasiKelola,
                 IzinPengelola::LegalLihat,
+                // P-11 Monitoring operasional.
+                IzinPengelola::OperasionalLihat,
+                IzinPengelola::OperasionalKelola,
             ],
-            self::Dukungan, self::MitraPenjualan, self::Analis => [
+            // P-09 Tiket dukungan: Dukungan dipisah dari Mitra & Penjualan dan Analis.
+            self::Dukungan => [
+                IzinPengelola::ReferensiLihat,
+                IzinPengelola::KatalogLihat,
+                IzinPengelola::TemplateLihat,
+                IzinPengelola::LegalLihat,
+                IzinPengelola::DukunganTiketLihat,
+                IzinPengelola::DukunganTiketTangani,
+            ],
+            self::MitraPenjualan, self::Analis => [
                 IzinPengelola::ReferensiLihat,
                 IzinPengelola::KatalogLihat,
                 IzinPengelola::TemplateLihat,

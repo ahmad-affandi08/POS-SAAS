@@ -20,6 +20,10 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
     { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat },
     { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat },
+    // P-09
+    { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat },
+    // P-11
+    { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
 ];
@@ -87,6 +91,16 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                     <Pemberitahuan jenis="peringatan" judul="Status integrasi">
                         <ul className="list-disc pl-5">
                             {props.PeringatanIntegrasi.map((pesan) => (
+                                <li key={pesan}>{pesan}</li>
+                            ))}
+                        </ul>
+                    </Pemberitahuan>
+                ) : null}
+                {/* P-11 BR-P11.1: banner kondisi operasional. */}
+                {props.PeringatanOperasional.length > 0 ? (
+                    <Pemberitahuan jenis="bahaya" judul="Masalah operasional">
+                        <ul className="list-disc pl-5">
+                            {props.PeringatanOperasional.map((pesan) => (
                                 <li key={pesan}>{pesan}</li>
                             ))}
                         </ul>

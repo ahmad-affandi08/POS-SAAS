@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
 use App\Http\Kontroler\Autentikasi\SesiKontroler;
 use App\Http\Kontroler\Autentikasi\VerifikasiEmailKontroler;
+use App\Http\Kontroler\Kelola\BantuanKontroler;
 use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Perantara\BagikanDataInertia;
@@ -46,6 +47,16 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         Route::middleware(IdentifikasiTenantSesi::class)->prefix('kelola')->group(function (): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
             Route::get('/panduan-awal', [BerandaKelolaKontroler::class, 'PanduanAwal'])->name('kelola.panduan-awal');
+
+            // P-09 Bantuan (tiket dukungan). Parameter tiket = Uuid, dicari lewat MilikTenant di kueri (bukan route
+            // model binding, yang berjalan sebelum tenant aktif ditetapkan). TODO F-02: izin peran tenant.
+            Route::get('/bantuan', [BantuanKontroler::class, 'Daftar'])->name('kelola.bantuan.daftar');
+            Route::get('/bantuan/buat', [BantuanKontroler::class, 'Buat'])->name('kelola.bantuan.buat');
+            Route::post('/bantuan', [BantuanKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('kelola.bantuan.simpan');
+            Route::get('/bantuan/{tiketDukungan}', [BantuanKontroler::class, 'Tampilkan'])->name('kelola.bantuan.tampil');
+            Route::post('/bantuan/{tiketDukungan}/balasan', [BantuanKontroler::class, 'Balas'])->middleware('throttle:30,1')->name('kelola.bantuan.balas');
+            Route::post('/bantuan/{tiketDukungan}/selesaikan', [BantuanKontroler::class, 'Selesaikan'])->name('kelola.bantuan.selesaikan');
+            Route::get('/bantuan/{tiketDukungan}/lampiran/{lampiran}', [BantuanKontroler::class, 'UnduhLampiran'])->name('kelola.bantuan.lampiran');
         });
     });
 });

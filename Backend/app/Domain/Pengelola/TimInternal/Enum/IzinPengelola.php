@@ -49,6 +49,14 @@ enum IzinPengelola: string
     case LegalLihat = 'legal.lihat';
     case LegalKelola = 'legal.kelola';
 
+    // P-09 Tiket dukungan (§19.3: Dukungan & Super Admin).
+    case DukunganTiketLihat = 'dukungan.tiket.lihat';
+    case DukunganTiketTangani = 'dukungan.tiket.tangani';
+
+    // P-11 Monitoring operasional (§19.3: Teknis & Super Admin).
+    case OperasionalLihat = 'operasional.lihat';
+    case OperasionalKelola = 'operasional.kelola';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -80,6 +88,12 @@ enum IzinPengelola: string
             self::IntegrasiKelola => 'Mengubah kredensial, menguji, dan mengaktifkan integrasi platform',
             self::LegalLihat => 'Melihat dokumen legal',
             self::LegalKelola => 'Menyusun dan menerbitkan dokumen legal',
+            // P-09
+            self::DukunganTiketLihat => 'Melihat antrean & percakapan tiket dukungan semua tenant',
+            self::DukunganTiketTangani => 'Mengambil, menugaskan, membalas, dan mengubah status tiket dukungan',
+            // P-11
+            self::OperasionalLihat => 'Melihat dasbor operasional (scheduler, antrean, job gagal, backup)',
+            self::OperasionalKelola => 'Mencoba ulang/membuang job gagal dan mencatat hasil backup',
         };
     }
 }

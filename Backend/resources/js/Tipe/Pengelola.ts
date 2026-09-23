@@ -16,6 +16,8 @@ export type PropsBersamaPengelola = {
     Pengguna: PenggunaPengelola | null;
     PeringatanSuperAdmin: boolean;
     PeringatanIntegrasi: string[];
+    // P-11 BR-P11.1: masalah operasional saat ini (scheduler, antrean, backup).
+    PeringatanOperasional: string[];
     errors: Record<string, string>;
 };
 
@@ -49,6 +51,12 @@ export const IzinPengelola = {
     IntegrasiKelola: 'integrasi.kelola',
     LegalLihat: 'legal.lihat',
     LegalKelola: 'legal.kelola',
+    // P-09
+    DukunganTiketLihat: 'dukungan.tiket.lihat',
+    DukunganTiketTangani: 'dukungan.tiket.tangani',
+    // P-11
+    OperasionalLihat: 'operasional.lihat',
+    OperasionalKelola: 'operasional.kelola',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */

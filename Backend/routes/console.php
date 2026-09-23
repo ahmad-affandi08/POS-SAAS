@@ -16,3 +16,12 @@ Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
 
 // BR-00.3: trial yang berakhir turun ke paket Gratis.
 Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
+
+// P-11 BR-P11.1: detak scheduler tiap menit + pemeriksaan alert operasional (scheduler, antrean, backup).
+Schedule::command('pengelola:detak')->everyMinute()->withoutOverlapping();
+
+// P-11 (§14.4): worker antrean database dijalankan scheduler tiap menit di Hostinger (tanpa proses daemon).
+Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
+
+// P-09: tiket selesai yang tidak dibuka lagi dalam 7 hari ditutup otomatis.
+Schedule::command('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('Asia/Jakarta')->withoutOverlapping();
