@@ -8,6 +8,7 @@ use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
+use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\TimInternalKontroler;
@@ -86,6 +87,16 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::put('/referensi/satuan/{satuanStandar}', [SatuanStandarKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::ReferensiSatuanKelola))
                 ->name('pengelola.referensi.satuan.ubah');
+
+            Route::get('/referensi/tarif-pajak', [TarifPajakKontroler::class, 'Daftar'])->name('pengelola.referensi.tarif-pajak.daftar');
+            Route::middleware($izin(IzinPengelola::ReferensiTarifPajakAjukan))->group(function (): void {
+                Route::post('/referensi/tarif-pajak', [TarifPajakKontroler::class, 'Simpan'])->name('pengelola.referensi.tarif-pajak.simpan');
+                Route::put('/referensi/tarif-pajak/{tarifPajak}', [TarifPajakKontroler::class, 'Ubah'])->name('pengelola.referensi.tarif-pajak.ubah');
+                Route::post('/referensi/tarif-pajak/{tarifPajak}/ajukan', [TarifPajakKontroler::class, 'Ajukan'])->name('pengelola.referensi.tarif-pajak.ajukan');
+            });
+            Route::post('/referensi/tarif-pajak/{tarifPajak}/tinjau', [TarifPajakKontroler::class, 'Tinjau'])
+                ->middleware($izin(IzinPengelola::ReferensiTarifPajakSetujui))
+                ->name('pengelola.referensi.tarif-pajak.tinjau');
         });
     });
 });

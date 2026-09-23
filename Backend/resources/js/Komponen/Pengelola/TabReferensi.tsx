@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 
 const daftarTab = [
+    { label: 'Tarif pajak', href: '/referensi/tarif-pajak' },
     { label: 'Wilayah', href: '/referensi/wilayah' },
     { label: 'Pembayaran', href: '/referensi/bank' },
     { label: 'Satuan', href: '/referensi/satuan' },
