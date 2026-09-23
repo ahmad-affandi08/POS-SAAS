@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.11 |
+| Versi | 1.12 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -32,6 +32,7 @@
 | 1.9 | Keputusan D-10: **Tata kelola AI agent** (§23.4): `CLAUDE.md`, `.claude/rules/`, hook, skill `/mulai-flow` & `/cek-dod`, subagent `penjaga-konvensi`, `Alat/CekKonvensi.py`, `Dokumen/` hasil generate, CI kepatuhan, CODEOWNERS, template PR. Pengecualian penamaan untuk file yang namanya diwajibkan alat ditambahkan (§13.7.4). |
 | 1.10 | Penyelarasan hasil scaffolding Fase 0: macro `UuidPublik()` (§13.7.4), test Dart berakhiran `_test.dart` (§13.7.4, §17.2.1), ruang kerja pub + melos di `pubspec.yaml` akar (§13.7.4). Lint `constant_identifier_names` dimatikan agar nilai enum PascalCase (§13.7.4). Paket Dart murni diuji dengan `dart test`. Tidak ada perubahan flow. |
 | 1.11 | Rincian P-01 hasil perencanaan `/mulai-flow`: BR-P01.1 ditegaskan (tolak menurunkan Super Admin bila aktif ≤ 2), allowlist IP ditunda (§25 no. 13), skema `PenggunaPengelola` (+`DuaFaktorAktifPada`, `KodePemulihan2fa`, `DinonaktifkanPada`) dan tabel baru `UndanganPengelola` (§15.3). |
+| 1.12 | Rincian P-02 hasil perencanaan `/mulai-flow`: `PengaliDpp` disimpan sebagai pecahan (`PengaliDppPembilang`/`PengaliDppPenyebut`) agar DPP 11/12 eksak (§12.2), BR-P02.2 ditegaskan (nasional 2 penyetuju, daerah 1, pengaju tidak boleh menyetujui), tabel baru `SatuanStandar` & `PersetujuanDataMaster`, kolom status & dasar hukum pada `TarifPajak`/`HariLibur` (§15.3). Model data referensi berada di `Domain/Referensi` dan `Domain/Pajak` agar bisa dibaca tenant; aksi pengelolaannya di `Domain/Pengelola/Referensi` (§13.2, §13.8). |
 
 ---
 
@@ -493,7 +494,7 @@ Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
 
 **Aturan Bisnis:**
 - BR-P02.1 Tarif yang sudah terbit tidak pernah diedit atau dihapus. Koreksi = tarif baru.
-- BR-P02.2 Perubahan tarif nasional butuh 2 persetujuan. Perubahan tarif daerah butuh 1 peninjau.
+- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Pengaju tidak pernah boleh menyetujui drafnya sendiri. Satu penolakan mengembalikan data ke `Draf`.
 - BR-P02.3 Tenant boleh **override** tarif daerah untuk outletnya (misal Perda baru belum masuk ke master) dengan konfirmasi dan catatan. Override terlihat di Platform Pengelola sebagai sinyal untuk memperbarui master.
 - BR-P02.4 Hari libur tahun berikutnya wajib terbit paling lambat 1 Desember (pengingat otomatis ke Konten & Legal).
 
@@ -1700,14 +1701,15 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 
 ```
 JenisPajak:     Ppn, PbjtMakananMinuman, Kustom...
-TarifPajak:     IdJenisPajak, Tarif (decimal), PengaliDpp (decimal, default 1),
+TarifPajak:     IdJenisPajak, Tarif (decimal), PengaliDppPembilang/PengaliDppPenyebut (pecahan eksak, default 1/1; PPN non-mewah 11/12),
                 KodeWilayah (nullable), BerlakuMulai, BerlakuSampai
 KelompokPajak:  kombinasi pajak untuk satu kategori produk (misal "F&B Dine-in" = PBJT 10% + SC 5%)
 Produk.IdKelompokPajak, Outlet.ProfilPajak (PKP? kota?), HargaTermasukPajak (per tenant/outlet)
 ```
 
 - Perhitungan pajak dilakukan **per baris**, dan pembulatan dilakukan **per dokumen per jenis pajak** agar sesuai dengan cara pelaporan.
-- Transaksi menyimpan snapshot `TarifPajak`, `PengaliDpp`, `DasarPengenaanPajak`, dan `JumlahPajak` per baris (`PenjualanDetail.SnapshotPajak`).
+- `PengaliDpp` selalu disimpan sebagai **pecahan** (pembilang/penyebut), bukan desimal, karena 11/12 tidak bisa ditulis tepat sebagai desimal. DPP dihitung `harga × pembilang ÷ penyebut` dengan pembulatan eksplisit di akhir.
+- Transaksi menyimpan snapshot `TarifPajak`, `PengaliDpp` (pembilang & penyebut), `DasarPengenaanPajak`, dan `JumlahPajak` per baris (`PenjualanDetail.SnapshotPajak`).
 
 ### 12.3 Kepatuhan Lain
 
@@ -1851,6 +1853,7 @@ Backend/app/
 │   ├── PanduanAwal/      # Wizard onboarding, TemplateSektor, Importir       (F-01)
 │   ├── Katalog/          # Produk, Varian, Satuan, Pilihan, Resep, DaftarHarga (F-03)
 │   ├── Pajak/            # JenisPajak, TarifPajak, KalkulatorPajak           (§12)
+│   ├── Referensi/        # Wilayah, HariLibur, ReferensiBank, SatuanStandar (dibaca tenant, dikelola lewat P-02)
 │   ├── Pembelian/        # Pemasok, PesananPembelian, PenerimaanBarang, FakturPembelian, Hutang (F-04)
 │   ├── Persediaan/       # MutasiStok, SaldoStok, TransferStok, StokOpname, Produksi (F-05)
 │   ├── Kasir/            # Shift, MutasiKas, SesiPerangkat                   (F-06, F-11)
@@ -2182,7 +2185,7 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 ```
 Backend/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
-├── Referensi/          # Wilayah, TarifPajak nasional & daerah, HariLibur, ReferensiBank (P-02)
+├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # TemplateSektor, TemplateSektorVersi, ValidatorTemplate, Sandbox (P-03)
 ├── Katalog/            # Fitur, Paket, Addon, KuponLangganan, EvaluatorFitur          (P-04)
 ├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)
@@ -2490,7 +2493,7 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `JenisPajak` | Kode, Nama, Cakupan (Nasional/Daerah/Kustom) |
-| `TarifPajak` | IdJenisPajak, Tarif, PengaliDpp, KodeWilayah, BerlakuMulai, BerlakuSampai |
+| `TarifPajak` | IdJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, KodeWilayah (null = nasional), BiayaLayananMasukDpp, BerlakuMulai, BerlakuSampai, Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, TautanDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada. Master platform (P-02); override tenant (BR-P02.3) dirancang di F-03 |
 | `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Nama / IdTarifPajak, DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan |
 
 **Karyawan**
@@ -2527,8 +2530,10 @@ erDiagram
 | `PeranPengelola` / `PeranPengelolaIzin` / `PenggunaPengelolaPeran` | Kode, Nama, Bawaan (peran §19.3 dari sistem) / IdPeranPengelola, KunciIzin / IdPenggunaPengelola, IdPeranPengelola |
 | `LogAuditPengelola` | IdPenggunaPengelola, Aksi, JenisObjek, IdObjek, IdTenant (nullable), NilaiLama JSON, NilaiBaru JSON, Alasan, Ip, DibuatPada (**append-only**) |
 | `Wilayah` | Kode, Nama, Tingkat (Provinsi/KabupatenKota), KodeInduk, ZonaWaktu |
-| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status |
+| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada |
 | `ReferensiBank` | Kode, Nama, Jenis (Bank/Ewallet/JaringanEdc/PenerbitQris), Aktif |
+| `SatuanStandar` | Kode, Nama, Simbol, BolehDesimal, Aktif (disalin ke `Satuan` tenant oleh template sektor) |
+| `PersetujuanDataMaster` | JenisData, IdData, IdPenggunaPengelola, Keputusan (Setuju/Tolak), Catatan, DibuatPada (append-only; satu orang satu keputusan per pengajuan; hanya keputusan setelah `DiajukanPada` terakhir yang dihitung) |
 | `TinjauanDataMaster` | JenisObjek, IdObjek, DiajukanOleh, DitinjauOleh, Status (MenungguTinjauan/Disetujui/Ditolak), DasarHukum, Catatan |
 | `TemplateSektor` / `TemplateSektorVersi` | Kode, Nama / IdTemplateSektor, Versi, Status (Draf/Terbit/Usang), Isi JSON, HasilValidasi JSON, DiterbitkanOleh, DiterbitkanPada |
 | `Fitur` | Kunci, Nama, Modul, Keterangan |

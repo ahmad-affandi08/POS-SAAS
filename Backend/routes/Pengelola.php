@@ -6,6 +6,9 @@ use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
+use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
+use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
+use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\TimInternalKontroler;
 use App\Http\Kontroler\Pengelola\UndanganKontroler;
@@ -57,5 +60,32 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
         Route::get('/log-audit', [LogAuditKontroler::class, 'Daftar'])
             ->middleware($izin(IzinPengelola::AuditLihat))
             ->name('pengelola.log-audit.daftar');
+
+        // P-02 Master regulasi & referensi.
+        Route::middleware($izin(IzinPengelola::ReferensiLihat))->group(function () use ($izin): void {
+            Route::get('/referensi/wilayah', [WilayahKontroler::class, 'Daftar'])->name('pengelola.referensi.wilayah.daftar');
+            Route::post('/referensi/wilayah', [WilayahKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::ReferensiWilayahKelola))
+                ->name('pengelola.referensi.wilayah.simpan');
+            Route::put('/referensi/wilayah/{wilayah}', [WilayahKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::ReferensiWilayahKelola))
+                ->name('pengelola.referensi.wilayah.ubah');
+
+            Route::get('/referensi/bank', [ReferensiBankKontroler::class, 'Daftar'])->name('pengelola.referensi.bank.daftar');
+            Route::post('/referensi/bank', [ReferensiBankKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::ReferensiBankKelola))
+                ->name('pengelola.referensi.bank.simpan');
+            Route::put('/referensi/bank/{referensiBank}', [ReferensiBankKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::ReferensiBankKelola))
+                ->name('pengelola.referensi.bank.ubah');
+
+            Route::get('/referensi/satuan', [SatuanStandarKontroler::class, 'Daftar'])->name('pengelola.referensi.satuan.daftar');
+            Route::post('/referensi/satuan', [SatuanStandarKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::ReferensiSatuanKelola))
+                ->name('pengelola.referensi.satuan.simpan');
+            Route::put('/referensi/satuan/{satuanStandar}', [SatuanStandarKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::ReferensiSatuanKelola))
+                ->name('pengelola.referensi.satuan.ubah');
+        });
     });
 });

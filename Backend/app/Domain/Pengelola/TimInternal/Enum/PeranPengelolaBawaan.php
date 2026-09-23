@@ -7,8 +7,8 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
 /**
  * Tujuh peran internal bawaan (P-01 langkah 2, PRD §19.3). Nilai = kolom `PeranPengelola.Kode`.
  *
- * Pada P-01 hanya Super Admin yang mengelola tim & melihat log audit ("semua menu pengelola").
- * Izin peran lain ditambahkan bersama flow yang menjadi cakupannya (P-02 s.d. P-12).
+ * Super Admin memegang semua izin ("semua menu pengelola"). Izin peran lain ditambahkan bersama flow
+ * yang menjadi cakupannya. P-02: Konten & Legal mengajukan, Keuangan meninjau data master regulasi.
  */
 enum PeranPengelolaBawaan: string
 {
@@ -40,7 +40,20 @@ enum PeranPengelolaBawaan: string
     {
         return match ($this) {
             self::SuperAdmin => IzinPengelola::cases(),
-            default => [],
+            self::KontenLegal => [
+                IzinPengelola::ReferensiLihat,
+                IzinPengelola::ReferensiWilayahKelola,
+                IzinPengelola::ReferensiBankKelola,
+                IzinPengelola::ReferensiSatuanKelola,
+                IzinPengelola::ReferensiTarifPajakAjukan,
+                IzinPengelola::ReferensiHariLiburAjukan,
+            ],
+            self::Keuangan => [
+                IzinPengelola::ReferensiLihat,
+                IzinPengelola::ReferensiTarifPajakSetujui,
+                IzinPengelola::ReferensiHariLiburSetujui,
+            ],
+            self::Dukungan, self::Teknis, self::MitraPenjualan, self::Analis => [IzinPengelola::ReferensiLihat],
         };
     }
 }

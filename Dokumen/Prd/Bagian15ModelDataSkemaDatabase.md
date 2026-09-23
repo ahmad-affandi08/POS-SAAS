@@ -168,7 +168,7 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `JenisPajak` | Kode, Nama, Cakupan (Nasional/Daerah/Kustom) |
-| `TarifPajak` | IdJenisPajak, Tarif, PengaliDpp, KodeWilayah, BerlakuMulai, BerlakuSampai |
+| `TarifPajak` | IdJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, KodeWilayah (null = nasional), BiayaLayananMasukDpp, BerlakuMulai, BerlakuSampai, Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, TautanDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada. Master platform (P-02); override tenant (BR-P02.3) dirancang di F-03 |
 | `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Nama / IdTarifPajak, DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan |
 
 **Karyawan**
@@ -205,8 +205,10 @@ erDiagram
 | `PeranPengelola` / `PeranPengelolaIzin` / `PenggunaPengelolaPeran` | Kode, Nama, Bawaan (peran §19.3 dari sistem) / IdPeranPengelola, KunciIzin / IdPenggunaPengelola, IdPeranPengelola |
 | `LogAuditPengelola` | IdPenggunaPengelola, Aksi, JenisObjek, IdObjek, IdTenant (nullable), NilaiLama JSON, NilaiBaru JSON, Alasan, Ip, DibuatPada (**append-only**) |
 | `Wilayah` | Kode, Nama, Tingkat (Provinsi/KabupatenKota), KodeInduk, ZonaWaktu |
-| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status |
+| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada |
 | `ReferensiBank` | Kode, Nama, Jenis (Bank/Ewallet/JaringanEdc/PenerbitQris), Aktif |
+| `SatuanStandar` | Kode, Nama, Simbol, BolehDesimal, Aktif (disalin ke `Satuan` tenant oleh template sektor) |
+| `PersetujuanDataMaster` | JenisData, IdData, IdPenggunaPengelola, Keputusan (Setuju/Tolak), Catatan, DibuatPada (append-only; satu orang satu keputusan per pengajuan; hanya keputusan setelah `DiajukanPada` terakhir yang dihitung) |
 | `TinjauanDataMaster` | JenisObjek, IdObjek, DiajukanOleh, DitinjauOleh, Status (MenungguTinjauan/Disetujui/Ditolak), DasarHukum, Catatan |
 | `TemplateSektor` / `TemplateSektorVersi` | Kode, Nama / IdTemplateSektor, Versi, Status (Draf/Terbit/Usang), Isi JSON, HasilValidasi JSON, DiterbitkanOleh, DiterbitkanPada |
 | `Fitur` | Kunci, Nama, Modul, Keterangan |

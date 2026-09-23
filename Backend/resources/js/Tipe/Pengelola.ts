@@ -25,7 +25,20 @@ export const IzinPengelola = {
     TimAnggotaNonaktifkan: 'tim.anggota.nonaktifkan',
     TimPeranTetapkan: 'tim.peran.tetapkan',
     AuditLihat: 'audit.lihat',
+    ReferensiLihat: 'referensi.lihat',
+    ReferensiWilayahKelola: 'referensi.wilayah.kelola',
+    ReferensiBankKelola: 'referensi.bank.kelola',
+    ReferensiSatuanKelola: 'referensi.satuan.kelola',
+    ReferensiTarifPajakAjukan: 'referensi.tarif-pajak.ajukan',
+    ReferensiTarifPajakSetujui: 'referensi.tarif-pajak.setujui',
+    ReferensiHariLiburAjukan: 'referensi.hari-libur.ajukan',
+    ReferensiHariLiburSetujui: 'referensi.hari-libur.setujui',
 } as const;
+
+/** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */
+export type DaftarBerhalaman<T> = { Data: T[]; HalamanSaatIni: number; HalamanTerakhir: number; Total: number };
+
+export type Pilihan = { Nilai: string; Label: string };
 
 export type KunciIzinPengelola = (typeof IzinPengelola)[keyof typeof IzinPengelola];
 

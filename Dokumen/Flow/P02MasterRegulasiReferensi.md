@@ -28,6 +28,6 @@
 
 **Aturan Bisnis:**
 - BR-P02.1 Tarif yang sudah terbit tidak pernah diedit atau dihapus. Koreksi = tarif baru.
-- BR-P02.2 Perubahan tarif nasional butuh 2 persetujuan. Perubahan tarif daerah butuh 1 peninjau.
+- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Pengaju tidak pernah boleh menyetujui drafnya sendiri. Satu penolakan mengembalikan data ke `Draf`.
 - BR-P02.3 Tenant boleh **override** tarif daerah untuk outletnya (misal Perda baru belum masuk ke master) dengan konfirmasi dan catatan. Override terlihat di Platform Pengelola sebagai sinyal untuk memperbarui master.
 - BR-P02.4 Hari libur tahun berikutnya wajib terbit paling lambat 1 Desember (pengingat otomatis ke Konten & Legal).

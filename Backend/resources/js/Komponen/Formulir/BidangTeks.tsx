@@ -8,7 +8,10 @@ type PropsBidangTeks = {
     keterangan?: string;
     jenis?: 'text' | 'email' | 'password';
     kode?: boolean;
-} & Pick<InputHTMLAttributes<HTMLInputElement>, 'autoComplete' | 'autoFocus' | 'inputMode' | 'maxLength' | 'required'>;
+} & Pick<
+    InputHTMLAttributes<HTMLInputElement>,
+    'autoComplete' | 'autoFocus' | 'disabled' | 'inputMode' | 'maxLength' | 'required'
+>;
 
 /** Input teks dengan label, keterangan, dan pesan galat yang terhubung ke aria (PRD §17.6). */
 export default function BidangTeks({
@@ -38,7 +41,7 @@ export default function BidangTeks({
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}
                 aria-describedby={dijelaskanOleh || undefined}
-                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:bg-latar disabled:text-teks-sekunder ${
                     galat ? 'border-bahaya' : 'border-garis-input'
                 } ${kode ? 'font-mono tracking-wide' : ''}`}
                 {...atribut}

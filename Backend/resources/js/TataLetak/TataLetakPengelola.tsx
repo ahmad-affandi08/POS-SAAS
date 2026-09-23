@@ -15,6 +15,7 @@ type ItemMenu = { label: string; href: string; izin: KunciIzinPengelola | null }
 
 const daftarMenu: ItemMenu[] = [
     { label: 'Beranda', href: '/', izin: null },
+    { label: 'Referensi', href: '/referensi/wilayah', izin: IzinPengelola.ReferensiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
 ];
@@ -49,7 +50,8 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                 </div>
                 <nav aria-label="Menu utama" className="mx-auto flex max-w-6xl gap-1 px-4">
                     {menuTerlihat.map((menu) => {
-                        const aktif = menu.href === '/' ? url === '/' : url.startsWith(menu.href);
+                        const awalan = menu.href.split('/').slice(0, 2).join('/');
+                        const aktif = menu.href === '/' ? url === '/' : url.startsWith(awalan);
 
                         return (
                             <Link

@@ -18,14 +18,15 @@
 
 ```
 JenisPajak:     Ppn, PbjtMakananMinuman, Kustom...
-TarifPajak:     IdJenisPajak, Tarif (decimal), PengaliDpp (decimal, default 1),
+TarifPajak:     IdJenisPajak, Tarif (decimal), PengaliDppPembilang/PengaliDppPenyebut (pecahan eksak, default 1/1; PPN non-mewah 11/12),
                 KodeWilayah (nullable), BerlakuMulai, BerlakuSampai
 KelompokPajak:  kombinasi pajak untuk satu kategori produk (misal "F&B Dine-in" = PBJT 10% + SC 5%)
 Produk.IdKelompokPajak, Outlet.ProfilPajak (PKP? kota?), HargaTermasukPajak (per tenant/outlet)
 ```
 
 - Perhitungan pajak dilakukan **per baris**, dan pembulatan dilakukan **per dokumen per jenis pajak** agar sesuai dengan cara pelaporan.
-- Transaksi menyimpan snapshot `TarifPajak`, `PengaliDpp`, `DasarPengenaanPajak`, dan `JumlahPajak` per baris (`PenjualanDetail.SnapshotPajak`).
+- `PengaliDpp` selalu disimpan sebagai **pecahan** (pembilang/penyebut), bukan desimal, karena 11/12 tidak bisa ditulis tepat sebagai desimal. DPP dihitung `harga × pembilang ÷ penyebut` dengan pembulatan eksplisit di akhir.
+- Transaksi menyimpan snapshot `TarifPajak`, `PengaliDpp` (pembilang & penyebut), `DasarPengenaanPajak`, dan `JumlahPajak` per baris (`PenjualanDetail.SnapshotPajak`).
 
 ### 12.3 Kepatuhan Lain
 

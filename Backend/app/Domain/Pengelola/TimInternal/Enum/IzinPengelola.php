@@ -16,6 +16,16 @@ enum IzinPengelola: string
     case TimPeranTetapkan = 'tim.peran.tetapkan';
     case AuditLihat = 'audit.lihat';
 
+    // P-02 Master regulasi & referensi.
+    case ReferensiLihat = 'referensi.lihat';
+    case ReferensiWilayahKelola = 'referensi.wilayah.kelola';
+    case ReferensiBankKelola = 'referensi.bank.kelola';
+    case ReferensiSatuanKelola = 'referensi.satuan.kelola';
+    case ReferensiTarifPajakAjukan = 'referensi.tarif-pajak.ajukan';
+    case ReferensiTarifPajakSetujui = 'referensi.tarif-pajak.setujui';
+    case ReferensiHariLiburAjukan = 'referensi.hari-libur.ajukan';
+    case ReferensiHariLiburSetujui = 'referensi.hari-libur.setujui';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -24,6 +34,14 @@ enum IzinPengelola: string
             self::TimAnggotaNonaktifkan => 'Menonaktifkan anggota tim internal',
             self::TimPeranTetapkan => 'Menetapkan peran anggota tim internal',
             self::AuditLihat => 'Melihat log audit pengelola',
+            self::ReferensiLihat => 'Melihat data referensi & regulasi',
+            self::ReferensiWilayahKelola => 'Mengelola data wilayah',
+            self::ReferensiBankKelola => 'Mengelola referensi pembayaran',
+            self::ReferensiSatuanKelola => 'Mengelola satuan standar',
+            self::ReferensiTarifPajakAjukan => 'Mengajukan tarif pajak',
+            self::ReferensiTarifPajakSetujui => 'Menyetujui atau menolak tarif pajak',
+            self::ReferensiHariLiburAjukan => 'Mengajukan hari libur',
+            self::ReferensiHariLiburSetujui => 'Menyetujui atau menolak hari libur',
         };
     }
 }

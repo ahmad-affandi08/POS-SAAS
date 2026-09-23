@@ -128,6 +128,7 @@ Backend/app/
 │   ├── PanduanAwal/      # Wizard onboarding, TemplateSektor, Importir       (F-01)
 │   ├── Katalog/          # Produk, Varian, Satuan, Pilihan, Resep, DaftarHarga (F-03)
 │   ├── Pajak/            # JenisPajak, TarifPajak, KalkulatorPajak           (§12)
+│   ├── Referensi/        # Wilayah, HariLibur, ReferensiBank, SatuanStandar (dibaca tenant, dikelola lewat P-02)
 │   ├── Pembelian/        # Pemasok, PesananPembelian, PenerimaanBarang, FakturPembelian, Hutang (F-04)
 │   ├── Persediaan/       # MutasiStok, SaldoStok, TransferStok, StokOpname, Produksi (F-05)
 │   ├── Kasir/            # Shift, MutasiKas, SesiPerangkat                   (F-06, F-11)
@@ -459,7 +460,7 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 ```
 Backend/app/Domain/Pengelola/
 ├── TimInternal/        # PenggunaPengelola, PeranPengelola, LogAuditPengelola        (P-01)
-├── Referensi/          # Wilayah, TarifPajak nasional & daerah, HariLibur, ReferensiBank (P-02)
+├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # TemplateSektor, TemplateSektorVersi, ValidatorTemplate, Sandbox (P-03)
 ├── Katalog/            # Fitur, Paket, Addon, KuponLangganan, EvaluatorFitur          (P-04)
 ├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)

@@ -56,6 +56,6 @@ describe('P-01 langkah 1–2: Super Admin pertama & peran bawaan', function (): 
         $this->seed();
 
         expect(PeranPengelola::query()->count())->toBe(7)
-            ->and(PeranPengelola::query()->where('Kode', 'Analis')->sole()->Izin()->count())->toBe(0);
+            ->and(PeranPengelola::query()->where('Kode', 'Analis')->sole()->Izin()->pluck('KunciIzin')->all())->toBe(['referensi.lihat']);
     });
 });
