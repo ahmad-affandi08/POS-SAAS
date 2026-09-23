@@ -661,6 +661,16 @@ FiturAktif(tenant, kunci) =
 - BR-P07.2 Transaksi offline yang dibuat sebelum penangguhan tetap diterima saat sinkron.
 - BR-P07.3 Semua tindakan pada tabel di atas tercatat di `LogAuditPengelola` dan terlihat di riwayat tenant.
 
+**Rincian Fase 0 (P-07 dasar; diputuskan agen atas mandat pemilik produk, menunggu konfirmasi):**
+- BR-P07.4 **Tangguhkan manual** hanya Super Admin, dari status `Trial`, `Aktif`, `Tertunggak`, atau `Gratis` (melengkapi BR-00.7: transisi Trial/Aktif/Gratis → Ditangguhkan). Wajib kategori (`Penipuan`, `Penyalahgunaan`, `PermintaanHukum`, `Lainnya`) dan catatan. Status sebelum penangguhan disimpan di `Langganan.StatusSebelumDitangguhkan`. Owner menerima email berisi kategori saja, catatan tetap internal; kegagalan kirim email tidak membatalkan penangguhan.
+- BR-P07.5 **Aktifkan kembali** oleh Keuangan atau Super Admin dengan keputusan tertulis (alasan wajib). Status yang dipulihkan = status sebelum penangguhan (transisi Ditangguhkan → Trial/Tertunggak ditambahkan); trial yang habis selama ditangguhkan turun ke paket Gratis (BR-00.3); penangguhan tanpa status asal (dari penagihan P-08) dipulihkan ke `Aktif`. Syarat "tagihan lunas" diperiksa otomatis setelah P-08 ada.
+- BR-P07.6 **Perpanjang trial** oleh Dukungan, Mitra & Penjualan, atau Super Admin: hanya saat status `Trial`, 1–14 hari per perpanjangan, maksimal 2 kali per tenant. Akhir trial baru dihitung dari akhir trial saat ini (atau dari sekarang bila sudah lewat tetapi belum diproses perintah akhir trial). Setiap perpanjangan dicatat sebagai `OverrideTenant` jenis `Trial`. Tenant yang sudah turun ke Gratis tidak bisa dikembalikan ke Trial.
+- BR-P07.7 **Override sementara** oleh Dukungan atau Super Admin: jenis `Batas` (kolom batas paket, angka ≥ 0) atau `Fitur` (kunci fitur katalog), berlaku sampai akhir tanggal pilihan (WIB), paling lama 90 hari. Satu kunci hanya satu override aktif; override bisa dicabut lebih awal dengan alasan. Override yang lewat diabaikan otomatis oleh evaluator fitur (P-04).
+- BR-P07.8 **Penanda** `Uji`/`Demo`/`Internal` hanya diubah Super Admin dengan alasan, disimpan di `Tenant.Penanda`.
+- BR-P07.9 **Catatan internal** append-only, ditulis semua peran yang boleh melihat tenant (Super Admin, Keuangan, Dukungan, Teknis, Mitra & Penjualan). Konten & Legal dan Analis tidak membuka menu tenant (§19.3).
+- BR-P07.10 Data usaha tenant (outlet, gudang, merek) di tampilan 360° dibaca lewat `KonteksPengelola::JalankanLintasTenant`, yang mencatat setiap pembukaan (`tenant.data.akses`) di `LogAuditPengelola`. Log akses baca tidak ditampilkan di riwayat tindakan tenant.
+- Tampilan 360° Fase 0: profil, paket & status langganan, pemakaian vs batas (outlet, pengguna), outlet & gudang, anggota, persetujuan legal, override, catatan, dan riwayat tindakan. Tagihan (P-08), tiket & akses dukungan (P-09), perangkat, mitra (P-12), skor kesehatan, ganti paket manual (butuh proration P-08), dan penghapusan data UU PDP menyusul.
+
 ---
 
 ### P-08 · Billing & Dunning Platform
@@ -2412,10 +2422,10 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `Tenant` | Id, Uuid, Nama, Slug (unik), Npwp, Pkp, ZonaWaktu, Pengaturan JSON, Status (Aktif; status penghapusan data ditambah P-07) |
+| `Tenant` | Id, Uuid, Nama, Slug (unik), Npwp, Pkp, ZonaWaktu, Pengaturan JSON, Status (Aktif; status penghapusan data ditambah P-07), Penanda (Uji/Demo/Internal, null = tenant biasa; P-07 BR-P07.8) |
 | `Paket` / `PaketFitur` | Kode, Nama, Status (Draf/Aktif/Diarsipkan), HargaNegosiasi, MasaTrialHari, BatasOutlet, BatasPerangkatPerOutlet, BatasPengguna, BatasSku, KuotaPesanWaBulanan, BatasPenyimpananMb (batas `null` = tak terbatas), Urutan / IdPaket, KunciFitur |
 | `HargaPaket` | IdPaket, HargaBulanan, HargaTahunan (decimal 18,2), BerlakuMulai, BerlakuSampai, TerapkanKePelangganLama, Status (Draf/MenungguTinjauan/Terbit), IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan, DaftarIdPenyusun JSON. Harga paket hanya ada di tabel ini (berversi, BR-P04.1) |
-| `Langganan` | IdTenant (unik), IdPaket, Status (Trial/Aktif/Tertunggak/Ditangguhkan/Berhenti/Gratis), TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan (Bulanan/Tahunan) |
+| `Langganan` | IdTenant (unik), IdPaket, Status (Trial/Aktif/Tertunggak/Ditangguhkan/Berhenti/Gratis), StatusSebelumDitangguhkan (diisi saat tangguhkan manual, P-07 BR-P07.4), TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan (Bulanan/Tahunan) |
 | `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
 | `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
 | `TenantPengguna` | IdTenant, IdPengguna, Pemilik, HashPin, Status |
@@ -2573,13 +2583,13 @@ erDiagram
 | `Fitur` | Kunci, Nama, Modul, Keterangan |
 | `Addon` / `LanggananAddon` | Kode, Nama, HargaBulanan, KunciFitur, TambahanBatas JSON, Status (Aktif/Diarsipkan) / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada (LanggananAddon dibuat di F-19) |
 | `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08) |
-| `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
+| `OverrideTenant` | Uuid, IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada (wajib; lewat = diabaikan), Alasan, DibuatOleh. Baris tidak dihapus; jenis Trial = jejak perpanjangan trial (BR-P07.6, BR-P07.7). Tanpa `MilikTenant` (data platform) |
 | `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
 | `KonfigurasiIntegrasi` | Jenis (Email/Captcha/Penyimpanan, bertambah per flow), Lingkungan (Staging/Produksi), Penyedia (Smtp/Turnstile/S3), Pengaturan JSON (tidak rahasia), Kredensial (terenkripsi), PetunjukKredensial JSON (4 karakter terakhir, BR-P05.1), Aktif, Status (BelumDiuji/Terhubung/Gagal), TerakhirDiujiPada, HasilUji JSON, GagalBeruntun, KredensialDiubahPada, RotasiSetiapHari (unik per Jenis + Lingkungan) |
 | `DokumenLegal` / `PersetujuanDokumenLegal` | Jenis (SyaratKetentuan/KebijakanPrivasi/PerjanjianPemrosesanData/Sla/KontrakMitra), Versi (angka urut per jenis), Judul, Isi (Markdown), RingkasanPerubahan, Materiil, BerlakuMulai, Status (Draf/Terbit), IdPenggunaPengelolaPenerbit, DiterbitkanPada / IdDokumenLegal, IdTenant, IdPengguna, DisetujuiPada, Ip (dibuat di F-00) |
 | `TemplatePesan` | Kunci, Kanal (Email/Wa/Push/InApp), Bahasa, Subjek, Isi, StatusPersetujuanWa |
 | `ArtikelBantuan` | Judul, Slug, Isi, Kategori, KunciHalamanTerkait, Status |
-| `CatatanTenant` | IdTenant, Isi, DibuatOleh |
+| `CatatanTenant` | Uuid, IdTenant, Isi, DibuatOleh (append-only, tidak terlihat tenant; BR-P07.9). Tanpa `MilikTenant` (data platform) |
 | `SkorKesehatanTenant` | IdTenant, Tanggal, Skor, Kategori (Sehat/PerluPerhatian/Berisiko), Faktor JSON |
 | `PermintaanPenghapusanData` | IdTenant, DimintaOleh, Status, DiverifikasiPada, DijadwalkanPada, SelesaiPada |
 | `PembayaranLangganan` | IdTagihanLangganan, Metode (Gateway/TransferManual), Jumlah, RefGateway, PathBukti, Status, DiverifikasiOleh |
