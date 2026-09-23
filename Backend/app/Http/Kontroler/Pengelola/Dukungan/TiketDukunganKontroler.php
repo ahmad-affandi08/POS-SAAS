@@ -1,0 +1,129 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Pengelola\Dukungan;
+
+use App\Domain\Dukungan\Enum\PrioritasTiketDukungan;
+use App\Domain\Dukungan\Enum\StatusTiketDukungan;
+use App\Domain\Dukungan\Layanan\PenyimpanLampiran;
+use App\Domain\Pengelola\Dukungan\Aksi\BalasTiketDukunganPengelola;
+use App\Domain\Pengelola\Dukungan\Aksi\TugaskanTiketDukungan;
+use App\Domain\Pengelola\Dukungan\Aksi\UbahPrioritasTiketDukungan;
+use App\Domain\Pengelola\Dukungan\Aksi\UbahStatusTiketDukungan;
+use App\Domain\Pengelola\Dukungan\Kueri\AntreanTiketDukungan;
+use App\Domain\Pengelola\Dukungan\Kueri\DetailTiketDukungan;
+use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
+use App\Http\Kontroler\Kelola\BantuanKontroler;
+use App\Http\Kontroler\Kontroler;
+use App\Http\Kontroler\Pengelola\PelakuPengelola;
+use App\Http\Permintaan\Pengelola\Dukungan\BalasTiketDukunganPengelolaPermintaan;
+use App\Http\Permintaan\Pengelola\Dukungan\UbahStatusTiketDukunganPermintaan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+/**
+ * Antrean & penanganan tiket dukungan di Platform Pengelola (P-09, §19.3: Dukungan & Super Admin).
+ * Data tiket dibaca/diubah lintas tenant hanya lewat KonteksPengelola di dalam kueri & aksi domain.
+ */
+final class TiketDukunganKontroler extends Kontroler
+{
+    use PelakuPengelola;
+
+    public function Daftar(Request $permintaan, AntreanTiketDukungan $antrean): Response
+    {
+        $saring = [
+            'Status' => $permintaan->string('status', AntreanTiketDukungan::SARING_STATUS_TERBUKA)->toString(),
+            'Prioritas' => $permintaan->string('prioritas')->toString(),
+            'LewatSla' => $permintaan->boolean('lewat-sla'),
+            'Milik' => $permintaan->string('milik')->toString(),
+            'Kata' => trim($permintaan->string('kata')->toString()),
+        ];
+
+        return Inertia::render('Pengelola/Dukungan/Antrean', [
+            'Tiket' => $antrean->Ambil($this->AmbilPelaku(), $saring),
+            'Saring' => $saring,
+            'PilihanStatus' => self::AmbilPilihanStatus(),
+            'PilihanPrioritas' => self::AmbilPilihanPrioritas(),
+        ]);
+    }
+
+    public function Tampilkan(string $tiketDukungan, DetailTiketDukungan $detail): Response
+    {
+        return Inertia::render('Pengelola/Dukungan/Tiket', [
+            'Tiket' => $detail->Ambil($tiketDukungan),
+            'Penangan' => $detail->AmbilPenangan(),
+            'PilihanStatus' => self::AmbilPilihanStatus(),
+            'PilihanPrioritas' => self::AmbilPilihanPrioritas(),
+            'Lampiran' => BantuanKontroler::AmbilBatasLampiran(),
+        ]);
+    }
+
+    public function UnduhLampiran(string $tiketDukungan, string $lampiran, DetailTiketDukungan $detail, PenyimpanLampiran $penyimpan): StreamedResponse
+    {
+        $data = $detail->CariLampiran($tiketDukungan, $lampiran);
+        abort_if($data === null, 404);
+
+        return $penyimpan->Unduh($data);
+    }
+
+    public function Ambil(string $tiketDukungan, TugaskanTiketDukungan $tugaskan): RedirectResponse
+    {
+        $pelaku = $this->AmbilPelaku();
+        $tiket = $tugaskan->Jalankan($pelaku, $tiketDukungan, $pelaku);
+
+        return back()->with('Kilat', "Tiket {$tiket->Nomor} sekarang Anda tangani.");
+    }
+
+    public function Tugaskan(string $tiketDukungan, Request $permintaan, TugaskanTiketDukungan $tugaskan): RedirectResponse
+    {
+        $uuid = $permintaan->validate(['UuidPenanggungJawab' => ['required', 'string', Rule::exists('PenggunaPengelola', 'Uuid')]])['UuidPenanggungJawab'];
+        $penanggungJawab = PenggunaPengelola::query()->where('Uuid', $uuid)->firstOrFail();
+        $tiket = $tugaskan->Jalankan($this->AmbilPelaku(), $tiketDukungan, $penanggungJawab);
+
+        return back()->with('Kilat', "Tiket {$tiket->Nomor} ditugaskan ke {$penanggungJawab->Nama}.");
+    }
+
+    public function Balas(string $tiketDukungan, BalasTiketDukunganPengelolaPermintaan $permintaan, BalasTiketDukunganPengelola $balas): RedirectResponse
+    {
+        $internal = $permintaan->boolean('CatatanInternal');
+        $balas->Jalankan($this->AmbilPelaku(), $tiketDukungan, $permintaan->AmbilIsi(), $internal, $permintaan->AmbilLampiran(), $permintaan->AmbilStatus());
+
+        return back()->with('Kilat', $internal ? 'Catatan internal disimpan.' : 'Balasan terkirim ke tenant.');
+    }
+
+    public function UbahStatus(string $tiketDukungan, UbahStatusTiketDukunganPermintaan $permintaan, UbahStatusTiketDukungan $ubah): RedirectResponse
+    {
+        $tiket = $ubah->Jalankan($this->AmbilPelaku(), $tiketDukungan, $permintaan->AmbilStatus(), $permintaan->AmbilAlasan());
+
+        return back()->with('Kilat', "Status tiket {$tiket->Nomor} menjadi {$tiket->Status->AmbilLabel()}.");
+    }
+
+    public function UbahPrioritas(string $tiketDukungan, Request $permintaan, UbahPrioritasTiketDukungan $ubah): RedirectResponse
+    {
+        $nilai = $permintaan->validate(['Prioritas' => ['required', 'string', Rule::enum(PrioritasTiketDukungan::class)]])['Prioritas'];
+        $tiket = $ubah->Jalankan($this->AmbilPelaku(), $tiketDukungan, PrioritasTiketDukungan::from($nilai));
+
+        return back()->with('Kilat', "Prioritas tiket {$tiket->Nomor} menjadi {$tiket->Prioritas->AmbilLabel()}.");
+    }
+
+    /**
+     * @return list<array{Nilai: string, Label: string}>
+     */
+    private static function AmbilPilihanStatus(): array
+    {
+        return array_map(fn (StatusTiketDukungan $status) => ['Nilai' => $status->value, 'Label' => $status->AmbilLabel()], StatusTiketDukungan::cases());
+    }
+
+    /**
+     * @return list<array{Nilai: string, Label: string}>
+     */
+    private static function AmbilPilihanPrioritas(): array
+    {
+        return array_map(fn (PrioritasTiketDukungan $prioritas) => ['Nilai' => $prioritas->value, 'Label' => $prioritas->AmbilLabel()], PrioritasTiketDukungan::cases());
+    }
+}

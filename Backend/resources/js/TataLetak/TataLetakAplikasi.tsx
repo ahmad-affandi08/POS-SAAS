@@ -32,6 +32,15 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         <Link href="/kelola/langganan" className="text-label font-semibold text-brand underline">
                             Langganan
                         </Link>
+                        {/* P-09: tombol Bantuan (tiket dukungan). TODO F-02: menu modul lengkap & izin peran tenant. */}
+                        {props.TenantAktif ? (
+                            <Link
+                                href="/kelola/bantuan"
+                                className="rounded-kontrol px-2 py-1 text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                            >
+                                Bantuan
+                            </Link>
+                        ) : null}
                         <span className="text-label text-teks-sekunder">{props.Pengguna?.Nama}</span>
                         {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
                         <Link

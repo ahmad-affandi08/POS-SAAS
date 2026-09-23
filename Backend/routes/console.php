@@ -22,3 +22,12 @@ Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
 
 // BR-P06.5: pengumuman versi materiil dokumen legal ke Owner selama masa pengumuman (sekali per versi per pengguna).
 Schedule::command('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// P-11 BR-P11.1: detak scheduler tiap menit + pemeriksaan alert operasional (scheduler, antrean, backup).
+Schedule::command('pengelola:detak')->everyMinute()->withoutOverlapping();
+
+// P-11 (§14.4): worker antrean database dijalankan scheduler tiap menit di Hostinger (tanpa proses daemon).
+Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
+
+// P-09: tiket selesai yang tidak dibuka lagi dalam 7 hari ditutup otomatis.
+Schedule::command('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('Asia/Jakarta')->withoutOverlapping();

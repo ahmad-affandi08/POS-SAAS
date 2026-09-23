@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Perantara\Pengelola;
 
 use App\Domain\Pengelola\Integrasi\Kueri\PeringatanIntegrasi;
+use App\Domain\Pengelola\Operasional\Kueri\KondisiOperasional;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Kueri\SuperAdminAktif;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -22,6 +23,8 @@ final class BagikanDataInertiaPengelola extends Middleware
     public function __construct(
         private readonly SuperAdminAktif $superAdminAktif,
         private readonly PeringatanIntegrasi $peringatanIntegrasi,
+        // P-11
+        private readonly KondisiOperasional $kondisiOperasional,
     ) {}
 
     /**
@@ -49,6 +52,8 @@ final class BagikanDataInertiaPengelola extends Middleware
                 && $this->superAdminAktif->Hitung() < (int) config('pengelola.MinimalSuperAdminAktif'),
             // BR-P05.3, BR-P05.5: banner status integrasi untuk semua anggota yang sudah masuk.
             'PeringatanIntegrasi' => fn () => $pengguna instanceof PenggunaPengelola ? $this->peringatanIntegrasi->Ambil() : [],
+            // P-11 BR-P11.1: banner kondisi operasional (scheduler, antrean, backup) dihitung dari data terkini.
+            'PeringatanOperasional' => fn () => $pengguna instanceof PenggunaPengelola ? array_values($this->kondisiOperasional->AmbilMasalah()) : [],
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
+use App\Http\Kontroler\Pengelola\Dukungan\TiketDukunganKontroler;
 use App\Http\Kontroler\Pengelola\Integrasi\IntegrasiKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\AddonKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
@@ -15,6 +16,7 @@ use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
+use App\Http\Kontroler\Pengelola\Operasional\OperasionalKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
@@ -161,6 +163,37 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 Route::post('/integrasi/{konfigurasiIntegrasi}/uji', [IntegrasiKontroler::class, 'Uji'])->name('pengelola.integrasi.uji');
                 Route::post('/integrasi/{konfigurasiIntegrasi}/aktifkan', [IntegrasiKontroler::class, 'Aktifkan'])->name('pengelola.integrasi.aktifkan');
                 Route::post('/integrasi/{konfigurasiIntegrasi}/nonaktifkan', [IntegrasiKontroler::class, 'Nonaktifkan'])->name('pengelola.integrasi.nonaktifkan');
+            });
+        });
+
+        // P-09 Tiket dukungan (§19.3: Dukungan & Super Admin). Parameter tiket = Uuid; tiket dicari lintas tenant
+        // di dalam KonteksPengelola, bukan lewat route model binding.
+        Route::middleware($izin(IzinPengelola::DukunganTiketLihat))->group(function () use ($izin): void {
+            Route::get('/dukungan/tiket', [TiketDukunganKontroler::class, 'Daftar'])->name('pengelola.dukungan.tiket.daftar');
+            Route::get('/dukungan/tiket/{tiketDukungan}', [TiketDukunganKontroler::class, 'Tampilkan'])->name('pengelola.dukungan.tiket.tampil');
+            Route::get('/dukungan/tiket/{tiketDukungan}/lampiran/{lampiran}', [TiketDukunganKontroler::class, 'UnduhLampiran'])
+                ->name('pengelola.dukungan.tiket.lampiran');
+            Route::middleware($izin(IzinPengelola::DukunganTiketTangani))->group(function (): void {
+                Route::post('/dukungan/tiket/{tiketDukungan}/ambil', [TiketDukunganKontroler::class, 'Ambil'])->name('pengelola.dukungan.tiket.ambil');
+                Route::post('/dukungan/tiket/{tiketDukungan}/tugaskan', [TiketDukunganKontroler::class, 'Tugaskan'])->name('pengelola.dukungan.tiket.tugaskan');
+                Route::post('/dukungan/tiket/{tiketDukungan}/balasan', [TiketDukunganKontroler::class, 'Balas'])->name('pengelola.dukungan.tiket.balas');
+                Route::put('/dukungan/tiket/{tiketDukungan}/status', [TiketDukunganKontroler::class, 'UbahStatus'])->name('pengelola.dukungan.tiket.status.ubah');
+                Route::put('/dukungan/tiket/{tiketDukungan}/prioritas', [TiketDukunganKontroler::class, 'UbahPrioritas'])
+                    ->name('pengelola.dukungan.tiket.prioritas.ubah');
+            });
+        });
+
+        // P-11 Monitoring operasional (§19.3: Teknis & Super Admin).
+        Route::middleware($izin(IzinPengelola::OperasionalLihat))->group(function () use ($izin): void {
+            Route::get('/operasional', [OperasionalKontroler::class, 'Dasbor'])->name('pengelola.operasional.dasbor');
+            Route::get('/operasional/tugas-gagal/{idTugas}', [OperasionalKontroler::class, 'TampilkanTugasGagal'])
+                ->name('pengelola.operasional.tugas-gagal.tampil');
+            Route::middleware($izin(IzinPengelola::OperasionalKelola))->group(function (): void {
+                Route::post('/operasional/tugas-gagal/{idTugas}/coba-ulang', [OperasionalKontroler::class, 'CobaUlangTugasGagal'])
+                    ->name('pengelola.operasional.tugas-gagal.coba-ulang');
+                Route::delete('/operasional/tugas-gagal/{idTugas}', [OperasionalKontroler::class, 'BuangTugasGagal'])
+                    ->name('pengelola.operasional.tugas-gagal.buang');
+                Route::post('/operasional/backup', [OperasionalKontroler::class, 'CatatBackup'])->name('pengelola.operasional.backup.catat');
             });
         });
 

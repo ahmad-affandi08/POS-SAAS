@@ -6,12 +6,20 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
+use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
+use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor;
+use App\Domain\Pengelola\Dukungan\Penangan\BeritahuTimTiketDukunganBaru;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
+use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
+use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
@@ -23,6 +31,9 @@ final class PenyediaAplikasi extends ServiceProvider
         // "scoped": dibuat ulang untuk setiap request/job sehingga tenant tidak terbawa antar-request.
         $this->app->scoped(KonteksTenant::class);
         $this->app->scoped(PencatatAuditPengelola::class);
+
+        // P-09: KonteksPengelola menyimpan status "di dalam JalankanLintasTenant" per request/job.
+        $this->app->scoped(KonteksPengelola::class);
     }
 
     public function boot(): void
@@ -50,6 +61,13 @@ final class PenyediaAplikasi extends ServiceProvider
 
         // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
         $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();
+
+        // P-09: pemberitahuan tiket dukungan (penangan di antrean, setelah commit).
+        Event::listen(TiketDukunganDibuat::class, BeritahuTimTiketDukunganBaru::class);
+        Event::listen(TiketDukunganDibalasPelapor::class, BeritahuPenanggungJawabBalasanPelapor::class);
+
+        // P-11 BR-P11.1: /sehat (uptime monitor eksternal) ikut memeriksa alert, agar scheduler mati tetap terdeteksi.
+        Event::listen(DiagnosingHealth::class, PeriksaOperasionalSaatCekSehat::class);
 
         if ($this->app->runningUnitTests()) {
             $this->loadMigrationsFrom(base_path('tests/Pendukung/Migrasi'));

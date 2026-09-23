@@ -60,6 +60,13 @@ enum IzinPengelola: string
     // P-08 Tagihan langganan & verifikasi pembayaran (§19.3: Keuangan & Super Admin).
     case TagihanLihat = 'tagihan.lihat';
     case TagihanVerifikasi = 'tagihan.verifikasi';
+    // P-09 Tiket dukungan (§19.3: Dukungan & Super Admin).
+    case DukunganTiketLihat = 'dukungan.tiket.lihat';
+    case DukunganTiketTangani = 'dukungan.tiket.tangani';
+
+    // P-11 Monitoring operasional (§19.3: Teknis & Super Admin).
+    case OperasionalLihat = 'operasional.lihat';
+    case OperasionalKelola = 'operasional.kelola';
 
     public function AmbilLabel(): string
     {
@@ -103,6 +110,12 @@ enum IzinPengelola: string
             // P-08
             self::TagihanLihat => 'Melihat tagihan langganan & bukti transfer',
             self::TagihanVerifikasi => 'Menerima atau menolak pembayaran langganan',
+            // P-09
+            self::DukunganTiketLihat => 'Melihat antrean & percakapan tiket dukungan semua tenant',
+            self::DukunganTiketTangani => 'Mengambil, menugaskan, membalas, dan mengubah status tiket dukungan',
+            // P-11
+            self::OperasionalLihat => 'Melihat dasbor operasional (scheduler, antrean, job gagal, backup)',
+            self::OperasionalKelola => 'Mencoba ulang/membuang job gagal dan mencatat hasil backup',
         };
     }
 }
