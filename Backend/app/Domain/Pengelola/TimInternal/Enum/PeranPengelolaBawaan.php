@@ -10,6 +10,7 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
  * Super Admin memegang semua izin ("semua menu pengelola"). Izin peran lain ditambahkan bersama flow
  * yang menjadi cakupannya. P-02: Konten & Legal mengajukan, Keuangan meninjau data master regulasi.
  * P-04: Keuangan menyusun paket & mengusulkan harga, Super Admin menyetujui.
+ * P-03 (BR-P03.5): Konten & Legal mengubah isi bisnis template, Keuangan COA & pemetaan akun, Teknis menerbitkan.
  */
 enum PeranPengelolaBawaan: string
 {
@@ -49,6 +50,9 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::ReferensiTarifPajakAjukan,
                 IzinPengelola::ReferensiHariLiburAjukan,
                 IzinPengelola::KatalogLihat,
+                IzinPengelola::TemplateLihat,
+                IzinPengelola::TemplateDrafKelola,
+                IzinPengelola::TemplateIsiUbah,
             ],
             self::Keuangan => [
                 IzinPengelola::ReferensiLihat,
@@ -59,8 +63,22 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::KatalogPaketAjukan,
                 IzinPengelola::KatalogAddonKelola,
                 IzinPengelola::KatalogKuponKelola,
+                IzinPengelola::TemplateLihat,
+                IzinPengelola::TemplateDrafKelola,
+                IzinPengelola::TemplateAkunUbah,
             ],
-            self::Dukungan, self::Teknis, self::MitraPenjualan, self::Analis => [IzinPengelola::ReferensiLihat, IzinPengelola::KatalogLihat],
+            self::Teknis => [
+                IzinPengelola::ReferensiLihat,
+                IzinPengelola::KatalogLihat,
+                IzinPengelola::TemplateLihat,
+                IzinPengelola::TemplateDrafKelola,
+                IzinPengelola::TemplateTerbitkan,
+            ],
+            self::Dukungan, self::MitraPenjualan, self::Analis => [
+                IzinPengelola::ReferensiLihat,
+                IzinPengelola::KatalogLihat,
+                IzinPengelola::TemplateLihat,
+            ],
         };
     }
 }

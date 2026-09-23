@@ -16,6 +16,7 @@ type ItemMenu = { label: string; href: string; izin: KunciIzinPengelola | null }
 const daftarMenu: ItemMenu[] = [
     { label: 'Beranda', href: '/', izin: null },
     { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat },
+    { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat },
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },

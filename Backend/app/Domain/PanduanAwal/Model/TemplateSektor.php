@@ -27,6 +27,12 @@ final class TemplateSektor extends ModelDasar
     /** @var array<string, mixed> */
     protected $attributes = ['Keterangan' => null];
 
+    /** URL memakai kode sektor, misal `/template-sektor/FNB-CAF/versi/2`. */
+    public function getRouteKeyName(): string
+    {
+        return 'Kode';
+    }
+
     /**
      * @return HasMany<TemplateSektorVersi, $this>
      */

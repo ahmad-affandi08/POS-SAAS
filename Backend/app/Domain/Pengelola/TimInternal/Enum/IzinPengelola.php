@@ -34,6 +34,13 @@ enum IzinPengelola: string
     case KatalogAddonKelola = 'katalog.addon.kelola';
     case KatalogKuponKelola = 'katalog.kupon.kelola';
 
+    // P-03 Template sektor.
+    case TemplateLihat = 'template.lihat';
+    case TemplateDrafKelola = 'template.draf.kelola';
+    case TemplateIsiUbah = 'template.isi.ubah';
+    case TemplateAkunUbah = 'template.akun.ubah';
+    case TemplateTerbitkan = 'template.terbitkan';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -56,6 +63,11 @@ enum IzinPengelola: string
             self::KatalogPaketSetujui => 'Menyetujui harga, mengaktifkan/mengarsipkan paket, mengubah paket aktif',
             self::KatalogAddonKelola => 'Mengelola add-on',
             self::KatalogKuponKelola => 'Mengelola kupon langganan',
+            self::TemplateLihat => 'Melihat template sektor',
+            self::TemplateDrafKelola => 'Membuat draf versi baru, memvalidasi, dan menghapus draf template',
+            self::TemplateIsiUbah => 'Membuat template & mengubah isi bisnis template',
+            self::TemplateAkunUbah => 'Mengubah COA, pemetaan akun, dan kelompok pajak template',
+            self::TemplateTerbitkan => 'Menerbitkan template sektor',
         };
     }
 }

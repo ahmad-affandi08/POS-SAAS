@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\PanduanAwal\Model\TemplateSektor;
+use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
@@ -17,11 +19,13 @@ use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
+use App\Http\Kontroler\Pengelola\TemplateSektor\TemplateSektorKontroler;
 use App\Http\Kontroler\Pengelola\TimInternalKontroler;
 use App\Http\Kontroler\Pengelola\UndanganKontroler;
 use App\Http\Perantara\Pengelola\PastikanPenggunaPengelola;
 use App\Http\Perantara\Pengelola\WajibDuaFaktor;
 use App\Http\Perantara\Pengelola\WajibIzinPengelola;
+use Illuminate\Routing\Route as RouteLaravel;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,6 +34,17 @@ use Illuminate\Support\Facades\Route;
  */
 
 $izin = static fn (IzinPengelola $izin): string => WajibIzinPengelola::class.':'.$izin->value;
+
+// Versi template dicari per nomor versi di dalam template pada URL, misal /template-sektor/FNB-CAF/versi/2 (P-03).
+Route::bind('templateSektorVersi', static function (string $nilai, RouteLaravel $rute): TemplateSektorVersi {
+    $template = $rute->parameter('templateSektor');
+    $kode = $template instanceof TemplateSektor ? $template->Kode : (is_string($template) ? $template : '');
+
+    return TemplateSektorVersi::query()
+        ->whereHas('TemplateSektor', fn ($kueri) => $kueri->where('Kode', $kode))
+        ->where('Versi', ctype_digit($nilai) ? (int) $nilai : 0)
+        ->firstOrFail();
+});
 
 Route::middleware('guest:pengelola')->group(function (): void {
     Route::get('/masuk', [SesiKontroler::class, 'TampilkanMasuk'])->name('pengelola.masuk');
@@ -119,6 +134,31 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::put('/katalog/kupon/{kuponLangganan}', [KuponKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::KatalogKuponKelola))
                 ->name('pengelola.katalog.kupon.ubah');
+        });
+
+        // P-03 Template sektor (BR-P03.5: isi bisnis, akun, dan terbitkan dipisah per izin).
+        Route::middleware($izin(IzinPengelola::TemplateLihat))->group(function () use ($izin): void {
+            Route::get('/template-sektor', [TemplateSektorKontroler::class, 'Daftar'])->name('pengelola.template-sektor.daftar');
+            Route::post('/template-sektor', [TemplateSektorKontroler::class, 'Buat'])
+                ->middleware($izin(IzinPengelola::TemplateIsiUbah))
+                ->name('pengelola.template-sektor.buat');
+
+            $versi = '/template-sektor/{templateSektor}/versi/{templateSektorVersi}';
+            Route::get($versi, [TemplateSektorKontroler::class, 'Tampilkan'])->name('pengelola.template-sektor.versi.tampil');
+            Route::middleware($izin(IzinPengelola::TemplateDrafKelola))->group(function () use ($versi): void {
+                Route::post("{$versi}/duplikasi", [TemplateSektorKontroler::class, 'Duplikasi'])->name('pengelola.template-sektor.versi.duplikasi');
+                Route::post("{$versi}/validasi", [TemplateSektorKontroler::class, 'Validasi'])->name('pengelola.template-sektor.versi.validasi');
+                Route::delete($versi, [TemplateSektorKontroler::class, 'HapusDraf'])->name('pengelola.template-sektor.versi.hapus');
+            });
+            Route::put("{$versi}/isi-bisnis", [TemplateSektorKontroler::class, 'SimpanIsiBisnis'])
+                ->middleware($izin(IzinPengelola::TemplateIsiUbah))
+                ->name('pengelola.template-sektor.versi.isi-bisnis.ubah');
+            Route::put("{$versi}/akun", [TemplateSektorKontroler::class, 'SimpanAkun'])
+                ->middleware($izin(IzinPengelola::TemplateAkunUbah))
+                ->name('pengelola.template-sektor.versi.akun.ubah');
+            Route::post("{$versi}/terbitkan", [TemplateSektorKontroler::class, 'Terbitkan'])
+                ->middleware($izin(IzinPengelola::TemplateTerbitkan))
+                ->name('pengelola.template-sektor.versi.terbitkan');
         });
 
         // P-02 Master regulasi & referensi.

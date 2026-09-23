@@ -39,6 +39,11 @@ export const IzinPengelola = {
     KatalogPaketSetujui: 'katalog.paket.setujui',
     KatalogAddonKelola: 'katalog.addon.kelola',
     KatalogKuponKelola: 'katalog.kupon.kelola',
+    TemplateLihat: 'template.lihat',
+    TemplateDrafKelola: 'template.draf.kelola',
+    TemplateIsiUbah: 'template.isi.ubah',
+    TemplateAkunUbah: 'template.akun.ubah',
+    TemplateTerbitkan: 'template.terbitkan',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */
