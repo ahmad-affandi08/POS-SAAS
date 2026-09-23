@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Katalog\Kontrak\BagianKatalogPos;
+use App\Domain\Katalog\Kontrak\PemeriksaPemakaianProduk;
+use App\Domain\Katalog\Kueri\KategoriSatuanUntukPos;
+use App\Domain\Katalog\Kueri\ProdukUntukPos;
+use App\Domain\Katalog\Layanan\PemakaianVarianProduk;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -14,11 +19,15 @@ final class PenyediaKatalog extends ServiceProvider
 {
     public function register(): void
     {
-        // Diisi tim pemilik pada Wave 1/2 (ikatan kontrak Katalog\Kontrak).
+        // BR-03.2: induk varian yang masih punya anak dianggap dipakai.
+        $this->app->tag([PemakaianVarianProduk::class], PemeriksaPemakaianProduk::TAG);
+
+        // D.3: bagian Kategori, Satuan, Produk, ProdukSatuan, ProdukBarcode katalog POS.
+        $this->app->tag([KategoriSatuanUntukPos::class, ProdukUntukPos::class], BagianKatalogPos::TAG);
     }
 
     public function boot(): void
     {
-        // Diisi tim pemilik pada Wave 1/2 (tag PemeriksaPemakaianProduk::TAG dan BagianKatalogPos::TAG).
+        // Tidak ada yang perlu di-boot.
     }
 }
