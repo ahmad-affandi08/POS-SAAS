@@ -16,4 +16,10 @@ final class PemakaianPerangkat
     {
         return Perangkat::query()->where('IdOutlet', $idOutlet)->whereNull('DicabutPada')->count();
     }
+
+    /** F-01 checklist "Langkah Berikutnya": perangkat yang sudah diaktifkan dan belum dicabut di tenant aktif. */
+    public function HitungDiaktifkan(): int
+    {
+        return Perangkat::query()->whereNotNull('DiaktifkanPada')->whereNull('DicabutPada')->count();
+    }
 }

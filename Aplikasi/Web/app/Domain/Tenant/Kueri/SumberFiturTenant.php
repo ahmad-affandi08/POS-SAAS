@@ -16,15 +16,19 @@ use Illuminate\Support\Carbon;
  * override pengelola yang masih berlaku. Override yang `BerakhirPada`-nya sudah lewat diabaikan (berakhir otomatis).
  * Bila ada lebih dari satu override aktif untuk kunci yang sama, baris terbaru yang menang.
  *
- * Add-on (F-19), flag fitur (P-10), dan modul outlet (F-02) belum tersedia sehingga masih kosong.
+ * Modul outlet (F-01, BR-01.3) diisi bila outlet disebut: kunci `OutletFitur` aktif outlet itu, atau null (tanpa
+ * batasan) bila outlet belum punya baris sama sekali. Add-on (F-19) dan flag fitur (P-10) belum tersedia.
  */
 final class SumberFiturTenant
 {
+    public function __construct(private readonly FiturOutlet $fiturOutlet) {}
+
     /**
      * @param  bool  $kunci  kunci baris langganan (FOR UPDATE) agar penambahan outlet/pengguna bersamaan dari satu
      *                       tenant diproses berurutan (F-02, BR-P04.3); hanya di dalam transaksi.
+     * @param  int|null  $idOutlet  outlet yang modulnya ikut dievaluasi (F-01); null = tanpa batasan modul outlet
      */
-    public function Ambil(int $idTenant, ?Carbon $pada = null, bool $kunci = false): SumberFitur
+    public function Ambil(int $idTenant, ?Carbon $pada = null, bool $kunci = false, ?int $idOutlet = null): SumberFitur
     {
         $langganan = Langganan::query()
             ->with('Paket.Fitur')
@@ -50,6 +54,7 @@ final class SumberFiturTenant
             batasPaket: $paket?->AmbilBatas() ?? array_fill_keys(Paket::KOLOM_BATAS, 0),
             overrideFitur: array_values(array_unique($overrideFitur)),
             overrideBatas: $overrideBatas,
+            modulOutletAktif: $idOutlet === null ? null : $this->fiturOutlet->AmbilKunciAktifAtauNull($idTenant, $idOutlet),
         );
     }
 

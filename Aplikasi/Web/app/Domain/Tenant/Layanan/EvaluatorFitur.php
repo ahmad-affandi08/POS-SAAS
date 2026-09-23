@@ -53,11 +53,14 @@ final class EvaluatorFitur
         return $batas;
     }
 
-    /** True bila pemakaian saat ini masih boleh bertambah satu lagi (dipakai PastikanBatasPaket di F-00/F-02). */
-    public function CekMasihDalamBatas(SumberFitur $sumber, string $kolomBatas, int $pemakaianSaatIni): bool
+    /**
+     * True bila pemakaian saat ini masih boleh bertambah `$tambahan` lagi (dipakai PastikanBatasPaket di F-00/F-02;
+     * F-01 menambah beberapa produk sekaligus).
+     */
+    public function CekMasihDalamBatas(SumberFitur $sumber, string $kolomBatas, int $pemakaianSaatIni, int $tambahan = 1): bool
     {
         $batas = $this->HitungBatasEfektif($sumber)[$kolomBatas] ?? null;
 
-        return $batas === null || $pemakaianSaatIni < $batas;
+        return $batas === null || $pemakaianSaatIni + $tambahan <= $batas;
     }
 }

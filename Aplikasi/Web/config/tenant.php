@@ -27,4 +27,9 @@ return [
         // F-02: tautan undangan anggota.
         'undangan',
     ],
+
+    // F-01 langkah 1: logo usaha di disk privat (tanpa storage:link, tidak bisa di-hotlink).
+    'DiskLogo' => env('TENANT_DISK_LOGO', 'local'),
+    'UkuranMaksimalLogoKb' => 1024,
+    'EkstensiLogo' => ['png', 'jpg', 'jpeg', 'webp'],
 ];
