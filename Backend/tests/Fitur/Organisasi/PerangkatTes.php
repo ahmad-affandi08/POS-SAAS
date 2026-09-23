@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Enum\JenisPerangkat;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\KodeAktivasi;
 use App\Domain\Organisasi\Model\Merek;
@@ -91,7 +93,7 @@ describe('F-02 langkah 5: tambah perangkat & kode aktivasi di back-office', func
 
         $k1 = BantuanPerangkat::BuatPerangkat($tenant->Id, $outlet)['Perangkat'];
         $k2 = BantuanPerangkat::BuatPerangkat($tenant->Id, $outlet, nama: 'Kasir Belakang')['Perangkat'];
-        $dapur = BantuanPerangkat::BuatPerangkat($tenant->Id, $outlet, \App\Domain\Organisasi\Enum\JenisPerangkat::Kds, 'Layar Dapur')['Perangkat'];
+        $dapur = BantuanPerangkat::BuatPerangkat($tenant->Id, $outlet, JenisPerangkat::Kds, 'Layar Dapur')['Perangkat'];
         BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->post("/kelola/perangkat/{$k2->Uuid}/cabut")->assertSessionHasNoErrors();
         $k3 = BantuanPerangkat::BuatPerangkat($tenant->Id, $outlet)['Perangkat'];
 
@@ -162,7 +164,7 @@ describe('BR-02.1: batas perangkat per outlet dari paket', function (): void {
 
         BantuanPerangkat::BuatPerangkat($tenant->Id, $utama);
         BantuanPerangkat::BuatPerangkat($tenant->Id, $utama);
-        expect(fn () => BantuanPerangkat::BuatPerangkat($tenant->Id, $utama))->toThrow(\App\Domain\Bersama\Galat\PelanggaranAturanBisnis::class);
+        expect(fn () => BantuanPerangkat::BuatPerangkat($tenant->Id, $utama))->toThrow(PelanggaranAturanBisnis::class);
 
         $cabang = PerangkatUjiBuatOutlet($tenant->Id, 'CBG1');
         expect(BantuanPerangkat::BuatPerangkat($tenant->Id, $cabang)['Perangkat']->Kode)->toBe('CBG1-K01');

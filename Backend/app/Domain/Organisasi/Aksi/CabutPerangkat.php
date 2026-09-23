@@ -30,7 +30,8 @@ final class CabutPerangkat
                 return $perangkat;
             }
 
-            $perangkat->DicabutPada = now();
+            $dicabutPada = now();
+            $perangkat->DicabutPada = $dicabutPada;
             $perangkat->save();
 
             KodeAktivasi::query()
@@ -42,7 +43,7 @@ final class CabutPerangkat
 
             $this->audit->Catat('perangkat.cabut', $perangkat, nilaiLama: ['Status' => 'Aktif'], nilaiBaru: [
                 'Status' => 'Dicabut',
-                'DicabutPada' => $perangkat->DicabutPada?->toIso8601String(),
+                'DicabutPada' => $dicabutPada->toIso8601String(),
             ]);
 
             return $perangkat;
