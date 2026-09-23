@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.27 |
+| Versi | 1.28 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -48,6 +48,7 @@
 | 1.25 | Tindak lanjut tinjauan integrasi (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): `/kelola/langganan` memakai izin `langganan.kelola` (khusus Pemilik); izin tenant baru `bantuan.tiket.lihat` & `bantuan.tiket.kelola` (bawaan Pemilik, Admin, Manajer Outlet); 2FA wajib (§20.2, BR-00.8) berlaku untuk peran bawaan Pemilik, Admin, Akuntan di paket ber-`keamanan.2fa-wajib`, dan 2FA milik akun tidak bisa dimatikan selama satu keanggotaan aktif mewajibkannya; tenant `Ditangguhkan` hanya bisa membaca back-office, kecuali langganan/pembayaran, keamanan akun, bantuan, dan persetujuan legal (F-00); banner Tertunggak (dengan batas tenggang) & Ditangguhkan di back-office; `LogAudit` tenant untuk 2FA, atur ulang kata sandi, persetujuan legal, tagihan & bukti transfer (peristiwa tingkat akun dicatat di setiap tenant tempat pengguna aktif). Langkah rilis: jalankan `organisasi:siapkan-peran` agar peran bawaan tenant lama menerima izin baru. |
 | 1.26 | **Pemilik produk mendelegasikan semua pertanyaan terbuka agen kepada agen** dengan patokan "terbaik untuk kita dan terbaik untuk tenant" (23/09/2026). Keputusan agen v1.16–v1.25 yang bertanda "menunggu konfirmasi" dianggap **disetujui** lewat delegasi ini. Keputusan baru dicatat di §25.2 dan D-12; Perjanjian Pemrosesan Data kini wajib disetujui saat registrasi (BR-P06.2). |
 | 1.27 | D-13 (disetujui pemilik produk): folder `Backend/` dipindah ke `Aplikasi/Web/` karena berisi aplikasi Laravel utuh (API, back-office, web publik, Platform Pengelola), sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`. Semua jalur di PRD, `CLAUDE.md`, `.claude/`, `Alat/`, dan CI disesuaikan; penjaga migrasi mengenali jalur lama `Backend/` dan hanya mengizinkan pindah lokasi tanpa perubahan isi. |
+| 1.28 | Rincian F-01 (diputuskan agen atas mandat D-12): wizard `PanduanAwal` 6 langkah dengan progres, penerapan template idempoten & aditif ke `Akun`/`PemetaanAkun`/`Kategori`/`Satuan`/`KelompokPajak`/`OutletFitur`, pajak outlet merujuk `JenisPajak` (tarif dicari saat dipakai), `MetodePembayaran`, produk contoh & tambah cepat, izin `panduan-awal.kelola`. Istilah `PiutangSettlement` → `PiutangPencairan` dan `Waste` → `SusutPersediaan` (§11.2, kamus §13.7.1). §25 no. 15 sebagian dan no. 16(a) ditutup. Rincian tabel §15 ditambahkan setelah implementasi digabung. |
 
 ---
 
@@ -899,6 +900,18 @@ And ia diarahkan ke Onboarding Wizard
 - BR-01.2 COA dibuat dari gabungan COA inti + ekstensi sektor (§11.2).
 - BR-01.3 Feature flag per outlet disimpan di tabel `OutletFitur` sehingga layar POS & menu menyesuaikan.
 
+**Rincian F-01 (v1.28, diputuskan agen atas mandat pemilik produk D-12):**
+- Wizard di `/kelola/panduan-awal`, izin tenant baru `panduan-awal.kelola` (bawaan Pemilik & Admin). Progres per tenant di `ProgresPanduanAwal`; setiap langkah bisa dilewati dan dilanjutkan, beranda menampilkan checklist "Langkah Berikutnya".
+- Langkah 2 menerapkan template `Terbit` versi terbaru secara **idempoten & aditif** (BR-01.1): COA inti + ekstensi sektor ke `Akun` & `PemetaanAkun` (BR-01.2), `Kategori`, `Satuan` dari `SatuanStandar`, `KelompokPajak`, `OutletFitur`, dan pengaturan tenant yang belum ada. Data yang sudah ada (termasuk akun yang diganti nama tenant) tidak ditimpa atau dihapus. Mengganti template menambah, bukan membersihkan, dan UI memberi peringatan. Versi template yang diterapkan dicatat di `Outlet.IdTemplateSektorVersi` & `Outlet.TemplateSektorDiterapkanPada` (BR-P03.1). Penerapan mengunci baris tenant (urutan kunci Tenant → Langganan → Outlet → baris data) sehingga klik ganda aman.
+- `OutletFitur` menyimpan **pilihan template**; fitur efektif = fitur paket ∩ `OutletFitur`, dihitung saat dibaca (`EvaluatorFitur`). Mode kasir disimpan di konfigurasi fitur `pos.retail`.
+- Langkah 3 (pajak): usulan dari sektor, `Tenant.Pkp`, dan tarif PBJT kota outlet. `KelompokPajakDetail` merujuk `IdJenisPajak` (tarif efektif dicari `TarifPajakBerlaku` per kota & tanggal, tidak pernah dibekukan, CLAUDE.md #12); flag outlet di `Outlet.ProfilPajak`. Kota tanpa tarif PBJT di master boleh disimpan dengan peringatan; F-07 memperlakukannya sebagai "PBJT tidak dihitung + peringatan ke Owner", bukan galat penjualan.
+- Langkah 4 (produk awal): (a) produk contoh dari kunci template `ProdukContoh` dan (d) tambah manual cepat (nama + harga + kategori opsional), dibatasi `BatasSku`. Impor Excel/CSV dan dari aplikasi lain dikerjakan di F-03 dan tidak ditampilkan di wizard. Produk cepat bertipe Stok untuk Retail/Grosir dan NonStok untuk F&B sampai ada resep; SKU boleh kosong.
+- Langkah 5 (metode pembayaran): `MetodePembayaran` per tenant: Tunai (selalu ada, tidak bisa dinonaktifkan), QRIS statis (gambar di disk privat), EDC per bank (`ReferensiBank`), Transfer. `IdAkun` kosong = diturunkan dari `PemetaanAkun` sesuai jenis (Tunai → Kas Outlet, QRIS/EDC → Piutang Pencairan, Transfer → Bank). QRIS dinamis & pembacaan isi QR (NMID) menyusul F-08.
+- Langkah 6 (perangkat): memakai aktivasi F-02b; tes cetak dilakukan di Aplikasi Kasir.
+- Logo usaha & gambar QRIS disimpan di disk privat dan diunduh aplikasi lewat API (F-06/F-07), tidak bergantung `storage:link`.
+- Kas Outlet memakai satu akun `1-1100` dengan dimensi `JurnalDetail.IdOutlet` (BR-02.4); akun kas terpisah per outlet tetap bisa dibuat di F-13.
+- Ditunda (utang tercatat): peran sektor (Pelayan, Dapur/Barista, Apoteker, Salesman) ke F-10/F-17; jam buka outlet ke halaman outlet (F-02); materialisasi StasiunDapur, AlasanVoid, AlasanPenyesuaian, LaporanUnggulan dibaca dari versi template terapan sampai flow masing-masing; "Stok awal" di checklist setelah F-05; pratinjau sandbox & tawarkan pembaruan template (BR-P03.6).
+
 ---
 
 ### F-02 · Setup Organisasi
@@ -1055,7 +1068,7 @@ flowchart LR
 | F-05c | **Stock Opname** | Snapshot stok sistem saat mulai; hitung fisik (scan/input, bisa beberapa orang, per rak/kategori); review selisih; approve → penyesuaian otomatis. Opsi *blind count* (penghitung tidak melihat qty sistem). |
 | F-05d | **Penyesuaian Stok** | Rusak, hilang, kadaluarsa, sampel, konsumsi internal. Wajib alasan + approval di atas nilai tertentu. |
 | F-05e | **Produksi / Rakitan** | Order produksi: konsumsi bahan (resep) → hasil produk jadi. HPP produk jadi = total HPP bahan + biaya overhead opsional. |
-| F-05f | **Waste F&B** | Pencatatan bahan terbuang harian (untuk kontrol food cost). |
+| F-05f | **Bahan Terbuang F&B** | Pencatatan bahan terbuang harian (untuk kontrol food cost). |
 | F-05g | **Batch & Expired** | Penjualan mengambil batch otomatis dengan FEFO (First Expired First Out). Notifikasi H-30/H-7 sebelum kadaluarsa. |
 | F-05h | **Serial/IMEI** | Setiap unit punya serial. Penjualan wajib pilih serial. Riwayat serial dari masuk hingga garansi. |
 | F-05i | **Konsinyasi** | Stok titipan tidak menambah aset. Saat terjual → hutang konsinyasi ke penitip. Settlement periodik. |
@@ -1170,7 +1183,7 @@ stateDiagram-v2
 **Aturan Bisnis:**
 - BR-08.1 **Split payment** diizinkan (misal Rp 50rb tunai + sisa QRIS).
 - BR-08.2 **Split bill** (F&B): per item, per orang (bagi rata), atau per nominal. Menghasilkan beberapa dokumen pembayaran untuk satu order.
-- BR-08.3 Setiap metode pembayaran terhubung ke **akun kas/bank/clearing** di COA. Contoh: QRIS → "Piutang Settlement QRIS" sampai dana masuk rekening.
+- BR-08.3 Setiap metode pembayaran terhubung ke **akun kas/bank/clearing** di COA. Contoh: QRIS → "Piutang Pencairan QRIS" sampai dana cair ke rekening.
 - BR-08.4 MDR/biaya (QRIS, EDC, ojol) dicatat otomatis sebagai beban saat settlement (§11).
 - BR-08.5 QRIS dinamis: timeout default 15 menit. Jika webhook terlambat, kasir bisa "Cek Status". Pembayaran ganda terdeteksi via kolom unik `PenjualanPembayaran.RefEksternal`.
 - BR-08.6 Pembulatan tunai hanya untuk bagian tunai.
@@ -1698,7 +1711,7 @@ Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
 | 1-1100 | Kas Outlet (per outlet) | Aset |
 | 1-1150 | Kas Brankas | Aset |
 | 1-1200 | Bank (per rekening) | Aset |
-| 1-1300 | Piutang Settlement (QRIS/EDC/Gateway/Ojol) | Aset |
+| 1-1300 | Piutang Pencairan (QRIS/EDC/Gateway/Ojol) | Aset |
 | 1-1400 | Piutang Usaha | Aset |
 | 1-1450 | Piutang Karyawan (Kasbon) | Aset |
 | 1-1500 | Persediaan Barang Dagang | Aset |
@@ -1728,7 +1741,7 @@ Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
 | 4-9000 | Pendapatan Lain (selisih kas lebih, pembulatan) | Pendapatan |
 | 5-1000 | Harga Pokok Penjualan | HPP |
 | 5-1100 | Selisih HPP / Penyesuaian Persediaan | HPP |
-| 5-1200 | Waste / Barang Rusak | HPP |
+| 5-1200 | Susut & Barang Rusak | HPP |
 | 6-1000 | Beban Gaji & Komisi | Beban |
 | 6-2000 | Beban Sewa, Listrik, Air, Internet | Beban |
 | 6-3000 | Beban Biaya Pembayaran (MDR QRIS/EDC, komisi ojol) | Beban |
@@ -1748,19 +1761,19 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-04.3 | Belanja stok tunai (mode UMKM) | Persediaan (+ PPN Masukan) | Kas/Bank |
 | J-04.4 | Bayar hutang | Hutang Usaha | Kas/Bank |
 | J-04.5 | Retur pembelian | Hutang Usaha | Persediaan (+ PPN Masukan kontra) |
-| J-07.1 | Penjualan (pendapatan) | Kas / Piutang Settlement / Piutang Usaha / Uang Muka Pelanggan / Deposit Pelanggan (sesuai metode) + Diskon Penjualan | Penjualan / Pendapatan Jasa + Pendapatan Service Charge + PPN Keluaran / Hutang PB1 + Pendapatan Lain (pembulatan) |
+| J-07.1 | Penjualan (pendapatan) | Kas / Piutang Pencairan / Piutang Usaha / Uang Muka Pelanggan / Deposit Pelanggan (sesuai metode) + Diskon Penjualan | Penjualan / Pendapatan Jasa + Pendapatan Service Charge + PPN Keluaran / Hutang PB1 + Pendapatan Lain (pembulatan) |
 | J-07.2 | Penjualan (HPP) | HPP | Persediaan (barang/bahan) |
 | J-07.3 | DP pre-order diterima | Kas | Uang Muka Pelanggan |
 | J-09.1 | Void | Pembalik penuh J-07.1 & J-07.2 | |
 | J-09.2 | Retur penjualan | Retur Penjualan + PPN/PB1 (kontra) ; Persediaan | Kas/Piutang/Nota Kredit ; HPP |
-| J-08.1 | Settlement QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Settlement |
+| J-08.1 | Pencairan QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Pencairan |
 | J-06.1 | Kas keluar (beban) | Beban terkait | Kas Outlet |
 | J-11.1 | Selisih kas kurang | Beban Selisih Kas | Kas Outlet |
 | J-11.2 | Selisih kas lebih | Kas Outlet | Pendapatan Lain |
 | J-11.3 | Setoran kas ke bank | Bank/Kas Brankas | Kas Outlet |
 | J-05.2 | Transfer stok dikirim | Persediaan Dalam Perjalanan | Persediaan (lokasi asal) |
 | J-05.3 | Transfer stok diterima | Persediaan (lokasi tujuan) | Persediaan Dalam Perjalanan |
-| J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Waste | Persediaan |
+| J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Susut & Barang Rusak | Persediaan |
 | J-05.5 | Opname/penyesuaian lebih | Persediaan | Selisih HPP |
 | J-05.6 | Produksi | Persediaan Barang Jadi | Persediaan Bahan Baku (+ Overhead Dibebankan) |
 | J-05.7 | Konsinyasi terjual | HPP | Hutang Konsinyasi |
@@ -2130,6 +2143,9 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | controller / middleware / request | `Kontroler` / `Perantara` / `Permintaan` | policy / query / service | `Kebijakan` / `Kueri` / `Layanan` |
 | job | `Tugas` | repository | `Repositori` |
 | Owner app | `Pemilik` (folder `Aplikasi/Pemilik`) | POS app | `Kasir` (folder `Aplikasi/Kasir`) |
+| settlement / payout receivable | `PiutangPencairan` (v1.28) | waste / shrinkage | `SusutPersediaan` (v1.28) |
+| onboarding wizard | `PanduanAwal` | payment method | `MetodePembayaran` |
+| feature flag per outlet | `OutletFitur` | web app (Laravel) | `Web` (folder `Aplikasi/Web`, D-13) |
 
 Pola penamaan class per jenis (**{Objek}{Jenis}**, agar file satu domain berdekatan saat diurutkan):
 `PenjualanKontroler`, `PenjualanKebijakan`, `SimpanProdukPermintaan`, `ProdukRespons`, `KirimStrukWaTugas`. Pengecualian: class **Aksi** dan **Peristiwa** memakai kalimat langsung, misal Aksi `SelesaikanPenjualan`, Peristiwa `PenjualanSelesai`, Penangan `KurangiStokPenjualan`.
@@ -3690,8 +3706,8 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
 14. **Utang implementasi P-04** (sebagian selesai v1.22): `PastikanBatasPaket` menegakkan `BatasOutlet` & `BatasPengguna` di F-02a. `BatasPerangkatPerOutlet` & `konfigurasi-aplikasi` selesai di F-02b (v1.24). Sisa: BR-P04.4 downgrade (F-19) dengan aturan kelebihan kapasitas di §25.2 no. 2.
-15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
-16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
+15. **Utang implementasi P-03** (sebagian selesai v1.28): kolom versi template pada outlet (BR-P03.1), penerapan aditif (BR-01.1), dan produk contoh (`ProdukContoh`) dibangun bersama F-01. Sisa: pratinjau sandbox dan tawarkan pembaruan ke tenant (BR-P03.6); penerapan ulang memakai Aksi yang sama.
+16. **Istilah & kelengkapan peran akun P-03**: (a) ~~`PiutangSettlement` & `Waste`~~ **Ditutup v1.28**: menjadi `PiutangPencairan` & `SusutPersediaan` (kamus §13.7.1); versi template terbit yang memuat kunci lama tetap terbaca lewat alias; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
 17. ~~Utang log audit tenant~~ **Ditutup v1.22**: tabel `LogAudit` tenant (append-only) mencatat pendaftaran, masuk/keluar, pilih tenant, akhir trial, dan semua aksi F-02. Aksi autentikasi (2FA, reset kata sandi, persetujuan legal) & tagihan tenant tersambung sejak v1.25.
 18. ~~Enumerasi akun saat registrasi~~ **Ditutup v1.22** (BR-00.10): email/nomor yang sudah terdaftar ditolak dengan satu pesan umum, pemilik akun menerima email pemberitahuan (maks. 1/jam).
 
