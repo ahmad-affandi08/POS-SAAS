@@ -43,4 +43,10 @@ final class DaftarPerangkat
             ])
             ->all());
     }
+
+    /** Perangkat tenant aktif berdasarkan Uuid di satu outlet; null bila tidak ada (termasuk milik tenant/outlet lain). */
+    public function CariDiOutlet(string $uuid, int $idOutlet): ?Perangkat
+    {
+        return Perangkat::query()->where('Uuid', $uuid)->where('IdOutlet', $idOutlet)->first();
+    }
 }

@@ -24,7 +24,7 @@ use Throwable;
  * - QRIS statis wajib gambar; disimpan di disk privat dan dihapus lagi bila transaksi gagal.
  * - EDC wajib bank/jaringan EDC aktif; transfer wajib bank/dompet digital aktif + nomor & nama pemilik rekening.
  * - Biaya (MDR) 0–10 persen, string desimal (tidak pernah float).
- * - Tunai dipastikan ada lebih dulu (idempoten).
+ * - Tunai dipastikan ada lebih dulu (idempoten). Nama unik per tenant (tanpa beda huruf besar/kecil): kirim ganda ditolak.
  */
 final class SimpanMetodePembayaran
 {
@@ -47,6 +47,16 @@ final class SimpanMetodePembayaran
             return DB::transaction(function () use ($idTenant, $isian, $path, $data): MetodePembayaran {
                 $this->penguncian->Kunci($idTenant);
                 $this->siapkanBawaan->Jalankan($idTenant);
+
+                // Kirim ganda (klik dua kali, tab lain) tidak membuat metode kembar: nama unik per tenant, diperiksa di
+                // bawah kunci Tenant. Berkas QRIS kiriman kedua dihapus lagi oleh blok catch.
+                $namaKecil = mb_strtolower(trim($data->nama));
+                $namaAda = MetodePembayaran::query()->pluck('Nama')->contains(fn (mixed $nama): bool => mb_strtolower(trim((string) $nama)) === $namaKecil);
+
+                if ($namaAda) {
+                    throw new PelanggaranAturanBisnis('NamaMetodeSudahAda', 'Metode pembayaran dengan nama ini sudah ada.', 'Nama');
+                }
+
                 $urutan = (int) MetodePembayaran::query()->max('Urutan');
 
                 $metode = MetodePembayaran::query()->create([...$isian, 'PathGambarQris' => $path, 'Urutan' => $urutan + 1, 'Aktif' => true]);

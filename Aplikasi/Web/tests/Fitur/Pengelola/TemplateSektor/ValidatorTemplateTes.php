@@ -166,7 +166,7 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
             'Mode kasir default harus salah satu mode yang dipilih.',
         ])->and(AmbilPesanValidasi($isi, 'Pengaturan'))->toBe([
             'Kelipatan pembulatan tunai harus bilangan bulat Rupiah lebih dari 0 (misal 100).',
-            'Service charge harus 0 sampai 10 persen.',
+            'Biaya layanan harus 0 sampai 10 persen.',
             'Metode HPP tidak dikenal.',
             'Pengaturan StokBolehMinus wajib ya atau tidak.',
         ])->and(AmbilPesanValidasi($isi, 'Kategori'))->toBe(['Nama kopi ganda.'])
@@ -189,7 +189,7 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
         TerbitkanPpnUji();
 
         expect(AmbilPesanValidasi($isi, 'KelompokPajak'))->toBe([
-            'Kelompok Makan & minum: PbjtMakananMinuman memakai subtotal + service charge, padahal pengaturan service charge tidak masuk DPP.',
+            'Kelompok Makan & minum: PbjtMakananMinuman memakai subtotal + biaya layanan, padahal pengaturan biaya layanan tidak masuk DPP.',
             'Kelompok Makan & minum: urutan Ppn harus angka 1–9 dan tidak ganda.',
         ]);
     });

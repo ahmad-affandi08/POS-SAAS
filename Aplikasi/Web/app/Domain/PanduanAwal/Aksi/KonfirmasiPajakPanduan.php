@@ -13,6 +13,7 @@ use App\Domain\PanduanAwal\Data\DataPajakPanduan;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
 use App\Domain\Tenant\Kueri\ProfilTenant;
+use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,6 +27,7 @@ final class KonfirmasiPajakPanduan
     public function __construct(
         private readonly KonteksTenant $konteks,
         private readonly ProfilTenant $profilTenant,
+        private readonly PenguncianTenant $penguncian,
         private readonly SimpanProfilPajakOutlet $simpanProfilPajak,
         private readonly TandaiLangkahPanduan $tandai,
     ) {}
@@ -36,9 +38,12 @@ final class KonfirmasiPajakPanduan
             throw new PelanggaranAturanBisnis('KotaBelumDiisi', 'Isi kota outlet di langkah Profil usaha dulu. Tarif PBJT mengikuti kota.', 'PungutPbjt');
         }
 
-        $pkp = $this->profilTenant->Ambil($this->konteks->Wajib())['Pkp'];
+        $idTenant = $this->konteks->Wajib();
 
-        DB::transaction(function () use ($outlet, $data, $pkp): void {
+        DB::transaction(function () use ($outlet, $data, $idTenant): void {
+            // Urutan kunci Tenant → Outlet (sama dengan penerapan template); PKP dibaca setelah Tenant terkunci.
+            $this->penguncian->Kunci($idTenant);
+            $pkp = $this->profilTenant->Ambil($idTenant)['Pkp'];
             $this->simpanProfilPajak->Jalankan($outlet, new DataProfilPajakOutlet(
                 pkp: $pkp,
                 pungutPbjt: $data->pungutPbjt,

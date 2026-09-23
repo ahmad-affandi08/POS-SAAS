@@ -9,17 +9,23 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\PemetaanAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
  * F-01 (BR-01.2, BR-01.1): COA inti + ekstensi sektor dari template menjadi `Akun` tenant, lalu pemetaan peran akun
  * tingkat tenant. Aditif & idempoten: akun yang kodenya sudah ada tidak diubah (termasuk yang diganti namanya
  * tenant), pemetaan yang sudah ada tidak ditimpa. Peran tidak dikenal dan akun yang tidak ada dilewati.
- * Pemanggil sudah memegang kunci baris Tenant (kirim ganda aman).
+ * Mengunci baris Tenant sendiri (kirim ganda aman).
  */
 final class TambahkanAkunTemplate
 {
-    public function __construct(private readonly PencatatAudit $audit) {}
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly PenguncianTenant $penguncian,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     /**
      * @param  list<DataAkunTemplate>  $akun
@@ -29,6 +35,8 @@ final class TambahkanAkunTemplate
     public function Jalankan(array $akun, array $pemetaan): array
     {
         return DB::transaction(function () use ($akun, $pemetaan): array {
+            // Kunci Tenant sendiri (reentran dalam satu transaksi): aman walau pemanggil belum mengunci.
+            $this->penguncian->Kunci($this->konteks->Wajib());
             $idPerKode = Akun::query()->pluck('Id', 'Kode')->all();
             $kodeBaru = [];
 

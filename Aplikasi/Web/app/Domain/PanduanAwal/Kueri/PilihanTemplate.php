@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\PanduanAwal\Kueri;
 
-use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Data\DataOutletRingkas;
 use App\Domain\PanduanAwal\Layanan\PembacaIsiTemplate;
 use App\Domain\Penjualan\Enum\ModeKasir;
 use App\Domain\Tenant\Kueri\FiturOutlet;
@@ -32,9 +32,9 @@ final class PilihanTemplate
      *
      * @return array<string, mixed>
      */
-    public function Ambil(Outlet $outlet): array
+    public function Ambil(DataOutletRingkas $outlet): array
     {
-        $idTenant = $outlet->IdTenant;
+        $idTenant = $outlet->idTenant;
         $template = $this->templateTerbit->AmbilSemua();
         $semuaKunci = [];
         $isiPerKode = [];
@@ -53,7 +53,7 @@ final class PilihanTemplate
             $tersedia[$kunci] = $this->pemeriksaFitur->CekAktif($idTenant, $kunci);
         }
 
-        $versiTerpilih = $this->templateTerbit->CariVersi($outlet->IdTemplateSektorVersi);
+        $versiTerpilih = $this->templateTerbit->CariVersi($outlet->idTemplateSektorVersi);
         $sektor = $this->profilTenant->Ambil($idTenant)['Pengaturan']['Sektor'] ?? [];
 
         return [
@@ -79,15 +79,15 @@ final class PilihanTemplate
                     'JumlahProdukContoh' => count($isi->produkContoh),
                 ];
             }, $template),
-            'TemplateTerpilih' => $versiTerpilih === null || $outlet->TemplateSektorDiterapkanPada === null ? null : [
+            'TemplateTerpilih' => $versiTerpilih === null || $outlet->templateSektorDiterapkanPada === null ? null : [
                 'Kode' => $versiTerpilih->TemplateSektor->Kode,
                 'Nama' => $versiTerpilih->TemplateSektor->Nama,
                 'Versi' => $versiTerpilih->Versi,
-                'DiterapkanPada' => $outlet->TemplateSektorDiterapkanPada->toIso8601ZuluString(),
+                'DiterapkanPada' => $outlet->templateSektorDiterapkanPada->toIso8601ZuluString(),
             ],
             'SektorLain' => array_values(array_filter(
                 is_array($sektor) ? $sektor : [],
-                fn (mixed $kode) => is_string($kode) && $kode !== $outlet->TemplateSektor,
+                fn (mixed $kode) => is_string($kode) && $kode !== $outlet->templateSektor,
             )),
             'NamaPaket' => $this->sumberFitur->AmbilNamaPaket($idTenant),
         ];

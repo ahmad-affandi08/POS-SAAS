@@ -9,6 +9,7 @@ use App\Domain\Akuntansi\Enum\SaldoNormal;
 use App\Domain\Akuntansi\Enum\TipeAkun;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Laporan\Enum\LaporanUnggulan;
+use App\Domain\Pajak\Data\BatasBiayaLayanan;
 use App\Domain\Pajak\Enum\CakupanPajak;
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
 use App\Domain\Pajak\Model\JenisPajak;
@@ -30,8 +31,6 @@ final class ValidatorTemplate
 {
     /** Kode akun §11.2: satu digit tipe, tanda hubung, empat digit. */
     public const POLA_KODE_AKUN = '/^[1-6]-\d{4}$/';
-
-    public const PERSEN_BIAYA_LAYANAN_MAKSIMAL = '10';
 
     /** Harga produk contoh: string desimal Rupiah (DECIMAL(18,2)), tanpa pemisah ribuan. Tidak pernah float. */
     public const POLA_HARGA = '/^\d{1,16}(\.\d{1,2})?$/';
@@ -419,7 +418,7 @@ final class ValidatorTemplate
                 if ($dasar === null) {
                     $this->Catat('KelompokPajak', "Kelompok {$nama}: dasar pengenaan {$kode} tidak dikenal.");
                 } elseif ($dasar === DasarPengenaanPajak::SubtotalPlusLayanan && ! $biayaLayananMasukDpp) {
-                    $this->Catat('KelompokPajak', "Kelompok {$nama}: {$kode} memakai subtotal + service charge, padahal pengaturan service charge tidak masuk DPP.");
+                    $this->Catat('KelompokPajak', "Kelompok {$nama}: {$kode} memakai subtotal + biaya layanan, padahal pengaturan biaya layanan tidak masuk DPP.");
                 }
 
                 $urutan = $baris['Urutan'] ?? null;
@@ -456,8 +455,8 @@ final class ValidatorTemplate
 
         $persen = self::AmbilDesimal($pengaturan['PersenBiayaLayanan'] ?? null);
 
-        if ($persen === null || $persen->isNegative() || $persen->isGreaterThan(self::PERSEN_BIAYA_LAYANAN_MAKSIMAL)) {
-            $this->Catat('Pengaturan', 'Service charge harus 0 sampai '.self::PERSEN_BIAYA_LAYANAN_MAKSIMAL.' persen.');
+        if ($persen === null || $persen->isNegative() || $persen->isGreaterThan(BatasBiayaLayanan::PERSEN_MAKSIMAL)) {
+            $this->Catat('Pengaturan', 'Biaya layanan harus 0 sampai '.BatasBiayaLayanan::PERSEN_MAKSIMAL.' persen.');
         }
 
         if (! is_string($pengaturan['MetodeHpp'] ?? null) || MetodeHpp::tryFrom($pengaturan['MetodeHpp']) === null) {

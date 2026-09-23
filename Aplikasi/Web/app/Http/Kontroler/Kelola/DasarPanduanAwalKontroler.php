@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Organisasi\Data\DataOutletRingkas;
+use App\Domain\Organisasi\Kueri\OutletUtama;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Kueri\ProgresPanduan;
@@ -15,14 +17,21 @@ use Illuminate\Http\RedirectResponse;
  */
 abstract class DasarPanduanAwalKontroler extends DasarKelolaKontroler
 {
-    protected function OutletPanduan(): Outlet
+    /** Ringkasan outlet wizard untuk Kueri panduan awal (DTO, CLAUDE.md #14). */
+    protected function OutletPanduanRingkas(): DataOutletRingkas
     {
         $outlet = app(ProgresPanduan::class)->AmbilOutlet();
         abort_if($outlet === null, 404);
         $boleh = $this->IdOutletBoleh();
-        abort_if($boleh !== null && ! in_array($outlet->Id, $boleh, true), 404);
+        abort_if($boleh !== null && ! in_array($outlet->id, $boleh, true), 404);
 
         return $outlet;
+    }
+
+    /** Model outlet wizard untuk Aksi (dimuat ulang dari scope tenant aktif). */
+    protected function OutletPanduan(): Outlet
+    {
+        return app(OutletUtama::class)->CariAktif($this->OutletPanduanRingkas()->id) ?? abort(404);
     }
 
     /**

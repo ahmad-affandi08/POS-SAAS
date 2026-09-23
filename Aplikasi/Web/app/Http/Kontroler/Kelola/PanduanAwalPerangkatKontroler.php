@@ -64,9 +64,9 @@ final class PanduanAwalPerangkatKontroler extends DasarPanduanAwalKontroler
         return $this->KembaliDenganKode($hasil['Perangkat'], $hasil['Kode'], $hasil['KedaluwarsaPada'], "Perangkat {$hasil['Perangkat']->Nama} ({$hasil['Perangkat']->Kode}) ditambahkan. Masukkan kode aktivasi di aplikasi kasir.");
     }
 
-    public function BuatKodeAktivasi(string $perangkat, BuatKodeAktivasi $buatKode): RedirectResponse
+    public function BuatKodeAktivasi(string $perangkat, DaftarPerangkat $daftar, BuatKodeAktivasi $buatKode): RedirectResponse
     {
-        $baris = Perangkat::query()->where('Uuid', $perangkat)->where('IdOutlet', $this->OutletPanduan()->Id)->first() ?? abort(404);
+        $baris = $daftar->CariDiOutlet($perangkat, $this->OutletPanduan()->Id) ?? abort(404);
         $kode = $buatKode->Jalankan($baris, $this->Pelaku()->Id);
 
         return $this->KembaliDenganKode($baris, $kode['Kode'], $kode['KedaluwarsaPada'], "Kode aktivasi baru untuk {$baris->Nama} dibuat. Kode sebelumnya tidak berlaku lagi.");

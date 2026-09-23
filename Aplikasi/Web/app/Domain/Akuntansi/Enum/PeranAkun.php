@@ -132,7 +132,7 @@ enum PeranAkun: string
             self::DiskonPenjualan => 'Diskon penjualan',
             self::ReturPenjualan => 'Retur penjualan',
             self::PendapatanJasa => 'Pendapatan jasa',
-            self::PendapatanBiayaLayanan => 'Pendapatan biaya layanan (service charge)',
+            self::PendapatanBiayaLayanan => 'Pendapatan biaya layanan',
             self::PendapatanLain => 'Pendapatan lain (selisih kas lebih, pembulatan)',
             self::Hpp => 'Harga pokok penjualan',
             self::SelisihHpp => 'Selisih HPP / penyesuaian persediaan',

@@ -33,7 +33,8 @@ use Illuminate\Support\Facades\DB;
  * - BR-01.2: COA inti + ekstensi sektor dan pemetaan akun dibuat dari template.
  * - BR-01.3: modul template menjadi `OutletFitur`; fitur efektif tetap dibatasi paket (P-04).
  * - BR-P03.1: template & versi dicatat di outlet; versi baru tidak mengubah tenant sampai diterapkan lagi.
- * Semua penulisan lewat Aksi publik domain pemiliknya, dalam satu transaksi dengan kunci Tenant (kirim ganda aman).
+ * Semua penulisan lewat Aksi publik domain pemiliknya, dalam satu transaksi. Urutan kunci Tenant → Outlet → baris data
+ * (v1.28) sehingga kirim ganda & langkah lain yang berjalan bersamaan aman dari deadlock.
  */
 final class TerapkanTemplateSektor
 {
@@ -66,7 +67,9 @@ final class TerapkanTemplateSektor
         $idTenant = $this->konteks->Wajib();
 
         return DB::transaction(function () use ($outlet, $versi, $kodeTemplate, $sektorLain, $idTenant): HasilPenerapanTemplate {
+            // Urutan kunci: Tenant → Outlet (dicatat lebih dulu) → baris data template.
             $this->penguncian->Kunci($idTenant);
+            $versiBerubah = $this->catatTemplate->Jalankan($outlet, $kodeTemplate, $versi->Id);
             $isi = $this->pembaca->Baca($versi->Isi);
 
             $akun = $this->tambahAkun->Jalankan($isi->akun, $isi->pemetaanAkun);
@@ -81,12 +84,13 @@ final class TerapkanTemplateSektor
                 $isi->kunciFitur,
                 $isi->modeKasir === [] ? null : ['ModeKasir' => $isi->modeKasir, 'ModeKasirDefault' => $isi->modeKasirDefault],
             );
-            $pengaturan = $this->lengkapiPengaturan->Jalankan($idTenant, [
-                ...$isi->pengaturan->AmbilPengaturanTenant(),
-                'Sektor' => array_values(array_unique([$kodeTemplate, ...$sektorLain])),
-            ]);
+            // Sektor usaha campuran bertambah (union) setiap kali template diterapkan; pengaturan lain hanya dilengkapi.
+            $pengaturan = $this->lengkapiPengaturan->Jalankan(
+                $idTenant,
+                $isi->pengaturan->AmbilPengaturanTenant(),
+                ['Sektor' => array_values(array_unique([$kodeTemplate, ...$sektorLain]))],
+            );
             $this->siapkanMetodePembayaran->Jalankan($idTenant);
-            $versiBerubah = $this->catatTemplate->Jalankan($outlet, $kodeTemplate, $versi->Id);
             $this->tandai->Jalankan(LangkahPanduan::Sektor, StatusLangkahPanduan::Selesai, $outlet->Id);
 
             $hasil = new HasilPenerapanTemplate(

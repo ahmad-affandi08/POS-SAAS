@@ -160,7 +160,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
             ->and(Kategori::query()->whereRaw('LOWER(Nama) = ?', ['minuman'])->count())->toBeLessThanOrEqual(1)
             ->and(KelompokPajak::query()->orderBy('Id')->pluck('Nama')->all())->toBe(['Makan & minum', 'Barang kena PPN'])
             ->and(Akun::query()->count())->toBeGreaterThanOrEqual($akunSebelum)
-            ->and(($tenant->fresh()?->Pengaturan ?? [])['Sektor'])->toBe(['FNB-CAF']);
+            ->and(($tenant->fresh()?->Pengaturan ?? [])['Sektor'])->toBe(['FNB-CAF', 'RTL-GEN']);
         expect(Outlet::query()->findOrFail($outlet->Id)->TemplateSektor)->toBe('RTL-GEN');
     });
 

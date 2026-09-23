@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\PanduanAwal\Kueri;
 
-use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Data\DataOutletRingkas;
+use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
+use App\Domain\Pajak\Data\DataTarifBerlaku;
 use App\Domain\Pajak\Enum\CakupanPajak;
 use App\Domain\Pajak\Kueri\DaftarKelompokPajak;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
-use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\PanduanAwal\Data\DataIsiTemplate;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
@@ -38,6 +39,7 @@ final class UsulanPajak
         private readonly TarifPajakBerlaku $tarifBerlaku,
         private readonly DaftarKelompokPajak $kelompokPajak,
         private readonly WilayahKota $wilayahKota,
+        private readonly ProfilPajakOutlet $profilPajakOutlet,
     ) {}
 
     /**
@@ -45,29 +47,29 @@ final class UsulanPajak
      *
      * @return array<string, mixed>
      */
-    public function Ambil(Outlet $outlet): array
+    public function Ambil(DataOutletRingkas $outlet): array
     {
-        $pkp = $this->profilTenant->Ambil($outlet->IdTenant)['Pkp'];
-        $versi = $this->templateTerbit->CariVersi($outlet->IdTemplateSektorVersi);
+        $pkp = $this->profilTenant->Ambil($outlet->idTenant)['Pkp'];
+        $versi = $this->templateTerbit->CariVersi($outlet->idTemplateSektorVersi);
         $isi = $versi === null ? null : $this->pembaca->Baca($versi->Isi);
-        $kota = $outlet->KodeKota === null ? null : $this->wilayahKota->Cari($outlet->KodeKota);
-        $hari = now($outlet->ZonaWaktu);
+        $kota = $outlet->kodeKota === null ? null : $this->wilayahKota->Cari($outlet->kodeKota);
+        $hari = now($outlet->zonaWaktu);
 
-        $tarifPbjt = $outlet->KodeKota === null ? null : $this->tarifBerlaku->Cari(self::KODE_PBJT, $outlet->KodeKota, $hari);
-        $tarifPpn = $this->tarifBerlaku->Cari(self::KODE_PPN, null, $hari);
+        $tarifPbjt = $outlet->kodeKota === null ? null : $this->tarifBerlaku->CariData(self::KODE_PBJT, $outlet->kodeKota, $hari);
+        $tarifPpn = $this->tarifBerlaku->CariData(self::KODE_PPN, null, $hari);
         $sudah = $this->progres->AmbilStatus(LangkahPanduan::Pajak) === StatusLangkahPanduan::Selesai;
         $usulan = $this->SusunUsulan($isi);
 
         return [
             'Pkp' => $pkp,
             'Kota' => $kota === null ? null : ['Kode' => $kota['Kode'], 'Nama' => $kota['Nama']],
-            'Nilai' => $sudah ? $this->AmbilNilaiTersimpan($outlet) : $usulan['Nilai'],
+            'Nilai' => $sudah ? $this->AmbilNilaiTersimpan($outlet->id) : $usulan['Nilai'],
             'SudahDikonfirmasi' => $sudah,
-            'TarifPbjt' => $tarifPbjt === null ? null : [...self::PetakanTarif($tarifPbjt), 'BiayaLayananMasukDpp' => $tarifPbjt->BiayaLayananMasukDpp],
+            'TarifPbjt' => $tarifPbjt === null ? null : [...self::PetakanTarif($tarifPbjt), 'BiayaLayananMasukDpp' => $tarifPbjt->biayaLayananMasukDpp],
             'TarifPpn' => $tarifPpn === null ? null : [
                 ...self::PetakanTarif($tarifPpn),
-                'PengaliDppPembilang' => $tarifPpn->PengaliDppPembilang,
-                'PengaliDppPenyebut' => $tarifPpn->PengaliDppPenyebut,
+                'PengaliDppPembilang' => $tarifPpn->pengaliDppPembilang,
+                'PengaliDppPenyebut' => $tarifPpn->pengaliDppPenyebut,
             ],
             'KelompokPajak' => $this->kelompokPajak->Ambil(),
             'AlasanUsulan' => $this->SusunAlasan($pkp, $versi?->TemplateSektor->Nama, $usulan, $kota['Nama'] ?? null, $tarifPbjt !== null),
@@ -107,17 +109,19 @@ final class UsulanPajak
     /**
      * @return array{PungutPbjt: bool, BiayaLayananAktif: bool, PersenBiayaLayanan: string, HargaTermasukPajak: bool}
      */
-    private function AmbilNilaiTersimpan(Outlet $outlet): array
+    private function AmbilNilaiTersimpan(int $idOutlet): array
     {
-        $profil = $outlet->ProfilPajak ?? [];
-        $biaya = is_array($profil['BiayaLayanan'] ?? null) ? $profil['BiayaLayanan'] : [];
-        $persen = self::AmbilPersen($biaya['Persen'] ?? null);
+        $profil = $this->profilPajakOutlet->Ambil($idOutlet);
+
+        if ($profil === null) {
+            return ['PungutPbjt' => false, 'BiayaLayananAktif' => false, 'PersenBiayaLayanan' => '0.00', 'HargaTermasukPajak' => false];
+        }
 
         return [
-            'PungutPbjt' => ($profil['PungutPbjt'] ?? false) === true,
-            'BiayaLayananAktif' => ($biaya['Aktif'] ?? false) === true,
-            'PersenBiayaLayanan' => (string) ($persen ?? BigDecimal::zero())->toScale(2, RoundingMode::Down),
-            'HargaTermasukPajak' => ($profil['HargaTermasukPajak'] ?? false) === true,
+            'PungutPbjt' => $profil->pungutPbjt,
+            'BiayaLayananAktif' => $profil->biayaLayananAktif,
+            'PersenBiayaLayanan' => $profil->persenBiayaLayanan,
+            'HargaTermasukPajak' => $profil->hargaTermasukPajak,
         ];
     }
 
@@ -136,7 +140,7 @@ final class UsulanPajak
         if ($namaKota !== null && $usulan['PbjtDariTemplate']) {
             $alasan[] = $adaTarifPbjt
                 ? "Tarif PBJT mengikuti peraturan daerah {$namaKota}."
-                : "Tarif PBJT {$namaKota} belum tersedia di sistem. Anda tetap bisa menyimpan; kami akan melengkapinya.";
+                : "Tarif PBJT {$namaKota} belum tersedia. Anda tetap bisa menyimpan; PBJT belum dihitung sampai tarifnya tersedia.";
         }
 
         $alasan[] = $pkp
@@ -144,7 +148,7 @@ final class UsulanPajak
             : 'Usaha Anda belum PKP, jadi PPN tidak dipungut. Ubah di langkah Profil usaha bila sudah dikukuhkan PKP.';
 
         if ($usulan['Nilai']['BiayaLayananAktif']) {
-            $alasan[] = "Template {$namaTemplate} mengusulkan service charge (biaya layanan) {$usulan['Nilai']['PersenBiayaLayanan']}%.";
+            $alasan[] = "Template {$namaTemplate} mengusulkan biaya layanan {$usulan['Nilai']['PersenBiayaLayanan']}%.";
         }
 
         return $alasan;
@@ -153,9 +157,9 @@ final class UsulanPajak
     /**
      * @return array{Tarif: string, BerlakuMulai: string, NomorDasarHukum: string|null}
      */
-    private static function PetakanTarif(TarifPajak $tarif): array
+    private static function PetakanTarif(DataTarifBerlaku $tarif): array
     {
-        return ['Tarif' => $tarif->Tarif, 'BerlakuMulai' => $tarif->BerlakuMulai->toDateString(), 'NomorDasarHukum' => $tarif->NomorDasarHukum];
+        return ['Tarif' => $tarif->tarif, 'BerlakuMulai' => $tarif->berlakuMulai, 'NomorDasarHukum' => $tarif->nomorDasarHukum];
     }
 
     private static function AmbilPersen(mixed $nilai): ?BigDecimal

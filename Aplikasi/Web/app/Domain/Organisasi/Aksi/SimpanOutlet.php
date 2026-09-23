@@ -42,8 +42,6 @@ final class SimpanOutlet
     {
         return DB::transaction(function () use ($outlet, $data): Outlet {
             $kode = mb_strtoupper(trim($data->kode));
-            // F-01: kunci lain di ProfilPajak (service charge, harga termasuk pajak) tidak boleh hilang saat outlet diubah.
-            $profilPajakLama = $outlet === null ? [] : (Outlet::query()->whereKey($outlet->Id)->value('ProfilPajak') ?? []);
             $isian = [
                 'Nama' => trim($data->nama),
                 'Kode' => $kode,
@@ -53,7 +51,6 @@ final class SimpanOutlet
                 'ZonaWaktu' => $this->TentukanZonaWaktu($data),
                 'JamTutupBuku' => $data->jamTutupBuku,
                 'ProfilPajak' => [
-                    ...(is_array($profilPajakLama) ? $profilPajakLama : []),
                     'Pkp' => $data->pkp,
                     'Nitku' => $data->pkp && $data->nitku !== null && trim($data->nitku) !== '' ? trim($data->nitku) : null,
                     'PungutPbjt' => $data->pungutPbjt,
@@ -94,6 +91,9 @@ final class SimpanOutlet
     private function Ubah(Outlet $outlet, array $isian): Outlet
     {
         $outlet = Outlet::query()->lockForUpdate()->findOrFail($outlet->Id);
+        // F-01: kunci lain di ProfilPajak (biaya layanan, harga termasuk pajak) tidak boleh hilang saat outlet diubah.
+        // Digabung dari baris yang sudah terkunci supaya perubahan pajak yang baru di-commit tidak tertimpa.
+        $isian['ProfilPajak'] = [...($outlet->ProfilPajak ?? []), ...$isian['ProfilPajak']];
 
         if ($isian['Kode'] !== $outlet->Kode && $outlet->KodeDikunciPada !== null) {
             throw new PelanggaranAturanBisnis('BR-02.2', 'Kode outlet tidak bisa diubah karena outlet sudah bertransaksi. Nomor dokumen lama memakai kode ini.', 'Kode');

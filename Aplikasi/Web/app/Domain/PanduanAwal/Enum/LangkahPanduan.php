@@ -41,6 +41,16 @@ enum LangkahPanduan: string
         return null;
     }
 
+    /**
+     * Langkah yang boleh ditandai Selesai langsung (tombol "Lanjutkan") karena tidak punya Aksi simpan sendiri atau
+     * isinya opsional: produk, metode pembayaran, perangkat. Profil usaha, sektor, dan pajak hanya Selesai lewat Aksi
+     * langkahnya (datanya wajib tersimpan dulu). Semua langkah tetap boleh dilewati.
+     */
+    public function CekBisaDitandaiSelesaiLangsung(): bool
+    {
+        return in_array($this, [self::Produk, self::MetodePembayaran, self::Perangkat], true);
+    }
+
     public function AmbilJudul(): string
     {
         return match ($this) {
