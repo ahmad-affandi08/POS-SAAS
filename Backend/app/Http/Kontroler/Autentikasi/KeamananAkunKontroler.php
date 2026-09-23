@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Autentikasi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
-use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Aksi\AktifkanDuaFaktorPengguna;
 use App\Domain\Organisasi\Aksi\NonaktifkanDuaFaktorPengguna;
 use App\Domain\Organisasi\Layanan\DuaFaktorPengguna;
@@ -24,16 +23,13 @@ use Inertia\Response;
 /**
  * Keamanan akun di back-office (`/kelola/keamanan`): aktivasi 2FA TOTP (QR + konfirmasi kode), kode pemulihan yang
  * ditampilkan sekali, dan nonaktifkan dengan konfirmasi kata sandi (§20.2, BR-00.8). 2FA milik akun pengguna, bukan
- * tenant; tenant aktif hanya menentukan apakah 2FA wajib.
+ * tenant; 2FA wajib bila salah satu tenant tempat pengguna menjadi anggota aktif mewajibkannya untuk perannya.
  */
 final class KeamananAkunKontroler extends Kontroler
 {
     private const MAKS_PERCOBAAN = 5;
 
-    public function __construct(
-        private readonly KonteksTenant $konteks,
-        private readonly PenentuWajibDuaFaktor $penentuWajib,
-    ) {}
+    public function __construct(private readonly PenentuWajibDuaFaktor $penentuWajib) {}
 
     public function Tampilkan(Request $permintaan, DuaFaktorPengguna $duaFaktor): Response
     {
@@ -92,11 +88,6 @@ final class KeamananAkunKontroler extends Kontroler
     public function NonaktifkanDuaFaktor(NonaktifkanDuaFaktorPermintaan $permintaan, NonaktifkanDuaFaktorPengguna $nonaktifkan): RedirectResponse
     {
         $pengguna = $this->PenggunaMasuk($permintaan);
-
-        if ($this->CekWajib($pengguna)) {
-            throw new PelanggaranAturanBisnis('BR-00.8', 'Paket langganan usaha ini mewajibkan verifikasi dua langkah untuk Owner, jadi tidak bisa dinonaktifkan.');
-        }
-
         $this->BatasiPercobaan('keamanan-2fa-nonaktifkan:'.$pengguna->Id, 'KataSandi');
         $nonaktifkan->Jalankan($pengguna, $permintaan->string('KataSandi')->toString());
 
@@ -113,9 +104,7 @@ final class KeamananAkunKontroler extends Kontroler
 
     private function CekWajib(Pengguna $pengguna): bool
     {
-        $idTenant = $this->konteks->Ambil();
-
-        return $idTenant !== null && $this->penentuWajib->CekWajib($pengguna->Id, $idTenant);
+        return $this->penentuWajib->AmbilTenantWajib($pengguna->Id) !== [];
     }
 
     private function BatasiPercobaan(string $kunci, string $bidang = 'Kode'): void

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
@@ -57,6 +58,21 @@ describe('Persetujuan ulang versi materiil (BR-P06.5)', function (): void {
             ->and($persetujuan->IdPengguna)->toBe($this->pemilik->Id)
             ->and($persetujuan->Ip)->toBe('198.51.100.7');
         $this->get('/kelola')->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Beranda'));
+    });
+
+    it('persetujuan tercatat di log audit tenant (legal.setujui) dengan pelaku, versi, dan IP', function (): void {
+        $versiBaru = BantuanAutentikasi::TerbitkanVersi(JenisDokumenLegal::KebijakanPrivasi, 3, '2026-10-23');
+        $this->travelTo(Carbon::parse('2026-10-23 07:30:00', 'Asia/Jakarta'));
+        $this->actingAs($this->pemilik, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $this->tenant->Id]);
+
+        $this->post('/kelola/persetujuan-legal', ['Dokumen' => [$versiBaru->Uuid], 'Setuju' => true], ['REMOTE_ADDR' => '198.51.100.7'])
+            ->assertSessionHasNoErrors();
+
+        $log = LogAudit::query()->withoutGlobalScopes()->where('Peristiwa', 'legal.setujui')->sole();
+        expect($log->IdTenant)->toBe($this->tenant->Id)
+            ->and($log->IdPengguna)->toBe($this->pemilik->Id)
+            ->and($log->Ip)->toBe('198.51.100.7')
+            ->and($log->NilaiBaru)->toBe(['Dokumen' => ['KebijakanPrivasi v3']]);
     });
 
     it('versi tidak materiil tidak meminta persetujuan ulang dan tidak diumumkan', function (): void {

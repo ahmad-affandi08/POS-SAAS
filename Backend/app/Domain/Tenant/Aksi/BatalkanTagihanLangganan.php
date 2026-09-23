@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class BatalkanTagihanLangganan
 {
+    public function __construct(private readonly PencatatAudit $audit) {}
+
     public function Jalankan(string $uuidTagihan, string $alasan): TagihanLangganan
     {
         return DB::transaction(function () use ($uuidTagihan, $alasan): TagihanLangganan {
@@ -38,6 +41,7 @@ final class BatalkanTagihanLangganan
                 throw new PelanggaranAturanBisnis('PembayaranMasihDiverifikasi', 'Tagihan tidak bisa dibatalkan karena bukti transfernya sedang diverifikasi.');
             }
 
+            $statusLama = $tagihan->Status;
             $tagihan->update([
                 'Status' => StatusTagihanLangganan::Dibatalkan,
                 'DibatalkanPada' => now(),
@@ -49,6 +53,13 @@ final class BatalkanTagihanLangganan
                 ->where('IdTagihanLangganan', $tagihan->Id)
                 ->whereNull('DibatalkanPada')
                 ->update(['DibatalkanPada' => now()]);
+
+            $this->audit->Catat(
+                'langganan.tagihan-batal',
+                $tagihan,
+                nilaiLama: ['Status' => $statusLama->value],
+                nilaiBaru: ['Status' => $tagihan->Status->value, 'Nomor' => $tagihan->Nomor, 'Alasan' => $alasan],
+            );
 
             return $tagihan;
         });

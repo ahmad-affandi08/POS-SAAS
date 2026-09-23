@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
 use App\Domain\Tenant\Model\DokumenLegal;
@@ -17,7 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class SetujuiDokumenLegal
 {
-    public function __construct(private readonly PersetujuanLegalTertunda $tertunda) {}
+    public function __construct(
+        private readonly PersetujuanLegalTertunda $tertunda,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     /**
      * @param  list<string>  $uuidDokumen  versi yang ditampilkan dan dicentang Owner
@@ -37,6 +41,12 @@ final class SetujuiDokumenLegal
                     ['IdDokumenLegal' => $dokumen->Id, 'IdTenant' => $idTenant, 'IdPengguna' => $idPengguna],
                     ['DisetujuiPada' => now(), 'Ip' => $ip],
                 );
+            }
+
+            if ($wajib !== []) {
+                $this->audit->Catat('legal.setujui', nilaiBaru: [
+                    'Dokumen' => array_map(fn (DokumenLegal $dokumen) => $dokumen->Jenis->value.' v'.$dokumen->Versi, $wajib),
+                ], idTenant: $idTenant, idPengguna: $idPengguna);
             }
 
             return count($wajib);

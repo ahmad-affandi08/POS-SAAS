@@ -8,7 +8,8 @@ namespace App\Domain\Organisasi\Enum;
  * Izin tenant (PRD §19.1, format D-06 `{modul}.{objek}.{aksi}`). Izin F-02 dipakai perantara `WajibIzinTenant`.
  * Izin modul lain sudah didaftarkan agar peran bawaan & peran kustom stabil sejak awal; penegakannya dibangun
  * bersama flow masing-masing (F-03 produk, F-05 persediaan, F-07/F-09 penjualan, F-13 akuntansi, F-14 laporan,
- * F-19 langganan). Menambah izin baru = tambah case + sesuaikan `PeranTenantBawaan`.
+ * F-19 langganan). Menambah izin baru = tambah case + sesuaikan `PeranTenantBawaan`, lalu jalankan
+ * `organisasi:siapkan-peran` agar peran bawaan tenant lama ikut menerimanya.
  */
 enum IzinTenant: string
 {
@@ -38,6 +39,10 @@ enum IzinTenant: string
     case AkuntansiKelola = 'akuntansi.kelola';
     case LanggananKelola = 'langganan.kelola';
 
+    // P-09 Bantuan (tiket dukungan ke tim platform).
+    case BantuanTiketLihat = 'bantuan.tiket.lihat';
+    case BantuanTiketKelola = 'bantuan.tiket.kelola';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -63,6 +68,8 @@ enum IzinTenant: string
             self::LaporanKeuanganLihat => 'Melihat laporan keuangan',
             self::AkuntansiKelola => 'Mengelola jurnal, pajak, dan tutup buku',
             self::LanggananKelola => 'Mengelola langganan & tagihan',
+            self::BantuanTiketLihat => 'Melihat tiket bantuan & balasan tim dukungan',
+            self::BantuanTiketKelola => 'Membuat, membalas, dan menyelesaikan tiket bantuan',
         };
     }
 
@@ -78,6 +85,7 @@ enum IzinTenant: string
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
+            self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',
         };
     }
 

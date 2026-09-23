@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * §20.2 + BR-00.8: Owner tenant berpaket Bisnis ke atas wajib mengaktifkan 2FA sebelum membuka menu `/kelola` lain.
+ * §20.2 + BR-00.8: Owner, Admin, dan Akuntan tenant berpaket Bisnis ke atas wajib mengaktifkan 2FA sebelum membuka menu `/kelola` lain.
  * Halaman keamanan akun & persetujuan legal tetap terbuka agar ia bisa menyelesaikannya. Berjalan setelah
  * `IdentifikasiTenantSesi`. Verifikasi kode saat masuk tidak diurus di sini: pengguna ber-2FA baru dianggap masuk
  * setelah kodenya terverifikasi (SesiKontroler).
@@ -41,6 +41,6 @@ final class WajibDuaFaktorTenant
         }
 
         return redirect()->route(self::RUTE_KEAMANAN)
-            ->with('Kilat', 'Paket langganan usaha ini mewajibkan verifikasi dua langkah untuk Owner. Aktifkan dulu sebelum membuka menu lain.');
+            ->with('Kilat', 'Paket langganan usaha ini mewajibkan verifikasi dua langkah untuk peran Anda. Aktifkan dulu sebelum membuka menu lain.');
     }
 }

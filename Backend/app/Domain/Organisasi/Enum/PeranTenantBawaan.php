@@ -76,6 +76,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::PenjualanVoid,
                 IzinTenant::PenjualanDiskonManual,
                 IzinTenant::LaporanPenjualanLihat,
+                IzinTenant::BantuanTiketLihat,
+                IzinTenant::BantuanTiketKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,

@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Aksi\VerifikasiDuaFaktorPengguna;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
@@ -11,6 +15,7 @@ use App\Http\Perantara\SesiAutentikasiTenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Tenant\BantuanAutentikasi;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
@@ -127,6 +132,21 @@ describe('Masuk dua langkah (BR-00.8)', function (): void {
         $this->assertGuest('web');
     });
 
+    it('kode pemulihan dibaca ulang di bawah kunci baris: dua permintaan dengan data pengguna yang sama tidak bisa memakai satu kode dua kali', function (): void {
+        ['Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji();
+        BantuanAutentikasi::AktifkanDuaFaktor($pengguna);
+        // Dua permintaan bersamaan memuat baris pengguna yang sama sebelum salah satunya menyimpan.
+        $permintaanA = Pengguna::query()->findOrFail($pengguna->Id);
+        $permintaanB = Pengguna::query()->findOrFail($pengguna->Id);
+        $verifikasi = app(VerifikasiDuaFaktorPengguna::class);
+
+        $verifikasi->Jalankan($permintaanA, 'AAAAA-BBBBB');
+
+        expect(fn () => $verifikasi->Jalankan($permintaanB, 'AAAAA-BBBBB'))
+            ->toThrow(PelanggaranAturanBisnis::class, 'Kode tidak cocok');
+        expect($pengguna->refresh()->KodePemulihan2fa)->toBe(['CCCCC-DDDDD']);
+    });
+
     it('percobaan kode dibatasi 5 kali', function (): void {
         ['Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji();
         $rahasia = BantuanAutentikasi::AktifkanDuaFaktor($pengguna);
@@ -203,5 +223,78 @@ describe('2FA wajib paket Bisnis ke atas (§20.2, fitur keamanan.2fa-wajib)', fu
             ->get('/kelola')->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Beranda'));
         $this->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $bisnis->Id])
             ->get('/kelola')->assertRedirect(route('kelola.keamanan'));
+    });
+});
+
+describe('2FA wajib per peran: Owner, Admin, Akuntan (§20.2, BR-00.8)', function (): void {
+    it('Admin dan Akuntan tenant Bisnis wajib 2FA; Kasir dan Manajer Outlet tidak', function (PeranTenantBawaan $peran, bool $wajib): void {
+        $bisnis = BantuanOrganisasi::BuatTenant('Toko Bisnis', 'BISNIS')['Tenant'];
+        $anggota = BantuanOrganisasi::TambahAnggota($bisnis->Id, $peran);
+
+        $respons = BantuanOrganisasi::Masuk($this, $anggota, $bisnis->Id)->get('/kelola');
+
+        $wajib
+            ? $respons->assertRedirect(route('kelola.keamanan'))
+            : $respons->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Beranda'));
+    })->with([
+        'Admin' => [PeranTenantBawaan::Admin, true],
+        'Akuntan' => [PeranTenantBawaan::Akuntan, true],
+        'Kasir' => [PeranTenantBawaan::Kasir, false],
+        'Manajer Outlet' => [PeranTenantBawaan::ManajerOutlet, false],
+    ]);
+
+    it('Admin tenant Pro (tanpa fitur 2FA wajib) tidak dipaksa', function (): void {
+        $pro = BantuanOrganisasi::BuatTenant('Toko Pro', 'PRO')['Tenant'];
+        $admin = BantuanOrganisasi::TambahAnggota($pro->Id, PeranTenantBawaan::Admin);
+
+        BantuanOrganisasi::Masuk($this, $admin, $pro->Id)->get('/kelola')
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Beranda'));
+    });
+
+    it('menonaktifkan 2FA ditolak bila tenant lain (bukan tenant aktif) mewajibkannya untuk peran pengguna', function (): void {
+        ['Tenant' => $pro, 'Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji('PRO');
+        $bisnis = BantuanOrganisasi::BuatTenant('Toko Bisnis', 'BISNIS')['Tenant'];
+        TenantPengguna::query()->create([
+            'IdTenant' => $bisnis->Id,
+            'IdPengguna' => $pengguna->Id,
+            'IdPeran' => BantuanOrganisasi::Peran($bisnis->Id, PeranTenantBawaan::Akuntan)->Id,
+        ]);
+        BantuanAutentikasi::AktifkanDuaFaktor($pengguna);
+
+        $tes = BantuanOrganisasi::Masuk($this, $pengguna, $pro->Id);
+        $tes->get('/kelola/keamanan')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('DuaFaktor.Wajib', true));
+        $tes->delete('/kelola/keamanan/dua-faktor', ['KataSandi' => BantuanAutentikasi::KATA_SANDI])->assertSessionHasErrors('Umum');
+        expect($pengguna->refresh()->CekDuaFaktorAktif())->toBeTrue();
+
+        // Setelah keanggotaan di tenant Bisnis dinonaktifkan, 2FA boleh dimatikan.
+        TenantPengguna::query()->where('IdTenant', $bisnis->Id)->where('IdPengguna', $pengguna->Id)->update(['Status' => 'Nonaktif']);
+        $tes->delete('/kelola/keamanan/dua-faktor', ['KataSandi' => BantuanAutentikasi::KATA_SANDI])->assertSessionHasNoErrors();
+        expect($pengguna->refresh()->CekDuaFaktorAktif())->toBeFalse();
+    });
+});
+
+describe('Log audit keamanan akun (§25 no. 17)', function (): void {
+    it('aktivasi & penonaktifan 2FA tercatat di setiap tenant tempat pengguna menjadi anggota aktif', function (): void {
+        ['Tenant' => $tenant, 'Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji('PRO');
+        $lain = BantuanOrganisasi::BuatTenant('Toko Budi', 'PRO')['Tenant'];
+        TenantPengguna::query()->create([
+            'IdTenant' => $lain->Id,
+            'IdPengguna' => $pengguna->Id,
+            'IdPeran' => BantuanOrganisasi::Peran($lain->Id, PeranTenantBawaan::Kasir)->Id,
+        ]);
+
+        $tes = BantuanOrganisasi::Masuk($this, $pengguna, $tenant->Id);
+        $tes->get('/kelola/keamanan');
+        $rahasia = session(SesiAutentikasiTenant::RAHASIA_2FA_SEMENTARA);
+        $tes->post('/kelola/keamanan/dua-faktor', ['Kode' => BantuanAutentikasi::KodeSaatIni($rahasia)])->assertSessionHasNoErrors();
+        $tes->delete('/kelola/keamanan/dua-faktor', ['KataSandi' => BantuanAutentikasi::KATA_SANDI])->assertSessionHasNoErrors();
+
+        foreach ([$tenant->Id, $lain->Id] as $idTenant) {
+            $log = LogAudit::query()->withoutGlobalScopes()->where('IdTenant', $idTenant)->where('Peristiwa', 'like', 'akun.%')->orderBy('Id')->get();
+            expect($log->pluck('Peristiwa')->all())->toBe(['akun.dua-faktor-aktif', 'akun.dua-faktor-nonaktif'])
+                ->and($log->pluck('IdPengguna')->unique()->all())->toBe([$pengguna->Id])
+                ->and($log[0]->Ip)->toBe('127.0.0.1')
+                ->and($log[0]->JenisObjek)->toBe('Pengguna');
+        }
     });
 });

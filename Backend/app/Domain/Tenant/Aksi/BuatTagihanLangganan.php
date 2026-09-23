@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
@@ -46,6 +47,7 @@ final class BuatTagihanLangganan
         private readonly KalkulatorTagihanLangganan $kalkulator,
         private readonly PenomorTagihanLangganan $penomor,
         private readonly TagihanLanggananTenant $tagihanTenant,
+        private readonly PencatatAudit $audit,
     ) {}
 
     public function Jalankan(int $idPengguna, string $kodePaket, SiklusTagihan $siklus, ?string $kodeKupon = null): TagihanLangganan
@@ -146,6 +148,11 @@ final class BuatTagihanLangganan
                     'Diskon' => $rincian->diskon->KeString(),
                 ]);
             }
+
+            $this->audit->Catat('langganan.tagihan-buat', $tagihan, nilaiBaru: [
+                'Nomor' => $tagihan->Nomor, 'Jenis' => $jenis->value, 'Paket' => $paket->Kode, 'Siklus' => $siklus->value,
+                'Total' => $rincian->total->KeString(), 'KodeKupon' => $kupon?->Kode,
+            ]);
 
             return $tagihan;
         });

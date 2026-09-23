@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Tenant\Data\DataBuktiTransfer;
@@ -27,7 +28,10 @@ use Throwable;
  */
 final class UnggahBuktiTransfer
 {
-    public function __construct(private readonly RekeningTujuanPlatform $rekening) {}
+    public function __construct(
+        private readonly RekeningTujuanPlatform $rekening,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     public function Jalankan(string $uuidTagihan, DataBuktiTransfer $data, int $idPengguna, string $namaPengguna, string $emailPengguna): PembayaranLangganan
     {
@@ -75,7 +79,7 @@ final class UnggahBuktiTransfer
                     throw new PelanggaranAturanBisnis('BuktiGagalDisimpan', 'Bukti transfer gagal disimpan. Coba unggah lagi.', 'Bukti');
                 }
 
-                return PembayaranLangganan::query()->create([
+                $pembayaran = PembayaranLangganan::query()->create([
                     'IdTenant' => $tagihan->IdTenant,
                     'IdTagihanLangganan' => $tagihan->Id,
                     'Metode' => MetodePembayaranLangganan::TransferManual,
@@ -95,6 +99,11 @@ final class UnggahBuktiTransfer
                     'EmailPemberitahuan' => $emailPengguna,
                     'NamaPemberitahuan' => $namaPengguna,
                 ]);
+                $this->audit->Catat('langganan.bukti-transfer-unggah', $pembayaran, nilaiBaru: [
+                    'NomorTagihan' => $tagihan->Nomor, 'Jumlah' => $tagihan->Total, 'KodeRekeningTujuan' => $rekening['Kode'],
+                ]);
+
+                return $pembayaran;
             });
         } catch (Throwable $galat) {
             if ($path !== null) {

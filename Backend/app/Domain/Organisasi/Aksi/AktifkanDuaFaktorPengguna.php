@@ -6,19 +6,21 @@ namespace App\Domain\Organisasi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Layanan\DuaFaktorPengguna;
+use App\Domain\Organisasi\Layanan\PencatatAuditAkun;
 use App\Domain\Organisasi\Model\Pengguna;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Mengaktifkan 2FA TOTP akun tenant setelah kode pertama terbukti benar (§20.2, BR-00.8). Token "ingat saya" diganti
- * agar perangkat lain yang masuk tanpa 2FA harus masuk ulang.
- *
- * TODO F-02: catat `LogAudit` tenant (§25 no. 17) setelah tabelnya ada.
+ * agar perangkat lain yang masuk tanpa 2FA harus masuk ulang. Dicatat di `LogAudit` setiap tenant anggota (§25 no. 17).
  */
 final class AktifkanDuaFaktorPengguna
 {
-    public function __construct(private readonly DuaFaktorPengguna $duaFaktor) {}
+    public function __construct(
+        private readonly DuaFaktorPengguna $duaFaktor,
+        private readonly PencatatAuditAkun $auditAkun,
+    ) {}
 
     /**
      * @return list<string> kode pemulihan, ditampilkan sekali saja
@@ -42,6 +44,7 @@ final class AktifkanDuaFaktorPengguna
                 'DuaFaktorAktifPada' => now(),
                 'TokenIngat' => Str::random(60),
             ])->save();
+            $this->auditAkun->Catat('akun.dua-faktor-aktif', $pengguna);
         });
 
         return $kodePemulihan;

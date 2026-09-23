@@ -8,11 +8,13 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Layanan\DuaFaktorPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Langkah kedua masuk untuk akun ber-2FA (§20.2, BR-00.8): kode TOTP 6 digit, atau kode pemulihan sekali pakai.
- * Kode TOTP yang sudah dipakai tidak bisa dipakai ulang selama masa berlakunya (mencegah replay).
+ * Kode TOTP yang sudah dipakai tidak bisa dipakai ulang selama masa berlakunya (mencegah replay); kode pemulihan
+ * dipakai di bawah kunci baris sehingga satu kode tidak lolos dua kali walau dikirim bersamaan.
  */
 final class VerifikasiDuaFaktorPengguna
 {
@@ -37,13 +39,29 @@ final class VerifikasiDuaFaktorPengguna
             return;
         }
 
+        // Kode pemulihan sekali pakai: baris pengguna dikunci agar dua permintaan bersamaan tidak memakai kode yang sama.
         $kodePemulihan = Str::upper(trim($kode));
-        $sisa = $pengguna->KodePemulihan2fa ?? [];
-        $cocok = array_values(array_filter($sisa, fn (string $simpanan) => hash_equals($simpanan, $kodePemulihan)));
+        $terpakai = DB::transaction(function () use ($pengguna, $kodePemulihan): bool {
+            $terkunci = Pengguna::query()->whereKey($pengguna->Id)->lockForUpdate()->first();
 
-        if ($cocok !== []) {
-            $pengguna->forceFill(['KodePemulihan2fa' => array_values(array_diff($sisa, $cocok))])->save();
+            if ($terkunci === null) {
+                return false;
+            }
 
+            $sisa = $terkunci->KodePemulihan2fa ?? [];
+            $cocok = array_values(array_filter($sisa, fn (string $simpanan) => hash_equals($simpanan, $kodePemulihan)));
+
+            if ($cocok === []) {
+                return false;
+            }
+
+            $terkunci->forceFill(['KodePemulihan2fa' => array_values(array_diff($sisa, $cocok))])->save();
+            $pengguna->setRawAttributes($terkunci->getAttributes(), true);
+
+            return true;
+        });
+
+        if ($terpakai) {
             return;
         }
 
