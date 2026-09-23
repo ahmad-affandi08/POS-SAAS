@@ -13,3 +13,6 @@ Schedule::command('pengelola:ingatkan-hari-libur')->dailyAt('08:00')->timezone('
 
 // BR-P05.3: uji koneksi integrasi aktif setiap jam; alert ke Teknis saat baru gagal.
 Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
+
+// BR-00.3: trial yang berakhir turun ke paket Gratis.
+Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
