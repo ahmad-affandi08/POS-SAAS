@@ -19,3 +19,6 @@ Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
 
 // P-08: tagihan lewat jatuh tempo, langganan Tertunggak lalu Ditangguhkan setelah masa tenggang.
 Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
+
+// BR-P06.5: pengumuman versi materiil dokumen legal ke Owner selama masa pengumuman (sekali per versi per pengguna).
+Schedule::command('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();

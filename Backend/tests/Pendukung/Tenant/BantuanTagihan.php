@@ -53,9 +53,14 @@ final class BantuanTagihan
         return rtrim((string) config('app.url'), '/').$path;
     }
 
-    /** Masuk back-office sebagai pengguna dengan tenant aktif di sesi. */
+    /**
+     * Masuk back-office sebagai pengguna dengan tenant aktif di sesi. Sesi dikosongkan dulu, seperti login sungguhan:
+     * `AuthenticateSession` menolak sesi yang masih membawa jejak pengguna sebelumnya.
+     */
     public static function Masuk(TestCase $tes, Pengguna $pengguna, Tenant $tenant): TestCase
     {
+        $tes->flushSession();
+
         return $tes->actingAs($pengguna, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $tenant->Id]);
     }
 

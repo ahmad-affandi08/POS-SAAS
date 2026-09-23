@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Perantara;
 
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
+use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
+use App\Domain\Tenant\Model\DokumenLegal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Middleware;
 
 /**
@@ -20,6 +24,9 @@ final class BagikanDataInertia extends Middleware
     public function __construct(
         private readonly RingkasanTenant $ringkasanTenant,
         private readonly KeanggotaanPengguna $keanggotaan,
+        // BR-P06.5: banner pengumuman versi materiil dokumen legal.
+        private readonly PemilikTenant $pemilikTenant,
+        private readonly PersetujuanLegalTertunda $persetujuanLegal,
     ) {}
 
     /**
@@ -47,6 +54,19 @@ final class BagikanDataInertia extends Middleware
                 $tenant = $anggota && is_int($idTenant) ? ($this->ringkasanTenant->Ambil([$idTenant])[0] ?? null) : null;
 
                 return $tenant === null ? null : ['Nama' => $tenant['Nama']];
+            },
+            // BR-P06.5: banner di back-office selama masa pengumuman versi materiil, hanya untuk Owner tenant aktif.
+            'PengumumanLegal' => function () use ($pengguna, $idTenant): array {
+                if (! $pengguna instanceof Pengguna || ! is_int($idTenant) || ! $this->pemilikTenant->CekPemilik($pengguna->Id, $idTenant)) {
+                    return [];
+                }
+
+                return array_map(fn (DokumenLegal $dokumen): array => [
+                    'Label' => $dokumen->Jenis->AmbilLabel(),
+                    'Versi' => $dokumen->Versi,
+                    'BerlakuMulai' => $dokumen->BerlakuMulai->toDateString(),
+                    'Tautan' => route('legal.tampil', ['jenis' => Str::kebab($dokumen->Jenis->value), 'versi' => $dokumen->Versi]),
+                ], $this->persetujuanLegal->AmbilPengumuman(now()));
             },
         ];
     }

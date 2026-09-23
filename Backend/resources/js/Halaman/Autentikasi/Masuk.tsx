@@ -34,6 +34,9 @@ export default function HalamanMasuk() {
                     saatBerubah={(nilai) => formulir.setData('KataSandi', nilai)}
                     galat={formulir.errors.KataSandi}
                 />
+                <Link href="/lupa-kata-sandi" className="self-start text-label font-semibold text-brand underline">
+                    Lupa kata sandi?
+                </Link>
                 <KotakCentang
                     label="Ingat saya di perangkat ini"
                     nilai={formulir.data.Ingat}

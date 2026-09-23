@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Tenant\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Aksi\BeritahuUpayaPendaftaranGanda;
 use App\Domain\Organisasi\Aksi\BuatPemilikTenant;
 use App\Domain\Organisasi\Aksi\SiapkanOrganisasiAwal;
+use App\Domain\Organisasi\Galat\IdentitasSudahTerdaftar;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Data\DataPendaftaran;
 use App\Domain\Tenant\Enum\JenisDokumenLegal;
@@ -25,6 +27,9 @@ use Illuminate\Support\Facades\DB;
  * Pendaftaran tenant baru (F-00 langkah 1 & 3). Dalam satu transaksi: tenant, Owner, langganan trial, persetujuan
  * S&K dan Kebijakan Privasi versi yang berlaku (BR-P06.5), serta outlet & gudang bawaan. Verifikasi email dikirim
  * pemanggil setelah transaksi selesai (BR-00.5).
+ *
+ * Email/nomor WhatsApp yang sudah terdaftar ditolak dengan pesan umum yang sama untuk keduanya, dan pemilik akun
+ * diberi tahu lewat email setelah transaksi dibatalkan (BR-00.1, §25 no. 18).
  */
 final class DaftarkanTenant
 {
@@ -33,6 +38,7 @@ final class DaftarkanTenant
         private readonly PembuatSlugTenant $pembuatSlug,
         private readonly BuatPemilikTenant $buatPemilik,
         private readonly SiapkanOrganisasiAwal $siapkanOrganisasi,
+        private readonly BeritahuUpayaPendaftaranGanda $beritahuPendaftaranGanda,
     ) {}
 
     public const PERCOBAAN_SLUG = 3;
@@ -45,6 +51,10 @@ final class DaftarkanTenant
         for ($percobaan = 1; ; $percobaan++) {
             try {
                 return $this->Simpan($data);
+            } catch (IdentitasSudahTerdaftar $galat) {
+                $this->beritahuPendaftaranGanda->Jalankan($galat->identitasPerPengguna);
+
+                throw new PelanggaranAturanBisnis('BR-00.1', IdentitasSudahTerdaftar::PESAN_UMUM, 'Email');
             } catch (UniqueConstraintViolationException $galat) {
                 // Slug diperiksa tanpa kunci; pendaftar lain dengan nama usaha sama bisa menang duluan → buat slug baru.
                 if (str_contains($galat->getMessage(), 'UniqTenantSlug') && $percobaan < self::PERCOBAAN_SLUG) {
@@ -55,8 +65,8 @@ final class DaftarkanTenant
                     throw new PelanggaranAturanBisnis('BR-00.2', 'Banyak pendaftaran sedang diproses. Coba kirim lagi.');
                 }
 
-                // Pendaftaran bersamaan dengan email/nomor yang sama: yang kalah diminta mencoba lagi.
-                throw new PelanggaranAturanBisnis('BR-00.1', 'Email atau nomor WhatsApp ini baru saja didaftarkan. Coba masuk, atau daftar dengan data lain.', 'Email');
+                // Pendaftaran bersamaan dengan email/nomor yang sama: pesan umum yang sama (§25 no. 18).
+                throw new PelanggaranAturanBisnis('BR-00.1', IdentitasSudahTerdaftar::PESAN_UMUM, 'Email');
             }
         }
     }

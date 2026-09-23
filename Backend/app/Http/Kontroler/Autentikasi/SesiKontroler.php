@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Autentikasi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Aksi\VerifikasiDuaFaktorPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Perantara\IdentifikasiTenantSesi;
+use App\Http\Perantara\SesiAutentikasiTenant;
+use App\Http\Permintaan\Autentikasi\KodeDuaFaktorPermintaan;
 use App\Http\Permintaan\Autentikasi\MasukPermintaan;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +24,7 @@ use Inertia\Response;
 
 /**
  * Masuk, keluar, dan pemilih tenant back-office (BR-00.1). Percobaan masuk dibatasi 5 kali per menit per email+IP.
+ * Akun ber-2FA masuk dua langkah (BR-00.8): kata sandi benar → "masuk tertunda" → kode TOTP/pemulihan → masuk.
  */
 final class SesiKontroler extends Kontroler
 {
@@ -27,6 +32,9 @@ final class SesiKontroler extends Kontroler
 
     /** Batas per IP untuk menahan penyemprotan kata sandi ke banyak email (§20.2). */
     public const BATAS_PERCOBAAN_MASUK_PER_IP = 20;
+
+    /** BR-00.8: percobaan kode 2FA per masuk tertunda, dengan jeda 5 menit. */
+    public const BATAS_PERCOBAAN_DUA_FAKTOR = 5;
 
     public function TampilkanMasuk(): Response
     {
@@ -46,12 +54,13 @@ final class SesiKontroler extends Kontroler
             throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaan', "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik.", 'Email');
         }
 
-        $berhasil = Auth::guard('web')->attempt(
-            ['Email' => $email, 'password' => $permintaan->string('KataSandi')->toString()],
-            $permintaan->boolean('Ingat'),
-        );
+        $penjaga = Auth::guard('web');
+        abort_unless($penjaga instanceof SessionGuard, 500);
+        // validate(), bukan attempt(): akun ber-2FA belum boleh dianggap masuk sebelum kodenya terverifikasi.
+        $berhasil = $penjaga->validate(['Email' => $email, 'password' => $permintaan->string('KataSandi')->toString()]);
+        $pengguna = $penjaga->getLastAttempted();
 
-        if (! $berhasil) {
+        if (! $berhasil || ! $pengguna instanceof Pengguna) {
             RateLimiter::hit($kunci, 60);
             RateLimiter::hit($kunciIp, 60);
 
@@ -59,18 +68,57 @@ final class SesiKontroler extends Kontroler
         }
 
         RateLimiter::clear($kunci);
-        $permintaan->session()->regenerate();
 
-        $pengguna = Auth::guard('web')->user();
-        $daftarTenant = $pengguna instanceof Pengguna ? $keanggotaan->AmbilIdTenant($pengguna->Id) : [];
+        if ($pengguna->CekDuaFaktorAktif()) {
+            // BR-00.8: belum masuk; sesi hanya mengingat siapa yang sedang menyelesaikan langkah kedua.
+            $sesi = $permintaan->session();
+            $sesi->regenerate();
+            $sesi->put([
+                SesiAutentikasiTenant::MASUK_TERTUNDA_ID => $pengguna->Id,
+                SesiAutentikasiTenant::MASUK_TERTUNDA_INGAT => $permintaan->boolean('Ingat'),
+                SesiAutentikasiTenant::MASUK_TERTUNDA_SAMPAI => now()->addMinutes(SesiAutentikasiTenant::MENIT_MASUK_TERTUNDA)->getTimestamp(),
+            ]);
 
-        if (count($daftarTenant) === 1) {
-            $permintaan->session()->put(IdentifikasiTenantSesi::KUNCI_SESI, $daftarTenant[0]);
-
-            return redirect()->intended(route('kelola.beranda'));
+            return redirect()->route('masuk.dua-faktor');
         }
 
-        return redirect()->route('pilih-tenant');
+        return $this->SelesaikanMasuk($permintaan, $pengguna, $permintaan->boolean('Ingat'), $keanggotaan);
+    }
+
+    public function TampilkanDuaFaktor(Request $permintaan): Response|RedirectResponse
+    {
+        if ($this->AmbilMasukTertunda($permintaan) === null) {
+            return redirect()->route('masuk');
+        }
+
+        return Inertia::render('Autentikasi/VerifikasiDuaFaktor');
+    }
+
+    public function VerifikasiDuaFaktor(
+        KodeDuaFaktorPermintaan $permintaan,
+        VerifikasiDuaFaktorPengguna $verifikasi,
+        KeanggotaanPengguna $keanggotaan,
+    ): RedirectResponse {
+        $pengguna = $this->AmbilMasukTertunda($permintaan);
+
+        if ($pengguna === null) {
+            return redirect()->route('masuk')->with('Kilat', 'Waktu verifikasi habis. Masuk lagi dengan email dan kata sandi.');
+        }
+
+        $kunci = 'masuk-dua-faktor:'.$pengguna->Id;
+
+        if (RateLimiter::tooManyAttempts($kunci, self::BATAS_PERCOBAAN_DUA_FAKTOR)) {
+            throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaan', 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($kunci).' detik.', 'Kode');
+        }
+
+        RateLimiter::hit($kunci, 300);
+        $verifikasi->Jalankan($pengguna, $permintaan->string('Kode')->toString());
+        RateLimiter::clear($kunci);
+
+        $ingat = $permintaan->session()->get(SesiAutentikasiTenant::MASUK_TERTUNDA_INGAT) === true;
+        $this->LupakanMasukTertunda($permintaan);
+
+        return $this->SelesaikanMasuk($permintaan, $pengguna, $ingat, $keanggotaan);
     }
 
     public function TampilkanPilihTenant(Request $permintaan, KeanggotaanPengguna $keanggotaan, RingkasanTenant $ringkasan): Response
@@ -105,5 +153,47 @@ final class SesiKontroler extends Kontroler
         $permintaan->session()->regenerateToken();
 
         return redirect()->route('masuk');
+    }
+
+    private function SelesaikanMasuk(Request $permintaan, Pengguna $pengguna, bool $ingat, KeanggotaanPengguna $keanggotaan): RedirectResponse
+    {
+        Auth::guard('web')->login($pengguna, $ingat);
+        $permintaan->session()->regenerate();
+
+        $daftarTenant = $keanggotaan->AmbilIdTenant($pengguna->Id);
+
+        if (count($daftarTenant) === 1) {
+            $permintaan->session()->put(IdentifikasiTenantSesi::KUNCI_SESI, $daftarTenant[0]);
+
+            return redirect()->intended(route('kelola.beranda'));
+        }
+
+        return redirect()->route('pilih-tenant');
+    }
+
+    private function AmbilMasukTertunda(Request $permintaan): ?Pengguna
+    {
+        $sesi = $permintaan->session();
+        $id = $sesi->get(SesiAutentikasiTenant::MASUK_TERTUNDA_ID);
+        $sampai = $sesi->get(SesiAutentikasiTenant::MASUK_TERTUNDA_SAMPAI);
+
+        if (! is_int($id) || ! is_int($sampai) || $sampai < now()->getTimestamp()) {
+            $this->LupakanMasukTertunda($permintaan);
+
+            return null;
+        }
+
+        $pengguna = Pengguna::query()->find($id);
+
+        return $pengguna instanceof Pengguna && $pengguna->CekDuaFaktorAktif() ? $pengguna : null;
+    }
+
+    private function LupakanMasukTertunda(Request $permintaan): void
+    {
+        $permintaan->session()->forget([
+            SesiAutentikasiTenant::MASUK_TERTUNDA_ID,
+            SesiAutentikasiTenant::MASUK_TERTUNDA_INGAT,
+            SesiAutentikasiTenant::MASUK_TERTUNDA_SAMPAI,
+        ]);
     }
 }
