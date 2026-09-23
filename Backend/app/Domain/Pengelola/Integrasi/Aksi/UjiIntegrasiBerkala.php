@@ -6,12 +6,14 @@ namespace App\Domain\Pengelola\Integrasi\Aksi;
 
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
+use App\Domain\Pengelola\Integrasi\Penguji\PenyaringPesan;
 use App\Domain\Pengelola\Integrasi\Surel\IntegrasiGagal;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -63,7 +65,7 @@ final class UjiIntegrasiBerkala
                 Mail::to($email)->send(new IntegrasiGagal($gagal, $lingkungan));
             } catch (Throwable $galat) {
                 // Integrasi email bisa jadi yang sedang gagal; banner tetap menjadi penanda utama.
-                Log::error('Alert integrasi gagal terkirim.', ['Pesan' => $galat->getMessage()]);
+                Log::error('Alert integrasi gagal terkirim.', ['Pesan' => Str::limit($galat->getMessage(), PenyaringPesan::PANJANG_MAKSIMAL)]);
             }
         }
     }

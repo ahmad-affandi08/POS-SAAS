@@ -24,15 +24,16 @@ final class UjiKoneksiIntegrasi
      */
     public function Jalankan(KonfigurasiIntegrasi $konfigurasi, ?PenggunaPengelola $pelaku = null): array
     {
-        $versiDiuji = $konfigurasi->DiubahPada?->toIso8601String();
+        // Penanda isian yang diuji: isi pengaturan & kredensial, bukan waktu ubah (presisi detik).
+        $isiDiuji = [$konfigurasi->Pengaturan, $konfigurasi->Kredensial];
         $mulai = hrtime(true);
         $hasil = app($konfigurasi->Penyedia->AmbilKelasPenguji())->Uji($konfigurasi->Pengaturan, $konfigurasi->Kredensial);
         $durasiMs = intdiv(hrtime(true) - $mulai, 1_000_000);
 
-        return DB::transaction(function () use ($konfigurasi, $pelaku, $hasil, $durasiMs, $versiDiuji): array {
+        return DB::transaction(function () use ($konfigurasi, $pelaku, $hasil, $durasiMs, $isiDiuji): array {
             $terkini = KonfigurasiIntegrasi::query()->lockForUpdate()->findOrFail($konfigurasi->Id);
 
-            if ($terkini->DiubahPada?->toIso8601String() !== $versiDiuji) {
+            if ([$terkini->Pengaturan, $terkini->Kredensial] !== $isiDiuji) {
                 return ['Hasil' => HasilUjiKoneksi::Gagal('Konfigurasi berubah saat diuji. Uji ulang.'), 'BaruGagal' => false];
             }
 

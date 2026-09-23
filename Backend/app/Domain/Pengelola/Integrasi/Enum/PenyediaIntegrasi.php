@@ -34,11 +34,11 @@ enum PenyediaIntegrasi: string
                 ['Kunci' => 'NamaPengirim', 'Label' => 'Nama pengirim', 'Jenis' => 'Teks', 'Wajib' => true],
             ],
             self::Turnstile => [
-                ['Kunci' => 'KunciSitus', 'Label' => 'Site key', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Kunci publik yang dipasang di halaman registrasi'],
+                ['Kunci' => 'KunciSitus', 'Label' => 'Kunci situs (site key)', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Kunci publik yang dipasang di halaman registrasi'],
             ],
             self::S3 => [
                 ['Kunci' => 'Endpoint', 'Label' => 'Endpoint', 'Jenis' => 'Url', 'Wajib' => true, 'Keterangan' => 'Misal https://<akun>.r2.cloudflarestorage.com'],
-                ['Kunci' => 'Wilayah', 'Label' => 'Region', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Cloudflare R2: auto'],
+                ['Kunci' => 'Wilayah', 'Label' => 'Wilayah (region)', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Cloudflare R2: auto'],
                 ['Kunci' => 'Bucket', 'Label' => 'Bucket', 'Jenis' => 'Teks', 'Wajib' => true],
             ],
         };
@@ -51,10 +51,10 @@ enum PenyediaIntegrasi: string
     {
         return match ($this) {
             self::Smtp => [['Kunci' => 'KataSandi', 'Label' => 'Kata sandi SMTP']],
-            self::Turnstile => [['Kunci' => 'KunciRahasia', 'Label' => 'Secret key']],
+            self::Turnstile => [['Kunci' => 'KunciRahasia', 'Label' => 'Kunci rahasia (secret key)']],
             self::S3 => [
-                ['Kunci' => 'IdKunciAkses', 'Label' => 'Access key ID'],
-                ['Kunci' => 'KunciAksesRahasia', 'Label' => 'Secret access key'],
+                ['Kunci' => 'IdKunciAkses', 'Label' => 'ID kunci akses (access key ID)'],
+                ['Kunci' => 'KunciAksesRahasia', 'Label' => 'Kunci akses rahasia (secret access key)'],
             ],
         };
     }

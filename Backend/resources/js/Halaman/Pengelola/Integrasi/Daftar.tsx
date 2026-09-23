@@ -84,14 +84,22 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
     const [memproses, AturMemproses] = useState(false);
     const konfigurasi = slot.Konfigurasi;
     const produksi = slot.Lingkungan === 'Produksi';
+    const { props } = usePage<PropsBersamaPengelola>();
+    const [kartuTerakhir, AturKartuTerakhir] = useState(false);
+    // Galat alasan (BR-P05.2) hanya ditampilkan di kartu yang baru saja dikirim.
+    const galatAlasan = kartuTerakhir ? props.errors.Alasan : undefined;
     const opsiKirim = {
         preserveScroll: true,
         onStart: () => AturMemproses(true),
         onFinish: () => AturMemproses(false),
-        onSuccess: () => AturAlasan(''),
+        onSuccess: () => {
+            AturAlasan('');
+            AturKartuTerakhir(false);
+        },
     };
     const UbahStatus = (aksi: 'aktifkan' | 'nonaktifkan') => {
         if (konfigurasi) {
+            AturKartuTerakhir(true);
             router.post(`/integrasi/${konfigurasi.Uuid}/${aksi}`, { Alasan: alasan }, opsiKirim);
         }
     };
@@ -163,11 +171,12 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
                             nilai={alasan}
                             saatBerubah={AturAlasan}
                             keterangan="Dipakai saat mengaktifkan atau menonaktifkan."
+                            galat={galatAlasan}
                         />
                     ) : null}
                     <div className="flex flex-wrap gap-2">
                         <Tombol varian="sekunder" onClick={() => AturSunting(true)}>
-                            {konfigurasi ? 'Ubah' : 'Atur'}
+                            {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'}
                         </Tombol>
                         {konfigurasi ? (
                             <Tombol
@@ -295,7 +304,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
             </p>
             <div className="flex gap-2 sm:col-span-2">
                 <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan
+                    Simpan konfigurasi
                 </Tombol>
                 <Tombol varian="sekunder" onClick={saatSelesai}>
                     Batal

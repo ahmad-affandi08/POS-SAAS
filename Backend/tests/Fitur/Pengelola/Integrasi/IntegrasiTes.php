@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Pengelola\Integrasi\Aksi\UjiKoneksiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Data\HasilUjiKoneksi;
 use App\Domain\Pengelola\Integrasi\Enum\StatusIntegrasi;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
@@ -15,6 +16,7 @@ use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -74,9 +76,20 @@ describe('Izin & alasan (BR-P05.2)', function (): void {
     it('hanya Teknis dan Super Admin yang bisa membuka dan mengubah integrasi', function (PeranPengelolaBawaan $peran): void {
         MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota($peran));
 
+        $konfigurasi = KonfigurasiIntegrasi::query()->create([
+            'Jenis' => 'Email', 'Lingkungan' => 'Staging', 'Penyedia' => 'Smtp', 'Pengaturan' => [],
+            'Kredensial' => ['KataSandi' => RAHASIA_SMTP_UJI], 'PetunjukKredensial' => [], 'KredensialDiubahPada' => now(),
+        ]);
+
         $this->get(BantuanPengelola::Url('/integrasi'))->assertForbidden();
         $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji())->assertForbidden();
-    })->with([PeranPengelolaBawaan::Keuangan, PeranPengelolaBawaan::Dukungan, PeranPengelolaBawaan::Analis]);
+        foreach (['uji', 'aktifkan', 'nonaktifkan'] as $aksi) {
+            $this->post(BantuanPengelola::Url("/integrasi/{$konfigurasi->Uuid}/{$aksi}"))->assertForbidden();
+        }
+    })->with([
+        PeranPengelolaBawaan::Keuangan, PeranPengelolaBawaan::Dukungan, PeranPengelolaBawaan::Analis,
+        PeranPengelolaBawaan::KontenLegal, PeranPengelolaBawaan::MitraPenjualan,
+    ]);
 
     it('perubahan konfigurasi produksi wajib alasan dan tercatat di log audit', function (): void {
         MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Teknis));
@@ -135,6 +148,16 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
             ->assertSessionHasErrors('Kredensial.KataSandi');
     });
 
+    it('serialisasi model tidak memuat kredensial', function (): void {
+        $konfigurasi = KonfigurasiIntegrasi::query()->create([
+            'Jenis' => 'Email', 'Lingkungan' => 'Staging', 'Penyedia' => 'Smtp', 'Pengaturan' => [],
+            'Kredensial' => ['KataSandi' => RAHASIA_SMTP_UJI], 'PetunjukKredensial' => [], 'KredensialDiubahPada' => now(),
+        ]);
+
+        expect($konfigurasi->toJson())->not->toContain(RAHASIA_SMTP_UJI)
+            ->and(array_key_exists('Kredensial', $konfigurasi->toArray()))->toBeFalse();
+    });
+
     it('pesan galat penyedia tidak memuat kredensial', function (): void {
         expect(PenyaringPesan::Saring('auth failed for '.RAHASIA_SMTP_UJI, ['KataSandi' => RAHASIA_SMTP_UJI]))
             ->toBe('auth failed for [disembunyikan]');
@@ -183,6 +206,28 @@ describe('Tes koneksi & aktivasi (BR-P05.4)', function (): void {
         expect(KonfigurasiIntegrasi::query()->where('Jenis', 'Captcha')->sole()->Status)->toBe(StatusIntegrasi::Terhubung);
     });
 
+    it('hasil uji dibuang bila isian berubah selama pengujian', function (): void {
+        MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Teknis));
+        $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji())->assertSessionHasNoErrors();
+        $lama = AmbilEmailStaging();
+        // Penguji palsu yang mengganti isian di tengah pengujian, meniru simpanan anggota lain.
+        app()->instance(PengujiSmtp::class, new class implements PengujiKoneksi
+        {
+            public function Uji(array $pengaturan, array $kredensial): HasilUjiKoneksi
+            {
+                $konfigurasi = KonfigurasiIntegrasi::query()->sole();
+                $konfigurasi->update(['Kredensial' => ['KataSandi' => 'sandi-baru-yang-belum-diuji-1234']]);
+
+                return HasilUjiKoneksi::Berhasil('Login SMTP berhasil.');
+            }
+        });
+
+        $hasil = app(UjiKoneksiIntegrasi::class)->Jalankan($lama);
+
+        expect($hasil['Hasil']->berhasil)->toBeFalse()
+            ->and(AmbilEmailStaging()->Status)->toBe(StatusIntegrasi::BelumDiuji);
+    });
+
     it('menonaktifkan integrasi produksi wajib alasan', function (): void {
         MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Teknis));
         $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji(['Lingkungan' => 'Produksi', 'Alasan' => 'Awal']))->assertSessionHasNoErrors();
@@ -220,6 +265,22 @@ describe('Uji berkala, alert, banner, rotasi (BR-P05.3, BR-P05.5)', function ():
                 ->where('PeringatanIntegrasi', ['Email transaksional gagal saat diuji. Fitur yang memakainya bisa terganggu.']));
     });
 
+    it('tanpa anggota Teknis, alert dikirim ke Super Admin', function (): void {
+        Mail::fake();
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        MasukSebagaiIntegrasi($this, $superAdmin);
+        $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji())->assertSessionHasNoErrors();
+        $uuid = AmbilEmailStaging()->Uuid;
+        PalsukanPengujiSmtp(true);
+        $this->post(BantuanPengelola::Url("/integrasi/{$uuid}/uji"));
+        $this->post(BantuanPengelola::Url("/integrasi/{$uuid}/aktifkan"))->assertSessionHasNoErrors();
+
+        PalsukanPengujiSmtp(false);
+        $this->artisan('pengelola:uji-integrasi')->assertSuccessful();
+
+        Mail::assertSent(IntegrasiGagal::class, fn (IntegrasiGagal $surel) => $surel->hasTo($superAdmin->Email));
+    });
+
     it('banner mengingatkan rotasi kunci setelah masa rotasi lewat', function (): void {
         MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Teknis));
         $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji(['RotasiSetiapHari' => 30]))->assertSessionHasNoErrors();
@@ -254,6 +315,13 @@ describe('Penerapan konfigurasi aktif (P-05)', function (): void {
         expect(config('mail.mailers.smtp.host'))->toBe('smtp.hostinger.com')
             ->and(config('mail.mailers.smtp.password'))->toBe(RAHASIA_SMTP_UJI)
             ->and(config('mail.from.name'))->toBe('Kasir Nusantara')
-            ->and(config('integrasi.Turnstile.KunciRahasia'))->toBeNull();
+            ->and(config('integrasi.Turnstile.KunciRahasia'))->toBeNull()
+            ->and(Cache::get(PenerapKonfigurasiIntegrasi::KUNCI_CACHE)[0]['Kredensial'] ?? '')->not->toContain(RAHASIA_SMTP_UJI);
+
+        // Setelah dinonaktifkan, cache dihapus sehingga konfigurasi tidak lagi diterapkan.
+        $this->post(BantuanPengelola::Url("/integrasi/{$uuid}/nonaktifkan"))->assertSessionHasNoErrors();
+        config(['mail.mailers.smtp.host' => 'dari-env']);
+        app(PenerapKonfigurasiIntegrasi::class)->Terapkan();
+        expect(config('mail.mailers.smtp.host'))->toBe('dari-env');
     });
 });

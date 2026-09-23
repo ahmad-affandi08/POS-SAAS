@@ -8,8 +8,12 @@ use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Penguji\PenyusunKonfigurasiLaravel;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Menerapkan konfigurasi integrasi aktif lingkungan server ini ke konfigurasi Laravel saat aplikasi berjalan (P-05).
@@ -19,6 +23,12 @@ use Illuminate\Support\Facades\Cache;
 final class PenerapKonfigurasiIntegrasi
 {
     public const KUNCI_CACHE = 'integrasi.konfigurasi-aktif';
+
+    /**
+     * Cache berumur pendek: cache juga dihapus setelah setiap perubahan, tetapi request yang membaca sebelum commit
+     * bisa menulis ulang data lama; TTL membatasi data basi itu paling lama sekian detik (BR-P05.4).
+     */
+    public const DETIK_CACHE = 60;
 
     public static function LupakanCache(): void
     {
@@ -54,7 +64,7 @@ final class PenerapKonfigurasiIntegrasi
     {
         try {
             /** @var list<array<string, mixed>> $baris */
-            $baris = Cache::rememberForever(self::KUNCI_CACHE, fn (): array => array_values(KonfigurasiIntegrasi::query()
+            $baris = Cache::remember(self::KUNCI_CACHE, self::DETIK_CACHE, fn (): array => array_values(KonfigurasiIntegrasi::query()
                 ->where('Lingkungan', LingkunganIntegrasi::AmbilSaatIni()->value)
                 ->where('Aktif', true)
                 ->get()
@@ -63,11 +73,25 @@ final class PenerapKonfigurasiIntegrasi
         } catch (QueryException) {
             // Tabel belum dimigrasi (instalasi baru): aplikasi tetap berjalan dengan konfigurasi .env.
             return [];
+        } catch (Throwable $galat) {
+            // Cache store mati, dsb.: jangan menjatuhkan semua request tenant & POS, pakai konfigurasi .env.
+            Log::error('Konfigurasi integrasi tidak bisa dimuat.', ['Pesan' => $galat->getMessage()]);
+
+            return [];
         }
 
-        return array_values(array_map(
-            fn (array $atribut): KonfigurasiIntegrasi => (new KonfigurasiIntegrasi)->newFromBuilder($atribut),
-            $baris,
-        ));
+        $daftar = [];
+
+        foreach ($baris as $atribut) {
+            try {
+                // Uji dekripsi di sini agar APP_KEY yang berganti tidak menjatuhkan boot semua request.
+                Crypt::decryptString(is_string($atribut['Kredensial'] ?? null) ? $atribut['Kredensial'] : '');
+                $daftar[] = (new KonfigurasiIntegrasi)->newFromBuilder($atribut);
+            } catch (DecryptException) {
+                Log::error('Kredensial integrasi tidak bisa didekripsi; periksa APP_KEY/APP_PREVIOUS_KEYS.', ['Jenis' => $atribut['Jenis'] ?? null]);
+            }
+        }
+
+        return $daftar;
     }
 }
