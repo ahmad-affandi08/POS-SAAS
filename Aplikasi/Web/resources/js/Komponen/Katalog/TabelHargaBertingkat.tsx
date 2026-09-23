@@ -210,7 +210,11 @@ export default function TabelHargaBertingkat({
                         }
                         className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     >
-                        {baris.length === 0 && wajibDasar ? 'Isi harga dasar' : 'Tambah harga bertingkat'}
+                        {baris.length === 0
+                            ? wajibDasar
+                                ? 'Isi harga dasar'
+                                : 'Isi harga'
+                            : 'Tambah harga bertingkat'}
                     </button>
                 ) : null}
                 {!disabled && baris.length > 1 ? (
