@@ -127,6 +127,21 @@ describe('Outlet (F-02 langkah 1)', function (): void {
         expect($utama->refresh()->only(['Kode', 'Nama']))->toBe(['Kode' => 'PUSAT', 'Nama' => 'Outlet Pusat Solo']);
     });
 
+    it('regresi F-01: mengubah outlet tidak menghapus kunci ProfilPajak dari panduan awal (service charge, harga termasuk pajak)', function (): void {
+        ['Tenant' => $tenant, 'Tes' => $tes] = MasukPemilikOutlet($this);
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        $utama = Outlet::query()->where('Kode', 'UTAMA')->sole();
+        $utama->forceFill(['ProfilPajak' => ['Pkp' => false, 'Nitku' => null, 'PungutPbjt' => true, 'BiayaLayanan' => ['Aktif' => true, 'Persen' => '5.00'], 'HargaTermasukPajak' => true]])->save();
+
+        $tes->put("/kelola/outlet/{$utama->Uuid}", IsianOutletUji($tenant->Id, ['Kode' => 'UTAMA', 'Pkp' => true, 'PungutPbjt' => true]))->assertSessionHasNoErrors();
+
+        $profil = $utama->refresh()->ProfilPajak;
+        expect($profil['Pkp'])->toBeTrue()
+            ->and($profil['Nitku'])->toBe('0012345678901234000001')
+            ->and($profil['BiayaLayanan'])->toEqual(['Aktif' => true, 'Persen' => '5.00'])
+            ->and($profil['HargaTermasukPajak'])->toBeTrue();
+    });
+
     it('arsip: outlet terakhir tidak bisa diarsipkan; outlet arsip tetap ada dan bisa dipulihkan', function (): void {
         ['Tenant' => $tenant, 'Tes' => $tes] = MasukPemilikOutlet($this);
         BantuanOrganisasi::AturKonteks($tenant->Id);
