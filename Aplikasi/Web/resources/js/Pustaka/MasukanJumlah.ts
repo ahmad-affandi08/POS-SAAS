@@ -192,3 +192,14 @@ export function KalikanDesimal(a: string, b: string, skala = SkalaKuantitas): st
 
     return TulisDesimal(hasil, skala);
 }
+
+/** Bulatkan string desimal ke `skala` digit dengan HalfUp: ("7800.125000", 2) → "7800.13". Untuk tampilan HPP. */
+export function BulatkanDesimal(nilai: string, skala: number): string {
+    const d = BacaDesimal(nilai);
+
+    if (d.skala <= skala) {
+        return TulisDesimal(SamakanSkala(d, skala), skala);
+    }
+
+    return TulisDesimal(BagiBulatkan(d.nilai, 10n ** BigInt(d.skala - skala)), skala);
+}

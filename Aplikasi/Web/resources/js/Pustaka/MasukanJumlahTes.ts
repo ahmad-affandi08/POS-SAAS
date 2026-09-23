@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     BandingkanDesimal,
+    BulatkanDesimal,
     CekDesimalBulat,
     CekDesimalPositif,
     CekMasukanJumlahValid,
@@ -89,5 +90,12 @@ describe('Aritmetika desimal BigInt', () => {
         expect(KalikanDesimal('18', '250')).toBe('4500.0000');
         expect(KalikanDesimal('0.00005', '1')).toBe('0.0001');
         expect(KalikanDesimal('0.00004', '1')).toBe('0.0000');
+    });
+
+    it('membulatkan HalfUp untuk tampilan HPP', () => {
+        expect(BulatkanDesimal('7800.125000', 2)).toBe('7800.13');
+        expect(BulatkanDesimal('7800.124999', 2)).toBe('7800.12');
+        expect(BulatkanDesimal('12', 2)).toBe('12.00');
+        expect(BulatkanDesimal('0.005', 2)).toBe('0.01');
     });
 });
