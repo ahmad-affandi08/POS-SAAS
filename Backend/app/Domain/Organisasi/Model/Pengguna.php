@@ -14,6 +14,7 @@ use Illuminate\Contracts\Auth\CanResetPassword as KontrakDapatResetKataSandi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
 /**
  * Akun pengguna tenant (PRD §15.3 `Pengguna`). Satu pengguna boleh menjadi anggota beberapa tenant
@@ -27,6 +28,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string $Email
  * @property string|null $NoHp
  * @property string $KataSandi
+ * @property Carbon|null $EmailDiverifikasiPada
  */
 final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, KontrakDapatDiotorisasi, KontrakDapatResetKataSandi
 {

@@ -23,10 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(SiapkanSesiPengelola::class);
 
         $middleware->redirectGuestsTo(
-            fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.masuk') : '/',
+            fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.masuk') : route('masuk'),
         );
         $middleware->redirectUsersTo(
-            fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.beranda') : '/',
+            fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.beranda') : route('kelola.beranda'),
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {

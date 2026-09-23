@@ -65,7 +65,9 @@ describe('Masuk Platform Pengelola & pemisahan sesi (BR-P01.2, BR-P01.4)', funct
 
     it('tidak melayani rute tenant di subdomain pengelola dan sebaliknya', function (): void {
         $this->get(BantuanPengelola::Url('/sembarang-halaman-tenant'))->assertNotFound();
-        $this->get('http://localhost/masuk')->assertNotFound();
+        // /masuk kini milik tenant (F-00); rute khusus pengelola tetap tidak dilayani di host tenant.
+        $this->get('http://localhost/tim-internal')->assertNotFound();
+        $this->get('http://localhost/integrasi')->assertNotFound();
         $this->get('http://localhost/')->assertOk();
     });
 
