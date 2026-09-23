@@ -13,6 +13,7 @@ use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
+use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
@@ -135,6 +136,18 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::put('/katalog/kupon/{kuponLangganan}', [KuponKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::KatalogKuponKelola))
                 ->name('pengelola.katalog.kupon.ubah');
+        });
+
+        // P-06 Dokumen legal.
+        Route::middleware($izin(IzinPengelola::LegalLihat))->group(function () use ($izin): void {
+            Route::get('/legal', [DokumenLegalKontroler::class, 'Daftar'])->name('pengelola.legal.daftar');
+            Route::get('/legal/{dokumenLegal}', [DokumenLegalKontroler::class, 'Tampilkan'])->name('pengelola.legal.tampil');
+            Route::middleware($izin(IzinPengelola::LegalKelola))->group(function (): void {
+                Route::post('/legal', [DokumenLegalKontroler::class, 'BuatDraf'])->name('pengelola.legal.buat');
+                Route::put('/legal/{dokumenLegal}', [DokumenLegalKontroler::class, 'Ubah'])->name('pengelola.legal.ubah');
+                Route::delete('/legal/{dokumenLegal}', [DokumenLegalKontroler::class, 'Hapus'])->name('pengelola.legal.hapus');
+                Route::post('/legal/{dokumenLegal}/terbitkan', [DokumenLegalKontroler::class, 'Terbitkan'])->name('pengelola.legal.terbitkan');
+            });
         });
 
         // P-05 Konfigurasi integrasi platform (BR-P05.2: hanya Teknis & Super Admin).

@@ -47,6 +47,8 @@ export const IzinPengelola = {
     TemplateTerbitkan: 'template.terbitkan',
     IntegrasiLihat: 'integrasi.lihat',
     IntegrasiKelola: 'integrasi.kelola',
+    LegalLihat: 'legal.lihat',
+    LegalKelola: 'legal.kelola',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */

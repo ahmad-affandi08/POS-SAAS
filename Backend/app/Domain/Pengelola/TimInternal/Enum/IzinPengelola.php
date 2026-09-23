@@ -45,6 +45,10 @@ enum IzinPengelola: string
     case IntegrasiLihat = 'integrasi.lihat';
     case IntegrasiKelola = 'integrasi.kelola';
 
+    // P-06 Dokumen legal.
+    case LegalLihat = 'legal.lihat';
+    case LegalKelola = 'legal.kelola';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -74,6 +78,8 @@ enum IzinPengelola: string
             self::TemplateTerbitkan => 'Menerbitkan template sektor',
             self::IntegrasiLihat => 'Melihat status integrasi platform',
             self::IntegrasiKelola => 'Mengubah kredensial, menguji, dan mengaktifkan integrasi platform',
+            self::LegalLihat => 'Melihat dokumen legal',
+            self::LegalKelola => 'Menyusun dan menerbitkan dokumen legal',
         };
     }
 }

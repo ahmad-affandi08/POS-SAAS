@@ -464,7 +464,7 @@ Backend/app/Domain/Pengelola/
 ├── TemplateSektor/     # Aksi kelola & terbitkan template, ValidatorTemplate (P-03); modelnya di Domain/PanduanAwal
 ├── Katalog/            # Aksi kelola fitur, paket, harga, add-on, kupon (P-04); modelnya di Domain/Tenant
 ├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi, PenerapKonfigurasiIntegrasi (P-05); nilai dibaca aplikasi lewat config, bukan model
-├── Konten/             # DokumenLegal, TemplatePesan, ArtikelBantuan                   (P-06)
+├── Konten/             # Aksi kelola DokumenLegal (P-06; modelnya di Domain/Tenant), TemplatePesan, ArtikelBantuan (Fase 1–2)
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
 ├── Tagihan/            # TagihanLangganan, PembayaranLangganan, Dunning, LaporanMrr    (P-08)
 ├── Dukungan/           # TiketDukungan, AksesDukungan, AlatBantu                       (P-09)

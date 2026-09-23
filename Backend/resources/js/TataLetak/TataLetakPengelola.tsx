@@ -18,6 +18,7 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat },
     { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat },
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
+    { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat },
     { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
