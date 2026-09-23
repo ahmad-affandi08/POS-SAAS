@@ -95,12 +95,13 @@ describe('Persetujuan ulang versi materiil (BR-P06.5)', function (): void {
     });
 
     it('Perjanjian Pemrosesan Data materiil yang terbit setelah registrasi juga wajib disetujui; yang berlaku sebelum registrasi tidak', function (): void {
-        $ppd = BantuanAutentikasi::TerbitkanVersi(JenisDokumenLegal::PerjanjianPemrosesanData, 1, '2026-10-23');
+        // PPD v1 sudah disetujui saat registrasi (wajib sejak v1.26); v2 materiil terbit setelahnya.
+        $ppd = BantuanAutentikasi::TerbitkanVersi(JenisDokumenLegal::PerjanjianPemrosesanData, 2, '2026-10-23');
         $this->travelTo(Carbon::parse('2026-10-23 10:00:00', 'Asia/Jakarta'));
         $this->actingAs($this->pemilik, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $this->tenant->Id])
             ->get('/kelola/persetujuan-legal')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Dokumen.0.Uuid', $ppd->Uuid));
 
-        // Owner yang mendaftar setelah versi itu berlaku tidak diminta ulang (lihat pertanyaan terbuka di PRD).
+        // Owner yang mendaftar setelah versi itu berlaku menyetujuinya saat registrasi, jadi tidak diminta ulang.
         $baru = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data('budi@toko.id', '081200000077', namaUsaha: 'Toko Budi'));
         $this->flushSession();
         $this->actingAs($baru['Pengguna'], 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $baru['Tenant']->Id])

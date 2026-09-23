@@ -28,11 +28,14 @@ enum JenisDokumenLegal: string
     }
 
     /**
+     * Disetujui saat registrasi (BR-P06.2). PPD ikut wajib (v1.26): menurut UU PDP tenant adalah pengendali data
+     * pelanggannya dan {{APP}} pemroses, sehingga perjanjian pemrosesan harus ada sejak data pertama masuk.
+     *
      * @return list<self>
      */
     public static function AmbilWajibRegistrasi(): array
     {
-        return [self::SyaratKetentuan, self::KebijakanPrivasi];
+        return [self::SyaratKetentuan, self::KebijakanPrivasi, self::PerjanjianPemrosesanData];
     }
 
     /**

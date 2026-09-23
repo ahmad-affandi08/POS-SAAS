@@ -134,8 +134,8 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                             className="font-semibold text-brand underline"
                         >
                             Syarat & Ketentuan
-                        </a>{' '}
-                        dan{' '}
+                        </a>
+                        ,{' '}
                         <a
                             href="/legal/kebijakan-privasi"
                             target="_blank"
@@ -143,6 +143,15 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                             className="font-semibold text-brand underline"
                         >
                             Kebijakan Privasi
+                        </a>
+                        , serta{' '}
+                        <a
+                            href="/legal/perjanjian-pemrosesan-data"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-brand underline"
+                        >
+                            Perjanjian Pemrosesan Data
                         </a>
                         .
                     </span>

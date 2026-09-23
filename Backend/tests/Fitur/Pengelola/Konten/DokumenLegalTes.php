@@ -160,12 +160,13 @@ describe('Tanggal berlaku & pengumuman (BR-P06.3)', function (): void {
 });
 
 describe('Versi berlaku & prasyarat registrasi (BR-P06.2, BR-P06.4)', function (): void {
-    it('registrasi baru siap setelah S&K dan Kebijakan Privasi berlaku; versi terjadwal belum dihitung', function (): void {
+    it('registrasi baru siap setelah S&K, Kebijakan Privasi, dan PPD berlaku; versi terjadwal belum dihitung', function (): void {
         $kueri = app(DokumenLegalBerlaku::class);
-        expect($kueri->AmbilKekuranganRegistrasi(now()))->toBe([JenisDokumenLegal::SyaratKetentuan, JenisDokumenLegal::KebijakanPrivasi]);
+        expect($kueri->AmbilKekuranganRegistrasi(now()))->toBe([JenisDokumenLegal::SyaratKetentuan, JenisDokumenLegal::KebijakanPrivasi, JenisDokumenLegal::PerjanjianPemrosesanData]);
 
         MasukSebagaiLegal($this);
         TerbitkanDokumenUji($this, JenisDokumenLegal::SyaratKetentuan);
+        TerbitkanDokumenUji($this, JenisDokumenLegal::PerjanjianPemrosesanData);
         TerbitkanDokumenUji($this, JenisDokumenLegal::KebijakanPrivasi, ['BerlakuMulai' => '2026-09-25']);
 
         expect($kueri->AmbilKekuranganRegistrasi(now()))->toBe([JenisDokumenLegal::KebijakanPrivasi])

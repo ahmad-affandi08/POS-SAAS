@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.25 |
+| Versi | 1.26 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -46,6 +46,7 @@
 | 1.23 | Perbaikan temuan tinjauan integrasi Fase 0 (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): aktifkan kembali memeriksa tunggakan & masa tenggang (BR-P07.5), penangguhan manual tidak bisa dicabut lewat tagihan/pembayaran (BR-P07.4 × BR-P08.9), `StatusSebelumDitangguhkan` dikosongkan otomatis, penanda Uji/Demo/Internal dikecualikan dari tunggakan, pemakaian di tampilan 360° memakai penghitung batas F-02a (outlet aktif; pengguna aktif + undangan berlaku). |
 | 1.24 | Rincian F-02b (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): perangkat & kode perangkat `{KodeOutlet}-{Jenis}{NN}`, kode aktivasi 8 karakter sekali pakai (HMAC), device token sendiri `{IdTenant}\|{rahasia}` **menggantikan Sanctum** untuk API POS (§13.1/§16.1 disesuaikan), PIN kasir 6 angka dengan penguncian 5× salah/5 menit, `BatasPerangkatPerOutlet` ditegakkan, cabut perangkat (BR-02.3), key JSON `konfigurasi-aplikasi` PascalCase (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`). `KodeAktivasi` masuk daftar pengecualian `MilikTenant` §13.4. §25 no. 14 bertambah selesai. |
 | 1.25 | Tindak lanjut tinjauan integrasi (diputuskan agen atas mandat pemilik produk, menunggu konfirmasi): `/kelola/langganan` memakai izin `langganan.kelola` (khusus Pemilik); izin tenant baru `bantuan.tiket.lihat` & `bantuan.tiket.kelola` (bawaan Pemilik, Admin, Manajer Outlet); 2FA wajib (§20.2, BR-00.8) berlaku untuk peran bawaan Pemilik, Admin, Akuntan di paket ber-`keamanan.2fa-wajib`, dan 2FA milik akun tidak bisa dimatikan selama satu keanggotaan aktif mewajibkannya; tenant `Ditangguhkan` hanya bisa membaca back-office, kecuali langganan/pembayaran, keamanan akun, bantuan, dan persetujuan legal (F-00); banner Tertunggak (dengan batas tenggang) & Ditangguhkan di back-office; `LogAudit` tenant untuk 2FA, atur ulang kata sandi, persetujuan legal, tagihan & bukti transfer (peristiwa tingkat akun dicatat di setiap tenant tempat pengguna aktif). Langkah rilis: jalankan `organisasi:siapkan-peran` agar peran bawaan tenant lama menerima izin baru. |
+| 1.26 | **Pemilik produk mendelegasikan semua pertanyaan terbuka agen kepada agen** dengan patokan "terbaik untuk kita dan terbaik untuk tenant" (23/09/2026). Keputusan agen v1.16–v1.25 yang bertanda "menunggu konfirmasi" dianggap **disetujui** lewat delegasi ini. Keputusan baru dicatat di §25.2 dan D-12; Perjanjian Pemrosesan Data kini wajib disetujui saat registrasi (BR-P06.2). |
 
 ---
 
@@ -628,7 +629,7 @@ FiturAktif(tenant, kunci) =
 
 **Aturan Bisnis:**
 - BR-P06.1 Versi dokumen legal yang sudah terbit tidak bisa diubah.
-- BR-P06.2 Registrasi tenant ditolak jika belum ada S&K dan Kebijakan Privasi berstatus terbit (prasyarat F-00). "Terbit" berarti ada versi terbit yang tanggal berlakunya sudah tiba.
+- BR-P06.2 Registrasi tenant ditolak jika belum ada S&K, Kebijakan Privasi, dan Perjanjian Pemrosesan Data (sejak v1.26) berstatus terbit (prasyarat F-00). "Terbit" berarti ada versi terbit yang tanggal berlakunya sudah tiba.
 - BR-P06.3 Versi baru hanya bisa terbit dengan `BerlakuMulai` hari ini atau nanti (WIB) dan lebih lambat dari versi terbit sebelumnya. Versi **materiil** yang menggantikan versi sebelumnya wajib `BerlakuMulai` ≥ tanggal terbit + 30 hari. Versi pertama suatu jenis boleh berlaku hari itu juga.
 - BR-P06.4 Satu jenis dokumen hanya punya satu draf pada satu waktu, dan draf hanya terlihat oleh penyusun (Konten & Legal, Super Admin). Status tampilan dihitung dari tanggal: *Terjadwal* (terbit, belum berlaku), *Berlaku* (versi terbit terakhir yang tanggalnya sudah tiba), *Digantikan*. Hanya draf yang boleh dihapus.
 - BR-P06.5 Pencatatan `PersetujuanDokumenLegal` (tenant, pengguna, versi, waktu, IP), pengumuman versi materiil ke Owner, dan permintaan persetujuan ulang saat login dibangun bersama F-00, karena membutuhkan tabel tenant. P-06 menyediakan kueri versi yang berlaku dan pemeriksaan prasyarat registrasi.
@@ -839,10 +840,10 @@ And percobaan tersebut tercatat di log audit tenant dan log audit pengelola
 **Tujuan:** Calon pelanggan membuat akun usaha (tenant) dan memulai masa trial.
 **Aktor:** Calon Owner, Sistem.
 **Pemicu:** Klik "Daftar Gratis" di landing page (atau tautan mitra/referral, P-12).
-**Prasyarat:** P-02 s.d. P-06 selesai: paket & batas tersedia (P-04), template sektor terbit (P-03), tarif pajak & wilayah (P-02), email & CAPTCHA aktif (P-05), S&K dan Kebijakan Privasi terbit (P-06).
+**Prasyarat:** P-02 s.d. P-06 selesai: paket & batas tersedia (P-04), template sektor terbit (P-03), tarif pajak & wilayah (P-02), email & CAPTCHA aktif (P-05), S&K, Kebijakan Privasi, dan Perjanjian Pemrosesan Data terbit (P-06).
 
 **Langkah:**
-1. Isi nama, email, no. WhatsApp, password, nama usaha, (opsional) kode mitra/referral, lalu **centang persetujuan S&K dan Kebijakan Privasi** versi yang berlaku (tercatat di `PersetujuanDokumenLegal`).
+1. Isi nama, email, no. WhatsApp, password, nama usaha, (opsional) kode mitra/referral, lalu **centang persetujuan S&K, Kebijakan Privasi, dan Perjanjian Pemrosesan Data** versi yang berlaku (tercatat di `PersetujuanDokumenLegal`).
 2. Verifikasi email (link) **atau** OTP WhatsApp.
 3. Sistem membuat baris di tabel `Tenant`, `Pengguna` (peran Owner), `Langganan` (status `Trial`, durasi & paket sesuai konfigurasi P-04), `AtribusiMitra` bila ada kode mitra, outlet default "Outlet Utama", gudang default.
 4. Redirect ke Onboarding Wizard (F-01).
@@ -3687,7 +3688,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
-14. **Utang implementasi P-04** (sebagian selesai v1.22): `PastikanBatasPaket` menegakkan `BatasOutlet` & `BatasPengguna` di F-02a. `BatasPerangkatPerOutlet` & `konfigurasi-aplikasi` selesai di F-02b (v1.24). Sisa: BR-P04.4 downgrade (F-19), termasuk nasib perangkat yang melebihi batas saat turun paket.
+14. **Utang implementasi P-04** (sebagian selesai v1.22): `PastikanBatasPaket` menegakkan `BatasOutlet` & `BatasPengguna` di F-02a. `BatasPerangkatPerOutlet` & `konfigurasi-aplikasi` selesai di F-02b (v1.24). Sisa: BR-P04.4 downgrade (F-19) dengan aturan kelebihan kapasitas di §25.2 no. 2.
 15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
 16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
 17. ~~Utang log audit tenant~~ **Ditutup v1.22**: tabel `LogAudit` tenant (append-only) mencatat pendaftaran, masuk/keluar, pilih tenant, akhir trial, dan semua aksi F-02. Aksi autentikasi (2FA, reset kata sandi, persetujuan legal) & tagihan tenant tersambung sejak v1.25.
@@ -3708,6 +3709,29 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-09 | Pedoman UI/UX & Design System: prinsip alat kerja, aturan warna 90/10, token warna, dua mode kepadatan, keadaan wajib, microcopy Indonesia, checklist anti-slop | 22/09/2026 | §17.6, `Spesifikasi/TokenDesain`, §23.3 |
 | D-10 | Tata kelola AI agent tiga lapis: konteks (`CLAUDE.md`, `.claude/rules/`, `Dokumen/`), penjaga otomatis (hook, `Alat/CekKonvensi.py`, CI, CODEOWNERS), alur kerja (`/mulai-flow`, `/cek-dod`, subagent peninjau, template PR) | 22/09/2026 | §23.4, §13.7.4 |
 | D-11 | **Harga langganan per paket**, bukan per outlet. Outlet, perangkat, dan kuota WA di atas batas paket dijual sebagai add-on. Add-on & kupon tanpa four-eyes. Kunci fitur katalog dipertahankan apa adanya | 23/09/2026 | §8 P-04, §21, §25 |
+| D-12 | Pemilik produk mendelegasikan keputusan atas pertanyaan terbuka agen (v1.16–v1.26) kepada agen dengan patokan kepatuhan hukum Indonesia, keadilan bagi tenant, dan kesehatan bisnis {{APP}}. Rincian di §25.2 | 23/09/2026 | §8 P-06/P-07/P-08/P-09/P-11, F-00, F-02, F-06, F-19, §25.2 |
+
+
+### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)
+
+Patokan: patuh hukum Indonesia, adil bagi tenant (tidak ada kejutan yang mengganggu operasional toko), dan tetap sehat untuk bisnis {{APP}}. Butir yang butuh kode disertai flow pelaksananya.
+
+1. **Device token POS sendiri, bukan Sanctum** (F-02b): disetujui. Tidak ada *abilities* per jenis perangkat; hak ditentukan izin peran kasir yang masuk lewat PIN, sehingga satu sumber kebenaran hak akses.
+2. **Kelebihan kapasitas saat turun paket** (BR-P04.4, dikerjakan F-19): tidak ada yang dicabut atau dihapus otomatis saat downgrade. Owner memilih outlet/perangkat/pengguna yang tetap aktif dalam **14 hari**; selama itu semuanya tetap berjalan dan penambahan baru ditolak. Bila tidak memilih, yang dinonaktifkan adalah yang **paling lama tidak aktif** (perangkat: `TerakhirAktifPada`; pengguna: login terakhir, Owner tidak pernah). Penonaktifan bisa dibalik dengan naik paket atau add-on; data tidak pernah dihapus. Transaksi offline yang terjadi sebelum penonaktifan tetap diterima saat sinkron (F-07).
+3. **PIN kasir offline** (F-06): hash PIN tidak pernah dikirim ke perangkat dalam bentuk yang bisa ditebak di luar perangkat. Server mengirim verifier Argon2id yang dibungkus kunci per perangkat; kunci itu disimpan di Android Keystore / iOS Keychain / Windows DPAPI dan tidak bisa diekspor. Batas 5 salah → kunci 5 menit juga berlaku lokal, dan pencabutan perangkat menghapus data PIN saat perangkat online. Perangkat hilang = segera cabut dari back-office (BR-02.3).
+4. **Mengatur PIN sendiri di back-office**: wajib konfirmasi kata sandi (berlaku 15 menit sejak konfirmasi terakhir), karena PIN membuka laci kas. Atur ulang PIN anggota oleh Pemilik/Admin juga memakai konfirmasi yang sama. Dikerjakan bersama F-06.
+5. **Izin Bantuan**: disetujui sesuai v1.25 (Pemilik, Admin, Manajer Outlet); peran kustom bisa diberi izin ini oleh Owner.
+6. **Nomor invoice langganan** `INV/tahun/bulan/urut`: urutan **berlanjut sepanjang tahun dan reset tiap 1 Januari** (sudah berjalan); bulan hanya penanda terbit. Satu deret tanpa lompatan per tahun memudahkan pemeriksaan pajak; tagihan yang dibatalkan tetap memegang nomornya.
+7. **Pembulatan PPN tagihan langganan**: DPP dan PPN dibulatkan **ke bawah** ke rupiah penuh per tagihan (sesuai praktik e-Faktur dan tidak pernah memungut lebih dari tarif). Wajib ditinjau konsultan pajak sebelum rilis produksi; perubahan cukup lewat konfigurasi kalkulator tanpa ubah data lama.
+8. **Status PKP {{APP}}**: {{APP}} **tidak memungut PPN sebelum resmi dikukuhkan PKP** (SPPKP terbit). Produksi awal memakai `TAGIHAN_PLATFORM_PKP=false`; saat SPPKP terbit, flag dinyalakan dan tarif diambil dari `TarifPajak` (tidak di-hard-code). Pengukuhan PKP sukarela direncanakan sebelum menjual ke tenant PKP menengah (Bisnis/Enterprise) agar mereka bisa mengkreditkan pajak masukan; paling lambat saat omzet melewati batas pengusaha kecil (Rp4,8 miliar/tahun).
+9. **Kupon 100% / tagihan Rp0**: diizinkan. Tagihan Rp0 langsung `Lunas` tanpa bukti transfer dan mengaktifkan langganan seperti pembayaran diterima, tercatat di audit dengan kode kupon. Kupon 100% hanya dibuat Super Admin/Keuangan. Sampai dibangun (P-08 lanjutan), tagihan Rp0 ditolak dengan arahan menghubungi tim.
+10. **SLA tiket dukungan**: jam kalender 24/7 untuk semua prioritas (toko buka akhir pekan & hari libur). Tidak diubah menjadi jam kerja.
+11. **Perpanjangan trial**: maks. 14 hari per perpanjangan dan maks. 2 kali per tenant (nilai berjalan), dipindahkan ke konfigurasi saat P-07 berikutnya disentuh. Override batas/fitur tetap wajib bertanggal berakhir.
+12. **Perjanjian Pemrosesan Data (PPD) saat registrasi**: **wajib dicentang** bersama S&K dan Kebijakan Privasi (UU No. 27/2022 tentang PDP: tenant pengendali data pelanggannya, {{APP}} pemroses). Konten & Legal wajib menerbitkan PPD sebelum registrasi dibuka.
+13. **Undangan yang belum diterima dihitung sebagai kursi pengguna**: ya (sudah berjalan), agar undangan tidak melampaui batas saat diterima bersamaan. Undangan kedaluwarsa (72 jam) atau dibatalkan tidak dihitung.
+14. **Analis & dasbor operasional**: tidak. Analis tetap hanya metrik bisnis agregat; kesehatan sistem (antrean, job gagal, backup) khusus Teknis & Super Admin (prinsip kebutuhan minimum).
+15. **Audit baca tagihan platform**: daftar tagihan & antrean verifikasi dibaca lewat daftar putih `KonteksPengelola::KueriDataPlatform` tanpa log per halaman (data catatan platform, dibatasi izin `tagihan.lihat`); membuka **bukti transfer** (data pribadi pengirim) tetap tercatat `tagihan.bukti.lihat`. Disetujui.
+16. **Penangguhan manual × pembayaran & pembatasan tenant ditangguhkan**: disetujui sesuai v1.23 dan v1.25.
 
 ---
 

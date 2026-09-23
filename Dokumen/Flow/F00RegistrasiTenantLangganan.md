@@ -5,10 +5,10 @@
 **Tujuan:** Calon pelanggan membuat akun usaha (tenant) dan memulai masa trial.
 **Aktor:** Calon Owner, Sistem.
 **Pemicu:** Klik "Daftar Gratis" di landing page (atau tautan mitra/referral, P-12).
-**Prasyarat:** P-02 s.d. P-06 selesai: paket & batas tersedia (P-04), template sektor terbit (P-03), tarif pajak & wilayah (P-02), email & CAPTCHA aktif (P-05), S&K dan Kebijakan Privasi terbit (P-06).
+**Prasyarat:** P-02 s.d. P-06 selesai: paket & batas tersedia (P-04), template sektor terbit (P-03), tarif pajak & wilayah (P-02), email & CAPTCHA aktif (P-05), S&K, Kebijakan Privasi, dan Perjanjian Pemrosesan Data terbit (P-06).
 
 **Langkah:**
-1. Isi nama, email, no. WhatsApp, password, nama usaha, (opsional) kode mitra/referral, lalu **centang persetujuan S&K dan Kebijakan Privasi** versi yang berlaku (tercatat di `PersetujuanDokumenLegal`).
+1. Isi nama, email, no. WhatsApp, password, nama usaha, (opsional) kode mitra/referral, lalu **centang persetujuan S&K, Kebijakan Privasi, dan Perjanjian Pemrosesan Data** versi yang berlaku (tercatat di `PersetujuanDokumenLegal`).
 2. Verifikasi email (link) **atau** OTP WhatsApp.
 3. Sistem membuat baris di tabel `Tenant`, `Pengguna` (peran Owner), `Langganan` (status `Trial`, durasi & paket sesuai konfigurasi P-04), `AtribusiMitra` bila ada kode mitra, outlet default "Outlet Utama", gudang default.
 4. Redirect ke Onboarding Wizard (F-01).

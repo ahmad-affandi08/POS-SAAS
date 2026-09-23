@@ -23,7 +23,7 @@ final class BantuanPendaftaran
         app(SiapkanKatalogBawaan::class)->Jalankan();
         Paket::query()->whereIn('Kode', ['GRATIS', 'STARTER', 'PRO', 'BISNIS', 'ENTERPRISE'])->update(['Status' => StatusPaket::Aktif->value]);
 
-        foreach ([JenisDokumenLegal::SyaratKetentuan, JenisDokumenLegal::KebijakanPrivasi] as $jenis) {
+        foreach (JenisDokumenLegal::AmbilWajibRegistrasi() as $jenis) {
             DokumenLegal::query()->create([
                 'Jenis' => $jenis,
                 'Versi' => 1,

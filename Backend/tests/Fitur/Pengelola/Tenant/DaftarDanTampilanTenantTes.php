@@ -105,7 +105,7 @@ describe('P-07 tampilan 360° tenant', function (): void {
                 ->where('Tenant.Anggota.0.Email', 'rina@kopinusantara.id')
                 ->where('Tenant.Anggota.0.Pemilik', true)
                 ->missing('Tenant.Anggota.0.KataSandi')
-                ->count('Tenant.PersetujuanLegal', 2)
+                ->count('Tenant.PersetujuanLegal', 3) // S&K, Kebijakan Privasi, PPD (BR-P06.2 sejak v1.26)
                 ->where('Tenant.Riwayat', [])
                 ->where('Aturan.MaksHariTrial', 14));
     });
