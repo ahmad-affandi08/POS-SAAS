@@ -933,6 +933,18 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 - Semua aksi F-02 serta pendaftaran, masuk, pilih tenant, keluar, dan akhir trial dicatat di `LogAudit` (append-only); halaman log audit untuk pemegang izin `audit.lihat`.
 - Ditunda ke F-02b: perangkat, kode aktivasi, PIN kasir, BR-02.3, `BatasPerangkatPerOutlet`.
 
+**Rincian F-02b (perangkat, kode aktivasi, PIN kasir; diputuskan agen atas mandat pemilik produk):**
+- Perangkat dikelola di `/kelola/perangkat` (izin `perangkat.lihat` / `perangkat.kelola`; peran bawaan Pemilik, Admin, Manajer Outlet; Manajer hanya outlet yang ditugaskan). Jenis: Kasir, Kds, Gudang, Pelayan (Salesman menyusul). Perangkat tidak pernah dihapus: status Belum diaktifkan → Aktif → Dicabut (final).
+- Kode perangkat `{KodeOutlet}-{Huruf}{NN}` (K = Kasir, D = KDS, G = Gudang, P = Pelayan; misal `JKT1-K02`), nomor urut per outlet & jenis, unik per tenant dan **tidak pernah dipakai ulang**, juga setelah dicabut. Perangkat pertama di outlet mengisi `Outlet.KodeDikunciPada` (BR-02.2).
+- BR-02.1: `BatasPerangkatPerOutlet` ditegakkan `PastikanBatasPaket` saat menambah perangkat; yang dihitung perangkat yang belum dicabut (termasuk yang belum diaktifkan). Perangkat hanya bisa ditambahkan di outlet aktif.
+- Kode aktivasi: 8 karakter dari 32 karakter tanpa 0/O/1/I, berlaku 15 menit, sekali pakai, disimpan sebagai HMAC-SHA256 (kunci aplikasi); ditampilkan sekali bersama QR (isi QR = kode). Membuat kode baru membatalkan kode lama perangkat itu; mencabut perangkat membatalkan kode yang belum dipakai. Kode untuk perangkat yang sudah aktif = pindah/instal ulang: aktivasi berikutnya mengganti token sehingga instalasi lama keluar. Penukaran dibatasi 10 kali/menit per IP; kode salah, kedaluwarsa, dipakai, atau dibatalkan dijawab galat yang sama (`KodeAktivasiTidakBerlaku`). `KodeAktivasi` adalah data platform tanpa `MilikTenant` (seperti `UndanganPengguna`) karena tenant belum diketahui saat kode ditukar.
+- Device token: `{IdTenant}|{rahasia}` dengan rahasia 64 byte acak; server hanya menyimpan SHA-256 rahasia di `Perangkat.HashToken`. Bagian `IdTenant` hanya menetapkan scope pencarian (token tenant A dengan IdTenant diganti tidak cocok di tenant lain). Dipilih alih-alih Sanctum karena pencarian tokenable Sanctum memuat `Perangkat` (MilikTenant) sebelum tenant diketahui dan akan memerlukan melewati scope tenant di luar `Domain/Pengelola`. Perantara `AutentikasiPerangkat` menetapkan tenant & perangkat, memperbarui `TerakhirAktifPada` (maks. sekali per menit) dan `VersiAplikasi` dari header `X-Versi-Aplikasi`.
+- BR-02.3: token perangkat yang dicabut langsung ditolak (`PerangkatDicabut`, 403). Penerimaan batch offline yang dibuat sebelum pencabutan dibangun bersama sinkron (F-07).
+- Langganan `Ditangguhkan`/`Berhenti`: aktivasi perangkat dan endpoint berjualan (mulai `kasir/masuk-pin`) ditolak `LanggananTidakAktif` (403); `konfigurasi-aplikasi` tetap terbuka dengan `Langganan.BolehBertransaksi = false`. Tenant yang turun ke paket Gratis boleh berjualan lagi.
+- PIN kasir: 6 angka per keanggotaan tenant (`TenantPengguna.HashPin`, `Hash::make`), ditolak bila angka sama semua atau deret naik/turun (misal 123456, 654321). Setiap anggota mengatur PIN sendiri di `/kelola/keamanan/pin`; pemegang izin `pengguna.pin.atur` (Pemilik, Admin, Manajer Outlet) mengatur ulang PIN anggota lain tanpa bisa melihatnya (bukan PIN Pemilik bila pelaku bukan Pemilik; pelaku berakses outlet terbatas hanya untuk anggota yang semua outletnya ada di outletnya). Verifikasi online `POST /api/pos/v1/kasir/masuk-pin`: hanya anggota aktif dengan akses ke outlet perangkat; 5 kali salah per perangkat + pengguna → terkunci 5 menit (`PinTerkunci`, 429). Distribusi hash PIN ke perangkat untuk verifikasi offline menyusul F-06.
+- Log audit: `perangkat.buat`, `perangkat.ubah`, `perangkat.kode-aktivasi.buat`, `perangkat.aktivasi`, `perangkat.cabut`, `outlet.kunci-kode`, `pengguna.pin.atur`, `pengguna.pin.atur-ulang`, `kasir.masuk-pin`, `kasir.pin.terkunci` (tanpa kode, token, atau PIN).
+- Versi aplikasi POS per platform (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`) sementara dari konfigurasi `config/aplikasi.php` sampai `RilisAplikasi` (P-10).
+
 ---
 
 ### F-03 · Master Produk, Harga & Pajak
@@ -2465,9 +2477,9 @@ erDiagram
 | `Outlet` | IdTenant, IdMerek, Kode, Nama, Alamat, KodeKota, ZonaWaktu, TemplateSektor, JamTutupBuku (misal 04:00), ProfilPajak JSON (Pkp, Nitku, PungutPbjt), Status (Aktif/Diarsipkan), KodeDikunciPada (BR-02.2), DiarsipkanPada |
 | `OutletFitur` | IdTenant, IdOutlet, KunciFitur, Aktif, Konfigurasi JSON |
 | `Gudang` | IdTenant, IdOutlet, Kode, Nama, Jenis (Toko/Dapur/Bar/Gudang/Rusak/DalamPerjalanan), Status (Aktif/Diarsipkan), DiarsipkanPada |
-| `Perangkat` | IdTenant, IdOutlet, Uuid, Kode, Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada |
+| `Perangkat` | IdTenant, IdOutlet, Uuid, Kode (unik per tenant, tidak dipakai ulang), Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), HashToken (SHA-256 device token, F-02b), DiaktifkanPada, TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada |
 | `PerangkatPengguna` | IdPengguna, IdTenant, Aplikasi (Owner/Pos), Platform (Android/Ios/Windows), TokenPush, VersiAplikasi, TerakhirAktifPada, DicabutPada |
-| `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode, KedaluwarsaPada, DipakaiPada |
+| `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode (HMAC-SHA256), KedaluwarsaPada, DipakaiPada, DibatalkanPada, IdPenggunaPembuat. Data platform tanpa `MilikTenant` (dicari lewat `HashKode` sebelum tenant diketahui, F-02b) |
 | `RilisAplikasi` | Aplikasi (Pos/Owner), Platform, Kanal (Beta/Stabil), Versi, Build, VersiMinimum, UrlUnduh, CatatanRilis, PersenRollout |
 | `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran (tidak dipakai untuk anggota `SemuaOutlet`) |
 | `Peran` / `PeranIzin` | IdTenant, Uuid, Kode (peran bawaan §19.1; kosong = kustom), Nama, Keterangan, Bawaan / IdTenant, IdPeran, KunciIzin |
@@ -2676,8 +2688,9 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/api/pos/v1/perangkat/aktivasi` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet |
+| POST | `/api/pos/v1/perangkat/aktivasi` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet. Respons F-02b: `TokenPerangkat`, `Perangkat`, `Outlet`, `Tenant`, `Langganan` |
 | GET | `/api/pos/v1/konfigurasi-aplikasi` | Versi terbaru, `min_supported_version`, feature flag remote, konfigurasi outlet |
+| POST | `/api/pos/v1/kasir/masuk-pin` | Verifikasi PIN kasir online (`UuidPengguna`, `Pin`) → pengguna & izin; kunci 5 menit setelah 5 kali salah per perangkat + pengguna (F-02b) |
 | GET | `/api/pos/v1/data-awal` | Paket data awal (dapat berupa file JSON terkompresi gzip untuk katalog besar): produk, harga, modifier, pajak, promo aktif, metode bayar, meja, pengaturan, staf + hash PIN, pelanggan yang sering datang (terbatas) |
 | GET | `/api/pos/v1/perubahan?sejak={kursor}` | Delta perubahan master sejak cursor (produk/harga/promo/stok ringkas/86/staf) |
 | POST | `/api/pos/v1/sinkron/kirim` | Kirim batch outbox (shift, sale, payment, cash movement, void, retur, approval). Respons per item: `accepted` / `duplicate` / `rejected` + alasan |
