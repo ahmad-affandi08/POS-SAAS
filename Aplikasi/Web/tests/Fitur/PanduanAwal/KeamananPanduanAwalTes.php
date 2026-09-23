@@ -437,3 +437,15 @@ describe('Log audit', function (): void {
             ->and($teks)->not->toContain('PathGambarQris');
     });
 });
+
+arch('CLAUDE.md #14: Kueri & Layanan PanduanAwal tidak memakai Model domain lain (hanya DTO/Kueri publik)')
+    ->expect(['App\Domain\PanduanAwal\Kueri', 'App\Domain\PanduanAwal\Layanan'])
+    ->not->toUse([
+        'App\Domain\Akuntansi\Model',
+        'App\Domain\Katalog\Model',
+        'App\Domain\Organisasi\Model',
+        'App\Domain\Pajak\Model',
+        'App\Domain\Penjualan\Model',
+        'App\Domain\Referensi\Model',
+        'App\Domain\Tenant\Model',
+    ]);

@@ -82,7 +82,7 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
     {
         return Inertia::render('Kelola/PanduanAwal/Sektor', [
             'Progres' => $this->Progres(),
-            ...$pilihan->Ambil($this->OutletPanduan()),
+            ...$pilihan->Ambil($this->OutletPanduanRingkas()),
         ]);
     }
 
@@ -97,7 +97,7 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
     {
         return Inertia::render('Kelola/PanduanAwal/Pajak', [
             'Progres' => $this->Progres(),
-            ...$usulan->Ambil($this->OutletPanduan()),
+            ...$usulan->Ambil($this->OutletPanduanRingkas()),
         ]);
     }
 

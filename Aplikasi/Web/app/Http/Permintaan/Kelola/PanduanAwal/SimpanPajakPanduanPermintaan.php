@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Permintaan\Kelola\PanduanAwal;
 
-use App\Domain\Organisasi\Data\DataProfilPajakOutlet;
+use App\Domain\Pajak\Data\BatasBiayaLayanan;
 use App\Domain\PanduanAwal\Data\DataPajakPanduan;
 use Brick\Math\BigDecimal;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * F-01 langkah 3: konfirmasi pajak outlet. Persen service charge berupa string desimal bertitik (misal "7.5"),
+ * F-01 langkah 3: konfirmasi pajak outlet. Persen biaya layanan berupa string desimal bertitik (misal "7.5"),
  * 0–10 persen (§12.1), dibandingkan dengan BigDecimal (tidak pernah float).
  */
 final class SimpanPajakPanduanPermintaan extends FormRequest
@@ -33,8 +33,8 @@ final class SimpanPajakPanduanPermintaan extends FormRequest
                 'regex:'.self::POLA_PERSEN,
                 function (string $atribut, mixed $nilai, Closure $gagal): void {
                     if (is_string($nilai) && preg_match(self::POLA_PERSEN, $nilai) === 1
-                        && BigDecimal::of($nilai)->isGreaterThan(DataProfilPajakOutlet::PERSEN_BIAYA_LAYANAN_MAKSIMAL)) {
-                        $gagal('Service charge 0 sampai '.DataProfilPajakOutlet::PERSEN_BIAYA_LAYANAN_MAKSIMAL.' persen.');
+                        && BigDecimal::of($nilai)->isGreaterThan(BatasBiayaLayanan::PERSEN_MAKSIMAL)) {
+                        $gagal('Biaya layanan 0 sampai '.BatasBiayaLayanan::PERSEN_MAKSIMAL.' persen.');
                     }
                 },
             ],
@@ -48,8 +48,8 @@ final class SimpanPajakPanduanPermintaan extends FormRequest
     public function messages(): array
     {
         return [
-            'PersenBiayaLayanan.required_if_accepted' => 'Isi persen service charge.',
-            'PersenBiayaLayanan.regex' => 'Service charge 0 sampai '.DataProfilPajakOutlet::PERSEN_BIAYA_LAYANAN_MAKSIMAL.' persen.',
+            'PersenBiayaLayanan.required_if_accepted' => 'Isi persen biaya layanan.',
+            'PersenBiayaLayanan.regex' => 'Biaya layanan 0 sampai '.BatasBiayaLayanan::PERSEN_MAKSIMAL.' persen.',
         ];
     }
 

@@ -61,7 +61,6 @@ describe('Registrasi lewat web (F-00)', function (): void {
 
         $this->get('/kelola/panduan-awal')
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                // F-01: halaman panduan awal (berkas TSX tim frontend; diperiksa begitu sudah digabung).
                 ->component('Kelola/PanduanAwal/Indeks')
                 ->where('TenantAktif.Nama', 'Kopi Nusantara')
                 ->where('Pengguna.EmailTerverifikasi', false));

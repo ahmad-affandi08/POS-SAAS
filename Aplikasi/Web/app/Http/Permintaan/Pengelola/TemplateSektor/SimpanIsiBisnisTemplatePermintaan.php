@@ -68,7 +68,7 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
     {
         return [
             'Pengaturan.PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan bilangan bulat Rupiah, misal 100.',
-            'Pengaturan.PersenBiayaLayanan.regex' => 'Service charge berupa persen, misal 5 atau 7.5.',
+            'Pengaturan.PersenBiayaLayanan.regex' => 'Biaya layanan berupa persen, misal 5 atau 7.5.',
             'ProdukContoh.present' => 'Daftar produk contoh wajib dikirim (boleh kosong).',
             'ProdukContoh.max' => 'Produk contoh paling banyak '.ValidatorTemplate::JUMLAH_PRODUK_CONTOH_MAKSIMAL.' item.',
             'ProdukContoh.*.Nama.required' => 'Nama produk contoh wajib diisi.',

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\PanduanAwal\Kueri;
 
+use App\Domain\Organisasi\Data\DataOutletRingkas;
 use App\Domain\Organisasi\Kueri\OutletUtama;
-use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
@@ -23,10 +23,10 @@ final class ProgresPanduan
         return ProgresPanduanAwal::query()->first();
     }
 
-    public function AmbilOutlet(): ?Outlet
+    public function AmbilOutlet(): ?DataOutletRingkas
     {
-        return $this->outletUtama->CariAktif($this->AmbilBaris()?->IdOutlet)
-            ?? $this->outletUtama->CariAktif($this->outletUtama->AmbilId());
+        return $this->outletUtama->CariAktifRingkas($this->AmbilBaris()?->IdOutlet)
+            ?? $this->outletUtama->CariAktifRingkas($this->outletUtama->AmbilId());
     }
 
     public function AmbilStatus(LangkahPanduan $langkah): StatusLangkahPanduan
@@ -53,7 +53,7 @@ final class ProgresPanduan
                 'Tautan' => route($langkah->AmbilNamaRute()),
             ], LangkahPanduan::cases()),
             'SelesaiPada' => $baris?->SelesaiPada?->toIso8601ZuluString(),
-            'Outlet' => $outlet === null ? null : ['Uuid' => $outlet->Uuid, 'Kode' => $outlet->Kode, 'Nama' => $outlet->Nama],
+            'Outlet' => $outlet === null ? null : ['Uuid' => $outlet->uuid, 'Kode' => $outlet->kode, 'Nama' => $outlet->nama],
         ];
     }
 }

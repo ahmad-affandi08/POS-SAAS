@@ -60,7 +60,7 @@ describe('F-01 langkah 3: usulan & konfirmasi pajak (tarif dari TarifPajak, CLAU
                 ->where('TarifPpn.PengaliDppPenyebut', 12)
                 ->where('KelompokPajak.0.Nama', 'Makan & minum')
                 ->where('KelompokPajak.0.Pajak.0.KodeJenisPajak', 'PbjtMakananMinuman')
-                ->where('KelompokPajak.0.Pajak.0.LabelDasarPengenaan', 'Subtotal + service charge')
+                ->where('KelompokPajak.0.Pajak.0.LabelDasarPengenaan', 'Subtotal + biaya layanan')
                 ->where('AlasanUsulan', fn ($alasan) => collect($alasan)->contains('Template Kafe / kedai kopi memakai PBJT makanan & minuman.')));
 
         // Tarif baru terbit untuk kota yang sama: prop mengikuti master, bukan angka di kode.
@@ -78,7 +78,7 @@ describe('F-01 langkah 3: usulan & konfirmasi pajak (tarif dari TarifPajak, CLAU
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->where('TarifPbjt', null)
                 ->where('TarifPpn', null)
-                ->where('AlasanUsulan', fn ($alasan) => collect($alasan)->contains('Tarif PBJT Kota Surakarta belum tersedia di sistem. Anda tetap bisa menyimpan; kami akan melengkapinya.')));
+                ->where('AlasanUsulan', fn ($alasan) => collect($alasan)->contains('Tarif PBJT Kota Surakarta belum tersedia. Anda tetap bisa menyimpan; PBJT belum dihitung sampai tarifnya tersedia.')));
 
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)
             ->post('/kelola/panduan-awal/pajak', ['PungutPbjt' => true, 'BiayaLayananAktif' => false, 'PersenBiayaLayanan' => null, 'HargaTermasukPajak' => false])

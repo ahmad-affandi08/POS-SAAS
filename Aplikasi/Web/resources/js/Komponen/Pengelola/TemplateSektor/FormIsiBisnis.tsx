@@ -212,7 +212,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                         galat={galat['Pengaturan.MetodeHpp']}
                     />
                     <BidangTeks
-                        label="Service charge (%)"
+                        label="Biaya layanan (%)"
                         inputMode="decimal"
                         keterangan="0 sampai 10."
                         nilai={data.Pengaturan.PersenBiayaLayanan}
@@ -221,7 +221,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                     />
                     <div className="flex flex-col gap-2 sm:col-span-2">
                         <KotakCentang
-                            label="Service charge masuk DPP pajak"
+                            label="Biaya layanan masuk DPP pajak"
                             nilai={data.Pengaturan.BiayaLayananMasukDpp}
                             saatBerubah={(nilai) => AturPengaturan('BiayaLayananMasukDpp', nilai)}
                         />

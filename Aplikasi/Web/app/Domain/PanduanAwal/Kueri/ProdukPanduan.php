@@ -6,7 +6,7 @@ namespace App\Domain\PanduanAwal\Kueri;
 
 use App\Domain\Katalog\Kueri\KatalogPanduan;
 use App\Domain\Katalog\Kueri\PemakaianSku;
-use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Data\DataOutletRingkas;
 use App\Domain\PanduanAwal\Layanan\PembacaIsiTemplate;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 
@@ -31,9 +31,9 @@ final class ProdukPanduan
      *
      * @return array<string, mixed>
      */
-    public function Ambil(Outlet $outlet): array
+    public function Ambil(DataOutletRingkas $outlet): array
     {
-        $versi = $this->templateTerbit->CariVersi($outlet->IdTemplateSektorVersi);
+        $versi = $this->templateTerbit->CariVersi($outlet->idTemplateSektorVersi);
         $contoh = $versi === null ? [] : $this->pembaca->Baca($versi->Isi)->produkContoh;
         $namaAda = $contoh === [] ? [] : array_flip($this->katalog->AmbilNamaProdukAda());
         $jumlah = $this->pemakaianSku->Hitung();
@@ -50,7 +50,7 @@ final class ProdukPanduan
             'Kategori' => $this->katalog->AmbilKategori(),
             'Produk' => $this->katalog->AmbilProdukTerbaru(self::JUMLAH_PRODUK_TERBARU),
             'JumlahProduk' => $jumlah,
-            'BatasSku' => $this->batasPaket->AmbilRingkasan($outlet->IdTenant, 'BatasSku', $jumlah),
+            'BatasSku' => $this->batasPaket->AmbilRingkasan($outlet->idTenant, 'BatasSku', $jumlah),
         ];
     }
 }

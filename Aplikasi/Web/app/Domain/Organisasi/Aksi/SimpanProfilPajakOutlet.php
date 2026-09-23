@@ -8,6 +8,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Data\DataProfilPajakOutlet;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Pajak\Data\BatasBiayaLayanan;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 use Brick\Math\RoundingMode;
@@ -57,8 +58,8 @@ final class SimpanProfilPajakOutlet
             $nilai = null;
         }
 
-        if ($nilai === null || $nilai->isNegative() || $nilai->isGreaterThan(DataProfilPajakOutlet::PERSEN_BIAYA_LAYANAN_MAKSIMAL) || $nilai->getScale() > 2) {
-            throw new PelanggaranAturanBisnis('PersenBiayaLayananTidakSah', 'Service charge 0 sampai '.DataProfilPajakOutlet::PERSEN_BIAYA_LAYANAN_MAKSIMAL.' persen.', 'PersenBiayaLayanan');
+        if ($nilai === null || $nilai->isNegative() || $nilai->isGreaterThan(BatasBiayaLayanan::PERSEN_MAKSIMAL) || $nilai->getScale() > 2) {
+            throw new PelanggaranAturanBisnis('PersenBiayaLayananTidakSah', 'Biaya layanan 0 sampai '.BatasBiayaLayanan::PERSEN_MAKSIMAL.' persen.', 'PersenBiayaLayanan');
         }
 
         return (string) $nilai->toScale(2, RoundingMode::Unnecessary);

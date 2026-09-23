@@ -98,7 +98,7 @@ export default function HalamanPajak({
                     ) : null}
                     {Pkp && !TarifPpn ? (
                         <p className="text-isi text-teks-sekunder">
-                            Tarif PPN belum tersedia di sistem. Anda tetap bisa menyimpan; kami akan melengkapinya.
+                            Tarif PPN belum tersedia. Anda tetap bisa menyimpan; PPN belum dihitung sampai tarifnya tersedia.
                         </p>
                     ) : null}
                 </section>
@@ -127,30 +127,30 @@ export default function HalamanPajak({
                         </Pemberitahuan>
                     ) : TarifPbjt ? (
                         <p className="text-isi text-teks-utama">
-                            Tarif PBJT {Kota.Nama}: {JelaskanTarif(TarifPbjt)}. Service charge{' '}
+                            Tarif PBJT {Kota.Nama}: {JelaskanTarif(TarifPbjt)}. Biaya layanan{' '}
                             {TarifPbjt.BiayaLayananMasukDpp ? 'ikut' : 'tidak ikut'} dikenai PBJT di kota ini.
                         </p>
                     ) : formulir.data.PungutPbjt ? (
                         <Pemberitahuan jenis="peringatan" judul="Tarif PBJT belum tersedia">
-                            Tarif PBJT {Kota.Nama} belum tersedia di sistem. Anda tetap bisa menyimpan; kami akan
-                            melengkapinya.
+                            Tarif PBJT {Kota.Nama} belum tersedia. Anda tetap bisa menyimpan; PBJT belum dihitung
+                            sampai tarifnya tersedia.
                         </Pemberitahuan>
                     ) : null}
                 </section>
 
                 <section aria-labelledby="judul-layanan" className="flex flex-col gap-2">
                     <h2 id="judul-layanan" className="text-subjudul font-semibold text-teks-utama">
-                        Service charge (biaya layanan)
+                        Biaya layanan
                     </h2>
                     <KotakCentang
-                        label="Kenakan service charge (biaya layanan)"
+                        label="Kenakan biaya layanan"
                         nilai={formulir.data.BiayaLayananAktif}
                         saatBerubah={(nilai) => formulir.setData('BiayaLayananAktif', nilai)}
                     />
                     {formulir.data.BiayaLayananAktif ? (
                         <div className="max-w-xs">
                             <BidangTeks
-                                label="Persentase service charge"
+                                label="Persentase biaya layanan"
                                 nilai={FormatMasukanPersen(formulir.data.PersenBiayaLayanan)}
                                 saatBerubah={(nilai) =>
                                     formulir.setData('PersenBiayaLayanan', NormalisasiMasukanPersen(nilai))

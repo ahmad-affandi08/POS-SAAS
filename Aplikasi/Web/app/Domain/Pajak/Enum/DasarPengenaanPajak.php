@@ -17,7 +17,7 @@ enum DasarPengenaanPajak: string
     {
         return match ($this) {
             self::Subtotal => 'Subtotal',
-            self::SubtotalPlusLayanan => 'Subtotal + service charge',
+            self::SubtotalPlusLayanan => 'Subtotal + biaya layanan',
         };
     }
 }

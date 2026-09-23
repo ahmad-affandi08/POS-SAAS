@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Organisasi\Kueri;
 
+use App\Domain\Organisasi\Data\DataOutletRingkas;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
 use App\Domain\Organisasi\Model\Outlet;
 
@@ -24,5 +25,13 @@ final class OutletUtama
     public function CariAktif(?int $idOutlet): ?Outlet
     {
         return $idOutlet === null ? null : Outlet::query()->whereKey($idOutlet)->where('Status', StatusOrganisasi::Aktif->value)->first();
+    }
+
+    /** Sama dengan `CariAktif`, dalam bentuk DTO untuk domain lain. */
+    public function CariAktifRingkas(?int $idOutlet): ?DataOutletRingkas
+    {
+        $outlet = $this->CariAktif($idOutlet);
+
+        return $outlet === null ? null : DataOutletRingkas::DariModel($outlet);
     }
 }

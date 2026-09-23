@@ -24,7 +24,7 @@ final class PanduanAwalProdukKontroler extends DasarPanduanAwalKontroler
     {
         return Inertia::render('Kelola/PanduanAwal/Produk', [
             'Progres' => $this->Progres(),
-            ...$produk->Ambil($this->OutletPanduan()),
+            ...$produk->Ambil($this->OutletPanduanRingkas()),
         ]);
     }
 
