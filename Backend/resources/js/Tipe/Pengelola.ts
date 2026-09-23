@@ -49,6 +49,9 @@ export const IzinPengelola = {
     IntegrasiKelola: 'integrasi.kelola',
     LegalLihat: 'legal.lihat',
     LegalKelola: 'legal.kelola',
+    // P-08 Tagihan langganan.
+    TagihanLihat: 'tagihan.lihat',
+    TagihanVerifikasi: 'tagihan.verifikasi',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */

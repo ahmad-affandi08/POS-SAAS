@@ -21,6 +21,7 @@ use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
+use App\Http\Kontroler\Pengelola\Tagihan\TagihanKontroler;
 use App\Http\Kontroler\Pengelola\TemplateSektor\TemplateSektorKontroler;
 use App\Http\Kontroler\Pengelola\TimInternalKontroler;
 use App\Http\Kontroler\Pengelola\UndanganKontroler;
@@ -184,6 +185,17 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::post("{$versi}/terbitkan", [TemplateSektorKontroler::class, 'Terbitkan'])
                 ->middleware($izin(IzinPengelola::TemplateTerbitkan))
                 ->name('pengelola.template-sektor.versi.terbitkan');
+        });
+
+        // P-08 Tagihan langganan & verifikasi transfer manual (§19.3: Keuangan & Super Admin).
+        Route::middleware($izin(IzinPengelola::TagihanLihat))->group(function () use ($izin): void {
+            Route::get('/tagihan', [TagihanKontroler::class, 'Daftar'])->name('pengelola.tagihan.daftar');
+            Route::get('/tagihan/{tagihan}', [TagihanKontroler::class, 'Tampilkan'])->name('pengelola.tagihan.tampil');
+            Route::get('/tagihan/pembayaran/{pembayaran}/bukti', [TagihanKontroler::class, 'LihatBukti'])->name('pengelola.tagihan.pembayaran.bukti');
+            Route::middleware($izin(IzinPengelola::TagihanVerifikasi))->group(function (): void {
+                Route::post('/tagihan/pembayaran/{pembayaran}/terima', [TagihanKontroler::class, 'Terima'])->name('pengelola.tagihan.pembayaran.terima');
+                Route::post('/tagihan/pembayaran/{pembayaran}/tolak', [TagihanKontroler::class, 'Tolak'])->name('pengelola.tagihan.pembayaran.tolak');
+            });
         });
 
         // P-02 Master regulasi & referensi.

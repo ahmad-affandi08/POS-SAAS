@@ -49,6 +49,10 @@ enum IzinPengelola: string
     case LegalLihat = 'legal.lihat';
     case LegalKelola = 'legal.kelola';
 
+    // P-08 Tagihan langganan & verifikasi pembayaran (§19.3: Keuangan & Super Admin).
+    case TagihanLihat = 'tagihan.lihat';
+    case TagihanVerifikasi = 'tagihan.verifikasi';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -80,6 +84,9 @@ enum IzinPengelola: string
             self::IntegrasiKelola => 'Mengubah kredensial, menguji, dan mengaktifkan integrasi platform',
             self::LegalLihat => 'Melihat dokumen legal',
             self::LegalKelola => 'Menyusun dan menerbitkan dokumen legal',
+            // P-08
+            self::TagihanLihat => 'Melihat tagihan langganan & bukti transfer',
+            self::TagihanVerifikasi => 'Menerima atau menolak pembayaran langganan',
         };
     }
 }

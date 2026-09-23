@@ -16,6 +16,8 @@ type ItemMenu = { label: string; href: string; izin: KunciIzinPengelola | null }
 const daftarMenu: ItemMenu[] = [
     { label: 'Beranda', href: '/', izin: null },
     { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat },
+    // P-08 Tagihan langganan & verifikasi transfer.
+    { label: 'Tagihan', href: '/tagihan', izin: IzinPengelola.TagihanLihat },
     { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat },
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
     { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat },
