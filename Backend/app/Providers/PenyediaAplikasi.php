@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +39,9 @@ final class PenyediaAplikasi extends ServiceProvider
 
         // Mencegah lazy loading (N+1), atribut tak dikenal, dan mass assignment diam-diam saat pengembangan.
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
+        $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();
 
         if ($this->app->runningUnitTests()) {
             $this->loadMigrationsFrom(base_path('tests/Pendukung/Migrasi'));

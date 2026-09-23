@@ -15,6 +15,7 @@ export type PropsBersamaPengelola = {
     Kilat: string | null;
     Pengguna: PenggunaPengelola | null;
     PeringatanSuperAdmin: boolean;
+    PeringatanIntegrasi: string[];
     errors: Record<string, string>;
 };
 
@@ -44,6 +45,8 @@ export const IzinPengelola = {
     TemplateIsiUbah: 'template.isi.ubah',
     TemplateAkunUbah: 'template.akun.ubah',
     TemplateTerbitkan: 'template.terbitkan',
+    IntegrasiLihat: 'integrasi.lihat',
+    IntegrasiKelola: 'integrasi.kelola',
 } as const;
 
 /** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */

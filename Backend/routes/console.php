@@ -10,3 +10,6 @@ use Illuminate\Support\Facades\Schedule;
 
 // BR-P02.4: pengingat hari libur tahun berikutnya (aktif mulai 1 November sampai terbit).
 Schedule::command('pengelola:ingatkan-hari-libur')->dailyAt('08:00')->timezone('Asia/Jakarta');
+
+// BR-P05.3: uji koneksi integrasi aktif setiap jam; alert ke Teknis saat baru gagal.
+Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();

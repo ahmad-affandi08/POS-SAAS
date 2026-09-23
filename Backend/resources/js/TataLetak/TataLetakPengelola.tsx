@@ -18,6 +18,7 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat },
     { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat },
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat },
+    { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat },
     { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat },
 ];
@@ -79,6 +80,15 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                     <Pemberitahuan jenis="peringatan" judul="Super Admin aktif kurang dari 2">
                         Undang minimal satu Super Admin lagi agar Platform Pengelola tetap bisa dikelola bila satu akun
                         terkunci.
+                    </Pemberitahuan>
+                ) : null}
+                {props.PeringatanIntegrasi.length > 0 ? (
+                    <Pemberitahuan jenis="peringatan" judul="Status integrasi">
+                        <ul className="list-disc pl-5">
+                            {props.PeringatanIntegrasi.map((pesan) => (
+                                <li key={pesan}>{pesan}</li>
+                            ))}
+                        </ul>
                     </Pemberitahuan>
                 ) : null}
                 {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}

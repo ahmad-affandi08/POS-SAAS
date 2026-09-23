@@ -1,0 +1,73 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Pengelola\Integrasi\Layanan;
+
+use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
+use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
+use App\Domain\Pengelola\Integrasi\Penguji\PenyusunKonfigurasiLaravel;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
+
+/**
+ * Menerapkan konfigurasi integrasi aktif lingkungan server ini ke konfigurasi Laravel saat aplikasi berjalan (P-05).
+ * Kode lain (termasuk tenant, misal CAPTCHA registrasi F-00) membaca `config('integrasi...')`, `mail`, atau disk
+ * `Objek`, tidak pernah model ini. Cache hanya menyimpan baris mentah yang kredensialnya masih terenkripsi.
+ */
+final class PenerapKonfigurasiIntegrasi
+{
+    public const KUNCI_CACHE = 'integrasi.konfigurasi-aktif';
+
+    public static function LupakanCache(): void
+    {
+        Cache::forget(self::KUNCI_CACHE);
+    }
+
+    public function Terapkan(): void
+    {
+        foreach ($this->AmbilKonfigurasiAktif() as $konfigurasi) {
+            match ($konfigurasi->Jenis) {
+                JenisIntegrasi::Email => config([
+                    'mail.default' => 'smtp',
+                    'mail.mailers.smtp' => PenyusunKonfigurasiLaravel::MailerSmtp($konfigurasi->Pengaturan, $konfigurasi->Kredensial),
+                    'mail.from.address' => (string) ($konfigurasi->Pengaturan['AlamatPengirim'] ?? ''),
+                    'mail.from.name' => (string) ($konfigurasi->Pengaturan['NamaPengirim'] ?? ''),
+                ]),
+                JenisIntegrasi::Captcha => config([
+                    'integrasi.Turnstile.KunciSitus' => (string) ($konfigurasi->Pengaturan['KunciSitus'] ?? ''),
+                    'integrasi.Turnstile.KunciRahasia' => $konfigurasi->Kredensial['KunciRahasia'] ?? '',
+                ]),
+                JenisIntegrasi::Penyimpanan => config([
+                    'filesystems.disks.Objek' => PenyusunKonfigurasiLaravel::DiskS3($konfigurasi->Pengaturan, $konfigurasi->Kredensial),
+                    'integrasi.PenyimpananObjekAktif' => true,
+                ]),
+            };
+        }
+    }
+
+    /**
+     * @return list<KonfigurasiIntegrasi>
+     */
+    private function AmbilKonfigurasiAktif(): array
+    {
+        try {
+            /** @var list<array<string, mixed>> $baris */
+            $baris = Cache::rememberForever(self::KUNCI_CACHE, fn (): array => array_values(KonfigurasiIntegrasi::query()
+                ->where('Lingkungan', LingkunganIntegrasi::AmbilSaatIni()->value)
+                ->where('Aktif', true)
+                ->get()
+                ->map(fn (KonfigurasiIntegrasi $konfigurasi): array => $konfigurasi->getAttributes())
+                ->all()));
+        } catch (QueryException) {
+            // Tabel belum dimigrasi (instalasi baru): aplikasi tetap berjalan dengan konfigurasi .env.
+            return [];
+        }
+
+        return array_values(array_map(
+            fn (array $atribut): KonfigurasiIntegrasi => (new KonfigurasiIntegrasi)->newFromBuilder($atribut),
+            $baris,
+        ));
+    }
+}

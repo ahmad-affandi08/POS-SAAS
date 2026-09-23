@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Perantara\Pengelola;
 
+use App\Domain\Pengelola\Integrasi\Kueri\PeringatanIntegrasi;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Kueri\SuperAdminAktif;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -18,7 +19,10 @@ final class BagikanDataInertiaPengelola extends Middleware
 {
     protected $rootView = 'Pengelola';
 
-    public function __construct(private readonly SuperAdminAktif $superAdminAktif) {}
+    public function __construct(
+        private readonly SuperAdminAktif $superAdminAktif,
+        private readonly PeringatanIntegrasi $peringatanIntegrasi,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -43,6 +47,8 @@ final class BagikanDataInertiaPengelola extends Middleware
             'PeringatanSuperAdmin' => fn () => $pengguna instanceof PenggunaPengelola
                 && $pengguna->PunyaPeran(PeranPengelolaBawaan::SuperAdmin)
                 && $this->superAdminAktif->Hitung() < (int) config('pengelola.MinimalSuperAdminAktif'),
+            // BR-P05.3, BR-P05.5: banner status integrasi untuk semua anggota yang sudah masuk.
+            'PeringatanIntegrasi' => fn () => $pengguna instanceof PenggunaPengelola ? $this->peringatanIntegrasi->Ambil() : [],
         ];
     }
 }

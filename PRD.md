@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.17 |
+| Versi | 1.18 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -38,6 +38,7 @@
 | 1.15 | Keputusan D-11 (harga langganan per paket, bukan per outlet; tambahan outlet/perangkat/kuota lewat add-on), batas paket §21 dilengkapi, add-on & kupon tanpa four-eyes, kunci fitur dipertahankan. Pertanyaan terbuka no. 14–17 ditutup. |
 | 1.16 | Rincian P-03 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus"): model `TemplateSektor`/`TemplateSektorVersi` di `Domain/PanduanAwal` (dibaca F-01), aksi kelola di `Domain/Pengelola/TemplateSektor`; satu draf per template, versi terbit tidak diubah (BR-P03.4); pembagian izin isi bisnis/akun/terbitkan (BR-P03.5); aturan validasi otomatis dirinci (BR-P03.3); nilai mode kasir `Retail`/`Cepat`/`Meja`/`Layanan`/`Grosir` (§5.1); data awal 3 template dari file data sebagai draf; pratinjau sandbox, tawarkan pembaruan, dan pelacakan versi tenant ditunda ke F-01 (BR-P03.6, §25 no. 15). |
 | 1.17 | Tindak lanjut tinjauan P-03: nilai enum mode kasir dicantumkan di §5.1, cakupan template sektor ditambahkan ke tabel peran §19.3, peran akun service charge bernama `PendapatanBiayaLayanan` (istilah `BiayaLayanan` Lampiran D), pengaturan pembulatan template memakai bentuk `PembulatanTunai {Kelipatan, Arah}` yang sama dengan test vector, dan aturan validasi BR-P03.3 dilengkapi (tarif nasional harus masih berlaku, urutan pajak, konsistensi service charge masuk DPP). |
+| 1.18 | Rincian P-05 Fase 0 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus"): integrasi email (SMTP), CAPTCHA (Cloudflare Turnstile), dan penyimpanan objek (S3-compatible, misal Cloudflare R2); kolom `KonfigurasiIntegrasi` dirinci (§15.3); aktivasi wajib tes koneksi berhasil setelah perubahan terakhir (BR-P05.4); rotasi kunci diingatkan lewat banner (BR-P05.5); uji berkala tiap jam lewat scheduler (BR-P05.3); gateway billing, WhatsApp, FCM, Sentry, dan daftar gateway tenant menyusul bersama flow pemakainya. |
 
 ---
 
@@ -595,7 +596,12 @@ FiturAktif(tenant, kunci) =
 **Aturan Bisnis:**
 - BR-P05.1 Kredensial tidak pernah ditampilkan ulang secara utuh (hanya 4 karakter terakhir).
 - BR-P05.2 Perubahan kredensial produksi hanya oleh Super Admin/Teknis, wajib alasan, tercatat di audit.
-- BR-P05.3 Kegagalan tes koneksi berkala memicu alert ke Teknis dan banner status di Platform Pengelola.
+- BR-P05.3 Kegagalan tes koneksi berkala memicu alert ke Teknis dan banner status di Platform Pengelola. Uji berkala berjalan tiap jam untuk integrasi aktif di lingkungan server itu; alert email dikirim sekali saat status berubah dari berhasil menjadi gagal (bukan tiap jam), ke anggota Teknis aktif (bila tidak ada, ke Super Admin).
+- BR-P05.4 Konfigurasi baru atau yang kredensial/pengaturannya berubah berstatus `BelumDiuji` dan tidak bisa diaktifkan sebelum tes koneksi berhasil. Konfigurasi aktif yang diubah langsung nonaktif sampai diuji ulang, sehingga sistem tidak pernah memakai kredensial yang belum terbukti. Perubahan apa pun pada lingkungan Produksi (simpan, aktifkan, nonaktifkan) wajib alasan.
+- BR-P05.5 Setiap konfigurasi punya masa rotasi (default 90 hari sejak kredensial terakhir diganti). Lewat masa itu, banner Platform Pengelola mengingatkan Teknis untuk mengganti kunci.
+- BR-P05.6 Kredensial hanya didekripsi di server saat dipakai atau diuji; halaman, log audit, dan respons tidak pernah memuatnya. Log audit mencatat nama kolom kredensial yang berubah, bukan nilainya. Mengosongkan kolom kredensial saat menyunting berarti nilai lama dipertahankan.
+
+**Lingkup Fase 0 (PGL-05):** Email (SMTP), CAPTCHA (Cloudflare Turnstile, BR-00.4), penyimpanan objek (S3-compatible). Konfigurasi dengan lingkungan yang sama dengan server (Staging untuk server non-produksi) diterapkan ke aplikasi saat berjalan. Gateway billing (P-08), WhatsApp BSP, FCM, Sentry/uptime, dan daftar gateway tenant ditambahkan bersama flow pemakainya.
 
 ---
 
@@ -2206,7 +2212,7 @@ Backend/app/Domain/Pengelola/
 ├── Referensi/          # Aksi kelola/ajukan/setujui data referensi (P-02); modelnya di Domain/Referensi & Domain/Pajak
 ├── TemplateSektor/     # Aksi kelola & terbitkan template, ValidatorTemplate (P-03); modelnya di Domain/PanduanAwal
 ├── Katalog/            # Aksi kelola fitur, paket, harga, add-on, kupon (P-04); modelnya di Domain/Tenant
-├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi                              (P-05)
+├── Integrasi/          # KonfigurasiIntegrasi, UjiKoneksi, PenerapKonfigurasiIntegrasi (P-05); nilai dibaca aplikasi lewat config, bukan model
 ├── Konten/             # DokumenLegal, TemplatePesan, ArtikelBantuan                   (P-06)
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
 ├── Tagihan/            # TagihanLangganan, PembayaranLangganan, Dunning, LaporanMrr    (P-08)
@@ -2559,7 +2565,7 @@ erDiagram
 | `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08) |
 | `OverrideTenant` | IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada, Alasan, DibuatOleh |
 | `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
-| `KonfigurasiIntegrasi` | Jenis, Lingkungan (Staging/Produksi), Kredensial (terenkripsi), Status, TerakhirDiujiPada, HasilUji |
+| `KonfigurasiIntegrasi` | Jenis (Email/Captcha/Penyimpanan, bertambah per flow), Lingkungan (Staging/Produksi), Penyedia (Smtp/Turnstile/S3), Pengaturan JSON (tidak rahasia), Kredensial (terenkripsi), PetunjukKredensial JSON (4 karakter terakhir, BR-P05.1), Aktif, Status (BelumDiuji/Terhubung/Gagal), TerakhirDiujiPada, HasilUji JSON, GagalBeruntun, KredensialDiubahPada, RotasiSetiapHari (unik per Jenis + Lingkungan) |
 | `DokumenLegal` / `PersetujuanDokumenLegal` | Jenis (SyaratKetentuan/KebijakanPrivasi/PerjanjianPemrosesanData/Sla/KontrakMitra), Versi, Isi, Materiil, BerlakuMulai, Status / IdDokumenLegal, IdTenant, IdPengguna, DisetujuiPada, Ip |
 | `TemplatePesan` | Kunci, Kanal (Email/Wa/Push/InApp), Bahasa, Subjek, Isi, StatusPersetujuanWa |
 | `ArtikelBantuan` | Judul, Slug, Isi, Kategori, KunciHalamanTerkait, Status |

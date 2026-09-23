@@ -7,6 +7,7 @@ use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
+use App\Http\Kontroler\Pengelola\Integrasi\IntegrasiKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\AddonKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
@@ -134,6 +135,17 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::put('/katalog/kupon/{kuponLangganan}', [KuponKontroler::class, 'Ubah'])
                 ->middleware($izin(IzinPengelola::KatalogKuponKelola))
                 ->name('pengelola.katalog.kupon.ubah');
+        });
+
+        // P-05 Konfigurasi integrasi platform (BR-P05.2: hanya Teknis & Super Admin).
+        Route::middleware($izin(IzinPengelola::IntegrasiLihat))->group(function () use ($izin): void {
+            Route::get('/integrasi', [IntegrasiKontroler::class, 'Daftar'])->name('pengelola.integrasi.daftar');
+            Route::middleware($izin(IzinPengelola::IntegrasiKelola))->group(function (): void {
+                Route::post('/integrasi', [IntegrasiKontroler::class, 'Simpan'])->name('pengelola.integrasi.simpan');
+                Route::post('/integrasi/{konfigurasiIntegrasi}/uji', [IntegrasiKontroler::class, 'Uji'])->name('pengelola.integrasi.uji');
+                Route::post('/integrasi/{konfigurasiIntegrasi}/aktifkan', [IntegrasiKontroler::class, 'Aktifkan'])->name('pengelola.integrasi.aktifkan');
+                Route::post('/integrasi/{konfigurasiIntegrasi}/nonaktifkan', [IntegrasiKontroler::class, 'Nonaktifkan'])->name('pengelola.integrasi.nonaktifkan');
+            });
         });
 
         // P-03 Template sektor (BR-P03.5: isi bisnis, akun, dan terbitkan dipisah per izin).

@@ -11,6 +11,7 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
  * yang menjadi cakupannya. P-02: Konten & Legal mengajukan, Keuangan meninjau data master regulasi.
  * P-04: Keuangan menyusun paket & mengusulkan harga, Super Admin menyetujui.
  * P-03 (BR-P03.5): Konten & Legal mengubah isi bisnis template, Keuangan COA & pemetaan akun, Teknis menerbitkan.
+ * P-05 (BR-P05.2): kredensial integrasi hanya Teknis & Super Admin; Keuangan dan Dukungan dilarang (§19.3).
  */
 enum PeranPengelolaBawaan: string
 {
@@ -73,6 +74,8 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::TemplateLihat,
                 IzinPengelola::TemplateDrafKelola,
                 IzinPengelola::TemplateTerbitkan,
+                IzinPengelola::IntegrasiLihat,
+                IzinPengelola::IntegrasiKelola,
             ],
             self::Dukungan, self::MitraPenjualan, self::Analis => [
                 IzinPengelola::ReferensiLihat,
