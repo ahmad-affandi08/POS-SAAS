@@ -47,7 +47,7 @@ Jangan mencoba melewati penjaga tersebut. Kalau penjaga menolak, perbaiki kodeny
 
 ## Yang dilarang keras
 
-- Mengubah file penjaga: `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, `PRD.md`, `Dokumen/**`, konfigurasi lint/test, test arsitektur, test vector. Perubahan ini hanya oleh manusia (akan diminta persetujuan).
+- Mengubah file penjaga: `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, `PRD.md`, `Dokumen/**`, konfigurasi lint/test, test arsitektur. Perubahan ini hanya oleh manusia (akan diminta persetujuan). Test vector boleh ditambah kasus oleh agent, tetapi kasus lama tidak boleh dihapus/dilemahkan (lihat `.claude/rules/Pengujian.md`).
 - Mengedit `Dokumen/` langsung. Itu hasil generate dari `PRD.md` lewat `python3 Alat/PecahPrd.py`.
 - `git push --force`, `--no-verify`, menonaktifkan hook, `migrate:fresh`/`db:wipe` di luar lingkungan test.
 - Membaca atau menulis `.env` dan rahasia apa pun. Kredensial tidak pernah masuk kode, log, atau commit.

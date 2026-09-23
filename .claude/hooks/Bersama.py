@@ -9,8 +9,10 @@ AkarRepo = os.environ.get("CLAUDE_PROJECT_DIR") or os.path.abspath(os.path.join(
 
 # File penjaga: agent boleh mengusulkan, tapi manusia yang menyetujui (permissionDecision "ask").
 PolaPenjaga = [
+    # Spesifikasi/VektorUjiKalkulasi/* dikeluarkan atas persetujuan pemilik produk (v1.30): agent boleh menambah kasus,
+    # tetapi tetap tidak boleh melemahkan/mengubah nilai harapan tanpa alasan bisnis (CLAUDE.md #19).
     "CLAUDE.md", ".claude/*", "Alat/*", ".github/*", "PRD.md",
-    "Spesifikasi/VektorUjiKalkulasi/*", "*/tests/Arsitektur/*",
+    "*/tests/Arsitektur/*",
     "*phpstan*.neon*", "*pint.json", "*rector.php", "*phpunit.xml*", "*eslint.config.*",
     "*.prettierrc*", "*analysis_options.yaml", "*dart_test.yaml", "*melos.yaml",
 ]
