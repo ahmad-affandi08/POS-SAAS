@@ -6,6 +6,7 @@ use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
+use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
@@ -85,6 +86,18 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::post('/katalog/paket/{paket}/status', [PaketKontroler::class, 'UbahStatus'])
                 ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
                 ->name('pengelola.katalog.paket.status');
+
+            Route::get('/katalog/paket/{paket}/harga', [HargaPaketKontroler::class, 'Daftar'])->name('pengelola.katalog.harga.daftar');
+            Route::middleware($izin(IzinPengelola::KatalogPaketAjukan))->group(function (): void {
+                Route::post('/katalog/paket/{paket}/harga', [HargaPaketKontroler::class, 'Simpan'])->name('pengelola.katalog.harga.simpan');
+                Route::put('/katalog/paket/{paket}/harga/{hargaPaket}', [HargaPaketKontroler::class, 'Ubah'])
+                    ->name('pengelola.katalog.harga.ubah');
+                Route::post('/katalog/paket/{paket}/harga/{hargaPaket}/ajukan', [HargaPaketKontroler::class, 'Ajukan'])
+                    ->name('pengelola.katalog.harga.ajukan');
+            });
+            Route::post('/katalog/paket/{paket}/harga/{hargaPaket}/tinjau', [HargaPaketKontroler::class, 'Tinjau'])
+                ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
+                ->name('pengelola.katalog.harga.tinjau');
         });
 
         // P-02 Master regulasi & referensi.
