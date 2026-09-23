@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Organisasi\Aksi\AturUlangKataSandi;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Organisasi\Surel\KataSandiDiubah;
 use App\Domain\Organisasi\Surel\TautanAturUlangKataSandi;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
@@ -99,6 +101,20 @@ describe('Atur ulang kata sandi (BR-00.9)', function (): void {
 
         $this->post('/masuk', ['Email' => 'rina@kopinusantara.id', 'KataSandi' => BantuanAutentikasi::KATA_SANDI])->assertSessionHasErrors('Email');
         $this->post('/masuk', ['Email' => 'rina@kopinusantara.id', 'KataSandi' => 'kopi-baru-2026'])->assertRedirect(route('kelola.beranda'));
+    });
+
+    it('atur ulang kata sandi tercatat di log audit tenant tempat pengguna menjadi anggota, dengan IP', function (): void {
+        $this->post('/lupa-kata-sandi', ['Email' => 'rina@kopinusantara.id']);
+        $token = AmbilTokenAturUlangUji();
+
+        $this->post('/atur-ulang-kata-sandi', [
+            'Token' => $token, 'Email' => 'rina@kopinusantara.id', 'KataSandi' => 'kopi-baru-2026', 'KonfirmasiKataSandi' => 'kopi-baru-2026',
+        ], ['REMOTE_ADDR' => '203.0.113.9'])->assertSessionHasNoErrors();
+
+        $log = LogAudit::query()->withoutGlobalScopes()->where('Peristiwa', 'akun.kata-sandi-atur-ulang')->sole();
+        expect($log->IdPengguna)->toBe($this->pengguna->Id)
+            ->and($log->IdTenant)->toBe(TenantPengguna::query()->where('IdPengguna', $this->pengguna->Id)->value('IdTenant'))
+            ->and($log->Ip)->toBe('203.0.113.9');
     });
 
     it('tautan berlaku 60 menit; token salah, email lain, dan kata sandi lemah ditolak', function (): void {

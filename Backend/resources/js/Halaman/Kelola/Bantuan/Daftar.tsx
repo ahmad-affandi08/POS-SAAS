@@ -1,10 +1,12 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 import { jenisLabelStatusTiket, type StatusTiket } from '@/Komponen/Dukungan/StatusTiket';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { IzinTenant, PunyaIzinTenant } from '@/Tipe/Organisasi';
 
 type RingkasanTiket = {
     Uuid: string;
@@ -24,6 +26,8 @@ type PropsDaftar = {
 
 /** Daftar tiket bantuan tenant (P-09). */
 export default function DaftarBantuan({ Tiket, Saring }: PropsDaftar) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    const bolehKelola = PunyaIzinTenant(props.Akses, IzinTenant.BantuanTiketKelola);
     const tab = [
         { nilai: 'terbuka', label: 'Masih terbuka', href: '/kelola/bantuan' },
         { nilai: 'semua', label: 'Semua tiket', href: '/kelola/bantuan?status=semua' },
@@ -35,12 +39,14 @@ export default function DaftarBantuan({ Tiket, Saring }: PropsDaftar) {
                 <p className="text-isi text-teks-sekunder">
                     Ada kendala? Kirim tiket ke Tim Dukungan dan pantau balasannya di sini.
                 </p>
-                <Link
-                    href="/kelola/bantuan/buat"
-                    className="inline-flex h-10 items-center rounded-kontrol border border-brand bg-brand px-4 text-label font-semibold text-permukaan outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                >
-                    Buat tiket
-                </Link>
+                {bolehKelola ? (
+                    <Link
+                        href="/kelola/bantuan/buat"
+                        className="inline-flex h-10 items-center rounded-kontrol border border-brand bg-brand px-4 text-label font-semibold text-permukaan outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                    >
+                        Buat tiket
+                    </Link>
+                ) : null}
             </div>
 
             <nav aria-label="Saring tiket" className="flex gap-1 border-b border-garis">

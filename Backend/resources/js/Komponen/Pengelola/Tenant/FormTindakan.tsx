@@ -3,8 +3,8 @@ import { useId, type FormEvent, type ReactNode } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import BidangTeksPanjang from '@/Komponen/Pengelola/Tenant/BidangTeksPanjang';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { Pilihan } from '@/Tipe/Pengelola';
@@ -102,6 +102,7 @@ export function FormPerpanjangTrial({
                 label="Alasan"
                 keterangan="Misal: Owner masih menunggu printer struk datang, butuh uji coba 1 minggu lagi."
                 nilai={formulir.data.Alasan}
+                baris={3}
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
@@ -205,6 +206,7 @@ export function FormOverride({
                 label="Alasan"
                 keterangan="Misal: pembukaan cabang ke-3 sambil menunggu proses upgrade paket."
                 nilai={formulir.data.Alasan}
+                baris={3}
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
@@ -248,6 +250,7 @@ export function FormTangguhkan({ uuid, pilihanKategori, saatSelesai }: PropsDasa
                 label="Catatan internal"
                 keterangan="Apa yang terjadi dan dasar keputusannya, misal nomor surat permintaan hukum."
                 nilai={formulir.data.Catatan}
+                baris={3}
                 maksimal={450}
                 saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
                 galat={formulir.errors.Catatan}
@@ -289,6 +292,7 @@ export function FormAktifkan({ uuid, statusTujuan, saatSelesai }: PropsDasar & {
             <BidangTeksPanjang
                 label="Keputusan tertulis"
                 nilai={formulir.data.Alasan}
+                baris={3}
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
@@ -330,6 +334,7 @@ export function FormPenanda({
             <BidangTeksPanjang
                 label="Alasan"
                 nilai={formulir.data.Alasan}
+                baris={3}
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
@@ -367,6 +372,7 @@ export function FormCabutOverride({
             <BidangTeksPanjang
                 label="Alasan"
                 nilai={formulir.data.Alasan}
+                baris={3}
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
@@ -388,6 +394,7 @@ export function FormCatatan({ uuid }: { uuid: string }) {
                 label="Catatan baru"
                 keterangan="Hanya terlihat oleh tim internal. Catatan tidak bisa diubah atau dihapus."
                 nilai={formulir.data.Isi}
+                baris={3}
                 maksimal={2000}
                 saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                 galat={formulir.errors.Isi ?? AmbilGalatUmum(formulir.errors)}

@@ -1,4 +1,4 @@
-import { Link, router, useForm } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import PercakapanTiket, { type PesanTiket } from '@/Komponen/Dukungan/PercakapanTiket';
@@ -10,6 +10,8 @@ import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { IzinTenant, PunyaIzinTenant } from '@/Tipe/Organisasi';
 
 type DetailTiket = {
     Uuid: string;
@@ -27,6 +29,8 @@ type DetailTiket = {
 
 /** Percakapan tiket bantuan tenant: balas, lampirkan berkas, tandai selesai (P-09). */
 export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; Lampiran: BatasLampiran }) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    const bolehKelola = PunyaIzinTenant(props.Akses, IzinTenant.BantuanTiketKelola);
     const formulir = useForm<{ Isi: string; Lampiran: File[] }>({ Isi: '', Lampiran: [] });
     const [menyelesaikan, AturMenyelesaikan] = useState(false);
     const galatLampiran = Object.entries(formulir.errors).find(([kunci]) => kunci.startsWith('Lampiran'))?.[1];
@@ -65,7 +69,12 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                 tautanLampiran={(uuid) => `/kelola/bantuan/${Tiket.Uuid}/lampiran/${uuid}`}
             />
 
-            {Tiket.BisaDibalas ? (
+            {!bolehKelola ? (
+                <Pemberitahuan jenis="info" judul="Hanya bisa melihat">
+                    Peran Anda hanya bisa melihat tiket bantuan. Minta pemilik usaha atau Admin untuk membalas tiket
+                    ini.
+                </Pemberitahuan>
+            ) : Tiket.BisaDibalas ? (
                 <form
                     onSubmit={Kirim}
                     className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-5"
@@ -76,7 +85,7 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                     <BidangTeksPanjang
                         label="Balasan Anda"
                         nilai={formulir.data.Isi}
-                        maxLength={10000}
+                        maksimal={10000}
                         saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                         galat={formulir.errors.Isi}
                     />

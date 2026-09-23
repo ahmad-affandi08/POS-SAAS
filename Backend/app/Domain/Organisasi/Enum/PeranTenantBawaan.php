@@ -80,6 +80,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::PerangkatLihat,
                 IzinTenant::PerangkatKelola,
                 IzinTenant::PenggunaPinAtur,
+                IzinTenant::BantuanTiketLihat,
+                IzinTenant::BantuanTiketKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,

@@ -68,7 +68,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                     label="Uraian masalah"
                     nilai={formulir.data.Isi}
                     baris={7}
-                    maxLength={10000}
+                    maksimal={10000}
                     keterangan="Tulis apa yang terjadi, sejak kapan, di outlet/perangkat mana, dan apa yang sudah dicoba."
                     saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                     galat={formulir.errors.Isi}

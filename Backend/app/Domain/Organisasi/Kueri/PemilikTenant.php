@@ -9,10 +9,8 @@ use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 
 /**
- * Owner (pemilik) tenant: dipakai penegakan 2FA wajib (§20.2) dan persetujuan ulang dokumen legal (BR-P06.5).
- * Hanya keanggotaan berstatus Aktif yang dihitung.
- *
- * TODO F-02: peran Admin tenant ikut diwajibkan 2FA setelah peran & izin tenant tersedia.
+ * Owner (pemilik) tenant: dipakai persetujuan ulang dokumen legal (BR-P06.5). Hanya keanggotaan berstatus Aktif yang
+ * dihitung. 2FA wajib (§20.2) mencakup Owner, Admin, dan Akuntan, sehingga memakai `PemegangPeranTenant`.
  */
 final class PemilikTenant
 {

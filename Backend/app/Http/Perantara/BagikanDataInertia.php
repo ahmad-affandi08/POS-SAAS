@@ -10,6 +10,7 @@ use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
+use App\Domain\Tenant\Kueri\RingkasanLanggananTenant;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
 use App\Domain\Tenant\Model\DokumenLegal;
 use Illuminate\Http\Request;
@@ -29,6 +30,8 @@ final class BagikanDataInertia extends Middleware
         // BR-P06.5: banner pengumuman versi materiil dokumen legal.
         private readonly PemilikTenant $pemilikTenant,
         private readonly PersetujuanLegalTertunda $persetujuanLegal,
+        // F-00: banner status langganan Tertunggak/Ditangguhkan.
+        private readonly RingkasanLanggananTenant $ringkasanLangganan,
     ) {}
 
     /**
@@ -50,12 +53,23 @@ final class BagikanDataInertia extends Middleware
                 // BR-00.5: banner pengingat selama email belum terverifikasi.
                 'EmailTerverifikasi' => $pengguna->EmailDiverifikasiPada !== null,
             ] : null,
-            // Nama tenant aktif hanya bila pengguna masih anggotanya.
+            // Nama & status langganan tenant aktif hanya bila pengguna masih anggotanya (F-00: banner Tertunggak/Ditangguhkan).
             'TenantAktif' => function () use ($pengguna, $idTenant): ?array {
                 $anggota = $pengguna instanceof Pengguna && is_int($idTenant) && $this->keanggotaan->CekAnggota($pengguna->Id, $idTenant);
                 $tenant = $anggota && is_int($idTenant) ? ($this->ringkasanTenant->Ambil([$idTenant])[0] ?? null) : null;
 
-                return $tenant === null ? null : ['Nama' => $tenant['Nama']];
+                if ($tenant === null) {
+                    return null;
+                }
+
+                $langganan = $this->ringkasanLangganan->Ambil($tenant['Id']);
+
+                return [
+                    'Nama' => $tenant['Nama'],
+                    'StatusLangganan' => $langganan === null ? null : $langganan['Status']->value,
+                    'PeriodeSelesai' => $langganan === null ? null : $langganan['PeriodeSelesai']?->toIso8601ZuluString(),
+                    'BatasTenggangPada' => $langganan === null ? null : $langganan['BatasTenggangPada']?->toIso8601ZuluString(),
+                ];
             },
             // BR-P06.5: banner di back-office selama masa pengumuman versi materiil, hanya untuk Owner tenant aktif.
             'PengumumanLegal' => function () use ($pengguna, $idTenant): array {

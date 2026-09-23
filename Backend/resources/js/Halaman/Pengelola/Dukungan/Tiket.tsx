@@ -160,7 +160,7 @@ function FormBalasan({
             <BidangTeksPanjang
                 label={formulir.data.CatatanInternal ? 'Catatan internal' : 'Balasan ke tenant'}
                 nilai={formulir.data.Isi}
-                maxLength={10000}
+                maksimal={10000}
                 saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                 galat={formulir.errors.Isi}
             />

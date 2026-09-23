@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Tenant\Aksi\BuatTagihanLangganan;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Tenant\BantuanTagihan;
 use Tests\TestCase;
 
@@ -100,13 +103,42 @@ describe('Halaman langganan Owner (P-08, F-19 Fase 0)', function (): void {
                 ->where('PilihanPaket.1.BisaDipilih', true));
     });
 
-    it('hanya Owner yang boleh membuka halaman langganan (TODO F-02: izin tenant)', function (): void {
+    it('§19.1: izin langganan.kelola khusus Pemilik; Admin & anggota tanpa peran mendapat halaman Tanpa izin', function (): void {
+        $admin = BantuanOrganisasi::TambahAnggota($this->tenant->Id, PeranTenantBawaan::Admin);
         $staf = Pengguna::factory()->createOne();
         TenantPengguna::query()->create(['IdTenant' => $this->tenant->Id, 'IdPengguna' => $staf->Id, 'Pemilik' => false]);
 
-        BantuanTagihan::Masuk($this, $staf, $this->tenant)->get('/kelola/langganan')->assertForbidden();
-        $this->post('/kelola/langganan/tagihan', ['KodePaket' => 'PRO', 'Siklus' => 'Bulanan'])->assertForbidden();
+        foreach ([$admin, $staf] as $pengguna) {
+            BantuanTagihan::Masuk($this, $pengguna, $this->tenant)->get('/kelola/langganan')
+                ->assertForbidden()
+                ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/TanpaIzin'));
+            $this->post('/kelola/langganan/tagihan', ['KodePaket' => 'PRO', 'Siklus' => 'Bulanan'])->assertForbidden();
+        }
+
         expect(TagihanLangganan::query()->withoutGlobalScopes()->count())->toBe(0);
+    });
+});
+
+describe('Log audit tenant langganan (§25 no. 17)', function (): void {
+    it('membuat tagihan, membatalkan, dan mengunggah bukti transfer tercatat dengan pelaku & IP', function (): void {
+        $pertama = BuatTagihanUji($this, $this->pemilik, $this->tenant);
+        $this->post("/kelola/langganan/tagihan/{$pertama->Uuid}/batalkan", ['Alasan' => 'Salah pilih siklus'])->assertSessionHasNoErrors();
+        $kedua = BuatTagihanUji($this, $this->pemilik, $this->tenant, siklus: 'Tahunan');
+        $this->post("/kelola/langganan/tagihan/{$kedua->Uuid}/pembayaran", IsianBuktiUji($kedua->Total))->assertSessionHasNoErrors();
+
+        $log = LogAudit::query()->withoutGlobalScopes()->where('IdTenant', $this->tenant->Id)
+            ->where('Peristiwa', 'like', 'langganan.%')->orderBy('Id')->get();
+
+        expect($log->pluck('Peristiwa')->all())->toBe([
+            'langganan.tagihan-buat', 'langganan.tagihan-batal', 'langganan.tagihan-buat', 'langganan.bukti-transfer-unggah',
+        ])
+            ->and($log->every(fn (LogAudit $baris) => $baris->IdPengguna === $this->pemilik->Id && $baris->Ip === '127.0.0.1'))->toBeTrue()
+            ->and($log[0]->JenisObjek)->toBe('TagihanLangganan')
+            ->and($log[0]->NilaiBaru)->toMatchArray(['Nomor' => $pertama->Nomor, 'Paket' => 'PRO', 'Siklus' => 'Bulanan', 'Total' => $pertama->Total])
+            ->and($log[1]->NilaiLama)->toBe(['Status' => 'Terbit'])
+            ->and($log[1]->NilaiBaru)->toMatchArray(['Status' => 'Dibatalkan', 'Alasan' => 'Salah pilih siklus'])
+            ->and($log[3]->JenisObjek)->toBe('PembayaranLangganan')
+            ->and($log[3]->NilaiBaru)->toMatchArray(['NomorTagihan' => $kedua->Nomor, 'Jumlah' => $kedua->Total]);
     });
 });
 
