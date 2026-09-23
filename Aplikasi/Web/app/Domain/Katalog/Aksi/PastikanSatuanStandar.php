@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Katalog\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Data\DataSatuanStandar;
 use App\Domain\Katalog\Model\Satuan;
+use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,11 +17,17 @@ use Illuminate\Support\Facades\DB;
  */
 final class PastikanSatuanStandar
 {
-    public function __construct(private readonly PencatatAudit $audit) {}
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly PenguncianTenant $penguncian,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     public function Jalankan(DataSatuanStandar $data): int
     {
         return DB::transaction(function () use ($data): int {
+            // Kunci Tenant sendiri (reentran dalam satu transaksi): aman walau pemanggil belum mengunci.
+            $this->penguncian->Kunci($this->konteks->Wajib());
             $ada = Satuan::query()->where('KodeStandar', $data->kode)->first();
 
             if ($ada !== null) {

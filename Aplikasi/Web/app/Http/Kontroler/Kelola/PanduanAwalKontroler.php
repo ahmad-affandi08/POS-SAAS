@@ -119,6 +119,7 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
     public function TandaiSelesai(string $langkah, TandaiLangkahPanduan $tandai): RedirectResponse
     {
         $kunci = LangkahPanduan::DariSlug($langkah) ?? abort(404);
+        abort_unless($kunci->CekBisaDitandaiSelesaiLangsung(), 404);
         $tandai->Jalankan($kunci, StatusLangkahPanduan::Selesai, $this->OutletPanduan()->Id);
 
         return $this->KeLangkahBerikutnya($kunci, "Langkah {$kunci->AmbilJudul()} selesai.");

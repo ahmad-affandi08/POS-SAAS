@@ -2,21 +2,33 @@
 
 declare(strict_types=1);
 
+use App\Domain\Akuntansi\Aksi\TambahkanAkunTemplate;
+use App\Domain\Akuntansi\Data\DataAkunTemplate;
+use App\Domain\Akuntansi\Enum\SaldoNormal;
+use App\Domain\Akuntansi\Enum\TipeAkun;
 use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\PemetaanAkun;
 use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Katalog\Aksi\PastikanSatuanStandar;
+use App\Domain\Katalog\Aksi\TambahkanKategoriTemplate;
+use App\Domain\Katalog\Aksi\TambahkanSatuanTemplate;
+use App\Domain\Katalog\Data\DataSatuanStandar;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
-use App\Domain\Katalog\Model\Satuan;
+use App\Domain\Organisasi\Aksi\SimpanOutlet;
+use App\Domain\Organisasi\Data\DataOutlet;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\Peran;
 use App\Domain\Organisasi\Model\PeranIzin;
 use App\Domain\Organisasi\Model\TenantPengguna;
-use App\Domain\Pajak\Model\KelompokPajak;
+use App\Domain\Pajak\Aksi\TambahkanKelompokPajakTemplate;
+use App\Domain\Pajak\Data\DataKelompokPajakTemplate;
+use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Referensi\Enum\JenisReferensiBank;
 use App\Domain\Referensi\Model\ReferensiBank;
+use App\Domain\Tenant\Aksi\TambahkanFiturOutletTemplate;
 use App\Domain\Tenant\Model\OutletFitur;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Http\UploadedFile;
@@ -102,6 +114,7 @@ describe('BR-01.1 idempoten & aditif: A → B → A', function (): void {
             ->and(Produk::query()->sole()->Nama)->toBe('Es Kopi Susu Aren Gula Jawa')
             ->and(Produk::query()->sole()->IdKategori)->toBe($kopi->Id);
 
+        expect(Tenant::query()->findOrFail($tenant->Id)->Pengaturan['Sektor'])->toBe(['FNB-CAF', 'RTL-GEN']);
         $outlet = Outlet::query()->findOrFail($outlet->Id);
         expect($outlet->TemplateSektor)->toBe('FNB-CAF')
             ->and($outlet->IdTemplateSektorVersi)->toBe($versiKafe->Id)
@@ -137,7 +150,7 @@ describe('Kirim ganda: urutan kunci Tenant → Langganan → Outlet', function (
             '/kelola/panduan-awal/produk' => ['Produk' => [['Nama' => 'Es Teh Manis', 'Harga' => '5000', 'Kategori' => null]]],
             '/kelola/panduan-awal/metode-pembayaran' => ['Jenis' => 'Edc', 'Nama' => 'EDC BCA', 'KodeBank' => 'BCA'],
             '/kelola/panduan-awal/perangkat' => ['Nama' => 'Kasir Depan'],
-            '/kelola/panduan-awal/langkah/pajak/selesai' => [],
+            '/kelola/panduan-awal/langkah/produk/selesai' => [],
             '/kelola/panduan-awal/selesai' => [],
         ];
 
@@ -153,6 +166,103 @@ describe('Kirim ganda: urutan kunci Tenant → Langganan → Outlet', function (
     });
 });
 
+describe('Aksi publik template mengunci Tenant sendiri', function (): void {
+    it('dipanggil langsung tanpa kunci pemanggil, setiap Aksi tetap mengunci baris Tenant lebih dulu', function (): void {
+        BantuanPanduanAwal::TerbitkanTemplate('FNB-CAF');
+        ['Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant();
+        $aksi = [
+            'TambahkanAkunTemplate' => fn () => app(TambahkanAkunTemplate::class)->Jalankan([new DataAkunTemplate('1-1100', 'Kas Outlet', TipeAkun::Aset, SaldoNormal::Debit)], []),
+            'TambahkanKategoriTemplate' => fn () => app(TambahkanKategoriTemplate::class)->Jalankan(['Roti Manis']),
+            'TambahkanSatuanTemplate' => fn () => app(TambahkanSatuanTemplate::class)->Jalankan([new DataSatuanStandar('PCS', 'Pcs', 'pcs', false)]),
+            'PastikanSatuanStandar' => fn () => app(PastikanSatuanStandar::class)->Jalankan(new DataSatuanStandar('KG', 'Kilogram', 'kg', true)),
+            'TambahkanKelompokPajakTemplate' => fn () => app(TambahkanKelompokPajakTemplate::class)->Jalankan([new DataKelompokPajakTemplate('Makan & minum', [])]),
+            'TambahkanFiturOutletTemplate' => fn () => app(TambahkanFiturOutletTemplate::class)->Jalankan($outlet->Id, ['pos.retail'], null),
+        ];
+
+        foreach ($aksi as $nama => $jalankan) {
+            expect(RekamUrutanKunciPanduanUji($jalankan)[0] ?? null)->toBe('Tenant', $nama);
+        }
+    });
+
+    it('konfigurasi mode kasir yang diisi ke baris pos.retail lama tercatat di log audit', function (): void {
+        BantuanPanduanAwal::TerbitkanTemplate('FNB-CAF');
+        ['Tenant' => $tenant, 'Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant();
+        OutletFitur::query()->create(['IdOutlet' => $outlet->Id, 'KunciFitur' => 'pos.retail', 'Aktif' => true, 'Konfigurasi' => null]);
+
+        BantuanPanduanAwal::Terapkan($outlet, 'FNB-CAF');
+
+        $log = LogAudit::query()->where('IdTenant', $tenant->Id)->where('Peristiwa', 'outlet.fitur.konfigurasi-template')->sole();
+        expect($log->NilaiBaru['Konfigurasi'] ?? null)->toBe(['ModeKasir' => ['Cepat', 'Meja'], 'ModeKasirDefault' => 'Cepat'])
+            ->and($log->NilaiLama)->toBe(['Konfigurasi' => null]);
+    });
+});
+
+describe('Langkah hanya Selesai lewat Aksinya', function (): void {
+    it('profil usaha, sektor, dan pajak tidak bisa ditandai Selesai langsung (404); produk, metode pembayaran, perangkat bisa; semua bisa dilewati', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+        $tes = fn () => BantuanPanduanAwal::Masuk($this, $pemilik, $tenant);
+
+        foreach (['profil-usaha', 'sektor', 'pajak'] as $slug) {
+            $tes()->post("/kelola/panduan-awal/langkah/{$slug}/selesai")->assertNotFound();
+        }
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        expect(ProgresPanduanAwal::query()->count())->toBe(0);
+
+        foreach (['produk', 'metode-pembayaran', 'perangkat'] as $slug) {
+            $tes()->post("/kelola/panduan-awal/langkah/{$slug}/selesai")->assertRedirect();
+        }
+
+        foreach (['profil-usaha', 'sektor', 'pajak'] as $slug) {
+            $tes()->post("/kelola/panduan-awal/langkah/{$slug}/lewati")->assertRedirect();
+        }
+
+        $status = array_map(fn (array $langkah) => $langkah['Status'], ProgresPanduanAwal::query()->sole()->StatusLangkah ?? []);
+        ksort($status);
+        expect($status)->toBe([
+            'MetodePembayaran' => 'Selesai', 'Pajak' => 'Dilewati', 'Perangkat' => 'Selesai',
+            'Produk' => 'Selesai', 'ProfilUsaha' => 'Dilewati', 'Sektor' => 'Dilewati',
+        ]);
+    });
+});
+
+describe('Perubahan ProfilPajak yang baru di-commit tidak tertimpa', function (): void {
+    it('SimpanOutlet menggabungkan ProfilPajak dari baris yang sudah terkunci, bukan dari bacaan sebelum kunci', function (): void {
+        ['Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant();
+        $outlet = Outlet::query()->with('Merek')->findOrFail($outlet->Id);
+        $disisipkan = false;
+
+        // Simulasi langkah pajak (tab lain) yang commit tepat sebelum SimpanOutlet mengunci baris outlet.
+        DB::listen(function ($kueri) use (&$disisipkan, $outlet): void {
+            if (! $disisipkan && str_contains($kueri->sql, 'from `Merek`')) {
+                $disisipkan = true;
+                DB::table('Outlet')->where('Id', $outlet->Id)->update(['ProfilPajak' => json_encode([
+                    'Pkp' => false, 'PungutPbjt' => true, 'BiayaLayanan' => ['Aktif' => true, 'Persen' => '5.00'], 'HargaTermasukPajak' => true,
+                ])]);
+            }
+        });
+
+        app(SimpanOutlet::class)->Jalankan($outlet, new DataOutlet(
+            nama: $outlet->Nama,
+            kode: $outlet->Kode,
+            uuidMerek: $outlet->Merek->Uuid,
+            alamat: 'Jl. Slamet Riyadi No. 1',
+            kodeKota: '33.72',
+            zonaWaktu: 'WIB',
+            jamTutupBuku: $outlet->JamTutupBuku,
+            pkp: false,
+            nitku: null,
+            pungutPbjt: true,
+        ));
+
+        $profil = Outlet::query()->findOrFail($outlet->Id)->ProfilPajak;
+        expect($disisipkan)->toBeTrue()
+            ->and($profil['BiayaLayanan'] ?? null)->toBe(['Aktif' => true, 'Persen' => '5.00'])
+            ->and($profil['HargaTermasukPajak'] ?? null)->toBeTrue()
+            ->and($profil['PungutPbjt'])->toBeTrue();
+    });
+});
+
 describe('Isolasi tenant & berkas', function (): void {
     it('Uuid metode pembayaran tenant lain tidak bisa diaktifkan; QRIS tenant lain & path traversal tidak terlayani', function (): void {
         ['Tenant' => $a, 'Pemilik' => $pemilikA] = BantuanPanduanAwal::BuatTenant();
@@ -164,7 +274,14 @@ describe('Isolasi tenant & berkas', function (): void {
         $qrisA = MetodePembayaran::query()->where('Jenis', 'QrisStatis')->sole();
         BantuanPanduanAwal::Masuk($this, $pemilikA, $a)->post("/kelola/panduan-awal/metode-pembayaran/{$qrisA->Uuid}/nonaktifkan")->assertSessionHasNoErrors();
 
+        BantuanPanduanAwal::Masuk($this, $pemilikA, $a)->post('/kelola/panduan-awal/profil-usaha', [
+            'NamaUsaha' => 'Kopi Nusantara', 'KodeKota' => '33.72', 'Pkp' => '0', 'Logo' => UploadedFile::fake()->image('logo.png', 64, 64),
+        ])->assertSessionHasNoErrors();
+        BantuanPanduanAwal::Masuk($this, $pemilikA, $a)->get('/kelola/panduan-awal/profil-usaha/logo')->assertOk();
+
         $tesB = fn () => BantuanPanduanAwal::Masuk($this, $pemilikB, $b);
+        $tesB()->get('/kelola/panduan-awal/profil-usaha/logo')->assertNotFound();
+        $tesB()->get("/kelola/panduan-awal/metode-pembayaran/{$qrisA->Uuid}/gambar-qris")->assertNotFound();
         $tesB()->post("/kelola/panduan-awal/metode-pembayaran/{$qrisA->Uuid}/aktifkan")->assertNotFound();
         $tesB()->get('/kelola/panduan-awal/metode-pembayaran/..%2F..%2F.env/gambar-qris')->assertNotFound();
         $tesB()->get('/kelola/panduan-awal/profil-usaha/logo?path=../../.env')->assertNotFound();
@@ -179,7 +296,7 @@ describe('Isolasi tenant & berkas', function (): void {
 });
 
 describe('Izin', function (): void {
-    it('peran kustom tanpa panduan-awal.kelola ditolak; Pemilik tetap bisa walau perannya tidak memuat izin', function (): void {
+    it('peran kustom tanpa panduan-awal.kelola ditolak di GET & POST; Pemilik tetap bisa', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
         $peran = Peran::query()->create(['Kode' => 'PengecekStok', 'Nama' => 'Pengecek Stok', 'Bawaan' => false]);
         PeranIzin::query()->create(['IdPeran' => $peran->Id, 'KunciIzin' => 'perangkat.kelola']);

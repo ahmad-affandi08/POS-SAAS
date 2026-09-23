@@ -5,22 +5,28 @@ declare(strict_types=1);
 namespace App\Domain\Pajak\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Pajak\Data\DataKelompokPajakTemplate;
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\KelompokPajak;
 use App\Domain\Pajak\Model\KelompokPajakDetail;
+use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
  * F-01: kelompok pajak template sektor menjadi `KelompokPajak` + `KelompokPajakDetail` tenant. Aditif & idempoten:
  * kelompok dengan nama sama (tanpa beda huruf besar/kecil) dipakai ulang, detail (kelompok, jenis) yang sudah ada
  * tidak diubah. Jenis pajak atau dasar pengenaan yang tidak dikenal dilewati. Tidak ada angka tarif yang disalin:
- * tarif selalu dicari dari `TarifPajak` bertanggal (CLAUDE.md #12). Pemanggil sudah memegang kunci Tenant.
+ * tarif selalu dicari dari `TarifPajak` bertanggal (CLAUDE.md #12). Mengunci baris Tenant sendiri (kirim ganda aman).
  */
 final class TambahkanKelompokPajakTemplate
 {
-    public function __construct(private readonly PencatatAudit $audit) {}
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly PenguncianTenant $penguncian,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     /**
      * @param  list<DataKelompokPajakTemplate>  $daftar
@@ -29,6 +35,8 @@ final class TambahkanKelompokPajakTemplate
     public function Jalankan(array $daftar): array
     {
         return DB::transaction(function () use ($daftar): array {
+            // Kunci Tenant sendiri (reentran dalam satu transaksi): aman walau pemanggil belum mengunci.
+            $this->penguncian->Kunci($this->konteks->Wajib());
             $kodeJenis = [];
 
             foreach ($daftar as $kelompok) {
