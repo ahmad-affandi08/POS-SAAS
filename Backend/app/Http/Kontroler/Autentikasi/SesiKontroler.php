@@ -25,6 +25,9 @@ final class SesiKontroler extends Kontroler
 {
     public const BATAS_PERCOBAAN_MASUK = 5;
 
+    /** Batas per IP untuk menahan penyemprotan kata sandi ke banyak email (§20.2). */
+    public const BATAS_PERCOBAAN_MASUK_PER_IP = 20;
+
     public function TampilkanMasuk(): Response
     {
         return Inertia::render('Autentikasi/Masuk');
@@ -34,9 +37,11 @@ final class SesiKontroler extends Kontroler
     {
         $email = mb_strtolower($permintaan->string('Email')->toString());
         $kunci = 'masuk:'.$email.'|'.$permintaan->ip();
+        $kunciIp = 'masuk-ip:'.$permintaan->ip();
 
-        if (RateLimiter::tooManyAttempts($kunci, self::BATAS_PERCOBAAN_MASUK)) {
-            $detik = RateLimiter::availableIn($kunci);
+        if (RateLimiter::tooManyAttempts($kunci, self::BATAS_PERCOBAAN_MASUK)
+            || RateLimiter::tooManyAttempts($kunciIp, self::BATAS_PERCOBAAN_MASUK_PER_IP)) {
+            $detik = max(RateLimiter::availableIn($kunci), RateLimiter::availableIn($kunciIp));
 
             throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaan', "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik.", 'Email');
         }
@@ -48,6 +53,7 @@ final class SesiKontroler extends Kontroler
 
         if (! $berhasil) {
             RateLimiter::hit($kunci, 60);
+            RateLimiter::hit($kunciIp, 60);
 
             throw new PelanggaranAturanBisnis('KredensialSalah', 'Email atau kata sandi salah.', 'Email');
         }

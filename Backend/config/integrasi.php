@@ -13,6 +13,9 @@ return [
         'KunciRahasia' => null,
     ],
 
+    // Email transaksional dari konfigurasi aktif P-05 (prasyarat registrasi di produksi, F-00).
+    'EmailAktif' => false,
+
     // Disk `Objek` (S3-compatible) tersedia bila konfigurasi penyimpanan aktif.
     'PenyimpananObjekAktif' => false,
 

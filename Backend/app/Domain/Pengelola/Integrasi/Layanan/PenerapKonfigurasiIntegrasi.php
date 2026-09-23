@@ -44,6 +44,7 @@ final class PenerapKonfigurasiIntegrasi
                     'mail.mailers.smtp' => PenyusunKonfigurasiLaravel::MailerSmtp($konfigurasi->Pengaturan, $konfigurasi->Kredensial),
                     'mail.from.address' => (string) ($konfigurasi->Pengaturan['AlamatPengirim'] ?? ''),
                     'mail.from.name' => (string) ($konfigurasi->Pengaturan['NamaPengirim'] ?? ''),
+                    'integrasi.EmailAktif' => true,
                 ]),
                 JenisIntegrasi::Captcha => config([
                     'integrasi.Turnstile.KunciSitus' => (string) ($konfigurasi->Pengaturan['KunciSitus'] ?? ''),

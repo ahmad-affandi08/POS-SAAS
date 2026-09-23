@@ -30,11 +30,16 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
     const galat = formulir.errors as Record<string, string | undefined>;
     // Token disimpan di state tersendiri: setter useState stabil, jadi widget CAPTCHA tidak dirender ulang saat mengetik.
     const [tokenCaptcha, AturTokenCaptcha] = useState('');
+    const [urutanResetCaptcha, AturUrutanResetCaptcha] = useState(0);
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
         formulir.transform((isian) => ({ ...isian, TokenCaptcha: tokenCaptcha }));
-        formulir.post('/daftar', { onFinish: () => formulir.reset('KataSandi', 'KonfirmasiKataSandi') });
+        formulir.post('/daftar', {
+            // Token CAPTCHA hanya berlaku sekali: setelah galat apa pun, minta CAPTCHA baru; isian lain tetap.
+            onError: () => AturUrutanResetCaptcha((urutan) => urutan + 1),
+            onFinish: () => formulir.reset('KataSandi', 'KonfirmasiKataSandi'),
+        });
     };
 
     if (!Dibuka) {
@@ -149,7 +154,8 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     <div className="sm:col-span-2">
                         <WidgetCaptcha
                             kunciSitus={KunciSitusCaptcha}
-                            saatBerhasil={AturTokenCaptcha}
+                            saatBerubah={AturTokenCaptcha}
+                            urutanReset={urutanResetCaptcha}
                             galat={galat.TokenCaptcha}
                         />
                     </div>

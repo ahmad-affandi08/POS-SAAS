@@ -35,50 +35,71 @@ final class DaftarkanTenant
         private readonly SiapkanOrganisasiAwal $siapkanOrganisasi,
     ) {}
 
+    public const PERCOBAAN_SLUG = 3;
+
     /**
      * @return array{Tenant: Tenant, Pengguna: Pengguna}
      */
     public function Jalankan(DataPendaftaran $data): array
     {
-        try {
-            return DB::transaction(function () use ($data): array {
-                $dokumen = $this->AmbilDokumenWajib();
-                $paket = $this->TentukanPaket($data->kodePaket);
-
-                $tenant = Tenant::query()->create([
-                    'Nama' => $data->namaUsaha,
-                    'Slug' => $this->pembuatSlug->Buat($data->namaUsaha),
-                ]);
-                $pengguna = $this->buatPemilik->Jalankan($tenant->Id, $data->pemilik);
-                $sekarang = now();
-                $hariTrial = $paket->MasaTrialHari;
-
-                Langganan::query()->create([
-                    'IdTenant' => $tenant->Id,
-                    'IdPaket' => $paket->Id,
-                    'Status' => $hariTrial > 0 ? StatusLangganan::Trial : StatusLangganan::Gratis,
-                    'TrialBerakhirPada' => $hariTrial > 0 ? $sekarang->copy()->addDays($hariTrial) : null,
-                    'PeriodeMulai' => $sekarang,
-                ]);
-
-                foreach ($dokumen as $dokumenLegal) {
-                    PersetujuanDokumenLegal::query()->create([
-                        'IdDokumenLegal' => $dokumenLegal,
-                        'IdTenant' => $tenant->Id,
-                        'IdPengguna' => $pengguna->Id,
-                        'DisetujuiPada' => $sekarang,
-                        'Ip' => $data->ip,
-                    ]);
+        for ($percobaan = 1; ; $percobaan++) {
+            try {
+                return $this->Simpan($data);
+            } catch (UniqueConstraintViolationException $galat) {
+                // Slug diperiksa tanpa kunci; pendaftar lain dengan nama usaha sama bisa menang duluan → buat slug baru.
+                if (str_contains($galat->getMessage(), 'UniqTenantSlug') && $percobaan < self::PERCOBAAN_SLUG) {
+                    continue;
                 }
 
-                $this->siapkanOrganisasi->Jalankan($tenant->Id, $tenant->Nama, $tenant->ZonaWaktu);
+                if (str_contains($galat->getMessage(), 'UniqTenantSlug')) {
+                    throw new PelanggaranAturanBisnis('BR-00.2', 'Banyak pendaftaran sedang diproses. Coba kirim lagi.');
+                }
 
-                return ['Tenant' => $tenant, 'Pengguna' => $pengguna];
-            });
-        } catch (UniqueConstraintViolationException) {
-            // Pendaftaran bersamaan dengan email/nomor/slug yang sama: yang kalah diminta mencoba lagi.
-            throw new PelanggaranAturanBisnis('BR-00.1', 'Email atau nomor WhatsApp ini baru saja didaftarkan. Coba masuk, atau daftar dengan data lain.', 'Email');
+                // Pendaftaran bersamaan dengan email/nomor yang sama: yang kalah diminta mencoba lagi.
+                throw new PelanggaranAturanBisnis('BR-00.1', 'Email atau nomor WhatsApp ini baru saja didaftarkan. Coba masuk, atau daftar dengan data lain.', 'Email');
+            }
         }
+    }
+
+    /**
+     * @return array{Tenant: Tenant, Pengguna: Pengguna}
+     */
+    private function Simpan(DataPendaftaran $data): array
+    {
+        return DB::transaction(function () use ($data): array {
+            $dokumen = $this->AmbilDokumenWajib();
+            $paket = $this->TentukanPaket($data->kodePaket);
+
+            $tenant = Tenant::query()->create([
+                'Nama' => $data->namaUsaha,
+                'Slug' => $this->pembuatSlug->Buat($data->namaUsaha),
+            ]);
+            $pengguna = $this->buatPemilik->Jalankan($tenant->Id, $data->pemilik);
+            $sekarang = now();
+            $hariTrial = $paket->MasaTrialHari;
+
+            Langganan::query()->create([
+                'IdTenant' => $tenant->Id,
+                'IdPaket' => $paket->Id,
+                'Status' => $hariTrial > 0 ? StatusLangganan::Trial : StatusLangganan::Gratis,
+                'TrialBerakhirPada' => $hariTrial > 0 ? $sekarang->copy()->addDays($hariTrial) : null,
+                'PeriodeMulai' => $sekarang,
+            ]);
+
+            foreach ($dokumen as $dokumenLegal) {
+                PersetujuanDokumenLegal::query()->create([
+                    'IdDokumenLegal' => $dokumenLegal,
+                    'IdTenant' => $tenant->Id,
+                    'IdPengguna' => $pengguna->Id,
+                    'DisetujuiPada' => $sekarang,
+                    'Ip' => $data->ip,
+                ]);
+            }
+
+            $this->siapkanOrganisasi->Jalankan($tenant->Id, $tenant->Nama, $tenant->ZonaWaktu);
+
+            return ['Tenant' => $tenant, 'Pengguna' => $pengguna];
+        });
     }
 
     /**

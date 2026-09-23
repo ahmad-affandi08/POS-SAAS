@@ -35,8 +35,13 @@ final class StatusPendaftaran
             $alasan[] = 'Paket trial bawaan belum aktif.';
         }
 
+        // Prasyarat F-00: email & CAPTCHA aktif (P-05). Lingkungan non-produksi boleh tanpa keduanya.
         if (app()->isProduction() && blank(config('integrasi.Turnstile.KunciRahasia'))) {
             $alasan[] = 'CAPTCHA belum aktif.';
+        }
+
+        if (app()->isProduction() && config('integrasi.EmailAktif') !== true) {
+            $alasan[] = 'Email transaksional belum aktif.';
         }
 
         return $alasan;

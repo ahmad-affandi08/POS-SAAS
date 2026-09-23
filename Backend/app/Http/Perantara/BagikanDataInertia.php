@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Perantara;
 
+use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
 use Illuminate\Http\Request;
@@ -16,7 +17,10 @@ final class BagikanDataInertia extends Middleware
 {
     protected $rootView = 'Aplikasi';
 
-    public function __construct(private readonly RingkasanTenant $ringkasanTenant) {}
+    public function __construct(
+        private readonly RingkasanTenant $ringkasanTenant,
+        private readonly KeanggotaanPengguna $keanggotaan,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -37,9 +41,10 @@ final class BagikanDataInertia extends Middleware
                 // BR-00.5: banner pengingat selama email belum terverifikasi.
                 'EmailTerverifikasi' => $pengguna->EmailDiverifikasiPada !== null,
             ] : null,
-            // Hanya nama tenant yang sudah dipilih; keanggotaan diperiksa IdentifikasiTenantSesi.
+            // Nama tenant aktif hanya bila pengguna masih anggotanya.
             'TenantAktif' => function () use ($pengguna, $idTenant): ?array {
-                $tenant = $pengguna instanceof Pengguna && is_int($idTenant) ? ($this->ringkasanTenant->Ambil([$idTenant])[0] ?? null) : null;
+                $anggota = $pengguna instanceof Pengguna && is_int($idTenant) && $this->keanggotaan->CekAnggota($pengguna->Id, $idTenant);
+                $tenant = $anggota && is_int($idTenant) ? ($this->ringkasanTenant->Ambil([$idTenant])[0] ?? null) : null;
 
                 return $tenant === null ? null : ['Nama' => $tenant['Nama']];
             },

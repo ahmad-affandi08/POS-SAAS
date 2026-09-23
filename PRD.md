@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.20 |
+| Versi | 1.21 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -41,6 +41,7 @@
 | 1.18 | Rincian P-05 Fase 0 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus"): integrasi email (SMTP), CAPTCHA (Cloudflare Turnstile), dan penyimpanan objek (S3-compatible, misal Cloudflare R2); kolom `KonfigurasiIntegrasi` dirinci (§15.3); aktivasi wajib tes koneksi berhasil setelah perubahan terakhir (BR-P05.4); rotasi kunci diingatkan lewat banner (BR-P05.5); uji berkala tiap jam lewat scheduler (BR-P05.3); gateway billing, WhatsApp, FCM, Sentry, dan daftar gateway tenant menyusul bersama flow pemakainya. |
 | 1.19 | Rincian P-06 Fase 0 (diputuskan agen atas mandat pemilik produk "tanpa meminta izin terus"): dokumen legal berversi Draf → Terbit dengan tanggal berlaku, satu draf per jenis, versi materiil wajib diumumkan ≥ 30 hari (BR-P06.3), status berlaku/terjadwal/digantikan dihitung dari tanggal (BR-P06.4); model di `Domain/Tenant` agar dibaca F-00, aksi kelola di `Domain/Pengelola/Konten`; tabel `PersetujuanDokumenLegal`, pengumuman ke tenant, dan persetujuan ulang saat login dibangun bersama F-00 (BR-P06.5); template komunikasi & help center tetap Fase 1–2 (PGL-07). |
 | 1.20 | Rincian F-00 Fase 0 (disetujui pemilik produk: F-00 dikerjakan sebelum P-07; rincian diputuskan agen atas mandat "tanpa meminta izin terus"): data tenant dibuat saat tombol Daftar ditekan dan verifikasi email berjalan setelahnya (BR-00.5), paket trial dari pilihan di halaman harga atau paket bawaan (BR-00.6), CAPTCHA wajib di produksi (BR-00.4), transisi `Langganan.Status` dirinci (BR-00.7); OTP WhatsApp, lupa kata sandi, 2FA tenant, kode mitra (P-12), persetujuan ulang dokumen materiil, dan penegakan batas paket (F-02/F-19) menyusul. |
+| 1.21 | Tindak lanjut tinjauan F-00: akhir trial diproses tiap jam (BR-00.7), pengecualian `MilikTenant` untuk tabel data platform dicatat di §13.4, prasyarat email aktif ditegakkan di produksi, utang log audit tenant & pertanyaan enumerasi akun dicatat di §25 (no. 17–18). |
 
 ---
 
@@ -823,7 +824,7 @@ And percobaan tersebut tercatat di log audit tenant dan log audit pengelola
 - BR-00.4 Rate-limit registrasi per IP (anti-spam) + CAPTCHA (Cloudflare Turnstile). Default 5 percobaan per jam per IP. Di Produksi, registrasi ditutup bila CAPTCHA belum aktif (P-05); lingkungan non-produksi boleh tanpa CAPTCHA.
 - BR-00.5 Tombol Daftar langsung membentuk tenant (AC di bawah) dan masuk sebagai Owner; email verifikasi (tautan bertanda tangan, berlaku 24 jam) dikirim bersamaan dan banner pengingat tampil sampai terverifikasi. OTP WhatsApp menyusul bersama integrasi WhatsApp BSP. Email yang sudah terdaftar tidak bisa dipakai mendaftar lagi; menambah usaha kedua untuk pengguna yang sama dibangun bersama F-02 (undangan & pemilih tenant).
 - BR-00.6 Paket trial: paket yang dipilih di halaman harga (`?paket=KODE`) bila aktif dan bukan harga negosiasi, selain itu paket bawaan registrasi (konfigurasi, default `PRO`). Durasi trial = `Paket.MasaTrialHari`; paket tanpa masa trial (misal `GRATIS`) langsung berstatus `Gratis`. Registrasi ditolak bila S&K dan Kebijakan Privasi belum berlaku (BR-P06.2) atau paket tidak aktif.
-- BR-00.7 Transisi `Langganan.Status` yang sah: Trial → Aktif/Gratis; Aktif → Tertunggak/Berhenti; Tertunggak → Aktif/Ditangguhkan; Ditangguhkan → Aktif/Gratis/Berhenti; Gratis → Aktif. Akhir trial diproses perintah harian: langganan pindah ke paket Gratis (konfigurasi, default `GRATIS`).
+- BR-00.7 Transisi `Langganan.Status` yang sah: Trial → Aktif/Gratis; Aktif → Tertunggak/Berhenti; Tertunggak → Aktif/Ditangguhkan; Ditangguhkan → Aktif/Gratis/Berhenti; Gratis → Aktif. Akhir trial diproses perintah terjadwal tiap jam (agar tenant tidak menikmati trial hingga sehari lebih lama): langganan pindah ke paket Gratis (konfigurasi, default `GRATIS`).
 
 **State Machine `Langganan.Status`:**
 ```
@@ -1974,6 +1975,7 @@ Implementasi:
 - Job queue membawa `IdTenant` (middleware job `DenganTenant`) sehingga scope tetap aktif di worker.
 - **Guard ganda:** test otomatis "isolasi tenant" untuk setiap model/endpoint (user tenant A tidak bisa membaca/mengubah data tenant B, termasuk via ID yang ditebak). Route model binding selalu lewat scope tenant.
 - ID publik di URL memakai **ULID/UUID**, bukan auto-increment, untuk mencegah enumerasi.
+- **Tabel data platform yang memuat `IdTenant` tanpa `MilikTenant`** (usulan agen di v1.21, menunggu konfirmasi pemilik produk): `TenantPengguna` (dibaca lintas tenant untuk pemilih tenant, selalu disaring `IdPengguna` milik pengguna yang masuk), `Langganan` dan `PersetujuanDokumenLegal` (data hubungan platform–tenant yang dikelola sistem & Platform Pengelola, misal proses akhir trial). Tabel data usaha tenant tetap wajib `MilikTenant`.
 - Jalur migrasi masa depan: tenant enterprise bisa dipindah ke database terdedikasi (VPS) karena `IdTenant` sudah ada di semua tabel.
 
 ### 13.5 Pembagian Tugas Klien
@@ -3623,6 +3625,8 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 14. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) wajib dibangun & diuji di F-02 (saat outlet, pengguna, dan perangkat bisa ditambah), BR-P04.4 (downgrade) di F-19. F-00 hanya membuat langganan.
 15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
 16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
+17. **Utang log audit tenant** (aturan `LogAudit` §13.2): pendaftaran, masuk/keluar, pemilihan tenant, dan penurunan trial belum tercatat karena tabel `LogAudit` tenant belum dibuat. Wajib dibangun bersama F-02 (peran & izin tenant) dan mencatat ulang peristiwa tersebut.
+18. **Enumerasi akun saat registrasi**: pesan "email sudah terdaftar" dan "nomor WhatsApp sudah dipakai" membuka keberadaan akun (diredam CAPTCHA + 5 percobaan/jam/IP). Perlu keputusan: pertahankan (UX lebih jelas) atau ganti pesan umum + kirim email pemberitahuan ke pemilik akun (lebih privat, UU PDP).
 
 ### 25.1 Keputusan yang Sudah Diambil
 

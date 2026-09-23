@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Organisasi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Layanan\PenandaVerifikasiEmail;
 use App\Domain\Organisasi\Model\Pengguna;
 
 /**
@@ -13,9 +14,11 @@ use App\Domain\Organisasi\Model\Pengguna;
  */
 final class VerifikasiEmailPengguna
 {
+    public function __construct(private readonly PenandaVerifikasiEmail $penanda) {}
+
     public function Jalankan(Pengguna $pengguna, string $hash): void
     {
-        if (! hash_equals(KirimVerifikasiEmail::BuatHash($pengguna), $hash)) {
+        if (! $this->penanda->CekCocok($pengguna, $hash)) {
             throw new PelanggaranAturanBisnis('TautanTidakValid', 'Tautan verifikasi tidak valid. Minta tautan baru.');
         }
 

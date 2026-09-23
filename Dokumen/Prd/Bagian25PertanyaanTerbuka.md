@@ -18,6 +18,8 @@
 14. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) wajib dibangun & diuji di F-02 (saat outlet, pengguna, dan perangkat bisa ditambah), BR-P04.4 (downgrade) di F-19. F-00 hanya membuat langganan.
 15. **Utang implementasi P-03** (BR-P03.6): pratinjau sandbox, tawarkan pembaruan ke tenant (aditif, BR-01.1), kolom versi template pada tenant/outlet (BR-P03.1), dan produk contoh wajib dibangun & diuji bersama F-01.
 16. **Istilah & kelengkapan peran akun P-03**: (a) nilai `PiutangSettlement` dan `Waste` mengikuti label §11.2 tetapi belum ada di kamus §13.7.1, masukkan ke kamus atau ganti padanan Indonesia sebelum F-01 menyalinnya ke data tenant; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
+17. **Utang log audit tenant** (aturan `LogAudit` §13.2): pendaftaran, masuk/keluar, pemilihan tenant, dan penurunan trial belum tercatat karena tabel `LogAudit` tenant belum dibuat. Wajib dibangun bersama F-02 (peran & izin tenant) dan mencatat ulang peristiwa tersebut.
+18. **Enumerasi akun saat registrasi**: pesan "email sudah terdaftar" dan "nomor WhatsApp sudah dipakai" membuka keberadaan akun (diredam CAPTCHA + 5 percobaan/jam/IP). Perlu keputusan: pertahankan (UX lebih jelas) atau ganti pesan umum + kirim email pemberitahuan ke pemilik akun (lebih privat, UU PDP).
 
 ### 25.1 Keputusan yang Sudah Diambil
 

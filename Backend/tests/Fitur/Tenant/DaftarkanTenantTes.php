@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Bersama\Tenant\TenantBelumDitetapkan;
 use App\Domain\Organisasi\Model\Gudang;
+use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
@@ -76,6 +78,52 @@ describe('Pendaftaran tenant (F-00)', function (): void {
 
         expect(fn () => app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data()))->toThrow(PelanggaranAturanBisnis::class)
             ->and(Tenant::query()->count())->toBe(0);
+    });
+
+    it('isolasi tenant: data organisasi tenant A tidak terlihat dari konteks tenant B; tanpa konteks gagal tertutup', function (): void {
+        $a = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Tenant'];
+        $b = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data('budi@toko.id', '081200000077', namaUsaha: 'Toko Budi'))['Tenant'];
+        $konteks = app(KonteksTenant::class);
+
+        $konteks->Atur($a->Id);
+        $outletA = Outlet::query()->sole();
+        $gudangA = Gudang::query()->sole();
+        $merekA = Merek::query()->sole();
+
+        $konteks->Atur($b->Id);
+        expect(Outlet::query()->whereKey($outletA->Id)->exists())->toBeFalse()
+            ->and(Outlet::query()->where('Uuid', $outletA->Uuid)->exists())->toBeFalse()
+            ->and(Gudang::query()->whereKey($gudangA->Id)->exists())->toBeFalse()
+            ->and(Merek::query()->whereKey($merekA->Id)->exists())->toBeFalse()
+            ->and(Outlet::query()->where('Id', $outletA->Id)->update(['Nama' => 'Diretas']))->toBe(0)
+            ->and(Outlet::query()->sole()->IdTenant)->toBe($b->Id);
+
+        $konteks->Kosongkan();
+        expect(fn () => Outlet::query()->count())->toThrow(TenantBelumDitetapkan::class)
+            ->and(fn () => Gudang::query()->count())->toThrow(TenantBelumDitetapkan::class)
+            ->and(fn () => Merek::query()->count())->toThrow(TenantBelumDitetapkan::class);
+    });
+
+    it('BR-00.7: tabel transisi status langganan', function (StatusLangganan $asal, StatusLangganan $tujuan, bool $sah): void {
+        expect($asal->BisaBerubahKe($tujuan))->toBe($sah);
+    })->with(function (): array {
+        $sah = [
+            'Trial' => ['Aktif', 'Gratis'],
+            'Aktif' => ['Tertunggak', 'Berhenti'],
+            'Tertunggak' => ['Aktif', 'Ditangguhkan'],
+            'Ditangguhkan' => ['Aktif', 'Gratis', 'Berhenti'],
+            'Gratis' => ['Aktif'],
+            'Berhenti' => [],
+        ];
+        $kasus = [];
+
+        foreach (StatusLangganan::cases() as $asal) {
+            foreach (StatusLangganan::cases() as $tujuan) {
+                $kasus["{$asal->value} -> {$tujuan->value}"] = [$asal, $tujuan, in_array($tujuan->value, $sah[$asal->value], true)];
+            }
+        }
+
+        return $kasus;
     });
 
     it('BR-00.7: transisi status langganan di luar state machine ditolak', function (): void {

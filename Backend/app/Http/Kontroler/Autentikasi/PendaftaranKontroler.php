@@ -29,13 +29,18 @@ final class PendaftaranKontroler extends Kontroler
 {
     public function Tampilkan(Request $permintaan, StatusPendaftaran $status, PaketTersedia $paket, PemeriksaCaptcha $captcha): Response
     {
+        $daftarPaket = array_values(array_map(
+            fn (Paket $baris) => ['Kode' => $baris->Kode, 'Nama' => $baris->Nama, 'MasaTrialHari' => $baris->MasaTrialHari],
+            array_filter($paket->AmbilUntukPendaftaran(), fn (Paket $baris) => ! $baris->HargaNegosiasi),
+        ));
+        $kodeTersedia = array_column($daftarPaket, 'Kode');
+        $diminta = mb_strtoupper($permintaan->string('paket')->toString());
+
         return Inertia::render('Autentikasi/Daftar', [
             'Dibuka' => $status->AmbilAlasanDitutup() === [],
-            'Paket' => array_values(array_map(
-                fn (Paket $baris) => ['Kode' => $baris->Kode, 'Nama' => $baris->Nama, 'MasaTrialHari' => $baris->MasaTrialHari],
-                array_filter($paket->AmbilUntukPendaftaran(), fn (Paket $baris) => ! $baris->HargaNegosiasi),
-            )),
-            'PaketTerpilih' => mb_strtoupper($permintaan->string('paket')->toString()) ?: (string) config('tenant.KodePaketTrialBawaan'),
+            'Paket' => $daftarPaket,
+            // BR-00.6: kode yang tidak tersedia (salah ketik, negosiasi) jatuh ke paket bawaan, bukan paket pertama.
+            'PaketTerpilih' => in_array($diminta, $kodeTersedia, true) ? $diminta : (string) config('tenant.KodePaketTrialBawaan'),
             'KunciSitusCaptcha' => $captcha->CekAktif() ? (string) config('integrasi.Turnstile.KunciSitus') : null,
         ]);
     }
@@ -56,7 +61,7 @@ final class PendaftaranKontroler extends Kontroler
         }
 
         if (! $captcha->Periksa($permintaan->string('TokenCaptcha')->toString(), $permintaan->ip())) {
-            throw new PelanggaranAturanBisnis('BR-00.4', 'Verifikasi CAPTCHA gagal. Muat ulang halaman lalu coba lagi.', 'TokenCaptcha');
+            throw new PelanggaranAturanBisnis('BR-00.4', 'Verifikasi CAPTCHA gagal. Selesaikan CAPTCHA sekali lagi.', 'TokenCaptcha');
         }
 
         $hasil = $daftarkan->Jalankan($permintaan->AmbilData());

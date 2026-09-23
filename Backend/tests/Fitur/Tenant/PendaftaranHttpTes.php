@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Integrasi\Layanan\PemeriksaCaptcha;
-use App\Domain\Organisasi\Aksi\KirimVerifikasiEmail;
+use App\Domain\Organisasi\Layanan\PenandaVerifikasiEmail;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Organisasi\Surel\VerifikasiEmail;
@@ -15,7 +15,6 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
@@ -44,7 +43,6 @@ beforeEach(function (): void {
     $this->travelTo(Carbon::parse('2026-09-23 10:00:00', 'Asia/Jakarta'));
     BantuanPendaftaran::SiapkanPrasyarat();
     Mail::fake();
-    RateLimiter::clear('pendaftaran');
 });
 
 describe('Registrasi lewat web (F-00)', function (): void {
@@ -85,6 +83,12 @@ describe('Registrasi lewat web (F-00)', function (): void {
         expect(Tenant::query()->count())->toBe(1);
     });
 
+    it('BR-00.6: paket pilihan yang tidak tersedia jatuh ke paket bawaan, bukan paket pertama', function (): void {
+        $this->get('/daftar?paket=enterprise')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PaketTerpilih', 'PRO'));
+        $this->get('/daftar?paket=salahketik')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PaketTerpilih', 'PRO'));
+        $this->get('/daftar?paket=starter')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PaketTerpilih', 'STARTER'));
+    });
+
     it('BR-P06.2: halaman daftar tertutup dan kiriman ditolak bila S&K belum berlaku', function (): void {
         DokumenLegal::query()->where('Jenis', 'SyaratKetentuan')->delete();
 
@@ -116,6 +120,18 @@ describe('CAPTCHA & rate limit (BR-00.4)', function (): void {
         expect(Tenant::query()->count())->toBe(0);
     });
 
+    it('di produksi, pendaftaran ditutup bila email transaksional belum aktif walau CAPTCHA aktif', function (): void {
+        app()->detectEnvironment(fn () => 'production');
+        $this->withoutMiddleware(PreventRequestForgery::class);
+        config(['integrasi.Turnstile.KunciSitus' => '0x4AAAuji', 'integrasi.Turnstile.KunciRahasia' => '0x4AAArahasia']);
+        Http::fake([PemeriksaCaptcha::URL_VERIFIKASI => Http::response(['success' => true])]);
+
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasErrors('Umum');
+        config(['integrasi.EmailAktif' => true]);
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        expect(Tenant::query()->count())->toBe(1);
+    });
+
     it('membatasi percobaan registrasi per IP per jam', function (): void {
         config(['tenant.BatasRegistrasiPerJam' => 2]);
 
@@ -130,7 +146,7 @@ describe('CAPTCHA & rate limit (BR-00.4)', function (): void {
 describe('Verifikasi email (BR-00.5)', function (): void {
     it('tautan bertanda tangan memverifikasi email; tautan kedaluwarsa atau dirusak ditolak', function (): void {
         $pengguna = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Pengguna'];
-        $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => KirimVerifikasiEmail::BuatHash($pengguna)];
+        $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => app(PenandaVerifikasiEmail::class)->BuatHash($pengguna)];
 
         $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter))->assertForbidden();
         $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), [...$parameter, 'hash' => 'salah']))
@@ -139,6 +155,21 @@ describe('Verifikasi email (BR-00.5)', function (): void {
 
         $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), $parameter))->assertRedirect(route('masuk'));
         expect($pengguna->refresh()->EmailDiverifikasiPada)->not->toBeNull();
+    });
+
+    it('tautan di email berlaku sesuai konfigurasi (24 jam), bukan lebih', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        $tautan = '';
+        Mail::assertSent(VerifikasiEmail::class, function (VerifikasiEmail $surel) use (&$tautan): bool {
+            $tautan = $surel->tautan;
+
+            return true;
+        });
+        $this->post('/keluar');
+
+        $this->travel(24)->hours();
+        $this->travel(1)->minutes();
+        $this->get($tautan)->assertForbidden();
     });
 
     it('kirim ulang tautan dibatasi', function (): void {

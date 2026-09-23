@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Organisasi\Aksi;
 
+use App\Domain\Organisasi\Layanan\PenandaVerifikasiEmail;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Surel\VerifikasiEmail;
 use Illuminate\Support\Facades\Mail;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\URL;
  */
 final class KirimVerifikasiEmail
 {
+    public function __construct(private readonly PenandaVerifikasiEmail $penanda) {}
+
     public function Jalankan(Pengguna $pengguna): void
     {
         if ($pengguna->EmailDiverifikasiPada !== null) {
@@ -24,14 +27,9 @@ final class KirimVerifikasiEmail
         $jam = (int) config('tenant.JamBerlakuVerifikasiEmail');
         $tautan = URL::temporarySignedRoute('verifikasi-email', now()->addHours($jam), [
             'pengguna' => $pengguna->Uuid,
-            'hash' => self::BuatHash($pengguna),
+            'hash' => $this->penanda->BuatHash($pengguna),
         ]);
 
         Mail::to($pengguna->Email)->send(new VerifikasiEmail($pengguna->Nama, $tautan, $jam));
-    }
-
-    public static function BuatHash(Pengguna $pengguna): string
-    {
-        return hash('sha256', mb_strtolower($pengguna->Email));
     }
 }
