@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Aksi\BuatPemilikTenant;
 use App\Domain\Organisasi\Aksi\SiapkanOrganisasiAwal;
@@ -97,6 +98,8 @@ final class DaftarkanTenant
             }
 
             $this->siapkanOrganisasi->Jalankan($tenant->Id, $tenant->Nama, $tenant->ZonaWaktu);
+            // F-02: log audit pendaftaran (§25 no. 17).
+            app(PencatatAudit::class)->CatatSesi('tenant.daftar', $tenant->Id, $pengguna->Id, $data->ip, null, ['Nama' => $tenant->Nama, 'Paket' => $paket->Kode]);
 
             return ['Tenant' => $tenant, 'Pengguna' => $pengguna];
         });

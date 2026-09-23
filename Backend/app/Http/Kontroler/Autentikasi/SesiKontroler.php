@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Autentikasi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
@@ -66,6 +67,8 @@ final class SesiKontroler extends Kontroler
 
         if (count($daftarTenant) === 1) {
             $permintaan->session()->put(IdentifikasiTenantSesi::KUNCI_SESI, $daftarTenant[0]);
+            // F-02: log audit sesi (§25 no. 17).
+            app(PencatatAudit::class)->CatatSesi('sesi.masuk', $daftarTenant[0], Auth::guard('web')->id(), $permintaan->ip(), $permintaan->userAgent());
 
             return redirect()->intended(route('kelola.beranda'));
         }
@@ -94,12 +97,16 @@ final class SesiKontroler extends Kontroler
         abort_if($terpilih === null, 404);
 
         $permintaan->session()->put(IdentifikasiTenantSesi::KUNCI_SESI, $terpilih['Id']);
+        // F-02: log audit sesi (§25 no. 17).
+        app(PencatatAudit::class)->CatatSesi('sesi.pilih-tenant', $terpilih['Id'], Auth::guard('web')->id(), $permintaan->ip(), $permintaan->userAgent());
 
         return redirect()->route('kelola.beranda');
     }
 
     public function Keluar(Request $permintaan): RedirectResponse
     {
+        // F-02: log audit sesi (§25 no. 17).
+        app(PencatatAudit::class)->CatatSesi('sesi.keluar', $permintaan->session()->get(IdentifikasiTenantSesi::KUNCI_SESI), Auth::guard('web')->id(), $permintaan->ip(), $permintaan->userAgent());
         Auth::guard('web')->logout();
         $permintaan->session()->invalidate();
         $permintaan->session()->regenerateToken();

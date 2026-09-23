@@ -22,5 +22,7 @@ return [
     'SlugTerlarang' => [
         'daftar', 'masuk', 'keluar', 'lupa-kata-sandi', 'verifikasi-email', 'pilih-tenant', 'kelola', 'unduh',
         'internal', 'api', 'webhook', 'sehat', 's', 'mitra', 'pengelola', 'harga', 'bantuan', 'legal',
+        // F-02: tautan undangan anggota.
+        'undangan',
     ],
 ];

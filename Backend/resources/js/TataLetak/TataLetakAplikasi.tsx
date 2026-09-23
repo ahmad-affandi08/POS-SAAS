@@ -1,15 +1,25 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
+// F-02: menu back-office berbasis izin (hanya UX; server tetap memeriksa izin).
+const daftarMenu: { label: string; href: string; izin: KunciIzinTenant | null }[] = [
+    { label: 'Beranda', href: '/kelola', izin: null },
+    { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat },
+    { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat },
+    { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat },
+];
+
 /** Tata letak back-office tenant (/kelola). Menu modul ditambahkan per flow (F-01 dst.). */
 export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
-    const { props } = usePage<PropsBersamaAplikasi>();
+    const { props, url } = usePage<PropsBersamaAplikasi>();
+    const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
     const [mengirim, AturMengirim] = useState(false);
     const KirimUlangVerifikasi = () =>
         router.post(
@@ -33,6 +43,30 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         </Tombol>
                     </div>
                 </div>
+                {props.Akses ? (
+                    <nav aria-label="Menu utama" className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4">
+                        {menuTerlihat.map((menu) => {
+                            const aktif =
+                                menu.href === '/kelola'
+                                    ? url === '/kelola'
+                                    : url.startsWith(menu.href) ||
+                                      (menu.href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
+
+                            return (
+                                <Link
+                                    key={menu.href}
+                                    href={menu.href}
+                                    aria-current={aktif ? 'page' : undefined}
+                                    className={`-mb-px border-b-2 px-3 py-2 text-label font-semibold outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                        aktif ? 'border-brand text-teks-utama' : 'border-transparent text-teks-sekunder'
+                                    }`}
+                                >
+                                    {menu.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                ) : null}
             </header>
             <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6">
                 <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>

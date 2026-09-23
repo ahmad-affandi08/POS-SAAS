@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
@@ -23,6 +24,8 @@ final class PenyediaAplikasi extends ServiceProvider
         // "scoped": dibuat ulang untuk setiap request/job sehingga tenant tidak terbawa antar-request.
         $this->app->scoped(KonteksTenant::class);
         $this->app->scoped(PencatatAuditPengelola::class);
+        // F-02: pencatat log audit tenant (pelaku & IP diisi perantara per request).
+        $this->app->scoped(PencatatAudit::class);
     }
 
     public function boot(): void

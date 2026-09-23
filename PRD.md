@@ -891,6 +891,18 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 - BR-02.3 Perangkat yang dicabut (revoke) langsung ditolak saat sinkron, tetapi transaksi offline yang sudah dibuat sebelum revoke **tetap diterima** (dengan flag review).
 - BR-02.4 Setiap outlet wajib punya minimal 1 lokasi stok dan 1 akun kas (Kas Outlet).
 
+**Rincian F-02a (organisasi, pengguna & peran, tanpa perangkat/PIN; diputuskan agen atas mandat pemilik produk):**
+- Outlet: kode 3–5 karakter diawali huruf (huruf/angka, disimpan huruf besar, misal `UTAMA`, `JKT1`), unik per tenant termasuk outlet arsip. Kota dari data `Wilayah` P-02; zona waktu (WIB/WITA/WIT) mengikuti kota, dipilih manual bila kota kosong. Jam tutup buku `JJ:MM` (bawaan 04:00). Profil pajak dasar disimpan untuk F-03: PKP, NITKU outlet (22 angka, opsional), memungut PBJT makanan & minuman. Jam operasional & template sektor per outlet diisi F-01.
+- BR-02.2 ditegakkan lewat `Outlet.KodeDikunciPada`: diisi oleh flow yang pertama kali membuat transaksi/perangkat outlet (F-02b/F-06/F-07); setelah terisi kode tidak bisa diubah.
+- BR-02.4 (bagian lokasi stok): outlet baru otomatis mendapat lokasi stok jenis Toko; lokasi stok jual terakhir (bukan Rusak/Dalam perjalanan) di outlet aktif tidak bisa diarsipkan atau diubah jenisnya. Akun Kas Outlet dibangun bersama COA tenant (F-01/F-13).
+- Outlet & lokasi stok tidak pernah dihapus, hanya **diarsipkan** (status Aktif/Diarsipkan) dan bisa dipulihkan; minimal satu outlet aktif. Merek hanya bisa dihapus bila belum pernah dipakai outlet; minimal satu merek.
+- BR-02.1 / BR-P04.3: layanan `PastikanBatasPaket` (batas efektif `EvaluatorFitur`, baris `Langganan` dikunci agar penambahan bersamaan tidak lolos) dipanggil saat menambah/memulihkan outlet (`BatasOutlet`, outlet arsip tidak dihitung) dan saat mengundang, menerima undangan, atau mengaktifkan kembali pengguna (`BatasPengguna` = anggota aktif + undangan yang masih berlaku). Pesan penolakan menyebut batas paket dan mengarahkan ke menu Langganan. `BatasPerangkatPerOutlet` di F-02b.
+- Undangan pengguna lewat email: berlaku 72 jam, sekali pakai, token hanya disimpan sebagai hash; undangan baru untuk email yang sama membatalkan yang lama. Penerima tanpa akun membuat akun (email dianggap terverifikasi); email yang sudah punya akun (termasuk anggota tenant lain) wajib masuk dulu lalu akunnya ditautkan (BR-00.1). Email anggota aktif/nonaktif tenant yang sama ditolak (nonaktif → aktifkan kembali).
+- Peran & izin tenant: peran bawaan §19.1 dibuat untuk setiap tenant saat pendaftaran dan diselaraskan perintah `organisasi:siapkan-peran` (idempoten, juga untuk tenant lama). Peran bawaan tidak bisa diubah; peran kustom dibuat dari izin granular. Pemilik selalu memegang semua izin & semua outlet. Anti-eskalasi: pelaku bukan Pemilik hanya bisa memberi izin/peran yang izinnya ia miliki dan outlet yang ia akses; hanya Pemilik yang menunjuk/mengubah Pemilik; izin `langganan.kelola` khusus Pemilik. Akses outlet: semua outlet atau daftar outlet (`OutletPengguna`).
+- Anggota dinonaktifkan, tidak dihapus: sesinya langsung terputus, undangan yang ia kirim dibatalkan. Tidak bisa mengubah akses/status akun sendiri; Pemilik aktif terakhir tidak bisa diturunkan atau dinonaktifkan.
+- Semua aksi F-02 serta pendaftaran, masuk, pilih tenant, keluar, dan akhir trial dicatat di `LogAudit` (append-only); halaman log audit untuk pemegang izin `audit.lihat`.
+- Ditunda ke F-02b: perangkat, kode aktivasi, PIN kasir, BR-02.3, `BatasPerangkatPerOutlet`.
+
 ---
 
 ### F-03 · Master Produk, Harga & Pajak
@@ -2418,16 +2430,18 @@ erDiagram
 | `Langganan` | IdTenant (unik), IdPaket, Status (Trial/Aktif/Tertunggak/Ditangguhkan/Berhenti/Gratis), TrialBerakhirPada, PeriodeMulai, PeriodeSelesai, SiklusTagihan (Bulanan/Tahunan) |
 | `TagihanLangganan` | IdTenant, Nomor, Jumlah, Status, DibayarPada, RefGateway |
 | `Pengguna` | Id, Uuid, Nama, Email, NoHp, KataSandi, Rahasia2fa |
-| `TenantPengguna` | IdTenant, IdPengguna, Pemilik, HashPin, Status |
+| `TenantPengguna` | IdTenant, IdPengguna, Pemilik, IdPeran (peran utama di tenant), SemuaOutlet, HashPin, Status (Aktif/Nonaktif), DinonaktifkanPada. Tanpa `MilikTenant` (dibaca lintas tenant untuk pemilih tenant, §13.4) |
 | `Merek` | IdTenant, Nama |
-| `Outlet` | IdTenant, IdMerek, Kode, Nama, Alamat, KodeKota, ZonaWaktu, TemplateSektor, JamTutupBuku (misal 04:00), ProfilPajak JSON |
+| `Outlet` | IdTenant, IdMerek, Kode, Nama, Alamat, KodeKota, ZonaWaktu, TemplateSektor, JamTutupBuku (misal 04:00), ProfilPajak JSON (Pkp, Nitku, PungutPbjt), Status (Aktif/Diarsipkan), KodeDikunciPada (BR-02.2), DiarsipkanPada |
 | `OutletFitur` | IdTenant, IdOutlet, KunciFitur, Aktif, Konfigurasi JSON |
-| `Gudang` | IdTenant, IdOutlet, Kode, Nama, Jenis (Toko/Dapur/Bar/Gudang/Rusak/DalamPerjalanan) |
+| `Gudang` | IdTenant, IdOutlet, Kode, Nama, Jenis (Toko/Dapur/Bar/Gudang/Rusak/DalamPerjalanan), Status (Aktif/Diarsipkan), DiarsipkanPada |
 | `Perangkat` | IdTenant, IdOutlet, Uuid, Kode, Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada |
 | `PerangkatPengguna` | IdPengguna, IdTenant, Aplikasi (Owner/Pos), Platform (Android/Ios/Windows), TokenPush, VersiAplikasi, TerakhirAktifPada, DicabutPada |
 | `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode, KedaluwarsaPada, DipakaiPada |
 | `RilisAplikasi` | Aplikasi (Pos/Owner), Platform, Kanal (Beta/Stabil), Versi, Build, VersiMinimum, UrlUnduh, CatatanRilis, PersenRollout |
-| `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran |
+| `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran (tidak dipakai untuk anggota `SemuaOutlet`) |
+| `Peran` / `PeranIzin` | IdTenant, Uuid, Kode (peran bawaan §19.1; kosong = kustom), Nama, Keterangan, Bawaan / IdTenant, IdPeran, KunciIzin |
+| `UndanganPengguna` | IdTenant, Uuid, Email, HashToken, IdPeran, SemuaOutlet, DaftarIdOutlet JSON, IdPenggunaPengundang, BerlakuSampai (72 jam), DiterimaPada, IdPenggunaPenerima, DibatalkanPada. Tanpa `MilikTenant` (dibuka penerima sebelum menjadi anggota; dicari lewat hash token) |
 
 **Katalog & Harga**
 
@@ -2547,7 +2561,7 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `NomorUrutDokumen` | IdTenant, IdOutlet, IdPerangkat, JenisDokumen, Periode, NomorTerakhir |
-| `LogAudit` | IdTenant, IdPengguna, IdPerangkat, Peristiwa, JenisObjek, IdObjek, NilaiLama JSON, NilaiBaru JSON, Ip, AgenPengguna, DibuatPada (**append-only**) |
+| `LogAudit` | IdTenant, IdPengguna (kosong = sistem), IdPerangkat, Peristiwa (`{objek}.{aksi}`, misal `outlet.ubah`, `sesi.masuk`), JenisObjek, IdObjek, NilaiLama JSON, NilaiBaru JSON, Ip, AgenPengguna, DibuatPada (**append-only**, ditulis hanya lewat `PencatatAudit` di `Domain/Bersama/Audit`) |
 | `RiwayatStatusDokumen` | JenisDokumen, IdDokumen, StatusDari, StatusKe, DiubahOleh, DiubahPada |
 | `BatchSinkron` | IdPerangkat, DiterimaPada, JumlahItem, Status, Galat JSON |
 | `WebhookTujuan` / `WebhookPengiriman` | Url, Rahasia, Peristiwa / Payload, Status, JumlahPercobaan, CobaLagiPada |
@@ -3257,6 +3271,8 @@ Masalah yang diselesaikan: di restoran, jika internet mati, order dari tablet pe
 | **Sales/Salesman** | Sales order, pelanggan miliknya, piutang pelanggan |
 
 Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.cakupan]`, misal `penjualan.void`, `penjualan.diskon.manual`, `persediaan.penyesuaian.setujui`, `laporan.keuangan.lihat`, `produk.harga.ubah`.
+
+Implementasi F-02a: peran bawaan yang dibuat untuk setiap tenant adalah Owner (`Pemilik`), Admin, Manajer Outlet, Supervisor, Kasir, Gudang (`StafGudang`), Purchasing (`StafPembelian`), dan Akuntan. Pelayan, Dapur/Barista, Apoteker, dan Sales/Salesman bergantung sektor sehingga ditambahkan template sektor (F-01). Izin awal: `outlet.lihat`, `outlet.kelola`, `pengguna.lihat`, `pengguna.undang`, `pengguna.ubah`, `pengguna.nonaktifkan`, `peran.kelola`, `audit.lihat` (ditegakkan F-02), serta `produk.lihat`, `produk.kelola`, `produk.harga.ubah`, `persediaan.lihat`, `persediaan.kelola`, `persediaan.penyesuaian.setujui`, `pembelian.kelola`, `penjualan.buat`, `penjualan.void`, `penjualan.diskon.manual`, `laporan.penjualan.lihat`, `laporan.keuangan.lihat`, `akuntansi.kelola`, `langganan.kelola` (khusus Owner) yang penegakannya dibangun bersama flow masing-masing.
 
 ### 19.2 Batas & Approval yang Bisa Dikonfigurasi
 

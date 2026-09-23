@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\GudangKontroler;
+use App\Http\Kontroler\Kelola\LogAuditKontroler;
+use App\Http\Kontroler\Kelola\MerekKontroler;
+use App\Http\Kontroler\Kelola\OutletKontroler;
+use App\Http\Kontroler\Kelola\PenggunaKontroler;
+use App\Http\Kontroler\Kelola\PeranKontroler;
+use App\Http\Perantara\SiapkanAuditTenant;
+use App\Http\Perantara\WajibIzinTenant;
+use Illuminate\Support\Facades\Route;
+
+/*
+ * Rute back-office F-02 Setup Organisasi (PRD §13.6, D-06). Didaftarkan dari routes/web.php di dalam grup
+ * `/kelola` (auth + IdentifikasiTenantSesi). ID di URL adalah ULID publik; data dicari di dalam scope tenant aktif.
+ */
+
+$izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
+
+Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
+    // Outlet, lokasi stok, merek (F-02 langkah 1–2).
+    Route::get('/outlet', [OutletKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.outlet.daftar');
+    Route::post('/outlet', [OutletKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.simpan');
+    Route::get('/outlet/{outlet}', [OutletKontroler::class, 'Detail'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.outlet.detail');
+    Route::put('/outlet/{outlet}', [OutletKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.ubah');
+    Route::post('/outlet/{outlet}/arsipkan', [OutletKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.arsipkan');
+    Route::post('/outlet/{outlet}/pulihkan', [OutletKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.pulihkan');
+
+    Route::post('/outlet/{outlet}/gudang', [GudangKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.simpan');
+    Route::put('/outlet/{outlet}/gudang/{gudang}', [GudangKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.ubah');
+    Route::post('/outlet/{outlet}/gudang/{gudang}/arsipkan', [GudangKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.arsipkan');
+    Route::post('/outlet/{outlet}/gudang/{gudang}/pulihkan', [GudangKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.pulihkan');
+
+    Route::post('/merek', [MerekKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.simpan');
+    Route::put('/merek/{merek}', [MerekKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.ubah');
+    Route::delete('/merek/{merek}', [MerekKontroler::class, 'Hapus'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.hapus');
+
+    // Pengguna & peran (F-02 langkah 3, §19.1).
+    Route::get('/pengguna', [PenggunaKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PenggunaLihat))->name('kelola.pengguna.daftar');
+    Route::post('/pengguna/undangan', [PenggunaKontroler::class, 'Undang'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.buat');
+    Route::post('/pengguna/undangan/{undangan}/batalkan', [PenggunaKontroler::class, 'BatalkanUndangan'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.batalkan');
+    Route::put('/pengguna/{pengguna}/akses', [PenggunaKontroler::class, 'UbahAkses'])->middleware($izin(IzinTenant::PenggunaUbah))->name('kelola.pengguna.akses');
+    Route::post('/pengguna/{pengguna}/nonaktifkan', [PenggunaKontroler::class, 'Nonaktifkan'])->middleware($izin(IzinTenant::PenggunaNonaktifkan))->name('kelola.pengguna.nonaktifkan');
+    Route::post('/pengguna/{pengguna}/aktifkan', [PenggunaKontroler::class, 'Aktifkan'])->middleware($izin(IzinTenant::PenggunaNonaktifkan))->name('kelola.pengguna.aktifkan');
+
+    Route::get('/peran', [PeranKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PenggunaLihat))->name('kelola.peran.daftar');
+    Route::post('/peran', [PeranKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.simpan');
+    Route::put('/peran/{peran}', [PeranKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.ubah');
+    Route::delete('/peran/{peran}', [PeranKontroler::class, 'Hapus'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.hapus');
+
+    // Log audit tenant (§25 no. 17).
+    Route::get('/log-audit', [LogAuditKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::AuditLihat))->name('kelola.log-audit.daftar');
+});

@@ -6,12 +6,14 @@ use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
 use App\Http\Kontroler\Autentikasi\SesiKontroler;
 use App\Http\Kontroler\Autentikasi\VerifikasiEmailKontroler;
 use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
+use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\IdentifikasiTenantSesi;
 use App\Http\Perantara\Pengelola\BagikanDataInertiaPengelola;
 use App\Http\Perantara\Pengelola\CatatAuditPengelola;
 use App\Http\Perantara\Pengelola\TolakDomainPengelola;
+use App\Http\Perantara\SiapkanAuditTenant;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,6 +35,10 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         Route::post('/masuk', [SesiKontroler::class, 'Masuk'])->name('masuk.kirim');
     });
 
+    // F-02 Undangan anggota tenant: bisa dibuka tanpa masuk (akun baru) atau sudah masuk (akun ditautkan).
+    Route::get('/undangan/{token}', [TerimaUndanganKontroler::class, 'Tampilkan'])->name('undangan.tampil');
+    Route::post('/undangan/{token}', [TerimaUndanganKontroler::class, 'Terima'])->middleware(['throttle:10,1', SiapkanAuditTenant::class])->name('undangan.terima');
+
     Route::get('/verifikasi-email/{pengguna}/{hash}', [VerifikasiEmailKontroler::class, 'Verifikasi'])
         ->middleware('signed')
         ->name('verifikasi-email');
@@ -46,6 +52,9 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         Route::middleware(IdentifikasiTenantSesi::class)->prefix('kelola')->group(function (): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
             Route::get('/panduan-awal', [BerandaKelolaKontroler::class, 'PanduanAwal'])->name('kelola.panduan-awal');
+
+            // F-02 Setup organisasi: outlet, lokasi stok, merek, pengguna & peran, log audit.
+            Route::group([], base_path('routes/Organisasi.php'));
         });
     });
 });
