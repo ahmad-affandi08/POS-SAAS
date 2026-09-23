@@ -25,6 +25,16 @@ final class KeanggotaanPengguna
             ->all()));
     }
 
+    /**
+     * Semua tenant yang punya anggota (dipakai perintah penyelarasan peran bawaan, F-02).
+     *
+     * @return list<int>
+     */
+    public function AmbilSemuaIdTenant(): array
+    {
+        return array_values(array_map('intval', TenantPengguna::query()->distinct()->orderBy('IdTenant')->pluck('IdTenant')->all()));
+    }
+
     public function CekAnggota(int $idPengguna, int $idTenant): bool
     {
         return TenantPengguna::query()

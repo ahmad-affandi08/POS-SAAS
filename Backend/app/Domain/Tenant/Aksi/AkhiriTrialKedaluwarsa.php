@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\Paket;
@@ -42,6 +43,8 @@ final class AkhiriTrialKedaluwarsa
                 }
 
                 $langganan->update(['Status' => StatusLangganan::Gratis, 'IdPaket' => $paketGratis->Id]);
+                // F-02: log audit penurunan trial oleh sistem (§25 no. 17).
+                app(PencatatAudit::class)->Catat('langganan.trial-berakhir', $langganan, nilaiBaru: ['Status' => StatusLangganan::Gratis->value, 'Paket' => $paketGratis->Kode], idTenant: $langganan->IdTenant);
 
                 return true;
             });

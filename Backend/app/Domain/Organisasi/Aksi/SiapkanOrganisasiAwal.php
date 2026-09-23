@@ -10,11 +10,14 @@ use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
 
 /**
- * Organisasi bawaan tenant baru (F-00 langkah 3): satu merek, "Outlet Utama", dan gudang tokonya.
+ * Organisasi bawaan tenant baru (F-00 langkah 3): satu merek, "Outlet Utama", dan gudang tokonya, serta peran
+ * bawaan tenant dengan Owner sebagai Pemilik (F-02, §19.1). Dipanggil setelah Owner dibuat.
  */
 final class SiapkanOrganisasiAwal
 {
     public const KODE_OUTLET_UTAMA = 'UTAMA';
+
+    public function __construct(private readonly SiapkanPeranBawaanTenant $siapkanPeran) {}
 
     public function Jalankan(int $idTenant, string $namaUsaha, string $zonaWaktu): Outlet
     {
@@ -33,6 +36,8 @@ final class SiapkanOrganisasiAwal
             'Nama' => 'Gudang Outlet Utama',
             'Jenis' => JenisGudang::Toko,
         ]);
+
+        $this->siapkanPeran->Jalankan($idTenant);
 
         return $outlet;
     }

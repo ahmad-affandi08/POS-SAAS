@@ -7,17 +7,25 @@ namespace App\Domain\Organisasi\Model;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
- * Keanggotaan pengguna di tenant (BR-00.1). Sengaja tanpa `MilikTenant`: tabel ini dibaca lintas tenant untuk
- * menentukan tenant mana yang boleh dipilih pengguna setelah masuk, selalu disaring dengan `IdPengguna` miliknya.
+ * Keanggotaan pengguna di tenant (BR-00.1, F-02). Sengaja tanpa `MilikTenant`: tabel ini dibaca lintas tenant untuk
+ * menentukan tenant mana yang boleh dipilih pengguna setelah masuk, selalu disaring dengan `IdPengguna` miliknya;
+ * di back-office selalu disaring `IdTenant` tenant aktif secara eksplisit.
+ *
+ * `IdPeran` = peran utama di tenant (izin back-office). `Pemilik` selaras dengan peran bawaan Pemilik.
+ * `SemuaOutlet` = akses ke semua outlet; selain itu akses lewat `OutletPengguna`.
  *
  * @property int $Id
  * @property int $IdTenant
  * @property int $IdPengguna
  * @property bool $Pemilik
+ * @property int|null $IdPeran
+ * @property bool $SemuaOutlet
  * @property string|null $HashPin
  * @property StatusKeanggotaan $Status
+ * @property Carbon|null $DinonaktifkanPada
  * @property-read Pengguna $Pengguna
  */
 final class TenantPengguna extends ModelDasar
@@ -30,7 +38,14 @@ final class TenantPengguna extends ModelDasar
     protected $hidden = ['HashPin'];
 
     /** @var array<string, mixed> */
-    protected $attributes = ['Pemilik' => false, 'HashPin' => null, 'Status' => 'Aktif'];
+    protected $attributes = [
+        'Pemilik' => false,
+        'IdPeran' => null,
+        'SemuaOutlet' => false,
+        'HashPin' => null,
+        'Status' => 'Aktif',
+        'DinonaktifkanPada' => null,
+    ];
 
     /**
      * @return BelongsTo<Pengguna, $this>
@@ -45,6 +60,11 @@ final class TenantPengguna extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['Pemilik' => 'boolean', 'Status' => StatusKeanggotaan::class];
+        return [
+            'Pemilik' => 'boolean',
+            'SemuaOutlet' => 'boolean',
+            'Status' => StatusKeanggotaan::class,
+            'DinonaktifkanPada' => 'datetime',
+        ];
     }
 }

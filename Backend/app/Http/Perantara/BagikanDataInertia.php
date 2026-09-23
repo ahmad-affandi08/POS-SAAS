@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Perantara;
 
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Model\Pengguna;
@@ -67,6 +69,13 @@ final class BagikanDataInertia extends Middleware
                     'BerlakuMulai' => $dokumen->BerlakuMulai->toDateString(),
                     'Tautan' => route('legal.tampil', ['jenis' => Str::kebab($dokumen->Jenis->value), 'versi' => $dokumen->Versi]),
                 ], $this->persetujuanLegal->AmbilPengumuman(now()));
+            },
+            // F-02: hak akses di tenant aktif untuk menu & tombol (hanya UX; server tetap penentu lewat WajibIzinTenant).
+            'Akses' => function () use ($pengguna): ?array {
+                $idTenant = app(KonteksTenant::class)->Ambil();
+                $akses = $pengguna instanceof Pengguna && $idTenant !== null ? app(AksesPengguna::class)->Ambil($idTenant, $pengguna->Id) : null;
+
+                return $akses === null ? null : ['Pemilik' => $akses['Pemilik'], 'Izin' => $akses['Izin']];
             },
         ];
     }

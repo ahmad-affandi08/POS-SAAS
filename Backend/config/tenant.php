@@ -24,5 +24,7 @@ return [
         'internal', 'api', 'webhook', 'sehat', 's', 'mitra', 'pengelola', 'harga', 'bantuan', 'legal',
         // Auth tenant: rute atur ulang kata sandi (BR-00.9).
         'atur-ulang-kata-sandi',
+        // F-02: tautan undangan anggota.
+        'undangan',
     ],
 ];

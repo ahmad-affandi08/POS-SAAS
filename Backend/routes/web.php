@@ -11,12 +11,14 @@ use App\Http\Kontroler\Autentikasi\VerifikasiEmailKontroler;
 use App\Http\Kontroler\Kelola\BantuanKontroler;
 use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Kelola\LanggananKontroler;
+use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\IdentifikasiTenantSesi;
 use App\Http\Perantara\Pengelola\BagikanDataInertiaPengelola;
 use App\Http\Perantara\Pengelola\CatatAuditPengelola;
 use App\Http\Perantara\Pengelola\TolakDomainPengelola;
+use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibDuaFaktorTenant;
 use App\Http\Perantara\WajibPersetujuanLegal;
 use Illuminate\Session\Middleware\AuthenticateSession;
@@ -48,6 +50,10 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         Route::get('/atur-ulang-kata-sandi/{token}', [LupaKataSandiKontroler::class, 'TampilkanAturUlang'])->name('atur-ulang-kata-sandi');
         Route::post('/atur-ulang-kata-sandi', [LupaKataSandiKontroler::class, 'AturUlang'])->name('atur-ulang-kata-sandi.kirim');
     });
+
+    // F-02 Undangan anggota tenant: bisa dibuka tanpa masuk (akun baru) atau sudah masuk (akun ditautkan).
+    Route::get('/undangan/{token}', [TerimaUndanganKontroler::class, 'Tampilkan'])->name('undangan.tampil');
+    Route::post('/undangan/{token}', [TerimaUndanganKontroler::class, 'Terima'])->middleware(['throttle:10,1', SiapkanAuditTenant::class])->name('undangan.terima');
 
     Route::get('/verifikasi-email/{pengguna}/{hash}', [VerifikasiEmailKontroler::class, 'Verifikasi'])
         ->middleware('signed')
@@ -87,6 +93,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::post('/bantuan/{tiketDukungan}/balasan', [BantuanKontroler::class, 'Balas'])->middleware('throttle:30,1')->name('kelola.bantuan.balas');
             Route::post('/bantuan/{tiketDukungan}/selesaikan', [BantuanKontroler::class, 'Selesaikan'])->name('kelola.bantuan.selesaikan');
             Route::get('/bantuan/{tiketDukungan}/lampiran/{lampiran}', [BantuanKontroler::class, 'UnduhLampiran'])->name('kelola.bantuan.lampiran');
+            // F-02 Setup organisasi: outlet, lokasi stok, merek, pengguna & peran, log audit.
+            Route::group([], base_path('routes/Organisasi.php'));
         });
     });
 });

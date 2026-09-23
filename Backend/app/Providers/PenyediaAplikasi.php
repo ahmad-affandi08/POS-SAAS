@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
@@ -34,6 +35,8 @@ final class PenyediaAplikasi extends ServiceProvider
 
         // P-09: KonteksPengelola menyimpan status "di dalam JalankanLintasTenant" per request/job.
         $this->app->scoped(KonteksPengelola::class);
+        // F-02: pencatat log audit tenant (pelaku & IP diisi perantara per request).
+        $this->app->scoped(PencatatAudit::class);
     }
 
     public function boot(): void

@@ -10,5 +10,7 @@ export type PropsBersamaAplikasi = {
     Pengguna: PenggunaAplikasi | null;
     TenantAktif: { Nama: string } | null;
     PengumumanLegal: PengumumanLegal[];
+    /** F-02: hak akses di tenant aktif (null di luar back-office). */
+    Akses: { Pemilik: boolean; Izin: string[] } | null;
     errors: Record<string, string>;
 };

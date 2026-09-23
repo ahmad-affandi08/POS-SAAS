@@ -20,9 +20,17 @@ use Illuminate\Support\Carbon;
  */
 final class SumberFiturTenant
 {
-    public function Ambil(int $idTenant, ?Carbon $pada = null): SumberFitur
+    /**
+     * @param  bool  $kunci  kunci baris langganan (FOR UPDATE) agar penambahan outlet/pengguna bersamaan dari satu
+     *                       tenant diproses berurutan (F-02, BR-P04.3); hanya di dalam transaksi.
+     */
+    public function Ambil(int $idTenant, ?Carbon $pada = null, bool $kunci = false): SumberFitur
     {
-        $langganan = Langganan::query()->with('Paket.Fitur')->where('IdTenant', $idTenant)->first();
+        $langganan = Langganan::query()
+            ->with('Paket.Fitur')
+            ->where('IdTenant', $idTenant)
+            ->when($kunci, fn ($kueri) => $kueri->lockForUpdate())
+            ->first();
         $paket = $langganan?->Paket;
 
         $override = $this->AmbilOverrideAktif($idTenant, $pada);
@@ -59,5 +67,12 @@ final class SumberFiturTenant
             ->orderBy('Id')
             ->get()
             ->all());
+    }
+
+    public function AmbilNamaPaket(int $idTenant): ?string
+    {
+        $langganan = Langganan::query()->where('IdTenant', $idTenant)->with('Paket')->first();
+
+        return $langganan?->Paket->Nama;
     }
 }
