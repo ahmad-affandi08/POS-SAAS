@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Katalog\Kueri;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Tenant\Model\Addon;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\HargaPaket;
+use App\Domain\Tenant\Model\KuponLangganan;
 use App\Domain\Tenant\Model\Paket;
 
 /**
@@ -65,5 +67,37 @@ final class DaftarKatalog
             'Batas' => $paket->AmbilBatas(),
             'KunciFitur' => $paket->AmbilKunciFitur(),
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function AmbilAddon(): array
+    {
+        return array_values(Addon::query()->orderBy('Status')->orderBy('Nama')->get()->map(fn (Addon $addon): array => [
+            'Kode' => $addon->Kode,
+            'Nama' => $addon->Nama,
+            'HargaBulanan' => $addon->HargaBulanan,
+            'KunciFitur' => $addon->KunciFitur,
+            'TambahanBatas' => $addon->TambahanBatas ?? [],
+            'Status' => $addon->Status->value,
+        ])->all());
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function AmbilKupon(): array
+    {
+        return array_values(KuponLangganan::query()->orderByDesc('Aktif')->orderBy('Kode')->get()->map(fn (KuponLangganan $kupon): array => [
+            'Kode' => $kupon->Kode,
+            'Jenis' => $kupon->Jenis->value,
+            'Nilai' => $kupon->Nilai,
+            'DurasiBulan' => $kupon->DurasiBulan,
+            'Kuota' => $kupon->Kuota,
+            'DaftarKodePaket' => $kupon->DaftarKodePaket,
+            'BerlakuSampai' => $kupon->BerlakuSampai?->toDateString(),
+            'Aktif' => $kupon->Aktif,
+        ])->all());
     }
 }

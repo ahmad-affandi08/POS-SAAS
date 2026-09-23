@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Domain\Pengelola\TimInternal\Enum\IzinPengelola;
 use App\Http\Kontroler\Pengelola\BerandaKontroler;
 use App\Http\Kontroler\Pengelola\DuaFaktorKontroler;
+use App\Http\Kontroler\Pengelola\Katalog\AddonKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
+use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
@@ -98,6 +100,22 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             Route::post('/katalog/paket/{paket}/harga/{hargaPaket}/tinjau', [HargaPaketKontroler::class, 'Tinjau'])
                 ->middleware($izin(IzinPengelola::KatalogPaketSetujui))
                 ->name('pengelola.katalog.harga.tinjau');
+
+            Route::get('/katalog/add-on', [AddonKontroler::class, 'Daftar'])->name('pengelola.katalog.addon.daftar');
+            Route::post('/katalog/add-on', [AddonKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::KatalogAddonKelola))
+                ->name('pengelola.katalog.addon.simpan');
+            Route::put('/katalog/add-on/{addon}', [AddonKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::KatalogAddonKelola))
+                ->name('pengelola.katalog.addon.ubah');
+
+            Route::get('/katalog/kupon', [KuponKontroler::class, 'Daftar'])->name('pengelola.katalog.kupon.daftar');
+            Route::post('/katalog/kupon', [KuponKontroler::class, 'Simpan'])
+                ->middleware($izin(IzinPengelola::KatalogKuponKelola))
+                ->name('pengelola.katalog.kupon.simpan');
+            Route::put('/katalog/kupon/{kuponLangganan}', [KuponKontroler::class, 'Ubah'])
+                ->middleware($izin(IzinPengelola::KatalogKuponKelola))
+                ->name('pengelola.katalog.kupon.ubah');
         });
 
         // P-02 Master regulasi & referensi.

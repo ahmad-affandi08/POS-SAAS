@@ -2,6 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 
 const daftarTab = [
     { label: 'Paket', href: '/katalog/paket' },
+    { label: 'Add-on', href: '/katalog/add-on' },
+    { label: 'Kupon', href: '/katalog/kupon' },
     { label: 'Fitur', href: '/katalog/fitur' },
 ];
 
