@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * P-02 langkah 3–4: peninjau menyetujui atau menolak. BR-P02.2: tarif nasional terbit setelah 2 penyetuju berbeda,
- * tarif daerah setelah 1; pengaju tidak boleh meninjau; satu penolakan mengembalikan ke Draf.
+ * tarif daerah setelah 1; penyusun & pengaju tidak boleh meninjau; satu penolakan mengembalikan ke Draf.
+ * BR-P02.5: BerlakuMulai tidak boleh di masa lalu saat terbit.
  * Saat terbit, tarif terbit sebelumnya (jenis & wilayah sama) diberi BerlakuSampai = sehari sebelum tarif baru.
  */
 final class TinjauTarifPajak
@@ -49,7 +50,7 @@ final class TinjauTarifPajak
                 self::JENIS_DATA,
                 $tarif->Id,
                 $tarif->PutaranTinjauan,
-                array_values(array_filter([$tarif->IdPenggunaPengelolaPengaju])),
+                TinjauanDataMaster::GabungTerlarang([[$tarif->DaftarIdPenyusun, $tarif->IdPenggunaPengelolaPengaju]]),
                 $peninjau,
                 $keputusan,
                 $catatan,
@@ -88,8 +89,22 @@ final class TinjauTarifPajak
         return $hasil;
     }
 
+    /** BR-P02.5: tarif harus sempat terkirim ke POS sebelum berlaku, jadi BerlakuMulai tidak boleh di masa lalu. */
+    public static function PastikanBelumLewat(TarifPajak $tarif): void
+    {
+        if ($tarif->BerlakuMulai->toDateString() < now('Asia/Jakarta')->toDateString()) {
+            throw new PelanggaranAturanBisnis(
+                'BR-P02.5',
+                'Tanggal berlaku sudah lewat. Ubah draf dengan tanggal berlaku hari ini atau sesudahnya.',
+                'BerlakuMulai',
+            );
+        }
+    }
+
     private function Terbitkan(TarifPajak $tarif, PenggunaPengelola $peninjau): void
     {
+        self::PastikanBelumLewat($tarif);
+
         $terbitSebelumnya = TarifPajak::query()
             ->where('IdJenisPajak', $tarif->IdJenisPajak)
             ->where('KodeWilayah', $tarif->KodeWilayah)

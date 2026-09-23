@@ -71,6 +71,7 @@ final class DaftarTarifPajak
                 'NomorDasarHukum' => $tarif->NomorDasarHukum,
                 'TautanDasarHukum' => $tarif->TautanDasarHukum,
                 'IdPengaju' => $tarif->IdPenggunaPengelolaPengaju,
+                'DaftarIdPenyusun' => $tarif->DaftarIdPenyusun ?? [],
                 'PersetujuanDibutuhkan' => $tarif->CekNasional() ? TinjauTarifPajak::PENYETUJU_NASIONAL : TinjauTarifPajak::PENYETUJU_DAERAH,
                 'Persetujuan' => $putaran->map(fn (PersetujuanDataMaster $item): array => [
                     'Peninjau' => $item->Peninjau->Nama,

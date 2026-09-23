@@ -37,6 +37,10 @@ final class DaftarHariLibur
                 'Jenis' => $item->Jenis->value,
                 'Status' => $item->Status->value,
                 'NomorDasarHukum' => $item->NomorDasarHukum,
+                'PembatalanMenunggu' => $item->CekPembatalanMenunggu(),
+                'AlasanPembatalan' => $item->AlasanPembatalan,
+                'IdPengajuBatal' => $item->IdPenggunaPengelolaPengajuBatal,
+                'DibatalkanPada' => $item->DibatalkanPada?->toIso8601String(),
             ])->all()),
             'IdPengajuMenunggu' => array_values(array_unique(array_filter(
                 $menunggu->pluck('IdPenggunaPengelolaPengaju')->all(),

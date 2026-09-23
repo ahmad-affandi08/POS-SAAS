@@ -1,0 +1,12 @@
+{
+    "_Keterangan": "Draf tarif pajak awal (PRD §12.1, BR-P02.5). Dimuat seeder sebagai DRAF; wajib diverifikasi konsultan pajak, diberi BerlakuMulai yang benar, lalu diajukan & disetujui four-eyes sebelum terbit. Nilai uang/tarif berupa string desimal.",
+    "Tarif": [
+        {
+            "KodeJenisPajak": "Ppn",
+            "Tarif": "12",
+            "PengaliDppPembilang": 11,
+            "PengaliDppPenyebut": 12,
+            "NomorDasarHukum": "PMK 131 Tahun 2024 (verifikasi konsultan pajak sebelum diajukan)"
+        }
+    ]
+}

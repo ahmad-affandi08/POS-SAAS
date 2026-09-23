@@ -35,6 +35,7 @@ use LogicException;
  * @property int|null $IdPenggunaPengelolaPengaju
  * @property Carbon|null $DiajukanPada
  * @property int $PutaranTinjauan
+ * @property list<int>|null $DaftarIdPenyusun
  * @property-read JenisPajak $JenisPajak
  */
 final class TarifPajak extends ModelDasar
@@ -54,6 +55,7 @@ final class TarifPajak extends ModelDasar
         'IdPenggunaPengelolaPengaju' => null,
         'DiajukanPada' => null,
         'PutaranTinjauan' => 0,
+        'DaftarIdPenyusun' => null,
     ];
 
     protected static function booted(): void
@@ -102,6 +104,7 @@ final class TarifPajak extends ModelDasar
             'Status' => StatusDataMaster::class,
             'DiajukanPada' => 'datetime',
             'PutaranTinjauan' => 'integer',
+            'DaftarIdPenyusun' => 'array',
         ];
     }
 }

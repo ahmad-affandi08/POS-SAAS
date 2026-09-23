@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Referensi\Model\HariLibur;
@@ -25,7 +26,7 @@ final class AjukanHariLiburTahun
         return DB::transaction(function () use ($pelaku, $tahun): int {
             $semua = HariLibur::query()->whereYear('Tanggal', $tahun)->lockForUpdate()->get();
 
-            if ($semua->contains(fn (HariLibur $hari) => $hari->Status === StatusDataMaster::MenungguTinjauan)) {
+            if ($semua->contains(fn (HariLibur $hari) => $hari->Status === StatusDataMaster::MenungguTinjauan || $hari->CekPembatalanMenunggu())) {
                 throw new PelanggaranAturanBisnis(
                     'PengajuanBerjalan',
                     "Masih ada pengajuan hari libur tahun {$tahun} yang menunggu tinjauan. Tunggu hasilnya sebelum mengajukan lagi.",
@@ -47,6 +48,7 @@ final class AjukanHariLiburTahun
 
             foreach ($draf as $hari) {
                 $hari->update([
+                    'DaftarIdPenyusun' => TinjauanDataMaster::TambahPenyusun($hari->DaftarIdPenyusun, $pelaku->Id),
                     'Status' => StatusDataMaster::MenungguTinjauan,
                     'IdPenggunaPengelolaPengaju' => $pelaku->Id,
                     'DiajukanPada' => $waktu,

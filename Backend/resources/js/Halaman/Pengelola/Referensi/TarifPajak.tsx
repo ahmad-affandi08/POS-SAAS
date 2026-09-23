@@ -31,6 +31,7 @@ type Tarif = {
     NomorDasarHukum: string | null;
     TautanDasarHukum: string | null;
     IdPengaju: number | null;
+    DaftarIdPenyusun: number[];
     PersetujuanDibutuhkan: number;
     Persetujuan: Persetujuan[];
     JumlahSetuju: number;
@@ -147,6 +148,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
                                     bolehSetujui &&
                                     tarif.Status === 'MenungguTinjauan' &&
                                     tarif.IdPengaju !== IdPengguna &&
+                                    !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
                                     !sudahMemutuskan;
 
                                 return (

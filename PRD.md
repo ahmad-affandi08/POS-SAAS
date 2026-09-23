@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.12 |
+| Versi | 1.13 |
 | Tanggal | 22 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -33,6 +33,7 @@
 | 1.10 | Penyelarasan hasil scaffolding Fase 0: macro `UuidPublik()` (§13.7.4), test Dart berakhiran `_test.dart` (§13.7.4, §17.2.1), ruang kerja pub + melos di `pubspec.yaml` akar (§13.7.4). Lint `constant_identifier_names` dimatikan agar nilai enum PascalCase (§13.7.4). Paket Dart murni diuji dengan `dart test`. Tidak ada perubahan flow. |
 | 1.11 | Rincian P-01 hasil perencanaan `/mulai-flow`: BR-P01.1 ditegaskan (tolak menurunkan Super Admin bila aktif ≤ 2), allowlist IP ditunda (§25 no. 13), skema `PenggunaPengelola` (+`DuaFaktorAktifPada`, `KodePemulihan2fa`, `DinonaktifkanPada`) dan tabel baru `UndanganPengelola` (§15.3). |
 | 1.12 | Rincian P-02 hasil perencanaan `/mulai-flow`: `PengaliDpp` disimpan sebagai pecahan (`PengaliDppPembilang`/`PengaliDppPenyebut`) agar DPP 11/12 eksak (§12.2), BR-P02.2 ditegaskan (nasional 2 penyetuju, daerah 1, pengaju tidak boleh menyetujui), tabel baru `SatuanStandar` & `PersetujuanDataMaster`, kolom status & dasar hukum pada `TarifPajak`/`HariLibur` (§15.3). Model data referensi berada di `Domain/Referensi` dan `Domain/Pajak` agar bisa dibaca tenant; aksi pengelolaannya di `Domain/Pengelola/Referensi` (§13.2, §13.8). |
+| 1.13 | Keputusan tinjauan P-02: data awal tarif dari file data (bukan kode), `BerlakuMulai` tarif tidak boleh di masa lalu saat diajukan/terbit, pembatalan hari libur terbit lewat pengajuan & tinjauan (status `Dibatalkan`), dan four-eyes berlaku untuk semua penyusun draf (BR-P02.2). |
 
 ---
 
@@ -490,11 +491,13 @@ Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
 4. Tarif terbit. Sistem menghitung tenant/outlet terdampak dan mengirim pemberitahuan ("Tarif PBJT Kota X berubah menjadi 10% mulai 1 Januari 2027").
 5. Aplikasi POS menerima tarif baru lewat delta sinkron sebelum tanggal berlaku, sehingga perpindahan tarif tetap benar walaupun perangkat offline pada hari H.
 
-**State Machine data master bertanggal:** `Draf → MenungguTinjauan → Terbit → (Berakhir saat BerlakuSampai lewat)`. `Ditolak` kembali ke `Draf`.
+**State Machine data master bertanggal:** `Draf → MenungguTinjauan → Terbit → (Berakhir saat BerlakuSampai lewat)`. `Ditolak` kembali ke `Draf`. Khusus hari libur: `Terbit → Dibatalkan` lewat pengajuan pembatalan yang disetujui (BR-P02.6).
 
 **Aturan Bisnis:**
 - BR-P02.1 Tarif yang sudah terbit tidak pernah diedit atau dihapus. Koreksi = tarif baru.
-- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Pengaju tidak pernah boleh menyetujui drafnya sendiri. Satu penolakan mengembalikan data ke `Draf`.
+- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Siapa pun yang pernah membuat, mengubah, atau mengajukan draf (penyusun) tidak boleh menyetujuinya. Satu penolakan mengembalikan data ke `Draf`.
+- BR-P02.5 `BerlakuMulai` tarif tidak boleh di masa lalu saat diajukan maupun saat terbit (tarif harus sempat terkirim ke POS sebelum berlaku). Nilai awal tarif (misal PPN) dimuat dari file data sebagai draf, tidak pernah ditulis di kode.
+- BR-P02.6 Hari libur terbit tidak diubah. Pembatalan (misal cuti bersama dibatalkan pemerintah) diajukan dengan alasan dan ditinjau 1 penyetuju selain pengaju; bila disetujui statusnya `Dibatalkan` dan baris tetap tersimpan. Penggeseran = pembatalan + hari libur baru.
 - BR-P02.3 Tenant boleh **override** tarif daerah untuk outletnya (misal Perda baru belum masuk ke master) dengan konfirmasi dan catatan. Override terlihat di Platform Pengelola sebagai sinyal untuk memperbarui master.
 - BR-P02.4 Hari libur tahun berikutnya wajib terbit paling lambat 1 Desember (pengingat otomatis ke Konten & Legal).
 
@@ -2493,7 +2496,7 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `JenisPajak` | Kode, Nama, Cakupan (Nasional/Daerah/Kustom) |
-| `TarifPajak` | IdJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, KodeWilayah (null = nasional), BiayaLayananMasukDpp, BerlakuMulai, BerlakuSampai, Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, TautanDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan (naik setiap diajukan). Tarif `decimal(9,6)` persen. Master platform (P-02); override tenant (BR-P02.3) dirancang di F-03 |
+| `TarifPajak` | IdJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, KodeWilayah (null = nasional), BiayaLayananMasukDpp, BerlakuMulai, BerlakuSampai, Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, TautanDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan (naik setiap diajukan), DaftarIdPenyusun JSON. Tarif `decimal(9,6)` persen. Master platform (P-02); override tenant (BR-P02.3) dirancang di F-03 |
 | `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Nama / IdTarifPajak, DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan |
 
 **Karyawan**
@@ -2530,7 +2533,7 @@ erDiagram
 | `PeranPengelola` / `PeranPengelolaIzin` / `PenggunaPengelolaPeran` | Kode, Nama, Bawaan (peran §19.3 dari sistem) / IdPeranPengelola, KunciIzin / IdPenggunaPengelola, IdPeranPengelola |
 | `LogAuditPengelola` | IdPenggunaPengelola, Aksi, JenisObjek, IdObjek, IdTenant (nullable), NilaiLama JSON, NilaiBaru JSON, Alasan, Ip, DibuatPada (**append-only**) |
 | `Wilayah` | Kode, Nama, Tingkat (Provinsi/KabupatenKota), KodeInduk, ZonaWaktu |
-| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan |
+| `HariLibur` | Tanggal, Nama, Jenis (Nasional/CutiBersama), Status (Draf/MenungguTinjauan/Terbit/Dibatalkan), NomorDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan, DaftarIdPenyusun JSON, PembatalanDiajukanPada, IdPenggunaPengelolaPengajuBatal, AlasanPembatalan, DibatalkanPada |
 | `ReferensiBank` | Kode, Nama, Jenis (Bank/Ewallet/JaringanEdc/PenerbitQris), Aktif |
 | `SatuanStandar` | Kode, Nama, Simbol, BolehDesimal, Aktif (disalin ke `Satuan` tenant oleh template sektor) |
 | `PersetujuanDataMaster` | JenisData, IdData, Putaran, IdPenggunaPengelola, Keputusan (Setuju/Tolak), Catatan, DibuatPada (append-only; unik per JenisData+IdData+Putaran+peninjau; hanya keputusan pada `PutaranTinjauan` data yang sedang berjalan yang dihitung) |

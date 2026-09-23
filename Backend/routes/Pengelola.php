@@ -104,10 +104,15 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 Route::post('/referensi/hari-libur', [HariLiburKontroler::class, 'Simpan'])->name('pengelola.referensi.hari-libur.simpan');
                 Route::put('/referensi/hari-libur/{hariLibur}', [HariLiburKontroler::class, 'Ubah'])->name('pengelola.referensi.hari-libur.ubah');
                 Route::delete('/referensi/hari-libur/{hariLibur}', [HariLiburKontroler::class, 'Hapus'])->name('pengelola.referensi.hari-libur.hapus');
+                Route::post('/referensi/hari-libur/{hariLibur}/pembatalan', [HariLiburKontroler::class, 'AjukanPembatalan'])
+                    ->name('pengelola.referensi.hari-libur.pembatalan.ajukan');
                 Route::post('/referensi/hari-libur/tahun/{tahun}/ajukan', [HariLiburKontroler::class, 'Ajukan'])
                     ->whereNumber('tahun')
                     ->name('pengelola.referensi.hari-libur.ajukan');
             });
+            Route::post('/referensi/hari-libur/{hariLibur}/pembatalan/tinjau', [HariLiburKontroler::class, 'TinjauPembatalan'])
+                ->middleware($izin(IzinPengelola::ReferensiHariLiburSetujui))
+                ->name('pengelola.referensi.hari-libur.pembatalan.tinjau');
             Route::post('/referensi/hari-libur/tahun/{tahun}/tinjau', [HariLiburKontroler::class, 'Tinjau'])
                 ->whereNumber('tahun')
                 ->middleware($izin(IzinPengelola::ReferensiHariLiburSetujui))

@@ -6,13 +6,16 @@ namespace App\Http\Kontroler\Pengelola\Referensi;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pengelola\Referensi\Aksi\AjukanHariLiburTahun;
+use App\Domain\Pengelola\Referensi\Aksi\AjukanPembatalanHariLibur;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafHariLibur;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauHariLiburTahun;
+use App\Domain\Pengelola\Referensi\Aksi\TinjauPembatalanHariLibur;
 use App\Domain\Pengelola\Referensi\Kueri\DaftarHariLibur;
 use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Model\HariLibur;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
+use App\Http\Permintaan\Pengelola\Referensi\AjukanPembatalanPermintaan;
 use App\Http\Permintaan\Pengelola\Referensi\SimpanHariLiburPermintaan;
 use App\Http\Permintaan\Pengelola\Referensi\TinjauDataMasterPermintaan;
 use Illuminate\Http\RedirectResponse;
@@ -75,5 +78,21 @@ final class HariLiburKontroler extends Kontroler
         return back()->with('Kilat', $status === StatusDataMaster::Terbit
             ? "Hari libur tahun {$tahun} terbit."
             : "Hari libur tahun {$tahun} dikembalikan ke draf.");
+    }
+
+    public function AjukanPembatalan(HariLibur $hariLibur, AjukanPembatalanPermintaan $permintaan, AjukanPembatalanHariLibur $ajukan): RedirectResponse
+    {
+        $ajukan->Jalankan($this->AmbilPelaku(), $hariLibur, $permintaan->string('Alasan')->toString());
+
+        return back()->with('Kilat', "Pembatalan {$hariLibur->Nama} diajukan dan menunggu tinjauan.");
+    }
+
+    public function TinjauPembatalan(HariLibur $hariLibur, TinjauDataMasterPermintaan $permintaan, TinjauPembatalanHariLibur $tinjau): RedirectResponse
+    {
+        $status = $tinjau->Jalankan($this->AmbilPelaku(), $hariLibur, $permintaan->AmbilKeputusan(), $permintaan->AmbilCatatan());
+
+        return back()->with('Kilat', $status === StatusDataMaster::Dibatalkan
+            ? "{$hariLibur->Nama} dibatalkan."
+            : "Pembatalan ditolak; {$hariLibur->Nama} tetap berlaku.");
     }
 }

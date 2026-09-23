@@ -15,8 +15,12 @@ type HariLibur = {
     Tanggal: string;
     Nama: string;
     Jenis: string;
-    Status: 'Draf' | 'MenungguTinjauan' | 'Terbit';
+    Status: 'Draf' | 'MenungguTinjauan' | 'Terbit' | 'Dibatalkan';
     NomorDasarHukum: string | null;
+    PembatalanMenunggu: boolean;
+    AlasanPembatalan: string | null;
+    IdPengajuBatal: number | null;
+    DibatalkanPada: string | null;
 };
 
 type PropsHariLibur = {
@@ -32,6 +36,7 @@ const labelStatus = {
     Draf: { jenis: 'netral', teks: 'Draf' },
     MenungguTinjauan: { jenis: 'peringatan', teks: 'Menunggu tinjauan' },
     Terbit: { jenis: 'sukses', teks: 'Terbit' },
+    Dibatalkan: { jenis: 'bahaya', teks: 'Dibatalkan' },
 } as const;
 
 const formatTanggal = new Intl.DateTimeFormat('id-ID', {
@@ -55,6 +60,7 @@ export default function HalamanHariLibur({
     const bolehSetujui = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiHariLiburSetujui);
     const [sunting, AturSunting] = useState<HariLibur | 'baru' | null>(null);
     const [meninjau, AturMeninjau] = useState(false);
+    const [pembatalan, AturPembatalan] = useState<{ jenis: 'ajukan' | 'tinjau'; hari: HariLibur } | null>(null);
     const labelJenis = new Map(PilihanJenis.map((item) => [item.Nilai, item.Label]));
     const adaDraf = HariLibur.some((hari) => hari.Status === 'Draf');
     const adaMenunggu = HariLibur.some((hari) => hari.Status === 'MenungguTinjauan');
@@ -102,6 +108,14 @@ export default function HalamanHariLibur({
                     tahun={Tahun}
                     pilihanJenis={PilihanJenis}
                     saatSelesai={() => AturSunting(null)}
+                />
+            ) : null}
+            {pembatalan !== null ? (
+                <FormPembatalan
+                    key={`${pembatalan.jenis}-${pembatalan.hari.Uuid}`}
+                    jenis={pembatalan.jenis}
+                    hari={pembatalan.hari}
+                    saatSelesai={() => AturPembatalan(null)}
                 />
             ) : null}
             {meninjau ? (
@@ -159,6 +173,11 @@ export default function HalamanHariLibur({
                                             jenis={labelStatus[hari.Status].jenis}
                                             teks={labelStatus[hari.Status].teks}
                                         />
+                                        {hari.PembatalanMenunggu ? (
+                                            <p className="mt-1 text-keterangan text-peringatan">
+                                                Pembatalan menunggu tinjauan: {hari.AlasanPembatalan}
+                                            </p>
+                                        ) : null}
                                     </td>
                                     <td className="px-4 py-2">
                                         {bolehAjukan && hari.Status === 'Draf' ? (
@@ -168,6 +187,25 @@ export default function HalamanHariLibur({
                                                 </Tombol>
                                                 <Tombol varian="bahaya" onClick={() => HapusDraf(hari)}>
                                                     Hapus
+                                                </Tombol>
+                                            </div>
+                                        ) : null}
+                                        {bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu ? (
+                                            <div className="flex justify-end">
+                                                <Tombol
+                                                    varian="bahaya"
+                                                    onClick={() => AturPembatalan({ jenis: 'ajukan', hari })}
+                                                >
+                                                    Ajukan pembatalan
+                                                </Tombol>
+                                            </div>
+                                        ) : null}
+                                        {bolehSetujui &&
+                                        hari.PembatalanMenunggu &&
+                                        hari.IdPengajuBatal !== IdPengguna ? (
+                                            <div className="flex justify-end">
+                                                <Tombol onClick={() => AturPembatalan({ jenis: 'tinjau', hari })}>
+                                                    Tinjau pembatalan
                                                 </Tombol>
                                             </div>
                                         ) : null}
@@ -286,6 +324,76 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
                 <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
                     Tolak pengajuan
                 </Tombol>
+                <Tombol varian="sekunder" onClick={saatSelesai}>
+                    Batal
+                </Tombol>
+            </div>
+        </section>
+    );
+}
+
+type PropsFormPembatalan = { jenis: 'ajukan' | 'tinjau'; hari: HariLibur; saatSelesai: () => void };
+
+function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
+    const formulir = useForm({ Alasan: '', Keputusan: 'Setuju', Catatan: '' });
+
+    const Ajukan = () =>
+        formulir.post(`/referensi/hari-libur/${hari.Uuid}/pembatalan`, {
+            preserveScroll: true,
+            onSuccess: saatSelesai,
+        });
+    const Tinjau = (keputusan: 'Setuju' | 'Tolak') => {
+        formulir.transform((data) => ({ Keputusan: keputusan, Catatan: data.Catatan }));
+        formulir.post(`/referensi/hari-libur/${hari.Uuid}/pembatalan/tinjau`, {
+            preserveScroll: true,
+            onSuccess: saatSelesai,
+        });
+    };
+
+    return (
+        <section className="flex flex-col gap-4 rounded-panel border border-bahaya bg-permukaan p-6">
+            <h2 className="text-subjudul font-semibold text-teks-utama">
+                {jenis === 'ajukan' ? `Ajukan pembatalan ${hari.Nama}` : `Tinjau pembatalan ${hari.Nama}`}
+            </h2>
+            <p className="text-isi text-teks-sekunder">
+                {jenis === 'ajukan'
+                    ? 'Hari libur tetap berlaku sampai pembatalan disetujui anggota lain. Untuk menggeser tanggal, batalkan lalu tambahkan hari libur baru.'
+                    : `Alasan: ${hari.AlasanPembatalan ?? '—'}. Bila disetujui, hari libur tidak lagi dipakai tenant; datanya tetap tersimpan.`}
+            </p>
+            {jenis === 'ajukan' ? (
+                <BidangTeks
+                    label="Alasan pembatalan"
+                    keterangan="Misal nomor SKB perubahan."
+                    nilai={formulir.data.Alasan}
+                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                    galat={formulir.errors.Alasan}
+                    maxLength={500}
+                    autoFocus
+                />
+            ) : (
+                <BidangTeks
+                    label="Catatan (wajib bila menolak)"
+                    nilai={formulir.data.Catatan}
+                    saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
+                    galat={formulir.errors.Catatan}
+                    maxLength={500}
+                />
+            )}
+            <div className="flex gap-2">
+                {jenis === 'ajukan' ? (
+                    <Tombol varian="bahaya" memproses={formulir.processing} onClick={Ajukan}>
+                        Ajukan pembatalan
+                    </Tombol>
+                ) : (
+                    <>
+                        <Tombol varian="bahaya" memproses={formulir.processing} onClick={() => Tinjau('Setuju')}>
+                            Setujui pembatalan
+                        </Tombol>
+                        <Tombol varian="sekunder" disabled={formulir.processing} onClick={() => Tinjau('Tolak')}>
+                            Tolak pembatalan
+                        </Tombol>
+                    </>
+                )}
                 <Tombol varian="sekunder" onClick={saatSelesai}>
                     Batal
                 </Tombol>

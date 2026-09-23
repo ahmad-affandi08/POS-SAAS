@@ -12,7 +12,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
  * Aturan four-eyes bersama untuk data master bertanggal (BR-P02.2):
- * - pengaju tidak meninjau pengajuannya sendiri;
+ * - penyusun (siapa pun yang pernah membuat, mengubah, atau mengajukan) tidak meninjau datanya sendiri;
  * - satu orang satu keputusan per putaran (juga dijaga indeks unik di database);
  * - hanya keputusan pada putaran yang sedang berjalan yang dihitung. Putaran naik setiap kali diajukan,
  *   sehingga persetujuan dari putaran yang ditolak tidak pernah terbawa.
@@ -20,20 +20,55 @@ use Illuminate\Database\UniqueConstraintViolationException;
 final class TinjauanDataMaster
 {
     /**
-     * @param  list<int>  $idPengaju  semua pengaju data yang ditinjau pada putaran ini
+     * Menambahkan pelaku ke daftar penyusun data (tanpa duplikat).
+     *
+     * @param  list<int>|null  $daftar
+     * @return list<int>
+     */
+    public static function TambahPenyusun(?array $daftar, int $idPelaku): array
+    {
+        $daftar ??= [];
+
+        return in_array($idPelaku, $daftar, true) ? $daftar : [...$daftar, $idPelaku];
+    }
+
+    /**
+     * Menggabungkan penyusun dan pengaju beberapa baris data menjadi daftar yang tidak boleh meninjau.
+     *
+     * @param  iterable<array{0: list<int>|null, 1: int|null}>  $daftar  pasangan [DaftarIdPenyusun, IdPengaju]
+     * @return list<int>
+     */
+    public static function GabungTerlarang(iterable $daftar): array
+    {
+        $hasil = [];
+
+        foreach ($daftar as [$penyusun, $pengaju]) {
+            foreach ([...($penyusun ?? []), ...($pengaju === null ? [] : [$pengaju])] as $id) {
+                $hasil[$id] = $id;
+            }
+        }
+
+        return array_values($hasil);
+    }
+
+    /**
+     * @param  list<int>  $idPenyusun  semua penyusun & pengaju data yang ditinjau
      * @return int jumlah persetujuan pada putaran ini
      */
     public function CatatKeputusan(
         string $jenisData,
         int $idData,
         int $putaran,
-        array $idPengaju,
+        array $idPenyusun,
         PenggunaPengelola $peninjau,
         KeputusanTinjauan $keputusan,
         ?string $catatan,
     ): int {
-        if (in_array($peninjau->Id, $idPengaju, true)) {
-            throw new PelanggaranAturanBisnis('BR-P02.2', 'Pengaju tidak boleh meninjau pengajuannya sendiri. Minta anggota lain meninjau.');
+        if (in_array($peninjau->Id, $idPenyusun, true)) {
+            throw new PelanggaranAturanBisnis(
+                'BR-P02.2',
+                'Anda ikut menyusun atau mengajukan data ini, jadi tidak boleh meninjaunya. Minta anggota lain meninjau.',
+            );
         }
 
         if ($keputusan === KeputusanTinjauan::Tolak && ($catatan === null || trim($catatan) === '')) {

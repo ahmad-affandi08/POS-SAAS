@@ -155,7 +155,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
         $daerah = ['KodeJenisPajak' => 'PbjtMakananMinuman', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => '33.74'];
 
-        $lama = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => '2026-01-01']);
+        $lama = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => '2026-10-01']);
         Tinjau($this, $keuangan, $lama);
         $baru = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '8', 'BerlakuMulai' => '2027-01-01']);
         Tinjau($this, $keuangan, $baru);
@@ -178,7 +178,7 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         $daerah = ['KodeJenisPajak' => 'PbjtMakananMinuman', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => '33.74'];
 
         Tinjau($this, $keuangan, AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => '2027-01-01']));
-        $mundur = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '9', 'BerlakuMulai' => '2026-06-01']);
+        $mundur = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '9', 'BerlakuMulai' => '2026-12-01']);
 
         Tinjau($this, $keuangan, $mundur)->assertSessionHasErrors('Umum');
         expect($mundur->refresh()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
@@ -186,7 +186,8 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
 
     it('draf tidak pernah dipakai kalkulasi', function (): void {
         $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
-        AjukanTarifBaru($this, $pengaju, ['BerlakuMulai' => '2020-01-01']);
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif(['BerlakuMulai' => '2020-01-01']))
+            ->assertSessionHasNoErrors();
 
         expect(app(TarifPajakBerlaku::class)->Cari('Ppn', null, Carbon::parse('2026-01-01')))->toBeNull();
     });
@@ -269,5 +270,48 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         expect(TarifPajak::query()->where('Status', 'MenungguTinjauan')->sole()->Tarif)->toBe('11.123456');
         $this->get(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Draf'))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Tarif.Data', 1)->where('Tarif.Data.0.Status', 'Draf'));
+    });
+    it('BR-P02.5: tarif dengan tanggal berlaku lewat tidak bisa diajukan maupun terbit', function (): void {
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif(['BerlakuMulai' => '2026-09-01']));
+        $lewat = TarifPajak::query()->sole();
+
+        $this->post(BantuanPengelola::Url("/referensi/tarif-pajak/{$lewat->Uuid}/ajukan"))->assertSessionHasErrors('BerlakuMulai');
+        expect($lewat->refresh()->Status)->toBe(StatusDataMaster::Draf);
+
+        $daerah = ['KodeJenisPajak' => 'PbjtMakananMinuman', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => '33.74'];
+        $besok = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => now('Asia/Jakarta')->addDay()->toDateString()]);
+        $this->travel(3)->days();
+
+        Tinjau($this, $keuangan, $besok)->assertSessionHasErrors('BerlakuMulai');
+        expect($besok->refresh()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
+    });
+
+    it('BR-P02.2: penyusun draf tidak boleh menyetujui walau yang mengajukan orang lain', function (): void {
+        $penyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        SebagaiPengelola($this, $penyusun)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif())->assertSessionHasNoErrors();
+        $tarif = TarifPajak::query()->sole();
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url("/referensi/tarif-pajak/{$tarif->Uuid}/ajukan"))->assertSessionHasNoErrors();
+
+        Tinjau($this, $penyusun, $tarif)->assertSessionHasErrors('Umum');
+        Tinjau($this, $keuangan, $tarif)->assertSessionHasNoErrors();
+
+        expect($tarif->refresh()->DaftarIdPenyusun)->toEqualCanonicalizing([$penyusun->Id, $pengaju->Id])
+            ->and(PersetujuanDataMaster::query()->count())->toBe(1);
+    });
+
+    it('BR-P02.5: seeder membaca tarif awal dari file data dan menolak file yang tidak valid', function (): void {
+        $path = tempnam(sys_get_temp_dir(), 'tarif').'.json';
+        file_put_contents($path, json_encode(['Tarif' => [['KodeJenisPajak' => 'Ppn', 'Tarif' => 11, 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'NomorDasarHukum' => 'X']]]));
+
+        expect(fn () => app(SiapkanPajakBawaan::class)->Jalankan($path))->toThrow(RuntimeException::class);
+
+        file_put_contents($path, json_encode(['Tarif' => [['KodeJenisPajak' => 'Ppn', 'Tarif' => '11.5', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'NomorDasarHukum' => 'Uji']]]));
+        app(SiapkanPajakBawaan::class)->Jalankan($path);
+
+        expect(TarifPajak::query()->sole()->Tarif)->toBe('11.500000');
     });
 });

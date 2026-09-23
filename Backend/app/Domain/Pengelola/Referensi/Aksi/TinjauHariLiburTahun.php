@@ -40,17 +40,16 @@ final class TinjauHariLiburTahun
                 throw new PelanggaranAturanBisnis('StatusTidakSesuai', "Tidak ada hari libur tahun {$tahun} yang menunggu tinjauan.");
             }
 
-            // Semua pengaju baris yang ditinjau diperiksa, bukan hanya baris pertama.
-            $idPengaju = array_values(array_unique(array_filter(
-                $diajukan->pluck('IdPenggunaPengelolaPengaju')->all(),
-                fn ($id) => is_int($id),
-            )));
+            // Semua penyusun & pengaju baris yang ditinjau diperiksa, bukan hanya baris pertama.
+            $idTerlarang = TinjauanDataMaster::GabungTerlarang(
+                $diajukan->map(fn (HariLibur $hari) => [$hari->DaftarIdPenyusun, $hari->IdPenggunaPengelolaPengaju]),
+            );
 
             $jumlahSetuju = $this->tinjauan->CatatKeputusan(
                 self::JENIS_DATA,
                 $tahun,
                 (int) $diajukan->max('PutaranTinjauan'),
-                $idPengaju,
+                $idTerlarang,
                 $peninjau,
                 $keputusan,
                 $catatan,

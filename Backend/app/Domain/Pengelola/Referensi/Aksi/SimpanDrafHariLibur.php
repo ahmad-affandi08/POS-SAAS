@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pengelola\Referensi\Data\DataHariLibur;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Referensi\Model\HariLibur;
@@ -33,6 +34,7 @@ final class SimpanDrafHariLibur
             $bentrok = HariLibur::query()
                 ->whereDate('Tanggal', $data->tanggal->toDateString())
                 ->where('Jenis', $data->jenis->value)
+                ->where('Status', '!=', StatusDataMaster::Dibatalkan->value)
                 ->when($hariLibur !== null, fn ($kueri) => $kueri->whereKeyNot($hariLibur?->Id))
                 ->exists();
 
@@ -42,6 +44,7 @@ final class SimpanDrafHariLibur
 
             $hariLibur ??= new HariLibur(['Status' => StatusDataMaster::Draf, 'IdPenggunaPengelolaPengaju' => $pelaku->Id]);
             $hariLibur->fill([
+                'DaftarIdPenyusun' => TinjauanDataMaster::TambahPenyusun($hariLibur->DaftarIdPenyusun, $pelaku->Id),
                 'Tanggal' => $data->tanggal->toDateString(),
                 'Nama' => $data->nama,
                 'Jenis' => $data->jenis,

@@ -10,6 +10,7 @@ use App\Domain\Pajak\Enum\CakupanPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pengelola\Referensi\Data\DataTarifPajak;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Referensi\Enum\TingkatWilayah;
@@ -48,6 +49,7 @@ final class SimpanDrafTarifPajak
             $nilaiLama = $tarif?->only(['Tarif', 'PengaliDppPembilang', 'PengaliDppPenyebut', 'KodeWilayah', 'BiayaLayananMasukDpp', 'NomorDasarHukum']);
             $tarif ??= new TarifPajak(['Status' => StatusDataMaster::Draf, 'IdPenggunaPengelolaPengaju' => $pelaku->Id]);
             $tarif->fill([
+                'DaftarIdPenyusun' => TinjauanDataMaster::TambahPenyusun($tarif->DaftarIdPenyusun, $pelaku->Id),
                 'IdJenisPajak' => $jenis->Id,
                 'Tarif' => (string) BigDecimal::of($data->tarif)->toScale(6),
                 'PengaliDppPembilang' => $data->pengaliDppPembilang,

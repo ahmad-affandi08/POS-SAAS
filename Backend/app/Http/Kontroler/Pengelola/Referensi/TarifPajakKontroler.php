@@ -68,7 +68,8 @@ final class TarifPajakKontroler extends Kontroler
         return back()->with('Kilat', match ($status) {
             StatusDataMaster::Terbit => 'Tarif pajak terbit.',
             StatusDataMaster::Draf => 'Tarif pajak ditolak dan dikembalikan ke draf.',
-            StatusDataMaster::MenungguTinjauan => 'Persetujuan dicatat. Masih menunggu penyetuju lain.',
+            // Dibatalkan hanya dipakai hari libur (BR-P02.6); tarif tidak pernah berakhir di status itu.
+            StatusDataMaster::MenungguTinjauan, StatusDataMaster::Dibatalkan => 'Persetujuan dicatat. Masih menunggu penyetuju lain.',
         });
     }
 }

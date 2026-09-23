@@ -43,6 +43,8 @@ return new class extends Migration
                 ->restrictOnDelete();
             $tabel->timestamp('DiajukanPada')->nullable();
             $tabel->unsignedInteger('PutaranTinjauan')->default(0);
+            // Semua anggota yang pernah membuat/mengubah/mengajukan draf; tidak boleh menyetujui (BR-P02.2).
+            $tabel->json('DaftarIdPenyusun')->nullable();
             $tabel->WaktuStandar();
             $tabel->index(['IdJenisPajak', 'KodeWilayah', 'Status', 'BerlakuMulai'], 'IdxTarifPajakBerlaku');
         });

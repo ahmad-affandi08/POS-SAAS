@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pajak\Model\TarifPajak;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,10 @@ final class AjukanTarifPajak
                 throw new PelanggaranAturanBisnis('DasarHukumWajib', 'Lampirkan nomor dasar hukum (PMK/Perda) sebelum mengajukan.', 'NomorDasarHukum');
             }
 
+            TinjauTarifPajak::PastikanBelumLewat($tarif);
+
             $tarif->update([
+                'DaftarIdPenyusun' => TinjauanDataMaster::TambahPenyusun($tarif->DaftarIdPenyusun, $pelaku->Id),
                 'Status' => StatusDataMaster::MenungguTinjauan,
                 'IdPenggunaPengelolaPengaju' => $pelaku->Id,
                 'DiajukanPada' => now(),

@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Hari libur nasional & cuti bersama dengan status tinjauan (P-02, BR-P02.4, PRD §15.3).
+ * Hari libur nasional & cuti bersama dengan status tinjauan dan pembatalan (P-02, BR-P02.4, BR-P02.6, PRD §15.3).
  */
 return new class extends Migration
 {
@@ -27,8 +27,19 @@ return new class extends Migration
                 ->restrictOnDelete();
             $tabel->timestamp('DiajukanPada')->nullable();
             $tabel->unsignedInteger('PutaranTinjauan')->default(0);
+            $tabel->json('DaftarIdPenyusun')->nullable();
+            // Pembatalan hari libur terbit (BR-P02.6).
+            $tabel->timestamp('PembatalanDiajukanPada')->nullable();
+            $tabel->foreignId('IdPenggunaPengelolaPengajuBatal')
+                ->nullable()
+                ->constrained('PenggunaPengelola', 'Id', 'FkHariLiburIdPenggunaPengelolaPengajuBatal')
+                ->restrictOnDelete();
+            $tabel->string('AlasanPembatalan', 500)->nullable();
+            $tabel->timestamp('DibatalkanPada')->nullable();
             $tabel->WaktuStandar();
-            $tabel->unique(['Tanggal', 'Jenis'], 'UniqHariLiburTanggalJenis');
+            // Tidak unik: tanggal yang dibatalkan boleh diisi hari libur pengganti. Keunikan di antara baris
+            // yang belum dibatalkan dijaga Aksi.
+            $tabel->index(['Tanggal', 'Jenis'], 'IdxHariLiburTanggalJenis');
             $tabel->index(['Status', 'Tanggal'], 'IdxHariLiburStatusTanggal');
         });
     }
