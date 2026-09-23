@@ -29,6 +29,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $NoHp
  * @property string $KataSandi
  * @property Carbon|null $EmailDiverifikasiPada
+ * @property string|null $Rahasia2fa
+ * @property list<string>|null $KodePemulihan2fa
+ * @property Carbon|null $DuaFaktorAktifPada
  */
 final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, KontrakDapatDiotorisasi, KontrakDapatResetKataSandi
 {
@@ -44,7 +47,18 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
     protected $table = 'Pengguna';
 
     /** @var list<string> */
-    protected $hidden = ['KataSandi', 'TokenIngat', 'Rahasia2fa'];
+    protected $hidden = ['KataSandi', 'TokenIngat', 'Rahasia2fa', 'KodePemulihan2fa'];
+
+    /**
+     * Nilai bawaan kolom 2FA, sama dengan default migrasi (agar model baru lengkap walau belum dimuat ulang).
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'Rahasia2fa' => null,
+        'KodePemulihan2fa' => null,
+        'DuaFaktorAktifPada' => null,
+    ];
 
     public function getAuthPasswordName(): string
     {
@@ -66,6 +80,12 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
         return $this->Email;
     }
 
+    /** 2FA TOTP akun tenant (§20.2): aktif bila rahasia sudah dikonfirmasi dengan kode pertama. */
+    public function CekDuaFaktorAktif(): bool
+    {
+        return $this->DuaFaktorAktifPada !== null && $this->Rahasia2fa !== null;
+    }
+
     /**
      * @return array<string, string>
      */
@@ -74,6 +94,8 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
         return [
             'KataSandi' => 'hashed',
             'Rahasia2fa' => 'encrypted',
+            'KodePemulihan2fa' => 'encrypted:array',
+            'DuaFaktorAktifPada' => 'datetime',
             'EmailDiverifikasiPada' => 'datetime',
         ];
     }

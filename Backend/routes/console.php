@@ -16,3 +16,6 @@ Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
 
 // BR-00.3: trial yang berakhir turun ke paket Gratis.
 Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
+
+// BR-P06.5: pengumuman versi materiil dokumen legal ke Owner selama masa pengumuman (sekali per versi per pengguna).
+Schedule::command('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();

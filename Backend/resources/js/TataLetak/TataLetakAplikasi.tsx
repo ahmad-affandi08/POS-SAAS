@@ -1,8 +1,9 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
@@ -28,6 +29,13 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                     </p>
                     <div className="flex items-center gap-3">
                         <span className="text-label text-teks-sekunder">{props.Pengguna?.Nama}</span>
+                        {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
+                        <Link
+                            href="/kelola/keamanan"
+                            className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        >
+                            Keamanan akun
+                        </Link>
                         <Tombol varian="sekunder" onClick={() => router.post('/keluar')}>
                             Keluar
                         </Tombol>
@@ -47,6 +55,23 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                                 Kirim ulang tautan
                             </Tombol>
                         </div>
+                    </Pemberitahuan>
+                ) : null}
+                {/* BR-P06.5: pengumuman versi materiil dokumen legal selama masa pengumuman. */}
+                {props.PengumumanLegal.length > 0 ? (
+                    <Pemberitahuan jenis="info" judul="Perubahan dokumen legal">
+                        <ul className="flex flex-col gap-1">
+                            {props.PengumumanLegal.map((pengumuman) => (
+                                <li key={`${pengumuman.Label}-${pengumuman.Versi}`}>
+                                    {pengumuman.Label} versi {pengumuman.Versi} berlaku mulai{' '}
+                                    {FormatTanggal(pengumuman.BerlakuMulai)}.{' '}
+                                    <a href={pengumuman.Tautan} className="font-semibold text-brand underline">
+                                        Baca perubahannya
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="mt-1">Anda akan diminta menyetujuinya setelah tanggal berlaku.</p>
                     </Pemberitahuan>
                 ) : null}
                 {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}

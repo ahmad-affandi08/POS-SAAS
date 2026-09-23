@@ -34,4 +34,14 @@ enum JenisDokumenLegal: string
     {
         return [self::SyaratKetentuan, self::KebijakanPrivasi];
     }
+
+    /**
+     * BR-P06.5: versi materiil jenis ini diumumkan ke Owner dan wajib disetujui ulang setelah berlaku.
+     *
+     * @return list<self>
+     */
+    public static function AmbilWajibPersetujuanUlang(): array
+    {
+        return [self::SyaratKetentuan, self::KebijakanPrivasi, self::PerjanjianPemrosesanData];
+    }
 }

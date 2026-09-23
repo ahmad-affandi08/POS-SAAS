@@ -22,5 +22,7 @@ return [
     'SlugTerlarang' => [
         'daftar', 'masuk', 'keluar', 'lupa-kata-sandi', 'verifikasi-email', 'pilih-tenant', 'kelola', 'unduh',
         'internal', 'api', 'webhook', 'sehat', 's', 'mitra', 'pengelola', 'harga', 'bantuan', 'legal',
+        // Auth tenant: rute atur ulang kata sandi (BR-00.9).
+        'atur-ulang-kata-sandi',
     ],
 ];

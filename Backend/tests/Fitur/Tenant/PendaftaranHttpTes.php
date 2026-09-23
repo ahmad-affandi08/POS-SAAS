@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Domain\Integrasi\Layanan\PemeriksaCaptcha;
+use App\Domain\Organisasi\Galat\IdentitasSudahTerdaftar;
 use App\Domain\Organisasi\Layanan\PenandaVerifikasiEmail;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
+use App\Domain\Organisasi\Surel\UpayaPendaftaranAkunTerdaftar;
 use App\Domain\Organisasi\Surel\VerifikasiEmail;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
 use App\Domain\Tenant\Model\DokumenLegal;
@@ -81,6 +83,22 @@ describe('Registrasi lewat web (F-00)', function (): void {
 
         $this->post('/daftar', IsianDaftarUji(['Email' => 'RINA@kopinusantara.id', 'NoHp' => '081299998888']))->assertSessionHasErrors('Email');
         expect(Tenant::query()->count())->toBe(1);
+    });
+
+    it('§25 no. 18: email atau nomor terdaftar mendapat pesan umum yang sama, dan pemilik akun diberi tahu', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        $this->post('/keluar');
+
+        $this->post('/daftar', IsianDaftarUji(['NoHp' => '081299998888']))
+            ->assertSessionHasErrors(['Email' => IdentitasSudahTerdaftar::PESAN_UMUM])
+            ->assertSessionDoesntHaveErrors('NoHp');
+        $this->post('/daftar', IsianDaftarUji(['Email' => 'lain@contoh.id']))
+            ->assertSessionHasErrors(['Email' => IdentitasSudahTerdaftar::PESAN_UMUM])
+            ->assertSessionDoesntHaveErrors('NoHp');
+
+        $this->assertGuest('web');
+        expect(Tenant::query()->count())->toBe(1)->and(Pengguna::query()->count())->toBe(1);
+        Mail::assertSent(UpayaPendaftaranAkunTerdaftar::class, fn (UpayaPendaftaranAkunTerdaftar $surel) => $surel->hasTo('rina@kopinusantara.id'));
     });
 
     it('BR-00.6: paket pilihan yang tidak tersedia jatuh ke paket bawaan, bukan paket pertama', function (): void {

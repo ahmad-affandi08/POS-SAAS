@@ -5,10 +5,13 @@ declare(strict_types=1);
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Bersama\Tenant\TenantBelumDitetapkan;
+use App\Domain\Organisasi\Galat\IdentitasSudahTerdaftar;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
+use App\Domain\Organisasi\Surel\UpayaPendaftaranAkunTerdaftar;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Model\DokumenLegal;
@@ -16,6 +19,7 @@ use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PersetujuanDokumenLegal;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
@@ -56,10 +60,40 @@ describe('Pendaftaran tenant (F-00)', function (): void {
         app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data());
 
         expect(fn () => app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data(noHp: '081299999999')))
-            ->toThrow(PelanggaranAturanBisnis::class, 'Email ini sudah terdaftar')
+            ->toThrow(PelanggaranAturanBisnis::class, IdentitasSudahTerdaftar::PESAN_UMUM)
             ->and(fn () => app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data('lain@contoh.id')))
-            ->toThrow(PelanggaranAturanBisnis::class, 'Nomor WhatsApp')
-            ->and(Tenant::query()->count())->toBe(1);
+            ->toThrow(PelanggaranAturanBisnis::class, IdentitasSudahTerdaftar::PESAN_UMUM)
+            ->and(Tenant::query()->count())->toBe(1)
+            ->and(Pengguna::query()->count())->toBe(1);
+    });
+
+    it('§25 no. 18: email & nomor yang sudah dipakai ditolak dengan pesan yang sama, dan pemilik akun diberi tahu lewat email', function (): void {
+        Mail::fake();
+        app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data());
+        app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data('budi@toko.id', '081200000077', namaUsaha: 'Toko Budi'));
+
+        $pesan = [];
+        foreach ([
+            'email saja' => BantuanPendaftaran::Data(noHp: '081299999999'),
+            'nomor saja' => BantuanPendaftaran::Data('baru@contoh.id'),
+            'email Rina + nomor Budi' => BantuanPendaftaran::Data('RINA@kopinusantara.id', '081200000077'),
+        ] as $kasus => $data) {
+            try {
+                app(DaftarkanTenant::class)->Jalankan($data);
+            } catch (PelanggaranAturanBisnis $galat) {
+                $pesan[$kasus] = [$galat->kode, $galat->bidang, $galat->getMessage()];
+            }
+        }
+
+        // Tiga penyebab berbeda, satu jawaban yang sama: pendaftar tidak bisa menebak data mana yang terdaftar.
+        expect(array_unique(array_map('serialize', $pesan)))->toHaveCount(1)
+            ->and(array_values($pesan)[0])->toBe(['BR-00.1', 'Email', IdentitasSudahTerdaftar::PESAN_UMUM])
+            ->and(Tenant::query()->count())->toBe(2);
+
+        // Rina diberi tahu sekali saja dalam satu jam walau namanya dipakai tiga kali; Budi sekali (nomornya).
+        Mail::assertSent(UpayaPendaftaranAkunTerdaftar::class, 2);
+        Mail::assertSent(UpayaPendaftaranAkunTerdaftar::class, fn (UpayaPendaftaranAkunTerdaftar $surel) => $surel->hasTo('rina@kopinusantara.id') && $surel->identitas === ['email']);
+        Mail::assertSent(UpayaPendaftaranAkunTerdaftar::class, fn (UpayaPendaftaranAkunTerdaftar $surel) => $surel->hasTo('budi@toko.id') && $surel->identitas === ['nomor WhatsApp']);
     });
 
     it('BR-00.6: paket pilihan dipakai bila aktif; GRATIS langsung berstatus Gratis; negosiasi memakai paket bawaan', function (): void {
