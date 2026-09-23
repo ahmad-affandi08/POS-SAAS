@@ -79,4 +79,4 @@ Alat/               Penjaga & skrip proyek (terlindungi)
 Dokumen/            Potongan PRD hasil generate (terlindungi)
 ```
 
-Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi `Aplikasi/Web` (Laravel + back-office) dan Flutter, P-01 (tim internal), P-02 (regulasi & referensi).
+Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi `Aplikasi/Web` (Laravel + back-office) dan Flutter, Platform Pengelola P-01 s.d. P-09 & P-11 (dasar), F-00 (registrasi & autentikasi), F-02 (organisasi, peran, perangkat, PIN), F-01 (panduan awal & template sektor). Berikutnya: F-03.
