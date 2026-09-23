@@ -9,6 +9,7 @@ use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Enum\StatusPaket;
 use App\Domain\Tenant\Kueri\PaketTersedia;
+use App\Domain\Tenant\Model\Addon;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\HargaPaket;
 use App\Domain\Tenant\Model\Paket;
@@ -57,7 +58,14 @@ describe('Katalog paket (P-04)', function (): void {
             ->and(HargaPaket::query()->where('Status', '!=', StatusDataMaster::Draf->value)->count())->toBe(0)
             ->and(Paket::query()->where('Kode', 'ENTERPRISE')->sole()->HargaNegosiasi)->toBeTrue()
             ->and(Paket::query()->where('Kode', 'GRATIS')->sole()->AmbilBatas()['BatasSku'])->toBe(100)
-            ->and(Paket::query()->where('Kode', 'BISNIS')->sole()->AmbilKunciFitur())->toContain('api.publik');
+            ->and(Paket::query()->where('Kode', 'BISNIS')->sole()->AmbilKunciFitur())->toContain('api.publik')
+            ->and(Paket::query()->where('Kode', 'PRO')->sole()->AmbilBatas())->toBe([
+                'BatasOutlet' => 3, 'BatasPerangkatPerOutlet' => 5, 'BatasPengguna' => 20,
+                'BatasSku' => null, 'KuotaPesanWaBulanan' => 100, 'BatasPenyimpananMb' => 5120,
+            ])
+            ->and(Addon::query()->count())->toBe(6)
+            ->and(Addon::query()->where('Status', '!=', StatusPaket::Diarsipkan->value)->count())->toBe(0)
+            ->and(Addon::query()->where('Kode', 'OUTLET_TAMBAHAN')->sole()->TambahanBatas)->toBe(['BatasOutlet' => 1]);
     });
 
     it('Keuangan menyusun draf paket dengan batas & fitur; batas kosong = tak terbatas; tercatat di audit', function (): void {

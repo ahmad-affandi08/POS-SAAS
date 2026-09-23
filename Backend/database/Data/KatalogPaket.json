@@ -1,35 +1,177 @@
 {
-    "_Keterangan": "Paket awal dari PRD §21 (harga indikatif, bukan final). Dimuat sebagai DRAF: harga wajib diajukan & disetujui (BR-P04.5), paket lalu diaktifkan Super Admin (BR-P04.6). Batas null = tak terbatas. Harga string desimal.",
+    "_Keterangan": "Paket awal PRD §21 (harga indikatif per paket, D-11). Dimuat sebagai DRAF: harga wajib diajukan & disetujui (BR-P04.5), paket lalu diaktifkan Super Admin (BR-P04.6). Batas null = tak terbatas; di atas batas dibeli lewat add-on. Harga string desimal.",
     "Paket": [
         {
-            "Kode": "GRATIS", "Nama": "Gratis", "Urutan": 1, "MasaTrialHari": 0, "HargaNegosiasi": false,
-            "Batas": { "BatasOutlet": 1, "BatasPerangkatPerOutlet": 1, "BatasPengguna": null, "BatasSku": 100, "KuotaPesanWaBulanan": 0, "BatasPenyimpananMb": null },
-            "Harga": { "HargaBulanan": "0", "HargaTahunan": "0" },
-            "Fitur": ["pos.retail", "laporan.dasar"]
+            "Kode": "GRATIS",
+            "Nama": "Gratis",
+            "Urutan": 1,
+            "MasaTrialHari": 0,
+            "HargaNegosiasi": false,
+            "Batas": {
+                "BatasOutlet": 1,
+                "BatasPerangkatPerOutlet": 1,
+                "BatasPengguna": 2,
+                "BatasSku": 100,
+                "KuotaPesanWaBulanan": 0,
+                "BatasPenyimpananMb": 100
+            },
+            "Harga": {
+                "HargaBulanan": "0",
+                "HargaTahunan": "0"
+            },
+            "Fitur": [
+                "pos.retail",
+                "laporan.dasar"
+            ]
         },
         {
-            "Kode": "STARTER", "Nama": "Starter", "Urutan": 2, "MasaTrialHari": 14, "HargaNegosiasi": false,
-            "Batas": { "BatasOutlet": 1, "BatasPerangkatPerOutlet": 2, "BatasPengguna": null, "BatasSku": null, "KuotaPesanWaBulanan": null, "BatasPenyimpananMb": null },
-            "Harga": { "HargaBulanan": "79000", "HargaTahunan": "758400" },
-            "Fitur": ["pos.retail", "struk.tanpa-watermark", "stok.dasar", "pelanggan.dasar", "laporan.dasar", "laporan.lengkap"]
+            "Kode": "STARTER",
+            "Nama": "Starter",
+            "Urutan": 2,
+            "MasaTrialHari": 14,
+            "HargaNegosiasi": false,
+            "Batas": {
+                "BatasOutlet": 1,
+                "BatasPerangkatPerOutlet": 2,
+                "BatasPengguna": 5,
+                "BatasSku": null,
+                "KuotaPesanWaBulanan": 0,
+                "BatasPenyimpananMb": 1024
+            },
+            "Harga": {
+                "HargaBulanan": "79000",
+                "HargaTahunan": "758400"
+            },
+            "Fitur": [
+                "pos.retail",
+                "struk.tanpa-watermark",
+                "stok.dasar",
+                "pelanggan.dasar",
+                "laporan.dasar",
+                "laporan.lengkap"
+            ]
         },
         {
-            "Kode": "PRO", "Nama": "Pro", "Urutan": 3, "MasaTrialHari": 14, "HargaNegosiasi": false,
-            "Batas": { "BatasOutlet": null, "BatasPerangkatPerOutlet": 5, "BatasPengguna": null, "BatasSku": null, "KuotaPesanWaBulanan": null, "BatasPenyimpananMb": null },
-            "Harga": { "HargaBulanan": "199000", "HargaTahunan": "1910400" },
-            "Fitur": ["pos.retail", "pos.mode-meja", "pos.kds", "struk.tanpa-watermark", "stok.dasar", "stok.opname", "pembelian.po", "pelanggan.dasar", "pelanggan.loyalti", "promo.mesin", "karyawan.komisi", "laporan.dasar", "laporan.lengkap", "akuntansi.penuh"]
+            "Kode": "PRO",
+            "Nama": "Pro",
+            "Urutan": 3,
+            "MasaTrialHari": 14,
+            "HargaNegosiasi": false,
+            "Batas": {
+                "BatasOutlet": 3,
+                "BatasPerangkatPerOutlet": 5,
+                "BatasPengguna": 20,
+                "BatasSku": null,
+                "KuotaPesanWaBulanan": 100,
+                "BatasPenyimpananMb": 5120
+            },
+            "Harga": {
+                "HargaBulanan": "199000",
+                "HargaTahunan": "1910400"
+            },
+            "Fitur": [
+                "pos.retail",
+                "pos.mode-meja",
+                "pos.kds",
+                "struk.tanpa-watermark",
+                "stok.dasar",
+                "stok.opname",
+                "pembelian.po",
+                "pelanggan.dasar",
+                "pelanggan.loyalti",
+                "promo.mesin",
+                "karyawan.komisi",
+                "laporan.dasar",
+                "laporan.lengkap",
+                "akuntansi.penuh",
+                "integrasi.whatsapp"
+            ]
         },
         {
-            "Kode": "BISNIS", "Nama": "Bisnis", "Urutan": 4, "MasaTrialHari": 14, "HargaNegosiasi": false,
-            "Batas": { "BatasOutlet": null, "BatasPerangkatPerOutlet": null, "BatasPengguna": null, "BatasSku": null, "KuotaPesanWaBulanan": null, "BatasPenyimpananMb": null },
-            "Harga": { "HargaBulanan": "399000", "HargaTahunan": "3830400" },
-            "Fitur": ["pos.retail", "pos.mode-meja", "pos.kds", "struk.tanpa-watermark", "stok.dasar", "stok.opname", "stok.multi-gudang", "stok.transfer", "pembelian.po", "pelanggan.dasar", "pelanggan.loyalti", "promo.mesin", "karyawan.komisi", "laporan.dasar", "laporan.lengkap", "akuntansi.penuh", "persetujuan.jarak-jauh", "keamanan.anti-fraud", "keamanan.2fa-wajib", "harga.daftar-harga", "piutang.grosir", "api.publik"]
+            "Kode": "BISNIS",
+            "Nama": "Bisnis",
+            "Urutan": 4,
+            "MasaTrialHari": 14,
+            "HargaNegosiasi": false,
+            "Batas": {
+                "BatasOutlet": 10,
+                "BatasPerangkatPerOutlet": null,
+                "BatasPengguna": 100,
+                "BatasSku": null,
+                "KuotaPesanWaBulanan": 500,
+                "BatasPenyimpananMb": 20480
+            },
+            "Harga": {
+                "HargaBulanan": "399000",
+                "HargaTahunan": "3830400"
+            },
+            "Fitur": [
+                "pos.retail",
+                "pos.mode-meja",
+                "pos.kds",
+                "struk.tanpa-watermark",
+                "stok.dasar",
+                "stok.opname",
+                "stok.multi-gudang",
+                "stok.transfer",
+                "pembelian.po",
+                "pelanggan.dasar",
+                "pelanggan.loyalti",
+                "promo.mesin",
+                "karyawan.komisi",
+                "laporan.dasar",
+                "laporan.lengkap",
+                "akuntansi.penuh",
+                "persetujuan.jarak-jauh",
+                "keamanan.anti-fraud",
+                "keamanan.2fa-wajib",
+                "harga.daftar-harga",
+                "piutang.grosir",
+                "api.publik",
+                "integrasi.whatsapp"
+            ]
         },
         {
-            "Kode": "ENTERPRISE", "Nama": "Enterprise", "Urutan": 5, "MasaTrialHari": 0, "HargaNegosiasi": true,
-            "Batas": { "BatasOutlet": null, "BatasPerangkatPerOutlet": null, "BatasPengguna": null, "BatasSku": null, "KuotaPesanWaBulanan": null, "BatasPenyimpananMb": null },
+            "Kode": "ENTERPRISE",
+            "Nama": "Enterprise",
+            "Urutan": 5,
+            "MasaTrialHari": 0,
+            "HargaNegosiasi": true,
+            "Batas": {
+                "BatasOutlet": null,
+                "BatasPerangkatPerOutlet": null,
+                "BatasPengguna": null,
+                "BatasSku": null,
+                "KuotaPesanWaBulanan": null,
+                "BatasPenyimpananMb": null
+            },
             "Harga": null,
-            "Fitur": ["pos.retail", "pos.mode-meja", "pos.kds", "struk.tanpa-watermark", "stok.dasar", "stok.opname", "stok.multi-gudang", "stok.transfer", "pembelian.po", "pelanggan.dasar", "pelanggan.loyalti", "promo.mesin", "karyawan.komisi", "laporan.dasar", "laporan.lengkap", "akuntansi.penuh", "persetujuan.jarak-jauh", "keamanan.anti-fraud", "keamanan.2fa-wajib", "harga.daftar-harga", "piutang.grosir", "api.publik", "franchise.royalti"]
+            "Fitur": [
+                "pos.retail",
+                "pos.mode-meja",
+                "pos.kds",
+                "struk.tanpa-watermark",
+                "stok.dasar",
+                "stok.opname",
+                "stok.multi-gudang",
+                "stok.transfer",
+                "pembelian.po",
+                "pelanggan.dasar",
+                "pelanggan.loyalti",
+                "promo.mesin",
+                "karyawan.komisi",
+                "laporan.dasar",
+                "laporan.lengkap",
+                "akuntansi.penuh",
+                "persetujuan.jarak-jauh",
+                "keamanan.anti-fraud",
+                "keamanan.2fa-wajib",
+                "harga.daftar-harga",
+                "piutang.grosir",
+                "api.publik",
+                "franchise.royalti",
+                "integrasi.whatsapp"
+            ]
         }
     ]
 }

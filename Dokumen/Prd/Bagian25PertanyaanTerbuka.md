@@ -15,11 +15,7 @@
 11. Apakah ada rencana **bundel hardware** (perangkat all-in-one + langganan) bersama distributor?
 12. **Kanal distribusi Windows** (D-02): diputuskan setelah sistem stabil (lihat tabel keputusan di bawah).
 13. **Allowlist IP Platform Pengelola** (BR-P01.2): per peran atau per pengguna? Sampai diputuskan, fitur ini tidak dibangun dan kolom `DaftarIpDiizinkan` tidak dibuat.
-14. **Harga paket per outlet?** §21 menulis "harga/bulan per outlet", sedangkan `HargaPaket` menyimpan harga per paket. Perlu diputuskan sebelum F-19 (penagihan).
-15. **Batas paket yang belum disebut §21** (outlet paket Pro, kuota WA Starter/Pro/Bisnis, batas pengguna & penyimpanan) sementara bernilai tak terbatas di `database/Data/KatalogPaket.json` (draf). Tentukan sebelum paket diaktifkan.
-16. **Add-on & kupon tanpa four-eyes?** Saat ini Keuangan bisa langsung mengubah harga add-on dan membuat kupon. Apakah perlu persetujuan kedua seperti harga paket (BR-P04.5)?
-17. **Kunci fitur berbahasa campuran** (`kanal.self-order`, `pos.kds`, `keamanan.anti-fraud`, `struk.tanpa-watermark`, `laporan.insight`): istilah ini dipakai PRD; konfirmasi sebelum kode tenant memakainya karena kunci tidak bisa diubah.
-18. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) dan BR-P04.4 (downgrade) wajib dibangun & diuji bersama `Langganan` di F-00/F-19.
+14. **Utang implementasi P-04**: BR-P04.3 (penegakan batas `PastikanBatasPaket` & `konfigurasi-aplikasi`) dan BR-P04.4 (downgrade) wajib dibangun & diuji bersama `Langganan` di F-00/F-19.
 
 ### 25.1 Keputusan yang Sudah Diambil
 
@@ -35,3 +31,4 @@
 | D-08 | Font resmi: **Atkinson Hyperlegible Next** untuk UI dan **Atkinson Hyperlegible Mono** untuk kode, di semua klien | 22/09/2026 | §17.5, `Spesifikasi/TokenDesain` |
 | D-09 | Pedoman UI/UX & Design System: prinsip alat kerja, aturan warna 90/10, token warna, dua mode kepadatan, keadaan wajib, microcopy Indonesia, checklist anti-slop | 22/09/2026 | §17.6, `Spesifikasi/TokenDesain`, §23.3 |
 | D-10 | Tata kelola AI agent tiga lapis: konteks (`CLAUDE.md`, `.claude/rules/`, `Dokumen/`), penjaga otomatis (hook, `Alat/CekKonvensi.py`, CI, CODEOWNERS), alur kerja (`/mulai-flow`, `/cek-dod`, subagent peninjau, template PR) | 22/09/2026 | §23.4, §13.7.4 |
+| D-11 | **Harga langganan per paket**, bukan per outlet. Outlet, perangkat, dan kuota WA di atas batas paket dijual sebagai add-on. Add-on & kupon tanpa four-eyes. Kunci fitur katalog dipertahankan apa adanya | 23/09/2026 | §8 P-04, §21, §25 |

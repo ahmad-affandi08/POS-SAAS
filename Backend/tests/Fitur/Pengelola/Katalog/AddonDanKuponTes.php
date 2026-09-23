@@ -31,20 +31,20 @@ describe('Add-on (P-04)', function (): void {
         MasukSebagaiKatalog($this, $keuangan);
 
         $this->post(BantuanPengelola::Url('/katalog/add-on'), [
-            'Kode' => 'OUTLET_TAMBAHAN', 'Nama' => 'Outlet tambahan', 'HargaBulanan' => '99000',
+            'Kode' => 'OUTLET_UJI', 'Nama' => 'Outlet tambahan', 'HargaBulanan' => '99000',
             'KunciFitur' => null, 'TambahanBatas' => ['BatasOutlet' => 1], 'Status' => 'Aktif',
         ])->assertSessionHasNoErrors();
         $this->post(BantuanPengelola::Url('/katalog/add-on'), [
-            'Kode' => 'SELF_ORDER', 'Nama' => 'Self-order QR', 'HargaBulanan' => '49000',
+            'Kode' => 'PESAN_MANDIRI_UJI', 'Nama' => 'Self-order QR', 'HargaBulanan' => '49000',
             'KunciFitur' => 'kanal.self-order', 'TambahanBatas' => [], 'Status' => 'Aktif',
         ])->assertSessionHasNoErrors();
-        $this->put(BantuanPengelola::Url('/katalog/add-on/SELF_ORDER'), [
-            'Kode' => 'SELF_ORDER', 'Nama' => 'Self-order QR', 'HargaBulanan' => '59000',
+        $this->put(BantuanPengelola::Url('/katalog/add-on/PESAN_MANDIRI_UJI'), [
+            'Kode' => 'PESAN_MANDIRI_UJI', 'Nama' => 'Self-order QR', 'HargaBulanan' => '59000',
             'KunciFitur' => 'kanal.self-order', 'TambahanBatas' => [], 'Status' => 'Diarsipkan',
         ])->assertSessionHasNoErrors();
 
-        expect(Addon::query()->where('Kode', 'OUTLET_TAMBAHAN')->sole()->TambahanBatas)->toBe(['BatasOutlet' => 1])
-            ->and(Addon::query()->where('Kode', 'SELF_ORDER')->sole()->Status)->toBe(StatusPaket::Diarsipkan);
+        expect(Addon::query()->where('Kode', 'OUTLET_UJI')->sole()->TambahanBatas)->toBe(['BatasOutlet' => 1])
+            ->and(Addon::query()->where('Kode', 'PESAN_MANDIRI_UJI')->sole()->Status)->toBe(StatusPaket::Diarsipkan);
         $log = LogAuditPengelola::query()->where('Aksi', 'katalog.addon.ubah')->sole();
         expect($log->NilaiLama['HargaBulanan'] ?? null)->toBe('49000.00')->and($log->NilaiBaru['HargaBulanan'] ?? null)->toBe('59000.00');
     });

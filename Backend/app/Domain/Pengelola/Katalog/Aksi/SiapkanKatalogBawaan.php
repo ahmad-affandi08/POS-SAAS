@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Katalog\Aksi;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Tenant\Enum\StatusPaket;
+use App\Domain\Tenant\Model\Addon;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\HargaPaket;
 use App\Domain\Tenant\Model\Paket;
@@ -13,18 +14,20 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Katalog fitur & paket awal dari file data (`database/Data/KatalogFitur.json`, `KatalogPaket.json`), P-04, §21.
+ * Katalog fitur, paket, dan add-on awal dari file data (`database/Data/KatalogFitur.json`, `KatalogPaket.json`,
+ * `KatalogAddon.json`), P-04, §21, D-11. Add-on dimuat Diarsipkan (belum dijual) sampai Keuangan mengaktifkannya.
  * Idempoten: fitur/paket yang sudah ada tidak diubah. Paket dibuat sebagai DRAF dengan draf harga; harga wajib
  * disetujui (BR-P04.5) dan paket diaktifkan Super Admin (BR-P04.6). Tidak ada harga di kode.
  */
 final class SiapkanKatalogBawaan
 {
-    public function Jalankan(?string $pathFitur = null, ?string $pathPaket = null): void
+    public function Jalankan(?string $pathFitur = null, ?string $pathPaket = null, ?string $pathAddon = null): void
     {
         $dataFitur = self::BacaJson($pathFitur ?? database_path('Data/KatalogFitur.json'), 'Fitur');
         $dataPaket = self::BacaJson($pathPaket ?? database_path('Data/KatalogPaket.json'), 'Paket');
+        $dataAddon = self::BacaJson($pathAddon ?? database_path('Data/KatalogAddon.json'), 'Addon');
 
-        DB::transaction(function () use ($dataFitur, $dataPaket): void {
+        DB::transaction(function () use ($dataFitur, $dataPaket, $dataAddon): void {
             foreach ($dataFitur as $fitur) {
                 Fitur::query()->firstOrCreate(
                     ['Kunci' => self::AmbilTeks($fitur, 'Kunci')],
@@ -66,6 +69,20 @@ final class SiapkanKatalogBawaan
                         'Status' => StatusDataMaster::Draf,
                     ]);
                 }
+            }
+
+            foreach ($dataAddon as $data) {
+                $tambahan = is_array($data['TambahanBatas'] ?? null)
+                    ? array_map('intval', array_intersect_key($data['TambahanBatas'], array_flip(Paket::KOLOM_BATAS)))
+                    : null;
+
+                Addon::query()->firstOrCreate(['Kode' => self::AmbilTeks($data, 'Kode')], [
+                    'Nama' => self::AmbilTeks($data, 'Nama'),
+                    'HargaBulanan' => self::AmbilTeks($data, 'HargaBulanan'),
+                    'KunciFitur' => is_string($data['KunciFitur'] ?? null) ? $data['KunciFitur'] : null,
+                    'TambahanBatas' => $tambahan === [] ? null : $tambahan,
+                    'Status' => StatusPaket::Diarsipkan,
+                ]);
             }
         });
     }
