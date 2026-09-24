@@ -88,7 +88,7 @@ Bab (chapter) YouTube dibuat dari judul langkah, supaya penonton bisa melompat k
 
 | Unsur | Aturan tutorial |
 |---|---|
-| **VO** | Manusia, satu pengisi suara tetap. Bahasa Indonesia baku santai ("Anda" atau "kamu", pilih satu untuk seluruh seri). Direkam di ruang kedap, −16 LUFS setelah master |
+| **VO** | Manusia, satu pengisi suara tetap. Bahasa Indonesia santai dan sopan dengan sapaan **"kamu"** di seluruh seri (sudah diputuskan); hindari "Anda", "lo/gue", dan kata gaul yang cepat basi. Direkam di ruang kedap, −16 LUFS setelah master |
 | **Backsound** | Lagu dasar suasana **Tenang** (`RencanaKonten.md` §5.2), sangat pelan: −28 s.d. −30 LUFS di bawah VO. Dimatikan saat langkah yang butuh konsentrasi (isi form panjang) |
 | **Efek suara** | Hanya bunyi UI asli dan halus: klik, ketuk, bip pindai, printer, notifikasi Owner, denting "berhasil" (sekali per video di "Cek berhasil"). Tanpa whoosh |
 | **Tanda bunyi** | Versi pendek 0,8 dtk di pembuka saja |
@@ -337,13 +337,13 @@ Tiga contoh berikut menjadi acuan gaya untuk semua naskah.
 |---|---|---|---|---|
 | 0:00–0:06 | Pembuka | Judul "Cara membuka shift dan mengisi kas awal", ikon Kasir, "Prasyarat: perangkat aktif, PIN kasir" | "Cara membuka shift dan mengisi kas awal." | Tanda bunyi pendek |
 | 0:06–0:13 | Konteks | Tablet di meja kasir, `LayarPilihKasir` | "Setiap mulai jaga, kasir mencatat uang yang ada di laci. Ini disebut kas awal." | Backsound pelan |
-| 0:13–0:24 | Langkah 1/3 · Masuk | Ketuk "Sari" → papan PIN, titik PIN terisi | "Ketuk nama Anda, lalu masukkan PIN enam digit." | Ketuk ×6 |
+| 0:13–0:24 | Langkah 1/3 · Masuk | Ketuk "Sari" → papan PIN, titik PIN terisi | "Ketuk namamu, lalu masukkan PIN enam digit." | Ketuk ×6 |
 | 0:24–0:40 | Langkah 2/3 · Isi kas awal | `LayarBukaShift`, zoom ke kolom kas awal, ketik 500.000 | "Masukkan jumlah uang di laci. Contohnya lima ratus ribu rupiah." | Ketuk angka |
 | 0:40–0:52 | Langkah 2/3 (lanjutan) | Ketuk "Hitung per pecahan", isi 100rb ×3, 50rb ×4 | "Kalau ingin lebih teliti, hitung per pecahan. Jumlahnya harus sama dengan kas awal." | Ketuk |
 | 0:52–0:58 | Langkah 3/3 · Buka | Sorot tombol "Buka Shift" → ketuk | "Ketuk Buka Shift." | Ketuk |
 | 0:58–1:06 | Kalau ada masalah | Contoh total pecahan Rp450.000 ≠ Rp500.000 → pesan galat asli | "Kalau jumlah pecahan tidak sama, aplikasi akan memberi tahu. Periksa lagi hitungannya." | — |
 | 1:06–1:12 | Aturan penting | Wi-Fi mati di bilah status, shift tetap terbuka | "Shift tetap bisa dibuka walau internet mati. Datanya dikirim otomatis nanti." | — |
-| 1:12–1:17 | Cek berhasil | `LayarJual` tampil, bilah status "Shift dibuka 07.02" | "Shift sudah terbuka. Anda siap berjualan." | Denting berhasil |
+| 1:12–1:17 | Cek berhasil | `LayarJual` tampil, bilah status "Shift dibuka 07.02" | "Shift sudah terbuka. Kamu siap berjualan." | Denting berhasil |
 | 1:17–1:22 | Penutup | "Selanjutnya: Cara melakukan transaksi pertama" | "Selanjutnya, pelajari cara melakukan transaksi pertama." | — |
 
 ### 8.2 T-SHF-01 · Cara mencatat kas masuk dan kas keluar (±90 dtk)
@@ -366,11 +366,11 @@ Tiga contoh berikut menjadi acuan gaya untuk semua naskah.
 | 0:00–0:07 | Pembuka | Judul, ikon Web, "Prasyarat: izin kelola produk" | "Cara impor produk dari Excel." |
 | 0:07–0:15 | Konteks | File Excel berisi 1.248 produk | "Punya daftar produk di Excel? Tidak perlu mengetik ulang satu per satu." |
 | 0:15–0:30 | Langkah 1/5 | `Kelola/Produk/Impor` → Unduh templat | "Buka Produk, pilih Impor, lalu unduh templatnya." |
-| 0:30–0:50 | Langkah 2/5 | Excel: salin kolom ke templat | "Salin data Anda ke kolom yang sesuai. Nama dan harga wajib diisi." |
+| 0:30–0:50 | Langkah 2/5 | Excel: salin kolom ke templat | "Salin datamu ke kolom yang sesuai. Nama dan harga wajib diisi." |
 | 0:50–1:05 | Langkah 3/5 | Unggah file | "Unggah file yang sudah diisi." |
 | 1:05–1:25 | Langkah 4/5 | Pemetaan kolom: "Harga Jual" → Harga | "Pastikan setiap kolom terhubung ke data yang benar." |
 | 1:25–1:55 | Kalau ada masalah | Hasil validasi: 3 baris galat (barcode ganda), unduh laporan galat | "Baris yang bermasalah ditandai beserta alasannya. Unduh laporannya, perbaiki, lalu unggah lagi." |
-| 1:55–2:10 | Langkah 5/5 | Proses → bilah kemajuan | "Ketuk Proses. Impor besar berjalan di latar, Anda bisa lanjut bekerja." |
+| 1:55–2:10 | Langkah 5/5 | Proses → bilah kemajuan | "Ketuk Proses. Impor besar berjalan di latar, jadi kamu bisa lanjut bekerja." |
 | 2:10–2:20 | Cek berhasil | `Kelola/Produk/Daftar` berisi produk baru, cari salah satunya | "Produk sudah masuk dan siap dijual di kasir." |
 | 2:20–2:28 | Penutup | "Selanjutnya: Cara mengimpor stok awal" | "Selanjutnya, isi stok awalnya." |
 
@@ -414,6 +414,7 @@ Pemasangan tombol "?" dan tautan di aplikasi adalah perubahan produk tersendiri:
 - [ ] Prasyarat (izin, paket, tutorial sebelumnya) disebut di pembuka
 - [ ] Semua layar dari build rilis; versi tercatat di `Manifes.json`
 - [ ] Label tombol di VO/teks sama persis dengan aplikasi
+- [ ] Sapaan memakai "kamu" (tidak ada "Anda")
 - [ ] BR yang dirasakan pengguna diperagakan, dan sesuai PRD terbaru
 - [ ] Ada satu keadaan tidak mulus dan cara mengatasinya
 - [ ] Jeda setelah setiap aksi; VO 120–140 kata/menit; chip langkah selalu tampil
@@ -443,10 +444,15 @@ Pemasangan tombol "?" dan tautan di aplikasi adalah perubahan produk tersendiri:
 
 ---
 
-## 13. Hal yang Perlu Diputuskan
+## 13. Keputusan
 
-1. Sapaan di VO: "Anda" atau "kamu" (dipakai konsisten di seluruh seri).
-2. Pengisi suara tetap (satu orang) dan anggarannya.
-3. Tempat hosting video di Pusat Bantuan: YouTube (tidak publik/publik) atau penyimpanan sendiri.
-4. Siapa peninjau per modul (pemilik flow).
-5. Urutan produksi G1 bila waktu tidak cukup: rekomendasi mulai dari jalur "Mulai dalam 1 hari" dan "Kasir hari pertama".
+**Sudah diputuskan**
+
+- Sapaan di VO, teks layar, dan subtitle: **"kamu"**, konsisten di seluruh seri tutorial dan video promosi.
+
+**Perlu diputuskan**
+
+1. Pengisi suara tetap (satu orang) dan anggarannya.
+2. Tempat hosting video di Pusat Bantuan: YouTube (tidak publik/publik) atau penyimpanan sendiri.
+3. Siapa peninjau per modul (pemilik flow).
+4. Urutan produksi G1 bila waktu tidak cukup: rekomendasi mulai dari jalur "Mulai dalam 1 hari" dan "Kasir hari pertama".

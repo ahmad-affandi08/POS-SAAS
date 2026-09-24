@@ -69,6 +69,8 @@ Semua video memakai kerangka yang sama supaya ritmenya tenang dan tidak terburu-
 | 21–26 | **Bukti** | Hasilnya: angka, status hijau, laporan jadi, B-roll manusia | Satu angka besar atau satu status. Tahan ≥ 2 detik tanpa gerakan lain |
 | 26–30 | **Penutup** | Logo + tagline + ajakan + tanda bunyi PAYOU | Selalu sama di 30 video (templat `KartuPenutup`) |
 
+**Sapaan:** "kamu" di VO, teks layar, dan subtitle (sama dengan seri tutorial).
+
 **Batas kepadatan:** VO ≤ 55 kata per video (±2 kata/detik), teks layar total ≤ 25 kata, jeda tanpa teks baru ≥ 1 detik di antara babak.
 
 ---
