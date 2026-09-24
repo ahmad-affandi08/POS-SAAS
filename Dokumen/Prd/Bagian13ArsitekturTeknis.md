@@ -229,7 +229,7 @@ Implementasi:
 | Operasional gudang (terima barang, transfer, opname via scan) | **Aplikasi Flutter** (mode Gudang) | Online-first dengan draft lokal. Posting saat online |
 | Dashboard owner, approval jarak jauh, notifikasi, aksi cepat | **Aplikasi Owner (Flutter)** | Online-first + cache lokal ringan (Drift) untuk dibuka cepat & dibaca saat sinyal lemah. `/api/pemilik/v1` |
 | Navigasi halaman back-office, form CRUD, pengaturan | **Web (Inertia)** | Props dari controller, `useForm`, partial reload, deferred props |
-| **Semua tabel data** (daftar master, dokumen, laporan, log) | **Web (TanStack Table + TanStack Query)** | Komponen `TabelData` (§17.4.3): data dari endpoint JSON `/internal/*` dengan paginasi, urut, dan saring di server, `placeholderData: keepPreviousData`, keadaan tabel di URL (D-16) |
+| **Semua tabel data** (daftar master, dokumen, laporan, log) | **Web (TanStack Table + TanStack Query)** | Komponen `TabelData` (§17.4.3): data JSON dari URL halaman yang sama (`Accept: application/json`, §25.2 no. 17) dengan paginasi, urut, dan saring di server, `placeholderData: keepPreviousData`, keadaan tabel di URL (D-16) |
 | Data back-office yang di-polling (dashboard, notifikasi) | **Web (TanStack Query)** | `refetchInterval` adaptif |
 | Pencarian/autocomplete di back-office | **Web (TanStack Query)** | Debounce |
 | Self-order, toko online, struk digital | **Web publik (React ringan)** | TanStack Query. Kalkulasi harga lewat server |
