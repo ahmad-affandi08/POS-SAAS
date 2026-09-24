@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promo PAYOU 30 Detik</title>
+<!--
+  Motion graphic promosi PAYOU, 30 detik, 1920x1080 (16:9), dengan musik latar & efek suara.
+  Palet merek D-15 (Spesifikasi/Merek/README.md), font Atkinson Hyperlegible (§17.5).
+  Tagline video: "Smart Choice Your Business Partner" (menggantikan slogan di dalam PNG logo).
+  Semua suara disintesis di halaman ini (Web Audio), tanpa file audio eksternal.
+  Kontrol: Spasi = putar/jeda, R = ulang, M = bisu, H = sembunyikan kontrol, panah = geser 1 detik.
+  Mode rekam: ?rekam=1 (kontrol disembunyikan, waktu dikendalikan window.AturWaktu(detik),
+  audio diekspor lewat window.EksporWav()).
+-->
+<style>
+  /* Font disimpan lokal (Huruf/, lisensi SIL OFL) agar video tetap benar tanpa internet. */
+  @font-face { font-family: 'Atkinson Hyperlegible Next'; font-weight: 400 800; font-display: block; src: url(Huruf/AtkinsonHyperlegibleNext.woff2) format('woff2'); }
+  @font-face { font-family: 'Atkinson Hyperlegible Mono'; font-weight: 500 700; font-display: block; src: url(Huruf/AtkinsonHyperlegibleMono.woff2) format('woff2'); }
+  :root {
+    --indigo: #6366f1;
+    --brand: #5558e8;
+    --navy: #0f2747;
+    --navy-tua: #0a1b33;
+    --kuning: #fbbf24;
+    --latar: #f9fafb;
+    --garis: #e5e7eb;
+    --permukaan: #ffffff;
+    --teks-sekunder: #4a5873;
+    --sukses: #2e7d32;
+    --peringatan: #9a5b00;
+    --bahaya: #e5484d;
+    --huruf: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+    --huruf-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body { font-family: var(--huruf); color: var(--navy); -webkit-font-smoothing: antialiased; }
+
+  #panggung {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px;
+    transform-origin: 0 0;
+    overflow: hidden; background: var(--navy);
+  }
+  .adegan { position: absolute; inset: 0; visibility: hidden; }
+  .lapis { position: absolute; }
+
+  /* ---------- Logo tanpa slogan bawaan + tagline baru ---------- */
+  .logo-potong { position: absolute; aspect-ratio: 1352 / 432; container-type: inline-size; }
+  .logo-potong .gambar-logo {
+    position: absolute; inset: 0; overflow: hidden;
+    /* sembunyikan slogan lama di PNG (kanan bawah), ikon P tetap utuh */
+    clip-path: polygon(0 0, 100% 0, 100% 81%, 21% 81%, 21% 100%, 0 100%);
+  }
+  .logo-potong img { position: absolute; width: 107.1%; left: -3.55%; top: -75.9%; }
+  .tagline {
+    position: absolute; left: 23.2%; top: 84.5%; white-space: nowrap;
+    font-size: 3.75cqw; line-height: 1; letter-spacing: .12em; font-weight: 500; color: var(--navy);
+  }
+
+  /* ---------- Adegan 1: masalah ---------- */
+  #adegan-masalah { background: radial-gradient(ellipse at 50% 40%, #16335c 0%, var(--navy) 55%, var(--navy-tua) 100%); }
+  .kisi {
+    position: absolute; inset: -60px;
+    background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .judul-masalah {
+    position: absolute; left: 0; right: 0; top: 380px; text-align: center;
+    color: #fff; font-weight: 800; font-size: 104px; letter-spacing: -2px; line-height: 1.08;
+  }
+  .judul-masalah .baris { display: block; }
+  .judul-masalah .sorot { color: var(--kuning); }
+  .keping {
+    position: absolute; padding: 22px 30px; border-radius: 20px;
+    background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.14);
+    color: #fff; font-size: 34px; font-weight: 700; display: flex; align-items: center; gap: 18px;
+    backdrop-filter: blur(6px); white-space: nowrap;
+  }
+  .keping .ikon {
+    width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+    background: var(--bahaya); color: #fff; font-size: 30px; font-weight: 800;
+  }
+  .keping small { display: block; font-size: 22px; font-weight: 500; opacity: .7; margin-top: 2px; }
+
+  /* ---------- Adegan 2: pengenalan ---------- */
+  #adegan-kenal { background: var(--navy); }
+  .lingkar-terang {
+    position: absolute; left: 50%; top: 50%; width: 2400px; height: 2400px; margin: -1200px 0 0 -1200px;
+    border-radius: 50%; background: var(--latar);
+  }
+  .cincin { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 3px solid var(--indigo); opacity: 0; }
+  .kicker-kenal {
+    position: absolute; left: 0; right: 0; top: 300px; text-align: center;
+    font-size: 40px; font-weight: 700; color: var(--brand); letter-spacing: 6px; text-transform: uppercase;
+  }
+
+  .bintang { position: absolute; width: 80px; height: 80px; }
+  .bintang svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  /* ---------- Adegan fitur ---------- */
+  .adegan-fitur { background: var(--latar); }
+  .adegan-fitur::before {
+    content: ''; position: absolute; right: -380px; top: -380px; width: 1100px; height: 1100px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,.16), rgba(99,102,241,0) 70%);
+  }
+  .adegan-fitur::after {
+    content: ''; position: absolute; left: -300px; bottom: -420px; width: 900px; height: 900px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(251,191,36,.14), rgba(251,191,36,0) 70%);
+  }
+  .teks-fitur { position: absolute; left: 140px; top: 260px; width: 780px; z-index: 2; }
+  .nomor {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-size: 26px; font-weight: 700; color: var(--brand); letter-spacing: 3px; text-transform: uppercase;
+    background: rgba(99,102,241,.1); padding: 12px 22px; border-radius: 999px;
+  }
+  .nomor b { background: var(--brand); color: #fff; border-radius: 999px; padding: 2px 12px; letter-spacing: 0; }
+  .judul-fitur { font-size: 84px; font-weight: 800; line-height: 1.05; letter-spacing: -2px; margin-top: 34px; color: var(--navy); }
+  .judul-fitur em { font-style: normal; color: var(--brand); }
+  .sub-fitur { font-size: 34px; line-height: 1.4; color: var(--teks-sekunder); margin-top: 30px; font-weight: 500; }
+  .garis-aksen { height: 8px; width: 140px; border-radius: 8px; background: var(--kuning); margin-top: 36px; transform-origin: left; }
+  .logo-sudut { left: 140px; top: 90px; width: 250px; z-index: 3; }
+
+  /* Tablet kasir */
+  .tablet {
+    position: absolute; left: 980px; top: 170px; width: 820px; height: 740px;
+    background: var(--navy); border-radius: 44px; padding: 22px;
+    box-shadow: 0 60px 120px -30px rgba(15,39,71,.45), 0 0 0 2px rgba(15,39,71,.2);
+  }
+  .layar { width: 100%; height: 100%; background: var(--latar); border-radius: 26px; overflow: hidden; position: relative; }
+  .bilah-atas {
+    height: 88px; background: var(--permukaan); border-bottom: 2px solid var(--garis);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+  }
+  .bilah-atas .nama { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 14px; }
+  .bilah-atas .nama img { height: 42px; }
+  .status { position: relative; width: 250px; height: 50px; }
+  .pil {
+    position: absolute; inset: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 22px; font-weight: 700;
+  }
+  .pil i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .pil-daring { background: #e7f5ea; color: var(--sukses); } .pil-daring i { background: var(--sukses); }
+  .pil-luring { background: #fff1d6; color: var(--peringatan); } .pil-luring i { background: var(--peringatan); }
+  .pil-sinkron { background: var(--brand); color: #fff; } .pil-sinkron i { background: #fff; }
+  .isi-kasir { display: grid; padding: 26px 30px; gap: 16px; }
+  .baris-item {
+    display: flex; justify-content: space-between; align-items: center; background: var(--permukaan);
+    border: 2px solid var(--garis); border-radius: 18px; padding: 20px 24px; font-size: 26px;
+  }
+  .baris-item b { font-weight: 700; }
+  .baris-item span { color: var(--teks-sekunder); font-size: 22px; display: block; margin-top: 4px; }
+  .baris-item .harga { font-family: var(--huruf-mono); font-weight: 700; font-size: 26px; color: var(--navy); }
+  .kaki-kasir { position: absolute; left: 30px; right: 30px; bottom: 28px; display: flex; gap: 20px; align-items: stretch; }
+  .total { flex: 1; background: var(--permukaan); border: 2px solid var(--garis); border-radius: 18px; padding: 16px 24px; }
+  .total small { font-size: 20px; color: var(--teks-sekunder); display: block; }
+  .total strong { font-family: var(--huruf-mono); font-size: 44px; font-weight: 700; }
+  .tombol-bayar {
+    width: 250px; border-radius: 18px; background: var(--brand); color: #fff; font-size: 34px; font-weight: 800;
+    display: grid; place-items: center;
+  }
+  .antrean {
+    position: absolute; left: 30px; right: 30px; bottom: 150px; font-size: 22px; color: var(--peringatan);
+    background: #fff7e6; border-radius: 14px; padding: 12px 18px; display: flex; gap: 10px; align-items: center; font-weight: 700;
+  }
+  .antrean-beres { background: #e7f5ea; color: var(--sukses); }
+  .berhasil { position: absolute; inset: 0; background: rgba(15,39,71,.55); display: grid; place-items: center; }
+  .kartu-berhasil { background: var(--permukaan); border-radius: 28px; padding: 44px 60px; text-align: center; width: 520px; }
+  .centang {
+    width: 120px; height: 120px; border-radius: 50%; background: var(--sukses); margin: 0 auto 22px;
+    display: grid; place-items: center;
+  }
+  .kartu-berhasil h4 { font-size: 36px; font-weight: 800; }
+  .kartu-berhasil p { font-size: 24px; color: var(--teks-sekunder); margin-top: 8px; }
+  .ikon-wifi { position: absolute; width: 120px; height: 120px; }
+
+  /* Otomatis */
+  .alur { position: absolute; left: 960px; top: 150px; width: 860px; height: 800px; }
+  .kartu-alur {
+    position: absolute; left: 0; width: 860px; background: var(--permukaan); border: 2px solid var(--garis);
+    border-radius: 26px; padding: 26px 32px; display: flex; align-items: center; gap: 26px;
+    box-shadow: 0 30px 60px -30px rgba(15,39,71,.3);
+  }
+  .kartu-alur .lencana {
+    width: 84px; height: 84px; border-radius: 22px; display: grid; place-items: center; flex: none;
+    font-size: 40px; font-weight: 800; color: #fff;
+  }
+  .kartu-alur h5 { font-size: 22px; color: var(--teks-sekunder); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .kartu-alur p { font-size: 32px; font-weight: 700; margin-top: 6px; }
+  .kartu-alur .mono { font-family: var(--huruf-mono); }
+  .kartu-alur .naik { color: var(--sukses); }
+  .penghubung { position: absolute; left: 70px; width: 6px; border-radius: 6px; background: var(--garis); overflow: hidden; }
+  .penghubung i { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: var(--brand); transform-origin: top; }
+  .neraca { display: flex; gap: 14px; margin-top: 10px; }
+  .neraca span { font-size: 24px; padding: 8px 16px; border-radius: 12px; background: var(--latar); font-family: var(--huruf-mono); font-weight: 700; }
+  .neraca .sama { background: var(--sukses); color: #fff; font-family: var(--huruf); }
+  .grafik { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-left: auto; }
+  .grafik i { width: 34px; border-radius: 8px 8px 4px 4px; background: var(--brand); transform-origin: bottom; display: block; }
+  .grafik i:last-child { background: var(--kuning); }
+
+  /* Owner */
+  .ponsel {
+    position: absolute; left: 1150px; top: 90px; width: 470px; height: 920px; background: var(--navy);
+    border-radius: 70px; padding: 18px; box-shadow: 0 60px 120px -30px rgba(15,39,71,.5);
+  }
+  .ponsel .layar { border-radius: 54px; background: var(--latar); }
+  .poni { position: absolute; left: 50%; top: 34px; width: 130px; height: 34px; margin-left: -65px; background: var(--navy); border-radius: 20px; z-index: 5; }
+  .kepala-owner { background: var(--brand); color: #fff; padding: 90px 34px 40px; }
+  .kepala-owner small { font-size: 22px; opacity: .85; font-weight: 500; }
+  .kepala-owner strong { display: block; font-family: var(--huruf-mono); font-size: 50px; font-weight: 700; margin-top: 8px; letter-spacing: -1px; }
+  .kepala-owner .naik { display: inline-block; margin-top: 12px; background: rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; font-size: 20px; font-weight: 700; }
+  .sparkline { display: block; margin: 20px 34px 0; }
+  .outlet { margin: 16px 26px 0; background: var(--permukaan); border: 2px solid var(--garis); border-radius: 20px; padding: 18px 22px; display: flex; justify-content: space-between; font-size: 22px; font-weight: 700; }
+  .outlet em { font-style: normal; color: var(--sukses); }
+  .outlet.peringatan-stok { background: #fff7e6; border-color: #f5d9a8; color: var(--peringatan); }
+  .outlet.peringatan-stok em { color: var(--peringatan); }
+  .notif {
+    position: absolute; left: 20px; right: 20px; top: 70px; background: var(--permukaan); border-radius: 26px; padding: 22px;
+    box-shadow: 0 30px 60px -20px rgba(15,39,71,.45); border: 2px solid var(--garis); z-index: 4;
+  }
+  .notif .atas { display: flex; align-items: center; gap: 12px; font-size: 18px; color: var(--teks-sekunder); font-weight: 700; }
+  .notif .atas img { width: 34px; height: 34px; }
+  .notif p { font-size: 24px; font-weight: 700; margin-top: 10px; line-height: 1.3; }
+  .notif .aksi { display: flex; gap: 12px; margin-top: 16px; }
+  .notif .aksi span { flex: 1; text-align: center; padding: 12px; border-radius: 14px; font-size: 22px; font-weight: 800; background: var(--latar); }
+  .notif .aksi .setuju { background: var(--brand); color: #fff; position: relative; overflow: hidden; }
+  .notif .aksi .disetujui { position: absolute; inset: 0; padding: 0; border-radius: 0; background: var(--sukses); color: #fff; display: grid; place-items: center; }
+  .sentuh { position: absolute; width: 70px; height: 70px; border-radius: 50%; background: rgba(99,102,241,.35); border: 3px solid rgba(99,102,241,.8); z-index: 6; }
+
+  /* ---------- Penutup ---------- */
+  #adegan-penutup { background: var(--latar); }
+  .sinar {
+    position: absolute; left: 50%; top: 42%; width: 2600px; height: 2600px; margin: -1300px 0 0 -1300px;
+    background: repeating-conic-gradient(from 0deg, rgba(99,102,241,.07) 0deg 8deg, transparent 8deg 20deg);
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+            mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+  }
+  .ajakan {
+    position: absolute; left: 50%; top: 740px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+  }
+  .tombol-ajakan {
+    background: var(--brand); color: #fff; font-size: 48px; font-weight: 800; padding: 28px 64px; border-radius: 999px;
+    box-shadow: 0 30px 60px -20px rgba(85,88,232,.6); display: flex; align-items: center; gap: 22px; white-space: nowrap;
+  }
+  .tombol-ajakan .panah { display: inline-block; }
+  .platform { font-size: 30px; color: var(--teks-sekunder); font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  .platform b { color: var(--kuning); padding: 0 12px; }
+
+  /* ---------- Tirai transisi ---------- */
+  .tirai { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+  .tirai i { position: absolute; top: -20%; height: 140%; left: -15%; width: 130%; transform: skewX(-14deg) translateX(-140%); }
+  .tirai i:nth-child(1) { background: var(--kuning); }
+  .tirai i:nth-child(2) { background: var(--brand); }
+  .tirai i:nth-child(3) { background: var(--navy); }
+
+  /* ---------- Kontrol & layar mulai ---------- */
+  #kontrol {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 100;
+    display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 999px;
+    background: rgba(15,39,71,.85); color: #fff; font: 600 15px var(--huruf);
+    backdrop-filter: blur(8px);
+  }
+  #kontrol button {
+    font: inherit; color: inherit; background: rgba(255,255,255,.12); border: 0; border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; min-width: 44px; min-height: 36px;
+  }
+  #kontrol button:hover { background: rgba(255,255,255,.22); }
+  #kontrol input[type=range] { width: min(40vw, 480px); accent-color: var(--kuning); }
+  #kontrol output { font-family: var(--huruf-mono); min-width: 92px; text-align: right; }
+  #layar-mulai {
+    position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
+    background: rgba(10,27,51,.72); backdrop-filter: blur(4px);
+  }
+  #layar-mulai button {
+    font: 800 28px var(--huruf); color: #fff; background: var(--brand); border: 0; border-radius: 999px;
+    padding: 22px 44px; cursor: pointer; box-shadow: 0 20px 50px -15px rgba(85,88,232,.8);
+  }
+  #layar-mulai p { color: #fff; opacity: .8; font: 500 17px var(--huruf); text-align: center; margin-top: 16px; }
+  body.rekam #kontrol, body.tanpa-kontrol #kontrol, body.rekam #layar-mulai, body.sudah-mulai #layar-mulai { display: none; }
+
+  /* ---------- Kamus keyframe ---------- */
+  @keyframes muncul { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes hilang { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes naik { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: none; } }
+  @keyframes naik-kecil { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+  @keyframes turun { from { opacity: 0; transform: translateY(-80px); } to { opacity: 1; transform: none; } }
+  @keyframes dari-kanan { from { opacity: 0; transform: translateX(120px); } to { opacity: 1; transform: none; } }
+  @keyframes dari-kiri { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: none; } }
+  @keyframes letup { 0% { opacity: 0; transform: scale(.4); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes letup-keluar { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.6); } }
+  @keyframes guncang {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-10px) rotate(-2deg); } 40% { transform: translateX(9px) rotate(2deg); }
+    60% { transform: translateX(-6px) rotate(-1deg); } 80% { transform: translateX(4px) rotate(1deg); }
+  }
+  @keyframes melayang { 0%, 100% { translate: 0 0; } 50% { translate: 0 -16px; } }
+  @keyframes pecah { to { opacity: 0; transform: scale(1.4); filter: blur(14px); } }
+  @keyframes tersedot { to { opacity: 0; transform: scale(.05); filter: blur(4px); } }
+  @keyframes lingkar-buka { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes cincin-denyut { 0% { opacity: .9; width: 0; height: 0; margin: 0; } 100% { opacity: 0; width: 1400px; height: 1400px; margin: -700px 0 0 -700px; } }
+  @keyframes sapu-kanan { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes renggang { from { opacity: 0; letter-spacing: .4em; filter: blur(6px); } to { opacity: 1; letter-spacing: .12em; filter: blur(0); } }
+  @keyframes bintang-terbang {
+    0% { transform: translate(299px, 95px) scale(1.03) rotate(0); }
+    50% { transform: translate(120px, -140px) scale(1.7) rotate(200deg); }
+    100% { transform: translate(0, 0) scale(1) rotate(360deg); }
+  }
+  @keyframes kilau { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.35) rotate(45deg); } }
+  @keyframes kedip { 0%, 100% { opacity: 0; transform: scale(.2) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+  @keyframes logo-ke-sudut {
+    from { left: 460px; top: 404px; width: 1000px; }
+    to { left: 140px; top: 90px; width: 250px; }
+  }
+  @keyframes rentang { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes rentang-tegak { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes tekan { 0%, 100% { transform: scale(1); } 45% { transform: scale(.92); } }
+  @keyframes sentuhan { 0% { opacity: 0; transform: scale(1.8); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.8); } }
+  @keyframes gambar-garis { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+  @keyframes tirai-lewat { from { transform: skewX(-14deg) translateX(-140%); } to { transform: skewX(-14deg) translateX(140%); } }
+  @keyframes geser-panah { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(12px); } }
+  @keyframes zoom-pelan { from { transform: scale(1); } to { transform: scale(1.06); } }
+  @keyframes putar-pelan { to { rotate: 20deg; } }
+</style>
+</head>
+<body>
+
+<div id="panggung">
+
+  <!-- ===================== 1. MASALAH 0.0–4.85 ===================== -->
+  <section class="adegan" id="adegan-masalah" data-mulai="0" data-selesai="4.9">
+    <div class="kisi" data-anim="zoom-pelan@0/4.9/linear"></div>
+
+    <div class="judul-masalah" data-anim="tersedot@4.15/0.6/tajam">
+      <span class="baris" data-anim="naik@0.3/0.9">Jualan lagi ramai…</span>
+      <span class="baris sorot" data-anim="naik@1.3/0.9, guncang@2.25/0.5/linear">internet malah mati.</span>
+    </div>
+
+    <div class="lapis" style="left:150px; top:150px" data-anim="letup@2.4/0.7/pegas, pecah@3.95/0.5/tajam">
+      <div class="keping" data-anim="melayang@2.4/3/ease-in-out">
+        <span class="ikon">!</span><div>Wi-Fi terputus<small>Transaksi gagal dikirim</small></div>
+      </div>
+    </div>
+    <div class="lapis" style="left:1240px; top:130px" data-anim="letup@2.85/0.7/pegas, pecah@4.0/0.5/tajam">
+      <div class="keping" data-anim="melayang@2.85/3/ease-in-out">
+        <span class="ikon">?</span><div>Stok selisih 12 pcs<small>Gudang vs catatan</small></div>
+      </div>
+    </div>
+    <div class="lapis" style="left:602px; top:800px" data-anim="letup@3.3/0.7/pegas, pecah@4.05/0.5/tajam">
+      <div class="keping" data-anim="melayang@3.3/3/ease-in-out">
+        <span class="ikon">⏱</span><div>Rekap manual sampai jam 11 malam<small>Kertas, kalkulator, Excel</small></div>
+      </div>
+    </div>
+
+    <div class="bintang" style="left:921px; top:501px; width:78px; height:78px" data-anim="letup@4.45/0.4/pegas, kilau@4.6/0.4/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- ===================== 2. PENGENALAN 4.85–9.15 ===================== -->
+  <section class="adegan" id="adegan-kenal" data-mulai="4.85" data-selesai="9.15">
+    <div class="lingkar-terang" data-anim="lingkar-buka@4.85/0.9/halus"></div>
+    <div class="cincin" data-anim="cincin-denyut@4.95/1.3/halus"></div>
+    <div class="cincin" data-anim="cincin-denyut@5.25/1.3/halus"></div>
+
+    <div class="kicker-kenal" data-anim="naik-kecil@5.4/0.8, hilang@7.95/0.4">Kenalkan</div>
+
+    <div class="logo-potong" data-logo="tagline-terpisah" style="left:460px; top:404px; width:1000px"
+         data-anim="sapu-kanan@5.9/1.1/halus, logo-ke-sudut@8.3/0.8/halus-sedang"></div>
+
+    <div class="bintang" style="left:622px; top:406px; width:78px; height:78px"
+         data-anim="bintang-terbang@5.0/1.1/halus, kilau@6.6/0.7/ease-in-out, hilang@7.3/0.3">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+    <div class="bintang" style="left:1480px; top:330px; width:46px; height:46px" data-anim="kedip@6.4/1.2/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--indigo)"/></svg>
+    </div>
+    <div class="bintang" style="left:420px; top:690px; width:36px; height:36px" data-anim="kedip@6.8/1.2/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- ===================== 3. OFFLINE-FIRST 9.15–15.6 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-offline" data-mulai="9.15" data-selesai="15.6">
+    <div class="logo-potong logo-sudut" data-logo></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@9.3/0.7"><b>01</b> Kasir offline-first</div>
+      <h2 class="judul-fitur" data-anim="naik@9.5/0.9">Internet mati?<br><em>Kasir tetap jualan.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@10.1/0.8/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@10.3/0.8">Transaksi tersimpan aman di perangkat, lalu sinkron otomatis tanpa dobel.</p>
+    </div>
+
+    <div class="tablet" data-anim="dari-kanan@9.2/1.0/halus">
+      <div class="layar">
+        <div class="bilah-atas">
+          <div class="nama"><img src="../Sumber/IkonMerek.png" alt="">PAYOU POS</div>
+          <div class="status">
+            <div class="pil pil-daring" data-anim="hilang@10.6/0.3"><i></i>Daring</div>
+            <div class="pil pil-luring" data-anim="letup@10.6/0.5/pegas, hilang@14.3/0.3"><i></i>Luring · aman</div>
+            <div class="pil pil-sinkron" data-anim="letup@14.3/0.5/pegas"><i></i>Tersinkron ✓</div>
+          </div>
+        </div>
+        <div class="isi-kasir">
+          <div class="baris-item" data-anim="dari-kanan@10.8/0.6/halus"><div><b>Kopi Susu Gula Aren</b><span>2 × Rp18.000</span></div><div class="harga">Rp36.000</div></div>
+          <div class="baris-item" data-anim="dari-kanan@11.2/0.6/halus"><div><b>Roti Bakar Cokelat Keju</b><span>1 × Rp22.000</span></div><div class="harga">Rp22.000</div></div>
+          <div class="baris-item" data-anim="dari-kanan@11.6/0.6/halus"><div><b>Air Mineral 600 ml</b><span>3 × Rp5.000</span></div><div class="harga">Rp15.000</div></div>
+        </div>
+        <div class="antrean antrean-beres" data-anim="naik-kecil@14.4/0.5">✓ Tersinkron otomatis, tanpa transaksi dobel</div>
+        <div class="antrean" data-anim="naik-kecil@13.45/0.5, hilang@14.3/0.25">⇅ 1 transaksi tersimpan di perangkat, menunggu sinkron</div>
+        <div class="kaki-kasir">
+          <div class="total"><small>Total</small><strong data-hitung="0,73000" data-hitung-waktu="10.8,12.0" data-format="rupiah">Rp0</strong></div>
+          <div class="tombol-bayar" data-anim="tekan@12.2/0.35/ease-in-out">Bayar</div>
+        </div>
+        <div class="berhasil" data-anim="muncul@12.45/0.3, hilang@13.3/0.3">
+          <div class="kartu-berhasil" data-anim="letup@12.45/0.5/pegas">
+            <div class="centang"><svg width="64" height="64" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h4>Pembayaran berhasil</h4>
+            <p>Struk K1-0142 · tersimpan lokal</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <svg class="ikon-wifi" style="left:1720px; top:84px" viewBox="0 0 24 24" data-anim="letup@10.55/0.5/pegas, letup-keluar@14.15/0.35">
+      <circle cx="12" cy="12" r="12" fill="var(--peringatan)"/>
+      <path d="M6 10.5a9 9 0 0 1 12 0M8.3 13a5.6 5.6 0 0 1 7.4 0M12 16.6h.01" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M6 6l12 12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <svg class="ikon-wifi" style="left:1720px; top:84px" viewBox="0 0 24 24" data-anim="letup@14.3/0.5/pegas">
+      <circle cx="12" cy="12" r="12" fill="var(--brand)"/>
+      <path d="M7.5 9.5a6 6 0 0 1 9.4-1.2L18 9.4M18 6v3.4h-3.4M16.5 14.5a6 6 0 0 1-9.4 1.2L6 14.6M6 18v-3.4h3.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </section>
+
+  <!-- ===================== 4. OTOMATIS 15.6–21.0 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-otomatis" data-mulai="15.6" data-selesai="21.0">
+    <div class="logo-potong logo-sudut" data-logo></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@15.75/0.7"><b>02</b> Stok &amp; akuntansi otomatis</div>
+      <h2 class="judul-fitur" data-anim="naik@15.95/0.9">Jual sekali,<br><em>pembukuan beres.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@16.5/0.8/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@16.7/0.8">Stok berkurang, jurnal seimbang, laba rugi siap. Tanpa input ganda.</p>
+    </div>
+
+    <div class="alur">
+      <div class="penghubung" style="top:150px; height:90px"><i data-anim="rentang-tegak@16.7/0.45/linear"></i></div>
+      <div class="penghubung" style="top:350px; height:90px"><i data-anim="rentang-tegak@17.6/0.45/linear"></i></div>
+      <div class="penghubung" style="top:570px; height:80px"><i data-anim="rentang-tegak@18.5/0.45/linear"></i></div>
+
+      <div class="kartu-alur" style="top:10px" data-anim="dari-kanan@16.1/0.7/halus">
+        <div class="lencana" style="background:var(--brand)">Rp</div>
+        <div><h5>Penjualan K1-0142</h5><p class="mono">Rp73.000 · Tunai</p></div>
+      </div>
+      <div class="kartu-alur" style="top:230px" data-anim="dari-kanan@17.0/0.7/halus">
+        <div class="lencana" style="background:var(--navy)">▾</div>
+        <div><h5>Mutasi stok</h5><p>Kopi Susu Gula Aren <span class="mono naik">−2</span> · sisa <span class="mono" data-hitung="48,46" data-hitung-waktu="17.35,17.95" data-format="angka">48</span></p></div>
+      </div>
+      <div class="kartu-alur" style="top:430px" data-anim="dari-kanan@17.9/0.7/halus">
+        <div class="lencana" style="background:var(--sukses)">⚖</div>
+        <div>
+          <h5>Jurnal otomatis</h5>
+          <div class="neraca">
+            <span>D Kas 73.000</span><span class="sama" data-anim="letup@18.4/0.5/pegas">=</span><span>K Penjualan 73.000</span>
+          </div>
+        </div>
+      </div>
+      <div class="kartu-alur" style="top:640px" data-anim="dari-kanan@18.8/0.7/halus">
+        <div class="lencana" style="background:var(--kuning); color:var(--navy)">↗</div>
+        <div><h5>Laporan laba rugi</h5><p>Siap <span class="naik">hari ini</span></p></div>
+        <div class="grafik">
+          <i style="height:45%" data-anim="rentang-tegak@19.1/0.5/halus"></i>
+          <i style="height:62%" data-anim="rentang-tegak@19.22/0.5/halus"></i>
+          <i style="height:54%" data-anim="rentang-tegak@19.34/0.5/halus"></i>
+          <i style="height:80%" data-anim="rentang-tegak@19.46/0.5/halus"></i>
+          <i style="height:100%" data-anim="rentang-tegak@19.58/0.6/pegas"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 5. OWNER 21.0–26.3 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-owner" data-mulai="21.0" data-selesai="26.3">
+    <div class="logo-potong logo-sudut" data-logo></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@21.15/0.7"><b>03</b> Aplikasi PAYOU Owner</div>
+      <h2 class="judul-fitur" data-anim="naik@21.35/0.9">Semua outlet,<br><em>dalam genggaman.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@21.9/0.8/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@22.1/0.8">Pantau omzet dan stok, setujui void dari mana saja.</p>
+    </div>
+
+    <div class="ponsel" data-anim="naik@21.1/0.9/halus">
+      <div class="poni"></div>
+      <div class="layar">
+        <div class="kepala-owner">
+          <small>Omzet hari ini · 3 outlet</small>
+          <strong data-hitung="0,12450000" data-hitung-waktu="21.6,23.2" data-format="rupiah">Rp0</strong>
+          <span class="naik" data-anim="letup@23.1/0.5/pegas">▲ 18% dari kemarin</span>
+        </div>
+        <svg class="sparkline" width="400" height="130" viewBox="0 0 400 130">
+          <defs><linearGradient id="isi-grafik" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366f1" stop-opacity=".25"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+          <path d="M0 110 L50 96 L100 102 L150 70 L200 78 L250 50 L300 58 L350 24 L400 14 L400 130 L0 130Z" fill="url(#isi-grafik)" data-anim="muncul@22.6/0.7"/>
+          <path d="M0 110 L50 96 L100 102 L150 70 L200 78 L250 50 L300 58 L350 24 L400 14" fill="none" stroke="#5558e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1000" data-anim="gambar-garis@21.7/1.6/halus"/>
+          <circle cx="400" cy="14" r="8" fill="#fbbf24" data-anim="letup@23.3/0.4/pegas"/>
+        </svg>
+        <div class="outlet" data-anim="naik-kecil@22.1/0.5"><span>Outlet Solo</span><em>Rp5.120.000</em></div>
+        <div class="outlet" data-anim="naik-kecil@22.3/0.5"><span>Outlet Sragen</span><em>Rp4.080.000</em></div>
+        <div class="outlet" data-anim="naik-kecil@22.5/0.5"><span>Outlet Klaten</span><em>Rp3.250.000</em></div>
+        <div class="outlet peringatan-stok" data-anim="naik-kecil@22.8/0.5"><span>⚠ Stok menipis: Gula Aren</span><em>2 kg</em></div>
+
+        <div class="notif" data-anim="turun@23.6/0.6/pegas">
+          <div class="atas"><img src="../Sumber/IkonMerek.png" alt="">PAYOU Owner · sekarang</div>
+          <p>Kasir Outlet Solo meminta void Rp45.000. Alasan: salah input menu.</p>
+          <div class="aksi"><span>Tolak</span><span class="setuju">Setujui<span class="disetujui" data-anim="muncul@24.75/0.25">✓ Disetujui</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sentuh" style="left:1440px; top:345px" data-anim="sentuhan@24.45/0.7/ease-out"></div>
+  </section>
+
+  <!-- ===================== 6. PENUTUP 26.3–30.0 ===================== -->
+  <section class="adegan" id="adegan-penutup" data-mulai="26.3" data-selesai="30.01">
+    <div class="sinar" data-anim="muncul@26.35/1.0, putar-pelan@26.35/3.65/linear"></div>
+
+    <div class="logo-potong" data-logo="tagline-terpisah" data-tagline-anim="renggang@27.0/1.0" style="left:410px; top:270px; width:1100px" data-anim="letup@26.45/0.9/pegas"></div>
+
+    <div class="ajakan">
+      <div class="tombol-ajakan" data-anim="naik@27.5/0.8/pegas">Daftar gratis sekarang <span class="panah" data-anim="geser-panah@28.4/0.8/ease-in-out, geser-panah@29.2/0.8/ease-in-out">→</span></div>
+      <div class="platform" data-anim="naik-kecil@27.9/0.7">Android<b>✦</b>iPad &amp; iPhone<b>✦</b>Windows<b>✦</b>Web</div>
+    </div>
+
+    <div class="bintang" style="left:360px; top:220px; width:50px; height:50px" data-anim="kedip@27.0/1.3/ease-in-out, kedip@28.5/1.3/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+    <div class="bintang" style="left:1540px; top:640px; width:40px; height:40px" data-anim="kedip@27.4/1.3/ease-in-out, kedip@28.9/1.1/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--indigo)"/></svg>
+    </div>
+    <div class="bintang" style="left:1600px; top:250px; width:30px; height:30px" data-anim="kedip@27.8/1.3/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- Tirai transisi: lapisan navy menutup penuh tepat pada detik pergantian adegan -->
+  <div class="tirai" data-tirai="15.6"></div>
+  <div class="tirai" data-tirai="21.0"></div>
+  <div class="tirai" data-tirai="26.3"></div>
+</div>
+
+<div id="layar-mulai">
+  <div>
+    <button type="button" id="tombol-mulai">▶ Putar dengan suara</button>
+    <p>30 detik · musik &amp; efek suara</p>
+  </div>
+</div>
+
+<div id="kontrol" role="group" aria-label="Kontrol video">
+  <button type="button" id="tombol-putar" aria-label="Putar">▶</button>
+  <button type="button" id="tombol-ulang" aria-label="Ulang dari awal">↺</button>
+  <button type="button" id="tombol-suara" aria-label="Bisukan">🔊</button>
+  <input type="range" id="penggeser" min="0" max="30000" step="10" value="0" aria-label="Posisi waktu">
+  <output id="penunjuk-waktu">0,0 / 30,0 d</output>
+</div>
+
+<script>
+(() => {
+  const durasiMs = 30000;
+  const durasiDetik = durasiMs / 1000;
+  const panggung = document.getElementById('panggung');
+  const semuaAdegan = [...document.querySelectorAll('.adegan')];
+  const penggeser = document.getElementById('penggeser');
+  const penunjukWaktu = document.getElementById('penunjuk-waktu');
+  const tombolPutar = document.getElementById('tombol-putar');
+  const tombolSuara = document.getElementById('tombol-suara');
+  const parameter = new URLSearchParams(location.search);
+  const modeRekam = parameter.has('rekam');
+  if (modeRekam) document.body.classList.add('rekam');
+
+  const kurvaNyata = {
+    halus: 'cubic-bezier(.22, 1, .36, 1)',
+    'halus-sedang': 'cubic-bezier(.65, 0, .35, 1)',
+    pegas: 'cubic-bezier(.34, 1.4, .64, 1)',
+    tajam: 'cubic-bezier(.7, 0, .84, 0)',
+  };
+
+  // ===================== Visual =====================
+
+  function IsiLogo() {
+    document.querySelectorAll('[data-logo]').forEach((wadah) => {
+      const tagline = document.createElement('span');
+      tagline.className = 'tagline';
+      tagline.textContent = 'Smart Choice Your Business Partner';
+      if (wadah.dataset.logo === 'tagline-terpisah') {
+        tagline.dataset.anim = wadah.dataset.taglineAnim ?? 'renggang@7.0/1.1';
+      }
+      wadah.innerHTML = '<div class="gambar-logo"><img src="../Sumber/LogoHorizontal.png" alt="PAYOU"></div>';
+      wadah.appendChild(tagline);
+    });
+  }
+
+  function IsiTirai() {
+    document.querySelectorAll('[data-tirai]').forEach((tirai) => {
+      const pusat = Number(tirai.dataset.tirai);
+      const durasi = 1.0;
+      tirai.innerHTML = [0.12, 0.06, 0].map((jeda) =>
+        `<i data-anim="tirai-lewat@${(pusat - durasi / 2 - jeda).toFixed(2)}/${durasi}/halus-sedang"></i>`).join('');
+    });
+  }
+
+  // "nama@mulai/durasi/kurva, ..." → animation CSS yang dijeda, lalu diseek dari jam induk.
+  function PasangAnimasi() {
+    document.querySelectorAll('[data-anim]').forEach((elemen) => {
+      // Animasi pertama mengisi mundur (both); berikutnya hanya maju agar tidak menimpa yang sebelumnya.
+      const bagian = elemen.dataset.anim.split(',').map((teks, urutan) => {
+        const [nama, sisa] = teks.trim().split('@');
+        const [mulai, durasi, namaKurva = 'halus'] = sisa.split('/');
+        const kurvaCss = kurvaNyata[namaKurva] ?? namaKurva;
+        return `${nama} ${durasi}s ${kurvaCss} ${mulai}s 1 normal ${urutan === 0 ? 'both' : 'forwards'} paused`;
+      });
+      elemen.style.animation = bagian.join(', ');
+    });
+  }
+
+  function FormatRupiah(nilai) {
+    return 'Rp' + Math.round(nilai).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function HaluskanKeluar(x) { return 1 - Math.pow(1 - x, 3); }
+
+  // ===================== Audio (disintesis, deterministik) =====================
+
+  function BuatAcak(benih) {
+    return () => {
+      benih = (benih + 0x6D2B79F5) | 0;
+      let t = Math.imul(benih ^ (benih >>> 15), 1 | benih);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function SusunAudio() {
+    const laju = 44100;
+    const konteks = new OfflineAudioContext(2, Math.ceil(laju * durasiDetik), laju);
+    const acak = BuatAcak(2026);
+
+    const kompresor = konteks.createDynamicsCompressor();
+    kompresor.threshold.value = -16; kompresor.ratio.value = 3.5; kompresor.attack.value = 0.005; kompresor.release.value = 0.2;
+    const utama = konteks.createGain(); utama.gain.value = 0.9;
+    utama.connect(kompresor).connect(konteks.destination);
+    const busMusik = konteks.createGain(); busMusik.gain.value = 0.55; busMusik.connect(utama);
+    const busEfek = konteks.createGain(); busEfek.gain.value = 1; busEfek.connect(utama);
+
+    const gema = konteks.createConvolver();
+    const panjangGema = Math.floor(laju * 1.8);
+    const impuls = konteks.createBuffer(2, panjangGema, laju);
+    for (let kanal = 0; kanal < 2; kanal += 1) {
+      const data = impuls.getChannelData(kanal);
+      for (let i = 0; i < panjangGema; i += 1) data[i] = (acak() * 2 - 1) * Math.pow(1 - i / panjangGema, 3.2);
+    }
+    gema.buffer = impuls;
+    const kembaliGema = konteks.createGain(); kembaliGema.gain.value = 0.28;
+    gema.connect(kembaliGema).connect(utama);
+
+    const bufferDerau = konteks.createBuffer(1, laju * 2, laju);
+    const dataDerau = bufferDerau.getChannelData(0);
+    for (let i = 0; i < dataDerau.length; i += 1) dataDerau[i] = acak() * 2 - 1;
+
+    function Sambung(sumber, { t, vol, serang, tahan = 0, lepas, pan = 0, tujuan = busEfek, kirimGema = 0 }) {
+      const penguat = konteks.createGain();
+      penguat.gain.setValueAtTime(0, t);
+      penguat.gain.linearRampToValueAtTime(vol, t + serang);
+      penguat.gain.setValueAtTime(vol, t + serang + tahan);
+      penguat.gain.setTargetAtTime(0, t + serang + tahan, lepas / 4);
+      const pemindah = konteks.createStereoPanner(); pemindah.pan.value = pan;
+      sumber.connect(penguat).connect(pemindah).connect(tujuan);
+      if (kirimGema > 0) {
+        const kirim = konteks.createGain(); kirim.gain.value = kirimGema;
+        pemindah.connect(kirim).connect(gema);
+      }
+      return t + serang + tahan + lepas * 1.5;
+    }
+
+    function Nada({ t, frek, frekAkhir, dur = 0.2, tipe = 'sine', vol = 0.2, serang = 0.005, lepas, pan, tujuan, kirimGema, saring, detune = 0 }) {
+      const osc = konteks.createOscillator();
+      osc.type = tipe; osc.detune.value = detune;
+      osc.frequency.setValueAtTime(frek, t);
+      if (frekAkhir) osc.frequency.exponentialRampToValueAtTime(frekAkhir, t + dur);
+      let keluaran = osc;
+      if (saring) {
+        const filter = konteks.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = saring;
+        osc.connect(filter); keluaran = filter;
+      }
+      const akhir = Sambung(keluaran, { t, vol, serang, tahan: Math.max(0, dur - serang), lepas: lepas ?? dur * 0.6, pan, tujuan, kirimGema });
+      osc.start(t); osc.stop(akhir + 0.1);
+    }
+
+    function Derau({ t, dur, vol = 0.2, jenis = 'bandpass', frek = 1000, frekAkhir, q = 1, serang = 0.005, lepas, pan, tujuan, kirimGema }) {
+      const sumber = konteks.createBufferSource();
+      sumber.buffer = bufferDerau; sumber.loop = true;
+      const filter = konteks.createBiquadFilter(); filter.type = jenis; filter.Q.value = q;
+      filter.frequency.setValueAtTime(frek, t);
+      if (frekAkhir) filter.frequency.exponentialRampToValueAtTime(frekAkhir, t + dur);
+      sumber.connect(filter);
+      const akhir = Sambung(filter, { t, vol, serang, tahan: Math.max(0, dur - serang), lepas: lepas ?? 0.05, pan, tujuan, kirimGema });
+      sumber.start(t, acak() * 1.5); sumber.stop(akhir + 0.1);
+    }
+
+    // ---- Kamus efek ----
+    const Whoosh = (t, dur = 0.7, vol = 0.22, naik = true) => Derau({
+      t, dur: dur * 0.55, vol, frek: naik ? 350 : 2800, frekAkhir: naik ? 2800 : 350, q: 0.9,
+      serang: dur * 0.5, lepas: dur * 0.45, kirimGema: 0.25,
+    });
+    const Pop = (t, vol = 0.22, frek = 820) => {
+      Nada({ t, frek, frekAkhir: frek * 0.35, dur: 0.09, vol, lepas: 0.08 });
+      Nada({ t, frek: frek * 2, frekAkhir: frek * 0.9, dur: 0.04, vol: vol * 0.25, lepas: 0.04 });
+    };
+    const Klik = (t, vol = 0.22) => {
+      Derau({ t, dur: 0.02, vol, jenis: 'highpass', frek: 3000, lepas: 0.03 });
+      Nada({ t, frek: 1300, frekAkhir: 700, dur: 0.03, vol: vol * 0.6, lepas: 0.03 });
+    };
+    const Bip = (t, frek = 2350) => Nada({ t, frek, dur: 0.085, vol: 0.075, tipe: 'square', saring: 5000, lepas: 0.03 });
+    const Detak = (t, vol = 0.1) => {
+      Derau({ t, dur: 0.012, vol, jenis: 'highpass', frek: 4500, lepas: 0.02 });
+      Nada({ t, frek: 1650, dur: 0.018, vol: vol * 0.5, lepas: 0.02 });
+    };
+    const Lonceng = (t, frek, vol = 0.12, pan = 0) => {
+      [[1, 1], [2.0, 0.45], [3.01, 0.22], [4.2, 0.1]].forEach(([kali, bobot]) =>
+        Nada({ t, frek: frek * kali, dur: 0.02, vol: vol * bobot, serang: 0.003, lepas: 1.4 / kali, pan, kirimGema: 0.45 }));
+    };
+    const Arpeggio = (t, daftarFrek, jarak = 0.07, vol = 0.1) =>
+      daftarFrek.forEach((frek, i) => Lonceng(t + i * jarak, frek, vol, (i - (daftarFrek.length - 1) / 2) * 0.25));
+    const Kilau = (t, vol = 0.05, jumlah = 7) => {
+      const tangga = [2093, 2349, 2637, 3136, 3520, 4186];
+      for (let i = 0; i < jumlah; i += 1) {
+        Nada({ t: t + i * 0.055, frek: tangga[Math.floor(acak() * tangga.length)], dur: 0.01, vol, lepas: 0.5, pan: acak() * 1.4 - 0.7, kirimGema: 0.6 });
+      }
+    };
+    const Galat = (t) => {
+      [0, 0.13].forEach((jeda) => Nada({ t: t + jeda, frek: 196, dur: 0.1, vol: 0.09, tipe: 'square', saring: 1400, lepas: 0.04 }));
+      Nada({ t, frek: 70, frekAkhir: 45, dur: 0.35, vol: 0.35, lepas: 0.3 });
+    };
+    const Dentum = (t, vol = 0.5) => {
+      Nada({ t, frek: 130, frekAkhir: 38, dur: 0.55, vol, lepas: 0.6 });
+      Derau({ t, dur: 0.25, vol: vol * 0.3, jenis: 'lowpass', frek: 1600, frekAkhir: 200, lepas: 0.3, kirimGema: 0.4 });
+    };
+    const Hitungan = (t0, t1, vol = 0.028) => {
+      for (let t = t0; t < t1; t += 0.075) Nada({ t, frek: 2600, dur: 0.012, vol, tipe: 'triangle', lepas: 0.015 });
+    };
+    const Kaching = (t) => {
+      Klik(t - 0.04, 0.18);
+      Lonceng(t, 1318.5, 0.14, -0.2);
+      Lonceng(t + 0.1, 1760, 0.14, 0.2);
+      Derau({ t: t + 0.02, dur: 0.35, vol: 0.05, jenis: 'highpass', frek: 6500, lepas: 0.4, kirimGema: 0.5 });
+    };
+    const Riser = (t0, t1) => {
+      Derau({ t: t0, dur: t1 - t0, vol: 0.2, frek: 400, frekAkhir: 6000, q: 1.2, serang: t1 - t0, lepas: 0.05, kirimGema: 0.3 });
+      Nada({ t: t0, frek: 180, frekAkhir: 720, dur: t1 - t0, vol: 0.04, tipe: 'sawtooth', saring: 2400, serang: t1 - t0, lepas: 0.05 });
+    };
+
+    // ---- Musik latar (C – G – Am – F, 100 bpm) ----
+    const ketukan = 0.6;
+    const akor = {
+      C: { pad: [261.63, 329.63, 392.0, 587.33], bas: 65.41 },
+      G: { pad: [246.94, 293.66, 392.0, 587.33], bas: 98.0 },
+      Am: { pad: [261.63, 329.63, 440.0, 493.88], bas: 110.0 },
+      F: { pad: [261.63, 349.23, 440.0, 523.25], bas: 87.31 },
+    };
+    function Pad(t, dur, nama, vol = 0.034) {
+      akor[nama].pad.forEach((frek, i) => {
+        [-6, 6].forEach((geser) => Nada({
+          t, frek, dur, vol, tipe: 'triangle', serang: 0.45, lepas: 0.9, saring: 1500, detune: geser,
+          pan: (i - 1.5) * 0.3, tujuan: busMusik, kirimGema: 0.35,
+        }));
+      });
+    }
+    function Bas(t, dur, nama, vol = 0.2) {
+      Nada({ t, frek: akor[nama].bas, dur, vol, serang: 0.01, lepas: 0.15, tujuan: busMusik });
+    }
+    function Kick(t, vol = 0.32) { Nada({ t, frek: 150, frekAkhir: 45, dur: 0.14, vol, lepas: 0.2, tujuan: busMusik }); }
+    function Tepuk(t, vol = 0.07) { Derau({ t, dur: 0.02, vol, frek: 1800, q: 0.8, lepas: 0.14, tujuan: busMusik, kirimGema: 0.3 }); }
+    function Hat(t, vol = 0.03) { Derau({ t, dur: 0.01, vol, jenis: 'highpass', frek: 8000, lepas: 0.04, tujuan: busMusik, pan: 0.25 }); }
+
+    const urutanAkor = ['C', 'G', 'Am', 'F'];
+    const awalMusik = 4.85;
+    const panjangBirama = ketukan * 4;
+    for (let birama = 0; ; birama += 1) {
+      const t = awalMusik + birama * panjangBirama;
+      if (t >= 26.2) break;
+      const nama = urutanAkor[birama % 4];
+      Pad(t, Math.min(panjangBirama, 26.3 - t), nama);
+      if (t >= 9.6) {
+        Bas(t, ketukan * 1.6, nama); Bas(t + ketukan * 2, ketukan * 1.6, nama, 0.16);
+        for (let k = 0; k < 4; k += 1) {
+          const tk = t + k * ketukan;
+          if (tk >= 25.2) break;
+          if (k % 2 === 0) Kick(tk); else Tepuk(tk);
+          Hat(tk + ketukan / 2);
+        }
+      }
+    }
+    // Akor penutup, memudar sampai detik 30.
+    Pad(26.3, 2.9, 'C', 0.04); Bas(26.3, 2.4, 'C', 0.2);
+    Nada({ t: 26.3, frek: 1046.5, dur: 2.2, vol: 0.02, tipe: 'sine', serang: 0.6, lepas: 1.2, tujuan: busMusik, kirimGema: 0.5 });
+
+    // ---- Adegan 1: masalah ----
+    [55, 82.41].forEach((frek, i) => Nada({ t: 0, frek, dur: 4.3, vol: i === 0 ? 0.16 : 0.07, tipe: 'sine', serang: 0.8, lepas: 0.6, tujuan: busMusik }));
+    Derau({ t: 0, dur: 4.3, vol: 0.03, jenis: 'lowpass', frek: 380, serang: 1.2, lepas: 0.6, tujuan: busMusik });
+    for (let t = 0.25; t < 4.1; t += 0.5) Detak(t, t % 1 < 0.5 ? 0.1 : 0.07);
+    Whoosh(0.2, 0.8, 0.14);
+    Galat(1.3);
+    Pop(2.4, 0.16, 420); Pop(2.85, 0.16, 470); Pop(3.3, 0.16, 520);
+    Whoosh(3.85, 0.7, 0.24, false);
+    Kilau(4.45, 0.045, 5);
+
+    // ---- Adegan 2: pengenalan ----
+    Dentum(4.85, 0.42); Whoosh(4.8, 1.0, 0.2);
+    Whoosh(5.0, 1.1, 0.14);
+    Whoosh(5.9, 0.9, 0.12);
+    Kilau(6.05, 0.05, 6);
+    Arpeggio(6.3, [1046.5, 1318.5, 1568.0, 2093.0], 0.08, 0.09);
+    Kilau(7.0, 0.035, 5);
+    Whoosh(8.25, 0.9, 0.13);
+
+    // ---- Adegan 3: offline-first ----
+    Whoosh(9.15, 1.0, 0.16); Pop(9.3, 0.14, 900);
+    Nada({ t: 10.6, frek: 880, dur: 0.12, vol: 0.1, lepas: 0.1 }); Nada({ t: 10.75, frek: 587, dur: 0.18, vol: 0.1, lepas: 0.15 });
+    Bip(10.8); Bip(11.2); Bip(11.6);
+    Hitungan(10.8, 12.0);
+    Klik(12.22);
+    Kaching(12.45);
+    Pop(13.45, 0.1, 700);
+    Arpeggio(14.3, [783.99, 987.77, 1174.66], 0.08, 0.09);
+
+    // ---- Transisi & adegan 4: otomatis ----
+    Whoosh(15.0, 1.2, 0.3);
+    Pop(15.75, 0.14, 900);
+    [16.1, 17.0, 17.9, 18.8].forEach((t, i) => { Whoosh(t - 0.05, 0.5, 0.07); Pop(t + 0.1, 0.13, 600 + i * 90); });
+    Hitungan(17.35, 17.95);
+    Lonceng(18.45, 1567.98, 0.12);
+    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((frek, i) =>
+      Nada({ t: 19.1 + i * 0.12, frek, dur: 0.03, vol: 0.09, tipe: 'triangle', lepas: 0.35, kirimGema: 0.3, pan: (i - 2) * 0.2 }));
+
+    // ---- Transisi & adegan 5: owner ----
+    Whoosh(20.4, 1.2, 0.3);
+    Whoosh(21.1, 0.9, 0.12); Pop(21.15, 0.14, 900);
+    Hitungan(21.6, 23.2);
+    Pop(23.1, 0.12, 1000);
+    Lonceng(23.6, 987.77, 0.13); Lonceng(23.72, 1318.5, 0.13);
+    Klik(24.55);
+    Arpeggio(24.75, [1046.5, 1318.5, 1568.0], 0.07, 0.08);
+    Riser(25.3, 26.3);
+
+    // ---- Transisi & penutup ----
+    Whoosh(25.75, 1.1, 0.22);
+    Dentum(26.3, 0.6);
+    Kilau(26.5, 0.05, 8);
+    Arpeggio(27.0, [523.25, 659.25, 783.99, 1046.5, 1318.5], 0.09, 0.08);
+    Pop(27.5, 0.16, 760);
+    Kilau(28.5, 0.03, 5);
+
+    return konteks.startRendering();
+  }
+
+  function UbahKeWav(buffer) {
+    const jumlahKanal = buffer.numberOfChannels;
+    const panjang = buffer.length;
+    const besarData = panjang * jumlahKanal * 2;
+    const hasil = new DataView(new ArrayBuffer(44 + besarData));
+    const TulisTeks = (posisi, teks) => [...teks].forEach((huruf, i) => hasil.setUint8(posisi + i, huruf.charCodeAt(0)));
+    TulisTeks(0, 'RIFF'); hasil.setUint32(4, 36 + besarData, true); TulisTeks(8, 'WAVE');
+    TulisTeks(12, 'fmt '); hasil.setUint32(16, 16, true); hasil.setUint16(20, 1, true); hasil.setUint16(22, jumlahKanal, true);
+    hasil.setUint32(24, buffer.sampleRate, true); hasil.setUint32(28, buffer.sampleRate * jumlahKanal * 2, true);
+    hasil.setUint16(32, jumlahKanal * 2, true); hasil.setUint16(34, 16, true);
+    TulisTeks(36, 'data'); hasil.setUint32(40, besarData, true);
+    const daftarKanal = [...Array(jumlahKanal)].map((_, kanal) => buffer.getChannelData(kanal));
+    let posisi = 44;
+    for (let i = 0; i < panjang; i += 1) {
+      for (let kanal = 0; kanal < jumlahKanal; kanal += 1) {
+        const sampel = Math.max(-1, Math.min(1, daftarKanal[kanal][i]));
+        hasil.setInt16(posisi, sampel < 0 ? sampel * 0x8000 : sampel * 0x7fff, true);
+        posisi += 2;
+      }
+    }
+    return new Uint8Array(hasil.buffer);
+  }
+
+  async function EksporWav() {
+    const bita = UbahKeWav(await janjiAudio);
+    let biner = '';
+    for (let i = 0; i < bita.length; i += 0x8000) biner += String.fromCharCode.apply(null, bita.subarray(i, i + 0x8000));
+    return btoa(biner);
+  }
+
+  // ===================== Jam induk & pemutaran =====================
+
+  const daftarPenghitung = [];
+  let daftarAnimasi = [];
+  let waktuMs = 0;
+  let sedangPutar = false;
+  let jamTerakhir = null;
+  let bisu = parameter.has('bisu');
+  let konteksAudio = null;
+  let sumberAudio = null;
+  let bufferAudio = null;
+  const janjiAudio = SusunAudio().then((buffer) => { bufferAudio = buffer; return buffer; });
+
+  function HentikanSuara() {
+    if (!sumberAudio) return;
+    try { sumberAudio.stop(); } catch (galat) { /* sudah berhenti */ }
+    sumberAudio.disconnect();
+    sumberAudio = null;
+  }
+
+  function MulaiSuara() {
+    HentikanSuara();
+    if (modeRekam || bisu || !sedangPutar || !bufferAudio) return;
+    konteksAudio ??= new AudioContext();
+    if (konteksAudio.state === 'suspended') konteksAudio.resume();
+    sumberAudio = konteksAudio.createBufferSource();
+    sumberAudio.buffer = bufferAudio;
+    sumberAudio.connect(konteksAudio.destination);
+    sumberAudio.start(0, waktuMs / 1000);
+  }
+
+  function GambarBingkai(ms) {
+    const detik = ms / 1000;
+    semuaAdegan.forEach((adegan) => {
+      const tampil = detik >= Number(adegan.dataset.mulai) && detik < Number(adegan.dataset.selesai);
+      adegan.style.visibility = tampil ? 'visible' : 'hidden';
+    });
+    daftarAnimasi.forEach((animasi) => { animasi.currentTime = ms; });
+    daftarPenghitung.forEach((penghitung) => {
+      const kemajuan = Math.min(1, Math.max(0, (detik - penghitung.mulai) / (penghitung.selesai - penghitung.mulai)));
+      const nilai = penghitung.dari + (penghitung.ke - penghitung.dari) * HaluskanKeluar(kemajuan);
+      penghitung.elemen.textContent = penghitung.format === 'rupiah' ? FormatRupiah(nilai) : Math.round(nilai).toString();
+    });
+    penggeser.value = Math.round(ms);
+    penunjukWaktu.textContent = `${detik.toFixed(1).replace('.', ',')} / 30,0 d`;
+  }
+
+  function AturWaktu(detik) {
+    waktuMs = Math.min(durasiMs, Math.max(0, detik * 1000));
+    GambarBingkai(waktuMs);
+    if (sedangPutar) MulaiSuara();
+  }
+
+  function Detak(jam) {
+    if (sedangPutar) {
+      if (jamTerakhir !== null) {
+        waktuMs += jam - jamTerakhir;
+        if (waktuMs >= durasiMs) {
+          if (parameter.has('sekali')) { waktuMs = durasiMs; AturPutar(false); }
+          else { waktuMs %= durasiMs; MulaiSuara(); }
+        }
+      }
+      jamTerakhir = jam;
+      GambarBingkai(waktuMs);
+    } else {
+      jamTerakhir = null;
+    }
+    requestAnimationFrame(Detak);
+  }
+
+  function AturPutar(putar) {
+    sedangPutar = putar;
+    tombolPutar.textContent = putar ? '❚❚' : '▶';
+    tombolPutar.setAttribute('aria-label', putar ? 'Jeda' : 'Putar');
+    if (putar) MulaiSuara(); else HentikanSuara();
+  }
+
+  function AturBisu(nilai) {
+    bisu = nilai;
+    tombolSuara.textContent = bisu ? '🔇' : '🔊';
+    tombolSuara.setAttribute('aria-label', bisu ? 'Nyalakan suara' : 'Bisukan');
+    MulaiSuara();
+  }
+
+  function SesuaikanSkala() {
+    const skala = Math.min(innerWidth / 1920, innerHeight / 1080);
+    panggung.style.transform = `scale(${skala}) translate(-50%, -50%)`;
+  }
+
+  IsiLogo();
+  IsiTirai();
+  PasangAnimasi();
+  document.querySelectorAll('[data-hitung]').forEach((elemen) => {
+    const [dari, ke] = elemen.dataset.hitung.split(',').map(Number);
+    const [mulai, selesai] = elemen.dataset.hitungWaktu.split(',').map(Number);
+    daftarPenghitung.push({ elemen, dari, ke, mulai, selesai, format: elemen.dataset.format });
+  });
+  daftarAnimasi = document.getAnimations();
+  SesuaikanSkala();
+  addEventListener('resize', SesuaikanSkala);
+  AturBisu(bisu);
+
+  document.getElementById('tombol-mulai').addEventListener('click', async () => {
+    document.body.classList.add('sudah-mulai');
+    await janjiAudio;
+    AturWaktu(0);
+    AturPutar(true);
+  });
+  tombolPutar.addEventListener('click', () => { document.body.classList.add('sudah-mulai'); AturPutar(!sedangPutar); });
+  tombolSuara.addEventListener('click', () => AturBisu(!bisu));
+  document.getElementById('tombol-ulang').addEventListener('click', () => { AturWaktu(0); AturPutar(true); });
+  penggeser.addEventListener('input', () => { AturPutar(false); AturWaktu(Number(penggeser.value) / 1000); });
+  addEventListener('keydown', (peristiwa) => {
+    if (peristiwa.target === penggeser && peristiwa.key.startsWith('Arrow')) return;
+    if (peristiwa.code === 'Space') { peristiwa.preventDefault(); document.body.classList.add('sudah-mulai'); AturPutar(!sedangPutar); }
+    else if (peristiwa.key === 'r' || peristiwa.key === 'R') { AturWaktu(0); AturPutar(true); }
+    else if (peristiwa.key === 'm' || peristiwa.key === 'M') AturBisu(!bisu);
+    else if (peristiwa.key === 'h' || peristiwa.key === 'H') document.body.classList.toggle('tanpa-kontrol');
+    else if (peristiwa.key === 'ArrowRight') AturWaktu(waktuMs / 1000 + 1);
+    else if (peristiwa.key === 'ArrowLeft') AturWaktu(waktuMs / 1000 - 1);
+  });
+
+  window.AturWaktu = AturWaktu;
+  window.DurasiDetik = durasiDetik;
+  window.EksporWav = EksporWav;
+  GambarBingkai(0);
+  Promise.all([document.fonts.load('800 40px "Atkinson Hyperlegible Next"'), document.fonts.load('500 40px "Atkinson Hyperlegible Next"'), document.fonts.load('700 40px "Atkinson Hyperlegible Mono"'), janjiAudio]).then(() => { document.body.dataset.siap = '1'; });
+  requestAnimationFrame(Detak);
+})();
+</script>
+</body>
+</html>
