@@ -1,9 +1,14 @@
 import { Link, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useId, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { RadioGroup, RadioGroupItem } from '@/Komponen/Ui/radio-group';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -116,7 +121,7 @@ function BannerStatus({ langganan, hariMasaTenggang }: { langganan: RingkasanLan
 
 function RingkasanStatus({ langganan }: { langganan: RingkasanLangganan }) {
     return (
-        <section aria-labelledby="judul-status" className="rounded-panel border border-garis bg-permukaan px-4 py-3">
+        <Card aria-labelledby="judul-status" role="region" className="px-4 py-3">
             <h2 id="judul-status" className="sr-only">
                 Status langganan
             </h2>
@@ -148,11 +153,12 @@ function RingkasanStatus({ langganan }: { langganan: RingkasanLangganan }) {
                     </dd>
                 </div>
             </dl>
-        </section>
+        </Card>
     );
 }
 
 function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langganan: RingkasanLangganan }) {
+    const idLegenda = useId();
     const bisaDipilih = pilihan.filter((paket) => paket.BisaDipilih);
     const bawaan =
         bisaDipilih.find((paket) => paket.PaketBerjalan) ??
@@ -179,102 +185,115 @@ function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langg
     }
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
-            noValidate
-        >
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                {perpanjangan ? 'Perpanjang langganan' : 'Pilih paket berbayar'}
-            </h2>
-            <fieldset className="overflow-x-auto">
-                <legend className="mb-2 text-label font-semibold text-teks-utama">Paket</legend>
-                <table className="w-full text-left text-isi">
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-3 py-2 font-semibold">
-                                Paket
-                            </th>
-                            <th scope="col" className="px-3 py-2 text-right font-semibold">
-                                Per bulan
-                            </th>
-                            <th scope="col" className="px-3 py-2 text-right font-semibold">
-                                Per tahun
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {pilihan.map((paket) => (
-                            <tr key={paket.Kode} className="border-b border-garis last:border-b-0">
-                                <td className="px-3 py-2">
-                                    <label className="flex items-start gap-2">
-                                        <input
-                                            type="radio"
-                                            name="KodePaket"
-                                            value={paket.Kode}
-                                            checked={formulir.data.KodePaket === paket.Kode}
-                                            disabled={!paket.BisaDipilih}
-                                            onChange={() => formulir.setData('KodePaket', paket.Kode)}
-                                            className="mt-1 h-4 w-4 accent-brand"
-                                        />
-                                        <span>
-                                            <span className="font-semibold text-teks-utama">{paket.Nama}</span>
-                                            {paket.PaketBerjalan ? (
-                                                <span className="block text-keterangan text-teks-sekunder">
-                                                    Paket Anda saat ini
-                                                </span>
-                                            ) : null}
-                                            {!paket.BisaDipilih ? (
-                                                <span className="block text-keterangan text-teks-sekunder">
-                                                    Ganti paket saat langganan aktif belum tersedia. Hubungi tim kami.
-                                                </span>
-                                            ) : null}
-                                        </span>
-                                    </label>
-                                </td>
-                                <td className="px-3 py-2 text-right tabular-nums">
-                                    {FormatRupiah(paket.HargaBulanan)}
-                                </td>
-                                <td className="px-3 py-2 text-right tabular-nums">
-                                    {FormatRupiah(paket.HargaTahunan)}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {formulir.errors.KodePaket ? (
-                    <p className="mt-1 text-keterangan font-semibold text-bahaya">{formulir.errors.KodePaket}</p>
-                ) : null}
-            </fieldset>
-            <div className="grid gap-4 sm:grid-cols-2">
-                <BidangPilihan
-                    label="Siklus tagihan"
-                    nilai={formulir.data.Siklus}
-                    opsi={[
-                        { Nilai: 'Bulanan', Label: 'Bulanan' },
-                        { Nilai: 'Tahunan', Label: 'Tahunan (lebih hemat)' },
-                    ]}
-                    saatBerubah={(nilai) => formulir.setData('Siklus', nilai)}
-                    galat={formulir.errors.Siklus}
-                />
-                <BidangTeks
-                    label="Kode kupon (opsional)"
-                    kode
-                    maxLength={30}
-                    nilai={formulir.data.KodeKupon}
-                    saatBerubah={(nilai) => formulir.setData('KodeKupon', nilai.toUpperCase())}
-                    galat={formulir.errors.KodeKupon}
-                />
-            </div>
-            <p className="text-keterangan text-teks-sekunder">
-                Harga belum termasuk PPN. Rincian PPN dan total tampil di tagihan sebelum Anda membayar.
-            </p>
-            <div>
-                <Tombol type="submit" memproses={formulir.processing} disabled={formulir.data.KodePaket === ''}>
-                    Buat tagihan
-                </Tombol>
-            </div>
-        </form>
+        <Card className="p-4">
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <h2 className="text-subjudul font-semibold text-teks-utama">
+                    {perpanjangan ? 'Perpanjang langganan' : 'Pilih paket berbayar'}
+                </h2>
+                <FieldSet className="gap-2">
+                    <FieldLegend id={idLegenda} className="mb-0 text-label font-semibold text-teks-utama">
+                        Paket
+                    </FieldLegend>
+                    <RadioGroup
+                        name="KodePaket"
+                        value={formulir.data.KodePaket}
+                        onValueChange={(nilai) => formulir.setData('KodePaket', nilai)}
+                        aria-labelledby={idLegenda}
+                        aria-invalid={formulir.errors.KodePaket ? true : undefined}
+                        className="block"
+                    >
+                        <Table className="text-isi">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead scope="col" className="px-3">
+                                        Paket
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-3 text-right">
+                                        Per bulan
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-3 text-right">
+                                        Per tahun
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {pilihan.map((paket) => (
+                                    <TableRow
+                                        key={paket.Kode}
+                                        data-state={formulir.data.KodePaket === paket.Kode ? 'selected' : undefined}
+                                    >
+                                        <TableCell className="px-3 whitespace-normal">
+                                            <div className="flex items-start gap-2">
+                                                <RadioGroupItem
+                                                    id={`${idLegenda}-${paket.Kode}`}
+                                                    value={paket.Kode}
+                                                    disabled={!paket.BisaDipilih}
+                                                    className="mt-1"
+                                                />
+                                                <label
+                                                    htmlFor={`${idLegenda}-${paket.Kode}`}
+                                                    className={paket.BisaDipilih ? 'cursor-pointer' : undefined}
+                                                >
+                                                    <span className="font-semibold text-teks-utama">{paket.Nama}</span>
+                                                    {paket.PaketBerjalan ? (
+                                                        <span className="block text-keterangan text-teks-sekunder">
+                                                            Paket Anda saat ini
+                                                        </span>
+                                                    ) : null}
+                                                    {!paket.BisaDipilih ? (
+                                                        <span className="block text-keterangan text-teks-sekunder">
+                                                            Ganti paket saat langganan aktif belum tersedia. Hubungi tim
+                                                            kami.
+                                                        </span>
+                                                    ) : null}
+                                                </label>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="px-3 text-right tabular-nums">
+                                            {FormatRupiah(paket.HargaBulanan)}
+                                        </TableCell>
+                                        <TableCell className="px-3 text-right tabular-nums">
+                                            {FormatRupiah(paket.HargaTahunan)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </RadioGroup>
+                    {formulir.errors.KodePaket ? (
+                        <FieldError className="text-keterangan font-semibold">{formulir.errors.KodePaket}</FieldError>
+                    ) : null}
+                </FieldSet>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <BidangPilihan
+                        label="Siklus tagihan"
+                        nilai={formulir.data.Siklus}
+                        opsi={[
+                            { Nilai: 'Bulanan', Label: 'Bulanan' },
+                            { Nilai: 'Tahunan', Label: 'Tahunan (lebih hemat)' },
+                        ]}
+                        saatBerubah={(nilai) => formulir.setData('Siklus', nilai)}
+                        galat={formulir.errors.Siklus}
+                    />
+                    <BidangTeks
+                        label="Kode kupon (opsional)"
+                        kode
+                        maxLength={30}
+                        nilai={formulir.data.KodeKupon}
+                        saatBerubah={(nilai) => formulir.setData('KodeKupon', nilai.toUpperCase())}
+                        galat={formulir.errors.KodeKupon}
+                    />
+                </div>
+                <p className="text-keterangan text-teks-sekunder">
+                    Harga belum termasuk PPN. Rincian PPN dan total tampil di tagihan sebelum Anda membayar.
+                </p>
+                <div>
+                    <Tombol type="submit" memproses={formulir.processing} disabled={formulir.data.KodePaket === ''}>
+                        Buat tagihan
+                    </Tombol>
+                </div>
+            </form>
+        </Card>
     );
 }
 
@@ -285,54 +304,60 @@ function RiwayatTagihan({ tagihan }: { tagihan: TagihanLangganan[] }) {
                 Riwayat tagihan
             </h2>
             {tagihan.length === 0 ? (
-                <p className="text-isi text-teks-sekunder">Belum ada tagihan.</p>
+                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
+                    <EmptyHeader className="max-w-none items-start text-left">
+                        <EmptyDescription className="text-isi text-teks-sekunder">Belum ada tagihan.</EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Riwayat tagihan langganan</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="text-isi">
+                        <TableCaption className="sr-only">Riwayat tagihan langganan</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className="px-4">
                                     Nomor
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Paket
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Jatuh tempo
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4 text-right">
                                     Total
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Status
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {tagihan.map((baris) => (
-                                <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label">
+                                <TableRow key={baris.Uuid}>
+                                    <TableCell className="px-4 font-mono text-label">
                                         <Link
                                             href={`/kelola/langganan/tagihan/${baris.Uuid}`}
-                                            className="text-brand underline"
+                                            className="text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         >
                                             {baris.Nomor}
                                         </Link>
-                                    </td>
-                                    <td className="px-4 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-4">
                                         {baris.NamaPaket} · {baris.Siklus}
-                                    </td>
-                                    <td className="px-4 py-2">{FormatTanggalWaktu(baris.JatuhTempoPada)}</td>
-                                    <td className="px-4 py-2 text-right tabular-nums">{FormatRupiah(baris.Total)}</td>
-                                    <td className="px-4 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-4">{FormatTanggalWaktu(baris.JatuhTempoPada)}</TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums">
+                                        {FormatRupiah(baris.Total)}
+                                    </TableCell>
+                                    <TableCell className="px-4">
                                         <LabelStatus jenis={JenisLabelTagihan(baris.Status)} teks={baris.LabelStatus} />
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </section>
     );

@@ -7,6 +7,21 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Button } from '@/Komponen/Ui/button';
+import { Card, CardContent, CardHeader } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatMasukanPersen, NormalisasiMasukanPersen } from '@/Pustaka/MasukanUang';
@@ -82,43 +97,47 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
 
     if (metodePembayaran.length === 0) {
         return (
-            <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.
-            </p>
+            <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
+                <EmptyHeader className="max-w-none items-start text-left">
+                    <EmptyDescription className="text-isi text-teks-sekunder">
+                        Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.
+                    </EmptyDescription>
+                </EmptyHeader>
+            </Empty>
         );
     }
 
     return (
-        <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-            <table className="w-full min-w-[720px] text-left text-isi">
-                <caption className="sr-only">Metode pembayaran</caption>
-                <thead className="border-b border-garis text-label text-teks-sekunder">
-                    <tr>
-                        <th scope="col" className="px-4 py-2 font-semibold">
+        <Card className="gap-0 py-0">
+            <Table className="min-w-[720px] text-isi">
+                <TableCaption className="sr-only">Metode pembayaran</TableCaption>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead scope="col" className="px-4">
                             Nama
-                        </th>
-                        <th scope="col" className="px-4 py-2 font-semibold">
+                        </TableHead>
+                        <TableHead scope="col" className="px-4">
                             Rincian
-                        </th>
-                        <th scope="col" className="px-4 py-2 text-right font-semibold">
+                        </TableHead>
+                        <TableHead scope="col" className="px-4 text-right">
                             Biaya
-                        </th>
-                        <th scope="col" className="px-4 py-2 font-semibold">
+                        </TableHead>
+                        <TableHead scope="col" className="px-4">
                             Status
-                        </th>
-                        <th scope="col" className="px-4 py-2 font-semibold">
+                        </TableHead>
+                        <TableHead scope="col" className="px-4">
                             <span className="sr-only">Aksi</span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {metodePembayaran.map((metode) => (
-                        <tr key={metode.Uuid} className="border-b border-garis last:border-b-0">
-                            <td className="px-4 py-2 align-top text-teks-utama">
+                        <TableRow key={metode.Uuid} className="align-top">
+                            <TableCell className="px-4 whitespace-normal text-teks-utama">
                                 <span className="break-words">{metode.Nama}</span>
                                 <span className="block text-keterangan text-teks-sekunder">{metode.LabelJenis}</span>
-                            </td>
-                            <td className="px-4 py-2 align-top text-teks-sekunder">
+                            </TableCell>
+                            <TableCell className="px-4 whitespace-normal text-teks-sekunder">
                                 {metode.TautanGambarQris ? (
                                     <img
                                         src={metode.TautanGambarQris}
@@ -136,20 +155,53 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
                                     </span>
                                 ) : null}
                                 {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening ? '—' : null}
-                            </td>
-                            <td className="px-4 py-2 text-right align-top text-teks-utama tabular-nums">
+                            </TableCell>
+                            <TableCell className="px-4 text-right text-teks-utama tabular-nums">
                                 {FormatPersen(metode.PersenBiaya)}%
-                            </td>
-                            <td className="px-4 py-2 align-top">
+                            </TableCell>
+                            <TableCell className="px-4">
                                 {metode.Aktif ? (
                                     <LabelStatus jenis="sukses" teks="Aktif" />
                                 ) : (
                                     <LabelStatus jenis="netral" teks="Nonaktif" />
                                 )}
-                            </td>
-                            <td className="px-4 py-2 text-right align-top">
+                            </TableCell>
+                            <TableCell className="px-4 text-right">
                                 {metode.Wajib ? (
                                     <span className="text-keterangan text-teks-sekunder">Selalu tersedia</span>
+                                ) : metode.Aktif ? (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={memproses !== null}
+                                                aria-busy={memproses === metode.Uuid || undefined}
+                                            >
+                                                {memproses === metode.Uuid
+                                                    ? 'Memproses…'
+                                                    : `Nonaktifkan ${metode.Nama}`}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Nonaktifkan {metode.Nama}?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Tombol {metode.Nama} hilang dari layar bayar aplikasi kasir.
+                                                    Transaksi lama tidak berubah, dan metode ini bisa diaktifkan lagi.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    variant="destructive"
+                                                    onClick={() => UbahStatus(metode)}
+                                                >
+                                                    Nonaktifkan {metode.Nama}
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 ) : (
                                     <Tombol
                                         varian="sekunder"
@@ -157,15 +209,15 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
                                         memproses={memproses === metode.Uuid}
                                         disabled={memproses !== null}
                                     >
-                                        {metode.Aktif ? `Nonaktifkan ${metode.Nama}` : `Aktifkan ${metode.Nama}`}
+                                        {`Aktifkan ${metode.Nama}`}
                                     </Tombol>
                                 )}
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
-        </section>
+                </TableBody>
+            </Table>
+        </Card>
     );
 }
 
@@ -213,92 +265,93 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTam
     };
 
     return (
-        <section
-            aria-labelledby="judul-tambah-metode"
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
-        >
-            <h2 id="judul-tambah-metode" className="text-subjudul font-semibold text-teks-utama">
-                Tambah metode pembayaran
-            </h2>
-            <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-                <RingkasanGalatFormulir galat={formulir.errors} />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <BidangPilihan
-                        label="Jenis"
-                        nilai={Jenis}
-                        opsi={jenisTersedia}
-                        saatBerubah={GantiJenis}
-                        galat={formulir.errors.Jenis}
-                    />
-                    <BidangTeks
-                        label="Nama di kasir"
-                        nilai={formulir.data.Nama}
-                        saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                        galat={formulir.errors.Nama}
-                        keterangan={contohNama[Jenis] ?? 'Tampil sebagai tombol di kasir.'}
-                        maxLength={60}
-                        required
-                    />
-                    {Jenis === 'Edc' || Jenis === 'Transfer' ? (
+        <Card aria-labelledby="judul-tambah-metode" className="gap-4 p-4 sm:p-6" role="region">
+            <CardHeader className="px-0">
+                <h2 id="judul-tambah-metode" className="text-subjudul font-semibold text-teks-utama">
+                    Tambah metode pembayaran
+                </h2>
+            </CardHeader>
+            <CardContent className="px-0">
+                <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                    <RingkasanGalatFormulir galat={formulir.errors} />
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <BidangPilihan
-                            label={Jenis === 'Edc' ? 'Bank penerbit mesin EDC' : 'Bank atau e-wallet tujuan'}
-                            nilai={formulir.data.KodeBank}
-                            opsi={opsiBank}
-                            saatBerubah={(nilai) => formulir.setData('KodeBank', nilai)}
-                            galat={formulir.errors.KodeBank}
-                            kosong={opsiBank.length === 0 ? 'Data bank belum tersedia' : 'Pilih bank'}
+                            label="Jenis"
+                            nilai={Jenis}
+                            opsi={jenisTersedia}
+                            saatBerubah={GantiJenis}
+                            galat={formulir.errors.Jenis}
+                        />
+                        <BidangTeks
+                            label="Nama di kasir"
+                            nilai={formulir.data.Nama}
+                            saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                            galat={formulir.errors.Nama}
+                            keterangan={contohNama[Jenis] ?? 'Tampil sebagai tombol di kasir.'}
+                            maxLength={60}
+                            required
+                        />
+                        {Jenis === 'Edc' || Jenis === 'Transfer' ? (
+                            <BidangPilihan
+                                label={Jenis === 'Edc' ? 'Bank penerbit mesin EDC' : 'Bank atau e-wallet tujuan'}
+                                nilai={formulir.data.KodeBank}
+                                opsi={opsiBank}
+                                saatBerubah={(nilai) => formulir.setData('KodeBank', nilai)}
+                                galat={formulir.errors.KodeBank}
+                                kosong={opsiBank.length === 0 ? 'Data bank belum tersedia' : 'Pilih bank'}
+                            />
+                        ) : null}
+                        {Jenis === 'Transfer' ? (
+                            <>
+                                <BidangTeks
+                                    label="Nomor rekening"
+                                    nilai={formulir.data.NomorRekening}
+                                    saatBerubah={(nilai) => formulir.setData('NomorRekening', nilai.replace(/\D/g, ''))}
+                                    galat={formulir.errors.NomorRekening}
+                                    keterangan="Angka saja, 5 sampai 30 digit."
+                                    inputMode="numeric"
+                                    maxLength={30}
+                                    kode
+                                    required
+                                />
+                                <BidangTeks
+                                    label="Nama pemilik rekening"
+                                    nilai={formulir.data.NamaPemilikRekening}
+                                    saatBerubah={(nilai) => formulir.setData('NamaPemilikRekening', nilai)}
+                                    galat={formulir.errors.NamaPemilikRekening}
+                                    maxLength={100}
+                                    required
+                                />
+                            </>
+                        ) : null}
+                        <BidangTeks
+                            label="Biaya per transaksi (persen, opsional)"
+                            nilai={FormatMasukanPersen(formulir.data.PersenBiaya)}
+                            saatBerubah={(nilai) => formulir.setData('PersenBiaya', NormalisasiMasukanPersen(nilai))}
+                            galat={formulir.errors.PersenBiaya}
+                            keterangan="Potongan dari penyedia (MDR), 0 sampai 10 persen, misal 0,7. Dipakai untuk laporan biaya."
+                            inputMode="decimal"
+                            maxLength={7}
+                        />
+                    </div>
+                    {Jenis === 'QrisStatis' ? (
+                        <BidangGambar
+                            label="Gambar QRIS"
+                            berkas={formulir.data.GambarQris}
+                            saatBerubah={(berkas) => formulir.setData('GambarQris', berkas)}
+                            ukuranMaksimalKb={batasGambarQris.UkuranMaksimalKb}
+                            ekstensi={batasGambarQris.Ekstensi}
+                            keterangan="Foto atau unduh QRIS dari aplikasi bank/penyedia Anda. Pastikan kode QR terlihat utuh."
+                            galat={formulir.errors.GambarQris}
                         />
                     ) : null}
-                    {Jenis === 'Transfer' ? (
-                        <>
-                            <BidangTeks
-                                label="Nomor rekening"
-                                nilai={formulir.data.NomorRekening}
-                                saatBerubah={(nilai) => formulir.setData('NomorRekening', nilai.replace(/\D/g, ''))}
-                                galat={formulir.errors.NomorRekening}
-                                keterangan="Angka saja, 5 sampai 30 digit."
-                                inputMode="numeric"
-                                maxLength={30}
-                                kode
-                                required
-                            />
-                            <BidangTeks
-                                label="Nama pemilik rekening"
-                                nilai={formulir.data.NamaPemilikRekening}
-                                saatBerubah={(nilai) => formulir.setData('NamaPemilikRekening', nilai)}
-                                galat={formulir.errors.NamaPemilikRekening}
-                                maxLength={100}
-                                required
-                            />
-                        </>
-                    ) : null}
-                    <BidangTeks
-                        label="Biaya per transaksi (persen, opsional)"
-                        nilai={FormatMasukanPersen(formulir.data.PersenBiaya)}
-                        saatBerubah={(nilai) => formulir.setData('PersenBiaya', NormalisasiMasukanPersen(nilai))}
-                        galat={formulir.errors.PersenBiaya}
-                        keterangan="Potongan dari penyedia (MDR), 0 sampai 10 persen, misal 0,7. Dipakai untuk laporan biaya."
-                        inputMode="decimal"
-                        maxLength={7}
-                    />
-                </div>
-                {Jenis === 'QrisStatis' ? (
-                    <BidangGambar
-                        label="Gambar QRIS"
-                        berkas={formulir.data.GambarQris}
-                        saatBerubah={(berkas) => formulir.setData('GambarQris', berkas)}
-                        ukuranMaksimalKb={batasGambarQris.UkuranMaksimalKb}
-                        ekstensi={batasGambarQris.Ekstensi}
-                        keterangan="Foto atau unduh QRIS dari aplikasi bank/penyedia Anda. Pastikan kode QR terlihat utuh."
-                        galat={formulir.errors.GambarQris}
-                    />
-                ) : null}
-                <div>
-                    <Tombol type="submit" memproses={formulir.processing}>
-                        Tambah metode pembayaran
-                    </Tombol>
-                </div>
-            </form>
-        </section>
+                    <div>
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            Tambah metode pembayaran
+                        </Tombol>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
     );
 }

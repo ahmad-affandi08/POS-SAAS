@@ -5,6 +5,32 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RincianTagihan from '@/Komponen/Langganan/RincianTagihan';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/Komponen/Ui/dialog';
+import { Field, FieldDescription, FieldError } from '@/Komponen/Ui/field';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -34,17 +60,12 @@ export default function HalamanTagihanLangganan({
     const menunggu = Pembayaran.find((pembayaran) => pembayaran.Status === 'Menunggu');
     const [membatalkan, AturMembatalkan] = useState(false);
 
-    const Batalkan = () => {
-        if (!window.confirm(`Batalkan tagihan ${Tagihan.Nomor}? Anda bisa membuat tagihan baru setelahnya.`)) {
-            return;
-        }
-
+    const Batalkan = () =>
         router.post(
             `/kelola/langganan/tagihan/${Tagihan.Uuid}/batalkan`,
             {},
             { onStart: () => AturMembatalkan(true), onFinish: () => AturMembatalkan(false) },
         );
-    };
 
     return (
         <TataLetakAplikasi judul={`Tagihan ${Tagihan.Nomor}`}>
@@ -66,14 +87,40 @@ export default function HalamanTagihanLangganan({
             <RincianTagihan tagihan={Tagihan} />
             {terbuka ? <DaftarRekening rekening={RekeningTujuan} total={Tagihan.Total} /> : null}
             {BolehUnggah ? (
-                <FormBukti tagihan={Tagihan} rekening={RekeningTujuan} ukuranMaksimalKb={UkuranBuktiMaksimalKb} />
+                <div>
+                    <DialogBukti tagihan={Tagihan} rekening={RekeningTujuan} ukuranMaksimalKb={UkuranBuktiMaksimalKb} />
+                </div>
             ) : null}
             <RiwayatPembayaran pembayaran={Pembayaran} />
             {BolehUnggah ? (
                 <div>
-                    <Tombol varian="bahaya" memproses={membatalkan} onClick={Batalkan}>
-                        Batalkan tagihan
-                    </Tombol>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="border-destructive text-destructive"
+                                disabled={membatalkan}
+                                aria-busy={membatalkan || undefined}
+                            >
+                                {membatalkan ? 'Memproses…' : 'Batalkan tagihan'}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Batalkan tagihan {Tagihan.Nomor}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Anda bisa membuat tagihan baru setelahnya.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Jangan batalkan</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={Batalkan}>
+                                    Batalkan tagihan
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             ) : null}
         </TataLetakAplikasi>
@@ -82,7 +129,7 @@ export default function HalamanTagihanLangganan({
 
 function DaftarRekening({ rekening, total }: { rekening: Rekening[]; total: string }) {
     return (
-        <section aria-labelledby="judul-rekening" className="rounded-panel border border-garis bg-permukaan px-4 py-3">
+        <Card aria-labelledby="judul-rekening" role="region" className="gap-1 px-4 py-3">
             <h2 id="judul-rekening" className="text-subjudul font-semibold text-teks-utama">
                 Transfer ke rekening berikut
             </h2>
@@ -103,7 +150,40 @@ function DaftarRekening({ rekening, total }: { rekening: Rekening[]; total: stri
                     ))}
                 </ul>
             )}
-        </section>
+        </Card>
+    );
+}
+
+type PropsDialogBukti = {
+    tagihan: TagihanLangganan;
+    rekening: Rekening[];
+    ukuranMaksimalKb: number;
+};
+
+/** Tombol "Unggah bukti transfer" + dialog formulirnya. Dialog tertutup sendiri setelah bukti terkirim. */
+function DialogBukti({ tagihan, rekening, ukuranMaksimalKb }: PropsDialogBukti) {
+    const [terbuka, AturTerbuka] = useState(false);
+
+    return (
+        <Dialog open={terbuka} onOpenChange={AturTerbuka}>
+            <DialogTrigger asChild>
+                <Button type="button">Unggah bukti transfer</Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Unggah bukti transfer</DialogTitle>
+                    <DialogDescription>
+                        Tagihan {tagihan.Nomor}, total {FormatRupiah(tagihan.Total)}.
+                    </DialogDescription>
+                </DialogHeader>
+                <FormBukti
+                    tagihan={tagihan}
+                    rekening={rekening}
+                    ukuranMaksimalKb={ukuranMaksimalKb}
+                    saatSelesai={() => AturTerbuka(false)}
+                />
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -111,11 +191,8 @@ function FormBukti({
     tagihan,
     rekening,
     ukuranMaksimalKb,
-}: {
-    tagihan: TagihanLangganan;
-    rekening: Rekening[];
-    ukuranMaksimalKb: number;
-}) {
+    saatSelesai,
+}: PropsDialogBukti & { saatSelesai: () => void }) {
     const idBerkas = useId();
     const formulir = useForm<{
         Bukti: File | null;
@@ -138,37 +215,34 @@ function FormBukti({
         formulir.post(`/kelola/langganan/tagihan/${tagihan.Uuid}/pembayaran`, {
             preserveScroll: true,
             forceFormData: true,
-            onSuccess: () => formulir.reset(),
+            onSuccess: () => {
+                formulir.reset();
+                saatSelesai();
+            },
         });
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-4 sm:grid-cols-2"
-            noValidate
-        >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">Unggah bukti transfer</h2>
-            <div className="flex flex-col gap-1 sm:col-span-2">
-                <label htmlFor={idBerkas} className="text-label font-semibold text-teks-utama">
+        <form onSubmit={Kirim} aria-label="Unggah bukti transfer" className="grid gap-4 sm:grid-cols-2" noValidate>
+            <Field className="gap-1 sm:col-span-2" data-invalid={formulir.errors.Bukti ? true : undefined}>
+                <Label htmlFor={idBerkas} className="text-label font-semibold text-teks-utama">
                     Bukti transfer
-                </label>
-                <input
+                </Label>
+                <Input
                     id={idBerkas}
                     type="file"
                     accept="image/jpeg,image/png,image/webp,application/pdf"
                     onChange={(peristiwa) => formulir.setData('Bukti', peristiwa.target.files?.[0] ?? null)}
                     aria-invalid={formulir.errors.Bukti ? true : undefined}
                     aria-describedby={`${idBerkas}-keterangan`}
-                    className="text-isi text-teks-utama file:mr-3 file:h-10 file:rounded-kontrol file:border file:border-garis-input file:bg-permukaan file:px-4 file:text-label file:font-semibold"
                 />
-                <p id={`${idBerkas}-keterangan`} className="text-keterangan text-teks-sekunder">
+                <FieldDescription id={`${idBerkas}-keterangan`} className="text-keterangan">
                     Foto atau PDF (JPG, PNG, WEBP, PDF), maksimal {Math.floor(ukuranMaksimalKb / 1024)} MB.
-                </p>
+                </FieldDescription>
                 {formulir.errors.Bukti ? (
-                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Bukti}</p>
+                    <FieldError className="text-keterangan font-semibold">{formulir.errors.Bukti}</FieldError>
                 ) : null}
-            </div>
+            </Field>
             <BidangTeks
                 label="Jumlah transfer (Rp)"
                 inputMode="decimal"
@@ -208,11 +282,14 @@ function FormBukti({
                     galat={formulir.errors.KodeRekeningTujuan}
                 />
             ) : null}
-            <div className="sm:col-span-2">
+            <DialogFooter className="sm:col-span-2">
+                <Button type="button" variant="outline" onClick={saatSelesai}>
+                    Batal
+                </Button>
                 <Tombol type="submit" memproses={formulir.processing} disabled={formulir.data.Bukti === null}>
                     Kirim bukti transfer
                 </Tombol>
-            </div>
+            </DialogFooter>
         </form>
     );
 }
@@ -227,48 +304,50 @@ function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }
             <h2 id="judul-pembayaran" className="text-subjudul font-semibold text-teks-utama">
                 Bukti transfer terkirim
             </h2>
-            <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                <table className="w-full text-left text-isi">
-                    <caption className="sr-only">Riwayat bukti transfer</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+            <Card className="gap-0 py-0">
+                <Table className="text-isi">
+                    <TableCaption className="sr-only">Riwayat bukti transfer</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col" className="px-4">
                                 Diunggah
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4">
                                 Transfer
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-right font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4 text-right">
                                 Jumlah
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4">
                                 Status
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4">
                                 <span className="sr-only">Bukti</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {pembayaran.map((baris) => (
-                            <tr key={baris.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                <td className="px-4 py-2">{FormatTanggalWaktu(baris.DiunggahPada)}</td>
-                                <td className="px-4 py-2">
+                            <TableRow key={baris.Uuid} className="align-top">
+                                <TableCell className="px-4">{FormatTanggalWaktu(baris.DiunggahPada)}</TableCell>
+                                <TableCell className="px-4 whitespace-normal">
                                     <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
                                     <span className="block text-keterangan text-teks-sekunder">
                                         {baris.BankPengirim} · {baris.NamaPengirim}
                                     </span>
-                                </td>
-                                <td className="px-4 py-2 text-right tabular-nums">{FormatRupiah(baris.Jumlah)}</td>
-                                <td className="px-4 py-2">
+                                </TableCell>
+                                <TableCell className="px-4 text-right tabular-nums">
+                                    {FormatRupiah(baris.Jumlah)}
+                                </TableCell>
+                                <TableCell className="px-4 whitespace-normal">
                                     <LabelStatus jenis={JenisLabelPembayaran(baris.Status)} teks={baris.LabelStatus} />
                                     {baris.AlasanTolak ? (
                                         <span className="mt-1 block text-keterangan text-teks-sekunder">
                                             Alasan: {baris.AlasanTolak}
                                         </span>
                                     ) : null}
-                                </td>
-                                <td className="px-4 py-2 text-right">
+                                </TableCell>
+                                <TableCell className="px-4 text-right">
                                     <a
                                         href={`/kelola/langganan/pembayaran/${baris.Uuid}/bukti`}
                                         target="_blank"
@@ -277,12 +356,12 @@ function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }
                                     >
                                         Lihat bukti
                                     </a>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                    </TableBody>
+                </Table>
+            </Card>
         </section>
     );
 }
