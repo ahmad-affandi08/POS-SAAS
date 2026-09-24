@@ -4,7 +4,15 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -60,9 +68,9 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
             }
         >
             <TabKatalog />
-            <Link href="/katalog/paket" className="text-label font-semibold text-brand underline">
-                Kembali ke daftar paket
-            </Link>
+            <Button asChild variant="link" className="h-auto self-start px-0 text-label font-semibold">
+                <Link href="/katalog/paket">Kembali ke daftar paket</Link>
+            </Button>
             <Pemberitahuan jenis="info" judul="Aturan harga paket">
                 Harga baru hanya berlaku untuk tagihan berikutnya. Bila &quot;terapkan ke pelanggan lama&quot; tidak
                 dicentang, langganan yang sudah berjalan tetap memakai harga lamanya. Harga terbit tidak bisa diubah;
@@ -93,91 +101,87 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
             ) : null}
 
             {Harga.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada harga">
-                    Usulkan harga pertama agar paket bisa diaktifkan.
-                </Pemberitahuan>
+                <KeadaanKosong judul="Belum ada harga">Usulkan harga pertama agar paket bisa diaktifkan.</KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Versi harga paket {Paket.Nama}</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
-                                    Per bulan
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
-                                    Per tahun
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Berlaku
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Pelanggan lama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Harga.map((harga) => {
-                                const status = labelStatus[harga.Status];
-                                const bisaTinjau =
-                                    bolehSetujui &&
-                                    harga.Status === 'MenungguTinjauan' &&
-                                    harga.IdPengaju !== IdPengguna &&
-                                    !harga.DaftarIdPenyusun.includes(IdPengguna) &&
-                                    !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
+                <PanelTabel keterangan={`Versi harga paket ${Paket.Nama}`}>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col" className="text-right">
+                                Per bulan
+                            </TableHead>
+                            <TableHead scope="col" className="text-right">
+                                Per tahun
+                            </TableHead>
+                            <TableHead scope="col">Berlaku</TableHead>
+                            <TableHead scope="col">Pelanggan lama</TableHead>
+                            <TableHead scope="col">Status</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Harga.map((harga) => {
+                            const status = labelStatus[harga.Status];
+                            const bisaTinjau =
+                                bolehSetujui &&
+                                harga.Status === 'MenungguTinjauan' &&
+                                harga.IdPengaju !== IdPengguna &&
+                                !harga.DaftarIdPenyusun.includes(IdPengguna) &&
+                                !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
 
-                                return (
-                                    <tr key={harga.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                        <td className="px-4 py-3 text-right tabular-nums">
-                                            {FormatRupiah(harga.HargaBulanan)}
-                                        </td>
-                                        <td className="px-4 py-3 text-right tabular-nums">
-                                            {FormatRupiah(harga.HargaTahunan)}
-                                        </td>
-                                        <td className="px-4 py-3 text-teks-sekunder">
-                                            {FormatTanggal(harga.BerlakuMulai)} –{' '}
-                                            {harga.BerlakuSampai ? FormatTanggal(harga.BerlakuSampai) : 'seterusnya'}
-                                        </td>
-                                        <td className="px-4 py-3 text-teks-sekunder">
-                                            {harga.TerapkanKePelangganLama ? 'Ikut harga baru' : 'Tetap harga lama'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <LabelStatus jenis={status.jenis} teks={status.teks} />
-                                            {harga.Persetujuan.map((item) => (
-                                                <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
-                                                    {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'}{' '}
-                                                    {item.Peninjau}
-                                                    {item.Catatan ? `: ${item.Catatan}` : ''}
-                                                </p>
-                                            ))}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex justify-end gap-2">
-                                                {bolehAjukan && harga.Status === 'Draf' ? (
-                                                    <>
-                                                        <Tombol varian="sekunder" onClick={() => AturSunting(harga)}>
-                                                            Ubah
-                                                        </Tombol>
-                                                        <Tombol onClick={() => Ajukan(harga)}>Ajukan harga</Tombol>
-                                                    </>
-                                                ) : null}
-                                                {bisaTinjau ? (
-                                                    <Tombol onClick={() => AturDitinjau(harga)}>Tinjau harga</Tombol>
-                                                ) : null}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </section>
+                            return (
+                                <TableRow key={harga.Uuid}>
+                                    <TableCell className="text-right tabular-nums">
+                                        {FormatRupiah(harga.HargaBulanan)}
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums">
+                                        {FormatRupiah(harga.HargaTahunan)}
+                                    </TableCell>
+                                    <TableCell className="text-teks-sekunder">
+                                        {FormatTanggal(harga.BerlakuMulai)} –{' '}
+                                        {harga.BerlakuSampai ? FormatTanggal(harga.BerlakuSampai) : 'seterusnya'}
+                                    </TableCell>
+                                    <TableCell className="text-teks-sekunder">
+                                        {harga.TerapkanKePelangganLama ? 'Ikut harga baru' : 'Tetap harga lama'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <LabelStatus jenis={status.jenis} teks={status.teks} />
+                                        {harga.Persetujuan.map((item) => (
+                                            <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
+                                                {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
+                                                {item.Catatan ? `: ${item.Catatan}` : ''}
+                                            </p>
+                                        ))}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-2">
+                                            {bolehAjukan && harga.Status === 'Draf' ? (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => AturSunting(harga)}
+                                                    >
+                                                        Ubah
+                                                    </Button>
+                                                    <Button size="sm" onClick={() => Ajukan(harga)}>
+                                                        Ajukan harga
+                                                    </Button>
+                                                </>
+                                            ) : null}
+                                            {bisaTinjau ? (
+                                                <Button size="sm" onClick={() => AturDitinjau(harga)}>
+                                                    Tinjau harga
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -203,52 +207,51 @@ function FormHarga({ alamat, harga, saatSelesai }: { alamat: string; harga: Harg
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-3"
-            noValidate
+        <DialogFormulir
+            judul={harga === null ? 'Usulkan harga baru' : 'Ubah draf harga'}
+            saatTutup={saatSelesai}
+            lebar="lebar"
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-3">
-                {harga === null ? 'Usulkan harga baru' : 'Ubah draf harga'}
-            </h2>
-            <BidangTeks
-                label="Harga per bulan (Rp)"
-                inputMode="decimal"
-                keterangan="Tanpa titik ribuan, misal 199000."
-                nilai={formulir.data.HargaBulanan}
-                saatBerubah={(nilai) => formulir.setData('HargaBulanan', nilai)}
-                galat={formulir.errors.HargaBulanan}
-            />
-            <BidangTeks
-                label="Harga per tahun (Rp)"
-                inputMode="decimal"
-                nilai={formulir.data.HargaTahunan}
-                saatBerubah={(nilai) => formulir.setData('HargaTahunan', nilai)}
-                galat={formulir.errors.HargaTahunan}
-            />
-            <BidangTeks
-                label="Berlaku mulai (TTTT-BB-HH)"
-                kode
-                nilai={formulir.data.BerlakuMulai}
-                saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
-                galat={formulir.errors.BerlakuMulai}
-            />
-            <div className="sm:col-span-3">
-                <KotakCentang
-                    label="Terapkan juga ke pelanggan lama (tanpa penguncian harga lama)"
-                    nilai={formulir.data.TerapkanKePelangganLama}
-                    saatBerubah={(nilai) => formulir.setData('TerapkanKePelangganLama', nilai)}
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-3" noValidate>
+                <BidangTeks
+                    label="Harga per bulan (Rp)"
+                    inputMode="decimal"
+                    keterangan="Tanpa titik ribuan, misal 199000."
+                    nilai={formulir.data.HargaBulanan}
+                    saatBerubah={(nilai) => formulir.setData('HargaBulanan', nilai)}
+                    galat={formulir.errors.HargaBulanan}
                 />
-            </div>
-            <div className="flex gap-2 sm:col-span-3">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan draf harga
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                <BidangTeks
+                    label="Harga per tahun (Rp)"
+                    inputMode="decimal"
+                    nilai={formulir.data.HargaTahunan}
+                    saatBerubah={(nilai) => formulir.setData('HargaTahunan', nilai)}
+                    galat={formulir.errors.HargaTahunan}
+                />
+                <BidangTanggal
+                    label="Berlaku mulai (TTTT-BB-HH)"
+                    nilai={formulir.data.BerlakuMulai}
+                    saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
+                    galat={formulir.errors.BerlakuMulai}
+                />
+                <div className="sm:col-span-3">
+                    <KotakCentang
+                        label="Terapkan juga ke pelanggan lama (tanpa penguncian harga lama)"
+                        nilai={formulir.data.TerapkanKePelangganLama}
+                        saatBerubah={(nilai) => formulir.setData('TerapkanKePelangganLama', nilai)}
+                    />
+                </div>
+                <DialogFooter className="sm:col-span-3 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan draf harga
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -261,15 +264,26 @@ function FormTinjauHarga({ alamat, harga, saatSelesai }: { alamat: string; harga
     };
 
     return (
-        <section className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                Tinjau harga {FormatRupiah(harga.HargaBulanan)}/bulan mulai {FormatTanggal(harga.BerlakuMulai)}
-            </h2>
-            <p className="text-isi text-teks-sekunder">
-                {harga.TerapkanKePelangganLama
+        <DialogKonfirmasi
+            judul={`Tinjau harga ${FormatRupiah(harga.HargaBulanan)}/bulan mulai ${FormatTanggal(harga.BerlakuMulai)}`}
+            deskripsi={
+                harga.TerapkanKePelangganLama
                     ? 'Harga ini juga berlaku untuk pelanggan lama pada tagihan berikutnya.'
-                    : 'Pelanggan lama tetap memakai harga lamanya.'}
-            </p>
+                    : 'Pelanggan lama tetap memakai harga lamanya.'
+            }
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
+            aksi={
+                <>
+                    <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
+                        Terbitkan harga
+                    </Tombol>
+                    <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
+                        Tolak harga
+                    </Tombol>
+                </>
+            }
+        >
             <BidangTeks
                 label="Catatan (wajib bila menolak)"
                 nilai={formulir.data.Catatan}
@@ -277,17 +291,6 @@ function FormTinjauHarga({ alamat, harga, saatSelesai }: { alamat: string; harga
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-            <div className="flex gap-2">
-                <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
-                    Terbitkan harga
-                </Tombol>
-                <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
-                    Tolak harga
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </section>
+        </DialogKonfirmasi>
     );
 }
