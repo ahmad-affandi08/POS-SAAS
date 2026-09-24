@@ -1,9 +1,13 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Label } from '@/Komponen/Ui/label';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Switch } from '@/Komponen/Ui/switch';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -97,6 +101,7 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
             AturKartuTerakhir(false);
         },
     };
+    const idSaklar = useId();
     const UbahStatus = (aksi: 'aktifkan' | 'nonaktifkan') => {
         if (konfigurasi) {
             AturKartuTerakhir(true);
@@ -105,9 +110,11 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
     };
 
     return (
-        <article className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-5">
-            <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-label font-semibold text-teks-utama">{slot.Lingkungan}</h3>
+        <Card className="gap-3 py-5">
+            <CardHeader className="flex flex-wrap items-center gap-2 px-5">
+                <CardTitle>
+                    <h3 className="text-label font-semibold text-teks-utama">{slot.Lingkungan}</h3>
+                </CardTitle>
                 {slot.LingkunganServer ? <LabelStatus jenis="netral" teks="Dipakai server ini" /> : null}
                 {konfigurasi ? (
                     <>
@@ -121,88 +128,92 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
                 ) : (
                     <LabelStatus jenis="netral" teks="Belum diatur" />
                 )}
-            </div>
-
-            {konfigurasi ? (
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-keterangan sm:grid-cols-2">
-                    {slot.BidangPengaturan.map((bidang) => (
-                        <div key={bidang.Kunci} className="flex flex-col">
-                            <dt className="text-teks-sekunder">{bidang.Label}</dt>
-                            <dd className="break-all text-teks-utama">
-                                {String(konfigurasi.Pengaturan[bidang.Kunci] ?? '-')}
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 px-5">
+                {konfigurasi ? (
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-keterangan sm:grid-cols-2">
+                        {slot.BidangPengaturan.map((bidang) => (
+                            <div key={bidang.Kunci} className="flex flex-col">
+                                <dt className="text-teks-sekunder">{bidang.Label}</dt>
+                                <dd className="break-all text-teks-utama">
+                                    {String(konfigurasi.Pengaturan[bidang.Kunci] ?? '-')}
+                                </dd>
+                            </div>
+                        ))}
+                        {slot.BidangKredensial.map((bidang) => (
+                            <div key={bidang.Kunci} className="flex flex-col">
+                                <dt className="text-teks-sekunder">{bidang.Label}</dt>
+                                <dd className="font-mono text-teks-utama">
+                                    {konfigurasi.PetunjukKredensial[bidang.Kunci] ?? '••••'}
+                                </dd>
+                            </div>
+                        ))}
+                        <div className="flex flex-col sm:col-span-2">
+                            <dt className="text-teks-sekunder">Tes koneksi terakhir</dt>
+                            <dd className="text-teks-utama">
+                                {konfigurasi.HasilUji && konfigurasi.TerakhirDiujiPada
+                                    ? `${FormatTanggalWaktu(konfigurasi.TerakhirDiujiPada)} · ${konfigurasi.HasilUji.Pesan}`
+                                    : 'Belum pernah diuji'}
                             </dd>
                         </div>
-                    ))}
-                    {slot.BidangKredensial.map((bidang) => (
-                        <div key={bidang.Kunci} className="flex flex-col">
-                            <dt className="text-teks-sekunder">{bidang.Label}</dt>
-                            <dd className="font-mono text-teks-utama">
-                                {konfigurasi.PetunjukKredensial[bidang.Kunci] ?? '••••'}
+                        <div className="flex flex-col sm:col-span-2">
+                            <dt className="text-teks-sekunder">Kredensial terakhir diganti</dt>
+                            <dd className="text-teks-utama">
+                                {FormatTanggal(konfigurasi.KredensialDiubahPada)} · rotasi setiap{' '}
+                                {konfigurasi.RotasiSetiapHari} hari
                             </dd>
                         </div>
-                    ))}
-                    <div className="flex flex-col sm:col-span-2">
-                        <dt className="text-teks-sekunder">Tes koneksi terakhir</dt>
-                        <dd className="text-teks-utama">
-                            {konfigurasi.HasilUji && konfigurasi.TerakhirDiujiPada
-                                ? `${FormatTanggalWaktu(konfigurasi.TerakhirDiujiPada)} · ${konfigurasi.HasilUji.Pesan}`
-                                : 'Belum pernah diuji'}
-                        </dd>
-                    </div>
-                    <div className="flex flex-col sm:col-span-2">
-                        <dt className="text-teks-sekunder">Kredensial terakhir diganti</dt>
-                        <dd className="text-teks-utama">
-                            {FormatTanggal(konfigurasi.KredensialDiubahPada)} · rotasi setiap{' '}
-                            {konfigurasi.RotasiSetiapHari} hari
-                        </dd>
-                    </div>
-                </dl>
-            ) : (
-                <p className="text-keterangan text-teks-sekunder">
-                    Belum ada konfigurasi {slot.Lingkungan.toLowerCase()} untuk {slot.LabelJenis.toLowerCase()}.
-                </p>
-            )}
+                    </dl>
+                ) : (
+                    <p className="text-keterangan text-teks-sekunder">
+                        Belum ada konfigurasi {slot.Lingkungan.toLowerCase()} untuk {slot.LabelJenis.toLowerCase()}.
+                    </p>
+                )}
 
-            {bolehKelola && !sunting ? (
-                <div className="flex flex-col gap-3">
-                    {konfigurasi && produksi ? (
-                        <BidangTeks
-                            label="Alasan (wajib untuk produksi)"
-                            nilai={alasan}
-                            saatBerubah={AturAlasan}
-                            keterangan="Dipakai saat mengaktifkan atau menonaktifkan."
-                            galat={galatAlasan}
-                        />
-                    ) : null}
-                    <div className="flex flex-wrap gap-2">
-                        <Tombol varian="sekunder" onClick={() => AturSunting(true)}>
-                            {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'}
-                        </Tombol>
+                {bolehKelola && !sunting ? (
+                    <div className="flex flex-col gap-3">
+                        {konfigurasi && produksi ? (
+                            <BidangTeks
+                                label="Alasan (wajib untuk produksi)"
+                                nilai={alasan}
+                                saatBerubah={AturAlasan}
+                                keterangan="Dipakai saat mengaktifkan atau menonaktifkan."
+                                galat={galatAlasan}
+                            />
+                        ) : null}
+                        <div className="flex flex-wrap gap-2">
+                            <Tombol varian="sekunder" onClick={() => AturSunting(true)}>
+                                {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'}
+                            </Tombol>
+                            {konfigurasi ? (
+                                <Tombol
+                                    varian="sekunder"
+                                    memproses={memproses}
+                                    onClick={() => router.post(`/integrasi/${konfigurasi.Uuid}/uji`, {}, opsiKirim)}
+                                >
+                                    Uji koneksi
+                                </Tombol>
+                            ) : null}
+                        </div>
                         {konfigurasi ? (
-                            <Tombol
-                                varian="sekunder"
-                                memproses={memproses}
-                                onClick={() => router.post(`/integrasi/${konfigurasi.Uuid}/uji`, {}, opsiKirim)}
-                            >
-                                Uji koneksi
-                            </Tombol>
-                        ) : null}
-                        {konfigurasi && !konfigurasi.Aktif ? (
-                            <Tombol memproses={memproses} onClick={() => UbahStatus('aktifkan')}>
-                                Aktifkan
-                            </Tombol>
-                        ) : null}
-                        {konfigurasi?.Aktif ? (
-                            <Tombol varian="bahaya" memproses={memproses} onClick={() => UbahStatus('nonaktifkan')}>
-                                Nonaktifkan
-                            </Tombol>
+                            <div className="flex items-center gap-2">
+                                <Switch
+                                    id={idSaklar}
+                                    checked={konfigurasi.Aktif}
+                                    disabled={memproses}
+                                    aria-busy={memproses || undefined}
+                                    onCheckedChange={(aktif) => UbahStatus(aktif ? 'aktifkan' : 'nonaktifkan')}
+                                />
+                                <Label htmlFor={idSaklar} className="text-label font-semibold text-teks-utama">
+                                    Integrasi {slot.Lingkungan.toLowerCase()} aktif
+                                </Label>
+                            </div>
                         ) : null}
                     </div>
-                </div>
-            ) : null}
-
+                ) : null}
+            </CardContent>
             {sunting ? <FormIntegrasi slot={slot} saatSelesai={() => AturSunting(false)} /> : null}
-        </article>
+        </Card>
     );
 }
 
@@ -238,78 +249,108 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
     };
 
     return (
-        <form onSubmit={Kirim} className="grid gap-3 border-t border-garis pt-4 sm:grid-cols-2" noValidate>
-            {slot.BidangPengaturan.map((bidang) =>
-                bidang.Jenis === 'Pilihan' ? (
-                    <BidangPilihan
-                        key={bidang.Kunci}
-                        label={bidang.Label}
-                        nilai={formulir.data.Pengaturan[bidang.Kunci] ?? ''}
-                        opsi={(bidang.Opsi ?? []).map((opsi) => ({ Nilai: opsi, Label: opsi.toUpperCase() }))}
-                        saatBerubah={(nilai) =>
-                            formulir.setData('Pengaturan', { ...formulir.data.Pengaturan, [bidang.Kunci]: nilai })
-                        }
-                        galat={galat[`Pengaturan.${bidang.Kunci}`]}
-                    />
-                ) : (
+        <Sheet
+            open
+            onOpenChange={(terbuka) => {
+                if (!terbuka) {
+                    saatSelesai();
+                }
+            }}
+        >
+            <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                <SheetHeader>
+                    <SheetTitle className="text-subjudul text-teks-utama">
+                        {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'} {slot.LabelJenis} · {slot.Lingkungan}
+                    </SheetTitle>
+                    <SheetDescription>
+                        {slot.Penyedia.Label}. Kredensial disimpan terenkripsi dan tidak pernah ditampilkan ulang.
+                    </SheetDescription>
+                </SheetHeader>
+                {galat.Umum ? (
+                    <div className="px-4">
+                        <Pemberitahuan jenis="bahaya">{galat.Umum}</Pemberitahuan>
+                    </div>
+                ) : null}
+                <form onSubmit={Kirim} className="grid gap-3 px-4 sm:grid-cols-2" noValidate>
+                    {slot.BidangPengaturan.map((bidang) =>
+                        bidang.Jenis === 'Pilihan' ? (
+                            <BidangPilihan
+                                key={bidang.Kunci}
+                                label={bidang.Label}
+                                nilai={formulir.data.Pengaturan[bidang.Kunci] ?? ''}
+                                opsi={(bidang.Opsi ?? []).map((opsi) => ({ Nilai: opsi, Label: opsi.toUpperCase() }))}
+                                saatBerubah={(nilai) =>
+                                    formulir.setData('Pengaturan', {
+                                        ...formulir.data.Pengaturan,
+                                        [bidang.Kunci]: nilai,
+                                    })
+                                }
+                                galat={galat[`Pengaturan.${bidang.Kunci}`]}
+                            />
+                        ) : (
+                            <BidangTeks
+                                key={bidang.Kunci}
+                                label={bidang.Label}
+                                {...(bidang.Keterangan ? { keterangan: bidang.Keterangan } : {})}
+                                jenis={bidang.Jenis === 'Email' ? 'email' : 'text'}
+                                inputMode={bidang.Jenis === 'Angka' ? 'numeric' : undefined}
+                                nilai={formulir.data.Pengaturan[bidang.Kunci] ?? ''}
+                                saatBerubah={(nilai) =>
+                                    formulir.setData('Pengaturan', {
+                                        ...formulir.data.Pengaturan,
+                                        [bidang.Kunci]: nilai,
+                                    })
+                                }
+                                galat={galat[`Pengaturan.${bidang.Kunci}`]}
+                            />
+                        ),
+                    )}
+                    {slot.BidangKredensial.map((bidang) => (
+                        <BidangTeks
+                            key={bidang.Kunci}
+                            label={bidang.Label}
+                            jenis="password"
+                            autoComplete="new-password"
+                            keterangan={
+                                konfigurasi
+                                    ? `Tersimpan ${konfigurasi.PetunjukKredensial[bidang.Kunci] ?? '••••'}. Kosongkan bila tidak diganti.`
+                                    : 'Wajib diisi.'
+                            }
+                            nilai={formulir.data.Kredensial[bidang.Kunci] ?? ''}
+                            saatBerubah={(nilai) =>
+                                formulir.setData('Kredensial', { ...formulir.data.Kredensial, [bidang.Kunci]: nilai })
+                            }
+                            galat={galat[`Kredensial.${bidang.Kunci}`]}
+                        />
+                    ))}
                     <BidangTeks
-                        key={bidang.Kunci}
-                        label={bidang.Label}
-                        {...(bidang.Keterangan ? { keterangan: bidang.Keterangan } : {})}
-                        jenis={bidang.Jenis === 'Email' ? 'email' : 'text'}
-                        inputMode={bidang.Jenis === 'Angka' ? 'numeric' : undefined}
-                        nilai={formulir.data.Pengaturan[bidang.Kunci] ?? ''}
-                        saatBerubah={(nilai) =>
-                            formulir.setData('Pengaturan', { ...formulir.data.Pengaturan, [bidang.Kunci]: nilai })
-                        }
-                        galat={galat[`Pengaturan.${bidang.Kunci}`]}
+                        label="Rotasi kunci setiap (hari)"
+                        inputMode="numeric"
+                        nilai={formulir.data.RotasiSetiapHari}
+                        saatBerubah={(nilai) => formulir.setData('RotasiSetiapHari', nilai)}
+                        galat={formulir.errors.RotasiSetiapHari}
                     />
-                ),
-            )}
-            {slot.BidangKredensial.map((bidang) => (
-                <BidangTeks
-                    key={bidang.Kunci}
-                    label={bidang.Label}
-                    jenis="password"
-                    autoComplete="new-password"
-                    keterangan={
-                        konfigurasi
-                            ? `Tersimpan ${konfigurasi.PetunjukKredensial[bidang.Kunci] ?? '••••'}. Kosongkan bila tidak diganti.`
-                            : 'Wajib diisi.'
-                    }
-                    nilai={formulir.data.Kredensial[bidang.Kunci] ?? ''}
-                    saatBerubah={(nilai) =>
-                        formulir.setData('Kredensial', { ...formulir.data.Kredensial, [bidang.Kunci]: nilai })
-                    }
-                    galat={galat[`Kredensial.${bidang.Kunci}`]}
-                />
-            ))}
-            <BidangTeks
-                label="Rotasi kunci setiap (hari)"
-                inputMode="numeric"
-                nilai={formulir.data.RotasiSetiapHari}
-                saatBerubah={(nilai) => formulir.setData('RotasiSetiapHari', nilai)}
-                galat={formulir.errors.RotasiSetiapHari}
-            />
-            {slot.Lingkungan === 'Produksi' ? (
-                <BidangTeks
-                    label="Alasan perubahan"
-                    nilai={formulir.data.Alasan}
-                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                    galat={formulir.errors.Alasan}
-                />
-            ) : null}
-            <p className="text-keterangan text-teks-sekunder sm:col-span-2">
-                Setelah disimpan, integrasi menjadi nonaktif sampai tes koneksi berhasil.
-            </p>
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan konfigurasi
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                    {slot.Lingkungan === 'Produksi' ? (
+                        <BidangTeks
+                            label="Alasan perubahan"
+                            nilai={formulir.data.Alasan}
+                            saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                            galat={formulir.errors.Alasan}
+                        />
+                    ) : null}
+                    <p className="text-keterangan text-teks-sekunder sm:col-span-2">
+                        Setelah disimpan, integrasi menjadi nonaktif sampai tes koneksi berhasil.
+                    </p>
+                    <SheetFooter className="flex-row px-0 sm:col-span-2">
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            Simpan konfigurasi
+                        </Tombol>
+                        <Tombol varian="sekunder" onClick={saatSelesai}>
+                            Batal
+                        </Tombol>
+                    </SheetFooter>
+                </form>
+            </SheetContent>
+        </Sheet>
     );
 }

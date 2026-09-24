@@ -2,8 +2,12 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import FormIsiBisnis from '@/Komponen/Pengelola/TemplateSektor/FormIsiBisnis';
+import { Button } from '@/Komponen/Ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
+import { cn } from '@/Komponen/Ui/utils';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -54,22 +58,23 @@ export default function HalamanEditorTemplate({ Template, Versi, DaftarVersi, Ad
     const url = `/template-sektor/${encodeURIComponent(Template.Kode)}/versi/${Versi.Versi}`;
     const bolehKelolaDraf = PunyaIzin(pengguna, IzinPengelola.TemplateDrafKelola);
     const [memproses, AturMemproses] = useState(false);
+    const [konfirmasi, AturKonfirmasi] = useState<'terbitkan' | 'hapus' | null>(null);
     const opsiKirim = {
         preserveScroll: true,
         onStart: () => AturMemproses(true),
         onFinish: () => AturMemproses(false),
     };
+    // Dialog ditutup setelah permintaan selesai; galat umum tampil di halaman seperti sebelumnya.
+    const opsiKonfirmasi = {
+        ...opsiKirim,
+        onFinish: () => {
+            AturMemproses(false);
+            AturKonfirmasi(null);
+        },
+    };
 
-    const Terbitkan = () => {
-        if (window.confirm(`Terbitkan ${Template.Kode} versi ${Versi.Versi}? Versi terbit tidak bisa diubah lagi.`)) {
-            router.post(`${url}/terbitkan`, {}, opsiKirim);
-        }
-    };
-    const HapusDraf = () => {
-        if (window.confirm(`Hapus draf versi ${Versi.Versi}? Perubahan di draf ini hilang.`)) {
-            router.delete(url, opsiKirim);
-        }
-    };
+    const Terbitkan = () => router.post(`${url}/terbitkan`, {}, opsiKonfirmasi);
+    const HapusDraf = () => router.delete(url, opsiKonfirmasi);
 
     return (
         <TataLetakPengelola
@@ -86,7 +91,7 @@ export default function HalamanEditorTemplate({ Template, Versi, DaftarVersi, Ad
                         </Tombol>
                     ) : null}
                     {draf && PunyaIzin(pengguna, IzinPengelola.TemplateTerbitkan) ? (
-                        <Tombol memproses={memproses} onClick={Terbitkan}>
+                        <Tombol memproses={memproses} onClick={() => AturKonfirmasi('terbitkan')}>
                             Terbitkan
                         </Tombol>
                     ) : null}
@@ -96,33 +101,62 @@ export default function HalamanEditorTemplate({ Template, Versi, DaftarVersi, Ad
                         </Tombol>
                     ) : null}
                     {draf && bolehKelolaDraf ? (
-                        <Tombol varian="bahaya" memproses={memproses} onClick={HapusDraf}>
+                        <Tombol varian="bahaya" memproses={memproses} onClick={() => AturKonfirmasi('hapus')}>
                             Hapus draf
                         </Tombol>
                     ) : null}
                 </div>
             }
         >
+            {konfirmasi === 'terbitkan' ? (
+                <DialogKonfirmasi
+                    judul={`Terbitkan ${Template.Kode} versi ${Versi.Versi}?`}
+                    deskripsi="Versi terbit tidak bisa diubah lagi."
+                    saatTutup={() => AturKonfirmasi(null)}
+                    aksi={
+                        <Tombol memproses={memproses} onClick={Terbitkan}>
+                            Terbitkan
+                        </Tombol>
+                    }
+                />
+            ) : null}
+            {konfirmasi === 'hapus' ? (
+                <DialogKonfirmasi
+                    judul={`Hapus draf versi ${Versi.Versi}?`}
+                    deskripsi="Perubahan di draf ini hilang."
+                    saatTutup={() => AturKonfirmasi(null)}
+                    aksi={
+                        <Tombol varian="bahaya" memproses={memproses} onClick={HapusDraf}>
+                            Hapus draf
+                        </Tombol>
+                    }
+                />
+            ) : null}
             <nav aria-label="Versi template" className="flex flex-wrap items-center gap-2">
-                <Link href="/template-sektor" className="text-label font-semibold text-brand underline">
-                    Semua template
-                </Link>
+                <Button asChild variant="link" className="h-auto px-0 text-label font-semibold">
+                    <Link href="/template-sektor">Semua template</Link>
+                </Button>
                 <span aria-hidden className="text-teks-sekunder">
                     ·
                 </span>
                 {DaftarVersi.map((baris) => (
-                    <Link
+                    <Button
                         key={baris.Versi}
-                        href={`/template-sektor/${encodeURIComponent(Template.Kode)}/versi/${baris.Versi}`}
-                        aria-current={baris.Versi === Versi.Versi ? 'page' : undefined}
-                        className={`rounded-kontrol border px-3 py-1 text-label font-semibold outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                            baris.Versi === Versi.Versi
-                                ? 'border-brand text-teks-utama'
-                                : 'border-garis text-teks-sekunder'
-                        }`}
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                            'text-label font-semibold',
+                            baris.Versi === Versi.Versi ? 'border-brand text-teks-utama' : 'text-teks-sekunder',
+                        )}
                     >
-                        Versi {baris.Versi} · {baris.Status}
-                    </Link>
+                        <Link
+                            href={`/template-sektor/${encodeURIComponent(Template.Kode)}/versi/${baris.Versi}`}
+                            aria-current={baris.Versi === Versi.Versi ? 'page' : undefined}
+                        >
+                            Versi {baris.Versi} · {baris.Status}
+                        </Link>
+                    </Button>
                 ))}
             </nav>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
@@ -139,24 +173,35 @@ export default function HalamanEditorTemplate({ Template, Versi, DaftarVersi, Ad
                     memperbaikinya.
                 </Pemberitahuan>
             )}
-            <FormIsiBisnis
-                key={`bisnis-${Versi.Versi}`}
-                url={url}
-                isi={Versi.Isi}
-                pilihan={Pilihan}
-                bolehUbah={draf && PunyaIzin(pengguna, IzinPengelola.TemplateIsiUbah)}
-            />
-            <FormAkun
-                key={`akun-${Versi.Versi}`}
-                url={url}
-                isi={{
-                    Akun: Versi.Isi.Akun,
-                    PemetaanAkun: Array.isArray(Versi.Isi.PemetaanAkun) ? {} : Versi.Isi.PemetaanAkun,
-                    KelompokPajak: Versi.Isi.KelompokPajak,
-                }}
-                pilihan={Pilihan}
-                bolehUbah={draf && PunyaIzin(pengguna, IzinPengelola.TemplateAkunUbah)}
-            />
+            {/* Kedua panel tetap terpasang (forceMount) agar isian yang belum disimpan tidak hilang saat pindah tab. */}
+            <Tabs defaultValue="isi-bisnis">
+                <TabsList>
+                    <TabsTrigger value="isi-bisnis">Isi bisnis</TabsTrigger>
+                    <TabsTrigger value="akun">Akun & pajak</TabsTrigger>
+                </TabsList>
+                <TabsContent value="isi-bisnis" forceMount className="data-[state=inactive]:hidden">
+                    <FormIsiBisnis
+                        key={`bisnis-${Versi.Versi}`}
+                        url={url}
+                        isi={Versi.Isi}
+                        pilihan={Pilihan}
+                        bolehUbah={draf && PunyaIzin(pengguna, IzinPengelola.TemplateIsiUbah)}
+                    />
+                </TabsContent>
+                <TabsContent value="akun" forceMount className="data-[state=inactive]:hidden">
+                    <FormAkun
+                        key={`akun-${Versi.Versi}`}
+                        url={url}
+                        isi={{
+                            Akun: Versi.Isi.Akun,
+                            PemetaanAkun: Array.isArray(Versi.Isi.PemetaanAkun) ? {} : Versi.Isi.PemetaanAkun,
+                            KelompokPajak: Versi.Isi.KelompokPajak,
+                        }}
+                        pilihan={Pilihan}
+                        bolehUbah={draf && PunyaIzin(pengguna, IzinPengelola.TemplateAkunUbah)}
+                    />
+                </TabsContent>
+            </Tabs>
         </TataLetakPengelola>
     );
 }

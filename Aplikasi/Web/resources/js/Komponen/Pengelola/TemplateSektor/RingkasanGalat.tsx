@@ -1,4 +1,4 @@
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { Alert, AlertDescription, AlertTitle } from '@/Komponen/Ui/alert';
 
 /** Galat bentuk isian dari server (misal `Akun.3.Kode`) diringkas di atas formulir. */
 export default function RingkasanGalat({ galat }: { galat: Record<string, string | undefined> }) {
@@ -9,12 +9,15 @@ export default function RingkasanGalat({ galat }: { galat: Record<string, string
     }
 
     return (
-        <Pemberitahuan jenis="bahaya" judul="Periksa kembali isian">
-            <ul className="list-disc pl-5">
-                {daftar.map(([kunci, pesan]) => (
-                    <li key={kunci}>{pesan}</li>
-                ))}
-            </ul>
-        </Pemberitahuan>
+        <Alert variant="destructive" className="border-bahaya">
+            <AlertTitle className="text-label font-semibold text-teks-utama">Periksa kembali isian</AlertTitle>
+            <AlertDescription className="text-isi text-teks-sekunder">
+                <ul className="list-disc pl-5">
+                    {daftar.map(([kunci, pesan]) => (
+                        <li key={kunci}>{pesan}</li>
+                    ))}
+                </ul>
+            </AlertDescription>
+        </Alert>
     );
 }

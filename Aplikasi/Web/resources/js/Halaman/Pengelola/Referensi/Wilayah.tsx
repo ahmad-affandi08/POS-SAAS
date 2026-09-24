@@ -4,9 +4,14 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import {
     IzinPengelola,
@@ -86,55 +91,44 @@ export default function HalamanWilayah({ Wilayah, Saring, PilihanTingkat, Piliha
             </form>
 
             {Wilayah.Data.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada wilayah">
+                <KeadaanKosong judul="Belum ada wilayah">
                     {Saring.Kata || Saring.Tingkat
                         ? 'Tidak ada wilayah yang cocok dengan pencarian.'
                         : 'Muat data resmi dengan perintah server: php artisan pengelola:impor-wilayah wilayah.csv'}
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Daftar wilayah</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Kode
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Nama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Tingkat
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Zona waktu
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Wilayah.Data.map((wilayah) => (
-                                <tr key={wilayah.Kode} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label">{wilayah.Kode}</td>
-                                    <td className="px-4 py-2 text-teks-utama">{wilayah.Nama}</td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
-                                        {labelTingkat.get(wilayah.Tingkat) ?? wilayah.Tingkat}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">{wilayah.ZonaWaktu}</td>
-                                    <td className="px-4 py-2 text-right">
-                                        {bolehKelola ? (
-                                            <Tombol varian="sekunder" onClick={() => AturSunting(wilayah)}>
-                                                Ubah
-                                            </Tombol>
-                                        ) : null}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan="Daftar wilayah">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Kode</TableHead>
+                            <TableHead scope="col">Nama</TableHead>
+                            <TableHead scope="col">Tingkat</TableHead>
+                            <TableHead scope="col">Zona waktu</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Wilayah.Data.map((wilayah) => (
+                            <TableRow key={wilayah.Kode}>
+                                <TableCell className="font-mono text-label">{wilayah.Kode}</TableCell>
+                                <TableCell className="text-teks-utama">{wilayah.Nama}</TableCell>
+                                <TableCell className="text-teks-sekunder">
+                                    {labelTingkat.get(wilayah.Tingkat) ?? wilayah.Tingkat}
+                                </TableCell>
+                                <TableCell className="text-teks-sekunder">{wilayah.ZonaWaktu}</TableCell>
+                                <TableCell className="text-right">
+                                    {bolehKelola ? (
+                                        <Button variant="outline" size="sm" onClick={() => AturSunting(wilayah)}>
+                                            Ubah
+                                        </Button>
+                                    ) : null}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
             <Paginasi
                 alamat="/referensi/wilayah"
@@ -176,59 +170,58 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul={wilayah === null ? 'Tambah wilayah' : `Ubah ${wilayah.Nama}`}
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {wilayah === null ? 'Tambah wilayah' : `Ubah ${wilayah.Nama}`}
-            </h2>
-            <BidangTeks
-                label="Kode resmi"
-                kode
-                keterangan="Provinsi 2 digit (33), kabupaten/kota 33.74. Tidak bisa diubah."
-                nilai={formulir.data.Kode}
-                saatBerubah={(nilai) => formulir.setData('Kode', nilai)}
-                galat={formulir.errors.Kode}
-                disabled={wilayah !== null}
-            />
-            <BidangTeks
-                label="Nama"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-            />
-            <BidangPilihan
-                label="Tingkat"
-                nilai={formulir.data.Tingkat}
-                opsi={pilihanTingkat}
-                saatBerubah={(nilai) => formulir.setData('Tingkat', nilai)}
-                galat={formulir.errors.Tingkat}
-            />
-            <BidangTeks
-                label="Kode provinsi induk"
-                kode
-                keterangan="Kosongkan untuk provinsi."
-                nilai={formulir.data.KodeInduk}
-                saatBerubah={(nilai) => formulir.setData('KodeInduk', nilai)}
-                galat={formulir.errors.KodeInduk}
-            />
-            <BidangPilihan
-                label="Zona waktu"
-                nilai={formulir.data.ZonaWaktu}
-                opsi={pilihanZonaWaktu.map((zona) => ({ Nilai: zona, Label: zona }))}
-                saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
-                galat={formulir.errors.ZonaWaktu}
-            />
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan wilayah
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangTeks
+                    label="Kode resmi"
+                    kode
+                    keterangan="Provinsi 2 digit (33), kabupaten/kota 33.74. Tidak bisa diubah."
+                    nilai={formulir.data.Kode}
+                    saatBerubah={(nilai) => formulir.setData('Kode', nilai)}
+                    galat={formulir.errors.Kode}
+                    disabled={wilayah !== null}
+                />
+                <BidangTeks
+                    label="Nama"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                />
+                <BidangPilihan
+                    label="Tingkat"
+                    nilai={formulir.data.Tingkat}
+                    opsi={pilihanTingkat}
+                    saatBerubah={(nilai) => formulir.setData('Tingkat', nilai)}
+                    galat={formulir.errors.Tingkat}
+                />
+                <BidangTeks
+                    label="Kode provinsi induk"
+                    kode
+                    keterangan="Kosongkan untuk provinsi."
+                    nilai={formulir.data.KodeInduk}
+                    saatBerubah={(nilai) => formulir.setData('KodeInduk', nilai)}
+                    galat={formulir.errors.KodeInduk}
+                />
+                <BidangPilihan
+                    label="Zona waktu"
+                    nilai={formulir.data.ZonaWaktu}
+                    opsi={pilihanZonaWaktu.map((zona) => ({ Nilai: zona, Label: zona }))}
+                    saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
+                    galat={formulir.errors.ZonaWaktu}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan wilayah
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }

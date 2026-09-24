@@ -6,9 +6,15 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
@@ -50,70 +56,59 @@ export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
                 />
             ) : null}
             {Kupon.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada kupon">
+                <KeadaanKosong judul="Belum ada kupon">
                     Buat kupon untuk promo langganan, misal diskon 50% selama 3 bulan.
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Daftar kupon langganan</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Kode
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
-                                    Diskon
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Ketentuan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Kupon.map((kupon) => (
-                                <tr key={kupon.Kode} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="px-4 py-3 font-mono text-label">{kupon.Kode}</td>
-                                    <td className="px-4 py-3 text-right tabular-nums">
-                                        {kupon.Jenis === 'Persen'
-                                            ? `${FormatPersen(kupon.Nilai)}%`
-                                            : FormatRupiah(kupon.Nilai)}
-                                    </td>
-                                    <td className="px-4 py-3 text-keterangan text-teks-sekunder">
-                                        <span className="block">{kupon.DurasiBulan} bulan</span>
-                                        <span className="block">Kuota: {kupon.Kuota ?? 'tanpa batas'}</span>
-                                        <span className="block">
-                                            Paket: {kupon.DaftarKodePaket?.join(', ') ?? 'semua'}
-                                        </span>
-                                        <span className="block">
-                                            Berlaku sampai:{' '}
-                                            {kupon.BerlakuSampai ? FormatTanggal(kupon.BerlakuSampai) : 'tanpa batas'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <LabelStatus
-                                            jenis={kupon.Aktif ? 'sukses' : 'netral'}
-                                            teks={kupon.Aktif ? 'Aktif' : 'Nonaktif'}
-                                        />
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        {bolehKelola ? (
-                                            <Tombol varian="sekunder" onClick={() => AturSunting(kupon)}>
-                                                Ubah
-                                            </Tombol>
-                                        ) : null}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan="Daftar kupon langganan">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Kode</TableHead>
+                            <TableHead scope="col" className="text-right">
+                                Diskon
+                            </TableHead>
+                            <TableHead scope="col">Ketentuan</TableHead>
+                            <TableHead scope="col">Status</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Kupon.map((kupon) => (
+                            <TableRow key={kupon.Kode}>
+                                <TableCell className="font-mono text-label">{kupon.Kode}</TableCell>
+                                <TableCell className="text-right tabular-nums">
+                                    {kupon.Jenis === 'Persen'
+                                        ? `${FormatPersen(kupon.Nilai)}%`
+                                        : FormatRupiah(kupon.Nilai)}
+                                </TableCell>
+                                <TableCell className="text-keterangan text-teks-sekunder">
+                                    <span className="block">{kupon.DurasiBulan} bulan</span>
+                                    <span className="block">Kuota: {kupon.Kuota ?? 'tanpa batas'}</span>
+                                    <span className="block">Paket: {kupon.DaftarKodePaket?.join(', ') ?? 'semua'}</span>
+                                    <span className="block">
+                                        Berlaku sampai:{' '}
+                                        {kupon.BerlakuSampai ? FormatTanggal(kupon.BerlakuSampai) : 'tanpa batas'}
+                                    </span>
+                                </TableCell>
+                                <TableCell>
+                                    <LabelStatus
+                                        jenis={kupon.Aktif ? 'sukses' : 'netral'}
+                                        teks={kupon.Aktif ? 'Aktif' : 'Nonaktif'}
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {bolehKelola ? (
+                                        <Button variant="outline" size="sm" onClick={() => AturSunting(kupon)}>
+                                            Ubah
+                                        </Button>
+                                    ) : null}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -160,83 +155,82 @@ function FormKupon({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul={kupon === null ? 'Buat kupon' : `Ubah ${kupon.Kode}`}
+            saatTutup={saatSelesai}
+            lebar="lebar"
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {kupon === null ? 'Buat kupon' : `Ubah ${kupon.Kode}`}
-            </h2>
-            <BidangTeks
-                label="Kode"
-                kode
-                keterangan="Huruf besar/angka/tanda hubung. Tidak bisa diubah."
-                nilai={formulir.data.Kode}
-                saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
-                galat={formulir.errors.Kode}
-                disabled={kupon !== null}
-            />
-            <BidangPilihan
-                label="Jenis diskon"
-                nilai={formulir.data.Jenis}
-                opsi={[
-                    { Nilai: 'Persen', Label: 'Persen (%)' },
-                    { Nilai: 'Nominal', Label: 'Nominal (Rp)' },
-                ]}
-                saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
-                galat={formulir.errors.Jenis}
-            />
-            <BidangTeks
-                label={formulir.data.Jenis === 'Persen' ? 'Diskon (%)' : 'Diskon (Rp)'}
-                inputMode="decimal"
-                nilai={formulir.data.Nilai}
-                saatBerubah={(nilai) => formulir.setData('Nilai', nilai)}
-                galat={formulir.errors.Nilai}
-            />
-            <BidangTeks
-                label="Durasi (bulan)"
-                inputMode="numeric"
-                nilai={formulir.data.DurasiBulan}
-                saatBerubah={(nilai) => formulir.setData('DurasiBulan', nilai)}
-                galat={formulir.errors.DurasiBulan}
-            />
-            <BidangTeks
-                label="Kuota pemakaian (opsional)"
-                inputMode="numeric"
-                nilai={formulir.data.Kuota}
-                saatBerubah={(nilai) => formulir.setData('Kuota', nilai)}
-                galat={formulir.errors.Kuota}
-            />
-            <BidangTeks
-                label="Berlaku sampai (TTTT-BB-HH, opsional)"
-                kode
-                nilai={formulir.data.BerlakuSampai}
-                saatBerubah={(nilai) => formulir.setData('BerlakuSampai', nilai)}
-                galat={formulir.errors.BerlakuSampai}
-            />
-            <div className="sm:col-span-2">
-                <GrupCentang
-                    legenda="Berlaku untuk paket (kosongkan untuk semua paket)"
-                    opsi={paket.map((item) => ({ nilai: item.Kode, label: item.Nama }))}
-                    terpilih={formulir.data.DaftarKodePaket}
-                    saatBerubah={(terpilih) => formulir.setData('DaftarKodePaket', terpilih)}
-                    galat={formulir.errors.DaftarKodePaket}
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangTeks
+                    label="Kode"
+                    kode
+                    keterangan="Huruf besar/angka/tanda hubung. Tidak bisa diubah."
+                    nilai={formulir.data.Kode}
+                    saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
+                    galat={formulir.errors.Kode}
+                    disabled={kupon !== null}
                 />
-            </div>
-            <KotakCentang
-                label="Aktif"
-                nilai={formulir.data.Aktif}
-                saatBerubah={(nilai) => formulir.setData('Aktif', nilai)}
-            />
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan kupon
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                <BidangPilihan
+                    label="Jenis diskon"
+                    nilai={formulir.data.Jenis}
+                    opsi={[
+                        { Nilai: 'Persen', Label: 'Persen (%)' },
+                        { Nilai: 'Nominal', Label: 'Nominal (Rp)' },
+                    ]}
+                    saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
+                    galat={formulir.errors.Jenis}
+                />
+                <BidangTeks
+                    label={formulir.data.Jenis === 'Persen' ? 'Diskon (%)' : 'Diskon (Rp)'}
+                    inputMode="decimal"
+                    nilai={formulir.data.Nilai}
+                    saatBerubah={(nilai) => formulir.setData('Nilai', nilai)}
+                    galat={formulir.errors.Nilai}
+                />
+                <BidangTeks
+                    label="Durasi (bulan)"
+                    inputMode="numeric"
+                    nilai={formulir.data.DurasiBulan}
+                    saatBerubah={(nilai) => formulir.setData('DurasiBulan', nilai)}
+                    galat={formulir.errors.DurasiBulan}
+                />
+                <BidangTeks
+                    label="Kuota pemakaian (opsional)"
+                    inputMode="numeric"
+                    nilai={formulir.data.Kuota}
+                    saatBerubah={(nilai) => formulir.setData('Kuota', nilai)}
+                    galat={formulir.errors.Kuota}
+                />
+                <BidangTanggal
+                    label="Berlaku sampai (TTTT-BB-HH, opsional)"
+                    nilai={formulir.data.BerlakuSampai}
+                    saatBerubah={(nilai) => formulir.setData('BerlakuSampai', nilai)}
+                    galat={formulir.errors.BerlakuSampai}
+                />
+                <div className="sm:col-span-2">
+                    <GrupCentang
+                        legenda="Berlaku untuk paket (kosongkan untuk semua paket)"
+                        opsi={paket.map((item) => ({ nilai: item.Kode, label: item.Nama }))}
+                        terpilih={formulir.data.DaftarKodePaket}
+                        saatBerubah={(terpilih) => formulir.setData('DaftarKodePaket', terpilih)}
+                        galat={formulir.errors.DaftarKodePaket}
+                    />
+                </div>
+                <KotakCentang
+                    label="Aktif"
+                    nilai={formulir.data.Aktif}
+                    saatBerubah={(nilai) => formulir.setData('Aktif', nilai)}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan kupon
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }

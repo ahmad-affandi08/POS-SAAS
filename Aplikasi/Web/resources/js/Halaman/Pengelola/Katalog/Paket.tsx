@@ -5,7 +5,13 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -76,90 +82,80 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
             {arsip !== null ? <FormArsip key={arsip.Uuid} paket={arsip} saatSelesai={() => AturArsip(null)} /> : null}
 
             {Paket.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada paket">
+                <KeadaanKosong judul="Belum ada paket">
                     Buat paket pertama. Paket baru tersimpan sebagai draf sampai harganya terbit dan paket diaktifkan.
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Daftar paket langganan</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Paket
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
-                                    Harga/bulan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Batas
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Paket.map((paket) => (
-                                <tr key={paket.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="px-4 py-3">
-                                        <p className="font-semibold text-teks-utama">{paket.Nama}</p>
-                                        <p className="font-mono text-keterangan text-teks-sekunder">{paket.Kode}</p>
-                                        <p className="text-keterangan text-teks-sekunder">
-                                            {paket.KunciFitur.length} fitur · trial {paket.MasaTrialHari} hari
-                                        </p>
-                                    </td>
-                                    <td className="px-4 py-3 text-right tabular-nums text-teks-utama">
-                                        {paket.HargaNegosiasi
-                                            ? 'Negosiasi'
-                                            : paket.HargaBulananBerlaku !== null
-                                              ? FormatRupiah(paket.HargaBulananBerlaku)
-                                              : 'Belum ada harga berlaku'}
-                                    </td>
-                                    <td className="px-4 py-3 text-keterangan text-teks-sekunder">
-                                        {KolomBatas.map((kolom) => (
-                                            <span key={kolom} className="block">
-                                                {labelBatas[kolom] ?? kolom}: {paket.Batas[kolom] ?? 'tak terbatas'}
-                                            </span>
-                                        ))}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <LabelStatus
-                                            jenis={labelStatus[paket.Status].jenis}
-                                            teks={labelStatus[paket.Status].teks}
-                                        />
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-col items-end gap-2">
-                                            <Link
-                                                href={`/katalog/paket/${paket.Uuid}/harga`}
-                                                className="text-label font-semibold text-brand underline"
-                                            >
-                                                Kelola harga
-                                            </Link>
-                                            {bolehAjukan && (paket.Status === 'Draf' || bolehSetujui) ? (
-                                                <Tombol varian="sekunder" onClick={() => AturSunting(paket)}>
-                                                    Ubah paket
-                                                </Tombol>
-                                            ) : null}
-                                            {bolehSetujui && paket.Status !== 'Aktif' ? (
-                                                <Tombol onClick={() => Aktifkan(paket)}>Aktifkan paket</Tombol>
-                                            ) : null}
-                                            {bolehSetujui && paket.Status === 'Aktif' ? (
-                                                <Tombol varian="bahaya" onClick={() => AturArsip(paket)}>
-                                                    Arsipkan paket
-                                                </Tombol>
-                                            ) : null}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan="Daftar paket langganan">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Paket</TableHead>
+                            <TableHead scope="col" className="text-right">
+                                Harga/bulan
+                            </TableHead>
+                            <TableHead scope="col">Batas</TableHead>
+                            <TableHead scope="col">Status</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Paket.map((paket) => (
+                            <TableRow key={paket.Uuid}>
+                                <TableCell>
+                                    <p className="font-semibold text-teks-utama">{paket.Nama}</p>
+                                    <p className="font-mono text-keterangan text-teks-sekunder">{paket.Kode}</p>
+                                    <p className="text-keterangan text-teks-sekunder">
+                                        {paket.KunciFitur.length} fitur · trial {paket.MasaTrialHari} hari
+                                    </p>
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-teks-utama">
+                                    {paket.HargaNegosiasi
+                                        ? 'Negosiasi'
+                                        : paket.HargaBulananBerlaku !== null
+                                          ? FormatRupiah(paket.HargaBulananBerlaku)
+                                          : 'Belum ada harga berlaku'}
+                                </TableCell>
+                                <TableCell className="text-keterangan text-teks-sekunder">
+                                    {KolomBatas.map((kolom) => (
+                                        <span key={kolom} className="block">
+                                            {labelBatas[kolom] ?? kolom}: {paket.Batas[kolom] ?? 'tak terbatas'}
+                                        </span>
+                                    ))}
+                                </TableCell>
+                                <TableCell>
+                                    <LabelStatus
+                                        jenis={labelStatus[paket.Status].jenis}
+                                        teks={labelStatus[paket.Status].teks}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <Button asChild variant="link" size="sm" className="h-auto px-0">
+                                            <Link href={`/katalog/paket/${paket.Uuid}/harga`}>Kelola harga</Link>
+                                        </Button>
+                                        {bolehAjukan && (paket.Status === 'Draf' || bolehSetujui) ? (
+                                            <Button variant="outline" size="sm" onClick={() => AturSunting(paket)}>
+                                                Ubah paket
+                                            </Button>
+                                        ) : null}
+                                        {bolehSetujui && paket.Status !== 'Aktif' ? (
+                                            <Button size="sm" onClick={() => Aktifkan(paket)}>
+                                                Aktifkan paket
+                                            </Button>
+                                        ) : null}
+                                        {bolehSetujui && paket.Status === 'Aktif' ? (
+                                            <Button variant="destructive" size="sm" onClick={() => AturArsip(paket)}>
+                                                Arsipkan paket
+                                            </Button>
+                                        ) : null}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -206,108 +202,110 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul={paket === null ? 'Buat paket' : `Ubah ${paket.Nama}`}
+            saatTutup={saatSelesai}
+            lebar="lebar"
+            galatUmum={galat.Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {paket === null ? 'Buat paket' : `Ubah ${paket.Nama}`}
-            </h2>
-            {perluAlasan ? (
-                <div className="sm:col-span-2">
-                    <Pemberitahuan jenis="peringatan" judul="Paket ini sudah dipakai">
-                        Perubahan fitur dan batas langsung berlaku untuk tenant yang memakai paket ini. Harga diubah
-                        lewat halaman Harga.
-                    </Pemberitahuan>
-                </div>
-            ) : null}
-            <BidangTeks
-                label="Kode"
-                kode
-                keterangan="Huruf besar, misal PRO. Tidak bisa diubah."
-                nilai={formulir.data.Kode}
-                saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
-                galat={formulir.errors.Kode}
-                disabled={paket !== null}
-            />
-            <BidangTeks
-                label="Nama"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-            />
-            <BidangTeks
-                label="Masa trial (hari)"
-                inputMode="numeric"
-                nilai={formulir.data.MasaTrialHari}
-                saatBerubah={(nilai) => formulir.setData('MasaTrialHari', nilai)}
-                galat={formulir.errors.MasaTrialHari}
-            />
-            <BidangTeks
-                label="Urutan tampil"
-                inputMode="numeric"
-                nilai={formulir.data.Urutan}
-                saatBerubah={(nilai) => formulir.setData('Urutan', nilai)}
-                galat={formulir.errors.Urutan}
-            />
-            <div className="sm:col-span-2">
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                {perluAlasan ? (
+                    <div className="sm:col-span-2">
+                        <Pemberitahuan jenis="peringatan" judul="Paket ini sudah dipakai">
+                            Perubahan fitur dan batas langsung berlaku untuk tenant yang memakai paket ini. Harga diubah
+                            lewat halaman Harga.
+                        </Pemberitahuan>
+                    </div>
+                ) : null}
                 <BidangTeks
-                    label="Keterangan (opsional)"
-                    nilai={formulir.data.Keterangan}
-                    saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
-                    galat={formulir.errors.Keterangan}
+                    label="Kode"
+                    kode
+                    keterangan="Huruf besar, misal PRO. Tidak bisa diubah."
+                    nilai={formulir.data.Kode}
+                    saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
+                    galat={formulir.errors.Kode}
+                    disabled={paket !== null}
                 />
-            </div>
-            <KotakCentang
-                label="Harga negosiasi (tanpa harga tetap, misal Enterprise)"
-                nilai={formulir.data.HargaNegosiasi}
-                saatBerubah={(nilai) => formulir.setData('HargaNegosiasi', nilai)}
-            />
-            <fieldset className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
-                <legend className="mb-2 text-label font-semibold text-teks-utama">
-                    Batas (kosongkan untuk tak terbatas)
-                </legend>
-                {kolomBatas.map((kolom) => (
-                    <BidangTeks
-                        key={kolom}
-                        label={labelBatas[kolom] ?? kolom}
-                        inputMode="numeric"
-                        nilai={formulir.data.Batas[kolom] ?? ''}
-                        saatBerubah={(nilai) => formulir.setData('Batas', { ...formulir.data.Batas, [kolom]: nilai })}
-                        galat={galat[`Batas.${kolom}`] ?? galat[kolom]}
-                    />
-                ))}
-            </fieldset>
-            <div className="sm:col-span-2">
-                <GrupCentang
-                    legenda="Fitur termasuk"
-                    opsi={fitur.map((item) => ({ nilai: item.Kunci, label: `${item.Nama} (${item.Modul})` }))}
-                    terpilih={formulir.data.KunciFitur}
-                    saatBerubah={(terpilih) => formulir.setData('KunciFitur', terpilih)}
-                    galat={formulir.errors.KunciFitur}
+                <BidangTeks
+                    label="Nama"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
                 />
-            </div>
-            {perluAlasan ? (
+                <BidangTeks
+                    label="Masa trial (hari)"
+                    inputMode="numeric"
+                    nilai={formulir.data.MasaTrialHari}
+                    saatBerubah={(nilai) => formulir.setData('MasaTrialHari', nilai)}
+                    galat={formulir.errors.MasaTrialHari}
+                />
+                <BidangTeks
+                    label="Urutan tampil"
+                    inputMode="numeric"
+                    nilai={formulir.data.Urutan}
+                    saatBerubah={(nilai) => formulir.setData('Urutan', nilai)}
+                    galat={formulir.errors.Urutan}
+                />
                 <div className="sm:col-span-2">
                     <BidangTeks
-                        label="Alasan perubahan"
-                        nilai={formulir.data.Alasan}
-                        saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                        galat={formulir.errors.Alasan}
-                        maxLength={500}
+                        label="Keterangan (opsional)"
+                        nilai={formulir.data.Keterangan}
+                        saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
+                        galat={formulir.errors.Keterangan}
                     />
                 </div>
-            ) : null}
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan paket
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                <KotakCentang
+                    label="Harga negosiasi (tanpa harga tetap, misal Enterprise)"
+                    nilai={formulir.data.HargaNegosiasi}
+                    saatBerubah={(nilai) => formulir.setData('HargaNegosiasi', nilai)}
+                />
+                <fieldset className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
+                    <legend className="mb-2 text-label font-semibold text-teks-utama">
+                        Batas (kosongkan untuk tak terbatas)
+                    </legend>
+                    {kolomBatas.map((kolom) => (
+                        <BidangTeks
+                            key={kolom}
+                            label={labelBatas[kolom] ?? kolom}
+                            inputMode="numeric"
+                            nilai={formulir.data.Batas[kolom] ?? ''}
+                            saatBerubah={(nilai) =>
+                                formulir.setData('Batas', { ...formulir.data.Batas, [kolom]: nilai })
+                            }
+                            galat={galat[`Batas.${kolom}`] ?? galat[kolom]}
+                        />
+                    ))}
+                </fieldset>
+                <div className="sm:col-span-2">
+                    <GrupCentang
+                        legenda="Fitur termasuk"
+                        opsi={fitur.map((item) => ({ nilai: item.Kunci, label: `${item.Nama} (${item.Modul})` }))}
+                        terpilih={formulir.data.KunciFitur}
+                        saatBerubah={(terpilih) => formulir.setData('KunciFitur', terpilih)}
+                        galat={formulir.errors.KunciFitur}
+                    />
+                </div>
+                {perluAlasan ? (
+                    <div className="sm:col-span-2">
+                        <BidangTeks
+                            label="Alasan perubahan"
+                            nilai={formulir.data.Alasan}
+                            saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                            galat={formulir.errors.Alasan}
+                            maxLength={500}
+                        />
+                    </div>
+                ) : null}
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan paket
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -320,30 +318,29 @@ function FormArsip({ paket, saatSelesai }: { paket: Paket; saatSelesai: () => vo
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-bahaya bg-permukaan p-6"
-            noValidate
+        <DialogFormulir
+            judul={`Arsipkan ${paket.Nama}?`}
+            deskripsi="Tenant baru tidak bisa memilih paket ini lagi. Tenant yang sudah memakainya tidak terdampak."
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama">Arsipkan {paket.Nama}?</h2>
-            <p className="text-isi text-teks-sekunder">
-                Tenant baru tidak bisa memilih paket ini lagi. Tenant yang sudah memakainya tidak terdampak.
-            </p>
-            <BidangTeks
-                label="Alasan"
-                nilai={formulir.data.Alasan}
-                saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                galat={formulir.errors.Alasan}
-                autoFocus
-            />
-            <div className="flex gap-2">
-                <Tombol type="submit" varian="bahaya" memproses={formulir.processing}>
-                    Arsipkan paket
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangTeks
+                    label="Alasan"
+                    nilai={formulir.data.Alasan}
+                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                    galat={formulir.errors.Alasan}
+                    autoFocus
+                />
+                <DialogFooter className="sm:justify-start">
+                    <Tombol type="submit" varian="bahaya" memproses={formulir.processing}>
+                        Arsipkan paket
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }

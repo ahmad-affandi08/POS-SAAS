@@ -5,7 +5,15 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -109,117 +117,108 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
             </div>
 
             {Tarif.Data.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada tarif pajak">
+                <KeadaanKosong judul="Belum ada tarif pajak">
                     Buat draf tarif pertama, lalu ajukan untuk ditinjau.
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Daftar tarif pajak</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Pajak
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
-                                    Tarif
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Berlaku
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Dasar hukum
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Tarif.Data.map((tarif) => {
-                                const status = labelStatus[tarif.Status];
-                                const sudahMemutuskan = tarif.Persetujuan.some(
-                                    (item) => item.IdPeninjau === IdPengguna,
-                                );
-                                const bisaTinjau =
-                                    bolehSetujui &&
-                                    tarif.Status === 'MenungguTinjauan' &&
-                                    tarif.IdPengaju !== IdPengguna &&
-                                    !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
-                                    !sudahMemutuskan;
+                <PanelTabel keterangan="Daftar tarif pajak">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Pajak</TableHead>
+                            <TableHead scope="col" className="text-right">
+                                Tarif
+                            </TableHead>
+                            <TableHead scope="col">Berlaku</TableHead>
+                            <TableHead scope="col">Dasar hukum</TableHead>
+                            <TableHead scope="col">Status</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Tarif.Data.map((tarif) => {
+                            const status = labelStatus[tarif.Status];
+                            const sudahMemutuskan = tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
+                            const bisaTinjau =
+                                bolehSetujui &&
+                                tarif.Status === 'MenungguTinjauan' &&
+                                tarif.IdPengaju !== IdPengguna &&
+                                !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
+                                !sudahMemutuskan;
 
-                                return (
-                                    <tr key={tarif.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                        <td className="px-4 py-3">
-                                            <p className="font-semibold text-teks-utama">{tarif.NamaJenisPajak}</p>
-                                            <p className="text-keterangan text-teks-sekunder">
-                                                {tarif.KodeWilayah ? `Wilayah ${tarif.KodeWilayah}` : 'Nasional'}
-                                                {tarif.BiayaLayananMasukDpp ? ' · biaya layanan masuk DPP' : ''}
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-3 text-right tabular-nums">
-                                            <p className="text-teks-utama">{FormatPersen(tarif.Tarif)}%</p>
-                                            <p className="text-keterangan text-teks-sekunder">
-                                                DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-3 text-teks-sekunder">
-                                            {FormatTanggal(tarif.BerlakuMulai)} –{' '}
-                                            {tarif.BerlakuSampai ? FormatTanggal(tarif.BerlakuSampai) : 'seterusnya'}
-                                        </td>
-                                        <td className="px-4 py-3 text-teks-sekunder">
-                                            {tarif.TautanDasarHukum ? (
-                                                <a
-                                                    href={tarif.TautanDasarHukum}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-brand underline"
-                                                >
+                            return (
+                                <TableRow key={tarif.Uuid}>
+                                    <TableCell>
+                                        <p className="font-semibold text-teks-utama">{tarif.NamaJenisPajak}</p>
+                                        <p className="text-keterangan text-teks-sekunder">
+                                            {tarif.KodeWilayah ? `Wilayah ${tarif.KodeWilayah}` : 'Nasional'}
+                                            {tarif.BiayaLayananMasukDpp ? ' · biaya layanan masuk DPP' : ''}
+                                        </p>
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums">
+                                        <p className="text-teks-utama">{FormatPersen(tarif.Tarif)}%</p>
+                                        <p className="text-keterangan text-teks-sekunder">
+                                            DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}
+                                        </p>
+                                    </TableCell>
+                                    <TableCell className="text-teks-sekunder">
+                                        {FormatTanggal(tarif.BerlakuMulai)} –{' '}
+                                        {tarif.BerlakuSampai ? FormatTanggal(tarif.BerlakuSampai) : 'seterusnya'}
+                                    </TableCell>
+                                    <TableCell className="text-teks-sekunder">
+                                        {tarif.TautanDasarHukum ? (
+                                            <Button asChild variant="link" className="h-auto p-0 text-isi">
+                                                <a href={tarif.TautanDasarHukum} target="_blank" rel="noreferrer">
                                                     {tarif.NomorDasarHukum ?? 'Dokumen'}
                                                 </a>
-                                            ) : (
-                                                (tarif.NomorDasarHukum ?? '—')
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <LabelStatus jenis={status.jenis} teks={status.teks} />
-                                            {tarif.Status === 'MenungguTinjauan' ? (
-                                                <p className="mt-1 text-keterangan text-teks-sekunder">
-                                                    {tarif.JumlahSetuju} dari {tarif.PersetujuanDibutuhkan} persetujuan
-                                                </p>
+                                            </Button>
+                                        ) : (
+                                            (tarif.NomorDasarHukum ?? '—')
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <LabelStatus jenis={status.jenis} teks={status.teks} />
+                                        {tarif.Status === 'MenungguTinjauan' ? (
+                                            <p className="mt-1 text-keterangan text-teks-sekunder">
+                                                {tarif.JumlahSetuju} dari {tarif.PersetujuanDibutuhkan} persetujuan
+                                            </p>
+                                        ) : null}
+                                        {tarif.Persetujuan.map((item) => (
+                                            <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
+                                                {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
+                                                {item.Catatan ? `: ${item.Catatan}` : ''}
+                                            </p>
+                                        ))}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-2">
+                                            {bolehAjukan && tarif.Status === 'Draf' ? (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => AturSunting(tarif)}
+                                                    >
+                                                        Ubah
+                                                    </Button>
+                                                    <Button size="sm" onClick={() => Ajukan(tarif)}>
+                                                        Ajukan
+                                                    </Button>
+                                                </>
                                             ) : null}
-                                            {tarif.Persetujuan.map((item) => (
-                                                <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
-                                                    {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'}{' '}
-                                                    {item.Peninjau}
-                                                    {item.Catatan ? `: ${item.Catatan}` : ''}
-                                                </p>
-                                            ))}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex justify-end gap-2">
-                                                {bolehAjukan && tarif.Status === 'Draf' ? (
-                                                    <>
-                                                        <Tombol varian="sekunder" onClick={() => AturSunting(tarif)}>
-                                                            Ubah
-                                                        </Tombol>
-                                                        <Tombol onClick={() => Ajukan(tarif)}>Ajukan</Tombol>
-                                                    </>
-                                                ) : null}
-                                                {bisaTinjau ? (
-                                                    <Tombol onClick={() => AturDitinjau(tarif)}>Tinjau</Tombol>
-                                                ) : null}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </section>
+                                            {bisaTinjau ? (
+                                                <Button size="sm" onClick={() => AturDitinjau(tarif)}>
+                                                    Tinjau
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </PanelTabel>
             )}
             <Paginasi
                 alamat="/referensi/tarif-pajak"
@@ -267,92 +266,91 @@ function FormTarif({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul={tarif === null ? 'Buat draf tarif pajak' : 'Ubah draf tarif pajak'}
+            saatTutup={saatSelesai}
+            lebar="lebar"
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {tarif === null ? 'Buat draf tarif pajak' : 'Ubah draf tarif pajak'}
-            </h2>
-            <BidangPilihan
-                label="Jenis pajak"
-                nilai={formulir.data.KodeJenisPajak}
-                opsi={jenisPajak.map((jenis) => ({ Nilai: jenis.Kode, Label: jenis.Nama }))}
-                saatBerubah={(nilai) => formulir.setData('KodeJenisPajak', nilai)}
-                galat={formulir.errors.KodeJenisPajak}
-            />
-            <BidangTeks
-                label="Tarif (persen)"
-                inputMode="decimal"
-                keterangan="Pakai titik untuk desimal, misal 10 atau 10.5."
-                nilai={formulir.data.Tarif}
-                saatBerubah={(nilai) => formulir.setData('Tarif', nilai)}
-                galat={formulir.errors.Tarif}
-            />
-            <div className="grid grid-cols-2 gap-2">
-                <BidangTeks
-                    label="Pengali DPP: pembilang"
-                    inputMode="numeric"
-                    nilai={formulir.data.PengaliDppPembilang}
-                    saatBerubah={(nilai) => formulir.setData('PengaliDppPembilang', nilai)}
-                    galat={formulir.errors.PengaliDppPembilang}
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangPilihan
+                    label="Jenis pajak"
+                    nilai={formulir.data.KodeJenisPajak}
+                    opsi={jenisPajak.map((jenis) => ({ Nilai: jenis.Kode, Label: jenis.Nama }))}
+                    saatBerubah={(nilai) => formulir.setData('KodeJenisPajak', nilai)}
+                    galat={formulir.errors.KodeJenisPajak}
                 />
                 <BidangTeks
-                    label="Penyebut"
-                    inputMode="numeric"
-                    keterangan="PPN non-mewah: 11/12. Penuh: 1/1."
-                    nilai={formulir.data.PengaliDppPenyebut}
-                    saatBerubah={(nilai) => formulir.setData('PengaliDppPenyebut', nilai)}
-                    galat={formulir.errors.PengaliDppPenyebut}
+                    label="Tarif (persen)"
+                    inputMode="decimal"
+                    keterangan="Pakai titik untuk desimal, misal 10 atau 10.5."
+                    nilai={formulir.data.Tarif}
+                    saatBerubah={(nilai) => formulir.setData('Tarif', nilai)}
+                    galat={formulir.errors.Tarif}
                 />
-            </div>
-            {cakupan === 'Daerah' ? (
+                <div className="grid grid-cols-2 gap-2">
+                    <BidangTeks
+                        label="Pengali DPP: pembilang"
+                        inputMode="numeric"
+                        nilai={formulir.data.PengaliDppPembilang}
+                        saatBerubah={(nilai) => formulir.setData('PengaliDppPembilang', nilai)}
+                        galat={formulir.errors.PengaliDppPembilang}
+                    />
+                    <BidangTeks
+                        label="Penyebut"
+                        inputMode="numeric"
+                        keterangan="PPN non-mewah: 11/12. Penuh: 1/1."
+                        nilai={formulir.data.PengaliDppPenyebut}
+                        saatBerubah={(nilai) => formulir.setData('PengaliDppPenyebut', nilai)}
+                        galat={formulir.errors.PengaliDppPenyebut}
+                    />
+                </div>
+                {cakupan === 'Daerah' ? (
+                    <BidangTeks
+                        label="Kode kabupaten/kota"
+                        kode
+                        keterangan="Misal 33.74 untuk Kota Semarang."
+                        nilai={formulir.data.KodeWilayah}
+                        saatBerubah={(nilai) => formulir.setData('KodeWilayah', nilai)}
+                        galat={formulir.errors.KodeWilayah}
+                    />
+                ) : null}
+                <BidangTanggal
+                    label="Berlaku mulai (TTTT-BB-HH)"
+                    nilai={formulir.data.BerlakuMulai}
+                    saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
+                    galat={formulir.errors.BerlakuMulai}
+                />
                 <BidangTeks
-                    label="Kode kabupaten/kota"
-                    kode
-                    keterangan="Misal 33.74 untuk Kota Semarang."
-                    nilai={formulir.data.KodeWilayah}
-                    saatBerubah={(nilai) => formulir.setData('KodeWilayah', nilai)}
-                    galat={formulir.errors.KodeWilayah}
+                    label="Nomor dasar hukum"
+                    keterangan="Nomor PMK atau Perda. Wajib sebelum diajukan."
+                    nilai={formulir.data.NomorDasarHukum}
+                    saatBerubah={(nilai) => formulir.setData('NomorDasarHukum', nilai)}
+                    galat={formulir.errors.NomorDasarHukum}
                 />
-            ) : null}
-            <BidangTeks
-                label="Berlaku mulai (TTTT-BB-HH)"
-                kode
-                nilai={formulir.data.BerlakuMulai}
-                saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
-                galat={formulir.errors.BerlakuMulai}
-            />
-            <BidangTeks
-                label="Nomor dasar hukum"
-                keterangan="Nomor PMK atau Perda. Wajib sebelum diajukan."
-                nilai={formulir.data.NomorDasarHukum}
-                saatBerubah={(nilai) => formulir.setData('NomorDasarHukum', nilai)}
-                galat={formulir.errors.NomorDasarHukum}
-            />
-            <BidangTeks
-                label="Tautan dokumen (opsional)"
-                nilai={formulir.data.TautanDasarHukum}
-                saatBerubah={(nilai) => formulir.setData('TautanDasarHukum', nilai)}
-                galat={formulir.errors.TautanDasarHukum}
-            />
-            {cakupan === 'Daerah' ? (
-                <KotakCentang
-                    label="Biaya layanan masuk dasar pengenaan pajak"
-                    nilai={formulir.data.BiayaLayananMasukDpp}
-                    saatBerubah={(nilai) => formulir.setData('BiayaLayananMasukDpp', nilai)}
+                <BidangTeks
+                    label="Tautan dokumen (opsional)"
+                    nilai={formulir.data.TautanDasarHukum}
+                    saatBerubah={(nilai) => formulir.setData('TautanDasarHukum', nilai)}
+                    galat={formulir.errors.TautanDasarHukum}
                 />
-            ) : null}
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan draf
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                {cakupan === 'Daerah' ? (
+                    <KotakCentang
+                        label="Biaya layanan masuk dasar pengenaan pajak"
+                        nilai={formulir.data.BiayaLayananMasukDpp}
+                        saatBerubah={(nilai) => formulir.setData('BiayaLayananMasukDpp', nilai)}
+                    />
+                ) : null}
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan draf
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -365,14 +363,22 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
     };
 
     return (
-        <section className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                Tinjau {tarif.NamaJenisPajak} {FormatPersen(tarif.Tarif)}% mulai {FormatTanggal(tarif.BerlakuMulai)}
-            </h2>
-            <p className="text-isi text-teks-sekunder">
-                Periksa tarif, pengali DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}, tanggal berlaku, dan
-                dasar hukum {tarif.NomorDasarHukum ?? ''}. Setelah terbit, tarif tidak bisa diubah.
-            </p>
+        <DialogKonfirmasi
+            judul={`Tinjau ${tarif.NamaJenisPajak} ${FormatPersen(tarif.Tarif)}% mulai ${FormatTanggal(tarif.BerlakuMulai)}`}
+            deskripsi={`Periksa tarif, pengali DPP ${tarif.PengaliDppPembilang}/${tarif.PengaliDppPenyebut}, tanggal berlaku, dan dasar hukum ${tarif.NomorDasarHukum ?? ''}. Setelah terbit, tarif tidak bisa diubah.`}
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
+            aksi={
+                <>
+                    <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
+                        Setujui tarif
+                    </Tombol>
+                    <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
+                        Tolak tarif
+                    </Tombol>
+                </>
+            }
+        >
             <BidangTeks
                 label="Catatan (wajib bila menolak)"
                 nilai={formulir.data.Catatan}
@@ -380,17 +386,6 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-            <div className="flex gap-2">
-                <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
-                    Setujui tarif
-                </Tombol>
-                <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
-                    Tolak tarif
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </section>
+        </DialogKonfirmasi>
     );
 }
