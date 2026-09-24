@@ -120,7 +120,8 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                         </SidebarGroup>
                     </nav>
                 </SidebarContent>
-                <SidebarRail aria-label="Buka atau tutup menu samping" title="Buka atau tutup menu samping" />
+                {/* Rel hanya pintasan tetikus (tabIndex -1); tombol di bilah atas adalah kontrol yang diumumkan. */}
+                <SidebarRail aria-hidden="true" aria-label={undefined} title="Buka atau tutup menu samping" />
             </Sidebar>
             <div data-slot="sidebar-inset" className="relative flex w-full min-w-0 flex-1 flex-col bg-latar">
                 <div className="sticky top-0 z-20">
