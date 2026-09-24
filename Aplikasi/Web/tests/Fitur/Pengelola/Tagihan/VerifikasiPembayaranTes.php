@@ -125,6 +125,21 @@ describe('Antrean verifikasi (P-08 langkah 3)', function (): void {
                 ->where('Pembayaran.0.Status', 'Menunggu'));
     });
 
+    it('TabelData (D-16): JSON di URL yang sama dengan cari, saring status, dan Meta', function (): void {
+        BayarTagihanUji($this, $this->pemilik, $this->tenant);
+        $tagihan = TagihanLangganan::query()->withoutGlobalScopes()->sole();
+        MasukTagihanPengelola($this, $this->keuangan);
+
+        $this->getJson(BantuanPengelola::Url('/tagihan?cari=Nusantara&saring[Status]='.$tagihan->Status->value))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.Uuid', $tagihan->Uuid)
+            ->assertJsonPath('Data.0.NamaTenant', 'Kopi Nusantara');
+
+        $this->getJson(BantuanPengelola::Url('/tagihan?cari=TidakAda'))->assertOk()->assertJsonPath('Meta.Total', 0);
+        $this->getJson(BantuanPengelola::Url('/tagihan?saring[TerbitPada]=2000-01-01..2000-01-31'))->assertOk()->assertJsonPath('Meta.Total', 0);
+    });
+
     it('membuka bukti transfer dari disk privat tercatat di audit dengan IdTenant', function (): void {
         $pembayaran = BayarTagihanUji($this, $this->pemilik, $this->tenant);
 

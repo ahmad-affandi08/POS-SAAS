@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pengelola\Tagihan;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pengelola\Tagihan\Aksi\BukaBuktiPembayaran;
 use App\Domain\Pengelola\Tagihan\Aksi\TerimaPembayaranLangganan;
 use App\Domain\Pengelola\Tagihan\Aksi\TolakPembayaranLangganan;
@@ -12,12 +13,12 @@ use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
 use App\Domain\Tenant\Model\PembayaranLangganan;
-use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Tagihan\TerimaPembayaranPermintaan;
 use App\Http\Permintaan\Pengelola\Tagihan\TolakPembayaranPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -34,23 +35,13 @@ final class TagihanKontroler extends Kontroler
 
     public function __construct(private readonly DaftarTagihanPlatform $kueri) {}
 
-    public function Daftar(Request $permintaan): Response
+    public function Daftar(Request $permintaan): Response|JsonResponse
     {
-        $kata = trim($permintaan->string('kata')->toString());
-        $status = StatusTagihanLangganan::tryFrom($permintaan->string('status')->toString());
-        $halaman = $this->kueri->AmbilTagihan($status, $kata);
-        /** @var list<TagihanLangganan> $isi */
-        $isi = $halaman->items();
-        $namaTenant = $this->kueri->AmbilNamaTenant(array_map(fn (TagihanLangganan $tagihan): int => $tagihan->IdTenant, $isi));
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarTagihanPlatform::KOLOM_URUT, '-TerbitPada', DaftarTagihanPlatform::KOLOM_SARING);
 
-        return Inertia::render('Pengelola/Tagihan/Daftar', [
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/Tagihan/Daftar', 'Tagihan', fn (): array => $this->kueri->AmbilTabel($tabel), fn (): array => [
             'Antrean' => $this->kueri->AmbilAntrean(),
-            'Tagihan' => DaftarBerhalaman::BuatDariData($halaman, array_map(fn (TagihanLangganan $tagihan): array => [
-                ...TagihanLanggananTenant::PetakanTagihan($tagihan),
-                'NamaTenant' => $namaTenant[$tagihan->IdTenant] ?? '—',
-            ], $isi)),
             'Ringkasan' => $this->kueri->HitungRingkasan(),
-            'Saring' => ['Kata' => $kata, 'Status' => $status === null ? '' : $status->value],
             'OpsiStatus' => array_map(fn (StatusTagihanLangganan $pilihan): array => ['Nilai' => $pilihan->value, 'Label' => $pilihan->AmbilLabel()], StatusTagihanLangganan::cases()),
         ]);
     }

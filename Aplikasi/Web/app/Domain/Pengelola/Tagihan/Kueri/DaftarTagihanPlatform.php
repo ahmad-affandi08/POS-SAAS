@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Tagihan\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
@@ -11,8 +13,8 @@ use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Tagihan & pembayaran langganan lintas tenant untuk Keuangan/Super Admin (P-08). Tagihan adalah data platform ke
@@ -22,7 +24,9 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class DaftarTagihanPlatform
 {
-    private const PER_HALAMAN = 30;
+    public const KOLOM_URUT = ['TerbitPada', 'Total', 'JatuhTempoPada'];
+
+    public const KOLOM_SARING = ['Status', 'TerbitPada'];
 
     /**
      * @return Builder<TagihanLangganan>
@@ -71,22 +75,34 @@ final class DaftarTagihanPlatform
     }
 
     /**
-     * @return LengthAwarePaginator<int, TagihanLangganan>
+     * Tagihan untuk `TabelData` (D-16): cari nomor tagihan/nama usaha; saring status (pilihan banyak) & tanggal terbit.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function AmbilTagihan(?StatusTagihanLangganan $status, string $kata): LengthAwarePaginator
+    public function AmbilTabel(DataPermintaanTabel $permintaan): array
     {
-        $kataAman = addcslashes($kata, '%_\\');
-
-        return self::KueriTagihan()
+        $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusTagihanLangganan $s): string => $s->value, StatusTagihanLangganan::cases()));
+        $tanggal = $permintaan->AmbilRentangTanggal('TerbitPada');
+        $kueri = self::KueriTagihan()
             ->with('Paket')
-            ->when($status !== null, fn ($kueri) => $kueri->where('Status', $status?->value))
-            ->when($kata !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
-                ->where('Nomor', 'like', "%{$kataAman}%")
-                ->orWhereIn('IdTenant', Tenant::query()->select('Id')->where('Nama', 'like', "%{$kataAman}%"))))
-            ->orderByDesc('TerbitPada')
-            ->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman')
-            ->withQueryString();
+            ->when($status !== [], fn ($kueri) => $kueri->whereIn('Status', $status))
+            ->when($tanggal['Dari'] !== null, fn ($kueri) => $kueri->where('TerbitPada', '>=', $tanggal['Dari'].' 00:00:00'))
+            ->when($tanggal['Sampai'] !== null, fn ($kueri) => $kueri->where('TerbitPada', '<=', $tanggal['Sampai'].' 23:59:59'))
+            ->when($permintaan->cari !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
+                ->where('Nomor', 'like', $pola)
+                ->orWhereIn('IdTenant', Tenant::query()->select('Id')->where('Nama', 'like', $pola))));
+
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['TerbitPada' => 'TerbitPada', 'Total' => 'Total', 'JatuhTempoPada' => 'JatuhTempoPada'], function (Collection $tagihan): array {
+            /** @var list<TagihanLangganan> $isi */
+            $isi = array_values($tagihan->all());
+            $namaTenant = $this->AmbilNamaTenant(array_map(fn (TagihanLangganan $t): int => $t->IdTenant, $isi));
+
+            return array_map(fn (TagihanLangganan $t): array => [
+                ...TagihanLanggananTenant::PetakanTagihan($t),
+                'NamaTenant' => $namaTenant[$t->IdTenant] ?? '—',
+            ], $isi);
+        });
     }
 
     public function CariTagihan(string $uuid): ?TagihanLangganan
