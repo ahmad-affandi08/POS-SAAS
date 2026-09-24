@@ -50,7 +50,8 @@ describe('F-03 bagian katalog POS Tim 1 (D.3)', function (): void {
 
         $bagian = AmbilBagianPosUji($t['Tenant']->Id, $t['Outlet']->Id, null);
 
-        expect(array_keys($bagian))->toEqualCanonicalizing(['Kategori', 'Satuan', 'Produk', 'ProdukSatuan', 'ProdukBarcode'])
+        // Bagian Tim 1 wajib ada; bagian tim lain (Pilihan, Resep, PaketProduk) ikut terdaftar lewat tag yang sama.
+        expect(array_keys($bagian))->toContain('Kategori', 'Satuan', 'Produk', 'ProdukSatuan', 'ProdukBarcode')
             ->and($bagian['Kategori'])->toContain(['Uuid' => $kopi->Uuid, 'UuidInduk' => $minuman->Uuid, 'Nama' => 'Kopi', 'Urutan' => 0])
             ->and($bagian['Satuan'])->toContain(['Uuid' => $t['Kg']->Uuid, 'Nama' => 'Kilogram', 'Simbol' => 'kg', 'BolehDesimal' => true])
             ->and(array_column($bagian['Produk'], 'Uuid'))->toBe([$induk->Uuid, $anak->Uuid])
