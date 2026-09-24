@@ -8,12 +8,20 @@ import 'package:http/testing.dart';
 import 'package:kasir/Data/BasisData/BasisDataKasir.dart';
 import 'package:kasir/Data/PenyimpanRahasia.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
+import 'package:kasir/Data/RepositoriKatalog.dart';
+import 'package:kasir/Data/RepositoriPenjualan.dart';
+import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
+import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
+import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
 import 'package:kasir/Domain/Shift/LayananShift.dart';
 import 'package:kasir/Domain/Sinkron/LayananSinkron.dart';
 import 'package:klien_api/KlienApi.dart';
+
+import 'KatalogUji.dart';
 
 /// Vektor PIN bersama PHP & Dart: staf uji memakai PIN, garam, dan verifier terbungkus dari sini sehingga verifikasi
 /// offline berjalan tanpa server.
@@ -34,17 +42,87 @@ Map<String, Object?> StafJson(String uuid, String nama, List<String> izin, int? 
   };
 }
 
-/// Data awal uji: Rina (kasir, PIN kasus 0 "246810"), Budi (supervisor, PIN kasus 1 "135790"), Sari (kasir tanpa
-/// verifier offline), kategori keluar & masuk, batas kas keluar Rp 200.000.
-Map<String, Object?> DataAwalUji({bool shiftBersama = false}) => {
-  'Pengaturan': {'BatasKasKeluar': '200000.00', 'ShiftBersama': shiftBersama},
+/// Data awal uji: Rina (kasir, boleh diskon manual, PIN kasus 0 "246810"), Budi (supervisor, penyetuju kas keluar &
+/// diskon, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
+/// Rp 200.000. F-07b: outlet SLB, perangkat POS-001, memungut PBJT 10% (bukan PKP), batas diskon 10%/30%, lima
+/// metode pembayaran fase 1.
+Map<String, Object?> DataAwalUji({
+  bool shiftBersama = false,
+  Map<String, Object?>? pembulatanTunai,
+  Map<String, Object?>? profilPajak,
+  List<Map<String, Object?>>? tarifPajak,
+}) => {
+  'Pengaturan': {
+    'BatasKasKeluar': '200000.00',
+    'ShiftBersama': shiftBersama,
+    'BatasDiskonManual': '10.00',
+    'BatasDiskonPenyetuju': '30.00',
+    'PembulatanTunai': pembulatanTunai,
+  },
+  'Outlet': {
+    'Uuid': '01K50VT1ET0000000000000001',
+    'Kode': 'SLB',
+    'Nama': 'Kopi Senja Solo Baru',
+    'Alamat': 'Jl. Ir. Soekarno No. 12, Solo Baru, Sukoharjo',
+    'Telepon': '0271-555123',
+  },
+  'Perangkat': {'Uuid': '01K5PERANGKAT0000000000001', 'Kode': 'POS-001'},
+  'ProfilPajak':
+      profilPajak ??
+      {
+        'Pkp': false,
+        'PungutPbjt': true,
+        'HargaTermasukPajak': false,
+        'BiayaLayanan': {'Aktif': false, 'Persen': '0.00'},
+      },
+  'TarifPajak':
+      tarifPajak ??
+      [
+        {
+          'KodeJenisPajak': 'PbjtMakananMinuman',
+          'Tarif': '10.00',
+          'PengaliDppPembilang': 1,
+          'PengaliDppPenyebut': 1,
+          'BerlakuMulai': '2024-01-01',
+          'BerlakuSampai': null,
+        },
+        {
+          'KodeJenisPajak': 'Ppn',
+          'Tarif': '12.00',
+          'PengaliDppPembilang': 11,
+          'PengaliDppPenyebut': 12,
+          'BerlakuMulai': '2025-01-01',
+          'BerlakuSampai': null,
+        },
+      ],
+  'MetodePembayaran': [
+    {'Uuid': '01K5MTD0000000000000000001', 'Jenis': 'Tunai', 'Nama': 'Tunai', 'AdaGambarQris': false, 'Urutan': 1},
+    {'Uuid': '01K5MTD0000000000000000002', 'Jenis': 'QrisStatis', 'Nama': 'QRIS', 'AdaGambarQris': true, 'Urutan': 2},
+    {'Uuid': '01K5MTD0000000000000000003', 'Jenis': 'Edc', 'Nama': 'EDC BCA', 'AdaGambarQris': false, 'Urutan': 3},
+    {
+      'Uuid': '01K5MTD0000000000000000004',
+      'Jenis': 'Transfer',
+      'Nama': 'Transfer BCA',
+      'NomorRekening': '0151234567',
+      'NamaPemilikRekening': 'CV Kopi Senja',
+      'AdaGambarQris': false,
+      'Urutan': 4,
+    },
+    {'Uuid': '01K5MTD0000000000000000005', 'Jenis': 'Ewallet', 'Nama': 'GoPay', 'AdaGambarQris': false, 'Urutan': 5},
+    {'Uuid': '01K5MTD0000000000000000006', 'Jenis': 'Piutang', 'Nama': 'Kasbon', 'AdaGambarQris': false, 'Urutan': 6},
+  ],
   'KategoriKas': [
     {'Uuid': '01K5KATEGORI00000000000001', 'Nama': 'Beli es batu & galon', 'Jenis': 'Keluar'},
     {'Uuid': '01K5KATEGORI00000000000002', 'Nama': 'Tambahan uang receh', 'Jenis': 'Masuk'},
   ],
   'Staf': [
-    StafJson('01K5STAF000000000000000001', 'Rina Wulandari', ['penjualan.buat'], 0),
-    StafJson('01K5STAF000000000000000002', 'Budi Santoso', ['penjualan.buat', 'kas.keluar.setujui'], 1),
+    StafJson('01K5STAF000000000000000001', 'Rina Wulandari', ['penjualan.buat', 'penjualan.diskon.manual'], 0),
+    StafJson('01K5STAF000000000000000002', 'Budi Santoso', [
+      'penjualan.buat',
+      'kas.keluar.setujui',
+      'penjualan.diskon.manual',
+      'penjualan.diskon.setujui',
+    ], 1),
     StafJson('01K5STAF000000000000000003', 'Sari Lestari', ['penjualan.buat'], null),
   ],
   'PinOffline': {'Tersedia': true, 'Parameter': vektorPin['Parameter'], 'BatasSalah': 5, 'MenitKunci': 5},
@@ -74,6 +152,8 @@ class LingkunganUji {
   DateTime jam;
 
   late final RepositoriKasir repositori = RepositoriKasir(db);
+  late final RepositoriKatalog repositoriKatalog = RepositoriKatalog(db);
+  late final RepositoriPenjualan repositoriPenjualan = RepositoriPenjualan(db, repositori);
   late final KlienPos klien = KlienPos(
     alamatDasar: Uri.parse('https://kasir.contoh.id/'),
     versiAplikasi: '0.1.0',
@@ -96,6 +176,18 @@ class LingkunganUji {
     jam: () => jam,
   );
 
+  late final LayananKatalog katalog = LayananKatalog(
+    klien: klien,
+    repositori: repositori,
+    repositoriKatalog: repositoriKatalog,
+    jam: () => jam,
+  );
+  late final LayananPenjualan penjualan = LayananPenjualan(
+    repositori: repositori,
+    repositoriPenjualan: repositoriPenjualan,
+    jam: () => jam,
+  );
+
   static LingkunganUji Buat() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     return LingkunganUji._(
@@ -107,11 +199,19 @@ class LingkunganUji {
   }
 
   /// Perangkat sudah aktif + data awal uji tersimpan (tanpa lewat server).
-  Future<void> SiapkanAktif({bool shiftBersama = false}) async {
+  Future<void> SiapkanAktif({bool shiftBersama = false, Map<String, Object?>? dataAwal}) async {
     rahasia.isi[PenyimpanRahasia.kunciToken] = '12|rahasia';
     rahasia.isi[PenyimpanRahasia.kunciPin] = vektorPin['KunciPerangkat']! as String;
-    await repositori.SimpanDataAwal(DataAwal.DariJson(DataAwalUji(shiftBersama: shiftBersama)), jam);
+    await repositori.SimpanDataAwal(DataAwal.DariJson(dataAwal ?? DataAwalUji(shiftBersama: shiftBersama)), jam);
   }
+
+  /// Katalog uji "Kopi Senja" tersimpan lokal (tanpa lewat server).
+  Future<void> SiapkanKatalog([Map<String, Object?>? katalog]) =>
+      repositoriKatalog.GantiKatalog(KatalogPos.DariJson(katalog ?? KatalogUji()));
+
+  Future<KatalogLokal> MuatKatalog() async => KatalogLokal.Bangun(await repositoriKatalog.Muat());
+
+  Future<KonteksPenjualan> MuatKonteks() => KonteksPenjualan.Muat(repositori, repositoriKatalog);
 
   Future<StafLokal> Staf(String nama) async =>
       StafLokal.DariBaris((await repositori.AmbilStaf()).firstWhere((s) => s.Nama == nama));

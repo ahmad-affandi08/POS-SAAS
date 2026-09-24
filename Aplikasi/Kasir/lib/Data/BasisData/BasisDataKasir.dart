@@ -1,5 +1,11 @@
 import 'package:drift/drift.dart';
 
+import 'TabelKatalog.dart';
+import 'TabelPenjualan.dart';
+
+export 'TabelKatalog.dart';
+export 'TabelPenjualan.dart';
+
 part 'BasisDataKasir.g.dart';
 
 /// Basis data lokal aplikasi kasir (Drift/SQLite, PRD §18). Nama tabel & kolom sama dengan server. Uang disimpan
@@ -99,15 +105,77 @@ class PercobaanPin extends Table {
   Set<Column<Object>> get primaryKey => {UuidPengguna};
 }
 
-@DriftDatabase(tables: [Pengaturan, Staf, KategoriKas, Shift, MutasiKas, Outbox, PercobaanPin])
+@DriftDatabase(
+  tables: [
+    Pengaturan,
+    Staf,
+    KategoriKas,
+    Shift,
+    MutasiKas,
+    Outbox,
+    PercobaanPin,
+    // Skema 2 (F-07c): katalog, pajak & metode bayar, penjualan.
+    Kategori,
+    Satuan,
+    KelompokPajak,
+    KelompokPajakDetail,
+    Produk,
+    ProdukSatuan,
+    ProdukBarcode,
+    DaftarHarga,
+    ProdukHarga,
+    KelompokPilihan,
+    Pilihan,
+    ProdukKelompokPilihan,
+    TarifPajak,
+    MetodePembayaran,
+    Penjualan,
+    PenjualanDetail,
+    PenjualanPembayaran,
+    PesananTertahan,
+    NomorUrutPenjualan,
+  ],
+)
 class BasisDataKasir extends _$BasisDataKasir {
   BasisDataKasir(super.executor);
 
+  /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, dari, ke) async {
+      // Migrasi hanya MENAMBAH tabel/indeks. Outbox & dokumen lama tidak disentuh (PRD §18.3 no. 9).
+      if (dari < 2) {
+        for (final tabel in <TableInfo<Table, Object?>>[
+          kategori,
+          satuan,
+          kelompokPajak,
+          kelompokPajakDetail,
+          produk,
+          produkSatuan,
+          produkBarcode,
+          daftarHarga,
+          produkHarga,
+          kelompokPilihan,
+          pilihan,
+          produkKelompokPilihan,
+          tarifPajak,
+          metodePembayaran,
+          penjualan,
+          penjualanDetail,
+          penjualanPembayaran,
+          pesananTertahan,
+          nomorUrutPenjualan,
+        ]) {
+          await m.createTable(tabel);
+        }
+        await m.createIndex(indeksProdukBarcodeBarcode);
+        await m.createIndex(indeksPenjualanTanggalBisnis);
+      }
+    },
     beforeOpen: (detail) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

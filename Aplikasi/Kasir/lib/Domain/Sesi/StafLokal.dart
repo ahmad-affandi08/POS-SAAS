@@ -8,6 +8,8 @@ import '../../Data/BasisData/BasisDataKasir.dart';
 abstract final class IzinKasir {
   static const String penjualanBuat = 'penjualan.buat';
   static const String kasKeluarSetujui = 'kas.keluar.setujui';
+  static const String penjualanDiskonManual = 'penjualan.diskon.manual';
+  static const String penjualanDiskonSetujui = 'penjualan.diskon.setujui';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

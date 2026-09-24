@@ -63,8 +63,8 @@ void main() {
       // Rel kiri di ≥ 600dp, bilah navigasi bawah di < 600dp. Beranda = Jual.
       expect(find.byType(NavigationRail), ukuran.width >= 600 ? findsOneWidget : findsNothing);
       expect(find.byType(NavigationBar), ukuran.width >= 600 ? findsNothing : findsOneWidget);
-      expect(find.text('Layar jual belum tersedia'), findsOneWidget);
-      for (final label in ['Jual', 'Kas', 'Shift', 'Sinkron', 'Pengaturan']) {
+      expect(find.text('Katalog belum ada di perangkat ini.'), findsOneWidget);
+      for (final label in ['Jual', 'Riwayat', 'Kas', 'Shift', 'Sinkron', 'Pengaturan']) {
         expect(find.text(label), findsOneWidget, reason: 'Item navigasi $label');
       }
 
@@ -129,7 +129,7 @@ void main() {
     expect(find.byType(LayarKunci), findsNothing);
 
     // Sentuhan = aktivitas: hitungan diam mulai dari nol.
-    await tester.tap(find.text('Layar jual belum tersedia'));
+    await tester.tap(find.text('Katalog belum ada di perangkat ini.'));
     await tester.pump(const Duration(minutes: 4));
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsNothing);
@@ -139,7 +139,11 @@ void main() {
     expect(find.byType(LayarKunci), findsOneWidget);
     expect(find.text('Terkunci · Rina Wulandari'), findsOneWidget);
     expect(find.text('Kopi Senja Solo Baru'), findsOneWidget);
-    expect(find.text('Layar jual belum tersedia'), findsNothing, reason: 'Area kerja tersembunyi saat terkunci.');
+    expect(
+      find.text('Katalog belum ada di perangkat ini.'),
+      findsNothing,
+      reason: 'Area kerja tersembunyi saat terkunci.',
+    );
 
     await KetikPin(tester, '111111');
     expect(find.textContaining('PIN salah'), findsOneWidget);
@@ -147,7 +151,7 @@ void main() {
 
     await KetikPin(tester, KasusPin(0)['Pin']! as String);
     expect(find.byType(LayarKunci), findsNothing);
-    expect(find.text('Layar jual belum tersedia'), findsOneWidget);
+    expect(find.text('Katalog belum ada di perangkat ini.'), findsOneWidget);
     await Lepas(tester, u);
   });
 
@@ -276,7 +280,7 @@ void main() {
 
     await tester.binding.handlePopRoute();
     await Tunggu(tester);
-    expect(find.text('Layar jual belum tersedia'), findsOneWidget);
+    expect(find.text('Katalog belum ada di perangkat ini.'), findsOneWidget);
     expect(find.byType(RuangKerja), findsOneWidget);
     await Lepas(tester, u);
   });

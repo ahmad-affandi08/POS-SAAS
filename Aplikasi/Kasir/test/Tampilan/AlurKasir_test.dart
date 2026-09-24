@@ -61,7 +61,7 @@ void main() {
 
     // Shift terbuka → Ruang Kerja Kasir dengan beranda Jual; kasir di bilah atas; status tertunda & offline terlihat.
     expect(find.byType(RuangKerja), findsOneWidget);
-    expect(find.text('Layar jual belum tersedia'), findsOneWidget);
+    expect(find.text('Katalog belum ada di perangkat ini.'), findsOneWidget);
     expect(find.text('Rina Wulandari'), findsOneWidget);
     expect(find.text('1 belum terkirim'), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);

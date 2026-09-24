@@ -13,6 +13,7 @@ import '../Komponen/FormatWaktu.dart';
 import '../LayarJual.dart';
 import '../LayarKas.dart';
 import '../LayarPengaturan.dart';
+import '../LayarRiwayat.dart';
 import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
 import '../LembarMutasiKas.dart';
@@ -144,7 +145,11 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   }
 
   Widget _BangunLayar(TujuanRuangKerja tujuan) => switch (tujuan) {
-    TujuanRuangKerja.Jual => LayarJual(saatBukaKas: () => _Buka(TujuanRuangKerja.Kas)),
+    TujuanRuangKerja.Jual => LayarJual(
+      kasir: widget.kasir,
+      aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && _jenisKas == null,
+    ),
+    TujuanRuangKerja.Riwayat => const LayarRiwayat(),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(shift: widget.shift, kasir: widget.kasir),
     TujuanRuangKerja.StatusSinkron => const LayarStatusSinkron(),
@@ -289,7 +294,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
                     _BangunRel(item, indeks, lebar),
                     VerticalDivider(width: TokenJarak.tebalGaris, thickness: TokenJarak.tebalGaris, color: warna.garis),
                   ],
-                  Expanded(child: _BangunAreaKerja(item, indeks, lebar)),
+                  // Batas lukis sendiri: perubahan keranjang tidak melukis ulang bilah atas, rel, dan bilah status.
+                  Expanded(child: RepaintBoundary(child: _BangunAreaKerja(item, indeks, lebar))),
                 ],
               ),
             ),

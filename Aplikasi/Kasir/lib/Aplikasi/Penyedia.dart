@@ -3,12 +3,20 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
+import 'package:mesin_kasir/MesinKasir.dart' show Uang;
 
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
 import '../Data/RepositoriKasir.dart';
+import '../Data/RepositoriKatalog.dart';
+import '../Data/RepositoriPenjualan.dart';
 import '../Domain/GalatKasir.dart';
+import '../Domain/Katalog/KatalogLokal.dart';
+import '../Domain/Katalog/LayananKatalog.dart';
+import '../Domain/Penjualan/Keranjang.dart';
+import '../Domain/Penjualan/KonteksPenjualan.dart';
+import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
 import '../Domain/Pin/PemverifikasiPinOffline.dart';
@@ -78,6 +86,66 @@ final penyediaLayananSinkron = Provider<LayananSinkron>(
     jam: ref.watch(penyediaJam),
   ),
 );
+
+final penyediaRepositoriKatalog = Provider<RepositoriKatalog>((ref) => RepositoriKatalog(ref.watch(penyediaBasisData)));
+
+final penyediaRepositoriPenjualan = Provider<RepositoriPenjualan>(
+  (ref) => RepositoriPenjualan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+final penyediaLayananKatalog = Provider<LayananKatalog>(
+  (ref) => LayananKatalog(
+    klien: ref.watch(penyediaKlienPos),
+    repositori: ref.watch(penyediaRepositori),
+    repositoriKatalog: ref.watch(penyediaRepositoriKatalog),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+final penyediaLayananPenjualan = Provider<LayananPenjualan>(
+  (ref) => LayananPenjualan(
+    repositori: ref.watch(penyediaRepositori),
+    repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+/// Katalog lokal di memori (dibangun ulang setelah katalog diperbarui: `ref.invalidate(penyediaKatalog)`).
+final penyediaKatalog = FutureProvider<KatalogLokal>(
+  (ref) async => KatalogLokal.Bangun(await ref.watch(penyediaRepositoriKatalog).Muat()),
+);
+
+/// Pengaturan jual dari data awal tersimpan (outlet, pajak, diskon, pembulatan, metode bayar).
+final penyediaKonteksPenjualan = FutureProvider<KonteksPenjualan>(
+  (ref) => KonteksPenjualan.Muat(ref.watch(penyediaRepositori), ref.watch(penyediaRepositoriKatalog)),
+);
+
+final penyediaPesananTertahan = StreamProvider<List<BarisPesananTertahan>>(
+  (ref) => ref.watch(penyediaRepositoriPenjualan).PantauPesananTertahan(),
+);
+
+/// Riwayat penjualan perangkat pada tanggal bisnis hari ini beserta status sinkron.
+final penyediaRiwayatHariIni = StreamProvider<List<RiwayatPenjualan>>((ref) async* {
+  final konteks = await ref.watch(penyediaKonteksPenjualan.future);
+  yield* ref.watch(penyediaRepositoriPenjualan).PantauRiwayat(konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
+});
+
+/// Penjualan tunai bersih (uang tunai diterima − kembalian) sebuah shift, untuk perkiraan kas di laci.
+final penyediaTunaiShift = StreamProvider.family<Uang, String>(
+  (ref, uuidShift) => ref.watch(penyediaRepositoriPenjualan).PantauTunaiBersihShift(uuidShift),
+);
+
+/// Keranjang yang sedang dibangun di layar Jual (bertahan saat pindah menu atau ganti kasir).
+class PengaturKeranjang extends Notifier<Keranjang> {
+  @override
+  Keranjang build() => Keranjang.kosong;
+
+  void Ganti(Keranjang keranjang) => state = keranjang;
+
+  void Kosongkan() => state = Keranjang.kosong;
+}
+
+final penyediaKeranjang = NotifierProvider<PengaturKeranjang, Keranjang>(PengaturKeranjang.new);
 
 final penyediaShiftAktif = StreamProvider<BarisShift?>((ref) => ref.watch(penyediaRepositori).PantauShiftAktif());
 
@@ -186,7 +254,9 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     await ref.read(penyediaLayananPerangkat).Aktifkan(kode);
     ref.invalidate(penyediaStaf);
     ref.invalidate(penyediaIdentitas);
+    ref.invalidate(penyediaKonteksPenjualan);
     state = const KeadaanSesi(TahapSesi.PilihKasir);
+    unawaited(PerbaruiKatalog());
   }
 
   Future<void> Masuk(StafLokal staf, String pin) async {
@@ -225,12 +295,29 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       ref.read(penyediaKoneksi.notifier).Tandai(tersambung ? StatusKoneksi.Online : StatusKoneksi.Offline);
       ref.invalidate(penyediaStaf);
       ref.invalidate(penyediaKategori);
+      ref.invalidate(penyediaKonteksPenjualan);
+      ref.invalidate(penyediaIdentitas);
+      if (tersambung) {
+        await PerbaruiKatalog();
+      }
     } on GalatKasir catch (galat) {
       _Dicabut(galat.pesan);
     } on GalatApi {
       // Galat server lain: tetap pakai data lokal terakhir.
       ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Online);
     }
+  }
+
+  /// Unduh katalog (lengkap/delta) lalu bangun ulang katalog di memori bila berubah (Rincian F-07c).
+  Future<HasilPerbaruiKatalog> PerbaruiKatalog() async {
+    final hasil = await ref.read(penyediaLayananKatalog).Perbarui();
+    if (hasil == HasilPerbaruiKatalog.Lengkap || hasil == HasilPerbaruiKatalog.Delta) {
+      ref.invalidate(penyediaKatalog);
+    }
+    if (hasil == HasilPerbaruiKatalog.Offline) {
+      ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Offline);
+    }
+    return hasil;
   }
 
   /// Kirim outbox; perangkat dicabut → kembali ke aktivasi.

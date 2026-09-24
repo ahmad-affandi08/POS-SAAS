@@ -23,6 +23,7 @@ class LayarKas extends ConsumerWidget {
     final warna = TokenWarna.AmbilDari(context);
     final mutasi = ref.watch(penyediaMutasiShift(shift.Uuid)).value ?? const <BarisMutasiKas>[];
     final kas = LayananShift.HitungKasNonPenjualan(shift, mutasi);
+    final tunaiPenjualan = ref.watch(penyediaTunaiShift(shift.Uuid)).value ?? Uang.Nol();
 
     return IsiAreaKerja(
       judul: 'Kas',
@@ -32,9 +33,13 @@ class LayarKas extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _BarisNilai(label: 'Kas awal', nilai: Uang.Dari(shift.KasAwal)),
-              _BarisNilai(label: 'Kas di laci (tanpa penjualan)', nilai: kas, tebal: true),
-              const SizedBox(height: TokenJarak.jarak4),
-              Text('Penjualan tunai akan ditambahkan setelah layar jual tersedia.', style: teks.bodySmall),
+              _BarisNilai(label: 'Kas di laci (tanpa penjualan)', nilai: kas, tebal: tunaiPenjualan.BernilaiNol()),
+              if (!tunaiPenjualan.BernilaiNol()) ...[
+                _BarisNilai(label: 'Penjualan tunai bersih', nilai: tunaiPenjualan),
+                _BarisNilai(label: 'Perkiraan kas di laci', nilai: kas.Tambah(tunaiPenjualan), tebal: true),
+                const SizedBox(height: TokenJarak.jarak4),
+                Text('Penjualan tunai bersih = uang tunai diterima dikurangi kembalian.', style: teks.bodySmall),
+              ],
             ],
           ),
         ),

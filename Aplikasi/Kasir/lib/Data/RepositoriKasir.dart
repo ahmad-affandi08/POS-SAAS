@@ -25,6 +25,17 @@ abstract final class KunciPengaturan {
   static const String menitKunciPin = 'MenitKunciPin';
   static const String dataAwalPada = 'DataAwalPada';
 
+  // F-07b/F-07c: identitas outlet untuk nomor penjualan, aturan diskon & pembulatan, profil pajak, katalog.
+  static const String uuidOutlet = 'UuidOutlet';
+  static const String kodeOutlet = 'KodeOutlet';
+  static const String jamTutupBuku = 'JamTutupBuku';
+  static const String batasDiskonManual = 'BatasDiskonManual';
+  static const String batasDiskonPenyetuju = 'BatasDiskonPenyetuju';
+  static const String pembulatanTunai = 'PembulatanTunai';
+  static const String profilPajak = 'ProfilPajak';
+  static const String kursorKatalog = 'KursorKatalog';
+  static const String katalogDiperbaruiPada = 'KatalogDiperbaruiPada';
+
   // Pengaturan lokal perangkat (D-16, §17.2.7). Tidak ikut diganti data awal dan tidak dihapus saat perangkat dicabut.
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';
@@ -56,11 +67,37 @@ class RepositoriKasir {
     return teks == null ? null : ParameterPin.DariJson(jsonDecode(teks) as Map<String, Object?>);
   }
 
-  /// Ganti staf, kategori kas, dan pengaturan kasir dengan data awal terbaru dari server.
+  /// Ganti staf, kategori kas, pengaturan kasir, tarif pajak, dan metode pembayaran dengan data awal terbaru dari
+  /// server. Kunci F-07b yang absen (server lama) sudah diberi nilai bawaan oleh `DataAwal`.
   Future<void> SimpanDataAwal(DataAwal data, DateTime sekarang) => db.transaction(() async {
     await db.delete(db.staf).go();
     await db.delete(db.kategoriKas).go();
+    await db.delete(db.tarifPajak).go();
+    await db.delete(db.metodePembayaran).go();
     await db.batch((b) {
+      b.insertAll(db.tarifPajak, [
+        for (final t in data.tarifPajak)
+          TarifPajakCompanion.insert(
+            KodeJenisPajak: t.kodeJenisPajak,
+            Tarif: t.tarif,
+            PengaliDppPembilang: t.pengaliDppPembilang,
+            PengaliDppPenyebut: t.pengaliDppPenyebut,
+            BerlakuMulai: t.berlakuMulai,
+            BerlakuSampai: Value(t.berlakuSampai),
+          ),
+      ]);
+      b.insertAll(db.metodePembayaran, [
+        for (final m in data.metodePembayaran)
+          MetodePembayaranCompanion.insert(
+            Uuid: m.uuid,
+            Jenis: m.jenis,
+            Nama: m.nama,
+            NomorRekening: Value(m.nomorRekening),
+            NamaPemilikRekening: Value(m.namaPemilikRekening),
+            AdaGambarQris: m.adaGambarQris,
+            Urutan: m.urutan,
+          ),
+      ]);
       b.insertAll(db.staf, [
         for (final s in data.staf)
           StafCompanion.insert(
@@ -91,6 +128,27 @@ class RepositoriKasir {
     );
     await SimpanPengaturan(KunciPengaturan.batasSalahPin, '${data.batasSalahPin}');
     await SimpanPengaturan(KunciPengaturan.menitKunciPin, '${data.menitKunciPin}');
+    await SimpanPengaturan(KunciPengaturan.batasDiskonManual, data.batasDiskonManual);
+    await SimpanPengaturan(KunciPengaturan.batasDiskonPenyetuju, data.batasDiskonPenyetuju);
+    final pembulatan = data.pembulatanTunai;
+    await SimpanPengaturan(
+      KunciPengaturan.pembulatanTunai,
+      pembulatan == null ? '' : jsonEncode({'Kelipatan': pembulatan.kelipatan, 'Arah': pembulatan.arah}),
+    );
+    await SimpanPengaturan(KunciPengaturan.profilPajak, jsonEncode(data.profilPajak.KeJson()));
+    final outlet = data.outlet;
+    if (outlet != null) {
+      await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);
+      await SimpanPengaturan(KunciPengaturan.kodeOutlet, outlet.kode);
+      if (outlet.nama.isNotEmpty) {
+        await SimpanPengaturan(KunciPengaturan.namaOutlet, outlet.nama);
+      }
+      await SimpanPengaturan(KunciPengaturan.jamTutupBuku, outlet.jamTutupBuku ?? '00:00');
+    }
+    final perangkat = data.perangkat;
+    if (perangkat != null && perangkat.kode.isNotEmpty) {
+      await SimpanPengaturan(KunciPengaturan.kodePerangkat, perangkat.kode);
+    }
     await SimpanPengaturan(KunciPengaturan.dataAwalPada, sekarang.toUtc().toIso8601String());
   });
 
@@ -132,17 +190,18 @@ class RepositoriKasir {
   /// Simpan shift baru + entri outbox `Shift.Buka` dalam satu transaksi.
   Future<void> SimpanShiftBaru(ShiftCompanion shift, ItemOutbox item, DateTime sekarang) => db.transaction(() async {
     await db.into(db.shift).insert(shift);
-    await _TambahOutbox(item, sekarang);
+    await TambahOutbox(item, sekarang);
   });
 
   /// Simpan mutasi kas + entri outbox `MutasiKas.Catat` dalam satu transaksi.
   Future<void> SimpanMutasiBaru(MutasiKasCompanion mutasi, ItemOutbox item, DateTime sekarang) =>
       db.transaction(() async {
         await db.into(db.mutasiKas).insert(mutasi);
-        await _TambahOutbox(item, sekarang);
+        await TambahOutbox(item, sekarang);
       });
 
-  Future<void> _TambahOutbox(ItemOutbox item, DateTime sekarang) => db
+  /// Tambah entri outbox. Hanya dipanggil di dalam `db.transaction` bersama dokumennya.
+  Future<void> TambahOutbox(ItemOutbox item, DateTime sekarang) => db
       .into(db.outbox)
       .insert(
         OutboxCompanion.insert(

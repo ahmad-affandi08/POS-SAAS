@@ -1,0 +1,312 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mesin_kasir/MesinKasir.dart';
+import 'package:sistem_desain/SistemDesain.dart';
+
+import '../../Aplikasi/Penyedia.dart';
+import '../../Domain/GalatKasir.dart';
+import '../../Domain/Katalog/KatalogLokal.dart';
+import '../../Domain/Penjualan/Keranjang.dart';
+import '../../Domain/Sesi/StafLokal.dart';
+import '../Komponen/FormatAngka.dart';
+import 'PanelDiskon.dart';
+
+/// Panel item keranjang (Rincian F-07c): pilih satuan, jumlah, pilihan wajib/opsional, catatan, dan (saat mengubah
+/// baris) diskon item & hapus. Mode tambah bila [baris] null (produk berpilihan), mode ubah bila [baris] terisi.
+class PanelItem extends ConsumerStatefulWidget {
+  const PanelItem({super.key, required this.produk, required this.kasir, required this.saatSelesai, this.baris});
+
+  /// Null bila produk sudah tidak ada di katalog (baris lama/pesanan tertahan): hanya jumlah, catatan, diskon.
+  final ProdukJual? produk;
+  final ItemKeranjang? baris;
+  final StafLokal kasir;
+  final VoidCallback saatSelesai;
+
+  @override
+  ConsumerState<PanelItem> createState() => _PanelItemState();
+}
+
+class _PanelItemState extends ConsumerState<PanelItem> {
+  late final Set<String> _pilihan = {...?widget.baris?.pilihan.map((p) => p.uuid)};
+  late SatuanJual? _satuan =
+      widget.produk?.satuan.where((s) => s.uuid == widget.baris?.uuidProdukSatuan).firstOrNull ??
+      widget.produk?.AmbilSatuanBawaan();
+  late final TextEditingController _jumlah = TextEditingController(
+    text: FormatAngka.FormatJumlah(widget.baris?.jumlah ?? Kuantitas.DariBulat(1)),
+  );
+  late final TextEditingController _catatan = TextEditingController(text: widget.baris?.catatan ?? '');
+  late DiskonManual? _diskon = widget.baris?.diskon;
+  String? _galat;
+  String? _galatDiskon;
+
+  bool get _modeUbah => widget.baris != null;
+
+  bool get _bolehDesimal => _satuan?.bolehDesimal ?? widget.baris?.bolehDesimal ?? false;
+
+  @override
+  void dispose() {
+    _jumlah.dispose();
+    _catatan.dispose();
+    super.dispose();
+  }
+
+  Kuantitas? _AmbilJumlah() {
+    final nilai = FormatAngka.UraiDesimal(_jumlah.text);
+    if (nilai == null || nilai.scale > Kuantitas.skala) {
+      return null;
+    }
+    return Kuantitas.DariDesimal(nilai);
+  }
+
+  void _Geser(int arah) {
+    final sekarang = _AmbilJumlah() ?? Kuantitas.Nol();
+    final baru = sekarang.Tambah(Kuantitas.DariBulat(arah));
+    if (baru.Bandingkan(Kuantitas.DariBulat(1)) < 0) {
+      return;
+    }
+    setState(() => _jumlah.text = FormatAngka.FormatJumlah(baru));
+  }
+
+  void _Pilih(KelompokPilihanJual kelompok, PilihanJual pilihan) => setState(() {
+    _galat = null;
+    if (_pilihan.contains(pilihan.uuid)) {
+      _pilihan.remove(pilihan.uuid);
+      return;
+    }
+    if (kelompok.CekSatuSaja()) {
+      _pilihan.removeAll(kelompok.pilihan.map((p) => p.uuid));
+    }
+    _pilihan.add(pilihan.uuid);
+  });
+
+  List<PilihanTerpilih> _AmbilPilihan() => [
+    for (final k in widget.produk?.kelompokPilihan ?? const <KelompokPilihanJual>[])
+      for (final p in k.pilihan)
+        if (_pilihan.contains(p.uuid)) PilihanTerpilih(uuid: p.uuid, nama: p.nama, harga: p.harga),
+  ];
+
+  Future<void> _Simpan() async {
+    final jumlah = _AmbilJumlah();
+    if (jumlah == null || jumlah.Bandingkan(Kuantitas.Nol()) <= 0) {
+      setState(() => _galat = 'Isi jumlah lebih dari 0.');
+      return;
+    }
+    final katalog = await ref.read(penyediaKatalog.future);
+    final k = await ref.read(penyediaKonteksPenjualan.future);
+    final layanan = ref.read(penyediaLayananPenjualan);
+    final pengatur = ref.read(penyediaKeranjang.notifier);
+    var keranjang = ref.read(penyediaKeranjang);
+    try {
+      if (!_modeUbah) {
+        final baris = layanan.BuatBaris(
+          katalog,
+          k,
+          widget.produk!,
+          satuan: _satuan,
+          pilihan: _AmbilPilihan(),
+          jumlah: jumlah,
+          catatan: _catatan.text,
+        );
+        pengatur.Ganti(layanan.TambahBaris(keranjang, baris, katalog, k));
+        widget.saatSelesai();
+        return;
+      }
+
+      final uuid = widget.baris!.uuid;
+      final produk = widget.produk;
+      if (produk != null) {
+        keranjang = layanan.AturPilihan(keranjang, uuid, produk, _AmbilPilihan());
+        if (_satuan != null && _satuan!.uuid != widget.baris!.uuidProdukSatuan) {
+          keranjang = layanan.GantiSatuan(keranjang, uuid, _satuan!, katalog, k);
+        }
+      }
+      keranjang = layanan.UbahJumlah(keranjang, uuid, jumlah, katalog, k);
+      keranjang = layanan.AturCatatan(keranjang, uuid, _catatan.text);
+
+      final diskon = _diskon;
+      final diskonLama = widget.baris!.diskon;
+      final diskonBerubah =
+          diskon?.KeJson().toString() != diskonLama?.KeJson().toString() ||
+          (diskon?.jumlah == null && jumlah != widget.baris!.jumlah);
+      var penyetuju = keranjang.penyetuju;
+      if (diskon != null && diskonBerubah) {
+        final indeks = keranjang.baris.indexWhere((b) => b.uuid == uuid);
+        final dasar = layanan.Hitung(keranjang, k).hasil.baris[indeks].bruto;
+        if (!mounted) {
+          return;
+        }
+        final hasil = await PastikanDiskonDisetujui(
+          context,
+          dasar: dasar,
+          diskon: diskon,
+          kasir: widget.kasir,
+          k: k,
+          penyetuju: penyetuju,
+        );
+        if (!hasil.boleh) {
+          return;
+        }
+        penyetuju = hasil.penyetuju;
+      }
+      keranjang = keranjang.Salin(
+        baris: [for (final b in keranjang.baris) b.uuid == uuid ? b.Salin(diskon: () => diskon) : b],
+        penyetuju: () => penyetuju,
+      );
+      pengatur.Ganti(keranjang);
+      widget.saatSelesai();
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() {
+          if (galat.kode.startsWith('Diskon') || galat.kode == 'TanpaIzin') {
+            _galatDiskon = galat.pesan;
+          } else {
+            _galat = galat.pesan;
+          }
+        });
+      }
+    }
+  }
+
+  void _Hapus() {
+    final layanan = ref.read(penyediaLayananPenjualan);
+    ref.read(penyediaKeranjang.notifier).Ganti(layanan.HapusBaris(ref.read(penyediaKeranjang), widget.baris!.uuid));
+    widget.saatSelesai();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final produk = widget.produk;
+    final bolehDiskon = widget.kasir.PunyaIzin(IzinKasir.penjualanDiskonManual);
+
+    return Padding(
+      padding: const EdgeInsets.all(TokenJarak.jarak24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (produk != null && produk.satuan.length > 1) ...[
+            Text('Satuan', style: teks.labelLarge),
+            const SizedBox(height: TokenJarak.jarak8),
+            Wrap(
+              spacing: TokenJarak.jarak8,
+              runSpacing: TokenJarak.jarak8,
+              children: [
+                for (final s in produk.satuan)
+                  ChoiceChip(
+                    label: Text(s.nama),
+                    selected: _satuan?.uuid == s.uuid,
+                    onSelected: (_) => setState(() => _satuan = s),
+                  ),
+              ],
+            ),
+            const SizedBox(height: TokenJarak.jarak16),
+          ],
+          Text('Jumlah', style: teks.labelLarge),
+          const SizedBox(height: TokenJarak.jarak8),
+          Row(
+            children: [
+              IconButton.outlined(
+                tooltip: 'Kurangi jumlah',
+                onPressed: () => _Geser(-1),
+                icon: const Icon(Icons.remove),
+                constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+              ),
+              const SizedBox(width: TokenJarak.jarak8),
+              Expanded(
+                child: TextField(
+                  controller: _jumlah,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.numberWithOptions(decimal: _bolehDesimal),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(_bolehDesimal ? r'[0-9.,]' : r'[0-9]')),
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  style: teks.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+              ),
+              const SizedBox(width: TokenJarak.jarak8),
+              IconButton.outlined(
+                tooltip: 'Tambah jumlah',
+                onPressed: () => _Geser(1),
+                icon: const Icon(Icons.add),
+                constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+              ),
+            ],
+          ),
+          for (final kelompok in produk?.kelompokPilihan ?? const <KelompokPilihanJual>[]) ...[
+            const SizedBox(height: TokenJarak.jarak16),
+            Text(
+              '${kelompok.nama} · ${kelompok.CekWajib() ? 'wajib' : 'opsional'}'
+              '${kelompok.CekSatuSaja()
+                  ? ', pilih 1'
+                  : kelompok.maksimal != null
+                  ? ', maks. ${kelompok.maksimal}'
+                  : ''}',
+              style: teks.labelLarge,
+            ),
+            const SizedBox(height: TokenJarak.jarak8),
+            Wrap(
+              spacing: TokenJarak.jarak8,
+              runSpacing: TokenJarak.jarak8,
+              children: [
+                for (final p in kelompok.pilihan)
+                  FilterChip(
+                    label: Text(p.harga.BernilaiNol() ? p.nama : '${p.nama} +${p.harga.FormatRupiah()}'),
+                    selected: _pilihan.contains(p.uuid),
+                    onSelected: (_) => _Pilih(kelompok, p),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: TokenJarak.jarak16),
+          TextField(
+            controller: _catatan,
+            maxLength: 255,
+            decoration: const InputDecoration(labelText: 'Catatan (opsional)', border: OutlineInputBorder()),
+          ),
+          if (_modeUbah && bolehDiskon) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Text('Diskon item', style: teks.labelLarge),
+            const SizedBox(height: TokenJarak.jarak8),
+            IsianDiskon(
+              awal: _diskon,
+              galat: _galatDiskon,
+              saatBerubah: (d) => setState(() {
+                _diskon = d;
+                _galatDiskon = null;
+              }),
+            ),
+          ],
+          if (_galat != null)
+            Padding(
+              padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+              child: Text(_galat!, style: TextStyle(color: warna.bahaya)),
+            ),
+          const SizedBox(height: TokenJarak.jarak16),
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              onPressed: _Simpan,
+              child: Text(_modeUbah ? 'Simpan perubahan' : 'Tambah ke keranjang'),
+            ),
+          ),
+          if (_modeUbah) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            SizedBox(
+              height: TokenJarak.targetSentuh,
+              child: TextButton(
+                onPressed: _Hapus,
+                style: TextButton.styleFrom(foregroundColor: warna.bahaya),
+                child: const Text('Hapus item'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

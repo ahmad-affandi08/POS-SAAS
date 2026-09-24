@@ -88,7 +88,11 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(b.Jenis == 'Shift.Buka' ? 'Buka shift' : 'Kas masuk/keluar'),
+                          Text(switch (b.Jenis) {
+                            'Shift.Buka' => 'Buka shift',
+                            'Penjualan.Buat' => 'Penjualan',
+                            _ => 'Kas masuk/keluar',
+                          }),
                           Text(b.PesanGalat ?? 'Ditolak server.', style: TextStyle(color: warna.bahaya)),
                         ],
                       ),

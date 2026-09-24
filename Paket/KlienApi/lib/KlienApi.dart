@@ -3,4 +3,6 @@ library;
 
 export 'Galat/GalatApi.dart';
 export 'KlienPos.dart';
+export 'Model/ModelKatalog.dart';
 export 'Model/ModelPos.dart';
+export 'Model/UraiJson.dart';

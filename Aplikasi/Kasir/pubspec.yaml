@@ -16,6 +16,8 @@ dependencies:
     path: ../../Paket/SistemDesain
   klien_api:
     path: ../../Paket/KlienApi
+  mesin_kasir:
+    path: ../../Paket/MesinKasir
   drift: ^2.35.0
   path_provider: ^2.1.6
   path: ^1.9.1

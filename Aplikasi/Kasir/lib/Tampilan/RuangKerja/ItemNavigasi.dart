@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 
 /// Tujuan area kerja di rel navigasi (PRD §17.2.7). Urutan enum = urutan tampil.
-enum TujuanRuangKerja { Jual, Kas, Shift, StatusSinkron, Pengaturan }
+enum TujuanRuangKerja { Jual, Riwayat, Kas, Shift, StatusSinkron, Pengaturan }
 
 /// Satu item rel navigasi. Item hanya tampil bila [modul] aktif (null = inti, selalu aktif) dan kasir punya [izin]
 /// (null = semua kasir). Maksimal 8 item (§17.2.7).
@@ -28,14 +28,20 @@ class ItemNavigasi {
   static const int batasItem = 8;
 
   /// Daftar lengkap item. Modul berikutnya ditambah di sini sesuai urutan §17.2.7 (setelah tujuannya ada di
-  /// [TujuanRuangKerja]): Order tersimpan (F-07), Meja (modul `Meja`), Riwayat transaksi (F-07), Pelanggan (modul
-  /// `Pelanggan`).
+  /// [TujuanRuangKerja]): Order tersimpan (open bill F-07 fase 2; pesanan tertahan fase 1 dibuka dari layar Jual), Meja
+  /// (modul `Meja`), Pelanggan (modul `Pelanggan`).
   static const List<ItemNavigasi> semua = [
     ItemNavigasi(
       tujuan: TujuanRuangKerja.Jual,
       label: 'Jual',
       ikon: Icons.point_of_sale_outlined,
       ikonAktif: Icons.point_of_sale,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Riwayat,
+      label: 'Riwayat',
+      ikon: Icons.receipt_long_outlined,
+      ikonAktif: Icons.receipt_long,
     ),
     ItemNavigasi(tujuan: TujuanRuangKerja.Kas, label: 'Kas', ikon: Icons.payments_outlined, ikonAktif: Icons.payments),
     ItemNavigasi(

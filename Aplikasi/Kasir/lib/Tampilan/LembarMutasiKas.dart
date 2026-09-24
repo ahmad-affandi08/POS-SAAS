@@ -151,9 +151,20 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
   }
 }
 
-/// BR-06.4: pilih supervisor (berizin `kas.keluar.setujui`) lalu masukkan PIN-nya. Hasil = supervisor yang lolos PIN.
+/// Pilih penyetuju lalu masukkan PIN-nya. Hasil = staf yang lolos PIN. Bawaan untuk kas keluar (BR-06.4, izin
+/// `kas.keluar.setujui`); dipakai juga untuk diskon di atas batas (BR-07.3, izin `penjualan.diskon.setujui`, atau hanya
+/// Pemilik lewat [hanyaPemilik]).
 class DialogPinSupervisor extends ConsumerStatefulWidget {
-  const DialogPinSupervisor({super.key});
+  const DialogPinSupervisor({
+    super.key,
+    this.izin = IzinKasir.kasKeluarSetujui,
+    this.pesan = 'Kas keluar ini di atas batas. Pilih supervisor yang menyetujui.',
+    this.hanyaPemilik = false,
+  });
+
+  final String izin;
+  final String pesan;
+  final bool hanyaPemilik;
 
   @override
   ConsumerState<DialogPinSupervisor> createState() => _DialogPinSupervisorState();
@@ -192,7 +203,7 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
   @override
   Widget build(BuildContext context) {
     final supervisor = (ref.watch(penyediaStaf).value ?? const <StafLokal>[])
-        .where((s) => s.PunyaIzin(IzinKasir.kasKeluarSetujui))
+        .where((s) => widget.hanyaPemilik ? s.pemilik : s.PunyaIzin(widget.izin))
         .toList();
     final warna = TokenWarna.AmbilDari(context);
     return AlertDialog(
@@ -203,10 +214,15 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Kas keluar ini di atas batas. Pilih supervisor yang menyetujui.'),
+                  Text(widget.pesan),
                   const SizedBox(height: 12),
                   if (supervisor.isEmpty)
-                    Text('Tidak ada supervisor di outlet ini.', style: TextStyle(color: warna.bahaya)),
+                    Text(
+                      widget.hanyaPemilik
+                          ? 'Pemilik belum terdaftar di perangkat ini.'
+                          : 'Tidak ada supervisor di outlet ini.',
+                      style: TextStyle(color: warna.bahaya),
+                    ),
                   for (final s in supervisor)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),

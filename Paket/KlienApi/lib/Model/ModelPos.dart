@@ -1,6 +1,8 @@
 /// Model respons API POS (PRD §16.3). Key JSON = nama kolom PascalCase (§16.2); uang = string desimal.
 library;
 
+import 'UraiJson.dart';
+
 Map<String, Object?> _Peta(Object? nilai) => nilai is Map<String, Object?> ? nilai : const <String, Object?>{};
 
 List<Object?> _Daftar(Object? nilai) => nilai is List<Object?> ? nilai : const <Object?>[];
@@ -130,7 +132,176 @@ class ParameterPin {
   );
 }
 
-/// `GET /data-awal` (F-06).
+/// Pembulatan tunai tenant (BR-08.6): kelipatan Rupiah dan arah `Bawah`/`Atas`/`Terdekat`.
+class PembulatanTunaiPos {
+  const PembulatanTunaiPos({required this.kelipatan, required this.arah});
+
+  final int kelipatan;
+  final String arah;
+
+  static PembulatanTunaiPos? DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    if (peta == null) {
+      return null;
+    }
+    final kelipatan = UraiJson.AmbilBulat(peta['Kelipatan']);
+    return kelipatan <= 0
+        ? null
+        : PembulatanTunaiPos(kelipatan: kelipatan, arah: UraiJson.AmbilTeks(peta['Arah'], 'Terdekat'));
+  }
+}
+
+/// Outlet perangkat (F-07b): kode dipakai di nomor penjualan `INV/{KodeOutlet}/...` (BR-07.1).
+class OutletPos {
+  const OutletPos({
+    required this.uuid,
+    required this.kode,
+    required this.nama,
+    required this.alamat,
+    required this.telepon,
+    this.jamTutupBuku,
+  });
+
+  final String uuid;
+  final String kode;
+  final String nama;
+  final String? alamat;
+  final String? telepon;
+
+  /// `HH:mm` bila server mengirimnya (tanggal bisnis sebelum jam ini = hari sebelumnya); null = 00:00.
+  final String? jamTutupBuku;
+
+  static OutletPos? DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    return peta == null
+        ? null
+        : OutletPos(
+            uuid: UraiJson.AmbilTeks(peta['Uuid']),
+            kode: UraiJson.AmbilTeks(peta['Kode']),
+            nama: UraiJson.AmbilTeks(peta['Nama']),
+            alamat: UraiJson.AmbilTeksAtauNull(peta['Alamat']),
+            telepon: UraiJson.AmbilTeksAtauNull(peta['Telepon']),
+            jamTutupBuku: UraiJson.AmbilTeksAtauNull(peta['JamTutupBuku']),
+          );
+  }
+}
+
+class PerangkatPos {
+  const PerangkatPos({required this.uuid, required this.kode});
+
+  final String uuid;
+  final String kode;
+
+  static PerangkatPos? DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    return peta == null
+        ? null
+        : PerangkatPos(uuid: UraiJson.AmbilTeks(peta['Uuid']), kode: UraiJson.AmbilTeks(peta['Kode']));
+  }
+}
+
+/// Profil pajak outlet (F-07b): PPN hanya bila PKP, PBJT makanan & minuman hanya bila memungut PBJT.
+class ProfilPajakPos {
+  const ProfilPajakPos({
+    this.pkp = false,
+    this.pungutPbjt = false,
+    this.hargaTermasukPajak = false,
+    this.biayaLayananAktif = false,
+    this.persenBiayaLayanan = '0',
+  });
+
+  final bool pkp;
+  final bool pungutPbjt;
+  final bool hargaTermasukPajak;
+  final bool biayaLayananAktif;
+  final String persenBiayaLayanan;
+
+  static ProfilPajakPos DariJson(Object? json) {
+    final peta = UraiJson.AmbilPeta(json);
+    final biaya = UraiJson.AmbilPeta(peta['BiayaLayanan']);
+    return ProfilPajakPos(
+      pkp: UraiJson.AmbilBenar(peta['Pkp']),
+      pungutPbjt: UraiJson.AmbilBenar(peta['PungutPbjt']),
+      hargaTermasukPajak: UraiJson.AmbilBenar(peta['HargaTermasukPajak']),
+      biayaLayananAktif: UraiJson.AmbilBenar(biaya['Aktif']),
+      persenBiayaLayanan: UraiJson.AmbilDesimal(biaya['Persen']),
+    );
+  }
+
+  Map<String, Object?> KeJson() => {
+    'Pkp': pkp,
+    'PungutPbjt': pungutPbjt,
+    'HargaTermasukPajak': hargaTermasukPajak,
+    'BiayaLayanan': {'Aktif': biayaLayananAktif, 'Persen': persenBiayaLayanan},
+  };
+}
+
+/// Tarif pajak terbit (nasional + wilayah outlet) beserta masa berlakunya (tanggal `YYYY-MM-DD`, CLAUDE.md #12).
+class TarifPajakPos {
+  const TarifPajakPos({
+    required this.kodeJenisPajak,
+    required this.tarif,
+    required this.pengaliDppPembilang,
+    required this.pengaliDppPenyebut,
+    required this.berlakuMulai,
+    required this.berlakuSampai,
+  });
+
+  final String kodeJenisPajak;
+  final String tarif;
+  final int pengaliDppPembilang;
+  final int pengaliDppPenyebut;
+  final String berlakuMulai;
+  final String? berlakuSampai;
+
+  static TarifPajakPos DariJson(Map<String, Object?> json) => TarifPajakPos(
+    kodeJenisPajak: UraiJson.AmbilTeks(json['KodeJenisPajak']),
+    tarif: UraiJson.AmbilDesimal(json['Tarif']),
+    pengaliDppPembilang: UraiJson.AmbilBulat(json['PengaliDppPembilang'], 1),
+    pengaliDppPenyebut: UraiJson.AmbilBulat(json['PengaliDppPenyebut'], 1),
+    berlakuMulai: _AmbilTanggal(json['BerlakuMulai']) ?? '0000-01-01',
+    berlakuSampai: _AmbilTanggal(json['BerlakuSampai']),
+  );
+
+  static String? _AmbilTanggal(Object? nilai) {
+    final teks = UraiJson.AmbilTeksAtauNull(nilai);
+    return teks == null || teks.length < 10 ? null : teks.substring(0, 10);
+  }
+}
+
+/// Metode pembayaran aktif outlet (jenis fase 1: `Tunai`, `QrisStatis`, `Edc`, `Transfer`, `Ewallet`).
+class MetodePembayaranPos {
+  const MetodePembayaranPos({
+    required this.uuid,
+    required this.jenis,
+    required this.nama,
+    required this.nomorRekening,
+    required this.namaPemilikRekening,
+    required this.adaGambarQris,
+    required this.urutan,
+  });
+
+  final String uuid;
+  final String jenis;
+  final String nama;
+  final String? nomorRekening;
+  final String? namaPemilikRekening;
+  final bool adaGambarQris;
+  final int urutan;
+
+  static MetodePembayaranPos DariJson(Map<String, Object?> json) => MetodePembayaranPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    jenis: UraiJson.AmbilTeks(json['Jenis']),
+    nama: UraiJson.AmbilTeks(json['Nama']),
+    nomorRekening: UraiJson.AmbilTeksAtauNull(json['NomorRekening']),
+    namaPemilikRekening: UraiJson.AmbilTeksAtauNull(json['NamaPemilikRekening']),
+    adaGambarQris: UraiJson.AmbilBenar(json['AdaGambarQris']),
+    urutan: UraiJson.AmbilBulat(json['Urutan']),
+  );
+}
+
+/// `GET /data-awal` (F-06, ditambah F-07b). Kunci F-07b yang absen (server lama) memakai nilai bawaan agar
+/// kompatibel mundur: batas diskon 10% / 30%, tanpa pembulatan tunai, profil pajak kosong, tanpa tarif & metode.
 class DataAwal {
   const DataAwal({
     required this.batasKasKeluar,
@@ -142,7 +313,18 @@ class DataAwal {
     required this.batasSalahPin,
     required this.menitKunciPin,
     required this.waktuServer,
+    this.batasDiskonManual = batasDiskonManualBawaan,
+    this.batasDiskonPenyetuju = batasDiskonPenyetujuBawaan,
+    this.pembulatanTunai,
+    this.outlet,
+    this.perangkat,
+    this.profilPajak = const ProfilPajakPos(),
+    this.tarifPajak = const [],
+    this.metodePembayaran = const [],
   });
+
+  static const String batasDiskonManualBawaan = '10';
+  static const String batasDiskonPenyetujuBawaan = '30';
 
   final String batasKasKeluar;
   final bool shiftBersama;
@@ -153,6 +335,18 @@ class DataAwal {
   final int batasSalahPin;
   final int menitKunciPin;
   final String waktuServer;
+
+  /// Persen diskon manual tanpa persetujuan (BR-07.3).
+  final String batasDiskonManual;
+
+  /// Persen diskon maksimal dengan persetujuan penyetuju (Pemilik tanpa batas).
+  final String batasDiskonPenyetuju;
+  final PembulatanTunaiPos? pembulatanTunai;
+  final OutletPos? outlet;
+  final PerangkatPos? perangkat;
+  final ProfilPajakPos profilPajak;
+  final List<TarifPajakPos> tarifPajak;
+  final List<MetodePembayaranPos> metodePembayaran;
 
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
@@ -167,6 +361,14 @@ class DataAwal {
       batasSalahPin: _Bulat(pin['BatasSalah']),
       menitKunciPin: _Bulat(pin['MenitKunci']),
       waktuServer: _Teks(json['WaktuServer']),
+      batasDiskonManual: UraiJson.AmbilDesimal(pengaturan['BatasDiskonManual'], batasDiskonManualBawaan),
+      batasDiskonPenyetuju: UraiJson.AmbilDesimal(pengaturan['BatasDiskonPenyetuju'], batasDiskonPenyetujuBawaan),
+      pembulatanTunai: PembulatanTunaiPos.DariJson(pengaturan['PembulatanTunai']),
+      outlet: OutletPos.DariJson(json['Outlet']),
+      perangkat: PerangkatPos.DariJson(json['Perangkat']),
+      profilPajak: ProfilPajakPos.DariJson(json['ProfilPajak']),
+      tarifPajak: UraiJson.AmbilDaftarPeta(json['TarifPajak']).map(TarifPajakPos.DariJson).toList(),
+      metodePembayaran: UraiJson.AmbilDaftarPeta(json['MetodePembayaran']).map(MetodePembayaranPos.DariJson).toList(),
     );
   }
 }

@@ -45,6 +45,7 @@ class LayananPerangkat {
     await repositori.SimpanPengaturan(KunciPengaturan.kodePerangkat, hasil.kodePerangkat);
     await repositori.SimpanPengaturan(KunciPengaturan.namaPerangkat, hasil.namaPerangkat);
     await repositori.SimpanPengaturan(KunciPengaturan.namaOutlet, hasil.namaOutlet);
+    await repositori.SimpanPengaturan(KunciPengaturan.uuidOutlet, hasil.uuidOutlet);
     await repositori.SimpanPengaturan(KunciPengaturan.namaUsaha, hasil.namaUsaha);
     await SegarkanDataAwal();
   }

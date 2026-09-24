@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
 import 'Galat/GalatApi.dart';
+import 'Model/ModelKatalog.dart';
 import 'Model/ModelPos.dart';
 
 /// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`) dan `X-Versi-Aplikasi`.
@@ -39,6 +41,30 @@ class KlienPos {
   Future<HasilMasukPin> MasukPin({required String uuidPengguna, required String pin}) async =>
       HasilMasukPin.DariJson(await _Kirim('POST', 'kasir/masuk-pin', {'UuidPengguna': uuidPengguna, 'Pin': pin}));
 
+  /// Katalog lengkap (tanpa [kursor]) atau delta sejak [kursor] (F-03 D.3). Kursor rusak/kedaluwarsa → `GalatApi`
+  /// ber-kode `KursorTidakValid` (pemanggil lalu mengulang tanpa kursor).
+  Future<KatalogPos> AmbilKatalog({String? kursor}) async => KatalogPos.DariJson(
+    await _Kirim(
+      'GET',
+      kursor == null || kursor.isEmpty ? 'katalog' : 'katalog?sejak=${Uri.encodeQueryComponent(kursor)}',
+      null,
+    ),
+  );
+
+  /// Gambar QRIS statis metode pembayaran (F-07b) sebagai bait gambar (PNG/JPEG) untuk ditampilkan di layar Bayar.
+  Future<Uint8List> AmbilGambarQris(String uuidMetode) async {
+    final respons = await _KirimMentah(
+      'GET',
+      'metode-pembayaran/${Uri.encodeComponent(uuidMetode)}/gambar-qris',
+      null,
+      terima: 'image/*',
+    );
+    if (respons.statusCode >= 400) {
+      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+    }
+    return respons.bodyBytes;
+  }
+
   /// Kirim batch outbox (maks. 50) dan kembalikan hasil per item dalam urutan yang sama.
   Future<List<HasilItemSinkron>> KirimSinkron(List<ItemOutbox> item) async {
     final json = await _Kirim('POST', 'sinkron/kirim', {'Item': item.map((i) => i.toJson()).toList()});
@@ -54,9 +80,27 @@ class KlienPos {
     Map<String, Object?>? isi, {
     bool pakaiToken = true,
   }) async {
+    final respons = await _KirimMentah(metode, jalur, isi, pakaiToken: pakaiToken);
+    final json = _UraiJson(respons.body);
+
+    if (respons.statusCode >= 400) {
+      throw _BuatGalat(respons.statusCode, json);
+    }
+
+    return json;
+  }
+
+  /// Kirim permintaan dan kembalikan respons apa adanya; gagal jaringan & 5xx → `GalatJaringan`.
+  Future<http.Response> _KirimMentah(
+    String metode,
+    String jalur,
+    Map<String, Object?>? isi, {
+    bool pakaiToken = true,
+    String terima = 'application/json',
+  }) async {
     final alamat = alamatDasar.resolve('api/pos/v1/$jalur');
     final permintaan = http.Request(metode, alamat)
-      ..headers.addAll({'Accept': 'application/json', 'X-Versi-Aplikasi': versiAplikasi});
+      ..headers.addAll({'Accept': terima, 'X-Versi-Aplikasi': versiAplikasi});
 
     if (pakaiToken) {
       final token = await ambilToken();
@@ -81,21 +125,15 @@ class KlienPos {
       throw GalatJaringan(galat.message);
     }
 
-    final json = _UraiJson(respons.body);
-
     if (respons.statusCode >= 500) {
       throw GalatJaringan('Server sedang bermasalah (${respons.statusCode}). Data akan dikirim ulang otomatis.');
     }
 
-    if (respons.statusCode >= 400) {
-      throw _BuatGalat(respons.statusCode, json);
-    }
-
-    return json;
+    return respons;
   }
 
   static Map<String, Object?> _UraiJson(String isi) {
-    if (isi.isEmpty) {
+    if (isi.isEmpty || !isi.trimLeft().startsWith('{')) {
       return const <String, Object?>{};
     }
     try {
