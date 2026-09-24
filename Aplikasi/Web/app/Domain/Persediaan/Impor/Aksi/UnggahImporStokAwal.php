@@ -24,8 +24,10 @@ use Throwable;
  * UTF-8; `PenyimpanBerkasImpor`: disk privat `impor/{IdTenant}/{ulid}.{ext}`).
  * - Ukuran ≤ `persediaan.Impor.UkuranMaksimalKb` (`BerkasTerlaluBesar`); baris data ≤ `persediaan.Impor.MaksimalBaris`
  *   (`BarisTerlaluBanyak`).
- * - **Idempoten per `HashBerkas`**: berkas yang sama persis selama impor sebelumnya masih aktif (belum Selesai/Gagal/
- *   Dibatalkan) mengembalikan impor itu, tanpa berkas & baris baru.
+ * - **Idempoten per `HashBerkas` dan pengunggah**: berkas yang sama persis dari pengguna yang sama selama impor
+ *   sebelumnya masih aktif (belum Selesai/Gagal/Dibatalkan) mengembalikan impor itu, tanpa berkas & baris baru.
+ *   Impor pengguna lain tidak pernah dikembalikan (pengguna berakses per outlet tidak boleh melihatnya, dan lokasi
+ *   bawaan/pemetaannya milik pengunggah lain).
  * - Impor lama tenant ini (lewat masa simpan) dipangkas lebih dulu. Audit `stok-awal.impor.unggah`.
  * Akses lokasi stok bawaan (outlet pelaku) diperiksa kontroler; di sini lokasi harus ada dan aktif.
  */
@@ -67,7 +69,7 @@ final class UnggahImporStokAwal
         $isi = (string) file_get_contents($pathAsli);
         $hash = hash('sha256', $isi);
 
-        $ada = $this->CariImporAktif($hash);
+        $ada = $this->CariImporAktif($hash, $idPengguna);
 
         if ($ada !== null) {
             return $ada;
@@ -95,7 +97,7 @@ final class UnggahImporStokAwal
 
             $hasil = DB::transaction(function () use ($idPengguna, $idGudangBawaan, $namaBerkas, $path, $hash, $ukuran, $format, $kepala, $pemisah): ImporStokAwal {
                 // Kunci baris impor ber-hash sama (indeks IdTenant+HashBerkas): unggahan ganda serentak berurutan.
-                $ada = ImporStokAwal::query()->where('HashBerkas', $hash)->orderByDesc('Id')->lockForUpdate()->get()
+                $ada = ImporStokAwal::query()->where('HashBerkas', $hash)->where('IdPengguna', $idPengguna)->orderByDesc('Id')->lockForUpdate()->get()
                     ->first(fn (ImporStokAwal $i): bool => $i->Status->CekAktif());
 
                 if ($ada !== null) {
@@ -145,9 +147,9 @@ final class UnggahImporStokAwal
         return $hasil;
     }
 
-    private function CariImporAktif(string $hash): ?ImporStokAwal
+    private function CariImporAktif(string $hash, int $idPengguna): ?ImporStokAwal
     {
-        return ImporStokAwal::query()->where('HashBerkas', $hash)->orderByDesc('Id')->get()
+        return ImporStokAwal::query()->where('HashBerkas', $hash)->where('IdPengguna', $idPengguna)->orderByDesc('Id')->get()
             ->first(fn (ImporStokAwal $i): bool => $i->Status->CekAktif());
     }
 

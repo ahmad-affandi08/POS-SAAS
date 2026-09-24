@@ -165,6 +165,7 @@ final class CatatMutasiStok
                 $baris->idMutasiAsal,
                 $baris->kunciBaris,
             ));
+            self::PastikanDalamBatasKolom($baris->kunciBaris, $hasil, $keadaanPasangan);
 
             $olahan[] = [
                 'Baris' => $baris,
@@ -848,6 +849,31 @@ final class CatatMutasiStok
             } else {
                 $this->pelacakSeri->TandaiKeluar($seri[$id], $jenis === JenisMutasi::Penjualan ? StatusNomorSeri::Terjual : StatusNomorSeri::Keluar);
             }
+        }
+    }
+
+    /**
+     * Hasil HPP dan saldo setelah baris ini harus muat di kolom DECIMAL: jumlah (18,4), nilai (18,2), HPP (19,6).
+     * Masukan per baris sudah dibatasi, tetapi jumlahan beberapa baris ke saldo atau HPP = nilai ÷ jumlah kecil bisa
+     * melampauinya; tanpa pemeriksaan ini MySQL menolak dengan galat SQL (500) di tengah transaksi.
+     */
+    private static function PastikanDalamBatasKolom(string $kunciBaris, HasilHpp $hasil, KeadaanHpp $keadaan): void
+    {
+        if ($keadaan->jumlah->KeDesimal()->abs()->isGreaterThanOrEqualTo(self::BATAS_JUMLAH)) {
+            throw self::Galat('JumlahTidakValid', 'Saldo stok setelah mutasi ini melampaui batas 100 triliun.', $kunciBaris);
+        }
+
+        $batasNilai = BigDecimal::of(self::BATAS_NILAI);
+        $batasHpp = BigDecimal::of(self::BATAS_HPP);
+        $nilaiLewat = array_filter(
+            [$keadaan->nilai, $hasil->totalHpp, $hasil->nilaiDiminta, $hasil->selisihHpp],
+            fn (Uang $nilai): bool => AritmetikaHpp::KeDesimal($nilai)->abs()->isGreaterThanOrEqualTo($batasNilai),
+        );
+        $hppLewat = $hasil->hppSatuan->abs()->isGreaterThanOrEqualTo($batasHpp)
+            || ($keadaan->hppRataRata !== null && $keadaan->hppRataRata->abs()->isGreaterThanOrEqualTo($batasHpp));
+
+        if ($nilaiLewat !== [] || $hppLewat) {
+            throw self::Galat('HppTidakValid', 'Nilai persediaan atau HPP per satuan setelah mutasi ini melampaui batas yang bisa dicatat.', $kunciBaris);
         }
     }
 
