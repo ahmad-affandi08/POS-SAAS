@@ -10,8 +10,9 @@ use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Menulis `BatasKasKeluar` & `ShiftBersama` ke `Tenant.Pengaturan` tenant aktif (F-06). Dipanggil
- * `Kasir\Aksi\UbahPengaturanKasir` yang memvalidasi dan mencatat audit. Kunci lain di `Pengaturan` tidak disentuh.
+ * Menulis pengaturan kasir (`BatasKasKeluar`, `ShiftBersama`, `BatasDiskonManual`, `BatasDiskonPenyetuju`,
+ * `PembulatanTunai`) ke `Tenant.Pengaturan` tenant aktif (F-06, F-07b). Dipanggil `Kasir\Aksi\UbahPengaturanKasir`
+ * yang memvalidasi dan mencatat audit. Kunci lain di `Pengaturan` tidak disentuh.
  */
 final class UbahPengaturanKasirTenant
 {
@@ -27,6 +28,9 @@ final class UbahPengaturanKasirTenant
             $pengaturan = $tenant->Pengaturan ?? [];
             $pengaturan['BatasKasKeluar'] = $data->batasKasKeluar->KeString();
             $pengaturan['ShiftBersama'] = $data->shiftBersama;
+            $pengaturan['BatasDiskonManual'] = (string) $data->batasDiskonManual;
+            $pengaturan['BatasDiskonPenyetuju'] = (string) $data->batasDiskonPenyetuju;
+            $pengaturan['PembulatanTunai'] = $data->AmbilPembulatanTunaiLarik();
             $tenant->Pengaturan = $pengaturan;
 
             if ($tenant->isDirty('Pengaturan')) {

@@ -10,6 +10,10 @@ use Carbon\CarbonImmutable;
 /**
  * Masukan `CatatMutasiStok` (DesainF05a C.2): satu dokumen sumber beserta baris mutasinya. Diproses dalam urutan
  * baris; idempoten per (jenisReferensi, idReferensi, kunciBaris).
+ *
+ * `abaikanBatasMinus` (F-07b, §18.3): transaksi yang sudah terjadi di perangkat (penjualan offline) tidak boleh ditolak
+ * karena stok tidak cukup. Bila true, pemeriksaan BR-05.2 dilewati untuk dokumen ini dan baris yang sebenarnya
+ * melanggar ditandai `HasilBarisMutasi::stokTidakCukup`. Aturan batch/seri tetap berlaku. Bawaan false.
  */
 final readonly class DataDokumenMutasi
 {
@@ -25,5 +29,6 @@ final readonly class DataDokumenMutasi
         public ?int $idPengguna,
         public ?int $idPerangkat,
         public array $baris,
+        public bool $abaikanBatasMinus = false,
     ) {}
 }

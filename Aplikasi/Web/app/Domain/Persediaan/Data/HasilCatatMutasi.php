@@ -20,6 +20,16 @@ final readonly class HasilCatatMutasi
         public bool $sudahAda,
     ) {}
 
+    /**
+     * Baris keluar yang stoknya tidak cukup (BR-05.2) namun tetap dicatat karena `abaikanBatasMinus` (F-07b).
+     *
+     * @return list<HasilBarisMutasi>
+     */
+    public function AmbilBarisStokTidakCukup(): array
+    {
+        return array_values(array_filter($this->baris, fn (HasilBarisMutasi $b): bool => $b->stokTidakCukup));
+    }
+
     /** Σ perubahan nilai persediaan (bertanda). */
     public function TotalHpp(): Uang
     {

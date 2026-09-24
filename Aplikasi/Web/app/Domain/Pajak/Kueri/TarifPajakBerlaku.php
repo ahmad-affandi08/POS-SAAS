@@ -6,11 +6,15 @@ namespace App\Domain\Pajak\Kueri;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pajak\Data\DataTarifBerlaku;
+use App\Domain\Pajak\Enum\CakupanPajak;
+use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use Carbon\CarbonInterface;
 
 /**
  * Tarif pajak master yang berlaku pada satu tanggal (dipakai kalkulasi F-07 dan sinkron POS). Hanya status Terbit.
+ * F-07b: tarif untuk outlet (jenis daerah memakai kota outlet, nasional/kustom tanpa wilayah) dan daftar tarif untuk
+ * `data-awal` POS.
  */
 final class TarifPajakBerlaku
 {
@@ -41,5 +45,65 @@ final class TarifPajakBerlaku
             pengaliDppPembilang: $tarif->PengaliDppPembilang,
             pengaliDppPenyebut: $tarif->PengaliDppPenyebut,
         );
+    }
+
+    /**
+     * Tarif yang berlaku untuk outlet: jenis pajak berlingkup `Daerah` memakai kota outlet (tanpa kota = tidak ada
+     * tarif), selain itu tarif tanpa wilayah (nasional). Null bila jenis pajak tidak dikenal atau belum ada tarif.
+     */
+    public function CariDataOutlet(string $kodeJenisPajak, ?string $kodeKotaOutlet, CarbonInterface $tanggal): ?DataTarifBerlaku
+    {
+        $jenis = JenisPajak::query()->where('Kode', $kodeJenisPajak)->first();
+
+        if ($jenis === null) {
+            return null;
+        }
+
+        if ($jenis->Cakupan === CakupanPajak::Daerah) {
+            return $kodeKotaOutlet === null ? null : $this->CariData($kodeJenisPajak, $kodeKotaOutlet, $tanggal);
+        }
+
+        return $this->CariData($kodeJenisPajak, null, $tanggal);
+    }
+
+    /**
+     * Tarif terbit nasional dan wilayah kota outlet yang belum berakhir pada `hari` (termasuk yang akan berlaku),
+     * urut kode jenis lalu mulai berlaku (`data-awal` POS, F-07b). Tarif daerah wilayah lain tidak ikut.
+     *
+     * @return list<array{KodeJenisPajak: string, Tarif: string, PengaliDppPembilang: int, PengaliDppPenyebut: int, BerlakuMulai: string, BerlakuSampai: string|null}>
+     */
+    public function DaftarUntukOutlet(?string $kodeKotaOutlet, CarbonInterface $hari): array
+    {
+        $jenis = JenisPajak::query()->get()->keyBy('Id');
+        $tarif = TarifPajak::query()
+            ->where('Status', StatusDataMaster::Terbit->value)
+            ->where(fn ($kueri) => $kueri->whereNull('KodeWilayah')->when($kodeKotaOutlet !== null, fn ($atau) => $atau->orWhere('KodeWilayah', $kodeKotaOutlet)))
+            ->where(fn ($kueri) => $kueri->whereNull('BerlakuSampai')->orWhereDate('BerlakuSampai', '>=', $hari->toDateString()))
+            ->orderBy('BerlakuMulai')
+            ->orderBy('Id')
+            ->get();
+        $hasil = [];
+
+        foreach ($tarif as $t) {
+            $j = $jenis->get($t->IdJenisPajak);
+
+            // Tarif daerah tanpa wilayah atau jenis nasional dengan wilayah bukan tarif outlet ini.
+            if ($j === null || ($j->Cakupan === CakupanPajak::Daerah) !== ($t->KodeWilayah !== null)) {
+                continue;
+            }
+
+            $hasil[] = [
+                'KodeJenisPajak' => $j->Kode,
+                'Tarif' => $t->Tarif,
+                'PengaliDppPembilang' => $t->PengaliDppPembilang,
+                'PengaliDppPenyebut' => $t->PengaliDppPenyebut,
+                'BerlakuMulai' => $t->BerlakuMulai->toDateString(),
+                'BerlakuSampai' => $t->BerlakuSampai?->toDateString(),
+            ];
+        }
+
+        usort($hasil, fn (array $a, array $b): int => [$a['KodeJenisPajak'], $a['BerlakuMulai']] <=> [$b['KodeJenisPajak'], $b['BerlakuMulai']]);
+
+        return $hasil;
     }
 }

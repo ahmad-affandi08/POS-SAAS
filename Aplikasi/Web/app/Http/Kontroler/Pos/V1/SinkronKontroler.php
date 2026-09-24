@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * `POST /api/pos/v1/sinkron/kirim` (PRD §16.3, §18): menerima batch outbox perangkat dan membalas hasil per item
- * (`Diterima`/`Duplikat`/`Ditolak`) dalam urutan yang sama. F-06: `Shift.Buka`, `MutasiKas.Catat`.
+ * (`Diterima`/`Duplikat`/`Ditolak`) dalam urutan yang sama. F-06: `Shift.Buka`, `MutasiKas.Catat`; F-07b: `Penjualan.Buat`.
  */
 final class SinkronKontroler extends Kontroler
 {

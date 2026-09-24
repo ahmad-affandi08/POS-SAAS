@@ -12,12 +12,14 @@ enum JenisSumberJurnal: string
 {
     case StokAwal = 'StokAwal';
     case MutasiKas = 'MutasiKas';
+    case Penjualan = 'Penjualan';
 
     public function AmbilLabel(): string
     {
         return match ($this) {
             self::StokAwal => 'Stok awal',
             self::MutasiKas => 'Kas masuk/keluar',
+            self::Penjualan => 'Penjualan',
         };
     }
 
@@ -31,6 +33,7 @@ enum JenisSumberJurnal: string
         return match ($this) {
             self::StokAwal => '/kelola/persediaan/stok-awal/'.$uuid,
             self::MutasiKas => '/kelola/kasir/mutasi-kas/'.$uuid,
+            self::Penjualan => '/kelola/penjualan/'.$uuid,
         };
     }
 }

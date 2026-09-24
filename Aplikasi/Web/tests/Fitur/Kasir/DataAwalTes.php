@@ -80,7 +80,14 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
         expect($uuidStaf)->toContain($k['Kasir']->Uuid, $k['Supervisor']->Uuid, $k['Pemilik']->Uuid)
             ->and($uuidStaf)->not->toContain($kasirCabang->Uuid)
             ->and(array_column($respons->json('KategoriKas'), 'Nama'))->toBe(['Beli es batu & galon', 'Tambahan uang receh'])
-            ->and($respons->json('Pengaturan'))->toBe(['BatasKasKeluar' => '200000.00', 'ShiftBersama' => false]);
+            ->and($respons->json('Pengaturan'))->toBe([
+                'BatasKasKeluar' => '200000.00',
+                'ShiftBersama' => false,
+                // F-07b: batas diskon (BR-07.3) & pembulatan tunai (BR-08.6).
+                'BatasDiskonManual' => '10.00',
+                'BatasDiskonPenyetuju' => '30.00',
+                'PembulatanTunai' => null,
+            ]);
     });
 
     it('isolasi & pencabutan: staf tenant lain tidak ikut; perangkat dicabut 403 dan kunci PIN-nya dikosongkan', function (): void {

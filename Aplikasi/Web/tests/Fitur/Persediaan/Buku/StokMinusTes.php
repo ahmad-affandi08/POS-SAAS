@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Domain\Katalog\Data\DataInfoProdukStok;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
+use App\Domain\Persediaan\Aksi\CatatMutasiStok;
+use App\Domain\Persediaan\Data\DataDokumenMutasi;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\MetodeHpp;
@@ -67,6 +69,44 @@ describe('F-05a BR-05.2 stok minus', function (): void {
         'seri, tenant boleh' => [PelacakanProduk::Seri, null, true, false],
         'tanpa pelacakan, tenant boleh' => [PelacakanProduk::Tidak, null, true, true],
     ]);
+
+    it('F-07b abaikanBatasMinus: dokumen tetap dicatat walau stok tidak cukup; baris yang melanggar BR-05.2 dilaporkan, baris yang cukup atau boleh minus tidak; bawaan tetap menolak', function (): void {
+        $t = BantuanPersediaan::SiapkanTenant();
+        $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
+        $p['Produksi']->forceFill(['BolehMinus' => true])->save();
+        $g = $t['Gudang']->Id;
+        BantuanBuku::CatatMasuk($p['Stok']->Id, $g, '3', '115500.00');
+        BantuanBuku::CatatMasuk($p['BahanBaku']->Id, $g, '10', '150000.00');
+        $baris = [
+            BantuanBuku::BuatBaris('K/1', $p['Stok']->Id, $g, '-5', null, JenisMutasi::Penjualan),
+            BantuanBuku::BuatBaris('K/2', $p['BahanBaku']->Id, $g, '-2.5', null, JenisMutasi::Penjualan),
+            BantuanBuku::BuatBaris('K/3', $p['Produksi']->Id, $g, '-1', null, JenisMutasi::Penjualan),
+        ];
+
+        $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat($baris, JenisReferensiMutasi::Penjualan));
+        expect($galat->kode)->toBe('StokTidakCukup');
+
+        $dokumen = BantuanBuku::BuatDokumen($baris, JenisReferensiMutasi::Penjualan);
+        $hasil = app(CatatMutasiStok::class)->Jalankan(new DataDokumenMutasi(
+            $dokumen->jenisReferensi,
+            $dokumen->idReferensi,
+            $dokumen->uuidReferensi,
+            $dokumen->nomorReferensi,
+            $dokumen->tanggalBisnis,
+            $dokumen->idPengguna,
+            $dokumen->idPerangkat,
+            $dokumen->baris,
+            abaikanBatasMinus: true,
+        ));
+
+        expect($hasil->baris['K/1']->stokTidakCukup)->toBeTrue()
+            ->and($hasil->baris['K/1']->saldoSetelah->KeString())->toBe('-2.0000')
+            ->and($hasil->baris['K/2']->stokTidakCukup)->toBeFalse()
+            ->and($hasil->baris['K/3']->stokTidakCukup)->toBeFalse()
+            ->and(array_map(fn ($b) => $b->kunciBaris, $hasil->AmbilBarisStokTidakCukup()))->toBe(['K/1'])
+            ->and(BantuanBuku::AmbilSaldo($p['Stok']->Id, $g)?->JumlahTersedia)->toBe('-2.0000')
+            ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id))->toBe([]);
+    });
 
     it('BR-05.2 tidak berlaku untuk mutasi masuk dan stok yang pas habis', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();

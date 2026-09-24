@@ -8,6 +8,7 @@ use App\Providers\PenyediaKatalog;
 use App\Providers\PenyediaKatalogHarga;
 use App\Providers\PenyediaKatalogImpor;
 use App\Providers\PenyediaKatalogKomposisi;
+use App\Providers\PenyediaPenjualan;
 use App\Providers\PenyediaPersediaan;
 
 return [
@@ -21,4 +22,6 @@ return [
     PenyediaPersediaan::class,
     // F-06: shift & kas (penangan item sinkron POS).
     PenyediaKasir::class,
+    // F-07b: penjualan dari POS (penangan item sinkron `Penjualan.Buat`).
+    PenyediaPenjualan::class,
 ];

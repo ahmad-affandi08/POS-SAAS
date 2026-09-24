@@ -27,4 +27,23 @@ final class MutasiDokumen
             ->get()
             ->all());
     }
+
+    /**
+     * Ringkasan baris mutasi satu dokumen sumber untuk halaman dokumen domain lain (misal detail penjualan F-07b),
+     * tanpa Model: produk, lokasi stok, jumlah bertanda (satuan dasar), dan perubahan nilai persediaan.
+     *
+     * @return list<array{Id: int, IdProduk: int, IdGudang: int, IdReferensiDetail: int|null, Jumlah: string, TotalHpp: string, TanggalBisnis: string}>
+     */
+    public function AmbilRingkasan(JenisReferensiMutasi $jenis, int $idReferensi): array
+    {
+        return array_map(fn (MutasiStok $m): array => [
+            'Id' => $m->Id,
+            'IdProduk' => $m->IdProduk,
+            'IdGudang' => $m->IdGudang,
+            'IdReferensiDetail' => $m->IdReferensiDetail,
+            'Jumlah' => $m->Jumlah,
+            'TotalHpp' => $m->TotalHpp,
+            'TanggalBisnis' => $m->TanggalBisnis->toDateString(),
+        ], $this->Ambil($jenis, $idReferensi));
+    }
 }

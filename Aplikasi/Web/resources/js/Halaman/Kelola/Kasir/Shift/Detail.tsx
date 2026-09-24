@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 
 import LencanaShift from '@/Komponen/Kasir/LencanaShift';
+import { kolomPenjualan } from '@/Komponen/Penjualan/KolomPenjualan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
@@ -87,8 +88,11 @@ function Nilai({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-/** F-06: detail shift (baca saja): pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan mutasi kas. */
-export default function HalamanDetailShift({ Shift, MutasiKas }: PropsDetailShift) {
+/**
+ * F-06: detail shift (baca saja): pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan mutasi kas.
+ * F-07b: penjualan yang dibuat di shift ini.
+ */
+export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan }: PropsDetailShift) {
     return (
         <TataLetakAplikasi judul={`Shift ${Shift.NamaKasir} · ${FormatTanggalWaktu(Shift.DibukaPada)}`}>
             <Button asChild variant="link" className="h-auto self-start px-0">
@@ -163,6 +167,23 @@ export default function HalamanDetailShift({ Shift, MutasiKas }: PropsDetailShif
                     },
                 ]}
                 kosong={{ judul: 'Belum ada kas masuk, kas keluar, atau setoran di shift ini.' }}
+            />
+
+            <h2 className="text-subjudul font-semibold text-teks-utama">Penjualan</h2>
+            <p className="text-isi text-teks-sekunder">
+                {Penjualan.JumlahTransaksi} transaksi, total{' '}
+                <span className="font-semibold tabular-nums">{FormatRupiah(Penjualan.TotalPenjualan)}</span>.
+            </p>
+            <TabelData
+                id="kasir-shift-penjualan"
+                label="Penjualan shift"
+                kolom={kolomPenjualan}
+                sumber={{ mode: 'lokal', data: Penjualan.Daftar }}
+                ambilIdBaris={(p) => p.Uuid}
+                urutBawaan="DibuatOfflinePada"
+                cari="Cari nomor"
+                alamatDetail={(p) => `/kelola/penjualan/${p.Uuid}`}
+                kosong={{ judul: 'Belum ada penjualan di shift ini.' }}
             />
         </TataLetakAplikasi>
     );

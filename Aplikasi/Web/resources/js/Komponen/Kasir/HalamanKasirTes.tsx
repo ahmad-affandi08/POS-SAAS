@@ -2,11 +2,21 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanKategoriKas from '@/Halaman/Kelola/Kasir/KategoriKas';
-import HalamanPengaturanKasir, { UbahKeMasukanUang } from '@/Halaman/Kelola/Kasir/Pengaturan';
+import HalamanPengaturanKasir, {
+    NormalisasiMasukanPersen,
+    UbahKeMasukanPersen,
+    UbahKeMasukanUang,
+} from '@/Halaman/Kelola/Kasir/Pengaturan';
 import HalamanDaftarShift from '@/Halaman/Kelola/Kasir/Shift/Daftar';
 import HalamanDetailShift from '@/Halaman/Kelola/Kasir/Shift/Detail';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import type { BarisShift, PropsDaftarShift, PropsDetailShift, PropsKategoriKas } from '@/Tipe/Kasir';
+import type {
+    BarisShift,
+    PropsDaftarShift,
+    PropsDetailShift,
+    PropsKategoriKas,
+    PropsPengaturanKasir,
+} from '@/Tipe/Kasir';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
@@ -27,6 +37,19 @@ const barisShift: BarisShift = {
     TotalKeluar: '45000.00',
     TotalSetoran: '300000.00',
     KasNonPenjualan: '925000.00',
+};
+
+const propsPengaturan: PropsPengaturanKasir = {
+    BatasKasKeluar: '200000.00',
+    ShiftBersama: false,
+    BatasDiskonManual: '10.00',
+    BatasDiskonPenyetuju: '30.00',
+    PembulatanTunai: null,
+    OpsiArahPembulatan: [
+        { Nilai: 'Bawah', Label: 'Ke bawah' },
+        { Nilai: 'Atas', Label: 'Ke atas' },
+        { Nilai: 'Terdekat', Label: 'Ke terdekat' },
+    ],
 };
 
 function PropsDaftar(data: BarisShift[]): PropsDaftarShift {
@@ -82,10 +105,38 @@ describe('F-06 halaman kasir back-office', () => {
                     UuidJurnal: '01K5JURNAL0000000000000007',
                 },
             ],
+            Penjualan: {
+                Daftar: [
+                    {
+                        Uuid: '01K5PENJUALAN0000000000001',
+                        Nomor: 'INV/UTAMA/260924/UTAMA-K01-0042',
+                        DibuatOfflinePada: '2026-09-24T03:10:00Z',
+                        TanggalBisnis: '2026-09-24',
+                        NamaOutlet: 'Kopi Senja Solo Baru',
+                        NamaKasir: 'Rina Wulandari',
+                        Kanal: 'BawaPulang',
+                        LabelKanal: 'Bawa pulang',
+                        TotalAkhir: '96570.00',
+                        Metode: ['QRIS statis', 'Tunai'],
+                        Status: 'Lunas',
+                        LabelStatus: 'Lunas',
+                        PerluTinjauan: false,
+                    },
+                ],
+                JumlahTransaksi: 1,
+                TotalPenjualan: '96570.00',
+            },
         };
 
         RenderUji(<HalamanDetailShift {...props} />);
         expect(screen.getByText(/kasir sudah punya shift terbuka/)).toBeTruthy();
+        // F-07b: penjualan shift dengan tautan ke detail penjualan.
+        expect(
+            within(screen.getByRole('table', { name: 'Penjualan shift' }))
+                .getByRole('link', { name: 'INV/UTAMA/260924/UTAMA-K01-0042' })
+                .getAttribute('href'),
+        ).toBe('/kelola/penjualan/01K5PENJUALAN0000000000001');
+        expect(screen.getByText(/1 transaksi, total/)).toBeTruthy();
         expect(screen.getByText('Rp 100.000 × 12')).toBeTruthy();
         expect(screen.getByText('Disetujui Budi Santoso')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'JU/2026/09/000007' }).getAttribute('href')).toBe(
@@ -93,8 +144,15 @@ describe('F-06 halaman kasir back-office', () => {
         );
 
         cleanup();
-        RenderUji(<HalamanDetailShift {...props} MutasiKas={[]} />);
+        RenderUji(
+            <HalamanDetailShift
+                {...props}
+                MutasiKas={[]}
+                Penjualan={{ Daftar: [], JumlahTransaksi: 0, TotalPenjualan: '0.00' }}
+            />,
+        );
         expect(screen.getByText(/Belum ada kas masuk/)).toBeTruthy();
+        expect(screen.getByText('Belum ada penjualan di shift ini.')).toBeTruthy();
     });
 
     it('kategori kas: keadaan kosong dan formulir tambah mengirim nama, jenis, akun', () => {
@@ -127,11 +185,51 @@ describe('F-06 halaman kasir back-office', () => {
         expect(UbahKeMasukanUang('200000.00')).toBe('200000');
         expect(UbahKeMasukanUang('150000.50')).toBe('150000.50');
 
-        render(<HalamanPengaturanKasir BatasKasKeluar="200000.00" ShiftBersama={false} />);
+        render(<HalamanPengaturanKasir {...propsPengaturan} />);
         const simpan = screen.getByRole('button', { name: 'Simpan pengaturan' });
         expect(simpan.hasAttribute('disabled')).toBe(true);
 
-        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByRole('checkbox', { name: /berbagi satu laci/ }));
         expect(simpan.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('pengaturan kasir F-07b: batas diskon (persen tanpa float) & pembulatan tunai terkirim; pembulatan mati = null', () => {
+        expect(UbahKeMasukanPersen('10.00')).toBe('10');
+        expect(UbahKeMasukanPersen('25.50')).toBe('25.5');
+        expect(NormalisasiMasukanPersen('12,755%')).toBe('12.75');
+        expect(NormalisasiMasukanPersen('1000')).toBe('100');
+
+        tiruanRouter.put.mockClear();
+        RenderUji(<HalamanPengaturanKasir {...propsPengaturan} />);
+        expect(screen.queryByLabelText('Kelipatan')).toBeNull();
+
+        UbahNilai(screen.getByLabelText('Batas diskon kasir (%)'), '5');
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Bulatkan pembayaran tunai' }));
+        UbahNilai(screen.getByLabelText('Kelipatan'), '500');
+        UbahNilai(screen.getByLabelText('Arah pembulatan'), 'Terdekat');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
+
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/kasir/pengaturan',
+            {
+                BatasKasKeluar: '200000',
+                ShiftBersama: false,
+                BatasDiskonManual: '5',
+                BatasDiskonPenyetuju: '30',
+                PembulatanTunai: { Kelipatan: 500, Arah: 'Terdekat' },
+            },
+            expect.anything(),
+        );
+
+        cleanup();
+        tiruanRouter.put.mockClear();
+        RenderUji(<HalamanPengaturanKasir {...propsPengaturan} PembulatanTunai={{ Kelipatan: 100, Arah: 'Bawah' }} />);
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Bulatkan pembayaran tunai' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/kasir/pengaturan',
+            expect.objectContaining({ PembulatanTunai: null }),
+            expect.anything(),
+        );
     });
 });

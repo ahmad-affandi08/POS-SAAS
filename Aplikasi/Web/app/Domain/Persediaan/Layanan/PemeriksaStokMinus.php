@@ -22,13 +22,19 @@ final class PemeriksaStokMinus
         return $produk->pelacakan === PelacakanProduk::Tidak && ($produk->bolehMinus ?? $pengaturan->stokBolehMinus);
     }
 
+    /** BR-05.2 dilanggar: `tersedia − diminta < 0` dan produk tidak boleh minus. `diminta` = besaran keluar (> 0). */
+    public function CekTidakCukup(DataInfoProdukStok $produk, DataPengaturanPersediaan $pengaturan, Kuantitas $tersedia, Kuantitas $diminta): bool
+    {
+        return $tersedia->Kurangi($diminta)->BernilaiNegatif() && ! $this->CekBolehMinus($produk, $pengaturan);
+    }
+
     /**
      * Menolak kode `StokTidakCukup` (BR-05.2; kode galat kontrak API §16.2) bila `tersedia − diminta < 0` dan produk
      * tidak boleh minus. `diminta` = besaran keluar (> 0).
      */
     public function Pastikan(DataInfoProdukStok $produk, DataInfoGudang $gudang, DataPengaturanPersediaan $pengaturan, Kuantitas $tersedia, Kuantitas $diminta): void
     {
-        if (! $tersedia->Kurangi($diminta)->BernilaiNegatif() || $this->CekBolehMinus($produk, $pengaturan)) {
+        if (! $this->CekTidakCukup($produk, $pengaturan, $tersedia, $diminta)) {
             return;
         }
 

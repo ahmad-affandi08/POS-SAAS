@@ -11,7 +11,8 @@ use Brick\Math\BigDecimal;
 /**
  * Hasil satu baris `CatatMutasiStok` (DesainF05a C.2). `totalHpp` = perubahan nilai persediaan sebenarnya
  * (bertanda); `nilaiDiminta` bertanda (+V masuk, −D keluar; keluar `Berjalan` = totalHpp); `selisihHpp` =
- * totalHpp − nilaiDiminta. `hppTidakDiketahui` = HPP belum ada sehingga dinilai 0.
+ * totalHpp − nilaiDiminta. `hppTidakDiketahui` = HPP belum ada sehingga dinilai 0. `stokTidakCukup` = baris keluar
+ * yang melanggar BR-05.2 tetapi tetap dicatat karena dokumen memakai `abaikanBatasMinus` (F-07b).
  */
 final readonly class HasilBarisMutasi
 {
@@ -29,5 +30,6 @@ final readonly class HasilBarisMutasi
         public ?int $idBatchStok,
         public ?int $idNomorSeri,
         public bool $hppTidakDiketahui,
+        public bool $stokTidakCukup = false,
     ) {}
 }

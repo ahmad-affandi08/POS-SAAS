@@ -39,6 +39,40 @@ final class DaftarMetodePembayaran
         ])->all());
     }
 
+    /**
+     * Metode aktif berjenis fase 1 untuk `data-awal` POS (F-07b). Path gambar QRIS tidak dikirim; perangkat mengunduh
+     * lewat `GET /api/pos/v1/metode-pembayaran/{uuid}/gambar-qris`.
+     *
+     * @return list<array{Uuid: string, Jenis: string, Nama: string, NomorRekening: string|null, NamaPemilikRekening: string|null, AdaGambarQris: bool, Urutan: int}>
+     */
+    public function AmbilUntukPos(): array
+    {
+        return array_values(MetodePembayaran::query()
+            ->where('Aktif', true)
+            ->orderBy('Urutan')
+            ->orderBy('Id')
+            ->get()
+            ->filter(fn (MetodePembayaran $metode): bool => $metode->Jenis->CekDidukungPos())
+            ->map(fn (MetodePembayaran $metode): array => [
+                'Uuid' => $metode->Uuid,
+                'Jenis' => $metode->Jenis->value,
+                'Nama' => $metode->Nama,
+                'NomorRekening' => $metode->NomorRekening,
+                'NamaPemilikRekening' => $metode->NamaPemilikRekening,
+                'AdaGambarQris' => $metode->PathGambarQris !== null,
+                'Urutan' => $metode->Urutan,
+            ])
+            ->all());
+    }
+
+    /** Path gambar QRIS statis metode aktif tenant aktif (unduhan POS F-07b); null bila tidak ada. */
+    public function CariPathGambarQrisPos(string $uuid): ?string
+    {
+        $metode = MetodePembayaran::query()->where('Uuid', $uuid)->where('Jenis', JenisMetodePembayaran::QrisStatis->value)->first();
+
+        return $metode?->PathGambarQris;
+    }
+
     public function Cari(string $uuid): ?MetodePembayaran
     {
         return MetodePembayaran::query()->where('Uuid', $uuid)->first();

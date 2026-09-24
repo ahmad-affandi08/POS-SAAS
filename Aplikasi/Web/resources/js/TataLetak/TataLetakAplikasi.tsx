@@ -7,6 +7,7 @@ import {
     LifeBuoyIcon,
     MonitorSmartphoneIcon,
     PackageIcon,
+    ReceiptTextIcon,
     ScrollTextIcon,
     ShieldCheckIcon,
     StoreIcon,
@@ -115,6 +116,8 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
     },
+    // F-07b: penjualan dari aplikasi POS (baca saja).
+    { label: 'Penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat, ikon: ReceiptTextIcon },
     {
         label: 'Shift & kas',
         href: '/kelola/kasir/shift',

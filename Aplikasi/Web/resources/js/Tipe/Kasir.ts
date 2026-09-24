@@ -1,4 +1,5 @@
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
+import type { PenjualanShift } from '@/Tipe/Penjualan';
 
 /** F-06 shift & kas (back-office). Uang = string desimal dari server; tidak pernah number/float. */
 
@@ -58,6 +59,8 @@ export type PropsDetailShift = {
         PecahanKasAwal: PecahanKas[];
     };
     MutasiKas: BarisMutasiKas[];
+    /** F-07b: penjualan yang dibuat di shift ini. */
+    Penjualan: PenjualanShift;
 };
 
 export type OpsiAkun = { Uuid: string; Kode: string; Nama: string; Jenis: string };
@@ -78,7 +81,15 @@ export type PropsKategoriKas = {
     OpsiAkun: Record<JenisKategoriKas, OpsiAkun[]>;
 };
 
+export type PembulatanTunai = { Kelipatan: number; Arah: string };
+
 export type PropsPengaturanKasir = {
     BatasKasKeluar: string;
     ShiftBersama: boolean;
+    /** F-07b BR-07.3: persen string desimal ("10.00"). */
+    BatasDiskonManual: string;
+    BatasDiskonPenyetuju: string;
+    /** F-07b BR-08.6: null = tanpa pembulatan tunai. */
+    PembulatanTunai: PembulatanTunai | null;
+    OpsiArahPembulatan: { Nilai: string; Label: string }[];
 };

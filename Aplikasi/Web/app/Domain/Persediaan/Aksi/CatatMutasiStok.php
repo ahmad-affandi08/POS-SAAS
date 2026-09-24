@@ -131,8 +131,12 @@ final class CatatMutasiStok
             $keluar = $baris->jumlah->BernilaiNegatif();
             $idBatchStok = null;
             $idNomorSeri = null;
+            $stokTidakCukup = false;
 
-            if ($keluar) {
+            if ($keluar && $dokumen->abaikanBatasMinus) {
+                // F-07b (§18.3): transaksi yang sudah terjadi di perangkat tetap dicatat; pelanggaran dilaporkan.
+                $stokTidakCukup = $this->pemeriksaStokMinus->CekTidakCukup($infoProduk, $pengaturan, $keadaanPasangan->jumlah, $baris->jumlah->Negasi());
+            } elseif ($keluar) {
                 // BR-05.2 (C.4): stok minus hanya untuk produk tanpa pelacakan yang diizinkan.
                 $this->pemeriksaStokMinus->Pastikan($infoProduk, $infoGudang, $pengaturan, $keadaanPasangan->jumlah, $baris->jumlah->Negasi());
             }
@@ -178,6 +182,7 @@ final class CatatMutasiStok
                 'SaldoSetelah' => $keadaanPasangan->jumlah,
                 'NilaiSetelah' => $keadaanPasangan->nilai,
                 'HppRataRataSetelah' => $keadaanPasangan->hppRataRata,
+                'StokTidakCukup' => $stokTidakCukup,
             ];
         }
 
@@ -207,6 +212,7 @@ final class CatatMutasiStok
                 $o['IdBatchStok'],
                 $o['IdNomorSeri'],
                 $h->hppTidakDiketahui,
+                $o['StokTidakCukup'],
             );
         }
 

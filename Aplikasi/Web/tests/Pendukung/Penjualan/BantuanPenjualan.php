@@ -1,0 +1,276 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Pendukung\Penjualan;
+
+use App\Domain\Bersama\Nilai\Kuantitas;
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Katalog\Pilihan\Model\Pilihan;
+use App\Domain\Organisasi\Model\Gudang;
+use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\Perangkat;
+use App\Domain\Pajak\Enum\DasarPengenaanPajak;
+use App\Domain\Penjualan\Enum\ArahPembulatan;
+use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\DataKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\DataPajakKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\DataPembayaranKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\DataPembulatanTunai;
+use App\Domain\Penjualan\Kalkulasi\DataPotongan;
+use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
+use App\Domain\Penjualan\Model\MetodePembayaran;
+use App\Domain\Tenant\Model\Tenant;
+use Brick\Math\BigDecimal;
+use Carbon\CarbonImmutable;
+use RuntimeException;
+use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Katalog\BantuanKatalog;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Persediaan\BantuanStokAwal;
+use Tests\TestCase;
+
+/**
+ * Prasyarat test F-07b penjualan dari POS: tenant ber-COA template retail (lewat `BantuanKasir`), perangkat kasir
+ * aktif dengan shift terbuka, metode pembayaran tiap jenis, dan pembuat item outbox `Penjualan.Buat` yang menghitung
+ * `Ringkasan` seperti aplikasi kasir (mesin kalkulasi F-07a yang sama). Panggil
+ * `BantuanPendaftaran::SiapkanPrasyarat()` dulu.
+ *
+ * Baris masukan `Item()`: `['Produk' => Produk, 'Jumlah' => '2', 'Harga' => '38500.00', 'Satuan' => ProdukSatuan|null,
+ * 'Pilihan' => list<Pilihan>, 'DiskonManual' => ['Persen' => '5']|['Jumlah' => '1000.00']|null, 'KodePajak' => list|null,
+ * 'HargaTermasukPajak' => bool|null]`. Pembayaran: `[['Metode' => MetodePembayaran, 'Jumlah' => '...'|null]]`
+ * (tunai tanpa jumlah = uang pas; bawaan satu pembayaran tunai uang pas).
+ */
+final class BantuanPenjualan
+{
+    private static int $urutanNomor = 0;
+
+    /**
+     * @return array{Tenant: Tenant, Pemilik: Pengguna, Outlet: Outlet, Gudang: Gudang, Perangkat: Perangkat, Token: string, Kasir: Pengguna, Supervisor: Pengguna, UuidShift: string, Tunai: MetodePembayaran, Qris: MetodePembayaran, Edc: MetodePembayaran, Transfer: MetodePembayaran, Tempo: MetodePembayaran}
+     */
+    public static function Siapkan(TestCase $tes, string $namaUsaha = 'Toko Kelontong Berkah Solo'): array
+    {
+        $k = BantuanKasir::Siapkan($tes, $namaUsaha);
+        $shift = BantuanKasir::ItemBukaShift($k['Kasir'], '500000.00');
+        $hasil = BantuanKasir::KirimRingkas($tes, $k['Token'], [$shift]);
+
+        if ($hasil !== [['Diterima', null]]) {
+            throw new RuntimeException('Shift uji gagal dibuka: '.json_encode($hasil));
+        }
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        return $k + [
+            'Gudang' => Gudang::query()->where('IdOutlet', $k['Outlet']->Id)->orderBy('Id')->firstOrFail(),
+            'UuidShift' => $shift['Uuid'],
+            'Tunai' => MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::Tunai->value)->firstOrFail(),
+            'Qris' => self::BuatMetode(JenisMetodePembayaran::QrisStatis, 'QRIS Toko Berkah'),
+            'Edc' => self::BuatMetode(JenisMetodePembayaran::Edc, 'EDC BCA'),
+            'Transfer' => self::BuatMetode(JenisMetodePembayaran::Transfer, 'Transfer BRI'),
+            'Tempo' => self::BuatMetode(JenisMetodePembayaran::Tempo, 'Tempo 30 hari'),
+        ];
+    }
+
+    public static function BuatMetode(JenisMetodePembayaran $jenis, string $nama, bool $aktif = true): MetodePembayaran
+    {
+        return MetodePembayaran::query()->create(['Jenis' => $jenis, 'Nama' => $nama, 'Aktif' => $aktif, 'Urutan' => 10]);
+    }
+
+    /** Produk barang stok (satuan pcs) dengan stok awal terposting (jurnal persediaan ikut tercatat). */
+    public static function BuatProdukBerstok(Gudang $gudang, int $idPengguna, string $nama = 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter', string $jumlah = '10', string $hpp = '30000', string $harga = '38500.00'): Produk
+    {
+        $produk = BantuanKatalog::BuatProduk(['Nama' => $nama], $harga);
+
+        if (BigDecimal::of($jumlah)->isPositive()) {
+            BantuanStokAwal::BuatDanPosting($gudang, [BantuanStokAwal::Baris($produk, $jumlah, $hpp)], $idPengguna);
+        }
+
+        return $produk;
+    }
+
+    /** Stok awal terposting untuk produk yang sudah ada (bahan baku, komponen). */
+    public static function IsiStok(Gudang $gudang, Produk $produk, string $jumlah, string $hpp, int $idPengguna): void
+    {
+        BantuanStokAwal::BuatDanPosting($gudang, [BantuanStokAwal::Baris($produk, $jumlah, $hpp)], $idPengguna);
+    }
+
+    /**
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     */
+    public static function Nomor(array $k, ?int $urutan = null, ?CarbonImmutable $waktu = null): string
+    {
+        $urutan ??= ++self::$urutanNomor;
+        /** @var Outlet $outlet */
+        $outlet = $k['Outlet'];
+        /** @var Perangkat $perangkat */
+        $perangkat = $k['Perangkat'];
+        $tanggal = ($waktu ?? CarbonImmutable::now()->subMinutes(5))->setTimezone($outlet->ZonaWaktu)->format('ymd');
+
+        return "INV/{$outlet->Kode}/{$tanggal}/{$perangkat->Kode}-".str_pad((string) $urutan, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Item outbox `Penjualan.Buat` lengkap. `opsi`: `Baris`, `Pembayaran`, `Pajak` (list `[Kode, Tarif, Pembilang,
+     * Penyebut, DasarPengenaan?]`), `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`
+     * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
+     * kunci `Data` yang ditimpa setelah dihitung (misal `Ringkasan` palsu).
+     *
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     * @param  array<string, mixed>  $opsi
+     * @param  array<string, mixed>  $timpa
+     * @return array{Jenis: string, Uuid: string, Data: array<string, mixed>}
+     */
+    public static function Item(array $k, array $opsi, array $timpa = [], ?string $uuid = null): array
+    {
+        $dibuatPada = $opsi['DibuatPada'] ?? CarbonImmutable::now()->subMinutes(5);
+        $hargaTermasukPajak = (bool) ($opsi['HargaTermasukPajak'] ?? false);
+        $persenLayanan = (string) ($opsi['PersenBiayaLayanan'] ?? '0');
+        $pembulatan = $opsi['PembulatanTunai'] ?? null;
+        $pajak = array_values(array_map(fn (array $p): array => [
+            'Kode' => $p[0],
+            'Tarif' => $p[1],
+            'PengaliDppPembilang' => $p[2] ?? 1,
+            'PengaliDppPenyebut' => $p[3] ?? 1,
+            'DasarPengenaan' => $p[4] ?? DasarPengenaanPajak::Subtotal->value,
+        ], $opsi['Pajak'] ?? []));
+
+        $baris = [];
+
+        foreach ($opsi['Baris'] as $b) {
+            /** @var Produk $produk */
+            $produk = $b['Produk'];
+            /** @var list<Pilihan> $pilihan */
+            $pilihan = $b['Pilihan'] ?? [];
+            $hargaPilihan = array_reduce($pilihan, fn (Uang $t, Pilihan $p): Uang => $t->Tambah(Uang::Dari($p->Harga)), Uang::Nol());
+            /** @var ProdukSatuan|null $satuan */
+            $satuan = $b['Satuan'] ?? null;
+            $baris[] = [
+                'Uuid' => BantuanKasir::Uuid(),
+                'UuidProduk' => $produk->Uuid,
+                'UuidProdukSatuan' => $satuan?->Uuid,
+                'Jumlah' => (string) ($b['Jumlah'] ?? '1'),
+                'HargaSatuan' => (string) ($b['Harga'] ?? '10000.00'),
+                'HargaPilihan' => $hargaPilihan->KeString(),
+                'Pilihan' => array_map(fn (Pilihan $p): array => ['UuidPilihan' => $p->Uuid, 'Nama' => $p->Nama, 'Harga' => Uang::Dari($p->Harga)->KeString()], $pilihan),
+                'HargaTermasukPajak' => $b['HargaTermasukPajak'] ?? null,
+                'KodePajak' => $b['KodePajak'] ?? null,
+                'DiskonManual' => $b['DiskonManual'] ?? null,
+                'Catatan' => $b['Catatan'] ?? null,
+            ];
+        }
+
+        $pembayaranMasukan = $opsi['Pembayaran'] ?? [['Metode' => $k['Tunai'], 'Jumlah' => null]];
+        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan);
+        $pembayaran = [];
+
+        foreach ($pembayaranMasukan as $p) {
+            /** @var MetodePembayaran $metode */
+            $metode = $p['Metode'];
+            $jumlah = $p['Jumlah'] ?? null;
+
+            if ($jumlah === null) {
+                // Uang pas: sisa tagihan setelah non-tunai lain.
+                $nonTunai = array_reduce($pembayaranMasukan, fn (Uang $t, array $x): Uang => $x['Metode']->Jenis === JenisMetodePembayaran::Tunai || ($x['Jumlah'] ?? null) === null ? $t : $t->Tambah(Uang::Dari($x['Jumlah'])), Uang::Nol());
+                $jumlah = $hasil['TotalAkhir']->Kurangi($nonTunai)->KeString();
+            }
+
+            $pembayaran[] = ['Uuid' => BantuanKasir::Uuid(), 'UuidMetodePembayaran' => $metode->Uuid, 'Jumlah' => $jumlah, 'Referensi' => $p['Referensi'] ?? null];
+        }
+
+        $hasilAkhir = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, array_map(
+            fn (array $p, array $b): array => ['Metode' => $p['Metode'], 'Jumlah' => $b['Jumlah']],
+            $pembayaranMasukan,
+            $pembayaran,
+        ));
+
+        /** @var Pengguna $kasir */
+        $kasir = $opsi['Kasir'] ?? $k['Kasir'];
+        /** @var Pengguna|null $penyetuju */
+        $penyetuju = $opsi['Penyetuju'] ?? null;
+
+        return [
+            'Jenis' => 'Penjualan.Buat',
+            'Uuid' => $uuid ?? BantuanKasir::Uuid(),
+            'Data' => array_replace([
+                'UuidShift' => $k['UuidShift'],
+                'UuidPengguna' => $kasir->Uuid,
+                'Nomor' => self::Nomor($k, waktu: $dibuatPada),
+                'Kanal' => 'BawaPulang',
+                'DibuatPada' => $dibuatPada->utc()->toIso8601ZuluString(),
+                'HargaTermasukPajak' => $hargaTermasukPajak,
+                'PersenBiayaLayanan' => $persenLayanan,
+                'PembulatanTunai' => $pembulatan === null ? null : ['Kelipatan' => $pembulatan[0], 'Arah' => $pembulatan[1]],
+                'Pajak' => $pajak,
+                'Baris' => $baris,
+                'DiskonManualPesanan' => $opsi['DiskonManualPesanan'] ?? null,
+                'UuidPenyetujuDiskon' => $penyetuju?->Uuid,
+                'Pembayaran' => $pembayaran,
+                'Ringkasan' => [
+                    'Subtotal' => $hasilAkhir['Subtotal']->KeString(),
+                    'TotalPajak' => $hasilAkhir['TotalPajak']->KeString(),
+                    'Pembulatan' => $hasilAkhir['Pembulatan']->KeString(),
+                    'TotalAkhir' => $hasilAkhir['TotalAkhir']->KeString(),
+                    'Kembalian' => $hasilAkhir['Kembalian']->KeString(),
+                ],
+                'Catatan' => 'Pelanggan minta struk digital',
+            ], $timpa),
+        ];
+    }
+
+    /**
+     * @param  array{0: int, 1: string}|null  $pembulatan
+     * @param  list<array<string, mixed>>  $pajak
+     * @param  list<array<string, mixed>>  $baris
+     * @param  array<string, string>|null  $diskonPesanan
+     * @param  list<array<string, mixed>>  $pembayaran
+     * @return array{Subtotal: Uang, TotalPajak: Uang, Pembulatan: Uang, TotalAkhir: Uang, Kembalian: Uang}
+     */
+    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran): array
+    {
+        $hasil = (new MesinKalkulasi)->Hitung(new DataKalkulasi(
+            hargaTermasukPajak: $termasukPajak,
+            baris: array_map(fn (array $b): DataBarisKalkulasi => new DataBarisKalkulasi(
+                Kuantitas::Dari((string) $b['Jumlah']),
+                Uang::Dari((string) $b['HargaSatuan']),
+                Uang::Dari((string) $b['HargaPilihan']),
+                is_bool($b['HargaTermasukPajak']) ? $b['HargaTermasukPajak'] : null,
+                is_array($b['KodePajak']) ? array_values(array_map('strval', $b['KodePajak'])) : null,
+                is_array($b['DiskonManual']) ? [self::Potongan($b['DiskonManual'])] : [],
+            ), $baris),
+            pajak: array_map(fn (array $p): DataPajakKalkulasi => new DataPajakKalkulasi(
+                (string) $p['Kode'],
+                (string) $p['Tarif'],
+                DasarPengenaanPajak::from((string) $p['DasarPengenaan']),
+                (int) $p['PengaliDppPembilang'],
+                (int) $p['PengaliDppPenyebut'],
+            ), $pajak),
+            persenBiayaLayanan: $persenLayanan,
+            pembulatanTunai: $pembulatan === null ? null : new DataPembulatanTunai($pembulatan[0], ArahPembulatan::from($pembulatan[1])),
+            potonganPesanan: $diskonPesanan === null ? [] : [self::Potongan($diskonPesanan)],
+            pembayaran: array_map(fn (array $p): DataPembayaranKalkulasi => new DataPembayaranKalkulasi(
+                $p['Metode']->Jenis === JenisMetodePembayaran::Tunai,
+                ($p['Jumlah'] ?? null) === null ? null : Uang::Dari((string) $p['Jumlah']),
+            ), $pembayaran),
+        ));
+
+        return [
+            'Subtotal' => $hasil->subtotal,
+            'TotalPajak' => $hasil->totalPajak,
+            'Pembulatan' => $hasil->pembulatan,
+            'TotalAkhir' => $hasil->totalAkhir,
+            'Kembalian' => $hasil->kembalian ?? Uang::Nol(),
+        ];
+    }
+
+    /**
+     * @param  array<string, string>  $diskon
+     */
+    private static function Potongan(array $diskon): DataPotongan
+    {
+        return isset($diskon['Persen']) ? DataPotongan::BuatPersen($diskon['Persen']) : DataPotongan::BuatNominal(Uang::Dari($diskon['Jumlah']));
+    }
+}

@@ -12,10 +12,11 @@ use App\Domain\Kasir\Model\Shift;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\DaftarPerangkat;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Penjualan\Kueri\DaftarPenjualan;
 
 /**
  * Detail shift back-office (F-06): data pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan daftar mutasi
- * kas beserta kategori, pencatat, penyetuju, dan jurnalnya. Shift tenant lain atau di outlet di luar akses = null.
+ * kas beserta kategori, pencatat, penyetuju, dan jurnalnya. F-07b: penjualan shift (lewat kueri publik Penjualan). Shift tenant lain atau di outlet di luar akses = null.
  */
 final class DetailShift
 {
@@ -24,6 +25,7 @@ final class DetailShift
         private readonly DaftarPerangkat $perangkat,
         private readonly AnggotaOutlet $anggota,
         private readonly JurnalSumber $jurnal,
+        private readonly DaftarPenjualan $penjualan,
     ) {}
 
     /**
@@ -81,6 +83,7 @@ final class DetailShift
                     'UuidJurnal' => $jurnal['Uuid'] ?? null,
                 ];
             })->all()),
+            'Penjualan' => $this->penjualan->AmbilUntukShift($shift->Id),
         ];
     }
 

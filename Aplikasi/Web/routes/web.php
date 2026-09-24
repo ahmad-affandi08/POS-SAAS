@@ -125,6 +125,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Persediaan.php'));
             Route::group([], base_path('routes/Akuntansi.php'));
             Route::group([], base_path('routes/Kasir.php'));
+            // F-07b Penjualan dari POS (daftar & detail back-office).
+            Route::group([], base_path('routes/Penjualan.php'));
         });
     });
 });

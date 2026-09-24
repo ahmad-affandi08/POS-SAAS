@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Kontroler\Pos\V1\DataAwalKontroler;
 use App\Http\Kontroler\Pos\V1\GambarProdukKontroler;
+use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
@@ -28,7 +29,7 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
     // F-02b: versi aplikasi & status langganan; tetap terbuka saat langganan ditangguhkan.
     Route::get('/konfigurasi-aplikasi', [KonfigurasiAplikasiKontroler::class, 'Tampilkan'])->name('pos.konfigurasi-aplikasi');
 
-    // F-06: kirim batch outbox (shift, mutasi kas; F-07 menambah penjualan). Sengaja di luar penjaga langganan agar
+    // F-06: kirim batch outbox (shift, mutasi kas; F-07b penjualan). Sengaja di luar penjaga langganan agar
     // data yang dibuat offline sebelum langganan ditangguhkan tetap bisa tersimpan di server (tanpa kehilangan data).
     Route::post('/sinkron/kirim', [SinkronKontroler::class, 'Kirim'])->middleware('throttle:120,1')->name('pos.sinkron.kirim');
 
@@ -47,5 +48,11 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
             ->middleware('throttle:600,1')
             ->where('produk', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
             ->name('pos.katalog.gambar');
+
+        // F-07b: gambar QRIS statis metode pembayaran (disimpan offline untuk layar Bayar).
+        Route::get('/metode-pembayaran/{metodePembayaran}/gambar-qris', [GambarQrisKontroler::class, 'Unduh'])
+            ->middleware('throttle:60,1')
+            ->where('metodePembayaran', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
+            ->name('pos.metode-pembayaran.gambar-qris');
     });
 });

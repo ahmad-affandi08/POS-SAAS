@@ -50,6 +50,7 @@ enum JenisReferensiMutasi: string
 
         return match ($this) {
             self::StokAwal => '/kelola/persediaan/stok-awal/'.$uuid,
+            self::Penjualan => '/kelola/penjualan/'.$uuid,
             default => null,
         };
     }

@@ -81,12 +81,14 @@ describe('F-05a enum persediaan (DesainF05a B.4)', function (): void {
         ]);
     });
 
-    it('tautan dokumen sumber hanya untuk stok awal dan hanya bila Uuid ada', function (): void {
+    it('tautan dokumen sumber hanya untuk dokumen yang halamannya ada (stok awal, penjualan F-07b) dan hanya bila Uuid ada', function (): void {
         $uuid = '01K5ZQ8X6T2N3M4P5Q6R7S8T9V';
 
         expect(JenisReferensiMutasi::StokAwal->BuatTautan($uuid))->toBe("/kelola/persediaan/stok-awal/{$uuid}")
             ->and(JenisReferensiMutasi::StokAwal->BuatTautan(null))->toBeNull()
-            ->and(JenisReferensiMutasi::Penjualan->BuatTautan($uuid))->toBeNull()
+            ->and(JenisReferensiMutasi::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
+            ->and(JenisReferensiMutasi::ReturPenjualan->BuatTautan($uuid))->toBeNull()
+            ->and(JenisSumberJurnal::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
             ->and(JenisSumberJurnal::StokAwal->BuatTautan($uuid))->toBe("/kelola/persediaan/stok-awal/{$uuid}")
             ->and(JenisSumberJurnal::StokAwal->BuatTautan(''))->toBeNull();
     });
