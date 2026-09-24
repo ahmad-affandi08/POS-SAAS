@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promo PAYOU 30 Detik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700;800&family=Atkinson+Hyperlegible+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!--
+  Motion graphic promosi PAYOU, 30 detik, 1920x1080 (16:9).
+  Palet merek D-15 (Spesifikasi/Merek/README.md), font Atkinson Hyperlegible (§17.5).
+  Kontrol: Spasi = putar/jeda, R = ulang, H = sembunyikan kontrol, panah = geser 1 detik.
+  Mode rekam: ?rekam=1 (kontrol disembunyikan, waktu dikendalikan window.AturWaktu(detik)).
+-->
+<style>
+  :root {
+    --indigo: #6366f1;
+    --brand: #5558e8;
+    --indigo-tua: #3f3fc4;
+    --navy: #0f2747;
+    --navy-tua: #0a1b33;
+    --kuning: #fbbf24;
+    --latar: #f9fafb;
+    --garis: #e5e7eb;
+    --permukaan: #ffffff;
+    --teks-sekunder: #4a5873;
+    --sukses: #2e7d32;
+    --sukses-terang: #34d399;
+    --peringatan: #9a5b00;
+    --bahaya: #e5484d;
+    --huruf: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+    --huruf-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+    --pegas: cubic-bezier(.34, 1.56, .64, 1);
+    --halus: cubic-bezier(.22, 1, .36, 1);
+    --tajam: cubic-bezier(.7, 0, .84, 0);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body { font-family: var(--huruf); color: var(--navy); -webkit-font-smoothing: antialiased; }
+
+  #panggung {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px;
+    transform-origin: 0 0;
+    overflow: hidden; background: var(--navy);
+  }
+  .adegan { position: absolute; inset: 0; visibility: hidden; }
+  .lapis { position: absolute; }
+  .tengah { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+
+  /* ---------- Adegan 1: masalah ---------- */
+  #adegan-masalah { background: radial-gradient(ellipse at 50% 40%, #16335c 0%, var(--navy) 55%, var(--navy-tua) 100%); }
+  .kisi {
+    position: absolute; inset: -60px;
+    background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .judul-masalah {
+    position: absolute; left: 0; right: 0; top: 380px; text-align: center;
+    color: #fff; font-weight: 800; font-size: 104px; letter-spacing: -2px; line-height: 1.08;
+  }
+  .judul-masalah .baris { display: block; }
+  .judul-masalah .sorot { color: var(--kuning); }
+  .keping {
+    position: absolute; padding: 22px 30px; border-radius: 20px;
+    background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.14);
+    color: #fff; font-size: 34px; font-weight: 700; display: flex; align-items: center; gap: 18px;
+    backdrop-filter: blur(6px); white-space: nowrap;
+  }
+  .keping .ikon {
+    width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+    background: var(--bahaya); color: #fff; font-size: 30px; font-weight: 800;
+  }
+  .keping small { display: block; font-size: 22px; font-weight: 500; opacity: .7; margin-top: 2px; }
+
+  /* ---------- Adegan 2: pengenalan ---------- */
+  #adegan-kenal { background: var(--navy); }
+  .lingkar-terang {
+    position: absolute; left: 50%; top: 50%; width: 2400px; height: 2400px; margin: -1200px 0 0 -1200px;
+    border-radius: 50%; background: var(--latar);
+  }
+  .cincin {
+    position: absolute; left: 50%; top: 50%; border-radius: 50%;
+    border: 3px solid var(--indigo); opacity: 0;
+  }
+  .logo-potong { position: absolute; overflow: hidden; aspect-ratio: 1352 / 432; }
+  .logo-potong img { position: absolute; width: 107.1%; left: -3.55%; top: -75.9%; }
+  .kicker-kenal {
+    position: absolute; left: 0; right: 0; top: 300px; text-align: center;
+    font-size: 40px; font-weight: 700; color: var(--brand); letter-spacing: 6px; text-transform: uppercase;
+  }
+
+  /* ---------- Bintang merek ---------- */
+  .bintang { position: absolute; width: 80px; height: 80px; }
+  .bintang svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  /* ---------- Adegan fitur (3–6) ---------- */
+  .adegan-fitur { background: var(--latar); }
+  .adegan-fitur::before {
+    content: ''; position: absolute; right: -380px; top: -380px; width: 1100px; height: 1100px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,.16), rgba(99,102,241,0) 70%);
+  }
+  .adegan-fitur::after {
+    content: ''; position: absolute; left: -300px; bottom: -420px; width: 900px; height: 900px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(251,191,36,.14), rgba(251,191,36,0) 70%);
+  }
+  .teks-fitur { position: absolute; left: 140px; top: 250px; width: 760px; z-index: 2; }
+  .nomor {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-size: 26px; font-weight: 700; color: var(--brand); letter-spacing: 3px; text-transform: uppercase;
+    background: rgba(99,102,241,.1); padding: 12px 22px; border-radius: 999px;
+  }
+  .nomor b { background: var(--brand); color: #fff; border-radius: 999px; padding: 2px 12px; letter-spacing: 0; }
+  .judul-fitur { font-size: 84px; font-weight: 800; line-height: 1.05; letter-spacing: -2px; margin-top: 34px; color: var(--navy); }
+  .judul-fitur em { font-style: normal; color: var(--brand); }
+  .sub-fitur { font-size: 34px; line-height: 1.4; color: var(--teks-sekunder); margin-top: 30px; font-weight: 500; }
+  .garis-aksen { height: 8px; width: 140px; border-radius: 8px; background: var(--kuning); margin-top: 36px; transform-origin: left; }
+
+  .logo-sudut { position: absolute; left: 140px; top: 90px; width: 250px; z-index: 3; }
+
+  /* Tablet kasir */
+  .tablet {
+    position: absolute; left: 980px; top: 170px; width: 820px; height: 740px;
+    background: var(--navy); border-radius: 44px; padding: 22px;
+    box-shadow: 0 60px 120px -30px rgba(15,39,71,.45), 0 0 0 2px rgba(15,39,71,.2);
+  }
+  .layar { width: 100%; height: 100%; background: var(--latar); border-radius: 26px; overflow: hidden; position: relative; }
+  .bilah-atas {
+    height: 88px; background: var(--permukaan); border-bottom: 2px solid var(--garis);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+  }
+  .bilah-atas .nama { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 14px; }
+  .bilah-atas .nama img { height: 42px; }
+  .status { position: relative; width: 250px; height: 50px; }
+  .pil {
+    position: absolute; inset: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 22px; font-weight: 700;
+  }
+  .pil i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .pil-daring { background: #e7f5ea; color: var(--sukses); } .pil-daring i { background: var(--sukses); }
+  .pil-luring { background: #fff1d6; color: var(--peringatan); } .pil-luring i { background: var(--peringatan); }
+  .pil-sinkron { background: var(--brand); color: #fff; } .pil-sinkron i { background: #fff; }
+  .isi-kasir { display: grid; grid-template-columns: 1fr; padding: 26px 30px; gap: 16px; }
+  .baris-item {
+    display: flex; justify-content: space-between; align-items: center; background: var(--permukaan);
+    border: 2px solid var(--garis); border-radius: 18px; padding: 20px 24px; font-size: 26px;
+  }
+  .baris-item b { font-weight: 700; }
+  .baris-item span { color: var(--teks-sekunder); font-size: 22px; display: block; margin-top: 4px; }
+  .baris-item .harga { font-family: var(--huruf-mono); font-weight: 700; font-size: 26px; color: var(--navy); }
+  .kaki-kasir {
+    position: absolute; left: 30px; right: 30px; bottom: 28px; display: flex; gap: 20px; align-items: stretch;
+  }
+  .total { flex: 1; background: var(--permukaan); border: 2px solid var(--garis); border-radius: 18px; padding: 16px 24px; }
+  .total small { font-size: 20px; color: var(--teks-sekunder); display: block; }
+  .total strong { font-family: var(--huruf-mono); font-size: 44px; font-weight: 700; }
+  .tombol-bayar {
+    width: 250px; border-radius: 18px; background: var(--brand); color: #fff; font-size: 34px; font-weight: 800;
+    display: grid; place-items: center;
+  }
+  .antrean {
+    position: absolute; left: 30px; right: 30px; bottom: 150px; font-size: 22px; color: var(--peringatan);
+    background: #fff7e6; border-radius: 14px; padding: 12px 18px; display: flex; gap: 10px; align-items: center; font-weight: 700;
+  }
+  .antrean-beres { background: #e7f5ea; color: var(--sukses); }
+  .berhasil {
+    position: absolute; inset: 0; background: rgba(15,39,71,.55); display: grid; place-items: center;
+  }
+  .kartu-berhasil {
+    background: var(--permukaan); border-radius: 28px; padding: 44px 60px; text-align: center; width: 520px;
+  }
+  .centang {
+    width: 120px; height: 120px; border-radius: 50%; background: var(--sukses); margin: 0 auto 22px;
+    display: grid; place-items: center;
+  }
+  .kartu-berhasil h4 { font-size: 36px; font-weight: 800; }
+  .kartu-berhasil p { font-size: 24px; color: var(--teks-sekunder); margin-top: 8px; }
+  .ikon-wifi { position: absolute; right: 40px; top: 120px; width: 120px; height: 120px; }
+
+  /* Sektor */
+  .awan-sektor {
+    position: absolute; left: 980px; top: 190px; width: 820px; height: 720px;
+    display: flex; flex-wrap: wrap; align-content: center; gap: 22px 18px;
+  }
+  .sektor {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--permukaan); border: 2px solid var(--garis); border-radius: 999px;
+    padding: 18px 30px 18px 18px; font-size: 32px; font-weight: 700; white-space: nowrap;
+    box-shadow: 0 18px 40px -18px rgba(15,39,71,.25);
+  }
+  .sektor .titik {
+    width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 24px; font-weight: 800; color: #fff; background: var(--brand);
+  }
+  .sektor.aktif { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .sektor.aktif .titik { background: var(--kuning); color: var(--navy); }
+
+  /* Otomatis */
+  .alur { position: absolute; left: 960px; top: 150px; width: 860px; height: 800px; }
+  .kartu-alur {
+    position: absolute; left: 0; width: 860px; background: var(--permukaan); border: 2px solid var(--garis);
+    border-radius: 26px; padding: 26px 32px; display: flex; align-items: center; gap: 26px;
+    box-shadow: 0 30px 60px -30px rgba(15,39,71,.3);
+  }
+  .kartu-alur .lencana {
+    width: 84px; height: 84px; border-radius: 22px; display: grid; place-items: center; flex: none;
+    font-size: 40px; font-weight: 800; color: #fff;
+  }
+  .kartu-alur h5 { font-size: 22px; color: var(--teks-sekunder); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .kartu-alur p { font-size: 32px; font-weight: 700; margin-top: 6px; }
+  .kartu-alur .mono { font-family: var(--huruf-mono); }
+  .kartu-alur .naik { color: var(--sukses); }
+  .penghubung { position: absolute; left: 70px; width: 6px; border-radius: 6px; background: var(--garis); overflow: hidden; }
+  .penghubung i { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: var(--brand); transform-origin: top; }
+  .neraca { display: flex; gap: 14px; margin-top: 10px; }
+  .neraca span { font-size: 24px; padding: 8px 16px; border-radius: 12px; background: var(--latar); font-family: var(--huruf-mono); font-weight: 700; }
+  .neraca .sama { background: var(--sukses); color: #fff; font-family: var(--huruf); }
+  .grafik { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-left: auto; }
+  .grafik i { width: 34px; border-radius: 8px 8px 4px 4px; background: var(--brand); transform-origin: bottom; display: block; }
+  .grafik i:last-child { background: var(--kuning); }
+
+  /* Owner */
+  .ponsel {
+    position: absolute; left: 1150px; top: 90px; width: 470px; height: 920px; background: var(--navy);
+    border-radius: 70px; padding: 18px; box-shadow: 0 60px 120px -30px rgba(15,39,71,.5);
+  }
+  .ponsel .layar { border-radius: 54px; background: var(--latar); }
+  .poni { position: absolute; left: 50%; top: 34px; width: 130px; height: 34px; margin-left: -65px; background: var(--navy); border-radius: 20px; z-index: 5; }
+  .kepala-owner { background: var(--brand); color: #fff; padding: 90px 34px 40px; }
+  .kepala-owner small { font-size: 22px; opacity: .85; font-weight: 500; }
+  .kepala-owner strong { display: block; font-family: var(--huruf-mono); font-size: 50px; font-weight: 700; margin-top: 8px; letter-spacing: -1px; }
+  .kepala-owner .naik { display: inline-block; margin-top: 12px; background: rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; font-size: 20px; font-weight: 700; }
+  .sparkline { display: block; margin: 20px 34px 0; }
+  .outlet { margin: 16px 26px 0; background: var(--permukaan); border: 2px solid var(--garis); border-radius: 20px; padding: 18px 22px; display: flex; justify-content: space-between; font-size: 22px; font-weight: 700; }
+  .outlet em { font-style: normal; color: var(--sukses); }
+  .outlet.peringatan-stok { background: #fff7e6; border-color: #f5d9a8; color: var(--peringatan); }
+  .outlet.peringatan-stok em { color: var(--peringatan); }
+  .notif {
+    position: absolute; left: 20px; right: 20px; top: 70px; background: var(--permukaan); border-radius: 26px; padding: 22px;
+    box-shadow: 0 30px 60px -20px rgba(15,39,71,.45); border: 2px solid var(--garis); z-index: 4;
+  }
+  .notif .atas { display: flex; align-items: center; gap: 12px; font-size: 18px; color: var(--teks-sekunder); font-weight: 700; }
+  .notif .atas img { width: 34px; height: 34px; }
+  .notif p { font-size: 24px; font-weight: 700; margin-top: 10px; line-height: 1.3; }
+  .notif .aksi { display: flex; gap: 12px; margin-top: 16px; }
+  .notif .aksi span { flex: 1; text-align: center; padding: 12px; border-radius: 14px; font-size: 22px; font-weight: 800; background: var(--latar); }
+  .notif .aksi .setuju { background: var(--brand); color: #fff; position: relative; overflow: hidden; }
+  .notif .aksi .disetujui { position: absolute; inset: 0; padding: 0; border-radius: 0; background: var(--sukses); color: #fff; display: grid; place-items: center; }
+  .sentuh { position: absolute; width: 70px; height: 70px; border-radius: 50%; background: rgba(99,102,241,.35); border: 3px solid rgba(99,102,241,.8); z-index: 6; }
+
+  /* ---------- Adegan 7: penutup ---------- */
+  #adegan-penutup { background: var(--latar); }
+  .sinar {
+    position: absolute; left: 50%; top: 42%; width: 2600px; height: 2600px; margin: -1300px 0 0 -1300px;
+    background: repeating-conic-gradient(from 0deg, rgba(99,102,241,.07) 0deg 8deg, transparent 8deg 20deg);
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+            mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+  }
+  .ajakan {
+    position: absolute; left: 50%; top: 740px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+  }
+  .tombol-ajakan {
+    background: var(--brand); color: #fff; font-size: 48px; font-weight: 800; padding: 28px 64px; border-radius: 999px;
+    box-shadow: 0 30px 60px -20px rgba(85,88,232,.6); display: flex; align-items: center; gap: 22px; white-space: nowrap;
+  }
+  .tombol-ajakan .panah { display: inline-block; }
+  .platform { font-size: 30px; color: var(--teks-sekunder); font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  .platform b { color: var(--kuning); padding: 0 12px; }
+
+  /* ---------- Tirai transisi ---------- */
+  .tirai { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+  .tirai i { position: absolute; top: -20%; height: 140%; width: 60%; transform: skewX(-14deg) translateX(-200%); }
+  .tirai i:nth-child(1) { background: var(--kuning); left: 0; }
+  .tirai i:nth-child(2) { background: var(--brand); left: 20%; }
+  .tirai i:nth-child(3) { background: var(--navy); left: 40%; }
+
+  /* ---------- Kontrol ---------- */
+  #kontrol {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 100;
+    display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 999px;
+    background: rgba(15,39,71,.85); color: #fff; font: 600 15px var(--huruf);
+    backdrop-filter: blur(8px); transition: opacity .3s;
+  }
+  #kontrol button {
+    font: inherit; color: inherit; background: rgba(255,255,255,.12); border: 0; border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; min-width: 44px; min-height: 36px;
+  }
+  #kontrol button:hover { background: rgba(255,255,255,.22); }
+  #kontrol input[type=range] { width: min(46vw, 520px); accent-color: var(--kuning); }
+  #kontrol output { font-family: var(--huruf-mono); min-width: 92px; text-align: right; }
+  body.rekam #kontrol, body.tanpa-kontrol #kontrol { display: none; }
+
+  /* ---------- Kamus keyframe ---------- */
+  @keyframes muncul { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes hilang { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes naik { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+  @keyframes naik-kecil { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  @keyframes turun { from { opacity: 0; transform: translateY(-80px); } to { opacity: 1; transform: none; } }
+  @keyframes dari-kanan { from { opacity: 0; transform: translateX(160px); } to { opacity: 1; transform: none; } }
+  @keyframes dari-kiri { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+  @keyframes letup { 0% { opacity: 0; transform: scale(.3); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes letup-keluar { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.6); } }
+  @keyframes guncang {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-10px) rotate(-2deg); } 40% { transform: translateX(9px) rotate(2deg); }
+    60% { transform: translateX(-6px) rotate(-1deg); } 80% { transform: translateX(4px) rotate(1deg); }
+  }
+  @keyframes melayang { 0%, 100% { translate: 0 0; } 50% { translate: 0 -18px; } }
+  @keyframes pecah { to { opacity: 0; transform: scale(1.5); filter: blur(14px); } }
+  @keyframes tersedot { to { opacity: 0; transform: scale(.05); filter: blur(4px); } }
+  @keyframes lingkar-buka { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes cincin-denyut { 0% { opacity: .9; width: 0; height: 0; margin: 0; } 100% { opacity: 0; width: 1400px; height: 1400px; margin: -700px 0 0 -700px; } }
+  @keyframes sapu-kanan { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes bintang-terbang {
+    0% { transform: translate(299px, 95px) scale(1.03) rotate(0); }
+    50% { transform: translate(120px, -140px) scale(1.7) rotate(200deg); }
+    100% { transform: translate(0, 0) scale(1) rotate(360deg); }
+  }
+  @keyframes kilau { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.35) rotate(45deg); } }
+  @keyframes kedip { 0%, 100% { opacity: 0; transform: scale(.2) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+  @keyframes logo-ke-sudut {
+    from { left: 460px; top: 404px; width: 1000px; }
+    to { left: 140px; top: 90px; width: 250px; }
+  }
+  @keyframes rentang { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes rentang-tegak { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes tekan { 0%, 100% { transform: scale(1); } 45% { transform: scale(.92); } }
+  @keyframes sentuhan { 0% { opacity: 0; transform: scale(1.8); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.8); } }
+  @keyframes putar { to { transform: rotate(360deg); } }
+  @keyframes gambar-garis { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+  @keyframes sorot-sektor { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes tirai-lewat {
+    0% { transform: skewX(-14deg) translateX(-260%); }
+    100% { transform: skewX(-14deg) translateX(300%); }
+  }
+  @keyframes geser-panah { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(12px); } }
+  @keyframes zoom-pelan { from { transform: scale(1); } to { transform: scale(1.06); } }
+  @keyframes putar-pelan { to { rotate: 25deg; } }
+</style>
+</head>
+<body>
+
+<div id="panggung">
+
+  <!-- ===================== 1. MASALAH 0.0–4.4 ===================== -->
+  <section class="adegan" id="adegan-masalah" data-mulai="0" data-selesai="4.45">
+    <div class="kisi" data-anim="zoom-pelan@0/4.4/linear"></div>
+
+    <div class="judul-masalah" data-anim="tersedot@3.7/0.6/tajam">
+      <span class="baris" data-anim="naik@0.2/0.7">Jualan lagi ramai…</span>
+      <span class="baris sorot" data-anim="naik@1.1/0.7, guncang@1.8/0.5/linear">internet malah mati.</span>
+    </div>
+
+    <div class="lapis" style="left:150px; top:150px" data-anim="letup@1.5/0.5/pegas, pecah@3.5/0.5/tajam">
+      <div class="keping" data-anim="melayang@1.5/3/ease-in-out, guncang@2.0/0.5/linear">
+        <span class="ikon">!</span><div>Wi-Fi terputus<small>Transaksi gagal dikirim</small></div>
+      </div>
+    </div>
+    <div class="lapis" style="left:1240px; top:130px" data-anim="letup@1.9/0.5/pegas, pecah@3.55/0.5/tajam">
+      <div class="keping" data-anim="melayang@1.9/3/ease-in-out">
+        <span class="ikon">?</span><div>Stok selisih 12 pcs<small>Gudang vs catatan</small></div>
+      </div>
+    </div>
+    <div class="lapis" style="left:200px; top:760px" data-anim="letup@2.3/0.5/pegas, pecah@3.6/0.5/tajam">
+      <div class="keping" data-anim="melayang@2.3/3/ease-in-out">
+        <span class="ikon">⏱</span><div>Rekap manual sampai jam 11 malam<small>Kertas, kalkulator, Excel</small></div>
+      </div>
+    </div>
+    <div class="lapis" style="left:1230px; top:790px" data-anim="letup@2.7/0.5/pegas, pecah@3.65/0.5/tajam">
+      <div class="keping" data-anim="melayang@2.7/3/ease-in-out">
+        <span class="ikon">✕</span><div>Laporan laba belum jadi<small>Pajak? Nanti dulu…</small></div>
+      </div>
+    </div>
+
+    <div class="bintang" style="left:921px; top:501px; width:78px; height:78px" data-anim="letup@3.95/0.35/pegas, kilau@4.1/0.4/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- ===================== 2. PENGENALAN 4.4–8.2 ===================== -->
+  <section class="adegan" id="adegan-kenal" data-mulai="4.4" data-selesai="8.25">
+    <div class="lingkar-terang" data-anim="lingkar-buka@4.4/0.8/halus"></div>
+    <div class="cincin" data-anim="cincin-denyut@4.5/1.1/halus"></div>
+    <div class="cincin" data-anim="cincin-denyut@4.75/1.1/halus"></div>
+
+    <div class="kicker-kenal" data-anim="naik-kecil@5.0/0.6, hilang@7.3/0.3">Kenalkan</div>
+
+    <div class="logo-potong" id="logo-utama" style="left:460px; top:404px; width:1000px"
+         data-anim="sapu-kanan@5.3/0.9/halus, logo-ke-sudut@7.55/0.7/halus">
+      <img src="../Sumber/LogoHorizontal.png" alt="PAYOU — Bisnis Laris, Kelola Praktis.">
+    </div>
+
+    <!-- Bintang terbang ke posisi bintang di logo -->
+    <div class="bintang" style="left:622px; top:406px; width:78px; height:78px"
+         data-anim="bintang-terbang@4.6/0.9/halus, kilau@5.6/0.6/ease-in-out, hilang@6.25/0.2">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+
+    <div class="bintang" style="left:1480px; top:330px; width:46px; height:46px" data-anim="kedip@6.0/1.0/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--indigo)"/></svg>
+    </div>
+    <div class="bintang" style="left:420px; top:690px; width:36px; height:36px" data-anim="kedip@6.3/1.0/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- ===================== 3. OFFLINE-FIRST 8.2–13.2 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-offline" data-mulai="8.25" data-selesai="13.25">
+    <div class="logo-potong logo-sudut"><img src="../Sumber/LogoHorizontal.png" alt=""></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@8.4/0.5"><b>01</b> Kasir offline-first</div>
+      <h2 class="judul-fitur" data-anim="naik@8.55/0.7">Internet mati?<br><em>Kasir tetap jualan.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@9.0/0.6/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@9.2/0.6">Transaksi tersimpan aman di perangkat, lalu sinkron otomatis tanpa dobel.</p>
+    </div>
+
+    <div class="tablet" data-anim="dari-kanan@8.35/0.8/halus">
+      <div class="layar">
+        <div class="bilah-atas">
+          <div class="nama"><img src="../Sumber/IkonMerek.png" alt="">PAYOU POS</div>
+          <div class="status">
+            <div class="pil pil-daring" data-anim="hilang@9.3/0.2"><i></i>Daring</div>
+            <div class="pil pil-luring" data-anim="letup@9.3/0.35/pegas, hilang@11.6/0.2"><i></i>Luring · aman</div>
+            <div class="pil pil-sinkron" data-anim="letup@11.6/0.35/pegas"><i></i>Tersinkron ✓</div>
+          </div>
+        </div>
+        <div class="isi-kasir">
+          <div class="baris-item" data-anim="dari-kanan@9.5/0.45/halus"><div><b>Kopi Susu Gula Aren</b><span>2 × Rp18.000</span></div><div class="harga">Rp36.000</div></div>
+          <div class="baris-item" data-anim="dari-kanan@9.8/0.45/halus"><div><b>Roti Bakar Cokelat Keju</b><span>1 × Rp22.000</span></div><div class="harga">Rp22.000</div></div>
+          <div class="baris-item" data-anim="dari-kanan@10.1/0.45/halus"><div><b>Air Mineral 600 ml</b><span>3 × Rp5.000</span></div><div class="harga">Rp15.000</div></div>
+        </div>
+        <div class="antrean antrean-beres" data-anim="naik-kecil@11.75/0.4">✓ Semua transaksi tersinkron, tanpa dobel</div>
+        <div class="antrean" data-anim="naik-kecil@9.6/0.4, hilang@11.6/0.2">
+          ⇅ <span data-hitung="1,3" data-hitung-waktu="9.6,10.3" data-format="angka">0</span>&nbsp;transaksi menunggu sinkron
+        </div>
+        <div class="kaki-kasir">
+          <div class="total"><small>Total</small><strong data-hitung="0,73000" data-hitung-waktu="9.5,10.5" data-format="rupiah">Rp0</strong></div>
+          <div class="tombol-bayar" data-anim="tekan@10.7/0.3/ease-in-out">Bayar</div>
+        </div>
+        <div class="berhasil" data-anim="muncul@10.95/0.25, hilang@11.55/0.25">
+          <div class="kartu-berhasil" data-anim="letup@10.95/0.4/pegas">
+            <div class="centang"><svg width="64" height="64" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="30" style="stroke-dashoffset:0"/></svg></div>
+            <h4>Pembayaran berhasil</h4>
+            <p>Struk K1-0142 · tersimpan lokal</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ikon wifi terputus → tersambung -->
+    <svg class="ikon-wifi" style="left:1720px; top:84px" viewBox="0 0 24 24" data-anim="letup@9.25/0.4/pegas, letup-keluar@11.5/0.3">
+      <circle cx="12" cy="12" r="12" fill="var(--peringatan)"/>
+      <path d="M6 10.5a9 9 0 0 1 12 0M8.3 13a5.6 5.6 0 0 1 7.4 0M12 16.6h.01" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M6 6l12 12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <svg class="ikon-wifi" style="left:1720px; top:84px" viewBox="0 0 24 24" data-anim="letup@11.65/0.4/pegas">
+      <circle cx="12" cy="12" r="12" fill="var(--brand)"/>
+      <path d="M7.5 9.5a6 6 0 0 1 9.4-1.2L18 9.4M18 6v3.4h-3.4M16.5 14.5a6 6 0 0 1-9.4 1.2L6 14.6M6 18v-3.4h3.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </section>
+
+  <!-- ===================== 4. SEKTOR 13.2–17.7 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-sektor" data-mulai="13.25" data-selesai="17.75">
+    <div class="logo-potong logo-sudut"><img src="../Sumber/LogoHorizontal.png" alt=""></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@13.4/0.5"><b>02</b> Template sektor</div>
+      <h2 class="judul-fitur" data-anim="naik@13.55/0.7">Satu aplikasi,<br><em>12+ jenis usaha.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@14.0/0.6/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@14.2/0.6">Pilih jenis usaha, modul, pajak, dan laporan yang pas langsung menyala.</p>
+    </div>
+
+    <div class="awan-sektor" id="awan-sektor"></div>
+  </section>
+
+  <!-- ===================== 5. OTOMATIS 17.7–22.2 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-otomatis" data-mulai="17.75" data-selesai="22.25">
+    <div class="logo-potong logo-sudut"><img src="../Sumber/LogoHorizontal.png" alt=""></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@17.9/0.5"><b>03</b> Stok &amp; akuntansi otomatis</div>
+      <h2 class="judul-fitur" data-anim="naik@18.05/0.7">Jual sekali,<br><em>pembukuan beres.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@18.5/0.6/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@18.7/0.6">Stok berkurang, jurnal seimbang, laba rugi siap. Tanpa input ganda.</p>
+    </div>
+
+    <div class="alur">
+      <div class="penghubung" style="top:150px; height:90px"><i data-anim="rentang-tegak@18.75/0.4/linear"></i></div>
+      <div class="penghubung" style="top:350px; height:90px"><i data-anim="rentang-tegak@19.55/0.4/linear"></i></div>
+      <div class="penghubung" style="top:570px; height:80px"><i data-anim="rentang-tegak@20.45/0.4/linear"></i></div>
+
+      <div class="kartu-alur" style="top:10px" data-anim="dari-kanan@18.2/0.55/halus">
+        <div class="lencana" style="background:var(--brand)">Rp</div>
+        <div><h5>Penjualan K1-0142</h5><p class="mono">Rp73.000 · Tunai</p></div>
+      </div>
+      <div class="kartu-alur" style="top:230px" data-anim="dari-kanan@19.05/0.55/halus">
+        <div class="lencana" style="background:var(--navy)">▾</div>
+        <div><h5>Mutasi stok</h5><p>Kopi Susu Gula Aren <span class="mono naik">−2</span> · sisa <span class="mono"><span data-hitung="48,46" data-hitung-waktu="19.4,19.9" data-format="angka">48</span></span></p></div>
+      </div>
+      <div class="kartu-alur" style="top:430px" data-anim="dari-kanan@19.9/0.55/halus">
+        <div class="lencana" style="background:var(--sukses)">⚖</div>
+        <div>
+          <h5>Jurnal otomatis</h5>
+          <div class="neraca">
+            <span>D Kas 73.000</span><span class="sama" data-anim="letup@20.4/0.4/pegas">=</span><span>K Penjualan 73.000</span>
+          </div>
+        </div>
+      </div>
+      <div class="kartu-alur" style="top:640px" data-anim="dari-kanan@20.8/0.55/halus">
+        <div class="lencana" style="background:var(--kuning); color:var(--navy)">↗</div>
+        <div><h5>Laporan laba rugi</h5><p>Siap <span class="naik">hari ini</span></p></div>
+        <div class="grafik">
+          <i style="height:45%" data-anim="rentang-tegak@21.1/0.4/halus"></i>
+          <i style="height:62%" data-anim="rentang-tegak@21.2/0.4/halus"></i>
+          <i style="height:54%" data-anim="rentang-tegak@21.3/0.4/halus"></i>
+          <i style="height:80%" data-anim="rentang-tegak@21.4/0.4/halus"></i>
+          <i style="height:100%" data-anim="rentang-tegak@21.5/0.45/pegas"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 6. OWNER 22.2–26.2 ===================== -->
+  <section class="adegan adegan-fitur" id="adegan-owner" data-mulai="22.25" data-selesai="26.25">
+    <div class="logo-potong logo-sudut"><img src="../Sumber/LogoHorizontal.png" alt=""></div>
+
+    <div class="teks-fitur">
+      <div class="nomor" data-anim="dari-kiri@22.4/0.5"><b>04</b> Aplikasi PAYOU Owner</div>
+      <h2 class="judul-fitur" data-anim="naik@22.55/0.7">Semua outlet,<br><em>dalam genggaman.</em></h2>
+      <div class="garis-aksen" data-anim="rentang@23.0/0.6/halus"></div>
+      <p class="sub-fitur" data-anim="naik-kecil@23.2/0.6">Pantau omzet dan stok, setujui void dari mana saja.</p>
+    </div>
+
+    <div class="ponsel" data-anim="naik@22.35/0.8/halus">
+      <div class="poni"></div>
+      <div class="layar">
+        <div class="kepala-owner">
+          <small>Omzet hari ini · 3 outlet</small>
+          <strong data-hitung="0,12450000" data-hitung-waktu="22.8,24.1" data-format="rupiah">Rp0</strong>
+          <span class="naik" data-anim="letup@24.0/0.4/pegas">▲ 18% dari kemarin</span>
+        </div>
+        <svg class="sparkline" width="400" height="130" viewBox="0 0 400 130">
+          <defs><linearGradient id="isi-grafik" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366f1" stop-opacity=".25"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+          <path d="M0 110 L50 96 L100 102 L150 70 L200 78 L250 50 L300 58 L350 24 L400 14 L400 130 L0 130Z" fill="url(#isi-grafik)" data-anim="muncul@23.6/0.6"/>
+          <path d="M0 110 L50 96 L100 102 L150 70 L200 78 L250 50 L300 58 L350 24 L400 14" fill="none" stroke="#5558e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1000" data-anim="gambar-garis@22.9/1.4/halus"/>
+          <circle cx="400" cy="14" r="8" fill="#fbbf24" data-anim="letup@24.1/0.35/pegas"/>
+        </svg>
+        <div class="outlet" data-anim="naik-kecil@23.3/0.4"><span>Outlet Solo</span><em>Rp5.120.000</em></div>
+        <div class="outlet" data-anim="naik-kecil@23.45/0.4"><span>Outlet Sragen</span><em>Rp4.080.000</em></div>
+        <div class="outlet" data-anim="naik-kecil@23.6/0.4"><span>Outlet Klaten</span><em>Rp3.250.000</em></div>
+        <div class="outlet peringatan-stok" data-anim="naik-kecil@23.9/0.4"><span>⚠ Stok menipis: Gula Aren</span><em>2 kg</em></div>
+
+        <div class="notif" data-anim="turun@24.35/0.5/pegas, hilang@25.9/0.3">
+          <div class="atas"><img src="../Sumber/IkonMerek.png" alt="">PAYOU Owner · sekarang</div>
+          <p>Kasir Outlet Solo meminta void Rp45.000. Alasan: salah input menu.</p>
+          <div class="aksi"><span>Tolak</span><span class="setuju">Setujui<span class="disetujui" data-anim="muncul@25.15/0.2">✓ Disetujui</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sentuh" style="left:1440px; top:345px" data-anim="sentuhan@24.9/0.6/ease-out"></div>
+  </section>
+
+  <!-- ===================== 7. PENUTUP 26.2–30.0 ===================== -->
+  <section class="adegan" id="adegan-penutup" data-mulai="26.25" data-selesai="30.01">
+    <div class="sinar" data-anim="muncul@26.3/0.8, putar-pelan@26.3/3.7/linear"></div>
+
+    <div class="logo-potong" style="left:410px; top:270px; width:1100px" data-anim="letup@26.4/0.8/pegas">
+      <img src="../Sumber/LogoHorizontal.png" alt="PAYOU — Bisnis Laris, Kelola Praktis.">
+    </div>
+
+    <div class="ajakan">
+      <div class="tombol-ajakan" data-anim="naik@27.1/0.6/pegas">Daftar gratis sekarang <span class="panah" data-anim="geser-panah@27.7/0.8/ease-in-out, geser-panah@28.5/0.8/ease-in-out, geser-panah@29.3/0.7/ease-in-out">→</span></div>
+      <div class="platform" data-anim="naik-kecil@27.5/0.6">Android<b>✦</b>iPad &amp; iPhone<b>✦</b>Windows<b>✦</b>Web</div>
+    </div>
+
+    <div class="bintang" style="left:360px; top:220px; width:50px; height:50px" data-anim="kedip@27.0/1.2/ease-in-out, kedip@28.4/1.2/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+    <div class="bintang" style="left:1540px; top:640px; width:40px; height:40px" data-anim="kedip@27.4/1.2/ease-in-out, kedip@28.8/1.1/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--indigo)"/></svg>
+    </div>
+    <div class="bintang" style="left:1600px; top:250px; width:30px; height:30px" data-anim="kedip@27.8/1.2/ease-in-out">
+      <svg viewBox="-50 -50 100 100"><path d="M0-50C4-18 18-4 50 0 18 4 4 18 0 50-4 18-18 4-50 0-18-4-4-18 0-50Z" fill="var(--kuning)"/></svg>
+    </div>
+  </section>
+
+  <!-- ===================== Tirai transisi antar-fitur ===================== -->
+  <div class="tirai"><i data-anim="tirai-lewat@12.8/0.9/halus"></i><i data-anim="tirai-lewat@12.85/0.9/halus"></i><i data-anim="tirai-lewat@12.9/0.9/halus"></i></div>
+  <div class="tirai"><i data-anim="tirai-lewat@17.3/0.9/halus"></i><i data-anim="tirai-lewat@17.35/0.9/halus"></i><i data-anim="tirai-lewat@17.4/0.9/halus"></i></div>
+  <div class="tirai"><i data-anim="tirai-lewat@21.8/0.9/halus"></i><i data-anim="tirai-lewat@21.85/0.9/halus"></i><i data-anim="tirai-lewat@21.9/0.9/halus"></i></div>
+  <div class="tirai"><i data-anim="tirai-lewat@25.8/0.9/halus"></i><i data-anim="tirai-lewat@25.85/0.9/halus"></i><i data-anim="tirai-lewat@25.9/0.9/halus"></i></div>
+</div>
+
+<div id="kontrol" role="group" aria-label="Kontrol video">
+  <button type="button" id="tombol-putar" aria-label="Jeda">❚❚</button>
+  <button type="button" id="tombol-ulang" aria-label="Ulang dari awal">↺</button>
+  <input type="range" id="penggeser" min="0" max="30000" step="10" value="0" aria-label="Posisi waktu">
+  <output id="penunjuk-waktu">0,0 / 30,0 d</output>
+</div>
+
+<script>
+(() => {
+  const durasiMs = 30000;
+  const panggung = document.getElementById('panggung');
+  const semuaAdegan = [...document.querySelectorAll('.adegan')];
+  const penggeser = document.getElementById('penggeser');
+  const penunjukWaktu = document.getElementById('penunjuk-waktu');
+  const tombolPutar = document.getElementById('tombol-putar');
+  const parameter = new URLSearchParams(location.search);
+  const modeRekam = parameter.has('rekam');
+  if (modeRekam) document.body.classList.add('rekam');
+
+  const kurvaNyata = {
+    halus: 'cubic-bezier(.22, 1, .36, 1)', pegas: 'cubic-bezier(.34, 1.56, .64, 1)', tajam: 'cubic-bezier(.7, 0, .84, 0)',
+  };
+
+  // Susun sektor (§5.1): 14 template, disorot bergantian.
+  function SusunSektor() {
+    const daftarSektor = [
+      ['Restoran', 'R'], ['Kafe & Kedai Kopi', 'K'], ['Cepat Saji', 'C'], ['Bakery', 'B'],
+      ['Kelontong', 'K'], ['Fashion', 'F'], ['Elektronik', 'E'], ['Apotek', 'A'],
+      ['Bahan Bangunan', 'B'], ['Grosir', 'G'], ['Salon & Barbershop', 'S'], ['Laundry', 'L'],
+      ['Bengkel', 'B'], ['Jasa Umum', 'J'],
+    ];
+    const sorotan = new Set([1, 4, 7, 11]);
+    const wadah = document.getElementById('awan-sektor');
+    daftarSektor.forEach(([nama, huruf], indeks) => {
+      const bungkus = document.createElement('div');
+      const mulai = 13.6 + indeks * 0.11;
+      bungkus.dataset.anim = `letup@${mulai.toFixed(2)}/0.45/pegas`;
+      const pil = document.createElement('div');
+      pil.className = 'sektor';
+      pil.innerHTML = `<span class="titik">${huruf}</span>${nama}`;
+      if (sorotan.has(indeks)) {
+        const giliran = [...sorotan].indexOf(indeks);
+        const waktuSorot = 15.6 + giliran * 0.35;
+        pil.dataset.anim = `sorot-sektor@${waktuSorot.toFixed(2)}/0.5/ease-in-out`;
+        pil.dataset.aktifPada = waktuSorot;
+      }
+      bungkus.appendChild(pil);
+      wadah.appendChild(bungkus);
+    });
+  }
+
+  // "nama@mulai/durasi/kurva, ..." → animation CSS yang dijeda, lalu diseek dari jam induk.
+  function PasangAnimasi() {
+    document.querySelectorAll('[data-anim]').forEach((elemen) => {
+      // Animasi pertama mengisi mundur (both); berikutnya hanya maju agar tidak menimpa yang sebelumnya.
+      const bagian = elemen.dataset.anim.split(',').map((teks, urutan) => {
+        const [nama, sisa] = teks.trim().split('@');
+        const [mulai, durasi, namaKurva = 'halus'] = sisa.split('/');
+        const kurvaCss = kurvaNyata[namaKurva] ?? namaKurva;
+        return `${nama} ${durasi}s ${kurvaCss} ${mulai}s 1 normal ${urutan === 0 ? 'both' : 'forwards'} paused`;
+      });
+      elemen.style.animation = bagian.join(', ');
+    });
+  }
+
+  function FormatRupiah(nilai) {
+    return 'Rp' + Math.round(nilai).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function HaluskanKeluar(x) { return 1 - Math.pow(1 - x, 3); }
+
+  const daftarPenghitung = [...document.querySelectorAll('[data-hitung]')].map((elemen) => {
+    const [dari, ke] = elemen.dataset.hitung.split(',').map(Number);
+    const [mulai, selesai] = elemen.dataset.hitungWaktu.split(',').map(Number);
+    return { elemen, dari, ke, mulai, selesai, format: elemen.dataset.format };
+  });
+
+  let daftarAnimasi = [];
+  let daftarAktif = [];
+  let waktuMs = 0;
+  let sedangPutar = !modeRekam;
+  let jamTerakhir = null;
+
+  function GambarBingkai(ms) {
+    const detik = ms / 1000;
+    semuaAdegan.forEach((adegan) => {
+      const tampil = detik >= Number(adegan.dataset.mulai) && detik < Number(adegan.dataset.selesai);
+      adegan.style.visibility = tampil ? 'visible' : 'hidden';
+    });
+    daftarAnimasi.forEach((animasi) => { animasi.currentTime = ms; });
+    daftarPenghitung.forEach((penghitung) => {
+      const kemajuan = Math.min(1, Math.max(0, (detik - penghitung.mulai) / (penghitung.selesai - penghitung.mulai)));
+      const nilai = penghitung.dari + (penghitung.ke - penghitung.dari) * HaluskanKeluar(kemajuan);
+      penghitung.elemen.textContent = penghitung.format === 'rupiah' ? FormatRupiah(nilai) : Math.round(nilai).toString();
+    });
+    daftarAktif.forEach((elemen) => {
+      elemen.classList.toggle('aktif', detik >= Number(elemen.dataset.aktifPada) + 0.15);
+    });
+    penggeser.value = Math.round(ms);
+    penunjukWaktu.textContent = `${detik.toFixed(1).replace('.', ',')} / 30,0 d`;
+  }
+
+  function AturWaktu(detik) {
+    waktuMs = Math.min(durasiMs, Math.max(0, detik * 1000));
+    GambarBingkai(waktuMs);
+  }
+
+  function Detak(jam) {
+    if (sedangPutar) {
+      if (jamTerakhir !== null) {
+        waktuMs += jam - jamTerakhir;
+        if (waktuMs >= durasiMs) waktuMs = parameter.has('sekali') ? durasiMs : waktuMs % durasiMs;
+      }
+      jamTerakhir = jam;
+      GambarBingkai(waktuMs);
+    } else {
+      jamTerakhir = null;
+    }
+    requestAnimationFrame(Detak);
+  }
+
+  function AturPutar(putar) {
+    sedangPutar = putar;
+    tombolPutar.textContent = putar ? '❚❚' : '▶';
+    tombolPutar.setAttribute('aria-label', putar ? 'Jeda' : 'Putar');
+  }
+
+  function SesuaikanSkala() {
+    const skala = Math.min(innerWidth / 1920, innerHeight / 1080);
+    panggung.style.transform = `scale(${skala}) translate(-50%, -50%)`;
+  }
+
+  SusunSektor();
+  PasangAnimasi();
+  daftarAnimasi = document.getAnimations();
+  daftarAktif = [...document.querySelectorAll('[data-aktif-pada]')];
+  SesuaikanSkala();
+  addEventListener('resize', SesuaikanSkala);
+
+  tombolPutar.addEventListener('click', () => AturPutar(!sedangPutar));
+  document.getElementById('tombol-ulang').addEventListener('click', () => { AturWaktu(0); AturPutar(true); });
+  penggeser.addEventListener('input', () => { AturPutar(false); AturWaktu(Number(penggeser.value) / 1000); });
+  addEventListener('keydown', (peristiwa) => {
+    if (peristiwa.target === penggeser && peristiwa.key.startsWith('Arrow')) return;
+    if (peristiwa.code === 'Space') { peristiwa.preventDefault(); AturPutar(!sedangPutar); }
+    else if (peristiwa.key === 'r' || peristiwa.key === 'R') { AturWaktu(0); AturPutar(true); }
+    else if (peristiwa.key === 'h' || peristiwa.key === 'H') document.body.classList.toggle('tanpa-kontrol');
+    else if (peristiwa.key === 'ArrowRight') AturWaktu(waktuMs / 1000 + 1);
+    else if (peristiwa.key === 'ArrowLeft') AturWaktu(waktuMs / 1000 - 1);
+  });
+
+  window.AturWaktu = AturWaktu;
+  window.DurasiDetik = durasiMs / 1000;
+  GambarBingkai(0);
+  document.fonts.ready.then(() => { document.body.dataset.siap = '1'; });
+  requestAnimationFrame(Detak);
+})();
+</script>
+</body>
+</html>
