@@ -120,6 +120,10 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/KatalogHarga.php'));
             Route::group([], base_path('routes/KatalogKomposisi.php'));
             Route::group([], base_path('routes/KatalogImpor.php'));
+            // F-05a Stok awal & buku stok: impor stok awal didaftarkan sebelum rute stok awal, lalu jurnal.
+            Route::group([], base_path('routes/PersediaanImpor.php'));
+            Route::group([], base_path('routes/Persediaan.php'));
+            Route::group([], base_path('routes/Akuntansi.php'));
         });
     });
 });

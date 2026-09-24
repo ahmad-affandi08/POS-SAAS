@@ -36,6 +36,8 @@ enum IzinTenant: string
     case PersediaanLihat = 'persediaan.lihat';
     case PersediaanKelola = 'persediaan.kelola';
     case PersediaanPenyesuaianSetujui = 'persediaan.penyesuaian.setujui';
+    // F-05a: posting & pembatalan stok awal (menulis jurnal ekuitas saldo awal).
+    case PersediaanStokAwalPosting = 'persediaan.stok-awal.posting';
     case PembelianKelola = 'pembelian.kelola';
     case PenjualanBuat = 'penjualan.buat';
     case PenjualanVoid = 'penjualan.void';
@@ -71,6 +73,7 @@ enum IzinTenant: string
             self::PersediaanLihat => 'Melihat stok',
             self::PersediaanKelola => 'Penerimaan, transfer, opname, penyesuaian stok',
             self::PersediaanPenyesuaianSetujui => 'Menyetujui penyesuaian stok',
+            self::PersediaanStokAwalPosting => 'Memposting & membatalkan stok awal (jurnal ekuitas saldo awal)',
             self::PembelianKelola => 'Mengelola pemasok & pesanan pembelian',
             self::PenjualanBuat => 'Berjualan di POS (jual, bayar, simpan pesanan, shift sendiri)',
             self::PenjualanVoid => 'Membatalkan (void) transaksi',
@@ -92,7 +95,8 @@ enum IzinTenant: string
             self::PenggunaLihat, self::PenggunaUndang, self::PenggunaUbah, self::PenggunaNonaktifkan,
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',
-            self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PembelianKelola => 'Persediaan & pembelian',
+            self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
+            self::PembelianKelola => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
