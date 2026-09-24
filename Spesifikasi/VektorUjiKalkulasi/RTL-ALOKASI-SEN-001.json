@@ -1,0 +1,89 @@
+{
+  "Id": "RTL-ALOKASI-SEN-001",
+  "Keterangan": "Diskon pesanan Rp 100 dibagi ke tiga baris sama besar: sisa sen ke baris pertama (metode sisa terbesar), biaya layanan 7,5% ikut dibagi",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "7.5",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PJK",
+      "Tarif": "10",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "A",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    },
+    {
+      "Sku": "B",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    },
+    {
+      "Sku": "C",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    }
+  ],
+  "Promo": [
+    {
+      "Jenis": "DiskonTetapPesanan",
+      "Jumlah": "100"
+    }
+  ],
+  "Pembayaran": {
+    "Metode": "Tunai"
+  },
+  "Harapan": {
+    "Subtotal": "3000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "100.00",
+    "TotalDiskon": "100.00",
+    "BiayaLayanan": "217.50",
+    "TotalPajak": "290.00",
+    "TotalPajakEksklusif": "290.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "3407.50",
+    "Pajak": {
+      "PJK": {
+        "Dpp": "2900.00",
+        "Jumlah": "290.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "33.34",
+        "BiayaLayanan": "72.50",
+        "Pajak": "96.66",
+        "PajakEksklusif": "96.66",
+        "TotalBaris": "1135.82"
+      },
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "33.33",
+        "BiayaLayanan": "72.50",
+        "Pajak": "96.67",
+        "PajakEksklusif": "96.67",
+        "TotalBaris": "1135.84"
+      },
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "33.33",
+        "BiayaLayanan": "72.50",
+        "Pajak": "96.67",
+        "PajakEksklusif": "96.67",
+        "TotalBaris": "1135.84"
+      }
+    ]
+  }
+}

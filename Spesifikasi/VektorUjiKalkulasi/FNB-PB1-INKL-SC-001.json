@@ -1,0 +1,80 @@
+{
+  "Id": "FNB-PB1-INKL-SC-001",
+  "Keterangan": "Kafe, harga termasuk PB1 10%, biaya layanan 5% masuk DPP PB1 (pajak atas biaya layanan ditambahkan), pembulatan tunai ke atas 500, uang pas",
+  "Pengaturan": {
+    "HargaTermasukPajak": true,
+    "PersenBiayaLayanan": "5",
+    "BiayaLayananMasukDpp": true,
+    "PembulatanTunai": {
+      "Kelipatan": 500,
+      "Arah": "Atas"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PB1",
+      "Tarif": "10",
+      "DasarPengenaan": "SubtotalPlusLayanan"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "KSU",
+      "Jumlah": "2",
+      "HargaSatuan": "22000",
+      "HargaPilihan": "3000"
+    },
+    {
+      "Sku": "RTI",
+      "Jumlah": "1",
+      "HargaSatuan": "27500"
+    }
+  ],
+  "Promo": [
+    {
+      "Jenis": "DiskonPersenItem",
+      "Sku": "RTI",
+      "Persen": "15"
+    }
+  ],
+  "Pembayaran": {
+    "Metode": "Tunai"
+  },
+  "Harapan": {
+    "Subtotal": "73375.00",
+    "DiskonBaris": "4125.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "4125.00",
+    "BiayaLayanan": "3668.75",
+    "TotalPajak": "7037.33",
+    "TotalPajakEksklusif": "366.88",
+    "Pembulatan": "89.37",
+    "TotalAkhir": "77500.00",
+    "Pajak": {
+      "PB1": {
+        "Dpp": "70373.30",
+        "Jumlah": "7037.33"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "50000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "2500.00",
+        "Pajak": "4795.45",
+        "PajakEksklusif": "250.00",
+        "TotalBaris": "52750.00"
+      },
+      {
+        "Bruto": "27500.00",
+        "Diskon": "4125.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "1168.75",
+        "Pajak": "2241.88",
+        "PajakEksklusif": "116.88",
+        "TotalBaris": "24660.63"
+      }
+    ]
+  }
+}

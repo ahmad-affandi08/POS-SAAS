@@ -1,0 +1,104 @@
+{
+  "Id": "RTL-PPN-CAMPUR-001",
+  "Keterangan": "Baris inklusif, eksklusif, dan tanpa pajak dalam satu dokumen; diskon manual 10% baris, diskon pesanan 5% dibagi pro-rata; bayar QRIS + tunai dengan kembalian, pembulatan terdekat ke 100",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Terdekat"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "SPT",
+      "Jumlah": "1",
+      "HargaSatuan": "249900",
+      "HargaTermasukPajak": true,
+      "DiskonManual": {
+        "Persen": "10"
+      }
+    },
+    {
+      "Sku": "KAO",
+      "Jumlah": "3",
+      "HargaSatuan": "33333"
+    },
+    {
+      "Sku": "GLA",
+      "Jumlah": "2",
+      "HargaSatuan": "14750",
+      "Pajak": []
+    }
+  ],
+  "Promo": [],
+  "DiskonManualPesanan": {
+    "Persen": "5"
+  },
+  "Pembayaran": [
+    {
+      "Metode": "Qris",
+      "Jumlah": "100000"
+    },
+    {
+      "Metode": "Tunai",
+      "Jumlah": "300000"
+    }
+  ],
+  "Harapan": {
+    "Subtotal": "354409.00",
+    "DiskonBaris": "24990.00",
+    "DiskonPesanan": "17720.45",
+    "TotalDiskon": "42710.45",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "31623.86",
+    "TotalPajakEksklusif": "10449.90",
+    "Pembulatan": "-38.45",
+    "TotalAkhir": "347100.00",
+    "Kembalian": "52900.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "263532.12",
+        "Jumlah": "31623.86"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "249900.00",
+        "Diskon": "24990.00",
+        "DiskonPesanan": "11245.50",
+        "BiayaLayanan": "0.00",
+        "Pajak": "21173.96",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "213664.50"
+      },
+      {
+        "Bruto": "99999.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "4999.95",
+        "BiayaLayanan": "0.00",
+        "Pajak": "10449.90",
+        "PajakEksklusif": "10449.90",
+        "TotalBaris": "105448.95"
+      },
+      {
+        "Bruto": "29500.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "1475.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "28025.00"
+      }
+    ]
+  }
+}

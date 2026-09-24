@@ -1,0 +1,77 @@
+{
+  "Id": "RTL-PPN-INKL-001",
+  "Keterangan": "Toko PKP, harga sudah termasuk PPN 12% dengan DPP nilai lain 11/12, bayar QRIS statis",
+  "Pengaturan": {
+    "HargaTermasukPajak": true,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Bawah"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "SBN",
+      "Jumlah": "2",
+      "HargaSatuan": "11100"
+    },
+    {
+      "Sku": "MNY",
+      "Jumlah": "1",
+      "HargaSatuan": "55500"
+    }
+  ],
+  "Promo": [],
+  "Pembayaran": [
+    {
+      "Metode": "Qris",
+      "Jumlah": "77700"
+    }
+  ],
+  "Harapan": {
+    "Subtotal": "77700.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "7700.00",
+    "TotalPajakEksklusif": "0.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "77700.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "64166.67",
+        "Jumlah": "7700.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "22200.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "2200.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "22200.00"
+      },
+      {
+        "Bruto": "55500.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "5500.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "55500.00"
+      }
+    ]
+  }
+}

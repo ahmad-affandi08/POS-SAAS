@@ -1,0 +1,85 @@
+{
+  "Id": "RTL-TANPA-PAJAK-001",
+  "Keterangan": "Non-PKP, jumlah desimal (timbangan), harga pilihan, diskon pesanan nominal, pembulatan ke bawah 100, tunai dengan kembalian",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Bawah"
+    }
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "DGS",
+      "Jumlah": "1.255",
+      "HargaSatuan": "23990"
+    },
+    {
+      "Sku": "TLR",
+      "Jumlah": "10",
+      "HargaSatuan": "2150",
+      "HargaPilihan": "0"
+    },
+    {
+      "Sku": "KRP",
+      "Jumlah": "1",
+      "HargaSatuan": "17500",
+      "HargaPilihan": "2500"
+    }
+  ],
+  "Promo": [
+    {
+      "Jenis": "DiskonTetapPesanan",
+      "Jumlah": "2500"
+    }
+  ],
+  "Pembayaran": {
+    "Metode": "Tunai",
+    "Jumlah": "100000"
+  },
+  "Harapan": {
+    "Subtotal": "71607.45",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "2500.00",
+    "TotalDiskon": "2500.00",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "0.00",
+    "TotalPajakEksklusif": "0.00",
+    "Pembulatan": "-7.45",
+    "TotalAkhir": "69100.00",
+    "Kembalian": "30900.00",
+    "Pajak": {},
+    "Baris": [
+      {
+        "Bruto": "30107.45",
+        "Diskon": "0.00",
+        "DiskonPesanan": "1051.13",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "29056.32"
+      },
+      {
+        "Bruto": "21500.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "750.62",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "20749.38"
+      },
+      {
+        "Bruto": "20000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "698.25",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "19301.75"
+      }
+    ]
+  }
+}

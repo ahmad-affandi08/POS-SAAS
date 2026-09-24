@@ -1,0 +1,65 @@
+{
+  "Id": "RTL-DISKON-PENUH-001",
+  "Keterangan": "Diskon melebihi harga dibatasi sampai harga (baris gratis), pembulatan tidak berlaku bila sisa tunai nol",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Atas"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "HDH",
+      "Jumlah": "1",
+      "HargaSatuan": "15000",
+      "DiskonManual": {
+        "Jumlah": "20000"
+      }
+    }
+  ],
+  "Promo": [],
+  "Pembayaran": {
+    "Metode": "Tunai",
+    "Jumlah": "0"
+  },
+  "Harapan": {
+    "Subtotal": "0.00",
+    "DiskonBaris": "15000.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "15000.00",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "0.00",
+    "TotalPajakEksklusif": "0.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "0.00",
+    "Kembalian": "0.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "0.00",
+        "Jumlah": "0.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "15000.00",
+        "Diskon": "15000.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "0.00"
+      }
+    ]
+  }
+}
