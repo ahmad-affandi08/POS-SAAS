@@ -201,7 +201,9 @@ export default function HalamanDaftarDaftarHarga({
                                         {RingkasPeriode(daftar)}
                                     </TableCell>
                                     <TableCell className="px-4 text-right tabular-nums">{daftar.Prioritas}</TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">{daftar.JumlahProduk}</TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums">
+                                        {daftar.JumlahProduk}
+                                    </TableCell>
                                     <TableCell className="px-4">
                                         <LabelStatus
                                             jenis={daftar.Aktif ? 'sukses' : 'netral'}

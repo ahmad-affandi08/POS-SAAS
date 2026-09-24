@@ -170,9 +170,7 @@ export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan)
                             <DialogTitle>
                                 {sunting === 'baru' ? 'Tambah satuan' : `Ubah satuan ${sunting.Nama}`}
                             </DialogTitle>
-                            <DialogDescription>
-                                Satuan dipakai untuk stok, harga, dan resep produk.
-                            </DialogDescription>
+                            <DialogDescription>Satuan dipakai untuk stok, harga, dan resep produk.</DialogDescription>
                         </DialogHeader>
                         <FormSatuan
                             key={sunting === 'baru' ? 'baru' : sunting.Uuid}

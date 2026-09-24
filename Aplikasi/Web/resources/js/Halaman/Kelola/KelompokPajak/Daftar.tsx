@@ -153,10 +153,7 @@ function FormKelompok({
                         transaksi.
                     </FieldDescription>
                     {data.Pajak.map((pajak, indeks) => (
-                        <Card
-                            key={indeks}
-                            className="grid items-end gap-2 p-3 shadow-none sm:grid-cols-[1fr_1fr_auto]"
-                        >
+                        <Card key={indeks} className="grid items-end gap-2 p-3 shadow-none sm:grid-cols-[1fr_1fr_auto]">
                             <BidangPilihan
                                 label={`Jenis pajak ${String(indeks + 1)}`}
                                 nilai={pajak.KodeJenisPajak}

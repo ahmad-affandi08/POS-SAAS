@@ -6,6 +6,9 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { CekBatasPenuh, FormatBatas } from '@/Tipe/Organisasi';
@@ -74,73 +77,77 @@ export default function HalamanPerangkatPanduan({
                     .
                 </Pemberitahuan>
             ) : (
-                <form
-                    ref={elemenFormulir}
-                    onSubmit={Kirim}
-                    className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
-                    noValidate
-                >
-                    <RingkasanGalatFormulir galat={formulir.errors} />
-                    <div className="max-w-md">
-                        <BidangTeks
-                            label="Nama perangkat kasir"
-                            nilai={formulir.data.Nama}
-                            saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                            galat={formulir.errors.Nama}
-                            keterangan='Misal "Kasir Depan" atau "Tablet Bar".'
-                            maxLength={100}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <Tombol type="submit" memproses={formulir.processing}>
-                            Tambah perangkat kasir
-                        </Tombol>
-                    </div>
-                </form>
+                <Card className="p-4 sm:p-6">
+                    <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                        <RingkasanGalatFormulir galat={formulir.errors} />
+                        <div className="max-w-md">
+                            <BidangTeks
+                                label="Nama perangkat kasir"
+                                nilai={formulir.data.Nama}
+                                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                                galat={formulir.errors.Nama}
+                                keterangan='Misal "Kasir Depan" atau "Tablet Bar".'
+                                maxLength={100}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <Tombol type="submit" memproses={formulir.processing}>
+                                Tambah perangkat kasir
+                            </Tombol>
+                        </div>
+                    </form>
+                </Card>
             )}
 
             {Perangkat.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    Belum ada perangkat kasir di outlet ini. Tambahkan satu untuk mulai berjualan di aplikasi kasir.
-                </p>
+                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
+                    <EmptyHeader className="max-w-none items-start text-left">
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            Belum ada perangkat kasir di outlet ini. Tambahkan satu untuk mulai berjualan di aplikasi
+                            kasir.
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[560px] text-left text-isi">
-                        <caption className="sr-only">Perangkat di outlet {Outlet.Nama}</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[560px] text-isi">
+                        <TableCaption className="sr-only">Perangkat di outlet {Outlet.Nama}</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className="px-4">
                                     Kode
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Nama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Perangkat.map((baris) => (
-                                <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label text-teks-utama">{baris.Kode}</td>
-                                    <td className="px-4 py-2 text-teks-utama">
+                                <TableRow key={baris.Uuid}>
+                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
+                                        {baris.Kode}
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
                                         <span className="break-words">{baris.Nama}</span>
                                         <span className="block text-keterangan text-teks-sekunder">
                                             {baris.LabelJenis}
                                         </span>
-                                    </td>
-                                    <td className="px-4 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-4">
                                         <LabelStatus
                                             jenis={labelStatus[baris.Status].jenis}
                                             teks={labelStatus[baris.Status].teks}
                                         />
-                                    </td>
-                                    <td className="px-4 py-2 text-right">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right">
                                         {BolehKelolaPerangkat && baris.Status !== 'Dicabut' ? (
                                             <Tombol
                                                 varian="sekunder"
@@ -151,12 +158,12 @@ export default function HalamanPerangkatPanduan({
                                                 {baris.Status === 'Aktif' ? 'Pindahkan ke HP lain' : 'Buat kode baru'}
                                             </Tombol>
                                         ) : null}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </TataLetakPanduan>
     );
