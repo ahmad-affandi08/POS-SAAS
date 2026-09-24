@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $IdPeran
  * @property bool $SemuaOutlet
  * @property string|null $HashPin
+ * @property string|null $VerifierPinOffline
  * @property StatusKeanggotaan $Status
  * @property Carbon|null $DinonaktifkanPada
  * @property-read Pengguna $Pengguna
@@ -35,7 +36,7 @@ final class TenantPengguna extends ModelDasar
     protected bool $pakaiUuid = false;
 
     /** @var list<string> */
-    protected $hidden = ['HashPin'];
+    protected $hidden = ['HashPin', 'VerifierPinOffline'];
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -62,6 +63,7 @@ final class TenantPengguna extends ModelDasar
     {
         return [
             'Pemilik' => 'boolean',
+            'VerifierPinOffline' => 'encrypted',
             'SemuaOutlet' => 'boolean',
             'Status' => StatusKeanggotaan::class,
             'DinonaktifkanPada' => 'datetime',

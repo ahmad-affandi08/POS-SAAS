@@ -10,6 +10,7 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Layanan\PenjagaPin;
+use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\OutletPengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,7 @@ final class AturUlangPinAnggota
         DB::transaction(function () use ($anggota, $pin): void {
             $baris = TenantPengguna::query()->lockForUpdate()->findOrFail($anggota->Id);
             $baris->HashPin = Hash::make($pin);
+            $baris->VerifierPinOffline = VerifierPinOffline::Buat($pin);
             $baris->save();
 
             $this->audit->Catat('pengguna.pin.atur-ulang', $baris, nilaiBaru: ['IdPengguna' => $baris->IdPengguna]);

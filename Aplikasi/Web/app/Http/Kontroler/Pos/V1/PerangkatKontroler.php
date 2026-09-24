@@ -33,6 +33,9 @@ final class PerangkatKontroler extends Kontroler
 
         return response()->json([
             'TokenPerangkat' => $hasil['TokenPerangkat'],
+            // F-06 (§25.2 no. 3): kunci pembungkus verifier PIN offline, dikirim sekali; aplikasi menyimpannya di
+            // secure storage (Keystore/Keychain/DPAPI). Tambahan kontrak yang kompatibel mundur.
+            'KunciPinOffline' => $hasil['Perangkat']->KunciPinOffline,
             'Perangkat' => PerangkatPosRespons::Perangkat($hasil['Perangkat']),
             'Outlet' => PerangkatPosRespons::Outlet($hasil['Outlet']),
             'Tenant' => PerangkatPosRespons::Tenant($ringkasanTenant->Ambil([$idTenant])[0] ?? null),

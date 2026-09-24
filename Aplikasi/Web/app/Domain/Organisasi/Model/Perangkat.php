@@ -33,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $TokenPush
  * @property array<string, mixed>|null $ProfilHardware
  * @property string|null $HashToken
+ * @property string|null $KunciPinOffline
  * @property Carbon|null $DiaktifkanPada
  * @property Carbon|null $TerakhirAktifPada
  * @property int $JumlahOutboxTertunda
@@ -47,7 +48,7 @@ final class Perangkat extends ModelDasar
     protected $table = 'Perangkat';
 
     /** @var list<string> */
-    protected $hidden = ['HashToken', 'TokenPush'];
+    protected $hidden = ['HashToken', 'TokenPush', 'KunciPinOffline'];
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -98,6 +99,7 @@ final class Perangkat extends ModelDasar
     {
         return [
             'Jenis' => JenisPerangkat::class,
+            'KunciPinOffline' => 'encrypted',
             'Platform' => PlatformPerangkat::class,
             'ProfilHardware' => 'array',
             'DiaktifkanPada' => 'datetime',

@@ -9,6 +9,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Data\DataAktivasiPerangkat;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
+use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\KodeAktivasi;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Perangkat;
@@ -66,6 +67,7 @@ final class AktifkanPerangkat
             $rahasia = rtrim(strtr(base64_encode(random_bytes(64)), '+/', '-_'), '=');
             $perangkat->fill([
                 'HashToken' => Perangkat::BuatHashToken($rahasia),
+                'KunciPinOffline' => VerifierPinOffline::BuatKunciPerangkat(),
                 'DiaktifkanPada' => now(),
                 'TerakhirAktifPada' => now(),
                 'Platform' => $data->platform,

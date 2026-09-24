@@ -1,0 +1,37 @@
+{
+    "Keterangan": "Vektor uji PIN kasir offline (PRD §25.2 no. 3): Argon2id v1.3 (Iterasi 2, MemoriKiB 19456, Paralelisme 1, Panjang 32) lalu AES-256-GCM dengan kunci perangkat (Sandi = ciphertext || tag 16 byte). Wajib lolos di PHP (VerifierPinOffline) dan Dart (PemverifikasiPinOffline). Kasus hanya boleh ditambah.",
+    "Parameter": {
+        "Algoritme": "Argon2id",
+        "Iterasi": 2,
+        "MemoriKiB": 19456,
+        "Paralelisme": 1,
+        "Panjang": 32
+    },
+    "KunciPerangkat": "YD3rEBXKcb4rc67whX13gR81LAc7YQjXLZgQowkU3/Q=",
+    "Kasus": [
+        {
+            "Nama": "PIN 246810",
+            "Pin": "246810",
+            "Garam": "AQEBAQEBAQEBAQEBAQEBAQ==",
+            "Hash": "9AksdELgasT3GfTv9pNhAl176rT+3UPnx+MvMiZfm34=",
+            "Nonce": "ZI+OGToGwwdn5x+z",
+            "Sandi": "YyFU+ZVtTQxp07XRLfnoQBpf9138t11wi1m+0Uv8S+IWT6ajFTrbMLvzEgfVw/eS"
+        },
+        {
+            "Nama": "PIN 135790",
+            "Pin": "135790",
+            "Garam": "ABEiM0RVZneImaq7zN3u/w==",
+            "Hash": "V/GmVRsbjFwI6WzURa99iGeDMo7jUCXS4O0Ki3dizok=",
+            "Nonce": "CngAlZFyLMhIJcqV",
+            "Sandi": "GBmR19mSafL0YQog7YaliBI4h5oaj1WmFz5+Mxw+biTWgEwapJzkkAhcpaVge86J"
+        },
+        {
+            "Nama": "PIN 000000",
+            "Pin": "000000",
+            "Garam": "//79/Pv6+fj39vX08/Lx8A==",
+            "Hash": "8SUUGrlgLrJExQFyS5/ASEzycEGLyQlS7cmv/twW1Rg=",
+            "Nonce": "Ym4eO2k1xmosirnI",
+            "Sandi": "gOZxdOlFVHbB8efgdx+Gerl1mpGWT2v8McCvuk/lE4U0PXwwx8sfdhjEM8QEIDZT"
+        }
+    ]
+}

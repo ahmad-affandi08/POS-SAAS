@@ -32,6 +32,8 @@ final class CabutPerangkat
 
             $dicabutPada = now();
             $perangkat->DicabutPada = $dicabutPada;
+            // PRD §25.2 no. 3: kunci pembungkus verifier PIN offline tidak berlaku lagi.
+            $perangkat->KunciPinOffline = null;
             $perangkat->save();
 
             KodeAktivasi::query()

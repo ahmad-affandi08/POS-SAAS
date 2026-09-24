@@ -7,6 +7,7 @@ namespace App\Domain\Organisasi\Aksi;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use App\Domain\Organisasi\Layanan\PenjagaPin;
+use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -37,6 +38,7 @@ final class AturPinSendiri
                 ->firstOrFail();
             $sudahAda = $anggota->HashPin !== null;
             $anggota->HashPin = Hash::make($pin);
+            $anggota->VerifierPinOffline = VerifierPinOffline::Buat($pin);
             $anggota->save();
 
             $this->audit->Catat('pengguna.pin.atur', $anggota, nilaiBaru: ['IdPengguna' => $idPengguna, 'Mengganti' => $sudahAda]);
