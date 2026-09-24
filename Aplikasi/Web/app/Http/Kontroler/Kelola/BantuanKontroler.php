@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Dukungan\Aksi\BalasTiketDukungan;
 use App\Domain\Dukungan\Aksi\BuatTiketDukungan;
 use App\Domain\Dukungan\Aksi\SelesaikanTiketDukungan;
@@ -15,7 +16,8 @@ use App\Domain\Organisasi\Model\Pengguna;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Permintaan\Kelola\BalasTiketDukunganPermintaan;
 use App\Http\Permintaan\Kelola\BuatTiketDukunganPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,15 +32,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class BantuanKontroler extends Kontroler
 {
-    public function Daftar(Request $permintaan, TiketDukunganTenant $kueri): Response
+    public function Daftar(Request $permintaan, TiketDukunganTenant $kueri): Response|JsonResponse
     {
-        $status = $permintaan->string('status')->toString() === 'semua' ? 'semua' : 'terbuka';
-        $halaman = $kueri->AmbilDaftar($status === 'terbuka');
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), TiketDukunganTenant::KOLOM_URUT, '-DibuatPada', TiketDukunganTenant::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Bantuan/Daftar', [
-            'Tiket' => DaftarBerhalaman::BuatDariData($halaman, array_values($halaman->items())),
-            'Saring' => ['Status' => $status],
-        ]);
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Bantuan/Daftar', 'Tiket', fn (): array => $kueri->AmbilTabel($tabel));
     }
 
     public function Buat(): Response

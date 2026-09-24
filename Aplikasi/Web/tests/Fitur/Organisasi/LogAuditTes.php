@@ -89,14 +89,14 @@ describe('LogAudit tenant (§13.2, §25 no. 17)', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
         BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->post('/kelola/merek', ['Nama' => 'Roti Nusantara'])->assertSessionHasNoErrors();
 
-        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->get('/kelola/log-audit?kata=merek')
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->get('/kelola/log-audit?cari=merek')
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Kelola/LogAudit/Daftar')
                 ->has('Log.Data', 1)
                 ->where('Log.Data.0.Peristiwa', 'merek.buat')
                 ->where('Log.Data.0.Pelaku', $pemilik->Nama)
                 ->where('Log.Data.0.NilaiBaru', ['Nama' => 'Roti Nusantara'])
-                ->where('Saring.Kata', 'merek'));
+                ->where('Log.Meta.Total', 1));
 
         $kasir = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
         BantuanOrganisasi::Masuk($this, $kasir, $tenant->Id)->get('/kelola/log-audit')->assertForbidden();

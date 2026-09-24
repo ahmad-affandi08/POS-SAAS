@@ -142,8 +142,8 @@ describe('Isolasi tenant (PRD §13.4)', function (): void {
         $lampiran = json_decode((string) DB::table('TiketDukunganPesan')->value('Lampiran'), true)[0];
 
         BantuanDukungan::MasukSebagaiTenant($this, $pb, $b);
-        $this->get('/kelola/bantuan?status=semua')
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Bantuan/Daftar')->where('Tiket.Total', 0));
+        $this->get('/kelola/bantuan?saring[Keadaan]=Semua')
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/Bantuan/Daftar')->where('Tiket.Meta.Total', 0));
         $this->get("/kelola/bantuan/{$tiket->Uuid}")->assertNotFound();
         $this->post("/kelola/bantuan/{$tiket->Uuid}/balasan", ['Isi' => 'Coba masuk'])->assertNotFound();
         $this->post("/kelola/bantuan/{$tiket->Uuid}/selesaikan")->assertNotFound();
@@ -163,7 +163,7 @@ describe('Isolasi tenant (PRD §13.4)', function (): void {
         BantuanDukungan::MasukSebagaiTenant($this, $pengguna, $tenant);
         $this->get('/kelola/bantuan')->assertInertia(fn (AssertableInertia $halaman) => $halaman
             ->component('Kelola/Bantuan/Daftar')
-            ->where('Tiket.Total', 1)
+            ->where('Tiket.Meta.Total', 1)
             ->where('Tiket.Data.0.Nomor', $tiket->Nomor)
             ->where('Tiket.Data.0.Status', 'Ditangani'));
 

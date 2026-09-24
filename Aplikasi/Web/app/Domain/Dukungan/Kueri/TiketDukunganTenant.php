@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Dukungan\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Dukungan\Enum\JenisPengirimPesan;
 use App\Domain\Dukungan\Enum\StatusTiketDukungan;
 use App\Domain\Dukungan\Model\TiketDukungan;
 use App\Domain\Dukungan\Model\TiketDukunganPesan;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Tiket dukungan dari sisi tenant (P-09): selalu dibatasi tenant aktif lewat MilikTenant, dan catatan internal tim
@@ -16,22 +18,26 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  */
 final class TiketDukunganTenant
 {
-    public const PER_HALAMAN = 20;
+    public const KOLOM_URUT = ['DibuatPada', 'Nomor'];
+
+    public const KOLOM_SARING = ['Keadaan'];
 
     /**
-     * @return LengthAwarePaginator<int, array<string, mixed>>
+     * Daftar untuk `TabelData` (D-16): cari nomor/judul, saring `Keadaan` (`Semua`; bawaan hanya tiket terbuka).
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function AmbilDaftar(bool $hanyaTerbuka): LengthAwarePaginator
+    public function AmbilTabel(DataPermintaanTabel $permintaan): array
     {
-        return TiketDukungan::query()
-            ->when($hanyaTerbuka, fn ($kueri) => $kueri->whereIn('Status', array_map(
+        $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
+        $kueri = TiketDukungan::query()
+            ->when(($permintaan->saring['Keadaan'] ?? 'Terbuka') !== 'Semua', fn ($kueri) => $kueri->whereIn('Status', array_map(
                 fn (StatusTiketDukungan $status) => $status->value,
                 StatusTiketDukungan::AmbilTerbuka(),
             )))
-            ->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman')
-            ->withQueryString()
-            ->through(fn (TiketDukungan $tiket): array => self::PetakanRingkas($tiket));
+            ->when($permintaan->cari !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam->where('Nomor', 'like', $pola)->orWhere('Judul', 'like', $pola)));
+
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['DibuatPada' => 'DibuatPada', 'Nomor' => 'Nomor'], fn (Collection $tiket): array => array_values($tiket->map(fn (TiketDukungan $t): array => self::PetakanRingkas($t))->all()));
     }
 
     public function Cari(string $uuid): TiketDukungan
