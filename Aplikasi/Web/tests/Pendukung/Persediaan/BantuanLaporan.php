@@ -89,6 +89,11 @@ final class BantuanLaporan
         self::$urutan++;
         $total = BigDecimal::zero();
 
+        foreach ($baris as [, $jumlah, $hpp]) {
+            $total = $total->plus(BigDecimal::of($jumlah)->multipliedBy($hpp)->toScale(2, RoundingMode::HalfUp));
+        }
+
+        // Kepala dibuat sekali dengan TotalNilai final: dokumen non-Draf tidak boleh diubah lagi (penjaga model #8).
         $stokAwal = StokAwal::query()->create([
             'Uuid' => (string) Str::ulid(),
             'Nomor' => $status === StatusStokAwal::Diposting || $status === StatusStokAwal::Dibatalkan ? 'SA/2026/09/'.str_pad((string) self::$urutan, 4, '0', STR_PAD_LEFT) : null,
@@ -98,11 +103,11 @@ final class BantuanLaporan
             'Status' => $status,
             'Sumber' => SumberStokAwal::Manual,
             'JumlahBaris' => count($baris),
+            'TotalNilai' => (string) $total,
         ]);
 
         foreach ($baris as $i => [$produk, $jumlah, $hpp]) {
             $nilai = BigDecimal::of($jumlah)->multipliedBy($hpp)->toScale(2, RoundingMode::HalfUp);
-            $total = $total->plus($nilai);
             StokAwalDetail::query()->create([
                 'IdStokAwal' => $stokAwal->Id,
                 'Urutan' => $i + 1,
@@ -114,9 +119,6 @@ final class BantuanLaporan
                 'Nilai' => (string) $nilai,
             ]);
         }
-
-        $stokAwal->TotalNilai = (string) $total;
-        $stokAwal->save();
 
         return $stokAwal;
     }
