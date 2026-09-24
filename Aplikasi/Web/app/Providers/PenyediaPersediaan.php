@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Katalog\Kontrak\PemeriksaPemakaianProduk;
 use App\Domain\Katalog\Kontrak\PemeriksaRiwayatStok;
+use App\Domain\Katalog\Kontrak\PenyediaHppBahan;
+use App\Domain\Persediaan\Kueri\HppBahanDariSaldo;
+use App\Domain\Persediaan\Kueri\PemakaianProdukDiPersediaan;
 use App\Domain\Persediaan\Kueri\RiwayatStokProduk;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,11 +23,10 @@ final class PenyediaPersediaan extends ServiceProvider
         // C.4: Katalog mengunci `Pelacakan` begitu produk punya riwayat stok (implementasi Tim D).
         $this->app->bind(PemeriksaRiwayatStok::class, RiwayatStokProduk::class);
 
-        // TODO(F-05a Tim F): daftarkan dua baris berikut bersama implementasinya (DesainF05a C.8). Sengaja belum
-        // didaftarkan selama `HppBahanDariSaldo` dan `PemakaianProdukDiPersediaan` masih stub, karena keduanya
-        // dipanggil fitur F-03 yang sudah berjalan (estimasi HPP resep, hapus/ubah jenis produk):
-        //   $this->app->bind(PenyediaHppBahan::class, HppBahanDariSaldo::class);  // `bind` menimpa `bindIf` Katalog
-        //   $this->app->tag(PemakaianProdukDiPersediaan::class, PemeriksaPemakaianProduk::TAG);
+        // C.8 (Tim F): HPP bahan resep dari SaldoStok (`bind` menimpa `bindIf` Katalog, BR-03.5) dan pemeriksa
+        // pemakaian produk dari sisi persediaan (riwayat stok / draf stok awal, BR-03.2).
+        $this->app->bind(PenyediaHppBahan::class, HppBahanDariSaldo::class);
+        $this->app->tag(PemakaianProdukDiPersediaan::class, PemeriksaPemakaianProduk::TAG);
     }
 
     public function boot(): void

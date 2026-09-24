@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\PanduanAwal\Kueri;
 
+use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\PemakaianSku;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
@@ -11,11 +12,13 @@ use App\Domain\Organisasi\Kueri\DaftarPinAnggota;
 use App\Domain\Organisasi\Kueri\PemakaianBatasOrganisasi;
 use App\Domain\Organisasi\Kueri\PemakaianPerangkat;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
+use App\Domain\Persediaan\Kueri\RingkasanStokAwal;
 
 /**
  * Checklist "Langkah Berikutnya" di beranda back-office (F-01 langkah 7). Item hanya tampil bila anggota punya izin
  * membuka tautannya; status Selesai dihitung dari data (bukan dicentang manual). Semua selesai = daftar kosong
- * (bagian disembunyikan). "Stok awal" menyusul bersama F-05.
+ * (bagian disembunyikan). "Isi stok awal" (F-05a) hanya tampil bila tenant punya produk berstok dan anggota boleh
+ * mengelola persediaan; selesai begitu ada stok awal yang diposting.
  */
 final class LangkahBerikutnya
 {
@@ -27,6 +30,8 @@ final class LangkahBerikutnya
         private readonly PemakaianPerangkat $pemakaianPerangkat,
         private readonly PemakaianBatasOrganisasi $pemakaianOrganisasi,
         private readonly DaftarPinAnggota $pinAnggota,
+        private readonly InfoProdukStok $infoProdukStok,
+        private readonly RingkasanStokAwal $ringkasanStokAwal,
     ) {}
 
     /**
@@ -58,6 +63,16 @@ final class LangkahBerikutnya
                 'Keterangan' => 'Tambahkan QRIS, kartu (EDC), atau transfer selain tunai.',
                 'Tautan' => route('kelola.panduan-awal.metode-pembayaran'),
                 'Selesai' => $this->metodePembayaran->HitungAktifSelainTunai() > 0,
+            ];
+        }
+
+        if ($boleh(IzinTenant::PersediaanKelola) && $this->infoProdukStok->HitungBerstok() > 0) {
+            $item[] = [
+                'Kunci' => 'StokAwal',
+                'Judul' => 'Isi stok awal',
+                'Keterangan' => 'Jumlah & harga modal barang yang sudah ada, supaya stok dan HPP benar.',
+                'Tautan' => route('kelola.persediaan.stok-awal.daftar'),
+                'Selesai' => $this->ringkasanStokAwal->CekAdaDiposting(),
             ];
         }
 
