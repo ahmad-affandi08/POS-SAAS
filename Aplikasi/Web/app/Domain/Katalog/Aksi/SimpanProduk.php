@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
  *   dari permintaan bersamaan dipetakan ke `BR-03.1` dan seluruh transaksi dibatalkan.
  * - Aturan jenis (C.1); IndukVarian menyimpan definisi atribut dan meneruskan kategori, merek, pajak, dan tampilan ke
  *   anak-anaknya saat diubah.
+ * - F-05a: `Pelacakan` tidak bisa diubah setelah produk punya riwayat stok (`PelacakanTerkunci`).
  * Urutan kunci: Tenant → Langganan (batas paket) → baris produk → satuan & barcode.
  */
 final class SimpanProduk
@@ -75,6 +76,7 @@ final class SimpanProduk
         } else {
             $produk = Produk::query()->whereKey($produk->Id)->lockForUpdate()->firstOrFail();
             $this->aturan->PastikanJenisBolehDiubah($produk, $data->jenis);
+            $this->aturan->PastikanPelacakanBolehDiubah($produk, $data->pelacakan);
             $this->PastikanSatuanDasarBolehDiubah($produk, $data->idSatuanDasar);
         }
 

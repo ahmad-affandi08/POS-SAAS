@@ -8,6 +8,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Katalog\Data\DataAtributVarian;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
+use App\Domain\Katalog\Kontrak\PemeriksaRiwayatStok;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\Satuan;
@@ -25,6 +26,7 @@ final class AturanProduk
     public function __construct(
         private readonly PenilaiPemakaianProduk $penilai,
         private readonly PembuatSku $pembuatSku,
+        private readonly PemeriksaRiwayatStok $riwayatStok,
     ) {}
 
     /** C.1: jenis tidak pernah berubah ke/dari IndukVarian; selain itu hanya bila produk belum dipakai. */
@@ -43,6 +45,23 @@ final class AturanProduk
         if ($alasan !== null) {
             throw new PelanggaranAturanBisnis('JenisTidakBolehDiubah', "Jenis produk tidak bisa diubah karena produk {$alasan}.", 'Jenis');
         }
+    }
+
+    /**
+     * F-05a (DesainF05a C.4): `Pelacakan` (Tidak/Batch/Seri) terkunci begitu produk punya riwayat stok, karena batch,
+     * nomor seri, dan saldo yang sudah tercatat mengikuti pelacakan lama.
+     */
+    public function PastikanPelacakanBolehDiubah(Produk $produk, PelacakanProduk $baru): void
+    {
+        if ($produk->Pelacakan === $baru || ! $this->riwayatStok->CekPunyaRiwayatStok($produk->Id)) {
+            return;
+        }
+
+        throw new PelanggaranAturanBisnis(
+            'PelacakanTerkunci',
+            "Pelacakan tidak bisa diubah dari {$produk->Pelacakan->AmbilLabel()} karena produk sudah punya riwayat stok. Buat produk baru bila cara pelacakannya perlu berbeda.",
+            'Pelacakan',
+        );
     }
 
     /** Anak varian hanya boleh berjenis `CekBolehAnakVarian()`. */
