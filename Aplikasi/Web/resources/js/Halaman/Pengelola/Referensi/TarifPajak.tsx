@@ -6,8 +6,8 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
-import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
 import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
@@ -363,7 +363,7 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
     };
 
     return (
-        <DialogKonfirmasi
+        <DialogTinjauan
             judul={`Tinjau ${tarif.NamaJenisPajak} ${FormatPersen(tarif.Tarif)}% mulai ${FormatTanggal(tarif.BerlakuMulai)}`}
             deskripsi={`Periksa tarif, pengali DPP ${tarif.PengaliDppPembilang}/${tarif.PengaliDppPenyebut}, tanggal berlaku, dan dasar hukum ${tarif.NomorDasarHukum ?? ''}. Setelah terbit, tarif tidak bisa diubah.`}
             saatTutup={saatSelesai}
@@ -386,6 +386,6 @@ function FormTinjau({ tarif, saatSelesai }: { tarif: Tarif; saatSelesai: () => v
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-        </DialogKonfirmasi>
+        </DialogTinjauan>
     );
 }

@@ -5,8 +5,8 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
-import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
 import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
@@ -264,7 +264,7 @@ function FormTinjauHarga({ alamat, harga, saatSelesai }: { alamat: string; harga
     };
 
     return (
-        <DialogKonfirmasi
+        <DialogTinjauan
             judul={`Tinjau harga ${FormatRupiah(harga.HargaBulanan)}/bulan mulai ${FormatTanggal(harga.BerlakuMulai)}`}
             deskripsi={
                 harga.TerapkanKePelangganLama
@@ -291,6 +291,6 @@ function FormTinjauHarga({ alamat, harga, saatSelesai }: { alamat: string; harga
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-        </DialogKonfirmasi>
+        </DialogTinjauan>
     );
 }

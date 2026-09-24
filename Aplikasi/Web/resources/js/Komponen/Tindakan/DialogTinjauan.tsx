@@ -11,11 +11,11 @@ import {
     AlertDialogTitle,
 } from '@/Komponen/Ui/alert-dialog';
 
-type PropsDialogKonfirmasi = {
+type PropsDialogTinjauan = {
     judul: string;
     deskripsi: ReactNode;
     saatTutup: () => void;
-    /** Tombol keputusan (terbitkan, setujui, tolak, hapus). Tidak menutup dialog sendiri; tutup lewat `onSuccess`. */
+    /** Tombol keputusan (setujui/terbitkan, tolak). Tidak menutup dialog sendiri; tutup lewat `onSuccess`. */
     aksi: ReactNode;
     /** Isian tambahan di antara deskripsi dan tombol, misal catatan peninjau. */
     children?: ReactNode;
@@ -25,10 +25,12 @@ type PropsDialogKonfirmasi = {
 };
 
 /**
- * Konfirmasi keputusan yang tidak bisa dibatalkan (terbit, setujui/tolak four-eyes, hapus draf).
- * Dialog selalu terbuka selama dirender; Esc dan tombol Batal memanggil `saatTutup`.
+ * Tinjauan four-eyes: peninjau menyetujui atau menolak pengajuan anggota lain (tarif pajak, hari libur, harga
+ * paket), dengan catatan peninjau sebagai `children` dan beberapa tombol keputusan di `aksi`. Untuk konfirmasi
+ * satu tindakan (terbitkan, hapus) pakai `DialogKonfirmasi`. Dialog selalu terbuka selama dirender; Esc dan
+ * tombol Batal memanggil `saatTutup`.
  */
-export default function DialogKonfirmasi({
+export default function DialogTinjauan({
     judul,
     deskripsi,
     saatTutup,
@@ -36,7 +38,7 @@ export default function DialogKonfirmasi({
     children,
     labelBatal = 'Batal',
     galatUmum,
-}: PropsDialogKonfirmasi) {
+}: PropsDialogTinjauan) {
     return (
         <AlertDialog
             open

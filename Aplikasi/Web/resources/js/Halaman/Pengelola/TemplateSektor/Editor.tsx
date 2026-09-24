@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import FormIsiBisnis from '@/Komponen/Pengelola/TemplateSektor/FormIsiBisnis';
 import { Button } from '@/Komponen/Ui/button';
@@ -111,26 +111,26 @@ export default function HalamanEditorTemplate({ Template, Versi, DaftarVersi, Ad
             {konfirmasi === 'terbitkan' ? (
                 <DialogKonfirmasi
                     judul={`Terbitkan ${Template.Kode} versi ${Versi.Versi}?`}
-                    deskripsi="Versi terbit tidak bisa diubah lagi."
-                    saatTutup={() => AturKonfirmasi(null)}
-                    aksi={
-                        <Tombol memproses={memproses} onClick={Terbitkan}>
-                            Terbitkan
-                        </Tombol>
-                    }
-                />
+                    labelAksi="Terbitkan"
+                    varian="utama"
+                    memproses={memproses}
+                    saatKonfirmasi={Terbitkan}
+                    saatBatal={() => AturKonfirmasi(null)}
+                >
+                    Versi terbit tidak bisa diubah lagi.
+                </DialogKonfirmasi>
             ) : null}
             {konfirmasi === 'hapus' ? (
                 <DialogKonfirmasi
                     judul={`Hapus draf versi ${Versi.Versi}?`}
-                    deskripsi="Perubahan di draf ini hilang."
-                    saatTutup={() => AturKonfirmasi(null)}
-                    aksi={
-                        <Tombol varian="bahaya" memproses={memproses} onClick={HapusDraf}>
-                            Hapus draf
-                        </Tombol>
-                    }
-                />
+                    labelAksi="Hapus draf"
+                    varian="bahaya"
+                    memproses={memproses}
+                    saatKonfirmasi={HapusDraf}
+                    saatBatal={() => AturKonfirmasi(null)}
+                >
+                    Perubahan di draf ini hilang.
+                </DialogKonfirmasi>
             ) : null}
             <nav aria-label="Versi template" className="flex flex-wrap items-center gap-2">
                 <Button asChild variant="link" className="h-auto px-0 text-label font-semibold">

@@ -5,8 +5,8 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
-import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import { Button } from '@/Komponen/Ui/button';
@@ -294,7 +294,7 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
     };
 
     return (
-        <DialogKonfirmasi
+        <DialogTinjauan
             judul={`Tinjau ${jumlah} hari libur tahun ${tahun}`}
             deskripsi="Cocokkan setiap tanggal dengan SKB. Setelah terbit, data tidak bisa diubah."
             saatTutup={saatSelesai}
@@ -317,7 +317,7 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-        </DialogKonfirmasi>
+        </DialogTinjauan>
     );
 }
 
@@ -346,7 +346,7 @@ function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
         return (
             <DialogFormulir
                 judul={`Ajukan pembatalan ${hari.Nama}`}
-                deskripsi="Hari libur tetap berlaku sampai pembatalan disetujui anggota lain. Untuk menggeser tanggal, batalkan lalu tambahkan hari libur baru."
+                keterangan="Hari libur tetap berlaku sampai pembatalan disetujui anggota lain. Untuk menggeser tanggal, batalkan lalu tambahkan hari libur baru."
                 saatTutup={saatSelesai}
                 galatUmum={galatUmum}
             >
@@ -374,7 +374,7 @@ function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
     }
 
     return (
-        <DialogKonfirmasi
+        <DialogTinjauan
             judul={`Tinjau pembatalan ${hari.Nama}`}
             deskripsi={`Alasan: ${hari.AlasanPembatalan ?? '—'}. Bila disetujui, hari libur tidak lagi dipakai tenant; datanya tetap tersimpan.`}
             saatTutup={saatSelesai}
@@ -397,6 +397,6 @@ function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-        </DialogKonfirmasi>
+        </DialogTinjauan>
     );
 }
