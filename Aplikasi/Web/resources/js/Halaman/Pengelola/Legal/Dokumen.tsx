@@ -13,6 +13,7 @@ import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 
 type DokumenLegal = {
     Uuid: string;
@@ -151,8 +152,8 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
                     saatBerubah={(nilai) => formulir.setData('Judul', nilai)}
                     galat={formulir.errors.Judul}
                 />
-                <BidangTeks
-                    label="Berlaku mulai (TTTT-BB-HH)"
+                <PemilihTanggal
+                    label="Berlaku mulai"
                     keterangan="Perubahan materiil paling cepat 30 hari setelah terbit."
                     nilai={formulir.data.BerlakuMulai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}

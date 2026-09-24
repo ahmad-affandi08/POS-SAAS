@@ -1,50 +1,15 @@
 import { XIcon } from 'lucide-react';
 import { useId } from 'react';
 
-import { Button } from '@/Komponen/Ui/button';
+import { PanelRentangTanggal, RingkasRentang } from '@/Komponen/Tanggal/PemilihRentangTanggal';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
-import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
 import { Switch } from '@/Komponen/Ui/switch';
 import { cn } from '@/Komponen/Ui/utils';
-import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 
 import type { DefinisiSaring } from './Tipe';
 
-function TulisTanggal(tanggal: Date): string {
-    const bulan = String(tanggal.getMonth() + 1).padStart(2, '0');
-    const hari = String(tanggal.getDate()).padStart(2, '0');
-
-    return `${String(tanggal.getFullYear())}-${bulan}-${hari}`;
-}
-
-/** Preset rentang tanggal §17.6.5 (tanggal lokal peramban). */
-export function BuatPresetTanggal(hariIni = new Date()): { label: string; nilai: string }[] {
-    const tahun = hariIni.getFullYear();
-    const bulan = hariIni.getMonth();
-    const tujuhHari = new Date(tahun, bulan, hariIni.getDate() - 6);
-    const kemarin = new Date(tahun, bulan, hariIni.getDate() - 1);
-
-    return [
-        { label: 'Hari ini', nilai: `${TulisTanggal(hariIni)}..${TulisTanggal(hariIni)}` },
-        { label: 'Kemarin', nilai: `${TulisTanggal(kemarin)}..${TulisTanggal(kemarin)}` },
-        { label: '7 hari terakhir', nilai: `${TulisTanggal(tujuhHari)}..${TulisTanggal(hariIni)}` },
-        {
-            label: 'Bulan ini',
-            nilai: `${TulisTanggal(new Date(tahun, bulan, 1))}..${TulisTanggal(new Date(tahun, bulan + 1, 0))}`,
-        },
-        {
-            label: 'Bulan lalu',
-            nilai: `${TulisTanggal(new Date(tahun, bulan - 1, 1))}..${TulisTanggal(new Date(tahun, bulan, 0))}`,
-        },
-    ];
-}
-
-export function PecahRentang(nilai: string): [string, string] {
-    const [dari = '', sampai = ''] = nilai.split('..');
-
-    return [dari, sampai];
-}
+export { BuatPresetTanggal, PecahRentang } from '@/Pustaka/Tanggal';
 
 /** Teks ringkas nilai saring untuk chip & tombol. */
 export function RingkasSaring(definisi: DefinisiSaring, nilai: string): string {
@@ -53,18 +18,7 @@ export function RingkasSaring(definisi: DefinisiSaring, nilai: string): string {
     }
 
     if (definisi.jenis === 'rentangTanggal') {
-        const [dari, sampai] = PecahRentang(nilai);
-        const preset = BuatPresetTanggal().find((p) => p.nilai === nilai);
-
-        if (preset) {
-            return preset.label;
-        }
-
-        if (dari !== '' && sampai !== '') {
-            return dari === sampai ? FormatTanggal(dari) : `${FormatTanggal(dari)} – ${FormatTanggal(sampai)}`;
-        }
-
-        return dari !== '' ? `sejak ${FormatTanggal(dari)}` : `sampai ${FormatTanggal(sampai)}`;
+        return RingkasRentang(nilai);
     }
 
     const label = new Map((definisi.opsi ?? []).map((o) => [o.nilai, o.label]));
@@ -96,56 +50,7 @@ export function PenyuntingSaring({ definisi, nilai: nilaiUrl, saatBerubah: Tulis
     }
 
     if (definisi.jenis === 'rentangTanggal') {
-        const [dari, sampai] = PecahRentang(nilai);
-        const Tulis = (d: string, s: string) => SaatBerubah(d === '' && s === '' ? '' : `${d}..${s}`);
-
-        return (
-            <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap gap-2" role="group" aria-label={`Preset ${definisi.label}`}>
-                    {BuatPresetTanggal().map((preset) => (
-                        <Button
-                            key={preset.label}
-                            type="button"
-                            size="sm"
-                            variant={preset.nilai === nilai ? 'default' : 'outline'}
-                            aria-pressed={preset.nilai === nilai}
-                            onClick={() => SaatBerubah(preset.nilai)}
-                            className="text-label"
-                        >
-                            {preset.label}
-                        </Button>
-                    ))}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                        <Label htmlFor={`${id}-dari`} className="text-label font-semibold text-teks-utama">
-                            Dari
-                        </Label>
-                        <Input
-                            id={`${id}-dari`}
-                            type="date"
-                            value={dari}
-                            max={sampai || undefined}
-                            onChange={(e) => Tulis(e.target.value, sampai)}
-                            className="h-10 border-garis-input"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <Label htmlFor={`${id}-sampai`} className="text-label font-semibold text-teks-utama">
-                            Sampai
-                        </Label>
-                        <Input
-                            id={`${id}-sampai`}
-                            type="date"
-                            value={sampai}
-                            min={dari || undefined}
-                            onChange={(e) => Tulis(dari, e.target.value)}
-                            className="h-10 border-garis-input"
-                        />
-                    </div>
-                </div>
-            </div>
-        );
+        return <PanelRentangTanggal label={definisi.label} nilai={nilai} saatBerubah={SaatBerubah} />;
     }
 
     const terpilih = new Set(nilai === '' ? [] : nilai.split(','));

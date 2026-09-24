@@ -5,10 +5,10 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { Alert, AlertTitle } from '@/Komponen/Ui/alert';
 import { Card } from '@/Komponen/Ui/card';
-import { Input } from '@/Komponen/Ui/input';
-import { Label } from '@/Komponen/Ui/label';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type { BidangImporStokAwal, OpsiGudang, PropsDetailImporStokAwal } from '@/Tipe/Persediaan';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
+import { TulisTanggal } from '@/Pustaka/Tanggal';
 
 export type DataPemetaanStokAwal = NonNullable<PropsDetailImporStokAwal['Pemetaan']>;
 
@@ -137,28 +137,15 @@ export default function PemetaanImporStokAwal({
                         saatBerubah={(nilai) => AturUuidGudang(nilai === '' ? null : nilai)}
                         galat={galatServer.UuidGudangBawaan}
                     />
-                    <div className="flex flex-col gap-1">
-                        <Label htmlFor={`${id}-tanggal`} className="text-label font-semibold text-teks-utama">
-                            Tanggal stok awal
-                        </Label>
-                        <Input
-                            id={`${id}-tanggal`}
-                            type="date"
-                            value={tanggal}
-                            onChange={(peristiwa) => AturTanggal(peristiwa.target.value)}
-                            aria-invalid={galatTanggal ? true : undefined}
-                            aria-describedby={`${id}-tanggal-keterangan${galatTanggal ? ` ${id}-tanggal-galat` : ''}`}
-                            className="h-10 text-isi tabular-nums"
-                        />
-                        <p id={`${id}-tanggal-keterangan`} className="text-keterangan text-teks-sekunder">
-                            Tanggal saldo awal. Tidak boleh melewati hari ini.
-                        </p>
-                        {galatTanggal ? (
-                            <p id={`${id}-tanggal-galat`} className="text-keterangan font-semibold text-bahaya">
-                                {galatTanggal}
-                            </p>
-                        ) : null}
-                    </div>
+                    <PemilihTanggal
+                        id={`${id}-tanggal`}
+                        label="Tanggal stok awal"
+                        nilai={tanggal}
+                        max={TulisTanggal(new Date())}
+                        saatBerubah={AturTanggal}
+                        keterangan="Tanggal saldo awal. Tidak boleh melewati hari ini."
+                        galat={galatTanggal}
+                    />
                 </fieldset>
 
                 <Table className="min-w-[640px] text-left text-isi">

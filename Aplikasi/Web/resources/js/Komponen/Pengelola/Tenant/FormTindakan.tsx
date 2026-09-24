@@ -6,12 +6,11 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { Input } from '@/Komponen/Ui/input';
-import { Label } from '@/Komponen/Ui/label';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { Pilihan } from '@/Tipe/Pengelola';
 import { labelBatas, type AturanTenant, type LanggananTenant } from '@/Tipe/TenantPengelola';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 
 type PropsKerangka = {
     judul: string;
@@ -190,25 +189,13 @@ export function FormOverride({
                         galat={formulir.errors.Nilai}
                     />
                 ) : null}
-                <div className="flex flex-col gap-1">
-                    <Label htmlFor={idTanggal} className="text-label font-semibold text-teks-utama">
-                        Berlaku sampai (akhir hari, WIB)
-                    </Label>
-                    <Input
-                        id={idTanggal}
-                        type="date"
-                        value={formulir.data.BerakhirPada}
-                        onChange={(peristiwa) => formulir.setData('BerakhirPada', peristiwa.target.value)}
-                        aria-invalid={formulir.errors.BerakhirPada ? true : undefined}
-                        aria-describedby={formulir.errors.BerakhirPada ? `${idTanggal}-galat` : undefined}
-                        className="h-10 text-isi"
-                    />
-                    {formulir.errors.BerakhirPada ? (
-                        <p id={`${idTanggal}-galat`} className="text-keterangan font-semibold text-bahaya">
-                            {formulir.errors.BerakhirPada}
-                        </p>
-                    ) : null}
-                </div>
+                <PemilihTanggal
+                    id={idTanggal}
+                    label="Berlaku sampai (akhir hari, WIB)"
+                    nilai={formulir.data.BerakhirPada}
+                    saatBerubah={(nilai) => formulir.setData('BerakhirPada', nilai)}
+                    galat={formulir.errors.BerakhirPada}
+                />
             </div>
             <BidangTeksPanjang
                 label="Alasan"

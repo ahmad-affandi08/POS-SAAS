@@ -1,5 +1,5 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
-import { useId, type FormEvent, type ReactNode } from 'react';
+import { type FormEvent, type ReactNode } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -11,8 +11,6 @@ import {
 } from '@/Komponen/Ui/alert';
 import { Button } from '@/Komponen/Ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
-import { Input } from '@/Komponen/Ui/input';
-import { Label } from '@/Komponen/Ui/label';
 import { Progress } from '@/Komponen/Ui/progress';
 import { Separator } from '@/Komponen/Ui/separator';
 import { cn } from '@/Komponen/Ui/utils';
@@ -23,6 +21,7 @@ import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatDurasi, FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import PemilihTanggalWaktu from '@/Komponen/Tanggal/PemilihTanggalWaktu';
 
 type CatatanBackup = {
     Uuid: string;
@@ -585,7 +584,7 @@ function FormCatatBackup() {
     );
 }
 
-/** Tanggal & jam lokal (`datetime-local`); nilai string dikirim apa adanya. */
+/** Tanggal & jam lokal (setara `datetime-local`); nilai string dikirim apa adanya. */
 function BidangWaktu({
     label,
     nilai,
@@ -597,28 +596,5 @@ function BidangWaktu({
     saatBerubah: (nilai: string) => void;
     galat?: string | undefined;
 }) {
-    const idBidang = useId();
-    const idGalat = `${idBidang}-galat`;
-
-    return (
-        <div className="flex flex-col gap-1">
-            <Label htmlFor={idBidang} className="text-label font-semibold text-teks-utama">
-                {label}
-            </Label>
-            <Input
-                id={idBidang}
-                type="datetime-local"
-                value={nilai}
-                onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
-                aria-invalid={galat ? true : undefined}
-                aria-describedby={galat ? idGalat : undefined}
-                className="h-10 text-isi"
-            />
-            {galat ? (
-                <span id={idGalat} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </span>
-            ) : null}
-        </div>
-    );
+    return <PemilihTanggalWaktu label={label} nilai={nilai} saatBerubah={saatBerubah} galat={galat} />;
 }

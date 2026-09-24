@@ -1,7 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
-import { BuatKelasKontrol, GalatBidang, KerangkaBidang, LabelBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -13,7 +12,6 @@ import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
-import { Input } from '@/Komponen/Ui/input';
 import {
     AmbilLabelPelacakan,
     FormatHppSatuan,
@@ -25,6 +23,7 @@ import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisKartuStok, PropsKartuStok } from '@/Tipe/Persediaan';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 
 const alamat = '/kelola/persediaan/kartu-stok';
 
@@ -86,21 +85,7 @@ function BidangTanggalSaring({
     saatBerubah: (nilai: string) => void;
     galat?: string | undefined;
 }) {
-    return (
-        <KerangkaBidang galat={galat}>
-            <LabelBidang htmlFor={id}>{label}</LabelBidang>
-            <Input
-                id={id}
-                type="date"
-                value={nilai}
-                onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
-                aria-invalid={galat ? true : undefined}
-                aria-describedby={galat ? `${id}-galat` : undefined}
-                className={BuatKelasKontrol(galat, 'tabular-nums')}
-            />
-            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
-        </KerangkaBidang>
-    );
+    return <PemilihTanggal id={id} label={label} nilai={nilai} saatBerubah={saatBerubah} galat={galat} />;
 }
 
 const kolomKartu: KolomTabel<BarisKartuStok>[] = [

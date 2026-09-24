@@ -16,6 +16,7 @@ import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
 import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Komponen/Ui/popover';
+import { cn } from '@/Komponen/Ui/utils';
 import {
     Sheet,
     SheetContent,
@@ -89,7 +90,13 @@ function TombolSaring({
                     ) : null}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 border-garis bg-permukaan p-3">
+            <PopoverContent
+                align="start"
+                className={cn(
+                    'border-garis bg-permukaan p-3',
+                    definisi.jenis === 'rentangTanggal' ? 'w-auto max-w-[calc(100vw-2rem)]' : 'w-80',
+                )}
+            >
                 <p className="mb-2 text-label font-semibold text-teks-utama">{definisi.label}</p>
                 <PenyuntingSaring
                     definisi={definisi}

@@ -222,7 +222,7 @@ function FormKupon({
                     galat={formulir.errors.Kuota}
                 />
                 <BidangTanggal
-                    label="Berlaku sampai (TTTT-BB-HH, opsional)"
+                    label="Berlaku sampai (opsional)"
                     nilai={formulir.data.BerlakuSampai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuSampai', nilai)}
                     galat={formulir.errors.BerlakuSampai}

@@ -38,6 +38,8 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import { JenisLabelPembayaran, type PembayaranLangganan, type TagihanLangganan } from '@/Tipe/TagihanLangganan';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
+import { TulisTanggal } from '@/Pustaka/Tanggal';
 
 type Rekening = { Kode: string; NamaBank: string; NomorRekening: string; AtasNama: string };
 
@@ -252,9 +254,9 @@ function FormBukti({
                 galat={formulir.errors.Jumlah}
                 keterangan={`Harus sama dengan total ${FormatRupiah(tagihan.Total)}.`}
             />
-            <BidangTeks
-                label="Tanggal transfer (TTTT-BB-HH)"
-                kode
+            <PemilihTanggal
+                label="Tanggal transfer"
+                max={TulisTanggal(new Date())}
                 nilai={formulir.data.TanggalTransfer}
                 saatBerubah={(nilai) => formulir.setData('TanggalTransfer', nilai)}
                 galat={formulir.errors.TanggalTransfer}

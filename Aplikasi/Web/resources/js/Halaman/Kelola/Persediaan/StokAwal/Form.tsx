@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
 
-import { GalatBidang, KerangkaBidang, LabelBidang, BuatKelasKontrol } from '@/Komponen/Formulir/BagianBidang';
+import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -25,13 +25,13 @@ import PanelKesiapanAkun from '@/Komponen/Persediaan/PanelKesiapanAkun';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
 import { Button } from '@/Komponen/Ui/button';
-import { Input } from '@/Komponen/Ui/input';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatHppSatuan, FormatJumlahStok, FormatLabelGudang, FormatNilai } from '@/Pustaka/FormatPersediaan';
 import { HitungNilaiBaris, HitungTotalNilai } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisFormStokAwal, MasukanStokAwal, PropsFormStokAwal } from '@/Tipe/Persediaan';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 
 const alamat = '/kelola/persediaan/stok-awal';
 
@@ -208,23 +208,15 @@ export default function HalamanFormStokAwal({
                             saatBerubah={GantiGudang}
                             galat={galatGudang}
                         />
-                        <KerangkaBidang galat={galatTanggal}>
-                            <LabelBidang htmlFor="tanggal-stok-awal">Tanggal stok awal</LabelBidang>
-                            <Input
-                                id="tanggal-stok-awal"
-                                type="date"
-                                value={tanggal}
-                                max={HariIni}
-                                required
-                                onChange={(peristiwa) => AturTanggal(peristiwa.target.value)}
-                                aria-invalid={galatTanggal ? true : undefined}
-                                aria-describedby={galatTanggal ? 'tanggal-stok-awal-galat' : undefined}
-                                className={BuatKelasKontrol(galatTanggal, 'tabular-nums')}
-                            />
-                            {galatTanggal ? (
-                                <GalatBidang id="tanggal-stok-awal-galat">{galatTanggal}</GalatBidang>
-                            ) : null}
-                        </KerangkaBidang>
+                        <PemilihTanggal
+                            id="tanggal-stok-awal"
+                            label="Tanggal stok awal"
+                            nilai={tanggal}
+                            max={HariIni}
+                            required
+                            saatBerubah={AturTanggal}
+                            galat={galatTanggal}
+                        />
                     </div>
                     {OpsiGudang.length === 0 ? (
                         <p className="text-isi text-teks-sekunder">
@@ -409,42 +401,18 @@ export default function HalamanFormStokAwal({
                                                                 kode
                                                                 required
                                                             />
-                                                            <KerangkaBidang galat={galat.TanggalKedaluwarsa}>
-                                                                <LabelBidang htmlFor={`${baris.Kunci}-kedaluwarsa`}>
-                                                                    {`Kedaluwarsa ${nama}${WajibKedaluwarsaBatch ? '' : ' (opsional)'}`}
-                                                                </LabelBidang>
-                                                                <Input
-                                                                    id={`${baris.Kunci}-kedaluwarsa`}
-                                                                    type="date"
-                                                                    value={baris.TanggalKedaluwarsa ?? ''}
-                                                                    required={WajibKedaluwarsaBatch}
-                                                                    onChange={(peristiwa) =>
-                                                                        UbahBaris(baris.Kunci, {
-                                                                            TanggalKedaluwarsa:
-                                                                                peristiwa.target.value || null,
-                                                                        })
-                                                                    }
-                                                                    aria-invalid={
-                                                                        galat.TanggalKedaluwarsa ? true : undefined
-                                                                    }
-                                                                    aria-describedby={
-                                                                        galat.TanggalKedaluwarsa
-                                                                            ? `${baris.Kunci}-kedaluwarsa-galat`
-                                                                            : undefined
-                                                                    }
-                                                                    className={BuatKelasKontrol(
-                                                                        galat.TanggalKedaluwarsa,
-                                                                        'tabular-nums',
-                                                                    )}
-                                                                />
-                                                                {galat.TanggalKedaluwarsa ? (
-                                                                    <GalatBidang
-                                                                        id={`${baris.Kunci}-kedaluwarsa-galat`}
-                                                                    >
-                                                                        {galat.TanggalKedaluwarsa}
-                                                                    </GalatBidang>
-                                                                ) : null}
-                                                            </KerangkaBidang>
+                                                            <PemilihTanggal
+                                                                id={`${baris.Kunci}-kedaluwarsa`}
+                                                                label={`Kedaluwarsa ${nama}${WajibKedaluwarsaBatch ? '' : ' (opsional)'}`}
+                                                                nilai={baris.TanggalKedaluwarsa ?? ''}
+                                                                required={WajibKedaluwarsaBatch}
+                                                                saatBerubah={(nilai) =>
+                                                                    UbahBaris(baris.Kunci, {
+                                                                        TanggalKedaluwarsa: nilai || null,
+                                                                    })
+                                                                }
+                                                                galat={galat.TanggalKedaluwarsa}
+                                                            />
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

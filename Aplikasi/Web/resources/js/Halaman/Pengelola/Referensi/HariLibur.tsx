@@ -307,7 +307,7 @@ function FormHariLibur({ hariLibur, tahun, pilihanJenis, saatSelesai }: PropsFor
         >
             <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
                 <BidangTanggal
-                    label="Tanggal (TTTT-BB-HH)"
+                    label="Tanggal"
                     nilai={formulir.data.Tanggal}
                     saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
                     galat={formulir.errors.Tanggal}

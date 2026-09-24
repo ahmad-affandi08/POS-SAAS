@@ -111,15 +111,15 @@ describe('BidangTanggal', () => {
         expect(UraiTanggal('2026-')).toBeUndefined();
     });
 
-    it('isian tetap teks bebas dan kalender mengisi string yang sama', () => {
+    it('isian HH/BB/TTTT hanya mengirim tanggal sah; kalender mengisi TTTT-BB-HH yang sama', () => {
         const SaatBerubah = vi.fn();
 
         function Bungkus() {
-            const [nilai, AturNilai] = useState('2026-03-10');
+            const [nilai, AturNilai] = useState('');
 
             return (
                 <BidangTanggal
-                    label="Berlaku mulai (TTTT-BB-HH)"
+                    label="Berlaku mulai"
                     nilai={nilai}
                     saatBerubah={(baru) => {
                         SaatBerubah(baru);
@@ -131,19 +131,21 @@ describe('BidangTanggal', () => {
         }
 
         render(<Bungkus />);
-        const isian = screen.getByLabelText<HTMLInputElement>('Berlaku mulai (TTTT-BB-HH)');
+        const isian = screen.getByLabelText<HTMLInputElement>('Berlaku mulai');
         expect(isian.getAttribute('aria-invalid')).toBe('true');
-        expect(screen.getByText('Tanggal wajib diisi.').id).toBe(isian.getAttribute('aria-describedby'));
+        expect(isian.getAttribute('aria-describedby')).toContain(screen.getByText('Tanggal wajib diisi.').id);
 
-        fireEvent.change(isian, { target: { value: '2026-03-1' } });
-        expect(SaatBerubah).toHaveBeenLastCalledWith('2026-03-1');
+        fireEvent.change(isian, { target: { value: '10/03/202' } });
+        expect(SaatBerubah).not.toHaveBeenCalled();
 
-        fireEvent.change(isian, { target: { value: '2026-03-10' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Pilih Berlaku mulai (TTTT-BB-HH) dari kalender' }));
+        fireEvent.change(isian, { target: { value: '10/03/2026' } });
+        expect(SaatBerubah).toHaveBeenLastCalledWith('2026-03-10');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Pilih Berlaku mulai dari kalender' }));
         const kalender = screen.getByRole('grid');
         fireEvent.click(within(kalender).getByText('17'));
         expect(SaatBerubah).toHaveBeenLastCalledWith('2026-03-17');
-        expect(isian.value).toBe('2026-03-17');
+        expect(isian.value).toBe('17/03/2026');
     });
 });
 

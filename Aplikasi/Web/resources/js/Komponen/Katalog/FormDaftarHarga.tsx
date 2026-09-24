@@ -1,15 +1,14 @@
 import { useForm } from '@inertiajs/react';
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
-import { Input } from '@/Komponen/Ui/input';
-import { Label } from '@/Komponen/Ui/label';
 import type { FormDaftarHarga as DataFormDaftarHarga, KanalPenjualan } from '@/Tipe/Katalog';
 import type { Pilihan } from '@/Tipe/Organisasi';
+import PemilihTanggalWaktu from '@/Komponen/Tanggal/PemilihTanggalWaktu';
 
 /** Rentang waktu lokal 'YYYY-MM-DDTHH:mm': selesai harus setelah mulai (RentangWaktuTidakValid). Perbandingan teks. */
 export function PeriksaRentangWaktu(mulai: string, selesai: string): string | null {
@@ -39,31 +38,14 @@ function BidangWaktu({
     galat: string | undefined;
     zonaWaktu: string;
 }) {
-    const id = useId();
-
     return (
-        <div className="flex flex-col gap-1">
-            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </Label>
-            <Input
-                id={id}
-                type="datetime-local"
-                value={nilai}
-                onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
-                aria-invalid={galat ? true : undefined}
-                aria-describedby={`${id}-keterangan${galat ? ` ${id}-galat` : ''}`}
-                className="h-10 text-isi tabular-nums"
-            />
-            <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                Zona waktu {zonaWaktu}. Kosongkan bila tanpa batas.
-            </p>
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+        <PemilihTanggalWaktu
+            label={label}
+            nilai={nilai}
+            saatBerubah={saatBerubah}
+            galat={galat}
+            keterangan={`Zona waktu ${zonaWaktu}. Kosongkan bila tanpa batas.`}
+        />
     );
 }
 

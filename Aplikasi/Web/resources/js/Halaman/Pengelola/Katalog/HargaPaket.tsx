@@ -253,7 +253,7 @@ function FormHarga({ alamat, harga, saatSelesai }: { alamat: string; harga: Harg
                     galat={formulir.errors.HargaTahunan}
                 />
                 <BidangTanggal
-                    label="Berlaku mulai (TTTT-BB-HH)"
+                    label="Berlaku mulai"
                     nilai={formulir.data.BerlakuMulai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
                     galat={formulir.errors.BerlakuMulai}

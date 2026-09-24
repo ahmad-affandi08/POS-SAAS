@@ -150,8 +150,10 @@ describe('KeadaanUrl (D-16 kontrak parameter TabelData)', () => {
             '2026-09-24..2026-09-24',
             '2026-09-23..2026-09-23',
             '2026-09-18..2026-09-24',
+            '2026-08-26..2026-09-24',
             '2026-09-01..2026-09-30',
             '2026-08-01..2026-08-31',
+            '2026-01-01..2026-12-31',
         ]);
         expect(RingkasSaring(definisi, '2026-01-02..2026-01-05')).toBe('2 Jan 2026 – 5 Jan 2026');
         expect(RingkasSaring(saring[0] as DefinisiSaring, 'Aktif,Nonaktif')).toBe('Aktif, Nonaktif');
