@@ -100,6 +100,7 @@ final class PembangunUlangSaldoStok
     private function BangunUlangPasangan(int $idProduk, int $idGudang): ?array
     {
         $percobaan = config('persediaan.PercobaanTransaksi', 3);
+        $percobaan = is_int($percobaan) && $percobaan > 0 ? $percobaan : 3;
 
         return DB::transaction(function () use ($idProduk, $idGudang): ?array {
             $this->pengaturan->AmbilDenganKunciBaca();
@@ -154,7 +155,7 @@ final class PembangunUlangSaldoStok
             }
 
             return $perubahan === [] ? null : ['IdProduk' => $idProduk, 'IdGudang' => $idGudang, ...$perubahan];
-        }, is_int($percobaan) ? $percobaan : 3);
+        }, $percobaan);
     }
 
     private function KunciSaldo(int $idProduk, int $idGudang): ?SaldoStok
