@@ -182,7 +182,13 @@ export default function PemilihTanggal({
                                 <CalendarIcon />
                             </InputGroupButton>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-3" align="end">
+                        <PopoverContent
+                            className="w-auto p-3"
+                            align="end"
+                            // Klik di dalam kalender (lewat portal) tidak boleh merambat ke InputGroupAddon, yang
+                            // memfokuskan isian dan menutup popover ini.
+                            onClick={(peristiwa) => peristiwa.stopPropagation()}
+                        >
                             <Kalender
                                 mode="single"
                                 required={false}

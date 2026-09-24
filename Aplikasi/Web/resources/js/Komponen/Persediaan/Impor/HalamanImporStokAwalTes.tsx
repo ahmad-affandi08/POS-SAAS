@@ -19,6 +19,7 @@ import type {
 
 import { BatasiProgresStokAwal } from './KemajuanImporStokAwal';
 import { PeriksaPemetaanStokAwal, type DataPemetaanStokAwal } from './PemetaanImporStokAwal';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -142,7 +143,7 @@ describe('Impor stok awal langkah 1: unggah (DesainF05a E)', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Unggah & lanjut ke pemetaan' }));
         expect(screen.getByText('Pilih berkas Excel atau CSV lebih dulu.')).toBeTruthy();
 
-        fireEvent.change(screen.getByLabelText('Lokasi stok bawaan'), { target: { value: opsiGudang[1]?.Uuid } });
+        UbahNilai(screen.getByLabelText('Lokasi stok bawaan'), opsiGudang[1]?.Uuid ?? '');
         expect(
             screen.getByRole('link', { name: 'Unduh templat Excel berisi daftar produk' }).getAttribute('href'),
         ).toBe(`/kelola/persediaan/stok-awal/impor/templat?format=xlsx&isi=produk&gudang=${opsiGudang[1]?.Uuid ?? ''}`);
@@ -209,10 +210,10 @@ describe('Impor stok awal langkah 2–5 (DesainF05a E)', () => {
         expect(tiruanRouter.put).not.toHaveBeenCalled();
         expect(screen.getByText('Ada 2 isian yang perlu diperbaiki.')).toBeTruthy();
 
-        fireEvent.change(screen.getByLabelText('Kolom untuk Harga Modal'), { target: { value: '2' } });
+        UbahNilai(screen.getByLabelText('Kolom untuk Harga Modal'), '2');
         expect(screen.getByText('38.500 · 14.250,75')).toBeTruthy();
-        fireEvent.change(screen.getByLabelText('Lokasi stok bawaan'), { target: { value: opsiGudang[0]?.Uuid } });
-        fireEvent.change(screen.getByLabelText('Tanggal stok awal'), { target: { value: '2026-09-01' } });
+        UbahNilai(screen.getByLabelText('Lokasi stok bawaan'), opsiGudang[0]?.Uuid ?? '');
+        UbahNilai(screen.getByLabelText('Tanggal stok awal'), '2026-09-01');
         fireEvent.click(screen.getByRole('button', { name: 'Periksa data' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             `/kelola/persediaan/stok-awal/impor/${uuidImpor}/pemetaan`,

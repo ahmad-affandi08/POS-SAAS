@@ -2,9 +2,9 @@ import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon 
 
 import { Button } from '@/Komponen/Ui/button';
 import { Label } from '@/Komponen/Ui/label';
-import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
 
 import { UKURAN_HALAMAN, type MetaTabel } from './Tipe';
+import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 
 type PropsPaginasi = {
     label: string;
@@ -39,18 +39,14 @@ export default function PaginasiTabel({ label, meta, jumlahBaris, AturHalaman, A
                     <Label htmlFor={`per-halaman-${label}`} className="text-label font-normal text-teks-sekunder">
                         Baris per halaman
                     </Label>
-                    <NativeSelect
+                    <PilihanCari
                         id={`per-halaman-${label}`}
-                        value={String(meta.PerHalaman)}
-                        onChange={(e) => AturPerHalaman(Number(e.target.value))}
-                        className="h-11 sm:h-9"
-                    >
-                        {UKURAN_HALAMAN.map((ukuran) => (
-                            <NativeSelectOption key={ukuran} value={String(ukuran)}>
-                                {ukuran}
-                            </NativeSelectOption>
-                        ))}
-                    </NativeSelect>
+                        label="Baris per halaman"
+                        nilai={String(meta.PerHalaman)}
+                        opsi={UKURAN_HALAMAN.map((ukuran) => ({ Nilai: String(ukuran), Label: String(ukuran) }))}
+                        saatBerubah={(nilai) => AturPerHalaman(Number(nilai))}
+                        className="h-11 w-20 sm:h-9"
+                    />
                 </div>
                 <div className="flex items-center gap-1">
                     <Button

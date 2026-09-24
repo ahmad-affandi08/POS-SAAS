@@ -9,6 +9,7 @@ import { BacaKeadaanDariUrl, BacaUrut, TulisKeadaanKeUrl } from './KeadaanUrl';
 import { BuatPresetTanggal, RingkasSaring } from './Saring';
 import TabelData from './TabelData';
 import type { DefinisiSaring, HasilTabel, KolomTabel } from './Tipe';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -215,9 +216,7 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
         );
 
         await waitFor(() => expect(panggilanFetch).toEqual(['/kelola/produk?halaman=2']));
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Cari di Daftar produk' }), {
-            target: { value: 'aren' },
-        });
+        UbahNilai(screen.getByRole('searchbox', { name: 'Cari di Daftar produk' }), 'aren');
         expect(panggilanFetch).toHaveLength(1);
 
         await waitFor(() => expect(panggilanFetch.at(-1)).toBe('/kelola/produk?cari=aren'));
@@ -249,7 +248,7 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
         await waitFor(() => expect(screen.getByText('Roti 1')).toBeTruthy());
         expect(screen.getByText(/Menampilkan/).textContent).toBe('Menampilkan 26–50 dari 60');
 
-        fireEvent.change(screen.getByLabelText('Baris per halaman'), { target: { value: '50' } });
+        UbahNilai(screen.getByLabelText('Baris per halaman'), '50');
         await waitFor(() => expect(panggilanFetch.at(-1)).toBe('/kelola/produk?perHalaman=50'));
     });
 
@@ -366,7 +365,7 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
         const AmbilBarisPertama = () => screen.getAllByRole('row')[1] as HTMLElement;
         expect(within(AmbilBarisPertama()).getByText('Kopi Susu Gula Aren Ukuran Besar 4')).toBeTruthy();
 
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Besar 2' } });
+        UbahNilai(screen.getByRole('searchbox'), 'Besar 2');
         await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
         expect(panggilanFetch).toEqual([]);
         expect(window.location.search).toBe('');

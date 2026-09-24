@@ -10,7 +10,6 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalat from '@/Komponen/Pengelola/TemplateSektor/RingkasanGalat';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import { Input } from '@/Komponen/Ui/input';
-import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import type { Pilihan } from '@/Tipe/Pengelola';
@@ -20,6 +19,7 @@ import type {
     PilihanEditorTemplate,
     ProdukContohTemplate,
 } from '@/Tipe/TemplateSektor';
+import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 
 type PropsFormIsiBisnis = {
     url: string;
@@ -315,36 +315,33 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                                         />
                                                     </TableCell>
                                                     <TableCell className={kelasSel}>
-                                                        <NativeSelect
+                                                        <PilihanCari
+                                                            label="Kategori"
                                                             aria-label={`Kategori produk contoh baris ${indeks + 1}`}
-                                                            aria-invalid={
-                                                                galat[`${awalan}.Kategori`] ? true : undefined
-                                                            }
+                                                            galat={galat[`${awalan}.Kategori`]}
                                                             className={kelasInput}
-                                                            value={produk.Kategori ?? ''}
-                                                            onChange={(peristiwa) =>
+                                                            nilai={produk.Kategori ?? ''}
+                                                            kosong="Tanpa kategori"
+                                                            opsi={[
+                                                                ...(kategoriAsing
+                                                                    ? [
+                                                                          {
+                                                                              Nilai: produk.Kategori ?? '',
+                                                                              Label: `${produk.Kategori ?? ''} (tidak ada di daftar)`,
+                                                                          },
+                                                                      ]
+                                                                    : []),
+                                                                ...kategoriTemplate.map((nama) => ({
+                                                                    Nilai: nama,
+                                                                    Label: nama,
+                                                                })),
+                                                            ]}
+                                                            saatBerubah={(nilai) =>
                                                                 UbahProdukContoh(indeks, {
-                                                                    Kategori:
-                                                                        peristiwa.target.value === ''
-                                                                            ? null
-                                                                            : peristiwa.target.value,
+                                                                    Kategori: nilai === '' ? null : nilai,
                                                                 })
                                                             }
-                                                        >
-                                                            <NativeSelectOption value="">
-                                                                Tanpa kategori
-                                                            </NativeSelectOption>
-                                                            {kategoriAsing ? (
-                                                                <NativeSelectOption value={produk.Kategori ?? ''}>
-                                                                    {produk.Kategori} (tidak ada di daftar)
-                                                                </NativeSelectOption>
-                                                            ) : null}
-                                                            {kategoriTemplate.map((nama) => (
-                                                                <NativeSelectOption key={nama} value={nama}>
-                                                                    {nama}
-                                                                </NativeSelectOption>
-                                                            ))}
-                                                        </NativeSelect>
+                                                        />
                                                     </TableCell>
                                                     <TableCell className={kelasSel}>
                                                         <Input
@@ -366,58 +363,43 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                                         ) : null}
                                                     </TableCell>
                                                     <TableCell className={kelasSel}>
-                                                        <NativeSelect
+                                                        <PilihanCari
+                                                            label="Satuan"
                                                             aria-label={`Satuan produk contoh baris ${indeks + 1}`}
-                                                            aria-invalid={
-                                                                galat[`${awalan}.KodeSatuan`] ? true : undefined
-                                                            }
+                                                            galat={galat[`${awalan}.KodeSatuan`]}
                                                             className={kelasInput}
-                                                            value={produk.KodeSatuan}
-                                                            onChange={(peristiwa) =>
-                                                                UbahProdukContoh(indeks, {
-                                                                    KodeSatuan: peristiwa.target.value,
-                                                                })
+                                                            nilai={produk.KodeSatuan}
+                                                            kosong="Pilih satuan"
+                                                            opsi={[
+                                                                ...(satuanAsing
+                                                                    ? [
+                                                                          {
+                                                                              Nilai: produk.KodeSatuan,
+                                                                              Label: `${produk.KodeSatuan} (tidak ada di daftar)`,
+                                                                          },
+                                                                      ]
+                                                                    : []),
+                                                                ...satuanTemplate,
+                                                            ]}
+                                                            saatBerubah={(nilai) =>
+                                                                UbahProdukContoh(indeks, { KodeSatuan: nilai })
                                                             }
-                                                        >
-                                                            <NativeSelectOption value="">
-                                                                Pilih satuan
-                                                            </NativeSelectOption>
-                                                            {satuanAsing ? (
-                                                                <NativeSelectOption value={produk.KodeSatuan}>
-                                                                    {produk.KodeSatuan} (tidak ada di daftar)
-                                                                </NativeSelectOption>
-                                                            ) : null}
-                                                            {satuanTemplate.map((satuan) => (
-                                                                <NativeSelectOption
-                                                                    key={satuan.Nilai}
-                                                                    value={satuan.Nilai}
-                                                                >
-                                                                    {satuan.Label}
-                                                                </NativeSelectOption>
-                                                            ))}
-                                                        </NativeSelect>
+                                                        />
                                                     </TableCell>
                                                     <TableCell className={kelasSel}>
-                                                        <NativeSelect
+                                                        <PilihanCari
+                                                            label="Jenis produk"
                                                             aria-label={`Jenis produk contoh baris ${indeks + 1}`}
-                                                            aria-invalid={galat[`${awalan}.Jenis`] ? true : undefined}
+                                                            galat={galat[`${awalan}.Jenis`]}
                                                             className={kelasInput}
-                                                            value={produk.Jenis}
-                                                            onChange={(peristiwa) =>
+                                                            nilai={produk.Jenis}
+                                                            opsi={pilihan.JenisProdukContoh}
+                                                            saatBerubah={(nilai) =>
                                                                 UbahProdukContoh(indeks, {
-                                                                    Jenis: peristiwa.target.value as JenisProdukContoh,
+                                                                    Jenis: nilai as JenisProdukContoh,
                                                                 })
                                                             }
-                                                        >
-                                                            {pilihan.JenisProdukContoh.map((jenis) => (
-                                                                <NativeSelectOption
-                                                                    key={jenis.Nilai}
-                                                                    value={jenis.Nilai}
-                                                                >
-                                                                    {jenis.Label}
-                                                                </NativeSelectOption>
-                                                            ))}
-                                                        </NativeSelect>
+                                                        />
                                                     </TableCell>
                                                     <TableCell className={`${kelasSel} text-right`}>
                                                         {bolehUbah ? (

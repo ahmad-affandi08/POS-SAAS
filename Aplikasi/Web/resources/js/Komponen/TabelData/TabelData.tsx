@@ -422,6 +422,21 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
     }, [kolom, preferensi.Urutan]);
 
     const urut: SortingState = keadaan.urut;
+    // Harus stabil antar-render: TanStack menghitung ulang baris tersaring bila referensinya berubah, dan tiap
+    // hitung ulang menjadwalkan reset halaman → render baru → array baru → putaran tanpa akhir (membekukan peramban).
+    // Kunci teks (bukan array `kolom`) supaya prop `kolom` yang ditulis inline tidak ikut memecah memo.
+    const kunciIdKolom = kolom.map((k) => k.id ?? ('accessorKey' in k ? String(k.accessorKey) : '')).join('|');
+    const saringKolom = useMemo(() => {
+        if (server) {
+            return [];
+        }
+
+        const idKolom = kunciIdKolom.split('|');
+
+        return Object.entries(keadaan.saring)
+            .filter(([id]) => idKolom.includes(id))
+            .map(([id, value]) => ({ id, value }));
+    }, [server, keadaan.saring, kunciIdKolom]);
     const PenyaringLokal = useMemo(() => BuatPenyaringLokal(saring), [saring]);
 
     // TanStack Table (pustaka wajib D-16) mengembalikan fungsi yang tidak bisa di-memo React Compiler; compiler
@@ -437,6 +452,9 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
             : { getSortedRowModel: getSortedRowModel(), getFilteredRowModel: getFilteredRowModel() }),
         defaultColumn: { filterFn: PenyaringLokal as FilterFn<T> },
         globalFilterFn: 'includesString',
+        // Paginasi dikelola sendiri (server/`keadaan`), bukan oleh TanStack: jangan reset otomatis.
+        autoResetPageIndex: false,
+        autoResetExpanded: false,
         enableMultiSort: true,
         maxMultiSortColCount: 3,
         enableColumnResizing: lebar === 'desktop',
@@ -448,13 +466,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
             columnOrder: urutanKolom,
             rowSelection: pilihan,
             globalFilter: server ? undefined : keadaan.cari,
-            columnFilters: server
-                ? []
-                : Object.entries(keadaan.saring)
-                      .filter(([id]) =>
-                          kolom.some((k) => (k.id ?? ('accessorKey' in k ? String(k.accessorKey) : '')) === id),
-                      )
-                      .map(([id, value]) => ({ id, value })),
+            columnFilters: saringKolom,
         },
         onSortingChange: (pembaru: Updater<SortingState>) =>
             keadaanTabel.AturUrut(typeof pembaru === 'function' ? pembaru(urut) : pembaru),

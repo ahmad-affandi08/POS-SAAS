@@ -10,6 +10,7 @@ import { BatasiProgres } from './KemajuanImpor';
 import { AmbilLangkahImpor } from './LangkahImpor';
 import { PeriksaPemetaan } from './PemetaanImpor';
 import { AturHalamanUji, RenderUji, tiruanRouter } from './TiruanInertia';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
 
@@ -101,7 +102,7 @@ describe('Impor produk langkah 1: unggah (E.10)', () => {
         RenderUji(<HalamanDaftarImpor {...PropsDaftar()} />);
         expect(screen.queryByText('Periksa pemetaan kolom sebelum mengimpor')).toBeNull();
 
-        fireEvent.change(screen.getByLabelText('Format berkas dari'), { target: { value: 'Majoo' } });
+        UbahNilai(screen.getByLabelText('Format berkas dari'), 'Majoo');
         expect(screen.getByText('Periksa pemetaan kolom sebelum mengimpor')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Unduh templat Excel' }).getAttribute('href')).toBe(
             '/kelola/produk/impor/templat?format=xlsx',
@@ -169,7 +170,7 @@ describe('Impor produk langkah 2–5 (E.10)', () => {
         expect(tiruanRouter.put).not.toHaveBeenCalled();
         expect(screen.getByText('Nama produk wajib dipetakan ke satu kolom.')).toBeTruthy();
 
-        fireEvent.change(screen.getByLabelText('Kolom untuk Nama produk'), { target: { value: '0' } });
+        UbahNilai(screen.getByLabelText('Kolom untuk Nama produk'), '0');
         expect(screen.getByText('Kopi Susu · Teh Manis')).toBeTruthy();
         fireEvent.click(screen.getByLabelText(/Lewati produk yang sudah ada/));
         fireEvent.click(screen.getByRole('button', { name: 'Periksa data' }));

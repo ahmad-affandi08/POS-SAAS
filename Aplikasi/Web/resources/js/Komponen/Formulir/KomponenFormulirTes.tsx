@@ -7,6 +7,7 @@ import BidangTeksPanjang from './BidangTeksPanjang';
 import GrupCentang from './GrupCentang';
 import KotakCentang from './KotakCentang';
 import Tombol from './Tombol';
+import { AmbilNilaiPilihan, BukaPilihan, PilihOpsi } from '@/Pengujian/InteraksiPilihan';
 
 describe('komponen Formulir di atas shadcn/ui (API lama tetap)', () => {
     afterEach(() => cleanup());
@@ -93,7 +94,7 @@ describe('komponen Formulir di atas shadcn/ui (API lama tetap)', () => {
         expect(SaatBerubah).toHaveBeenLastCalledWith([]);
     });
 
-    it('BidangPilihan: select asli (NativeSelect) dengan opsi kosong, nilai, dan galat', () => {
+    it('BidangPilihan: PilihanCari dengan kotak cari, opsi kosong, nilai, dan galat', () => {
         const SaatBerubah = vi.fn();
         render(
             <BidangPilihan
@@ -103,23 +104,31 @@ describe('komponen Formulir di atas shadcn/ui (API lama tetap)', () => {
                 opsi={[
                     { Nilai: 'WIB', Label: 'WIB (UTC+7)' },
                     { Nilai: 'WITA', Label: 'WITA (UTC+8)' },
+                    { Nilai: 'WIT', Label: 'WIT (UTC+9)' },
                 ]}
                 saatBerubah={SaatBerubah}
                 galat="Zona waktu wajib dipilih."
             />,
         );
 
-        const pilihan = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Zona waktu' });
-        expect(pilihan.tagName).toBe('SELECT');
-        expect(Array.from(pilihan.options).map((opsi) => opsi.textContent)).toEqual([
-            'Pilih zona waktu',
-            'WIB (UTC+7)',
-            'WITA (UTC+8)',
-        ]);
+        const pilihan = screen.getByRole('combobox', { name: 'Zona waktu' });
+        expect(pilihan.textContent).toContain('Pilih zona waktu');
         expect(pilihan.getAttribute('aria-invalid')).toBe('true');
         expect(pilihan.getAttribute('aria-describedby')).toBe(screen.getByText('Zona waktu wajib dipilih.').id);
+        expect(AmbilNilaiPilihan(pilihan)).toEqual(['', 'WIB', 'WITA', 'WIT']);
 
-        fireEvent.change(pilihan, { target: { value: 'WITA' } });
+        // Cari mempersempit daftar; daftar dibuka di bawah pemicu, bukan menimpanya.
+        fireEvent.click(pilihan);
+        fireEvent.change(screen.getByRole('textbox', { name: 'Cari Zona waktu' }), { target: { value: 'utc+8' } });
+        const daftar = BukaPilihan(pilihan);
+        expect(
+            Array.from(daftar.querySelectorAll('[data-slot="pilihan-cari-item"]')).map((o) => o.textContent),
+        ).toEqual(['WITA (UTC+8)']);
+        fireEvent.change(screen.getByRole('textbox', { name: 'Cari Zona waktu' }), { target: { value: 'tidak ada' } });
+        expect(screen.getByText('Tidak ada yang cocok dengan “tidak ada”.')).toBeTruthy();
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+
+        PilihOpsi(pilihan, 'WITA');
         expect(SaatBerubah).toHaveBeenCalledWith('WITA');
     });
 

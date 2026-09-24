@@ -1,6 +1,8 @@
-import type { ComponentProps } from 'react';
+import type { ChangeEvent, ComponentProps } from 'react';
+import type { DropdownProps } from 'react-day-picker';
 import { id as lokalId } from 'react-day-picker/locale';
 
+import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 import { Calendar, CalendarDayButton } from '@/Komponen/Ui/calendar';
 import { cn } from '@/Komponen/Ui/utils';
 
@@ -17,6 +19,23 @@ function HariKalender({ className, ...sisa }: ComponentProps<typeof CalendarDayB
                 className,
             )}
             {...sisa}
+        />
+    );
+}
+
+/** Pilihan bulan/tahun di judul kalender: `PilihanCari` (bisa dicari, tidak menutupi pemicunya). */
+function DropdownKalender({ options = [], value, onChange, disabled, 'aria-label': labelAria }: DropdownProps) {
+    const label = labelAria ?? 'Pilih';
+
+    return (
+        <PilihanCari
+            label={label}
+            aria-label={label}
+            nilai={String(value ?? '')}
+            opsi={options.filter((o) => !o.disabled).map((o) => ({ Nilai: String(o.value), Label: o.label }))}
+            saatBerubah={(nilai) => onChange?.({ target: { value: nilai } } as ChangeEvent<HTMLSelectElement>)}
+            disabled={disabled}
+            className="h-8 w-auto gap-1 px-2 font-semibold shadow-none pointer-coarse:h-10"
         />
     );
 }
@@ -41,6 +60,8 @@ export default function Kalender({ className, classNames, components, ...props }
             )}
             classNames={{
                 months: 'relative flex flex-col gap-6 sm:flex-row',
+                // Bilah panah melapisi judul: biarkan klik tembus ke pemicu bulan/tahun, kecuali tombol panahnya.
+                nav: 'pointer-events-none absolute inset-x-0 top-0 z-[1] flex w-full items-center justify-between gap-1 [&>button]:pointer-events-auto',
                 month_caption: 'flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)',
                 dropdowns: 'flex h-(--cell-size) w-full items-center justify-center gap-1.5 text-isi font-semibold',
                 dropdown_root:
@@ -58,6 +79,7 @@ export default function Kalender({ className, classNames, components, ...props }
             }}
             components={{
                 DayButton: HariKalender,
+                Dropdown: DropdownKalender,
                 ...components,
             }}
             {...props}

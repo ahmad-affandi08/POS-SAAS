@@ -1,5 +1,5 @@
-import { XIcon } from 'lucide-react';
-import { useId } from 'react';
+import { SearchIcon, XIcon } from 'lucide-react';
+import { useId, useState } from 'react';
 
 import { PanelRentangTanggal, RingkasRentang } from '@/Komponen/Tanggal/PemilihRentangTanggal';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
@@ -8,6 +8,7 @@ import { Switch } from '@/Komponen/Ui/switch';
 import { cn } from '@/Komponen/Ui/utils';
 
 import type { DefinisiSaring } from './Tipe';
+import { CocokkanCari } from '@/Komponen/Formulir/PilihanCari';
 
 export { BuatPresetTanggal, PecahRentang } from '@/Pustaka/Tanggal';
 
@@ -53,8 +54,17 @@ export function PenyuntingSaring({ definisi, nilai: nilaiUrl, saatBerubah: Tulis
         return <PanelRentangTanggal label={definisi.label} nilai={nilai} saatBerubah={SaatBerubah} />;
     }
 
+    return <DaftarOpsiSaring definisi={definisi} nilai={nilai} saatBerubah={SaatBerubah} />;
+}
+
+/** Daftar opsi saring (tunggal/banyak) dengan kotak cari di atasnya. */
+function DaftarOpsiSaring({ definisi, nilai, saatBerubah: SaatBerubah }: PropsPenyunting) {
+    const id = useId();
+    const [kata, AturKata] = useState('');
     const terpilih = new Set(nilai === '' ? [] : nilai.split(','));
     const banyak = definisi.jenis === 'pilihanBanyak';
+    const semua = definisi.opsi ?? [];
+    const tampil = semua.filter((o) => CocokkanCari({ Nilai: o.nilai, Label: o.label }, kata));
     const Ganti = (opsi: string, aktif: boolean) => {
         if (!banyak) {
             SaatBerubah(aktif ? opsi : '');
@@ -72,7 +82,7 @@ export function PenyuntingSaring({ definisi, nilai: nilaiUrl, saatBerubah: Tulis
 
         // Urutan mengikuti daftar opsi agar URL stabil.
         SaatBerubah(
-            (definisi.opsi ?? [])
+            semua
                 .map((o) => o.nilai)
                 .filter((n) => baru.has(n))
                 .join(','),
@@ -80,26 +90,47 @@ export function PenyuntingSaring({ definisi, nilai: nilaiUrl, saatBerubah: Tulis
     };
 
     return (
-        <fieldset className="flex max-h-72 flex-col gap-1 overflow-y-auto">
-            <legend className="sr-only">{definisi.label}</legend>
-            {(definisi.opsi ?? []).map((opsi) => {
-                const idOpsi = `${id}-${opsi.nilai}`;
+        <div className="flex flex-col gap-2">
+            <div className="flex h-10 items-center gap-2 rounded-kontrol border border-garis-input bg-permukaan px-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/40">
+                <SearchIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
+                <input
+                    value={kata}
+                    onChange={(peristiwa) => AturKata(peristiwa.target.value)}
+                    placeholder={`Cari ${definisi.label.toLowerCase()}…`}
+                    aria-label={`Cari opsi ${definisi.label}`}
+                    autoComplete="off"
+                    className="h-full w-full bg-transparent text-isi text-teks-utama outline-none placeholder:text-teks-sekunder"
+                />
+            </div>
+            <fieldset className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+                <legend className="sr-only">{definisi.label}</legend>
+                {tampil.length === 0 ? (
+                    <p className="px-1 py-3 text-center text-label text-teks-sekunder">
+                        Tidak ada yang cocok dengan “{kata}”.
+                    </p>
+                ) : null}
+                {tampil.map((opsi) => {
+                    const idOpsi = `${id}-${opsi.nilai}`;
 
-                return (
-                    <div key={opsi.nilai} className="flex min-h-10 items-center gap-2 rounded-kontrol px-1">
-                        <Checkbox
-                            id={idOpsi}
-                            checked={terpilih.has(opsi.nilai)}
-                            onCheckedChange={(aktif) => Ganti(opsi.nilai, aktif === true)}
-                            className={cn(!banyak && 'rounded-full')}
-                        />
-                        <Label htmlFor={idOpsi} className="flex-1 text-isi font-normal text-teks-utama">
-                            {opsi.label}
-                        </Label>
-                    </div>
-                );
-            })}
-        </fieldset>
+                    return (
+                        <div
+                            key={opsi.nilai}
+                            className="flex min-h-10 items-center gap-2 rounded-kontrol px-1 hover:bg-brand-lembut"
+                        >
+                            <Checkbox
+                                id={idOpsi}
+                                checked={terpilih.has(opsi.nilai)}
+                                onCheckedChange={(aktif) => Ganti(opsi.nilai, aktif === true)}
+                                className={cn(!banyak && 'rounded-full')}
+                            />
+                            <Label htmlFor={idOpsi} className="flex-1 text-isi font-normal text-teks-utama">
+                                {opsi.label}
+                            </Label>
+                        </div>
+                    );
+                })}
+            </fieldset>
+        </div>
     );
 }
 

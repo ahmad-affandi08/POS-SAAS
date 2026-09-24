@@ -7,6 +7,7 @@ import HalamanDaftarShift from '@/Halaman/Kelola/Kasir/Shift/Daftar';
 import HalamanDetailShift from '@/Halaman/Kelola/Kasir/Shift/Detail';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import type { BarisShift, PropsDaftarShift, PropsDetailShift, PropsKategoriKas } from '@/Tipe/Kasir';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -111,8 +112,8 @@ describe('F-06 halaman kasir back-office', () => {
         expect(screen.getByText(/Belum ada kategori kas/)).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah kategori kas' }));
-        fireEvent.change(screen.getByLabelText('Nama kategori'), { target: { value: 'Bayar parkir motor' } });
-        fireEvent.change(screen.getByLabelText('Akun jurnal'), { target: { value: '01K5AKUN000000000000000001' } });
+        UbahNilai(screen.getByLabelText('Nama kategori'), 'Bayar parkir motor');
+        UbahNilai(screen.getByLabelText('Akun jurnal'), '01K5AKUN000000000000000001');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kategori' }));
 
         expect(tiruanRouter.post).toHaveBeenCalledWith(

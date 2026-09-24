@@ -8,10 +8,10 @@ import RingkasanGalat from '@/Komponen/Pengelola/TemplateSektor/RingkasanGalat';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { Input } from '@/Komponen/Ui/input';
-import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
 import { Separator } from '@/Komponen/Ui/separator';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type { AkunTemplate, IsiAkunTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
+import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 
 type PropsFormAkun = {
     url: string;
@@ -139,20 +139,17 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                                 />
                                             </TableCell>
                                             <TableCell className={kelasSel}>
-                                                <NativeSelect
+                                                <PilihanCari
+                                                    label="Tipe akun"
                                                     aria-label={`Tipe akun baris ${indeks + 1}`}
                                                     className={kelasInput}
-                                                    value={akun.Tipe}
-                                                    onChange={(peristiwa) =>
-                                                        UbahAkun(indeks, { Tipe: peristiwa.target.value })
-                                                    }
-                                                >
-                                                    {pilihan.TipeAkun.map((tipe) => (
-                                                        <NativeSelectOption key={tipe.Nilai} value={tipe.Nilai}>
-                                                            {tipe.DigitAwal}- {tipe.Label}
-                                                        </NativeSelectOption>
-                                                    ))}
-                                                </NativeSelect>
+                                                    nilai={akun.Tipe}
+                                                    opsi={pilihan.TipeAkun.map((tipe) => ({
+                                                        Nilai: tipe.Nilai,
+                                                        Label: `${tipe.DigitAwal}- ${tipe.Label}`,
+                                                    }))}
+                                                    saatBerubah={(nilai) => UbahAkun(indeks, { Tipe: nilai })}
+                                                />
                                             </TableCell>
                                             <TableCell className={kelasSel}>
                                                 <Checkbox

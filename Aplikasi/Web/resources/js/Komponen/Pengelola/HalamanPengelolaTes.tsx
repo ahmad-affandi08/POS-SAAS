@@ -16,6 +16,7 @@ import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 import { IzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 /*
  * Test perilaku halaman Platform Pengelola setelah migrasi ke shadcn/ui: dialog formulir, konfirmasi four-eyes
@@ -135,10 +136,10 @@ describe('BidangTanggal', () => {
         expect(isian.getAttribute('aria-invalid')).toBe('true');
         expect(isian.getAttribute('aria-describedby')).toContain(screen.getByText('Tanggal wajib diisi.').id);
 
-        fireEvent.change(isian, { target: { value: '10/03/202' } });
+        UbahNilai(isian, '10/03/202');
         expect(SaatBerubah).not.toHaveBeenCalled();
 
-        fireEvent.change(isian, { target: { value: '10/03/2026' } });
+        UbahNilai(isian, '10/03/2026');
         expect(SaatBerubah).toHaveBeenLastCalledWith('2026-03-10');
 
         fireEvent.click(screen.getByRole('button', { name: 'Pilih Berlaku mulai dari kalender' }));
@@ -167,9 +168,9 @@ describe('Katalog fitur (P-04)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah fitur' }));
         const dialog = screen.getByRole('dialog', { name: 'Tambah fitur' });
-        fireEvent.change(within(dialog).getByLabelText('Kunci'), { target: { value: 'POS.MODE-MEJA' } });
-        fireEvent.change(within(dialog).getByLabelText('Nama'), { target: { value: 'Mode meja' } });
-        fireEvent.change(within(dialog).getByLabelText('Modul'), { target: { value: 'Pos' } });
+        UbahNilai(within(dialog).getByLabelText('Kunci'), 'POS.MODE-MEJA');
+        UbahNilai(within(dialog).getByLabelText('Nama'), 'Mode meja');
+        UbahNilai(within(dialog).getByLabelText('Modul'), 'Pos');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Simpan fitur' }));
         expect(uji.kiriman).toEqual([
             {
@@ -218,9 +219,7 @@ describe('Harga paket four-eyes (P-04, BR-P04.5)', () => {
         fireEvent.click(screen.getByRole('menuitem', { name: 'Tinjau harga' }));
         const dialog = screen.getByRole('alertdialog');
         expect(within(dialog).getByText('Pelanggan lama tetap memakai harga lamanya.')).toBeTruthy();
-        fireEvent.change(within(dialog).getByLabelText('Catatan (wajib bila menolak)'), {
-            target: { value: 'Terlalu mahal' },
-        });
+        UbahNilai(within(dialog).getByLabelText('Catatan (wajib bila menolak)'), 'Terlalu mahal');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Tolak harga' }));
         expect(uji.kiriman).toEqual([
             {
@@ -268,9 +267,7 @@ describe('Integrasi (P-05)', () => {
         };
         const { rerender: RenderUlang } = render(<HalamanIntegrasi Integrasi={[slot]} />);
 
-        fireEvent.change(screen.getByLabelText('Alasan (wajib untuk produksi)'), {
-            target: { value: 'Uji koneksi lolos' },
-        });
+        UbahNilai(screen.getByLabelText('Alasan (wajib untuk produksi)'), 'Uji koneksi lolos');
         const saklar = screen.getByRole('switch', { name: 'Integrasi produksi aktif' });
         expect(saklar.getAttribute('aria-checked')).toBe('false');
         fireEvent.click(saklar);
@@ -325,7 +322,7 @@ describe('Template sektor (P-03)', () => {
         const kontra = screen.getByRole('checkbox', { name: 'Akun kontra baris 1' });
         fireEvent.click(kontra);
         expect(kontra.getAttribute('aria-checked')).toBe('true');
-        fireEvent.change(screen.getByLabelText('Tipe akun baris 1'), { target: { value: 'Pendapatan' } });
+        UbahNilai(screen.getByLabelText('Tipe akun baris 1'), 'Pendapatan');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan akun & pajak' }));
         expect(uji.kiriman).toEqual([
             {
@@ -392,7 +389,7 @@ describe('Template sektor (P-03)', () => {
         expect(screen.getByRole('link', { name: 'Versi 2 · Draf' }).getAttribute('aria-current')).toBe('page');
 
         fireEvent.mouseDown(screen.getByRole('tab', { name: 'Akun & pajak' }), { button: 0 });
-        fireEvent.change(screen.getByLabelText('Nama akun baris 1'), { target: { value: 'Kas besar' } });
+        UbahNilai(screen.getByLabelText('Nama akun baris 1'), 'Kas besar');
         fireEvent.mouseDown(screen.getByRole('tab', { name: 'Isi bisnis' }), { button: 0 });
         fireEvent.mouseDown(screen.getByRole('tab', { name: 'Akun & pajak' }), { button: 0 });
         expect(screen.getByLabelText<HTMLInputElement>('Nama akun baris 1').value).toBe('Kas besar');

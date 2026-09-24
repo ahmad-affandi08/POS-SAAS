@@ -24,6 +24,7 @@ import {
     NilaiEkstrem,
     UuidDokumen,
 } from './DataUjiPersediaan';
+import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -225,22 +226,16 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
         );
         RenderUji(<HalamanFormStokAwal {...PropsForm()} />);
 
-        fireEvent.change(screen.getByRole('combobox', { name: 'Lokasi stok' }), {
-            target: { value: GudangUtama.Uuid },
-        });
+        UbahNilai(screen.getByRole('combobox', { name: 'Lokasi stok' }), GudangUtama.Uuid);
         const cari = screen.getByRole('combobox', { name: 'Tambah produk' });
         fireEvent.focus(cari);
-        fireEvent.change(cari, { target: { value: 'gayo' } });
+        UbahNilai(cari, 'gayo');
         await waitFor(() => expect(screen.getByRole('option', { name: /Arabika Gayo/ })).toBeTruthy());
         fireEvent.keyDown(cari, { key: 'Enter' });
 
         expect(screen.getByText('HPP rata-rata saat ini Rp 1.200')).toBeTruthy();
-        fireEvent.change(screen.getByRole('textbox', { name: 'Jumlah Biji Kopi Arabika Gayo' }), {
-            target: { value: '10' },
-        });
-        fireEvent.change(screen.getByRole('textbox', { name: 'Harga modal per satuan Biji Kopi Arabika Gayo' }), {
-            target: { value: '1.234,5678' },
-        });
+        UbahNilai(screen.getByRole('textbox', { name: 'Jumlah Biji Kopi Arabika Gayo' }), '10');
+        UbahNilai(screen.getByRole('textbox', { name: 'Harga modal per satuan Biji Kopi Arabika Gayo' }), '1.234,5678');
         expect(screen.getAllByText('Rp 12.345,68').length).toBeGreaterThan(0);
 
         fireEvent.click(screen.getByRole('button', { name: 'Simpan draf' }));
@@ -303,9 +298,7 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
     it('ubah: nomor seri menentukan jumlah; hapus baris mengurangi total', () => {
         RenderUji(<HalamanFormStokAwal {...PropsUbah()} />);
 
-        fireEvent.change(screen.getByRole('textbox', { name: 'Nomor seri Mesin Espresso Mini' }), {
-            target: { value: 'SN-001\nSN-002' },
-        });
+        UbahNilai(screen.getByRole('textbox', { name: 'Nomor seri Mesin Espresso Mini' }), 'SN-001\nSN-002');
         expect(screen.getByText('Rp 27.012,35')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Hapus baris Susu UHT Full Cream 1 L' }));
@@ -381,9 +374,7 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
         expect(screen.getByText('Stok minus. Selisih HPP dicatat saat posting.')).toBeTruthy();
         expect(screen.getByText(/stok saat ini −4 kg/)).toBeTruthy();
 
-        fireEvent.change(screen.getByRole('combobox', { name: 'Lokasi stok' }), {
-            target: { value: GudangLama.Uuid },
-        });
+        UbahNilai(screen.getByRole('combobox', { name: 'Lokasi stok' }), GudangLama.Uuid);
         expect(screen.queryByText(/stok saat ini/)).toBeNull();
     });
 
@@ -510,16 +501,12 @@ describe('Kelola/Persediaan/StokAwal/Detail (F-05a)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Batalkan stok awal' }));
         const dialog = screen.getByRole('alertdialog');
-        fireEvent.change(within(dialog).getByRole('textbox', { name: 'Alasan pembatalan' }), {
-            target: { value: 'sal' },
-        });
+        UbahNilai(within(dialog).getByRole('textbox', { name: 'Alasan pembatalan' }), 'sal');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Batalkan stok awal' }));
         expect(within(dialog).getByText('Tulis alasan minimal 5 karakter.')).toBeTruthy();
         expect(tiruanRouter.post).not.toHaveBeenCalled();
 
-        fireEvent.change(within(dialog).getByRole('textbox', { name: 'Alasan pembatalan' }), {
-            target: { value: '  Salah hitung fisik gudang  ' },
-        });
+        UbahNilai(within(dialog).getByRole('textbox', { name: 'Alasan pembatalan' }), '  Salah hitung fisik gudang  ');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Batalkan stok awal' }));
         expect(tiruanRouter.post).toHaveBeenCalledWith(
             `/kelola/persediaan/stok-awal/${UuidDokumen}/batalkan`,

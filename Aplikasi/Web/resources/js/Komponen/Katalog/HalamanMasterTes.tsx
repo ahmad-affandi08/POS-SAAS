@@ -20,6 +20,7 @@ import type {
 import { PeriksaRentangWaktu } from './FormDaftarHarga';
 import { BuatHasilTabel, IzinLihat, IzinPenuh } from './DataUjiKatalog';
 import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from './TiruanInertia';
+import { AmbilNilaiPilihan, UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
 
@@ -57,12 +58,10 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
         fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
         BukaAksi('Minuman');
         fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah kategori' }));
-        const opsiInduk = Array.from(screen.getByLabelText<HTMLSelectElement>('Induk kategori').options).map(
-            (o) => o.value,
-        );
+        const opsiInduk = AmbilNilaiPilihan(screen.getByLabelText('Induk kategori'));
         expect(opsiInduk).toEqual(['', 'K4']);
 
-        fireEvent.change(screen.getByLabelText('Nama kategori'), { target: { value: 'Minuman dingin' } });
+        UbahNilai(screen.getByLabelText('Nama kategori'), 'Minuman dingin');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kategori' }));
         expect(kirimanForm[0]).toEqual({
             metode: 'put',
@@ -115,8 +114,8 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
         expect(screen.queryByRole('menuitem', { name: 'Hapus satuan' })).toBeNull();
         fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
         fireEvent.click(screen.getByRole('button', { name: 'Tambah satuan' }));
-        fireEvent.change(screen.getByLabelText('Nama satuan'), { target: { value: 'Dus' } });
-        fireEvent.change(screen.getByLabelText('Simbol'), { target: { value: 'dus' } });
+        UbahNilai(screen.getByLabelText('Nama satuan'), 'Dus');
+        UbahNilai(screen.getByLabelText('Simbol'), 'dus');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan satuan' }));
         expect(kirimanForm[0]).toEqual({
             metode: 'post',
@@ -153,17 +152,15 @@ describe('Kelola/DaftarHarga (E.7)', () => {
 
         expect(screen.getByText('Belum ada daftar harga. Semua produk memakai harga dasar.')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Buat daftar harga' }));
-        fireEvent.change(screen.getByLabelText('Nama daftar harga'), { target: { value: 'Harga GoFood' } });
-        fireEvent.change(screen.getByLabelText('Kanal penjualan'), { target: { value: 'Online' } });
-        fireEvent.change(screen.getByLabelText('Mulai berlaku (opsional)'), { target: { value: '2026-11-01T00:00' } });
-        fireEvent.change(screen.getByLabelText('Selesai berlaku (opsional)'), {
-            target: { value: '2026-10-01T00:00' },
-        });
+        UbahNilai(screen.getByLabelText('Nama daftar harga'), 'Harga GoFood');
+        UbahNilai(screen.getByLabelText('Kanal penjualan'), 'Online');
+        UbahNilai(screen.getByLabelText('Mulai berlaku (opsional)'), '2026-11-01T00:00');
+        UbahNilai(screen.getByLabelText('Selesai berlaku (opsional)'), '2026-10-01T00:00');
         fireEvent.click(screen.getByRole('button', { name: 'Buat daftar harga' }));
         expect(kirimanForm).toHaveLength(0);
         expect(screen.getAllByText('Waktu selesai harus setelah waktu mulai.').length).toBeGreaterThan(0);
 
-        fireEvent.change(screen.getByLabelText('Selesai berlaku (opsional)'), { target: { value: '' } });
+        UbahNilai(screen.getByLabelText('Selesai berlaku (opsional)'), '');
         fireEvent.click(screen.getByLabelText('Solo'));
         fireEvent.click(screen.getByRole('button', { name: 'Buat daftar harga' }));
         expect(kirimanForm[0]).toEqual({
@@ -229,7 +226,7 @@ describe('Kelola/DaftarHarga (E.7)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Isi harga' }));
         const [hargaSabun] = screen.getAllByLabelText('Harga baris 1');
-        fireEvent.change(hargaSabun ?? document.body, { target: { value: '4.800' } });
+        UbahNilai(hargaSabun ?? document.body, '4.800');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan harga' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             '/kelola/daftar-harga/DH-1/harga',
@@ -292,7 +289,7 @@ describe('Kelola/KelompokPajak (E.8)', () => {
 
         fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi Makan & minum' }), { key: 'Enter' });
         fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah kelompok pajak' }));
-        fireEvent.change(screen.getByLabelText('Kategori pajak'), { target: { value: 'NonPajak' } });
+        UbahNilai(screen.getByLabelText('Kategori pajak'), 'NonPajak');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kelompok pajak' }));
         expect(kirimanForm[0]).toEqual({
             metode: 'put',

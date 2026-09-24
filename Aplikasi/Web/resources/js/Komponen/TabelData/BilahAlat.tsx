@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Column, Table } from '@tanstack/react-table';
 import {
     ArrowDownIcon,
@@ -14,7 +15,6 @@ import { Button } from '@/Komponen/Ui/button';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
-import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Komponen/Ui/popover';
 import { cn } from '@/Komponen/Ui/utils';
 import {
@@ -32,6 +32,8 @@ import { ChipSaring, PenyuntingSaring, RingkasSaring } from './Saring';
 import type { DefinisiSaring, KeadaanTabel, UrutKolom } from './Tipe';
 import { AmbilMeta } from './Tipe';
 import type { LebarLayar } from './useLebarLayar';
+import PilihanCari from '@/Komponen/Formulir/PilihanCari';
+import { CocokkanCari } from '@/Komponen/Formulir/PilihanCari';
 
 type PropsBilahAlat<T> = {
     label: string;
@@ -133,6 +135,7 @@ function AturKolom<T>({
         .map((k) => k.id)
         .filter((id) => kolom.some((k) => k.id === id));
 
+    const [kataKolom, AturKataKolom] = useState('');
     const Pindah = (satu: Column<T>, arah: -1 | 1) => {
         const posisi = urutan.indexOf(satu.id);
         const tujuan = posisi + arah;
@@ -156,7 +159,18 @@ function AturKolom<T>({
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 border-garis bg-permukaan p-3">
                 <p className="mb-2 text-label font-semibold text-teks-utama">Kolom yang ditampilkan</p>
-                <ul className="flex flex-col gap-1">
+                <div className="mb-2 flex h-10 items-center gap-2 rounded-kontrol border border-garis-input bg-permukaan px-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/40">
+                    <SearchIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
+                    <input
+                        value={kataKolom}
+                        onChange={(peristiwa) => AturKataKolom(peristiwa.target.value)}
+                        placeholder="Cari kolom…"
+                        aria-label="Cari kolom"
+                        autoComplete="off"
+                        className="h-full w-full bg-transparent text-isi text-teks-utama outline-none placeholder:text-teks-sekunder"
+                    />
+                </div>
+                <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
                     {urutan.map((idKolom, indeks) => {
                         const satu = kolom.find((k) => k.id === idKolom);
 
@@ -165,6 +179,10 @@ function AturKolom<T>({
                         }
 
                         const label = AmbilMeta(satu.columnDef.meta)?.label ?? satu.id;
+
+                        if (!CocokkanCari({ Nilai: satu.id, Label: label }, kataKolom)) {
+                            return null;
+                        }
 
                         return (
                             <li key={satu.id} className="flex min-h-10 items-center gap-2">
@@ -231,24 +249,19 @@ function PilihUrutHp<T>({
             <Label htmlFor="tabel-urut-hp" className="text-label font-semibold text-teks-utama">
                 Urutkan
             </Label>
-            <NativeSelect
+            <PilihanCari
                 id="tabel-urut-hp"
-                value={TulisUrut(keadaan.urut.slice(0, 1))}
-                onChange={(e) => {
-                    const nilai = e.target.value;
-                    AturUrut(nilai === '' ? [] : [{ id: nilai.replace(/^-/, ''), desc: nilai.startsWith('-') }]);
-                }}
-                className="h-11 w-full"
-            >
-                {bisaUrut.flatMap((k) => [
-                    <NativeSelectOption key={k.id} value={k.id}>
-                        {AmbilMeta(k.columnDef.meta)?.label} (naik)
-                    </NativeSelectOption>,
-                    <NativeSelectOption key={`-${k.id}`} value={`-${k.id}`}>
-                        {AmbilMeta(k.columnDef.meta)?.label} (turun)
-                    </NativeSelectOption>,
+                label="Urutkan"
+                nilai={TulisUrut(keadaan.urut.slice(0, 1))}
+                opsi={bisaUrut.flatMap((k) => [
+                    { Nilai: k.id, Label: `${AmbilMeta(k.columnDef.meta)?.label ?? k.id} (naik)` },
+                    { Nilai: `-${k.id}`, Label: `${AmbilMeta(k.columnDef.meta)?.label ?? k.id} (turun)` },
                 ])}
-            </NativeSelect>
+                saatBerubah={(nilai) =>
+                    AturUrut(nilai === '' ? [] : [{ id: nilai.replace(/^-/, ''), desc: nilai.startsWith('-') }])
+                }
+                className="h-11"
+            />
         </div>
     );
 }
