@@ -209,7 +209,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $hariIni->subDays(3)->format('Y-m-d'));
 
         expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('TanggalSebelumMutasiTerakhir')
-            ->and(StokAwal::query()->whereKey($draf->Id)->value('Status'))->toBe('Draf');
+            ->and(StokAwal::query()->whereKey($draf->Id)->value('Status'))->toBe(StatusStokAwal::Draf);
     });
 
     it('PemetaanAkunBelumAda: akun Ekuitas Saldo Awal belum dipetakan, posting ditolak tanpa efek stok', function (): void {

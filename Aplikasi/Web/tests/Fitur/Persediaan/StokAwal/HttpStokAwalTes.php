@@ -174,13 +174,13 @@ describe('F-05a HTTP stok awal: izin, outlet, dan isolasi tenant', function (): 
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Akuntan);
         $this->post('/kelola/persediaan/stok-awal', [...$isi, 'Uuid' => (string) Str::ulid()])->assertForbidden();
         $this->post("/kelola/persediaan/stok-awal/{$isi['Uuid']}/posting")->assertSessionHasNoErrors();
-        expect(StokAwal::query()->where('Uuid', $isi['Uuid'])->value('Status'))->toBe('Diposting');
+        expect(StokAwal::query()->where('Uuid', $isi['Uuid'])->value('Status'))->toBe(StatusStokAwal::Diposting);
 
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet);
         $kedua = BantuanStokAwal::IsiForm($t['Gudang'], [BantuanStokAwal::IsiBaris($p['Produksi'], '20', '9500')]);
         $this->post('/kelola/persediaan/stok-awal', $kedua)->assertRedirect();
         $this->post("/kelola/persediaan/stok-awal/{$kedua['Uuid']}/posting")->assertSessionHasNoErrors();
-        expect(StokAwal::query()->where('Uuid', $kedua['Uuid'])->value('Status'))->toBe('Diposting');
+        expect(StokAwal::query()->where('Uuid', $kedua['Uuid'])->value('Status'))->toBe(StatusStokAwal::Diposting);
 
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->getJson("/kelola/persediaan/stok-awal/{$isi['Uuid']}/status")->assertForbidden();

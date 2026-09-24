@@ -10,6 +10,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Persediaan\Aksi\BatalkanStokAwal;
 use App\Domain\Persediaan\Aksi\PostingStokAwal;
 use App\Domain\Persediaan\Enum\MetodeHpp;
+use App\Domain\Persediaan\Enum\StatusNomorSeri;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
 use App\Domain\Persediaan\Model\BatchStok;
 use App\Domain\Persediaan\Model\MutasiStok;
@@ -160,7 +161,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
 
         expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($terjual, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and(app(BatalkanStokAwal::class)->Jalankan($utuh, 'Salah lokasi stok', $t['Pemilik']->Id)->Status)->toBe(StatusStokAwal::Dibatalkan)
-            ->and(NomorSeri::query()->where('Nomor', 'RC18-0101')->value('Status'))->not->toBe('Tersedia')
+            ->and(NomorSeri::query()->where('Nomor', 'RC18-0101')->value('Status'))->not->toBe(StatusNomorSeri::Tersedia)
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
     });
 });
