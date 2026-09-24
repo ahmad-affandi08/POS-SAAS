@@ -6,6 +6,15 @@ import { jenisLabelStatusTiket, type BatasLampiran, type StatusTiket } from '@/K
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/Komponen/Ui/breadcrumb';
+import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -52,11 +61,19 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
     return (
         <TataLetakAplikasi judul={Tiket.Judul}>
             <div className="flex flex-wrap items-center gap-2 text-label text-teks-sekunder">
-                <Link href="/kelola/bantuan" className="font-semibold text-brand underline">
-                    Semua tiket
-                </Link>
-                <span aria-hidden="true">/</span>
-                <span className="font-mono">{Tiket.Nomor}</span>
+                <Breadcrumb aria-label="Lokasi halaman">
+                    <BreadcrumbList className="text-label">
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild className="font-semibold text-brand underline">
+                                <Link href="/kelola/bantuan">Semua tiket</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                        <BreadcrumbItem>
+                            <BreadcrumbPage className="font-mono">{Tiket.Nomor}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
                 <LabelStatus jenis={jenisLabelStatusTiket[Tiket.Status]} teks={Tiket.LabelStatus} />
                 <span>
                     {Tiket.LabelKategori} · Prioritas {Tiket.LabelPrioritas} · Dibuat{' '}
@@ -75,40 +92,39 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                     ini.
                 </Pemberitahuan>
             ) : Tiket.BisaDibalas ? (
-                <form
-                    onSubmit={Kirim}
-                    className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-5"
-                >
-                    {Tiket.Status === 'Selesai' ? (
-                        <Pemberitahuan jenis="info">Mengirim balasan akan membuka lagi tiket ini.</Pemberitahuan>
-                    ) : null}
-                    <BidangTeksPanjang
-                        label="Balasan Anda"
-                        nilai={formulir.data.Isi}
-                        maksimal={10000}
-                        saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
-                        galat={formulir.errors.Isi}
-                    />
-                    <BidangBerkas
-                        label="Lampiran"
-                        berkas={formulir.data.Lampiran}
-                        ekstensi={Lampiran.Ekstensi}
-                        maksimal={Lampiran.Maksimal}
-                        ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
-                        saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
-                        galat={galatLampiran}
-                    />
-                    <div className="flex flex-wrap gap-3">
-                        <Tombol type="submit" memproses={formulir.processing}>
-                            Kirim balasan
-                        </Tombol>
-                        {Tiket.BisaDiselesaikan ? (
-                            <Tombol varian="sekunder" memproses={menyelesaikan} onClick={Selesaikan}>
-                                Masalah sudah selesai
-                            </Tombol>
+                <Card className="p-5">
+                    <form onSubmit={Kirim} className="flex flex-col gap-3">
+                        {Tiket.Status === 'Selesai' ? (
+                            <Pemberitahuan jenis="info">Mengirim balasan akan membuka lagi tiket ini.</Pemberitahuan>
                         ) : null}
-                    </div>
-                </form>
+                        <BidangTeksPanjang
+                            label="Balasan Anda"
+                            nilai={formulir.data.Isi}
+                            maksimal={10000}
+                            saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
+                            galat={formulir.errors.Isi}
+                        />
+                        <BidangBerkas
+                            label="Lampiran"
+                            berkas={formulir.data.Lampiran}
+                            ekstensi={Lampiran.Ekstensi}
+                            maksimal={Lampiran.Maksimal}
+                            ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
+                            saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
+                            galat={galatLampiran}
+                        />
+                        <div className="flex flex-wrap gap-3">
+                            <Tombol type="submit" memproses={formulir.processing}>
+                                Kirim balasan
+                            </Tombol>
+                            {Tiket.BisaDiselesaikan ? (
+                                <Tombol varian="sekunder" memproses={menyelesaikan} onClick={Selesaikan}>
+                                    Masalah sudah selesai
+                                </Tombol>
+                            ) : null}
+                        </div>
+                    </form>
+                </Card>
             ) : (
                 <Pemberitahuan jenis="info" judul="Tiket ditutup">
                     Tiket ini tidak bisa dibalas lagi. Bila masalahnya muncul lagi,{' '}
