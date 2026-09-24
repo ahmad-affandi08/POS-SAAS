@@ -32,20 +32,23 @@ describe('F-03 halaman katalog Tim 1 (prop kontrak E)', function (): void {
         $masuk()->get('/kelola/produk')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Produk/Daftar')
             ->has('Produk.Data', 2)
-            ->where('Produk.Total', 2)
+            ->where('Produk.Meta.Total', 2)
             ->where('Produk.Data.0.Nama', 'Es Kopi Susu Gula Aren')
             ->where('Produk.Data.0.HargaDasar', '22000.00')
             ->where('Produk.Data.0.NamaKategori', 'Kopi')
             ->where('Produk.Data.0.SimbolSatuan', 'pcs')
             ->where('Produk.Data.1.JumlahVarian', 1)
-            ->where('Saring', ['Kata' => '', 'Kategori' => null, 'Jenis' => null, 'Status' => 'Aktif', 'Urut' => 'Nama'])
+            ->missing('Saring')
             ->has('Kategori', 2)
             ->has('Jenis', 9)
             ->where('BatasSku', ['Batas' => null, 'Terpakai' => 2])
             ->where('Izin', ['Kelola' => false, 'UbahHarga' => false, 'KelolaPersediaan' => false, 'KelolaPajak' => false]));
 
+        // `kata` (nama lama) tetap diterima; `cari` = kontrak TabelData D-16. Barcode dicocokkan persis.
         $masuk()->get('/kelola/produk?kata=8990000000123')->assertInertia(fn (AssertableInertia $h) => $h->has('Produk.Data', 1)->where('Produk.Data.0.Uuid', $produk->Uuid));
-        $masuk()->get("/kelola/produk?saring[Kategori]={$minuman->Uuid}")->assertInertia(fn (AssertableInertia $h) => $h->has('Produk.Data', 1)->where('Saring.Kategori', $minuman->Uuid));
+        $masuk()->getJson('/kelola/produk?cari=8990000000123')->assertOk()->assertJsonPath('Data.0.Uuid', $produk->Uuid)->assertJsonPath('Meta.Total', 1);
+        $masuk()->getJson('/kelola/produk?urut=-Nama')->assertOk()->assertJsonPath('Data.0.Nama', 'Kaos Polos');
+        $masuk()->get("/kelola/produk?saring[Kategori]={$minuman->Uuid}")->assertInertia(fn (AssertableInertia $h) => $h->has('Produk.Data', 1)->where('Produk.Data.0.Nama', 'Es Kopi Susu Gula Aren'));
         $masuk()->get('/kelola/produk?saring[Status]=Diarsipkan')->assertInertia(fn (AssertableInertia $h) => $h->has('Produk.Data', 1)->where('Produk.Data.0.Status', 'Diarsipkan'));
         $masuk()->get('/kelola/produk?saring[Status]=Semua&saring[Jenis]=IndukVarian')->assertInertia(fn (AssertableInertia $h) => $h->has('Produk.Data', 1)->where('Produk.Data.0.Nama', 'Kaos Polos'));
     });

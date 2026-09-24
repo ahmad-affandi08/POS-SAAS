@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import HalamanDaftarProduk, { BuatQueryProduk, BuatUrlEksporProduk } from '@/Halaman/Kelola/Produk/Daftar';
+import HalamanDaftarProduk from '@/Halaman/Kelola/Produk/Daftar';
 import HalamanDetailProduk from '@/Halaman/Kelola/Produk/Detail';
 import HalamanFormProduk from '@/Halaman/Kelola/Produk/Form';
 import HalamanHargaProduk from '@/Halaman/Kelola/Produk/Harga';
@@ -15,13 +15,13 @@ import type {
     PropsFormProduk,
     PropsHargaProduk,
     PropsResepProduk,
-    SaringProduk,
 } from '@/Tipe/Katalog';
 
 import {
     AturanJenis,
     BuatBarisProduk,
     BuatHalaman,
+    BuatHasilTabel,
     BuatKepala,
     HargaEkstrem,
     IzinLihat,
@@ -35,12 +35,9 @@ import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from './TiruanIn
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
 
-const saringAwal: SaringProduk = { Kata: '', Kategori: null, Jenis: null, Status: 'Aktif', Urut: 'Nama' };
-
 function PropsDaftar(perubahan: Partial<PropsDaftarProduk> = {}): PropsDaftarProduk {
     return {
-        Produk: BuatHalaman([]),
-        Saring: saringAwal,
+        Produk: BuatHasilTabel([]),
         Kategori: OpsiKategoriUji,
         Jenis: AturanJenis,
         BatasSku: { Batas: 100, Terpakai: 12 },
@@ -49,32 +46,34 @@ function PropsDaftar(perubahan: Partial<PropsDaftarProduk> = {}): PropsDaftarPro
     };
 }
 
-describe('Kelola/Produk/Daftar (DesainF03 E.2)', () => {
-    beforeEach(() => AturHalamanUji());
+describe('Kelola/Produk/Daftar (DesainF03 E.2, TabelData D-16)', () => {
+    beforeEach(() => {
+        AturHalamanUji();
+        window.history.replaceState({}, '', '/kelola/produk');
+    });
     afterEach(() => cleanup());
 
     it('keadaan kosong memakai microcopy desain dan dua ajakan', () => {
-        render(<HalamanDaftarProduk {...PropsDaftar()} />);
+        RenderUji(<HalamanDaftarProduk {...PropsDaftar()} />);
 
         expect(screen.getByText('Belum ada produk. Impor dari Excel atau Tambah produk')).toBeTruthy();
         expect(screen.getAllByRole('link', { name: 'Impor dari Excel' }).length).toBeGreaterThan(0);
         expect(screen.getByText('12 dari 100 produk')).toBeTruthy();
     });
 
-    it('kosong karena saringan: menawarkan hapus saringan', () => {
-        render(<HalamanDaftarProduk {...PropsDaftar({ Saring: { ...saringAwal, Kata: 'teh' } })} />);
+    it('kosong karena pencarian: menawarkan hapus pencarian & saring', () => {
+        window.history.replaceState({}, '', '/kelola/produk?cari=teh');
+        RenderUji(<HalamanDaftarProduk {...PropsDaftar()} />);
 
-        expect(screen.getByText('Tidak ada produk yang cocok dengan pencarian atau saringan ini.')).toBeTruthy();
-        expect(screen.getByRole('link', { name: 'Hapus saringan' }).getAttribute('href')).toBe('/kelola/produk');
+        expect(screen.getByText('Tidak ada hasil untuk pencarian atau saring ini.')).toBeTruthy();
+        expect(screen.getAllByRole('button', { name: 'Hapus pencarian & saring' }).length).toBeGreaterThan(0);
     });
 
     it('data ekstrem: 2.000 baris, nama 60 karakter, Rp 1.250.000.000 rata kanan tabular; SKU Mono', () => {
         const baris = Array.from({ length: 2000 }, (_, i) =>
             BuatBarisProduk(i + 1, i === 0 ? { Nama: NamaPanjang, HargaDasar: HargaEkstrem } : {}),
         );
-        const { container } = render(
-            <HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHalaman(baris, { Total: 2000 }) })} />,
-        );
+        const { container } = RenderUji(<HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHasilTabel(baris) })} />);
 
         // Kueri DOM langsung: kueri berbasis peran untuk 2.000 baris terlalu lambat di jsdom.
         expect(container.querySelectorAll('tbody tr')).toHaveLength(2000);
@@ -88,10 +87,10 @@ describe('Kelola/Produk/Daftar (DesainF03 E.2)', () => {
         expect(pertama?.querySelector('td.font-mono')?.textContent).toBe('PRD-000001');
     }, 30_000);
 
-    it('arsipkan mengirim POST; tanpa izin kelola tombol disembunyikan dan alasannya tertulis', () => {
-        render(<HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHalaman([BuatBarisProduk(1)]) })} />);
+    it('arsipkan mengirim POST; tanpa izin kelola aksi disembunyikan dan alasannya tertulis', () => {
+        RenderUji(<HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHasilTabel([BuatBarisProduk(1)]) })} />);
         // Aksi baris ada di DropdownMenu (Radix): dibuka dengan keyboard, lalu item "Arsipkan" dipilih.
-        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi untuk Produk 1' }), { key: 'Enter' });
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi baris' }), { key: 'Enter' });
         fireEvent.click(screen.getByRole('menuitem', { name: 'Arsipkan' }));
         expect(tiruanRouter.post).toHaveBeenCalledWith(
             `/kelola/produk/${BuatBarisProduk(1).Uuid}/arsipkan`,
@@ -100,49 +99,35 @@ describe('Kelola/Produk/Daftar (DesainF03 E.2)', () => {
         );
         cleanup();
 
-        render(
-            <HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHalaman([BuatBarisProduk(1)]), Izin: IzinLihat })} />,
+        RenderUji(
+            <HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHasilTabel([BuatBarisProduk(1)]), Izin: IzinLihat })} />,
         );
-        expect(screen.queryByRole('button', { name: /Arsipkan/ })).toBeNull();
-        expect(screen.queryByRole('button', { name: /Aksi untuk/ })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Aksi baris' })).toBeNull();
         expect(screen.queryByRole('link', { name: 'Tambah produk' })).toBeNull();
         expect(screen.getByText('Hanya bisa melihat')).toBeTruthy();
     });
 
     it('batas SKU penuh: tombol tambah nonaktif dengan penjelasan', () => {
-        render(<HalamanDaftarProduk {...PropsDaftar({ BatasSku: { Batas: 100, Terpakai: 100 } })} />);
+        RenderUji(<HalamanDaftarProduk {...PropsDaftar({ BatasSku: { Batas: 100, Terpakai: 100 } })} />);
 
         expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Tambah produk' }).disabled).toBe(true);
         expect(screen.getByText('Batas produk paket sudah tercapai')).toBeTruthy();
     });
 
-    it('query saringan & tautan ekspor mengikuti E.2', () => {
-        const saring: SaringProduk = {
-            Kata: ' kopi ',
-            Kategori: 'KAT-KOPI',
-            Jenis: 'Resep',
-            Status: 'Semua',
-            Urut: '-DiubahPada',
-        };
-
-        expect(BuatQueryProduk(saring)).toEqual({
-            kata: 'kopi',
-            'saring[Kategori]': 'KAT-KOPI',
-            'saring[Jenis]': 'Resep',
-            'saring[Status]': 'Semua',
-            urut: '-DiubahPada',
-        });
-        expect(BuatQueryProduk(saringAwal)).toEqual({});
-        expect(BuatUrlEksporProduk(saring)).toBe(
-            '/kelola/produk/ekspor?format=xlsx&kata=kopi&saring%5BKategori%5D=KAT-KOPI&saring%5BJenis%5D=Resep&saring%5BStatus%5D=Semua&urut=-DiubahPada',
+    it('saring status bawaan Aktif, ekspor mengikuti pencarian & saring aktif di URL', () => {
+        window.history.replaceState(
+            {},
+            '',
+            '/kelola/produk?cari=kopi&urut=-DiubahPada&saring%5BJenis%5D=Resep&saring%5BStatus%5D=Semua',
         );
-    });
+        RenderUji(<HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHasilTabel([BuatBarisProduk(1)]) })} />);
 
-    it('mengganti saringan langsung memuat ulang daftar lewat router.get', () => {
-        render(<HalamanDaftarProduk {...PropsDaftar()} />);
-        fireEvent.change(screen.getByLabelText('Jenis'), { target: { value: 'Jasa' } });
-
-        expect(tiruanRouter.get).toHaveBeenCalledWith('/kelola/produk', { 'saring[Jenis]': 'Jasa' }, expect.anything());
+        expect(screen.getByRole('link', { name: 'Ekspor ke Excel' }).getAttribute('href')).toBe(
+            '/kelola/produk/ekspor?cari=kopi&urut=-DiubahPada&saring%5BJenis%5D=Resep&saring%5BStatus%5D=Semua',
+        );
+        const chip = screen.getByLabelText('Saring aktif');
+        expect(within(chip).getByText('Status: Semua status')).toBeTruthy();
+        expect(within(chip).getByText('Jenis: Menu resep')).toBeTruthy();
     });
 });
 

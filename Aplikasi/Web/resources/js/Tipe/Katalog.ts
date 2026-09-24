@@ -1,3 +1,4 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 /**
  * Kontrak props halaman F-03 Master Produk, Harga & Pajak (DesainF03 bagian E, dibekukan di Wave 0).
  *
@@ -74,19 +75,12 @@ export type BarisProduk = {
     SimbolSatuan: string;
     JumlahVarian: number;
     TampilDiPos: boolean;
+    DiubahPada: string | null;
     Status: StatusProduk;
     UrlGambarKecil: string | null;
 };
-export type SaringProduk = {
-    Kata: string;
-    Kategori: string | null;
-    Jenis: JenisProduk | null;
-    Status: StatusProduk | 'Semua';
-    Urut: 'Nama' | '-DiubahPada' | 'Sku';
-};
 export type PropsDaftarProduk = {
-    Produk: DaftarBerhalaman<BarisProduk>;
-    Saring: SaringProduk;
+    Produk: HasilTabel<BarisProduk>;
     Kategori: OpsiKategori[];
     Jenis: AturanJenisProduk[];
     BatasSku: Batas;

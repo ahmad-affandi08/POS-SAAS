@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Katalog\Data\DataSaringProduk;
 use App\Domain\Katalog\Enum\StatusProduk;
 use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
@@ -14,23 +16,41 @@ use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\ProdukHarga;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Model\Satuan;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
- * Daftar produk back-office (F-03 E.2), 25 per halaman. Anak varian tidak tampil (ada di bawah induknya). `kata`
+ * Daftar produk back-office (F-03 E.2) untuk `TabelData` (D-16). Anak varian tidak tampil (ada di bawah induknya). `kata`
  * mencocokkan Nama/SKU (sebagian) atau barcode (persis); kategori termasuk sub-kategorinya.
  */
 final class DaftarProduk
 {
-    public const PER_HALAMAN = 25;
+    public const KOLOM_URUT = ['Nama', 'Sku', 'DiubahPada'];
+
+    public const KOLOM_SARING = ['Kategori', 'Jenis', 'Status'];
 
     /**
-     * @return LengthAwarePaginator<int, Produk>
+     * Daftar untuk `TabelData` (D-16): saring dari `DataSaringProduk`, urut & paginasi dari permintaan tabel.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(DataSaringProduk $saring, int $halaman = 1): LengthAwarePaginator
+    public function AmbilTabel(DataSaringProduk $saring, DataPermintaanTabel $permintaan): array
+    {
+        return PenerapKueriTabel::Terapkan(
+            $this->BuatKueri($saring),
+            $permintaan,
+            ['Nama' => 'Nama', 'Sku' => 'Sku', 'DiubahPada' => 'DiubahPada'],
+            fn (Collection $produk): array => $this->Petakan(array_values($produk->all())),
+        );
+    }
+
+    /**
+     * @return Builder<Produk>
+     */
+    private function BuatKueri(DataSaringProduk $saring): Builder
     {
         $kata = trim($saring->kata);
-        $pola = '%'.addcslashes($kata, '%_\\').'%';
+        $pola = PenerapKueriTabel::PolaCari($kata);
 
         return Produk::query()
             ->whereNull('IdInduk')
@@ -42,13 +62,7 @@ final class DaftarProduk
             ->when($saring->idKategori !== null, fn ($kueri) => $kueri->whereIn('IdKategori', PohonKategoriTenant::Muat()->AmbilIdDenganTurunan((int) $saring->idKategori)))
             ->when($saring->jenis !== null, fn ($kueri) => $kueri->where('Jenis', $saring->jenis?->value))
             ->when($saring->status === StatusProduk::Aktif, fn ($kueri) => $kueri->whereNull('DiarsipkanPada'))
-            ->when($saring->status === StatusProduk::Diarsipkan, fn ($kueri) => $kueri->whereNotNull('DiarsipkanPada'))
-            ->when($saring->urut === '-DiubahPada', fn ($kueri) => $kueri->orderByDesc('DiubahPada'))
-            ->when($saring->urut === 'Sku', fn ($kueri) => $kueri->orderBy('Sku'))
-            ->orderBy('Nama')
-            ->orderBy('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman))
-            ->withQueryString();
+            ->when($saring->status === StatusProduk::Diarsipkan, fn ($kueri) => $kueri->whereNotNull('DiarsipkanPada'));
     }
 
     /**
@@ -77,6 +91,7 @@ final class DaftarProduk
             'SimbolSatuan' => (string) ($simbol->get($p->IdSatuanDasar) ?? ''),
             'JumlahVarian' => (int) ($jumlahVarian->get($p->Id) ?? 0),
             'TampilDiPos' => $p->TampilDiPos,
+            'DiubahPada' => $p->DiubahPada?->toIso8601String(),
             'Status' => $p->AmbilStatus()->value,
             'UrlGambarKecil' => PenyimpanGambarProduk::BuatUrl($p, 'kecil'),
         ], $produk);

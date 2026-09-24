@@ -82,9 +82,9 @@ function TombolSaring({
                 <Button type="button" variant="outline" className={kelasTombolAlat}>
                     <ListFilterIcon aria-hidden="true" className="size-4 text-teks-sekunder" />
                     {definisi.label}
-                    {nilai !== '' ? (
+                    {nilai !== '' || definisi.nilaiBawaan ? (
                         <span className="max-w-40 truncate font-normal text-teks-sekunder">
-                            · {RingkasSaring(definisi, nilai)}
+                            · {RingkasSaring(definisi, nilai === '' ? (definisi.nilaiBawaan ?? '') : nilai)}
                         </span>
                     ) : null}
                 </Button>

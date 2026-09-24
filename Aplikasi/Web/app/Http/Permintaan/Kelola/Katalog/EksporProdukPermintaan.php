@@ -24,6 +24,7 @@ final class EksporProdukPermintaan extends FormRequest
         return [
             'format' => ['nullable', 'in:xlsx,csv'],
             'kata' => ['nullable', 'string', 'max:100'],
+            'cari' => ['nullable', 'string', 'max:100'],
             'saring' => ['nullable', 'array'],
             'saring.Kategori' => ['nullable', 'string', 'max:26'],
             'saring.Jenis' => ['nullable', 'string', 'max:20'],
@@ -44,7 +45,7 @@ final class EksporProdukPermintaan extends FormRequest
         $statusTeks = is_string($saring['Status'] ?? null) ? $saring['Status'] : 'Aktif';
 
         return new DataSaringProduk(
-            trim($this->string('kata')->toString()),
+            trim($this->string('cari')->toString()) !== '' ? trim($this->string('cari')->toString()) : trim($this->string('kata')->toString()),
             is_int($idKategori) ? $idKategori : ($uuidKategori === null ? null : 0),
             is_string($saring['Jenis'] ?? null) ? JenisProduk::tryFrom($saring['Jenis']) : null,
             $statusTeks === 'Semua' ? null : (StatusProduk::tryFrom($statusTeks) ?? StatusProduk::Aktif),

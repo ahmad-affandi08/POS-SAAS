@@ -1,3 +1,4 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 /**
  * Props tiruan halaman F-03 untuk test Vitest (DesainF03 bagian E). Termasuk data ekstrem §17.6.6:
  * nama 60 karakter, Rp 1.250.000.000, dan 2.000 baris.
@@ -104,9 +105,18 @@ export function BuatBarisProduk(nomor: number, perubahan: Partial<BarisProduk> =
         SimbolSatuan: 'pcs',
         JumlahVarian: 0,
         TampilDiPos: true,
+        DiubahPada: '2026-09-20T03:15:00Z',
         Status: 'Aktif',
         UrlGambarKecil: null,
         ...perubahan,
+    };
+}
+
+/** Hasil `TabelData` satu halaman (D-16). */
+export function BuatHasilTabel<T>(Data: T[], total = Data.length): HasilTabel<T> {
+    return {
+        Data,
+        Meta: { Halaman: 1, PerHalaman: 25, Total: total, JumlahHalaman: Math.max(1, Math.ceil(total / 25)) },
     };
 }
 

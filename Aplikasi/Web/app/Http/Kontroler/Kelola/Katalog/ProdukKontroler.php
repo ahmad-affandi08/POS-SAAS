@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Katalog;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Aksi\ArsipkanProduk;
 use App\Domain\Katalog\Aksi\BuatBarcodeInternal;
 use App\Domain\Katalog\Aksi\HapusProduk;
@@ -27,7 +28,8 @@ use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\Katalog\SimpanProdukPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,28 +41,22 @@ use Inertia\Response;
  */
 final class ProdukKontroler extends DasarKatalogKontroler
 {
-    public function Daftar(Request $permintaan, DaftarProduk $daftar, PohonKategori $pohon): Response
+    public function Daftar(Request $permintaan, DaftarProduk $daftar, PohonKategori $pohon): Response|JsonResponse
     {
-        $saring = (array) $permintaan->input('saring', []);
-        $uuidKategori = is_string($saring['Kategori'] ?? null) && $saring['Kategori'] !== '' ? $saring['Kategori'] : null;
-        $jenis = is_string($saring['Jenis'] ?? null) ? JenisProduk::tryFrom($saring['Jenis']) : null;
-        $statusTeks = is_string($saring['Status'] ?? null) ? $saring['Status'] : 'Aktif';
-        $status = $statusTeks === 'Semua' ? null : (StatusProduk::tryFrom($statusTeks) ?? StatusProduk::Aktif);
-        $urut = in_array($permintaan->query('urut'), ['Nama', '-DiubahPada', 'Sku'], true) ? (string) $permintaan->query('urut') : 'Nama';
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarProduk::KOLOM_URUT, 'Nama', DaftarProduk::KOLOM_SARING);
+        $uuidKategori = $tabel->saring['Kategori'] ?? null;
+        $statusTeks = $tabel->saring['Status'] ?? 'Aktif';
         $idKategori = $uuidKategori === null ? null : Kategori::query()->where('Uuid', $uuidKategori)->value('Id');
-        $kata = trim($permintaan->string('kata')->toString());
+        // `kata` = nama parameter lama (tautan tersimpan), `cari` = kontrak TabelData.
+        $kata = $tabel->cari !== '' ? $tabel->cari : trim($permintaan->string('kata')->toString());
+        $saring = new DataSaringProduk(
+            $kata,
+            is_int($idKategori) ? $idKategori : ($uuidKategori === null ? null : 0),
+            JenisProduk::tryFrom($tabel->saring['Jenis'] ?? ''),
+            $statusTeks === 'Semua' ? null : (StatusProduk::tryFrom($statusTeks) ?? StatusProduk::Aktif),
+        );
 
-        $halaman = $daftar->Ambil(new DataSaringProduk($kata, is_int($idKategori) ? $idKategori : ($uuidKategori === null ? null : 0), $jenis, $status, $urut), max(1, $permintaan->integer('halaman', 1)));
-
-        return Inertia::render('Kelola/Produk/Daftar', [
-            'Produk' => DaftarBerhalaman::BuatDariData($halaman, $daftar->Petakan(array_values($halaman->items()))),
-            'Saring' => [
-                'Kata' => $kata,
-                'Kategori' => is_int($idKategori) ? $uuidKategori : null,
-                'Jenis' => $jenis?->value,
-                'Status' => $status === null ? 'Semua' : $status->value,
-                'Urut' => $urut,
-            ],
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Produk/Daftar', 'Produk', fn (): array => $daftar->AmbilTabel($saring, $tabel), fn (): array => [
             'Kategori' => $pohon->AmbilOpsi(),
             'Jenis' => JenisProduk::AmbilDaftarAturan(),
             'BatasSku' => $this->AmbilBatasSku(),

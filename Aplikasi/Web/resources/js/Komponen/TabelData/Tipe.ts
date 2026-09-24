@@ -31,6 +31,11 @@ export type DefinisiSaring = {
     opsi?: OpsiSaring[];
     /** Label chip untuk saring `ya` (mis. "Perlu ditinjau"). */
     labelAktif?: string;
+    /**
+     * Nilai yang berlaku server saat saring kosong (mis. status `Aktif`). Ditampilkan sebagai pilihan terpilih dan
+     * tidak ditulis ke URL; memilih nilai ini kembali mengosongkan saring.
+     */
+    nilaiBawaan?: string;
 };
 
 /** Prioritas tampil kolom di layar sempit (§17.4.4). */

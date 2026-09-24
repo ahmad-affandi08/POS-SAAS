@@ -78,8 +78,11 @@ export function RingkasSaring(definisi: DefinisiSaring, nilai: string): string {
 type PropsPenyunting = { definisi: DefinisiSaring; nilai: string; saatBerubah: (nilai: string) => void };
 
 /** Isi penyunting satu saring; dipakai di Popover (desktop) dan Sheet "Saring" (HP). */
-export function PenyuntingSaring({ definisi, nilai, saatBerubah }: PropsPenyunting) {
+export function PenyuntingSaring({ definisi, nilai: nilaiUrl, saatBerubah: TulisUrl }: PropsPenyunting) {
     const id = useId();
+    const bawaan = definisi.nilaiBawaan ?? '';
+    const nilai = nilaiUrl === '' ? bawaan : nilaiUrl;
+    const SaatBerubah = (baru: string) => TulisUrl(baru === bawaan ? '' : baru);
 
     if (definisi.jenis === 'ya') {
         return (
@@ -87,14 +90,14 @@ export function PenyuntingSaring({ definisi, nilai, saatBerubah }: PropsPenyunti
                 <Label htmlFor={id} className="text-isi text-teks-utama">
                     {definisi.labelAktif ?? definisi.label}
                 </Label>
-                <Switch id={id} checked={nilai === '1'} onCheckedChange={(aktif) => saatBerubah(aktif ? '1' : '')} />
+                <Switch id={id} checked={nilai === '1'} onCheckedChange={(aktif) => SaatBerubah(aktif ? '1' : '')} />
             </div>
         );
     }
 
     if (definisi.jenis === 'rentangTanggal') {
         const [dari, sampai] = PecahRentang(nilai);
-        const Tulis = (d: string, s: string) => saatBerubah(d === '' && s === '' ? '' : `${d}..${s}`);
+        const Tulis = (d: string, s: string) => SaatBerubah(d === '' && s === '' ? '' : `${d}..${s}`);
 
         return (
             <div className="flex flex-col gap-3">
@@ -106,7 +109,7 @@ export function PenyuntingSaring({ definisi, nilai, saatBerubah }: PropsPenyunti
                             size="sm"
                             variant={preset.nilai === nilai ? 'default' : 'outline'}
                             aria-pressed={preset.nilai === nilai}
-                            onClick={() => saatBerubah(preset.nilai)}
+                            onClick={() => SaatBerubah(preset.nilai)}
                             className="text-label"
                         >
                             {preset.label}
@@ -149,7 +152,7 @@ export function PenyuntingSaring({ definisi, nilai, saatBerubah }: PropsPenyunti
     const banyak = definisi.jenis === 'pilihanBanyak';
     const Ganti = (opsi: string, aktif: boolean) => {
         if (!banyak) {
-            saatBerubah(aktif ? opsi : '');
+            SaatBerubah(aktif ? opsi : '');
 
             return;
         }
@@ -163,7 +166,7 @@ export function PenyuntingSaring({ definisi, nilai, saatBerubah }: PropsPenyunti
         }
 
         // Urutan mengikuti daftar opsi agar URL stabil.
-        saatBerubah(
+        SaatBerubah(
             (definisi.opsi ?? [])
                 .map((o) => o.nilai)
                 .filter((n) => baru.has(n))
