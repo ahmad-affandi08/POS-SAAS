@@ -32,6 +32,8 @@ return [
     // BR-03.6: batas berkas impor; di atas `BatasBarisSinkron` baris diproses di antrean per potongan.
     'Impor' => [
         'UkuranMaksimalKb' => 10240,
+        // Total isi xlsx setelah diekstrak (dihitung dari isi nyata, bukan ukuran terdeklarasi): perlindungan bom ZIP.
+        'UkuranEkstrakMaksimalKb' => 204800,
         'MaksimalBaris' => 20000,
         'BatasBarisSinkron' => 300,
         'UkuranPotongan' => 50,

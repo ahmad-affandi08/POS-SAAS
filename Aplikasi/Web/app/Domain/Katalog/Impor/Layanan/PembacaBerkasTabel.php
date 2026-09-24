@@ -39,8 +39,8 @@ final class PembacaBerkasTabel
     /** Batas jumlah kolom yang dibaca (sisanya diabaikan). */
     public const MAKSIMAL_KOLOM = 100;
 
-    /** Batas total isi ZIP xlsx setelah diekstrak (perlindungan bom ZIP). */
-    private const MAKSIMAL_UKURAN_EKSTRAK = 209715200;
+    /** Batas bawaan total isi ZIP xlsx setelah diekstrak (perlindungan bom ZIP), KB; `katalog.Impor.UkuranEkstrakMaksimalKb`. */
+    private const MAKSIMAL_UKURAN_EKSTRAK_KB = 204800;
 
     /**
      * Jenis berkas dari isinya. Ekstensi `namaAsli` harus xlsx/csv dan sama dengan isinya.
@@ -365,16 +365,49 @@ final class PembacaBerkasTabel
                 return false;
             }
 
-            $total = 0;
+            // Ukuran di direktori pusat bisa dipalsukan (libzip tetap mengekstrak isi sebenarnya), jadi isi setiap
+            // entri benar-benar dibaca dan dihitung; berhenti begitu melewati batas.
+            $sisa = self::AmbilUkuranEkstrakMaksimal();
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
-                $total += (int) ($zip->statIndex($i)['size'] ?? 0);
+                $aliran = $zip->getStreamIndex($i);
+
+                if (! is_resource($aliran)) {
+                    return false;
+                }
+
+                try {
+                    while (! feof($aliran)) {
+                        $potongan = fread($aliran, 1048576);
+
+                        if ($potongan === false) {
+                            return false;
+                        }
+
+                        $sisa -= strlen($potongan);
+
+                        if ($sisa < 0) {
+                            return false;
+                        }
+
+                        if ($potongan === '') {
+                            break;
+                        }
+                    }
+                } finally {
+                    fclose($aliran);
+                }
             }
 
-            return $total <= self::MAKSIMAL_UKURAN_EKSTRAK;
+            return true;
         } finally {
             $zip->close();
         }
+    }
+
+    private static function AmbilUkuranEkstrakMaksimal(): int
+    {
+        return (int) config('katalog.Impor.UkuranEkstrakMaksimalKb', self::MAKSIMAL_UKURAN_EKSTRAK_KB) * 1024;
     }
 
     /** Teks bila tidak ada bita kendali biner (selain tab, LF, CR, FF) atau diawali BOM UTF-16. */
