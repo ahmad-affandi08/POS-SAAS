@@ -108,7 +108,10 @@ export default function PenyuntingAtributVarian({
                         <ul className="flex flex-wrap gap-2" aria-label={`Nilai ${atribut.Nama || 'atribut'}`}>
                             {atribut.Nilai.map((item) => (
                                 <li key={item}>
-                                    <Badge variant="secondary" className="gap-2 overflow-visible py-1 text-label font-normal">
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-2 overflow-visible py-1 text-label font-normal"
+                                    >
                                         <span className="break-all whitespace-normal">{item}</span>
                                         {!disabled ? (
                                             <Button

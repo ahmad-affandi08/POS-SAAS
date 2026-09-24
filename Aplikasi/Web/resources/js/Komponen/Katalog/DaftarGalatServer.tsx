@@ -20,7 +20,9 @@ export default function DaftarGalatServer({
         <div aria-live="polite" aria-atomic="true">
             {pesan.length > 0 ? (
                 <Alert variant="destructive" className="rounded-panel border-l-4 border-bahaya">
-                    <AlertTitle className="text-label font-semibold text-teks-utama">Perubahan tidak disimpan</AlertTitle>
+                    <AlertTitle className="text-label font-semibold text-teks-utama">
+                        Perubahan tidak disimpan
+                    </AlertTitle>
                     <AlertDescription className="text-isi text-teks-sekunder">
                         <ul className="list-disc pl-5">
                             {pesan.map((item) => (

@@ -90,7 +90,9 @@ describe('Kelola/Produk/Daftar (DesainF03 E.2)', () => {
 
     it('arsipkan mengirim POST; tanpa izin kelola tombol disembunyikan dan alasannya tertulis', () => {
         render(<HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHalaman([BuatBarisProduk(1)]) })} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Arsipkan Produk 1' }));
+        // Aksi baris ada di DropdownMenu (Radix): dibuka dengan keyboard, lalu item "Arsipkan" dipilih.
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi untuk Produk 1' }), { key: 'Enter' });
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Arsipkan' }));
         expect(tiruanRouter.post).toHaveBeenCalledWith(
             `/kelola/produk/${BuatBarisProduk(1).Uuid}/arsipkan`,
             {},
@@ -102,6 +104,7 @@ describe('Kelola/Produk/Daftar (DesainF03 E.2)', () => {
             <HalamanDaftarProduk {...PropsDaftar({ Produk: BuatHalaman([BuatBarisProduk(1)]), Izin: IzinLihat })} />,
         );
         expect(screen.queryByRole('button', { name: /Arsipkan/ })).toBeNull();
+        expect(screen.queryByRole('button', { name: /Aksi untuk/ })).toBeNull();
         expect(screen.queryByRole('link', { name: 'Tambah produk' })).toBeNull();
         expect(screen.getByText('Hanya bisa melihat')).toBeTruthy();
     });

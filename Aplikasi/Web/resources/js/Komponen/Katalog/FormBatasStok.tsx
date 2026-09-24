@@ -90,7 +90,10 @@ export default function FormBatasStok({
                             <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
                                 Minimum ({simbolSatuan})
                             </TableHead>
-                            <TableHead scope="col" className="pr-0 text-right text-label font-semibold text-teks-sekunder">
+                            <TableHead
+                                scope="col"
+                                className="pr-0 text-right text-label font-semibold text-teks-sekunder"
+                            >
                                 Maksimum ({simbolSatuan})
                             </TableHead>
                         </TableRow>

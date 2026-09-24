@@ -27,7 +27,7 @@ if (typeof Element.prototype.scrollIntoView !== 'function') {
     Element.prototype.scrollIntoView = () => undefined;
 }
 
-export type KirimanUji ={ metode: 'post' | 'put' | 'delete'; url: string; data: unknown };
+export type KirimanUji = { metode: 'post' | 'put' | 'delete'; url: string; data: unknown };
 
 /** Semua pengiriman `useForm().post/put/delete` selama test. */
 export const kirimanForm: KirimanUji[] = [];

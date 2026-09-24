@@ -60,10 +60,7 @@ export default function GrupRadio<T extends string>({
                             aria-invalid={galat ? true : undefined}
                             className="mt-0.5"
                         />
-                        <Label
-                            htmlFor={`${id}-${item.Nilai}`}
-                            className="block text-isi font-normal text-teks-utama"
-                        >
+                        <Label htmlFor={`${id}-${item.Nilai}`} className="block text-isi font-normal text-teks-utama">
                             {item.Label}
                             {item.Keterangan ? (
                                 <span className="block text-keterangan text-teks-sekunder">{item.Keterangan}</span>

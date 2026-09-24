@@ -214,11 +214,7 @@ export default function PemilihProduk({
                             }
                         }}
                     >
-                        <CommandList
-                            ref={AturRefDaftar}
-                            label={`Hasil ${label}`}
-                            className="max-h-72"
-                        >
+                        <CommandList ref={AturRefDaftar} label={`Hasil ${label}`} className="max-h-72">
                             {hasil.map((produk) => (
                                 <CommandItem
                                     key={produk.Uuid}
