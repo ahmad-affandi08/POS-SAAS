@@ -28,7 +28,7 @@ describe('LogAuditPengelola append-only (BR-P01.3)', function (): void {
 
         $this->actingAs($superAdmin, 'pengelola')
             ->withSession(BantuanPengelola::SesiTerverifikasi())
-            ->get(BantuanPengelola::Url('/log-audit?kata=tim.anggota'))
+            ->get(BantuanPengelola::Url('/log-audit?cari=tim.anggota'))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Pengelola/LogAudit/Daftar')
                 ->has('Log.Data', 1)

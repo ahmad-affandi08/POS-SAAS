@@ -4,51 +4,23 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pengelola;
 
-use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Pengelola\TimInternal\Kueri\DaftarLogAuditPengelola;
 use App\Http\Kontroler\Kontroler;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Log audit Platform Pengelola, hanya baca (BR-P01.3).
+ * Log audit Platform Pengelola, hanya baca (BR-P01.3, TabelData D-16).
  */
 final class LogAuditKontroler extends Kontroler
 {
-    private const PER_HALAMAN = 50;
-
-    public function Daftar(Request $permintaan): Response
+    public function Daftar(Request $permintaan, DaftarLogAuditPengelola $daftar): Response|JsonResponse
     {
-        $kata = trim($permintaan->string('kata')->toString());
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarLogAuditPengelola::KOLOM_URUT, '-DibuatPada', DaftarLogAuditPengelola::KOLOM_SARING);
 
-        $halaman = LogAuditPengelola::query()
-            ->with('Pelaku:Id,Nama,Email')
-            ->when($kata !== '', fn ($kueri) => $kueri->where('Aksi', 'like', '%'.addcslashes($kata, '%_\\').'%'))
-            ->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman')
-            ->withQueryString()
-            ->through(fn (LogAuditPengelola $log): array => [
-                'Id' => $log->Id,
-                'Aksi' => $log->Aksi,
-                'Pelaku' => $log->Pelaku->Nama ?? 'Sistem',
-                'JenisObjek' => $log->JenisObjek,
-                'IdObjek' => $log->IdObjek,
-                'IdTenant' => $log->IdTenant,
-                'NilaiLama' => $log->NilaiLama,
-                'NilaiBaru' => $log->NilaiBaru,
-                'Alasan' => $log->Alasan,
-                'Ip' => $log->Ip,
-                'DibuatPada' => $log->DibuatPada->toIso8601String(),
-            ]);
-
-        return Inertia::render('Pengelola/LogAudit/Daftar', [
-            'Log' => [
-                'Data' => $halaman->items(),
-                'HalamanSaatIni' => $halaman->currentPage(),
-                'HalamanTerakhir' => $halaman->lastPage(),
-                'Total' => $halaman->total(),
-            ],
-            'Saring' => ['Kata' => $kata],
-        ]);
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/LogAudit/Daftar', 'Log', fn (): array => $daftar->AmbilTabel($tabel));
     }
 }
