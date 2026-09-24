@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 
 import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/PasangAplikasi.dart';
@@ -31,7 +32,7 @@ void main() {
     await Lepas(tester, u);
   });
 
-  testWidgets('BR-06.3 offline: pilih kasir, PIN, buka shift dengan pecahan → layar shift & outbox tertunda', (
+  testWidgets('BR-06.3 offline: pilih kasir, PIN, buka shift dengan pecahan → ruang kerja & outbox tertunda', (
     tester,
   ) async {
     final u = LingkunganUji.Buat();
@@ -58,9 +59,20 @@ void main() {
     await tester.tap(find.text('Buka shift'));
     await Tunggu(tester, const Duration(seconds: 1));
 
-    expect(find.text('Shift Rina Wulandari'), findsOneWidget);
-    expect(find.text('Rp 250.000'), findsWidgets);
+    // Shift terbuka → Ruang Kerja Kasir dengan beranda Jual; kasir di bilah atas; status tertunda & offline terlihat.
+    expect(find.byType(RuangKerja), findsOneWidget);
+    expect(find.text('Layar jual belum tersedia'), findsOneWidget);
+    expect(find.text('Rina Wulandari'), findsOneWidget);
     expect(find.text('1 belum terkirim'), findsOneWidget);
+    expect(find.text('Offline'), findsOneWidget);
+
+    await tester.tap(find.text('Kas'));
+    await Tunggu(tester);
+    expect(find.text('Rp 250.000'), findsWidgets);
+    await tester.tap(find.text('Shift'));
+    await Tunggu(tester);
+    expect(find.text('Dibuka oleh'), findsOneWidget);
+    expect(find.text('Rina Wulandari'), findsWidgets);
     await Lepas(tester, u);
   });
 
@@ -87,8 +99,12 @@ void main() {
     await tester.tap(find.text('Buka shift'));
     await Tunggu(tester, const Duration(seconds: 1));
 
-    await tester.tap(find.text('Kas keluar'));
+    await tester.tap(find.text('Kas'));
     await Tunggu(tester);
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Kas keluar'));
+    await Tunggu(tester);
+    // Formulir dibuka sebagai panel di atas area kerja (bukan halaman baru).
+    expect(find.text('Kas keluar'), findsNWidgets(2));
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await Tunggu(tester);
     await tester.tap(find.text('Beli es batu & galon').last);
@@ -103,6 +119,7 @@ void main() {
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));
 
+    expect(find.text('Kas keluar'), findsOneWidget, reason: 'Panel tertutup setelah tersimpan.');
     expect(find.text('Beli es batu & galon'), findsOneWidget);
     expect(find.textContaining('disetujui supervisor'), findsOneWidget);
     expect(find.text('Rp 150.000'), findsOneWidget);

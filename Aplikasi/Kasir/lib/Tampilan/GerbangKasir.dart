@@ -5,9 +5,10 @@ import '../Aplikasi/Penyedia.dart';
 import 'LayarAktivasi.dart';
 import 'LayarBukaShift.dart';
 import 'LayarPilihKasir.dart';
-import 'LayarShift.dart';
+import 'RuangKerja/RuangKerja.dart';
 
-/// Menentukan layar menurut sesi: aktivasi → pilih kasir & PIN → buka shift → shift berjalan.
+/// Menentukan layar menurut sesi: aktivasi → pilih kasir & PIN → buka shift → Ruang Kerja Kasir (§17.2.7) selama
+/// shift terbuka, termasuk layar kunci & ganti kasir.
 class GerbangKasir extends ConsumerWidget {
   const GerbangKasir({super.key});
 
@@ -24,8 +25,9 @@ class GerbangKasir extends ConsumerWidget {
             .when(
               loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
               error: (galat, _) => Scaffold(body: Center(child: Text('Data shift tidak bisa dibaca: $galat'))),
-              data: (shift) =>
-                  shift == null ? LayarBukaShift(kasir: sesi.kasir!) : LayarShift(shift: shift, kasir: sesi.kasir!),
+              data: (shift) => shift == null
+                  ? LayarBukaShift(kasir: sesi.kasir!)
+                  : RuangKerja(shift: shift, kasir: sesi.kasir!, kunci: sesi.kunci),
             ),
     };
   }

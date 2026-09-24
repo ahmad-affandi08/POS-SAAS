@@ -24,6 +24,11 @@ abstract final class KunciPengaturan {
   static const String batasSalahPin = 'BatasSalahPin';
   static const String menitKunciPin = 'MenitKunciPin';
   static const String dataAwalPada = 'DataAwalPada';
+
+  // Pengaturan lokal perangkat (D-16, §17.2.7). Tidak ikut diganti data awal dan tidak dihapus saat perangkat dicabut.
+  static const String ukuranTampilan = 'UkuranTampilan';
+  static const String posisiKeranjang = 'PosisiKeranjang';
+  static const String menitKunciOtomatis = 'MenitKunciOtomatis';
 }
 
 /// Status shift lokal (sama dengan server).
