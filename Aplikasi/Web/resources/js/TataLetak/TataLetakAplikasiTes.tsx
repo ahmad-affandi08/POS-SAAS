@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 
-import TataLetakAplikasi, { CariMenuProdukAktif, CekMenuAktif } from './TataLetakAplikasi';
+import TataLetakAplikasi, { CariMenuProdukAktif, CekMenuAktif, SaringMenuTerlihat } from './TataLetakAplikasi';
 
 let propsHalaman: PropsBersamaAplikasi;
 let urlHalaman = '/kelola';
@@ -137,6 +137,97 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         propsHalaman = BuatProps({}, ['produk.lihat']);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
         expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
+    });
+
+    it('F-05a: grup Persediaan untuk persediaan.lihat; impor & pengaturan tersembunyi tanpa izinnya', () => {
+        propsHalaman = BuatProps({}, ['persediaan.lihat']);
+        urlHalaman = '/kelola/persediaan/stok-awal/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
+        render(<TataLetakAplikasi judul="Stok awal">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        const induk = within(utama).getByRole('link', { name: 'Persediaan' });
+        expect(induk.getAttribute('href')).toBe('/kelola/persediaan/saldo');
+        expect(induk.getAttribute('aria-current')).toBe('page');
+        const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
+        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
+            'Saldo stok',
+            'Kartu stok',
+            'Stok awal',
+        ]);
+        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Stok awal');
+        expect(within(utama).queryByRole('link', { name: 'Akuntansi' })).toBeNull();
+    });
+
+    it('F-05a: persediaan.kelola + akuntansi.kelola melihat Impor stok awal & Pengaturan; awalan terpanjang aktif', () => {
+        propsHalaman = BuatProps({}, ['persediaan.lihat', 'persediaan.kelola', 'akuntansi.kelola']);
+        urlHalaman = '/kelola/persediaan/stok-awal/impor/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
+        render(<TataLetakAplikasi judul="Impor stok awal">isi</TataLetakAplikasi>);
+
+        const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
+        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
+            '/kelola/persediaan/saldo',
+            '/kelola/persediaan/kartu-stok',
+            '/kelola/persediaan/stok-awal',
+            '/kelola/persediaan/stok-awal/impor',
+            '/kelola/persediaan/pengaturan',
+        ]);
+        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Impor stok awal');
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        const aktif = Array.from(utama.querySelectorAll(':scope a[aria-current="page"]')).map((a) => a.textContent);
+        expect(aktif).toEqual(['Persediaan', 'Impor stok awal']);
+    });
+
+    it('F-05a: tanpa persediaan.lihat tetapi dengan akuntansi.kelola, grup Persediaan menuju Pengaturan persediaan', () => {
+        propsHalaman = BuatProps({}, ['akuntansi.kelola']);
+        urlHalaman = '/kelola/persediaan/pengaturan';
+        render(<TataLetakAplikasi judul="Pengaturan persediaan">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        expect(within(utama).getByRole('link', { name: 'Persediaan' }).getAttribute('href')).toBe(
+            '/kelola/persediaan/pengaturan',
+        );
+        const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
+        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Pengaturan persediaan']);
+    });
+
+    it('F-05a: menu Akuntansi › Jurnal hanya untuk laporan.keuangan.lihat', () => {
+        propsHalaman = BuatProps({}, ['laporan.keuangan.lihat']);
+        urlHalaman = '/kelola/akuntansi/jurnal/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
+        render(<TataLetakAplikasi judul="Jurnal">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        expect(within(utama).getByRole('link', { name: 'Akuntansi' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/jurnal',
+        );
+        expect(within(utama).queryByRole('link', { name: 'Persediaan' })).toBeNull();
+        const sub = screen.getByRole('navigation', { name: 'Menu akuntansi' });
+        expect(within(sub).getByRole('link', { name: 'Jurnal' }).getAttribute('aria-current')).toBe('page');
+        cleanup();
+
+        propsHalaman = BuatProps({}, ['produk.lihat', 'persediaan.lihat']);
+        urlHalaman = '/kelola';
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+        expect(screen.queryByRole('link', { name: 'Akuntansi' })).toBeNull();
+        expect(screen.queryByRole('navigation', { name: 'Menu persediaan' })).toBeNull();
+    });
+
+    it('F-05a: Pemilik melihat seluruh menu persediaan dan jurnal; sub-menu aktif memakai awalan terpanjang', () => {
+        expect(SaringMenuTerlihat({ Pemilik: true, Izin: [] }).map(({ menu }) => menu.label)).toEqual([
+            'Beranda',
+            'Outlet',
+            'Produk',
+            'Persediaan',
+            'Akuntansi',
+            'Perangkat',
+            'Pengguna & peran',
+            'Log audit',
+            'Langganan',
+            'Bantuan',
+        ]);
+        expect(SaringMenuTerlihat({ Pemilik: false, Izin: [] }).map(({ menu }) => menu.label)).toEqual(['Beranda']);
+        expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/persediaan/kartu-stok?produk=01J9')).toBe(true);
+        expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/produk')).toBe(false);
+        expect(CekMenuAktif('/kelola/akuntansi/jurnal', '/kelola/akuntansi/jurnal/01J9')).toBe(true);
     });
 
     it('Pengguna & peran tetap aktif di /kelola/peran; aria-current hanya pada satu menu utama', () => {
