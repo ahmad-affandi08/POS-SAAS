@@ -217,6 +217,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Outlet',
             'Produk',
             'Persediaan',
+            'Shift & kas',
             'Akuntansi',
             'Perangkat',
             'Pengguna & peran',
@@ -228,6 +229,10 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/persediaan/kartu-stok?produk=01J9')).toBe(true);
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/produk')).toBe(false);
         expect(CekMenuAktif('/kelola/akuntansi/jurnal', '/kelola/akuntansi/jurnal/01J9')).toBe(true);
+        // F-06: grup "Shift & kas" hanya tampil bila ada sub-menu yang boleh dibuka.
+        expect(
+            SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.penjualan.lihat'] }).map(({ menu }) => menu.label),
+        ).toEqual(['Beranda', 'Shift & kas']);
     });
 
     it('Pengguna & peran tetap aktif di /kelola/peran; aria-current hanya pada satu menu utama', () => {
