@@ -1,0 +1,141 @@
+{
+  "Id": "HRG-DAFTAR-JATUH-001",
+  "Keterangan": "Daftar harga tanpa baris yang berlaku untuk jumlah itu dilewati (tanpa cadangan ke baris terkecil): jatuh ke daftar berikutnya, lalu ke harga dasar.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-GROSIR",
+        "Nama": "Grosir 12+",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 10
+      },
+      {
+        "Uuid": "DH-MEMBER",
+        "Nama": "Member",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 5
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-GROSIR",
+        "JumlahMinimum": "12.0000",
+        "Harga": "4000.00"
+      },
+      {
+        "UuidProduk": "P-SAMPO",
+        "UuidProdukSatuan": "PS-SAMPO-BTL",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "10000.00"
+      },
+      {
+        "UuidProduk": "P-SAMPO",
+        "UuidProdukSatuan": "PS-SAMPO-BTL",
+        "UuidDaftarHarga": "DH-GROSIR",
+        "JumlahMinimum": "12.0000",
+        "Harga": "9000.00"
+      },
+      {
+        "UuidProduk": "P-SAMPO",
+        "UuidProdukSatuan": "PS-SAMPO-BTL",
+        "UuidDaftarHarga": "DH-MEMBER",
+        "JumlahMinimum": "1.0000",
+        "Harga": "9500.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "sabun 5 pcs: daftar grosir belum berlaku, harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "5",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "5000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "sabun 12 pcs: daftar grosir",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "12",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-GROSIR",
+        "JumlahMinimum": "12.0000"
+      }
+    },
+    {
+      "Nama": "sampo 5 botol: jatuh ke daftar member",
+      "Masukan": {
+        "UuidProduk": "P-SAMPO",
+        "UuidProdukSatuan": "PS-SAMPO-BTL",
+        "Jumlah": "5",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "9500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-MEMBER",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "sampo 12 botol: daftar grosir",
+      "Masukan": {
+        "UuidProduk": "P-SAMPO",
+        "UuidProdukSatuan": "PS-SAMPO-BTL",
+        "Jumlah": "12",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "9000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-GROSIR",
+        "JumlahMinimum": "12.0000"
+      }
+    }
+  ]
+}

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Pajak\Kueri;
 
+use App\Domain\Pajak\Enum\KategoriPajakProduk;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\KelompokPajak;
 use App\Domain\Pajak\Model\KelompokPajakDetail;
 
 /**
- * Kelompok pajak tenant aktif (F-01 langkah 3 & 4) dan data jenis pajak platform untuk domain lain.
+ * Kelompok pajak tenant aktif (F-01 langkah 3 & 4; F-03 opsi form produk & impor) dan data jenis pajak platform
+ * untuk domain lain.
  */
 final class DaftarKelompokPajak
 {
@@ -27,6 +29,31 @@ final class DaftarKelompokPajak
                 'LabelDasarPengenaan' => $detail->DasarPengenaan->AmbilLabel(),
             ])->all()),
         ])->all());
+    }
+
+    /**
+     * Opsi kelompok pajak untuk form produk (F-03), urut nama. `LabelKategori` untuk kategori kosong (data lama) =
+     * "Belum dikategorikan".
+     *
+     * @return list<array{Id: int, Uuid: string, Nama: string, Kategori: string|null, LabelKategori: string}>
+     */
+    public function AmbilOpsi(): array
+    {
+        return array_values(KelompokPajak::query()->orderBy('Nama')->orderBy('Id')->get()->map(fn (KelompokPajak $kelompok): array => [
+            'Id' => $kelompok->Id,
+            'Uuid' => $kelompok->Uuid,
+            'Nama' => $kelompok->Nama,
+            'Kategori' => $kelompok->Kategori?->value,
+            'LabelKategori' => $kelompok->Kategori?->AmbilLabel() ?? 'Belum dikategorikan',
+        ])->all());
+    }
+
+    /** Id kelompok pajak tenant ber-kategori tertentu dengan Id terkecil (impor F-03), atau null. */
+    public function CariIdBerdasarkanKategori(KategoriPajakProduk $kategori): ?int
+    {
+        $id = KelompokPajak::query()->where('Kategori', $kategori->value)->orderBy('Id')->value('Id');
+
+        return is_int($id) ? $id : null;
     }
 
     /** Id kelompok pajak tenant dengan nama tertentu (tanpa beda huruf besar/kecil). */

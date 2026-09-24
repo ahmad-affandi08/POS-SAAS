@@ -1,0 +1,105 @@
+{
+  "Id": "HRG-NONAKTIF-001",
+  "Keterangan": "Daftar harga nonaktif diabaikan walau prioritasnya paling tinggi.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-LAMA",
+        "Nama": "Harga lama",
+        "Aktif": false,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 100
+      },
+      {
+        "Uuid": "DH-AKTIF",
+        "Nama": "Harga aktif",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 1
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-LAMA",
+        "JumlahMinimum": "1.0000",
+        "Harga": "3000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-AKTIF",
+        "JumlahMinimum": "1.0000",
+        "Harga": "4900.00"
+      },
+      {
+        "UuidProduk": "P-SIKAT",
+        "UuidProdukSatuan": "PS-SIKAT-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "7500.00"
+      },
+      {
+        "UuidProduk": "P-SIKAT",
+        "UuidProdukSatuan": "PS-SIKAT-PCS",
+        "UuidDaftarHarga": "DH-LAMA",
+        "JumlahMinimum": "1.0000",
+        "Harga": "6000.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "daftar nonaktif dilewati, daftar aktif dipakai",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4900.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-AKTIF",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "hanya daftar nonaktif: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-SIKAT",
+        "UuidProdukSatuan": "PS-SIKAT-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "7500.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

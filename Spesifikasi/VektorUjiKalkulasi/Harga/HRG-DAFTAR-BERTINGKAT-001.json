@@ -1,0 +1,123 @@
+{
+  "Id": "HRG-DAFTAR-BERTINGKAT-001",
+  "Keterangan": "Harga bertingkat di dalam daftar harga: 1-23 = Rp 4.800, 24+ = Rp 4.200 (Sumber tetap DaftarHarga).",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-TOKO",
+        "Nama": "Harga toko",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "5000.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "12.0000",
+        "Harga": "4500.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "1.0000",
+        "Harga": "4800.00"
+      },
+      {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "24.0000",
+        "Harga": "4200.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "1 pcs tingkat 1 daftar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4800.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "23 pcs tingkat 1 daftar (tingkat dasar 12 tidak dipakai)",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "23",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4800.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "24 pcs tingkat 24 daftar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "24",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4200.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "24.0000"
+      }
+    },
+    {
+      "Nama": "100 pcs tingkat 24 daftar",
+      "Masukan": {
+        "UuidProduk": "P-SABUN",
+        "UuidProdukSatuan": "PS-SABUN-PCS",
+        "Jumlah": "100",
+        "UuidOutlet": "O-SLO",
+        "Kanal": null,
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T03:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "4200.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-TOKO",
+        "JumlahMinimum": "24.0000"
+      }
+    }
+  ]
+}
