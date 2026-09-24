@@ -3,8 +3,6 @@ import { useId } from 'react';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { Label } from '@/Komponen/Ui/label';
-// Radix Checkbox di dalam form memakai ResizeObserver (lihat berkas tersebut).
-import '@/TataLetak/CadanganApiPeramban';
 
 import { GalatBidang } from './BagianBidang';
 

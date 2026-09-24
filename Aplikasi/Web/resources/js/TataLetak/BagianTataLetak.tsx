@@ -1,5 +1,3 @@
-import './CadanganApiPeramban';
-
 import { router } from '@inertiajs/react';
 import { ChevronDownIcon, LogOutIcon } from 'lucide-react';
 import type { ReactNode } from 'react';

@@ -1,14 +1,13 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState, type ReactNode } from 'react';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarPengguna from '@/Halaman/Kelola/Pengguna/Daftar';
 import HalamanDaftarPerangkat from '@/Halaman/Kelola/Perangkat/Daftar';
 import HalamanDokumenLegal from '@/Halaman/Pengelola/Legal/Dokumen';
 import TampilTenant from '@/Halaman/Pengelola/Tenant/Tampil';
+import { BukaMenu, PilihTab } from '@/Pengujian/InteraksiRadix';
 import type { Tampilan360 } from '@/Tipe/TenantPengelola';
-
-import { BukaMenu, PasangTiruanDom, PilihTab } from './TiruanDom';
 
 /*
  * Test perilaku halaman milik migrasi shadcn Tim 4: aksi baris lewat DropdownMenu, konfirmasi tindakan
@@ -117,7 +116,6 @@ function AmbilKiriman(): Kiriman[] {
     return uji.kiriman;
 }
 
-beforeAll(() => PasangTiruanDom());
 beforeEach(() => {
     uji.kiriman.length = 0;
     uji.opsiTerakhir = null;

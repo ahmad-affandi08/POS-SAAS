@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState, type ReactNode } from 'react';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanHargaPaket from '@/Halaman/Pengelola/Katalog/HargaPaket';
 import HalamanFitur from '@/Halaman/Pengelola/Katalog/Fitur';
@@ -80,17 +80,6 @@ function AturHalaman(izin: string[], url = '/', galat: Record<string, string> = 
     uji.ubah = null;
     Object.values(uji.router).forEach((fungsi) => fungsi.mockClear());
 }
-
-beforeAll(() => {
-    // jsdom tidak punya ResizeObserver & pointer capture; Radix Popover/Switch memakainya.
-    globalThis.ResizeObserver ??= class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-    };
-    Element.prototype.hasPointerCapture ??= () => false;
-    Element.prototype.scrollIntoView ??= () => {};
-});
 
 beforeEach(() => AturHalaman([]));
 afterEach(() => cleanup());
