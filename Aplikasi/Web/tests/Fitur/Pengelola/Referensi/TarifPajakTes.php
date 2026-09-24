@@ -273,6 +273,42 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         $this->get(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Draf'))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Tarif.Data', 1)->where('Tarif.Data.0.Status', 'Draf'));
     });
+
+    it('TabelData (D-16): JSON di URL yang sama dengan cari, saring status Berakhir & jenis pajak, urut, dan Meta', function (): void {
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        $daerah = ['KodeJenisPajak' => 'PbjtMakananMinuman', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => '33.74'];
+        $lama = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '10', 'BerlakuMulai' => '2026-10-01', 'NomorDasarHukum' => 'Perda Kota Semarang 2 Tahun 2026']);
+        $baru = AjukanTarifBaru($this, $pengaju, [...$daerah, 'Tarif' => '9', 'BerlakuMulai' => '2026-11-01', 'NomorDasarHukum' => 'Perda Kota Semarang 5 Tahun 2026']);
+        Tinjau($this, $keuangan, $lama)->assertSessionHasNoErrors();
+        Tinjau($this, $keuangan, $baru)->assertSessionHasNoErrors();
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif())->assertSessionHasNoErrors();
+        $this->travelTo(Carbon::parse('2026-12-01 10:00:00', 'Asia/Jakarta'));
+        SebagaiPengelola($this, $keuangan);
+
+        $this->getJson(BantuanPengelola::Url('/referensi/tarif-pajak?cari=Semarang'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 2)
+            ->assertJsonPath('Meta.Halaman', 1)
+            ->assertJsonPath('Data.0.Uuid', $baru->Uuid)
+            ->assertJsonPath('Data.1.Uuid', $lama->Uuid);
+        $this->getJson(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Berakhir'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.Uuid', $lama->Uuid)
+            ->assertJsonPath('Data.0.Status', 'Berakhir');
+        $this->getJson(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Terbit'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.Uuid', $baru->Uuid);
+        $this->getJson(BantuanPengelola::Url('/referensi/tarif-pajak?saring[Status]=Draf,Terbit&saring[KodeJenisPajak]=Ppn'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.KodeJenisPajak', 'Ppn');
+        $this->getJson(BantuanPengelola::Url('/referensi/tarif-pajak?urut=BerlakuMulai&saring[KodeJenisPajak]=PbjtMakananMinuman'))
+            ->assertOk()
+            ->assertJsonPath('Data.0.Uuid', $lama->Uuid);
+    });
     it('BR-P02.5: tarif dengan tanggal berlaku lewat tidak bisa diajukan maupun terbit', function (): void {
         $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);

@@ -6,21 +6,20 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
+import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { HasilTabel, KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
-import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import { Button } from '@/Komponen/Ui/button';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
-import { IzinPengelola, PunyaIzin, type DaftarBerhalaman, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Persetujuan = { Peninjau: string; IdPeninjau: number; Keputusan: 'Setuju' | 'Tolak'; Catatan: string | null };
 
@@ -48,9 +47,8 @@ type Tarif = {
 type JenisPajak = { Kode: string; Nama: string; Cakupan: 'Nasional' | 'Daerah' | 'Kustom' };
 
 type PropsTarifPajak = {
-    Tarif: DaftarBerhalaman<Tarif>;
+    Tarif: HasilTabel<Tarif>;
     JenisPajak: JenisPajak[];
-    Saring: { Status: string | null };
     IdPengguna: number;
 };
 
@@ -61,8 +59,86 @@ const labelStatus = {
     Berakhir: { jenis: 'netral', teks: 'Berakhir' },
 } as const;
 
-/** Tarif pajak master bertanggal dengan persetujuan four-eyes (P-02, BR-P02.1, BR-P02.2). */
-export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPengguna }: PropsTarifPajak) {
+const kolom: KolomTabel<Tarif>[] = [
+    {
+        id: 'Pajak',
+        header: 'Pajak',
+        meta: { label: 'Pajak', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: tarif } }) => (
+            <>
+                <span className="block font-semibold text-teks-utama">{tarif.NamaJenisPajak}</span>
+                <span className="block text-keterangan font-normal text-teks-sekunder">
+                    {tarif.KodeWilayah ? `Wilayah ${tarif.KodeWilayah}` : 'Nasional'}
+                    {tarif.BiayaLayananMasukDpp ? ' · biaya layanan masuk DPP' : ''}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Tarif',
+        accessorKey: 'Tarif',
+        header: 'Tarif',
+        meta: { label: 'Tarif', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: tarif } }) => (
+            <>
+                <span className="block text-teks-utama">{FormatPersen(tarif.Tarif)}%</span>
+                <span className="block text-keterangan text-teks-sekunder">
+                    DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'BerlakuMulai',
+        accessorKey: 'BerlakuMulai',
+        header: 'Berlaku',
+        meta: { label: 'Berlaku', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: tarif } }) =>
+            `${FormatTanggal(tarif.BerlakuMulai)} – ${tarif.BerlakuSampai ? FormatTanggal(tarif.BerlakuSampai) : 'seterusnya'}`,
+    },
+    {
+        id: 'DasarHukum',
+        header: 'Dasar hukum',
+        enableSorting: false,
+        meta: { label: 'Dasar hukum', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: tarif } }) =>
+            tarif.TautanDasarHukum ? (
+                <Button asChild variant="link" className="h-auto p-0 text-isi">
+                    <a href={tarif.TautanDasarHukum} target="_blank" rel="noreferrer">
+                        {tarif.NomorDasarHukum ?? 'Dokumen'}
+                    </a>
+                </Button>
+            ) : (
+                (tarif.NomorDasarHukum ?? '—')
+            ),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        enableSorting: false,
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row: { original: tarif } }) => (
+            <>
+                <LabelStatus jenis={labelStatus[tarif.Status].jenis} teks={labelStatus[tarif.Status].teks} />
+                {tarif.Status === 'MenungguTinjauan' ? (
+                    <span className="mt-1 block text-keterangan text-teks-sekunder">
+                        {tarif.JumlahSetuju} dari {tarif.PersetujuanDibutuhkan} persetujuan
+                    </span>
+                ) : null}
+                {tarif.Persetujuan.map((item) => (
+                    <span key={item.IdPeninjau} className="block text-keterangan text-teks-sekunder">
+                        {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
+                        {item.Catatan ? `: ${item.Catatan}` : ''}
+                    </span>
+                ))}
+            </>
+        ),
+    },
+];
+
+/** Tarif pajak master bertanggal dengan persetujuan four-eyes (P-02, BR-P02.1, BR-P02.2), TabelData D-16. */
+export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: PropsTarifPajak) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehAjukan = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiTarifPajakAjukan);
     const bolehSetujui = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiTarifPajakSetujui);
@@ -70,8 +146,12 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
     const [ditinjau, AturDitinjau] = useState<Tarif | null>(null);
     const Ajukan = (tarif: Tarif) =>
         router.post(`/referensi/tarif-pajak/${tarif.Uuid}/ajukan`, {}, { preserveScroll: true });
-    const SaringStatus = (status: string) =>
-        router.get('/referensi/tarif-pajak', status ? { saring: { Status: status } } : {}, { preserveState: true });
+    const BisaTinjau = (tarif: Tarif) =>
+        bolehSetujui &&
+        tarif.Status === 'MenungguTinjauan' &&
+        tarif.IdPengaju !== IdPengguna &&
+        !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
+        !tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
 
     return (
         <TataLetakPengelola
@@ -102,131 +182,63 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, Saring, IdPenggun
                 <FormTinjau key={ditinjau.Uuid} tarif={ditinjau} saatSelesai={() => AturDitinjau(null)} />
             ) : null}
 
-            <div className="w-56">
-                <BidangPilihan
-                    label="Status"
-                    nilai={Saring.Status ?? ''}
-                    kosong="Semua status"
-                    opsi={[
-                        { Nilai: 'Draf', Label: 'Draf' },
-                        { Nilai: 'MenungguTinjauan', Label: 'Menunggu tinjauan' },
-                        { Nilai: 'Terbit', Label: 'Terbit' },
-                    ]}
-                    saatBerubah={SaringStatus}
-                />
-            </div>
+            <TabelData
+                id="pengelola-referensi-tarif-pajak"
+                label="Daftar tarif pajak"
+                kolom={kolom}
+                sumber={{ mode: 'server', alamat: '/referensi/tarif-pajak', awal: Tarif }}
+                ambilIdBaris={(tarif) => tarif.Uuid}
+                urutBawaan="Pajak,-BerlakuMulai"
+                cari="Cari jenis pajak, kode wilayah, atau dasar hukum"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: (['Draf', 'MenungguTinjauan', 'Terbit', 'Berakhir'] as const).map((status) => ({
+                            nilai: status,
+                            label: labelStatus[status].teks,
+                        })),
+                    },
+                    {
+                        id: 'KodeJenisPajak',
+                        label: 'Jenis pajak',
+                        jenis: 'pilihanBanyak',
+                        opsi: JenisPajak.map((jenis) => ({ nilai: jenis.Kode, label: jenis.Nama })),
+                    },
+                ]}
+                {...(bolehAjukan || bolehSetujui
+                    ? {
+                          aksiBaris: (tarif: Tarif) => {
+                              const bisaUbah = bolehAjukan && tarif.Status === 'Draf';
+                              const bisaTinjau = BisaTinjau(tarif);
 
-            {Tarif.Data.length === 0 ? (
-                <KeadaanKosong judul="Belum ada tarif pajak">
-                    Buat draf tarif pertama, lalu ajukan untuk ditinjau.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar tarif pajak">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Pajak</TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Tarif
-                            </TableHead>
-                            <TableHead scope="col">Berlaku</TableHead>
-                            <TableHead scope="col">Dasar hukum</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Tarif.Data.map((tarif) => {
-                            const status = labelStatus[tarif.Status];
-                            const sudahMemutuskan = tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
-                            const bisaTinjau =
-                                bolehSetujui &&
-                                tarif.Status === 'MenungguTinjauan' &&
-                                tarif.IdPengaju !== IdPengguna &&
-                                !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
-                                !sudahMemutuskan;
-
-                            return (
-                                <TableRow key={tarif.Uuid}>
-                                    <TableCell>
-                                        <p className="font-semibold text-teks-utama">{tarif.NamaJenisPajak}</p>
-                                        <p className="text-keterangan text-teks-sekunder">
-                                            {tarif.KodeWilayah ? `Wilayah ${tarif.KodeWilayah}` : 'Nasional'}
-                                            {tarif.BiayaLayananMasukDpp ? ' · biaya layanan masuk DPP' : ''}
-                                        </p>
-                                    </TableCell>
-                                    <TableCell className="text-right tabular-nums">
-                                        <p className="text-teks-utama">{FormatPersen(tarif.Tarif)}%</p>
-                                        <p className="text-keterangan text-teks-sekunder">
-                                            DPP {tarif.PengaliDppPembilang}/{tarif.PengaliDppPenyebut}
-                                        </p>
-                                    </TableCell>
-                                    <TableCell className="text-teks-sekunder">
-                                        {FormatTanggal(tarif.BerlakuMulai)} –{' '}
-                                        {tarif.BerlakuSampai ? FormatTanggal(tarif.BerlakuSampai) : 'seterusnya'}
-                                    </TableCell>
-                                    <TableCell className="text-teks-sekunder">
-                                        {tarif.TautanDasarHukum ? (
-                                            <Button asChild variant="link" className="h-auto p-0 text-isi">
-                                                <a href={tarif.TautanDasarHukum} target="_blank" rel="noreferrer">
-                                                    {tarif.NomorDasarHukum ?? 'Dokumen'}
-                                                </a>
-                                            </Button>
-                                        ) : (
-                                            (tarif.NomorDasarHukum ?? '—')
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <LabelStatus jenis={status.jenis} teks={status.teks} />
-                                        {tarif.Status === 'MenungguTinjauan' ? (
-                                            <p className="mt-1 text-keterangan text-teks-sekunder">
-                                                {tarif.JumlahSetuju} dari {tarif.PersetujuanDibutuhkan} persetujuan
-                                            </p>
-                                        ) : null}
-                                        {tarif.Persetujuan.map((item) => (
-                                            <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
-                                                {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
-                                                {item.Catatan ? `: ${item.Catatan}` : ''}
-                                            </p>
-                                        ))}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-end gap-2">
-                                            {bolehAjukan && tarif.Status === 'Draf' ? (
-                                                <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => AturSunting(tarif)}
-                                                    >
-                                                        Ubah
-                                                    </Button>
-                                                    <Button size="sm" onClick={() => Ajukan(tarif)}>
-                                                        Ajukan
-                                                    </Button>
-                                                </>
-                                            ) : null}
-                                            {bisaTinjau ? (
-                                                <Button size="sm" onClick={() => AturDitinjau(tarif)}>
-                                                    Tinjau
-                                                </Button>
-                                            ) : null}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </PanelTabel>
-            )}
-            <Paginasi
-                alamat="/referensi/tarif-pajak"
-                saring={Saring.Status ? { 'saring[Status]': Saring.Status } : {}}
-                halamanSaatIni={Tarif.HalamanSaatIni}
-                halamanTerakhir={Tarif.HalamanTerakhir}
-                total={Tarif.Total}
-                label="Halaman tarif pajak"
+                              return (
+                                  <>
+                                      {bisaUbah ? (
+                                          <>
+                                              <DropdownMenuItem onSelect={() => AturSunting(tarif)}>
+                                                  Ubah draf
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem onSelect={() => Ajukan(tarif)}>
+                                                  Ajukan untuk ditinjau
+                                              </DropdownMenuItem>
+                                          </>
+                                      ) : null}
+                                      {bisaTinjau ? (
+                                          <DropdownMenuItem onSelect={() => AturDitinjau(tarif)}>
+                                              Tinjau tarif
+                                          </DropdownMenuItem>
+                                      ) : null}
+                                      {!bisaUbah && !bisaTinjau ? (
+                                          <DropdownMenuItem disabled>Tidak ada aksi untuk tarif ini</DropdownMenuItem>
+                                      ) : null}
+                                  </>
+                              );
+                          },
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada tarif pajak. Buat draf tarif pertama, lalu ajukan untuk ditinjau.' }}
             />
         </TataLetakPengelola>
     );

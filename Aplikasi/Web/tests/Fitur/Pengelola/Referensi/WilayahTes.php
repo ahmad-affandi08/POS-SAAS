@@ -70,7 +70,7 @@ describe('Data wilayah (P-02)', function (): void {
         $anggota = BantuanPengelola::BuatAnggota($peran);
         $this->actingAs($anggota, 'pengelola')->withSession(BantuanPengelola::SesiTerverifikasi());
 
-        $this->get(BantuanPengelola::Url('/referensi/wilayah?kata=jawa'))
+        $this->get(BantuanPengelola::Url('/referensi/wilayah?cari=jawa'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/Referensi/Wilayah')->has('Wilayah.Data', 1));
 
@@ -93,8 +93,34 @@ describe('Data wilayah (P-02)', function (): void {
 
         $this->get(BantuanPengelola::Url('/referensi/wilayah?saring[Tingkat]=KabupatenKota'))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Wilayah.Data', 1)->where('Wilayah.Data.0.Kode', '33.74'));
-        $this->get(BantuanPengelola::Url('/referensi/wilayah?kata=%25'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Wilayah.Data', 0));
+        $this->get(BantuanPengelola::Url('/referensi/wilayah?cari=%25'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Wilayah.Data', 0)->where('Wilayah.Meta.Total', 0));
+    });
+
+    it('TabelData (D-16): JSON di URL yang sama dengan cari nama/awalan kode, saring tingkat, urut, dan Meta', function (): void {
+        BuatProvinsiJateng();
+        Wilayah::query()->create(['Kode' => '33.74', 'Nama' => 'Kota Semarang', 'Tingkat' => TingkatWilayah::KabupatenKota, 'KodeInduk' => '33', 'ZonaWaktu' => ZonaWaktu::Wib]);
+        Wilayah::query()->create(['Kode' => '33.22', 'Nama' => 'Kabupaten Semarang', 'Tingkat' => TingkatWilayah::KabupatenKota, 'KodeInduk' => '33', 'ZonaWaktu' => ZonaWaktu::Wib]);
+        $this->actingAs(BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Analis), 'pengelola')->withSession(BantuanPengelola::SesiTerverifikasi());
+
+        $this->getJson(BantuanPengelola::Url('/referensi/wilayah?cari=semarang'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 2)
+            ->assertJsonPath('Meta.JumlahHalaman', 1)
+            ->assertJsonPath('Data.0.Kode', '33.22')
+            ->assertJsonPath('Data.1.Kode', '33.74');
+        $this->getJson(BantuanPengelola::Url('/referensi/wilayah?cari=semarang&urut=-Nama'))
+            ->assertOk()
+            ->assertJsonPath('Data.0.Nama', 'Kota Semarang');
+        $this->getJson(BantuanPengelola::Url('/referensi/wilayah?cari=33.7'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.Nama', 'Kota Semarang');
+        $this->getJson(BantuanPengelola::Url('/referensi/wilayah?saring[Tingkat]=Provinsi&perHalaman=50'))
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Meta.PerHalaman', 50)
+            ->assertJsonPath('Data.0.Kode', '33');
     });
 
     it('tidak bisa dibuka dari domain tenant', function (): void {

@@ -1,56 +1,67 @@
-import { router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useForm, usePage } from '@inertiajs/react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { HasilTabel, KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
-import {
-    IzinPengelola,
-    PunyaIzin,
-    type DaftarBerhalaman,
-    type Pilihan,
-    type PropsBersamaPengelola,
-} from '@/Tipe/Pengelola';
+import { IzinPengelola, PunyaIzin, type Pilihan, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Wilayah = { Kode: string; Nama: string; Tingkat: string; KodeInduk: string | null; ZonaWaktu: string };
 
 type PropsWilayah = {
-    Wilayah: DaftarBerhalaman<Wilayah>;
-    Saring: { Kata: string; Tingkat: string | null };
+    Wilayah: HasilTabel<Wilayah>;
     PilihanTingkat: Pilihan[];
     PilihanZonaWaktu: string[];
 };
 
-/** Data wilayah resmi (P-02). Muat massal lewat perintah server `pengelola:impor-wilayah`. */
-export default function HalamanWilayah({ Wilayah, Saring, PilihanTingkat, PilihanZonaWaktu }: PropsWilayah) {
+function BuatKolom(labelTingkat: Map<string, string>): KolomTabel<Wilayah>[] {
+    return [
+        {
+            id: 'Kode',
+            accessorKey: 'Kode',
+            header: 'Kode',
+            meta: { label: 'Kode', prioritas: 'penting', kelasSel: 'font-mono text-label whitespace-nowrap' },
+        },
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama' },
+        },
+        {
+            id: 'Tingkat',
+            accessorKey: 'Tingkat',
+            header: 'Tingkat',
+            enableSorting: false,
+            meta: { label: 'Tingkat', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => labelTingkat.get(row.original.Tingkat) ?? row.original.Tingkat,
+        },
+        {
+            id: 'ZonaWaktu',
+            accessorKey: 'ZonaWaktu',
+            header: 'Zona waktu',
+            enableSorting: false,
+            meta: { label: 'Zona waktu', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        },
+    ];
+}
+
+/** Data wilayah resmi (P-02), TabelData D-16. Muat massal lewat perintah server `pengelola:impor-wilayah`. */
+export default function HalamanWilayah({ Wilayah, PilihanTingkat, PilihanZonaWaktu }: PropsWilayah) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiWilayahKelola);
-    const [kata, AturKata] = useState(Saring.Kata);
-    const [tingkat, AturTingkat] = useState(Saring.Tingkat ?? '');
     const [sunting, AturSunting] = useState<Wilayah | 'baru' | null>(null);
-    const labelTingkat = new Map(PilihanTingkat.map((item) => [item.Nilai, item.Label]));
-    const saringAktif = {
-        ...(Saring.Kata ? { kata: Saring.Kata } : {}),
-        ...(Saring.Tingkat ? { 'saring[Tingkat]': Saring.Tingkat } : {}),
-    };
-
-    const Cari = (peristiwa: FormEvent) => {
-        peristiwa.preventDefault();
-        router.get(
-            '/referensi/wilayah',
-            { ...(kata ? { kata } : {}), ...(tingkat ? { saring: { Tingkat: tingkat } } : {}) },
-            { preserveState: true },
-        );
-    };
+    const kolom = useMemo(
+        () => BuatKolom(new Map(PilihanTingkat.map((item) => [item.Nilai, item.Label]))),
+        [PilihanTingkat],
+    );
 
     return (
         <TataLetakPengelola
@@ -72,71 +83,32 @@ export default function HalamanWilayah({ Wilayah, Saring, PilihanTingkat, Piliha
                 />
             ) : null}
 
-            <form onSubmit={Cari} className="flex flex-wrap items-end gap-2">
-                <div className="w-full max-w-xs">
-                    <BidangTeks label="Cari nama atau kode" nilai={kata} saatBerubah={AturKata} />
-                </div>
-                <div className="w-48">
-                    <BidangPilihan
-                        label="Tingkat"
-                        nilai={tingkat}
-                        opsi={PilihanTingkat}
-                        saatBerubah={AturTingkat}
-                        kosong="Semua"
-                    />
-                </div>
-                <Tombol type="submit" varian="sekunder">
-                    Cari
-                </Tombol>
-            </form>
-
-            {Wilayah.Data.length === 0 ? (
-                <KeadaanKosong judul="Belum ada wilayah">
-                    {Saring.Kata || Saring.Tingkat
-                        ? 'Tidak ada wilayah yang cocok dengan pencarian.'
-                        : 'Muat data resmi dengan perintah server: php artisan pengelola:impor-wilayah wilayah.csv'}
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar wilayah">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Kode</TableHead>
-                            <TableHead scope="col">Nama</TableHead>
-                            <TableHead scope="col">Tingkat</TableHead>
-                            <TableHead scope="col">Zona waktu</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Wilayah.Data.map((wilayah) => (
-                            <TableRow key={wilayah.Kode}>
-                                <TableCell className="font-mono text-label">{wilayah.Kode}</TableCell>
-                                <TableCell className="text-teks-utama">{wilayah.Nama}</TableCell>
-                                <TableCell className="text-teks-sekunder">
-                                    {labelTingkat.get(wilayah.Tingkat) ?? wilayah.Tingkat}
-                                </TableCell>
-                                <TableCell className="text-teks-sekunder">{wilayah.ZonaWaktu}</TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(wilayah)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
-            <Paginasi
-                alamat="/referensi/wilayah"
-                saring={saringAktif}
-                halamanSaatIni={Wilayah.HalamanSaatIni}
-                halamanTerakhir={Wilayah.HalamanTerakhir}
-                total={Wilayah.Total}
-                label="Halaman wilayah"
+            <TabelData
+                id="pengelola-referensi-wilayah"
+                label="Daftar wilayah"
+                kolom={kolom}
+                sumber={{ mode: 'server', alamat: '/referensi/wilayah', awal: Wilayah }}
+                ambilIdBaris={(wilayah) => wilayah.Kode}
+                urutBawaan="Kode"
+                cari="Cari nama atau kode wilayah"
+                saring={[
+                    {
+                        id: 'Tingkat',
+                        label: 'Tingkat',
+                        jenis: 'pilihanBanyak',
+                        opsi: PilihanTingkat.map((item) => ({ nilai: item.Nilai, label: item.Label })),
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (wilayah: Wilayah) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(wilayah)}>Ubah wilayah</DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada wilayah. Muat data resmi dengan perintah server: php artisan pengelola:impor-wilayah wilayah.csv',
+                }}
             />
         </TataLetakPengelola>
     );
