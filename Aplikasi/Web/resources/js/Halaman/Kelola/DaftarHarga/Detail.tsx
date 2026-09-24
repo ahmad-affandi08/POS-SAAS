@@ -1,15 +1,14 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState } from 'react';
 
-import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { AmbilGalatBerawalan } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormDaftarHarga from '@/Komponen/Katalog/FormDaftarHarga';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
-import SakelarPadat, { KelasSel, usePadatTabel } from '@/Komponen/Katalog/SakelarPadat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,12 +21,8 @@ import {
     AlertDialogTrigger,
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
-import { Skeleton } from '@/Komponen/Ui/skeleton';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatRupiah } from '@/Pustaka/Format';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -49,7 +44,6 @@ export function AmbilBarisBerubah(
 export default function HalamanDetailDaftarHarga({
     DaftarHarga,
     Baris,
-    Saring,
     Outlet,
     Kanal,
     ZonaWaktu,
@@ -57,16 +51,19 @@ export default function HalamanDetailDaftarHarga({
 }: PropsDetailDaftarHarga) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [ubahPengaturan, AturUbahPengaturan] = useState(false);
-    const [kata, AturKata] = useState(Saring.Kata);
-    const [memuat, AturMemuat] = useState(false);
     const [memproses, AturMemproses] = useState(false);
     const [periksa, AturPeriksa] = useState(false);
-    const [padat, AturPadat] = usePadatTabel('DaftarHarga');
-    const [harga, AturHarga] = useState<Record<string, BarisHarga[]>>(() =>
-        Object.fromEntries(Baris.Data.map((baris) => [baris.UuidProdukSatuan, baris.Harga])),
-    );
-    const berubah = AmbilBarisBerubah(Baris.Data, harga);
-    const sel = KelasSel(padat);
+    // Isian yang diubah (per produk-satuan) dan baris yang sudah pernah tampil, agar perubahan di beberapa
+    // halaman tabel tersimpan sekaligus.
+    const [ubahan, AturUbahan] = useState<Record<string, BarisHarga[]>>({});
+    const [dilihat, AturDilihat] = useState<Record<string, BarisProdukDaftar>>({});
+    const [urutanKiriman, AturUrutanKiriman] = useState<string[]>([]);
+    const barisDilihat = Object.values(dilihat);
+    const harga: Record<string, BarisHarga[]> = {
+        ...Object.fromEntries(barisDilihat.map((baris) => [baris.UuidProdukSatuan, baris.Harga])),
+        ...ubahan,
+    };
+    const berubah = AmbilBarisBerubah(barisDilihat, harga);
     const alamat = `/kelola/daftar-harga/${DaftarHarga.Uuid}`;
     const formAwal = {
         Nama: DaftarHarga.Nama,
@@ -78,25 +75,22 @@ export default function HalamanDetailDaftarHarga({
         Prioritas: DaftarHarga.Prioritas,
     };
 
-    const Cari = (peristiwa: FormEvent) => {
-        peristiwa.preventDefault();
-        router.get(alamat, kata.trim() === '' ? {} : { kata: kata.trim() }, {
-            preserveState: true,
-            onStart: () => AturMemuat(true),
-            onFinish: () => AturMemuat(false),
-        });
-    };
+    const CatatDilihat = useCallback((baris: BarisProdukDaftar[]) => {
+        AturDilihat((lama) => ({
+            ...lama,
+            ...Object.fromEntries(
+                baris.filter((b) => !(b.UuidProdukSatuan in lama)).map((b) => [b.UuidProdukSatuan, b]),
+            ),
+        }));
+    }, []);
 
     const UbahStatus = () =>
         router.post(`${alamat}/${DaftarHarga.Aktif ? 'nonaktifkan' : 'aktifkan'}`, {}, { preserveScroll: true });
 
     const Simpan = () => {
         AturPeriksa(true);
-        const salah = Baris.Data.some((baris) => {
-            const hasil = PeriksaBarisHarga(harga[baris.UuidProdukSatuan] ?? [], {
-                wajibDasar: false,
-                bolehDesimal: true,
-            });
+        const salah = berubah.some((baris) => {
+            const hasil = PeriksaBarisHarga(baris.Harga, { wajibDasar: false, bolehDesimal: true });
 
             return Object.keys(hasil.perBaris).length > 0;
         });
@@ -105,12 +99,74 @@ export default function HalamanDetailDaftarHarga({
             return;
         }
 
+        AturUrutanKiriman(berubah.map((baris) => baris.UuidProdukSatuan));
         router.put(
             `${alamat}/harga`,
             { Baris: berubah },
-            { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
+            {
+                preserveScroll: true,
+                onStart: () => AturMemproses(true),
+                onFinish: () => AturMemproses(false),
+                onSuccess: () => {
+                    // Harga tersimpan menjadi harga awal baru: baris dimuat ulang dari server.
+                    AturUbahan({});
+                    AturDilihat({});
+                    AturPeriksa(false);
+                },
+            },
         );
     };
+
+    const kolom: KolomTabel<BarisProdukDaftar>[] = [
+        {
+            id: 'Produk',
+            header: 'Produk',
+            enableSorting: false,
+            meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: baris } }) => (
+                <>
+                    <span className="block font-semibold break-words text-teks-utama">{baris.NamaProduk}</span>
+                    <span className="text-keterangan font-normal text-teks-sekunder">
+                        <span className="font-mono">{baris.Sku ?? 'Tanpa SKU'}</span> · per {baris.NamaSatuan}
+                    </span>
+                </>
+            ),
+        },
+        {
+            id: 'HargaDasar',
+            header: 'Harga dasar',
+            enableSorting: false,
+            meta: { label: 'Harga dasar', angka: true, prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => (row.original.HargaDasar === null ? '—' : FormatRupiah(row.original.HargaDasar)),
+        },
+        {
+            id: 'HargaDaftar',
+            header: 'Harga di daftar ini',
+            enableSorting: false,
+            meta: { label: 'Harga di daftar ini', prioritas: 'penting', wajib: true },
+            cell: ({ row: { original: baris } }) => {
+                const indeksKiriman = urutanKiriman.indexOf(baris.UuidProdukSatuan);
+
+                return (
+                    <TabelHargaBertingkat
+                        judul={`Harga ${baris.NamaProduk} per ${baris.NamaSatuan}`}
+                        baris={ubahan[baris.UuidProdukSatuan] ?? baris.Harga}
+                        saatBerubah={(nilai) => AturUbahan((lama) => ({ ...lama, [baris.UuidProdukSatuan]: nilai }))}
+                        simbolSatuan={baris.NamaSatuan}
+                        bolehDesimal
+                        wajibDasar={false}
+                        galatServer={
+                            indeksKiriman < 0
+                                ? {}
+                                : AmbilGalatBerawalan(props.errors, `Baris.${String(indeksKiriman)}.Harga`)
+                        }
+                        tampilkanGalat={periksa}
+                        disabled={!Izin.UbahHarga}
+                    />
+                );
+            },
+        },
+    ];
 
     return (
         <TataLetakAplikasi judul={DaftarHarga.Nama}>
@@ -204,118 +260,23 @@ export default function HalamanDetailDaftarHarga({
                 ) : null}
             </Sheet>
 
-            <form
-                onSubmit={Cari}
-                role="search"
-                aria-label="Cari produk di daftar harga"
-                className="flex flex-wrap items-end gap-2"
-            >
-                <div className="w-full max-w-sm">
-                    <BidangTeks label="Cari produk" nilai={kata} saatBerubah={AturKata} maxLength={100} />
-                </div>
-                <Button type="submit" variant="outline">
-                    Cari
-                </Button>
-                <SakelarPadat padat={padat} saatBerubah={AturPadat} />
-            </form>
-
-            <div aria-live="polite" className="sr-only">
-                {memuat ? 'Memuat produk…' : `${String(Baris.Total)} produk-satuan.`}
-            </div>
-
-            {memuat ? (
-                <Card aria-hidden="true" className="gap-2 p-4">
-                    {[0, 1, 2, 3].map((baris) => (
-                        <Skeleton key={baris} className="h-8" />
-                    ))}
-                </Card>
-            ) : Baris.Data.length === 0 ? (
-                <KeadaanKosong
-                    judul={
-                        Saring.Kata
-                            ? `Tidak ada produk yang cocok dengan "${Saring.Kata}".`
-                            : 'Belum ada produk yang bisa dijual.'
-                    }
-                >
-                    {Saring.Kata ? (
-                        <Link href={alamat} className="font-semibold text-brand underline">
-                            Hapus pencarian
-                        </Link>
-                    ) : null}
-                </KeadaanKosong>
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className={`min-w-[760px] ${padat ? 'text-label' : 'text-isi'}`}>
-                        <TableCaption className="sr-only">Harga produk di {DaftarHarga.Nama}</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className={sel}>
-                                    Produk
-                                </TableHead>
-                                <TableHead scope="col" className={`${sel} text-right`}>
-                                    Harga dasar
-                                </TableHead>
-                                <TableHead scope="col" className={sel}>
-                                    Harga di daftar ini
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Baris.Data.map((baris, indeks) => (
-                                <TableRow key={baris.UuidProdukSatuan} className="align-top">
-                                    <TableHead scope="row" className={`${sel} h-auto font-normal whitespace-normal`}>
-                                        <span className="block font-semibold break-words text-teks-utama">
-                                            {baris.NamaProduk}
-                                        </span>
-                                        <span className="text-keterangan text-teks-sekunder">
-                                            <span className="font-mono">{baris.Sku ?? 'Tanpa SKU'}</span> · per{' '}
-                                            {baris.NamaSatuan}
-                                        </span>
-                                    </TableHead>
-                                    <TableCell className={`${sel} text-right tabular-nums text-teks-sekunder`}>
-                                        {baris.HargaDasar === null ? '—' : FormatRupiah(baris.HargaDasar)}
-                                    </TableCell>
-                                    <TableCell className={`${sel} whitespace-normal`}>
-                                        <TabelHargaBertingkat
-                                            judul={`Harga ${baris.NamaProduk} per ${baris.NamaSatuan}`}
-                                            baris={harga[baris.UuidProdukSatuan] ?? []}
-                                            saatBerubah={(nilai) =>
-                                                AturHarga({ ...harga, [baris.UuidProdukSatuan]: nilai })
-                                            }
-                                            simbolSatuan={baris.NamaSatuan}
-                                            bolehDesimal
-                                            wajibDasar={false}
-                                            galatServer={AmbilGalatBerawalan(
-                                                props.errors,
-                                                `Baris.${String(indeks)}.Harga`,
-                                            )}
-                                            tampilkanGalat={periksa}
-                                            disabled={!Izin.UbahHarga}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
-            <Paginasi
-                alamat={alamat}
-                saring={Saring.Kata ? { kata: Saring.Kata } : {}}
-                halamanSaatIni={Baris.HalamanSaatIni}
-                halamanTerakhir={Baris.HalamanTerakhir}
-                total={Baris.Total}
-                label="Halaman produk daftar harga"
+            <TabelData
+                id={`katalog-daftar-harga-${DaftarHarga.Uuid}`}
+                label={`Harga produk di ${DaftarHarga.Nama}`}
+                kolom={kolom}
+                sumber={{ mode: 'server', alamat, awal: Baris }}
+                ambilIdBaris={(baris) => baris.UuidProdukSatuan}
+                cari="Cari nama atau SKU produk"
+                saatData={CatatDilihat}
+                kosong={{ judul: 'Belum ada produk yang bisa dijual.' }}
             />
-            {Izin.UbahHarga && Baris.Data.length > 0 ? (
+            {Izin.UbahHarga && barisDilihat.length > 0 ? (
                 <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-garis bg-latar py-3">
                     <Tombol onClick={Simpan} memproses={memproses} disabled={berubah.length === 0}>
                         Simpan harga
                     </Tombol>
                     <span aria-live="polite" className="text-label text-teks-sekunder tabular-nums">
-                        {berubah.length === 0
-                            ? 'Belum ada perubahan di halaman ini.'
-                            : `${String(berubah.length)} produk berubah.`}
+                        {berubah.length === 0 ? 'Belum ada perubahan.' : `${String(berubah.length)} produk berubah.`}
                     </span>
                 </div>
             ) : null}

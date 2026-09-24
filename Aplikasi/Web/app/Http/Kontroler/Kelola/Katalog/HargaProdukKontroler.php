@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Katalog;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Harga\Aksi\SimpanDaftarHarga;
 use App\Domain\Katalog\Harga\Aksi\SimpanHargaDaftarHarga;
 use App\Domain\Katalog\Harga\Aksi\SimpanHargaProduk;
@@ -18,9 +19,10 @@ use App\Domain\Organisasi\Kueri\OutletUtama;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Http\Permintaan\Kelola\Katalog\SimpanHargaDaftarHargaPermintaan;
 use App\Http\Permintaan\Kelola\Katalog\SimpanHargaProdukPermintaan;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -29,14 +31,15 @@ use Inertia\Response;
  */
 final class HargaProdukKontroler extends DasarKatalogKontroler
 {
-    public function Tampilkan(string $produk, Request $permintaan, KepalaProduk $kepala, HargaProdukUntukHalaman $harga, RiwayatHargaProduk $riwayat): Response
+    public function Tampilkan(string $produk, Request $permintaan, KepalaProduk $kepala, HargaProdukUntukHalaman $harga, RiwayatHargaProduk $riwayat): Response|JsonResponse
     {
         $baris = $this->CariProduk($produk);
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), RiwayatHargaProduk::KOLOM_URUT, '-DibuatPada', RiwayatHargaProduk::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Produk/Harga', [
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Produk/Harga', 'Riwayat', fn (): array => $riwayat->AmbilTabel($baris, $tabel), fn (): array => [
             'Kepala' => $kepala->Ambil($baris),
             ...$harga->Ambil($baris),
-            'Riwayat' => $riwayat->Ambil($baris, $permintaan->integer('halaman', 1)),
+            'OpsiSumberRiwayat' => array_map(fn (SumberPerubahanHarga $s): array => ['Nilai' => $s->value, 'Label' => $s->AmbilLabel()], SumberPerubahanHarga::cases()),
             'LabelHargaTermasukPajak' => $this->AmbilLabelHargaTermasukPajak($baris),
             'Izin' => $this->AmbilIzinKatalog(),
         ]);

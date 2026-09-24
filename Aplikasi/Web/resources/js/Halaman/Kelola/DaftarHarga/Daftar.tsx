@@ -3,8 +3,9 @@ import { useState } from 'react';
 
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormDaftarHarga, { DaftarHargaKosong } from '@/Komponen/Katalog/FormDaftarHarga';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,11 +18,8 @@ import {
     AlertDialogTrigger,
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -94,6 +92,78 @@ function TombolStatusDaftar({ daftar }: { daftar: BarisDaftarHarga }) {
     );
 }
 
+const kolom: KolomTabel<BarisDaftarHarga>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => (
+            <Link
+                href={`/kelola/daftar-harga/${row.original.Uuid}`}
+                className="font-semibold break-words text-brand underline"
+            >
+                {row.original.Nama}
+            </Link>
+        ),
+    },
+    {
+        id: 'BerlakuUntuk',
+        header: 'Berlaku untuk',
+        enableSorting: false,
+        meta: { label: 'Berlaku untuk', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: daftar } }) =>
+            [
+                daftar.NamaOutlet === null ? 'Semua outlet' : daftar.NamaOutlet.join(', '),
+                daftar.LabelKanal ?? 'Semua kanal',
+                daftar.TierPelanggan ? `Pelanggan ${daftar.TierPelanggan}` : null,
+            ]
+                .filter(Boolean)
+                .join(' · '),
+    },
+    {
+        id: 'Periode',
+        header: 'Periode',
+        enableSorting: false,
+        meta: { label: 'Periode', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => RingkasPeriode(row.original),
+    },
+    {
+        id: 'Prioritas',
+        accessorKey: 'Prioritas',
+        header: 'Prioritas',
+        meta: { label: 'Prioritas', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => row.original.Prioritas,
+    },
+    {
+        id: 'JumlahProduk',
+        header: 'Produk',
+        enableSorting: false,
+        meta: { label: 'Jumlah produk', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => row.original.JumlahProduk,
+    },
+    {
+        id: 'Status',
+        header: 'Status',
+        enableSorting: false,
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus
+                jenis={row.original.Aktif ? 'sukses' : 'netral'}
+                teks={row.original.Aktif ? 'Aktif' : 'Nonaktif'}
+            />
+        ),
+    },
+];
+
+const kolomAksi: KolomTabel<BarisDaftarHarga> = {
+    id: 'UbahStatus',
+    header: () => <span className="sr-only">Ubah status</span>,
+    enableSorting: false,
+    meta: { label: 'Ubah status', wajib: true, kelasSel: 'text-right' },
+    cell: ({ row }) => <TombolStatusDaftar daftar={row.original} />,
+};
+
 /** F-03 daftar harga per outlet, kanal, tingkat pelanggan, dan periode. Tidak pernah dihapus, hanya dinonaktifkan. */
 export default function HalamanDaftarDaftarHarga({
     DaftarHarga,
@@ -144,90 +214,33 @@ export default function HalamanDaftarDaftarHarga({
                 ) : null}
             </Sheet>
 
-            {DaftarHarga.Data.length === 0 ? (
-                <KeadaanKosong judul="Belum ada daftar harga. Semua produk memakai harga dasar." />
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[860px] text-isi">
-                        <TableCaption className="sr-only">Daftar harga, {DaftarHarga.Total} daftar</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Nama
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Berlaku untuk
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Periode
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Prioritas
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Produk
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Status
-                                </TableHead>
-                                {Izin.UbahHarga ? (
-                                    <TableHead scope="col" className="px-4">
-                                        <span className="sr-only">Aksi</span>
-                                    </TableHead>
-                                ) : null}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {DaftarHarga.Data.map((daftar) => (
-                                <TableRow key={daftar.Uuid} className="align-top">
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <Link
-                                            href={`/kelola/daftar-harga/${daftar.Uuid}`}
-                                            className="font-semibold break-words text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        >
-                                            {daftar.Nama}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                        {[
-                                            daftar.NamaOutlet === null ? 'Semua outlet' : daftar.NamaOutlet.join(', '),
-                                            daftar.LabelKanal ?? 'Semua kanal',
-                                            daftar.TierPelanggan ? `Pelanggan ${daftar.TierPelanggan}` : null,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                        {RingkasPeriode(daftar)}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">{daftar.Prioritas}</TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">
-                                        {daftar.JumlahProduk}
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        <LabelStatus
-                                            jenis={daftar.Aktif ? 'sukses' : 'netral'}
-                                            teks={daftar.Aktif ? 'Aktif' : 'Nonaktif'}
-                                        />
-                                    </TableCell>
-                                    {Izin.UbahHarga ? (
-                                        <TableCell className="px-4 text-right">
-                                            <TombolStatusDaftar daftar={daftar} />
-                                        </TableCell>
-                                    ) : null}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
-            <Paginasi
-                alamat="/kelola/daftar-harga"
-                saring={{}}
-                halamanSaatIni={DaftarHarga.HalamanSaatIni}
-                halamanTerakhir={DaftarHarga.HalamanTerakhir}
-                total={DaftarHarga.Total}
-                label="Halaman daftar harga"
+            <TabelData
+                id="katalog-daftar-harga"
+                label="Daftar harga"
+                kolom={Izin.UbahHarga ? [...kolom, kolomAksi] : kolom}
+                sumber={{ mode: 'server', alamat: '/kelola/daftar-harga', awal: DaftarHarga }}
+                ambilIdBaris={(daftar) => daftar.Uuid}
+                urutBawaan="-Prioritas"
+                cari="Cari nama daftar harga"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihan',
+                        opsi: [
+                            { nilai: 'Aktif', label: 'Aktif' },
+                            { nilai: 'Nonaktif', label: 'Nonaktif' },
+                        ],
+                    },
+                    {
+                        id: 'Kanal',
+                        label: 'Kanal',
+                        jenis: 'pilihanBanyak',
+                        opsi: Kanal.map((k) => ({ nilai: k.Nilai, label: k.Label })),
+                    },
+                ]}
+                alamatDetail={(daftar) => `/kelola/daftar-harga/${daftar.Uuid}`}
+                kosong={{ judul: 'Belum ada daftar harga. Semua produk memakai harga dasar.' }}
             />
         </TataLetakAplikasi>
     );

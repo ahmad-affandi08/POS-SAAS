@@ -98,7 +98,7 @@ describe('F-03 daftar harga (E.7)', function (): void {
 
         BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Kasir)->get('/kelola/daftar-harga')->assertOk()
             ->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/DaftarHarga/Daftar')
-                ->where('DaftarHarga.Total', 2)
+                ->where('DaftarHarga.Meta.Total', 2)
                 ->where('DaftarHarga.Data.0.Nama', 'Harga Bandara')
                 ->where('DaftarHarga.Data.0.NamaOutlet', ['Outlet Bandara Soetta'])
                 ->where('DaftarHarga.Data.0.LabelKanal', 'Bawa pulang')
@@ -109,6 +109,11 @@ describe('F-03 daftar harga (E.7)', function (): void {
                 ->has('Kanal', count(KanalPenjualan::cases()))
                 ->where('ZonaWaktu', 'Asia/Jakarta')
                 ->where('Izin.UbahHarga', false));
+
+        // TabelData (D-16): saring status & cari nama dari URL yang sama sebagai JSON.
+        $kasir = BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $kasir->getJson('/kelola/daftar-harga?saring[Status]=Nonaktif')->assertOk()->assertJsonPath('Meta.Total', 1)->assertJsonPath('Data.0.Nama', 'Harga Lama');
+        $kasir->getJson('/kelola/daftar-harga?cari=bandara')->assertOk()->assertJsonPath('Meta.Total', 1)->assertJsonPath('Data.0.Nama', 'Harga Bandara');
     });
 
     it('detail: form, baris satuan yang dijual (yang punya harga di daftar dulu), pencarian kata', function (): void {
@@ -126,16 +131,16 @@ describe('F-03 daftar harga (E.7)', function (): void {
                 ->where('DaftarHarga.UuidOutlet', [])
                 ->where('DaftarHarga.MulaiPada', '')
                 ->where('DaftarHarga.Prioritas', '0')
-                ->where('Baris.Total', 2)
+                ->where('Baris.Meta.Total', 2)
                 ->where('Baris.Data.0.NamaProduk', 'Minyak Zaitun Extra Virgin 250 ml')
                 ->where('Baris.Data.0.HargaDasar', '85000.00')
                 ->where('Baris.Data.0.Harga', [['JumlahMinimum' => '12.0000', 'Harga' => '80000.00']])
                 ->where('Baris.Data.1.UuidProduk', $sabun->Uuid)
-                ->where('Baris.Data.1.Harga', [])
-                ->where('Saring.Kata', ''));
+                ->where('Baris.Data.1.Harga', []));
 
-        $masuk()->get("/kelola/daftar-harga/{$daftar->Uuid}?kata=sabun")
-            ->assertInertia(fn (AssertableInertia $h) => $h->where('Baris.Total', 1)->where('Saring.Kata', 'sabun'));
+        $masuk()->get("/kelola/daftar-harga/{$daftar->Uuid}?cari=sabun")
+            ->assertInertia(fn (AssertableInertia $h) => $h->where('Baris.Meta.Total', 1));
+        $masuk()->getJson("/kelola/daftar-harga/{$daftar->Uuid}?cari=sabun")->assertOk()->assertJsonPath('Meta.Total', 1)->assertJsonPath('Data.0.UuidProduk', $sabun->Uuid);
     });
 
     it('BR-03.3 menyimpan harga di daftar (tingkat tanpa harga dasar boleh), riwayat ber-IdDaftarHarga, galat Baris.{i}', function (): void {
@@ -200,7 +205,7 @@ describe('F-03 daftar harga (E.7)', function (): void {
         $masukLain()->put("/kelola/daftar-harga/{$daftar->Uuid}", IsiFormDaftarHarga())->assertNotFound();
         $masukLain()->post("/kelola/daftar-harga/{$daftar->Uuid}/nonaktifkan")->assertNotFound();
         $masukLain()->put("/kelola/daftar-harga/{$daftar->Uuid}/harga", ['Baris' => []])->assertNotFound();
-        $masukLain()->get('/kelola/daftar-harga')->assertInertia(fn (AssertableInertia $h) => $h->where('DaftarHarga.Total', 0));
+        $masukLain()->get('/kelola/daftar-harga')->assertInertia(fn (AssertableInertia $h) => $h->where('DaftarHarga.Meta.Total', 0));
         $masukLain()->post('/kelola/daftar-harga', IsiFormDaftarHarga(['UuidOutlet' => [$this->solo->Uuid]]))->assertSessionHasErrors(['UuidOutlet']);
 
         BantuanOrganisasi::AturKonteks($this->t['Tenant']->Id);

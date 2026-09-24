@@ -18,7 +18,7 @@ import type {
 } from '@/Tipe/Katalog';
 
 import { PeriksaRentangWaktu } from './FormDaftarHarga';
-import { BuatHalaman, IzinLihat, IzinPenuh } from './DataUjiKatalog';
+import { BuatHasilTabel, IzinLihat, IzinPenuh } from './DataUjiKatalog';
 import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from './TiruanInertia';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
@@ -125,9 +125,10 @@ describe('Kelola/DaftarHarga (E.7)', () => {
     });
 
     it('daftar: kosong, lalu buat daftar harga mengirim FormDaftarHarga', () => {
-        render(
+        window.history.replaceState({}, '', '/kelola/daftar-harga');
+        RenderUji(
             <HalamanDaftarDaftarHarga
-                DaftarHarga={BuatHalaman([])}
+                DaftarHarga={BuatHasilTabel([])}
                 Outlet={[{ Nilai: 'O-SLO', Label: 'Solo' }]}
                 Kanal={[{ Nilai: 'Online', Label: 'Online' }]}
                 ZonaWaktu="WIB"
@@ -178,7 +179,7 @@ describe('Kelola/DaftarHarga (E.7)', () => {
                 SelesaiPada: '',
                 Prioritas: '10',
             },
-            Baris: BuatHalaman([
+            Baris: BuatHasilTabel([
                 {
                     UuidProduk: 'P1',
                     NamaProduk: 'Sabun',
@@ -198,7 +199,6 @@ describe('Kelola/DaftarHarga (E.7)', () => {
                     Harga: [{ JumlahMinimum: '12.0000', Harga: '4000.00' }],
                 },
             ]),
-            Saring: { Kata: '' },
             Outlet: [],
             Kanal: [],
             ZonaWaktu: 'WIB',
@@ -208,7 +208,8 @@ describe('Kelola/DaftarHarga (E.7)', () => {
         expect(AmbilBarisBerubah(props.Baris.Data, { 'PS-1': [], 'PS-2': props.Baris.Data[1]?.Harga ?? [] })).toEqual(
             [],
         );
-        render(<HalamanDetailDaftarHarga {...props} />);
+        window.history.replaceState({}, '', '/kelola/daftar-harga/DH-1');
+        RenderUji(<HalamanDetailDaftarHarga {...props} />);
         expect(screen.getByText('Semua outlet · Semua kanal · Pelanggan GROSIR · Prioritas 10')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Isi harga' }));

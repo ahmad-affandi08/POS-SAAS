@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Katalog;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Harga\Aksi\SimpanDaftarHarga;
 use App\Domain\Katalog\Harga\Aksi\SimpanHargaDaftarHarga;
 use App\Domain\Katalog\Harga\Aksi\UbahStatusDaftarHarga;
@@ -14,9 +15,10 @@ use App\Domain\Katalog\Harga\Kueri\DetailDaftarHarga;
 use App\Domain\Katalog\Harga\Model\DaftarHarga;
 use App\Http\Permintaan\Kelola\Katalog\SimpanDaftarHargaPermintaan;
 use App\Http\Permintaan\Kelola\Katalog\SimpanHargaDaftarHargaPermintaan;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -26,10 +28,11 @@ use Inertia\Response;
  */
 final class DaftarHargaKontroler extends DasarKatalogKontroler
 {
-    public function Daftar(Request $permintaan, DaftarDaftarHarga $daftar): Response
+    public function Daftar(Request $permintaan, DaftarDaftarHarga $daftar): Response|JsonResponse
     {
-        return Inertia::render('Kelola/DaftarHarga/Daftar', [
-            'DaftarHarga' => $daftar->Ambil($permintaan->integer('halaman', 1)),
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDaftarHarga::KOLOM_URUT, '-Prioritas', DaftarDaftarHarga::KOLOM_SARING);
+
+        return ResponsTabel::Kirim($permintaan, 'Kelola/DaftarHarga/Daftar', 'DaftarHarga', fn (): array => $daftar->AmbilTabel($tabel), fn (): array => [
             'Outlet' => $daftar->AmbilOpsiOutlet($this->IdOutletBoleh()),
             'Kanal' => DaftarDaftarHarga::AmbilOpsiKanal(),
             'ZonaWaktu' => $daftar->AmbilZonaWaktu(),
@@ -44,15 +47,13 @@ final class DaftarHargaKontroler extends DasarKatalogKontroler
         return redirect()->route('kelola.daftar-harga.detail', ['daftarHarga' => $baris->Uuid])->with('Kilat', "Daftar harga {$baris->Nama} dibuat.");
     }
 
-    public function Detail(string $daftarHarga, Request $permintaan, DetailDaftarHarga $detail, DaftarDaftarHarga $daftar): Response
+    public function Detail(string $daftarHarga, Request $permintaan, DetailDaftarHarga $detail, DaftarDaftarHarga $daftar): Response|JsonResponse
     {
         $baris = $this->CariDaftarHarga($daftarHarga);
-        $kata = $permintaan->string('kata')->toString();
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), [], '');
 
-        return Inertia::render('Kelola/DaftarHarga/Detail', [
+        return ResponsTabel::Kirim($permintaan, 'Kelola/DaftarHarga/Detail', 'Baris', fn (): array => $detail->AmbilBaris($baris, $tabel), fn (): array => [
             'DaftarHarga' => $detail->AmbilForm($baris),
-            'Baris' => $detail->AmbilBaris($baris, $kata, $permintaan->integer('halaman', 1)),
-            'Saring' => ['Kata' => $kata],
             'Outlet' => $daftar->AmbilOpsiOutlet($this->IdOutletBoleh()),
             'Kanal' => DaftarDaftarHarga::AmbilOpsiKanal(),
             'ZonaWaktu' => $daftar->AmbilZonaWaktu(),

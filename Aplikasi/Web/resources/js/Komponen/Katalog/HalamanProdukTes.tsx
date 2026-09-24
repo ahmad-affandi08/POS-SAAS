@@ -20,7 +20,6 @@ import type {
 import {
     AturanJenis,
     BuatBarisProduk,
-    BuatHalaman,
     BuatHasilTabel,
     BuatKepala,
     HargaEkstrem,
@@ -449,7 +448,7 @@ describe('Kelola/Produk/Harga, Pilihan, Resep, Komponen (E.6, E.9)', () => {
                 },
             ],
             DaftarHarga: [],
-            Riwayat: BuatHalaman([
+            Riwayat: BuatHasilTabel([
                 {
                     DibuatPada: '2026-09-20T03:00:00Z',
                     NamaSatuan: 'pcs',
@@ -462,10 +461,12 @@ describe('Kelola/Produk/Harga, Pilihan, Resep, Komponen (E.6, E.9)', () => {
                     LabelSumber: 'Manual',
                 },
             ]),
+            OpsiSumberRiwayat: [{ Nilai: 'Manual', Label: 'Diubah manual' }],
             LabelHargaTermasukPajak: 'sudah termasuk pajak (ikut outlet)',
             Izin: IzinPenuh,
         };
-        render(<HalamanHargaProduk {...props} />);
+        window.history.replaceState({}, '', '/kelola/produk/01J9PRODUK00000000000000001/harga');
+        RenderUji(<HalamanHargaProduk {...props} />);
 
         expect(screen.getByText('Rp 4.500')).toBeTruthy();
         expect(screen.getAllByText('Rp 5.000').length).toBeGreaterThan(0);

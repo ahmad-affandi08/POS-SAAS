@@ -6,7 +6,7 @@ import HalamanDaftarKategori from '@/Halaman/Kelola/Kategori/Daftar';
 import HalamanDaftarKelompokPilihan from '@/Halaman/Kelola/KelompokPilihan/Daftar';
 import HalamanDaftarSatuan from '@/Halaman/Kelola/Satuan/Daftar';
 
-import { BuatHalaman, IzinPenuh } from './DataUjiKatalog';
+import { BuatHasilTabel, IzinPenuh } from './DataUjiKatalog';
 import { AturHalamanUji, RenderUji, tiruanRouter } from './TiruanInertia';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
@@ -113,9 +113,10 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
     });
 
     it('daftar harga: nonaktifkan lewat konfirmasi, aktifkan langsung', () => {
-        render(
+        window.history.replaceState({}, '', '/kelola/daftar-harga');
+        RenderUji(
             <HalamanDaftarDaftarHarga
-                DaftarHarga={BuatHalaman([
+                DaftarHarga={BuatHasilTabel([
                     {
                         Uuid: 'DH-1',
                         Nama: 'Harga GoFood',

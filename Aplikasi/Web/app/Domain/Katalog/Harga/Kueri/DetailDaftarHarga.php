@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Harga\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Harga\Layanan\WaktuLokalDaftarHarga;
@@ -21,8 +23,6 @@ use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
  */
 final class DetailDaftarHarga
 {
-    public const PER_HALAMAN = 25;
-
     public function __construct(
         private readonly PetaUuidOutlet $petaOutlet,
         private readonly DaftarDaftarHarga $daftarDaftarHarga,
@@ -50,12 +50,14 @@ final class DetailDaftarHarga
     }
 
     /**
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * Baris harga produk di daftar untuk `TabelData` (D-16): cari nama/SKU; urutan tetap (yang sudah berharga dulu).
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function AmbilBaris(DaftarHarga $daftar, string $kata, int $halaman = 1): array
+    public function AmbilBaris(DaftarHarga $daftar, DataPermintaanTabel $permintaan): array
     {
-        $kata = trim($kata);
-        $pola = '%'.addcslashes($kata, '%_\\').'%';
+        $kata = $permintaan->cari;
+        $pola = PenerapKueriTabel::PolaCari($kata);
         $jenisDijual = array_values(array_map(
             fn (JenisProduk $jenis): string => $jenis->value,
             array_filter(JenisProduk::cases(), fn (JenisProduk $jenis): bool => $jenis->CekBisaDijual()),
@@ -72,8 +74,7 @@ final class DetailDaftarHarga
             ->orderBy('Produk.Nama')
             ->orderBy('ProdukSatuan.Id')
             ->select('ProdukSatuan.*')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman))
-            ->withQueryString();
+            ->paginate($permintaan->perHalaman, ['*'], 'halaman', $permintaan->halaman);
         /** @var list<ProdukSatuan> $satuan */
         $satuan = $hasil->items();
         $idSatuan = array_map(fn (ProdukSatuan $s): int => $s->Id, $satuan);
@@ -85,27 +86,22 @@ final class DetailDaftarHarga
             ->orderBy('JumlahMinimum')
             ->get();
 
-        return [
-            'Data' => array_map(function (ProdukSatuan $s) use ($produk, $namaSatuan, $harga, $daftar): array {
-                $p = $produk->get($s->IdProduk);
-                $dasar = $harga->first(fn (ProdukHarga $h): bool => $h->IdProdukSatuan === $s->Id && $h->IdDaftarHarga === null && $h->JumlahMinimum === '1.0000');
+        return PenerapKueriTabel::DariPaginator($hasil, fn (array $isi): array => array_map(function (ProdukSatuan $s) use ($produk, $namaSatuan, $harga, $daftar): array {
+            $p = $produk->get($s->IdProduk);
+            $dasar = $harga->first(fn (ProdukHarga $h): bool => $h->IdProdukSatuan === $s->Id && $h->IdDaftarHarga === null && $h->JumlahMinimum === '1.0000');
 
-                return [
-                    'UuidProduk' => $p->Uuid ?? '',
-                    'NamaProduk' => $p->Nama ?? '',
-                    'Sku' => $p?->Sku,
-                    'UuidProdukSatuan' => $s->Uuid,
-                    'NamaSatuan' => (string) ($namaSatuan->get($s->IdSatuan) ?? ''),
-                    'HargaDasar' => $dasar?->Harga,
-                    'Harga' => array_values($harga
-                        ->filter(fn (ProdukHarga $h): bool => $h->IdProdukSatuan === $s->Id && $h->IdDaftarHarga === $daftar->Id)
-                        ->map(fn (ProdukHarga $h): array => ['JumlahMinimum' => $h->JumlahMinimum, 'Harga' => $h->Harga])
-                        ->all()),
-                ];
-            }, $satuan),
-            'HalamanSaatIni' => $hasil->currentPage(),
-            'HalamanTerakhir' => $hasil->lastPage(),
-            'Total' => $hasil->total(),
-        ];
+            return [
+                'UuidProduk' => $p->Uuid ?? '',
+                'NamaProduk' => $p->Nama ?? '',
+                'Sku' => $p?->Sku,
+                'UuidProdukSatuan' => $s->Uuid,
+                'NamaSatuan' => (string) ($namaSatuan->get($s->IdSatuan) ?? ''),
+                'HargaDasar' => $dasar?->Harga,
+                'Harga' => array_values($harga
+                    ->filter(fn (ProdukHarga $h): bool => $h->IdProdukSatuan === $s->Id && $h->IdDaftarHarga === $daftar->Id)
+                    ->map(fn (ProdukHarga $h): array => ['JumlahMinimum' => $h->JumlahMinimum, 'Harga' => $h->Harga])
+                    ->all()),
+            ];
+        }, $isi));
     }
 }

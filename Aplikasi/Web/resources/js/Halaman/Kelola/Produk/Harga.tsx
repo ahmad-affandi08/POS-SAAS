@@ -9,14 +9,14 @@ import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { BandingkanDesimal, CekDesimalValid, FormatMasukanJumlah } from '@/Pustaka/MasukanJumlah';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { BarisHarga, PropsHargaProduk } from '@/Tipe/Katalog';
+import type { BarisHarga, BarisRiwayatHarga, PropsHargaProduk } from '@/Tipe/Katalog';
 
 type SatuanHarga = PropsHargaProduk['Satuan'][number];
 type DaftarHargaProduk = PropsHargaProduk['DaftarHarga'][number];
@@ -153,12 +153,58 @@ function EditorDaftarHarga({
     );
 }
 
+const kolomRiwayat: KolomTabel<BarisRiwayatHarga>[] = [
+    {
+        id: 'DibuatPada',
+        accessorKey: 'DibuatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DibuatPada),
+    },
+    {
+        id: 'Harga',
+        header: 'Harga',
+        enableSorting: false,
+        meta: { label: 'Harga', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => `${row.original.NamaDaftarHarga ?? 'Harga dasar'} · ${row.original.NamaSatuan}`,
+    },
+    {
+        id: 'JumlahMinimum',
+        header: 'Mulai jumlah',
+        enableSorting: false,
+        meta: { label: 'Mulai jumlah', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => `${FormatMasukanJumlah(row.original.JumlahMinimum)}+`,
+    },
+    {
+        id: 'HargaLama',
+        header: 'Lama',
+        enableSorting: false,
+        meta: { label: 'Harga lama', angka: true, prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => (row.original.HargaLama === null ? 'Baru' : FormatRupiah(row.original.HargaLama)),
+    },
+    {
+        id: 'HargaBaru',
+        header: 'Baru',
+        enableSorting: false,
+        meta: { label: 'Harga baru', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => (row.original.HargaBaru === null ? 'Dihapus' : FormatRupiah(row.original.HargaBaru)),
+    },
+    {
+        id: 'Oleh',
+        header: 'Oleh',
+        enableSorting: false,
+        meta: { label: 'Oleh', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => `${row.original.NamaPengubah ?? 'Sistem'} · ${row.original.LabelSumber}`,
+    },
+];
+
 /** F-03 harga produk: harga dasar & bertingkat per satuan, harga per daftar harga, riwayat harga (BR-03.3). */
 export default function HalamanHargaProduk({
     Kepala,
     Satuan,
     DaftarHarga,
     Riwayat,
+    OpsiSumberRiwayat,
     LabelHargaTermasukPajak,
     Izin,
 }: PropsHargaProduk) {
@@ -273,66 +319,25 @@ export default function HalamanHargaProduk({
             </section>
 
             <PanelKatalog judul="Riwayat harga" idJudul="judul-riwayat-harga">
-                {Riwayat.Data.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Belum ada perubahan harga.</p>
-                ) : (
-                    <Table className="min-w-[760px] text-left text-label">
-                        <TableCaption className="sr-only">Riwayat perubahan harga</TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className="pl-0 font-semibold text-teks-sekunder">
-                                    Waktu
-                                </TableHead>
-                                <TableHead scope="col" className="font-semibold text-teks-sekunder">
-                                    Harga
-                                </TableHead>
-                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
-                                    Mulai jumlah
-                                </TableHead>
-                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
-                                    Lama
-                                </TableHead>
-                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
-                                    Baru
-                                </TableHead>
-                                <TableHead scope="col" className="pr-0 font-semibold text-teks-sekunder">
-                                    Oleh
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Riwayat.Data.map((item, indeks) => (
-                                <TableRow key={`${item.DibuatPada}-${String(indeks)}`} className="border-garis">
-                                    <TableCell className="pl-0 text-teks-sekunder">
-                                        {FormatTanggalWaktu(item.DibuatPada)}
-                                    </TableCell>
-                                    <TableCell className="whitespace-normal">
-                                        {item.NamaDaftarHarga ?? 'Harga dasar'} · {item.NamaSatuan}
-                                    </TableCell>
-                                    <TableCell className="text-right tabular-nums">
-                                        {FormatMasukanJumlah(item.JumlahMinimum)}+
-                                    </TableCell>
-                                    <TableCell className="text-right tabular-nums text-teks-sekunder">
-                                        {item.HargaLama === null ? 'Baru' : FormatRupiah(item.HargaLama)}
-                                    </TableCell>
-                                    <TableCell className="text-right tabular-nums">
-                                        {item.HargaBaru === null ? 'Dihapus' : FormatRupiah(item.HargaBaru)}
-                                    </TableCell>
-                                    <TableCell className="pr-0 whitespace-normal text-teks-sekunder">
-                                        {item.NamaPengubah ?? 'Sistem'} · {item.LabelSumber}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
-                <Paginasi
-                    alamat={`/kelola/produk/${Kepala.Uuid}/harga`}
-                    saring={{}}
-                    halamanSaatIni={Riwayat.HalamanSaatIni}
-                    halamanTerakhir={Riwayat.HalamanTerakhir}
-                    total={Riwayat.Total}
-                    label="Halaman riwayat harga"
+                <TabelData
+                    id={`katalog-riwayat-harga-${Kepala.Uuid}`}
+                    label="Riwayat perubahan harga"
+                    kolom={kolomRiwayat}
+                    sumber={{ mode: 'server', alamat: `/kelola/produk/${Kepala.Uuid}/harga`, awal: Riwayat }}
+                    ambilIdBaris={(item) =>
+                        `${item.DibuatPada}-${item.NamaSatuan}-${item.JumlahMinimum}-${item.NamaDaftarHarga ?? ''}`
+                    }
+                    urutBawaan="-DibuatPada"
+                    saring={[
+                        {
+                            id: 'Sumber',
+                            label: 'Sumber',
+                            jenis: 'pilihanBanyak',
+                            opsi: OpsiSumberRiwayat.map((o) => ({ nilai: o.Nilai, label: o.Label })),
+                        },
+                        { id: 'Tanggal', label: 'Tanggal', jenis: 'rentangTanggal' },
+                    ]}
+                    kosong={{ judul: 'Belum ada perubahan harga.' }}
                 />
             </PanelKatalog>
         </TataLetakAplikasi>

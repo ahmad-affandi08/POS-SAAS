@@ -6,7 +6,6 @@ import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
  * `PropsBersamaAplikasi & {…}`; tipe di bawah adalah bagian `{…}`-nya. Perubahan bentuk = versi kontrak baru.
  */
 import type { Batas, Pilihan } from '@/Tipe/Organisasi';
-import type { DaftarBerhalaman } from '@/Tipe/Pengelola';
 
 // E.1 Tipe bersama.
 export type JenisProduk =
@@ -238,7 +237,8 @@ export type PropsHargaProduk = {
         Ringkasan: string;
         Harga: (BarisHarga & { UuidProdukSatuan: string })[];
     }[];
-    Riwayat: DaftarBerhalaman<BarisRiwayatHarga>;
+    Riwayat: HasilTabel<BarisRiwayatHarga>;
+    OpsiSumberRiwayat: Pilihan[];
     LabelHargaTermasukPajak: string;
     Izin: IzinKatalog;
 };
@@ -269,7 +269,7 @@ export type BarisDaftarHarga = {
     JumlahProduk: number;
 };
 export type PropsDaftarDaftarHarga = {
-    DaftarHarga: DaftarBerhalaman<BarisDaftarHarga>;
+    DaftarHarga: HasilTabel<BarisDaftarHarga>;
     Outlet: Pilihan[];
     Kanal: Pilihan[];
     ZonaWaktu: string;
@@ -277,7 +277,7 @@ export type PropsDaftarDaftarHarga = {
 };
 export type PropsDetailDaftarHarga = {
     DaftarHarga: FormDaftarHarga & { Uuid: string; Aktif: boolean };
-    Baris: DaftarBerhalaman<{
+    Baris: HasilTabel<{
         UuidProduk: string;
         NamaProduk: string;
         Sku: string | null;
@@ -286,7 +286,6 @@ export type PropsDetailDaftarHarga = {
         HargaDasar: string | null;
         Harga: BarisHarga[];
     }>;
-    Saring: { Kata: string };
     Outlet: Pilihan[];
     Kanal: Pilihan[];
     ZonaWaktu: string;

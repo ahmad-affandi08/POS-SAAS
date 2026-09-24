@@ -17,7 +17,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EllipsisIcon } from 'lucide-react';
-import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import { Button } from '@/Komponen/Ui/button';
@@ -71,6 +71,8 @@ export type PropsTabelData<T> = {
     aksiAlat?: ReactNode;
     /** Ringkasan di atas tabel dari hasil server terbaru (ikut berubah saat saring berubah). */
     ringkasan?: (hasil: HasilTabel<T> | undefined) => ReactNode;
+    /** Dipanggil setiap baris yang tampil berganti (mis. untuk isian yang bisa diedit lintas halaman). */
+    saatData?: (baris: T[]) => void;
 };
 
 const BATAS_VIRTUAL = 100;
@@ -291,6 +293,11 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
         () => (sumber.mode === 'lokal' ? sumber.data : (kueri.data?.Data ?? [])),
         [sumber, kueri.data],
     );
+
+    const { saatData: SaatData } = props;
+    useEffect(() => {
+        SaatData?.(data);
+    }, [data, SaatData]);
 
     const kolom = useMemo<ColumnDef<T, never>[]>(() => {
         const hasil: ColumnDef<T, never>[] = [];
