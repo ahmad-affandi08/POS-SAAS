@@ -61,7 +61,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 
 | Kode | Event | Debit | Kredit |
 |---|---|---|---|
-| J-05.1 | Stok awal | Persediaan | Ekuitas Saldo Awal |
+| J-05.1 | Stok awal (F-05a: + `SelisihHpp` bila ada selisih BR-04.3; pembatalan = jurnal pembalik) | Persediaan | Ekuitas Saldo Awal |
 | J-04.1 | GRN diposting (sebelum faktur) | Persediaan | Hutang Belum Difakturkan (GRNI) |
 | J-04.2 | Faktur pembelian | GRNI + PPN Masukan | Hutang Usaha |
 | J-04.3 | Belanja stok tunai (mode UMKM) | Persediaan (+ PPN Masukan) | Kas/Bank |
