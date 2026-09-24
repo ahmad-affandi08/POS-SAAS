@@ -8,7 +8,19 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
+import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
+import { Button } from '@/Komponen/Ui/button';
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/Komponen/Ui/table';
 import { BandingkanDesimal, CekDesimalPositif, FormatMasukanJumlah, JumlahkanDesimal } from '@/Pustaka/MasukanJumlah';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -81,116 +93,112 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
             {komponen.length === 0 && !Izin.Kelola ? (
                 <KeadaanKosong judul="Paket ini belum berisi produk." />
             ) : (
-                <section
-                    aria-labelledby="judul-komponen"
-                    className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4"
+                <PanelKatalog
+                    judul="Isi paket"
+                    idJudul="judul-komponen"
+                    keterangan="Stok setiap komponen terpotong saat paket terjual. Alokasi harga membagi harga paket ke tiap komponen untuk laporan; kosongkan semua agar dibagi otomatis menurut harga dasar."
                 >
-                    <h2 id="judul-komponen" className="text-subjudul font-semibold text-teks-utama">
-                        Isi paket
-                    </h2>
-                    <p className="text-keterangan text-teks-sekunder">
-                        Stok setiap komponen terpotong saat paket terjual. Alokasi harga membagi harga paket ke tiap
-                        komponen untuk laporan; kosongkan semua agar dibagi otomatis menurut harga dasar.
-                    </p>
                     {komponen.length === 0 ? (
                         <p className="rounded-kontrol border border-dashed border-garis-input px-3 py-2 text-isi text-teks-sekunder">
                             Paket belum berisi produk. Cari produk di bawah untuk menambahkannya.
                         </p>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[620px] text-left text-isi">
-                                <caption className="sr-only">Komponen paket</caption>
-                                <thead className="border-b border-garis text-label text-teks-sekunder">
-                                    <tr>
-                                        <th scope="col" className="py-2 pr-2 font-semibold">
-                                            Produk
+                        <Table className="min-w-[620px] text-left text-isi">
+                            <TableCaption className="sr-only">Komponen paket</TableCaption>
+                            <TableHeader>
+                                <TableRow className="border-garis hover:bg-transparent">
+                                    <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                                        Produk
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right text-label font-semibold text-teks-sekunder"
+                                    >
+                                        Jumlah
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right text-label font-semibold text-teks-sekunder"
+                                    >
+                                        Alokasi harga
+                                    </TableHead>
+                                    <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                                        <span className="sr-only">Aksi</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {komponen.map((item, indeks) => (
+                                    <TableRow key={item.UuidProdukKomponen} className="border-garis align-top">
+                                        <th scope="row" className="p-2 pl-0 text-left align-top font-normal">
+                                            <span className="block font-semibold break-words text-teks-utama">
+                                                {item.Nama}
+                                            </span>
+                                            <span className="font-mono text-keterangan text-teks-sekunder">
+                                                {item.Sku ?? 'Tanpa SKU'}
+                                            </span>
                                         </th>
-                                        <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                            Jumlah
-                                        </th>
-                                        <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                            Alokasi harga
-                                        </th>
-                                        <th scope="col" className="py-2 pl-2 font-semibold">
-                                            <span className="sr-only">Aksi</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {komponen.map((item, indeks) => (
-                                        <tr
-                                            key={item.UuidProdukKomponen}
-                                            className="border-b border-garis align-top last:border-b-0"
-                                        >
-                                            <th scope="row" className="py-2 pr-2 text-left font-normal">
-                                                <span className="block font-semibold break-words text-teks-utama">
-                                                    {item.Nama}
-                                                </span>
-                                                <span className="font-mono text-keterangan text-teks-sekunder">
-                                                    {item.Sku ?? 'Tanpa SKU'}
-                                                </span>
-                                            </th>
-                                            <td className="px-2 py-2">
-                                                <BidangJumlah
-                                                    label={`Jumlah ${item.Nama}`}
-                                                    labelTersembunyi
-                                                    nilai={item.Jumlah}
-                                                    saatBerubah={(nilai) => Ubah(indeks, { Jumlah: nilai })}
-                                                    akhiran={item.SimbolSatuan}
-                                                    galat={
-                                                        galat[`Komponen.${String(indeks)}.Jumlah`] ??
-                                                        (periksa && !CekDesimalPositif(item.Jumlah)
-                                                            ? 'Isi jumlah lebih dari 0.'
-                                                            : undefined)
+                                        <TableCell className="whitespace-normal">
+                                            <BidangJumlah
+                                                label={`Jumlah ${item.Nama}`}
+                                                labelTersembunyi
+                                                nilai={item.Jumlah}
+                                                saatBerubah={(nilai) => Ubah(indeks, { Jumlah: nilai })}
+                                                akhiran={item.SimbolSatuan}
+                                                galat={
+                                                    galat[`Komponen.${String(indeks)}.Jumlah`] ??
+                                                    (periksa && !CekDesimalPositif(item.Jumlah)
+                                                        ? 'Isi jumlah lebih dari 0.'
+                                                        : undefined)
+                                                }
+                                                disabled={!Izin.Kelola}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="whitespace-normal">
+                                            <BidangJumlah
+                                                label={`Alokasi harga ${item.Nama}`}
+                                                labelTersembunyi
+                                                nilai={item.AlokasiHarga}
+                                                saatBerubah={(nilai) => Ubah(indeks, { AlokasiHarga: nilai })}
+                                                desimal={6}
+                                                digitBulat={3}
+                                                akhiran="%"
+                                                galat={galat[`Komponen.${String(indeks)}.AlokasiHarga`]}
+                                                disabled={!Izin.Kelola}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="pr-0">
+                                            {Izin.Kelola ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() =>
+                                                        AturKomponen(komponen.filter((_, i) => i !== indeks))
                                                     }
-                                                    disabled={!Izin.Kelola}
-                                                />
-                                            </td>
-                                            <td className="px-2 py-2">
-                                                <BidangJumlah
-                                                    label={`Alokasi harga ${item.Nama}`}
-                                                    labelTersembunyi
-                                                    nilai={item.AlokasiHarga}
-                                                    saatBerubah={(nilai) => Ubah(indeks, { AlokasiHarga: nilai })}
-                                                    desimal={6}
-                                                    digitBulat={3}
-                                                    akhiran="%"
-                                                    galat={galat[`Komponen.${String(indeks)}.AlokasiHarga`]}
-                                                    disabled={!Izin.Kelola}
-                                                />
-                                            </td>
-                                            <td className="py-2 pl-2">
-                                                {Izin.Kelola ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            AturKomponen(komponen.filter((_, i) => i !== indeks))
-                                                        }
-                                                        className="h-10 text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                                        aria-label={`Hapus komponen ${item.Nama}`}
-                                                    >
-                                                        Hapus
-                                                    </button>
-                                                ) : null}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                {alokasi.total !== null ? (
-                                    <tfoot>
-                                        <tr>
-                                            <th scope="row" colSpan={2} className="py-2 pr-2 text-right font-semibold">
-                                                Total alokasi
-                                            </th>
-                                            <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                                                {FormatMasukanJumlah(alokasi.total)} %
-                                            </td>
-                                            <td />
-                                        </tr>
-                                    </tfoot>
-                                ) : null}
-                            </table>
-                        </div>
+                                                    className="h-10 text-destructive"
+                                                    aria-label={`Hapus komponen ${item.Nama}`}
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            ) : null}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                            {alokasi.total !== null ? (
+                                <TableFooter className="border-garis bg-transparent">
+                                    <TableRow className="hover:bg-transparent">
+                                        <th scope="row" colSpan={2} className="p-2 pl-0 text-right font-semibold">
+                                            Total alokasi
+                                        </th>
+                                        <TableCell className="text-right font-semibold tabular-nums">
+                                            {FormatMasukanJumlah(alokasi.total)} %
+                                        </TableCell>
+                                        <TableCell />
+                                    </TableRow>
+                                </TableFooter>
+                            ) : null}
+                        </Table>
                     )}
                     <div aria-live="polite">
                         {(periksa || alokasi.total !== null) && alokasi.pesan ? (
@@ -229,7 +237,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                             </div>
                         </>
                     ) : null}
-                </section>
+                </PanelKatalog>
             )}
         </TataLetakAplikasi>
     );
