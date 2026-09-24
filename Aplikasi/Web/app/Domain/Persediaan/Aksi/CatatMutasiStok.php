@@ -472,7 +472,16 @@ final class CatatMutasiStok
 
         foreach ($dokumen->baris as $b) {
             if ($b->batchMasuk !== null) {
-                $antrean[self::BuatKunciBatch($b)] = [$b->idProduk, $b->idGudang, trim($b->batchMasuk->nomorBatch), $b];
+                $kunciBatch = self::BuatKunciBatch($b);
+                $sebelumnya = $antrean[$kunciBatch][3] ?? null;
+
+                // Batch sama di satu dokumen wajib berkedaluwarsa sama (baris kedua tidak lewat PelacakBatchStok).
+                if ($sebelumnya instanceof DataBarisMutasi
+                    && $sebelumnya->batchMasuk?->tanggalKedaluwarsa?->toDateString() !== $b->batchMasuk->tanggalKedaluwarsa?->toDateString()) {
+                    throw self::Galat('BatchKedaluwarsaBerbeda', 'Batch '.trim($b->batchMasuk->nomorBatch).' tercatat dengan dua tanggal kedaluwarsa berbeda di dokumen ini.', $b->kunciBaris, 'TanggalKedaluwarsa');
+                }
+
+                $antrean[$kunciBatch] ??= [$b->idProduk, $b->idGudang, trim($b->batchMasuk->nomorBatch), $b];
             } elseif ($b->idBatchStok !== null) {
                 $antrean['#'.$b->idBatchStok] = [$b->idProduk, $b->idGudang, (string) ($nomorKeluar[$b->idBatchStok] ?? ''), $b];
             }
@@ -485,7 +494,7 @@ final class CatatMutasiStok
         foreach ($antrean as $kunci => [$idProduk, $idGudang, , $b]) {
             /** @var DataBarisMutasi $b */
             $batch = $b->batchMasuk !== null
-                ? $this->pelacakBatch->KunciMasuk($idProduk, $idGudang, $b->batchMasuk)
+                ? $this->pelacakBatch->KunciMasuk($idProduk, $idGudang, $b->batchMasuk, self::AmbilHppMasuk($b))
                 : $this->pelacakBatch->KunciKeluar((int) $b->idBatchStok, $idProduk, $idGudang);
 
             $perKunci[(string) $kunci] = $batch;
@@ -848,6 +857,18 @@ final class CatatMutasiStok
             MetodeHpp::RataRata => new HppRataRataBergerak,
             MetodeHpp::Fifo => new HppFifo,
         };
+    }
+
+    /** HPP per satuan penerimaan (informasi `BatchStok.HppSatuan` saat batch pertama dibuat). */
+    private static function AmbilHppMasuk(DataBarisMutasi $baris): ?BigDecimal
+    {
+        if ($baris->hppSatuan !== null) {
+            return $baris->hppSatuan;
+        }
+
+        return $baris->modeNilai === ModeNilaiMutasi::Ditentukan && $baris->nilai !== null
+            ? AritmetikaHpp::Hpp($baris->nilai, $baris->jumlah)
+            : null;
     }
 
     private static function BuatKunciBatch(DataBarisMutasi $baris): string
