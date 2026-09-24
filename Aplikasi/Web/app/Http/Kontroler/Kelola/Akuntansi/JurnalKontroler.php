@@ -7,7 +7,10 @@ namespace App\Http\Kontroler\Kelola\Akuntansi;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Kueri\DaftarJurnal;
 use App\Domain\Akuntansi\Kueri\DetailJurnal;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,19 +26,11 @@ final class JurnalKontroler extends DasarKelolaKontroler
         private readonly DetailJurnal $detail,
     ) {}
 
-    public function Daftar(Request $permintaan): Response
+    public function Daftar(Request $permintaan): Response|JsonResponse
     {
-        $jenis = JenisSumberJurnal::tryFrom($permintaan->string('jenis')->toString());
-        $saring = [
-            'Kata' => mb_substr(trim($permintaan->string('kata')->toString()), 0, 100),
-            'Dari' => self::AmbilTanggal($permintaan, 'dari'),
-            'Sampai' => self::AmbilTanggal($permintaan, 'sampai'),
-            'JenisSumber' => $jenis?->value,
-        ];
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarJurnal::KOLOM_URUT, DaftarJurnal::URUT_BAWAAN, DaftarJurnal::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Akuntansi/Jurnal/Daftar', [
-            'Jurnal' => $this->daftar->Ambil($saring, max(1, $permintaan->integer('halaman', 1)), $this->IdOutletBoleh()),
-            'Saring' => $saring,
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Akuntansi/Jurnal/Daftar', 'Jurnal', fn (): array => $this->daftar->AmbilTabel($tabel, $this->IdOutletBoleh()), fn (): array => [
             'OpsiJenisSumber' => array_map(
                 fn (JenisSumberJurnal $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()],
                 JenisSumberJurnal::cases(),
@@ -49,15 +44,5 @@ final class JurnalKontroler extends DasarKelolaKontroler
         abort_if($props === null, 404);
 
         return Inertia::render('Kelola/Akuntansi/Jurnal/Detail', $props);
-    }
-
-    /** Tanggal `YYYY-MM-DD` dari query; format lain diabaikan (kosong = tanpa batas). */
-    private static function AmbilTanggal(Request $permintaan, string $kunci): string
-    {
-        $nilai = trim($permintaan->string($kunci)->toString());
-
-        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $nilai) === 1 && checkdate((int) substr($nilai, 5, 2), (int) substr($nilai, 8, 2), (int) substr($nilai, 0, 4))
-            ? $nilai
-            : '';
     }
 }

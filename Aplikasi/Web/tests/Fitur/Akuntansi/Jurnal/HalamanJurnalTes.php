@@ -31,8 +31,8 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $h) => $h
                 ->component('Kelola/Akuntansi/Jurnal/Daftar')
-                ->where('Jurnal.Total', 3)
-                ->where('Jurnal.HalamanSaatIni', 1)
+                ->where('Jurnal.Meta.Total', 3)
+                ->where('Jurnal.Meta.Halaman', 1)
                 ->where('Jurnal.Data.0.Nomor', $balik->nomor)
                 ->where('Jurnal.Data.0.Pembalik', true)
                 ->where('Jurnal.Data.0.Dibalik', false)
@@ -53,7 +53,7 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
                     'Dibalik' => true,
                     'Pembalik' => false,
                 ])
-                ->where('Saring', ['Kata' => '', 'Dari' => '', 'Sampai' => '', 'JenisSumber' => null])
+                ->missing('Saring')
                 ->where('OpsiJenisSumber', [['Nilai' => 'StokAwal', 'Label' => 'Stok awal'], ['Nilai' => 'MutasiKas', 'Label' => 'Kas masuk/keluar']]));
     });
 
@@ -64,17 +64,19 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
         }
         $masuk = fn () => BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
-        $masuk()->get('/kelola/akuntansi/jurnal?kata=SA/2026/09/0051')->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Jurnal.Total', 1)->where('Jurnal.Data.0.NomorSumber', 'SA/2026/09/0051'));
-        $masuk()->get('/kelola/akuntansi/jurnal?kata=JU/2026/08')->assertInertia(fn (AssertableInertia $h) => $h->where('Jurnal.Total', 2));
-        $masuk()->get('/kelola/akuntansi/jurnal?dari=2026-08-01&sampai=2026-08-31&jenis=StokAwal')->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Jurnal.Total', 2)
-            ->where('Saring', ['Kata' => '', 'Dari' => '2026-08-01', 'Sampai' => '2026-08-31', 'JenisSumber' => 'StokAwal']));
-        $masuk()->get('/kelola/akuntansi/jurnal?dari=31-08-2026&sampai=2026-02-30&jenis=Penjualan&kata=%25')->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Jurnal.Total', 0)
-            ->where('Saring', ['Kata' => '%', 'Dari' => '', 'Sampai' => '', 'JenisSumber' => null]));
-        $masuk()->get('/kelola/akuntansi/jurnal?halaman=2')->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Jurnal.Total', 52)->where('Jurnal.HalamanSaatIni', 2)->where('Jurnal.HalamanTerakhir', 2)->has('Jurnal.Data', 2));
+        $masuk()->get('/kelola/akuntansi/jurnal?cari=SA/2026/09/0051')->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Jurnal.Meta.Total', 1)->where('Jurnal.Data.0.NomorSumber', 'SA/2026/09/0051'));
+        $masuk()->get('/kelola/akuntansi/jurnal?cari=JU/2026/08')->assertInertia(fn (AssertableInertia $h) => $h->where('Jurnal.Meta.Total', 2));
+        $masuk()->get('/kelola/akuntansi/jurnal?saring[Tanggal]=2026-08-01..2026-08-31&saring[JenisSumber]=StokAwal')->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Jurnal.Meta.Total', 2));
+        // Tanggal tidak sah & jenis tak dikenal diabaikan; `%` dicari sebagai huruf biasa.
+        $masuk()->getJson('/kelola/akuntansi/jurnal?saring[Tanggal]=31-08-2026..2026-02-30&saring[JenisSumber]=Penjualan&cari=%25')->assertOk()
+            ->assertJsonPath('Meta.Total', 0);
+        $masuk()->getJson('/kelola/akuntansi/jurnal?saring[Tanggal]=31-08-2026..2026-02-30&saring[JenisSumber]=Penjualan')->assertOk()
+            ->assertJsonPath('Meta.Total', 52);
+        $masuk()->get('/kelola/akuntansi/jurnal?halaman=3')->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Jurnal.Meta.Total', 52)->where('Jurnal.Meta.Halaman', 3)->where('Jurnal.Meta.JumlahHalaman', 3)->has('Jurnal.Data', 2));
+        $masuk()->getJson('/kelola/akuntansi/jurnal?perHalaman=50&halaman=2')->assertOk()->assertJsonCount(2, 'Data');
     });
 
     it('detail jurnal: baris akun & outlet, total seimbang, pembuat, tautan jurnal dibalik & pembalik', function (): void {
@@ -139,7 +141,7 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
         $b = BantuanPersediaan::SiapkanTenant('Toko Roti Harum Manis');
         $masukB = fn () => BantuanPersediaan::MasukSebagai($this, $b['Tenant']->Id);
 
-        $masukB()->get('/kelola/akuntansi/jurnal')->assertInertia(fn (AssertableInertia $h) => $h->where('Jurnal.Total', 0));
+        $masukB()->get('/kelola/akuntansi/jurnal')->assertInertia(fn (AssertableInertia $h) => $h->where('Jurnal.Meta.Total', 0));
         $masukB()->get("/kelola/akuntansi/jurnal/{$jurnalA->uuid}")->assertNotFound();
         $masukB()->get('/kelola/akuntansi/jurnal/bukan-ulid')->assertNotFound();
     });
@@ -156,7 +158,7 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
         $masuk = fn () => BantuanOrganisasi::Masuk($this, $akuntan, $t['Tenant']->Id);
 
         $masuk()->get('/kelola/akuntansi/jurnal')->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Jurnal.Total', 1)->where('Jurnal.Data.0.Uuid', $diSolo->uuid));
+            ->where('Jurnal.Meta.Total', 1)->where('Jurnal.Data.0.Uuid', $diSolo->uuid));
         $masuk()->get("/kelola/akuntansi/jurnal/{$diSolo->uuid}")->assertOk();
         $masuk()->get("/kelola/akuntansi/jurnal/{$diUtama->uuid}")->assertNotFound();
         $masuk()->get("/kelola/akuntansi/jurnal/{$tingkatUsaha->uuid}")->assertNotFound();

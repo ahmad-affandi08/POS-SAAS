@@ -7,54 +7,57 @@ namespace App\Domain\Akuntansi\Kueri;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as BuilderKueri;
+use Illuminate\Support\Collection;
 
 /**
- * Daftar jurnal berhalaman untuk halaman Jurnal (tipe FE `PropsDaftarJurnal`, DesainF05a C.5/E), terbaru di atas.
- * Saringan: kata (nomor jurnal, nomor sumber, keterangan), rentang tanggal, jenis sumber. Pengguna yang aksesnya
+ * Daftar jurnal untuk halaman Jurnal (tipe FE `PropsDaftarJurnal`, DesainF05a C.5/E, `TabelData` D-16), terbaru di atas.
+ * Cari nomor jurnal, nomor sumber, keterangan; saring rentang tanggal & jenis sumber. Pengguna yang aksesnya
  * dibatasi ke outlet tertentu hanya melihat jurnal yang semua barisnya berada di outlet aksesnya.
  */
 final class DaftarJurnal
 {
-    public const PER_HALAMAN = 50;
+    public const KOLOM_URUT = ['Tanggal', 'Nomor'];
+
+    public const KOLOM_SARING = ['Tanggal', 'JenisSumber'];
+
+    public const URUT_BAWAAN = '-Tanggal';
 
     /**
-     * @param  array{Kata: string, Dari: string, Sampai: string, JenisSumber: string|null}  $saring
+     * Daftar untuk `TabelData` (D-16): cari nomor jurnal/nomor sumber/keterangan, saring rentang tanggal & jenis sumber.
+     *
      * @param  list<int>|null  $idOutletBoleh  null = semua outlet
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(array $saring, int $halaman, ?array $idOutletBoleh = null): array
+    public function AmbilTabel(DataPermintaanTabel $permintaan, ?array $idOutletBoleh = null): array
     {
-        $kata = trim($saring['Kata']);
-        $jenis = $saring['JenisSumber'] === null ? null : JenisSumberJurnal::tryFrom($saring['JenisSumber']);
+        $kata = $permintaan->cari;
+        $tanggal = $permintaan->AmbilRentangTanggal('Tanggal');
+        $jenis = $permintaan->AmbilDaftar('JenisSumber', array_map(fn (JenisSumberJurnal $j): string => $j->value, JenisSumberJurnal::cases()));
 
         $kueri = Jurnal::query()
             ->when($kata !== '', function (Builder $kueri) use ($kata): void {
-                $pola = '%'.addcslashes($kata, '%_\\').'%';
+                $pola = PenerapKueriTabel::PolaCari($kata);
                 $kueri->where(fn (Builder $k) => $k->where('Nomor', 'like', $pola)
                     ->orWhere('NomorSumber', 'like', $pola)
                     ->orWhere('Keterangan', 'like', $pola));
             })
-            ->when(self::CekTanggal($saring['Dari']), fn (Builder $k) => $k->where('Tanggal', '>=', $saring['Dari']))
-            ->when(self::CekTanggal($saring['Sampai']), fn (Builder $k) => $k->where('Tanggal', '<=', $saring['Sampai']))
-            ->when($jenis !== null, fn (Builder $k) => $k->where('JenisSumber', $jenis?->value));
+            ->when($tanggal['Dari'] !== null, fn (Builder $k) => $k->where('Tanggal', '>=', $tanggal['Dari']))
+            ->when($tanggal['Sampai'] !== null, fn (Builder $k) => $k->where('Tanggal', '<=', $tanggal['Sampai']))
+            ->when($jenis !== [], fn (Builder $k) => $k->whereIn('JenisSumber', $jenis));
 
         self::BatasiOutlet($kueri, $idOutletBoleh);
 
-        $hasil = $kueri->orderByDesc('Tanggal')->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman));
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor'], function (Collection $jurnal): array {
+            /** @var list<Jurnal> $daftar */
+            $daftar = array_values($jurnal->all());
+            $idDibalik = self::AmbilIdYangDibalik(array_map(fn (Jurnal $j): int => $j->Id, $daftar));
 
-        /** @var list<Jurnal> $jurnal */
-        $jurnal = array_values($hasil->items());
-        $idDibalik = self::AmbilIdYangDibalik(array_map(fn (Jurnal $j): int => $j->Id, $jurnal));
-
-        return [
-            'Data' => array_map(fn (Jurnal $j): array => self::PetakanBaris($j, isset($idDibalik[$j->Id])), $jurnal),
-            'HalamanSaatIni' => $hasil->currentPage(),
-            'HalamanTerakhir' => $hasil->lastPage(),
-            'Total' => $hasil->total(),
-        ];
+            return array_map(fn (Jurnal $j): array => self::PetakanBaris($j, isset($idDibalik[$j->Id])), $daftar);
+        });
     }
 
     /**
@@ -117,10 +120,5 @@ final class DaftarJurnal
         }
 
         return $hasil;
-    }
-
-    private static function CekTanggal(string $nilai): bool
-    {
-        return preg_match('/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/', $nilai) === 1;
     }
 }

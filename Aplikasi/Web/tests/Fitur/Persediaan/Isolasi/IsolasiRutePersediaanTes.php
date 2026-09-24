@@ -241,7 +241,7 @@ describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenan
         PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$rahasiaB->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
         PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produkA->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
         PastikanTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal', false, ...$rahasia);
-        PastikanTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal?kata=JU%2F2026', false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal?cari=JU%2F2026', false, ...$rahasia);
 
         // Pengaturan persediaan hanya milik tenant aktif.
         $masuk()->put('/kelola/persediaan/pengaturan', ['MetodeHpp' => MetodeHpp::Fifo->value, 'StokBolehMinus' => true])->assertSessionHasNoErrors();

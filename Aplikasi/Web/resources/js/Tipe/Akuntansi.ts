@@ -1,8 +1,9 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 /**
  * Kontrak props halaman jurnal F-05a (baca saja, DesainF05a E). Uang = string desimal ("12345.68"), tanggal
  * `YYYY-MM-DD`, cap waktu ISO UTC. Pemilik file: Tim 0 (perubahan lewat permintaan ke lead).
  */
-import type { DaftarBerhalaman, Pilihan } from '@/Tipe/Pengelola';
+import type { Pilihan } from '@/Tipe/Pengelola';
 
 export type BarisDaftarJurnal = {
     Uuid: string;
@@ -19,8 +20,7 @@ export type BarisDaftarJurnal = {
     Pembalik: boolean;
 };
 export type PropsDaftarJurnal = {
-    Jurnal: DaftarBerhalaman<BarisDaftarJurnal>;
-    Saring: { Kata: string; Dari: string; Sampai: string; JenisSumber: string | null };
+    Jurnal: HasilTabel<BarisDaftarJurnal>;
     OpsiJenisSumber: Pilihan[];
 };
 export type PropsDetailJurnal = {

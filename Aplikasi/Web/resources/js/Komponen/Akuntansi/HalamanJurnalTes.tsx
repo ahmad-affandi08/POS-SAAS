@@ -1,9 +1,9 @@
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import HalamanDaftarJurnal, { BuatQueryJurnal } from '@/Halaman/Kelola/Akuntansi/Jurnal/Daftar';
+import HalamanDaftarJurnal from '@/Halaman/Kelola/Akuntansi/Jurnal/Daftar';
 import HalamanDetailJurnal from '@/Halaman/Kelola/Akuntansi/Jurnal/Detail';
-import { AturHalamanUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, RenderUji } from '@/Komponen/Katalog/TiruanInertia';
 import type { BarisDaftarJurnal, PropsDaftarJurnal, PropsDetailJurnal } from '@/Tipe/Akuntansi';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
@@ -35,12 +35,12 @@ const pembalik: BarisDaftarJurnal = {
     TautanSumber: null,
 };
 
-const saringKosong: PropsDaftarJurnal['Saring'] = { Kata: '', Dari: '', Sampai: '', JenisSumber: null };
-
-function BuatPropsDaftar(data: BarisDaftarJurnal[], saring = saringKosong, halamanTerakhir = 1): PropsDaftarJurnal {
+function BuatPropsDaftar(data: BarisDaftarJurnal[], jumlahHalaman = 1): PropsDaftarJurnal {
     return {
-        Jurnal: { Data: data, HalamanSaatIni: 1, HalamanTerakhir: halamanTerakhir, Total: data.length },
-        Saring: saring,
+        Jurnal: {
+            Data: data,
+            Meta: { Halaman: 1, PerHalaman: 25, Total: jumlahHalaman * 25, JumlahHalaman: jumlahHalaman },
+        },
         OpsiJenisSumber: [{ Nilai: 'StokAwal', Label: 'Stok awal' }],
     };
 }
@@ -93,15 +93,9 @@ describe('Kelola/Akuntansi/Jurnal (F-05a, DesainF05a E)', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola/akuntansi/jurnal'));
     afterEach(() => cleanup());
 
-    it('BuatQueryJurnal hanya mengirim saringan yang terisi', () => {
-        expect(BuatQueryJurnal(saringKosong)).toEqual({});
-        expect(
-            BuatQueryJurnal({ Kata: '  SA/2026 ', Dari: '2026-09-01', Sampai: '2026-09-30', JenisSumber: 'StokAwal' }),
-        ).toEqual({ kata: 'SA/2026', dari: '2026-09-01', sampai: '2026-09-30', jenis: 'StokAwal' });
-    });
-
     it('daftar: nomor Mono bertautan ke detail, sumber bertautan, nilai Rupiah rata kanan, penanda pembalik', () => {
-        render(<HalamanDaftarJurnal {...BuatPropsDaftar([pembalik, barisJurnal])} />);
+        window.history.replaceState({}, '', '/kelola/akuntansi/jurnal');
+        RenderUji(<HalamanDaftarJurnal {...BuatPropsDaftar([pembalik, barisJurnal])} />);
 
         const tautanNomor = screen.getByRole('link', { name: 'JU/2026/09/000001' });
         expect(tautanNomor.getAttribute('href')).toBe(`/kelola/akuntansi/jurnal/${barisJurnal.Uuid}`);
@@ -109,62 +103,66 @@ describe('Kelola/Akuntansi/Jurnal (F-05a, DesainF05a E)', () => {
         expect(screen.getAllByRole('link', { name: 'SA/2026/09/0001' })[0]?.getAttribute('href')).toBe(
             barisJurnal.TautanSumber,
         );
-        const nilai = screen.getByText('Rp 123.456.789.012,34');
-        expect(nilai.className).toContain('tabular-nums');
-        expect(nilai.className).toContain('text-right');
+        const nilai = screen.getByText('Rp 123.456.789.012,34').closest('td');
+        expect(nilai?.className).toContain('tabular-nums');
+        expect(nilai?.className).toContain('text-right');
         expect(screen.getByText('Jurnal pembalik')).toBeTruthy();
         expect(screen.getByText('Sudah dibalik')).toBeTruthy();
         expect(screen.getByText('Rp 0,01')).toBeTruthy();
     });
 
-    it('saringan: jenis sumber langsung diterapkan, kata & tanggal lewat tombol; kerangka memuat tampil', () => {
-        render(<HalamanDaftarJurnal {...BuatPropsDaftar([barisJurnal])} />);
+    it('saring (TabelData D-16): sumber & tanggal tersimpan di URL, cari ditahan lalu dikirim ke server', async () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/jurnal');
+        const permintaan: string[] = [];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn((url: string) => {
+                permintaan.push(url);
 
-        fireEvent.change(screen.getByLabelText('Cari jurnal'), { target: { value: 'SA/2026/09' } });
-        fireEvent.change(screen.getByLabelText('Dari tanggal'), { target: { value: '2026-09-01' } });
-        expect(tiruanRouter.get).not.toHaveBeenCalled();
-
-        fireEvent.change(screen.getByLabelText('Sumber'), { target: { value: 'StokAwal' } });
-        expect(tiruanRouter.get).toHaveBeenLastCalledWith(
-            '/kelola/akuntansi/jurnal',
-            { kata: 'SA/2026/09', dari: '2026-09-01', jenis: 'StokAwal' },
-            expect.objectContaining({ preserveState: true }),
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve(BuatPropsDaftar([]).Jurnal),
+                });
+            }),
         );
+        RenderUji(<HalamanDaftarJurnal {...BuatPropsDaftar([barisJurnal])} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Terapkan saringan' }));
-        expect(tiruanRouter.get).toHaveBeenCalledTimes(2);
+        fireEvent.click(screen.getByRole('button', { name: /^Sumber/ }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Stok awal' }));
+        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'SA/2026/09' } });
 
-        const opsi = tiruanRouter.get.mock.calls[1]?.[2] as { onStart: () => void };
-        act(() => opsi.onStart());
-        expect(screen.getByTestId('kerangka-jurnal')).toBeTruthy();
-        expect(screen.getByText('Memuat jurnal…')).toBeTruthy();
+        await waitFor(() =>
+            expect(permintaan.at(-1)).toBe(
+                '/kelola/akuntansi/jurnal?cari=SA%2F2026%2F09&saring%5BJenisSumber%5D=StokAwal',
+            ),
+        );
+        expect(window.location.search).toBe('?cari=SA%2F2026%2F09&saring%5BJenisSumber%5D=StokAwal');
+        vi.unstubAllGlobals();
     });
 
     it('kosong tanpa saringan mengarahkan ke stok awal; kosong dengan saringan menawarkan hapus saringan', () => {
-        const tampilan = render(<HalamanDaftarJurnal {...BuatPropsDaftar([])} />);
+        window.history.replaceState({}, '', '/kelola/akuntansi/jurnal');
+        const tampilan = RenderUji(<HalamanDaftarJurnal {...BuatPropsDaftar([])} />);
         expect(screen.getByText('Belum ada jurnal. Jurnal terbentuk otomatis saat stok awal diposting.')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Buka stok awal' }).getAttribute('href')).toBe(
             '/kelola/persediaan/stok-awal',
         );
         tampilan.unmount();
 
-        render(<HalamanDaftarJurnal {...BuatPropsDaftar([], { ...saringKosong, Kata: 'tidak ada' })} />);
-        expect(screen.getByText('Tidak ada jurnal yang cocok dengan pencarian atau saringan ini.')).toBeTruthy();
-        expect(screen.getAllByRole('link', { name: 'Hapus saringan' }).length).toBeGreaterThan(0);
+        window.history.replaceState({}, '', '/kelola/akuntansi/jurnal?cari=tidak+ada');
+        RenderUji(<HalamanDaftarJurnal {...BuatPropsDaftar([])} />);
+        expect(screen.getByText('Tidak ada hasil untuk pencarian atau saring ini.')).toBeTruthy();
     });
 
-    it('galat server ditampilkan; paginasi membawa saringan', () => {
+    it('galat server ditampilkan; paginasi server tampil bila lebih dari satu halaman', () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/jurnal');
         AturHalamanUji({ Tanggal: 'Periode Agustus 2026 sudah dikunci.' }, '/kelola/akuntansi/jurnal');
-        render(
-            <HalamanDaftarJurnal
-                {...BuatPropsDaftar([barisJurnal], { ...saringKosong, JenisSumber: 'StokAwal' }, 3)}
-            />,
-        );
+        RenderUji(<HalamanDaftarJurnal {...BuatPropsDaftar([barisJurnal], 3)} />);
 
         expect(screen.getByText('Periode Agustus 2026 sudah dikunci.')).toBeTruthy();
-        expect(screen.getByRole('link', { name: /Berikutnya/ }).getAttribute('href')).toBe(
-            '/kelola/akuntansi/jurnal?jenis=StokAwal&halaman=2',
-        );
+        expect(screen.getByText('Halaman 1 dari 3')).toBeTruthy();
+        expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Halaman berikutnya' }).disabled).toBe(false);
     });
 
     it('detail: baris akun, outlet/tingkat usaha, total seimbang, tautan pembalik dan sumber', () => {
