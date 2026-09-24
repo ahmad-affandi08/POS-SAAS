@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    BanknoteIcon,
     BookOpenTextIcon,
     CreditCardIcon,
     HouseIcon,
@@ -66,6 +67,13 @@ const menuPersediaan: ItemMenu[] = [
     { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
 ];
 
+// F-06: grup menu "Kasir": shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
+const menuKasir: ItemMenu[] = [
+    { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
+    { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
+    { label: 'Pengaturan kasir', href: '/kelola/kasir/pengaturan', izin: IzinTenant.OutletKelola },
+];
+
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).
 const menuAkuntansi: ItemMenu[] = [
     { label: 'Jurnal', href: '/kelola/akuntansi/jurnal', izin: IzinTenant.LaporanKeuanganLihat },
@@ -105,6 +113,14 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: WarehouseIcon,
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
+    },
+    {
+        label: 'Kasir',
+        href: '/kelola/kasir/shift',
+        izin: null,
+        ikon: BanknoteIcon,
+        labelSub: 'Menu kasir',
+        sub: menuKasir,
     },
     {
         label: 'Akuntansi',

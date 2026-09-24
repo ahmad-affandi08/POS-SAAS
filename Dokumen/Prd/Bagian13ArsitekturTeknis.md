@@ -294,6 +294,7 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | outlet | `Outlet` (serapan) | payment | `PenjualanPembayaran`, `Pembayaran` |
 | warehouse / location | `Gudang` | sale return / void | `ReturPenjualan` / `VoidPenjualan` |
 | device | `Perangkat` | shift | `Shift` (serapan) |
+| cash category / cash movement | `KategoriKas` / `MutasiKas` | sync outbox item | item outbox (`Jenis`: `Shift.Buka`, `MutasiKas.Catat`) |
 | hardware | `PerangkatKeras` | cash movement | `MutasiKas` |
 | user / role / permission | `Pengguna` / `Peran` / `Izin` | stock level / stock movement | `SaldoStok` / `MutasiStok` |
 | product / category / unit | `Produk` / `Kategori` / `Satuan` | stock transfer / opname / adjustment | `TransferStok` / `StokOpname` / `PenyesuaianStok` |

@@ -44,6 +44,23 @@ final class DaftarPerangkat
             ->all());
     }
 
+    /**
+     * Label perangkat per Id untuk tampilan domain lain (F-06 shift): `Kode — Nama`.
+     *
+     * @param  list<int>  $id
+     * @return array<int, string>
+     */
+    public function AmbilLabel(array $id): array
+    {
+        $hasil = [];
+
+        foreach (Perangkat::query()->whereIn('Id', array_values(array_unique($id)))->get(['Id', 'Kode', 'Nama']) as $perangkat) {
+            $hasil[$perangkat->Id] = "{$perangkat->Kode} — {$perangkat->Nama}";
+        }
+
+        return $hasil;
+    }
+
     /** Perangkat tenant aktif berdasarkan Uuid di satu outlet; null bila tidak ada (termasuk milik tenant/outlet lain). */
     public function CariDiOutlet(string $uuid, int $idOutlet): ?Perangkat
     {

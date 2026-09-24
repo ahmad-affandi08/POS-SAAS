@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.33 |
+| Versi | 1.34 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -54,6 +54,7 @@
 | 1.31 | Rincian F-03 (diputuskan agen atas mandat D-12): skema katalog lengkap di §15 (`ProdukGudang`, `NomorUrutKatalog`, `PenghapusanKatalog`, `ImporProduk`/`ImporProdukBaris`, kolom baru Produk/DaftarHarga/RiwayatHarga/KelompokPajak/Resep/Pilihan), endpoint POS `katalog` & gambar di §16.3, istilah baru di kamus, penegakan izin katalog di §19.1, aturan SKU/barcode otomatis, BatasSku, varian, arsip/hapus, riwayat harga, penentu harga PHP=Dart dengan test vector, rumus susut resep, dan impor/ekspor. Utang F-03 di §25 no. 19. |
 | 1.32 | D-14 (keputusan pemilik produk): tanpa mode gelap di semua klien termasuk KDS; kolom "Gelap" dihapus dari token warna §17.6.3; satu sumber warna per platform; seluruh komponen shadcn/ui dipasang dengan warna dari token. |
 | 1.33 | Rincian F-05a (diputuskan agen atas mandat D-12): dokumen `StokAwal` & impor stok awal, ledger `MutasiStok` dengan HPP rata-rata bergerak/FIFO, batch & nomor seri, inti jurnal (`PostingJurnal`, `BalikkanJurnal`, kunci periode) yang dibangun lebih awal untuk J-05.1, kolom tambahan §15 (Inventori, Akuntansi, Sistem), izin baru `persediaan.stok-awal.posting` (§19.1), kode galat F-05a, perintah `persediaan:bangun-ulang-saldo`. Utang F-05a di §25 no. 20. |
+| 1.34 | Rincian F-06a (diputuskan agen atas mandat D-12): server & back-office shift dan kas. Endpoint `POST /api/pos/v1/sinkron/kirim` (batch outbox, hasil per item Diterima/Duplikat/Ditolak), tabel `Shift`/`MutasiKas` dilengkapi dan tabel baru `KategoriKas` (§15), izin baru `kas.keluar.setujui` (§19.1), pengaturan kasir tenant (batas kas keluar, shift bersama), jurnal kas masuk & setoran (§11.3). Aplikasi kasir Flutter menyusul di F-06b. Utang F-06 di §25 no. 21. |
 
 ---
 
@@ -1132,6 +1133,15 @@ flowchart LR
 - BR-06.3 Shift bisa dibuka offline (lihat §18).
 - BR-06.4 Kas keluar di atas batas butuh PIN supervisor.
 
+**Rincian F-06a (v1.34, diputuskan agen atas mandat D-12):**
+- Shift & mutasi kas dibuat di perangkat (ULID, bisa offline) dan dikirim lewat `POST /api/pos/v1/sinkron/kirim`: batch maks. 50 item berurutan `{Jenis, Uuid, Data}` (F-06: `Shift.Buka`, `MutasiKas.Catat`). Hasil per item dengan urutan yang sama: `Diterima`, `Duplikat` (Uuid sudah diterima, aman dihapus dari outbox), atau `Ditolak` + `Galat {Kode, Pesan, Bidang, Detail}` (masuk daftar "Perlu Tindakan"). Setiap item di transaksinya sendiri; galat server = seluruh batch dikirim ulang dan item yang sudah diterima kembali sebagai `Duplikat`. Endpoint ini tetap menerima data saat langganan ditangguhkan agar data offline tidak hilang.
+- Membuka shift & mencatat kas memakai izin `penjualan.buat` ("berjualan & shift sendiri"). BR-06.1 per perangkat ditegakkan server (`ShiftSudahTerbuka`); per kasir lintas perangkat bisa terjadi saat offline, jadi shift tetap diterima tetapi ditandai `PerluTinjauan` dengan alasannya. Shift bersama (BR-06.2) adalah pengaturan tenant; di shift yang bukan bersama hanya pembuka shift atau supervisor (`kas.keluar.setujui`) yang boleh mencatat kas.
+- Kas awal ≥ 0; hitungan pecahan opsional wajib berjumlah sama dengan kas awal. Kas awal tidak dijurnal (uang hanya berpindah di dalam kas usaha).
+- Kas masuk/keluar wajib memilih `KategoriKas` aktif yang dipetakan ke satu akun (back-office, izin `akuntansi.kelola`; kategori tidak dihapus, cukup dinonaktifkan). Setoran tanpa kategori.
+- BR-06.4: batas bawaan Rp 200.000 (§19.2), diatur per tenant di Pengaturan kasir (izin `outlet.kelola`, 0 = selalu butuh persetujuan). Kas keluar di atas batas wajib `UuidPenyetuju`; PIN diperiksa di perangkat, server memeriksa penyetuju punya izin `kas.keluar.setujui` di outlet itu.
+- Jurnal diposting sinkron saat mutasi diterima (aturan #10): kas keluar J-06.1, kas masuk (Dr Kas Outlet / Cr akun kategori), setoran J-11.3 ke Kas Brankas. Mutasi di periode terkunci ditolak `PeriodeTerkunci`. Mutasi kas append-only; data pembukaan shift tidak bisa diubah.
+- Back-office: daftar & detail shift (izin `laporan.penjualan.lihat`, dibatasi outlet akses) dengan ringkasan kas non-penjualan, dan tautan dari jurnal ke shift sumbernya.
+
 **State Machine `Shift.Status`:** `Terbuka → Menutup (hitung kas) → Tertutup → (DibukaUlang oleh supervisor, dengan alasan)`.
 
 ---
@@ -1799,10 +1809,11 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-09.1 | Void | Pembalik penuh J-07.1 & J-07.2 | |
 | J-09.2 | Retur penjualan | Retur Penjualan + PPN/PB1 (kontra) ; Persediaan | Kas/Piutang/Nota Kredit ; HPP |
 | J-08.1 | Pencairan QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Pencairan |
-| J-06.1 | Kas keluar (beban) | Beban terkait | Kas Outlet |
+| J-06.1 | Kas keluar (beban; F-06: akun dari `KategoriKas`) | Beban terkait | Kas Outlet |
+| J-06.2 | Kas masuk non-penjualan (F-06) | Kas Outlet | Akun dari `KategoriKas` (pendapatan lain, ekuitas, dll.) |
 | J-11.1 | Selisih kas kurang | Beban Selisih Kas | Kas Outlet |
 | J-11.2 | Selisih kas lebih | Kas Outlet | Pendapatan Lain |
-| J-11.3 | Setoran kas ke bank | Bank/Kas Brankas | Kas Outlet |
+| J-11.3 | Setoran kas ke bank (F-06: `MutasiKas` jenis Setoran ke Kas Brankas) | Bank/Kas Brankas | Kas Outlet |
 | J-05.2 | Transfer stok dikirim | Persediaan Dalam Perjalanan | Persediaan (lokasi asal) |
 | J-05.3 | Transfer stok diterima | Persediaan (lokasi tujuan) | Persediaan Dalam Perjalanan |
 | J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Susut & Barang Rusak | Persediaan |
@@ -2156,6 +2167,7 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | outlet | `Outlet` (serapan) | payment | `PenjualanPembayaran`, `Pembayaran` |
 | warehouse / location | `Gudang` | sale return / void | `ReturPenjualan` / `VoidPenjualan` |
 | device | `Perangkat` | shift | `Shift` (serapan) |
+| cash category / cash movement | `KategoriKas` / `MutasiKas` | sync outbox item | item outbox (`Jenis`: `Shift.Buka`, `MutasiKas.Catat`) |
 | hardware | `PerangkatKeras` | cash movement | `MutasiKas` |
 | user / role / permission | `Pengguna` / `Peran` / `Izin` | stock level / stock movement | `SaldoStok` / `MutasiStok` |
 | product / category / unit | `Produk` / `Kategori` / `Satuan` | stock transfer / opname / adjustment | `TransferStok` / `StokOpname` / `PenyesuaianStok` |
@@ -2598,8 +2610,9 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `Shift` | IdTenant, IdOutlet, IdPerangkat, Uuid, DibukaOleh, DibukaPada, KasAwal, DitutupOleh, DitutupPada, KasSeharusnya, KasAktual, Selisih, Pecahan JSON, Status |
-| `MutasiKas` | IdShift, Jenis (Masuk/Keluar/Setoran), Kategori, Jumlah, Catatan, Lampiran, DisetujuiOleh |
+| `Shift` | IdTenant, IdOutlet, IdPerangkat, Uuid (dari perangkat), Status, Bersama, DibukaOleh, DibukaPada, TanggalBisnis, KasAwal, PecahanKasAwal JSON, PerluTinjauan, AlasanTinjauan, DiterimaPada, DitutupOleh, DitutupPada, KasSeharusnya, KasAktual, Selisih, PecahanKasAkhir JSON (F-06; kolom tutup diisi F-11) |
+| `MutasiKas` | IdTenant, Uuid (dari perangkat), IdShift, Jenis (Masuk/Keluar/Setoran), IdKategoriKas, Jumlah, Catatan, PathLampiran, DicatatOleh, DicatatPada, TanggalBisnis, DisetujuiOleh, IdJurnal, DiterimaPada. Append-only (F-06) |
+| `KategoriKas` | IdTenant, Uuid, Nama, Jenis (Masuk/Keluar), IdAkun, Aktif, Urutan. Unik (IdTenant, Jenis, Nama) (F-06) |
 | `Penjualan` | IdTenant, IdOutlet, IdShift, IdPerangkat, Uuid, **UuidKlien (unik)**, Nomor, Kanal (MakanDiTempat/BawaPulang/Antar/Online/PesanSendiri/Marketplace), IdMeja, IdPelanggan, Status, TanggalBisnis, Subtotal, TotalDiskon, BiayaLayanan, TotalPajak, Pembulatan, TotalAkhir, TotalDibayar, Kembalian, TotalHpp, JumlahTamu, Catatan, DisinkronPada, DibuatOfflinePada |
 | `PenjualanDetail` | IdPenjualan, Uuid, IdProduk, NamaProduk (snapshot), IdSatuan, Jumlah, HargaSatuan, JumlahDiskon, IdPromo, SnapshotPajak JSON, JumlahPajak, TotalBaris, HppSatuan, TotalHpp, Pilihan JSON, Catatan, StatusDapur, IdKaryawan (komisi), AlasanVoid |
 | `PenjualanPembayaran` | IdPenjualan, Uuid, IdMetodePembayaran, Jumlah, Status, Referensi (kode approval/ref gateway), RefEksternal (unik), DibayarPada |
@@ -3388,7 +3401,7 @@ Masalah yang diselesaikan: di restoran, jika internet mati, order dari tablet pe
 
 Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.cakupan]`, misal `penjualan.void`, `penjualan.diskon.manual`, `persediaan.penyesuaian.setujui`, `laporan.keuangan.lihat`, `produk.harga.ubah`.
 
-Implementasi F-02a: peran bawaan yang dibuat untuk setiap tenant adalah Owner (`Pemilik`), Admin, Manajer Outlet, Supervisor, Kasir, Gudang (`StafGudang`), Purchasing (`StafPembelian`), dan Akuntan. Pelayan, Dapur/Barista, Apoteker, dan Sales/Salesman bergantung sektor; penambahannya ditunda ke F-10/F-17 karena izinnya (KDS, pesanan meja) belum ada (keputusan F-01 v1.28). Izin awal: `outlet.lihat`, `outlet.kelola`, `pengguna.lihat`, `pengguna.undang`, `pengguna.ubah`, `pengguna.nonaktifkan`, `peran.kelola`, `audit.lihat` (ditegakkan F-02), serta `produk.lihat`, `produk.kelola`, `produk.harga.ubah`, `persediaan.lihat`, `persediaan.kelola`, `persediaan.penyesuaian.setujui`, `pembelian.kelola`, `penjualan.buat`, `penjualan.void`, `penjualan.diskon.manual`, `laporan.penjualan.lihat`, `laporan.keuangan.lihat`, `akuntansi.kelola`, `langganan.kelola` (khusus Owner) yang penegakannya dibangun bersama flow masing-masing. Ditambahkan kemudian: `bantuan.tiket.lihat`, `bantuan.tiket.kelola` (v1.25), `perangkat.lihat`, `perangkat.kelola`, `pengguna.pin.atur` (F-02b), dan `panduan-awal.kelola` (F-01, v1.29: menjalankan panduan awal; bawaan Pemilik & Admin; langkah perangkat di wizard juga mensyaratkan `perangkat.kelola`). Penegakan F-03 (v1.31): `produk.lihat` (katalog, ekspor), `produk.kelola` (produk, kategori, satuan, pilihan, resep, komponen paket, impor), `produk.harga.ubah` (harga dasar, daftar harga, harga awal/varian/pilihan, kolom harga impor; diperiksa ulang di dalam tugas antrean), `persediaan.kelola` (batas stok per gudang), `akuntansi.kelola` (kelompok pajak). Penegakan F-05a (v1.33): izin baru `persediaan.stok-awal.posting` (posting & batal stok awal; bawaan Pemilik, Admin, Manajer Outlet, Akuntan; tenant lama menerimanya lewat `organisasi:siapkan-peran`), `persediaan.lihat` (saldo, kartu stok, daftar & detail stok awal, termasuk HPP), `persediaan.kelola` (draf stok awal, impor stok awal), `akuntansi.kelola` (pengaturan persediaan: metode HPP, stok boleh minus), `laporan.keuangan.lihat` (daftar & detail jurnal; tidak ada izin `akuntansi.lihat`). Pengguna yang dibatasi outlet hanya melihat lokasi, dokumen, impor miliknya, dan jurnal yang semua barisnya di outlet aksesnya.
+Implementasi F-02a: peran bawaan yang dibuat untuk setiap tenant adalah Owner (`Pemilik`), Admin, Manajer Outlet, Supervisor, Kasir, Gudang (`StafGudang`), Purchasing (`StafPembelian`), dan Akuntan. Pelayan, Dapur/Barista, Apoteker, dan Sales/Salesman bergantung sektor; penambahannya ditunda ke F-10/F-17 karena izinnya (KDS, pesanan meja) belum ada (keputusan F-01 v1.28). Izin awal: `outlet.lihat`, `outlet.kelola`, `pengguna.lihat`, `pengguna.undang`, `pengguna.ubah`, `pengguna.nonaktifkan`, `peran.kelola`, `audit.lihat` (ditegakkan F-02), serta `produk.lihat`, `produk.kelola`, `produk.harga.ubah`, `persediaan.lihat`, `persediaan.kelola`, `persediaan.penyesuaian.setujui`, `pembelian.kelola`, `penjualan.buat`, `penjualan.void`, `penjualan.diskon.manual`, `laporan.penjualan.lihat`, `laporan.keuangan.lihat`, `akuntansi.kelola`, `langganan.kelola` (khusus Owner) yang penegakannya dibangun bersama flow masing-masing. Ditambahkan kemudian: `bantuan.tiket.lihat`, `bantuan.tiket.kelola` (v1.25), `perangkat.lihat`, `perangkat.kelola`, `pengguna.pin.atur` (F-02b), dan `panduan-awal.kelola` (F-01, v1.29: menjalankan panduan awal; bawaan Pemilik & Admin; langkah perangkat di wizard juga mensyaratkan `perangkat.kelola`). Penegakan F-03 (v1.31): `produk.lihat` (katalog, ekspor), `produk.kelola` (produk, kategori, satuan, pilihan, resep, komponen paket, impor), `produk.harga.ubah` (harga dasar, daftar harga, harga awal/varian/pilihan, kolom harga impor; diperiksa ulang di dalam tugas antrean), `persediaan.kelola` (batas stok per gudang), `akuntansi.kelola` (kelompok pajak). Penegakan F-05a (v1.33): izin baru `persediaan.stok-awal.posting` (posting & batal stok awal; bawaan Pemilik, Admin, Manajer Outlet, Akuntan; tenant lama menerimanya lewat `organisasi:siapkan-peran`), `persediaan.lihat` (saldo, kartu stok, daftar & detail stok awal, termasuk HPP), `persediaan.kelola` (draf stok awal, impor stok awal), `akuntansi.kelola` (pengaturan persediaan: metode HPP, stok boleh minus), `laporan.keuangan.lihat` (daftar & detail jurnal; tidak ada izin `akuntansi.lihat`). Pengguna yang dibatasi outlet hanya melihat lokasi, dokumen, impor miliknya, dan jurnal yang semua barisnya di outlet aksesnya. Penegakan F-06 (v1.34): izin baru `kas.keluar.setujui` (persetujuan kas keluar di atas batas dengan PIN; bawaan Supervisor & Manajer Outlet, tenant lama lewat `organisasi:siapkan-peran`), `penjualan.buat` (buka shift & catat kas di POS), `laporan.penjualan.lihat` (daftar & detail shift), `akuntansi.kelola` (kategori kas), `outlet.kelola` (pengaturan kasir).
 
 ### 19.2 Batas & Approval yang Bisa Dikonfigurasi
 
@@ -3761,6 +3774,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 18. ~~Enumerasi akun saat registrasi~~ **Ditutup v1.22** (BR-00.10): email/nomor yang sudah terdaftar ditolak dengan satu pesan umum, pemilik akun menerima email pemberitahuan (maks. 1/jam).
 19. **Utang F-03** (v1.31): kontrak OpenAPI (Scramble) untuk endpoint POS katalog; `Produk.IdPemasok` konsinyasi (F-04); penyedia HPP bahan nyata (F-05a); snapshot resep di baris penjualan & vektor baris pajak campuran inklusif/eksklusif (F-07); vektor HPP/pemotongan resep (F-07); pencocokan preset impor dengan berkas ekspor asli majoo/Moka/Pawoon; impor modifier, resep, dan daftar harga; pembersihan jejak hapus lintas tenant (P-11); URL gambar publik (F-17); tabel tier pelanggan (F-16); parsing barcode timbangan (F-07); memindahkan test arsitektur katalog ke `tests/Arsitektur` (manusia); penjaga CI "test vector hanya tambah". Temuan QA F-03 yang ditunda: tugas impor yang sudah berjalan tetap menulis setelah tenant ditangguhkan (hentikan di potongan berikutnya); batas atas persen susut resep agar jumlah kotor tidak melampaui `decimal(18,4)` saat pemotongan stok (F-07); batas ekstraksi xlsx 200 MB per unggahan bisa diperkecil bila beban server terlalu tinggi.
 20. **Utang F-05a** (v1.33): suite uji konkurensi nyata `tests/Konkurensi` (dua koneksi, `DatabaseTruncation`) butuh perubahan `phpunit.xml`/`Pest.php` oleh manusia; sampai itu, urutan kunci & idempotensi diuji tanpa dua koneksi. Pemutaran ulang lapisan FIFO (`--ulang-fifo`); alat konversi metode HPP; satuan alternatif (dus/pak) di stok awal; stok di payload katalog POS (bagian `SaldoStok`, F-06/F-07); kontrak `PemeriksaPemakaianGudang` untuk arsip gudang berstok (F-05b); penerimaan nomor seri `DalamPerjalanan` (F-05b); kebijakan penjualan offline bertanggal di periode terkunci (F-07/F-15); kunci S tenant pada setiap mutasi diukur ulang di uji beban F-07. Temuan QA F-05a yang ditunda: pratinjau impor belum memeriksa batas 16 digit nilai (tertangkap saat draf dibuat); `StokAwal.IdOutlet` tidak ikut berubah bila lokasi dipindah ke outlet lain; penjaga model tidak mencakup ubah/hapus lewat query builder langsung.
+21. **Utang F-06** (v1.34): aplikasi kasir Flutter (aktivasi, Drift + outbox, masuk PIN offline dengan verifier per perangkat D-12 no. 3, layar Buka Shift & kas) di F-06b; unggah foto bukti kas (`PathLampiran`) di F-06b; persetujuan jarak jauh lewat push (X4); shift bersama per outlet (sekarang per tenant); `sinkron/kirim` untuk perangkat yang dicabut setelah data offline dibuat (F-07); penyetuju yang izinnya dicabut setelah menyetujui offline tetap ditolak (tinjau di F-07); kontrak OpenAPI untuk `sinkron/kirim`.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

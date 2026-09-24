@@ -42,7 +42,7 @@ enum PeranTenantBawaan: string
             self::Pemilik => 'Semua akses di semua outlet, termasuk langganan.',
             self::Admin => 'Semua akses kecuali langganan & kepemilikan.',
             self::ManajerOutlet => 'Operasional outlet yang ditugaskan: produk, stok, persetujuan, laporan outlet.',
-            self::Supervisor => 'Persetujuan di POS (void, diskon), buka ulang shift.',
+            self::Supervisor => 'Persetujuan di POS (void, diskon, kas keluar), buka ulang shift.',
             self::Kasir => 'POS: jual, bayar, simpan pesanan, cetak, buka/tutup shift sendiri.',
             self::StafGudang => 'Penerimaan, transfer, opname, penyesuaian stok (butuh persetujuan).',
             self::StafPembelian => 'Pemasok & pesanan pembelian.',
@@ -76,6 +76,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::PenjualanBuat,
                 IzinTenant::PenjualanVoid,
                 IzinTenant::PenjualanDiskonManual,
+                IzinTenant::KasKeluarSetujui,
                 IzinTenant::LaporanPenjualanLihat,
                 // F-02b: perangkat & PIN kasir di outlet yang ditugaskan.
                 IzinTenant::PerangkatLihat,
@@ -89,6 +90,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::PenjualanBuat,
                 IzinTenant::PenjualanVoid,
                 IzinTenant::PenjualanDiskonManual,
+                // F-06 BR-06.4: PIN supervisor untuk kas keluar di atas batas.
+                IzinTenant::KasKeluarSetujui,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola],

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Providers\PenyediaAplikasi;
+use App\Providers\PenyediaKasir;
 use App\Providers\PenyediaKatalog;
 use App\Providers\PenyediaKatalogHarga;
 use App\Providers\PenyediaKatalogImpor;
@@ -18,4 +19,6 @@ return [
     PenyediaKatalogImpor::class,
     // F-05a: stok awal & buku stok (ikatan kontrak Katalog ke Persediaan).
     PenyediaPersediaan::class,
+    // F-06: shift & kas (penangan item sinkron POS).
+    PenyediaKasir::class,
 ];

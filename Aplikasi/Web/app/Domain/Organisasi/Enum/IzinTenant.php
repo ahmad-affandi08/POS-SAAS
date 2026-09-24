@@ -42,6 +42,8 @@ enum IzinTenant: string
     case PenjualanBuat = 'penjualan.buat';
     case PenjualanVoid = 'penjualan.void';
     case PenjualanDiskonManual = 'penjualan.diskon.manual';
+    // F-06 BR-06.4: menyetujui kas keluar di atas batas dengan PIN (supervisor ke atas).
+    case KasKeluarSetujui = 'kas.keluar.setujui';
     case LaporanPenjualanLihat = 'laporan.penjualan.lihat';
     case LaporanKeuanganLihat = 'laporan.keuangan.lihat';
     case AkuntansiKelola = 'akuntansi.kelola';
@@ -78,6 +80,7 @@ enum IzinTenant: string
             self::PenjualanBuat => 'Berjualan di POS (jual, bayar, simpan pesanan, shift sendiri)',
             self::PenjualanVoid => 'Membatalkan (void) transaksi',
             self::PenjualanDiskonManual => 'Memberi diskon manual',
+            self::KasKeluarSetujui => 'Menyetujui kas keluar di atas batas',
             self::LaporanPenjualanLihat => 'Melihat laporan penjualan',
             self::LaporanKeuanganLihat => 'Melihat laporan keuangan',
             self::AkuntansiKelola => 'Mengelola jurnal, pajak, dan tutup buku',
@@ -97,7 +100,7 @@ enum IzinTenant: string
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
             self::PembelianKelola => 'Persediaan & pembelian',
-            self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual => 'Penjualan',
+            self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

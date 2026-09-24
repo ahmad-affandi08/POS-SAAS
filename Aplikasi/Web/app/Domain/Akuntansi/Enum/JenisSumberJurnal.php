@@ -11,11 +11,13 @@ namespace App\Domain\Akuntansi\Enum;
 enum JenisSumberJurnal: string
 {
     case StokAwal = 'StokAwal';
+    case MutasiKas = 'MutasiKas';
 
     public function AmbilLabel(): string
     {
         return match ($this) {
             self::StokAwal => 'Stok awal',
+            self::MutasiKas => 'Kas masuk/keluar',
         };
     }
 
@@ -28,6 +30,7 @@ enum JenisSumberJurnal: string
 
         return match ($this) {
             self::StokAwal => '/kelola/persediaan/stok-awal/'.$uuid,
+            self::MutasiKas => '/kelola/kasir/mutasi-kas/'.$uuid,
         };
     }
 }

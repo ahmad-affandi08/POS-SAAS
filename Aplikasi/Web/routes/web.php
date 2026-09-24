@@ -124,6 +124,7 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/PersediaanImpor.php'));
             Route::group([], base_path('routes/Persediaan.php'));
             Route::group([], base_path('routes/Akuntansi.php'));
+            Route::group([], base_path('routes/Kasir.php'));
         });
     });
 });

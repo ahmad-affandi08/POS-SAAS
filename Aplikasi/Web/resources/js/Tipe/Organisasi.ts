@@ -29,6 +29,9 @@ export const IzinTenant = {
     PersediaanLihat: 'persediaan.lihat',
     PersediaanStokAwalPosting: 'persediaan.stok-awal.posting',
     LaporanKeuanganLihat: 'laporan.keuangan.lihat',
+    // F-06 shift & kas: daftar shift memakai laporan.penjualan.lihat, persetujuan kas keluar di POS.
+    LaporanPenjualanLihat: 'laporan.penjualan.lihat',
+    KasKeluarSetujui: 'kas.keluar.setujui',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

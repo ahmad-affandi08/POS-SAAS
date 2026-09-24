@@ -7,6 +7,7 @@ use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
+use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\PastikanLanggananPosAktif;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,10 @@ Route::post('/perangkat/aktivasi', [PerangkatKontroler::class, 'Aktivasi'])
 Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
     // F-02b: versi aplikasi & status langganan; tetap terbuka saat langganan ditangguhkan.
     Route::get('/konfigurasi-aplikasi', [KonfigurasiAplikasiKontroler::class, 'Tampilkan'])->name('pos.konfigurasi-aplikasi');
+
+    // F-06: kirim batch outbox (shift, mutasi kas; F-07 menambah penjualan). Sengaja di luar penjaga langganan agar
+    // data yang dibuat offline sebelum langganan ditangguhkan tetap bisa tersimpan di server (tanpa kehilangan data).
+    Route::post('/sinkron/kirim', [SinkronKontroler::class, 'Kirim'])->middleware('throttle:120,1')->name('pos.sinkron.kirim');
 
     // Endpoint berjualan: POS terkunci saat langganan Ditangguhkan/Berhenti.
     Route::middleware(PastikanLanggananPosAktif::class)->group(function (): void {
