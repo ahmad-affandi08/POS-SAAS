@@ -72,11 +72,17 @@ final class PenyimpanGambarProduk
     /** Versi gambar = ulid pada nama berkas; null bila tanpa gambar. */
     public static function AmbilVersi(Produk $produk): ?string
     {
-        if ($produk->PathGambar === null || $produk->PathGambar === '') {
+        return self::AmbilVersiDariPath($produk->PathGambar);
+    }
+
+    /** Versi (ulid) dari path gambar besar; dipakai juga log audit agar path penyimpanan tidak ikut tercatat. */
+    public static function AmbilVersiDariPath(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
             return null;
         }
 
-        $nama = pathinfo($produk->PathGambar, PATHINFO_FILENAME);
+        $nama = pathinfo($path, PATHINFO_FILENAME);
         $posisi = strrpos($nama, '-');
 
         return $posisi === false ? null : substr($nama, $posisi + 1);

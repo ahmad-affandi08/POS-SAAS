@@ -36,7 +36,7 @@ final class HapusGambarProduk
 
             $produk->fill(['PathGambar' => null])->save();
             DB::afterCommit(fn () => $this->penyimpan->Hapus($pathLama));
-            $this->audit->Catat('produk.gambar.hapus', $produk, ['PathGambar' => $pathLama]);
+            $this->audit->Catat('produk.gambar.hapus', $produk, ['VersiGambar' => PenyimpanGambarProduk::AmbilVersiDariPath($pathLama)]);
 
             return $produk;
         });
