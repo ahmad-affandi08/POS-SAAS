@@ -11,10 +11,10 @@ use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Resep\Data\DataHppResep;
 use App\Domain\Katalog\Resep\Kueri\HppResep;
 use App\Domain\Katalog\Resep\Kueri\ResepProduk;
-use App\Domain\Katalog\Resep\Layanan\HppBahanBelumTersedia;
 use App\Domain\Katalog\Resep\Model\Resep;
 use App\Domain\Katalog\Resep\Model\ResepDetail;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Persediaan\Kueri\HppBahanDariSaldo;
 use Brick\Math\BigDecimal;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -232,14 +232,14 @@ describe('BR-03.5 estimasi HPP resep', function (): void {
         expect(app(HppResep::class)->Hitung($menu)->hppSatuan)->toBe('391.666700');
     });
 
-    it('satu bahan tanpa HPP → BelumTersedia; ikatan bawaan sebelum F-05a selalu BelumTersedia; tanpa resep → TanpaResep', function (): void {
+    it('satu bahan tanpa HPP → BelumTersedia; ikatan F-05a (HPP dari saldo) tanpa saldo bahan → BelumTersedia; tanpa resep → TanpaResep', function (): void {
         BantuanKatalog::BuatTenant();
         $kopi = BantuanKomposisi::BuatBahan();
         $susu = BantuanKomposisi::BuatBahan('Susu Segar Full Cream Pasteurisasi', 'ml', 'Mililiter');
         $menu = BantuanKomposisi::BuatProdukResep();
 
         expect(app(HppResep::class)->Hitung($menu)->KeArray())->toBe(['Status' => 'TanpaResep', 'HppSatuan' => null, 'Baris' => []])
-            ->and(app(PenyediaHppBahan::class))->toBeInstanceOf(HppBahanBelumTersedia::class);
+            ->and(app(PenyediaHppBahan::class))->toBeInstanceOf(HppBahanDariSaldo::class);
 
         BantuanKomposisi::SimpanResep($menu, [[$kopi, '18'], [$susu, '150']]);
         $bawaan = app(HppResep::class)->Hitung($menu);

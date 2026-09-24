@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Kueri;
 
-use LogicException;
+use App\Domain\Persediaan\Enum\StatusStokAwal;
+use App\Domain\Persediaan\Model\StokAwal;
 
 /**
- * Ringkasan stok awal tenant aktif untuk panduan awal (DesainF05a C.8).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim F (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Ringkasan stok awal tenant aktif untuk butir panduan awal "Isi stok awal" (F-01, DesainF05a C.8).
  */
 final class RingkasanStokAwal
 {
+    /** True bila tenant punya minimal satu stok awal berstatus Diposting (yang dibatalkan tidak dihitung). */
     public function CekAdaDiposting(): bool
     {
-        throw new LogicException('F-05a Tim F');
+        return StokAwal::query()->where('Status', StatusStokAwal::Diposting->value)->exists();
     }
 }
