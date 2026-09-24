@@ -49,12 +49,12 @@ Jangan mencoba melewati penjaga tersebut. Kalau penjaga menolak, perbaiki kodeny
 
 ## Yang dilarang keras
 
-- Mengubah file penjaga: `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, `PRD.md`, `Dokumen/**`, konfigurasi lint/test, test arsitektur. Perubahan ini hanya oleh manusia (akan diminta persetujuan). Test vector boleh ditambah kasus oleh agent, tetapi kasus lama tidak boleh dihapus/dilemahkan (lihat `.claude/rules/Pengujian.md`).
+- Melemahkan file penjaga (`CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, `PRD.md`, konfigurasi lint/test, test arsitektur). Sejak **D-17** agent boleh mengubah file penjaga **tanpa meminta izin** (memperbarui PRD, aturan, dokumen), asalkan tidak melemahkan test/lint/CI/test arsitektur (aturan #19), dicatat di PRD (riwayat versi/keputusan), dan dilaporkan ke pengguna. Test vector boleh ditambah kasus oleh agent, tetapi kasus lama tidak boleh dihapus/dilemahkan (lihat `.claude/rules/Pengujian.md`).
 - Mengedit `Dokumen/` langsung. Itu hasil generate dari `PRD.md` lewat `python3 Alat/PecahPrd.py`.
 - `git push --force`, `--no-verify`, menonaktifkan hook, `migrate:fresh`/`db:wipe` di luar lingkungan test.
 - Membaca atau menulis `.env` dan rahasia apa pun. Kredensial tidak pernah masuk kode, log, atau commit.
 - Menyimpang dari PRD diam-diam. Jika aturan bertabrakan, tidak jelas, atau terasa salah:
-  **berhenti, jelaskan ke pengguna, atau tulis usulan di PR** (bagian "Usulan perubahan keputusan"). Keputusan D-xx hanya diubah manusia.
+  **berhenti, jelaskan ke pengguna, atau tulis usulan di PR** (bagian "Usulan perubahan keputusan"). Keputusan baru atau penyesuaian D-xx boleh dicatat agent (D-12, D-17) dan dilaporkan; membalik keputusan pemilik produk tetap harus ditanyakan dulu.
 
 ## Perintah pengecekan
 

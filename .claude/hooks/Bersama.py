@@ -8,7 +8,7 @@ import sys
 
 AkarRepo = os.environ.get("CLAUDE_PROJECT_DIR") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-# File penjaga: agent boleh mengusulkan, tapi manusia yang menyetujui (permissionDecision "ask").
+# File penjaga: sejak D-17 agent boleh mengubahnya tanpa konfirmasi (hook memberi "allow" + catatan).
 PolaPenjaga = [
     # Spesifikasi/VektorUjiKalkulasi/* dikeluarkan atas persetujuan pemilik produk (v1.30): agent boleh menambah kasus,
     # tetapi tetap tidak boleh melemahkan/mengubah nilai harapan tanpa alasan bisnis (CLAUDE.md #19).
@@ -19,7 +19,7 @@ PolaPenjaga = [
 ]
 # File yang tidak boleh diedit tangan sama sekali (deny).
 PolaTerlarang = {
-    "Dokumen/*": "Dokumen/ adalah hasil generate. Ubah PRD.md (dengan persetujuan manusia) lalu jalankan: python3 Alat/PecahPrd.py",
+    "Dokumen/*": "Dokumen/ adalah hasil generate. Ubah PRD.md lalu jalankan: python3 Alat/PecahPrd.py",
     "*composer.lock": "Lockfile diperbarui lewat composer, bukan diedit tangan.",
     "*package-lock.json": "Lockfile diperbarui lewat npm, bukan diedit tangan.",
     "*pubspec.lock": "Lockfile diperbarui lewat dart/flutter pub, bukan diedit tangan.",

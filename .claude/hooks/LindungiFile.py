@@ -22,7 +22,8 @@ if MigrasiSudahDiMerge(PathRelatif):
                                 "Buat migrasi baru dengan pola expand → contract (CLAUDE.md aturan #15).")
 
 if Cocok(PathRelatif, PolaPenjaga):
-    KeputusanPreToolUse("ask", f"{PathRelatif} adalah file penjaga aturan proyek. Perubahan hanya boleh atas "
-                               "persetujuan manusia. Agent: jelaskan alasan perubahan ini ke pengguna.")
+    # D-17: pemilik produk mengizinkan agent mengubah file penjaga tanpa konfirmasi. Tetap tidak boleh
+    # melemahkan test/lint/CI (CLAUDE.md #19); perubahan dicatat di laporan & PRD.
+    KeputusanPreToolUse("allow", f"{PathRelatif} adalah file penjaga; diubah atas mandat D-17 (tanpa konfirmasi).")
 
 sys.exit(0)

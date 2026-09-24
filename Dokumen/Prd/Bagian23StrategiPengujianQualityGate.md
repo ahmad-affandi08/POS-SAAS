@@ -55,7 +55,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | | Aturan per jenis file, dimuat hanya saat file yang cocok dibuka (`paths:`) | `.claude/rules/*.md` |
 | | Potongan PRD per bagian & per flow (hasil generate, bukan diedit) | `Dokumen/` via `Alat/PecahPrd.py` |
 | **2. Penjaga otomatis** | Pengecek konvensi: penamaan PascalCase/kebab-case, migrasi, float/double untuk uang, bypass scope tenant, URL & nama route | `Alat/CekKonvensi.py` (+ `Alat/KonvensiPengecualian.json`) |
-| | Hook `PreToolUse`: tolak edit `.env`, `Dokumen/`, lockfile, migrasi yang sudah di-merge; minta persetujuan manusia untuk file penjaga; tolak force push, `--no-verify`, `migrate:fresh` di luar test | `.claude/hooks/LindungiFile.py`, `CekPerintah.py` |
+| | Hook `PreToolUse`: tolak edit `.env`, `Dokumen/`, lockfile, migrasi yang sudah di-merge; izinkan file penjaga dengan catatan (D-17); tolak force push, `--no-verify`, `migrate:fresh` di luar test | `.claude/hooks/LindungiFile.py`, `CekPerintah.py` |
 | | Hook `PostToolUse`: format + cek konvensi setiap file yang diedit, pelanggaran dikirim balik ke agent | `.claude/hooks/CekSetelahEdit.py` |
 | | Hook `Stop`: agent tidak boleh menyatakan selesai selama konvensi/dokumen melanggar | `.claude/hooks/CekSebelumSelesai.py` |
 | | CI wajib hijau + CODEOWNERS untuk file penjaga | `.github/workflows/CekKepatuhan.yml`, `.github/CODEOWNERS` |
@@ -66,7 +66,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | | Template PR menyebut Flow, BR, D-xx, dan bukti pengecekan | `.github/pull_request_template.md` |
 
 **Aturan tata kelola:**
-- File penjaga (`CLAUDE.md`, `.claude/`, `Alat/`, `.github/`, `PRD.md`, `Dokumen/`, konfigurasi lint/test, test arsitektur, test vector) hanya diubah atas persetujuan manusia dan ditinjau CODEOWNERS.
+- File penjaga (`CLAUDE.md`, `.claude/`, `Alat/`, `.github/`, `PRD.md`, `Dokumen/`, konfigurasi lint/test, test arsitektur, test vector) boleh diubah agent tanpa meminta izin sejak D-17, dengan syarat tidak melemahkan test/lint/CI, dicatat di PRD, dan dilaporkan; tetap ditinjau CODEOWNERS saat PR.
 - Agent yang menemukan aturan bertabrakan atau tidak masuk akal **tidak menyimpang diam-diam**. Ia berhenti dan bertanya, atau menulis usulan di bagian "Usulan perubahan keputusan" pada PR.
 - Setiap aturan baru di PRD yang penting **wajib punya pengecek otomatis**. Aturan yang tidak bisa dicek dimasukkan ke daftar tinjauan subagent `penjaga-konvensi`.
 - Branch protection `main`: wajib PR, CI hijau, dan "Require review from Code Owners".

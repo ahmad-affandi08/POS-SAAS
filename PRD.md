@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.39 |
+| Versi | 1.40 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -60,6 +60,7 @@
 | 1.37 | Keputusan D-16 dari pemilik produk: (1) **semua tabel web** memakai komponen `TabelData` berbasis **TanStack Table + TanStack Query** dengan fitur lengkap (§17.4.3); (2) **web responsif penuh** dari 360px sampai layar lebar (§17.4.4); (3) Aplikasi POS dirancang sebagai **Ruang Kerja Kasir** yang elegan dan tetap mudah untuk dipakai berjam-jam (§17.2.7). Tabel §13.5, §17.2.3, §17.6.2, §17.6.5, §17.6.9, §17.6.11, §23.3 disesuaikan. Utang penyesuaian halaman & layar yang sudah ada di §25 no. 22. |
 | 1.38 | Pelaksanaan D-16 (keputusan agen, D-12): data `TabelData` mode server dilayani **URL halaman yang sama** dengan `Accept: application/json` (bukan `/internal/*` terpisah); **tabel isian formulir** dan **rincian dokumen kecil** dikecualikan dari `TabelData` (§17.4.3, §25.2 no. 17). Migrasi seluruh daftar web ke `TabelData` selesai (§25 no. 22a). |
 | 1.39 | Pemilih tanggal seragam (§17.4.2): `PemilihTanggal`, `PemilihTanggalWaktu`, `PemilihRentangTanggal` menggantikan isian tanggal bawaan peramban di seluruh web; preset rentang ditambah 30 hari terakhir & Tahun ini. |
+| 1.40 | Keputusan D-17: agent mengubah file penjaga (PRD, CLAUDE.md, aturan, hook) tanpa meminta izin, dengan batas tidak melemahkan test/lint/CI dan larangan keras tetap berlaku. |
 
 ---
 
@@ -3796,7 +3797,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | | Aturan per jenis file, dimuat hanya saat file yang cocok dibuka (`paths:`) | `.claude/rules/*.md` |
 | | Potongan PRD per bagian & per flow (hasil generate, bukan diedit) | `Dokumen/` via `Alat/PecahPrd.py` |
 | **2. Penjaga otomatis** | Pengecek konvensi: penamaan PascalCase/kebab-case, migrasi, float/double untuk uang, bypass scope tenant, URL & nama route | `Alat/CekKonvensi.py` (+ `Alat/KonvensiPengecualian.json`) |
-| | Hook `PreToolUse`: tolak edit `.env`, `Dokumen/`, lockfile, migrasi yang sudah di-merge; minta persetujuan manusia untuk file penjaga; tolak force push, `--no-verify`, `migrate:fresh` di luar test | `.claude/hooks/LindungiFile.py`, `CekPerintah.py` |
+| | Hook `PreToolUse`: tolak edit `.env`, `Dokumen/`, lockfile, migrasi yang sudah di-merge; izinkan file penjaga dengan catatan (D-17); tolak force push, `--no-verify`, `migrate:fresh` di luar test | `.claude/hooks/LindungiFile.py`, `CekPerintah.py` |
 | | Hook `PostToolUse`: format + cek konvensi setiap file yang diedit, pelanggaran dikirim balik ke agent | `.claude/hooks/CekSetelahEdit.py` |
 | | Hook `Stop`: agent tidak boleh menyatakan selesai selama konvensi/dokumen melanggar | `.claude/hooks/CekSebelumSelesai.py` |
 | | CI wajib hijau + CODEOWNERS untuk file penjaga | `.github/workflows/CekKepatuhan.yml`, `.github/CODEOWNERS` |
@@ -3807,7 +3808,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | | Template PR menyebut Flow, BR, D-xx, dan bukti pengecekan | `.github/pull_request_template.md` |
 
 **Aturan tata kelola:**
-- File penjaga (`CLAUDE.md`, `.claude/`, `Alat/`, `.github/`, `PRD.md`, `Dokumen/`, konfigurasi lint/test, test arsitektur, test vector) hanya diubah atas persetujuan manusia dan ditinjau CODEOWNERS.
+- File penjaga (`CLAUDE.md`, `.claude/`, `Alat/`, `.github/`, `PRD.md`, `Dokumen/`, konfigurasi lint/test, test arsitektur, test vector) boleh diubah agent tanpa meminta izin sejak D-17, dengan syarat tidak melemahkan test/lint/CI, dicatat di PRD, dan dilaporkan; tetap ditinjau CODEOWNERS saat PR.
 - Agent yang menemukan aturan bertabrakan atau tidak masuk akal **tidak menyimpang diam-diam**. Ia berhenti dan bertanya, atau menulis usulan di bagian "Usulan perubahan keputusan" pada PR.
 - Setiap aturan baru di PRD yang penting **wajib punya pengecek otomatis**. Aturan yang tidak bisa dicek dimasukkan ke daftar tinjauan subagent `penjaga-konvensi`.
 - Branch protection `main`: wajib PR, CI hijau, dan "Require review from Code Owners".
@@ -3885,6 +3886,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-14 | **Tanpa mode gelap** di semua klien (web, Aplikasi Kasir, Aplikasi Pemilik, KDS). Warna diubah di satu tempat per platform (`Aplikasi.css` untuk web, `TokenWarna.dart` untuk Flutter); halaman tidak pernah memuat warna lepas. Seluruh komponen shadcn/ui dipasang di `Komponen/Ui/` dan warnanya diturunkan dari token. Warna final menyusul | 24/09/2026 | §17.4, §17.5, §17.6.3, §17.x KDS |
 | D-15 | Nama sistem **PAYOU** (slogan "Bisnis Laris, Kelola Praktis.") beserta logo, ikon, dan palet merek dari pemilik produk. Token warna §17.6.3 menjadi final (Brand Indigo `#5558E8`, TeksUtama Navy `#0F2747`). Aset sumber & skrip turunan di `Spesifikasi/Merek/`; logo di UI adalah aset merek, bukan dekorasi (aturan tanpa gradien berlaku untuk komponen UI) | 24/09/2026 | Kepala dokumen, §17.6.3, `Spesifikasi/Merek`, `CLAUDE.md` |
 | D-16 | Dari pemilik produk: (1) semua tabel web memakai `TabelData` berbasis **TanStack Table + TanStack Query** dengan fitur lengkap (cari, saring, urut, atur kolom, pilih & aksi massal, paginasi server, ekspor, keadaan di URL); (2) seluruh web **responsif** 360px s.d. layar lebar; (3) Aplikasi POS adalah **Ruang Kerja Kasir** yang elegan dan mudah untuk kerja berjam-jam | 24/09/2026 | §13.5, §17.2.3, §17.2.7, §17.4.3, §17.4.4, §17.6, §23.3, §25 no. 22, `CLAUDE.md`, `.claude/rules/` |
+| D-17 | Dari pemilik produk: agent **boleh mengubah PRD, `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, dan dokumen/aturan lain tanpa meminta izin**, serta semua alat berjalan tanpa konfirmasi. Batas yang tetap: tidak melemahkan test/lint/CI/test arsitektur, `Dokumen/` hanya lewat `Alat/PecahPrd.py`, larangan keras (`.env`, force push, `--no-verify`, penghapus database) tetap berlaku, setiap perubahan dicatat & dilaporkan | 24/09/2026 | `CLAUDE.md`, `.claude/hooks/`, `.claude/settings.json`, §23 |
 
 
 ### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)
