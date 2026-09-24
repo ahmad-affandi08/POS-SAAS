@@ -1,5 +1,5 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -7,11 +7,11 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
@@ -53,7 +53,56 @@ const formatTanggal = new Intl.DateTimeFormat('id-ID', {
     timeZone: 'UTC',
 });
 
-/** Hari libur nasional & cuti bersama per tahun (P-02). Wajib terbit paling lambat 1 Desember (BR-P02.4). */
+function BuatKolom(labelJenis: Map<string, string>): KolomTabel<HariLibur>[] {
+    return [
+        {
+            id: 'Tanggal',
+            accessorKey: 'Tanggal',
+            header: 'Tanggal',
+            meta: { label: 'Tanggal', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-utama' },
+            cell: ({ row }) => formatTanggal.format(new Date(`${row.original.Tanggal}T00:00:00Z`)),
+        },
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama' },
+        },
+        {
+            id: 'Jenis',
+            accessorKey: 'Jenis',
+            header: 'Jenis',
+            meta: { label: 'Jenis', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => labelJenis.get(row.original.Jenis) ?? row.original.Jenis,
+        },
+        {
+            id: 'NomorDasarHukum',
+            accessorKey: 'NomorDasarHukum',
+            header: 'Dasar hukum',
+            enableSorting: false,
+            meta: { label: 'Dasar hukum', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => row.original.NomorDasarHukum ?? '—',
+        },
+        {
+            id: 'Status',
+            accessorKey: 'Status',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row: { original: hari } }) => (
+                <>
+                    <LabelStatus jenis={labelStatus[hari.Status].jenis} teks={labelStatus[hari.Status].teks} />
+                    {hari.PembatalanMenunggu ? (
+                        <span className="mt-1 block text-keterangan text-peringatan">
+                            Pembatalan menunggu tinjauan: {hari.AlasanPembatalan}
+                        </span>
+                    ) : null}
+                </>
+            ),
+        },
+    ];
+}
+
+/** Hari libur nasional & cuti bersama per tahun (P-02), TabelData D-16. Wajib terbit paling lambat 1 Desember (BR-P02.4). */
 export default function HalamanHariLibur({
     Tahun,
     HariLibur,
@@ -68,7 +117,10 @@ export default function HalamanHariLibur({
     const [sunting, AturSunting] = useState<HariLibur | 'baru' | null>(null);
     const [meninjau, AturMeninjau] = useState(false);
     const [pembatalan, AturPembatalan] = useState<{ jenis: 'ajukan' | 'tinjau'; hari: HariLibur } | null>(null);
-    const labelJenis = new Map(PilihanJenis.map((item) => [item.Nilai, item.Label]));
+    const kolom = useMemo(
+        () => BuatKolom(new Map(PilihanJenis.map((item) => [item.Nilai, item.Label]))),
+        [PilihanJenis],
+    );
     const adaDraf = HariLibur.some((hari) => hari.Status === 'Draf');
     const adaMenunggu = HariLibur.some((hari) => hari.Status === 'MenungguTinjauan');
     const bisaTinjau =
@@ -139,75 +191,83 @@ export default function HalamanHariLibur({
                     paling lambat 1 Desember.
                 </Pemberitahuan>
             ) : (
-                <PanelTabel keterangan={`Hari libur tahun ${Tahun}`}>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Tanggal</TableHead>
-                            <TableHead scope="col">Nama</TableHead>
-                            <TableHead scope="col">Jenis</TableHead>
-                            <TableHead scope="col">Dasar hukum</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {HariLibur.map((hari) => (
-                            <TableRow key={hari.Uuid}>
-                                <TableCell className="whitespace-nowrap text-teks-utama">
-                                    {formatTanggal.format(new Date(`${hari.Tanggal}T00:00:00Z`))}
-                                </TableCell>
-                                <TableCell className="text-teks-utama">{hari.Nama}</TableCell>
-                                <TableCell className="text-teks-sekunder">
-                                    {labelJenis.get(hari.Jenis) ?? hari.Jenis}
-                                </TableCell>
-                                <TableCell className="text-teks-sekunder">{hari.NomorDasarHukum ?? '—'}</TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={labelStatus[hari.Status].jenis}
-                                        teks={labelStatus[hari.Status].teks}
-                                    />
-                                    {hari.PembatalanMenunggu ? (
-                                        <p className="mt-1 text-keterangan text-peringatan">
-                                            Pembatalan menunggu tinjauan: {hari.AlasanPembatalan}
-                                        </p>
-                                    ) : null}
-                                </TableCell>
-                                <TableCell>
-                                    {bolehAjukan && hari.Status === 'Draf' ? (
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => AturSunting(hari)}>
-                                                Ubah
-                                            </Button>
-                                            <Button variant="destructive" size="sm" onClick={() => HapusDraf(hari)}>
-                                                Hapus
-                                            </Button>
-                                        </div>
-                                    ) : null}
-                                    {bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu ? (
-                                        <div className="flex justify-end">
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => AturPembatalan({ jenis: 'ajukan', hari })}
-                                            >
-                                                Ajukan pembatalan
-                                            </Button>
-                                        </div>
-                                    ) : null}
-                                    {bolehSetujui && hari.PembatalanMenunggu && hari.IdPengajuBatal !== IdPengguna ? (
-                                        <div className="flex justify-end">
-                                            <Button size="sm" onClick={() => AturPembatalan({ jenis: 'tinjau', hari })}>
-                                                Tinjau pembatalan
-                                            </Button>
-                                        </div>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
+                <TabelData
+                    id="pengelola-referensi-hari-libur"
+                    label={`Hari libur tahun ${Tahun}`}
+                    kolom={kolom}
+                    sumber={{ mode: 'lokal', data: HariLibur }}
+                    ambilIdBaris={(hari) => hari.Uuid}
+                    urutBawaan="Tanggal"
+                    cari="Cari nama hari libur"
+                    saring={[
+                        {
+                            id: 'Jenis',
+                            label: 'Jenis',
+                            jenis: 'pilihanBanyak',
+                            opsi: PilihanJenis.map((item) => ({ nilai: item.Nilai, label: item.Label })),
+                        },
+                        {
+                            id: 'Status',
+                            label: 'Status',
+                            jenis: 'pilihanBanyak',
+                            opsi: (['Draf', 'MenungguTinjauan', 'Terbit', 'Dibatalkan'] as const).map((status) => ({
+                                nilai: status,
+                                label: labelStatus[status].teks,
+                            })),
+                        },
+                    ]}
+                    {...(bolehAjukan || bolehSetujui
+                        ? {
+                              aksiBaris: (hari: HariLibur) => {
+                                  const bisaUbah = bolehAjukan && hari.Status === 'Draf';
+                                  const bisaAjukanBatal =
+                                      bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu;
+                                  const bisaTinjauBatal =
+                                      bolehSetujui && hari.PembatalanMenunggu && hari.IdPengajuBatal !== IdPengguna;
+
+                                  return (
+                                      <>
+                                          {bisaUbah ? (
+                                              <>
+                                                  <DropdownMenuItem onSelect={() => AturSunting(hari)}>
+                                                      Ubah draf
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuSeparator />
+                                                  <DropdownMenuItem
+                                                      variant="destructive"
+                                                      onSelect={() => HapusDraf(hari)}
+                                                  >
+                                                      Hapus draf
+                                                  </DropdownMenuItem>
+                                              </>
+                                          ) : null}
+                                          {bisaTinjauBatal ? (
+                                              <DropdownMenuItem
+                                                  onSelect={() => AturPembatalan({ jenis: 'tinjau', hari })}
+                                              >
+                                                  Tinjau pembatalan
+                                              </DropdownMenuItem>
+                                          ) : null}
+                                          {bisaAjukanBatal ? (
+                                              <DropdownMenuItem
+                                                  variant="destructive"
+                                                  onSelect={() => AturPembatalan({ jenis: 'ajukan', hari })}
+                                              >
+                                                  Ajukan pembatalan
+                                              </DropdownMenuItem>
+                                          ) : null}
+                                          {!bisaUbah && !bisaAjukanBatal && !bisaTinjauBatal ? (
+                                              <DropdownMenuItem disabled>
+                                                  Tidak ada aksi untuk hari libur ini
+                                              </DropdownMenuItem>
+                                          ) : null}
+                                      </>
+                                  );
+                              },
+                          }
+                        : {})}
+                    kosong={{ judul: `Belum ada hari libur ${Tahun}.` }}
+                />
             )}
         </TataLetakPengelola>
     );

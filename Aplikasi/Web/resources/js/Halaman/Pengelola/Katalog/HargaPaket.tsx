@@ -7,12 +7,12 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -48,7 +48,56 @@ const labelStatus = {
     Berakhir: { jenis: 'netral', teks: 'Berakhir' },
 } as const;
 
-/** Versi harga paket (P-04, BR-P04.1, BR-P04.5). Keuangan mengusulkan, Super Admin menyetujui. */
+const kolom: KolomTabel<Harga>[] = [
+    {
+        id: 'BerlakuMulai',
+        accessorKey: 'BerlakuMulai',
+        header: 'Berlaku',
+        meta: { label: 'Berlaku', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: harga } }) =>
+            `${FormatTanggal(harga.BerlakuMulai)} – ${harga.BerlakuSampai ? FormatTanggal(harga.BerlakuSampai) : 'seterusnya'}`,
+    },
+    {
+        id: 'HargaBulanan',
+        accessorKey: 'HargaBulanan',
+        header: 'Per bulan',
+        meta: { label: 'Per bulan', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatRupiah(row.original.HargaBulanan),
+    },
+    {
+        id: 'HargaTahunan',
+        accessorKey: 'HargaTahunan',
+        header: 'Per tahun',
+        meta: { label: 'Per tahun', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatRupiah(row.original.HargaTahunan),
+    },
+    {
+        id: 'PelangganLama',
+        header: 'Pelanggan lama',
+        enableSorting: false,
+        meta: { label: 'Pelanggan lama', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => (row.original.TerapkanKePelangganLama ? 'Ikut harga baru' : 'Tetap harga lama'),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row: { original: harga } }) => (
+            <>
+                <LabelStatus jenis={labelStatus[harga.Status].jenis} teks={labelStatus[harga.Status].teks} />
+                {harga.Persetujuan.map((item) => (
+                    <span key={item.IdPeninjau} className="block text-keterangan text-teks-sekunder">
+                        {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
+                        {item.Catatan ? `: ${item.Catatan}` : ''}
+                    </span>
+                ))}
+            </>
+        ),
+    },
+];
+
+/** Versi harga paket (P-04, BR-P04.1, BR-P04.5), TabelData D-16. Keuangan mengusulkan, Super Admin menyetujui. */
 export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHargaPaket) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehAjukan = PunyaIzin(props.Pengguna, IzinPengelola.KatalogPaketAjukan);
@@ -57,6 +106,12 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
     const [ditinjau, AturDitinjau] = useState<Harga | null>(null);
     const alamat = `/katalog/paket/${Paket.Uuid}/harga`;
     const Ajukan = (harga: Harga) => router.post(`${alamat}/${harga.Uuid}/ajukan`, {}, { preserveScroll: true });
+    const BisaTinjau = (harga: Harga) =>
+        bolehSetujui &&
+        harga.Status === 'MenungguTinjauan' &&
+        harga.IdPengaju !== IdPengguna &&
+        !harga.DaftarIdPenyusun.includes(IdPengguna) &&
+        !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
 
     return (
         <TataLetakPengelola
@@ -100,89 +155,57 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
                 />
             ) : null}
 
-            {Harga.length === 0 ? (
-                <KeadaanKosong judul="Belum ada harga">Usulkan harga pertama agar paket bisa diaktifkan.</KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan={`Versi harga paket ${Paket.Nama}`}>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col" className="text-right">
-                                Per bulan
-                            </TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Per tahun
-                            </TableHead>
-                            <TableHead scope="col">Berlaku</TableHead>
-                            <TableHead scope="col">Pelanggan lama</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Harga.map((harga) => {
-                            const status = labelStatus[harga.Status];
-                            const bisaTinjau =
-                                bolehSetujui &&
-                                harga.Status === 'MenungguTinjauan' &&
-                                harga.IdPengaju !== IdPengguna &&
-                                !harga.DaftarIdPenyusun.includes(IdPengguna) &&
-                                !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
+            <TabelData
+                id="pengelola-katalog-harga-paket"
+                label={`Versi harga paket ${Paket.Nama}`}
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Harga }}
+                ambilIdBaris={(harga) => harga.Uuid}
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: (['Draf', 'MenungguTinjauan', 'Terbit', 'Berakhir'] as const).map((status) => ({
+                            nilai: status,
+                            label: labelStatus[status].teks,
+                        })),
+                    },
+                ]}
+                {...(bolehAjukan || bolehSetujui
+                    ? {
+                          aksiBaris: (harga: Harga) => {
+                              const bisaUbah = bolehAjukan && harga.Status === 'Draf';
+                              const bisaTinjau = BisaTinjau(harga);
 
-                            return (
-                                <TableRow key={harga.Uuid}>
-                                    <TableCell className="text-right tabular-nums">
-                                        {FormatRupiah(harga.HargaBulanan)}
-                                    </TableCell>
-                                    <TableCell className="text-right tabular-nums">
-                                        {FormatRupiah(harga.HargaTahunan)}
-                                    </TableCell>
-                                    <TableCell className="text-teks-sekunder">
-                                        {FormatTanggal(harga.BerlakuMulai)} –{' '}
-                                        {harga.BerlakuSampai ? FormatTanggal(harga.BerlakuSampai) : 'seterusnya'}
-                                    </TableCell>
-                                    <TableCell className="text-teks-sekunder">
-                                        {harga.TerapkanKePelangganLama ? 'Ikut harga baru' : 'Tetap harga lama'}
-                                    </TableCell>
-                                    <TableCell>
-                                        <LabelStatus jenis={status.jenis} teks={status.teks} />
-                                        {harga.Persetujuan.map((item) => (
-                                            <p key={item.IdPeninjau} className="text-keterangan text-teks-sekunder">
-                                                {item.Keputusan === 'Setuju' ? 'Disetujui' : 'Ditolak'} {item.Peninjau}
-                                                {item.Catatan ? `: ${item.Catatan}` : ''}
-                                            </p>
-                                        ))}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-end gap-2">
-                                            {bolehAjukan && harga.Status === 'Draf' ? (
-                                                <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => AturSunting(harga)}
-                                                    >
-                                                        Ubah
-                                                    </Button>
-                                                    <Button size="sm" onClick={() => Ajukan(harga)}>
-                                                        Ajukan harga
-                                                    </Button>
-                                                </>
-                                            ) : null}
-                                            {bisaTinjau ? (
-                                                <Button size="sm" onClick={() => AturDitinjau(harga)}>
-                                                    Tinjau harga
-                                                </Button>
-                                            ) : null}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </PanelTabel>
-            )}
+                              if (!bisaUbah && !bisaTinjau) {
+                                  return null;
+                              }
+
+                              return (
+                                  <>
+                                      {bisaUbah ? (
+                                          <>
+                                              <DropdownMenuItem onSelect={() => AturSunting(harga)}>
+                                                  Ubah usulan harga
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem onSelect={() => Ajukan(harga)}>
+                                                  Ajukan harga
+                                              </DropdownMenuItem>
+                                          </>
+                                      ) : null}
+                                      {bisaTinjau ? (
+                                          <DropdownMenuItem onSelect={() => AturDitinjau(harga)}>
+                                              Tinjau harga
+                                          </DropdownMenuItem>
+                                      ) : null}
+                                  </>
+                              );
+                          },
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada harga. Usulkan harga pertama agar paket bisa diaktifkan.' }}
+            />
         </TataLetakPengelola>
     );
 }

@@ -545,14 +545,19 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
             </div>
         );
     } else if (baris.length === 0) {
-        isi = adaSaring ? (
-            <KeadaanKosong judul="Tidak ada hasil untuk pencarian atau saring ini.">
-                <Button type="button" variant="link" className="h-auto px-0" onClick={keadaanTabel.HapusSemua}>
-                    Hapus pencarian & saring
-                </Button>
-            </KeadaanKosong>
-        ) : (
-            <KeadaanKosong judul={props.kosong.judul}>{props.kosong.aksi}</KeadaanKosong>
+        // Diumumkan pembaca layar: penting setelah mencari/menyaring tanpa hasil.
+        isi = (
+            <div role="status">
+                {adaSaring ? (
+                    <KeadaanKosong judul="Tidak ada hasil untuk pencarian atau saring ini.">
+                        <Button type="button" variant="link" className="h-auto px-0" onClick={keadaanTabel.HapusSemua}>
+                            Hapus pencarian & saring
+                        </Button>
+                    </KeadaanKosong>
+                ) : (
+                    <KeadaanKosong judul={props.kosong.judul}>{props.kosong.aksi}</KeadaanKosong>
+                )}
+            </div>
         );
     } else if (lebar === 'hp') {
         isi = (

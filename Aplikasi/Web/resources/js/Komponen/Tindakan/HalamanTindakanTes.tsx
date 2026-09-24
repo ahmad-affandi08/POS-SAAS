@@ -346,7 +346,7 @@ describe('Pengelola/Tenant 360°: Tabs & tindakan berisiko (P-07, BR-P07.3)', ()
 
     it('ringkasan tampil di tab pertama; tab override memuat tabel override', () => {
         AturPropsPengelola(['tenant.lihat']);
-        render(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
+        RenderDenganKueri(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
 
         expect(screen.getByRole('tab', { name: 'Ringkasan', selected: true })).toBeTruthy();
         expect(screen.getByRole('heading', { name: 'Profil usaha' })).toBeTruthy();
@@ -361,7 +361,7 @@ describe('Pengelola/Tenant 360°: Tabs & tindakan berisiko (P-07, BR-P07.3)', ()
 
     it('tangguhkan memakai AlertDialog dan mengirim POST dengan field yang sama', () => {
         AturPropsPengelola(['tenant.lihat', 'tenant.tangguhkan']);
-        render(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
+        RenderDenganKueri(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Tangguhkan' }));
         const dialog = screen.getByRole('alertdialog', { name: 'Tangguhkan tenant' });
@@ -383,7 +383,7 @@ describe('Pengelola/Tenant 360°: Tabs & tindakan berisiko (P-07, BR-P07.3)', ()
 
     it('cabut override dari tab override memakai AlertDialog', () => {
         AturPropsPengelola(['tenant.lihat', 'tenant.override.kelola']);
-        render(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
+        RenderDenganKueri(<TampilTenant Tenant={BuatTenant()} Pilihan={pilihan} Aturan={aturan} />);
 
         PilihTab(screen.getByRole('tab', { name: 'Override & trial (1)' }));
         fireEvent.click(screen.getByRole('button', { name: 'Cabut' }));

@@ -1,13 +1,14 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import MenuAksiBaris, { type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -33,9 +34,63 @@ type PropsDaftar = { Anggota: Anggota[]; Undangan: Undangan[]; Peran: Peran[] };
 
 type Pilihan = { jenis: 'peran' | 'nonaktifkan'; anggota: Anggota } | null;
 
-const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+function BuatKolom(namaPeran: Map<string, string>): KolomTabel<Anggota>[] {
+    return [
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: anggota } }) => (
+                <>
+                    <span className="block font-semibold text-teks-utama">{anggota.Nama}</span>
+                    <span className="block text-keterangan font-normal break-all text-teks-sekunder">
+                        {anggota.Email}
+                    </span>
+                </>
+            ),
+        },
+        {
+            id: 'Peran',
+            header: 'Peran',
+            enableSorting: false,
+            meta: { label: 'Peran', prioritas: 'penting', kelasSel: 'text-teks-utama' },
+            cell: ({ row }) => row.original.KodePeran.map((kode) => namaPeran.get(kode) ?? kode).join(', '),
+        },
+        {
+            id: 'Aktif',
+            accessorKey: 'Aktif',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row: { original: anggota } }) => (
+                <div className="flex flex-wrap gap-1">
+                    {anggota.Aktif ? (
+                        <LabelStatus jenis="sukses" teks="Aktif" />
+                    ) : (
+                        <LabelStatus jenis="netral" teks="Nonaktif" />
+                    )}
+                    {anggota.DuaFaktorAktif ? null : (
+                        <LabelStatus jenis="peringatan" teks="Verifikasi dua langkah belum aktif" />
+                    )}
+                    {anggota.Aktif ? null : (
+                        <span className="block w-full text-keterangan text-teks-sekunder">
+                            Dinonaktifkan {FormatTanggalWaktu(anggota.DinonaktifkanPada)}
+                        </span>
+                    )}
+                </div>
+            ),
+        },
+        {
+            id: 'TerakhirMasukPada',
+            accessorKey: 'TerakhirMasukPada',
+            header: 'Terakhir masuk',
+            meta: { label: 'Terakhir masuk', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => FormatTanggalWaktu(row.original.TerakhirMasukPada),
+        },
+    ];
+}
 
-/** Manajemen tim internal (P-01 langkah 3, 5, 6). */
+/** Manajemen tim internal (P-01 langkah 3, 5, 6), TabelData D-16. */
 export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const { props } = usePage<PropsBersamaPengelola>();
     const pengguna = props.Pengguna;
@@ -45,21 +100,9 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const opsiPeran = Peran.map((peran) => ({ nilai: peran.Kode, label: peran.Nama }));
     const TampilkanPeran = (kode: string[]) => kode.map((item) => namaPeran.get(item) ?? item).join(', ');
 
-    const SusunAksi = (anggota: Anggota): AksiBaris[] => {
-        const aksi: AksiBaris[] = [];
-        if (PunyaIzin(pengguna, IzinPengelola.TimPeranTetapkan)) {
-            aksi.push({ label: 'Ubah peran', saatPilih: () => AturPilihan({ jenis: 'peran', anggota }) });
-        }
-        if (PunyaIzin(pengguna, IzinPengelola.TimAnggotaNonaktifkan)) {
-            aksi.push({
-                label: 'Nonaktifkan',
-                bahaya: true,
-                saatPilih: () => AturPilihan({ jenis: 'nonaktifkan', anggota }),
-            });
-        }
-
-        return aksi;
-    };
+    const bolehUbahPeran = PunyaIzin(pengguna, IzinPengelola.TimPeranTetapkan);
+    const bolehNonaktifkan = PunyaIzin(pengguna, IzinPengelola.TimAnggotaNonaktifkan);
+    const kolom = useMemo(() => BuatKolom(new Map(Peran.map((peran) => [peran.Kode, peran.Nama]))), [Peran]);
 
     return (
         <TataLetakPengelola
@@ -90,67 +133,52 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                 />
             ) : null}
 
-            <Card className="gap-0 py-0">
-                <Table className="min-w-[720px] text-isi">
-                    <TableCaption className="sr-only">Daftar anggota tim internal</TableCaption>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead scope="col" className={kelasKepala}>
-                                Nama
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Peran
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Status
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Terakhir masuk
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Anggota.map((anggota) => (
-                            <TableRow key={anggota.Uuid} className="align-top">
-                                <TableCell className="px-4 py-3 whitespace-normal">
-                                    <p className="font-semibold text-teks-utama">{anggota.Nama}</p>
-                                    <p className="text-keterangan text-teks-sekunder">{anggota.Email}</p>
-                                </TableCell>
-                                <TableCell className="px-4 py-3 whitespace-normal text-teks-utama">
-                                    {TampilkanPeran(anggota.KodePeran)}
-                                </TableCell>
-                                <TableCell className="px-4 py-3 whitespace-normal">
-                                    <div className="flex flex-wrap gap-1">
-                                        {anggota.Aktif ? (
-                                            <LabelStatus jenis="sukses" teks="Aktif" />
-                                        ) : (
-                                            <LabelStatus jenis="netral" teks="Nonaktif" />
-                                        )}
-                                        {anggota.DuaFaktorAktif ? null : (
-                                            <LabelStatus jenis="peringatan" teks="Verifikasi dua langkah belum aktif" />
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="px-4 py-3 text-teks-sekunder">
-                                    {FormatTanggalWaktu(anggota.TerakhirMasukPada)}
-                                </TableCell>
-                                <TableCell className="px-4 py-3 text-right">
-                                    {anggota.Aktif ? (
-                                        <MenuAksiBaris label={`Aksi untuk ${anggota.Nama}`} aksi={SusunAksi(anggota)} />
-                                    ) : (
-                                        <span className="text-keterangan text-teks-sekunder">
-                                            Dinonaktifkan {FormatTanggalWaktu(anggota.DinonaktifkanPada)}
-                                        </span>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
+            <TabelData
+                id="pengelola-tim-internal"
+                label="Daftar anggota tim internal"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Anggota }}
+                ambilIdBaris={(anggota) => anggota.Uuid}
+                urutBawaan="Nama"
+                cari="Cari nama atau email"
+                saring={[
+                    {
+                        id: 'Aktif',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: [
+                            { nilai: 'true', label: 'Aktif' },
+                            { nilai: 'false', label: 'Nonaktif' },
+                        ],
+                    },
+                ]}
+                {...(bolehUbahPeran || bolehNonaktifkan
+                    ? {
+                          aksiBaris: (anggota: Anggota) =>
+                              anggota.Aktif ? (
+                                  <>
+                                      {bolehUbahPeran ? (
+                                          <DropdownMenuItem onSelect={() => AturPilihan({ jenis: 'peran', anggota })}>
+                                              Ubah peran
+                                          </DropdownMenuItem>
+                                      ) : null}
+                                      {bolehUbahPeran && bolehNonaktifkan ? <DropdownMenuSeparator /> : null}
+                                      {bolehNonaktifkan ? (
+                                          <DropdownMenuItem
+                                              variant="destructive"
+                                              onSelect={() => AturPilihan({ jenis: 'nonaktifkan', anggota })}
+                                          >
+                                              Nonaktifkan
+                                          </DropdownMenuItem>
+                                      ) : null}
+                                  </>
+                              ) : (
+                                  <DropdownMenuItem disabled>Anggota sudah dinonaktifkan</DropdownMenuItem>
+                              ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada anggota tim internal. Undang anggota pertama.' }}
+            />
 
             <section className="flex flex-col gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Undangan menunggu</h2>

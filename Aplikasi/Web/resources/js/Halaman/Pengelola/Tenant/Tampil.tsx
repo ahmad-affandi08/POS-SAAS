@@ -12,8 +12,9 @@ import {
     FormTangguhkan,
 } from '@/Komponen/Pengelola/Tenant/FormTindakan';
 import { LabelPenanda, LabelStatusLangganan } from '@/Komponen/Pengelola/Tenant/LabelLangganan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -36,7 +37,87 @@ const labelAksi: Record<string, string> = {
     'tenant.penanda.ubah': 'Ubah penanda',
 };
 
-const kelasKepala = 'text-label font-semibold text-teks-sekunder';
+const kolomPemakaian: KolomTabel<Tampilan360['Pemakaian'][number]>[] = [
+    {
+        id: 'Label',
+        accessorKey: 'Label',
+        header: 'Sumber daya',
+        meta: { label: 'Sumber daya', prioritas: 'utama', wajib: true },
+    },
+    {
+        id: 'Pakai',
+        accessorKey: 'Pakai',
+        header: 'Terpakai',
+        meta: { label: 'Terpakai', angka: true, prioritas: 'penting' },
+    },
+    {
+        id: 'Batas',
+        header: 'Batas',
+        enableSorting: false,
+        meta: { label: 'Batas', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                {baris.Batas === null ? 'Tak terbatas' : baris.Batas}
+                {baris.Batas !== null && baris.Pakai > baris.Batas ? (
+                    <span className="ml-2">
+                        <LabelStatus jenis="peringatan" teks="Melebihi batas" />
+                    </span>
+                ) : null}
+            </>
+        ),
+    },
+];
+
+const kolomOverride: KolomTabel<Tampilan360['Override'][number]>[] = [
+    {
+        id: 'Jenis',
+        accessorKey: 'Jenis',
+        header: 'Jenis',
+        meta: { label: 'Jenis', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <span className="block">{baris.Jenis}</span>
+                <LabelStatus jenis={baris.Aktif ? 'sukses' : 'netral'} teks={baris.Aktif ? 'Berlaku' : 'Berakhir'} />
+            </>
+        ),
+    },
+    {
+        id: 'Isi',
+        header: 'Isi',
+        enableSorting: false,
+        meta: { label: 'Isi', prioritas: 'penting' },
+        cell: ({ row: { original: baris } }) =>
+            baris.Jenis === 'Batas' ? (
+                `${labelBatas[baris.Kunci] ?? baris.Kunci}: ${baris.Nilai ?? '—'}`
+            ) : baris.Jenis === 'Trial' ? (
+                `+${baris.Nilai ?? '?'} hari`
+            ) : (
+                <span className="font-mono text-label">{baris.Kunci}</span>
+            ),
+    },
+    {
+        id: 'BerakhirPada',
+        accessorKey: 'BerakhirPada',
+        header: 'Berakhir',
+        meta: { label: 'Berakhir', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.BerakhirPada),
+    },
+    {
+        id: 'Aktif',
+        accessorKey: 'Aktif',
+        header: 'Alasan',
+        enableSorting: false,
+        meta: { label: 'Alasan', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                {baris.Alasan}
+                <span className="block text-keterangan">
+                    {baris.DibuatOleh} · {FormatTanggalWaktu(baris.DibuatPada)}
+                </span>
+            </>
+        ),
+    },
+];
 
 /** Tampilan 360° dasar tenant & tindakan pengelola (P-07). Semua tindakan tercatat di riwayat (BR-P07.3). */
 export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
@@ -230,40 +311,14 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                     </Panel>
 
                     <Panel judul="Pemakaian vs batas">
-                        <Table className="text-isi">
-                            <TableCaption className="sr-only">
-                                Pemakaian dibanding batas efektif (paket + override)
-                            </TableCaption>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead scope="col" className={`${kelasKepala} px-0`}>
-                                        Sumber daya
-                                    </TableHead>
-                                    <TableHead scope="col" className={`${kelasKepala} px-0 text-right`}>
-                                        Terpakai
-                                    </TableHead>
-                                    <TableHead scope="col" className={`${kelasKepala} px-0 text-right`}>
-                                        Batas
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Tenant.Pemakaian.map((baris) => (
-                                    <TableRow key={baris.Label}>
-                                        <TableCell className="px-0 whitespace-normal">{baris.Label}</TableCell>
-                                        <TableCell className="px-0 text-right tabular-nums">{baris.Pakai}</TableCell>
-                                        <TableCell className="px-0 text-right tabular-nums">
-                                            {baris.Batas === null ? 'Tak terbatas' : baris.Batas}
-                                            {baris.Batas !== null && baris.Pakai > baris.Batas ? (
-                                                <span className="ml-2">
-                                                    <LabelStatus jenis="peringatan" teks="Melebihi batas" />
-                                                </span>
-                                            ) : null}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <TabelData
+                            id="pengelola-tenant-pemakaian"
+                            label="Pemakaian dibanding batas efektif (paket + override)"
+                            kolom={kolomPemakaian}
+                            sumber={{ mode: 'lokal', data: Tenant.Pemakaian }}
+                            ambilIdBaris={(baris) => baris.Label}
+                            kosong={{ judul: 'Belum ada data pemakaian.' }}
+                        />
                     </Panel>
 
                     <Panel judul="Outlet & gudang">
@@ -341,79 +396,39 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
 
                 <TabsContent value="override">
                     <Panel judul="Override & perpanjangan trial">
-                        {Tenant.Override.length === 0 ? (
-                            <p className="text-isi text-teks-sekunder">
-                                Belum pernah ada override atau perpanjangan trial.
-                            </p>
-                        ) : (
-                            <Table className="min-w-[720px] text-isi">
-                                <TableCaption className="sr-only">Override tenant, terbaru di atas</TableCaption>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-transparent">
-                                        <TableHead scope="col" className={`${kelasKepala} pl-0`}>
-                                            Jenis
-                                        </TableHead>
-                                        <TableHead scope="col" className={kelasKepala}>
-                                            Isi
-                                        </TableHead>
-                                        <TableHead scope="col" className={kelasKepala}>
-                                            Berakhir
-                                        </TableHead>
-                                        <TableHead scope="col" className={kelasKepala}>
-                                            Alasan
-                                        </TableHead>
-                                        <TableHead scope="col" className={`${kelasKepala} pr-0`}>
-                                            <span className="sr-only">Aksi</span>
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Tenant.Override.map((baris) => (
-                                        <TableRow key={baris.Uuid} className="align-top">
-                                            <TableCell className="pl-0">
-                                                <span className="block">{baris.Jenis}</span>
-                                                <LabelStatus
-                                                    jenis={baris.Aktif ? 'sukses' : 'netral'}
-                                                    teks={baris.Aktif ? 'Berlaku' : 'Berakhir'}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="whitespace-normal">
-                                                {baris.Jenis === 'Batas' ? (
-                                                    `${labelBatas[baris.Kunci] ?? baris.Kunci}: ${baris.Nilai ?? '—'}`
-                                                ) : baris.Jenis === 'Trial' ? (
-                                                    `+${baris.Nilai ?? '?'} hari`
-                                                ) : (
-                                                    <span className="font-mono text-label">{baris.Kunci}</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-teks-sekunder">
-                                                {FormatTanggalWaktu(baris.BerakhirPada)}
-                                            </TableCell>
-                                            <TableCell className="whitespace-normal text-teks-sekunder">
-                                                {baris.Alasan}
-                                                <span className="block text-keterangan">
-                                                    {baris.DibuatOleh} · {FormatTanggalWaktu(baris.DibuatPada)}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="pr-0 text-right">
-                                                {baris.Aktif &&
-                                                baris.Jenis !== 'Trial' &&
-                                                PunyaIzin(pengguna, IzinPengelola.TenantOverrideKelola) ? (
-                                                    <Tombol
-                                                        varian="sekunder"
-                                                        onClick={() =>
-                                                            AturTindakan({ cabut: baris.Uuid, kunci: baris.Kunci })
-                                                        }
-                                                    >
-                                                        Cabut
-                                                    </Tombol>
-                                                ) : null}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
+                        <TabelData
+                            id="pengelola-tenant-override"
+                            label="Override tenant, terbaru di atas"
+                            kolom={[
+                                ...kolomOverride,
+                                {
+                                    id: 'Tindakan',
+                                    header: () => <span className="sr-only">Tindakan</span>,
+                                    enableSorting: false,
+                                    meta: {
+                                        label: 'Tindakan',
+                                        prioritas: 'penting',
+                                        wajib: true,
+                                        kelasSel: 'text-right',
+                                    },
+                                    cell: ({ row: { original: baris } }) =>
+                                        baris.Aktif &&
+                                        baris.Jenis !== 'Trial' &&
+                                        PunyaIzin(pengguna, IzinPengelola.TenantOverrideKelola) ? (
+                                            <Tombol
+                                                varian="sekunder"
+                                                onClick={() => AturTindakan({ cabut: baris.Uuid, kunci: baris.Kunci })}
+                                            >
+                                                Cabut
+                                            </Tombol>
+                                        ) : null,
+                                },
+                            ]}
+                            sumber={{ mode: 'lokal', data: Tenant.Override }}
+                            ambilIdBaris={(baris) => baris.Uuid}
+                            saring={[{ id: 'Aktif', label: 'Hanya yang berlaku', jenis: 'ya' }]}
+                            kosong={{ judul: 'Belum pernah ada override atau perpanjangan trial.' }}
+                        />
                     </Panel>
                 </TabsContent>
 

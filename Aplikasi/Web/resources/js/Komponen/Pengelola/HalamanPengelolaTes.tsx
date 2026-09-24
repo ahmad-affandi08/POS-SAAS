@@ -160,7 +160,7 @@ describe('NavigasiTab', () => {
 describe('Katalog fitur (P-04)', () => {
     it('formulir tambah di Dialog mengirim isian yang sama dan Esc menutup tanpa kirim', () => {
         AturHalaman([IzinPengelola.KatalogFiturKelola], '/katalog/fitur');
-        render(<HalamanFitur Fitur={[]} />);
+        RenderDenganKueri(<HalamanFitur Fitur={[]} />);
         expect(screen.getByRole('status').textContent).toContain('Belum ada fitur');
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah fitur' }));
@@ -183,10 +183,12 @@ describe('Katalog fitur (P-04)', () => {
     });
 
     it('tanpa izin kelola tidak ada tombol tambah/ubah', () => {
-        render(<HalamanFitur Fitur={[{ Kunci: 'pos.meja', Nama: 'Meja', Modul: 'Pos', Keterangan: null }]} />);
+        RenderDenganKueri(
+            <HalamanFitur Fitur={[{ Kunci: 'pos.meja', Nama: 'Meja', Modul: 'Pos', Keterangan: null }]} />,
+        );
         expect(screen.getByRole('table', { name: 'Katalog fitur' })).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Tambah fitur' })).toBeNull();
-        expect(screen.queryByRole('button', { name: 'Ubah' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Aksi baris' })).toBeNull();
     });
 });
 
@@ -207,10 +209,11 @@ describe('Harga paket four-eyes (P-04, BR-P04.5)', () => {
 
     it('peninjau lain menolak lewat AlertDialog; catatan & keputusan terkirim', () => {
         AturHalaman([IzinPengelola.KatalogPaketSetujui], '/katalog/paket/PK1/harga');
-        render(<HalamanHargaPaket Paket={paket} Harga={[harga]} IdPengguna={9} />);
+        RenderDenganKueri(<HalamanHargaPaket Paket={paket} Harga={[harga]} IdPengguna={9} />);
         expect(screen.getByText('Menunggu tinjauan')).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Tinjau harga' }));
+        BukaMenu(screen.getByRole('button', { name: 'Aksi baris' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Tinjau harga' }));
         const dialog = screen.getByRole('alertdialog');
         expect(within(dialog).getByText('Pelanggan lama tetap memakai harga lamanya.')).toBeTruthy();
         fireEvent.change(within(dialog).getByLabelText('Catatan (wajib bila menolak)'), {
@@ -231,8 +234,8 @@ describe('Harga paket four-eyes (P-04, BR-P04.5)', () => {
 
     it('penyusun sendiri tidak bisa meninjau', () => {
         AturHalaman([IzinPengelola.KatalogPaketSetujui], '/katalog/paket/PK1/harga');
-        render(<HalamanHargaPaket Paket={paket} Harga={[harga]} IdPengguna={7} />);
-        expect(screen.queryByRole('button', { name: 'Tinjau harga' })).toBeNull();
+        RenderDenganKueri(<HalamanHargaPaket Paket={paket} Harga={[harga]} IdPengguna={7} />);
+        expect(screen.queryByRole('button', { name: 'Aksi baris' })).toBeNull();
     });
 });
 

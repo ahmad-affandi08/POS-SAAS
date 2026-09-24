@@ -1,17 +1,16 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -51,7 +50,68 @@ const labelStatus = {
     Diarsipkan: { jenis: 'peringatan', teks: 'Diarsipkan' },
 } as const;
 
-/** Paket langganan: isi, batas, fitur, status (P-04, BR-P04.2, BR-P04.6). */
+function BuatKolom(kolomBatas: string[]): KolomTabel<Paket>[] {
+    return [
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Paket',
+            meta: { label: 'Paket', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: paket } }) => (
+                <>
+                    <Link
+                        href={`/katalog/paket/${paket.Uuid}/harga`}
+                        className="block font-semibold text-teks-utama underline-offset-2 hover:underline"
+                    >
+                        {paket.Nama}
+                    </Link>
+                    <span className="block font-mono text-keterangan font-normal text-teks-sekunder">{paket.Kode}</span>
+                    <span className="block text-keterangan font-normal text-teks-sekunder">
+                        {paket.KunciFitur.length} fitur · trial {paket.MasaTrialHari} hari
+                    </span>
+                </>
+            ),
+        },
+        {
+            id: 'HargaBulanan',
+            header: 'Harga/bulan',
+            enableSorting: false,
+            meta: { label: 'Harga/bulan', angka: true, prioritas: 'penting', kelasSel: 'text-teks-utama' },
+            cell: ({ row: { original: paket } }) =>
+                paket.HargaNegosiasi
+                    ? 'Negosiasi'
+                    : paket.HargaBulananBerlaku !== null
+                      ? FormatRupiah(paket.HargaBulananBerlaku)
+                      : 'Belum ada harga berlaku',
+        },
+        {
+            id: 'Batas',
+            header: 'Batas',
+            enableSorting: false,
+            meta: { label: 'Batas', prioritas: 'rendah', kelasSel: 'text-keterangan text-teks-sekunder' },
+            cell: ({ row: { original: paket } }) =>
+                kolomBatas.map((kolom) => (
+                    <span key={kolom} className="block">
+                        {labelBatas[kolom] ?? kolom}: {paket.Batas[kolom] ?? 'tak terbatas'}
+                    </span>
+                )),
+        },
+        {
+            id: 'Status',
+            accessorKey: 'Status',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row }) => (
+                <LabelStatus
+                    jenis={labelStatus[row.original.Status].jenis}
+                    teks={labelStatus[row.original.Status].teks}
+                />
+            ),
+        },
+    ];
+}
+
+/** Paket langganan: isi, batas, fitur, status (P-04, BR-P04.2, BR-P04.6), TabelData D-16. */
 export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehAjukan = PunyaIzin(props.Pengguna, IzinPengelola.KatalogPaketAjukan);
@@ -60,6 +120,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
     const [arsip, AturArsip] = useState<Paket | null>(null);
     const Aktifkan = (paket: Paket) =>
         router.post(`/katalog/paket/${paket.Uuid}/aktifkan`, {}, { preserveScroll: true });
+    const kolom = useMemo(() => BuatKolom(KolomBatas), [KolomBatas]);
 
     return (
         <TataLetakPengelola
@@ -81,82 +142,50 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
             ) : null}
             {arsip !== null ? <FormArsip key={arsip.Uuid} paket={arsip} saatSelesai={() => AturArsip(null)} /> : null}
 
-            {Paket.length === 0 ? (
-                <KeadaanKosong judul="Belum ada paket">
-                    Buat paket pertama. Paket baru tersimpan sebagai draf sampai harganya terbit dan paket diaktifkan.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar paket langganan">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Paket</TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Harga/bulan
-                            </TableHead>
-                            <TableHead scope="col">Batas</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Paket.map((paket) => (
-                            <TableRow key={paket.Uuid}>
-                                <TableCell>
-                                    <p className="font-semibold text-teks-utama">{paket.Nama}</p>
-                                    <p className="font-mono text-keterangan text-teks-sekunder">{paket.Kode}</p>
-                                    <p className="text-keterangan text-teks-sekunder">
-                                        {paket.KunciFitur.length} fitur · trial {paket.MasaTrialHari} hari
-                                    </p>
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-teks-utama">
-                                    {paket.HargaNegosiasi
-                                        ? 'Negosiasi'
-                                        : paket.HargaBulananBerlaku !== null
-                                          ? FormatRupiah(paket.HargaBulananBerlaku)
-                                          : 'Belum ada harga berlaku'}
-                                </TableCell>
-                                <TableCell className="text-keterangan text-teks-sekunder">
-                                    {KolomBatas.map((kolom) => (
-                                        <span key={kolom} className="block">
-                                            {labelBatas[kolom] ?? kolom}: {paket.Batas[kolom] ?? 'tak terbatas'}
-                                        </span>
-                                    ))}
-                                </TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={labelStatus[paket.Status].jenis}
-                                        teks={labelStatus[paket.Status].teks}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <Button asChild variant="link" size="sm" className="h-auto px-0">
-                                            <Link href={`/katalog/paket/${paket.Uuid}/harga`}>Kelola harga</Link>
-                                        </Button>
-                                        {bolehAjukan && (paket.Status === 'Draf' || bolehSetujui) ? (
-                                            <Button variant="outline" size="sm" onClick={() => AturSunting(paket)}>
-                                                Ubah paket
-                                            </Button>
-                                        ) : null}
-                                        {bolehSetujui && paket.Status !== 'Aktif' ? (
-                                            <Button size="sm" onClick={() => Aktifkan(paket)}>
-                                                Aktifkan paket
-                                            </Button>
-                                        ) : null}
-                                        {bolehSetujui && paket.Status === 'Aktif' ? (
-                                            <Button variant="destructive" size="sm" onClick={() => AturArsip(paket)}>
-                                                Arsipkan paket
-                                            </Button>
-                                        ) : null}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-katalog-paket"
+                label="Daftar paket langganan"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Paket }}
+                ambilIdBaris={(paket) => paket.Uuid}
+                cari="Cari nama atau kode paket"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: (['Draf', 'Aktif', 'Diarsipkan'] as const).map((status) => ({
+                            nilai: status,
+                            label: labelStatus[status].teks,
+                        })),
+                    },
+                ]}
+                alamatDetail={(paket) => `/katalog/paket/${paket.Uuid}/harga`}
+                aksiBaris={(paket) => (
+                    <>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/katalog/paket/${paket.Uuid}/harga`}>Kelola harga</Link>
+                        </DropdownMenuItem>
+                        {bolehAjukan && (paket.Status === 'Draf' || bolehSetujui) ? (
+                            <DropdownMenuItem onSelect={() => AturSunting(paket)}>Ubah paket</DropdownMenuItem>
+                        ) : null}
+                        {bolehSetujui && paket.Status !== 'Aktif' ? (
+                            <DropdownMenuItem onSelect={() => Aktifkan(paket)}>Aktifkan paket</DropdownMenuItem>
+                        ) : null}
+                        {bolehSetujui && paket.Status === 'Aktif' ? (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem variant="destructive" onSelect={() => AturArsip(paket)}>
+                                    Arsipkan paket
+                                </DropdownMenuItem>
+                            </>
+                        ) : null}
+                    </>
+                )}
+                kosong={{
+                    judul: 'Belum ada paket. Buat paket pertama; paket baru tersimpan sebagai draf sampai harganya terbit dan paket diaktifkan.',
+                }}
+            />
         </TataLetakPengelola>
     );
 }

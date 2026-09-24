@@ -1,16 +1,15 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
@@ -36,12 +35,63 @@ const labelBatas: Record<string, string> = {
     BatasPenyimpananMb: 'Penyimpanan (MB)',
 };
 
-/** Add-on langganan: fitur dan/atau tambahan batas yang dibeli terpisah (P-04). */
+function BuatKolom(namaFitur: Map<string, string>): KolomTabel<Addon>[] {
+    return [
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Add-on',
+            meta: { label: 'Add-on', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: addon } }) => (
+                <>
+                    <span className="block font-semibold text-teks-utama">{addon.Nama}</span>
+                    <span className="block font-mono text-keterangan font-normal text-teks-sekunder">{addon.Kode}</span>
+                </>
+            ),
+        },
+        {
+            id: 'HargaBulanan',
+            accessorKey: 'HargaBulanan',
+            header: 'Harga/bulan',
+            meta: { label: 'Harga/bulan', angka: true, prioritas: 'penting' },
+            cell: ({ row }) => FormatRupiah(row.original.HargaBulanan),
+        },
+        {
+            id: 'Memberi',
+            header: 'Memberi',
+            enableSorting: false,
+            meta: { label: 'Memberi', prioritas: 'rendah', kelasSel: 'text-keterangan text-teks-sekunder' },
+            cell: ({ row: { original: addon } }) => (
+                <>
+                    {addon.KunciFitur ? (
+                        <span className="block">Fitur: {namaFitur.get(addon.KunciFitur) ?? addon.KunciFitur}</span>
+                    ) : null}
+                    {Object.entries(addon.TambahanBatas).map(([kolom, nilai]) => (
+                        <span key={kolom} className="block">
+                            +{nilai} {labelBatas[kolom] ?? kolom}
+                        </span>
+                    ))}
+                </>
+            ),
+        },
+        {
+            id: 'Status',
+            accessorKey: 'Status',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row }) => (
+                <LabelStatus jenis={row.original.Status === 'Aktif' ? 'sukses' : 'netral'} teks={row.original.Status} />
+            ),
+        },
+    ];
+}
+
+/** Add-on langganan: fitur dan/atau tambahan batas yang dibeli terpisah (P-04), TabelData D-16. */
 export default function HalamanAddon({ Addon, Fitur, KolomBatas }: PropsAddon) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.KatalogAddonKelola);
     const [sunting, AturSunting] = useState<Addon | 'baru' | null>(null);
-    const namaFitur = new Map(Fitur.map((fitur) => [fitur.Kunci, fitur.Nama]));
+    const kolom = useMemo(() => BuatKolom(new Map(Fitur.map((fitur) => [fitur.Kunci, fitur.Nama]))), [Fitur]);
 
     return (
         <TataLetakPengelola
@@ -62,65 +112,36 @@ export default function HalamanAddon({ Addon, Fitur, KolomBatas }: PropsAddon) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
-            {Addon.length === 0 ? (
-                <KeadaanKosong judul="Belum ada add-on">
-                    Tambahkan add-on seperti outlet tambahan, self-order QR, atau kuota WhatsApp.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar add-on">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Add-on</TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Harga/bulan
-                            </TableHead>
-                            <TableHead scope="col">Memberi</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Addon.map((addon) => (
-                            <TableRow key={addon.Kode}>
-                                <TableCell>
-                                    <p className="font-semibold text-teks-utama">{addon.Nama}</p>
-                                    <p className="font-mono text-keterangan text-teks-sekunder">{addon.Kode}</p>
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                    {FormatRupiah(addon.HargaBulanan)}
-                                </TableCell>
-                                <TableCell className="text-keterangan text-teks-sekunder">
-                                    {addon.KunciFitur ? (
-                                        <span className="block">
-                                            Fitur: {namaFitur.get(addon.KunciFitur) ?? addon.KunciFitur}
-                                        </span>
-                                    ) : null}
-                                    {Object.entries(addon.TambahanBatas).map(([kolom, nilai]) => (
-                                        <span key={kolom} className="block">
-                                            +{nilai} {labelBatas[kolom] ?? kolom}
-                                        </span>
-                                    ))}
-                                </TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={addon.Status === 'Aktif' ? 'sukses' : 'netral'}
-                                        teks={addon.Status}
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(addon)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-katalog-addon"
+                label="Daftar add-on"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Addon }}
+                ambilIdBaris={(addon) => addon.Kode}
+                urutBawaan="Nama"
+                cari="Cari nama atau kode add-on"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: [
+                            { nilai: 'Aktif', label: 'Aktif' },
+                            { nilai: 'Diarsipkan', label: 'Diarsipkan' },
+                        ],
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (addon: Addon) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(addon)}>Ubah add-on</DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada add-on. Tambahkan add-on seperti outlet tambahan, self-order QR, atau kuota WhatsApp.',
+                }}
+            />
         </TataLetakPengelola>
     );
 }

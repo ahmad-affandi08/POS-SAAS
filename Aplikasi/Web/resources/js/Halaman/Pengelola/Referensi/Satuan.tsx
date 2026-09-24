@@ -5,19 +5,58 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Satuan = { Kode: string; Nama: string; Simbol: string; BolehDesimal: boolean; Aktif: boolean };
 
-/** Satuan standar platform, disalin ke tenant oleh template sektor (P-02). */
+const kolom: KolomTabel<Satuan>[] = [
+    {
+        id: 'Kode',
+        accessorKey: 'Kode',
+        header: 'Kode',
+        meta: { label: 'Kode', prioritas: 'penting', kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama' },
+    },
+    {
+        id: 'Simbol',
+        accessorKey: 'Simbol',
+        header: 'Simbol',
+        meta: { label: 'Simbol', prioritas: 'penting', kelasSel: 'font-mono text-label text-teks-sekunder' },
+    },
+    {
+        id: 'BolehDesimal',
+        header: 'Jumlah desimal',
+        enableSorting: false,
+        meta: { label: 'Jumlah desimal', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => (row.original.BolehDesimal ? 'Boleh (misal 1,5)' : 'Bilangan bulat'),
+    },
+    {
+        id: 'Aktif',
+        accessorKey: 'Aktif',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus
+                jenis={row.original.Aktif ? 'sukses' : 'netral'}
+                teks={row.original.Aktif ? 'Aktif' : 'Nonaktif'}
+            />
+        ),
+    },
+];
+
+/** Satuan standar platform, disalin ke tenant oleh template sektor (P-02), TabelData D-16. */
 export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiSatuanKelola);
@@ -41,53 +80,33 @@ export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
                 />
             ) : null}
 
-            {Satuan.length === 0 ? (
-                <KeadaanKosong judul="Belum ada satuan standar">
-                    Tambahkan satuan pertama, misal pcs atau kg.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar satuan standar">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Kode</TableHead>
-                            <TableHead scope="col">Nama</TableHead>
-                            <TableHead scope="col">Simbol</TableHead>
-                            <TableHead scope="col">Jumlah desimal</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Satuan.map((satuan) => (
-                            <TableRow key={satuan.Kode}>
-                                <TableCell className="font-mono text-label">{satuan.Kode}</TableCell>
-                                <TableCell className="text-teks-utama">{satuan.Nama}</TableCell>
-                                <TableCell className="font-mono text-label text-teks-sekunder">
-                                    {satuan.Simbol}
-                                </TableCell>
-                                <TableCell className="text-teks-sekunder">
-                                    {satuan.BolehDesimal ? 'Boleh (misal 1,5)' : 'Bilangan bulat'}
-                                </TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={satuan.Aktif ? 'sukses' : 'netral'}
-                                        teks={satuan.Aktif ? 'Aktif' : 'Nonaktif'}
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(satuan)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-referensi-satuan"
+                label="Daftar satuan standar"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Satuan }}
+                ambilIdBaris={(satuan) => satuan.Kode}
+                cari="Cari kode, nama, atau simbol"
+                saring={[
+                    {
+                        id: 'Aktif',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: [
+                            { nilai: 'true', label: 'Aktif' },
+                            { nilai: 'false', label: 'Nonaktif' },
+                        ],
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (satuan: Satuan) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(satuan)}>Ubah satuan</DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada satuan standar. Tambahkan satuan pertama, misal pcs atau kg.' }}
+            />
         </TataLetakPengelola>
     );
 }

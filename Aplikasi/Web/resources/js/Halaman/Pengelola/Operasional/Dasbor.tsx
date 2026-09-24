@@ -15,8 +15,9 @@ import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
 import { Progress } from '@/Komponen/Ui/progress';
 import { Separator } from '@/Komponen/Ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { cn } from '@/Komponen/Ui/utils';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatDurasi, FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
@@ -46,17 +47,21 @@ type Alert = {
     EmailTerkirimPada: string | null;
 };
 
+type BarisAntrean = { Antrean: string; Menunggu: number; Diproses: number; UmurTertuaDetik: number | null };
+
+type TugasGagal = { Uuid: string; Antrean: string; NamaTugas: string; RingkasanGalat: string; GagalPada: string };
+
 type Dasbor = {
     Penjadwal: { TerakhirPada: string | null; UmurDetik: number | null; Sehat: boolean; BatasMenit: number };
     Antrean: {
-        PerAntrean: { Antrean: string; Menunggu: number; Diproses: number; UmurTertuaDetik: number | null }[];
+        PerAntrean: BarisAntrean[];
         UmurTertuaDetik: number | null;
         Sehat: boolean;
         BatasMenit: number;
     };
     TugasGagal: {
         Total: number;
-        Data: { Uuid: string; Antrean: string; NamaTugas: string; RingkasanGalat: string; GagalPada: string }[];
+        Data: TugasGagal[];
     };
     Backup: {
         BackupTerakhir: CatatanBackup | null;
@@ -82,7 +87,129 @@ function HitungPersenDiskTerpakai(disk: { SisaByte: number; TotalByte: number })
     return Math.min(100, Math.max(0, Math.round(((disk.TotalByte - disk.SisaByte) / disk.TotalByte) * 100)));
 }
 
-/** Dasbor operasional dasar (P-11): scheduler, antrean, job gagal, backup, alert, kesehatan server. */
+const kolomAntrean: KolomTabel<BarisAntrean>[] = [
+    {
+        id: 'Antrean',
+        accessorKey: 'Antrean',
+        header: 'Antrean',
+        meta: { label: 'Antrean', prioritas: 'utama', wajib: true, kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'Menunggu',
+        accessorKey: 'Menunggu',
+        header: 'Menunggu',
+        meta: { label: 'Menunggu', angka: true, prioritas: 'penting' },
+    },
+    {
+        id: 'Diproses',
+        accessorKey: 'Diproses',
+        header: 'Diproses',
+        meta: { label: 'Diproses', angka: true, prioritas: 'penting' },
+    },
+    {
+        id: 'UmurTertuaDetik',
+        accessorKey: 'UmurTertuaDetik',
+        header: 'Umur tertua',
+        meta: { label: 'Umur tertua', prioritas: 'penting' },
+        cell: ({ row }) => FormatDurasi(row.original.UmurTertuaDetik),
+    },
+];
+
+const kolomTugasGagal: KolomTabel<TugasGagal>[] = [
+    {
+        id: 'NamaTugas',
+        accessorKey: 'NamaTugas',
+        header: 'Job',
+        meta: { label: 'Job', prioritas: 'utama', wajib: true, kelasSel: 'font-mono text-label' },
+        cell: ({ row: { original: tugas } }) => (
+            <Button
+                asChild
+                variant="link"
+                className="h-auto p-0 font-mono text-label font-semibold break-all whitespace-normal"
+            >
+                <Link href={`/operasional/tugas-gagal/${tugas.Uuid}`}>{tugas.NamaTugas}</Link>
+            </Button>
+        ),
+    },
+    {
+        id: 'GagalPada',
+        accessorKey: 'GagalPada',
+        header: 'Waktu gagal',
+        meta: { label: 'Waktu gagal', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.GagalPada),
+    },
+    {
+        id: 'Antrean',
+        accessorKey: 'Antrean',
+        header: 'Antrean',
+        meta: { label: 'Antrean', prioritas: 'penting', kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'RingkasanGalat',
+        accessorKey: 'RingkasanGalat',
+        header: 'Galat',
+        enableSorting: false,
+        meta: { label: 'Galat', prioritas: 'rendah', kelasSel: 'text-keterangan break-all text-teks-sekunder' },
+    },
+];
+
+const kolomBackup: KolomTabel<CatatanBackup>[] = [
+    {
+        id: 'SelesaiPada',
+        accessorKey: 'SelesaiPada',
+        header: 'Selesai',
+        meta: { label: 'Selesai', prioritas: 'utama', wajib: true, kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.SelesaiPada),
+    },
+    {
+        id: 'Jenis',
+        accessorKey: 'Jenis',
+        header: 'Jenis',
+        meta: { label: 'Jenis', prioritas: 'penting' },
+        cell: ({ row }) => row.original.LabelJenis,
+    },
+    {
+        id: 'Hasil',
+        accessorKey: 'Hasil',
+        header: 'Hasil',
+        meta: { label: 'Hasil', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus jenis={row.original.Hasil === 'Berhasil' ? 'sukses' : 'bahaya'} teks={row.original.Hasil} />
+        ),
+    },
+    {
+        id: 'UkuranByte',
+        accessorKey: 'UkuranByte',
+        header: 'Ukuran',
+        meta: { label: 'Ukuran', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatUkuranBerkas(row.original.UkuranByte),
+    },
+    {
+        id: 'Lokasi',
+        header: 'Lokasi & keterangan',
+        enableSorting: false,
+        meta: {
+            label: 'Lokasi & keterangan',
+            prioritas: 'rendah',
+            kelasSel: 'text-keterangan break-all text-teks-sekunder',
+        },
+        cell: ({ row: { original: catatan } }) => (
+            <>
+                {catatan.Lokasi ? <span className="block font-mono">{catatan.Lokasi}</span> : null}
+                {catatan.Keterangan}
+            </>
+        ),
+    },
+    {
+        id: 'DicatatOleh',
+        accessorKey: 'DicatatOleh',
+        header: 'Dicatat oleh',
+        enableSorting: false,
+        meta: { label: 'Dicatat oleh', prioritas: 'rendah' },
+    },
+];
+
+/** Dasbor operasional dasar (P-11): scheduler, antrean, job gagal, backup, alert, kesehatan server. TabelData D-16. */
 export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.OperasionalKelola);
@@ -132,49 +259,38 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
             </Bagian>
 
             <Bagian judul="Antrean per nama">
-                {Antrean.PerAntrean.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Tidak ada job di antrean.</p>
-                ) : (
-                    <Tabel kolom={['Antrean', 'Menunggu', 'Diproses', 'Umur tertua']}>
-                        {Antrean.PerAntrean.map((baris) => (
-                            <TableRow key={baris.Antrean}>
-                                <TableCell className="font-mono text-label">{baris.Antrean}</TableCell>
-                                <TableCell className="text-right tabular-nums">{baris.Menunggu}</TableCell>
-                                <TableCell className="text-right tabular-nums">{baris.Diproses}</TableCell>
-                                <TableCell>{FormatDurasi(baris.UmurTertuaDetik)}</TableCell>
-                            </TableRow>
-                        ))}
-                    </Tabel>
-                )}
+                <TabelData
+                    id="pengelola-operasional-antrean"
+                    label="Job per antrean"
+                    kolom={kolomAntrean}
+                    sumber={{ mode: 'lokal', data: Antrean.PerAntrean }}
+                    ambilIdBaris={(baris) => baris.Antrean}
+                    kosong={{ judul: 'Tidak ada job di antrean.' }}
+                />
             </Bagian>
 
             <Bagian judul={`Job gagal (${String(TugasGagal.Total)})`}>
-                {TugasGagal.Data.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Tidak ada job gagal.</p>
-                ) : (
-                    <Tabel kolom={['Waktu gagal', 'Job', 'Antrean', 'Galat']}>
-                        {TugasGagal.Data.map((tugas) => (
-                            <TableRow key={tugas.Uuid}>
-                                <TableCell className="whitespace-nowrap text-teks-sekunder">
-                                    {FormatTanggalWaktu(tugas.GagalPada)}
-                                </TableCell>
-                                <TableCell className="font-mono text-label">
-                                    <Button
-                                        asChild
-                                        variant="link"
-                                        className="h-auto p-0 font-mono text-label font-semibold break-all whitespace-normal"
-                                    >
-                                        <Link href={`/operasional/tugas-gagal/${tugas.Uuid}`}>{tugas.NamaTugas}</Link>
-                                    </Button>
-                                </TableCell>
-                                <TableCell className="font-mono text-label">{tugas.Antrean}</TableCell>
-                                <TableCell className="text-keterangan break-all text-teks-sekunder">
-                                    {tugas.RingkasanGalat}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </Tabel>
-                )}
+                <TabelData
+                    id="pengelola-operasional-tugas-gagal"
+                    label="Job gagal terbaru"
+                    kolom={kolomTugasGagal}
+                    sumber={{ mode: 'lokal', data: TugasGagal.Data }}
+                    ambilIdBaris={(tugas) => tugas.Uuid}
+                    cari="Cari nama job, antrean, atau galat"
+                    saring={[
+                        {
+                            id: 'Antrean',
+                            label: 'Antrean',
+                            jenis: 'pilihanBanyak',
+                            opsi: [...new Set(TugasGagal.Data.map((tugas) => tugas.Antrean))].map((nama) => ({
+                                nilai: nama,
+                                label: nama,
+                            })),
+                        },
+                    ]}
+                    alamatDetail={(tugas) => `/operasional/tugas-gagal/${tugas.Uuid}`}
+                    kosong={{ judul: 'Tidak ada job gagal.' }}
+                />
             </Bagian>
 
             <Bagian judul="Backup & uji restore">
@@ -197,30 +313,34 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                     </div>
                 </dl>
                 {Backup.Riwayat.length > 0 ? (
-                    <Tabel kolom={['Selesai', 'Jenis', 'Hasil', 'Ukuran', 'Lokasi & keterangan', 'Dicatat oleh']}>
-                        {Backup.Riwayat.map((catatan) => (
-                            <TableRow key={catatan.Uuid}>
-                                <TableCell className="whitespace-nowrap">
-                                    {FormatTanggalWaktu(catatan.SelesaiPada)}
-                                </TableCell>
-                                <TableCell>{catatan.LabelJenis}</TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={catatan.Hasil === 'Berhasil' ? 'sukses' : 'bahaya'}
-                                        teks={catatan.Hasil}
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                    {FormatUkuranBerkas(catatan.UkuranByte)}
-                                </TableCell>
-                                <TableCell className="text-keterangan break-all text-teks-sekunder">
-                                    {catatan.Lokasi ? <span className="block font-mono">{catatan.Lokasi}</span> : null}
-                                    {catatan.Keterangan}
-                                </TableCell>
-                                <TableCell>{catatan.DicatatOleh}</TableCell>
-                            </TableRow>
-                        ))}
-                    </Tabel>
+                    <TabelData
+                        id="pengelola-operasional-backup"
+                        label="Riwayat backup & uji restore"
+                        kolom={kolomBackup}
+                        sumber={{ mode: 'lokal', data: Backup.Riwayat }}
+                        ambilIdBaris={(catatan) => catatan.Uuid}
+                        saring={[
+                            {
+                                id: 'Jenis',
+                                label: 'Jenis',
+                                jenis: 'pilihanBanyak',
+                                opsi: [
+                                    { nilai: 'Backup', label: 'Backup' },
+                                    { nilai: 'UjiRestore', label: 'Uji restore' },
+                                ],
+                            },
+                            {
+                                id: 'Hasil',
+                                label: 'Hasil',
+                                jenis: 'pilihanBanyak',
+                                opsi: [
+                                    { nilai: 'Berhasil', label: 'Berhasil' },
+                                    { nilai: 'Gagal', label: 'Gagal' },
+                                ],
+                            },
+                        ]}
+                        kosong={{ judul: 'Belum ada catatan backup.' }}
+                    />
                 ) : null}
                 {bolehKelola ? <FormCatatBackup /> : null}
             </Bagian>
@@ -315,23 +435,6 @@ function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
             </CardHeader>
             <CardContent className="flex flex-col gap-3 px-4">{children}</CardContent>
         </Card>
-    );
-}
-
-function Tabel({ kolom, children }: { kolom: string[]; children: ReactNode }) {
-    return (
-        <Table className="min-w-[640px] text-isi [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:whitespace-normal">
-            <TableHeader>
-                <TableRow>
-                    {kolom.map((nama) => (
-                        <TableHead key={nama} scope="col" className="px-3 text-label font-semibold text-teks-sekunder">
-                            {nama}
-                        </TableHead>
-                    ))}
-                </TableRow>
-            </TableHeader>
-            <TableBody>{children}</TableBody>
-        </Table>
     );
 }
 

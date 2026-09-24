@@ -46,6 +46,8 @@ function AmbilKodeGalatBatal(Closure $kerja): ?string
 
 describe('F-05a pembatalan stok awal', function (): void {
     it('membalik stok dan jurnal: mutasi B/… bertanda negatif ber-IdMutasiAsal, jurnal Pembatalan ber-IdJurnalDibalik, saldo kembali nol', function (): void {
+        // Siang hari WIB: hari bisnis = tanggal kalender Jakarta (sebelum 04.00 WIB masih hari bisnis kemarin).
+        $this->travelTo(CarbonImmutable::parse('2026-09-24 05:00:00', 'UTC'));
         $t = BantuanPersediaan::SiapkanTenant();
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [

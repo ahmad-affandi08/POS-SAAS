@@ -3,17 +3,45 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Fitur = { Kunci: string; Nama: string; Modul: string; Keterangan: string | null };
+
+const kolom: KolomTabel<Fitur>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: fitur } }) => (
+            <>
+                <span className="block text-teks-utama">{fitur.Nama}</span>
+                {fitur.Keterangan ? (
+                    <span className="block text-keterangan font-normal text-teks-sekunder">{fitur.Keterangan}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'Kunci',
+        accessorKey: 'Kunci',
+        header: 'Kunci',
+        meta: { label: 'Kunci', prioritas: 'penting', kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'Modul',
+        accessorKey: 'Modul',
+        header: 'Modul',
+        meta: { label: 'Modul', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+    },
+];
 
 /** Katalog fitur (P-04). Kunci fitur dipakai kode aplikasi dan tidak bisa diubah. */
 export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
@@ -38,48 +66,36 @@ export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
-            {Fitur.length === 0 ? (
-                <KeadaanKosong judul="Belum ada fitur">
-                    Tambahkan fitur pertama. Kunci fitur dipakai kode aplikasi, jadi tulis sesuai modul yang sudah
-                    dibangun.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Katalog fitur">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Kunci</TableHead>
-                            <TableHead scope="col">Nama</TableHead>
-                            <TableHead scope="col">Modul</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Fitur.map((fitur) => (
-                            <TableRow key={fitur.Kunci}>
-                                <TableCell className="font-mono text-label">{fitur.Kunci}</TableCell>
-                                <TableCell className="text-teks-utama">
-                                    {fitur.Nama}
-                                    {fitur.Keterangan ? (
-                                        <span className="block text-keterangan text-teks-sekunder">
-                                            {fitur.Keterangan}
-                                        </span>
-                                    ) : null}
-                                </TableCell>
-                                <TableCell className="text-teks-sekunder">{fitur.Modul}</TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(fitur)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-katalog-fitur"
+                label="Katalog fitur"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Fitur }}
+                ambilIdBaris={(fitur) => fitur.Kunci}
+                urutBawaan="Kunci"
+                cari="Cari kunci, nama, atau modul"
+                saring={[
+                    {
+                        id: 'Modul',
+                        label: 'Modul',
+                        jenis: 'pilihanBanyak',
+                        opsi: [...new Set(Fitur.map((fitur) => fitur.Modul))].map((modul) => ({
+                            nilai: modul,
+                            label: modul,
+                        })),
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (fitur: Fitur) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(fitur)}>Ubah fitur</DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada fitur. Tambahkan fitur pertama; kunci fitur dipakai kode aplikasi, jadi tulis sesuai modul yang sudah dibangun.',
+                }}
+            />
         </TataLetakPengelola>
     );
 }

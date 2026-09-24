@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Harga\Kueri\DetailDaftarHarga;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -40,10 +41,10 @@ it('join Produk dibatasi tenant konteks: produk tenant lain tidak muncul walau d
     ]);
 
     BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
-    $hasil = app(DetailDaftarHarga::class)->AmbilBaris($daftar, '');
+    $hasil = app(DetailDaftarHarga::class)->AmbilBaris($daftar, DataPermintaanTabel::Dari([], [], ''));
     $teks = json_encode($hasil, JSON_UNESCAPED_UNICODE);
 
-    expect($hasil['Total'])->toBe(1)
+    expect($hasil['Meta']['Total'])->toBe(1)
         ->and($teks)->toContain($milik->Nama)
         ->and($teks)->not->toContain('Produk Rahasia Tenant Lain')
         ->and($teks)->not->toContain('RAHASIA-01');

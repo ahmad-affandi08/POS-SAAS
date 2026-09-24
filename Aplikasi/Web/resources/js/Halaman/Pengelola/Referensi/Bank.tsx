@@ -1,17 +1,16 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type Pilihan, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
@@ -20,12 +19,51 @@ type Referensi = { Kode: string; Nama: string; Jenis: string; Aktif: boolean };
 
 type PropsBank = { Referensi: Referensi[]; PilihanJenis: Pilihan[] };
 
-/** Referensi pembayaran: bank, dompet digital, jaringan EDC, penerbit QRIS (P-02). */
+function BuatKolom(labelJenis: Map<string, string>): KolomTabel<Referensi>[] {
+    return [
+        {
+            id: 'Kode',
+            accessorKey: 'Kode',
+            header: 'Kode',
+            meta: { label: 'Kode', prioritas: 'penting', kelasSel: 'font-mono text-label' },
+        },
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama' },
+        },
+        {
+            id: 'Jenis',
+            accessorKey: 'Jenis',
+            header: 'Jenis',
+            meta: { label: 'Jenis', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row }) => labelJenis.get(row.original.Jenis) ?? row.original.Jenis,
+        },
+        {
+            id: 'Aktif',
+            accessorKey: 'Aktif',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row }) => (
+                <LabelStatus
+                    jenis={row.original.Aktif ? 'sukses' : 'netral'}
+                    teks={row.original.Aktif ? 'Aktif' : 'Nonaktif'}
+                />
+            ),
+        },
+    ];
+}
+
+/** Referensi pembayaran: bank, dompet digital, jaringan EDC, penerbit QRIS (P-02), TabelData D-16. */
 export default function HalamanBank({ Referensi, PilihanJenis }: PropsBank) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.ReferensiBankKelola);
     const [sunting, AturSunting] = useState<Referensi | 'baru' | null>(null);
-    const labelJenis = new Map(PilihanJenis.map((item) => [item.Nilai, item.Label]));
+    const kolom = useMemo(
+        () => BuatKolom(new Map(PilihanJenis.map((item) => [item.Nilai, item.Label]))),
+        [PilihanJenis],
+    );
 
     return (
         <TataLetakPengelola
@@ -46,49 +84,43 @@ export default function HalamanBank({ Referensi, PilihanJenis }: PropsBank) {
                 />
             ) : null}
 
-            {Referensi.length === 0 ? (
-                <KeadaanKosong judul="Belum ada referensi pembayaran">
-                    Tambahkan bank, dompet digital, jaringan EDC, atau penerbit QRIS yang bisa dipilih tenant.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar referensi pembayaran">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Kode</TableHead>
-                            <TableHead scope="col">Nama</TableHead>
-                            <TableHead scope="col">Jenis</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Referensi.map((referensi) => (
-                            <TableRow key={referensi.Kode}>
-                                <TableCell className="font-mono text-label">{referensi.Kode}</TableCell>
-                                <TableCell className="text-teks-utama">{referensi.Nama}</TableCell>
-                                <TableCell className="text-teks-sekunder">
-                                    {labelJenis.get(referensi.Jenis) ?? referensi.Jenis}
-                                </TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={referensi.Aktif ? 'sukses' : 'netral'}
-                                        teks={referensi.Aktif ? 'Aktif' : 'Nonaktif'}
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(referensi)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-referensi-bank"
+                label="Daftar referensi pembayaran"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Referensi }}
+                ambilIdBaris={(referensi) => referensi.Kode}
+                cari="Cari kode atau nama"
+                saring={[
+                    {
+                        id: 'Jenis',
+                        label: 'Jenis',
+                        jenis: 'pilihanBanyak',
+                        opsi: PilihanJenis.map((item) => ({ nilai: item.Nilai, label: item.Label })),
+                    },
+                    {
+                        id: 'Aktif',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: [
+                            { nilai: 'true', label: 'Aktif' },
+                            { nilai: 'false', label: 'Nonaktif' },
+                        ],
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (referensi: Referensi) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(referensi)}>
+                                  Ubah referensi
+                              </DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada referensi pembayaran. Tambahkan bank, dompet digital, jaringan EDC, atau penerbit QRIS yang bisa dipilih tenant.',
+                }}
+            />
         </TataLetakPengelola>
     );
 }

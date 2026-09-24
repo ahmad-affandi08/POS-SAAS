@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarDaftarHarga from '@/Halaman/Kelola/DaftarHarga/Daftar';
@@ -11,12 +11,18 @@ import { AturHalamanUji, RenderUji, tiruanRouter } from './TiruanInertia';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
 
+/** Buka menu aksi baris TabelData (Radix, keyboard) lalu pilih satu item. */
+function PilihAksi(nama: string, item: string): void {
+    fireEvent.keyDown(screen.getByRole('button', { name: `Aksi ${nama}` }), { key: 'Enter' });
+    fireEvent.click(screen.getByRole('menuitem', { name: item }));
+}
+
 describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi (F-03)', () => {
     beforeEach(() => AturHalamanUji());
     afterEach(() => cleanup());
 
     it('kategori: formulir tambah tampil di dialog dan Batal menutupnya', () => {
-        render(<HalamanDaftarKategori Kategori={[]} Izin={IzinPenuh} />);
+        RenderUji(<HalamanDaftarKategori Kategori={[]} Izin={IzinPenuh} />);
 
         expect(screen.queryByRole('dialog')).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Tambah kategori' }));
@@ -28,7 +34,7 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
     });
 
     it('kategori: router.delete baru dipanggil setelah konfirmasi', () => {
-        render(
+        RenderUji(
             <HalamanDaftarKategori
                 Kategori={[
                     {
@@ -45,16 +51,19 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
             />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Hapus kategori Camilan' }));
+        PilihAksi('Camilan', 'Hapus kategori');
         expect(screen.getByRole('alertdialog', { name: 'Hapus kategori Camilan?' })).toBeTruthy();
         expect(tiruanRouter.delete).not.toHaveBeenCalled();
 
         fireEvent.click(screen.getByRole('button', { name: 'Hapus kategori' }));
-        expect(tiruanRouter.delete).toHaveBeenCalledWith('/kelola/kategori/K9', { preserveScroll: true });
+        expect(tiruanRouter.delete).toHaveBeenCalledWith(
+            '/kelola/kategori/K9',
+            expect.objectContaining({ preserveScroll: true }),
+        );
     });
 
     it('satuan: batal di konfirmasi tidak menghapus', () => {
-        render(
+        RenderUji(
             <HalamanDaftarSatuan
                 Satuan={[
                     {
@@ -70,7 +79,7 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
             />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Hapus satuan Porsi' }));
+        PilihAksi('Porsi', 'Hapus satuan');
         fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
         expect(screen.queryByRole('alertdialog')).toBeNull();
         expect(tiruanRouter.delete).not.toHaveBeenCalled();
@@ -106,10 +115,13 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
             />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Hapus kelompok Level gula' }));
+        PilihAksi('Level gula', 'Hapus kelompok');
         expect(screen.getByText('Kelompok ini dilepas dari 6 produk. Transaksi lama tidak berubah.')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Ya, hapus kelompok' }));
-        expect(tiruanRouter.delete).toHaveBeenCalledWith('/kelola/kelompok-pilihan/KP-GULA', { preserveScroll: true });
+        expect(tiruanRouter.delete).toHaveBeenCalledWith(
+            '/kelola/kelompok-pilihan/KP-GULA',
+            expect.objectContaining({ preserveScroll: true }),
+        );
     });
 
     it('daftar harga: nonaktifkan lewat konfirmasi, aktifkan langsung', () => {

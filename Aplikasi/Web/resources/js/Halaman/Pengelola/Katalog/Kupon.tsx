@@ -7,13 +7,12 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
-import { Button } from '@/Komponen/Ui/button';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -33,7 +32,52 @@ type Kupon = {
 
 type PropsKupon = { Kupon: Kupon[]; Paket: { Kode: string; Nama: string }[] };
 
-/** Kupon langganan (P-04). Pemakaian dicatat saat penagihan (P-08). */
+const kolom: KolomTabel<Kupon>[] = [
+    {
+        id: 'Kode',
+        accessorKey: 'Kode',
+        header: 'Kode',
+        meta: { label: 'Kode', prioritas: 'utama', wajib: true, kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'Diskon',
+        header: 'Diskon',
+        enableSorting: false,
+        meta: { label: 'Diskon', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: kupon } }) =>
+            kupon.Jenis === 'Persen' ? `${FormatPersen(kupon.Nilai)}%` : FormatRupiah(kupon.Nilai),
+    },
+    {
+        id: 'Ketentuan',
+        header: 'Ketentuan',
+        enableSorting: false,
+        meta: { label: 'Ketentuan', prioritas: 'rendah', kelasSel: 'text-keterangan text-teks-sekunder' },
+        cell: ({ row: { original: kupon } }) => (
+            <>
+                <span className="block">{kupon.DurasiBulan} bulan</span>
+                <span className="block">Kuota: {kupon.Kuota ?? 'tanpa batas'}</span>
+                <span className="block">Paket: {kupon.DaftarKodePaket?.join(', ') ?? 'semua'}</span>
+                <span className="block">
+                    Berlaku sampai: {kupon.BerlakuSampai ? FormatTanggal(kupon.BerlakuSampai) : 'tanpa batas'}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Aktif',
+        accessorKey: 'Aktif',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus
+                jenis={row.original.Aktif ? 'sukses' : 'netral'}
+                teks={row.original.Aktif ? 'Aktif' : 'Nonaktif'}
+            />
+        ),
+    },
+];
+
+/** Kupon langganan (P-04), TabelData D-16. Pemakaian dicatat saat penagihan (P-08). */
 export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.KatalogKuponKelola);
@@ -55,61 +99,36 @@ export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
-            {Kupon.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kupon">
-                    Buat kupon untuk promo langganan, misal diskon 50% selama 3 bulan.
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar kupon langganan">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Kode</TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Diskon
-                            </TableHead>
-                            <TableHead scope="col">Ketentuan</TableHead>
-                            <TableHead scope="col">Status</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Kupon.map((kupon) => (
-                            <TableRow key={kupon.Kode}>
-                                <TableCell className="font-mono text-label">{kupon.Kode}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                    {kupon.Jenis === 'Persen'
-                                        ? `${FormatPersen(kupon.Nilai)}%`
-                                        : FormatRupiah(kupon.Nilai)}
-                                </TableCell>
-                                <TableCell className="text-keterangan text-teks-sekunder">
-                                    <span className="block">{kupon.DurasiBulan} bulan</span>
-                                    <span className="block">Kuota: {kupon.Kuota ?? 'tanpa batas'}</span>
-                                    <span className="block">Paket: {kupon.DaftarKodePaket?.join(', ') ?? 'semua'}</span>
-                                    <span className="block">
-                                        Berlaku sampai:{' '}
-                                        {kupon.BerlakuSampai ? FormatTanggal(kupon.BerlakuSampai) : 'tanpa batas'}
-                                    </span>
-                                </TableCell>
-                                <TableCell>
-                                    <LabelStatus
-                                        jenis={kupon.Aktif ? 'sukses' : 'netral'}
-                                        teks={kupon.Aktif ? 'Aktif' : 'Nonaktif'}
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {bolehKelola ? (
-                                        <Button variant="outline" size="sm" onClick={() => AturSunting(kupon)}>
-                                            Ubah
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-katalog-kupon"
+                label="Daftar kupon langganan"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Kupon }}
+                ambilIdBaris={(kupon) => kupon.Kode}
+                urutBawaan="Kode"
+                cari="Cari kode kupon"
+                saring={[
+                    {
+                        id: 'Aktif',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: [
+                            { nilai: 'true', label: 'Aktif' },
+                            { nilai: 'false', label: 'Nonaktif' },
+                        ],
+                    },
+                ]}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (kupon: Kupon) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(kupon)}>Ubah kupon</DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada kupon. Buat kupon untuk promo langganan, misal diskon 50% selama 3 bulan.',
+                }}
+            />
         </TataLetakPengelola>
     );
 }

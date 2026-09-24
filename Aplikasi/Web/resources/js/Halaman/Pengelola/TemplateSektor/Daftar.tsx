@@ -4,12 +4,11 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
-import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
-import { Button } from '@/Komponen/Ui/button';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
@@ -24,7 +23,74 @@ type RingkasanTemplate = {
     VersiTerbaru: number | null;
 };
 
-/** Daftar template sektor berversi (P-03). */
+/** Alamat editor versi yang dibuka: draf bila ada, selain itu versi terbit/terbaru. */
+function AlamatVersiBuka(template: RingkasanTemplate): string {
+    const versi = template.VersiDraf?.Versi ?? template.VersiTerbit?.Versi ?? template.VersiTerbaru;
+
+    return versi ? `/template-sektor/${encodeURIComponent(template.Kode)}/versi/${versi}` : '';
+}
+
+const kolom: KolomTabel<RingkasanTemplate>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Template',
+        meta: { label: 'Template', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: template } }) => (
+            <>
+                <span className="block font-semibold text-teks-utama">{template.Nama}</span>
+                <span className="block font-mono text-keterangan font-normal text-teks-sekunder">{template.Kode}</span>
+                {template.Keterangan ? (
+                    <span className="block text-keterangan font-normal text-teks-sekunder">{template.Keterangan}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'VersiTerbit',
+        accessorKey: 'VersiTerbit',
+        header: 'Versi terbit',
+        enableSorting: false,
+        meta: { label: 'Versi terbit', prioritas: 'penting' },
+        cell: ({ row: { original: template } }) =>
+            template.VersiTerbit ? (
+                <>
+                    <span className="block tabular-nums">Versi {template.VersiTerbit.Versi}</span>
+                    <span className="block text-keterangan text-teks-sekunder">
+                        Terbit {FormatTanggal(template.VersiTerbit.DiterbitkanPada)}
+                    </span>
+                </>
+            ) : (
+                <LabelStatus jenis="peringatan" teks="Belum terbit" />
+            ),
+    },
+    {
+        id: 'Draf',
+        header: 'Draf',
+        enableSorting: false,
+        meta: { label: 'Draf', prioritas: 'penting' },
+        cell: ({ row: { original: template } }) =>
+            template.VersiDraf ? (
+                <div className="flex flex-col items-start gap-1">
+                    <span className="tabular-nums">Versi {template.VersiDraf.Versi}</span>
+                    <LabelStatus
+                        jenis={template.VersiDraf.Lolos ? 'sukses' : 'bahaya'}
+                        teks={
+                            template.VersiDraf.Lolos
+                                ? 'Lolos validasi'
+                                : template.VersiDraf.SudahDivalidasi
+                                  ? 'Belum lolos validasi'
+                                  : 'Belum divalidasi'
+                        }
+                    />
+                </div>
+            ) : (
+                <span className="text-teks-sekunder">Tidak ada</span>
+            ),
+    },
+];
+
+/** Daftar template sektor berversi (P-03), TabelData D-16. */
 export default function HalamanDaftarTemplateSektor({ Template }: { Template: RingkasanTemplate[] }) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehBuat = PunyaIzin(props.Pengguna, IzinPengelola.TemplateIsiUbah);
@@ -40,86 +106,28 @@ export default function HalamanDaftarTemplateSektor({ Template }: { Template: Ri
                 sebagai draf versi baru. Tenant lama tidak berubah tanpa persetujuannya.
             </p>
             {buatBaru ? <FormBuatTemplate template={Template} saatSelesai={() => AturBuatBaru(false)} /> : null}
-            {Template.length === 0 ? (
-                <KeadaanKosong judul="Belum ada template sektor">
-                    Buat template pertama, misal Retail umum (RTL-GEN).
-                </KeadaanKosong>
-            ) : (
-                <PanelTabel keterangan="Daftar template sektor">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col">Template</TableHead>
-                            <TableHead scope="col">Versi terbit</TableHead>
-                            <TableHead scope="col">Draf</TableHead>
-                            <TableHead scope="col">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Template.map((template) => (
-                            <BarisTemplate key={template.Kode} template={template} />
-                        ))}
-                    </TableBody>
-                </PanelTabel>
-            )}
+            <TabelData
+                id="pengelola-template-sektor"
+                label="Daftar template sektor"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Template }}
+                ambilIdBaris={(template) => template.Kode}
+                urutBawaan="Nama"
+                cari="Cari nama atau kode template"
+                saring={[{ id: 'VersiTerbit', label: 'Versi terbit', jenis: 'ya', labelAktif: 'Sudah terbit' }]}
+                alamatDetail={AlamatVersiBuka}
+                aksiBaris={(template) =>
+                    AlamatVersiBuka(template) ? (
+                        <DropdownMenuItem asChild>
+                            <Link href={AlamatVersiBuka(template)}>Buka template</Link>
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem disabled>Belum ada versi</DropdownMenuItem>
+                    )
+                }
+                kosong={{ judul: 'Belum ada template sektor. Buat template pertama, misal Retail umum (RTL-GEN).' }}
+            />
         </TataLetakPengelola>
-    );
-}
-
-function BarisTemplate({ template }: { template: RingkasanTemplate }) {
-    const versiBuka = template.VersiDraf?.Versi ?? template.VersiTerbit?.Versi ?? template.VersiTerbaru;
-
-    return (
-        <TableRow>
-            <TableCell>
-                <p className="font-semibold text-teks-utama">{template.Nama}</p>
-                <p className="font-mono text-keterangan text-teks-sekunder">{template.Kode}</p>
-                {template.Keterangan ? (
-                    <p className="text-keterangan text-teks-sekunder">{template.Keterangan}</p>
-                ) : null}
-            </TableCell>
-            <TableCell>
-                {template.VersiTerbit ? (
-                    <>
-                        <p className="tabular-nums">Versi {template.VersiTerbit.Versi}</p>
-                        <p className="text-keterangan text-teks-sekunder">
-                            Terbit {FormatTanggal(template.VersiTerbit.DiterbitkanPada)}
-                        </p>
-                    </>
-                ) : (
-                    <LabelStatus jenis="peringatan" teks="Belum terbit" />
-                )}
-            </TableCell>
-            <TableCell>
-                {template.VersiDraf ? (
-                    <div className="flex flex-col gap-1">
-                        <span className="tabular-nums">Versi {template.VersiDraf.Versi}</span>
-                        <LabelStatus
-                            jenis={template.VersiDraf.Lolos ? 'sukses' : 'bahaya'}
-                            teks={
-                                template.VersiDraf.Lolos
-                                    ? 'Lolos validasi'
-                                    : template.VersiDraf.SudahDivalidasi
-                                      ? 'Belum lolos validasi'
-                                      : 'Belum divalidasi'
-                            }
-                        />
-                    </div>
-                ) : (
-                    <span className="text-teks-sekunder">Tidak ada</span>
-                )}
-            </TableCell>
-            <TableCell className="text-right">
-                {versiBuka ? (
-                    <Button asChild variant="outline" size="sm">
-                        <Link href={`/template-sektor/${encodeURIComponent(template.Kode)}/versi/${versiBuka}`}>
-                            Buka
-                        </Link>
-                    </Button>
-                ) : null}
-            </TableCell>
-        </TableRow>
     );
 }
 
