@@ -5,7 +5,7 @@ import HalamanDaftarImpor, { PeriksaBerkasImpor } from '@/Halaman/Kelola/Produk/
 import HalamanDetailImpor, { BuatUrlLaporanImpor } from '@/Halaman/Kelola/Produk/Impor/Detail';
 import type { PropsDaftarImpor, PropsDetailImpor, RingkasanImpor } from '@/Tipe/Katalog';
 
-import { AturanJenis, BuatHalaman, BuatHasilTabel, IzinPenuh, OpsiKelompokPajakUji } from './DataUjiKatalog';
+import { AturanJenis, BuatHasilTabel, IzinPenuh, OpsiKelompokPajakUji } from './DataUjiKatalog';
 import { BatasiProgres } from './KemajuanImpor';
 import { AmbilLangkahImpor } from './LangkahImpor';
 import { PeriksaPemetaan } from './PemetaanImpor';

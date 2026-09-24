@@ -4,7 +4,6 @@ import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
  * dan pengaturan persediaan. Desimal selalu string: uang "12345.68", jumlah "10.0000", HPP "1234.568000".
  * Tanggal `YYYY-MM-DD`; cap waktu ISO UTC. Pemilik file: Tim 0 (perubahan lewat permintaan ke lead).
  */
-import type { DaftarBerhalaman } from '@/Tipe/Pengelola';
 
 export type StatusStokAwal = 'Draf' | 'Memproses' | 'Diposting' | 'Dibatalkan' | 'Dibuang';
 export type SumberStokAwal = 'Manual' | 'Impor';
