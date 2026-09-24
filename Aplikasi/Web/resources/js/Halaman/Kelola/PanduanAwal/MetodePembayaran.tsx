@@ -7,6 +7,8 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,8 +22,6 @@ import {
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
 import { Card, CardContent, CardHeader } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatMasukanPersen, NormalisasiMasukanPersen } from '@/Pustaka/MasukanUang';
@@ -95,129 +95,123 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
             },
         );
 
-    if (metodePembayaran.length === 0) {
-        return (
-            <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
-                <EmptyHeader className="max-w-none items-start text-left">
-                    <EmptyDescription className="text-isi text-teks-sekunder">
-                        Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.
-                    </EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    }
+    const kolom: KolomTabel<MetodePembayaranRingkas>[] = [
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: metode } }) => (
+                <>
+                    <span className="break-words text-teks-utama">{metode.Nama}</span>
+                    <span className="block text-keterangan text-teks-sekunder">{metode.LabelJenis}</span>
+                </>
+            ),
+        },
+        {
+            id: 'Rincian',
+            header: 'Rincian',
+            enableSorting: false,
+            meta: { label: 'Rincian', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row: { original: metode } }) => (
+                <>
+                    {metode.TautanGambarQris ? (
+                        <img
+                            src={metode.TautanGambarQris}
+                            alt={`Gambar QRIS ${metode.Nama}`}
+                            width={64}
+                            height={64}
+                            className="size-16 rounded-kontrol border border-garis object-contain"
+                        />
+                    ) : null}
+                    {metode.NamaBank ? <span className="block">{metode.NamaBank}</span> : null}
+                    {metode.NomorRekening ? (
+                        <span className="block font-mono text-label">
+                            {metode.NomorRekening}
+                            {metode.NamaPemilikRekening ? ` a.n. ${metode.NamaPemilikRekening}` : ''}
+                        </span>
+                    ) : null}
+                    {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening ? '—' : null}
+                </>
+            ),
+        },
+        {
+            id: 'PersenBiaya',
+            header: 'Biaya',
+            enableSorting: false,
+            meta: { label: 'Biaya', angka: true, prioritas: 'penting' },
+            cell: ({ row }) => `${FormatPersen(row.original.PersenBiaya)}%`,
+        },
+        {
+            id: 'Aktif',
+            accessorKey: 'Aktif',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row }) =>
+                row.original.Aktif ? (
+                    <LabelStatus jenis="sukses" teks="Aktif" />
+                ) : (
+                    <LabelStatus jenis="netral" teks="Nonaktif" />
+                ),
+        },
+        {
+            id: 'Tindakan',
+            header: () => <span className="sr-only">Tindakan</span>,
+            enableSorting: false,
+            meta: { label: 'Tindakan', prioritas: 'penting', wajib: true, kelasSel: 'text-right' },
+            cell: ({ row: { original: metode } }) =>
+                metode.Wajib ? (
+                    <span className="text-keterangan text-teks-sekunder">Selalu tersedia</span>
+                ) : metode.Aktif ? (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={memproses !== null}
+                                aria-busy={memproses === metode.Uuid || undefined}
+                            >
+                                {memproses === metode.Uuid ? 'Memproses…' : `Nonaktifkan ${metode.Nama}`}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Nonaktifkan {metode.Nama}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Tombol {metode.Nama} hilang dari layar bayar aplikasi kasir. Transaksi lama tidak
+                                    berubah, dan metode ini bisa diaktifkan lagi.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={() => UbahStatus(metode)}>
+                                    Nonaktifkan {metode.Nama}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                ) : (
+                    <Tombol
+                        varian="sekunder"
+                        onClick={() => UbahStatus(metode)}
+                        memproses={memproses === metode.Uuid}
+                        disabled={memproses !== null}
+                    >
+                        {`Aktifkan ${metode.Nama}`}
+                    </Tombol>
+                ),
+        },
+    ];
 
     return (
-        <Card className="gap-0 py-0">
-            <Table className="min-w-[720px] text-isi">
-                <TableCaption className="sr-only">Metode pembayaran</TableCaption>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead scope="col" className="px-4">
-                            Nama
-                        </TableHead>
-                        <TableHead scope="col" className="px-4">
-                            Rincian
-                        </TableHead>
-                        <TableHead scope="col" className="px-4 text-right">
-                            Biaya
-                        </TableHead>
-                        <TableHead scope="col" className="px-4">
-                            Status
-                        </TableHead>
-                        <TableHead scope="col" className="px-4">
-                            <span className="sr-only">Aksi</span>
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {metodePembayaran.map((metode) => (
-                        <TableRow key={metode.Uuid} className="align-top">
-                            <TableCell className="px-4 whitespace-normal text-teks-utama">
-                                <span className="break-words">{metode.Nama}</span>
-                                <span className="block text-keterangan text-teks-sekunder">{metode.LabelJenis}</span>
-                            </TableCell>
-                            <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                {metode.TautanGambarQris ? (
-                                    <img
-                                        src={metode.TautanGambarQris}
-                                        alt={`Gambar QRIS ${metode.Nama}`}
-                                        width={64}
-                                        height={64}
-                                        className="size-16 rounded-kontrol border border-garis object-contain"
-                                    />
-                                ) : null}
-                                {metode.NamaBank ? <span className="block">{metode.NamaBank}</span> : null}
-                                {metode.NomorRekening ? (
-                                    <span className="block font-mono text-label">
-                                        {metode.NomorRekening}
-                                        {metode.NamaPemilikRekening ? ` a.n. ${metode.NamaPemilikRekening}` : ''}
-                                    </span>
-                                ) : null}
-                                {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening ? '—' : null}
-                            </TableCell>
-                            <TableCell className="px-4 text-right text-teks-utama tabular-nums">
-                                {FormatPersen(metode.PersenBiaya)}%
-                            </TableCell>
-                            <TableCell className="px-4">
-                                {metode.Aktif ? (
-                                    <LabelStatus jenis="sukses" teks="Aktif" />
-                                ) : (
-                                    <LabelStatus jenis="netral" teks="Nonaktif" />
-                                )}
-                            </TableCell>
-                            <TableCell className="px-4 text-right">
-                                {metode.Wajib ? (
-                                    <span className="text-keterangan text-teks-sekunder">Selalu tersedia</span>
-                                ) : metode.Aktif ? (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                disabled={memproses !== null}
-                                                aria-busy={memproses === metode.Uuid || undefined}
-                                            >
-                                                {memproses === metode.Uuid
-                                                    ? 'Memproses…'
-                                                    : `Nonaktifkan ${metode.Nama}`}
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Nonaktifkan {metode.Nama}?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Tombol {metode.Nama} hilang dari layar bayar aplikasi kasir.
-                                                    Transaksi lama tidak berubah, dan metode ini bisa diaktifkan lagi.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    variant="destructive"
-                                                    onClick={() => UbahStatus(metode)}
-                                                >
-                                                    Nonaktifkan {metode.Nama}
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                ) : (
-                                    <Tombol
-                                        varian="sekunder"
-                                        onClick={() => UbahStatus(metode)}
-                                        memproses={memproses === metode.Uuid}
-                                        disabled={memproses !== null}
-                                    >
-                                        {`Aktifkan ${metode.Nama}`}
-                                    </Tombol>
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </Card>
+        <TabelData
+            id="panduan-metode-pembayaran"
+            label="Metode pembayaran"
+            kolom={kolom}
+            sumber={{ mode: 'lokal', data: metodePembayaran }}
+            ambilIdBaris={(metode) => metode.Uuid}
+            kosong={{ judul: 'Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.' }}
+        />
     );
 }
 

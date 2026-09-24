@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import HalamanMetodePembayaranPanduan from '@/Halaman/Kelola/PanduanAwal/MetodePembayaran';
 import HalamanPajak from '@/Halaman/Kelola/PanduanAwal/Pajak';
 import HalamanProdukPanduan from '@/Halaman/Kelola/PanduanAwal/Produk';
-import { AturHalamanUji, kirimanForm, RenderUji } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import type { PropsPajak, PropsProdukPanduan } from '@/Tipe/PanduanAwal';
 
 import { BuatProgresContoh } from './DataUjiPanduan';
@@ -97,6 +98,52 @@ describe('Langkah 4 Produk (F-01): centang produk contoh memakai Checkbox', () =
         expect(screen.getByText(/Sisa kuota paket 1 SKU/)).toBeTruthy();
         expect((screen.getByRole('button', { name: 'Tambahkan produk contoh' }) as HTMLButtonElement).disabled).toBe(
             true,
+        );
+    });
+});
+
+describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lewat konfirmasi', () => {
+    beforeEach(() => AturHalamanUji({}, '/kelola/panduan-awal/metode-pembayaran'));
+    afterEach(() => cleanup());
+
+    it('tunai selalu tersedia; QRIS dinonaktifkan setelah konfirmasi', () => {
+        const dasar = {
+            NamaBank: null,
+            NomorRekening: null,
+            NamaPemilikRekening: null,
+            PersenBiaya: '0',
+            TautanGambarQris: null,
+            Aktif: true,
+        };
+        RenderUji(
+            <HalamanMetodePembayaranPanduan
+                Progres={BuatProgresContoh({ ProfilUsaha: 'Selesai', Sektor: 'Selesai', Pajak: 'Selesai' })}
+                MetodePembayaran={[
+                    { ...dasar, Uuid: 'M1', Jenis: 'Tunai', LabelJenis: 'Tunai', Nama: 'Tunai', Wajib: true },
+                    {
+                        ...dasar,
+                        Uuid: 'M2',
+                        Jenis: 'QrisStatis',
+                        LabelJenis: 'QRIS statis',
+                        Nama: 'QRIS toko',
+                        PersenBiaya: '0.7',
+                        Wajib: false,
+                    },
+                ]}
+                JenisTersedia={[]}
+                Bank={[]}
+                BatasGambarQris={{ UkuranMaksimalKb: 2048, Ekstensi: ['png'] }}
+            />,
+        );
+
+        expect(screen.getByText('Selalu tersedia')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Nonaktifkan QRIS toko' }));
+        expect(tiruanRouter.post).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Nonaktifkan QRIS toko' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/panduan-awal/metode-pembayaran/M2/nonaktifkan',
+            {},
+            expect.anything(),
         );
     });
 });
