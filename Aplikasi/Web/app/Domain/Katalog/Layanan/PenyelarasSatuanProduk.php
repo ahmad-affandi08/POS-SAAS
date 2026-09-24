@@ -125,9 +125,10 @@ final class PenyelarasSatuanProduk
 
         // 3) Satuan dipertahankan diperbarui, satuan baru dibuat; harga awal satuan baru dikumpulkan.
         $hargaAwal = [];
+        $bidangHarga = [];
         $barcodeSisa = ProdukBarcode::query()->where('IdProduk', $produk->Id)->get()->keyBy(fn (ProdukBarcode $b): string => mb_strtolower($b->Barcode));
 
-        foreach ($rencana as $r) {
+        foreach ($rencana as $i => $r) {
             $baris = $r['Id'] === null ? new ProdukSatuan(['IdProduk' => $produk->Id]) : $ada->get($r['Id']);
 
             if (! $baris instanceof ProdukSatuan) {
@@ -153,11 +154,12 @@ final class PenyelarasSatuanProduk
 
             if ($r['Id'] === null && $r['Data']->hargaAwal !== []) {
                 $hargaAwal[$baris->Id] = $r['Data']->hargaAwal;
+                $bidangHarga[$baris->Id] = "Satuan.{$i}.HargaAwal";
             }
         }
 
         if ($hargaAwal !== []) {
-            $this->harga->SimpanHargaDasar($produk, $hargaAwal, $sumberHarga);
+            $this->harga->SimpanHargaDasar($produk, $hargaAwal, $sumberHarga, $bidangHarga);
         }
     }
 

@@ -82,7 +82,7 @@ final class PenyusunAnakVarian
         ]);
 
         if ($hargaDasar !== null) {
-            $this->harga->SimpanHargaDasar($anak, [$satuan->Id => [new DataBarisHarga(Kuantitas::Dari(1), $hargaDasar)]], $sumberHarga);
+            $this->harga->SimpanHargaDasar($anak, [$satuan->Id => [new DataBarisHarga(Kuantitas::Dari(1), $hargaDasar)]], $sumberHarga, [$satuan->Id => 'HargaDasar']);
         }
 
         return $anak;
