@@ -30,7 +30,7 @@ beforeEach(function (): void {
  *
  * @return array{Tenant: Tenant, Gudang: Gudang, Produk: array<string, Produk>, Batch: BatchStok}
  */
-function TimHSiapkanLedger(string $namaUsaha = 'Toko Sembako Berkah Jaya', MetodeHpp $metode = MetodeHpp::RataRata): array
+function SiapkanLedgerBangunUlang(string $namaUsaha = 'Toko Sembako Berkah Jaya', MetodeHpp $metode = MetodeHpp::RataRata): array
 {
     $t = BantuanPersediaan::SiapkanTenant($namaUsaha, $metode);
     $produk = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
@@ -58,7 +58,7 @@ function TimHSiapkanLedger(string $namaUsaha = 'Toko Sembako Berkah Jaya', Metod
 }
 
 /** Invarian yang dijaga bangun ulang (tanpa jurnal: ledger ditulis langsung). */
-function TimHInvarianStok(int $idTenant, bool $fifo = false): array
+function PeriksaInvarianStokBangunUlang(int $idTenant, bool $fifo = false): array
 {
     return [
         ...PemeriksaInvarian::PeriksaSaldoStok($idTenant),
@@ -72,9 +72,9 @@ function TimHInvarianStok(int $idTenant, bool $fifo = false): array
 
 describe('persediaan:bangun-ulang-saldo --periksa (DesainF05a C.9, aturan #9)', function (): void {
     it('BR-05.1: ledger konsisten (MA & FIFO) → tanpa perbedaan, kode keluar 0', function (MetodeHpp $metode): void {
-        $l = TimHSiapkanLedger(metode: $metode);
+        $l = SiapkanLedgerBangunUlang(metode: $metode);
 
-        expect(TimHInvarianStok($l['Tenant']->Id, $metode === MetodeHpp::Fifo))->toBe([])
+        expect(PeriksaInvarianStokBangunUlang($l['Tenant']->Id, $metode === MetodeHpp::Fifo))->toBe([])
             ->and(app(PemeriksaKonsistensiStok::class)->Periksa())->toBe([]);
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])
@@ -83,7 +83,7 @@ describe('persediaan:bangun-ulang-saldo --periksa (DesainF05a C.9, aturan #9)', 
     })->with([MetodeHpp::RataRata, MetodeHpp::Fifo]);
 
     it('BR-05.1: saldo rusak terdeteksi, kode keluar 1, dan --periksa tidak mengubah apa pun', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
         $minyak = $l['Produk']['Stok']->Id;
         SaldoStok::query()->where('IdProduk', $minyak)->update(['JumlahTersedia' => '9.0000', 'NilaiPersediaan' => '8000.00']);
 
@@ -98,7 +98,7 @@ describe('persediaan:bangun-ulang-saldo --periksa (DesainF05a C.9, aturan #9)', 
     });
 
     it('melaporkan rantai SaldoSetelah/NilaiSetelah yang putus, Q=0 bernilai, batch & seri yang tidak sesuai', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
         $id = $l['Tenant']->Id;
         $p = $l['Produk'];
         // Korupsi disimulasikan langsung di SQL (model MutasiStok append-only).
@@ -119,7 +119,7 @@ describe('persediaan:bangun-ulang-saldo --periksa (DesainF05a C.9, aturan #9)', 
     });
 
     it('FIFO: Σ sisa lapisan terbuka ≠ saldo dan penanda Habis salah dilaporkan (hanya tenant FIFO)', function (): void {
-        $l = TimHSiapkanLedger(metode: MetodeHpp::Fifo);
+        $l = SiapkanLedgerBangunUlang(metode: MetodeHpp::Fifo);
         DB::table('LapisanFifo')->where('IdTenant', $l['Tenant']->Id)->where('IdProduk', $l['Produk']['Stok']->Id)->update(['NilaiSisa' => '8600.00']);
         DB::table('LapisanFifo')->where('IdTenant', $l['Tenant']->Id)->where('IdProduk', $l['Produk']['BahanBaku']->Id)->update(['Habis' => true]);
 
@@ -151,7 +151,7 @@ describe('persediaan:bangun-ulang-saldo --periksa (DesainF05a C.9, aturan #9)', 
 
 describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', function (): void {
     it('BR-05.1: memperbaiki jumlah, nilai, HPP rata-rata, mutasi terakhir; membuat baris yang hilang; menolkan baris yatim; memperbaiki batch', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
         $id = $l['Tenant']->Id;
         $p = $l['Produk'];
         $gudang = $l['Gudang']->Id;
@@ -162,7 +162,7 @@ describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', functio
         SaldoStok::query()->create(['IdProduk' => $p['Produksi']->Id, 'IdGudang' => $gudang, 'JumlahTersedia' => '4.0000', 'NilaiPersediaan' => '100000.00', 'HppRataRata' => '25000.000000']);
         BatchStok::query()->whereKey($l['Batch']->Id)->update(['JumlahSisa' => '3.0000']);
 
-        expect(TimHInvarianStok($id))->not->toBe([]);
+        expect(PeriksaInvarianStokBangunUlang($id))->not->toBe([]);
 
         $this->artisan('persediaan:bangun-ulang-saldo')
             ->expectsOutputToContain("Tenant {$id}: 4 saldo stok diperbaiki.")
@@ -170,7 +170,7 @@ describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', functio
             ->assertSuccessful();
 
         BantuanOrganisasi::AturKonteks($id);
-        expect(TimHInvarianStok($id))->toBe([])
+        expect(PeriksaInvarianStokBangunUlang($id))->toBe([])
             ->and(SaldoStok::query()->where('IdProduk', $p['Stok']->Id)->firstOrFail()->only(['JumlahTersedia', 'NilaiPersediaan', 'HppRataRata', 'IdMutasiStokTerakhir']))->toBe($harapanMinyak)
             ->and(SaldoStok::query()->where('IdProduk', $p['BahanBaku']->Id)->firstOrFail()->only(['JumlahTersedia', 'NilaiPersediaan', 'HppRataRata']))
             ->toBe(['JumlahTersedia' => '25.5000', 'NilaiPersediaan' => '382500.00', 'HppRataRata' => '15000.000000'])
@@ -202,11 +202,11 @@ describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', functio
         expect(app(PembangunUlangSaldoStok::class)->Jalankan())->toBe(1)
             ->and(SaldoStok::query()->sole()->only(['JumlahTersedia', 'NilaiPersediaan', 'HppRataRata']))
             ->toBe(['JumlahTersedia' => '6.0000', 'NilaiPersediaan' => '6600.00', 'HppRataRata' => '1100.000000'])
-            ->and(TimHInvarianStok($t['Tenant']->Id))->toBe([]);
+            ->and(PeriksaInvarianStokBangunUlang($t['Tenant']->Id))->toBe([]);
     });
 
     it('perbedaan yang tidak bisa diperbaiki (rantai mutasi) tetap dilaporkan dan kode keluar 1', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
         DB::table('MutasiStok')->where('IdTenant', $l['Tenant']->Id)->where('IdProduk', $l['Produk']['Stok']->Id)->where('Jumlah', '<', 0)->update(['NilaiSetelah' => '1.00']);
 
         $this->artisan('persediaan:bangun-ulang-saldo')
@@ -215,7 +215,7 @@ describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', functio
     });
 
     it('urutan kunci: Tenant (S) → SaldoStok FOR UPDATE → Σ mutasi (S) → BatchStok FOR UPDATE, per pasangan', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
         BatchStok::query()->whereKey($l['Batch']->Id)->update(['JumlahSisa' => '0.0000']);
         $pernyataan = [];
         DB::listen(function ($kueri) use (&$pernyataan): void {
@@ -244,8 +244,8 @@ describe('persediaan:bangun-ulang-saldo (bangun ulang, DesainF05a C.9)', functio
 
 describe('persediaan:bangun-ulang-saldo lintas tenant (aturan #11)', function (): void {
     it('isolasi tenant: --tenant hanya memproses tenant itu; tiap tenant lewat KonteksTenant sendiri; audit per tenant', function (): void {
-        $a = TimHSiapkanLedger('Toko Kelontong Makmur Sentosa');
-        $b = TimHSiapkanLedger('Warung Bu Tini Jaya');
+        $a = SiapkanLedgerBangunUlang('Toko Kelontong Makmur Sentosa');
+        $b = SiapkanLedgerBangunUlang('Warung Bu Tini Jaya');
         foreach ([$a, $b] as $l) {
             DB::table('SaldoStok')->where('IdTenant', $l['Tenant']->Id)->where('IdProduk', $l['Produk']['Stok']->Id)->update(['JumlahTersedia' => '1.0000']);
         }
@@ -254,8 +254,8 @@ describe('persediaan:bangun-ulang-saldo lintas tenant (aturan #11)', function ()
             ->expectsOutputToContain('1 tenant diproses, 1 saldo stok diperbaiki.')
             ->assertSuccessful();
 
-        expect(TimHInvarianStok($a['Tenant']->Id))->toBe([])
-            ->and(TimHInvarianStok($b['Tenant']->Id))->not->toBe([])
+        expect(PeriksaInvarianStokBangunUlang($a['Tenant']->Id))->toBe([])
+            ->and(PeriksaInvarianStokBangunUlang($b['Tenant']->Id))->not->toBe([])
             ->and(DB::table('LogAudit')->where('Peristiwa', 'persediaan.saldo.bangun-ulang')->pluck('IdTenant')->all())->toBe([$a['Tenant']->Id]);
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])
@@ -264,12 +264,12 @@ describe('persediaan:bangun-ulang-saldo lintas tenant (aturan #11)', function ()
 
         $this->artisan('persediaan:bangun-ulang-saldo')->expectsOutputToContain('2 tenant diproses, 1 saldo stok diperbaiki.')->assertSuccessful();
 
-        expect(TimHInvarianStok($b['Tenant']->Id))->toBe([])
+        expect(PeriksaInvarianStokBangunUlang($b['Tenant']->Id))->toBe([])
             ->and(DB::table('LogAudit')->where('Peristiwa', 'persediaan.saldo.bangun-ulang')->orderBy('Id')->pluck('IdTenant')->all())->toBe([$a['Tenant']->Id, $b['Tenant']->Id]);
     });
 
     it('--tenant tidak valid ditolak; tenant tak dikenal diperingatkan; konteks tenant pemanggil dipulihkan', function (): void {
-        $l = TimHSiapkanLedger();
+        $l = SiapkanLedgerBangunUlang();
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--tenant' => ['abc']])->expectsOutputToContain('Id tenant tidak valid: abc')->assertExitCode(1);
         $this->artisan('persediaan:bangun-ulang-saldo', ['--tenant' => ['999999', (string) $l['Tenant']->Id], '--periksa' => true])

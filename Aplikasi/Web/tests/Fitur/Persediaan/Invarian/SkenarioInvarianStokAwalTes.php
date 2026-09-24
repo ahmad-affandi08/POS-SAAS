@@ -47,7 +47,7 @@ beforeEach(function (): void {
  *
  * @param  list<array{0: Produk, 1: string, 2: string, 3?: string|null, 4?: string|null, 5?: list<string>}>  $baris
  */
-function TimHSimpanDanPosting(Gudang $gudang, array $baris, int $idPengguna, string $catatan = 'Stok awal hasil hitung fisik akhir bulan'): StokAwal
+function SimpanDanPostingStokAwalInvarian(Gudang $gudang, array $baris, int $idPengguna, string $catatan = 'Stok awal hasil hitung fisik akhir bulan'): StokAwal
 {
     $tanggal = app(TanggalBisnisOutlet::class)->Hitung($gudang->IdOutlet);
     $data = new DataStokAwal(
@@ -71,7 +71,7 @@ function TimHSimpanDanPosting(Gudang $gudang, array $baris, int $idPengguna, str
 }
 
 /** Keluar lewat buku stok (penjualan F-07 masa depan; tanpa jurnal, jadi hanya invarian stok yang diperiksa). */
-function TimHJualLewatBuku(Produk $produk, Gudang $gudang, string $jumlah, int $idReferensi): void
+function JualLewatBukuInvarian(Produk $produk, Gudang $gudang, string $jumlah, int $idReferensi): void
 {
     app(CatatMutasiStok::class)->Jalankan(new DataDokumenMutasi(
         jenisReferensi: JenisReferensiMutasi::Penjualan,
@@ -93,7 +93,7 @@ function TimHJualLewatBuku(Produk $produk, Gudang $gudang, string $jumlah, int $
 }
 
 /** Invarian stok tanpa pemeriksaan akun persediaan (untuk mutasi yang jurnalnya milik flow lain). */
-function TimHInvarianStokSaja(int $idTenant, bool $fifo): array
+function PeriksaInvarianStokSaja(int $idTenant, bool $fifo): array
 {
     return [
         ...PemeriksaInvarian::PeriksaSaldoStok($idTenant),
@@ -115,7 +115,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
         $idPengguna = $t['Pemilik']->Id;
 
         // 1. Posting: nilai baris = Nilai(jumlah, hpp) dibulatkan 2 desimal; seri dialokasikan 512500.33, .33, .34.
-        $pertama = TimHSimpanDanPosting($t['Gudang'], [
+        $pertama = SimpanDanPostingStokAwalInvarian($t['Gudang'], [
             [$p['Stok'], '10', '1234.5678'],
             [$p['BahanBaku'], '25.5', '15250.123456'],
             [$p['Produksi'], '40', '8333.333333'],
@@ -135,7 +135,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
             ->and(LapisanFifo::query()->where('Habis', false)->count())->toBe($fifo ? 7 : 0);
 
         // Bahan baku ke PersediaanBahanBaku, sisanya ke PersediaanBarangDagang; kredit EkuitasSaldoAwal.
-        $perPeran = TimHDebitKreditPerPeran($pertama->IdJurnal);
+        $perPeran = HitungDebitKreditPerPeran($pertama->IdJurnal);
         expect($perPeran)->toBe([
             'EkuitasSaldoAwal' => ['0.00', '2700458.16'],
             'PersediaanBahanBaku' => ['388878.15', '0.00'],
@@ -149,7 +149,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
             ->and(PemeriksaInvarian::PeriksaSemua($id, $fifo))->toBe([])
             ->and(SaldoStok::query()->where(fn ($q) => $q->where('JumlahTersedia', '<>', 0)->orWhere('NilaiPersediaan', '<>', 0))->count())->toBe(0)
             ->and(Jurnal::query()->whereKey($batal->IdJurnalPembatalan)->value('IdJurnalDibalik'))->toBe($pertama->IdJurnal)
-            ->and(TimHDebitKreditPerPeran($batal->IdJurnalPembatalan))->toBe([
+            ->and(HitungDebitKreditPerPeran($batal->IdJurnalPembatalan))->toBe([
                 'EkuitasSaldoAwal' => ['2700458.16', '0.00'],
                 'PersediaanBahanBaku' => ['0.00', '388878.15'],
                 'PersediaanBarangDagang' => ['0.00', '2311580.01'],
@@ -159,7 +159,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
             ->and(LapisanFifo::query()->where('Habis', false)->count())->toBe(0);
 
         // 3. Posting lagi (jumlah berbeda, nomor seri yang sama diaktifkan kembali).
-        $kedua = TimHSimpanDanPosting($t['Gudang'], [
+        $kedua = SimpanDanPostingStokAwalInvarian($t['Gudang'], [
             [$p['Stok'], '12', '1250'],
             [$p['BahanBaku'], '20.25', '15000'],
             [$p['Batch'], '18', '17850', 'UHT-2609-A', '2027-03-31'],
@@ -176,7 +176,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
             ->and(NomorSeri::query()->where('Status', StatusNomorSeri::Tersedia)->orderBy('Nomor')->pluck('Nomor')->all())->toBe(['RC18-2026-000121', 'RC18-2026-000123']);
 
         // 4. Stok terpakai (penjualan lewat buku stok): pembatalan ditolak dan tidak meninggalkan jejak apa pun.
-        TimHJualLewatBuku($p['Stok'], $t['Gudang'], '5', 9001);
+        JualLewatBukuInvarian($p['Stok'], $t['Gudang'], '5', 9001);
         $jumlahMutasi = MutasiStok::query()->count();
 
         $galat = null;
@@ -191,7 +191,7 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
             ->and(MutasiStok::query()->count())->toBe($jumlahMutasi)
             ->and(Jurnal::query()->count())->toBe(3)
             ->and($kedua->refresh()->Status)->toBe(StatusStokAwal::Diposting)
-            ->and(TimHInvarianStokSaja($id, $fifo))->toBe([]);
+            ->and(PeriksaInvarianStokSaja($id, $fifo))->toBe([]);
 
         // Pemeriksa aplikasi (perintah malam) sepakat dengan pemeriksa invarian independen atas data mesin buku stok.
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])->assertSuccessful();
@@ -202,12 +202,12 @@ describe('F-05a invarian end-to-end: stok awal → batal → posting lagi (atura
         $id = $t['Tenant']->Id;
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
 
-        TimHJualLewatBuku($p['Stok'], $t['Gudang'], '4', 9101);
-        $stokAwal = TimHSimpanDanPosting($t['Gudang'], [[$p['Stok'], '10', '1100']], $t['Pemilik']->Id);
+        JualLewatBukuInvarian($p['Stok'], $t['Gudang'], '4', 9101);
+        $stokAwal = SimpanDanPostingStokAwalInvarian($t['Gudang'], [[$p['Stok'], '10', '1100']], $t['Pemilik']->Id);
 
         expect(SaldoStok::query()->sole()->only(['JumlahTersedia', 'NilaiPersediaan']))->toBe(['JumlahTersedia' => '6.0000', 'NilaiPersediaan' => '6600.00'])
             ->and(PemeriksaInvarian::PeriksaSemua($id, $metode === MetodeHpp::Fifo))->toBe([])
-            ->and(TimHDebitKreditPerPeran($stokAwal->IdJurnal))->toBe([
+            ->and(HitungDebitKreditPerPeran($stokAwal->IdJurnal))->toBe([
                 'EkuitasSaldoAwal' => ['0.00', '11000.00'],
                 'PersediaanBarangDagang' => ['6600.00', '0.00'],
                 'SelisihHpp' => ['4400.00', '0.00'],
@@ -227,9 +227,9 @@ describe('F-05a invarian jurnal multi-outlet (J-05.1 per IdOutlet)', function ()
         $gudangCabang = BantuanPersediaan::BuatGudang($cabang, 'Gudang Cabang Solo Baru');
         $idPengguna = $t['Pemilik']->Id;
 
-        $depan = TimHSimpanDanPosting($t['Gudang'], [[$p['Stok'], '48', '36250'], [$p['Seri'], '1', '675000', null, null, ['RC18-UTM-0001']]], $idPengguna);
-        $gudangBelakang = TimHSimpanDanPosting($belakang, [[$p['Stok'], '120', '36000'], [$p['BahanBaku'], '250.75', '14500.5']], $idPengguna);
-        $solo = TimHSimpanDanPosting($gudangCabang, [[$p['Stok'], '60', '36500'], [$p['Batch'], '36', '17900', 'UHT-SOLO-01', '2027-02-28']], $idPengguna);
+        $depan = SimpanDanPostingStokAwalInvarian($t['Gudang'], [[$p['Stok'], '48', '36250'], [$p['Seri'], '1', '675000', null, null, ['RC18-UTM-0001']]], $idPengguna);
+        $gudangBelakang = SimpanDanPostingStokAwalInvarian($belakang, [[$p['Stok'], '120', '36000'], [$p['BahanBaku'], '250.75', '14500.5']], $idPengguna);
+        $solo = SimpanDanPostingStokAwalInvarian($gudangCabang, [[$p['Stok'], '60', '36500'], [$p['Batch'], '36', '17900', 'UHT-SOLO-01', '2027-02-28']], $idPengguna);
 
         expect(PemeriksaInvarian::PeriksaSemua($id))->toBe([]);
 
@@ -264,7 +264,7 @@ describe('F-05a invarian jurnal multi-outlet (J-05.1 per IdOutlet)', function ()
  *
  * @return array<string, array{string, string}>
  */
-function TimHDebitKreditPerPeran(?int $idJurnal): array
+function HitungDebitKreditPerPeran(?int $idJurnal): array
 {
     $baris = DB::select(
         'SELECT p.Kunci, SUM(d.Debit) AS Debit, SUM(d.Kredit) AS Kredit

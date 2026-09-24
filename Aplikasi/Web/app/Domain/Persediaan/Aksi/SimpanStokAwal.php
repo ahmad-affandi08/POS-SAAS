@@ -66,8 +66,29 @@ final class SimpanStokAwal
             // Kirim ganda bersamaan dengan Uuid klien yang sama: yang kalah mengembalikan dokumen pemenang.
             $lama = $ada === null && $data->uuid !== null ? StokAwal::query()->where('Uuid', $data->uuid)->first() : null;
 
-            return $lama ?? throw $galat;
+            return $lama ?? throw self::TerjemahkanGalatUnik($galat);
         }
+    }
+
+    /**
+     * Pelanggaran indeks unik yang tidak bisa dipulihkan menjadi galat bisnis (422), bukan galat SQL (500):
+     * - Uuid klien sudah dipakai dokumen di luar tenant ini (Uuid unik global; dokumennya tidak terlihat di sini);
+     * - dua baris dengan produk & nomor batch yang dianggap sama oleh kolasi database (beda aksen, misal É/E),
+     *   yang lolos pemeriksaan `BarisGanda` berbasis huruf kecil.
+     */
+    private static function TerjemahkanGalatUnik(UniqueConstraintViolationException $galat): Throwable
+    {
+        $pesan = $galat->getMessage();
+
+        if (str_contains($pesan, 'UniqStokAwalUuid')) {
+            return new PelanggaranAturanBisnis('UuidSudahDipakai', 'Draf ini tidak bisa disimpan dengan kode yang sama. Muat ulang halaman lalu simpan lagi.', 'Uuid');
+        }
+
+        if (str_contains($pesan, 'UniqStokAwalDetail')) {
+            return new PelanggaranAturanBisnis('BarisGanda', 'Ada baris dengan produk dan nomor batch yang sama (beda aksen atau spasi dianggap sama). Gabungkan barisnya.', 'Baris');
+        }
+
+        return $galat;
     }
 
     private function Buat(DataStokAwal $data): StokAwal

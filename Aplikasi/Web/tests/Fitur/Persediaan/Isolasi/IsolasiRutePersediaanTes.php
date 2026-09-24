@@ -42,7 +42,7 @@ beforeEach(function (): void {
  *
  * @return array{Draf: StokAwal, Diposting: StokAwal, Impor: ImporStokAwal, Jurnal: Jurnal}
  */
-function TimHBuatDokumenLangsung(Gudang $gudang, Produk $produk, int $idPengguna): array
+function BuatDokumenIsolasiLangsung(Gudang $gudang, Produk $produk, int $idPengguna): array
 {
     $buatStokAwal = function (StatusStokAwal $status, ?string $nomor) use ($gudang, $produk): StokAwal {
         $dokumen = StokAwal::query()->create([
@@ -85,7 +85,7 @@ function TimHBuatDokumenLangsung(Gudang $gudang, Produk $produk, int $idPengguna
  *
  * @return list<array{string, string, array<string, mixed>}>
  */
-function TimHRuteBerdokumen(StokAwal $draf, StokAwal $diposting, ?ImporStokAwal $impor, ?Jurnal $jurnal, Gudang $gudangSendiri, Produk $produkSendiri): array
+function AmbilRuteBerdokumenIsolasi(StokAwal $draf, StokAwal $diposting, ?ImporStokAwal $impor, ?Jurnal $jurnal, Gudang $gudangSendiri, Produk $produkSendiri): array
 {
     $badanStokAwal = fn (StokAwal $d): array => [
         'UuidGudang' => $gudangSendiri->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => 'Coba ubah dokumen orang lain',
@@ -126,7 +126,7 @@ function TimHRuteBerdokumen(StokAwal $draf, StokAwal $diposting, ?ImporStokAwal 
 }
 
 /** Keadaan dokumen yang tidak boleh berubah oleh permintaan dari luar tenant/outlet. */
-function TimHJejakDokumen(int $idTenant): array
+function AmbilJejakDokumenIsolasi(int $idTenant): array
 {
     return [
         DB::table('StokAwal')->where('IdTenant', $idTenant)->orderBy('Id')->get(['Id', 'Status', 'Nomor', 'IdJurnal', 'DiubahPada'])->map(fn ($b) => (array) $b)->all(),
@@ -143,7 +143,7 @@ function TimHJejakDokumen(int $idTenant): array
  *
  * @param  TestResponse<Response>  $respons
  */
-function TimHTanpaBocor(TestResponse $respons, string ...$rahasia): void
+function PastikanTanpaBocor(TestResponse $respons, string ...$rahasia): void
 {
     $status = $respons->getStatusCode();
     expect($status)->toBeIn([200, 302, 404, 422], "status {$status}: ".($respons->exception?->getMessage() ?? ''));
@@ -160,7 +160,7 @@ function TimHTanpaBocor(TestResponse $respons, string ...$rahasia): void
  *
  * @param  TestResponse<Response>  $respons
  */
-function TimHDitolak(TestResponse $respons): void
+function PastikanDitolakIsolasi(TestResponse $respons): void
 {
     $status = $respons->getStatusCode();
     expect($status)->toBeIn([302, 404, 422], "status {$status}: ".($respons->exception?->getMessage() ?? ''));
@@ -171,42 +171,42 @@ function TimHDitolak(TestResponse $respons): void
 }
 
 /**
- * GET `alamat` lalu `TimHTanpaBocor`. Rahasia yang dikirim penguji sendiri di kueri (misal `?gudang=` asing yang
+ * GET `alamat` lalu `PastikanTanpaBocor`. Rahasia yang dikirim penguji sendiri di kueri (misal `?gudang=` asing yang
  * digemakan kembali di prop `Saring`) tidak dihitung bocor; nama dan dokumennya tetap diperiksa.
  */
-function TimHTanpaBocorDi(TestCase $klien, string $alamat, bool $json, string ...$rahasia): void
+function PastikanTanpaBocorDi(TestCase $klien, string $alamat, bool $json, string ...$rahasia): void
 {
     $respons = $json ? $klien->getJson($alamat) : $klien->get($alamat);
     $kueri = urldecode($alamat);
 
-    TimHTanpaBocor($respons, ...array_values(array_filter($rahasia, fn (string $r): bool => ! str_contains($kueri, $r))));
+    PastikanTanpaBocor($respons, ...array_values(array_filter($rahasia, fn (string $r): bool => ! str_contains($kueri, $r))));
 }
 
 describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenant B (aturan #11)', function (): void {
     it('dokumen, impor, dan jurnal tenant B = 404 di semua rute berdokumen; tidak ada yang berubah', function (): void {
         $b = BantuanPersediaan::SiapkanTenant('Warung Bu Tini Jaya');
         $produkB = BantuanPersediaan::BuatProdukSemuaJenis($b['Pcs'], $b['Kg'])['Stok'];
-        $dokB = TimHBuatDokumenLangsung($b['Gudang'], $produkB, $b['Pemilik']->Id);
-        $jejakB = TimHJejakDokumen($b['Tenant']->Id);
+        $dokB = BuatDokumenIsolasiLangsung($b['Gudang'], $produkB, $b['Pemilik']->Id);
+        $jejakB = AmbilJejakDokumenIsolasi($b['Tenant']->Id);
 
         $a = BantuanPersediaan::SiapkanTenant('Toko Kelontong Makmur Sentosa');
         $produkA = BantuanPersediaan::BuatProdukSemuaJenis($a['Pcs'], $a['Kg'])['Stok'];
         $pemilikA = BantuanOrganisasi::TambahAnggota($a['Tenant']->Id, PeranTenantBawaan::Pemilik);
         $masuk = fn () => BantuanOrganisasi::Masuk($this, $pemilikA, $a['Tenant']->Id);
 
-        foreach (TimHRuteBerdokumen($dokB['Draf'], $dokB['Diposting'], $dokB['Impor'], $dokB['Jurnal'], $a['Gudang'], $produkA) as [$metode, $alamat, $badan]) {
+        foreach (AmbilRuteBerdokumenIsolasi($dokB['Draf'], $dokB['Diposting'], $dokB['Impor'], $dokB['Jurnal'], $a['Gudang'], $produkA) as [$metode, $alamat, $badan]) {
             $masuk()->call($metode, $alamat, $badan)->assertNotFound();
         }
 
-        expect(TimHJejakDokumen($b['Tenant']->Id))->toBe($jejakB)
-            ->and(TimHJejakDokumen($a['Tenant']->Id)[0])->toBe([]);
+        expect(AmbilJejakDokumenIsolasi($b['Tenant']->Id))->toBe($jejakB)
+            ->and(AmbilJejakDokumenIsolasi($a['Tenant']->Id)[0])->toBe([]);
     });
 
     it('UUID lokasi stok, produk, dan saringan tenant B tidak bisa dipakai dan tidak membocorkan data', function (): void {
         $b = BantuanPersediaan::SiapkanTenant('Warung Bu Tini Jaya');
         $rahasiaB = BantuanKatalog::BuatProduk(['Nama' => 'Kopi Luwak Premium Rahasia Tenant B 250 gram'], '350000.00', $b['Pcs']);
         BantuanPersediaan::TulisMutasiLangsung($rahasiaB->Id, $b['Gudang']->Id, '15', '4500000.00');
-        $dokB = TimHBuatDokumenLangsung($b['Gudang'], $rahasiaB, $b['Pemilik']->Id);
+        $dokB = BuatDokumenIsolasiLangsung($b['Gudang'], $rahasiaB, $b['Pemilik']->Id);
         $pengaturanB = Tenant::query()->findOrFail($b['Tenant']->Id)->Pengaturan;
 
         $a = BantuanPersediaan::SiapkanTenant('Toko Kelontong Makmur Sentosa');
@@ -218,11 +218,11 @@ describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenan
 
         // Simpan draf di lokasi stok tenant B = 404; produk tenant B di lokasi sendiri = ditolak.
         $masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $b['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($produkA)])->assertNotFound();
-        TimHDitolak($masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $a['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($rahasiaB)]));
+        PastikanDitolakIsolasi($masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $a['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($rahasiaB)]));
 
         // Unggah impor dengan lokasi bawaan tenant B.
         $csv = UploadedFile::fake()->createWithContent('stok-awal.csv', "SKU,Stok,Harga Modal\nMGR-2L,10,38500\n");
-        TimHDitolak($masuk()->post("{$sa}/impor", ['Berkas' => $csv, 'UuidGudangBawaan' => $b['Gudang']->Uuid]));
+        PastikanDitolakIsolasi($masuk()->post("{$sa}/impor", ['Berkas' => $csv, 'UuidGudangBawaan' => $b['Gudang']->Uuid]));
 
         BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
         expect(StokAwal::query()->count())->toBe(0)
@@ -230,18 +230,18 @@ describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenan
 
         // Daftar, saringan, pencarian, templat, dan kartu stok tidak menampilkan data tenant B.
         $rahasia = [$rahasiaB->Uuid, $rahasiaB->Nama, $b['Gudang']->Uuid, $dokB['Draf']->Uuid, $dokB['Diposting']->Uuid, $dokB['Impor']->Uuid, $dokB['Jurnal']->Uuid];
-        TimHTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}/impor", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/produk/cari?kata=Kopi+Luwak&batas=20', true, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Kopi&gudang={$b['Gudang']->Uuid}", true, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/saldo?keadaan=Semua', false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$rahasiaB->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produkA->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal', false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal?kata=JU%2F2026', false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}/impor", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/persediaan/produk/cari?kata=Kopi+Luwak&batas=20', true, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Kopi&gudang={$b['Gudang']->Uuid}", true, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/persediaan/saldo?keadaan=Semua', false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$rahasiaB->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produkA->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal', false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal?kata=JU%2F2026', false, ...$rahasia);
 
         // Pengaturan persediaan hanya milik tenant aktif.
         $masuk()->put('/kelola/persediaan/pengaturan', ['MetodeHpp' => MetodeHpp::Fifo->value, 'StokBolehMinus' => true])->assertSessionHasNoErrors();
@@ -256,8 +256,8 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
         $produk = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg'])['Stok'];
         $cabang = Outlet::query()->create(['IdMerek' => Merek::query()->value('Id'), 'Kode' => 'SOLO', 'Nama' => 'Cabang Solo Baru']);
         $gudangCabang = BantuanPersediaan::BuatGudang($cabang, 'Gudang Cabang Solo Baru');
-        $dokCabang = TimHBuatDokumenLangsung($gudangCabang, $produk, $t['Pemilik']->Id);
-        $jejak = TimHJejakDokumen($t['Tenant']->Id);
+        $dokCabang = BuatDokumenIsolasiLangsung($gudangCabang, $produk, $t['Pemilik']->Id);
+        $jejak = AmbilJejakDokumenIsolasi($t['Tenant']->Id);
 
         $manajer = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet, semuaOutlet: false);
         OutletPengguna::query()->create(['IdOutlet' => $t['Outlet']->Id, 'IdPengguna' => $manajer->Id, 'IdPeran' => BantuanOrganisasi::Peran($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->Id]);
@@ -265,7 +265,7 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
 
         // Stok awal di lokasi outlet lain, dan impor milik pengguna lain (pengguna per outlet hanya melihat impornya
         // sendiri, Tim E) = 404. Jurnal tidak terikat outlet (DesainF05a D).
-        foreach (TimHRuteBerdokumen($dokCabang['Draf'], $dokCabang['Diposting'], $dokCabang['Impor'], null, $t['Gudang'], $produk) as [$metode, $alamat, $badan]) {
+        foreach (AmbilRuteBerdokumenIsolasi($dokCabang['Draf'], $dokCabang['Diposting'], $dokCabang['Impor'], null, $t['Gudang'], $produk) as [$metode, $alamat, $badan]) {
             $masuk()->call($metode, $alamat, $badan)->assertNotFound();
         }
 
@@ -273,17 +273,17 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
         $baris = [['UuidProduk' => $produk->Uuid, 'Jumlah' => '5', 'HppSatuan' => '38500', 'NomorBatch' => null, 'TanggalKedaluwarsa' => null, 'NomorSeri' => []]];
         $masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $gudangCabang->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris])->assertNotFound();
 
-        expect(TimHJejakDokumen($t['Tenant']->Id))->toBe($jejak);
+        expect(AmbilJejakDokumenIsolasi($t['Tenant']->Id))->toBe($jejak);
 
         $rahasia = [$gudangCabang->Uuid, $dokCabang['Draf']->Uuid, $dokCabang['Diposting']->Uuid, 'Gudang Cabang Solo Baru'];
-        TimHTanpaBocorDi($masuk(), "{$sa}/impor", false, $dokCabang['Impor']->Uuid, 'stok-rahasia.csv');
-        TimHTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}/buat", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/saldo', false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produk->Uuid}&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Minyak&gudang={$gudangCabang->Uuid}", true, ...$rahasia);
-        TimHTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}/impor", false, $dokCabang['Impor']->Uuid, 'stok-rahasia.csv');
+        PastikanTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}/buat", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), '/kelola/persediaan/saldo', false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produk->Uuid}&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Minyak&gudang={$gudangCabang->Uuid}", true, ...$rahasia);
+        PastikanTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
     });
 });
