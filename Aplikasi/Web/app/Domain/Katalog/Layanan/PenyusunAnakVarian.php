@@ -20,6 +20,8 @@ use App\Domain\Katalog\Model\ProdukSatuan;
  */
 final class PenyusunAnakVarian
 {
+    private const PANJANG_SKU_MAKSIMAL = 64;
+
     public function __construct(
         private readonly AturanProduk $aturan,
         private readonly PenghubungHargaProduk $harga,
@@ -177,7 +179,9 @@ final class PenyusunAnakVarian
         }
 
         do {
-            $sku = $awalan.'-'.str_pad((string) ++$terbesar, 2, '0', STR_PAD_LEFT);
+            $akhiran = '-'.str_pad((string) ++$terbesar, 2, '0', STR_PAD_LEFT);
+            // SKU maksimal 64 karakter (kolom & POLA_SKU): awalan induk dipotong bila perlu.
+            $sku = rtrim(substr($awalan, 0, self::PANJANG_SKU_MAKSIMAL - strlen($akhiran)), '-').$akhiran;
         } while (PembuatSku::CekSkuTerpakai($sku));
 
         return $sku;
