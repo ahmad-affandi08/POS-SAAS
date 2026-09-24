@@ -23,7 +23,7 @@ beforeEach(function (): void {
 });
 
 /** Satu mutasi stok mentah di tenant konteks (mengunci metode HPP, H-4). */
-function TimFBuatRiwayatStok(array $t): void
+function BuatRiwayatStokPengaturan(array $t): void
 {
     $produk = BantuanKatalog::BuatProduk(['Nama' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter'], '38500.00', $t['Pcs']);
     BantuanLaporan::CatatMutasi($produk, $t['Gudang'], '24.0000', '924000.00');
@@ -80,7 +80,7 @@ describe('F-05a pengaturan persediaan: metode HPP (BR-04.2) & stok minus (BR-05.
 
     it('H-4 MetodeHppTerkunci: setelah ada riwayat stok metode HPP tidak bisa diganti, stok minus tetap bisa diubah', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
-        TimFBuatRiwayatStok($t);
+        BuatRiwayatStokPengaturan($t);
         $masuk = fn () => BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $masuk()->get('/kelola/persediaan/pengaturan')
@@ -124,7 +124,7 @@ describe('F-05a pengaturan persediaan: metode HPP (BR-04.2) & stok minus (BR-05.
 
     it('isolasi tenant: riwayat stok tenant lain tidak mengunci metode HPP tenant ini', function (): void {
         $a = BantuanPersediaan::SiapkanTenant();
-        TimFBuatRiwayatStok($a);
+        BuatRiwayatStokPengaturan($a);
         $b = BantuanPersediaan::SiapkanTenant('Toko Kelontong Maju Mundur');
 
         app(UbahPengaturanPersediaan::class)->Jalankan(MetodeHpp::Fifo, false);

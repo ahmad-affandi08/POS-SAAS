@@ -20,7 +20,7 @@ beforeEach(function (): void {
 });
 
 /** xlsx sah + entri berisi `$ukuranAsli` bita nol yang ukuran terdeklarasinya dipalsukan (bom ZIP). */
-function TimEBuatXlsxBomZip(int $ukuranAsli, int $ukuranDeklarasi): string
+function BuatXlsxBomZipStokAwal(int $ukuranAsli, int $ukuranDeklarasi): string
 {
     $path = (string) BantuanImporStokAwal::BuatXlsx([BantuanImporStokAwal::JUDUL, ['MGS-2L', 'Minyak Goreng', 'pcs', '', 10, 38500]])->getRealPath();
     $zip = new ZipArchive;
@@ -125,7 +125,7 @@ describe('F-05a impor stok awal: unggah berkas (pola BR-03.6)', function (): voi
             ->assertSessionHasErrors('Berkas');
 
         config(['persediaan.Impor.UkuranMaksimalKb' => 10240, 'katalog.Impor.UkuranEkstrakMaksimalKb' => 1024]);
-        $masuk->post($url, ['Berkas' => BantuanImpor::BuatBerkasMentah(TimEBuatXlsxBomZip(3 * 1024 * 1024, 100), 'stok.xlsx')])
+        $masuk->post($url, ['Berkas' => BantuanImpor::BuatBerkasMentah(BuatXlsxBomZipStokAwal(3 * 1024 * 1024, 100), 'stok.xlsx')])
             ->assertSessionHasErrors(['Berkas' => 'Isi berkas bukan lembar kerja Excel .xlsx yang sah.']);
 
         BantuanOrganisasi::AturKonteks($t['Tenant']->Id);

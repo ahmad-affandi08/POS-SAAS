@@ -21,7 +21,7 @@ beforeEach(function (): void {
 /**
  * @return list<list<string|int|null>>
  */
-function TimEBarisSederhana(): array
+function BuatBarisImporSederhana(): array
 {
     return [BantuanImporStokAwal::JUDUL, ['MGS-2L', 'Minyak Goreng Sawit 2 Liter', 'pcs', '', '24', '38.500']];
 }
@@ -30,13 +30,13 @@ describe('F-05a impor stok awal: izin persediaan.kelola & isolasi tenant/outlet'
     it('Kasir (tanpa persediaan.kelola) 403 di semua rute impor; Staf Gudang boleh', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $pemilik = BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
-        $impor = BantuanImporStokAwal::Unggah($pemilik, BantuanImporStokAwal::BuatCsv(TimEBarisSederhana()), $t['Gudang']->Uuid);
+        $impor = BantuanImporStokAwal::Unggah($pemilik, BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana()), $t['Gudang']->Uuid);
         $p = "/kelola/persediaan/stok-awal/impor/{$impor->Uuid}";
         $kasir = fn () => BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Kasir);
 
         $kasir()->get('/kelola/persediaan/stok-awal/impor')->assertForbidden();
         $kasir()->get('/kelola/persediaan/stok-awal/impor/templat?format=xlsx')->assertForbidden();
-        $kasir()->post('/kelola/persediaan/stok-awal/impor', ['Berkas' => BantuanImporStokAwal::BuatCsv(TimEBarisSederhana())])->assertForbidden();
+        $kasir()->post('/kelola/persediaan/stok-awal/impor', ['Berkas' => BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana())])->assertForbidden();
         $kasir()->get($p)->assertForbidden();
         $kasir()->get("{$p}/status")->assertForbidden();
         $kasir()->put("{$p}/pemetaan", ['Pemetaan' => $impor->Pemetaan, 'Tanggal' => now()->toDateString()])->assertForbidden();
@@ -53,7 +53,7 @@ describe('F-05a impor stok awal: izin persediaan.kelola & isolasi tenant/outlet'
     it('isolasi tenant: impor tenant lain = 404 di semua rute dan tidak tampil di riwayat', function (): void {
         $a = BantuanPersediaan::SiapkanTenant('Toko Sembako Berkah Jaya');
         $masukA = BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id);
-        $impor = BantuanImporStokAwal::Unggah($masukA, BantuanImporStokAwal::BuatCsv(TimEBarisSederhana()), $a['Gudang']->Uuid);
+        $impor = BantuanImporStokAwal::Unggah($masukA, BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana()), $a['Gudang']->Uuid);
 
         $b = BantuanPersediaan::SiapkanTenant('Apotek Sehat Sentosa');
         $masukB = BantuanPersediaan::MasukSebagai($this, $b['Tenant']->Id);
@@ -79,13 +79,13 @@ describe('F-05a impor stok awal: izin persediaan.kelola & isolasi tenant/outlet'
     it('pengguna berakses per outlet hanya melihat impornya sendiri; lokasi di luar aksesnya = 404', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $pemilik = BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
-        $imporPemilik = BantuanImporStokAwal::Unggah($pemilik, BantuanImporStokAwal::BuatCsv(TimEBarisSederhana()), $t['Gudang']->Uuid);
+        $imporPemilik = BantuanImporStokAwal::Unggah($pemilik, BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana()), $t['Gudang']->Uuid);
 
         $terbatas = BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::StafGudang, false);
         $terbatas->get("/kelola/persediaan/stok-awal/impor/{$imporPemilik->Uuid}")->assertNotFound();
-        $terbatas->post('/kelola/persediaan/stok-awal/impor', ['Berkas' => BantuanImporStokAwal::BuatCsv(TimEBarisSederhana()), 'UuidGudangBawaan' => $t['Gudang']->Uuid])->assertNotFound();
+        $terbatas->post('/kelola/persediaan/stok-awal/impor', ['Berkas' => BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana()), 'UuidGudangBawaan' => $t['Gudang']->Uuid])->assertNotFound();
 
-        $imporSendiri = BantuanImporStokAwal::Unggah($terbatas, BantuanImporStokAwal::BuatCsv([...TimEBarisSederhana(), ['GULA-1', '', '', '', '5', '14000']]));
+        $imporSendiri = BantuanImporStokAwal::Unggah($terbatas, BantuanImporStokAwal::BuatCsv([...BuatBarisImporSederhana(), ['GULA-1', '', '', '', '5', '14000']]));
         $terbatas->get('/kelola/persediaan/stok-awal/impor')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->has('Riwayat.Data', 1)
             ->where('Riwayat.Data.0.Uuid', $imporSendiri->Uuid)
@@ -96,7 +96,7 @@ describe('F-05a impor stok awal: izin persediaan.kelola & isolasi tenant/outlet'
     it('batalkan dari MenungguPemetaan: audit stok-awal.impor.batalkan; tidak bisa dibatalkan dua kali atau diterapkan', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $masuk = BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
-        $impor = BantuanImporStokAwal::Unggah($masuk, BantuanImporStokAwal::BuatCsv(TimEBarisSederhana()), $t['Gudang']->Uuid);
+        $impor = BantuanImporStokAwal::Unggah($masuk, BantuanImporStokAwal::BuatCsv(BuatBarisImporSederhana()), $t['Gudang']->Uuid);
         $p = "/kelola/persediaan/stok-awal/impor/{$impor->Uuid}";
 
         $masuk->post("{$p}/batalkan")->assertSessionHasNoErrors();

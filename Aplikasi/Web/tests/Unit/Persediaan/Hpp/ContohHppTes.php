@@ -21,7 +21,7 @@ use Tests\Pendukung\Persediaan\BantuanBuku;
 /**
  * @param  list<array{0: array{0: string, 1?: string, 2?: string|null}, 1: array{0: string, 1: string, 2: string, 3: string, 4: string|null}}>  $langkah
  */
-function TimAJalankanContohHpp(StrategiHpp $strategi, array $langkah): KeadaanHpp
+function JalankanContohHppUji(StrategiHpp $strategi, array $langkah): KeadaanHpp
 {
     $keadaan = KeadaanHpp::BuatKosong();
 
@@ -45,7 +45,7 @@ function TimAJalankanContohHpp(StrategiHpp $strategi, array $langkah): KeadaanHp
 /**
  * @return array<string, list<array{0: array{0: string, 1?: string, 2?: string|null}, 1: array{0: string, 1: string, 2: string, 3: string, 4: string|null}}>>
  */
-function TimAContohHppRataRata(): array
+function AmbilContohHppRataRata(): array
 {
     return [
         '#1 stok awal 10 @ 1234.5678, jual 3, terima 5 senilai 6500, jual 12 (nilai habis tepat)' => [
@@ -104,7 +104,7 @@ function TimAContohHppRataRata(): array
 /**
  * @return array<string, list<array{0: array{0: string, 1?: string, 2?: string|null}, 1: array{0: string, 1: string, 2: string, 3: string, 4: string|null}}>>
  */
-function TimAContohHppFifo(): array
+function AmbilContohHppFifo(): array
 {
     return [
         '#2 FIFO: 10 @ 1000, 5 @ 1200, jual 12 → 10000 + 2400' => [
@@ -133,8 +133,8 @@ function TimAContohHppFifo(): array
 
 describe('F-05a contoh kerja HPP rata-rata bergerak (DesainF05a C.3, BR-04.2/04.3)', function (): void {
     it('contoh HPP rata-rata bergerak', function (string $nama): void {
-        TimAJalankanContohHpp(new HppRataRataBergerak, TimAContohHppRataRata()[$nama]);
-    })->with(array_keys(TimAContohHppRataRata()));
+        JalankanContohHppUji(new HppRataRataBergerak, AmbilContohHppRataRata()[$nama]);
+    })->with(array_keys(AmbilContohHppRataRata()));
 
     it('masuk berjalan dinilai pada A; tanpa A dinilai 0 dan ditandai hppTidakDiketahui', function (): void {
         $strategi = new HppRataRataBergerak;
@@ -154,8 +154,8 @@ describe('F-05a contoh kerja HPP rata-rata bergerak (DesainF05a C.3, BR-04.2/04.
 
 describe('F-05a contoh kerja HPP FIFO (DesainF05a C.3)', function (): void {
     it('contoh HPP FIFO', function (string $nama): void {
-        TimAJalankanContohHpp(new HppFifo, TimAContohHppFifo()[$nama]);
-    })->with(array_keys(TimAContohHppFifo()));
+        JalankanContohHppUji(new HppFifo, AmbilContohHppFifo()[$nama]);
+    })->with(array_keys(AmbilContohHppFifo()));
 
     it('#2 FIFO: HppSatuan keluar = Hpp(|TotalHpp|, q) dan lapisan L2 tersisa 3 / 3600.00', function (): void {
         $strategi = new HppFifo;

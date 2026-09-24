@@ -57,6 +57,18 @@ final class StokAwal extends ModelDasar
 
     protected $table = 'StokAwal';
 
+    /**
+     * Kolom yang boleh berubah per status asal (null = Draf, bebas diubah lewat `SimpanStokAwal`).
+     *
+     * @var array<string, list<string>>
+     */
+    private const KOLOM_BOLEH_BERUBAH = [
+        'Memproses' => ['Status', 'Nomor', 'IdJurnal', 'TotalNilai', 'PesanGalat', 'DipostingOleh', 'DipostingPada', 'DiubahOleh', 'DiubahPada'],
+        'Diposting' => ['Status', 'IdJurnalPembatalan', 'AlasanBatal', 'DibatalkanOleh', 'DibatalkanPada', 'DiubahOleh', 'DiubahPada'],
+        'Dibatalkan' => [],
+        'Dibuang' => [],
+    ];
+
     /** @var array<string, mixed> */
     protected $attributes = [
         'Nomor' => null,
@@ -86,6 +98,32 @@ final class StokAwal extends ModelDasar
     public function ImporStokAwal(): BelongsTo
     {
         return $this->belongsTo(ImporStokAwal::class, 'IdImporStokAwal', 'Id');
+    }
+
+    /**
+     * Penjaga aturan #8 di tingkat model: dokumen tidak pernah dihapus, dan setelah keluar dari Draf hanya kolom
+     * perpindahan status berikutnya yang boleh berubah (Memproses → Diposting/Draf; Diposting → Dibatalkan). Dibatalkan
+     * dan Dibuang tidak bisa diubah lagi.
+     */
+    protected static function booted(): void
+    {
+        self::updating(function (self $stokAwal): void {
+            $asal = $stokAwal->getOriginal('Status');
+            $boleh = self::KOLOM_BOLEH_BERUBAH[$asal instanceof StatusStokAwal ? $asal->value : (string) $asal] ?? null;
+
+            if ($boleh === null) {
+                return;
+            }
+
+            $terlarang = array_diff(array_keys($stokAwal->getDirty()), $boleh);
+
+            if ($terlarang !== []) {
+                throw new LogicException('Stok awal berstatus '.($asal instanceof StatusStokAwal ? $asal->value : (string) $asal).' tidak bisa diubah: '.implode(', ', $terlarang).'.');
+            }
+        });
+        self::deleting(function (): void {
+            throw new LogicException('Dokumen stok awal tidak pernah dihapus; draf dibuang (status Dibuang).');
+        });
     }
 
     /**

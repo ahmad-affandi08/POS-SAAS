@@ -6,8 +6,10 @@ namespace App\Domain\Persediaan\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Persediaan\Enum\StatusStokAwal;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use LogicException;
 
 /**
  * Baris dokumen stok awal (DesainF05a B.2). `NamaProduk`/`Sku` = snapshot saat disimpan. Jumlah dalam satuan dasar,
@@ -44,6 +46,25 @@ final class StokAwalDetail extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = ['Sku' => null, 'NomorBatch' => null, 'TanggalKedaluwarsa' => null, 'DaftarNomorSeri' => null];
+
+    /**
+     * Penjaga aturan #8: baris hanya boleh diubah atau dihapus selama dokumennya masih Draf (status dibaca dengan
+     * kunci baca; Aksi pemanggil sudah memegang kunci dokumen).
+     */
+    protected static function booted(): void
+    {
+        $jaga = function (self $baris): void {
+            $status = StokAwal::query()->whereKey($baris->IdStokAwal)->sharedLock()->value('Status');
+            $status = $status instanceof StatusStokAwal ? $status : StatusStokAwal::tryFrom((string) $status);
+
+            if ($status !== StatusStokAwal::Draf) {
+                throw new LogicException('Baris stok awal hanya bisa diubah atau dihapus selama dokumennya masih Draf.');
+            }
+        };
+
+        self::updating($jaga);
+        self::deleting($jaga);
+    }
 
     /**
      * @return BelongsTo<StokAwal, $this>

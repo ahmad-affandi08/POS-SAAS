@@ -25,7 +25,7 @@ beforeEach(function (): void {
 /**
  * @return list<QueryExecuted>
  */
-function TimATangkapKueri(Closure $aksi): array
+function TangkapKueriKunciBuku(Closure $aksi): array
 {
     $kueri = [];
     DB::listen(function (QueryExecuted $q) use (&$kueri): void {
@@ -45,7 +45,7 @@ describe('F-05a buku stok: urutan kunci (DesainF05a C.2)', function (): void {
         $produk = [$p['Produksi']->Id, $p['Stok']->Id, $p['BahanBaku']->Id];
         rsort($produk);
 
-        $kueri = TimATangkapKueri(fn () => BantuanBuku::Catat([
+        $kueri = TangkapKueriKunciBuku(fn () => BantuanBuku::Catat([
             BantuanBuku::BuatBaris('A', $produk[0], $g2, '1', '1000.00'),
             BantuanBuku::BuatBaris('B', $produk[2], $g2, '1', '1000.00'),
             BantuanBuku::BuatBaris('C', $produk[1], $g1, '1', '1000.00'),

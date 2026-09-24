@@ -39,7 +39,7 @@ beforeEach(function (): void {
  *
  * @return list<array{0: string, 1: string, 2: string, 3: int|null}>
  */
-function TimCBarisJurnal(int $idJurnal): array
+function AmbilBarisJurnalStokAwal(int $idJurnal): array
 {
     $peran = PemetaanAkun::query()->whereNull('IdOutlet')->pluck('Kunci', 'IdAkun')->all();
 
@@ -48,7 +48,7 @@ function TimCBarisJurnal(int $idJurnal): array
         ->all());
 }
 
-function TimCKodeGalatPosting(Closure $kerja): ?string
+function AmbilKodeGalatPosting(Closure $kerja): ?string
 {
     try {
         $kerja();
@@ -92,7 +92,7 @@ describe('F-05a posting stok awal J-05.1 (BR-05.1)', function (): void {
             ->and($jurnal->KunciSumber)->toBe('Utama')
             ->and($jurnal->NomorSumber)->toBe($dokumen->Nomor)
             ->and($jurnal->TotalDebit)->toBe('768470.68')
-            ->and(TimCBarisJurnal($jurnal->Id))->toEqualCanonicalizing([
+            ->and(AmbilBarisJurnalStokAwal($jurnal->Id))->toEqualCanonicalizing([
                 ['PersediaanBahanBaku', '376125.00', '0.00', $t['Outlet']->Id],
                 ['PersediaanBarangDagang', '392345.68', '0.00', $t['Outlet']->Id],
                 ['EkuitasSaldoAwal', '0.00', '768470.68', $t['Outlet']->Id],
@@ -131,7 +131,7 @@ describe('F-05a posting stok awal J-05.1 (BR-05.1)', function (): void {
         expect(substr((string) $solo->Nomor, -4))->toBe('0002')
             ->and(substr((string) $utama->Nomor, -4))->toBe('0001')
             ->and($solo->IdOutlet)->toBe($cabang->Id)
-            ->and(array_unique(array_map(fn (array $b) => $b[3], TimCBarisJurnal((int) $solo->IdJurnal))))->toBe([$cabang->Id])
+            ->and(array_unique(array_map(fn (array $b) => $b[3], AmbilBarisJurnalStokAwal((int) $solo->IdJurnal))))->toBe([$cabang->Id])
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
     });
 
@@ -176,7 +176,7 @@ describe('F-05a posting stok awal J-05.1 (BR-05.1)', function (): void {
 
         expect(SaldoStok::query()->where('IdProduk', $p['Stok']->Id)->value('JumlahTersedia'))->toBe('6.0000')
             ->and(SaldoStok::query()->where('IdProduk', $p['Stok']->Id)->value('NilaiPersediaan'))->toBe('6600.00')
-            ->and(TimCBarisJurnal((int) $dokumen->IdJurnal))->toEqualCanonicalizing([
+            ->and(AmbilBarisJurnalStokAwal((int) $dokumen->IdJurnal))->toEqualCanonicalizing([
                 ['PersediaanBarangDagang', '6600.00', '0.00', $t['Outlet']->Id],
                 ['SelisihHpp', '4400.00', '0.00', $t['Outlet']->Id],
                 ['EkuitasSaldoAwal', '0.00', '11000.00', $t['Outlet']->Id],
@@ -192,12 +192,12 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '5', '38000')], $t['Pemilik']->Id);
         $kedua = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Produksi'], '5', '9000'), BantuanStokAwal::Baris($p['Stok'], '7', '38000')]);
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($kedua, $t['Pemilik']->Id)))->toBe('StokAwalSudahAda')
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($kedua, $t['Pemilik']->Id)))->toBe('StokAwalSudahAda')
             ->and($kedua->fresh()?->Status)->toBe(StatusStokAwal::Draf)
             ->and(MutasiStok::query()->count())->toBe(1);
 
         $belakang = BantuanPersediaan::BuatGudang($t['Outlet'], 'Gudang Belakang Toko');
-        expect(TimCKodeGalatPosting(fn () => BantuanStokAwal::BuatDanPosting($belakang, [BantuanStokAwal::Baris($p['Stok'], '7', '38000')], $t['Pemilik']->Id)))->toBeNull()
+        expect(AmbilKodeGalatPosting(fn () => BantuanStokAwal::BuatDanPosting($belakang, [BantuanStokAwal::Baris($p['Stok'], '7', '38000')], $t['Pemilik']->Id)))->toBeNull()
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
     });
 
@@ -208,7 +208,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         BantuanStokAwal::Jual($p['Stok'], $t['Gudang'], '2', $hariIni->subDay()->format('Y-m-d'));
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $hariIni->subDays(3)->format('Y-m-d'));
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('TanggalSebelumMutasiTerakhir')
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('TanggalSebelumMutasiTerakhir')
             ->and(StokAwal::query()->whereKey($draf->Id)->value('Status'))->toBe(StatusStokAwal::Draf);
     });
 
@@ -218,7 +218,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         PemetaanAkun::query()->where('Kunci', 'EkuitasSaldoAwal')->delete();
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')]);
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('PemetaanAkunBelumAda')
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('PemetaanAkunBelumAda')
             ->and(MutasiStok::query()->count())->toBe(0)
             ->and(SaldoStok::query()->where('JumlahTersedia', '!=', 0)->count())->toBe(0);
     });
@@ -230,7 +230,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $tanggal->format('Y-m-d'));
         BantuanPersediaan::KunciPeriode($tanggal->format('Y-m'));
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('PeriodeTerkunci')
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('PeriodeTerkunci')
             ->and(MutasiStok::query()->count())->toBe(0)
             ->and(Jurnal::query()->count())->toBe(0);
     });
@@ -241,7 +241,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')]);
         $p['Stok']->update(['DiarsipkanPada' => now(), 'Aktif' => false]);
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('ProdukDiarsipkan');
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('ProdukDiarsipkan');
     });
 
     it('dokumen Dibuang tidak bisa diposting (StatusTidakSesuai)', function (): void {
@@ -250,7 +250,7 @@ describe('F-05a posting stok awal: pemeriksaan ulang saat posting', function ():
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')]);
         app(BuangStokAwal::class)->Jalankan($draf);
 
-        expect(TimCKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
+        expect(AmbilKodeGalatPosting(fn () => app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
     });
 
     it('stok awal bernilai nol diposting tanpa jurnal (tidak ada JurnalKosong)', function (): void {

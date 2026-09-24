@@ -40,7 +40,7 @@ describe('F-05a BR-05.2 stok minus', function (): void {
         } else {
             $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::CatatKeluar($p['Stok']->Id, $g, '5'));
 
-            expect($galat->kode)->toBe('BR-05.2')
+            expect($galat->kode)->toBe('StokTidakCukup')
                 ->and($galat->bidang)->toBe('Jumlah')
                 ->and($galat->getMessage())->toBe('Stok Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter di '.$t['Gudang']->Nama.' tidak cukup: tersedia 3, dibutuhkan 5.')
                 ->and($galat->detail)->toBe(['UuidProduk' => $p['Stok']->Uuid, 'UuidGudang' => $t['Gudang']->Uuid, 'Tersedia' => '3.0000', 'Diminta' => '5.0000'])

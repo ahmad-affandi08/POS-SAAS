@@ -97,13 +97,16 @@ final class CatatMutasiStok
     {
         // L1: kunci S Tenant; metode HPP tidak bisa berubah selama dokumen ini dicatat.
         $pengaturan = $this->pengaturanTenant->AmbilDenganKunciBaca();
-        $this->penjagaKunciPeriode->PastikanTerbuka($dokumen->tanggalBisnis);
 
+        // Pemutaran ulang dokumen yang sudah tercatat dikembalikan apa adanya, juga bila periodenya kini terkunci
+        // (kirim ulang sinkron POS/F-07 setelah tutup buku tidak boleh berubah menjadi PeriodeTerkunci).
         $ulang = $this->PeriksaIdempotensi($dokumen);
 
         if ($ulang !== null) {
             return $ulang;
         }
+
+        $this->penjagaKunciPeriode->PastikanTerbuka($dokumen->tanggalBisnis);
 
         [$produk, $gudang] = $this->AmbilProdukDanGudang($dokumen);
         $this->PeriksaMutasiAsal($dokumen);

@@ -27,7 +27,7 @@ beforeEach(function (): void {
 /**
  * @return array{0: array<string, mixed>, 1: array<string, Produk>}
  */
-function QaKSiapkanBatas(): array
+function SiapkanBatasNilaiUji(): array
 {
     $t = BantuanPersediaan::SiapkanTenant();
 
@@ -36,7 +36,7 @@ function QaKSiapkanBatas(): array
 
 describe('F-05a QA: batas DECIMAL stok awal', function (): void {
     it('Nilai baris yang lolos cek digit tetapi dibulatkan ke 17 digit ditolak 422, bukan 500', function (): void {
-        [$t, $p] = QaKSiapkanBatas();
+        [$t, $p] = SiapkanBatasNilaiUji();
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         // 1000 × 9.999.999.999.999,999995 = 9.999.999.999.999.999,995 (16 digit) → HalfUp 10^16 (17 digit).
@@ -48,7 +48,7 @@ describe('F-05a QA: batas DECIMAL stok awal', function (): void {
     });
 
     it('TotalNilai dokumen yang melampaui DECIMAL(18,2) ditolak 422 walau tiap baris dalam batas', function (): void {
-        [$t, $p] = QaKSiapkanBatas();
+        [$t, $p] = SiapkanBatasNilaiUji();
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         // Tiap baris 9.999.899.999.000.001 (16 digit); jumlah dua baris 17 digit.
@@ -63,7 +63,7 @@ describe('F-05a QA: batas DECIMAL stok awal', function (): void {
 
 describe('F-05a QA: batas DECIMAL buku stok (BR-05.1)', function (): void {
     it('saldo nilai per pasangan yang melampaui DECIMAL(18,2) ditolak sebelum menulis apa pun', function (): void {
-        [$t, $p] = QaKSiapkanBatas();
+        [$t, $p] = SiapkanBatasNilaiUji();
         $minyak = $p['Stok'];
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
@@ -77,7 +77,7 @@ describe('F-05a QA: batas DECIMAL buku stok (BR-05.1)', function (): void {
     });
 
     it('saldo jumlah per pasangan yang melampaui DECIMAL(18,4) ditolak (dua batch di satu dokumen)', function (): void {
-        [$t, $p] = QaKSiapkanBatas();
+        [$t, $p] = SiapkanBatasNilaiUji();
         $susu = $p['Batch'];
         $kedaluwarsa = CarbonImmutable::parse('2027-06-30');
 

@@ -22,7 +22,7 @@ beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
 });
 
-function TimBBalikkan(int $idJurnal, int $idSumber = 1, string $tanggal = '2026-09-30', string $kunci = 'Pembatalan', ?int $idPengguna = null): HasilPostingJurnal
+function BalikkanJurnalUji(int $idJurnal, int $idSumber = 1, string $tanggal = '2026-09-30', string $kunci = 'Pembatalan', ?int $idPengguna = null): HasilPostingJurnal
 {
     return app(BalikkanJurnal::class)->Jalankan(
         $idJurnal,
@@ -38,7 +38,7 @@ function TimBBalikkan(int $idJurnal, int $idSumber = 1, string $tanggal = '2026-
 /**
  * @return list<array{IdAkun: int, IdOutlet: int|null, Debit: string, Kredit: string, Memo: string|null}>
  */
-function TimBBarisTanpaUrutan(int $idJurnal): array
+function AmbilBarisJurnalTanpaUrutan(int $idJurnal): array
 {
     return JurnalDetail::query()->where('IdJurnal', $idJurnal)->orderBy('IdAkun')->orderBy('IdOutlet')->orderBy('Debit')->get()
         ->map(fn (JurnalDetail $d): array => ['IdAkun' => $d->IdAkun, 'IdOutlet' => $d->IdOutlet, 'Debit' => $d->Debit, 'Kredit' => $d->Kredit, 'Memo' => $d->Memo])
@@ -56,9 +56,9 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('10600400.00'), $t['Outlet']->Id),
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('2500000.25'), $solo->Id),
         ]));
-        $sebelum = TimBBarisTanpaUrutan($asal->idJurnal);
+        $sebelum = AmbilBarisJurnalTanpaUrutan($asal->idJurnal);
 
-        $balik = TimBBalikkan($asal->idJurnal, idPengguna: $t['Pemilik']->Id);
+        $balik = BalikkanJurnalUji($asal->idJurnal, idPengguna: $t['Pemilik']->Id);
         $jurnalBalik = Jurnal::query()->findOrFail($balik->idJurnal);
         $jurnalAsal = Jurnal::query()->findOrFail($asal->idJurnal);
 
@@ -74,8 +74,8 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
             ->and($jurnalBalik->NomorSumber)->toBe($jurnalAsal->NomorSumber)
             ->and($jurnalBalik->TotalDebit)->toBe($jurnalAsal->TotalKredit)
             ->and($jurnalBalik->Otomatis)->toBeTrue()
-            ->and(TimBBarisTanpaUrutan($balik->idJurnal))->toEqualCanonicalizing($cermin)
-            ->and(TimBBarisTanpaUrutan($asal->idJurnal))->toBe($sebelum)
+            ->and(AmbilBarisJurnalTanpaUrutan($balik->idJurnal))->toEqualCanonicalizing($cermin)
+            ->and(AmbilBarisJurnalTanpaUrutan($asal->idJurnal))->toBe($sebelum)
             ->and($jurnalAsal->IdJurnalDibalik)->toBeNull()
             ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($t['Tenant']->Id))->toBe([]);
 
@@ -88,8 +88,8 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
     it('idempotensi: membalik ulang dengan sumber & kunci sama mengembalikan pembalik yang sama', function (): void {
         BantuanPersediaan::SiapkanTenant();
         $asal = BantuanJurnal::Posting(BantuanJurnal::DataStokAwal());
-        $pertama = TimBBalikkan($asal->idJurnal);
-        $kedua = TimBBalikkan($asal->idJurnal);
+        $pertama = BalikkanJurnalUji($asal->idJurnal);
+        $kedua = BalikkanJurnalUji($asal->idJurnal);
 
         expect($kedua->sudahAda)->toBeTrue()
             ->and($kedua->idJurnal)->toBe($pertama->idJurnal)
@@ -99,18 +99,18 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
     it('satu jurnal hanya bisa dibalik sekali (JurnalSudahDibalik); jurnal tidak dikenal ditolak', function (): void {
         BantuanPersediaan::SiapkanTenant();
         $asal = BantuanJurnal::Posting(BantuanJurnal::DataStokAwal());
-        TimBBalikkan($asal->idJurnal);
+        BalikkanJurnalUji($asal->idJurnal);
 
         $ganda = null;
         try {
-            TimBBalikkan($asal->idJurnal, kunci: 'PembatalanKedua');
+            BalikkanJurnalUji($asal->idJurnal, kunci: 'PembatalanKedua');
         } catch (PelanggaranAturanBisnis $galat) {
             $ganda = $galat;
         }
 
         $takDikenal = null;
         try {
-            TimBBalikkan(999999);
+            BalikkanJurnalUji(999999);
         } catch (PelanggaranAturanBisnis $galat) {
             $takDikenal = $galat;
         }
@@ -128,13 +128,13 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
 
         $galat = null;
         try {
-            TimBBalikkan($asal->idJurnal, tanggal: '2026-08-31');
+            BalikkanJurnalUji($asal->idJurnal, tanggal: '2026-08-31');
         } catch (PelanggaranAturanBisnis $e) {
             $galat = $e;
         }
 
         expect($galat?->kode)->toBe('PeriodeTerkunci')
-            ->and(TimBBalikkan($asal->idJurnal, tanggal: '2026-09-01')->nomor)->toBe('JU/2026/09/000001');
+            ->and(BalikkanJurnalUji($asal->idJurnal, tanggal: '2026-09-01')->nomor)->toBe('JU/2026/09/000001');
     });
 
     it('isolasi tenant: jurnal tenant lain tidak bisa dibalik (JurnalTidakDikenal)', function (): void {
@@ -144,7 +144,7 @@ describe('F-05a BalikkanJurnal (aturan #8, DesainF05a C.5)', function (): void {
 
         $galat = null;
         try {
-            TimBBalikkan($asal->idJurnal);
+            BalikkanJurnalUji($asal->idJurnal);
         } catch (PelanggaranAturanBisnis $e) {
             $galat = $e;
         }

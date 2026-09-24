@@ -31,7 +31,7 @@ beforeEach(function (): void {
 /**
  * @return array{0: array<string, mixed>, 1: array<string, Produk>, 2: StokAwal}
  */
-function TimCSiapkanDrafBesar(): array
+function SiapkanDrafStokAwalBesar(): array
 {
     $t = BantuanPersediaan::SiapkanTenant();
     $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
@@ -48,7 +48,7 @@ function TimCSiapkanDrafBesar(): array
 describe('F-05a posting stok awal lewat antrean', function (): void {
     it('di atas batas: Draf → Memproses, satu tugas bertenant dikirim; kirim ulang tidak menggandakan; posting langsung ditolak SedangDiproses; tugas memposting', function (): void {
         Queue::fake();
-        [$t, , $draf] = TimCSiapkanDrafBesar();
+        [$t, , $draf] = SiapkanDrafStokAwalBesar();
 
         $status = app(AjukanPostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id);
         $ulang = app(AjukanPostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id);
@@ -101,7 +101,7 @@ describe('F-05a posting stok awal lewat antrean', function (): void {
     });
 
     it('antrean sinkron: tugas berjalan setelah commit sehingga dokumen langsung Diposting', function (): void {
-        [$t, , $draf] = TimCSiapkanDrafBesar();
+        [$t, , $draf] = SiapkanDrafStokAwalBesar();
 
         expect(app(AjukanPostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id))->toBe(StatusStokAwal::Memproses)
             ->and($draf->fresh()?->Status)->toBe(StatusStokAwal::Diposting)
@@ -110,7 +110,7 @@ describe('F-05a posting stok awal lewat antrean', function (): void {
 
     it('pelanggaran aturan bisnis di tugas: Memproses → Draf dengan PesanGalat dan audit posting-gagal, tanpa efek stok', function (): void {
         Queue::fake();
-        [$t, $p, $draf] = TimCSiapkanDrafBesar();
+        [$t, $p, $draf] = SiapkanDrafStokAwalBesar();
         app(AjukanPostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id);
         $p['BahanBaku']->update(['DiarsipkanPada' => now(), 'Aktif' => false]);
 
@@ -126,7 +126,7 @@ describe('F-05a posting stok awal lewat antrean', function (): void {
 
     it('galat sistem terakhir (failed): dokumen kembali ke Draf dengan pesan umum', function (): void {
         Queue::fake();
-        [$t, , $draf] = TimCSiapkanDrafBesar();
+        [$t, , $draf] = SiapkanDrafStokAwalBesar();
         app(AjukanPostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id);
 
         (new PostingStokAwalTugas($t['Tenant']->Id, $t['Pemilik']->Id, $draf->Id))->failed(new RuntimeException('Deadlock berulang'));

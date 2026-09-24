@@ -33,12 +33,12 @@ beforeEach(function (): void {
 /**
  * @param  list<DataBarisMutasi>  $baris
  */
-function TimDCatatMutasi(int $idReferensi, array $baris, JenisReferensiMutasi $jenis = JenisReferensiMutasi::StokAwal): void
+function CatatMutasiPelacakanUji(int $idReferensi, array $baris, JenisReferensiMutasi $jenis = JenisReferensiMutasi::StokAwal): void
 {
     app(CatatMutasiStok::class)->Jalankan(new DataDokumenMutasi($jenis, $idReferensi, null, null, CarbonImmutable::parse('2026-09-24'), null, null, $baris));
 }
 
-function TimDKodeGalatBuku(Closure $jalankan): ?string
+function AmbilKodeGalatBukuPelacakan(Closure $jalankan): ?string
 {
     try {
         $jalankan();
@@ -55,7 +55,7 @@ describe('F-05a buku stok untuk produk ber-pelacakan (DesainF05a C.4)', function
         $susu = $t['Produk']['Batch'];
         $susu->forceFill(['BolehMinus' => true])->save();
         // Dua batch: total produk (20) cukup untuk keluar 11, tetapi batch A (10) tidak.
-        TimDCatatMutasi(1, [
+        CatatMutasiPelacakanUji(1, [
             new DataBarisMutasi('P/1', $susu->Id, $t['Gudang']->Id, JenisMutasi::StokAwal, Kuantitas::Dari('10'), ModeNilaiMutasi::Ditentukan,
                 nilai: Uang::Dari('195000.00'), batchMasuk: new DataBatchMasuk('UHT-2026-0917A', CarbonImmutable::parse('2027-03-17'))),
             new DataBarisMutasi('P/2', $susu->Id, $t['Gudang']->Id, JenisMutasi::StokAwal, Kuantitas::Dari('10'), ModeNilaiMutasi::Ditentukan,
@@ -63,7 +63,7 @@ describe('F-05a buku stok untuk produk ber-pelacakan (DesainF05a C.4)', function
         ]);
         $batch = BatchStok::query()->where('NomorBatch', 'UHT-2026-0917A')->sole();
 
-        expect(TimDKodeGalatBuku(fn () => TimDCatatMutasi(2, [new DataBarisMutasi('K/1', $susu->Id, $t['Gudang']->Id, JenisMutasi::PenyesuaianKeluar, Kuantitas::Dari('-11'),
+        expect(AmbilKodeGalatBukuPelacakan(fn () => CatatMutasiPelacakanUji(2, [new DataBarisMutasi('K/1', $susu->Id, $t['Gudang']->Id, JenisMutasi::PenyesuaianKeluar, Kuantitas::Dari('-11'),
             ModeNilaiMutasi::Berjalan, idBatchStok: $batch->Id)], JenisReferensiMutasi::PenyesuaianStok)))->toBe('StokBatchTidakCukup')
             ->and($batch->refresh()->JumlahSisa)->toBe('10.0000')
             ->and(MutasiStok::query()->count())->toBe(2)
@@ -75,9 +75,9 @@ describe('F-05a buku stok untuk produk ber-pelacakan (DesainF05a C.4)', function
         $susu = $t['Produk']['Batch'];
         $baris = fn (string $kunci, string $kedaluwarsa): DataBarisMutasi => new DataBarisMutasi($kunci, $susu->Id, $t['Gudang']->Id, JenisMutasi::StokAwal, Kuantitas::Dari('5'),
             ModeNilaiMutasi::Ditentukan, nilai: Uang::Dari('97500.00'), batchMasuk: new DataBatchMasuk('UHT-2026-0917A', CarbonImmutable::parse($kedaluwarsa)));
-        TimDCatatMutasi(1, [$baris('P/1', '2027-03-17')]);
+        CatatMutasiPelacakanUji(1, [$baris('P/1', '2027-03-17')]);
 
-        expect(TimDKodeGalatBuku(fn () => TimDCatatMutasi(2, [$baris('P/1', '2027-04-01')])))->toBe('BatchKedaluwarsaBerbeda')
+        expect(AmbilKodeGalatBukuPelacakan(fn () => CatatMutasiPelacakanUji(2, [$baris('P/1', '2027-04-01')])))->toBe('BatchKedaluwarsaBerbeda')
             ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id))->toBe([]);
     });
 
@@ -87,16 +87,16 @@ describe('F-05a buku stok untuk produk ber-pelacakan (DesainF05a C.4)', function
         $masuk = fn (string $kunci, string $nomor, string $jumlah = '1'): DataBarisMutasi => new DataBarisMutasi($kunci, $rice->Id, $t['Gudang']->Id, JenisMutasi::StokAwal,
             Kuantitas::Dari($jumlah), ModeNilaiMutasi::Ditentukan, nilai: Uang::Dari('675000.00'), nomorSeriMasuk: $nomor);
 
-        expect(TimDKodeGalatBuku(fn () => TimDCatatMutasi(1, [$masuk('P/1/0', 'RC-01', '2')])))->toBe('JumlahTidakValid');
+        expect(AmbilKodeGalatBukuPelacakan(fn () => CatatMutasiPelacakanUji(1, [$masuk('P/1/0', 'RC-01', '2')])))->toBe('JumlahTidakValid');
 
-        TimDCatatMutasi(1, [$masuk('P/1/0', 'RC-01'), $masuk('P/1/1', 'RC-02')]);
-        expect(TimDKodeGalatBuku(fn () => TimDCatatMutasi(2, [$masuk('P/1/0', 'RC-01')])))->toBe('NomorSeriSudahAda');
+        CatatMutasiPelacakanUji(1, [$masuk('P/1/0', 'RC-01'), $masuk('P/1/1', 'RC-02')]);
+        expect(AmbilKodeGalatBukuPelacakan(fn () => CatatMutasiPelacakanUji(2, [$masuk('P/1/0', 'RC-01')])))->toBe('NomorSeriSudahAda');
 
         $rc01 = NomorSeri::query()->where('Nomor', 'RC-01')->sole();
-        expect(TimDKodeGalatBuku(fn () => TimDCatatMutasi(3, [new DataBarisMutasi('K/1', $rice->Id, $t['GudangBelakang']->Id, JenisMutasi::PenyesuaianKeluar,
+        expect(AmbilKodeGalatBukuPelacakan(fn () => CatatMutasiPelacakanUji(3, [new DataBarisMutasi('K/1', $rice->Id, $t['GudangBelakang']->Id, JenisMutasi::PenyesuaianKeluar,
             Kuantitas::Dari('-1'), ModeNilaiMutasi::Berjalan, idNomorSeri: $rc01->Id)], JenisReferensiMutasi::PenyesuaianStok)))->toBe('NomorSeriTidakTersedia');
 
-        TimDCatatMutasi(4, [new DataBarisMutasi('K/1', $rice->Id, $t['Gudang']->Id, JenisMutasi::PenyesuaianKeluar, Kuantitas::Dari('-1'), ModeNilaiMutasi::Berjalan,
+        CatatMutasiPelacakanUji(4, [new DataBarisMutasi('K/1', $rice->Id, $t['Gudang']->Id, JenisMutasi::PenyesuaianKeluar, Kuantitas::Dari('-1'), ModeNilaiMutasi::Berjalan,
             idNomorSeri: $rc01->Id)], JenisReferensiMutasi::PenyesuaianStok);
         expect($rc01->refresh()->Status)->not->toBe(StatusNomorSeri::Tersedia)
             ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id))->toBe([]);
