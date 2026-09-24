@@ -1,9 +1,8 @@
 import { Link, useForm } from '@inertiajs/react';
-import { useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
-import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { AmbilGalatBerawalan, CekAdaGalat } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -19,6 +18,10 @@ import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { Field, FieldLabel, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Switch } from '@/Komponen/Ui/switch';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type {
     AturanJenisProduk,
@@ -121,6 +124,7 @@ export default function HalamanFormProduk({
     const data = formulir.data;
     const galat = formulir.errors as Record<string, string | undefined>;
     const elemenForm = useRef<HTMLFormElement>(null);
+    const idForm = useId();
     const [tabAktif, AturTabAktif] = useState<KunciTab>('Umum');
     const [periksaHarga, AturPeriksaHarga] = useState(false);
     const aturan = Jenis.find((item) => item.Nilai === data.Jenis);
@@ -431,23 +435,35 @@ export default function HalamanFormProduk({
                     disabled={data.Pelacakan === 'Seri'}
                 />
             ) : null}
-            <fieldset className="flex flex-col gap-1 sm:col-span-2">
-                <legend className="text-label font-semibold text-teks-utama">Tampilkan produk</legend>
+            <FieldSet className="gap-1 sm:col-span-2">
+                <FieldLegend variant="label" className="mb-1 text-label font-semibold text-teks-utama">
+                    Tampilkan produk
+                </FieldLegend>
                 {bisaDijual || induk ? (
-                    <KotakCentang
-                        label={induk ? 'Tampilkan sebagai grup varian di kasir' : 'Tampil di kasir (POS)'}
-                        nilai={data.TampilDiPos}
-                        saatBerubah={(nilai) => Atur('TampilDiPos', nilai)}
-                    />
+                    <Field orientation="horizontal" className="min-h-10 items-center">
+                        <Switch
+                            id={`${idForm}-tampil-pos`}
+                            checked={data.TampilDiPos}
+                            onCheckedChange={(nilai) => Atur('TampilDiPos', nilai)}
+                        />
+                        <FieldLabel htmlFor={`${idForm}-tampil-pos`} className="text-isi font-normal text-teks-utama">
+                            {induk ? 'Tampilkan sebagai grup varian di kasir' : 'Tampil di kasir (POS)'}
+                        </FieldLabel>
+                    </Field>
                 ) : (
                     <p className="text-keterangan text-teks-sekunder">Jenis ini tidak tampil di kasir.</p>
                 )}
-                <KotakCentang
-                    label="Tampil di toko online"
-                    nilai={data.TampilOnline}
-                    saatBerubah={(nilai) => Atur('TampilOnline', nilai)}
-                />
-            </fieldset>
+                <Field orientation="horizontal" className="min-h-10 items-center">
+                    <Switch
+                        id={`${idForm}-tampil-online`}
+                        checked={data.TampilOnline}
+                        onCheckedChange={(nilai) => Atur('TampilOnline', nilai)}
+                    />
+                    <FieldLabel htmlFor={`${idForm}-tampil-online`} className="text-isi font-normal text-teks-utama">
+                        Tampil di toko online
+                    </FieldLabel>
+                </Field>
+            </FieldSet>
         </div>
     );
 
@@ -469,7 +485,7 @@ export default function HalamanFormProduk({
                         (Object.keys(galatPerTab) as KunciTab[]).some((tab) => CekGalatTab({ [kunci]: 'x' }, tab)),
                     )}
                 />
-                <div className="rounded-panel border border-garis bg-permukaan p-4">
+                <Card className="gap-0 rounded-panel p-4 shadow-none">
                     <DaftarTab
                         label="Bagian formulir produk"
                         tab={daftarTab}
@@ -510,7 +526,7 @@ export default function HalamanFormProduk({
                             Pajak: panelPajak,
                         }}
                     />
-                </div>
+                </Card>
                 {satuanDasar === undefined && data.UuidSatuanDasar !== '' ? (
                     <p className="text-keterangan text-bahaya">
                         Satuan dasar tidak ditemukan. Pilih ulang satuan dasar.
@@ -522,12 +538,9 @@ export default function HalamanFormProduk({
                             {Mode === 'Buat' ? 'Simpan produk' : 'Simpan perubahan'}
                         </Tombol>
                     ) : null}
-                    <Link
-                        href={Mode === 'Buat' ? '/kelola/produk' : `/kelola/produk/${data.Uuid}`}
-                        className="inline-flex h-10 items-center rounded-kontrol border border-garis-input bg-permukaan px-4 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                    >
-                        Batal
-                    </Link>
+                    <Button asChild variant="outline" className="h-10">
+                        <Link href={Mode === 'Buat' ? '/kelola/produk' : `/kelola/produk/${data.Uuid}`}>Batal</Link>
+                    </Button>
                 </div>
             </form>
         </TataLetakAplikasi>
