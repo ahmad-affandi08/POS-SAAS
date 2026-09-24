@@ -19,6 +19,12 @@ export const IzinTenant = {
     BantuanTiketKelola: 'bantuan.tiket.kelola',
     // F-01 panduan awal (profil usaha, template sektor, pajak, produk awal, metode pembayaran).
     PanduanAwalKelola: 'panduan-awal.kelola',
+    // F-03 master produk, harga & pajak (batas stok = persediaan.kelola, kelompok pajak = akuntansi.kelola).
+    ProdukLihat: 'produk.lihat',
+    ProdukKelola: 'produk.kelola',
+    ProdukHargaUbah: 'produk.harga.ubah',
+    PersediaanKelola: 'persediaan.kelola',
+    AkuntansiKelola: 'akuntansi.kelola',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

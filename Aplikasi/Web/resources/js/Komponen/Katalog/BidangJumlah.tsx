@@ -1,0 +1,105 @@
+import { useId, useState, type ChangeEvent } from 'react';
+
+import {
+    CekMasukanJumlahValid,
+    FormatMasukanJumlah,
+    NormalisasiMasukanJumlah,
+    SkalaKuantitas,
+} from '@/Pustaka/MasukanJumlah';
+
+type PropsBidangJumlah = {
+    label: string;
+    /** String desimal polos seperti yang dikirim ke server ("1.5"), atau "" bila kosong. */
+    nilai: string;
+    saatBerubah: (nilai: string) => void;
+    /** Digit pecahan yang boleh diketik: 4 untuk kuantitas, 0 untuk satuan tanpa desimal, 6 untuk persen. */
+    desimal?: number;
+    digitBulat?: number;
+    /** Akhiran tampilan, misal "kg" atau "%". */
+    akhiran?: string;
+    galat?: string | undefined;
+    keterangan?: string | undefined;
+    disabled?: boolean;
+    required?: boolean;
+    labelTersembunyi?: boolean;
+};
+
+/**
+ * Input kuantitas/persen: tampil "1.250,5" (koma desimal, angka tabular, rata kanan), dikirim "1250.5".
+ * Ketikan setengah jadi ("3,") dipertahankan selama fokus. Tidak ada number/float (CLAUDE.md #7).
+ */
+export default function BidangJumlah({
+    label,
+    nilai,
+    saatBerubah,
+    desimal = SkalaKuantitas,
+    digitBulat = 14,
+    akhiran,
+    galat,
+    keterangan,
+    disabled,
+    required,
+    labelTersembunyi = false,
+}: PropsBidangJumlah) {
+    const id = useId();
+    const [teksKetik, AturTeksKetik] = useState<string | null>(null);
+    const tampil = teksKetik ?? FormatMasukanJumlah(nilai).replace('−', '-');
+    const opsi = { desimal, digitBulat };
+    const dijelaskanOleh = [keterangan ? `${id}-keterangan` : null, galat ? `${id}-galat` : null]
+        .filter(Boolean)
+        .join(' ');
+
+    const Ubah = (peristiwa: ChangeEvent<HTMLInputElement>) => {
+        const mentah = peristiwa.target.value;
+
+        if (!CekMasukanJumlahValid(mentah, opsi)) {
+            return;
+        }
+
+        AturTeksKetik(mentah);
+        saatBerubah(NormalisasiMasukanJumlah(mentah, opsi));
+    };
+
+    return (
+        <div className="flex flex-col gap-1">
+            <label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
+                {label}
+            </label>
+            <div
+                className={`flex h-10 items-center rounded-kontrol border bg-permukaan focus-within:ring-2 focus-within:ring-brand ${
+                    galat ? 'border-bahaya' : 'border-garis-input'
+                } ${disabled ? 'bg-latar' : ''}`}
+            >
+                <input
+                    id={id}
+                    type="text"
+                    inputMode={desimal > 0 ? 'decimal' : 'numeric'}
+                    autoComplete="off"
+                    value={tampil}
+                    onChange={Ubah}
+                    onBlur={() => AturTeksKetik(null)}
+                    disabled={disabled}
+                    required={required}
+                    aria-invalid={galat ? true : undefined}
+                    aria-describedby={dijelaskanOleh || undefined}
+                    className="h-full w-full min-w-0 rounded-kontrol bg-transparent px-3 text-right text-isi text-teks-utama tabular-nums outline-none disabled:text-teks-sekunder"
+                />
+                {akhiran ? (
+                    <span aria-hidden="true" className="pr-3 text-isi text-teks-sekunder">
+                        {akhiran}
+                    </span>
+                ) : null}
+            </div>
+            {keterangan ? (
+                <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
+                    {keterangan}
+                </p>
+            ) : null}
+            {galat ? (
+                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
+                    {galat}
+                </p>
+            ) : null}
+        </div>
+    );
+}
