@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Kasir\Kueri;
 
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Kasir\Enum\JenisMutasiKas;
 use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Model\MutasiKas;
@@ -15,14 +17,18 @@ use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use Illuminate\Support\Collection;
 
 /**
- * Daftar shift back-office (F-06, izin `laporan.penjualan.lihat`), terbaru dulu, berhalaman 25. Saringan: outlet
- * (hanya yang boleh diakses), status, rentang tanggal bisnis, dan hanya yang perlu ditinjau. Total kas masuk,
- * keluar, dan setoran dijumlah di SQL per shift (DECIMAL, eksak). `KasNonPenjualan` = kas awal + masuk − keluar −
- * setoran; penjualan tunai ditambahkan F-07.
+ * Daftar shift back-office (F-06, izin `laporan.penjualan.lihat`) untuk `TabelData` (D-16): cari nama kasir, saring
+ * outlet (hanya yang boleh diakses), status, rentang tanggal bisnis, dan hanya yang perlu ditinjau; urut waktu buka,
+ * tanggal bisnis, atau kas awal. Total kas masuk, keluar, dan setoran dijumlah di SQL per shift (DECIMAL, eksak).
+ * `KasNonPenjualan` = kas awal + masuk − keluar − setoran; penjualan tunai ditambahkan F-07.
  */
 final class DaftarShift
 {
-    private const PER_HALAMAN = 25;
+    public const KOLOM_URUT = ['DibukaPada', 'TanggalBisnis', 'KasAwal'];
+
+    public const KOLOM_SARING = ['Outlet', 'Status', 'TanggalBisnis', 'PerluTinjauan'];
+
+    public const URUT_BAWAAN = '-DibukaPada';
 
     public function __construct(
         private readonly PetaUuidOutlet $outlet,
@@ -31,34 +37,31 @@ final class DaftarShift
     ) {}
 
     /**
-     * @param  array{UuidOutlet: string|null, Status: string|null, Dari: string, Sampai: string, PerluTinjauan: bool}  $saring
      * @param  list<int>|null  $idOutletBoleh
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(array $saring, ?array $idOutletBoleh, int $halaman): array
+    public function AmbilTabel(DataPermintaanTabel $permintaan, ?array $idOutletBoleh, int $idTenant): array
     {
-        $idOutlet = $saring['UuidOutlet'] === null ? null : ($this->outlet->AmbilIdDariUuid([$saring['UuidOutlet']])[$saring['UuidOutlet']] ?? 0);
-        $status = StatusShift::tryFrom((string) $saring['Status']);
+        $uuidOutlet = $permintaan->AmbilDaftar('Outlet');
+        $idOutlet = $uuidOutlet === [] ? null : array_values($this->outlet->AmbilIdDariUuid($uuidOutlet));
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusShift $s): string => $s->value, StatusShift::cases()));
+        $tanggal = $permintaan->AmbilRentangTanggal('TanggalBisnis');
+        $idKasir = $permintaan->cari === '' ? null : $this->anggota->CariIdDariNama($idTenant, $permintaan->cari);
 
         $kueri = Shift::query()
             ->when($idOutletBoleh !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutletBoleh ?? []))
-            ->when($idOutlet !== null, fn ($k) => $k->where('IdOutlet', $idOutlet))
-            ->when($status !== null, fn ($k) => $k->where('Status', $status?->value))
-            ->when($saring['Dari'] !== '', fn ($k) => $k->where('TanggalBisnis', '>=', $saring['Dari']))
-            ->when($saring['Sampai'] !== '', fn ($k) => $k->where('TanggalBisnis', '<=', $saring['Sampai']))
-            ->when($saring['PerluTinjauan'], fn ($k) => $k->where('PerluTinjauan', true));
+            ->when($idOutlet !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutlet ?? []))
+            ->when($status !== [], fn ($k) => $k->whereIn('Status', $status))
+            ->when($tanggal['Dari'] !== null, fn ($k) => $k->where('TanggalBisnis', '>=', $tanggal['Dari']))
+            ->when($tanggal['Sampai'] !== null, fn ($k) => $k->where('TanggalBisnis', '<=', $tanggal['Sampai']))
+            ->when($permintaan->AmbilBoolean('PerluTinjauan') === true, fn ($k) => $k->where('PerluTinjauan', true))
+            ->when($idKasir !== null, fn ($k) => $k->whereIn('DibukaOleh', $idKasir ?? []));
 
-        $total = (clone $kueri)->count();
-        $terakhir = max(1, intdiv($total + self::PER_HALAMAN - 1, self::PER_HALAMAN));
-        $halaman = min(max(1, $halaman), $terakhir);
-        $shift = $kueri->orderByDesc('DibukaPada')->orderByDesc('Id')->offset(($halaman - 1) * self::PER_HALAMAN)->limit(self::PER_HALAMAN)->get();
-
-        return [
-            'Data' => $this->Petakan($shift),
-            'HalamanSaatIni' => $halaman,
-            'HalamanTerakhir' => $terakhir,
-            'Total' => $total,
-        ];
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, [
+            'DibukaPada' => 'DibukaPada',
+            'TanggalBisnis' => 'TanggalBisnis',
+            'KasAwal' => 'KasAwal',
+        ], fn (Collection $shift): array => $this->Petakan($shift));
     }
 
     /**

@@ -3,6 +3,9 @@
  * agar invalidasi setelah mutasi Inertia konsisten.
  */
 export const KunciKueri = {
+    // D-16: data TabelData mode server, per tabel & query URL ternormalisasi.
+    Tabel: (id: string, alamat: string, query: string) => ['Tabel', id, alamat, query] as const,
+    TabelSemua: (id: string) => ['Tabel', id] as const,
     Perangkat: (idOutlet: string) => ['Perangkat', idOutlet] as const,
     Laporan: (nama: string, saring: Record<string, string>) => ['Laporan', nama, saring] as const,
     // F-03: pemilih bahan/komponen (GET /kelola/produk/cari) dan polling status impor.

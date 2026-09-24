@@ -36,7 +36,7 @@ describe('F-06 halaman back-office shift', function (): void {
 
         $this->get('/kelola/kasir/shift')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Kasir/Shift/Daftar')
-            ->where('Shift.Total', 1)
+            ->where('Shift.Meta.Total', 1)
             ->where('Shift.Data.0.Uuid', $shift['Uuid'])
             ->where('Shift.Data.0.NamaKasir', $k['Kasir']->Nama)
             ->where('Shift.Data.0.TotalMasuk', '20000.00')
@@ -52,6 +52,46 @@ describe('F-06 halaman back-office shift', function (): void {
             ->where('MutasiKas.0.NomorJurnal', fn (?string $nomor): bool => is_string($nomor) && str_starts_with($nomor, 'JU/')));
 
         $this->get("/kelola/kasir/mutasi-kas/{$keluar['Uuid']}")->assertRedirect("/kelola/kasir/shift/{$shift['Uuid']}");
+    });
+
+    it('D-16 TabelData: URL yang sama melayani JSON {Data, Meta}; cari nama kasir, saring status/tanggal/tinjauan, urut & paginasi', function (): void {
+        $k = BantuanKasir::Siapkan($this);
+        $perangkat2 = BantuanPerangkat::BuatDanAktifkan($this, $k['Tenant']->Id, $k['Outlet'], 'Kasir Belakang');
+        $pertama = BantuanKasir::ItemBukaShift($k['Kasir'], '500000.00', ['DibukaPada' => '2026-09-20T01:00:00Z']);
+        $kedua = BantuanKasir::ItemBukaShift($k['Supervisor'], '750000.00', ['DibukaPada' => '2026-09-22T01:00:00Z']);
+        BantuanKasir::KirimRingkas($this, $k['Token'], [$pertama]);
+        BantuanKasir::KirimRingkas($this, $perangkat2['Token'], [$kedua]);
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::ManajerOutlet);
+        $json = fn (string $query) => $this->getJson('/kelola/kasir/shift'.$query)->assertOk();
+
+        $semua = $json('');
+        expect($semua->json('Meta'))->toBe(['Halaman' => 1, 'PerHalaman' => 25, 'Total' => 2, 'JumlahHalaman' => 1])
+            ->and(array_column($semua->json('Data'), 'Uuid'))->toBe([$kedua['Uuid'], $pertama['Uuid']])
+            ->and($semua->headers->get('Content-Type'))->toContain('application/json');
+
+        expect(array_column($json('?urut=KasAwal')->json('Data'), 'Uuid'))->toBe([$pertama['Uuid'], $kedua['Uuid']])
+            ->and(array_column($json('?cari='.urlencode(mb_substr($k['Supervisor']->Nama, 0, 5)))->json('Data'), 'Uuid'))->toBe([$kedua['Uuid']])
+            ->and($json('?saring[TanggalBisnis]=2026-09-21..2026-09-30')->json('Meta.Total'))->toBe(1)
+            ->and($json('?saring[Status]=Tertutup')->json('Meta.Total'))->toBe(0)
+            ->and($json('?saring[PerluTinjauan]=1')->json('Meta.Total'))->toBe(0)
+            ->and($json('?perHalaman=100&halaman=9')->json('Meta'))->toBe(['Halaman' => 1, 'PerHalaman' => 100, 'Total' => 2, 'JumlahHalaman' => 1]);
+
+        // Kolom urut/saring di luar daftar putih diabaikan (tidak pernah masuk SQL); ukuran halaman tak dikenal = 25.
+        expect(array_column($json('?urut=Id;DROP TABLE Shift,-Uuid&saring[IdTenant]=999&perHalaman=7')->json('Data'), 'Uuid'))
+            ->toBe([$kedua['Uuid'], $pertama['Uuid']])
+            ->and($json('?perHalaman=7')->json('Meta.PerHalaman'))->toBe(25);
+
+        // Kunjungan Inertia tetap mendapat halaman beserta tabel awal sesuai query URL.
+        $this->get('/kelola/kasir/shift?urut=KasAwal')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Kasir/Shift/Daftar')
+            ->where('Shift.Data.0.Uuid', $pertama['Uuid'])
+            ->where('Shift.Meta.Total', 2)
+            ->has('OpsiStatus'));
+
+        // JSON juga dijaga izin: Kasir 403.
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->getJson('/kelola/kasir/shift')->assertForbidden();
     });
 
     it('izin & isolasi: Kasir 403; shift tenant lain 404; pengguna per outlet hanya melihat shift outletnya', function (): void {
@@ -74,7 +114,7 @@ describe('F-06 halaman back-office shift', function (): void {
         BantuanOrganisasi::Masuk($this, $manajerCabang, $a['Tenant']->Id);
 
         $this->get('/kelola/kasir/shift')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('Shift.Total', 1)
+            ->where('Shift.Meta.Total', 1)
             ->where('Shift.Data.0.Uuid', $shiftCabang['Uuid']));
         $this->get("/kelola/kasir/shift/{$shiftA['Uuid']}")->assertNotFound();
 

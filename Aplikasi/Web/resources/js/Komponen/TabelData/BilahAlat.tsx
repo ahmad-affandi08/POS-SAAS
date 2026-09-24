@@ -1,0 +1,366 @@
+import type { Column, Table } from '@tanstack/react-table';
+import {
+    ArrowDownIcon,
+    ArrowUpIcon,
+    Columns3Icon,
+    DownloadIcon,
+    FilterIcon,
+    ListFilterIcon,
+    SearchIcon,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { Button } from '@/Komponen/Ui/button';
+import { Checkbox } from '@/Komponen/Ui/checkbox';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
+import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/Komponen/Ui/popover';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/Komponen/Ui/sheet';
+
+import { HitungSaringAktif, TulisUrut } from './KeadaanUrl';
+import { ChipSaring, PenyuntingSaring, RingkasSaring } from './Saring';
+import type { DefinisiSaring, KeadaanTabel, UrutKolom } from './Tipe';
+import { AmbilMeta } from './Tipe';
+import type { LebarLayar } from './useLebarLayar';
+
+type PropsBilahAlat<T> = {
+    label: string;
+    tabel: Table<T>;
+    lebar: LebarLayar;
+    keadaan: KeadaanTabel;
+    teksCari: string;
+    cari: string | false;
+    saring: DefinisiSaring[];
+    ekspor?: { alamat: string; label?: string; query: string };
+    aksiAlat?: ReactNode;
+    AturCari: (teks: string) => void;
+    AturSaring: (id: string, nilai: string) => void;
+    AturUrut: (urut: UrutKolom[]) => void;
+    HapusSemua: () => void;
+    AturTampilKolom: (kolom: string, tampil: boolean) => void;
+    AturUrutanKolom: (urutan: string[]) => void;
+    KembalikanKolom: () => void;
+};
+
+const kelasTombolAlat = 'h-10 gap-2 border-garis-input text-label font-semibold text-teks-utama';
+
+function TombolSaring({
+    definisi,
+    nilai,
+    AturSaring,
+}: {
+    definisi: DefinisiSaring;
+    nilai: string;
+    AturSaring: (id: string, nilai: string) => void;
+}) {
+    if (definisi.jenis === 'ya') {
+        return (
+            <Button
+                type="button"
+                variant={nilai === '1' ? 'default' : 'outline'}
+                aria-pressed={nilai === '1'}
+                onClick={() => AturSaring(definisi.id, nilai === '1' ? '' : '1')}
+                className={nilai === '1' ? 'h-10 text-label font-semibold' : kelasTombolAlat}
+            >
+                {definisi.labelAktif ?? definisi.label}
+            </Button>
+        );
+    }
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button type="button" variant="outline" className={kelasTombolAlat}>
+                    <ListFilterIcon aria-hidden="true" className="size-4 text-teks-sekunder" />
+                    {definisi.label}
+                    {nilai !== '' ? (
+                        <span className="max-w-40 truncate font-normal text-teks-sekunder">
+                            · {RingkasSaring(definisi, nilai)}
+                        </span>
+                    ) : null}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 border-garis bg-permukaan p-3">
+                <p className="mb-2 text-label font-semibold text-teks-utama">{definisi.label}</p>
+                <PenyuntingSaring
+                    definisi={definisi}
+                    nilai={nilai}
+                    saatBerubah={(baru) => AturSaring(definisi.id, baru)}
+                />
+                {nilai !== '' ? (
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="mt-2 h-auto px-0 text-label"
+                        onClick={() => AturSaring(definisi.id, '')}
+                    >
+                        Hapus saring {definisi.label.toLowerCase()}
+                    </Button>
+                ) : null}
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+/** Atur kolom tampil & urutan (disimpan per pengguna). */
+function AturKolom<T>({
+    tabel,
+    AturTampilKolom,
+    AturUrutanKolom,
+    KembalikanKolom,
+}: Pick<PropsBilahAlat<T>, 'tabel' | 'AturTampilKolom' | 'AturUrutanKolom' | 'KembalikanKolom'>) {
+    const kolom = tabel
+        .getAllLeafColumns()
+        .filter((k) => AmbilMeta(k.columnDef.meta)?.label && !AmbilMeta(k.columnDef.meta)?.wajib);
+    const urutan = tabel
+        .getAllLeafColumns()
+        .map((k) => k.id)
+        .filter((id) => kolom.some((k) => k.id === id));
+
+    const Pindah = (satu: Column<T>, arah: -1 | 1) => {
+        const posisi = urutan.indexOf(satu.id);
+        const tujuan = posisi + arah;
+
+        if (tujuan < 0 || tujuan >= urutan.length) {
+            return;
+        }
+
+        const baru = [...urutan];
+        [baru[posisi], baru[tujuan]] = [baru[tujuan] ?? '', baru[posisi] ?? ''];
+        AturUrutanKolom(baru);
+    };
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button type="button" variant="outline" className={kelasTombolAlat}>
+                    <Columns3Icon aria-hidden="true" className="size-4 text-teks-sekunder" />
+                    Atur kolom
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 border-garis bg-permukaan p-3">
+                <p className="mb-2 text-label font-semibold text-teks-utama">Kolom yang ditampilkan</p>
+                <ul className="flex flex-col gap-1">
+                    {urutan.map((idKolom, indeks) => {
+                        const satu = kolom.find((k) => k.id === idKolom);
+
+                        if (!satu) {
+                            return null;
+                        }
+
+                        const label = AmbilMeta(satu.columnDef.meta)?.label ?? satu.id;
+
+                        return (
+                            <li key={satu.id} className="flex min-h-10 items-center gap-2">
+                                <Checkbox
+                                    id={`kolom-${satu.id}`}
+                                    checked={satu.getIsVisible()}
+                                    onCheckedChange={(aktif) => AturTampilKolom(satu.id, aktif === true)}
+                                />
+                                <Label htmlFor={`kolom-${satu.id}`} className="flex-1 text-isi font-normal">
+                                    {label}
+                                </Label>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="size-8"
+                                    disabled={indeks === 0}
+                                    aria-label={`Geser kolom ${label} ke atas`}
+                                    onClick={() => Pindah(satu, -1)}
+                                >
+                                    <ArrowUpIcon aria-hidden="true" className="size-4" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="size-8"
+                                    disabled={indeks === urutan.length - 1}
+                                    aria-label={`Geser kolom ${label} ke bawah`}
+                                    onClick={() => Pindah(satu, 1)}
+                                >
+                                    <ArrowDownIcon aria-hidden="true" className="size-4" />
+                                </Button>
+                            </li>
+                        );
+                    })}
+                </ul>
+                <Button type="button" variant="link" className="mt-2 h-auto px-0 text-label" onClick={KembalikanKolom}>
+                    Kembalikan kolom bawaan
+                </Button>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+/** Pilihan urut untuk HP (kepala kolom tidak terlihat di daftar bertumpuk). */
+function PilihUrutHp<T>({
+    tabel,
+    keadaan,
+    AturUrut,
+}: {
+    tabel: Table<T>;
+    keadaan: KeadaanTabel;
+    AturUrut: (urut: UrutKolom[]) => void;
+}) {
+    const bisaUrut = tabel.getAllLeafColumns().filter((k) => k.getCanSort() && AmbilMeta(k.columnDef.meta)?.label);
+
+    if (bisaUrut.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-col gap-1">
+            <Label htmlFor="tabel-urut-hp" className="text-label font-semibold text-teks-utama">
+                Urutkan
+            </Label>
+            <NativeSelect
+                id="tabel-urut-hp"
+                value={TulisUrut(keadaan.urut.slice(0, 1))}
+                onChange={(e) => {
+                    const nilai = e.target.value;
+                    AturUrut(nilai === '' ? [] : [{ id: nilai.replace(/^-/, ''), desc: nilai.startsWith('-') }]);
+                }}
+                className="h-11 w-full"
+            >
+                {bisaUrut.flatMap((k) => [
+                    <NativeSelectOption key={k.id} value={k.id}>
+                        {AmbilMeta(k.columnDef.meta)?.label} (naik)
+                    </NativeSelectOption>,
+                    <NativeSelectOption key={`-${k.id}`} value={`-${k.id}`}>
+                        {AmbilMeta(k.columnDef.meta)?.label} (turun)
+                    </NativeSelectOption>,
+                ])}
+            </NativeSelect>
+        </div>
+    );
+}
+
+/** Bilah alat `TabelData`: cari, saring (Popover di layar lebar, Sheet di HP), chip saring, atur kolom, ekspor. */
+export default function BilahAlat<T>(props: PropsBilahAlat<T>) {
+    const { keadaan, saring, lebar, AturSaring } = props;
+    const jumlahSaring = HitungSaringAktif(keadaan);
+    const adaPencarian = keadaan.cari.trim() !== '';
+    const chip = saring.filter((d) => (keadaan.saring[d.id] ?? '') !== '');
+
+    const kotakCari =
+        props.cari === false ? null : (
+            <div className="relative min-w-0 flex-1 sm:max-w-sm">
+                <SearchIcon
+                    aria-hidden="true"
+                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-teks-sekunder"
+                />
+                <Input
+                    type="search"
+                    value={props.teksCari}
+                    onChange={(e) => props.AturCari(e.target.value)}
+                    placeholder={props.cari}
+                    aria-label={`Cari di ${props.label}`}
+                    className="h-11 border-garis-input bg-permukaan pl-9 text-isi sm:h-10"
+                />
+            </div>
+        );
+
+    const ekspor = props.ekspor ? (
+        <Button asChild variant="outline" className={kelasTombolAlat}>
+            <a href={props.ekspor.query === '' ? props.ekspor.alamat : `${props.ekspor.alamat}?${props.ekspor.query}`}>
+                <DownloadIcon aria-hidden="true" className="size-4 text-teks-sekunder" />
+                {props.ekspor.label ?? 'Ekspor'}
+            </a>
+        </Button>
+    ) : null;
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+                {kotakCari}
+                {lebar === 'hp' ? (
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button type="button" variant="outline" className={`${kelasTombolAlat} h-11`}>
+                                <FilterIcon aria-hidden="true" className="size-4 text-teks-sekunder" />
+                                Saring{jumlahSaring > 0 ? ` (${String(jumlahSaring)})` : ''}
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto bg-permukaan">
+                            <SheetHeader>
+                                <SheetTitle className="text-subjudul text-teks-utama">Saring & urutkan</SheetTitle>
+                                <SheetDescription className="text-isi text-teks-sekunder">
+                                    Perubahan langsung diterapkan ke {props.label.toLowerCase()}.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-5 px-4">
+                                <PilihUrutHp tabel={props.tabel} keadaan={keadaan} AturUrut={props.AturUrut} />
+                                {saring.map((definisi) => (
+                                    <section key={definisi.id} className="flex flex-col gap-2">
+                                        {definisi.jenis === 'ya' ? null : (
+                                            <h3 className="text-label font-semibold text-teks-utama">
+                                                {definisi.label}
+                                            </h3>
+                                        )}
+                                        <PenyuntingSaring
+                                            definisi={definisi}
+                                            nilai={keadaan.saring[definisi.id] ?? ''}
+                                            saatBerubah={(baru) => AturSaring(definisi.id, baru)}
+                                        />
+                                    </section>
+                                ))}
+                            </div>
+                            <SheetFooter>
+                                <Button type="button" variant="outline" className="h-11" onClick={props.HapusSemua}>
+                                    Hapus semua saring
+                                </Button>
+                            </SheetFooter>
+                        </SheetContent>
+                    </Sheet>
+                ) : (
+                    saring.map((definisi) => (
+                        <TombolSaring
+                            key={definisi.id}
+                            definisi={definisi}
+                            nilai={keadaan.saring[definisi.id] ?? ''}
+                            AturSaring={AturSaring}
+                        />
+                    ))
+                )}
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                    {lebar === 'hp' ? null : (
+                        <AturKolom
+                            tabel={props.tabel}
+                            AturTampilKolom={props.AturTampilKolom}
+                            AturUrutanKolom={props.AturUrutanKolom}
+                            KembalikanKolom={props.KembalikanKolom}
+                        />
+                    )}
+                    {ekspor}
+                    {props.aksiAlat}
+                </div>
+            </div>
+            {chip.length > 0 || adaPencarian ? (
+                <div className="flex flex-wrap items-center gap-2" aria-label="Saring aktif">
+                    {chip.map((definisi) => (
+                        <ChipSaring
+                            key={definisi.id}
+                            definisi={definisi}
+                            nilai={keadaan.saring[definisi.id] ?? ''}
+                            saatHapus={() => AturSaring(definisi.id, '')}
+                        />
+                    ))}
+                    <Button type="button" variant="link" className="h-9 px-1 text-label" onClick={props.HapusSemua}>
+                        Hapus pencarian & saring
+                    </Button>
+                </div>
+            ) : null}
+        </div>
+    );
+}

@@ -1,3 +1,5 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
+
 /** F-06 shift & kas (back-office). Uang = string desimal dari server; tidak pernah number/float. */
 
 export type StatusShift = 'Terbuka' | 'Menutup' | 'Tertutup' | 'DibukaUlang';
@@ -26,17 +28,8 @@ export type BarisShift = RingkasanKasShift & {
     KasAwal: string;
 };
 
-export type SaringShift = {
-    UuidOutlet: string | null;
-    Status: StatusShift | null;
-    Dari: string;
-    Sampai: string;
-    PerluTinjauan: boolean;
-};
-
 export type PropsDaftarShift = {
-    Shift: { Data: BarisShift[]; HalamanSaatIni: number; HalamanTerakhir: number; Total: number };
-    Saring: SaringShift;
+    Shift: HasilTabel<BarisShift>;
     OpsiOutlet: { Uuid: string; Nama: string }[];
     OpsiStatus: { Nilai: StatusShift; Label: string }[];
 };

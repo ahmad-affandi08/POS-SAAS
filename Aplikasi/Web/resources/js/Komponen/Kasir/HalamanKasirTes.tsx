@@ -3,14 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanKategoriKas from '@/Halaman/Kelola/Kasir/KategoriKas';
 import HalamanPengaturanKasir, { UbahKeMasukanUang } from '@/Halaman/Kelola/Kasir/Pengaturan';
-import HalamanDaftarShift, { BuatQueryShift } from '@/Halaman/Kelola/Kasir/Shift/Daftar';
+import HalamanDaftarShift from '@/Halaman/Kelola/Kasir/Shift/Daftar';
 import HalamanDetailShift from '@/Halaman/Kelola/Kasir/Shift/Detail';
-import { AturHalamanUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import type { BarisShift, PropsDaftarShift, PropsDetailShift, PropsKategoriKas, SaringShift } from '@/Tipe/Kasir';
+import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import type { BarisShift, PropsDaftarShift, PropsDetailShift, PropsKategoriKas } from '@/Tipe/Kasir';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
-
-const saringKosong: SaringShift = { UuidOutlet: null, Status: null, Dari: '', Sampai: '', PerluTinjauan: false };
 
 const barisShift: BarisShift = {
     Uuid: '01K5SHIFT00000000000000001',
@@ -30,10 +28,9 @@ const barisShift: BarisShift = {
     KasNonPenjualan: '925000.00',
 };
 
-function PropsDaftar(data: BarisShift[], saring = saringKosong): PropsDaftarShift {
+function PropsDaftar(data: BarisShift[]): PropsDaftarShift {
     return {
-        Shift: { Data: data, HalamanSaatIni: 1, HalamanTerakhir: 1, Total: data.length },
-        Saring: saring,
+        Shift: { Data: data, Meta: { Halaman: 1, PerHalaman: 25, Total: data.length, JumlahHalaman: 1 } },
         OpsiOutlet: [{ Uuid: '01K5OUTLET0000000000000001', Nama: 'Kopi Senja Solo Baru' }],
         OpsiStatus: [{ Nilai: 'Terbuka', Label: 'Terbuka' }],
     };
@@ -43,29 +40,21 @@ describe('F-06 halaman kasir back-office', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola/kasir/shift'));
     afterEach(() => cleanup());
 
-    it('BuatQueryShift hanya mengirim saringan yang terisi', () => {
-        expect(BuatQueryShift(saringKosong)).toEqual({});
-        expect(
-            BuatQueryShift({
-                UuidOutlet: 'X',
-                Status: 'Tertutup',
-                Dari: '2026-09-01',
-                Sampai: '2026-09-30',
-                PerluTinjauan: true,
-            }),
-        ).toEqual({ outlet: 'X', status: 'Tertutup', dari: '2026-09-01', sampai: '2026-09-30', tinjauan: '1' });
-    });
-
-    it('daftar shift: Rupiah terformat, penanda perlu ditinjau, tautan ke detail; keadaan kosong', () => {
-        render(<HalamanDaftarShift {...PropsDaftar([barisShift])} />);
-        const tabel = screen.getByRole('table');
+    it('daftar shift (TabelData D-16): Rupiah terformat, penanda perlu ditinjau, tautan ke detail, saring; keadaan kosong', () => {
+        window.history.replaceState({}, '', '/kelola/kasir/shift');
+        RenderUji(<HalamanDaftarShift {...PropsDaftar([barisShift])} />);
+        const tabel = screen.getByRole('table', { name: 'Daftar shift' });
 
         expect(within(tabel).getByText('Rp 1.250.000')).toBeTruthy();
         expect(within(tabel).getByText('Perlu ditinjau')).toBeTruthy();
         expect(within(tabel).getByRole('link').getAttribute('href')).toBe(`/kelola/kasir/shift/${barisShift.Uuid}`);
+        expect(screen.getByRole('searchbox', { name: 'Cari di Daftar shift' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Hanya yang perlu ditinjau' })).toBeTruthy();
+        // Satu outlet: saring outlet tidak ditampilkan.
+        expect(screen.queryByRole('button', { name: /^Outlet/ })).toBeNull();
 
         cleanup();
-        render(<HalamanDaftarShift {...PropsDaftar([])} />);
+        RenderUji(<HalamanDaftarShift {...PropsDaftar([])} />);
         expect(screen.getByText(/Belum ada shift/)).toBeTruthy();
     });
 

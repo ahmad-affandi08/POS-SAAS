@@ -6,6 +6,7 @@ namespace App\Domain\Organisasi\Kueri;
 
 use App\Domain\Organisasi\Data\DataAnggotaOutlet;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\TenantPengguna;
 
 /**
  * API baca publik (F-06): anggota aktif tenant dari Uuid pengguna yang punya akses ke outlet tertentu. Null bila
@@ -48,5 +49,22 @@ final class AnggotaOutlet
         }
 
         return $hasil;
+    }
+
+    /**
+     * Id anggota tenant yang namanya memuat kata cari (pencarian `TabelData` domain lain, D-16). Maks 200 Id.
+     *
+     * @return list<int>
+     */
+    public function CariIdDariNama(int $idTenant, string $kata): array
+    {
+        $idAnggota = TenantPengguna::query()->where('IdTenant', $idTenant)->select('IdPengguna');
+
+        return array_values(array_map('intval', Pengguna::query()
+            ->whereIn('Id', $idAnggota)
+            ->where('Nama', 'like', '%'.addcslashes($kata, '\\%_').'%')
+            ->limit(200)
+            ->pluck('Id')
+            ->all()));
     }
 }
