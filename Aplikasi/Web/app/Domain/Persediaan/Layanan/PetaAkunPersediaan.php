@@ -6,18 +6,16 @@ namespace App\Domain\Persediaan\Layanan;
 
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Katalog\Enum\JenisProduk;
-use LogicException;
 
 /**
- * Peran akun persediaan per jenis produk: BahanBaku → PersediaanBahanBaku, lainnya → PersediaanBarangDagang (DesainF05a C.6.4, H-15).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim C (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Peran akun persediaan per jenis produk (J-05.1, DesainF05a C.6.4, H-15): BahanBaku → PersediaanBahanBaku, jenis
+ * berstok lain (Stok, Produksi) → PersediaanBarangDagang. `PersediaanBarangJadi` untuk Produksi menunggu J-05.6
+ * (F-05e).
  */
 final class PetaAkunPersediaan
 {
     public function UntukJenis(JenisProduk $jenis): PeranAkun
     {
-        throw new LogicException('F-05a Tim C');
+        return $jenis === JenisProduk::BahanBaku ? PeranAkun::PersediaanBahanBaku : PeranAkun::PersediaanBarangDagang;
     }
 }

@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Permintaan\Kelola\Persediaan;
 
 use Illuminate\Foundation\Http\FormRequest;
-use LogicException;
 
 /**
- * Validasi alasan pembatalan stok awal (5–255 karakter, DesainF05a D).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim C (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Validasi alasan pembatalan stok awal: wajib, 5–255 karakter (DesainF05a D). Alasan disimpan di dokumen, riwayat
+ * status, dan LogAudit.
  */
 final class BatalkanStokAwalPermintaan extends FormRequest
 {
@@ -20,6 +17,25 @@ final class BatalkanStokAwalPermintaan extends FormRequest
      */
     public function rules(): array
     {
-        throw new LogicException('F-05a Tim C');
+        return [
+            'Alasan' => ['required', 'string', 'min:5', 'max:255'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'Alasan.required' => 'Tulis alasan pembatalan.',
+            'Alasan.min' => 'Alasan pembatalan minimal :min karakter.',
+            'Alasan.max' => 'Alasan pembatalan maksimal :max karakter.',
+        ];
+    }
+
+    public function AmbilAlasan(): string
+    {
+        return trim((string) $this->validated('Alasan'));
     }
 }

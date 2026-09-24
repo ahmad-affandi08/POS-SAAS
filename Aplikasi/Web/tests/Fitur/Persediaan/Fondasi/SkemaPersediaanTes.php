@@ -10,12 +10,12 @@ use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Katalog\Kontrak\PemeriksaPemakaianProduk;
 use App\Domain\Katalog\Kontrak\PemeriksaRiwayatStok;
 use App\Domain\Katalog\Kontrak\PenyediaHppBahan;
-use App\Domain\Katalog\Resep\Layanan\HppBahanBelumTersedia;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
+use App\Domain\Persediaan\Kueri\HppBahanDariSaldo;
 use App\Domain\Persediaan\Kueri\PemakaianProdukDiPersediaan;
 use App\Domain\Persediaan\Kueri\RiwayatStokProduk;
 use App\Domain\Persediaan\Model\MutasiStok;
@@ -284,13 +284,12 @@ describe('F-05a izin, rute, dan ikatan provider (DesainF05a B.5, D, G)', functio
             ->toContain('App\Http\Perantara\WajibIzinTenant:persediaan.stok-awal.posting');
     });
 
-    it('provider: PemeriksaRiwayatStok diikat ke Persediaan; HPP bahan & pemakaian produk tetap perilaku F-03 sampai Tim F', function (): void {
+    it('provider: PemeriksaRiwayatStok, PenyediaHppBahan, dan pemeriksa pemakaian produk diikat ke Persediaan (Tim F)', function (): void {
         expect(app(PemeriksaRiwayatStok::class))->toBeInstanceOf(RiwayatStokProduk::class)
-            ->and(app(PenyediaHppBahan::class))->toBeInstanceOf(HppBahanBelumTersedia::class);
+            ->and(app(PenyediaHppBahan::class))->toBeInstanceOf(HppBahanDariSaldo::class);
 
-        foreach (app()->tagged(PemeriksaPemakaianProduk::TAG) as $pemeriksa) {
-            expect($pemeriksa)->not->toBeInstanceOf(PemakaianProdukDiPersediaan::class);
-        }
+        $kelas = array_map(fn (object $pemeriksa): string => $pemeriksa::class, iterator_to_array(app()->tagged(PemeriksaPemakaianProduk::TAG), false));
+        expect($kelas)->toContain(PemakaianProdukDiPersediaan::class);
     });
 });
 
