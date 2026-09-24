@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Token warna semantik (PRD §17.6.3).
+/// Token warna semantik (PRD §17.6.3). **Satu-satunya sumber warna** untuk seluruh aplikasi Flutter.
 ///
-/// **Sementara**: nilai masih usulan awal dan akan diganti saat identitas brand final (D-09).
-/// Nilai akhir berasal dari `Spesifikasi/TokenDesain/Token.json` agar web dan Flutter selalu sama.
-/// Kode fitur hanya memakai nama token, tidak pernah kode warna langsung.
+/// **Warna masih sementara** (D-09): identitas brand final belum diputuskan. Untuk mengganti warna,
+/// ubah nilainya **di sini** dan **di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css`** (token `--color-*`,
+/// nama sama dalam kebab-case, mis. `garisInput` = `--color-garis-input`). Test `SumberWarna_test.dart`
+/// memastikan keduanya sama.
+///
+/// Hanya ada satu palet terang: tidak ada mode gelap di aplikasi mana pun, termasuk KDS (D-14).
+/// Kode fitur hanya memakai nama token, tidak pernah `Color(0x...)` atau `Colors.*` langsung
+/// (dijaga oleh `test/Token/SumberWarna_test.dart`).
 @immutable
 final class TokenWarna extends ThemeExtension<TokenWarna> {
   const TokenWarna({
@@ -21,7 +26,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     required this.info,
   });
 
-  static const TokenWarna terang = TokenWarna(
+  static const TokenWarna bawaan = TokenWarna(
     latar: Color(0xFFFAFAF7),
     permukaan: Color(0xFFFFFFFF),
     garis: Color(0xFFE4E2DC),
@@ -33,20 +38,6 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     peringatan: Color(0xFF9A5B00),
     bahaya: Color(0xFFB3261E),
     info: Color(0xFF1F5FAD),
-  );
-
-  static const TokenWarna gelap = TokenWarna(
-    latar: Color(0xFF151514),
-    permukaan: Color(0xFF1E1E1C),
-    garis: Color(0xFF34332F),
-    garisInput: Color(0xFF7A776F),
-    teksUtama: Color(0xFFEDEBE6),
-    teksSekunder: Color(0xFFA8A59E),
-    brand: Color(0xFF5BB8BB),
-    sukses: Color(0xFF6FBF73),
-    peringatan: Color(0xFFE3A13B),
-    bahaya: Color(0xFFF28B82),
-    info: Color(0xFF8AB4F0),
   );
 
   final Color latar;

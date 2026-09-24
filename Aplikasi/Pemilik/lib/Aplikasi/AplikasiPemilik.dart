@@ -14,8 +14,9 @@ class AplikasiPemilik extends StatelessWidget {
     return MaterialApp(
       title: 'Pemilik',
       debugShowCheckedModeBanner: false,
-      theme: BuatTema(kecerahan: Brightness.light),
-      darkTheme: BuatTema(kecerahan: Brightness.dark),
+      // Hanya tema terang, tanpa darkTheme (D-14).
+      theme: BuatTema(),
+      themeMode: ThemeMode.light,
       builder: (context, anak) => lingkungan.tampilkanPenanda
           ? Banner(
               message: lingkungan.label,
