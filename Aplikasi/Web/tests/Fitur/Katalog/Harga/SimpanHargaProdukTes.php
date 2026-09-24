@@ -6,6 +6,7 @@ use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Katalog\Enum\EntitasKatalog;
 use App\Domain\Katalog\Harga\Aksi\SimpanHargaProduk;
+use App\Domain\Katalog\Harga\Data\HasilSimpanHarga;
 use App\Domain\Katalog\Harga\Enum\SumberPerubahanHarga;
 use App\Domain\Katalog\Harga\Model\RiwayatHarga;
 use App\Domain\Katalog\Model\PenghapusanKatalog;
@@ -27,7 +28,7 @@ beforeEach(function (): void {
 /**
  * @param  array<int, list<array{0: string, 1: string}>>  $perSatuan
  */
-function SimpanHarga(Produk $produk, array $perSatuan, SumberPerubahanHarga $sumber = SumberPerubahanHarga::Manual): App\Domain\Katalog\Harga\Data\HasilSimpanHarga
+function SimpanHarga(Produk $produk, array $perSatuan, SumberPerubahanHarga $sumber = SumberPerubahanHarga::Manual): HasilSimpanHarga
 {
     return app(SimpanHargaProduk::class)->Jalankan(
         $produk,
