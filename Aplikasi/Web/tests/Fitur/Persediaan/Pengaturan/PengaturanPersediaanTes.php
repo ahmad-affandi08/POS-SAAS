@@ -20,8 +20,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    // Halaman FE `Kelola/Persediaan/Pengaturan` milik Tim G; test ini memeriksa props, bukan berkas halaman.
-    config()->set('inertia.pages.ensure_pages_exist', false);
 });
 
 /** Satu mutasi stok mentah di tenant konteks (mengunci metode HPP, H-4). */
@@ -41,7 +39,7 @@ describe('F-05a pengaturan persediaan: metode HPP (BR-04.2) & stok minus (BR-05.
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id)->get('/kelola/persediaan/pengaturan')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->component('Kelola/Persediaan/Pengaturan', false)
+                ->component('Kelola/Persediaan/Pengaturan')
                 ->where('MetodeHpp', 'RataRata')
                 ->where('StokBolehMinus', false)
                 ->where('MetodeHppTerkunci', false)

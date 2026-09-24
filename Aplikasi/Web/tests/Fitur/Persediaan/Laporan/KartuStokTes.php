@@ -24,8 +24,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    // Halaman FE `Kelola/Persediaan/KartuStok` milik Tim G; test ini memeriksa props, bukan berkas halaman.
-    config()->set('inertia.pages.ensure_pages_exist', false);
 });
 
 /**
@@ -135,7 +133,7 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
         $masuk()->get("/kelola/persediaan/kartu-stok?produk={$d['Minyak']->Uuid}&gudang={$d['Gudang']->Uuid}")
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->component('Kelola/Persediaan/KartuStok', false)
+                ->component('Kelola/Persediaan/KartuStok')
                 ->where('Produk', ['Uuid' => $d['Minyak']->Uuid, 'Nama' => $d['Minyak']->Nama, 'Sku' => 'MGS-2L', 'SimbolSatuan' => 'pcs', 'Pelacakan' => 'Tidak'])
                 ->where('Gudang.Uuid', $d['Gudang']->Uuid)
                 ->where('Saring', ['UuidProduk' => $d['Minyak']->Uuid, 'UuidGudang' => $d['Gudang']->Uuid, 'Dari' => '2026-09-01', 'Sampai' => '2026-09-24'])

@@ -29,8 +29,6 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    // Halaman FE `Kelola/Persediaan/Saldo` milik Tim G; test ini memeriksa props, bukan berkas halaman.
-    config()->set('inertia.pages.ensure_pages_exist', false);
 });
 
 /**
@@ -222,7 +220,7 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
             ->get('/kelola/persediaan/saldo?keadaan=Ada&urut=-Nilai&kata=minyak')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->component('Kelola/Persediaan/Saldo', false)
+                ->component('Kelola/Persediaan/Saldo')
                 ->where('Saring', ['Kata' => 'minyak', 'UuidGudang' => null, 'Keadaan' => 'Ada', 'Urut' => '-Nilai'])
                 ->where('Saldo.Total', 1)
                 ->where('Saldo.Data.0.NilaiPersediaan', '924000.00')
@@ -242,7 +240,7 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
             ->get('/kelola/persediaan/saldo')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->component('Kelola/Persediaan/Saldo', false)
+                ->component('Kelola/Persediaan/Saldo')
                 ->where('Saldo.Total', 1)
                 ->where('Saldo.Data.0.UuidGudang', $d['Solo']->Uuid)
                 ->has('OpsiGudang', 1));
