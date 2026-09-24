@@ -1,0 +1,73 @@
+{
+    "Kode": "Umum",
+    "Nama": "Templat bawaan (Excel/CSV)",
+    "VersiFormat": 1,
+    "Asumsi": false,
+    "Keterangan": "Templat bawaan dan hasil ekspor daftar produk. Unduh templat, isi, lalu unggah kembali.",
+    "Pembaca": { "Lembar": null, "BarisJudul": null, "PemisahCsv": null },
+    "Kolom": {
+        "Nama": ["Nama Produk", "Nama", "Nama Barang", "Nama Item"],
+        "NamaStruk": ["Nama di Struk", "Nama Struk"],
+        "Sku": ["SKU", "Kode Produk", "Kode SKU", "Kode Barang"],
+        "Jenis": ["Jenis", "Jenis Produk", "Tipe Produk"],
+        "LacakStok": ["Lacak Stok", "Kelola Stok"],
+        "Kategori": ["Kategori", "Kategori Produk"],
+        "Merek": ["Merek", "Merk", "Brand"],
+        "Satuan": ["Satuan Dasar", "Satuan", "Unit"],
+        "HargaJual": ["Harga Jual", "Harga"],
+        "Barcode": ["Barcode", "Kode Barcode"],
+        "KelompokPajak": ["Kelompok Pajak", "Pajak"],
+        "HargaTermasukPajak": ["Harga Termasuk Pajak"],
+        "TampilDiPos": ["Tampil di POS", "Tampil di Kasir"],
+        "TampilOnline": ["Tampil Online"],
+        "BolehMinus": ["Boleh Jual Saat Stok Kosong", "Boleh Minus"],
+        "Pelacakan": ["Pelacakan"],
+        "NamaInduk": ["Nama Induk Varian", "Nama Induk"],
+        "Varian": ["Varian", "Nama Varian"],
+        "SatuanAlternatif1": ["Satuan Alternatif 1"],
+        "KonversiSatuanAlternatif1": ["Isi Satuan Alternatif 1"],
+        "HargaSatuanAlternatif1": ["Harga Satuan Alternatif 1"],
+        "BarcodeSatuanAlternatif1": ["Barcode Satuan Alternatif 1"],
+        "SatuanAlternatif2": ["Satuan Alternatif 2"],
+        "KonversiSatuanAlternatif2": ["Isi Satuan Alternatif 2"],
+        "HargaSatuanAlternatif2": ["Harga Satuan Alternatif 2"],
+        "BarcodeSatuanAlternatif2": ["Barcode Satuan Alternatif 2"],
+        "SatuanAlternatif3": ["Satuan Alternatif 3"],
+        "KonversiSatuanAlternatif3": ["Isi Satuan Alternatif 3"],
+        "HargaSatuanAlternatif3": ["Harga Satuan Alternatif 3"],
+        "BarcodeSatuanAlternatif3": ["Barcode Satuan Alternatif 3"],
+        "JumlahGrosir1": ["Min. Qty Grosir 1", "Min Qty Grosir 1"],
+        "HargaGrosir1": ["Harga Grosir 1"],
+        "JumlahGrosir2": ["Min. Qty Grosir 2", "Min Qty Grosir 2"],
+        "HargaGrosir2": ["Harga Grosir 2"],
+        "JumlahGrosir3": ["Min. Qty Grosir 3", "Min Qty Grosir 3"],
+        "HargaGrosir3": ["Harga Grosir 3"],
+        "Status": ["Status"],
+        "HargaModal": ["Harga Modal", "Harga Beli", "HPP"],
+        "Stok": ["Stok", "Stok Awal"]
+    },
+    "Nilai": {
+        "Boolean": {
+            "Ya": ["ya", "y", "aktif", "true", "1", "yes", "benar"],
+            "Tidak": ["tidak", "t", "nonaktif", "false", "0", "no", "salah"]
+        },
+        "Jenis": {
+            "Stok": ["barang", "produk", "stok", "barang stok"],
+            "NonStok": ["tanpa stok", "non stok", "nonstok"],
+            "Jasa": ["jasa", "layanan"],
+            "BahanBaku": ["bahan baku", "bahan"],
+            "IndukVarian": ["induk varian"]
+        },
+        "KelompokPajak": {
+            "KenaPpn": ["ppn", "pajak", "kena pajak", "kena ppn"],
+            "KenaPbjt": ["pb1", "pbjt", "pajak restoran"],
+            "BebasPpn": ["bebas ppn"],
+            "NonPajak": ["tidak", "tanpa pajak", "non pajak", "0"]
+        },
+        "Status": {
+            "Aktif": ["aktif", "ya", "1"],
+            "Diarsipkan": ["diarsipkan", "arsip", "nonaktif", "tidak aktif", "0"]
+        }
+    },
+    "Varian": { "Mode": "KolomInduk", "KolomNamaInduk": "NamaInduk", "PemisahAtribut": ";", "PemisahNamaNilai": ":" }
+}
