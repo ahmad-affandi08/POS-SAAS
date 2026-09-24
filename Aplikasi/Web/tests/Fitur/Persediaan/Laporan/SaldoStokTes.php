@@ -12,8 +12,12 @@ use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\MetodeHpp;
+use App\Domain\Persediaan\Enum\StatusNomorSeri;
 use App\Domain\Persediaan\Kueri\DaftarSaldoStok;
+use App\Domain\Persediaan\Model\BatchStok;
+use App\Domain\Persediaan\Model\NomorSeri;
 use App\Domain\Tenant\Model\Tenant;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Katalog\BantuanHarga;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -174,6 +178,32 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
         expect($beras['GudangAktif'] ?? null)->toBeFalse()
             ->and(TimFPasanganSaldo(TimFAmbilSaldo([], [$d['CabangSolo']->Id])))->toBe(['Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter @ Gudang Solo'])
             ->and(TimFAmbilSaldo(['UuidGudang' => $d['Toko']->Uuid], [$d['CabangSolo']->Id])['Saldo']['Data'])->toBe([]);
+    });
+
+    it('produk dilacak: baris Batch memuat rincian batch (RincianBatchSaldo Tim D), baris Seri memuat jumlah nomor seri tersedia', function (): void {
+        $t = BantuanPersediaan::SiapkanTenant('Toko Elektronik & Swalayan Sinar Terang');
+        $produk = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
+        $batchA = BatchStok::query()->create(['Uuid' => (string) Str::ulid(), 'IdProduk' => $produk['Batch']->Id, 'IdGudang' => $t['Gudang']->Id, 'NomorBatch' => 'UHT-2611A', 'TanggalKedaluwarsa' => '2026-11-30', 'JumlahSisa' => '12.0000', 'HppSatuan' => '15000.000000']);
+        $batchB = BatchStok::query()->create(['Uuid' => (string) Str::ulid(), 'IdProduk' => $produk['Batch']->Id, 'IdGudang' => $t['Gudang']->Id, 'NomorBatch' => 'UHT-2702B', 'TanggalKedaluwarsa' => '2027-02-28', 'JumlahSisa' => '8.0000', 'HppSatuan' => '15500.000000']);
+        BantuanLaporan::CatatMutasi($produk['Batch'], $t['Gudang'], '12.0000', '180000.00', timpa: ['IdBatchStok' => $batchA->Id]);
+        BantuanLaporan::CatatMutasi($produk['Batch'], $t['Gudang'], '8.0000', '124000.00', timpa: ['IdBatchStok' => $batchB->Id]);
+
+        foreach (['RC18-0001', 'RC18-0002'] as $nomor) {
+            $seri = NomorSeri::query()->create(['Uuid' => (string) Str::ulid(), 'IdProduk' => $produk['Seri']->Id, 'Nomor' => $nomor, 'Status' => StatusNomorSeri::Tersedia, 'IdGudang' => $t['Gudang']->Id]);
+            BantuanLaporan::CatatMutasi($produk['Seri'], $t['Gudang'], '1.0000', '550000.00', timpa: ['IdNomorSeri' => $seri->Id]);
+        }
+
+        $data = collect(TimFAmbilSaldo()['Saldo']['Data'])->keyBy('UuidProduk');
+
+        expect($data[$produk['Batch']->Uuid]['Batch'])->toBe([
+            ['NomorBatch' => 'UHT-2611A', 'TanggalKedaluwarsa' => '2026-11-30', 'JumlahSisa' => '12.0000'],
+            ['NomorBatch' => 'UHT-2702B', 'TanggalKedaluwarsa' => '2027-02-28', 'JumlahSisa' => '8.0000'],
+        ])
+            ->and($data[$produk['Batch']->Uuid]['JumlahNomorSeri'])->toBeNull()
+            ->and($data[$produk['Seri']->Uuid]['Batch'])->toBe([])
+            ->and($data[$produk['Seri']->Uuid]['JumlahNomorSeri'])->toBe(2)
+            ->and(PemeriksaInvarian::PeriksaBatch($t['Tenant']->Id))->toBe([])
+            ->and(PemeriksaInvarian::PeriksaNomorSeri($t['Tenant']->Id))->toBe([]);
     });
 
     it('isolasi tenant: tenant lain tidak melihat saldo', function (): void {
