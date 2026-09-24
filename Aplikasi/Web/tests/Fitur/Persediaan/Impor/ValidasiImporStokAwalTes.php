@@ -110,16 +110,16 @@ describe('F-05a impor stok awal: validasi baris (produk, lokasi, jumlah, harga m
             ->and($impor->JumlahValid)->toBe(0)
             ->and($impor->JumlahGalat)->toBe(11)
             ->and(array_keys($galat))->toBe(range(2, 12))
-            ->and($galat[2][0])->toBe(['Bidang' => 'Produk', 'Pesan' => 'Produk "TIDAK-ADA-99" tidak ditemukan. Periksa SKU, barcode, atau nama produk.'])
+            ->and($galat[2][0])->toEqual(['Bidang' => 'Produk', 'Pesan' => 'Produk "TIDAK-ADA-99" tidak ditemukan. Periksa SKU, barcode, atau nama produk.'])
             ->and($galat[3][0]['Pesan'])->toBe('"Kopi Bubuk Robusta Temanggung 250 gram" cocok dengan 2 produk. Isi SKU agar produk tidak ambigu.')
             ->and($galat[4][0]['Pesan'])->toContain('barang konsinyasi')
             ->and($galat[5][0]['Pesan'])->toContain('tidak punya stok')
             ->and($galat[6][0]['Pesan'])->toBe('Teh Celup Melati Isi 25 sudah diarsipkan. Aktifkan lagi produknya bila stoknya masih ada.')
-            ->and($galat[7][0])->toBe(['Bidang' => 'Lokasi Stok', 'Pesan' => 'Lokasi stok "LOKASI-ANEH" tidak ditemukan atau di luar outlet yang boleh Anda akses.'])
+            ->and($galat[7][0])->toEqual(['Bidang' => 'Lokasi Stok', 'Pesan' => 'Lokasi stok "LOKASI-ANEH" tidak ditemukan atau di luar outlet yang boleh Anda akses.'])
             ->and($galat[8][0]['Pesan'])->toBe('Lokasi "Gudang Belakang" cocok dengan 2 lokasi stok. Pakai kode lokasi.')
             ->and($galat[9][0]['Pesan'])->toBe('Lokasi stok Gudang Lama Pasar Legi sudah diarsipkan.')
             ->and($galat[10][0]['Bidang'])->toBe('Lokasi Stok')
-            ->and($galat[11][0])->toBe(['Bidang' => 'Stok', 'Pesan' => 'Satuan pcs untuk '.$produk['Stok']->Nama.' tidak boleh desimal.'])
+            ->and($galat[11][0])->toEqual(['Bidang' => 'Stok', 'Pesan' => 'Satuan pcs untuk '.$produk['Stok']->Nama.' tidak boleh desimal.'])
             ->and(array_column($galat[12], 'Bidang'))->toBe(['Stok', 'Harga Modal']);
 
         $masuk->get("/kelola/persediaan/stok-awal/impor/{$impor->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h

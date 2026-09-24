@@ -390,8 +390,9 @@ final class PemvalidasiImporStokAwal
         $tanggalKedaluwarsa = is_string($data['TanggalKedaluwarsa'] ?? null) ? CarbonImmutable::parse($data['TanggalKedaluwarsa']) : null;
         $nomorSeri = array_values(array_map('strval', (array) ($data['NomorSeri'] ?? [])));
 
+        // Bidang galat pelacakan (`NomorBatch`, `Jumlah`, …) ditampilkan sebagai judul kolom templat.
         return array_values(array_map(
-            fn (array $g): array => self::Galat((string) $g['Bidang'], (string) $g['Pesan']),
+            fn (array $g): array => self::Galat(BidangImporStokAwal::tryFrom((string) $g['Bidang'])?->AmbilLabel() ?? (string) $g['Bidang'], (string) $g['Pesan']),
             $this->pelacakan->PeriksaBaris($produk, new DataBarisStokAwal(
                 $produk->id,
                 $jumlah,
@@ -447,7 +448,7 @@ final class PemvalidasiImporStokAwal
         ImporStokAwalBaris::query()
             ->where('IdImporStokAwal', $impor->Id)
             ->where('Status', StatusBarisImporStokAwal::Valid->value)
-            ->select(['Id', 'NomorBaris', 'Data'])
+            ->select(['Id', 'NomorBaris', 'Data', 'Galat'])
             ->chunkById(self::UKURAN_POTONGAN, /** @param Collection<int, ImporStokAwalBaris> $potongan */ function (Collection $potongan) use (&$peta): void {
                 foreach ($potongan as $baris) {
                     $batch = is_string($baris->Data['NomorBatch'] ?? null) ? mb_strtolower($baris->Data['NomorBatch']) : '';
