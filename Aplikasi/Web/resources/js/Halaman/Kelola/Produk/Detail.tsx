@@ -6,7 +6,7 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import { LabelTigaKeadaan } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormBatasStok from '@/Komponen/Katalog/FormBatasStok';
-import GeneratorVarian from '@/Komponen/Katalog/GeneratorVarian';
+import PembuatVarian from '@/Komponen/Katalog/PembuatVarian';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -369,7 +369,7 @@ export default function HalamanDetailProduk({
             ) : null}
 
             {induk && Izin.Kelola ? (
-                <GeneratorVarian
+                <PembuatVarian
                     uuidProduk={Produk.Uuid}
                     atributAwal={Produk.AtributVarian}
                     varian={Varian}

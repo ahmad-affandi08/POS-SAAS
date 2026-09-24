@@ -8,7 +8,7 @@ import type { AturanJenisProduk, BarisVarian, JenisProduk } from '@/Tipe/Katalog
 import type { Batas } from '@/Tipe/Organisasi';
 
 import { AmbilGalatBerawalan, HitungKombinasiVarian } from './BantuanKatalog';
-import EditorAtributVarian, { MaksimalKombinasi } from './EditorAtributVarian';
+import PenyuntingAtributVarian, { MaksimalKombinasi } from './PenyuntingAtributVarian';
 
 /** Jenis yang boleh menjadi anak varian (DesainF03 C.1 `CekBolehAnakVarian`). */
 const jenisAnakBoleh: JenisProduk[] = ['Stok', 'Produksi', 'Konsinyasi', 'Jasa', 'NonStok', 'Resep'];
@@ -36,7 +36,7 @@ export function HitungVarianBaru(atribut: { Nama: string; Nilai: string[] }[], v
     return HitungKombinasiVarian(atribut).filter((kombinasi) => !ada.has(KunciKombinasi(kombinasi)));
 }
 
-type PropsGeneratorVarian = {
+type PropsPembuatVarian = {
     uuidProduk: string;
     atributAwal: { Nama: string; Nilai: string[] }[];
     varian: BarisVarian[];
@@ -50,7 +50,7 @@ type PropsGeneratorVarian = {
  * Pembuat varian (kombinasi kartesius) untuk produk bervarian. Idempoten: kombinasi yang sudah ada dilewati server.
  * BatasSku diperiksa semua-atau-tidak-sama-sekali, jadi pratinjau menyebut sisa kuota paket.
  */
-export default function GeneratorVarian({
+export default function PembuatVarian({
     uuidProduk,
     atributAwal,
     varian,
@@ -58,7 +58,7 @@ export default function GeneratorVarian({
     batasSku,
     bolehUbahHarga,
     galat,
-}: PropsGeneratorVarian) {
+}: PropsPembuatVarian) {
     const [atribut, AturAtribut] = useState(atributAwal);
     const [jenisAnak, AturJenisAnak] = useState<JenisProduk>('Stok');
     const [hargaDasar, AturHargaDasar] = useState('');
@@ -89,7 +89,7 @@ export default function GeneratorVarian({
             <h2 id="judul-generator-varian" className="text-subjudul font-semibold text-teks-utama">
                 Buat varian
             </h2>
-            <EditorAtributVarian
+            <PenyuntingAtributVarian
                 nilai={atribut}
                 saatBerubah={AturAtribut}
                 galat={AmbilGalatBerawalan(galat, 'AtributVarian')}

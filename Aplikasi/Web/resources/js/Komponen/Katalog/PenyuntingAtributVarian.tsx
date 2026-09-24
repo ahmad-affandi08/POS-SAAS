@@ -10,7 +10,7 @@ export const MaksimalKombinasi = 100;
 
 type Atribut = { Nama: string; Nilai: string[] };
 
-type PropsEditorAtributVarian = {
+type PropsPenyuntingAtributVarian = {
     nilai: Atribut[];
     saatBerubah: (nilai: Atribut[]) => void;
     /** Galat server relatif, misal {"0.Nilai": "…", "1.Nama": "…"}. */
@@ -81,12 +81,12 @@ function BidangNilai({
  * Definisi atribut varian (maks 3 atribut × 20 nilai; ≤ 100 kombinasi per generasi, DesainF03 C.2).
  * Menampilkan jumlah kombinasi yang akan dihasilkan.
  */
-export default function EditorAtributVarian({
+export default function PenyuntingAtributVarian({
     nilai,
     saatBerubah,
     galat = {},
     disabled = false,
-}: PropsEditorAtributVarian) {
+}: PropsPenyuntingAtributVarian) {
     const kombinasi = HitungKombinasiVarian(nilai);
     const Ubah = (indeks: number, perubahan: Partial<Atribut>) =>
         saatBerubah(nilai.map((item, i) => (i === indeks ? { ...item, ...perubahan } : item)));
