@@ -1,10 +1,12 @@
-// Merekam VideoPromosi30Detik.html menjadi MP4 1920x1080, bingkai demi bingkai (hasil deterministik).
+// Merekam VideoPromosi30Detik.html menjadi MP4 1920x1080 lengkap dengan audio, bingkai demi bingkai (deterministik).
 // Butuh: Playwright (Chromium) dan ffmpeg. Jalankan dari akar repo:
-//   node Spesifikasi/Merek/VideoPromosi/RekamVideo.mjs [keluaran.mp4] [fps]
+//   NODE_PATH=$(npm root -g) node Spesifikasi/Merek/VideoPromosi/RekamVideo.mjs [keluaran.mp4] [fps]
 // Path ffmpeg bisa diatur lewat variabel lingkungan FFMPEG.
 import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
@@ -17,15 +19,27 @@ const alamatHalaman = pathToFileURL(resolve(folderIni, 'VideoPromosi30Detik.html
 
 async function RekamVideo() {
   const peramban = await chromium.launch();
-  const halaman = await peramban.newPage({ viewport: { width: 1920, height: 1080 }, ignoreHTTPSErrors: true });
+  const halaman = await peramban.newPage({ viewport: { width: 1920, height: 1080 } });
   await halaman.goto(alamatHalaman);
-  await halaman.waitForFunction(() => document.body.dataset.siap === '1', null, { timeout: 20000 });
+  await halaman.waitForFunction(() => document.body.dataset.siap === '1', null, { timeout: 60000 });
+  const hurufSiap = await halaman.evaluate(() => document.fonts.check('800 40px "Atkinson Hyperlegible Next"'));
+  if (!hurufSiap) throw new Error('Font Atkinson Hyperlegible belum termuat; rekaman dibatalkan.');
+
+  const folderSementara = mkdtempSync(join(tmpdir(), 'rekam-payou-'));
+  const pathAudio = join(folderSementara, 'Audio.wav');
+  writeFileSync(pathAudio, Buffer.from(await halaman.evaluate(() => window.EksporWav()), 'base64'));
+
   const durasiDetik = await halaman.evaluate(() => window.DurasiDetik);
   const jumlahBingkai = Math.round(durasiDetik * fps);
 
   const ffmpeg = spawn(process.env.FFMPEG ?? 'ffmpeg', [
-    '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
+    '-y', '-loglevel', 'error',
+    '-f', 'image2pipe', '-framerate', String(fps), '-i', '-',
+    '-i', pathAudio,
+    '-map', '0:v', '-map', '1:a',
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p',
+    '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-ar', '44100',
+    '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart',
     pathKeluaran,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
   const selesai = new Promise((lanjut, gagal) => ffmpeg.on('close', (kode) => (kode === 0 ? lanjut() : gagal(new Error(`ffmpeg keluar dengan kode ${kode}`)))));
@@ -39,6 +53,7 @@ async function RekamVideo() {
   ffmpeg.stdin.end();
   await selesai;
   await peramban.close();
+  rmSync(folderSementara, { recursive: true, force: true });
   process.stdout.write(`\nSelesai: ${pathKeluaran}\n`);
 }
 
