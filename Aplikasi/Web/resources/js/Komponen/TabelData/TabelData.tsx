@@ -63,7 +63,7 @@ export type PropsTabelData<T> = {
     cari?: string | false;
     saring?: DefinisiSaring[];
     alamatDetail?: (baris: T) => string;
-    /** Isi menu aksi baris (`DropdownMenuItem`). */
+    /** Isi menu aksi baris (`DropdownMenuItem`); `null` bila baris ini tidak punya aksi yang boleh. */
     aksiBaris?: (baris: T) => ReactNode;
     /** Nama baris untuk tombol menu aksi yang dibacakan, mis. "Aksi Minuman" (bawaan "Aksi baris"). */
     labelBaris?: (baris: T) => string;
@@ -352,24 +352,34 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                 enableResizing: false,
                 meta: { label: '', wajib: true },
                 header: () => <span className="sr-only">Aksi</span>,
-                cell: ({ row }) => (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="size-11 sm:size-8"
-                                aria-label={LabelBaris ? `Aksi ${LabelBaris(row.original)}` : 'Aksi baris'}
-                            >
-                                <EllipsisIcon aria-hidden="true" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-44">
-                            {AksiBaris(row.original)}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                ),
+                cell: ({ row }) => {
+                    const isi = AksiBaris(row.original);
+
+                    // `null` = tidak ada aksi yang boleh untuk baris ini: tombol menu tidak ditampilkan.
+                    if (isi === null) {
+                        return null;
+                    }
+
+                    return (
+                        // Non-modal: dialog yang dibuka dari menu tidak berebut fokus & pointer-events dengan menu.
+                        <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="size-11 sm:size-8"
+                                    aria-label={LabelBaris ? `Aksi ${LabelBaris(row.original)}` : 'Aksi baris'}
+                                >
+                                    <EllipsisIcon aria-hidden="true" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-44">
+                                {isi}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    );
+                },
             });
         }
 

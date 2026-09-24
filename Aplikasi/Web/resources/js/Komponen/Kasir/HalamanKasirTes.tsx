@@ -83,7 +83,7 @@ describe('F-06 halaman kasir back-office', () => {
             ],
         };
 
-        render(<HalamanDetailShift {...props} />);
+        RenderUji(<HalamanDetailShift {...props} />);
         expect(screen.getByText(/kasir sudah punya shift terbuka/)).toBeTruthy();
         expect(screen.getByText('Rp 100.000 × 12')).toBeTruthy();
         expect(screen.getByText('Disetujui Budi Santoso')).toBeTruthy();
@@ -92,7 +92,7 @@ describe('F-06 halaman kasir back-office', () => {
         );
 
         cleanup();
-        render(<HalamanDetailShift {...props} MutasiKas={[]} />);
+        RenderUji(<HalamanDetailShift {...props} MutasiKas={[]} />);
         expect(screen.getByText(/Belum ada kas masuk/)).toBeTruthy();
     });
 
@@ -107,7 +107,7 @@ describe('F-06 halaman kasir back-office', () => {
             },
         };
         tiruanRouter.post.mockClear();
-        render(<HalamanKategoriKas {...props} />);
+        RenderUji(<HalamanKategoriKas {...props} />);
         expect(screen.getByText(/Belum ada kategori kas/)).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah kategori kas' }));

@@ -4,11 +4,11 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Card } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -39,7 +39,60 @@ type Merek = { Uuid: string; Nama: string; JumlahOutlet: number };
 
 type PropsDaftar = { Outlet: Outlet[]; Merek: Merek[]; Kota: Kota[]; BatasOutlet: Batas };
 
-const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+const kolom: KolomTabel<Outlet>[] = [
+    {
+        id: 'Kode',
+        accessorKey: 'Kode',
+        header: 'Kode',
+        meta: { label: 'Kode', prioritas: 'penting', kelasSel: 'font-mono text-label text-teks-utama' },
+    },
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Outlet',
+        meta: { label: 'Outlet', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: outlet } }) => (
+            <>
+                <Link href={`/kelola/outlet/${outlet.Uuid}`} className="font-semibold text-brand underline">
+                    {outlet.Nama}
+                </Link>
+                {outlet.NamaMerek ? (
+                    <span className="block text-keterangan text-teks-sekunder">{outlet.NamaMerek}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'NamaKota',
+        accessorFn: (outlet) => `${outlet.NamaKota ?? 'Belum diisi'} · ${outlet.ZonaWaktu}`,
+        header: 'Kota',
+        meta: { label: 'Kota', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'JamTutupBuku',
+        accessorKey: 'JamTutupBuku',
+        header: 'Tutup buku',
+        meta: { label: 'Tutup buku', prioritas: 'rendah', kelasSel: 'font-mono text-label text-teks-sekunder' },
+    },
+    {
+        id: 'JumlahGudang',
+        accessorKey: 'JumlahGudang',
+        header: 'Lokasi stok',
+        meta: { label: 'Lokasi stok', angka: true, prioritas: 'rendah' },
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) =>
+            row.original.Status === 'Aktif' ? (
+                <LabelStatus jenis="sukses" teks="Aktif" />
+            ) : (
+                <LabelStatus jenis="netral" teks="Diarsipkan" />
+            ),
+    },
+];
 
 /** Daftar outlet & merek (F-02 langkah 1, BR-02.1). */
 export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }: PropsDaftar) {
@@ -95,81 +148,28 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                 </DialogFormulir>
             ) : null}
 
-            {Outlet.length === 0 ? (
-                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
-                    <EmptyHeader>
-                        <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada outlet yang bisa Anda akses. Minta Owner menugaskan Anda ke outlet.
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[820px] text-isi">
-                        <TableCaption className="sr-only">Daftar outlet</TableCaption>
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Kode
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Outlet
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Kota
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Tutup buku
-                                </TableHead>
-                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
-                                    Lokasi stok
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Status
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Outlet.map((outlet) => (
-                                <TableRow key={outlet.Uuid}>
-                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
-                                        {outlet.Kode}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <Link
-                                            href={`/kelola/outlet/${outlet.Uuid}`}
-                                            className="font-semibold text-brand underline"
-                                        >
-                                            {outlet.Nama}
-                                        </Link>
-                                        {outlet.NamaMerek ? (
-                                            <span className="block text-keterangan text-teks-sekunder">
-                                                {outlet.NamaMerek}
-                                            </span>
-                                        ) : null}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                        {outlet.NamaKota ?? 'Belum diisi'} · {outlet.ZonaWaktu}
-                                    </TableCell>
-                                    <TableCell className="px-4 font-mono text-label text-teks-sekunder">
-                                        {outlet.JamTutupBuku}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums text-teks-utama">
-                                        {outlet.JumlahGudang}
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        {outlet.Status === 'Aktif' ? (
-                                            <LabelStatus jenis="sukses" teks="Aktif" />
-                                        ) : (
-                                            <LabelStatus jenis="netral" teks="Diarsipkan" />
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            <TabelData
+                id="organisasi-outlet"
+                label="Daftar outlet"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Outlet }}
+                ambilIdBaris={(outlet) => outlet.Uuid}
+                urutBawaan="Kode"
+                cari="Cari kode, nama outlet, atau kota"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihan',
+                        opsi: [
+                            { nilai: 'Aktif', label: 'Aktif' },
+                            { nilai: 'Diarsipkan', label: 'Diarsipkan' },
+                        ],
+                    },
+                ]}
+                alamatDetail={(outlet) => `/kelola/outlet/${outlet.Uuid}`}
+                kosong={{ judul: 'Belum ada outlet yang bisa Anda akses. Minta Owner menugaskan Anda ke outlet.' }}
+            />
 
             <BagianMerek merek={Merek} bolehKelola={bolehKelola} />
         </TataLetakAplikasi>

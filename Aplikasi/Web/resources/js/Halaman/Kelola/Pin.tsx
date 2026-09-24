@@ -3,6 +3,8 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -12,14 +14,46 @@ import {
     BreadcrumbSeparator,
 } from '@/Komponen/Ui/breadcrumb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 
 type AnggotaPin = { Uuid: string; Nama: string; Email: string; NamaPeran: string | null; PinDiatur: boolean };
 
 type PropsPin = { PinSayaDiatur: boolean; Anggota: AnggotaPin[] | null };
+
+const kolom: KolomTabel<AnggotaPin>[] = [
+    {
+        id: 'Nama',
+        accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email}`,
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: anggota } }) => (
+            <>
+                <span className="block text-teks-utama">{anggota.Nama}</span>
+                <span className="block text-keterangan break-all text-teks-sekunder">{anggota.Email}</span>
+            </>
+        ),
+    },
+    {
+        id: 'NamaPeran',
+        accessorFn: (anggota) => anggota.NamaPeran ?? '—',
+        header: 'Peran',
+        meta: { label: 'Peran', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'PinDiatur',
+        accessorKey: 'PinDiatur',
+        header: 'PIN',
+        meta: { label: 'PIN', prioritas: 'penting' },
+        cell: ({ row }) =>
+            row.original.PinDiatur ? (
+                <LabelStatus jenis="sukses" teks="Sudah diatur" />
+            ) : (
+                <LabelStatus jenis="peringatan" teks="Belum diatur" />
+            ),
+    },
+];
 
 /** PIN kasir 6 angka: atur PIN sendiri, atur ulang PIN anggota (F-02 langkah 4, §20.2). */
 export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
@@ -84,64 +118,21 @@ export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
                             </CardContent>
                         </Card>
                     ) : null}
-                    {Anggota.length === 0 ? (
-                        <Empty className="rounded-panel border border-garis bg-permukaan px-4 py-6 md:p-6">
-                            <EmptyHeader>
-                                <EmptyDescription className="text-isi text-teks-sekunder">
-                                    Belum ada anggota lain yang PIN-nya bisa Anda atur.
-                                </EmptyDescription>
-                            </EmptyHeader>
-                        </Empty>
-                    ) : (
-                        <div className="rounded-panel border border-garis bg-permukaan">
-                            <Table className="min-w-[560px] text-left text-isi">
-                                <TableCaption className="sr-only">Status PIN anggota</TableCaption>
-                                <TableHeader className="text-label">
-                                    <TableRow className="border-garis hover:bg-transparent">
-                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
-                                            Nama
-                                        </TableHead>
-                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
-                                            Peran
-                                        </TableHead>
-                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
-                                            PIN
-                                        </TableHead>
-                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
-                                            <span className="sr-only">Aksi</span>
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Anggota.map((anggota) => (
-                                        <TableRow key={anggota.Uuid} className="border-garis">
-                                            <TableCell className="px-4 py-2 whitespace-normal text-teks-utama">
-                                                {anggota.Nama}
-                                                <span className="block text-keterangan text-teks-sekunder">
-                                                    {anggota.Email}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-2 text-teks-sekunder">
-                                                {anggota.NamaPeran ?? '—'}
-                                            </TableCell>
-                                            <TableCell className="px-4 py-2">
-                                                {anggota.PinDiatur ? (
-                                                    <LabelStatus jenis="sukses" teks="Sudah diatur" />
-                                                ) : (
-                                                    <LabelStatus jenis="peringatan" teks="Belum diatur" />
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="px-4 py-2 text-right">
-                                                <Tombol varian="sekunder" onClick={() => AturSunting(anggota)}>
-                                                    Atur ulang PIN
-                                                </Tombol>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                    <TabelData
+                        id="organisasi-pin"
+                        label="Status PIN anggota"
+                        kolom={kolom}
+                        sumber={{ mode: 'lokal', data: Anggota }}
+                        ambilIdBaris={(anggota) => anggota.Uuid}
+                        urutBawaan="Nama"
+                        cari="Cari nama atau email"
+                        saring={[{ id: 'PinDiatur', label: 'Hanya yang sudah punya PIN', jenis: 'ya' }]}
+                        labelBaris={(anggota) => anggota.Nama}
+                        aksiBaris={(anggota) => (
+                            <DropdownMenuItem onSelect={() => AturSunting(anggota)}>Atur ulang PIN</DropdownMenuItem>
+                        )}
+                        kosong={{ judul: 'Belum ada anggota lain yang PIN-nya bisa Anda atur.' }}
+                    />
                 </section>
             ) : null}
         </TataLetakAplikasi>

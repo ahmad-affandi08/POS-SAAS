@@ -23,14 +23,41 @@ type PropsMenuAksiBaris = {
     aksi: AksiBaris[];
 };
 
+/**
+ * Isi menu aksi (`DropdownMenuItem`): aksi biasa di atas, aksi bahaya dipisah di bawah. Dipakai `MenuAksiBaris` dan
+ * `aksiBaris` milik `TabelData`.
+ */
+export function ItemAksiBaris({ aksi }: { aksi: AksiBaris[] }) {
+    const aksiBiasa = aksi.filter((item) => item.bahaya !== true);
+    const aksiBahaya = aksi.filter((item) => item.bahaya === true);
+
+    return (
+        <>
+            {aksiBiasa.map((item) => (
+                <DropdownMenuItem key={item.label} disabled={item.nonaktif === true} onSelect={item.saatPilih}>
+                    {item.label}
+                </DropdownMenuItem>
+            ))}
+            {aksiBiasa.length > 0 && aksiBahaya.length > 0 ? <DropdownMenuSeparator /> : null}
+            {aksiBahaya.map((item) => (
+                <DropdownMenuItem
+                    key={item.label}
+                    variant="destructive"
+                    disabled={item.nonaktif === true}
+                    onSelect={item.saatPilih}
+                >
+                    {item.label}
+                </DropdownMenuItem>
+            ))}
+        </>
+    );
+}
+
 /** Menu aksi per baris tabel/daftar (§17.6). Tidak dirender bila tidak ada aksi yang boleh. */
 export default function MenuAksiBaris({ label, aksi }: PropsMenuAksiBaris) {
     if (aksi.length === 0) {
         return null;
     }
-
-    const aksiBiasa = aksi.filter((item) => item.bahaya !== true);
-    const aksiBahaya = aksi.filter((item) => item.bahaya === true);
 
     return (
         // Non-modal: dialog yang dibuka dari menu tidak berebut fokus & pointer-events dengan menu.
@@ -41,22 +68,7 @@ export default function MenuAksiBaris({ label, aksi }: PropsMenuAksiBaris) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                {aksiBiasa.map((item) => (
-                    <DropdownMenuItem key={item.label} disabled={item.nonaktif === true} onSelect={item.saatPilih}>
-                        {item.label}
-                    </DropdownMenuItem>
-                ))}
-                {aksiBiasa.length > 0 && aksiBahaya.length > 0 ? <DropdownMenuSeparator /> : null}
-                {aksiBahaya.map((item) => (
-                    <DropdownMenuItem
-                        key={item.label}
-                        variant="destructive"
-                        disabled={item.nonaktif === true}
-                        onSelect={item.saatPilih}
-                    >
-                        {item.label}
-                    </DropdownMenuItem>
-                ))}
+                <ItemAksiBaris aksi={aksi} />
             </DropdownMenuContent>
         </DropdownMenu>
     );

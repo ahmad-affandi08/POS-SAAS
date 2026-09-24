@@ -3,18 +3,50 @@ import { useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisKategoriKas, JenisKategoriKas, PropsKategoriKas } from '@/Tipe/Kasir';
 
 const alamat = '/kelola/kasir/kategori-kas';
-const kelasKepala = 'h-auto px-4 py-2 text-label font-semibold text-teks-sekunder';
+
+const kolom: KolomTabel<BarisKategoriKas>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'font-semibold text-teks-utama' },
+    },
+    {
+        id: 'Jenis',
+        accessorKey: 'Jenis',
+        header: 'Jenis',
+        meta: { label: 'Jenis', prioritas: 'penting' },
+        cell: ({ row }) => row.original.LabelJenis,
+    },
+    {
+        id: 'Akun',
+        accessorFn: (k) => k.Akun ?? '—',
+        header: 'Akun jurnal',
+        meta: { label: 'Akun jurnal', prioritas: 'rendah', kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'Aktif',
+        accessorKey: 'Aktif',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <Badge variant={row.original.Aktif ? 'default' : 'outline'}>
+                {row.original.Aktif ? 'Aktif' : 'Nonaktif'}
+            </Badge>
+        ),
+    },
+];
 
 type IsianKategori = { Nama: string; Jenis: JenisKategoriKas; UuidAkun: string };
 
@@ -73,61 +105,43 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                 <Button onClick={() => Buka(null)}>Tambah kategori kas</Button>
             </div>
 
-            {Kategori.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kategori kas. Tambahkan minimal satu kategori kas keluar agar kasir bisa mencatat pengeluaran dari laci." />
-            ) : (
-                <section className="rounded-panel border border-garis bg-card">
-                    <Table className="min-w-[720px] text-left text-isi">
-                        <TableCaption className="sr-only">Daftar kategori kas, {Kategori.length} kategori</TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Nama
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Jenis
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Akun jurnal
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Status
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    <span className="sr-only">Aksi</span>
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Kategori.map((k) => (
-                                <TableRow key={k.Uuid} className="border-garis">
-                                    <TableCell className="px-4 font-semibold text-teks-utama">{k.Nama}</TableCell>
-                                    <TableCell className="px-4">{k.LabelJenis}</TableCell>
-                                    <TableCell className="px-4 font-mono text-label">{k.Akun ?? '—'}</TableCell>
-                                    <TableCell className="px-4">
-                                        <Badge variant={k.Aktif ? 'default' : 'outline'}>
-                                            {k.Aktif ? 'Aktif' : 'Nonaktif'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right">
-                                        <MenuAksiBaris
-                                            label={`Aksi untuk kategori ${k.Nama}`}
-                                            aksi={[
-                                                { label: 'Ubah kategori', saatPilih: () => Buka(k) },
-                                                {
-                                                    label: k.Aktif ? 'Nonaktifkan kategori' : 'Aktifkan kategori',
-                                                    saatPilih: () => UbahStatus(k),
-                                                    bahaya: k.Aktif,
-                                                },
-                                            ]}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </section>
-            )}
+            <TabelData
+                id="kasir-kategori-kas"
+                label="Daftar kategori kas"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Kategori }}
+                ambilIdBaris={(k) => k.Uuid}
+                urutBawaan="Nama"
+                cari="Cari nama kategori"
+                saring={[
+                    {
+                        id: 'Jenis',
+                        label: 'Jenis',
+                        jenis: 'pilihan',
+                        opsi: [
+                            { nilai: 'Keluar', label: 'Kas keluar' },
+                            { nilai: 'Masuk', label: 'Kas masuk' },
+                        ],
+                    },
+                    { id: 'Aktif', label: 'Hanya yang aktif', jenis: 'ya' },
+                ]}
+                labelBaris={(k) => `untuk kategori ${k.Nama}`}
+                aksiBaris={(k) => (
+                    <ItemAksiBaris
+                        aksi={[
+                            { label: 'Ubah kategori', saatPilih: () => Buka(k) },
+                            {
+                                label: k.Aktif ? 'Nonaktifkan kategori' : 'Aktifkan kategori',
+                                saatPilih: () => UbahStatus(k),
+                                bahaya: k.Aktif,
+                            },
+                        ]}
+                    />
+                )}
+                kosong={{
+                    judul: 'Belum ada kategori kas. Tambahkan minimal satu kategori kas keluar agar kasir bisa mencatat pengeluaran dari laci.',
+                }}
+            />
 
             {form !== null ? (
                 <DialogFormulir

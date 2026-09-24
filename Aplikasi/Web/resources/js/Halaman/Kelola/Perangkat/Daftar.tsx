@@ -5,12 +5,12 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
-import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Card } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -52,7 +52,52 @@ const labelStatus: Record<StatusPerangkat, { jenis: 'sukses' | 'peringatan' | 'n
     Dicabut: { jenis: 'netral', teks: 'Dicabut' },
 };
 
-const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+const kolom: KolomTabel<Perangkat>[] = [
+    {
+        id: 'Kode',
+        accessorKey: 'Kode',
+        header: 'Kode',
+        meta: { label: 'Kode', prioritas: 'utama', wajib: true, kelasSel: 'font-mono text-label text-teks-utama' },
+    },
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'penting' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <span className="text-teks-utama">{baris.Nama}</span>
+                <span className="block text-keterangan text-teks-sekunder">
+                    {baris.LabelJenis}
+                    {baris.Platform ? ` · ${baris.Platform}` : ''}
+                    {baris.VersiAplikasi ? ` · versi ${baris.VersiAplikasi}` : ''}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'NamaOutlet',
+        accessorFn: (baris) => baris.NamaOutlet ?? '—',
+        header: 'Outlet',
+        meta: { label: 'Outlet', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus jenis={labelStatus[row.original.Status].jenis} teks={labelStatus[row.original.Status].teks} />
+        ),
+    },
+    {
+        id: 'TerakhirAktifPada',
+        accessorKey: 'TerakhirAktifPada',
+        header: 'Terakhir aktif',
+        meta: { label: 'Terakhir aktif', prioritas: 'rendah', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.TerakhirAktifPada),
+    },
+];
 
 /** Perangkat POS per outlet: tambah, aktivasi lewat kode + QR, cabut (F-02 langkah 5, BR-02.1, BR-02.3). */
 export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangkat, KodeAktivasiBaru }: PropsDaftar) {
@@ -110,95 +155,50 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
             {ubah ? <FormUbahNama key={ubah.Uuid} perangkat={ubah} saatSelesai={() => AturUbah(null)} /> : null}
             {cabut ? <KonfirmasiCabut perangkat={cabut} saatSelesai={() => AturCabut(null)} /> : null}
 
-            {Perangkat.length === 0 ? (
-                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
-                    <EmptyHeader>
-                        <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[860px] text-isi">
-                        <TableCaption className="sr-only">Daftar perangkat</TableCaption>
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Kode
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Nama
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Outlet
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Status
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Terakhir aktif
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    <span className="sr-only">Aksi</span>
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Perangkat.map((baris) => (
-                                <TableRow key={baris.Uuid}>
-                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
-                                        {baris.Kode}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
-                                        {baris.Nama}
-                                        <span className="block text-keterangan text-teks-sekunder">
-                                            {baris.LabelJenis}
-                                            {baris.Platform ? ` · ${baris.Platform}` : ''}
-                                            {baris.VersiAplikasi ? ` · versi ${baris.VersiAplikasi}` : ''}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                        {baris.NamaOutlet ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        <LabelStatus
-                                            jenis={labelStatus[baris.Status].jenis}
-                                            teks={labelStatus[baris.Status].teks}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="px-4 text-teks-sekunder">
-                                        {FormatTanggalWaktu(baris.TerakhirAktifPada)}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right">
-                                        {bolehKelola && baris.Status !== 'Dicabut' ? (
-                                            <MenuAksiBaris
-                                                label={`Aksi perangkat ${baris.Nama} (${baris.Kode})`}
-                                                aksi={[
-                                                    { label: 'Ubah nama', saatPilih: () => AturUbah(baris) },
-                                                    {
-                                                        label:
-                                                            baris.Status === 'Aktif'
-                                                                ? 'Pindahkan ke HP lain'
-                                                                : 'Buat kode baru',
-                                                        saatPilih: () =>
-                                                            router.post(
-                                                                `/kelola/perangkat/${baris.Uuid}/kode-aktivasi`,
-                                                                {},
-                                                                { preserveScroll: true },
-                                                            ),
-                                                    },
-                                                    { label: 'Cabut', bahaya: true, saatPilih: () => AturCabut(baris) },
-                                                ]}
-                                            />
-                                        ) : null}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            <TabelData
+                id="organisasi-perangkat"
+                label="Daftar perangkat"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Perangkat }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                urutBawaan="Kode"
+                cari="Cari kode atau nama perangkat"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihanBanyak',
+                        opsi: Object.entries(labelStatus).map(([nilai, label]) => ({ nilai, label: label.teks })),
+                    },
+                    {
+                        id: 'NamaOutlet',
+                        label: 'Outlet',
+                        jenis: 'pilihanBanyak',
+                        opsi: Outlet.map((outlet) => ({ nilai: outlet.Nama, label: outlet.Nama })),
+                    },
+                ]}
+                labelBaris={(baris) => `perangkat ${baris.Nama} (${baris.Kode})`}
+                aksiBaris={(baris) =>
+                    bolehKelola && baris.Status !== 'Dicabut' ? (
+                        <ItemAksiBaris
+                            aksi={[
+                                { label: 'Ubah nama', saatPilih: () => AturUbah(baris) },
+                                {
+                                    label: baris.Status === 'Aktif' ? 'Pindahkan ke HP lain' : 'Buat kode baru',
+                                    saatPilih: () =>
+                                        router.post(
+                                            `/kelola/perangkat/${baris.Uuid}/kode-aktivasi`,
+                                            {},
+                                            { preserveScroll: true },
+                                        ),
+                                },
+                                { label: 'Cabut', bahaya: true, saatPilih: () => AturCabut(baris) },
+                            ]}
+                        />
+                    ) : null
+                }
+                kosong={{ judul: 'Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.' }}
+            />
         </TataLetakAplikasi>
     );
 }

@@ -7,6 +7,7 @@ import HalamanDaftarPerangkat from '@/Halaman/Kelola/Perangkat/Daftar';
 import HalamanDokumenLegal from '@/Halaman/Pengelola/Legal/Dokumen';
 import TampilTenant from '@/Halaman/Pengelola/Tenant/Tampil';
 import { BukaMenu, PilihTab } from '@/Pengujian/InteraksiRadix';
+import { RenderDenganKueri } from '@/Pengujian/RenderKueri';
 import type { Tampilan360 } from '@/Tipe/TenantPengelola';
 
 /*
@@ -162,7 +163,7 @@ describe('Kelola/Pengguna: aksi baris & konfirmasi nonaktifkan (F-02, BR-02.1)',
 
     it('akun sendiri tanpa menu aksi; nonaktifkan lewat AlertDialog lalu POST ke URL yang sama', () => {
         AturPropsAplikasi([], true);
-        render(<HalamanDaftarPengguna {...props} />);
+        RenderDenganKueri(<HalamanDaftarPengguna {...props} />);
 
         expect(screen.queryByRole('button', { name: 'Aksi untuk Rina Wulandari' })).toBeNull();
         BukaMenu(screen.getByRole('button', { name: 'Aksi untuk Budi Santoso' }));
@@ -180,7 +181,7 @@ describe('Kelola/Pengguna: aksi baris & konfirmasi nonaktifkan (F-02, BR-02.1)',
 
     it('ubah akses membuka panel samping dan mengirim PUT dengan nama field yang sama', () => {
         AturPropsAplikasi([], true);
-        render(<HalamanDaftarPengguna {...props} />);
+        RenderDenganKueri(<HalamanDaftarPengguna {...props} />);
 
         BukaMenu(screen.getByRole('button', { name: 'Aksi untuk Budi Santoso' }));
         fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah akses' }));
@@ -198,7 +199,7 @@ describe('Kelola/Pengguna: aksi baris & konfirmasi nonaktifkan (F-02, BR-02.1)',
 
     it('tanpa izin ubah/nonaktifkan: tidak ada menu aksi', () => {
         AturPropsAplikasi(['pengguna.undang']);
-        render(<HalamanDaftarPengguna {...props} />);
+        RenderDenganKueri(<HalamanDaftarPengguna {...props} />);
 
         expect(screen.queryByRole('button', { name: 'Aksi untuk Budi Santoso' })).toBeNull();
         expect(screen.getByRole('button', { name: 'Undang pengguna' })).toBeTruthy();
@@ -233,7 +234,7 @@ describe('Kelola/Perangkat: cabut lewat AlertDialog (F-02 langkah 5, BR-02.3)', 
 
     it('Batal tidak mengirim apa pun; Cabut perangkat mengirim POST cabut', () => {
         AturPropsAplikasi(['perangkat.kelola']);
-        render(<HalamanDaftarPerangkat {...props} />);
+        RenderDenganKueri(<HalamanDaftarPerangkat {...props} />);
 
         // Perangkat yang sudah dicabut tidak punya aksi.
         expect(screen.queryByRole('button', { name: 'Aksi perangkat Kasir Lama (KSR02)' })).toBeNull();
@@ -256,7 +257,7 @@ describe('Kelola/Perangkat: cabut lewat AlertDialog (F-02 langkah 5, BR-02.3)', 
 
     it('menu aksi perangkat aktif menawarkan pindah HP; tambah perangkat lewat dialog', () => {
         AturPropsAplikasi(['perangkat.kelola']);
-        render(<HalamanDaftarPerangkat {...props} />);
+        RenderDenganKueri(<HalamanDaftarPerangkat {...props} />);
 
         BukaMenu(screen.getByRole('button', { name: 'Aksi perangkat Kasir Depan (KSR01)' }));
         fireEvent.click(screen.getByRole('menuitem', { name: 'Pindahkan ke HP lain' }));
@@ -275,7 +276,7 @@ describe('Kelola/Perangkat: cabut lewat AlertDialog (F-02 langkah 5, BR-02.3)', 
 
     it('kosong: pesan ajakan menambah perangkat', () => {
         AturPropsAplikasi([]);
-        render(<HalamanDaftarPerangkat {...props} Perangkat={[]} />);
+        RenderDenganKueri(<HalamanDaftarPerangkat {...props} Perangkat={[]} />);
 
         expect(
             screen.getByText('Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.'),

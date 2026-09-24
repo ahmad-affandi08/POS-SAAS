@@ -1,12 +1,14 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -16,7 +18,6 @@ import {
     BreadcrumbSeparator,
 } from '@/Komponen/Ui/breadcrumb';
 import { Card, CardContent } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -41,8 +42,6 @@ type Outlet = {
 type Gudang = { Uuid: string; Kode: string; Nama: string; Jenis: string; Status: StatusOrganisasi };
 
 type PropsDetail = { Outlet: Outlet; Gudang: Gudang[]; Merek: Pilihan[]; Kota: Kota[]; JenisGudang: Pilihan[] };
-
-const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
 
 /** Profil outlet & lokasi stoknya (F-02 langkah 1–2, BR-02.2, BR-02.4). */
 export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, JenisGudang }: PropsDetail) {
@@ -149,7 +148,42 @@ type PropsBagianGudang = { alamatOutlet: string; gudang: Gudang[]; jenis: Piliha
 
 function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianGudang) {
     const [sunting, AturSunting] = useState<Gudang | 'baru' | null>(null);
-    const labelJenis = new Map(jenis.map((baris) => [baris.Nilai, baris.Label]));
+    const kolom = useMemo<KolomTabel<Gudang>[]>(() => {
+        const labelJenis = new Map(jenis.map((baris) => [baris.Nilai, baris.Label]));
+
+        return [
+            {
+                id: 'Kode',
+                accessorKey: 'Kode',
+                header: 'Kode',
+                meta: {
+                    label: 'Kode',
+                    prioritas: 'utama',
+                    wajib: true,
+                    kelasSel: 'font-mono text-label text-teks-utama',
+                },
+            },
+            { id: 'Nama', accessorKey: 'Nama', header: 'Nama', meta: { label: 'Nama', prioritas: 'penting' } },
+            {
+                id: 'Jenis',
+                accessorFn: (baris) => labelJenis.get(baris.Jenis) ?? baris.Jenis,
+                header: 'Jenis',
+                meta: { label: 'Jenis', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            },
+            {
+                id: 'Status',
+                accessorKey: 'Status',
+                header: 'Status',
+                meta: { label: 'Status', prioritas: 'penting' },
+                cell: ({ row }) =>
+                    row.original.Status === 'Aktif' ? (
+                        <LabelStatus jenis="sukses" teks="Aktif" />
+                    ) : (
+                        <LabelStatus jenis="netral" teks="Diarsipkan" />
+                    ),
+            },
+        ];
+    }, [jenis]);
 
     return (
         <section className="flex flex-col gap-2">
@@ -179,70 +213,37 @@ function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianG
                     />
                 </DialogFormulir>
             ) : null}
-            <Card className="gap-0 py-0">
-                <Table className="min-w-[640px] text-isi">
-                    <TableCaption className="sr-only">Lokasi stok outlet</TableCaption>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead scope="col" className={kelasKepala}>
-                                Kode
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Nama
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Jenis
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Status
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {gudang.map((baris) => (
-                            <TableRow key={baris.Uuid}>
-                                <TableCell className="px-4 font-mono text-label text-teks-utama">
-                                    {baris.Kode}
-                                </TableCell>
-                                <TableCell className="px-4 whitespace-normal text-teks-utama">{baris.Nama}</TableCell>
-                                <TableCell className="px-4 text-teks-sekunder">
-                                    {labelJenis.get(baris.Jenis) ?? baris.Jenis}
-                                </TableCell>
-                                <TableCell className="px-4">
-                                    {baris.Status === 'Aktif' ? (
-                                        <LabelStatus jenis="sukses" teks="Aktif" />
-                                    ) : (
-                                        <LabelStatus jenis="netral" teks="Diarsipkan" />
-                                    )}
-                                </TableCell>
-                                <TableCell className="px-4 text-right">
-                                    {bolehKelola ? (
-                                        <MenuAksiBaris
-                                            label={`Aksi lokasi stok ${baris.Nama}`}
-                                            aksi={[
-                                                { label: 'Ubah', saatPilih: () => AturSunting(baris) },
-                                                {
-                                                    label: baris.Status === 'Aktif' ? 'Arsipkan' : 'Pulihkan',
-                                                    bahaya: baris.Status === 'Aktif',
-                                                    saatPilih: () =>
-                                                        router.post(
-                                                            `${alamatOutlet}/gudang/${baris.Uuid}/${baris.Status === 'Aktif' ? 'arsipkan' : 'pulihkan'}`,
-                                                            {},
-                                                            { preserveScroll: true },
-                                                        ),
-                                                },
-                                            ]}
-                                        />
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
+            <TabelData
+                id="organisasi-gudang-outlet"
+                label="Lokasi stok outlet"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: gudang }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                urutBawaan="Kode"
+                labelBaris={(baris) => `lokasi stok ${baris.Nama}`}
+                {...(bolehKelola
+                    ? {
+                          aksiBaris: (baris: Gudang) => (
+                              <ItemAksiBaris
+                                  aksi={[
+                                      { label: 'Ubah', saatPilih: () => AturSunting(baris) },
+                                      {
+                                          label: baris.Status === 'Aktif' ? 'Arsipkan' : 'Pulihkan',
+                                          bahaya: baris.Status === 'Aktif',
+                                          saatPilih: () =>
+                                              router.post(
+                                                  `${alamatOutlet}/gudang/${baris.Uuid}/${baris.Status === 'Aktif' ? 'arsipkan' : 'pulihkan'}`,
+                                                  {},
+                                                  { preserveScroll: true },
+                                              ),
+                                      },
+                                  ]}
+                              />
+                          ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada lokasi stok. Tambah lokasi stok untuk barang jual.' }}
+            />
         </section>
     );
 }

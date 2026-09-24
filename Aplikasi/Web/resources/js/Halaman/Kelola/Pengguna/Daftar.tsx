@@ -1,5 +1,5 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -7,11 +7,12 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabPengguna from '@/Komponen/Kelola/TabPengguna';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
-import MenuAksiBaris, { type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
-import { Card } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { ItemAksiBaris, type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -57,7 +58,96 @@ type PropsDaftar = {
 
 type Pilihan = { jenis: 'akses' | 'nonaktifkan'; anggota: Anggota } | null;
 
-const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+/** Kolom daftar pengguna; kode outlet & akun sendiri dari props halaman. */
+function BuatKolom(namaOutlet: Map<string, string>, uuidSaya: string): KolomTabel<Anggota>[] {
+    return [
+        {
+            id: 'Nama',
+            accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email}`,
+            header: 'Nama',
+            meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: anggota } }) => (
+                <>
+                    <span className="block font-semibold text-teks-utama">
+                        {anggota.Nama}
+                        {anggota.Uuid === uuidSaya ? (
+                            <span className="font-normal text-teks-sekunder"> (Anda)</span>
+                        ) : null}
+                    </span>
+                    <span className="block text-keterangan break-all text-teks-sekunder">{anggota.Email}</span>
+                </>
+            ),
+        },
+        {
+            id: 'NamaPeran',
+            accessorFn: (anggota) => anggota.NamaPeran ?? 'Belum ada peran',
+            header: 'Peran',
+            meta: { label: 'Peran', prioritas: 'penting' },
+        },
+        {
+            id: 'Outlet',
+            header: 'Outlet',
+            enableSorting: false,
+            meta: { label: 'Outlet', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row: { original: anggota } }) =>
+                anggota.SemuaOutlet
+                    ? 'Semua outlet'
+                    : anggota.UuidOutlet.map((uuid) => namaOutlet.get(uuid) ?? 'Diarsipkan').join(', ') ||
+                      'Belum ditugaskan',
+        },
+        {
+            id: 'Status',
+            accessorKey: 'Status',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row: { original: anggota } }) =>
+                anggota.Status === 'Aktif' ? (
+                    <LabelStatus jenis="sukses" teks="Aktif" />
+                ) : (
+                    <LabelStatus
+                        jenis="netral"
+                        teks={`Nonaktif sejak ${FormatTanggalWaktu(anggota.DinonaktifkanPada)}`}
+                    />
+                ),
+        },
+    ];
+}
+
+const kolomUndangan: KolomTabel<Undangan>[] = [
+    {
+        id: 'Email',
+        accessorKey: 'Email',
+        header: 'Email',
+        meta: { label: 'Email', prioritas: 'utama', wajib: true, kelasSel: 'break-all font-semibold text-teks-utama' },
+    },
+    {
+        id: 'NamaPeran',
+        accessorFn: (undangan) => undangan.NamaPeran ?? '—',
+        header: 'Peran',
+        meta: { label: 'Peran', prioritas: 'penting' },
+    },
+    {
+        id: 'Outlet',
+        header: 'Outlet',
+        enableSorting: false,
+        meta: { label: 'Outlet', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: undangan } }) =>
+            undangan.SemuaOutlet ? 'Semua outlet' : `${String(undangan.JumlahOutlet)} outlet`,
+    },
+    {
+        id: 'Pengundang',
+        accessorKey: 'Pengundang',
+        header: 'Diundang oleh',
+        meta: { label: 'Diundang oleh', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'BerlakuSampai',
+        accessorKey: 'BerlakuSampai',
+        header: 'Berlaku sampai',
+        meta: { label: 'Berlaku sampai', prioritas: 'penting', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.BerlakuSampai),
+    },
+];
 
 /** Pengguna tenant: undang, atur peran & outlet, nonaktifkan (F-02 langkah 3, BR-02.1, BR-00.1). */
 export default function HalamanDaftarPengguna({
@@ -78,7 +168,10 @@ export default function HalamanDaftarPengguna({
     const [pilihan, AturPilihan] = useState<Pilihan>(null);
     const penuh = CekBatasPenuh(BatasPengguna);
     const peranTerlihat = Peran.filter((peran) => sayaPemilik || !peran.Pemilik);
-    const namaOutlet = new Map(Outlet.map((outlet) => [outlet.Uuid, outlet.Kode]));
+    const kolom = useMemo(
+        () => BuatKolom(new Map(Outlet.map((outlet) => [outlet.Uuid, outlet.Kode])), UuidSaya),
+        [Outlet, UuidSaya],
+    );
 
     // Pemilik hanya bisa diubah Pemilik lain; akun sendiri tidak bisa diubah dari sini.
     const BolehSentuh = (anggota: Anggota) => anggota.Uuid !== UuidSaya && (sayaPemilik || !anggota.Pemilik);
@@ -176,111 +269,64 @@ export default function HalamanDaftarPengguna({
                 />
             ) : null}
 
-            <Card className="gap-0 py-0">
-                <Table className="min-w-[760px] text-isi">
-                    <TableCaption className="sr-only">Daftar pengguna</TableCaption>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead scope="col" className={kelasKepala}>
-                                Nama
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Peran
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Outlet
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                Status
-                            </TableHead>
-                            <TableHead scope="col" className={kelasKepala}>
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Anggota.map((anggota) => (
-                            <TableRow key={anggota.Uuid} className="align-top">
-                                <TableCell className="px-4 whitespace-normal">
-                                    <p className="font-semibold text-teks-utama">
-                                        {anggota.Nama}
-                                        {anggota.Uuid === UuidSaya ? (
-                                            <span className="font-normal text-teks-sekunder"> (Anda)</span>
-                                        ) : null}
-                                    </p>
-                                    <p className="text-keterangan text-teks-sekunder">{anggota.Email}</p>
-                                </TableCell>
-                                <TableCell className="px-4 whitespace-normal text-teks-utama">
-                                    {anggota.NamaPeran ?? 'Belum ada peran'}
-                                </TableCell>
-                                <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                    {anggota.SemuaOutlet
-                                        ? 'Semua outlet'
-                                        : anggota.UuidOutlet.map((uuid) => namaOutlet.get(uuid) ?? 'Diarsipkan').join(
-                                              ', ',
-                                          ) || 'Belum ditugaskan'}
-                                </TableCell>
-                                <TableCell className="px-4">
-                                    {anggota.Status === 'Aktif' ? (
-                                        <LabelStatus jenis="sukses" teks="Aktif" />
-                                    ) : (
-                                        <LabelStatus
-                                            jenis="netral"
-                                            teks={`Nonaktif sejak ${FormatTanggalWaktu(anggota.DinonaktifkanPada)}`}
-                                        />
-                                    )}
-                                </TableCell>
-                                <TableCell className="px-4 text-right">
-                                    <MenuAksiBaris label={`Aksi untuk ${anggota.Nama}`} aksi={SusunAksi(anggota)} />
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
+            <TabelData
+                id="organisasi-pengguna"
+                label="Daftar pengguna"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Anggota }}
+                ambilIdBaris={(anggota) => anggota.Uuid}
+                cari="Cari nama atau email"
+                saring={[
+                    {
+                        id: 'Status',
+                        label: 'Status',
+                        jenis: 'pilihan',
+                        opsi: [
+                            { nilai: 'Aktif', label: 'Aktif' },
+                            { nilai: 'Nonaktif', label: 'Nonaktif' },
+                        ],
+                    },
+                ]}
+                labelBaris={(anggota) => `untuk ${anggota.Nama}`}
+                aksiBaris={(anggota) => {
+                    const aksi = SusunAksi(anggota);
 
-            <section className="flex flex-col gap-2">
-                <h2 className="text-subjudul font-semibold text-teks-utama">Undangan menunggu</h2>
-                {Undangan.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Tidak ada undangan yang menunggu diterima.</p>
-                ) : (
-                    <Card className="gap-0 py-0">
-                        <ul className="divide-y divide-garis">
-                            {Undangan.map((undangan) => (
-                                <li
-                                    key={undangan.Uuid}
-                                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-isi"
-                                >
-                                    <span>
-                                        <span className="font-semibold text-teks-utama">{undangan.Email}</span>
-                                        <span className="block text-keterangan text-teks-sekunder">
-                                            {undangan.NamaPeran ?? '—'} ·{' '}
-                                            {undangan.SemuaOutlet
-                                                ? 'semua outlet'
-                                                : `${String(undangan.JumlahOutlet)} outlet`}{' '}
-                                            · diundang {undangan.Pengundang} · berlaku sampai{' '}
-                                            {FormatTanggalWaktu(undangan.BerlakuSampai)}
-                                        </span>
-                                    </span>
-                                    {bolehUndang ? (
-                                        <Tombol
-                                            varian="sekunder"
-                                            onClick={() =>
-                                                router.post(
-                                                    `/kelola/pengguna/undangan/${undangan.Uuid}/batalkan`,
-                                                    {},
-                                                    { preserveScroll: true },
-                                                )
-                                            }
-                                        >
-                                            Batalkan undangan
-                                        </Tombol>
-                                    ) : null}
-                                </li>
-                            ))}
-                        </ul>
-                    </Card>
-                )}
+                    return aksi.length === 0 ? null : <ItemAksiBaris aksi={aksi} />;
+                }}
+                kosong={{ judul: 'Belum ada pengguna lain. Undang pengguna agar tim bisa ikut bekerja.' }}
+            />
+
+            <section className="flex flex-col gap-2" aria-labelledby="judul-undangan">
+                <h2 id="judul-undangan" className="text-subjudul font-semibold text-teks-utama">
+                    Undangan menunggu
+                </h2>
+                <TabelData
+                    id="organisasi-undangan"
+                    label="Undangan menunggu"
+                    kolom={kolomUndangan}
+                    sumber={{ mode: 'lokal', data: Undangan }}
+                    ambilIdBaris={(undangan) => undangan.Uuid}
+                    labelBaris={(undangan) => `undangan ${undangan.Email}`}
+                    {...(bolehUndang
+                        ? {
+                              aksiBaris: (undangan: Undangan) => (
+                                  <DropdownMenuItem
+                                      variant="destructive"
+                                      onSelect={() =>
+                                          router.post(
+                                              `/kelola/pengguna/undangan/${undangan.Uuid}/batalkan`,
+                                              {},
+                                              { preserveScroll: true },
+                                          )
+                                      }
+                                  >
+                                      Batalkan undangan
+                                  </DropdownMenuItem>
+                              ),
+                          }
+                        : {})}
+                    kosong={{ judul: 'Tidak ada undangan yang menunggu diterima.' }}
+                />
             </section>
         </TataLetakAplikasi>
     );

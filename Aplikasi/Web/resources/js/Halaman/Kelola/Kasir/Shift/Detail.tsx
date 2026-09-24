@@ -1,18 +1,82 @@
 import { Link } from '@inertiajs/react';
 
 import LencanaShift from '@/Komponen/Kasir/LencanaShift';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
-import { cn } from '@/Komponen/Ui/utils';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsDetailShift } from '@/Tipe/Kasir';
 
-const kelasKepala = 'h-auto px-4 py-2 text-label font-semibold text-teks-sekunder';
+type MutasiKas = PropsDetailShift['MutasiKas'][number];
+
+const kolom: KolomTabel<MutasiKas>[] = [
+    {
+        id: 'DicatatPada',
+        accessorKey: 'DicatatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DicatatPada),
+    },
+    {
+        id: 'Jenis',
+        accessorKey: 'Jenis',
+        header: 'Jenis & kategori',
+        meta: { label: 'Jenis & kategori', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: m } }) => (
+            <>
+                <span className="block text-teks-utama">{m.LabelJenis}</span>
+                {m.NamaKategori ? <span className="block text-label text-teks-sekunder">{m.NamaKategori}</span> : null}
+                {m.Catatan ? (
+                    <span className="block text-label break-words text-teks-sekunder">{m.Catatan}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'DicatatOleh',
+        accessorKey: 'DicatatOleh',
+        header: 'Dicatat oleh',
+        meta: { label: 'Dicatat oleh', prioritas: 'rendah' },
+        cell: ({ row: { original: m } }) => (
+            <>
+                <span className="block">{m.DicatatOleh}</span>
+                {m.DisetujuiOleh ? (
+                    <span className="block text-label text-teks-sekunder">Disetujui {m.DisetujuiOleh}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'NomorJurnal',
+        header: 'Jurnal',
+        enableSorting: false,
+        meta: { label: 'Jurnal', prioritas: 'rendah', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row: { original: m } }) =>
+            m.UuidJurnal && m.NomorJurnal ? (
+                <Link href={`/kelola/akuntansi/jurnal/${m.UuidJurnal}`} className="font-mono text-brand underline">
+                    {m.NomorJurnal}
+                </Link>
+            ) : (
+                <span className="text-teks-sekunder">—</span>
+            ),
+    },
+    {
+        id: 'Jumlah',
+        header: 'Jumlah',
+        enableSorting: false,
+        meta: { label: 'Jumlah', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: m } }) => (
+            <span className={m.Jenis === 'Masuk' ? 'text-sukses' : 'text-teks-utama'}>
+                {m.Jenis === 'Masuk' ? '+' : '−'}
+                {FormatRupiah(m.Jumlah)}
+            </span>
+        ),
+    },
+];
 
 function Nilai({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -81,85 +145,25 @@ export default function HalamanDetailShift({ Shift, MutasiKas }: PropsDetailShif
             </Card>
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Kas masuk, keluar & setoran</h2>
-            {MutasiKas.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kas masuk, kas keluar, atau setoran di shift ini." />
-            ) : (
-                <section className="rounded-panel border border-garis bg-card">
-                    <Table className="min-w-[860px] text-left text-isi">
-                        <TableCaption className="sr-only">Mutasi kas shift, {MutasiKas.length} baris</TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Waktu
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Jenis & kategori
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Dicatat oleh
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Jurnal
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Jumlah
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {MutasiKas.map((m) => (
-                                <TableRow key={m.Uuid} className="border-garis align-top">
-                                    <TableCell className="px-4 whitespace-nowrap text-teks-sekunder">
-                                        {FormatTanggalWaktu(m.DicatatPada)}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <span className="block text-teks-utama">{m.LabelJenis}</span>
-                                        {m.NamaKategori ? (
-                                            <span className="block text-label text-teks-sekunder">
-                                                {m.NamaKategori}
-                                            </span>
-                                        ) : null}
-                                        {m.Catatan ? (
-                                            <span className="block text-label break-words text-teks-sekunder">
-                                                {m.Catatan}
-                                            </span>
-                                        ) : null}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <span className="block">{m.DicatatOleh}</span>
-                                        {m.DisetujuiOleh ? (
-                                            <span className="block text-label text-teks-sekunder">
-                                                Disetujui {m.DisetujuiOleh}
-                                            </span>
-                                        ) : null}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-nowrap">
-                                        {m.UuidJurnal && m.NomorJurnal ? (
-                                            <Link
-                                                href={`/kelola/akuntansi/jurnal/${m.UuidJurnal}`}
-                                                className="font-mono text-brand underline"
-                                            >
-                                                {m.NomorJurnal}
-                                            </Link>
-                                        ) : (
-                                            <span className="text-teks-sekunder">—</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell
-                                        className={cn(
-                                            'px-4 text-right whitespace-nowrap tabular-nums',
-                                            m.Jenis === 'Masuk' ? 'text-sukses' : 'text-teks-utama',
-                                        )}
-                                    >
-                                        {m.Jenis === 'Masuk' ? '+' : '−'}
-                                        {FormatRupiah(m.Jumlah)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </section>
-            )}
+            <TabelData
+                id="kasir-shift-mutasi"
+                label="Mutasi kas shift"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: MutasiKas }}
+                ambilIdBaris={(m) => m.Uuid}
+                urutBawaan="DicatatPada"
+                saring={[
+                    {
+                        id: 'Jenis',
+                        label: 'Jenis',
+                        jenis: 'pilihanBanyak',
+                        opsi: [...new Map(MutasiKas.map((m) => [m.Jenis, m.LabelJenis])).entries()].map(
+                            ([nilai, label]) => ({ nilai, label }),
+                        ),
+                    },
+                ]}
+                kosong={{ judul: 'Belum ada kas masuk, kas keluar, atau setoran di shift ini.' }}
+            />
         </TataLetakAplikasi>
     );
 }
