@@ -186,7 +186,7 @@ final class PenerapImpor
         }
 
         return is_string($data['NamaInduk'] ?? null)
-            ? $this->BuatVarian($data, $opsi, $bolehHarga)
+            ? $this->BuatVarian($impor, $data, $opsi, $bolehHarga)
             : $this->Buat($data, $opsi, $bolehHarga);
     }
 
@@ -337,11 +337,11 @@ final class PenerapImpor
     /**
      * @param  array<string, mixed>  $data
      */
-    private function BuatVarian(array $data, DataOpsiImpor $opsi, bool $bolehHarga): int
+    private function BuatVarian(ImporProduk $impor, array $data, DataOpsiImpor $opsi, bool $bolehHarga): int
     {
         /** @var list<array{Nama: string, Nilai: string}> $atribut */
         $atribut = array_values(array_map(fn (array $a): array => ['Nama' => (string) $a['Nama'], 'Nilai' => (string) $a['Nilai']], (array) ($data['Varian'] ?? [])));
-        $induk = $this->CariInduk((string) $data['NamaInduk']) ?? $this->BuatInduk($data, $atribut, $opsi, $bolehHarga);
+        $induk = $this->CariInduk((string) $data['NamaInduk']) ?? $this->BuatInduk($impor, $data, $atribut, $opsi, $bolehHarga);
         $jenis = JenisProduk::tryFrom((string) ($data['JenisAkhir'] ?? '')) ?? $opsi->jenisBawaan;
         $anak = $this->tambahVarian->Jalankan($induk, new DataVarianAnak($atribut, is_string($data['Sku'] ?? null) ? $data['Sku'] : null, $jenis, null, $bolehHarga, SumberPerubahanKatalog::Impor));
 
@@ -349,20 +349,29 @@ final class PenerapImpor
     }
 
     /**
-     * Induk varian baru dari data baris anak pertamanya: kategori, merek, satuan dasar, pajak, dan tampilan.
+     * Induk varian baru. Datanya (SKU, kategori, merek, satuan dasar, pajak, tampilan) diambil dari baris induk
+     * eksplisit di berkas yang sama bila ada (baris itu nanti memperbarui induk ini), selain itu dari baris anak.
      *
-     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $dataAnak
      * @param  list<array{Nama: string, Nilai: string}>  $atribut
      */
-    private function BuatInduk(array $data, array $atribut, DataOpsiImpor $opsi, bool $bolehHarga): Produk
+    private function BuatInduk(ImporProduk $impor, array $dataAnak, array $atribut, DataOpsiImpor $opsi, bool $bolehHarga): Produk
     {
+        $barisInduk = ImporProdukBaris::query()
+            ->where('IdImporProduk', $impor->Id)
+            ->where('KunciProduk', mb_substr('induk:'.mb_strtolower((string) $dataAnak['NamaInduk']), 0, 191))
+            ->whereIn('Status', [StatusBarisImpor::Valid->value, StatusBarisImpor::Diterapkan->value])
+            ->whereRaw("JSON_TYPE(JSON_EXTRACT(`Data`, '$.NamaInduk')) = 'NULL'")
+            ->orderBy('NomorBaris')
+            ->first();
+        $data = $barisInduk === null ? $dataAnak : $barisInduk->Data;
         $satuanDasar = $this->AmbilSatuan(is_string($data['Satuan'] ?? null) ? $data['Satuan'] : 'pcs', $opsi, BidangImpor::Satuan);
 
         return $this->simpanProduk->Jalankan(null, new DataProduk(
             uuid: (string) Str::ulid(),
-            nama: (string) $data['NamaInduk'],
-            namaStruk: null,
-            sku: null,
+            nama: (string) $dataAnak['NamaInduk'],
+            namaStruk: $barisInduk === null || ! is_string($data['NamaStruk'] ?? null) ? null : $data['NamaStruk'],
+            sku: $barisInduk === null || ! is_string($data['Sku'] ?? null) ? null : $data['Sku'],
             jenis: JenisProduk::IndukVarian,
             idKategori: $this->AmbilIdKategori($data, $opsi),
             merek: is_string($data['Merek'] ?? null) ? $data['Merek'] : null,

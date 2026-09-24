@@ -134,13 +134,13 @@ final class PemvalidasiImpor
     private function JalankanFaseB(ImporProduk $impor): void
     {
         $opsi = DataOpsiImpor::DariArray($impor->Opsi ?? []);
-        $this->TandaiGanda($impor);
+        $pajakInduk = $this->TandaiGanda($impor);
 
         ImporProdukBaris::query()
             ->where('IdImporProduk', $impor->Id)
             ->whereIn('Status', [StatusBarisImpor::Valid->value, StatusBarisImpor::Dilewati->value])
-            ->chunkById(self::UKURAN_POTONGAN_RENCANA, /** @param Collection<int, ImporProdukBaris> $potongan */ function (Collection $potongan) use ($opsi): void {
-                $this->RencanakanPotongan($potongan, $opsi);
+            ->chunkById(self::UKURAN_POTONGAN_RENCANA, /** @param Collection<int, ImporProdukBaris> $potongan */ function (Collection $potongan) use ($opsi, $pajakInduk): void {
+                $this->RencanakanPotongan($potongan, $opsi, $pajakInduk);
             }, 'Id');
 
         DB::transaction(function () use ($impor): void {
@@ -166,18 +166,26 @@ final class PemvalidasiImpor
 
     /**
      * SKU, barcode, produk tanpa SKU (nama), dan varian (induk + nilai) yang muncul lebih dari sekali di berkas.
-     * Hanya baris yang lolos fase A yang dibandingkan.
+     * Hanya baris yang lolos fase A yang dibandingkan. Sekalian mencatat baris induk varian eksplisit di berkas
+     * (nama → punya kelompok pajak), karena induk baru dibuat dari baris itu.
+     *
+     * @return array<string, bool>
      */
-    private function TandaiGanda(ImporProduk $impor): void
+    private function TandaiGanda(ImporProduk $impor): array
     {
         $peta = ['Sku' => [], 'Barcode' => [], 'Nama' => [], 'Varian' => []];
+        $pajakInduk = [];
 
         ImporProdukBaris::query()
             ->where('IdImporProduk', $impor->Id)
             ->where('Status', StatusBarisImpor::Valid->value)
             ->select(['Id', 'NomorBaris', 'Data'])
-            ->chunkById(self::UKURAN_POTONGAN_RENCANA, /** @param Collection<int, ImporProdukBaris> $potongan */ function (Collection $potongan) use (&$peta): void {
+            ->chunkById(self::UKURAN_POTONGAN_RENCANA, /** @param Collection<int, ImporProdukBaris> $potongan */ function (Collection $potongan) use (&$peta, &$pajakInduk): void {
                 foreach ($potongan as $baris) {
+                    if (($baris->Data['JenisAkhir'] ?? null) === JenisProduk::IndukVarian->value && ($baris->Data['NamaInduk'] ?? null) === null) {
+                        $pajakInduk[mb_strtolower((string) $baris->Data['Nama'])] ??= ($baris->Data['IdKelompokPajak'] ?? null) !== null;
+                    }
+
                     foreach (self::AmbilKunciGanda($baris->Data) as $jenis => $kunciDaftar) {
                         foreach ($kunciDaftar as $kunci) {
                             $peta[$jenis][$kunci][] = $baris->NomorBaris;
@@ -219,6 +227,8 @@ final class PemvalidasiImpor
 
             self::PerbaruiMassal($perubahan);
         }
+
+        return $pajakInduk;
     }
 
     /**
@@ -246,8 +256,9 @@ final class PemvalidasiImpor
 
     /**
      * @param  Collection<int, ImporProdukBaris>  $potongan
+     * @param  array<string, bool>  $pajakInduk  nama induk (huruf kecil) di berkas → punya kelompok pajak
      */
-    private function RencanakanPotongan(Collection $potongan, DataOpsiImpor $opsi): void
+    private function RencanakanPotongan(Collection $potongan, DataOpsiImpor $opsi, array $pajakInduk): void
     {
         $data = $potongan->mapWithKeys(fn (ImporProdukBaris $baris): array => [$baris->Id => $baris->Data])->all();
         $sku = array_values(array_unique(array_filter(array_map(fn (array $d): ?string => is_string($d['Sku'] ?? null) ? $d['Sku'] : null, $data))));
@@ -316,7 +327,10 @@ final class PemvalidasiImpor
             $aksi = $target === null ? AksiBarisImpor::Buat : ($opsi->mode === ModeImpor::TambahDanPerbarui ? AksiBarisImpor::Perbarui : AksiBarisImpor::Lewati);
             $perluPajak = $jenisAkhir->CekBisaDijual() || $jenisAkhir === JenisProduk::IndukVarian;
 
-            if ($aksi === AksiBarisImpor::Buat && $perluPajak && ($d['IdKelompokPajak'] ?? null) === null && $opsi->idKelompokPajakBawaan === null && ($namaIndukBaris === null || $idInduk === null)) {
+            // Anak varian baru ikut pajak induknya: induk yang sudah ada, atau baris induk di berkas yang berpajak.
+            $pajakDariInduk = $namaIndukBaris !== null && ($idInduk !== null || ($pajakInduk[$namaIndukBaris] ?? false));
+
+            if ($aksi === AksiBarisImpor::Buat && $perluPajak && ($d['IdKelompokPajak'] ?? null) === null && $opsi->idKelompokPajakBawaan === null && ! $pajakDariInduk) {
                 $galat[] = ['Bidang' => 'Kelompok Pajak', 'Pesan' => 'Kelompok pajak wajib untuk produk yang dijual. Isi kolom Kelompok Pajak atau pilih kelompok pajak bawaan.'];
             }
 
