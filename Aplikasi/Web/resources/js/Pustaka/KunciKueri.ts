@@ -12,4 +12,11 @@ export const KunciKueri = {
     Impor: {
         Status: (uuid: string) => ['Impor', 'Status', uuid] as const,
     },
+    // F-05a: pemilih produk stok awal (GET /kelola/persediaan/produk/cari), polling status posting & impor stok awal.
+    Persediaan: {
+        CariProduk: (kata: string, uuidGudang: string | null) =>
+            ['Persediaan', 'CariProduk', kata, uuidGudang] as const,
+        StatusPosting: (uuid: string) => ['Persediaan', 'StatusPosting', uuid] as const,
+        StatusImpor: (uuid: string) => ['Persediaan', 'StatusImpor', uuid] as const,
+    },
 } as const;
