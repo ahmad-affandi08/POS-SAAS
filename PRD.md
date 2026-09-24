@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.30 |
+| Versi | 1.31 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -51,6 +51,7 @@
 | 1.28 | Rincian F-01 (diputuskan agen atas mandat D-12): wizard `PanduanAwal` 6 langkah dengan progres, penerapan template idempoten & aditif ke `Akun`/`PemetaanAkun`/`Kategori`/`Satuan`/`KelompokPajak`/`OutletFitur`, pajak outlet merujuk `JenisPajak` (tarif dicari saat dipakai), `MetodePembayaran`, produk contoh & tambah cepat, izin `panduan-awal.kelola`. Istilah `PiutangSettlement` → `PiutangPencairan` dan `Waste` → `SusutPersediaan` (§11.2, kamus §13.7.1). §25 no. 15 sebagian dan no. 16(a) ditutup. Rincian tabel §15 ditambahkan setelah implementasi digabung. |
 | 1.29 | Skema F-01 dicatat di §15 sesuai implementasi (`ProgresPanduanAwal`, kolom baru `Outlet`, `MetodePembayaran`, `Satuan.KodeStandar`, `KelompokPajakDetail.IdJenisPajak`, kunci JSON `Tenant.Pengaturan` & `Outlet.ProfilPajak`); `PemetaanAkun.Kunci` memakai nilai `PeranAkun`; izin `panduan-awal.kelola` di §19.1; batas kewajaran MDR 10% per metode; peran sektor ditunda ke F-10/F-17. Langkah rilis: `organisasi:siapkan-peran` dan `panduan-awal:siapkan-bawaan`. |
 | 1.30 | Disetujui pemilik produk: test vector `Spesifikasi/VektorUjiKalkulasi/` tidak lagi file penjaga. Agent boleh **menambah kasus** (wajib lolos di PHP & Dart), tetapi tidak boleh menghapus kasus atau mengubah nilai harapan tanpa alasan bisnis tertulis di PRD (CLAUDE.md #19 tetap berlaku). |
+| 1.31 | Rincian F-03 (diputuskan agen atas mandat D-12): skema katalog lengkap di §15 (`ProdukGudang`, `NomorUrutKatalog`, `PenghapusanKatalog`, `ImporProduk`/`ImporProdukBaris`, kolom baru Produk/DaftarHarga/RiwayatHarga/KelompokPajak/Resep/Pilihan), endpoint POS `katalog` & gambar di §16.3, istilah baru di kamus, penegakan izin katalog di §19.1, aturan SKU/barcode otomatis, BatasSku, varian, arsip/hapus, riwayat harga, penentu harga PHP=Dart dengan test vector, rumus susut resep, dan impor/ekspor. Utang F-03 di §25 no. 19. |
 
 ---
 
@@ -1013,6 +1014,19 @@ Harga final ditentukan berlapis (prioritas tinggi ke rendah):
 - BR-03.4 Perubahan resep **tidak** mengubah transaksi lampau (resep di-snapshot saat penjualan untuk kalkulasi HPP).
 - BR-03.5 HPP produk resep = Σ (qty bahan × HPP bahan saat itu) / yield.
 - BR-03.6 Import massal memakai validasi baris per baris dengan laporan error yang bisa diunduh. Import besar diproses di antrian (queue).
+
+**Rincian F-03 (v1.31, diputuskan agen atas mandat D-12):**
+- SKU otomatis `PRD-000001` bila kosong dan barcode internal EAN-13 berawalan `20` (dapat dikonfigurasi; parsing barcode timbangan 2x memakai awalan lain per tenant di F-07), keduanya dari `NomorUrutKatalog` di bawah kunci tenant sehingga kirim ganda tidak menggandakan. SKU/barcode dibandingkan tanpa beda huruf besar/kecil.
+- `BatasSku` menghitung produk aktif saja: produk diarsipkan, induk varian, dan produk terhapus tidak dihitung. Ditegakkan saat buat, pulihkan, generasi varian, dan impor (berhenti rapi di batas; bisa dilanjutkan setelah kuota bertambah).
+- Varian: maks. 3 atribut × 20 nilai, maks. 100 kombinasi per generasi; atribut baru tidak bisa ditambahkan ke induk yang sudah punya anak. Kategori maks. 3 tingkat.
+- Hapus (BR-03.2): hanya bila tidak dipakai (bahan resep versi terbaru, bahan pilihan, komponen paket, anak varian terpakai; F-05/F-07 menambah pemeriksa lewat kontrak `PemeriksaPemakaianProduk`); soft delete dengan SKU & kunci varian dikosongkan. Selain itu hanya diarsipkan. Setiap penghapusan meninggalkan jejak `PenghapusanKatalog` untuk POS.
+- Harga (BR-03.3): semua perubahan harga dasar, bertingkat, daftar harga, tambah cepat F-01, impor, varian, dan satuan yang dibuang tercatat di `RiwayatHarga` dengan `Sumber`. Harga pilihan (modifier) dicatat di `LogAudit` (lama/baru), bukan `RiwayatHarga`.
+- Penentu harga lapis 3–5 (daftar harga → harga bertingkat → harga dasar per satuan) identik di server (`PenentuHarga`) dan `MesinKasir` Dart, diuji test vector `Spesifikasi/VektorUjiKalkulasi/Harga/` (11 berkas, 49 kasus). Pemilihan daftar harga: prioritas, lalu kespesifikan, lalu Uuid terkecil; batas waktu `MulaiPada` inklusif, `SelesaiPada` eksklusif.
+- `HargaTermasukPajak` per produk bersifat override (null = ikut outlet); F-07 wajib mendukung baris inklusif & eksklusif campuran dalam satu dokumen dan menambah vektor untuknya.
+- Kategori pajak produk: KenaPpn, BebasPpn, KenaPbjt, NonPajak, Lainnya (pajak lain/daerah), diturunkan dari jenis pajak kelompok (tidak ada angka tarif di kode).
+- Resep: rumus susut `JumlahKotor = JumlahBersih ÷ (1 − Susut/100)`, susut 0 ≤ s < 100; JumlahKotor skala 4 (sama dengan jumlah yang dipotong dari stok), subtotal & HPP satuan skala 6. HPP resep = Σ(JumlahKotor × HPP bahan) ÷ JumlahHasil (BR-03.5); tampil "HPP belum tersedia" sampai HPP bahan ada (F-05a). Resep melingkar ditolak.
+- Impor: xlsx/csv (jenis diperiksa dari isi), maks. 10 MB & 20.000 baris, di atas 300 baris lewat antrean per potongan 50 dan bisa dilanjutkan; mengulang berkas yang sama tidak menggandakan. Preset majoo/Moka/Pawoon bertanda asumsi ("Periksa pemetaan kolom sebelum mengimpor") sampai dicocokkan dengan berkas ekspor asli. Angka Indonesia: koma = desimal; titik = ribuan (berkelompok 3) kecuali satu titik diikuti tepat 2 angka pada uang; tanpa float. Kolom harga tanpa izin `produk.harga.ubah` diabaikan dengan peringatan; Harga Modal & Stok diabaikan (masuk F-05a). Berkas disimpan privat 30 hari. Ekspor memakai kolom templat impor (round trip) dan menetralkan sel berawalan `= + - @`.
+- Gambar produk di disk privat, diubah ukuran (besar 800 px, kecil 256 px), nama berversi; URL publik menyusul F-17.
 
 ---
 
@@ -2150,6 +2164,11 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | settlement / payout receivable | `PiutangPencairan` (v1.28) | waste / shrinkage | `SusutPersediaan` (v1.28) |
 | onboarding wizard | `PanduanAwal` | payment method | `MetodePembayaran` |
 | feature flag per outlet | `OutletFitur` | web app (Laravel) | `Web` (folder `Aplikasi/Web`, D-13) |
+| min/max stock per location | `ProdukGudang` | deletion tombstone | `PenghapusanKatalog` |
+| catalog sequence (SKU/barcode) | `NomorUrutKatalog` | product import / import row | `ImporProduk` / `ImporProdukBaris` |
+| sales channel | `KanalPenjualan` | product tax category | `KategoriPajakProduk` |
+| variant key / attributes | `KunciVarian` / `AtributVarian` | import preset | `Preset` (serapan; `PresetImporProduk`) |
+| variant generator / editor (UI) | `PembuatVarian` / `Penyunting…` | modifier (UI) | "Pilihan (modifier)" |
 
 Pola penamaan class per jenis (**{Objek}{Jenis}**, agar file satu domain berdekatan saat diurutkan):
 `PenjualanKontroler`, `PenjualanKebijakan`, `SimpanProdukPermintaan`, `ProdukRespons`, `KirimStrukWaTugas`. Pengecualian: class **Aksi** dan **Peristiwa** memakai kalimat langsung, misal Aksi `SelesaikanPenjualan`, Peristiwa `PenjualanSelesai`, Penangan `KurangiStokPenjualan`.
@@ -2516,17 +2535,21 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `Kategori` | IdTenant, Uuid, IdInduk, Nama, IdStasiunDapur (kolom dibuat F-10), Urutan |
-| `Produk` | IdTenant, Uuid, Sku, Nama, NamaStruk, Jenis, IdKategori, Merek, IdSatuanDasar, Pelacakan (Tidak/Batch/Seri), IdKelompokPajak, MetodeHpp, BolehMinus, Aktif, TampilDiPos, TampilOnline, IdInduk (varian), AtributVarian JSON |
+| `Produk` | IdTenant, Uuid, Sku, Nama, NamaStruk, Jenis, IdKategori, Merek, IdSatuanDasar, Pelacakan (Tidak/Batch/Seri), IdKelompokPajak, MetodeHpp (belum dipakai; metode HPP per tenant), BolehMinus, Aktif, TampilDiPos, TampilOnline, IdInduk (varian), AtributVarian JSON, KunciVarian (unik per induk), HargaTermasukPajak (null = ikut outlet), PathGambar (disk privat), DiarsipkanPada, DihapusPada (soft delete, SKU dikosongkan) (F-03) |
 | `Satuan` | IdTenant, Uuid, Nama, Simbol, BolehDesimal, KodeStandar (unik per tenant, dari `SatuanStandar`; F-01) |
-| `ProdukSatuan` | IdTenant, IdProduk, IdSatuan, KonversiKeDasar, DefaultJual, DefaultBeli |
-| `ProdukBarcode` | IdTenant, IdProduk, IdProdukSatuan, Barcode (unik per tenant) |
-| `ProdukHarga` | IdTenant, Uuid, IdProduk, IdProdukSatuan, IdDaftarHarga (null = dasar; FK menyusul F-03), JumlahMinimum, Harga |
-| `DaftarHarga` | IdTenant, Nama, IdOutlet JSON, Kanal, TierPelanggan, MulaiPada, SelesaiPada, Prioritas |
-| `KelompokPilihan` / `Pilihan` (modifier) | MinimalPilih, MaksimalPilih / Nama, Harga, IdProduk (bahan, opsional), Jumlah |
-| `ProdukKelompokPilihan` | IdProduk, IdKelompokPilihan, Urutan |
-| `Resep` / `ResepDetail` | IdProduk, JumlahHasil, Versi / IdProdukBahan, Jumlah, IdSatuan, PersenSusut |
-| `PaketProdukDetail` (bundle) | IdProdukPaket, IdProdukKomponen, Jumlah, AlokasiHarga |
-| `RiwayatHarga` | IdProduk, HargaLama, HargaBaru, DiubahOleh |
+| `ProdukSatuan` | IdTenant, Uuid, IdProduk, IdSatuan, KonversiKeDasar, DefaultJual, DefaultBeli |
+| `ProdukBarcode` | IdTenant, Uuid, IdProduk, IdProdukSatuan, Barcode (unik per tenant, tanpa beda huruf besar/kecil) |
+| `ProdukGudang` | IdTenant, IdProduk, IdGudang, StokMinimum, StokMaksimum (batas restock per lokasi stok; F-03) |
+| `NomorUrutKatalog` | IdTenant, Jenis (Sku/Barcode), NomorTerakhir (SKU otomatis `PRD-000001`, barcode internal EAN-13 berawalan `20`; F-03) |
+| `PenghapusanKatalog` | IdTenant, Entitas, UuidEntitas, DihapusPada (jejak hapus untuk sinkron delta POS, append-only, retensi 90 hari; F-03) |
+| `ImporProduk` / `ImporProdukBaris` | IdTenant, Uuid, IdPengguna, Sumber (Umum/Majoo/Moka/Pawoon), NamaBerkas, PathBerkas, HashBerkas, UkuranBerkas, Format, Status, KolomSumber, Pemetaan, Opsi, penghitung Jumlah*, PesanGalat, DivalidasiPada, DiterapkanMulaiPada, SelesaiPada / IdTenant, IdImporProduk, NomorBaris, Status, Aksi, KunciProduk, Data, DataAsli, Galat, IdProduk, DiterapkanPada (F-03, BR-03.6) |
+| `ProdukHarga` | IdTenant, Uuid, IdProduk, IdProdukSatuan, IdDaftarHarga (null = dasar; FK F-03), KunciDaftarHarga (kolom generated `IFNULL(IdDaftarHarga,0)` untuk indeks unik), JumlahMinimum, Harga |
+| `DaftarHarga` | IdTenant, Uuid, Nama, IdOutlet JSON, Kanal, TierPelanggan (kode bebas sampai tabel tier F-16), MulaiPada, SelesaiPada (UTC; diinput zona waktu tenant), Prioritas, Aktif (tidak pernah dihapus, hanya dinonaktifkan) |
+| `KelompokPilihan` / `Pilihan` (modifier) | IdTenant, Uuid, Nama, MinimalPilih, MaksimalPilih, Urutan / IdTenant, IdKelompokPilihan, Nama, Harga, IdProduk (bahan, opsional), Jumlah, Aktif, Urutan |
+| `ProdukKelompokPilihan` | IdTenant, Uuid, IdProduk, IdKelompokPilihan, Urutan |
+| `Resep` / `ResepDetail` | IdTenant, Uuid, IdProduk, JumlahHasil, Versi, Catatan, DibuatOleh (baris tidak pernah diubah/dihapus; perubahan = versi baru, BR-03.4) / IdTenant, IdProdukBahan, Jumlah, IdSatuan, JumlahDasar (snapshot konversi), PersenSusut, Urutan |
+| `PaketProdukDetail` (bundle) | IdTenant, Uuid, IdProdukPaket, IdProdukKomponen, Jumlah, AlokasiHarga (persen `decimal(9,6)`; kosong semua atau total tepat 100) |
+| `RiwayatHarga` | IdTenant, IdProduk, IdProdukSatuan, IdSatuan, IdDaftarHarga, JumlahMinimum, HargaLama (null = baru), HargaBaru (null = dihapus), DiubahOleh, Sumber (Manual/PanduanAwal/Impor/Varian); append-only |
 
 **Inventori**
 
@@ -2611,7 +2634,7 @@ erDiagram
 |---|---|
 | `JenisPajak` | Kode, Nama, Cakupan (Nasional/Daerah/Kustom) |
 | `TarifPajak` | IdJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, KodeWilayah (null = nasional), BiayaLayananMasukDpp, BerlakuMulai, BerlakuSampai, Status (Draf/MenungguTinjauan/Terbit), NomorDasarHukum, TautanDasarHukum, IdPenggunaPengelolaPengaju, DiajukanPada, PutaranTinjauan (naik setiap diajukan), DaftarIdPenyusun JSON. Tarif `decimal(9,6)` persen. Master platform (P-02); override tenant (BR-P02.3) dirancang di F-03 |
-| `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Uuid, Nama / IdTenant, IdKelompokPajak, IdJenisPajak, IdTarifPajak (nullable, override tenant F-03), DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan. Tarif efektif dicari `TarifPajakBerlaku` per kota outlet & tanggal (F-01) |
+| `KelompokPajak` / `KelompokPajakDetail` | IdTenant, Uuid, Nama, Kategori (KenaPpn/BebasPpn/KenaPbjt/NonPajak/Lainnya; F-03) / IdTenant, IdKelompokPajak, IdJenisPajak, IdTarifPajak (nullable, override tenant F-03), DasarPengenaan (Subtotal/SubtotalPlusLayanan), Urutan. Tarif efektif dicari `TarifPajakBerlaku` per kota outlet & tanggal (F-01) |
 
 **Karyawan**
 
@@ -2717,6 +2740,8 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 | POST | `/api/pos/v1/perangkat/aktivasi` | Tukar kode aktivasi → device token, kode perangkat (`Perangkat.Kode`), info outlet. Respons F-02b: `TokenPerangkat`, `Perangkat`, `Outlet`, `Tenant`, `Langganan` |
 | GET | `/api/pos/v1/konfigurasi-aplikasi` | Versi terbaru, `min_supported_version`, feature flag remote, konfigurasi outlet |
 | POST | `/api/pos/v1/kasir/masuk-pin` | Verifikasi PIN kasir online (`UuidPengguna`, `Pin`) → pengguna & izin; kunci 5 menit setelah 5 kali salah per perangkat + pengguna (F-02b) |
+| GET | `/api/pos/v1/katalog?sejak={Kursor}` | Katalog lengkap atau delta (F-03, throttle 30/menit): amplop `Skema`, `Lengkap`, `Kursor`, `WaktuServer`; bagian Kategori, Satuan, KelompokPajak, Produk (`Dihapus`), ProdukSatuan, ProdukBarcode, DaftarHarga, ProdukHarga, KelompokPilihan, Pilihan, ProdukKelompokPilihan, Resep (+Bahan, versi terbaru), PaketProdukDetail, Terhapus. Kursor base64url dengan tumpang tindih 120 detik; kursor > 90 hari = sinkron lengkap; kursor rusak = 422 `KursorTidakValid`. `data-awal`/`perubahan` kelak menyematkan payload ini di kunci `Katalog` |
+| GET | `/api/pos/v1/katalog/gambar/{produk}?ukuran=kecil\|besar&versi=` | Gambar produk (privat, throttle 600/menit) |
 | GET | `/api/pos/v1/data-awal` | Paket data awal (dapat berupa file JSON terkompresi gzip untuk katalog besar): produk, harga, modifier, pajak, promo aktif, metode bayar, meja, pengaturan, staf + hash PIN, pelanggan yang sering datang (terbatas) |
 | GET | `/api/pos/v1/perubahan?sejak={kursor}` | Delta perubahan master sejak cursor (produk/harga/promo/stok ringkas/86/staf) |
 | POST | `/api/pos/v1/sinkron/kirim` | Kirim batch outbox (shift, sale, payment, cash movement, void, retur, approval). Respons per item: `accepted` / `duplicate` / `rejected` + alasan |
@@ -3344,7 +3369,7 @@ Masalah yang diselesaikan: di restoran, jika internet mati, order dari tablet pe
 
 Owner dapat membuat role kustom dari daftar permission granular: `modul.aksi[.cakupan]`, misal `penjualan.void`, `penjualan.diskon.manual`, `persediaan.penyesuaian.setujui`, `laporan.keuangan.lihat`, `produk.harga.ubah`.
 
-Implementasi F-02a: peran bawaan yang dibuat untuk setiap tenant adalah Owner (`Pemilik`), Admin, Manajer Outlet, Supervisor, Kasir, Gudang (`StafGudang`), Purchasing (`StafPembelian`), dan Akuntan. Pelayan, Dapur/Barista, Apoteker, dan Sales/Salesman bergantung sektor; penambahannya ditunda ke F-10/F-17 karena izinnya (KDS, pesanan meja) belum ada (keputusan F-01 v1.28). Izin awal: `outlet.lihat`, `outlet.kelola`, `pengguna.lihat`, `pengguna.undang`, `pengguna.ubah`, `pengguna.nonaktifkan`, `peran.kelola`, `audit.lihat` (ditegakkan F-02), serta `produk.lihat`, `produk.kelola`, `produk.harga.ubah`, `persediaan.lihat`, `persediaan.kelola`, `persediaan.penyesuaian.setujui`, `pembelian.kelola`, `penjualan.buat`, `penjualan.void`, `penjualan.diskon.manual`, `laporan.penjualan.lihat`, `laporan.keuangan.lihat`, `akuntansi.kelola`, `langganan.kelola` (khusus Owner) yang penegakannya dibangun bersama flow masing-masing. Ditambahkan kemudian: `bantuan.tiket.lihat`, `bantuan.tiket.kelola` (v1.25), `perangkat.lihat`, `perangkat.kelola`, `pengguna.pin.atur` (F-02b), dan `panduan-awal.kelola` (F-01, v1.29: menjalankan panduan awal; bawaan Pemilik & Admin; langkah perangkat di wizard juga mensyaratkan `perangkat.kelola`).
+Implementasi F-02a: peran bawaan yang dibuat untuk setiap tenant adalah Owner (`Pemilik`), Admin, Manajer Outlet, Supervisor, Kasir, Gudang (`StafGudang`), Purchasing (`StafPembelian`), dan Akuntan. Pelayan, Dapur/Barista, Apoteker, dan Sales/Salesman bergantung sektor; penambahannya ditunda ke F-10/F-17 karena izinnya (KDS, pesanan meja) belum ada (keputusan F-01 v1.28). Izin awal: `outlet.lihat`, `outlet.kelola`, `pengguna.lihat`, `pengguna.undang`, `pengguna.ubah`, `pengguna.nonaktifkan`, `peran.kelola`, `audit.lihat` (ditegakkan F-02), serta `produk.lihat`, `produk.kelola`, `produk.harga.ubah`, `persediaan.lihat`, `persediaan.kelola`, `persediaan.penyesuaian.setujui`, `pembelian.kelola`, `penjualan.buat`, `penjualan.void`, `penjualan.diskon.manual`, `laporan.penjualan.lihat`, `laporan.keuangan.lihat`, `akuntansi.kelola`, `langganan.kelola` (khusus Owner) yang penegakannya dibangun bersama flow masing-masing. Ditambahkan kemudian: `bantuan.tiket.lihat`, `bantuan.tiket.kelola` (v1.25), `perangkat.lihat`, `perangkat.kelola`, `pengguna.pin.atur` (F-02b), dan `panduan-awal.kelola` (F-01, v1.29: menjalankan panduan awal; bawaan Pemilik & Admin; langkah perangkat di wizard juga mensyaratkan `perangkat.kelola`). Penegakan F-03 (v1.31): `produk.lihat` (katalog, ekspor), `produk.kelola` (produk, kategori, satuan, pilihan, resep, komponen paket, impor), `produk.harga.ubah` (harga dasar, daftar harga, harga awal/varian/pilihan, kolom harga impor; diperiksa ulang di dalam tugas antrean), `persediaan.kelola` (batas stok per gudang), `akuntansi.kelola` (kelompok pajak).
 
 ### 19.2 Batas & Approval yang Bisa Dikonfigurasi
 
@@ -3715,6 +3740,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 16. **Istilah & kelengkapan peran akun P-03**: (a) ~~`PiutangSettlement` & `Waste`~~ **Ditutup v1.28**: menjadi `PiutangPencairan` & `SusutPersediaan` (kamus §13.7.1); versi template terbit yang memuat kunci lama tetap terbaca lewat alias; (b) peran akun untuk Persediaan Barang Jadi & Overhead Dibebankan (J-05.6), Hutang Service Charge (2-1700), dan Beban Promosi (6-4000) belum ada. Karena BR-P03.3 mewajibkan semua peran terisi, peran baru nanti harus ditambahkan sebagai opsional atau dengan versi template baru.
 17. ~~Utang log audit tenant~~ **Ditutup v1.22**: tabel `LogAudit` tenant (append-only) mencatat pendaftaran, masuk/keluar, pilih tenant, akhir trial, dan semua aksi F-02. Aksi autentikasi (2FA, reset kata sandi, persetujuan legal) & tagihan tenant tersambung sejak v1.25.
 18. ~~Enumerasi akun saat registrasi~~ **Ditutup v1.22** (BR-00.10): email/nomor yang sudah terdaftar ditolak dengan satu pesan umum, pemilik akun menerima email pemberitahuan (maks. 1/jam).
+19. **Utang F-03** (v1.31): kontrak OpenAPI (Scramble) untuk endpoint POS katalog; `Produk.IdPemasok` konsinyasi (F-04); penyedia HPP bahan nyata (F-05a); snapshot resep di baris penjualan & vektor baris pajak campuran inklusif/eksklusif (F-07); vektor HPP/pemotongan resep (F-07); pencocokan preset impor dengan berkas ekspor asli majoo/Moka/Pawoon; impor modifier, resep, dan daftar harga; pembersihan jejak hapus lintas tenant (P-11); URL gambar publik (F-17); tabel tier pelanggan (F-16); parsing barcode timbangan (F-07); memindahkan test arsitektur katalog ke `tests/Arsitektur` (manusia); penjaga CI "test vector hanya tambah".
 
 ### 25.1 Keputusan yang Sudah Diambil
 
