@@ -5,15 +5,14 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
+// Aplikasi web tidak punya mode gelap: tema Sonner dikunci terang (tanpa next-themes).
+// Warna mengikuti token di Gaya/Aplikasi.css lewat variabel --popover, --border, dst.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -28,6 +27,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          "--success-bg": "var(--color-sukses-lembut)",
+          "--success-text": "var(--color-sukses)",
+          "--success-border": "var(--color-sukses)",
+          "--info-bg": "var(--color-info-lembut)",
+          "--info-text": "var(--color-info)",
+          "--info-border": "var(--color-info)",
+          "--warning-bg": "var(--color-peringatan-lembut)",
+          "--warning-text": "var(--color-peringatan)",
+          "--warning-border": "var(--color-peringatan)",
+          "--error-bg": "var(--color-bahaya-lembut)",
+          "--error-text": "var(--color-bahaya)",
+          "--error-border": "var(--color-bahaya)",
         } as React.CSSProperties
       }
       {...props}

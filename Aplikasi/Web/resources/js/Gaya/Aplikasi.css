@@ -1,13 +1,78 @@
 /*
- * Token desain (PRD §17.5 tipografi, §17.6 warna/bentuk). Warna di bawah adalah nilai SEMENTARA
- * dari §17.6.3; warna final belum diputuskan. Komponen wajib memakai token, bukan hex lepas.
+ * Token desain web (PRD §17.5 tipografi, §17.6 warna/bentuk) — SATU-SATUNYA sumber warna aplikasi web.
+ *
+ * Aturan:
+ * - Semua nilai warna (hex, rgb, oklch, ...) hanya boleh ada di file ini. Halaman, komponen kita, dan
+ *   komponen shadcn/ui (Komponen/Ui) memakai utilitas token (bg-permukaan, text-teks-utama, bg-primary, ...).
+ *   Dijaga oleh test Gaya/AturanWarnaTes.ts.
+ * - Tidak ada mode gelap di aplikasi web: tanpa varian `dark:`, tanpa blok `.dark`, tanpa prefers-color-scheme.
+ * - Palet bawaan Tailwind (red-500, white, black, ...) dimatikan agar tidak ada warna di luar token.
+ *
+ * Mengganti warna: ubah nilai di bagian 1 ("UBAH WARNA DI SINI") saja. Bagian 2 dan seterusnya adalah
+ * pemetaan yang tidak perlu disentuh. Warna di bawah masih SEMENTARA (§17.6.3); warna final belum diputuskan.
  */
 @import '@fontsource-variable/atkinson-hyperlegible-next';
 @import '@fontsource-variable/atkinson-hyperlegible-mono';
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import './UtilitasKomponen.css';
 
 @source '../views';
 
+/* ============================================================================================
+ * 1. UBAH WARNA DI SINI
+ *    Palet (nilai sementara §17.6.3). Setiap token menjadi utilitas Tailwind: bg-latar,
+ *    text-teks-sekunder, border-garis, bg-brand-lembut, dst. `static` = variabel selalu dikeluarkan
+ *    (dipakai juga lewat var() di style inline, misalnya Sonner).
+ * ============================================================================================ */
+@theme static {
+    /* Matikan palet bawaan Tailwind: hanya token di bawah yang boleh dipakai. */
+    --color-*: initial;
+
+    /* Netral */
+    --color-latar: #fafaf7; /* latar halaman */
+    --color-permukaan: #ffffff; /* panel, tabel, dialog, input */
+    --color-permukaan-redup: #f3f2ee; /* permukaan sekunder/redup: tombol sekunder, skeleton, lencana netral */
+    --color-permukaan-sorot: #ecebe6; /* sorotan hover/aktif pada menu, daftar, opsi */
+    --color-garis: #e4e2dc; /* pemisah */
+    --color-garis-input: #8a877f; /* tepi input & kontrol (kontras >= 3:1) */
+    --color-teks-utama: #1c1b19;
+    --color-teks-sekunder: #5c5a55;
+
+    /* Brand (aksi utama, penanda aktif) */
+    --color-brand: #0b6468;
+    --color-brand-teks: #ffffff; /* teks/ikon di atas brand */
+    --color-brand-lembut: #e2efef; /* latar lembut brand (gelembung pesan, sorotan terpilih) */
+    --color-brand-lembut-sorot: #cfe4e5; /* hover di atas brand-lembut */
+
+    /* Semantik status + varian latar lembut (lencana, baris tabel, toast) */
+    --color-sukses: #2e7d32;
+    --color-sukses-lembut: #e8f3e9;
+    --color-peringatan: #9a5b00;
+    --color-peringatan-lembut: #fbf1e1;
+    --color-bahaya: #b3261e;
+    --color-bahaya-teks: #ffffff; /* teks/ikon di atas bahaya */
+    --color-bahaya-lembut: #fbe9e8;
+    --color-info: #1f5fad;
+    --color-info-lembut: #e7eef8;
+
+    /* Grafik (seri data berurutan) */
+    --color-grafik-1: #0b6468;
+    --color-grafik-2: #1f5fad;
+    --color-grafik-3: #9a5b00;
+    --color-grafik-4: #6b4fa3;
+    --color-grafik-5: #5c5a55;
+
+    /* Tirai di belakang dialog/sheet/drawer, dan warna bayangan elevasi */
+    --color-tirai: rgb(28 27 25 / 0.5);
+    --color-bayangan-tipis: rgb(28 27 25 / 0.05);
+    --color-bayangan: rgb(28 27 25 / 0.1);
+    --color-bayangan-tebal: rgb(28 27 25 / 0.25);
+}
+
+/* ============================================================================================
+ * 2. Bentuk & tipografi (bukan warna)
+ * ============================================================================================ */
 @theme {
     --font-sans: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
     --font-mono: 'Atkinson Hyperlegible Mono Variable', ui-monospace, monospace;
@@ -26,27 +91,154 @@
     --text-keterangan: 12px;
     --text-keterangan--line-height: 16px;
 
-    --color-latar: #fafaf7;
-    --color-permukaan: #ffffff;
-    --color-garis: #e4e2dc;
-    --color-garis-input: #8a877f;
-    --color-teks-utama: #1c1b19;
-    --color-teks-sekunder: #5c5a55;
-    --color-brand: #0b6468;
-    --color-sukses: #2e7d32;
-    --color-peringatan: #9a5b00;
-    --color-bahaya: #b3261e;
-    --color-info: #1f5fad;
-
     --radius-kontrol: 6px;
     --radius-panel: 8px;
+
+    /* Skala radius Tailwind/shadcn diturunkan dari token (nilainya sama dengan bawaan Tailwind:
+       sm 4px, md 6px, lg 8px, xl 12px), jadi halaman lama tidak berubah. */
+    --radius-sm: calc(var(--radius-kontrol) - 2px);
+    --radius-md: var(--radius-kontrol);
+    --radius-lg: var(--radius-panel);
+    --radius-xl: calc(var(--radius-panel) + 4px);
+
+    /* Bayangan elevasi (bentuk sama dengan bawaan Tailwind, warna dari token bayangan). */
+    --shadow: 0 1px 3px 0 var(--color-bayangan), 0 1px 2px -1px var(--color-bayangan);
+    --shadow-inner: inset 0 2px 4px 0 var(--color-bayangan-tipis);
+    --drop-shadow: 0 1px 2px var(--color-bayangan), 0 1px 1px var(--color-bayangan-tipis);
+    --shadow-2xs: 0 1px var(--color-bayangan-tipis);
+    --shadow-xs: 0 1px 2px 0 var(--color-bayangan-tipis);
+    --shadow-sm: 0 1px 3px 0 var(--color-bayangan), 0 1px 2px -1px var(--color-bayangan);
+    --shadow-md: 0 4px 6px -1px var(--color-bayangan), 0 2px 4px -2px var(--color-bayangan);
+    --shadow-lg: 0 10px 15px -3px var(--color-bayangan), 0 4px 6px -4px var(--color-bayangan);
+    --shadow-xl: 0 20px 25px -5px var(--color-bayangan), 0 8px 10px -6px var(--color-bayangan);
+    --shadow-2xl: 0 25px 50px -12px var(--color-bayangan-tebal);
+    --inset-shadow-2xs: inset 0 1px var(--color-bayangan-tipis);
+    --inset-shadow-xs: inset 0 1px 1px var(--color-bayangan-tipis);
+    --inset-shadow-sm: inset 0 2px 4px var(--color-bayangan-tipis);
+    --drop-shadow-xs: 0 1px 1px var(--color-bayangan-tipis);
+    --drop-shadow-sm: 0 1px 2px var(--color-bayangan);
+    --drop-shadow-md: 0 3px 3px var(--color-bayangan);
+    --drop-shadow-lg: 0 4px 4px var(--color-bayangan);
+    --drop-shadow-xl: 0 9px 7px var(--color-bayangan);
+    --drop-shadow-2xl: 0 25px 25px var(--color-bayangan);
+    --text-shadow-2xs: 0 1px 0 var(--color-bayangan);
+    --text-shadow-xs: 0 1px 1px var(--color-bayangan);
+    --text-shadow-sm: 0 1px 1px var(--color-bayangan);
+    --text-shadow-md: 0 1px 2px var(--color-bayangan);
+    --text-shadow-lg: 0 4px 8px var(--color-bayangan);
 }
 
+/* ============================================================================================
+ * 3. Pemetaan shadcn/ui -> token kita. JANGAN DIUBAH untuk mengganti warna; ubah bagian 1.
+ *    Variabel shadcn hanya merujuk token, tidak berisi nilai warna sendiri.
+ * ============================================================================================ */
+:root {
+    --radius: var(--radius-panel);
+
+    --background: var(--color-permukaan);
+    --foreground: var(--color-teks-utama);
+    --card: var(--color-permukaan);
+    --card-foreground: var(--color-teks-utama);
+    --popover: var(--color-permukaan);
+    --popover-foreground: var(--color-teks-utama);
+    --primary: var(--color-brand);
+    --primary-foreground: var(--color-brand-teks);
+    --secondary: var(--color-permukaan-redup);
+    --secondary-foreground: var(--color-teks-utama);
+    --muted: var(--color-permukaan-redup);
+    --muted-foreground: var(--color-teks-sekunder);
+    --accent: var(--color-permukaan-sorot);
+    --accent-foreground: var(--color-teks-utama);
+    --destructive: var(--color-bahaya);
+    --destructive-foreground: var(--color-bahaya-teks);
+    --border: var(--color-garis);
+    --input: var(--color-garis-input);
+    --ring: var(--color-brand);
+
+    --chart-1: var(--color-grafik-1);
+    --chart-2: var(--color-grafik-2);
+    --chart-3: var(--color-grafik-3);
+    --chart-4: var(--color-grafik-4);
+    --chart-5: var(--color-grafik-5);
+
+    --sidebar: var(--color-latar);
+    --sidebar-foreground: var(--color-teks-utama);
+    --sidebar-primary: var(--color-brand);
+    --sidebar-primary-foreground: var(--color-brand-teks);
+    --sidebar-accent: var(--color-permukaan-sorot);
+    --sidebar-accent-foreground: var(--color-teks-utama);
+    --sidebar-border: var(--color-garis);
+    --sidebar-ring: var(--color-brand);
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ============================================================================================
+ * 4. Dasar halaman & penyesuaian pustaka (JANGAN DIUBAH untuk mengganti warna)
+ * ============================================================================================ */
 @layer base {
+    *,
+    ::before,
+    ::after {
+        /* Tepi tanpa warna eksplisit (komponen shadcn: `border`) memakai token garis. */
+        border-color: var(--border);
+        /* Celah ring-offset mengikuti token permukaan (bawaan Tailwind: putih tetap). */
+        --tw-ring-offset-color: var(--color-permukaan);
+    }
+
     body {
         background-color: var(--color-latar);
         color: var(--color-teks-utama);
         font-family: var(--font-sans);
         font-variant-numeric: tabular-nums;
     }
+}
+
+/*
+ * Recharts memberi warna bawaan lewat atribut (stroke="#ccc" / "#fff"). Selektor ini (dari chart.tsx
+ * shadcn) dipindahkan ke sini supaya literal tersebut hanya ada di file token.
+ */
+[data-slot='chart'] .recharts-cartesian-grid line[stroke='#ccc'] {
+    stroke: color-mix(in oklab, var(--border) 50%, transparent);
+}
+[data-slot='chart'] .recharts-polar-grid [stroke='#ccc'],
+[data-slot='chart'] .recharts-reference-line [stroke='#ccc'] {
+    stroke: var(--border);
+}
+[data-slot='chart'] .recharts-dot[stroke='#fff'],
+[data-slot='chart'] .recharts-sector[stroke='#fff'] {
+    stroke: transparent;
 }

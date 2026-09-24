@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/Komponen/Ui/utils"
 import { Popover as PopoverPrimitive } from "radix-ui"
 
 function Popover({
