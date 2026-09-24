@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Persediaan\Layanan\Hpp\HppFifo;
@@ -43,61 +42,99 @@ function TimAJalankanContohHpp(StrategiHpp $strategi, array $langkah): KeadaanHp
     return $keadaan;
 }
 
-describe('F-05a contoh kerja HPP rata-rata bergerak (DesainF05a C.3, BR-04.2/04.3)', function (): void {
-    it('contoh HPP rata-rata bergerak', function (array $langkah): void {
-        TimAJalankanContohHpp(new HppRataRataBergerak, $langkah);
-    })->with([
-        '#1 stok awal 10 @ 1234.5678, jual 3, terima 5 senilai 6500, jual 12 (nilai habis tepat)' => [[
+/**
+ * @return array<string, list<array{0: array{0: string, 1?: string, 2?: string|null}, 1: array{0: string, 1: string, 2: string, 3: string, 4: string|null}}>>
+ */
+function TimAContohHppRataRata(): array
+{
+    return [
+        '#1 stok awal 10 @ 1234.5678, jual 3, terima 5 senilai 6500, jual 12 (nilai habis tepat)' => [
             [['10', '12345.68', '1234.5678'], ['12345.68', '0.00', '10.0000', '12345.68', '1234.568000']],
             [['-3'], ['-3703.70', '0.00', '7.0000', '8641.98', '1234.568000']],
             [['5', '6500.00'], ['6500.00', '0.00', '12.0000', '15141.98', '1261.831667']],
             [['-12'], ['-15141.98', '0.00', '0.0000', '0.00', '1261.831667']],
-        ]],
-        '#2 MA: 10 @ 1000, 5 @ 1200, jual 12' => [[
+        ],
+        '#2 MA: 10 @ 1000, 5 @ 1200, jual 12' => [
             [['10', '10000.00', '1000'], ['10000.00', '0.00', '10.0000', '10000.00', '1000.000000']],
             [['5', '6000.00', '1200'], ['6000.00', '0.00', '15.0000', '16000.00', '1066.666667']],
             [['-12'], ['-12800.00', '0.00', '3.0000', '3200.00', '1066.666667']],
-        ]],
-        '#3 BR-04.3: A 1000, Q 0, jual 4 (minus), terima 10 @ 1100 → selisih −400' => [[
+        ],
+        '#3 BR-04.3: A 1000, Q 0, jual 4 (minus), terima 10 @ 1100 → selisih −400' => [
             [['5', '5000.00', '1000'], ['5000.00', '0.00', '5.0000', '5000.00', '1000.000000']],
             [['-5'], ['-5000.00', '0.00', '0.0000', '0.00', '1000.000000']],
             [['-4'], ['-4000.00', '0.00', '-4.0000', '-4000.00', '1000.000000']],
             [['10', '11000.00'], ['10600.00', '-400.00', '6.0000', '6600.00', '1100.000000']],
-        ]],
-        '#4 melewati nol: Q 2, N 2000, A 1000, jual 5' => [[
+        ],
+        '#4 melewati nol: Q 2, N 2000, A 1000, jual 5' => [
             [['2', '2000.00'], ['2000.00', '0.00', '2.0000', '2000.00', '1000.000000']],
             [['-5'], ['-5000.00', '0.00', '-3.0000', '-3000.00', '1000.000000']],
-        ]],
-        '#5 pembulatan: 3 unit senilai 1000, jual 1+1+1 → 333.33, 333.33, 333.34' => [[
+        ],
+        '#5 pembulatan: 3 unit senilai 1000, jual 1+1+1 → 333.33, 333.33, 333.34' => [
             [['3', '1000.00'], ['1000.00', '0.00', '3.0000', '1000.00', '333.333333']],
             [['-1'], ['-333.33', '0.00', '2.0000', '666.67', '333.333333']],
             [['-1'], ['-333.33', '0.00', '1.0000', '333.34', '333.333333']],
             [['-1'], ['-333.34', '0.00', '0.0000', '0.00', '333.333333']],
-        ]],
-        'BR-04.3 masuk saat minus tetapi masih minus: Q −10 terima 4 @ 1100 → Q −6 dinilai ulang pada 1100' => [[
+        ],
+        'BR-04.3 masuk saat minus tetapi masih minus: Q −10 terima 4 @ 1100 → Q −6 dinilai ulang pada 1100' => [
             [['1', '1000.00'], ['1000.00', '0.00', '1.0000', '1000.00', '1000.000000']],
             [['-11'], ['-11000.00', '0.00', '-10.0000', '-10000.00', '1000.000000']],
             [['4', '4400.00'], ['3400.00', '-1000.00', '-6.0000', '-6600.00', '1100.000000']],
             [['6', '6600.00'], ['6600.00', '0.00', '0.0000', '0.00', '1100.000000']],
-        ]],
-        'HPP belum diketahui: jual sebelum ada stok dinilai 0' => [[
+        ],
+        'HPP belum diketahui: jual sebelum ada stok dinilai 0' => [
             [['-2'], ['0.00', '0.00', '-2.0000', '0.00', null]],
             [['5', '7500.00'], ['4500.00', '-3000.00', '3.0000', '4500.00', '1500.000000']],
-        ]],
-        'pembatalan stok awal (keluar ditentukan D = nilai asal) saat stok utuh: selisih 0' => [[
+        ],
+        'pembatalan stok awal (keluar ditentukan D = nilai asal) saat stok utuh: selisih 0' => [
             [['10', '12345.68', '1234.5678'], ['12345.68', '0.00', '10.0000', '12345.68', '1234.568000']],
             [['-10', '12345.68'], ['-12345.68', '0.00', '0.0000', '0.00', '1234.568000']],
-        ]],
-        'keluar ditentukan saat Q′ > 0: −min(D, N), A′ = N′/Q′' => [[
+        ],
+        'keluar ditentukan saat Q′ > 0: −min(D, N), A′ = N′/Q′' => [
             [['10', '12345.68', '1234.5678'], ['12345.68', '0.00', '10.0000', '12345.68', '1234.568000']],
             [['5', '2796.30'], ['2796.30', '0.00', '15.0000', '15141.98', '1009.465333']],
             [['-10', '12345.68'], ['-12345.68', '0.00', '5.0000', '2796.30', '559.260000']],
-        ]],
-        'keluar ditentukan saat Q′ < 0: dinilai berjalan, selisih = TotalHpp + D' => [[
+        ],
+        'keluar ditentukan saat Q′ < 0: dinilai berjalan, selisih = TotalHpp + D' => [
             [['2', '2000.00'], ['2000.00', '0.00', '2.0000', '2000.00', '1000.000000']],
             [['-3', '3300.00'], ['-3000.00', '300.00', '-1.0000', '-1000.00', '1000.000000']],
-        ]],
-    ]);
+        ],
+    ];
+}
+
+/**
+ * @return array<string, list<array{0: array{0: string, 1?: string, 2?: string|null}, 1: array{0: string, 1: string, 2: string, 3: string, 4: string|null}}>>
+ */
+function TimAContohHppFifo(): array
+{
+    return [
+        '#2 FIFO: 10 @ 1000, 5 @ 1200, jual 12 → 10000 + 2400' => [
+            [['10', '10000.00', '1000'], ['10000.00', '0.00', '10.0000', '10000.00', '1000.000000']],
+            [['5', '6000.00', '1200'], ['6000.00', '0.00', '15.0000', '16000.00', '1066.666667']],
+            [['-12'], ['-12400.00', '0.00', '3.0000', '3600.00', '1200.000000']],
+        ],
+        '#3 BR-04.3 FIFO: sisa minus dinilai pada lapisan terakhir, terima → lapisan (6, 6600)' => [
+            [['5', '5000.00', '1000'], ['5000.00', '0.00', '5.0000', '5000.00', '1000.000000']],
+            [['-5'], ['-5000.00', '0.00', '0.0000', '0.00', '1000.000000']],
+            [['-4'], ['-4000.00', '0.00', '-4.0000', '-4000.00', '1000.000000']],
+            [['10', '11000.00'], ['10600.00', '-400.00', '6.0000', '6600.00', '1100.000000']],
+        ],
+        '#4 melewati nol FIFO' => [
+            [['2', '2000.00'], ['2000.00', '0.00', '2.0000', '2000.00', '1000.000000']],
+            [['-5'], ['-5000.00', '0.00', '-3.0000', '-3000.00', '1000.000000']],
+        ],
+        '#5 pembulatan FIFO: lapisan 3 unit senilai 1000 → 333.33, 333.33, 333.34' => [
+            [['3', '1000.00'], ['1000.00', '0.00', '3.0000', '1000.00', '333.333333']],
+            [['-1'], ['-333.33', '0.00', '2.0000', '666.67', '333.335000']],
+            [['-1'], ['-333.33', '0.00', '1.0000', '333.34', '333.340000']],
+            [['-1'], ['-333.34', '0.00', '0.0000', '0.00', '333.340000']],
+        ],
+    ];
+}
+
+describe('F-05a contoh kerja HPP rata-rata bergerak (DesainF05a C.3, BR-04.2/04.3)', function (): void {
+    it('contoh HPP rata-rata bergerak', function (string $nama): void {
+        TimAJalankanContohHpp(new HppRataRataBergerak, TimAContohHppRataRata()[$nama]);
+    })->with(array_keys(TimAContohHppRataRata()));
 
     it('masuk berjalan dinilai pada A; tanpa A dinilai 0 dan ditandai hppTidakDiketahui', function (): void {
         $strategi = new HppRataRataBergerak;
@@ -116,31 +153,9 @@ describe('F-05a contoh kerja HPP rata-rata bergerak (DesainF05a C.3, BR-04.2/04.
 });
 
 describe('F-05a contoh kerja HPP FIFO (DesainF05a C.3)', function (): void {
-    it('contoh HPP FIFO', function (array $langkah): void {
-        TimAJalankanContohHpp(new HppFifo, $langkah);
-    })->with([
-        '#2 FIFO: 10 @ 1000, 5 @ 1200, jual 12 → 10000 + 2400' => [[
-            [['10', '10000.00', '1000'], ['10000.00', '0.00', '10.0000', '10000.00', '1000.000000']],
-            [['5', '6000.00', '1200'], ['6000.00', '0.00', '15.0000', '16000.00', '1066.666667']],
-            [['-12'], ['-12400.00', '0.00', '3.0000', '3600.00', '1200.000000']],
-        ]],
-        '#3 BR-04.3 FIFO: sisa minus dinilai pada lapisan terakhir, terima → lapisan (6, 6600)' => [[
-            [['5', '5000.00', '1000'], ['5000.00', '0.00', '5.0000', '5000.00', '1000.000000']],
-            [['-5'], ['-5000.00', '0.00', '0.0000', '0.00', '1000.000000']],
-            [['-4'], ['-4000.00', '0.00', '-4.0000', '-4000.00', '1000.000000']],
-            [['10', '11000.00'], ['10600.00', '-400.00', '6.0000', '6600.00', '1100.000000']],
-        ]],
-        '#4 melewati nol FIFO' => [[
-            [['2', '2000.00'], ['2000.00', '0.00', '2.0000', '2000.00', '1000.000000']],
-            [['-5'], ['-5000.00', '0.00', '-3.0000', '-3000.00', '1000.000000']],
-        ]],
-        '#5 pembulatan FIFO: lapisan 3 unit senilai 1000 → 333.33, 333.33, 333.34' => [[
-            [['3', '1000.00'], ['1000.00', '0.00', '3.0000', '1000.00', '333.333333']],
-            [['-1'], ['-333.33', '0.00', '2.0000', '666.67', '333.335000']],
-            [['-1'], ['-333.33', '0.00', '1.0000', '333.34', '333.340000']],
-            [['-1'], ['-333.34', '0.00', '0.0000', '0.00', '333.340000']],
-        ]],
-    ]);
+    it('contoh HPP FIFO', function (string $nama): void {
+        TimAJalankanContohHpp(new HppFifo, TimAContohHppFifo()[$nama]);
+    })->with(array_keys(TimAContohHppFifo()));
 
     it('#2 FIFO: HppSatuan keluar = Hpp(|TotalHpp|, q) dan lapisan L2 tersisa 3 / 3600.00', function (): void {
         $strategi = new HppFifo;
@@ -179,8 +194,9 @@ describe('F-05a contoh kerja HPP FIFO (DesainF05a C.3)', function (): void {
             new LapisanHpp(2, 102, null, null, Kuantitas::Dari('5'), Kuantitas::Dari('3'), BigDecimal::of('1200'), Uang::Dari('6000.00'), Uang::Dari('3600.00')),
         ], BigDecimal::of('1200'));
 
-        expect(fn () => (new HppFifo)->Terapkan($keadaan, BantuanBuku::BuatMasukanDitentukan('-5', '6000.00', null, 102)))
-            ->toThrow(fn (PelanggaranAturanBisnis $e) => expect($e->kode)->toBe('LapisanSudahTerpakai'));
+        $galat = BantuanBuku::TangkapPelanggaran(fn () => (new HppFifo)->Terapkan($keadaan, BantuanBuku::BuatMasukanDitentukan('-5', '6000.00', null, 102)));
+
+        expect($galat->kode)->toBe('LapisanSudahTerpakai');
 
         expect($keadaan->lapisan[0]->jumlahSisa->KeString())->toBe('3.0000');
     });

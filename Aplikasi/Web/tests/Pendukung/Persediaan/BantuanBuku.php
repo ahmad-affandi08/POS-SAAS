@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Pendukung\Persediaan;
 
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Persediaan\Aksi\CatatMutasiStok;
@@ -21,6 +22,7 @@ use App\Domain\Persediaan\Layanan\Hpp\StrategiHpp;
 use App\Domain\Persediaan\Model\SaldoStok;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
+use RuntimeException;
 
 /**
  * Bantuan test buku stok & HPP F-05a Tim A (DesainF05a C.2/C.3): pembuat masukan strategi HPP (unit, tanpa
@@ -85,6 +87,20 @@ final class BantuanBuku
         }
 
         return $total;
+    }
+
+    /**
+     * Menjalankan `aksi` dan mengembalikan PelanggaranAturanBisnis yang dilemparnya (gagal bila tidak ada).
+     */
+    public static function TangkapPelanggaran(callable $aksi): PelanggaranAturanBisnis
+    {
+        try {
+            $aksi();
+        } catch (PelanggaranAturanBisnis $galat) {
+            return $galat;
+        }
+
+        throw new RuntimeException('Diharapkan PelanggaranAturanBisnis, tetapi aksi berhasil.');
     }
 
     /** Id referensi dokumen uji yang unik (dokumen sumber fiktif, misal nomor penerimaan). */
