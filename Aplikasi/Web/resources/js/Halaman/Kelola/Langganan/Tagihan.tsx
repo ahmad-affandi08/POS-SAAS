@@ -5,6 +5,8 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RincianTagihan from '@/Komponen/Langganan/RincianTagihan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -30,7 +32,6 @@ import {
 import { Field, FieldDescription, FieldError } from '@/Komponen/Ui/field';
 import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -294,6 +295,67 @@ function FormBukti({
     );
 }
 
+const kolomPembayaran: KolomTabel<PembayaranLangganan>[] = [
+    {
+        id: 'DiunggahPada',
+        accessorKey: 'DiunggahPada',
+        header: 'Diunggah',
+        meta: { label: 'Diunggah', prioritas: 'utama', wajib: true, kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DiunggahPada),
+    },
+    {
+        id: 'Transfer',
+        header: 'Transfer',
+        enableSorting: false,
+        meta: { label: 'Transfer', prioritas: 'rendah' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
+                <span className="block text-keterangan text-teks-sekunder">
+                    {baris.BankPengirim} · {baris.NamaPengirim}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Jumlah',
+        header: 'Jumlah',
+        enableSorting: false,
+        meta: { label: 'Jumlah', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatRupiah(row.original.Jumlah),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <LabelStatus jenis={JenisLabelPembayaran(baris.Status)} teks={baris.LabelStatus} />
+                {baris.AlasanTolak ? (
+                    <span className="mt-1 block text-keterangan text-teks-sekunder">Alasan: {baris.AlasanTolak}</span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'Bukti',
+        header: () => <span className="sr-only">Bukti</span>,
+        enableSorting: false,
+        meta: { label: 'Bukti', prioritas: 'penting', wajib: true, kelasSel: 'text-right' },
+        cell: ({ row }) => (
+            <a
+                href={`/kelola/langganan/pembayaran/${row.original.Uuid}/bukti`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-label font-semibold text-brand underline"
+            >
+                Lihat bukti
+            </a>
+        ),
+    },
+];
+
 function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }) {
     if (pembayaran.length === 0) {
         return null;
@@ -304,64 +366,15 @@ function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }
             <h2 id="judul-pembayaran" className="text-subjudul font-semibold text-teks-utama">
                 Bukti transfer terkirim
             </h2>
-            <Card className="gap-0 py-0">
-                <Table className="text-isi">
-                    <TableCaption className="sr-only">Riwayat bukti transfer</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col" className="px-4">
-                                Diunggah
-                            </TableHead>
-                            <TableHead scope="col" className="px-4">
-                                Transfer
-                            </TableHead>
-                            <TableHead scope="col" className="px-4 text-right">
-                                Jumlah
-                            </TableHead>
-                            <TableHead scope="col" className="px-4">
-                                Status
-                            </TableHead>
-                            <TableHead scope="col" className="px-4">
-                                <span className="sr-only">Bukti</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {pembayaran.map((baris) => (
-                            <TableRow key={baris.Uuid} className="align-top">
-                                <TableCell className="px-4">{FormatTanggalWaktu(baris.DiunggahPada)}</TableCell>
-                                <TableCell className="px-4 whitespace-normal">
-                                    <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
-                                    <span className="block text-keterangan text-teks-sekunder">
-                                        {baris.BankPengirim} · {baris.NamaPengirim}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="px-4 text-right tabular-nums">
-                                    {FormatRupiah(baris.Jumlah)}
-                                </TableCell>
-                                <TableCell className="px-4 whitespace-normal">
-                                    <LabelStatus jenis={JenisLabelPembayaran(baris.Status)} teks={baris.LabelStatus} />
-                                    {baris.AlasanTolak ? (
-                                        <span className="mt-1 block text-keterangan text-teks-sekunder">
-                                            Alasan: {baris.AlasanTolak}
-                                        </span>
-                                    ) : null}
-                                </TableCell>
-                                <TableCell className="px-4 text-right">
-                                    <a
-                                        href={`/kelola/langganan/pembayaran/${baris.Uuid}/bukti`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-label font-semibold text-brand underline"
-                                    >
-                                        Lihat bukti
-                                    </a>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
+            <TabelData
+                id="langganan-riwayat-pembayaran"
+                label="Riwayat bukti transfer"
+                kolom={kolomPembayaran}
+                sumber={{ mode: 'lokal', data: pembayaran }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                urutBawaan="-DiunggahPada"
+                kosong={{ judul: 'Belum ada bukti transfer.' }}
+            />
         </section>
     );
 }

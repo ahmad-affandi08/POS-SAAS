@@ -3,13 +3,14 @@ import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import LangkahImpor, { JenisLabelImpor } from '@/Komponen/Katalog/LangkahImpor';
 import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import TabelBarisGalatImpor from '@/Komponen/Katalog/TabelBarisGalatImpor';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import KemajuanImporStokAwal, { StatusBerjalanStokAwal } from '@/Komponen/Persediaan/Impor/KemajuanImporStokAwal';
 import PemetaanImporStokAwal from '@/Komponen/Persediaan/Impor/PemetaanImporStokAwal';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -48,6 +49,65 @@ function JenisLabelDraf(status: StatusStokAwal): 'sukses' | 'peringatan' | 'baha
 
     return status === 'Dibatalkan' ? 'bahaya' : 'netral';
 }
+
+type RingkasanDraf = NonNullable<PropsDetailImporStokAwal['Pratinjau']>['RingkasanDokumen'][number];
+type DokumenImpor = PropsDetailImporStokAwal['Dokumen'][number];
+
+const kolomRingkasan: KolomTabel<RingkasanDraf>[] = [
+    {
+        id: 'NamaGudang',
+        accessorKey: 'NamaGudang',
+        header: 'Lokasi stok',
+        meta: { label: 'Lokasi stok', prioritas: 'utama', wajib: true },
+    },
+    {
+        id: 'JumlahBaris',
+        accessorKey: 'JumlahBaris',
+        header: 'Baris',
+        meta: { label: 'Jumlah baris', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => row.original.JumlahBaris.toLocaleString('id-ID'),
+    },
+    {
+        id: 'TotalNilai',
+        header: 'Total nilai',
+        enableSorting: false,
+        meta: { label: 'Total nilai', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatRupiah(row.original.TotalNilai),
+    },
+];
+
+const kolomDokumen: KolomTabel<DokumenImpor>[] = [
+    {
+        id: 'NamaGudang',
+        accessorKey: 'NamaGudang',
+        header: 'Lokasi stok',
+        meta: { label: 'Lokasi stok', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => (
+            <Link
+                href={`/kelola/persediaan/stok-awal/${row.original.Uuid}`}
+                className="font-semibold text-brand underline"
+            >
+                {row.original.NamaGudang}
+            </Link>
+        ),
+    },
+    {
+        id: 'JumlahBaris',
+        accessorKey: 'JumlahBaris',
+        header: 'Baris',
+        meta: { label: 'Jumlah baris', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => row.original.JumlahBaris.toLocaleString('id-ID'),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus jenis={JenisLabelDraf(row.original.Status)} teks={labelStatusDraf[row.original.Status]} />
+        ),
+    },
+];
 
 function Angka({ label, nilai }: { label: string; nilai: number }) {
     return (
@@ -156,48 +216,14 @@ export default function HalamanDetailImporStokAwal({
                         <Angka label="Draf yang akan dibuat" nilai={Pratinjau.RingkasanDokumen.length} />
                     </dl>
                     {Pratinjau.RingkasanDokumen.length > 0 ? (
-                        <div className="rounded-kontrol border border-garis">
-                            <Table className="min-w-[480px] text-left text-label">
-                                <TableCaption className="sr-only">Draf stok awal yang akan dibuat</TableCaption>
-                                <TableHeader>
-                                    <TableRow className="border-garis hover:bg-transparent">
-                                        <TableHead scope="col" className="px-3 font-semibold text-teks-sekunder">
-                                            Lokasi stok
-                                        </TableHead>
-                                        <TableHead
-                                            scope="col"
-                                            className="px-3 text-right font-semibold text-teks-sekunder"
-                                        >
-                                            Baris
-                                        </TableHead>
-                                        <TableHead
-                                            scope="col"
-                                            className="px-3 text-right font-semibold text-teks-sekunder"
-                                        >
-                                            Total nilai
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Pratinjau.RingkasanDokumen.map((dokumen, indeks) => (
-                                        <TableRow
-                                            key={`${dokumen.NamaGudang}-${String(indeks)}`}
-                                            className="border-garis"
-                                        >
-                                            <TableCell className="px-3 whitespace-normal">
-                                                {dokumen.NamaGudang}
-                                            </TableCell>
-                                            <TableCell className="px-3 text-right tabular-nums">
-                                                {dokumen.JumlahBaris.toLocaleString('id-ID')}
-                                            </TableCell>
-                                            <TableCell className="px-3 text-right tabular-nums">
-                                                {FormatRupiah(dokumen.TotalNilai)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        <TabelData
+                            id="persediaan-impor-ringkasan-draf"
+                            label="Draf stok awal yang akan dibuat"
+                            kolom={kolomRingkasan}
+                            sumber={{ mode: 'lokal', data: Pratinjau.RingkasanDokumen }}
+                            ambilIdBaris={(dokumen) => dokumen.NamaGudang}
+                            kosong={{ judul: 'Tidak ada draf yang akan dibuat.' }}
+                        />
                     ) : null}
                     {Pratinjau.Peringatan.length > 0 ? (
                         <Pemberitahuan jenis="info" judul="Catatan">
@@ -220,49 +246,11 @@ export default function HalamanDetailImporStokAwal({
                                 Baris ini tidak ikut dibuatkan draf. Perbaiki di berkas lalu unggah ulang, atau
                                 lanjutkan tanpa baris ini.
                             </p>
-                            <div className="rounded-kontrol border border-garis [&_[data-slot=table-container]]:max-h-96 [&_[data-slot=table-container]]:overflow-auto">
-                                <Table className="min-w-[560px] text-left text-label">
-                                    <TableCaption className="sr-only">Baris bermasalah</TableCaption>
-                                    <TableHeader className="sticky top-0 bg-card">
-                                        <TableRow className="border-garis hover:bg-transparent">
-                                            <TableHead
-                                                scope="col"
-                                                className="px-3 text-right font-semibold text-teks-sekunder"
-                                            >
-                                                Baris
-                                            </TableHead>
-                                            <TableHead scope="col" className="px-3 font-semibold text-teks-sekunder">
-                                                Produk
-                                            </TableHead>
-                                            <TableHead scope="col" className="px-3 font-semibold text-teks-sekunder">
-                                                Masalah
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {Pratinjau.BarisGalat.map((baris) => (
-                                            <TableRow key={baris.NomorBaris} className="border-garis align-top">
-                                                <TableCell className="px-3 text-right tabular-nums">
-                                                    {baris.NomorBaris}
-                                                </TableCell>
-                                                <TableCell className="px-3 break-words whitespace-normal">
-                                                    {baris.Data.Produk ?? '—'}
-                                                </TableCell>
-                                                <TableCell className="px-3 whitespace-normal">
-                                                    <ul className="flex flex-col gap-0.5">
-                                                        {baris.Galat.map((galat) => (
-                                                            <li key={`${galat.Bidang}-${galat.Pesan}`}>
-                                                                <span className="font-semibold">{galat.Bidang}:</span>{' '}
-                                                                {galat.Pesan}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
+                            <TabelBarisGalatImpor
+                                id="persediaan-impor-galat"
+                                baris={Pratinjau.BarisGalat}
+                                ambilNama={(baris) => baris.Data.Produk ?? '—'}
+                            />
                         </div>
                     ) : null}
                     <TautanLaporan impor={Impor} />
@@ -305,60 +293,15 @@ export default function HalamanDetailImporStokAwal({
                     <h2 id="judul-draf-impor" className="text-subjudul font-semibold text-teks-utama">
                         Dokumen stok awal dari impor ini
                     </h2>
-                    {Dokumen.length === 0 ? (
-                        <KeadaanKosong judul="Belum ada draf yang dibuat." />
-                    ) : (
-                        <div className="rounded-panel border border-garis bg-card">
-                            <Table className="min-w-[480px] text-left text-isi">
-                                <TableCaption className="sr-only">Dokumen stok awal dari impor ini</TableCaption>
-                                <TableHeader>
-                                    <TableRow className="border-garis hover:bg-transparent">
-                                        <TableHead
-                                            scope="col"
-                                            className="px-4 text-label font-semibold text-teks-sekunder"
-                                        >
-                                            Lokasi stok
-                                        </TableHead>
-                                        <TableHead
-                                            scope="col"
-                                            className="px-4 text-right text-label font-semibold text-teks-sekunder"
-                                        >
-                                            Baris
-                                        </TableHead>
-                                        <TableHead
-                                            scope="col"
-                                            className="px-4 text-label font-semibold text-teks-sekunder"
-                                        >
-                                            Status
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Dokumen.map((dokumen) => (
-                                        <TableRow key={dokumen.Uuid} className="border-garis">
-                                            <TableCell className="px-4 whitespace-normal">
-                                                <Link
-                                                    href={`/kelola/persediaan/stok-awal/${dokumen.Uuid}`}
-                                                    className="font-semibold text-brand underline"
-                                                >
-                                                    {dokumen.NamaGudang}
-                                                </Link>
-                                            </TableCell>
-                                            <TableCell className="px-4 text-right tabular-nums">
-                                                {dokumen.JumlahBaris.toLocaleString('id-ID')}
-                                            </TableCell>
-                                            <TableCell className="px-4">
-                                                <LabelStatus
-                                                    jenis={JenisLabelDraf(dokumen.Status)}
-                                                    teks={labelStatusDraf[dokumen.Status]}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                    <TabelData
+                        id="persediaan-impor-dokumen"
+                        label="Dokumen stok awal dari impor ini"
+                        kolom={kolomDokumen}
+                        sumber={{ mode: 'lokal', data: Dokumen }}
+                        ambilIdBaris={(dokumen) => dokumen.Uuid}
+                        alamatDetail={(dokumen) => `/kelola/persediaan/stok-awal/${dokumen.Uuid}`}
+                        kosong={{ judul: 'Belum ada draf yang dibuat.' }}
+                    />
                 </section>
             ) : null}
 

@@ -9,10 +9,11 @@ import { HitungBarisMutasi } from '@/Komponen/Persediaan/AturanFormStokAwal';
 import LabelStatusStokAwal from '@/Komponen/Persediaan/LabelStatusStokAwal';
 import PanelKesiapanAkun from '@/Komponen/Persediaan/PanelKesiapanAkun';
 import PemantauPosting from '@/Komponen/Persediaan/PemantauPosting';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatHppSatuan, FormatJumlahStok, FormatNilai } from '@/Pustaka/FormatPersediaan';
@@ -46,7 +47,106 @@ function Keterangan({ label, children }: { label: string; children: ReactNode })
     );
 }
 
-const kelasKepala = 'px-2 h-auto text-label font-semibold text-teks-sekunder';
+type BarisStokAwal = PropsDetailStokAwal['Baris'][number];
+type JurnalStokAwal = PropsDetailStokAwal['Jurnal'][number];
+
+const kolomBaris: KolomTabel<BarisStokAwal>[] = [
+    {
+        id: 'Urutan',
+        accessorKey: 'Urutan',
+        header: 'No.',
+        meta: { label: 'Nomor urut', angka: true, prioritas: 'rendah', kelasSel: 'w-12 text-teks-sekunder' },
+    },
+    {
+        id: 'NamaProduk',
+        accessorFn: (baris) => `${baris.NamaProduk} ${baris.Sku ?? ''}`,
+        header: 'Produk',
+        meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <span className="block font-semibold break-words text-teks-utama">{baris.NamaProduk}</span>
+                <span className="font-mono text-keterangan text-teks-sekunder">{baris.Sku ?? 'Tanpa SKU'}</span>
+            </>
+        ),
+    },
+    {
+        id: 'Jumlah',
+        header: 'Jumlah',
+        enableSorting: false,
+        meta: { label: 'Jumlah', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatJumlahStok(row.original.Jumlah, row.original.SimbolSatuan),
+    },
+    {
+        id: 'HppSatuan',
+        header: 'Harga modal per satuan',
+        enableSorting: false,
+        meta: { label: 'Harga modal per satuan', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatHppSatuan(row.original.HppSatuan),
+    },
+    {
+        id: 'Nilai',
+        header: 'Nilai',
+        enableSorting: false,
+        meta: { label: 'Nilai', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatNilai(row.original.Nilai),
+    },
+    {
+        id: 'Pelacakan',
+        accessorKey: 'Pelacakan',
+        header: 'Batch / nomor seri',
+        enableSorting: false,
+        meta: { label: 'Batch / nomor seri', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                {baris.Pelacakan === 'Batch' ? (
+                    <>
+                        <span className="font-mono text-teks-utama">{baris.NomorBatch}</span>
+                        <span className="block text-keterangan">
+                            Kedaluwarsa {FormatTanggal(baris.TanggalKedaluwarsa)}
+                        </span>
+                    </>
+                ) : null}
+                {baris.Pelacakan === 'Seri' ? (
+                    <details>
+                        <summary className="cursor-pointer text-brand underline">
+                            {baris.NomorSeri.length.toLocaleString('id-ID')} nomor seri
+                        </summary>
+                        <ul className="mt-1 max-h-48 overflow-y-auto font-mono text-keterangan text-teks-utama">
+                            {baris.NomorSeri.map((seri) => (
+                                <li key={seri}>{seri}</li>
+                            ))}
+                        </ul>
+                    </details>
+                ) : null}
+                {baris.Pelacakan === 'Tidak' ? '—' : null}
+            </>
+        ),
+    },
+];
+
+const kolomJurnal: KolomTabel<JurnalStokAwal>[] = [
+    {
+        id: 'Tanggal',
+        accessorKey: 'Tanggal',
+        header: 'Tanggal',
+        meta: { label: 'Tanggal', prioritas: 'penting', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggal(row.original.Tanggal),
+    },
+    {
+        id: 'Keterangan',
+        accessorKey: 'Keterangan',
+        header: 'Keterangan',
+        enableSorting: false,
+        meta: { label: 'Keterangan', prioritas: 'rendah' },
+    },
+    {
+        id: 'TotalDebit',
+        header: 'Total debit',
+        enableSorting: false,
+        meta: { label: 'Total debit', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatNilai(row.original.TotalDebit),
+    },
+];
 
 /** F-05a: detail dokumen stok awal, posting (J-05.1), pembatalan (jurnal pembalik), buang draf, jurnal & riwayat. */
 export default function HalamanDetailStokAwal({
@@ -205,84 +305,16 @@ export default function HalamanDetailStokAwal({
             </PanelKatalog>
 
             <PanelKatalog judul="Barang" idJudul="judul-barang-detail-stok-awal">
-                {Baris.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Dokumen ini belum berisi barang.</p>
-                ) : (
-                    <Table className="min-w-[860px] text-left text-isi">
-                        <TableCaption className="sr-only">Barang stok awal, {Baris.length} baris</TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className={`${kelasKepala} w-12 text-right`}>
-                                    No.
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Produk
-                                </TableHead>
-                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
-                                    Jumlah
-                                </TableHead>
-                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
-                                    Harga modal per satuan
-                                </TableHead>
-                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
-                                    Nilai
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Batch / nomor seri
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Baris.map((baris) => (
-                                <TableRow key={baris.Urutan} className="border-garis align-top">
-                                    <TableCell className="px-2 py-2 text-right text-teks-sekunder tabular-nums">
-                                        {baris.Urutan}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal">
-                                        <span className="block font-semibold break-words text-teks-utama">
-                                            {baris.NamaProduk}
-                                        </span>
-                                        <span className="font-mono text-keterangan text-teks-sekunder">
-                                            {baris.Sku ?? 'Tanpa SKU'}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
-                                        {FormatJumlahStok(baris.Jumlah, baris.SimbolSatuan)}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
-                                        {FormatHppSatuan(baris.HppSatuan)}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
-                                        {FormatNilai(baris.Nilai)}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal text-teks-sekunder">
-                                        {baris.Pelacakan === 'Batch' ? (
-                                            <>
-                                                <span className="font-mono text-teks-utama">{baris.NomorBatch}</span>
-                                                <span className="block text-keterangan">
-                                                    Kedaluwarsa {FormatTanggal(baris.TanggalKedaluwarsa)}
-                                                </span>
-                                            </>
-                                        ) : null}
-                                        {baris.Pelacakan === 'Seri' ? (
-                                            <details>
-                                                <summary className="cursor-pointer text-brand underline">
-                                                    {baris.NomorSeri.length.toLocaleString('id-ID')} nomor seri
-                                                </summary>
-                                                <ul className="mt-1 max-h-48 overflow-y-auto font-mono text-keterangan text-teks-utama">
-                                                    {baris.NomorSeri.map((seri) => (
-                                                        <li key={seri}>{seri}</li>
-                                                    ))}
-                                                </ul>
-                                            </details>
-                                        ) : null}
-                                        {baris.Pelacakan === 'Tidak' ? '—' : null}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
+                <TabelData
+                    id="persediaan-stok-awal-baris"
+                    label={`Barang stok awal, ${String(Baris.length)} baris`}
+                    kolom={kolomBaris}
+                    sumber={{ mode: 'lokal', data: Baris }}
+                    ambilIdBaris={(baris) => String(baris.Urutan)}
+                    urutBawaan="Urutan"
+                    cari="Cari nama produk atau SKU"
+                    kosong={{ judul: 'Dokumen ini belum berisi barang.' }}
+                />
             </PanelKatalog>
 
             <PanelKatalog
@@ -290,63 +322,46 @@ export default function HalamanDetailStokAwal({
                 idJudul="judul-jurnal-stok-awal"
                 keterangan="Jurnal otomatis: Debit persediaan, Kredit ekuitas saldo awal. Pembatalan membuat jurnal pembalik."
             >
-                {Jurnal.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">
-                        {StokAwal.Status === 'Diposting' || StokAwal.Status === 'Dibatalkan'
-                            ? 'Tidak ada jurnal karena total nilai stok awal Rp 0.'
-                            : 'Jurnal dibuat saat stok awal diposting.'}
-                    </p>
-                ) : (
-                    <Table className="min-w-[640px] text-left text-isi">
-                        <TableCaption className="sr-only">Jurnal stok awal</TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Nomor jurnal
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Tanggal
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Keterangan
-                                </TableHead>
-                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
-                                    Total debit
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Jurnal.map((jurnal) => (
-                                <TableRow key={jurnal.Uuid} className="border-garis align-top">
-                                    <TableCell className="px-2 py-2 whitespace-normal">
-                                        {Izin.LihatJurnal ? (
-                                            <Link
-                                                href={`/kelola/akuntansi/jurnal/${jurnal.Uuid}`}
-                                                className="font-mono font-semibold text-brand underline"
-                                            >
-                                                {jurnal.Nomor}
-                                            </Link>
-                                        ) : (
-                                            <span className="font-mono">{jurnal.Nomor}</span>
-                                        )}
-                                        {jurnal.Pembalik ? (
-                                            <span className="ml-2">
-                                                <LabelStatus jenis="peringatan" teks="Pembalik" />
-                                            </span>
-                                        ) : null}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-nowrap">
-                                        {FormatTanggal(jurnal.Tanggal)}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal">{jurnal.Keterangan}</TableCell>
-                                    <TableCell className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
-                                        {FormatNilai(jurnal.TotalDebit)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
+                <TabelData
+                    id="persediaan-stok-awal-jurnal"
+                    label="Jurnal stok awal"
+                    kolom={[
+                        {
+                            id: 'Nomor',
+                            accessorKey: 'Nomor',
+                            header: 'Nomor jurnal',
+                            meta: { label: 'Nomor jurnal', prioritas: 'utama', wajib: true },
+                            cell: ({ row: { original: jurnal } }) => (
+                                <>
+                                    {Izin.LihatJurnal ? (
+                                        <Link
+                                            href={`/kelola/akuntansi/jurnal/${jurnal.Uuid}`}
+                                            className="font-mono font-semibold text-brand underline"
+                                        >
+                                            {jurnal.Nomor}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-mono">{jurnal.Nomor}</span>
+                                    )}
+                                    {jurnal.Pembalik ? (
+                                        <span className="ml-2">
+                                            <LabelStatus jenis="peringatan" teks="Pembalik" />
+                                        </span>
+                                    ) : null}
+                                </>
+                            ),
+                        },
+                        ...kolomJurnal,
+                    ]}
+                    sumber={{ mode: 'lokal', data: Jurnal }}
+                    ambilIdBaris={(jurnal) => jurnal.Uuid}
+                    kosong={{
+                        judul:
+                            StokAwal.Status === 'Diposting' || StokAwal.Status === 'Dibatalkan'
+                                ? 'Tidak ada jurnal karena total nilai stok awal Rp 0.'
+                                : 'Jurnal dibuat saat stok awal diposting.',
+                    }}
+                />
             </PanelKatalog>
 
             <PanelKatalog judul="Riwayat status" idJudul="judul-riwayat-stok-awal">

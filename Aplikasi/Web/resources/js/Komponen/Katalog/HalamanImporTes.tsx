@@ -162,7 +162,7 @@ describe('Impor produk langkah 2–5 (E.10)', () => {
     });
 
     it('pemetaan preset asumsi: peringatan, contoh isi, lalu PUT { Pemetaan, Opsi }', () => {
-        render(<HalamanDetailImpor {...PropsDetail()} />);
+        RenderUji(<HalamanDetailImpor {...PropsDetail()} />);
 
         expect(screen.getByText('Periksa pemetaan kolom sebelum mengimpor')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Periksa data' }));
@@ -199,7 +199,7 @@ describe('Impor produk langkah 2–5 (E.10)', () => {
                 DiblokirBatasSku: 'Produk melebihi batas paket (120 + 1.000 > 500).',
             },
         });
-        render(<HalamanDetailImpor {...props} />);
+        RenderUji(<HalamanDetailImpor {...props} />);
 
         expect(screen.getByText('1.000')).toBeTruthy();
         expect(screen.getByText('Harga tidak boleh negatif.')).toBeTruthy();

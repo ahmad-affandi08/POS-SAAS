@@ -7,9 +7,9 @@ import KemajuanImpor, { StatusBerjalan } from '@/Komponen/Katalog/KemajuanImpor'
 import LangkahImpor, { JenisLabelImpor } from '@/Komponen/Katalog/LangkahImpor';
 import PemetaanImpor from '@/Komponen/Katalog/PemetaanImpor';
 import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import TabelBarisGalatImpor from '@/Komponen/Katalog/TabelBarisGalatImpor';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -169,49 +169,11 @@ export default function HalamanDetailImpor({
                                 Baris ini tidak ikut diimpor. Perbaiki di berkas lalu unggah ulang, atau lanjutkan tanpa
                                 baris ini.
                             </p>
-                            <div className="rounded-kontrol border border-garis [&_[data-slot=table-container]]:max-h-96 [&_[data-slot=table-container]]:overflow-auto">
-                                <Table className="min-w-[560px] text-left text-label">
-                                    <TableCaption className="sr-only">Baris bermasalah</TableCaption>
-                                    <TableHeader className="sticky top-0 bg-card">
-                                        <TableRow className="border-garis hover:bg-transparent">
-                                            <TableHead
-                                                scope="col"
-                                                className="px-3 text-right font-semibold text-teks-sekunder"
-                                            >
-                                                Baris
-                                            </TableHead>
-                                            <TableHead scope="col" className="px-3 font-semibold text-teks-sekunder">
-                                                Produk
-                                            </TableHead>
-                                            <TableHead scope="col" className="px-3 font-semibold text-teks-sekunder">
-                                                Masalah
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {Pratinjau.BarisGalat.map((baris) => (
-                                            <TableRow key={baris.NomorBaris} className="border-garis align-top">
-                                                <TableCell className="px-3 text-right tabular-nums">
-                                                    {baris.NomorBaris}
-                                                </TableCell>
-                                                <TableCell className="px-3 break-words whitespace-normal">
-                                                    {baris.Data.Nama ?? Object.values(baris.Data)[0] ?? '—'}
-                                                </TableCell>
-                                                <TableCell className="px-3 whitespace-normal">
-                                                    <ul className="flex flex-col gap-0.5">
-                                                        {baris.Galat.map((galat) => (
-                                                            <li key={`${galat.Bidang}-${galat.Pesan}`}>
-                                                                <span className="font-semibold">{galat.Bidang}:</span>{' '}
-                                                                {galat.Pesan}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
+                            <TabelBarisGalatImpor
+                                id="katalog-impor-galat"
+                                baris={Pratinjau.BarisGalat}
+                                ambilNama={(baris) => baris.Data.Nama ?? Object.values(baris.Data)[0] ?? '—'}
+                            />
                         </div>
                     ) : null}
                     <TautanLaporan impor={Impor} />

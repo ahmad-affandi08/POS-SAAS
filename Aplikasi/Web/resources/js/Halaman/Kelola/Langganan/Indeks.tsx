@@ -4,11 +4,12 @@ import { useId, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
 import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { RadioGroup, RadioGroupItem } from '@/Komponen/Ui/radio-group';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -297,68 +298,70 @@ function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langg
     );
 }
 
+const kolomTagihan: KolomTabel<TagihanLangganan>[] = [
+    {
+        id: 'Nomor',
+        accessorKey: 'Nomor',
+        header: 'Nomor',
+        enableSorting: false,
+        meta: { label: 'Nomor tagihan', prioritas: 'utama', wajib: true, kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => (
+            <Link
+                href={`/kelola/langganan/tagihan/${row.original.Uuid}`}
+                className="font-mono text-label text-brand underline"
+            >
+                {row.original.Nomor}
+            </Link>
+        ),
+    },
+    {
+        id: 'Paket',
+        header: 'Paket',
+        enableSorting: false,
+        meta: { label: 'Paket', prioritas: 'rendah' },
+        cell: ({ row }) => `${row.original.NamaPaket} · ${row.original.Siklus}`,
+    },
+    {
+        id: 'JatuhTempoPada',
+        accessorKey: 'JatuhTempoPada',
+        header: 'Jatuh tempo',
+        meta: { label: 'Jatuh tempo', prioritas: 'penting', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.JatuhTempoPada),
+    },
+    {
+        id: 'Total',
+        header: 'Total',
+        enableSorting: false,
+        meta: { label: 'Total', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatRupiah(row.original.Total),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus jenis={JenisLabelTagihan(row.original.Status)} teks={row.original.LabelStatus} />
+        ),
+    },
+];
+
 function RiwayatTagihan({ tagihan }: { tagihan: TagihanLangganan[] }) {
     return (
         <section aria-labelledby="judul-riwayat" className="flex flex-col gap-2">
             <h2 id="judul-riwayat" className="text-subjudul font-semibold text-teks-utama">
                 Riwayat tagihan
             </h2>
-            {tagihan.length === 0 ? (
-                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
-                    <EmptyHeader className="max-w-none items-start text-left">
-                        <EmptyDescription className="text-isi text-teks-sekunder">Belum ada tagihan.</EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="text-isi">
-                        <TableCaption className="sr-only">Riwayat tagihan langganan</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Nomor
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Paket
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Jatuh tempo
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Total
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Status
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {tagihan.map((baris) => (
-                                <TableRow key={baris.Uuid}>
-                                    <TableCell className="px-4 font-mono text-label">
-                                        <Link
-                                            href={`/kelola/langganan/tagihan/${baris.Uuid}`}
-                                            className="text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        >
-                                            {baris.Nomor}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        {baris.NamaPaket} · {baris.Siklus}
-                                    </TableCell>
-                                    <TableCell className="px-4">{FormatTanggalWaktu(baris.JatuhTempoPada)}</TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">
-                                        {FormatRupiah(baris.Total)}
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        <LabelStatus jenis={JenisLabelTagihan(baris.Status)} teks={baris.LabelStatus} />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            <TabelData
+                id="langganan-riwayat-tagihan"
+                label="Riwayat tagihan langganan"
+                kolom={kolomTagihan}
+                sumber={{ mode: 'lokal', data: tagihan }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                urutBawaan="-JatuhTempoPada"
+                alamatDetail={(baris) => `/kelola/langganan/tagihan/${baris.Uuid}`}
+                kosong={{ judul: 'Belum ada tagihan.' }}
+            />
         </section>
     );
 }

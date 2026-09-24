@@ -353,7 +353,7 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
     afterEach(() => cleanup());
 
     it('BR-03.2: produk terpakai tidak menawarkan hapus, alasan ditulis; arsip tetap bisa', () => {
-        render(<HalamanDetailProduk {...PropsDetail()} />);
+        RenderUji(<HalamanDetailProduk {...PropsDetail()} />);
 
         expect(screen.queryByRole('button', { name: 'Hapus produk' })).toBeNull();
         expect(
@@ -368,7 +368,7 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
     });
 
     it('satuan & barcode: isi konversi, barcode Mono, barcode internal lewat POST', () => {
-        render(<HalamanDetailProduk {...PropsDetail()} />);
+        RenderUji(<HalamanDetailProduk {...PropsDetail()} />);
 
         expect(screen.getByText('24 pcs')).toBeTruthy();
         expect(screen.getByText('8991234567890').className).toContain('font-mono');
@@ -382,7 +382,7 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
     });
 
     it('batas stok: min > maks ditolak di peramban; tanpa izin persediaan hanya baca', () => {
-        render(<HalamanDetailProduk {...PropsDetail()} />);
+        RenderUji(<HalamanDetailProduk {...PropsDetail()} />);
         fireEvent.change(screen.getByLabelText('Stok maksimum Gudang utama'), { target: { value: '5' } });
 
         expect(screen.getByText('Stok minimum tidak boleh lebih besar dari stok maksimum.')).toBeTruthy();
@@ -397,7 +397,7 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
         );
         cleanup();
 
-        render(<HalamanDetailProduk {...PropsDetail({ Izin: { ...IzinPenuh, KelolaPersediaan: false } })} />);
+        RenderUji(<HalamanDetailProduk {...PropsDetail({ Izin: { ...IzinPenuh, KelolaPersediaan: false } })} />);
         expect(screen.queryByRole('button', { name: 'Simpan batas stok' })).toBeNull();
     });
 
@@ -422,7 +422,7 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
             BatasStok: null,
             BatasSku: { Batas: 100, Terpakai: 100 },
         });
-        render(<HalamanDetailProduk {...props} />);
+        RenderUji(<HalamanDetailProduk {...props} />);
 
         expect(screen.getByText(/1 varian baru akan dibuat: L\./)).toBeTruthy();
         expect(screen.getByText(/Sisa kuota paket 0 produk/)).toBeTruthy();
@@ -639,7 +639,7 @@ describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
     afterEach(() => cleanup());
 
     it('hapus produk memakai AlertDialog: Batal menutup tanpa kirim, konfirmasi mengirim DELETE', async () => {
-        render(
+        RenderUji(
             <HalamanDetailProduk
                 {...PropsDetail({ Produk: { ...PropsDetail().Produk, AlasanTidakBisaDihapus: null } })}
             />,

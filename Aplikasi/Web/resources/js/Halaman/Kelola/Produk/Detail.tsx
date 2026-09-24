@@ -11,6 +11,8 @@ import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -23,13 +25,64 @@ import {
     AlertDialogTrigger,
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatMasukanJumlah } from '@/Pustaka/MasukanJumlah';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsDetailProduk } from '@/Tipe/Katalog';
+
+type Satuan = PropsDetailProduk['Produk']['Satuan'][number];
+type Varian = PropsDetailProduk['Varian'][number];
+
+const kolomVarian: KolomTabel<Varian>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Varian',
+        meta: { label: 'Varian', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: varian } }) => (
+            <>
+                <Link href={`/kelola/produk/${varian.Uuid}`} className="font-semibold text-brand underline">
+                    {varian.Nama}
+                </Link>
+                <span className="block text-keterangan text-teks-sekunder">
+                    {varian.Atribut.map((a) => `${a.Nama}: ${a.Nilai}`).join(' · ')}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Sku',
+        accessorFn: (varian) => varian.Sku ?? '—',
+        header: 'SKU',
+        meta: { label: 'SKU', prioritas: 'penting', kelasSel: 'font-mono text-label' },
+    },
+    {
+        id: 'HargaDasar',
+        header: 'Harga dasar',
+        enableSorting: false,
+        meta: { label: 'Harga dasar', angka: true, prioritas: 'penting' },
+        cell: ({ row }) =>
+            row.original.HargaDasar === null ? (
+                <span className="text-teks-sekunder">Belum ada harga</span>
+            ) : (
+                FormatRupiah(row.original.HargaDasar)
+            ),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'rendah' },
+        cell: ({ row }) => (
+            <LabelStatus
+                jenis={row.original.Status === 'Aktif' ? 'sukses' : 'netral'}
+                teks={row.original.Status === 'Aktif' ? 'Aktif' : 'Diarsipkan'}
+            />
+        ),
+    },
+];
 
 function Baris({ label, children }: { label: string; children: ReactNode }) {
     return (
@@ -57,6 +110,79 @@ export default function HalamanDetailProduk({
     const dasar = Produk.SatuanDasar;
     const induk = Produk.Jenis === 'IndukVarian';
     const opsiKirim = { preserveScroll: true };
+
+    const kolomSatuan: KolomTabel<Satuan>[] = [
+        {
+            id: 'Nama',
+            accessorKey: 'Nama',
+            header: 'Satuan',
+            meta: { label: 'Satuan', prioritas: 'utama', wajib: true },
+            cell: ({ row: { original: satuan } }) => (
+                <>
+                    <span className="font-semibold text-teks-utama">
+                        {satuan.Nama} ({satuan.Simbol})
+                    </span>
+                    <span className="block text-keterangan text-teks-sekunder">
+                        {satuan.BisaDijual ? 'Dijual di kasir' : 'Hanya untuk pembelian (belum ada harga dasar)'}
+                    </span>
+                </>
+            ),
+        },
+        {
+            id: 'KonversiKeDasar',
+            header: 'Isi',
+            enableSorting: false,
+            meta: { label: 'Isi', angka: true, prioritas: 'penting' },
+            cell: ({ row }) => `${FormatMasukanJumlah(row.original.KonversiKeDasar)} ${dasar.Simbol}`,
+        },
+        {
+            id: 'Bawaan',
+            header: 'Bawaan',
+            enableSorting: false,
+            meta: { label: 'Bawaan', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+            cell: ({ row: { original: satuan } }) =>
+                [satuan.DefaultJual ? 'Jual' : null, satuan.DefaultBeli ? 'Beli' : null].filter(Boolean).join(', ') ||
+                '—',
+        },
+        {
+            id: 'Barcode',
+            header: 'Barcode',
+            enableSorting: false,
+            meta: { label: 'Barcode', prioritas: 'penting' },
+            cell: ({ row: { original: satuan } }) => (
+                <>
+                    {satuan.Barcode.length === 0 ? (
+                        <span className="text-teks-sekunder">Belum ada</span>
+                    ) : (
+                        <ul className="flex flex-col gap-0.5">
+                            {satuan.Barcode.map((barcode) => (
+                                <li key={barcode.Uuid} className="font-mono text-label break-all">
+                                    {barcode.Barcode}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    {Izin.Kelola ? (
+                        <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            onClick={() =>
+                                router.post(
+                                    `/kelola/produk/${Produk.Uuid}/satuan/${satuan.Uuid}/barcode-internal`,
+                                    {},
+                                    opsiKirim,
+                                )
+                            }
+                            className="mt-1 h-auto px-0"
+                        >
+                            Buat barcode internal {satuan.Simbol}
+                        </Button>
+                    ) : null}
+                </>
+            ),
+        },
+    ];
 
     const Unggah = () => {
         if (gambar === null) {
@@ -212,142 +338,29 @@ export default function HalamanDetailProduk({
                 idJudul="judul-satuan"
                 keterangan="Barcode internal (EAN-13 berawalan 20) untuk barang tanpa barcode pabrik."
             >
-                <Table className="min-w-[640px] text-left text-isi">
-                    <TableCaption className="sr-only">Satuan dan barcode produk</TableCaption>
-                    <TableHeader>
-                        <TableRow className="border-garis hover:bg-transparent">
-                            <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
-                                Satuan
-                            </TableHead>
-                            <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
-                                Isi
-                            </TableHead>
-                            <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
-                                Bawaan
-                            </TableHead>
-                            <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
-                                Barcode
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Produk.Satuan.map((satuan) => (
-                            <TableRow key={satuan.Uuid} className="border-garis align-top">
-                                <TableCell className="pl-0 whitespace-normal">
-                                    <span className="font-semibold text-teks-utama">
-                                        {satuan.Nama} ({satuan.Simbol})
-                                    </span>
-                                    <span className="block text-keterangan text-teks-sekunder">
-                                        {satuan.BisaDijual
-                                            ? 'Dijual di kasir'
-                                            : 'Hanya untuk pembelian (belum ada harga dasar)'}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-right whitespace-nowrap tabular-nums">
-                                    {FormatMasukanJumlah(satuan.KonversiKeDasar)} {dasar.Simbol}
-                                </TableCell>
-                                <TableCell className="text-teks-sekunder">
-                                    {[satuan.DefaultJual ? 'Jual' : null, satuan.DefaultBeli ? 'Beli' : null]
-                                        .filter(Boolean)
-                                        .join(', ') || '—'}
-                                </TableCell>
-                                <TableCell className="pr-0 whitespace-normal">
-                                    {satuan.Barcode.length === 0 ? (
-                                        <span className="text-teks-sekunder">Belum ada</span>
-                                    ) : (
-                                        <ul className="flex flex-col gap-0.5">
-                                            {satuan.Barcode.map((barcode) => (
-                                                <li key={barcode.Uuid} className="font-mono text-label break-all">
-                                                    {barcode.Barcode}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    {Izin.Kelola ? (
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            size="sm"
-                                            onClick={() =>
-                                                router.post(
-                                                    `/kelola/produk/${Produk.Uuid}/satuan/${satuan.Uuid}/barcode-internal`,
-                                                    {},
-                                                    opsiKirim,
-                                                )
-                                            }
-                                            className="mt-1 h-auto px-0"
-                                        >
-                                            Buat barcode internal {satuan.Simbol}
-                                        </Button>
-                                    ) : null}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <TabelData
+                    id="katalog-produk-satuan"
+                    label="Satuan dan barcode produk"
+                    kolom={kolomSatuan}
+                    sumber={{ mode: 'lokal', data: Produk.Satuan }}
+                    ambilIdBaris={(satuan) => satuan.Uuid}
+                    kosong={{ judul: 'Belum ada satuan.' }}
+                />
             </PanelKatalog>
 
             {induk ? (
                 <PanelKatalog judul={`Varian (${String(Varian.length)})`} idJudul="judul-varian">
-                    {Varian.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">
-                            Belum ada varian. Buat varian dari atribut di bawah.
-                        </p>
-                    ) : (
-                        <Table className="min-w-[560px] text-left text-isi">
-                            <TableCaption className="sr-only">Daftar varian</TableCaption>
-                            <TableHeader>
-                                <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
-                                        Varian
-                                    </TableHead>
-                                    <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
-                                        SKU
-                                    </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
-                                        Harga dasar
-                                    </TableHead>
-                                    <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
-                                        Status
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Varian.map((varian) => (
-                                    <TableRow key={varian.Uuid} className="border-garis">
-                                        <TableCell className="pl-0 whitespace-normal">
-                                            <Link
-                                                href={`/kelola/produk/${varian.Uuid}`}
-                                                className="font-semibold text-brand underline"
-                                            >
-                                                {varian.Nama}
-                                            </Link>
-                                            <span className="block text-keterangan text-teks-sekunder">
-                                                {varian.Atribut.map((a) => `${a.Nama}: ${a.Nilai}`).join(' · ')}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-label">{varian.Sku ?? '—'}</TableCell>
-                                        <TableCell className="text-right tabular-nums">
-                                            {varian.HargaDasar === null ? (
-                                                <span className="text-teks-sekunder">Belum ada harga</span>
-                                            ) : (
-                                                FormatRupiah(varian.HargaDasar)
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="pr-0">
-                                            <LabelStatus
-                                                jenis={varian.Status === 'Aktif' ? 'sukses' : 'netral'}
-                                                teks={varian.Status === 'Aktif' ? 'Aktif' : 'Diarsipkan'}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    )}
+                    <TabelData
+                        id="katalog-produk-varian"
+                        label="Daftar varian"
+                        kolom={kolomVarian}
+                        sumber={{ mode: 'lokal', data: Varian }}
+                        ambilIdBaris={(varian) => varian.Uuid}
+                        urutBawaan="Nama"
+                        cari="Cari nama atau SKU varian"
+                        alamatDetail={(varian) => `/kelola/produk/${varian.Uuid}`}
+                        kosong={{ judul: 'Belum ada varian. Buat varian dari atribut di bawah.' }}
+                    />
                 </PanelKatalog>
             ) : null}
 
