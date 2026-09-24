@@ -318,6 +318,8 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | feature flag per outlet | `OutletFitur` | web app (Laravel) | `Web` (folder `Aplikasi/Web`, D-13) |
 | min/max stock per location | `ProdukGudang` | deletion tombstone | `PenghapusanKatalog` |
 | catalog sequence (SKU/barcode) | `NomorUrutKatalog` | product import / import row | `ImporProduk` / `ImporProdukBaris` |
+| opening stock | `StokAwal` / `StokAwalDetail` | opening stock import | `ImporStokAwal` / `ImporStokAwalBaris` |
+| FIFO cost layer | `LapisanFifo` | COGS variance | `SelisihHpp` |
 | sales channel | `KanalPenjualan` | product tax category | `KategoriPajakProduk` |
 | variant key / attributes | `KunciVarian` / `AtributVarian` | import preset | `Preset` (serapan; `PresetImporProduk`) |
 | variant generator / editor (UI) | `PembuatVarian` / `Penyunting…` | modifier (UI) | "Pilihan (modifier)" |
