@@ -4,8 +4,13 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
@@ -36,36 +41,27 @@ export default function HalamanDaftarTemplateSektor({ Template }: { Template: Ri
             </p>
             {buatBaru ? <FormBuatTemplate template={Template} saatSelesai={() => AturBuatBaru(false)} /> : null}
             {Template.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada template sektor">
+                <KeadaanKosong judul="Belum ada template sektor">
                     Buat template pertama, misal Retail umum (RTL-GEN).
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Daftar template sektor</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Template
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Versi terbit
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Draf
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Template.map((template) => (
-                                <BarisTemplate key={template.Kode} template={template} />
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan="Daftar template sektor">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Template</TableHead>
+                            <TableHead scope="col">Versi terbit</TableHead>
+                            <TableHead scope="col">Draf</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Template.map((template) => (
+                            <BarisTemplate key={template.Kode} template={template} />
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -75,15 +71,15 @@ function BarisTemplate({ template }: { template: RingkasanTemplate }) {
     const versiBuka = template.VersiDraf?.Versi ?? template.VersiTerbit?.Versi ?? template.VersiTerbaru;
 
     return (
-        <tr className="border-b border-garis align-top last:border-b-0">
-            <td className="px-4 py-3">
+        <TableRow>
+            <TableCell>
                 <p className="font-semibold text-teks-utama">{template.Nama}</p>
                 <p className="font-mono text-keterangan text-teks-sekunder">{template.Kode}</p>
                 {template.Keterangan ? (
                     <p className="text-keterangan text-teks-sekunder">{template.Keterangan}</p>
                 ) : null}
-            </td>
-            <td className="px-4 py-3">
+            </TableCell>
+            <TableCell>
                 {template.VersiTerbit ? (
                     <>
                         <p className="tabular-nums">Versi {template.VersiTerbit.Versi}</p>
@@ -94,8 +90,8 @@ function BarisTemplate({ template }: { template: RingkasanTemplate }) {
                 ) : (
                     <LabelStatus jenis="peringatan" teks="Belum terbit" />
                 )}
-            </td>
-            <td className="px-4 py-3">
+            </TableCell>
+            <TableCell>
                 {template.VersiDraf ? (
                     <div className="flex flex-col gap-1">
                         <span className="tabular-nums">Versi {template.VersiDraf.Versi}</span>
@@ -113,18 +109,17 @@ function BarisTemplate({ template }: { template: RingkasanTemplate }) {
                 ) : (
                     <span className="text-teks-sekunder">Tidak ada</span>
                 )}
-            </td>
-            <td className="px-4 py-3 text-right">
+            </TableCell>
+            <TableCell className="text-right">
                 {versiBuka ? (
-                    <Link
-                        href={`/template-sektor/${encodeURIComponent(template.Kode)}/versi/${versiBuka}`}
-                        className="inline-flex h-10 items-center rounded-kontrol border border-garis-input px-4 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                    >
-                        Buka
-                    </Link>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/template-sektor/${encodeURIComponent(template.Kode)}/versi/${versiBuka}`}>
+                            Buka
+                        </Link>
+                    </Button>
                 ) : null}
-            </td>
-        </tr>
+            </TableCell>
+        </TableRow>
     );
 }
 
@@ -139,48 +134,50 @@ function FormBuatTemplate({ template, saatSelesai }: PropsFormBuat) {
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul="Buat template sektor"
+            saatTutup={saatSelesai}
+            lebar="lebar"
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">Buat template sektor</h2>
-            <BidangTeks
-                label="Kode sektor"
-                kode
-                keterangan="Tiga huruf kelompok dan tiga huruf sektor, misal FNB-RST. Tidak bisa diubah."
-                nilai={formulir.data.Kode}
-                saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
-                galat={formulir.errors.Kode}
-            />
-            <BidangTeks
-                label="Nama"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-            />
-            <BidangTeks
-                label="Keterangan (opsional)"
-                nilai={formulir.data.Keterangan}
-                saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
-                galat={formulir.errors.Keterangan}
-            />
-            <BidangPilihan
-                label="Salin isi dari"
-                nilai={formulir.data.KodeTemplateDasar}
-                kosong="Mulai kosong"
-                opsi={template.map((item) => ({ Nilai: item.Kode, Label: `${item.Nama} (${item.Kode})` }))}
-                saatBerubah={(nilai) => formulir.setData('KodeTemplateDasar', nilai)}
-                galat={formulir.errors.KodeTemplateDasar}
-            />
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Buat draf versi 1
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangTeks
+                    label="Kode sektor"
+                    kode
+                    keterangan="Tiga huruf kelompok dan tiga huruf sektor, misal FNB-RST. Tidak bisa diubah."
+                    nilai={formulir.data.Kode}
+                    saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
+                    galat={formulir.errors.Kode}
+                />
+                <BidangTeks
+                    label="Nama"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                />
+                <BidangTeks
+                    label="Keterangan (opsional)"
+                    nilai={formulir.data.Keterangan}
+                    saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
+                    galat={formulir.errors.Keterangan}
+                />
+                <BidangPilihan
+                    label="Salin isi dari"
+                    nilai={formulir.data.KodeTemplateDasar}
+                    kosong="Mulai kosong"
+                    opsi={template.map((item) => ({ Nilai: item.Kode, Label: `${item.Nama} (${item.Kode})` }))}
+                    saatBerubah={(nilai) => formulir.setData('KodeTemplateDasar', nilai)}
+                    galat={formulir.errors.KodeTemplateDasar}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Buat draf versi 1
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
