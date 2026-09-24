@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import 'RuangKerja/IsiAreaKerja.dart';
 
 /// Status sinkron (PRD §18): jumlah data belum terkirim dan daftar "Perlu Tindakan" (ditolak server) beserta
-/// alasannya. Item bisa dikirim ulang setelah penyebabnya diperbaiki di back-office.
+/// alasannya. Item bisa dikirim ulang setelah penyebabnya diperbaiki di back-office. Tampil di area ruang kerja
+/// (dibuka dari rel navigasi atau dengan mengetuk bilah status).
 class LayarStatusSinkron extends ConsumerStatefulWidget {
   const LayarStatusSinkron({super.key});
 
@@ -40,49 +42,69 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
     final tertunda = ref.watch(penyediaJumlahTertunda).value ?? 0;
     final perlu = ref.watch(penyediaPerluTindakan).value ?? const [];
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Status sinkron')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            tertunda == 0 ? 'Semua data sudah terkirim.' : '$tertunda data belum terkirim.',
-            style: teks.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: _sibuk ? null : _Kirim,
-                child: Text(_sibuk ? 'Mengirim…' : 'Kirim sekarang'),
-              ),
+    final koneksi = ref.watch(penyediaKoneksi);
+
+    return IsiAreaKerja(
+      judul: 'Status sinkron',
+      anak: [
+        Text(tertunda == 0 ? 'Semua data sudah terkirim.' : '$tertunda data belum terkirim.', style: teks.titleMedium),
+        const SizedBox(height: TokenJarak.jarak4),
+        Text(switch (koneksi) {
+          StatusKoneksi.Online => 'Perangkat tersambung ke server.',
+          StatusKoneksi.Offline => 'Perangkat sedang offline. Data tetap tersimpan dan dikirim otomatis saat online.',
+          StatusKoneksi.BelumDiketahui => 'Koneksi ke server belum diperiksa.',
+        }, style: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
+        const SizedBox(height: TokenJarak.jarak12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            height: TokenJarak.targetSentuh,
+            child: FilledButton(
+              onPressed: _sibuk ? null : _Kirim,
+              child: Text(_sibuk ? 'Mengirim…' : 'Kirim sekarang'),
             ),
           ),
-          if (_pesan != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_pesan!)),
-          const SizedBox(height: 24),
-          Text('Perlu tindakan', style: teks.titleMedium),
-          const SizedBox(height: 8),
-          if (perlu.isEmpty)
-            Text('Tidak ada data yang ditolak server.', style: teks.bodyMedium?.copyWith(color: warna.teksSekunder))
-          else
-            for (final b in perlu)
-              Card(
-                child: ListTile(
-                  title: Text(b.Jenis == 'Shift.Buka' ? 'Buka shift' : 'Kas masuk/keluar'),
-                  subtitle: Text(b.PesanGalat ?? 'Ditolak server.', style: TextStyle(color: warna.bahaya)),
-                  trailing: TextButton(
-                    onPressed: () async {
-                      await ref.read(penyediaRepositori).CobaLagi(b.Uuid, ref.read(penyediaJam)());
-                      await _Kirim();
-                    },
-                    child: const Text('Kirim ulang'),
-                  ),
+        ),
+        if (_pesan != null)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+            child: Text(_pesan!),
+          ),
+        const SizedBox(height: TokenJarak.jarak24),
+        Text('Perlu tindakan', style: teks.titleMedium),
+        const SizedBox(height: TokenJarak.jarak8),
+        if (perlu.isEmpty)
+          Text('Tidak ada data yang ditolak server.', style: teks.bodyMedium?.copyWith(color: warna.teksSekunder))
+        else
+          for (final b in perlu)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+              child: KotakPanel(
+                anak: Row(
+                  children: [
+                    Icon(Icons.error_outline, size: TokenJarak.ikonSedang, color: warna.bahaya),
+                    const SizedBox(width: TokenJarak.jarak12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(b.Jenis == 'Shift.Buka' ? 'Buka shift' : 'Kas masuk/keluar'),
+                          Text(b.PesanGalat ?? 'Ditolak server.', style: TextStyle(color: warna.bahaya)),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await ref.read(penyediaRepositori).CobaLagi(b.Uuid, ref.read(penyediaJam)());
+                        await _Kirim();
+                      },
+                      child: const Text('Kirim ulang'),
+                    ),
+                  ],
                 ),
               ),
-        ],
-      ),
+            ),
+      ],
     );
   }
 }

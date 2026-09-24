@@ -7,9 +7,19 @@ import '../Sesi/LayananPerangkat.dart';
 
 /// Hasil satu putaran sinkron.
 class RingkasanSinkron {
-  const RingkasanSinkron({this.terkirim = 0, this.ditolak = 0, this.offline = false, this.perangkatDicabut = false});
+  const RingkasanSinkron({
+    this.terkirim = 0,
+    this.ditolak = 0,
+    this.offline = false,
+    this.perangkatDicabut = false,
+    this.tersambung,
+  });
 
   final int terkirim;
+
+  /// Server terjangkau pada putaran ini: `true` bila server menjawab, `false` bila gagal jaringan, `null` bila tidak
+  /// ada yang dikirim (koneksi tidak diperiksa).
+  final bool? tersambung;
   final int ditolak;
   final bool offline;
   final bool perangkatDicabut;
@@ -38,12 +48,13 @@ class LayananSinkron {
     _berjalan = true;
     var terkirim = 0;
     var ditolak = 0;
+    var dijawabServer = false;
 
     try {
       while (true) {
         final batch = await repositori.AmbilOutboxSiapKirim(ukuranBatch, _jam());
         if (batch.isEmpty) {
-          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak);
+          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: dijawabServer ? true : null);
         }
 
         final List<HasilItemSinkron> hasil;
@@ -54,11 +65,12 @@ class LayananSinkron {
           ]);
         } on GalatJaringan catch (galat) {
           await repositori.JadwalkanUlang(batch, _jam(), galat.pesan);
-          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, offline: true);
+          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, offline: true, tersambung: false);
         } on GalatApi catch (galat) {
+          dijawabServer = true;
           if (galat.CekPerangkatDitolak()) {
             await perangkat.CabutLokal();
-            return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, perangkatDicabut: true);
+            return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, perangkatDicabut: true, tersambung: true);
           }
           // Batch ditolak utuh (bentuk permintaan salah): tandai semua agar antrean berikutnya tidak tertahan.
           for (final b in batch) {
@@ -68,6 +80,7 @@ class LayananSinkron {
           continue;
         }
 
+        dijawabServer = true;
         final selesai = <String>[];
         for (final h in hasil) {
           if (h.status == StatusItemSinkron.Ditolak) {
@@ -85,7 +98,7 @@ class LayananSinkron {
         final terlewat = batch.where((b) => !dijawab.contains(b.Uuid)).toList();
         if (terlewat.isNotEmpty) {
           await repositori.JadwalkanUlang(terlewat, _jam(), 'Server tidak menjawab item ini.');
-          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak);
+          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: true);
         }
       }
     } finally {

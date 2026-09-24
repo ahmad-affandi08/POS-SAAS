@@ -6,14 +6,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Domain/Perangkat/PenjagaLayarMenyala.dart';
 import 'package:kasir/Domain/Pin/PemverifikasiPinOffline.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import 'LingkunganUji.dart';
 
-/// Pasang aplikasi utuh dengan basis data memori, secure storage memori, dan server tiruan.
-Future<void> PasangAplikasi(WidgetTester tester, LingkunganUji u, {Lingkungan lingkungan = Lingkungan.Produksi}) async {
-  await tester.binding.setSurfaceSize(const Size(1280, 900));
+/// Pasang aplikasi utuh dengan basis data memori, secure storage memori, server tiruan, dan penjaga layar tiruan.
+/// [ukuran] = ukuran layar logis (bawaan 1280×900 dp).
+Future<void> PasangAplikasi(
+  WidgetTester tester,
+  LingkunganUji u, {
+  Lingkungan lingkungan = Lingkungan.Produksi,
+  Size ukuran = const Size(1280, 900),
+  PenjagaLayarTiruan? penjagaLayar,
+}) async {
+  // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = ukuran;
+  addTearDown(tester.view.reset);
+  await tester.binding.setSurfaceSize(ukuran);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     ProviderScope(
@@ -24,6 +36,7 @@ Future<void> PasangAplikasi(WidgetTester tester, LingkunganUji u, {Lingkungan li
         penyediaJam.overrideWithValue(() => u.jam),
         penyediaLingkungan.overrideWithValue(lingkungan),
         penyediaPemverifikasiPin.overrideWithValue(const PemverifikasiPinTiruan()),
+        penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
       ],
       child: AplikasiKasir(lingkungan: lingkungan),
     ),
@@ -81,4 +94,15 @@ class PemverifikasiPinTiruan extends PemverifikasiPinOffline {
     }
     return false;
   }
+}
+
+/// Penjaga layar tiruan: mencatat apakah layar sedang diminta tetap menyala.
+class PenjagaLayarTiruan implements PenjagaLayarMenyala {
+  bool menyala = false;
+
+  @override
+  Future<void> Aktifkan() async => menyala = true;
+
+  @override
+  Future<void> Nonaktifkan() async => menyala = false;
 }

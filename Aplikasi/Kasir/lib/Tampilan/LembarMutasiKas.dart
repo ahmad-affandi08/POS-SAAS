@@ -11,13 +11,21 @@ import 'Komponen/MasukanUang.dart';
 import 'Komponen/PapanPin.dart';
 
 /// F-06 langkah 4: catat kas masuk/keluar/setoran non-penjualan. Kas keluar di atas batas meminta PIN supervisor
-/// (BR-06.4) sebelum disimpan.
+/// (BR-06.4) sebelum disimpan. Isi formulir ini ditampilkan bingkai ruang kerja di dalam `PanelTugas` (panel samping
+/// atau lembar bawah) yang juga memberi judul; [saatTersimpan] dipanggil setelah mutasi tersimpan.
 class LembarMutasiKas extends ConsumerStatefulWidget {
-  const LembarMutasiKas({super.key, required this.shift, required this.jenis, required this.pencatat});
+  const LembarMutasiKas({
+    super.key,
+    required this.shift,
+    required this.jenis,
+    required this.pencatat,
+    required this.saatTersimpan,
+  });
 
   final BarisShift shift;
   final String jenis;
   final StafLokal pencatat;
+  final VoidCallback saatTersimpan;
 
   static String AmbilJudul(String jenis) => switch (jenis) {
     JenisMutasi.masuk => 'Kas masuk',
@@ -76,10 +84,11 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
         catatan: _catatan.text,
         penyetuju: penyetuju,
       );
+      final sesi = ref.read(penyediaSesi.notifier);
       if (mounted) {
-        Navigator.of(context).pop(true);
+        widget.saatTersimpan();
       }
-      await ref.read(penyediaSesi.notifier).Sinkronkan();
+      await sesi.Sinkronkan();
     } on GalatKasir catch (galat) {
       if (mounted) {
         setState(() => _galat = galat.pesan);
@@ -94,15 +103,12 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
   @override
   Widget build(BuildContext context) {
     final kategori = widget.jenis == JenisMutasi.setoran ? null : ref.watch(penyediaKategori(widget.jenis));
-    final teks = Theme.of(context).textTheme;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.viewInsetsOf(context).bottom),
+      padding: const EdgeInsets.all(TokenJarak.jarak24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(LembarMutasiKas.AmbilJudul(widget.jenis), style: teks.headlineSmall),
-          const SizedBox(height: 16),
           if (kategori != null)
             kategori.when(
               loading: () => const LinearProgressIndicator(),
@@ -110,9 +116,16 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
               data: (daftar) => daftar.isEmpty
                   ? const Text('Belum ada kategori. Minta admin menambahkannya di back-office menu Shift & kas.')
                   : DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _uuidKategori,
                       decoration: const InputDecoration(labelText: 'Kategori', border: OutlineInputBorder()),
-                      items: [for (final k in daftar) DropdownMenuItem(value: k.Uuid, child: Text(k.Nama))],
+                      items: [
+                        for (final k in daftar)
+                          DropdownMenuItem(
+                            value: k.Uuid,
+                            child: Text(k.Nama, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
                       onChanged: (nilai) => setState(() => _uuidKategori = nilai),
                     ),
             ),

@@ -5,9 +5,12 @@ import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
 
 import '../Data/BasisData/BasisDataKasir.dart';
+import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
 import '../Data/RepositoriKasir.dart';
 import '../Domain/GalatKasir.dart';
+import '../Domain/Perangkat/PengaturanPerangkat.dart';
+import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
 import '../Domain/Pin/PemverifikasiPinOffline.dart';
 import '../Domain/Sesi/LayananMasuk.dart';
 import '../Domain/Sesi/LayananPerangkat.dart';
@@ -24,6 +27,9 @@ final penyediaKlienHttp = Provider<http.Client>((ref) => http.Client());
 final penyediaLingkungan = Provider<Lingkungan>((ref) => Lingkungan.Dev);
 final penyediaPlatform = Provider<String>((ref) => 'Android');
 final penyediaJam = Provider<DateTime Function()>((ref) => DateTime.now);
+
+/// Layar tetap menyala selama shift terbuka (§17.2.7). Test memakai tiruan.
+final penyediaPenjagaLayar = Provider<PenjagaLayarMenyala>((ref) => const PenjagaLayarWakelock());
 
 final penyediaRepositori = Provider<RepositoriKasir>((ref) => RepositoriKasir(ref.watch(penyediaBasisData)));
 
@@ -102,13 +108,59 @@ final penyediaIdentitas = FutureProvider<({String outlet, String perangkat})>((r
   );
 });
 
+/// Pengaturan lokal perangkat (ukuran tampilan, posisi keranjang, kunci otomatis). Dimuat dari tabel `Pengaturan`;
+/// sebelum selesai dimuat memakai nilai bawaan.
+class PengaturPengaturanPerangkat extends Notifier<PengaturanPerangkat> {
+  var _diubah = false;
+
+  @override
+  PengaturanPerangkat build() {
+    unawaited(_Muat());
+    return const PengaturanPerangkat();
+  }
+
+  Future<void> _Muat() async {
+    final dimuat = await PengaturanPerangkat.Muat(ref.read(penyediaRepositori));
+    if (!_diubah) {
+      state = dimuat;
+    }
+  }
+
+  Future<void> Simpan(PengaturanPerangkat baru) async {
+    _diubah = true;
+    state = baru;
+    await baru.Simpan(ref.read(penyediaRepositori));
+  }
+}
+
+final penyediaPengaturanPerangkat = NotifierProvider<PengaturPengaturanPerangkat, PengaturanPerangkat>(
+  PengaturPengaturanPerangkat.new,
+);
+
+/// Koneksi ke server menurut hasil sinkron terakhir (bilah status ruang kerja).
+enum StatusKoneksi { BelumDiketahui, Online, Offline }
+
+class PengaturKoneksi extends Notifier<StatusKoneksi> {
+  @override
+  StatusKoneksi build() => StatusKoneksi.BelumDiketahui;
+
+  void Tandai(StatusKoneksi status) => state = status;
+}
+
+final penyediaKoneksi = NotifierProvider<PengaturKoneksi, StatusKoneksi>(PengaturKoneksi.new);
+
 enum TahapSesi { Memuat, BelumAktif, PilihKasir, Masuk }
 
+/// Kunci layar ruang kerja (§17.2.7): `Terkunci` = buka dengan PIN kasir yang sama atau ganti kasir; `GantiKasir` =
+/// pilih kasir lain + PIN (dari ketuk nama kasir), bisa dibatalkan. Shift tetap terbuka pada keduanya.
+enum KeadaanKunci { Bebas, Terkunci, GantiKasir }
+
 class KeadaanSesi {
-  const KeadaanSesi(this.tahap, {this.kasir, this.pesan});
+  const KeadaanSesi(this.tahap, {this.kasir, this.pesan, this.kunci = KeadaanKunci.Bebas});
 
   final TahapSesi tahap;
   final StafLokal? kasir;
+  final KeadaanKunci kunci;
 
   /// Pesan penting untuk ditampilkan sekali (misal perangkat dicabut).
   final String? pesan;
@@ -144,22 +196,49 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
 
   void Keluar() => state = const KeadaanSesi(TahapSesi.PilihKasir);
 
+  /// Kunci ruang kerja tanpa menutup shift (kunci cepat, kunci otomatis, atau ganti kasir).
+  void Kunci({bool gantiKasir = false}) {
+    if (state.tahap != TahapSesi.Masuk) {
+      return;
+    }
+    if (state.kunci == KeadaanKunci.Terkunci && gantiKasir) {
+      return;
+    }
+    state = KeadaanSesi(
+      TahapSesi.Masuk,
+      kasir: state.kasir,
+      kunci: gantiKasir ? KeadaanKunci.GantiKasir : KeadaanKunci.Terkunci,
+    );
+  }
+
+  /// Batal ganti kasir (hanya dari ketuk nama kasir; layar terkunci tetap butuh PIN).
+  void BatalGantiKasir() {
+    if (state.tahap == TahapSesi.Masuk && state.kunci == KeadaanKunci.GantiKasir) {
+      state = KeadaanSesi(TahapSesi.Masuk, kasir: state.kasir);
+    }
+  }
+
   /// Perbarui data awal (staf, kategori, pengaturan) bila online; perangkat dicabut → kembali ke aktivasi.
   Future<void> SegarkanData() async {
     try {
-      await ref.read(penyediaLayananPerangkat).SegarkanDataAwal();
+      final tersambung = await ref.read(penyediaLayananPerangkat).SegarkanDataAwal();
+      ref.read(penyediaKoneksi.notifier).Tandai(tersambung ? StatusKoneksi.Online : StatusKoneksi.Offline);
       ref.invalidate(penyediaStaf);
       ref.invalidate(penyediaKategori);
     } on GalatKasir catch (galat) {
       _Dicabut(galat.pesan);
     } on GalatApi {
       // Galat server lain: tetap pakai data lokal terakhir.
+      ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Online);
     }
   }
 
   /// Kirim outbox; perangkat dicabut → kembali ke aktivasi.
   Future<RingkasanSinkron> Sinkronkan() async {
     final hasil = await ref.read(penyediaLayananSinkron).KirimTertunda();
+    if (hasil.tersambung != null) {
+      ref.read(penyediaKoneksi.notifier).Tandai(hasil.tersambung! ? StatusKoneksi.Online : StatusKoneksi.Offline);
+    }
     if (hasil.perangkatDicabut) {
       _Dicabut('Perangkat ini sudah dicabut dari back-office. Data yang belum terkirim tetap tersimpan di perangkat.');
     }
