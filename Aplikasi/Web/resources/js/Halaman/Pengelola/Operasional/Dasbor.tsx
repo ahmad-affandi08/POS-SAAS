@@ -1,9 +1,22 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
-import type { FormEvent, ReactNode } from 'react';
+import { useId, type FormEvent, type ReactNode } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import {
+    Alert as KotakPeringatan,
+    AlertDescription as IsiPeringatan,
+    AlertTitle as JudulPeringatan,
+} from '@/Komponen/Ui/alert';
+import { Button } from '@/Komponen/Ui/button';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
+import { Progress } from '@/Komponen/Ui/progress';
+import { Separator } from '@/Komponen/Ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { cn } from '@/Komponen/Ui/utils';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatDurasi, FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
@@ -60,6 +73,15 @@ type Dasbor = {
     };
 };
 
+/** Persentase disk terpakai (bilangan bulat 0–100) untuk indikator; bukan uang/kuantitas. */
+function HitungPersenDiskTerpakai(disk: { SisaByte: number; TotalByte: number }): number {
+    if (disk.TotalByte <= 0) {
+        return 0;
+    }
+
+    return Math.min(100, Math.max(0, Math.round(((disk.TotalByte - disk.SisaByte) / disk.TotalByte) * 100)));
+}
+
 /** Dasbor operasional dasar (P-11): scheduler, antrean, job gagal, backup, alert, kesehatan server. */
 export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
     const { props } = usePage<PropsBersamaPengelola>();
@@ -105,7 +127,7 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                 {Alert.Aktif.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Tidak ada alert aktif.</p>
                 ) : (
-                    <DaftarAlert alert={Alert.Aktif} />
+                    <DaftarAlertAktif alert={Alert.Aktif} />
                 )}
             </Bagian>
 
@@ -115,12 +137,12 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                 ) : (
                     <Tabel kolom={['Antrean', 'Menunggu', 'Diproses', 'Umur tertua']}>
                         {Antrean.PerAntrean.map((baris) => (
-                            <tr key={baris.Antrean} className="border-b border-garis last:border-b-0">
-                                <td className="px-3 py-2 font-mono text-label">{baris.Antrean}</td>
-                                <td className="px-3 py-2 text-right tabular-nums">{baris.Menunggu}</td>
-                                <td className="px-3 py-2 text-right tabular-nums">{baris.Diproses}</td>
-                                <td className="px-3 py-2">{FormatDurasi(baris.UmurTertuaDetik)}</td>
-                            </tr>
+                            <TableRow key={baris.Antrean}>
+                                <TableCell className="font-mono text-label">{baris.Antrean}</TableCell>
+                                <TableCell className="text-right tabular-nums">{baris.Menunggu}</TableCell>
+                                <TableCell className="text-right tabular-nums">{baris.Diproses}</TableCell>
+                                <TableCell>{FormatDurasi(baris.UmurTertuaDetik)}</TableCell>
+                            </TableRow>
                         ))}
                     </Tabel>
                 )}
@@ -132,23 +154,24 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                 ) : (
                     <Tabel kolom={['Waktu gagal', 'Job', 'Antrean', 'Galat']}>
                         {TugasGagal.Data.map((tugas) => (
-                            <tr key={tugas.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                <td className="whitespace-nowrap px-3 py-2 text-teks-sekunder">
+                            <TableRow key={tugas.Uuid}>
+                                <TableCell className="whitespace-nowrap text-teks-sekunder">
                                     {FormatTanggalWaktu(tugas.GagalPada)}
-                                </td>
-                                <td className="px-3 py-2 font-mono text-label">
-                                    <Link
-                                        href={`/operasional/tugas-gagal/${tugas.Uuid}`}
-                                        className="break-all font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                </TableCell>
+                                <TableCell className="font-mono text-label">
+                                    <Button
+                                        asChild
+                                        variant="link"
+                                        className="h-auto p-0 font-mono text-label font-semibold break-all whitespace-normal"
                                     >
-                                        {tugas.NamaTugas}
-                                    </Link>
-                                </td>
-                                <td className="px-3 py-2 font-mono text-label">{tugas.Antrean}</td>
-                                <td className="break-all px-3 py-2 text-keterangan text-teks-sekunder">
+                                        <Link href={`/operasional/tugas-gagal/${tugas.Uuid}`}>{tugas.NamaTugas}</Link>
+                                    </Button>
+                                </TableCell>
+                                <TableCell className="font-mono text-label">{tugas.Antrean}</TableCell>
+                                <TableCell className="text-keterangan break-all text-teks-sekunder">
                                     {tugas.RingkasanGalat}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
                     </Tabel>
                 )}
@@ -176,26 +199,26 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                 {Backup.Riwayat.length > 0 ? (
                     <Tabel kolom={['Selesai', 'Jenis', 'Hasil', 'Ukuran', 'Lokasi & keterangan', 'Dicatat oleh']}>
                         {Backup.Riwayat.map((catatan) => (
-                            <tr key={catatan.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                <td className="whitespace-nowrap px-3 py-2">
+                            <TableRow key={catatan.Uuid}>
+                                <TableCell className="whitespace-nowrap">
                                     {FormatTanggalWaktu(catatan.SelesaiPada)}
-                                </td>
-                                <td className="px-3 py-2">{catatan.LabelJenis}</td>
-                                <td className="px-3 py-2">
+                                </TableCell>
+                                <TableCell>{catatan.LabelJenis}</TableCell>
+                                <TableCell>
                                     <LabelStatus
                                         jenis={catatan.Hasil === 'Berhasil' ? 'sukses' : 'bahaya'}
                                         teks={catatan.Hasil}
                                     />
-                                </td>
-                                <td className="px-3 py-2 text-right tabular-nums">
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums">
                                     {FormatUkuranBerkas(catatan.UkuranByte)}
-                                </td>
-                                <td className="break-all px-3 py-2 text-keterangan text-teks-sekunder">
+                                </TableCell>
+                                <TableCell className="text-keterangan break-all text-teks-sekunder">
                                     {catatan.Lokasi ? <span className="block font-mono">{catatan.Lokasi}</span> : null}
                                     {catatan.Keterangan}
-                                </td>
-                                <td className="px-3 py-2">{catatan.DicatatOleh}</td>
-                            </tr>
+                                </TableCell>
+                                <TableCell>{catatan.DicatatOleh}</TableCell>
+                            </TableRow>
                         ))}
                     </Tabel>
                 ) : null}
@@ -210,10 +233,17 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                     </div>
                     <div>
                         <dt className="text-teks-sekunder">Ruang disk tersisa</dt>
-                        <dd className="text-teks-utama">
+                        <dd className="flex flex-col gap-1 text-teks-utama">
                             {Kesehatan.Disk
                                 ? `${FormatUkuranBerkas(Kesehatan.Disk.SisaByte)} dari ${FormatUkuranBerkas(Kesehatan.Disk.TotalByte)}`
                                 : 'Tidak tersedia di hosting ini'}
+                            {Kesehatan.Disk ? (
+                                <Progress
+                                    value={HitungPersenDiskTerpakai(Kesehatan.Disk)}
+                                    aria-label={`Disk terpakai ${String(HitungPersenDiskTerpakai(Kesehatan.Disk))}%`}
+                                    className="max-w-60"
+                                />
+                            ) : null}
                         </dd>
                     </div>
                     <div>
@@ -225,9 +255,9 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                             {PunyaIzin(props.Pengguna, IzinPengelola.IntegrasiLihat) ? (
                                 <>
                                     {' · '}
-                                    <Link href="/integrasi" className="font-semibold text-brand underline">
-                                        Buka integrasi
-                                    </Link>
+                                    <Button asChild variant="link" className="h-auto p-0 text-label font-semibold">
+                                        <Link href="/integrasi">Buka integrasi</Link>
+                                    </Button>
                                 </>
                             ) : null}
                         </dd>
@@ -258,50 +288,107 @@ function Ringkasan({
     keterangan: string;
 }) {
     return (
-        <section className="flex flex-col gap-1 rounded-panel border border-garis bg-permukaan p-4">
-            <div className="flex items-center justify-between gap-2">
-                <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-                <LabelStatus jenis={sehat ? 'sukses' : 'bahaya'} teks={sehat ? 'Normal' : 'Bermasalah'} />
-            </div>
-            <p className="text-isi text-teks-utama">{nilai}</p>
-            <p className="text-keterangan text-teks-sekunder">{keterangan}</p>
-        </section>
+        <Card className="gap-1 py-4">
+            <CardHeader className="px-4">
+                <CardTitle>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
+                </CardTitle>
+                <CardAction>
+                    <LabelStatus jenis={sehat ? 'sukses' : 'bahaya'} teks={sehat ? 'Normal' : 'Bermasalah'} />
+                </CardAction>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-1 px-4">
+                <p className="text-isi text-teks-utama">{nilai}</p>
+                <CardDescription className="text-keterangan text-teks-sekunder">{keterangan}</CardDescription>
+            </CardContent>
+        </Card>
     );
 }
 
 function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
     return (
-        <section className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4">
-            <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-            {children}
-        </section>
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4">
+                <CardTitle>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 px-4">{children}</CardContent>
+        </Card>
     );
 }
 
 function Tabel({ kolom, children }: { kolom: string[]; children: ReactNode }) {
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-isi">
-                <thead className="border-b border-garis text-label text-teks-sekunder">
-                    <tr>
-                        {kolom.map((nama) => (
-                            <th key={nama} scope="col" className="px-3 py-2 font-semibold">
-                                {nama}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>{children}</tbody>
-            </table>
-        </div>
+        <Table className="min-w-[640px] text-isi [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:whitespace-normal">
+            <TableHeader>
+                <TableRow>
+                    {kolom.map((nama) => (
+                        <TableHead key={nama} scope="col" className="px-3 text-label font-semibold text-teks-sekunder">
+                            {nama}
+                        </TableHead>
+                    ))}
+                </TableRow>
+            </TableHeader>
+            <TableBody>{children}</TableBody>
+        </Table>
+    );
+}
+
+function TeksWaktuAlert({ baris }: { baris: Alert }) {
+    return (
+        <>
+            {FormatTanggalWaktu(baris.MulaiPada)}
+            {baris.SelesaiPada ? ` – ${FormatTanggalWaktu(baris.SelesaiPada)}` : ''}
+        </>
+    );
+}
+
+function TeksEmailAlert({ baris }: { baris: Alert }) {
+    return baris.EmailTerkirimPada
+        ? `Email ke Teknis terkirim ${FormatTanggalWaktu(baris.EmailTerkirimPada)}`
+        : 'Email belum terkirim (dicoba lagi pada pemeriksaan berikutnya)';
+}
+
+/** Alert yang masih terbuka: kotak Alert per kejadian, tingkat selalu tertulis (tidak hanya warna). */
+function DaftarAlertAktif({ alert }: { alert: Alert[] }) {
+    return (
+        <ul className="flex flex-col gap-2">
+            {alert.map((baris) => (
+                <li key={baris.Id}>
+                    <KotakPeringatan
+                        variant={baris.Tingkat === 'Kritis' ? 'destructive' : 'default'}
+                        className={cn(baris.Tingkat === 'Kritis' ? 'border-bahaya' : 'border-peringatan')}
+                    >
+                        <JudulPeringatan className="flex flex-wrap items-center gap-2 text-label">
+                            <LabelStatus
+                                jenis={baris.Tingkat === 'Kritis' ? 'bahaya' : 'peringatan'}
+                                teks={baris.Tingkat}
+                            />
+                            <span className="font-semibold text-teks-utama">{baris.Label}</span>
+                            <span className="font-normal text-teks-sekunder">
+                                <TeksWaktuAlert baris={baris} />
+                            </span>
+                        </JudulPeringatan>
+                        <IsiPeringatan>
+                            <p className="text-isi text-teks-utama">{baris.Pesan}</p>
+                            <p className="text-keterangan text-teks-sekunder">
+                                <TeksEmailAlert baris={baris} />
+                            </p>
+                        </IsiPeringatan>
+                    </KotakPeringatan>
+                </li>
+            ))}
+        </ul>
     );
 }
 
 function DaftarAlert({ alert }: { alert: Alert[] }) {
     return (
         <ul className="flex flex-col gap-2">
-            {alert.map((baris) => (
-                <li key={baris.Id} className="flex flex-col gap-1 border-b border-garis pb-2 last:border-b-0">
+            {alert.map((baris, indeks) => (
+                <li key={baris.Id} className="flex flex-col gap-1">
+                    {indeks > 0 ? <Separator className="mb-1" /> : null}
                     <p className="flex flex-wrap items-center gap-2 text-label">
                         <LabelStatus
                             jenis={baris.Tingkat === 'Kritis' ? 'bahaya' : 'peringatan'}
@@ -309,15 +396,12 @@ function DaftarAlert({ alert }: { alert: Alert[] }) {
                         />
                         <span className="font-semibold text-teks-utama">{baris.Label}</span>
                         <span className="text-teks-sekunder">
-                            {FormatTanggalWaktu(baris.MulaiPada)}
-                            {baris.SelesaiPada ? ` – ${FormatTanggalWaktu(baris.SelesaiPada)}` : ''}
+                            <TeksWaktuAlert baris={baris} />
                         </span>
                     </p>
                     <p className="text-isi text-teks-utama">{baris.Pesan}</p>
                     <p className="text-keterangan text-teks-sekunder">
-                        {baris.EmailTerkirimPada
-                            ? `Email ke Teknis terkirim ${FormatTanggalWaktu(baris.EmailTerkirimPada)}`
-                            : 'Email belum terkirim (dicoba lagi pada pemeriksaan berikutnya)'}
+                        <TeksEmailAlert baris={baris} />
                     </p>
                 </li>
             ))}
@@ -340,7 +424,8 @@ function FormCatatBackup() {
     };
 
     return (
-        <form onSubmit={Kirim} className="grid gap-3 border-t border-garis pt-3 sm:grid-cols-3">
+        <form onSubmit={Kirim} className="grid gap-3 sm:grid-cols-3">
+            <Separator className="sm:col-span-3" />
             <p className="text-label font-semibold text-teks-utama sm:col-span-3">Catat hasil secara manual</p>
             <BidangPilihan
                 label="Jenis"
@@ -397,6 +482,7 @@ function FormCatatBackup() {
     );
 }
 
+/** Tanggal & jam lokal (`datetime-local`); nilai string dikirim apa adanya. */
 function BidangWaktu({
     label,
     nilai,
@@ -408,19 +494,28 @@ function BidangWaktu({
     saatBerubah: (nilai: string) => void;
     galat?: string | undefined;
 }) {
+    const idBidang = useId();
+    const idGalat = `${idBidang}-galat`;
+
     return (
-        <label className="flex flex-col gap-1 text-label font-semibold text-teks-utama">
-            {label}
-            <input
+        <div className="flex flex-col gap-1">
+            <Label htmlFor={idBidang} className="text-label font-semibold text-teks-utama">
+                {label}
+            </Label>
+            <Input
+                id={idBidang}
                 type="datetime-local"
                 value={nilai}
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}
-                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi font-normal text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
+                aria-describedby={galat ? idGalat : undefined}
+                className="h-10 text-isi"
             />
-            {galat ? <span className="text-keterangan font-semibold text-bahaya">{galat}</span> : null}
-        </label>
+            {galat ? (
+                <span id={idGalat} className="text-keterangan font-semibold text-bahaya">
+                    {galat}
+                </span>
+            ) : null}
+        </div>
     );
 }
