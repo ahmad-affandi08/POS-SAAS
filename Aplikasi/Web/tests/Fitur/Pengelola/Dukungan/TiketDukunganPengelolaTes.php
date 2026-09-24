@@ -69,7 +69,7 @@ describe('Antrean lintas tenant lewat KonteksPengelola (§13.8)', function (): v
 
         $this->get(BantuanPengelola::Url('/dukungan/tiket'))->assertInertia(fn (AssertableInertia $halaman) => $halaman
             ->component('Pengelola/Dukungan/Antrean')
-            ->where('Tiket.Total', 2)
+            ->where('Tiket.Meta.Total', 2)
             // Batas SLA terdekat di atas: tiket lama (Tinggi, 8 jam) sudah lewat.
             ->where('Tiket.Data.0.Nomor', $lama->Nomor)
             ->where('Tiket.Data.0.NamaTenant', 'Kopi Nusantara')
@@ -77,18 +77,18 @@ describe('Antrean lintas tenant lewat KonteksPengelola (§13.8)', function (): v
             ->where('Tiket.Data.1.NamaTenant', 'Laundry Bersih')
             ->where('Tiket.Data.1.LewatSla', false));
 
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?lewat-sla=1'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 1)->where('Tiket.Data.0.Nomor', $lama->Nomor));
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?prioritas=Mendesak'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 1)->where('Tiket.Data.0.Nomor', $baru->Nomor));
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?milik=saya'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 0));
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?status=Ditutup'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 0));
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?status=salah'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 0));
-        $this->get(BantuanPengelola::Url('/dukungan/tiket?kata=laundry'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Total', 1));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?saring[LewatSla]=1'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 1)->where('Tiket.Data.0.Nomor', $lama->Nomor));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?saring[Prioritas]=Mendesak'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 1)->where('Tiket.Data.0.Nomor', $baru->Nomor));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?saring[Milik]=Saya'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 0));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?saring[Status]=Ditutup'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 0));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?saring[Status]=salah'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 0));
+        $this->get(BantuanPengelola::Url('/dukungan/tiket?cari=laundry'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tiket.Meta.Total', 1));
 
         $log = LogAuditPengelola::query()->where('Aksi', KonteksPengelola::AKSI_AUDIT)->orderBy('Id')->first();
         expect($log?->IdPenggunaPengelola)->toBe($petugas->Id)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pengelola\Dukungan;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Dukungan\Enum\PrioritasTiketDukungan;
 use App\Domain\Dukungan\Enum\StatusTiketDukungan;
 use App\Domain\Dukungan\Layanan\PenyimpanLampiran;
@@ -19,6 +20,8 @@ use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Dukungan\BalasTiketDukunganPengelolaPermintaan;
 use App\Http\Permintaan\Pengelola\Dukungan\UbahStatusTiketDukunganPermintaan;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,19 +37,11 @@ final class TiketDukunganKontroler extends Kontroler
 {
     use PelakuPengelola;
 
-    public function Daftar(Request $permintaan, AntreanTiketDukungan $antrean): Response
+    public function Daftar(Request $permintaan, AntreanTiketDukungan $antrean): Response|JsonResponse
     {
-        $saring = [
-            'Status' => $permintaan->string('status', AntreanTiketDukungan::SARING_STATUS_TERBUKA)->toString(),
-            'Prioritas' => $permintaan->string('prioritas')->toString(),
-            'LewatSla' => $permintaan->boolean('lewat-sla'),
-            'Milik' => $permintaan->string('milik')->toString(),
-            'Kata' => trim($permintaan->string('kata')->toString()),
-        ];
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), AntreanTiketDukungan::KOLOM_URUT, '', AntreanTiketDukungan::KOLOM_SARING);
 
-        return Inertia::render('Pengelola/Dukungan/Antrean', [
-            'Tiket' => $antrean->Ambil($this->AmbilPelaku(), $saring),
-            'Saring' => $saring,
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/Dukungan/Antrean', 'Tiket', fn (): array => $antrean->AmbilTabel($this->AmbilPelaku(), $tabel), fn (): array => [
             'PilihanStatus' => self::AmbilPilihanStatus(),
             'PilihanPrioritas' => self::AmbilPilihanPrioritas(),
         ]);

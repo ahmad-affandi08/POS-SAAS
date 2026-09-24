@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Dukungan\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Dukungan\Enum\PrioritasTiketDukungan;
 use App\Domain\Dukungan\Enum\StatusTiketDukungan;
 use App\Domain\Dukungan\Model\TiketDukungan;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Antrean tiket dukungan semua tenant di Platform Pengelola (P-09). Dibaca lewat KonteksPengelola (tercatat di log
@@ -19,15 +21,17 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class AntreanTiketDukungan
 {
-    public const PER_HALAMAN = 30;
+    public const SARING_STATUS_TERBUKA = 'Terbuka';
 
-    public const SARING_STATUS_TERBUKA = 'terbuka';
+    public const SARING_STATUS_SEMUA = 'Semua';
 
-    public const SARING_STATUS_SEMUA = 'semua';
+    public const SARING_MILIK_SAYA = 'Saya';
 
-    public const SARING_MILIK_SAYA = 'saya';
+    public const SARING_MILIK_BELUM = 'Belum';
 
-    public const SARING_MILIK_BELUM = 'belum';
+    public const KOLOM_URUT = ['BatasSlaPada', 'DibuatPada'];
+
+    public const KOLOM_SARING = ['Status', 'Prioritas', 'LewatSla', 'Milik'];
 
     public function __construct(
         private readonly KonteksPengelola $konteks,
@@ -35,20 +39,37 @@ final class AntreanTiketDukungan
     ) {}
 
     /**
-     * @param  array{Status: string, Prioritas: string, LewatSla: bool, Milik: string, Kata: string}  $saring
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * Antrean untuk `TabelData` (D-16). Saring: `Status` (`Terbuka` bawaan, `Semua`, atau satu status), `Prioritas`
+     * (pilihan banyak), `LewatSla` (`1`), `Milik` (`Saya`/`Belum`); cari nomor/judul. Tanpa urut pilihan: tiket terbuka
+     * dari batas SLA terdekat, selain itu terbaru dulu.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(PenggunaPengelola $pelaku, array $saring): array
+    public function AmbilTabel(PenggunaPengelola $pelaku, DataPermintaanTabel $permintaan): array
     {
-        return $this->konteks->JalankanLintasTenant('Membuka antrean tiket dukungan', function () use ($pelaku, $saring): array {
-            $halaman = $this->BangunKueri($pelaku, $saring)->paginate(self::PER_HALAMAN, ['*'], 'halaman')->withQueryString();
+        $saring = [
+            'Status' => $permintaan->saring['Status'] ?? self::SARING_STATUS_TERBUKA,
+            'Prioritas' => $permintaan->AmbilDaftar('Prioritas', array_map(fn (PrioritasTiketDukungan $p): string => $p->value, PrioritasTiketDukungan::cases())),
+            'LewatSla' => $permintaan->AmbilBoolean('LewatSla') === true,
+            'Milik' => $permintaan->saring['Milik'] ?? '',
+            'Kata' => $permintaan->cari,
+        ];
 
-            return $this->Petakan($halaman);
+        return $this->konteks->JalankanLintasTenant('Membuka antrean tiket dukungan', function () use ($pelaku, $saring, $permintaan): array {
+            $kueri = $this->BangunKueri($pelaku, $saring);
+
+            if ($permintaan->urut === []) {
+                $saring['Status'] === self::SARING_STATUS_TERBUKA || StatusTiketDukungan::tryFrom($saring['Status'])?->CekTerbuka() === true
+                    ? $kueri->orderBy('BatasSlaPada')->orderBy('Id')
+                    : $kueri->orderByDesc('Id');
+            }
+
+            return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['BatasSlaPada' => 'BatasSlaPada', 'DibuatPada' => 'Id'], fn (Collection $tiket): array => $this->Petakan(array_values($tiket->all())));
         });
     }
 
     /**
-     * @param  array{Status: string, Prioritas: string, LewatSla: bool, Milik: string, Kata: string}  $saring
+     * @param  array{Status: string, Prioritas: list<string>, LewatSla: bool, Milik: string, Kata: string}  $saring
      * @return Builder<TiketDukungan>
      */
     private function BangunKueri(PenggunaPengelola $pelaku, array $saring): Builder
@@ -63,8 +84,8 @@ final class AntreanTiketDukungan
             default => $kueri->where('Status', StatusTiketDukungan::tryFrom($saring['Status']) === null ? '-' : $saring['Status']),
         };
 
-        if (PrioritasTiketDukungan::tryFrom($saring['Prioritas']) !== null) {
-            $kueri->where('Prioritas', $saring['Prioritas']);
+        if ($saring['Prioritas'] !== []) {
+            $kueri->whereIn('Prioritas', $saring['Prioritas']);
         }
 
         if ($saring['LewatSla']) {
@@ -78,24 +99,19 @@ final class AntreanTiketDukungan
         };
 
         if ($saring['Kata'] !== '') {
-            $kata = '%'.addcslashes($saring['Kata'], '%_\\').'%';
+            $kata = PenerapKueriTabel::PolaCari($saring['Kata']);
             $kueri->where(fn (Builder $bagian) => $bagian->where('Nomor', 'like', $kata)->orWhere('Judul', 'like', $kata));
         }
 
-        return $saring['Status'] === self::SARING_STATUS_SEMUA || $saring['Status'] === StatusTiketDukungan::Selesai->value
-            || $saring['Status'] === StatusTiketDukungan::Ditutup->value
-            ? $kueri->orderByDesc('Id')
-            : $kueri->orderBy('BatasSlaPada')->orderBy('Id');
+        return $kueri;
     }
 
     /**
-     * @param  LengthAwarePaginator<int, TiketDukungan>  $halaman
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * @param  list<TiketDukungan>  $tiket
+     * @return list<array<string, mixed>>
      */
-    private function Petakan(LengthAwarePaginator $halaman): array
+    private function Petakan(array $tiket): array
     {
-        /** @var list<TiketDukungan> $tiket */
-        $tiket = $halaman->items();
         $tenant = collect($this->ringkasanTenant->Ambil(array_values(array_unique(array_map(fn (TiketDukungan $baris) => $baris->IdTenant, $tiket)))))
             ->keyBy('Id');
         $idPenanggungJawab = array_values(array_filter(array_unique(array_map(fn (TiketDukungan $baris) => $baris->IdPenanggungJawab, $tiket))));
@@ -104,27 +120,22 @@ final class AntreanTiketDukungan
             : PenggunaPengelola::query()->whereKey($idPenanggungJawab)->pluck('Nama', 'Id');
         $sekarang = now();
 
-        return [
-            'Data' => array_map(fn (TiketDukungan $baris): array => [
-                'Uuid' => $baris->Uuid,
-                'Nomor' => $baris->Nomor,
-                'Judul' => $baris->Judul,
-                'NamaTenant' => $tenant->get($baris->IdTenant)['Nama'] ?? "Tenant #{$baris->IdTenant}",
-                'Kategori' => $baris->Kategori->AmbilLabel(),
-                'Prioritas' => $baris->Prioritas->value,
-                'LabelPrioritas' => $baris->Prioritas->AmbilLabel(),
-                'Status' => $baris->Status->value,
-                'LabelStatus' => $baris->Status->AmbilLabel(),
-                'PenanggungJawab' => $baris->IdPenanggungJawab === null ? null : (string) ($namaPenanggungJawab[$baris->IdPenanggungJawab] ?? '-'),
-                'BatasSlaPada' => $baris->BatasSlaPada->toIso8601String(),
-                'ResponsPertamaPada' => $baris->ResponsPertamaPada?->toIso8601String(),
-                'LewatSla' => $baris->CekLewatSla($sekarang),
-                'PesanTerakhirPada' => $baris->PesanTerakhirPada?->toIso8601String(),
-                'DibuatPada' => $baris->DibuatPada->toIso8601String(),
-            ], $tiket),
-            'HalamanSaatIni' => $halaman->currentPage(),
-            'HalamanTerakhir' => $halaman->lastPage(),
-            'Total' => $halaman->total(),
-        ];
+        return array_map(fn (TiketDukungan $baris): array => [
+            'Uuid' => $baris->Uuid,
+            'Nomor' => $baris->Nomor,
+            'Judul' => $baris->Judul,
+            'NamaTenant' => $tenant->get($baris->IdTenant)['Nama'] ?? "Tenant #{$baris->IdTenant}",
+            'Kategori' => $baris->Kategori->AmbilLabel(),
+            'Prioritas' => $baris->Prioritas->value,
+            'LabelPrioritas' => $baris->Prioritas->AmbilLabel(),
+            'Status' => $baris->Status->value,
+            'LabelStatus' => $baris->Status->AmbilLabel(),
+            'PenanggungJawab' => $baris->IdPenanggungJawab === null ? null : (string) ($namaPenanggungJawab[$baris->IdPenanggungJawab] ?? '-'),
+            'BatasSlaPada' => $baris->BatasSlaPada->toIso8601String(),
+            'ResponsPertamaPada' => $baris->ResponsPertamaPada?->toIso8601String(),
+            'LewatSla' => $baris->CekLewatSla($sekarang),
+            'PesanTerakhirPada' => $baris->PesanTerakhirPada?->toIso8601String(),
+            'DibuatPada' => $baris->DibuatPada->toIso8601String(),
+        ], $tiket);
     }
 }
