@@ -399,7 +399,9 @@ final class PemvalidasiImpor
     }
 
     /**
-     * Ubah banyak baris sekaligus: `UPDATE … SET Kolom = CASE Id WHEN … END WHERE Id IN (…)` (nilai di-quote PDO).
+     * Ubah banyak baris sekaligus lewat model ber-scope `MilikTenant` (tenant dari `KonteksTenant`, CLAUDE.md #11):
+     * `UPDATE … SET Kolom = CASE Id WHEN … END, DiubahPada = … WHERE IdTenant = <konteks> AND Id IN (…)`. Id
+     * dipaksa integer dan nilai di-quote PDO, sehingga ekspresi CASE aman; Id tenant lain tidak pernah tersentuh.
      *
      * @param  array<int, array<string, string|null>>  $perubahan  Id → kolom → nilai
      */
@@ -409,23 +411,22 @@ final class PemvalidasiImpor
             return;
         }
 
+        $koneksi = DB::connection();
         $kolom = array_values(array_intersect(array_keys((array) reset($perubahan)), ['Status', 'Aksi', 'KunciProduk', 'Galat']));
-        $set = [];
-        $ikatan = [];
+        $nilaiBaru = [];
 
         foreach ($kolom as $namaKolom) {
-            $set[] = "`{$namaKolom}` = CASE `Id`".str_repeat(' WHEN ? THEN ?', count($perubahan)).' END';
+            $kasus = '';
 
             foreach ($perubahan as $id => $nilai) {
-                array_push($ikatan, $id, $nilai[$namaKolom] ?? null);
+                $isi = $nilai[$namaKolom] ?? null;
+                $kasus .= ' WHEN '.(int) $id.' THEN '.($isi === null ? 'NULL' : $koneksi->getPdo()->quote($isi));
             }
+
+            $nilaiBaru[$namaKolom] = DB::raw("CASE `Id`{$kasus} END");
         }
 
-        $idTenant = (int) ImporProdukBaris::query()->whereKey(array_key_first($perubahan))->value('IdTenant');
-        $ikatan = [...$ikatan, now(), $idTenant, ...array_keys($perubahan)];
-
-        // Id berasal dari kueri ber-scope tenant; IdTenant diulang di WHERE sebagai pagar tambahan.
-        DB::update('UPDATE `ImporProdukBaris` SET '.implode(', ', $set).', `DiubahPada` = ? WHERE `IdTenant` = ? AND `Id` IN ('.implode(', ', array_fill(0, count($perubahan), '?')).')', $ikatan);
+        ImporProdukBaris::query()->whereKey(array_map('intval', array_keys($perubahan)))->update($nilaiBaru);
     }
 
     /**
