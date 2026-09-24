@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.45 |
+| Versi | 1.46 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -66,6 +66,7 @@
 | 1.43 | Rincian F-07b & F-07c (diputuskan agen atas mandat D-12): item sinkron `Penjualan.Buat`, validasi server (tarif pajak, batas diskon BR-07.3, hitung ulang), stok & jurnal J-07.1/J-07.2 saat Lunas, tabel `PenjualanPajak`, izin `penjualan.diskon.setujui`, pengaturan batas diskon & pembulatan tunai, tambahan `data-awal`, gambar QRIS untuk POS, layar Jual & Bayar di Ruang Kerja Kasir. |
 | 1.44 | Keputusan implementasi F-07b/F-07c dicatat: pintasan POS mengikuti §17.2.3 (F1/F8/F9/Esc), persetujuan diskon oleh kasir yang berizin, penanganan produk/pilihan terhapus, nomor & tanggal bisnis, `data-awal` `Outlet.ZonaWaktu/JamTutupBuku`, opsi `abaikanBatasMinus` buku stok; utang F-07 (§25 no. 23). |
 | 1.45 | Rincian F-09 fase 1 (void transaksi di shift yang sama, retur dengan refund tunai/transfer manual, daftar void & retur) dan F-11 (tutup shift buta, hitung pecahan, selisih & persetujuan, jurnal selisih, laporan shift X/Z), diputuskan agen atas mandat D-12. Izin baru `shift.selisih.setujui`. |
+| 1.46 | Tindak lanjut tinjauan F-07: snapshot pengaturan & pajak dari perangkat dicocokkan dengan pengaturan tenant/outlet (beda → diterima + `PerluTinjauan`), penolakan karena izin/batas yang berubah setelah transaksi offline diganti "terima + tinjau", definisi persen diskon efektif tunggal, tanggal bisnis perangkat memakai zona outlet, nomor urut terakhir per perangkat di `data-awal`. |
 
 ---
 
@@ -1247,6 +1248,7 @@ stateDiagram-v2
 - BR-07.3: kasir yang sendiri berizin `penjualan.diskon.setujui` menyetujui diskonnya sendiri (tanpa PIN) sampai `BatasDiskonPenyetuju`; di atasnya hanya Pemilik. Peran Kasir bawaan tidak punya `penjualan.diskon.manual`, jadi setiap diskon kasir butuh PIN penyetuju. Batas penyetuju ≥ batas kasir.
 - Produk/pilihan yang dihapus setelah dijual offline: penjualan diterima, stoknya tidak dikurangi, ditandai `PerluTinjauan` (`ProdukDihapus`/`PilihanTidakDikenal`). Bahan/komponen berpelacakan batch/seri → `PelacakanBelumDidukung`. Penjualan diterima walau shiftnya sudah ditutup (outbox FIFO). Penjualan Rp 0 tidak dijurnal. Snapshot jenis & nama metode bayar ikut disimpan.
 - Buku stok: `DataDokumenMutasi.abaikanBatasMinus` melewati BR-05.2 dan melaporkan baris yang melanggar; alasan tinjauan `StokTidakCukup` hanya bila BR-05.2 benar-benar dilanggar.
+- **Tindak lanjut tinjauan (v1.46):** (a) Server mencocokkan snapshot `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`, dan himpunan pajak per baris dengan pengaturan tenant & `Outlet.ProfilPajak` serta kelompok pajak produk pada tanggal bisnis; beda (misal pengaturan berubah saat perangkat offline, atau pajak wajib tidak ada) tetap **diterima** dengan `PerluTinjauan` (`PengaturanBerbeda`/`PajakBerbeda`), karena uang sudah diterima (§18.3). `PembulatanTunai.Kelipatan` hanya 1–1.000 dan |pembulatan| < kelipatan. (b) Kasir yang masih anggota tenant tetapi izin/outletnya berubah, atau diskon melebihi batas yang berlaku saat diterima, **diterima + `PerluTinjauan`** (`IzinBerubah`/`DiskonMelebihiBatas`); yang ditolak hanya data yang tidak mungkin sah (pengguna bukan anggota tenant, penyetuju tanpa izin sama sekali). (c) Persen diskon efektif = diskon (hasil mesin, sudah dibulatkan) ÷ bruto baris (atau ÷ subtotal untuk pesanan), dipakai sama di aplikasi dan server. (d) Tanggal bisnis & `YYMMDD` di perangkat memakai `Outlet.ZonaWaktu`, bukan zona perangkat. (e) `data-awal` menyertakan nomor urut terakhir penjualan per perangkat per tanggal agar pemasangan ulang aplikasi tidak memakai nomor yang sama. (f) Kasir tanpa `penjualan.diskon.manual` diarahkan ke PIN penyetuju, bukan ditolak. Kode jenis pajak untuk syarat PKP/PBJT dan akun jurnal dibaca dari atribut `JenisPajak` (kategori PPN/PBJT), bukan string tetap.
 - Aplikasi: tarif pajak `BerlakuSampai` inklusif; bila satu kode pajak ada di beberapa kelompok, dasar pengenaan dari kelompok pertama; katalog diperbarui berkala hanya saat keranjang kosong dan tanpa panel terbuka; resep & komponen paket tidak disimpan di perangkat (stok dihitung server); harga ditentukan ulang saat jumlah/satuan berubah, pesanan tertahan memakai harga snapshot; EDC wajib nomor approval, QRIS statis wajib konfirmasi "Dana sudah masuk". Item navigasi baru "Riwayat".
 
 **Dampak Stok:** mutasi `Penjualan` untuk produk `Stok`/`Produksi`, bahan resep, komponen bundle, dan modifier yang berbahan (diposting saat status `Lunas` atau, untuk F&B, saat item berstatus `DikirimKeDapur` sesuai konfigurasi).
