@@ -1,9 +1,9 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanPajak from '@/Halaman/Kelola/PanduanAwal/Pajak';
 import HalamanProdukPanduan from '@/Halaman/Kelola/PanduanAwal/Produk';
-import { AturHalamanUji, kirimanForm } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, kirimanForm, RenderUji } from '@/Komponen/Katalog/TiruanInertia';
 import type { PropsPajak, PropsProdukPanduan } from '@/Tipe/PanduanAwal';
 
 import { BuatProgresContoh } from './DataUjiPanduan';
@@ -47,7 +47,7 @@ describe('Langkah 3 Pajak (F-01): pilihan harga termasuk pajak memakai RadioGrou
     afterEach(() => cleanup());
 
     it('radio "Belum termasuk pajak" mengubah HargaTermasukPajak yang dikirim', () => {
-        render(<HalamanPajak {...BuatPropsPajak()} />);
+        RenderUji(<HalamanPajak {...BuatPropsPajak()} />);
 
         const termasuk = screen.getByRole('radio', { name: /Sudah termasuk pajak/ });
         const belum = screen.getByRole('radio', { name: /Belum termasuk pajak/ });
@@ -71,7 +71,7 @@ describe('Langkah 4 Produk (F-01): centang produk contoh memakai Checkbox', () =
     afterEach(() => cleanup());
 
     it('"Pilih semua" menjadi indeterminate saat sebagian dipilih; produk yang sudah ada tidak bisa dicentang', () => {
-        render(<HalamanProdukPanduan {...BuatPropsProduk()} />);
+        RenderUji(<HalamanProdukPanduan {...BuatPropsProduk()} />);
 
         const semua = screen.getByRole('checkbox', { name: 'Pilih semua' });
         expect(semua.getAttribute('aria-checked')).toBe('true');
@@ -92,7 +92,7 @@ describe('Langkah 4 Produk (F-01): centang produk contoh memakai Checkbox', () =
     });
 
     it('kuota paket terlampaui: peringatan tampil dan tombol tambah nonaktif', () => {
-        render(<HalamanProdukPanduan {...BuatPropsProduk({ BatasSku: { Batas: 2, Terpakai: 1 } })} />);
+        RenderUji(<HalamanProdukPanduan {...BuatPropsProduk({ BatasSku: { Batas: 2, Terpakai: 1 } })} />);
 
         expect(screen.getByText(/Sisa kuota paket 1 SKU/)).toBeTruthy();
         expect((screen.getByRole('button', { name: 'Tambahkan produk contoh' }) as HTMLButtonElement).disabled).toBe(

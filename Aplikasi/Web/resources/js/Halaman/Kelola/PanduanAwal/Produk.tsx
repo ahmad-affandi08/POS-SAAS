@@ -7,11 +7,12 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
 import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -379,62 +380,47 @@ function FormProdukCepat({
     );
 }
 
+const kolomProduk: KolomTabel<PropsProdukPanduan['Produk'][number]>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'utama', wajib: true, kelasSel: 'break-words text-teks-utama' },
+    },
+    {
+        id: 'NamaKategori',
+        accessorFn: (baris) => baris.NamaKategori ?? '—',
+        header: 'Kategori',
+        meta: { label: 'Kategori', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'Harga',
+        header: 'Harga jual',
+        enableSorting: false,
+        meta: { label: 'Harga jual', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatRupiah(row.original.Harga),
+    },
+];
+
 function TabelProduk({ produk, jumlahProduk }: { produk: PropsProdukPanduan['Produk']; jumlahProduk: number }) {
     return (
         <section aria-labelledby="judul-daftar-produk" className="flex flex-col gap-2">
             <h2 id="judul-daftar-produk" className="text-subjudul font-semibold text-teks-utama">
                 Produk Anda
             </h2>
-            {produk.length === 0 ? (
-                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
-                    <EmptyHeader className="max-w-none items-start text-left">
-                        <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada produk. Tambah produk pertama Anda.
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                <>
-                    <p className="text-label text-teks-sekunder">
-                        {jumlahProduk > produk.length
-                            ? `Menampilkan ${String(produk.length)} produk terbaru dari ${String(jumlahProduk)}.`
-                            : `${String(jumlahProduk)} produk.`}
-                    </p>
-                    <Card className="gap-0 py-0">
-                        <Table className="min-w-[480px] text-isi">
-                            <TableCaption className="sr-only">Produk terbaru</TableCaption>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead scope="col" className="px-4">
-                                        Nama
-                                    </TableHead>
-                                    <TableHead scope="col" className="px-4">
-                                        Kategori
-                                    </TableHead>
-                                    <TableHead scope="col" className="px-4 text-right">
-                                        Harga jual
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {produk.map((baris) => (
-                                    <TableRow key={baris.Uuid}>
-                                        <TableCell className="px-4 break-words whitespace-normal text-teks-utama">
-                                            {baris.Nama}
-                                        </TableCell>
-                                        <TableCell className="px-4 text-teks-sekunder">
-                                            {baris.NamaKategori ?? '—'}
-                                        </TableCell>
-                                        <TableCell className="px-4 text-right text-teks-utama tabular-nums">
-                                            {FormatRupiah(baris.Harga)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
-                </>
-            )}
+            {jumlahProduk > produk.length ? (
+                <p className="text-label text-teks-sekunder">
+                    Menampilkan {String(produk.length)} produk terbaru dari {String(jumlahProduk)}.
+                </p>
+            ) : null}
+            <TabelData
+                id="panduan-produk-terbaru"
+                label="Produk terbaru"
+                kolom={kolomProduk}
+                sumber={{ mode: 'lokal', data: produk }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                kosong={{ judul: 'Belum ada produk. Tambah produk pertama Anda.' }}
+            />
         </section>
     );
 }

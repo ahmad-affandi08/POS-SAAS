@@ -6,9 +6,9 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card } from '@/Komponen/Ui/card';
-import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { CekBatasPenuh, FormatBatas } from '@/Tipe/Organisasi';
@@ -21,6 +21,38 @@ const labelStatus: Record<StatusPerangkat, { jenis: 'sukses' | 'peringatan' | 'n
     BelumDiaktifkan: { jenis: 'peringatan', teks: 'Belum diaktifkan' },
     Dicabut: { jenis: 'netral', teks: 'Dicabut' },
 };
+
+type BarisPerangkat = PropsPerangkatPanduan['Perangkat'][number];
+
+const kolom: KolomTabel<BarisPerangkat>[] = [
+    {
+        id: 'Kode',
+        accessorKey: 'Kode',
+        header: 'Kode',
+        meta: { label: 'Kode', prioritas: 'utama', wajib: true, kelasSel: 'font-mono text-label text-teks-utama' },
+    },
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Nama',
+        meta: { label: 'Nama', prioritas: 'penting' },
+        cell: ({ row: { original: baris } }) => (
+            <>
+                <span className="break-words text-teks-utama">{baris.Nama}</span>
+                <span className="block text-keterangan text-teks-sekunder">{baris.LabelJenis}</span>
+            </>
+        ),
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => (
+            <LabelStatus jenis={labelStatus[row.original.Status].jenis} teks={labelStatus[row.original.Status].teks} />
+        ),
+    },
+];
 
 /** Langkah 6 F-01: tambah perangkat kasir di outlet panduan dan aktifkan dengan kode + QR (memakai ulang F-02b). */
 export default function HalamanPerangkatPanduan({
@@ -100,71 +132,36 @@ export default function HalamanPerangkatPanduan({
                 </Card>
             )}
 
-            {Perangkat.length === 0 ? (
-                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
-                    <EmptyHeader className="max-w-none items-start text-left">
-                        <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada perangkat kasir di outlet ini. Tambahkan satu untuk mulai berjualan di aplikasi
-                            kasir.
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[560px] text-isi">
-                        <TableCaption className="sr-only">Perangkat di outlet {Outlet.Nama}</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Kode
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Nama
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Status
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    <span className="sr-only">Aksi</span>
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Perangkat.map((baris) => (
-                                <TableRow key={baris.Uuid}>
-                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
-                                        {baris.Kode}
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
-                                        <span className="break-words">{baris.Nama}</span>
-                                        <span className="block text-keterangan text-teks-sekunder">
-                                            {baris.LabelJenis}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="px-4">
-                                        <LabelStatus
-                                            jenis={labelStatus[baris.Status].jenis}
-                                            teks={labelStatus[baris.Status].teks}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right">
-                                        {BolehKelolaPerangkat && baris.Status !== 'Dicabut' ? (
-                                            <Tombol
-                                                varian="sekunder"
-                                                onClick={() => BuatKodeBaru(baris.Uuid)}
-                                                memproses={memproses === baris.Uuid}
-                                                disabled={memproses !== null}
-                                            >
-                                                {baris.Status === 'Aktif' ? 'Pindahkan ke HP lain' : 'Buat kode baru'}
-                                            </Tombol>
-                                        ) : null}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            <TabelData
+                id="panduan-perangkat"
+                label={`Perangkat di outlet ${Outlet.Nama}`}
+                kolom={[
+                    ...kolom,
+                    {
+                        id: 'Tindakan',
+                        header: () => <span className="sr-only">Tindakan</span>,
+                        enableSorting: false,
+                        meta: { label: 'Tindakan', prioritas: 'penting', wajib: true, kelasSel: 'text-right' },
+                        cell: ({ row: { original: baris } }) =>
+                            BolehKelolaPerangkat && baris.Status !== 'Dicabut' ? (
+                                <Tombol
+                                    varian="sekunder"
+                                    onClick={() => BuatKodeBaru(baris.Uuid)}
+                                    memproses={memproses === baris.Uuid}
+                                    disabled={memproses !== null}
+                                >
+                                    {baris.Status === 'Aktif' ? 'Pindahkan ke HP lain' : 'Buat kode baru'}
+                                </Tombol>
+                            ) : null,
+                    },
+                ]}
+                sumber={{ mode: 'lokal', data: Perangkat }}
+                ambilIdBaris={(baris) => baris.Uuid}
+                urutBawaan="Kode"
+                kosong={{
+                    judul: 'Belum ada perangkat kasir di outlet ini. Tambahkan satu untuk mulai berjualan di aplikasi kasir.',
+                }}
+            />
         </TataLetakPanduan>
     );
 }

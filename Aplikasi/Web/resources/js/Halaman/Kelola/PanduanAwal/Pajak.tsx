@@ -6,10 +6,11 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card } from '@/Komponen/Ui/card';
 import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { RadioGroup, RadioGroupItem } from '@/Komponen/Ui/radio-group';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -17,6 +18,33 @@ import { FormatMasukanPersen, NormalisasiMasukanPersen } from '@/Pustaka/Masukan
 import { AlamatPanduan, type PropsPajak, type TarifTampil } from '@/Tipe/PanduanAwal';
 
 type IsianPajak = PropsPajak['Nilai'];
+
+const kolomKelompok: KolomTabel<PropsPajak['KelompokPajak'][number]>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Kelompok',
+        meta: { label: 'Kelompok', prioritas: 'utama', wajib: true, kelasSel: 'break-words text-teks-utama' },
+    },
+    {
+        id: 'Pajak',
+        header: 'Pajak yang dikenakan',
+        enableSorting: false,
+        meta: { label: 'Pajak yang dikenakan', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: kelompok } }) =>
+            kelompok.Pajak.length === 0 ? (
+                'Tanpa pajak'
+            ) : (
+                <ul>
+                    {kelompok.Pajak.map((pajak) => (
+                        <li key={pajak.KodeJenisPajak}>
+                            {pajak.NamaJenisPajak} · {pajak.LabelDasarPengenaan}
+                        </li>
+                    ))}
+                </ul>
+            ),
+    },
+];
 
 /** "10.000000" berlaku "2024-01-01" → "10% berlaku mulai 1 Jan 2024 (Perda No. 1 Tahun 2024)". */
 function JelaskanTarif(tarif: TarifTampil): string {
@@ -207,50 +235,16 @@ export default function HalamanPajak({
                         <h2 id="judul-kelompok" className="text-subjudul font-semibold text-teks-utama">
                             Kelompok pajak dari template
                         </h2>
-                        {KelompokPajak.length === 0 ? (
-                            <p className="text-isi text-teks-sekunder">
-                                Belum ada kelompok pajak. Terapkan template di langkah Jenis usaha & template untuk
-                                menyiapkannya.
-                            </p>
-                        ) : (
-                            <div className="rounded-panel border border-garis">
-                                <Table className="min-w-[420px] text-isi">
-                                    <TableCaption className="sr-only">Kelompok pajak</TableCaption>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead scope="col" className="px-4">
-                                                Kelompok
-                                            </TableHead>
-                                            <TableHead scope="col" className="px-4">
-                                                Pajak yang dikenakan
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {KelompokPajak.map((kelompok) => (
-                                            <TableRow key={kelompok.Nama}>
-                                                <TableCell className="px-4 align-top break-words whitespace-normal text-teks-utama">
-                                                    {kelompok.Nama}
-                                                </TableCell>
-                                                <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                                    {kelompok.Pajak.length === 0 ? (
-                                                        'Tanpa pajak'
-                                                    ) : (
-                                                        <ul>
-                                                            {kelompok.Pajak.map((pajak) => (
-                                                                <li key={pajak.KodeJenisPajak}>
-                                                                    {pajak.NamaJenisPajak} · {pajak.LabelDasarPengenaan}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
+                        <TabelData
+                            id="panduan-kelompok-pajak"
+                            label="Kelompok pajak"
+                            kolom={kolomKelompok}
+                            sumber={{ mode: 'lokal', data: KelompokPajak }}
+                            ambilIdBaris={(kelompok) => kelompok.Nama}
+                            kosong={{
+                                judul: 'Belum ada kelompok pajak. Terapkan template di langkah Jenis usaha & template untuk menyiapkannya.',
+                            }}
+                        />
                     </section>
 
                     <div>

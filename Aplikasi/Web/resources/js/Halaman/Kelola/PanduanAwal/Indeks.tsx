@@ -6,7 +6,6 @@ import IndikatorLangkah, { teksStatusLangkah } from '@/Komponen/PanduanAwal/Indi
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import { Separator } from '@/Komponen/Ui/separator';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -51,44 +50,31 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
             ) : null}
 
             <Card className="gap-0 py-0">
-                <Table className="min-w-[480px] text-isi">
-                    <TableCaption className="sr-only">Langkah panduan awal</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead scope="col" className="px-4">
-                                Langkah
-                            </TableHead>
-                            <TableHead scope="col" className="px-4">
-                                Status
-                            </TableHead>
-                            <TableHead scope="col" className="px-4">
-                                <span className="sr-only">Aksi</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Progres.Langkah.map((item, indeks) => (
-                            <TableRow key={item.Kunci}>
-                                <TableCell className="px-4 whitespace-normal text-teks-utama">
+                <ol aria-label="Status setiap langkah" className="divide-y divide-garis">
+                    {Progres.Langkah.map((item, indeks) => (
+                        <li
+                            key={item.Kunci}
+                            className="flex flex-col gap-2 px-4 py-3 text-isi sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="text-teks-utama">
                                     {String(indeks + 1)}. {item.Judul}
-                                </TableCell>
-                                <TableCell className="px-4">
-                                    <LabelStatus
-                                        jenis={jenisLabel[item.Status]}
-                                        teks={teksStatusLangkah[item.Status]}
-                                    />
-                                </TableCell>
-                                <TableCell className="px-4 text-right">
-                                    <Button asChild variant="link" size="sm" className="font-semibold underline">
-                                        <Link href={item.Tautan}>
-                                            {item.Status === 'Selesai' ? `Ubah ${item.Judul}` : `Buka ${item.Judul}`}
-                                        </Link>
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                </span>
+                                <LabelStatus jenis={jenisLabel[item.Status]} teks={teksStatusLangkah[item.Status]} />
+                            </span>
+                            <Button
+                                asChild
+                                variant="link"
+                                size="sm"
+                                className="h-11 self-start px-0 font-semibold underline sm:h-8 sm:self-auto"
+                            >
+                                <Link href={item.Tautan}>
+                                    {item.Status === 'Selesai' ? `Ubah ${item.Judul}` : `Buka ${item.Judul}`}
+                                </Link>
+                            </Button>
+                        </li>
+                    ))}
+                </ol>
             </Card>
 
             <Separator />
