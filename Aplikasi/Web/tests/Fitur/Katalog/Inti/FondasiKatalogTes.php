@@ -242,7 +242,8 @@ describe('F-03 Wave 0: layanan dan kueri katalog', function (): void {
     it('config katalog memuat semua kunci Wave 0', function (): void {
         expect(config('katalog.Sku.Awalan'))->toBe('PRD-')
             ->and(config('katalog.Barcode.Awalan'))->toBe('20')
-            ->and(config('katalog.Gambar'))->toBe(['UkuranMaksimalKb' => 5120, 'SisiBesar' => 800, 'SisiKecil' => 256, 'Kualitas' => 80])
+            ->and(config('katalog.Gambar'))->toBe(['UkuranMaksimalKb' => 5120, 'SisiBesar' => 800, 'SisiKecil' => 256, 'Kualitas' => 80, 'PikselMaksimal' => 40000000])
+            ->and(config('katalog.Impor.UkuranEkstrakMaksimalKb'))->toBe(204800)
             ->and(config('katalog.Varian'))->toBe(['MaksimalAtribut' => 3, 'MaksimalNilai' => 20, 'MaksimalKombinasi' => 100])
             ->and(config('katalog.Kategori.MaksimalKedalaman'))->toBe(3)
             ->and(config('katalog.Impor.BatasBarisSinkron'))->toBe(300)
