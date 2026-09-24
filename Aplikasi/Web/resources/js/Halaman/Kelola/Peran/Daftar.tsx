@@ -5,6 +5,9 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabPengguna from '@/Komponen/Kelola/TabPengguna';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -38,9 +41,7 @@ export default function HalamanDaftarPeran({ Peran, DaftarIzin }: PropsDaftar) {
                 <p className="text-isi text-teks-sekunder">
                     Peran bawaan disiapkan sistem. Buat peran kustom bila tim Anda butuh kombinasi izin lain.
                 </p>
-                {bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Buat peran</Tombol>
-                ) : null}
+                {bolehKelola ? <Tombol onClick={() => AturSunting('baru')}>Buat peran</Tombol> : null}
             </div>
 
             {sunting !== null ? (
@@ -52,49 +53,54 @@ export default function HalamanDaftarPeran({ Peran, DaftarIzin }: PropsDaftar) {
                 />
             ) : null}
 
-            <ul className="flex flex-col divide-y divide-garis rounded-panel border border-garis bg-permukaan">
-                {Peran.map((peran) => (
-                    <li key={peran.Uuid} className="flex flex-col gap-2 px-4 py-3">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                                <p className="flex flex-wrap items-center gap-2 font-semibold text-teks-utama">
-                                    {peran.Nama}
-                                    <LabelStatus jenis="netral" teks={peran.Bawaan ? 'Bawaan' : 'Kustom'} />
-                                </p>
-                                {peran.Keterangan ? (
-                                    <p className="text-keterangan text-teks-sekunder">{peran.Keterangan}</p>
-                                ) : null}
-                                <p className="text-keterangan text-teks-sekunder">
-                                    {peran.JumlahAnggota} anggota aktif
-                                </p>
-                            </div>
-                            {bolehKelola && !peran.Bawaan ? (
-                                <span className="flex gap-2">
-                                    <Tombol varian="sekunder" onClick={() => AturSunting(peran)}>
-                                        Ubah peran
-                                    </Tombol>
-                                    {peran.JumlahAnggota === 0 ? (
-                                        <Tombol
-                                            varian="bahaya"
-                                            onClick={() =>
-                                                router.delete(`/kelola/peran/${peran.Uuid}`, { preserveScroll: true })
-                                            }
-                                        >
-                                            Hapus peran
-                                        </Tombol>
+            <Card className="gap-0 py-0">
+                <ul className="flex flex-col divide-y divide-garis">
+                    {Peran.map((peran) => (
+                        <li key={peran.Uuid} className="flex flex-col gap-2 px-4 py-3">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                <div>
+                                    <p className="flex flex-wrap items-center gap-2 font-semibold text-teks-utama">
+                                        {peran.Nama}
+                                        <LabelStatus jenis="netral" teks={peran.Bawaan ? 'Bawaan' : 'Kustom'} />
+                                    </p>
+                                    {peran.Keterangan ? (
+                                        <p className="text-keterangan text-teks-sekunder">{peran.Keterangan}</p>
                                     ) : null}
-                                </span>
-                            ) : null}
-                        </div>
-                        <p className="text-keterangan text-teks-sekunder">
-                            {peran.Pemilik
-                                ? 'Semua izin, termasuk langganan.'
-                                : peran.Izin.map((kunci) => labelIzin.get(kunci) ?? kunci).join(' · ') ||
-                                  'Belum ada izin.'}
-                        </p>
-                    </li>
-                ))}
-            </ul>
+                                    <p className="text-keterangan text-teks-sekunder">
+                                        {peran.JumlahAnggota} anggota aktif
+                                    </p>
+                                </div>
+                                {bolehKelola && !peran.Bawaan ? (
+                                    <MenuAksiBaris
+                                        label={`Aksi peran ${peran.Nama}`}
+                                        aksi={[
+                                            { label: 'Ubah peran', saatPilih: () => AturSunting(peran) },
+                                            ...(peran.JumlahAnggota === 0
+                                                ? [
+                                                      {
+                                                          label: 'Hapus peran',
+                                                          bahaya: true,
+                                                          saatPilih: () =>
+                                                              router.delete(`/kelola/peran/${peran.Uuid}`, {
+                                                                  preserveScroll: true,
+                                                              }),
+                                                      },
+                                                  ]
+                                                : []),
+                                        ]}
+                                    />
+                                ) : null}
+                            </div>
+                            <p className="text-keterangan text-teks-sekunder">
+                                {peran.Pemilik
+                                    ? 'Semua izin, termasuk langganan.'
+                                    : peran.Izin.map((kunci) => labelIzin.get(kunci) ?? kunci).join(' · ') ||
+                                      'Belum ada izin.'}
+                            </p>
+                        </li>
+                    ))}
+                </ul>
+            </Card>
         </TataLetakAplikasi>
     );
 }
@@ -131,56 +137,55 @@ function FormPeran({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6"
-            noValidate
+        <DialogFormulir
+            jenis="panel"
+            judul={peran === null ? 'Buat peran' : `Ubah ${peran.Nama}`}
+            saatTutup={saatSelesai}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                {peran === null ? 'Buat peran' : `Ubah ${peran.Nama}`}
-            </h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <BidangTeks
-                    label="Nama peran"
-                    nilai={formulir.data.Nama}
-                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                    galat={formulir.errors.Nama}
-                    maxLength={100}
-                    autoFocus
-                    required
-                />
-                <BidangTeks
-                    label="Keterangan (opsional)"
-                    nilai={formulir.data.Keterangan}
-                    saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
-                    galat={formulir.errors.Keterangan}
-                    maxLength={255}
-                />
-            </div>
-            {kelompok.map((namaKelompok) => (
-                <GrupCentang
-                    key={namaKelompok}
-                    legenda={namaKelompok}
-                    opsi={daftarIzin
-                        .filter((izin) => izin.Kelompok === namaKelompok && !izin.KhususPemilik)
-                        .map((izin) => ({ nilai: izin.Kunci, label: izin.Label }))}
-                    terpilih={formulir.data.Izin.filter(
-                        (kunci) => daftarIzin.find((izin) => izin.Kunci === kunci)?.Kelompok === namaKelompok,
-                    )}
-                    saatBerubah={(terpilih) => UbahKelompok(namaKelompok, terpilih)}
-                />
-            ))}
-            {formulir.errors.Izin ? (
-                <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Izin}</p>
-            ) : null}
-            <div className="flex gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan peran
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <BidangTeks
+                        label="Nama peran"
+                        nilai={formulir.data.Nama}
+                        saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                        galat={formulir.errors.Nama}
+                        maxLength={100}
+                        autoFocus
+                        required
+                    />
+                    <BidangTeks
+                        label="Keterangan (opsional)"
+                        nilai={formulir.data.Keterangan}
+                        saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
+                        galat={formulir.errors.Keterangan}
+                        maxLength={255}
+                    />
+                </div>
+                {kelompok.map((namaKelompok) => (
+                    <GrupCentang
+                        key={namaKelompok}
+                        legenda={namaKelompok}
+                        opsi={daftarIzin
+                            .filter((izin) => izin.Kelompok === namaKelompok && !izin.KhususPemilik)
+                            .map((izin) => ({ nilai: izin.Kunci, label: izin.Label }))}
+                        terpilih={formulir.data.Izin.filter(
+                            (kunci) => daftarIzin.find((izin) => izin.Kunci === kunci)?.Kelompok === namaKelompok,
+                        )}
+                        saatBerubah={(terpilih) => UbahKelompok(namaKelompok, terpilih)}
+                    />
+                ))}
+                {formulir.errors.Izin ? (
+                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Izin}</p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan peran
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }

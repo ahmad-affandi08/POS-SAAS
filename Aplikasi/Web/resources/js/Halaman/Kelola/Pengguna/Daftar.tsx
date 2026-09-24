@@ -7,6 +7,11 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabPengguna from '@/Komponen/Kelola/TabPengguna';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
+import MenuAksiBaris, { type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -52,6 +57,8 @@ type PropsDaftar = {
 
 type Pilihan = { jenis: 'akses' | 'nonaktifkan'; anggota: Anggota } | null;
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Pengguna tenant: undang, atur peran & outlet, nonaktifkan (F-02 langkah 3, BR-02.1, BR-00.1). */
 export default function HalamanDaftarPengguna({
     Anggota,
@@ -76,6 +83,33 @@ export default function HalamanDaftarPengguna({
     // Pemilik hanya bisa diubah Pemilik lain; akun sendiri tidak bisa diubah dari sini.
     const BolehSentuh = (anggota: Anggota) => anggota.Uuid !== UuidSaya && (sayaPemilik || !anggota.Pemilik);
 
+    const SusunAksi = (anggota: Anggota): AksiBaris[] => {
+        if (!BolehSentuh(anggota)) {
+            return [];
+        }
+
+        const aksi: AksiBaris[] = [];
+        if (anggota.Status === 'Aktif' && bolehUbah) {
+            aksi.push({ label: 'Ubah akses', saatPilih: () => AturPilihan({ jenis: 'akses', anggota }) });
+        }
+        if (anggota.Status === 'Aktif' && bolehNonaktifkan) {
+            aksi.push({
+                label: 'Nonaktifkan',
+                bahaya: true,
+                saatPilih: () => AturPilihan({ jenis: 'nonaktifkan', anggota }),
+            });
+        }
+        if (anggota.Status === 'Nonaktif' && bolehNonaktifkan) {
+            aksi.push({
+                label: 'Aktifkan kembali',
+                nonaktif: penuh,
+                saatPilih: () => router.post(`/kelola/pengguna/${anggota.Uuid}/aktifkan`, {}, { preserveScroll: true }),
+            });
+        }
+
+        return aksi;
+    };
+
     return (
         <TataLetakAplikasi judul="Pengguna & peran">
             <TabPengguna />
@@ -84,7 +118,7 @@ export default function HalamanDaftarPengguna({
                     Kursi pengguna (anggota aktif + undangan menunggu):{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasPengguna, 'pengguna')}</span>
                 </p>
-                {bolehUndang && !formUndangan ? (
+                {bolehUndang ? (
                     <Tombol onClick={() => AturFormUndangan(true)} disabled={penuh}>
                         Undang pengguna
                     </Tombol>
@@ -142,32 +176,32 @@ export default function HalamanDaftarPengguna({
                 />
             ) : null}
 
-            <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                <table className="w-full min-w-[760px] text-left text-isi">
-                    <caption className="sr-only">Daftar pengguna</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+            <Card className="gap-0 py-0">
+                <Table className="min-w-[760px] text-isi">
+                    <TableCaption className="sr-only">Daftar pengguna</TableCaption>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead scope="col" className={kelasKepala}>
                                 Nama
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Peran
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Outlet
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Status
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 <span className="sr-only">Aksi</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {Anggota.map((anggota) => (
-                            <tr key={anggota.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                <td className="px-4 py-2">
+                            <TableRow key={anggota.Uuid} className="align-top">
+                                <TableCell className="px-4 whitespace-normal">
                                     <p className="font-semibold text-teks-utama">
                                         {anggota.Nama}
                                         {anggota.Uuid === UuidSaya ? (
@@ -175,16 +209,18 @@ export default function HalamanDaftarPengguna({
                                         ) : null}
                                     </p>
                                     <p className="text-keterangan text-teks-sekunder">{anggota.Email}</p>
-                                </td>
-                                <td className="px-4 py-2 text-teks-utama">{anggota.NamaPeran ?? 'Belum ada peran'}</td>
-                                <td className="px-4 py-2 text-teks-sekunder">
+                                </TableCell>
+                                <TableCell className="px-4 whitespace-normal text-teks-utama">
+                                    {anggota.NamaPeran ?? 'Belum ada peran'}
+                                </TableCell>
+                                <TableCell className="px-4 whitespace-normal text-teks-sekunder">
                                     {anggota.SemuaOutlet
                                         ? 'Semua outlet'
                                         : anggota.UuidOutlet.map((uuid) => namaOutlet.get(uuid) ?? 'Diarsipkan').join(
                                               ', ',
                                           ) || 'Belum ditugaskan'}
-                                </td>
-                                <td className="px-4 py-2">
+                                </TableCell>
+                                <TableCell className="px-4">
                                     {anggota.Status === 'Aktif' ? (
                                         <LabelStatus jenis="sukses" teks="Aktif" />
                                     ) : (
@@ -193,89 +229,57 @@ export default function HalamanDaftarPengguna({
                                             teks={`Nonaktif sejak ${FormatTanggalWaktu(anggota.DinonaktifkanPada)}`}
                                         />
                                     )}
-                                </td>
-                                <td className="px-4 py-2 text-right">
-                                    {BolehSentuh(anggota) ? (
-                                        <span className="flex justify-end gap-2">
-                                            {anggota.Status === 'Aktif' && bolehUbah ? (
-                                                <Tombol
-                                                    varian="sekunder"
-                                                    onClick={() => AturPilihan({ jenis: 'akses', anggota })}
-                                                >
-                                                    Ubah akses
-                                                </Tombol>
-                                            ) : null}
-                                            {anggota.Status === 'Aktif' && bolehNonaktifkan ? (
-                                                <Tombol
-                                                    varian="bahaya"
-                                                    onClick={() => AturPilihan({ jenis: 'nonaktifkan', anggota })}
-                                                >
-                                                    Nonaktifkan
-                                                </Tombol>
-                                            ) : null}
-                                            {anggota.Status === 'Nonaktif' && bolehNonaktifkan ? (
-                                                <Tombol
-                                                    varian="sekunder"
-                                                    disabled={penuh}
-                                                    onClick={() =>
-                                                        router.post(
-                                                            `/kelola/pengguna/${anggota.Uuid}/aktifkan`,
-                                                            {},
-                                                            { preserveScroll: true },
-                                                        )
-                                                    }
-                                                >
-                                                    Aktifkan kembali
-                                                </Tombol>
-                                            ) : null}
-                                        </span>
-                                    ) : null}
-                                </td>
-                            </tr>
+                                </TableCell>
+                                <TableCell className="px-4 text-right">
+                                    <MenuAksiBaris label={`Aksi untuk ${anggota.Nama}`} aksi={SusunAksi(anggota)} />
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </section>
+                    </TableBody>
+                </Table>
+            </Card>
 
             <section className="flex flex-col gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Undangan menunggu</h2>
                 {Undangan.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Tidak ada undangan yang menunggu diterima.</p>
                 ) : (
-                    <ul className="divide-y divide-garis rounded-panel border border-garis bg-permukaan">
-                        {Undangan.map((undangan) => (
-                            <li
-                                key={undangan.Uuid}
-                                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-isi"
-                            >
-                                <span>
-                                    <span className="font-semibold text-teks-utama">{undangan.Email}</span>
-                                    <span className="block text-keterangan text-teks-sekunder">
-                                        {undangan.NamaPeran ?? '—'} ·{' '}
-                                        {undangan.SemuaOutlet
-                                            ? 'semua outlet'
-                                            : `${String(undangan.JumlahOutlet)} outlet`}{' '}
-                                        · diundang {undangan.Pengundang} · berlaku sampai{' '}
-                                        {FormatTanggalWaktu(undangan.BerlakuSampai)}
+                    <Card className="gap-0 py-0">
+                        <ul className="divide-y divide-garis">
+                            {Undangan.map((undangan) => (
+                                <li
+                                    key={undangan.Uuid}
+                                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-isi"
+                                >
+                                    <span>
+                                        <span className="font-semibold text-teks-utama">{undangan.Email}</span>
+                                        <span className="block text-keterangan text-teks-sekunder">
+                                            {undangan.NamaPeran ?? '—'} ·{' '}
+                                            {undangan.SemuaOutlet
+                                                ? 'semua outlet'
+                                                : `${String(undangan.JumlahOutlet)} outlet`}{' '}
+                                            · diundang {undangan.Pengundang} · berlaku sampai{' '}
+                                            {FormatTanggalWaktu(undangan.BerlakuSampai)}
+                                        </span>
                                     </span>
-                                </span>
-                                {bolehUndang ? (
-                                    <Tombol
-                                        varian="sekunder"
-                                        onClick={() =>
-                                            router.post(
-                                                `/kelola/pengguna/undangan/${undangan.Uuid}/batalkan`,
-                                                {},
-                                                { preserveScroll: true },
-                                            )
-                                        }
-                                    >
-                                        Batalkan undangan
-                                    </Tombol>
-                                ) : null}
-                            </li>
-                        ))}
-                    </ul>
+                                    {bolehUndang ? (
+                                        <Tombol
+                                            varian="sekunder"
+                                            onClick={() =>
+                                                router.post(
+                                                    `/kelola/pengguna/undangan/${undangan.Uuid}/batalkan`,
+                                                    {},
+                                                    { preserveScroll: true },
+                                                )
+                                            }
+                                        >
+                                            Batalkan undangan
+                                        </Tombol>
+                                    ) : null}
+                                </li>
+                            ))}
+                        </ul>
+                    </Card>
                 )}
             </section>
         </TataLetakAplikasi>
@@ -330,14 +334,8 @@ function FormAkses({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6"
-            noValidate
-        >
-            <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-            {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <DialogFormulir jenis="panel" judul={judul} keterangan={keterangan} saatTutup={saatSelesai}>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                 {denganEmail ? (
                     <BidangTeks
                         label="Email"
@@ -358,37 +356,37 @@ function FormAkses({
                     galat={formulir.errors.Peran}
                     kosong="Pilih peran"
                 />
-            </div>
-            <KotakCentang
-                label={
-                    semuaOutletPaksa
-                        ? 'Semua outlet (Pemilik selalu mengakses semua outlet)'
-                        : 'Semua outlet, termasuk outlet baru'
-                }
-                nilai={formulir.data.SemuaOutlet || semuaOutletPaksa}
-                saatBerubah={(nilai) => formulir.setData('SemuaOutlet', nilai)}
-            />
-            {formulir.errors.SemuaOutlet ? (
-                <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.SemuaOutlet}</p>
-            ) : null}
-            {!formulir.data.SemuaOutlet && !semuaOutletPaksa ? (
-                <GrupCentang
-                    legenda="Outlet yang ditugaskan"
-                    opsi={outlet.map((baris) => ({ nilai: baris.Uuid, label: `${baris.Kode} · ${baris.Nama}` }))}
-                    terpilih={formulir.data.Outlet}
-                    saatBerubah={(terpilih) => formulir.setData('Outlet', terpilih)}
-                    galat={formulir.errors.Outlet}
+                <KotakCentang
+                    label={
+                        semuaOutletPaksa
+                            ? 'Semua outlet (Pemilik selalu mengakses semua outlet)'
+                            : 'Semua outlet, termasuk outlet baru'
+                    }
+                    nilai={formulir.data.SemuaOutlet || semuaOutletPaksa}
+                    saatBerubah={(nilai) => formulir.setData('SemuaOutlet', nilai)}
                 />
-            ) : null}
-            <div className="flex gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    {tombol}
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+                {formulir.errors.SemuaOutlet ? (
+                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.SemuaOutlet}</p>
+                ) : null}
+                {!formulir.data.SemuaOutlet && !semuaOutletPaksa ? (
+                    <GrupCentang
+                        legenda="Outlet yang ditugaskan"
+                        opsi={outlet.map((baris) => ({ nilai: baris.Uuid, label: `${baris.Kode} · ${baris.Nama}` }))}
+                        terpilih={formulir.data.Outlet}
+                        saatBerubah={(terpilih) => formulir.setData('Outlet', terpilih)}
+                        galat={formulir.errors.Outlet}
+                    />
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        {tombol}
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -396,35 +394,28 @@ function KonfirmasiNonaktifkan({ anggota, saatSelesai }: { anggota: Anggota; saa
     const [memproses, AturMemproses] = useState(false);
 
     return (
-        <div className="flex flex-col gap-3 rounded-panel border border-bahaya bg-permukaan p-6">
-            <h2 className="text-subjudul font-semibold text-teks-utama">Nonaktifkan {anggota.Nama}?</h2>
-            <p className="text-isi text-teks-sekunder">
+        <DialogKonfirmasi
+            judul={`Nonaktifkan ${anggota.Nama}?`}
+            labelAksi="Nonaktifkan pengguna"
+            memproses={memproses}
+            saatBatal={saatSelesai}
+            saatKonfirmasi={() =>
+                router.post(
+                    `/kelola/pengguna/${anggota.Uuid}/nonaktifkan`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onStart: () => AturMemproses(true),
+                        onFinish: () => AturMemproses(false),
+                        onSuccess: saatSelesai,
+                    },
+                )
+            }
+        >
+            <p>
                 {anggota.Nama} langsung keluar dari usaha ini dan tidak bisa memilihnya lagi. Akun & riwayatnya tetap
                 tersimpan, dan bisa diaktifkan kembali kapan saja. Undangan yang ia kirim ikut dibatalkan.
             </p>
-            <div className="flex gap-2">
-                <Tombol
-                    varian="bahaya"
-                    memproses={memproses}
-                    onClick={() =>
-                        router.post(
-                            `/kelola/pengguna/${anggota.Uuid}/nonaktifkan`,
-                            {},
-                            {
-                                preserveScroll: true,
-                                onStart: () => AturMemproses(true),
-                                onFinish: () => AturMemproses(false),
-                                onSuccess: saatSelesai,
-                            },
-                        )
-                    }
-                >
-                    Nonaktifkan pengguna
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </div>
+        </DialogKonfirmasi>
     );
 }

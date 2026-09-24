@@ -4,6 +4,11 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -34,6 +39,8 @@ type Merek = { Uuid: string; Nama: string; JumlahOutlet: number };
 
 type PropsDaftar = { Outlet: Outlet[]; Merek: Merek[]; Kota: Kota[]; BatasOutlet: Batas };
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Daftar outlet & merek (F-02 langkah 1, BR-02.1). */
 export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }: PropsDaftar) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -48,7 +55,7 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                     Outlet aktif:{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>
                 </p>
-                {bolehKelola && !formTerbuka ? (
+                {bolehKelola ? (
                     <Tombol onClick={() => AturFormTerbuka(true)} disabled={penuh}>
                         Tambah outlet
                     </Tombol>
@@ -66,61 +73,69 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
             ) : null}
 
             {formTerbuka ? (
-                <FormOutlet
-                    uuid={null}
-                    awal={{
-                        Nama: '',
-                        Kode: '',
-                        Merek: Merek[0]?.Uuid ?? '',
-                        Alamat: '',
-                        KodeKota: '',
-                        ZonaWaktu: 'WIB',
-                        JamTutupBuku: '04:00',
-                        Pkp: false,
-                        Nitku: '',
-                        PungutPbjt: false,
-                    }}
-                    merek={Merek.map((baris) => ({ Nilai: baris.Uuid, Label: baris.Nama }))}
-                    kota={Kota}
-                    saatBatal={() => AturFormTerbuka(false)}
-                />
+                <DialogFormulir jenis="panel" judul="Tambah outlet" saatTutup={() => AturFormTerbuka(false)}>
+                    <FormOutlet
+                        uuid={null}
+                        awal={{
+                            Nama: '',
+                            Kode: '',
+                            Merek: Merek[0]?.Uuid ?? '',
+                            Alamat: '',
+                            KodeKota: '',
+                            ZonaWaktu: 'WIB',
+                            JamTutupBuku: '04:00',
+                            Pkp: false,
+                            Nitku: '',
+                            PungutPbjt: false,
+                        }}
+                        merek={Merek.map((baris) => ({ Nilai: baris.Uuid, Label: baris.Nama }))}
+                        kota={Kota}
+                        saatBatal={() => AturFormTerbuka(false)}
+                    />
+                </DialogFormulir>
             ) : null}
 
             {Outlet.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    Belum ada outlet yang bisa Anda akses. Minta Owner menugaskan Anda ke outlet.
-                </p>
+                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
+                    <EmptyHeader>
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            Belum ada outlet yang bisa Anda akses. Minta Owner menugaskan Anda ke outlet.
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[820px] text-left text-isi">
-                        <caption className="sr-only">Daftar outlet</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[820px] text-isi">
+                        <TableCaption className="sr-only">Daftar outlet</TableCaption>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead scope="col" className={kelasKepala}>
                                     Kode
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Outlet
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Kota
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Tutup buku
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={`${kelasKepala} text-right`}>
                                     Lokasi stok
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Status
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Outlet.map((outlet) => (
-                                <tr key={outlet.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label text-teks-utama">{outlet.Kode}</td>
-                                    <td className="px-4 py-2">
+                                <TableRow key={outlet.Uuid}>
+                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
+                                        {outlet.Kode}
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal">
                                         <Link
                                             href={`/kelola/outlet/${outlet.Uuid}`}
                                             className="font-semibold text-brand underline"
@@ -132,28 +147,28 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                                                 {outlet.NamaMerek}
                                             </span>
                                         ) : null}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
                                         {outlet.NamaKota ?? 'Belum diisi'} · {outlet.ZonaWaktu}
-                                    </td>
-                                    <td className="px-4 py-2 font-mono text-label text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 font-mono text-label text-teks-sekunder">
                                         {outlet.JamTutupBuku}
-                                    </td>
-                                    <td className="px-4 py-2 text-right tabular-nums text-teks-utama">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums text-teks-utama">
                                         {outlet.JumlahGudang}
-                                    </td>
-                                    <td className="px-4 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-4">
                                         {outlet.Status === 'Aktif' ? (
                                             <LabelStatus jenis="sukses" teks="Aktif" />
                                         ) : (
                                             <LabelStatus jenis="netral" teks="Diarsipkan" />
                                         )}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
 
             <BagianMerek merek={Merek} bolehKelola={bolehKelola} />
@@ -168,7 +183,7 @@ function BagianMerek({ merek, bolehKelola }: { merek: Merek[]; bolehKelola: bool
         <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Merek</h2>
-                {bolehKelola && sunting === null ? (
+                {bolehKelola ? (
                     <Tombol varian="sekunder" onClick={() => AturSunting('baru')}>
                         Tambah merek
                     </Tombol>
@@ -178,42 +193,52 @@ function BagianMerek({ merek, bolehKelola }: { merek: Merek[]; bolehKelola: bool
                 Pakai lebih dari satu merek bila usaha Anda punya beberapa nama dagang, misal kafe dan toko roti.
             </p>
             {sunting !== null ? (
-                <FormMerek
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    merek={sunting === 'baru' ? null : sunting}
-                    saatSelesai={() => AturSunting(null)}
-                />
+                <DialogFormulir
+                    judul={sunting === 'baru' ? 'Tambah merek' : `Ganti nama merek ${sunting.Nama}`}
+                    saatTutup={() => AturSunting(null)}
+                >
+                    <FormMerek
+                        key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                        merek={sunting === 'baru' ? null : sunting}
+                        saatSelesai={() => AturSunting(null)}
+                    />
+                </DialogFormulir>
             ) : null}
-            <ul className="divide-y divide-garis rounded-panel border border-garis bg-permukaan">
-                {merek.map((baris) => (
-                    <li
-                        key={baris.Uuid}
-                        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-isi"
-                    >
-                        <span>
-                            <span className="font-semibold text-teks-utama">{baris.Nama}</span>
-                            <span className="text-teks-sekunder"> · {baris.JumlahOutlet} outlet</span>
-                        </span>
-                        {bolehKelola ? (
-                            <span className="flex gap-2">
-                                <Tombol varian="sekunder" onClick={() => AturSunting(baris)}>
-                                    Ganti nama
-                                </Tombol>
-                                {baris.JumlahOutlet === 0 && merek.length > 1 ? (
-                                    <Tombol
-                                        varian="bahaya"
-                                        onClick={() =>
-                                            router.delete(`/kelola/merek/${baris.Uuid}`, { preserveScroll: true })
-                                        }
-                                    >
-                                        Hapus merek
-                                    </Tombol>
-                                ) : null}
+            <Card className="gap-0 py-0">
+                <ul className="divide-y divide-garis">
+                    {merek.map((baris) => (
+                        <li
+                            key={baris.Uuid}
+                            className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-isi"
+                        >
+                            <span>
+                                <span className="font-semibold text-teks-utama">{baris.Nama}</span>
+                                <span className="text-teks-sekunder"> · {baris.JumlahOutlet} outlet</span>
                             </span>
-                        ) : null}
-                    </li>
-                ))}
-            </ul>
+                            {bolehKelola ? (
+                                <MenuAksiBaris
+                                    label={`Aksi merek ${baris.Nama}`}
+                                    aksi={[
+                                        { label: 'Ganti nama', saatPilih: () => AturSunting(baris) },
+                                        ...(baris.JumlahOutlet === 0 && merek.length > 1
+                                            ? [
+                                                  {
+                                                      label: 'Hapus merek',
+                                                      bahaya: true,
+                                                      saatPilih: () =>
+                                                          router.delete(`/kelola/merek/${baris.Uuid}`, {
+                                                              preserveScroll: true,
+                                                          }),
+                                                  },
+                                              ]
+                                            : []),
+                                    ]}
+                                />
+                            ) : null}
+                        </li>
+                    ))}
+                </ul>
+            </Card>
         </section>
     );
 }
@@ -233,28 +258,24 @@ function FormMerek({ merek, saatSelesai }: { merek: Merek | null; saatSelesai: (
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-wrap items-end gap-2 rounded-panel border border-garis bg-permukaan p-4"
-            noValidate
-        >
-            <div className="w-full max-w-sm">
-                <BidangTeks
-                    label="Nama merek"
-                    nilai={formulir.data.Nama}
-                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                    galat={formulir.errors.Nama}
-                    maxLength={150}
-                    autoFocus
-                    required
-                />
+        <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+            <BidangTeks
+                label="Nama merek"
+                nilai={formulir.data.Nama}
+                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                galat={formulir.errors.Nama}
+                maxLength={150}
+                autoFocus
+                required
+            />
+            <div className="flex flex-wrap gap-2">
+                <Tombol type="submit" memproses={formulir.processing}>
+                    Simpan merek
+                </Tombol>
+                <Tombol varian="sekunder" onClick={saatSelesai}>
+                    Batal
+                </Tombol>
             </div>
-            <Tombol type="submit" memproses={formulir.processing}>
-                Simpan merek
-            </Tombol>
-            <Tombol varian="sekunder" onClick={saatSelesai}>
-                Batal
-            </Tombol>
         </form>
     );
 }

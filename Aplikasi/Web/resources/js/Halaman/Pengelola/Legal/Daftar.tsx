@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -45,10 +46,7 @@ export default function HalamanDaftarLegal({ Dokumen }: { Dokumen: KelompokDokum
                 const adaDraf = kelompok.Versi.some((versi) => versi.StatusTampilan === 'Draf');
 
                 return (
-                    <section
-                        key={kelompok.Jenis}
-                        className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-5"
-                    >
+                    <Card key={kelompok.Jenis} className="gap-2 px-5 py-5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h2 className="text-subjudul font-semibold text-teks-utama">{kelompok.Label}</h2>
                             {bolehKelola && !adaDraf ? (
@@ -92,7 +90,7 @@ export default function HalamanDaftarLegal({ Dokumen }: { Dokumen: KelompokDokum
                                 ))}
                             </ul>
                         )}
-                    </section>
+                    </Card>
                 );
             })}
         </TataLetakPengelola>
