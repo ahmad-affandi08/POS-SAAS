@@ -6,7 +6,7 @@ namespace App\Domain\Persediaan\Impor\Tugas;
 
 use App\Domain\Katalog\Impor\Layanan\KonteksTugasImpor;
 use App\Domain\Persediaan\Enum\StatusImporStokAwal;
-use App\Domain\Persediaan\Impor\Layanan\PemvalidasiImporStokAwal;
+use App\Domain\Persediaan\Impor\Layanan\PenerapImporStokAwal;
 use App\Domain\Persediaan\Impor\Layanan\PengirimTugasImporStokAwal;
 use App\Domain\Persediaan\Model\ImporStokAwal;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
@@ -15,16 +15,17 @@ use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
 /**
- * Validasi impor stok awal (DesainF05a C.7), langsung untuk berkas kecil atau di antrean untuk berkas besar.
- * Membawa `IdTenant` dan menetapkan konteks tenant (+ pengunggah sebagai pelaku) lebih dulu (CLAUDE.md #11).
- * Setelah `persediaan.Impor.MaksimalDetikPerTugas` detik tugas mengirim dirinya lagi dan melanjutkan dari baris
- * tersimpan terakhir. Unik per impor sampai mulai diproses.
+ * Penerapan impor stok awal (DesainF05a C.7): membuat dokumen stok awal **Draf** per lokasi stok lewat
+ * `SimpanStokAwal`, satu transaksi per dokumen (≤ `persediaan.StokAwal.MaksimalBaris` baris). Tidak pernah
+ * memposting. Membawa `IdTenant` dan menetapkan konteks tenant lebih dulu. Setelah
+ * `persediaan.Impor.MaksimalDetikPerTugas` detik tugas mengirim dirinya lagi; menjalankan ulang aman karena baris
+ * yang sudah masuk draf (`ImporStokAwalBaris.IdStokAwal`) tidak diproses lagi.
  */
-final class ValidasiImporStokAwalTugas implements ShouldBeUniqueUntilProcessing, ShouldQueue
+final class TerapkanImporStokAwalTugas implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Queueable;
 
-    public const PESAN_GAGAL = 'Pemeriksaan berkas terhenti karena galat sistem. Unggah ulang berkas, atau hubungi dukungan bila berulang.';
+    public const PESAN_GAGAL = 'Pembuatan draf terhenti karena galat sistem. Draf yang sudah dibuat tidak diulang; klik Lanjutkan impor untuk meneruskan.';
 
     public int $tries = 3;
 
@@ -38,19 +39,19 @@ final class ValidasiImporStokAwalTugas implements ShouldBeUniqueUntilProcessing,
 
     public function uniqueId(): string
     {
-        return 'validasi-stok-awal-'.$this->idImporStokAwal;
+        return 'terapkan-stok-awal-'.$this->idImporStokAwal;
     }
 
-    public function handle(KonteksTugasImpor $konteks, PemvalidasiImporStokAwal $pemvalidasi): void
+    public function handle(KonteksTugasImpor $konteks, PenerapImporStokAwal $penerap): void
     {
-        $konteks->Jalankan($this->idTenant, $this->idPengguna, function () use ($pemvalidasi): void {
+        $konteks->Jalankan($this->idTenant, $this->idPengguna, function () use ($penerap): void {
             $impor = ImporStokAwal::query()->find($this->idImporStokAwal);
 
-            if ($impor === null || $impor->Status !== StatusImporStokAwal::Memvalidasi) {
+            if ($impor === null || $impor->Status !== StatusImporStokAwal::Menerapkan) {
                 return;
             }
 
-            if (! $pemvalidasi->Jalankan($impor, (int) config('persediaan.Impor.MaksimalDetikPerTugas', 40))) {
+            if (! $penerap->Jalankan($impor, (int) config('persediaan.Impor.MaksimalDetikPerTugas', 40))) {
                 PengirimTugasImporStokAwal::KirimLanjutan(new self($this->idTenant, $this->idPengguna, $this->idImporStokAwal));
             }
         });

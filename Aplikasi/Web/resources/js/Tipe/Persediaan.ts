@@ -270,6 +270,14 @@ export type RingkasanImporStokAwal = {
     SelesaiPada: string | null;
     NamaPengguna: string | null;
 };
+/** GET /kelola/persediaan/stok-awal/impor/{uuid}/status (polling tiap 3 detik). */
+export type StatusPollingImporStokAwal = {
+    Status: StatusImporStokAwal;
+    LabelStatus: string;
+    Progres: number;
+    JumlahDokumen: number;
+    PesanGalat: string | null;
+};
 export type PropsDaftarImporStokAwal = {
     Riwayat: DaftarBerhalaman<RingkasanImporStokAwal>;
     OpsiGudang: OpsiGudang[];
