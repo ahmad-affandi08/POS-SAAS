@@ -1,5 +1,8 @@
 import { useId, useState, type ChangeEvent } from 'react';
 
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/Komponen/Ui/input-group';
+import { Label } from '@/Komponen/Ui/label';
+import { cn } from '@/Komponen/Ui/utils';
 import {
     CekMasukanJumlahValid,
     FormatMasukanJumlah,
@@ -62,15 +65,11 @@ export default function BidangJumlah({
 
     return (
         <div className="flex flex-col gap-1">
-            <label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
+            <Label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
                 {label}
-            </label>
-            <div
-                className={`flex h-10 items-center rounded-kontrol border bg-permukaan focus-within:ring-2 focus-within:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                } ${disabled ? 'bg-latar' : ''}`}
-            >
-                <input
+            </Label>
+            <InputGroup data-disabled={disabled ? true : undefined} className={cn('h-10', disabled && 'bg-latar')}>
+                <InputGroupInput
                     id={id}
                     type="text"
                     inputMode={desimal > 0 ? 'decimal' : 'numeric'}
@@ -82,14 +81,14 @@ export default function BidangJumlah({
                     required={required}
                     aria-invalid={galat ? true : undefined}
                     aria-describedby={dijelaskanOleh || undefined}
-                    className="h-full w-full min-w-0 rounded-kontrol bg-transparent px-3 text-right text-isi text-teks-utama tabular-nums outline-none disabled:text-teks-sekunder"
+                    className="text-right text-isi text-teks-utama tabular-nums disabled:text-teks-sekunder"
                 />
                 {akhiran ? (
-                    <span aria-hidden="true" className="pr-3 text-isi text-teks-sekunder">
-                        {akhiran}
-                    </span>
+                    <InputGroupAddon align="inline-end" aria-hidden="true">
+                        <InputGroupText className="text-isi font-normal text-teks-sekunder">{akhiran}</InputGroupText>
+                    </InputGroupAddon>
                 ) : null}
-            </div>
+            </InputGroup>
             {keterangan ? (
                 <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
                     {keterangan}

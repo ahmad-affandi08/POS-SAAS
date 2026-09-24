@@ -4,10 +4,12 @@ import { useState } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
 import type { AturanJenisProduk, BarisVarian, JenisProduk } from '@/Tipe/Katalog';
 import type { Batas } from '@/Tipe/Organisasi';
 
 import { AmbilGalatBerawalan, HitungKombinasiVarian } from './BantuanKatalog';
+import PanelKatalog from './PanelKatalog';
 import PenyuntingAtributVarian, { MaksimalKombinasi } from './PenyuntingAtributVarian';
 
 /** Jenis yang boleh menjadi anak varian (DesainF03 C.1 `CekBolehAnakVarian`). */
@@ -82,13 +84,7 @@ export default function PembuatVarian({
         );
 
     return (
-        <section
-            aria-labelledby="judul-generator-varian"
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4"
-        >
-            <h2 id="judul-generator-varian" className="text-subjudul font-semibold text-teks-utama">
-                Buat varian
-            </h2>
+        <PanelKatalog judul="Buat varian" idJudul="judul-generator-varian">
             <PenyuntingAtributVarian
                 nilai={atribut}
                 saatBerubah={AturAtribut}
@@ -131,15 +127,19 @@ export default function PembuatVarian({
                               .join(', ')}${baru.length > 5 ? ', …' : ''}.`}
                 </p>
                 {terlaluBanyak ? (
-                    <p className="font-semibold text-bahaya">
-                        Maksimal {MaksimalKombinasi} varian baru sekali buat. Kurangi nilai atribut.
-                    </p>
+                    <Alert variant="destructive" className="rounded-panel">
+                        <AlertDescription className="font-semibold text-bahaya">
+                            Maksimal {MaksimalKombinasi} varian baru sekali buat. Kurangi nilai atribut.
+                        </AlertDescription>
+                    </Alert>
                 ) : null}
                 {melebihiKuota ? (
-                    <p className="font-semibold text-bahaya">
-                        Sisa kuota paket {sisaKuota} produk, kurang untuk {baru.length} varian. Tidak ada varian yang
-                        dibuat sampai kuota cukup.
-                    </p>
+                    <Alert variant="destructive" className="rounded-panel">
+                        <AlertDescription className="font-semibold text-bahaya">
+                            Sisa kuota paket {sisaKuota} produk, kurang untuk {baru.length} varian. Tidak ada varian
+                            yang dibuat sampai kuota cukup.
+                        </AlertDescription>
+                    </Alert>
                 ) : null}
             </div>
             <div>
@@ -151,6 +151,6 @@ export default function PembuatVarian({
                     Buat {baru.length > 0 ? `${String(baru.length)} ` : ''}varian
                 </Tombol>
             </div>
-        </section>
+        </PanelKatalog>
     );
 }

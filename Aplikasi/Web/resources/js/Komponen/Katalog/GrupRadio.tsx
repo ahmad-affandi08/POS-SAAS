@@ -1,5 +1,8 @@
 import { useId } from 'react';
 
+import { Label } from '@/Komponen/Ui/label';
+import { RadioGroup, RadioGroupItem } from '@/Komponen/Ui/radio-group';
+
 type PropsGrupRadio<T extends string> = {
     legenda: string;
     nilai: T;
@@ -10,7 +13,7 @@ type PropsGrupRadio<T extends string> = {
     disabled?: boolean;
 };
 
-/** Pilihan tunggal sebagai radio asli dalam fieldset (target sentuh ≥ 40px, panah keyboard bawaan peramban). */
+/** Pilihan tunggal (RadioGroup) dalam fieldset: target sentuh ≥ 40px, panah keyboard berpindah pilihan. */
 export default function GrupRadio<T extends string>({
     legenda,
     nilai,
@@ -36,27 +39,39 @@ export default function GrupRadio<T extends string>({
                     {keterangan}
                 </p>
             ) : null}
-            <div className="flex flex-col gap-0.5">
+            <RadioGroup
+                value={nilai}
+                onValueChange={(baru) => {
+                    const pilihan = opsi.find((item) => item.Nilai === baru);
+
+                    if (pilihan) {
+                        saatBerubah(pilihan.Nilai);
+                    }
+                }}
+                disabled={disabled}
+                aria-label={legenda}
+                className="gap-0.5"
+            >
                 {opsi.map((item) => (
-                    <label key={item.Nilai} className="flex min-h-10 items-start gap-2 py-2 text-isi text-teks-utama">
-                        <input
-                            type="radio"
-                            name={id}
+                    <div key={item.Nilai} className="flex min-h-10 items-start gap-2 py-2">
+                        <RadioGroupItem
+                            id={`${id}-${item.Nilai}`}
                             value={item.Nilai}
-                            checked={nilai === item.Nilai}
-                            disabled={disabled}
-                            onChange={() => saatBerubah(item.Nilai)}
-                            className="mt-0.5 size-4 accent-brand"
+                            aria-invalid={galat ? true : undefined}
+                            className="mt-0.5"
                         />
-                        <span>
+                        <Label
+                            htmlFor={`${id}-${item.Nilai}`}
+                            className="block text-isi font-normal text-teks-utama"
+                        >
                             {item.Label}
                             {item.Keterangan ? (
                                 <span className="block text-keterangan text-teks-sekunder">{item.Keterangan}</span>
                             ) : null}
-                        </span>
-                    </label>
+                        </Label>
+                    </div>
                 ))}
-            </div>
+            </RadioGroup>
             {galat ? (
                 <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
                     {galat}

@@ -1,4 +1,6 @@
-import { useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
 
 export type ItemTab<K extends string> = { Kunci: K; Label: string; AdaGalat?: boolean };
 
@@ -12,73 +14,51 @@ type PropsDaftarTab<K extends string> = {
 };
 
 /**
- * Tab dalam satu formulir (pola ARIA tabs): panah kiri/kanan, Home, End berpindah tab.
+ * Tab dalam satu formulir (Tabs shadcn, pola ARIA tabs): panah kiri/kanan, Home, End berpindah tab.
+ * Semua panel tetap terpasang (tersembunyi) agar galat & fokus isian di tab lain bisa dijangkau.
  * Tab dengan galat diberi teks "perlu diperbaiki" (bukan warna saja).
  */
 export default function DaftarTab<K extends string>({ label, tab, aktif, saatPilih, panel }: PropsDaftarTab<K>) {
-    const id = useId();
-    const tombol = useRef<Record<string, HTMLButtonElement | null>>({});
-
-    const Pindah = (peristiwa: KeyboardEvent<HTMLButtonElement>, indeks: number) => {
-        const tujuan =
-            peristiwa.key === 'ArrowRight'
-                ? (indeks + 1) % tab.length
-                : peristiwa.key === 'ArrowLeft'
-                  ? (indeks - 1 + tab.length) % tab.length
-                  : peristiwa.key === 'Home'
-                    ? 0
-                    : peristiwa.key === 'End'
-                      ? tab.length - 1
-                      : null;
-        const item = tujuan === null ? undefined : tab[tujuan];
+    const Pilih = (nilai: string) => {
+        const item = tab.find((kandidat) => kandidat.Kunci === nilai);
 
         if (item) {
-            peristiwa.preventDefault();
             saatPilih(item.Kunci);
-            tombol.current[item.Kunci]?.focus();
         }
     };
 
     return (
-        <div className="flex flex-col gap-4">
-            <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto border-b border-garis">
-                {tab.map((item, indeks) => (
-                    <button
+        <Tabs value={aktif} onValueChange={Pilih} className="gap-4">
+            <TabsList
+                variant="line"
+                aria-label={label}
+                className="h-auto w-full justify-start overflow-x-auto rounded-none border-b border-garis p-0"
+            >
+                {tab.map((item) => (
+                    <TabsTrigger
                         key={item.Kunci}
-                        ref={(elemen) => {
-                            tombol.current[item.Kunci] = elemen;
-                        }}
-                        type="button"
-                        role="tab"
-                        id={`${id}-tab-${item.Kunci}`}
-                        aria-selected={item.Kunci === aktif}
-                        aria-controls={`${id}-panel-${item.Kunci}`}
-                        tabIndex={item.Kunci === aktif ? 0 : -1}
+                        value={item.Kunci}
+                        // Klik tanpa mousedown (pembaca layar, test) tetap memilih tab.
                         onClick={() => saatPilih(item.Kunci)}
-                        onKeyDown={(peristiwa) => Pindah(peristiwa, indeks)}
-                        className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-label font-semibold outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                            item.Kunci === aktif
-                                ? 'border-brand text-teks-utama'
-                                : 'border-transparent text-teks-sekunder'
-                        }`}
+                        className="flex-none px-3 py-2 text-label font-semibold"
                     >
                         {item.Label}
                         {item.AdaGalat ? <span className="ml-1 text-bahaya">(perlu diperbaiki)</span> : null}
-                    </button>
+                    </TabsTrigger>
                 ))}
-            </div>
+            </TabsList>
             {tab.map((item) => (
-                <div
+                <TabsContent
                     key={item.Kunci}
-                    role="tabpanel"
-                    id={`${id}-panel-${item.Kunci}`}
-                    aria-labelledby={`${id}-tab-${item.Kunci}`}
+                    value={item.Kunci}
+                    forceMount
                     hidden={item.Kunci !== aktif}
+                    tabIndex={-1}
                     className="flex flex-col gap-4"
                 >
                     {panel[item.Kunci]}
-                </div>
+                </TabsContent>
             ))}
-        </div>
+        </Tabs>
     );
 }

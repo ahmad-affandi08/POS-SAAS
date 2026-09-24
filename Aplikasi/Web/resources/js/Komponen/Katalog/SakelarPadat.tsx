@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { Toggle } from '@/Komponen/Ui/toggle';
+
 function BacaPreferensi(kunci: string): boolean {
     try {
         return window.localStorage.getItem(kunci) === '1';
@@ -40,13 +42,8 @@ type PropsSakelarPadat = { padat: boolean; saatBerubah: (nilai: boolean) => void
 /** Sakelar tampilan padat (aria-pressed) untuk tabel katalog ribuan baris. */
 export default function SakelarPadat({ padat, saatBerubah }: PropsSakelarPadat) {
     return (
-        <button
-            type="button"
-            aria-pressed={padat}
-            onClick={() => saatBerubah(!padat)}
-            className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
-        >
+        <Toggle variant="outline" pressed={padat} onPressedChange={saatBerubah} className="px-3 font-semibold">
             Tampilan padat: {padat ? 'aktif' : 'nonaktif'}
-        </button>
+        </Toggle>
     );
 }

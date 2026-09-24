@@ -1,5 +1,9 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 
+import { Button } from '@/Komponen/Ui/button';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
+
 import { PeriksaBarcode } from './BantuanKatalog';
 
 type PropsBidangBarcode = {
@@ -57,24 +61,26 @@ export default function BidangBarcode({
 
     return (
         <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
+            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                 {label}
-            </label>
+            </Label>
             {nilai.length > 0 ? (
                 <ul className="flex flex-col gap-1" aria-label={`${label} tersimpan`}>
                     {nilai.map((barcode, indeks) => (
                         <li key={barcode} className="flex flex-col gap-0.5">
-                            <span className="flex items-center justify-between gap-2 rounded-kontrol border border-garis bg-latar px-3 py-1">
+                            <span className="flex items-center justify-between gap-2 rounded-kontrol border border-garis bg-muted px-3 py-1">
                                 <span className="font-mono text-label break-all text-teks-utama">{barcode}</span>
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="xs"
                                     disabled={disabled}
                                     onClick={() => saatBerubah(nilai.filter((_, i) => i !== indeks))}
-                                    className="text-keterangan font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                    className="text-destructive"
                                     aria-label={`Hapus barcode ${barcode}`}
                                 >
                                     Hapus
-                                </button>
+                                </Button>
                             </span>
                             {galatPerIndeks[indeks] ? (
                                 <span className="text-keterangan font-semibold text-bahaya">
@@ -86,7 +92,7 @@ export default function BidangBarcode({
                 </ul>
             ) : null}
             <div className="flex gap-2">
-                <input
+                <Input
                     id={id}
                     type="text"
                     value={ketikan}
@@ -97,18 +103,11 @@ export default function BidangBarcode({
                     placeholder="Pindai atau ketik barcode"
                     aria-invalid={pesanGalat ? true : undefined}
                     aria-describedby={`${id}-keterangan${pesanGalat ? ` ${id}-galat` : ''}`}
-                    className={`h-10 min-w-0 flex-1 rounded-kontrol border bg-permukaan px-3 font-mono text-isi tracking-wide text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                        pesanGalat ? 'border-bahaya' : 'border-garis-input'
-                    }`}
+                    className="h-10 flex-1 font-mono tracking-wide"
                 />
-                <button
-                    type="button"
-                    onClick={Tambah}
-                    disabled={disabled}
-                    className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                >
+                <Button type="button" variant="outline" onClick={Tambah} disabled={disabled} className="h-10">
                     Tambah barcode
-                </button>
+                </Button>
             </div>
             <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
                 Boleh lebih dari satu. Tekan Enter setelah memindai.

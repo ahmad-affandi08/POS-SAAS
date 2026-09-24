@@ -9,7 +9,25 @@ import { vi } from 'vitest';
 
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 
-export type KirimanUji = { metode: 'post' | 'put' | 'delete'; url: string; data: unknown };
+/*
+ * jsdom belum punya ResizeObserver dan scrollIntoView, yang dipakai Radix (radio, switch, popover) dan cmdk
+ * (Command). Pengganti kosong cukup untuk test: ukuran & gulir tidak diperiksa di sini.
+ */
+class ResizeObserverUji {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+}
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+    globalThis.ResizeObserver = ResizeObserverUji;
+}
+
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+    Element.prototype.scrollIntoView = () => undefined;
+}
+
+export type KirimanUji ={ metode: 'post' | 'put' | 'delete'; url: string; data: unknown };
 
 /** Semua pengiriman `useForm().post/put/delete` selama test. */
 export const kirimanForm: KirimanUji[] = [];
