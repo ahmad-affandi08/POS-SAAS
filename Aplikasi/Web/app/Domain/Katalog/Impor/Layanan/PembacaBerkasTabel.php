@@ -205,7 +205,7 @@ final class PembacaBerkasTabel
             $jumlahData++;
 
             if ($jumlahData > $maksimalBaris) {
-                throw new PelanggaranAturanBisnis('BarisTerlaluBanyak', 'Berkas berisi lebih dari '.PenguraiNilaiImpor::FormatRibuan($maksimalBaris).' baris produk. Bagi berkas menjadi beberapa bagian.', 'Berkas');
+                throw self::GalatBarisTerlaluBanyak($maksimalBaris);
             }
 
             self::TambahContoh($kolomSumber, $sel);
@@ -225,6 +225,10 @@ final class PembacaBerkasTabel
 
         if ($judulTerpilih === null || $kolomSumber === []) {
             throw self::GalatBerkas('Berkas tidak berisi baris judul kolom.');
+        }
+
+        if ($jumlahData > $maksimalBaris) {
+            throw self::GalatBarisTerlaluBanyak($maksimalBaris);
         }
 
         if ($jumlahData === 0) {
@@ -381,6 +385,11 @@ final class PembacaBerkasTabel
         }
 
         return preg_match('/[\x00-\x08\x0B\x0E-\x1F\x7F]/', $awal) !== 1;
+    }
+
+    private static function GalatBarisTerlaluBanyak(int $maksimalBaris): PelanggaranAturanBisnis
+    {
+        return new PelanggaranAturanBisnis('BarisTerlaluBanyak', 'Berkas berisi lebih dari '.PenguraiNilaiImpor::FormatRibuan($maksimalBaris).' baris produk. Bagi berkas menjadi beberapa bagian.', 'Berkas');
     }
 
     private static function GalatBerkas(string $pesan): PelanggaranAturanBisnis

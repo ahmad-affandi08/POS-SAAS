@@ -264,8 +264,9 @@ final class PenerapImpor
             true,
             true,
             $induk ? [] : array_values(array_map('strval', (array) ($data['Barcode'] ?? []))),
-            $induk || ! $bolehHarga ? [] : self::SusunHargaBaru($data),
+            [],
         )];
+        $hargaAlternatif = [];
 
         if (! $induk) {
             foreach ((array) ($data['SatuanAlternatif'] ?? []) as $alternatif) {
@@ -282,8 +283,12 @@ final class PenerapImpor
                     false,
                     false,
                     array_values(array_map('strval', (array) ($alternatif['Barcode'] ?? []))),
-                    $bolehHarga && is_string($alternatif['Harga'] ?? null) ? [new DataBarisHarga(Kuantitas::Dari(1), Uang::Dari($alternatif['Harga']))] : [],
+                    [],
                 );
+
+                if (is_string($alternatif['Harga'] ?? null)) {
+                    $hargaAlternatif[$unit->Id] = $alternatif['Harga'];
+                }
             }
         }
 
@@ -308,6 +313,22 @@ final class PenerapImpor
             sumber: SumberPerubahanKatalog::Impor,
         ));
 
+        if ($bolehHarga && ! $induk) {
+            $satuanProduk = ProdukSatuan::query()->where('IdProduk', $produk->Id)->get()->keyBy('IdSatuan');
+            $pasangan = [];
+
+            foreach ($hargaAlternatif as $idSatuan => $harga) {
+                $alternatif = $satuanProduk->get($idSatuan);
+
+                if ($alternatif !== null) {
+                    $pasangan[] = [$alternatif, $harga];
+                }
+            }
+
+            $dasar = $satuanProduk->get($satuanDasar->Id) ?? throw new PelanggaranAturanBisnis('SatuanDasarWajib', 'Satuan dasar produk tidak ditemukan.', 'Satuan');
+            $this->SimpanHarga($produk, $dasar, $data, $pasangan);
+        }
+
         $this->ArsipkanBilaPerlu($produk, $data);
 
         return $produk->Id;
@@ -322,8 +343,7 @@ final class PenerapImpor
         $atribut = array_values(array_map(fn (array $a): array => ['Nama' => (string) $a['Nama'], 'Nilai' => (string) $a['Nilai']], (array) ($data['Varian'] ?? [])));
         $induk = $this->CariInduk((string) $data['NamaInduk']) ?? $this->BuatInduk($data, $atribut, $opsi, $bolehHarga);
         $jenis = JenisProduk::tryFrom((string) ($data['JenisAkhir'] ?? '')) ?? $opsi->jenisBawaan;
-        $hargaDasar = $bolehHarga && is_string($data['HargaJual'] ?? null) ? Uang::Dari($data['HargaJual']) : null;
-        $anak = $this->tambahVarian->Jalankan($induk, new DataVarianAnak($atribut, is_string($data['Sku'] ?? null) ? $data['Sku'] : null, $jenis, $hargaDasar, $bolehHarga, SumberPerubahanKatalog::Impor));
+        $anak = $this->tambahVarian->Jalankan($induk, new DataVarianAnak($atribut, is_string($data['Sku'] ?? null) ? $data['Sku'] : null, $jenis, null, $bolehHarga, SumberPerubahanKatalog::Impor));
 
         return $this->Perbarui($anak, $data, $opsi, $bolehHarga);
     }
@@ -404,9 +424,45 @@ final class PenerapImpor
             $this->tambahBarcode->Jalankan($satuanDasar, (string) $barcode);
         }
 
+        $hargaAlternatif = [];
+
+        foreach ((array) ($data['SatuanAlternatif'] ?? []) as $alternatif) {
+            $bidang = BidangImpor::SatuanAlternatif((int) $alternatif['Nomor']);
+            $unit = $this->AmbilSatuan((string) $alternatif['Satuan'], $opsi, $bidang);
+
+            if ($unit->Id === $produk->IdSatuanDasar) {
+                throw new PelanggaranAturanBisnis('SatuanProdukGanda', "Satuan {$unit->Nama} sama dengan satuan dasar.", $bidang->value);
+            }
+
+            $satuanProduk = $this->pastikanSatuanProduk->Jalankan($produk, $unit, Kuantitas::Dari((string) $alternatif['Konversi']));
+
+            foreach ((array) ($alternatif['Barcode'] ?? []) as $barcode) {
+                $this->tambahBarcode->Jalankan($satuanProduk, (string) $barcode);
+            }
+
+            if (is_string($alternatif['Harga'] ?? null)) {
+                $hargaAlternatif[] = [$satuanProduk, $alternatif['Harga']];
+            }
+        }
+
+        if ($bolehHarga) {
+            $this->SimpanHarga($produk, $satuanDasar, $data, $hargaAlternatif);
+        }
+    }
+
+    /**
+     * Harga lewat `SimpanHargaProduk` Tim 2 (sumber Impor → `RiwayatHarga`, BR-03.3): harga dasar satuan dasar diganti
+     * bila Harga Jual diisi; set grosir diganti bila kolom grosir dipetakan; satuan alternatif hanya harga dasarnya.
+     * Tanpa perubahan = tanpa tulis.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  list<array{0: ProdukSatuan, 1: string}>  $hargaAlternatif
+     */
+    private function SimpanHarga(Produk $produk, ProdukSatuan $satuanDasar, array $data, array $hargaAlternatif): void
+    {
         $perSatuan = [];
 
-        if ($bolehHarga && (is_string($data['HargaJual'] ?? null) || is_array($data['Grosir'] ?? null))) {
+        if (is_string($data['HargaJual'] ?? null) || (is_array($data['Grosir'] ?? null) && $data['Grosir'] !== [])) {
             $baris = self::AmbilHargaDasar($satuanDasar);
 
             if (is_string($data['HargaJual'] ?? null)) {
@@ -424,25 +480,10 @@ final class PenerapImpor
             $perSatuan[$satuanDasar->Id] = self::KeBarisHarga($baris);
         }
 
-        foreach ((array) ($data['SatuanAlternatif'] ?? []) as $alternatif) {
-            $bidang = BidangImpor::SatuanAlternatif((int) $alternatif['Nomor']);
-            $unit = $this->AmbilSatuan((string) $alternatif['Satuan'], $opsi, $bidang);
-
-            if ($unit->Id === $produk->IdSatuanDasar) {
-                throw new PelanggaranAturanBisnis('SatuanProdukGanda', "Satuan {$unit->Nama} sama dengan satuan dasar.", $bidang->value);
-            }
-
-            $satuanProduk = $this->pastikanSatuanProduk->Jalankan($produk, $unit, Kuantitas::Dari((string) $alternatif['Konversi']));
-
-            foreach ((array) ($alternatif['Barcode'] ?? []) as $barcode) {
-                $this->tambahBarcode->Jalankan($satuanProduk, (string) $barcode);
-            }
-
-            if ($bolehHarga && is_string($alternatif['Harga'] ?? null)) {
-                $baris = self::AmbilHargaDasar($satuanProduk);
-                $baris[Kuantitas::Dari(1)->KeString()] = Uang::Dari($alternatif['Harga'])->KeString();
-                $perSatuan[$satuanProduk->Id] = self::KeBarisHarga($baris);
-            }
+        foreach ($hargaAlternatif as [$satuanProduk, $harga]) {
+            $baris = self::AmbilHargaDasar($satuanProduk);
+            $baris[Kuantitas::Dari(1)->KeString()] = Uang::Dari($harga)->KeString();
+            $perSatuan[$satuanProduk->Id] = self::KeBarisHarga($baris);
         }
 
         if ($perSatuan !== []) {
@@ -479,27 +520,6 @@ final class PenerapImpor
         }
 
         return $hasil;
-    }
-
-    /**
-     * Harga awal produk baru: harga jual (jumlah minimum 1) + grosir.
-     *
-     * @param  array<string, mixed>  $data
-     * @return list<DataBarisHarga>
-     */
-    private static function SusunHargaBaru(array $data): array
-    {
-        if (! is_string($data['HargaJual'] ?? null)) {
-            return [];
-        }
-
-        $baris = [new DataBarisHarga(Kuantitas::Dari(1), Uang::Dari($data['HargaJual']))];
-
-        foreach ((array) ($data['Grosir'] ?? []) as $grosir) {
-            $baris[] = new DataBarisHarga(Kuantitas::Dari((string) $grosir['JumlahMinimum']), Uang::Dari((string) $grosir['Harga']));
-        }
-
-        return $baris;
     }
 
     /**
