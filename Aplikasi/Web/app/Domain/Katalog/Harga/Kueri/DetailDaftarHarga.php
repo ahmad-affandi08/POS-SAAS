@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Harga\Kueri;
 
+use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Harga\Layanan\WaktuLokalDaftarHarga;
 use App\Domain\Katalog\Harga\Model\DaftarHarga;
@@ -25,6 +26,7 @@ final class DetailDaftarHarga
     public function __construct(
         private readonly PetaUuidOutlet $petaOutlet,
         private readonly DaftarDaftarHarga $daftarDaftarHarga,
+        private readonly KonteksTenant $konteks,
     ) {}
 
     /**
@@ -58,13 +60,15 @@ final class DetailDaftarHarga
             fn (JenisProduk $jenis): string => $jenis->value,
             array_filter(JenisProduk::cases(), fn (JenisProduk $jenis): bool => $jenis->CekBisaDijual()),
         ));
+        // Pertahanan berlapis: join & subkueri ikut dibatasi tenant konteks (scope `MilikTenant` hanya menyaring
+        // tabel utama `ProdukSatuan`).
+        $idTenant = $this->konteks->Wajib();
         $hasil = ProdukSatuan::query()
-            ->join('Produk', 'Produk.Id', '=', 'ProdukSatuan.IdProduk')
+            ->join('Produk', fn ($gabung) => $gabung->on('Produk.Id', '=', 'ProdukSatuan.IdProduk')->where('Produk.IdTenant', '=', $idTenant))
             ->whereNull('Produk.DihapusPada')
-            ->where('Produk.IdTenant', $daftar->IdTenant)
             ->whereIn('Produk.Jenis', $jenisDijual)
             ->when($kata !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam->where('Produk.Nama', 'like', $pola)->orWhere('Produk.Sku', 'like', $pola)))
-            ->orderByRaw('EXISTS (SELECT 1 FROM ProdukHarga WHERE ProdukHarga.IdProdukSatuan = ProdukSatuan.Id AND ProdukHarga.IdDaftarHarga = ?) DESC', [$daftar->Id])
+            ->orderByRaw('EXISTS (SELECT 1 FROM ProdukHarga WHERE ProdukHarga.IdProdukSatuan = ProdukSatuan.Id AND ProdukHarga.IdDaftarHarga = ? AND ProdukHarga.IdTenant = ?) DESC', [$daftar->Id, $idTenant])
             ->orderBy('Produk.Nama')
             ->orderBy('ProdukSatuan.Id')
             ->select('ProdukSatuan.*')
