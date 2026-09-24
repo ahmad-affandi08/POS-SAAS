@@ -12,6 +12,7 @@ use Illuminate\Testing\TestResponse;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Reader\XLSX\Reader as PembacaXlsx;
 use OpenSpout\Writer\XLSX\Writer as PenulisXlsx;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
@@ -93,6 +94,7 @@ final class BantuanImpor
      *
      * @param  array<string, mixed>  $opsi
      * @param  array<string, int|null>|null  $pemetaan
+     * @return TestResponse<Response>
      */
     public static function Petakan(TestCase $tes, ImporProduk $impor, array $opsi = [], ?array $pemetaan = null): TestResponse
     {
@@ -111,6 +113,7 @@ final class BantuanImpor
     /**
      * Isi unduhan xlsx/csv sebagai baris teks.
      *
+     * @param  TestResponse<Response>  $respons
      * @return list<list<string>>
      */
     public static function BacaUnduhan(TestResponse $respons, string $format = 'xlsx'): array
