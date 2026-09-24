@@ -1,0 +1,72 @@
+{
+  "Id": "HRG-ZONA-WAKTU-001",
+  "Keterangan": "Batas rentang daftar harga dibandingkan sebagai instan, bukan jam dinding: promo 17 Agustus 00:00–24:00 WITA (UTC+8) disimpan [2026-08-16T16:00Z, 2026-08-17T16:00Z). Waktu transaksi boleh ber-offset WIB (+07:00), WITA (+08:00), atau WIT (+09:00); Indonesia tanpa DST.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-MERDEKA-WITA",
+        "Nama": "Promo 17 Agustus (WITA)",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": null,
+        "TierPelanggan": null,
+        "MulaiPada": "2026-08-16T16:00:00Z",
+        "SelesaiPada": "2026-08-17T16:00:00Z",
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "22000.00"
+      },
+      {
+        "UuidProduk": "P-KOPI",
+        "UuidProdukSatuan": "PS-KOPI-CUP",
+        "UuidDaftarHarga": "DH-MERDEKA-WITA",
+        "JumlahMinimum": "1.0000",
+        "Harga": "17045.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "tepat 00:00 WITA 17 Agustus berlaku",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-MKS", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-17T00:00:00+08:00" },
+      "Harapan": { "Harga": "17045.00", "Sumber": "DaftarHarga", "UuidDaftarHarga": "DH-MERDEKA-WITA", "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "23:59:59 WITA 16 Agustus belum berlaku",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-MKS", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-16T23:59:59+08:00" },
+      "Harapan": { "Harga": "22000.00", "Sumber": "Dasar", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "23:59:59.999 WITA 17 Agustus masih berlaku",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-MKS", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-17T23:59:59.999+08:00" },
+      "Harapan": { "Harga": "17045.00", "Sumber": "DaftarHarga", "UuidDaftarHarga": "DH-MERDEKA-WITA", "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "tepat 00:00 WITA 18 Agustus sudah berakhir",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-MKS", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-18T00:00:00+08:00" },
+      "Harapan": { "Harga": "22000.00", "Sumber": "Dasar", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "outlet WIB 23:30 WIB 16 Agustus = 00:30 WITA, sudah berlaku",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-SLO", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-16T23:30:00+07:00" },
+      "Harapan": { "Harga": "17045.00", "Sumber": "DaftarHarga", "UuidDaftarHarga": "DH-MERDEKA-WITA", "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "outlet WIT 00:59:59 WIT 18 Agustus = 23:59:59 WITA, masih berlaku",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-DJJ", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-18T00:59:59+09:00" },
+      "Harapan": { "Harga": "17045.00", "Sumber": "DaftarHarga", "UuidDaftarHarga": "DH-MERDEKA-WITA", "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "outlet WIT 01:00 WIT 18 Agustus = tepat SelesaiPada, sudah berakhir",
+      "Masukan": { "UuidProduk": "P-KOPI", "UuidProdukSatuan": "PS-KOPI-CUP", "Jumlah": "1", "UuidOutlet": "O-DJJ", "Kanal": null, "TierPelanggan": null, "Waktu": "2026-08-18T01:00:00+09:00" },
+      "Harapan": { "Harga": "22000.00", "Sumber": "Dasar", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000" }
+    }
+  ]
+}

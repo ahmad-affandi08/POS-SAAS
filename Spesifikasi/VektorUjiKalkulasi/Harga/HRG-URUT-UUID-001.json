@@ -1,0 +1,34 @@
+{
+  "Id": "HRG-URUT-UUID-001",
+  "Keterangan": "Seri prioritas & spesifisitas diputus dengan Uuid menaik secara ordinal bita (huruf besar sebelum huruf kecil, bukan urutan kamus). Daftar tanpa baris yang berlaku untuk jumlah pecahan dilewati; daftar harga tidak punya cadangan baris terkecil, harga dasar punya.",
+  "Katalog": {
+    "DaftarHarga": [
+      { "Uuid": "dh-alfa", "Nama": "Daftar alfa kecil", "Aktif": true, "UuidOutlet": null, "Kanal": "Online", "TierPelanggan": null, "MulaiPada": null, "SelesaiPada": null, "Prioritas": 5 },
+      { "Uuid": "DH-alfa", "Nama": "Daftar alfa campuran", "Aktif": true, "UuidOutlet": null, "Kanal": "Online", "TierPelanggan": null, "MulaiPada": null, "SelesaiPada": null, "Prioritas": 5 },
+      { "Uuid": "DH-ZULU", "Nama": "Daftar zulu besar", "Aktif": true, "UuidOutlet": null, "Kanal": "Online", "TierPelanggan": null, "MulaiPada": null, "SelesaiPada": null, "Prioritas": 5 }
+    ],
+    "ProdukHarga": [
+      { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000", "Harga": "15000.00" },
+      { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "UuidDaftarHarga": "dh-alfa", "JumlahMinimum": "1.0000", "Harga": "14100.00" },
+      { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "UuidDaftarHarga": "DH-alfa", "JumlahMinimum": "1.0000", "Harga": "14200.00" },
+      { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "UuidDaftarHarga": "DH-ZULU", "JumlahMinimum": "1.0000", "Harga": "14300.00" }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "seri penuh: DH-ZULU menang (Z 0x5A < a 0x61 < d 0x64 ordinal bita)",
+      "Masukan": { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "Jumlah": "2.5", "UuidOutlet": "O-SLO", "Kanal": "Online", "TierPelanggan": null, "Waktu": "2026-10-01T03:00:00Z" },
+      "Harapan": { "Harga": "14300.00", "Sumber": "DaftarHarga", "UuidDaftarHarga": "DH-ZULU", "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "0,5 kg: semua daftar hanya punya baris 1 kg, dilewati; harga dasar memakai baris terkecil",
+      "Masukan": { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "Jumlah": "0.5", "UuidOutlet": "O-SLO", "Kanal": "Online", "TierPelanggan": null, "Waktu": "2026-10-01T03:00:00Z" },
+      "Harapan": { "Harga": "15000.00", "Sumber": "Dasar", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000" }
+    },
+    {
+      "Nama": "kanal lain: tidak ada daftar cocok, harga dasar",
+      "Masukan": { "UuidProduk": "P-BERAS", "UuidProdukSatuan": "PS-BERAS-KG", "Jumlah": "0.0001", "UuidOutlet": "O-SLO", "Kanal": "MakanDiTempat", "TierPelanggan": null, "Waktu": "2026-10-01T03:00:00Z" },
+      "Harapan": { "Harga": "15000.00", "Sumber": "Dasar", "UuidDaftarHarga": null, "JumlahMinimum": "1.0000" }
+    }
+  ]
+}
