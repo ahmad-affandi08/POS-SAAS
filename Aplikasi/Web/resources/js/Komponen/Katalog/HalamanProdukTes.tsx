@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarProduk, { BuatQueryProduk, BuatUrlEksporProduk } from '@/Halaman/Kelola/Produk/Daftar';
@@ -645,5 +645,51 @@ describe('Kelola/Produk/Harga, Pilihan, Resep, Komponen (E.6, E.9)', () => {
             />,
         );
         expect(screen.getByText('Total alokasi harus tepat 100 %, sekarang 66,666666 %.')).toBeTruthy();
+    });
+});
+
+describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
+    beforeEach(() => AturHalamanUji());
+    afterEach(() => cleanup());
+
+    it('hapus produk memakai AlertDialog: Batal menutup tanpa kirim, konfirmasi mengirim DELETE', async () => {
+        render(
+            <HalamanDetailProduk
+                {...PropsDetail({ Produk: { ...PropsDetail().Produk, AlasanTidakBisaDihapus: null } })}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Hapus produk' }));
+        const dialog = screen.getByRole('alertdialog', { name: 'Hapus Susu UHT 1 L?' });
+        expect(dialog.textContent).toContain('dihapus permanen');
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+        expect(tiruanRouter.delete).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Hapus produk' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Ya, hapus produk' }));
+        expect(tiruanRouter.delete).toHaveBeenCalledWith('/kelola/produk/01J9PRODUK00000000000000001');
+    });
+
+    it('sakelar tampil (Switch) mengubah TampilDiPos/TampilOnline di body FormProduk', () => {
+        render(<HalamanFormProduk {...PropsForm()} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Pajak & tampilan' }));
+
+        const pos = screen.getByRole('switch', { name: 'Tampil di kasir (POS)' });
+        const online = screen.getByRole('switch', { name: 'Tampil di toko online' });
+        expect(pos.getAttribute('aria-checked')).toBe('true');
+        expect(online.getAttribute('aria-checked')).toBe('false');
+
+        fireEvent.click(pos);
+        fireEvent.click(online);
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Sabun cair' } });
+        fireEvent.click(screen.getByRole('tab', { name: 'Harga' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Isi harga dasar' }));
+        fireEvent.change(screen.getByLabelText('Harga baris 1'), { target: { value: '10.000' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        const body = kirimanForm[0]?.data as FormProduk;
+        expect(body.TampilDiPos).toBe(false);
+        expect(body.TampilOnline).toBe(true);
     });
 });

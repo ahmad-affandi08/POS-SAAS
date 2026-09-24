@@ -48,16 +48,30 @@ function useNilaiTertunda(nilai: string, jeda: number): string {
     return tertunda;
 }
 
+/** Id elemen opsi cmdk bernilai `nilai` di dalam daftar `idDaftar` (id opsi dibuat cmdk, bukan oleh kita). */
+function CariIdOpsi(idDaftar: string | undefined, nilai: string): string | undefined {
+    if (idDaftar === undefined || nilai === '') {
+        return undefined;
+    }
+
+    const opsi = Array.from(document.getElementById(idDaftar)?.querySelectorAll('[cmdk-item]') ?? []).find(
+        (elemen) => elemen.getAttribute('data-value') === nilai,
+    );
+
+    return opsi?.id || undefined;
+}
+
 /**
  * Input combobox di dalam `Command`: `aria-activedescendant` mengikuti opsi yang disorot cmdk.
- * Dipisah agar hook `useCommandState` berada di dalam konteks Command.
+ * Dipisah agar hook `useCommandState` berada di dalam konteks Command. Id dicari dari nilai yang disorot karena
+ * cmdk belum mengisi `selectedItemId` saat opsi pertama disorot otomatis.
  */
 function MasukanPemilih({
     daftarTerlihat,
     idDaftar,
     ...atribut
 }: ComponentProps<typeof Input> & { daftarTerlihat: boolean; idDaftar: string | undefined }) {
-    const idTersorot = useCommandState((keadaan) => keadaan.selectedItemId);
+    const idTersorot = useCommandState((keadaan) => CariIdOpsi(idDaftar, keadaan.value) ?? keadaan.selectedItemId);
 
     return (
         <Input
@@ -88,7 +102,7 @@ type PropsPemilihProduk = {
 /**
  * Pemilih produk dengan pencarian server (TanStack Query, KunciKueri.Produk.Cari), dibangun dari Command + Popover.
  * Combobox ARIA: panah atas/bawah memilih, Enter memasukkan, Escape menutup. Keadaan memuat, kosong, dan galat tertulis.
- * Penyaringan dilakukan server (`shouldFilter` mati); cmdk hanya mengatur sorotan dan keyboard.
+ * Penyaringan dilakukan server (`shouldFilter` mati); cmdk hanya mengatur sorotan (opsi pertama saat hasil baru) dan keyboard.
  */
 export default function PemilihProduk({
     label,
@@ -103,7 +117,6 @@ export default function PemilihProduk({
     const jangkar = useRef<HTMLDivElement>(null);
     const [kata, AturKata] = useState('');
     const [terbuka, AturTerbuka] = useState(false);
-    const [sorot, AturSorot] = useState('');
     const [idDaftar, AturIdDaftar] = useState<string | undefined>(undefined);
     const kataCari = useNilaiTertunda(kata.trim(), 300);
     const aktif = terbuka && kataCari.length >= 2;
@@ -121,7 +134,6 @@ export default function PemilihProduk({
         saatPilih(produk);
         AturKata('');
         AturTerbuka(false);
-        AturSorot('');
     };
 
     /** Tombol yang tidak ditangani cmdk dihentikan di sini agar perilaku input teks tetap (caret, kirim form). */
@@ -162,8 +174,6 @@ export default function PemilihProduk({
             <Command
                 shouldFilter={false}
                 vimBindings={false}
-                value={sorot}
-                onValueChange={AturSorot}
                 className="h-auto overflow-visible rounded-none bg-transparent"
             >
                 <Popover
@@ -194,7 +204,6 @@ export default function PemilihProduk({
                                 onChange={(peristiwa) => {
                                     AturKata(peristiwa.target.value);
                                     AturTerbuka(true);
-                                    AturSorot('');
                                 }}
                                 onFocus={() => AturTerbuka(true)}
                                 onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
