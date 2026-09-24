@@ -72,6 +72,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::PersediaanLihat,
                 IzinTenant::PersediaanKelola,
                 IzinTenant::PersediaanPenyesuaianSetujui,
+                IzinTenant::PersediaanStokAwalPosting,
                 IzinTenant::PenjualanBuat,
                 IzinTenant::PenjualanVoid,
                 IzinTenant::PenjualanDiskonManual,
@@ -96,6 +97,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::OutletLihat,
                 IzinTenant::ProdukLihat,
                 IzinTenant::PersediaanLihat,
+                // F-05a: Akuntan memposting stok awal karena menulis jurnal ekuitas saldo awal.
+                IzinTenant::PersediaanStokAwalPosting,
                 IzinTenant::LaporanPenjualanLihat,
                 IzinTenant::LaporanKeuanganLihat,
                 IzinTenant::AkuntansiKelola,
