@@ -10,6 +10,22 @@ import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import SakelarPadat, { KelasSel, usePadatTabel } from '@/Komponen/Katalog/SakelarPadat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Skeleton } from '@/Komponen/Ui/skeleton';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -71,6 +87,9 @@ export default function HalamanDetailDaftarHarga({
         });
     };
 
+    const UbahStatus = () =>
+        router.post(`${alamat}/${DaftarHarga.Aktif ? 'nonaktifkan' : 'aktifkan'}`, {}, { preserveScroll: true });
+
     const Simpan = () => {
         AturPeriksa(true);
         const salah = Baris.Data.some((baris) => {
@@ -125,37 +144,65 @@ export default function HalamanDetailDaftarHarga({
                         .filter(Boolean)
                         .join(' · ')}
                 </span>
-                {Izin.UbahHarga && !ubahPengaturan ? (
+                {Izin.UbahHarga ? (
                     <span className="flex flex-wrap gap-2">
-                        <Tombol varian="sekunder" onClick={() => AturUbahPengaturan(true)}>
+                        <Button type="button" variant="outline" onClick={() => AturUbahPengaturan(true)}>
                             Ubah pengaturan
-                        </Tombol>
-                        <Tombol
-                            varian="sekunder"
-                            onClick={() =>
-                                router.post(
-                                    `${alamat}/${DaftarHarga.Aktif ? 'nonaktifkan' : 'aktifkan'}`,
-                                    {},
-                                    { preserveScroll: true },
-                                )
-                            }
-                        >
-                            {DaftarHarga.Aktif ? 'Nonaktifkan daftar' : 'Aktifkan daftar'}
-                        </Tombol>
+                        </Button>
+                        {DaftarHarga.Aktif ? (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="outline">
+                                        Nonaktifkan daftar
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Nonaktifkan {DaftarHarga.Nama}?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Kasir berhenti memakai harga di daftar ini dan kembali ke harga dasar atau
+                                            daftar lain yang cocok. Daftar bisa diaktifkan lagi kapan saja.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction variant="destructive" onClick={UbahStatus}>
+                                            Nonaktifkan daftar
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        ) : (
+                            <Button type="button" variant="outline" onClick={UbahStatus}>
+                                Aktifkan daftar
+                            </Button>
+                        )}
                     </span>
                 ) : null}
             </div>
 
-            {ubahPengaturan ? (
-                <FormDaftarHarga
-                    uuid={DaftarHarga.Uuid}
-                    awal={formAwal}
-                    outlet={Outlet}
-                    kanal={Kanal}
-                    zonaWaktu={ZonaWaktu}
-                    saatSelesai={() => AturUbahPengaturan(false)}
-                />
-            ) : null}
+            <Sheet open={ubahPengaturan} onOpenChange={AturUbahPengaturan}>
+                {ubahPengaturan ? (
+                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                        <SheetHeader>
+                            <SheetTitle>Ubah pengaturan {DaftarHarga.Nama}</SheetTitle>
+                            <SheetDescription>
+                                Atur untuk outlet, kanal, tingkat pelanggan, dan periode mana daftar ini berlaku.
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="px-4 pb-4">
+                            <FormDaftarHarga
+                                uuid={DaftarHarga.Uuid}
+                                awal={formAwal}
+                                outlet={Outlet}
+                                kanal={Kanal}
+                                zonaWaktu={ZonaWaktu}
+                                saatSelesai={() => AturUbahPengaturan(false)}
+                            />
+                        </div>
+                    </SheetContent>
+                ) : null}
+            </Sheet>
 
             <form
                 onSubmit={Cari}
@@ -166,9 +213,9 @@ export default function HalamanDetailDaftarHarga({
                 <div className="w-full max-w-sm">
                     <BidangTeks label="Cari produk" nilai={kata} saatBerubah={AturKata} maxLength={100} />
                 </div>
-                <Tombol type="submit" varian="sekunder">
+                <Button type="submit" variant="outline">
                     Cari
-                </Tombol>
+                </Button>
                 <SakelarPadat padat={padat} saatBerubah={AturPadat} />
             </form>
 
@@ -177,14 +224,11 @@ export default function HalamanDetailDaftarHarga({
             </div>
 
             {memuat ? (
-                <div
-                    aria-hidden="true"
-                    className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
-                >
+                <Card aria-hidden="true" className="gap-2 p-4">
                     {[0, 1, 2, 3].map((baris) => (
-                        <div key={baris} className="h-8 animate-pulse rounded-kontrol bg-latar" />
+                        <Skeleton key={baris} className="h-8" />
                     ))}
-                </div>
+                </Card>
             ) : Baris.Data.length === 0 ? (
                 <KeadaanKosong
                     judul={
@@ -200,29 +244,26 @@ export default function HalamanDetailDaftarHarga({
                     ) : null}
                 </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className={`w-full min-w-[760px] text-left ${padat ? 'text-label' : 'text-isi'}`}>
-                        <caption className="sr-only">Harga produk di {DaftarHarga.Nama}</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className={`${sel} font-semibold`}>
+                <Card className="gap-0 py-0">
+                    <Table className={`min-w-[760px] ${padat ? 'text-label' : 'text-isi'}`}>
+                        <TableCaption className="sr-only">Harga produk di {DaftarHarga.Nama}</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className={sel}>
                                     Produk
-                                </th>
-                                <th scope="col" className={`${sel} text-right font-semibold`}>
+                                </TableHead>
+                                <TableHead scope="col" className={`${sel} text-right`}>
                                     Harga dasar
-                                </th>
-                                <th scope="col" className={`${sel} font-semibold`}>
+                                </TableHead>
+                                <TableHead scope="col" className={sel}>
                                     Harga di daftar ini
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Baris.Data.map((baris, indeks) => (
-                                <tr
-                                    key={baris.UuidProdukSatuan}
-                                    className="border-b border-garis align-top last:border-b-0"
-                                >
-                                    <th scope="row" className={`${sel} text-left font-normal`}>
+                                <TableRow key={baris.UuidProdukSatuan} className="align-top">
+                                    <TableHead scope="row" className={`${sel} h-auto font-normal whitespace-normal`}>
                                         <span className="block font-semibold break-words text-teks-utama">
                                             {baris.NamaProduk}
                                         </span>
@@ -230,13 +271,11 @@ export default function HalamanDetailDaftarHarga({
                                             <span className="font-mono">{baris.Sku ?? 'Tanpa SKU'}</span> · per{' '}
                                             {baris.NamaSatuan}
                                         </span>
-                                    </th>
-                                    <td
-                                        className={`${sel} text-right whitespace-nowrap tabular-nums text-teks-sekunder`}
-                                    >
+                                    </TableHead>
+                                    <TableCell className={`${sel} text-right tabular-nums text-teks-sekunder`}>
                                         {baris.HargaDasar === null ? '—' : FormatRupiah(baris.HargaDasar)}
-                                    </td>
-                                    <td className={sel}>
+                                    </TableCell>
+                                    <TableCell className={`${sel} whitespace-normal`}>
                                         <TabelHargaBertingkat
                                             judul={`Harga ${baris.NamaProduk} per ${baris.NamaSatuan}`}
                                             baris={harga[baris.UuidProdukSatuan] ?? []}
@@ -253,12 +292,12 @@ export default function HalamanDetailDaftarHarga({
                                             tampilkanGalat={periksa}
                                             disabled={!Izin.UbahHarga}
                                         />
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
             <Paginasi
                 alamat={alamat}

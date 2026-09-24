@@ -7,6 +7,29 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Badge } from '@/Komponen/Ui/badge';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Komponen/Ui/dialog';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsDaftarSatuan } from '@/Tipe/Katalog';
@@ -37,7 +60,7 @@ function FormSatuan({ satuan, saatSelesai }: { satuan: Satuan | null; saatSelesa
             onSubmit={Kirim}
             noValidate
             aria-label={satuan ? `Ubah satuan ${satuan.Nama}` : 'Tambah satuan'}
-            className="grid gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:grid-cols-3"
+            className="flex flex-col gap-4"
         >
             <BidangTeks
                 label="Nama satuan"
@@ -72,15 +95,49 @@ function FormSatuan({ satuan, saatSelesai }: { satuan: Satuan | null; saatSelesa
                     </p>
                 )}
             </div>
-            <div className="flex flex-wrap gap-2 sm:col-span-3">
+            <DialogFooter>
+                <Button type="button" variant="outline" onClick={saatSelesai}>
+                    Batal
+                </Button>
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan satuan
                 </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
+            </DialogFooter>
         </form>
+    );
+}
+
+/** Tombol hapus + konfirmasi. Hanya tampil untuk satuan yang belum dipakai produk. */
+function TombolHapusSatuan({ satuan }: { satuan: Satuan }) {
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    aria-label={`Hapus satuan ${satuan.Nama}`}
+                >
+                    Hapus
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus satuan {satuan.Nama}?</AlertDialogTitle>
+                    <AlertDialogDescription>Satuan ini belum dipakai produk mana pun.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                        variant="destructive"
+                        onClick={() => router.delete(`/kelola/satuan/${satuan.Uuid}`, { preserveScroll: true })}
+                    >
+                        Hapus satuan
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
 
@@ -100,97 +157,102 @@ export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan)
                 <p className="text-isi text-teks-sekunder">
                     Satuan dipakai untuk stok, harga, dan resep. Konversi (misal 1 dus = 24 pcs) diatur per produk.
                 </p>
-                {Izin.Kelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah satuan</Tombol>
+                {Izin.Kelola ? (
+                    <Button type="button" onClick={() => AturSunting('baru')}>
+                        Tambah satuan
+                    </Button>
                 ) : null}
             </div>
-            {sunting !== null ? (
-                <FormSatuan
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    satuan={sunting === 'baru' ? null : sunting}
-                    saatSelesai={() => AturSunting(null)}
-                />
-            ) : null}
+            <Dialog open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
+                {sunting !== null ? (
+                    <DialogContent showCloseButton={false}>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {sunting === 'baru' ? 'Tambah satuan' : `Ubah satuan ${sunting.Nama}`}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Satuan dipakai untuk stok, harga, dan resep produk.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <FormSatuan
+                            key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                            satuan={sunting === 'baru' ? null : sunting}
+                            saatSelesai={() => AturSunting(null)}
+                        />
+                    </DialogContent>
+                ) : null}
+            </Dialog>
             {Satuan.length === 0 ? (
                 <KeadaanKosong judul="Belum ada satuan. Tambah satuan, misal pcs atau kg." />
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[560px] text-left text-isi">
-                        <caption className="sr-only">Daftar satuan</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[560px] text-isi">
+                        <TableCaption className="sr-only">Daftar satuan</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className="px-4">
                                     Satuan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Pecahan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Asal
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4 text-right">
                                     Produk
-                                </th>
+                                </TableHead>
                                 {Izin.Kelola ? (
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    <TableHead scope="col" className="px-4">
                                         <span className="sr-only">Aksi</span>
-                                    </th>
+                                    </TableHead>
                                 ) : null}
-                            </tr>
-                        </thead>
-                        <tbody>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Satuan.map((item) => (
-                                <tr key={item.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2">
+                                <TableRow key={item.Uuid}>
+                                    <TableCell className="px-4 whitespace-normal">
                                         <span className="font-semibold text-teks-utama">{item.Nama}</span>{' '}
                                         <span className="text-teks-sekunder">({item.Simbol})</span>
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-teks-sekunder">
                                         {item.BolehDesimal ? 'Boleh' : 'Tidak'}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-teks-sekunder">
                                         {item.KodeStandar ? (
-                                            <>
-                                                Standar <span className="font-mono">{item.KodeStandar}</span>
-                                            </>
+                                            <span className="inline-flex items-center gap-2">
+                                                Standar
+                                                <Badge variant="secondary" className="font-mono">
+                                                    {item.KodeStandar}
+                                                </Badge>
+                                            </span>
                                         ) : (
                                             'Buatan sendiri'
                                         )}
-                                    </td>
-                                    <td className="px-4 py-2 text-right tabular-nums">{item.JumlahProduk}</td>
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
                                     {Izin.Kelola ? (
-                                        <td className="px-4 py-2 whitespace-nowrap">
-                                            <span className="flex gap-3">
-                                                <button
+                                        <TableCell className="px-4">
+                                            <span className="flex justify-end gap-1">
+                                                <Button
                                                     type="button"
+                                                    variant="outline"
+                                                    size="sm"
                                                     onClick={() => AturSunting(item)}
-                                                    className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                                     aria-label={`Ubah satuan ${item.Nama}`}
                                                 >
                                                     Ubah
-                                                </button>
-                                                {item.JumlahProduk === 0 ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            router.delete(`/kelola/satuan/${item.Uuid}`, {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                        className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                                        aria-label={`Hapus satuan ${item.Nama}`}
-                                                    >
-                                                        Hapus
-                                                    </button>
-                                                ) : null}
+                                                </Button>
+                                                {item.JumlahProduk === 0 ? <TombolHapusSatuan satuan={item} /> : null}
                                             </span>
-                                        </td>
+                                        </TableCell>
                                     ) : null}
-                                </tr>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </TataLetakAplikasi>
     );
