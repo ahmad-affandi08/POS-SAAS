@@ -81,7 +81,7 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
                 'Batalkan' => $dokumen->Status === StatusStokAwal::Diposting && $posting,
             ],
             'Izin' => $this->AmbilIzinPersediaan(),
-            'KesiapanAkun' => $this->AmbilKesiapanAkun($detail->AmbilPeranAkun($dokumen)),
+            'KesiapanAkun' => $this->AmbilKesiapanAkun($detail->AmbilPeranAkun($dokumen), $dokumen->IdOutlet),
             'BatasPostingLangsung' => (int) config('persediaan.StokAwal.BatasPostingLangsung', 300),
         ]);
     }
@@ -180,8 +180,8 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
      * @param  list<PeranAkun>  $peran
      * @return array{Siap: bool, PeranBelumDipetakan: list<array{Kunci: string, Label: string}>}
      */
-    private function AmbilKesiapanAkun(array $peran): array
+    private function AmbilKesiapanAkun(array $peran, ?int $idOutlet = null): array
     {
-        return app(KesiapanPeranAkun::class)->Periksa($peran);
+        return app(KesiapanPeranAkun::class)->Periksa($peran, $idOutlet);
     }
 }

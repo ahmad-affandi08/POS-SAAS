@@ -110,7 +110,7 @@ final class PostingStokAwal
         $this->pengunciSaldo->Kunci(array_map(fn (int $id): array => [$id, $dokumen->IdGudang], $idProduk));
         $this->PastikanBelumAdaStokAwal($dokumen, $detail, $idProduk);
         $this->PastikanTanggalSetelahMutasiTerakhir($dokumen, $detail, $idProduk);
-        $this->PastikanAkunSiap($produk);
+        $this->PastikanAkunSiap($produk, $gudang->idOutlet);
 
         $periode = $dokumen->Tanggal->format('Y-m');
         $nomor = $this->penomor->AmbilNomorBerikutnya(JenisDokumenBernomor::StokAwal, $periode);
@@ -246,7 +246,7 @@ final class PostingStokAwal
     /**
      * @param  array<int, DataInfoProdukStok>  $produk
      */
-    private function PastikanAkunSiap(array $produk): void
+    private function PastikanAkunSiap(array $produk, ?int $idOutlet): void
     {
         $peran = [];
 
@@ -255,7 +255,7 @@ final class PostingStokAwal
         }
 
         $peran[PeranAkun::EkuitasSaldoAwal->value] = true;
-        $kesiapan = $this->kesiapanAkun->Periksa(array_map(fn (string $p): PeranAkun => PeranAkun::from($p), array_keys($peran)));
+        $kesiapan = $this->kesiapanAkun->Periksa(array_map(fn (string $p): PeranAkun => PeranAkun::from($p), array_keys($peran)), $idOutlet);
 
         if (! $kesiapan['Siap']) {
             $label = implode(', ', array_map(fn (array $p): string => $p['Label'], $kesiapan['PeranBelumDipetakan']));
