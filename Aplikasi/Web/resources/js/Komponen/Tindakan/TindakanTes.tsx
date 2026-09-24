@@ -1,12 +1,13 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 
 import DialogFormulir from './DialogFormulir';
 import DialogKonfirmasi from './DialogKonfirmasi';
+import DialogTinjauan from './DialogTinjauan';
 import MenuAksiBaris from './MenuAksiBaris';
-import { BukaMenu, PasangTiruanDom } from './TiruanDom';
 
-beforeAll(() => PasangTiruanDom());
 afterEach(() => cleanup());
 
 describe('MenuAksiBaris', () => {
@@ -98,7 +99,7 @@ describe('DialogKonfirmasi', () => {
 });
 
 describe('DialogFormulir', () => {
-    it('jenis dialog: dialog berjudul tanpa tombol tutup berbahasa Inggris; Esc memanggil saatTutup', () => {
+    it('jenis dialog: dialog berjudul dengan tombol "Tutup" berbahasa Indonesia; Esc memanggil saatTutup', () => {
         const Tutup = vi.fn();
         render(
             <DialogFormulir judul="Tambah merek" saatTutup={Tutup}>
@@ -109,8 +110,21 @@ describe('DialogFormulir', () => {
         const dialog = screen.getByRole('dialog', { name: 'Tambah merek' });
         expect(within(dialog).getByRole('form', { name: 'Formulir merek' })).toBeTruthy();
         expect(within(dialog).queryByText('Close')).toBeNull();
+        expect(within(dialog).getByRole('button', { name: 'Tutup' })).toBeTruthy();
 
         fireEvent.keyDown(dialog, { key: 'Escape' });
+        expect(Tutup).toHaveBeenCalledOnce();
+    });
+
+    it('tombol "Tutup" (X) memanggil saatTutup', () => {
+        const Tutup = vi.fn();
+        render(
+            <DialogFormulir judul="Tambah merek" saatTutup={Tutup}>
+                <form aria-label="Formulir merek" />
+            </DialogFormulir>,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
         expect(Tutup).toHaveBeenCalledOnce();
     });
 
@@ -136,5 +150,80 @@ describe('DialogFormulir', () => {
         const panel = screen.getByRole('dialog', { name: 'Undang pengguna' });
         expect(panel.getAttribute('data-slot')).toBe('sheet-content');
         expect(within(panel).getByText('Berlaku 72 jam.')).toBeTruthy();
+    });
+
+    it('lebar "lebar" memperlebar dialog & panel; bawaan "sedang"', () => {
+        const dialog = render(
+            <DialogFormulir judul="Tambah kupon" lebar="lebar" saatTutup={vi.fn()}>
+                <p>isi</p>
+            </DialogFormulir>,
+        );
+        expect(screen.getByRole('dialog', { name: 'Tambah kupon' }).className).toContain('sm:max-w-3xl');
+        dialog.unmount();
+
+        render(
+            <DialogFormulir jenis="panel" judul="Undang pengguna" saatTutup={vi.fn()}>
+                <p>isi</p>
+            </DialogFormulir>,
+        );
+        const panel = screen.getByRole('dialog', { name: 'Undang pengguna' });
+        expect(panel.className).toContain('sm:max-w-xl');
+        expect(panel.className).not.toContain('sm:max-w-3xl');
+    });
+
+    it('galatUmum tampil sebagai pemberitahuan bahaya di dalam dialog', () => {
+        render(
+            <DialogFormulir judul="Tambah bank" galatUmum="Kode bank sudah dipakai." saatTutup={vi.fn()}>
+                <form aria-label="Formulir bank" />
+            </DialogFormulir>,
+        );
+
+        const dialog = screen.getByRole('dialog', { name: 'Tambah bank' });
+        expect(within(dialog).getByText('Kode bank sudah dipakai.')).toBeTruthy();
+    });
+});
+
+describe('DialogTinjauan', () => {
+    it('menampilkan dua keputusan, catatan peninjau & galat umum; Batal memanggil saatTutup', () => {
+        const Tutup = vi.fn();
+        const Setujui = vi.fn();
+        const Tolak = vi.fn();
+        render(
+            <DialogTinjauan
+                judul="Tinjau tarif PPN 12%"
+                deskripsi="Setelah terbit, tarif tidak bisa diubah."
+                saatTutup={Tutup}
+                galatUmum="Pengaju tidak boleh meninjau sendiri."
+                aksi={
+                    <>
+                        <button type="button" onClick={Setujui}>
+                            Setujui tarif
+                        </button>
+                        <button type="button" onClick={Tolak}>
+                            Tolak tarif
+                        </button>
+                    </>
+                }
+            >
+                <label>
+                    Catatan
+                    <textarea />
+                </label>
+            </DialogTinjauan>,
+        );
+
+        const dialog = screen.getByRole('alertdialog', { name: 'Tinjau tarif PPN 12%' });
+        expect(within(dialog).getByText('Setelah terbit, tarif tidak bisa diubah.')).toBeTruthy();
+        expect(within(dialog).getByText('Pengaju tidak boleh meninjau sendiri.')).toBeTruthy();
+        expect(within(dialog).getByRole('textbox', { name: 'Catatan' })).toBeTruthy();
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Setujui tarif' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Tolak tarif' }));
+        expect(Setujui).toHaveBeenCalledOnce();
+        expect(Tolak).toHaveBeenCalledOnce();
+        expect(Tutup).not.toHaveBeenCalled();
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Batal' }));
+        expect(Tutup).toHaveBeenCalledOnce();
     });
 });

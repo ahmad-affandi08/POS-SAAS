@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';

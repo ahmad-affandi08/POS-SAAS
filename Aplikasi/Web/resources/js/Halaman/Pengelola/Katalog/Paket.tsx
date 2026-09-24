@@ -5,7 +5,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
@@ -320,7 +320,7 @@ function FormArsip({ paket, saatSelesai }: { paket: Paket; saatSelesai: () => vo
     return (
         <DialogFormulir
             judul={`Arsipkan ${paket.Nama}?`}
-            deskripsi="Tenant baru tidak bisa memilih paket ini lagi. Tenant yang sudah memakainya tidak terdampak."
+            keterangan="Tenant baru tidak bisa memilih paket ini lagi. Tenant yang sudah memakainya tidak terdampak."
             saatTutup={saatSelesai}
             galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >

@@ -183,7 +183,7 @@ export default function HalamanDetailDaftarHarga({
 
             <Sheet open={ubahPengaturan} onOpenChange={AturUbahPengaturan}>
                 {ubahPengaturan ? (
-                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                    <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                         <SheetHeader>
                             <SheetTitle>Ubah pengaturan {DaftarHarga.Nama}</SheetTitle>
                             <SheetDescription>

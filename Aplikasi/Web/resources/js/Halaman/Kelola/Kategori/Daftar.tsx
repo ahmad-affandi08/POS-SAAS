@@ -194,7 +194,7 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
             </div>
             <Dialog open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
-                    <DialogContent showCloseButton={false}>
+                    <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
                                 {sunting === 'baru' ? 'Tambah kategori' : `Ubah kategori ${sunting.Nama}`}

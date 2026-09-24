@@ -10,16 +10,6 @@ import { BuatProgresContoh } from './DataUjiPanduan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
-// RadioGroup & Checkbox (Radix) mengukur kontrol dengan ResizeObserver, yang tidak ada di jsdom.
-vi.stubGlobal(
-    'ResizeObserver',
-    class {
-        observe = vi.fn();
-        unobserve = vi.fn();
-        disconnect = vi.fn();
-    },
-);
-
 function BuatPropsPajak(ubah: Partial<PropsPajak> = {}): PropsPajak {
     return {
         Progres: BuatProgresContoh({ ProfilUsaha: 'Selesai', Sektor: 'Selesai' }),

@@ -252,7 +252,7 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
             </div>
             <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
-                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                    <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                         <SheetHeader>
                             <SheetTitle>
                                 {sunting === 'baru' ? 'Tambah kelompok pajak' : `Ubah kelompok pajak ${sunting.Nama}`}

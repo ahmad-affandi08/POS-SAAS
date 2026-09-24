@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
 import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';

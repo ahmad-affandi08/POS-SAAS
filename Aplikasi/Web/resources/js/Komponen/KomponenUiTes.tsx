@@ -4,6 +4,17 @@ import { describe, expect, it } from 'vitest';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Dialog, DialogContent, DialogTitle } from '@/Komponen/Ui/dialog';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/Komponen/Ui/pagination';
+import { Sheet, SheetContent, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Spinner } from '@/Komponen/Ui/spinner';
 
 /*
  * Semua komponen shadcn/ui terpasang (Komponen/Ui) belum dipakai halaman mana pun, sehingga `vite build`
@@ -37,5 +48,55 @@ describe('komponen shadcn/ui', () => {
         expect(screen.getByRole('button', { name: 'Simpan produk' }).className).toContain('bg-primary');
         expect(screen.getByText('Void').className).toContain('text-destructive-foreground');
         expect(screen.getByText('Ringkasan penjualan').closest('[data-slot="card"]')?.className).toContain('bg-card');
+    });
+
+    it('label pembaca layar komponen shadcn/ui berbahasa Indonesia', () => {
+        const dialog = render(
+            <Dialog open>
+                <DialogContent aria-describedby={undefined}>
+                    <DialogTitle>Tambah merek</DialogTitle>
+                </DialogContent>
+            </Dialog>,
+        );
+        expect(screen.getByRole('button', { name: 'Tutup' })).toBeTruthy();
+        expect(screen.queryByText('Close')).toBeNull();
+        dialog.unmount();
+
+        render(
+            <Sheet open>
+                <SheetContent aria-describedby={undefined}>
+                    <SheetTitle>Filter</SheetTitle>
+                </SheetContent>
+            </Sheet>,
+        );
+        expect(screen.getByRole('button', { name: 'Tutup' })).toBeTruthy();
+        expect(screen.queryByText('Close')).toBeNull();
+    });
+
+    it('paginasi dan indikator memuat berbahasa Indonesia', () => {
+        render(
+            <>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious href="#" />
+                        </PaginationItem>
+                        <PaginationItem>
+                            <PaginationEllipsis />
+                        </PaginationItem>
+                        <PaginationItem>
+                            <PaginationNext href="#" />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+                <Spinner />
+            </>,
+        );
+
+        expect(screen.getByRole('navigation', { name: 'Paginasi' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Ke halaman sebelumnya' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Ke halaman berikutnya' })).toBeTruthy();
+        expect(screen.getByText('Halaman lainnya')).toBeTruthy();
+        expect(screen.getByRole('status', { name: 'Memuat' })).toBeTruthy();
     });
 });

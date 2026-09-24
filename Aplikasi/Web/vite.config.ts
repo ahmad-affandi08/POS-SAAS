@@ -23,5 +23,6 @@ export default defineConfig({
     test: {
         environment: "jsdom",
         include: ["resources/js/**/*Tes.{ts,tsx}"],
+        setupFiles: ["resources/js/Pengujian/SiapkanLingkunganUji.ts"],
     },
 });
