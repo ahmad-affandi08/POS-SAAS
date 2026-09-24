@@ -58,7 +58,8 @@ final class AturKelompokPilihanProduk
             }
 
             $lama = ProdukKelompokPilihan::query()->where('IdProduk', $produk->Id)->orderBy('Urutan')->lockForUpdate()->get()->keyBy('IdKelompokPilihan');
-            $sebelum = $lama->keys()->map(fn (mixed $id): mixed => $ditemukan->get($id) ?? $id)->values()->all();
+            $namaLama = KelompokPilihan::query()->whereKey($lama->keys()->all())->pluck('Nama', 'Id');
+            $sebelum = $lama->keys()->map(fn (mixed $id): mixed => $namaLama->get($id))->values()->all();
 
             foreach ($lama as $idKelompok => $baris) {
                 if (! in_array($idKelompok, $idKelompokPilihan, true)) {
