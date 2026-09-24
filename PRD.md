@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.44 |
+| Versi | 1.45 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -65,6 +65,7 @@
 | 1.42 | Rincian F-07a (diputuskan agen atas mandat D-12): aturan pembulatan, alokasi pro-rata, pajak inklusif/eksklusif campuran, dan pembulatan tunai mesin kalkulasi; format test vector diperluas (`Pajak`, `DiskonManual`, `DiskonManualPesanan`, `HargaPilihan`, pembayaran daftar, `Harapan` rinci per baris). |
 | 1.43 | Rincian F-07b & F-07c (diputuskan agen atas mandat D-12): item sinkron `Penjualan.Buat`, validasi server (tarif pajak, batas diskon BR-07.3, hitung ulang), stok & jurnal J-07.1/J-07.2 saat Lunas, tabel `PenjualanPajak`, izin `penjualan.diskon.setujui`, pengaturan batas diskon & pembulatan tunai, tambahan `data-awal`, gambar QRIS untuk POS, layar Jual & Bayar di Ruang Kerja Kasir. |
 | 1.44 | Keputusan implementasi F-07b/F-07c dicatat: pintasan POS mengikuti §17.2.3 (F1/F8/F9/Esc), persetujuan diskon oleh kasir yang berizin, penanganan produk/pilihan terhapus, nomor & tanggal bisnis, `data-awal` `Outlet.ZonaWaktu/JamTutupBuku`, opsi `abaikanBatasMinus` buku stok; utang F-07 (§25 no. 23). |
+| 1.45 | Rincian F-09 fase 1 (void transaksi di shift yang sama, retur dengan refund tunai/transfer manual, daftar void & retur) dan F-11 (tutup shift buta, hitung pecahan, selisih & persetujuan, jurnal selisih, laporan shift X/Z), diputuskan agen atas mandat D-12. Izin baru `shift.selisih.setujui`. |
 
 ---
 
@@ -1294,6 +1295,12 @@ stateDiagram-v2
 - BR-09.2 Refund QRIS/kartu memakai refund gateway jika didukung. Jika tidak, dicatat sebagai refund manual (transfer).
 - BR-09.3 Semua void/retur masuk **Laporan Anti-Fraud**: frekuensi per kasir, jam, nominal, dan pola (void segera setelah bayar tunai).
 
+**Rincian F-09 fase 1 (v1.45, diputuskan agen atas mandat D-12):**
+- **Void transaksi** di aplikasi POS: hanya penjualan dari shift yang masih terbuka di perangkat itu, dengan alasan (≥ 5 karakter) dan PIN penyetuju ber-izin `penjualan.void` (kasir yang sendiri ber-izin menyetujui dirinya). Item outbox `Penjualan.Void` `{UuidPenjualan, UuidPengguna, UuidPenyetuju, Alasan, DivoidPada}` (Uuid item = Uuid `VoidPenjualan`). Pengembalian mengikuti pembayaran asal: bagian tunai keluar dari laci (mengurangi kas seharusnya shift), non-tunai dicatat sebagai refund manual (BR-09.2). Server: penjualan wajib ada, `Lunas`, di shift yang belum ditutup pada `DivoidPada` (`VoidTidakDiizinkan`), penyetuju berwenang; menyimpan `VoidPenjualan`, status penjualan `Void`, membalik mutasi stok (baris pembalik `JenisReferensiMutasi::VoidPenjualan`) dan jurnal penjualan (`BalikkanJurnal`, J-09.1) di transaksi yang sama. Idempoten per Uuid; void kedua untuk penjualan yang sama → `SudahDivoid`.
+- **Retur penjualan** di aplikasi POS (perlu online untuk mencari struk asal: `GET /api/pos/v1/penjualan/cari?nomor=` mengembalikan penjualan outlet itu beserta jumlah yang masih bisa diretur): untuk penjualan `Lunas` yang tidak di-void, paling lama `BatasHariRetur` hari (pengaturan kasir, bawaan 7) sejak tanggal bisnis penjualan, dengan alasan, kondisi per baris (`LayakJual`/`Rusak`), dan PIN penyetuju ber-izin `penjualan.void`. Refund fase 1: tunai dari laci shift aktif atau transfer manual (metode transfer); tukar barang, nota kredit/saldo, dan refund gateway menyusul. Nomor `RJ/{OUTLET}/{YYMMDD}/{DEVICE}-{SEQ4}`. Item outbox `ReturPenjualan.Buat` `{UuidPenjualanAsal, UuidShift, UuidPengguna, UuidPenyetuju, Nomor, Alasan, DibuatPada, Baris [{Uuid, UuidPenjualanDetail, Jumlah, Kondisi}], Refund [{Uuid, UuidMetodePembayaran, Jumlah}], Ringkasan {TotalRefund}}`.
+- Nilai retur per baris = bagian proporsional `TotalBaris` snapshot (jumlah retur ÷ jumlah jual, dibulatkan ke sen; retur terakhir sebuah baris mengambil sisa agar Σ retur = TotalBaris), begitu juga pajak dan biaya layanannya. Jumlah retur ≤ jumlah jual − yang sudah diretur (`JumlahReturMelebihi`). Stok: `LayakJual` kembali ke gudang Toko, `Rusak` ke gudang jenis `Rusak` outlet (bila tidak ada: ke Toko + `PerluTinjauan`), dinilai HPP satuan snapshot. Jurnal J-09.2: Dr `ReturPenjualan` (tanpa pajak) + Dr akun pajak & `PendapatanBiayaLayanan` bagian retur, Cr akun refund; Dr persediaan / Cr `Hpp`. Tabel `ReturPenjualan` & `ReturPenjualanDetail` (§15) ditambah kolom snapshot nilai, dan `ReturPenjualanPembayaran`.
+- Back-office: status penjualan menampilkan Void/Diretur sebagian/penuh, detail penjualan menampilkan void & retur, dan daftar **Void & Retur** (`/kelola/penjualan/void-retur`, `TabelData`: waktu, jenis, nomor, kasir, penyetuju, nominal, alasan, jeda sejak bayar) sebagai dasar laporan anti-fraud BR-09.3 (analisis pola menyusul F-14).
+
 ---
 
 ### F-10 · Pemenuhan Pesanan (Fulfillment)
@@ -1318,6 +1325,12 @@ stateDiagram-v2
 6. (Opsional) **Setoran**: kas disetor ke brankas/bank. Dokumen setoran memindahkan saldo Kas Laci → Kas Brankas/Bank.
 
 **Dampak Jurnal:** selisih kurang → Dr Beban Selisih Kas, Cr Kas; selisih lebih → Dr Kas, Cr Pendapatan Lain (Selisih Kas).
+
+**Rincian F-11 (v1.45, diputuskan agen atas mandat D-12):**
+- Aplikasi POS: "Tutup shift" di layar Shift. Tutup buta bawaan (`TutupShiftButa`, pengaturan kasir) — kas seharusnya tidak ditampilkan sebelum kasir menyimpan hitungan. Kasir mengisi hitungan pecahan (Rp 100.000 s.d. Rp 100) atau total kas aktual, dan opsional total non-tunai per metode (pencocokan slip EDC/QRIS). Pesanan tertahan harus diselesaikan atau dibatalkan dulu.
+- Kas seharusnya = kas awal + penjualan tunai bersih (tunai diterima − kembalian) + kas masuk − kas keluar − setoran − refund tunai (void & retur). Selisih = kas aktual − kas seharusnya. |Selisih| > `ToleransiSelisihKas` (pengaturan kasir, bawaan Rp 10.000, §19.2) → wajib alasan + PIN penyetuju ber-izin baru `shift.selisih.setujui` (bawaan Supervisor, Manajer Outlet, Admin).
+- Item outbox `Shift.Tutup` `{UuidShift, UuidPengguna, DitutupPada, KasAktual, PecahanKasAkhir|null, NonTunai [{UuidMetodePembayaran, Jumlah}], Alasan|null, UuidPenyetuju|null, Ringkasan {KasSeharusnya, Selisih}}`; dikirim setelah semua penjualan/kas shift itu (outbox FIFO). Server menghitung ulang kas seharusnya dari datanya; beda dengan perangkat → tetap diterima dengan angka server + `PerluTinjauan` (`KasSeharusnyaBerbeda`). Shift menjadi `Tertutup` (`DitutupOleh`, `DitutupPada`, `KasSeharusnya`, `KasAktual`, `Selisih`, `PecahanKasAkhir`, `RingkasanNonTunai` JSON, `AlasanSelisih`, `IdPenyetujuSelisih`). Jurnal selisih di transaksi yang sama: kurang J-11.1 (Dr `BebanSelisihKas`, Cr `KasOutlet`), lebih J-11.2 (Dr `KasOutlet`, Cr `PendapatanLain`). Penjualan/kas yang tiba setelah shift ditutup tetap diterima dengan `PerluTinjauan` (`ShiftSudahDitutup`).
+- Laporan shift: **X** (ringkasan berjalan, dapat dibuka kapan saja di aplikasi) dan **Z** (setelah tutup): jumlah transaksi, penjualan kotor/diskon/bersih, pajak, per metode bayar, void & retur, kas masuk/keluar/setoran, kas seharusnya/aktual/selisih. Back-office detail shift menampilkan ringkasan yang sama. Buka ulang shift oleh supervisor menyusul.
 
 ---
 
