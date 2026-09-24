@@ -68,14 +68,13 @@ final class SimpanHargaProduk
         return DB::transaction(function () use ($idTenant, $produk, $perSatuan, $sumber): HasilSimpanHarga {
             $this->penguncian->Kunci($idTenant);
 
-            /** @var Collection<int, ProdukSatuan> $satuan */
             $satuan = ProdukSatuan::query()
                 ->where('IdProduk', $produk->Id)
                 ->whereIn('Id', array_keys($perSatuan))
                 ->with('SatuanUnit')
                 ->get()
                 ->keyBy('Id');
-            self::Validasi($perSatuan, $satuan);
+            $satuanValid = self::Validasi($perSatuan, $satuan);
 
             $lama = [];
 
@@ -89,8 +88,7 @@ final class SimpanHargaProduk
             $auditLama = $auditBaru = [];
 
             foreach ($perSatuan as $idProdukSatuan => $daftar) {
-                $produkSatuan = $satuan->get($idProdukSatuan);
-                assert($produkSatuan instanceof ProdukSatuan);
+                $produkSatuan = $satuanValid[$idProdukSatuan];
                 $lamaSatuan = $lama[$idProdukSatuan] ?? [];
                 $baru = [];
 
@@ -156,9 +154,11 @@ final class SimpanHargaProduk
     /**
      * @param  array<int, list<DataBarisHarga>>  $perSatuan
      * @param  Collection<int, ProdukSatuan>  $satuan
+     * @return array<int, ProdukSatuan> satuan produk per IdProdukSatuan yang disebut (semuanya milik produk)
      */
-    private static function Validasi(array $perSatuan, Collection $satuan): void
+    private static function Validasi(array $perSatuan, Collection $satuan): array
     {
+        $hasil = [];
         $satu = Kuantitas::Dari(1);
         $nol = Kuantitas::Nol();
         $jumlahMaksimum = Kuantitas::Dari(self::JUMLAH_MINIMUM_MAKSIMUM);
@@ -172,6 +172,7 @@ final class SimpanHargaProduk
                 throw new PelanggaranAturanBisnis('SatuanTidakDikenal', 'Satuan ini bukan satuan produk tersebut. Muat ulang halaman lalu coba lagi.', "Satuan.{$i}");
             }
 
+            $hasil[$idProdukSatuan] = $produkSatuan;
             $bolehDesimal = $produkSatuan->SatuanUnit->BolehDesimal;
             $terpakai = [];
             $adaDasar = false;
@@ -207,6 +208,8 @@ final class SimpanHargaProduk
 
             $i++;
         }
+
+        return $hasil;
     }
 
     /**
