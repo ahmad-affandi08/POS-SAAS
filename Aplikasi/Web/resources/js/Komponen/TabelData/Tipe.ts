@@ -57,7 +57,7 @@ export type MetaKolom = {
 };
 
 /** Definisi kolom halaman: kolom TanStack dengan `meta` bertipe `MetaKolom`. */
-export type KolomTabel<T> = ColumnDef<T, never> & { meta?: MetaKolom };
+export type KolomTabel<T> = ColumnDef<T, unknown> & { meta?: MetaKolom };
 
 /** Membaca `meta` kolom sebagai `MetaKolom` (TanStack menyimpannya tanpa tipe). */
 export function AmbilMeta(meta: unknown): MetaKolom | undefined {

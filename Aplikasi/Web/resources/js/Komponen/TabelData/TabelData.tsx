@@ -65,6 +65,8 @@ export type PropsTabelData<T> = {
     alamatDetail?: (baris: T) => string;
     /** Isi menu aksi baris (`DropdownMenuItem`). */
     aksiBaris?: (baris: T) => ReactNode;
+    /** Nama baris untuk tombol menu aksi yang dibacakan, mis. "Aksi Minuman" (bawaan "Aksi baris"). */
+    labelBaris?: (baris: T) => string;
     aksiMassal?: (konteks: KonteksAksiMassal<T>) => ReactNode;
     ekspor?: { alamat: string; label?: string };
     kosong: { judul: string; aksi?: ReactNode };
@@ -343,6 +345,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
 
         if (props.aksiBaris) {
             const AksiBaris = props.aksiBaris;
+            const LabelBaris = props.labelBaris;
             hasil.push({
                 id: 'aksi',
                 enableSorting: false,
@@ -357,7 +360,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                                 size="icon"
                                 variant="ghost"
                                 className="size-11 sm:size-8"
-                                aria-label="Aksi baris"
+                                aria-label={LabelBaris ? `Aksi ${LabelBaris(row.original)}` : 'Aksi baris'}
                             >
                                 <EllipsisIcon aria-hidden="true" />
                             </Button>
@@ -371,7 +374,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
         }
 
         return hasil;
-    }, [props.kolom, props.aksiBaris, adaAksiMassal]);
+    }, [props.kolom, props.aksiBaris, props.labelBaris, adaAksiMassal]);
 
     const visibilitas = useMemo<VisibilityState>(() => {
         const hasil: VisibilityState = {};

@@ -8,26 +8,17 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import { JenisBahan } from '@/Komponen/Katalog/BantuanKatalog';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/Komponen/Ui/alert-dialog';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { Button } from '@/Komponen/Ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Card } from '@/Komponen/Ui/card';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { BandingkanDesimal, CekDesimalValid, FormatJumlahSatuan } from '@/Pustaka/MasukanJumlah';
@@ -334,48 +325,70 @@ function FormKelompok({
     );
 }
 
-/** Tombol hapus + konfirmasi: kelompok dilepas dari produk yang memakainya. */
-function TombolHapusKelompok({ kelompok }: { kelompok: Kelompok }) {
+/** Rincian pilihan di satu kelompok: nama, bahan yang dipotong, dan tambahan harga. */
+function DaftarPilihan({ kelompok }: { kelompok: Kelompok }) {
     return (
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    aria-label={`Hapus kelompok ${kelompok.Nama}`}
+        <ul className="flex flex-col gap-1 text-label" aria-label={`Pilihan di ${kelompok.Nama}`}>
+            {AmbilPilihanTampil(kelompok).map((pilihan) => (
+                <li
+                    key={pilihan.Uuid ?? pilihan.Nama}
+                    className="flex flex-wrap items-baseline justify-between gap-x-3"
                 >
-                    Hapus
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus kelompok {kelompok.Nama}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Kelompok ini dilepas dari {kelompok.JumlahProduk} produk. Transaksi lama tidak berubah.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                    <AlertDialogAction
-                        variant="destructive"
-                        onClick={() =>
-                            router.delete(`/kelola/kelompok-pilihan/${kelompok.Uuid}`, { preserveScroll: true })
-                        }
-                    >
-                        Ya, hapus kelompok
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+                    <span className="text-teks-utama">
+                        {pilihan.Nama} {!pilihan.Aktif ? <LabelStatus jenis="netral" teks="Nonaktif" /> : null}
+                        {pilihan.NamaProdukBahan ? (
+                            <span className="block text-keterangan text-teks-sekunder">
+                                {`${pilihan.NamaProdukBahan} ${FormatJumlahSatuan(pilihan.Jumlah, pilihan.SimbolSatuanBahan ?? '')}`}
+                            </span>
+                        ) : null}
+                    </span>
+                    <span className="tabular-nums">
+                        {CekDesimalValid(pilihan.Harga) && BandingkanDesimal(pilihan.Harga, '0') === 0
+                            ? 'Gratis'
+                            : `+${FormatRupiah(pilihan.Harga)}`}
+                    </span>
+                </li>
+            ))}
+        </ul>
     );
 }
+
+const kolom: KolomTabel<Kelompok>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Kelompok',
+        meta: { label: 'Kelompok', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: kelompok } }) => (
+            <>
+                <span className="block font-semibold break-words text-teks-utama">{kelompok.Nama}</span>
+                <span className="block text-keterangan text-teks-sekunder">
+                    {RingkasAturanPilih(kelompok.MinimalPilih, kelompok.MaksimalPilih)} · dipakai{' '}
+                    {kelompok.JumlahProduk} produk
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Pilihan',
+        header: 'Pilihan',
+        enableSorting: false,
+        meta: { label: 'Pilihan', prioritas: 'penting', kelasSel: 'min-w-64' },
+        cell: ({ row }) => <DaftarPilihan kelompok={row.original} />,
+    },
+    {
+        id: 'JumlahProduk',
+        accessorKey: 'JumlahProduk',
+        header: 'Produk',
+        meta: { label: 'Jumlah produk', angka: true, prioritas: 'rendah' },
+    },
+];
 
 /** F-03 kelompok pilihan (modifier) dengan harga tambahan dan bahan opsional untuk potong stok. */
 export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: PropsDaftarKelompokPilihan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [sunting, AturSunting] = useState<Kelompok | 'baru' | null>(null);
+    const [hapus, AturHapus] = useState<Kelompok | null>(null);
 
     return (
         <TataLetakAplikasi judul="Pilihan (modifier)">
@@ -414,74 +427,47 @@ export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: 
                     </SheetContent>
                 ) : null}
             </Sheet>
-            {KelompokPilihan.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kelompok pilihan. Tambah kelompok, misal Level gula: Normal, Kurang manis, Tanpa gula." />
-            ) : (
-                <ul className="flex flex-col gap-3">
-                    {KelompokPilihan.map((kelompok) => (
-                        <li key={kelompok.Uuid}>
-                            <Card className="gap-2 py-4">
-                                <CardHeader className="px-4">
-                                    <CardTitle className="break-words text-teks-utama">{kelompok.Nama}</CardTitle>
-                                    <CardDescription className="text-keterangan">
-                                        {RingkasAturanPilih(kelompok.MinimalPilih, kelompok.MaksimalPilih)} · dipakai{' '}
-                                        {kelompok.JumlahProduk} produk
-                                    </CardDescription>
-                                    {Izin.Kelola ? (
-                                        <CardAction className="flex gap-1">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => AturSunting(kelompok)}
-                                                aria-label={`Ubah kelompok ${kelompok.Nama}`}
-                                            >
-                                                Ubah
-                                            </Button>
-                                            <TombolHapusKelompok kelompok={kelompok} />
-                                        </CardAction>
-                                    ) : null}
-                                </CardHeader>
-                                <CardContent className="px-4">
-                                    <Table className="text-label">
-                                        <TableCaption className="sr-only">Pilihan di {kelompok.Nama}</TableCaption>
-                                        <TableHeader className="sr-only">
-                                            <TableRow>
-                                                <TableHead scope="col">Pilihan</TableHead>
-                                                <TableHead scope="col">Bahan</TableHead>
-                                                <TableHead scope="col">Tambahan harga</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {AmbilPilihanTampil(kelompok).map((pilihan) => (
-                                                <TableRow key={pilihan.Uuid ?? pilihan.Nama}>
-                                                    <TableCell className="py-1 pl-0 whitespace-normal text-teks-utama">
-                                                        {pilihan.Nama}{' '}
-                                                        {!pilihan.Aktif ? (
-                                                            <LabelStatus jenis="netral" teks="Nonaktif" />
-                                                        ) : null}
-                                                    </TableCell>
-                                                    <TableCell className="py-1 whitespace-normal text-teks-sekunder">
-                                                        {pilihan.NamaProdukBahan
-                                                            ? `${pilihan.NamaProdukBahan} ${FormatJumlahSatuan(pilihan.Jumlah, pilihan.SimbolSatuanBahan ?? '')}`
-                                                            : ''}
-                                                    </TableCell>
-                                                    <TableCell className="py-1 pr-0 text-right tabular-nums">
-                                                        {CekDesimalValid(pilihan.Harga) &&
-                                                        BandingkanDesimal(pilihan.Harga, '0') === 0
-                                                            ? 'Gratis'
-                                                            : `+${FormatRupiah(pilihan.Harga)}`}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
-                        </li>
-                    ))}
-                </ul>
-            )}
+            {hapus !== null ? (
+                <DialogKonfirmasi
+                    judul={`Hapus kelompok ${hapus.Nama}?`}
+                    labelAksi="Ya, hapus kelompok"
+                    saatBatal={() => AturHapus(null)}
+                    saatKonfirmasi={() =>
+                        router.delete(`/kelola/kelompok-pilihan/${hapus.Uuid}`, {
+                            preserveScroll: true,
+                            onFinish: () => AturHapus(null),
+                        })
+                    }
+                >
+                    Kelompok ini dilepas dari {hapus.JumlahProduk} produk. Transaksi lama tidak berubah.
+                </DialogKonfirmasi>
+            ) : null}
+            <TabelData
+                id="katalog-kelompok-pilihan"
+                label="Daftar kelompok pilihan"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: KelompokPilihan }}
+                ambilIdBaris={(kelompok) => kelompok.Uuid}
+                cari="Cari nama kelompok"
+                labelBaris={(kelompok) => kelompok.Nama}
+                {...(Izin.Kelola
+                    ? {
+                          aksiBaris: (kelompok: Kelompok) => (
+                              <>
+                                  <DropdownMenuItem onSelect={() => AturSunting(kelompok)}>
+                                      Ubah kelompok
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem variant="destructive" onSelect={() => AturHapus(kelompok)}>
+                                      Hapus kelompok
+                                  </DropdownMenuItem>
+                              </>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada kelompok pilihan. Tambah kelompok, misal Level gula: Normal, Kurang manis, Tanpa gula.',
+                }}
+            />
         </TataLetakAplikasi>
     );
 }

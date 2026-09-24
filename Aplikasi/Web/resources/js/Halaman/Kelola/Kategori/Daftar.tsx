@@ -5,21 +5,11 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/Komponen/Ui/alert-dialog';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import {
     Dialog,
     DialogContent,
@@ -28,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/Komponen/Ui/dialog';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsDaftarKategori } from '@/Tipe/Katalog';
@@ -136,46 +126,44 @@ function FormKategori({
     );
 }
 
-/** Tombol hapus + konfirmasi. Hanya tampil untuk kategori tanpa sub-kategori dan tanpa produk. */
-function TombolHapusKategori({ kategori }: { kategori: Kategori }) {
-    return (
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    aria-label={`Hapus kategori ${kategori.Nama}`}
-                >
-                    Hapus
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus kategori {kategori.Nama}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Kategori ini tidak punya sub-kategori dan tidak dipakai produk mana pun.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                    <AlertDialogAction
-                        variant="destructive"
-                        onClick={() => router.delete(`/kelola/kategori/${kategori.Uuid}`, { preserveScroll: true })}
-                    >
-                        Hapus kategori
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    );
-}
+const kolom: KolomTabel<Kategori>[] = [
+    {
+        id: 'Jalur',
+        accessorKey: 'Jalur',
+        header: 'Kategori',
+        meta: { label: 'Kategori', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: item } }) => (
+            <>
+                <span className={`block font-semibold break-words text-teks-utama ${KelasIndentasi(item.Kedalaman)}`}>
+                    {item.Nama}
+                </span>
+                {item.Kedalaman > 1 ? (
+                    <span className={`block text-keterangan text-teks-sekunder ${KelasIndentasi(item.Kedalaman)}`}>
+                        {item.Jalur}
+                    </span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'Urutan',
+        accessorKey: 'Urutan',
+        header: 'Urutan',
+        meta: { label: 'Urutan tampil', angka: true, prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+    },
+    {
+        id: 'JumlahProduk',
+        accessorKey: 'JumlahProduk',
+        header: 'Produk',
+        meta: { label: 'Jumlah produk', angka: true, prioritas: 'penting' },
+    },
+];
 
 /** F-03 kategori bertingkat (maks 3 tingkat). Hapus hanya bila tanpa sub-kategori dan tanpa produk. */
 export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKategori) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [sunting, AturSunting] = useState<Kategori | 'baru' | null>(null);
+    const [hapus, AturHapus] = useState<Kategori | null>(null);
     const CekPunyaAnak = (uuid: string) => Kategori.some((item) => item.UuidInduk === uuid);
 
     return (
@@ -212,75 +200,45 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
                     </DialogContent>
                 ) : null}
             </Dialog>
-            {Kategori.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir." />
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[560px] text-isi">
-                        <TableCaption className="sr-only">Daftar kategori</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Kategori
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Urutan
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Produk
-                                </TableHead>
-                                {Izin.Kelola ? (
-                                    <TableHead scope="col" className="px-4">
-                                        <span className="sr-only">Aksi</span>
-                                    </TableHead>
-                                ) : null}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Kategori.map((item) => (
-                                <TableRow key={item.Uuid}>
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <span
-                                            className={`block font-semibold break-words text-teks-utama ${KelasIndentasi(item.Kedalaman)}`}
-                                        >
-                                            {item.Nama}
-                                        </span>
-                                        {item.Kedalaman > 1 ? (
-                                            <span
-                                                className={`block text-keterangan text-teks-sekunder ${KelasIndentasi(item.Kedalaman)}`}
-                                            >
-                                                {item.Jalur}
-                                            </span>
-                                        ) : null}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums text-teks-sekunder">
-                                        {item.Urutan}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
-                                    {Izin.Kelola ? (
-                                        <TableCell className="px-4">
-                                            <span className="flex justify-end gap-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => AturSunting(item)}
-                                                    aria-label={`Ubah kategori ${item.Nama}`}
-                                                >
-                                                    Ubah
-                                                </Button>
-                                                {item.JumlahProduk === 0 && !CekPunyaAnak(item.Uuid) ? (
-                                                    <TombolHapusKategori kategori={item} />
-                                                ) : null}
-                                            </span>
-                                        </TableCell>
-                                    ) : null}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            {hapus !== null ? (
+                <DialogKonfirmasi
+                    judul={`Hapus kategori ${hapus.Nama}?`}
+                    labelAksi="Hapus kategori"
+                    saatBatal={() => AturHapus(null)}
+                    saatKonfirmasi={() =>
+                        router.delete(`/kelola/kategori/${hapus.Uuid}`, {
+                            preserveScroll: true,
+                            onFinish: () => AturHapus(null),
+                        })
+                    }
+                >
+                    Kategori ini tidak punya sub-kategori dan tidak dipakai produk mana pun.
+                </DialogKonfirmasi>
+            ) : null}
+            <TabelData
+                id="katalog-kategori"
+                label="Daftar kategori"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Kategori }}
+                ambilIdBaris={(item) => item.Uuid}
+                cari="Cari nama kategori"
+                labelBaris={(item) => item.Nama}
+                {...(Izin.Kelola
+                    ? {
+                          aksiBaris: (item: Kategori) => (
+                              <>
+                                  <DropdownMenuItem onSelect={() => AturSunting(item)}>Ubah kategori</DropdownMenuItem>
+                                  {item.JumlahProduk === 0 && !CekPunyaAnak(item.Uuid) ? (
+                                      <DropdownMenuItem variant="destructive" onSelect={() => AturHapus(item)}>
+                                          Hapus kategori
+                                      </DropdownMenuItem>
+                                  ) : null}
+                              </>
+                          ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.' }}
+            />
         </TataLetakAplikasi>
     );
 }

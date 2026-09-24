@@ -5,22 +5,12 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/Komponen/Ui/alert-dialog';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import {
     Dialog,
     DialogContent,
@@ -29,7 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/Komponen/Ui/dialog';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsDaftarSatuan } from '@/Tipe/Katalog';
@@ -107,44 +97,56 @@ function FormSatuan({ satuan, saatSelesai }: { satuan: Satuan | null; saatSelesa
     );
 }
 
-/** Tombol hapus + konfirmasi. Hanya tampil untuk satuan yang belum dipakai produk. */
-function TombolHapusSatuan({ satuan }: { satuan: Satuan }) {
-    return (
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    aria-label={`Hapus satuan ${satuan.Nama}`}
-                >
-                    Hapus
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus satuan {satuan.Nama}?</AlertDialogTitle>
-                    <AlertDialogDescription>Satuan ini belum dipakai produk mana pun.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                    <AlertDialogAction
-                        variant="destructive"
-                        onClick={() => router.delete(`/kelola/satuan/${satuan.Uuid}`, { preserveScroll: true })}
-                    >
-                        Hapus satuan
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    );
-}
+const kolom: KolomTabel<Satuan>[] = [
+    {
+        id: 'Nama',
+        accessorFn: (item) => `${item.Nama} ${item.Simbol}`,
+        header: 'Satuan',
+        meta: { label: 'Satuan', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: item } }) => (
+            <>
+                <span className="font-semibold text-teks-utama">{item.Nama}</span>{' '}
+                <span className="text-teks-sekunder">({item.Simbol})</span>
+            </>
+        ),
+    },
+    {
+        id: 'BolehDesimal',
+        accessorKey: 'BolehDesimal',
+        header: 'Pecahan',
+        meta: { label: 'Boleh pecahan', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => (row.original.BolehDesimal ? 'Boleh' : 'Tidak'),
+    },
+    {
+        id: 'Asal',
+        accessorFn: (item) => (item.KodeStandar ? 'Standar' : 'Sendiri'),
+        header: 'Asal',
+        meta: { label: 'Asal', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: item } }) =>
+            item.KodeStandar ? (
+                <span className="inline-flex items-center gap-2">
+                    Standar
+                    <Badge variant="secondary" className="font-mono">
+                        {item.KodeStandar}
+                    </Badge>
+                </span>
+            ) : (
+                'Buatan sendiri'
+            ),
+    },
+    {
+        id: 'JumlahProduk',
+        accessorKey: 'JumlahProduk',
+        header: 'Produk',
+        meta: { label: 'Jumlah produk', angka: true, prioritas: 'penting' },
+    },
+];
 
 /** F-03 satuan ukur tenant: standar (dari referensi) dan buatan sendiri. */
 export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [sunting, AturSunting] = useState<Satuan | 'baru' | null>(null);
+    const [hapus, AturHapus] = useState<Satuan | null>(null);
 
     return (
         <TataLetakAplikasi judul="Satuan">
@@ -180,78 +182,57 @@ export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan)
                     </DialogContent>
                 ) : null}
             </Dialog>
-            {Satuan.length === 0 ? (
-                <KeadaanKosong judul="Belum ada satuan. Tambah satuan, misal pcs atau kg." />
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[560px] text-isi">
-                        <TableCaption className="sr-only">Daftar satuan</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Satuan
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Pecahan
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Asal
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Produk
-                                </TableHead>
-                                {Izin.Kelola ? (
-                                    <TableHead scope="col" className="px-4">
-                                        <span className="sr-only">Aksi</span>
-                                    </TableHead>
-                                ) : null}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Satuan.map((item) => (
-                                <TableRow key={item.Uuid}>
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <span className="font-semibold text-teks-utama">{item.Nama}</span>{' '}
-                                        <span className="text-teks-sekunder">({item.Simbol})</span>
-                                    </TableCell>
-                                    <TableCell className="px-4 text-teks-sekunder">
-                                        {item.BolehDesimal ? 'Boleh' : 'Tidak'}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-teks-sekunder">
-                                        {item.KodeStandar ? (
-                                            <span className="inline-flex items-center gap-2">
-                                                Standar
-                                                <Badge variant="secondary" className="font-mono">
-                                                    {item.KodeStandar}
-                                                </Badge>
-                                            </span>
-                                        ) : (
-                                            'Buatan sendiri'
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
-                                    {Izin.Kelola ? (
-                                        <TableCell className="px-4">
-                                            <span className="flex justify-end gap-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => AturSunting(item)}
-                                                    aria-label={`Ubah satuan ${item.Nama}`}
-                                                >
-                                                    Ubah
-                                                </Button>
-                                                {item.JumlahProduk === 0 ? <TombolHapusSatuan satuan={item} /> : null}
-                                            </span>
-                                        </TableCell>
-                                    ) : null}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            {hapus !== null ? (
+                <DialogKonfirmasi
+                    judul={`Hapus satuan ${hapus.Nama}?`}
+                    labelAksi="Hapus satuan"
+                    saatBatal={() => AturHapus(null)}
+                    saatKonfirmasi={() =>
+                        router.delete(`/kelola/satuan/${hapus.Uuid}`, {
+                            preserveScroll: true,
+                            onFinish: () => AturHapus(null),
+                        })
+                    }
+                >
+                    Satuan ini belum dipakai produk mana pun.
+                </DialogKonfirmasi>
+            ) : null}
+            <TabelData
+                id="katalog-satuan"
+                label="Daftar satuan"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Satuan }}
+                ambilIdBaris={(item) => item.Uuid}
+                urutBawaan="Nama"
+                cari="Cari nama atau simbol satuan"
+                saring={[
+                    {
+                        id: 'Asal',
+                        label: 'Asal',
+                        jenis: 'pilihan',
+                        opsi: [
+                            { nilai: 'Standar', label: 'Standar' },
+                            { nilai: 'Sendiri', label: 'Buatan sendiri' },
+                        ],
+                    },
+                ]}
+                labelBaris={(item) => item.Nama}
+                {...(Izin.Kelola
+                    ? {
+                          aksiBaris: (item: Satuan) => (
+                              <>
+                                  <DropdownMenuItem onSelect={() => AturSunting(item)}>Ubah satuan</DropdownMenuItem>
+                                  {item.JumlahProduk === 0 ? (
+                                      <DropdownMenuItem variant="destructive" onSelect={() => AturHapus(item)}>
+                                          Hapus satuan
+                                      </DropdownMenuItem>
+                                  ) : null}
+                              </>
+                          ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada satuan. Tambah satuan, misal pcs atau kg.' }}
+            />
         </TataLetakAplikasi>
     );
 }

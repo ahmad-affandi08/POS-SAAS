@@ -5,14 +5,15 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { KategoriPajakProduk, PropsDaftarKelompokPajak } from '@/Tipe/Katalog';
@@ -229,6 +230,52 @@ function FormKelompok({
     );
 }
 
+const kolom: KolomTabel<KelompokPajak>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Kelompok',
+        meta: { label: 'Kelompok', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: item } }) => (
+            <>
+                <span className="block font-semibold break-words text-teks-utama">{item.Nama}</span>
+                <span className="text-keterangan text-teks-sekunder">{item.LabelKategori}</span>
+            </>
+        ),
+    },
+    {
+        id: 'Kategori',
+        accessorKey: 'Kategori',
+        header: 'Kategori pajak',
+        meta: { label: 'Kategori pajak', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => row.original.LabelKategori,
+    },
+    {
+        id: 'Pajak',
+        header: 'Pajak',
+        enableSorting: false,
+        meta: { label: 'Pajak', prioritas: 'penting', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: item } }) =>
+            item.Pajak.length === 0 ? (
+                'Tanpa pajak'
+            ) : (
+                <ol className="flex flex-col gap-0.5">
+                    {item.Pajak.map((pajak) => (
+                        <li key={pajak.KodeJenisPajak}>
+                            {pajak.NamaJenisPajak} · {pajak.LabelDasarPengenaan}
+                        </li>
+                    ))}
+                </ol>
+            ),
+    },
+    {
+        id: 'JumlahProduk',
+        accessorKey: 'JumlahProduk',
+        header: 'Produk',
+        meta: { label: 'Jumlah produk', angka: true, prioritas: 'penting' },
+    },
+];
+
 /** F-03 kelompok pajak produk (kategori PPN/PBJT/bebas/non-pajak/lainnya). Ubah butuh izin akuntansi.kelola. */
 export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelompokPajak) {
     const { KelompokPajak, Izin } = propsHalaman;
@@ -272,72 +319,36 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
                     </SheetContent>
                 ) : null}
             </Sheet>
-            {KelompokPajak.length === 0 ? (
-                <KeadaanKosong judul="Belum ada kelompok pajak. Tambah kelompok pajak sebelum menambah produk yang dijual." />
-            ) : (
-                <Card className="gap-0 py-0">
-                    <Table className="min-w-[640px] text-isi">
-                        <TableCaption className="sr-only">Daftar kelompok pajak</TableCaption>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead scope="col" className="px-4">
-                                    Kelompok
-                                </TableHead>
-                                <TableHead scope="col" className="px-4">
-                                    Pajak
-                                </TableHead>
-                                <TableHead scope="col" className="px-4 text-right">
-                                    Produk
-                                </TableHead>
-                                {Izin.KelolaPajak ? (
-                                    <TableHead scope="col" className="px-4">
-                                        <span className="sr-only">Aksi</span>
-                                    </TableHead>
-                                ) : null}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {KelompokPajak.map((item) => (
-                                <TableRow key={item.Uuid} className="align-top">
-                                    <TableCell className="px-4 whitespace-normal">
-                                        <span className="block font-semibold break-words text-teks-utama">
-                                            {item.Nama}
-                                        </span>
-                                        <span className="text-keterangan text-teks-sekunder">{item.LabelKategori}</span>
-                                    </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
-                                        {item.Pajak.length === 0 ? (
-                                            'Tanpa pajak'
-                                        ) : (
-                                            <ol className="flex flex-col gap-0.5">
-                                                {item.Pajak.map((pajak) => (
-                                                    <li key={pajak.KodeJenisPajak}>
-                                                        {pajak.NamaJenisPajak} · {pajak.LabelDasarPengenaan}
-                                                    </li>
-                                                ))}
-                                            </ol>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
-                                    {Izin.KelolaPajak ? (
-                                        <TableCell className="px-4 text-right">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => AturSunting(item)}
-                                                aria-label={`Ubah kelompok pajak ${item.Nama}`}
-                                            >
-                                                Ubah
-                                            </Button>
-                                        </TableCell>
-                                    ) : null}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            )}
+            <TabelData
+                id="katalog-kelompok-pajak"
+                label="Daftar kelompok pajak"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: KelompokPajak }}
+                ambilIdBaris={(item) => item.Uuid}
+                urutBawaan="Nama"
+                cari="Cari nama kelompok pajak"
+                saring={[
+                    {
+                        id: 'Kategori',
+                        label: 'Kategori pajak',
+                        jenis: 'pilihanBanyak',
+                        opsi: propsHalaman.Kategori.map((o) => ({ nilai: o.Nilai, label: o.Label })),
+                    },
+                ]}
+                labelBaris={(item) => item.Nama}
+                {...(Izin.KelolaPajak
+                    ? {
+                          aksiBaris: (item: KelompokPajak) => (
+                              <DropdownMenuItem onSelect={() => AturSunting(item)}>
+                                  Ubah kelompok pajak
+                              </DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{
+                    judul: 'Belum ada kelompok pajak. Tambah kelompok pajak sebelum menambah produk yang dijual.',
+                }}
+            />
         </TataLetakAplikasi>
     );
 }

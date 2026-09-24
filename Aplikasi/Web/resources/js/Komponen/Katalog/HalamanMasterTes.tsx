@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarDaftarHarga, { RingkasPeriode } from '@/Halaman/Kelola/DaftarHarga/Daftar';
@@ -44,13 +44,19 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
 
     it('induk tidak boleh diri sendiri/turunan atau tingkat 3; hapus hanya kategori kosong tanpa anak', () => {
         expect([...AmbilTurunanKategori(kategori, 'K1')].sort()).toEqual(['K1', 'K2', 'K3']);
-        render(<HalamanDaftarKategori Kategori={kategori} Izin={IzinPenuh} />);
+        RenderUji(<HalamanDaftarKategori Kategori={kategori} Izin={IzinPenuh} />);
 
-        expect(screen.queryByRole('button', { name: 'Hapus kategori Minuman' })).toBeNull();
-        expect(screen.queryByRole('button', { name: 'Hapus kategori Kopi' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'Hapus kategori Kopi susu' })).toBeTruthy();
-
-        fireEvent.click(screen.getByRole('button', { name: 'Ubah kategori Minuman' }));
+        // Aksi baris ada di menu TabelData (Radix DropdownMenu): dibuka dengan keyboard.
+        const BukaAksi = (nama: string) =>
+            fireEvent.keyDown(screen.getByRole('button', { name: `Aksi ${nama}` }), { key: 'Enter' });
+        BukaAksi('Minuman');
+        expect(screen.queryByRole('menuitem', { name: 'Hapus kategori' })).toBeNull();
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+        BukaAksi('Kopi');
+        expect(screen.queryByRole('menuitem', { name: 'Hapus kategori' })).toBeNull();
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+        BukaAksi('Minuman');
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah kategori' }));
         const opsiInduk = Array.from(screen.getByLabelText<HTMLSelectElement>('Induk kategori').options).map(
             (o) => o.value,
         );
@@ -63,17 +69,23 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
             url: '/kelola/kategori/K1',
             data: { Nama: 'Minuman dingin', UuidInduk: null, Urutan: '0' },
         });
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+
+        BukaAksi('Kopi susu');
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Hapus kategori' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Hapus kategori' }));
+        expect(tiruanRouter.delete).toHaveBeenCalledWith('/kelola/kategori/K3', expect.anything());
     });
 
     it('kosong & tanpa izin', () => {
-        render(<HalamanDaftarKategori Kategori={[]} Izin={IzinLihat} />);
+        RenderUji(<HalamanDaftarKategori Kategori={[]} Izin={IzinLihat} />);
 
         expect(screen.getByText('Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.')).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Tambah kategori' })).toBeNull();
     });
 
     it('satuan: kode standar Mono, tambah satuan POST', () => {
-        render(
+        RenderUji(
             <HalamanDaftarSatuan
                 Satuan={[
                     {
@@ -98,7 +110,10 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
         );
 
         expect(screen.getByText('KGM').className).toContain('font-mono');
-        expect(screen.queryByRole('button', { name: 'Hapus satuan Kilogram' })).toBeNull();
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi Kilogram' }), { key: 'Enter' });
+        expect(screen.getByRole('menuitem', { name: 'Ubah satuan' })).toBeTruthy();
+        expect(screen.queryByRole('menuitem', { name: 'Hapus satuan' })).toBeNull();
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
         fireEvent.click(screen.getByRole('button', { name: 'Tambah satuan' }));
         fireEvent.change(screen.getByLabelText('Nama satuan'), { target: { value: 'Dus' } });
         fireEvent.change(screen.getByLabelText('Simbol'), { target: { value: 'dus' } });
@@ -271,11 +286,12 @@ describe('Kelola/KelompokPajak (E.8)', () => {
     });
 
     it('memakai istilah "biaya layanan"; ubah hanya dengan izin akuntansi.kelola', () => {
-        render(<HalamanDaftarKelompokPajak {...props} />);
+        RenderUji(<HalamanDaftarKelompokPajak {...props} />);
         expect(screen.getByText('PBJT makanan & minuman · Subtotal + biaya layanan')).toBeTruthy();
         expect(document.body.textContent).not.toMatch(/service charge/i);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Ubah kelompok pajak Makan & minum' }));
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi Makan & minum' }), { key: 'Enter' });
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah kelompok pajak' }));
         fireEvent.change(screen.getByLabelText('Kategori pajak'), { target: { value: 'NonPajak' } });
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kelompok pajak' }));
         expect(kirimanForm[0]).toEqual({
@@ -285,8 +301,8 @@ describe('Kelola/KelompokPajak (E.8)', () => {
         });
         cleanup();
 
-        render(<HalamanDaftarKelompokPajak {...props} Izin={{ ...IzinPenuh, KelolaPajak: false }} />);
-        expect(screen.queryByRole('button', { name: /Ubah kelompok pajak/ })).toBeNull();
+        RenderUji(<HalamanDaftarKelompokPajak {...props} Izin={{ ...IzinPenuh, KelolaPajak: false }} />);
+        expect(screen.queryByRole('button', { name: 'Aksi Makan & minum' })).toBeNull();
         expect(screen.getByText('akuntansi.kelola')).toBeTruthy();
     });
 });
@@ -373,13 +389,21 @@ describe('Kelola/KelompokPilihan (E.9)', () => {
         expect(screen.getByText('Keju parut 20 g')).toBeTruthy();
         expect(screen.getByText('Opsional, maks 3 · dipakai 4 produk')).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Ubah kelompok Topping' }));
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi Topping' }), { key: 'Enter' });
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah kelompok' }));
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kelompok pilihan' }));
         expect(kirimanForm[0]?.url).toBe('/kelola/kelompok-pilihan/KP-TOP');
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi Topping' }), { key: 'Enter' });
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Hapus kelompok' }));
+        expect(screen.getByText('Kelompok ini dilepas dari 4 produk. Transaksi lama tidak berubah.')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Ya, hapus kelompok' }));
+        expect(tiruanRouter.delete).toHaveBeenCalledWith('/kelola/kelompok-pilihan/KP-TOP', expect.anything());
     });
 
     it('kosong dan konfirmasi hapus', () => {
-        render(<HalamanDaftarKelompokPilihan KelompokPilihan={[]} Izin={IzinPenuh} />);
+        RenderUji(<HalamanDaftarKelompokPilihan KelompokPilihan={[]} Izin={IzinPenuh} />);
         expect(screen.getByText(/Belum ada kelompok pilihan/)).toBeTruthy();
     });
 });
