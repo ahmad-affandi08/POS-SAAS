@@ -11,6 +11,8 @@ use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Persediaan\Model\SaldoStok;
 use Brick\Math\BigDecimal;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Daftar saldo stok per (produk, lokasi stok) berhalaman + ringkasan (tipe FE `PropsSaldoStok` bagian `Saldo` dan
@@ -20,8 +22,9 @@ use Brick\Math\BigDecimal;
  * lokasi lain = daftar kosong), `Keadaan` (Semua/Ada/Nol/Minus). Urutan: `Nama` (produk lalu lokasi), `-Nilai`
  * (nilai persediaan terbesar), `Jumlah` (jumlah terkecil). Lokasi yang diarsipkan tetap tampil (`GudangAktif`).
  *
- * Nama/SKU produk milik domain Katalog, jadi saringan kata dan urut nama dikerjakan di PHP atas baris saldo ringan
- * (tanpa kueri tabel Katalog); ringkasan dijumlah dengan BigDecimal (eksak).
+ * Saringan, urutan, ringkasan, dan paginasi dikerjakan di SQL: nama produk (milik Katalog) digabung lewat subkueri
+ * publik `InfoProdukStok::KueriIdNama()`, urutan lokasi (sedikit baris, milik Organisasi) lewat `FIND_IN_SET()` atas daftar
+ * yang sudah diurutkan di PHP. Hanya baris satu halaman yang dimuat; ringkasan dijumlah MySQL atas DECIMAL (eksak).
  */
 final class DaftarSaldoStok
 {
@@ -58,44 +61,53 @@ final class DaftarSaldoStok
     public function Ambil(array $saring, ?array $idOutletBoleh, int $halaman): array
     {
         $gudang = $this->AmbilGudangTersaring($saring['UuidGudang'], $idOutletBoleh);
-        $ringan = $gudang === [] ? [] : $this->AmbilBarisRingan(array_keys($gudang), $saring['Keadaan']);
-        $produk = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($ringan, 'IdProduk'))), true);
-
-        $kata = $saring['Kata'];
-
-        if ($kata !== '') {
-            $cocok = $this->AmbilIdProdukCocok($kata, $produk);
-            $ringan = array_values(array_filter($ringan, fn (array $b): bool => isset($cocok[$b['IdProduk']])));
-        }
-
-        $ringan = array_values(array_filter($ringan, fn (array $b): bool => isset($produk[$b['IdProduk']])));
-        $this->Urutkan($ringan, $saring['Urut'], $produk, $gudang);
-
-        $total = BigDecimal::zero();
-        $minus = 0;
-
-        foreach ($ringan as $baris) {
-            $total = $total->plus($baris['NilaiPersediaan']);
-            $minus += BigDecimal::of($baris['JumlahTersedia'])->isNegative() ? 1 : 0;
-        }
-
         $perHalaman = max(1, (int) config('persediaan.Saldo.PerHalaman', 50));
-        $jumlah = count($ringan);
+
+        if ($gudang === []) {
+            return $this->BuatHasil([], 1, 1, 0, '0', 0);
+        }
+
+        $kueri = $this->BuatKueri(array_keys($gudang), $saring['Kata'], $saring['Keadaan']);
+        $ringkasan = (clone $kueri)->toBase()
+            ->selectRaw('COUNT(*) AS JumlahBaris')
+            ->selectRaw('COALESCE(SUM(`SaldoStok`.`NilaiPersediaan`), 0) AS TotalNilai')
+            ->selectRaw('COALESCE(SUM(CASE WHEN `SaldoStok`.`JumlahTersedia` < 0 THEN 1 ELSE 0 END), 0) AS JumlahMinus')
+            ->first();
+
+        $jumlah = (int) ($ringkasan->JumlahBaris ?? 0);
         $terakhir = max(1, intdiv($jumlah + $perHalaman - 1, $perHalaman));
         $halaman = min(max(1, $halaman), $terakhir);
-        $potongan = array_slice($ringan, ($halaman - 1) * $perHalaman, $perHalaman);
 
+        $this->Urutkan($kueri, $saring['Urut'], $gudang);
+        $potongan = $kueri->offset(($halaman - 1) * $perHalaman)->limit($perHalaman)->get(['SaldoStok.*']);
+
+        return $this->BuatHasil(
+            $this->Petakan($potongan, $gudang),
+            $halaman,
+            $terakhir,
+            $jumlah,
+            (string) ($ringkasan->TotalNilai ?? '0'),
+            (int) ($ringkasan->JumlahMinus ?? 0),
+        );
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $data
+     * @return array{Saldo: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
+     */
+    private function BuatHasil(array $data, int $halaman, int $terakhir, int $jumlah, string $totalNilai, int $jumlahMinus): array
+    {
         return [
             'Saldo' => [
-                'Data' => $this->Petakan($potongan, $produk, $gudang),
+                'Data' => $data,
                 'HalamanSaatIni' => $halaman,
                 'HalamanTerakhir' => $terakhir,
                 'Total' => $jumlah,
             ],
             'Ringkasan' => [
-                'TotalNilai' => (string) $total->toScale(2),
+                'TotalNilai' => (string) BigDecimal::of($totalNilai)->toScale(2),
                 'JumlahBaris' => $jumlah,
-                'JumlahMinus' => $minus,
+                'JumlahMinus' => $jumlahMinus,
             ],
         ];
     }
@@ -120,106 +132,71 @@ final class DaftarSaldoStok
     }
 
     /**
-     * @param  list<int>  $idGudang
-     * @return list<array{Id: int, IdProduk: int, IdGudang: int, JumlahTersedia: string, NilaiPersediaan: string}>
-     */
-    private function AmbilBarisRingan(array $idGudang, string $keadaan): array
-    {
-        $baris = SaldoStok::query()
-            ->whereIn('IdGudang', $idGudang)
-            ->when($keadaan === 'Ada', fn ($kueri) => $kueri->where('JumlahTersedia', '>', 0))
-            ->when($keadaan === 'Nol', fn ($kueri) => $kueri->where('JumlahTersedia', '=', 0))
-            ->when($keadaan === 'Minus', fn ($kueri) => $kueri->where('JumlahTersedia', '<', 0))
-            ->orderBy('Id')
-            ->toBase()
-            ->get(['Id', 'IdProduk', 'IdGudang', 'JumlahTersedia', 'NilaiPersediaan']);
-
-        return array_values($baris->map(fn (object $b): array => [
-            'Id' => (int) $b->Id,
-            'IdProduk' => (int) $b->IdProduk,
-            'IdGudang' => (int) $b->IdGudang,
-            'JumlahTersedia' => (string) $b->JumlahTersedia,
-            'NilaiPersediaan' => (string) $b->NilaiPersediaan,
-        ])->all());
-    }
-
-    /**
-     * Produk yang Nama/SKU-nya mengandung kata (tanpa membedakan huruf besar/kecil), atau yang SKU/barcode/nama-nya
-     * persis kata (pencocokan Katalog).
+     * Saldo di lokasi terpilih, digabung dengan produk yang cocok dengan kata (baris tanpa produk cocok tersaring).
      *
-     * @param  array<int, DataInfoProdukStok>  $produk
-     * @return array<int, true>
+     * @param  list<int>  $idGudang
+     * @return EloquentBuilder<SaldoStok>
      */
-    private function AmbilIdProdukCocok(string $kata, array $produk): array
+    private function BuatKueri(array $idGudang, string $kata, string $keadaan): EloquentBuilder
     {
-        $kecil = mb_strtolower($kata);
-        $cocok = [];
-
-        foreach ($produk as $id => $p) {
-            if (str_contains(mb_strtolower($p->nama), $kecil) || ($p->sku !== null && str_contains(mb_strtolower($p->sku), $kecil))) {
-                $cocok[$id] = true;
-            }
-        }
-
-        foreach ($this->infoProduk->CariKunciImpor([$kata])[$kata] ?? [] as $id) {
-            $cocok[$id] = true;
-        }
-
-        return $cocok;
+        return SaldoStok::query()
+            ->joinSub($this->infoProduk->KueriIdNama($kata), 'ProdukSaldo', 'ProdukSaldo.Id', '=', 'SaldoStok.IdProduk')
+            ->whereIn('SaldoStok.IdGudang', $idGudang)
+            ->when($keadaan === 'Ada', fn ($kueri) => $kueri->where('SaldoStok.JumlahTersedia', '>', 0))
+            ->when($keadaan === 'Nol', fn ($kueri) => $kueri->where('SaldoStok.JumlahTersedia', '=', 0))
+            ->when($keadaan === 'Minus', fn ($kueri) => $kueri->where('SaldoStok.JumlahTersedia', '<', 0));
     }
 
     /**
-     * @param  list<array{Id: int, IdProduk: int, IdGudang: int, JumlahTersedia: string, NilaiPersediaan: string}>  $ringan
-     * @param  array<int, DataInfoProdukStok>  $produk
+     * Urutan utama sesuai saringan, lalu nama produk, produk, nama outlet & lokasi, dan Id (urutan stabil).
+     *
+     * @param  EloquentBuilder<SaldoStok>  $kueri
      * @param  array<int, DataInfoGudang>  $gudang
      */
-    private function Urutkan(array &$ringan, string $urut, array $produk, array $gudang): void
+    private function Urutkan(EloquentBuilder $kueri, string $urut, array $gudang): void
     {
-        $kunciNama = fn (array $b): array => [
-            mb_strtolower($produk[$b['IdProduk']]->nama),
-            $b['IdProduk'],
-            (string) $gudang[$b['IdGudang']]->namaOutlet,
-            $gudang[$b['IdGudang']]->nama,
-            $b['Id'],
-        ];
+        match ($urut) {
+            '-Nilai' => $kueri->orderByDesc('SaldoStok.NilaiPersediaan'),
+            'Jumlah' => $kueri->orderBy('SaldoStok.JumlahTersedia'),
+            default => null,
+        };
 
-        usort($ringan, function (array $a, array $b) use ($urut, $kunciNama): int {
-            $banding = match ($urut) {
-                '-Nilai' => BigDecimal::of($b['NilaiPersediaan'])->compareTo($a['NilaiPersediaan']),
-                'Jumlah' => BigDecimal::of($a['JumlahTersedia'])->compareTo($b['JumlahTersedia']),
-                default => 0,
-            };
+        $urutGudang = array_values($gudang);
+        usort($urutGudang, fn (DataInfoGudang $a, DataInfoGudang $b): int => [(string) $a->namaOutlet, $a->nama, $a->id] <=> [(string) $b->namaOutlet, $b->nama, $b->id]);
+        // Posisi lokasi pada daftar terurut, dikirim sebagai satu binding ("3,1,2") untuk FIND_IN_SET.
+        $daftarId = implode(',', array_map(fn (DataInfoGudang $g): int => $g->id, $urutGudang));
 
-            return $banding !== 0 ? $banding : $kunciNama($a) <=> $kunciNama($b);
-        });
+        $kueri->orderBy('ProdukSaldo.Nama')
+            ->orderBy('SaldoStok.IdProduk')
+            ->orderByRaw('FIND_IN_SET(`SaldoStok`.`IdGudang`, ?)', [$daftarId])
+            ->orderBy('SaldoStok.Id');
     }
 
     /**
-     * Baris halaman (tipe FE `BarisSaldoStok`) tanpa N+1: batch dan jumlah nomor seri hanya untuk produk yang
-     * dilacak.
+     * Baris halaman (tipe FE `BarisSaldoStok`) tanpa N+1: produk satu halaman diambil sekali lewat Katalog; batch dan
+     * jumlah nomor seri hanya untuk produk yang dilacak.
      *
-     * @param  list<array{Id: int, IdProduk: int, IdGudang: int, JumlahTersedia: string, NilaiPersediaan: string}>  $potongan
-     * @param  array<int, DataInfoProdukStok>  $produk
+     * @param  Collection<int, SaldoStok>  $potongan
      * @param  array<int, DataInfoGudang>  $gudang
      * @return list<array<string, mixed>>
      */
-    private function Petakan(array $potongan, array $produk, array $gudang): array
+    private function Petakan(Collection $potongan, array $gudang): array
     {
-        if ($potongan === []) {
+        if ($potongan->isEmpty()) {
             return [];
         }
 
-        $saldo = SaldoStok::query()->whereKey(array_column($potongan, 'Id'))->get()->keyBy('Id');
+        $produk = $this->infoProduk->AmbilBanyak(array_values(array_unique($potongan->pluck('IdProduk')->all())), true);
         $pasanganBatch = [];
         $pasanganSeri = [];
 
-        foreach ($potongan as $b) {
-            $pelacakan = $produk[$b['IdProduk']]->pelacakan;
+        foreach ($potongan as $s) {
+            $pelacakan = ($produk[$s->IdProduk] ?? null)?->pelacakan;
 
             if ($pelacakan === PelacakanProduk::Batch) {
-                $pasanganBatch[] = [$b['IdProduk'], $b['IdGudang']];
+                $pasanganBatch[] = [$s->IdProduk, $s->IdGudang];
             } elseif ($pelacakan === PelacakanProduk::Seri) {
-                $pasanganSeri[] = [$b['IdProduk'], $b['IdGudang']];
+                $pasanganSeri[] = [$s->IdProduk, $s->IdGudang];
             }
         }
 
@@ -227,15 +204,14 @@ final class DaftarSaldoStok
         $seri = $pasanganSeri === [] ? [] : $this->rincianBatch->HitungSeriTersedia($pasanganSeri);
         $hasil = [];
 
-        foreach ($potongan as $b) {
-            $s = $saldo->get($b['Id']);
+        foreach ($potongan as $s) {
+            $p = $produk[$s->IdProduk] ?? null;
+            $g = $gudang[$s->IdGudang] ?? null;
 
-            if (! $s instanceof SaldoStok) {
+            if (! $p instanceof DataInfoProdukStok || ! $g instanceof DataInfoGudang) {
                 continue;
             }
 
-            $p = $produk[$b['IdProduk']];
-            $g = $gudang[$b['IdGudang']];
             $kunci = SaldoStok::BuatKunciPasangan($p->id, $g->id);
 
             $hasil[] = [

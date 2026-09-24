@@ -17,6 +17,8 @@ use App\Domain\Persediaan\Kueri\DaftarSaldoStok;
 use App\Domain\Persediaan\Model\BatchStok;
 use App\Domain\Persediaan\Model\NomorSeri;
 use App\Domain\Tenant\Model\Tenant;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Katalog\BantuanHarga;
@@ -166,6 +168,55 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
             ->and(AmbilPasanganSaldoUji($h2))->toBe(['Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter @ Gudang Outlet Utama'])
             ->and($h9['Saldo']['HalamanSaatIni'])->toBe(2)
             ->and($h2['Ringkasan']['JumlahBaris'])->toBe(4);
+    });
+
+    it('saring, urut, dan halaman di SQL: jumlah kueri tetap dan tidak ada kueri yang memuat semua baris/produk; karakter wildcard kata diperlakukan harfiah', function (): void {
+        $d = SiapkanSaldoStokUji();
+        config()->set('persediaan.Saldo.PerHalaman', 5);
+        $toko = $d['Toko'];
+
+        // [jumlah kueri, binding terbanyak dalam satu kueri, hasil]. Implementasi yang memuat semua produk ke PHP
+        // mengirim satu binding per produk (whereIn Id), jadi binding terbanyak ikut tumbuh bersama data.
+        $hitungKueri = function (array $saring): array {
+            $jumlah = 0;
+            $bindingTerbanyak = 0;
+            $aktif = true;
+            DB::listen(function (QueryExecuted $kueri) use (&$jumlah, &$bindingTerbanyak, &$aktif): void {
+                if ($aktif) {
+                    $jumlah++;
+                    $bindingTerbanyak = max($bindingTerbanyak, count($kueri->bindings));
+                }
+            });
+            $hasil = AmbilSaldoStokUji($saring, halaman: 2);
+            $aktif = false;
+
+            return [$jumlah, $bindingTerbanyak, $hasil];
+        };
+
+        for ($i = 1; $i <= 12; $i++) {
+            $p = BantuanKatalog::BuatProduk(['Nama' => sprintf('Kopi Bubuk Robusta Lampung Kemasan %03d', $i), 'Sku' => sprintf('KBR-%03d', $i)], '25000.00');
+            BantuanLaporan::CatatMutasi($p, $toko, '2.0000', '50000.00');
+        }
+
+        [$sebelum, $bindingSebelum, $hasilSebelum] = $hitungKueri(['Kata' => 'kopi bubuk']);
+
+        for ($i = 13; $i <= 60; $i++) {
+            $p = BantuanKatalog::BuatProduk(['Nama' => sprintf('Kopi Bubuk Robusta Lampung Kemasan %03d', $i), 'Sku' => sprintf('KBR-%03d', $i)], '25000.00');
+            BantuanLaporan::CatatMutasi($p, $toko, '2.0000', '50000.00');
+        }
+
+        app()->forgetInstance(DaftarSaldoStok::class);
+        [$sesudah, $bindingSesudah, $hasilSesudah] = $hitungKueri(['Kata' => 'kopi bubuk']);
+
+        expect($sesudah)->toBe($sebelum)
+            ->and($bindingSesudah)->toBe($bindingSebelum)
+            ->and($bindingSesudah)->toBeLessThan(12)
+            ->and($hasilSebelum['Ringkasan'])->toBe(['TotalNilai' => '600000.00', 'JumlahBaris' => 12, 'JumlahMinus' => 0])
+            ->and($hasilSesudah['Ringkasan'])->toBe(['TotalNilai' => '3000000.00', 'JumlahBaris' => 60, 'JumlahMinus' => 0])
+            ->and(array_column($hasilSesudah['Saldo']['Data'], 'NamaProduk'))->toBe(array_map(fn (int $i): string => sprintf('Kopi Bubuk Robusta Lampung Kemasan %03d', $i), range(6, 10)))
+            ->and($hasilSesudah['Saldo']['HalamanTerakhir'])->toBe(12)
+            ->and(AmbilSaldoStokUji(['Kata' => '%'])['Saldo']['Data'])->toBe([])
+            ->and(AmbilSaldoStokUji(['Kata' => '_'])['Saldo']['Data'])->toBe([]);
     });
 
     it('lokasi diarsipkan tetap tampil (GudangAktif false); akses per outlet hanya melihat lokasi outletnya', function (): void {

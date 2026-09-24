@@ -11,6 +11,7 @@ use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\Satuan;
 use Generator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
 
 /**
  * Ringkasan produk tenant aktif untuk domain Persediaan (DesainF05a C.1): per Id/Uuid, pencarian produk berstok,
@@ -85,6 +86,26 @@ final class InfoProdukStok
             ->get();
 
         return $this->Petakan($produk);
+    }
+
+    /**
+     * Subkueri produk tenant aktif (termasuk terhapus) berkolom `Id` & `Nama` untuk digabung Persediaan saat menyaring
+     * dan mengurutkan saldo stok di SQL, tanpa Persediaan menyentuh tabel Katalog. `kata` kosong = semua produk;
+     * selain itu Nama/SKU mengandung `kata` (tanpa membedakan huruf besar/kecil) atau barcode persis `kata`.
+     */
+    public function KueriIdNama(string $kata = ''): Builder
+    {
+        $kata = trim($kata);
+        $pola = '%'.addcslashes($kata, '%_\\').'%';
+
+        return Produk::query()
+            ->withTrashed()
+            ->when($kata !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
+                ->where('Nama', 'like', $pola)
+                ->orWhere('Sku', 'like', $pola)
+                ->orWhereIn('Id', ProdukBarcode::query()->where('Barcode', $kata)->select('IdProduk'))))
+            ->select(['Id', 'Nama'])
+            ->toBase();
     }
 
     /**
