@@ -25,4 +25,11 @@
 - Jurnal diposting sinkron saat mutasi diterima (aturan #10): kas keluar J-06.1, kas masuk (Dr Kas Outlet / Cr akun kategori), setoran J-11.3 ke Kas Brankas. Mutasi di periode terkunci ditolak `PeriodeTerkunci`. Mutasi kas append-only; data pembukaan shift tidak bisa diubah.
 - Back-office: daftar & detail shift (izin `laporan.penjualan.lihat`, dibatasi outlet akses) dengan ringkasan kas non-penjualan, dan tautan dari jurnal ke shift sumbernya.
 
+**Rincian F-06b (v1.35, aplikasi kasir Flutter):**
+- Aktivasi: kode dari back-office ditukar token perangkat + `KunciPinOffline` (sekali); keduanya di secure storage (Keystore/Keychain/DPAPI). Identitas outlet & perangkat serta data awal di basis data lokal Drift (nama tabel & kolom sama dengan server, uang TEXT desimal).
+- Masuk PIN: utama verifikasi lokal (Argon2id v1.3, iterasi 2, memori 19 MiB, paralelisme 1, 32 byte; verifier dibungkus AES-256-GCM dengan kunci perangkat), sehingga bisa tanpa internet. Staf yang PIN-nya diatur sebelum F-06 (belum punya verifier) diverifikasi online; offline diberi tahu untuk mengatur ulang PIN. 5 kali salah → PIN dikunci 5 menit di perangkat, juga offline. PIN tidak pernah disimpan.
+- Buka shift & kas mengikuti aturan server (BR-06.1–06.4) di perangkat agar kasir langsung tahu bila ditolak; dokumen & entri outbox disimpan dalam satu transaksi SQLite. Hitung pecahan opsional (Rp 100.000 s.d. Rp 100). Kas keluar di atas batas membuka dialog PIN supervisor (staf berizin `kas.keluar.setujui`).
+- Sinkron: outbox FIFO maks. 50 item per kirim, otomatis tiap 30 detik saat layar shift terbuka dan setelah setiap simpan; gagal jaringan/5xx dijadwal ulang dengan mundur eksponensial (5 detik × 2^n, maks. 5 menit); item ditolak masuk "Perlu Tindakan" dengan alasan dan bisa dikirim ulang. Perangkat dicabut → token, kunci PIN, dan data staf lokal dihapus; transaksi yang belum terkirim tetap disimpan.
+
+
 **State Machine `Shift.Status`:** `Terbuka → Menutup (hitung kas) → Tertutup → (DibukaUlang oleh supervisor, dengan alasan)`.

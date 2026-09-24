@@ -21,11 +21,8 @@ void main() {
         : JsonUji(DataAwalUji());
     await PasangAplikasi(tester, u);
 
-    print('LANGKAH 1');
     await tester.enterText(find.byType(TextField), 'AB12CD34');
-    print('LANGKAH 2');
     await tester.tap(find.text('Aktifkan perangkat'));
-    print('LANGKAH 3');
     await Tunggu(tester, const Duration(seconds: 1));
 
     expect(find.text('Siapa yang bertugas?'), findsOneWidget);
@@ -42,32 +39,23 @@ void main() {
     u.server.penangan = (_) async => throw http.ClientException('offline');
     await PasangAplikasi(tester, u);
 
-    print('LANGKAH 4');
     await tester.tap(find.text('Rina Wulandari'));
     await tester.pump();
-    print('LANGKAH 5');
     await KetikPin(tester, '111111');
     expect(find.textContaining('PIN salah. Sisa 4 percobaan'), findsOneWidget);
 
-    print('LANGKAH 6');
     await KetikPin(tester, KasusPin(0)['Pin']! as String);
     expect(find.text('Buka shift · Rina Wulandari'), findsOneWidget);
 
-    print('LANGKAH 7');
     await tester.tap(find.text('Hitung per pecahan'));
     await tester.pump();
-    print('LANGKAH 8');
     await tester.tap(find.byTooltip('Tambah Rp 100.000'));
-    print('LANGKAH 9');
     await tester.tap(find.byTooltip('Tambah Rp 100.000'));
-    print('LANGKAH 10');
     await tester.tap(find.byTooltip('Tambah Rp 50.000'));
     await tester.pump();
     expect(find.widgetWithText(TextField, '250000'), findsOneWidget);
 
-    print('LANGKAH 11');
     await tester.tap(find.text('Buka shift'));
-    print('LANGKAH 12');
     await Tunggu(tester, const Duration(seconds: 1));
 
     expect(find.text('Shift Rina Wulandari'), findsOneWidget);
@@ -92,44 +80,27 @@ void main() {
       });
     };
     await PasangAplikasi(tester, u);
-    print('LANGKAH 13');
     await tester.tap(find.text('Rina Wulandari'));
     await tester.pump();
-    print('LANGKAH 14');
     await KetikPin(tester, KasusPin(0)['Pin']! as String);
-    print('LANGKAH 15');
     await tester.enterText(find.byType(TextField), '500000');
-    print('LANGKAH 16');
     await tester.tap(find.text('Buka shift'));
-    print('LANGKAH 17');
     await Tunggu(tester, const Duration(seconds: 1));
 
-    print('LANGKAH 18');
     await tester.tap(find.text('Kas keluar'));
-    print('LANGKAH 19');
     await Tunggu(tester);
-    print('LANGKAH 20');
     await tester.tap(find.byType(DropdownButtonFormField<String>));
-    print('LANGKAH 21');
     await Tunggu(tester);
-    print('LANGKAH 22');
     await tester.tap(find.text('Beli es batu & galon').last);
-    print('LANGKAH 23');
     await Tunggu(tester);
-    print('LANGKAH 24');
     await tester.enterText(find.widgetWithText(TextField, 'Jumlah'), '350000');
-    print('LANGKAH 25');
     await tester.tap(find.text('Simpan kas keluar'));
-    print('LANGKAH 26');
     await Tunggu(tester);
 
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
-    print('LANGKAH 27');
     await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
     await tester.pump();
-    print('LANGKAH 28');
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
-    print('LANGKAH 29');
     await Tunggu(tester, const Duration(seconds: 1));
 
     expect(find.text('Beli es batu & galon'), findsOneWidget);

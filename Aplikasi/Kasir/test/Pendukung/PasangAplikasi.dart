@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,10 +41,16 @@ Future<void> Tunggu(WidgetTester tester, [Duration lama = const Duration(millise
   }
 }
 
-/// Lepas pohon widget sebelum basis data ditutup agar stream Drift tidak tertinggal.
+/// Lepas pohon widget lalu tutup basis data. Stream Drift hidup di zona waktu palsu test, jadi penutupan dijalankan di
+/// zona yang sama sambil memompa frame (menutup di `runAsync` akan menunggu selamanya).
 Future<void> Lepas(WidgetTester tester, LingkunganUji u) async {
   await tester.pumpWidget(const SizedBox.shrink());
-  await tester.runAsync(u.Tutup);
+  var selesai = false;
+  unawaited(u.Tutup().then((_) => selesai = true));
+  for (var i = 0; i < 200 && !selesai; i++) {
+    await tester.pump(const Duration(milliseconds: 20));
+  }
+  expect(selesai, isTrue, reason: 'Basis data uji harus tertutup bersih.');
 }
 
 /// Ketuk PIN 6 digit di `PapanPin`.
