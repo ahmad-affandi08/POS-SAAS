@@ -57,6 +57,6 @@ final class UbahPengaturanPersediaan
                 nilaiLama: ['MetodeHpp' => $lama->metodeHpp->value, 'StokBolehMinus' => $lama->stokBolehMinus],
                 nilaiBaru: ['MetodeHpp' => $metode->value, 'StokBolehMinus' => $bolehMinus],
             );
-        }, (int) config('persediaan.PercobaanTransaksi', 3));
+        }, max(1, (int) config('persediaan.PercobaanTransaksi', 3)));
     }
 }
