@@ -7,6 +7,7 @@ use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Persediaan\Aksi\BatalkanStokAwal;
 use App\Domain\Persediaan\Aksi\PostingStokAwal;
 use App\Domain\Persediaan\Enum\MetodeHpp;
@@ -77,7 +78,7 @@ describe('F-05a pembatalan stok awal', function (): void {
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
     });
 
-    it('idempoten: membatalkan dua kali tidak membuat mutasi atau jurnal kedua; setelah batal produk boleh diberi stok awal lagi', function (): void {
+    it('idempoten: membatalkan dua kali tidak membuat mutasi atau jurnal kedua; setelah batal produk boleh diberi stok awal lagi bertanggal tidak sebelum mutasi pembatalan (H-5)', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $t['Pemilik']->Id);
@@ -88,7 +89,7 @@ describe('F-05a pembatalan stok awal', function (): void {
         expect(MutasiStok::query()->count())->toBe(2)
             ->and(Jurnal::query()->count())->toBe(2);
 
-        $ulang = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '37800')], $t['Pemilik']->Id);
+        $ulang = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '37800')], $t['Pemilik']->Id, app(TanggalBisnisOutlet::class)->Hitung($t['Outlet']->Id)->format('Y-m-d'));
         expect($ulang->Status)->toBe(StatusStokAwal::Diposting)
             ->and(SaldoStok::query()->where('IdProduk', $p['Stok']->Id)->value('NilaiPersediaan'))->toBe('378000.00')
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
@@ -119,7 +120,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and($dokumen->fresh()?->Status)->toBe(StatusStokAwal::Diposting)
             ->and(MutasiStok::query()->where('KunciBaris', 'like', 'B/%')->count())->toBe(0)
-            ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
+            ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);
     });
 
     it('FIFO: lapisan stok awal sudah terpakai', function (): void {
@@ -129,7 +130,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         BantuanStokAwal::Jual($p['Stok'], $t['Gudang'], '1');
 
         expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
-            ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id, fifo: true))->toBe([]);
+            ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id, fifo: true))->toBe([]);
     });
 
     it('FIFO tanpa pemakaian: pembatalan berhasil dan lapisan habis', function (): void {
@@ -148,7 +149,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         BantuanStokAwal::Jual($p['Batch'], $t['Gudang'], '2', idBatchStok: BatchStok::query()->value('Id'));
 
         expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
-            ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
+            ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);
     });
 
     it('seri: nomor seri stok awal sudah keluar; tanpa pemakaian pembatalan mengeluarkan semua nomor seri', function (): void {
@@ -162,6 +163,6 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($terjual, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and(app(BatalkanStokAwal::class)->Jalankan($utuh, 'Salah lokasi stok', $t['Pemilik']->Id)->Status)->toBe(StatusStokAwal::Dibatalkan)
             ->and(NomorSeri::query()->where('Nomor', 'RC18-0101')->value('Status'))->not->toBe(StatusNomorSeri::Tersedia)
-            ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
+            ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);
     });
 });

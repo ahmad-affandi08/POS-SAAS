@@ -112,7 +112,7 @@ describe('F-05a halaman stok awal', function (): void {
             ->where('Baris.0.Pelacakan', 'Seri')
             ->where('Baris.0.NomorSeri', ['RC18-0001', 'RC18-0002'])
             ->where('Jurnal.0.TotalDebit', '1300000.00')
-            ->where('Jurnal.0.Pembalik')
+            ->where('Jurnal.0.Pembalik', false)
             ->where('Riwayat.1.StatusKe', 'Diposting')
             ->where('Tindakan', ['Ubah' => false, 'Buang' => false, 'Posting' => false, 'Batalkan' => true])
             ->where('BatasPostingLangsung', 300));
@@ -122,7 +122,7 @@ describe('F-05a halaman stok awal', function (): void {
         $this->get("/kelola/persediaan/stok-awal/{$draf->Uuid}")->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Detail')
             ->where('Tindakan', ['Ubah' => true, 'Buang' => true, 'Posting' => false, 'Batalkan' => false])
-            ->where('KesiapanAkun.Siap')
+            ->where('KesiapanAkun.Siap', false)
             ->where('KesiapanAkun.PeranBelumDipetakan.0.Kunci', 'PersediaanBahanBaku'));
     });
 

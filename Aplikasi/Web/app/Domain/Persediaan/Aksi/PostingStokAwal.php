@@ -29,6 +29,7 @@ use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
+use App\Domain\Persediaan\Layanan\Hpp\AritmetikaHpp;
 use App\Domain\Persediaan\Layanan\PemeriksaStokAwal;
 use App\Domain\Persediaan\Layanan\PengunciSaldoStok;
 use App\Domain\Persediaan\Layanan\PenyusunJurnalStokAwal;
@@ -38,7 +39,6 @@ use App\Domain\Persediaan\Model\StokAwal;
 use App\Domain\Persediaan\Model\StokAwalDetail;
 use App\Domain\Tenant\Kueri\PengaturanPersediaanTenant;
 use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -271,7 +271,7 @@ final class PostingStokAwal
     /**
      * Baris mutasi: satu per baris dokumen (`P/{IdDetail}`), atau satu per nomor seri (`P/{IdDetail}/{i}`) dengan
      * nilai baris dibagi: n−1 nomor pertama mendapat HppSatuan dibulatkan ke bawah 2 desimal, nomor terakhir sisanya
-     * (DesainF05a C.3 contoh 6), sehingga Σ = Nilai baris.
+     * (DesainF05a C.3 contoh 6, `AritmetikaHpp::AlokasikanNilaiSeri`), sehingga Σ = Nilai baris.
      *
      * @param  Collection<int, StokAwalDetail>  $detail
      * @param  array<int, DataInfoProdukStok>  $produk
@@ -287,13 +287,10 @@ final class PostingStokAwal
             $seri = $baris->DaftarNomorSeri ?? [];
 
             if ($produk[$baris->IdProduk]->pelacakan === PelacakanProduk::Seri && $seri !== []) {
-                $perUnit = Uang::Dari($hpp->toScale(2, RoundingMode::Down));
-                $terpakai = Uang::Nol();
+                $alokasi = AritmetikaHpp::AlokasikanNilaiSeri(count($seri), $hpp);
 
                 foreach (array_values($seri) as $i => $nomorSeri) {
-                    $terakhir = $i === count($seri) - 1;
-                    $nilaiSeri = $terakhir ? $nilai->Kurangi($terpakai) : $perUnit;
-                    $terpakai = $terpakai->Tambah($nilaiSeri);
+                    $nilaiSeri = $alokasi[$i];
                     $hasil[] = new DataBarisMutasi(
                         kunciBaris: 'P/'.$baris->Id.'/'.($i + 1),
                         idProduk: $baris->IdProduk,

@@ -107,6 +107,26 @@ final class BantuanStokAwal
     }
 
     /**
+     * Invarian setelah skenario yang memakai `Jual()`: semua pemeriksaan `PemeriksaInvarian` kecuali saldo akun
+     * persediaan = nilai stok, karena penjualan tiruan hanya mencatat buku stok tanpa jurnal HPP (jurnal penjualan
+     * milik F-07).
+     *
+     * @return list<string>
+     */
+    public static function PeriksaInvarianTanpaJurnalPenjualan(int $idTenant, bool $fifo = false): array
+    {
+        return [
+            ...PemeriksaInvarian::PeriksaSaldoStok($idTenant),
+            ...PemeriksaInvarian::PeriksaRantaiMutasi($idTenant),
+            ...PemeriksaInvarian::PeriksaNilaiNolSaatJumlahNol($idTenant),
+            ...($fifo ? PemeriksaInvarian::PeriksaLapisanFifo($idTenant) : []),
+            ...PemeriksaInvarian::PeriksaBatch($idTenant),
+            ...PemeriksaInvarian::PeriksaNomorSeri($idTenant),
+            ...PemeriksaInvarian::PeriksaJurnalSeimbang($idTenant),
+        ];
+    }
+
+    /**
      * Isi form HTTP (tipe FE `MasukanStokAwal`).
      *
      * @param  list<array<string, mixed>>  $baris
