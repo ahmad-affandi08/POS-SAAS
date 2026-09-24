@@ -4,7 +4,14 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangTanggal from '@/Komponen/Pengelola/BidangTanggal';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Pengelola/DialogKonfirmasi';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
@@ -132,89 +139,75 @@ export default function HalamanHariLibur({
                     paling lambat 1 Desember.
                 </Pemberitahuan>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Hari libur tahun {Tahun}</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Tanggal
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Nama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Jenis
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Dasar hukum
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {HariLibur.map((hari) => (
-                                <tr key={hari.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="whitespace-nowrap px-4 py-2 text-teks-utama">
-                                        {formatTanggal.format(new Date(`${hari.Tanggal}T00:00:00Z`))}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-utama">{hari.Nama}</td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
-                                        {labelJenis.get(hari.Jenis) ?? hari.Jenis}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">{hari.NomorDasarHukum ?? '—'}</td>
-                                    <td className="px-4 py-2">
-                                        <LabelStatus
-                                            jenis={labelStatus[hari.Status].jenis}
-                                            teks={labelStatus[hari.Status].teks}
-                                        />
-                                        {hari.PembatalanMenunggu ? (
-                                            <p className="mt-1 text-keterangan text-peringatan">
-                                                Pembatalan menunggu tinjauan: {hari.AlasanPembatalan}
-                                            </p>
-                                        ) : null}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {bolehAjukan && hari.Status === 'Draf' ? (
-                                            <div className="flex justify-end gap-2">
-                                                <Tombol varian="sekunder" onClick={() => AturSunting(hari)}>
-                                                    Ubah
-                                                </Tombol>
-                                                <Tombol varian="bahaya" onClick={() => HapusDraf(hari)}>
-                                                    Hapus
-                                                </Tombol>
-                                            </div>
-                                        ) : null}
-                                        {bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu ? (
-                                            <div className="flex justify-end">
-                                                <Tombol
-                                                    varian="bahaya"
-                                                    onClick={() => AturPembatalan({ jenis: 'ajukan', hari })}
-                                                >
-                                                    Ajukan pembatalan
-                                                </Tombol>
-                                            </div>
-                                        ) : null}
-                                        {bolehSetujui &&
-                                        hari.PembatalanMenunggu &&
-                                        hari.IdPengajuBatal !== IdPengguna ? (
-                                            <div className="flex justify-end">
-                                                <Tombol onClick={() => AturPembatalan({ jenis: 'tinjau', hari })}>
-                                                    Tinjau pembatalan
-                                                </Tombol>
-                                            </div>
-                                        ) : null}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan={`Hari libur tahun ${Tahun}`}>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Tanggal</TableHead>
+                            <TableHead scope="col">Nama</TableHead>
+                            <TableHead scope="col">Jenis</TableHead>
+                            <TableHead scope="col">Dasar hukum</TableHead>
+                            <TableHead scope="col">Status</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {HariLibur.map((hari) => (
+                            <TableRow key={hari.Uuid}>
+                                <TableCell className="whitespace-nowrap text-teks-utama">
+                                    {formatTanggal.format(new Date(`${hari.Tanggal}T00:00:00Z`))}
+                                </TableCell>
+                                <TableCell className="text-teks-utama">{hari.Nama}</TableCell>
+                                <TableCell className="text-teks-sekunder">
+                                    {labelJenis.get(hari.Jenis) ?? hari.Jenis}
+                                </TableCell>
+                                <TableCell className="text-teks-sekunder">{hari.NomorDasarHukum ?? '—'}</TableCell>
+                                <TableCell>
+                                    <LabelStatus
+                                        jenis={labelStatus[hari.Status].jenis}
+                                        teks={labelStatus[hari.Status].teks}
+                                    />
+                                    {hari.PembatalanMenunggu ? (
+                                        <p className="mt-1 text-keterangan text-peringatan">
+                                            Pembatalan menunggu tinjauan: {hari.AlasanPembatalan}
+                                        </p>
+                                    ) : null}
+                                </TableCell>
+                                <TableCell>
+                                    {bolehAjukan && hari.Status === 'Draf' ? (
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => AturSunting(hari)}>
+                                                Ubah
+                                            </Button>
+                                            <Button variant="destructive" size="sm" onClick={() => HapusDraf(hari)}>
+                                                Hapus
+                                            </Button>
+                                        </div>
+                                    ) : null}
+                                    {bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu ? (
+                                        <div className="flex justify-end">
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => AturPembatalan({ jenis: 'ajukan', hari })}
+                                            >
+                                                Ajukan pembatalan
+                                            </Button>
+                                        </div>
+                                    ) : null}
+                                    {bolehSetujui && hari.PembatalanMenunggu && hari.IdPengajuBatal !== IdPengguna ? (
+                                        <div className="flex justify-end">
+                                            <Button size="sm" onClick={() => AturPembatalan({ jenis: 'tinjau', hari })}>
+                                                Tinjau pembatalan
+                                            </Button>
+                                        </div>
+                                    ) : null}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -247,50 +240,48 @@ function FormHariLibur({ hariLibur, tahun, pilihanJenis, saatSelesai }: PropsFor
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
+        <DialogFormulir
+            judul={hariLibur === null ? 'Tambah hari libur' : `Ubah ${hariLibur.Nama}`}
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {hariLibur === null ? 'Tambah hari libur' : `Ubah ${hariLibur.Nama}`}
-            </h2>
-            <BidangTeks
-                label="Tanggal (TTTT-BB-HH)"
-                kode
-                nilai={formulir.data.Tanggal}
-                saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
-                galat={formulir.errors.Tanggal}
-            />
-            <BidangTeks
-                label="Nama"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-            />
-            <BidangPilihan
-                label="Jenis"
-                nilai={formulir.data.Jenis}
-                opsi={pilihanJenis}
-                saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
-                galat={formulir.errors.Jenis}
-            />
-            <BidangTeks
-                label="Nomor dasar hukum"
-                keterangan="Misal SKB 3 Menteri. Wajib sebelum diajukan."
-                nilai={formulir.data.NomorDasarHukum}
-                saatBerubah={(nilai) => formulir.setData('NomorDasarHukum', nilai)}
-                galat={formulir.errors.NomorDasarHukum}
-            />
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan draf
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangTanggal
+                    label="Tanggal (TTTT-BB-HH)"
+                    nilai={formulir.data.Tanggal}
+                    saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
+                    galat={formulir.errors.Tanggal}
+                />
+                <BidangTeks
+                    label="Nama"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                />
+                <BidangPilihan
+                    label="Jenis"
+                    nilai={formulir.data.Jenis}
+                    opsi={pilihanJenis}
+                    saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
+                    galat={formulir.errors.Jenis}
+                />
+                <BidangTeks
+                    label="Nomor dasar hukum"
+                    keterangan="Misal SKB 3 Menteri. Wajib sebelum diajukan."
+                    nilai={formulir.data.NomorDasarHukum}
+                    saatBerubah={(nilai) => formulir.setData('NomorDasarHukum', nilai)}
+                    galat={formulir.errors.NomorDasarHukum}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan draf
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -303,13 +294,22 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
     };
 
     return (
-        <section className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                Tinjau {jumlah} hari libur tahun {tahun}
-            </h2>
-            <p className="text-isi text-teks-sekunder">
-                Cocokkan setiap tanggal dengan SKB. Setelah terbit, data tidak bisa diubah.
-            </p>
+        <DialogKonfirmasi
+            judul={`Tinjau ${jumlah} hari libur tahun ${tahun}`}
+            deskripsi="Cocokkan setiap tanggal dengan SKB. Setelah terbit, data tidak bisa diubah."
+            saatTutup={saatSelesai}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
+            aksi={
+                <>
+                    <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
+                        Terbitkan hari libur
+                    </Tombol>
+                    <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
+                        Tolak pengajuan
+                    </Tombol>
+                </>
+            }
+        >
             <BidangTeks
                 label="Catatan (wajib bila menolak)"
                 nilai={formulir.data.Catatan}
@@ -317,18 +317,7 @@ function FormTinjauTahun({ tahun, jumlah, saatSelesai }: { tahun: number; jumlah
                 galat={formulir.errors.Catatan}
                 maxLength={500}
             />
-            <div className="flex gap-2">
-                <Tombol memproses={formulir.processing} onClick={() => Kirim('Setuju')}>
-                    Terbitkan hari libur
-                </Tombol>
-                <Tombol varian="bahaya" disabled={formulir.processing} onClick={() => Kirim('Tolak')}>
-                    Tolak pengajuan
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </section>
+        </DialogKonfirmasi>
     );
 }
 
@@ -350,54 +339,64 @@ function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
         });
     };
 
+    const galatUmum = (formulir.errors as Record<string, string | undefined>).Umum;
+
+    if (jenis === 'ajukan') {
+        // Mengajukan butuh alasan yang langsung diketik: dialog biasa agar fokus awal di isian alasan.
+        return (
+            <DialogFormulir
+                judul={`Ajukan pembatalan ${hari.Nama}`}
+                deskripsi="Hari libur tetap berlaku sampai pembatalan disetujui anggota lain. Untuk menggeser tanggal, batalkan lalu tambahkan hari libur baru."
+                saatTutup={saatSelesai}
+                galatUmum={galatUmum}
+            >
+                <div className="flex flex-col gap-4">
+                    <BidangTeks
+                        label="Alasan pembatalan"
+                        keterangan="Misal nomor SKB perubahan."
+                        nilai={formulir.data.Alasan}
+                        saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                        galat={formulir.errors.Alasan}
+                        maxLength={500}
+                        autoFocus
+                    />
+                    <DialogFooter className="sm:justify-start">
+                        <Tombol varian="bahaya" memproses={formulir.processing} onClick={Ajukan}>
+                            Ajukan pembatalan
+                        </Tombol>
+                        <Tombol varian="sekunder" onClick={saatSelesai}>
+                            Batal
+                        </Tombol>
+                    </DialogFooter>
+                </div>
+            </DialogFormulir>
+        );
+    }
+
     return (
-        <section className="flex flex-col gap-4 rounded-panel border border-bahaya bg-permukaan p-6">
-            <h2 className="text-subjudul font-semibold text-teks-utama">
-                {jenis === 'ajukan' ? `Ajukan pembatalan ${hari.Nama}` : `Tinjau pembatalan ${hari.Nama}`}
-            </h2>
-            <p className="text-isi text-teks-sekunder">
-                {jenis === 'ajukan'
-                    ? 'Hari libur tetap berlaku sampai pembatalan disetujui anggota lain. Untuk menggeser tanggal, batalkan lalu tambahkan hari libur baru.'
-                    : `Alasan: ${hari.AlasanPembatalan ?? '—'}. Bila disetujui, hari libur tidak lagi dipakai tenant; datanya tetap tersimpan.`}
-            </p>
-            {jenis === 'ajukan' ? (
-                <BidangTeks
-                    label="Alasan pembatalan"
-                    keterangan="Misal nomor SKB perubahan."
-                    nilai={formulir.data.Alasan}
-                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                    galat={formulir.errors.Alasan}
-                    maxLength={500}
-                    autoFocus
-                />
-            ) : (
-                <BidangTeks
-                    label="Catatan (wajib bila menolak)"
-                    nilai={formulir.data.Catatan}
-                    saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
-                    galat={formulir.errors.Catatan}
-                    maxLength={500}
-                />
-            )}
-            <div className="flex gap-2">
-                {jenis === 'ajukan' ? (
-                    <Tombol varian="bahaya" memproses={formulir.processing} onClick={Ajukan}>
-                        Ajukan pembatalan
+        <DialogKonfirmasi
+            judul={`Tinjau pembatalan ${hari.Nama}`}
+            deskripsi={`Alasan: ${hari.AlasanPembatalan ?? '—'}. Bila disetujui, hari libur tidak lagi dipakai tenant; datanya tetap tersimpan.`}
+            saatTutup={saatSelesai}
+            galatUmum={galatUmum}
+            aksi={
+                <>
+                    <Tombol varian="bahaya" memproses={formulir.processing} onClick={() => Tinjau('Setuju')}>
+                        Setujui pembatalan
                     </Tombol>
-                ) : (
-                    <>
-                        <Tombol varian="bahaya" memproses={formulir.processing} onClick={() => Tinjau('Setuju')}>
-                            Setujui pembatalan
-                        </Tombol>
-                        <Tombol varian="sekunder" disabled={formulir.processing} onClick={() => Tinjau('Tolak')}>
-                            Tolak pembatalan
-                        </Tombol>
-                    </>
-                )}
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </section>
+                    <Tombol varian="sekunder" disabled={formulir.processing} onClick={() => Tinjau('Tolak')}>
+                        Tolak pembatalan
+                    </Tombol>
+                </>
+            }
+        >
+            <BidangTeks
+                label="Catatan (wajib bila menolak)"
+                nilai={formulir.data.Catatan}
+                saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
+                galat={formulir.errors.Catatan}
+                maxLength={500}
+            />
+        </DialogKonfirmasi>
     );
 }
