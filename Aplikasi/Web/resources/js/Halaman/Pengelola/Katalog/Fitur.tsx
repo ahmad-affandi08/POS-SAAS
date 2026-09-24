@@ -3,8 +3,13 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Pengelola/DialogFormulir';
+import KeadaanKosong from '@/Komponen/Pengelola/KeadaanKosong';
+import PanelTabel from '@/Komponen/Pengelola/PanelTabel';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
@@ -34,55 +39,46 @@ export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
                 />
             ) : null}
             {Fitur.length === 0 ? (
-                <Pemberitahuan jenis="info" judul="Belum ada fitur">
+                <KeadaanKosong judul="Belum ada fitur">
                     Tambahkan fitur pertama. Kunci fitur dipakai kode aplikasi, jadi tulis sesuai modul yang sudah
                     dibangun.
-                </Pemberitahuan>
+                </KeadaanKosong>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Katalog fitur</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Kunci
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Nama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    Modul
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Fitur.map((fitur) => (
-                                <tr key={fitur.Kunci} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label">{fitur.Kunci}</td>
-                                    <td className="px-4 py-2 text-teks-utama">
-                                        {fitur.Nama}
-                                        {fitur.Keterangan ? (
-                                            <span className="block text-keterangan text-teks-sekunder">
-                                                {fitur.Keterangan}
-                                            </span>
-                                        ) : null}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">{fitur.Modul}</td>
-                                    <td className="px-4 py-2 text-right">
-                                        {bolehKelola ? (
-                                            <Tombol varian="sekunder" onClick={() => AturSunting(fitur)}>
-                                                Ubah
-                                            </Tombol>
-                                        ) : null}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                <PanelTabel keterangan="Katalog fitur">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col">Kunci</TableHead>
+                            <TableHead scope="col">Nama</TableHead>
+                            <TableHead scope="col">Modul</TableHead>
+                            <TableHead scope="col">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Fitur.map((fitur) => (
+                            <TableRow key={fitur.Kunci}>
+                                <TableCell className="font-mono text-label">{fitur.Kunci}</TableCell>
+                                <TableCell className="text-teks-utama">
+                                    {fitur.Nama}
+                                    {fitur.Keterangan ? (
+                                        <span className="block text-keterangan text-teks-sekunder">
+                                            {fitur.Keterangan}
+                                        </span>
+                                    ) : null}
+                                </TableCell>
+                                <TableCell className="text-teks-sekunder">{fitur.Modul}</TableCell>
+                                <TableCell className="text-right">
+                                    {bolehKelola ? (
+                                        <Button variant="outline" size="sm" onClick={() => AturSunting(fitur)}>
+                                            Ubah
+                                        </Button>
+                                    ) : null}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </PanelTabel>
             )}
         </TataLetakPengelola>
     );
@@ -108,49 +104,44 @@ function FormFitur({ fitur, saatSelesai }: { fitur: Fitur | null; saatSelesai: (
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid gap-4 rounded-panel border border-garis bg-permukaan p-6 sm:grid-cols-2"
-            noValidate
-        >
-            <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">
-                {fitur === null ? 'Tambah fitur' : `Ubah ${fitur.Nama}`}
-            </h2>
-            <BidangTeks
-                label="Kunci"
-                kode
-                keterangan="Huruf kecil dipisah titik, misal pos.mode-meja. Tidak bisa diubah."
-                nilai={formulir.data.Kunci}
-                saatBerubah={(nilai) => formulir.setData('Kunci', nilai.toLowerCase())}
-                galat={formulir.errors.Kunci}
-                disabled={fitur !== null}
-            />
-            <BidangTeks
-                label="Nama"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-            />
-            <BidangTeks
-                label="Modul"
-                nilai={formulir.data.Modul}
-                saatBerubah={(nilai) => formulir.setData('Modul', nilai)}
-                galat={formulir.errors.Modul}
-            />
-            <BidangTeks
-                label="Keterangan (opsional)"
-                nilai={formulir.data.Keterangan}
-                saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
-                galat={formulir.errors.Keterangan}
-            />
-            <div className="flex gap-2 sm:col-span-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan fitur
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+        <DialogFormulir judul={fitur === null ? 'Tambah fitur' : `Ubah ${fitur.Nama}`} saatTutup={saatSelesai}>
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangTeks
+                    label="Kunci"
+                    kode
+                    keterangan="Huruf kecil dipisah titik, misal pos.mode-meja. Tidak bisa diubah."
+                    nilai={formulir.data.Kunci}
+                    saatBerubah={(nilai) => formulir.setData('Kunci', nilai.toLowerCase())}
+                    galat={formulir.errors.Kunci}
+                    disabled={fitur !== null}
+                />
+                <BidangTeks
+                    label="Nama"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                />
+                <BidangTeks
+                    label="Modul"
+                    nilai={formulir.data.Modul}
+                    saatBerubah={(nilai) => formulir.setData('Modul', nilai)}
+                    galat={formulir.errors.Modul}
+                />
+                <BidangTeks
+                    label="Keterangan (opsional)"
+                    nilai={formulir.data.Keterangan}
+                    saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
+                    galat={formulir.errors.Keterangan}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan fitur
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
     );
 }
