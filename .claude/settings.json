@@ -10,6 +10,11 @@
     "allow": [
       "Edit(./Aplikasi/**)",
       "Write(./Aplikasi/**)",
+      "Edit(./Spesifikasi/**)",
+      "Write(./Spesifikasi/**)",
+      "Edit(./.claude/worktrees/**)",
+      "Write(./.claude/worktrees/**)",
+      "Bash(python3:*)",
       "Edit(./Paket/**)",
       "Write(./Paket/**)",
       "Bash(cd:*)",

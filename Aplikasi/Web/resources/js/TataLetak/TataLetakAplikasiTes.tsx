@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 
-import TataLetakAplikasi from './TataLetakAplikasi';
+import TataLetakAplikasi, { CariMenuProdukAktif } from './TataLetakAplikasi';
 
 let propsHalaman: PropsBersamaAplikasi;
+let urlHalaman = '/kelola';
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
@@ -16,7 +17,7 @@ vi.mock('@inertiajs/react', () => ({
         </a>
     ),
     router: { post: vi.fn() },
-    usePage: () => ({ props: propsHalaman, url: '/kelola' }),
+    usePage: () => ({ props: propsHalaman, url: urlHalaman }),
 }));
 
 function BuatProps(tenant: Partial<TenantAktif> | null, izin: string[], pemilik = false): PropsBersamaAplikasi {
@@ -43,6 +44,7 @@ function BuatProps(tenant: Partial<TenantAktif> | null, izin: string[], pemilik 
 describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1)', () => {
     beforeEach(() => {
         propsHalaman = BuatProps({}, []);
+        urlHalaman = '/kelola';
     });
 
     afterEach(() => {
@@ -99,5 +101,36 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(screen.getByText('Langganan ditangguhkan')).toBeTruthy();
         expect(screen.getByText('Hubungi pemilik usaha untuk membayar tagihan.')).toBeTruthy();
         expect(screen.queryByRole('link', { name: 'Bayar tagihan di menu Langganan' })).toBeNull();
+    });
+
+    it('F-03: grup menu Produk tampil sebagai sub-menu; Impor produk hanya untuk produk.kelola', () => {
+        propsHalaman = BuatProps({}, ['produk.lihat']);
+        urlHalaman = '/kelola/kategori';
+        render(<TataLetakAplikasi judul="Kategori">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        expect(utama.querySelector('a[href="/kelola/produk"]')?.getAttribute('aria-current')).toBe('page');
+        const sub = screen.getByRole('navigation', { name: 'Menu produk' });
+        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
+            'Produk',
+            'Kategori',
+            'Satuan',
+            'Daftar harga',
+            'Pilihan (modifier)',
+            'Kelompok pajak',
+        ]);
+        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Kategori');
+    });
+
+    it('F-03: sub-menu memilih awalan terpanjang dan tersembunyi di luar grup Produk', () => {
+        expect(CariMenuProdukAktif('/kelola/produk/impor/01J9?x=1')).toBe('/kelola/produk/impor');
+        expect(CariMenuProdukAktif('/kelola/produk/01J9/harga')).toBe('/kelola/produk');
+        expect(CariMenuProdukAktif('/kelola/produk?kata=kopi')).toBe('/kelola/produk');
+        expect(CariMenuProdukAktif('/kelola/produk-lain')).toBeNull();
+        expect(CariMenuProdukAktif('/kelola/outlet')).toBeNull();
+
+        propsHalaman = BuatProps({}, ['produk.lihat']);
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+        expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
     });
 });
