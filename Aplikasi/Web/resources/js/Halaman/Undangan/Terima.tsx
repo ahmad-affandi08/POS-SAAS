@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Button } from '@/Komponen/Ui/button';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAutentikasi from '@/TataLetak/TataLetakAutentikasi';
 
@@ -78,12 +79,9 @@ export default function HalamanTerimaUndangan({ Token, Berlaku, Email, NamaTenan
                         Email ini sudah punya akun. Masuk dulu; setelah itu Anda kembali ke halaman ini untuk menerima
                         undangan.
                     </p>
-                    <Link
-                        href="/masuk"
-                        className="inline-flex h-10 items-center justify-center rounded-kontrol border border-brand bg-brand px-4 text-label font-semibold text-permukaan outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                    >
-                        Masuk untuk menerima undangan
-                    </Link>
+                    <Button asChild className="h-10 px-4 text-label font-semibold focus-visible:ring-offset-2">
+                        <Link href="/masuk">Masuk untuk menerima undangan</Link>
+                    </Button>
                 </div>
             </TataLetakAutentikasi>
         );

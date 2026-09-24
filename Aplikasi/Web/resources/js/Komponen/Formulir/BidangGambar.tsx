@@ -1,6 +1,17 @@
 import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
+import { Button } from '@/Komponen/Ui/button';
+import { Input } from '@/Komponen/Ui/input';
 import { FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
+
+import {
+    BuatKelasKontrol,
+    GabungDijelaskanOleh,
+    GalatBidang,
+    KerangkaBidang,
+    KeteranganBidang,
+    LabelBidang,
+} from './BagianBidang';
 
 type PropsBidangGambar = {
     label: string;
@@ -102,10 +113,8 @@ export default function BidangGambar({
     };
 
     return (
-        <div className="flex flex-col gap-2">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </label>
+        <KerangkaBidang galat={pesanGalat} className="gap-2">
+            <LabelBidang htmlFor={id}>{label}</LabelBidang>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                 <div className="flex size-32 shrink-0 items-center justify-center overflow-hidden rounded-kontrol border border-garis bg-latar">
                     {sumberGambar ? (
@@ -120,8 +129,8 @@ export default function BidangGambar({
                         </span>
                     )}
                 </div>
-                <div className="flex min-w-0 flex-col gap-2">
-                    <input
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Input
                         ref={masukan}
                         id={id}
                         type="file"
@@ -129,46 +138,45 @@ export default function BidangGambar({
                         onChange={Pilih}
                         disabled={disabled}
                         aria-invalid={pesanGalat ? true : undefined}
-                        aria-describedby={`${id}-keterangan${pesanGalat ? ` ${id}-galat` : ''}`}
-                        className="text-isi text-teks-utama file:mr-3 file:rounded-kontrol file:border file:border-garis-input file:bg-permukaan file:px-3 file:py-1 file:text-label file:font-semibold"
+                        aria-describedby={GabungDijelaskanOleh(`${id}-keterangan`, pesanGalat && `${id}-galat`)}
+                        className={BuatKelasKontrol(
+                            pesanGalat,
+                            'cursor-pointer py-1.5 file:mr-3 file:text-label file:font-semibold file:text-teks-utama',
+                        )}
                     />
-                    <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                        {petunjuk}
-                    </p>
+                    <KeteranganBidang id={`${id}-keterangan`}>{petunjuk}</KeteranganBidang>
                     {berkas ? (
                         <p className="flex flex-wrap items-center gap-2 text-keterangan text-teks-utama">
                             <span className="break-all">
                                 {berkas.name} · {FormatUkuranBerkas(berkas.size)}
                             </span>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
                                 onClick={Batalkan}
-                                className="font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-auto p-0 text-keterangan font-semibold text-brand underline"
                             >
                                 Batal pilih
-                            </button>
+                            </Button>
                         </p>
                     ) : tautanSaatIni && saatHapusSaatIni ? (
                         <p>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
                                 onClick={saatHapusSaatIni}
                                 disabled={disabled}
-                                className="text-keterangan font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-auto p-0 text-keterangan font-semibold text-bahaya underline"
                             >
                                 {labelHapus}
-                            </button>
+                            </Button>
                         </p>
                     ) : null}
                 </div>
             </div>
             <div aria-live="polite">
-                {pesanGalat ? (
-                    <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                        {pesanGalat}
-                    </p>
-                ) : null}
+                {pesanGalat ? <GalatBidang id={`${id}-galat`}>{pesanGalat}</GalatBidang> : null}
             </div>
-        </div>
+        </KerangkaBidang>
     );
 }

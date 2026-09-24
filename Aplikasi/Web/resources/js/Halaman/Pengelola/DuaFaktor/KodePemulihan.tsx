@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 
+import { Button } from '@/Komponen/Ui/button';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAutentikasiPengelola from '@/TataLetak/TataLetakAutentikasiPengelola';
 
@@ -14,17 +15,14 @@ export default function KodePemulihan({ KodePemulihan }: { KodePemulihan: string
                 </Pemberitahuan>
                 <ul className="grid grid-cols-2 gap-2 font-mono text-isi text-teks-utama">
                     {KodePemulihan.map((kode) => (
-                        <li key={kode} className="rounded-kontrol border border-garis px-3 py-2 text-center">
+                        <li key={kode} className="rounded-kontrol border border-garis bg-latar px-3 py-2 text-center">
                             {kode}
                         </li>
                     ))}
                 </ul>
-                <Link
-                    href="/"
-                    className="inline-flex h-10 items-center justify-center rounded-kontrol border border-brand bg-brand px-4 text-label font-semibold text-permukaan outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                >
-                    Saya sudah menyimpannya
-                </Link>
+                <Button asChild className="h-10 px-4 text-label font-semibold focus-visible:ring-offset-2">
+                    <Link href="/">Saya sudah menyimpannya</Link>
+                </Button>
             </div>
         </TataLetakAutentikasiPengelola>
     );

@@ -1,5 +1,13 @@
 import { useId } from 'react';
 
+import { Checkbox } from '@/Komponen/Ui/checkbox';
+import { FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Label } from '@/Komponen/Ui/label';
+// Radix Checkbox di dalam form memakai ResizeObserver (lihat berkas tersebut).
+import '@/TataLetak/CadanganApiPeramban';
+
+import { GalatBidang } from './BagianBidang';
+
 type Opsi = { nilai: string; label: string };
 
 type PropsGrupCentang = {
@@ -18,26 +26,29 @@ export default function GrupCentang({ legenda, opsi, terpilih, saatBerubah, gala
         saatBerubah(terpilih.includes(nilai) ? terpilih.filter((item) => item !== nilai) : [...terpilih, nilai]);
 
     return (
-        <fieldset className="flex flex-col gap-2" aria-describedby={galat ? `${id}-galat` : undefined}>
-            <legend className="text-label font-semibold text-teks-utama">{legenda}</legend>
+        <FieldSet className="gap-2" aria-describedby={galat ? `${id}-galat` : undefined}>
+            <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
+                {legenda}
+            </FieldLegend>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {opsi.map((item) => (
-                    <label key={item.nilai} className="flex min-h-10 items-center gap-2 text-isi text-teks-utama">
-                        <input
-                            type="checkbox"
-                            className="size-4 accent-brand"
+                {opsi.map((item, indeks) => (
+                    <div key={item.nilai} className="flex min-h-10 items-center gap-2">
+                        <Checkbox
+                            id={`${id}-${String(indeks)}`}
                             checked={terpilih.includes(item.nilai)}
-                            onChange={() => Alihkan(item.nilai)}
+                            onCheckedChange={() => Alihkan(item.nilai)}
+                            className="border-garis-input"
                         />
-                        {item.label}
-                    </label>
+                        <Label
+                            htmlFor={`${id}-${String(indeks)}`}
+                            className="min-h-10 text-isi font-normal text-teks-utama"
+                        >
+                            {item.label}
+                        </Label>
+                    </div>
                 ))}
             </div>
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </fieldset>
+            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
+        </FieldSet>
     );
 }

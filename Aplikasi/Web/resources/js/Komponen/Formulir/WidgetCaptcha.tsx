@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { Spinner } from '@/Komponen/Ui/spinner';
+
+import { GalatBidang } from './BagianBidang';
+
 type OpsiTurnstile = {
     sitekey: string;
     callback: (token: string) => void;
@@ -101,14 +105,17 @@ export default function WidgetCaptcha({ kunciSitus, saatBerubah, urutanReset, ga
         <div className="flex flex-col gap-1" aria-live="polite">
             <div ref={wadah} />
             {keadaan === 'memuat' ? (
-                <p className="text-keterangan text-teks-sekunder">Memuat verifikasi keamanan…</p>
-            ) : null}
-            {keadaan === 'galat' ? (
-                <p className="text-keterangan font-semibold text-bahaya">
-                    Verifikasi keamanan gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.
+                <p className="flex items-center gap-2 text-keterangan text-teks-sekunder">
+                    <Spinner role={undefined} aria-label={undefined} aria-hidden="true" />
+                    Memuat verifikasi keamanan…
                 </p>
             ) : null}
-            {galat ? <p className="text-keterangan font-semibold text-bahaya">{galat}</p> : null}
+            {keadaan === 'galat' ? (
+                <GalatBidang>
+                    Verifikasi keamanan gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.
+                </GalatBidang>
+            ) : null}
+            {galat ? <GalatBidang>{galat}</GalatBidang> : null}
         </div>
     );
 }

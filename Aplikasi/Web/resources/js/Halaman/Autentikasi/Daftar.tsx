@@ -1,10 +1,12 @@
 import { Link, useForm } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import WidgetCaptcha from '@/Komponen/Formulir/WidgetCaptcha';
+import { Checkbox } from '@/Komponen/Ui/checkbox';
+import { Label } from '@/Komponen/Ui/label';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAutentikasi from '@/TataLetak/TataLetakAutentikasi';
 
@@ -28,6 +30,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
         Setuju: false,
     });
     const galat = formulir.errors as Record<string, string | undefined>;
+    const idSetuju = useId();
     // Token disimpan di state tersendiri: setter useState stabil, jadi widget CAPTCHA tidak dirender ulang saat mengetik.
     const [tokenCaptcha, AturTokenCaptcha] = useState('');
     const [urutanResetCaptcha, AturUrutanResetCaptcha] = useState(0);
@@ -118,14 +121,16 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                         galat={galat.Paket}
                     />
                 </div>
-                <label className="flex items-start gap-2 text-isi text-teks-utama sm:col-span-2">
-                    <input
-                        type="checkbox"
-                        className="mt-1 size-4 accent-brand"
+                <div className="flex items-start gap-2 sm:col-span-2">
+                    <Checkbox
+                        id={idSetuju}
+                        className="mt-0.5 border-garis-input"
                         checked={formulir.data.Setuju}
-                        onChange={(peristiwa) => formulir.setData('Setuju', peristiwa.target.checked)}
+                        onCheckedChange={(status) => formulir.setData('Setuju', status === true)}
+                        aria-invalid={galat.Setuju ? true : undefined}
+                        aria-describedby={galat.Setuju ? `${idSetuju}-galat` : undefined}
                     />
-                    <span>
+                    <Label htmlFor={idSetuju} className="block text-isi leading-normal font-normal text-teks-utama">
                         Saya menyetujui{' '}
                         <a
                             href="/legal/syarat-ketentuan"
@@ -154,10 +159,12 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                             Perjanjian Pemrosesan Data
                         </a>
                         .
-                    </span>
-                </label>
+                    </Label>
+                </div>
                 {galat.Setuju ? (
-                    <p className="text-keterangan font-semibold text-bahaya sm:col-span-2">{galat.Setuju}</p>
+                    <p id={`${idSetuju}-galat`} className="text-keterangan font-semibold text-bahaya sm:col-span-2">
+                        {galat.Setuju}
+                    </p>
                 ) : null}
                 {KunciSitusCaptcha ? (
                     <div className="sm:col-span-2">

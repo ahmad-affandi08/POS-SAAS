@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 
+import { Separator } from '@/Komponen/Ui/separator';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 
 type PropsDokumenLegal = {
@@ -17,6 +18,7 @@ export default function HalamanDokumenLegalPublik({ Dokumen }: PropsDokumenLegal
                     Versi {Dokumen.Versi} · {Dokumen.Terjadwal ? 'akan berlaku mulai' : 'berlaku mulai'}{' '}
                     {FormatTanggal(Dokumen.BerlakuMulai)}
                 </p>
+                <Separator className="bg-garis" />
                 <article className="whitespace-pre-wrap text-isi text-teks-utama">{Dokumen.Isi}</article>
             </main>
         </>

@@ -1,8 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import { Card, CardContent } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+
+import { PemberitahuanMelayang } from './BagianTataLetak';
 
 type PropsTataLetak = { judul: string; keterangan?: string; children: ReactNode; lebar?: 'sempit' | 'sedang' };
 
@@ -27,8 +30,11 @@ export default function TataLetakAutentikasi({ judul, keterangan, children, leba
                 </header>
                 {props.Kilat ? <Pemberitahuan jenis="info">{props.Kilat}</Pemberitahuan> : null}
                 {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
-                <section className="rounded-panel border border-garis bg-permukaan p-6">{children}</section>
+                <Card className="rounded-panel py-6 shadow-none">
+                    <CardContent className="px-6">{children}</CardContent>
+                </Card>
             </main>
+            <PemberitahuanMelayang />
         </>
     );
 }

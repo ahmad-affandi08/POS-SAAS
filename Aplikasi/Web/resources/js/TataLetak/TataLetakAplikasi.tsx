@@ -1,15 +1,45 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    CreditCardIcon,
+    HouseIcon,
+    LifeBuoyIcon,
+    MonitorSmartphoneIcon,
+    PackageIcon,
+    ScrollTextIcon,
+    ShieldCheckIcon,
+    StoreIcon,
+    UsersIcon,
+    type LucideIcon,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
+    SidebarProvider,
+    SidebarRail,
+} from '@/Komponen/Ui/sidebar';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
+import { BacaSidebarTerbuka, KepalaTataLetak, MenuAkun, PemberitahuanMelayang } from './BagianTataLetak';
+
 type PropsTataLetak = { judul: string; children: ReactNode };
 
-type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null };
+type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null; ikon?: LucideIcon };
 
 // F-03: grup menu "Produk". Tampil sebagai sub-menu saat salah satu halamannya dibuka.
 const menuProduk: ItemMenu[] = [
@@ -34,16 +64,29 @@ export function CariMenuProdukAktif(url: string): string | null {
 
 // Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
 const daftarMenu: ItemMenu[] = [
-    { label: 'Beranda', href: '/kelola', izin: null },
-    { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat },
-    { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
+    { label: 'Beranda', href: '/kelola', izin: null, ikon: HouseIcon },
+    { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat, ikon: StoreIcon },
+    { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat, ikon: PackageIcon },
     // F-02b: perangkat POS.
-    { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat },
-    { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat },
-    { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat },
-    { label: 'Langganan', href: '/kelola/langganan', izin: IzinTenant.LanggananKelola },
-    { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat },
+    { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat, ikon: MonitorSmartphoneIcon },
+    { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat, ikon: UsersIcon },
+    { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat, ikon: ScrollTextIcon },
+    { label: 'Langganan', href: '/kelola/langganan', izin: IzinTenant.LanggananKelola, ikon: CreditCardIcon },
+    { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },
 ];
+
+/** Menu utama yang aktif untuk URL ini (Produk untuk seluruh grupnya; Pengguna & peran juga untuk /kelola/peran). */
+export function CekMenuAktif(href: string, url: string): boolean {
+    if (href === '/kelola') {
+        return url === '/kelola';
+    }
+
+    if (href === '/kelola/produk') {
+        return CariMenuProdukAktif(url) !== null;
+    }
+
+    return url.startsWith(href) || (href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
+}
 
 /** F-00: banner selama langganan Tertunggak (masa tenggang) atau Ditangguhkan (hanya lihat, export, bayar). */
 function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBayar: boolean }) {
@@ -83,13 +126,19 @@ function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBay
     return null;
 }
 
-/** Tata letak back-office tenant (/kelola). Menu modul ditambahkan per flow (F-01 dst.). */
+/**
+ * Tata letak back-office tenant (/kelola): bilah menu samping shadcn/ui berbasis izin (bisa diciutkan menjadi ikon,
+ * menjadi Sheet di layar sempit), bilah atas dengan remah roti & menu akun, lalu banner status dan isi halaman.
+ * Menu modul ditambahkan per flow (F-01 dst.).
+ */
 export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
     const menuProdukAktif = CariMenuProdukAktif(url);
     const subMenuProduk = menuProduk.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
+    const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
+    const keamananAktif = url.startsWith('/kelola/keamanan');
     const [mengirim, AturMengirim] = useState(false);
     const KirimUlangVerifikasi = () =>
         router.post(
@@ -99,115 +148,149 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
         );
 
     return (
-        <>
+        <SidebarProvider defaultOpen={BacaSidebarTerbuka()}>
             <Head title={judul} />
-            <header className="border-b border-garis bg-permukaan">
-                <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-                    <p className="text-subjudul font-bold text-teks-utama">{tenantAktif?.Nama ?? props.NamaAplikasi}</p>
-                    <div className="flex items-center gap-3">
-                        <span className="text-label text-teks-sekunder">{props.Pengguna?.Nama}</span>
-                        {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
-                        <Link
-                            href="/kelola/keamanan"
-                            className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                        >
-                            Keamanan akun
-                        </Link>
-                        <Tombol varian="sekunder" onClick={() => router.post('/keluar')}>
-                            Keluar
-                        </Tombol>
-                    </div>
-                </div>
-                {tenantAktif && props.Akses ? (
-                    <nav aria-label="Menu utama" className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4">
-                        {menuTerlihat.map((menu) => {
-                            const aktif =
-                                menu.href === '/kelola'
-                                    ? url === '/kelola'
-                                    : menu.href === '/kelola/produk'
-                                      ? menuProdukAktif !== null
-                                      : url.startsWith(menu.href) ||
-                                        (menu.href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
-
-                            return (
-                                <Link
-                                    key={menu.href}
-                                    href={menu.href}
-                                    aria-current={aktif ? 'page' : undefined}
-                                    className={`-mb-px border-b-2 px-3 py-2 text-label font-semibold outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                        aktif ? 'border-brand text-teks-utama' : 'border-transparent text-teks-sekunder'
-                                    }`}
-                                >
-                                    {menu.label}
-                                </Link>
-                            );
-                        })}
-                    </nav>
-                ) : null}
-                {tenantAktif && props.Akses && menuProdukAktif !== null && subMenuProduk.length > 0 ? (
-                    <nav
-                        aria-label="Menu produk"
-                        className="mx-auto flex max-w-6xl gap-1 overflow-x-auto border-t border-garis px-4"
+            <Sidebar collapsible="icon">
+                <SidebarHeader className="border-b border-sidebar-border">
+                    <p
+                        className="truncate px-2 py-1.5 text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
+                        title={namaInduk}
                     >
-                        {subMenuProduk.map((menu) => (
-                            <Link
-                                key={menu.href}
-                                href={menu.href}
-                                aria-current={menuProdukAktif === menu.href ? 'page' : undefined}
-                                className={`shrink-0 px-3 py-2 text-label outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                    menuProdukAktif === menu.href
-                                        ? 'font-semibold text-teks-utama underline underline-offset-4'
-                                        : 'text-teks-sekunder'
-                                }`}
+                        {namaInduk}
+                    </p>
+                </SidebarHeader>
+                <SidebarContent>
+                    {tenantAktif && props.Akses ? (
+                        <nav aria-label="Menu utama">
+                            <SidebarGroup>
+                                <SidebarGroupContent>
+                                    <SidebarMenu>
+                                        {menuTerlihat.map((menu) => {
+                                            const aktif = CekMenuAktif(menu.href, url);
+                                            const Ikon = menu.ikon;
+
+                                            return (
+                                                <SidebarMenuItem key={menu.href}>
+                                                    <SidebarMenuButton
+                                                        asChild
+                                                        isActive={aktif}
+                                                        tooltip={menu.label}
+                                                        className="text-label data-[active=true]:font-semibold"
+                                                    >
+                                                        <Link
+                                                            href={menu.href}
+                                                            aria-current={aktif ? 'page' : undefined}
+                                                        >
+                                                            {Ikon ? <Ikon aria-hidden="true" /> : null}
+                                                            <span>{menu.label}</span>
+                                                        </Link>
+                                                    </SidebarMenuButton>
+                                                    {menu.href === '/kelola/produk' &&
+                                                    menuProdukAktif !== null &&
+                                                    subMenuProduk.length > 0 ? (
+                                                        <nav aria-label="Menu produk">
+                                                            <SidebarMenuSub>
+                                                                {subMenuProduk.map((sub) => (
+                                                                    <SidebarMenuSubItem key={sub.href}>
+                                                                        <SidebarMenuSubButton
+                                                                            asChild
+                                                                            isActive={menuProdukAktif === sub.href}
+                                                                            className="text-label data-[active=true]:font-semibold"
+                                                                        >
+                                                                            <Link
+                                                                                href={sub.href}
+                                                                                aria-current={
+                                                                                    menuProdukAktif === sub.href
+                                                                                        ? 'page'
+                                                                                        : undefined
+                                                                                }
+                                                                            >
+                                                                                {sub.label}
+                                                                            </Link>
+                                                                        </SidebarMenuSubButton>
+                                                                    </SidebarMenuSubItem>
+                                                                ))}
+                                                            </SidebarMenuSub>
+                                                        </nav>
+                                                    ) : null}
+                                                </SidebarMenuItem>
+                                            );
+                                        })}
+                                    </SidebarMenu>
+                                </SidebarGroupContent>
+                            </SidebarGroup>
+                        </nav>
+                    ) : null}
+                </SidebarContent>
+                <SidebarFooter className="border-t border-sidebar-border">
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
+                            <SidebarMenuButton
+                                asChild
+                                isActive={keamananAktif}
+                                tooltip="Keamanan akun"
+                                className="text-label data-[active=true]:font-semibold"
                             >
-                                {menu.label}
-                            </Link>
-                        ))}
-                    </nav>
-                ) : null}
-            </header>
-            <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6">
-                <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
-                {props.Pengguna && !props.Pengguna.EmailTerverifikasi ? (
-                    <Pemberitahuan jenis="peringatan" judul="Verifikasi email Anda">
-                        <p>
-                            Kami mengirim tautan verifikasi ke {props.Pengguna.Email}. Buka tautan itu untuk mengamankan
-                            akun.
-                        </p>
-                        <div className="mt-2">
-                            <Tombol varian="sekunder" memproses={mengirim} onClick={KirimUlangVerifikasi}>
-                                Kirim ulang tautan
-                            </Tombol>
-                        </div>
-                    </Pemberitahuan>
-                ) : null}
-                {/* BR-P06.5: pengumuman versi materiil dokumen legal selama masa pengumuman. */}
-                {props.PengumumanLegal.length > 0 ? (
-                    <Pemberitahuan jenis="info" judul="Perubahan dokumen legal">
-                        <ul className="flex flex-col gap-1">
-                            {props.PengumumanLegal.map((pengumuman) => (
-                                <li key={`${pengumuman.Label}-${pengumuman.Versi}`}>
-                                    {pengumuman.Label} versi {pengumuman.Versi} berlaku mulai{' '}
-                                    {FormatTanggal(pengumuman.BerlakuMulai)}.{' '}
-                                    <a href={pengumuman.Tautan} className="font-semibold text-brand underline">
-                                        Baca perubahannya
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-1">Anda akan diminta menyetujuinya setelah tanggal berlaku.</p>
-                    </Pemberitahuan>
-                ) : null}
-                {tenantAktif ? (
-                    <BannerLangganan
-                        tenant={tenantAktif}
-                        bolehBayar={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
-                    />
-                ) : null}
-                {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}
-                {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
-                {children}
-            </main>
-        </>
+                                <Link href="/kelola/keamanan" aria-current={keamananAktif ? 'page' : undefined}>
+                                    <ShieldCheckIcon aria-hidden="true" />
+                                    <span>Keamanan akun</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
+                {/* Rel hanya pintasan tetikus (tabIndex -1); tombol di bilah atas adalah kontrol yang diumumkan. */}
+                <SidebarRail aria-hidden="true" aria-label={undefined} title="Buka atau tutup menu samping" />
+            </Sidebar>
+            <div data-slot="sidebar-inset" className="relative flex w-full min-w-0 flex-1 flex-col bg-latar">
+                <KepalaTataLetak induk={namaInduk} judul={judul}>
+                    <MenuAkun nama={props.Pengguna?.Nama} email={props.Pengguna?.Email} />
+                </KepalaTataLetak>
+                <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
+                    <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                    {props.Pengguna && !props.Pengguna.EmailTerverifikasi ? (
+                        <Pemberitahuan jenis="peringatan" judul="Verifikasi email Anda">
+                            <p>
+                                Kami mengirim tautan verifikasi ke {props.Pengguna.Email}. Buka tautan itu untuk
+                                mengamankan akun.
+                            </p>
+                            <div className="mt-2">
+                                <Tombol varian="sekunder" memproses={mengirim} onClick={KirimUlangVerifikasi}>
+                                    Kirim ulang tautan
+                                </Tombol>
+                            </div>
+                        </Pemberitahuan>
+                    ) : null}
+                    {/* BR-P06.5: pengumuman versi materiil dokumen legal selama masa pengumuman. */}
+                    {props.PengumumanLegal.length > 0 ? (
+                        <Pemberitahuan jenis="info" judul="Perubahan dokumen legal">
+                            <ul className="flex flex-col gap-1">
+                                {props.PengumumanLegal.map((pengumuman) => (
+                                    <li key={`${pengumuman.Label}-${pengumuman.Versi}`}>
+                                        {pengumuman.Label} versi {pengumuman.Versi} berlaku mulai{' '}
+                                        {FormatTanggal(pengumuman.BerlakuMulai)}.{' '}
+                                        <a href={pengumuman.Tautan} className="font-semibold text-brand underline">
+                                            Baca perubahannya
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-1">Anda akan diminta menyetujuinya setelah tanggal berlaku.</p>
+                        </Pemberitahuan>
+                    ) : null}
+                    {tenantAktif ? (
+                        <BannerLangganan
+                            tenant={tenantAktif}
+                            bolehBayar={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
+                        />
+                    ) : null}
+                    {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}
+                    {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
+                    {children}
+                </main>
+            </div>
+            <PemberitahuanMelayang />
+        </SidebarProvider>
     );
 }

@@ -1,4 +1,8 @@
 import { Link } from '@inertiajs/react';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+
+import { buttonVariants } from '@/Komponen/Ui/button';
+import { Pagination, PaginationContent, PaginationItem } from '@/Komponen/Ui/pagination';
 
 type PropsPaginasi = {
     alamat: string;
@@ -8,6 +12,8 @@ type PropsPaginasi = {
     total: number;
     label: string;
 };
+
+const kelasTautan = buttonVariants({ variant: 'outline', size: 'sm', className: 'text-label font-semibold' });
 
 /** Navigasi halaman memakai parameter query `halaman` (D-06). */
 export default function Paginasi({ alamat, saring, halamanSaatIni, halamanTerakhir, total, label }: PropsPaginasi) {
@@ -19,22 +25,28 @@ export default function Paginasi({ alamat, saring, halamanSaatIni, halamanTerakh
         `${alamat}?${new URLSearchParams({ ...saring, halaman: String(halaman) }).toString()}`;
 
     return (
-        <nav aria-label={label} className="flex items-center justify-between text-label">
+        <Pagination aria-label={label} className="mx-0 flex-wrap items-center justify-between gap-2 text-label">
             <span className="text-teks-sekunder">
                 Halaman {halamanSaatIni} dari {halamanTerakhir} · {total} entri
             </span>
-            <div className="flex gap-3">
+            <PaginationContent className="gap-2">
                 {halamanSaatIni > 1 ? (
-                    <Link href={BuatTautan(halamanSaatIni - 1)} className="font-semibold text-brand underline">
-                        Sebelumnya
-                    </Link>
+                    <PaginationItem>
+                        <Link href={BuatTautan(halamanSaatIni - 1)} rel="prev" className={kelasTautan}>
+                            <ChevronLeftIcon aria-hidden="true" />
+                            Sebelumnya
+                        </Link>
+                    </PaginationItem>
                 ) : null}
                 {halamanSaatIni < halamanTerakhir ? (
-                    <Link href={BuatTautan(halamanSaatIni + 1)} className="font-semibold text-brand underline">
-                        Berikutnya
-                    </Link>
+                    <PaginationItem>
+                        <Link href={BuatTautan(halamanSaatIni + 1)} rel="next" className={kelasTautan}>
+                            Berikutnya
+                            <ChevronRightIcon aria-hidden="true" />
+                        </Link>
+                    </PaginationItem>
                 ) : null}
-            </div>
-        </nav>
+            </PaginationContent>
+        </Pagination>
     );
 }
