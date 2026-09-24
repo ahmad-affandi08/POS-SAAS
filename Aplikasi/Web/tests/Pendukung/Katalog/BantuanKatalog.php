@@ -13,7 +13,9 @@ use App\Domain\Katalog\Model\Satuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Pajak\Model\KelompokPajak;
 use App\Domain\Tenant\Model\Tenant;
+use Illuminate\Support\Str;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
 use Tests\TestCase;
@@ -91,6 +93,77 @@ final class BantuanKatalog
         }
 
         return $produk;
+    }
+
+    public static function BuatKelompokPajak(string $nama = 'Barang kena PPN'): KelompokPajak
+    {
+        return KelompokPajak::query()->create(['Nama' => $nama]);
+    }
+
+    /**
+     * Tenant siap mengisi produk lewat form: satuan pcs (standar), satuan kg (desimal), dan satu kelompok pajak.
+     * Konteks tenant diatur ke tenant ini.
+     *
+     * @return array{Tenant: Tenant, Pemilik: Pengguna, Outlet: Outlet, Pcs: Satuan, Kg: Satuan, KelompokPajak: KelompokPajak}
+     */
+    public static function SiapkanTenantProduk(string $namaUsaha = 'Toko Sumber Rejeki', ?string $kodePaket = null): array
+    {
+        $hasil = self::BuatTenant($namaUsaha, $kodePaket);
+        BantuanOrganisasi::AturKonteks($hasil['Tenant']->Id);
+
+        return $hasil + [
+            'Pcs' => self::BuatSatuan('Pieces', 'pcs', false, 'PCS'),
+            'Kg' => self::BuatSatuan('Kilogram', 'kg', true, 'KG'),
+            'KelompokPajak' => self::BuatKelompokPajak(),
+        ];
+    }
+
+    /**
+     * Isi form produk (tipe FE `FormProduk`) dengan satu satuan dasar tanpa barcode & harga.
+     *
+     * @param  array<string, mixed>  $timpa
+     * @return array<string, mixed>
+     */
+    public static function IsiFormProduk(Satuan $satuanDasar, ?KelompokPajak $kelompokPajak, array $timpa = []): array
+    {
+        self::$urutan++;
+
+        return array_replace([
+            'Uuid' => (string) Str::ulid(),
+            'Nama' => 'Kopi Bubuk Robusta Temanggung 250 gram #'.self::$urutan,
+            'NamaStruk' => '',
+            'Sku' => '',
+            'Jenis' => JenisProduk::Stok->value,
+            'UuidKategori' => null,
+            'Merek' => '',
+            'UuidSatuanDasar' => $satuanDasar->Uuid,
+            'Pelacakan' => 'Tidak',
+            'UuidKelompokPajak' => $kelompokPajak?->Uuid,
+            'HargaTermasukPajak' => 'Ikut',
+            'BolehMinus' => 'Ikut',
+            'TampilDiPos' => true,
+            'TampilOnline' => false,
+            'Satuan' => [self::IsiSatuanForm($satuanDasar)],
+            'AtributVarian' => [],
+        ], $timpa);
+    }
+
+    /**
+     * @param  list<string>  $barcode
+     * @param  list<array{JumlahMinimum: string, Harga: string}>  $hargaAwal
+     * @return array<string, mixed>
+     */
+    public static function IsiSatuanForm(Satuan $satuan, string $konversi = '1', array $barcode = [], array $hargaAwal = [], ?string $uuid = null, bool $defaultJual = false, bool $defaultBeli = false): array
+    {
+        return [
+            'Uuid' => $uuid,
+            'UuidSatuan' => $satuan->Uuid,
+            'KonversiKeDasar' => $konversi,
+            'DefaultJual' => $defaultJual,
+            'DefaultBeli' => $defaultBeli,
+            'Barcode' => $barcode,
+            'HargaAwal' => $hargaAwal,
+        ];
     }
 
     /**
