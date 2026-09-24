@@ -22,5 +22,5 @@ return [
     'MinimalSuperAdminAktif' => 2,
 
     // Nama yang tampil di aplikasi autentikator (Google Authenticator, Aegis, dsb.).
-    'NamaPenerbit2fa' => env('APP_NAME', 'POS SaaS').' Pengelola',
+    'NamaPenerbit2fa' => env('APP_NAME', 'PAYOU').' Pengelola',
 ];

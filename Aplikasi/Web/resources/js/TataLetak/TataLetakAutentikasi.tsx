@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
 import { Card, CardContent } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -22,8 +23,8 @@ export default function TataLetakAutentikasi({ judul, keterangan, children, leba
                 }`}
             >
                 <header className="flex flex-col gap-1">
-                    <Link href="/" className="text-label font-semibold text-teks-sekunder">
-                        {props.NamaAplikasi}
+                    <Link href="/" className="mb-4 self-start">
+                        <LogoMerek nama={props.NamaAplikasi} />
                     </Link>
                     <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
                     {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}

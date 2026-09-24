@@ -1,12 +1,12 @@
 # PRD — POS SaaS Multi-Sektor Indonesia
 
-> **Nama sistem:** belum ditetapkan. Di seluruh dokumen dipakai placeholder **`{{APP}}`**.
-> Kandidat nama ada di [Lampiran A](#lampiran-a--kandidat-nama-sistem).
+> **Nama sistem:** **PAYOU**, slogan *"Bisnis Laris, Kelola Praktis."* (D-15, v1.36). Placeholder **`{{APP}}`** yang masih tertulis di dokumen ini dibaca sebagai PAYOU.
+> Aset logo & palet merek di `Spesifikasi/Merek/`. Kandidat nama lama tetap di [Lampiran A](#lampiran-a--kandidat-nama-sistem) sebagai arsip.
 
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.35 |
+| Versi | 1.36 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -56,6 +56,7 @@
 | 1.33 | Rincian F-05a (diputuskan agen atas mandat D-12): dokumen `StokAwal` & impor stok awal, ledger `MutasiStok` dengan HPP rata-rata bergerak/FIFO, batch & nomor seri, inti jurnal (`PostingJurnal`, `BalikkanJurnal`, kunci periode) yang dibangun lebih awal untuk J-05.1, kolom tambahan §15 (Inventori, Akuntansi, Sistem), izin baru `persediaan.stok-awal.posting` (§19.1), kode galat F-05a, perintah `persediaan:bangun-ulang-saldo`. Utang F-05a di §25 no. 20. |
 | 1.34 | Rincian F-06a (diputuskan agen atas mandat D-12): server & back-office shift dan kas. Endpoint `POST /api/pos/v1/sinkron/kirim` (batch outbox, hasil per item Diterima/Duplikat/Ditolak), tabel `Shift`/`MutasiKas` dilengkapi dan tabel baru `KategoriKas` (§15), izin baru `kas.keluar.setujui` (§19.1), pengaturan kasir tenant (batas kas keluar, shift bersama), jurnal kas masuk & setoran (§11.3). Aplikasi kasir Flutter menyusul di F-06b. Utang F-06 di §25 no. 21. |
 | 1.35 | Rincian F-06b (diputuskan agen atas mandat D-12): aplikasi kasir Flutter (aktivasi, masuk PIN online/offline, buka shift, kas masuk/keluar/setoran dengan PIN supervisor, status sinkron), PIN offline Argon2id terbungkus kunci perangkat (§25.2 no. 3) dengan vektor uji bersama `Spesifikasi/VektorUjiPin`, `GET /api/pos/v1/data-awal` bagian F-06, kolom `TenantPengguna.VerifierPinOffline` & `Perangkat.KunciPinOffline` (§15). Utang F-06 di §25 no. 21 diperbarui. |
+| 1.36 | Keputusan D-15: nama sistem **PAYOU** dan identitas merek dari pemilik produk (logo, ikon, palet). Token warna §17.6.3 final: Navy untuk teks, Indigo untuk brand, netral dingin untuk latar & garis. Aset & turunannya (favicon web, ikon Android/iOS/Windows, logo dalam aplikasi) di `Spesifikasi/Merek/`. Nama tampilan aplikasi: **PAYOU POS** (Aplikasi POS) dan **PAYOU Owner** (Aplikasi Owner). |
 
 ---
 
@@ -3190,17 +3191,19 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 **Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
 
-**Token warna (usulan awal, bisa disesuaikan saat identitas brand & nama sistem final):**
+**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/Sumber/LembarMerek.png`):** Primary Indigo `#6366F1`, Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
 
-| Token | Nilai (sementara) | Fungsi |
+**Token warna (final, v1.36):**
+
+| Token | Nilai | Fungsi |
 |---|---|---|
-| `Latar` | `#FAFAF7` | Latar halaman (abu-abu hangat, bukan abu kebiruan) |
+| `Latar` | `#F9FAFB` (Warm Neutral) | Latar halaman |
 | `Permukaan` | `#FFFFFF` | Panel, tabel, dialog |
-| `Garis` | `#E4E2DC` | Pemisah dekoratif |
-| `GarisInput` | `#8A877F` | Tepi input & kontrol (kontras ≥ 3:1) |
-| `TeksUtama` | `#1C1B19` | Teks utama |
-| `TeksSekunder` | `#5C5A55` | Keterangan, label sekunder |
-| `Brand` | `#0B6468` (teal tua) | Aksi utama, penanda aktif |
+| `Garis` | `#E5E7EB` (Cool Gray) | Pemisah dekoratif |
+| `GarisInput` | `#7D8799` | Tepi input & kontrol (kontras 3,5:1 terhadap `Latar`) |
+| `TeksUtama` | `#0F2747` (Navy) | Teks utama (14,3:1) |
+| `TeksSekunder` | `#4A5873` | Keterangan, label sekunder (6,9:1) |
+| `Brand` | `#5558E8` (Indigo) | Aksi utama, penanda aktif (teks putih 5,3:1) |
 | `Sukses` | `#2E7D32` | Lunas, berhasil, tersinkron |
 | `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
 | `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |
@@ -3802,6 +3805,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-12 | Pemilik produk mendelegasikan keputusan atas pertanyaan terbuka agen (v1.16–v1.26) kepada agen dengan patokan kepatuhan hukum Indonesia, keadilan bagi tenant, dan kesehatan bisnis {{APP}}. Rincian di §25.2 | 23/09/2026 | §8 P-06/P-07/P-08/P-09/P-11, F-00, F-02, F-06, F-19, §25.2 |
 | D-13 | Folder aplikasi Laravel bernama **`Aplikasi/Web/`** (sebelumnya `Backend/`): satu aplikasi berisi API POS & Owner, back-office Inertia React, web publik, dan Platform Pengelola, sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`; kode bersama tetap di `Paket/` | 23/09/2026 | §13.0, §13.7.2, §13.8, §17.4.1, §22, §23, `CLAUDE.md`, `.claude/`, `Alat/`, CI |
 | D-14 | **Tanpa mode gelap** di semua klien (web, Aplikasi Kasir, Aplikasi Pemilik, KDS). Warna diubah di satu tempat per platform (`Aplikasi.css` untuk web, `TokenWarna.dart` untuk Flutter); halaman tidak pernah memuat warna lepas. Seluruh komponen shadcn/ui dipasang di `Komponen/Ui/` dan warnanya diturunkan dari token. Warna final menyusul | 24/09/2026 | §17.4, §17.5, §17.6.3, §17.x KDS |
+| D-15 | Nama sistem **PAYOU** (slogan "Bisnis Laris, Kelola Praktis.") beserta logo, ikon, dan palet merek dari pemilik produk. Token warna §17.6.3 menjadi final (Brand Indigo `#5558E8`, TeksUtama Navy `#0F2747`). Aset sumber & skrip turunan di `Spesifikasi/Merek/`; logo di UI adalah aset merek, bukan dekorasi (aturan tanpa gradien berlaku untuk komponen UI) | 24/09/2026 | Kepala dokumen, §17.6.3, `Spesifikasi/Merek`, `CLAUDE.md` |
 
 
 ### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)

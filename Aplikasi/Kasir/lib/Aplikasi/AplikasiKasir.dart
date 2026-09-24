@@ -13,7 +13,7 @@ class AplikasiKasir extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kasir',
+      title: 'PAYOU POS',
       debugShowCheckedModeBanner: false,
       // Hanya tema terang, tanpa darkTheme (D-14).
       theme: BuatTema(),

@@ -22,6 +22,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/fonts/LisensiOFL.txt
+    - assets/merek/
   fonts:
     - family: AtkinsonHyperlegibleNext
       fonts:

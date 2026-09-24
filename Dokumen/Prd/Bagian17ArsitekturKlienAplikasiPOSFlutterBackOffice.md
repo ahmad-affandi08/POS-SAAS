@@ -372,17 +372,19 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 **Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
 
-**Token warna (usulan awal, bisa disesuaikan saat identitas brand & nama sistem final):**
+**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/Sumber/LembarMerek.png`):** Primary Indigo `#6366F1`, Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
 
-| Token | Nilai (sementara) | Fungsi |
+**Token warna (final, v1.36):**
+
+| Token | Nilai | Fungsi |
 |---|---|---|
-| `Latar` | `#FAFAF7` | Latar halaman (abu-abu hangat, bukan abu kebiruan) |
+| `Latar` | `#F9FAFB` (Warm Neutral) | Latar halaman |
 | `Permukaan` | `#FFFFFF` | Panel, tabel, dialog |
-| `Garis` | `#E4E2DC` | Pemisah dekoratif |
-| `GarisInput` | `#8A877F` | Tepi input & kontrol (kontras ≥ 3:1) |
-| `TeksUtama` | `#1C1B19` | Teks utama |
-| `TeksSekunder` | `#5C5A55` | Keterangan, label sekunder |
-| `Brand` | `#0B6468` (teal tua) | Aksi utama, penanda aktif |
+| `Garis` | `#E5E7EB` (Cool Gray) | Pemisah dekoratif |
+| `GarisInput` | `#7D8799` | Tepi input & kontrol (kontras 3,5:1 terhadap `Latar`) |
+| `TeksUtama` | `#0F2747` (Navy) | Teks utama (14,3:1) |
+| `TeksSekunder` | `#4A5873` | Keterangan, label sekunder (6,9:1) |
+| `Brand` | `#5558E8` (Indigo) | Aksi utama, penanda aktif (teks putih 5,3:1) |
 | `Sukses` | `#2E7D32` | Lunas, berhasil, tersinkron |
 | `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
 | `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |

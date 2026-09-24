@@ -58,6 +58,8 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Align(alignment: Alignment.centerLeft, child: LogoMerek.lengkap()),
+                const SizedBox(height: 32),
                 Text('Aktifkan perangkat kasir', style: teks.headlineSmall),
                 const SizedBox(height: 8),
                 Text(

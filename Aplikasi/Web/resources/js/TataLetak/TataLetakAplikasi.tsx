@@ -38,6 +38,7 @@ import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
+import { IkonMerek } from '@/Komponen/Merek/LogoMerek';
 import { BacaSidebarTerbuka, KepalaTataLetak, MenuAkun, PemberitahuanMelayang } from './BagianTataLetak';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
@@ -241,12 +242,15 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
             <Head title={judul} />
             <Sidebar collapsible="icon">
                 <SidebarHeader className="border-b border-sidebar-border">
-                    <p
-                        className="truncate px-2 py-1.5 text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
-                        title={namaInduk}
-                    >
-                        {namaInduk}
-                    </p>
+                    <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:px-0">
+                        <IkonMerek nama={props.NamaAplikasi} />
+                        <p
+                            className="truncate text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
+                            title={namaInduk}
+                        >
+                            {namaInduk}
+                        </p>
+                    </div>
                 </SidebarHeader>
                 <SidebarContent>
                     {tenantAktif && props.Akses ? (

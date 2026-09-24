@@ -1,6 +1,6 @@
 # CLAUDE.md — Aturan Kerja AI Agent
 
-POS SaaS multi-sektor Indonesia (nama sistem belum ditetapkan, ditulis `{{APP}}`).
+POS SaaS multi-sektor Indonesia bernama **PAYOU** (D-15; placeholder `{{APP}}` di PRD = PAYOU). Aset merek di `Spesifikasi/Merek/`.
 Sumber kebenaran: `PRD.md`. **Jangan membaca PRD.md utuh.** Baca potongannya lewat `Dokumen/Indeks.md`:
 flow di `Dokumen/Flow/`, bagian PRD di `Dokumen/Prd/`, keputusan di `Dokumen/Keputusan.md`.
 
@@ -43,7 +43,7 @@ Jangan mencoba melewati penjaga tersebut. Kalau penjaga menolak, perbaiki kodeny
 17. Setiap perubahan perilaku disertai test. Flow keuangan/stok wajib invariant test (Σ debit = Σ kredit, `SaldoStok` = Σ `MutasiStok`).
 18. Kalkulasi harga/pajak/promo harus lolos test vector bersama di `Spesifikasi/VektorUjiKalkulasi/` (PHP & Dart).
 19. **Dilarang** melemahkan, men-skip, atau menghapus test, aturan lint, test arsitektur, atau konfigurasi CI supaya lolos.
-20. UI mengikuti §17.5 (font Atkinson Hyperlegible) dan §17.6 (token, keadaan wajib, microcopy Indonesia). Warna final belum diputuskan: pakai token, jangan hex lepas.
+20. UI mengikuti §17.5 (font Atkinson Hyperlegible) dan §17.6 (token, keadaan wajib, microcopy Indonesia). Palet final PAYOU (D-15) ada di token: pakai token, jangan hex lepas.
 
 ## Yang dilarang keras
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Token warna semantik (PRD §17.6.3). **Satu-satunya sumber warna** untuk seluruh aplikasi Flutter.
 ///
-/// **Warna masih sementara** (D-09): identitas brand final belum diputuskan. Untuk mengganti warna,
+/// Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek`). Untuk mengganti warna,
 /// ubah nilainya **di sini** dan **di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css`** (token `--color-*`,
 /// nama sama dalam kebab-case, mis. `garisInput` = `--color-garis-input`). Test `SumberWarna_test.dart`
 /// memastikan keduanya sama.
@@ -27,13 +27,13 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
   });
 
   static const TokenWarna bawaan = TokenWarna(
-    latar: Color(0xFFFAFAF7),
+    latar: Color(0xFFF9FAFB),
     permukaan: Color(0xFFFFFFFF),
-    garis: Color(0xFFE4E2DC),
-    garisInput: Color(0xFF8A877F),
-    teksUtama: Color(0xFF1C1B19),
-    teksSekunder: Color(0xFF5C5A55),
-    brand: Color(0xFF0B6468),
+    garis: Color(0xFFE5E7EB),
+    garisInput: Color(0xFF7D8799),
+    teksUtama: Color(0xFF0F2747),
+    teksSekunder: Color(0xFF4A5873),
+    brand: Color(0xFF5558E8),
     sukses: Color(0xFF2E7D32),
     peringatan: Color(0xFF9A5B00),
     bahaya: Color(0xFFB3261E),

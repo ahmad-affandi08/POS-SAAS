@@ -32,6 +32,7 @@ import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { IzinPengelola, PunyaIzin, type KunciIzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
+import { IkonMerek } from '@/Komponen/Merek/LogoMerek';
 import { BacaSidebarTerbuka, KepalaTataLetak, MenuAkun, PemberitahuanMelayang } from './BagianTataLetak';
 
 type PropsTataLetak = {
@@ -83,12 +84,15 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
             <Head title={judul} />
             <Sidebar collapsible="icon">
                 <SidebarHeader className="border-b border-sidebar-border">
-                    <p
-                        className="truncate px-2 py-1.5 text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
-                        title={namaPlatform}
-                    >
-                        {namaPlatform}
-                    </p>
+                    <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:px-0">
+                        <IkonMerek nama={props.NamaAplikasi} />
+                        <p
+                            className="truncate text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
+                            title={namaPlatform}
+                        >
+                            {namaPlatform}
+                        </p>
+                    </div>
                 </SidebarHeader>
                 <SidebarContent>
                     <nav aria-label="Menu utama">

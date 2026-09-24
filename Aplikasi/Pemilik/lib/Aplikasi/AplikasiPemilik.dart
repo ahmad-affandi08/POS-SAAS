@@ -12,7 +12,7 @@ class AplikasiPemilik extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pemilik',
+      title: 'PAYOU Owner',
       debugShowCheckedModeBanner: false,
       // Hanya tema terang, tanpa darkTheme (D-14).
       theme: BuatTema(),
@@ -38,7 +38,16 @@ class LayarAwal extends StatelessWidget {
   Widget build(BuildContext context) {
     final teks = Theme.of(context).textTheme;
     return Scaffold(
-      body: Center(child: Text('Pemilik', style: teks.headlineSmall)),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const LogoMerek.lengkap(),
+            const SizedBox(height: 24),
+            Text('Pemilik', style: teks.headlineSmall),
+          ],
+        ),
+      ),
     );
   }
 }

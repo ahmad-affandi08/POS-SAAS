@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 
 import { BuatKlienKueri } from './Pustaka/KlienKueri';
 
-const NamaAplikasi = import.meta.env.VITE_APP_NAME ?? 'POS SaaS';
+const NamaAplikasi = import.meta.env.VITE_APP_NAME ?? 'PAYOU';
 const klienKueri = BuatKlienKueri();
 // Halaman Platform Pengelola dikecualikan: bundle-nya terpisah (Pengelola.tsx, PRD §13.8).
 const daftarHalaman = import.meta.glob<{ default: ComponentType }>(['./Halaman/**/*.tsx', '!./Halaman/Pengelola/**']);

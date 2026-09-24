@@ -24,7 +24,7 @@
 
 /* ============================================================================================
  * 1. UBAH WARNA DI SINI
- *    Palet dasar (nilai sementara §17.6.3). Ke-11 nilai ini juga ada di Flutter
+ *    Palet dasar merek PAYOU (D-15, §17.6.3; sumber Spesifikasi/Merek). Ke-11 nilai ini juga ada di Flutter
  *    (Paket/SistemDesain/lib/Token/TokenWarna.dart, nama sama dalam camelCase) dan dicek sama oleh
  *    Paket/SistemDesain/test/Token/SumberWarna_test.dart: ubah keduanya bersamaan.
  *    Setiap token menjadi utilitas Tailwind: bg-latar, text-teks-sekunder, border-garis, dst.
@@ -34,13 +34,13 @@
     /* Matikan palet bawaan Tailwind: hanya token di file ini yang boleh dipakai. */
     --color-*: initial;
 
-    --color-latar: #fafaf7; /* latar halaman */
+    --color-latar: #f9fafb; /* latar halaman (Warm Neutral) */
     --color-permukaan: #ffffff; /* panel, tabel, dialog, input; juga teks di atas brand/bahaya */
-    --color-garis: #e4e2dc; /* pemisah */
-    --color-garis-input: #8a877f; /* tepi input & kontrol (kontras >= 3:1) */
-    --color-teks-utama: #1c1b19;
-    --color-teks-sekunder: #5c5a55;
-    --color-brand: #0b6468; /* aksi utama, penanda aktif */
+    --color-garis: #e5e7eb; /* pemisah (Cool Gray) */
+    --color-garis-input: #7d8799; /* tepi input & kontrol (kontras >= 3:1) */
+    --color-teks-utama: #0f2747; /* Navy */
+    --color-teks-sekunder: #4a5873;
+    --color-brand: #5558e8; /* aksi utama, penanda aktif; Primary Indigo #6366f1 digelapkan agar teks putih >= 4,5:1 */
     --color-sukses: #2e7d32;
     --color-peringatan: #9a5b00;
     --color-bahaya: #b3261e;
