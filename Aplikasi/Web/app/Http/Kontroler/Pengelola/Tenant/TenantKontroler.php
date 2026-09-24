@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pengelola\Tenant;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pengelola\Katalog\Kueri\DaftarKatalog;
 use App\Domain\Pengelola\Tenant\Aksi\BuatOverrideTenant;
 use App\Domain\Pengelola\Tenant\Aksi\PerpanjangTrial;
@@ -15,7 +16,8 @@ use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Model\Paket;
 use App\Domain\Tenant\Model\Tenant;
 use App\Http\Kontroler\Kontroler;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,33 +27,11 @@ use Inertia\Response;
  */
 final class TenantKontroler extends Kontroler
 {
-    public function Daftar(Request $permintaan, DaftarTenant $kueri): Response
+    public function Daftar(Request $permintaan, DaftarTenant $kueri): Response|JsonResponse
     {
-        $kata = trim($permintaan->string('kata')->toString());
-        $status = StatusLangganan::tryFrom($permintaan->string('status')->toString());
-        $nilaiPenanda = $permintaan->string('penanda')->toString();
-        $penanda = $nilaiPenanda === DaftarTenant::SARING_TANPA_PENANDA ? $nilaiPenanda : PenandaTenant::tryFrom($nilaiPenanda);
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarTenant::KOLOM_URUT, '-DibuatPada', DaftarTenant::KOLOM_SARING);
 
-        $halaman = $kueri->Cari($kata, $status, $penanda);
-        $email = $kueri->AmbilEmailPemilik(array_values(array_map(fn (Tenant $tenant): int => $tenant->Id, $halaman->items())));
-
-        return Inertia::render('Pengelola/Tenant/Daftar', [
-            'Tenant' => DaftarBerhalaman::Buat($halaman, fn (Tenant $tenant): array => [
-                'Uuid' => $tenant->Uuid,
-                'Nama' => $tenant->Nama,
-                'Slug' => $tenant->Slug,
-                'EmailPemilik' => $email[$tenant->Id] ?? null,
-                'KodePaket' => $tenant->Langganan?->Paket->Kode,
-                'StatusLangganan' => $tenant->Langganan?->Status->value,
-                'TrialBerakhirPada' => $tenant->Langganan?->TrialBerakhirPada?->toIso8601String(),
-                'Penanda' => $tenant->Penanda?->value,
-                'DibuatPada' => $tenant->DibuatPada->toIso8601String(),
-            ]),
-            'Saring' => [
-                'Kata' => $kata,
-                'Status' => $status === null ? '' : $status->value,
-                'Penanda' => $penanda instanceof PenandaTenant ? $penanda->value : ($penanda ?? ''),
-            ],
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/Tenant/Daftar', 'Tenant', fn (): array => $kueri->AmbilTabel($tabel), fn (): array => [
             'PilihanStatus' => array_map(fn (StatusLangganan $item) => ['Nilai' => $item->value, 'Label' => $item->AmbilLabel()], StatusLangganan::cases()),
             'PilihanPenanda' => [
                 ['Nilai' => DaftarTenant::SARING_TANPA_PENANDA, 'Label' => 'Tanpa penanda'],

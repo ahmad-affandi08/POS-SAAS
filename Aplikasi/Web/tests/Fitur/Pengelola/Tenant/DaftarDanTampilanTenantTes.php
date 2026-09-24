@@ -34,30 +34,31 @@ describe('P-07 daftar tenant', function (): void {
 
         $cari([])->assertInertia(fn (AssertableInertia $halaman) => $halaman
             ->component('Pengelola/Tenant/Daftar')
-            ->where('Tenant.Total', 3)
+            ->where('Tenant.Meta.Total', 3)
             ->where('Tenant.Data.0.Nama', 'Salon Cantik')
             ->where('Tenant.Data.2.EmailPemilik', 'rina@kopinusantara.id')
             ->where('Tenant.Data.2.KodePaket', 'PRO')
             ->where('Tenant.Data.2.StatusLangganan', 'Trial'));
 
-        $cari(['kata' => 'sinarjaya.co'])->assertInertia(fn (AssertableInertia $halaman) => $halaman
-            ->where('Tenant.Total', 1)
+        $cari(['cari' => 'sinarjaya.co'])->assertInertia(fn (AssertableInertia $halaman) => $halaman
+            ->where('Tenant.Meta.Total', 1)
             ->where('Tenant.Data.0.Uuid', $toko->Uuid));
-        $cari(['kata' => $kopi->Slug])->assertInertia(fn (AssertableInertia $halaman) => $halaman
-            ->where('Tenant.Total', 1)
+        $cari(['cari' => $kopi->Slug])->assertInertia(fn (AssertableInertia $halaman) => $halaman
+            ->where('Tenant.Meta.Total', 1)
             ->where('Tenant.Data.0.Uuid', $kopi->Uuid));
-        $cari(['status' => 'Aktif'])->assertInertia(fn (AssertableInertia $halaman) => $halaman
-            ->where('Tenant.Total', 1)
+        $cari(['saring' => ['Status' => 'Aktif']])->assertInertia(fn (AssertableInertia $halaman) => $halaman
+            ->where('Tenant.Meta.Total', 1)
             ->where('Tenant.Data.0.Uuid', $toko->Uuid));
-        $cari(['penanda' => 'Demo'])->assertInertia(fn (AssertableInertia $halaman) => $halaman
-            ->where('Tenant.Total', 1)
+        $cari(['saring' => ['Penanda' => 'Demo']])->assertInertia(fn (AssertableInertia $halaman) => $halaman
+            ->where('Tenant.Meta.Total', 1)
             ->where('Tenant.Data.0.Penanda', 'Demo'));
-        $cari(['penanda' => 'Tanpa'])->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tenant.Total', 2));
+        $cari(['saring' => ['Penanda' => 'Tanpa']])->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tenant.Meta.Total', 2));
+        $cari(['saring' => ['Penanda' => 'Tanpa,Demo']])->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tenant.Meta.Total', 3));
         // Karakter wildcard LIKE diperlakukan sebagai teks biasa.
-        $cari(['kata' => '%'])->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tenant.Total', 0));
+        $cari(['cari' => '%'])->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Tenant.Meta.Total', 0));
     });
 
-    it('berhalaman 25 baris per halaman', function (): void {
+    it('berhalaman 25 baris per halaman (TabelData D-16)', function (): void {
         foreach (range(1, 26) as $nomor) {
             BantuanTenantPengelola::BuatTenant("Warung Makan Sederhana {$nomor}");
         }
@@ -66,9 +67,9 @@ describe('P-07 daftar tenant', function (): void {
         $this->get(BantuanPengelola::Url('/tenant?halaman=2'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                ->where('Tenant.Total', 26)
-                ->where('Tenant.HalamanSaatIni', 2)
-                ->where('Tenant.HalamanTerakhir', 2)
+                ->where('Tenant.Meta.Total', 26)
+                ->where('Tenant.Meta.Halaman', 2)
+                ->where('Tenant.Meta.JumlahHalaman', 2)
                 ->count('Tenant.Data', 1));
     });
 
