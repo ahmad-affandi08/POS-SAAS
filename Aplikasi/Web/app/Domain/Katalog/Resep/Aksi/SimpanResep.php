@@ -135,11 +135,18 @@ final class SimpanResep
                 throw new PelanggaranAturanBisnis('BahanTidakValid', "Jumlah {$produkBahan->Nama} harus lebih dari 0.", "Bahan.{$i}.Jumlah");
             }
 
+            $jumlahDasar = $bahan->jumlah->Kali($satuan->KonversiKeDasar);
+
+            // Jumlah positif yang membulat ke 0 di satuan dasar (4 desimal) = resep diam-diam tidak memakai bahan.
+            if ($jumlahDasar->Bandingkan(Kuantitas::Nol()) <= 0) {
+                throw new PelanggaranAturanBisnis('BahanTidakValid', "Jumlah {$produkBahan->Nama} terlalu kecil untuk satuan ini. Pakai satuan yang lebih besar.", "Bahan.{$i}.Jumlah");
+            }
+
             $baris[] = [
                 'IdProdukBahan' => $produkBahan->Id,
                 'Jumlah' => $bahan->jumlah->KeString(),
                 'IdSatuan' => $bahan->idSatuan,
-                'JumlahDasar' => $bahan->jumlah->Kali($satuan->KonversiKeDasar)->KeString(),
+                'JumlahDasar' => $jumlahDasar->KeString(),
                 'PersenSusut' => $this->UraiPersenSusut($bahan->persenSusut, "Bahan.{$i}.PersenSusut"),
             ];
         }
