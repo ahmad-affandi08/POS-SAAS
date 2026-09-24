@@ -257,7 +257,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                 }
             }}
         >
-            <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+            <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                 <SheetHeader>
                     <SheetTitle className="text-subjudul text-teks-utama">
                         {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'} {slot.LabelJenis} · {slot.Lingkungan}

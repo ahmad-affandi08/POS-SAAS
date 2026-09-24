@@ -394,7 +394,7 @@ export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: 
             </div>
             <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
-                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-2xl">
+                    <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                         <SheetHeader>
                             <SheetTitle>
                                 {sunting === 'baru' ? 'Tambah kelompok pilihan' : `Ubah kelompok ${sunting.Nama}`}

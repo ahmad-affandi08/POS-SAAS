@@ -70,7 +70,6 @@ export default function DialogFormulir({
             <Sheet open onOpenChange={UbahTerbuka}>
                 <SheetContent
                     side="right"
-                    showCloseButton={false}
                     className="w-full overflow-y-auto sm:max-w-xl"
                     {...(denganKeterangan ? {} : { 'aria-describedby': undefined })}
                 >
@@ -91,7 +90,6 @@ export default function DialogFormulir({
     return (
         <Dialog open onOpenChange={UbahTerbuka}>
             <DialogContent
-                showCloseButton={false}
                 className="max-h-[90vh] overflow-y-auto sm:max-w-xl"
                 {...(denganKeterangan ? {} : { 'aria-describedby': undefined })}
             >

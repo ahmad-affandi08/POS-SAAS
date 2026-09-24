@@ -123,7 +123,7 @@ export default function HalamanDaftarDaftarHarga({
             </div>
             <Sheet open={formTerbuka} onOpenChange={AturFormTerbuka}>
                 {formTerbuka ? (
-                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                    <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                         <SheetHeader>
                             <SheetTitle>Buat daftar harga</SheetTitle>
                             <SheetDescription>

@@ -98,7 +98,7 @@ describe('DialogKonfirmasi', () => {
 });
 
 describe('DialogFormulir', () => {
-    it('jenis dialog: dialog berjudul tanpa tombol tutup berbahasa Inggris; Esc memanggil saatTutup', () => {
+    it('jenis dialog: dialog berjudul dengan tombol "Tutup" berbahasa Indonesia; Esc memanggil saatTutup', () => {
         const Tutup = vi.fn();
         render(
             <DialogFormulir judul="Tambah merek" saatTutup={Tutup}>
@@ -109,8 +109,21 @@ describe('DialogFormulir', () => {
         const dialog = screen.getByRole('dialog', { name: 'Tambah merek' });
         expect(within(dialog).getByRole('form', { name: 'Formulir merek' })).toBeTruthy();
         expect(within(dialog).queryByText('Close')).toBeNull();
+        expect(within(dialog).getByRole('button', { name: 'Tutup' })).toBeTruthy();
 
         fireEvent.keyDown(dialog, { key: 'Escape' });
+        expect(Tutup).toHaveBeenCalledOnce();
+    });
+
+    it('tombol "Tutup" (X) memanggil saatTutup', () => {
+        const Tutup = vi.fn();
+        render(
+            <DialogFormulir judul="Tambah merek" saatTutup={Tutup}>
+                <form aria-label="Formulir merek" />
+            </DialogFormulir>,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tutup' }));
         expect(Tutup).toHaveBeenCalledOnce();
     });
 

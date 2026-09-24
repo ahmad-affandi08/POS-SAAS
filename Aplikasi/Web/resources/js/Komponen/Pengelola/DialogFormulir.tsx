@@ -36,7 +36,6 @@ export default function DialogFormulir({
             }}
         >
             <DialogContent
-                showCloseButton={false}
                 className={cn('max-h-[90vh] overflow-y-auto', lebar === 'lebar' ? 'sm:max-w-3xl' : 'sm:max-w-xl')}
                 {...(deskripsi ? {} : { 'aria-describedby': undefined })}
             >
