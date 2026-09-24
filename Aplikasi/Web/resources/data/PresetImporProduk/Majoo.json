@@ -1,0 +1,44 @@
+{
+    "Kode": "Majoo",
+    "Nama": "majoo",
+    "VersiFormat": 1,
+    "Asumsi": true,
+    "Keterangan": "Ekspor Daftar Produk majoo. Nama kolom ASUMSI dari halaman bantuan publik, wajib diverifikasi dengan berkas ekspor asli.",
+    "Pembaca": { "Lembar": null, "BarisJudul": null, "PemisahCsv": null },
+    "Kolom": {
+        "Nama": ["Nama Produk", "Nama Item", "Product Name"],
+        "Varian": ["Varian", "Nama Varian"],
+        "Sku": ["SKU", "Kode Produk", "Kode SKU"],
+        "Barcode": ["Barcode"],
+        "Kategori": ["Kategori", "Kategori Produk"],
+        "HargaJual": ["Harga Jual", "Harga"],
+        "HargaModal": ["Harga Modal", "Harga Beli", "HPP"],
+        "Satuan": ["Satuan", "Unit"],
+        "LacakStok": ["Kelola Stok"],
+        "Stok": ["Stok", "Stok Awal"],
+        "TampilDiPos": ["Tampil di Menu", "Dijual"],
+        "Merek": ["Merek", "Brand"]
+    },
+    "Nilai": {
+        "Boolean": {
+            "Ya": ["ya", "y", "aktif", "true", "1", "yes"],
+            "Tidak": ["tidak", "t", "nonaktif", "false", "0", "no"]
+        },
+        "Jenis": {
+            "Stok": ["barang", "produk", "stok"],
+            "Jasa": ["jasa", "layanan"],
+            "BahanBaku": ["bahan baku", "bahan"]
+        },
+        "KelompokPajak": {
+            "KenaPpn": ["ppn", "pajak", "kena pajak"],
+            "KenaPbjt": ["pb1", "pbjt", "pajak restoran"],
+            "BebasPpn": ["bebas ppn"],
+            "NonPajak": ["tidak", "tanpa pajak", "non pajak", "0"]
+        },
+        "Status": {
+            "Aktif": ["aktif", "ya", "1"],
+            "Diarsipkan": ["nonaktif", "tidak aktif", "0"]
+        }
+    },
+    "Varian": { "Mode": "BarisPerVarian", "KolomNamaInduk": "Nama", "PemisahAtribut": ";", "PemisahNamaNilai": ":" }
+}

@@ -1,0 +1,40 @@
+{
+    "Kode": "Moka",
+    "Nama": "Moka (GoBiz)",
+    "VersiFormat": 1,
+    "Asumsi": true,
+    "Keterangan": "Ekspor Item Library Moka/GoBiz. Nama kolom ASUMSI dari halaman bantuan publik, wajib diverifikasi dengan berkas ekspor asli.",
+    "Pembaca": { "Lembar": null, "BarisJudul": null, "PemisahCsv": null },
+    "Kolom": {
+        "Nama": ["Item Name", "Name", "Nama Item"],
+        "Varian": ["Variant Name", "Variant", "Nama Varian"],
+        "Sku": ["SKU"],
+        "Barcode": ["Barcode"],
+        "Kategori": ["Category", "Category Name", "Kategori"],
+        "HargaJual": ["Price", "Selling Price", "Harga"],
+        "HargaModal": ["Cost", "Cost Price"],
+        "Satuan": ["Unit"],
+        "LacakStok": ["Track Stock", "Lacak Stok"],
+        "Stok": ["In Stock", "Stock"]
+    },
+    "Nilai": {
+        "Boolean": {
+            "Ya": ["ya", "y", "yes", "true", "1", "aktif"],
+            "Tidak": ["tidak", "t", "no", "false", "0", "nonaktif"]
+        },
+        "Jenis": {
+            "Stok": ["barang", "item", "stok"],
+            "Jasa": ["jasa", "service"]
+        },
+        "KelompokPajak": {
+            "KenaPpn": ["ppn", "tax", "pajak"],
+            "KenaPbjt": ["pb1", "pbjt"],
+            "NonPajak": ["no tax", "tanpa pajak", "0"]
+        },
+        "Status": {
+            "Aktif": ["aktif", "active", "1"],
+            "Diarsipkan": ["inactive", "nonaktif", "0"]
+        }
+    },
+    "Varian": { "Mode": "BarisPerVarian", "KolomNamaInduk": "Nama", "PemisahAtribut": ";", "PemisahNamaNilai": ":" }
+}
