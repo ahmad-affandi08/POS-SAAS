@@ -1,5 +1,9 @@
 import { useId } from 'react';
 
+import { Textarea } from '@/Komponen/Ui/textarea';
+
+import { BuatKelasKontrol, GalatBidang, KerangkaBidang, KeteranganBidang, LabelBidang } from './BagianBidang';
+
 type PropsBidangDaftarTeks = {
     label: string;
     nilai: string[];
@@ -21,11 +25,9 @@ export default function BidangDaftarTeks({
     const id = useId();
 
     return (
-        <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </label>
-            <textarea
+        <KerangkaBidang galat={galat}>
+            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <Textarea
                 id={id}
                 rows={Math.max(3, nilai.length + 1)}
                 value={nilai.join('\n')}
@@ -33,14 +35,10 @@ export default function BidangDaftarTeks({
                 disabled={disabled}
                 aria-invalid={galat ? true : undefined}
                 aria-describedby={`${id}-keterangan`}
-                className={`rounded-kontrol border bg-permukaan px-3 py-2 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:bg-latar disabled:text-teks-sekunder ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
+                className={BuatKelasKontrol(galat, 'h-auto py-2 field-sizing-fixed')}
             />
-            <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                {keterangan}
-            </p>
-            {galat ? <p className="text-keterangan font-semibold text-bahaya">{galat}</p> : null}
-        </div>
+            <KeteranganBidang id={`${id}-keterangan`}>{keterangan}</KeteranganBidang>
+            {galat ? <GalatBidang>{galat}</GalatBidang> : null}
+        </KerangkaBidang>
     );
 }

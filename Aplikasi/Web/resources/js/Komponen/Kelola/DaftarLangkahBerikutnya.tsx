@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { useId } from 'react';
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import type { ItemLangkahBerikutnya } from '@/Tipe/PanduanAwal';
 
@@ -20,18 +21,20 @@ export default function DaftarLangkahBerikutnya({ daftar }: { daftar: ItemLangka
     const jumlahSelesai = daftar.filter((item) => item.Selesai).length;
 
     return (
-        <section
+        <Card
+            role="region"
             aria-labelledby={idJudul}
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
+            className="gap-3 rounded-panel px-4 py-4 shadow-none sm:px-6 sm:py-6"
         >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id={idJudul} className="text-subjudul font-semibold text-teks-utama">
-                    Langkah berikutnya
-                </h2>
-                <p className="text-label text-teks-sekunder">
+            <CardHeader className="flex flex-wrap items-baseline justify-between gap-2 px-0 [.border-b]:pb-0">
+                <CardTitle className="text-subjudul font-semibold text-teks-utama">
+                    <h2 id={idJudul}>Langkah berikutnya</h2>
+                </CardTitle>
+                <CardDescription className="text-label text-teks-sekunder">
                     {String(jumlahSelesai)} dari {String(daftar.length)} selesai
-                </p>
-            </div>
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
             <ul className="flex flex-col">
                 {UrutkanLangkahBerikutnya(daftar).map((item) => (
                     <li
@@ -59,6 +62,7 @@ export default function DaftarLangkahBerikutnya({ daftar }: { daftar: ItemLangka
                     </li>
                 ))}
             </ul>
-        </section>
+            </CardContent>
+        </Card>
     );
 }

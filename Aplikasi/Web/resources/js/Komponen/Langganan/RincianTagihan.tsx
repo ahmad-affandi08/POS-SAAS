@@ -1,3 +1,5 @@
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -14,7 +16,7 @@ export default function RincianTagihan({ tagihan, namaTenant }: PropsRincianTagi
     const pengaliPenuh = tagihan.PengaliDppPembilang === tagihan.PengaliDppPenyebut;
 
     return (
-        <section aria-labelledby="judul-rincian" className="rounded-panel border border-garis bg-permukaan">
+        <Card role="region" aria-labelledby="judul-rincian" className="gap-0 rounded-panel py-0 shadow-none">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-garis px-4 py-3">
                 <div>
                     <h2 id="judul-rincian" className="font-mono text-subjudul font-semibold text-teks-utama">
@@ -51,54 +53,54 @@ export default function RincianTagihan({ tagihan, namaTenant }: PropsRincianTagi
                     </div>
                 ) : null}
             </dl>
-            <table className="w-full border-t border-garis text-left text-isi">
-                <caption className="sr-only">Rincian biaya tagihan {tagihan.Nomor}</caption>
-                <tbody>
-                    <tr className="border-b border-garis">
-                        <th scope="row" className="px-4 py-2 font-normal">
+            <Table className="border-t border-garis text-left text-isi">
+                <TableCaption className="sr-only">Rincian biaya tagihan {tagihan.Nomor}</TableCaption>
+                <TableBody>
+                    <TableRow className="border-garis hover:bg-transparent">
+                        <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
                             Paket {tagihan.NamaPaket} · {tagihan.Siklus === 'Tahunan' ? '12 bulan' : '1 bulan'}
-                        </th>
-                        <td className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.Subtotal)}</td>
-                    </tr>
+                        </TableHead>
+                        <TableCell className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.Subtotal)}</TableCell>
+                    </TableRow>
                     {tagihan.Diskon !== '0.00' ? (
-                        <tr className="border-b border-garis">
-                            <th scope="row" className="px-4 py-2 font-normal">
+                        <TableRow className="border-garis hover:bg-transparent">
+                            <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
                                 Diskon kupon <span className="font-mono">{tagihan.KodeKupon}</span>
-                            </th>
-                            <td className="px-4 py-2 text-right tabular-nums">−{FormatRupiah(tagihan.Diskon)}</td>
-                        </tr>
+                            </TableHead>
+                            <TableCell className="px-4 py-2 text-right tabular-nums">−{FormatRupiah(tagihan.Diskon)}</TableCell>
+                        </TableRow>
                     ) : null}
                     {adaPpn ? (
                         <>
-                            <tr className="border-b border-garis text-teks-sekunder">
-                                <th scope="row" className="px-4 py-2 font-normal">
+                            <TableRow className="border-garis text-teks-sekunder hover:bg-transparent">
+                                <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
                                     Dasar pengenaan pajak
                                     {pengaliPenuh
                                         ? ''
                                         : ` (nilai lain ${tagihan.PengaliDppPembilang}/${tagihan.PengaliDppPenyebut})`}
-                                </th>
-                                <td className="px-4 py-2 text-right tabular-nums">
+                                </TableHead>
+                                <TableCell className="px-4 py-2 text-right tabular-nums">
                                     {FormatRupiah(tagihan.DasarPengenaanPajak)}
-                                </td>
-                            </tr>
-                            <tr className="border-b border-garis">
-                                <th scope="row" className="px-4 py-2 font-normal">
+                                </TableCell>
+                            </TableRow>
+                            <TableRow className="border-garis hover:bg-transparent">
+                                <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
                                     PPN {FormatPersen(tagihan.TarifPpn)}%
-                                </th>
-                                <td className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.JumlahPpn)}</td>
-                            </tr>
+                                </TableHead>
+                                <TableCell className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.JumlahPpn)}</TableCell>
+                            </TableRow>
                         </>
                     ) : null}
-                    <tr>
-                        <th scope="row" className="px-4 py-3 font-semibold">
+                    <TableRow className="hover:bg-transparent">
+                        <TableHead scope="row" className="h-auto px-4 py-3 font-semibold whitespace-normal">
                             Total tagihan
-                        </th>
-                        <td className="px-4 py-3 text-right text-subjudul font-bold tabular-nums">
+                        </TableHead>
+                        <TableCell className="px-4 py-3 text-right text-subjudul font-bold tabular-nums">
                             {FormatRupiah(tagihan.Total)}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </Card>
     );
 }

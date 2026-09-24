@@ -1,6 +1,10 @@
 import { useId, useRef } from 'react';
 
+import { Button } from '@/Komponen/Ui/button';
+import { Input } from '@/Komponen/Ui/input';
 import { FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
+
+import { BuatKelasKontrol, GabungDijelaskanOleh, GalatBidang, KerangkaBidang, KeteranganBidang, LabelBidang } from './BagianBidang';
 
 type PropsBidangBerkas = {
     label: string;
@@ -34,11 +38,9 @@ export default function BidangBerkas({
     };
 
     return (
-        <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </label>
-            <input
+        <KerangkaBidang galat={galat}>
+            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <Input
                 ref={masukan}
                 id={id}
                 type="file"
@@ -48,12 +50,10 @@ export default function BidangBerkas({
                     saatBerubah([...berkas, ...Array.from(peristiwa.target.files ?? [])].slice(0, maksimal))
                 }
                 aria-invalid={galat ? true : undefined}
-                aria-describedby={`${id}-keterangan${galat ? ` ${id}-galat` : ''}`}
-                className="text-isi text-teks-utama file:mr-3 file:rounded-kontrol file:border file:border-garis-input file:bg-permukaan file:px-3 file:py-1 file:text-label file:font-semibold"
+                aria-describedby={GabungDijelaskanOleh(`${id}-keterangan`, galat && `${id}-galat`)}
+                className={BuatKelasKontrol(galat, 'cursor-pointer py-1.5 file:mr-3 file:text-label file:font-semibold file:text-teks-utama')}
             />
-            <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                {keterangan}
-            </p>
+            <KeteranganBidang id={`${id}-keterangan`}>{keterangan}</KeteranganBidang>
             {berkas.length > 0 ? (
                 <ul className="flex flex-col gap-1">
                     {berkas.map((file, indeks) => (
@@ -64,22 +64,19 @@ export default function BidangBerkas({
                             <span className="break-all text-teks-utama">
                                 {file.name} · {FormatUkuranBerkas(file.size)}
                             </span>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
                                 onClick={() => Hapus(indeks)}
-                                className="font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-auto p-0 text-keterangan font-semibold text-bahaya underline"
                             >
                                 Hapus
-                            </button>
+                            </Button>
                         </li>
                     ))}
                 </ul>
             ) : null}
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
+        </KerangkaBidang>
     );
 }

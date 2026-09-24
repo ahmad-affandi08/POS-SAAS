@@ -1,3 +1,6 @@
+import { DownloadIcon } from 'lucide-react';
+
+import { Badge } from '@/Komponen/Ui/badge';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
 
@@ -34,16 +37,19 @@ export default function PercakapanTiket({ pesan, tautanLampiran }: PropsPercakap
                 ) : (
                     <li
                         key={baris.Uuid}
-                        className={`flex flex-col gap-2 rounded-panel border bg-permukaan px-4 py-3 ${
+                        className={`flex flex-col gap-2 rounded-panel border bg-card px-4 py-3 text-card-foreground ${
                             baris.CatatanInternal ? 'border-peringatan border-l-4' : 'border-garis'
                         } ${baris.JenisPengirim === 'Pengelola' ? 'ml-0 sm:ml-8' : 'mr-0 sm:mr-8'}`}
                     >
                         <p className="flex flex-wrap items-baseline gap-x-2 text-label">
                             <span className="font-semibold text-teks-utama">{baris.NamaPengirim}</span>
                             {baris.CatatanInternal ? (
-                                <span className="font-semibold text-peringatan">
+                                <Badge
+                                    variant="outline"
+                                    className="rounded-kontrol border-peringatan bg-peringatan-lembut text-keterangan font-semibold text-peringatan"
+                                >
                                     Catatan internal (tidak terlihat tenant)
-                                </span>
+                                </Badge>
                             ) : null}
                             <span className="text-teks-sekunder">{FormatTanggalWaktu(baris.DibuatPada)}</span>
                         </p>
@@ -54,8 +60,9 @@ export default function PercakapanTiket({ pesan, tautanLampiran }: PropsPercakap
                                     <li key={lampiran.Uuid}>
                                         <a
                                             href={tautanLampiran(lampiran.Uuid)}
-                                            className="font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                            className="inline-flex items-center gap-1 font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                         >
+                                            <DownloadIcon aria-hidden="true" className="size-3.5" />
                                             Unduh {lampiran.NamaAsli}
                                         </a>{' '}
                                         <span className="text-teks-sekunder">

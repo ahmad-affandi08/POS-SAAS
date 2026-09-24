@@ -3,6 +3,8 @@ import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import IndikatorLangkah from '@/Komponen/PanduanAwal/IndikatorLangkah';
+import { buttonVariants } from '@/Komponen/Ui/button';
+import { Separator } from '@/Komponen/Ui/separator';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import {
     AlamatPanduan,
@@ -27,8 +29,11 @@ type PropsTataLetakPanduan = {
     children: ReactNode;
 };
 
-const kelasTautanTombol =
-    'inline-flex h-10 items-center justify-center rounded-kontrol border border-garis-input bg-permukaan px-4 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2';
+/** Tautan yang tampil seperti Tombol varian sekunder (Button outline shadcn/ui). */
+const kelasTautanTombol = buttonVariants({
+    variant: 'outline',
+    className: 'h-10 border-garis-input px-4 text-label font-semibold text-teks-utama focus-visible:ring-offset-2',
+});
 
 /** Kerangka satu langkah panduan awal: penanda langkah, isi, lalu bilah Kembali / Lewati dulu / Lanjutkan. */
 export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir', children }: PropsTataLetakPanduan) {
@@ -89,7 +94,8 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
 
             {children}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-garis pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Separator className="bg-garis" />
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <Link href={sebelumnya?.Tautan ?? AlamatPanduan.Indeks} className={kelasTautanTombol}>
                     {sebelumnya ? `Kembali ke ${sebelumnya.Judul}` : 'Kembali ke ringkasan'}
                 </Link>

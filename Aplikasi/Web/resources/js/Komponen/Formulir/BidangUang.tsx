@@ -1,5 +1,7 @@
 import { useId, useLayoutEffect, useRef, type ChangeEvent } from 'react';
 
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/Komponen/Ui/input-group';
+import { cn } from '@/Komponen/Ui/utils';
 import {
     CekMasukanUangValid,
     FormatMasukanUang,
@@ -7,6 +9,14 @@ import {
     HitungPosisiKursor,
     NormalisasiMasukanUang,
 } from '@/Pustaka/MasukanUang';
+
+import {
+    GabungDijelaskanOleh,
+    GalatBidang,
+    KerangkaBidang,
+    KeteranganBidang,
+    LabelBidang,
+} from './BagianBidang';
 
 type PropsBidangUang = {
     label: string;
@@ -39,9 +49,7 @@ export default function BidangUang({
     const masukan = useRef<HTMLInputElement>(null);
     const digitKursor = useRef<number | null>(null);
     const tampil = FormatMasukanUang(nilai);
-    const dijelaskanOleh = [keterangan ? `${id}-keterangan` : null, galat ? `${id}-galat` : null]
-        .filter(Boolean)
-        .join(' ');
+    const dijelaskanOleh = GabungDijelaskanOleh(keterangan && `${id}-keterangan`, galat && `${id}-galat`);
 
     useLayoutEffect(() => {
         const elemen = masukan.current;
@@ -67,19 +75,18 @@ export default function BidangUang({
     };
 
     return (
-        <div className="flex flex-col gap-1">
-            <label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
+        <KerangkaBidang galat={galat}>
+            <LabelBidang htmlFor={id} tersembunyi={labelTersembunyi}>
                 {label}
-            </label>
-            <div
-                className={`flex h-10 items-center rounded-kontrol border bg-permukaan focus-within:ring-2 focus-within:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                } ${disabled ? 'bg-latar' : ''}`}
+            </LabelBidang>
+            <InputGroup
+                data-disabled={disabled ? true : undefined}
+                className={cn('h-10 bg-permukaan', galat ? 'border-bahaya' : 'border-garis-input', disabled && 'bg-latar')}
             >
-                <span aria-hidden="true" className="pl-3 text-isi text-teks-sekunder">
+                <InputGroupAddon aria-hidden="true" className="text-isi font-normal text-teks-sekunder">
                     Rp
-                </span>
-                <input
+                </InputGroupAddon>
+                <InputGroupInput
                     ref={masukan}
                     id={id}
                     type="text"
@@ -90,20 +97,12 @@ export default function BidangUang({
                     disabled={disabled}
                     required={required}
                     aria-invalid={galat ? true : undefined}
-                    aria-describedby={dijelaskanOleh || undefined}
-                    className="h-full w-full min-w-0 rounded-kontrol bg-transparent px-3 text-right text-isi text-teks-utama tabular-nums outline-none disabled:text-teks-sekunder"
+                    aria-describedby={dijelaskanOleh}
+                    className="h-full text-right text-isi text-teks-utama tabular-nums disabled:text-teks-sekunder disabled:opacity-100"
                 />
-            </div>
-            {keterangan ? (
-                <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                    {keterangan}
-                </p>
-            ) : null}
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+            </InputGroup>
+            {keterangan ? <KeteranganBidang id={`${id}-keterangan`}>{keterangan}</KeteranganBidang> : null}
+            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
+        </KerangkaBidang>
     );
 }
