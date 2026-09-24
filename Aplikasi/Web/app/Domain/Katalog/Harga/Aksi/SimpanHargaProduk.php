@@ -12,8 +12,8 @@ use App\Domain\Katalog\Harga\Enum\SumberPerubahanHarga;
 use App\Domain\Katalog\Harga\Layanan\PenyelarasBarisHarga;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
-use Illuminate\Support\Facades\DB;
 use App\Domain\Tenant\Layanan\PenguncianTenant;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Menyimpan harga dasar & harga bertingkat (lapis 4–5 price engine F-03) per satuan produk, dengan riwayat harga

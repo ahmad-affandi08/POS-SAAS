@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Kontroler\Pos\V1\GambarProdukKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
+use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
@@ -28,5 +30,13 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
     Route::middleware(PastikanLanggananPosAktif::class)->group(function (): void {
         // F-02b: masuk kasir dengan PIN (kunci 5 menit setelah 5 kali salah, §20.2).
         Route::post('/kasir/masuk-pin', [KasirKontroler::class, 'MasukPin'])->middleware('throttle:60,1')->name('pos.kasir.masuk-pin');
+
+        // F-03 D.3: katalog lengkap/delta (`?sejak=`) dan gambar produk berversi. Gambar diunduh per produk sehingga
+        // batasnya lebih longgar daripada katalog.
+        Route::get('/katalog', [KatalogKontroler::class, 'Ambil'])->middleware('throttle:30,1')->name('pos.katalog');
+        Route::get('/katalog/gambar/{produk}', [GambarProdukKontroler::class, 'Unduh'])
+            ->middleware('throttle:600,1')
+            ->where('produk', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
+            ->name('pos.katalog.gambar');
     });
 });
