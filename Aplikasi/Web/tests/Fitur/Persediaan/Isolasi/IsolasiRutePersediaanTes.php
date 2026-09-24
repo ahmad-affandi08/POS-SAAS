@@ -263,8 +263,9 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
         OutletPengguna::query()->create(['IdOutlet' => $t['Outlet']->Id, 'IdPengguna' => $manajer->Id, 'IdPeran' => BantuanOrganisasi::Peran($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->Id]);
         $masuk = fn () => BantuanOrganisasi::Masuk($this, $manajer, $t['Tenant']->Id);
 
-        // Impor & jurnal tidak terikat outlet (DesainF05a D); yang diuji di sini dokumen stok awal.
-        foreach (TimHRuteBerdokumen($dokCabang['Draf'], $dokCabang['Diposting'], null, null, $t['Gudang'], $produk) as [$metode, $alamat, $badan]) {
+        // Stok awal di lokasi outlet lain, dan impor milik pengguna lain (pengguna per outlet hanya melihat impornya
+        // sendiri, Tim E) = 404. Jurnal tidak terikat outlet (DesainF05a D).
+        foreach (TimHRuteBerdokumen($dokCabang['Draf'], $dokCabang['Diposting'], $dokCabang['Impor'], null, $t['Gudang'], $produk) as [$metode, $alamat, $badan]) {
             $masuk()->call($metode, $alamat, $badan)->assertNotFound();
         }
 
@@ -275,6 +276,7 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
         expect(TimHJejakDokumen($t['Tenant']->Id))->toBe($jejak);
 
         $rahasia = [$gudangCabang->Uuid, $dokCabang['Draf']->Uuid, $dokCabang['Diposting']->Uuid, 'Gudang Cabang Solo Baru'];
+        TimHTanpaBocorDi($masuk(), "{$sa}/impor", false, $dokCabang['Impor']->Uuid, 'stok-rahasia.csv');
         TimHTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
         TimHTanpaBocorDi($masuk(), "{$sa}/buat", false, ...$rahasia);
         TimHTanpaBocorDi($masuk(), "{$sa}?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
