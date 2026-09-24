@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.36 |
+| Versi | 1.37 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -57,6 +57,7 @@
 | 1.34 | Rincian F-06a (diputuskan agen atas mandat D-12): server & back-office shift dan kas. Endpoint `POST /api/pos/v1/sinkron/kirim` (batch outbox, hasil per item Diterima/Duplikat/Ditolak), tabel `Shift`/`MutasiKas` dilengkapi dan tabel baru `KategoriKas` (§15), izin baru `kas.keluar.setujui` (§19.1), pengaturan kasir tenant (batas kas keluar, shift bersama), jurnal kas masuk & setoran (§11.3). Aplikasi kasir Flutter menyusul di F-06b. Utang F-06 di §25 no. 21. |
 | 1.35 | Rincian F-06b (diputuskan agen atas mandat D-12): aplikasi kasir Flutter (aktivasi, masuk PIN online/offline, buka shift, kas masuk/keluar/setoran dengan PIN supervisor, status sinkron), PIN offline Argon2id terbungkus kunci perangkat (§25.2 no. 3) dengan vektor uji bersama `Spesifikasi/VektorUjiPin`, `GET /api/pos/v1/data-awal` bagian F-06, kolom `TenantPengguna.VerifierPinOffline` & `Perangkat.KunciPinOffline` (§15). Utang F-06 di §25 no. 21 diperbarui. |
 | 1.36 | Keputusan D-15: nama sistem **PAYOU** dan identitas merek dari pemilik produk (logo, ikon, palet). Token warna §17.6.3 final: Navy untuk teks, Indigo untuk brand, netral dingin untuk latar & garis. Aset & turunannya (favicon web, ikon Android/iOS/Windows, logo dalam aplikasi) di `Spesifikasi/Merek/`. Nama tampilan aplikasi: **PAYOU POS** (Aplikasi POS) dan **PAYOU Owner** (Aplikasi Owner). |
+| 1.37 | Keputusan D-16 dari pemilik produk: (1) **semua tabel web** memakai komponen `TabelData` berbasis **TanStack Table + TanStack Query** dengan fitur lengkap (§17.4.3); (2) **web responsif penuh** dari 360px sampai layar lebar (§17.4.4); (3) Aplikasi POS dirancang sebagai **Ruang Kerja Kasir** yang elegan dan tetap mudah untuk dipakai berjam-jam (§17.2.7). Tabel §13.5, §17.2.3, §17.6.2, §17.6.5, §17.6.9, §17.6.11, §23.3 disesuaikan. Utang penyesuaian halaman & layar yang sudah ada di §25 no. 22. |
 
 ---
 
@@ -2111,7 +2112,7 @@ Implementasi:
 | Operasional gudang (terima barang, transfer, opname via scan) | **Aplikasi Flutter** (mode Gudang) | Online-first dengan draft lokal. Posting saat online |
 | Dashboard owner, approval jarak jauh, notifikasi, aksi cepat | **Aplikasi Owner (Flutter)** | Online-first + cache lokal ringan (Drift) untuk dibuka cepat & dibaca saat sinyal lemah. `/api/pemilik/v1` |
 | Navigasi halaman back-office, form CRUD, pengaturan | **Web (Inertia)** | Props dari controller, `useForm`, partial reload, deferred props |
-| Tabel laporan besar dengan filter/pagination server | **Web (TanStack Query)** | `placeholderData: keepPreviousData` + TanStack Table, endpoint `/internal/laporan/*` |
+| **Semua tabel data** (daftar master, dokumen, laporan, log) | **Web (TanStack Table + TanStack Query)** | Komponen `TabelData` (§17.4.3): data dari endpoint JSON `/internal/*` dengan paginasi, urut, dan saring di server, `placeholderData: keepPreviousData`, keadaan tabel di URL (D-16) |
 | Data back-office yang di-polling (dashboard, notifikasi) | **Web (TanStack Query)** | `refetchInterval` adaptif |
 | Pencarian/autocomplete di back-office | **Web (TanStack Query)** | Debounce |
 | Self-order, toko online, struk digital | **Web publik (React ringan)** | TanStack Query. Kalkulasi harga lewat server |
@@ -2901,6 +2902,8 @@ flowchart TD
 
 #### 17.2.3 Layout Adaptif
 
+Layout di bawah adalah isi area kerja **Ruang Kerja Kasir** (§17.2.7): bingkai ruang kerja (bilah atas, rel navigasi, bilah status) selalu ada, dan layar Jual menjadi beranda.
+
 | Lebar layar | Contoh perangkat | Layout |
 |---|---|---|
 | < 600 dp | HP (pelayan, salesman, kasir mikro) | Satu kolom. Keranjang sebagai bottom sheet. Tombol Bayar menempel di bawah |
@@ -3003,6 +3006,39 @@ Implementasi (adaptor):
 - Pinning sertifikat opsional (fase 3). Android: obfuscation (`--obfuscate --split-debug-info`), simbol debug diunggah ke Sentry.
 
 ---
+
+#### 17.2.7 Ruang Kerja Kasir (Keputusan D-16)
+
+Aplikasi POS **bukan kumpulan layar**, melainkan **ruang kerja** tempat kasir bekerja 8–12 jam per hari. Targetnya **elegan tetapi tetap mudah**: tenang dilihat berjam-jam, dan kasir baru bisa melayani transaksi pertama tanpa pelatihan panjang.
+
+**Bingkai ruang kerja (selalu ada setelah masuk):**
+
+| Bagian | Isi | Catatan |
+|---|---|---|
+| **Bilah atas** | Logo tanda PAYOU, outlet · perangkat, nama kasir, jam, tombol **Kunci** | Ketuk nama kasir → ganti kasir (PIN) tanpa menutup shift |
+| **Rel navigasi** (kiri; di HP menjadi bilah bawah) | Jual (beranda) · Order tersimpan · Meja* · Riwayat transaksi · Kas · Pelanggan* · Shift · Pengaturan | Ikon + label, maksimal 8 item, item hanya muncul bila modul/izin aktif (*). Bisa diciutkan menjadi ikon saja |
+| **Area kerja** | Layar aktif (Jual: katalog + keranjang, §17.2.3) | Tugas rutin (kas masuk/keluar, cari pelanggan, catatan item, diskon) dibuka sebagai **panel samping atau lembar** di atas area kerja, bukan pindah halaman, sehingga keranjang tidak hilang |
+| **Bilah status** (bawah) | Koneksi, transaksi tertunda sinkron, printer, shift (jam buka) | Selalu terlihat; ketuk untuk detail (§17.6.6) |
+
+**Prinsip elegan & mudah:**
+1. **Tenang untuk mata.** Latar netral `Latar`, panel `Permukaan`, pemisah garis tipis, satu warna brand hanya untuk aksi utama (BAYAR) dan penanda aktif. Tidak ada animasi berulang, banner berkedip, atau warna jenuh selain status.
+2. **Hierarki jelas dalam satu pandangan.** Yang terbesar selalu TOTAL, lalu tombol BAYAR, lalu isi keranjang. Ukuran dari token §17.5 (`Tampilan` untuk TOTAL & kembalian).
+3. **Ritme konsisten.** Kisi 8dp, radius 8 panel / 6 kontrol, tinggi baris keranjang tetap, ubin produk seragam (foto nyata atau inisial di atas latar netral bila tanpa foto).
+4. **Umpan balik halus tetapi pasti.** Tekan tombol berubah dalam < 100 ms; pindai berhasil/gagal ditandai suara pendek + getar (bisa dimatikan) dan sorot baris keranjang 150 ms; tidak ada toast untuk hal rutin.
+5. **Tidak pernah membuat kasir tersesat.** Maksimal dua ketukan dari beranda ke fitur rutin; tombol kembali selalu ke area kerja; tidak ada dialog bertumpuk.
+
+**Kenyamanan kerja berjam-jam:**
+- **Kunci cepat & kunci otomatis** saat perangkat diam (bawaan 5 menit, diatur Owner): layar kunci menampilkan nama outlet & jam, buka dengan PIN kasir yang sama atau ganti kasir.
+- **Ukuran tampilan per perangkat:** Normal / Besar (skala teks 1,0 / 1,15) dan **posisi keranjang** kiri/kanan (kasir kidal, penempatan layar di meja).
+- **Mode layar penuh/kiosk** (§17.2.3) dan layar tetap menyala selama shift terbuka.
+- **Input tanpa fokus:** pemindai barcode bekerja di mana pun di layar Jual tanpa perlu mengetuk kolom cari; papan angka besar untuk jumlah & uang; **pintasan keyboard** di desktop (daftar pintasan terlihat lewat `?`).
+- **Ingatan kerja:** produk favorit/terlaris outlet di atas katalog, kategori terakhir diingat, keranjang yang belum dibayar selamat bila aplikasi tertutup (tersimpan di SQLite).
+- **Tanpa kejutan:** perubahan data dari server (harga, produk) diterapkan di antara transaksi, tidak di tengah keranjang yang sedang dibangun; pesan sistem muncul di bilah status, tidak memotong transaksi.
+
+**Aturan implementasi:**
+- Satu widget bingkai `RuangKerja` di `Aplikasi/Kasir/lib/Tampilan/RuangKerja/` membungkus semua layar setelah masuk. Layar fitur hanya mengisi area kerja.
+- Komponen visual (ubin produk, baris keranjang, papan angka, panel samping, bilah status) dibuat di `Paket/SistemDesain` agar KDS dan mode Gudang memakai bahasa visual yang sama.
+- Setiap layar ruang kerja memiliki test widget di tiga lebar (360, 800, 1280 dp) dan golden test untuk layar Jual & Bayar.
 
 ### 17.3 Aplikasi Mobile Owner (Flutter, Android & iOS) — Keputusan D-04
 
@@ -3114,9 +3150,44 @@ export function useStatusPerangkat(idOutlet: string) {
 #### 17.4.3 Design System Web
 
 - Token dari `Spesifikasi/TokenDesain` di `@theme` Tailwind 4 (hanya tema terang, D-14), komponen dasar shadcn/ui di `Komponen/Ui/` yang warnanya diturunkan dari token, warna brand per tenant (struk & toko online).
-- Komponen wajib: `InputUang`, `TabelData` (server-side), `PemilihRentangTanggal` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `LencanaStatus`, `DialogPersetujuan`, `KeadaanKosong`, `WizardImpor`, `DialogAktivasiPerangkat` (menampilkan QR aktivasi).
+- Komponen wajib: `InputUang`, `TabelData` (lihat di bawah), `PemilihRentangTanggal` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `LencanaStatus`, `DialogPersetujuan`, `KeadaanKosong`, `WizardImpor`, `DialogAktivasiPerangkat` (menampilkan QR aktivasi).
 - Bahasa Indonesia sederhana, i18n key siap Inggris. Kontras WCAG AA.
 - Code splitting per halaman (`import.meta.glob` lazy). Halaman web publik self-order ditargetkan < 150 KB JS gzip.
+
+**`TabelData` (Keputusan D-16).** Semua tabel data di back-office dan Platform Pengelola **wajib** memakai satu komponen `Komponen/TabelData/` yang dibangun di atas **TanStack Table v8** (logika) dan komponen `Table` shadcn/ui (tampilan), dengan data dari **TanStack Query**. Tidak boleh ada `<table>`/`<Table>` yang dirakit sendiri di halaman.
+
+| Fitur | Aturan |
+|---|---|
+| Sumber data | **Mode server** (bawaan, untuk semua daftar yang bisa tumbuh): `useQuery` ke endpoint JSON `/internal/...` dengan `placeholderData: keepPreviousData`; paginasi, urut, dan saring dikerjakan server. **Mode lokal** hanya untuk tabel kecil yang datanya sudah ada di halaman dan dibatasi ≤ 200 baris (baris dokumen, isian form, ringkasan) |
+| Kontrak kueri | Parameter URL: `cari`, `urut` (`Kolom` atau `-Kolom`, bisa beberapa dipisah koma), `halaman`, `perHalaman` (25/50/100, maks 100), `saring[Kolom]=nilai`. Respons: `{ Data: [...], Meta: { Halaman, PerHalaman, Total, JumlahHalaman } }`. Server memakai daftar putih kolom urut/saring; kolom tak dikenal diabaikan |
+| Keadaan di URL | Pencarian, saring, urut, halaman, dan ukuran halaman tersimpan di URL (bisa dibagikan, tombol Kembali berfungsi). Pencarian di-*debounce* 300 ms |
+| Pencarian & saring | Kotak cari global + saring per kolom (pilihan tunggal/banyak dengan jumlah per nilai bila tersedia, rentang tanggal dengan preset, rentang angka). Chip saring aktif + tombol "Hapus semua saring" |
+| Urut | Klik kepala kolom (naik → turun → mati); Shift+klik untuk urut bertingkat. Kolom yang bisa diurut ditandai ikon |
+| Kolom | Atur kolom tampil/sembunyi dan urutan, disimpan per pengguna per tabel (`localStorage`); kolom pertama (identitas) dan kolom aksi menempel saat digulir horizontal; lebar kolom bisa diubah di desktop |
+| Pilih baris & aksi massal | Kotak centang per baris + pilih semua di halaman ini / semua hasil saring; bilah aksi massal muncul dengan jumlah terpilih. Hanya bila flow menyediakan aksi massal |
+| Aksi baris | Menu aksi per baris (ikon ⋯) dan klik baris membuka detail bila ada |
+| Ekspor | Ekspor CSV/Excel mengikuti saring & urut aktif (dikerjakan server lewat antrean bila > 5.000 baris) bila flow menyediakan ekspor |
+| Kinerja | Virtualisasi baris (TanStack Virtual) untuk mode lokal > 100 baris; kepala tabel menempel saat halaman digulir |
+| Keadaan | Kerangka baris saat memuat pertama, indikator tipis saat memuat ulang (data lama tetap tampil), kosong (bedakan "belum ada data" dan "tidak ada hasil untuk saring ini"), galat + Coba lagi (§17.6.6) |
+| Format | Uang & angka rata kanan `tabular-nums`, kode/nomor dokumen font Mono, tanggal `22/09/2026`, lencana status dengan teks |
+| Responsif | Lihat §17.4.4: di layar < 640px baris tampil sebagai daftar bertumpuk |
+| Aksesibilitas | Tabel semantik (`th scope`, `aria-sort`), navigasi keyboard, kotak centang berlabel |
+
+#### 17.4.4 Web Responsif (Keputusan D-16)
+
+Semua halaman web (back-office, Platform Pengelola, autentikasi, web publik) **wajib berfungsi dan rapi di semua lebar layar** dari **360px** (HP kecil) sampai **1920px ke atas**, tanpa gulir horizontal halaman.
+
+| Lebar | Perangkat acuan | Aturan |
+|---|---|---|
+| < 640px | HP | Menu samping menjadi *Sheet*; satu kolom; form satu kolom; dialog menjadi lembar layar penuh dari bawah; tombol aksi utama menempel di bawah; `TabelData` tampil sebagai **daftar bertumpuk** (kolom identitas sebagai judul, 2–3 kolom penting, lencana status, menu aksi), saring dibuka lewat tombol "Saring" (Sheet), aksi massal di bilah bawah |
+| 640–1023px | Tablet, laptop kecil | Menu samping bisa diciutkan ke ikon; form dua kolom menjadi satu kolom di bawah 768px; `TabelData` menyembunyikan kolom berprioritas rendah (bisa dimunculkan lewat Atur kolom) dan menggulir horizontal dengan kolom identitas menempel |
+| 1024–1535px | Laptop, PC | Tata letak penuh; tabel semua kolom bawaan |
+| ≥ 1536px | Monitor lebar | Isi dibatasi lebar baca untuk form & detail (maks ±1280px); tabel boleh memakai lebar penuh |
+
+- Target sentuh ≥ 44px pada perangkat sentuh (`pointer: coarse`) walau dalam mode Ringkas.
+- Teks tidak pernah terpotong tanpa cara membaca penuh (tooltip/detail); nama panjang dibungkus atau dipotong dengan elipsis + judul.
+- Diuji di tiga lebar acuan **360, 768, 1280px** untuk setiap halaman baru/berubah (tangkapan layar Playwright), selain test komponen Vitest.
+
 
 ### 17.5 Tipografi (Keputusan D-08)
 
@@ -3180,7 +3251,7 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 | Klien | Pertanyaan utama pengguna | Arah desain |
 |---|---|---|
-| **Aplikasi POS (Kasir)** | "Bisa selesai bayar dalam 20 detik tanpa salah?" | Target sentuh besar, kontras tinggi, TOTAL & tombol BAYAR dominan, dekorasi nol, status koneksi/sinkron/printer selalu terlihat, bisa dipakai penuh dengan keyboard/scanner di desktop |
+| **Aplikasi POS (Kasir)** | "Bisa selesai bayar dalam 20 detik tanpa salah, dan tetap nyaman setelah 10 jam?" | **Ruang Kerja Kasir** (§17.2.7): elegan dan tenang, target sentuh besar, kontras tinggi, TOTAL & tombol BAYAR dominan, dekorasi nol, status koneksi/sinkron/printer selalu terlihat, bisa dipakai penuh dengan keyboard/scanner di desktop |
 | **KDS** | "Pesanan mana yang harus dibuat sekarang?" | Tema terang berkontras tinggi (D-14), huruf besar (1,25×), urutan waktu, warna umur tiket (normal → kuning → merah), satu ketukan untuk ubah status |
 | **Aplikasi Owner** | "Hari ini untung berapa, ada masalah apa?" | Satu angka besar + perbandingan, lalu daftar hal yang butuh tindakan (persetujuan, selisih kas, stok kritis). Bukan dinding widget |
 | **Back-office** | "Bisa cari, bandingkan, dan ubah banyak data dengan cepat?" | Padat data, tabel lebih utama dari kartu, filter di atas, aksi massal, detail di panel/halaman terpisah |
@@ -3240,6 +3311,7 @@ Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1,
 #### 17.6.5 Pola Layar
 
 **Aplikasi POS:**
+- Semua layar setelah masuk berada di dalam bingkai **Ruang Kerja Kasir** (§17.2.7).
 - Tata letak dua panel (katalog | keranjang) di tablet/desktop, satu kolom + *bottom sheet* di HP (§17.2.3).
 - **Bilah status permanen** di bawah: koneksi, jumlah transaksi tertunda, printer, nama kasir & shift.
 - Layar bayar: TOTAL memakai token `Tampilan`, tombol pecahan uang cepat, metode bayar sebagai tombol besar, **kembalian ditampilkan paling besar** setelah bayar tunai.
@@ -3248,7 +3320,7 @@ Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1,
 
 **Back-office & Platform Pengelola:**
 - Navigasi samping dikelompokkan mengikuti flow: **Penjualan · Persediaan · Pembelian · Pelanggan & Promo · Karyawan · Keuangan · Laporan · Pengaturan**.
-- **Halaman daftar:** judul + tombol aksi utama → bilah filter & pencarian (filter tersimpan di URL) → tabel (kolom bisa diatur, angka rata kanan, urut, pilih banyak untuk aksi massal) → paginasi.
+- **Halaman daftar:** judul + tombol aksi utama → `TabelData` (§17.4.3: cari, saring, urut, atur kolom, pilih banyak untuk aksi massal, paginasi server, keadaan di URL). Di HP tampil sebagai daftar bertumpuk (§17.4.4).
 - **Halaman detail dokumen:** kepala berisi nomor dokumen (font Mono), lencana status, dan aksi sesuai status (misal PO `Disetujui` → "Terima Barang") → isi → tab riwayat & log audit.
 - **Form:** satu kolom untuk form pendek, dua kolom untuk form panjang, dikelompokkan per bagian. Validasi langsung di bawah field. Tombol Simpan tetap terlihat (menempel) di form panjang.
 - **Laporan:** filter periode dengan preset (Hari ini, Kemarin, 7 hari, Bulan ini, Bulan lalu) → angka ringkasan (maks 4) → tabel rinci. Grafik hanya bila tren/perbandingan memang penting.
@@ -3295,6 +3367,7 @@ Setiap layar/komponen wajib punya desain untuk keadaan berikut sebelum dianggap 
 - Target sentuh ≥ 48dp di klien sentuh. Fokus keyboard terlihat jelas di web & desktop Windows.
 - Mendukung pembesaran teks sistem hingga 130% tanpa tata letak rusak (Flutter `textScaler`, web `rem`).
 - Diuji di **tablet Android murah (RAM 3 GB), layar 8"**, di bawah cahaya terang, dari jarak lengan. Ini perangkat acuan, bukan MacBook desainer.
+- Web diuji di lebar **360, 768, dan 1280px** (§17.4.4); Aplikasi POS di **360, 800, dan 1280dp** (§17.2.7).
 
 #### 17.6.10 Proses Desain
 
@@ -3314,6 +3387,8 @@ Wajib lolos sebelum layar masuk implementasi:
 - [ ] Warna hanya muncul untuk aksi utama dan status, status selalu disertai teks/ikon
 - [ ] Tidak ada gradien, efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
 - [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel
+- [ ] Tabel web memakai `TabelData` (TanStack Table + Query) dengan fitur §17.4.3
+- [ ] Rapi di lebar 360 / 768 / 1280px tanpa gulir horizontal halaman (web, §17.4.4); layar POS berada di bingkai Ruang Kerja Kasir dan rapi di 360 / 800 / 1280dp (§17.2.7)
 - [ ] Font & ukuran hanya dari token §17.5. Angka uang tabular & rata kanan. Kode memakai font Mono
 - [ ] Semua keadaan di §17.6.6 sudah didesain
 - [ ] Diuji dengan data ekstrem dan di perangkat acuan
@@ -3701,7 +3776,7 @@ gantt
 - [ ] Spesifikasi flow (§8 format) disetujui PO
 - [ ] Migrasi + model + action + policy + event/listener
 - [ ] Dampak stok & jurnal sesuai tabel §11.3, dengan invariant test lulus
-- [ ] UI tablet & desktop, state kosong/loading/error. Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
+- [ ] UI responsif di semua lebar (web: 360/768/1280px, §17.4.4; POS: 360/800/1280dp di bingkai Ruang Kerja Kasir, §17.2.7), state kosong/loading/error. Tabel web memakai `TabelData` (§17.4.3). Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
 - [ ] Audit log & permission
 - [ ] Nama tabel, kolom, folder, file, dan function sesuai konvensi §13.7 (istilah baru sudah masuk kamus)
 - [ ] Desain lolos checklist review §17.6.11 dan semua keadaan wajib §17.6.6 terimplementasi
@@ -3786,6 +3861,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 19. **Utang F-03** (v1.31): kontrak OpenAPI (Scramble) untuk endpoint POS katalog; `Produk.IdPemasok` konsinyasi (F-04); penyedia HPP bahan nyata (F-05a); snapshot resep di baris penjualan & vektor baris pajak campuran inklusif/eksklusif (F-07); vektor HPP/pemotongan resep (F-07); pencocokan preset impor dengan berkas ekspor asli majoo/Moka/Pawoon; impor modifier, resep, dan daftar harga; pembersihan jejak hapus lintas tenant (P-11); URL gambar publik (F-17); tabel tier pelanggan (F-16); parsing barcode timbangan (F-07); memindahkan test arsitektur katalog ke `tests/Arsitektur` (manusia); penjaga CI "test vector hanya tambah". Temuan QA F-03 yang ditunda: tugas impor yang sudah berjalan tetap menulis setelah tenant ditangguhkan (hentikan di potongan berikutnya); batas atas persen susut resep agar jumlah kotor tidak melampaui `decimal(18,4)` saat pemotongan stok (F-07); batas ekstraksi xlsx 200 MB per unggahan bisa diperkecil bila beban server terlalu tinggi.
 20. **Utang F-05a** (v1.33): suite uji konkurensi nyata `tests/Konkurensi` (dua koneksi, `DatabaseTruncation`) butuh perubahan `phpunit.xml`/`Pest.php` oleh manusia; sampai itu, urutan kunci & idempotensi diuji tanpa dua koneksi. Pemutaran ulang lapisan FIFO (`--ulang-fifo`); alat konversi metode HPP; satuan alternatif (dus/pak) di stok awal; stok di payload katalog POS (bagian `SaldoStok`, F-06/F-07); kontrak `PemeriksaPemakaianGudang` untuk arsip gudang berstok (F-05b); penerimaan nomor seri `DalamPerjalanan` (F-05b); kebijakan penjualan offline bertanggal di periode terkunci (F-07/F-15); kunci S tenant pada setiap mutasi diukur ulang di uji beban F-07. Temuan QA F-05a yang ditunda: pratinjau impor belum memeriksa batas 16 digit nilai (tertangkap saat draf dibuat); `StokAwal.IdOutlet` tidak ikut berubah bila lokasi dipindah ke outlet lain; penjaga model tidak mencakup ubah/hapus lewat query builder langsung.
 21. **Utang F-06** (v1.34, diperbarui v1.35): unggah foto bukti kas (`PathLampiran`) dari aplikasi; persetujuan jarak jauh lewat push (X4); shift bersama per outlet (sekarang per tenant); `sinkron/kirim` untuk perangkat yang dicabut setelah data offline dibuat (F-07); penyetuju yang izinnya dicabut setelah menyetujui offline tetap ditolak (tinjau di F-07); kontrak OpenAPI untuk `sinkron/kirim` & `data-awal`; enkripsi basis data lokal SQLCipher (§17.2.6) bila disyaratkan; pembaruan data awal berkala di latar (sekarang saat aplikasi dibuka & tombol "Perbarui data kasir"); alamat server produksi/staging lewat `--dart-define=ALAMAT_SERVER`.
+22. **Utang D-16** (v1.37): (a) membangun `Komponen/TabelData/` (TanStack Table + Query, §17.4.3) beserta helper kueri tabel server (daftar putih urut/saring, kontrak `Data`/`Meta`) dan endpoint JSON `/internal/*`; (b) memindahkan ±45 halaman web yang sudah ada (back-office & Platform Pengelola) dari tabel rakitan sendiri ke `TabelData`; (c) audit responsif semua halaman di 360/768/1280px + tangkapan layar Playwright; (d) membangun bingkai `RuangKerja` Aplikasi POS dan memindahkan layar F-06b (pilih kasir, shift, kas, status sinkron) ke dalamnya, termasuk kunci cepat/otomatis dan pengaturan ukuran tampilan. Dikerjakan **sebelum F-07** agar layar penjualan langsung dibangun di atas fondasi ini.
 
 ### 25.1 Keputusan yang Sudah Diambil
 
@@ -3806,6 +3882,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-13 | Folder aplikasi Laravel bernama **`Aplikasi/Web/`** (sebelumnya `Backend/`): satu aplikasi berisi API POS & Owner, back-office Inertia React, web publik, dan Platform Pengelola, sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`; kode bersama tetap di `Paket/` | 23/09/2026 | §13.0, §13.7.2, §13.8, §17.4.1, §22, §23, `CLAUDE.md`, `.claude/`, `Alat/`, CI |
 | D-14 | **Tanpa mode gelap** di semua klien (web, Aplikasi Kasir, Aplikasi Pemilik, KDS). Warna diubah di satu tempat per platform (`Aplikasi.css` untuk web, `TokenWarna.dart` untuk Flutter); halaman tidak pernah memuat warna lepas. Seluruh komponen shadcn/ui dipasang di `Komponen/Ui/` dan warnanya diturunkan dari token. Warna final menyusul | 24/09/2026 | §17.4, §17.5, §17.6.3, §17.x KDS |
 | D-15 | Nama sistem **PAYOU** (slogan "Bisnis Laris, Kelola Praktis.") beserta logo, ikon, dan palet merek dari pemilik produk. Token warna §17.6.3 menjadi final (Brand Indigo `#5558E8`, TeksUtama Navy `#0F2747`). Aset sumber & skrip turunan di `Spesifikasi/Merek/`; logo di UI adalah aset merek, bukan dekorasi (aturan tanpa gradien berlaku untuk komponen UI) | 24/09/2026 | Kepala dokumen, §17.6.3, `Spesifikasi/Merek`, `CLAUDE.md` |
+| D-16 | Dari pemilik produk: (1) semua tabel web memakai `TabelData` berbasis **TanStack Table + TanStack Query** dengan fitur lengkap (cari, saring, urut, atur kolom, pilih & aksi massal, paginasi server, ekspor, keadaan di URL); (2) seluruh web **responsif** 360px s.d. layar lebar; (3) Aplikasi POS adalah **Ruang Kerja Kasir** yang elegan dan mudah untuk kerja berjam-jam | 24/09/2026 | §13.5, §17.2.3, §17.2.7, §17.4.3, §17.4.4, §17.6, §23.3, §25 no. 22, `CLAUDE.md`, `.claude/rules/` |
 
 
 ### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)

@@ -37,7 +37,7 @@
 - [ ] Spesifikasi flow (§8 format) disetujui PO
 - [ ] Migrasi + model + action + policy + event/listener
 - [ ] Dampak stok & jurnal sesuai tabel §11.3, dengan invariant test lulus
-- [ ] UI tablet & desktop, state kosong/loading/error. Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
+- [ ] UI responsif di semua lebar (web: 360/768/1280px, §17.4.4; POS: 360/800/1280dp di bingkai Ruang Kerja Kasir, §17.2.7), state kosong/loading/error. Tabel web memakai `TabelData` (§17.4.3). Untuk fitur aplikasi POS: diuji di Android, Windows, dan iPad, termasuk skenario offline
 - [ ] Audit log & permission
 - [ ] Nama tabel, kolom, folder, file, dan function sesuai konvensi §13.7 (istilah baru sudah masuk kamus)
 - [ ] Desain lolos checklist review §17.6.11 dan semua keadaan wajib §17.6.6 terimplementasi

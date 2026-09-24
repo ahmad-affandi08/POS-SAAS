@@ -44,6 +44,8 @@ Jangan mencoba melewati penjaga tersebut. Kalau penjaga menolak, perbaiki kodeny
 18. Kalkulasi harga/pajak/promo harus lolos test vector bersama di `Spesifikasi/VektorUjiKalkulasi/` (PHP & Dart).
 19. **Dilarang** melemahkan, men-skip, atau menghapus test, aturan lint, test arsitektur, atau konfigurasi CI supaya lolos.
 20. UI mengikuti §17.5 (font Atkinson Hyperlegible) dan §17.6 (token, keadaan wajib, microcopy Indonesia). Palet final PAYOU (D-15) ada di token: pakai token, jangan hex lepas.
+21. **Semua tabel web memakai `TabelData`** (TanStack Table + TanStack Query, fitur lengkap §17.4.3); jangan merakit `<table>` sendiri. **Web responsif** 360px s.d. layar lebar (§17.4.4), diuji di 360/768/1280px (D-16).
+22. **Aplikasi POS adalah Ruang Kerja Kasir** (§17.2.7, D-16): semua layar setelah masuk berada di bingkai `RuangKerja`; elegan, tenang, dan mudah untuk kerja berjam-jam.
 
 ## Yang dilarang keras
 
@@ -79,4 +81,4 @@ Alat/               Penjaga & skrip proyek (terlindungi)
 Dokumen/            Potongan PRD hasil generate (terlindungi)
 ```
 
-Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi `Aplikasi/Web` (Laravel + back-office) dan Flutter, Platform Pengelola P-01 s.d. P-09 & P-11 (dasar), F-00 (registrasi & autentikasi), F-02 (organisasi, peran, perangkat, PIN), F-01 (panduan awal & template sektor), F-03 (katalog, harga & pajak, impor/ekspor), F-05a (stok awal, ledger stok & HPP, jurnal inti), F-06 (shift & kas: server, back-office, aplikasi kasir Flutter dengan PIN offline & outbox). Berikutnya: F-07 (penjualan).
+Status: **Fase 0 berjalan** (§22). Sudah ada: fondasi `Aplikasi/Web` (Laravel + back-office) dan Flutter, Platform Pengelola P-01 s.d. P-09 & P-11 (dasar), F-00 (registrasi & autentikasi), F-02 (organisasi, peran, perangkat, PIN), F-01 (panduan awal & template sektor), F-03 (katalog, harga & pajak, impor/ekspor), F-05a (stok awal, ledger stok & HPP, jurnal inti), F-06 (shift & kas: server, back-office, aplikasi kasir Flutter dengan PIN offline & outbox). Berikutnya: utang D-16 (§25 no. 22: `TabelData`, audit responsif, bingkai Ruang Kerja Kasir), lalu F-07 (penjualan).
