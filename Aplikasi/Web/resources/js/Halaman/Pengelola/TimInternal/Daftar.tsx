@@ -4,6 +4,10 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import MenuAksiBaris, { type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -29,6 +33,8 @@ type PropsDaftar = { Anggota: Anggota[]; Undangan: Undangan[]; Peran: Peran[] };
 
 type Pilihan = { jenis: 'peran' | 'nonaktifkan'; anggota: Anggota } | null;
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Manajemen tim internal (P-01 langkah 3, 5, 6). */
 export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const { props } = usePage<PropsBersamaPengelola>();
@@ -39,11 +45,27 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const opsiPeran = Peran.map((peran) => ({ nilai: peran.Kode, label: peran.Nama }));
     const TampilkanPeran = (kode: string[]) => kode.map((item) => namaPeran.get(item) ?? item).join(', ');
 
+    const SusunAksi = (anggota: Anggota): AksiBaris[] => {
+        const aksi: AksiBaris[] = [];
+        if (PunyaIzin(pengguna, IzinPengelola.TimPeranTetapkan)) {
+            aksi.push({ label: 'Ubah peran', saatPilih: () => AturPilihan({ jenis: 'peran', anggota }) });
+        }
+        if (PunyaIzin(pengguna, IzinPengelola.TimAnggotaNonaktifkan)) {
+            aksi.push({
+                label: 'Nonaktifkan',
+                bahaya: true,
+                saatPilih: () => AturPilihan({ jenis: 'nonaktifkan', anggota }),
+            });
+        }
+
+        return aksi;
+    };
+
     return (
         <TataLetakPengelola
             judul="Tim internal"
             aksi={
-                PunyaIzin(pengguna, IzinPengelola.TimAnggotaUndang) && !formUndanganTerbuka ? (
+                PunyaIzin(pengguna, IzinPengelola.TimAnggotaUndang) ? (
                     <Tombol onClick={() => AturFormUndanganTerbuka(true)}>Undang anggota</Tombol>
                 ) : null
             }
@@ -68,39 +90,39 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                 />
             ) : null}
 
-            <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                <table className="w-full min-w-[720px] text-left text-isi">
-                    <caption className="sr-only">Daftar anggota tim internal</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+            <Card className="gap-0 py-0">
+                <Table className="min-w-[720px] text-isi">
+                    <TableCaption className="sr-only">Daftar anggota tim internal</TableCaption>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead scope="col" className={kelasKepala}>
                                 Nama
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Peran
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Status
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Terakhir masuk
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 <span className="sr-only">Aksi</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {Anggota.map((anggota) => (
-                            <tr key={anggota.Uuid} className="border-b border-garis last:border-b-0">
-                                <td className="px-4 py-3 align-top">
+                            <TableRow key={anggota.Uuid} className="align-top">
+                                <TableCell className="px-4 py-3 whitespace-normal">
                                     <p className="font-semibold text-teks-utama">{anggota.Nama}</p>
                                     <p className="text-keterangan text-teks-sekunder">{anggota.Email}</p>
-                                </td>
-                                <td className="px-4 py-3 align-top text-teks-utama">
+                                </TableCell>
+                                <TableCell className="px-4 py-3 whitespace-normal text-teks-utama">
                                     {TampilkanPeran(anggota.KodePeran)}
-                                </td>
-                                <td className="px-4 py-3 align-top">
+                                </TableCell>
+                                <TableCell className="px-4 py-3 whitespace-normal">
                                     <div className="flex flex-wrap gap-1">
                                         {anggota.Aktif ? (
                                             <LabelStatus jenis="sukses" teks="Aktif" />
@@ -111,58 +133,46 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                                             <LabelStatus jenis="peringatan" teks="Verifikasi dua langkah belum aktif" />
                                         )}
                                     </div>
-                                </td>
-                                <td className="px-4 py-3 align-top text-teks-sekunder">
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-teks-sekunder">
                                     {FormatTanggalWaktu(anggota.TerakhirMasukPada)}
-                                </td>
-                                <td className="px-4 py-3 text-right align-top">
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-right">
                                     {anggota.Aktif ? (
-                                        <div className="flex justify-end gap-2">
-                                            {PunyaIzin(pengguna, IzinPengelola.TimPeranTetapkan) ? (
-                                                <Tombol
-                                                    varian="sekunder"
-                                                    onClick={() => AturPilihan({ jenis: 'peran', anggota })}
-                                                >
-                                                    Ubah peran
-                                                </Tombol>
-                                            ) : null}
-                                            {PunyaIzin(pengguna, IzinPengelola.TimAnggotaNonaktifkan) ? (
-                                                <Tombol
-                                                    varian="bahaya"
-                                                    onClick={() => AturPilihan({ jenis: 'nonaktifkan', anggota })}
-                                                >
-                                                    Nonaktifkan
-                                                </Tombol>
-                                            ) : null}
-                                        </div>
+                                        <MenuAksiBaris label={`Aksi untuk ${anggota.Nama}`} aksi={SusunAksi(anggota)} />
                                     ) : (
                                         <span className="text-keterangan text-teks-sekunder">
                                             Dinonaktifkan {FormatTanggalWaktu(anggota.DinonaktifkanPada)}
                                         </span>
                                     )}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </section>
+                    </TableBody>
+                </Table>
+            </Card>
 
             <section className="flex flex-col gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Undangan menunggu</h2>
                 {Undangan.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Tidak ada undangan yang menunggu diterima.</p>
                 ) : (
-                    <ul className="divide-y divide-garis rounded-panel border border-garis bg-permukaan">
-                        {Undangan.map((undangan) => (
-                            <li key={undangan.Uuid} className="flex flex-wrap justify-between gap-2 px-4 py-3 text-isi">
-                                <span className="font-semibold text-teks-utama">{undangan.Email}</span>
-                                <span className="text-teks-sekunder">
-                                    {TampilkanPeran(undangan.KodePeran)} · berlaku sampai{' '}
-                                    {FormatTanggalWaktu(undangan.BerlakuSampai)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
+                    <Card className="gap-0 py-0">
+                        <ul className="divide-y divide-garis">
+                            {Undangan.map((undangan) => (
+                                <li
+                                    key={undangan.Uuid}
+                                    className="flex flex-wrap justify-between gap-2 px-4 py-3 text-isi"
+                                >
+                                    <span className="font-semibold text-teks-utama">{undangan.Email}</span>
+                                    <span className="text-teks-sekunder">
+                                        {TampilkanPeran(undangan.KodePeran)} · berlaku sampai{' '}
+                                        {FormatTanggalWaktu(undangan.BerlakuSampai)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </Card>
                 )}
             </section>
         </TataLetakPengelola>
@@ -180,41 +190,43 @@ function FormUndangan({ opsiPeran, saatSelesai }: { opsiPeran: Opsi; saatSelesai
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6"
-            noValidate
+        <DialogFormulir
+            judul="Undang anggota tim"
+            keterangan={
+                <p>
+                    Undangan dikirim lewat email, berlaku 48 jam, dan hanya bisa dipakai sekali. Anggota wajib
+                    mengaktifkan verifikasi dua langkah.
+                </p>
+            }
+            saatTutup={saatSelesai}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama">Undang anggota tim</h2>
-            <p className="text-isi text-teks-sekunder">
-                Undangan dikirim lewat email, berlaku 48 jam, dan hanya bisa dipakai sekali. Anggota wajib mengaktifkan
-                verifikasi dua langkah.
-            </p>
-            <BidangTeks
-                label="Email"
-                jenis="email"
-                nilai={formulir.data.Email}
-                saatBerubah={(nilai) => formulir.setData('Email', nilai)}
-                galat={formulir.errors.Email}
-                autoFocus
-                required
-            />
-            <GrupCentang
-                legenda="Peran"
-                opsi={opsiPeran}
-                terpilih={formulir.data.KodePeran}
-                saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
-                galat={formulir.errors.KodePeran}
-            />
-            <div className="flex gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Kirim undangan
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangTeks
+                    label="Email"
+                    jenis="email"
+                    nilai={formulir.data.Email}
+                    saatBerubah={(nilai) => formulir.setData('Email', nilai)}
+                    galat={formulir.errors.Email}
+                    autoFocus
+                    required
+                />
+                <GrupCentang
+                    legenda="Peran"
+                    opsi={opsiPeran}
+                    terpilih={formulir.data.KodePeran}
+                    saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
+                    galat={formulir.errors.KodePeran}
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Kirim undangan
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -236,36 +248,33 @@ function FormPeran({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6"
-            noValidate
-        >
-            <h2 className="text-subjudul font-semibold text-teks-utama">Ubah peran {anggota.Nama}</h2>
-            {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
-            <GrupCentang
-                legenda="Peran (boleh lebih dari satu)"
-                opsi={opsiPeran}
-                terpilih={formulir.data.KodePeran}
-                saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
-                galat={formulir.errors.KodePeran}
-            />
-            <BidangTeks
-                label="Alasan (opsional)"
-                nilai={formulir.data.Alasan}
-                saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                galat={formulir.errors.Alasan}
-                maxLength={500}
-            />
-            <div className="flex gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan peran
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+        <DialogFormulir judul={`Ubah peran ${anggota.Nama}`} saatTutup={saatSelesai}>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
+                <GrupCentang
+                    legenda="Peran (boleh lebih dari satu)"
+                    opsi={opsiPeran}
+                    terpilih={formulir.data.KodePeran}
+                    saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
+                    galat={formulir.errors.KodePeran}
+                />
+                <BidangTeks
+                    label="Alasan (opsional)"
+                    nilai={formulir.data.Alasan}
+                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                    galat={formulir.errors.Alasan}
+                    maxLength={500}
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan peran
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -279,34 +288,37 @@ function FormNonaktifkan({ anggota, saatSelesai }: { anggota: Anggota; saatSeles
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-bahaya bg-permukaan p-6"
-            noValidate
+        <DialogFormulir
+            jenis="konfirmasi"
+            judul={`Nonaktifkan ${anggota.Nama}?`}
+            keterangan={
+                <p>
+                    Sesinya langsung terputus dan ia tidak bisa masuk lagi. Akun tidak dihapus; riwayat audit tetap
+                    tersimpan.
+                </p>
+            }
+            saatTutup={saatSelesai}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama">Nonaktifkan {anggota.Nama}?</h2>
-            <p className="text-isi text-teks-sekunder">
-                Sesinya langsung terputus dan ia tidak bisa masuk lagi. Akun tidak dihapus; riwayat audit tetap
-                tersimpan.
-            </p>
-            {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
-            <BidangTeks
-                label="Alasan"
-                nilai={formulir.data.Alasan}
-                saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
-                galat={formulir.errors.Alasan}
-                maxLength={500}
-                autoFocus
-                required
-            />
-            <div className="flex gap-2">
-                <Tombol type="submit" varian="bahaya" memproses={formulir.processing}>
-                    Nonaktifkan akun
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
+                <BidangTeks
+                    label="Alasan"
+                    nilai={formulir.data.Alasan}
+                    saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
+                    galat={formulir.errors.Alasan}
+                    maxLength={500}
+                    autoFocus
+                    required
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" varian="bahaya" memproses={formulir.processing}>
+                        Nonaktifkan akun
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }

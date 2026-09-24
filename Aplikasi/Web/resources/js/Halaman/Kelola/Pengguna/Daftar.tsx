@@ -103,8 +103,7 @@ export default function HalamanDaftarPengguna({
             aksi.push({
                 label: 'Aktifkan kembali',
                 nonaktif: penuh,
-                saatPilih: () =>
-                    router.post(`/kelola/pengguna/${anggota.Uuid}/aktifkan`, {}, { preserveScroll: true }),
+                saatPilih: () => router.post(`/kelola/pengguna/${anggota.Uuid}/aktifkan`, {}, { preserveScroll: true }),
             });
         }
 

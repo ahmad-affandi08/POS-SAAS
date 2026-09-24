@@ -30,7 +30,13 @@ const kelasKeterangan = 'flex flex-col gap-2 text-isi text-teks-sekunder';
  * Wadah formulir tindakan. Dirender (terbuka) selama induknya memasangnya; menutup lewat Esc/Batal
  * memanggil `saatTutup`. Tombol kirim & batal tetap milik formulir di dalamnya.
  */
-export default function DialogFormulir({ judul, keterangan, jenis = 'dialog', saatTutup, children }: PropsDialogFormulir) {
+export default function DialogFormulir({
+    judul,
+    keterangan,
+    jenis = 'dialog',
+    saatTutup,
+    children,
+}: PropsDialogFormulir) {
     const UbahTerbuka = (terbuka: boolean) => {
         if (!terbuka) {
             saatTutup();

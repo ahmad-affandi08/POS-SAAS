@@ -451,9 +451,7 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                                                 {log.Aksi}
                                             </span>
                                         </p>
-                                        {log.Alasan ? (
-                                            <p className="text-teks-sekunder">Alasan: {log.Alasan}</p>
-                                        ) : null}
+                                        {log.Alasan ? <p className="text-teks-sekunder">Alasan: {log.Alasan}</p> : null}
                                         {log.NilaiBaru ? (
                                             <p className="break-all text-keterangan text-teks-sekunder">
                                                 <code className="font-mono">{JSON.stringify(log.NilaiBaru)}</code>

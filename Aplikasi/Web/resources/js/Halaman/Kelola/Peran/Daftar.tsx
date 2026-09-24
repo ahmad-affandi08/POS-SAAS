@@ -41,9 +41,7 @@ export default function HalamanDaftarPeran({ Peran, DaftarIzin }: PropsDaftar) {
                 <p className="text-isi text-teks-sekunder">
                     Peran bawaan disiapkan sistem. Buat peran kustom bila tim Anda butuh kombinasi izin lain.
                 </p>
-                {bolehKelola ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Buat peran</Tombol>
-                ) : null}
+                {bolehKelola ? <Tombol onClick={() => AturSunting('baru')}>Buat peran</Tombol> : null}
             </div>
 
             {sunting !== null ? (
@@ -144,50 +142,50 @@ function FormPeran({
             judul={peran === null ? 'Buat peran' : `Ubah ${peran.Nama}`}
             saatTutup={saatSelesai}
         >
-        <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <BidangTeks
-                    label="Nama peran"
-                    nilai={formulir.data.Nama}
-                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                    galat={formulir.errors.Nama}
-                    maxLength={100}
-                    autoFocus
-                    required
-                />
-                <BidangTeks
-                    label="Keterangan (opsional)"
-                    nilai={formulir.data.Keterangan}
-                    saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
-                    galat={formulir.errors.Keterangan}
-                    maxLength={255}
-                />
-            </div>
-            {kelompok.map((namaKelompok) => (
-                <GrupCentang
-                    key={namaKelompok}
-                    legenda={namaKelompok}
-                    opsi={daftarIzin
-                        .filter((izin) => izin.Kelompok === namaKelompok && !izin.KhususPemilik)
-                        .map((izin) => ({ nilai: izin.Kunci, label: izin.Label }))}
-                    terpilih={formulir.data.Izin.filter(
-                        (kunci) => daftarIzin.find((izin) => izin.Kunci === kunci)?.Kelompok === namaKelompok,
-                    )}
-                    saatBerubah={(terpilih) => UbahKelompok(namaKelompok, terpilih)}
-                />
-            ))}
-            {formulir.errors.Izin ? (
-                <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Izin}</p>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan peran
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <BidangTeks
+                        label="Nama peran"
+                        nilai={formulir.data.Nama}
+                        saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                        galat={formulir.errors.Nama}
+                        maxLength={100}
+                        autoFocus
+                        required
+                    />
+                    <BidangTeks
+                        label="Keterangan (opsional)"
+                        nilai={formulir.data.Keterangan}
+                        saatBerubah={(nilai) => formulir.setData('Keterangan', nilai)}
+                        galat={formulir.errors.Keterangan}
+                        maxLength={255}
+                    />
+                </div>
+                {kelompok.map((namaKelompok) => (
+                    <GrupCentang
+                        key={namaKelompok}
+                        legenda={namaKelompok}
+                        opsi={daftarIzin
+                            .filter((izin) => izin.Kelompok === namaKelompok && !izin.KhususPemilik)
+                            .map((izin) => ({ nilai: izin.Kunci, label: izin.Label }))}
+                        terpilih={formulir.data.Izin.filter(
+                            (kunci) => daftarIzin.find((izin) => izin.Kunci === kunci)?.Kelompok === namaKelompok,
+                        )}
+                        saatBerubah={(terpilih) => UbahKelompok(namaKelompok, terpilih)}
+                    />
+                ))}
+                {formulir.errors.Izin ? (
+                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Izin}</p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan peran
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
         </DialogFormulir>
     );
 }

@@ -204,7 +204,9 @@ function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianG
                     <TableBody>
                         {gudang.map((baris) => (
                             <TableRow key={baris.Uuid}>
-                                <TableCell className="px-4 font-mono text-label text-teks-utama">{baris.Kode}</TableCell>
+                                <TableCell className="px-4 font-mono text-label text-teks-utama">
+                                    {baris.Kode}
+                                </TableCell>
                                 <TableCell className="px-4 whitespace-normal text-teks-utama">{baris.Nama}</TableCell>
                                 <TableCell className="px-4 text-teks-sekunder">
                                     {labelJenis.get(baris.Jenis) ?? baris.Jenis}

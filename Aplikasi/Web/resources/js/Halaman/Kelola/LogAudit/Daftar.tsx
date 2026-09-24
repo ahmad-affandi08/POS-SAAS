@@ -96,7 +96,9 @@ export default function HalamanLogAudit({ Log, Saring }: PropsDaftar) {
                                     <TableCell className="px-4 text-teks-sekunder">
                                         {FormatTanggalWaktu(log.DibuatPada)}
                                     </TableCell>
-                                    <TableCell className="px-4 whitespace-normal text-teks-utama">{log.Pelaku}</TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
+                                        {log.Pelaku}
+                                    </TableCell>
                                     <TableCell className="px-4 font-mono text-label text-teks-utama">
                                         {log.Peristiwa}
                                     </TableCell>

@@ -4,6 +4,9 @@ import { useId, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RincianTagihan from '@/Komponen/Langganan/RincianTagihan';
+import { Card } from '@/Komponen/Ui/card';
+import { Label } from '@/Komponen/Ui/label';
+import { Textarea } from '@/Komponen/Ui/textarea';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -64,64 +67,66 @@ function KartuPembayaran({
     bolehVerifikasi: boolean;
 }) {
     return (
-        <article className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <LabelStatus jenis={JenisLabelPembayaran(pembayaran.Status)} teks={pembayaran.LabelStatus} />
-                <a
-                    href={`/tagihan/pembayaran/${pembayaran.Uuid}/bukti`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-label font-semibold underline"
-                >
-                    Buka bukti transfer
-                </a>
-            </div>
-            <dl className="grid gap-x-6 gap-y-2 text-isi sm:grid-cols-3">
-                <div>
-                    <dt className="text-keterangan text-teks-sekunder">Jumlah menurut tenant</dt>
-                    <dd className="tabular-nums">{FormatRupiah(pembayaran.Jumlah)}</dd>
+        <article>
+            <Card className="gap-3 px-4 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <LabelStatus jenis={JenisLabelPembayaran(pembayaran.Status)} teks={pembayaran.LabelStatus} />
+                    <a
+                        href={`/tagihan/pembayaran/${pembayaran.Uuid}/bukti`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-label font-semibold underline"
+                    >
+                        Buka bukti transfer
+                    </a>
                 </div>
-                <div>
-                    <dt className="text-keterangan text-teks-sekunder">Tanggal transfer</dt>
-                    <dd>{FormatTanggal(pembayaran.TanggalTransfer)}</dd>
-                </div>
-                <div>
-                    <dt className="text-keterangan text-teks-sekunder">Diunggah</dt>
-                    <dd>{FormatTanggalWaktu(pembayaran.DiunggahPada)}</dd>
-                </div>
-                <div>
-                    <dt className="text-keterangan text-teks-sekunder">Pengirim</dt>
-                    <dd>
-                        {pembayaran.BankPengirim} · {pembayaran.NamaPengirim}
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-keterangan text-teks-sekunder">Rekening tujuan</dt>
-                    <dd>
-                        {pembayaran.BankTujuan} <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
-                    </dd>
-                </div>
-                {pembayaran.DiverifikasiPada ? (
+                <dl className="grid gap-x-6 gap-y-2 text-isi sm:grid-cols-3">
                     <div>
-                        <dt className="text-keterangan text-teks-sekunder">Diverifikasi</dt>
+                        <dt className="text-keterangan text-teks-sekunder">Jumlah menurut tenant</dt>
+                        <dd className="tabular-nums">{FormatRupiah(pembayaran.Jumlah)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-keterangan text-teks-sekunder">Tanggal transfer</dt>
+                        <dd>{FormatTanggal(pembayaran.TanggalTransfer)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-keterangan text-teks-sekunder">Diunggah</dt>
+                        <dd>{FormatTanggalWaktu(pembayaran.DiunggahPada)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-keterangan text-teks-sekunder">Pengirim</dt>
                         <dd>
-                            {FormatTanggalWaktu(pembayaran.DiverifikasiPada)} oleh {pembayaran.Verifikator ?? '—'}
+                            {pembayaran.BankPengirim} · {pembayaran.NamaPengirim}
                         </dd>
                     </div>
-                ) : null}
-                {pembayaran.AlasanTolak ? (
-                    <div className="sm:col-span-3">
-                        <dt className="text-keterangan text-teks-sekunder">Alasan ditolak</dt>
-                        <dd>{pembayaran.AlasanTolak}</dd>
+                    <div>
+                        <dt className="text-keterangan text-teks-sekunder">Rekening tujuan</dt>
+                        <dd>
+                            {pembayaran.BankTujuan} <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
+                        </dd>
+                    </div>
+                    {pembayaran.DiverifikasiPada ? (
+                        <div>
+                            <dt className="text-keterangan text-teks-sekunder">Diverifikasi</dt>
+                            <dd>
+                                {FormatTanggalWaktu(pembayaran.DiverifikasiPada)} oleh {pembayaran.Verifikator ?? '—'}
+                            </dd>
+                        </div>
+                    ) : null}
+                    {pembayaran.AlasanTolak ? (
+                        <div className="sm:col-span-3">
+                            <dt className="text-keterangan text-teks-sekunder">Alasan ditolak</dt>
+                            <dd>{pembayaran.AlasanTolak}</dd>
+                        </div>
+                    ) : null}
+                </dl>
+                {pembayaran.Status === 'Menunggu' && bolehVerifikasi ? (
+                    <div className="grid gap-4 border-t border-garis pt-3 lg:grid-cols-2">
+                        <FormTerima uuid={pembayaran.Uuid} total={total} />
+                        <FormTolak uuid={pembayaran.Uuid} />
                     </div>
                 ) : null}
-            </dl>
-            {pembayaran.Status === 'Menunggu' && bolehVerifikasi ? (
-                <div className="grid gap-4 border-t border-garis pt-3 lg:grid-cols-2">
-                    <FormTerima uuid={pembayaran.Uuid} total={total} />
-                    <FormTolak uuid={pembayaran.Uuid} />
-                </div>
-            ) : null}
+            </Card>
         </article>
     );
 }
@@ -173,21 +178,22 @@ function FormTolak({ uuid }: { uuid: string }) {
         <form onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
             <h3 className="text-label font-semibold text-teks-utama">Tolak bukti</h3>
             <div className="flex flex-col gap-1">
-                <label htmlFor={id} className="text-label font-semibold text-teks-utama">
+                <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                     Alasan (dikirim ke pemilik usaha)
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                     id={id}
                     rows={3}
                     value={formulir.data.Alasan}
                     onChange={(peristiwa) => formulir.setData('Alasan', peristiwa.target.value)}
                     aria-invalid={formulir.errors.Alasan ? true : undefined}
-                    className={`rounded-kontrol border bg-permukaan px-3 py-2 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                        formulir.errors.Alasan ? 'border-bahaya' : 'border-garis-input'
-                    }`}
+                    aria-describedby={formulir.errors.Alasan ? `${id}-galat` : undefined}
+                    className="text-isi"
                 />
                 {formulir.errors.Alasan ? (
-                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.Alasan}</p>
+                    <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
+                        {formulir.errors.Alasan}
+                    </p>
                 ) : null}
             </div>
             <div>
