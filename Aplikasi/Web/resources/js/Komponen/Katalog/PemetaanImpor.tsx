@@ -4,7 +4,9 @@ import { useId, useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { Alert, AlertTitle } from '@/Komponen/Ui/alert';
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type {
     AturanJenisProduk,
     BidangImpor,
@@ -15,6 +17,7 @@ import type {
 } from '@/Tipe/Katalog';
 
 import GrupRadio from './GrupRadio';
+import PeringatanAsumsi from './PeringatanAsumsi';
 
 type DataPemetaan = NonNullable<PropsDetailImpor['Pemetaan']>;
 
@@ -103,52 +106,49 @@ export default function PemetaanImpor({
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            noValidate
-            aria-labelledby={`${id}-judul`}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
-        >
-            <h2 id={`${id}-judul`} className="text-subjudul font-semibold text-teks-utama">
-                Pemetaan kolom
-            </h2>
-            {presetAsumsi ? (
-                <Pemberitahuan jenis="peringatan" judul="Periksa pemetaan kolom sebelum mengimpor">
-                    Nama kolom format aplikasi ini belum diverifikasi dengan berkas ekspor asli. Pastikan setiap bidang
-                    menunjuk kolom yang benar; lihat contoh isi di samping pilihan.
-                </Pemberitahuan>
-            ) : null}
-            <div aria-live="polite">
-                {jumlahGalat > 0 ? (
-                    <p className="rounded-kontrol border border-l-4 border-bahaya bg-permukaan px-3 py-2 text-isi font-semibold text-bahaya">
-                        Ada {jumlahGalat} pemetaan yang perlu diperbaiki.
-                    </p>
+        <Card className="gap-4 rounded-panel p-4 shadow-none">
+            <form onSubmit={Kirim} noValidate aria-labelledby={`${id}-judul`} className="flex flex-col gap-4">
+                <h2 id={`${id}-judul`} className="text-subjudul font-semibold text-teks-utama">
+                    Pemetaan kolom
+                </h2>
+                {presetAsumsi ? (
+                    <PeringatanAsumsi>
+                        Nama kolom format aplikasi ini belum diverifikasi dengan berkas ekspor asli. Pastikan setiap
+                        bidang menunjuk kolom yang benar; lihat contoh isi di samping pilihan.
+                    </PeringatanAsumsi>
                 ) : null}
-            </div>
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-isi">
-                    <caption className="sr-only">Pemetaan bidang produk ke kolom berkas</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="py-2 pr-2 font-semibold">
+                <div aria-live="polite">
+                    {jumlahGalat > 0 ? (
+                        <Alert variant="destructive" className="rounded-kontrol border-l-4 border-bahaya">
+                            <AlertTitle className="text-isi font-semibold text-bahaya">
+                                Ada {jumlahGalat} pemetaan yang perlu diperbaiki.
+                            </AlertTitle>
+                        </Alert>
+                    ) : null}
+                </div>
+                <Table className="min-w-[640px] text-left text-isi">
+                    <TableCaption className="sr-only">Pemetaan bidang produk ke kolom berkas</TableCaption>
+                    <TableHeader>
+                        <TableRow className="border-garis hover:bg-transparent">
+                            <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
                                 Bidang produk
-                            </th>
-                            <th scope="col" className="px-2 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
                                 Kolom di berkas
-                            </th>
-                            <th scope="col" className="py-2 pl-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
                                 Contoh isi
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {data.Bidang.map((bidang) => {
                             const kolom = pemetaan[bidang.Kunci] ?? null;
                             const contoh = data.KolomSumber.find((item) => item.Indeks === kolom)?.Contoh ?? [];
 
                             return (
-                                <tr key={bidang.Kunci} className="border-b border-garis align-top last:border-b-0">
-                                    <th scope="row" className="py-2 pr-2 text-left font-normal">
+                                <TableRow key={bidang.Kunci} className="border-garis align-top hover:bg-transparent">
+                                    <th scope="row" className="p-2 pl-0 text-left align-top font-normal">
                                         <span className="block font-semibold text-teks-utama">
                                             {bidang.Label}
                                             {bidang.Wajib ? ' (wajib)' : ''}
@@ -157,7 +157,7 @@ export default function PemetaanImpor({
                                             {bidang.Keterangan}
                                         </span>
                                     </th>
-                                    <td className="px-2 py-2">
+                                    <TableCell className="whitespace-normal">
                                         <BidangPilihan
                                             label={`Kolom untuk ${bidang.Label}`}
                                             nilai={kolom === null ? '' : String(kolom)}
@@ -171,82 +171,82 @@ export default function PemetaanImpor({
                                             }
                                             galat={galatLokal[bidang.Kunci] ?? galatServer[`Pemetaan.${bidang.Kunci}`]}
                                         />
-                                    </td>
-                                    <td className="py-2 pl-2 text-keterangan break-all text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="pr-0 text-keterangan break-all whitespace-normal text-teks-sekunder">
                                         {contoh.length === 0 ? '—' : contoh.filter(Boolean).slice(0, 3).join(' · ')}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             );
                         })}
-                    </tbody>
-                </table>
-            </div>
+                    </TableBody>
+                </Table>
 
-            <fieldset className="grid gap-4 sm:grid-cols-2">
-                <legend className="mb-2 text-label font-semibold text-teks-utama">Pengaturan impor</legend>
-                <GrupRadio<OpsiImpor['Mode']>
-                    legenda="Bila SKU atau nama produk sudah ada"
-                    nilai={opsi.Mode}
-                    opsi={[
-                        {
-                            Nilai: 'TambahDanPerbarui',
-                            Label: 'Perbarui produk yang sudah ada',
-                            Keterangan: 'Aman diimpor ulang: tidak membuat duplikat.',
-                        },
-                        {
-                            Nilai: 'TambahSaja',
-                            Label: 'Lewati produk yang sudah ada',
-                            Keterangan: 'Hanya produk baru yang ditambahkan.',
-                        },
-                    ]}
-                    saatBerubah={(nilai) => AturOpsi({ ...opsi, Mode: nilai })}
-                    galat={galatServer['Opsi.Mode']}
-                />
-                <div className="flex flex-col gap-3">
-                    <BidangPilihan
-                        label="Jenis bawaan"
-                        nilai={opsi.JenisBawaan}
-                        opsi={jenis
-                            .filter((item) => item.Nilai !== 'IndukVarian')
-                            .map((item) => ({ Nilai: item.Nilai, Label: item.Label }))}
-                        saatBerubah={(nilai) => AturOpsi({ ...opsi, JenisBawaan: nilai as JenisProduk })}
-                        galat={galatServer['Opsi.JenisBawaan']}
+                <fieldset className="grid gap-4 sm:grid-cols-2">
+                    <legend className="mb-2 text-label font-semibold text-teks-utama">Pengaturan impor</legend>
+                    <GrupRadio<OpsiImpor['Mode']>
+                        legenda="Bila SKU atau nama produk sudah ada"
+                        nilai={opsi.Mode}
+                        opsi={[
+                            {
+                                Nilai: 'TambahDanPerbarui',
+                                Label: 'Perbarui produk yang sudah ada',
+                                Keterangan: 'Aman diimpor ulang: tidak membuat duplikat.',
+                            },
+                            {
+                                Nilai: 'TambahSaja',
+                                Label: 'Lewati produk yang sudah ada',
+                                Keterangan: 'Hanya produk baru yang ditambahkan.',
+                            },
+                        ]}
+                        saatBerubah={(nilai) => AturOpsi({ ...opsi, Mode: nilai })}
+                        galat={galatServer['Opsi.Mode']}
                     />
-                    <BidangPilihan
-                        label="Kelompok pajak bawaan"
-                        nilai={opsi.UuidKelompokPajakBawaan ?? ''}
-                        kosong="Tidak ada (baris tanpa pajak ditolak)"
-                        opsi={kelompokPajak.map((item) => ({
-                            Nilai: item.Uuid,
-                            Label: `${item.Nama} · ${item.LabelKategori}`,
-                        }))}
-                        saatBerubah={(nilai) =>
-                            AturOpsi({ ...opsi, UuidKelompokPajakBawaan: nilai === '' ? null : nilai })
-                        }
-                        galat={galatServer['Opsi.UuidKelompokPajakBawaan']}
-                    />
-                    <KotakCentang
-                        label="Buat kategori baru bila belum ada"
-                        nilai={opsi.BuatKategoriBaru}
-                        saatBerubah={(nilai) => AturOpsi({ ...opsi, BuatKategoriBaru: nilai })}
-                    />
-                    <KotakCentang
-                        label="Buat satuan baru bila belum ada"
-                        nilai={opsi.BuatSatuanBaru}
-                        saatBerubah={(nilai) => AturOpsi({ ...opsi, BuatSatuanBaru: nilai })}
-                    />
-                </div>
-            </fieldset>
-            <div className="flex flex-wrap gap-2">
-                <Tombol type="submit" memproses={memproses}>
-                    Periksa data
-                </Tombol>
-                {saatBatal ? (
-                    <Tombol varian="sekunder" onClick={saatBatal}>
-                        Batal ubah pemetaan
+                    <div className="flex flex-col gap-3">
+                        <BidangPilihan
+                            label="Jenis bawaan"
+                            nilai={opsi.JenisBawaan}
+                            opsi={jenis
+                                .filter((item) => item.Nilai !== 'IndukVarian')
+                                .map((item) => ({ Nilai: item.Nilai, Label: item.Label }))}
+                            saatBerubah={(nilai) => AturOpsi({ ...opsi, JenisBawaan: nilai as JenisProduk })}
+                            galat={galatServer['Opsi.JenisBawaan']}
+                        />
+                        <BidangPilihan
+                            label="Kelompok pajak bawaan"
+                            nilai={opsi.UuidKelompokPajakBawaan ?? ''}
+                            kosong="Tidak ada (baris tanpa pajak ditolak)"
+                            opsi={kelompokPajak.map((item) => ({
+                                Nilai: item.Uuid,
+                                Label: `${item.Nama} · ${item.LabelKategori}`,
+                            }))}
+                            saatBerubah={(nilai) =>
+                                AturOpsi({ ...opsi, UuidKelompokPajakBawaan: nilai === '' ? null : nilai })
+                            }
+                            galat={galatServer['Opsi.UuidKelompokPajakBawaan']}
+                        />
+                        <KotakCentang
+                            label="Buat kategori baru bila belum ada"
+                            nilai={opsi.BuatKategoriBaru}
+                            saatBerubah={(nilai) => AturOpsi({ ...opsi, BuatKategoriBaru: nilai })}
+                        />
+                        <KotakCentang
+                            label="Buat satuan baru bila belum ada"
+                            nilai={opsi.BuatSatuanBaru}
+                            saatBerubah={(nilai) => AturOpsi({ ...opsi, BuatSatuanBaru: nilai })}
+                        />
+                    </div>
+                </fieldset>
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={memproses}>
+                        Periksa data
                     </Tombol>
-                ) : null}
-            </div>
-        </form>
+                    {saatBatal ? (
+                        <Tombol varian="sekunder" onClick={saatBatal}>
+                            Batal ubah pemetaan
+                        </Tombol>
+                    ) : null}
+                </div>
+            </form>
+        </Card>
     );
 }

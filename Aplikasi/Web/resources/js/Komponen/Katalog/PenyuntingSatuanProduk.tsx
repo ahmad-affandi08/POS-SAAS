@@ -1,6 +1,7 @@
 import { useId } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import { Button } from '@/Komponen/Ui/button';
 import type { FormSatuanProduk, OpsiSatuan } from '@/Tipe/Katalog';
 
 import { AmbilGalatBerawalan } from './BantuanKatalog';
@@ -100,7 +101,7 @@ export default function PenyuntingSatuanProduk({
                 return (
                     <fieldset
                         key={baris.Uuid ?? `baru-${String(indeks)}`}
-                        className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-3"
+                        className="flex flex-col gap-3 rounded-panel border border-garis bg-card p-3"
                     >
                         <legend className="px-1 text-label font-semibold text-teks-utama">
                             {indeks === 0 ? `Satuan dasar: ${namaSatuan}` : `Satuan alternatif ${String(indeks)}`}
@@ -155,7 +156,7 @@ export default function PenyuntingSatuanProduk({
                                     checked={baris.DefaultJual}
                                     onChange={() => PilihBawaan(indeks, 'DefaultJual')}
                                     disabled={disabled}
-                                    className="size-4 accent-brand"
+                                    className="size-4 accent-primary"
                                 />
                                 Satuan jual bawaan
                             </label>
@@ -166,15 +167,16 @@ export default function PenyuntingSatuanProduk({
                                     checked={baris.DefaultBeli}
                                     onChange={() => PilihBawaan(indeks, 'DefaultBeli')}
                                     disabled={disabled}
-                                    className="size-4 accent-brand"
+                                    className="size-4 accent-primary"
                                 />
                                 Satuan beli bawaan
                             </label>
                         </div>
                         {indeks > 0 && !disabled ? (
                             <p>
-                                <button
+                                <Button
                                     type="button"
+                                    variant="link"
                                     onClick={() => {
                                         const tersisa = satuan.filter((_, i) => i !== indeks);
                                         saatBerubah(
@@ -185,10 +187,10 @@ export default function PenyuntingSatuanProduk({
                                             })),
                                         );
                                     }}
-                                    className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                    className="h-auto px-0 text-destructive"
                                 >
                                     Hapus satuan {opsi?.Simbol ?? String(indeks)}
-                                </button>
+                                </Button>
                                 {baris.Uuid !== null ? (
                                     <span className="block text-keterangan text-teks-sekunder">
                                         Harga dan barcode satuan ini ikut terhapus saat produk disimpan.
@@ -201,8 +203,9 @@ export default function PenyuntingSatuanProduk({
             })}
             {!disabled && sisa.length > 0 ? (
                 <p>
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
                         onClick={() =>
                             saatBerubah([
                                 ...satuan,
@@ -217,10 +220,10 @@ export default function PenyuntingSatuanProduk({
                                 },
                             ])
                         }
-                        className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-10"
                     >
                         Tambah satuan alternatif
-                    </button>
+                    </Button>
                     <span className="mt-1 block text-keterangan text-teks-sekunder">
                         Misal pak isi 10 atau dus isi 24. Harga satuan baru diisi di tab Harga.
                     </span>

@@ -2,10 +2,12 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { BandingkanDesimal, CekDesimalValid } from '@/Pustaka/MasukanJumlah';
 import type { BarisBatasStok } from '@/Tipe/Katalog';
 
 import BidangJumlah from './BidangJumlah';
+import PanelKatalog from './PanelKatalog';
 
 /** Galat lokal per gudang: minimum tidak boleh melebihi maksimum (BatasStokTidakValid). */
 export function PeriksaBatasStok(baris: BarisBatasStok[]): Record<string, string> {
@@ -68,81 +70,73 @@ export default function FormBatasStok({
     };
 
     return (
-        <section
-            aria-labelledby="judul-batas-stok"
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4"
+        <PanelKatalog
+            judul="Stok minimum & maksimum per lokasi"
+            idJudul="judul-batas-stok"
+            keterangan="Dipakai untuk peringatan stok menipis dan saran pembelian. Kosongkan maksimum bila tidak dibatasi."
         >
-            <h2 id="judul-batas-stok" className="text-subjudul font-semibold text-teks-utama">
-                Stok minimum & maksimum per lokasi
-            </h2>
-            <p className="text-keterangan text-teks-sekunder">
-                Dipakai untuk peringatan stok menipis dan saran pembelian. Kosongkan maksimum bila tidak dibatasi.
-            </p>
             {baris.length === 0 ? (
                 <p className="text-isi text-teks-sekunder">
                     Belum ada lokasi stok aktif. Tambah gudang di menu Outlet.
                 </p>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[560px] text-left text-isi">
-                        <caption className="sr-only">Batas stok per lokasi</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="py-2 pr-2 font-semibold">
-                                    Lokasi stok
-                                </th>
-                                <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                    Minimum ({simbolSatuan})
-                                </th>
-                                <th scope="col" className="py-2 pl-2 text-right font-semibold">
-                                    Maksimum ({simbolSatuan})
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {baris.map((item, indeks) => {
-                                const pesan =
-                                    galatLokal[item.UuidGudang] ?? galat[`Baris.${String(indeks)}.StokMaksimum`];
+                <Table className="min-w-[560px] text-left text-isi">
+                    <TableCaption className="sr-only">Batas stok per lokasi</TableCaption>
+                    <TableHeader>
+                        <TableRow className="border-garis hover:bg-transparent">
+                            <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                                Lokasi stok
+                            </TableHead>
+                            <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
+                                Minimum ({simbolSatuan})
+                            </TableHead>
+                            <TableHead
+                                scope="col"
+                                className="pr-0 text-right text-label font-semibold text-teks-sekunder"
+                            >
+                                Maksimum ({simbolSatuan})
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {baris.map((item, indeks) => {
+                            const pesan = galatLokal[item.UuidGudang] ?? galat[`Baris.${String(indeks)}.StokMaksimum`];
 
-                                return (
-                                    <tr
-                                        key={item.UuidGudang}
-                                        className="border-b border-garis align-top last:border-b-0"
-                                    >
-                                        <th scope="row" className="py-2 pr-2 text-left font-normal">
-                                            <span className="font-semibold text-teks-utama">{item.NamaGudang}</span>
-                                            <span className="block text-keterangan text-teks-sekunder">
-                                                {item.NamaOutlet}
-                                            </span>
-                                        </th>
-                                        <td className="px-2 py-2">
-                                            <BidangJumlah
-                                                label={`Stok minimum ${item.NamaGudang}`}
-                                                labelTersembunyi
-                                                nilai={item.StokMinimum}
-                                                saatBerubah={(nilai) => Ubah(indeks, { StokMinimum: nilai })}
-                                                desimal={bolehDesimal ? 4 : 0}
-                                                disabled={!bolehUbah}
-                                                galat={galat[`Baris.${String(indeks)}.StokMinimum`]}
-                                            />
-                                        </td>
-                                        <td className="py-2 pl-2">
-                                            <BidangJumlah
-                                                label={`Stok maksimum ${item.NamaGudang}`}
-                                                labelTersembunyi
-                                                nilai={item.StokMaksimum}
-                                                saatBerubah={(nilai) => Ubah(indeks, { StokMaksimum: nilai })}
-                                                desimal={bolehDesimal ? 4 : 0}
-                                                disabled={!bolehUbah}
-                                                galat={pesan}
-                                            />
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                            return (
+                                <TableRow key={item.UuidGudang} className="border-garis align-top hover:bg-transparent">
+                                    <th scope="row" className="p-2 pl-0 text-left align-top font-normal">
+                                        <span className="font-semibold text-teks-utama">{item.NamaGudang}</span>
+                                        <span className="block text-keterangan text-teks-sekunder">
+                                            {item.NamaOutlet}
+                                        </span>
+                                    </th>
+                                    <TableCell className="whitespace-normal">
+                                        <BidangJumlah
+                                            label={`Stok minimum ${item.NamaGudang}`}
+                                            labelTersembunyi
+                                            nilai={item.StokMinimum}
+                                            saatBerubah={(nilai) => Ubah(indeks, { StokMinimum: nilai })}
+                                            desimal={bolehDesimal ? 4 : 0}
+                                            disabled={!bolehUbah}
+                                            galat={galat[`Baris.${String(indeks)}.StokMinimum`]}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="pr-0 whitespace-normal">
+                                        <BidangJumlah
+                                            label={`Stok maksimum ${item.NamaGudang}`}
+                                            labelTersembunyi
+                                            nilai={item.StokMaksimum}
+                                            saatBerubah={(nilai) => Ubah(indeks, { StokMaksimum: nilai })}
+                                            desimal={bolehDesimal ? 4 : 0}
+                                            disabled={!bolehUbah}
+                                            galat={pesan}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
             )}
             {bolehUbah && baris.length > 0 ? (
                 <div>
@@ -156,6 +150,6 @@ export default function FormBatasStok({
                     Perlu izin <span className="font-mono">persediaan.kelola</span> untuk mengubah batas stok.
                 </p>
             ) : null}
-        </section>
+        </PanelKatalog>
     );
 }

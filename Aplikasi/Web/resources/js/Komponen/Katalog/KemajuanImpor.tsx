@@ -2,8 +2,12 @@ import { router } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
+import { Progress } from '@/Komponen/Ui/progress';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import type { RingkasanImpor, StatusImpor, StatusImporProduk } from '@/Tipe/Katalog';
+
+import PanelKatalog from './PanelKatalog';
 
 /** Status yang masih berjalan di antrean: halaman menanyakan status tiap 3 detik (DesainF03 E.10). */
 export const StatusBerjalan: StatusImporProduk[] = ['Diunggah', 'Memvalidasi', 'Menerapkan'];
@@ -52,23 +56,19 @@ export default function KemajuanImpor({ impor }: { impor: RingkasanImpor }) {
     }, [status, impor.Status]);
 
     return (
-        <section
-            aria-labelledby="judul-kemajuan-impor"
-            className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
+        <PanelKatalog
+            judul={impor.Status === 'Menerapkan' ? 'Mengimpor produk' : 'Memeriksa data'}
+            idJudul="judul-kemajuan-impor"
         >
-            <h2 id="judul-kemajuan-impor" className="text-subjudul font-semibold text-teks-utama">
-                {impor.Status === 'Menerapkan' ? 'Mengimpor produk' : 'Memeriksa data'}
-            </h2>
-            <div
-                role="progressbar"
+            <Progress
+                value={progres}
                 aria-label={label}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={progres}
-                className="h-3 w-full overflow-hidden rounded-kontrol border border-garis bg-latar"
-            >
-                <div className="h-full bg-brand" style={{ width: `${String(progres)}%` }} />
-            </div>
+                aria-valuetext={`${String(progres)}%`}
+                className="h-3 rounded-kontrol"
+            />
             <p aria-live="polite" className="text-isi text-teks-utama tabular-nums">
                 {label}: {progres}%
                 {impor.Status === 'Menerapkan'
@@ -76,13 +76,15 @@ export default function KemajuanImpor({ impor }: { impor: RingkasanImpor }) {
                     : ''}
             </p>
             {kueri.isError ? (
-                <p role="alert" className="text-keterangan font-semibold text-peringatan">
-                    Status belum bisa dibaca. Proses tetap berjalan di server; kami coba lagi otomatis.
-                </p>
+                <Alert className="rounded-panel border-l-4 border-peringatan">
+                    <AlertDescription className="font-semibold text-peringatan">
+                        Status belum bisa dibaca. Proses tetap berjalan di server; kami coba lagi otomatis.
+                    </AlertDescription>
+                </Alert>
             ) : null}
             <p className="text-keterangan text-teks-sekunder">
                 Anda boleh meninggalkan halaman ini. Proses tetap berjalan dan hasilnya tersimpan di riwayat impor.
             </p>
-        </section>
+        </PanelKatalog>
     );
 }

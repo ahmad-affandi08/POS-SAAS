@@ -1,4 +1,6 @@
 import BidangUang from '@/Komponen/Formulir/BidangUang';
+import { Button } from '@/Komponen/Ui/button';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { BandingkanDesimal, CekDesimalBulat, CekDesimalPositif, FormatMasukanJumlah } from '@/Pustaka/MasukanJumlah';
 import type { BarisHarga } from '@/Tipe/Katalog';
@@ -121,110 +123,115 @@ export default function TabelHargaBertingkat({
                     Belum ada harga. Tanpa harga dasar, satuan ini hanya untuk pembelian dan tidak muncul di kasir.
                 </p>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[420px] text-left text-isi">
-                        <caption className="sr-only">{judul}</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="py-1 pr-2 text-right font-semibold">
-                                    Mulai jumlah ({simbolSatuan})
-                                </th>
-                                <th scope="col" className="px-2 py-1 text-right font-semibold">
-                                    Harga per {simbolSatuan}
-                                </th>
-                                <th scope="col" className="py-1 pl-2 font-semibold">
-                                    <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {baris.map((item, indeks) => {
-                                const dasar =
-                                    wajibDasar &&
-                                    indeks === 0 &&
-                                    CekDesimalPositif(item.JumlahMinimum) &&
-                                    BandingkanDesimal(item.JumlahMinimum, '1') === 0;
+                <Table className="min-w-[420px] text-left text-isi">
+                    <TableCaption className="sr-only">{judul}</TableCaption>
+                    <TableHeader>
+                        <TableRow className="border-garis hover:bg-transparent">
+                            <TableHead
+                                scope="col"
+                                className="h-8 pl-0 text-right text-label font-semibold text-teks-sekunder"
+                            >
+                                Mulai jumlah ({simbolSatuan})
+                            </TableHead>
+                            <TableHead
+                                scope="col"
+                                className="h-8 text-right text-label font-semibold text-teks-sekunder"
+                            >
+                                Harga per {simbolSatuan}
+                            </TableHead>
+                            <TableHead scope="col" className="h-8 pr-0 text-label font-semibold text-teks-sekunder">
+                                <span className="sr-only">Aksi</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {baris.map((item, indeks) => {
+                            const dasar =
+                                wajibDasar &&
+                                indeks === 0 &&
+                                CekDesimalPositif(item.JumlahMinimum) &&
+                                BandingkanDesimal(item.JumlahMinimum, '1') === 0;
 
-                                return (
-                                    <tr key={indeks} className="align-top">
-                                        <td className="py-1 pr-2">
-                                            <BidangJumlah
-                                                label={`Mulai jumlah baris ${String(indeks + 1)}`}
-                                                labelTersembunyi
-                                                nilai={item.JumlahMinimum}
-                                                saatBerubah={(nilai) => Ubah(indeks, { JumlahMinimum: nilai })}
-                                                desimal={bolehDesimal ? 4 : 0}
-                                                akhiran={simbolSatuan}
-                                                disabled={disabled || dasar}
-                                                galat={
-                                                    galatServer[`${String(indeks)}.JumlahMinimum`] ??
-                                                    perBaris[indeks]?.JumlahMinimum
-                                                }
-                                            />
-                                        </td>
-                                        <td className="px-2 py-1">
-                                            <BidangUang
-                                                label={`Harga baris ${String(indeks + 1)}`}
-                                                labelTersembunyi
-                                                nilai={item.Harga}
-                                                saatBerubah={(nilai) => Ubah(indeks, { Harga: nilai })}
+                            return (
+                                <TableRow key={indeks} className="border-0 align-top hover:bg-transparent">
+                                    <TableCell className="py-1 pl-0 whitespace-normal">
+                                        <BidangJumlah
+                                            label={`Mulai jumlah baris ${String(indeks + 1)}`}
+                                            labelTersembunyi
+                                            nilai={item.JumlahMinimum}
+                                            saatBerubah={(nilai) => Ubah(indeks, { JumlahMinimum: nilai })}
+                                            desimal={bolehDesimal ? 4 : 0}
+                                            akhiran={simbolSatuan}
+                                            disabled={disabled || dasar}
+                                            galat={
+                                                galatServer[`${String(indeks)}.JumlahMinimum`] ??
+                                                perBaris[indeks]?.JumlahMinimum
+                                            }
+                                        />
+                                    </TableCell>
+                                    <TableCell className="py-1 whitespace-normal">
+                                        <BidangUang
+                                            label={`Harga baris ${String(indeks + 1)}`}
+                                            labelTersembunyi
+                                            nilai={item.Harga}
+                                            saatBerubah={(nilai) => Ubah(indeks, { Harga: nilai })}
+                                            disabled={disabled}
+                                            galat={galatServer[`${String(indeks)}.Harga`] ?? perBaris[indeks]?.Harga}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="py-1 pr-0">
+                                        {dasar ? (
+                                            <span className="inline-flex h-10 items-center text-keterangan text-teks-sekunder">
+                                                Harga dasar
+                                            </span>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
                                                 disabled={disabled}
-                                                galat={
-                                                    galatServer[`${String(indeks)}.Harga`] ?? perBaris[indeks]?.Harga
-                                                }
-                                            />
-                                        </td>
-                                        <td className="py-1 pl-2">
-                                            {dasar ? (
-                                                <span className="inline-flex h-10 items-center text-keterangan text-teks-sekunder">
-                                                    Harga dasar
-                                                </span>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    disabled={disabled}
-                                                    onClick={() => saatBerubah(baris.filter((_, i) => i !== indeks))}
-                                                    className="h-10 text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                                    aria-label={`Hapus tingkat harga baris ${String(indeks + 1)}`}
-                                                >
-                                                    Hapus
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                                                onClick={() => saatBerubah(baris.filter((_, i) => i !== indeks))}
+                                                className="h-10 text-destructive"
+                                                aria-label={`Hapus tingkat harga baris ${String(indeks + 1)}`}
+                                            >
+                                                Hapus
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
             )}
             <div aria-live="polite">
                 {umum ? <p className="text-keterangan font-semibold text-bahaya">{umum}</p> : null}
             </div>
             <div className="flex flex-wrap gap-2">
                 {!disabled ? (
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
                         onClick={() =>
                             saatBerubah([...baris, { JumlahMinimum: baris.length === 0 ? '1' : '', Harga: '' }])
                         }
-                        className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-10"
                     >
                         {baris.length === 0
                             ? wajibDasar
                                 ? 'Isi harga dasar'
                                 : 'Isi harga'
                             : 'Tambah harga bertingkat'}
-                    </button>
+                    </Button>
                 ) : null}
                 {!disabled && baris.length > 1 ? (
-                    <button
+                    <Button
                         type="button"
+                        variant="link"
                         onClick={() => saatBerubah(UrutkanBarisHarga(baris))}
-                        className="h-10 px-2 text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-10 px-2"
                     >
                         Urutkan menurut jumlah
-                    </button>
+                    </Button>
                 ) : null}
             </div>
         </div>

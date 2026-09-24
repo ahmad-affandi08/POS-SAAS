@@ -6,15 +6,15 @@ import { PindahkanItem } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
+import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
+import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
+import { Button } from '@/Komponen/Ui/button';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsPilihanProduk } from '@/Tipe/Katalog';
 
 type Kelompok = PropsPilihanProduk['Terpasang'][number];
-
-const kelasTautanKecil =
-    'text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:text-teks-sekunder disabled:no-underline';
 
 /** F-03 pilihan (modifier) produk: pasang, lepas, dan urutkan kelompok pilihan. Anak varian mewarisi dari induk. */
 export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, DariInduk, Izin }: PropsPilihanProduk) {
@@ -38,35 +38,34 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
             {!Izin.Kelola ? <PesanHanyaLihat izin="produk.kelola" objek="pilihan produk ini" /> : null}
             <DaftarGalatServer galat={props.errors} />
             {DariInduk ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-3 text-isi text-teks-sekunder">
-                    Varian memakai pilihan dari produk induknya.{' '}
-                    {Kepala.UuidInduk ? (
-                        <Link
-                            href={`/kelola/produk/${Kepala.UuidInduk}/pilihan`}
-                            className="font-semibold text-brand underline"
-                        >
-                            Ubah pilihan di {Kepala.NamaInduk ?? 'produk induk'}
-                        </Link>
-                    ) : null}
-                </p>
+                <Alert role="status" className="rounded-panel">
+                    <AlertDescription className="block text-isi text-teks-sekunder">
+                        Varian memakai pilihan dari produk induknya.{' '}
+                        {Kepala.UuidInduk ? (
+                            <Link
+                                href={`/kelola/produk/${Kepala.UuidInduk}/pilihan`}
+                                className="font-semibold text-brand underline"
+                            >
+                                Ubah pilihan di {Kepala.NamaInduk ?? 'produk induk'}
+                            </Link>
+                        ) : null}
+                    </AlertDescription>
+                </Alert>
             ) : null}
 
             {semua.length === 0 ? (
                 <KeadaanKosong judul="Belum ada kelompok pilihan, misal Level gula atau Topping.">
-                    <Link href="/kelola/kelompok-pilihan" className="font-semibold text-brand underline">
-                        Buat kelompok pilihan
-                    </Link>
+                    <Button asChild variant="outline">
+                        <Link href="/kelola/kelompok-pilihan">Buat kelompok pilihan</Link>
+                    </Button>
                 </KeadaanKosong>
             ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <section
-                        aria-labelledby="judul-terpasang"
-                        className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
+                    <PanelKatalog
+                        judul={`Terpasang (${String(terpasang.length)})`}
+                        idJudul="judul-terpasang"
+                        keterangan="Urutan di sini = urutan tampil di kasir."
                     >
-                        <h2 id="judul-terpasang" className="text-subjudul font-semibold text-teks-utama">
-                            Terpasang ({terpasang.length})
-                        </h2>
-                        <p className="text-keterangan text-teks-sekunder">Urutan di sini = urutan tampil di kasir.</p>
                         {terpasang.length === 0 ? (
                             <p className="text-isi text-teks-sekunder">Produk ini dijual tanpa pilihan.</p>
                         ) : (
@@ -85,55 +84,53 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
                                             </span>
                                         </span>
                                         {bolehUbah ? (
-                                            <span className="flex gap-3">
-                                                <button
+                                            <span className="flex gap-1">
+                                                <Button
                                                     type="button"
+                                                    variant="ghost"
+                                                    size="sm"
                                                     disabled={indeks === 0}
                                                     onClick={() =>
                                                         AturTerpasang(PindahkanItem(terpasang, indeks, indeks - 1))
                                                     }
-                                                    className={kelasTautanKecil}
                                                     aria-label={`Naikkan ${item.Nama}`}
                                                 >
                                                     Naik
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
                                                     type="button"
+                                                    variant="ghost"
+                                                    size="sm"
                                                     disabled={indeks === terpasang.length - 1}
                                                     onClick={() =>
                                                         AturTerpasang(PindahkanItem(terpasang, indeks, indeks + 1))
                                                     }
-                                                    className={kelasTautanKecil}
                                                     aria-label={`Turunkan ${item.Nama}`}
                                                 >
                                                     Turun
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
                                                     type="button"
+                                                    variant="ghost"
+                                                    size="sm"
                                                     onClick={() =>
                                                         AturTerpasang(
                                                             terpasang.filter((lain) => lain.Uuid !== item.Uuid),
                                                         )
                                                     }
-                                                    className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                                    className="text-destructive"
                                                     aria-label={`Lepas ${item.Nama}`}
                                                 >
                                                     Lepas
-                                                </button>
+                                                </Button>
                                             </span>
                                         ) : null}
                                     </li>
                                 ))}
                             </ol>
                         )}
-                    </section>
-                    <section
-                        aria-labelledby="judul-tersedia"
-                        className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
-                    >
-                        <h2 id="judul-tersedia" className="text-subjudul font-semibold text-teks-utama">
-                            Tersedia ({tersedia.length})
-                        </h2>
+                    </PanelKatalog>
+                    <PanelKatalog judul={`Tersedia (${String(tersedia.length)})`} idJudul="judul-tersedia">
                         {tersedia.length === 0 ? (
                             <p className="text-isi text-teks-sekunder">Semua kelompok pilihan sudah terpasang.</p>
                         ) : (
@@ -152,20 +149,21 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
                                             </span>
                                         </span>
                                         {bolehUbah ? (
-                                            <button
+                                            <Button
                                                 type="button"
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={() => AturTerpasang([...terpasang, item])}
-                                                className={kelasTautanKecil}
                                                 aria-label={`Pasang ${item.Nama}`}
                                             >
                                                 Pasang
-                                            </button>
+                                            </Button>
                                         ) : null}
                                     </li>
                                 ))}
                             </ul>
                         )}
-                    </section>
+                    </PanelKatalog>
                 </div>
             )}
             {bolehUbah && semua.length > 0 ? (
