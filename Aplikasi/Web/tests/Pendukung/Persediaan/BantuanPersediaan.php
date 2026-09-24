@@ -18,8 +18,18 @@ use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Persediaan\Enum\JenisMutasi;
+use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\MetodeHpp;
+use App\Domain\Persediaan\Enum\StatusNomorSeri;
+use App\Domain\Persediaan\Model\BatchStok;
+use App\Domain\Persediaan\Model\LapisanFifo;
+use App\Domain\Persediaan\Model\MutasiStok;
+use App\Domain\Persediaan\Model\NomorSeri;
+use App\Domain\Persediaan\Model\SaldoStok;
 use App\Domain\Tenant\Model\Tenant;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
@@ -147,5 +157,91 @@ final class BantuanPersediaan
     public static function MasukSebagai(TestCase $tes, int $idTenant, PeranTenantBawaan $peran = PeranTenantBawaan::Pemilik, bool $semuaOutlet = true): TestCase
     {
         return BantuanKatalog::MasukSebagai($tes, $idTenant, $peran, $semuaOutlet);
+    }
+
+    /**
+     * Satu baris `MutasiStok` yang ditulis LANGSUNG (tanpa mesin buku stok Tim A) beserta rantai SaldoSetelah/
+     * NilaiSetelah dan cache `SaldoStok` (+ `BatchStok.JumlahSisa` bila `IdBatchStok`) yang konsisten. Untuk test
+     * pembangun ulang/pemeriksa yang perlu data ledger tanpa bergantung pada `CatatMutasiStok`. `HppRataRataSetelah`
+     * bawaan = Hpp(N′, Q′) bila Q′ > 0, selain itu HPP rata-rata sebelumnya. Opsi lain = kolom MutasiStok yang ditimpa.
+     *
+     * @param  array<string, mixed>  $opsi
+     */
+    public static function TulisMutasiLangsung(int $idProduk, int $idGudang, string $jumlah, string $totalHpp, array $opsi = []): MutasiStok
+    {
+        self::$urutan++;
+        $sebelum = MutasiStok::query()->where('IdProduk', $idProduk)->where('IdGudang', $idGudang)->orderByDesc('Id')->first();
+        $saldoSetelah = BigDecimal::of($sebelum->SaldoSetelah ?? '0')->plus($jumlah)->toScale(4);
+        $nilaiSetelah = BigDecimal::of($sebelum->NilaiSetelah ?? '0')->plus($totalHpp)->toScale(2);
+        $hppSatuan = BigDecimal::of($jumlah)->isZero() ? BigDecimal::zero() : BigDecimal::of($totalHpp)->abs()->dividedBy(BigDecimal::of($jumlah)->abs(), 6, RoundingMode::HalfUp);
+        $hppRataRata = $saldoSetelah->isPositive()
+            ? (string) $nilaiSetelah->dividedBy($saldoSetelah, 6, RoundingMode::HalfUp)
+            : $sebelum?->HppRataRataSetelah;
+
+        $mutasi = MutasiStok::query()->create(array_replace([
+            'IdProduk' => $idProduk,
+            'IdGudang' => $idGudang,
+            'JenisMutasi' => JenisMutasi::StokAwal,
+            'Jumlah' => BigDecimal::of($jumlah)->toScale(4)->__toString(),
+            'HppSatuan' => (string) $hppSatuan,
+            'TotalHpp' => BigDecimal::of($totalHpp)->toScale(2)->__toString(),
+            'SelisihHpp' => '0.00',
+            'SaldoSetelah' => (string) $saldoSetelah,
+            'NilaiSetelah' => (string) $nilaiSetelah,
+            'HppRataRataSetelah' => $hppRataRata,
+            'JenisReferensi' => JenisReferensiMutasi::StokAwal,
+            'IdReferensi' => self::$urutan,
+            'KunciBaris' => 'P/'.self::$urutan,
+            'TanggalBisnis' => '2026-09-24',
+        ], $opsi));
+        $mutasi->refresh();
+
+        $saldo = SaldoStok::query()->firstOrNew(['IdProduk' => $idProduk, 'IdGudang' => $idGudang]);
+        $saldo->fill([
+            'JumlahTersedia' => BigDecimal::of($saldo->JumlahTersedia ?? '0')->plus($mutasi->Jumlah)->toScale(4)->__toString(),
+            'NilaiPersediaan' => BigDecimal::of($saldo->NilaiPersediaan ?? '0')->plus($mutasi->TotalHpp)->toScale(2)->__toString(),
+            'HppRataRata' => $mutasi->HppRataRataSetelah,
+            'IdMutasiStokTerakhir' => $mutasi->Id,
+        ])->save();
+
+        if ($mutasi->IdBatchStok !== null) {
+            $batch = BatchStok::query()->findOrFail($mutasi->IdBatchStok);
+            $batch->JumlahSisa = BigDecimal::of($batch->JumlahSisa)->plus($mutasi->Jumlah)->toScale(4)->__toString();
+            $batch->save();
+        }
+
+        return $mutasi;
+    }
+
+    /** Batch stok kosong (JumlahSisa 0) untuk dipakai `TulisMutasiLangsung` dengan opsi `IdBatchStok`. */
+    public static function BuatBatchLangsung(int $idProduk, int $idGudang, string $nomorBatch, ?string $kedaluwarsa = '2027-03-31'): BatchStok
+    {
+        return BatchStok::query()->create(['IdProduk' => $idProduk, 'IdGudang' => $idGudang, 'NomorBatch' => $nomorBatch, 'TanggalKedaluwarsa' => $kedaluwarsa]);
+    }
+
+    /** Nomor seri langsung (tanpa `PelacakNomorSeri`); `idGudang` null = tidak di lokasi stok. */
+    public static function BuatNomorSeriLangsung(int $idProduk, string $nomor, StatusNomorSeri $status = StatusNomorSeri::Tersedia, ?int $idGudang = null): NomorSeri
+    {
+        return NomorSeri::query()->create(['IdProduk' => $idProduk, 'Nomor' => $nomor, 'Status' => $status, 'IdGudang' => $idGudang]);
+    }
+
+    /** Lapisan FIFO penuh untuk mutasi masuk `mutasi` (tanpa mesin HPP Tim A). */
+    public static function BuatLapisanFifoLangsung(MutasiStok $mutasi, ?string $jumlahSisa = null, ?string $nilaiSisa = null): LapisanFifo
+    {
+        $sisa = $jumlahSisa ?? $mutasi->Jumlah;
+
+        return LapisanFifo::query()->create([
+            'IdProduk' => $mutasi->IdProduk,
+            'IdGudang' => $mutasi->IdGudang,
+            'IdBatchStok' => $mutasi->IdBatchStok,
+            'IdMutasiSumber' => $mutasi->Id,
+            'TanggalMasuk' => $mutasi->TanggalBisnis,
+            'JumlahAwal' => $mutasi->Jumlah,
+            'JumlahSisa' => $sisa,
+            'HppSatuan' => $mutasi->HppSatuan,
+            'NilaiAwal' => $mutasi->TotalHpp,
+            'NilaiSisa' => $nilaiSisa ?? $mutasi->TotalHpp,
+            'Habis' => BigDecimal::of($sisa)->isZero(),
+        ]);
     }
 }
