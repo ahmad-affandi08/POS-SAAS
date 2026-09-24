@@ -1,0 +1,17 @@
+name: klien_api
+description: Klien API POS `/api/pos/v1` untuk aplikasi Kasir (device token). Dart murni, tanpa Flutter.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  http: ^1.2.0
+  inti:
+    path: ../Inti
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

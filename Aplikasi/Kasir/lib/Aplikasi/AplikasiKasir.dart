@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Tampilan/GerbangKasir.dart';
 import 'Lingkungan.dart';
 
-/// Akar widget Aplikasi POS. Rute & fitur ditambahkan per flow (PRD §8, §17).
+/// Akar widget Aplikasi POS (PRD §17.2). Harus berada di dalam `ProviderScope` (lihat `Persiapan.dart`).
 class AplikasiKasir extends StatelessWidget {
   const AplikasiKasir({super.key, required this.lingkungan});
 
@@ -25,20 +26,7 @@ class AplikasiKasir extends StatelessWidget {
               child: anak,
             )
           : anak!,
-      home: const LayarAwal(),
-    );
-  }
-}
-
-/// Layar sementara sampai flow pertama aplikasi ini dibangun.
-class LayarAwal extends StatelessWidget {
-  const LayarAwal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final teks = Theme.of(context).textTheme;
-    return Scaffold(
-      body: Center(child: Text('Kasir', style: teks.headlineSmall)),
+      home: const GerbangKasir(),
     );
   }
 }

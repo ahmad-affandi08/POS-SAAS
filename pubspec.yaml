@@ -8,6 +8,7 @@ environment:
 
 workspace:
   - Paket/Inti
+  - Paket/KlienApi
   - Paket/MesinKasir
   - Paket/SistemDesain
   - Aplikasi/Kasir

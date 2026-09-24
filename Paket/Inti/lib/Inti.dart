@@ -3,6 +3,7 @@ library;
 
 export 'package:decimal/decimal.dart' show Decimal;
 
+export 'Identitas/PembuatUlid.dart';
 export 'Nilai/Kuantitas.dart';
 export 'Nilai/ModePembulatan.dart';
 export 'Nilai/Uang.dart';

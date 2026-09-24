@@ -1,0 +1,248 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
+import 'package:klien_api/KlienApi.dart';
+
+import 'BasisData/BasisDataKasir.dart';
+
+/// Status baris outbox lokal (PRD §18 no. 4).
+abstract final class StatusOutbox {
+  static const String tertunda = 'Tertunda';
+  static const String perluTindakan = 'PerluTindakan';
+}
+
+/// Kunci tabel `Pengaturan` lokal.
+abstract final class KunciPengaturan {
+  static const String uuidPerangkat = 'UuidPerangkat';
+  static const String kodePerangkat = 'KodePerangkat';
+  static const String namaPerangkat = 'NamaPerangkat';
+  static const String namaOutlet = 'NamaOutlet';
+  static const String namaUsaha = 'NamaUsaha';
+  static const String batasKasKeluar = 'BatasKasKeluar';
+  static const String shiftBersama = 'ShiftBersama';
+  static const String parameterPin = 'ParameterPin';
+  static const String batasSalahPin = 'BatasSalahPin';
+  static const String menitKunciPin = 'MenitKunciPin';
+  static const String dataAwalPada = 'DataAwalPada';
+}
+
+/// Status shift lokal (sama dengan server).
+abstract final class StatusShiftLokal {
+  static const String terbuka = 'Terbuka';
+}
+
+/// Akses basis data lokal kasir. Setiap perubahan dokumen menulis dokumen + entri outbox dalam satu transaksi
+/// SQLite (PRD §18 no. 3), sehingga tidak ada data tersimpan tanpa antrean kirim.
+class RepositoriKasir {
+  RepositoriKasir(this.db);
+
+  final BasisDataKasir db;
+
+  // Pengaturan -------------------------------------------------------------------------------------------------------
+
+  Future<String?> AmbilPengaturan(String kunci) async =>
+      (await (db.select(db.pengaturan)..where((p) => p.Kunci.equals(kunci))).getSingleOrNull())?.Nilai;
+
+  Future<void> SimpanPengaturan(String kunci, String nilai) =>
+      db.into(db.pengaturan).insertOnConflictUpdate(PengaturanCompanion.insert(Kunci: kunci, Nilai: nilai));
+
+  Future<ParameterPin?> AmbilParameterPin() async {
+    final teks = await AmbilPengaturan(KunciPengaturan.parameterPin);
+    return teks == null ? null : ParameterPin.DariJson(jsonDecode(teks) as Map<String, Object?>);
+  }
+
+  /// Ganti staf, kategori kas, dan pengaturan kasir dengan data awal terbaru dari server.
+  Future<void> SimpanDataAwal(DataAwal data, DateTime sekarang) => db.transaction(() async {
+    await db.delete(db.staf).go();
+    await db.delete(db.kategoriKas).go();
+    await db.batch((b) {
+      b.insertAll(db.staf, [
+        for (final s in data.staf)
+          StafCompanion.insert(
+            Uuid: s.uuid,
+            Nama: s.nama,
+            Pemilik: s.pemilik,
+            Izin: jsonEncode(s.izin),
+            PinDiatur: s.pinDiatur,
+            PinGaram: Value(s.pin?.garam),
+            PinNonce: Value(s.pin?.nonce),
+            PinSandi: Value(s.pin?.sandi),
+          ),
+      ]);
+      b.insertAll(db.kategoriKas, [
+        for (final k in data.kategoriKas) KategoriKasCompanion.insert(Uuid: k.uuid, Nama: k.nama, Jenis: k.jenis),
+      ]);
+    });
+    await SimpanPengaturan(KunciPengaturan.batasKasKeluar, data.batasKasKeluar);
+    await SimpanPengaturan(KunciPengaturan.shiftBersama, data.shiftBersama ? '1' : '0');
+    await SimpanPengaturan(
+      KunciPengaturan.parameterPin,
+      jsonEncode({
+        'Iterasi': data.parameterPin.iterasi,
+        'MemoriKiB': data.parameterPin.memoriKiB,
+        'Paralelisme': data.parameterPin.paralelisme,
+        'Panjang': data.parameterPin.panjang,
+      }),
+    );
+    await SimpanPengaturan(KunciPengaturan.batasSalahPin, '${data.batasSalahPin}');
+    await SimpanPengaturan(KunciPengaturan.menitKunciPin, '${data.menitKunciPin}');
+    await SimpanPengaturan(KunciPengaturan.dataAwalPada, sekarang.toUtc().toIso8601String());
+  });
+
+  // Staf & kategori --------------------------------------------------------------------------------------------------
+
+  Future<List<BarisStaf>> AmbilStaf() => (db.select(db.staf)..orderBy([(s) => OrderingTerm.asc(s.Nama)])).get();
+
+  Future<BarisStaf?> CariStaf(String uuid) => (db.select(db.staf)..where((s) => s.Uuid.equals(uuid))).getSingleOrNull();
+
+  Future<List<BarisKategoriKas>> AmbilKategori(String jenis) =>
+      (db.select(db.kategoriKas)
+            ..where((k) => k.Jenis.equals(jenis))
+            ..orderBy([(k) => OrderingTerm.asc(k.Nama)]))
+          .get();
+
+  Future<BarisKategoriKas?> CariKategori(String uuid) =>
+      (db.select(db.kategoriKas)..where((k) => k.Uuid.equals(uuid))).getSingleOrNull();
+
+  // Shift & mutasi kas -----------------------------------------------------------------------------------------------
+
+  Future<BarisShift?> AmbilShiftAktif() =>
+      (db.select(db.shift)..where((s) => s.Status.equals(StatusShiftLokal.terbuka))).getSingleOrNull();
+
+  Stream<BarisShift?> PantauShiftAktif() =>
+      (db.select(db.shift)..where((s) => s.Status.equals(StatusShiftLokal.terbuka))).watchSingleOrNull();
+
+  Future<List<BarisMutasiKas>> AmbilMutasi(String uuidShift) =>
+      (db.select(db.mutasiKas)
+            ..where((m) => m.UuidShift.equals(uuidShift))
+            ..orderBy([(m) => OrderingTerm.desc(m.DicatatPada)]))
+          .get();
+
+  Stream<List<BarisMutasiKas>> PantauMutasi(String uuidShift) =>
+      (db.select(db.mutasiKas)
+            ..where((m) => m.UuidShift.equals(uuidShift))
+            ..orderBy([(m) => OrderingTerm.desc(m.DicatatPada)]))
+          .watch();
+
+  /// Simpan shift baru + entri outbox `Shift.Buka` dalam satu transaksi.
+  Future<void> SimpanShiftBaru(ShiftCompanion shift, ItemOutbox item, DateTime sekarang) => db.transaction(() async {
+    await db.into(db.shift).insert(shift);
+    await _TambahOutbox(item, sekarang);
+  });
+
+  /// Simpan mutasi kas + entri outbox `MutasiKas.Catat` dalam satu transaksi.
+  Future<void> SimpanMutasiBaru(MutasiKasCompanion mutasi, ItemOutbox item, DateTime sekarang) =>
+      db.transaction(() async {
+        await db.into(db.mutasiKas).insert(mutasi);
+        await _TambahOutbox(item, sekarang);
+      });
+
+  Future<void> _TambahOutbox(ItemOutbox item, DateTime sekarang) => db
+      .into(db.outbox)
+      .insert(
+        OutboxCompanion.insert(
+          Uuid: item.uuid,
+          Jenis: item.jenis,
+          Data: jsonEncode(item.data),
+          Status: StatusOutbox.tertunda,
+          DibuatPada: sekarang.toUtc(),
+          BerikutnyaPada: sekarang.toUtc(),
+        ),
+      );
+
+  // Outbox -----------------------------------------------------------------------------------------------------------
+
+  /// Item tertunda yang sudah jatuh tempo, urut FIFO (Id), maks. `batas`. Berhenti di item pertama yang belum jatuh
+  /// tempo agar urutan (shift sebelum mutasinya) tidak terlompati.
+  Future<List<BarisOutbox>> AmbilOutboxSiapKirim(int batas, DateTime sekarang) async {
+    final baris =
+        await (db.select(db.outbox)
+              ..where((o) => o.Status.equals(StatusOutbox.tertunda))
+              ..orderBy([(o) => OrderingTerm.asc(o.Id)])
+              ..limit(batas))
+            .get();
+    final siap = <BarisOutbox>[];
+    for (final b in baris) {
+      if (b.BerikutnyaPada.isAfter(sekarang.toUtc())) {
+        break;
+      }
+      siap.add(b);
+    }
+    return siap;
+  }
+
+  Future<void> HapusOutbox(List<String> uuid) => (db.delete(db.outbox)..where((o) => o.Uuid.isIn(uuid))).go();
+
+  Future<void> TandaiPerluTindakan(String uuid, String? kode, String? pesan) =>
+      (db.update(db.outbox)..where((o) => o.Uuid.equals(uuid))).write(
+        OutboxCompanion(
+          Status: const Value(StatusOutbox.perluTindakan),
+          KodeGalat: Value(kode),
+          PesanGalat: Value(pesan),
+        ),
+      );
+
+  /// Jadwalkan ulang setelah gagal jaringan dengan mundur eksponensial (5 detik × 2^percobaan, maks. 5 menit).
+  Future<void> JadwalkanUlang(List<BarisOutbox> baris, DateTime sekarang, String pesan) => db.transaction(() async {
+    for (final b in baris) {
+      final detik = (5 * (1 << b.Percobaan.clamp(0, 10))).clamp(5, 300);
+      await (db.update(db.outbox)..where((o) => o.Id.equals(b.Id))).write(
+        OutboxCompanion(
+          Percobaan: Value(b.Percobaan + 1),
+          PesanGalat: Value(pesan),
+          BerikutnyaPada: Value(sekarang.toUtc().add(Duration(seconds: detik))),
+        ),
+      );
+    }
+  });
+
+  /// Kirim ulang item "Perlu Tindakan" (misal setelah admin memperbaiki kategori/izin di back-office).
+  Future<void> CobaLagi(String uuid, DateTime sekarang) =>
+      (db.update(db.outbox)..where((o) => o.Uuid.equals(uuid))).write(
+        OutboxCompanion(
+          Status: const Value(StatusOutbox.tertunda),
+          Percobaan: const Value(0),
+          BerikutnyaPada: Value(sekarang.toUtc()),
+        ),
+      );
+
+  Stream<int> PantauJumlahTertunda() {
+    final jumlah = db.outbox.Id.count();
+    return (db.selectOnly(db.outbox)
+          ..addColumns([jumlah])
+          ..where(db.outbox.Status.equals(StatusOutbox.tertunda)))
+        .map((r) => r.read(jumlah) ?? 0)
+        .watchSingle();
+  }
+
+  Stream<List<BarisOutbox>> PantauPerluTindakan() =>
+      (db.select(db.outbox)
+            ..where((o) => o.Status.equals(StatusOutbox.perluTindakan))
+            ..orderBy([(o) => OrderingTerm.asc(o.Id)]))
+          .watch();
+
+  // Penguncian PIN ---------------------------------------------------------------------------------------------------
+
+  Future<BarisPercobaanPin?> AmbilPercobaanPin(String uuidPengguna) =>
+      (db.select(db.percobaanPin)..where((p) => p.UuidPengguna.equals(uuidPengguna))).getSingleOrNull();
+
+  Future<void> SimpanPercobaanPin(String uuidPengguna, int jumlahGagal, DateTime? terkunciSampai) => db
+      .into(db.percobaanPin)
+      .insertOnConflictUpdate(
+        PercobaanPinCompanion.insert(
+          UuidPengguna: uuidPengguna,
+          JumlahGagal: jumlahGagal,
+          TerkunciSampai: Value(terkunciSampai?.toUtc()),
+        ),
+      );
+
+  Future<void> HapusPercobaanPin(String uuidPengguna) =>
+      (db.delete(db.percobaanPin)..where((p) => p.UuidPengguna.equals(uuidPengguna))).go();
+
+  /// Perangkat dicabut (PRD §25.2 no. 3): hapus data PIN & staf. Shift, mutasi, dan outbox yang belum terkirim
+  /// tetap disimpan agar tidak ada transaksi yang hilang.
+  Future<void> HapusDataSensitif() => db.transaction(() async {
+    await db.delete(db.staf).go();
+    await db.delete(db.percobaanPin).go();
+  });
+}
