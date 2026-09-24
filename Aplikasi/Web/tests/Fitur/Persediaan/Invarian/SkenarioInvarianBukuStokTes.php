@@ -35,7 +35,7 @@ beforeEach(function (): void {
  *
  * @param  list<DataBarisMutasi>  $baris
  */
-function TimHCatatDokumen(JenisReferensiMutasi $jenis, int $idReferensi, array $baris): HasilCatatMutasi
+function CatatDokumenInvarianBuku(JenisReferensiMutasi $jenis, int $idReferensi, array $baris): HasilCatatMutasi
 {
     return app(CatatMutasiStok::class)->Jalankan(new DataDokumenMutasi(
         jenisReferensi: $jenis,
@@ -49,7 +49,7 @@ function TimHCatatDokumen(JenisReferensiMutasi $jenis, int $idReferensi, array $
     ));
 }
 
-function TimHMasuk(string $kunci, int $idProduk, int $idGudang, JenisMutasi $jenis, string $jumlah, string $nilai, ?string $hpp = null, ?DataBatchMasuk $batch = null, ?string $seri = null): DataBarisMutasi
+function CatatMasukInvarianBuku(string $kunci, int $idProduk, int $idGudang, JenisMutasi $jenis, string $jumlah, string $nilai, ?string $hpp = null, ?DataBatchMasuk $batch = null, ?string $seri = null): DataBarisMutasi
 {
     return new DataBarisMutasi(
         kunciBaris: $kunci, idProduk: $idProduk, idGudang: $idGudang, jenisMutasi: $jenis, jumlah: Kuantitas::Dari($jumlah),
@@ -58,7 +58,7 @@ function TimHMasuk(string $kunci, int $idProduk, int $idGudang, JenisMutasi $jen
     );
 }
 
-function TimHKeluar(string $kunci, int $idProduk, int $idGudang, string $jumlah, ?int $idBatch = null, ?int $idSeri = null): DataBarisMutasi
+function CatatKeluarInvarianBuku(string $kunci, int $idProduk, int $idGudang, string $jumlah, ?int $idBatch = null, ?int $idSeri = null): DataBarisMutasi
 {
     return new DataBarisMutasi(
         kunciBaris: $kunci, idProduk: $idProduk, idGudang: $idGudang, jenisMutasi: JenisMutasi::Penjualan,
@@ -67,7 +67,7 @@ function TimHKeluar(string $kunci, int $idProduk, int $idGudang, string $jumlah,
 }
 
 /** @return list<string> */
-function TimHInvarianBuku(int $idTenant, bool $fifo): array
+function PeriksaInvarianBukuSkenario(int $idTenant, bool $fifo): array
 {
     return [
         ...PemeriksaInvarian::PeriksaSaldoStok($idTenant),
@@ -80,7 +80,7 @@ function TimHInvarianBuku(int $idTenant, bool $fifo): array
 }
 
 /** @return array{Saldo: list<array<string, mixed>>, Batch: list<array<string, mixed>>} */
-function TimHPotretCache(int $idTenant): array
+function AmbilPotretCacheStok(int $idTenant): array
 {
     return [
         'Saldo' => DB::table('SaldoStok')->where('IdTenant', $idTenant)->orderBy('IdProduk')->orderBy('IdGudang')
@@ -100,44 +100,44 @@ describe('F-05a invarian buku stok nyata × bangun ulang (Tim A + Tim H)', funct
         $batchA = new DataBatchMasuk('UHT-2609-A', CarbonImmutable::parse('2027-03-31'));
 
         // Contoh C.3 #2 (10 @ 1000, terima 5 @ 1200, jual 12) + bahan baku desimal, batch, seri, lokasi kedua.
-        TimHCatatDokumen(JenisReferensiMutasi::StokAwal, 1, [
-            TimHMasuk('P/1', $p['Stok']->Id, $toko, JenisMutasi::StokAwal, '10', '10000.00', '1000'),
-            TimHMasuk('P/2', $p['BahanBaku']->Id, $belakang, JenisMutasi::StokAwal, '25.5', '388878.15', '15250.123456'),
-            TimHMasuk('P/3', $p['Batch']->Id, $toko, JenisMutasi::StokAwal, '24', '428400.00', '17850', $batchA),
-            TimHMasuk('P/4/1', $p['Seri']->Id, $toko, JenisMutasi::StokAwal, '1', '512500.33', '512500.333333', seri: 'RC18-2026-000121'),
-            TimHMasuk('P/4/2', $p['Seri']->Id, $toko, JenisMutasi::StokAwal, '1', '512500.34', '512500.333333', seri: 'RC18-2026-000122'),
+        CatatDokumenInvarianBuku(JenisReferensiMutasi::StokAwal, 1, [
+            CatatMasukInvarianBuku('P/1', $p['Stok']->Id, $toko, JenisMutasi::StokAwal, '10', '10000.00', '1000'),
+            CatatMasukInvarianBuku('P/2', $p['BahanBaku']->Id, $belakang, JenisMutasi::StokAwal, '25.5', '388878.15', '15250.123456'),
+            CatatMasukInvarianBuku('P/3', $p['Batch']->Id, $toko, JenisMutasi::StokAwal, '24', '428400.00', '17850', $batchA),
+            CatatMasukInvarianBuku('P/4/1', $p['Seri']->Id, $toko, JenisMutasi::StokAwal, '1', '512500.33', '512500.333333', seri: 'RC18-2026-000121'),
+            CatatMasukInvarianBuku('P/4/2', $p['Seri']->Id, $toko, JenisMutasi::StokAwal, '1', '512500.34', '512500.333333', seri: 'RC18-2026-000122'),
         ]);
-        TimHCatatDokumen(JenisReferensiMutasi::PenerimaanBarang, 2, [
-            TimHMasuk('T/1', $p['Stok']->Id, $toko, JenisMutasi::PenerimaanPembelian, '5', '6000.00'),
-            TimHMasuk('T/2', $p['Stok']->Id, $belakang, JenisMutasi::PenerimaanPembelian, '40', '41000.00'),
+        CatatDokumenInvarianBuku(JenisReferensiMutasi::PenerimaanBarang, 2, [
+            CatatMasukInvarianBuku('T/1', $p['Stok']->Id, $toko, JenisMutasi::PenerimaanPembelian, '5', '6000.00'),
+            CatatMasukInvarianBuku('T/2', $p['Stok']->Id, $belakang, JenisMutasi::PenerimaanPembelian, '40', '41000.00'),
         ]);
         $idBatch = BatchStok::query()->where('NomorBatch', 'UHT-2609-A')->value('Id');
         $idSeri = NomorSeri::query()->where('Nomor', 'RC18-2026-000122')->value('Id');
         $jual = [
-            TimHKeluar('J/1', $p['Stok']->Id, $toko, '12'),
-            TimHKeluar('J/2', $p['BahanBaku']->Id, $belakang, '3.25'),
-            TimHKeluar('J/3', $p['Batch']->Id, $toko, '4', idBatch: is_int($idBatch) ? $idBatch : null),
-            TimHKeluar('J/4', $p['Seri']->Id, $toko, '1', idSeri: is_int($idSeri) ? $idSeri : null),
+            CatatKeluarInvarianBuku('J/1', $p['Stok']->Id, $toko, '12'),
+            CatatKeluarInvarianBuku('J/2', $p['BahanBaku']->Id, $belakang, '3.25'),
+            CatatKeluarInvarianBuku('J/3', $p['Batch']->Id, $toko, '4', idBatch: is_int($idBatch) ? $idBatch : null),
+            CatatKeluarInvarianBuku('J/4', $p['Seri']->Id, $toko, '1', idSeri: is_int($idSeri) ? $idSeri : null),
         ];
-        $hasilJual = TimHCatatDokumen(JenisReferensiMutasi::Penjualan, 3, $jual);
+        $hasilJual = CatatDokumenInvarianBuku(JenisReferensiMutasi::Penjualan, 3, $jual);
 
         // MA: −12800.00 (A 1066.666667); FIFO: −(10000.00 + 2400.00) = −12400.00.
         expect($hasilJual->baris['J/1']->totalHpp->KeString())->toBe($fifo ? '-12400.00' : '-12800.00')
             ->and(SaldoStok::query()->where('IdProduk', $p['Stok']->Id)->where('IdGudang', $toko)->sole()->only(['JumlahTersedia', 'NilaiPersediaan']))
             ->toBe(['JumlahTersedia' => '3.0000', 'NilaiPersediaan' => $fifo ? '3600.00' : '3200.00'])
-            ->and(TimHInvarianBuku($id, $fifo))->toBe([])
+            ->and(PeriksaInvarianBukuSkenario($id, $fifo))->toBe([])
             ->and(app(PemeriksaKonsistensiStok::class)->Periksa())->toBe([]);
 
         // Idempoten: dokumen yang sama dikirim ulang = replay tanpa baris baru; invarian tetap.
         $jumlahMutasi = MutasiStok::query()->count();
-        expect(TimHCatatDokumen(JenisReferensiMutasi::Penjualan, 3, $jual)->sudahAda)->toBeTrue()
+        expect(CatatDokumenInvarianBuku(JenisReferensiMutasi::Penjualan, 3, $jual)->sudahAda)->toBeTrue()
             ->and(MutasiStok::query()->count())->toBe($jumlahMutasi)
-            ->and(TimHInvarianBuku($id, $fifo))->toBe([]);
+            ->and(PeriksaInvarianBukuSkenario($id, $fifo))->toBe([]);
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])->assertSuccessful();
 
         // Rusak cache (saldo, HPP rata-rata, mutasi terakhir, baris hilang, batch) → bangun ulang = potret mesin.
-        $potret = TimHPotretCache($id);
+        $potret = AmbilPotretCacheStok($id);
         DB::table('SaldoStok')->where('IdTenant', $id)->where('IdProduk', $p['Stok']->Id)
             ->update(['JumlahTersedia' => '99.0000', 'NilaiPersediaan' => '1.00', 'HppRataRata' => null, 'IdMutasiStokTerakhir' => null]);
         DB::table('SaldoStok')->where('IdTenant', $id)->where('IdProduk', $p['BahanBaku']->Id)->delete();
@@ -145,8 +145,8 @@ describe('F-05a invarian buku stok nyata × bangun ulang (Tim A + Tim H)', funct
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])->assertExitCode(1);
         expect(app(PembangunUlangSaldoStok::class)->Jalankan())->toBe(4)
-            ->and(TimHPotretCache($id))->toEqual($potret)
-            ->and(TimHInvarianBuku($id, $fifo))->toBe([]);
+            ->and(AmbilPotretCacheStok($id))->toEqual($potret)
+            ->and(PeriksaInvarianBukuSkenario($id, $fifo))->toBe([]);
 
         $this->artisan('persediaan:bangun-ulang-saldo', ['--periksa' => true])->assertSuccessful();
     })->with([MetodeHpp::RataRata, MetodeHpp::Fifo]);

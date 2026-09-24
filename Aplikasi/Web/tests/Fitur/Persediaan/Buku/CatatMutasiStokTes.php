@@ -41,7 +41,7 @@ beforeEach(function (): void {
 /**
  * @return array{Tenant: Tenant, Pemilik: Pengguna, Gudang: Gudang, Produk: array<string, Produk>, Gudang2: Gudang}
  */
-function TimASiapkanBuku(MetodeHpp $metode = MetodeHpp::RataRata, bool $bolehMinus = false, string $nama = 'Toko Sembako Berkah Jaya'): array
+function SiapkanBukuStokUji(MetodeHpp $metode = MetodeHpp::RataRata, bool $bolehMinus = false, string $nama = 'Toko Sembako Berkah Jaya'): array
 {
     $t = BantuanPersediaan::SiapkanTenant($nama, $metode, $bolehMinus);
     $produk = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
@@ -57,7 +57,7 @@ function TimASiapkanBuku(MetodeHpp $metode = MetodeHpp::RataRata, bool $bolehMin
 
 describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): void {
     it('BR-05.1: setiap atribut baris mutasi tersimpan dan SaldoStok = Σ MutasiStok', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $minyak = $b['Produk']['Stok'];
         $dokumen = new DataDokumenMutasi(
             JenisReferensiMutasi::StokAwal,
@@ -113,7 +113,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('BR-04.2 contoh #1 rata-rata bergerak lewat buku stok: stok awal, jual, terima, jual habis → Q 0, N 0', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
 
@@ -138,7 +138,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('contoh #2 FIFO lewat buku stok: jual 12 = 10000 + 2400, lapisan L1 habis, L2 tersisa 3 / 3600', function (): void {
-        $b = TimASiapkanBuku(MetodeHpp::Fifo);
+        $b = SiapkanBukuStokUji(MetodeHpp::Fifo);
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
 
@@ -169,7 +169,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('FIFO pembalik ber-idMutasiAsal mengonsumsi tepat lapisan sumbernya; lapisan yang sudah terpakai → LapisanSudahTerpakai', function (): void {
-        $b = TimASiapkanBuku(MetodeHpp::Fifo);
+        $b = SiapkanBukuStokUji(MetodeHpp::Fifo);
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
 
@@ -195,7 +195,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('dokumen banyak baris lintas produk & lokasi: diproses urut masukan, rantai per pasangan, IdMutasiStokTerakhir = baris terakhir pasangan', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $minyak = $b['Produk']['Stok']->Id;
         $gula = $b['Produk']['BahanBaku']->Id;
         $g1 = $b['Gudang']->Id;
@@ -224,7 +224,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('dijalankan di transaksi pemanggil (savepoint): pemanggil gagal → mutasi dan saldo ikut batal', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $id = $b['Produk']['Stok']->Id;
 
         expect(fn () => DB::transaction(function () use ($id, $b): void {
@@ -238,7 +238,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('satu baris gagal → seluruh dokumen batal (tidak ada baris parsial)', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
 
@@ -247,13 +247,13 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
             BantuanBuku::BuatBaris('2', $id, $g, '-8', null, JenisMutasi::PenyesuaianKeluar),
         ]));
 
-        expect($galat->kode)->toBe('BR-05.2')
+        expect($galat->kode)->toBe('StokTidakCukup')
             ->and(MutasiStok::query()->count())->toBe(0)
             ->and(BantuanBuku::AmbilSaldo($id, $g)->JumlahTersedia ?? '0.0000')->toBe('0.0000');
     });
 
     it('HPP belum diketahui: keluar sebelum ada stok (boleh minus) dinilai 0 dan ditandai hppTidakDiketahui', function (): void {
-        $b = TimASiapkanBuku(bolehMinus: true);
+        $b = SiapkanBukuStokUji(bolehMinus: true);
         $hasil = BantuanBuku::CatatKeluar($b['Produk']['Stok']->Id, $b['Gudang']->Id, '2');
 
         expect($hasil->baris['K/1']->hppTidakDiketahui)->toBeTrue()
@@ -262,7 +262,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
     });
 
     it('dokumen 2.000 baris tercatat lengkap di bawah 5 detik (kunci & sisipan berbasis himpunan, DesainF05a C.2)', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $produk = [$b['Produk']['Stok']->Id, $b['Produk']['BahanBaku']->Id, $b['Produk']['Produksi']->Id];
         $gudang = [$b['Gudang']->Id, $b['Gudang2']->Id];
         $baris = [];
@@ -286,7 +286,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
 
 describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', function (): void {
     it('arah mutasi harus sesuai jenis', function (JenisMutasi $jenis, string $jumlah, ?string $nilai): void {
-        $b = TimASiapkanBuku(bolehMinus: true);
+        $b = SiapkanBukuStokUji(bolehMinus: true);
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
             BantuanBuku::BuatBaris('1', $b['Produk']['Stok']->Id, $b['Gudang']->Id, $jumlah, $nilai, $jenis),
         ]));
@@ -301,7 +301,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     ]);
 
     it('StokAwal boleh dua arah (pembatalan stok awal = baris negatif)', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
 
@@ -314,7 +314,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     });
 
     it('baris pembalik: jenis sama & tanda kebalikan boleh walau jenisnya satu arah; selain itu ArahMutasiTidakSesuai', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $id = $b['Produk']['Stok']->Id;
         $g = $b['Gudang']->Id;
         $asal = BantuanBuku::CatatMasuk($id, $g, '10', '385000.00', JenisMutasi::PenerimaanPembelian)->baris['M/1']->idMutasiStok;
@@ -332,7 +332,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     });
 
     it('masukan tidak valid ditolak sebelum menulis apa pun', function (string $kode, Closure $buatBaris): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $baris = $buatBaris($b['Produk'], $b['Gudang']->Id);
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat($baris));
 
@@ -362,7 +362,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     ]);
 
     it('kuantitas desimal diterima untuk satuan kg (bahan baku)', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $hasil = BantuanBuku::CatatMasuk($b['Produk']['BahanBaku']->Id, $b['Gudang']->Id, '2.5', '35626.25');
 
         expect($hasil->baris['M/1']->saldoSetelah->KeString())->toBe('2.5000')
@@ -370,7 +370,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     });
 
     it('produk terhapus tidak dikenal untuk mutasi baru', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $b['Produk']['Stok']->delete();
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::CatatMasuk($b['Produk']['Stok']->Id, $b['Gudang']->Id, '1', '1000.00'));
@@ -379,7 +379,7 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
     });
 
     it('periode terkunci menolak mutasi bertanggal di periode itu (PeriodeTerkunci, DesainF05a H-9)', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         BantuanPersediaan::KunciPeriode('2026-08', $b['Pemilik']->Id);
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat(
@@ -399,8 +399,8 @@ describe('F-05a buku stok: validasi masukan (DesainF05a C.2 langkah 1 & 5)', fun
 
 describe('F-05a buku stok: isolasi tenant (§13.4)', function (): void {
     it('produk atau lokasi stok milik tenant lain = ProdukTidakDikenal / GudangTidakDikenal, tanpa menulis apa pun', function (): void {
-        $lain = TimASiapkanBuku(nama: 'Warung Kopi Tetangga');
-        $b = TimASiapkanBuku();
+        $lain = SiapkanBukuStokUji(nama: 'Warung Kopi Tetangga');
+        $b = SiapkanBukuStokUji();
 
         $produkLain = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::CatatMasuk($lain['Produk']['Stok']->Id, $b['Gudang']->Id, '1', '1000.00'));
         $gudangLain = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::CatatMasuk($b['Produk']['Stok']->Id, $lain['Gudang']->Id, '1', '1000.00'));
@@ -412,9 +412,9 @@ describe('F-05a buku stok: isolasi tenant (§13.4)', function (): void {
     });
 
     it('mutasi & saldo tercatat atas nama tenant aktif dan tidak terlihat dari tenant lain', function (): void {
-        $lain = TimASiapkanBuku(nama: 'Warung Kopi Tetangga');
+        $lain = SiapkanBukuStokUji(nama: 'Warung Kopi Tetangga');
         BantuanBuku::CatatMasuk($lain['Produk']['Stok']->Id, $lain['Gudang']->Id, '7', '269500.00');
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         BantuanBuku::CatatMasuk($b['Produk']['Stok']->Id, $b['Gudang']->Id, '3', '115500.00');
 
         expect(MutasiStok::query()->count())->toBe(1)
@@ -430,7 +430,7 @@ describe('F-05a buku stok: isolasi tenant (§13.4)', function (): void {
 
 describe('F-05a buku stok: kegagalan domain dilempar sebagai PelanggaranAturanBisnis', function (): void {
     it('PelanggaranAturanBisnis membawa KunciBaris di detail', function (): void {
-        $b = TimASiapkanBuku();
+        $b = SiapkanBukuStokUji();
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([BantuanBuku::BuatBaris('P/9', $b['Produk']['Jasa']->Id, $b['Gudang']->Id, '1', '1000.00')]));
 
         expect($galat)->toBeInstanceOf(PelanggaranAturanBisnis::class)

@@ -29,7 +29,7 @@ beforeEach(function (): void {
 /**
  * @return array{0: array<string, mixed>, 1: array<string, Produk>}
  */
-function TimCSiapkanHttp(): array
+function SiapkanHttpStokAwal(): array
 {
     $t = BantuanPersediaan::SiapkanTenant();
 
@@ -38,7 +38,7 @@ function TimCSiapkanHttp(): array
 
 describe('F-05a HTTP stok awal: draf', function (): void {
     it('Pemilik menyimpan draf lewat form; kirim ulang dengan Uuid yang sama tidak membuat dokumen kedua', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $isi = BantuanStokAwal::IsiForm($t['Gudang'], [
             BantuanStokAwal::IsiBaris($p['Stok'], '24', '37500'),
             BantuanStokAwal::IsiBaris($p['Batch'], '12', '18250.5', 'UHT-2609A', '2027-03-31'),
@@ -58,7 +58,7 @@ describe('F-05a HTTP stok awal: draf', function (): void {
     });
 
     it('validasi form: jumlah berformat ribuan, HPP > 6 desimal, dan baris kosong ditolak', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $this->post('/kelola/persediaan/stok-awal', BantuanStokAwal::IsiForm($t['Gudang'], [
@@ -70,7 +70,7 @@ describe('F-05a HTTP stok awal: draf', function (): void {
     });
 
     it('pelanggaran aturan baris tampil sebagai galat bidang baris (Konsinyasi ditolak)', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $this->post('/kelola/persediaan/stok-awal', BantuanStokAwal::IsiForm($t['Gudang'], [
@@ -80,7 +80,7 @@ describe('F-05a HTTP stok awal: draf', function (): void {
     });
 
     it('ubah draf dengan VersiDiubahPada; dokumen Diposting tidak bisa diubah atau dibuang (StatusTidakSesuai)', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '5', '38000')]);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
         $isi = [...BantuanStokAwal::IsiForm($t['Gudang'], [BantuanStokAwal::IsiBaris($p['Stok'], '6', '38000')]), 'VersiDiubahPada' => $draf->DiubahPada?->toIso8601String()];
@@ -102,7 +102,7 @@ describe('F-05a HTTP stok awal: draf', function (): void {
     });
 
     it('buang draf lewat rute: status Dibuang, dokumen tetap ada', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '5', '38000')]);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
@@ -114,7 +114,7 @@ describe('F-05a HTTP stok awal: draf', function (): void {
 
 describe('F-05a HTTP stok awal: posting, batalkan, status', function (): void {
     it('posting berulang lewat HTTP menghasilkan satu set mutasi dan satu jurnal; status JSON memuat nomor', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000'), BantuanStokAwal::Baris($p['BahanBaku'], '7.25', '14750')]);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
@@ -131,7 +131,7 @@ describe('F-05a HTTP stok awal: posting, batalkan, status', function (): void {
     });
 
     it('batalkan lewat HTTP: alasan wajib 5–255 karakter; berhasil membalik stok', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $t['Pemilik']->Id);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
@@ -145,7 +145,7 @@ describe('F-05a HTTP stok awal: posting, batalkan, status', function (): void {
     });
 
     it('cari produk: hanya produk berstok, dengan saldo di lokasi dan tanda stok awal sudah ada', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $t['Pemilik']->Id);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
@@ -163,7 +163,7 @@ describe('F-05a HTTP stok awal: posting, batalkan, status', function (): void {
 
 describe('F-05a HTTP stok awal: izin, outlet, dan isolasi tenant', function (): void {
     it('matriks izin: StafGudang membuat draf tetapi 403 saat posting; Akuntan boleh posting tetapi 403 membuat draf; ManajerOutlet boleh keduanya; Kasir 403', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $isi = BantuanStokAwal::IsiForm($t['Gudang'], [BantuanStokAwal::IsiBaris($p['Stok'], '10', '38000')]);
 
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::StafGudang);
@@ -188,7 +188,7 @@ describe('F-05a HTTP stok awal: izin, outlet, dan isolasi tenant', function (): 
     });
 
     it('pembatasan outlet: manajer cabang tidak bisa melihat, memposting, atau memakai lokasi stok outlet lain (404)', function (): void {
-        [$t, $p] = TimCSiapkanHttp();
+        [$t, $p] = SiapkanHttpStokAwal();
         $cabang = BantuanHarga::BuatOutlet('SLO-02', 'Cabang Solo Baru');
         $gudangCabang = BantuanPersediaan::BuatGudang($cabang, 'Gudang Cabang Solo Baru');
         $drafUtama = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')]);
@@ -209,9 +209,9 @@ describe('F-05a HTTP stok awal: izin, outlet, dan isolasi tenant', function (): 
     });
 
     it('isolasi tenant: dokumen, lokasi stok, dan produk tenant lain = 404 / tidak dikenal', function (): void {
-        [$tA, $pA] = TimCSiapkanHttp();
+        [$tA, $pA] = SiapkanHttpStokAwal();
         $drafA = BantuanStokAwal::BuatDraf($tA['Gudang'], [BantuanStokAwal::Baris($pA['Stok'], '10', '38000')]);
-        [$tB, $pB] = TimCSiapkanHttp();
+        [$tB, $pB] = SiapkanHttpStokAwal();
         BantuanPersediaan::MasukSebagai($this, $tB['Tenant']->Id);
 
         $this->getJson("/kelola/persediaan/stok-awal/{$drafA->Uuid}/status")->assertNotFound();

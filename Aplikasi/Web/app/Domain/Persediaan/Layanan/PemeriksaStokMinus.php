@@ -23,7 +23,8 @@ final class PemeriksaStokMinus
     }
 
     /**
-     * Menolak `BR-05.2` bila `tersedia − diminta < 0` dan produk tidak boleh minus. `diminta` = besaran keluar (> 0).
+     * Menolak kode `StokTidakCukup` (BR-05.2; kode galat kontrak API §16.2) bila `tersedia − diminta < 0` dan produk
+     * tidak boleh minus. `diminta` = besaran keluar (> 0).
      */
     public function Pastikan(DataInfoProdukStok $produk, DataInfoGudang $gudang, DataPengaturanPersediaan $pengaturan, Kuantitas $tersedia, Kuantitas $diminta): void
     {
@@ -32,7 +33,7 @@ final class PemeriksaStokMinus
         }
 
         throw new PelanggaranAturanBisnis(
-            'BR-05.2',
+            'StokTidakCukup',
             "Stok {$produk->nama} di {$gudang->nama} tidak cukup: tersedia ".self::FormatJumlah($tersedia).', dibutuhkan '.self::FormatJumlah($diminta).'.',
             'Jumlah',
             detail: [

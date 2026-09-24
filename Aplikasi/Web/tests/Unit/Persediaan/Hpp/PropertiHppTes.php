@@ -19,7 +19,7 @@ use Tests\Pendukung\Persediaan\BantuanBuku;
  */
 
 /** Kuantitas acak 0,0001–25 (sesekali bilangan bulat), bertanda. */
-function TimABuatJumlahAcak(bool $keluar): Kuantitas
+function BuatJumlahAcakProperti(bool $keluar): Kuantitas
 {
     $satuan = mt_rand(0, 2) === 0
         ? BigDecimal::ofUnscaledValue(mt_rand(1, 250000), 4)
@@ -28,12 +28,12 @@ function TimABuatJumlahAcak(bool $keluar): Kuantitas
     return Kuantitas::Dari($keluar ? $satuan->negated() : $satuan);
 }
 
-function TimABuatNilaiAcak(): Uang
+function BuatNilaiAcakProperti(): Uang
 {
     return Uang::Dari(BigDecimal::ofUnscaledValue(mt_rand(0, 250_000_000), 2));
 }
 
-function TimAJalankanPropertiHpp(StrategiHpp $strategi, int $benih, bool $fifo): void
+function JalankanPropertiHppUji(StrategiHpp $strategi, int $benih, bool $fifo): void
 {
     mt_srand($benih);
     $keadaan = KeadaanHpp::BuatKosong();
@@ -42,12 +42,12 @@ function TimAJalankanPropertiHpp(StrategiHpp $strategi, int $benih, bool $fifo):
 
     for ($langkah = 1; $langkah <= 500; $langkah++) {
         $keluar = mt_rand(0, 99) < 48;
-        $jumlah = TimABuatJumlahAcak($keluar);
+        $jumlah = BuatJumlahAcakProperti($keluar);
         $ditentukan = $keluar ? mt_rand(0, 4) === 0 : mt_rand(0, 5) !== 0;
         $masukan = new MasukanHpp(
             $jumlah,
             $ditentukan ? ModeNilaiMutasi::Ditentukan : ModeNilaiMutasi::Berjalan,
-            $ditentukan ? TimABuatNilaiAcak() : null,
+            $ditentukan ? BuatNilaiAcakProperti() : null,
             kunciBaris: 'L/'.$langkah,
         );
 
@@ -88,10 +88,10 @@ function TimAJalankanPropertiHpp(StrategiHpp $strategi, int $benih, bool $fifo):
 
 describe('F-05a properti HPP (DesainF05a C.3/F): Q=0⇒N=0, Q>0⇒N≥0, N=Σ TotalHpp', function (): void {
     it('rata-rata bergerak atas 500 langkah acak', function (int $benih): void {
-        TimAJalankanPropertiHpp(new HppRataRataBergerak, $benih, false);
+        JalankanPropertiHppUji(new HppRataRataBergerak, $benih, false);
     })->with([20260924, 1305, 777]);
 
     it('FIFO atas 500 langkah acak: lapisan terbuka = saldo saat Q ≥ 0, kosong saat Q ≤ 0', function (int $benih): void {
-        TimAJalankanPropertiHpp(new HppFifo, $benih, true);
+        JalankanPropertiHppUji(new HppFifo, $benih, true);
     })->with([20260924, 1305, 777]);
 });

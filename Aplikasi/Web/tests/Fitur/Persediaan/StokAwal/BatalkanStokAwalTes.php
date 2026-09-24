@@ -33,7 +33,7 @@ beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
 });
 
-function TimCKodeGalatBatal(Closure $kerja): ?string
+function AmbilKodeGalatBatal(Closure $kerja): ?string
 {
     try {
         $kerja();
@@ -100,13 +100,13 @@ describe('F-05a pembatalan stok awal', function (): void {
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')]);
 
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($draf, 'Salah input', $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($draf, 'Salah input', $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
 
         $dokumen = app(PostingStokAwal::class)->Jalankan($draf, $t['Pemilik']->Id);
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'oke', $t['Pemilik']->Id)))->toBe('AlasanTidakValid');
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'oke', $t['Pemilik']->Id)))->toBe('AlasanTidakValid');
 
         app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Salah input jumlah', $t['Pemilik']->Id);
-        expect(TimCKodeGalatBatal(fn () => app(PostingStokAwal::class)->Jalankan($dokumen, $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
+        expect(AmbilKodeGalatBatal(fn () => app(PostingStokAwal::class)->Jalankan($dokumen, $t['Pemilik']->Id)))->toBe('StatusTidakSesuai');
     });
 });
 
@@ -117,7 +117,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $t['Pemilik']->Id);
         BantuanStokAwal::Jual($p['Stok'], $t['Gudang'], '3');
 
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and($dokumen->fresh()?->Status)->toBe(StatusStokAwal::Diposting)
             ->and(MutasiStok::query()->where('KunciBaris', 'like', 'B/%')->count())->toBe(0)
             ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);
@@ -129,7 +129,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '10', '38000')], $t['Pemilik']->Id);
         BantuanStokAwal::Jual($p['Stok'], $t['Gudang'], '1');
 
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id, fifo: true))->toBe([]);
     });
 
@@ -148,7 +148,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         $dokumen = BantuanStokAwal::BuatDanPosting($t['Gudang'], [BantuanStokAwal::Baris($p['Batch'], '24', '18250', 'UHT-2609A', '2027-03-31')], $t['Pemilik']->Id);
         BantuanStokAwal::Jual($p['Batch'], $t['Gudang'], '2', idBatchStok: BatchStok::query()->value('Id'));
 
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($dokumen, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);
     });
 
@@ -160,7 +160,7 @@ describe('F-05a pembatalan stok awal ditolak bila stok sudah terpakai (StokSudah
         $utuh = BantuanStokAwal::BuatDanPosting($gudangLain, [BantuanStokAwal::Baris($p['Seri'], '1', '655000', nomorSeri: ['RC18-0101'])], $t['Pemilik']->Id);
         BantuanStokAwal::Jual($p['Seri'], $t['Gudang'], '1', idNomorSeri: NomorSeri::query()->where('Nomor', 'RC18-0002')->value('Id'));
 
-        expect(TimCKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($terjual, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
+        expect(AmbilKodeGalatBatal(fn () => app(BatalkanStokAwal::class)->Jalankan($terjual, 'Mau input ulang', $t['Pemilik']->Id)))->toBe('StokSudahTerpakai')
             ->and(app(BatalkanStokAwal::class)->Jalankan($utuh, 'Salah lokasi stok', $t['Pemilik']->Id)->Status)->toBe(StatusStokAwal::Dibatalkan)
             ->and(NomorSeri::query()->where('Nomor', 'RC18-0101')->value('Status'))->not->toBe(StatusNomorSeri::Tersedia)
             ->and(BantuanStokAwal::PeriksaInvarianTanpaJurnalPenjualan($t['Tenant']->Id))->toBe([]);

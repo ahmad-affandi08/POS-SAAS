@@ -18,7 +18,7 @@ beforeEach(function (): void {
 });
 
 /** Kode galat `PelanggaranAturanBisnis` dari `$jalankan`, atau null bila tidak melempar. */
-function TimDAmbilKodeGalatSeri(Closure $jalankan): ?string
+function AmbilKodeGalatSeriUji(Closure $jalankan): ?string
 {
     try {
         $jalankan();
@@ -57,8 +57,8 @@ describe('F-05a PelacakNomorSeri (DesainF05a C.4, F-05h)', function (): void {
         $pelacak = app(PelacakNomorSeri::class);
         $pelacak->TandaiMasuk($pelacak->KunciMasuk($rice->Id, $t['Gudang']->Id, 'RC18-2609-000123'), $t['Gudang']->Id);
 
-        expect(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciMasuk($rice->Id, $t['Gudang']->Id, 'RC18-2609-000123')))->toBe('NomorSeriSudahAda')
-            ->and(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciMasuk($rice->Id, $t['GudangBelakang']->Id, 'RC18-2609-000123')))->toBe('NomorSeriSudahAda');
+        expect(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciMasuk($rice->Id, $t['Gudang']->Id, 'RC18-2609-000123')))->toBe('NomorSeriSudahAda')
+            ->and(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciMasuk($rice->Id, $t['GudangBelakang']->Id, 'RC18-2609-000123')))->toBe('NomorSeriSudahAda');
 
         $jalan = $pelacak->KunciMasuk($rice->Id, $t['Gudang']->Id, 'RC18-2609-000124');
         $pelacak->TandaiKeluar($jalan, StatusNomorSeri::DalamPerjalanan);
@@ -81,7 +81,7 @@ describe('F-05a PelacakNomorSeri (DesainF05a C.4, F-05h)', function (): void {
         expect(NomorSeri::query()->count())->toBe(1)->and($seriB->refresh()->IdTenant)->toBe($b['Tenant']->Id);
 
         // Dari tenant B, nomor seri tenant A tidak terlihat.
-        expect(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciKeluar($seriA->Id, $a['Produk']['Seri']->Id, $a['Gudang']->Id)))->toBe('NomorSeriTidakTersedia');
+        expect(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciKeluar($seriA->Id, $a['Produk']['Seri']->Id, $a['Gudang']->Id)))->toBe('NomorSeriTidakTersedia');
     });
 
     it('nomor seri Terjual/Keluar diaktifkan kembali (baris yang sama) saat masuk lagi', function (): void {
@@ -109,12 +109,12 @@ describe('F-05a PelacakNomorSeri (DesainF05a C.4, F-05h)', function (): void {
         $pelacak = app(PelacakNomorSeri::class);
         $seri = $pelacak->KunciMasuk($rice->Id, $t['Gudang']->Id, 'RC18-2609-000123');
 
-        expect(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciKeluar($seri->Id, $rice->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia');
+        expect(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciKeluar($seri->Id, $rice->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia');
 
         $pelacak->TandaiMasuk($seri, $t['Gudang']->Id);
-        expect(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciKeluar($seri->Id, $rice->Id, $t['GudangBelakang']->Id)))->toBe('NomorSeriTidakTersedia')
-            ->and(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciKeluar($seri->Id, $t['Produk']['Stok']->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia')
-            ->and(TimDAmbilKodeGalatSeri(fn () => $pelacak->KunciKeluar(987654321, $rice->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia')
+        expect(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciKeluar($seri->Id, $rice->Id, $t['GudangBelakang']->Id)))->toBe('NomorSeriTidakTersedia')
+            ->and(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciKeluar($seri->Id, $t['Produk']['Stok']->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia')
+            ->and(AmbilKodeGalatSeriUji(fn () => $pelacak->KunciKeluar(987654321, $rice->Id, $t['Gudang']->Id)))->toBe('NomorSeriTidakTersedia')
             ->and($pelacak->KunciKeluar($seri->Id, $rice->Id, $t['Gudang']->Id)->Id)->toBe($seri->Id);
 
         expect(fn () => $pelacak->TandaiKeluar($seri, StatusNomorSeri::Tersedia))->toThrow(LogicException::class);
@@ -128,7 +128,7 @@ describe('F-05a PelacakNomorSeri (DesainF05a C.4, F-05h)', function (): void {
             DB::transaction(function () use ($pelacak, $t): void {
                 $pelacak->TandaiMasuk($pelacak->KunciMasuk($t['Produk']['Seri']->Id, $t['Gudang']->Id, 'RC18-2609-000999'), $t['Gudang']->Id);
 
-                throw new PelanggaranAturanBisnis('BR-05.2', 'Stok tidak cukup.');
+                throw new PelanggaranAturanBisnis('StokTidakCukup', 'Stok tidak cukup.');
             });
         } catch (PelanggaranAturanBisnis) {
         }

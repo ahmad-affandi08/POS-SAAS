@@ -22,7 +22,7 @@ beforeEach(function (): void {
 });
 
 /** Menjalankan `fn` dan mengembalikan pelanggaran aturan bisnis yang dilemparnya. */
-function TimBTangkapPelanggaran(callable $fn): PelanggaranAturanBisnis
+function TangkapPelanggaranJurnal(callable $fn): PelanggaranAturanBisnis
 {
     try {
         $fn();
@@ -36,7 +36,7 @@ function TimBTangkapPelanggaran(callable $fn): PelanggaranAturanBisnis
 /**
  * @return list<array{IdAkun: int, IdOutlet: int|null, Debit: string, Kredit: string, Urutan: int}>
  */
-function TimBBarisJurnal(int $idJurnal): array
+function BuatBarisJurnalUji(int $idJurnal): array
 {
     return JurnalDetail::query()->where('IdJurnal', $idJurnal)->orderBy('Urutan')->get()
         ->map(fn (JurnalDetail $d): array => ['IdAkun' => $d->IdAkun, 'IdOutlet' => $d->IdOutlet, 'Debit' => $d->Debit, 'Kredit' => $d->Kredit, 'Urutan' => $d->Urutan])
@@ -65,7 +65,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
             ->and($jurnal->TotalDebit)->toBe('12345678.90')
             ->and($jurnal->TotalKredit)->toBe('12345678.90')
             ->and($jurnal->DibuatOleh)->toBe($t['Pemilik']->Id)
-            ->and(TimBBarisJurnal($jurnal->Id))->toBe([
+            ->and(BuatBarisJurnalUji($jurnal->Id))->toBe([
                 ['IdAkun' => BantuanJurnal::IdAkunPeran(PeranAkun::PersediaanBarangDagang), 'IdOutlet' => $t['Outlet']->Id, 'Debit' => '12345678.90', 'Kredit' => '0.00', 'Urutan' => 1],
                 ['IdAkun' => BantuanJurnal::IdAkunPeran(PeranAkun::EkuitasSaldoAwal), 'IdOutlet' => $t['Outlet']->Id, 'Debit' => '0.00', 'Kredit' => '12345678.90', 'Urutan' => 2],
             ])
@@ -75,7 +75,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
 
     it('J-05.1: Σ debit ≠ Σ kredit ditolak JurnalTidakSeimbang dengan total, tanpa jurnal & tanpa nomor terpakai', function (): void {
         BantuanPersediaan::SiapkanTenant();
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [
             DataBarisJurnal::Debit(PeranAkun::PersediaanBarangDagang, Uang::Dari('1500000.00')),
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('1499999.99')),
         ])));
@@ -92,8 +92,8 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
     it('J-05.1: jurnal bernilai nol ditolak JurnalKosong; baris nol di kedua sisi dibuang', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
 
-        expect(TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(nilai: '0.00')))->kode)->toBe('JurnalKosong')
-            ->and(TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [])))->kode)->toBe('JurnalKosong');
+        expect(TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(nilai: '0.00')))->kode)->toBe('JurnalKosong')
+            ->and(TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [])))->kode)->toBe('JurnalKosong');
 
         $hasil = BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [
             DataBarisJurnal::Debit(PeranAkun::PersediaanBarangDagang, Uang::Dari('250000.00')),
@@ -101,14 +101,14 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('250000.00')),
         ]));
 
-        expect(TimBBarisJurnal($hasil->idJurnal))->toHaveCount(2)
+        expect(BuatBarisJurnalUji($hasil->idJurnal))->toHaveCount(2)
             ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($t['Tenant']->Id))->toBe([]);
     });
 
     it('J-05.1: baris negatif, dua sisi terisi, atau tanpa/ganda akun ditolak BarisJurnalTidakValid', function (array $baris, string $pesan): void {
         // Pest mengevaluasi closure dataset lebih dulu, jadi $baris sudah berupa daftar baris.
         BantuanPersediaan::SiapkanTenant();
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: $baris)));
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: $baris)));
 
         expect($galat->kode)->toBe('BarisJurnalTidakValid')
             ->and($galat->getMessage())->toContain($pesan)
@@ -148,7 +148,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         $selisih = BantuanJurnal::IdAkunPeran(PeranAkun::SelisihHpp);
         $o = $t['Outlet']->Id;
 
-        expect(TimBBarisJurnal($hasil->idJurnal))->toBe([
+        expect(BuatBarisJurnalUji($hasil->idJurnal))->toBe([
             ['IdAkun' => $persediaan, 'IdOutlet' => $o, 'Debit' => '1000000.50', 'Kredit' => '0.00', 'Urutan' => 1],
             ['IdAkun' => $selisih, 'IdOutlet' => $o, 'Debit' => '75.25', 'Kredit' => '0.00', 'Urutan' => 2],
             ['IdAkun' => $persediaan, 'IdOutlet' => null, 'Debit' => '1.00', 'Kredit' => '0.00', 'Urutan' => 3],
@@ -169,7 +169,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('50000.00')),
         ]));
 
-        expect(TimBBarisJurnal($hasil->idJurnal)[0]['IdAkun'])->toBe($kas)
+        expect(BuatBarisJurnalUji($hasil->idJurnal)[0]['IdAkun'])->toBe($kas)
             ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($t['Tenant']->Id))->toBe([]);
     });
 
@@ -194,7 +194,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
     it('idempotensi: sumber sama dengan total berbeda ditolak JurnalSumberGanda; jurnal lama tidak berubah', function (): void {
         BantuanPersediaan::SiapkanTenant();
         BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idSumber: 12, nilai: '1000000.00'));
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idSumber: 12, nilai: '1000000.01')));
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idSumber: 12, nilai: '1000000.01')));
 
         expect($galat->kode)->toBe('JurnalSumberGanda')
             ->and(Jurnal::query()->sole()->TotalDebit)->toBe('1000000.00');
@@ -204,7 +204,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         BantuanPersediaan::SiapkanTenant();
         PemetaanAkun::query()->where('Kunci', PeranAkun::EkuitasSaldoAwal->value)->delete();
 
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal()));
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal()));
 
         expect($galat->kode)->toBe('PemetaanAkunBelumAda')
             ->and($galat->getMessage())->toBe('Akun untuk Ekuitas saldo awal belum dipetakan. Terapkan template sektor di Panduan awal atau minta Akuntan memetakan akun.')
@@ -217,7 +217,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         $beban = BantuanJurnal::AkunLain(TipeAkun::Beban, 0);
         PemetaanAkun::query()->where('Kunci', PeranAkun::PersediaanBarangDagang->value)->update(['IdAkun' => $beban->Id]);
 
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal()));
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal()));
 
         expect($galat->kode)->toBe('PemetaanAkunBelumAda')
             ->and($galat->getMessage())->toContain("Akun {$beban->Kode} {$beban->Nama}")
@@ -234,16 +234,16 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         $diSolo = BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idSumber: 21, idOutlet: $solo->Id));
         $diUtama = BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idSumber: 22, idOutlet: $t['Outlet']->Id));
 
-        expect(TimBBarisJurnal($diSolo->idJurnal)[0]['IdAkun'])->toBe($persediaanSolo->Id)
-            ->and(TimBBarisJurnal($diSolo->idJurnal)[1]['IdAkun'])->toBe(BantuanJurnal::IdAkunPeran(PeranAkun::EkuitasSaldoAwal))
-            ->and(TimBBarisJurnal($diUtama->idJurnal)[0]['IdAkun'])->toBe($persediaanTenant);
+        expect(BuatBarisJurnalUji($diSolo->idJurnal)[0]['IdAkun'])->toBe($persediaanSolo->Id)
+            ->and(BuatBarisJurnalUji($diSolo->idJurnal)[1]['IdAkun'])->toBe(BantuanJurnal::IdAkunPeran(PeranAkun::EkuitasSaldoAwal))
+            ->and(BuatBarisJurnalUji($diUtama->idJurnal)[0]['IdAkun'])->toBe($persediaanTenant);
     });
 
     it('PeriodeTerkunci: jurnal bertanggal di periode terkunci ditolak; periode lain tetap bisa', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         BantuanPersediaan::KunciPeriode('2026-08', $t['Pemilik']->Id);
 
-        $galat = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(tanggal: '2026-08-31')));
+        $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(tanggal: '2026-08-31')));
 
         expect($galat->kode)->toBe('PeriodeTerkunci')
             ->and($galat->bidang)->toBe('Tanggal')
@@ -312,8 +312,8 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         $akunA = BantuanJurnal::IdAkunPeran(PeranAkun::KasOutlet);
         $b = BantuanPersediaan::SiapkanTenant('Apotek Sehat Sentosa');
 
-        $galatOutlet = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idOutlet: $a['Outlet']->Id)));
-        $galatAkun = TimBTangkapPelanggaran(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [
+        $galatOutlet = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(idOutlet: $a['Outlet']->Id)));
+        $galatAkun = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(baris: [
             new DataBarisJurnal(null, $akunA, null, Uang::Dari('1000.00'), Uang::Nol()),
             DataBarisJurnal::Kredit(PeranAkun::EkuitasSaldoAwal, Uang::Dari('1000.00')),
         ])));

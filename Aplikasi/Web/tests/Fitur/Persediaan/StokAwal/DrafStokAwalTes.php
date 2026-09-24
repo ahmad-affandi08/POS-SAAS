@@ -35,7 +35,7 @@ beforeEach(function (): void {
 /**
  * @return array{0: array<string, mixed>, 1: array<string, Produk>}
  */
-function TimCSiapkanDraf(): array
+function SiapkanDrafStokAwalUji(): array
 {
     $t = BantuanPersediaan::SiapkanTenant();
 
@@ -43,7 +43,7 @@ function TimCSiapkanDraf(): array
 }
 
 /** Kode galat dari Aksi, atau null bila tidak ada galat. */
-function TimCKodeGalat(Closure $kerja): ?string
+function AmbilKodeGalatDraf(Closure $kerja): ?string
 {
     try {
         $kerja();
@@ -56,7 +56,7 @@ function TimCKodeGalat(Closure $kerja): ?string
 
 describe('F-05a stok awal draf: buat & ubah', function (): void {
     it('membuat draf dengan snapshot produk, Nilai = Jumlah × HPP (2 desimal, HalfUp), total, riwayat, dan audit; tanpa mutasi stok', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
 
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [
             BantuanStokAwal::Baris($p['Stok'], '10', '1234.5678'),
@@ -81,7 +81,7 @@ describe('F-05a stok awal draf: buat & ubah', function (): void {
     });
 
     it('idempoten per Uuid klien: Uuid yang sama mengembalikan draf yang sama tanpa baris ganda', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $uuid = (string) Str::ulid();
 
         $pertama = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '5', '38000')], uuid: $uuid);
@@ -94,7 +94,7 @@ describe('F-05a stok awal draf: buat & ubah', function (): void {
     });
 
     it('ubah draf mengganti semua baris dan menghitung ulang total; versi usang ditolak DokumenBerubah', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $this->travelTo(CarbonImmutable::now()->subMinutes(5));
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '5', '38000')]);
         $versiLama = $draf->DiubahPada?->toIso8601String();
@@ -110,7 +110,7 @@ describe('F-05a stok awal draf: buat & ubah', function (): void {
             ->and(StokAwalDetail::query()->where('IdStokAwal', $draf->Id)->orderBy('Urutan')->pluck('IdProduk')->all())->toBe([$p['Produksi']->Id, $p['Stok']->Id])
             ->and(LogAudit::query()->where('Peristiwa', 'stok-awal.ubah')->exists())->toBeTrue();
 
-        expect(TimCKodeGalat(fn () => app(SimpanStokAwal::class)->Jalankan(BantuanStokAwal::Data($t['Gudang'], [
+        expect(AmbilKodeGalatDraf(fn () => app(SimpanStokAwal::class)->Jalankan(BantuanStokAwal::Data($t['Gudang'], [
             BantuanStokAwal::Baris($p['Stok'], '1', '1'),
         ], versi: $versiLama), $draf)))->toBe('DokumenBerubah');
         expect(StokAwalDetail::query()->where('IdStokAwal', $draf->Id)->count())->toBe(2);
@@ -119,32 +119,32 @@ describe('F-05a stok awal draf: buat & ubah', function (): void {
 
 describe('F-05a stok awal draf: pemeriksaan isi (C.6.1)', function (): void {
     it('menolak produk Konsinyasi (H-1), jenis tanpa stok, diarsipkan, dan tidak dikenal', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $p['Produksi']->update(['DiarsipkanPada' => now(), 'Aktif' => false]);
         $buat = fn (int $idProduk) => fn () => app(SimpanStokAwal::class)->Jalankan(BantuanStokAwal::Data($t['Gudang'], [
             new DataBarisStokAwal($idProduk, Kuantitas::Dari('1'), BigDecimal::of('1000'), null, null, []),
         ]), null);
 
-        expect(TimCKodeGalat($buat($p['Konsinyasi']->Id)))->toBe('ProdukKonsinyasi')
-            ->and(TimCKodeGalat($buat($p['Jasa']->Id)))->toBe('ProdukTanpaStok')
-            ->and(TimCKodeGalat($buat($p['Produksi']->Id)))->toBe('ProdukDiarsipkan')
-            ->and(TimCKodeGalat($buat(0)))->toBe('ProdukTidakDikenal')
+        expect(AmbilKodeGalatDraf($buat($p['Konsinyasi']->Id)))->toBe('ProdukKonsinyasi')
+            ->and(AmbilKodeGalatDraf($buat($p['Jasa']->Id)))->toBe('ProdukTanpaStok')
+            ->and(AmbilKodeGalatDraf($buat($p['Produksi']->Id)))->toBe('ProdukDiarsipkan')
+            ->and(AmbilKodeGalatDraf($buat(0)))->toBe('ProdukTidakDikenal')
             ->and(StokAwal::query()->count())->toBe(0);
     });
 
     it('jumlah dalam satuan dasar: pcs harus bulat, kg boleh desimal; jumlah 0 dan HPP > 6 desimal ditolak (H-2)', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $buat = fn (array $baris) => fn () => BantuanStokAwal::BuatDraf($t['Gudang'], $baris);
 
-        expect(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Stok'], '1.5', '38000')])))->toBe('JumlahTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Stok'], '0', '38000')])))->toBe('JumlahTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Stok'], '1', '1.1234567')])))->toBe('HppTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Stok'], '1', '-5')])))->toBe('HppTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['BahanBaku'], '12.3456', '14750')])))->toBeNull();
+        expect(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Stok'], '1.5', '38000')])))->toBe('JumlahTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Stok'], '0', '38000')])))->toBe('JumlahTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Stok'], '1', '1.1234567')])))->toBe('HppTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Stok'], '1', '-5')])))->toBe('HppTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['BahanBaku'], '12.3456', '14750')])))->toBeNull();
     });
 
     it('baris ganda (produk + batch sama) ditolak BarisGanda dengan semua galat baris di detail', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
 
         try {
             BantuanStokAwal::BuatDraf($t['Gudang'], [
@@ -165,14 +165,14 @@ describe('F-05a stok awal draf: pemeriksaan isi (C.6.1)', function (): void {
     });
 
     it('batch wajib nomor & kedaluwarsa (H-3), seri wajib sebanyak jumlah, produk biasa tanpa batch/seri', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $buat = fn (array $baris) => fn () => BantuanStokAwal::BuatDraf($t['Gudang'], $baris);
 
-        expect(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Batch'], '10', '18000', 'B-01')])))->toBe('PelacakanTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Batch'], '10', '18000')])))->toBe('PelacakanTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Seri'], '2', '650000', nomorSeri: ['RC-0001'])])))->toBe('PelacakanTidakValid')
-            ->and(TimCKodeGalat($buat([BantuanStokAwal::Baris($p['Stok'], '1', '38000', 'B-01', '2027-01-01')])))->toBe('PelacakanTidakValid')
-            ->and(TimCKodeGalat($buat([
+        expect(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Batch'], '10', '18000', 'B-01')])))->toBe('PelacakanTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Batch'], '10', '18000')])))->toBe('PelacakanTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Seri'], '2', '650000', nomorSeri: ['RC-0001'])])))->toBe('PelacakanTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([BantuanStokAwal::Baris($p['Stok'], '1', '38000', 'B-01', '2027-01-01')])))->toBe('PelacakanTidakValid')
+            ->and(AmbilKodeGalatDraf($buat([
                 BantuanStokAwal::Baris($p['Batch'], '10', '18000', ' B-01 ', '2027-01-01'),
                 BantuanStokAwal::Baris($p['Seri'], '2', '650000', nomorSeri: ['RC-0001', 'RC-0002']),
             ])))->toBeNull()
@@ -180,23 +180,23 @@ describe('F-05a stok awal draf: pemeriksaan isi (C.6.1)', function (): void {
     });
 
     it('tanggal di masa depan, lokasi stok diarsipkan, dan dokumen tanpa baris ditolak', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $baris = [BantuanStokAwal::Baris($p['Stok'], '1', '38000')];
         $besok = CarbonImmutable::now('Asia/Jakarta')->addDays(2)->format('Y-m-d');
 
-        expect(TimCKodeGalat(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], $baris, $besok)))->toBe('TanggalDiMasaDepan')
-            ->and(TimCKodeGalat(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], [])))->toBe('BarisKosong');
+        expect(AmbilKodeGalatDraf(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], $baris, $besok)))->toBe('TanggalDiMasaDepan')
+            ->and(AmbilKodeGalatDraf(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], [])))->toBe('BarisKosong');
 
         $gudangArsip = BantuanPersediaan::BuatGudang($t['Outlet'], 'Gudang Lama Pasar Legi');
         $gudangArsip->update(['Status' => StatusOrganisasi::Diarsipkan]);
-        expect(TimCKodeGalat(fn () => BantuanStokAwal::BuatDraf($gudangArsip, $baris)))->toBe('GudangDiarsipkan');
+        expect(AmbilKodeGalatDraf(fn () => BantuanStokAwal::BuatDraf($gudangArsip, $baris)))->toBe('GudangDiarsipkan');
     });
 
     it('baris melebihi MaksimalBaris ditolak BarisTerlaluBanyak', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         config(['persediaan.StokAwal.MaksimalBaris' => 1]);
 
-        expect(TimCKodeGalat(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], [
+        expect(AmbilKodeGalatDraf(fn () => BantuanStokAwal::BuatDraf($t['Gudang'], [
             BantuanStokAwal::Baris($p['Stok'], '1', '38000'),
             BantuanStokAwal::Baris($p['Produksi'], '1', '9000'),
         ])))->toBe('BarisTerlaluBanyak');
@@ -205,7 +205,7 @@ describe('F-05a stok awal draf: pemeriksaan isi (C.6.1)', function (): void {
 
 describe('F-05a stok awal draf: buang (H-14)', function (): void {
     it('Draf → Dibuang tanpa menghapus dokumen maupun barisnya; idempoten; draf yang dibuang tidak bisa diubah', function (): void {
-        [$t, $p] = TimCSiapkanDraf();
+        [$t, $p] = SiapkanDrafStokAwalUji();
         $draf = BantuanStokAwal::BuatDraf($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '3', '38000')]);
 
         $dibuang = app(BuangStokAwal::class)->Jalankan($draf);
@@ -216,7 +216,7 @@ describe('F-05a stok awal draf: buang (H-14)', function (): void {
             ->and(StokAwalDetail::query()->where('IdStokAwal', $draf->Id)->count())->toBe(1)
             ->and(RiwayatStatusDokumen::query()->where('IdDokumen', $draf->Id)->pluck('StatusKe')->all())->toBe(['Draf', 'Dibuang'])
             ->and(LogAudit::query()->where('Peristiwa', 'stok-awal.buang')->count())->toBe(1)
-            ->and(TimCKodeGalat(fn () => app(SimpanStokAwal::class)->Jalankan(
+            ->and(AmbilKodeGalatDraf(fn () => app(SimpanStokAwal::class)->Jalankan(
                 BantuanStokAwal::Data($t['Gudang'], [BantuanStokAwal::Baris($p['Stok'], '1', '1')], versi: $dibuang->DiubahPada?->toIso8601String()),
                 $dibuang,
             )))->toBe('StatusTidakSesuai');

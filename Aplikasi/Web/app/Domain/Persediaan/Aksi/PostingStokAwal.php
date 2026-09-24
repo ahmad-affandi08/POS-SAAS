@@ -127,6 +127,12 @@ final class PostingStokAwal
             $this->SusunBarisMutasi($detail, $produk, $dokumen->IdGudang),
         ));
 
+        // BR-04.3: stok awal setelah stok minus menghasilkan selisih HPP; akunnya diperiksa dengan pesan yang sama
+        // (daftar semua peran yang belum dipetakan) sebelum jurnal disusun.
+        if (! $hasilMutasi->TotalSelisih()->BernilaiNol()) {
+            $this->PastikanAkunSiap($produk, $gudang->idOutlet, [PeranAkun::SelisihHpp]);
+        }
+
         $jurnal = $this->PostingJurnal($dokumen, $nomor, $tanggal, $gudang, $produk, $hasilMutasi, $idPengguna);
 
         $dokumen->UbahStatus(StatusStokAwal::Diposting);
@@ -245,8 +251,9 @@ final class PostingStokAwal
 
     /**
      * @param  array<int, DataInfoProdukStok>  $produk
+     * @param  list<PeranAkun>  $tambahan  peran lain yang dipakai jurnal (misal Selisih HPP)
      */
-    private function PastikanAkunSiap(array $produk, ?int $idOutlet): void
+    private function PastikanAkunSiap(array $produk, ?int $idOutlet, array $tambahan = []): void
     {
         $peran = [];
 
@@ -255,6 +262,11 @@ final class PostingStokAwal
         }
 
         $peran[PeranAkun::EkuitasSaldoAwal->value] = true;
+
+        foreach ($tambahan as $satu) {
+            $peran[$satu->value] = true;
+        }
+
         $kesiapan = $this->kesiapanAkun->Periksa(array_map(fn (string $p): PeranAkun => PeranAkun::from($p), array_keys($peran)), $idOutlet);
 
         if (! $kesiapan['Siap']) {

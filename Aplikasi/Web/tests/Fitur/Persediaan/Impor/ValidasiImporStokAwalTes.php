@@ -32,14 +32,14 @@ beforeEach(function (): void {
  *
  * @return array<int, list<array{Bidang: string, Pesan: string}>>
  */
-function TimEGalatPerBaris(int $idImpor): array
+function AmbilGalatPerBarisImpor(int $idImpor): array
 {
     return ImporStokAwalBaris::query()->where('IdImporStokAwal', $idImpor)->where('Status', StatusBarisImporStokAwal::Galat->value)
         ->orderBy('NomorBaris')->get()->mapWithKeys(fn (ImporStokAwalBaris $b): array => [$b->NomorBaris => $b->Galat ?? []])->all();
 }
 
 /** Jalankan tugas validasi seperti worker: kunci unik dilepas saat tugas mulai diproses (ShouldBeUniqueUntilProcessing). */
-function TimEJalankanValidasi(ValidasiImporStokAwalTugas $tugas): void
+function JalankanValidasiImporUji(ValidasiImporStokAwalTugas $tugas): void
 {
     (new UniqueLock(app(Cache::class)))->release($tugas);
     $tugas->handle(app(KonteksTugasImpor::class), app(PemvalidasiImporStokAwal::class));
@@ -104,7 +104,7 @@ describe('F-05a impor stok awal: validasi baris (produk, lokasi, jumlah, harga m
 
         BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
         $impor->refresh();
-        $galat = TimEGalatPerBaris($impor->Id);
+        $galat = AmbilGalatPerBarisImpor($impor->Id);
 
         expect($impor->Status)->toBe(StatusImporStokAwal::Pratinjau)
             ->and($impor->JumlahValid)->toBe(0)
@@ -152,7 +152,7 @@ describe('F-05a impor stok awal: validasi baris (produk, lokasi, jumlah, harga m
         $impor->refresh();
         expect($impor->Status)->toBe(StatusImporStokAwal::Pratinjau)
             ->and(ImporStokAwalBaris::query()->where('IdImporStokAwal', $impor->Id)->count())->toBe(2)
-            ->and(TimEGalatPerBaris($impor->Id)[2][0]['Pesan'])->toBe('Produk "x" tidak ditemukan. Periksa SKU, barcode, atau nama produk.')
+            ->and(AmbilGalatPerBarisImpor($impor->Id)[2][0]['Pesan'])->toBe('Produk "x" tidak ditemukan. Periksa SKU, barcode, atau nama produk.')
             ->and(LogAudit::query()->where('Peristiwa', 'stok-awal.impor.pemetaan')->count())->toBe(2);
     });
 });
@@ -181,7 +181,7 @@ describe('F-05a impor stok awal: validasi di antrean (berkas besar)', function (
 
         // Anggaran 0 detik: berhenti setelah potongan sisip pertama (500 baris).
         config(['persediaan.Impor.MaksimalDetikPerTugas' => 0]);
-        TimEJalankanValidasi(new ValidasiImporStokAwalTugas($t['Tenant']->Id, $impor->IdPengguna, $impor->Id));
+        JalankanValidasiImporUji(new ValidasiImporStokAwalTugas($t['Tenant']->Id, $impor->IdPengguna, $impor->Id));
         BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
         expect(ImporStokAwalBaris::query()->where('IdImporStokAwal', $impor->Id)->count())->toBe(500)
             ->and($impor->refresh()->Status)->toBe(StatusImporStokAwal::Memvalidasi);
@@ -189,7 +189,7 @@ describe('F-05a impor stok awal: validasi di antrean (berkas besar)', function (
         $masuk->get("/kelola/persediaan/stok-awal/impor/{$impor->Uuid}/status")->assertJson(['Progres' => 80]);
 
         config(['persediaan.Impor.MaksimalDetikPerTugas' => 40]);
-        TimEJalankanValidasi(new ValidasiImporStokAwalTugas($t['Tenant']->Id, $impor->IdPengguna, $impor->Id));
+        JalankanValidasiImporUji(new ValidasiImporStokAwalTugas($t['Tenant']->Id, $impor->IdPengguna, $impor->Id));
         BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
         $impor->refresh();
         expect($impor->Status)->toBe(StatusImporStokAwal::Pratinjau)
@@ -225,5 +225,5 @@ it('F-05a impor stok awal: produk jenis IndukVarian tidak punya stok', function 
     BantuanImporStokAwal::Petakan($masuk, $impor, $t['Gudang']->Uuid)->assertSessionHasNoErrors();
 
     BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
-    expect(TimEGalatPerBaris($impor->Id)[2][0]['Pesan'])->toContain('tidak punya stok');
+    expect(AmbilGalatPerBarisImpor($impor->Id)[2][0]['Pesan'])->toContain('tidak punya stok');
 });

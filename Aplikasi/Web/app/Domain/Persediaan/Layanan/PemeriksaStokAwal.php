@@ -12,6 +12,7 @@ use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Persediaan\Data\DataBarisStokAwal;
+use App\Domain\Persediaan\Layanan\Hpp\AritmetikaHpp;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
@@ -98,6 +99,10 @@ final class PemeriksaStokAwal
             }
         }
 
+        if ($galat === []) {
+            self::PastikanTotalDalamBatas($baris);
+        }
+
         if ($galat !== []) {
             $pertama = $galat[0];
 
@@ -152,7 +157,7 @@ final class PemeriksaStokAwal
             $galat[] = ['HppSatuan', 'HppTidakValid', 'Harga modal maksimal 6 angka di belakang koma.'];
         } elseif (self::HitungDigitBulat($hpp) > self::DIGIT_HPP) {
             $galat[] = ['HppSatuan', 'HppTidakValid', 'Harga modal terlalu besar.'];
-        } elseif ($galat === [] && self::HitungDigitBulat($jumlah->multipliedBy($hpp)) > self::DIGIT_NILAI) {
+        } elseif ($galat === [] && self::HitungDigitBulat(AritmetikaHpp::KeDesimal(AritmetikaHpp::Nilai($baris->jumlah, $hpp))) > self::DIGIT_NILAI) {
             $galat[] = ['HppSatuan', 'HppTidakValid', 'Nilai baris (stok × harga modal) terlalu besar.'];
         }
 
@@ -161,6 +166,25 @@ final class PemeriksaStokAwal
         }
 
         return $galat;
+    }
+
+    /**
+     * TotalNilai dokumen (dan total jurnal J-05.1) = Σ Nilai baris harus muat di DECIMAL(18,2), walau tiap baris
+     * sudah dalam batas.
+     *
+     * @param  list<DataBarisStokAwal>  $baris
+     */
+    private static function PastikanTotalDalamBatas(array $baris): void
+    {
+        $total = BigDecimal::zero();
+
+        foreach ($baris as $satu) {
+            $total = $total->plus(AritmetikaHpp::KeDesimal(AritmetikaHpp::Nilai($satu->jumlah, $satu->hppSatuan)));
+        }
+
+        if (self::HitungDigitBulat($total) > self::DIGIT_NILAI) {
+            throw new PelanggaranAturanBisnis('HppTidakValid', 'Total nilai stok awal terlalu besar untuk satu dokumen. Pecah menjadi beberapa dokumen.', 'Baris');
+        }
     }
 
     private static function HitungDigitBulat(BigDecimal $nilai): int

@@ -17,7 +17,7 @@ beforeEach(function (): void {
  * @param  list<string>  $nomorSeri
  * @return list<array{Bidang: string, Pesan: string}>
  */
-function TimDPeriksaBarisPelacakan(string $kunciProduk, string $jumlah, ?string $nomorBatch = null, ?string $kedaluwarsa = null, array $nomorSeri = []): array
+function PeriksaBarisPelacakanUji(string $kunciProduk, string $jumlah, ?string $nomorBatch = null, ?string $kedaluwarsa = null, array $nomorSeri = []): array
 {
     $produk = test()->produkPelacakan[$kunciProduk];
 
@@ -26,7 +26,7 @@ function TimDPeriksaBarisPelacakan(string $kunciProduk, string $jumlah, ?string 
 
 describe('F-05a PemvalidasiPelacakan (DesainF05a C.4, H-3)', function (): void {
     it('baris valid tidak menghasilkan galat', function (string $kunciProduk, string $jumlah, ?string $nomorBatch, ?string $kedaluwarsa, array $nomorSeri): void {
-        expect(TimDPeriksaBarisPelacakan($kunciProduk, $jumlah, $nomorBatch, $kedaluwarsa, $nomorSeri))->toBe([]);
+        expect(PeriksaBarisPelacakanUji($kunciProduk, $jumlah, $nomorBatch, $kedaluwarsa, $nomorSeri))->toBe([]);
     })->with([
         'tanpa pelacakan' => ['Stok', '125.5', null, null, []],
         'bahan baku desimal' => ['BahanBaku', '12.75', null, null, []],
@@ -37,34 +37,34 @@ describe('F-05a PemvalidasiPelacakan (DesainF05a C.4, H-3)', function (): void {
     ]);
 
     it('batch: nomor batch wajib (≤ 60) dan kedaluwarsa wajib (H-3); nomor seri harus kosong', function (): void {
-        expect(TimDPeriksaBarisPelacakan('Batch', '48', '  ', null))->toBe([
+        expect(PeriksaBarisPelacakanUji('Batch', '48', '  ', null))->toBe([
             ['Bidang' => 'NomorBatch', 'Pesan' => 'Isi nomor batch untuk Susu UHT Full Cream 1 Liter (batch & kedaluwarsa).'],
             ['Bidang' => 'TanggalKedaluwarsa', 'Pesan' => 'Isi tanggal kedaluwarsa batch untuk Susu UHT Full Cream 1 Liter (batch & kedaluwarsa).'],
-        ])->and(TimDPeriksaBarisPelacakan('Batch', '48', str_repeat('B', 61), '2027-03-17'))->toBe([
+        ])->and(PeriksaBarisPelacakanUji('Batch', '48', str_repeat('B', 61), '2027-03-17'))->toBe([
             ['Bidang' => 'NomorBatch', 'Pesan' => 'Nomor batch maksimal 60 karakter.'],
-        ])->and(array_column(TimDPeriksaBarisPelacakan('Batch', '1', 'UHT-1', '2027-03-17', ['SN-1']), 'Bidang'))->toBe(['NomorSeri']);
+        ])->and(array_column(PeriksaBarisPelacakanUji('Batch', '1', 'UHT-1', '2027-03-17', ['SN-1']), 'Bidang'))->toBe(['NomorSeri']);
     });
 
     it('batch: kedaluwarsa opsional bila WajibKedaluwarsaBatch dimatikan', function (): void {
         config(['persediaan.StokAwal.WajibKedaluwarsaBatch' => false]);
 
-        expect(TimDPeriksaBarisPelacakan('Batch', '48', 'UHT-2026-0917A', null))->toBe([]);
+        expect(PeriksaBarisPelacakanUji('Batch', '48', 'UHT-2026-0917A', null))->toBe([]);
     });
 
     it('seri: jumlah nomor seri harus sama dengan jumlah unit', function (): void {
-        expect(TimDPeriksaBarisPelacakan('Seri', '3', null, null, ['RC18-0001', 'RC18-0002']))->toBe([
+        expect(PeriksaBarisPelacakanUji('Seri', '3', null, null, ['RC18-0001', 'RC18-0002']))->toBe([
             ['Bidang' => 'NomorSeri', 'Pesan' => 'Jumlah 3 tetapi nomor seri yang diisi 2. Isi satu nomor seri per unit.'],
         ]);
     });
 
     it('seri: jumlah harus bilangan bulat', function (): void {
-        expect(TimDPeriksaBarisPelacakan('Seri', '1.5', null, null, ['RC18-0001']))->toBe([
+        expect(PeriksaBarisPelacakanUji('Seri', '1.5', null, null, ['RC18-0001']))->toBe([
             ['Bidang' => 'Jumlah', 'Pesan' => 'Jumlah produk bernomor seri harus bilangan bulat.'],
         ]);
     });
 
     it('seri: nomor di-trim, 1–100 karakter, unik di baris tanpa beda huruf besar/kecil', function (): void {
-        $galat = TimDPeriksaBarisPelacakan('Seri', '4', null, null, ['rc18-0001', ' RC18-0001 ', '', str_repeat('S', 101)]);
+        $galat = PeriksaBarisPelacakanUji('Seri', '4', null, null, ['rc18-0001', ' RC18-0001 ', '', str_repeat('S', 101)]);
 
         expect($galat)->toBe([
             ['Bidang' => 'NomorSeri', 'Pesan' => 'Setiap nomor seri 1–100 karakter dan tidak boleh kosong.'],
@@ -76,15 +76,15 @@ describe('F-05a PemvalidasiPelacakan (DesainF05a C.4, H-3)', function (): void {
         config(['persediaan.StokAwal.MaksimalNomorSeriPerBaris' => 2]);
         $tiga = ['RC18-0001', 'RC18-0002', 'RC18-0003'];
 
-        expect(TimDPeriksaBarisPelacakan('Seri', '3', null, null, $tiga))->toBe([
+        expect(PeriksaBarisPelacakanUji('Seri', '3', null, null, $tiga))->toBe([
             ['Bidang' => 'NomorSeri', 'Pesan' => 'Maksimal 2 nomor seri per baris. Pecah menjadi beberapa dokumen stok awal.'],
-        ])->and(array_column(TimDPeriksaBarisPelacakan('Seri', '1', 'B-01', '2027-01-01', ['RC18-0001']), 'Bidang'))->toBe(['NomorBatch']);
+        ])->and(array_column(PeriksaBarisPelacakanUji('Seri', '1', 'B-01', '2027-01-01', ['RC18-0001']), 'Bidang'))->toBe(['NomorBatch']);
     });
 
     it('tanpa pelacakan: batch, kedaluwarsa, dan nomor seri harus kosong', function (): void {
-        expect(TimDPeriksaBarisPelacakan('Stok', '2', 'B-01', null, ['SN-1']))->toBe([
+        expect(PeriksaBarisPelacakanUji('Stok', '2', 'B-01', null, ['SN-1']))->toBe([
             ['Bidang' => 'NomorBatch', 'Pesan' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter tidak dilacak per batch. Kosongkan nomor batch dan kedaluwarsa.'],
             ['Bidang' => 'NomorSeri', 'Pesan' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter tidak dilacak per nomor seri. Kosongkan nomor seri.'],
-        ])->and(array_column(TimDPeriksaBarisPelacakan('Stok', '2', null, '2027-01-01'), 'Bidang'))->toBe(['NomorBatch']);
+        ])->and(array_column(PeriksaBarisPelacakanUji('Stok', '2', null, '2027-01-01'), 'Bidang'))->toBe(['NomorBatch']);
     });
 });

@@ -32,7 +32,7 @@ beforeEach(function (): void {
  *
  * @return array{Tenant: Tenant, Pemilik: Pengguna, Outlet: Outlet, Gudang: Gudang, Minyak: Produk, UuidStokAwal: string}
  */
-function TimFSiapkanKartuStok(): array
+function SiapkanKartuStokUji(): array
 {
     $t = BantuanPersediaan::SiapkanTenant('Toko Sembako Berkah Jaya');
     $minyak = BantuanKatalog::BuatProduk(['Nama' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter', 'Sku' => 'MGS-2L'], '38500.00', $t['Pcs']);
@@ -55,15 +55,15 @@ function TimFSiapkanKartuStok(): array
 /**
  * @return array{SaldoAwal: array{Jumlah: string, Nilai: string}, SaldoAkhir: array{Jumlah: string, Nilai: string}, Mutasi: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}}
  */
-function TimFAmbilKartu(Produk $produk, Gudang $gudang, string $dari, string $sampai, int $halaman = 1): array
+function AmbilKartuStokUji(Produk $produk, Gudang $gudang, string $dari, string $sampai, int $halaman = 1): array
 {
     return app(KartuStok::class)->Ambil($produk->Id, $gudang->Id, CarbonImmutable::parse($dari), CarbonImmutable::parse($sampai), $halaman);
 }
 
 describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     it('BR-05.1 baris dalam rentang urut Id dengan saldo berjalan; saldo awal = baris terakhir sebelum rentang; saldo akhir = baris terakhir rentang', function (): void {
-        $d = TimFSiapkanKartuStok();
-        $kartu = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-09-05', '2026-09-30');
+        $d = SiapkanKartuStokUji();
+        $kartu = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-09-05', '2026-09-30');
 
         expect($kartu['SaldoAwal'])->toBe(['Jumlah' => '24.0000', 'Nilai' => '924000.00'])
             ->and($kartu['SaldoAkhir'])->toBe(['Jumlah' => '28.0000', 'Nilai' => '1088181.82'])
@@ -87,8 +87,8 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     });
 
     it('baris stok awal bertautan ke dokumen sumber, mencatat pelaku, dan waktu pencatatan ISO', function (): void {
-        $d = TimFSiapkanKartuStok();
-        $baris = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-09-01')['Mutasi']['Data'][0];
+        $d = SiapkanKartuStokUji();
+        $baris = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-09-01')['Mutasi']['Data'][0];
 
         expect($baris)->toMatchArray([
             'JenisMutasi' => 'StokAwal',
@@ -101,10 +101,10 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     });
 
     it('rentang tanpa mutasi: saldo awal = saldo akhir = baris terakhir sebelum rentang; sebelum riwayat = nol', function (): void {
-        $d = TimFSiapkanKartuStok();
-        $november = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-11-01', '2026-11-30');
-        $agustus = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-08-01', '2026-08-31');
-        $oktober = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-10-01', '2026-10-31');
+        $d = SiapkanKartuStokUji();
+        $november = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-11-01', '2026-11-30');
+        $agustus = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-08-01', '2026-08-31');
+        $oktober = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-10-01', '2026-10-31');
 
         expect($november['SaldoAwal'])->toBe(['Jumlah' => '27.0000', 'Nilai' => '1049318.18'])
             ->and($november['SaldoAkhir'])->toBe($november['SaldoAwal'])
@@ -116,9 +116,9 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     });
 
     it('berhalaman sesuai config KartuStok.PerHalaman', function (): void {
-        $d = TimFSiapkanKartuStok();
+        $d = SiapkanKartuStokUji();
         config()->set('persediaan.KartuStok.PerHalaman', 2);
-        $h2 = TimFAmbilKartu($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-10-31', 2);
+        $h2 = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-10-31', 2);
 
         expect([$h2['Mutasi']['HalamanSaatIni'], $h2['Mutasi']['HalamanTerakhir'], $h2['Mutasi']['Total']])->toBe([2, 3, 5])
             ->and(array_column($h2['Mutasi']['Data'], 'TanggalBisnis'))->toBe(['2026-09-10', '2026-09-20'])
@@ -126,7 +126,7 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     });
 
     it('HTTP: props PropsKartuStok dengan produk & lokasi terpilih; tanggal bawaan awal bulan s.d. hari ini; dari > sampai ditukar', function (): void {
-        $d = TimFSiapkanKartuStok();
+        $d = SiapkanKartuStokUji();
         $this->travelTo(CarbonImmutable::parse('2026-09-24 10:00:00', 'Asia/Jakarta'));
         $masuk = fn () => BantuanPersediaan::MasukSebagai($this, $d['Tenant']->Id);
 
@@ -161,7 +161,7 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
     });
 
     it('HTTP isolasi: produk atau lokasi tenant lain = 404; lokasi di outlet di luar akses = 404; Kasir 403', function (): void {
-        $d = TimFSiapkanKartuStok();
+        $d = SiapkanKartuStokUji();
         $b = BantuanPersediaan::SiapkanTenant('Toko Kelontong Maju Mundur');
         $produkB = BantuanKatalog::BuatProduk(['Nama' => 'Kecap Manis Bango 520 ml'], '24000.00', $b['Pcs']);
 

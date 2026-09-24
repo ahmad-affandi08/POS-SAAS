@@ -26,17 +26,17 @@ beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
 });
 
-function TimABatch(string $nomor, string $kedaluwarsa = '2027-03-31'): DataBatchMasuk
+function BuatBatchMasukUjiBuku(string $nomor, string $kedaluwarsa = '2027-03-31'): DataBatchMasuk
 {
     return new DataBatchMasuk($nomor, CarbonImmutable::parse($kedaluwarsa));
 }
 
-function TimAAmbilIdBatch(string $nomor): int
+function AmbilIdBatchUjiBuku(string $nomor): int
 {
     return (int) BatchStok::query()->where('NomorBatch', $nomor)->value('Id');
 }
 
-function TimAAmbilIdSeri(string $nomor): int
+function AmbilIdSeriUjiBuku(string $nomor): int
 {
     return (int) NomorSeri::query()->where('Nomor', $nomor)->value('Id');
 }
@@ -49,9 +49,9 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
         $g = $t['Gudang']->Id;
 
         $hasil = BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: TimABatch('SUSU-2609A')),
-            BantuanBuku::BuatBaris('P/2', $id, $g, '8', '160000.00', batchMasuk: TimABatch('SUSU-2610B', '2027-04-30')),
-            BantuanBuku::BuatBaris('P/3', $id, $g, '5', '97500.00', batchMasuk: TimABatch('SUSU-2609A')),
+            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A')),
+            BantuanBuku::BuatBaris('P/2', $id, $g, '8', '160000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2610B', '2027-04-30')),
+            BantuanBuku::BuatBaris('P/3', $id, $g, '5', '97500.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A')),
         ], JenisReferensiMutasi::StokAwal);
 
         $a = BatchStok::query()->where('NomorBatch', 'SUSU-2609A')->firstOrFail();
@@ -74,12 +74,12 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
         $id = $p['Batch']->Id;
         $g = $t['Gudang']->Id;
         BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: TimABatch('SUSU-2609A')),
-            BantuanBuku::BuatBaris('P/2', $id, $g, '10', '195000.00', batchMasuk: TimABatch('SUSU-2610B', '2027-04-30')),
+            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A')),
+            BantuanBuku::BuatBaris('P/2', $id, $g, '10', '195000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2610B', '2027-04-30')),
         ], JenisReferensiMutasi::StokAwal);
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('J/1', $id, $g, '-12', null, JenisMutasi::Penjualan, idBatchStok: TimAAmbilIdBatch('SUSU-2609A')),
+            BantuanBuku::BuatBaris('J/1', $id, $g, '-12', null, JenisMutasi::Penjualan, idBatchStok: AmbilIdBatchUjiBuku('SUSU-2609A')),
         ], JenisReferensiMutasi::Penjualan));
 
         expect($galat->kode)->toBe('StokBatchTidakCukup')
@@ -92,13 +92,13 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
         $p['Batch']->forceFill(['BolehMinus' => true])->save();
         $id = $p['Batch']->Id;
         $g = $t['Gudang']->Id;
-        BantuanBuku::Catat([BantuanBuku::BuatBaris('P/1', $id, $g, '4', '78000.00', batchMasuk: TimABatch('SUSU-2609A'))], JenisReferensiMutasi::StokAwal);
+        BantuanBuku::Catat([BantuanBuku::BuatBaris('P/1', $id, $g, '4', '78000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A'))], JenisReferensiMutasi::StokAwal);
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('J/1', $id, $g, '-5', null, JenisMutasi::Penjualan, idBatchStok: TimAAmbilIdBatch('SUSU-2609A')),
+            BantuanBuku::BuatBaris('J/1', $id, $g, '-5', null, JenisMutasi::Penjualan, idBatchStok: AmbilIdBatchUjiBuku('SUSU-2609A')),
         ], JenisReferensiMutasi::Penjualan));
 
-        expect($galat->kode)->toBe('BR-05.2')
+        expect($galat->kode)->toBe('StokTidakCukup')
             ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id))->toBe([]);
     });
 
@@ -108,10 +108,10 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
         $id = $p['Batch']->Id;
         $g = $t['Gudang']->Id;
         BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: TimABatch('SUSU-2609A')),
-            BantuanBuku::BuatBaris('P/2', $id, $g, '10', '210000.00', batchMasuk: TimABatch('SUSU-2610B', '2027-04-30')),
+            BantuanBuku::BuatBaris('P/1', $id, $g, '10', '195000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A')),
+            BantuanBuku::BuatBaris('P/2', $id, $g, '10', '210000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2610B', '2027-04-30')),
         ], JenisReferensiMutasi::StokAwal);
-        $idB = TimAAmbilIdBatch('SUSU-2610B');
+        $idB = AmbilIdBatchUjiBuku('SUSU-2610B');
 
         $jual = BantuanBuku::Catat([BantuanBuku::BuatBaris('J/1', $id, $g, '-4', null, JenisMutasi::Penjualan, idBatchStok: $idB)], JenisReferensiMutasi::Penjualan);
         $lapisan = LapisanFifo::query()->where('IdProduk', $id)->orderBy('Id')->get()->all();
@@ -120,7 +120,7 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
             ->and($jual->baris['J/1']->idBatchStok)->toBe($idB)
             ->and(BatchStok::query()->whereKey($idB)->value('JumlahSisa'))->toBe('6.0000')
             ->and($lapisan[0]->JumlahSisa)->toBe('10.0000')
-            ->and($lapisan[0]->IdBatchStok)->toBe(TimAAmbilIdBatch('SUSU-2609A'))
+            ->and($lapisan[0]->IdBatchStok)->toBe(AmbilIdBatchUjiBuku('SUSU-2609A'))
             ->and($lapisan[1]->JumlahSisa)->toBe('6.0000')
             ->and($lapisan[1]->IdBatchStok)->toBe($idB)
             ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id, true))->toBe([]);
@@ -129,10 +129,10 @@ describe('F-05a buku stok: batch (C.4)', function (): void {
     it('nomor batch sama dengan kedaluwarsa berbeda → BatchKedaluwarsaBerbeda', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
-        BantuanBuku::Catat([BantuanBuku::BuatBaris('P/1', $p['Batch']->Id, $t['Gudang']->Id, '4', '78000.00', batchMasuk: TimABatch('SUSU-2609A'))], JenisReferensiMutasi::StokAwal);
+        BantuanBuku::Catat([BantuanBuku::BuatBaris('P/1', $p['Batch']->Id, $t['Gudang']->Id, '4', '78000.00', batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A'))], JenisReferensiMutasi::StokAwal);
 
         $beda = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('M/1', $p['Batch']->Id, $t['Gudang']->Id, '1', '19500.00', JenisMutasi::PenerimaanPembelian, batchMasuk: TimABatch('SUSU-2609A', '2027-06-30')),
+            BantuanBuku::BuatBaris('M/1', $p['Batch']->Id, $t['Gudang']->Id, '1', '19500.00', JenisMutasi::PenerimaanPembelian, batchMasuk: BuatBatchMasukUjiBuku('SUSU-2609A', '2027-06-30')),
         ], JenisReferensiMutasi::PenerimaanBarang));
 
         expect($beda->kode)->toBe('BatchKedaluwarsaBerbeda');
@@ -150,7 +150,7 @@ describe('F-05a buku stok: nomor seri (C.4)', function (): void {
             BantuanBuku::BuatBaris('P/1/1', $id, $g, '1', '675000.00', nomorSeriMasuk: 'RC18-0001'),
             BantuanBuku::BuatBaris('P/1/2', $id, $g, '1', '675000.00', nomorSeriMasuk: 'RC18-0002'),
         ], JenisReferensiMutasi::StokAwal);
-        $idSeri = TimAAmbilIdSeri('RC18-0001');
+        $idSeri = AmbilIdSeriUjiBuku('RC18-0001');
 
         $jual = BantuanBuku::Catat([BantuanBuku::BuatBaris('J/1', $id, $g, '-1', null, JenisMutasi::Penjualan, idNomorSeri: $idSeri)], JenisReferensiMutasi::Penjualan);
         $terjual = NomorSeri::query()->findOrFail($idSeri);
@@ -178,7 +178,7 @@ describe('F-05a buku stok: nomor seri (C.4)', function (): void {
         ], JenisReferensiMutasi::StokAwal);
 
         $galat = BantuanBuku::TangkapPelanggaran(fn () => BantuanBuku::Catat([
-            BantuanBuku::BuatBaris('K/1', $p['Seri']->Id, $g2, '-1', null, JenisMutasi::PenyesuaianKeluar, idNomorSeri: TimAAmbilIdSeri('RC18-0001')),
+            BantuanBuku::BuatBaris('K/1', $p['Seri']->Id, $g2, '-1', null, JenisMutasi::PenyesuaianKeluar, idNomorSeri: AmbilIdSeriUjiBuku('RC18-0001')),
         ]));
 
         expect($galat->kode)->toBe('NomorSeriTidakTersedia')
