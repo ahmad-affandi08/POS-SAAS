@@ -37,7 +37,13 @@ final class PenulisEksporProduk
         return PenulisTabel::Alirkan($format, 'produk-'.now()->format('Ymd-His'), DataEksporProduk::AmbilJudul(), function () use ($idTenant, $saring): Generator {
             // Respons dialirkan setelah kontroler selesai: pastikan scope tenant tetap tenant pengekspor.
             $this->konteks->Atur($idTenant);
-            set_time_limit(120);
+            // Perpanjang batas waktu ekspor besar hanya bila proses memang dibatasi (web); proses tanpa batas
+            // (CLI, antrean) tidak boleh diberi batas baru yang mematikannya di tengah jalan.
+            $batas = (int) ini_get('max_execution_time');
+
+            if ($batas > 0) {
+                set_time_limit(max(120, $batas));
+            }
 
             yield from $this->data->AmbilBaris($saring);
         });

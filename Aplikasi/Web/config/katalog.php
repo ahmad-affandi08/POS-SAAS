@@ -17,6 +17,8 @@ return [
         'SisiBesar' => 800,
         'SisiKecil' => 256,
         'Kualitas' => 80,
+        // Batas piksel (lebar × tinggi) sebelum didekode GD: mencegah bom piksel (PNG kecil berdimensi raksasa).
+        'PikselMaksimal' => 40000000,
     ],
 
     'Varian' => [
