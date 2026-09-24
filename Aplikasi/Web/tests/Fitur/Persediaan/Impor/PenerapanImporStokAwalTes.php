@@ -3,17 +3,25 @@
 declare(strict_types=1);
 
 use App\Domain\Akuntansi\Model\Jurnal;
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Katalog\Impor\Layanan\KonteksTugasImpor;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Persediaan\Enum\StatusBarisImporStokAwal;
 use App\Domain\Persediaan\Enum\StatusImporStokAwal;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
 use App\Domain\Persediaan\Enum\SumberStokAwal;
+use App\Domain\Persediaan\Impor\Layanan\PenerapImporStokAwal;
+use App\Domain\Persediaan\Impor\Tugas\TerapkanImporStokAwalTugas;
 use App\Domain\Persediaan\Model\ImporStokAwalBaris;
 use App\Domain\Persediaan\Model\MutasiStok;
 use App\Domain\Persediaan\Model\SaldoStok;
 use App\Domain\Persediaan\Model\StokAwal;
 use App\Domain\Persediaan\Model\StokAwalDetail;
+use Illuminate\Bus\UniqueLock;
+use Illuminate\Contracts\Cache\Repository as Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -91,6 +99,7 @@ describe('F-05a impor stok awal: pratinjau & pembuatan draf per lokasi (tidak me
             ->and($draf->pluck('Sumber')->all())->toBe([SumberStokAwal::Impor, SumberStokAwal::Impor])
             ->and($draf->pluck('IdGudang')->all())->toBe([$t['Gudang']->Id, $gudangBelakang->Id])
             ->and($draf->pluck('Nomor')->all())->toBe([null, null])
+            ->and($draf->pluck('DibuatOleh')->all())->toBe([$impor->IdPengguna, $impor->IdPengguna])
             ->and($draf[0]->Tanggal->toDateString())->toBe(now()->subDays(2)->toDateString())
             ->and($draf->pluck('TotalNilai')->all())->toBe(['2274000.00', '1114126.56'])
             ->and(StokAwalDetail::query()->where('IdStokAwal', $draf[1]->Id)->where('IdProduk', $produk['Batch']->Id)->sole()->NomorBatch)->toBe('B-2026-09')
@@ -158,7 +167,7 @@ describe('F-05a impor stok awal: pratinjau & pembuatan draf per lokasi (tidak me
         BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
         $impor->refresh();
         expect($impor->Status)->toBe(StatusImporStokAwal::Gagal)
-            ->and($impor->PesanGalat)->toStartWith('Draf stok awal gagal dibuat: ')
+            ->and($impor->PesanGalat)->toStartWith('Draf stok awal gagal dibuat: Baris berkas 3: ')
             ->and($impor->JumlahDokumen)->toBe(1)
             ->and(StokAwal::query()->count())->toBe(1);
 
@@ -171,6 +180,40 @@ describe('F-05a impor stok awal: pratinjau & pembuatan draf per lokasi (tidak me
             ->and($impor->JumlahDokumen)->toBe(2)
             ->and(StokAwal::query()->count())->toBe(2)
             ->and(StokAwalDetail::query()->orderBy('Id')->pluck('IdProduk')->all())->toBe([$gula->Id, $teh->Id])
+            ->and(MutasiStok::query()->count())->toBe(0);
+    });
+
+    it('lebih dari BatasBarisSinkron baris valid → pembuatan draf di antrean; pengunggah menjadi pembuat draf & pelaku audit', function (): void {
+        config(['persediaan.Impor.BatasBarisSinkron' => 1]);
+        $t = BantuanPersediaan::SiapkanTenant();
+        $minyak = BantuanKatalog::BuatProduk(['Nama' => 'Minyak Goreng Sawit 2 Liter', 'Sku' => 'MGS-2L'], '38500.00', $t['Pcs']);
+        $beras = BantuanKatalog::BuatProduk(['Nama' => 'Beras Pandan Wangi 5 kg', 'Sku' => 'BRS-5'], '78500.00', $t['Pcs']);
+        $masuk = BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
+        $impor = BantuanImporStokAwal::Unggah($masuk, BantuanImporStokAwal::BuatCsv([BantuanImporStokAwal::JUDUL, [$minyak->Sku, '', '', '', '24', '34.000'], [$beras->Sku, '', '', '', '15', '71.500']]), $t['Gudang']->Uuid);
+        config(['persediaan.Impor.BatasBarisSinkron' => 300]);
+        BantuanImporStokAwal::Petakan($masuk, $impor, $t['Gudang']->Uuid)->assertSessionHasNoErrors();
+        config(['persediaan.Impor.BatasBarisSinkron' => 1]);
+
+        Queue::fake();
+        $masuk->post("/kelola/persediaan/stok-awal/impor/{$impor->Uuid}/terapkan")->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        expect($impor->refresh()->Status)->toBe(StatusImporStokAwal::Menerapkan)
+            ->and(StokAwal::query()->count())->toBe(0);
+        Queue::assertPushed(TerapkanImporStokAwalTugas::class, fn (TerapkanImporStokAwalTugas $tugas): bool => $tugas->idImporStokAwal === $impor->Id);
+
+        // Seperti worker: tanpa pengguna masuk dan tanpa konteks audit/tenant dari request.
+        Auth::guard('web')->forgetUser();
+        app(PencatatAudit::class)->AturKonteks(null, null, null);
+        $tugas = new TerapkanImporStokAwalTugas($t['Tenant']->Id, $impor->IdPengguna, $impor->Id);
+        (new UniqueLock(app(Cache::class)))->release($tugas);
+        $tugas->handle(app(KonteksTugasImpor::class), app(PenerapImporStokAwal::class));
+
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        $draf = StokAwal::query()->where('IdImporStokAwal', $impor->Id)->sole();
+        expect($impor->refresh()->Status)->toBe(StatusImporStokAwal::Selesai)
+            ->and($draf->DibuatOleh)->toBe($impor->IdPengguna)
+            ->and($draf->TotalNilai)->toBe('1888500.00')
+            ->and(LogAudit::query()->where('Peristiwa', 'stok-awal.buat')->sole()->IdPengguna)->toBe($impor->IdPengguna)
             ->and(MutasiStok::query()->count())->toBe(0);
     });
 });

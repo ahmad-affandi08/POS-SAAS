@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Persediaan\Impor\Layanan;
 
 use App\Domain\Bersama\Tenant\KonteksTenant;
-use App\Domain\Katalog\Data\DataSaringProduk;
-use App\Domain\Katalog\Enum\JenisProduk;
-use App\Domain\Katalog\Enum\StatusProduk;
-use App\Domain\Katalog\Impor\Enum\BidangImpor;
-use App\Domain\Katalog\Impor\Kueri\DataEksporProduk;
 use App\Domain\Katalog\Impor\Layanan\PenulisTabel;
+use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Persediaan\Enum\BidangImporStokAwal;
 use App\Domain\Persediaan\Enum\StatusBarisImporStokAwal;
@@ -24,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * formula injection** `NetralkanRumus`):
  * - Templat: SKU, Nama Produk, Satuan (informasi), Lokasi Stok, Stok, Harga Modal, Nomor Batch, Kedaluwarsa, Nomor
  *   Seri. `isi=produk` mengisi satu baris per produk berstok aktif (bukan konsinyasi, termasuk anak varian) dari
- *   API ekspor katalog `DataEksporProduk`; lokasi terisi kode lokasi pilihan.
+ *   `InfoProdukStok::AmbilSemuaBerstok()`; Satuan = simbol satuan dasar; lokasi terisi kode lokasi pilihan.
  * - Laporan: kolom asli berkas + "Nomor Baris", "Status Impor", "Galat". `galat` = baris bermasalah saja,
  *   `semua` = seluruh baris. Berkas laporan galat bisa diperbaiki lalu diunggah ulang (judul kolom asli tetap).
  */
@@ -32,7 +28,7 @@ final class PenulisBerkasImporStokAwal
 {
     public function __construct(
         private readonly KonteksTenant $konteks,
-        private readonly DataEksporProduk $eksporProduk,
+        private readonly InfoProdukStok $infoProduk,
     ) {}
 
     /**
@@ -80,33 +76,9 @@ final class PenulisBerkasImporStokAwal
     {
         // Respons dialirkan setelah kontroler selesai: pastikan scope tenant tetap tenant ini.
         $this->konteks->Atur($idTenant);
-        $judul = DataEksporProduk::AmbilJudul();
-        $indeks = array_flip($judul);
-        $ambil = fn (array $baris, BidangImpor $bidang): string => (string) ($baris[$indeks[$bidang->AmbilJudul()] ?? -1] ?? '');
-        $jenisBerstok = [];
 
-        foreach (JenisProduk::cases() as $jenis) {
-            if ($jenis->CekPunyaStok() && $jenis !== JenisProduk::Konsinyasi) {
-                $jenisBerstok[$jenis->AmbilLabel()] = true;
-            }
-        }
-
-        foreach ($this->eksporProduk->AmbilBaris(new DataSaringProduk(status: StatusProduk::Aktif)) as $baris) {
-            if (! isset($jenisBerstok[$ambil($baris, BidangImpor::Jenis)])) {
-                continue;
-            }
-
-            yield [
-                $ambil($baris, BidangImpor::Sku),
-                $ambil($baris, BidangImpor::Nama),
-                $ambil($baris, BidangImpor::Satuan),
-                $kodeLokasi,
-                '',
-                '',
-                '',
-                '',
-                '',
-            ];
+        foreach ($this->infoProduk->AmbilSemuaBerstok() as $produk) {
+            yield [(string) $produk->sku, $produk->nama, $produk->simbolSatuan, $kodeLokasi, '', '', '', '', ''];
         }
     }
 

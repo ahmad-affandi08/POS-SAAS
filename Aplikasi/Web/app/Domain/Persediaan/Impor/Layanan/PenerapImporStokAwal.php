@@ -100,15 +100,21 @@ final class PenerapImporStokAwal
 
         $nomorAwal = (int) $baris->min('NomorBaris');
         $nomorAkhir = (int) $baris->max('NomorBaris');
-        $stokAwal = $this->simpanStokAwal->Jalankan(new DataStokAwal(
-            uuid: null,
-            idGudang: $idGudang,
-            tanggal: CarbonImmutable::parse($impor->Tanggal?->toDateString() ?? now()->toDateString())->startOfDay(),
-            catatan: mb_substr("Impor {$impor->NamaBerkas} baris {$nomorAwal}–{$nomorAkhir}", 0, 500),
-            baris: array_values($baris->map(fn (ImporStokAwalBaris $b): DataBarisStokAwal => self::KeBarisStokAwal($b))->all()),
-            sumber: SumberStokAwal::Impor,
-            idImpor: $impor->Id,
-        ), null);
+        $daftarBaris = array_values($baris->all());
+
+        try {
+            $stokAwal = $this->simpanStokAwal->Jalankan(new DataStokAwal(
+                uuid: null,
+                idGudang: $idGudang,
+                tanggal: CarbonImmutable::parse($impor->Tanggal?->toDateString() ?? now()->toDateString())->startOfDay(),
+                catatan: mb_substr("Impor {$impor->NamaBerkas} baris {$nomorAwal}–{$nomorAkhir}", 0, 500),
+                baris: array_values($baris->map(fn (ImporStokAwalBaris $b): DataBarisStokAwal => self::KeBarisStokAwal($b))->all()),
+                sumber: SumberStokAwal::Impor,
+                idImpor: $impor->Id,
+            ), null);
+        } catch (PelanggaranAturanBisnis $galat) {
+            throw self::TerjemahkanGalat($galat, $daftarBaris);
+        }
 
         ImporStokAwalBaris::query()->whereKey($baris->pluck('Id')->all())->update([
             'Status' => StatusBarisImporStokAwal::Diterapkan->value,
@@ -138,6 +144,39 @@ final class PenerapImporStokAwal
                 'JumlahBarisDiterapkan' => ImporStokAwalBaris::query()->where('IdImporStokAwal', $impor->Id)->where('Status', StatusBarisImporStokAwal::Diterapkan->value)->count(),
             ]);
         });
+    }
+
+    /**
+     * Galat baris `SimpanStokAwal` (`detail.Baris[].Urutan` = urutan baris draf) diterjemahkan ke nomor baris berkas
+     * agar pengguna bisa memperbaiki berkasnya; maksimal 5 baris disebut.
+     *
+     * @param  list<ImporStokAwalBaris>  $baris  urut sama dengan baris draf
+     */
+    private static function TerjemahkanGalat(PelanggaranAturanBisnis $galat, array $baris): PelanggaranAturanBisnis
+    {
+        $detail = is_array($galat->detail['Baris'] ?? null) ? array_values($galat->detail['Baris']) : [];
+
+        if ($detail === []) {
+            return $galat;
+        }
+
+        $pesan = [];
+
+        foreach (array_slice($detail, 0, 5) as $satu) {
+            $urutan = is_array($satu) ? (int) ($satu['Urutan'] ?? 0) : 0;
+            $nomor = isset($baris[$urutan - 1]) ? $baris[$urutan - 1]->NomorBaris : $urutan;
+            $pesan[] = "baris berkas {$nomor}: ".(is_array($satu) ? (string) ($satu['Pesan'] ?? '') : '');
+        }
+
+        $sisa = count($detail) - count($pesan);
+
+        return new PelanggaranAturanBisnis(
+            $galat->kode,
+            ucfirst(implode('; ', $pesan)).($sisa > 0 ? " (dan {$sisa} galat lain)." : '.'),
+            $galat->bidang,
+            $galat->statusHttp,
+            $galat->detail,
+        );
     }
 
     private static function KeBarisStokAwal(ImporStokAwalBaris $baris): DataBarisStokAwal

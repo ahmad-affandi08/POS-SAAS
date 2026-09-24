@@ -29,7 +29,9 @@ describe('F-05a impor stok awal: templat & laporan (anti formula injection)', fu
         }
     });
 
-    it('templat isi=produk: produk berstok aktif (termasuk bahan baku, produksi, batch, seri), tanpa konsinyasi/jasa/arsip; lokasi = kode lokasi; nama berumus dinetralkan', function (): void {
+    it('templat isi=produk: produk berstok aktif (termasuk bahan baku, produksi, batch, seri), tanpa konsinyasi/jasa/arsip/tenant lain; lokasi = kode lokasi; nama berumus dinetralkan', function (): void {
+        $lain = BantuanPersediaan::SiapkanTenant('Apotek Sehat Sentosa');
+        BantuanKatalog::BuatProduk(['Nama' => 'Paracetamol 500 mg Strip Isi 10 (tenant lain)', 'Sku' => 'PCT-500'], '5000.00', $lain['Pcs']);
         $t = BantuanPersediaan::SiapkanTenant();
         $produk = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
         BantuanKatalog::BuatProduk(['Nama' => '=HYPERLINK("http://jahat.test","Kopi Murah")', 'Sku' => 'JAHAT-1', 'Jenis' => JenisProduk::Stok], '10000.00', $t['Pcs']);
@@ -45,12 +47,13 @@ describe('F-05a impor stok awal: templat & laporan (anti formula injection)', fu
                 ->and($nama)->not->toContain($produk['Konsinyasi']->Nama)
                 ->and($nama)->not->toContain($produk['Jasa']->Nama)
                 ->and($nama)->not->toContain('Teh Celup Melati Isi 25 (diarsipkan)')
+                ->and($nama)->not->toContain('Paracetamol 500 mg Strip Isi 10 (tenant lain)')
                 ->and($nama)->toContain('\'=HYPERLINK("http://jahat.test","Kopi Murah")')
                 ->and(array_unique(array_column(array_slice($baris, 1), 3)))->toBe([$t['Gudang']->Kode]);
 
             $minyak = array_values(array_filter($baris, fn (array $b): bool => ($b[1] ?? '') === $produk['Stok']->Nama))[0];
             expect($minyak[0])->toBe($produk['Stok']->Sku)
-                ->and($minyak[2])->toBe('Pieces')
+                ->and($minyak[2])->toBe('pcs')
                 ->and(array_slice($minyak, 4))->toBe(['', '', '', '', '']);
         }
     });

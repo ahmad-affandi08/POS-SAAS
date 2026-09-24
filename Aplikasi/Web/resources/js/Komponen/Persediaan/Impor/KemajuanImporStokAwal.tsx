@@ -7,16 +7,7 @@ import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
 import { Progress } from '@/Komponen/Ui/progress';
 import { Skeleton } from '@/Komponen/Ui/skeleton';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
-import type { RingkasanImporStokAwal, StatusImporStokAwal } from '@/Tipe/Persediaan';
-
-/** Respons GET /kelola/persediaan/stok-awal/impor/{uuid}/status (DesainF05a D). */
-export type StatusPollingImporStokAwal = {
-    Status: StatusImporStokAwal;
-    LabelStatus: string;
-    Progres: number;
-    JumlahDokumen: number;
-    PesanGalat: string | null;
-};
+import type { RingkasanImporStokAwal, StatusImporStokAwal, StatusPollingImporStokAwal } from '@/Tipe/Persediaan';
 
 /** Status yang masih diproses server: halaman menanyakan status tiap 3 detik. */
 export const StatusBerjalanStokAwal: StatusImporStokAwal[] = ['Diunggah', 'Memvalidasi', 'Menerapkan'];

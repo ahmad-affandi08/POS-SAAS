@@ -9,6 +9,7 @@ use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\Satuan;
+use Generator;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -135,6 +136,25 @@ final class InfoProdukStok
         }
 
         return $hasil;
+    }
+
+    /**
+     * Semua produk berstok yang belum diarsipkan (termasuk anak varian; tanpa konsinyasi & induk varian), urut nama,
+     * dialirkan per potongan agar memori tetap (templat impor stok awal, DesainF05a C.7).
+     *
+     * @return Generator<int, DataInfoProdukStok>
+     */
+    public function AmbilSemuaBerstok(): Generator
+    {
+        $kueri = Produk::query()
+            ->whereNull('DiarsipkanPada')
+            ->whereIn('Jenis', self::AmbilJenisBerstok())
+            ->orderBy('Nama')
+            ->orderBy('Id');
+
+        foreach ($kueri->lazy(self::UKURAN_POTONGAN)->chunk(self::UKURAN_POTONGAN) as $potongan) {
+            yield from $this->Petakan(new Collection($potongan->values()->all()));
+        }
     }
 
     /** Jumlah produk berstok yang belum diarsipkan (butir panduan awal "Isi stok awal"). */
