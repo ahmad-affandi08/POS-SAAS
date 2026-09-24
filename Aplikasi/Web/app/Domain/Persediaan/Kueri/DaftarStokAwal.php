@@ -4,21 +4,28 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
 use App\Domain\Persediaan\Model\StokAwal;
 use App\Domain\Persediaan\Model\StokAwalDetail;
+use Illuminate\Support\Collection;
 
 /**
- * Daftar dokumen stok awal berhalaman (tipe FE `PropsDaftarStokAwal['StokAwal']`, DesainF05a C.6.6), terbaru dulu
- * (Tanggal, lalu Id). Hanya lokasi stok di outlet yang boleh diakses (null = semua). Saringan: Kata (nomor, catatan,
- * atau nama/SKU produk di barisnya), Status (`Semua` = semua status), lokasi stok (Uuid).
+ * Daftar dokumen stok awal untuk `TabelData` (D-16; tipe FE `PropsDaftarStokAwal['StokAwal']`, DesainF05a C.6.6),
+ * bawaan terbaru dulu. Hanya lokasi stok di outlet yang boleh diakses (null = semua). Cari: nomor, catatan, atau
+ * nama/SKU produk di barisnya. Saring: Status (pilihan banyak), Gudang (Uuid lokasi stok).
  */
 final class DaftarStokAwal
 {
-    public const PER_HALAMAN = 20;
+    public const KOLOM_URUT = ['Tanggal', 'Nomor', 'TotalNilai'];
+
+    public const KOLOM_SARING = ['Status', 'Gudang'];
+
+    public const URUT_BAWAAN = '-Tanggal';
 
     public function __construct(
         private readonly KonteksTenant $konteks,
@@ -27,41 +34,41 @@ final class DaftarStokAwal
     ) {}
 
     /**
-     * @param  array{Kata: string, Status: string, UuidGudang: string|null}  $saring
      * @param  list<int>|null  $idOutletBoleh
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(array $saring, ?array $idOutletBoleh, int $halaman): array
+    public function AmbilTabel(DataPermintaanTabel $permintaan, ?array $idOutletBoleh): array
     {
-        $kata = trim($saring['Kata']);
-        $status = StatusStokAwal::tryFrom($saring['Status']);
-        $idGudang = null;
+        $kata = $permintaan->cari;
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusStokAwal $s): string => $s->value, StatusStokAwal::cases()));
+        $uuidGudang = $permintaan->saring['Gudang'] ?? null;
+        $idGudang = $uuidGudang === null ? null : (($this->infoGudang->AmbilDariUuid([$uuidGudang])[$uuidGudang] ?? null)->id ?? 0);
+        $pola = PenerapKueriTabel::PolaCari($kata);
 
-        if ($saring['UuidGudang'] !== null) {
-            $idGudang = ($this->infoGudang->AmbilDariUuid([$saring['UuidGudang']])[$saring['UuidGudang']] ?? null)->id ?? 0;
-        }
-
-        $pola = '%'.addcslashes($kata, '%_\\').'%';
-        $halamanData = StokAwal::query()
+        $kueri = StokAwal::query()
             ->when($idOutletBoleh !== null, fn ($kueri) => $kueri->whereIn('IdOutlet', $idOutletBoleh ?? []))
-            ->when($status !== null, fn ($kueri) => $kueri->where('Status', $status?->value))
+            ->when($status !== [], fn ($kueri) => $kueri->whereIn('Status', $status))
             ->when($idGudang !== null, fn ($kueri) => $kueri->where('IdGudang', $idGudang))
             ->when($kata !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
                 ->where('Nomor', 'like', $pola)
                 ->orWhere('Catatan', 'like', $pola)
                 ->orWhereIn('Id', StokAwalDetail::query()->select('IdStokAwal')->where(fn ($detail) => $detail
                     ->where('NamaProduk', 'like', $pola)
-                    ->orWhere('Sku', 'like', $pola)))))
-            ->orderByDesc('Tanggal')
-            ->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman));
+                    ->orWhere('Sku', 'like', $pola)))));
 
-        /** @var list<StokAwal> $dokumen */
-        $dokumen = array_values($halamanData->items());
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'TotalNilai' => 'TotalNilai'], fn (Collection $dokumen): array => $this->Petakan(array_values($dokumen->all())));
+    }
+
+    /**
+     * @param  list<StokAwal>  $dokumen
+     * @return list<array<string, mixed>>
+     */
+    private function Petakan(array $dokumen): array
+    {
         $gudang = $this->infoGudang->AmbilBanyak(array_values(array_unique(array_map(fn (StokAwal $s): int => $s->IdGudang, $dokumen))));
         $nama = $this->anggota->AmbilNamaPengguna($this->konteks->Wajib(), array_values(array_unique(array_filter(array_map(fn (StokAwal $s): ?int => $s->DibuatOleh, $dokumen), 'is_int'))));
 
-        $data = array_map(fn (StokAwal $s): array => [
+        return array_map(fn (StokAwal $s): array => [
             'Uuid' => $s->Uuid,
             'Nomor' => $s->Nomor,
             'Tanggal' => $s->Tanggal->format('Y-m-d'),
@@ -75,12 +82,5 @@ final class DaftarStokAwal
             'DibuatOleh' => $s->DibuatOleh === null ? null : ($nama[$s->DibuatOleh] ?? null),
             'DiubahPada' => $s->DiubahPada?->toIso8601String() ?? '',
         ], $dokumen);
-
-        return [
-            'Data' => $data,
-            'HalamanSaatIni' => $halamanData->currentPage(),
-            'HalamanTerakhir' => $halamanData->lastPage(),
-            'Total' => $halamanData->total(),
-        ];
     }
 }

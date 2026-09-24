@@ -32,35 +32,38 @@ describe('F-05a halaman stok awal', function (): void {
 
         $this->get('/kelola/persediaan/stok-awal')->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Daftar')
-            ->where('StokAwal.Total', 2)
-            ->where('Saring', ['Kata' => '', 'Status' => 'Semua', 'UuidGudang' => null])
+            ->where('StokAwal.Meta.Total', 2)
+            ->has('OpsiStatus')
             ->where('Izin.PostingStokAwal', true)
             ->where('KesiapanAkun.Siap', true)
             ->has('OpsiGudang', 2));
 
-        $this->get('/kelola/persediaan/stok-awal?status=Diposting')->assertInertia(fn (Assert $halaman) => $halaman
+        $this->get('/kelola/persediaan/stok-awal?saring[Status]=Diposting')->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Daftar')
-            ->where('StokAwal.Total', 1)
+            ->where('StokAwal.Meta.Total', 1)
             ->where('StokAwal.Data.0.Uuid', $utama->Uuid)
             ->where('StokAwal.Data.0.Nomor', $utama->Nomor)
             ->where('StokAwal.Data.0.LabelStatus', 'Diposting')
             ->where('StokAwal.Data.0.TotalNilai', '380000.00')
             ->where('StokAwal.Data.0.NamaGudang', $t['Gudang']->Nama));
 
-        $this->get("/kelola/persediaan/stok-awal?gudang={$gudangCabang->Uuid}&kata=minyak")->assertInertia(fn (Assert $halaman) => $halaman
+        $this->get("/kelola/persediaan/stok-awal?saring[Gudang]={$gudangCabang->Uuid}&cari=minyak")->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Daftar')
-            ->where('Saring', ['Kata' => 'minyak', 'Status' => 'Semua', 'UuidGudang' => $gudangCabang->Uuid])
-            ->where('StokAwal.Total', 1)
+            ->where('StokAwal.Meta.Total', 1)
             ->where('StokAwal.Data.0.Uuid', $drafCabang->Uuid));
-        $this->get('/kelola/persediaan/stok-awal?kata=tidak-ada-produk-ini')->assertInertia(fn (Assert $halaman) => $halaman
+        $this->get('/kelola/persediaan/stok-awal?cari=tidak-ada-produk-ini')->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Daftar')
-            ->where('StokAwal.Total', 0));
+            ->where('StokAwal.Meta.Total', 0));
+
+        $this->getJson('/kelola/persediaan/stok-awal?saring[Status]=Draf,Diposting&urut=TotalNilai')->assertOk()
+            ->assertJsonPath('Meta.Total', 2)
+            ->assertJsonPath('Data.0.Uuid', $drafCabang->Uuid);
 
         $manajer = BantuanHarga::TambahAnggotaOutlet($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet, $cabang);
         BantuanOrganisasi::Masuk($this, $manajer, $t['Tenant']->Id);
         $this->get('/kelola/persediaan/stok-awal')->assertInertia(fn (Assert $halaman) => $halaman
             ->component('Kelola/Persediaan/StokAwal/Daftar')
-            ->where('StokAwal.Total', 1)
+            ->where('StokAwal.Meta.Total', 1)
             ->where('StokAwal.Data.0.Uuid', $drafCabang->Uuid));
     });
 

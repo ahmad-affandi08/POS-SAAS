@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Impor\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Impor\Aksi\LanjutkanImporProduk;
 use App\Domain\Katalog\Impor\Enum\StatusImporProduk;
@@ -11,15 +13,19 @@ use App\Domain\Katalog\Impor\Layanan\PembacaPresetImpor;
 use App\Domain\Katalog\Impor\Model\ImporProduk;
 use App\Domain\Katalog\Impor\Model\ImporProdukBaris;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
- * Riwayat impor produk tenant (F-03 E.10, tipe FE `RingkasanImpor`), 20 per halaman, terbaru dulu. Juga dipakai
+ * Riwayat impor produk tenant (F-03 E.10, tipe FE `RingkasanImpor`) untuk `TabelData` (D-16), bawaan terbaru dulu. Juga dipakai
  * halaman detail & status JSON untuk satu impor.
  */
 final class DaftarImporProduk
 {
-    public const PER_HALAMAN = 20;
+    public const KOLOM_URUT = ['DibuatPada', 'NamaBerkas'];
+
+    public const KOLOM_SARING = ['Status'];
+
+    public const URUT_BAWAAN = '-DibuatPada';
 
     public function __construct(
         private readonly KonteksTenant $konteks,
@@ -28,12 +34,18 @@ final class DaftarImporProduk
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, ImporProduk>
+     * Riwayat untuk `TabelData` (D-16): cari nama berkas, saring status.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(int $halaman): LengthAwarePaginator
+    public function AmbilTabel(DataPermintaanTabel $permintaan): array
     {
-        return ImporProduk::query()->orderByDesc('DibuatPada')->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman));
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusImporProduk $s): string => $s->value, StatusImporProduk::cases()));
+        $kueri = ImporProduk::query()
+            ->when($permintaan->cari !== '', fn ($k) => $k->where('NamaBerkas', 'like', PenerapKueriTabel::PolaCari($permintaan->cari)))
+            ->when($status !== [], fn ($k) => $k->whereIn('Status', $status));
+
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['DibuatPada' => 'DibuatPada', 'NamaBerkas' => 'NamaBerkas'], fn (Collection $impor): array => $this->Petakan(array_values($impor->all())));
     }
 
     /**

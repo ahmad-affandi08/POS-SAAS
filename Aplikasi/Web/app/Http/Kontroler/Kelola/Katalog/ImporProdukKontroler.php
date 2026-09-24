@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Katalog;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Impor\Aksi\BatalkanImporProduk;
 use App\Domain\Katalog\Impor\Aksi\LanjutkanImporProduk;
@@ -11,6 +12,7 @@ use App\Domain\Katalog\Impor\Aksi\SimpanPemetaanImpor;
 use App\Domain\Katalog\Impor\Aksi\TerapkanImporProduk;
 use App\Domain\Katalog\Impor\Aksi\UnggahBerkasImpor;
 use App\Domain\Katalog\Impor\Data\DataPresetImpor;
+use App\Domain\Katalog\Impor\Enum\StatusImporProduk;
 use App\Domain\Katalog\Impor\Kueri\DaftarImporProduk;
 use App\Domain\Katalog\Impor\Kueri\DetailImporProduk;
 use App\Domain\Katalog\Impor\Layanan\PembacaBerkasTabel;
@@ -24,7 +26,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\Katalog\SimpanPemetaanImporPermintaan;
 use App\Http\Permintaan\Kelola\Katalog\UnggahImporProdukPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,12 +41,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class ImporProdukKontroler extends DasarKatalogKontroler
 {
-    public function Daftar(Request $permintaan, DaftarImporProduk $daftar, PembacaPresetImpor $preset, PastikanBatasPaket $batasPaket, PemakaianSku $pemakaianSku): Response
+    public function Daftar(Request $permintaan, DaftarImporProduk $daftar, PembacaPresetImpor $preset, PastikanBatasPaket $batasPaket, PemakaianSku $pemakaianSku): Response|JsonResponse
     {
-        $halaman = $daftar->Ambil(max(1, $permintaan->integer('halaman', 1)));
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarImporProduk::KOLOM_URUT, DaftarImporProduk::URUT_BAWAAN, DaftarImporProduk::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Produk/Impor/Daftar', [
-            'Riwayat' => DaftarBerhalaman::BuatDariData($halaman, $daftar->Petakan(array_values($halaman->items()))),
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Produk/Impor/Daftar', 'Riwayat', fn (): array => $daftar->AmbilTabel($tabel), fn (): array => [
+            'OpsiStatus' => array_map(fn (StatusImporProduk $s): array => ['Nilai' => $s->value, 'Label' => $s->AmbilLabel()], StatusImporProduk::cases()),
             'Preset' => array_map(fn (DataPresetImpor $p): array => ['Kode' => $p->kode, 'Nama' => $p->nama, 'Keterangan' => $p->keterangan, 'Asumsi' => $p->asumsi], $preset->AmbilSemua()),
             'BatasBerkas' => [
                 'UkuranMaksimalKb' => (int) config('katalog.Impor.UkuranMaksimalKb', 10240),

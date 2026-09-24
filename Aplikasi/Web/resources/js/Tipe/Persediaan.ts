@@ -41,10 +41,9 @@ export type BarisDaftarStokAwal = {
     DibuatOleh: string | null;
     DiubahPada: string;
 };
-export type SaringStokAwal = { Kata: string; Status: StatusStokAwal | 'Semua'; UuidGudang: string | null };
 export type PropsDaftarStokAwal = {
-    StokAwal: DaftarBerhalaman<BarisDaftarStokAwal>;
-    Saring: SaringStokAwal;
+    StokAwal: HasilTabel<BarisDaftarStokAwal>;
+    OpsiStatus: { Nilai: StatusStokAwal; Label: string }[];
     OpsiGudang: OpsiGudang[];
     Izin: IzinPersediaan;
     KesiapanAkun: KesiapanAkun;
@@ -279,7 +278,8 @@ export type StatusPollingImporStokAwal = {
     PesanGalat: string | null;
 };
 export type PropsDaftarImporStokAwal = {
-    Riwayat: DaftarBerhalaman<RingkasanImporStokAwal>;
+    Riwayat: HasilTabel<RingkasanImporStokAwal>;
+    OpsiStatus: { Nilai: StatusImporStokAwal; Label: string }[];
     OpsiGudang: OpsiGudang[];
     BatasBerkas: { UkuranMaksimalKb: number; MaksimalBaris: number; Ekstensi: string[] };
 };

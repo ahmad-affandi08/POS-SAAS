@@ -6,6 +6,7 @@ namespace App\Http\Kontroler\Kelola\Persediaan;
 
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\KesiapanPeranAkun;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Persediaan\Aksi\AjukanPostingStokAwal;
@@ -19,6 +20,7 @@ use App\Domain\Persediaan\Kueri\DetailStokAwal;
 use App\Domain\Persediaan\Model\StokAwal;
 use App\Http\Permintaan\Kelola\Persediaan\BatalkanStokAwalPermintaan;
 use App\Http\Permintaan\Kelola\Persediaan\SimpanStokAwalPermintaan;
+use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,19 +35,13 @@ use Inertia\Response;
  */
 final class StokAwalKontroler extends DasarPersediaanKontroler
 {
-    public function Daftar(Request $permintaan, DaftarStokAwal $daftar): Response
+    public function Daftar(Request $permintaan, DaftarStokAwal $daftar): Response|JsonResponse
     {
-        $kata = mb_substr(trim($permintaan->string('kata')->toString()), 0, 100);
-        $statusTeks = $permintaan->string('status', 'Semua')->toString();
-        $status = StatusStokAwal::tryFrom($statusTeks)->value ?? 'Semua';
-        $uuidGudang = $permintaan->string('gudang')->toString();
-        $uuidGudang = $uuidGudang === '' ? null : $uuidGudang;
-        $saring = ['Kata' => $kata, 'Status' => $status, 'UuidGudang' => $uuidGudang];
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarStokAwal::KOLOM_URUT, DaftarStokAwal::URUT_BAWAAN, DaftarStokAwal::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Persediaan/StokAwal/Daftar', [
-            'StokAwal' => $daftar->Ambil($saring, $this->IdOutletBoleh(), max(1, $permintaan->integer('halaman', 1))),
-            'Saring' => $saring,
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Persediaan/StokAwal/Daftar', 'StokAwal', fn (): array => $daftar->AmbilTabel($tabel, $this->IdOutletBoleh()), fn (): array => [
             'OpsiGudang' => $this->AmbilOpsiGudang(false),
+            'OpsiStatus' => array_map(fn (StatusStokAwal $s): array => ['Nilai' => $s->value, 'Label' => $s->AmbilLabel()], StatusStokAwal::cases()),
             'Izin' => $this->AmbilIzinPersediaan(),
             'KesiapanAkun' => $this->AmbilKesiapanAkun([PeranAkun::PersediaanBarangDagang, PeranAkun::PersediaanBahanBaku, PeranAkun::EkuitasSaldoAwal]),
         ]);

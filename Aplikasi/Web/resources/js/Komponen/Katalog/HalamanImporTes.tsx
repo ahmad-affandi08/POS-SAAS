@@ -5,7 +5,7 @@ import HalamanDaftarImpor, { PeriksaBerkasImpor } from '@/Halaman/Kelola/Produk/
 import HalamanDetailImpor, { BuatUrlLaporanImpor } from '@/Halaman/Kelola/Produk/Impor/Detail';
 import type { PropsDaftarImpor, PropsDetailImpor, RingkasanImpor } from '@/Tipe/Katalog';
 
-import { AturanJenis, BuatHalaman, IzinPenuh, OpsiKelompokPajakUji } from './DataUjiKatalog';
+import { AturanJenis, BuatHalaman, BuatHasilTabel, IzinPenuh, OpsiKelompokPajakUji } from './DataUjiKatalog';
 import { BatasiProgres } from './KemajuanImpor';
 import { AmbilLangkahImpor } from './LangkahImpor';
 import { PeriksaPemetaan } from './PemetaanImpor';
@@ -21,7 +21,8 @@ const batasBerkas: PropsDaftarImpor['BatasBerkas'] = {
 
 function PropsDaftar(perubahan: Partial<PropsDaftarImpor> = {}): PropsDaftarImpor {
     return {
-        Riwayat: BuatHalaman([]),
+        Riwayat: BuatHasilTabel([]),
+        OpsiStatus: [{ Nilai: 'Selesai', Label: 'Selesai' }],
         Preset: [
             { Kode: 'Umum', Nama: 'Templat sistem', Keterangan: 'Templat dari tombol Unduh templat.', Asumsi: false },
             { Kode: 'Majoo', Nama: 'majoo', Keterangan: 'Ekspor Daftar Produk majoo.', Asumsi: true },
@@ -97,7 +98,7 @@ describe('Impor produk langkah 1: unggah (E.10)', () => {
     afterEach(() => cleanup());
 
     it('preset asumsi menampilkan "Periksa pemetaan kolom sebelum mengimpor"', () => {
-        render(<HalamanDaftarImpor {...PropsDaftar()} />);
+        RenderUji(<HalamanDaftarImpor {...PropsDaftar()} />);
         expect(screen.queryByText('Periksa pemetaan kolom sebelum mengimpor')).toBeNull();
 
         fireEvent.change(screen.getByLabelText('Format berkas dari'), { target: { value: 'Majoo' } });
@@ -116,7 +117,7 @@ describe('Impor produk langkah 1: unggah (E.10)', () => {
         );
         expect(PeriksaBerkasImpor(besar, batasBerkas)).toMatch(/melebihi batas/);
 
-        render(<HalamanDaftarImpor {...PropsDaftar()} />);
+        RenderUji(<HalamanDaftarImpor {...PropsDaftar()} />);
         fireEvent.click(screen.getByRole('button', { name: 'Unggah & lanjut ke pemetaan' }));
         expect(screen.getByText('Pilih berkas Excel atau CSV lebih dulu.')).toBeTruthy();
 

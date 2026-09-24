@@ -1,18 +1,18 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import HalamanDaftarStokAwal, { BuatQueryStokAwal } from '@/Halaman/Kelola/Persediaan/StokAwal/Daftar';
+import HalamanDaftarStokAwal from '@/Halaman/Kelola/Persediaan/StokAwal/Daftar';
 import HalamanDetailStokAwal, { PeriksaAlasanBatal } from '@/Halaman/Kelola/Persediaan/StokAwal/Detail';
 import HalamanFormStokAwal from '@/Halaman/Kelola/Persediaan/StokAwal/Form';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import type { PropsDaftarStokAwal, PropsFormStokAwal, SaringStokAwal } from '@/Tipe/Persediaan';
+import type { PropsDaftarStokAwal, PropsFormStokAwal } from '@/Tipe/Persediaan';
 
 import {
     AkunBelumSiap,
     AkunSiap,
     BuatBarisDaftarStokAwal,
     BuatBarisForm,
-    BuatHalaman,
+    BuatHasilTabel,
     BuatHasilCari,
     BuatPropsDetail,
     GudangLama,
@@ -27,12 +27,13 @@ import {
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
-const saringAwal: SaringStokAwal = { Kata: '', Status: 'Semua', UuidGudang: null };
-
 function PropsDaftar(perubahan: Partial<PropsDaftarStokAwal> = {}): PropsDaftarStokAwal {
     return {
-        StokAwal: BuatHalaman([]),
-        Saring: saringAwal,
+        StokAwal: BuatHasilTabel([]),
+        OpsiStatus: [
+            { Nilai: 'Draf', Label: 'Draf' },
+            { Nilai: 'Diposting', Label: 'Diposting' },
+        ],
         OpsiGudang: [GudangUtama, GudangLama],
         Izin: IzinPenuh,
         KesiapanAkun: AkunSiap,
@@ -94,12 +95,15 @@ function PropsUbah(perubahan: Partial<PropsFormStokAwal> = {}): PropsFormStokAwa
     });
 }
 
-describe('Kelola/Persediaan/StokAwal/Daftar (F-05a)', () => {
-    beforeEach(() => AturHalamanUji({}, '/kelola/persediaan/stok-awal'));
+describe('Kelola/Persediaan/StokAwal/Daftar (F-05a, TabelData D-16)', () => {
+    beforeEach(() => {
+        AturHalamanUji({}, '/kelola/persediaan/stok-awal');
+        window.history.replaceState({}, '', '/kelola/persediaan/stok-awal');
+    });
     afterEach(() => cleanup());
 
     it('kosong: ajakan buat & impor untuk persediaan.kelola', () => {
-        render(<HalamanDaftarStokAwal {...PropsDaftar()} />);
+        RenderUji(<HalamanDaftarStokAwal {...PropsDaftar()} />);
 
         expect(
             screen.getByText('Belum ada stok awal. Isi stok awal agar saldo stok dan HPP benar sejak hari pertama.'),
@@ -113,27 +117,27 @@ describe('Kelola/Persediaan/StokAwal/Daftar (F-05a)', () => {
     });
 
     it('tanpa izin kelola: hanya lihat, tanpa tombol buat, alasannya tertulis', () => {
-        render(<HalamanDaftarStokAwal {...PropsDaftar({ Izin: IzinLihat })} />);
+        RenderUji(<HalamanDaftarStokAwal {...PropsDaftar({ Izin: IzinLihat })} />);
 
         expect(screen.getByText('Hanya bisa melihat')).toBeTruthy();
         expect(screen.queryByRole('link', { name: 'Buat stok awal' })).toBeNull();
         expect(screen.getByText('Minta pengelola persediaan mengisi stok awal.')).toBeTruthy();
     });
 
-    it('kosong karena saringan: menawarkan hapus saringan', () => {
-        render(<HalamanDaftarStokAwal {...PropsDaftar({ Saring: { ...saringAwal, Status: 'Draf' } })} />);
+    it('kosong karena saringan: menawarkan hapus pencarian & saring', () => {
+        window.history.replaceState({}, '', '/kelola/persediaan/stok-awal?saring%5BStatus%5D=Draf');
+        RenderUji(<HalamanDaftarStokAwal {...PropsDaftar()} />);
 
-        expect(screen.getByRole('link', { name: 'Hapus saringan' }).getAttribute('href')).toBe(
-            '/kelola/persediaan/stok-awal',
-        );
+        expect(screen.getByText('Tidak ada hasil untuk pencarian atau saring ini.')).toBeTruthy();
+        expect(within(screen.getByLabelText('Saring aktif')).getByText('Status: Draf')).toBeTruthy();
     });
 
     it('peringatan akun jurnal hanya untuk pemegang izin posting', () => {
-        render(<HalamanDaftarStokAwal {...PropsDaftar({ KesiapanAkun: AkunBelumSiap })} />);
+        RenderUji(<HalamanDaftarStokAwal {...PropsDaftar({ KesiapanAkun: AkunBelumSiap })} />);
         expect(screen.getByText('Akun jurnal persediaan belum lengkap')).toBeTruthy();
         cleanup();
 
-        render(<HalamanDaftarStokAwal {...PropsDaftar({ KesiapanAkun: AkunBelumSiap, Izin: IzinStafGudang })} />);
+        RenderUji(<HalamanDaftarStokAwal {...PropsDaftar({ KesiapanAkun: AkunBelumSiap, Izin: IzinStafGudang })} />);
         expect(screen.queryByText('Akun jurnal persediaan belum lengkap')).toBeNull();
     });
 
@@ -148,8 +152,8 @@ describe('Kelola/Persediaan/StokAwal/Daftar (F-05a)', () => {
                       : {},
             ),
         );
-        const { container } = render(
-            <HalamanDaftarStokAwal {...PropsDaftar({ StokAwal: BuatHalaman(baris, { Total: 500 }) })} />,
+        const { container } = RenderUji(
+            <HalamanDaftarStokAwal {...PropsDaftar({ StokAwal: BuatHasilTabel(baris, 500, 500) })} />,
         );
         const barisTabel = container.querySelectorAll('tbody tr');
 
@@ -166,30 +170,30 @@ describe('Kelola/Persediaan/StokAwal/Daftar (F-05a)', () => {
         expect(barisTabel[1]?.textContent).toContain('Dari impor Excel');
     }, 30_000);
 
-    it('ganti status langsung memuat ulang dengan query; kerangka memuat tampil selama permintaan', () => {
-        tiruanRouter.get.mockImplementation((_url: string, _data: unknown, opsi: { onStart?: () => void }) =>
-            opsi.onStart?.(),
+    it('saring status tersimpan di URL dan data diambil dari server (TanStack Query)', async () => {
+        const permintaan: string[] = [];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn((url: string) => {
+                permintaan.push(url);
+
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve(BuatHasilTabel([BuatBarisDaftarStokAwal(9)])),
+                });
+            }),
         );
-        render(<HalamanDaftarStokAwal {...PropsDaftar({ StokAwal: BuatHalaman([BuatBarisDaftarStokAwal(1)]) })} />);
-
-        fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), { target: { value: 'Draf' } });
-
-        expect(tiruanRouter.get).toHaveBeenCalledWith(
-            '/kelola/persediaan/stok-awal',
-            { status: 'Draf' },
-            expect.anything(),
+        RenderUji(
+            <HalamanDaftarStokAwal {...PropsDaftar({ StokAwal: BuatHasilTabel([BuatBarisDaftarStokAwal(1)]) })} />,
         );
-        expect(screen.getByRole('status').textContent).toContain('Memuat stok awal…');
-        tiruanRouter.get.mockReset();
-    });
 
-    it('query saringan: kosong & bawaan tidak dikirim', () => {
-        expect(BuatQueryStokAwal(saringAwal)).toEqual({});
-        expect(BuatQueryStokAwal({ Kata: ' SA/2026 ', Status: 'Diposting', UuidGudang: GudangUtama.Uuid })).toEqual({
-            kata: 'SA/2026',
-            status: 'Diposting',
-            gudang: GudangUtama.Uuid,
-        });
+        fireEvent.click(screen.getByRole('button', { name: /^Status/ }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Draf' }));
+
+        await waitFor(() => expect(permintaan).toEqual(['/kelola/persediaan/stok-awal?saring%5BStatus%5D=Draf']));
+        expect(window.location.search).toBe('?saring%5BStatus%5D=Draf');
+        vi.unstubAllGlobals();
     });
 });
 

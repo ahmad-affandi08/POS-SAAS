@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Persediaan;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Impor\Layanan\PembacaBerkasTabel;
+use App\Domain\Persediaan\Enum\StatusImporStokAwal;
 use App\Domain\Persediaan\Impor\Aksi\BatalkanImporStokAwal;
 use App\Domain\Persediaan\Impor\Aksi\LanjutkanImporStokAwal;
 use App\Domain\Persediaan\Impor\Aksi\SimpanPemetaanImporStokAwal;
@@ -16,6 +18,7 @@ use App\Domain\Persediaan\Impor\Layanan\PenulisBerkasImporStokAwal;
 use App\Domain\Persediaan\Model\ImporStokAwal;
 use App\Http\Permintaan\Kelola\Persediaan\SimpanPemetaanImporStokAwalPermintaan;
 use App\Http\Permintaan\Kelola\Persediaan\UnggahImporStokAwalPermintaan;
+use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,10 +35,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class ImporStokAwalKontroler extends DasarPersediaanKontroler
 {
-    public function Daftar(Request $permintaan): Response
+    public function Daftar(Request $permintaan): Response|JsonResponse
     {
-        return Inertia::render('Kelola/Persediaan/StokAwal/Impor/Daftar', [
-            'Riwayat' => app(DaftarImporStokAwal::class)->Ambil(max(1, $permintaan->integer('halaman', 1)), $this->HanyaPengguna()),
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarImporStokAwal::KOLOM_URUT, DaftarImporStokAwal::URUT_BAWAAN, DaftarImporStokAwal::KOLOM_SARING);
+
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Persediaan/StokAwal/Impor/Daftar', 'Riwayat', fn (): array => app(DaftarImporStokAwal::class)->AmbilTabel($tabel, $this->HanyaPengguna()), fn (): array => [
+            'OpsiStatus' => array_map(fn (StatusImporStokAwal $s): array => ['Nilai' => $s->value, 'Label' => $s->AmbilLabel()], StatusImporStokAwal::cases()),
             'OpsiGudang' => $this->AmbilOpsiGudang(),
             'BatasBerkas' => [
                 'UkuranMaksimalKb' => (int) config('persediaan.Impor.UkuranMaksimalKb', 10240),

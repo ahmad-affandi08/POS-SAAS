@@ -8,13 +8,13 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import LangkahImpor, { JenisLabelImpor } from '@/Komponen/Katalog/LangkahImpor';
 import { LabelOpsiGudang } from '@/Komponen/Persediaan/Impor/PemetaanImporStokAwal';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -66,8 +66,54 @@ export function RingkasHasilImporStokAwal(impor: RingkasanImporStokAwal): string
     return `${impor.JumlahBaris.toLocaleString('id-ID')} baris`;
 }
 
+const kolomRiwayat: KolomTabel<RingkasanImporStokAwal>[] = [
+    {
+        id: 'NamaBerkas',
+        accessorKey: 'NamaBerkas',
+        header: 'Berkas',
+        meta: { label: 'Berkas', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: impor } }) => (
+            <>
+                <Link href={`${alamatImpor}/${impor.Uuid}`} className="font-semibold break-all text-brand underline">
+                    {impor.NamaBerkas}
+                </Link>
+                <span className="block text-keterangan font-normal text-teks-sekunder">
+                    {impor.NamaGudangBawaan ? `Lokasi bawaan ${impor.NamaGudangBawaan}` : 'Tanpa lokasi bawaan'} ·{' '}
+                    {impor.NamaPengguna ?? 'Sistem'}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'DibuatPada',
+        accessorKey: 'DibuatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'text-teks-sekunder whitespace-nowrap' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DibuatPada),
+    },
+    {
+        id: 'Status',
+        header: 'Status',
+        enableSorting: false,
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => <LabelStatus jenis={JenisLabelImpor(row.original.Status)} teks={row.original.LabelStatus} />,
+    },
+    {
+        id: 'Hasil',
+        header: 'Hasil',
+        enableSorting: false,
+        meta: { label: 'Hasil', prioritas: 'rendah', kelasSel: 'text-teks-sekunder tabular-nums' },
+        cell: ({ row }) => RingkasHasilImporStokAwal(row.original),
+    },
+];
+
 /** F-05a impor stok awal langkah 1: unduh templat, unggah Excel/CSV + lokasi bawaan, dan riwayat impor. */
-export default function HalamanDaftarImporStokAwal({ Riwayat, OpsiGudang, BatasBerkas }: PropsDaftarImporStokAwal) {
+export default function HalamanDaftarImporStokAwal({
+    Riwayat,
+    OpsiStatus,
+    OpsiGudang,
+    BatasBerkas,
+}: PropsDaftarImporStokAwal) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const id = useId();
     const masukan = useRef<HTMLInputElement>(null);
@@ -210,70 +256,24 @@ export default function HalamanDaftarImporStokAwal({ Riwayat, OpsiGudang, BatasB
                 <h2 id="judul-riwayat-impor-stok-awal" className="text-subjudul font-semibold text-teks-utama">
                     Riwayat impor
                 </h2>
-                {Riwayat.Data.length === 0 ? (
-                    <KeadaanKosong judul="Belum pernah mengimpor stok awal. Riwayat disimpan 30 hari." />
-                ) : (
-                    <div className="rounded-panel border border-garis bg-card">
-                        <Table className="min-w-[720px] text-left text-isi">
-                            <TableCaption className="sr-only">Riwayat impor stok awal</TableCaption>
-                            <TableHeader>
-                                <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="px-4 text-label font-semibold text-teks-sekunder">
-                                        Berkas
-                                    </TableHead>
-                                    <TableHead scope="col" className="px-4 text-label font-semibold text-teks-sekunder">
-                                        Waktu
-                                    </TableHead>
-                                    <TableHead scope="col" className="px-4 text-label font-semibold text-teks-sekunder">
-                                        Status
-                                    </TableHead>
-                                    <TableHead scope="col" className="px-4 text-label font-semibold text-teks-sekunder">
-                                        Hasil
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Riwayat.Data.map((impor) => (
-                                    <TableRow key={impor.Uuid} className="border-garis align-top">
-                                        <TableCell className="px-4 whitespace-normal">
-                                            <Link
-                                                href={`${alamatImpor}/${impor.Uuid}`}
-                                                className="font-semibold break-all text-brand underline"
-                                            >
-                                                {impor.NamaBerkas}
-                                            </Link>
-                                            <span className="block text-keterangan text-teks-sekunder">
-                                                {impor.NamaGudangBawaan
-                                                    ? `Lokasi bawaan ${impor.NamaGudangBawaan}`
-                                                    : 'Tanpa lokasi bawaan'}{' '}
-                                                · {impor.NamaPengguna ?? 'Sistem'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="px-4 text-teks-sekunder">
-                                            {FormatTanggalWaktu(impor.DibuatPada)}
-                                        </TableCell>
-                                        <TableCell className="px-4">
-                                            <LabelStatus
-                                                jenis={JenisLabelImpor(impor.Status)}
-                                                teks={impor.LabelStatus}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="px-4 whitespace-normal text-teks-sekunder tabular-nums">
-                                            {RingkasHasilImporStokAwal(impor)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
-                <Paginasi
-                    alamat={alamatImpor}
-                    saring={{}}
-                    halamanSaatIni={Riwayat.HalamanSaatIni}
-                    halamanTerakhir={Riwayat.HalamanTerakhir}
-                    total={Riwayat.Total}
-                    label="Halaman riwayat impor stok awal"
+                <TabelData
+                    id="persediaan-riwayat-impor"
+                    label="Riwayat impor stok awal"
+                    kolom={kolomRiwayat}
+                    sumber={{ mode: 'server', alamat: alamatImpor, awal: Riwayat }}
+                    ambilIdBaris={(impor) => impor.Uuid}
+                    urutBawaan="-DibuatPada"
+                    cari="Cari nama berkas"
+                    saring={[
+                        {
+                            id: 'Status',
+                            label: 'Status',
+                            jenis: 'pilihanBanyak',
+                            opsi: OpsiStatus.map((o) => ({ nilai: o.Nilai, label: o.Label })),
+                        },
+                    ]}
+                    alamatDetail={(impor) => `${alamatImpor}/${impor.Uuid}`}
+                    kosong={{ judul: 'Belum pernah mengimpor stok awal. Riwayat disimpan 30 hari.' }}
                 />
             </section>
         </TataLetakAplikasi>

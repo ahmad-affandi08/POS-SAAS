@@ -425,7 +425,8 @@ export type RingkasanImpor = {
     NamaPengguna: string | null;
 };
 export type PropsDaftarImpor = {
-    Riwayat: DaftarBerhalaman<RingkasanImpor>;
+    Riwayat: HasilTabel<RingkasanImpor>;
+    OpsiStatus: { Nilai: StatusImporProduk; Label: string }[];
     Preset: { Kode: string; Nama: string; Keterangan: string; Asumsi: boolean }[];
     BatasBerkas: { UkuranMaksimalKb: number; MaksimalBaris: number; Ekstensi: string[] };
     BatasSku: Batas;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Impor\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Organisasi\Kueri\InfoGudang;
@@ -12,16 +14,21 @@ use App\Domain\Persediaan\Enum\StatusImporStokAwal;
 use App\Domain\Persediaan\Impor\Aksi\LanjutkanImporStokAwal;
 use App\Domain\Persediaan\Model\ImporStokAwal;
 use App\Domain\Persediaan\Model\ImporStokAwalBaris;
+use Illuminate\Support\Collection;
 
 /**
- * Riwayat impor stok awal tenant (tipe FE `PropsDaftarImporStokAwal['Riwayat']`, DesainF05a E), 20 per halaman,
- * terbaru dulu. `hanyaPengguna` diisi untuk pelaku yang aksesnya dibatasi per outlet: ia hanya melihat impornya
+ * Riwayat impor stok awal tenant (tipe FE `PropsDaftarImporStokAwal['Riwayat']`, DesainF05a E) untuk `TabelData`
+ * (D-16), bawaan terbaru dulu. `hanyaPengguna` diisi untuk pelaku yang aksesnya dibatasi per outlet: ia hanya melihat impornya
  * sendiri (impor pengguna lain bisa memuat lokasi stok di luar aksesnya). Juga memetakan satu impor untuk halaman
  * detail & status JSON.
  */
 final class DaftarImporStokAwal
 {
-    public const PER_HALAMAN = 20;
+    public const KOLOM_URUT = ['DibuatPada', 'NamaBerkas'];
+
+    public const KOLOM_SARING = ['Status'];
+
+    public const URUT_BAWAAN = '-DibuatPada';
 
     public function __construct(
         private readonly KonteksTenant $konteks,
@@ -30,21 +37,19 @@ final class DaftarImporStokAwal
     ) {}
 
     /**
-     * @return array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}
+     * Riwayat untuk `TabelData` (D-16): cari nama berkas, saring status.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Ambil(int $halaman, ?int $hanyaPengguna = null): array
+    public function AmbilTabel(DataPermintaanTabel $permintaan, ?int $hanyaPengguna = null): array
     {
-        $hasil = ImporStokAwal::query()
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusImporStokAwal $s): string => $s->value, StatusImporStokAwal::cases()));
+        $kueri = ImporStokAwal::query()
             ->when($hanyaPengguna !== null, fn ($kueri) => $kueri->where('IdPengguna', $hanyaPengguna))
-            ->orderByDesc('DibuatPada')->orderByDesc('Id')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman', max(1, $halaman));
+            ->when($permintaan->cari !== '', fn ($k) => $k->where('NamaBerkas', 'like', PenerapKueriTabel::PolaCari($permintaan->cari)))
+            ->when($status !== [], fn ($k) => $k->whereIn('Status', $status));
 
-        return [
-            'Data' => $this->Petakan(array_values($hasil->items())),
-            'HalamanSaatIni' => $hasil->currentPage(),
-            'HalamanTerakhir' => $hasil->lastPage(),
-            'Total' => $hasil->total(),
-        ];
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['DibuatPada' => 'DibuatPada', 'NamaBerkas' => 'NamaBerkas'], fn (Collection $impor): array => $this->Petakan(array_values($impor->all())));
     }
 
     /**

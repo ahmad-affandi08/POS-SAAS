@@ -119,9 +119,10 @@ describe('Impor stok awal langkah 1: unggah (DesainF05a E)', () => {
     afterEach(() => cleanup());
 
     it('keadaan kosong, tautan templat, pemeriksaan berkas, lalu unggah multipart { Berkas, UuidGudangBawaan }', () => {
-        render(
+        RenderUji(
             <HalamanDaftarImporStokAwal
-                Riwayat={{ Data: [], HalamanSaatIni: 1, HalamanTerakhir: 1, Total: 0 }}
+                Riwayat={{ Data: [], Meta: { Halaman: 1, PerHalaman: 25, Total: 0, JumlahHalaman: 1 } }}
+                OpsiStatus={[{ Nilai: 'Selesai', Label: 'Selesai' }]}
                 OpsiGudang={opsiGudang}
                 BatasBerkas={batasBerkas}
             />,
@@ -157,16 +158,15 @@ describe('Impor stok awal langkah 1: unggah (DesainF05a E)', () => {
     });
 
     it('tanpa lokasi stok yang bisa diakses: pesan kosong, tanpa form unggah; ringkasan hasil riwayat', () => {
-        render(
+        RenderUji(
             <HalamanDaftarImporStokAwal
                 Riwayat={{
                     Data: [
                         BuatImpor({ Status: 'Selesai', LabelStatus: 'Selesai', JumlahValid: 12000, JumlahDokumen: 6 }),
                     ],
-                    HalamanSaatIni: 1,
-                    HalamanTerakhir: 1,
-                    Total: 1,
+                    Meta: { Halaman: 1, PerHalaman: 25, Total: 1, JumlahHalaman: 1 },
                 }}
+                OpsiStatus={[{ Nilai: 'Selesai', Label: 'Selesai' }]}
                 OpsiGudang={[]}
                 BatasBerkas={batasBerkas}
             />,
