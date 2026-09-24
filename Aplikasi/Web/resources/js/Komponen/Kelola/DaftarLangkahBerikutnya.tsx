@@ -35,33 +35,33 @@ export default function DaftarLangkahBerikutnya({ daftar }: { daftar: ItemLangka
                 </CardDescription>
             </CardHeader>
             <CardContent className="px-0">
-            <ul className="flex flex-col">
-                {UrutkanLangkahBerikutnya(daftar).map((item) => (
-                    <li
-                        key={item.Kunci}
-                        className="flex flex-col gap-1 border-b border-garis py-3 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
-                    >
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                            <Link
-                                href={item.Tautan}
-                                className={`text-isi font-semibold break-words underline outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                    item.Selesai ? 'text-teks-sekunder' : 'text-brand'
-                                }`}
-                            >
-                                {item.Judul}
-                            </Link>
-                            <p className="text-label text-teks-sekunder">{item.Keterangan}</p>
-                        </div>
-                        <div className="shrink-0">
-                            {item.Selesai ? (
-                                <LabelStatus jenis="sukses" teks="Selesai" />
-                            ) : (
-                                <LabelStatus jenis="netral" teks="Belum" />
-                            )}
-                        </div>
-                    </li>
-                ))}
-            </ul>
+                <ul className="flex flex-col">
+                    {UrutkanLangkahBerikutnya(daftar).map((item) => (
+                        <li
+                            key={item.Kunci}
+                            className="flex flex-col gap-1 border-b border-garis py-3 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                        >
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                                <Link
+                                    href={item.Tautan}
+                                    className={`text-isi font-semibold break-words underline outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                        item.Selesai ? 'text-teks-sekunder' : 'text-brand'
+                                    }`}
+                                >
+                                    {item.Judul}
+                                </Link>
+                                <p className="text-label text-teks-sekunder">{item.Keterangan}</p>
+                            </div>
+                            <div className="shrink-0">
+                                {item.Selesai ? (
+                                    <LabelStatus jenis="sukses" teks="Selesai" />
+                                ) : (
+                                    <LabelStatus jenis="netral" teks="Belum" />
+                                )}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
             </CardContent>
         </Card>
     );

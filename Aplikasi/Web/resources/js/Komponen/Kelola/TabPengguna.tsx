@@ -30,7 +30,9 @@ export default function TabPengguna() {
                         data-state={aktif ? 'active' : 'inactive'}
                         className={cn(
                             'inline-flex h-8 items-center rounded-kontrol px-3 text-label font-semibold outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                            aktif ? 'bg-background text-teks-utama shadow-sm' : 'text-teks-sekunder hover:text-teks-utama',
+                            aktif
+                                ? 'bg-background text-teks-utama shadow-sm'
+                                : 'text-teks-sekunder hover:text-teks-utama',
                         )}
                     >
                         {tab.label}

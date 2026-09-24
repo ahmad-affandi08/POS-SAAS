@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 
+import { Button } from '@/Komponen/Ui/button';
 import TataLetakAutentikasiPengelola from '@/TataLetak/TataLetakAutentikasiPengelola';
 
 type PropsGalat = { Status: number; Judul: string; Keterangan: string };
@@ -11,9 +12,9 @@ export default function Galat({ Status, Judul, Keterangan }: PropsGalat) {
             <div className="flex flex-col gap-4">
                 <p className="text-isi text-teks-utama">{Keterangan}</p>
                 <p className="font-mono text-keterangan text-teks-sekunder">Kode galat: {Status}</p>
-                <Link href="/" className="font-semibold text-brand underline">
-                    Kembali ke beranda
-                </Link>
+                <Button asChild variant="outline" className="h-10 w-fit text-label font-semibold">
+                    <Link href="/">Kembali ke beranda</Link>
+                </Button>
             </div>
         </TataLetakAutentikasiPengelola>
     );

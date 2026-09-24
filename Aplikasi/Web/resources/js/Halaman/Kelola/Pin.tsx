@@ -3,6 +3,17 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/Komponen/Ui/breadcrumb';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 
@@ -16,25 +27,38 @@ export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
 
     return (
         <TataLetakAplikasi judul="PIN kasir">
-            <p className="text-isi text-teks-sekunder">
-                <Link href="/kelola/keamanan" className="font-semibold text-brand underline">
-                    Keamanan akun
-                </Link>{' '}
-                / PIN kasir
-            </p>
-            <section className="flex max-w-xl flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
-                <header className="flex flex-col gap-1">
-                    <h2 className="text-subjudul font-bold text-teks-utama">PIN saya</h2>
-                    <p className="text-isi text-teks-sekunder">
+            <Breadcrumb aria-label="Jalur halaman">
+                <BreadcrumbList className="text-isi text-teks-sekunder">
+                    <BreadcrumbItem>
+                        <BreadcrumbLink asChild className="font-semibold text-brand underline">
+                            <Link href="/kelola/keamanan">Keamanan akun</Link>
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                    <BreadcrumbItem>
+                        <BreadcrumbPage role={undefined} aria-disabled={undefined} className="text-teks-sekunder">
+                            PIN kasir
+                        </BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+            <Card className="max-w-xl gap-4 rounded-panel py-6 shadow-none">
+                <CardHeader className="gap-1 px-6">
+                    <CardTitle className="text-subjudul font-bold text-teks-utama">
+                        <h2>PIN saya</h2>
+                    </CardTitle>
+                    <CardDescription className="text-isi text-teks-sekunder">
                         Dipakai untuk masuk cepat di perangkat kasir bersama. Jangan pakai angka yang sama semua atau
                         berurutan. Setelah 5 kali salah, PIN terkunci 5 menit di perangkat itu.
-                    </p>
+                    </CardDescription>
                     <p className="text-label font-semibold text-teks-utama">
                         Status: {PinSayaDiatur ? 'Sudah diatur' : 'Belum diatur'}
                     </p>
-                </header>
-                <FormPin alamat="/kelola/keamanan/pin" labelTombol={PinSayaDiatur ? 'Ganti PIN' : 'Simpan PIN'} />
-            </section>
+                </CardHeader>
+                <CardContent className="px-6">
+                    <FormPin alamat="/kelola/keamanan/pin" labelTombol={PinSayaDiatur ? 'Ganti PIN' : 'Simpan PIN'} />
+                </CardContent>
+            </Card>
 
             {Anggota ? (
                 <section className="flex flex-col gap-2">
@@ -44,66 +68,78 @@ export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
                         kepadanya.
                     </p>
                     {sunting ? (
-                        <div className="flex max-w-xl flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4">
-                            <h3 className="text-label font-semibold text-teks-utama">Atur ulang PIN {sunting.Nama}</h3>
-                            <FormPin
-                                key={sunting.Uuid}
-                                alamat={`/kelola/pengguna/${sunting.Uuid}/pin`}
-                                labelTombol="Simpan PIN baru"
-                                saatSelesai={() => AturSunting(null)}
-                            />
-                        </div>
+                        <Card className="max-w-xl gap-3 rounded-panel py-4 shadow-none">
+                            <CardHeader className="px-4">
+                                <CardTitle className="text-label font-semibold text-teks-utama">
+                                    <h3>Atur ulang PIN {sunting.Nama}</h3>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-4">
+                                <FormPin
+                                    key={sunting.Uuid}
+                                    alamat={`/kelola/pengguna/${sunting.Uuid}/pin`}
+                                    labelTombol="Simpan PIN baru"
+                                    saatSelesai={() => AturSunting(null)}
+                                />
+                            </CardContent>
+                        </Card>
                     ) : null}
                     {Anggota.length === 0 ? (
-                        <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                            Belum ada anggota lain yang PIN-nya bisa Anda atur.
-                        </p>
+                        <Empty className="rounded-panel border border-garis bg-permukaan px-4 py-6 md:p-6">
+                            <EmptyHeader>
+                                <EmptyDescription className="text-isi text-teks-sekunder">
+                                    Belum ada anggota lain yang PIN-nya bisa Anda atur.
+                                </EmptyDescription>
+                            </EmptyHeader>
+                        </Empty>
                     ) : (
-                        <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                            <table className="w-full min-w-[560px] text-left text-isi">
-                                <caption className="sr-only">Status PIN anggota</caption>
-                                <thead className="border-b border-garis text-label text-teks-sekunder">
-                                    <tr>
-                                        <th scope="col" className="px-4 py-2 font-semibold">
+                        <div className="rounded-panel border border-garis bg-permukaan">
+                            <Table className="min-w-[560px] text-left text-isi">
+                                <TableCaption className="sr-only">Status PIN anggota</TableCaption>
+                                <TableHeader className="text-label">
+                                    <TableRow className="border-garis hover:bg-transparent">
+                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
                                             Nama
-                                        </th>
-                                        <th scope="col" className="px-4 py-2 font-semibold">
+                                        </TableHead>
+                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
                                             Peran
-                                        </th>
-                                        <th scope="col" className="px-4 py-2 font-semibold">
+                                        </TableHead>
+                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
                                             PIN
-                                        </th>
-                                        <th scope="col" className="px-4 py-2 font-semibold">
+                                        </TableHead>
+                                        <TableHead scope="col" className="px-4 font-semibold text-teks-sekunder">
                                             <span className="sr-only">Aksi</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {Anggota.map((anggota) => (
-                                        <tr key={anggota.Uuid} className="border-b border-garis last:border-b-0">
-                                            <td className="px-4 py-2 text-teks-utama">
+                                        <TableRow key={anggota.Uuid} className="border-garis">
+                                            <TableCell className="px-4 py-2 whitespace-normal text-teks-utama">
                                                 {anggota.Nama}
                                                 <span className="block text-keterangan text-teks-sekunder">
                                                     {anggota.Email}
                                                 </span>
-                                            </td>
-                                            <td className="px-4 py-2 text-teks-sekunder">{anggota.NamaPeran ?? '—'}</td>
-                                            <td className="px-4 py-2">
+                                            </TableCell>
+                                            <TableCell className="px-4 py-2 text-teks-sekunder">
+                                                {anggota.NamaPeran ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-2">
                                                 {anggota.PinDiatur ? (
                                                     <LabelStatus jenis="sukses" teks="Sudah diatur" />
                                                 ) : (
                                                     <LabelStatus jenis="peringatan" teks="Belum diatur" />
                                                 )}
-                                            </td>
-                                            <td className="px-4 py-2 text-right">
+                                            </TableCell>
+                                            <TableCell className="px-4 py-2 text-right">
                                                 <Tombol varian="sekunder" onClick={() => AturSunting(anggota)}>
                                                     Atur ulang PIN
                                                 </Tombol>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </section>

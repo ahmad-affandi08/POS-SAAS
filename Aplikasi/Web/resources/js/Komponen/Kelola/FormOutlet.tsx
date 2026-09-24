@@ -73,115 +73,116 @@ export default function FormOutlet({ awal, uuid, kodeTerkunci = false, merek, ko
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-        <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <BidangTeks
-                    label="Nama outlet"
-                    nilai={formulir.data.Nama}
-                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                    galat={formulir.errors.Nama}
-                    maxLength={150}
-                    required
-                />
-                <BidangTeks
-                    label="Kode outlet"
-                    nilai={formulir.data.Kode}
-                    saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
-                    galat={formulir.errors.Kode}
-                    keterangan={
-                        kodeTerkunci
-                            ? 'Kode dikunci karena outlet sudah bertransaksi.'
-                            : '3–5 karakter untuk nomor dokumen, misal JKT1. Tidak bisa diubah setelah outlet bertransaksi.'
-                    }
-                    maxLength={5}
-                    disabled={kodeTerkunci}
-                    kode
-                    required
-                />
-                <BidangPilihan
-                    label="Merek"
-                    nilai={formulir.data.Merek}
-                    opsi={merek}
-                    saatBerubah={(nilai) => formulir.setData('Merek', nilai)}
-                    galat={formulir.errors.Merek}
-                />
-                <BidangTeks
-                    label="Alamat (opsional)"
-                    nilai={formulir.data.Alamat}
-                    saatBerubah={(nilai) => formulir.setData('Alamat', nilai)}
-                    galat={formulir.errors.Alamat}
-                    maxLength={500}
-                />
-                <BidangPilihan
-                    label="Kabupaten/kota"
-                    nilai={formulir.data.KodeKota}
-                    opsi={pilihanKota}
-                    saatBerubah={PilihKota}
-                    galat={formulir.errors.KodeKota}
-                    kosong={kota.length === 0 ? 'Data wilayah belum tersedia' : 'Pilih kabupaten/kota'}
-                />
-                <BidangPilihan
-                    label="Zona waktu"
-                    nilai={formulir.data.ZonaWaktu}
-                    opsi={pilihanZonaWaktu}
-                    saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
-                    galat={formulir.errors.ZonaWaktu}
-                />
-                <BidangTeks
-                    label="Jam tutup buku"
-                    nilai={formulir.data.JamTutupBuku}
-                    saatBerubah={(nilai) => formulir.setData('JamTutupBuku', nilai)}
-                    galat={formulir.errors.JamTutupBuku}
-                    keterangan="Transaksi sebelum jam ini masuk tanggal bisnis kemarin. Kafe yang tutup 02.00 memakai 04:00."
-                    inputMode="numeric"
-                    maxLength={5}
-                    kode
-                    required
-                />
-            </div>
-            <FieldSet className="gap-2 border-t border-garis pt-4">
-                <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
-                    Profil pajak dasar
-                </FieldLegend>
-                <FieldDescription className="m-0 text-keterangan text-teks-sekunder">
-                    Disimpan untuk perhitungan pajak di menu Produk. Tarif mengikuti data resmi, bukan diisi di sini.
-                </FieldDescription>
-                <KotakCentang
-                    label="Usaha berstatus PKP (memungut PPN)"
-                    nilai={formulir.data.Pkp}
-                    saatBerubah={(nilai) => formulir.setData('Pkp', nilai)}
-                />
-                {formulir.data.Pkp ? (
-                    <div className="max-w-sm">
+                <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <BidangTeks
-                            label="NITKU outlet (opsional)"
-                            nilai={formulir.data.Nitku}
-                            saatBerubah={(nilai) => formulir.setData('Nitku', nilai.replace(/\D/g, ''))}
-                            galat={formulir.errors.Nitku}
-                            keterangan="Nomor Identitas Tempat Kegiatan Usaha, 22 angka."
-                            inputMode="numeric"
-                            maxLength={22}
+                            label="Nama outlet"
+                            nilai={formulir.data.Nama}
+                            saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                            galat={formulir.errors.Nama}
+                            maxLength={150}
+                            required
+                        />
+                        <BidangTeks
+                            label="Kode outlet"
+                            nilai={formulir.data.Kode}
+                            saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
+                            galat={formulir.errors.Kode}
+                            keterangan={
+                                kodeTerkunci
+                                    ? 'Kode dikunci karena outlet sudah bertransaksi.'
+                                    : '3–5 karakter untuk nomor dokumen, misal JKT1. Tidak bisa diubah setelah outlet bertransaksi.'
+                            }
+                            maxLength={5}
+                            disabled={kodeTerkunci}
                             kode
+                            required
+                        />
+                        <BidangPilihan
+                            label="Merek"
+                            nilai={formulir.data.Merek}
+                            opsi={merek}
+                            saatBerubah={(nilai) => formulir.setData('Merek', nilai)}
+                            galat={formulir.errors.Merek}
+                        />
+                        <BidangTeks
+                            label="Alamat (opsional)"
+                            nilai={formulir.data.Alamat}
+                            saatBerubah={(nilai) => formulir.setData('Alamat', nilai)}
+                            galat={formulir.errors.Alamat}
+                            maxLength={500}
+                        />
+                        <BidangPilihan
+                            label="Kabupaten/kota"
+                            nilai={formulir.data.KodeKota}
+                            opsi={pilihanKota}
+                            saatBerubah={PilihKota}
+                            galat={formulir.errors.KodeKota}
+                            kosong={kota.length === 0 ? 'Data wilayah belum tersedia' : 'Pilih kabupaten/kota'}
+                        />
+                        <BidangPilihan
+                            label="Zona waktu"
+                            nilai={formulir.data.ZonaWaktu}
+                            opsi={pilihanZonaWaktu}
+                            saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
+                            galat={formulir.errors.ZonaWaktu}
+                        />
+                        <BidangTeks
+                            label="Jam tutup buku"
+                            nilai={formulir.data.JamTutupBuku}
+                            saatBerubah={(nilai) => formulir.setData('JamTutupBuku', nilai)}
+                            galat={formulir.errors.JamTutupBuku}
+                            keterangan="Transaksi sebelum jam ini masuk tanggal bisnis kemarin. Kafe yang tutup 02.00 memakai 04:00."
+                            inputMode="numeric"
+                            maxLength={5}
+                            kode
+                            required
                         />
                     </div>
-                ) : null}
-                <KotakCentang
-                    label="Memungut PBJT makanan & minuman (pajak daerah)"
-                    nilai={formulir.data.PungutPbjt}
-                    saatBerubah={(nilai) => formulir.setData('PungutPbjt', nilai)}
-                />
-            </FieldSet>
-            <div className="flex flex-wrap gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    {uuid === null ? 'Tambah outlet' : 'Simpan outlet'}
-                </Tombol>
-                {saatBatal ? (
-                    <Tombol varian="sekunder" onClick={saatBatal}>
-                        Batal
-                    </Tombol>
-                ) : null}
-            </div>
-        </form>
+                    <FieldSet className="gap-2 border-t border-garis pt-4">
+                        <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
+                            Profil pajak dasar
+                        </FieldLegend>
+                        <FieldDescription className="m-0 text-keterangan text-teks-sekunder">
+                            Disimpan untuk perhitungan pajak di menu Produk. Tarif mengikuti data resmi, bukan diisi di
+                            sini.
+                        </FieldDescription>
+                        <KotakCentang
+                            label="Usaha berstatus PKP (memungut PPN)"
+                            nilai={formulir.data.Pkp}
+                            saatBerubah={(nilai) => formulir.setData('Pkp', nilai)}
+                        />
+                        {formulir.data.Pkp ? (
+                            <div className="max-w-sm">
+                                <BidangTeks
+                                    label="NITKU outlet (opsional)"
+                                    nilai={formulir.data.Nitku}
+                                    saatBerubah={(nilai) => formulir.setData('Nitku', nilai.replace(/\D/g, ''))}
+                                    galat={formulir.errors.Nitku}
+                                    keterangan="Nomor Identitas Tempat Kegiatan Usaha, 22 angka."
+                                    inputMode="numeric"
+                                    maxLength={22}
+                                    kode
+                                />
+                            </div>
+                        ) : null}
+                        <KotakCentang
+                            label="Memungut PBJT makanan & minuman (pajak daerah)"
+                            nilai={formulir.data.PungutPbjt}
+                            saatBerubah={(nilai) => formulir.setData('PungutPbjt', nilai)}
+                        />
+                    </FieldSet>
+                    <div className="flex flex-wrap gap-2">
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            {uuid === null ? 'Tambah outlet' : 'Simpan outlet'}
+                        </Tombol>
+                        {saatBatal ? (
+                            <Tombol varian="sekunder" onClick={saatBatal}>
+                                Batal
+                            </Tombol>
+                        ) : null}
+                    </div>
+                </form>
             </CardContent>
         </Card>
     );

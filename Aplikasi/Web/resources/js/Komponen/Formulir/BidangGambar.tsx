@@ -4,7 +4,14 @@ import { Button } from '@/Komponen/Ui/button';
 import { Input } from '@/Komponen/Ui/input';
 import { FormatUkuranBerkas } from '@/Pustaka/FormatUkuran';
 
-import { BuatKelasKontrol, GabungDijelaskanOleh, GalatBidang, KerangkaBidang, KeteranganBidang, LabelBidang } from './BagianBidang';
+import {
+    BuatKelasKontrol,
+    GabungDijelaskanOleh,
+    GalatBidang,
+    KerangkaBidang,
+    KeteranganBidang,
+    LabelBidang,
+} from './BagianBidang';
 
 type PropsBidangGambar = {
     label: string;
@@ -132,7 +139,10 @@ export default function BidangGambar({
                         disabled={disabled}
                         aria-invalid={pesanGalat ? true : undefined}
                         aria-describedby={GabungDijelaskanOleh(`${id}-keterangan`, pesanGalat && `${id}-galat`)}
-                        className={BuatKelasKontrol(pesanGalat, 'cursor-pointer py-1.5 file:mr-3 file:text-label file:font-semibold file:text-teks-utama')}
+                        className={BuatKelasKontrol(
+                            pesanGalat,
+                            'cursor-pointer py-1.5 file:mr-3 file:text-label file:font-semibold file:text-teks-utama',
+                        )}
                     />
                     <KeteranganBidang id={`${id}-keterangan`}>{petunjuk}</KeteranganBidang>
                     {berkas ? (

@@ -10,13 +10,7 @@ import {
     NormalisasiMasukanUang,
 } from '@/Pustaka/MasukanUang';
 
-import {
-    GabungDijelaskanOleh,
-    GalatBidang,
-    KerangkaBidang,
-    KeteranganBidang,
-    LabelBidang,
-} from './BagianBidang';
+import { GabungDijelaskanOleh, GalatBidang, KerangkaBidang, KeteranganBidang, LabelBidang } from './BagianBidang';
 
 type PropsBidangUang = {
     label: string;
@@ -81,7 +75,11 @@ export default function BidangUang({
             </LabelBidang>
             <InputGroup
                 data-disabled={disabled ? true : undefined}
-                className={cn('h-10 bg-permukaan', galat ? 'border-bahaya' : 'border-garis-input', disabled && 'bg-latar')}
+                className={cn(
+                    'h-10 bg-permukaan',
+                    galat ? 'border-bahaya' : 'border-garis-input',
+                    disabled && 'bg-latar',
+                )}
             >
                 <InputGroupAddon aria-hidden="true" className="text-isi font-normal text-teks-sekunder">
                     Rp

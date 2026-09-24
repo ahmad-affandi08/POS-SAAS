@@ -60,20 +60,30 @@ export default function RincianTagihan({ tagihan, namaTenant }: PropsRincianTagi
                         <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
                             Paket {tagihan.NamaPaket} · {tagihan.Siklus === 'Tahunan' ? '12 bulan' : '1 bulan'}
                         </TableHead>
-                        <TableCell className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.Subtotal)}</TableCell>
+                        <TableCell className="px-4 py-2 text-right tabular-nums">
+                            {FormatRupiah(tagihan.Subtotal)}
+                        </TableCell>
                     </TableRow>
                     {tagihan.Diskon !== '0.00' ? (
                         <TableRow className="border-garis hover:bg-transparent">
-                            <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
+                            <TableHead
+                                scope="row"
+                                className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit"
+                            >
                                 Diskon kupon <span className="font-mono">{tagihan.KodeKupon}</span>
                             </TableHead>
-                            <TableCell className="px-4 py-2 text-right tabular-nums">−{FormatRupiah(tagihan.Diskon)}</TableCell>
+                            <TableCell className="px-4 py-2 text-right tabular-nums">
+                                −{FormatRupiah(tagihan.Diskon)}
+                            </TableCell>
                         </TableRow>
                     ) : null}
                     {adaPpn ? (
                         <>
                             <TableRow className="border-garis text-teks-sekunder hover:bg-transparent">
-                                <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
+                                <TableHead
+                                    scope="row"
+                                    className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit"
+                                >
                                     Dasar pengenaan pajak
                                     {pengaliPenuh
                                         ? ''
@@ -84,10 +94,15 @@ export default function RincianTagihan({ tagihan, namaTenant }: PropsRincianTagi
                                 </TableCell>
                             </TableRow>
                             <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="row" className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit">
+                                <TableHead
+                                    scope="row"
+                                    className="h-auto px-4 py-2 font-normal whitespace-normal text-inherit"
+                                >
                                     PPN {FormatPersen(tagihan.TarifPpn)}%
                                 </TableHead>
-                                <TableCell className="px-4 py-2 text-right tabular-nums">{FormatRupiah(tagihan.JumlahPpn)}</TableCell>
+                                <TableCell className="px-4 py-2 text-right tabular-nums">
+                                    {FormatRupiah(tagihan.JumlahPpn)}
+                                </TableCell>
                             </TableRow>
                         </>
                     ) : null}

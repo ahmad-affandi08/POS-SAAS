@@ -2,8 +2,11 @@ import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
+import { Card, CardContent } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import type { PropsBersamaPengelola } from '@/Tipe/Pengelola';
+
+import { PemberitahuanMelayang } from './BagianTataLetak';
 
 type PropsTataLetak = {
     judul: string;
@@ -28,8 +31,11 @@ export default function TataLetakAutentikasiPengelola({ judul, keterangan, child
                     {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}
                 </header>
                 {props.Kilat ? <Pemberitahuan jenis="info">{props.Kilat}</Pemberitahuan> : null}
-                <section className="rounded-panel border border-garis bg-permukaan p-6">{children}</section>
+                <Card className="rounded-panel py-6 shadow-none">
+                    <CardContent className="px-6">{children}</CardContent>
+                </Card>
             </main>
+            <PemberitahuanMelayang />
         </>
     );
 }

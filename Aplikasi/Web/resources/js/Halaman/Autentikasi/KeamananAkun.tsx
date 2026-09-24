@@ -3,6 +3,9 @@ import type { FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Button } from '@/Komponen/Ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Separator } from '@/Komponen/Ui/separator';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -17,38 +20,50 @@ type PropsKeamananAkun = {
 export default function HalamanKeamananAkun({ DuaFaktor, Aktivasi, KodePemulihanBaru }: PropsKeamananAkun) {
     return (
         <TataLetakAplikasi judul="Keamanan akun">
-            <section className="flex max-w-xl flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6">
-                <header className="flex flex-col gap-1">
-                    <h2 className="text-subjudul font-bold text-teks-utama">Verifikasi dua langkah</h2>
-                    <p className="text-isi text-teks-sekunder">
+            <Card className="max-w-xl gap-4 rounded-panel py-6 shadow-none">
+                <CardHeader className="gap-1 px-6">
+                    <CardTitle className="text-subjudul font-bold text-teks-utama">
+                        <h2>Verifikasi dua langkah</h2>
+                    </CardTitle>
+                    <CardDescription className="text-isi text-teks-sekunder">
                         Selain kata sandi, masuk memerlukan kode 6 digit dari aplikasi autentikator di ponsel Anda.
-                    </p>
+                    </CardDescription>
                     <p className="text-label font-semibold text-teks-utama">
                         Status: {DuaFaktor.Aktif ? 'Aktif' : 'Belum aktif'}
                         {DuaFaktor.Aktif && DuaFaktor.AktifPada
                             ? ` sejak ${FormatTanggalWaktu(DuaFaktor.AktifPada)}`
                             : null}
                     </p>
-                </header>
-                {DuaFaktor.Wajib && !DuaFaktor.Aktif ? (
-                    <Pemberitahuan jenis="peringatan" judul="Wajib untuk peran Anda di paket ini">
-                        Aktifkan verifikasi dua langkah sebelum membuka menu lain di back-office.
-                    </Pemberitahuan>
-                ) : null}
-                {KodePemulihanBaru ? <DaftarKodePemulihan kode={KodePemulihanBaru} /> : null}
-                {Aktivasi ? <FormulirAktivasi aktivasi={Aktivasi} /> : null}
-                {DuaFaktor.Aktif ? (
-                    <FormulirNonaktifkan wajib={DuaFaktor.Wajib} sisaKode={DuaFaktor.SisaKodePemulihan} />
-                ) : null}
-            </section>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4 px-6">
+                    {DuaFaktor.Wajib && !DuaFaktor.Aktif ? (
+                        <Pemberitahuan jenis="peringatan" judul="Wajib untuk peran Anda di paket ini">
+                            Aktifkan verifikasi dua langkah sebelum membuka menu lain di back-office.
+                        </Pemberitahuan>
+                    ) : null}
+                    {KodePemulihanBaru ? <DaftarKodePemulihan kode={KodePemulihanBaru} /> : null}
+                    {Aktivasi ? <FormulirAktivasi aktivasi={Aktivasi} /> : null}
+                    {DuaFaktor.Aktif ? (
+                        <FormulirNonaktifkan wajib={DuaFaktor.Wajib} sisaKode={DuaFaktor.SisaKodePemulihan} />
+                    ) : null}
+                </CardContent>
+            </Card>
             {/* F-02b: PIN kasir untuk masuk cepat di aplikasi kasir. */}
-            <section className="flex max-w-xl flex-col gap-2 rounded-panel border border-garis bg-permukaan p-6">
-                <h2 className="text-subjudul font-bold text-teks-utama">PIN kasir</h2>
-                <p className="text-isi text-teks-sekunder">PIN 6 angka untuk masuk cepat di perangkat kasir bersama.</p>
-                <Link href="/kelola/keamanan/pin" className="self-start text-label font-semibold text-brand underline">
-                    Atur PIN kasir
-                </Link>
-            </section>
+            <Card className="max-w-xl gap-3 rounded-panel py-6 shadow-none">
+                <CardHeader className="gap-1 px-6">
+                    <CardTitle className="text-subjudul font-bold text-teks-utama">
+                        <h2>PIN kasir</h2>
+                    </CardTitle>
+                    <CardDescription className="text-isi text-teks-sekunder">
+                        PIN 6 angka untuk masuk cepat di perangkat kasir bersama.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="px-6">
+                    <Button asChild variant="outline" className="h-10 border-garis-input text-label font-semibold">
+                        <Link href="/kelola/keamanan/pin">Atur PIN kasir</Link>
+                    </Button>
+                </CardContent>
+            </Card>
         </TataLetakAplikasi>
     );
 }
@@ -62,7 +77,7 @@ function DaftarKodePemulihan({ kode }: { kode: string[] }) {
             </Pemberitahuan>
             <ul className="grid grid-cols-2 gap-2 font-mono text-isi text-teks-utama">
                 {kode.map((baris) => (
-                    <li key={baris} className="rounded-kontrol border border-garis px-3 py-2 text-center">
+                    <li key={baris} className="rounded-kontrol border border-garis bg-latar px-3 py-2 text-center">
                         {baris}
                     </li>
                 ))}
@@ -121,7 +136,8 @@ function FormulirNonaktifkan({ wajib, sisaKode }: { wajib: boolean; sisaKode: nu
     };
 
     return (
-        <div className="flex flex-col gap-3 border-t border-garis pt-4">
+        <div className="flex flex-col gap-3">
+            <Separator className="bg-garis" />
             <p className="text-isi text-teks-sekunder">
                 Sisa kode pemulihan: <span className="tabular-nums">{sisaKode}</span> dari 8.
                 {sisaKode <= 2 ? ' Nonaktifkan lalu aktifkan lagi untuk mendapat kode baru.' : null}
