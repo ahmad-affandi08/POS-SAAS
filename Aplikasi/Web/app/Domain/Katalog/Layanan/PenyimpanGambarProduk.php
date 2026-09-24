@@ -17,7 +17,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Gambar produk di disk privat `config('katalog.DiskGambar')` (F-03 C.2): diunduh lewat rute terautentikasi
  * (back-office dan token perangkat POS), terisolasi per tenant.
- * - Terima jpg/png/webp ≤ `katalog.Gambar.UkuranMaksimalKb`, minimal 200×200 piksel (`GambarTidakValid`).
+ * - Terima jpg/png/webp ≤ `katalog.Gambar.UkuranMaksimalKb`, minimal 200×200 piksel, maksimal
+ *   `katalog.Gambar.PikselMaksimal` piksel sebelum didekode (bom piksel) (`GambarTidakValid`).
  * - Diubah ukurannya dengan GD: sisi terpanjang ≤ `SisiBesar` (800) → `produk/{IdTenant}/{UuidProduk}-{ulid}.webp`,
  *   dan ≤ `SisiKecil` (256) → `…-kecil.webp`; kualitas `Kualitas`; JPEG bila GD tanpa WebP.
  * - Nama berkas berversi (ulid) sehingga POS boleh menyimpan cache selamanya.
@@ -71,11 +72,17 @@ final class PenyimpanGambarProduk
     /** Versi gambar = ulid pada nama berkas; null bila tanpa gambar. */
     public static function AmbilVersi(Produk $produk): ?string
     {
-        if ($produk->PathGambar === null || $produk->PathGambar === '') {
+        return self::AmbilVersiDariPath($produk->PathGambar);
+    }
+
+    /** Versi (ulid) dari path gambar besar; dipakai juga log audit agar path penyimpanan tidak ikut tercatat. */
+    public static function AmbilVersiDariPath(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
             return null;
         }
 
-        $nama = pathinfo($produk->PathGambar, PATHINFO_FILENAME);
+        $nama = pathinfo($path, PATHINFO_FILENAME);
         $posisi = strrpos($nama, '-');
 
         return $posisi === false ? null : substr($nama, $posisi + 1);
@@ -122,6 +129,11 @@ final class PenyimpanGambarProduk
 
         if ($info[0] < self::SISI_MINIMAL || $info[1] < self::SISI_MINIMAL) {
             throw new PelanggaranAturanBisnis('GambarTidakValid', 'Gambar minimal 200×200 piksel agar tetap jelas di layar kasir.', 'Gambar');
+        }
+
+        // Bom piksel: berkas kecil berdimensi raksasa ditolak sebelum GD mengalokasikan lebar × tinggi di memori.
+        if ((int) config('katalog.Gambar.PikselMaksimal', 40000000) < $info[0] * $info[1]) {
+            throw new PelanggaranAturanBisnis('GambarTidakValid', 'Resolusi gambar terlalu besar. Perkecil gambar (misal 4000×3000 piksel) lalu unggah lagi.', 'Gambar');
         }
 
         $gambar = @imagecreatefromstring($isi);

@@ -8,8 +8,11 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import { AmbilGalatBerawalan, CekAdaGalat } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import DaftarTab, { type ItemTab } from '@/Komponen/Katalog/DaftarTab';
-import EditorAtributVarian from '@/Komponen/Katalog/EditorAtributVarian';
-import EditorSatuanProduk, { GantiSatuanDasar, SiapkanSatuanDasar } from '@/Komponen/Katalog/EditorSatuanProduk';
+import PenyuntingAtributVarian from '@/Komponen/Katalog/PenyuntingAtributVarian';
+import PenyuntingSatuanProduk, {
+    GantiSatuanDasar,
+    SiapkanSatuanDasar,
+} from '@/Komponen/Katalog/PenyuntingSatuanProduk';
 import GrupRadio from '@/Komponen/Katalog/GrupRadio';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -475,7 +478,7 @@ export default function HalamanFormProduk({
                         panel={{
                             Umum: panelUmum,
                             Satuan: (
-                                <EditorSatuanProduk
+                                <PenyuntingSatuanProduk
                                     satuan={data.Satuan}
                                     uuidSatuanDasar={data.UuidSatuanDasar}
                                     opsiSatuan={Satuan}
@@ -491,7 +494,7 @@ export default function HalamanFormProduk({
                                         Tentukan atribut dan nilainya di sini. Setelah produk disimpan, buat varian dari
                                         halaman produk: satu varian untuk setiap kombinasi.
                                     </p>
-                                    <EditorAtributVarian
+                                    <PenyuntingAtributVarian
                                         nilai={data.AtributVarian}
                                         saatBerubah={(nilai) => Atur('AtributVarian', nilai)}
                                         galat={AmbilGalatBerawalan(galat, 'AtributVarian')}

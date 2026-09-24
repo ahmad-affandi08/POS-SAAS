@@ -44,7 +44,7 @@ export function GantiSatuanDasar(satuan: FormSatuanProduk[], lama: string, baru:
     return SiapkanSatuanDasar(diganti, baru);
 }
 
-type PropsEditorSatuanProduk = {
+type PropsPenyuntingSatuanProduk = {
     satuan: FormSatuanProduk[];
     uuidSatuanDasar: string;
     opsiSatuan: OpsiSatuan[];
@@ -58,14 +58,14 @@ type PropsEditorSatuanProduk = {
  * Satuan & konversi produk (BR-03.1 barcode per satuan). Baris pertama = satuan dasar (isi 1).
  * Tepat satu satuan jual bawaan dan satu satuan beli bawaan.
  */
-export default function EditorSatuanProduk({
+export default function PenyuntingSatuanProduk({
     satuan,
     uuidSatuanDasar,
     opsiSatuan,
     saatBerubah,
     galat,
     disabled = false,
-}: PropsEditorSatuanProduk) {
+}: PropsPenyuntingSatuanProduk) {
     const id = useId();
     const dasar = opsiSatuan.find((item) => item.Uuid === uuidSatuanDasar);
     const Ubah = (indeks: number, perubahan: Partial<FormSatuanProduk>) =>

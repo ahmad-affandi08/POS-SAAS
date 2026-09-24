@@ -37,7 +37,8 @@ final class UnggahGambarProduk
                 $pathLama = $produk->PathGambar;
                 $produk->fill(['PathGambar' => $pathBaru])->save();
                 DB::afterCommit(fn () => $this->penyimpan->Hapus($pathLama));
-                $this->audit->Catat('produk.gambar.ubah', $produk, ['PathGambar' => $pathLama], ['PathGambar' => $pathBaru]);
+                // Audit mencatat versi gambar, bukan path penyimpanan internal.
+                $this->audit->Catat('produk.gambar.ubah', $produk, ['VersiGambar' => PenyimpanGambarProduk::AmbilVersiDariPath($pathLama)], ['VersiGambar' => PenyimpanGambarProduk::AmbilVersiDariPath($pathBaru)]);
 
                 return $produk;
             });

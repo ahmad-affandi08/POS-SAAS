@@ -118,6 +118,17 @@ describe('F-03 katalog POS GET /api/pos/v1/katalog (D.3)', function (): void {
         BantuanPerangkat::AturStatusLangganan($this->t['Tenant']->Id, StatusLangganan::Ditangguhkan);
         AmbilKatalogPos($this, $this->token)->assertForbidden()->assertJsonPath('Galat.Kode', 'LanggananTidakAktif');
     });
+
+    it('kontrak kompatibel mundur (CLAUDE.md #16): kunci amplop + bagian semua tim PERSIS (urutan diabaikan)', function (): void {
+        $kunci = array_keys(AmbilKatalogPos($this, $this->token)->assertOk()->json());
+        sort($kunci);
+
+        expect($kunci)->toBe([
+            'DaftarHarga', 'Kategori', 'KelompokPajak', 'KelompokPilihan', 'Kursor', 'Lengkap', 'PaketProdukDetail', 'Pilihan',
+            'Produk', 'ProdukBarcode', 'ProdukHarga', 'ProdukKelompokPilihan', 'ProdukSatuan', 'Resep', 'Satuan', 'Skema',
+            'Terhapus', 'WaktuServer',
+        ]);
+    });
 });
 
 describe('F-03 gambar produk POS GET /api/pos/v1/katalog/gambar/{produk}', function (): void {

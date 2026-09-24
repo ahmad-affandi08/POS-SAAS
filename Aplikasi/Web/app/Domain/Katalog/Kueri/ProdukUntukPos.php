@@ -41,7 +41,16 @@ final class ProdukUntukPos implements BagianKatalogPos
             ->orderBy('Id')
             ->get();
 
-        $uuidProduk = Produk::query()->withTrashed()->pluck('Uuid', 'Id');
+        // Hanya Uuid produk yang dirujuk bagian ini (induk varian, pemilik satuan & barcode), bukan seluruh katalog.
+        $idProdukDirujuk = $produk->pluck('IdInduk')->filter()
+            ->merge($satuan->pluck('IdProduk'))
+            ->merge($barcode->pluck('IdProduk'))
+            ->unique()
+            ->diff($produk->modelKeys())
+            ->values()
+            ->all();
+        $uuidProduk = $produk->pluck('Uuid', 'Id')
+            ->union($idProdukDirujuk === [] ? [] : Produk::query()->withTrashed()->whereIn('Id', $idProdukDirujuk)->pluck('Uuid', 'Id'));
         $uuidSatuan = Satuan::query()->pluck('Uuid', 'Id');
         $uuidKategori = Kategori::query()->pluck('Uuid', 'Id');
         $uuidProdukSatuan = ProdukSatuan::query()->whereIn('Id', $barcode->pluck('IdProdukSatuan')->all())->pluck('Uuid', 'Id');

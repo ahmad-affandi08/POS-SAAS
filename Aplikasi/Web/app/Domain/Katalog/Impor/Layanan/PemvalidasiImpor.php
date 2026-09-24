@@ -399,33 +399,29 @@ final class PemvalidasiImpor
     }
 
     /**
-     * Ubah banyak baris sekaligus: `UPDATE … SET Kolom = CASE Id WHEN … END WHERE Id IN (…)` (nilai di-quote PDO).
+     * Ubah banyak baris lewat model ber-scope `MilikTenant` (tenant dari `KonteksTenant`, CLAUDE.md #11): baris dengan
+     * nilai yang sama persis dikelompokkan menjadi satu `UPDATE … WHERE IdTenant = <konteks> AND Id IN (…)`, sehingga
+     * jumlah kueri = jumlah kombinasi nilai berbeda. Id tenant lain tidak pernah tersentuh.
      *
      * @param  array<int, array<string, string|null>>  $perubahan  Id → kolom → nilai
      */
     private static function PerbaruiMassal(array $perubahan): void
     {
-        if ($perubahan === []) {
-            return;
+        $kolomBoleh = array_flip(['Status', 'Aksi', 'KunciProduk', 'Galat']);
+        $kelompok = [];
+
+        foreach ($perubahan as $id => $nilai) {
+            $nilai = array_intersect_key($nilai, $kolomBoleh);
+            $kunci = self::KeJson($nilai);
+            $kelompok[$kunci] ??= ['Nilai' => $nilai, 'Id' => []];
+            $kelompok[$kunci]['Id'][] = (int) $id;
         }
 
-        $kolom = array_values(array_intersect(array_keys((array) reset($perubahan)), ['Status', 'Aksi', 'KunciProduk', 'Galat']));
-        $set = [];
-        $ikatan = [];
-
-        foreach ($kolom as $namaKolom) {
-            $set[] = "`{$namaKolom}` = CASE `Id`".str_repeat(' WHEN ? THEN ?', count($perubahan)).' END';
-
-            foreach ($perubahan as $id => $nilai) {
-                array_push($ikatan, $id, $nilai[$namaKolom] ?? null);
+        foreach ($kelompok as $satu) {
+            foreach (array_chunk($satu['Id'], self::UKURAN_SISIP) as $potonganId) {
+                ImporProdukBaris::query()->whereKey($potonganId)->update($satu['Nilai']);
             }
         }
-
-        $idTenant = (int) ImporProdukBaris::query()->whereKey(array_key_first($perubahan))->value('IdTenant');
-        $ikatan = [...$ikatan, now(), $idTenant, ...array_keys($perubahan)];
-
-        // Id berasal dari kueri ber-scope tenant; IdTenant diulang di WHERE sebagai pagar tambahan.
-        DB::update('UPDATE `ImporProdukBaris` SET '.implode(', ', $set).', `DiubahPada` = ? WHERE `IdTenant` = ? AND `Id` IN ('.implode(', ', array_fill(0, count($perubahan), '?')).')', $ikatan);
     }
 
     /**
