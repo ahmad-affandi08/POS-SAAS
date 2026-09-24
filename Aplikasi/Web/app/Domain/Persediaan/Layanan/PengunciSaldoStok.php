@@ -6,8 +6,6 @@ namespace App\Domain\Persediaan\Layanan;
 
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Persediaan\Model\SaldoStok;
-use Illuminate\Support\Facades\DB;
-use LogicException;
 
 /**
  * Mengunci baris SaldoStok (kunci L3, DesainF05a C.2) urut (IdProduk, IdGudang):
@@ -16,7 +14,8 @@ use LogicException;
  *    tidak mengubah isi baris yang sudah ada;
  * 2. membacanya kembali dengan `FOR UPDATE` urut (IdProduk, IdGudang).
  *
- * Publik dan reentran (memanggil ulang di transaksi yang sama aman). Wajib di dalam transaksi.
+ * Publik dan reentran (memanggil ulang di transaksi yang sama aman). Wajib dipanggil di dalam transaksi pemanggil
+ * (di luar transaksi kunci langsung lepas).
  */
 final class PengunciSaldoStok
 {
@@ -30,10 +29,6 @@ final class PengunciSaldoStok
      */
     public function Kunci(array $pasangan): array
     {
-        if (DB::transactionLevel() === 0) {
-            throw new LogicException('PengunciSaldoStok hanya boleh dipanggil di dalam transaksi.');
-        }
-
         $urut = self::UrutkanUnik($pasangan);
 
         if ($urut === []) {

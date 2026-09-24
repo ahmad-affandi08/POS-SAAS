@@ -146,7 +146,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
         $l2 = BantuanBuku::CatatMasuk($id, $g, '5', '6000.00', JenisMutasi::PenerimaanPembelian);
         $jual = BantuanBuku::CatatKeluar($id, $g, '12');
 
-        $lapisan = LapisanFifo::query()->where('IdProduk', $id)->orderBy('Id')->get();
+        $lapisan = LapisanFifo::query()->where('IdProduk', $id)->orderBy('Id')->get()->all();
         $saldo = BantuanBuku::AmbilSaldo($id, $g);
 
         expect($jual->TotalHpp()->KeString())->toBe('-12400.00')
@@ -249,7 +249,7 @@ describe('F-05a buku stok: pencatatan (BR-05.1, DesainF05a C.2)', function (): v
 
         expect($galat->kode)->toBe('BR-05.2')
             ->and(MutasiStok::query()->count())->toBe(0)
-            ->and(BantuanBuku::AmbilSaldo($id, $g)?->JumlahTersedia ?? '0.0000')->toBe('0.0000');
+            ->and(BantuanBuku::AmbilSaldo($id, $g)->JumlahTersedia ?? '0.0000')->toBe('0.0000');
     });
 
     it('HPP belum diketahui: keluar sebelum ada stok (boleh minus) dinilai 0 dan ditandai hppTidakDiketahui', function (): void {
