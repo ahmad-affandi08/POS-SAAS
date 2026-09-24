@@ -132,7 +132,7 @@ final class PenyimpanGambarProduk
         }
 
         // Bom piksel: berkas kecil berdimensi raksasa ditolak sebelum GD mengalokasikan lebar × tinggi di memori.
-        if ($info[0] * $info[1] > (int) config('katalog.Gambar.PikselMaksimal', 40000000)) {
+        if ((int) config('katalog.Gambar.PikselMaksimal', 40000000) < $info[0] * $info[1]) {
             throw new PelanggaranAturanBisnis('GambarTidakValid', 'Resolusi gambar terlalu besar. Perkecil gambar (misal 4000×3000 piksel) lalu unggah lagi.', 'Gambar');
         }
 

@@ -399,34 +399,29 @@ final class PemvalidasiImpor
     }
 
     /**
-     * Ubah banyak baris sekaligus lewat model ber-scope `MilikTenant` (tenant dari `KonteksTenant`, CLAUDE.md #11):
-     * `UPDATE … SET Kolom = CASE Id WHEN … END, DiubahPada = … WHERE IdTenant = <konteks> AND Id IN (…)`. Id
-     * dipaksa integer dan nilai di-quote PDO, sehingga ekspresi CASE aman; Id tenant lain tidak pernah tersentuh.
+     * Ubah banyak baris lewat model ber-scope `MilikTenant` (tenant dari `KonteksTenant`, CLAUDE.md #11): baris dengan
+     * nilai yang sama persis dikelompokkan menjadi satu `UPDATE … WHERE IdTenant = <konteks> AND Id IN (…)`, sehingga
+     * jumlah kueri = jumlah kombinasi nilai berbeda. Id tenant lain tidak pernah tersentuh.
      *
      * @param  array<int, array<string, string|null>>  $perubahan  Id → kolom → nilai
      */
     private static function PerbaruiMassal(array $perubahan): void
     {
-        if ($perubahan === []) {
-            return;
+        $kolomBoleh = array_flip(['Status', 'Aksi', 'KunciProduk', 'Galat']);
+        $kelompok = [];
+
+        foreach ($perubahan as $id => $nilai) {
+            $nilai = array_intersect_key($nilai, $kolomBoleh);
+            $kunci = self::KeJson($nilai);
+            $kelompok[$kunci] ??= ['Nilai' => $nilai, 'Id' => []];
+            $kelompok[$kunci]['Id'][] = (int) $id;
         }
 
-        $koneksi = DB::connection();
-        $kolom = array_values(array_intersect(array_keys((array) reset($perubahan)), ['Status', 'Aksi', 'KunciProduk', 'Galat']));
-        $nilaiBaru = [];
-
-        foreach ($kolom as $namaKolom) {
-            $kasus = '';
-
-            foreach ($perubahan as $id => $nilai) {
-                $isi = $nilai[$namaKolom] ?? null;
-                $kasus .= ' WHEN '.(int) $id.' THEN '.($isi === null ? 'NULL' : $koneksi->getPdo()->quote($isi));
+        foreach ($kelompok as $satu) {
+            foreach (array_chunk($satu['Id'], self::UKURAN_SISIP) as $potonganId) {
+                ImporProdukBaris::query()->whereKey($potonganId)->update($satu['Nilai']);
             }
-
-            $nilaiBaru[$namaKolom] = DB::raw("CASE `Id`{$kasus} END");
         }
-
-        ImporProdukBaris::query()->whereKey(array_map('intval', array_keys($perubahan)))->update($nilaiBaru);
     }
 
     /**
