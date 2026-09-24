@@ -11,12 +11,17 @@ use App\Domain\Katalog\Data\DataSatuanStandar;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Model\Satuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Model\Gudang;
+use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
+use App\Domain\Persediaan\Enum\StatusStokAwal;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Organisasi\BantuanPerangkat;
 use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
+use Tests\Pendukung\Persediaan\BantuanLaporan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
@@ -131,5 +136,41 @@ describe('F-01 langkah 7: checklist "Langkah Berikutnya" di beranda', function (
         BantuanPerangkat::AturPin($tenant->Id, $kasir->Id, '193847');
         BantuanPanduanAwal::Masuk($this, $kasir, $tenant)->get('/kelola')
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('LangkahBerikutnya', []));
+    });
+
+    it('F-05a butir "Isi stok awal": tampil bila ada produk berstok & izin persediaan.kelola; selesai hanya bila ada stok awal Diposting', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik, 'Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant();
+        $kasir = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
+        $stafGudang = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::StafGudang);
+        $butirStokAwal = fn (Pengguna $pengguna): ?array => collect(BantuanPanduanAwal::Masuk($this, $pengguna, $tenant)->get('/kelola')->assertOk()->inertiaProps('LangkahBerikutnya'))
+            ->firstWhere('Kunci', 'StokAwal');
+
+        // Belum ada produk berstok (Jasa/NonStok tidak dihitung) → butir tidak tampil.
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        BantuanKatalog::BuatProduk(['Nama' => 'Jasa Antar Belanja Dalam Kota', 'Jenis' => JenisProduk::Jasa]);
+        expect($butirStokAwal($pemilik))->toBeNull();
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        $beras = BantuanKatalog::BuatProduk(['Nama' => 'Beras Pandan Wangi Cianjur Premium 5 kg', 'Jenis' => JenisProduk::Stok], '82000.00');
+        $gudang = Gudang::query()->where('IdOutlet', $outlet->Id)->orderBy('Id')->firstOrFail();
+
+        expect($butirStokAwal($pemilik))->toBe([
+            'Kunci' => 'StokAwal',
+            'Judul' => 'Isi stok awal',
+            'Keterangan' => 'Jumlah & harga modal barang yang sudah ada, supaya stok dan HPP benar.',
+            'Tautan' => route('kelola.persediaan.stok-awal.daftar'),
+            'Selesai' => false,
+        ])
+            ->and($butirStokAwal($stafGudang)['Selesai'] ?? null)->toBeFalse()
+            ->and($butirStokAwal($kasir))->toBeNull();
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        BantuanLaporan::BuatStokAwal($gudang, StatusStokAwal::Draf, [[$beras, '40.0000', '75000']]);
+        BantuanLaporan::BuatStokAwal($gudang, StatusStokAwal::Dibatalkan, [[$beras, '40.0000', '75000']]);
+        expect($butirStokAwal($pemilik)['Selesai'] ?? null)->toBeFalse();
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        BantuanLaporan::BuatStokAwal($gudang, StatusStokAwal::Diposting, [[$beras, '40.0000', '75000']]);
+        expect($butirStokAwal($pemilik)['Selesai'] ?? null)->toBeTrue();
     });
 });
