@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * F-03 impor (mode tambah & perbarui): ubah sebagian kolom produk; null = tidak diubah. Aturan sama dengan form
- * (jenis, pelacakan, kelompok pajak, BahanBaku tidak tampil di POS). Satuan, barcode, dan harga diurus Aksi lain.
+ * (jenis, pelacakan termasuk `PelacakanTerkunci` F-05a, kelompok pajak, BahanBaku tidak tampil di POS). Satuan, barcode, dan harga diurus Aksi lain.
  * Audit `produk.ubah` kecuali sumber Impor (impor mencatat audit per potongan). Tanpa perubahan = tanpa tulis.
  */
 final class PerbaruiProdukSebagian
@@ -45,6 +45,10 @@ final class PerbaruiProdukSebagian
                 if ($produk->IdInduk !== null) {
                     $this->aturan->PastikanJenisAnak($data->jenis);
                 }
+            }
+
+            if ($data->pelacakan !== null) {
+                $this->aturan->PastikanPelacakanBolehDiubah($produk, $data->pelacakan);
             }
 
             if ($data->nama !== null && (trim($data->nama) === '' || mb_strlen(trim($data->nama)) > 150)) {
