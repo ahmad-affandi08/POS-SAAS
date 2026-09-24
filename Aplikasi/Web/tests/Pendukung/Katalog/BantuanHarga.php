@@ -12,8 +12,14 @@ use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukHarga;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Model\Satuan;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Model\Merek;
+use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Organisasi\Model\OutletPengguna;
+use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pajak\Enum\CakupanPajak;
 use App\Domain\Pajak\Model\JenisPajak;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 
 /**
  * Prasyarat harga & pajak F-03 (Tim 2) untuk test: baris harga, satuan tambahan, daftar harga, dan jenis pajak
@@ -78,5 +84,23 @@ final class BantuanHarga
         JenisPajak::query()->firstOrCreate(['Kode' => 'Ppn'], ['Nama' => 'PPN', 'Cakupan' => CakupanPajak::Nasional]);
         JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtMakananMinuman'], ['Nama' => 'PBJT makanan & minuman (PB1)', 'Cakupan' => CakupanPajak::Daerah]);
         JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtJasaHiburan'], ['Nama' => 'PBJT jasa kesenian & hiburan', 'Cakupan' => CakupanPajak::Daerah]);
+    }
+
+    /** Outlet tambahan di tenant konteks aktif. */
+    public static function BuatOutlet(string $kode, string $nama): Outlet
+    {
+        return Outlet::query()->create(['IdMerek' => Merek::query()->value('Id'), 'Kode' => $kode, 'Nama' => $nama]);
+    }
+
+    /** Anggota berperan tertentu yang hanya ditugaskan ke outlet-outlet ini. */
+    public static function TambahAnggotaOutlet(int $idTenant, PeranTenantBawaan $peran, Outlet ...$outlet): Pengguna
+    {
+        $pengguna = BantuanOrganisasi::TambahAnggota($idTenant, $peran, semuaOutlet: false);
+
+        foreach ($outlet as $item) {
+            OutletPengguna::query()->create(['IdOutlet' => $item->Id, 'IdPengguna' => $pengguna->Id, 'IdPeran' => BantuanOrganisasi::Peran($idTenant, $peran)->Id]);
+        }
+
+        return $pengguna;
     }
 }

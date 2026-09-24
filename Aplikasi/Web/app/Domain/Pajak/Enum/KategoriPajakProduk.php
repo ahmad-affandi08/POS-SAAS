@@ -33,4 +33,20 @@ enum KategoriPajakProduk: string
     {
         return $this === self::BebasPpn || $this === self::NonPajak;
     }
+
+    /**
+     * Kategori dari kode jenis pajak detail kelompok (aturan sama dengan migrasi 000124): ada `Ppn` → KenaPpn; selain
+     * itu ada `PbjtMakananMinuman` → KenaPbjt; tanpa detail → NonPajak; sisanya → Lainnya.
+     *
+     * @param  array<int, string>  $kodeJenisPajak
+     */
+    public static function TentukanDariKodeJenisPajak(array $kodeJenisPajak): self
+    {
+        return match (true) {
+            in_array('Ppn', $kodeJenisPajak, true) => self::KenaPpn,
+            in_array('PbjtMakananMinuman', $kodeJenisPajak, true) => self::KenaPbjt,
+            $kodeJenisPajak === [] => self::NonPajak,
+            default => self::Lainnya,
+        };
+    }
 }

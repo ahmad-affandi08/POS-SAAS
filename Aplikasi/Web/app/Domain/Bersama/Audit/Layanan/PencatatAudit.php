@@ -36,6 +36,15 @@ final class PencatatAudit
         $this->idPerangkat = $idPerangkat;
     }
 
+    /**
+     * Pengguna pelaku dari konteks audit (back-office lewat `SiapkanAuditTenant`, atau job yang mengatur konteks
+     * pengguna pemicunya). Dipakai data yang mencatat pengubah sendiri, misal `RiwayatHarga.DiubahOleh` (F-03).
+     */
+    public function AmbilIdPengguna(): ?int
+    {
+        return $this->idPengguna;
+    }
+
     /** F-02b: perangkat pelaku diketahui setelah token/kode aktivasi diperiksa (API POS). */
     public function AturPerangkat(?int $idPerangkat): void
     {
