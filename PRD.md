@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.31 |
+| Versi | 1.32 |
 | Tanggal | 23 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -52,6 +52,7 @@
 | 1.29 | Skema F-01 dicatat di §15 sesuai implementasi (`ProgresPanduanAwal`, kolom baru `Outlet`, `MetodePembayaran`, `Satuan.KodeStandar`, `KelompokPajakDetail.IdJenisPajak`, kunci JSON `Tenant.Pengaturan` & `Outlet.ProfilPajak`); `PemetaanAkun.Kunci` memakai nilai `PeranAkun`; izin `panduan-awal.kelola` di §19.1; batas kewajaran MDR 10% per metode; peran sektor ditunda ke F-10/F-17. Langkah rilis: `organisasi:siapkan-peran` dan `panduan-awal:siapkan-bawaan`. |
 | 1.30 | Disetujui pemilik produk: test vector `Spesifikasi/VektorUjiKalkulasi/` tidak lagi file penjaga. Agent boleh **menambah kasus** (wajib lolos di PHP & Dart), tetapi tidak boleh menghapus kasus atau mengubah nilai harapan tanpa alasan bisnis tertulis di PRD (CLAUDE.md #19 tetap berlaku). |
 | 1.31 | Rincian F-03 (diputuskan agen atas mandat D-12): skema katalog lengkap di §15 (`ProdukGudang`, `NomorUrutKatalog`, `PenghapusanKatalog`, `ImporProduk`/`ImporProdukBaris`, kolom baru Produk/DaftarHarga/RiwayatHarga/KelompokPajak/Resep/Pilihan), endpoint POS `katalog` & gambar di §16.3, istilah baru di kamus, penegakan izin katalog di §19.1, aturan SKU/barcode otomatis, BatasSku, varian, arsip/hapus, riwayat harga, penentu harga PHP=Dart dengan test vector, rumus susut resep, dan impor/ekspor. Utang F-03 di §25 no. 19. |
+| 1.32 | D-14 (keputusan pemilik produk): tanpa mode gelap di semua klien termasuk KDS; kolom "Gelap" dihapus dari token warna §17.6.3; satu sumber warna per platform; seluruh komponen shadcn/ui dipasang dengan warna dari token. |
 
 ---
 
@@ -2886,7 +2887,7 @@ flowchart TD
 
 - Indikator koneksi, jumlah transaksi tertunda, dan status printer **selalu terlihat**.
 - Layar bayar: nominal besar, tombol pecahan cepat, pilih metode, split, kembalian besar.
-- Target sentuh ≥ 48 dp. Tipografi mengikuti §17.5 (angka tabular untuk uang, font Mono untuk kode). Mode gelap untuk KDS.
+- Target sentuh ≥ 48 dp. Tipografi mengikuti §17.5 (angka tabular untuk uang, font Mono untuk kode). KDS memakai tema terang berkontras tinggi (D-14).
 - Mode kiosk: Android *screen pinning*/*lock task* (perangkat terkelola), Windows kiosk/fullscreen, iPad *Guided Access*.
 
 #### 17.2.4 Kinerja
@@ -3073,7 +3074,7 @@ export function useStatusPerangkat(idOutlet: string) {
 
 #### 17.4.3 Design System Web
 
-- Token dari `Spesifikasi/TokenDesain` di `@theme` Tailwind 4, light/dark, warna brand per tenant (struk & toko online).
+- Token dari `Spesifikasi/TokenDesain` di `@theme` Tailwind 4 (hanya tema terang, D-14), komponen dasar shadcn/ui di `Komponen/Ui/` yang warnanya diturunkan dari token, warna brand per tenant (struk & toko online).
 - Komponen wajib: `InputUang`, `TabelData` (server-side), `PemilihRentangTanggal` (preset Hari ini, Kemarin, 7 hari, Bulan ini), `LencanaStatus`, `DialogPersetujuan`, `KeadaanKosong`, `WizardImpor`, `DialogAktivasiPerangkat` (menampilkan QR aktivasi).
 - Bahasa Indonesia sederhana, i18n key siap Inggris. Kontras WCAG AA.
 - Code splitting per halaman (`import.meta.glob` lazy). Halaman web publik self-order ditargetkan < 150 KB JS gzip.
@@ -3141,7 +3142,7 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 | Klien | Pertanyaan utama pengguna | Arah desain |
 |---|---|---|
 | **Aplikasi POS (Kasir)** | "Bisa selesai bayar dalam 20 detik tanpa salah?" | Target sentuh besar, kontras tinggi, TOTAL & tombol BAYAR dominan, dekorasi nol, status koneksi/sinkron/printer selalu terlihat, bisa dipakai penuh dengan keyboard/scanner di desktop |
-| **KDS** | "Pesanan mana yang harus dibuat sekarang?" | Mode gelap, huruf besar (1,25×), urutan waktu, warna umur tiket (normal → kuning → merah), satu ketukan untuk ubah status |
+| **KDS** | "Pesanan mana yang harus dibuat sekarang?" | Tema terang berkontras tinggi (D-14), huruf besar (1,25×), urutan waktu, warna umur tiket (normal → kuning → merah), satu ketukan untuk ubah status |
 | **Aplikasi Owner** | "Hari ini untung berapa, ada masalah apa?" | Satu angka besar + perbandingan, lalu daftar hal yang butuh tindakan (persetujuan, selisih kas, stok kritis). Bukan dinding widget |
 | **Back-office** | "Bisa cari, bandingkan, dan ubah banyak data dengan cepat?" | Padat data, tabel lebih utama dari kartu, filter di atas, aksi massal, detail di panel/halaman terpisah |
 | **Platform Pengelola** | "Tenant mana yang perlu ditangani?" | Seperti back-office, dengan penanda lingkungan (Staging/Produksi) yang mencolok di bagian atas |
@@ -3153,27 +3154,28 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 **Token warna (usulan awal, bisa disesuaikan saat identitas brand & nama sistem final):**
 
-| Token | Terang | Gelap | Fungsi |
-|---|---|---|---|
-| `Latar` | `#FAFAF7` | `#151514` | Latar halaman (abu-abu hangat, bukan abu kebiruan) |
-| `Permukaan` | `#FFFFFF` | `#1E1E1C` | Panel, tabel, dialog |
-| `Garis` | `#E4E2DC` | `#34332F` | Pemisah dekoratif |
-| `GarisInput` | `#8A877F` | `#7A776F` | Tepi input & kontrol (kontras ≥ 3:1) |
-| `TeksUtama` | `#1C1B19` | `#EDEBE6` | Teks utama |
-| `TeksSekunder` | `#5C5A55` | `#A8A59E` | Keterangan, label sekunder |
-| `Brand` | `#0B6468` (teal tua) | `#5BB8BB` | Aksi utama, penanda aktif |
-| `Sukses` | `#2E7D32` | `#6FBF73` | Lunas, berhasil, tersinkron |
-| `Peringatan` | `#9A5B00` | `#E3A13B` | Menunggu, tertunda, stok menipis |
-| `Bahaya` | `#B3261E` | `#F28B82` | Void, gagal, selisih kas, offline lama |
-| `Info` | `#1F5FAD` | `#8AB4F0` | Informasi netral, tautan |
+| Token | Nilai (sementara) | Fungsi |
+|---|---|---|
+| `Latar` | `#FAFAF7` | Latar halaman (abu-abu hangat, bukan abu kebiruan) |
+| `Permukaan` | `#FFFFFF` | Panel, tabel, dialog |
+| `Garis` | `#E4E2DC` | Pemisah dekoratif |
+| `GarisInput` | `#8A877F` | Tepi input & kontrol (kontras ≥ 3:1) |
+| `TeksUtama` | `#1C1B19` | Teks utama |
+| `TeksSekunder` | `#5C5A55` | Keterangan, label sekunder |
+| `Brand` | `#0B6468` (teal tua) | Aksi utama, penanda aktif |
+| `Sukses` | `#2E7D32` | Lunas, berhasil, tersinkron |
+| `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
+| `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |
+| `Info` | `#1F5FAD` | Informasi netral, tautan |
 
-Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1, dihitung saat penyusunan). Teks putih di atas `Brand` dan `Bahaya` (mode terang) juga ≥ 4,5:1. Setiap warna semantik punya varian latar lembut (misal `SuksesLatar`) untuk lencana dan baris tabel.
+Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1, dihitung saat penyusunan). Teks putih di atas `Brand` dan `Bahaya` juga ≥ 4,5:1. Setiap warna semantik punya varian latar lembut (misal `SuksesLatar`) untuk lencana dan baris tabel.
 
 **Aturan warna:**
 - **Status tidak pernah hanya warna.** Selalu disertai teks atau ikon ("Lunas", "Tertunda 3"), agar tetap jelas bagi pengguna buta warna dan di layar murah.
 - Makna warna **sama di semua klien**: hijau selalu lunas/berhasil, merah selalu void/gagal, dan seterusnya.
 - Tanpa gradien, efek kaca, atau warna dekoratif.
-- **Mode gelap** wajib untuk KDS, opsional untuk klien lain (mengikuti sistem).
+- **Tanpa mode gelap di semua klien, termasuk KDS** (D-14). KDS memakai tema terang berkontras tinggi dengan huruf besar.
+- **Satu sumber warna:** web di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css` (bagian "UBAH WARNA DI SINI"; variabel shadcn/ui hanya merujuk token), Flutter di `Paket/SistemDesain/lib/Token/TokenWarna.dart`. Halaman & komponen hanya memakai token; literal warna di luar dua file itu ditolak test penjaga.
 - Warna brand tenant (logo/warna struk & toko online) hanya berlaku di struk dan web publik tenant, **tidak** mengubah warna UI {{APP}}.
 
 #### 17.6.4 Bentuk, Ruang & Kepadatan
@@ -3759,6 +3761,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-11 | **Harga langganan per paket**, bukan per outlet. Outlet, perangkat, dan kuota WA di atas batas paket dijual sebagai add-on. Add-on & kupon tanpa four-eyes. Kunci fitur katalog dipertahankan apa adanya | 23/09/2026 | §8 P-04, §21, §25 |
 | D-12 | Pemilik produk mendelegasikan keputusan atas pertanyaan terbuka agen (v1.16–v1.26) kepada agen dengan patokan kepatuhan hukum Indonesia, keadilan bagi tenant, dan kesehatan bisnis {{APP}}. Rincian di §25.2 | 23/09/2026 | §8 P-06/P-07/P-08/P-09/P-11, F-00, F-02, F-06, F-19, §25.2 |
 | D-13 | Folder aplikasi Laravel bernama **`Aplikasi/Web/`** (sebelumnya `Backend/`): satu aplikasi berisi API POS & Owner, back-office Inertia React, web publik, dan Platform Pengelola, sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`; kode bersama tetap di `Paket/` | 23/09/2026 | §13.0, §13.7.2, §13.8, §17.4.1, §22, §23, `CLAUDE.md`, `.claude/`, `Alat/`, CI |
+| D-14 | **Tanpa mode gelap** di semua klien (web, Aplikasi Kasir, Aplikasi Pemilik, KDS). Warna diubah di satu tempat per platform (`Aplikasi.css` untuk web, `TokenWarna.dart` untuk Flutter); halaman tidak pernah memuat warna lepas. Seluruh komponen shadcn/ui dipasang di `Komponen/Ui/` dan warnanya diturunkan dari token. Warna final menyusul | 24/09/2026 | §17.4, §17.5, §17.6.3, §17.x KDS |
 
 
 ### 25.2 Keputusan atas Pertanyaan Agen (v1.26, D-12)

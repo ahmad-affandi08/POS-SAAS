@@ -5,18 +5,21 @@ import 'package:sistem_desain/SistemDesain.dart';
 void main() {
   group('BuatTema (PRD §17.5, §17.6)', () {
     test('memakai font Atkinson Hyperlegible Next yang di-bundle', () {
-      final tema = BuatTema(kecerahan: Brightness.light);
+      final tema = BuatTema();
       expect(tema.textTheme.bodyMedium!.fontFamily, 'packages/sistem_desain/AtkinsonHyperlegibleNext');
     });
 
-    test('memasang token warna sesuai kecerahan', () {
-      expect(BuatTema(kecerahan: Brightness.light).extension<TokenWarna>(), TokenWarna.terang);
-      expect(BuatTema(kecerahan: Brightness.dark).extension<TokenWarna>(), TokenWarna.gelap);
+    test('selalu tema terang dengan token warna bawaan (D-14)', () {
+      final tema = BuatTema();
+      expect(tema.brightness, Brightness.light);
+      expect(tema.colorScheme.brightness, Brightness.light);
+      expect(tema.extension<TokenWarna>(), TokenWarna.bawaan);
+      expect(BuatTema(kepadatan: KepadatanTipografi.Ringkas).brightness, Brightness.light);
     });
 
     test('skala tipografi mengikuti mode kepadatan', () {
-      final nyaman = BuatTema(kecerahan: Brightness.light).textTheme;
-      final ringkas = BuatTema(kecerahan: Brightness.light, kepadatan: KepadatanTipografi.Ringkas).textTheme;
+      final nyaman = BuatTema().textTheme;
+      final ringkas = BuatTema(kepadatan: KepadatanTipografi.Ringkas).textTheme;
       expect(nyaman.displayMedium!.fontSize, 36);
       expect(nyaman.bodyMedium!.fontSize, 16);
       expect(ringkas.displayMedium!.fontSize, 30);

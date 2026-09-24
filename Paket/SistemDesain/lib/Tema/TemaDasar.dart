@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../Token/TokenTipografi.dart';
 import '../Token/TokenWarna.dart';
 
-/// Membuat [ThemeData] dari token (PRD §17.6). Aplikasi tidak menyusun tema sendiri.
-ThemeData BuatTema({required Brightness kecerahan, KepadatanTipografi kepadatan = KepadatanTipografi.Nyaman}) {
-  final warna = kecerahan == Brightness.light ? TokenWarna.terang : TokenWarna.gelap;
+/// Membuat [ThemeData] terang dari token (PRD §17.6). Aplikasi tidak menyusun tema sendiri.
+///
+/// Selalu terang: tidak ada mode gelap (D-14).
+ThemeData BuatTema({KepadatanTipografi kepadatan = KepadatanTipografi.Nyaman}) {
+  const warna = TokenWarna.bawaan;
   final skala = SkalaTipografi.AmbilUntuk(kepadatan);
   final skemaWarna = ColorScheme(
-    brightness: kecerahan,
+    brightness: Brightness.light,
     primary: warna.brand,
     onPrimary: warna.permukaan,
     secondary: warna.brand,
@@ -23,7 +25,7 @@ ThemeData BuatTema({required Brightness kecerahan, KepadatanTipografi kepadatan 
   );
   return ThemeData(
     useMaterial3: true,
-    brightness: kecerahan,
+    brightness: Brightness.light,
     colorScheme: skemaWarna,
     scaffoldBackgroundColor: warna.latar,
     fontFamily: fontUtama,
