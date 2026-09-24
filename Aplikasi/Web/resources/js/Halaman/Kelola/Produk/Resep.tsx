@@ -191,113 +191,118 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                         </p>
                     ) : (
                         <Table className="min-w-[760px] text-left text-isi">
-                                <TableCaption className="sr-only">Bahan resep</TableCaption>
-                                <TableHeader>
-                                    <TableRow className="border-garis hover:bg-transparent">
-                                        <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
-                                            Bahan
-                                        </TableHead>
-                                        <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
-                                            Jumlah bersih
-                                        </TableHead>
-                                        <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
-                                            Satuan
-                                        </TableHead>
-                                        <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
-                                            Susut
-                                        </TableHead>
-                                        <TableHead scope="col" className="text-right text-label font-semibold text-teks-sekunder">
-                                            Jumlah kotor
-                                        </TableHead>
-                                        <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
-                                            <span className="sr-only">Aksi</span>
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {bahan.map((item, indeks) => {
-                                        const galatLokal = periksa ? PeriksaBahan(item) : {};
-                                        const satuan = item.OpsiSatuan.find((opsi) => opsi.Uuid === item.UuidSatuan);
-                                        const kotor = HitungJumlahKotor(item.Jumlah || '0', item.PersenSusut || '0');
+                            <TableCaption className="sr-only">Bahan resep</TableCaption>
+                            <TableHeader>
+                                <TableRow className="border-garis hover:bg-transparent">
+                                    <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                                        Bahan
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right text-label font-semibold text-teks-sekunder"
+                                    >
+                                        Jumlah bersih
+                                    </TableHead>
+                                    <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
+                                        Satuan
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right text-label font-semibold text-teks-sekunder"
+                                    >
+                                        Susut
+                                    </TableHead>
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right text-label font-semibold text-teks-sekunder"
+                                    >
+                                        Jumlah kotor
+                                    </TableHead>
+                                    <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                                        <span className="sr-only">Aksi</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {bahan.map((item, indeks) => {
+                                    const galatLokal = periksa ? PeriksaBahan(item) : {};
+                                    const satuan = item.OpsiSatuan.find((opsi) => opsi.Uuid === item.UuidSatuan);
+                                    const kotor = HitungJumlahKotor(item.Jumlah || '0', item.PersenSusut || '0');
 
-                                        return (
-                                            <TableRow key={item.UuidProdukBahan} className="border-garis align-top">
-                                                <th scope="row" className="p-2 pl-0 text-left align-top font-normal">
-                                                    <span className="block font-semibold break-words text-teks-utama">
-                                                        {item.NamaBahan}
-                                                    </span>
-                                                    <span className="font-mono text-keterangan text-teks-sekunder">
-                                                        {item.Sku ?? 'Tanpa SKU'}
-                                                    </span>
-                                                </th>
-                                                <TableCell className="whitespace-normal">
-                                                    <BidangJumlah
-                                                        label={`Jumlah bersih ${item.NamaBahan}`}
-                                                        labelTersembunyi
-                                                        nilai={item.Jumlah}
-                                                        saatBerubah={(nilai) => Ubah(indeks, { Jumlah: nilai })}
-                                                        desimal={satuan?.BolehDesimal === false ? 0 : 4}
-                                                        galat={
-                                                            galat[`Bahan.${String(indeks)}.Jumlah`] ?? galatLokal.Jumlah
-                                                        }
-                                                        disabled={!bolehUbah}
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="whitespace-normal">
-                                                    <BidangPilihan
-                                                        label={`Satuan ${item.NamaBahan}`}
-                                                        nilai={item.UuidSatuan}
-                                                        opsi={item.OpsiSatuan.map((opsi) => ({
-                                                            Nilai: opsi.Uuid,
-                                                            Label: opsi.Simbol,
-                                                        }))}
-                                                        saatBerubah={(nilai) => Ubah(indeks, { UuidSatuan: nilai })}
-                                                        galat={galat[`Bahan.${String(indeks)}.UuidSatuan`]}
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="whitespace-normal">
-                                                    <BidangJumlah
-                                                        label={`Susut ${item.NamaBahan}`}
-                                                        labelTersembunyi
-                                                        nilai={item.PersenSusut}
-                                                        saatBerubah={(nilai) => Ubah(indeks, { PersenSusut: nilai })}
-                                                        desimal={6}
-                                                        digitBulat={3}
-                                                        akhiran="%"
-                                                        galat={
-                                                            galat[`Bahan.${String(indeks)}.PersenSusut`] ??
-                                                            galatLokal.PersenSusut
-                                                        }
-                                                        disabled={!bolehUbah}
-                                                    />
-                                                </TableCell>
-                                                <TableCell
-                                                    className="text-right whitespace-nowrap tabular-nums"
-                                                    aria-describedby="rumus-susut"
-                                                >
-                                                    {kotor === null
-                                                        ? '—'
-                                                        : `${FormatMasukanJumlah(kotor)} ${satuan?.Simbol ?? ''}`}
-                                                </TableCell>
-                                                <TableCell className="pr-0">
-                                                    {bolehUbah ? (
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                AturBahan(bahan.filter((_, i) => i !== indeks))
-                                                            }
-                                                            className="h-10 text-destructive"
-                                                            aria-label={`Hapus bahan ${item.NamaBahan}`}
-                                                        >
-                                                            Hapus
-                                                        </Button>
-                                                    ) : null}
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
+                                    return (
+                                        <TableRow key={item.UuidProdukBahan} className="border-garis align-top">
+                                            <th scope="row" className="p-2 pl-0 text-left align-top font-normal">
+                                                <span className="block font-semibold break-words text-teks-utama">
+                                                    {item.NamaBahan}
+                                                </span>
+                                                <span className="font-mono text-keterangan text-teks-sekunder">
+                                                    {item.Sku ?? 'Tanpa SKU'}
+                                                </span>
+                                            </th>
+                                            <TableCell className="whitespace-normal">
+                                                <BidangJumlah
+                                                    label={`Jumlah bersih ${item.NamaBahan}`}
+                                                    labelTersembunyi
+                                                    nilai={item.Jumlah}
+                                                    saatBerubah={(nilai) => Ubah(indeks, { Jumlah: nilai })}
+                                                    desimal={satuan?.BolehDesimal === false ? 0 : 4}
+                                                    galat={galat[`Bahan.${String(indeks)}.Jumlah`] ?? galatLokal.Jumlah}
+                                                    disabled={!bolehUbah}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="whitespace-normal">
+                                                <BidangPilihan
+                                                    label={`Satuan ${item.NamaBahan}`}
+                                                    nilai={item.UuidSatuan}
+                                                    opsi={item.OpsiSatuan.map((opsi) => ({
+                                                        Nilai: opsi.Uuid,
+                                                        Label: opsi.Simbol,
+                                                    }))}
+                                                    saatBerubah={(nilai) => Ubah(indeks, { UuidSatuan: nilai })}
+                                                    galat={galat[`Bahan.${String(indeks)}.UuidSatuan`]}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="whitespace-normal">
+                                                <BidangJumlah
+                                                    label={`Susut ${item.NamaBahan}`}
+                                                    labelTersembunyi
+                                                    nilai={item.PersenSusut}
+                                                    saatBerubah={(nilai) => Ubah(indeks, { PersenSusut: nilai })}
+                                                    desimal={6}
+                                                    digitBulat={3}
+                                                    akhiran="%"
+                                                    galat={
+                                                        galat[`Bahan.${String(indeks)}.PersenSusut`] ??
+                                                        galatLokal.PersenSusut
+                                                    }
+                                                    disabled={!bolehUbah}
+                                                />
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-right whitespace-nowrap tabular-nums"
+                                                aria-describedby="rumus-susut"
+                                            >
+                                                {kotor === null
+                                                    ? '—'
+                                                    : `${FormatMasukanJumlah(kotor)} ${satuan?.Simbol ?? ''}`}
+                                            </TableCell>
+                                            <TableCell className="pr-0">
+                                                {bolehUbah ? (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        onClick={() => AturBahan(bahan.filter((_, i) => i !== indeks))}
+                                                        className="h-10 text-destructive"
+                                                        aria-label={`Hapus bahan ${item.NamaBahan}`}
+                                                    >
+                                                        Hapus
+                                                    </Button>
+                                                ) : null}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
                         </Table>
                     )}
                     <div aria-live="polite">

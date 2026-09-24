@@ -343,7 +343,10 @@ export default function HalamanDaftarProduk({ Produk, Saring, Kategori, Jenis, B
                                         </div>
                                     </TableCell>
                                     <TableCell
-                                        className={cn(sel, 'font-mono text-label break-all whitespace-normal text-teks-utama')}
+                                        className={cn(
+                                            sel,
+                                            'font-mono text-label break-all whitespace-normal text-teks-utama',
+                                        )}
                                     >
                                         {produk.Sku ?? '—'}
                                     </TableCell>
