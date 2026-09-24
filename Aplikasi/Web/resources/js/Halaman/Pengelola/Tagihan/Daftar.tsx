@@ -4,6 +4,8 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -29,6 +31,18 @@ type PropsDaftarTagihan = {
     OpsiStatus: Pilihan[];
 };
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
+/** Angka ringkasan antrean (kartu ringkas, tanpa warna: angka + teks sudah cukup). */
+function KartuRingkasan({ nilai, label }: { nilai: number; label: string }) {
+    return (
+        <Card className="gap-1 px-4 py-3">
+            <span className="text-judul font-semibold tabular-nums text-teks-utama">{nilai}</span>
+            <span className="text-label text-teks-sekunder">{label}</span>
+        </Card>
+    );
+}
+
 /** Tagihan langganan & antrean "Menunggu Verifikasi" transfer manual (P-08 langkah 3). */
 export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Saring, OpsiStatus }: PropsDaftarTagihan) {
     const [kata, AturKata] = useState(Saring.Kata);
@@ -41,10 +55,14 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Sari
 
     return (
         <TataLetakPengelola judul="Tagihan langganan">
-            <p className="text-isi text-teks-sekunder">
-                {Ringkasan.MenungguVerifikasi} bukti transfer menunggu verifikasi · {Ringkasan.BelumDibayar} tagihan
-                belum dibayar
-            </p>
+            <ul className="grid gap-3 sm:grid-cols-2" aria-label="Ringkasan tagihan">
+                <li>
+                    <KartuRingkasan nilai={Ringkasan.MenungguVerifikasi} label="bukti transfer menunggu verifikasi" />
+                </li>
+                <li>
+                    <KartuRingkasan nilai={Ringkasan.BelumDibayar} label="tagihan belum dibayar" />
+                </li>
+            </ul>
             <section aria-labelledby="judul-antrean" className="flex flex-col gap-2">
                 <h2 id="judul-antrean" className="text-subjudul font-semibold text-teks-utama">
                     Menunggu verifikasi
@@ -54,34 +72,36 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Sari
                         Belum ada bukti transfer yang perlu diperiksa.
                     </Pemberitahuan>
                 ) : (
-                    <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                        <table className="w-full text-left text-isi">
-                            <caption className="sr-only">Bukti transfer menunggu verifikasi, terlama di atas</caption>
-                            <thead className="border-b border-garis text-label text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                    <Card className="gap-0 py-0">
+                        <Table className="text-isi">
+                            <TableCaption className="sr-only">
+                                Bukti transfer menunggu verifikasi, terlama di atas
+                            </TableCaption>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Diunggah
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Tenant
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Tagihan
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Transfer
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={`${kelasKepala} text-right`}>
                                         Jumlah
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {Antrean.map((baris) => (
-                                    <tr key={baris.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                        <td className="px-4 py-2">{FormatTanggalWaktu(baris.DiunggahPada)}</td>
-                                        <td className="px-4 py-2">{baris.NamaTenant}</td>
-                                        <td className="px-4 py-2">
+                                    <TableRow key={baris.Uuid} className="align-top">
+                                        <TableCell className="px-4">{FormatTanggalWaktu(baris.DiunggahPada)}</TableCell>
+                                        <TableCell className="px-4 whitespace-normal">{baris.NamaTenant}</TableCell>
+                                        <TableCell className="px-4 whitespace-normal">
                                             {baris.UuidTagihan ? (
                                                 <Link
                                                     href={`/tagihan/${baris.UuidTagihan}`}
@@ -93,21 +113,21 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Sari
                                             <span className="block text-keterangan text-teks-sekunder">
                                                 {baris.NamaPaket}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-2">
+                                        </TableCell>
+                                        <TableCell className="px-4 whitespace-normal">
                                             <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
                                             <span className="block text-keterangan text-teks-sekunder">
                                                 {baris.BankPengirim} → {baris.BankTujuan}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-2 text-right tabular-nums">
+                                        </TableCell>
+                                        <TableCell className="px-4 text-right tabular-nums">
                                             {FormatRupiah(baris.Jumlah)}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </TableBody>
+                        </Table>
+                    </Card>
                 )}
             </section>
             <section aria-labelledby="judul-semua" className="flex flex-col gap-2">
@@ -132,61 +152,63 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Sari
                 {Tagihan.Data.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Tidak ada tagihan yang cocok.</p>
                 ) : (
-                    <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                        <table className="w-full text-left text-isi">
-                            <caption className="sr-only">Daftar tagihan langganan</caption>
-                            <thead className="border-b border-garis text-label text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                    <Card className="gap-0 py-0">
+                        <Table className="text-isi">
+                            <TableCaption className="sr-only">Daftar tagihan langganan</TableCaption>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Nomor
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Tenant
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Paket
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Jatuh tempo
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={`${kelasKepala} text-right`}>
                                         Total
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className={kelasKepala}>
                                         Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {Tagihan.Data.map((baris) => (
-                                    <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                        <td className="px-4 py-2">
+                                    <TableRow key={baris.Uuid}>
+                                        <TableCell className="px-4">
                                             <Link
                                                 href={`/tagihan/${baris.Uuid}`}
                                                 className="font-mono text-label text-brand underline"
                                             >
                                                 {baris.Nomor}
                                             </Link>
-                                        </td>
-                                        <td className="px-4 py-2">{baris.NamaTenant}</td>
-                                        <td className="px-4 py-2">
+                                        </TableCell>
+                                        <TableCell className="px-4 whitespace-normal">{baris.NamaTenant}</TableCell>
+                                        <TableCell className="px-4 whitespace-normal">
                                             {baris.NamaPaket} · {baris.Siklus}
-                                        </td>
-                                        <td className="px-4 py-2">{FormatTanggalWaktu(baris.JatuhTempoPada)}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums">
+                                        </TableCell>
+                                        <TableCell className="px-4">
+                                            {FormatTanggalWaktu(baris.JatuhTempoPada)}
+                                        </TableCell>
+                                        <TableCell className="px-4 text-right tabular-nums">
                                             {FormatRupiah(baris.Total)}
-                                        </td>
-                                        <td className="px-4 py-2">
+                                        </TableCell>
+                                        <TableCell className="px-4">
                                             <LabelStatus
                                                 jenis={JenisLabelTagihan(baris.Status)}
                                                 teks={baris.LabelStatus}
                                             />
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </TableBody>
+                        </Table>
+                    </Card>
                 )}
                 <Paginasi
                     alamat="/tagihan"

@@ -5,6 +5,11 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { RadioGroup, RadioGroupItem } from '@/Komponen/Ui/radio-group';
+import { cn } from '@/Komponen/Ui/utils';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -33,6 +38,7 @@ function RingkasKategori(kategori: string[]): string {
 export default function HalamanSektor({ Progres, Template, TemplateTerpilih, SektorLain, NamaPaket }: PropsSektor) {
     const elemenFormulir = useRef<HTMLFormElement>(null);
     const idGalatTemplate = useId();
+    const idLegenda = useId();
     const formulir = useForm<IsianSektor>({
         KodeTemplate: TemplateTerpilih?.Kode ?? '',
         SektorLain: SektorLain.filter((kode) => kode !== TemplateTerpilih?.Kode),
@@ -80,24 +86,34 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
             ) : null}
 
             {Template.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    Belum ada template yang bisa dipilih. Hubungi tim kami lewat menu{' '}
-                    <Link href="/kelola/bantuan" className="font-semibold text-brand underline">
-                        Bantuan
-                    </Link>
-                    .
-                </p>
+                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
+                    <EmptyHeader className="max-w-none items-start text-left">
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            Belum ada template yang bisa dipilih. Hubungi tim kami lewat menu{' '}
+                            <Link href="/kelola/bantuan" className="font-semibold text-brand underline">
+                                Bantuan
+                            </Link>
+                            .
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
                 <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                     <RingkasanGalatFormulir galat={formulir.errors} />
-                    <fieldset
-                        className="flex flex-col gap-2"
+                    <FieldSet
+                        className="gap-2"
                         aria-describedby={formulir.errors.KodeTemplate ? idGalatTemplate : undefined}
                     >
-                        <legend className="mb-2 text-subjudul font-semibold text-teks-utama">
+                        <FieldLegend id={idLegenda} className="mb-2 text-subjudul font-semibold text-teks-utama">
                             Pilih jenis usaha Anda
-                        </legend>
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                        </FieldLegend>
+                        <RadioGroup
+                            name="KodeTemplate"
+                            value={formulir.data.KodeTemplate}
+                            onValueChange={PilihTemplate}
+                            aria-labelledby={idLegenda}
+                            className="grid-cols-1 lg:grid-cols-2"
+                        >
                             {Template.map((template, indeks) => (
                                 <PilihanTemplate
                                     key={template.Kode}
@@ -105,16 +121,15 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                                     terpilih={formulir.data.KodeTemplate === template.Kode}
                                     diterapkan={TemplateTerpilih?.Kode === template.Kode}
                                     tandaiTidakValid={indeks === 0 && Boolean(formulir.errors.KodeTemplate)}
-                                    saatPilih={() => PilihTemplate(template.Kode)}
                                 />
                             ))}
-                        </div>
+                        </RadioGroup>
                         {formulir.errors.KodeTemplate ? (
-                            <p id={idGalatTemplate} className="text-keterangan font-semibold text-bahaya">
+                            <FieldError id={idGalatTemplate} className="text-keterangan font-semibold">
                                 {formulir.errors.KodeTemplate}
-                            </p>
+                            </FieldError>
                         ) : null}
-                    </fieldset>
+                    </FieldSet>
 
                     <div aria-live="polite">
                         {gantiTemplate ? (
@@ -125,7 +140,7 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                     </div>
 
                     {Template.length > 1 ? (
-                        <div className="rounded-panel border border-garis bg-permukaan p-4">
+                        <Card className="gap-2 p-4">
                             <GrupCentang
                                 legenda="Usaha Anda juga bergerak di bidang lain? (opsional)"
                                 opsi={Template.filter((item) => item.Kode !== formulir.data.KodeTemplate).map(
@@ -135,11 +150,11 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                                 saatBerubah={(terpilih) => formulir.setData('SektorLain', terpilih.slice(0, 10))}
                                 galat={galatSektorLain}
                             />
-                            <p className="mt-2 text-keterangan text-teks-sekunder">
+                            <FieldDescription className="text-keterangan">
                                 Hanya dicatat untuk menyesuaikan saran fitur. Isi template lain tidak ditambahkan.
                                 Maksimal 10.
-                            </p>
-                        </div>
+                            </FieldDescription>
+                        </Card>
                     ) : null}
 
                     <div>
@@ -158,31 +173,24 @@ type PropsPilihanTemplate = {
     terpilih: boolean;
     diterapkan: boolean;
     tandaiTidakValid: boolean;
-    saatPilih: () => void;
 };
 
-function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid, saatPilih }: PropsPilihanTemplate) {
+function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid }: PropsPilihanTemplate) {
+    const idPilihan = useId();
     const idKeterangan = useId();
     const fiturTerkunci = template.Fitur.filter((fitur) => !fitur.TersediaDiPaket);
 
     return (
-        <div
-            className={`flex flex-col gap-2 rounded-panel border bg-permukaan p-4 ${
-                terpilih ? 'border-2 border-brand' : 'border-garis'
-            }`}
-        >
-            <label className="flex cursor-pointer items-start gap-3">
-                <input
-                    type="radio"
-                    name="KodeTemplate"
+        <Card className={cn('gap-2 p-4 shadow-none', terpilih ? 'border-2 border-primary' : 'border-garis')}>
+            <div className="flex items-start gap-3">
+                <RadioGroupItem
+                    id={idPilihan}
                     value={template.Kode}
-                    checked={terpilih}
-                    onChange={saatPilih}
                     aria-describedby={idKeterangan}
                     aria-invalid={tandaiTidakValid || undefined}
-                    className="mt-1 size-4 shrink-0 accent-brand"
+                    className="mt-1"
                 />
-                <span className="flex min-w-0 flex-col gap-1">
+                <label htmlFor={idPilihan} className="flex min-w-0 cursor-pointer flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2">
                         <span className="text-subjudul font-semibold break-words text-teks-utama">{template.Nama}</span>
                         <span className="text-keterangan text-teks-sekunder">versi {template.Versi}</span>
@@ -191,8 +199,8 @@ function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid, saa
                     {template.Keterangan ? (
                         <span className="text-isi text-teks-sekunder">{template.Keterangan}</span>
                     ) : null}
-                </span>
-            </label>
+                </label>
+            </div>
             <dl id={idKeterangan} className="grid grid-cols-1 gap-x-4 gap-y-1 pl-7 text-label sm:grid-cols-[auto_1fr]">
                 <dt className="text-teks-sekunder">Mode kasir</dt>
                 <dd className="text-teks-utama">
@@ -209,7 +217,7 @@ function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid, saa
             </dl>
             {template.Fitur.length > 0 ? (
                 <details className="pl-7">
-                    <summary className="cursor-pointer text-label font-semibold text-brand outline-none focus-visible:ring-2 focus-visible:ring-brand">
+                    <summary className="cursor-pointer rounded-sm text-label font-semibold text-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
                         {template.Fitur.length} fitur kasir
                         {fiturTerkunci.length > 0 ? `, ${String(fiturTerkunci.length)} butuh paket lebih tinggi` : ''}
                     </summary>
@@ -230,6 +238,6 @@ function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid, saa
                     </ul>
                 </details>
             ) : null}
-        </div>
+        </Card>
     );
 }

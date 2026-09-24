@@ -8,6 +8,11 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { KategoriPajakProduk, PropsDaftarKelompokPajak } from '@/Tipe/Katalog';
@@ -108,7 +113,7 @@ function FormKelompok({
             onSubmit={Kirim}
             noValidate
             aria-label={kelompok ? `Ubah kelompok pajak ${kelompok.Nama}` : 'Tambah kelompok pajak'}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
+            className="flex flex-col gap-4"
         >
             <RingkasanGalatFormulir galat={{ ...galat, ...(galatKonsistensi ? { Pajak: galatKonsistensi } : {}) }} />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -139,19 +144,16 @@ function FormKelompok({
             {tanpaPajak ? (
                 <p className="text-isi text-teks-sekunder">Produk di kelompok ini dijual tanpa pajak.</p>
             ) : (
-                <fieldset className="flex flex-col gap-2">
-                    <legend className="text-label font-semibold text-teks-utama">
+                <FieldSet className="gap-2">
+                    <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
                         Pajak yang dikenakan (berurutan)
-                    </legend>
-                    <p className="text-keterangan text-teks-sekunder">
+                    </FieldLegend>
+                    <FieldDescription className="text-keterangan">
                         Tarif tidak disimpan di sini; tarif diambil dari tabel tarif yang berlaku pada tanggal
                         transaksi.
-                    </p>
+                    </FieldDescription>
                     {data.Pajak.map((pajak, indeks) => (
-                        <div
-                            key={indeks}
-                            className="grid items-end gap-2 rounded-kontrol border border-garis p-3 sm:grid-cols-[1fr_1fr_auto]"
-                        >
+                        <Card key={indeks} className="grid items-end gap-2 p-3 shadow-none sm:grid-cols-[1fr_1fr_auto]">
                             <BidangPilihan
                                 label={`Jenis pajak ${String(indeks + 1)}`}
                                 nilai={pajak.KodeJenisPajak}
@@ -183,44 +185,45 @@ function FormKelompok({
                                 }
                                 galat={galat[`Pajak.${String(indeks)}.DasarPengenaan`]}
                             />
-                            <button
+                            <Button
                                 type="button"
+                                variant="ghost"
                                 onClick={() => AturPajak(data.Pajak.filter((_, i) => i !== indeks))}
-                                className="h-10 text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-10 text-destructive"
                                 aria-label={`Hapus pajak ${String(indeks + 1)}`}
                             >
                                 Hapus
-                            </button>
-                        </div>
+                            </Button>
+                        </Card>
                     ))}
                     <p>
-                        <button
+                        <Button
                             type="button"
+                            variant="outline"
                             onClick={() =>
                                 AturPajak([
                                     ...data.Pajak,
                                     { KodeJenisPajak: '', DasarPengenaan: props.DasarPengenaan[0]?.Nilai ?? '' },
                                 ])
                             }
-                            className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         >
                             Tambah pajak
-                        </button>
+                        </Button>
                     </p>
-                </fieldset>
+                </FieldSet>
             )}
             <div aria-live="polite">
                 {(galatKonsistensi ?? galat.Pajak) ? (
-                    <p className="text-keterangan font-semibold text-bahaya">{galatKonsistensi ?? galat.Pajak}</p>
+                    <FieldError className="text-keterangan font-semibold">{galatKonsistensi ?? galat.Pajak}</FieldError>
                 ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kelompok pajak
                 </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
+                <Button type="button" variant="outline" onClick={saatSelesai}>
                     Batal
-                </Tombol>
+                </Button>
             </div>
         </form>
     );
@@ -241,52 +244,68 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
                     Setiap produk yang dijual memakai satu kelompok pajak. PBJT makanan & minuman dan PPN tidak boleh
                     dikenakan bersamaan pada satu produk.
                 </p>
-                {Izin.KelolaPajak && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah kelompok pajak</Tombol>
+                {Izin.KelolaPajak ? (
+                    <Button type="button" onClick={() => AturSunting('baru')}>
+                        Tambah kelompok pajak
+                    </Button>
                 ) : null}
             </div>
-            {sunting !== null ? (
-                <FormKelompok
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    kelompok={sunting === 'baru' ? null : sunting}
-                    props={propsHalaman}
-                    saatSelesai={() => AturSunting(null)}
-                />
-            ) : null}
+            <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
+                {sunting !== null ? (
+                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-xl">
+                        <SheetHeader>
+                            <SheetTitle>
+                                {sunting === 'baru' ? 'Tambah kelompok pajak' : `Ubah kelompok pajak ${sunting.Nama}`}
+                            </SheetTitle>
+                            <SheetDescription>
+                                PBJT makanan & minuman dan PPN tidak boleh dikenakan bersamaan pada satu produk.
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="px-4 pb-4">
+                            <FormKelompok
+                                key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                                kelompok={sunting === 'baru' ? null : sunting}
+                                props={propsHalaman}
+                                saatSelesai={() => AturSunting(null)}
+                            />
+                        </div>
+                    </SheetContent>
+                ) : null}
+            </Sheet>
             {KelompokPajak.length === 0 ? (
                 <KeadaanKosong judul="Belum ada kelompok pajak. Tambah kelompok pajak sebelum menambah produk yang dijual." />
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[640px] text-left text-isi">
-                        <caption className="sr-only">Daftar kelompok pajak</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[640px] text-isi">
+                        <TableCaption className="sr-only">Daftar kelompok pajak</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className="px-4">
                                     Kelompok
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4">
                                     Pajak
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4 text-right">
                                     Produk
-                                </th>
+                                </TableHead>
                                 {Izin.KelolaPajak ? (
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    <TableHead scope="col" className="px-4">
                                         <span className="sr-only">Aksi</span>
-                                    </th>
+                                    </TableHead>
                                 ) : null}
-                            </tr>
-                        </thead>
-                        <tbody>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {KelompokPajak.map((item) => (
-                                <tr key={item.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="px-4 py-2">
+                                <TableRow key={item.Uuid} className="align-top">
+                                    <TableCell className="px-4 whitespace-normal">
                                         <span className="block font-semibold break-words text-teks-utama">
                                             {item.Nama}
                                         </span>
                                         <span className="text-keterangan text-teks-sekunder">{item.LabelKategori}</span>
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
                                         {item.Pajak.length === 0 ? (
                                             'Tanpa pajak'
                                         ) : (
@@ -298,25 +317,26 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
                                                 ))}
                                             </ol>
                                         )}
-                                    </td>
-                                    <td className="px-4 py-2 text-right tabular-nums">{item.JumlahProduk}</td>
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
                                     {Izin.KelolaPajak ? (
-                                        <td className="px-4 py-2">
-                                            <button
+                                        <TableCell className="px-4 text-right">
+                                            <Button
                                                 type="button"
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={() => AturSunting(item)}
-                                                className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                                 aria-label={`Ubah kelompok pajak ${item.Nama}`}
                                             >
                                                 Ubah
-                                            </button>
-                                        </td>
+                                            </Button>
+                                        </TableCell>
                                     ) : null}
-                                </tr>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </TataLetakAplikasi>
     );

@@ -5,6 +5,12 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
+import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -46,6 +52,8 @@ const labelStatus: Record<StatusPerangkat, { jenis: 'sukses' | 'peringatan' | 'n
     Dicabut: { jenis: 'netral', teks: 'Dicabut' },
 };
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Perangkat POS per outlet: tambah, aktivasi lewat kode + QR, cabut (F-02 langkah 5, BR-02.1, BR-02.3). */
 export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangkat, KodeAktivasiBaru }: PropsDaftar) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -64,13 +72,15 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
             {KodeAktivasiBaru ? <KartuKodeAktivasi kode={KodeAktivasiBaru} /> : null}
 
             {Outlet.length > 0 ? (
-                <ul className="flex flex-wrap gap-2 text-label text-teks-sekunder">
+                <ul className="grid grid-cols-1 gap-2 text-label sm:grid-cols-2 lg:grid-cols-4">
                     {Outlet.map((outlet) => (
-                        <li key={outlet.Uuid} className="rounded-kontrol border border-garis bg-permukaan px-3 py-1">
-                            {outlet.Nama}:{' '}
-                            <span className="font-semibold text-teks-utama">
-                                {FormatBatas(outlet.BatasPerangkat, 'perangkat')}
-                            </span>
+                        <li key={outlet.Uuid}>
+                            <Card className="gap-1 px-4 py-3">
+                                <span className="text-teks-sekunder">{outlet.Nama}: </span>
+                                <span className="font-semibold text-teks-utama">
+                                    {FormatBatas(outlet.BatasPerangkat, 'perangkat')}
+                                </span>
+                            </Card>
                         </li>
                     ))}
                 </ul>
@@ -87,103 +97,107 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
             ) : null}
 
             {bolehKelola ? (
-                formTerbuka ? (
-                    <FormTambah outlet={Outlet} jenis={JenisPerangkat} saatSelesai={() => AturFormTerbuka(false)} />
-                ) : (
-                    <div>
-                        <Tombol onClick={() => AturFormTerbuka(true)} disabled={Outlet.length === 0}>
-                            Tambah perangkat
-                        </Tombol>
-                    </div>
-                )
+                <div>
+                    <Tombol onClick={() => AturFormTerbuka(true)} disabled={Outlet.length === 0}>
+                        Tambah perangkat
+                    </Tombol>
+                </div>
+            ) : null}
+            {bolehKelola && formTerbuka ? (
+                <FormTambah outlet={Outlet} jenis={JenisPerangkat} saatSelesai={() => AturFormTerbuka(false)} />
             ) : null}
 
             {ubah ? <FormUbahNama key={ubah.Uuid} perangkat={ubah} saatSelesai={() => AturUbah(null)} /> : null}
             {cabut ? <KonfirmasiCabut perangkat={cabut} saatSelesai={() => AturCabut(null)} /> : null}
 
             {Perangkat.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.
-                </p>
+                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
+                    <EmptyHeader>
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[860px] text-left text-isi">
-                        <caption className="sr-only">Daftar perangkat</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[860px] text-isi">
+                        <TableCaption className="sr-only">Daftar perangkat</TableCaption>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead scope="col" className={kelasKepala}>
                                     Kode
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Nama
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Outlet
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Terakhir aktif
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     <span className="sr-only">Aksi</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Perangkat.map((baris) => (
-                                <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2 font-mono text-label text-teks-utama">{baris.Kode}</td>
-                                    <td className="px-4 py-2 text-teks-utama">
+                                <TableRow key={baris.Uuid}>
+                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
+                                        {baris.Kode}
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
                                         {baris.Nama}
                                         <span className="block text-keterangan text-teks-sekunder">
                                             {baris.LabelJenis}
                                             {baris.Platform ? ` · ${baris.Platform}` : ''}
                                             {baris.VersiAplikasi ? ` · versi ${baris.VersiAplikasi}` : ''}
                                         </span>
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">{baris.NamaOutlet ?? '—'}</td>
-                                    <td className="px-4 py-2">
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
+                                        {baris.NamaOutlet ?? '—'}
+                                    </TableCell>
+                                    <TableCell className="px-4">
                                         <LabelStatus
                                             jenis={labelStatus[baris.Status].jenis}
                                             teks={labelStatus[baris.Status].teks}
                                         />
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-teks-sekunder">
                                         {FormatTanggalWaktu(baris.TerakhirAktifPada)}
-                                    </td>
-                                    <td className="px-4 py-2 text-right">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right">
                                         {bolehKelola && baris.Status !== 'Dicabut' ? (
-                                            <span className="flex justify-end gap-2">
-                                                <Tombol varian="sekunder" onClick={() => AturUbah(baris)}>
-                                                    Ubah nama
-                                                </Tombol>
-                                                <Tombol
-                                                    varian="sekunder"
-                                                    onClick={() =>
-                                                        router.post(
-                                                            `/kelola/perangkat/${baris.Uuid}/kode-aktivasi`,
-                                                            {},
-                                                            { preserveScroll: true },
-                                                        )
-                                                    }
-                                                >
-                                                    {baris.Status === 'Aktif'
-                                                        ? 'Pindahkan ke HP lain'
-                                                        : 'Buat kode baru'}
-                                                </Tombol>
-                                                <Tombol varian="bahaya" onClick={() => AturCabut(baris)}>
-                                                    Cabut
-                                                </Tombol>
-                                            </span>
+                                            <MenuAksiBaris
+                                                label={`Aksi perangkat ${baris.Nama} (${baris.Kode})`}
+                                                aksi={[
+                                                    { label: 'Ubah nama', saatPilih: () => AturUbah(baris) },
+                                                    {
+                                                        label:
+                                                            baris.Status === 'Aktif'
+                                                                ? 'Pindahkan ke HP lain'
+                                                                : 'Buat kode baru',
+                                                        saatPilih: () =>
+                                                            router.post(
+                                                                `/kelola/perangkat/${baris.Uuid}/kode-aktivasi`,
+                                                                {},
+                                                                { preserveScroll: true },
+                                                            ),
+                                                    },
+                                                    { label: 'Cabut', bahaya: true, saatPilih: () => AturCabut(baris) },
+                                                ]}
+                                            />
                                         ) : null}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </TataLetakAplikasi>
     );
@@ -200,44 +214,42 @@ function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid grid-cols-1 gap-4 rounded-panel border border-garis bg-permukaan p-4 md:grid-cols-3"
-            noValidate
-        >
-            <BidangTeks
-                label="Nama perangkat"
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-                keterangan='Misal "Kasir Depan" atau "Tablet Dapur"'
-                maxLength={100}
-                autoFocus
-                required
-            />
-            <BidangPilihan
-                label="Outlet"
-                nilai={formulir.data.Outlet}
-                opsi={outlet.map((baris) => ({ Nilai: baris.Uuid, Label: `${baris.Nama} (${baris.Kode})` }))}
-                saatBerubah={(nilai) => formulir.setData('Outlet', nilai)}
-                galat={formulir.errors.Outlet}
-            />
-            <BidangPilihan
-                label="Jenis"
-                nilai={formulir.data.Jenis}
-                opsi={jenis}
-                saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
-                galat={formulir.errors.Jenis}
-            />
-            <div className="flex gap-2 md:col-span-3">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Tambah & buat kode aktivasi
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+        <DialogFormulir judul="Tambah perangkat" saatTutup={saatSelesai}>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangTeks
+                    label="Nama perangkat"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                    keterangan='Misal "Kasir Depan" atau "Tablet Dapur"'
+                    maxLength={100}
+                    autoFocus
+                    required
+                />
+                <BidangPilihan
+                    label="Outlet"
+                    nilai={formulir.data.Outlet}
+                    opsi={outlet.map((baris) => ({ Nilai: baris.Uuid, Label: `${baris.Nama} (${baris.Kode})` }))}
+                    saatBerubah={(nilai) => formulir.setData('Outlet', nilai)}
+                    galat={formulir.errors.Outlet}
+                />
+                <BidangPilihan
+                    label="Jenis"
+                    nilai={formulir.data.Jenis}
+                    opsi={jenis}
+                    saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
+                    galat={formulir.errors.Jenis}
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Tambah & buat kode aktivasi
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -250,29 +262,27 @@ function FormUbahNama({ perangkat, saatSelesai }: { perangkat: Perangkat; saatSe
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
-            noValidate
-        >
-            <BidangTeks
-                label={`Nama perangkat ${perangkat.Kode}`}
-                nilai={formulir.data.Nama}
-                saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
-                galat={formulir.errors.Nama}
-                maxLength={100}
-                autoFocus
-                required
-            />
-            <div className="flex gap-2">
-                <Tombol type="submit" memproses={formulir.processing}>
-                    Simpan nama
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+        <DialogFormulir judul={`Ubah nama ${perangkat.Nama}`} saatTutup={saatSelesai}>
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangTeks
+                    label={`Nama perangkat ${perangkat.Kode}`}
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                    maxLength={100}
+                    autoFocus
+                    required
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan nama
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -280,42 +290,29 @@ function KonfirmasiCabut({ perangkat, saatSelesai }: { perangkat: Perangkat; saa
     const [memproses, AturMemproses] = useState(false);
 
     return (
-        <section
-            role="alertdialog"
-            aria-labelledby="judul-cabut"
-            className="flex flex-col gap-3 rounded-panel border border-bahaya bg-permukaan p-4"
+        <DialogKonfirmasi
+            judul={`Cabut ${perangkat.Nama} (${perangkat.Kode})?`}
+            labelAksi="Cabut perangkat"
+            memproses={memproses}
+            saatBatal={saatSelesai}
+            saatKonfirmasi={() =>
+                router.post(
+                    `/kelola/perangkat/${perangkat.Uuid}/cabut`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onStart: () => AturMemproses(true),
+                        onFinish: () => AturMemproses(false),
+                        onSuccess: saatSelesai,
+                    },
+                )
+            }
         >
-            <h2 id="judul-cabut" className="text-subjudul font-semibold text-teks-utama">
-                Cabut {perangkat.Nama} ({perangkat.Kode})?
-            </h2>
-            <p className="text-isi text-teks-sekunder">
+            <p>
                 Aplikasi di perangkat ini langsung tidak bisa dipakai. Transaksi offline yang sudah dibuat sebelumnya
                 tetap diterima saat sinkron untuk ditinjau. Pencabutan tidak bisa dibatalkan; kode {perangkat.Kode}{' '}
                 tidak akan dipakai lagi.
             </p>
-            <div className="flex gap-2">
-                <Tombol
-                    varian="bahaya"
-                    memproses={memproses}
-                    onClick={() =>
-                        router.post(
-                            `/kelola/perangkat/${perangkat.Uuid}/cabut`,
-                            {},
-                            {
-                                preserveScroll: true,
-                                onStart: () => AturMemproses(true),
-                                onFinish: () => AturMemproses(false),
-                                onSuccess: saatSelesai,
-                            },
-                        )
-                    }
-                >
-                    Cabut perangkat
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
-        </section>
+        </DialogKonfirmasi>
     );
 }

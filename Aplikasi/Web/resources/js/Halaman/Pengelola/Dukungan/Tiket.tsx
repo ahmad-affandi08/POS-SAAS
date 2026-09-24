@@ -9,6 +9,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -78,9 +79,9 @@ export default function TiketDukungan({ Tiket, Penangan, PilihanStatus, PilihanP
                 </div>
 
                 <aside className="flex flex-col gap-4">
-                    <section className="rounded-panel border border-garis bg-permukaan p-4">
+                    <Card className="gap-2 px-4 py-4">
                         <h2 className="text-subjudul font-semibold text-teks-utama">Rincian</h2>
-                        <dl className="mt-2 grid grid-cols-1 gap-2 text-label">
+                        <dl className="grid grid-cols-1 gap-2 text-label">
                             <Rincian
                                 label="Tenant"
                                 nilai={Tiket.Tenant ? `${Tiket.Tenant.Nama} (${Tiket.Tenant.Slug})` : '—'}
@@ -103,7 +104,7 @@ export default function TiketDukungan({ Tiket, Penangan, PilihanStatus, PilihanP
                                 <Rincian key={kunci} label={kunci} nilai={nilai} />
                             ))}
                         </dl>
-                    </section>
+                    </Card>
                     {bolehTangani ? (
                         <PanelAksi
                             tiket={Tiket}
@@ -150,56 +151,58 @@ function FormBalasan({
     };
 
     return (
-        <form onSubmit={Kirim} className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4">
-            {!masihTerbuka ? (
-                <Pemberitahuan jenis="info">
-                    Tiket tidak terbuka. Hanya catatan internal yang bisa ditulis; buka lagi tiket untuk membalas
-                    tenant.
-                </Pemberitahuan>
-            ) : null}
-            <BidangTeksPanjang
-                label={formulir.data.CatatanInternal ? 'Catatan internal' : 'Balasan ke tenant'}
-                nilai={formulir.data.Isi}
-                maksimal={10000}
-                saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
-                galat={formulir.errors.Isi}
-            />
-            <BidangBerkas
-                label="Lampiran"
-                berkas={formulir.data.Lampiran}
-                ekstensi={lampiran.Ekstensi}
-                maksimal={lampiran.Maksimal}
-                ukuranMaksimalKb={lampiran.UkuranMaksimalKb}
-                saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
-                galat={galatLampiran}
-            />
-            <KotakCentang
-                label="Catatan internal (tidak terlihat tenant, tidak dikirim email)"
-                nilai={formulir.data.CatatanInternal}
-                saatBerubah={(nilai) =>
-                    formulir.setData({ ...formulir.data, CatatanInternal: nilai || !masihTerbuka, Status: '' })
-                }
-            />
-            {!formulir.data.CatatanInternal ? (
-                <BidangPilihan
-                    label="Status setelah dibalas"
-                    nilai={formulir.data.Status}
-                    kosong="Tetap (Baru menjadi Ditangani)"
-                    opsi={[
-                        { Nilai: 'Ditangani', Label: 'Ditangani' },
-                        { Nilai: 'MenungguPelanggan', Label: 'Menunggu pelanggan' },
-                        { Nilai: 'Selesai', Label: 'Selesai' },
-                    ]}
-                    saatBerubah={(nilai) => formulir.setData('Status', nilai)}
-                    galat={formulir.errors.Status}
+        <Card className="px-4 py-4">
+            <form onSubmit={Kirim} className="flex flex-col gap-3">
+                {!masihTerbuka ? (
+                    <Pemberitahuan jenis="info">
+                        Tiket tidak terbuka. Hanya catatan internal yang bisa ditulis; buka lagi tiket untuk membalas
+                        tenant.
+                    </Pemberitahuan>
+                ) : null}
+                <BidangTeksPanjang
+                    label={formulir.data.CatatanInternal ? 'Catatan internal' : 'Balasan ke tenant'}
+                    nilai={formulir.data.Isi}
+                    maksimal={10000}
+                    saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
+                    galat={formulir.errors.Isi}
                 />
-            ) : null}
-            <div>
-                <Tombol type="submit" memproses={formulir.processing}>
-                    {formulir.data.CatatanInternal ? 'Simpan catatan internal' : 'Kirim balasan ke tenant'}
-                </Tombol>
-            </div>
-        </form>
+                <BidangBerkas
+                    label="Lampiran"
+                    berkas={formulir.data.Lampiran}
+                    ekstensi={lampiran.Ekstensi}
+                    maksimal={lampiran.Maksimal}
+                    ukuranMaksimalKb={lampiran.UkuranMaksimalKb}
+                    saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
+                    galat={galatLampiran}
+                />
+                <KotakCentang
+                    label="Catatan internal (tidak terlihat tenant, tidak dikirim email)"
+                    nilai={formulir.data.CatatanInternal}
+                    saatBerubah={(nilai) =>
+                        formulir.setData({ ...formulir.data, CatatanInternal: nilai || !masihTerbuka, Status: '' })
+                    }
+                />
+                {!formulir.data.CatatanInternal ? (
+                    <BidangPilihan
+                        label="Status setelah dibalas"
+                        nilai={formulir.data.Status}
+                        kosong="Tetap (Baru menjadi Ditangani)"
+                        opsi={[
+                            { Nilai: 'Ditangani', Label: 'Ditangani' },
+                            { Nilai: 'MenungguPelanggan', Label: 'Menunggu pelanggan' },
+                            { Nilai: 'Selesai', Label: 'Selesai' },
+                        ]}
+                        saatBerubah={(nilai) => formulir.setData('Status', nilai)}
+                        galat={formulir.errors.Status}
+                    />
+                ) : null}
+                <div>
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        {formulir.data.CatatanInternal ? 'Simpan catatan internal' : 'Kirim balasan ke tenant'}
+                    </Tombol>
+                </div>
+            </form>
+        </Card>
     );
 }
 
@@ -228,7 +231,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
     );
 
     return (
-        <section className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4">
+        <Card className="gap-4 px-4 py-4">
             <h2 className="text-subjudul font-semibold text-teks-utama">Tindakan</h2>
             {masihTerbuka ? (
                 <div className="flex flex-col gap-2">
@@ -311,6 +314,6 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
             ) : (
                 <p className="text-keterangan text-teks-sekunder">Tiket ditutup. Tidak ada perubahan status lagi.</p>
             )}
-        </section>
+        </Card>
     );
 }

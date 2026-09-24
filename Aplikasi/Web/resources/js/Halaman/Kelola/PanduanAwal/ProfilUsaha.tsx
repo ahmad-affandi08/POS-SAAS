@@ -9,6 +9,9 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { AlamatPanduan, type PropsProfilUsaha } from '@/Tipe/PanduanAwal';
 
 type IsianProfilUsaha = {
@@ -50,108 +53,108 @@ export default function HalamanProfilUsaha({ Progres, Profil, Kota, BatasLogo }:
 
     return (
         <TataLetakPanduan progres={Progres} langkah="ProfilUsaha">
-            <form
-                ref={elemenFormulir}
-                onSubmit={Kirim}
-                className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
-                noValidate
-            >
-                <RingkasanGalatFormulir galat={formulir.errors} />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <BidangTeks
-                        label="Nama usaha"
-                        nilai={formulir.data.NamaUsaha}
-                        saatBerubah={(nilai) => formulir.setData('NamaUsaha', nilai)}
-                        galat={formulir.errors.NamaUsaha}
-                        keterangan="Tampil di struk dan aplikasi kasir, misal Kopi Nusantara."
-                        maxLength={150}
-                        autoComplete="organization"
-                        required
-                    />
-                    <div className="flex flex-col gap-1">
-                        <BidangPilihan
-                            label="Kabupaten/kota outlet"
-                            nilai={formulir.data.KodeKota}
-                            opsi={pilihanKota}
-                            saatBerubah={(nilai) => formulir.setData('KodeKota', nilai)}
-                            galat={formulir.errors.KodeKota}
-                            kosong={Kota.length === 0 ? 'Data wilayah belum tersedia' : 'Pilih kabupaten/kota'}
-                        />
-                        <p className="text-keterangan text-teks-sekunder">
-                            {kotaTerpilih
-                                ? `Zona waktu outlet mengikuti kota: ${kotaTerpilih.ZonaWaktu}. Tarif PBJT juga mengikuti kota.`
-                                : 'Zona waktu dan tarif PBJT outlet mengikuti kota.'}
-                        </p>
-                    </div>
-                    <div className="md:col-span-2">
-                        <BidangTeksPanjang
-                            label="Alamat outlet (opsional)"
-                            nilai={formulir.data.Alamat}
-                            saatBerubah={(nilai) => formulir.setData('Alamat', nilai)}
-                            galat={formulir.errors.Alamat}
-                            keterangan="Dicetak di struk. Contoh: Jl. Kaliurang Km 5 No. 12, Sleman."
-                            baris={3}
-                            maksimal={500}
-                        />
-                    </div>
-                </div>
-
-                <fieldset className="flex flex-col gap-2">
-                    <legend className="text-label font-semibold text-teks-utama">Status pajak usaha</legend>
-                    <KotakCentang
-                        label="Usaha saya PKP (Pengusaha Kena Pajak)"
-                        nilai={formulir.data.Pkp}
-                        saatBerubah={(nilai) => formulir.setData('Pkp', nilai)}
-                    />
-                    <div className="max-w-md">
+            <Card className="p-4 sm:p-6">
+                <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                    <RingkasanGalatFormulir galat={formulir.errors} />
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <BidangTeks
-                            label={formulir.data.Pkp ? 'NPWP' : 'NPWP (opsional)'}
-                            nilai={formulir.data.Npwp}
-                            saatBerubah={(nilai) => formulir.setData('Npwp', nilai)}
-                            galat={formulir.errors.Npwp}
-                            keterangan={
-                                formulir.data.Pkp
-                                    ? '15 atau 16 angka. Wajib untuk usaha PKP. Titik dan tanda hubung boleh diketik.'
-                                    : '15 atau 16 angka. Titik dan tanda hubung boleh diketik.'
-                            }
-                            inputMode="numeric"
-                            maxLength={24}
-                            kode
+                            label="Nama usaha"
+                            nilai={formulir.data.NamaUsaha}
+                            saatBerubah={(nilai) => formulir.setData('NamaUsaha', nilai)}
+                            galat={formulir.errors.NamaUsaha}
+                            keterangan="Tampil di struk dan aplikasi kasir, misal Kopi Nusantara."
+                            maxLength={150}
+                            autoComplete="organization"
+                            required
                         />
+                        <div className="flex flex-col gap-1">
+                            <BidangPilihan
+                                label="Kabupaten/kota outlet"
+                                nilai={formulir.data.KodeKota}
+                                opsi={pilihanKota}
+                                saatBerubah={(nilai) => formulir.setData('KodeKota', nilai)}
+                                galat={formulir.errors.KodeKota}
+                                kosong={Kota.length === 0 ? 'Data wilayah belum tersedia' : 'Pilih kabupaten/kota'}
+                            />
+                            <p className="text-keterangan text-teks-sekunder">
+                                {kotaTerpilih
+                                    ? `Zona waktu outlet mengikuti kota: ${kotaTerpilih.ZonaWaktu}. Tarif PBJT juga mengikuti kota.`
+                                    : 'Zona waktu dan tarif PBJT outlet mengikuti kota.'}
+                            </p>
+                        </div>
+                        <div className="md:col-span-2">
+                            <BidangTeksPanjang
+                                label="Alamat outlet (opsional)"
+                                nilai={formulir.data.Alamat}
+                                saatBerubah={(nilai) => formulir.setData('Alamat', nilai)}
+                                galat={formulir.errors.Alamat}
+                                keterangan="Dicetak di struk. Contoh: Jl. Kaliurang Km 5 No. 12, Sleman."
+                                baris={3}
+                                maksimal={500}
+                            />
+                        </div>
                     </div>
-                </fieldset>
 
-                <BidangGambar
-                    label="Logo usaha (opsional)"
-                    berkas={formulir.data.Logo}
-                    saatBerubah={(berkas) => formulir.setData({ ...formulir.data, Logo: berkas, HapusLogo: false })}
-                    tautanSaatIni={formulir.data.HapusLogo ? null : Profil.TautanLogo}
-                    saatHapusSaatIni={() => formulir.setData({ ...formulir.data, Logo: null, HapusLogo: true })}
-                    labelHapus="Hapus logo"
-                    ukuranMaksimalKb={BatasLogo.UkuranMaksimalKb}
-                    ekstensi={BatasLogo.Ekstensi}
-                    keterangan="Dipakai di struk dan aplikasi kasir. Gambar persegi paling rapi."
-                    galat={formulir.errors.Logo}
-                />
-                {formulir.data.HapusLogo ? (
-                    <p className="text-keterangan text-teks-sekunder">
-                        Logo akan dihapus saat profil disimpan.{' '}
-                        <button
-                            type="button"
-                            onClick={() => formulir.setData('HapusLogo', false)}
-                            className="font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                        >
-                            Batalkan hapus logo
-                        </button>
-                    </p>
-                ) : null}
+                    <FieldSet className="gap-2">
+                        <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
+                            Status pajak usaha
+                        </FieldLegend>
+                        <KotakCentang
+                            label="Usaha saya PKP (Pengusaha Kena Pajak)"
+                            nilai={formulir.data.Pkp}
+                            saatBerubah={(nilai) => formulir.setData('Pkp', nilai)}
+                        />
+                        <div className="max-w-md">
+                            <BidangTeks
+                                label={formulir.data.Pkp ? 'NPWP' : 'NPWP (opsional)'}
+                                nilai={formulir.data.Npwp}
+                                saatBerubah={(nilai) => formulir.setData('Npwp', nilai)}
+                                galat={formulir.errors.Npwp}
+                                keterangan={
+                                    formulir.data.Pkp
+                                        ? '15 atau 16 angka. Wajib untuk usaha PKP. Titik dan tanda hubung boleh diketik.'
+                                        : '15 atau 16 angka. Titik dan tanda hubung boleh diketik.'
+                                }
+                                inputMode="numeric"
+                                maxLength={24}
+                                kode
+                            />
+                        </div>
+                    </FieldSet>
 
-                <div>
-                    <Tombol type="submit" memproses={formulir.processing}>
-                        Simpan profil usaha
-                    </Tombol>
-                </div>
-            </form>
+                    <BidangGambar
+                        label="Logo usaha (opsional)"
+                        berkas={formulir.data.Logo}
+                        saatBerubah={(berkas) => formulir.setData({ ...formulir.data, Logo: berkas, HapusLogo: false })}
+                        tautanSaatIni={formulir.data.HapusLogo ? null : Profil.TautanLogo}
+                        saatHapusSaatIni={() => formulir.setData({ ...formulir.data, Logo: null, HapusLogo: true })}
+                        labelHapus="Hapus logo"
+                        ukuranMaksimalKb={BatasLogo.UkuranMaksimalKb}
+                        ekstensi={BatasLogo.Ekstensi}
+                        keterangan="Dipakai di struk dan aplikasi kasir. Gambar persegi paling rapi."
+                        galat={formulir.errors.Logo}
+                    />
+                    {formulir.data.HapusLogo ? (
+                        <p className="text-keterangan text-teks-sekunder">
+                            Logo akan dihapus saat profil disimpan.{' '}
+                            <Button
+                                type="button"
+                                variant="link"
+                                onClick={() => formulir.setData('HapusLogo', false)}
+                                className="h-auto p-0 text-keterangan font-semibold underline"
+                            >
+                                Batalkan hapus logo
+                            </Button>
+                        </p>
+                    ) : null}
+
+                    <div>
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            Simpan profil usaha
+                        </Tombol>
+                    </div>
+                </form>
+            </Card>
         </TataLetakPanduan>
     );
 }

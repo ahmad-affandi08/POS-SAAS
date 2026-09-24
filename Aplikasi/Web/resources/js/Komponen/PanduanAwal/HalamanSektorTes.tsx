@@ -9,6 +9,16 @@ import { BuatProgresContoh, BuatPropsBersamaContoh } from './DataUjiPanduan';
 
 const tiruan = vi.hoisted(() => ({ kirim: vi.fn() }));
 
+// RadioGroup (Radix) mengukur tombol radio dengan ResizeObserver, yang tidak ada di jsdom.
+vi.stubGlobal(
+    'ResizeObserver',
+    class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+    },
+);
+
 vi.mock('@inertiajs/react', async () => {
     const { useState } = await import('react');
 

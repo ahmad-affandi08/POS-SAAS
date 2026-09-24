@@ -12,6 +12,22 @@ import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Button } from '@/Komponen/Ui/button';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { BandingkanDesimal, CekDesimalValid, FormatJumlahSatuan } from '@/Pustaka/MasukanJumlah';
@@ -147,10 +163,10 @@ function FormKelompok({
             onSubmit={Kirim}
             noValidate
             aria-label={kelompok ? `Ubah kelompok pilihan ${kelompok.Nama}` : 'Tambah kelompok pilihan'}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
+            className="flex flex-col gap-4"
         >
             <RingkasanGalatFormulir galat={{ ...galat, ...(galatLokal ? { Pilihan: galatLokal } : {}) }} />
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                     <BidangTeks
                         label="Nama kelompok"
@@ -181,13 +197,12 @@ function FormKelompok({
                     maxLength={2}
                 />
             </div>
-            <fieldset className="flex flex-col gap-3">
-                <legend className="text-label font-semibold text-teks-utama">Pilihan ({data.Pilihan.length})</legend>
+            <FieldSet className="gap-3">
+                <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
+                    Pilihan ({data.Pilihan.length})
+                </FieldLegend>
                 {data.Pilihan.map((pilihan, indeks) => (
-                    <div
-                        key={pilihan.Uuid ?? `baru-${String(indeks)}`}
-                        className="flex flex-col gap-3 rounded-kontrol border border-garis p-3"
-                    >
+                    <Card key={pilihan.Uuid ?? `baru-${String(indeks)}`} className="gap-3 p-3 shadow-none">
                         <div className="grid gap-3 sm:grid-cols-3">
                             <BidangTeks
                                 label={`Nama pilihan ${String(indeks + 1)}`}
@@ -242,39 +257,43 @@ function FormKelompok({
                                     saatBerubah={(nilai) => UbahPilihan(indeks, { Jumlah: nilai })}
                                     galat={galat[`Pilihan.${String(indeks)}.Jumlah`]}
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
                                     onClick={() =>
                                         UbahPilihan(indeks, { UuidProdukBahan: null, Jumlah: '', NamaBahan: null })
                                     }
-                                    className="h-10 text-left text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                    className="h-10 justify-start text-destructive"
                                 >
                                     Lepas bahan
-                                </button>
+                                </Button>
                             </div>
                         )}
                         {data.Pilihan.length > 1 ? (
                             <p>
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() =>
                                         formulir.setData((lama) => ({
                                             ...lama,
                                             Pilihan: lama.Pilihan.filter((_, i) => i !== indeks),
                                         }))
                                     }
-                                    className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                    className="text-destructive"
                                 >
                                     Hapus pilihan {pilihan.Nama || String(indeks + 1)}
-                                </button>
+                                </Button>
                             </p>
                         ) : null}
-                    </div>
+                    </Card>
                 ))}
                 {data.Pilihan.length < MaksimalPilihan ? (
                     <p>
-                        <button
+                        <Button
                             type="button"
+                            variant="outline"
                             onClick={() =>
                                 formulir.setData((lama) => ({
                                     ...lama,
@@ -292,27 +311,64 @@ function FormKelompok({
                                     ],
                                 }))
                             }
-                            className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         >
                             Tambah pilihan
-                        </button>
+                        </Button>
                     </p>
                 ) : null}
-            </fieldset>
+            </FieldSet>
             <div aria-live="polite">
                 {(galatLokal ?? galat.Pilihan) ? (
-                    <p className="text-keterangan font-semibold text-bahaya">{galatLokal ?? galat.Pilihan}</p>
+                    <FieldError className="text-keterangan font-semibold">{galatLokal ?? galat.Pilihan}</FieldError>
                 ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kelompok pilihan
                 </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
+                <Button type="button" variant="outline" onClick={saatSelesai}>
                     Batal
-                </Tombol>
+                </Button>
             </div>
         </form>
+    );
+}
+
+/** Tombol hapus + konfirmasi: kelompok dilepas dari produk yang memakainya. */
+function TombolHapusKelompok({ kelompok }: { kelompok: Kelompok }) {
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    aria-label={`Hapus kelompok ${kelompok.Nama}`}
+                >
+                    Hapus
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus kelompok {kelompok.Nama}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Kelompok ini dilepas dari {kelompok.JumlahProduk} produk. Transaksi lama tidak berubah.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                        variant="destructive"
+                        onClick={() =>
+                            router.delete(`/kelola/kelompok-pilihan/${kelompok.Uuid}`, { preserveScroll: true })
+                        }
+                    >
+                        Ya, hapus kelompok
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
 
@@ -320,7 +376,6 @@ function FormKelompok({
 export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: PropsDaftarKelompokPilihan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [sunting, AturSunting] = useState<Kelompok | 'baru' | null>(null);
-    const [hapus, AturHapus] = useState<Kelompok | null>(null);
 
     return (
         <TataLetakAplikasi judul="Pilihan (modifier)">
@@ -331,118 +386,98 @@ export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: 
                     Pilihan yang ditanyakan kasir saat menjual, misal Level gula atau Topping. Pasang ke produk dari
                     halaman produk, tab Pilihan.
                 </p>
-                {Izin.Kelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah kelompok pilihan</Tombol>
+                {Izin.Kelola ? (
+                    <Button type="button" onClick={() => AturSunting('baru')}>
+                        Tambah kelompok pilihan
+                    </Button>
                 ) : null}
             </div>
-            {sunting !== null ? (
-                <FormKelompok
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    kelompok={sunting === 'baru' ? null : sunting}
-                    bolehUbahHarga={Izin.UbahHarga}
-                    saatSelesai={() => AturSunting(null)}
-                />
-            ) : null}
-            {hapus !== null ? (
-                <div
-                    role="alertdialog"
-                    aria-labelledby="judul-hapus-kelompok"
-                    className="flex flex-col gap-2 rounded-panel border border-l-4 border-bahaya bg-permukaan p-4"
-                >
-                    <p id="judul-hapus-kelompok" className="text-label font-semibold text-teks-utama">
-                        Hapus kelompok {hapus.Nama}?
-                    </p>
-                    <p className="text-isi text-teks-sekunder">
-                        Kelompok ini dilepas dari {hapus.JumlahProduk} produk. Transaksi lama tidak berubah.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                        <Tombol
-                            varian="bahaya"
-                            autoFocus
-                            onClick={() =>
-                                router.delete(`/kelola/kelompok-pilihan/${hapus.Uuid}`, {
-                                    preserveScroll: true,
-                                    onFinish: () => AturHapus(null),
-                                })
-                            }
-                        >
-                            Ya, hapus kelompok
-                        </Tombol>
-                        <Tombol varian="sekunder" onClick={() => AturHapus(null)}>
-                            Batal
-                        </Tombol>
-                    </div>
-                </div>
-            ) : null}
+            <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
+                {sunting !== null ? (
+                    <SheetContent showCloseButton={false} className="w-full overflow-y-auto sm:max-w-2xl">
+                        <SheetHeader>
+                            <SheetTitle>
+                                {sunting === 'baru' ? 'Tambah kelompok pilihan' : `Ubah kelompok ${sunting.Nama}`}
+                            </SheetTitle>
+                            <SheetDescription>
+                                Atur batas pilih, harga tambahan, dan bahan yang dipotong dari stok.
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="px-4 pb-4">
+                            <FormKelompok
+                                key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                                kelompok={sunting === 'baru' ? null : sunting}
+                                bolehUbahHarga={Izin.UbahHarga}
+                                saatSelesai={() => AturSunting(null)}
+                            />
+                        </div>
+                    </SheetContent>
+                ) : null}
+            </Sheet>
             {KelompokPilihan.length === 0 ? (
                 <KeadaanKosong judul="Belum ada kelompok pilihan. Tambah kelompok, misal Level gula: Normal, Kurang manis, Tanpa gula." />
             ) : (
                 <ul className="flex flex-col gap-3">
                     {KelompokPilihan.map((kelompok) => (
-                        <li
-                            key={kelompok.Uuid}
-                            className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
-                        >
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                    <p className="font-semibold break-words text-teks-utama">{kelompok.Nama}</p>
-                                    <p className="text-keterangan text-teks-sekunder">
+                        <li key={kelompok.Uuid}>
+                            <Card className="gap-2 py-4">
+                                <CardHeader className="px-4">
+                                    <CardTitle className="break-words text-teks-utama">{kelompok.Nama}</CardTitle>
+                                    <CardDescription className="text-keterangan">
                                         {RingkasAturanPilih(kelompok.MinimalPilih, kelompok.MaksimalPilih)} · dipakai{' '}
                                         {kelompok.JumlahProduk} produk
-                                    </p>
-                                </div>
-                                {Izin.Kelola ? (
-                                    <span className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => AturSunting(kelompok)}
-                                            className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                            aria-label={`Ubah kelompok ${kelompok.Nama}`}
-                                        >
-                                            Ubah
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => AturHapus(kelompok)}
-                                            className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                            aria-label={`Hapus kelompok ${kelompok.Nama}`}
-                                        >
-                                            Hapus
-                                        </button>
-                                    </span>
-                                ) : null}
-                            </div>
-                            <table className="w-full text-left text-label">
-                                <caption className="sr-only">Pilihan di {kelompok.Nama}</caption>
-                                <thead className="sr-only">
-                                    <tr>
-                                        <th scope="col">Pilihan</th>
-                                        <th scope="col">Bahan</th>
-                                        <th scope="col">Tambahan harga</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {AmbilPilihanTampil(kelompok).map((pilihan) => (
-                                        <tr key={pilihan.Uuid ?? pilihan.Nama} className="border-t border-garis">
-                                            <td className="py-1 pr-2 text-teks-utama">
-                                                {pilihan.Nama}{' '}
-                                                {!pilihan.Aktif ? <LabelStatus jenis="netral" teks="Nonaktif" /> : null}
-                                            </td>
-                                            <td className="px-2 py-1 text-teks-sekunder">
-                                                {pilihan.NamaProdukBahan
-                                                    ? `${pilihan.NamaProdukBahan} ${FormatJumlahSatuan(pilihan.Jumlah, pilihan.SimbolSatuanBahan ?? '')}`
-                                                    : ''}
-                                            </td>
-                                            <td className="py-1 pl-2 text-right tabular-nums">
-                                                {CekDesimalValid(pilihan.Harga) &&
-                                                BandingkanDesimal(pilihan.Harga, '0') === 0
-                                                    ? 'Gratis'
-                                                    : `+${FormatRupiah(pilihan.Harga)}`}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </CardDescription>
+                                    {Izin.Kelola ? (
+                                        <CardAction className="flex gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => AturSunting(kelompok)}
+                                                aria-label={`Ubah kelompok ${kelompok.Nama}`}
+                                            >
+                                                Ubah
+                                            </Button>
+                                            <TombolHapusKelompok kelompok={kelompok} />
+                                        </CardAction>
+                                    ) : null}
+                                </CardHeader>
+                                <CardContent className="px-4">
+                                    <Table className="text-label">
+                                        <TableCaption className="sr-only">Pilihan di {kelompok.Nama}</TableCaption>
+                                        <TableHeader className="sr-only">
+                                            <TableRow>
+                                                <TableHead scope="col">Pilihan</TableHead>
+                                                <TableHead scope="col">Bahan</TableHead>
+                                                <TableHead scope="col">Tambahan harga</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {AmbilPilihanTampil(kelompok).map((pilihan) => (
+                                                <TableRow key={pilihan.Uuid ?? pilihan.Nama}>
+                                                    <TableCell className="py-1 pl-0 whitespace-normal text-teks-utama">
+                                                        {pilihan.Nama}{' '}
+                                                        {!pilihan.Aktif ? (
+                                                            <LabelStatus jenis="netral" teks="Nonaktif" />
+                                                        ) : null}
+                                                    </TableCell>
+                                                    <TableCell className="py-1 whitespace-normal text-teks-sekunder">
+                                                        {pilihan.NamaProdukBahan
+                                                            ? `${pilihan.NamaProdukBahan} ${FormatJumlahSatuan(pilihan.Jumlah, pilihan.SimbolSatuanBahan ?? '')}`
+                                                            : ''}
+                                                    </TableCell>
+                                                    <TableCell className="py-1 pr-0 text-right tabular-nums">
+                                                        {CekDesimalValid(pilihan.Harga) &&
+                                                        BandingkanDesimal(pilihan.Harga, '0') === 0
+                                                            ? 'Gratis'
+                                                            : `+${FormatRupiah(pilihan.Harga)}`}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
                         </li>
                     ))}
                 </ul>

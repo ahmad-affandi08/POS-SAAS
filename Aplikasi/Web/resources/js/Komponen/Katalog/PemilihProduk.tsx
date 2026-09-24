@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useState, type KeyboardEvent } from 'react';
+import { useCommandState } from 'cmdk';
+import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react';
 
+import { Command, CommandItem, CommandList } from '@/Komponen/Ui/command';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
+import { Popover, PopoverAnchor, PopoverContent } from '@/Komponen/Ui/popover';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import type { HasilCariProduk, JenisProduk } from '@/Tipe/Katalog';
 
@@ -43,6 +48,45 @@ function useNilaiTertunda(nilai: string, jeda: number): string {
     return tertunda;
 }
 
+/** Id elemen opsi cmdk bernilai `nilai` di dalam daftar `idDaftar` (id opsi dibuat cmdk, bukan oleh kita). */
+function CariIdOpsi(idDaftar: string | undefined, nilai: string): string | undefined {
+    if (idDaftar === undefined || nilai === '') {
+        return undefined;
+    }
+
+    const opsi = Array.from(document.getElementById(idDaftar)?.querySelectorAll('[cmdk-item]') ?? []).find(
+        (elemen) => elemen.getAttribute('data-value') === nilai,
+    );
+
+    return opsi?.id || undefined;
+}
+
+/**
+ * Input combobox di dalam `Command`: `aria-activedescendant` mengikuti opsi yang disorot cmdk.
+ * Dipisah agar hook `useCommandState` berada di dalam konteks Command. Id dicari dari nilai yang disorot karena
+ * cmdk belum mengisi `selectedItemId` saat opsi pertama disorot otomatis.
+ */
+function MasukanPemilih({
+    daftarTerlihat,
+    idDaftar,
+    ...atribut
+}: ComponentProps<typeof Input> & { daftarTerlihat: boolean; idDaftar: string | undefined }) {
+    const idTersorot = useCommandState((keadaan) => CariIdOpsi(idDaftar, keadaan.value) ?? keadaan.selectedItemId);
+
+    return (
+        <Input
+            type="search"
+            role="combobox"
+            aria-expanded={daftarTerlihat}
+            aria-controls={daftarTerlihat ? idDaftar : undefined}
+            aria-autocomplete="list"
+            aria-activedescendant={daftarTerlihat ? idTersorot : undefined}
+            autoComplete="off"
+            {...atribut}
+        />
+    );
+}
+
 type PropsPemilihProduk = {
     label: string;
     /** Jenis produk yang boleh dipilih, misal bahan resep: BahanBaku, Stok, Produksi. */
@@ -56,8 +100,9 @@ type PropsPemilihProduk = {
 };
 
 /**
- * Pemilih produk dengan pencarian server (TanStack Query, KunciKueri.Produk.Cari). Combobox ARIA:
- * panah atas/bawah memilih, Enter memasukkan, Escape menutup. Keadaan memuat, kosong, dan galat tertulis.
+ * Pemilih produk dengan pencarian server (TanStack Query, KunciKueri.Produk.Cari), dibangun dari Command + Popover.
+ * Combobox ARIA: panah atas/bawah memilih, Enter memasukkan, Escape menutup. Keadaan memuat, kosong, dan galat tertulis.
+ * Penyaringan dilakukan server (`shouldFilter` mati); cmdk hanya mengatur sorotan (opsi pertama saat hasil baru) dan keyboard.
  */
 export default function PemilihProduk({
     label,
@@ -69,10 +114,10 @@ export default function PemilihProduk({
     disabled,
 }: PropsPemilihProduk) {
     const id = useId();
-    const idDaftar = `${id}-daftar`;
+    const jangkar = useRef<HTMLDivElement>(null);
     const [kata, AturKata] = useState('');
     const [terbuka, AturTerbuka] = useState(false);
-    const [sorot, AturSorot] = useState(0);
+    const [idDaftar, AturIdDaftar] = useState<string | undefined>(undefined);
     const kataCari = useNilaiTertunda(kata.trim(), 300);
     const aktif = terbuka && kataCari.length >= 2;
     const kueri = useQuery({
@@ -82,32 +127,30 @@ export default function PemilihProduk({
         staleTime: 30_000,
     });
     const hasil = (kueri.data?.Data ?? []).filter((produk) => !kecuali.includes(produk.Uuid));
-    const indeksSorot = Math.min(sorot, Math.max(hasil.length - 1, 0));
+    const daftarTerlihat = aktif && hasil.length > 0;
+    const AturRefDaftar = useCallback((elemen: HTMLDivElement | null) => AturIdDaftar(elemen?.id), []);
 
     const Pilih = (produk: ProdukTerpilih) => {
         saatPilih(produk);
         AturKata('');
         AturTerbuka(false);
-        AturSorot(0);
     };
 
+    /** Tombol yang tidak ditangani cmdk dihentikan di sini agar perilaku input teks tetap (caret, kirim form). */
     const TekanTombol = (peristiwa: KeyboardEvent<HTMLInputElement>) => {
-        if (peristiwa.key === 'ArrowDown') {
-            peristiwa.preventDefault();
-            AturTerbuka(true);
-            AturSorot(Math.min(indeksSorot + 1, hasil.length - 1));
-        } else if (peristiwa.key === 'ArrowUp') {
-            peristiwa.preventDefault();
-            AturSorot(Math.max(indeksSorot - 1, 0));
-        } else if (peristiwa.key === 'Enter') {
-            const produk = hasil[indeksSorot];
-
-            if (terbuka && produk) {
-                peristiwa.preventDefault();
-                Pilih(produk);
-            }
+        if (peristiwa.key === 'Home' || peristiwa.key === 'End') {
+            peristiwa.stopPropagation();
         } else if (peristiwa.key === 'Escape') {
             AturTerbuka(false);
+        } else if (!daftarTerlihat) {
+            if (peristiwa.key === 'ArrowDown') {
+                peristiwa.preventDefault();
+                AturTerbuka(true);
+            } else if (peristiwa.key === 'ArrowUp') {
+                peristiwa.preventDefault();
+            } else if (peristiwa.key === 'Enter') {
+                peristiwa.stopPropagation();
+            }
         }
     };
 
@@ -123,41 +166,83 @@ export default function PemilihProduk({
         status = 'Ketik minimal 2 huruf.';
     }
 
-    const daftarTerlihat = aktif && hasil.length > 0;
-
     return (
-        <div className="relative flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
+        <div className="flex flex-col gap-1">
+            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                 {label}
-            </label>
-            <input
-                id={id}
-                type="search"
-                role="combobox"
-                aria-expanded={daftarTerlihat}
-                aria-controls={idDaftar}
-                aria-autocomplete="list"
-                aria-activedescendant={daftarTerlihat ? `${id}-opsi-${String(indeksSorot)}` : undefined}
-                aria-invalid={galat ? true : undefined}
-                aria-describedby={[keterangan ? `${id}-keterangan` : null, galat ? `${id}-galat` : null, `${id}-status`]
-                    .filter(Boolean)
-                    .join(' ')}
-                value={kata}
-                disabled={disabled}
-                autoComplete="off"
-                placeholder="Cari nama, SKU, atau barcode"
-                onChange={(peristiwa) => {
-                    AturKata(peristiwa.target.value);
-                    AturTerbuka(true);
-                    AturSorot(0);
-                }}
-                onFocus={() => AturTerbuka(true)}
-                onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
-                onKeyDown={TekanTombol}
-                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
-            />
+            </Label>
+            <Command
+                shouldFilter={false}
+                vimBindings={false}
+                className="h-auto overflow-visible rounded-none bg-transparent"
+            >
+                <Popover
+                    open={daftarTerlihat}
+                    onOpenChange={(buka) => {
+                        if (!buka) {
+                            AturTerbuka(false);
+                        }
+                    }}
+                >
+                    <PopoverAnchor asChild>
+                        <div ref={jangkar}>
+                            <MasukanPemilih
+                                id={id}
+                                daftarTerlihat={daftarTerlihat}
+                                idDaftar={idDaftar}
+                                aria-invalid={galat ? true : undefined}
+                                aria-describedby={[
+                                    keterangan ? `${id}-keterangan` : null,
+                                    galat ? `${id}-galat` : null,
+                                    `${id}-status`,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                value={kata}
+                                disabled={disabled}
+                                placeholder="Cari nama, SKU, atau barcode"
+                                onChange={(peristiwa) => {
+                                    AturKata(peristiwa.target.value);
+                                    AturTerbuka(true);
+                                }}
+                                onFocus={() => AturTerbuka(true)}
+                                onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
+                                onKeyDown={TekanTombol}
+                                className="h-10 text-isi"
+                            />
+                        </div>
+                    </PopoverAnchor>
+                    <PopoverContent
+                        align="start"
+                        className="w-(--radix-popover-trigger-width) p-0"
+                        onOpenAutoFocus={(peristiwa) => peristiwa.preventDefault()}
+                        onCloseAutoFocus={(peristiwa) => peristiwa.preventDefault()}
+                        onInteractOutside={(peristiwa) => {
+                            if (jangkar.current?.contains(peristiwa.target as Node)) {
+                                peristiwa.preventDefault();
+                            }
+                        }}
+                    >
+                        <CommandList ref={AturRefDaftar} label={`Hasil ${label}`} className="max-h-72">
+                            {hasil.map((produk) => (
+                                <CommandItem
+                                    key={produk.Uuid}
+                                    value={produk.Uuid}
+                                    onSelect={() => Pilih(produk)}
+                                    onMouseDown={(peristiwa) => peristiwa.preventDefault()}
+                                    className="flex cursor-pointer flex-col items-start gap-0 px-3 py-2 text-isi"
+                                >
+                                    <span className="font-semibold break-words text-teks-utama">{produk.Nama}</span>
+                                    <span className="text-keterangan text-teks-sekunder">
+                                        {produk.Sku ? <span className="font-mono">{produk.Sku}</span> : 'Tanpa SKU'} ·{' '}
+                                        {produk.Satuan.map((satuan) => satuan.Simbol).join(', ')}
+                                    </span>
+                                </CommandItem>
+                            ))}
+                        </CommandList>
+                    </PopoverContent>
+                </Popover>
+            </Command>
             {keterangan ? (
                 <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
                     {keterangan}
@@ -166,35 +251,6 @@ export default function PemilihProduk({
             <p id={`${id}-status`} aria-live="polite" className="text-keterangan text-teks-sekunder">
                 {status ?? ''}
             </p>
-            <ul
-                id={idDaftar}
-                role="listbox"
-                aria-label={`Hasil ${label}`}
-                hidden={!daftarTerlihat}
-                className="absolute top-full right-0 left-0 z-10 max-h-72 overflow-y-auto rounded-kontrol border border-garis-input bg-permukaan"
-            >
-                {hasil.map((produk, indeks) => (
-                    <li
-                        key={produk.Uuid}
-                        id={`${id}-opsi-${String(indeks)}`}
-                        role="option"
-                        aria-selected={indeks === indeksSorot}
-                        onMouseDown={(peristiwa) => {
-                            peristiwa.preventDefault();
-                            Pilih(produk);
-                        }}
-                        className={`flex cursor-pointer flex-col px-3 py-2 text-isi ${
-                            indeks === indeksSorot ? 'bg-latar' : ''
-                        }`}
-                    >
-                        <span className="font-semibold break-words text-teks-utama">{produk.Nama}</span>
-                        <span className="text-keterangan text-teks-sekunder">
-                            {produk.Sku ? <span className="font-mono">{produk.Sku}</span> : 'Tanpa SKU'} ·{' '}
-                            {produk.Satuan.map((satuan) => satuan.Simbol).join(', ')}
-                        </span>
-                    </li>
-                ))}
-            </ul>
             {galat ? (
                 <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
                     {galat}

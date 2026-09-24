@@ -1,13 +1,15 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 
-import TataLetakAplikasi, { CariMenuProdukAktif } from './TataLetakAplikasi';
+import TataLetakAplikasi, { CariMenuProdukAktif, CekMenuAktif } from './TataLetakAplikasi';
 
 let propsHalaman: PropsBersamaAplikasi;
 let urlHalaman = '/kelola';
+
+const tiruanRouter = vi.hoisted(() => ({ post: vi.fn() }));
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
@@ -16,7 +18,7 @@ vi.mock('@inertiajs/react', () => ({
             {children}
         </a>
     ),
-    router: { post: vi.fn() },
+    router: tiruanRouter,
     usePage: () => ({ props: propsHalaman, url: urlHalaman }),
 }));
 
@@ -49,6 +51,9 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
 
     afterEach(() => {
         cleanup();
+        tiruanRouter.post.mockReset();
+        // Status ciut bilah samping disimpan SidebarProvider di cookie; jangan bocor ke test berikutnya.
+        document.cookie = 'sidebar_state=; path=/; max-age=0';
     });
 
     it('Pemilik melihat menu Langganan dan Bantuan; Keamanan akun selalu ada', () => {
@@ -132,5 +137,59 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         propsHalaman = BuatProps({}, ['produk.lihat']);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
         expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
+    });
+
+    it('Pengguna & peran tetap aktif di /kelola/peran; aria-current hanya pada satu menu utama', () => {
+        propsHalaman = BuatProps({}, ['pengguna.lihat', 'outlet.lihat']);
+        urlHalaman = '/kelola/peran/01J9';
+        render(<TataLetakAplikasi judul="Peran">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        const aktif = Array.from(utama.querySelectorAll('a[aria-current="page"]'));
+        expect(aktif.map((a) => a.textContent)).toEqual(['Pengguna & peran']);
+        expect(CekMenuAktif('/kelola', '/kelola/outlet')).toBe(false);
+        expect(CekMenuAktif('/kelola/outlet', '/kelola/outlet/01J9')).toBe(true);
+    });
+
+    it('bilah samping bisa diciutkan lewat tombol di bilah atas; remah roti menyebut usaha dan halaman', () => {
+        propsHalaman = BuatProps({}, ['outlet.lihat']);
+        urlHalaman = '/kelola/outlet';
+        const { container } = render(<TataLetakAplikasi judul="Outlet">isi</TataLetakAplikasi>);
+
+        const sidebar = container.querySelector('[data-slot="sidebar"]');
+        expect(sidebar?.getAttribute('data-state')).toBe('expanded');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Buka atau tutup menu samping' }));
+
+        expect(sidebar?.getAttribute('data-state')).toBe('collapsed');
+        expect(sidebar?.getAttribute('data-collapsible')).toBe('icon');
+
+        const remah = screen.getByRole('navigation', { name: 'Remah roti' });
+        expect(within(remah).getByText('Kopi Nusantara')).toBeTruthy();
+        expect(within(remah).getByText('Outlet').getAttribute('aria-current')).toBe('page');
+        expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Outlet');
+        expect(screen.getByRole('main').textContent).toContain('isi');
+    });
+
+    it('menu akun (DropdownMenu) menampilkan nama & email, lalu Keluar mem-POST /keluar', () => {
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const pemicu = screen.getByRole('button', { name: 'Menu akun Rina Wulandari' });
+        expect(screen.queryByRole('menuitem', { name: 'Keluar' })).toBeNull();
+
+        fireEvent.keyDown(pemicu, { key: 'Enter' });
+
+        const menu = screen.getByRole('menu');
+        expect(within(menu).getByText('rina@kopinusantara.id')).toBeTruthy();
+
+        fireEvent.click(within(menu).getByRole('menuitem', { name: 'Keluar' }));
+
+        expect(tiruanRouter.post).toHaveBeenCalledWith('/keluar');
+    });
+
+    it('memasang Toaster dengan label Bahasa Indonesia', () => {
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        expect(screen.getByRole('region', { name: /^Notifikasi/ })).toBeTruthy();
     });
 });

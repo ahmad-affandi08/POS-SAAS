@@ -1,6 +1,10 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import { Badge } from '@/Komponen/Ui/badge';
+import { Button } from '@/Komponen/Ui/button';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
 
 import { HitungKombinasiVarian, TambahUnik } from './BantuanKatalog';
 
@@ -39,11 +43,11 @@ function BidangNilai({
 
     return (
         <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
+            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                 Nilai {atribut.Nama || 'atribut'}
-            </label>
+            </Label>
             <div className="flex gap-2">
-                <input
+                <Input
                     id={id}
                     type="text"
                     value={ketikan}
@@ -57,16 +61,11 @@ function BidangNilai({
                         }
                     }}
                     aria-describedby={`${id}-keterangan`}
-                    className="h-10 min-w-0 flex-1 rounded-kontrol border border-garis-input bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:bg-latar"
+                    className="h-10 flex-1"
                 />
-                <button
-                    type="button"
-                    onClick={Tambah}
-                    disabled={disabled || penuh}
-                    className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                >
+                <Button type="button" variant="outline" onClick={Tambah} disabled={disabled || penuh} className="h-10">
                     Tambah nilai
-                </button>
+                </Button>
             </div>
             <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
                 {penuh
@@ -94,10 +93,7 @@ export default function PenyuntingAtributVarian({
     return (
         <div className="flex flex-col gap-3">
             {nilai.map((atribut, indeks) => (
-                <fieldset
-                    key={indeks}
-                    className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-3"
-                >
+                <fieldset key={indeks} className="flex flex-col gap-2 rounded-panel border border-garis bg-card p-3">
                     <legend className="px-1 text-label font-semibold text-teks-utama">Atribut {indeks + 1}</legend>
                     <BidangTeks
                         label="Nama atribut"
@@ -111,23 +107,27 @@ export default function PenyuntingAtributVarian({
                     {atribut.Nilai.length > 0 ? (
                         <ul className="flex flex-wrap gap-2" aria-label={`Nilai ${atribut.Nama || 'atribut'}`}>
                             {atribut.Nilai.map((item) => (
-                                <li
-                                    key={item}
-                                    className="flex items-center gap-2 rounded-kontrol border border-garis bg-latar px-2 py-1 text-label"
-                                >
-                                    <span className="break-all">{item}</span>
-                                    {!disabled ? (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                Ubah(indeks, { Nilai: atribut.Nilai.filter((n) => n !== item) })
-                                            }
-                                            className="font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                            aria-label={`Hapus nilai ${item}`}
-                                        >
-                                            Hapus
-                                        </button>
-                                    ) : null}
+                                <li key={item}>
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-2 overflow-visible py-1 text-label font-normal"
+                                    >
+                                        <span className="break-all whitespace-normal">{item}</span>
+                                        {!disabled ? (
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                size="xs"
+                                                onClick={() =>
+                                                    Ubah(indeks, { Nilai: atribut.Nilai.filter((n) => n !== item) })
+                                                }
+                                                className="h-auto p-0 text-destructive"
+                                                aria-label={`Hapus nilai ${item}`}
+                                            >
+                                                Hapus
+                                            </Button>
+                                        ) : null}
+                                    </Badge>
                                 </li>
                             ))}
                         </ul>
@@ -142,26 +142,28 @@ export default function PenyuntingAtributVarian({
                     ) : null}
                     {!disabled ? (
                         <p>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
                                 onClick={() => saatBerubah(nilai.filter((_, i) => i !== indeks))}
-                                className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-auto px-0 text-destructive"
                             >
                                 Hapus atribut {atribut.Nama || String(indeks + 1)}
-                            </button>
+                            </Button>
                         </p>
                     ) : null}
                 </fieldset>
             ))}
             <div className="flex flex-wrap items-center gap-3">
                 {!disabled && nilai.length < MaksimalAtribut ? (
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
                         onClick={() => saatBerubah([...nilai, { Nama: '', Nilai: [] }])}
-                        className="h-10 rounded-kontrol border border-garis-input bg-permukaan px-3 text-label font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-10"
                     >
                         Tambah atribut
-                    </button>
+                    </Button>
                 ) : null}
                 <p aria-live="polite" className="text-label text-teks-sekunder tabular-nums">
                     {kombinasi.length === 0

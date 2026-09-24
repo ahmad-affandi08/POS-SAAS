@@ -7,6 +7,28 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Komponen/Ui/alert-dialog';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Komponen/Ui/dialog';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsDaftarKategori } from '@/Tipe/Katalog';
@@ -74,7 +96,7 @@ function FormKategori({
             onSubmit={Kirim}
             noValidate
             aria-label={kategori ? `Ubah kategori ${kategori.Nama}` : 'Tambah kategori'}
-            className="grid gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:grid-cols-3"
+            className="flex flex-col gap-4"
         >
             <BidangTeks
                 label="Nama kategori"
@@ -102,15 +124,51 @@ function FormKategori({
                 maxLength={4}
                 keterangan="Angka kecil tampil lebih dulu di kasir."
             />
-            <div className="flex flex-wrap gap-2 sm:col-span-3">
+            <DialogFooter>
+                <Button type="button" variant="outline" onClick={saatSelesai}>
+                    Batal
+                </Button>
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kategori
                 </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
-                    Batal
-                </Tombol>
-            </div>
+            </DialogFooter>
         </form>
+    );
+}
+
+/** Tombol hapus + konfirmasi. Hanya tampil untuk kategori tanpa sub-kategori dan tanpa produk. */
+function TombolHapusKategori({ kategori }: { kategori: Kategori }) {
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    aria-label={`Hapus kategori ${kategori.Nama}`}
+                >
+                    Hapus
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus kategori {kategori.Nama}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Kategori ini tidak punya sub-kategori dan tidak dipakai produk mana pun.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                        variant="destructive"
+                        onClick={() => router.delete(`/kelola/kategori/${kategori.Uuid}`, { preserveScroll: true })}
+                    >
+                        Hapus kategori
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
 
@@ -128,46 +186,60 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
                 <p className="text-isi text-teks-sekunder">
                     Kelompokkan produk sampai 3 tingkat, misal Minuman › Kopi › Kopi susu.
                 </p>
-                {Izin.Kelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah kategori</Tombol>
+                {Izin.Kelola ? (
+                    <Button type="button" onClick={() => AturSunting('baru')}>
+                        Tambah kategori
+                    </Button>
                 ) : null}
             </div>
-            {sunting !== null ? (
-                <FormKategori
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    kategori={sunting === 'baru' ? null : sunting}
-                    semua={Kategori}
-                    saatSelesai={() => AturSunting(null)}
-                />
-            ) : null}
+            <Dialog open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
+                {sunting !== null ? (
+                    <DialogContent showCloseButton={false}>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {sunting === 'baru' ? 'Tambah kategori' : `Ubah kategori ${sunting.Nama}`}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Kategori bisa bertingkat sampai 3 tingkat, misal Minuman › Kopi › Kopi susu.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <FormKategori
+                            key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                            kategori={sunting === 'baru' ? null : sunting}
+                            semua={Kategori}
+                            saatSelesai={() => AturSunting(null)}
+                        />
+                    </DialogContent>
+                ) : null}
+            </Dialog>
             {Kategori.length === 0 ? (
                 <KeadaanKosong judul="Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir." />
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[560px] text-left text-isi">
-                        <caption className="sr-only">Daftar kategori</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[560px] text-isi">
+                        <TableCaption className="sr-only">Daftar kategori</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead scope="col" className="px-4">
                                     Kategori
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4 text-right">
                                     Urutan
-                                </th>
-                                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className="px-4 text-right">
                                     Produk
-                                </th>
+                                </TableHead>
                                 {Izin.Kelola ? (
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    <TableHead scope="col" className="px-4">
                                         <span className="sr-only">Aksi</span>
-                                    </th>
+                                    </TableHead>
                                 ) : null}
-                            </tr>
-                        </thead>
-                        <tbody>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Kategori.map((item) => (
-                                <tr key={item.Uuid} className="border-b border-garis last:border-b-0">
-                                    <td className="px-4 py-2">
+                                <TableRow key={item.Uuid}>
+                                    <TableCell className="px-4 whitespace-normal">
                                         <span
                                             className={`block font-semibold break-words text-teks-utama ${KelasIndentasi(item.Kedalaman)}`}
                                         >
@@ -180,44 +252,34 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
                                                 {item.Jalur}
                                             </span>
                                         ) : null}
-                                    </td>
-                                    <td className="px-4 py-2 text-right tabular-nums text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums text-teks-sekunder">
                                         {item.Urutan}
-                                    </td>
-                                    <td className="px-4 py-2 text-right tabular-nums">{item.JumlahProduk}</td>
+                                    </TableCell>
+                                    <TableCell className="px-4 text-right tabular-nums">{item.JumlahProduk}</TableCell>
                                     {Izin.Kelola ? (
-                                        <td className="px-4 py-2 whitespace-nowrap">
-                                            <span className="flex gap-3">
-                                                <button
+                                        <TableCell className="px-4">
+                                            <span className="flex justify-end gap-1">
+                                                <Button
                                                     type="button"
+                                                    variant="outline"
+                                                    size="sm"
                                                     onClick={() => AturSunting(item)}
-                                                    className="text-label font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                                     aria-label={`Ubah kategori ${item.Nama}`}
                                                 >
                                                     Ubah
-                                                </button>
+                                                </Button>
                                                 {item.JumlahProduk === 0 && !CekPunyaAnak(item.Uuid) ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            router.delete(`/kelola/kategori/${item.Uuid}`, {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                        className="text-label font-semibold text-bahaya underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                                        aria-label={`Hapus kategori ${item.Nama}`}
-                                                    >
-                                                        Hapus
-                                                    </button>
+                                                    <TombolHapusKategori kategori={item} />
                                                 ) : null}
                                             </span>
-                                        </td>
+                                        </TableCell>
                                     ) : null}
-                                </tr>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
         </TataLetakAplikasi>
     );

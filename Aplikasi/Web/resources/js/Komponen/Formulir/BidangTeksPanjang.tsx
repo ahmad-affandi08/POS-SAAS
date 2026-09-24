@@ -1,5 +1,16 @@
 import { useId } from 'react';
 
+import { Textarea } from '@/Komponen/Ui/textarea';
+
+import {
+    BuatKelasKontrol,
+    GabungDijelaskanOleh,
+    GalatBidang,
+    KerangkaBidang,
+    KeteranganBidang,
+    LabelBidang,
+} from './BagianBidang';
+
 type PropsBidangTeksPanjang = {
     label: string;
     nilai: string;
@@ -23,16 +34,11 @@ export default function BidangTeksPanjang({
     required,
 }: PropsBidangTeksPanjang) {
     const id = useId();
-    const dijelaskanOleh = [keterangan ? `${id}-keterangan` : null, galat ? `${id}-galat` : null]
-        .filter(Boolean)
-        .join(' ');
 
     return (
-        <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </label>
-            <textarea
+        <KerangkaBidang galat={galat}>
+            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <Textarea
                 id={id}
                 value={nilai}
                 rows={baris}
@@ -40,21 +46,11 @@ export default function BidangTeksPanjang({
                 required={required}
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}
-                aria-describedby={dijelaskanOleh || undefined}
-                className={`rounded-kontrol border bg-permukaan px-3 py-2 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
+                aria-describedby={GabungDijelaskanOleh(keterangan && `${id}-keterangan`, galat && `${id}-galat`)}
+                className={BuatKelasKontrol(galat, 'h-auto py-2 field-sizing-fixed')}
             />
-            {keterangan ? (
-                <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                    {keterangan}
-                </p>
-            ) : null}
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+            {keterangan ? <KeteranganBidang id={`${id}-keterangan`}>{keterangan}</KeteranganBidang> : null}
+            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
+        </KerangkaBidang>
     );
 }

@@ -5,6 +5,8 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { LabelPenanda, LabelStatusLangganan } from '@/Komponen/Pengelola/Tenant/LabelLangganan';
+import { Card } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -18,6 +20,8 @@ type PropsDaftar = {
     PilihanStatus: Pilihan[];
     PilihanPenanda: Pilihan[];
 };
+
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
 
 /** Daftar tenant (P-07): cari nama, slug, atau email Owner; saring status langganan & penanda. */
 export default function Daftar({ Tenant, Saring, PilihanStatus, PilihanPenanda }: PropsDaftar) {
@@ -72,32 +76,32 @@ export default function Daftar({ Tenant, Saring, PilihanStatus, PilihanPenanda }
                         : 'Tenant muncul di sini setelah calon pelanggan mendaftar dari halaman Daftar Gratis.'}
                 </Pemberitahuan>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[860px] text-left text-isi">
-                        <caption className="sr-only">Daftar tenant, terbaru di atas</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[860px] text-isi">
+                        <TableCaption className="sr-only">Daftar tenant, terbaru di atas</TableCaption>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead scope="col" className={kelasKepala}>
                                     Tenant
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Owner
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Paket & status
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Trial berakhir
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Terdaftar
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Tenant.Data.map((tenant) => (
-                                <tr key={tenant.Uuid} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="px-4 py-3">
+                                <TableRow key={tenant.Uuid} className="align-top">
+                                    <TableCell className="px-4 py-3 whitespace-normal">
                                         <Link
                                             href={`/tenant/${tenant.Uuid}`}
                                             className="font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
@@ -107,30 +111,30 @@ export default function Daftar({ Tenant, Saring, PilihanStatus, PilihanPenanda }
                                         <span className="block font-mono text-keterangan text-teks-sekunder">
                                             {tenant.Slug}
                                         </span>
-                                    </td>
-                                    <td className="break-all px-4 py-3 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 break-all whitespace-normal text-teks-sekunder">
                                         {tenant.EmailPemilik ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 whitespace-normal">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-mono text-label">{tenant.KodePaket ?? '—'}</span>
                                             <LabelStatusLangganan status={tenant.StatusLangganan} />
                                             <LabelPenanda penanda={tenant.Penanda} />
                                         </div>
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-teks-sekunder">
                                         {tenant.StatusLangganan === 'Trial'
                                             ? FormatTanggalWaktu(tenant.TrialBerakhirPada)
                                             : '—'}
-                                    </td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-teks-sekunder">
                                         {FormatTanggalWaktu(tenant.DibuatPada)}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
 
             <Paginasi

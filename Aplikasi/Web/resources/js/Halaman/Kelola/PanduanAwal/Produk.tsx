@@ -1,5 +1,5 @@
 import { Link, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -7,6 +7,13 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { Checkbox } from '@/Komponen/Ui/checkbox';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -73,7 +80,6 @@ type PropsBagianProdukContoh = {
 
 function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }: PropsBagianProdukContoh) {
     const elemenFormulir = useRef<HTMLFormElement>(null);
-    const kotakSemua = useRef<HTMLInputElement>(null);
     const [terkirim, AturTerkirim] = useState<string[]>([]);
     const formulir = useForm<{ ProdukContoh: { Nama: string; Harga: string }[] }>({ ProdukContoh: [] });
     const [pilihan, AturPilihan] = useState<PilihanContoh>(() =>
@@ -87,12 +93,6 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
     const melebihiKuota = sisaSku !== null && terpilih.length > sisaSku;
     const semuaDipilih = bisaDipilih.length > 0 && terpilih.length === bisaDipilih.length;
     const galat = formulir.errors as Record<string, string | undefined>;
-
-    useEffect(() => {
-        if (kotakSemua.current) {
-            kotakSemua.current.indeterminate = terpilih.length > 0 && !semuaDipilih;
-        }
-    }, [terpilih.length, semuaDipilih]);
 
     const UbahBaris = (nama: string, ubahan: Partial<{ Dipilih: boolean; Harga: string }>) =>
         AturPilihan((lama) => ({
@@ -127,10 +127,7 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
     };
 
     return (
-        <section
-            aria-labelledby="judul-produk-contoh"
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
-        >
+        <Card aria-labelledby="judul-produk-contoh" role="region" className="gap-3 p-4 sm:p-6">
             <h2 id="judul-produk-contoh" className="text-subjudul font-semibold text-teks-utama">
                 Produk contoh dari template
             </h2>
@@ -146,61 +143,61 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                     </p>
                     <RingkasanGalatFormulir galat={formulir.errors} />
                     {galat.ProdukContoh ? (
-                        <p className="text-keterangan font-semibold text-bahaya">{galat.ProdukContoh}</p>
+                        <FieldError className="text-keterangan font-semibold">{galat.ProdukContoh}</FieldError>
                     ) : null}
                     <div className="max-h-120 overflow-auto rounded-panel border border-garis">
-                        <table className="w-full min-w-[640px] text-left text-isi">
-                            <caption className="sr-only">Produk contoh dari template</caption>
-                            <thead className="sticky top-0 z-10 border-b border-garis bg-permukaan text-label text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="w-12 px-4 py-2 font-semibold">
-                                        <label className="flex items-center gap-2">
-                                            <input
-                                                ref={kotakSemua}
-                                                type="checkbox"
-                                                className="size-4 accent-brand"
-                                                checked={semuaDipilih}
-                                                disabled={bisaDipilih.length === 0}
-                                                onChange={(peristiwa) => PilihSemua(peristiwa.target.checked)}
-                                            />
-                                            <span className="sr-only">Pilih semua</span>
-                                        </label>
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                        <Table className="min-w-[640px] text-isi">
+                            <TableCaption className="sr-only">Produk contoh dari template</TableCaption>
+                            <TableHeader className="sticky top-0 z-10 bg-permukaan">
+                                <TableRow>
+                                    <TableHead scope="col" className="w-12 px-4">
+                                        <Checkbox
+                                            aria-label="Pilih semua"
+                                            checked={
+                                                semuaDipilih ? true : terpilih.length > 0 ? 'indeterminate' : false
+                                            }
+                                            disabled={bisaDipilih.length === 0}
+                                            onCheckedChange={(nilai) => PilihSemua(nilai === true)}
+                                        />
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-4">
                                         Nama
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-4">
                                         Kategori
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-4">
                                         Satuan
-                                    </th>
-                                    <th scope="col" className="w-48 px-4 py-2 text-right font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className="w-48 px-4 text-right">
                                         Harga jual
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {produkContoh.map((item) => {
                                     const baris = pilihan[item.Nama];
                                     const galatNama = AmbilGalatBaris(item.Nama, 'Nama');
 
                                     return (
-                                        <tr key={item.Nama} className="border-b border-garis last:border-b-0">
-                                            <td className="px-4 py-2 align-top">
+                                        <TableRow
+                                            key={item.Nama}
+                                            data-state={baris?.Dipilih && !item.SudahAda ? 'selected' : undefined}
+                                            className="align-top"
+                                        >
+                                            <TableCell className="px-4">
                                                 {item.SudahAda ? null : (
-                                                    <input
-                                                        type="checkbox"
-                                                        className="mt-3 size-4 accent-brand"
+                                                    <Checkbox
+                                                        className="mt-3"
                                                         checked={baris?.Dipilih ?? false}
-                                                        onChange={(peristiwa) =>
-                                                            UbahBaris(item.Nama, { Dipilih: peristiwa.target.checked })
+                                                        onCheckedChange={(nilai) =>
+                                                            UbahBaris(item.Nama, { Dipilih: nilai === true })
                                                         }
                                                         aria-label={`Pilih ${item.Nama}`}
                                                     />
                                                 )}
-                                            </td>
-                                            <td className="px-4 py-2 align-top break-words text-teks-utama">
+                                            </TableCell>
+                                            <TableCell className="px-4 break-words whitespace-normal text-teks-utama">
                                                 <span className="block pt-2">{item.Nama}</span>
                                                 {item.SudahAda ? <LabelStatus jenis="netral" teks="Sudah ada" /> : null}
                                                 {galatNama ? (
@@ -208,14 +205,14 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                                                         {galatNama}
                                                     </span>
                                                 ) : null}
-                                            </td>
-                                            <td className="px-4 py-2 pt-4 align-top text-teks-sekunder">
+                                            </TableCell>
+                                            <TableCell className="px-4 pt-4 whitespace-normal text-teks-sekunder">
                                                 {item.NamaKategori ?? '—'}
-                                            </td>
-                                            <td className="px-4 py-2 pt-4 align-top font-mono text-label text-teks-sekunder">
+                                            </TableCell>
+                                            <TableCell className="px-4 pt-4 font-mono text-label text-teks-sekunder">
                                                 {item.KodeSatuan}
-                                            </td>
-                                            <td className="px-4 py-2 align-top">
+                                            </TableCell>
+                                            <TableCell className="px-4 whitespace-normal">
                                                 {item.SudahAda ? (
                                                     <span className="block pt-2 text-right text-teks-sekunder tabular-nums">
                                                         {FormatRupiah(item.Harga)}
@@ -230,22 +227,24 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                                                         disabled={!baris?.Dipilih}
                                                     />
                                                 )}
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
                     <div aria-live="polite" className="flex flex-col gap-2">
                         <p className="text-label text-teks-sekunder">
                             {String(terpilih.length)} dari {String(bisaDipilih.length)} produk contoh dipilih.
                         </p>
                         {melebihiKuota ? (
-                            <p className="text-label font-semibold text-peringatan">
-                                Sisa kuota paket {String(sisaSku)} SKU. Kurangi pilihan menjadi paling banyak{' '}
-                                {String(sisaSku)} produk.
-                            </p>
+                            <Alert className="border-peringatan text-peringatan">
+                                <AlertDescription className="text-label font-semibold text-peringatan">
+                                    Sisa kuota paket {String(sisaSku)} SKU. Kurangi pilihan menjadi paling banyak{' '}
+                                    {String(sisaSku)} produk.
+                                </AlertDescription>
+                            </Alert>
                         ) : null}
                     </div>
                     <div>
@@ -259,7 +258,7 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                     </div>
                 </form>
             )}
-        </section>
+        </Card>
     );
 }
 
@@ -298,18 +297,17 @@ function FormProdukCepat({
     };
 
     return (
-        <section
-            aria-labelledby="judul-produk-cepat"
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4 sm:p-6"
-        >
+        <Card aria-labelledby="judul-produk-cepat" role="region" className="gap-3 p-4 sm:p-6">
             <h2 id="judul-produk-cepat" className="text-subjudul font-semibold text-teks-utama">
                 Tambah produk sendiri
             </h2>
             <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
-                <fieldset disabled={kuotaPenuh} className="flex flex-col gap-3">
-                    <legend className="sr-only">Produk baru</legend>
+                <FieldSet disabled={kuotaPenuh} className="gap-3">
+                    <FieldLegend className="sr-only">Produk baru</FieldLegend>
                     <RingkasanGalatFormulir galat={formulir.errors} />
-                    {galat.Produk ? <p className="text-keterangan font-semibold text-bahaya">{galat.Produk}</p> : null}
+                    {galat.Produk ? (
+                        <FieldError className="text-keterangan font-semibold">{galat.Produk}</FieldError>
+                    ) : null}
                     <ol className="flex flex-col gap-3">
                         {formulir.data.Produk.map((baris, indeks) => (
                             <li
@@ -341,8 +339,9 @@ function FormProdukCepat({
                                 />
                                 <div className="md:pt-6">
                                     {formulir.data.Produk.length > 1 ? (
-                                        <Tombol
-                                            varian="sekunder"
+                                        <Button
+                                            type="button"
+                                            variant="outline"
                                             onClick={() =>
                                                 formulir.setData(
                                                     'Produk',
@@ -352,7 +351,7 @@ function FormProdukCepat({
                                             aria-label={`Hapus baris produk ${String(indeks + 1)}`}
                                         >
                                             Hapus baris
-                                        </Tombol>
+                                        </Button>
                                     ) : null}
                                 </div>
                             </li>
@@ -362,20 +361,21 @@ function FormProdukCepat({
                         <Tombol type="submit" memproses={formulir.processing}>
                             Tambah produk
                         </Tombol>
-                        <Tombol
-                            varian="sekunder"
+                        <Button
+                            type="button"
+                            variant="outline"
                             onClick={() => formulir.setData('Produk', [...formulir.data.Produk, barisKosong])}
                             disabled={formulir.data.Produk.length >= maksimalBarisManual}
                         >
                             Tambah baris
-                        </Tombol>
+                        </Button>
                     </div>
-                    <p className="text-keterangan text-teks-sekunder">
+                    <FieldDescription className="text-keterangan">
                         Maksimal {maksimalBarisManual} produk sekali simpan. Nama yang sudah ada dilewati.
-                    </p>
-                </fieldset>
+                    </FieldDescription>
+                </FieldSet>
             </form>
-        </section>
+        </Card>
     );
 }
 
@@ -386,9 +386,13 @@ function TabelProduk({ produk, jumlahProduk }: { produk: PropsProdukPanduan['Pro
                 Produk Anda
             </h2>
             {produk.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    Belum ada produk. Tambah produk pertama Anda.
-                </p>
+                <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
+                    <EmptyHeader className="max-w-none items-start text-left">
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            Belum ada produk. Tambah produk pertama Anda.
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
                 <>
                     <p className="text-label text-teks-sekunder">
@@ -396,35 +400,39 @@ function TabelProduk({ produk, jumlahProduk }: { produk: PropsProdukPanduan['Pro
                             ? `Menampilkan ${String(produk.length)} produk terbaru dari ${String(jumlahProduk)}.`
                             : `${String(jumlahProduk)} produk.`}
                     </p>
-                    <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                        <table className="w-full min-w-[480px] text-left text-isi">
-                            <caption className="sr-only">Produk terbaru</caption>
-                            <thead className="border-b border-garis text-label text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                    <Card className="gap-0 py-0">
+                        <Table className="min-w-[480px] text-isi">
+                            <TableCaption className="sr-only">Produk terbaru</TableCaption>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead scope="col" className="px-4">
                                         Nama
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-4">
                                         Kategori
-                                    </th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                    </TableHead>
+                                    <TableHead scope="col" className="px-4 text-right">
                                         Harga jual
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {produk.map((baris) => (
-                                    <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                        <td className="px-4 py-2 break-words text-teks-utama">{baris.Nama}</td>
-                                        <td className="px-4 py-2 text-teks-sekunder">{baris.NamaKategori ?? '—'}</td>
-                                        <td className="px-4 py-2 text-right text-teks-utama tabular-nums">
+                                    <TableRow key={baris.Uuid}>
+                                        <TableCell className="px-4 break-words whitespace-normal text-teks-utama">
+                                            {baris.Nama}
+                                        </TableCell>
+                                        <TableCell className="px-4 text-teks-sekunder">
+                                            {baris.NamaKategori ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="px-4 text-right text-teks-utama tabular-nums">
                                             {FormatRupiah(baris.Harga)}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </TableBody>
+                        </Table>
+                    </Card>
                 </>
             )}
         </section>

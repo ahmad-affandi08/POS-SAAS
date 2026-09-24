@@ -6,6 +6,8 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
 import type { FormDaftarHarga as DataFormDaftarHarga, KanalPenjualan } from '@/Tipe/Katalog';
 import type { Pilihan } from '@/Tipe/Organisasi';
 
@@ -41,19 +43,17 @@ function BidangWaktu({
 
     return (
         <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
+            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                 {label}
-            </label>
-            <input
+            </Label>
+            <Input
                 id={id}
                 type="datetime-local"
                 value={nilai}
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}
                 aria-describedby={`${id}-keterangan${galat ? ` ${id}-galat` : ''}`}
-                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
+                className="h-10 text-isi tabular-nums"
             />
             <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
                 Zona waktu {zonaWaktu}. Kosongkan bila tanpa batas.
@@ -106,7 +106,7 @@ export default function FormDaftarHarga({ uuid, awal, outlet, kanal, zonaWaktu, 
             onSubmit={Kirim}
             noValidate
             aria-label={uuid === null ? 'Buat daftar harga' : 'Ubah pengaturan daftar harga'}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-4"
+            className="flex flex-col gap-4 rounded-panel border border-garis bg-card p-4"
         >
             <RingkasanGalatFormulir galat={{ ...galat, ...(galatRentang ? { SelesaiPada: galatRentang } : {}) }} />
             <div className="grid gap-4 sm:grid-cols-2">

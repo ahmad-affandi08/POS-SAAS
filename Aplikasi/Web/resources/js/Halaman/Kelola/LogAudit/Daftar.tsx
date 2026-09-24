@@ -3,6 +3,9 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -23,6 +26,8 @@ type PropsDaftar = {
     Log: { Data: Log[]; HalamanSaatIni: number; HalamanTerakhir: number; Total: number };
     Saring: { Kata: string };
 };
+
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
 
 /** Log audit usaha, hanya baca (aturan LogAudit §13.2): siapa melakukan apa, kapan, dari mana. */
 export default function HalamanLogAudit({ Log, Saring }: PropsDaftar) {
@@ -50,49 +55,57 @@ export default function HalamanLogAudit({ Log, Saring }: PropsDaftar) {
             </form>
 
             {Log.Data.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    {Saring.Kata
-                        ? `Tidak ada log dengan peristiwa "${Saring.Kata}".`
-                        : 'Belum ada aktivitas yang tercatat.'}
-                </p>
+                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
+                    <EmptyHeader>
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            {Saring.Kata
+                                ? `Tidak ada log dengan peristiwa "${Saring.Kata}".`
+                                : 'Belum ada aktivitas yang tercatat.'}
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[860px] text-left text-isi">
-                        <caption className="sr-only">Log audit usaha, terbaru di atas</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[860px] text-isi">
+                        <TableCaption className="sr-only">Log audit usaha, terbaru di atas</TableCaption>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead scope="col" className={kelasKepala}>
                                     Waktu
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Pelaku
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Peristiwa
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Objek
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Perubahan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     IP
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Log.Data.map((log) => (
-                                <tr key={log.Id} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="whitespace-nowrap px-4 py-2 text-teks-sekunder">
+                                <TableRow key={log.Id} className="align-top">
+                                    <TableCell className="px-4 text-teks-sekunder">
                                         {FormatTanggalWaktu(log.DibuatPada)}
-                                    </td>
-                                    <td className="px-4 py-2 text-teks-utama">{log.Pelaku}</td>
-                                    <td className="px-4 py-2 font-mono text-label text-teks-utama">{log.Peristiwa}</td>
-                                    <td className="px-4 py-2 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-utama">
+                                        {log.Pelaku}
+                                    </TableCell>
+                                    <TableCell className="px-4 font-mono text-label text-teks-utama">
+                                        {log.Peristiwa}
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-teks-sekunder">
                                         {log.JenisObjek ? `${log.JenisObjek} #${String(log.IdObjek ?? '')}` : '—'}
-                                    </td>
-                                    <td className="px-4 py-2 text-keterangan text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 whitespace-normal text-keterangan text-teks-sekunder">
                                         {log.NilaiLama ? (
                                             <p>
                                                 Lama:{' '}
@@ -109,15 +122,15 @@ export default function HalamanLogAudit({ Log, Saring }: PropsDaftar) {
                                                 </code>
                                             </p>
                                         ) : null}
-                                    </td>
-                                    <td className="px-4 py-2 font-mono text-keterangan text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 font-mono text-keterangan text-teks-sekunder">
                                         {log.Ip ?? '—'}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
 
             <Paginasi

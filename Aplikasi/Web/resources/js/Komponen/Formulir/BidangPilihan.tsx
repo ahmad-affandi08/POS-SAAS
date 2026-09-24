@@ -1,5 +1,9 @@
 import { useId } from 'react';
 
+import { NativeSelect, NativeSelectOption } from '@/Komponen/Ui/native-select';
+
+import { BuatKelasKontrol, GalatBidang, KerangkaBidang, LabelBidang } from './BagianBidang';
+
 type PropsBidangPilihan = {
     label: string;
     nilai: string;
@@ -14,32 +18,26 @@ export default function BidangPilihan({ label, nilai, opsi, saatBerubah, galat, 
     const id = useId();
 
     return (
-        <div className="flex flex-col gap-1">
-            <label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </label>
-            <select
-                id={id}
-                value={nilai}
-                onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
-                aria-invalid={galat ? true : undefined}
-                aria-describedby={galat ? `${id}-galat` : undefined}
-                className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    galat ? 'border-bahaya' : 'border-garis-input'
-                }`}
-            >
-                {kosong !== undefined ? <option value="">{kosong}</option> : null}
-                {opsi.map((item) => (
-                    <option key={item.Nilai} value={item.Nilai}>
-                        {item.Label}
-                    </option>
-                ))}
-            </select>
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+        <KerangkaBidang galat={galat}>
+            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <div className="w-full [&>[data-slot=native-select-wrapper]]:w-full">
+                <NativeSelect
+                    id={id}
+                    value={nilai}
+                    onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
+                    aria-invalid={galat ? true : undefined}
+                    aria-describedby={galat ? `${id}-galat` : undefined}
+                    className={BuatKelasKontrol(galat)}
+                >
+                    {kosong !== undefined ? <NativeSelectOption value="">{kosong}</NativeSelectOption> : null}
+                    {opsi.map((item) => (
+                        <NativeSelectOption key={item.Nilai} value={item.Nilai}>
+                            {item.Label}
+                        </NativeSelectOption>
+                    ))}
+                </NativeSelect>
+            </div>
+            {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}
+        </KerangkaBidang>
     );
 }

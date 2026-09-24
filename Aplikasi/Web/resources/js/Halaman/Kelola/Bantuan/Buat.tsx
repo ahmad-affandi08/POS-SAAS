@@ -7,6 +7,8 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 
 type PropsBuat = {
@@ -34,63 +36,62 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
 
     return (
         <TataLetakAplikasi judul="Buat tiket bantuan">
-            <form
-                onSubmit={Kirim}
-                className="flex max-w-2xl flex-col gap-4 rounded-panel border border-garis bg-permukaan p-5"
-            >
-                <BidangPilihan
-                    label="Kategori"
-                    nilai={formulir.data.Kategori}
-                    opsi={Kategori}
-                    kosong="Pilih kategori masalah"
-                    saatBerubah={(nilai) => formulir.setData('Kategori', nilai)}
-                    galat={formulir.errors.Kategori}
-                />
-                <BidangPilihan
-                    label="Seberapa mendesak?"
-                    nilai={formulir.data.Prioritas}
-                    opsi={Prioritas.map((pilihan) => ({
-                        Nilai: pilihan.Nilai,
-                        Label: `${pilihan.Label}: ${pilihan.Keterangan}`,
-                    }))}
-                    saatBerubah={(nilai) => formulir.setData('Prioritas', nilai)}
-                    galat={formulir.errors.Prioritas}
-                />
-                <BidangTeks
-                    label="Judul"
-                    nilai={formulir.data.Judul}
-                    maxLength={150}
-                    keterangan="Ringkas masalahnya, misal: Printer struk Outlet Kemang tidak mencetak."
-                    saatBerubah={(nilai) => formulir.setData('Judul', nilai)}
-                    galat={formulir.errors.Judul}
-                />
-                <BidangTeksPanjang
-                    label="Uraian masalah"
-                    nilai={formulir.data.Isi}
-                    baris={7}
-                    maksimal={10000}
-                    keterangan="Tulis apa yang terjadi, sejak kapan, di outlet/perangkat mana, dan apa yang sudah dicoba."
-                    saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
-                    galat={formulir.errors.Isi}
-                />
-                <BidangBerkas
-                    label="Lampiran (foto layar, dokumen)"
-                    berkas={formulir.data.Lampiran}
-                    ekstensi={Lampiran.Ekstensi}
-                    maksimal={Lampiran.Maksimal}
-                    ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
-                    saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
-                    galat={galatLampiran}
-                />
-                <div className="flex flex-wrap items-center gap-3">
-                    <Tombol type="submit" memproses={formulir.processing}>
-                        Kirim tiket
-                    </Tombol>
-                    <Link href="/kelola/bantuan" className="text-label font-semibold text-teks-sekunder underline">
-                        Batal
-                    </Link>
-                </div>
-            </form>
+            <Card className="max-w-2xl p-5">
+                <form onSubmit={Kirim} className="flex flex-col gap-4">
+                    <BidangPilihan
+                        label="Kategori"
+                        nilai={formulir.data.Kategori}
+                        opsi={Kategori}
+                        kosong="Pilih kategori masalah"
+                        saatBerubah={(nilai) => formulir.setData('Kategori', nilai)}
+                        galat={formulir.errors.Kategori}
+                    />
+                    <BidangPilihan
+                        label="Seberapa mendesak?"
+                        nilai={formulir.data.Prioritas}
+                        opsi={Prioritas.map((pilihan) => ({
+                            Nilai: pilihan.Nilai,
+                            Label: `${pilihan.Label}: ${pilihan.Keterangan}`,
+                        }))}
+                        saatBerubah={(nilai) => formulir.setData('Prioritas', nilai)}
+                        galat={formulir.errors.Prioritas}
+                    />
+                    <BidangTeks
+                        label="Judul"
+                        nilai={formulir.data.Judul}
+                        maxLength={150}
+                        keterangan="Ringkas masalahnya, misal: Printer struk Outlet Kemang tidak mencetak."
+                        saatBerubah={(nilai) => formulir.setData('Judul', nilai)}
+                        galat={formulir.errors.Judul}
+                    />
+                    <BidangTeksPanjang
+                        label="Uraian masalah"
+                        nilai={formulir.data.Isi}
+                        baris={7}
+                        maksimal={10000}
+                        keterangan="Tulis apa yang terjadi, sejak kapan, di outlet/perangkat mana, dan apa yang sudah dicoba."
+                        saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
+                        galat={formulir.errors.Isi}
+                    />
+                    <BidangBerkas
+                        label="Lampiran (foto layar, dokumen)"
+                        berkas={formulir.data.Lampiran}
+                        ekstensi={Lampiran.Ekstensi}
+                        maksimal={Lampiran.Maksimal}
+                        ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
+                        saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
+                        galat={galatLampiran}
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            Kirim tiket
+                        </Tombol>
+                        <Button asChild variant="outline">
+                            <Link href="/kelola/bantuan">Batal</Link>
+                        </Button>
+                    </div>
+                </form>
+            </Card>
         </TataLetakAplikasi>
     );
 }

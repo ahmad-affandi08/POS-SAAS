@@ -8,6 +8,8 @@ import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
+import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -107,21 +109,17 @@ function EditorDaftarHarga({
     };
 
     return (
-        <section
-            aria-labelledby={`judul-daftar-${daftar.Uuid}`}
-            className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4"
+        <PanelKatalog
+            tingkat="h3"
+            idJudul={`judul-daftar-${daftar.Uuid}`}
+            judul={
+                <Link href={`/kelola/daftar-harga/${daftar.Uuid}`} className="text-brand underline">
+                    {daftar.Nama}
+                </Link>
+            }
+            aksi={<LabelStatus jenis={daftar.Aktif ? 'sukses' : 'netral'} teks={daftar.Aktif ? 'Aktif' : 'Nonaktif'} />}
+            keterangan={`${daftar.Ringkasan}. Kosongkan satuan yang memakai harga dasar.`}
         >
-            <div className="flex flex-wrap items-center gap-2">
-                <h3 id={`judul-daftar-${daftar.Uuid}`} className="text-subjudul font-semibold text-teks-utama">
-                    <Link href={`/kelola/daftar-harga/${daftar.Uuid}`} className="text-brand underline">
-                        {daftar.Nama}
-                    </Link>
-                </h3>
-                <LabelStatus jenis={daftar.Aktif ? 'sukses' : 'netral'} teks={daftar.Aktif ? 'Aktif' : 'Nonaktif'} />
-            </div>
-            <p className="text-keterangan text-teks-sekunder">
-                {daftar.Ringkasan}. Kosongkan satuan yang memakai harga dasar.
-            </p>
             {satuan.map((item) => (
                 <div key={item.UuidProdukSatuan} className="flex flex-col gap-1">
                     <p className="text-label font-semibold text-teks-utama">
@@ -151,7 +149,7 @@ function EditorDaftarHarga({
                     </Tombol>
                 </div>
             ) : null}
-        </section>
+        </PanelKatalog>
     );
 }
 
@@ -208,17 +206,11 @@ export default function HalamanHargaProduk({
                 kecuali={Object.keys(galat).filter((kunci) => /^(Satuan|Harga)\./.test(kunci))}
             />
 
-            <section
-                aria-labelledby="judul-harga-dasar"
-                className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4"
+            <PanelKatalog
+                judul="Harga dasar & harga bertingkat"
+                idJudul="judul-harga-dasar"
+                keterangan={`Harga ${LabelHargaTermasukPajak}. Satuan tanpa harga dasar hanya dipakai untuk pembelian dan tidak muncul di kasir. Harga satuan lain tidak dihitung otomatis dari isi satuan.`}
             >
-                <h2 id="judul-harga-dasar" className="text-subjudul font-semibold text-teks-utama">
-                    Harga dasar & harga bertingkat
-                </h2>
-                <p className="text-keterangan text-teks-sekunder">
-                    Harga {LabelHargaTermasukPajak}. Satuan tanpa harga dasar hanya dipakai untuk pembelian dan tidak
-                    muncul di kasir. Harga satuan lain tidak dihitung otomatis dari isi satuan.
-                </p>
                 {Satuan.map((item, indeks) => (
                     <div key={item.UuidProdukSatuan} className="flex flex-col gap-1">
                         <p className="text-label font-semibold text-teks-utama">
@@ -251,14 +243,14 @@ export default function HalamanHargaProduk({
                         </Tombol>
                     </div>
                 ) : null}
-            </section>
+            </PanelKatalog>
 
             <section aria-labelledby="judul-daftar-harga" className="flex flex-col gap-3">
                 <h2 id="judul-daftar-harga" className="text-subjudul font-semibold text-teks-utama">
                     Harga di daftar harga
                 </h2>
                 {DaftarHarga.length === 0 ? (
-                    <p className="rounded-panel border border-garis bg-permukaan px-4 py-3 text-isi text-teks-sekunder">
+                    <p className="rounded-panel border border-garis bg-card px-4 py-3 text-isi text-teks-sekunder">
                         Belum ada daftar harga. Buat daftar harga untuk harga per outlet, kanal (misal online), tingkat
                         pelanggan, atau periode promo di{' '}
                         <Link href="/kelola/daftar-harga" className="font-semibold text-brand underline">
@@ -280,70 +272,59 @@ export default function HalamanHargaProduk({
                 )}
             </section>
 
-            <section
-                aria-labelledby="judul-riwayat-harga"
-                className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4"
-            >
-                <h2 id="judul-riwayat-harga" className="text-subjudul font-semibold text-teks-utama">
-                    Riwayat harga
-                </h2>
+            <PanelKatalog judul="Riwayat harga" idJudul="judul-riwayat-harga">
                 {Riwayat.Data.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Belum ada perubahan harga.</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[760px] text-left text-label">
-                            <caption className="sr-only">Riwayat perubahan harga</caption>
-                            <thead className="border-b border-garis text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="py-2 pr-2 font-semibold">
-                                        Waktu
-                                    </th>
-                                    <th scope="col" className="px-2 py-2 font-semibold">
-                                        Harga
-                                    </th>
-                                    <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                        Mulai jumlah
-                                    </th>
-                                    <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                        Lama
-                                    </th>
-                                    <th scope="col" className="px-2 py-2 text-right font-semibold">
-                                        Baru
-                                    </th>
-                                    <th scope="col" className="py-2 pl-2 font-semibold">
-                                        Oleh
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Riwayat.Data.map((item, indeks) => (
-                                    <tr
-                                        key={`${item.DibuatPada}-${String(indeks)}`}
-                                        className="border-b border-garis last:border-b-0"
-                                    >
-                                        <td className="py-2 pr-2 whitespace-nowrap text-teks-sekunder">
-                                            {FormatTanggalWaktu(item.DibuatPada)}
-                                        </td>
-                                        <td className="px-2 py-2">
-                                            {item.NamaDaftarHarga ?? 'Harga dasar'} · {item.NamaSatuan}
-                                        </td>
-                                        <td className="px-2 py-2 text-right tabular-nums">
-                                            {FormatMasukanJumlah(item.JumlahMinimum)}+
-                                        </td>
-                                        <td className="px-2 py-2 text-right tabular-nums text-teks-sekunder">
-                                            {item.HargaLama === null ? 'Baru' : FormatRupiah(item.HargaLama)}
-                                        </td>
-                                        <td className="px-2 py-2 text-right tabular-nums">
-                                            {item.HargaBaru === null ? 'Dihapus' : FormatRupiah(item.HargaBaru)}
-                                        </td>
-                                        <td className="py-2 pl-2 text-teks-sekunder">
-                                            {item.NamaPengubah ?? 'Sistem'} · {item.LabelSumber}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <Table className="min-w-[760px] text-left text-label">
+                        <TableCaption className="sr-only">Riwayat perubahan harga</TableCaption>
+                        <TableHeader>
+                            <TableRow className="border-garis hover:bg-transparent">
+                                <TableHead scope="col" className="pl-0 font-semibold text-teks-sekunder">
+                                    Waktu
+                                </TableHead>
+                                <TableHead scope="col" className="font-semibold text-teks-sekunder">
+                                    Harga
+                                </TableHead>
+                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
+                                    Mulai jumlah
+                                </TableHead>
+                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
+                                    Lama
+                                </TableHead>
+                                <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
+                                    Baru
+                                </TableHead>
+                                <TableHead scope="col" className="pr-0 font-semibold text-teks-sekunder">
+                                    Oleh
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Riwayat.Data.map((item, indeks) => (
+                                <TableRow key={`${item.DibuatPada}-${String(indeks)}`} className="border-garis">
+                                    <TableCell className="pl-0 text-teks-sekunder">
+                                        {FormatTanggalWaktu(item.DibuatPada)}
+                                    </TableCell>
+                                    <TableCell className="whitespace-normal">
+                                        {item.NamaDaftarHarga ?? 'Harga dasar'} · {item.NamaSatuan}
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums">
+                                        {FormatMasukanJumlah(item.JumlahMinimum)}+
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums text-teks-sekunder">
+                                        {item.HargaLama === null ? 'Baru' : FormatRupiah(item.HargaLama)}
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums">
+                                        {item.HargaBaru === null ? 'Dihapus' : FormatRupiah(item.HargaBaru)}
+                                    </TableCell>
+                                    <TableCell className="pr-0 whitespace-normal text-teks-sekunder">
+                                        {item.NamaPengubah ?? 'Sistem'} · {item.LabelSumber}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
                 <Paginasi
                     alamat={`/kelola/produk/${Kepala.Uuid}/harga`}
@@ -353,7 +334,7 @@ export default function HalamanHargaProduk({
                     total={Riwayat.Total}
                     label="Halaman riwayat harga"
                 />
-            </section>
+            </PanelKatalog>
         </TataLetakAplikasi>
     );
 }

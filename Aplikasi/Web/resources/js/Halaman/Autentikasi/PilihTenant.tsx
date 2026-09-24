@@ -1,7 +1,9 @@
 import { router } from '@inertiajs/react';
+import { ChevronRightIcon, StoreIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Button } from '@/Komponen/Ui/button';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAutentikasi from '@/TataLetak/TataLetakAutentikasi';
 
@@ -24,8 +26,9 @@ export default function HalamanPilihTenant({ Tenant }: { Tenant: { Uuid: string;
                 <ul className="flex flex-col gap-2">
                     {Tenant.map((tenant) => (
                         <li key={tenant.Uuid}>
-                            <button
+                            <Button
                                 type="button"
+                                variant="outline"
                                 disabled={memproses}
                                 onClick={() =>
                                     router.post(
@@ -34,10 +37,12 @@ export default function HalamanPilihTenant({ Tenant }: { Tenant: { Uuid: string;
                                         { onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
                                     )
                                 }
-                                className="w-full rounded-kontrol border border-garis-input px-4 py-3 text-left text-isi font-semibold text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-auto w-full justify-start border-garis-input px-4 py-3 text-left text-isi font-semibold whitespace-normal text-teks-utama"
                             >
-                                {tenant.Nama}
-                            </button>
+                                <StoreIcon aria-hidden="true" className="text-teks-sekunder" />
+                                <span className="flex-1">{tenant.Nama}</span>
+                                <ChevronRightIcon aria-hidden="true" className="text-teks-sekunder" />
+                            </Button>
                         </li>
                     ))}
                 </ul>

@@ -3,6 +3,10 @@ import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import IndikatorLangkah, { teksStatusLangkah } from '@/Komponen/PanduanAwal/IndikatorLangkah';
+import { Button } from '@/Komponen/Ui/button';
+import { Card } from '@/Komponen/Ui/card';
+import { Separator } from '@/Komponen/Ui/separator';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -46,49 +50,49 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                 </Pemberitahuan>
             ) : null}
 
-            <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                <table className="w-full min-w-[480px] text-left text-isi">
-                    <caption className="sr-only">Langkah panduan awal</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+            <Card className="gap-0 py-0">
+                <Table className="min-w-[480px] text-isi">
+                    <TableCaption className="sr-only">Langkah panduan awal</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead scope="col" className="px-4">
                                 Langkah
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4">
                                 Status
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className="px-4">
                                 <span className="sr-only">Aksi</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {Progres.Langkah.map((item, indeks) => (
-                            <tr key={item.Kunci} className="border-b border-garis last:border-b-0">
-                                <td className="px-4 py-2 text-teks-utama">
+                            <TableRow key={item.Kunci}>
+                                <TableCell className="px-4 whitespace-normal text-teks-utama">
                                     {String(indeks + 1)}. {item.Judul}
-                                </td>
-                                <td className="px-4 py-2">
+                                </TableCell>
+                                <TableCell className="px-4">
                                     <LabelStatus
                                         jenis={jenisLabel[item.Status]}
                                         teks={teksStatusLangkah[item.Status]}
                                     />
-                                </td>
-                                <td className="px-4 py-2 text-right">
-                                    <Link
-                                        href={item.Tautan}
-                                        className="font-semibold text-brand underline outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                    >
-                                        {item.Status === 'Selesai' ? `Ubah ${item.Judul}` : `Buka ${item.Judul}`}
-                                    </Link>
-                                </td>
-                            </tr>
+                                </TableCell>
+                                <TableCell className="px-4 text-right">
+                                    <Button asChild variant="link" size="sm" className="font-semibold underline">
+                                        <Link href={item.Tautan}>
+                                            {item.Status === 'Selesai' ? `Ubah ${item.Judul}` : `Buka ${item.Judul}`}
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </section>
+                    </TableBody>
+                </Table>
+            </Card>
 
-            <div className="flex flex-col gap-3 border-t border-garis pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Separator />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-isi text-teks-sekunder">
                     {belumSelesai.length === 0
                         ? 'Semua langkah selesai.'
@@ -105,12 +109,9 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                         Selesaikan panduan
                     </Tombol>
                     {langkahBerikutnya ? (
-                        <Link
-                            href={langkahBerikutnya.Tautan}
-                            className="inline-flex h-10 items-center justify-center rounded-kontrol border border-brand bg-brand px-4 text-label font-semibold text-permukaan outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                        >
-                            Lanjutkan: {langkahBerikutnya.Judul}
-                        </Link>
+                        <Button asChild>
+                            <Link href={langkahBerikutnya.Tautan}>Lanjutkan: {langkahBerikutnya.Judul}</Link>
+                        </Button>
                     ) : null}
                 </div>
             </div>
