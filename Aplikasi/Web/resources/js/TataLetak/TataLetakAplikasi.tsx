@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    BookOpenTextIcon,
     CreditCardIcon,
     HouseIcon,
     LifeBuoyIcon,
@@ -9,6 +10,7 @@ import {
     ShieldCheckIcon,
     StoreIcon,
     UsersIcon,
+    WarehouseIcon,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -41,6 +43,9 @@ type PropsTataLetak = { judul: string; children: ReactNode };
 
 type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null; ikon?: LucideIcon };
 
+/** Menu utama bersub-menu: tampil bila ada sub-menu yang boleh dibuka; tautannya = sub-menu pertama yang boleh. */
+type GrupMenu = ItemMenu & { labelSub: string; sub: ItemMenu[] };
+
 // F-03: grup menu "Produk". Tampil sebagai sub-menu saat salah satu halamannya dibuka.
 const menuProduk: ItemMenu[] = [
     { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
@@ -52,21 +57,63 @@ const menuProduk: ItemMenu[] = [
     { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 
-/** Item sub-menu Produk yang aktif untuk URL ini: awalan terpanjang menang (/kelola/produk/impor vs /kelola/produk). */
-export function CariMenuProdukAktif(url: string): string | null {
+// F-05a: grup menu "Persediaan" (DesainF05a E). Impor butuh persediaan.kelola, pengaturan butuh akuntansi.kelola.
+const menuPersediaan: ItemMenu[] = [
+    { label: 'Saldo stok', href: '/kelola/persediaan/saldo', izin: IzinTenant.PersediaanLihat },
+    { label: 'Kartu stok', href: '/kelola/persediaan/kartu-stok', izin: IzinTenant.PersediaanLihat },
+    { label: 'Stok awal', href: '/kelola/persediaan/stok-awal', izin: IzinTenant.PersediaanLihat },
+    { label: 'Impor stok awal', href: '/kelola/persediaan/stok-awal/impor', izin: IzinTenant.PersediaanKelola },
+    { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
+];
+
+// F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).
+const menuAkuntansi: ItemMenu[] = [
+    { label: 'Jurnal', href: '/kelola/akuntansi/jurnal', izin: IzinTenant.LaporanKeuanganLihat },
+];
+
+/** Item sub-menu yang aktif untuk URL ini: awalan terpanjang menang (/kelola/produk/impor vs /kelola/produk). */
+export function CariSubMenuAktif(daftar: ItemMenu[], url: string): string | null {
     const jalur = url.split('?')[0] ?? url;
-    const cocok = menuProduk
+    const cocok = daftar
         .filter((menu) => jalur === menu.href || jalur.startsWith(`${menu.href}/`))
         .sort((a, b) => b.href.length - a.href.length);
 
     return cocok[0]?.href ?? null;
 }
 
+/** Item sub-menu Produk yang aktif untuk URL ini. */
+export function CariMenuProdukAktif(url: string): string | null {
+    return CariSubMenuAktif(menuProduk, url);
+}
+
 // Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
-const daftarMenu: ItemMenu[] = [
+const daftarMenu: (ItemMenu | GrupMenu)[] = [
     { label: 'Beranda', href: '/kelola', izin: null, ikon: HouseIcon },
     { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat, ikon: StoreIcon },
-    { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat, ikon: PackageIcon },
+    {
+        label: 'Produk',
+        href: '/kelola/produk',
+        izin: IzinTenant.ProdukLihat,
+        ikon: PackageIcon,
+        labelSub: 'Menu produk',
+        sub: menuProduk,
+    },
+    {
+        label: 'Persediaan',
+        href: '/kelola/persediaan/saldo',
+        izin: null,
+        ikon: WarehouseIcon,
+        labelSub: 'Menu persediaan',
+        sub: menuPersediaan,
+    },
+    {
+        label: 'Akuntansi',
+        href: '/kelola/akuntansi/jurnal',
+        izin: null,
+        ikon: BookOpenTextIcon,
+        labelSub: 'Menu akuntansi',
+        sub: menuAkuntansi,
+    },
     // F-02b: perangkat POS.
     { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat, ikon: MonitorSmartphoneIcon },
     { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat, ikon: UsersIcon },
@@ -75,17 +122,45 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },
 ];
 
-/** Menu utama yang aktif untuk URL ini (Produk untuk seluruh grupnya; Pengguna & peran juga untuk /kelola/peran). */
+function CekGrupMenu(menu: ItemMenu | GrupMenu): menu is GrupMenu {
+    return 'sub' in menu;
+}
+
+/** Menu utama yang aktif untuk URL ini (grup untuk seluruh sub-menunya; Pengguna & peran juga untuk /kelola/peran). */
 export function CekMenuAktif(href: string, url: string): boolean {
     if (href === '/kelola') {
         return url === '/kelola';
     }
 
-    if (href === '/kelola/produk') {
-        return CariMenuProdukAktif(url) !== null;
+    const grup = daftarMenu.find((menu): menu is GrupMenu => CekGrupMenu(menu) && menu.href === href);
+
+    if (grup) {
+        return CariSubMenuAktif(grup.sub, url) !== null;
     }
 
     return url.startsWith(href) || (href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
+}
+
+type MenuTerlihat = { menu: ItemMenu; labelSub: string | null; sub: ItemMenu[] };
+
+/** Menu utama yang boleh dilihat pemegang akses ini beserta sub-menunya; grup tanpa sub-menu boleh disembunyikan. */
+export function SaringMenuTerlihat(akses: PropsBersamaAplikasi['Akses']): MenuTerlihat[] {
+    const CekBoleh = (menu: ItemMenu) => menu.izin === null || PunyaIzinTenant(akses, menu.izin);
+
+    return daftarMenu.flatMap((menu): MenuTerlihat[] => {
+        if (!CekBoleh(menu)) {
+            return [];
+        }
+
+        if (!CekGrupMenu(menu)) {
+            return [{ menu, labelSub: null, sub: [] }];
+        }
+
+        const sub = menu.sub.filter(CekBoleh);
+        const pertama = sub[0];
+
+        return pertama === undefined ? [] : [{ menu: { ...menu, href: pertama.href }, labelSub: menu.labelSub, sub }];
+    });
 }
 
 /** F-00: banner selama langganan Tertunggak (masa tenggang) atau Ditangguhkan (hanya lihat, export, bayar). */
@@ -134,9 +209,7 @@ function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBay
 export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
-    const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
-    const menuProdukAktif = CariMenuProdukAktif(url);
-    const subMenuProduk = menuProduk.filter((menu) => menu.izin === null || PunyaIzinTenant(props.Akses, menu.izin));
+    const menuTerlihat = SaringMenuTerlihat(props.Akses);
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
     const keamananAktif = url.startsWith('/kelola/keamanan');
     const [mengirim, AturMengirim] = useState(false);
@@ -165,12 +238,14 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                             <SidebarGroup>
                                 <SidebarGroupContent>
                                     <SidebarMenu>
-                                        {menuTerlihat.map((menu) => {
-                                            const aktif = CekMenuAktif(menu.href, url);
+                                        {menuTerlihat.map(({ menu, labelSub, sub }) => {
+                                            const subAktif = labelSub === null ? null : CariSubMenuAktif(sub, url);
+                                            const aktif =
+                                                labelSub === null ? CekMenuAktif(menu.href, url) : subAktif !== null;
                                             const Ikon = menu.ikon;
 
                                             return (
-                                                <SidebarMenuItem key={menu.href}>
+                                                <SidebarMenuItem key={menu.label}>
                                                     <SidebarMenuButton
                                                         asChild
                                                         isActive={aktif}
@@ -185,27 +260,25 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                                                             <span>{menu.label}</span>
                                                         </Link>
                                                     </SidebarMenuButton>
-                                                    {menu.href === '/kelola/produk' &&
-                                                    menuProdukAktif !== null &&
-                                                    subMenuProduk.length > 0 ? (
-                                                        <nav aria-label="Menu produk">
+                                                    {labelSub !== null && subAktif !== null ? (
+                                                        <nav aria-label={labelSub}>
                                                             <SidebarMenuSub>
-                                                                {subMenuProduk.map((sub) => (
-                                                                    <SidebarMenuSubItem key={sub.href}>
+                                                                {sub.map((item) => (
+                                                                    <SidebarMenuSubItem key={item.href}>
                                                                         <SidebarMenuSubButton
                                                                             asChild
-                                                                            isActive={menuProdukAktif === sub.href}
+                                                                            isActive={subAktif === item.href}
                                                                             className="text-label data-[active=true]:font-semibold"
                                                                         >
                                                                             <Link
-                                                                                href={sub.href}
+                                                                                href={item.href}
                                                                                 aria-current={
-                                                                                    menuProdukAktif === sub.href
+                                                                                    subAktif === item.href
                                                                                         ? 'page'
                                                                                         : undefined
                                                                                 }
                                                                             >
-                                                                                {sub.label}
+                                                                                {item.label}
                                                                             </Link>
                                                                         </SidebarMenuSubButton>
                                                                     </SidebarMenuSubItem>
