@@ -11,6 +11,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use LogicException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -102,7 +103,9 @@ final class PenyimpanGambarProduk
     private static function Disk(): FilesystemAdapter
     {
         $disk = Storage::disk((string) config('katalog.DiskGambar', 'local'));
-        assert($disk instanceof FilesystemAdapter);
+        if (! $disk instanceof FilesystemAdapter) {
+            throw new LogicException('Disk gambar produk harus FilesystemAdapter.');
+        }
 
         return $disk;
     }
