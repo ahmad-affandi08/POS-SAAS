@@ -7,7 +7,7 @@ import {
 } from "lucide-react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
-// Aplikasi web tidak punya mode gelap: tema Sonner dikunci terang (tanpa next-themes).
+// Aplikasi web tidak punya mode gelap (D-14): tema Sonner dikunci terang, tanpa pustaka pengalih tema.
 // Warna mengikuti token di Gaya/Aplikasi.css lewat variabel --popover, --border, dst.
 const Toaster = ({ ...props }: ToasterProps) => {
   return (

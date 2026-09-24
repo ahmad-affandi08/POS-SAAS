@@ -5,7 +5,8 @@
  * - Semua nilai warna (hex, rgb, oklch, ...) hanya boleh ada di file ini. Halaman, komponen kita, dan
  *   komponen shadcn/ui (Komponen/Ui) memakai utilitas token (bg-permukaan, text-teks-utama, bg-primary, ...).
  *   Dijaga oleh test Gaya/AturanWarnaTes.ts.
- * - Tidak ada mode gelap di aplikasi web: tanpa varian `dark:`, tanpa blok `.dark`, tanpa prefers-color-scheme.
+ * - Tidak ada mode gelap (D-14): tanpa varian gelap Tailwind, tanpa kelas/blok tema gelap, tanpa media query
+ *   skema warna sistem. Juga dijaga oleh Gaya/AturanWarnaTes.ts.
  * - Palet bawaan Tailwind (red-500, white, black, ...) dimatikan agar tidak ada warna di luar token.
  *
  * Mengganti warna: ubah nilai di bagian 1 ("UBAH WARNA DI SINI") saja. Bagian 2 dan seterusnya adalah
@@ -18,56 +19,69 @@
 @import './UtilitasKomponen.css';
 
 @source '../views';
+/* File test tidak dirender; contoh pola terlarang di dalamnya jangan sampai menjadi CSS. */
+@source not '../**/*Tes.{ts,tsx}';
 
 /* ============================================================================================
  * 1. UBAH WARNA DI SINI
- *    Palet (nilai sementara §17.6.3). Setiap token menjadi utilitas Tailwind: bg-latar,
- *    text-teks-sekunder, border-garis, bg-brand-lembut, dst. `static` = variabel selalu dikeluarkan
- *    (dipakai juga lewat var() di style inline, misalnya Sonner).
+ *    Palet dasar (nilai sementara §17.6.3). Ke-11 nilai ini juga ada di Flutter
+ *    (Paket/SistemDesain/lib/Token/TokenWarna.dart, nama sama dalam camelCase) dan dicek sama oleh
+ *    Paket/SistemDesain/test/Token/SumberWarna_test.dart: ubah keduanya bersamaan.
+ *    Setiap token menjadi utilitas Tailwind: bg-latar, text-teks-sekunder, border-garis, dst.
+ *    `static` = variabel selalu dikeluarkan (dipakai juga lewat var() di style inline, mis. Sonner).
  * ============================================================================================ */
 @theme static {
-    /* Matikan palet bawaan Tailwind: hanya token di bawah yang boleh dipakai. */
+    /* Matikan palet bawaan Tailwind: hanya token di file ini yang boleh dipakai. */
     --color-*: initial;
 
-    /* Netral */
     --color-latar: #fafaf7; /* latar halaman */
-    --color-permukaan: #ffffff; /* panel, tabel, dialog, input */
-    --color-permukaan-redup: #f3f2ee; /* permukaan sekunder/redup: tombol sekunder, skeleton, lencana netral */
-    --color-permukaan-sorot: #ecebe6; /* sorotan hover/aktif pada menu, daftar, opsi */
+    --color-permukaan: #ffffff; /* panel, tabel, dialog, input; juga teks di atas brand/bahaya */
     --color-garis: #e4e2dc; /* pemisah */
     --color-garis-input: #8a877f; /* tepi input & kontrol (kontras >= 3:1) */
     --color-teks-utama: #1c1b19;
     --color-teks-sekunder: #5c5a55;
-
-    /* Brand (aksi utama, penanda aktif) */
-    --color-brand: #0b6468;
-    --color-brand-teks: #ffffff; /* teks/ikon di atas brand */
-    --color-brand-lembut: #e2efef; /* latar lembut brand (gelembung pesan, sorotan terpilih) */
-    --color-brand-lembut-sorot: #cfe4e5; /* hover di atas brand-lembut */
-
-    /* Semantik status + varian latar lembut (lencana, baris tabel, toast) */
+    --color-brand: #0b6468; /* aksi utama, penanda aktif */
     --color-sukses: #2e7d32;
-    --color-sukses-lembut: #e8f3e9;
     --color-peringatan: #9a5b00;
-    --color-peringatan-lembut: #fbf1e1;
     --color-bahaya: #b3261e;
-    --color-bahaya-teks: #ffffff; /* teks/ikon di atas bahaya */
-    --color-bahaya-lembut: #fbe9e8;
     --color-info: #1f5fad;
-    --color-info-lembut: #e7eef8;
+}
 
-    /* Grafik (seri data berurutan) */
-    --color-grafik-1: #0b6468;
-    --color-grafik-2: #1f5fad;
-    --color-grafik-3: #9a5b00;
-    --color-grafik-4: #6b4fa3;
-    --color-grafik-5: #5c5a55;
+/* ============================================================================================
+ * 1b. Nada turunan (boleh disesuaikan, tapi biasanya cukup mengubah palet dasar di atas)
+ *    Diturunkan dari palet dasar dengan color-mix, sehingga ikut berubah bila palet dasar diubah.
+ *    Bila kelak sebuah nada perlu nilai sendiri (hex), tambahkan juga ke TokenWarna.dart dan ke
+ *    peta di SumberWarna_test.dart agar web & Flutter tetap sama.
+ * ============================================================================================ */
+@theme static {
+    /* Teks/ikon di atas warna penuh */
+    --color-brand-teks: var(--color-permukaan);
+    --color-bahaya-teks: var(--color-permukaan);
 
-    /* Tirai di belakang dialog/sheet/drawer, dan warna bayangan elevasi */
-    --color-tirai: rgb(28 27 25 / 0.5);
-    --color-bayangan-tipis: rgb(28 27 25 / 0.05);
-    --color-bayangan: rgb(28 27 25 / 0.1);
-    --color-bayangan-tebal: rgb(28 27 25 / 0.25);
+    /* Permukaan sekunder (tombol sekunder, skeleton, lencana netral) & sorotan hover/aktif menu */
+    --color-permukaan-redup: color-mix(in oklab, var(--color-garis) 40%, var(--color-permukaan));
+    --color-permukaan-sorot: color-mix(in oklab, var(--color-garis) 70%, var(--color-permukaan));
+
+    /* Latar lembut (lencana, baris tabel, toast, gelembung pesan) */
+    --color-brand-lembut: color-mix(in oklab, var(--color-brand) 12%, var(--color-permukaan));
+    --color-brand-lembut-sorot: color-mix(in oklab, var(--color-brand) 20%, var(--color-permukaan));
+    --color-sukses-lembut: color-mix(in oklab, var(--color-sukses) 12%, var(--color-permukaan));
+    --color-peringatan-lembut: color-mix(in oklab, var(--color-peringatan) 12%, var(--color-permukaan));
+    --color-bahaya-lembut: color-mix(in oklab, var(--color-bahaya) 12%, var(--color-permukaan));
+    --color-info-lembut: color-mix(in oklab, var(--color-info) 12%, var(--color-permukaan));
+
+    /* Seri grafik (sementara memakai palet dasar; warna grafik final menyusul) */
+    --color-grafik-1: var(--color-brand);
+    --color-grafik-2: var(--color-info);
+    --color-grafik-3: var(--color-peringatan);
+    --color-grafik-4: var(--color-teks-sekunder);
+    --color-grafik-5: var(--color-garis-input);
+
+    /* Tirai di belakang dialog/sheet/drawer, dan bayangan elevasi */
+    --color-tirai: color-mix(in oklab, var(--color-teks-utama) 50%, transparent);
+    --color-bayangan-tipis: color-mix(in oklab, var(--color-teks-utama) 5%, transparent);
+    --color-bayangan: color-mix(in oklab, var(--color-teks-utama) 10%, transparent);
+    --color-bayangan-tebal: color-mix(in oklab, var(--color-teks-utama) 25%, transparent);
 }
 
 /* ============================================================================================

@@ -2,7 +2,7 @@
  * Utilitas tambahan yang dipakai komponen shadcn/ui (Komponen/Ui). Disalin seperlunya dari
  * `shadcn/dist/tailwind.css` (shadcn@4.21.0) alih-alih mengimpor paket CLI `shadcn` sebagai dependensi:
  * - hanya utilitas yang dipakai: scroll-fade (attachment, message-scroller) dan shimmer (attachment);
- * - TANPA varian gelap (versi asli shimmer punya `@variant dark`);
+ * - TANPA varian gelap (versi asli shimmer punya varian gelap);
  * - tanpa literal warna: masker memakai `black` (hanya kanal alfa yang dipakai), sorotan shimmer
  *   diturunkan dari currentColor.
  * Varian `data-open:`/`data-closed:` tidak perlu disalin: Tailwind 4 sudah mendukung varian atribut data.
