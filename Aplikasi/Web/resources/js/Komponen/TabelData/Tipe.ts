@@ -4,7 +4,8 @@ import type { ColumnDef } from '@tanstack/react-table';
  * Tipe bersama `TabelData` (PRD §17.4.3, D-16). Kontrak server: `{ Data, Meta }` dari `ResponsTabel` (PHP).
  */
 export type MetaTabel = { Halaman: number; PerHalaman: number; Total: number; JumlahHalaman: number };
-export type HasilTabel<T> = { Data: T[]; Meta: MetaTabel };
+/** `Ringkasan` opsional: angka ringkasan yang dihitung server untuk saring yang sama (mis. total nilai). */
+export type HasilTabel<T, R = unknown> = { Data: T[]; Meta: MetaTabel; Ringkasan?: R };
 
 export type UrutKolom = { id: string; desc: boolean };
 

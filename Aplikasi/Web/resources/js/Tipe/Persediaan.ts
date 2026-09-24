@@ -1,3 +1,4 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 /**
  * Kontrak props & JSON halaman persediaan F-05a (DesainF05a E): stok awal, impor stok awal, saldo stok, kartu stok,
  * dan pengaturan persediaan. Desimal selalu string: uang "12345.68", jumlah "10.0000", HPP "1234.568000".
@@ -197,10 +198,9 @@ export type BarisSaldoStok = {
     JumlahNomorSeri: number | null;
     TautanKartuStok: string;
 };
+export type RingkasanSaldoStok = { TotalNilai: string; JumlahBaris: number; JumlahMinus: number };
 export type PropsSaldoStok = {
-    Saldo: DaftarBerhalaman<BarisSaldoStok>;
-    Ringkasan: { TotalNilai: string; JumlahBaris: number; JumlahMinus: number };
-    Saring: { Kata: string; UuidGudang: string | null; Keadaan: KeadaanSaldo; Urut: 'Nama' | '-Nilai' | 'Jumlah' };
+    Saldo: HasilTabel<BarisSaldoStok, RingkasanSaldoStok> & { Ringkasan: RingkasanSaldoStok };
     OpsiGudang: OpsiGudang[];
     MetodeHpp: MetodeHpp;
 };
@@ -228,7 +228,7 @@ export type PropsKartuStok = {
     Saring: { UuidProduk: string | null; UuidGudang: string | null; Dari: string; Sampai: string };
     SaldoAwal: { Jumlah: string; Nilai: string } | null;
     SaldoAkhir: { Jumlah: string; Nilai: string } | null;
-    Mutasi: DaftarBerhalaman<BarisKartuStok> | null;
+    Mutasi: HasilTabel<BarisKartuStok> | null;
     OpsiGudang: OpsiGudang[];
 };
 

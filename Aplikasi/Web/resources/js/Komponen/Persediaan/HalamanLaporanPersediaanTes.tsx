@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanKartuStok, { BuatQueryKartuStok, PeriksaSaringKartu } from '@/Halaman/Kelola/Persediaan/KartuStok';
 import HalamanPengaturanPersediaan from '@/Halaman/Kelola/Persediaan/Pengaturan';
-import HalamanSaldoStok, { BuatQuerySaldo } from '@/Halaman/Kelola/Persediaan/Saldo';
+import HalamanSaldoStok from '@/Halaman/Kelola/Persediaan/Saldo';
 import { AturHalamanUji, RenderUji, TiruanInertia, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import type { PropsKartuStok, PropsPengaturanPersediaan, PropsSaldoStok } from '@/Tipe/Persediaan';
+import type { BarisSaldoStok, PropsKartuStok, PropsPengaturanPersediaan, PropsSaldoStok } from '@/Tipe/Persediaan';
 
 import {
     BuatBarisKartu,
     BuatBarisSaldo,
-    BuatHalaman,
+    BuatHasilTabel,
     GudangLama,
     GudangUtama,
     NamaPanjang,
@@ -25,21 +25,29 @@ function AturAkses(izin: string[]): void {
     TiruanInertia.usePage().props.Akses = { Pemilik: false, Izin: izin };
 }
 
-const saringSaldo: PropsSaldoStok['Saring'] = { Kata: '', UuidGudang: null, Keadaan: 'Semua', Urut: 'Nama' };
+const ringkasanKosong = { TotalNilai: '0.00', JumlahBaris: 0, JumlahMinus: 0 };
 
-function PropsSaldo(perubahan: Partial<PropsSaldoStok> = {}): PropsSaldoStok {
+function PropsSaldo(
+    perubahan: Partial<Omit<PropsSaldoStok, 'Saldo'>> & {
+        Saldo?: ReturnType<typeof BuatHasilTabel<BarisSaldoStok>>;
+        Ringkasan?: PropsSaldoStok['Saldo']['Ringkasan'];
+    } = {},
+): PropsSaldoStok {
+    const { Saldo = BuatHasilTabel<BarisSaldoStok>([]), Ringkasan = ringkasanKosong, ...sisa } = perubahan;
+
     return {
-        Saldo: BuatHalaman([]),
-        Ringkasan: { TotalNilai: '0.00', JumlahBaris: 0, JumlahMinus: 0 },
-        Saring: saringSaldo,
+        Saldo: { ...Saldo, Ringkasan },
         OpsiGudang: [GudangUtama, GudangLama],
         MetodeHpp: 'RataRata',
-        ...perubahan,
+        ...sisa,
     };
 }
 
-describe('Kelola/Persediaan/Saldo (F-05a)', () => {
-    beforeEach(() => AturHalamanUji({}, '/kelola/persediaan/saldo'));
+describe('Kelola/Persediaan/Saldo (F-05a, TabelData D-16)', () => {
+    beforeEach(() => {
+        AturHalamanUji({}, '/kelola/persediaan/saldo');
+        window.history.replaceState({}, '', '/kelola/persediaan/saldo');
+    });
     afterEach(() => cleanup());
 
     it('kosong: ajakan isi stok awal untuk persediaan.kelola; tanpa izin kelola diarahkan ke pengelola', () => {
@@ -55,12 +63,12 @@ describe('Kelola/Persediaan/Saldo (F-05a)', () => {
         expect(screen.getByText('Minta pengelola persediaan mengisi stok awal.')).toBeTruthy();
     });
 
-    it('kosong karena saringan: menawarkan hapus saringan', () => {
-        RenderUji(<HalamanSaldoStok {...PropsSaldo({ Saring: { ...saringSaldo, Keadaan: 'Minus' } })} />);
+    it('kosong karena saringan: menawarkan hapus pencarian & saring', () => {
+        window.history.replaceState({}, '', '/kelola/persediaan/saldo?saring%5BKeadaan%5D=Minus');
+        RenderUji(<HalamanSaldoStok {...PropsSaldo()} />);
 
-        expect(screen.getByRole('link', { name: 'Hapus saringan' }).getAttribute('href')).toBe(
-            '/kelola/persediaan/saldo',
-        );
+        expect(screen.getByText('Tidak ada hasil untuk pencarian atau saring ini.')).toBeTruthy();
+        expect(within(screen.getByLabelText('Saring aktif')).getByText('Keadaan stok: Stok minus')).toBeTruthy();
     });
 
     it('ringkasan, stok minus, HPP belum diketahui, batch diringkas, lokasi diarsipkan, tautan kartu stok', () => {
@@ -74,7 +82,7 @@ describe('Kelola/Persediaan/Saldo (F-05a)', () => {
                 {...PropsSaldo({
                     Ringkasan: { TotalNilai: NilaiEkstrem, JumlahBaris: 3, JumlahMinus: 1 },
                     MetodeHpp: 'Fifo',
-                    Saldo: BuatHalaman([
+                    Saldo: BuatHasilTabel([
                         BuatBarisSaldo(1, {
                             NamaProduk: NamaPanjang,
                             JumlahTersedia: '-4.0000',
@@ -115,19 +123,15 @@ describe('Kelola/Persediaan/Saldo (F-05a)', () => {
         expect(
             screen.getByRole('link', { name: `Kartu stok ${NamaPanjang} di Gudang Utama` }).getAttribute('href'),
         ).toBe(BuatBarisSaldo(1).TautanKartuStok);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Tampilkan stok minus' }));
-        expect(tiruanRouter.get).toHaveBeenCalledWith(
-            '/kelola/persediaan/saldo',
-            { keadaan: 'Minus' },
-            expect.anything(),
+        expect(screen.getByRole('link', { name: 'Tampilkan stok minus' }).getAttribute('href')).toBe(
+            '/kelola/persediaan/saldo?saring%5BKeadaan%5D=Minus',
         );
     });
 
-    it('data ekstrem: 1.000 baris; angka rata kanan tabular', () => {
+    it('data ekstrem: 1.000 baris; angka rata kanan tabular; paginasi server', () => {
         const baris = Array.from({ length: 1000 }, (_, i) => BuatBarisSaldo(i + 1));
         const { container } = RenderUji(
-            <HalamanSaldoStok {...PropsSaldo({ Saldo: BuatHalaman(baris, { Total: 1000, HalamanTerakhir: 20 }) })} />,
+            <HalamanSaldoStok {...PropsSaldo({ Saldo: BuatHasilTabel(baris, 20000, 1000) })} />,
         );
 
         expect(container.querySelectorAll('tbody tr')).toHaveLength(1000);
@@ -136,22 +140,8 @@ describe('Kelola/Persediaan/Saldo (F-05a)', () => {
         );
         expect(selNilai?.className).toContain('text-right');
         expect(selNilai?.className).toContain('tabular-nums');
-        expect(screen.getByRole('link', { name: /Berikutnya/ }).getAttribute('href')).toBe(
-            '/kelola/persediaan/saldo?halaman=2',
-        );
+        expect(screen.getByText('Halaman 1 dari 20')).toBeTruthy();
     }, 30_000);
-
-    it('query saringan: kosong & bawaan tidak dikirim', () => {
-        expect(BuatQuerySaldo(saringSaldo)).toEqual({});
-        expect(
-            BuatQuerySaldo({ Kata: ' kopi ', UuidGudang: GudangUtama.Uuid, Keadaan: 'Ada', Urut: '-Nilai' }),
-        ).toEqual({
-            kata: 'kopi',
-            gudang: GudangUtama.Uuid,
-            keadaan: 'Ada',
-            urut: '-Nilai',
-        });
-    });
 });
 
 const saringKartu: PropsKartuStok['Saring'] = {
@@ -187,7 +177,7 @@ function PropsKartuTerisi(perubahan: Partial<PropsKartuStok> = {}): PropsKartuSt
         Saring: { ...saringKartu, UuidProduk: '01J9PRD0000000000000000001', UuidGudang: GudangUtama.Uuid },
         SaldoAwal: { Jumlah: '0.0000', Nilai: '0.00' },
         SaldoAkhir: { Jumlah: '7.0000', Nilai: '8641.98' },
-        Mutasi: BuatHalaman([
+        Mutasi: BuatHasilTabel([
             BuatBarisKartu(),
             BuatBarisKartu({
                 TanggalBisnis: '2026-09-02',
@@ -223,30 +213,29 @@ describe('Kelola/Persediaan/KartuStok (F-05a)', () => {
         expect(tiruanRouter.get).not.toHaveBeenCalled();
     });
 
-    it('saldo awal, mutasi masuk/keluar bertanda, referensi bertaut, saldo akhir', () => {
+    it('saldo awal & akhir periode, mutasi masuk/keluar bertanda, referensi bertaut (TabelData D-16)', () => {
+        window.history.replaceState({}, '', '/kelola/persediaan/kartu-stok');
         const { container } = RenderUji(<HalamanKartuStok {...PropsKartuTerisi()} />);
 
+        const saldo = screen.getByLabelText('Saldo periode');
+        expect(saldo.textContent).toContain('Saldo awal');
+        expect(saldo.textContent).toContain('7 kg');
+        expect(saldo.textContent).toContain('Rp 8.641,98');
         const baris = Array.from(container.querySelectorAll('tbody tr'));
-        expect(baris.map((tr) => tr.querySelector('th')?.textContent ?? null)).toEqual([
-            'Saldo awal',
-            null,
-            null,
-            'Saldo akhir',
-        ]);
-        expect(baris[1]?.textContent).toContain('Stok awal');
+        expect(baris).toHaveLength(2);
+        expect(baris[0]?.textContent).toContain('Stok awal');
         expect(screen.getByRole('link', { name: 'SA/2026/09/0001' }).getAttribute('href')).toBe(
             `/kelola/persediaan/stok-awal/${UuidDokumen}`,
         );
-        expect(baris[2]?.textContent).toContain('PJ/SOLO/0001');
-        expect(baris[2]?.textContent).toContain('−Rp 3.703,70');
-        expect(baris[2]?.textContent).toContain('Sistem');
-        expect(baris[3]?.textContent).toContain('7 kg');
-        expect(baris[3]?.textContent).toContain('Rp 8.641,98');
+        expect(baris[1]?.textContent).toContain('PJ/SOLO/0001');
+        expect(baris[1]?.textContent).toContain('−Rp 3.703,70');
+        expect(baris[1]?.textContent).toContain('Sistem');
         expect(screen.getByRole('heading', { name: 'Biji Kopi Arabika Gayo di Gudang Utama' })).toBeTruthy();
     });
 
     it('tanpa mutasi di rentang tanggal: pesan jelas, saldo awal/akhir tetap tampil', () => {
-        RenderUji(<HalamanKartuStok {...PropsKartuTerisi({ Mutasi: BuatHalaman([]) })} />);
+        window.history.replaceState({}, '', '/kelola/persediaan/kartu-stok');
+        RenderUji(<HalamanKartuStok {...PropsKartuTerisi({ Mutasi: BuatHasilTabel([]) })} />);
 
         expect(screen.getByText('Tidak ada mutasi stok di rentang tanggal ini.')).toBeTruthy();
         expect(screen.getByText('Saldo akhir')).toBeTruthy();

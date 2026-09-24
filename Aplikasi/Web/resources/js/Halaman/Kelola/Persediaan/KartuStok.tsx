@@ -9,12 +9,11 @@ import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
 import KerangkaMemuat from '@/Komponen/Persediaan/KerangkaMemuat';
 import PemilihProdukStok from '@/Komponen/Persediaan/PemilihProdukStok';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import { Input } from '@/Komponen/Ui/input';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
-import { cn } from '@/Komponen/Ui/utils';
-import Paginasi from '@/Komponen/Umpan/Paginasi';
 import {
     AmbilLabelPelacakan,
     FormatHppSatuan,
@@ -25,7 +24,7 @@ import {
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { PropsKartuStok } from '@/Tipe/Persediaan';
+import type { BarisKartuStok, PropsKartuStok } from '@/Tipe/Persediaan';
 
 const alamat = '/kelola/persediaan/kartu-stok';
 
@@ -104,6 +103,100 @@ function BidangTanggalSaring({
     );
 }
 
+const kolomKartu: KolomTabel<BarisKartuStok>[] = [
+    {
+        id: 'Tanggal',
+        header: 'Tanggal',
+        enableSorting: false,
+        meta: { label: 'Tanggal', prioritas: 'utama', wajib: true, kelasSel: 'whitespace-nowrap' },
+        cell: ({ row: { original: mutasi } }) => (
+            <>
+                {FormatTanggal(mutasi.TanggalBisnis)}
+                <span className="block text-keterangan font-normal text-teks-sekunder">
+                    {FormatTanggalWaktu(mutasi.DicatatPada)}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Jenis',
+        header: 'Jenis',
+        enableSorting: false,
+        meta: { label: 'Jenis', prioritas: 'penting' },
+        cell: ({ row }) => row.original.LabelJenisMutasi,
+    },
+    {
+        id: 'Referensi',
+        header: 'Referensi',
+        enableSorting: false,
+        meta: { label: 'Referensi', prioritas: 'rendah' },
+        cell: ({ row: { original: mutasi } }) =>
+            mutasi.TautanReferensi && mutasi.NomorReferensi ? (
+                <Link href={mutasi.TautanReferensi} className="font-mono font-semibold break-all text-brand underline">
+                    {mutasi.NomorReferensi}
+                </Link>
+            ) : (
+                <span className="font-mono break-all">{mutasi.NomorReferensi ?? '—'}</span>
+            ),
+    },
+    {
+        id: 'Masuk',
+        header: 'Masuk',
+        enableSorting: false,
+        meta: { label: 'Masuk', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => (row.original.Masuk === null ? '' : FormatJumlahStok(row.original.Masuk)),
+    },
+    {
+        id: 'Keluar',
+        header: 'Keluar',
+        enableSorting: false,
+        meta: { label: 'Keluar', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => (row.original.Keluar === null ? '' : FormatJumlahStok(row.original.Keluar)),
+    },
+    {
+        id: 'HppSatuan',
+        header: 'HPP satuan',
+        enableSorting: false,
+        meta: { label: 'HPP satuan', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatHppSatuan(row.original.HppSatuan),
+    },
+    {
+        id: 'TotalHpp',
+        header: 'Nilai mutasi',
+        enableSorting: false,
+        meta: { label: 'Nilai mutasi', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatNilai(row.original.TotalHpp),
+    },
+    {
+        id: 'SaldoSetelah',
+        header: 'Saldo',
+        enableSorting: false,
+        meta: { label: 'Saldo', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatJumlahStok(row.original.SaldoSetelah),
+    },
+    {
+        id: 'NilaiSetelah',
+        header: 'Nilai saldo',
+        enableSorting: false,
+        meta: { label: 'Nilai saldo', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatNilai(row.original.NilaiSetelah),
+    },
+    {
+        id: 'BatchSeri',
+        header: 'Batch / seri',
+        enableSorting: false,
+        meta: { label: 'Batch / seri', prioritas: 'rendah', kelasSel: 'font-mono text-keterangan break-all' },
+        cell: ({ row }) => row.original.NomorBatch ?? row.original.NomorSeri ?? '—',
+    },
+    {
+        id: 'DicatatOleh',
+        header: 'Dicatat oleh',
+        enableSorting: false,
+        meta: { label: 'Dicatat oleh', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) => row.original.DicatatOleh ?? 'Sistem',
+    },
+];
+
 /** F-05a: kartu stok satu produk di satu lokasi, urut pencatatan (H-5), dengan saldo awal, berjalan, dan akhir. */
 export default function HalamanKartuStok({
     Produk,
@@ -121,8 +214,6 @@ export default function HalamanKartuStok({
     const [memuat, AturMemuat] = useState(false);
     const galat = periksa ? PeriksaSaringKartu(saring) : {};
     const simbol = Produk?.SimbolSatuan ?? '';
-    const kelasKepala = 'px-2 h-auto text-label font-semibold text-teks-sekunder';
-    const kelasAngka = 'px-2 py-2 text-right whitespace-nowrap tabular-nums';
     const opsiGudang =
         OpsiGudang.some((gudang) => gudang.Uuid === Gudang?.Uuid) || Gudang === null
             ? OpsiGudang
@@ -250,140 +341,39 @@ export default function HalamanKartuStok({
                         </>
                     }
                 >
-                    {Mutasi.Data.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">Tidak ada mutasi stok di rentang tanggal ini.</p>
-                    ) : null}
-                    <Table className="min-w-[1100px] text-left text-isi">
-                        <TableCaption className="sr-only">
-                            Kartu stok {Produk.Nama}, {Mutasi.Total} mutasi
-                        </TableCaption>
-                        <TableHeader>
-                            <TableRow className="border-garis hover:bg-transparent">
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Tanggal
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Jenis
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Referensi
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Masuk
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Keluar
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    HPP satuan
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Nilai mutasi
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Saldo
-                                </TableHead>
-                                <TableHead scope="col" className={cn(kelasKepala, 'text-right')}>
-                                    Nilai saldo
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Batch / seri
-                                </TableHead>
-                                <TableHead scope="col" className={kelasKepala}>
-                                    Dicatat oleh
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {SaldoAwal ? (
-                                <TableRow className="border-garis bg-permukaan-redup hover:bg-permukaan-redup">
-                                    <th scope="row" colSpan={7} className="px-2 py-2 text-left font-semibold">
-                                        Saldo awal
-                                    </th>
-                                    <TableCell className={cn(kelasAngka, 'font-semibold')}>
-                                        {FormatJumlahStok(SaldoAwal.Jumlah, simbol)}
-                                    </TableCell>
-                                    <TableCell className={cn(kelasAngka, 'font-semibold')}>
-                                        {FormatNilai(SaldoAwal.Nilai)}
-                                    </TableCell>
-                                    <TableCell colSpan={2} />
-                                </TableRow>
-                            ) : null}
-                            {Mutasi.Data.map((mutasi, indeks) => (
-                                <TableRow
-                                    key={`${mutasi.DicatatPada}-${String(indeks)}`}
-                                    className="border-garis align-top"
-                                >
-                                    <TableCell className="px-2 py-2 whitespace-nowrap">
-                                        {FormatTanggal(mutasi.TanggalBisnis)}
-                                        <span className="block text-keterangan text-teks-sekunder">
-                                            {FormatTanggalWaktu(mutasi.DicatatPada)}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal">
-                                        {mutasi.LabelJenisMutasi}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal">
-                                        {mutasi.TautanReferensi && mutasi.NomorReferensi ? (
-                                            <Link
-                                                href={mutasi.TautanReferensi}
-                                                className="font-mono font-semibold break-all text-brand underline"
-                                            >
-                                                {mutasi.NomorReferensi}
-                                            </Link>
-                                        ) : (
-                                            <span className="font-mono break-all">{mutasi.NomorReferensi ?? '—'}</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className={kelasAngka}>
-                                        {mutasi.Masuk === null ? '' : FormatJumlahStok(mutasi.Masuk)}
-                                    </TableCell>
-                                    <TableCell className={kelasAngka}>
-                                        {mutasi.Keluar === null ? '' : FormatJumlahStok(mutasi.Keluar)}
-                                    </TableCell>
-                                    <TableCell className={kelasAngka}>{FormatHppSatuan(mutasi.HppSatuan)}</TableCell>
-                                    <TableCell className={kelasAngka}>{FormatNilai(mutasi.TotalHpp)}</TableCell>
-                                    <TableCell className={kelasAngka}>
-                                        {FormatJumlahStok(mutasi.SaldoSetelah)}
-                                    </TableCell>
-                                    <TableCell className={kelasAngka}>{FormatNilai(mutasi.NilaiSetelah)}</TableCell>
-                                    <TableCell className="px-2 py-2 font-mono text-keterangan break-all whitespace-normal">
-                                        {mutasi.NomorBatch ?? mutasi.NomorSeri ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-2 whitespace-normal text-teks-sekunder">
-                                        {mutasi.DicatatOleh ?? 'Sistem'}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {SaldoAkhir ? (
-                                <TableRow className="border-garis bg-permukaan-redup hover:bg-permukaan-redup">
-                                    <th scope="row" colSpan={7} className="px-2 py-2 text-left font-semibold">
-                                        Saldo akhir
-                                    </th>
-                                    <TableCell className={cn(kelasAngka, 'font-semibold')}>
-                                        {FormatJumlahStok(SaldoAkhir.Jumlah, simbol)}
-                                    </TableCell>
-                                    <TableCell className={cn(kelasAngka, 'font-semibold')}>
-                                        {FormatNilai(SaldoAkhir.Nilai)}
-                                    </TableCell>
-                                    <TableCell colSpan={2} />
-                                </TableRow>
-                            ) : null}
-                        </TableBody>
-                    </Table>
+                    <TabelData
+                        id="persediaan-kartu-stok"
+                        label={`Kartu stok ${Produk.Nama}`}
+                        kolom={kolomKartu}
+                        sumber={{ mode: 'server', alamat, awal: Mutasi }}
+                        ambilIdBaris={(mutasi) => `${mutasi.DicatatPada}-${mutasi.SaldoSetelah}-${mutasi.NilaiSetelah}`}
+                        ringkasan={() =>
+                            SaldoAwal && SaldoAkhir ? (
+                                <dl className="grid gap-3 sm:grid-cols-2" aria-label="Saldo periode">
+                                    {[
+                                        { label: 'Saldo awal', saldo: SaldoAwal },
+                                        { label: 'Saldo akhir', saldo: SaldoAkhir },
+                                    ].map(({ label, saldo }) => (
+                                        <div
+                                            key={label}
+                                            className="rounded-panel border border-garis bg-permukaan-redup p-3"
+                                        >
+                                            <dt className="text-label font-semibold text-teks-sekunder">{label}</dt>
+                                            <dd className="text-subjudul font-semibold text-teks-utama tabular-nums">
+                                                {FormatJumlahStok(saldo.Jumlah, simbol)}
+                                                <span className="block text-isi font-normal text-teks-sekunder">
+                                                    {FormatNilai(saldo.Nilai)}
+                                                </span>
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            ) : null
+                        }
+                        kosong={{ judul: 'Tidak ada mutasi stok di rentang tanggal ini.' }}
+                    />
                 </PanelKatalog>
             )}
-
-            {Mutasi ? (
-                <Paginasi
-                    alamat={alamat}
-                    saring={BuatQueryKartuStok(Saring)}
-                    halamanSaatIni={Mutasi.HalamanSaatIni}
-                    halamanTerakhir={Mutasi.HalamanTerakhir}
-                    total={Mutasi.Total}
-                    label="Halaman kartu stok"
-                />
-            ) : null}
         </TataLetakAplikasi>
     );
 }

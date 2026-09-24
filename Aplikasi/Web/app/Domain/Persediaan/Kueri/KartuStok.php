@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Kueri;
 
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Persediaan\Model\MutasiStok;
@@ -28,9 +29,11 @@ final class KartuStok
     ) {}
 
     /**
-     * @return array{SaldoAwal: array{Jumlah: string, Nilai: string}, SaldoAkhir: array{Jumlah: string, Nilai: string}, Mutasi: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}}
+     * `Mutasi` berkontrak `TabelData` (D-16) `{Data, Meta}`, urut kronologis (saldo berjalan tidak bisa diurut ulang).
+     *
+     * @return array{SaldoAwal: array{Jumlah: string, Nilai: string}, SaldoAkhir: array{Jumlah: string, Nilai: string}, Mutasi: array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}}
      */
-    public function Ambil(int $idProduk, int $idGudang, CarbonImmutable $dari, CarbonImmutable $sampai, int $halaman): array
+    public function Ambil(int $idProduk, int $idGudang, CarbonImmutable $dari, CarbonImmutable $sampai, int $halaman, int $perHalaman = 100): array
     {
         $pasangan = fn (): Builder => MutasiStok::query()->where('IdProduk', $idProduk)->where('IdGudang', $idGudang);
         $rentang = fn (): Builder => $pasangan()->whereBetween('TanggalBisnis', [$dari->toDateString(), $sampai->toDateString()]);
@@ -47,7 +50,7 @@ final class KartuStok
         $halamanMutasi = $rentang()
             ->with(['BatchStok:Id,NomorBatch', 'NomorSeri:Id,Nomor'])
             ->orderBy('Id')
-            ->paginate(max(1, (int) config('persediaan.KartuStok.PerHalaman', 100)), ['*'], 'halaman', max(1, $halaman));
+            ->paginate(max(1, $perHalaman), ['*'], 'halaman', max(1, $halaman));
 
         /** @var list<MutasiStok> $baris */
         $baris = array_values($halamanMutasi->items());
@@ -57,12 +60,7 @@ final class KartuStok
         return [
             'SaldoAwal' => $saldoAwal,
             'SaldoAkhir' => $saldoAkhir,
-            'Mutasi' => [
-                'Data' => array_map(fn (MutasiStok $m): array => self::PetakanBaris($m, $nama), $baris),
-                'HalamanSaatIni' => $halamanMutasi->currentPage(),
-                'HalamanTerakhir' => $halamanMutasi->lastPage(),
-                'Total' => $halamanMutasi->total(),
-            ],
+            'Mutasi' => PenerapKueriTabel::DariPaginator($halamanMutasi, fn (array $isi): array => array_map(fn (MutasiStok $m): array => self::PetakanBaris($m, $nama), $isi)),
         ];
     }
 

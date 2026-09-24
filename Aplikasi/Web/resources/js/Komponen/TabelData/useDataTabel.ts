@@ -15,7 +15,11 @@ export class GalatDataTabel extends Error {
 
 /** Query URL saat ini dalam bentuk ternormalisasi (sama dengan yang ditulis `TulisKeadaanKeUrl`). */
 function BacaQueryUrl(urutBawaan: UrutKolom[]): string {
-    return TulisKeadaanKeUrl(BacaKeadaanDariUrl(window.location.search, urutBawaan), urutBawaan);
+    return TulisKeadaanKeUrl(
+        BacaKeadaanDariUrl(window.location.search, urutBawaan),
+        urutBawaan,
+        window.location.search,
+    );
 }
 
 export async function AmbilDataTabel<T>(alamat: string, query: string): Promise<HasilTabel<T>> {
@@ -45,7 +49,8 @@ export function useDataTabel<T>(
     aktif: boolean,
 ) {
     const klien = useQueryClient();
-    const query = TulisKeadaanKeUrl(keadaan, urutBawaan);
+    // Parameter halaman di luar tabel (mis. `produk`, `gudang`) ikut dikirim.
+    const query = TulisKeadaanKeUrl(keadaan, urutBawaan, aktif ? window.location.search : '');
     // Keadaan yang dipakai server menyusun `awal` = URL saat props diterima; dihitung ulang hanya bila `awal` berganti.
     const [awalTerakhir, AturAwalTerakhir] = useState(awal);
     const [queryAwal, AturQueryAwal] = useState(() => BacaQueryUrl(urutBawaan));

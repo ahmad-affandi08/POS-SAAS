@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Persediaan;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Persediaan\Kueri\KartuStok;
+use App\Http\Respons\ResponsTabel;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,12 +18,12 @@ use Inertia\Response;
 /**
  * Halaman kartu stok, izin `persediaan.lihat` (DesainF05a D; tipe FE `PropsKartuStok`). Query: `produk` & `gudang`
  * (Uuid), `dari` & `sampai` (`YYYY-MM-DD`, bawaan awal bulan s.d. hari ini menurut tanggal bisnis outlet lokasi),
- * `halaman`. Produk tenant lain = 404; lokasi tenant lain atau di outlet di luar akses = 404. Tanpa produk atau
+ * `halaman` & `perHalaman` (TabelData D-16). Produk tenant lain = 404; lokasi tenant lain atau di outlet di luar akses = 404. Tanpa produk atau
  * lokasi terpilih: `Mutasi`, `SaldoAwal`, `SaldoAkhir` null (FE menampilkan pemilih).
  */
 final class KartuStokKontroler extends DasarPersediaanKontroler
 {
-    public function Tampilkan(Request $permintaan, KartuStok $kartu, InfoProdukStok $infoProduk, TanggalBisnisOutlet $tanggalBisnis): Response
+    public function Tampilkan(Request $permintaan, KartuStok $kartu, InfoProdukStok $infoProduk, TanggalBisnisOutlet $tanggalBisnis): Response|JsonResponse
     {
         $uuidProduk = self::AmbilTeks($permintaan->query('produk'));
         $uuidGudang = self::AmbilTeks($permintaan->query('gudang'));
@@ -41,10 +44,15 @@ final class KartuStokKontroler extends DasarPersediaanKontroler
             [$dari, $sampai] = [$sampai, $dari];
         }
 
-        $halaman = $permintaan->query('halaman');
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), [], '');
         $isi = $produk !== null && $gudang !== null
-            ? $kartu->Ambil($produk->id, $gudang->id, $dari, $sampai, is_numeric($halaman) ? (int) $halaman : 1)
+            ? $kartu->Ambil($produk->id, $gudang->id, $dari, $sampai, $tabel->halaman, $tabel->perHalaman)
             : ['SaldoAwal' => null, 'SaldoAkhir' => null, 'Mutasi' => null];
+
+        // TabelData (D-16): halaman mutasi berikutnya diminta ke URL yang sama sebagai JSON.
+        if (ResponsTabel::MintaData($permintaan)) {
+            return response()->json($isi['Mutasi'] ?? ['Data' => [], 'Meta' => ['Halaman' => 1, 'PerHalaman' => $tabel->perHalaman, 'Total' => 0, 'JumlahHalaman' => 1]]);
+        }
 
         return Inertia::render('Kelola/Persediaan/KartuStok', [
             'Produk' => $produk === null ? null : [

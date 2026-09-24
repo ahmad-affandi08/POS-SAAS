@@ -1,3 +1,4 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 /**
  * Props tiruan halaman persediaan F-05a untuk test Vitest, mengikuti kontrak `Tipe/Persediaan.ts` (DesainF05a E).
  * Termasuk data ekstrem §17.6.6: nama 60 karakter, nilai Rp 1.250.000.000, stok minus, dan ribuan baris.
@@ -60,6 +61,19 @@ export const GudangLama: OpsiGudang = {
     NamaOutlet: null,
     Aktif: false,
 };
+
+/** Hasil `TabelData` (D-16) satu halaman. */
+export function BuatHasilTabel<T>(data: T[], total = data.length, perHalaman = 25): HasilTabel<T> {
+    return {
+        Data: data,
+        Meta: {
+            Halaman: 1,
+            PerHalaman: perHalaman,
+            Total: total,
+            JumlahHalaman: Math.max(1, Math.ceil(total / perHalaman)),
+        },
+    };
+}
 
 export function BuatHalaman<T>(data: T[], perubahan: Partial<DaftarBerhalaman<T>> = {}): DaftarBerhalaman<T> {
     return { Data: data, HalamanSaatIni: 1, HalamanTerakhir: 1, Total: data.length, ...perubahan };

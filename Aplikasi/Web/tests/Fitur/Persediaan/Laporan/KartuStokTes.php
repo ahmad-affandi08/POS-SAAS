@@ -53,11 +53,11 @@ function SiapkanKartuStokUji(): array
 }
 
 /**
- * @return array{SaldoAwal: array{Jumlah: string, Nilai: string}, SaldoAkhir: array{Jumlah: string, Nilai: string}, Mutasi: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}}
+ * @return array{SaldoAwal: array{Jumlah: string, Nilai: string}, SaldoAkhir: array{Jumlah: string, Nilai: string}, Mutasi: array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}}
  */
-function AmbilKartuStokUji(Produk $produk, Gudang $gudang, string $dari, string $sampai, int $halaman = 1): array
+function AmbilKartuStokUji(Produk $produk, Gudang $gudang, string $dari, string $sampai, int $halaman = 1, int $perHalaman = 100): array
 {
-    return app(KartuStok::class)->Ambil($produk->Id, $gudang->Id, CarbonImmutable::parse($dari), CarbonImmutable::parse($sampai), $halaman);
+    return app(KartuStok::class)->Ambil($produk->Id, $gudang->Id, CarbonImmutable::parse($dari), CarbonImmutable::parse($sampai), $halaman, $perHalaman);
 }
 
 describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
@@ -67,7 +67,7 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
 
         expect($kartu['SaldoAwal'])->toBe(['Jumlah' => '24.0000', 'Nilai' => '924000.00'])
             ->and($kartu['SaldoAkhir'])->toBe(['Jumlah' => '28.0000', 'Nilai' => '1088181.82'])
-            ->and($kartu['Mutasi']['Total'])->toBe(3)
+            ->and($kartu['Mutasi']['Meta']['Total'])->toBe(3)
             ->and(array_map(fn (array $b): array => [$b['TanggalBisnis'], $b['JenisMutasi'], $b['Masuk'], $b['Keluar'], $b['TotalHpp'], $b['SaldoSetelah'], $b['NilaiSetelah']], $kartu['Mutasi']['Data']))->toBe([
                 ['2026-09-05', 'Penjualan', null, '3.0000', '-115500.00', '21.0000', '808500.00'],
                 ['2026-09-10', 'PenerimaanPembelian', '12.0000', null, '474000.00', '33.0000', '1282500.00'],
@@ -108,19 +108,18 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
 
         expect($november['SaldoAwal'])->toBe(['Jumlah' => '27.0000', 'Nilai' => '1049318.18'])
             ->and($november['SaldoAkhir'])->toBe($november['SaldoAwal'])
-            ->and($november['Mutasi']['Total'])->toBe(0)
+            ->and($november['Mutasi']['Meta']['Total'])->toBe(0)
             ->and($agustus['SaldoAwal'])->toBe(['Jumlah' => '0.0000', 'Nilai' => '0.00'])
             ->and($agustus['SaldoAkhir'])->toBe(['Jumlah' => '0.0000', 'Nilai' => '0.00'])
             ->and($oktober['SaldoAwal'])->toBe(['Jumlah' => '28.0000', 'Nilai' => '1088181.82'])
             ->and($oktober['SaldoAkhir'])->toBe(['Jumlah' => '27.0000', 'Nilai' => '1049318.18']);
     });
 
-    it('berhalaman sesuai config KartuStok.PerHalaman', function (): void {
+    it('berhalaman sesuai ukuran halaman tabel (D-16)', function (): void {
         $d = SiapkanKartuStokUji();
-        config()->set('persediaan.KartuStok.PerHalaman', 2);
-        $h2 = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-10-31', 2);
+        $h2 = AmbilKartuStokUji($d['Minyak'], $d['Gudang'], '2026-09-01', '2026-10-31', 2, 2);
 
-        expect([$h2['Mutasi']['HalamanSaatIni'], $h2['Mutasi']['HalamanTerakhir'], $h2['Mutasi']['Total']])->toBe([2, 3, 5])
+        expect([$h2['Mutasi']['Meta']['Halaman'], $h2['Mutasi']['Meta']['JumlahHalaman'], $h2['Mutasi']['Meta']['Total']])->toBe([2, 3, 5])
             ->and(array_column($h2['Mutasi']['Data'], 'TanggalBisnis'))->toBe(['2026-09-10', '2026-09-20'])
             ->and($h2['SaldoAwal'])->toBe(['Jumlah' => '0.0000', 'Nilai' => '0.00']);
     });
@@ -139,14 +138,22 @@ describe('F-05a kartu stok (BR-05.1, DesainF05a C.8, H-5)', function (): void {
                 ->where('Saring', ['UuidProduk' => $d['Minyak']->Uuid, 'UuidGudang' => $d['Gudang']->Uuid, 'Dari' => '2026-09-01', 'Sampai' => '2026-09-24'])
                 ->where('SaldoAwal', ['Jumlah' => '0.0000', 'Nilai' => '0.00'])
                 ->where('SaldoAkhir', ['Jumlah' => '28.0000', 'Nilai' => '1088181.82'])
-                ->where('Mutasi.Total', 4)
+                ->where('Mutasi.Meta.Total', 4)
                 ->has('OpsiGudang', 1));
 
         $masuk()->get("/kelola/persediaan/kartu-stok?produk={$d['Minyak']->Uuid}&gudang={$d['Gudang']->Uuid}&dari=2026-10-31&sampai=2026-10-01")
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->where('Saring.Dari', '2026-10-01')
                 ->where('Saring.Sampai', '2026-10-31')
-                ->where('Mutasi.Total', 1));
+                ->where('Mutasi.Meta.Total', 1));
+
+        // TabelData (D-16): mutasi berikutnya dari URL yang sama sebagai JSON, parameter produk/gudang/periode ikut.
+        $masuk()->getJson("/kelola/persediaan/kartu-stok?produk={$d['Minyak']->Uuid}&gudang={$d['Gudang']->Uuid}&perHalaman=25&halaman=1")
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 4)
+            ->assertJsonPath('Meta.PerHalaman', 25)
+            ->assertJsonCount(4, 'Data');
+        $masuk()->getJson('/kelola/persediaan/kartu-stok')->assertOk()->assertJsonPath('Meta.Total', 0);
 
         $masuk()->get('/kelola/persediaan/kartu-stok?dari=bukan-tanggal&sampai=2026-02-31')
             ->assertOk()

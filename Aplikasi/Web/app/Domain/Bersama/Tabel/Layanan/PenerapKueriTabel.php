@@ -6,6 +6,7 @@ namespace App\Domain\Bersama\Tabel\Layanan;
 
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use Closure;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -56,5 +57,27 @@ final class PenerapKueriTabel
     public static function PolaCari(string $kata): string
     {
         return '%'.addcslashes($kata, '\\%_').'%';
+    }
+
+    /**
+     * Mengubah paginator Laravel menjadi kontrak `TabelData` (untuk kueri yang sudah berhalaman sendiri).
+     *
+     * @template TItem
+     *
+     * @param  LengthAwarePaginator<int, TItem>  $halaman
+     * @param  Closure(list<TItem>): list<array<string, mixed>>  $petakan
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
+     */
+    public static function DariPaginator(LengthAwarePaginator $halaman, Closure $petakan): array
+    {
+        return [
+            'Data' => $petakan(array_values($halaman->items())),
+            'Meta' => [
+                'Halaman' => $halaman->currentPage(),
+                'PerHalaman' => $halaman->perPage(),
+                'Total' => $halaman->total(),
+                'JumlahHalaman' => max(1, $halaman->lastPage()),
+            ],
+        ];
     }
 }

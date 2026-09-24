@@ -25,10 +25,6 @@ return [
         'HariSimpan' => 30,
     ],
 
-    'Saldo' => ['PerHalaman' => 50],
-
-    'KartuStok' => ['PerHalaman' => 100],
-
     // Jumlah percobaan `DB::transaction` saat deadlock (Aksi terluar mutasi stok).
     'PercobaanTransaksi' => 3,
 ];

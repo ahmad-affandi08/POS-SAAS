@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Kueri;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Data\DataInfoProdukStok;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
@@ -15,12 +16,12 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Daftar saldo stok per (produk, lokasi stok) berhalaman + ringkasan (tipe FE `PropsSaldoStok` bagian `Saldo` dan
- * `Ringkasan`, DesainF05a C.8).
+ * Daftar saldo stok per (produk, lokasi stok) untuk `TabelData` (D-16) + ringkasan (tipe FE `PropsSaldoStok`,
+ * DesainF05a C.8).
  *
- * Saringan: `Kata` (bagian Nama/SKU, atau SKU/barcode/nama persis), `UuidGudang` (hanya lokasi yang boleh diakses;
- * lokasi lain = daftar kosong), `Keadaan` (Semua/Ada/Nol/Minus). Urutan: `Nama` (produk lalu lokasi), `-Nilai`
- * (nilai persediaan terbesar), `Jumlah` (jumlah terkecil). Lokasi yang diarsipkan tetap tampil (`GudangAktif`).
+ * Cari: bagian Nama/SKU, atau SKU/barcode/nama persis. Saring: `Gudang` (Uuid; hanya lokasi yang boleh diakses,
+ * lokasi lain = daftar kosong), `Keadaan` (Ada/Nol/Minus). Urut: `Nama`, `Nilai`, `Jumlah` (naik/turun), lalu produk &
+ * lokasi. Lokasi yang diarsipkan tetap tampil (`GudangAktif`).
  *
  * Saringan, urutan, ringkasan, dan paginasi dikerjakan di SQL: nama produk (milik Katalog) digabung lewat subkueri
  * publik `InfoProdukStok::KueriIdNama()`, urutan lokasi (sedikit baris, milik Organisasi) lewat `FIND_IN_SET()` atas daftar
@@ -28,9 +29,11 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class DaftarSaldoStok
 {
-    private const KEADAAN = ['Semua', 'Ada', 'Nol', 'Minus'];
+    public const KOLOM_URUT = ['Nama', 'Nilai', 'Jumlah'];
 
-    private const URUT = ['Nama', '-Nilai', 'Jumlah'];
+    public const KOLOM_SARING = ['Gudang', 'Keadaan'];
+
+    private const KEADAAN = ['Ada', 'Nol', 'Minus'];
 
     public function __construct(
         private readonly InfoProdukStok $infoProduk,
@@ -39,35 +42,23 @@ final class DaftarSaldoStok
     ) {}
 
     /**
-     * Saringan dari parameter query yang sudah dibersihkan (nilai tak dikenal → bawaan).
+     * Saldo untuk `TabelData` (D-16) beserta `Ringkasan` untuk saring yang sama.
      *
-     * @return array{Kata: string, UuidGudang: string|null, Keadaan: string, Urut: string}
-     */
-    public static function NormalkanSaring(mixed $kata, mixed $uuidGudang, mixed $keadaan, mixed $urut): array
-    {
-        return [
-            'Kata' => is_string($kata) ? mb_substr(trim($kata), 0, 100) : '',
-            'UuidGudang' => is_string($uuidGudang) && $uuidGudang !== '' ? $uuidGudang : null,
-            'Keadaan' => in_array($keadaan, self::KEADAAN, true) ? $keadaan : 'Semua',
-            'Urut' => in_array($urut, self::URUT, true) ? $urut : 'Nama',
-        ];
-    }
-
-    /**
-     * @param  array{Kata: string, UuidGudang: string|null, Keadaan: string, Urut: string}  $saring
      * @param  list<int>|null  $idOutletBoleh  null = semua outlet
-     * @return array{Saldo: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
      */
-    public function Ambil(array $saring, ?array $idOutletBoleh, int $halaman): array
+    public function AmbilTabel(DataPermintaanTabel $permintaan, ?array $idOutletBoleh): array
     {
-        $gudang = $this->AmbilGudangTersaring($saring['UuidGudang'], $idOutletBoleh);
-        $perHalaman = max(1, (int) config('persediaan.Saldo.PerHalaman', 50));
+        $gudang = $this->AmbilGudangTersaring($permintaan->saring['Gudang'] ?? null, $idOutletBoleh);
+        $keadaan = $permintaan->saring['Keadaan'] ?? '';
+        $keadaan = in_array($keadaan, self::KEADAAN, true) ? $keadaan : 'Semua';
+        $perHalaman = $permintaan->perHalaman;
 
         if ($gudang === []) {
-            return $this->BuatHasil([], 1, 1, 0, '0', 0);
+            return $this->BuatHasil([], 1, $perHalaman, 0, '0', 0);
         }
 
-        $kueri = $this->BuatKueri(array_keys($gudang), $saring['Kata'], $saring['Keadaan']);
+        $kueri = $this->BuatKueri(array_keys($gudang), $permintaan->cari, $keadaan);
         $ringkasan = (clone $kueri)->toBase()
             ->selectRaw('COUNT(*) AS JumlahBaris')
             ->selectRaw('COALESCE(SUM(`SaldoStok`.`NilaiPersediaan`), 0) AS TotalNilai')
@@ -76,15 +67,15 @@ final class DaftarSaldoStok
 
         $jumlah = (int) ($ringkasan->JumlahBaris ?? 0);
         $terakhir = max(1, intdiv($jumlah + $perHalaman - 1, $perHalaman));
-        $halaman = min(max(1, $halaman), $terakhir);
+        $halaman = min($permintaan->halaman, $terakhir);
 
-        $this->Urutkan($kueri, $saring['Urut'], $gudang);
+        $this->Urutkan($kueri, $permintaan->urut, $gudang);
         $potongan = $kueri->offset(($halaman - 1) * $perHalaman)->limit($perHalaman)->get(['SaldoStok.*']);
 
         return $this->BuatHasil(
             $this->Petakan($potongan, $gudang),
             $halaman,
-            $terakhir,
+            $perHalaman,
             $jumlah,
             (string) ($ringkasan->TotalNilai ?? '0'),
             (int) ($ringkasan->JumlahMinus ?? 0),
@@ -93,16 +84,17 @@ final class DaftarSaldoStok
 
     /**
      * @param  list<array<string, mixed>>  $data
-     * @return array{Saldo: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
      */
-    private function BuatHasil(array $data, int $halaman, int $terakhir, int $jumlah, string $totalNilai, int $jumlahMinus): array
+    private function BuatHasil(array $data, int $halaman, int $perHalaman, int $jumlah, string $totalNilai, int $jumlahMinus): array
     {
         return [
-            'Saldo' => [
-                'Data' => $data,
-                'HalamanSaatIni' => $halaman,
-                'HalamanTerakhir' => $terakhir,
+            'Data' => $data,
+            'Meta' => [
+                'Halaman' => $halaman,
+                'PerHalaman' => $perHalaman,
                 'Total' => $jumlah,
+                'JumlahHalaman' => max(1, intdiv($jumlah + $perHalaman - 1, $perHalaman)),
             ],
             'Ringkasan' => [
                 'TotalNilai' => (string) BigDecimal::of($totalNilai)->toScale(2),
@@ -148,18 +140,24 @@ final class DaftarSaldoStok
     }
 
     /**
-     * Urutan utama sesuai saringan, lalu nama produk, produk, nama outlet & lokasi, dan Id (urutan stabil).
+     * Urutan pilihan pengguna (`Nama`, `Nilai`, `Jumlah`, naik/turun), lalu nama produk, produk, nama outlet & lokasi,
+     * dan Id (urutan stabil).
      *
      * @param  EloquentBuilder<SaldoStok>  $kueri
+     * @param  list<array{Kolom: string, Turun: bool}>  $urut
      * @param  array<int, DataInfoGudang>  $gudang
      */
-    private function Urutkan(EloquentBuilder $kueri, string $urut, array $gudang): void
+    private function Urutkan(EloquentBuilder $kueri, array $urut, array $gudang): void
     {
-        match ($urut) {
-            '-Nilai' => $kueri->orderByDesc('SaldoStok.NilaiPersediaan'),
-            'Jumlah' => $kueri->orderBy('SaldoStok.JumlahTersedia'),
-            default => null,
-        };
+        foreach ($urut as $satu) {
+            $arah = $satu['Turun'] ? 'desc' : 'asc';
+            match ($satu['Kolom']) {
+                'Nilai' => $kueri->orderBy('SaldoStok.NilaiPersediaan', $arah),
+                'Jumlah' => $kueri->orderBy('SaldoStok.JumlahTersedia', $arah),
+                'Nama' => $kueri->orderBy('ProdukSaldo.Nama', $arah),
+                default => null,
+            };
+        }
 
         $urutGudang = array_values($gudang);
         usort($urutGudang, fn (DataInfoGudang $a, DataInfoGudang $b): int => [(string) $a->namaOutlet, $a->nama, $a->id] <=> [(string) $b->namaOutlet, $b->nama, $b->id]);

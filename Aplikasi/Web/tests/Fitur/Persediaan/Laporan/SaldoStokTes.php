@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\ProdukSatuan;
@@ -60,16 +61,29 @@ function SiapkanSaldoStokUji(): array
 }
 
 /**
+ * Memanggil `DaftarSaldoStok::AmbilTabel` (D-16) dengan saringan gaya lama (`Kata`, `UuidGudang`, `Keadaan`, `Urut`)
+ * lalu menyajikan hasil `{Data, Meta, Ringkasan}` sebagai `{Saldo: {Data, HalamanSaatIni, HalamanTerakhir, Total},
+ * Ringkasan}` agar pemeriksaan di bawah tetap terbaca. `perHalaman` bebas di sini (Dari() membatasi 25/50/100).
+ *
  * @param  array<string, mixed>  $saring
  * @return array{Saldo: array{Data: list<array<string, mixed>>, HalamanSaatIni: int, HalamanTerakhir: int, Total: int}, Ringkasan: array{TotalNilai: string, JumlahBaris: int, JumlahMinus: int}}
  */
-function AmbilSaldoStokUji(array $saring = [], ?array $idOutletBoleh = null, int $halaman = 1): array
+function AmbilSaldoStokUji(array $saring = [], ?array $idOutletBoleh = null, int $halaman = 1, int $perHalaman = 50): array
 {
-    return app(DaftarSaldoStok::class)->Ambil(
-        DaftarSaldoStok::NormalkanSaring($saring['Kata'] ?? null, $saring['UuidGudang'] ?? null, $saring['Keadaan'] ?? null, $saring['Urut'] ?? null),
-        $idOutletBoleh,
+    $urut = (string) ($saring['Urut'] ?? 'Nama');
+    $permintaan = new DataPermintaanTabel(
+        (string) ($saring['Kata'] ?? ''),
+        [['Kolom' => ltrim($urut, '-'), 'Turun' => str_starts_with($urut, '-')]],
         $halaman,
+        $perHalaman,
+        array_filter(['Gudang' => $saring['UuidGudang'] ?? null, 'Keadaan' => $saring['Keadaan'] ?? null], fn ($n): bool => is_string($n)),
     );
+    $hasil = app(DaftarSaldoStok::class)->AmbilTabel($permintaan, $idOutletBoleh);
+
+    return [
+        'Saldo' => ['Data' => $hasil['Data'], 'HalamanSaatIni' => $hasil['Meta']['Halaman'], 'HalamanTerakhir' => $hasil['Meta']['JumlahHalaman'], 'Total' => $hasil['Meta']['Total']],
+        'Ringkasan' => $hasil['Ringkasan'],
+    ];
 }
 
 /**
@@ -138,7 +152,7 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
         expect(AmbilPasanganSaldoUji(AmbilSaldoStokUji(['Kata' => '8991234500017'])))->toBe(['Gula Pasir Kristal Putih Kemasan 1 kg @ Gudang Outlet Utama']);
     });
 
-    it('urut -Nilai (terbesar dulu) dan Jumlah (terkecil dulu); nilai saringan tak dikenal kembali ke bawaan', function (): void {
+    it('urut -Nilai (terbesar dulu) dan Jumlah (terkecil dulu); kolom urut/saring & nilai tak dikenal diabaikan', function (): void {
         SiapkanSaldoStokUji();
 
         expect(AmbilPasanganSaldoUji(AmbilSaldoStokUji(['Urut' => '-Nilai'])))->toBe([
@@ -153,16 +167,17 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
                 'Beras Pandan Wangi Cianjur Premium 5 kg @ Gudang Belakang',
                 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter @ Gudang Outlet Utama',
             ])
-            ->and(DaftarSaldoStok::NormalkanSaring(['x'], 123, 'Rusak', 'DROP TABLE'))->toBe(['Kata' => '', 'UuidGudang' => null, 'Keadaan' => 'Semua', 'Urut' => 'Nama']);
+            ->and(AmbilPasanganSaldoUji(AmbilSaldoStokUji(['Keadaan' => 'Rusak'])))->toHaveCount(4)
+            ->and(DataPermintaanTabel::Dari(['cari' => ['x'], 'urut' => 'DROP TABLE', 'saring' => ['Gudang' => 123, 'Lain' => 'x']], DaftarSaldoStok::KOLOM_URUT, 'Nama', DaftarSaldoStok::KOLOM_SARING))
+            ->toEqual(new DataPermintaanTabel('', [['Kolom' => 'Nama', 'Turun' => false]], 1, 25, []));
     });
 
-    it('berhalaman sesuai config Saldo.PerHalaman; halaman di luar rentang dijepit; ringkasan atas semua baris', function (): void {
+    it('berhalaman sesuai ukuran halaman tabel; halaman di luar rentang dijepit; ringkasan atas semua baris', function (): void {
         SiapkanSaldoStokUji();
-        config()->set('persediaan.Saldo.PerHalaman', 3);
 
-        $h1 = AmbilSaldoStokUji();
-        $h2 = AmbilSaldoStokUji(halaman: 2);
-        $h9 = AmbilSaldoStokUji(halaman: 9);
+        $h1 = AmbilSaldoStokUji(perHalaman: 3);
+        $h2 = AmbilSaldoStokUji(halaman: 2, perHalaman: 3);
+        $h9 = AmbilSaldoStokUji(halaman: 9, perHalaman: 3);
 
         expect([$h1['Saldo']['HalamanSaatIni'], $h1['Saldo']['HalamanTerakhir'], $h1['Saldo']['Total'], count($h1['Saldo']['Data'])])->toBe([1, 2, 4, 3])
             ->and(AmbilPasanganSaldoUji($h2))->toBe(['Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter @ Gudang Outlet Utama'])
@@ -172,7 +187,6 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
 
     it('saring, urut, dan halaman di SQL: jumlah kueri tetap dan tidak ada kueri yang memuat semua baris/produk; karakter wildcard kata diperlakukan harfiah', function (): void {
         $d = SiapkanSaldoStokUji();
-        config()->set('persediaan.Saldo.PerHalaman', 5);
         $toko = $d['Toko'];
 
         // [jumlah kueri, binding terbanyak dalam satu kueri, hasil]. Implementasi yang memuat semua produk ke PHP
@@ -187,7 +201,7 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
                     $bindingTerbanyak = max($bindingTerbanyak, count($kueri->bindings));
                 }
             });
-            $hasil = AmbilSaldoStokUji($saring, halaman: 2);
+            $hasil = AmbilSaldoStokUji($saring, halaman: 2, perHalaman: 5);
             $aktif = false;
 
             return [$jumlah, $bindingTerbanyak, $hasil];
@@ -268,16 +282,22 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
         BantuanPersediaan::AturMetodeHpp($d['Tenant'], MetodeHpp::Fifo);
 
         BantuanPersediaan::MasukSebagai($this, $d['Tenant']->Id)
-            ->get('/kelola/persediaan/saldo?keadaan=Ada&urut=-Nilai&kata=minyak')
+            ->get('/kelola/persediaan/saldo?saring[Keadaan]=Ada&urut=-Nilai&cari=minyak')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Kelola/Persediaan/Saldo')
-                ->where('Saring', ['Kata' => 'minyak', 'UuidGudang' => null, 'Keadaan' => 'Ada', 'Urut' => '-Nilai'])
-                ->where('Saldo.Total', 1)
+                ->where('Saldo.Meta.Total', 1)
                 ->where('Saldo.Data.0.NilaiPersediaan', '924000.00')
-                ->where('Ringkasan', ['TotalNilai' => '924000.00', 'JumlahBaris' => 1, 'JumlahMinus' => 0])
+                ->where('Saldo.Ringkasan', ['TotalNilai' => '924000.00', 'JumlahBaris' => 1, 'JumlahMinus' => 0])
                 ->where('MetodeHpp', 'Fifo')
                 ->has('OpsiGudang', 3));
+
+        // TabelData (D-16): URL yang sama sebagai JSON, ringkasan ikut saringan.
+        BantuanPersediaan::MasukSebagai($this, $d['Tenant']->Id)
+            ->getJson('/kelola/persediaan/saldo?saring[Keadaan]=Minus')
+            ->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Ringkasan.TotalNilai', '-115500.00');
     });
 
     it('HTTP: izin persediaan.lihat (Kasir 403); staf gudang per outlet hanya melihat outletnya', function (): void {
@@ -292,7 +312,7 @@ describe('F-05a saldo stok (DesainF05a C.8, D)', function (): void {
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Kelola/Persediaan/Saldo')
-                ->where('Saldo.Total', 1)
+                ->where('Saldo.Meta.Total', 1)
                 ->where('Saldo.Data.0.UuidGudang', $d['Solo']->Uuid)
                 ->has('OpsiGudang', 1));
     });

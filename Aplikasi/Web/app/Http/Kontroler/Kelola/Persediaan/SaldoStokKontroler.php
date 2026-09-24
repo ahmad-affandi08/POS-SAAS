@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Persediaan;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Persediaan\Kueri\DaftarSaldoStok;
 use App\Domain\Tenant\Kueri\PengaturanPersediaanTenant;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -17,19 +19,11 @@ use Inertia\Response;
  */
 final class SaldoStokKontroler extends DasarPersediaanKontroler
 {
-    public function Daftar(Request $permintaan, DaftarSaldoStok $daftar, PengaturanPersediaanTenant $pengaturan): Response
+    public function Daftar(Request $permintaan, DaftarSaldoStok $daftar, PengaturanPersediaanTenant $pengaturan): Response|JsonResponse
     {
-        $saring = DaftarSaldoStok::NormalkanSaring(
-            $permintaan->query('kata'),
-            $permintaan->query('gudang'),
-            $permintaan->query('keadaan'),
-            $permintaan->query('urut'),
-        );
-        $halaman = $permintaan->query('halaman');
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarSaldoStok::KOLOM_URUT, 'Nama', DaftarSaldoStok::KOLOM_SARING);
 
-        return Inertia::render('Kelola/Persediaan/Saldo', [
-            ...$daftar->Ambil($saring, $this->IdOutletBoleh(), is_numeric($halaman) ? (int) $halaman : 1),
-            'Saring' => $saring,
+        return ResponsTabel::Kirim($permintaan, 'Kelola/Persediaan/Saldo', 'Saldo', fn (): array => $daftar->AmbilTabel($tabel, $this->IdOutletBoleh()), fn (): array => [
             'OpsiGudang' => $this->AmbilOpsiGudang(false),
             'MetodeHpp' => $pengaturan->Ambil()->metodeHpp->value,
         ]);

@@ -69,6 +69,8 @@ export type PropsTabelData<T> = {
     ekspor?: { alamat: string; label?: string };
     kosong: { judul: string; aksi?: ReactNode };
     aksiAlat?: ReactNode;
+    /** Ringkasan di atas tabel dari hasil server terbaru (ikut berubah saat saring berubah). */
+    ringkasan?: (hasil: HasilTabel<T> | undefined) => ReactNode;
 };
 
 const BATAS_VIRTUAL = 100;
@@ -473,7 +475,16 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
             cari={cari}
             saring={saring}
             {...(props.ekspor
-                ? { ekspor: { ...props.ekspor, query: TulisKeadaanKeUrl(keadaan, keadaanTabel.urutBawaan) } }
+                ? {
+                      ekspor: {
+                          ...props.ekspor,
+                          query: TulisKeadaanKeUrl(
+                              keadaan,
+                              keadaanTabel.urutBawaan,
+                              server ? window.location.search : '',
+                          ),
+                      },
+                  }
                 : {})}
             aksiAlat={props.aksiAlat}
             AturCari={keadaanTabel.AturCari}
@@ -602,6 +613,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
 
     return (
         <section className="flex min-w-0 flex-col gap-3" aria-label={props.label}>
+            {props.ringkasan ? props.ringkasan(server ? kueri.data : undefined) : null}
             {bilahAlat}
             {terpilih.length > 0 && props.aksiMassal ? (
                 <div
