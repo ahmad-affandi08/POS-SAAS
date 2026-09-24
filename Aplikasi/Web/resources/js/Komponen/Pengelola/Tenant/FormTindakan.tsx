@@ -5,6 +5,9 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import { Input } from '@/Komponen/Ui/input';
+import { Label } from '@/Komponen/Ui/label';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { Pilihan } from '@/Tipe/Pengelola';
@@ -22,7 +25,10 @@ type PropsKerangka = {
     children: ReactNode;
 };
 
-/** Kerangka formulir tindakan: judul, penjelasan akibat, galat aturan bisnis, tombol kirim & batal. */
+/**
+ * Kerangka formulir tindakan dalam dialog: judul, penjelasan akibat, galat aturan bisnis, tombol kirim & batal.
+ * Tindakan berisiko (varian bahaya: tangguhkan, cabut override) memakai AlertDialog.
+ */
 function KerangkaForm({
     judul,
     keterangan,
@@ -35,24 +41,25 @@ function KerangkaForm({
     children,
 }: PropsKerangka) {
     return (
-        <form
-            onSubmit={saatKirim}
-            noValidate
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-permukaan p-6"
+        <DialogFormulir
+            jenis={varianKirim === 'bahaya' ? 'konfirmasi' : 'dialog'}
+            judul={judul}
+            keterangan={keterangan}
+            saatTutup={saatBatal}
         >
-            <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-            <div className="text-isi text-teks-sekunder">{keterangan}</div>
-            {galatUmum ? <Pemberitahuan jenis="bahaya">{galatUmum}</Pemberitahuan> : null}
-            {children}
-            <div className="flex flex-wrap gap-2">
-                <Tombol type="submit" varian={varianKirim} memproses={memproses}>
-                    {labelKirim}
-                </Tombol>
-                <Tombol varian="sekunder" onClick={saatBatal}>
-                    Batal
-                </Tombol>
-            </div>
-        </form>
+            <form onSubmit={saatKirim} noValidate className="flex flex-col gap-4">
+                {galatUmum ? <Pemberitahuan jenis="bahaya">{galatUmum}</Pemberitahuan> : null}
+                {children}
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" varian={varianKirim} memproses={memproses}>
+                        {labelKirim}
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatBatal}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
     );
 }
 
@@ -184,21 +191,22 @@ export function FormOverride({
                     />
                 ) : null}
                 <div className="flex flex-col gap-1">
-                    <label htmlFor={idTanggal} className="text-label font-semibold text-teks-utama">
+                    <Label htmlFor={idTanggal} className="text-label font-semibold text-teks-utama">
                         Berlaku sampai (akhir hari, WIB)
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                         id={idTanggal}
                         type="date"
                         value={formulir.data.BerakhirPada}
                         onChange={(peristiwa) => formulir.setData('BerakhirPada', peristiwa.target.value)}
                         aria-invalid={formulir.errors.BerakhirPada ? true : undefined}
-                        className={`h-10 rounded-kontrol border bg-permukaan px-3 text-isi text-teks-utama outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                            formulir.errors.BerakhirPada ? 'border-bahaya' : 'border-garis-input'
-                        }`}
+                        aria-describedby={formulir.errors.BerakhirPada ? `${idTanggal}-galat` : undefined}
+                        className="h-10 text-isi"
                     />
                     {formulir.errors.BerakhirPada ? (
-                        <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.BerakhirPada}</p>
+                        <p id={`${idTanggal}-galat`} className="text-keterangan font-semibold text-bahaya">
+                            {formulir.errors.BerakhirPada}
+                        </p>
                     ) : null}
                 </div>
             </div>

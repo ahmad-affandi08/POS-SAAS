@@ -12,6 +12,9 @@ import {
     FormTangguhkan,
 } from '@/Komponen/Pengelola/Tenant/FormTindakan';
 import { LabelPenanda, LabelStatusLangganan } from '@/Komponen/Pengelola/Tenant/LabelLangganan';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -32,6 +35,8 @@ const labelAksi: Record<string, string> = {
     'tenant.catatan.tulis': 'Tulis catatan',
     'tenant.penanda.ubah': 'Ubah penanda',
 };
+
+const kelasKepala = 'text-label font-semibold text-teks-sekunder';
 
 /** Tampilan 360° dasar tenant & tindakan pengelola (P-07). Semua tindakan tercatat di riwayat (BR-P07.3). */
 export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
@@ -103,7 +108,7 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                 </Pemberitahuan>
             ) : null}
 
-            {tombolTerlihat.length > 0 && tindakan === null ? (
+            {tombolTerlihat.length > 0 ? (
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Tindakan pada tenant">
                     {tombolTerlihat.map((item) => (
                         <Tombol
@@ -156,316 +161,350 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                 />
             ) : null}
 
-            <div className="grid gap-4 lg:grid-cols-2">
-                <Panel judul="Profil usaha">
-                    <DaftarNilai
-                        isi={[
-                            ['Nama usaha', Profil.Nama],
-                            ['Slug', <span className="font-mono">{Profil.Slug}</span>],
-                            ['NPWP', Profil.Npwp ? <span className="font-mono">{Profil.Npwp}</span> : 'Belum diisi'],
-                            ['PKP', Profil.Pkp ? 'Ya' : 'Tidak'],
-                            ['Zona waktu', Profil.ZonaWaktu],
-                            [
-                                'Sektor',
-                                Profil.TemplateSektor.length > 0
-                                    ? Profil.TemplateSektor.join(', ')
-                                    : 'Belum memilih template sektor',
-                            ],
-                            ['Terdaftar', FormatTanggalWaktu(Profil.DibuatPada)],
-                        ]}
-                    />
-                </Panel>
+            <Tabs defaultValue="ringkasan" className="gap-4">
+                <div className="overflow-x-auto">
+                    <TabsList aria-label="Bagian tampilan tenant" className="text-label">
+                        <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
+                        <TabsTrigger value="override">Override & trial ({Tenant.Override.length})</TabsTrigger>
+                        <TabsTrigger value="catatan">Catatan & riwayat</TabsTrigger>
+                        <TabsTrigger value="menyusul">Belum tersedia</TabsTrigger>
+                    </TabsList>
+                </div>
 
-                <Panel judul="Paket & langganan">
-                    {Langganan === null ? (
-                        <p className="text-isi text-teks-sekunder">Tenant ini belum punya langganan.</p>
-                    ) : (
+                <TabsContent value="ringkasan" className="grid gap-4 lg:grid-cols-2">
+                    <Panel judul="Profil usaha">
                         <DaftarNilai
                             isi={[
+                                ['Nama usaha', Profil.Nama],
+                                ['Slug', <span className="font-mono">{Profil.Slug}</span>],
                                 [
-                                    'Paket',
-                                    <>
-                                        {Langganan.NamaPaket} <span className="font-mono">({Langganan.KodePaket})</span>
-                                    </>,
+                                    'NPWP',
+                                    Profil.Npwp ? <span className="font-mono">{Profil.Npwp}</span> : 'Belum diisi',
                                 ],
-                                ['Status', Langganan.Status],
-                                ['Trial berakhir', FormatTanggalWaktu(Langganan.TrialBerakhirPada)],
+                                ['PKP', Profil.Pkp ? 'Ya' : 'Tidak'],
+                                ['Zona waktu', Profil.ZonaWaktu],
                                 [
-                                    'Perpanjangan trial',
-                                    `${Langganan.PerpanjanganTrial} dari ${Aturan.MaksKaliTrial} kali`,
+                                    'Sektor',
+                                    Profil.TemplateSektor.length > 0
+                                        ? Profil.TemplateSektor.join(', ')
+                                        : 'Belum memilih template sektor',
                                 ],
-                                [
-                                    'Periode',
-                                    `${FormatTanggalWaktu(Langganan.PeriodeMulai)} – ${FormatTanggalWaktu(Langganan.PeriodeSelesai)}`,
-                                ],
-                                ['Siklus tagihan', Langganan.SiklusTagihan],
-                                ...(Langganan.StatusSebelumDitangguhkan
-                                    ? ([['Status sebelum ditangguhkan', Langganan.StatusSebelumDitangguhkan]] as [
-                                          string,
-                                          ReactNode,
-                                      ][])
-                                    : []),
+                                ['Terdaftar', FormatTanggalWaktu(Profil.DibuatPada)],
                             ]}
                         />
-                    )}
-                </Panel>
+                    </Panel>
 
-                <Panel judul="Pemakaian vs batas">
-                    <table className="w-full text-left text-isi">
-                        <caption className="sr-only">Pemakaian dibanding batas efektif (paket + override)</caption>
-                        <thead className="text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="py-1 font-semibold">
-                                    Sumber daya
-                                </th>
-                                <th scope="col" className="py-1 text-right font-semibold">
-                                    Terpakai
-                                </th>
-                                <th scope="col" className="py-1 text-right font-semibold">
-                                    Batas
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Tenant.Pemakaian.map((baris) => (
-                                <tr key={baris.Label} className="border-t border-garis">
-                                    <td className="py-2">{baris.Label}</td>
-                                    <td className="py-2 text-right tabular-nums">{baris.Pakai}</td>
-                                    <td className="py-2 text-right tabular-nums">
-                                        {baris.Batas === null ? 'Tak terbatas' : baris.Batas}
-                                        {baris.Batas !== null && baris.Pakai > baris.Batas ? (
-                                            <span className="ml-2">
-                                                <LabelStatus jenis="peringatan" teks="Melebihi batas" />
-                                            </span>
-                                        ) : null}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </Panel>
+                    <Panel judul="Paket & langganan">
+                        {Langganan === null ? (
+                            <p className="text-isi text-teks-sekunder">Tenant ini belum punya langganan.</p>
+                        ) : (
+                            <DaftarNilai
+                                isi={[
+                                    [
+                                        'Paket',
+                                        <>
+                                            {Langganan.NamaPaket}{' '}
+                                            <span className="font-mono">({Langganan.KodePaket})</span>
+                                        </>,
+                                    ],
+                                    ['Status', Langganan.Status],
+                                    ['Trial berakhir', FormatTanggalWaktu(Langganan.TrialBerakhirPada)],
+                                    [
+                                        'Perpanjangan trial',
+                                        `${Langganan.PerpanjanganTrial} dari ${Aturan.MaksKaliTrial} kali`,
+                                    ],
+                                    [
+                                        'Periode',
+                                        `${FormatTanggalWaktu(Langganan.PeriodeMulai)} – ${FormatTanggalWaktu(Langganan.PeriodeSelesai)}`,
+                                    ],
+                                    ['Siklus tagihan', Langganan.SiklusTagihan],
+                                    ...(Langganan.StatusSebelumDitangguhkan
+                                        ? ([['Status sebelum ditangguhkan', Langganan.StatusSebelumDitangguhkan]] as [
+                                              string,
+                                              ReactNode,
+                                          ][])
+                                        : []),
+                                ]}
+                            />
+                        )}
+                    </Panel>
 
-                <Panel judul="Outlet & gudang">
-                    <p className="text-isi text-teks-sekunder">
-                        {Tenant.Organisasi.Outlet.length} outlet · {Tenant.Organisasi.JumlahGudang} gudang ·{' '}
-                        {Tenant.Organisasi.JumlahMerek} merek
-                    </p>
-                    {Tenant.Organisasi.Outlet.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">Belum ada outlet.</p>
-                    ) : (
-                        <ul className="flex flex-col gap-1 text-isi">
-                            {Tenant.Organisasi.Outlet.map((outlet) => (
-                                <li key={outlet.Kode}>
-                                    <span className="font-mono text-label">{outlet.Kode}</span> {outlet.Nama}
-                                    {outlet.TemplateSektor ? (
-                                        <span className="text-teks-sekunder"> · {outlet.TemplateSektor}</span>
-                                    ) : null}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
-
-                <Panel judul="Anggota">
-                    {Tenant.Anggota.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">Belum ada anggota.</p>
-                    ) : (
-                        <ul className="flex flex-col gap-3 text-isi">
-                            {Tenant.Anggota.map((anggota) => (
-                                <li key={anggota.Email} className="flex flex-col gap-1">
-                                    <span className="flex flex-wrap items-center gap-2 font-semibold text-teks-utama">
-                                        {anggota.Nama}
-                                        {anggota.Pemilik ? <LabelStatus jenis="netral" teks="Owner" /> : null}
-                                        {anggota.Status !== 'Aktif' ? (
-                                            <LabelStatus jenis="netral" teks={anggota.Status} />
-                                        ) : null}
-                                    </span>
-                                    <span className="break-all text-teks-sekunder">
-                                        {anggota.Email} ·{' '}
-                                        {anggota.EmailTerverifikasi
-                                            ? 'email terverifikasi'
-                                            : 'email belum diverifikasi'}
-                                    </span>
-                                    {anggota.NoHp ? (
-                                        <span className="font-mono text-label text-teks-sekunder">{anggota.NoHp}</span>
-                                    ) : null}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
-
-                <Panel judul="Persetujuan legal">
-                    {Tenant.PersetujuanLegal.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">
-                            Belum ada persetujuan dokumen legal yang tercatat.
-                        </p>
-                    ) : (
-                        <ul className="flex flex-col gap-1 text-isi">
-                            {Tenant.PersetujuanLegal.map((baris) => (
-                                <li key={`${baris.Jenis}-${String(baris.Versi)}-${baris.DisetujuiPada}`}>
-                                    {baris.Jenis} versi {baris.Versi ?? '—'}
-                                    <span className="text-teks-sekunder">
-                                        {' '}
-                                        · {baris.Pengguna} · {FormatTanggalWaktu(baris.DisetujuiPada)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
-            </div>
-
-            <Panel judul="Override & perpanjangan trial">
-                {Tenant.Override.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Belum pernah ada override atau perpanjangan trial.</p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[720px] text-left text-isi">
-                            <caption className="sr-only">Override tenant, terbaru di atas</caption>
-                            <thead className="text-label text-teks-sekunder">
-                                <tr>
-                                    <th scope="col" className="py-1 pr-3 font-semibold">
-                                        Jenis
-                                    </th>
-                                    <th scope="col" className="py-1 pr-3 font-semibold">
-                                        Isi
-                                    </th>
-                                    <th scope="col" className="py-1 pr-3 font-semibold">
-                                        Berakhir
-                                    </th>
-                                    <th scope="col" className="py-1 pr-3 font-semibold">
-                                        Alasan
-                                    </th>
-                                    <th scope="col" className="py-1 font-semibold">
-                                        <span className="sr-only">Aksi</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Tenant.Override.map((baris) => (
-                                    <tr key={baris.Uuid} className="border-t border-garis align-top">
-                                        <td className="py-2 pr-3">
-                                            <span className="block">{baris.Jenis}</span>
-                                            <LabelStatus
-                                                jenis={baris.Aktif ? 'sukses' : 'netral'}
-                                                teks={baris.Aktif ? 'Berlaku' : 'Berakhir'}
-                                            />
-                                        </td>
-                                        <td className="py-2 pr-3">
-                                            {baris.Jenis === 'Batas' ? (
-                                                `${labelBatas[baris.Kunci] ?? baris.Kunci}: ${baris.Nilai ?? '—'}`
-                                            ) : baris.Jenis === 'Trial' ? (
-                                                `+${baris.Nilai ?? '?'} hari`
-                                            ) : (
-                                                <span className="font-mono text-label">{baris.Kunci}</span>
-                                            )}
-                                        </td>
-                                        <td className="whitespace-nowrap py-2 pr-3 text-teks-sekunder">
-                                            {FormatTanggalWaktu(baris.BerakhirPada)}
-                                        </td>
-                                        <td className="py-2 pr-3 text-teks-sekunder">
-                                            {baris.Alasan}
-                                            <span className="block text-keterangan">
-                                                {baris.DibuatOleh} · {FormatTanggalWaktu(baris.DibuatPada)}
-                                            </span>
-                                        </td>
-                                        <td className="py-2 text-right">
-                                            {baris.Aktif &&
-                                            baris.Jenis !== 'Trial' &&
-                                            PunyaIzin(pengguna, IzinPengelola.TenantOverrideKelola) ? (
-                                                <Tombol
-                                                    varian="sekunder"
-                                                    onClick={() =>
-                                                        AturTindakan({ cabut: baris.Uuid, kunci: baris.Kunci })
-                                                    }
-                                                >
-                                                    Cabut
-                                                </Tombol>
+                    <Panel judul="Pemakaian vs batas">
+                        <Table className="text-isi">
+                            <TableCaption className="sr-only">
+                                Pemakaian dibanding batas efektif (paket + override)
+                            </TableCaption>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead scope="col" className={`${kelasKepala} px-0`}>
+                                        Sumber daya
+                                    </TableHead>
+                                    <TableHead scope="col" className={`${kelasKepala} px-0 text-right`}>
+                                        Terpakai
+                                    </TableHead>
+                                    <TableHead scope="col" className={`${kelasKepala} px-0 text-right`}>
+                                        Batas
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Tenant.Pemakaian.map((baris) => (
+                                    <TableRow key={baris.Label}>
+                                        <TableCell className="px-0 whitespace-normal">{baris.Label}</TableCell>
+                                        <TableCell className="px-0 text-right tabular-nums">{baris.Pakai}</TableCell>
+                                        <TableCell className="px-0 text-right tabular-nums">
+                                            {baris.Batas === null ? 'Tak terbatas' : baris.Batas}
+                                            {baris.Batas !== null && baris.Pakai > baris.Batas ? (
+                                                <span className="ml-2">
+                                                    <LabelStatus jenis="peringatan" teks="Melebihi batas" />
+                                                </span>
                                             ) : null}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </Panel>
+                            </TableBody>
+                        </Table>
+                    </Panel>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-                <Panel judul="Catatan internal">
-                    {PunyaIzin(pengguna, IzinPengelola.TenantCatatanTulis) ? <FormCatatan uuid={Profil.Uuid} /> : null}
-                    {Tenant.Catatan.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">Belum ada catatan internal.</p>
-                    ) : (
-                        <ul className="flex flex-col gap-3 text-isi">
-                            {Tenant.Catatan.map((catatan) => (
-                                <li key={catatan.Uuid} className="border-t border-garis pt-3">
-                                    <p className="whitespace-pre-line text-teks-utama">{catatan.Isi}</p>
-                                    <p className="text-keterangan text-teks-sekunder">
-                                        {catatan.Penulis} · {FormatTanggalWaktu(catatan.DibuatPada)}
-                                    </p>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
+                    <Panel judul="Outlet & gudang">
+                        <p className="text-isi text-teks-sekunder">
+                            {Tenant.Organisasi.Outlet.length} outlet · {Tenant.Organisasi.JumlahGudang} gudang ·{' '}
+                            {Tenant.Organisasi.JumlahMerek} merek
+                        </p>
+                        {Tenant.Organisasi.Outlet.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">Belum ada outlet.</p>
+                        ) : (
+                            <ul className="flex flex-col gap-1 text-isi">
+                                {Tenant.Organisasi.Outlet.map((outlet) => (
+                                    <li key={outlet.Kode}>
+                                        <span className="font-mono text-label">{outlet.Kode}</span> {outlet.Nama}
+                                        {outlet.TemplateSektor ? (
+                                            <span className="text-teks-sekunder"> · {outlet.TemplateSektor}</span>
+                                        ) : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
 
-                <Panel judul="Riwayat tindakan">
-                    {Tenant.Riwayat.length === 0 ? (
-                        <p className="text-isi text-teks-sekunder">Belum ada tindakan pengelola pada tenant ini.</p>
-                    ) : (
-                        <ol className="flex flex-col gap-3 text-isi">
-                            {Tenant.Riwayat.map((log) => (
-                                <li key={log.Id} className="border-t border-garis pt-3">
-                                    <p className="font-semibold text-teks-utama">
-                                        {labelAksi[log.Aksi] ?? log.Aksi}{' '}
-                                        <span className="font-mono text-keterangan font-normal text-teks-sekunder">
-                                            {log.Aksi}
+                    <Panel judul="Anggota">
+                        {Tenant.Anggota.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">Belum ada anggota.</p>
+                        ) : (
+                            <ul className="flex flex-col gap-3 text-isi">
+                                {Tenant.Anggota.map((anggota) => (
+                                    <li key={anggota.Email} className="flex flex-col gap-1">
+                                        <span className="flex flex-wrap items-center gap-2 font-semibold text-teks-utama">
+                                            {anggota.Nama}
+                                            {anggota.Pemilik ? <LabelStatus jenis="netral" teks="Owner" /> : null}
+                                            {anggota.Status !== 'Aktif' ? (
+                                                <LabelStatus jenis="netral" teks={anggota.Status} />
+                                            ) : null}
                                         </span>
-                                    </p>
-                                    {log.Alasan ? <p className="text-teks-sekunder">Alasan: {log.Alasan}</p> : null}
-                                    {log.NilaiBaru ? (
-                                        <p className="break-all text-keterangan text-teks-sekunder">
-                                            <code className="font-mono">{JSON.stringify(log.NilaiBaru)}</code>
-                                        </p>
-                                    ) : null}
-                                    <p className="text-keterangan text-teks-sekunder">
-                                        {log.Pelaku} · {FormatTanggalWaktu(log.DibuatPada)}
-                                    </p>
-                                </li>
-                            ))}
-                        </ol>
-                    )}
-                </Panel>
-            </div>
+                                        <span className="break-all text-teks-sekunder">
+                                            {anggota.Email} ·{' '}
+                                            {anggota.EmailTerverifikasi
+                                                ? 'email terverifikasi'
+                                                : 'email belum diverifikasi'}
+                                        </span>
+                                        {anggota.NoHp ? (
+                                            <span className="font-mono text-label text-teks-sekunder">
+                                                {anggota.NoHp}
+                                            </span>
+                                        ) : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
 
-            <Panel judul="Belum tersedia">
-                <ul className="grid gap-3 text-isi sm:grid-cols-2">
-                    <ModulMenyusul judul="Tagihan & pembayaran" modul="Billing & Dunning Platform (P-08)" />
-                    <ModulMenyusul judul="Tiket & riwayat akses dukungan" modul="Dukungan & Akses Dukungan (P-09)" />
-                    <ModulMenyusul
-                        judul="Perangkat (platform, versi aplikasi, outbox tertunda)"
-                        modul="aktivasi perangkat POS"
-                    />
-                    <ModulMenyusul judul="Mitra perujuk" modul="Mitra, Reseller & Referral (P-12)" />
-                    <ModulMenyusul judul="Skor kesehatan" modul="skor kesehatan tenant (fase berikutnya)" />
-                    <ModulMenyusul
-                        judul="Permintaan penghapusan data (UU PDP)"
-                        modul="alur penghapusan data (fase berikutnya)"
-                    />
-                </ul>
-            </Panel>
+                    <Panel judul="Persetujuan legal">
+                        {Tenant.PersetujuanLegal.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">
+                                Belum ada persetujuan dokumen legal yang tercatat.
+                            </p>
+                        ) : (
+                            <ul className="flex flex-col gap-1 text-isi">
+                                {Tenant.PersetujuanLegal.map((baris) => (
+                                    <li key={`${baris.Jenis}-${String(baris.Versi)}-${baris.DisetujuiPada}`}>
+                                        {baris.Jenis} versi {baris.Versi ?? '—'}
+                                        <span className="text-teks-sekunder">
+                                            {' '}
+                                            · {baris.Pengguna} · {FormatTanggalWaktu(baris.DisetujuiPada)}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
+                </TabsContent>
+
+                <TabsContent value="override">
+                    <Panel judul="Override & perpanjangan trial">
+                        {Tenant.Override.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">
+                                Belum pernah ada override atau perpanjangan trial.
+                            </p>
+                        ) : (
+                            <Table className="min-w-[720px] text-isi">
+                                <TableCaption className="sr-only">Override tenant, terbaru di atas</TableCaption>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead scope="col" className={`${kelasKepala} pl-0`}>
+                                            Jenis
+                                        </TableHead>
+                                        <TableHead scope="col" className={kelasKepala}>
+                                            Isi
+                                        </TableHead>
+                                        <TableHead scope="col" className={kelasKepala}>
+                                            Berakhir
+                                        </TableHead>
+                                        <TableHead scope="col" className={kelasKepala}>
+                                            Alasan
+                                        </TableHead>
+                                        <TableHead scope="col" className={`${kelasKepala} pr-0`}>
+                                            <span className="sr-only">Aksi</span>
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {Tenant.Override.map((baris) => (
+                                        <TableRow key={baris.Uuid} className="align-top">
+                                            <TableCell className="pl-0">
+                                                <span className="block">{baris.Jenis}</span>
+                                                <LabelStatus
+                                                    jenis={baris.Aktif ? 'sukses' : 'netral'}
+                                                    teks={baris.Aktif ? 'Berlaku' : 'Berakhir'}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="whitespace-normal">
+                                                {baris.Jenis === 'Batas' ? (
+                                                    `${labelBatas[baris.Kunci] ?? baris.Kunci}: ${baris.Nilai ?? '—'}`
+                                                ) : baris.Jenis === 'Trial' ? (
+                                                    `+${baris.Nilai ?? '?'} hari`
+                                                ) : (
+                                                    <span className="font-mono text-label">{baris.Kunci}</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-teks-sekunder">
+                                                {FormatTanggalWaktu(baris.BerakhirPada)}
+                                            </TableCell>
+                                            <TableCell className="whitespace-normal text-teks-sekunder">
+                                                {baris.Alasan}
+                                                <span className="block text-keterangan">
+                                                    {baris.DibuatOleh} · {FormatTanggalWaktu(baris.DibuatPada)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="pr-0 text-right">
+                                                {baris.Aktif &&
+                                                baris.Jenis !== 'Trial' &&
+                                                PunyaIzin(pengguna, IzinPengelola.TenantOverrideKelola) ? (
+                                                    <Tombol
+                                                        varian="sekunder"
+                                                        onClick={() =>
+                                                            AturTindakan({ cabut: baris.Uuid, kunci: baris.Kunci })
+                                                        }
+                                                    >
+                                                        Cabut
+                                                    </Tombol>
+                                                ) : null}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </Panel>
+                </TabsContent>
+
+                <TabsContent value="catatan" className="grid gap-4 lg:grid-cols-2">
+                    <Panel judul="Catatan internal">
+                        {PunyaIzin(pengguna, IzinPengelola.TenantCatatanTulis) ? (
+                            <FormCatatan uuid={Profil.Uuid} />
+                        ) : null}
+                        {Tenant.Catatan.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">Belum ada catatan internal.</p>
+                        ) : (
+                            <ul className="flex flex-col gap-3 text-isi">
+                                {Tenant.Catatan.map((catatan) => (
+                                    <li key={catatan.Uuid} className="border-t border-garis pt-3">
+                                        <p className="whitespace-pre-line text-teks-utama">{catatan.Isi}</p>
+                                        <p className="text-keterangan text-teks-sekunder">
+                                            {catatan.Penulis} · {FormatTanggalWaktu(catatan.DibuatPada)}
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
+
+                    <Panel judul="Riwayat tindakan">
+                        {Tenant.Riwayat.length === 0 ? (
+                            <p className="text-isi text-teks-sekunder">Belum ada tindakan pengelola pada tenant ini.</p>
+                        ) : (
+                            <ol className="flex flex-col gap-3 text-isi">
+                                {Tenant.Riwayat.map((log) => (
+                                    <li key={log.Id} className="border-t border-garis pt-3">
+                                        <p className="font-semibold text-teks-utama">
+                                            {labelAksi[log.Aksi] ?? log.Aksi}{' '}
+                                            <span className="font-mono text-keterangan font-normal text-teks-sekunder">
+                                                {log.Aksi}
+                                            </span>
+                                        </p>
+                                        {log.Alasan ? (
+                                            <p className="text-teks-sekunder">Alasan: {log.Alasan}</p>
+                                        ) : null}
+                                        {log.NilaiBaru ? (
+                                            <p className="break-all text-keterangan text-teks-sekunder">
+                                                <code className="font-mono">{JSON.stringify(log.NilaiBaru)}</code>
+                                            </p>
+                                        ) : null}
+                                        <p className="text-keterangan text-teks-sekunder">
+                                            {log.Pelaku} · {FormatTanggalWaktu(log.DibuatPada)}
+                                        </p>
+                                    </li>
+                                ))}
+                            </ol>
+                        )}
+                    </Panel>
+                </TabsContent>
+
+                <TabsContent value="menyusul">
+                    <Panel judul="Belum tersedia">
+                        <ul className="grid gap-3 text-isi sm:grid-cols-2">
+                            <ModulMenyusul judul="Tagihan & pembayaran" modul="Billing & Dunning Platform (P-08)" />
+                            <ModulMenyusul
+                                judul="Tiket & riwayat akses dukungan"
+                                modul="Dukungan & Akses Dukungan (P-09)"
+                            />
+                            <ModulMenyusul
+                                judul="Perangkat (platform, versi aplikasi, outbox tertunda)"
+                                modul="aktivasi perangkat POS"
+                            />
+                            <ModulMenyusul judul="Mitra perujuk" modul="Mitra, Reseller & Referral (P-12)" />
+                            <ModulMenyusul judul="Skor kesehatan" modul="skor kesehatan tenant (fase berikutnya)" />
+                            <ModulMenyusul
+                                judul="Permintaan penghapusan data (UU PDP)"
+                                modul="alur penghapusan data (fase berikutnya)"
+                            />
+                        </ul>
+                    </Panel>
+                </TabsContent>
+            </Tabs>
         </TataLetakPengelola>
     );
 }
 
 function Panel({ judul, children }: { judul: string; children: ReactNode }) {
     return (
-        <section className="flex flex-col gap-3 rounded-panel border border-garis bg-permukaan p-4">
-            <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-            {children}
-        </section>
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4">
+                <CardTitle>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 px-4">{children}</CardContent>
+        </Card>
     );
 }
 

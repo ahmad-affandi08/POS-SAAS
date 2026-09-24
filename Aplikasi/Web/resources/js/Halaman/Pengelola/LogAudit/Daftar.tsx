@@ -1,8 +1,12 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Card } from '@/Komponen/Ui/card';
+import { Empty, EmptyDescription, EmptyHeader } from '@/Komponen/Ui/empty';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import Paginasi from '@/Komponen/Umpan/Paginasi';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 
@@ -25,6 +29,8 @@ type PropsDaftar = {
     Saring: { Kata: string };
 };
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Log audit Platform Pengelola, hanya baca (BR-P01.3). */
 export default function Daftar({ Log, Saring }: PropsDaftar) {
     const [kata, AturKata] = useState(Saring.Kata);
@@ -33,8 +39,6 @@ export default function Daftar({ Log, Saring }: PropsDaftar) {
         peristiwa.preventDefault();
         router.get('/log-audit', kata ? { kata } : {}, { preserveState: true });
     };
-    const BuatTautanHalaman = (halaman: number) =>
-        `/log-audit?${new URLSearchParams({ ...(Saring.Kata ? { kata: Saring.Kata } : {}), halaman: String(halaman) }).toString()}`;
 
     return (
         <TataLetakPengelola judul="Log audit">
@@ -53,97 +57,96 @@ export default function Daftar({ Log, Saring }: PropsDaftar) {
             </form>
 
             {Log.Data.length === 0 ? (
-                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
-                    {Saring.Kata ? `Tidak ada log dengan aksi "${Saring.Kata}".` : 'Belum ada aktivitas yang tercatat.'}
-                </p>
+                <Empty className="border border-garis bg-permukaan p-6 md:p-6">
+                    <EmptyHeader>
+                        <EmptyDescription className="text-isi text-teks-sekunder">
+                            {Saring.Kata
+                                ? `Tidak ada log dengan aksi "${Saring.Kata}".`
+                                : 'Belum ada aktivitas yang tercatat.'}
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             ) : (
-                <section className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                    <table className="w-full min-w-[860px] text-left text-isi">
-                        <caption className="sr-only">Log audit pengelola, terbaru di atas</caption>
-                        <thead className="border-b border-garis text-label text-teks-sekunder">
-                            <tr>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                <Card className="gap-0 py-0">
+                    <Table className="min-w-[860px] text-isi">
+                        <TableCaption className="sr-only">Log audit pengelola, terbaru di atas</TableCaption>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead scope="col" className={kelasKepala}>
                                     Waktu
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Pelaku
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Aksi
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Objek
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     Perubahan
-                                </th>
-                                <th scope="col" className="px-4 py-2 font-semibold">
+                                </TableHead>
+                                <TableHead scope="col" className={kelasKepala}>
                                     IP
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Log.Data.map((log) => (
-                                <tr key={log.Id} className="border-b border-garis align-top last:border-b-0">
-                                    <td className="whitespace-nowrap px-4 py-3 text-teks-sekunder">
+                                <TableRow key={log.Id} className="align-top">
+                                    <TableCell className="px-4 py-3 text-teks-sekunder">
                                         {FormatTanggalWaktu(log.DibuatPada)}
-                                    </td>
-                                    <td className="px-4 py-3 text-teks-utama">{log.Pelaku}</td>
-                                    <td className="px-4 py-3 font-mono text-label text-teks-utama">{log.Aksi}</td>
-                                    <td className="px-4 py-3 text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 whitespace-normal text-teks-utama">
+                                        {log.Pelaku}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 font-mono text-label text-teks-utama">
+                                        {log.Aksi}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 whitespace-normal text-teks-sekunder">
                                         {log.JenisObjek ? `${log.JenisObjek} #${String(log.IdObjek ?? '')}` : '—'}
                                         {log.IdTenant !== null ? (
                                             <span className="block">Tenant #{log.IdTenant}</span>
                                         ) : null}
-                                    </td>
-                                    <td className="px-4 py-3 text-keterangan text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 whitespace-normal text-keterangan text-teks-sekunder">
                                         {log.NilaiLama ? (
                                             <p>
-                                                Lama: <code className="font-mono">{JSON.stringify(log.NilaiLama)}</code>
+                                                Lama:{' '}
+                                                <code className="font-mono break-all">
+                                                    {JSON.stringify(log.NilaiLama)}
+                                                </code>
                                             </p>
                                         ) : null}
                                         {log.NilaiBaru ? (
                                             <p>
-                                                Baru: <code className="font-mono">{JSON.stringify(log.NilaiBaru)}</code>
+                                                Baru:{' '}
+                                                <code className="font-mono break-all">
+                                                    {JSON.stringify(log.NilaiBaru)}
+                                                </code>
                                             </p>
                                         ) : null}
                                         {log.Alasan ? <p>Alasan: {log.Alasan}</p> : null}
-                                    </td>
-                                    <td className="px-4 py-3 font-mono text-keterangan text-teks-sekunder">
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 font-mono text-keterangan text-teks-sekunder">
                                         {log.Ip ?? '—'}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </section>
+                        </TableBody>
+                    </Table>
+                </Card>
             )}
 
-            {Log.HalamanTerakhir > 1 ? (
-                <nav aria-label="Halaman log audit" className="flex items-center justify-between text-label">
-                    <span className="text-teks-sekunder">
-                        Halaman {Log.HalamanSaatIni} dari {Log.HalamanTerakhir} · {Log.Total} entri
-                    </span>
-                    <div className="flex gap-2">
-                        {Log.HalamanSaatIni > 1 ? (
-                            <Link
-                                href={BuatTautanHalaman(Log.HalamanSaatIni - 1)}
-                                className="font-semibold text-brand underline"
-                            >
-                                Sebelumnya
-                            </Link>
-                        ) : null}
-                        {Log.HalamanSaatIni < Log.HalamanTerakhir ? (
-                            <Link
-                                href={BuatTautanHalaman(Log.HalamanSaatIni + 1)}
-                                className="font-semibold text-brand underline"
-                            >
-                                Berikutnya
-                            </Link>
-                        ) : null}
-                    </div>
-                </nav>
-            ) : null}
+            <Paginasi
+                alamat="/log-audit"
+                saring={Saring.Kata ? { kata: Saring.Kata } : {}}
+                halamanSaatIni={Log.HalamanSaatIni}
+                halamanTerakhir={Log.HalamanTerakhir}
+                total={Log.Total}
+                label="Halaman log audit"
+            />
         </TataLetakPengelola>
     );
 }
