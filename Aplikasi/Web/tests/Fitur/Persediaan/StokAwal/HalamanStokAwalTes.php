@@ -13,17 +13,11 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 /*
  * F-05a Tim C: props halaman Inertia stok awal (kontrak `Tipe/Persediaan.ts`: PropsDaftarStokAwal, PropsFormStokAwal,
- * PropsDetailStokAwal). Komponen halamannya milik Tim G (DesainF05a G); selama Tim G belum merge, pemeriksaan
- * keberadaan berkas halaman dimatikan hanya di berkas test ini. Hapus `beforeEach` kedua dan
- * argumen `false` di `component()` setelah halaman Tim G ada.
+ * PropsDetailStokAwal). Komponen halaman milik Tim G.
  */
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-});
-
-beforeEach(function (): void {
-    config(['inertia.pages.ensure_pages_exist' => false]);
 });
 
 describe('F-05a halaman stok awal', function (): void {
@@ -37,7 +31,7 @@ describe('F-05a halaman stok awal', function (): void {
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $this->get('/kelola/persediaan/stok-awal')->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Daftar', false)
+            ->component('Kelola/Persediaan/StokAwal/Daftar')
             ->where('StokAwal.Total', 2)
             ->where('Saring', ['Kata' => '', 'Status' => 'Semua', 'UuidGudang' => null])
             ->where('Izin.PostingStokAwal', true)
@@ -45,7 +39,7 @@ describe('F-05a halaman stok awal', function (): void {
             ->has('OpsiGudang', 2));
 
         $this->get('/kelola/persediaan/stok-awal?status=Diposting')->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Daftar', false)
+            ->component('Kelola/Persediaan/StokAwal/Daftar')
             ->where('StokAwal.Total', 1)
             ->where('StokAwal.Data.0.Uuid', $utama->Uuid)
             ->where('StokAwal.Data.0.Nomor', $utama->Nomor)
@@ -53,10 +47,19 @@ describe('F-05a halaman stok awal', function (): void {
             ->where('StokAwal.Data.0.TotalNilai', '380000.00')
             ->where('StokAwal.Data.0.NamaGudang', $t['Gudang']->Nama));
 
+        $this->get("/kelola/persediaan/stok-awal?gudang={$gudangCabang->Uuid}&kata=minyak")->assertInertia(fn (Assert $halaman) => $halaman
+            ->component('Kelola/Persediaan/StokAwal/Daftar')
+            ->where('Saring', ['Kata' => 'minyak', 'Status' => 'Semua', 'UuidGudang' => $gudangCabang->Uuid])
+            ->where('StokAwal.Total', 1)
+            ->where('StokAwal.Data.0.Uuid', $drafCabang->Uuid));
+        $this->get('/kelola/persediaan/stok-awal?kata=tidak-ada-produk-ini')->assertInertia(fn (Assert $halaman) => $halaman
+            ->component('Kelola/Persediaan/StokAwal/Daftar')
+            ->where('StokAwal.Total', 0));
+
         $manajer = BantuanHarga::TambahAnggotaOutlet($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet, $cabang);
         BantuanOrganisasi::Masuk($this, $manajer, $t['Tenant']->Id);
         $this->get('/kelola/persediaan/stok-awal')->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Daftar', false)
+            ->component('Kelola/Persediaan/StokAwal/Daftar')
             ->where('StokAwal.Total', 1)
             ->where('StokAwal.Data.0.Uuid', $drafCabang->Uuid));
     });
@@ -68,7 +71,7 @@ describe('F-05a halaman stok awal', function (): void {
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $this->get('/kelola/persediaan/stok-awal/buat')->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Form', false)
+            ->component('Kelola/Persediaan/StokAwal/Form')
             ->where('Mode', 'Buat')
             ->where('StokAwal', null)
             ->where('BatasBaris', 2000)
@@ -78,7 +81,7 @@ describe('F-05a halaman stok awal', function (): void {
             ->has('OpsiGudang', 1));
 
         $this->get("/kelola/persediaan/stok-awal/{$draf->Uuid}/ubah")->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Form', false)
+            ->component('Kelola/Persediaan/StokAwal/Form')
             ->where('Mode', 'Ubah')
             ->where('StokAwal.Uuid', $draf->Uuid)
             ->where('StokAwal.UuidGudang', $t['Gudang']->Uuid)
@@ -101,7 +104,7 @@ describe('F-05a halaman stok awal', function (): void {
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
         $this->get("/kelola/persediaan/stok-awal/{$dokumen->Uuid}")->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Detail', false)
+            ->component('Kelola/Persediaan/StokAwal/Detail')
             ->where('StokAwal.Nomor', $dokumen->Nomor)
             ->where('StokAwal.Status', 'Diposting')
             ->where('StokAwal.TotalNilai', '1300000.00')
@@ -109,7 +112,7 @@ describe('F-05a halaman stok awal', function (): void {
             ->where('Baris.0.Pelacakan', 'Seri')
             ->where('Baris.0.NomorSeri', ['RC18-0001', 'RC18-0002'])
             ->where('Jurnal.0.TotalDebit', '1300000.00')
-            ->where('Jurnal.0.Pembalik', false)
+            ->where('Jurnal.0.Pembalik')
             ->where('Riwayat.1.StatusKe', 'Diposting')
             ->where('Tindakan', ['Ubah' => false, 'Buang' => false, 'Posting' => false, 'Batalkan' => true])
             ->where('BatasPostingLangsung', 300));
@@ -117,9 +120,9 @@ describe('F-05a halaman stok awal', function (): void {
         PemetaanAkun::query()->where('Kunci', 'PersediaanBahanBaku')->delete();
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::StafGudang);
         $this->get("/kelola/persediaan/stok-awal/{$draf->Uuid}")->assertOk()->assertInertia(fn (Assert $halaman) => $halaman
-            ->component('Kelola/Persediaan/StokAwal/Detail', false)
+            ->component('Kelola/Persediaan/StokAwal/Detail')
             ->where('Tindakan', ['Ubah' => true, 'Buang' => true, 'Posting' => false, 'Batalkan' => false])
-            ->where('KesiapanAkun.Siap', false)
+            ->where('KesiapanAkun.Siap')
             ->where('KesiapanAkun.PeranBelumDipetakan.0.Kunci', 'PersediaanBahanBaku'));
     });
 
