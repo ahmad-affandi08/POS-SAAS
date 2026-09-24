@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Persediaan\Kueri;
 
 use App\Domain\Katalog\Kontrak\PemeriksaRiwayatStok;
-use LogicException;
+use App\Domain\Persediaan\Model\MutasiStok;
 
 /**
- * Implementasi `PemeriksaRiwayatStok`: produk sudah punya MutasiStok (DesainF05a C.4).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim D (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Implementasi `PemeriksaRiwayatStok` (DesainF05a C.4): produk sudah punya baris `MutasiStok` di tenant aktif.
+ * Dipakai Katalog untuk mengunci `Pelacakan` (`PelacakanTerkunci`). Dibaca dengan kunci baca (`sharedLock`) karena
+ * dipanggil di dalam transaksi Aksi Katalog: pembacaan biasa di REPEATABLE READ bisa memakai snapshot lama, dan kunci
+ * baca menahan mutasi baru produk ini sampai perubahan produk selesai.
  */
 final class RiwayatStokProduk implements PemeriksaRiwayatStok
 {
     public function CekPunyaRiwayatStok(int $idProduk): bool
     {
-        throw new LogicException('F-05a Tim D');
+        return MutasiStok::query()->where('IdProduk', $idProduk)->sharedLock()->exists();
     }
 }
