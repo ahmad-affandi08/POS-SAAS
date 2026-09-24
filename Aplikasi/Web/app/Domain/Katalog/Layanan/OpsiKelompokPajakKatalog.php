@@ -4,28 +4,26 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Layanan;
 
-use App\Domain\Pajak\Model\KelompokPajak;
+use App\Domain\Pajak\Kueri\DaftarKelompokPajak;
 
 /**
  * Kelompok pajak tenant aktif untuk halaman & katalog POS Tim 1 (tipe FE `OpsiKelompokPajak` + `Id`), dan peta
- * Uuid ↔ Id untuk form produk.
- *
- * SEMENTARA sampai T2-A (`Pajak\Kueri\DaftarKelompokPajak::AmbilOpsi()` dengan `Kategori`) digabung: dibaca langsung
- * tanpa kategori.
+ * Uuid ↔ Id untuk form produk. Sumber: `Pajak\Kueri\DaftarKelompokPajak::AmbilOpsi()` (domain Pajak, Tim 2),
+ * disimpan per instans agar satu permintaan tidak mengulang kueri.
  */
 final class OpsiKelompokPajakKatalog
 {
     /** @var list<array{Id: int, Uuid: string, Nama: string, Kategori: string|null, LabelKategori: string}>|null */
     private ?array $opsi = null;
 
+    public function __construct(private readonly DaftarKelompokPajak $daftarKelompokPajak) {}
+
     /**
      * @return list<array{Id: int, Uuid: string, Nama: string, Kategori: string|null, LabelKategori: string}>
      */
     public function AmbilOpsi(): array
     {
-        return $this->opsi ??= array_values(KelompokPajak::query()->orderBy('Nama')->get()
-            ->map(fn (KelompokPajak $kelompok): array => ['Id' => $kelompok->Id, 'Uuid' => $kelompok->Uuid, 'Nama' => $kelompok->Nama, 'Kategori' => null, 'LabelKategori' => ''])
-            ->all());
+        return $this->opsi ??= $this->daftarKelompokPajak->AmbilOpsi();
     }
 
     /**
