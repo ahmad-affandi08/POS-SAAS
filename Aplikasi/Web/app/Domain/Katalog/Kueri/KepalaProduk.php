@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Kueri;
 
+use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
 use App\Domain\Katalog\Model\Produk;
 
 /**
@@ -45,24 +46,10 @@ final class KepalaProduk
             'Jenis' => $produk->Jenis->value,
             'LabelJenis' => $produk->Jenis->AmbilLabel(),
             'Status' => $produk->AmbilStatus()->value,
-            'UrlGambarKecil' => $this->BuatUrlGambarKecil($produk),
+            'UrlGambarKecil' => PenyimpanGambarProduk::BuatUrl($produk, 'kecil'),
             'UuidInduk' => $induk?->Uuid,
             'NamaInduk' => $induk?->Nama,
             'Tab' => $tab,
         ];
-    }
-
-    /** Nama berkas gambar `{UuidProduk}-{ulid}.{ext}`: ulid = versi untuk cache (F-03 C.2 PenyimpanGambarProduk). */
-    private function BuatUrlGambarKecil(Produk $produk): ?string
-    {
-        if ($produk->PathGambar === null || $produk->PathGambar === '') {
-            return null;
-        }
-
-        $nama = pathinfo($produk->PathGambar, PATHINFO_FILENAME);
-        $posisi = strrpos($nama, '-');
-        $versi = $posisi === false ? '' : substr($nama, $posisi + 1);
-
-        return '/kelola/produk/'.$produk->Uuid.'/gambar?ukuran=kecil'.($versi === '' ? '' : '&versi='.rawurlencode($versi));
     }
 }

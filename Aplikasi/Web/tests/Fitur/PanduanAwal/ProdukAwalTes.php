@@ -43,7 +43,7 @@ describe('F-01 langkah 4: produk awal (contoh template & tambah cepat)', functio
         $satuan = ProdukSatuan::query()->where('IdProduk', $produk->Id)->sole();
         $harga = ProdukHarga::query()->where('IdProduk', $produk->Id)->sole();
         expect($produk->Jenis)->toBe(JenisProduk::NonStok)
-            ->and($produk->Sku)->toBeNull()
+            ->and($produk->Sku)->toBe('PRD-000001') // F-03 (DesainF03 C.2 no. 19): SKU produk cepat dibuat otomatis.
             ->and($produk->IdKategori)->toBe(Kategori::query()->where('Nama', 'Kopi')->value('Id'))
             ->and($produk->IdSatuanDasar)->toBe(Satuan::query()->where('KodeStandar', 'PCS')->value('Id'))
             ->and($produk->IdKelompokPajak)->toBe(KelompokPajak::query()->where('Nama', 'Makan & minum')->value('Id'))

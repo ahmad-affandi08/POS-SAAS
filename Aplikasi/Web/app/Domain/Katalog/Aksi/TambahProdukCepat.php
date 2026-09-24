@@ -4,22 +4,29 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Aksi;
 
-use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataProdukCepat;
+use App\Domain\Katalog\Data\DataSatuanProduk;
 use App\Domain\Katalog\Data\HasilTambahProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
+use App\Domain\Katalog\Enum\SumberPerubahanKatalog;
+use App\Domain\Katalog\Harga\Data\DataBarisHarga;
+use App\Domain\Katalog\Kueri\PemakaianSku;
 use App\Domain\Katalog\Model\Produk;
-use App\Domain\Katalog\Model\ProdukHarga;
-use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * F-01 langkah 4: produk awal (contoh template atau tambah cepat) dalam satu transaksi.
  * - Idempoten per nama: nama yang sudah ada (tanpa beda huruf besar/kecil) atau muncul dua kali di masukan dilewati.
- * - BR-P04.3: batas `BatasSku` paket diperiksa untuk semua produk baru sekaligus; ditolak = tidak ada yang tersimpan.
- * - Satu produk = `Produk` + `ProdukSatuan` dasar (jual & beli) + `ProdukHarga` umum. Harga string desimal.
+ * - BR-P04.3: batas `BatasSku` paket (`PemakaianSku`) diperiksa untuk semua produk baru sekaligus; ditolak = tidak
+ *   ada yang tersimpan.
+ * - F-03: setiap produk disimpan lewat `SimpanProduk` (sumber PanduanAwal): SKU otomatis, satuan dasar (jual & beli),
+ *   dan harga dasar lewat Tim 2 sehingga `RiwayatHarga` ikut tercatat.
  * Urutan kunci: Tenant → Langganan (batas paket) → baris produk.
  */
 final class TambahProdukCepat
@@ -28,7 +35,8 @@ final class TambahProdukCepat
         private readonly KonteksTenant $konteks,
         private readonly PenguncianTenant $penguncian,
         private readonly PastikanBatasPaket $batasPaket,
-        private readonly PencatatAudit $audit,
+        private readonly PemakaianSku $pemakaianSku,
+        private readonly SimpanProduk $simpanProduk,
     ) {}
 
     /**
@@ -59,48 +67,46 @@ final class TambahProdukCepat
             }
 
             if ($baru !== []) {
-                $this->batasPaket->Pastikan($idTenant, 'BatasSku', fn (): int => Produk::query()->count(), count($baru));
+                $this->batasPaket->Pastikan($idTenant, 'BatasSku', fn (): int => $this->pemakaianSku->Hitung(), count($baru));
             }
 
             foreach ($baru as $data) {
-                $this->Buat($data);
+                $this->simpanProduk->Jalankan(null, self::KeDataProduk($data));
             }
 
             return new HasilTambahProduk(array_map(fn (DataProdukCepat $data): string => trim($data->nama), $baru), $dilewati);
         });
     }
 
-    private function Buat(DataProdukCepat $data): void
+    private static function KeDataProduk(DataProdukCepat $data): DataProduk
     {
-        $produk = Produk::query()->create([
-            'Nama' => trim($data->nama),
-            'Jenis' => $data->jenis,
-            'IdKategori' => $data->idKategori,
-            'IdSatuanDasar' => $data->idSatuanDasar,
-            'IdKelompokPajak' => $data->idKelompokPajak,
-            'Aktif' => true,
-            'TampilDiPos' => true,
-        ]);
-        $satuan = ProdukSatuan::query()->create([
-            'IdProduk' => $produk->Id,
-            'IdSatuan' => $data->idSatuanDasar,
-            'KonversiKeDasar' => '1',
-            'DefaultJual' => true,
-            'DefaultBeli' => true,
-        ]);
-        ProdukHarga::query()->create([
-            'IdProduk' => $produk->Id,
-            'IdProdukSatuan' => $satuan->Id,
-            'IdDaftarHarga' => null,
-            'JumlahMinimum' => '1',
-            'Harga' => $data->harga->KeString(),
-        ]);
-
-        $this->audit->Catat('produk.buat', $produk, nilaiBaru: [
-            'Nama' => $produk->Nama,
-            'Harga' => $data->harga->KeString(),
-            'IdKategori' => $produk->IdKategori,
-            'Jenis' => $produk->Jenis->value,
-        ]);
+        return new DataProduk(
+            uuid: (string) Str::ulid(),
+            nama: trim($data->nama),
+            namaStruk: null,
+            sku: null,
+            jenis: $data->jenis,
+            idKategori: $data->idKategori,
+            merek: null,
+            idSatuanDasar: $data->idSatuanDasar,
+            pelacakan: PelacakanProduk::Tidak,
+            idKelompokPajak: $data->idKelompokPajak,
+            hargaTermasukPajak: null,
+            bolehMinus: null,
+            tampilDiPos: true,
+            tampilOnline: false,
+            satuan: [new DataSatuanProduk(
+                idProdukSatuan: null,
+                idSatuan: $data->idSatuanDasar,
+                konversiKeDasar: Kuantitas::Dari(1),
+                defaultJual: true,
+                defaultBeli: true,
+                barcode: [],
+                hargaAwal: [new DataBarisHarga(Kuantitas::Dari(1), $data->harga)],
+            )],
+            atributVarian: [],
+            bolehUbahHarga: true,
+            sumber: SumberPerubahanKatalog::PanduanAwal,
+        );
     }
 }

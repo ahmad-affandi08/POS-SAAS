@@ -1,0 +1,158 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Permintaan\Kelola\Katalog;
+
+use App\Domain\Bersama\Nilai\Kuantitas;
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Katalog\Data\DataAtributVarian;
+use App\Domain\Katalog\Data\DataProduk;
+use App\Domain\Katalog\Data\DataSatuanProduk;
+use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
+use App\Domain\Katalog\Harga\Data\DataBarisHarga;
+use App\Domain\Katalog\Layanan\OpsiKelompokPajakKatalog;
+use App\Domain\Katalog\Model\Kategori;
+use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Katalog\Model\Satuan;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Form produk F-03 (tipe FE `FormProduk`, E.3). Uang & jumlah berupa string desimal; ID berupa ULID publik yang
+ * dipetakan ke Id di dalam tenant aktif (tidak dikenal = galat di bidangnya).
+ */
+final class SimpanProdukPermintaan extends FormRequest
+{
+    public const POLA_UANG = 'regex:/^\d{1,16}(\.\d{1,2})?$/';
+
+    public const POLA_KUANTITAS = 'regex:/^\d{1,14}(\.\d{1,4})?$/';
+
+    /**
+     * @return array<string, list<mixed>>
+     */
+    public function rules(): array
+    {
+        $tigaKeadaan = Rule::in(['Ikut', 'Ya', 'Tidak']);
+
+        return [
+            'Uuid' => ['required', 'ulid'],
+            'Nama' => ['required', 'string', 'max:150'],
+            'NamaStruk' => ['nullable', 'string', 'max:40'],
+            'Sku' => ['nullable', 'string', 'max:64'],
+            'Jenis' => ['required', Rule::enum(JenisProduk::class)],
+            'UuidKategori' => ['nullable', 'ulid'],
+            'Merek' => ['nullable', 'string', 'max:60'],
+            'UuidSatuanDasar' => ['required', 'ulid'],
+            'Pelacakan' => ['required', Rule::enum(PelacakanProduk::class)],
+            'UuidKelompokPajak' => ['nullable', 'ulid'],
+            'HargaTermasukPajak' => ['required', $tigaKeadaan],
+            'BolehMinus' => ['required', $tigaKeadaan],
+            'TampilDiPos' => ['required', 'boolean'],
+            'TampilOnline' => ['required', 'boolean'],
+            'Satuan' => ['required', 'array', 'min:1', 'max:10'],
+            'Satuan.*.Uuid' => ['nullable', 'ulid'],
+            'Satuan.*.UuidSatuan' => ['required', 'ulid'],
+            'Satuan.*.KonversiKeDasar' => ['required', 'string', self::POLA_KUANTITAS],
+            'Satuan.*.DefaultJual' => ['required', 'boolean'],
+            'Satuan.*.DefaultBeli' => ['required', 'boolean'],
+            'Satuan.*.Barcode' => ['present', 'array', 'max:20'],
+            'Satuan.*.Barcode.*' => ['required', 'string', 'max:64'],
+            'Satuan.*.HargaAwal' => ['present', 'array', 'max:10'],
+            'Satuan.*.HargaAwal.*.JumlahMinimum' => ['required', 'string', self::POLA_KUANTITAS],
+            'Satuan.*.HargaAwal.*.Harga' => ['required', 'string', self::POLA_UANG],
+            'AtributVarian' => ['present', 'array', 'max:3'],
+            'AtributVarian.*.Nama' => ['required', 'string', 'max:30'],
+            'AtributVarian.*.Nilai' => ['required', 'array', 'min:1', 'max:20'],
+            'AtributVarian.*.Nilai.*' => ['required', 'string', 'max:40'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'Satuan.*.KonversiKeDasar.regex' => 'Isi satuan berupa angka, maksimal 4 angka desimal. Misal: 12 atau 0.5.',
+            'Satuan.*.HargaAwal.*.JumlahMinimum.regex' => 'Jumlah minimum berupa angka, maksimal 4 angka desimal.',
+            'Satuan.*.HargaAwal.*.Harga.regex' => 'Harga berupa angka tanpa titik ribuan, misal 15000 atau 15000.50.',
+        ];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function AmbilData(?Produk $produk, bool $bolehUbahHarga): DataProduk
+    {
+        $idSatuan = Satuan::query()->pluck('Id', 'Uuid');
+        $idProdukSatuan = $produk === null ? collect() : ProdukSatuan::query()->where('IdProduk', $produk->Id)->pluck('Id', 'Uuid');
+        $satuan = [];
+
+        /** @var list<array<string, mixed>> $barisSatuan */
+        $barisSatuan = array_values((array) $this->input('Satuan', []));
+
+        foreach ($barisSatuan as $i => $baris) {
+            $uuidProdukSatuan = $baris['Uuid'] ?? null;
+            $satuan[] = new DataSatuanProduk(
+                idProdukSatuan: is_string($uuidProdukSatuan) ? (int) ($idProdukSatuan->get($uuidProdukSatuan) ?? self::Galat("Satuan.{$i}.Uuid", 'Satuan produk ini sudah berubah. Muat ulang halaman.')) : null,
+                idSatuan: (int) ($idSatuan->get((string) $baris['UuidSatuan']) ?? self::Galat("Satuan.{$i}.UuidSatuan", 'Satuan tidak ditemukan.')),
+                konversiKeDasar: Kuantitas::Dari((string) $baris['KonversiKeDasar']),
+                defaultJual: (bool) $baris['DefaultJual'],
+                defaultBeli: (bool) $baris['DefaultBeli'],
+                barcode: array_values(array_map('strval', (array) ($baris['Barcode'] ?? []))),
+                hargaAwal: array_values(array_map(fn (array $harga): DataBarisHarga => new DataBarisHarga(
+                    Kuantitas::Dari((string) $harga['JumlahMinimum']),
+                    Uang::Dari((string) $harga['Harga']),
+                ), (array) ($baris['HargaAwal'] ?? []))),
+            );
+        }
+
+        return new DataProduk(
+            uuid: $produk === null ? $this->string('Uuid')->toString() : $produk->Uuid,
+            nama: $this->string('Nama')->toString(),
+            namaStruk: $this->filled('NamaStruk') ? $this->string('NamaStruk')->toString() : null,
+            sku: $this->filled('Sku') ? $this->string('Sku')->toString() : null,
+            jenis: JenisProduk::from($this->string('Jenis')->toString()),
+            idKategori: $this->filled('UuidKategori')
+                ? (int) (Kategori::query()->where('Uuid', $this->string('UuidKategori')->toString())->value('Id') ?? self::Galat('UuidKategori', 'Kategori tidak ditemukan.'))
+                : null,
+            merek: $this->filled('Merek') ? $this->string('Merek')->toString() : null,
+            idSatuanDasar: (int) ($idSatuan->get($this->string('UuidSatuanDasar')->toString()) ?? self::Galat('UuidSatuanDasar', 'Satuan dasar tidak ditemukan.')),
+            pelacakan: PelacakanProduk::from($this->string('Pelacakan')->toString()),
+            idKelompokPajak: $this->filled('UuidKelompokPajak')
+                ? (app(OpsiKelompokPajakKatalog::class)->CariIdBerdasarkanUuid($this->string('UuidKelompokPajak')->toString()) ?? self::Galat('UuidKelompokPajak', 'Kelompok pajak tidak ditemukan.'))
+                : null,
+            hargaTermasukPajak: self::DariTigaKeadaan($this->string('HargaTermasukPajak')->toString()),
+            bolehMinus: self::DariTigaKeadaan($this->string('BolehMinus')->toString()),
+            tampilDiPos: $this->boolean('TampilDiPos'),
+            tampilOnline: $this->boolean('TampilOnline'),
+            satuan: $satuan,
+            atributVarian: array_values(array_map(fn (array $atribut): DataAtributVarian => new DataAtributVarian(
+                (string) $atribut['Nama'],
+                array_values(array_map('strval', (array) $atribut['Nilai'])),
+            ), array_values((array) $this->input('AtributVarian', [])))),
+            bolehUbahHarga: $bolehUbahHarga,
+        );
+    }
+
+    private static function DariTigaKeadaan(string $nilai): ?bool
+    {
+        return match ($nilai) {
+            'Ya' => true,
+            'Tidak' => false,
+            default => null,
+        };
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private static function Galat(string $bidang, string $pesan): never
+    {
+        throw ValidationException::withMessages([$bidang => $pesan]);
+    }
+}
