@@ -24,10 +24,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Persediaan\BantuanPersediaan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
+use Tests\TestCase;
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
@@ -135,14 +137,49 @@ function TimHJejakDokumen(int $idTenant): array
     ];
 }
 
-/** Respons daftar/saringan: boleh 404 (UUID asing ditolak) atau berhasil tanpa membocorkan data rahasia. */
+/**
+ * Respons daftar/saringan: boleh 404 (UUID asing ditolak) atau berhasil tanpa membocorkan data rahasia. Alamat
+ * permintaan yang digemakan Inertia (`"url"`) dibuang dulu: UUID yang dikirim penguji sendiri bukan kebocoran.
+ *
+ * @param  TestResponse<Response>  $respons
+ */
 function TimHTanpaBocor(TestResponse $respons, string ...$rahasia): void
 {
-    expect($respons->getStatusCode())->toBeIn([200, 302, 404, 422]);
+    $status = $respons->getStatusCode();
+    expect($status)->toBeIn([200, 302, 404, 422], "status {$status}: ".($respons->exception?->getMessage() ?? ''));
+
+    $isi = (string) preg_replace('/"url":"[^"]*"/', '', (string) $respons->getContent());
 
     foreach ($rahasia as $teks) {
-        $respons->assertDontSee($teks, false);
+        expect(str_contains($isi, $teks) || str_contains($isi, str_replace('/', '\\/', $teks)))->toBeFalse("bocor: {$teks}");
     }
+}
+
+/**
+ * Permintaan tulis dengan UUID asing ditolak: 404, atau galat validasi (redirect ber-`errors` / 422).
+ *
+ * @param  TestResponse<Response>  $respons
+ */
+function TimHDitolak(TestResponse $respons): void
+{
+    $status = $respons->getStatusCode();
+    expect($status)->toBeIn([302, 404, 422], "status {$status}: ".($respons->exception?->getMessage() ?? ''));
+
+    if ($status === 302) {
+        $respons->assertSessionHasErrors();
+    }
+}
+
+/**
+ * GET `alamat` lalu `TimHTanpaBocor`. Rahasia yang dikirim penguji sendiri di kueri (misal `?gudang=` asing yang
+ * digemakan kembali di prop `Saring`) tidak dihitung bocor; nama dan dokumennya tetap diperiksa.
+ */
+function TimHTanpaBocorDi(TestCase $klien, string $alamat, bool $json, string ...$rahasia): void
+{
+    $respons = $json ? $klien->getJson($alamat) : $klien->get($alamat);
+    $kueri = urldecode($alamat);
+
+    TimHTanpaBocor($respons, ...array_values(array_filter($rahasia, fn (string $r): bool => ! str_contains($kueri, $r))));
 }
 
 describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenant B (aturan #11)', function (): void {
@@ -181,12 +218,11 @@ describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenan
 
         // Simpan draf di lokasi stok tenant B = 404; produk tenant B di lokasi sendiri = ditolak.
         $masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $b['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($produkA)])->assertNotFound();
-        expect($masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $a['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($rahasiaB)])->getStatusCode())
-            ->toBeIn([302, 404, 422]);
+        TimHDitolak($masuk()->post($sa, ['Uuid' => (string) Str::ulid(), 'UuidGudang' => $a['Gudang']->Uuid, 'Tanggal' => '2026-09-01', 'Catatan' => null, 'Baris' => $baris($rahasiaB)]));
 
         // Unggah impor dengan lokasi bawaan tenant B.
         $csv = UploadedFile::fake()->createWithContent('stok-awal.csv', "SKU,Stok,Harga Modal\nMGR-2L,10,38500\n");
-        expect($masuk()->post("{$sa}/impor", ['Berkas' => $csv, 'UuidGudangBawaan' => $b['Gudang']->Uuid])->getStatusCode())->toBeIn([302, 404, 422]);
+        TimHDitolak($masuk()->post("{$sa}/impor", ['Berkas' => $csv, 'UuidGudangBawaan' => $b['Gudang']->Uuid]));
 
         BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
         expect(StokAwal::query()->count())->toBe(0)
@@ -194,18 +230,18 @@ describe('F-05a isolasi tenant: setiap rute persediaan & jurnal × dokumen tenan
 
         // Daftar, saringan, pencarian, templat, dan kartu stok tidak menampilkan data tenant B.
         $rahasia = [$rahasiaB->Uuid, $rahasiaB->Nama, $b['Gudang']->Uuid, $dokB['Draf']->Uuid, $dokB['Diposting']->Uuid, $dokB['Impor']->Uuid, $dokB['Jurnal']->Uuid];
-        TimHTanpaBocor($masuk()->get($sa), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}?gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}/impor"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}/impor/templat?format=csv&isi=produk&gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->getJson('/kelola/persediaan/produk/cari?kata=Kopi+Luwak&batas=20'), ...$rahasia);
-        TimHTanpaBocor($masuk()->getJson("/kelola/persediaan/produk/cari?kata=Kopi&gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get('/kelola/persediaan/saldo?keadaan=Semua'), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("/kelola/persediaan/saldo?gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("/kelola/persediaan/kartu-stok?produk={$rahasiaB->Uuid}&gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("/kelola/persediaan/kartu-stok?produk={$produkA->Uuid}&gudang={$b['Gudang']->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get('/kelola/akuntansi/jurnal'), ...$rahasia);
-        TimHTanpaBocor($masuk()->get('/kelola/akuntansi/jurnal?kata=JU%2F2026'), ...$rahasia);
+        TimHTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}/impor", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/produk/cari?kata=Kopi+Luwak&batas=20', true, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Kopi&gudang={$b['Gudang']->Uuid}", true, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/saldo?keadaan=Semua', false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$rahasiaB->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produkA->Uuid}&gudang={$b['Gudang']->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal', false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), '/kelola/akuntansi/jurnal?kata=JU%2F2026', false, ...$rahasia);
 
         // Pengaturan persediaan hanya milik tenant aktif.
         $masuk()->put('/kelola/persediaan/pengaturan', ['MetodeHpp' => MetodeHpp::Fifo->value, 'StokBolehMinus' => true])->assertSessionHasNoErrors();
@@ -239,13 +275,13 @@ describe('F-05a isolasi outlet: pengguna per outlet × lokasi stok outlet lain (
         expect(TimHJejakDokumen($t['Tenant']->Id))->toBe($jejak);
 
         $rahasia = [$gudangCabang->Uuid, $dokCabang['Draf']->Uuid, $dokCabang['Diposting']->Uuid, 'Gudang Cabang Solo Baru'];
-        TimHTanpaBocor($masuk()->get($sa), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}/buat"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}?gudang={$gudangCabang->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("/kelola/persediaan/saldo?gudang={$gudangCabang->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get('/kelola/persediaan/saldo'), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("/kelola/persediaan/kartu-stok?produk={$produk->Uuid}&gudang={$gudangCabang->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->getJson("/kelola/persediaan/produk/cari?kata=Minyak&gudang={$gudangCabang->Uuid}"), ...$rahasia);
-        TimHTanpaBocor($masuk()->get("{$sa}/impor/templat?format=csv&isi=produk&gudang={$gudangCabang->Uuid}"), ...$rahasia);
+        TimHTanpaBocorDi($masuk(), $sa, false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}/buat", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/saldo?gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), '/kelola/persediaan/saldo', false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/kartu-stok?produk={$produk->Uuid}&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "/kelola/persediaan/produk/cari?kata=Minyak&gudang={$gudangCabang->Uuid}", true, ...$rahasia);
+        TimHTanpaBocorDi($masuk(), "{$sa}/impor/templat?format=csv&isi=produk&gudang={$gudangCabang->Uuid}", false, ...$rahasia);
     });
 });
