@@ -70,7 +70,7 @@ it('CSV UTF-16LE ber-BOM dibaca benar; sel 100.000 karakter menjadi galat baris,
     expect(array_column($impor->KolomSumber ?? [], 'Judul'))->toBe(['Nama Produk', 'Harga Jual'])
         ->and($impor->KolomSumber[0]['Contoh'][0] ?? null)->toBe('Kéripik Singkong Balado');
 
-    BantuanImpor::Petakan($masuk, $impor)->assertSessionHasNoErrors();
+    BantuanImpor::Petakan($masuk, $impor, ['UuidKelompokPajakBawaan' => $t['KelompokPajak']->Uuid])->assertSessionHasNoErrors();
     BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
     $impor->refresh();
     expect($impor->JumlahValid)->toBe(1)->and($impor->JumlahGalat)->toBe(1);
