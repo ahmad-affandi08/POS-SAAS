@@ -15,7 +15,6 @@ import type {
     OpsiGudang,
     PropsDetailStokAwal,
 } from '@/Tipe/Persediaan';
-import type { DaftarBerhalaman } from '@/Tipe/Pengelola';
 
 export const NamaPanjang = 'Es Kopi Susu Gula Aren Spesial Ukuran Jumbo Tanpa Es Batu XL';
 export const NilaiEkstrem = '1250000000.00';
@@ -73,10 +72,6 @@ export function BuatHasilTabel<T>(data: T[], total = data.length, perHalaman = 2
             JumlahHalaman: Math.max(1, Math.ceil(total / perHalaman)),
         },
     };
-}
-
-export function BuatHalaman<T>(data: T[], perubahan: Partial<DaftarBerhalaman<T>> = {}): DaftarBerhalaman<T> {
-    return { Data: data, HalamanSaatIni: 1, HalamanTerakhir: 1, Total: data.length, ...perubahan };
 }
 
 function UuidUrut(awalan: string, nomor: number): string {

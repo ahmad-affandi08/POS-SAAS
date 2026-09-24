@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Pengelola\Referensi;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pengelola\Referensi\Aksi\AjukanTarifPajak;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafTarifPajak;
@@ -14,10 +15,10 @@ use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Referensi\SimpanTarifPajakPermintaan;
 use App\Http\Permintaan\Pengelola\Referensi\TinjauDataMasterPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -27,15 +28,12 @@ final class TarifPajakKontroler extends Kontroler
 {
     use PelakuPengelola;
 
-    public function Daftar(Request $permintaan, DaftarTarifPajak $kueri): Response
+    public function Daftar(Request $permintaan, DaftarTarifPajak $kueri): Response|JsonResponse
     {
-        $status = StatusDataMaster::tryFrom((string) $permintaan->input('saring.Status', ''));
-        $halaman = $kueri->Cari($status);
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarTarifPajak::KOLOM_URUT, DaftarTarifPajak::URUT_BAWAAN, DaftarTarifPajak::KOLOM_SARING);
 
-        return Inertia::render('Pengelola/Referensi/TarifPajak', [
-            'Tarif' => DaftarBerhalaman::BuatDariData($halaman, $kueri->PetakanHalaman($halaman)),
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/Referensi/TarifPajak', 'Tarif', fn (): array => $kueri->AmbilTabel($tabel), fn (): array => [
             'JenisPajak' => $kueri->AmbilJenisPajak(),
-            'Saring' => ['Status' => $status?->value],
             'IdPengguna' => $this->AmbilPelaku()->Id,
         ]);
     }

@@ -1,14 +1,19 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanHargaPaket from '@/Halaman/Pengelola/Katalog/HargaPaket';
 import HalamanFitur from '@/Halaman/Pengelola/Katalog/Fitur';
 import HalamanIntegrasi from '@/Halaman/Pengelola/Integrasi/Daftar';
+import HalamanTarifPajak from '@/Halaman/Pengelola/Referensi/TarifPajak';
+import HalamanWilayah from '@/Halaman/Pengelola/Referensi/Wilayah';
 import HalamanEditorTemplate from '@/Halaman/Pengelola/TemplateSektor/Editor';
 import BidangTanggal, { TulisTanggal, UraiTanggal } from '@/Komponen/Pengelola/BidangTanggal';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
+import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 import { IzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 
@@ -79,6 +84,17 @@ function AturHalaman(izin: string[], url = '/', galat: Record<string, string> = 
     uji.kiriman.length = 0;
     uji.ubah = null;
     Object.values(uji.router).forEach((fungsi) => fungsi.mockClear());
+}
+
+/** Halaman dengan `TabelData` butuh TanStack Query (di aplikasi dipasang oleh `Pengelola.tsx`). */
+function RenderDenganKueri(elemen: ReactElement) {
+    const klien = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    return render(<QueryClientProvider client={klien}>{elemen}</QueryClientProvider>);
+}
+
+function HasilUji<T>(Data: T[]): HasilTabel<T> {
+    return { Data, Meta: { Halaman: 1, PerHalaman: 25, Total: Data.length, JumlahHalaman: 1 } };
 }
 
 beforeEach(() => AturHalaman([]));
@@ -398,5 +414,86 @@ describe('Template sektor (P-03)', () => {
             expect.objectContaining({ preserveScroll: true }),
         );
         expect(Konfirmasi).not.toHaveBeenCalled();
+    });
+});
+
+describe('Referensi wilayah & tarif pajak (P-02, TabelData D-16)', () => {
+    const wilayah = [
+        { Kode: '33', Nama: 'Jawa Tengah', Tingkat: 'Provinsi', KodeInduk: null, ZonaWaktu: 'WIB' },
+        { Kode: '33.74', Nama: 'Kota Semarang', Tingkat: 'KabupatenKota', KodeInduk: '33', ZonaWaktu: 'WIB' },
+    ];
+    const pilihanTingkat = [
+        { Nilai: 'Provinsi', Label: 'Provinsi' },
+        { Nilai: 'KabupatenKota', Label: 'Kabupaten/kota' },
+    ];
+
+    it('wilayah: tabel server dengan cari; ubah lewat aksi baris hanya dengan izin kelola', () => {
+        AturHalaman([IzinPengelola.ReferensiWilayahKelola], '/referensi/wilayah');
+        const { unmount: Lepas } = RenderDenganKueri(
+            <HalamanWilayah Wilayah={HasilUji(wilayah)} PilihanTingkat={pilihanTingkat} PilihanZonaWaktu={['WIB']} />,
+        );
+        const tabel = screen.getByRole('table', { name: 'Daftar wilayah' });
+        expect(within(tabel).getByText('Kabupaten/kota')).toBeTruthy();
+        expect(screen.getByPlaceholderText('Cari nama atau kode wilayah')).toBeTruthy();
+
+        BukaMenu(screen.getAllByRole('button', { name: 'Aksi baris' })[1] as HTMLElement);
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Ubah wilayah' }));
+        expect(screen.getByRole('dialog', { name: 'Ubah Kota Semarang' })).toBeTruthy();
+        Lepas();
+
+        AturHalaman([], '/referensi/wilayah');
+        RenderDenganKueri(
+            <HalamanWilayah Wilayah={HasilUji(wilayah)} PilihanTingkat={pilihanTingkat} PilihanZonaWaktu={['WIB']} />,
+        );
+        expect(screen.queryByRole('button', { name: 'Aksi baris' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Tambah wilayah' })).toBeNull();
+    });
+
+    it('tarif pajak: peninjau lain meninjau dari aksi baris; tarif terbit tanpa aksi', () => {
+        const dasar = {
+            KodeJenisPajak: 'Ppn',
+            NamaJenisPajak: 'PPN',
+            Tarif: '12.000000',
+            PengaliDppPembilang: 11,
+            PengaliDppPenyebut: 12,
+            KodeWilayah: null,
+            BiayaLayananMasukDpp: false,
+            BerlakuSampai: null,
+            NomorDasarHukum: 'PMK 131 Tahun 2024',
+            TautanDasarHukum: null,
+            DaftarIdPenyusun: [7],
+            IdPengaju: 7,
+            PersetujuanDibutuhkan: 2,
+            Persetujuan: [],
+            JumlahSetuju: 0,
+        };
+        AturHalaman([IzinPengelola.ReferensiTarifPajakSetujui], '/referensi/tarif-pajak');
+        RenderDenganKueri(
+            <HalamanTarifPajak
+                Tarif={HasilUji([
+                    { ...dasar, Uuid: 'T1', BerlakuMulai: '2027-01-01', Status: 'MenungguTinjauan' as const },
+                    { ...dasar, Uuid: 'T2', BerlakuMulai: '2025-01-01', Status: 'Terbit' as const },
+                ])}
+                JenisPajak={[{ Kode: 'Ppn', Nama: 'PPN', Cakupan: 'Nasional' }]}
+                IdPengguna={9}
+            />,
+        );
+        expect(screen.getByRole('table', { name: 'Daftar tarif pajak' })).toBeTruthy();
+        expect(screen.getByText('0 dari 2 persetujuan')).toBeTruthy();
+
+        const [aksiMenunggu, aksiTerbit] = screen.getAllByRole('button', { name: 'Aksi baris' });
+        BukaMenu(aksiTerbit as HTMLElement);
+        expect(
+            screen.getByRole('menuitem', { name: 'Tidak ada aksi untuk tarif ini' }).getAttribute('aria-disabled'),
+        ).toBe('true');
+        fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+
+        BukaMenu(aksiMenunggu as HTMLElement);
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Tinjau tarif' }));
+        const dialog = screen.getByRole('alertdialog');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Setujui tarif' }));
+        expect(uji.kiriman).toEqual([
+            { metode: 'post', url: '/referensi/tarif-pajak/T1/tinjau', data: { Keputusan: 'Setuju', Catatan: '' } },
+        ]);
     });
 });

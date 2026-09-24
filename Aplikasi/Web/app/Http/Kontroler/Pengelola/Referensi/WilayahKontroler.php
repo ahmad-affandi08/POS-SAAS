@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pengelola\Referensi;
 
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanWilayah;
 use App\Domain\Pengelola\Referensi\Kueri\DaftarReferensi;
 use App\Domain\Referensi\Enum\TingkatWilayah;
@@ -12,10 +13,10 @@ use App\Domain\Referensi\Model\Wilayah;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Referensi\SimpanWilayahPermintaan;
-use App\Http\Respons\DaftarBerhalaman;
+use App\Http\Respons\ResponsTabel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -25,20 +26,11 @@ final class WilayahKontroler extends Kontroler
 {
     use PelakuPengelola;
 
-    public function Daftar(Request $permintaan, DaftarReferensi $kueri): Response
+    public function Daftar(Request $permintaan, DaftarReferensi $kueri): Response|JsonResponse
     {
-        $kata = trim($permintaan->string('kata')->toString());
-        $tingkat = TingkatWilayah::tryFrom((string) $permintaan->input('saring.Tingkat', ''));
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarReferensi::KOLOM_URUT_WILAYAH, 'Kode', DaftarReferensi::KOLOM_SARING_WILAYAH);
 
-        return Inertia::render('Pengelola/Referensi/Wilayah', [
-            'Wilayah' => DaftarBerhalaman::Buat($kueri->CariWilayah($kata, $tingkat), fn (Wilayah $wilayah): array => [
-                'Kode' => $wilayah->Kode,
-                'Nama' => $wilayah->Nama,
-                'Tingkat' => $wilayah->Tingkat->value,
-                'KodeInduk' => $wilayah->KodeInduk,
-                'ZonaWaktu' => $wilayah->ZonaWaktu->value,
-            ]),
-            'Saring' => ['Kata' => $kata, 'Tingkat' => $tingkat?->value],
+        return ResponsTabel::Kirim($permintaan, 'Pengelola/Referensi/Wilayah', 'Wilayah', fn (): array => $kueri->AmbilTabelWilayah($tabel), fn (): array => [
             'PilihanTingkat' => array_map(fn (TingkatWilayah $item) => ['Nilai' => $item->value, 'Label' => $item->AmbilLabel()], TingkatWilayah::cases()),
             'PilihanZonaWaktu' => array_map(fn (ZonaWaktu $item) => $item->value, ZonaWaktu::cases()),
         ]);

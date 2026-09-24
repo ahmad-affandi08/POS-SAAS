@@ -5,45 +5,78 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Referensi\Kueri;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauTarifPajak;
 use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
 use App\Domain\Pengelola\Referensi\Model\PersetujuanDataMaster;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Daftar tarif pajak master untuk Platform Pengelola beserta status tinjauan putaran terakhir (P-02).
  */
 final class DaftarTarifPajak
 {
-    private const PER_HALAMAN = 50;
+    public const KOLOM_URUT = ['Pajak', 'Tarif', 'BerlakuMulai'];
+
+    public const KOLOM_SARING = ['Status', 'KodeJenisPajak'];
+
+    /** Urutan bawaan: per jenis pajak & wilayah, tanggal berlaku terbaru di atas. */
+    public const URUT_BAWAAN = 'Pajak,-BerlakuMulai';
+
+    /** Status tampilan tarif terbit yang `BerlakuSampai`-nya sudah lewat (bukan status di basis data). */
+    public const STATUS_BERAKHIR = 'Berakhir';
 
     /**
-     * @return LengthAwarePaginator<int, TarifPajak>
+     * Tarif untuk `TabelData` (D-16): cari jenis pajak, kode wilayah, atau nomor dasar hukum; saring status
+     * (pilihan banyak, termasuk `Berakhir`) dan jenis pajak.
+     *
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
      */
-    public function Cari(?StatusDataMaster $status): LengthAwarePaginator
+    public function AmbilTabel(DataPermintaanTabel $permintaan): array
     {
-        return TarifPajak::query()
+        $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
+        $hariIni = now('Asia/Jakarta')->toDateString();
+        $status = $permintaan->AmbilDaftar('Status', [StatusDataMaster::Draf->value, StatusDataMaster::MenungguTinjauan->value, StatusDataMaster::Terbit->value, self::STATUS_BERAKHIR]);
+        $jenis = $permintaan->AmbilDaftar('KodeJenisPajak');
+
+        $kueri = TarifPajak::query()
             ->with('JenisPajak')
-            ->when($status !== null, fn ($kueri) => $kueri->where('Status', $status?->value))
-            ->orderBy('IdJenisPajak')
-            ->orderBy('KodeWilayah')
-            ->orderByDesc('BerlakuMulai')
-            ->paginate(self::PER_HALAMAN, ['*'], 'halaman')
-            ->withQueryString();
+            ->when($permintaan->cari !== '', fn (Builder $kueri) => $kueri->where(fn (Builder $dalam) => $dalam
+                ->where('NomorDasarHukum', 'like', $pola)
+                ->orWhere('KodeWilayah', 'like', $pola)
+                ->orWhereIn('IdJenisPajak', JenisPajak::query()->select('Id')->where('Nama', 'like', $pola)->orWhere('Kode', 'like', $pola))))
+            ->when($jenis !== [], fn (Builder $kueri) => $kueri->whereIn('IdJenisPajak', JenisPajak::query()->select('Id')->whereIn('Kode', $jenis)))
+            ->when($status !== [], fn (Builder $kueri) => $kueri->where(function (Builder $dalam) use ($status, $hariIni): void {
+                foreach ($status as $nilai) {
+                    match ($nilai) {
+                        self::STATUS_BERAKHIR => $dalam->orWhere(fn (Builder $k) => $k->where('Status', StatusDataMaster::Terbit->value)->where('BerlakuSampai', '<', $hariIni)),
+                        StatusDataMaster::Terbit->value => $dalam->orWhere(fn (Builder $k) => $k->where('Status', $nilai)->where(fn (Builder $b) => $b->whereNull('BerlakuSampai')->orWhere('BerlakuSampai', '>=', $hariIni))),
+                        default => $dalam->orWhere('Status', $nilai),
+                    };
+                }
+            }));
+
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, [
+            'Pajak' => function (Builder $kueri, bool $turun): void {
+                $kueri->orderBy('IdJenisPajak', $turun ? 'desc' : 'asc')->orderBy('KodeWilayah', $turun ? 'desc' : 'asc');
+            },
+            'Tarif' => 'Tarif',
+            'BerlakuMulai' => 'BerlakuMulai',
+        ], fn (Collection $tarif): array => $this->PetakanTarif(array_values($tarif->all())));
     }
 
     /**
      * Memetakan satu halaman tarif; keputusan peninjau putaran berjalan dimuat dalam satu kueri (tanpa N+1).
      *
-     * @param  LengthAwarePaginator<int, TarifPajak>  $halaman
+     * @param  list<TarifPajak>  $daftar
      * @return list<array<string, mixed>>
      */
-    public function PetakanHalaman(LengthAwarePaginator $halaman): array
+    private function PetakanTarif(array $daftar): array
     {
-        $daftar = array_values($halaman->items());
-
         $keputusan = PersetujuanDataMaster::query()
             ->with('Peninjau:Id,Nama')
             ->where('JenisData', TinjauTarifPajak::JENIS_DATA)
@@ -67,7 +100,7 @@ final class DaftarTarifPajak
                 'BiayaLayananMasukDpp' => $tarif->BiayaLayananMasukDpp,
                 'BerlakuMulai' => $tarif->BerlakuMulai->toDateString(),
                 'BerlakuSampai' => $tarif->BerlakuSampai?->toDateString(),
-                'Status' => $berakhir ? 'Berakhir' : $tarif->Status->value,
+                'Status' => $berakhir ? self::STATUS_BERAKHIR : $tarif->Status->value,
                 'NomorDasarHukum' => $tarif->NomorDasarHukum,
                 'TautanDasarHukum' => $tarif->TautanDasarHukum,
                 'IdPengaju' => $tarif->IdPenggunaPengelolaPengaju,

@@ -70,9 +70,6 @@ export const IzinPengelola = {
     OperasionalKelola: 'operasional.kelola',
 } as const;
 
-/** Daftar berhalaman dari Backend (App\Http\Respons\DaftarBerhalaman). */
-export type DaftarBerhalaman<T> = { Data: T[]; HalamanSaatIni: number; HalamanTerakhir: number; Total: number };
-
 export type Pilihan = { Nilai: string; Label: string };
 
 export type KunciIzinPengelola = (typeof IzinPengelola)[keyof typeof IzinPengelola];
