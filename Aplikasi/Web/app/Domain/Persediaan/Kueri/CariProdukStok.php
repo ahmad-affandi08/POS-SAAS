@@ -4,21 +4,60 @@ declare(strict_types=1);
 
 namespace App\Domain\Persediaan\Kueri;
 
-use LogicException;
+use App\Domain\Katalog\Data\DataInfoProdukStok;
+use App\Domain\Katalog\Kueri\InfoProdukStok;
+use App\Domain\Persediaan\Enum\StatusStokAwal;
+use App\Domain\Persediaan\Model\SaldoStok;
+use App\Domain\Persediaan\Model\StokAwalDetail;
 
 /**
- * Pencarian produk berstok + SaldoDiGudang, HppRataRata, StokAwalSudahAda (tipe FE `HasilCariProdukStok`, DesainF05a C.6.6).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim C (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Pencarian produk berstok untuk form stok awal (tipe FE `HasilCariProdukStok['Data']`, DesainF05a C.6.6): produk
+ * dari `InfoProdukStok::CariUntukStok` (berstok, bukan Konsinyasi, belum diarsipkan) ditambah, bila lokasi stok
+ * disebut, `SaldoDiGudang` & `HppRataRata` dari SaldoStok dan `StokAwalSudahAda` (sudah ada stok awal Diposting di
+ * lokasi itu). Tanpa lokasi ketiganya null/false.
  */
 final class CariProdukStok
 {
+    public function __construct(private readonly InfoProdukStok $infoProduk) {}
+
     /**
-     * @return list<array<string, mixed>>
+     * @return list<array{Uuid: string, Nama: string, Sku: string|null, Jenis: string, Pelacakan: string, SimbolSatuan: string, BolehDesimal: bool, SaldoDiGudang: string|null, HppRataRata: string|null, StokAwalSudahAda: bool}>
      */
     public function Cari(string $kata, ?int $idGudang, int $batas = 20): array
     {
-        throw new LogicException('F-05a Tim C');
+        $produk = $this->infoProduk->CariUntukStok($kata, max(1, min(50, $batas)));
+        $id = array_map(fn (DataInfoProdukStok $p): int => $p->id, $produk);
+        $saldo = [];
+        $sudahAda = [];
+
+        if ($idGudang !== null && $id !== []) {
+            $saldo = SaldoStok::query()->where('IdGudang', $idGudang)->whereIn('IdProduk', $id)->get()->keyBy('IdProduk')->all();
+            $sudahAda = array_flip(StokAwalDetail::query()
+                ->join('StokAwal', 'StokAwal.Id', '=', 'StokAwalDetail.IdStokAwal')
+                ->where('StokAwal.IdGudang', $idGudang)
+                ->where('StokAwal.Status', StatusStokAwal::Diposting->value)
+                ->whereIn('StokAwalDetail.IdProduk', $id)
+                ->distinct()
+                ->pluck('StokAwalDetail.IdProduk')
+                ->map(fn (mixed $nilai): int => (int) $nilai)
+                ->all());
+        }
+
+        return array_map(function (DataInfoProdukStok $p) use ($saldo, $sudahAda, $idGudang): array {
+            $baris = $saldo[$p->id] ?? null;
+
+            return [
+                'Uuid' => $p->uuid,
+                'Nama' => $p->nama,
+                'Sku' => $p->sku,
+                'Jenis' => $p->jenis->value,
+                'Pelacakan' => $p->pelacakan->value,
+                'SimbolSatuan' => $p->simbolSatuan,
+                'BolehDesimal' => $p->bolehDesimal,
+                'SaldoDiGudang' => $idGudang === null ? null : ($baris instanceof SaldoStok ? $baris->JumlahTersedia : '0.0000'),
+                'HppRataRata' => $baris instanceof SaldoStok ? $baris->HppRataRata : null,
+                'StokAwalSudahAda' => isset($sudahAda[$p->id]),
+            ];
+        }, $produk);
     }
 }

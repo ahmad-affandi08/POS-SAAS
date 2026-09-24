@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\Persediaan\Kebijakan;
 
 use App\Domain\Persediaan\Model\StokAwal;
-use LogicException;
 
 /**
- * Akses dokumen stok awal: lokasi stoknya harus di outlet yang boleh diakses pengguna (DesainF05a C.6.6).
- *
- * STUB F-05a Tim 0: diimplementasikan Tim C (DesainF05a G). Tanda tangan publik mengikuti DesainF05a C/D;
- * perubahan tanda tangan yang dipakai tim lain diminta lewat lead.
+ * Akses dokumen stok awal (DesainF05a C.6.6, D): dokumen dicari lewat `MilikTenant` (tenant lain tidak terlihat),
+ * lalu lokasi stoknya (snapshot `StokAwal.IdOutlet`) harus berada di outlet yang boleh diakses pengguna.
+ * `idOutletBoleh` null = semua outlet, termasuk lokasi tanpa outlet; akses per outlet tidak mencakup lokasi tanpa
+ * outlet. Tidak boleh = 404 di kontroler.
  */
 final class StokAwalKebijakan
 {
@@ -20,6 +19,10 @@ final class StokAwalKebijakan
      */
     public function CekBolehAkses(StokAwal $stokAwal, ?array $idOutletBoleh): bool
     {
-        throw new LogicException('F-05a Tim C');
+        if ($idOutletBoleh === null) {
+            return true;
+        }
+
+        return $stokAwal->IdOutlet !== null && in_array($stokAwal->IdOutlet, $idOutletBoleh, true);
     }
 }
