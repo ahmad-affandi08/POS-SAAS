@@ -55,7 +55,7 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                     Outlet aktif:{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>
                 </p>
-                {bolehKelola && !formTerbuka ? (
+                {bolehKelola ? (
                     <Tombol onClick={() => AturFormTerbuka(true)} disabled={penuh}>
                         Tambah outlet
                     </Tombol>
@@ -183,7 +183,7 @@ function BagianMerek({ merek, bolehKelola }: { merek: Merek[]; bolehKelola: bool
         <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Merek</h2>
-                {bolehKelola && sunting === null ? (
+                {bolehKelola ? (
                     <Tombol varian="sekunder" onClick={() => AturSunting('baru')}>
                         Tambah merek
                     </Tombol>

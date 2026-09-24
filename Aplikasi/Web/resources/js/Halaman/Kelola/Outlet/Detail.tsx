@@ -5,6 +5,18 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/Komponen/Ui/breadcrumb';
+import { Card, CardContent } from '@/Komponen/Ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -30,6 +42,8 @@ type Gudang = { Uuid: string; Kode: string; Nama: string; Jenis: string; Status:
 
 type PropsDetail = { Outlet: Outlet; Gudang: Gudang[]; Merek: Pilihan[]; Kota: Kota[]; JenisGudang: Pilihan[] };
 
+const kelasKepala = 'px-4 text-label font-semibold text-teks-sekunder';
+
 /** Profil outlet & lokasi stoknya (F-02 langkah 1–2, BR-02.2, BR-02.4). */
 export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, JenisGudang }: PropsDetail) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -40,18 +54,30 @@ export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, Jenis
     return (
         <TataLetakAplikasi judul={Outlet.Nama}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="flex flex-wrap items-center gap-2 text-isi text-teks-sekunder">
-                    <Link href="/kelola/outlet" className="font-semibold text-brand underline">
-                        Semua outlet
-                    </Link>
-                    <span aria-hidden="true">/</span>
-                    <span className="font-mono text-label text-teks-utama">{Outlet.Kode}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Breadcrumb aria-label="Jejak halaman">
+                        <BreadcrumbList className="text-isi">
+                            <BreadcrumbItem>
+                                <BreadcrumbLink asChild>
+                                    <Link href="/kelola/outlet" className="font-semibold text-brand underline">
+                                        Semua outlet
+                                    </Link>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage className="font-mono text-label text-teks-utama">
+                                    {Outlet.Kode}
+                                </BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
                     {Outlet.Status === 'Aktif' ? (
                         <LabelStatus jenis="sukses" teks="Aktif" />
                     ) : (
                         <LabelStatus jenis="netral" teks="Diarsipkan" />
                     )}
-                </p>
+                </div>
                 {bolehKelola ? (
                     Outlet.Status === 'Aktif' ? (
                         <Tombol
@@ -88,12 +114,16 @@ export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, Jenis
                     kota={Kota}
                 />
             ) : (
-                <dl className="grid grid-cols-1 gap-3 rounded-panel border border-garis bg-permukaan p-6 text-isi md:grid-cols-2">
-                    <Rincian label="Alamat" nilai={Outlet.Alamat ?? 'Belum diisi'} />
-                    <Rincian label="Kabupaten/kota" nilai={`${namaKota} · ${Outlet.ZonaWaktu}`} />
-                    <Rincian label="Jam tutup buku" nilai={Outlet.JamTutupBuku} />
-                    <Rincian label="PKP" nilai={Outlet.Pkp ? 'Ya' : 'Tidak'} />
-                </dl>
+                <Card className="py-6">
+                    <CardContent>
+                        <dl className="grid grid-cols-1 gap-3 text-isi md:grid-cols-2">
+                            <Rincian label="Alamat" nilai={Outlet.Alamat ?? 'Belum diisi'} />
+                            <Rincian label="Kabupaten/kota" nilai={`${namaKota} · ${Outlet.ZonaWaktu}`} />
+                            <Rincian label="Jam tutup buku" nilai={Outlet.JamTutupBuku} />
+                            <Rincian label="PKP" nilai={Outlet.Pkp ? 'Ya' : 'Tidak'} />
+                        </dl>
+                    </CardContent>
+                </Card>
             )}
 
             <BagianGudang
@@ -125,7 +155,7 @@ function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianG
         <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Lokasi stok</h2>
-                {bolehKelola && sunting === null ? (
+                {bolehKelola ? (
                     <Tombol varian="sekunder" onClick={() => AturSunting('baru')}>
                         Tambah lokasi stok
                     </Tombol>
@@ -136,77 +166,81 @@ function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianG
                 Belakang bila stoknya dipisah.
             </p>
             {sunting !== null ? (
-                <FormGudang
-                    key={sunting === 'baru' ? 'baru' : sunting.Uuid}
-                    alamatOutlet={alamatOutlet}
-                    gudang={sunting === 'baru' ? null : sunting}
-                    jenis={jenis}
-                    saatSelesai={() => AturSunting(null)}
-                />
+                <DialogFormulir
+                    judul={sunting === 'baru' ? 'Tambah lokasi stok' : `Ubah lokasi stok ${sunting.Kode}`}
+                    saatTutup={() => AturSunting(null)}
+                >
+                    <FormGudang
+                        key={sunting === 'baru' ? 'baru' : sunting.Uuid}
+                        alamatOutlet={alamatOutlet}
+                        gudang={sunting === 'baru' ? null : sunting}
+                        jenis={jenis}
+                        saatSelesai={() => AturSunting(null)}
+                    />
+                </DialogFormulir>
             ) : null}
-            <div className="overflow-x-auto rounded-panel border border-garis bg-permukaan">
-                <table className="w-full min-w-[640px] text-left text-isi">
-                    <caption className="sr-only">Lokasi stok outlet</caption>
-                    <thead className="border-b border-garis text-label text-teks-sekunder">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+            <Card className="gap-0 py-0">
+                <Table className="min-w-[640px] text-isi">
+                    <TableCaption className="sr-only">Lokasi stok outlet</TableCaption>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead scope="col" className={kelasKepala}>
                                 Kode
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Nama
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Jenis
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 Status
-                            </th>
-                            <th scope="col" className="px-4 py-2 font-semibold">
+                            </TableHead>
+                            <TableHead scope="col" className={kelasKepala}>
                                 <span className="sr-only">Aksi</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {gudang.map((baris) => (
-                            <tr key={baris.Uuid} className="border-b border-garis last:border-b-0">
-                                <td className="px-4 py-2 font-mono text-label text-teks-utama">{baris.Kode}</td>
-                                <td className="px-4 py-2 text-teks-utama">{baris.Nama}</td>
-                                <td className="px-4 py-2 text-teks-sekunder">
+                            <TableRow key={baris.Uuid}>
+                                <TableCell className="px-4 font-mono text-label text-teks-utama">{baris.Kode}</TableCell>
+                                <TableCell className="px-4 whitespace-normal text-teks-utama">{baris.Nama}</TableCell>
+                                <TableCell className="px-4 text-teks-sekunder">
                                     {labelJenis.get(baris.Jenis) ?? baris.Jenis}
-                                </td>
-                                <td className="px-4 py-2">
+                                </TableCell>
+                                <TableCell className="px-4">
                                     {baris.Status === 'Aktif' ? (
                                         <LabelStatus jenis="sukses" teks="Aktif" />
                                     ) : (
                                         <LabelStatus jenis="netral" teks="Diarsipkan" />
                                     )}
-                                </td>
-                                <td className="px-4 py-2 text-right">
+                                </TableCell>
+                                <TableCell className="px-4 text-right">
                                     {bolehKelola ? (
-                                        <span className="flex justify-end gap-2">
-                                            <Tombol varian="sekunder" onClick={() => AturSunting(baris)}>
-                                                Ubah
-                                            </Tombol>
-                                            <Tombol
-                                                varian={baris.Status === 'Aktif' ? 'bahaya' : 'sekunder'}
-                                                onClick={() =>
-                                                    router.post(
-                                                        `${alamatOutlet}/gudang/${baris.Uuid}/${baris.Status === 'Aktif' ? 'arsipkan' : 'pulihkan'}`,
-                                                        {},
-                                                        { preserveScroll: true },
-                                                    )
-                                                }
-                                            >
-                                                {baris.Status === 'Aktif' ? 'Arsipkan' : 'Pulihkan'}
-                                            </Tombol>
-                                        </span>
+                                        <MenuAksiBaris
+                                            label={`Aksi lokasi stok ${baris.Nama}`}
+                                            aksi={[
+                                                { label: 'Ubah', saatPilih: () => AturSunting(baris) },
+                                                {
+                                                    label: baris.Status === 'Aktif' ? 'Arsipkan' : 'Pulihkan',
+                                                    bahaya: baris.Status === 'Aktif',
+                                                    saatPilih: () =>
+                                                        router.post(
+                                                            `${alamatOutlet}/gudang/${baris.Uuid}/${baris.Status === 'Aktif' ? 'arsipkan' : 'pulihkan'}`,
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        ),
+                                                },
+                                            ]}
+                                        />
                                     ) : null}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                    </TableBody>
+                </Table>
+            </Card>
         </section>
     );
 }
@@ -228,11 +262,7 @@ function FormGudang({ alamatOutlet, gudang, jenis, saatSelesai }: PropsFormGudan
     };
 
     return (
-        <form
-            onSubmit={Kirim}
-            className="grid grid-cols-1 gap-4 rounded-panel border border-garis bg-permukaan p-4 md:grid-cols-3"
-            noValidate
-        >
+        <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
             <BidangTeks
                 label="Nama lokasi"
                 nilai={formulir.data.Nama}
@@ -259,7 +289,7 @@ function FormGudang({ alamatOutlet, gudang, jenis, saatSelesai }: PropsFormGudan
                 saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                 galat={formulir.errors.Jenis}
             />
-            <div className="flex gap-2 md:col-span-3">
+            <div className="flex flex-wrap gap-2">
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan lokasi stok
                 </Tombol>
