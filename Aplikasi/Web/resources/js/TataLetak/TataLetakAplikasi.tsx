@@ -5,6 +5,7 @@ import {
     ChartColumnIcon,
     CreditCardIcon,
     HouseIcon,
+    IdCardIcon,
     LifeBuoyIcon,
     MonitorSmartphoneIcon,
     PackageIcon,
@@ -101,6 +102,13 @@ const menuPelanggan: ItemMenu[] = [
     { label: 'Pelunasan piutang', href: '/kelola/piutang/pelunasan', izin: IzinTenant.PelangganLihat },
 ];
 
+// F-18: karyawan, jadwal kerja, rekap absensi (karyawan.lihat).
+const menuKaryawan: ItemMenu[] = [
+    { label: 'Daftar karyawan', href: '/kelola/karyawan', izin: IzinTenant.KaryawanLihat },
+    { label: 'Jadwal kerja', href: '/kelola/karyawan/jadwal', izin: IzinTenant.KaryawanLihat },
+    { label: 'Absensi', href: '/kelola/karyawan/absensi', izin: IzinTenant.KaryawanLihat },
+];
+
 const menuKasir: ItemMenu[] = [
     { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
@@ -195,6 +203,14 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: UsersRoundIcon,
         labelSub: 'Menu pelanggan',
         sub: menuPelanggan,
+    },
+    {
+        label: 'Karyawan',
+        href: '/kelola/karyawan',
+        izin: null,
+        ikon: IdCardIcon,
+        labelSub: 'Menu karyawan',
+        sub: menuKaryawan,
     },
     {
         label: 'Shift & kas',

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 

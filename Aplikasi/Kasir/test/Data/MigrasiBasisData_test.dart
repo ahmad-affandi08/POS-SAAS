@@ -52,6 +52,9 @@ const List<String> tabelVoidRetur = [
 /// Tabel skema 6 (F-07 mode meja fase 1: meja & pesanan terbuka).
 const List<String> tabelMeja = ['AreaMeja', 'Meja', 'PesananTerbuka', 'NomorUrutPesananTerbuka'];
 
+/// Hapus tabel skema 10 (F-18 absensi lokal), agar sama dengan perangkat skema ≤ 9.
+Future<void> HapusTabelAbsensi(BasisDataKasir db) => db.customStatement('DROP TABLE "AbsensiLokal"');
+
 /// Hapus tabel skema 7 (F-16a pelanggan lokal), agar sama dengan perangkat skema ≤ 6.
 Future<void> HapusTabelPelanggan(BasisDataKasir db) => db.customStatement('DROP TABLE "PelangganLokal"');
 
@@ -108,7 +111,7 @@ void main() {
     expect((await db.select(db.shift).get()).single.KasAwal, '500000.00');
 
     // Migrasi berantai sampai skema terbaru (5, void & retur F-09).
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     final tabel = await db
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .map((r) => r.read<String>('name'))
@@ -151,12 +154,12 @@ void main() {
     expect((await db.select(db.nomorUrutPenjualan).get()).single.Terakhir, 1);
   });
 
-  test('basis data baru langsung skema terbaru (9)', () async {
+  test('basis data baru langsung skema terbaru (10)', () async {
     final db = BasisDataKasir(NativeDatabase.memory());
     addTearDown(db.close);
     expect(await db.select(db.penjualan).get(), isEmpty);
     expect(await db.select(db.returPenjualan).get(), isEmpty);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
   });
 
   test('F-11 migrasi 2 → 3 hanya menambah kolom tutup shift; outbox tertunda, shift, & penjualan tetap utuh', () async {
@@ -167,6 +170,8 @@ void main() {
     // Bangun skema 2: skema terbaru dikurangi kolom F-11, lalu isi data seperti perangkat lama.
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     for (final kolom in kolomTutupShift) {
       await lama.customStatement('ALTER TABLE "Shift" DROP COLUMN "$kolom"');
     }
@@ -191,7 +196,7 @@ void main() {
     expect(outbox.map((o) => o.Uuid), ['SHIFT1', 'JUAL1'], reason: 'Outbox belum terkirim tidak boleh hilang.');
     expect(outbox.first.Percobaan, 2);
     expect(outbox.last.Status, 'PerluTindakan');
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
 
     final shift = (await db.select(db.shift).get()).single;
     expect(shift.KasAwal, '500000.00');
@@ -212,6 +217,8 @@ void main() {
 
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     await lama.customStatement('ALTER TABLE "KelompokPajakDetail" DROP COLUMN "Kategori"');
     await HapusTabelVoidRetur(lama);
     await lama.customStatement(
@@ -232,7 +239,7 @@ void main() {
       'JUAL1',
       reason: 'Outbox belum terkirim tidak boleh hilang.',
     );
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     final detail = (await db.select(db.kelompokPajakDetail).get()).single;
     expect(detail.KodeJenisPajak, 'Ppn');
     expect(detail.Kategori, isNull, reason: 'Baris lama tanpa kategori → fallback ke kode sampai katalog diperbarui.');
@@ -248,6 +255,8 @@ void main() {
 
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     await HapusTabelVoidRetur(lama);
     await lama.customStatement(
       'INSERT INTO Penjualan (Uuid, Nomor, UuidShift, UuidPengguna, NamaKasir, Kanal, DibuatPada, TanggalBisnis, Status, '
@@ -272,7 +281,7 @@ void main() {
     expect(outbox.first.Percobaan, 4);
     expect(outbox.first.Data, '{"Nomor":"INV/SLB/260924/POS-001-0001"}');
     expect(outbox.last.Status, 'PerluTindakan');
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     expect((await db.select(db.penjualan).get()).single.TotalAkhir, '67100.00');
 
     // Tabel baru langsung bisa ditulis.
@@ -310,6 +319,8 @@ void main() {
 
       final lama = BasisDataKasir(NativeDatabase(berkas));
       await lama.customSelect('SELECT 1').get();
+      // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+      await HapusTabelAbsensi(lama);
       await HapusTabelMeja(lama);
       await lama.customStatement(
         "INSERT INTO NomorUrutReturPenjualan (KodePerangkat, Tanggal, Terakhir) VALUES ('POS-001', '260924', 3)",
@@ -327,7 +338,7 @@ void main() {
       final outbox = await db.select(db.outbox).get();
       expect(outbox.single.Uuid, 'RETUR1', reason: 'Outbox belum terkirim tidak boleh hilang.');
       expect(outbox.single.Percobaan, 2);
-      expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+      expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
       expect((await db.select(db.nomorUrutReturPenjualan).get()).single.Terakhir, 3);
 
       // Tabel baru langsung bisa ditulis.
@@ -361,6 +372,8 @@ void main() {
 
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     await HapusTabelPelanggan(lama);
     await lama.customStatement(
       "INSERT INTO PesananTerbuka (Uuid, Nomor, DibukaPada, Status, Baris, DiubahPada) VALUES ('PESAN1', "
@@ -377,7 +390,7 @@ void main() {
     addTearDown(db.close);
     expect((await db.select(db.outbox).get()).single.Jenis, 'PesananTerbuka.Buka');
     expect((await db.select(db.pesananTerbuka).get()).single.Nomor, 'OB/SLB/260925/POS-001-0001');
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     await db
         .into(db.pelangganLokal)
         .insert(
@@ -398,6 +411,8 @@ void main() {
 
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     // Skema 7 belum punya kolom tier (8) maupun kredit (9).
     for (final kolom in ['KodeTier', 'NamaTier', 'LimitKredit', 'SisaPiutang', 'HariLewatJatuhTempo']) {
       await lama.customStatement('ALTER TABLE PelangganLokal DROP COLUMN $kolom');
@@ -415,7 +430,7 @@ void main() {
 
     final db = BasisDataKasir(NativeDatabase(berkas));
     addTearDown(db.close);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     expect((await db.select(db.outbox).get()).single.Jenis, 'Pelanggan.Buat');
     final pelanggan = (await db.select(db.pelangganLokal).get()).single;
     expect(pelanggan.Nama, 'Ani Rahmawati');
@@ -431,6 +446,8 @@ void main() {
 
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
+    // Skema ≤ 9 belum punya tabel absensi lokal (F-18).
+    await HapusTabelAbsensi(lama);
     for (final kolom in ['LimitKredit', 'SisaPiutang', 'HariLewatJatuhTempo']) {
       await lama.customStatement('ALTER TABLE PelangganLokal DROP COLUMN $kolom');
     }
@@ -447,7 +464,7 @@ void main() {
 
     final db = BasisDataKasir(NativeDatabase(berkas));
     addTearDown(db.close);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 9);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
     expect((await db.select(db.outbox).get()).single.Jenis, 'Penjualan.Buat');
     final pelanggan = (await db.select(db.pelangganLokal).get()).single;
     expect(pelanggan.KodeTier, 'GOLD');
@@ -456,5 +473,37 @@ void main() {
         .update(db.pelangganLokal)
         .write(const PelangganLokalCompanion(LimitKredit: Value('5000000.00'), SisaPiutang: Value('77000.00')));
     expect((await db.select(db.pelangganLokal).get()).single.LimitKredit, '5000000.00');
+  });
+
+  test('F-18 migrasi 9 → 10 menambah tabel absensi lokal; pelanggan & outbox tertunda utuh', () async {
+    final folder = Directory.systemTemp.createTempSync('migrasi_kasir_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final berkas = File('${folder.path}/kasir.sqlite');
+
+    final lama = BasisDataKasir(NativeDatabase(berkas));
+    await lama.customSelect('SELECT 1').get();
+    await lama.customStatement('DROP TABLE AbsensiLokal');
+    await lama.customStatement(
+      'INSERT INTO Outbox (Uuid, Jenis, Data, Status, Percobaan, DibuatPada, BerikutnyaPada) VALUES '
+      "('JUAL1', 'Penjualan.Buat', '{}', 'Tertunda', 0, '2026-09-25T03:00:00.000Z', '2026-09-25T03:00:00.000Z')",
+    );
+    await lama.customStatement('PRAGMA user_version = 9');
+    await lama.close();
+
+    final db = BasisDataKasir(NativeDatabase(berkas));
+    addTearDown(db.close);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 10);
+    expect((await db.select(db.outbox).get()).single.Jenis, 'Penjualan.Buat');
+    await db
+        .into(db.absensiLokal)
+        .insert(
+          AbsensiLokalCompanion.insert(
+            Uuid: 'ABS1',
+            UuidPengguna: 'STAF1',
+            NamaStaf: 'Rina Wulandari',
+            MasukPada: DateTime.utc(2026, 9, 25, 1),
+          ),
+        );
+    expect((await db.select(db.absensiLokal).get()).single.NamaStaf, 'Rina Wulandari');
   });
 }

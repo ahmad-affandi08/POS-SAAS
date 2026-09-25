@@ -5,6 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart' show Uang;
 
+import '../Data/KameraSwafotoPlatform.dart';
+import '../Data/RepositoriAbsensi.dart';
+import '../Domain/Karyawan/LayananAbsensi.dart';
+import '../Domain/Perangkat/KameraSwafoto.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
@@ -262,6 +266,22 @@ final penyediaPesananMeja = StreamProvider.family<PesananMeja?, String>(
 );
 
 // Pelanggan (F-16a) ----------------------------------------------------------------------------------------------------
+
+/// F-18: kamera swafoto absensi (tiruan di test).
+final penyediaKameraSwafoto = Provider<KameraSwafoto>((ref) => KameraSwafotoPlatform());
+
+final penyediaRepositoriAbsensi = Provider<RepositoriAbsensi>(
+  (ref) => RepositoriAbsensi(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+/// F-18: absen masuk/keluar staf dengan PIN + swafoto.
+final penyediaLayananAbsensi = Provider<LayananAbsensi>(
+  (ref) => LayananAbsensi(
+    repositori: ref.watch(penyediaRepositoriAbsensi),
+    kamera: ref.watch(penyediaKameraSwafoto),
+    jam: ref.watch(penyediaJam),
+  ),
+);
 
 final penyediaRepositoriPelanggan = Provider<RepositoriPelanggan>(
   (ref) => RepositoriPelanggan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),

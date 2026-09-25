@@ -90,6 +90,9 @@ enum PeranTenantBawaan: string
                 // F-16a: data pelanggan outlet.
                 IzinTenant::PelangganLihat,
                 IzinTenant::PelangganKelola,
+                // F-18: karyawan & jadwal outlet.
+                IzinTenant::KaryawanLihat,
+                IzinTenant::KaryawanKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -105,6 +108,7 @@ enum PeranTenantBawaan: string
                 // F-11: PIN supervisor untuk selisih kas tutup shift di atas toleransi.
                 IzinTenant::ShiftSelisihSetujui,
                 IzinTenant::PelangganLihat,
+                IzinTenant::KaryawanLihat,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola],
@@ -119,6 +123,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::LaporanKeuanganLihat,
                 IzinTenant::AkuntansiKelola,
                 IzinTenant::PelangganLihat,
+                IzinTenant::KaryawanLihat,
             ],
         };
     }

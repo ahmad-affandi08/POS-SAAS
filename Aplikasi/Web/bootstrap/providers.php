@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Providers\PenyediaAplikasi;
+use App\Providers\PenyediaKaryawan;
 use App\Providers\PenyediaKasir;
 use App\Providers\PenyediaKatalog;
 use App\Providers\PenyediaKatalogHarga;
@@ -30,4 +31,6 @@ return [
     PenyediaLaporan::class,
     // F-16a: pelanggan (penangan item sinkron `Pelanggan.Buat`).
     PenyediaPelanggan::class,
+    // F-18: karyawan (penangan item sinkron `Absensi.Masuk` & `Absensi.Keluar`).
+    PenyediaKaryawan::class,
 ];

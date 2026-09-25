@@ -63,6 +63,9 @@ enum IzinTenant: string
     // F-16a CRM-01 pelanggan (back-office; memilih & membuat pelanggan di POS cukup `penjualan.buat`).
     case PelangganLihat = 'pelanggan.lihat';
     case PelangganKelola = 'pelanggan.kelola';
+    // F-18: karyawan, jadwal kerja, rekap absensi.
+    case KaryawanLihat = 'karyawan.lihat';
+    case KaryawanKelola = 'karyawan.kelola';
 
     public function AmbilLabel(): string
     {
@@ -104,6 +107,8 @@ enum IzinTenant: string
             self::BantuanTiketKelola => 'Membuat, membalas, dan menyelesaikan tiket bantuan',
             self::PelangganLihat => 'Melihat data & riwayat belanja pelanggan',
             self::PelangganKelola => 'Menambah, mengubah, dan mengarsipkan pelanggan',
+            self::KaryawanLihat => 'Melihat karyawan, jadwal kerja, dan rekap absensi',
+            self::KaryawanKelola => 'Mengelola data karyawan dan jadwal kerja',
         };
     }
 
@@ -123,6 +128,7 @@ enum IzinTenant: string
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',
             self::PelangganLihat, self::PelangganKelola => 'Pelanggan',
+            self::KaryawanLihat, self::KaryawanKelola => 'Karyawan',
         };
     }
 

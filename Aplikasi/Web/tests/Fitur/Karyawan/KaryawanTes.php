@@ -1,0 +1,200 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Karyawan\Enum\StatusKaryawan;
+use App\Domain\Karyawan\Model\Absensi;
+use App\Domain\Karyawan\Model\JadwalKerja;
+use App\Domain\Karyawan\Model\Karyawan;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Katalog\BantuanHarga;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Persediaan\BantuanPersediaan;
+use Tests\Pendukung\Tenant\BantuanPendaftaran;
+use Tests\TestCase;
+
+/*
+ * F-18 bagian 1 (PRD "Rincian F-18 bagian 1"): data karyawan (akun tertaut unik, gaji hanya untuk pengelola), jadwal
+ * kerja mingguan per outlet (simpan, hapus, bentrok outlet lain, salin minggu lalu), absensi dari POS lewat outbox
+ * `Absensi.Masuk`/`Absensi.Keluar` (idempoten, karyawan dibuat otomatis, swafoto JPEG privat), rekap absensi dengan
+ * keterlambatan, izin & isolasi tenant.
+ */
+
+beforeEach(function (): void {
+    BantuanPendaftaran::SiapkanPrasyarat();
+    Storage::fake('local');
+});
+
+/** JPEG minimal (tanda tangan FFD8FF) untuk uji swafoto. */
+function SwafotoUji(): string
+{
+    return base64_encode("\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xFF\xD9");
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ * @return array{Jenis: string, Uuid: string, Data: array<string, mixed>}
+ */
+function ItemAbsensi(string $jenis, array $data, ?string $uuid = null): array
+{
+    return ['Jenis' => $jenis, 'Uuid' => $uuid ?? BantuanKasir::Uuid(), 'Data' => $data];
+}
+
+/** Waktu hari ini jam [jam]:[menit] zona outlet uji (WIB), dalam UTC ISO. */
+function JamHariIni(int $jam, int $menit): string
+{
+    return CarbonImmutable::now('Asia/Jakarta')->setTime($jam, $menit)->utc()->toIso8601ZuluString();
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function SiapkanKaryawan(TestCase $tes, string $nama = 'Kopi Senja Karyawan'): array
+{
+    $k = BantuanPenjualan::Siapkan($tes, $nama);
+    BantuanOrganisasi::Masuk($tes, $k['Pemilik'], $k['Tenant']->Id);
+
+    return $k;
+}
+
+describe('F-18 data karyawan', function (): void {
+    it('tambah tertaut akun, akun ganda ditolak, ubah, nonaktifkan; gaji hanya untuk karyawan.kelola', function (): void {
+        $k = SiapkanKaryawan($this);
+
+        $this->post('/kelola/karyawan', ['Nama' => 'Rina Wulandari', 'Jabatan' => 'Barista', 'LevelStaf' => 'Senior', 'GajiPokok' => '3500000', 'UuidPengguna' => $k['Kasir']->Uuid, 'UuidOutlet' => $k['Outlet']->Uuid])
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->post('/kelola/karyawan', ['Nama' => 'Rina Kedua', 'UuidPengguna' => $k['Kasir']->Uuid])->assertSessionHasErrors('UuidPengguna');
+        $this->post('/kelola/karyawan', ['Nama' => 'Pak Joko Tukang Parkir', 'GajiPokok' => '1,5'])->assertSessionHasErrors('GajiPokok');
+        $this->post('/kelola/karyawan', ['Nama' => 'Pak Joko Tukang Parkir'])->assertSessionHasNoErrors();
+
+        $rina = Karyawan::query()->where('Nama', 'Rina Wulandari')->sole();
+        expect($rina->IdPengguna)->toBe($k['Kasir']->Id)
+            ->and((string) $rina->GajiPokok)->toBe('3500000.00')
+            ->and($rina->IdOutlet)->toBe($k['Outlet']->Id);
+
+        $this->put("/kelola/karyawan/{$rina->Uuid}", ['Nama' => 'Rina Wulandari', 'Jabatan' => 'Kepala Barista', 'UuidPengguna' => $k['Kasir']->Uuid])->assertSessionHasNoErrors();
+        expect($rina->refresh()->Jabatan)->toBe('Kepala Barista')->and($rina->GajiPokok)->toBeNull();
+        $this->post("/kelola/karyawan/{$rina->Uuid}/nonaktifkan")->assertSessionHasNoErrors();
+        expect($rina->refresh()->Status)->toBe(StatusKaryawan::Nonaktif)
+            ->and(LogAudit::query()->where('Peristiwa', 'karyawan.nonaktifkan')->count())->toBe(1)
+            ->and(LogAudit::query()->where('Peristiwa', 'karyawan.tambah')->value('NilaiBaru'))->not->toContain('3500000');
+
+        $this->getJson('/kelola/karyawan?cari=rina')->assertOk()->assertJsonPath('Meta.Total', 1)->assertJsonPath('Data.0.Jabatan', 'Kepala Barista');
+        $this->post("/kelola/karyawan/{$rina->Uuid}/aktifkan")->assertSessionHasNoErrors();
+        $this->put("/kelola/karyawan/{$rina->Uuid}", ['Nama' => 'Rina Wulandari', 'GajiPokok' => '4000000'])->assertSessionHasNoErrors();
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Supervisor);
+        $this->get('/kelola/karyawan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Karyawan/Daftar')->where('Izin.Kelola', false)->where('Karyawan.Data.1.GajiPokok', null)->has('OpsiPengguna', 0));
+        $this->post('/kelola/karyawan', ['Nama' => 'Tidak Boleh'])->assertForbidden();
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/karyawan')->assertForbidden();
+    });
+});
+
+describe('F-18 jadwal kerja', function (): void {
+    it('simpan, ubah, hapus jadwal minggu; jam tidak valid & bentrok outlet lain ditolak; salin minggu lalu', function (): void {
+        $k = SiapkanKaryawan($this);
+        $this->post('/kelola/karyawan', ['Nama' => 'Dimas Pratama', 'UuidOutlet' => $k['Outlet']->Uuid])->assertSessionHasNoErrors();
+        $dimas = Karyawan::query()->sole();
+        $senin = CarbonImmutable::parse('2026-09-21');
+        $isian = fn (array $sel): array => ['UuidOutlet' => $k['Outlet']->Uuid, 'Senin' => '2026-09-21', 'Sel' => $sel];
+
+        $this->get('/kelola/karyawan/jadwal?minggu=2026-09-23')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Karyawan/Jadwal')->where('Senin', '2026-09-21')->has('Jadwal.Hari', 7)->has('Jadwal.Baris', 1));
+
+        $this->put('/kelola/karyawan/jadwal', $isian([
+            ['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-21', 'JamMulai' => '08:00', 'JamSelesai' => '16:00'],
+            ['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-22', 'JamMulai' => '22:00', 'JamSelesai' => '06:00'],
+        ]))->assertSessionHasNoErrors();
+        expect(JadwalKerja::query()->count())->toBe(2);
+
+        $this->put('/kelola/karyawan/jadwal', $isian([['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-23', 'JamMulai' => '25:00', 'JamSelesai' => '16:00']]))->assertSessionHasErrors('Sel.0.JamMulai');
+        $this->put('/kelola/karyawan/jadwal', $isian([['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-30', 'JamMulai' => '08:00', 'JamSelesai' => '16:00']]))->assertSessionHasErrors('Sel.0.Tanggal');
+        $this->put('/kelola/karyawan/jadwal', $isian([['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-22', 'JamMulai' => null, 'JamSelesai' => null]]))->assertSessionHasNoErrors();
+        expect(JadwalKerja::query()->count())->toBe(1);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $lain = BantuanHarga::BuatOutlet('KRT', 'Cabang Kartasura');
+        $this->put('/kelola/karyawan/jadwal', ['UuidOutlet' => $lain->Uuid, 'Senin' => '2026-09-21', 'Sel' => [['UuidKaryawan' => $dimas->Uuid, 'Tanggal' => '2026-09-21', 'JamMulai' => '09:00', 'JamSelesai' => '17:00']]])
+            ->assertSessionHasErrors('Sel.0.JamMulai');
+
+        $this->post('/kelola/karyawan/jadwal/salin', ['UuidOutlet' => $k['Outlet']->Uuid, 'Senin' => $senin->addDays(7)->toDateString()])->assertSessionHasNoErrors();
+        $baru = JadwalKerja::query()->whereDate('Tanggal', '2026-09-28')->sole();
+        expect([$baru->JamMulai, $baru->JamSelesai])->toBe(['08:00', '16:00'])
+            ->and(LogAudit::query()->where('Peristiwa', 'jadwal-kerja.salin')->count())->toBe(1);
+    });
+});
+
+describe('F-18 absensi dari POS', function (): void {
+    it('masuk & keluar idempoten dengan swafoto; karyawan dibuat otomatis; rekap menghitung terlambat', function (): void {
+        $k = SiapkanKaryawan($this);
+        $uuid = BantuanKasir::Uuid();
+        $masuk = ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => $k['Kasir']->Uuid, 'MasukPada' => JamHariIni(9, 40), 'Swafoto' => SwafotoUji()], $uuid);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$masuk]))->toBe([['Diterima', null]])
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [$masuk]))->toBe([['Duplikat', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $karyawan = Karyawan::query()->sole();
+        $absensi = Absensi::query()->sole();
+        expect($karyawan->IdPengguna)->toBe($k['Kasir']->Id)
+            ->and($absensi->Uuid)->toBe($uuid)
+            ->and($absensi->PathSwafotoMasuk)->not->toBeNull()
+            ->and(Storage::disk('local')->exists((string) $absensi->PathSwafotoMasuk))->toBeTrue();
+
+        $keluarAwal = ItemAbsensi('Absensi.Keluar', ['UuidAbsensi' => $uuid, 'UuidPengguna' => $k['Kasir']->Uuid, 'KeluarPada' => JamHariIni(9, 0)]);
+        $keluar = ItemAbsensi('Absensi.Keluar', ['UuidAbsensi' => $uuid, 'UuidPengguna' => $k['Kasir']->Uuid, 'KeluarPada' => JamHariIni(17, 5), 'Swafoto' => null]);
+        $keluarLain = ItemAbsensi('Absensi.Keluar', ['UuidAbsensi' => $uuid, 'UuidPengguna' => $k['Supervisor']->Uuid, 'KeluarPada' => JamHariIni(17, 5)]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$keluarAwal, $keluarLain, $keluar]))
+            ->toBe([['Ditolak', 'WaktuTidakValid'], ['Ditolak', 'AbsensiTidakDitemukan'], ['Diterima', null]])
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [$keluar]))->toBe([['Duplikat', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $tanggal = $absensi->refresh()->TanggalBisnis->toDateString();
+        JadwalKerja::query()->create(['IdKaryawan' => $karyawan->Id, 'IdOutlet' => $k['Outlet']->Id, 'Tanggal' => $tanggal, 'JamMulai' => '09:00', 'JamSelesai' => '17:00']);
+
+        BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+        $this->getJson('/kelola/karyawan/absensi?cari=')->assertOk()
+            ->assertJsonPath('Meta.Total', 1)
+            ->assertJsonPath('Data.0.JamMasuk', '09:40')
+            ->assertJsonPath('Data.0.JamKeluar', '17:05')
+            ->assertJsonPath('Data.0.DurasiMenit', 445)
+            ->assertJsonPath('Data.0.TerlambatMenit', 40)
+            ->assertJsonPath('Data.0.Status', 'Terlambat')
+            ->assertJsonPath('Data.0.AdaSwafotoMasuk', true)
+            ->assertJsonPath('Data.0.AdaSwafotoKeluar', false);
+        $this->get("/kelola/karyawan/absensi/{$uuid}/swafoto/masuk")->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->get("/kelola/karyawan/absensi/{$uuid}/swafoto/keluar")->assertNotFound();
+
+        $b = BantuanPenjualan::Siapkan($this, 'Tenant Lain Absensi');
+        BantuanOrganisasi::Masuk($this, $b['Pemilik'], $b['Tenant']->Id);
+        $this->get("/kelola/karyawan/absensi/{$uuid}/swafoto/masuk")->assertNotFound();
+        $this->getJson('/kelola/karyawan/absensi?cari=')->assertOk()->assertJsonPath('Meta.Total', 0);
+    });
+
+    it('swafoto bukan JPEG, pengguna di luar outlet, dan karyawan nonaktif ditolak', function (): void {
+        $k = SiapkanKaryawan($this);
+        $png = base64_encode("\x89PNG\r\n\x1a\n0000");
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [
+            ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => $k['Kasir']->Uuid, 'MasukPada' => JamHariIni(8, 0), 'Swafoto' => $png]),
+            ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => BantuanKasir::Uuid(), 'MasukPada' => JamHariIni(8, 0)]),
+        ]))->toBe([['Ditolak', 'SwafotoTidakValid'], ['Ditolak', 'KasirTidakDitemukan']]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(Absensi::query()->count())->toBe(0)->and(Storage::disk('local')->allFiles())->toBe([]);
+        Karyawan::query()->create(['Nama' => 'Supervisor Nonaktif', 'IdPengguna' => $k['Supervisor']->Id, 'Status' => StatusKaryawan::Nonaktif]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [
+            ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => $k['Supervisor']->Uuid, 'MasukPada' => JamHariIni(8, 0), 'Swafoto' => SwafotoUji()]),
+        ]))->toBe([['Ditolak', 'KaryawanNonaktif']]);
+        expect(Storage::disk('local')->allFiles())->toBe([]);
+    });
+});

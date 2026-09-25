@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Organisasi\Kueri;
 
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use App\Domain\Organisasi\Model\OutletPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\Peran;
@@ -66,6 +67,24 @@ final class DaftarAnggota
                 'BerlakuSampai' => $undangan->BerlakuSampai->toIso8601String(),
                 'Pengundang' => $undangan->Pengundang->Nama,
             ])
+            ->all());
+    }
+
+    /**
+     * F-18: anggota aktif tenant (Id, Uuid, Nama) untuk ditautkan ke data karyawan, urut nama.
+     *
+     * @return list<array{Id: int, Uuid: string, Nama: string}>
+     */
+    public function AmbilPilihanAktif(int $idTenant): array
+    {
+        return array_values(TenantPengguna::query()
+            ->where('IdTenant', $idTenant)
+            ->where('Status', StatusKeanggotaan::Aktif->value)
+            ->with('Pengguna')
+            ->get()
+            ->map(fn (TenantPengguna $baris): array => ['Id' => $baris->Pengguna->Id, 'Uuid' => $baris->Pengguna->Uuid, 'Nama' => $baris->Pengguna->Nama])
+            ->sortBy(fn (array $a): string => mb_strtolower($a['Nama']))
+            ->values()
             ->all());
     }
 

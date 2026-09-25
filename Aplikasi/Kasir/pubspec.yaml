@@ -26,6 +26,7 @@ dependencies:
   cryptography: ^2.9.0
   http: ^1.6.0
   wakelock_plus: ^1.8.0
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:

@@ -15167,6 +15167,319 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
   }
 }
 
+class $AbsensiLokalTable extends AbsensiLokal with TableInfo<$AbsensiLokalTable, BarisAbsensiLokal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AbsensiLokalTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenggunaMeta = const VerificationMeta('UuidPengguna');
+  @override
+  late final GeneratedColumn<String> UuidPengguna = GeneratedColumn<String>(
+    'UuidPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaStafMeta = const VerificationMeta('NamaStaf');
+  @override
+  late final GeneratedColumn<String> NamaStaf = GeneratedColumn<String>(
+    'NamaStaf',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _MasukPadaMeta = const VerificationMeta('MasukPada');
+  @override
+  late final GeneratedColumn<DateTime> MasukPada = GeneratedColumn<DateTime>(
+    'MasukPada',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _KeluarPadaMeta = const VerificationMeta('KeluarPada');
+  @override
+  late final GeneratedColumn<DateTime> KeluarPada = GeneratedColumn<DateTime>(
+    'KeluarPada',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [Uuid, UuidPengguna, NamaStaf, MasukPada, KeluarPada];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'AbsensiLokal';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisAbsensiLokal> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidPengguna')) {
+      context.handle(_UuidPenggunaMeta, UuidPengguna.isAcceptableOrUnknown(data['UuidPengguna']!, _UuidPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_UuidPenggunaMeta);
+    }
+    if (data.containsKey('NamaStaf')) {
+      context.handle(_NamaStafMeta, NamaStaf.isAcceptableOrUnknown(data['NamaStaf']!, _NamaStafMeta));
+    } else if (isInserting) {
+      context.missing(_NamaStafMeta);
+    }
+    if (data.containsKey('MasukPada')) {
+      context.handle(_MasukPadaMeta, MasukPada.isAcceptableOrUnknown(data['MasukPada']!, _MasukPadaMeta));
+    } else if (isInserting) {
+      context.missing(_MasukPadaMeta);
+    }
+    if (data.containsKey('KeluarPada')) {
+      context.handle(_KeluarPadaMeta, KeluarPada.isAcceptableOrUnknown(data['KeluarPada']!, _KeluarPadaMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisAbsensiLokal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisAbsensiLokal(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPengguna'])!,
+      NamaStaf: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaStaf'])!,
+      MasukPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}MasukPada'])!,
+      KeluarPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}KeluarPada']),
+    );
+  }
+
+  @override
+  $AbsensiLokalTable createAlias(String alias) {
+    return $AbsensiLokalTable(attachedDatabase, alias);
+  }
+}
+
+class BarisAbsensiLokal extends DataClass implements Insertable<BarisAbsensiLokal> {
+  final String Uuid;
+  final String UuidPengguna;
+  final String NamaStaf;
+  final DateTime MasukPada;
+  final DateTime? KeluarPada;
+  const BarisAbsensiLokal({
+    required this.Uuid,
+    required this.UuidPengguna,
+    required this.NamaStaf,
+    required this.MasukPada,
+    this.KeluarPada,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidPengguna'] = Variable<String>(UuidPengguna);
+    map['NamaStaf'] = Variable<String>(NamaStaf);
+    map['MasukPada'] = Variable<DateTime>(MasukPada);
+    if (!nullToAbsent || KeluarPada != null) {
+      map['KeluarPada'] = Variable<DateTime>(KeluarPada);
+    }
+    return map;
+  }
+
+  AbsensiLokalCompanion toCompanion(bool nullToAbsent) {
+    return AbsensiLokalCompanion(
+      Uuid: Value(Uuid),
+      UuidPengguna: Value(UuidPengguna),
+      NamaStaf: Value(NamaStaf),
+      MasukPada: Value(MasukPada),
+      KeluarPada: KeluarPada == null && nullToAbsent ? const Value.absent() : Value(KeluarPada),
+    );
+  }
+
+  factory BarisAbsensiLokal.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisAbsensiLokal(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidPengguna: serializer.fromJson<String>(json['UuidPengguna']),
+      NamaStaf: serializer.fromJson<String>(json['NamaStaf']),
+      MasukPada: serializer.fromJson<DateTime>(json['MasukPada']),
+      KeluarPada: serializer.fromJson<DateTime?>(json['KeluarPada']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidPengguna': serializer.toJson<String>(UuidPengguna),
+      'NamaStaf': serializer.toJson<String>(NamaStaf),
+      'MasukPada': serializer.toJson<DateTime>(MasukPada),
+      'KeluarPada': serializer.toJson<DateTime?>(KeluarPada),
+    };
+  }
+
+  BarisAbsensiLokal copyWith({
+    String? Uuid,
+    String? UuidPengguna,
+    String? NamaStaf,
+    DateTime? MasukPada,
+    Value<DateTime?> KeluarPada = const Value.absent(),
+  }) => BarisAbsensiLokal(
+    Uuid: Uuid ?? this.Uuid,
+    UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+    NamaStaf: NamaStaf ?? this.NamaStaf,
+    MasukPada: MasukPada ?? this.MasukPada,
+    KeluarPada: KeluarPada.present ? KeluarPada.value : this.KeluarPada,
+  );
+  BarisAbsensiLokal copyWithCompanion(AbsensiLokalCompanion data) {
+    return BarisAbsensiLokal(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidPengguna: data.UuidPengguna.present ? data.UuidPengguna.value : this.UuidPengguna,
+      NamaStaf: data.NamaStaf.present ? data.NamaStaf.value : this.NamaStaf,
+      MasukPada: data.MasukPada.present ? data.MasukPada.value : this.MasukPada,
+      KeluarPada: data.KeluarPada.present ? data.KeluarPada.value : this.KeluarPada,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisAbsensiLokal(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaStaf: $NamaStaf, ')
+          ..write('MasukPada: $MasukPada, ')
+          ..write('KeluarPada: $KeluarPada')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(Uuid, UuidPengguna, NamaStaf, MasukPada, KeluarPada);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisAbsensiLokal &&
+          other.Uuid == this.Uuid &&
+          other.UuidPengguna == this.UuidPengguna &&
+          other.NamaStaf == this.NamaStaf &&
+          other.MasukPada == this.MasukPada &&
+          other.KeluarPada == this.KeluarPada);
+}
+
+class AbsensiLokalCompanion extends UpdateCompanion<BarisAbsensiLokal> {
+  final Value<String> Uuid;
+  final Value<String> UuidPengguna;
+  final Value<String> NamaStaf;
+  final Value<DateTime> MasukPada;
+  final Value<DateTime?> KeluarPada;
+  final Value<int> rowid;
+  const AbsensiLokalCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidPengguna = const Value.absent(),
+    this.NamaStaf = const Value.absent(),
+    this.MasukPada = const Value.absent(),
+    this.KeluarPada = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AbsensiLokalCompanion.insert({
+    required String Uuid,
+    required String UuidPengguna,
+    required String NamaStaf,
+    required DateTime MasukPada,
+    this.KeluarPada = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidPengguna = Value(UuidPengguna),
+       NamaStaf = Value(NamaStaf),
+       MasukPada = Value(MasukPada);
+  static Insertable<BarisAbsensiLokal> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidPengguna,
+    Expression<String>? NamaStaf,
+    Expression<DateTime>? MasukPada,
+    Expression<DateTime>? KeluarPada,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidPengguna != null) 'UuidPengguna': UuidPengguna,
+      if (NamaStaf != null) 'NamaStaf': NamaStaf,
+      if (MasukPada != null) 'MasukPada': MasukPada,
+      if (KeluarPada != null) 'KeluarPada': KeluarPada,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AbsensiLokalCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidPengguna,
+    Value<String>? NamaStaf,
+    Value<DateTime>? MasukPada,
+    Value<DateTime?>? KeluarPada,
+    Value<int>? rowid,
+  }) {
+    return AbsensiLokalCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+      NamaStaf: NamaStaf ?? this.NamaStaf,
+      MasukPada: MasukPada ?? this.MasukPada,
+      KeluarPada: KeluarPada ?? this.KeluarPada,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidPengguna.present) {
+      map['UuidPengguna'] = Variable<String>(UuidPengguna.value);
+    }
+    if (NamaStaf.present) {
+      map['NamaStaf'] = Variable<String>(NamaStaf.value);
+    }
+    if (MasukPada.present) {
+      map['MasukPada'] = Variable<DateTime>(MasukPada.value);
+    }
+    if (KeluarPada.present) {
+      map['KeluarPada'] = Variable<DateTime>(KeluarPada.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AbsensiLokalCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaStaf: $NamaStaf, ')
+          ..write('MasukPada: $MasukPada, ')
+          ..write('KeluarPada: $KeluarPada, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BasisDataKasir extends GeneratedDatabase {
   _$BasisDataKasir(QueryExecutor e) : super(e);
   $BasisDataKasirManager get managers => $BasisDataKasirManager(this);
@@ -15206,6 +15519,7 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
   late final $PesananTerbukaTable pesananTerbuka = $PesananTerbukaTable(this);
   late final $NomorUrutPesananTerbukaTable nomorUrutPesananTerbuka = $NomorUrutPesananTerbukaTable(this);
   late final $PelangganLokalTable pelangganLokal = $PelangganLokalTable(this);
+  late final $AbsensiLokalTable absensiLokal = $AbsensiLokalTable(this);
   late final Index indeksProdukBarcodeBarcode = Index(
     'IndeksProdukBarcodeBarcode',
     'CREATE INDEX IndeksProdukBarcodeBarcode ON ProdukBarcode (Barcode)',
@@ -15254,6 +15568,7 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
     pesananTerbuka,
     nomorUrutPesananTerbuka,
     pelangganLokal,
+    absensiLokal,
     indeksProdukBarcodeBarcode,
     indeksPenjualanTanggalBisnis,
   ];
@@ -23344,6 +23659,173 @@ typedef $$PelangganLokalTableProcessedTableManager =
       BarisPelangganLokal,
       PrefetchHooks Function()
     >;
+typedef $$AbsensiLokalTableCreateCompanionBuilder = AbsensiLokalCompanion Function({
+  required String Uuid,
+  required String UuidPengguna,
+  required String NamaStaf,
+  required DateTime MasukPada,
+  Value<DateTime?> KeluarPada,
+  Value<int> rowid,
+});
+typedef $$AbsensiLokalTableUpdateCompanionBuilder = AbsensiLokalCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidPengguna,
+  Value<String> NamaStaf,
+  Value<DateTime> MasukPada,
+  Value<DateTime?> KeluarPada,
+  Value<int> rowid,
+});
+
+class $$AbsensiLokalTableFilterComposer extends Composer<_$BasisDataKasir, $AbsensiLokalTable> {
+  $$AbsensiLokalTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaStaf =>
+      $composableBuilder(column: $table.NamaStaf, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get MasukPada =>
+      $composableBuilder(column: $table.MasukPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get KeluarPada =>
+      $composableBuilder(column: $table.KeluarPada, builder: (column) => ColumnFilters(column));
+}
+
+class $$AbsensiLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $AbsensiLokalTable> {
+  $$AbsensiLokalTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaStaf =>
+      $composableBuilder(column: $table.NamaStaf, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get MasukPada =>
+      $composableBuilder(column: $table.MasukPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get KeluarPada =>
+      $composableBuilder(column: $table.KeluarPada, builder: (column) => ColumnOrderings(column));
+}
+
+class $$AbsensiLokalTableAnnotationComposer extends Composer<_$BasisDataKasir, $AbsensiLokalTable> {
+  $$AbsensiLokalTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaStaf => $composableBuilder(column: $table.NamaStaf, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get MasukPada => $composableBuilder(column: $table.MasukPada, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get KeluarPada =>
+      $composableBuilder(column: $table.KeluarPada, builder: (column) => column);
+}
+
+class $$AbsensiLokalTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $AbsensiLokalTable,
+          BarisAbsensiLokal,
+          $$AbsensiLokalTableFilterComposer,
+          $$AbsensiLokalTableOrderingComposer,
+          $$AbsensiLokalTableAnnotationComposer,
+          $$AbsensiLokalTableCreateCompanionBuilder,
+          $$AbsensiLokalTableUpdateCompanionBuilder,
+          (BarisAbsensiLokal, BaseReferences<_$BasisDataKasir, $AbsensiLokalTable, BarisAbsensiLokal>),
+          BarisAbsensiLokal,
+          PrefetchHooks Function()
+        > {
+  $$AbsensiLokalTableTableManager(_$BasisDataKasir db, $AbsensiLokalTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$AbsensiLokalTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$AbsensiLokalTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$AbsensiLokalTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidPengguna = const Value.absent(),
+                Value<String> NamaStaf = const Value.absent(),
+                Value<DateTime> MasukPada = const Value.absent(),
+                Value<DateTime?> KeluarPada = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AbsensiLokalCompanion(
+                Uuid: Uuid,
+                UuidPengguna: UuidPengguna,
+                NamaStaf: NamaStaf,
+                MasukPada: MasukPada,
+                KeluarPada: KeluarPada,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidPengguna,
+                required String NamaStaf,
+                required DateTime MasukPada,
+                Value<DateTime?> KeluarPada = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AbsensiLokalCompanion.insert(
+                Uuid: Uuid,
+                UuidPengguna: UuidPengguna,
+                NamaStaf: NamaStaf,
+                MasukPada: MasukPada,
+                KeluarPada: KeluarPada,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AbsensiLokalTable, BarisAbsensiLokal>(table),
+                  BaseReferences<_$BasisDataKasir, $AbsensiLokalTable, BarisAbsensiLokal>(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AbsensiLokalTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $AbsensiLokalTable,
+      BarisAbsensiLokal,
+      $$AbsensiLokalTableFilterComposer,
+      $$AbsensiLokalTableOrderingComposer,
+      $$AbsensiLokalTableAnnotationComposer,
+      $$AbsensiLokalTableCreateCompanionBuilder,
+      $$AbsensiLokalTableUpdateCompanionBuilder,
+      (BarisAbsensiLokal, BaseReferences<_$BasisDataKasir, $AbsensiLokalTable, BarisAbsensiLokal>),
+      BarisAbsensiLokal,
+      PrefetchHooks Function()
+    >;
 
 class $BasisDataKasirManager {
   final _$BasisDataKasir _db;
@@ -23396,4 +23878,5 @@ class $BasisDataKasirManager {
   $$NomorUrutPesananTerbukaTableTableManager get nomorUrutPesananTerbuka =>
       $$NomorUrutPesananTerbukaTableTableManager(_db, _db.nomorUrutPesananTerbuka);
   $$PelangganLokalTableTableManager get pelangganLokal => $$PelangganLokalTableTableManager(_db, _db.pelangganLokal);
+  $$AbsensiLokalTableTableManager get absensiLokal => $$AbsensiLokalTableTableManager(_db, _db.absensiLokal);
 }

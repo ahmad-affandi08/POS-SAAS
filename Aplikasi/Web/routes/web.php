@@ -139,6 +139,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Promo.php'));
             // F-12 Piutang pelanggan & pelunasan.
             Route::group([], base_path('routes/Piutang.php'));
+            // F-18 Karyawan, jadwal kerja, absensi.
+            Route::group([], base_path('routes/Karyawan.php'));
         });
     });
 });

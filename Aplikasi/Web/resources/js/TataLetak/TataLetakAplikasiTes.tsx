@@ -230,6 +230,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Penjualan',
             // F-16a: data pelanggan.
             'Pelanggan',
+            'Karyawan',
             'Shift & kas',
             'Akuntansi',
             // F-14a: laporan penjualan, pajak, stok.

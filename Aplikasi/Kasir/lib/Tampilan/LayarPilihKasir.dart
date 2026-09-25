@@ -6,6 +6,7 @@ import '../Aplikasi/Penyedia.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import 'Komponen/PapanPin.dart';
+import 'LayarAbsensi.dart';
 
 /// F-06 langkah 1: pilih nama kasir lalu masukkan PIN (bisa tanpa internet).
 class LayarPilihKasir extends ConsumerStatefulWidget {
@@ -97,6 +98,18 @@ class _LayarPilihKasirState extends ConsumerState<LayarPilihKasir> {
                                     ),
                                   ),
                               ],
+                            ),
+                            const SizedBox(height: 24),
+                            // F-18: absen masuk/keluar staf tanpa membuka sesi kasir.
+                            SizedBox(
+                              height: 48,
+                              child: OutlinedButton.icon(
+                                onPressed: () =>
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute<void>(builder: (_) => const LayarAbsensi())),
+                                icon: const Icon(Icons.badge_outlined),
+                                label: const Text('Absen masuk/keluar'),
+                              ),
                             ),
                           ],
                         ),

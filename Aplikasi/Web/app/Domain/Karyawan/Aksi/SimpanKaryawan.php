@@ -1,0 +1,110 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Karyawan\Aksi;
+
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Karyawan\Data\DataKaryawan;
+use App\Domain\Karyawan\Model\Karyawan;
+use App\Domain\Organisasi\Kueri\DaftarAnggota;
+use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Tambah/ubah karyawan (F-18, izin `karyawan.kelola`). Akun tertaut harus anggota aktif tenant dan hanya boleh
+ * tertaut ke satu karyawan (`PenggunaSudahTertaut`); outlet utama opsional. Audit `karyawan.tambah|ubah`.
+ */
+final class SimpanKaryawan
+{
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly DaftarAnggota $anggota,
+        private readonly PetaUuidOutlet $outlet,
+        private readonly PencatatAudit $audit,
+    ) {}
+
+    public function Jalankan(DataKaryawan $data, ?Karyawan $karyawan = null): Karyawan
+    {
+        $nama = trim($data->nama);
+
+        if ($nama === '' || mb_strlen($nama) > 150) {
+            throw new PelanggaranAturanBisnis('NamaTidakValid', 'Isi nama karyawan, paling panjang 150 karakter.', 'Nama');
+        }
+
+        $idPengguna = null;
+
+        if ($data->uuidPengguna !== null) {
+            $cocok = array_values(array_filter($this->anggota->AmbilPilihanAktif($this->konteks->Wajib()), fn (array $a): bool => $a['Uuid'] === $data->uuidPengguna));
+
+            if ($cocok === []) {
+                throw new PelanggaranAturanBisnis('PenggunaTidakDitemukan', 'Akun yang dipilih bukan anggota aktif usaha ini.', 'UuidPengguna');
+            }
+
+            $idPengguna = $cocok[0]['Id'];
+        }
+
+        $idOutlet = null;
+
+        if ($data->uuidOutlet !== null) {
+            $idOutlet = $this->outlet->AmbilIdDariUuid([$data->uuidOutlet])[$data->uuidOutlet] ?? null;
+
+            if ($idOutlet === null) {
+                throw new PelanggaranAturanBisnis('OutletTidakDitemukan', 'Outlet tidak ditemukan.', 'UuidOutlet');
+            }
+        }
+
+        $isian = [
+            'Nama' => $nama,
+            'Jabatan' => self::Bersihkan($data->jabatan, 80),
+            'LevelStaf' => self::Bersihkan($data->levelStaf, 40),
+            'GajiPokok' => $data->gajiPokok?->KeString(),
+            'IdPengguna' => $idPengguna,
+            'IdOutlet' => $idOutlet,
+        ];
+
+        $idSendiri = $karyawan?->Id;
+
+        return DB::transaction(function () use ($isian, $karyawan, $data, $idPengguna, $idSendiri): Karyawan {
+            if ($idPengguna !== null && Karyawan::query()->where('IdPengguna', $idPengguna)->when($idSendiri !== null, fn ($k) => $k->whereKeyNot($idSendiri))->lockForUpdate()->exists()) {
+                throw new PelanggaranAturanBisnis('PenggunaSudahTertaut', 'Akun ini sudah tertaut ke karyawan lain.', 'UuidPengguna');
+            }
+
+            if ($karyawan === null) {
+                $baru = Karyawan::query()->create([...$isian, 'DibuatOleh' => $data->idPengguna]);
+                $this->audit->Catat('karyawan.tambah', $baru, nilaiBaru: self::UntukAudit($isian), idPengguna: $data->idPengguna);
+
+                return $baru;
+            }
+
+            $terkunci = Karyawan::query()->whereKey($karyawan->Id)->lockForUpdate()->firstOrFail();
+            $lama = $terkunci->only(array_keys($isian));
+            $terkunci->fill($isian)->save();
+            $this->audit->Catat('karyawan.ubah', $terkunci, self::UntukAudit($lama), self::UntukAudit($isian), idPengguna: $data->idPengguna);
+
+            return $terkunci;
+        }, 3);
+    }
+
+    /**
+     * Gaji pokok tidak ditulis ke log audit (data pribadi karyawan); hanya tanda terisi.
+     *
+     * @param  array<string, mixed>  $nilai
+     * @return array<string, mixed>
+     */
+    private static function UntukAudit(array $nilai): array
+    {
+        $nilai['GajiPokok'] = ($nilai['GajiPokok'] ?? null) === null ? null : 'diisi';
+
+        return $nilai;
+    }
+
+    private static function Bersihkan(?string $teks, int $maks): ?string
+    {
+        $teks = $teks === null ? '' : trim($teks);
+
+        return $teks === '' ? null : mb_substr($teks, 0, $maks);
+    }
+}

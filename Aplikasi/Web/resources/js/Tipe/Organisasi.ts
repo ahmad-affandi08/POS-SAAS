@@ -38,6 +38,8 @@ export const IzinTenant = {
     // F-16a pelanggan (CRM-01).
     PelangganLihat: 'pelanggan.lihat',
     PelangganKelola: 'pelanggan.kelola',
+    KaryawanLihat: 'karyawan.lihat',
+    KaryawanKelola: 'karyawan.kelola',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

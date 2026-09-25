@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
 import 'package:kasir/Domain/Perangkat/PenjagaLayarMenyala.dart';
 import 'package:kasir/Domain/Pin/PemverifikasiPinOffline.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -20,6 +22,7 @@ Future<void> PasangAplikasi(
   Lingkungan lingkungan = Lingkungan.Produksi,
   Size ukuran = const Size(1280, 900),
   PenjagaLayarTiruan? penjagaLayar,
+  KameraSwafoto? kamera,
 }) async {
   // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
   tester.view.devicePixelRatio = 1;
@@ -37,6 +40,7 @@ Future<void> PasangAplikasi(
         penyediaLingkungan.overrideWithValue(lingkungan),
         penyediaPemverifikasiPin.overrideWithValue(const PemverifikasiPinTiruan()),
         penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
+        penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
       ],
       child: AplikasiKasir(lingkungan: lingkungan),
     ),
@@ -105,4 +109,22 @@ class PenjagaLayarTiruan implements PenjagaLayarMenyala {
 
   @override
   Future<void> Nonaktifkan() async => menyala = false;
+}
+
+/// Kamera swafoto tiruan (F-18): [foto] null = pengguna membatalkan.
+class KameraSwafotoTiruan implements KameraSwafoto {
+  KameraSwafotoTiruan({this.tersedia = true, this.foto});
+
+  final bool tersedia;
+  Uint8List? foto;
+  int dipanggil = 0;
+
+  @override
+  bool CekTersedia() => tersedia;
+
+  @override
+  Future<Uint8List?> Ambil() async {
+    dipanggil++;
+    return foto;
+  }
 }
