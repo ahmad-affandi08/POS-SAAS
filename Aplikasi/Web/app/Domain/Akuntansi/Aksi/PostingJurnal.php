@@ -7,6 +7,7 @@ namespace App\Domain\Akuntansi\Aksi;
 use App\Domain\Akuntansi\Data\DataBarisJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Data\HasilPostingJurnal;
+use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Layanan\PenentuAkun;
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
 use App\Domain\Akuntansi\Model\Akun;
@@ -90,7 +91,10 @@ final class PostingJurnal
             }
 
             // 5. Periode terbuka. F-15/§18: transaksi POS di periode terkunci dibukukan di periode terbuka berikutnya.
-            $tanggalPosting = $this->penjagaPeriode->SesuaikanTanggalPosting($data->tanggal);
+            // Jurnal penutup tahun (J-15.1) justru wajib di 31 Desember yang sudah terkunci (dijaga `TutupTahunAkuntansi`).
+            $tanggalPosting = $data->jenisSumber === JenisSumberJurnal::TutupTahun
+                ? $data->tanggal
+                : $this->penjagaPeriode->SesuaikanTanggalPosting($data->tanggal);
 
             if ($tanggalPosting->toDateString() !== $data->tanggal->toDateString()) {
                 $data = $data->DenganTanggal($tanggalPosting, " (tanggal transaksi {$data->tanggal->toDateString()}, periodenya terkunci)");

@@ -260,9 +260,23 @@ export type BarisPeriodeAkuntansi = {
     Berjalan: boolean;
     /** Shift yang belum ditutup di periode ini (syarat kunci). */
     ShiftBelumDitutup: number;
+    /** Tahun bukunya sudah ditutup (J-15.1): kunci tidak bisa dibuka. */
+    TahunDitutup: boolean;
+};
+
+/** F-15 tutup tahun (J-15.1): satu tahun buku di halaman Tutup buku. */
+export type BarisTahunBuku = {
+    Tahun: number;
+    BulanTerkunci: number;
+    Ditutup: boolean;
+    DitutupPada: string | null;
+    DitutupOleh: string | null;
+    NomorJurnal: string | null;
+    UuidJurnal: string | null;
 };
 
 export type PropsTutupBuku = {
     Periode: BarisPeriodeAkuntansi[];
+    Tahun: BarisTahunBuku[];
     Izin: { Kelola: boolean };
 };

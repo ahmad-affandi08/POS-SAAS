@@ -179,6 +179,7 @@ erDiagram
 | `Jurnal` | IdTenant, Uuid, Nomor, Tanggal, JenisSumber, IdSumber, UuidSumber, NomorSumber, KunciSumber, Keterangan, Otomatis, IdJurnalDibalik, Periode, TotalDebit, TotalKredit, DibuatOleh. Append-only (F-05a) |
 | `JurnalDetail` | IdTenant, IdJurnal, Urutan, IdAkun, IdOutlet, Tanggal, Debit, Kredit, Memo |
 | `KunciPeriode` | IdTenant, Periode (YYYY-MM), DikunciPada, DikunciOleh |
+| `TutupHarian` | IdTenant, IdOutlet, TanggalBisnis, DitutupPada, DitutupOleh, JumlahTransaksi, PenjualanBersih, Peringatan (JSON) (v1.81, F-15) |
 | `Pengeluaran` | IdOutlet, IdAkun, Jumlah, IdAkunSumberDana, Lampiran |
 | `MutasiBank` / `MutasiBankDetail` | fase 3 (rekonsiliasi) |
 

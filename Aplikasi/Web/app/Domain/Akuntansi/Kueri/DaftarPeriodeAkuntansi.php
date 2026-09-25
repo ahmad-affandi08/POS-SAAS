@@ -12,7 +12,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * Daftar periode untuk halaman Tutup buku (F-15): bulan berjalan + 23 bulan sebelumnya (terbaru dulu), status kunci,
- * siapa & kapan dikunci, dan syarat kunci (bulan sudah lewat, shift sampai akhir periode sudah ditutup).
+ * siapa & kapan dikunci, syarat kunci (bulan sudah lewat, shift sampai akhir periode sudah ditutup), dan apakah tahun
+ * bukunya sudah ditutup (kunci tidak bisa dibuka).
  */
 final class DaftarPeriodeAkuntansi
 {
@@ -21,16 +22,18 @@ final class DaftarPeriodeAkuntansi
     public function __construct(
         private readonly ShiftBelumDitutup $shift,
         private readonly DaftarAnggota $anggota,
+        private readonly StatusTutupTahun $tutupTahun,
     ) {}
 
     /**
-     * @return list<array{Periode: string, Label: string, Terkunci: bool, DikunciPada: string|null, DikunciOleh: string|null, Berjalan: bool, ShiftBelumDitutup: int}>
+     * @return list<array{Periode: string, Label: string, Terkunci: bool, DikunciPada: string|null, DikunciOleh: string|null, Berjalan: bool, ShiftBelumDitutup: int, TahunDitutup: bool}>
      */
     public function Ambil(int $idTenant, CarbonImmutable $bulanIni): array
     {
         $kunci = KunciPeriode::query()->get()->keyBy('Periode');
         $nama = $this->anggota->AmbilNamaPengguna($idTenant, array_values(array_filter($kunci->pluck('DikunciOleh')->all(), 'is_int')));
         $hasil = [];
+        $tahunDitutup = [];
 
         for ($i = 0; $i < self::JUMLAH_BULAN; $i++) {
             $awal = $bulanIni->startOfMonth()->subMonthsNoOverflow($i);
@@ -45,6 +48,7 @@ final class DaftarPeriodeAkuntansi
                 'DikunciOleh' => $baris?->DikunciOleh === null ? null : ($nama[$baris->DikunciOleh] ?? null),
                 'Berjalan' => $i === 0,
                 'ShiftBelumDitutup' => $baris === null && $i > 0 ? $this->shift->Hitung($awal->endOfMonth(), dariTanggal: $awal) : 0,
+                'TahunDitutup' => $tahunDitutup[$awal->year] ??= $this->tutupTahun->CekDitutup($awal->year),
             ];
         }
 

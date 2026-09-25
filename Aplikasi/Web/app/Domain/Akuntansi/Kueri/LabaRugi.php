@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Akuntansi\Kueri;
 
 use App\Domain\Akuntansi\Data\SaringLaporanKeuangan;
+use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\TipeAkun;
 use App\Domain\Akuntansi\Model\Akun;
+use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Bersama\Nilai\Uang;
 use Carbon\CarbonImmutable;
@@ -15,7 +17,8 @@ use Carbon\CarbonImmutable;
  * Laba rugi (F-13a, FIN-07 P0, tipe FE `PropsLabaRugi`): pendapatan − HPP = laba kotor − beban = laba bersih, per
  * akun dalam kelompok tipe akun, dibandingkan dengan periode sebelumnya yang sama panjang (bulan penuh → bulan
  * penuh sebelumnya). Satu kueri agregat per akun untuk kedua periode (DECIMAL, eksak). Pendapatan = kredit − debit
- * (akun kontra seperti diskon/retur penjualan mengurangi), HPP & beban = debit − kredit.
+ * (akun kontra seperti diskon/retur penjualan mengurangi), HPP & beban = debit − kredit. Jurnal penutup tahun (F-15)
+ * tidak dihitung.
  */
 final class LabaRugi
 {
@@ -37,7 +40,9 @@ final class LabaRugi
             ->get();
         $agregat = $akun->isEmpty() ? collect() : $saring->TerapkanOutlet(JurnalDetail::query()
             ->whereIn('IdAkun', $akun->pluck('Id')->all())
-            ->whereBetween('Tanggal', [$dariLalu, $saring->sampai]))
+            ->whereBetween('Tanggal', [$dariLalu, $saring->sampai])
+            // F-15: jurnal penutup tahun (J-15.1) memindahkan laba ke Laba Ditahan, bukan kinerja periode.
+            ->whereNotIn('IdJurnal', Jurnal::query()->select('Id')->where('JenisSumber', JenisSumberJurnal::TutupTahun->value)))
             ->groupBy('IdAkun')
             ->selectRaw(
                 '`IdAkun`,'

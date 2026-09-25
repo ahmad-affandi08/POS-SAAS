@@ -106,6 +106,7 @@ describe('F-13a menu Akuntansi', () => {
             'Laba rugi',
             'Neraca',
             'Arus kas',
+            'Tutup buku',
             'Bagan akun',
             'Pemetaan akun',
         ]);

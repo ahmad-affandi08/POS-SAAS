@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -13,7 +13,7 @@ import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { BarisPeriodeAkuntansi, PropsTutupBuku } from '@/Tipe/Akuntansi';
+import type { BarisPeriodeAkuntansi, BarisTahunBuku, PropsTutupBuku } from '@/Tipe/Akuntansi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 
 const alamat = '/kelola/akuntansi/tutup-buku';
@@ -34,6 +34,62 @@ export function AmbilStatusPeriode(p: BarisPeriodeAkuntansi): {
         ? { nilai: 'Terbuka', teks: `${p.ShiftBelumDitutup} shift belum ditutup`, jenis: 'peringatan' }
         : { nilai: 'Terbuka', teks: 'Terbuka, siap dikunci', jenis: 'netral' };
 }
+
+/** Status tahun buku: ditutup, siap ditutup (12 bulan terkunci), atau belum semua bulan terkunci. */
+export function AmbilStatusTahun(t: BarisTahunBuku): { teks: string; jenis: 'sukses' | 'peringatan' | 'netral' } {
+    if (t.Ditutup) {
+        return { teks: 'Ditutup', jenis: 'sukses' };
+    }
+    return t.BulanTerkunci === 12
+        ? { teks: 'Siap ditutup', jenis: 'netral' }
+        : { teks: `${t.BulanTerkunci} dari 12 bulan terkunci`, jenis: 'peringatan' };
+}
+
+const kolomTahun: KolomTabel<BarisTahunBuku>[] = [
+    {
+        id: 'Tahun',
+        accessorKey: 'Tahun',
+        header: 'Tahun buku',
+        meta: { label: 'Tahun buku', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama font-semibold' },
+    },
+    {
+        id: 'Status',
+        accessorFn: (t) => AmbilStatusTahun(t).teks,
+        header: 'Status',
+        meta: { label: 'Status', prioritas: 'penting' },
+        cell: ({ row }) => {
+            const status = AmbilStatusTahun(row.original);
+            return <LabelStatus jenis={status.jenis} teks={status.teks} />;
+        },
+    },
+    {
+        id: 'NomorJurnal',
+        accessorKey: 'NomorJurnal',
+        header: 'Jurnal penutup',
+        meta: { label: 'Jurnal penutup', prioritas: 'rendah' },
+        cell: ({ row }) =>
+            row.original.UuidJurnal !== null ? (
+                <Link
+                    href={`/kelola/akuntansi/jurnal/${row.original.UuidJurnal}`}
+                    className="font-semibold text-teks-utama underline-offset-2 hover:underline"
+                >
+                    {row.original.NomorJurnal}
+                </Link>
+            ) : (
+                '—'
+            ),
+    },
+    {
+        id: 'DitutupPada',
+        accessorKey: 'DitutupPada',
+        header: 'Ditutup',
+        meta: { label: 'Ditutup', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row }) =>
+            row.original.Ditutup
+                ? `${FormatTanggalWaktu(row.original.DitutupPada)}${row.original.DitutupOleh ? ` · ${row.original.DitutupOleh}` : ''}`
+                : '—',
+    },
+];
 
 const kolom: KolomTabel<BarisPeriodeAkuntansi>[] = [
     {
@@ -69,10 +125,11 @@ const kolom: KolomTabel<BarisPeriodeAkuntansi>[] = [
  * dilaporkan. Transaksi kasir offline yang terlambat tetap diterima dan dibukukan di periode terbuka berikutnya
  * (§18). Buka kunci wajib alasan dan tercatat di log audit.
  */
-export default function HalamanTutupBuku({ Periode, Izin }: PropsTutupBuku) {
+export default function HalamanTutupBuku({ Periode, Tahun, Izin }: PropsTutupBuku) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [kunci, AturKunci] = useState<BarisPeriodeAkuntansi | null>(null);
     const [buka, AturBuka] = useState<BarisPeriodeAkuntansi | null>(null);
+    const [tutupTahun, AturTutupTahun] = useState<BarisTahunBuku | null>(null);
     const [memproses, AturMemproses] = useState(false);
 
     const Kunci = () => {
@@ -88,6 +145,23 @@ export default function HalamanTutupBuku({ Periode, Izin }: PropsTutupBuku) {
                 onFinish: () => AturMemproses(false),
                 onSuccess: () => AturKunci(null),
                 onError: () => AturKunci(null),
+            },
+        );
+    };
+
+    const TutupTahun = () => {
+        if (tutupTahun === null) {
+            return;
+        }
+        router.post(
+            `${alamat}/tahun/${tutupTahun.Tahun}/tutup`,
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => AturMemproses(true),
+                onFinish: () => AturMemproses(false),
+                onSuccess: () => AturTutupTahun(null),
+                onError: () => AturTutupTahun(null),
             },
         );
     };
@@ -123,7 +197,11 @@ export default function HalamanTutupBuku({ Periode, Izin }: PropsTutupBuku) {
                     ? {
                           aksiBaris: (p: BarisPeriodeAkuntansi) =>
                               p.Terkunci ? (
-                                  <DropdownMenuItem onSelect={() => AturBuka(p)}>Buka kunci periode</DropdownMenuItem>
+                                  p.TahunDitutup ? null : (
+                                      <DropdownMenuItem onSelect={() => AturBuka(p)}>
+                                          Buka kunci periode
+                                      </DropdownMenuItem>
+                                  )
                               ) : p.Berjalan ? null : (
                                   <DropdownMenuItem onSelect={() => AturKunci(p)}>Kunci periode</DropdownMenuItem>
                               ),
@@ -131,6 +209,44 @@ export default function HalamanTutupBuku({ Periode, Izin }: PropsTutupBuku) {
                     : {})}
                 kosong={{ judul: 'Belum ada periode.' }}
             />
+            <h2 className="mt-4 text-subjudul font-semibold text-teks-utama">Tutup tahun</h2>
+            <p className="max-w-3xl text-isi text-teks-sekunder">
+                Setelah 12 bulan terkunci, tutup tahun buku untuk memindahkan laba atau rugi tahun itu ke Laba Ditahan.
+                Setelah ditutup, kunci bulan-bulannya tidak bisa dibuka lagi.
+            </p>
+            <TabelData
+                id="kelola-akuntansi-tutup-tahun"
+                label="Daftar tahun buku"
+                kolom={kolomTahun}
+                sumber={{ mode: 'lokal', data: Tahun }}
+                ambilIdBaris={(t) => String(t.Tahun)}
+                labelBaris={(t) => `tahun ${t.Tahun}`}
+                {...(Izin.Kelola
+                    ? {
+                          aksiBaris: (t: BarisTahunBuku) =>
+                              t.Ditutup || t.BulanTerkunci < 12 ? null : (
+                                  <DropdownMenuItem onSelect={() => AturTutupTahun(t)}>Tutup tahun</DropdownMenuItem>
+                              ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Belum ada tahun buku.' }}
+            />
+            {tutupTahun !== null ? (
+                <DialogKonfirmasi
+                    judul={`Tutup tahun buku ${tutupTahun.Tahun}?`}
+                    labelAksi="Tutup tahun"
+                    varian="utama"
+                    memproses={memproses}
+                    saatKonfirmasi={TutupTahun}
+                    saatBatal={() => AturTutupTahun(null)}
+                >
+                    <p>
+                        Saldo pendapatan, HPP, dan beban tahun {tutupTahun.Tahun} dipindahkan ke Laba Ditahan lewat
+                        jurnal penutup tanggal 31 Desember {tutupTahun.Tahun}.
+                    </p>
+                    <p>Kunci bulan-bulan tahun ini tidak bisa dibuka lagi. Koreksi dicatat di tahun berjalan.</p>
+                </DialogKonfirmasi>
+            ) : null}
             {kunci !== null ? (
                 <DialogKonfirmasi
                     judul={`Kunci periode ${kunci.Label}?`}

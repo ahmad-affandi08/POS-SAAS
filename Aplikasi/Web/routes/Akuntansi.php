@@ -69,6 +69,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     // F-15: kunci & buka kunci periode (YYYY-MM).
     Route::post('/akuntansi/tutup-buku/{periode}/kunci', [TutupBukuKontroler::class, 'Kunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.kunci');
     Route::post('/akuntansi/tutup-buku/{periode}/buka-kunci', [TutupBukuKontroler::class, 'BukaKunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.buka-kunci');
+    // F-15 tutup tahun (J-15.1).
+    Route::post('/akuntansi/tutup-buku/tahun/{tahun}/tutup', [TutupBukuKontroler::class, 'TutupTahun'])->where('tahun', '\d{4}')->name('kelola.akuntansi.tutup-buku.tutup-tahun');
 
     Route::post('/akuntansi/kas-bank/{transaksiKasBank}/pembalik', [TransaksiKasBankKontroler::class, 'Balikkan'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.pembalik');
 });

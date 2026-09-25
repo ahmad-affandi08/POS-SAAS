@@ -31,6 +31,8 @@ enum JenisSumberJurnal: string
     case PembayaranPiutang = 'PembayaranPiutang';
     // F-12 bagian 2: uang muka pre-order diterima (J-07.3) dan penyelesaian sisanya (dikembalikan/hangus).
     case PesananPenjualan = 'PesananPenjualan';
+    // F-15 tutup tahun (J-15.1): jurnal penutup pendapatan, HPP & beban ke Laba Ditahan; IdSumber = tahun.
+    case TutupTahun = 'TutupTahun';
 
     public function AmbilLabel(): string
     {
@@ -50,6 +52,7 @@ enum JenisSumberJurnal: string
             self::ReturPembelian => 'Retur pembelian',
             self::PembayaranPiutang => 'Pelunasan piutang',
             self::PesananPenjualan => 'Uang muka pre-order',
+            self::TutupTahun => 'Tutup tahun',
         };
     }
 
@@ -76,6 +79,7 @@ enum JenisSumberJurnal: string
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             self::PembayaranPiutang => '/kelola/piutang/pelunasan/'.$uuid,
             self::PesananPenjualan => '/kelola/pre-order/'.$uuid,
+            self::TutupTahun => null,
         };
     }
 }
