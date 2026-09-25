@@ -284,6 +284,125 @@ void main() {
     });
   });
 
+  group('DataAwal F-09', () {
+    test('server lama tanpa BatasHariRetur → 7 hari; nilai server dipetakan', () {
+      expect(DataAwal.DariJson(DataAwalF06()).batasHariRetur, 7);
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Pengaturan': {'BatasKasKeluar': '200000.00', 'ShiftBersama': false, 'BatasHariRetur': 14},
+      });
+      expect(data.batasHariRetur, 14);
+    });
+  });
+
+  group('penjualan/cari (F-09 retur)', () {
+    Map<String, Object?> Struk() => {
+      'Penjualan': {
+        'Uuid': '01K5PNJ0000000000000000007',
+        'Nomor': 'INV/SLB/260920/POS-002-0007',
+        'Status': 'DireturSebagian',
+        'LabelStatus': 'Diretur sebagian',
+        'TanggalBisnis': '2026-09-20',
+        'DibuatPada': '2026-09-20T05:12:00Z',
+        'NamaKasir': 'Sari Lestari',
+        'HargaTermasukPajak': true,
+        'Subtotal': '287500.00',
+        'TotalDiskon': '0.00',
+        'BiayaLayanan': '0.00',
+        'TotalPajak': '0.00',
+        'Pembulatan': '0.00',
+        'TotalAkhir': '287500.00',
+        'TotalDibayar': '300000.00',
+        'Kembalian': '12500.00',
+        'BatasHariRetur': 7,
+        'BatasReturSampai': '2026-09-27',
+        'BisaDiretur': true,
+        'AlasanTidakBisaDiretur': null,
+      },
+      'Baris': [
+        {
+          'Uuid': '01K5BRS0000000000000000001',
+          'UuidProduk': '01K5PRD0000000000000000001',
+          'NamaProduk': 'Kopi Susu Literan 1 L',
+          'SimbolSatuan': 'btl',
+          'Jumlah': '3.0000',
+          'HargaSatuan': '33333.33',
+          'HargaPilihan': '0.00',
+          'Pilihan': [
+            {'UuidPilihan': 'P1', 'Nama': 'Kurang manis', 'Harga': '0.00'},
+          ],
+          'Bruto': '100000.00',
+          'JumlahDiskon': '0.00',
+          'JumlahDiskonPesanan': '0.00',
+          'BiayaLayanan': '0.00',
+          'JumlahPajak': '9909.91',
+          'TotalBaris': '100000.00',
+          'SnapshotPajak': <Object?>[],
+          'JumlahSudahDiretur': '1.0000',
+          'JumlahBisaDiretur': '2.0000',
+          'NilaiBisaDiretur': '66666.67',
+        },
+      ],
+      'Pembayaran': [
+        {
+          'Uuid': 'B1',
+          'UuidMetodePembayaran': 'M1',
+          'JenisMetode': 'Tunai',
+          'NamaMetode': 'Tunai',
+          'Jumlah': '300000.00',
+          'Referensi': null,
+        },
+      ],
+      'Retur': [
+        {
+          'Uuid': 'R1',
+          'Nomor': 'RJ/SLB/260921/POS-002-0001',
+          'DibuatPada': '2026-09-21T02:00:00Z',
+          'TotalRefund': '33333.33',
+        },
+      ],
+    };
+
+    test('nomor dikodekan di query; respons dipetakan (uang & jumlah tetap teks desimal)', () async {
+      late http.Request dikirim;
+      final klien = BuatKlien((p) async {
+        dikirim = p;
+        return Json(Struk(), 200);
+      });
+
+      final hasil = await klien.CariPenjualan(' INV/SLB/260920/POS-002-0007 ');
+
+      expect(dikirim.method, 'GET');
+      expect(dikirim.url.path, '/api/pos/v1/penjualan/cari');
+      expect(dikirim.url.queryParameters, {'nomor': 'INV/SLB/260920/POS-002-0007'});
+      expect(dikirim.headers['Authorization'], startsWith('Bearer '));
+      expect(hasil.penjualan.labelStatus, 'Diretur sebagian');
+      expect((hasil.penjualan.bisaDiretur, hasil.penjualan.batasReturSampai), (true, '2026-09-27'));
+      final b = hasil.baris.single;
+      expect(
+        (b.jumlah, b.jumlahSudahDiretur, b.jumlahBisaDiretur, b.nilaiBisaDiretur, b.totalBaris),
+        ('3.0000', '1.0000', '2.0000', '66666.67', '100000.00'),
+      );
+      expect(b.pilihan, ['Kurang manis']);
+      expect(hasil.pembayaran.single.jenisMetode, 'Tunai');
+      expect(hasil.retur.single.totalRefund, '33333.33');
+    });
+
+    test('404 PenjualanTidakDitemukan → GalatApi; server tak terjangkau → GalatJaringan', () async {
+      final tidakAda = BuatKlien(
+        (_) async => Json({
+          'Galat': {'Kode': 'PenjualanTidakDitemukan', 'Pesan': 'Penjualan tidak ditemukan.'},
+        }, 404),
+      );
+      await expectLater(
+        tidakAda.CariPenjualan('INV/X'),
+        throwsA(isA<GalatApi>().having((g) => g.kode, 'kode', 'PenjualanTidakDitemukan')),
+      );
+      final offline = BuatKlien((_) async => throw http.ClientException('offline'));
+      await expectLater(offline.CariPenjualan('INV/X'), throwsA(isA<GalatJaringan>()));
+    });
+  });
+
   test('AmbilGambarQris mengembalikan bait gambar; 404 → GalatApi', () async {
     final klien = BuatKlien(
       (p) async => p.url.path.endsWith('/M1/gambar-qris')

@@ -1,9 +1,11 @@
 import 'package:drift/drift.dart';
 
 import 'TabelKatalog.dart';
+import 'TabelPascaPenjualan.dart';
 import 'TabelPenjualan.dart';
 
 export 'TabelKatalog.dart';
+export 'TabelPascaPenjualan.dart';
 export 'TabelPenjualan.dart';
 
 part 'BasisDataKasir.g.dart';
@@ -150,15 +152,22 @@ class PercobaanPin extends Table {
     PenjualanPembayaran,
     PesananTertahan,
     NomorUrutPenjualan,
+    // Skema 5 (F-09 fase 1): void & retur penjualan.
+    VoidPenjualan,
+    ReturPenjualan,
+    ReturPenjualanDetail,
+    ReturPenjualanPembayaran,
+    NomorUrutReturPenjualan,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
   BasisDataKasir(super.executor);
 
   /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
-  /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak).
+  /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
+  /// & retur penjualan).
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -211,6 +220,17 @@ class BasisDataKasir extends _$BasisDataKasir {
       // Dari skema 1, tabel katalog baru dibuat di atas sudah berkolom lengkap.
       if (dari >= 2 && dari < 4) {
         await m.addColumn(kelompokPajakDetail, kelompokPajakDetail.Kategori);
+      }
+      if (dari < 5) {
+        for (final tabel in <TableInfo<Table, Object?>>[
+          voidPenjualan,
+          returPenjualan,
+          returPenjualanDetail,
+          returPenjualanPembayaran,
+          nomorUrutReturPenjualan,
+        ]) {
+          await m.createTable(tabel);
+        }
       }
     },
     beforeOpen: (detail) async {

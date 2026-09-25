@@ -17,6 +17,8 @@ import '../LayarRiwayat.dart';
 import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
 import '../LembarMutasiKas.dart';
+import '../Penjualan/LembarRetur.dart';
+import '../Penjualan/LembarVoid.dart';
 import '../Shift/KartuLaporanShift.dart';
 import '../Shift/LembarTutupShift.dart';
 import 'BilahAtasRuangKerja.dart';
@@ -59,7 +61,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   /// Panel shift yang sedang terbuka (F-11: tutup shift atau laporan X); null = tertutup.
   _PanelShift? _panelShift;
 
-  bool get _adaPanel => _jenisKas != null || _panelShift != null;
+  /// Panel void/retur yang sedang terbuka (F-09); null = tertutup.
+  _PanelPenjualan? _panelPenjualan;
+
+  bool get _adaPanel => _jenisKas != null || _panelShift != null || _panelPenjualan != null;
 
   Timer? _pewaktuSinkron;
   Timer? _pewaktuDiam;
@@ -137,17 +142,26 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
 
   void _BukaPanelKas(String jenis) => setState(() {
     _panelShift = null;
+    _panelPenjualan = null;
     _jenisKas = jenis;
   });
 
   void _BukaPanelShift(_PanelShift panel) => setState(() {
     _jenisKas = null;
+    _panelPenjualan = null;
     _panelShift = panel;
+  });
+
+  void _BukaPanelPenjualan(_PanelPenjualan panel) => setState(() {
+    _jenisKas = null;
+    _panelShift = null;
+    _panelPenjualan = panel;
   });
 
   void _TutupPanel() => setState(() {
     _jenisKas = null;
     _panelShift = null;
+    _panelPenjualan = null;
   });
 
   /// Tombol kembali (Android) selalu kembali ke area kerja: tutup panel, lalu ke beranda Jual. Tidak keluar aplikasi.
@@ -167,7 +181,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       kasir: widget.kasir,
       aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && !_adaPanel,
     ),
-    TujuanRuangKerja.Riwayat => const LayarRiwayat(),
+    TujuanRuangKerja.Riwayat => LayarRiwayat(
+      saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
+      saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
+    ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
       shift: widget.shift,
@@ -233,13 +250,23 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final warna = TokenWarna.AmbilDari(context);
     final jenisKas = _jenisKas;
     final panelShift = _panelShift;
+    final panelPenjualan = _panelPenjualan;
     final area = IndexedStack(index: indeks, children: [for (final i in item) _BangunLayar(i.tujuan)]);
-    if (jenisKas == null && panelShift == null) {
+    if (jenisKas == null && panelShift == null && panelPenjualan == null) {
       return area;
     }
 
-    final (judul, formulir) = switch ((jenisKas, panelShift)) {
-      (final String jenis, _) => (
+    final (judul, formulir) = switch ((jenisKas, panelShift, panelPenjualan)) {
+      (_, _, _PanelPenjualan(uuidPenjualanVoid: final String uuid)) => (
+        LembarVoid.judul,
+        LembarVoid(key: ValueKey('Void-$uuid'), uuidPenjualan: uuid, kasir: widget.kasir, saatSelesai: _TutupPanel)
+            as Widget,
+      ),
+      (_, _, _PanelPenjualan()) => (
+        LembarRetur.judul,
+        LembarRetur(key: const ValueKey('Retur'), kasir: widget.kasir, saatSelesai: _TutupPanel),
+      ),
+      (final String jenis, _, _) => (
         LembarMutasiKas.AmbilJudul(jenis),
         LembarMutasiKas(
           key: ValueKey(jenis),
@@ -249,7 +276,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           saatTersimpan: _TutupPanel,
         ) as Widget,
       ),
-      (_, _PanelShift.Tutup) => (
+      (_, _PanelShift.Tutup, _) => (
         LembarTutupShift.judul,
         LembarTutupShift(key: const ValueKey('TutupShift'), shift: widget.shift, penutup: widget.kasir),
       ),
@@ -389,6 +416,13 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
 
 /// Panel shift di ruang kerja (F-11).
 enum _PanelShift { Tutup, LaporanX }
+
+/// Panel void (dengan Uuid penjualan) atau retur dari struk (tanpa Uuid) di ruang kerja (F-09).
+class _PanelPenjualan {
+  const _PanelPenjualan({this.uuidPenjualanVoid});
+
+  final String? uuidPenjualanVoid;
+}
 
 /// Laporan X: ringkasan shift berjalan dari data perangkat, bisa dibuka kapan saja dari layar Shift.
 class _IsiLaporanX extends ConsumerWidget {

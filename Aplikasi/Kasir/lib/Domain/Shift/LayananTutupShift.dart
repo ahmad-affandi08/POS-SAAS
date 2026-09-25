@@ -24,7 +24,8 @@ class MetodeLaporanShift {
 }
 
 /// Laporan shift X (berjalan) / Z (setelah tutup) dari data di perangkat (Rincian F-11). Angka penjualan tanpa
-/// penjualan yang di-void; void & retur dilaporkan terpisah (F-09 menyusul, sementara 0).
+/// penjualan yang di-void; void & retur dilaporkan terpisah (F-09 fase 1): void = penjualan shift ini berstatus `Void`,
+/// retur = dokumen retur yang refund-nya keluar dari laci shift ini (sama dengan server `RingkasanPenjualanShift`).
 class LaporanShift {
   const LaporanShift({
     required this.shift,
@@ -40,6 +41,8 @@ class LaporanShift {
     required this.refundTunai,
     required this.jumlahVoid,
     required this.nominalVoid,
+    required this.jumlahRetur,
+    required this.nominalRetur,
     required this.kasMasuk,
     required this.kasKeluar,
     required this.setoran,
@@ -58,6 +61,8 @@ class LaporanShift {
   final Uang refundTunai;
   final int jumlahVoid;
   final Uang nominalVoid;
+  final int jumlahRetur;
+  final Uang nominalRetur;
   final Uang kasMasuk;
   final Uang kasKeluar;
   final Uang setoran;
@@ -116,8 +121,8 @@ class LayananTutupShift {
 
   static const String jenisTunai = 'Tunai';
 
-  /// Status penjualan void lokal (F-09 menyusul): tidak dihitung sebagai penjualan, tetapi tunainya sempat masuk.
-  static const String statusVoid = 'Void';
+  /// Status penjualan void lokal (F-09): tidak dihitung sebagai penjualan, tetapi tunainya sempat masuk laci.
+  static const String statusVoid = StatusPenjualanLokal.divoid;
 
   static const int panjangAlasanMinimal = 5;
 
@@ -151,6 +156,7 @@ class LayananTutupShift {
     }
     final dokumen = await repositoriPenjualan.AmbilDokumenShift(uuidShift);
     final mutasi = await repositori.AmbilMutasi(uuidShift);
+    final voidRetur = await repositoriPenjualan.AmbilVoidReturShift(uuidShift);
 
     final dihitung = dokumen.penjualan.where((p) => p.Status != statusVoid).toList();
     final uuidDihitung = {for (final p in dihitung) p.Uuid};
@@ -196,10 +202,15 @@ class LayananTutupShift {
       totalAkhir: Jumlahkan(dihitung.map((p) => p.TotalAkhir)),
       perMetode: metodeUrut,
       tunaiMasukBersih: tunaiMasuk,
-      // Titik perluasan F-09: Σ refund tunai void & retur yang keluar dari laci shift ini.
-      refundTunai: Uang.Nol(),
+      // F-09: Σ refund tunai void (shift penjualan = shift void) & retur yang keluar dari laci shift ini.
+      refundTunai: Jumlahkan([
+        ...voidRetur.void_.map((v) => v.RefundTunai),
+        ...voidRetur.retur.map((r) => r.RefundTunai),
+      ]),
       jumlahVoid: void_.length,
       nominalVoid: Jumlahkan(void_.map((p) => p.TotalAkhir)),
+      jumlahRetur: voidRetur.retur.length,
+      nominalRetur: Jumlahkan(voidRetur.retur.map((r) => r.TotalRefund)),
       kasMasuk: JumlahMutasi(JenisMutasi.masuk),
       kasKeluar: JumlahMutasi(JenisMutasi.keluar),
       setoran: JumlahMutasi(JenisMutasi.setoran),

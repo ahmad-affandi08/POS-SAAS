@@ -11,6 +11,9 @@ abstract final class IzinKasir {
   static const String penjualanDiskonManual = 'penjualan.diskon.manual';
   static const String penjualanDiskonSetujui = 'penjualan.diskon.setujui';
   static const String shiftSelisihSetujui = 'shift.selisih.setujui';
+
+  /// F-09: melayani & menyetujui void/retur penjualan.
+  static const String penjualanVoid = 'penjualan.void';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

@@ -329,7 +329,7 @@ class MetodePembayaranPos {
 
 /// `GET /data-awal` (F-06, ditambah F-07b & F-11). Kunci yang absen (server lama) memakai nilai bawaan agar
 /// kompatibel mundur: batas diskon 10% / 30%, tanpa pembulatan tunai, profil pajak kosong, tanpa tarif & metode;
-/// tutup shift buta aktif dan toleransi selisih kas Rp 10.000.
+/// tutup shift buta aktif, toleransi selisih kas Rp 10.000, dan batas retur 7 hari.
 class DataAwal {
   const DataAwal({
     required this.batasKasKeluar,
@@ -351,6 +351,7 @@ class DataAwal {
     this.metodePembayaran = const [],
     this.tutupShiftButa = true,
     this.toleransiSelisihKas = toleransiSelisihKasBawaan,
+    this.batasHariRetur = batasHariReturBawaan,
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -358,6 +359,9 @@ class DataAwal {
   /// F-11: toleransi selisih kas bawaan Rp 10.000 (§19.2).
   static const String toleransiSelisihKasBawaan = '10000';
   static const String batasDiskonPenyetujuBawaan = '30';
+
+  /// F-09: batas hari retur bawaan (inklusif, 0–365).
+  static const int batasHariReturBawaan = 7;
 
   final String batasKasKeluar;
   final bool shiftBersama;
@@ -387,6 +391,9 @@ class DataAwal {
   /// F-11: |selisih kas| di atas nilai ini wajib alasan + PIN penyetuju ber-izin `shift.selisih.setujui`.
   final String toleransiSelisihKas;
 
+  /// F-09: retur paling lama sekian hari sejak tanggal bisnis penjualan (`Pengaturan.BatasHariRetur`).
+  final int batasHariRetur;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -410,6 +417,7 @@ class DataAwal {
       metodePembayaran: UraiJson.AmbilDaftarPeta(json['MetodePembayaran']).map(MetodePembayaranPos.DariJson).toList(),
       tutupShiftButa: UraiJson.AmbilBenar(pengaturan['TutupShiftButa'], true),
       toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
+      batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
     );
   }
 }

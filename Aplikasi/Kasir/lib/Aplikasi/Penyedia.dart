@@ -17,6 +17,8 @@ import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
+import '../Domain/Penjualan/LayananReturPenjualan.dart';
+import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
 import '../Domain/Pin/PemverifikasiPinOffline.dart';
@@ -119,6 +121,25 @@ final penyediaLayananPenjualan = Provider<LayananPenjualan>(
   ),
 );
 
+/// Void transaksi di shift yang sama (F-09 fase 1).
+final penyediaLayananVoid = Provider<LayananVoidPenjualan>(
+  (ref) => LayananVoidPenjualan(
+    repositori: ref.watch(penyediaRepositori),
+    repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+/// Retur penjualan dari struk (F-09 fase 1, cari struk online).
+final penyediaLayananRetur = Provider<LayananReturPenjualan>(
+  (ref) => LayananReturPenjualan(
+    klien: ref.watch(penyediaKlienPos),
+    repositori: ref.watch(penyediaRepositori),
+    repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
 /// Katalog lokal di memori (dibangun ulang setelah katalog diperbarui: `ref.invalidate(penyediaKatalog)`).
 final penyediaKatalog = FutureProvider<KatalogLokal>(
   (ref) async => KatalogLokal.Bangun(await ref.watch(penyediaRepositoriKatalog).Muat()),
@@ -144,11 +165,31 @@ final penyediaTunaiShift = StreamProvider.family<Uang, String>(
   (ref, uuidShift) => ref.watch(penyediaRepositoriPenjualan).PantauTunaiBersihShift(uuidShift),
 );
 
-/// Laporan shift X/Z (F-11) dari data perangkat; dihitung ulang saat penjualan atau kas shift berubah.
+/// Refund tunai (void & retur, F-09) yang keluar dari laci sebuah shift.
+final penyediaRefundTunaiShift = StreamProvider.family<Uang, String>(
+  (ref, uuidShift) => ref.watch(penyediaRepositoriPenjualan).PantauRefundTunaiShift(uuidShift),
+);
+
+/// Jumlah dokumen void & retur sebuah shift (pemicu hitung ulang laporan shift).
+final penyediaJumlahVoidReturShift = StreamProvider.family<int, String>(
+  (ref, uuidShift) => ref.watch(penyediaRepositoriPenjualan).PantauJumlahVoidReturShift(uuidShift),
+);
+
+/// Retur perangkat pada tanggal bisnis hari ini beserta status sinkron (F-09).
+final penyediaReturHariIni = StreamProvider<List<RiwayatRetur>>((ref) async* {
+  final konteks = await ref.watch(penyediaKonteksPenjualan.future);
+  yield* ref
+      .watch(penyediaRepositoriPenjualan)
+      .PantauReturTanggal(konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
+});
+
+/// Laporan shift X/Z (F-11) dari data perangkat; dihitung ulang saat penjualan, kas, void, atau retur shift berubah.
 final penyediaLaporanShift = FutureProvider.family<LaporanShift, String>((ref, uuidShift) async {
   ref.watch(penyediaShift(uuidShift));
   ref.watch(penyediaMutasiShift(uuidShift));
   ref.watch(penyediaTunaiShift(uuidShift));
+  ref.watch(penyediaRefundTunaiShift(uuidShift));
+  ref.watch(penyediaJumlahVoidReturShift(uuidShift));
   return ref.watch(penyediaLayananTutupShift).SusunLaporan(uuidShift);
 });
 

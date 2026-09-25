@@ -40,6 +40,22 @@ const List<String> kolomTutupShift = [
   'UuidPenyetujuSelisih',
 ];
 
+/// Tabel skema 5 (F-09 fase 1: void & retur penjualan).
+const List<String> tabelVoidRetur = [
+  'VoidPenjualan',
+  'ReturPenjualan',
+  'ReturPenjualanDetail',
+  'ReturPenjualanPembayaran',
+  'NomorUrutReturPenjualan',
+];
+
+/// Hapus tabel skema 5 dari basis data yang dibangun dengan skema terbaru, agar sama dengan perangkat skema ≤ 4.
+Future<void> HapusTabelVoidRetur(BasisDataKasir db) async {
+  for (final tabel in tabelVoidRetur.reversed) {
+    await db.customStatement('DROP TABLE "$tabel"');
+  }
+}
+
 /// PRD §18.3 no. 9 & Rincian F-07c: migrasi skema lokal 1 → 2 hanya menambah tabel; outbox yang belum terkirim, shift,
 /// dan mutasi kas tetap utuh.
 void main() {
@@ -76,8 +92,8 @@ void main() {
     expect(outbox.last.Status, 'PerluTindakan');
     expect((await db.select(db.shift).get()).single.KasAwal, '500000.00');
 
-    // Migrasi berantai sampai skema terbaru (4, kategori jenis pajak PRD v1.46).
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
+    // Migrasi berantai sampai skema terbaru (5, void & retur F-09).
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 5);
     final tabel = await db
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .map((r) => r.read<String>('name'))
@@ -104,6 +120,7 @@ void main() {
         'PenjualanPembayaran',
         'PesananTertahan',
         'NomorUrutPenjualan',
+        ...tabelVoidRetur,
       ]),
     );
     final indeks = await db
@@ -119,11 +136,12 @@ void main() {
     expect((await db.select(db.nomorUrutPenjualan).get()).single.Terakhir, 1);
   });
 
-  test('basis data baru langsung skema terbaru (4)', () async {
+  test('basis data baru langsung skema terbaru (5)', () async {
     final db = BasisDataKasir(NativeDatabase.memory());
     addTearDown(db.close);
     expect(await db.select(db.penjualan).get(), isEmpty);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
+    expect(await db.select(db.returPenjualan).get(), isEmpty);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 5);
   });
 
   test('F-11 migrasi 2 → 3 hanya menambah kolom tutup shift; outbox tertunda, shift, & penjualan tetap utuh', () async {
@@ -138,6 +156,7 @@ void main() {
       await lama.customStatement('ALTER TABLE "Shift" DROP COLUMN "$kolom"');
     }
     await lama.customStatement('ALTER TABLE "KelompokPajakDetail" DROP COLUMN "Kategori"');
+    await HapusTabelVoidRetur(lama);
     await lama.customStatement(
       "INSERT INTO Shift (Uuid, DibukaOleh, NamaKasir, DibukaPada, KasAwal, PecahanKasAwal, Bersama, Status) VALUES "
       "('SHIFT1', 'STAF1', 'Rina Wulandari', '2026-09-24T01:00:00.000Z', '500000.00', NULL, 0, 'Terbuka')",
@@ -157,7 +176,7 @@ void main() {
     expect(outbox.map((o) => o.Uuid), ['SHIFT1', 'JUAL1'], reason: 'Outbox belum terkirim tidak boleh hilang.');
     expect(outbox.first.Percobaan, 2);
     expect(outbox.last.Status, 'PerluTindakan');
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 5);
 
     final shift = (await db.select(db.shift).get()).single;
     expect(shift.KasAwal, '500000.00');
@@ -179,6 +198,7 @@ void main() {
     final lama = BasisDataKasir(NativeDatabase(berkas));
     await lama.customSelect('SELECT 1').get();
     await lama.customStatement('ALTER TABLE "KelompokPajakDetail" DROP COLUMN "Kategori"');
+    await HapusTabelVoidRetur(lama);
     await lama.customStatement(
       'INSERT INTO KelompokPajakDetail (UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan) VALUES '
       "('KP1', 'Ppn', 'Subtotal', 1)",
@@ -197,12 +217,72 @@ void main() {
       'JUAL1',
       reason: 'Outbox belum terkirim tidak boleh hilang.',
     );
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 5);
     final detail = (await db.select(db.kelompokPajakDetail).get()).single;
     expect(detail.KodeJenisPajak, 'Ppn');
     expect(detail.Kategori, isNull, reason: 'Baris lama tanpa kategori → fallback ke kode sampai katalog diperbarui.');
 
     await db.update(db.kelompokPajakDetail).write(const KelompokPajakDetailCompanion(Kategori: Value('Ppn')));
     expect((await db.select(db.kelompokPajakDetail).get()).single.Kategori, 'Ppn');
+  });
+
+  test('F-09 migrasi 4 → 5 hanya menambah tabel void & retur; outbox tertunda & penjualan lama utuh', () async {
+    final folder = Directory.systemTemp.createTempSync('migrasi_kasir_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final berkas = File('${folder.path}/kasir.sqlite');
+
+    final lama = BasisDataKasir(NativeDatabase(berkas));
+    await lama.customSelect('SELECT 1').get();
+    await HapusTabelVoidRetur(lama);
+    await lama.customStatement(
+      'INSERT INTO Penjualan (Uuid, Nomor, UuidShift, UuidPengguna, NamaKasir, Kanal, DibuatPada, TanggalBisnis, Status, '
+      'Subtotal, TotalDiskon, BiayaLayanan, TotalPajak, Pembulatan, TotalAkhir, TotalDibayar, Kembalian) VALUES '
+      "('JUAL1', 'INV/SLB/260924/POS-001-0001', 'SHIFT1', 'STAF1', 'Rina Wulandari', 'BawaPulang', "
+      "'2026-09-24T01:10:00.000Z', '2026-09-24', 'Lunas', '61000.00', '0.00', '0.00', '6100.00', '0.00', '67100.00', "
+      "'100000.00', '32900.00')",
+    );
+    await lama.customStatement(
+      'INSERT INTO Outbox (Uuid, Jenis, Data, Status, Percobaan, DibuatPada, BerikutnyaPada) VALUES '
+      "('JUAL1', 'Penjualan.Buat', '{\"Nomor\":\"INV/SLB/260924/POS-001-0001\"}', 'Tertunda', 4, "
+      "'2026-09-24T01:10:00.000Z', '2026-09-24T01:10:00.000Z'),"
+      "('TUTUP1', 'Shift.Tutup', '{}', 'PerluTindakan', 0, '2026-09-24T09:00:00.000Z', '2026-09-24T09:00:00.000Z')",
+    );
+    await lama.customStatement('PRAGMA user_version = 4');
+    await lama.close();
+
+    final db = BasisDataKasir(NativeDatabase(berkas));
+    addTearDown(db.close);
+    final outbox = await (db.select(db.outbox)..orderBy([(o) => OrderingTerm.asc(o.Id)])).get();
+    expect(outbox.map((o) => o.Uuid), ['JUAL1', 'TUTUP1'], reason: 'Outbox belum terkirim tidak boleh hilang.');
+    expect(outbox.first.Percobaan, 4);
+    expect(outbox.first.Data, '{"Nomor":"INV/SLB/260924/POS-001-0001"}');
+    expect(outbox.last.Status, 'PerluTindakan');
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 5);
+    expect((await db.select(db.penjualan).get()).single.TotalAkhir, '67100.00');
+
+    // Tabel baru langsung bisa ditulis.
+    await db
+        .into(db.nomorUrutReturPenjualan)
+        .insert(NomorUrutReturPenjualanCompanion.insert(KodePerangkat: 'POS-001', Tanggal: '260924', Terakhir: 1));
+    await db
+        .into(db.voidPenjualan)
+        .insert(
+          VoidPenjualanCompanion.insert(
+            Uuid: 'VOID1',
+            UuidPenjualan: 'JUAL1',
+            UuidShift: 'SHIFT1',
+            UuidPengguna: 'STAF1',
+            NamaPengguna: 'Rina Wulandari',
+            UuidPenyetuju: 'STAF2',
+            NamaPenyetuju: 'Budi Santoso',
+            Alasan: 'Salah input pesanan',
+            DivoidPada: DateTime.utc(2026, 9, 24, 1, 15),
+            Nominal: '67100.00',
+            RefundTunai: '67100.00',
+            RefundNonTunai: '0.00',
+          ),
+        );
+    expect((await db.select(db.voidPenjualan).get()).single.RefundTunai, '67100.00');
+    expect((await db.select(db.nomorUrutReturPenjualan).get()).single.Terakhir, 1);
   });
 }

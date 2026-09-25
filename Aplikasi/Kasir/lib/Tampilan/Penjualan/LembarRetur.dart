@@ -1,0 +1,620 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inti/Inti.dart';
+import 'package:klien_api/KlienApi.dart';
+import 'package:sistem_desain/SistemDesain.dart';
+
+import '../../Aplikasi/Penyedia.dart';
+import '../../Data/BasisData/BasisDataKasir.dart';
+import '../../Domain/GalatKasir.dart';
+import '../../Domain/Penjualan/KonteksPenjualan.dart';
+import '../../Domain/Penjualan/LayananReturPenjualan.dart';
+import '../../Domain/Penjualan/PenghitungNilaiRetur.dart';
+import '../../Domain/Sesi/StafLokal.dart';
+import '../Komponen/FormatAngka.dart';
+import '../Komponen/MasukanUang.dart';
+import '../LembarMutasiKas.dart';
+
+/// Cara refund retur fase 1: tunai dari laci shift aktif, transfer manual, atau keduanya.
+enum CaraRefund { Tunai, Transfer, Campuran }
+
+/// Formulir retur dari struk (Rincian F-09 fase 1) di dalam `PanelTugas` ruang kerja: masukkan/pindai nomor struk →
+/// cari online → pilih barang, jumlah, & kondisi → alasan & cara refund → PIN penyetuju ber-izin `penjualan.void` →
+/// simpan lokal + outbox. Pemindai barcode (keyboard wedge) mengetik nomor lalu Enter langsung mencari.
+class LembarRetur extends ConsumerStatefulWidget {
+  const LembarRetur({super.key, required this.kasir, required this.saatSelesai});
+
+  static const String judul = 'Retur dari struk';
+
+  final StafLokal kasir;
+  final VoidCallback saatSelesai;
+
+  @override
+  ConsumerState<LembarRetur> createState() => _LembarReturState();
+}
+
+class _LembarReturState extends ConsumerState<LembarRetur> {
+  final _nomor = TextEditingController();
+  final _alasan = TextEditingController();
+  final _tunai = TextEditingController();
+  final Map<String, TextEditingController> _jumlah = {};
+  final Map<String, String> _kondisi = {};
+  HasilCariPenjualan? _hasil;
+  CaraRefund _cara = CaraRefund.Tunai;
+  String? _uuidMetodeTransfer;
+  bool _mencari = false;
+  bool _sibuk = false;
+  String? _galat;
+  ReturTersimpan? _selesai;
+  int? _batasHari;
+
+  LayananReturPenjualan get _layanan => ref.read(penyediaLayananRetur);
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_MuatBatas());
+  }
+
+  Future<void> _MuatBatas() async {
+    final batas = await _layanan.AmbilBatasHariRetur();
+    if (mounted) {
+      setState(() => _batasHari = batas);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nomor.dispose();
+    _alasan.dispose();
+    _tunai.dispose();
+    for (final p in _jumlah.values) {
+      p.dispose();
+    }
+    super.dispose();
+  }
+
+  TextEditingController _PengendaliJumlah(String uuid) => _jumlah.putIfAbsent(uuid, TextEditingController.new);
+
+  Future<void> _Cari() async {
+    setState(() {
+      _mencari = true;
+      _galat = null;
+      _hasil = null;
+    });
+    try {
+      final hasil = await _layanan.Cari(_nomor.text);
+      if (mounted) {
+        setState(() {
+          for (final p in _jumlah.values) {
+            p.clear();
+          }
+          _kondisi.clear();
+          _hasil = hasil;
+        });
+      }
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _galat = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _mencari = false);
+      }
+    }
+  }
+
+  /// Jumlah retur yang diketik untuk [baris]; null bila tidak valid (bukan angka / lebih dari 4 desimal).
+  Kuantitas? _AmbilJumlah(BarisPenjualanCariPos baris) {
+    final teks = _jumlah[baris.uuid]?.text ?? '';
+    if (teks.trim().isEmpty) {
+      return Kuantitas.Nol();
+    }
+    final nilai = FormatAngka.UraiDesimal(teks);
+    if (nilai == null || nilai.scale > Kuantitas.skala) {
+      return null;
+    }
+    return Kuantitas.DariDesimal(nilai);
+  }
+
+  /// Galat isian satu baris untuk ditampilkan di bawah kolom jumlah.
+  String? _GalatBaris(BarisPenjualanCariPos baris, bool bolehDesimal) {
+    final jumlah = _AmbilJumlah(baris);
+    if (jumlah == null || jumlah.BernilaiNegatif()) {
+      return 'Isi angka yang benar.';
+    }
+    final d = jumlah.KeDesimal();
+    if (!bolehDesimal && d != d.truncate()) {
+      return 'Harus bilangan bulat.';
+    }
+    if (jumlah.Bandingkan(Kuantitas.Dari(baris.jumlahBisaDiretur)) > 0) {
+      return 'Maksimal ${FormatAngka.FormatJumlah(Kuantitas.Dari(baris.jumlahBisaDiretur))}.';
+    }
+    return null;
+  }
+
+  List<PilihanReturBaris> _AmbilPilihan() {
+    final hasil = _hasil;
+    if (hasil == null) {
+      return const [];
+    }
+    return [
+      for (final b in hasil.baris)
+        if (_AmbilJumlah(b) case final jumlah? when !jumlah.BernilaiNol())
+          PilihanReturBaris(baris: b, jumlah: jumlah, kondisi: _kondisi[b.uuid] ?? KondisiRetur.layakJual),
+    ];
+  }
+
+  /// Total refund dari pilihan yang valid (null bila ada isian yang belum valid).
+  Uang? _HitungTotal() {
+    final hasil = _hasil;
+    if (hasil == null) {
+      return null;
+    }
+    final katalog = ref.read(penyediaKatalog).value;
+    for (final b in hasil.baris) {
+      if (_GalatBaris(b, LayananReturPenjualan.CekBolehDesimal(b, katalog)) != null) {
+        return null;
+      }
+    }
+    return LayananReturPenjualan.HitungTotal(_AmbilPilihan());
+  }
+
+  Uang _HitungTunai(Uang total) => switch (_cara) {
+    CaraRefund.Tunai => total,
+    CaraRefund.Transfer => Uang.Nol(),
+    CaraRefund.Campuran => MasukanUang.AmbilNilai(_tunai) ?? Uang.Nol(),
+  };
+
+  Future<void> _Simpan(KonteksPenjualan k, List<BarisMetodePembayaran> transfer) async {
+    final hasil = _hasil;
+    if (hasil == null) {
+      return;
+    }
+    final katalog = ref.read(penyediaKatalog).value;
+    final total = _HitungTotal();
+    if (total == null) {
+      setState(() => _galat = 'Periksa lagi jumlah retur yang ditandai.');
+      return;
+    }
+    List<PilihanReturBaris> pilihan;
+    try {
+      pilihan = LayananReturPenjualan.ValidasiPilihan(hasil, _AmbilPilihan(), katalog: katalog);
+    } on GalatKasir catch (galat) {
+      setState(() => _galat = galat.pesan);
+      return;
+    }
+    if (_alasan.text.trim().runes.length < LayananReturPenjualan.panjangAlasanMinimal) {
+      setState(() => _galat = 'Tulis alasan retur minimal 5 huruf.');
+      return;
+    }
+    final tunai = _HitungTunai(total);
+    if (tunai.Bandingkan(total) > 0) {
+      setState(() => _galat = 'Refund tunai tidak boleh lebih dari ${total.FormatRupiah()}.');
+      return;
+    }
+    final metodeTransfer = transfer.where((m) => m.Uuid == _uuidMetodeTransfer).firstOrNull ?? transfer.firstOrNull;
+
+    StafLokal? penyetuju;
+    if (LayananReturPenjualan.AmbilPenyetujuEfektif(widget.kasir, null) == null) {
+      penyetuju = await showDialog<StafLokal>(
+        context: context,
+        builder: (_) => DialogPinSupervisor(
+          izin: IzinKasir.penjualanVoid,
+          pesan: 'Retur ${total.FormatRupiah()} wajib disetujui. Pilih supervisor yang menyetujui.',
+        ),
+      );
+      if (penyetuju == null) {
+        return;
+      }
+    }
+
+    setState(() {
+      _sibuk = true;
+      _galat = null;
+    });
+    try {
+      final tersimpan = await _layanan.Simpan(
+        hasil: hasil,
+        pilihan: pilihan,
+        alasan: _alasan.text,
+        refundTunai: tunai,
+        metodeTransfer: metodeTransfer,
+        kasir: widget.kasir,
+        k: k,
+        penyetuju: penyetuju,
+        katalog: katalog,
+      );
+      if (mounted) {
+        setState(() => _selesai = tersimpan);
+      }
+      unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _galat = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _sibuk = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final selesai = _selesai;
+    final hasil = _hasil;
+
+    Widget Bingkai(List<Widget> anak) => Padding(
+      padding: const EdgeInsets.all(TokenJarak.jarak24),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: anak),
+    );
+    final galat = _galat == null
+        ? const SizedBox.shrink()
+        : Padding(
+            padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak8),
+            child: Text(_galat!, style: teks.bodyMedium?.copyWith(color: warna.bahaya)),
+          );
+
+    if (selesai != null) {
+      return Bingkai([
+        Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: warna.sukses, size: TokenJarak.ikonBesar),
+            const SizedBox(width: TokenJarak.jarak8),
+            Expanded(child: Text('Retur tersimpan.', style: teks.titleMedium)),
+          ],
+        ),
+        const SizedBox(height: TokenJarak.jarak8),
+        TeksKode(selesai.nomor, gaya: teks.titleSmall),
+        const SizedBox(height: TokenJarak.jarak12),
+        KotakPanel(
+          anak: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _BarisNilai(label: 'Total refund', nilai: selesai.totalRefund),
+              if (!selesai.refundTunai.BernilaiNol())
+                _BarisNilai(label: 'Kembalikan tunai dari laci', nilai: selesai.refundTunai, tebal: true),
+              if (!selesai.refundTransfer.BernilaiNol())
+                _BarisNilai(
+                  label: 'Transfer manual ke pelanggan (${selesai.namaMetodeTransfer ?? 'transfer'})',
+                  nilai: selesai.refundTransfer,
+                  tebal: true,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: TokenJarak.jarak8),
+        Text(
+          'Stok barang kembali & jurnal dicatat server setelah data terkirim.',
+          style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+        const SizedBox(height: TokenJarak.jarak16),
+        SizedBox(
+          height: 56,
+          child: FilledButton(onPressed: widget.saatSelesai, child: const Text('Selesai')),
+        ),
+      ]);
+    }
+
+    final cari = [
+      TextField(
+        controller: _nomor,
+        autofocus: hasil == null,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => unawaited(_Cari()),
+        decoration: const InputDecoration(
+          labelText: 'Nomor struk',
+          hintText: 'Pindai atau ketik, misal INV/SLB/260924/POS-001-0001',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: TokenJarak.jarak8),
+      SizedBox(
+        height: TokenJarak.targetSentuh,
+        child: OutlinedButton(
+          onPressed: _mencari ? null : () => unawaited(_Cari()),
+          child: Text(_mencari ? 'Mencari struk…' : 'Cari struk'),
+        ),
+      ),
+      if (_mencari) const LinearProgressIndicator(),
+      if (hasil == null) ...[
+        galat,
+        const SizedBox(height: TokenJarak.jarak8),
+        Text(
+          'Retur butuh internet untuk mencari struk. Batas retur ${_batasHari ?? DataAwal.batasHariReturBawaan} hari '
+          'sejak tanggal transaksi. Transaksi di shift ini yang belum ditutup cukup di-void dari Riwayat.',
+          style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+      ],
+    ];
+    if (hasil == null) {
+      return Bingkai(cari);
+    }
+
+    final p = hasil.penjualan;
+    final tidakBisa = LayananReturPenjualan.AmbilPesanTidakBisaDiretur(p);
+    final katalog = ref.watch(penyediaKatalog).value;
+    final k = ref.watch(penyediaKonteksPenjualan).value;
+    final metode = k?.metodePembayaran ?? const <BarisMetodePembayaran>[];
+    final transfer = metode.where((m) => m.Jenis == JenisMetodeBayar.transfer).toList();
+    final total = _HitungTotal();
+    final tunai = total == null ? null : _HitungTunai(total);
+
+    return Bingkai([
+      ...cari,
+      const SizedBox(height: TokenJarak.jarak12),
+      KotakPanel(
+        anak: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TeksKode(p.nomor, gaya: teks.titleSmall),
+            const SizedBox(height: TokenJarak.jarak4),
+            Text('${_FormatTanggal(p.tanggalBisnis)} · ${p.namaKasir} · ${p.labelStatus}', style: teks.bodySmall),
+            _BarisNilai(label: 'Total transaksi', nilai: Uang.Dari(p.totalAkhir)),
+            for (final r in hasil.retur)
+              Text(
+                'Sudah diretur: ${r.nomor} · ${Uang.Dari(r.totalRefund).FormatRupiah()}',
+                style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+              ),
+          ],
+        ),
+      ),
+      if (tidakBisa != null) ...[
+        const SizedBox(height: TokenJarak.jarak12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.block, color: warna.bahaya, size: TokenJarak.ikonSedang),
+            const SizedBox(width: TokenJarak.jarak8),
+            Expanded(
+              child: Text(tidakBisa, style: teks.bodyMedium?.copyWith(color: warna.bahaya)),
+            ),
+          ],
+        ),
+      ] else ...[
+        const SizedBox(height: TokenJarak.jarak16),
+        Text('Barang yang diretur', style: teks.titleSmall),
+        for (final b in hasil.baris)
+          _BarisRetur(
+            baris: b,
+            pengendali: _PengendaliJumlah(b.uuid),
+            kondisi: _kondisi[b.uuid] ?? KondisiRetur.layakJual,
+            bolehDesimal: LayananReturPenjualan.CekBolehDesimal(b, katalog),
+            galat: _GalatBaris(b, LayananReturPenjualan.CekBolehDesimal(b, katalog)),
+            nilai: switch (_AmbilJumlah(b)) {
+              final j? when !j.BernilaiNol() && _GalatBaris(b, true) == null => PenghitungNilaiRetur.Hitung(b, j),
+              _ => null,
+            },
+            saatBerubah: () => setState(() => _galat = null),
+            saatKondisi: (kondisi) => setState(() => _kondisi[b.uuid] = kondisi),
+          ),
+        const SizedBox(height: TokenJarak.jarak12),
+        TextField(
+          controller: _alasan,
+          maxLength: 255,
+          decoration: const InputDecoration(
+            labelText: 'Alasan retur',
+            hintText: 'Contoh: kemasan bocor',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        Text('Cara refund', style: teks.titleSmall),
+        const SizedBox(height: TokenJarak.jarak8),
+        SegmentedButton<CaraRefund>(
+          showSelectedIcon: false,
+          segments: [
+            const ButtonSegment(value: CaraRefund.Tunai, label: Text('Tunai')),
+            ButtonSegment(value: CaraRefund.Transfer, label: const Text('Transfer'), enabled: transfer.isNotEmpty),
+            ButtonSegment(value: CaraRefund.Campuran, label: const Text('Keduanya'), enabled: transfer.isNotEmpty),
+          ],
+          selected: {_cara},
+          onSelectionChanged: (pilih) => setState(() => _cara = pilih.first),
+        ),
+        if (transfer.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak4),
+            child: Text(
+              'Metode transfer belum aktif di outlet ini, jadi refund hanya tunai.',
+              style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+            ),
+          ),
+        if (_cara != CaraRefund.Tunai && transfer.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+            child: DropdownButtonFormField<String>(
+              initialValue: _uuidMetodeTransfer ?? transfer.first.Uuid,
+              decoration: const InputDecoration(labelText: 'Rekening transfer', border: OutlineInputBorder()),
+              items: [for (final m in transfer) DropdownMenuItem(value: m.Uuid, child: Text(m.Nama))],
+              onChanged: (uuid) => setState(() => _uuidMetodeTransfer = uuid),
+            ),
+          ),
+        if (_cara == CaraRefund.Campuran)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+            child: MasukanUang(
+              pengendali: _tunai,
+              label: 'Bagian tunai dari laci',
+              saatBerubah: (_) => setState(() {}),
+            ),
+          ),
+        const SizedBox(height: TokenJarak.jarak12),
+        KotakPanel(
+          anak: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: total == null
+                ? [Text('Periksa jumlah retur yang ditandai merah.', style: TextStyle(color: warna.bahaya))]
+                : [
+                    _BarisNilai(label: 'Total refund', nilai: total, tebal: true),
+                    if (!tunai!.BernilaiNol()) _BarisNilai(label: 'Tunai dari laci', nilai: tunai),
+                    if (!total.Kurangi(tunai).BernilaiNol())
+                      _BarisNilai(label: 'Transfer manual', nilai: total.Kurangi(tunai)),
+                  ],
+          ),
+        ),
+        galat,
+        const SizedBox(height: TokenJarak.jarak8),
+        SizedBox(
+          height: 56,
+          child: FilledButton(
+            onPressed: _sibuk || k == null ? null : () => unawaited(_Simpan(k, transfer)),
+            child: Text(_sibuk ? 'Menyimpan…' : 'Simpan retur'),
+          ),
+        ),
+        const SizedBox(height: TokenJarak.jarak8),
+        Text(
+          LayananReturPenjualan.AmbilPenyetujuEfektif(widget.kasir, null) == null
+              ? 'Retur wajib disetujui supervisor dengan PIN.'
+              : 'Anda berwenang menyetujui retur ini.',
+          style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+      ],
+    ]);
+  }
+
+  static String _FormatTanggal(String tanggal) => tanggal.length == 10
+      ? '${tanggal.substring(8, 10)}/${tanggal.substring(5, 7)}/${tanggal.substring(0, 4)}'
+      : tanggal;
+}
+
+/// Satu baris penjualan asal: jumlah retur (maks. sisa) dan kondisi barang.
+class _BarisRetur extends StatelessWidget {
+  const _BarisRetur({
+    required this.baris,
+    required this.pengendali,
+    required this.kondisi,
+    required this.bolehDesimal,
+    required this.galat,
+    required this.nilai,
+    required this.saatBerubah,
+    required this.saatKondisi,
+  });
+
+  final BarisPenjualanCariPos baris;
+  final TextEditingController pengendali;
+  final String kondisi;
+  final bool bolehDesimal;
+  final String? galat;
+  final Uang? nilai;
+  final VoidCallback saatBerubah;
+  final ValueChanged<String> saatKondisi;
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final sisa = Kuantitas.Dari(baris.jumlahBisaDiretur);
+    final satuan = baris.simbolSatuan.isEmpty ? '' : ' ${baris.simbolSatuan}';
+    final habis = sisa.BernilaiNol();
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Text(baris.namaProduk, style: teks.bodyLarge)),
+              TeksUang(Uang.Dari(baris.totalBaris), gaya: teks.bodyMedium),
+            ],
+          ),
+          if (baris.pilihan.isNotEmpty) Text(baris.pilihan.join(', '), style: teks.bodySmall),
+          Text(
+            'Terjual ${FormatAngka.FormatJumlah(Kuantitas.Dari(baris.jumlah))}$satuan · '
+            '${habis ? 'sudah diretur semua' : 'bisa diretur ${FormatAngka.FormatJumlah(sisa)}$satuan'}',
+            style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+          ),
+          if (!habis) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: ValueKey('JumlahRetur-${baris.uuid}'),
+                    controller: pengendali,
+                    keyboardType: TextInputType.numberWithOptions(decimal: bolehDesimal),
+                    textAlign: TextAlign.right,
+                    onChanged: (_) => saatBerubah(),
+                    style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+                    decoration: InputDecoration(
+                      labelText: 'Jumlah retur',
+                      hintText: '0',
+                      errorText: galat,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: TokenJarak.jarak8),
+                SizedBox(
+                  height: TokenJarak.targetSentuh + 8,
+                  child: TextButton(
+                    onPressed: () {
+                      pengendali.text = FormatAngka.FormatJumlah(sisa);
+                      saatBerubah();
+                    },
+                    child: const Text('Semua'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: TokenJarak.jarak8),
+            SegmentedButton<String>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: KondisiRetur.layakJual, label: Text('Layak jual')),
+                ButtonSegment(value: KondisiRetur.rusak, label: Text('Rusak')),
+              ],
+              selected: {kondisi},
+              onSelectionChanged: (pilih) => saatKondisi(pilih.first),
+            ),
+            if (nilai != null)
+              Padding(
+                padding: const EdgeInsets.only(top: TokenJarak.jarak4),
+                child: Row(
+                  children: [
+                    Expanded(child: Text('Nilai retur', style: teks.bodySmall)),
+                    TeksUang(nilai!, gaya: teks.bodySmall),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BarisNilai extends StatelessWidget {
+  const _BarisNilai({required this.label, required this.nilai, this.tebal = false});
+
+  final String label;
+  final Uang nilai;
+  final bool tebal;
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final gaya = tebal ? teks.titleSmall : teks.bodyMedium;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(label, style: gaya)),
+          const SizedBox(width: TokenJarak.jarak12),
+          TeksUang(nilai, gaya: gaya),
+        ],
+      ),
+    );
+  }
+}

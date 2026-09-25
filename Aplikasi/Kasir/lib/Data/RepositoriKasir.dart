@@ -43,6 +43,9 @@ abstract final class KunciPengaturan {
   static const String tutupShiftButa = 'TutupShiftButa';
   static const String toleransiSelisihKas = 'ToleransiSelisihKas';
 
+  /// F-09: batas hari retur sejak tanggal bisnis penjualan (bilangan bulat).
+  static const String batasHariRetur = 'BatasHariRetur';
+
   /// Uuid shift yang baru ditutup dan laporan Z-nya belum ditutup kasir (bertahan bila aplikasi dimulai ulang).
   static const String laporanZTertunda = 'LaporanZTertunda';
 
@@ -152,6 +155,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.profilPajak, jsonEncode(data.profilPajak.KeJson()));
     await SimpanPengaturan(KunciPengaturan.tutupShiftButa, data.tutupShiftButa ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.toleransiSelisihKas, data.toleransiSelisihKas);
+    await SimpanPengaturan(KunciPengaturan.batasHariRetur, '${data.batasHariRetur}');
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);

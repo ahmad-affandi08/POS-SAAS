@@ -206,7 +206,15 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
         .where((s) => widget.hanyaPemilik ? s.pemilik : s.PunyaIzin(widget.izin))
         .toList();
     final warna = TokenWarna.AmbilDari(context);
+    // Tepi dialog diperkecil agar papan PIN (3 × 96dp) muat di layar 360dp tanpa terpotong.
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak24),
+      contentPadding: const EdgeInsets.fromLTRB(
+        TokenJarak.jarak16,
+        TokenJarak.jarak16,
+        TokenJarak.jarak16,
+        TokenJarak.jarak24,
+      ),
       title: const Text('Persetujuan supervisor'),
       content: SingleChildScrollView(
         child: _dipilih == null

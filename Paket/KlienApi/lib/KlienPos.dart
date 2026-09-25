@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
 import 'Model/ModelPos.dart';
+import 'Model/ModelRetur.dart';
 
 /// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`) dan `X-Versi-Aplikasi`.
 /// Galat server → `GalatApi`; server tak terjangkau, waktu habis, atau 5xx → `GalatJaringan` (aman dicoba lagi).
@@ -64,6 +65,12 @@ class KlienPos {
     }
     return respons.bodyBytes;
   }
+
+  /// Struk asal untuk retur (F-09 fase 1): penjualan outlet perangkat dengan [nomor] persis, beserta jumlah & nilai yang
+  /// masih bisa diretur. Tidak ada → `GalatApi` ber-kode `PenjualanTidakDitemukan` (404); offline → `GalatJaringan`.
+  Future<HasilCariPenjualan> CariPenjualan(String nomor) async => HasilCariPenjualan.DariJson(
+    await _Kirim('GET', 'penjualan/cari?nomor=${Uri.encodeQueryComponent(nomor.trim())}', null),
+  );
 
   /// Kirim batch outbox (maks. 50) dan kembalikan hasil per item dalam urutan yang sama.
   Future<List<HasilItemSinkron>> KirimSinkron(List<ItemOutbox> item) async {

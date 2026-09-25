@@ -10882,6 +10882,2408 @@ class NomorUrutPenjualanCompanion extends UpdateCompanion<BarisNomorUrutPenjuala
   }
 }
 
+class $VoidPenjualanTable extends VoidPenjualan with TableInfo<$VoidPenjualanTable, BarisVoidPenjualan> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VoidPenjualanTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenjualanMeta = const VerificationMeta('UuidPenjualan');
+  @override
+  late final GeneratedColumn<String> UuidPenjualan = GeneratedColumn<String>(
+    'UuidPenjualan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _UuidShiftMeta = const VerificationMeta('UuidShift');
+  @override
+  late final GeneratedColumn<String> UuidShift = GeneratedColumn<String>(
+    'UuidShift',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenggunaMeta = const VerificationMeta('UuidPengguna');
+  @override
+  late final GeneratedColumn<String> UuidPengguna = GeneratedColumn<String>(
+    'UuidPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaPenggunaMeta = const VerificationMeta('NamaPengguna');
+  @override
+  late final GeneratedColumn<String> NamaPengguna = GeneratedColumn<String>(
+    'NamaPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenyetujuMeta = const VerificationMeta('UuidPenyetuju');
+  @override
+  late final GeneratedColumn<String> UuidPenyetuju = GeneratedColumn<String>(
+    'UuidPenyetuju',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaPenyetujuMeta = const VerificationMeta('NamaPenyetuju');
+  @override
+  late final GeneratedColumn<String> NamaPenyetuju = GeneratedColumn<String>(
+    'NamaPenyetuju',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _AlasanMeta = const VerificationMeta('Alasan');
+  @override
+  late final GeneratedColumn<String> Alasan = GeneratedColumn<String>(
+    'Alasan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _DivoidPadaMeta = const VerificationMeta('DivoidPada');
+  @override
+  late final GeneratedColumn<DateTime> DivoidPada = GeneratedColumn<DateTime>(
+    'DivoidPada',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NominalMeta = const VerificationMeta('Nominal');
+  @override
+  late final GeneratedColumn<String> Nominal = GeneratedColumn<String>(
+    'Nominal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _RefundTunaiMeta = const VerificationMeta('RefundTunai');
+  @override
+  late final GeneratedColumn<String> RefundTunai = GeneratedColumn<String>(
+    'RefundTunai',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _RefundNonTunaiMeta = const VerificationMeta('RefundNonTunai');
+  @override
+  late final GeneratedColumn<String> RefundNonTunai = GeneratedColumn<String>(
+    'RefundNonTunai',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    UuidPenjualan,
+    UuidShift,
+    UuidPengguna,
+    NamaPengguna,
+    UuidPenyetuju,
+    NamaPenyetuju,
+    Alasan,
+    DivoidPada,
+    Nominal,
+    RefundTunai,
+    RefundNonTunai,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'VoidPenjualan';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisVoidPenjualan> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidPenjualan')) {
+      context.handle(
+        _UuidPenjualanMeta,
+        UuidPenjualan.isAcceptableOrUnknown(data['UuidPenjualan']!, _UuidPenjualanMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPenjualanMeta);
+    }
+    if (data.containsKey('UuidShift')) {
+      context.handle(_UuidShiftMeta, UuidShift.isAcceptableOrUnknown(data['UuidShift']!, _UuidShiftMeta));
+    } else if (isInserting) {
+      context.missing(_UuidShiftMeta);
+    }
+    if (data.containsKey('UuidPengguna')) {
+      context.handle(_UuidPenggunaMeta, UuidPengguna.isAcceptableOrUnknown(data['UuidPengguna']!, _UuidPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_UuidPenggunaMeta);
+    }
+    if (data.containsKey('NamaPengguna')) {
+      context.handle(_NamaPenggunaMeta, NamaPengguna.isAcceptableOrUnknown(data['NamaPengguna']!, _NamaPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_NamaPenggunaMeta);
+    }
+    if (data.containsKey('UuidPenyetuju')) {
+      context.handle(
+        _UuidPenyetujuMeta,
+        UuidPenyetuju.isAcceptableOrUnknown(data['UuidPenyetuju']!, _UuidPenyetujuMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPenyetujuMeta);
+    }
+    if (data.containsKey('NamaPenyetuju')) {
+      context.handle(
+        _NamaPenyetujuMeta,
+        NamaPenyetuju.isAcceptableOrUnknown(data['NamaPenyetuju']!, _NamaPenyetujuMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_NamaPenyetujuMeta);
+    }
+    if (data.containsKey('Alasan')) {
+      context.handle(_AlasanMeta, Alasan.isAcceptableOrUnknown(data['Alasan']!, _AlasanMeta));
+    } else if (isInserting) {
+      context.missing(_AlasanMeta);
+    }
+    if (data.containsKey('DivoidPada')) {
+      context.handle(_DivoidPadaMeta, DivoidPada.isAcceptableOrUnknown(data['DivoidPada']!, _DivoidPadaMeta));
+    } else if (isInserting) {
+      context.missing(_DivoidPadaMeta);
+    }
+    if (data.containsKey('Nominal')) {
+      context.handle(_NominalMeta, Nominal.isAcceptableOrUnknown(data['Nominal']!, _NominalMeta));
+    } else if (isInserting) {
+      context.missing(_NominalMeta);
+    }
+    if (data.containsKey('RefundTunai')) {
+      context.handle(_RefundTunaiMeta, RefundTunai.isAcceptableOrUnknown(data['RefundTunai']!, _RefundTunaiMeta));
+    } else if (isInserting) {
+      context.missing(_RefundTunaiMeta);
+    }
+    if (data.containsKey('RefundNonTunai')) {
+      context.handle(
+        _RefundNonTunaiMeta,
+        RefundNonTunai.isAcceptableOrUnknown(data['RefundNonTunai']!, _RefundNonTunaiMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_RefundNonTunaiMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisVoidPenjualan map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisVoidPenjualan(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidPenjualan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPenjualan'])!,
+      UuidShift: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidShift'])!,
+      UuidPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPengguna'])!,
+      NamaPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPengguna'])!,
+      UuidPenyetuju: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPenyetuju'])!,
+      NamaPenyetuju: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPenyetuju'])!,
+      Alasan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Alasan'])!,
+      DivoidPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DivoidPada'])!,
+      Nominal: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Nominal'])!,
+      RefundTunai: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}RefundTunai'])!,
+      RefundNonTunai: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}RefundNonTunai'])!,
+    );
+  }
+
+  @override
+  $VoidPenjualanTable createAlias(String alias) {
+    return $VoidPenjualanTable(attachedDatabase, alias);
+  }
+}
+
+class BarisVoidPenjualan extends DataClass implements Insertable<BarisVoidPenjualan> {
+  final String Uuid;
+  final String UuidPenjualan;
+
+  /// Shift penjualan (= shift yang laci kasnya mengeluarkan refund tunai).
+  final String UuidShift;
+  final String UuidPengguna;
+  final String NamaPengguna;
+  final String UuidPenyetuju;
+  final String NamaPenyetuju;
+  final String Alasan;
+  final DateTime DivoidPada;
+
+  /// `TotalAkhir` penjualan.
+  final String Nominal;
+
+  /// Tunai bersih (diterima − kembalian) yang dikembalikan dari laci.
+  final String RefundTunai;
+
+  /// Non-tunai yang dikembalikan manual (BR-09.2).
+  final String RefundNonTunai;
+  const BarisVoidPenjualan({
+    required this.Uuid,
+    required this.UuidPenjualan,
+    required this.UuidShift,
+    required this.UuidPengguna,
+    required this.NamaPengguna,
+    required this.UuidPenyetuju,
+    required this.NamaPenyetuju,
+    required this.Alasan,
+    required this.DivoidPada,
+    required this.Nominal,
+    required this.RefundTunai,
+    required this.RefundNonTunai,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidPenjualan'] = Variable<String>(UuidPenjualan);
+    map['UuidShift'] = Variable<String>(UuidShift);
+    map['UuidPengguna'] = Variable<String>(UuidPengguna);
+    map['NamaPengguna'] = Variable<String>(NamaPengguna);
+    map['UuidPenyetuju'] = Variable<String>(UuidPenyetuju);
+    map['NamaPenyetuju'] = Variable<String>(NamaPenyetuju);
+    map['Alasan'] = Variable<String>(Alasan);
+    map['DivoidPada'] = Variable<DateTime>(DivoidPada);
+    map['Nominal'] = Variable<String>(Nominal);
+    map['RefundTunai'] = Variable<String>(RefundTunai);
+    map['RefundNonTunai'] = Variable<String>(RefundNonTunai);
+    return map;
+  }
+
+  VoidPenjualanCompanion toCompanion(bool nullToAbsent) {
+    return VoidPenjualanCompanion(
+      Uuid: Value(Uuid),
+      UuidPenjualan: Value(UuidPenjualan),
+      UuidShift: Value(UuidShift),
+      UuidPengguna: Value(UuidPengguna),
+      NamaPengguna: Value(NamaPengguna),
+      UuidPenyetuju: Value(UuidPenyetuju),
+      NamaPenyetuju: Value(NamaPenyetuju),
+      Alasan: Value(Alasan),
+      DivoidPada: Value(DivoidPada),
+      Nominal: Value(Nominal),
+      RefundTunai: Value(RefundTunai),
+      RefundNonTunai: Value(RefundNonTunai),
+    );
+  }
+
+  factory BarisVoidPenjualan.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisVoidPenjualan(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidPenjualan: serializer.fromJson<String>(json['UuidPenjualan']),
+      UuidShift: serializer.fromJson<String>(json['UuidShift']),
+      UuidPengguna: serializer.fromJson<String>(json['UuidPengguna']),
+      NamaPengguna: serializer.fromJson<String>(json['NamaPengguna']),
+      UuidPenyetuju: serializer.fromJson<String>(json['UuidPenyetuju']),
+      NamaPenyetuju: serializer.fromJson<String>(json['NamaPenyetuju']),
+      Alasan: serializer.fromJson<String>(json['Alasan']),
+      DivoidPada: serializer.fromJson<DateTime>(json['DivoidPada']),
+      Nominal: serializer.fromJson<String>(json['Nominal']),
+      RefundTunai: serializer.fromJson<String>(json['RefundTunai']),
+      RefundNonTunai: serializer.fromJson<String>(json['RefundNonTunai']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidPenjualan': serializer.toJson<String>(UuidPenjualan),
+      'UuidShift': serializer.toJson<String>(UuidShift),
+      'UuidPengguna': serializer.toJson<String>(UuidPengguna),
+      'NamaPengguna': serializer.toJson<String>(NamaPengguna),
+      'UuidPenyetuju': serializer.toJson<String>(UuidPenyetuju),
+      'NamaPenyetuju': serializer.toJson<String>(NamaPenyetuju),
+      'Alasan': serializer.toJson<String>(Alasan),
+      'DivoidPada': serializer.toJson<DateTime>(DivoidPada),
+      'Nominal': serializer.toJson<String>(Nominal),
+      'RefundTunai': serializer.toJson<String>(RefundTunai),
+      'RefundNonTunai': serializer.toJson<String>(RefundNonTunai),
+    };
+  }
+
+  BarisVoidPenjualan copyWith({
+    String? Uuid,
+    String? UuidPenjualan,
+    String? UuidShift,
+    String? UuidPengguna,
+    String? NamaPengguna,
+    String? UuidPenyetuju,
+    String? NamaPenyetuju,
+    String? Alasan,
+    DateTime? DivoidPada,
+    String? Nominal,
+    String? RefundTunai,
+    String? RefundNonTunai,
+  }) => BarisVoidPenjualan(
+    Uuid: Uuid ?? this.Uuid,
+    UuidPenjualan: UuidPenjualan ?? this.UuidPenjualan,
+    UuidShift: UuidShift ?? this.UuidShift,
+    UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+    NamaPengguna: NamaPengguna ?? this.NamaPengguna,
+    UuidPenyetuju: UuidPenyetuju ?? this.UuidPenyetuju,
+    NamaPenyetuju: NamaPenyetuju ?? this.NamaPenyetuju,
+    Alasan: Alasan ?? this.Alasan,
+    DivoidPada: DivoidPada ?? this.DivoidPada,
+    Nominal: Nominal ?? this.Nominal,
+    RefundTunai: RefundTunai ?? this.RefundTunai,
+    RefundNonTunai: RefundNonTunai ?? this.RefundNonTunai,
+  );
+  BarisVoidPenjualan copyWithCompanion(VoidPenjualanCompanion data) {
+    return BarisVoidPenjualan(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidPenjualan: data.UuidPenjualan.present ? data.UuidPenjualan.value : this.UuidPenjualan,
+      UuidShift: data.UuidShift.present ? data.UuidShift.value : this.UuidShift,
+      UuidPengguna: data.UuidPengguna.present ? data.UuidPengguna.value : this.UuidPengguna,
+      NamaPengguna: data.NamaPengguna.present ? data.NamaPengguna.value : this.NamaPengguna,
+      UuidPenyetuju: data.UuidPenyetuju.present ? data.UuidPenyetuju.value : this.UuidPenyetuju,
+      NamaPenyetuju: data.NamaPenyetuju.present ? data.NamaPenyetuju.value : this.NamaPenyetuju,
+      Alasan: data.Alasan.present ? data.Alasan.value : this.Alasan,
+      DivoidPada: data.DivoidPada.present ? data.DivoidPada.value : this.DivoidPada,
+      Nominal: data.Nominal.present ? data.Nominal.value : this.Nominal,
+      RefundTunai: data.RefundTunai.present ? data.RefundTunai.value : this.RefundTunai,
+      RefundNonTunai: data.RefundNonTunai.present ? data.RefundNonTunai.value : this.RefundNonTunai,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisVoidPenjualan(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidPenjualan: $UuidPenjualan, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaPengguna: $NamaPengguna, ')
+          ..write('UuidPenyetuju: $UuidPenyetuju, ')
+          ..write('NamaPenyetuju: $NamaPenyetuju, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('DivoidPada: $DivoidPada, ')
+          ..write('Nominal: $Nominal, ')
+          ..write('RefundTunai: $RefundTunai, ')
+          ..write('RefundNonTunai: $RefundNonTunai')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    Uuid,
+    UuidPenjualan,
+    UuidShift,
+    UuidPengguna,
+    NamaPengguna,
+    UuidPenyetuju,
+    NamaPenyetuju,
+    Alasan,
+    DivoidPada,
+    Nominal,
+    RefundTunai,
+    RefundNonTunai,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisVoidPenjualan &&
+          other.Uuid == this.Uuid &&
+          other.UuidPenjualan == this.UuidPenjualan &&
+          other.UuidShift == this.UuidShift &&
+          other.UuidPengguna == this.UuidPengguna &&
+          other.NamaPengguna == this.NamaPengguna &&
+          other.UuidPenyetuju == this.UuidPenyetuju &&
+          other.NamaPenyetuju == this.NamaPenyetuju &&
+          other.Alasan == this.Alasan &&
+          other.DivoidPada == this.DivoidPada &&
+          other.Nominal == this.Nominal &&
+          other.RefundTunai == this.RefundTunai &&
+          other.RefundNonTunai == this.RefundNonTunai);
+}
+
+class VoidPenjualanCompanion extends UpdateCompanion<BarisVoidPenjualan> {
+  final Value<String> Uuid;
+  final Value<String> UuidPenjualan;
+  final Value<String> UuidShift;
+  final Value<String> UuidPengguna;
+  final Value<String> NamaPengguna;
+  final Value<String> UuidPenyetuju;
+  final Value<String> NamaPenyetuju;
+  final Value<String> Alasan;
+  final Value<DateTime> DivoidPada;
+  final Value<String> Nominal;
+  final Value<String> RefundTunai;
+  final Value<String> RefundNonTunai;
+  final Value<int> rowid;
+  const VoidPenjualanCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidPenjualan = const Value.absent(),
+    this.UuidShift = const Value.absent(),
+    this.UuidPengguna = const Value.absent(),
+    this.NamaPengguna = const Value.absent(),
+    this.UuidPenyetuju = const Value.absent(),
+    this.NamaPenyetuju = const Value.absent(),
+    this.Alasan = const Value.absent(),
+    this.DivoidPada = const Value.absent(),
+    this.Nominal = const Value.absent(),
+    this.RefundTunai = const Value.absent(),
+    this.RefundNonTunai = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VoidPenjualanCompanion.insert({
+    required String Uuid,
+    required String UuidPenjualan,
+    required String UuidShift,
+    required String UuidPengguna,
+    required String NamaPengguna,
+    required String UuidPenyetuju,
+    required String NamaPenyetuju,
+    required String Alasan,
+    required DateTime DivoidPada,
+    required String Nominal,
+    required String RefundTunai,
+    required String RefundNonTunai,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidPenjualan = Value(UuidPenjualan),
+       UuidShift = Value(UuidShift),
+       UuidPengguna = Value(UuidPengguna),
+       NamaPengguna = Value(NamaPengguna),
+       UuidPenyetuju = Value(UuidPenyetuju),
+       NamaPenyetuju = Value(NamaPenyetuju),
+       Alasan = Value(Alasan),
+       DivoidPada = Value(DivoidPada),
+       Nominal = Value(Nominal),
+       RefundTunai = Value(RefundTunai),
+       RefundNonTunai = Value(RefundNonTunai);
+  static Insertable<BarisVoidPenjualan> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidPenjualan,
+    Expression<String>? UuidShift,
+    Expression<String>? UuidPengguna,
+    Expression<String>? NamaPengguna,
+    Expression<String>? UuidPenyetuju,
+    Expression<String>? NamaPenyetuju,
+    Expression<String>? Alasan,
+    Expression<DateTime>? DivoidPada,
+    Expression<String>? Nominal,
+    Expression<String>? RefundTunai,
+    Expression<String>? RefundNonTunai,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidPenjualan != null) 'UuidPenjualan': UuidPenjualan,
+      if (UuidShift != null) 'UuidShift': UuidShift,
+      if (UuidPengguna != null) 'UuidPengguna': UuidPengguna,
+      if (NamaPengguna != null) 'NamaPengguna': NamaPengguna,
+      if (UuidPenyetuju != null) 'UuidPenyetuju': UuidPenyetuju,
+      if (NamaPenyetuju != null) 'NamaPenyetuju': NamaPenyetuju,
+      if (Alasan != null) 'Alasan': Alasan,
+      if (DivoidPada != null) 'DivoidPada': DivoidPada,
+      if (Nominal != null) 'Nominal': Nominal,
+      if (RefundTunai != null) 'RefundTunai': RefundTunai,
+      if (RefundNonTunai != null) 'RefundNonTunai': RefundNonTunai,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VoidPenjualanCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidPenjualan,
+    Value<String>? UuidShift,
+    Value<String>? UuidPengguna,
+    Value<String>? NamaPengguna,
+    Value<String>? UuidPenyetuju,
+    Value<String>? NamaPenyetuju,
+    Value<String>? Alasan,
+    Value<DateTime>? DivoidPada,
+    Value<String>? Nominal,
+    Value<String>? RefundTunai,
+    Value<String>? RefundNonTunai,
+    Value<int>? rowid,
+  }) {
+    return VoidPenjualanCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidPenjualan: UuidPenjualan ?? this.UuidPenjualan,
+      UuidShift: UuidShift ?? this.UuidShift,
+      UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+      NamaPengguna: NamaPengguna ?? this.NamaPengguna,
+      UuidPenyetuju: UuidPenyetuju ?? this.UuidPenyetuju,
+      NamaPenyetuju: NamaPenyetuju ?? this.NamaPenyetuju,
+      Alasan: Alasan ?? this.Alasan,
+      DivoidPada: DivoidPada ?? this.DivoidPada,
+      Nominal: Nominal ?? this.Nominal,
+      RefundTunai: RefundTunai ?? this.RefundTunai,
+      RefundNonTunai: RefundNonTunai ?? this.RefundNonTunai,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidPenjualan.present) {
+      map['UuidPenjualan'] = Variable<String>(UuidPenjualan.value);
+    }
+    if (UuidShift.present) {
+      map['UuidShift'] = Variable<String>(UuidShift.value);
+    }
+    if (UuidPengguna.present) {
+      map['UuidPengguna'] = Variable<String>(UuidPengguna.value);
+    }
+    if (NamaPengguna.present) {
+      map['NamaPengguna'] = Variable<String>(NamaPengguna.value);
+    }
+    if (UuidPenyetuju.present) {
+      map['UuidPenyetuju'] = Variable<String>(UuidPenyetuju.value);
+    }
+    if (NamaPenyetuju.present) {
+      map['NamaPenyetuju'] = Variable<String>(NamaPenyetuju.value);
+    }
+    if (Alasan.present) {
+      map['Alasan'] = Variable<String>(Alasan.value);
+    }
+    if (DivoidPada.present) {
+      map['DivoidPada'] = Variable<DateTime>(DivoidPada.value);
+    }
+    if (Nominal.present) {
+      map['Nominal'] = Variable<String>(Nominal.value);
+    }
+    if (RefundTunai.present) {
+      map['RefundTunai'] = Variable<String>(RefundTunai.value);
+    }
+    if (RefundNonTunai.present) {
+      map['RefundNonTunai'] = Variable<String>(RefundNonTunai.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VoidPenjualanCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidPenjualan: $UuidPenjualan, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaPengguna: $NamaPengguna, ')
+          ..write('UuidPenyetuju: $UuidPenyetuju, ')
+          ..write('NamaPenyetuju: $NamaPenyetuju, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('DivoidPada: $DivoidPada, ')
+          ..write('Nominal: $Nominal, ')
+          ..write('RefundTunai: $RefundTunai, ')
+          ..write('RefundNonTunai: $RefundNonTunai, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReturPenjualanTable extends ReturPenjualan with TableInfo<$ReturPenjualanTable, BarisReturPenjualan> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReturPenjualanTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NomorMeta = const VerificationMeta('Nomor');
+  @override
+  late final GeneratedColumn<String> Nomor = GeneratedColumn<String>(
+    'Nomor',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _UuidPenjualanAsalMeta = const VerificationMeta('UuidPenjualanAsal');
+  @override
+  late final GeneratedColumn<String> UuidPenjualanAsal = GeneratedColumn<String>(
+    'UuidPenjualanAsal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NomorPenjualanAsalMeta = const VerificationMeta('NomorPenjualanAsal');
+  @override
+  late final GeneratedColumn<String> NomorPenjualanAsal = GeneratedColumn<String>(
+    'NomorPenjualanAsal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidShiftMeta = const VerificationMeta('UuidShift');
+  @override
+  late final GeneratedColumn<String> UuidShift = GeneratedColumn<String>(
+    'UuidShift',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenggunaMeta = const VerificationMeta('UuidPengguna');
+  @override
+  late final GeneratedColumn<String> UuidPengguna = GeneratedColumn<String>(
+    'UuidPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaKasirMeta = const VerificationMeta('NamaKasir');
+  @override
+  late final GeneratedColumn<String> NamaKasir = GeneratedColumn<String>(
+    'NamaKasir',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPenyetujuMeta = const VerificationMeta('UuidPenyetuju');
+  @override
+  late final GeneratedColumn<String> UuidPenyetuju = GeneratedColumn<String>(
+    'UuidPenyetuju',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _AlasanMeta = const VerificationMeta('Alasan');
+  @override
+  late final GeneratedColumn<String> Alasan = GeneratedColumn<String>(
+    'Alasan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _DibuatPadaMeta = const VerificationMeta('DibuatPada');
+  @override
+  late final GeneratedColumn<DateTime> DibuatPada = GeneratedColumn<DateTime>(
+    'DibuatPada',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TanggalBisnisMeta = const VerificationMeta('TanggalBisnis');
+  @override
+  late final GeneratedColumn<String> TanggalBisnis = GeneratedColumn<String>(
+    'TanggalBisnis',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _MetodeRefundMeta = const VerificationMeta('MetodeRefund');
+  @override
+  late final GeneratedColumn<String> MetodeRefund = GeneratedColumn<String>(
+    'MetodeRefund',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TotalRefundMeta = const VerificationMeta('TotalRefund');
+  @override
+  late final GeneratedColumn<String> TotalRefund = GeneratedColumn<String>(
+    'TotalRefund',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _RefundTunaiMeta = const VerificationMeta('RefundTunai');
+  @override
+  late final GeneratedColumn<String> RefundTunai = GeneratedColumn<String>(
+    'RefundTunai',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    Nomor,
+    UuidPenjualanAsal,
+    NomorPenjualanAsal,
+    UuidShift,
+    UuidPengguna,
+    NamaKasir,
+    UuidPenyetuju,
+    Alasan,
+    DibuatPada,
+    TanggalBisnis,
+    MetodeRefund,
+    TotalRefund,
+    RefundTunai,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ReturPenjualan';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisReturPenjualan> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('Nomor')) {
+      context.handle(_NomorMeta, Nomor.isAcceptableOrUnknown(data['Nomor']!, _NomorMeta));
+    } else if (isInserting) {
+      context.missing(_NomorMeta);
+    }
+    if (data.containsKey('UuidPenjualanAsal')) {
+      context.handle(
+        _UuidPenjualanAsalMeta,
+        UuidPenjualanAsal.isAcceptableOrUnknown(data['UuidPenjualanAsal']!, _UuidPenjualanAsalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPenjualanAsalMeta);
+    }
+    if (data.containsKey('NomorPenjualanAsal')) {
+      context.handle(
+        _NomorPenjualanAsalMeta,
+        NomorPenjualanAsal.isAcceptableOrUnknown(data['NomorPenjualanAsal']!, _NomorPenjualanAsalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_NomorPenjualanAsalMeta);
+    }
+    if (data.containsKey('UuidShift')) {
+      context.handle(_UuidShiftMeta, UuidShift.isAcceptableOrUnknown(data['UuidShift']!, _UuidShiftMeta));
+    } else if (isInserting) {
+      context.missing(_UuidShiftMeta);
+    }
+    if (data.containsKey('UuidPengguna')) {
+      context.handle(_UuidPenggunaMeta, UuidPengguna.isAcceptableOrUnknown(data['UuidPengguna']!, _UuidPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_UuidPenggunaMeta);
+    }
+    if (data.containsKey('NamaKasir')) {
+      context.handle(_NamaKasirMeta, NamaKasir.isAcceptableOrUnknown(data['NamaKasir']!, _NamaKasirMeta));
+    } else if (isInserting) {
+      context.missing(_NamaKasirMeta);
+    }
+    if (data.containsKey('UuidPenyetuju')) {
+      context.handle(
+        _UuidPenyetujuMeta,
+        UuidPenyetuju.isAcceptableOrUnknown(data['UuidPenyetuju']!, _UuidPenyetujuMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPenyetujuMeta);
+    }
+    if (data.containsKey('Alasan')) {
+      context.handle(_AlasanMeta, Alasan.isAcceptableOrUnknown(data['Alasan']!, _AlasanMeta));
+    } else if (isInserting) {
+      context.missing(_AlasanMeta);
+    }
+    if (data.containsKey('DibuatPada')) {
+      context.handle(_DibuatPadaMeta, DibuatPada.isAcceptableOrUnknown(data['DibuatPada']!, _DibuatPadaMeta));
+    } else if (isInserting) {
+      context.missing(_DibuatPadaMeta);
+    }
+    if (data.containsKey('TanggalBisnis')) {
+      context.handle(
+        _TanggalBisnisMeta,
+        TanggalBisnis.isAcceptableOrUnknown(data['TanggalBisnis']!, _TanggalBisnisMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_TanggalBisnisMeta);
+    }
+    if (data.containsKey('MetodeRefund')) {
+      context.handle(_MetodeRefundMeta, MetodeRefund.isAcceptableOrUnknown(data['MetodeRefund']!, _MetodeRefundMeta));
+    } else if (isInserting) {
+      context.missing(_MetodeRefundMeta);
+    }
+    if (data.containsKey('TotalRefund')) {
+      context.handle(_TotalRefundMeta, TotalRefund.isAcceptableOrUnknown(data['TotalRefund']!, _TotalRefundMeta));
+    } else if (isInserting) {
+      context.missing(_TotalRefundMeta);
+    }
+    if (data.containsKey('RefundTunai')) {
+      context.handle(_RefundTunaiMeta, RefundTunai.isAcceptableOrUnknown(data['RefundTunai']!, _RefundTunaiMeta));
+    } else if (isInserting) {
+      context.missing(_RefundTunaiMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisReturPenjualan map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisReturPenjualan(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      Nomor: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Nomor'])!,
+      UuidPenjualanAsal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidPenjualanAsal'],
+      )!,
+      NomorPenjualanAsal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}NomorPenjualanAsal'],
+      )!,
+      UuidShift: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidShift'])!,
+      UuidPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPengguna'])!,
+      NamaKasir: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaKasir'])!,
+      UuidPenyetuju: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPenyetuju'])!,
+      Alasan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Alasan'])!,
+      DibuatPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DibuatPada'])!,
+      TanggalBisnis: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TanggalBisnis'])!,
+      MetodeRefund: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}MetodeRefund'])!,
+      TotalRefund: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TotalRefund'])!,
+      RefundTunai: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}RefundTunai'])!,
+    );
+  }
+
+  @override
+  $ReturPenjualanTable createAlias(String alias) {
+    return $ReturPenjualanTable(attachedDatabase, alias);
+  }
+}
+
+class BarisReturPenjualan extends DataClass implements Insertable<BarisReturPenjualan> {
+  final String Uuid;
+  final String Nomor;
+  final String UuidPenjualanAsal;
+  final String NomorPenjualanAsal;
+
+  /// Shift aktif saat retur (laci yang mengeluarkan refund tunai).
+  final String UuidShift;
+  final String UuidPengguna;
+  final String NamaKasir;
+  final String UuidPenyetuju;
+  final String Alasan;
+  final DateTime DibuatPada;
+
+  /// `YYYY-MM-DD` tanggal bisnis outlet saat retur.
+  final String TanggalBisnis;
+
+  /// `Tunai`, `Transfer`, atau `Campuran`.
+  final String MetodeRefund;
+  final String TotalRefund;
+  final String RefundTunai;
+  const BarisReturPenjualan({
+    required this.Uuid,
+    required this.Nomor,
+    required this.UuidPenjualanAsal,
+    required this.NomorPenjualanAsal,
+    required this.UuidShift,
+    required this.UuidPengguna,
+    required this.NamaKasir,
+    required this.UuidPenyetuju,
+    required this.Alasan,
+    required this.DibuatPada,
+    required this.TanggalBisnis,
+    required this.MetodeRefund,
+    required this.TotalRefund,
+    required this.RefundTunai,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['Nomor'] = Variable<String>(Nomor);
+    map['UuidPenjualanAsal'] = Variable<String>(UuidPenjualanAsal);
+    map['NomorPenjualanAsal'] = Variable<String>(NomorPenjualanAsal);
+    map['UuidShift'] = Variable<String>(UuidShift);
+    map['UuidPengguna'] = Variable<String>(UuidPengguna);
+    map['NamaKasir'] = Variable<String>(NamaKasir);
+    map['UuidPenyetuju'] = Variable<String>(UuidPenyetuju);
+    map['Alasan'] = Variable<String>(Alasan);
+    map['DibuatPada'] = Variable<DateTime>(DibuatPada);
+    map['TanggalBisnis'] = Variable<String>(TanggalBisnis);
+    map['MetodeRefund'] = Variable<String>(MetodeRefund);
+    map['TotalRefund'] = Variable<String>(TotalRefund);
+    map['RefundTunai'] = Variable<String>(RefundTunai);
+    return map;
+  }
+
+  ReturPenjualanCompanion toCompanion(bool nullToAbsent) {
+    return ReturPenjualanCompanion(
+      Uuid: Value(Uuid),
+      Nomor: Value(Nomor),
+      UuidPenjualanAsal: Value(UuidPenjualanAsal),
+      NomorPenjualanAsal: Value(NomorPenjualanAsal),
+      UuidShift: Value(UuidShift),
+      UuidPengguna: Value(UuidPengguna),
+      NamaKasir: Value(NamaKasir),
+      UuidPenyetuju: Value(UuidPenyetuju),
+      Alasan: Value(Alasan),
+      DibuatPada: Value(DibuatPada),
+      TanggalBisnis: Value(TanggalBisnis),
+      MetodeRefund: Value(MetodeRefund),
+      TotalRefund: Value(TotalRefund),
+      RefundTunai: Value(RefundTunai),
+    );
+  }
+
+  factory BarisReturPenjualan.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisReturPenjualan(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      Nomor: serializer.fromJson<String>(json['Nomor']),
+      UuidPenjualanAsal: serializer.fromJson<String>(json['UuidPenjualanAsal']),
+      NomorPenjualanAsal: serializer.fromJson<String>(json['NomorPenjualanAsal']),
+      UuidShift: serializer.fromJson<String>(json['UuidShift']),
+      UuidPengguna: serializer.fromJson<String>(json['UuidPengguna']),
+      NamaKasir: serializer.fromJson<String>(json['NamaKasir']),
+      UuidPenyetuju: serializer.fromJson<String>(json['UuidPenyetuju']),
+      Alasan: serializer.fromJson<String>(json['Alasan']),
+      DibuatPada: serializer.fromJson<DateTime>(json['DibuatPada']),
+      TanggalBisnis: serializer.fromJson<String>(json['TanggalBisnis']),
+      MetodeRefund: serializer.fromJson<String>(json['MetodeRefund']),
+      TotalRefund: serializer.fromJson<String>(json['TotalRefund']),
+      RefundTunai: serializer.fromJson<String>(json['RefundTunai']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'Nomor': serializer.toJson<String>(Nomor),
+      'UuidPenjualanAsal': serializer.toJson<String>(UuidPenjualanAsal),
+      'NomorPenjualanAsal': serializer.toJson<String>(NomorPenjualanAsal),
+      'UuidShift': serializer.toJson<String>(UuidShift),
+      'UuidPengguna': serializer.toJson<String>(UuidPengguna),
+      'NamaKasir': serializer.toJson<String>(NamaKasir),
+      'UuidPenyetuju': serializer.toJson<String>(UuidPenyetuju),
+      'Alasan': serializer.toJson<String>(Alasan),
+      'DibuatPada': serializer.toJson<DateTime>(DibuatPada),
+      'TanggalBisnis': serializer.toJson<String>(TanggalBisnis),
+      'MetodeRefund': serializer.toJson<String>(MetodeRefund),
+      'TotalRefund': serializer.toJson<String>(TotalRefund),
+      'RefundTunai': serializer.toJson<String>(RefundTunai),
+    };
+  }
+
+  BarisReturPenjualan copyWith({
+    String? Uuid,
+    String? Nomor,
+    String? UuidPenjualanAsal,
+    String? NomorPenjualanAsal,
+    String? UuidShift,
+    String? UuidPengguna,
+    String? NamaKasir,
+    String? UuidPenyetuju,
+    String? Alasan,
+    DateTime? DibuatPada,
+    String? TanggalBisnis,
+    String? MetodeRefund,
+    String? TotalRefund,
+    String? RefundTunai,
+  }) => BarisReturPenjualan(
+    Uuid: Uuid ?? this.Uuid,
+    Nomor: Nomor ?? this.Nomor,
+    UuidPenjualanAsal: UuidPenjualanAsal ?? this.UuidPenjualanAsal,
+    NomorPenjualanAsal: NomorPenjualanAsal ?? this.NomorPenjualanAsal,
+    UuidShift: UuidShift ?? this.UuidShift,
+    UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+    NamaKasir: NamaKasir ?? this.NamaKasir,
+    UuidPenyetuju: UuidPenyetuju ?? this.UuidPenyetuju,
+    Alasan: Alasan ?? this.Alasan,
+    DibuatPada: DibuatPada ?? this.DibuatPada,
+    TanggalBisnis: TanggalBisnis ?? this.TanggalBisnis,
+    MetodeRefund: MetodeRefund ?? this.MetodeRefund,
+    TotalRefund: TotalRefund ?? this.TotalRefund,
+    RefundTunai: RefundTunai ?? this.RefundTunai,
+  );
+  BarisReturPenjualan copyWithCompanion(ReturPenjualanCompanion data) {
+    return BarisReturPenjualan(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      Nomor: data.Nomor.present ? data.Nomor.value : this.Nomor,
+      UuidPenjualanAsal: data.UuidPenjualanAsal.present ? data.UuidPenjualanAsal.value : this.UuidPenjualanAsal,
+      NomorPenjualanAsal: data.NomorPenjualanAsal.present ? data.NomorPenjualanAsal.value : this.NomorPenjualanAsal,
+      UuidShift: data.UuidShift.present ? data.UuidShift.value : this.UuidShift,
+      UuidPengguna: data.UuidPengguna.present ? data.UuidPengguna.value : this.UuidPengguna,
+      NamaKasir: data.NamaKasir.present ? data.NamaKasir.value : this.NamaKasir,
+      UuidPenyetuju: data.UuidPenyetuju.present ? data.UuidPenyetuju.value : this.UuidPenyetuju,
+      Alasan: data.Alasan.present ? data.Alasan.value : this.Alasan,
+      DibuatPada: data.DibuatPada.present ? data.DibuatPada.value : this.DibuatPada,
+      TanggalBisnis: data.TanggalBisnis.present ? data.TanggalBisnis.value : this.TanggalBisnis,
+      MetodeRefund: data.MetodeRefund.present ? data.MetodeRefund.value : this.MetodeRefund,
+      TotalRefund: data.TotalRefund.present ? data.TotalRefund.value : this.TotalRefund,
+      RefundTunai: data.RefundTunai.present ? data.RefundTunai.value : this.RefundTunai,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisReturPenjualan(')
+          ..write('Uuid: $Uuid, ')
+          ..write('Nomor: $Nomor, ')
+          ..write('UuidPenjualanAsal: $UuidPenjualanAsal, ')
+          ..write('NomorPenjualanAsal: $NomorPenjualanAsal, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaKasir: $NamaKasir, ')
+          ..write('UuidPenyetuju: $UuidPenyetuju, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('DibuatPada: $DibuatPada, ')
+          ..write('TanggalBisnis: $TanggalBisnis, ')
+          ..write('MetodeRefund: $MetodeRefund, ')
+          ..write('TotalRefund: $TotalRefund, ')
+          ..write('RefundTunai: $RefundTunai')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    Uuid,
+    Nomor,
+    UuidPenjualanAsal,
+    NomorPenjualanAsal,
+    UuidShift,
+    UuidPengguna,
+    NamaKasir,
+    UuidPenyetuju,
+    Alasan,
+    DibuatPada,
+    TanggalBisnis,
+    MetodeRefund,
+    TotalRefund,
+    RefundTunai,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisReturPenjualan &&
+          other.Uuid == this.Uuid &&
+          other.Nomor == this.Nomor &&
+          other.UuidPenjualanAsal == this.UuidPenjualanAsal &&
+          other.NomorPenjualanAsal == this.NomorPenjualanAsal &&
+          other.UuidShift == this.UuidShift &&
+          other.UuidPengguna == this.UuidPengguna &&
+          other.NamaKasir == this.NamaKasir &&
+          other.UuidPenyetuju == this.UuidPenyetuju &&
+          other.Alasan == this.Alasan &&
+          other.DibuatPada == this.DibuatPada &&
+          other.TanggalBisnis == this.TanggalBisnis &&
+          other.MetodeRefund == this.MetodeRefund &&
+          other.TotalRefund == this.TotalRefund &&
+          other.RefundTunai == this.RefundTunai);
+}
+
+class ReturPenjualanCompanion extends UpdateCompanion<BarisReturPenjualan> {
+  final Value<String> Uuid;
+  final Value<String> Nomor;
+  final Value<String> UuidPenjualanAsal;
+  final Value<String> NomorPenjualanAsal;
+  final Value<String> UuidShift;
+  final Value<String> UuidPengguna;
+  final Value<String> NamaKasir;
+  final Value<String> UuidPenyetuju;
+  final Value<String> Alasan;
+  final Value<DateTime> DibuatPada;
+  final Value<String> TanggalBisnis;
+  final Value<String> MetodeRefund;
+  final Value<String> TotalRefund;
+  final Value<String> RefundTunai;
+  final Value<int> rowid;
+  const ReturPenjualanCompanion({
+    this.Uuid = const Value.absent(),
+    this.Nomor = const Value.absent(),
+    this.UuidPenjualanAsal = const Value.absent(),
+    this.NomorPenjualanAsal = const Value.absent(),
+    this.UuidShift = const Value.absent(),
+    this.UuidPengguna = const Value.absent(),
+    this.NamaKasir = const Value.absent(),
+    this.UuidPenyetuju = const Value.absent(),
+    this.Alasan = const Value.absent(),
+    this.DibuatPada = const Value.absent(),
+    this.TanggalBisnis = const Value.absent(),
+    this.MetodeRefund = const Value.absent(),
+    this.TotalRefund = const Value.absent(),
+    this.RefundTunai = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReturPenjualanCompanion.insert({
+    required String Uuid,
+    required String Nomor,
+    required String UuidPenjualanAsal,
+    required String NomorPenjualanAsal,
+    required String UuidShift,
+    required String UuidPengguna,
+    required String NamaKasir,
+    required String UuidPenyetuju,
+    required String Alasan,
+    required DateTime DibuatPada,
+    required String TanggalBisnis,
+    required String MetodeRefund,
+    required String TotalRefund,
+    required String RefundTunai,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       Nomor = Value(Nomor),
+       UuidPenjualanAsal = Value(UuidPenjualanAsal),
+       NomorPenjualanAsal = Value(NomorPenjualanAsal),
+       UuidShift = Value(UuidShift),
+       UuidPengguna = Value(UuidPengguna),
+       NamaKasir = Value(NamaKasir),
+       UuidPenyetuju = Value(UuidPenyetuju),
+       Alasan = Value(Alasan),
+       DibuatPada = Value(DibuatPada),
+       TanggalBisnis = Value(TanggalBisnis),
+       MetodeRefund = Value(MetodeRefund),
+       TotalRefund = Value(TotalRefund),
+       RefundTunai = Value(RefundTunai);
+  static Insertable<BarisReturPenjualan> custom({
+    Expression<String>? Uuid,
+    Expression<String>? Nomor,
+    Expression<String>? UuidPenjualanAsal,
+    Expression<String>? NomorPenjualanAsal,
+    Expression<String>? UuidShift,
+    Expression<String>? UuidPengguna,
+    Expression<String>? NamaKasir,
+    Expression<String>? UuidPenyetuju,
+    Expression<String>? Alasan,
+    Expression<DateTime>? DibuatPada,
+    Expression<String>? TanggalBisnis,
+    Expression<String>? MetodeRefund,
+    Expression<String>? TotalRefund,
+    Expression<String>? RefundTunai,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (Nomor != null) 'Nomor': Nomor,
+      if (UuidPenjualanAsal != null) 'UuidPenjualanAsal': UuidPenjualanAsal,
+      if (NomorPenjualanAsal != null) 'NomorPenjualanAsal': NomorPenjualanAsal,
+      if (UuidShift != null) 'UuidShift': UuidShift,
+      if (UuidPengguna != null) 'UuidPengguna': UuidPengguna,
+      if (NamaKasir != null) 'NamaKasir': NamaKasir,
+      if (UuidPenyetuju != null) 'UuidPenyetuju': UuidPenyetuju,
+      if (Alasan != null) 'Alasan': Alasan,
+      if (DibuatPada != null) 'DibuatPada': DibuatPada,
+      if (TanggalBisnis != null) 'TanggalBisnis': TanggalBisnis,
+      if (MetodeRefund != null) 'MetodeRefund': MetodeRefund,
+      if (TotalRefund != null) 'TotalRefund': TotalRefund,
+      if (RefundTunai != null) 'RefundTunai': RefundTunai,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReturPenjualanCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? Nomor,
+    Value<String>? UuidPenjualanAsal,
+    Value<String>? NomorPenjualanAsal,
+    Value<String>? UuidShift,
+    Value<String>? UuidPengguna,
+    Value<String>? NamaKasir,
+    Value<String>? UuidPenyetuju,
+    Value<String>? Alasan,
+    Value<DateTime>? DibuatPada,
+    Value<String>? TanggalBisnis,
+    Value<String>? MetodeRefund,
+    Value<String>? TotalRefund,
+    Value<String>? RefundTunai,
+    Value<int>? rowid,
+  }) {
+    return ReturPenjualanCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      Nomor: Nomor ?? this.Nomor,
+      UuidPenjualanAsal: UuidPenjualanAsal ?? this.UuidPenjualanAsal,
+      NomorPenjualanAsal: NomorPenjualanAsal ?? this.NomorPenjualanAsal,
+      UuidShift: UuidShift ?? this.UuidShift,
+      UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+      NamaKasir: NamaKasir ?? this.NamaKasir,
+      UuidPenyetuju: UuidPenyetuju ?? this.UuidPenyetuju,
+      Alasan: Alasan ?? this.Alasan,
+      DibuatPada: DibuatPada ?? this.DibuatPada,
+      TanggalBisnis: TanggalBisnis ?? this.TanggalBisnis,
+      MetodeRefund: MetodeRefund ?? this.MetodeRefund,
+      TotalRefund: TotalRefund ?? this.TotalRefund,
+      RefundTunai: RefundTunai ?? this.RefundTunai,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (Nomor.present) {
+      map['Nomor'] = Variable<String>(Nomor.value);
+    }
+    if (UuidPenjualanAsal.present) {
+      map['UuidPenjualanAsal'] = Variable<String>(UuidPenjualanAsal.value);
+    }
+    if (NomorPenjualanAsal.present) {
+      map['NomorPenjualanAsal'] = Variable<String>(NomorPenjualanAsal.value);
+    }
+    if (UuidShift.present) {
+      map['UuidShift'] = Variable<String>(UuidShift.value);
+    }
+    if (UuidPengguna.present) {
+      map['UuidPengguna'] = Variable<String>(UuidPengguna.value);
+    }
+    if (NamaKasir.present) {
+      map['NamaKasir'] = Variable<String>(NamaKasir.value);
+    }
+    if (UuidPenyetuju.present) {
+      map['UuidPenyetuju'] = Variable<String>(UuidPenyetuju.value);
+    }
+    if (Alasan.present) {
+      map['Alasan'] = Variable<String>(Alasan.value);
+    }
+    if (DibuatPada.present) {
+      map['DibuatPada'] = Variable<DateTime>(DibuatPada.value);
+    }
+    if (TanggalBisnis.present) {
+      map['TanggalBisnis'] = Variable<String>(TanggalBisnis.value);
+    }
+    if (MetodeRefund.present) {
+      map['MetodeRefund'] = Variable<String>(MetodeRefund.value);
+    }
+    if (TotalRefund.present) {
+      map['TotalRefund'] = Variable<String>(TotalRefund.value);
+    }
+    if (RefundTunai.present) {
+      map['RefundTunai'] = Variable<String>(RefundTunai.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReturPenjualanCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('Nomor: $Nomor, ')
+          ..write('UuidPenjualanAsal: $UuidPenjualanAsal, ')
+          ..write('NomorPenjualanAsal: $NomorPenjualanAsal, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaKasir: $NamaKasir, ')
+          ..write('UuidPenyetuju: $UuidPenyetuju, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('DibuatPada: $DibuatPada, ')
+          ..write('TanggalBisnis: $TanggalBisnis, ')
+          ..write('MetodeRefund: $MetodeRefund, ')
+          ..write('TotalRefund: $TotalRefund, ')
+          ..write('RefundTunai: $RefundTunai, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReturPenjualanDetailTable extends ReturPenjualanDetail
+    with TableInfo<$ReturPenjualanDetailTable, BarisReturPenjualanDetail> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReturPenjualanDetailTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidReturPenjualanMeta = const VerificationMeta('UuidReturPenjualan');
+  @override
+  late final GeneratedColumn<String> UuidReturPenjualan = GeneratedColumn<String>(
+    'UuidReturPenjualan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES ReturPenjualan (Uuid)'),
+  );
+  static const VerificationMeta _UuidPenjualanDetailMeta = const VerificationMeta('UuidPenjualanDetail');
+  @override
+  late final GeneratedColumn<String> UuidPenjualanDetail = GeneratedColumn<String>(
+    'UuidPenjualanDetail',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaProdukMeta = const VerificationMeta('NamaProduk');
+  @override
+  late final GeneratedColumn<String> NamaProduk = GeneratedColumn<String>(
+    'NamaProduk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _SimbolSatuanMeta = const VerificationMeta('SimbolSatuan');
+  @override
+  late final GeneratedColumn<String> SimbolSatuan = GeneratedColumn<String>(
+    'SimbolSatuan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JumlahMeta = const VerificationMeta('Jumlah');
+  @override
+  late final GeneratedColumn<String> Jumlah = GeneratedColumn<String>(
+    'Jumlah',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _KondisiMeta = const VerificationMeta('Kondisi');
+  @override
+  late final GeneratedColumn<String> Kondisi = GeneratedColumn<String>(
+    'Kondisi',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NilaiBarisMeta = const VerificationMeta('NilaiBaris');
+  @override
+  late final GeneratedColumn<String> NilaiBaris = GeneratedColumn<String>(
+    'NilaiBaris',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    UuidReturPenjualan,
+    UuidPenjualanDetail,
+    NamaProduk,
+    SimbolSatuan,
+    Jumlah,
+    Kondisi,
+    NilaiBaris,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ReturPenjualanDetail';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisReturPenjualanDetail> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidReturPenjualan')) {
+      context.handle(
+        _UuidReturPenjualanMeta,
+        UuidReturPenjualan.isAcceptableOrUnknown(data['UuidReturPenjualan']!, _UuidReturPenjualanMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidReturPenjualanMeta);
+    }
+    if (data.containsKey('UuidPenjualanDetail')) {
+      context.handle(
+        _UuidPenjualanDetailMeta,
+        UuidPenjualanDetail.isAcceptableOrUnknown(data['UuidPenjualanDetail']!, _UuidPenjualanDetailMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPenjualanDetailMeta);
+    }
+    if (data.containsKey('NamaProduk')) {
+      context.handle(_NamaProdukMeta, NamaProduk.isAcceptableOrUnknown(data['NamaProduk']!, _NamaProdukMeta));
+    } else if (isInserting) {
+      context.missing(_NamaProdukMeta);
+    }
+    if (data.containsKey('SimbolSatuan')) {
+      context.handle(_SimbolSatuanMeta, SimbolSatuan.isAcceptableOrUnknown(data['SimbolSatuan']!, _SimbolSatuanMeta));
+    } else if (isInserting) {
+      context.missing(_SimbolSatuanMeta);
+    }
+    if (data.containsKey('Jumlah')) {
+      context.handle(_JumlahMeta, Jumlah.isAcceptableOrUnknown(data['Jumlah']!, _JumlahMeta));
+    } else if (isInserting) {
+      context.missing(_JumlahMeta);
+    }
+    if (data.containsKey('Kondisi')) {
+      context.handle(_KondisiMeta, Kondisi.isAcceptableOrUnknown(data['Kondisi']!, _KondisiMeta));
+    } else if (isInserting) {
+      context.missing(_KondisiMeta);
+    }
+    if (data.containsKey('NilaiBaris')) {
+      context.handle(_NilaiBarisMeta, NilaiBaris.isAcceptableOrUnknown(data['NilaiBaris']!, _NilaiBarisMeta));
+    } else if (isInserting) {
+      context.missing(_NilaiBarisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisReturPenjualanDetail map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisReturPenjualanDetail(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidReturPenjualan: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidReturPenjualan'],
+      )!,
+      UuidPenjualanDetail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidPenjualanDetail'],
+      )!,
+      NamaProduk: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaProduk'])!,
+      SimbolSatuan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}SimbolSatuan'])!,
+      Jumlah: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Jumlah'])!,
+      Kondisi: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Kondisi'])!,
+      NilaiBaris: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NilaiBaris'])!,
+    );
+  }
+
+  @override
+  $ReturPenjualanDetailTable createAlias(String alias) {
+    return $ReturPenjualanDetailTable(attachedDatabase, alias);
+  }
+}
+
+class BarisReturPenjualanDetail extends DataClass implements Insertable<BarisReturPenjualanDetail> {
+  final String Uuid;
+  final String UuidReturPenjualan;
+  final String UuidPenjualanDetail;
+  final String NamaProduk;
+  final String SimbolSatuan;
+  final String Jumlah;
+
+  /// `LayakJual` atau `Rusak`.
+  final String Kondisi;
+
+  /// Nilai retur baris (bagian proporsional `TotalBaris`).
+  final String NilaiBaris;
+  const BarisReturPenjualanDetail({
+    required this.Uuid,
+    required this.UuidReturPenjualan,
+    required this.UuidPenjualanDetail,
+    required this.NamaProduk,
+    required this.SimbolSatuan,
+    required this.Jumlah,
+    required this.Kondisi,
+    required this.NilaiBaris,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidReturPenjualan'] = Variable<String>(UuidReturPenjualan);
+    map['UuidPenjualanDetail'] = Variable<String>(UuidPenjualanDetail);
+    map['NamaProduk'] = Variable<String>(NamaProduk);
+    map['SimbolSatuan'] = Variable<String>(SimbolSatuan);
+    map['Jumlah'] = Variable<String>(Jumlah);
+    map['Kondisi'] = Variable<String>(Kondisi);
+    map['NilaiBaris'] = Variable<String>(NilaiBaris);
+    return map;
+  }
+
+  ReturPenjualanDetailCompanion toCompanion(bool nullToAbsent) {
+    return ReturPenjualanDetailCompanion(
+      Uuid: Value(Uuid),
+      UuidReturPenjualan: Value(UuidReturPenjualan),
+      UuidPenjualanDetail: Value(UuidPenjualanDetail),
+      NamaProduk: Value(NamaProduk),
+      SimbolSatuan: Value(SimbolSatuan),
+      Jumlah: Value(Jumlah),
+      Kondisi: Value(Kondisi),
+      NilaiBaris: Value(NilaiBaris),
+    );
+  }
+
+  factory BarisReturPenjualanDetail.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisReturPenjualanDetail(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidReturPenjualan: serializer.fromJson<String>(json['UuidReturPenjualan']),
+      UuidPenjualanDetail: serializer.fromJson<String>(json['UuidPenjualanDetail']),
+      NamaProduk: serializer.fromJson<String>(json['NamaProduk']),
+      SimbolSatuan: serializer.fromJson<String>(json['SimbolSatuan']),
+      Jumlah: serializer.fromJson<String>(json['Jumlah']),
+      Kondisi: serializer.fromJson<String>(json['Kondisi']),
+      NilaiBaris: serializer.fromJson<String>(json['NilaiBaris']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidReturPenjualan': serializer.toJson<String>(UuidReturPenjualan),
+      'UuidPenjualanDetail': serializer.toJson<String>(UuidPenjualanDetail),
+      'NamaProduk': serializer.toJson<String>(NamaProduk),
+      'SimbolSatuan': serializer.toJson<String>(SimbolSatuan),
+      'Jumlah': serializer.toJson<String>(Jumlah),
+      'Kondisi': serializer.toJson<String>(Kondisi),
+      'NilaiBaris': serializer.toJson<String>(NilaiBaris),
+    };
+  }
+
+  BarisReturPenjualanDetail copyWith({
+    String? Uuid,
+    String? UuidReturPenjualan,
+    String? UuidPenjualanDetail,
+    String? NamaProduk,
+    String? SimbolSatuan,
+    String? Jumlah,
+    String? Kondisi,
+    String? NilaiBaris,
+  }) => BarisReturPenjualanDetail(
+    Uuid: Uuid ?? this.Uuid,
+    UuidReturPenjualan: UuidReturPenjualan ?? this.UuidReturPenjualan,
+    UuidPenjualanDetail: UuidPenjualanDetail ?? this.UuidPenjualanDetail,
+    NamaProduk: NamaProduk ?? this.NamaProduk,
+    SimbolSatuan: SimbolSatuan ?? this.SimbolSatuan,
+    Jumlah: Jumlah ?? this.Jumlah,
+    Kondisi: Kondisi ?? this.Kondisi,
+    NilaiBaris: NilaiBaris ?? this.NilaiBaris,
+  );
+  BarisReturPenjualanDetail copyWithCompanion(ReturPenjualanDetailCompanion data) {
+    return BarisReturPenjualanDetail(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidReturPenjualan: data.UuidReturPenjualan.present ? data.UuidReturPenjualan.value : this.UuidReturPenjualan,
+      UuidPenjualanDetail: data.UuidPenjualanDetail.present ? data.UuidPenjualanDetail.value : this.UuidPenjualanDetail,
+      NamaProduk: data.NamaProduk.present ? data.NamaProduk.value : this.NamaProduk,
+      SimbolSatuan: data.SimbolSatuan.present ? data.SimbolSatuan.value : this.SimbolSatuan,
+      Jumlah: data.Jumlah.present ? data.Jumlah.value : this.Jumlah,
+      Kondisi: data.Kondisi.present ? data.Kondisi.value : this.Kondisi,
+      NilaiBaris: data.NilaiBaris.present ? data.NilaiBaris.value : this.NilaiBaris,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisReturPenjualanDetail(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidReturPenjualan: $UuidReturPenjualan, ')
+          ..write('UuidPenjualanDetail: $UuidPenjualanDetail, ')
+          ..write('NamaProduk: $NamaProduk, ')
+          ..write('SimbolSatuan: $SimbolSatuan, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('Kondisi: $Kondisi, ')
+          ..write('NilaiBaris: $NilaiBaris')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(Uuid, UuidReturPenjualan, UuidPenjualanDetail, NamaProduk, SimbolSatuan, Jumlah, Kondisi, NilaiBaris);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisReturPenjualanDetail &&
+          other.Uuid == this.Uuid &&
+          other.UuidReturPenjualan == this.UuidReturPenjualan &&
+          other.UuidPenjualanDetail == this.UuidPenjualanDetail &&
+          other.NamaProduk == this.NamaProduk &&
+          other.SimbolSatuan == this.SimbolSatuan &&
+          other.Jumlah == this.Jumlah &&
+          other.Kondisi == this.Kondisi &&
+          other.NilaiBaris == this.NilaiBaris);
+}
+
+class ReturPenjualanDetailCompanion extends UpdateCompanion<BarisReturPenjualanDetail> {
+  final Value<String> Uuid;
+  final Value<String> UuidReturPenjualan;
+  final Value<String> UuidPenjualanDetail;
+  final Value<String> NamaProduk;
+  final Value<String> SimbolSatuan;
+  final Value<String> Jumlah;
+  final Value<String> Kondisi;
+  final Value<String> NilaiBaris;
+  final Value<int> rowid;
+  const ReturPenjualanDetailCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidReturPenjualan = const Value.absent(),
+    this.UuidPenjualanDetail = const Value.absent(),
+    this.NamaProduk = const Value.absent(),
+    this.SimbolSatuan = const Value.absent(),
+    this.Jumlah = const Value.absent(),
+    this.Kondisi = const Value.absent(),
+    this.NilaiBaris = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReturPenjualanDetailCompanion.insert({
+    required String Uuid,
+    required String UuidReturPenjualan,
+    required String UuidPenjualanDetail,
+    required String NamaProduk,
+    required String SimbolSatuan,
+    required String Jumlah,
+    required String Kondisi,
+    required String NilaiBaris,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidReturPenjualan = Value(UuidReturPenjualan),
+       UuidPenjualanDetail = Value(UuidPenjualanDetail),
+       NamaProduk = Value(NamaProduk),
+       SimbolSatuan = Value(SimbolSatuan),
+       Jumlah = Value(Jumlah),
+       Kondisi = Value(Kondisi),
+       NilaiBaris = Value(NilaiBaris);
+  static Insertable<BarisReturPenjualanDetail> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidReturPenjualan,
+    Expression<String>? UuidPenjualanDetail,
+    Expression<String>? NamaProduk,
+    Expression<String>? SimbolSatuan,
+    Expression<String>? Jumlah,
+    Expression<String>? Kondisi,
+    Expression<String>? NilaiBaris,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidReturPenjualan != null) 'UuidReturPenjualan': UuidReturPenjualan,
+      if (UuidPenjualanDetail != null) 'UuidPenjualanDetail': UuidPenjualanDetail,
+      if (NamaProduk != null) 'NamaProduk': NamaProduk,
+      if (SimbolSatuan != null) 'SimbolSatuan': SimbolSatuan,
+      if (Jumlah != null) 'Jumlah': Jumlah,
+      if (Kondisi != null) 'Kondisi': Kondisi,
+      if (NilaiBaris != null) 'NilaiBaris': NilaiBaris,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReturPenjualanDetailCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidReturPenjualan,
+    Value<String>? UuidPenjualanDetail,
+    Value<String>? NamaProduk,
+    Value<String>? SimbolSatuan,
+    Value<String>? Jumlah,
+    Value<String>? Kondisi,
+    Value<String>? NilaiBaris,
+    Value<int>? rowid,
+  }) {
+    return ReturPenjualanDetailCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidReturPenjualan: UuidReturPenjualan ?? this.UuidReturPenjualan,
+      UuidPenjualanDetail: UuidPenjualanDetail ?? this.UuidPenjualanDetail,
+      NamaProduk: NamaProduk ?? this.NamaProduk,
+      SimbolSatuan: SimbolSatuan ?? this.SimbolSatuan,
+      Jumlah: Jumlah ?? this.Jumlah,
+      Kondisi: Kondisi ?? this.Kondisi,
+      NilaiBaris: NilaiBaris ?? this.NilaiBaris,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidReturPenjualan.present) {
+      map['UuidReturPenjualan'] = Variable<String>(UuidReturPenjualan.value);
+    }
+    if (UuidPenjualanDetail.present) {
+      map['UuidPenjualanDetail'] = Variable<String>(UuidPenjualanDetail.value);
+    }
+    if (NamaProduk.present) {
+      map['NamaProduk'] = Variable<String>(NamaProduk.value);
+    }
+    if (SimbolSatuan.present) {
+      map['SimbolSatuan'] = Variable<String>(SimbolSatuan.value);
+    }
+    if (Jumlah.present) {
+      map['Jumlah'] = Variable<String>(Jumlah.value);
+    }
+    if (Kondisi.present) {
+      map['Kondisi'] = Variable<String>(Kondisi.value);
+    }
+    if (NilaiBaris.present) {
+      map['NilaiBaris'] = Variable<String>(NilaiBaris.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReturPenjualanDetailCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidReturPenjualan: $UuidReturPenjualan, ')
+          ..write('UuidPenjualanDetail: $UuidPenjualanDetail, ')
+          ..write('NamaProduk: $NamaProduk, ')
+          ..write('SimbolSatuan: $SimbolSatuan, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('Kondisi: $Kondisi, ')
+          ..write('NilaiBaris: $NilaiBaris, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReturPenjualanPembayaranTable extends ReturPenjualanPembayaran
+    with TableInfo<$ReturPenjualanPembayaranTable, BarisReturPenjualanPembayaran> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReturPenjualanPembayaranTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidReturPenjualanMeta = const VerificationMeta('UuidReturPenjualan');
+  @override
+  late final GeneratedColumn<String> UuidReturPenjualan = GeneratedColumn<String>(
+    'UuidReturPenjualan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES ReturPenjualan (Uuid)'),
+  );
+  static const VerificationMeta _UuidMetodePembayaranMeta = const VerificationMeta('UuidMetodePembayaran');
+  @override
+  late final GeneratedColumn<String> UuidMetodePembayaran = GeneratedColumn<String>(
+    'UuidMetodePembayaran',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JenisMeta = const VerificationMeta('Jenis');
+  @override
+  late final GeneratedColumn<String> Jenis = GeneratedColumn<String>(
+    'Jenis',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaMetodeMeta = const VerificationMeta('NamaMetode');
+  @override
+  late final GeneratedColumn<String> NamaMetode = GeneratedColumn<String>(
+    'NamaMetode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JumlahMeta = const VerificationMeta('Jumlah');
+  @override
+  late final GeneratedColumn<String> Jumlah = GeneratedColumn<String>(
+    'Jumlah',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [Uuid, UuidReturPenjualan, UuidMetodePembayaran, Jenis, NamaMetode, Jumlah];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ReturPenjualanPembayaran';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BarisReturPenjualanPembayaran> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidReturPenjualan')) {
+      context.handle(
+        _UuidReturPenjualanMeta,
+        UuidReturPenjualan.isAcceptableOrUnknown(data['UuidReturPenjualan']!, _UuidReturPenjualanMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidReturPenjualanMeta);
+    }
+    if (data.containsKey('UuidMetodePembayaran')) {
+      context.handle(
+        _UuidMetodePembayaranMeta,
+        UuidMetodePembayaran.isAcceptableOrUnknown(data['UuidMetodePembayaran']!, _UuidMetodePembayaranMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidMetodePembayaranMeta);
+    }
+    if (data.containsKey('Jenis')) {
+      context.handle(_JenisMeta, Jenis.isAcceptableOrUnknown(data['Jenis']!, _JenisMeta));
+    } else if (isInserting) {
+      context.missing(_JenisMeta);
+    }
+    if (data.containsKey('NamaMetode')) {
+      context.handle(_NamaMetodeMeta, NamaMetode.isAcceptableOrUnknown(data['NamaMetode']!, _NamaMetodeMeta));
+    } else if (isInserting) {
+      context.missing(_NamaMetodeMeta);
+    }
+    if (data.containsKey('Jumlah')) {
+      context.handle(_JumlahMeta, Jumlah.isAcceptableOrUnknown(data['Jumlah']!, _JumlahMeta));
+    } else if (isInserting) {
+      context.missing(_JumlahMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisReturPenjualanPembayaran map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisReturPenjualanPembayaran(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidReturPenjualan: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidReturPenjualan'],
+      )!,
+      UuidMetodePembayaran: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidMetodePembayaran'],
+      )!,
+      Jenis: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Jenis'])!,
+      NamaMetode: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaMetode'])!,
+      Jumlah: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Jumlah'])!,
+    );
+  }
+
+  @override
+  $ReturPenjualanPembayaranTable createAlias(String alias) {
+    return $ReturPenjualanPembayaranTable(attachedDatabase, alias);
+  }
+}
+
+class BarisReturPenjualanPembayaran extends DataClass implements Insertable<BarisReturPenjualanPembayaran> {
+  final String Uuid;
+  final String UuidReturPenjualan;
+  final String UuidMetodePembayaran;
+  final String Jenis;
+  final String NamaMetode;
+  final String Jumlah;
+  const BarisReturPenjualanPembayaran({
+    required this.Uuid,
+    required this.UuidReturPenjualan,
+    required this.UuidMetodePembayaran,
+    required this.Jenis,
+    required this.NamaMetode,
+    required this.Jumlah,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidReturPenjualan'] = Variable<String>(UuidReturPenjualan);
+    map['UuidMetodePembayaran'] = Variable<String>(UuidMetodePembayaran);
+    map['Jenis'] = Variable<String>(Jenis);
+    map['NamaMetode'] = Variable<String>(NamaMetode);
+    map['Jumlah'] = Variable<String>(Jumlah);
+    return map;
+  }
+
+  ReturPenjualanPembayaranCompanion toCompanion(bool nullToAbsent) {
+    return ReturPenjualanPembayaranCompanion(
+      Uuid: Value(Uuid),
+      UuidReturPenjualan: Value(UuidReturPenjualan),
+      UuidMetodePembayaran: Value(UuidMetodePembayaran),
+      Jenis: Value(Jenis),
+      NamaMetode: Value(NamaMetode),
+      Jumlah: Value(Jumlah),
+    );
+  }
+
+  factory BarisReturPenjualanPembayaran.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisReturPenjualanPembayaran(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidReturPenjualan: serializer.fromJson<String>(json['UuidReturPenjualan']),
+      UuidMetodePembayaran: serializer.fromJson<String>(json['UuidMetodePembayaran']),
+      Jenis: serializer.fromJson<String>(json['Jenis']),
+      NamaMetode: serializer.fromJson<String>(json['NamaMetode']),
+      Jumlah: serializer.fromJson<String>(json['Jumlah']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidReturPenjualan': serializer.toJson<String>(UuidReturPenjualan),
+      'UuidMetodePembayaran': serializer.toJson<String>(UuidMetodePembayaran),
+      'Jenis': serializer.toJson<String>(Jenis),
+      'NamaMetode': serializer.toJson<String>(NamaMetode),
+      'Jumlah': serializer.toJson<String>(Jumlah),
+    };
+  }
+
+  BarisReturPenjualanPembayaran copyWith({
+    String? Uuid,
+    String? UuidReturPenjualan,
+    String? UuidMetodePembayaran,
+    String? Jenis,
+    String? NamaMetode,
+    String? Jumlah,
+  }) => BarisReturPenjualanPembayaran(
+    Uuid: Uuid ?? this.Uuid,
+    UuidReturPenjualan: UuidReturPenjualan ?? this.UuidReturPenjualan,
+    UuidMetodePembayaran: UuidMetodePembayaran ?? this.UuidMetodePembayaran,
+    Jenis: Jenis ?? this.Jenis,
+    NamaMetode: NamaMetode ?? this.NamaMetode,
+    Jumlah: Jumlah ?? this.Jumlah,
+  );
+  BarisReturPenjualanPembayaran copyWithCompanion(ReturPenjualanPembayaranCompanion data) {
+    return BarisReturPenjualanPembayaran(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidReturPenjualan: data.UuidReturPenjualan.present ? data.UuidReturPenjualan.value : this.UuidReturPenjualan,
+      UuidMetodePembayaran: data.UuidMetodePembayaran.present
+          ? data.UuidMetodePembayaran.value
+          : this.UuidMetodePembayaran,
+      Jenis: data.Jenis.present ? data.Jenis.value : this.Jenis,
+      NamaMetode: data.NamaMetode.present ? data.NamaMetode.value : this.NamaMetode,
+      Jumlah: data.Jumlah.present ? data.Jumlah.value : this.Jumlah,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisReturPenjualanPembayaran(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidReturPenjualan: $UuidReturPenjualan, ')
+          ..write('UuidMetodePembayaran: $UuidMetodePembayaran, ')
+          ..write('Jenis: $Jenis, ')
+          ..write('NamaMetode: $NamaMetode, ')
+          ..write('Jumlah: $Jumlah')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(Uuid, UuidReturPenjualan, UuidMetodePembayaran, Jenis, NamaMetode, Jumlah);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisReturPenjualanPembayaran &&
+          other.Uuid == this.Uuid &&
+          other.UuidReturPenjualan == this.UuidReturPenjualan &&
+          other.UuidMetodePembayaran == this.UuidMetodePembayaran &&
+          other.Jenis == this.Jenis &&
+          other.NamaMetode == this.NamaMetode &&
+          other.Jumlah == this.Jumlah);
+}
+
+class ReturPenjualanPembayaranCompanion extends UpdateCompanion<BarisReturPenjualanPembayaran> {
+  final Value<String> Uuid;
+  final Value<String> UuidReturPenjualan;
+  final Value<String> UuidMetodePembayaran;
+  final Value<String> Jenis;
+  final Value<String> NamaMetode;
+  final Value<String> Jumlah;
+  final Value<int> rowid;
+  const ReturPenjualanPembayaranCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidReturPenjualan = const Value.absent(),
+    this.UuidMetodePembayaran = const Value.absent(),
+    this.Jenis = const Value.absent(),
+    this.NamaMetode = const Value.absent(),
+    this.Jumlah = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReturPenjualanPembayaranCompanion.insert({
+    required String Uuid,
+    required String UuidReturPenjualan,
+    required String UuidMetodePembayaran,
+    required String Jenis,
+    required String NamaMetode,
+    required String Jumlah,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidReturPenjualan = Value(UuidReturPenjualan),
+       UuidMetodePembayaran = Value(UuidMetodePembayaran),
+       Jenis = Value(Jenis),
+       NamaMetode = Value(NamaMetode),
+       Jumlah = Value(Jumlah);
+  static Insertable<BarisReturPenjualanPembayaran> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidReturPenjualan,
+    Expression<String>? UuidMetodePembayaran,
+    Expression<String>? Jenis,
+    Expression<String>? NamaMetode,
+    Expression<String>? Jumlah,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidReturPenjualan != null) 'UuidReturPenjualan': UuidReturPenjualan,
+      if (UuidMetodePembayaran != null) 'UuidMetodePembayaran': UuidMetodePembayaran,
+      if (Jenis != null) 'Jenis': Jenis,
+      if (NamaMetode != null) 'NamaMetode': NamaMetode,
+      if (Jumlah != null) 'Jumlah': Jumlah,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReturPenjualanPembayaranCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidReturPenjualan,
+    Value<String>? UuidMetodePembayaran,
+    Value<String>? Jenis,
+    Value<String>? NamaMetode,
+    Value<String>? Jumlah,
+    Value<int>? rowid,
+  }) {
+    return ReturPenjualanPembayaranCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidReturPenjualan: UuidReturPenjualan ?? this.UuidReturPenjualan,
+      UuidMetodePembayaran: UuidMetodePembayaran ?? this.UuidMetodePembayaran,
+      Jenis: Jenis ?? this.Jenis,
+      NamaMetode: NamaMetode ?? this.NamaMetode,
+      Jumlah: Jumlah ?? this.Jumlah,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidReturPenjualan.present) {
+      map['UuidReturPenjualan'] = Variable<String>(UuidReturPenjualan.value);
+    }
+    if (UuidMetodePembayaran.present) {
+      map['UuidMetodePembayaran'] = Variable<String>(UuidMetodePembayaran.value);
+    }
+    if (Jenis.present) {
+      map['Jenis'] = Variable<String>(Jenis.value);
+    }
+    if (NamaMetode.present) {
+      map['NamaMetode'] = Variable<String>(NamaMetode.value);
+    }
+    if (Jumlah.present) {
+      map['Jumlah'] = Variable<String>(Jumlah.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReturPenjualanPembayaranCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidReturPenjualan: $UuidReturPenjualan, ')
+          ..write('UuidMetodePembayaran: $UuidMetodePembayaran, ')
+          ..write('Jenis: $Jenis, ')
+          ..write('NamaMetode: $NamaMetode, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $NomorUrutReturPenjualanTable extends NomorUrutReturPenjualan
+    with TableInfo<$NomorUrutReturPenjualanTable, BarisNomorUrutReturPenjualan> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NomorUrutReturPenjualanTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _KodePerangkatMeta = const VerificationMeta('KodePerangkat');
+  @override
+  late final GeneratedColumn<String> KodePerangkat = GeneratedColumn<String>(
+    'KodePerangkat',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TanggalMeta = const VerificationMeta('Tanggal');
+  @override
+  late final GeneratedColumn<String> Tanggal = GeneratedColumn<String>(
+    'Tanggal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TerakhirMeta = const VerificationMeta('Terakhir');
+  @override
+  late final GeneratedColumn<int> Terakhir = GeneratedColumn<int>(
+    'Terakhir',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [KodePerangkat, Tanggal, Terakhir];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'NomorUrutReturPenjualan';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisNomorUrutReturPenjualan> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('KodePerangkat')) {
+      context.handle(
+        _KodePerangkatMeta,
+        KodePerangkat.isAcceptableOrUnknown(data['KodePerangkat']!, _KodePerangkatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_KodePerangkatMeta);
+    }
+    if (data.containsKey('Tanggal')) {
+      context.handle(_TanggalMeta, Tanggal.isAcceptableOrUnknown(data['Tanggal']!, _TanggalMeta));
+    } else if (isInserting) {
+      context.missing(_TanggalMeta);
+    }
+    if (data.containsKey('Terakhir')) {
+      context.handle(_TerakhirMeta, Terakhir.isAcceptableOrUnknown(data['Terakhir']!, _TerakhirMeta));
+    } else if (isInserting) {
+      context.missing(_TerakhirMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {KodePerangkat, Tanggal};
+  @override
+  BarisNomorUrutReturPenjualan map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisNomorUrutReturPenjualan(
+      KodePerangkat: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KodePerangkat'])!,
+      Tanggal: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Tanggal'])!,
+      Terakhir: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}Terakhir'])!,
+    );
+  }
+
+  @override
+  $NomorUrutReturPenjualanTable createAlias(String alias) {
+    return $NomorUrutReturPenjualanTable(attachedDatabase, alias);
+  }
+}
+
+class BarisNomorUrutReturPenjualan extends DataClass implements Insertable<BarisNomorUrutReturPenjualan> {
+  final String KodePerangkat;
+
+  /// `YYMMDD`.
+  final String Tanggal;
+  final int Terakhir;
+  const BarisNomorUrutReturPenjualan({required this.KodePerangkat, required this.Tanggal, required this.Terakhir});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['KodePerangkat'] = Variable<String>(KodePerangkat);
+    map['Tanggal'] = Variable<String>(Tanggal);
+    map['Terakhir'] = Variable<int>(Terakhir);
+    return map;
+  }
+
+  NomorUrutReturPenjualanCompanion toCompanion(bool nullToAbsent) {
+    return NomorUrutReturPenjualanCompanion(
+      KodePerangkat: Value(KodePerangkat),
+      Tanggal: Value(Tanggal),
+      Terakhir: Value(Terakhir),
+    );
+  }
+
+  factory BarisNomorUrutReturPenjualan.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisNomorUrutReturPenjualan(
+      KodePerangkat: serializer.fromJson<String>(json['KodePerangkat']),
+      Tanggal: serializer.fromJson<String>(json['Tanggal']),
+      Terakhir: serializer.fromJson<int>(json['Terakhir']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'KodePerangkat': serializer.toJson<String>(KodePerangkat),
+      'Tanggal': serializer.toJson<String>(Tanggal),
+      'Terakhir': serializer.toJson<int>(Terakhir),
+    };
+  }
+
+  BarisNomorUrutReturPenjualan copyWith({String? KodePerangkat, String? Tanggal, int? Terakhir}) =>
+      BarisNomorUrutReturPenjualan(
+        KodePerangkat: KodePerangkat ?? this.KodePerangkat,
+        Tanggal: Tanggal ?? this.Tanggal,
+        Terakhir: Terakhir ?? this.Terakhir,
+      );
+  BarisNomorUrutReturPenjualan copyWithCompanion(NomorUrutReturPenjualanCompanion data) {
+    return BarisNomorUrutReturPenjualan(
+      KodePerangkat: data.KodePerangkat.present ? data.KodePerangkat.value : this.KodePerangkat,
+      Tanggal: data.Tanggal.present ? data.Tanggal.value : this.Tanggal,
+      Terakhir: data.Terakhir.present ? data.Terakhir.value : this.Terakhir,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisNomorUrutReturPenjualan(')
+          ..write('KodePerangkat: $KodePerangkat, ')
+          ..write('Tanggal: $Tanggal, ')
+          ..write('Terakhir: $Terakhir')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(KodePerangkat, Tanggal, Terakhir);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisNomorUrutReturPenjualan &&
+          other.KodePerangkat == this.KodePerangkat &&
+          other.Tanggal == this.Tanggal &&
+          other.Terakhir == this.Terakhir);
+}
+
+class NomorUrutReturPenjualanCompanion extends UpdateCompanion<BarisNomorUrutReturPenjualan> {
+  final Value<String> KodePerangkat;
+  final Value<String> Tanggal;
+  final Value<int> Terakhir;
+  final Value<int> rowid;
+  const NomorUrutReturPenjualanCompanion({
+    this.KodePerangkat = const Value.absent(),
+    this.Tanggal = const Value.absent(),
+    this.Terakhir = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NomorUrutReturPenjualanCompanion.insert({
+    required String KodePerangkat,
+    required String Tanggal,
+    required int Terakhir,
+    this.rowid = const Value.absent(),
+  }) : KodePerangkat = Value(KodePerangkat),
+       Tanggal = Value(Tanggal),
+       Terakhir = Value(Terakhir);
+  static Insertable<BarisNomorUrutReturPenjualan> custom({
+    Expression<String>? KodePerangkat,
+    Expression<String>? Tanggal,
+    Expression<int>? Terakhir,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (KodePerangkat != null) 'KodePerangkat': KodePerangkat,
+      if (Tanggal != null) 'Tanggal': Tanggal,
+      if (Terakhir != null) 'Terakhir': Terakhir,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NomorUrutReturPenjualanCompanion copyWith({
+    Value<String>? KodePerangkat,
+    Value<String>? Tanggal,
+    Value<int>? Terakhir,
+    Value<int>? rowid,
+  }) {
+    return NomorUrutReturPenjualanCompanion(
+      KodePerangkat: KodePerangkat ?? this.KodePerangkat,
+      Tanggal: Tanggal ?? this.Tanggal,
+      Terakhir: Terakhir ?? this.Terakhir,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (KodePerangkat.present) {
+      map['KodePerangkat'] = Variable<String>(KodePerangkat.value);
+    }
+    if (Tanggal.present) {
+      map['Tanggal'] = Variable<String>(Tanggal.value);
+    }
+    if (Terakhir.present) {
+      map['Terakhir'] = Variable<int>(Terakhir.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NomorUrutReturPenjualanCompanion(')
+          ..write('KodePerangkat: $KodePerangkat, ')
+          ..write('Tanggal: $Tanggal, ')
+          ..write('Terakhir: $Terakhir, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BasisDataKasir extends GeneratedDatabase {
   _$BasisDataKasir(QueryExecutor e) : super(e);
   $BasisDataKasirManager get managers => $BasisDataKasirManager(this);
@@ -10911,6 +13313,11 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
   late final $PenjualanPembayaranTable penjualanPembayaran = $PenjualanPembayaranTable(this);
   late final $PesananTertahanTable pesananTertahan = $PesananTertahanTable(this);
   late final $NomorUrutPenjualanTable nomorUrutPenjualan = $NomorUrutPenjualanTable(this);
+  late final $VoidPenjualanTable voidPenjualan = $VoidPenjualanTable(this);
+  late final $ReturPenjualanTable returPenjualan = $ReturPenjualanTable(this);
+  late final $ReturPenjualanDetailTable returPenjualanDetail = $ReturPenjualanDetailTable(this);
+  late final $ReturPenjualanPembayaranTable returPenjualanPembayaran = $ReturPenjualanPembayaranTable(this);
+  late final $NomorUrutReturPenjualanTable nomorUrutReturPenjualan = $NomorUrutReturPenjualanTable(this);
   late final Index indeksProdukBarcodeBarcode = Index(
     'IndeksProdukBarcodeBarcode',
     'CREATE INDEX IndeksProdukBarcodeBarcode ON ProdukBarcode (Barcode)',
@@ -10949,6 +13356,11 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
     penjualanPembayaran,
     pesananTertahan,
     nomorUrutPenjualan,
+    voidPenjualan,
+    returPenjualan,
+    returPenjualanDetail,
+    returPenjualanPembayaran,
+    nomorUrutReturPenjualan,
     indeksProdukBarcodeBarcode,
     indeksPenjualanTanggalBisnis,
   ];
@@ -16635,6 +19047,1468 @@ typedef $$NomorUrutPenjualanTableProcessedTableManager =
       BarisNomorUrutPenjualan,
       PrefetchHooks Function()
     >;
+typedef $$VoidPenjualanTableCreateCompanionBuilder = VoidPenjualanCompanion Function({
+  required String Uuid,
+  required String UuidPenjualan,
+  required String UuidShift,
+  required String UuidPengguna,
+  required String NamaPengguna,
+  required String UuidPenyetuju,
+  required String NamaPenyetuju,
+  required String Alasan,
+  required DateTime DivoidPada,
+  required String Nominal,
+  required String RefundTunai,
+  required String RefundNonTunai,
+  Value<int> rowid,
+});
+typedef $$VoidPenjualanTableUpdateCompanionBuilder = VoidPenjualanCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidPenjualan,
+  Value<String> UuidShift,
+  Value<String> UuidPengguna,
+  Value<String> NamaPengguna,
+  Value<String> UuidPenyetuju,
+  Value<String> NamaPenyetuju,
+  Value<String> Alasan,
+  Value<DateTime> DivoidPada,
+  Value<String> Nominal,
+  Value<String> RefundTunai,
+  Value<String> RefundNonTunai,
+  Value<int> rowid,
+});
+
+class $$VoidPenjualanTableFilterComposer extends Composer<_$BasisDataKasir, $VoidPenjualanTable> {
+  $$VoidPenjualanTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenjualan =>
+      $composableBuilder(column: $table.UuidPenjualan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaPenyetuju =>
+      $composableBuilder(column: $table.NamaPenyetuju, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get DivoidPada =>
+      $composableBuilder(column: $table.DivoidPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Nominal =>
+      $composableBuilder(column: $table.Nominal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get RefundNonTunai =>
+      $composableBuilder(column: $table.RefundNonTunai, builder: (column) => ColumnFilters(column));
+}
+
+class $$VoidPenjualanTableOrderingComposer extends Composer<_$BasisDataKasir, $VoidPenjualanTable> {
+  $$VoidPenjualanTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenjualan =>
+      $composableBuilder(column: $table.UuidPenjualan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaPenyetuju =>
+      $composableBuilder(column: $table.NamaPenyetuju, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get DivoidPada =>
+      $composableBuilder(column: $table.DivoidPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Nominal =>
+      $composableBuilder(column: $table.Nominal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get RefundNonTunai =>
+      $composableBuilder(column: $table.RefundNonTunai, builder: (column) => ColumnOrderings(column));
+}
+
+class $$VoidPenjualanTableAnnotationComposer extends Composer<_$BasisDataKasir, $VoidPenjualanTable> {
+  $$VoidPenjualanTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenjualan =>
+      $composableBuilder(column: $table.UuidPenjualan, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidShift => $composableBuilder(column: $table.UuidShift, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaPenyetuju =>
+      $composableBuilder(column: $table.NamaPenyetuju, builder: (column) => column);
+
+  GeneratedColumn<String> get Alasan => $composableBuilder(column: $table.Alasan, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get DivoidPada =>
+      $composableBuilder(column: $table.DivoidPada, builder: (column) => column);
+
+  GeneratedColumn<String> get Nominal => $composableBuilder(column: $table.Nominal, builder: (column) => column);
+
+  GeneratedColumn<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => column);
+
+  GeneratedColumn<String> get RefundNonTunai =>
+      $composableBuilder(column: $table.RefundNonTunai, builder: (column) => column);
+}
+
+class $$VoidPenjualanTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $VoidPenjualanTable,
+          BarisVoidPenjualan,
+          $$VoidPenjualanTableFilterComposer,
+          $$VoidPenjualanTableOrderingComposer,
+          $$VoidPenjualanTableAnnotationComposer,
+          $$VoidPenjualanTableCreateCompanionBuilder,
+          $$VoidPenjualanTableUpdateCompanionBuilder,
+          (BarisVoidPenjualan, BaseReferences<_$BasisDataKasir, $VoidPenjualanTable, BarisVoidPenjualan>),
+          BarisVoidPenjualan,
+          PrefetchHooks Function()
+        > {
+  $$VoidPenjualanTableTableManager(_$BasisDataKasir db, $VoidPenjualanTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$VoidPenjualanTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$VoidPenjualanTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$VoidPenjualanTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidPenjualan = const Value.absent(),
+                Value<String> UuidShift = const Value.absent(),
+                Value<String> UuidPengguna = const Value.absent(),
+                Value<String> NamaPengguna = const Value.absent(),
+                Value<String> UuidPenyetuju = const Value.absent(),
+                Value<String> NamaPenyetuju = const Value.absent(),
+                Value<String> Alasan = const Value.absent(),
+                Value<DateTime> DivoidPada = const Value.absent(),
+                Value<String> Nominal = const Value.absent(),
+                Value<String> RefundTunai = const Value.absent(),
+                Value<String> RefundNonTunai = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VoidPenjualanCompanion(
+                Uuid: Uuid,
+                UuidPenjualan: UuidPenjualan,
+                UuidShift: UuidShift,
+                UuidPengguna: UuidPengguna,
+                NamaPengguna: NamaPengguna,
+                UuidPenyetuju: UuidPenyetuju,
+                NamaPenyetuju: NamaPenyetuju,
+                Alasan: Alasan,
+                DivoidPada: DivoidPada,
+                Nominal: Nominal,
+                RefundTunai: RefundTunai,
+                RefundNonTunai: RefundNonTunai,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidPenjualan,
+                required String UuidShift,
+                required String UuidPengguna,
+                required String NamaPengguna,
+                required String UuidPenyetuju,
+                required String NamaPenyetuju,
+                required String Alasan,
+                required DateTime DivoidPada,
+                required String Nominal,
+                required String RefundTunai,
+                required String RefundNonTunai,
+                Value<int> rowid = const Value.absent(),
+              }) => VoidPenjualanCompanion.insert(
+                Uuid: Uuid,
+                UuidPenjualan: UuidPenjualan,
+                UuidShift: UuidShift,
+                UuidPengguna: UuidPengguna,
+                NamaPengguna: NamaPengguna,
+                UuidPenyetuju: UuidPenyetuju,
+                NamaPenyetuju: NamaPenyetuju,
+                Alasan: Alasan,
+                DivoidPada: DivoidPada,
+                Nominal: Nominal,
+                RefundTunai: RefundTunai,
+                RefundNonTunai: RefundNonTunai,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$VoidPenjualanTable, BarisVoidPenjualan>(table),
+                  BaseReferences<_$BasisDataKasir, $VoidPenjualanTable, BarisVoidPenjualan>(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VoidPenjualanTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $VoidPenjualanTable,
+      BarisVoidPenjualan,
+      $$VoidPenjualanTableFilterComposer,
+      $$VoidPenjualanTableOrderingComposer,
+      $$VoidPenjualanTableAnnotationComposer,
+      $$VoidPenjualanTableCreateCompanionBuilder,
+      $$VoidPenjualanTableUpdateCompanionBuilder,
+      (BarisVoidPenjualan, BaseReferences<_$BasisDataKasir, $VoidPenjualanTable, BarisVoidPenjualan>),
+      BarisVoidPenjualan,
+      PrefetchHooks Function()
+    >;
+typedef $$ReturPenjualanTableCreateCompanionBuilder = ReturPenjualanCompanion Function({
+  required String Uuid,
+  required String Nomor,
+  required String UuidPenjualanAsal,
+  required String NomorPenjualanAsal,
+  required String UuidShift,
+  required String UuidPengguna,
+  required String NamaKasir,
+  required String UuidPenyetuju,
+  required String Alasan,
+  required DateTime DibuatPada,
+  required String TanggalBisnis,
+  required String MetodeRefund,
+  required String TotalRefund,
+  required String RefundTunai,
+  Value<int> rowid,
+});
+typedef $$ReturPenjualanTableUpdateCompanionBuilder = ReturPenjualanCompanion Function({
+  Value<String> Uuid,
+  Value<String> Nomor,
+  Value<String> UuidPenjualanAsal,
+  Value<String> NomorPenjualanAsal,
+  Value<String> UuidShift,
+  Value<String> UuidPengguna,
+  Value<String> NamaKasir,
+  Value<String> UuidPenyetuju,
+  Value<String> Alasan,
+  Value<DateTime> DibuatPada,
+  Value<String> TanggalBisnis,
+  Value<String> MetodeRefund,
+  Value<String> TotalRefund,
+  Value<String> RefundTunai,
+  Value<int> rowid,
+});
+
+final class $$ReturPenjualanTableReferences
+    extends BaseReferences<_$BasisDataKasir, $ReturPenjualanTable, BarisReturPenjualan> {
+  $$ReturPenjualanTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ReturPenjualanDetailTable, List<BarisReturPenjualanDetail>>
+  _returPenjualanDetailRefsTable(_$BasisDataKasir db) => MultiTypedResultKey.fromTable(
+    db.returPenjualanDetail,
+    aliasName: 'ReturPenjualan__Uuid__ReturPenjualanDetail__UuidReturPenjualan',
+  );
+
+  $$ReturPenjualanDetailTableProcessedTableManager get returPenjualanDetailRefs {
+    final manager = $$ReturPenjualanDetailTableTableManager(
+      $_db,
+      $_db.returPenjualanDetail,
+    ).filter((f) => f.UuidReturPenjualan.Uuid.sqlEquals($_itemColumn<String>('Uuid')!));
+
+    final cache = $_typedResult.readTableOrNull(_returPenjualanDetailRefsTable($_db));
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$ReturPenjualanPembayaranTable, List<BarisReturPenjualanPembayaran>>
+  _returPenjualanPembayaranRefsTable(_$BasisDataKasir db) => MultiTypedResultKey.fromTable(
+    db.returPenjualanPembayaran,
+    aliasName: 'ReturPenjualan__Uuid__ReturPenjualanPembayaran__UuidReturPenjualan',
+  );
+
+  $$ReturPenjualanPembayaranTableProcessedTableManager get returPenjualanPembayaranRefs {
+    final manager = $$ReturPenjualanPembayaranTableTableManager(
+      $_db,
+      $_db.returPenjualanPembayaran,
+    ).filter((f) => f.UuidReturPenjualan.Uuid.sqlEquals($_itemColumn<String>('Uuid')!));
+
+    final cache = $_typedResult.readTableOrNull(_returPenjualanPembayaranRefsTable($_db));
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$ReturPenjualanTableFilterComposer extends Composer<_$BasisDataKasir, $ReturPenjualanTable> {
+  $$ReturPenjualanTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Nomor =>
+      $composableBuilder(column: $table.Nomor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenjualanAsal =>
+      $composableBuilder(column: $table.UuidPenjualanAsal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NomorPenjualanAsal =>
+      $composableBuilder(column: $table.NomorPenjualanAsal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaKasir =>
+      $composableBuilder(column: $table.NamaKasir, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get MetodeRefund =>
+      $composableBuilder(column: $table.MetodeRefund, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get TotalRefund =>
+      $composableBuilder(column: $table.TotalRefund, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> returPenjualanDetailRefs(Expression<bool> Function($$ReturPenjualanDetailTableFilterComposer f) f) {
+    final $$ReturPenjualanDetailTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.Uuid,
+      referencedTable: $db.returPenjualanDetail,
+      getReferencedColumn: (t) => t.UuidReturPenjualan,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanDetailTableFilterComposer(
+            $db: $db,
+            $table: $db.returPenjualanDetail,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> returPenjualanPembayaranRefs(
+    Expression<bool> Function($$ReturPenjualanPembayaranTableFilterComposer f) f,
+  ) {
+    final $$ReturPenjualanPembayaranTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.Uuid,
+      referencedTable: $db.returPenjualanPembayaran,
+      getReferencedColumn: (t) => t.UuidReturPenjualan,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanPembayaranTableFilterComposer(
+            $db: $db,
+            $table: $db.returPenjualanPembayaran,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ReturPenjualanTableOrderingComposer extends Composer<_$BasisDataKasir, $ReturPenjualanTable> {
+  $$ReturPenjualanTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Nomor =>
+      $composableBuilder(column: $table.Nomor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenjualanAsal =>
+      $composableBuilder(column: $table.UuidPenjualanAsal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NomorPenjualanAsal =>
+      $composableBuilder(column: $table.NomorPenjualanAsal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaKasir =>
+      $composableBuilder(column: $table.NamaKasir, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get MetodeRefund =>
+      $composableBuilder(column: $table.MetodeRefund, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get TotalRefund =>
+      $composableBuilder(column: $table.TotalRefund, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ReturPenjualanTableAnnotationComposer extends Composer<_$BasisDataKasir, $ReturPenjualanTable> {
+  $$ReturPenjualanTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get Nomor => $composableBuilder(column: $table.Nomor, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenjualanAsal =>
+      $composableBuilder(column: $table.UuidPenjualanAsal, builder: (column) => column);
+
+  GeneratedColumn<String> get NomorPenjualanAsal =>
+      $composableBuilder(column: $table.NomorPenjualanAsal, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidShift => $composableBuilder(column: $table.UuidShift, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaKasir => $composableBuilder(column: $table.NamaKasir, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenyetuju =>
+      $composableBuilder(column: $table.UuidPenyetuju, builder: (column) => column);
+
+  GeneratedColumn<String> get Alasan => $composableBuilder(column: $table.Alasan, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => column);
+
+  GeneratedColumn<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => column);
+
+  GeneratedColumn<String> get MetodeRefund =>
+      $composableBuilder(column: $table.MetodeRefund, builder: (column) => column);
+
+  GeneratedColumn<String> get TotalRefund =>
+      $composableBuilder(column: $table.TotalRefund, builder: (column) => column);
+
+  GeneratedColumn<String> get RefundTunai =>
+      $composableBuilder(column: $table.RefundTunai, builder: (column) => column);
+
+  Expression<T> returPenjualanDetailRefs<T extends Object>(
+    Expression<T> Function($$ReturPenjualanDetailTableAnnotationComposer a) f,
+  ) {
+    final $$ReturPenjualanDetailTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.Uuid,
+      referencedTable: $db.returPenjualanDetail,
+      getReferencedColumn: (t) => t.UuidReturPenjualan,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanDetailTableAnnotationComposer(
+            $db: $db,
+            $table: $db.returPenjualanDetail,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> returPenjualanPembayaranRefs<T extends Object>(
+    Expression<T> Function($$ReturPenjualanPembayaranTableAnnotationComposer a) f,
+  ) {
+    final $$ReturPenjualanPembayaranTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.Uuid,
+      referencedTable: $db.returPenjualanPembayaran,
+      getReferencedColumn: (t) => t.UuidReturPenjualan,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanPembayaranTableAnnotationComposer(
+            $db: $db,
+            $table: $db.returPenjualanPembayaran,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ReturPenjualanTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $ReturPenjualanTable,
+          BarisReturPenjualan,
+          $$ReturPenjualanTableFilterComposer,
+          $$ReturPenjualanTableOrderingComposer,
+          $$ReturPenjualanTableAnnotationComposer,
+          $$ReturPenjualanTableCreateCompanionBuilder,
+          $$ReturPenjualanTableUpdateCompanionBuilder,
+          (BarisReturPenjualan, $$ReturPenjualanTableReferences),
+          BarisReturPenjualan,
+          PrefetchHooks Function({bool returPenjualanDetailRefs, bool returPenjualanPembayaranRefs})
+        > {
+  $$ReturPenjualanTableTableManager(_$BasisDataKasir db, $ReturPenjualanTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$ReturPenjualanTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$ReturPenjualanTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$ReturPenjualanTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> Nomor = const Value.absent(),
+                Value<String> UuidPenjualanAsal = const Value.absent(),
+                Value<String> NomorPenjualanAsal = const Value.absent(),
+                Value<String> UuidShift = const Value.absent(),
+                Value<String> UuidPengguna = const Value.absent(),
+                Value<String> NamaKasir = const Value.absent(),
+                Value<String> UuidPenyetuju = const Value.absent(),
+                Value<String> Alasan = const Value.absent(),
+                Value<DateTime> DibuatPada = const Value.absent(),
+                Value<String> TanggalBisnis = const Value.absent(),
+                Value<String> MetodeRefund = const Value.absent(),
+                Value<String> TotalRefund = const Value.absent(),
+                Value<String> RefundTunai = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanCompanion(
+                Uuid: Uuid,
+                Nomor: Nomor,
+                UuidPenjualanAsal: UuidPenjualanAsal,
+                NomorPenjualanAsal: NomorPenjualanAsal,
+                UuidShift: UuidShift,
+                UuidPengguna: UuidPengguna,
+                NamaKasir: NamaKasir,
+                UuidPenyetuju: UuidPenyetuju,
+                Alasan: Alasan,
+                DibuatPada: DibuatPada,
+                TanggalBisnis: TanggalBisnis,
+                MetodeRefund: MetodeRefund,
+                TotalRefund: TotalRefund,
+                RefundTunai: RefundTunai,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String Nomor,
+                required String UuidPenjualanAsal,
+                required String NomorPenjualanAsal,
+                required String UuidShift,
+                required String UuidPengguna,
+                required String NamaKasir,
+                required String UuidPenyetuju,
+                required String Alasan,
+                required DateTime DibuatPada,
+                required String TanggalBisnis,
+                required String MetodeRefund,
+                required String TotalRefund,
+                required String RefundTunai,
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanCompanion.insert(
+                Uuid: Uuid,
+                Nomor: Nomor,
+                UuidPenjualanAsal: UuidPenjualanAsal,
+                NomorPenjualanAsal: NomorPenjualanAsal,
+                UuidShift: UuidShift,
+                UuidPengguna: UuidPengguna,
+                NamaKasir: NamaKasir,
+                UuidPenyetuju: UuidPenyetuju,
+                Alasan: Alasan,
+                DibuatPada: DibuatPada,
+                TanggalBisnis: TanggalBisnis,
+                MetodeRefund: MetodeRefund,
+                TotalRefund: TotalRefund,
+                RefundTunai: RefundTunai,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReturPenjualanTable, BarisReturPenjualan>(table),
+                  $$ReturPenjualanTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({returPenjualanDetailRefs = false, returPenjualanPembayaranRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (returPenjualanDetailRefs) db.returPenjualanDetail,
+                if (returPenjualanPembayaranRefs) db.returPenjualanPembayaran,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (returPenjualanDetailRefs)
+                    await $_getPrefetchedData<BarisReturPenjualan, $ReturPenjualanTable, BarisReturPenjualanDetail>(
+                      currentTable: table,
+                      referencedTable: $$ReturPenjualanTableReferences._returPenjualanDetailRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ReturPenjualanTableReferences(db, table, p0).returPenjualanDetailRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.UuidReturPenjualan == item.Uuid),
+                      typedResults: items,
+                    ),
+                  if (returPenjualanPembayaranRefs)
+                    await $_getPrefetchedData<BarisReturPenjualan, $ReturPenjualanTable, BarisReturPenjualanPembayaran>(
+                      currentTable: table,
+                      referencedTable: $$ReturPenjualanTableReferences._returPenjualanPembayaranRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ReturPenjualanTableReferences(db, table, p0).returPenjualanPembayaranRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.UuidReturPenjualan == item.Uuid),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReturPenjualanTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $ReturPenjualanTable,
+      BarisReturPenjualan,
+      $$ReturPenjualanTableFilterComposer,
+      $$ReturPenjualanTableOrderingComposer,
+      $$ReturPenjualanTableAnnotationComposer,
+      $$ReturPenjualanTableCreateCompanionBuilder,
+      $$ReturPenjualanTableUpdateCompanionBuilder,
+      (BarisReturPenjualan, $$ReturPenjualanTableReferences),
+      BarisReturPenjualan,
+      PrefetchHooks Function({bool returPenjualanDetailRefs, bool returPenjualanPembayaranRefs})
+    >;
+typedef $$ReturPenjualanDetailTableCreateCompanionBuilder = ReturPenjualanDetailCompanion Function({
+  required String Uuid,
+  required String UuidReturPenjualan,
+  required String UuidPenjualanDetail,
+  required String NamaProduk,
+  required String SimbolSatuan,
+  required String Jumlah,
+  required String Kondisi,
+  required String NilaiBaris,
+  Value<int> rowid,
+});
+typedef $$ReturPenjualanDetailTableUpdateCompanionBuilder = ReturPenjualanDetailCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidReturPenjualan,
+  Value<String> UuidPenjualanDetail,
+  Value<String> NamaProduk,
+  Value<String> SimbolSatuan,
+  Value<String> Jumlah,
+  Value<String> Kondisi,
+  Value<String> NilaiBaris,
+  Value<int> rowid,
+});
+
+final class $$ReturPenjualanDetailTableReferences
+    extends BaseReferences<_$BasisDataKasir, $ReturPenjualanDetailTable, BarisReturPenjualanDetail> {
+  $$ReturPenjualanDetailTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ReturPenjualanTable _UuidReturPenjualanTable(_$BasisDataKasir db) =>
+      db.returPenjualan.createAlias('ReturPenjualanDetail__UuidReturPenjualan__ReturPenjualan__Uuid');
+
+  $$ReturPenjualanTableProcessedTableManager get UuidReturPenjualan {
+    final $_column = $_itemColumn<String>('UuidReturPenjualan')!;
+
+    final manager = $$ReturPenjualanTableTableManager(
+      $_db,
+      $_db.returPenjualan,
+    ).filter((f) => f.Uuid.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_UuidReturPenjualanTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$ReturPenjualanDetailTableFilterComposer extends Composer<_$BasisDataKasir, $ReturPenjualanDetailTable> {
+  $$ReturPenjualanDetailTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenjualanDetail =>
+      $composableBuilder(column: $table.UuidPenjualanDetail, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaProduk =>
+      $composableBuilder(column: $table.NamaProduk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get SimbolSatuan =>
+      $composableBuilder(column: $table.SimbolSatuan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Kondisi =>
+      $composableBuilder(column: $table.Kondisi, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NilaiBaris =>
+      $composableBuilder(column: $table.NilaiBaris, builder: (column) => ColumnFilters(column));
+
+  $$ReturPenjualanTableFilterComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableFilterComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanDetailTableOrderingComposer extends Composer<_$BasisDataKasir, $ReturPenjualanDetailTable> {
+  $$ReturPenjualanDetailTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenjualanDetail =>
+      $composableBuilder(column: $table.UuidPenjualanDetail, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaProduk =>
+      $composableBuilder(column: $table.NamaProduk, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get SimbolSatuan =>
+      $composableBuilder(column: $table.SimbolSatuan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Kondisi =>
+      $composableBuilder(column: $table.Kondisi, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NilaiBaris =>
+      $composableBuilder(column: $table.NilaiBaris, builder: (column) => ColumnOrderings(column));
+
+  $$ReturPenjualanTableOrderingComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableOrderingComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanDetailTableAnnotationComposer extends Composer<_$BasisDataKasir, $ReturPenjualanDetailTable> {
+  $$ReturPenjualanDetailTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenjualanDetail =>
+      $composableBuilder(column: $table.UuidPenjualanDetail, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaProduk => $composableBuilder(column: $table.NamaProduk, builder: (column) => column);
+
+  GeneratedColumn<String> get SimbolSatuan =>
+      $composableBuilder(column: $table.SimbolSatuan, builder: (column) => column);
+
+  GeneratedColumn<String> get Jumlah => $composableBuilder(column: $table.Jumlah, builder: (column) => column);
+
+  GeneratedColumn<String> get Kondisi => $composableBuilder(column: $table.Kondisi, builder: (column) => column);
+
+  GeneratedColumn<String> get NilaiBaris => $composableBuilder(column: $table.NilaiBaris, builder: (column) => column);
+
+  $$ReturPenjualanTableAnnotationComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableAnnotationComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanDetailTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $ReturPenjualanDetailTable,
+          BarisReturPenjualanDetail,
+          $$ReturPenjualanDetailTableFilterComposer,
+          $$ReturPenjualanDetailTableOrderingComposer,
+          $$ReturPenjualanDetailTableAnnotationComposer,
+          $$ReturPenjualanDetailTableCreateCompanionBuilder,
+          $$ReturPenjualanDetailTableUpdateCompanionBuilder,
+          (BarisReturPenjualanDetail, $$ReturPenjualanDetailTableReferences),
+          BarisReturPenjualanDetail,
+          PrefetchHooks Function({bool UuidReturPenjualan})
+        > {
+  $$ReturPenjualanDetailTableTableManager(_$BasisDataKasir db, $ReturPenjualanDetailTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$ReturPenjualanDetailTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$ReturPenjualanDetailTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$ReturPenjualanDetailTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidReturPenjualan = const Value.absent(),
+                Value<String> UuidPenjualanDetail = const Value.absent(),
+                Value<String> NamaProduk = const Value.absent(),
+                Value<String> SimbolSatuan = const Value.absent(),
+                Value<String> Jumlah = const Value.absent(),
+                Value<String> Kondisi = const Value.absent(),
+                Value<String> NilaiBaris = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanDetailCompanion(
+                Uuid: Uuid,
+                UuidReturPenjualan: UuidReturPenjualan,
+                UuidPenjualanDetail: UuidPenjualanDetail,
+                NamaProduk: NamaProduk,
+                SimbolSatuan: SimbolSatuan,
+                Jumlah: Jumlah,
+                Kondisi: Kondisi,
+                NilaiBaris: NilaiBaris,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidReturPenjualan,
+                required String UuidPenjualanDetail,
+                required String NamaProduk,
+                required String SimbolSatuan,
+                required String Jumlah,
+                required String Kondisi,
+                required String NilaiBaris,
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanDetailCompanion.insert(
+                Uuid: Uuid,
+                UuidReturPenjualan: UuidReturPenjualan,
+                UuidPenjualanDetail: UuidPenjualanDetail,
+                NamaProduk: NamaProduk,
+                SimbolSatuan: SimbolSatuan,
+                Jumlah: Jumlah,
+                Kondisi: Kondisi,
+                NilaiBaris: NilaiBaris,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReturPenjualanDetailTable, BarisReturPenjualanDetail>(table),
+                  $$ReturPenjualanDetailTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({UuidReturPenjualan = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (UuidReturPenjualan) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.UuidReturPenjualan,
+                        referencedTable: $$ReturPenjualanDetailTableReferences._UuidReturPenjualanTable(db),
+                        referencedColumn: $$ReturPenjualanDetailTableReferences._UuidReturPenjualanTable(db).Uuid,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReturPenjualanDetailTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $ReturPenjualanDetailTable,
+      BarisReturPenjualanDetail,
+      $$ReturPenjualanDetailTableFilterComposer,
+      $$ReturPenjualanDetailTableOrderingComposer,
+      $$ReturPenjualanDetailTableAnnotationComposer,
+      $$ReturPenjualanDetailTableCreateCompanionBuilder,
+      $$ReturPenjualanDetailTableUpdateCompanionBuilder,
+      (BarisReturPenjualanDetail, $$ReturPenjualanDetailTableReferences),
+      BarisReturPenjualanDetail,
+      PrefetchHooks Function({bool UuidReturPenjualan})
+    >;
+typedef $$ReturPenjualanPembayaranTableCreateCompanionBuilder = ReturPenjualanPembayaranCompanion Function({
+  required String Uuid,
+  required String UuidReturPenjualan,
+  required String UuidMetodePembayaran,
+  required String Jenis,
+  required String NamaMetode,
+  required String Jumlah,
+  Value<int> rowid,
+});
+typedef $$ReturPenjualanPembayaranTableUpdateCompanionBuilder = ReturPenjualanPembayaranCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidReturPenjualan,
+  Value<String> UuidMetodePembayaran,
+  Value<String> Jenis,
+  Value<String> NamaMetode,
+  Value<String> Jumlah,
+  Value<int> rowid,
+});
+
+final class $$ReturPenjualanPembayaranTableReferences
+    extends BaseReferences<_$BasisDataKasir, $ReturPenjualanPembayaranTable, BarisReturPenjualanPembayaran> {
+  $$ReturPenjualanPembayaranTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ReturPenjualanTable _UuidReturPenjualanTable(_$BasisDataKasir db) =>
+      db.returPenjualan.createAlias('ReturPenjualanPembayaran__UuidReturPenjualan__ReturPenjualan__Uuid');
+
+  $$ReturPenjualanTableProcessedTableManager get UuidReturPenjualan {
+    final $_column = $_itemColumn<String>('UuidReturPenjualan')!;
+
+    final manager = $$ReturPenjualanTableTableManager(
+      $_db,
+      $_db.returPenjualan,
+    ).filter((f) => f.Uuid.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_UuidReturPenjualanTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$ReturPenjualanPembayaranTableFilterComposer extends Composer<_$BasisDataKasir, $ReturPenjualanPembayaranTable> {
+  $$ReturPenjualanPembayaranTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Jenis =>
+      $composableBuilder(column: $table.Jenis, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaMetode =>
+      $composableBuilder(column: $table.NamaMetode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnFilters(column));
+
+  $$ReturPenjualanTableFilterComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableFilterComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanPembayaranTableOrderingComposer
+    extends Composer<_$BasisDataKasir, $ReturPenjualanPembayaranTable> {
+  $$ReturPenjualanPembayaranTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Jenis =>
+      $composableBuilder(column: $table.Jenis, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaMetode =>
+      $composableBuilder(column: $table.NamaMetode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnOrderings(column));
+
+  $$ReturPenjualanTableOrderingComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableOrderingComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanPembayaranTableAnnotationComposer
+    extends Composer<_$BasisDataKasir, $ReturPenjualanPembayaranTable> {
+  $$ReturPenjualanPembayaranTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => column);
+
+  GeneratedColumn<String> get Jenis => $composableBuilder(column: $table.Jenis, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaMetode => $composableBuilder(column: $table.NamaMetode, builder: (column) => column);
+
+  GeneratedColumn<String> get Jumlah => $composableBuilder(column: $table.Jumlah, builder: (column) => column);
+
+  $$ReturPenjualanTableAnnotationComposer get UuidReturPenjualan {
+    final $$ReturPenjualanTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.UuidReturPenjualan,
+      referencedTable: $db.returPenjualan,
+      getReferencedColumn: (t) => t.Uuid,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ReturPenjualanTableAnnotationComposer(
+            $db: $db,
+            $table: $db.returPenjualan,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReturPenjualanPembayaranTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $ReturPenjualanPembayaranTable,
+          BarisReturPenjualanPembayaran,
+          $$ReturPenjualanPembayaranTableFilterComposer,
+          $$ReturPenjualanPembayaranTableOrderingComposer,
+          $$ReturPenjualanPembayaranTableAnnotationComposer,
+          $$ReturPenjualanPembayaranTableCreateCompanionBuilder,
+          $$ReturPenjualanPembayaranTableUpdateCompanionBuilder,
+          (BarisReturPenjualanPembayaran, $$ReturPenjualanPembayaranTableReferences),
+          BarisReturPenjualanPembayaran,
+          PrefetchHooks Function({bool UuidReturPenjualan})
+        > {
+  $$ReturPenjualanPembayaranTableTableManager(_$BasisDataKasir db, $ReturPenjualanPembayaranTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$ReturPenjualanPembayaranTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$ReturPenjualanPembayaranTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$ReturPenjualanPembayaranTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidReturPenjualan = const Value.absent(),
+                Value<String> UuidMetodePembayaran = const Value.absent(),
+                Value<String> Jenis = const Value.absent(),
+                Value<String> NamaMetode = const Value.absent(),
+                Value<String> Jumlah = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanPembayaranCompanion(
+                Uuid: Uuid,
+                UuidReturPenjualan: UuidReturPenjualan,
+                UuidMetodePembayaran: UuidMetodePembayaran,
+                Jenis: Jenis,
+                NamaMetode: NamaMetode,
+                Jumlah: Jumlah,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidReturPenjualan,
+                required String UuidMetodePembayaran,
+                required String Jenis,
+                required String NamaMetode,
+                required String Jumlah,
+                Value<int> rowid = const Value.absent(),
+              }) => ReturPenjualanPembayaranCompanion.insert(
+                Uuid: Uuid,
+                UuidReturPenjualan: UuidReturPenjualan,
+                UuidMetodePembayaran: UuidMetodePembayaran,
+                Jenis: Jenis,
+                NamaMetode: NamaMetode,
+                Jumlah: Jumlah,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReturPenjualanPembayaranTable, BarisReturPenjualanPembayaran>(table),
+                  $$ReturPenjualanPembayaranTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({UuidReturPenjualan = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (UuidReturPenjualan) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.UuidReturPenjualan,
+                        referencedTable: $$ReturPenjualanPembayaranTableReferences._UuidReturPenjualanTable(db),
+                        referencedColumn: $$ReturPenjualanPembayaranTableReferences._UuidReturPenjualanTable(db).Uuid,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReturPenjualanPembayaranTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $ReturPenjualanPembayaranTable,
+      BarisReturPenjualanPembayaran,
+      $$ReturPenjualanPembayaranTableFilterComposer,
+      $$ReturPenjualanPembayaranTableOrderingComposer,
+      $$ReturPenjualanPembayaranTableAnnotationComposer,
+      $$ReturPenjualanPembayaranTableCreateCompanionBuilder,
+      $$ReturPenjualanPembayaranTableUpdateCompanionBuilder,
+      (BarisReturPenjualanPembayaran, $$ReturPenjualanPembayaranTableReferences),
+      BarisReturPenjualanPembayaran,
+      PrefetchHooks Function({bool UuidReturPenjualan})
+    >;
+typedef $$NomorUrutReturPenjualanTableCreateCompanionBuilder = NomorUrutReturPenjualanCompanion Function({
+  required String KodePerangkat,
+  required String Tanggal,
+  required int Terakhir,
+  Value<int> rowid,
+});
+typedef $$NomorUrutReturPenjualanTableUpdateCompanionBuilder = NomorUrutReturPenjualanCompanion Function({
+  Value<String> KodePerangkat,
+  Value<String> Tanggal,
+  Value<int> Terakhir,
+  Value<int> rowid,
+});
+
+class $$NomorUrutReturPenjualanTableFilterComposer extends Composer<_$BasisDataKasir, $NomorUrutReturPenjualanTable> {
+  $$NomorUrutReturPenjualanTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Tanggal =>
+      $composableBuilder(column: $table.Tanggal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get Terakhir =>
+      $composableBuilder(column: $table.Terakhir, builder: (column) => ColumnFilters(column));
+}
+
+class $$NomorUrutReturPenjualanTableOrderingComposer extends Composer<_$BasisDataKasir, $NomorUrutReturPenjualanTable> {
+  $$NomorUrutReturPenjualanTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Tanggal =>
+      $composableBuilder(column: $table.Tanggal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get Terakhir =>
+      $composableBuilder(column: $table.Terakhir, builder: (column) => ColumnOrderings(column));
+}
+
+class $$NomorUrutReturPenjualanTableAnnotationComposer
+    extends Composer<_$BasisDataKasir, $NomorUrutReturPenjualanTable> {
+  $$NomorUrutReturPenjualanTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => column);
+
+  GeneratedColumn<String> get Tanggal => $composableBuilder(column: $table.Tanggal, builder: (column) => column);
+
+  GeneratedColumn<int> get Terakhir => $composableBuilder(column: $table.Terakhir, builder: (column) => column);
+}
+
+class $$NomorUrutReturPenjualanTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $NomorUrutReturPenjualanTable,
+          BarisNomorUrutReturPenjualan,
+          $$NomorUrutReturPenjualanTableFilterComposer,
+          $$NomorUrutReturPenjualanTableOrderingComposer,
+          $$NomorUrutReturPenjualanTableAnnotationComposer,
+          $$NomorUrutReturPenjualanTableCreateCompanionBuilder,
+          $$NomorUrutReturPenjualanTableUpdateCompanionBuilder,
+          (
+            BarisNomorUrutReturPenjualan,
+            BaseReferences<_$BasisDataKasir, $NomorUrutReturPenjualanTable, BarisNomorUrutReturPenjualan>,
+          ),
+          BarisNomorUrutReturPenjualan,
+          PrefetchHooks Function()
+        > {
+  $$NomorUrutReturPenjualanTableTableManager(_$BasisDataKasir db, $NomorUrutReturPenjualanTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$NomorUrutReturPenjualanTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$NomorUrutReturPenjualanTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$NomorUrutReturPenjualanTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> KodePerangkat = const Value.absent(),
+                Value<String> Tanggal = const Value.absent(),
+                Value<int> Terakhir = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NomorUrutReturPenjualanCompanion(
+                KodePerangkat: KodePerangkat,
+                Tanggal: Tanggal,
+                Terakhir: Terakhir,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String KodePerangkat,
+                required String Tanggal,
+                required int Terakhir,
+                Value<int> rowid = const Value.absent(),
+              }) => NomorUrutReturPenjualanCompanion.insert(
+                KodePerangkat: KodePerangkat,
+                Tanggal: Tanggal,
+                Terakhir: Terakhir,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NomorUrutReturPenjualanTable, BarisNomorUrutReturPenjualan>(table),
+                  BaseReferences<_$BasisDataKasir, $NomorUrutReturPenjualanTable, BarisNomorUrutReturPenjualan>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NomorUrutReturPenjualanTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $NomorUrutReturPenjualanTable,
+      BarisNomorUrutReturPenjualan,
+      $$NomorUrutReturPenjualanTableFilterComposer,
+      $$NomorUrutReturPenjualanTableOrderingComposer,
+      $$NomorUrutReturPenjualanTableAnnotationComposer,
+      $$NomorUrutReturPenjualanTableCreateCompanionBuilder,
+      $$NomorUrutReturPenjualanTableUpdateCompanionBuilder,
+      (
+        BarisNomorUrutReturPenjualan,
+        BaseReferences<_$BasisDataKasir, $NomorUrutReturPenjualanTable, BarisNomorUrutReturPenjualan>,
+      ),
+      BarisNomorUrutReturPenjualan,
+      PrefetchHooks Function()
+    >;
 
 class $BasisDataKasirManager {
   final _$BasisDataKasir _db;
@@ -16673,4 +20547,12 @@ class $BasisDataKasirManager {
       $$PesananTertahanTableTableManager(_db, _db.pesananTertahan);
   $$NomorUrutPenjualanTableTableManager get nomorUrutPenjualan =>
       $$NomorUrutPenjualanTableTableManager(_db, _db.nomorUrutPenjualan);
+  $$VoidPenjualanTableTableManager get voidPenjualan => $$VoidPenjualanTableTableManager(_db, _db.voidPenjualan);
+  $$ReturPenjualanTableTableManager get returPenjualan => $$ReturPenjualanTableTableManager(_db, _db.returPenjualan);
+  $$ReturPenjualanDetailTableTableManager get returPenjualanDetail =>
+      $$ReturPenjualanDetailTableTableManager(_db, _db.returPenjualanDetail);
+  $$ReturPenjualanPembayaranTableTableManager get returPenjualanPembayaran =>
+      $$ReturPenjualanPembayaranTableTableManager(_db, _db.returPenjualanPembayaran);
+  $$NomorUrutReturPenjualanTableTableManager get nomorUrutReturPenjualan =>
+      $$NomorUrutReturPenjualanTableTableManager(_db, _db.nomorUrutReturPenjualan);
 }

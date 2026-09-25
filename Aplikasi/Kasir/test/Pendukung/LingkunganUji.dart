@@ -44,7 +44,7 @@ Map<String, Object?> StafJson(String uuid, String nama, List<String> izin, int? 
 }
 
 /// Data awal uji: Rina (kasir, boleh diskon manual, PIN kasus 0 "246810"), Budi (supervisor, penyetuju kas keluar &
-/// diskon & selisih kas tutup shift, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
+/// diskon & selisih kas tutup shift & void/retur, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
 /// Rp 200.000. F-07b: outlet SLB, perangkat POS-001, memungut PBJT 10% (bukan PKP), batas diskon 10%/30%, lima
 /// metode pembayaran fase 1.
 Map<String, Object?> DataAwalUji({
@@ -133,6 +133,7 @@ Map<String, Object?> DataAwalUji({
       'penjualan.diskon.manual',
       'penjualan.diskon.setujui',
       'shift.selisih.setujui',
+      'penjualan.void',
     ], 1),
     StafJson('01K5STAF000000000000000003', 'Sari Lestari', ['penjualan.buat'], null),
   ],

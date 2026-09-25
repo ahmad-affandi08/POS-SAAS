@@ -20,6 +20,42 @@ class DokumenPenjualan {
   final ItemOutbox outbox;
 }
 
+/// Status penjualan lokal (sama dengan server, keputusan implementasi F-09 v1.47): `Lunas → Void | DireturSebagian |
+/// Diretur`, `DireturSebagian → Diretur`.
+abstract final class StatusPenjualanLokal {
+  static const String lunas = 'Lunas';
+  static const String divoid = 'Void';
+  static const String direturSebagian = 'DireturSebagian';
+  static const String diretur = 'Diretur';
+}
+
+/// Dokumen retur siap simpan: header, baris, refund, item outbox `ReturPenjualan.Buat`, dan status baru penjualan
+/// asal bila penjualan itu ada di perangkat ini (null = tidak diubah).
+class DokumenRetur {
+  const DokumenRetur({
+    required this.retur,
+    required this.detail,
+    required this.pembayaran,
+    required this.outbox,
+    this.statusPenjualanAsal,
+  });
+
+  final ReturPenjualanCompanion retur;
+  final List<ReturPenjualanDetailCompanion> detail;
+  final List<ReturPenjualanPembayaranCompanion> pembayaran;
+  final ItemOutbox outbox;
+  final String? statusPenjualanAsal;
+}
+
+/// Baris riwayat retur perangkat beserta status sinkronnya.
+class RiwayatRetur {
+  const RiwayatRetur({required this.retur, required this.status, this.pesanGalat});
+
+  final BarisReturPenjualan retur;
+  final StatusSinkronPenjualan status;
+  final String? pesanGalat;
+}
+
 /// Status sinkron satu penjualan, diturunkan dari outbox.
 enum StatusSinkronPenjualan { Terkirim, BelumTerkirim, PerluTindakan }
 
@@ -99,11 +135,7 @@ class RepositoriPenjualan {
             final o = b.readTableOrNull(db.outbox);
             return RiwayatPenjualan(
               penjualan: p,
-              status: o == null
-                  ? StatusSinkronPenjualan.Terkirim
-                  : o.Status == StatusOutbox.perluTindakan
-                  ? StatusSinkronPenjualan.PerluTindakan
-                  : StatusSinkronPenjualan.BelumTerkirim,
+              status: _StatusDariOutbox(o),
               metode: pembayaran.where((x) => x.UuidPenjualan == p.Uuid).map((x) => x.NamaMetode).toList(),
               pesanGalat: o?.PesanGalat,
             );
@@ -147,6 +179,140 @@ class RepositoriPenjualan {
       pembayaran: await (db.select(db.penjualanPembayaran)..where((b) => b.UuidPenjualan.isIn(uuid))).get(),
     );
   }
+
+  // Void & retur (F-09 fase 1) ----------------------------------------------------------------------------------------
+
+  /// Void: status penjualan `Lunas → Void` + dokumen `VoidPenjualan` + outbox `Penjualan.Void` dalam satu transaksi.
+  /// Penjualan yang sudah tidak `Lunas` (di-void/diretur di antaranya) → galat dan tidak ada yang tersimpan.
+  Future<void> SimpanVoid(VoidPenjualanCompanion dokumen, ItemOutbox item, DateTime sekarang) =>
+      db.transaction(() async {
+        final diubah =
+            await (db.update(db.penjualan)..where(
+                  (p) => p.Uuid.equals(dokumen.UuidPenjualan.value) & p.Status.equals(StatusPenjualanLokal.lunas),
+                ))
+                .write(const PenjualanCompanion(Status: Value(StatusPenjualanLokal.divoid)));
+        if (diubah != 1) {
+          throw StateError('Penjualan ${dokumen.UuidPenjualan.value} tidak berstatus Lunas.');
+        }
+        await db.into(db.voidPenjualan).insert(dokumen);
+        await repositoriKasir.TambahOutbox(item, sekarang);
+      });
+
+  Future<BarisVoidPenjualan?> CariVoid(String uuidPenjualan) =>
+      (db.select(db.voidPenjualan)..where((v) => v.UuidPenjualan.equals(uuidPenjualan))).getSingleOrNull();
+
+  Future<BarisPenjualan?> CariPenjualanNomor(String nomor) =>
+      (db.select(db.penjualan)..where((p) => p.Nomor.equals(nomor))).getSingleOrNull();
+
+  /// Apakah dokumen [uuid] masih menunggu di outbox (belum terkirim atau perlu tindakan).
+  Future<bool> CekMasihDiOutbox(String uuid) async =>
+      (await (db.select(db.outbox)..where((o) => o.Uuid.equals(uuid))).getSingleOrNull()) != null;
+
+  /// Apakah ada retur lokal atas [uuidPenjualanAsal] yang belum diterima server (masih di outbox).
+  Future<bool> CekReturBelumTerkirim(String uuidPenjualanAsal) async {
+    final kueri = db.select(db.returPenjualan).join([
+      innerJoin(db.outbox, db.outbox.Uuid.equalsExp(db.returPenjualan.Uuid)),
+    ])..where(db.returPenjualan.UuidPenjualanAsal.equals(uuidPenjualanAsal));
+    return (await kueri.get()).isNotEmpty;
+  }
+
+  /// Ambil nomor urut retur berikutnya ([tanggal] `YYMMDD`), susun dokumen dengan nomor itu, lalu simpan retur + baris
+  /// + refund + status penjualan asal lokal + outbox dalam satu transaksi (nomor tidak terpakai bila gagal).
+  Future<DokumenRetur> SimpanRetur({
+    required String kodePerangkat,
+    required String tanggal,
+    required DateTime sekarang,
+    required DokumenRetur Function(int urut) susun,
+  }) => db.transaction(() async {
+    final lama = await (db.select(
+      db.nomorUrutReturPenjualan,
+    )..where((n) => n.KodePerangkat.equals(kodePerangkat) & n.Tanggal.equals(tanggal))).getSingleOrNull();
+    final urut = (lama?.Terakhir ?? 0) + 1;
+    await db
+        .into(db.nomorUrutReturPenjualan)
+        .insertOnConflictUpdate(
+          NomorUrutReturPenjualanCompanion.insert(KodePerangkat: kodePerangkat, Tanggal: tanggal, Terakhir: urut),
+        );
+
+    final dokumen = susun(urut);
+    await db.into(db.returPenjualan).insert(dokumen.retur);
+    await db.batch((b) {
+      b.insertAll(db.returPenjualanDetail, dokumen.detail);
+      b.insertAll(db.returPenjualanPembayaran, dokumen.pembayaran);
+    });
+    final status = dokumen.statusPenjualanAsal;
+    if (status != null) {
+      await (db.update(db.penjualan)..where(
+            (p) =>
+                p.Uuid.equals(dokumen.retur.UuidPenjualanAsal.value) &
+                p.Status.isIn([StatusPenjualanLokal.lunas, StatusPenjualanLokal.direturSebagian]),
+          ))
+          .write(PenjualanCompanion(Status: Value(status)));
+    }
+    await repositoriKasir.TambahOutbox(dokumen.outbox, sekarang);
+    return dokumen;
+  });
+
+  Future<List<BarisReturPenjualanDetail>> AmbilDetailRetur(String uuidRetur) =>
+      (db.select(db.returPenjualanDetail)..where((d) => d.UuidReturPenjualan.equals(uuidRetur))).get();
+
+  Future<List<BarisReturPenjualanPembayaran>> AmbilPembayaranRetur(String uuidRetur) =>
+      (db.select(db.returPenjualanPembayaran)..where((d) => d.UuidReturPenjualan.equals(uuidRetur))).get();
+
+  /// Void (shift penjualan) & retur (shift refund) sebuah shift, untuk laporan X/Z dan kas seharusnya.
+  Future<({List<BarisVoidPenjualan> void_, List<BarisReturPenjualan> retur})> AmbilVoidReturShift(
+    String uuidShift,
+  ) async => (
+    void_: await (db.select(db.voidPenjualan)..where((v) => v.UuidShift.equals(uuidShift))).get(),
+    retur: await (db.select(db.returPenjualan)..where((r) => r.UuidShift.equals(uuidShift))).get(),
+  );
+
+  /// Refund tunai yang keluar dari laci [uuidShift]: Σ `VoidPenjualan.RefundTunai` + Σ `ReturPenjualan.RefundTunai`
+  /// (sama dengan server `RingkasanPenjualanShift`). Dijumlah di Dart agar tetap desimal eksak.
+  Stream<Uang> PantauRefundTunaiShift(String uuidShift) => db
+      .customSelect(
+        'SELECT RefundTunai FROM VoidPenjualan WHERE UuidShift = ?1 '
+        'UNION ALL SELECT RefundTunai FROM ReturPenjualan WHERE UuidShift = ?1',
+        variables: [Variable.withString(uuidShift)],
+        readsFrom: {db.voidPenjualan, db.returPenjualan},
+      )
+      .watch()
+      .map((baris) => baris.fold(Uang.Nol(), (t, b) => t.Tambah(Uang.Dari(b.read<String>('RefundTunai')))));
+
+  /// Jumlah dokumen void + retur sebuah shift (pemicu hitung ulang laporan shift).
+  Stream<int> PantauJumlahVoidReturShift(String uuidShift) => db
+      .customSelect(
+        'SELECT (SELECT COUNT(*) FROM VoidPenjualan WHERE UuidShift = ?1) + '
+        '(SELECT COUNT(*) FROM ReturPenjualan WHERE UuidShift = ?1) AS Jumlah',
+        variables: [Variable.withString(uuidShift)],
+        readsFrom: {db.voidPenjualan, db.returPenjualan},
+      )
+      .watchSingle()
+      .map((b) => b.read<int>('Jumlah'));
+
+  /// Retur perangkat pada [tanggalBisnis] (`YYYY-MM-DD`), terbaru dulu, dengan status sinkron.
+  Stream<List<RiwayatRetur>> PantauReturTanggal(String tanggalBisnis) {
+    final kueri =
+        db.select(db.returPenjualan).join([leftOuterJoin(db.outbox, db.outbox.Uuid.equalsExp(db.returPenjualan.Uuid))])
+          ..where(db.returPenjualan.TanggalBisnis.equals(tanggalBisnis))
+          ..orderBy([OrderingTerm.desc(db.returPenjualan.DibuatPada)]);
+    return kueri.watch().map(
+      (baris) => [
+        for (final b in baris)
+          RiwayatRetur(
+            retur: b.readTable(db.returPenjualan),
+            status: _StatusDariOutbox(b.readTableOrNull(db.outbox)),
+            pesanGalat: b.readTableOrNull(db.outbox)?.PesanGalat,
+          ),
+      ],
+    );
+  }
+
+  static StatusSinkronPenjualan _StatusDariOutbox(BarisOutbox? o) => o == null
+      ? StatusSinkronPenjualan.Terkirim
+      : o.Status == StatusOutbox.perluTindakan
+      ? StatusSinkronPenjualan.PerluTindakan
+      : StatusSinkronPenjualan.BelumTerkirim;
 
   Future<int> HitungPesananTertahan() async {
     final jumlah = db.pesananTertahan.Uuid.count();

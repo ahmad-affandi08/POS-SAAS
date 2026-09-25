@@ -24,6 +24,8 @@ class LayarKas extends ConsumerWidget {
     final mutasi = ref.watch(penyediaMutasiShift(shift.Uuid)).value ?? const <BarisMutasiKas>[];
     final kas = LayananShift.HitungKasNonPenjualan(shift, mutasi);
     final tunaiPenjualan = ref.watch(penyediaTunaiShift(shift.Uuid)).value ?? Uang.Nol();
+    final refundTunai = ref.watch(penyediaRefundTunaiShift(shift.Uuid)).value ?? Uang.Nol();
+    final adaPenjualan = !tunaiPenjualan.BernilaiNol() || !refundTunai.BernilaiNol();
 
     return IsiAreaKerja(
       judul: 'Kas',
@@ -33,12 +35,22 @@ class LayarKas extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _BarisNilai(label: 'Kas awal', nilai: Uang.Dari(shift.KasAwal)),
-              _BarisNilai(label: 'Kas di laci (tanpa penjualan)', nilai: kas, tebal: tunaiPenjualan.BernilaiNol()),
-              if (!tunaiPenjualan.BernilaiNol()) ...[
+              _BarisNilai(label: 'Kas di laci (tanpa penjualan)', nilai: kas, tebal: !adaPenjualan),
+              if (adaPenjualan) ...[
                 _BarisNilai(label: 'Penjualan tunai bersih', nilai: tunaiPenjualan),
-                _BarisNilai(label: 'Perkiraan kas di laci', nilai: kas.Tambah(tunaiPenjualan), tebal: true),
+                if (!refundTunai.BernilaiNol())
+                  _BarisNilai(label: 'Refund tunai (void & retur)', nilai: Uang.Nol().Kurangi(refundTunai)),
+                _BarisNilai(
+                  label: 'Perkiraan kas di laci',
+                  nilai: kas.Tambah(tunaiPenjualan).Kurangi(refundTunai),
+                  tebal: true,
+                ),
                 const SizedBox(height: TokenJarak.jarak4),
-                Text('Penjualan tunai bersih = uang tunai diterima dikurangi kembalian.', style: teks.bodySmall),
+                Text(
+                  'Penjualan tunai bersih = uang tunai diterima dikurangi kembalian'
+                  '${refundTunai.BernilaiNol() ? '' : ', termasuk transaksi yang kemudian di-void'}.',
+                  style: teks.bodySmall,
+                ),
               ],
             ],
           ),

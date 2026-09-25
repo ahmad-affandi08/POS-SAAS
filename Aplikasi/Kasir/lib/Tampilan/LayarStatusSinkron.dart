@@ -11,6 +11,17 @@ import 'RuangKerja/IsiAreaKerja.dart';
 class LayarStatusSinkron extends ConsumerStatefulWidget {
   const LayarStatusSinkron({super.key});
 
+  /// Label jenis item outbox untuk kasir.
+  static String AmbilLabelJenis(String jenis) => switch (jenis) {
+    'Shift.Buka' => 'Buka shift',
+    'Shift.Tutup' => 'Tutup shift',
+    'Penjualan.Buat' => 'Penjualan',
+    'Penjualan.Void' => 'Void penjualan',
+    'ReturPenjualan.Buat' => 'Retur penjualan',
+    'MutasiKas.Catat' => 'Kas masuk/keluar',
+    _ => jenis,
+  };
+
   @override
   ConsumerState<LayarStatusSinkron> createState() => _LayarStatusSinkronState();
 }
@@ -88,11 +99,7 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(switch (b.Jenis) {
-                            'Shift.Buka' => 'Buka shift',
-                            'Penjualan.Buat' => 'Penjualan',
-                            _ => 'Kas masuk/keluar',
-                          }),
+                          Text(LayarStatusSinkron.AmbilLabelJenis(b.Jenis)),
                           Text(b.PesanGalat ?? 'Ditolak server.', style: TextStyle(color: warna.bahaya)),
                         ],
                       ),
