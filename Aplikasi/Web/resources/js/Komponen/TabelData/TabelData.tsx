@@ -20,7 +20,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EllipsisIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
-import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
+import KeadaanKosong, { type JenisIlustrasiKosong } from '@/Komponen/Katalog/KeadaanKosong';
 import { Button } from '@/Komponen/Ui/button';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/Komponen/Ui/dropdown-menu';
@@ -70,7 +70,8 @@ export type PropsTabelData<T> = {
     labelBaris?: (baris: T) => string;
     aksiMassal?: (konteks: KonteksAksiMassal<T>) => ReactNode;
     ekspor?: { alamat: string; label?: string };
-    kosong: { judul: string; aksi?: ReactNode };
+    /** `ilustrasi` (D-18): ilustrasi subjek untuk daftar utama yang belum berisi data. */
+    kosong: { judul: string; aksi?: ReactNode; ilustrasi?: JenisIlustrasiKosong };
     aksiAlat?: ReactNode;
     /** Ringkasan di atas tabel dari hasil server terbaru (ikut berubah saat saring berubah). */
     ringkasan?: (hasil: HasilTabel<T> | undefined) => ReactNode;
@@ -560,6 +561,18 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
     );
 
     let isi: ReactNode;
+    // Tanpa bingkai: sudah berada di dalam panel tabel (hindari kotak di dalam kotak).
+    const keadaanKosong = adaSaring ? (
+        <KeadaanKosong judul="Tidak ada hasil untuk pencarian atau saring ini." bingkai={false}>
+            <Button type="button" variant="link" className="h-auto px-0" onClick={keadaanTabel.HapusSemua}>
+                Hapus pencarian & saring
+            </Button>
+        </KeadaanKosong>
+    ) : (
+        <KeadaanKosong judul={props.kosong.judul} ilustrasi={props.kosong.ilustrasi} bingkai={false}>
+            {props.kosong.aksi}
+        </KeadaanKosong>
+    );
 
     if (memuatPertama) {
         isi = (
@@ -580,21 +593,9 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                 </Pemberitahuan>
             </div>
         );
-    } else if (baris.length === 0) {
-        // Diumumkan pembaca layar: penting setelah mencari/menyaring tanpa hasil.
-        isi = (
-            <div role="status">
-                {adaSaring ? (
-                    <KeadaanKosong judul="Tidak ada hasil untuk pencarian atau saring ini.">
-                        <Button type="button" variant="link" className="h-auto px-0" onClick={keadaanTabel.HapusSemua}>
-                            Hapus pencarian & saring
-                        </Button>
-                    </KeadaanKosong>
-                ) : (
-                    <KeadaanKosong judul={props.kosong.judul}>{props.kosong.aksi}</KeadaanKosong>
-                )}
-            </div>
-        );
+    } else if (baris.length === 0 && lebar === 'hp') {
+        // HP: tanpa kepala kolom (daftar bertumpuk), cukup keadaan kosongnya.
+        isi = <div role="status">{keadaanKosong}</div>;
     } else if (lebar === 'hp') {
         isi = (
             <ul aria-label={props.label} className="flex flex-col">
@@ -665,6 +666,15 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                             <tr aria-hidden="true">
                                 <td style={{ height: bawah }} />
                             </tr>
+                        ) : null}
+                        {baris.length === 0 ? (
+                            // Kepala kolom tetap tampil; keadaan kosong satu baris selebar tabel. Diumumkan pembaca
+                            // layar: penting setelah mencari/menyaring tanpa hasil.
+                            <TableRow className="border-garis hover:bg-transparent">
+                                <td role="status" colSpan={tabel.getVisibleLeafColumns().length}>
+                                    {keadaanKosong}
+                                </td>
+                            </TableRow>
                         ) : null}
                     </TableBody>
                 </table>

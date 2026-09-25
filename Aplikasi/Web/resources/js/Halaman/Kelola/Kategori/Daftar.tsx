@@ -275,7 +275,10 @@ export default function HalamanDaftarKategori({ Kategori, OpsiStasiunDapur, Izin
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.' }}
+                kosong={{
+                    ilustrasi: 'Produk',
+                    judul: 'Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.',
+                }}
             />
         </TataLetakAplikasi>
     );

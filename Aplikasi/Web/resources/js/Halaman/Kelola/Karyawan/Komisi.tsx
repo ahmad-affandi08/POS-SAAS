@@ -118,7 +118,7 @@ export default function HalamanAturanKomisi({ Aturan, OpsiKategori, Izin }: Prop
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada aturan komisi.', ...(tombol ? { aksi: tombol } : {}) }}
+                kosong={{ judul: 'Belum ada aturan komisi.' }}
             />
             {ubah !== null ? (
                 <FormulirAturanKomisi aturan={ubah} opsiKategori={OpsiKategori} saatTutup={() => AturUbah(null)} />

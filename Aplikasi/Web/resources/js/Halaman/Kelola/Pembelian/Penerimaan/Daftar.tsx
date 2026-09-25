@@ -83,7 +83,10 @@ export default function HalamanDaftarPenerimaan({ Penerimaan, OpsiStatus, OpsiPe
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
                 aksiAlat={Izin.Kelola ? tombol : null}
-                kosong={{ judul: 'Belum ada penerimaan barang.', ...(Izin.Kelola ? { aksi: tombol } : {}) }}
+                kosong={{
+                    ilustrasi: 'Pembelian',
+                    judul: 'Belum ada penerimaan barang.',
+                }}
             />
         </HalamanDaftarPembelian>
     );

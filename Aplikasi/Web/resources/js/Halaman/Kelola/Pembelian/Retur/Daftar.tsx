@@ -55,7 +55,7 @@ export default function HalamanDaftarRetur({ Retur, OpsiStatus, OpsiPemasok, Izi
                 cari="Cari nomor atau alasan"
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(r) => `${alamat}/${r.Uuid}`}
-                kosong={{ judul: 'Belum ada retur pembelian.' }}
+                kosong={{ ilustrasi: 'Pembelian', judul: 'Belum ada retur pembelian.' }}
             />
         </HalamanDaftarPembelian>
     );

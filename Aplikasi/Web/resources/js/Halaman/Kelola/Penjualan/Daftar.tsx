@@ -53,6 +53,7 @@ export default function HalamanDaftarPenjualan({ Penjualan, OpsiOutlet, OpsiStat
                 saring={saring}
                 alamatDetail={(baris) => `${alamat}/${baris.Uuid}`}
                 kosong={{
+                    ilustrasi: 'Penjualan',
                     judul: 'Belum ada penjualan. Penjualan muncul di sini setelah kasir berjualan di aplikasi POS dan perangkatnya tersinkron.',
                 }}
             />

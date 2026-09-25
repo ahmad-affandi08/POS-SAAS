@@ -101,7 +101,7 @@ export default function FormDaftarHarga({
             onSubmit={Kirim}
             noValidate
             aria-label={uuid === null ? 'Buat daftar harga' : 'Ubah pengaturan daftar harga'}
-            className="flex flex-col gap-4 rounded-panel border border-garis bg-card p-4"
+            className="flex flex-col gap-4"
         >
             <RingkasanGalatFormulir galat={{ ...galat, ...(galatRentang ? { SelesaiPada: galatRentang } : {}) }} />
             <div className="grid gap-4 sm:grid-cols-2">

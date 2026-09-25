@@ -183,7 +183,7 @@ export default function PemilihTanggal({
                             </InputGroupButton>
                         </PopoverTrigger>
                         <PopoverContent
-                            className="w-auto p-3"
+                            className="w-auto p-2"
                             align="end"
                             // Klik di dalam kalender (lewat portal) tidak boleh merambat ke InputGroupAddon, yang
                             // memfokuskan isian dan menutup popover ini.
@@ -201,7 +201,7 @@ export default function PemilihTanggal({
                                     AturTerbuka(false);
                                 }}
                             />
-                            <div className="mt-3 flex items-center justify-between gap-2 border-t border-garis pt-3">
+                            <div className="mt-2 flex items-center justify-between gap-2 border-t border-garis pt-2">
                                 <Button
                                     type="button"
                                     variant="outline"

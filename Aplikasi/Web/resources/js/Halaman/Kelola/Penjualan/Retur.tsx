@@ -267,7 +267,9 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
                 sumber={{ mode: 'lokal', data: MutasiStok }}
                 ambilIdBaris={(m) => m.Kunci}
                 cari={false}
-                kosong={{ judul: 'Retur ini tidak mengembalikan stok (jasa atau produk tanpa stok).' }}
+                kosong={{
+                    judul: 'Retur ini tidak mengembalikan stok (jasa atau produk tanpa stok).',
+                }}
             />
         </TataLetakAplikasi>
     );

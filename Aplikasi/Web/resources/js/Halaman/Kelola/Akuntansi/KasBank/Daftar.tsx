@@ -145,7 +145,9 @@ export default function HalamanTransaksiKasBank({
                 sumber={{ mode: 'lokal', data: Saldo }}
                 ambilIdBaris={(a) => a.Uuid}
                 cari={false}
-                kosong={{ judul: 'Belum ada akun kas/bank. Tandai akun kas atau bank di Bagan akun.' }}
+                kosong={{
+                    judul: 'Belum ada akun kas/bank. Tandai akun kas atau bank di Bagan akun.',
+                }}
             />
 
             {Izin.Kelola ? (
@@ -168,7 +170,7 @@ export default function HalamanTransaksiKasBank({
                 cari="Cari nomor atau keterangan"
                 saring={saring}
                 alamatDetail={(t) => `${alamat}/${t.Uuid}`}
-                kosong={{ judul: 'Belum ada transaksi kas & bank.' }}
+                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada transaksi kas & bank.' }}
             />
         </TataLetakAplikasi>
     );

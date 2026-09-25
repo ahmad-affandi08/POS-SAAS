@@ -261,10 +261,15 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
                 kolom={kolom}
                 sumber={{ mode: 'server', alamat: '/kelola/produk', awal: Hasil([]) }}
                 ambilIdBaris={(p) => p.Uuid}
-                kosong={{ judul: 'Belum ada produk. Tambahkan produk pertama Anda.' }}
+                kosong={{ judul: 'Belum ada produk. Tambahkan produk pertama Anda.', ilustrasi: 'Produk' }}
             />,
         );
         expect(screen.getByText('Belum ada produk. Tambahkan produk pertama Anda.')).toBeTruthy();
+        // D-18: daftar yang belum berisi data menampilkan ilustrasi subjek.
+        expect(document.querySelector('img[src*="ProdukKosong"]')).not.toBeNull();
+        // Desktop: kepala kolom tetap tampil, keadaan kosong jadi satu baris selebar tabel (bukan kotak terpisah).
+        expect(screen.getByRole('columnheader', { name: /Nama produk/ })).toBeTruthy();
+        expect(screen.getByRole('status').getAttribute('colspan')).toBe(String(kolom.length));
         Lepas();
 
         window.history.replaceState({}, '', '/kelola/produk?saring%5BStatus%5D=Aktif');
@@ -276,10 +281,12 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
                 sumber={{ mode: 'server', alamat: '/kelola/produk', awal: Hasil([]) }}
                 ambilIdBaris={(p) => p.Uuid}
                 saring={saring}
-                kosong={{ judul: 'Belum ada produk.' }}
+                kosong={{ judul: 'Belum ada produk.', ilustrasi: 'Produk' }}
             />,
         );
         expect(screen.getByText('Tidak ada hasil untuk pencarian atau saring ini.')).toBeTruthy();
+        // D-18: hasil cari/saring kosong tetap ringkas, tanpa ilustrasi.
+        expect(document.querySelector('img[src*="ProdukKosong"]')).toBeNull();
 
         fireEvent.click(screen.getAllByRole('button', { name: 'Hapus pencarian & saring' })[0] as HTMLElement);
         // Galat 5xx dicoba ulang 2 kali (jeda bawaan TanStack) sebelum ditampilkan.

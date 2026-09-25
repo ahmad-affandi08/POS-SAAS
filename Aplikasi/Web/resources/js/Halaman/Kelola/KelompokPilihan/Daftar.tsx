@@ -157,6 +157,7 @@ export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: 
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: 'Produk',
                     judul: 'Belum ada kelompok pilihan. Tambah kelompok, misal Level gula: Normal, Kurang manis, Tanpa gula.',
                 }}
             />

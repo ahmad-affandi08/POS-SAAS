@@ -221,19 +221,9 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: 'Produk',
                     judul: 'Belum ada produk. Impor dari Excel atau Tambah produk',
-                    aksi: Izin.Kelola ? (
-                        <>
-                            <Button asChild variant="outline">
-                                <Link href={`${alamat}/impor`}>Impor dari Excel</Link>
-                            </Button>
-                            <Button asChild>
-                                <Link href={`${alamat}/buat`}>Tambah produk</Link>
-                            </Button>
-                        </>
-                    ) : (
-                        <span>Minta pengelola produk menambahkan produk.</span>
-                    ),
+                    ...(Izin.Kelola ? {} : { aksi: <span>Minta pengelola produk menambahkan produk.</span> }),
                 }}
             />
         </TataLetakAplikasi>

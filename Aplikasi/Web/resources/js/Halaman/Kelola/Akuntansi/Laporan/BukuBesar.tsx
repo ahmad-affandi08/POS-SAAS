@@ -134,7 +134,10 @@ export default function HalamanBukuBesar({ Saring, Akun, Mutasi, OpsiAkun, OpsiO
                             />
                         ) : null;
                     }}
-                    kosong={{ judul: 'Tidak ada jurnal akun ini pada periode dan outlet yang dipilih.' }}
+                    kosong={{
+                        ilustrasi: 'Akuntansi',
+                        judul: 'Tidak ada jurnal akun ini pada periode dan outlet yang dipilih.',
+                    }}
                 />
             )}
         </TataLetakAplikasi>

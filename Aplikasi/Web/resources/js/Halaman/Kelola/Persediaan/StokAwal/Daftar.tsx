@@ -148,8 +148,9 @@ export default function HalamanDaftarStokAwal({
                 alamatDetail={(dokumen) => `${AlamatStokAwal}/${dokumen.Uuid}`}
                 aksiAlat={tombolBuat}
                 kosong={{
+                    ilustrasi: 'Stok',
                     judul: 'Belum ada stok awal. Isi stok awal agar saldo stok dan HPP benar sejak hari pertama.',
-                    aksi: Izin.Kelola ? tombolBuat : <span>Minta pengelola persediaan mengisi stok awal.</span>,
+                    ...(Izin.Kelola ? {} : { aksi: <span>Minta pengelola persediaan mengisi stok awal.</span> }),
                 }}
             />
         </TataLetakAplikasi>

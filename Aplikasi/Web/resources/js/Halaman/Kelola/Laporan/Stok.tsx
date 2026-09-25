@@ -177,7 +177,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                             ambilIdBaris={(b) => b.Kunci}
                             urutBawaan="-Nilai"
                             cari={false}
-                            kosong={{ judul: 'Belum ada stok pada tanggal ini.' }}
+                            kosong={{ ilustrasi: 'Laporan', judul: 'Belum ada stok pada tanggal ini.' }}
                         />
                     </section>
                     <section aria-labelledby="judul-per-kategori" className="flex flex-col gap-2">

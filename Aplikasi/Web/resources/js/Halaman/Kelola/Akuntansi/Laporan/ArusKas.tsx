@@ -102,7 +102,7 @@ export default function HalamanArusKas({ Saring, Laporan, OpsiOutlet }: PropsAru
                 sumber={{ mode: 'lokal', data: Laporan.Baris }}
                 ambilIdBaris={(b) => b.Id}
                 cari={false}
-                kosong={{ judul: 'Belum ada jurnal kas atau bank.' }}
+                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada jurnal kas atau bank.' }}
             />
         </TataLetakAplikasi>
     );

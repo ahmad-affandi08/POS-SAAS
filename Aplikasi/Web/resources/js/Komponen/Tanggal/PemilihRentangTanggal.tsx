@@ -104,14 +104,14 @@ export function PanelRentangTanggal({
     };
 
     return (
-        <div className={cn('flex flex-col gap-3', !satuBulan && 'sm:flex-row sm:items-start sm:gap-4')}>
+        <div className={cn('flex flex-col gap-2', !satuBulan && 'sm:flex-row sm:items-start sm:gap-3')}>
             {preset.length > 0 ? (
                 <div
                     role="group"
                     aria-label={`Preset ${label}`}
                     className={cn(
                         'flex flex-wrap gap-2',
-                        !satuBulan && 'sm:w-40 sm:shrink-0 sm:flex-col sm:flex-nowrap sm:gap-1',
+                        !satuBulan && 'sm:w-32 sm:shrink-0 sm:flex-col sm:flex-nowrap sm:gap-1',
                     )}
                 >
                     {preset.map((p) => {
@@ -130,7 +130,7 @@ export function PanelRentangTanggal({
                                 }}
                                 className={cn(
                                     'text-label pointer-coarse:h-11',
-                                    !satuBulan && 'sm:h-9 sm:justify-start sm:border-transparent sm:shadow-none',
+                                    !satuBulan && 'sm:h-8 sm:justify-start sm:border-transparent sm:shadow-none',
                                     !satuBulan && !aktif && 'sm:bg-transparent sm:hover:bg-brand-lembut',
                                 )}
                             >
@@ -140,7 +140,7 @@ export function PanelRentangTanggal({
                     })}
                 </div>
             ) : null}
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-2">
                 <Kalender
                     mode="range"
                     numberOfMonths={duaBulan ? 2 : 1}
@@ -156,7 +156,7 @@ export function PanelRentangTanggal({
                     }}
                     className="self-center"
                 />
-                <div className="grid grid-cols-2 gap-2 border-t border-garis pt-3">
+                <div className="grid grid-cols-2 gap-2 border-t border-garis pt-2">
                     <PemilihTanggal
                         label="Dari"
                         nilai={dari}
@@ -278,11 +278,11 @@ export default function PemilihRentangTanggal({
                     <PopoverTrigger asChild>{pemicu}</PopoverTrigger>
                     <PopoverContent
                         align="start"
-                        className="w-auto max-w-[calc(100vw-2rem)] border-garis bg-permukaan p-3"
+                        className="w-auto max-w-[calc(100vw-2rem)] border-garis bg-permukaan p-2"
                         aria-label={`Pilih ${label}`}
                     >
                         {panel}
-                        <div className="mt-3 flex justify-end gap-2 border-t border-garis pt-3">{tombol}</div>
+                        <div className="mt-2 flex justify-end gap-2 border-t border-garis pt-2">{tombol}</div>
                     </PopoverContent>
                 </Popover>
             )}

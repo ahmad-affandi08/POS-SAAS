@@ -125,8 +125,9 @@ export default function HalamanDaftarTransferStok({ Transfer, OpsiGudang, OpsiSt
                 alamatDetail={(t) => `${AlamatTransfer}/${t.Uuid}`}
                 aksiAlat={tombolBuat}
                 kosong={{
+                    ilustrasi: 'Stok',
                     judul: 'Belum ada transfer stok.',
-                    aksi: tombolBuat ?? <span>Minta pengelola persediaan membuat transfer.</span>,
+                    ...(tombolBuat ? {} : { aksi: <span>Minta pengelola persediaan membuat transfer.</span> }),
                 }}
             />
         </TataLetakAplikasi>

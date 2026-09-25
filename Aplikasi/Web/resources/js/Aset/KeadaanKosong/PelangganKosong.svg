@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-label="Pelanggan belum ada">
+<defs>
+ <linearGradient id="indigo" x1="80" y1="80" x2="400" y2="410" gradientUnits="userSpaceOnUse"><stop stop-color="#7779F7"/><stop offset="1" stop-color="#5558E8"/></linearGradient>
+ <linearGradient id="deep" x1="90" y1="100" x2="340" y2="410" gradientUnits="userSpaceOnUse"><stop stop-color="#3746D3"/><stop offset="1" stop-color="#1D29B8"/></linearGradient>
+ <linearGradient id="soft" x1="100" y1="100" x2="400" y2="400" gradientUnits="userSpaceOnUse"><stop stop-color="#F1F1FF"/><stop offset="1" stop-color="#DBDDFF"/></linearGradient>
+ <filter id="shade" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+</defs>
+<path d="M90 175C106 110 175 107 221 121c49 14 67-23 132 1 68 25 88 91 65 153-20 57-73 111-161 113-81 2-146-30-168-86-15-40-9-85 1-127Z" fill="#EFEFFF"/>
+<ellipse cx="255" cy="406" rx="146" ry="11" fill="#0F2747" opacity=".08" filter="url(#shade)"/>
+<circle cx="101" cy="160" r="6" fill="#FBBF24"/><circle cx="403" cy="196" r="5" fill="#5558E8" opacity=".55"/>
+
+<rect x="132" y="158" width="223" height="194" rx="19" transform="rotate(-10 132 158)" fill="#C7CAFF" stroke="#1D29B8" stroke-width="6"/>
+<rect x="167" y="144" width="222" height="220" rx="20" fill="#fff" stroke="#1D29B8" stroke-width="6"/>
+<circle cx="277" cy="219" r="35" fill="url(#indigo)"/><path d="M219 296c5-37 25-54 58-54s54 17 58 54" fill="url(#deep)"/>
+<path d="M205 324h143" stroke="#B8BAF6" stroke-width="9" stroke-linecap="round"/>
+<circle cx="374" cy="342" r="34" fill="#FBBF24" stroke="#1D29B8" stroke-width="5"/><path d="M374 327v30m-15-15h30" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+</svg>

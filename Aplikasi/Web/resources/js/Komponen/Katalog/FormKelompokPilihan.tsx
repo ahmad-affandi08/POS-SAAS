@@ -10,7 +10,6 @@ import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import { FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import type {
     FormKelompokPilihan as DataFormKelompokPilihan,
@@ -191,7 +190,10 @@ export default function FormKelompokPilihan({
                     Pilihan ({data.Pilihan.length})
                 </FieldLegend>
                 {data.Pilihan.map((pilihan, indeks) => (
-                    <Card key={pilihan.Uuid ?? `baru-${String(indeks)}`} className="gap-3 p-3 shadow-none">
+                    <div
+                        key={pilihan.Uuid ?? `baru-${String(indeks)}`}
+                        className="flex flex-col gap-3 border-t border-garis pt-3"
+                    >
                         <div className="grid gap-3 sm:grid-cols-3">
                             <BidangTeks
                                 label={`Nama pilihan ${String(indeks + 1)}`}
@@ -276,7 +278,7 @@ export default function FormKelompokPilihan({
                                 </Button>
                             </p>
                         ) : null}
-                    </Card>
+                    </div>
                 ))}
                 {data.Pilihan.length < MaksimalPilihan ? (
                     <p>

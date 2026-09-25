@@ -103,7 +103,7 @@ export default function HalamanNeracaSaldo({ Saring, Laporan, OpsiOutlet }: Prop
                 sumber={{ mode: 'lokal', data: Laporan.Baris }}
                 ambilIdBaris={(b) => b.Uuid}
                 cari="Cari kode atau nama akun"
-                kosong={{ judul: 'Belum ada jurnal pada periode dan outlet yang dipilih.' }}
+                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada jurnal pada periode dan outlet yang dipilih.' }}
             />
         </TataLetakAplikasi>
     );

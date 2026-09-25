@@ -159,8 +159,9 @@ export default function HalamanDaftarStokOpname({
                 alamatDetail={(o) => `${AlamatOpname}/${o.Uuid}`}
                 aksiAlat={tombolMulai}
                 kosong={{
+                    ilustrasi: 'Stok',
                     judul: 'Belum ada stok opname.',
-                    aksi: tombolMulai ?? <span>Minta pengelola persediaan memulai opname.</span>,
+                    ...(tombolMulai ? {} : { aksi: <span>Minta pengelola persediaan memulai opname.</span> }),
                 }}
             />
 

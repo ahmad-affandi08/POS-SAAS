@@ -233,6 +233,7 @@ export default function HalamanSaldoStok({ Saldo, OpsiGudang, MetodeHpp }: Props
                     />
                 )}
                 kosong={{
+                    ilustrasi: 'Stok',
                     judul: 'Belum ada stok tercatat. Isi stok awal agar saldo dan HPP benar sejak hari pertama.',
                     aksi: bolehKelola ? (
                         <Button asChild>

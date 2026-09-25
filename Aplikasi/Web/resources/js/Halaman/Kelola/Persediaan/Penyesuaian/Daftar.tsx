@@ -126,8 +126,9 @@ export default function HalamanDaftarPenyesuaianStok({
                 alamatDetail={(p) => `${AlamatPenyesuaian}/${p.Uuid}`}
                 aksiAlat={tombolBuat}
                 kosong={{
+                    ilustrasi: 'Stok',
                     judul: 'Belum ada penyesuaian stok.',
-                    aksi: tombolBuat ?? <span>Minta pengelola persediaan mencatat penyesuaian.</span>,
+                    ...(tombolBuat ? {} : { aksi: <span>Minta pengelola persediaan mencatat penyesuaian.</span> }),
                 }}
             />
         </TataLetakAplikasi>

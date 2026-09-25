@@ -190,16 +190,8 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                     />
                 )}
                 kosong={{
+                    ilustrasi: 'Pelanggan',
                     judul: 'Belum ada pelanggan. Tambahkan di sini atau dari aplikasi kasir saat transaksi.',
-                    ...(Izin.Kelola
-                        ? {
-                              aksi: (
-                                  <Button asChild>
-                                      <Link href={`${AlamatPelanggan}/buat`}>Tambah pelanggan</Link>
-                                  </Button>
-                              ),
-                          }
-                        : {}),
                 }}
             />
 

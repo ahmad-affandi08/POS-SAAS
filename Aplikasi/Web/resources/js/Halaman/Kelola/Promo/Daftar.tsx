@@ -199,16 +199,8 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: 'Promo',
                     judul: 'Belum ada promo. Contoh: happy hour 2 kopi Rp 30.000, beli 2 gratis 1, atau diskon 10% member Gold.',
-                    ...(Izin.Kelola
-                        ? {
-                              aksi: (
-                                  <Button asChild>
-                                      <Link href={`${alamat}/buat`}>Tambah promo</Link>
-                                  </Button>
-                              ),
-                          }
-                        : {}),
                 }}
             />
         </TataLetakAplikasi>

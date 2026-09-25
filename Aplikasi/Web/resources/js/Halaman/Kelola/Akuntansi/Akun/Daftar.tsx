@@ -203,7 +203,10 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada akun. Terapkan template sektor di Panduan awal untuk membuat bagan akun.' }}
+                kosong={{
+                    ilustrasi: 'Akuntansi',
+                    judul: 'Belum ada akun. Terapkan template sektor di Panduan awal untuk membuat bagan akun.',
+                }}
             />
 
             {form !== null ? (

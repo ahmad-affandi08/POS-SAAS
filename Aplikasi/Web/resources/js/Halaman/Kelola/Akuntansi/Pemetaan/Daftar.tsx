@@ -178,7 +178,7 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
                 ]}
                 labelBaris={(p) => `untuk ${p.LabelPeran} ${p.NamaOutlet ?? 'semua outlet'}`}
                 {...(Izin.Kelola ? { aksiBaris: AksiBarisPemetaan } : {})}
-                kosong={{ judul: 'Belum ada peran akun.' }}
+                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada peran akun.' }}
             />
 
             {form !== null ? (

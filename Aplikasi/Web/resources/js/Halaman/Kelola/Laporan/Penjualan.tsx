@@ -252,7 +252,10 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
                     ambilIdBaris={(b) => b.Kunci}
                     urutBawaan="-TotalDiskon"
                     cari="Cari nama kasir"
-                    kosong={{ judul: 'Belum ada penjualan berdiskon pada periode dan saring ini.' }}
+                    kosong={{
+                        ilustrasi: 'Laporan',
+                        judul: 'Belum ada penjualan berdiskon pada periode dan saring ini.',
+                    }}
                 />
             );
         default:

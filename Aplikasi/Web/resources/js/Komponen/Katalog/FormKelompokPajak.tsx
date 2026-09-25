@@ -6,7 +6,6 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import { Button } from '@/Komponen/Ui/button';
-import { Card } from '@/Komponen/Ui/card';
 import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import type { KategoriPajakProduk, PropsBuatKelompokPajak, PropsDaftarKelompokPajak } from '@/Tipe/Katalog';
 
@@ -148,7 +147,10 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                         transaksi.
                     </FieldDescription>
                     {data.Pajak.map((pajak, indeks) => (
-                        <Card key={indeks} className="grid items-end gap-2 p-3 shadow-none sm:grid-cols-[1fr_1fr_auto]">
+                        <div
+                            key={indeks}
+                            className="grid items-end gap-2 border-t border-garis pt-3 sm:grid-cols-[1fr_1fr_auto]"
+                        >
                             <BidangPilihan
                                 label={`Jenis pajak ${String(indeks + 1)}`}
                                 nilai={pajak.KodeJenisPajak}
@@ -189,7 +191,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                             >
                                 Hapus
                             </Button>
-                        </Card>
+                        </div>
                     ))}
                     <p>
                         <Button

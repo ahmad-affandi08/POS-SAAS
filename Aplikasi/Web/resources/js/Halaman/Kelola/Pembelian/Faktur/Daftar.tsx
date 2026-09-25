@@ -61,7 +61,10 @@ export default function HalamanDaftarFaktur({ Faktur, OpsiStatus, OpsiPemasok, I
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(f) => `${alamat}/${f.Uuid}`}
                 aksiAlat={tombol}
-                kosong={{ judul: 'Belum ada faktur pembelian.', ...(Izin.Kelola ? { aksi: tombol } : {}) }}
+                kosong={{
+                    ilustrasi: 'Pembelian',
+                    judul: 'Belum ada faktur pembelian.',
+                }}
             />
         </HalamanDaftarPembelian>
     );

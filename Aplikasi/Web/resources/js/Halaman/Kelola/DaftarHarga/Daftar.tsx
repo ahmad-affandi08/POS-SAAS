@@ -208,7 +208,7 @@ export default function HalamanDaftarDaftarHarga({ DaftarHarga, Kanal, Izin }: P
                     },
                 ]}
                 alamatDetail={(daftar) => `/kelola/daftar-harga/${daftar.Uuid}`}
-                kosong={{ judul: 'Belum ada daftar harga. Semua produk memakai harga dasar.' }}
+                kosong={{ ilustrasi: 'Produk', judul: 'Belum ada daftar harga. Semua produk memakai harga dasar.' }}
             />
         </TataLetakAplikasi>
     );

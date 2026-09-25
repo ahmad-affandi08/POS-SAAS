@@ -85,7 +85,7 @@ export default function HalamanLaporanKomisi({ Komisi, OpsiOutlet }: PropsLapora
                         </span>
                     </p>
                 )}
-                kosong={{ judul: 'Belum ada komisi pada periode ini.' }}
+                kosong={{ ilustrasi: 'Laporan', judul: 'Belum ada komisi pada periode ini.' }}
             />
         </TataLetakAplikasi>
     );

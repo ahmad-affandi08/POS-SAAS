@@ -116,7 +116,7 @@ export default function HalamanLaporanPajak({ Saring, Peringatan, OpsiOutlet, Pb
                     ambilIdBaris={(b) => b.Kunci}
                     urutBawaan="Bulan"
                     cari="Cari outlet atau jenis pajak"
-                    kosong={{ judul: 'Tidak ada PB1/PBJT pada periode ini.' }}
+                    kosong={{ ilustrasi: 'Laporan', judul: 'Tidak ada PB1/PBJT pada periode ini.' }}
                 />
             </section>
 

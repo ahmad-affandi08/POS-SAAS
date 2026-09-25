@@ -160,7 +160,10 @@ export default function HalamanDaftarPiutangPelanggan({ Piutang, OpsiUmur, OpsiP
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Tidak ada piutang terbuka. Semua penjualan tempo sudah lunas.' }}
+                kosong={{
+                    ilustrasi: 'Pelanggan',
+                    judul: 'Tidak ada piutang terbuka. Semua penjualan tempo sudah lunas.',
+                }}
             />
         </HalamanDaftarPiutang>
     );
