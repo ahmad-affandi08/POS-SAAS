@@ -9,6 +9,7 @@ use App\Providers\PenyediaKatalogHarga;
 use App\Providers\PenyediaKatalogImpor;
 use App\Providers\PenyediaKatalogKomposisi;
 use App\Providers\PenyediaLaporan;
+use App\Providers\PenyediaPelanggan;
 use App\Providers\PenyediaPenjualan;
 use App\Providers\PenyediaPersediaan;
 
@@ -27,4 +28,6 @@ return [
     PenyediaPenjualan::class,
     // F-14a: laporan (penangan ringkasan penjualan harian).
     PenyediaLaporan::class,
+    // F-16a: pelanggan (penangan item sinkron `Pelanggan.Buat`).
+    PenyediaPelanggan::class,
 ];

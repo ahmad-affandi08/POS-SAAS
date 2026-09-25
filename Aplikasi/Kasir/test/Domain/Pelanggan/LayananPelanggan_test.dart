@@ -1,0 +1,127 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart' show OrderingTerm;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:kasir/Domain/GalatKasir.dart';
+import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
+import 'package:kasir/Domain/Penjualan/Keranjang.dart';
+import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
+import 'package:kasir/Domain/Sesi/StafLokal.dart';
+import 'package:mesin_kasir/MesinKasir.dart';
+
+import '../../Pendukung/KatalogUji.dart';
+import '../../Pendukung/LingkunganUji.dart';
+
+Matcher GalatDengan(String kode) => throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', kode));
+
+/// Rincian F-16a di perangkat: normalisasi & penyamaran nomor HP sama dengan server, pelanggan baru offline (outbox
+/// `Pelanggan.Buat` + cache tersamar), cari online/offline, dan `Penjualan.Buat` membawa `UuidPelanggan`.
+void main() {
+  late LingkunganUji u;
+  late StafLokal rina;
+
+  setUp(() async {
+    u = LingkunganUji.Buat();
+    await u.SiapkanAktif();
+    rina = await u.Staf('Rina Wulandari');
+  });
+  tearDown(() => u.Tutup());
+
+  test('nomor HP: normalisasi & penyamaran sama dengan NomorHp server', () {
+    expect(LayananPelanggan.NormalisasiNoHp('0812-3456-7890'), '6281234567890');
+    expect(LayananPelanggan.NormalisasiNoHp('+62 812 3456 7890'), '6281234567890');
+    expect(LayananPelanggan.NormalisasiNoHp('812.3456.7890'), '6281234567890');
+    expect(LayananPelanggan.NormalisasiNoHp('0812'), isNull);
+    expect(LayananPelanggan.NormalisasiNoHp('0812abc4567'), isNull);
+    expect(LayananPelanggan.SamarkanNoHp('6281234567890'), '0812****7890');
+    expect(LayananPelanggan.SamarkanNoHp('6281311112222'), '0813****2222');
+  });
+
+  test('pelanggan baru offline: outbox Pelanggan.Buat + cache tersamar; nama & nomor divalidasi', () async {
+    final baru = await u.pelanggan.Buat(nama: '  Budi Santoso ', noHp: '0813 1111 2222', kasir: rina);
+    expect(baru.nama, 'Budi Santoso');
+    expect(baru.noHpSamar, '0813****2222');
+
+    final outbox = (await u.db.select(u.db.outbox).get()).single;
+    expect(outbox.Jenis, 'Pelanggan.Buat');
+    expect(outbox.Uuid, baru.uuid);
+    expect(jsonDecode(outbox.Data), {
+      'Nama': 'Budi Santoso',
+      'NoHp': '6281311112222',
+      'Email': null,
+      'UuidPengguna': rina.uuid,
+      'DibuatPada': '2026-09-24T01:00:00.000Z',
+    });
+    final lokal = (await u.db.select(u.db.pelangganLokal).get()).single;
+    expect(lokal.NoHpSamar, '0813****2222', reason: 'Nomor utuh tidak disimpan di tabel lokal.');
+
+    await expectLater(() => u.pelanggan.Buat(nama: ' ', noHp: '081311112222', kasir: rina), GalatDengan('NamaWajib'));
+    await expectLater(() => u.pelanggan.Buat(nama: 'Ani', noHp: '0812', kasir: rina), GalatDengan('NoHpTidakValid'));
+    await expectLater(
+      () => u.pelanggan.Buat(
+        nama: 'Ani',
+        noHp: '081234567890',
+        kasir: const StafLokal(uuid: '01K5STAF000000000000000009', nama: 'Tamu', pemilik: false, izin: []),
+      ),
+      GalatDengan('TanpaIzin'),
+    );
+  });
+
+  test('cari: online dari server & dicatat saat dipilih; offline dari cache perangkat', () async {
+    u.server.penangan = (p) async => http.Response(
+      jsonEncode({
+        'Pelanggan': [
+          {'Uuid': '01K5PELANGGAN0000000000001', 'Nama': 'Ani Rahmawati', 'NoHp': '0812****7890'},
+        ],
+      }),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
+    expect((await u.pelanggan.Cari('an')).pelanggan, isEmpty);
+    final online = await u.pelanggan.Cari('ani');
+    expect(online.online, isTrue);
+    expect(u.server.permintaan.single.url.queryParameters['kata'], 'ani');
+    await u.pelanggan.CatatDipakai(online.pelanggan.single);
+
+    u.jam = DateTime.utc(2026, 9, 24, 2);
+    await u.pelanggan.Buat(nama: 'Budi Santoso', noHp: '081311112222', kasir: rina);
+    u.server.penangan = (p) async => throw http.ClientException('offline');
+    final offline = await u.pelanggan.Cari('ani');
+    expect(offline.online, isFalse);
+    expect(offline.pelanggan.single.nama, 'Ani Rahmawati');
+    expect((await u.pelanggan.Cari('2222')).pelanggan.single.nama, 'Budi Santoso');
+    expect((await u.pelanggan.AmbilTerakhir()).map((p) => p.nama), ['Budi Santoso', 'Ani Rahmawati']);
+  });
+
+  test('bayar dengan pelanggan: Penjualan.Buat membawa UuidPelanggan setelah Pelanggan.Buat; keranjang tertahan menyimpannya', () async {
+    await u.SiapkanKatalog();
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+    await u.shift.BukaShift(kasir: rina, kasAwal: Uang.DariBulat(500000));
+    final baru = await u.pelanggan.Buat(nama: 'Budi Santoso', noHp: '081311112222', kasir: rina);
+
+    var keranjang = u.penjualan.TambahBaris(
+      Keranjang.kosong,
+      u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!),
+      katalog,
+      k,
+    );
+    keranjang = keranjang.Salin(pelanggan: () => baru);
+    expect(Keranjang.DariJson(keranjang.KeJson()).pelanggan?.uuid, baru.uuid);
+
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    final hasil = await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(50000))],
+      kasir: rina,
+      k: k,
+    );
+    final outbox = await (u.db.select(u.db.outbox)..orderBy([(o) => OrderingTerm.asc(o.Id)])).get();
+    expect(outbox.map((o) => o.Jenis), ['Shift.Buka', 'Pelanggan.Buat', 'Penjualan.Buat']);
+    final data = jsonDecode(outbox.last.Data) as Map<String, Object?>;
+    expect(outbox.last.Uuid, hasil.uuid);
+    expect(data['UuidPelanggan'], baru.uuid);
+    expect(LayananPenjualan.jenisOutbox, 'Penjualan.Buat');
+  });
+}

@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
 import 'Model/ModelMeja.dart';
+import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
 import 'Model/ModelRetur.dart';
 import 'Model/UraiJson.dart';
@@ -73,6 +74,17 @@ class KlienPos {
   Future<HasilCariPenjualan> CariPenjualan(String nomor) async => HasilCariPenjualan.DariJson(
     await _Kirim('GET', 'penjualan/cari?nomor=${Uri.encodeQueryComponent(nomor.trim())}', null),
   );
+
+  /// Cari pelanggan aktif tenant (F-16a): nama atau nomor HP, minimal 3 karakter (kurang = daftar kosong tanpa
+  /// permintaan). Offline → `GalatJaringan`.
+  Future<List<PelangganPos>> CariPelanggan(String kata) async {
+    final rapi = kata.trim();
+    if (rapi.length < 3) {
+      return const [];
+    }
+    final json = await _Kirim('GET', 'pelanggan?kata=${Uri.encodeQueryComponent(rapi)}', null);
+    return UraiJson.AmbilDaftarPeta(json['Pelanggan']).map(PelangganPos.DariJson).toList();
+  }
 
   /// Data meja outlet perangkat (F-07 mode meja fase 1).
   Future<DataMejaPos> AmbilMeja() async => DataMejaPos.DariJson(await _Kirim('GET', 'meja', null));

@@ -13,6 +13,7 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\DaftarPerangkat;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Penjualan\Data\DataSudahDiretur;
 use App\Domain\Penjualan\Enum\KodeAlasanTinjauan;
 use App\Domain\Penjualan\Layanan\PenghitungNilaiRetur;
@@ -45,6 +46,7 @@ final class DetailPenjualan
         private readonly InfoGudang $infoGudang,
         private readonly KomposisiPenjualan $komposisi,
         private readonly PenghitungNilaiRetur $penghitungRetur,
+        private readonly IdentitasPelanggan $pelanggan,
     ) {}
 
     /**
@@ -84,6 +86,8 @@ final class DetailPenjualan
                 'NamaOutlet' => $this->outlet->AmbilRingkas([$p->IdOutlet])[0]['Nama'] ?? '',
                 'Perangkat' => $this->perangkat->AmbilLabel([$p->IdPerangkat])[$p->IdPerangkat] ?? '',
                 'NamaKasir' => $nama[$p->IdPengguna]['Nama'] ?? '',
+                // F-16a: pelanggan penjualan (null = tanpa pelanggan).
+                'Pelanggan' => $this->pelanggan->AmbilRingkas($p->IdPelanggan),
                 'NamaPenyetujuDiskon' => $p->IdPenyetujuDiskon === null ? null : ($nama[$p->IdPenyetujuDiskon]['Nama'] ?? ''),
                 'DibuatOfflinePada' => $p->DibuatOfflinePada->toIso8601String(),
                 'DiterimaPada' => $p->DiterimaPada->toIso8601String(),

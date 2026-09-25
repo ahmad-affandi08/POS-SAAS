@@ -177,10 +177,36 @@ class PenyetujuDiskon {
       : null;
 }
 
+/// Pelanggan yang dipilih untuk transaksi (F-16a). Nomor HP hanya tersamar.
+class PelangganTerpilih {
+  const PelangganTerpilih({required this.uuid, required this.nama, required this.noHpSamar});
+
+  final String uuid;
+  final String nama;
+  final String noHpSamar;
+
+  Map<String, Object?> KeJson() => {'Uuid': uuid, 'Nama': nama, 'NoHpSamar': noHpSamar};
+
+  static PelangganTerpilih? DariJson(Object? json) => json is Map<String, Object?> && json['Uuid'] is String
+      ? PelangganTerpilih(
+          uuid: json['Uuid']! as String,
+          nama: '${json['Nama'] ?? ''}',
+          noHpSamar: '${json['NoHpSamar'] ?? ''}',
+        )
+      : null;
+}
+
 /// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
 /// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
-  const Keranjang({this.baris = const [], this.diskonPesanan, this.penyetuju, this.catatan, this.pesananMeja});
+  const Keranjang({
+    this.baris = const [],
+    this.diskonPesanan,
+    this.penyetuju,
+    this.catatan,
+    this.pesananMeja,
+    this.pelanggan,
+  });
 
   static const Keranjang kosong = Keranjang();
 
@@ -189,6 +215,9 @@ class Keranjang {
   final PenyetujuDiskon? penyetuju;
   final String? catatan;
   final KonteksPesananMeja? pesananMeja;
+
+  /// F-16a: null = pelanggan umum.
+  final PelangganTerpilih? pelanggan;
 
   bool get CekKosong => baris.isEmpty;
 
@@ -200,12 +229,14 @@ class Keranjang {
     PenyetujuDiskon? Function()? penyetuju,
     String? Function()? catatan,
     KonteksPesananMeja? Function()? pesananMeja,
+    PelangganTerpilih? Function()? pelanggan,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
     penyetuju: penyetuju == null ? this.penyetuju : penyetuju(),
     catatan: catatan == null ? this.catatan : catatan(),
     pesananMeja: pesananMeja == null ? this.pesananMeja : pesananMeja(),
+    pelanggan: pelanggan == null ? this.pelanggan : pelanggan(),
   );
 
   Map<String, Object?> KeJson() => {
@@ -213,6 +244,7 @@ class Keranjang {
     'DiskonManualPesanan': diskonPesanan?.KeJson(),
     'Penyetuju': penyetuju?.KeJson(),
     'Catatan': catatan,
+    'Pelanggan': pelanggan?.KeJson(),
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -223,5 +255,6 @@ class Keranjang {
     diskonPesanan: DiskonManual.DariJson(json['DiskonManualPesanan']),
     penyetuju: PenyetujuDiskon.DariJson(json['Penyetuju']),
     catatan: json['Catatan'] as String?,
+    pelanggan: PelangganTerpilih.DariJson(json['Pelanggan']),
   );
 }

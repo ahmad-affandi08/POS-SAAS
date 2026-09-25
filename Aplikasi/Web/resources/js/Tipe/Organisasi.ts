@@ -35,6 +35,9 @@ export const IzinTenant = {
     // F-04 pembelian: pemasok, PO, penerimaan, faktur, hutang, retur; persetujuan PO & pengaturan pembelian.
     PembelianKelola: 'pembelian.kelola',
     PembelianPoSetujui: 'pembelian.po.setujui',
+    // F-16a pelanggan (CRM-01).
+    PelangganLihat: 'pelanggan.lihat',
+    PelangganKelola: 'pelanggan.kelola',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

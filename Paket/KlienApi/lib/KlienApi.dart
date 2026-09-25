@@ -5,6 +5,7 @@ export 'Galat/GalatApi.dart';
 export 'KlienPos.dart';
 export 'Model/ModelKatalog.dart';
 export 'Model/ModelMeja.dart';
+export 'Model/ModelPelanggan.dart';
 export 'Model/ModelPos.dart';
 export 'Model/ModelRetur.dart';
 export 'Model/UraiJson.dart';

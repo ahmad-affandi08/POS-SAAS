@@ -60,6 +60,7 @@ const propsDetail: PropsDetailPenjualan = {
         Perangkat: 'UTAMA-K01 — Kasir Depan',
         NamaKasir: 'Rina Wulandari',
         NamaPenyetujuDiskon: 'Budi Santoso',
+        Pelanggan: { Uuid: '01K5PELANGGAN0000000000001', Nama: 'Bu Ani Rahmawati' },
         DibuatOfflinePada: '2026-09-24T03:10:00Z',
         DiterimaPada: '2026-09-24T05:00:00Z',
         TanggalBisnis: '2026-09-24',

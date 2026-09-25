@@ -30,6 +30,7 @@ use LogicException;
  * @property string $Nomor
  * @property KanalPenjualan $Kanal
  * @property StatusPenjualan $Status
+ * @property int|null $IdPelanggan
  * @property Carbon $TanggalBisnis
  * @property int $IdPengguna
  * @property int|null $IdPenyetujuDiskon

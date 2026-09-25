@@ -58,6 +58,9 @@ enum IzinTenant: string
     // P-09 Bantuan (tiket dukungan ke tim platform).
     case BantuanTiketLihat = 'bantuan.tiket.lihat';
     case BantuanTiketKelola = 'bantuan.tiket.kelola';
+    // F-16a CRM-01 pelanggan (back-office; memilih & membuat pelanggan di POS cukup `penjualan.buat`).
+    case PelangganLihat = 'pelanggan.lihat';
+    case PelangganKelola = 'pelanggan.kelola';
 
     public function AmbilLabel(): string
     {
@@ -96,6 +99,8 @@ enum IzinTenant: string
             self::LanggananKelola => 'Mengelola langganan & tagihan',
             self::BantuanTiketLihat => 'Melihat tiket bantuan & balasan tim dukungan',
             self::BantuanTiketKelola => 'Membuat, membalas, dan menyelesaikan tiket bantuan',
+            self::PelangganLihat => 'Melihat data & riwayat belanja pelanggan',
+            self::PelangganKelola => 'Menambah, mengubah, dan mengarsipkan pelanggan',
         };
     }
 
@@ -114,6 +119,7 @@ enum IzinTenant: string
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',
+            self::PelangganLihat, self::PelangganKelola => 'Pelanggan',
         };
     }
 

@@ -41,6 +41,8 @@ export type RingkasanPenjualan = {
     Perangkat: string;
     NamaKasir: string;
     NamaPenyetujuDiskon: string | null;
+    /** F-16a: pelanggan penjualan (null = tanpa pelanggan). */
+    Pelanggan: { Uuid: string; Nama: string } | null;
     DibuatOfflinePada: string;
     DiterimaPada: string;
     TanggalBisnis: string;

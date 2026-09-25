@@ -318,6 +318,15 @@ export default function HalamanDetailPenjualan({
                             <span className="font-mono">{p.Perangkat}</span>
                         </Nilai>
                         <Nilai label="Kanal">{p.LabelKanal}</Nilai>
+                        <Nilai label="Pelanggan">
+                            {p.Pelanggan ? (
+                                <Link href={`/kelola/pelanggan/${p.Pelanggan.Uuid}`} className="text-brand underline">
+                                    {p.Pelanggan.Nama}
+                                </Link>
+                            ) : (
+                                'Umum (tanpa pelanggan)'
+                            )}
+                        </Nilai>
                         <Nilai label="Diterima server">{FormatTanggalWaktu(p.DiterimaPada)}</Nilai>
                         {p.NamaPenyetujuDiskon ? <Nilai label="Diskon disetujui">{p.NamaPenyetujuDiskon}</Nilai> : null}
                         <Nilai label="Shift">

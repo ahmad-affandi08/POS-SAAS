@@ -703,6 +703,7 @@ class LayananPenjualan {
       },
       'Catatan': catatan == null || catatan.isEmpty ? null : catatan,
       'UuidPesananTerbuka': ?pesananMeja?.uuid,
+      'UuidPelanggan': ?keranjang.pelanggan?.uuid,
     };
 
     return DokumenPenjualan(

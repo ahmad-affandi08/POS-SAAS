@@ -228,6 +228,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Pembelian',
             // F-07b: daftar penjualan dari POS.
             'Penjualan',
+            // F-16a: data pelanggan.
+            'Pelanggan',
             'Shift & kas',
             'Akuntansi',
             // F-14a: laporan penjualan, pajak, stok.
@@ -253,6 +255,10 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.penjualan.lihat'] }).map(({ menu }) => menu.label),
         ).toEqual(['Beranda', 'Penjualan', 'Shift & kas', 'Laporan']);
         expect(CekMenuAktif('/kelola/penjualan', '/kelola/penjualan/01J9')).toBe(true);
+        // F-16a: menu Pelanggan ikut izin pelanggan.lihat.
+        expect(SaringMenuTerlihat({ Pemilik: false, Izin: ['pelanggan.lihat'] }).map(({ menu }) => menu.label)).toEqual(
+            ['Beranda', 'Pelanggan'],
+        );
         // F-14a: grup "Laporan" hanya berisi laporan yang boleh dibuka; tautannya = sub-menu pertama yang boleh.
         const laporanStok = SaringMenuTerlihat({ Pemilik: false, Izin: ['persediaan.lihat'] }).find(
             ({ menu }) => menu.label === 'Laporan',

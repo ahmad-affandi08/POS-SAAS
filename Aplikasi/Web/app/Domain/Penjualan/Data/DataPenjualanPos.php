@@ -41,5 +41,6 @@ final readonly class DataPenjualanPos
         public ?string $catatan,
         public ?string $uuidPesananTerbuka = null,
         public bool $kirimDapur = false,
+        public ?string $uuidPelanggan = null,
     ) {}
 }

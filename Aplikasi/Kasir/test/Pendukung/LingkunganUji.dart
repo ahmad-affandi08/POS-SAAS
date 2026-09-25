@@ -9,11 +9,13 @@ import 'package:kasir/Data/BasisData/BasisDataKasir.dart';
 import 'package:kasir/Data/PenyimpanRahasia.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Data/RepositoriKatalog.dart';
+import 'package:kasir/Data/RepositoriPelanggan.dart';
 import 'package:kasir/Data/RepositoriPenjualan.dart';
 import 'package:kasir/Data/RepositoriPesananMeja.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
 import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
+import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
@@ -237,6 +239,13 @@ class LingkunganUji {
     klien: klien,
     repositori: repositori,
     repositoriMeja: repositoriMeja,
+    jam: () => jam,
+  );
+
+  late final RepositoriPelanggan repositoriPelanggan = RepositoriPelanggan(db, repositori);
+  late final LayananPelanggan pelanggan = LayananPelanggan(
+    klien: klien,
+    repositori: repositoriPelanggan,
     jam: () => jam,
   );
 

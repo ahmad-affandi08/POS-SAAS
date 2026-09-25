@@ -133,6 +133,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Penjualan.php'));
             // F-14a Laporan inti (penjualan, pajak, stok).
             Route::group([], base_path('routes/Laporan.php'));
+            // F-16a Pelanggan (CRM-01).
+            Route::group([], base_path('routes/Pelanggan.php'));
         });
     });
 });

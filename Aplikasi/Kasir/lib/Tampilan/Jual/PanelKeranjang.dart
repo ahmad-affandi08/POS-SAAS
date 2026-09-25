@@ -25,6 +25,7 @@ class PanelKeranjang extends StatelessWidget {
     this.statusBaris = const {},
     this.labelTahan = 'Tahan',
     this.labelKosongkan = 'Batalkan transaksi',
+    this.saatPelanggan,
   });
 
   final Keranjang keranjang;
@@ -50,6 +51,9 @@ class PanelKeranjang extends StatelessWidget {
   /// Tombol kedua: "Tahan" (retail) atau "Kirim ke dapur" (mode meja).
   final String labelTahan;
   final String labelKosongkan;
+
+  /// F-16a: buka panel pelanggan (F2). Null = tombol pelanggan tidak ditampilkan.
+  final VoidCallback? saatPelanggan;
 
   static List<String> AmbilRincian(ItemKeranjang b) => [
     if (b.namaSatuan != null && b.namaSatuan!.isNotEmpty) '@ ${b.hargaSatuan.FormatRupiah()}/${b.namaSatuan}',
@@ -106,6 +110,43 @@ class PanelKeranjang extends StatelessWidget {
                     icon: const Icon(Icons.remove_shopping_cart_outlined),
                   ),
                 ],
+              ),
+            ),
+          if (saatPelanggan != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                onTap: saatPelanggan,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        keranjang.pelanggan == null ? Icons.person_outline : Icons.person,
+                        size: TokenJarak.ikonSedang,
+                        color: keranjang.pelanggan == null ? warna.teksSekunder : warna.brand,
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          keranjang.pelanggan == null
+                              ? 'Pelanggan umum · ketuk untuk memilih (F2)'
+                              : '${keranjang.pelanggan!.nama} · ${keranjang.pelanggan!.noHpSamar}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
+                ),
               ),
             ),
           Expanded(

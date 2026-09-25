@@ -11,6 +11,7 @@ import '../Data/PenyimpanRahasia.dart';
 import '../Data/PesananMeja.dart';
 import '../Data/RepositoriKasir.dart';
 import '../Data/RepositoriKatalog.dart';
+import '../Data/RepositoriPelanggan.dart';
 import '../Data/RepositoriPenjualan.dart';
 import '../Data/RepositoriPesananMeja.dart';
 import '../Domain/Dapur/LayananDapur.dart';
@@ -18,6 +19,7 @@ import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/LayananPesananMeja.dart';
+import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
@@ -256,6 +258,20 @@ final penyediaPesananTerbuka = StreamProvider<List<PesananMeja>>(
 
 final penyediaPesananMeja = StreamProvider.family<PesananMeja?, String>(
   (ref, uuid) => ref.watch(penyediaRepositoriPesananMeja).PantauPesanan(uuid),
+);
+
+// Pelanggan (F-16a) ----------------------------------------------------------------------------------------------------
+
+final penyediaRepositoriPelanggan = Provider<RepositoriPelanggan>(
+  (ref) => RepositoriPelanggan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+final penyediaLayananPelanggan = Provider<LayananPelanggan>(
+  (ref) => LayananPelanggan(
+    klien: ref.watch(penyediaKlienPos),
+    repositori: ref.watch(penyediaRepositoriPelanggan),
+    jam: ref.watch(penyediaJam),
+  ),
 );
 
 /// Layar dapur (KDS) untuk perangkat berjenis `Kds`.

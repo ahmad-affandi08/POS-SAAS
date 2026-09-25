@@ -14,6 +14,7 @@ import {
     ShoppingCartIcon,
     StoreIcon,
     UsersIcon,
+    UsersRoundIcon,
     WarehouseIcon,
     type LucideIcon,
 } from 'lucide-react';
@@ -176,6 +177,7 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu penjualan',
         sub: menuPenjualan,
     },
+    { label: 'Pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat, ikon: UsersRoundIcon },
     {
         label: 'Shift & kas',
         href: '/kelola/kasir/shift',

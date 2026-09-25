@@ -20,11 +20,12 @@ import 'Jual/PanelBayar.dart';
 import 'Jual/PanelDiskon.dart';
 import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
+import 'Jual/PanelPelanggan.dart';
 import 'Jual/PanelTertahan.dart';
 import 'Jual/PengenalPemindai.dart';
 import 'Meja/DialogPesananMeja.dart';
 
-enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan }
+enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan, Pelanggan }
 
 /// Beranda ruang kerja: layar Jual (F-07 mode retail, Rincian F-07c, PRD §17.2.3 & §17.2.7).
 /// - Katalog: cari nama/SKU/barcode, kategori, ubin produk seragam; keranjang di sisi yang diatur (kiri/kanan) mulai
@@ -33,7 +34,7 @@ enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan }
 ///   area kerja, sehingga keranjang tidak hilang.
 /// - Pemindai barcode tanpa fokus: rangkaian karakter cepat diakhiri Enter di mana pun di layar Jual (bukan saat mengetik
 ///   di kolom isian). Pintasan desktop (tabel §17.2.3): F1 cari, F8 bayar, F9 uang pas (tunai uang pas langsung
-///   disimpan), Esc tutup panel atau hapus item terakhir keranjang. F2 dicadangkan untuk pelanggan (belum ada).
+///   disimpan), Esc tutup panel atau hapus item terakhir keranjang, F2 pilih pelanggan (F-16a).
 ///   Batalkan transaksi hanya lewat tombol di keranjang (dengan konfirmasi).
 /// - Katalog diperbarui berkala 60 detik saat online dan keranjang kosong (perubahan tidak mengejutkan di tengah
 ///   transaksi, §17.2.7).
@@ -175,6 +176,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     }
     if (event.logicalKey == LogicalKeyboardKey.f1) {
       _fokusCari.requestFocus();
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.f2) {
+      _BukaPelanggan();
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.f8) {
@@ -394,6 +399,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     ref.read(penyediaKeranjang.notifier).Kosongkan();
     _TutupPanel();
     widget.saatKeMeja?.call();
+  }
+
+  void _BukaPelanggan() {
+    if (_panel == _JenisPanel.Bayar || _panel == _JenisPanel.Selesai) {
+      return;
+    }
+    setState(() {
+      _panel = _JenisPanel.Pelanggan;
+      _pesan = null;
+    });
   }
 
   void _BukaTertahan() => setState(() {
@@ -791,6 +806,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatTahan: () => unawaited(pesanan == null ? _Tahan() : _KirimDapur()),
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
       saatBayar: _BukaBayar,
+      saatPelanggan: _BukaPelanggan,
     );
   }
 
@@ -896,6 +912,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             : TampilanSelesai(hasil: _selesai!, saatTransaksiBaru: _TransaksiBaru),
       ),
       _JenisPanel.Tertahan => (judul: 'Pesanan tertahan', isi: PanelTertahan(saatDibuka: _TutupPanel)),
+      _JenisPanel.Pelanggan => (judul: 'Pelanggan', isi: PanelPelanggan(kasir: widget.kasir, saatSelesai: _TutupPanel)),
     };
   }
 

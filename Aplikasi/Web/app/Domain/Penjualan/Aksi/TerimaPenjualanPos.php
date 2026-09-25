@@ -27,6 +27,7 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
+use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
 use App\Domain\Pemenuhan\Data\DataKirimDapur;
@@ -121,6 +122,7 @@ final class TerimaPenjualanPos
         private readonly PencatatAudit $audit,
         private readonly PenutupPesananTerbuka $penutupPesanan,
         private readonly KirimKeDapur $kirimDapur,
+        private readonly IdentitasPelanggan $identitasPelanggan,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -252,8 +254,15 @@ final class TerimaPenjualanPos
         [$pesanan, $tinjauanPesanan] = $this->penutupPesanan->Cari($data->uuidPesananTerbuka, $outlet->idOutlet);
         $tinjauan += $tinjauanPesanan;
 
+        // F-16a: pelanggan dari POS (Uuid atau alias). Belum dikenal = penjualan tetap diterima tanpa pelanggan.
+        $idPelanggan = $data->uuidPelanggan === null ? null : $this->identitasPelanggan->CariId($data->uuidPelanggan);
+
+        if ($data->uuidPelanggan !== null && $idPelanggan === null) {
+            $tinjauan['PelangganTidakDikenal'] = 'PelangganTidakDikenal: pelanggan belum diterima server, penjualan disimpan tanpa pelanggan';
+        }
+
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
 
@@ -576,6 +585,7 @@ final class TerimaPenjualanPos
         HasilKalkulasi $hasil,
         Uang $totalDibayar,
         ?int $idPesananTerbuka,
+        ?int $idPelanggan,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
@@ -583,6 +593,7 @@ final class TerimaPenjualanPos
             'IdShift' => $idShift,
             'IdPerangkat' => $data->idPerangkat,
             'IdPesananTerbuka' => $idPesananTerbuka,
+            'IdPelanggan' => $idPelanggan,
             'Nomor' => $data->nomor,
             'Kanal' => $data->kanal,
             'Status' => StatusPenjualan::Lunas,

@@ -275,4 +275,23 @@ void main() {
     expect(await klien.UbahStatusTiket('T1', 'Dimasak'), 'Dimasak');
     expect(jsonDecode(dikirim.last.body), {'Status': 'Dimasak'});
   });
+
+  test('F-16a cari pelanggan: kata < 3 tanpa permintaan; hasil tersamar', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'Pelanggan': [
+          {'Uuid': 'P1', 'Nama': 'Ani Rahmawati', 'NoHp': '0812****7890'},
+        ],
+      }, 200);
+    });
+
+    expect(await klien.CariPelanggan(' an '), isEmpty);
+    expect(dikirim, isEmpty);
+    final hasil = await klien.CariPelanggan('ani r');
+    expect(dikirim.single.url.queryParameters['kata'], 'ani r');
+    expect(hasil.single.nama, 'Ani Rahmawati');
+    expect(hasil.single.noHpSamar, '0812****7890');
+  });
 }
