@@ -179,6 +179,18 @@ abstract final class PenyusunStrukPenjualan {
     ];
   }
 
+  /// `Rp 18.000` → `18.000` (baris rincian; dipakai juga dokumen kasir lain).
+  static String Angka(Uang nilai) => _Angka(nilai);
+
+  /// `2.0000` → `2`; `1.5000` → `1,5`.
+  static String Jumlah(String jumlah) => _Jumlah(jumlah);
+
+  /// `20 Sep 2026` dan `10.15` waktu lokal perangkat.
+  static (String, String) TanggalJam(DateTime waktu) {
+    final lokal = waktu.toLocal();
+    return ('${lokal.day} ${_bulan[lokal.month - 1]} ${lokal.year}', '${_Dua(lokal.hour)}.${_Dua(lokal.minute)}');
+  }
+
   /// `Rp 18.000` → `18.000` (baris rincian).
   static String _Angka(Uang nilai) => nilai.FormatRupiah().replaceFirst('Rp ', '').replaceFirst('−', '');
 

@@ -12,9 +12,11 @@ import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Penjualan/Keranjang.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananVoidPenjualan.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
 import 'package:kasir/Domain/Struk/IdentitasStruk.dart';
+import 'package:kasir/Domain/Struk/PenyusunDokumenKasir.dart';
 import 'package:kasir/Domain/Struk/PenyusunStrukPenjualan.dart';
 import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -282,4 +284,121 @@ void main() {
       expect(StrukPos.DariJson(null), isNull);
     },
   );
+
+  test(
+    '3b bukti void: nomor, alasan, penyetuju, refund; laci hanya bila refund tunai & diminta; cetak ulang bertanda',
+    () async {
+      await Siapkan();
+      final hasil = await Jual(JenisMetodeBayar.tunai);
+      final budi = await u.Staf('Budi Santoso');
+      await LayananVoidPenjualan(
+        repositori: u.repositori,
+        repositoriPenjualan: u.repositoriPenjualan,
+        jam: () => u.jam,
+      ).Void(uuidPenjualan: hasil.uuid, kasir: rina, alasan: 'Salah input pesanan meja 4', penyetuju: budi);
+      await profil.Simpan(u.repositori);
+
+      await u.struk.CetakVoid(hasil.uuid, bukaLaci: true);
+      final teks = u.printer.AmbilTeks();
+      expect(teks, contains('BUKTI VOID'));
+      expect(teks, contains(hasil.nomor));
+      // Kertas 58 mm (32 kolom): alasan panjang dibungkus di spasi.
+      expect(teks, contains('Alasan: Salah input pesanan meja\n4'));
+      expect(teks, contains('Disetujui: Budi Santoso'));
+      expect(teks, contains('Rp 67.100'));
+      expect(RegExp(r'Refund tunai\s+67\.100').hasMatch(teks), isTrue, reason: teks);
+      expect(_AdaPulsaLaci(u.printer.kiriman.last), isTrue);
+
+      await u.struk.CetakVoid(hasil.uuid, cetakUlang: true);
+      expect(u.printer.AmbilTeks(), contains('CETAK ULANG'));
+      expect(_AdaPulsaLaci(u.printer.kiriman.last), isFalse);
+    },
+  );
+
+  test('3b laporan shift X: judul, transaksi, per metode, kas laci; laporan Z setelah tutup', () async {
+    await Siapkan();
+    await Jual(JenisMetodeBayar.tunai);
+    await profil.Simpan(u.repositori);
+    final shiftAktif = (await u.repositori.AmbilShiftAktif())!;
+
+    await u.struk.CetakLaporanShift(await u.tutupShift.SusunLaporan(shiftAktif.Uuid));
+    var teks = u.printer.AmbilTeks();
+    expect(teks, contains('LAPORAN X'));
+    expect(RegExp(r'Jumlah transaksi\s+1').hasMatch(teks), isTrue, reason: teks);
+    expect(teks, contains('Kas seharusnya'));
+    expect(teks, contains('Tanda tangan kasir'));
+
+    final z = await u.tutupShift.TutupShift(shift: shiftAktif, penutup: rina, kasAktual: Uang.DariBulat(567100));
+    await u.struk.CetakLaporanShift(z);
+    teks = u.printer.AmbilTeks();
+    expect(teks, contains('LAPORAN Z'));
+    expect(teks, contains('Kas aktual'));
+  });
+
+  test('3b nota retur: nomor, asal, baris (rusak ditandai), total refund per metode, alasan; laci bila diminta', () {
+    const identitas = IdentitasStruk(
+      pengaturan: StrukPos(namaUsaha: 'Kopi Senja'),
+      namaUsaha: 'Kopi Senja',
+      namaOutlet: 'Kopi Senja Solo Baru',
+    );
+    final retur = BarisReturPenjualan(
+      Uuid: 'R1',
+      Nomor: 'RJ/SLO/260920/POS-001-0001',
+      UuidPenjualanAsal: 'P1',
+      NomorPenjualanAsal: 'INV/SLO/260920/POS-001-0007',
+      UuidShift: 'S1',
+      UuidPengguna: 'U1',
+      NamaKasir: 'Rina Wulandari',
+      UuidPenyetuju: 'U2',
+      Alasan: 'Kemasan bocor',
+      DibuatPada: DateTime.utc(2026, 9, 20, 3, 15),
+      TanggalBisnis: '2026-09-20',
+      MetodeRefund: 'Tunai',
+      TotalRefund: '36000.00',
+      RefundTunai: '36000.00',
+    );
+    final dokumen = PenyusunDokumenKasir.SusunRetur(
+      identitas,
+      retur,
+      [
+        const BarisReturPenjualanDetail(
+          Uuid: 'D1',
+          UuidReturPenjualan: 'R1',
+          UuidPenjualanDetail: 'PD1',
+          NamaProduk: 'Es Kopi Susu Aren',
+          SimbolSatuan: 'gls',
+          Jumlah: '2.0000',
+          Kondisi: 'Rusak',
+          NilaiBaris: '36000.00',
+        ),
+      ],
+      [
+        const BarisReturPenjualanPembayaran(
+          Uuid: 'B1',
+          UuidReturPenjualan: 'R1',
+          UuidMetodePembayaran: 'M1',
+          Jenis: 'Tunai',
+          NamaMetode: 'Tunai',
+          Jumlah: '36000.00',
+        ),
+      ],
+      bukaLaci: true,
+    );
+    final teks = TataLetakStruk.KeTeks(dokumen, LebarKertas.Mm58).map((b) => b.trim()).toList();
+    expect(teks, containsAll(['NOTA RETUR', 'RJ/SLO/260920/POS-001-0001', 'Asal:', 'INV/SLO/260920/POS-001-0007']));
+    expect(teks.any((b) => b.startsWith('2 gls (rusak)') && b.endsWith('36.000')), isTrue, reason: teks.join('\n'));
+    expect(teks.any((b) => b.startsWith('TOTAL REFUND') && b.endsWith('Rp 36.000')), isTrue);
+    expect(teks, contains('Alasan: Kemasan bocor'));
+    expect(dokumen.bukaLaci, isTrue);
+  });
+}
+
+/// Pulsa buka laci `ESC p` ada di kiriman printer.
+bool _AdaPulsaLaci(List<int> data) {
+  for (var i = 0; i + 1 < data.length; i++) {
+    if (data[i] == 0x1B && data[i + 1] == 0x70) {
+      return true;
+    }
+  }
+  return false;
 }

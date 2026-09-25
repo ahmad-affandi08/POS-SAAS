@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/Inti.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Struk/BagianCetakDokumen.dart';
+
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
@@ -160,6 +162,13 @@ class _LembarVoidState extends ConsumerState<LembarVoid> {
         Text(
           'Stok & jurnal dibalik oleh server setelah data terkirim.',
           style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+        const SizedBox(height: TokenJarak.jarak12),
+        // Cetak struk bagian 3b: bukti void (laci terbuka bila ada refund tunai, hanya pada cetak otomatis pertama).
+        BagianCetakDokumen(
+          kunci: 'Void:${widget.uuidPenjualan}',
+          namaDokumen: 'bukti void',
+          cetak: (l, ulang, otomatis) => l.CetakVoid(widget.uuidPenjualan, cetakUlang: ulang, bukaLaci: otomatis),
         ),
         const SizedBox(height: TokenJarak.jarak16),
         SizedBox(

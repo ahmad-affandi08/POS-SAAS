@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.83 |
+| Versi | 1.84 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.84 | Rincian **cetak struk bagian 3b** (POS-11; rincian diputuskan agen atas mandat D-12): aplikasi kasir mencetak bukti void, nota retur, laporan X (manual) dan laporan Z (otomatis bila cetak otomatis aktif); laci dibuka pada cetak otomatis pertama bukti void/nota retur bila ada refund tunai dari laci. |
 | 1.83 | Rincian **cetak struk bagian 3a: struk digital** (POS-11; rincian diputuskan agen atas mandat D-12): halaman publik `/s/{kodeStruk}` dengan kode `{IdTenant basis-36}.{Uuid penjualan}` yang bisa disusun kasir saat offline, QR + tautan di struk cetak, saklar "QR struk digital" di pengaturan struk. |
 | 1.82 | Rincian **P-10 rilis aplikasi & flag fitur** (PGL-18; rincian diputuskan agen atas mandat D-12): `RilisAplikasi` (Draf/Aktif/Dihentikan, kanal Beta untuk tenant Uji/Internal, rollout bertahap per ember perangkat), versi minimum dengan pengumuman ≥ 7 hari (BR-P10.1) dan dampak perangkat lama + outbox (BR-P10.2, header baru `X-Outbox-Tertunda`), `FlagFitur` Global/Paket/Tenant/Persentase dengan kill switch dan audit beralasan (BR-P10.3), aplikasi kasir membaca `konfigurasi-aplikasi` dan mengunci layar jual saat wajib perbarui. Pengumuman & banner pemeliharaan (PGL-19) tetap Fase 2. |
 | 1.81 | Rincian **F-15 tutup buku** (FIN-08; rincian diputuskan agen atas mandat D-12): tutup bulan (kunci & buka kunci periode dengan alasan + audit, syarat bulan lewat & semua shift ditutup); transaksi POS di periode terkunci kini **diterima** dengan `TanggalBisnis` asli, ditandai `PerluTinjauan`, jurnal & mutasi stok dibukukan di hari pertama periode terbuka berikutnya (§18.3, sebelumnya ditolak); tutup harian per outlet (tabel baru `TutupHarian`); tutup tahun J-15.1 ke Laba Ditahan per outlet. |
@@ -1329,6 +1330,13 @@ stateDiagram-v2
 - `data-awal` `Struk.AwalanStrukDigital` (tambahan aditif) = `https://{domain}/s/{tenant}.`; null bila saklar "QR struk digital" (`TampilkanStrukDigital`, bawaan hidup; boleh tidak dikirim form lama) dimatikan di `/kelola/kasir/struk`. Struk cetak menambah QR (`GS ( k`) dan tautan di atas catatan kaki.
 - Isi halaman hanya data yang juga tercetak (nama usaha/outlet, alamat & NPWP menurut saklar, nomor, waktu, kasir & pelanggan menurut saklar, baris, diskon, biaya layanan, pajak per jenis, pembulatan, total, pembayaran, kembalian, total retur, catatan kaki, penutup); tanpa HPP, catatan internal, atau tinjauan. Penjualan void ditandai "TRANSAKSI DIBATALKAN". Struk yang belum tersinkron, dimatikan, tenant lain, atau kode salah = halaman "Struk belum tersedia" (404).
 - **Belum**: kirim struk lewat WhatsApp/email (butuh integrasi WA, F-20), logo di halaman struk digital.
+
+**Rincian cetak struk bagian 3b: dokumen kasir lain (v1.84; rincian diputuskan agen atas mandat D-12):**
+- **Bukti void** (setelah void di aplikasi): kepala struk tenant, "BUKTI VOID", nomor penjualan, waktu void, kasir, penyetuju, alasan, total dibatalkan, refund tunai & non-tunai, kaki struk. **Nota retur** (setelah retur): "NOTA RETUR", nomor retur, nomor penjualan asal, waktu, kasir (menurut saklar), baris barang dengan jumlah, satuan, tanda "(rusak)", nilai, total refund per metode, alasan.
+- Keduanya dicetak otomatis sekali bila printer diatur dan cetak otomatis aktif; cetak otomatis pertama membuka laci bila ada refund tunai dari laci (dan profil printer mengizinkan buka laci). Cetak berikutnya manual, bertanda "CETAK ULANG", tanpa membuka laci.
+- **Laporan X** (panel laporan shift berjalan) dicetak hanya bila diminta; **laporan Z** (setelah tutup shift) dicetak otomatis sekali bila cetak otomatis aktif, bisa dicetak ulang. Isi sama dengan kartu laporan di layar: penjualan kotor/diskon/bersih/pajak/biaya layanan/pembulatan/total, void & retur, per metode bayar, kas laci (kas awal, tunai bersih, kas masuk/keluar, setoran, refund tunai, kas seharusnya, kas aktual, selisih & alasan), ruang tanda tangan kasir.
+- Semua dari data lokal (bisa offline); gagal cetak tidak membatalkan void, retur, atau tutup shift.
+- **Belum**: struk pre-order/uang muka, tiket dapur per stasiun di printer, buka laci manual tercatat, printer USB & all-in-one (Sunmi, iMin), fallback printer sistem, Wizard Uji Perangkat.
 
 **Keputusan implementasi F-07b/F-07c (v1.44):**
 - Kunci opsional `Penjualan.Buat`: `Kanal`, `PembulatanTunai`, `Pajak`, `HargaPilihan`, `Pilihan`, `KodePajak` (null = semua pajak dokumen, `[]` = tanpa pajak), `DiskonManual`, `Catatan`, `Referensi`. `DibuatPada` ISO-8601 berzona; > 10 menit di masa depan atau sebelum buka shift − 10 menit → `WaktuTidakValid`. `HargaPilihan` wajib = Σ harga `Pilihan`; `Ringkasan.Kembalian` ikut dicocokkan. `YYMMDD` nomor = tanggal bisnis (aplikasi memakai `Outlet.JamTutupBuku`); `{DEVICE}` = `Perangkat.Kode` apa adanya. Kode galat tambahan: `NomorTidakValid`, `ProdukTidakDikenal`, `SatuanTidakDikenal`, `MetodeBayarTidakDikenal`, `PembayaranTidakValid`, `PenyetujuTidakBerwenang`, `LokasiStokTidakAda`.

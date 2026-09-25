@@ -203,6 +203,21 @@ class PengaturPrinter extends Notifier<StatusPrinter> {
 
   final Set<String> _sudahOtomatis = {};
 
+  /// Cetak dokumen kasir selain struk penjualan (bukti void, nota retur, laporan shift); galat → pesan untuk kasir.
+  Future<String?> CetakDokumen(Future<void> Function(LayananStruk layanan) aksi) => _Jalankan(aksi);
+
+  /// Cetak otomatis sekali per dokumen [kunci] (misal Uuid retur) bila cetak otomatis aktif. Null = tidak dicetak.
+  Future<({bool dicetak, String? galat})> CetakDokumenOtomatis(
+    String kunci,
+    Future<void> Function(LayananStruk layanan) aksi,
+  ) async {
+    if (!_sudahOtomatis.add(kunci) || !await ref.read(penyediaLayananStruk).CekCetakOtomatis()) {
+      return (dicetak: false, galat: null);
+    }
+    final galat = await _Jalankan(aksi);
+    return (dicetak: galat == null, galat: galat);
+  }
+
   /// Cetak uji untuk isian yang mungkin belum disimpan: keadaan bilah status tidak diubah.
   Future<String?> CetakUji(ProfilPrinter profil) async {
     try {

@@ -24,6 +24,7 @@ import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
 import '../Shift/KartuLaporanShift.dart';
 import '../Shift/LembarTutupShift.dart';
+import '../Struk/BagianCetakDokumen.dart';
 import 'BilahAtasRuangKerja.dart';
 import 'ItemNavigasi.dart';
 import 'LayarKunci.dart';
@@ -512,7 +513,20 @@ class _IsiLaporanX extends ConsumerWidget {
         .when(
           loading: () => const LinearProgressIndicator(),
           error: (galat, _) => Text('Laporan tidak bisa dibaca: $galat'),
-          data: (laporan) => KartuLaporanShift(laporan: laporan),
+          data: (laporan) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              KartuLaporanShift(laporan: laporan),
+              const SizedBox(height: TokenJarak.jarak12),
+              // Cetak struk bagian 3b: laporan X hanya dicetak bila diminta (tanpa kas seharusnya saat tutup buta).
+              BagianCetakDokumen(
+                kunci: 'LaporanX:$uuidShift',
+                namaDokumen: 'laporan X',
+                otomatis: false,
+                cetak: (layanan, _, _) => layanan.CetakLaporanShift(laporan),
+              ),
+            ],
+          ),
         ),
   );
 }

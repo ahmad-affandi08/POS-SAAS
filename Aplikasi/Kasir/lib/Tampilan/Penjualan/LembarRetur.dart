@@ -6,6 +6,8 @@ import 'package:inti/Inti.dart';
 import 'package:klien_api/KlienApi.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Struk/BagianCetakDokumen.dart';
+
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
@@ -305,6 +307,13 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
         Text(
           'Stok barang kembali & jurnal dicatat server setelah data terkirim.',
           style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+        const SizedBox(height: TokenJarak.jarak12),
+        // Cetak struk bagian 3b: nota retur (laci terbuka bila ada refund tunai, hanya pada cetak otomatis pertama).
+        BagianCetakDokumen(
+          kunci: 'Retur:${selesai.uuid}',
+          namaDokumen: 'nota retur',
+          cetak: (l, ulang, otomatis) => l.CetakRetur(selesai.uuid, cetakUlang: ulang, bukaLaci: otomatis),
         ),
         const SizedBox(height: TokenJarak.jarak16),
         SizedBox(

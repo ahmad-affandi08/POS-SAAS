@@ -1,17 +1,21 @@
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
+import 'package:inti/Inti.dart';
 
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
 import '../Penjualan/KonteksPenjualan.dart';
 import 'IdentitasStruk.dart';
+import '../Shift/LayananTutupShift.dart';
+import 'PenyusunDokumenKasir.dart';
 import 'PenyusunStrukPenjualan.dart';
 import 'ProfilPrinter.dart';
 
 /// Membuat transport dari profil printer (diganti tiruan di test).
 typedef PembuatTransport = TransportPrinter Function(ProfilPrinter profil);
 
-/// Cetak struk penjualan (plus buka laci untuk tunai), cetak ulang, dan cetak uji (POS-11, POS-17, PRD v1.79). Buka laci
+/// Cetak struk penjualan (plus buka laci untuk tunai), cetak ulang, cetak uji (POS-11, POS-17, PRD v1.79), serta bukti
+/// void, nota retur, dan laporan shift X/Z (PRD v1.84). Buka laci
 /// manual tanpa transaksi belum ada karena wajib dicatat (§19.2). Semua dari data lokal,
 /// jadi tetap jalan saat offline (§18). Galat printer dilempar sebagai [GalatPrinter] berpesan untuk kasir; penjualan
 /// tetap tersimpan walau struk gagal dicetak.
@@ -51,6 +55,58 @@ class LayananStruk {
       bukaLaci: laci,
     );
     await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(dokumen);
+  }
+
+  /// Bukti void [uuidPenjualan] (cetak struk bagian 3b). [bukaLaci] untuk refund tunai dari laci.
+  Future<void> CetakVoid(String uuidPenjualan, {bool cetakUlang = false, bool bukaLaci = false}) async {
+    final profil = await _WajibProfil();
+    final jual = await penjualan.CariPenjualan(uuidPenjualan);
+    final dokumen = await penjualan.CariVoid(uuidPenjualan);
+    if (jual == null || dokumen == null) {
+      throw const GalatKasir('VoidTidakDitemukan', 'Void transaksi ini tidak ada di perangkat.');
+    }
+    final laci = bukaLaci && profil.bukaLaciTunai && !Uang.Dari(dokumen.RefundTunai).BernilaiNol();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunVoid(
+        await IdentitasStruk.Muat(repositori),
+        jual,
+        dokumen,
+        cetakUlang: cetakUlang,
+        bukaLaci: laci,
+      ),
+    );
+  }
+
+  /// Nota retur [uuidRetur] (cetak struk bagian 3b). [bukaLaci] untuk refund tunai dari laci.
+  Future<void> CetakRetur(String uuidRetur, {bool cetakUlang = false, bool bukaLaci = false}) async {
+    final profil = await _WajibProfil();
+    final retur = await penjualan.CariRetur(uuidRetur);
+    if (retur == null) {
+      throw const GalatKasir('ReturTidakDitemukan', 'Retur ini tidak ada di perangkat.');
+    }
+    final laci = bukaLaci && profil.bukaLaciTunai && !Uang.Dari(retur.RefundTunai).BernilaiNol();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunRetur(
+        await IdentitasStruk.Muat(repositori),
+        retur,
+        await penjualan.AmbilDetailRetur(uuidRetur),
+        await penjualan.AmbilPembayaranRetur(uuidRetur),
+        cetakUlang: cetakUlang,
+        bukaLaci: laci,
+      ),
+    );
+  }
+
+  /// Laporan shift X/Z (cetak struk bagian 3b).
+  Future<void> CetakLaporanShift(LaporanShift laporan, {bool tampilkanKasSeharusnya = true}) async {
+    final profil = await _WajibProfil();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunLaporanShift(
+        await IdentitasStruk.Muat(repositori),
+        laporan,
+        tampilkanKasSeharusnya: tampilkanKasSeharusnya,
+      ),
+    );
   }
 
   /// Printer diatur dan cetak otomatis aktif.

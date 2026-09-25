@@ -263,6 +263,9 @@ class RepositoriPenjualan {
     return dokumen;
   });
 
+  Future<BarisReturPenjualan?> CariRetur(String uuidRetur) =>
+      (db.select(db.returPenjualan)..where((r) => r.Uuid.equals(uuidRetur))).getSingleOrNull();
+
   Future<List<BarisReturPenjualanDetail>> AmbilDetailRetur(String uuidRetur) =>
       (db.select(db.returPenjualanDetail)..where((d) => d.UuidReturPenjualan.equals(uuidRetur))).get();
 
