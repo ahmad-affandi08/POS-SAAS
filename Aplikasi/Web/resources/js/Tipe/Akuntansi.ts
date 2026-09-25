@@ -248,3 +248,21 @@ export type PropsArusKas = {
     };
     OpsiOutlet: { Uuid: string; Nama: string }[];
 };
+
+/** F-15 tutup buku: satu periode akuntansi `YYYY-MM`. */
+export type BarisPeriodeAkuntansi = {
+    Periode: string;
+    Label: string;
+    Terkunci: boolean;
+    DikunciPada: string | null;
+    DikunciOleh: string | null;
+    /** Bulan berjalan (belum bisa dikunci). */
+    Berjalan: boolean;
+    /** Shift yang belum ditutup di periode ini (syarat kunci). */
+    ShiftBelumDitutup: number;
+};
+
+export type PropsTutupBuku = {
+    Periode: BarisPeriodeAkuntansi[];
+    Izin: { Kelola: boolean };
+};

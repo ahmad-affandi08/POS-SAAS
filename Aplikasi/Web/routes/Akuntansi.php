@@ -8,6 +8,7 @@ use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\LaporanKeuanganKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\PemetaanAkunKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\TransaksiKasBankKontroler;
+use App\Http\Kontroler\Kelola\Akuntansi\TutupBukuKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,8 @@ $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin
 $ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
 
 Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganLihat)])->group(function () use ($ulid): void {
+    // F-15: tutup buku (daftar periode & status kunci).
+    Route::get('/akuntansi/tutup-buku', [TutupBukuKontroler::class, 'Tampilkan'])->name('kelola.akuntansi.tutup-buku');
     Route::get('/akuntansi/jurnal', [JurnalKontroler::class, 'Daftar'])->name('kelola.akuntansi.jurnal.daftar');
     Route::get('/akuntansi/jurnal/{jurnal}', [JurnalKontroler::class, 'Detail'])->where('jurnal', $ulid)->name('kelola.akuntansi.jurnal.detail');
 
@@ -63,5 +66,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     // F-13a: transaksi kas & bank (halaman catat, simpan & pembalik).
     Route::get('/akuntansi/kas-bank/buat', [TransaksiKasBankKontroler::class, 'Buat'])->name('kelola.akuntansi.kas-bank.buat');
     Route::post('/akuntansi/kas-bank', [TransaksiKasBankKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.kas-bank.simpan');
+    // F-15: kunci & buka kunci periode (YYYY-MM).
+    Route::post('/akuntansi/tutup-buku/{periode}/kunci', [TutupBukuKontroler::class, 'Kunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.kunci');
+    Route::post('/akuntansi/tutup-buku/{periode}/buka-kunci', [TutupBukuKontroler::class, 'BukaKunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.buka-kunci');
+
     Route::post('/akuntansi/kas-bank/{transaksiKasBank}/pembalik', [TransaksiKasBankKontroler::class, 'Balikkan'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.pembalik');
 });
