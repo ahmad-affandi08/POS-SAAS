@@ -10,7 +10,7 @@
  * - Palet bawaan Tailwind (red-500, white, black, ...) dimatikan agar tidak ada warna di luar token.
  *
  * Mengganti warna: ubah nilai di bagian 1 ("UBAH WARNA DI SINI") saja. Bagian 2 dan seterusnya adalah
- * pemetaan yang tidak perlu disentuh. Warna di bawah masih SEMENTARA (§17.6.3); warna final belum diputuskan.
+ * pemetaan yang tidak perlu disentuh. Palet di bawah adalah warna final D-15 (§17.6.3).
  */
 @import '@fontsource-variable/atkinson-hyperlegible-next';
 @import '@fontsource-variable/atkinson-hyperlegible-mono';
@@ -24,7 +24,7 @@
 
 /* ============================================================================================
  * 1. UBAH WARNA DI SINI
- *    Palet dasar merek PAYOU (D-15, §17.6.3; sumber Spesifikasi/Merek). Ke-11 nilai ini juga ada di Flutter
+ *    Palet dasar merek PAYOU (D-15, §17.6.3; sumber Spesifikasi/Merek). Ke-12 nilai ini juga ada di Flutter
  *    (Paket/SistemDesain/lib/Token/TokenWarna.dart, nama sama dalam camelCase) dan dicek sama oleh
  *    Paket/SistemDesain/test/Token/SumberWarna_test.dart: ubah keduanya bersamaan.
  *    Setiap token menjadi utilitas Tailwind: bg-latar, text-teks-sekunder, border-garis, dst.
@@ -41,6 +41,7 @@
     --color-teks-utama: #0f2747; /* Navy */
     --color-teks-sekunder: #4a5873;
     --color-brand: #5558e8; /* aksi utama, penanda aktif; Primary Indigo #6366f1 digelapkan agar teks putih >= 4,5:1 */
+    --color-brand-gelap: #1d29b8; /* Indigo Gelap dari gradasi logo P; latar sidebar/header merek, teks putih 10,2:1 */
     --color-sukses: #2e7d32;
     --color-peringatan: #9a5b00;
     --color-bahaya: #b3261e;
@@ -69,6 +70,12 @@
     --color-peringatan-lembut: color-mix(in oklab, var(--color-peringatan) 12%, var(--color-permukaan));
     --color-bahaya-lembut: color-mix(in oklab, var(--color-bahaya) 12%, var(--color-permukaan));
     --color-info-lembut: color-mix(in oklab, var(--color-info) 12%, var(--color-permukaan));
+
+    /* Sidebar merek gelap (D-15): latar BrandGelap, teks menu tidak aktif ~6,7:1, sorotan hover, garis pemisah */
+    --color-brand-gelap-teks: color-mix(in oklab, var(--color-permukaan) 80%, var(--color-brand-gelap));
+    --color-brand-gelap-sorot: color-mix(in oklab, var(--color-permukaan) 12%, var(--color-brand-gelap));
+    --color-brand-gelap-garis: color-mix(in oklab, var(--color-permukaan) 16%, var(--color-brand-gelap));
+    --color-brand-gelap-gulir: color-mix(in oklab, var(--color-permukaan) 28%, var(--color-brand-gelap));
 
     /* Seri grafik (sementara memakai palet dasar; warna grafik final menyusul) */
     --color-grafik-1: var(--color-brand);
@@ -175,14 +182,15 @@
     --chart-4: var(--color-grafik-4);
     --chart-5: var(--color-grafik-5);
 
-    --sidebar: var(--color-latar);
-    --sidebar-foreground: var(--color-teks-utama);
+    /* Sidebar gelap merek (D-15): menu aktif = Brand, hover = sorotan BrandGelap, fokus = cincin putih. */
+    --sidebar: var(--color-brand-gelap);
+    --sidebar-foreground: var(--color-brand-gelap-teks);
     --sidebar-primary: var(--color-brand);
     --sidebar-primary-foreground: var(--color-brand-teks);
-    --sidebar-accent: var(--color-permukaan-sorot);
-    --sidebar-accent-foreground: var(--color-teks-utama);
-    --sidebar-border: var(--color-garis);
-    --sidebar-ring: var(--color-brand);
+    --sidebar-accent: var(--color-brand-gelap-sorot);
+    --sidebar-accent-foreground: var(--color-permukaan);
+    --sidebar-border: var(--color-brand-gelap-garis);
+    --sidebar-ring: var(--color-permukaan);
 }
 
 @theme inline {
@@ -239,6 +247,12 @@
         font-family: var(--font-sans);
         font-variant-numeric: tabular-nums;
     }
+}
+
+/* Bilah gulir sidebar gelap merek (D-15): tipis, ibu jari BrandGelap terang di atas rel transparan. */
+[data-slot='sidebar-content'] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-gelap-gulir) transparent;
 }
 
 /*

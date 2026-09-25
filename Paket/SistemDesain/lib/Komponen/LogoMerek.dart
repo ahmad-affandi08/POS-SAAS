@@ -5,12 +5,21 @@ const String namaMerek = 'PAYOU';
 
 /// Logo PAYOU (sumber `Spesifikasi/Merek`, dibuat ulang lewat `Spesifikasi/Merek/BuatTurunanAset.py`).
 ///
-/// [LogoMerek.lengkap] = logo horizontal dengan slogan, untuk layar sambutan/aktivasi.
+/// [LogoMerek.lengkap] = logo horizontal dengan tagline, untuk layar sambutan/aktivasi.
 /// [LogoMerek.ikon] = tanda huruf P saja, untuk ruang sempit.
+/// Varian [LogoMerek.lengkapPutih] dan [LogoMerek.ikonPutih] dipakai di atas permukaan gelap.
 class LogoMerek extends StatelessWidget {
-  const LogoMerek.lengkap({super.key, this.tinggi = 56}) : _berkas = 'assets/merek/LogoHorizontal.png';
+  const LogoMerek.lengkap({super.key, this.tinggi = 56})
+    : _berkas = 'assets/merek/LogoHorizontal.png';
 
-  const LogoMerek.ikon({super.key, this.tinggi = 40}) : _berkas = 'assets/merek/IkonMerek.png';
+  const LogoMerek.ikon({super.key, this.tinggi = 40})
+    : _berkas = 'assets/merek/IkonMerek.png';
+
+  const LogoMerek.lengkapPutih({super.key, this.tinggi = 56})
+    : _berkas = 'assets/merek/LogoHorizontalPutih.png';
+
+  const LogoMerek.ikonPutih({super.key, this.tinggi = 40})
+    : _berkas = 'assets/merek/IkonMerekPutih.png';
 
   final double tinggi;
   final String _berkas;
@@ -21,7 +30,12 @@ class LogoMerek extends StatelessWidget {
       label: namaMerek,
       image: true,
       child: ExcludeSemantics(
-        child: Image.asset(_berkas, package: 'sistem_desain', height: tinggi, fit: BoxFit.contain),
+        child: Image.asset(
+          _berkas,
+          package: 'sistem_desain',
+          height: tinggi,
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }

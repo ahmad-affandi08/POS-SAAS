@@ -15,7 +15,7 @@ paths:
 - **Pilihan & dropdown:** pakai `Komponen/Formulir/PilihanCari` (atau `BidangPilihan`): daftar terbuka di bawah pemicu, tidak menutupinya, dan punya kotak cari. Dilarang `<select>`/`NativeSelect` di luar `Komponen/Ui` (dijaga test). Setiap dropdown berisi daftar pilihan (saring tabel, atur kolom, dsb.) wajib punya kotak cari.
 - Web publik (self-order, toko online) **tidak menghitung harga sendiri**: panggil endpoint server.
 - Tipografi dari token §17.5: Atkinson Hyperlegible Next (UI) & Mono (kode, nomor dokumen, SKU). Uang: `tabular-nums`, rata kanan.
-- Warna & ukuran **hanya dari token** (`@theme`). Dilarang hex lepas, gradien, efek kaca, bayangan dekoratif, emoji di UI. Palet final merek PAYOU (D-15) sudah ada di token; logo PAYOU dipakai lewat `Komponen/Merek/LogoMerek.tsx`, bukan file gambar langsung.
+- Warna & ukuran **hanya dari token** (`@theme`). Dilarang hex lepas, gradien, efek kaca, bayangan dekoratif, emoji di UI; pengecualian gradien hanya untuk kepala sidebar merek `BrandGelap` → `Brand` (D-15). Palet final merek PAYOU sudah ada di token; logo PAYOU dipakai lewat `Komponen/Merek/LogoMerek.tsx`, bukan file gambar langsung.
 - Setiap layar punya keadaan: memuat (skeleton), kosong, galat, tanpa izin, data ekstrem (§17.6.6).
 - Microcopy Bahasa Indonesia konkret, tombol kata kerja spesifik ("Simpan produk"), format Rupiah `Rp 1.250.000` (§17.6.7).
 - Aksesibilitas: elemen interaktif asli (`button`, `a`, `label`), kontras WCAG AA, fokus keyboard terlihat.

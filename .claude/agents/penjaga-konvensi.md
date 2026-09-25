@@ -19,7 +19,7 @@ Langkah:
    - Mutasi POS tanpa idempotensi, uang memakai float/double
    - Test yang di-skip, dihapus, atau dilemahkan; perubahan pada file penjaga
    - Perluasan cakupan di luar flow/BR yang dinyatakan
-   - UI: hex lepas, gradien, emoji, keadaan wajib yang hilang, microcopy Inggris
+   - UI: hex lepas, gradien di luar pengecualian kepala sidebar merek D-15, emoji, keadaan wajib yang hilang, microcopy Inggris
 5. Laporkan dalam format:
    - **Wajib diperbaiki**: `file:baris — masalah — aturan (CLAUDE.md #n / PRD §x / D-xx)`
    - **Saran**: hal non-blokir

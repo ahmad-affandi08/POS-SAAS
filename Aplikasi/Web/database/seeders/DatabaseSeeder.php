@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanSatuanStandarBawaan;
+use App\Domain\Pengelola\Referensi\Aksi\SiapkanWilayahBawaan;
 use App\Domain\Pengelola\TemplateSektor\Aksi\SiapkanTemplateSektorBawaan;
 use App\Domain\Pengelola\TimInternal\Aksi\SiapkanPeranBawaan;
 use Illuminate\Database\Seeder;
@@ -20,6 +21,7 @@ final class DatabaseSeeder extends Seeder
     public function run(
         SiapkanPeranBawaan $siapkanPeranBawaan,
         SiapkanSatuanStandarBawaan $siapkanSatuanStandar,
+        SiapkanWilayahBawaan $siapkanWilayah,
         SiapkanPajakBawaan $siapkanPajak,
         SiapkanKatalogBawaan $siapkanKatalog,
         SiapkanTemplateSektorBawaan $siapkanTemplateSektor,
@@ -29,6 +31,10 @@ final class DatabaseSeeder extends Seeder
 
         // P-02: satuan standar awal. Idempoten.
         $siapkanSatuanStandar->Jalankan();
+
+        // P-02: wilayah awal wajib (38 provinsi + 514 kabupaten/kota, Kepmendagri 2025); pendaftaran F-00 memilih kota
+        // dari sini. Idempoten: kode yang sudah ada tidak diubah.
+        $siapkanWilayah->Jalankan();
 
         // P-02: jenis pajak bawaan + DRAF tarif PPN (wajib ditinjau sebelum terbit, §12).
         $siapkanPajak->Jalankan();

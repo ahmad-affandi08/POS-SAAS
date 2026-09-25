@@ -3,8 +3,8 @@
 Motion graphic HTML untuk video promosi awal: 1920×1080 (16:9), 30 detik, dengan musik latar dan efek suara.
 Memakai logo dari `../Sumber/`, palet merek D-15, dan font Atkinson Hyperlegible (§17.5, disimpan lokal di `Huruf/`, lisensi SIL OFL).
 
-Tagline video: **Smart Choice Your Business Partner**. Slogan lama yang tertanam di `LogoHorizontal.png`
-ditutup dan diganti teks tagline ini; file logo sumber tidak diubah.
+Tagline resmi: **Smart Choice Your Business Partner**. Untuk animasi masuk, tagline yang tertanam di
+`LogoHorizontal.png` ditutup lalu digambar kembali sebagai lapisan teks terpisah.
 
 ## Alur cerita
 

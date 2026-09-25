@@ -65,6 +65,19 @@ describe('TataLetakPengelola: menu sesuai izin, penanda lingkungan, banner (P-01
         expect(CekMenuPengelolaAktif('/referensi/tarif-pajak', '/referensi/wilayah')).toBe(true);
     });
 
+    it('kepala sidebar memakai gradasi merek dan logo putih, bukan nama platform', () => {
+        propsHalaman = BuatProps([]);
+        const { container } = render(<TataLetakPengelola judul="Beranda">isi</TataLetakPengelola>);
+
+        const kepala = container.querySelector('[data-slot="sidebar-header"]');
+        expect(kepala?.className).toContain('bg-linear-to-br');
+        expect(kepala?.className).toContain('from-brand-gelap');
+        expect(kepala?.className).toContain('to-brand');
+        expect(kepala?.querySelector('img[src*="LogoHorizontalPutih.png"]')).toBeTruthy();
+        expect(kepala?.querySelector('img[src*="IkonMerekPutih.png"]')).toBeTruthy();
+        expect(kepala?.textContent).not.toContain('Kasir · Pengelola');
+    });
+
     it('penanda lingkungan selalu tampil dan banner integrasi & operasional ditampilkan', () => {
         propsHalaman = BuatProps([], {
             PeringatanSuperAdmin: true,

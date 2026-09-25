@@ -21,7 +21,6 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -32,8 +31,14 @@ import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { IzinPengelola, PunyaIzin, type KunciIzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
-import { IkonMerek } from '@/Komponen/Merek/LogoMerek';
-import { BacaSidebarTerbuka, KepalaTataLetak, MenuAkun, PemberitahuanMelayang } from './BagianTataLetak';
+import {
+    BacaSidebarTerbuka,
+    kelasTombolMenuSidebar,
+    KepalaTataLetak,
+    MenuAkun,
+    PemberitahuanMelayang,
+} from './BagianTataLetak';
+import KepalaSidebarMerek from './KepalaSidebarMerek';
 
 type PropsTataLetak = {
     judul: string;
@@ -82,21 +87,11 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
     return (
         <SidebarProvider defaultOpen={BacaSidebarTerbuka()}>
             <Head title={judul} />
-            <Sidebar collapsible="icon">
-                <SidebarHeader className="border-b border-sidebar-border">
-                    <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:px-0">
-                        <IkonMerek nama={props.NamaAplikasi} />
-                        <p
-                            className="truncate text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
-                            title={namaPlatform}
-                        >
-                            {namaPlatform}
-                        </p>
-                    </div>
-                </SidebarHeader>
+            <Sidebar collapsible="icon" className="border-sidebar-border">
+                <KepalaSidebarMerek nama={props.NamaAplikasi} />
                 <SidebarContent>
                     <nav aria-label="Menu utama">
-                        <SidebarGroup>
+                        <SidebarGroup className="px-3 py-3">
                             <SidebarGroupContent>
                                 <SidebarMenu>
                                     {menuTerlihat.map((menu) => {
@@ -109,7 +104,7 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                                                     asChild
                                                     isActive={aktif}
                                                     tooltip={menu.label}
-                                                    className="text-label data-[active=true]:font-semibold"
+                                                    className={kelasTombolMenuSidebar}
                                                 >
                                                     <Link href={menu.href} aria-current={aktif ? 'page' : undefined}>
                                                         <Ikon aria-hidden="true" />

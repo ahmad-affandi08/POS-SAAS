@@ -9,7 +9,7 @@ Jalankan ulang setiap kali logo sumber diganti:
 Hasil (ditimpa):
 - Web: `Aplikasi/Web/public/favicon.ico`, `public/apple-touch-icon.png`, `resources/js/Aset/Merek/*.png`
 - Flutter: ikon Android (legacy + adaptive), iOS AppIcon, Windows `app_icon.ico` untuk Kasir & Pemilik,
-  serta logo dalam aplikasi di `Paket/SistemDesain/assets/merek/`.
+  serta logo warna/putih dalam aplikasi di `Paket/SistemDesain/assets/merek/`.
 
 Warna latar ikon aplikasi = `Permukaan` (putih), sama dengan token UI.
 """
@@ -36,6 +36,13 @@ def UbahTinggi(gambar: Image.Image, tinggi: int) -> Image.Image:
     return gambar.resize((lebar, tinggi), Image.LANCZOS)
 
 
+def JadikanPutih(gambar: Image.Image) -> Image.Image:
+    """Pertahankan alfa dan siluet persis, lalu ubah seluruh piksel tampak menjadi putih."""
+    putih = Image.new("RGBA", gambar.size, (255, 255, 255, 0))
+    putih.putalpha(gambar.getchannel("A"))
+    return putih
+
+
 def TaruhDiTengah(tanda: Image.Image, sisi: int, porsi: float, latar=(0, 0, 0, 0), sudut: float = 0.0) -> Image.Image:
     """Tanda merek di tengah kanvas persegi; `porsi` = tinggi tanda terhadap sisi kanvas."""
     kanvas = Image.new("RGBA", (sisi, sisi), (0, 0, 0, 0))
@@ -58,7 +65,7 @@ def Simpan(gambar: Image.Image, path: Path, **opsi) -> None:
     print(f"  {path.relative_to(AKAR)}")
 
 
-def BuatWeb(tanda: Image.Image, logo: Image.Image) -> None:
+def BuatWeb(tanda: Image.Image, logo: Image.Image, tanda_putih: Image.Image, logo_putih: Image.Image) -> None:
     web = AKAR / "Aplikasi/Web"
     ico = TaruhDiTengah(tanda, 256, 0.92)
     ico.save(web / "public/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
@@ -66,6 +73,8 @@ def BuatWeb(tanda: Image.Image, logo: Image.Image) -> None:
     Simpan(TaruhDiTengah(tanda, 180, 0.64, PUTIH).convert("RGB"), web / "public/apple-touch-icon.png")
     Simpan(UbahTinggi(logo, 168), web / "resources/js/Aset/Merek/LogoHorizontal.png")
     Simpan(UbahTinggi(tanda, 96), web / "resources/js/Aset/Merek/IkonMerek.png")
+    Simpan(UbahTinggi(logo_putih, 168), web / "resources/js/Aset/Merek/LogoHorizontalPutih.png")
+    Simpan(UbahTinggi(tanda_putih, 96), web / "resources/js/Aset/Merek/IkonMerekPutih.png")
 
 
 def BuatAndroid(tanda: Image.Image, res: Path) -> None:
@@ -108,17 +117,30 @@ def BuatWindows(tanda: Image.Image, path: Path) -> None:
     print(f"  {path.relative_to(AKAR)}")
 
 
-def BuatSistemDesain(tanda: Image.Image, logo: Image.Image) -> None:
+def BuatSistemDesain(tanda: Image.Image, logo: Image.Image, tanda_putih: Image.Image, logo_putih: Image.Image) -> None:
     aset = AKAR / "Paket/SistemDesain/assets/merek"
     Simpan(UbahTinggi(logo, 216), aset / "LogoHorizontal.png")
     Simpan(UbahTinggi(tanda, 192), aset / "IkonMerek.png")
+    Simpan(UbahTinggi(logo_putih, 216), aset / "LogoHorizontalPutih.png")
+    Simpan(UbahTinggi(tanda_putih, 192), aset / "IkonMerekPutih.png")
 
 
 def main() -> None:
+    # Varian putih adalah turunan deterministik sumber warna agar selalu ikut saat logo utama diperbarui.
+    Simpan(
+        JadikanPutih(Image.open(SUMBER / "IkonMerek.png").convert("RGBA")),
+        SUMBER / "IkonMerekPutih.png",
+    )
+    Simpan(
+        JadikanPutih(Image.open(SUMBER / "LogoHorizontal.png").convert("RGBA")),
+        SUMBER / "LogoHorizontalPutih.png",
+    )
     tanda = Muat("IkonMerek.png")
     logo = Muat("LogoHorizontal.png")
+    tanda_putih = Muat("IkonMerekPutih.png")
+    logo_putih = Muat("LogoHorizontalPutih.png")
     print("Web:")
-    BuatWeb(tanda, logo)
+    BuatWeb(tanda, logo, tanda_putih, logo_putih)
     for aplikasi in ("Kasir", "Pemilik"):
         print(f"{aplikasi}:")
         dasar = AKAR / "Aplikasi" / aplikasi
@@ -128,7 +150,7 @@ def main() -> None:
         if windows.parent.exists():
             BuatWindows(tanda, windows)
     print("SistemDesain:")
-    BuatSistemDesain(tanda, logo)
+    BuatSistemDesain(tanda, logo, tanda_putih, logo_putih)
 
 
 if __name__ == "__main__":

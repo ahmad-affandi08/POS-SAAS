@@ -20,6 +20,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     required this.teksUtama,
     required this.teksSekunder,
     required this.brand,
+    required this.brandGelap,
     required this.sukses,
     required this.peringatan,
     required this.bahaya,
@@ -34,6 +35,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     teksUtama: Color(0xFF0F2747),
     teksSekunder: Color(0xFF4A5873),
     brand: Color(0xFF5558E8),
+    brandGelap: Color(0xFF1D29B8),
     sukses: Color(0xFF2E7D32),
     peringatan: Color(0xFF9A5B00),
     bahaya: Color(0xFFB3261E),
@@ -47,6 +49,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
   final Color teksUtama;
   final Color teksSekunder;
   final Color brand;
+  final Color brandGelap;
   final Color sukses;
   final Color peringatan;
   final Color bahaya;
@@ -55,7 +58,9 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
   /// Token warna dari tema terdekat. Gagal keras bila tema belum memasang [TokenWarna].
   static TokenWarna AmbilDari(BuildContext context) =>
       Theme.of(context).extension<TokenWarna>() ??
-      (throw StateError('TokenWarna belum dipasang di ThemeData. Pakai BuatTema().'));
+      (throw StateError(
+        'TokenWarna belum dipasang di ThemeData. Pakai BuatTema().',
+      ));
 
   @override
   TokenWarna copyWith({
@@ -66,6 +71,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     Color? teksUtama,
     Color? teksSekunder,
     Color? brand,
+    Color? brandGelap,
     Color? sukses,
     Color? peringatan,
     Color? bahaya,
@@ -78,6 +84,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     teksUtama: teksUtama ?? this.teksUtama,
     teksSekunder: teksSekunder ?? this.teksSekunder,
     brand: brand ?? this.brand,
+    brandGelap: brandGelap ?? this.brandGelap,
     sukses: sukses ?? this.sukses,
     peringatan: peringatan ?? this.peringatan,
     bahaya: bahaya ?? this.bahaya,
@@ -97,6 +104,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
       teksUtama: Color.lerp(teksUtama, other.teksUtama, t)!,
       teksSekunder: Color.lerp(teksSekunder, other.teksSekunder, t)!,
       brand: Color.lerp(brand, other.brand, t)!,
+      brandGelap: Color.lerp(brandGelap, other.brandGelap, t)!,
       sukses: Color.lerp(sukses, other.sukses, t)!,
       peringatan: Color.lerp(peringatan, other.peringatan, t)!,
       bahaya: Color.lerp(bahaya, other.bahaya, t)!,

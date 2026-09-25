@@ -1,11 +1,7 @@
 # Rencana Konten Motion Graphic PAYOU: 30 Video × 30 Detik untuk Go-Live
 
 Dokumen kerja tim pemasaran & produk. Dipakai mulai 6 minggu sebelum **launch publik (GA, akhir Fase 2 §22)**.
-Tagline video: **Smart Choice Your Business Partner**.
-
-> **Catatan keputusan merek.** Slogan resmi di D-15 dan di file logo masih "Bisnis Laris, Kelola Praktis.".
-> Sebelum produksi massal, pemilik produk perlu memutuskan tagline mana yang resmi. Kalau yang dipakai
-> tagline baru, logo dan lembar merek dibuat ulang agar video, aplikasi, dan toko aplikasi seragam.
+Tagline resmi D-15: **Smart Choice Your Business Partner**.
 
 ---
 
@@ -88,7 +84,7 @@ Semua video memakai kerangka yang sama supaya ritmenya tenang dan tidak terburu-
 | Transisi | Hanya 2 jenis: **potong di aksi** (cut on action) dan **tirai merek** (kuning–indigo–navy) untuk pindah babak besar. Maksimal 2 tirai per video |
 | Bintang kuning | Tanda baca merek: muncul di pembuka logo, penutup, dan paling banyak 1 kali sebagai penanda "berhasil". Tidak dipakai sebagai hiasan acak |
 | Tipografi | Atkinson Hyperlegible Next (judul 800, isi 500), Mono untuk angka uang. Ukuran judul 72–96 px (16:9) / 88–110 px (9:16) |
-| Warna | Hanya token D-15: `Brand` #5558E8, `TeksUtama` #0F2747, kuning #FBBF24 (aksen merek), `Latar` #F9FAFB, `Garis` #E5E7EB. Status memakai warna status aplikasi (sukses, peringatan, bahaya) |
+| Warna | Hanya token D-15: `Brand` #5558E8, `BrandGelap` #1D29B8, `TeksUtama` #0F2747, kuning #FBBF24 (aksen merek), `Latar` #F9FAFB, `Garis` #E5E7EB. Status memakai warna status aplikasi (sukses, peringatan, bahaya) |
 | Bingkai perangkat | Vektor datar sederhana (warna navy), bukan render foto 3D. Rasio layar sama persis dengan perangkat rekaman |
 
 ---
@@ -750,9 +746,8 @@ Tinjauan setiap 2 minggu: tiga video terbaik dibuat versi kait alternatif; tiga 
 
 ## 14. Hal yang Perlu Diputuskan Pemilik Produk
 
-1. Tagline resmi: "Smart Choice Your Business Partner" (video) atau "Bisnis Laris, Kelola Praktis." (D-15 saat ini).
-2. Sumber musik: komposisi khusus atau pustaka berlisensi.
-3. Memakai pengisi suara (VO) atau hanya teks + musik. Rekomendasi: VO untuk K01–K03 dan K30, sisanya teks + musik.
-4. Domain & URL ajakan (kartu penutup), serta halaman tujuan per video.
-5. Tenant beta mana yang bersedia untuk B-roll dan testimoni (K30), lengkap dengan izin tertulis.
-6. Harga final paket (K29) dan klaim terukur (waktu onboarding, kecepatan transaksi).
+1. Sumber musik: komposisi khusus atau pustaka berlisensi.
+2. Memakai pengisi suara (VO) atau hanya teks + musik. Rekomendasi: VO untuk K01–K03 dan K30, sisanya teks + musik.
+3. Domain & URL ajakan (kartu penutup), serta halaman tujuan per video.
+4. Tenant beta mana yang bersedia untuk B-roll dan testimoni (K30), lengkap dengan izin tertulis.
+5. Harga final paket (K29) dan klaim terukur (waktu onboarding, kecepatan transaksi).

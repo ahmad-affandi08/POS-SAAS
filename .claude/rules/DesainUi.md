@@ -12,7 +12,7 @@ paths:
 
 - [ ] Layar tetap bisa dipahami jika semua warna dihapus.
 - [ ] Warna hanya untuk aksi utama & status; status selalu disertai teks/ikon.
-- [ ] Tanpa gradien, efek kaca, bayangan dekoratif, emoji, ilustrasi dekoratif.
+- [ ] Tanpa gradien (kecuali kepala sidebar merek `BrandGelap` → `Brand`, D-15), efek kaca, bayangan dekoratif, emoji, ilustrasi dekoratif.
 - [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel.
 - [ ] Web: tabel memakai `TabelData` (TanStack Table + Query, §17.4.3) dengan cari, saring, urut, atur kolom, paginasi server, keadaan di URL.
 - [ ] Web: rapi di 360 / 768 / 1280px tanpa gulir horizontal halaman (§17.4.4).

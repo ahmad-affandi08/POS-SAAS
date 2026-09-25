@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     BanknoteIcon,
     BookOpenTextIcon,
+    ChevronRightIcon,
     ChartColumnIcon,
     CreditCardIcon,
     HouseIcon,
@@ -19,16 +20,16 @@ import {
     WarehouseIcon,
     type LucideIcon,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Komponen/Ui/collapsible';
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -37,14 +38,25 @@ import {
     SidebarMenuSubItem,
     SidebarProvider,
     SidebarRail,
+    useSidebar,
 } from '@/Komponen/Ui/sidebar';
+import { cn } from '@/Komponen/Ui/utils';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
-import { IkonMerek } from '@/Komponen/Merek/LogoMerek';
-import { BacaSidebarTerbuka, KepalaTataLetak, MenuAkun, PemberitahuanMelayang } from './BagianTataLetak';
+import {
+    BacaSidebarTerbuka,
+    kelasChevronGrupSidebar,
+    kelasTombolGrupSidebar,
+    kelasTombolMenuSidebar,
+    kelasTombolSubMenuSidebar,
+    KepalaTataLetak,
+    MenuAkun,
+    PemberitahuanMelayang,
+} from './BagianTataLetak';
+import KepalaSidebarMerek from './KepalaSidebarMerek';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
@@ -291,6 +303,80 @@ export function SaringMenuTerlihat(akses: PropsBersamaAplikasi['Akses']): MenuTe
     });
 }
 
+/**
+ * Satu menu utama sidebar. Grup bersub-menu adalah tombol Collapsible: klik label membuka/menutup sub-menu dengan
+ * animasi tinggi dan chevron memutar 90°. Saat sidebar diciutkan menjadi ikon (sub-menu tak terlihat), klik langsung
+ * menuju sub-menu pertama. Grup halaman aktif terbuka sejak awal (tanpa animasi saat dimuat).
+ */
+function ItemMenuSidebar({ menu, labelSub, sub, url }: MenuTerlihat & { url: string }) {
+    const { state, isMobile } = useSidebar();
+    const subAktif = labelSub === null ? null : CariSubMenuAktif(sub, url);
+    const aktif = labelSub === null ? CekMenuAktif(menu.href, url) : subAktif !== null;
+    const [terbuka, AturTerbuka] = useState(subAktif !== null);
+    const Ikon = menu.ikon;
+    const ikon = Ikon ? <Ikon aria-hidden="true" /> : null;
+
+    if (labelSub === null) {
+        return (
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={aktif} tooltip={menu.label} className={kelasTombolMenuSidebar}>
+                    <Link href={menu.href} aria-current={aktif ? 'page' : undefined}>
+                        {ikon}
+                        <span>{menu.label}</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        );
+    }
+
+    const TanganiKlikGrup = (peristiwa: MouseEvent<HTMLButtonElement>) => {
+        if (state === 'collapsed' && !isMobile) {
+            peristiwa.preventDefault();
+            router.visit(menu.href);
+        }
+    };
+
+    return (
+        <Collapsible asChild open={terbuka} onOpenChange={AturTerbuka}>
+            <SidebarMenuItem>
+                <CollapsibleTrigger asChild onClick={TanganiKlikGrup}>
+                    <SidebarMenuButton
+                        isActive={aktif}
+                        tooltip={menu.label}
+                        className={cn(kelasTombolMenuSidebar, kelasTombolGrupSidebar)}
+                    >
+                        {ikon}
+                        <span>{menu.label}</span>
+                        <ChevronRightIcon aria-hidden="true" className={kelasChevronGrupSidebar} />
+                    </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                    <nav aria-label={labelSub}>
+                        <SidebarMenuSub className="mt-1 mb-1">
+                            {sub.map((item) => (
+                                <SidebarMenuSubItem key={item.href}>
+                                    <SidebarMenuSubButton
+                                        asChild
+                                        isActive={subAktif === item.href}
+                                        className={kelasTombolSubMenuSidebar}
+                                    >
+                                        <Link
+                                            href={item.href}
+                                            aria-current={subAktif === item.href ? 'page' : undefined}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </nav>
+                </CollapsibleContent>
+            </SidebarMenuItem>
+        </Collapsible>
+    );
+}
+
 /** F-00: banner selama langganan Tertunggak (masa tenggang) atau Ditangguhkan (hanya lihat, export, bayar). */
 function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBayar: boolean }) {
     const ajakan = bolehBayar ? (
@@ -351,82 +437,24 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     return (
         <SidebarProvider defaultOpen={BacaSidebarTerbuka()}>
             <Head title={judul} />
-            <Sidebar collapsible="icon">
-                <SidebarHeader className="border-b border-sidebar-border">
-                    <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:px-0">
-                        <IkonMerek nama={props.NamaAplikasi} />
-                        <p
-                            className="truncate text-subjudul font-bold text-teks-utama group-data-[collapsible=icon]:sr-only"
-                            title={namaInduk}
-                        >
-                            {namaInduk}
-                        </p>
-                    </div>
-                </SidebarHeader>
+            <Sidebar collapsible="icon" className="border-sidebar-border">
+                <KepalaSidebarMerek nama={props.NamaAplikasi} />
                 <SidebarContent>
                     {tenantAktif && props.Akses ? (
                         <nav aria-label="Menu utama">
-                            <SidebarGroup>
+                            <SidebarGroup className="px-3 py-3">
                                 <SidebarGroupContent>
                                     <SidebarMenu>
-                                        {menuTerlihat.map(({ menu, labelSub, sub }) => {
-                                            const subAktif = labelSub === null ? null : CariSubMenuAktif(sub, url);
-                                            const aktif =
-                                                labelSub === null ? CekMenuAktif(menu.href, url) : subAktif !== null;
-                                            const Ikon = menu.ikon;
-
-                                            return (
-                                                <SidebarMenuItem key={menu.label}>
-                                                    <SidebarMenuButton
-                                                        asChild
-                                                        isActive={aktif}
-                                                        tooltip={menu.label}
-                                                        className="text-label data-[active=true]:font-semibold"
-                                                    >
-                                                        <Link
-                                                            href={menu.href}
-                                                            aria-current={aktif ? 'page' : undefined}
-                                                        >
-                                                            {Ikon ? <Ikon aria-hidden="true" /> : null}
-                                                            <span>{menu.label}</span>
-                                                        </Link>
-                                                    </SidebarMenuButton>
-                                                    {labelSub !== null && subAktif !== null ? (
-                                                        <nav aria-label={labelSub}>
-                                                            <SidebarMenuSub>
-                                                                {sub.map((item) => (
-                                                                    <SidebarMenuSubItem key={item.href}>
-                                                                        <SidebarMenuSubButton
-                                                                            asChild
-                                                                            isActive={subAktif === item.href}
-                                                                            className="text-label data-[active=true]:font-semibold"
-                                                                        >
-                                                                            <Link
-                                                                                href={item.href}
-                                                                                aria-current={
-                                                                                    subAktif === item.href
-                                                                                        ? 'page'
-                                                                                        : undefined
-                                                                                }
-                                                                            >
-                                                                                {item.label}
-                                                                            </Link>
-                                                                        </SidebarMenuSubButton>
-                                                                    </SidebarMenuSubItem>
-                                                                ))}
-                                                            </SidebarMenuSub>
-                                                        </nav>
-                                                    ) : null}
-                                                </SidebarMenuItem>
-                                            );
-                                        })}
+                                        {menuTerlihat.map((terlihat) => (
+                                            <ItemMenuSidebar key={terlihat.menu.label} {...terlihat} url={url} />
+                                        ))}
                                     </SidebarMenu>
                                 </SidebarGroupContent>
                             </SidebarGroup>
                         </nav>
                     ) : null}
                 </SidebarContent>
-                <SidebarFooter className="border-t border-sidebar-border">
+                <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
                     <SidebarMenu>
                         <SidebarMenuItem>
                             {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
@@ -434,7 +462,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                                 asChild
                                 isActive={keamananAktif}
                                 tooltip="Keamanan akun"
-                                className="text-label data-[active=true]:font-semibold"
+                                className={kelasTombolMenuSidebar}
                             >
                                 <Link href="/kelola/keamanan" aria-current={keamananAktif ? 'page' : undefined}>
                                     <ShieldCheckIcon aria-hidden="true" />

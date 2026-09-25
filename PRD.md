@@ -1,12 +1,12 @@
 # PRD — POS SaaS Multi-Sektor Indonesia
 
-> **Nama sistem:** **PAYOU**, slogan *"Bisnis Laris, Kelola Praktis."* (D-15, v1.36). Placeholder **`{{APP}}`** yang masih tertulis di dokumen ini dibaca sebagai PAYOU.
+> **Nama sistem:** **PAYOU**, tagline *"Smart Choice Your Business Partner"* (D-15, diperbarui v1.73). Placeholder **`{{APP}}`** yang masih tertulis di dokumen ini dibaca sebagai PAYOU.
 > Aset logo & palet merek di `Spesifikasi/Merek/`. Kandidat nama lama tetap di [Lampiran A](#lampiran-a--kandidat-nama-sistem) sebagai arsip.
 
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.68 |
+| Versi | 1.74 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -87,6 +87,12 @@
 | 1.64 | Rincian F-18 bagian 1 (EMP-01/02/03): data karyawan (opsional tertaut akun pengguna, level staf, gaji pokok hanya untuk pengelola), jadwal kerja mingguan per outlet (salin minggu lalu), absensi masuk/keluar dari aplikasi kasir dengan PIN + swafoto kamera depan bila perangkat berkamera (item outbox `Absensi.Masuk`/`Absensi.Keluar`, idempoten, karyawan dibuat otomatis dari absensi), rekap absensi dengan keterlambatan terhadap jadwal, izin `karyawan.lihat`/`karyawan.kelola`, skema lokal POS v10. Keputusan pemilik produk: F-18 dipecah (komisi = bagian 2; target, kasbon, rekap gaji, geofence HP pribadi = bagian 3), swafoto wajib bila kamera ada, karyawan tabel terpisah, komisi tanpa jurnal sampai rekap gaji. |
 | 1.65 | Cara kerja agen (D-17): keputusan pemilik produk: di lokal hanya test yang terdampak perubahan yang dijalankan (analisis statis tetap seluruh kode); suite penuh dijalankan CI `CekKepatuhan.yml` di setiap push. Langkah 3 `/cek-dod` diperbarui. |
 | 1.68 | Rincian F-12 bagian 2 (SLS-02 pre-order & uang muka): dokumen `PesananPenjualan` (+ Detail, Pembayaran) dibuat kasir offline lewat outbox `PesananPenjualan.Buat` dengan DP (J-07.3, Uang Muka Pelanggan; tanpa stok & pendapatan; ikut kas shift), diambil online lewat Riwayat › Ambil pre-order dan dilunasi dengan metode sistem "Uang muka (DP)" (`Penjualan.Buat` `UuidPesananPenjualan`; pendapatan & stok saat diserahkan; tinjauan `UangMukaBermasalah`), void mengembalikan DP ke pesanan; back-office `/kelola/pre-order` (tandai siap, batal/selesaikan sisa DP: dikembalikan dari kas/bank atau hangus ke Pendapatan Lain); skema lokal kasir 11. Keputusan pemilik produk v1.68: DP pre-order dulu (pengingat WA menunggu integrasi WhatsApp), DP saat batal dipilih (kembali/hangus), pre-order dibuat di POS offline, nama dokumen `PesananPenjualan`. |
+| 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
+| 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
+| 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.74 | P-02: **wilayah menjadi data awal wajib** — 38 provinsi + 514 kabupaten/kota sesuai Kepmendagri No. 300.2.2-2138 Tahun 2025 beserta zona waktu per provinsi, dimuat seeder dari `database/Data/WilayahAwal.json` (idempoten, kode yang sudah ada tidak diubah). Tanpa data ini pendaftaran F-00 tidak bisa memilih kota. Kecamatan/desa tetap tidak dipakai. |
+| 1.73 | D-15 memperluas tampilan merek ke **seluruh sidebar Web** (tenant & Platform Pengelola): latar solid `BrandGelap`, teks menu putih redup (±6,7:1), hover sorotan `BrandGelap` terang, menu aktif berlatar `Brand` dengan teks putih tebal, sub-menu aktif disorot dengan teks putih, cincin fokus putih, dan garis pemisah turunan `BrandGelap`. Nada turunan (`BrandGelapTeks`, `BrandGelapSorot`, `BrandGelapGaris`) diturunkan dengan color-mix di token Web; gradasi tetap hanya di kepala sidebar. Grup menu tenant adalah tombol Collapsible: klik label membuka/menutup sub-menu dengan animasi tinggi 200 ms tanpa pindah halaman dan chevron `›` memutar 90°; saat sidebar diciutkan menjadi ikon, klik grup langsung menuju sub-menu pertama yang boleh; bilah gulir sidebar tipis dengan ibu jari `BrandGelapGulir`. |
+| 1.72 | D-15 menerapkan kepala sidebar Web modern dengan gradasi terbatas **`BrandGelap` → `Brand`**: logo PAYOU putih lengkap saat sidebar terbuka dan ikon P putih saat diciutkan. Nama tenant/platform tidak lagi tampil di kepala sidebar, tetapi tetap tampil pada remah roti agar konteks kerja tidak hilang. Ini adalah satu-satunya pengecualian aturan tanpa gradien pada UI. |
 | 1.67 | Rincian F-16c bagian 2 (CRM-06 voucher & kode promo): syarat promo `WajibVoucher` di mesin promo PHP & Dart (+ test vector `PRM-VOUCHER-001`), tabel `Voucher` & `VoucherPemakaian`, kode tunggal/massal berawalan + ekspor CSV di back-office, voucher wajib online di POS (`POST /api/pos/v1/voucher/pesan|lepas`, dipesan 60 menit untuk Uuid penjualan), `Penjualan.Buat` `Voucher` (voucher bermasalah = diterima + tinjauan `VoucherTidakBerlaku`), void melepas voucher; `GET /promo?voucher=1` untuk aplikasi yang mengenal voucher (kompatibel mundur). Keputusan pemilik produk v1.67: voucher & kode promo dulu, wajib online, generate + ekspor CSV. |
 | 1.66 | Rincian F-18 bagian 2 (EMP-04 komisi): aturan komisi (semua produk/kategori/produk, persen atau nominal per jumlah, opsional per level staf; paling spesifik menang), kasir memilih staf pelayan per baris di panel item (`Penjualan.Buat` `Baris.*.Staf`, maks. 5, dibagi rata), komisi dicatat server di transaksi penjualan (staf tidak dikenal = tinjauan `StafTidakDikenal`), void membatalkan penuh, retur memotong proporsional kumulatif, laporan komisi per karyawan; data awal POS `Karyawan`. Tanpa jurnal sampai rekap gaji (keputusan pemilik produk v1.64). |
 
@@ -532,7 +538,7 @@ Then ia diarahkan ke halaman aktivasi 2FA dan akses menu ditolak
 
 | Data | Isi | Dipakai oleh |
 |---|---|---|
-| Wilayah | Provinsi & kabupaten/kota (kode wilayah resmi), zona waktu (WIB/WITA/WIT) | Profil outlet, tarif PBJT, zona waktu laporan |
+| Wilayah | Provinsi & kabupaten/kota (kode wilayah resmi, tanpa kecamatan/desa), zona waktu (WIB/WITA/WIT). Data awal wajib dari seeder (Kepmendagri 2025, v1.74) | Profil outlet, pendaftaran F-00, tarif PBJT, zona waktu laporan |
 | Tarif pajak nasional | PPN (tarif + `PengaliDpp`), jenis pajak lain | Kalkulasi penjualan & pembelian (§12) |
 | Tarif pajak daerah | PBJT makanan & minuman per kabupaten/kota, aturan service charge masuk DPP | Outlet F&B sesuai kota |
 | Hari libur | Libur nasional & cuti bersama per tahun | Forecast restock, jadwal kerja, laporan |
@@ -3481,9 +3487,9 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 **Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
 
-**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/Sumber/LembarMerek.png`):** Primary Indigo `#6366F1`, Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
+**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/`):** Primary Indigo `#6366F1`, Indigo Gelap `#1D29B8` (diambil dari kelompok warna gelap gradasi logo P), Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
 
-**Token warna (final, v1.36):**
+**Token warna (final, diperbarui v1.71):**
 
 | Token | Nilai | Fungsi |
 |---|---|---|
@@ -3494,6 +3500,7 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 | `TeksUtama` | `#0F2747` (Navy) | Teks utama (14,3:1) |
 | `TeksSekunder` | `#4A5873` | Keterangan, label sekunder (6,9:1) |
 | `Brand` | `#5558E8` (Indigo) | Aksi utama, penanda aktif (teks putih 5,3:1) |
+| `BrandGelap` | `#1D29B8` (Indigo Gelap) | Latar seluruh sidebar Web (menu aktif `Brand`, teks putih) dan header merek; permukaan brand kuat (teks putih 10,2:1) |
 | `Sukses` | `#2E7D32` | Lunas, berhasil, tersinkron |
 | `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
 | `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |
@@ -3504,7 +3511,7 @@ Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1,
 **Aturan warna:**
 - **Status tidak pernah hanya warna.** Selalu disertai teks atau ikon ("Lunas", "Tertunda 3"), agar tetap jelas bagi pengguna buta warna dan di layar murah.
 - Makna warna **sama di semua klien**: hijau selalu lunas/berhasil, merah selalu void/gagal, dan seterusnya.
-- Tanpa gradien, efek kaca, atau warna dekoratif.
+- Tanpa gradien, efek kaca, atau warna dekoratif, kecuali gradasi merek terbatas `BrandGelap` → `Brand` pada kepala sidebar (D-15).
 - **Tanpa mode gelap di semua klien, termasuk KDS** (D-14). KDS memakai tema terang berkontras tinggi dengan huruf besar.
 - **Satu sumber warna:** web di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css` (bagian "UBAH WARNA DI SINI"; variabel shadcn/ui hanya merujuk token), Flutter di `Paket/SistemDesain/lib/Token/TokenWarna.dart`. Halaman & komponen hanya memakai token; literal warna di luar dua file itu ditolak test penjaga.
 - Warna brand tenant (logo/warna struk & toko online) hanya berlaku di struk dan web publik tenant, **tidak** mengubah warna UI {{APP}}.
@@ -3596,7 +3603,7 @@ Setiap layar/komponen wajib punya desain untuk keadaan berikut sebelum dianggap 
 4. **Uji dengan 5 pengguna nyata** per klien (kasir, staf gudang, owner) memakai prototipe sebelum desain visual final.
 5. **Visual dari token**, bukan warna/ukuran lepas. Komponen shadcn/ui dan tema Flutter diturunkan dari token, tidak dipakai dengan tampilan bawaannya.
 6. **Referensi dari produk kerja nyata**, misalnya Square POS, Toast, Shopify POS, Loyverse (kasir); Linear, Stripe Dashboard, Xero (back-office); majoo & Moka (pembanding lokal). **Bukan** dari galeri inspirasi visual.
-7. **Jika memakai AI untuk desain/kode UI**, sertakan batasan: token §17.5–§17.6, tanpa gradien/bayangan dekoratif, data Indonesia nyata, dan daftar keadaan wajib.
+7. **Jika memakai AI untuk desain/kode UI**, sertakan batasan: token §17.5–§17.6, tanpa gradien selain pengecualian kepala sidebar merek D-15, tanpa bayangan dekoratif, data Indonesia nyata, dan daftar keadaan wajib.
 
 #### 17.6.11 Checklist Review Desain ("Anti-Slop")
 
@@ -3604,7 +3611,7 @@ Wajib lolos sebelum layar masuk implementasi:
 
 - [ ] Layar tetap bisa dipahami jika semua warna dihapus
 - [ ] Warna hanya muncul untuk aksi utama dan status, status selalu disertai teks/ikon
-- [ ] Tidak ada gradien, efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
+- [ ] Tidak ada gradien selain kepala sidebar merek `BrandGelap` → `Brand` (D-15), efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
 - [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel
 - [ ] Tabel web memakai `TabelData` (TanStack Table + Query) dengan fitur §17.4.3
 - [ ] Rapi di lebar 360 / 768 / 1280px tanpa gulir horizontal halaman (web, §17.4.4); layar POS berada di bingkai Ruang Kerja Kasir dan rapi di 360 / 800 / 1280dp (§17.2.7)
@@ -4104,7 +4111,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-12 | Pemilik produk mendelegasikan keputusan atas pertanyaan terbuka agen (v1.16–v1.26) kepada agen dengan patokan kepatuhan hukum Indonesia, keadilan bagi tenant, dan kesehatan bisnis {{APP}}. Rincian di §25.2 | 23/09/2026 | §8 P-06/P-07/P-08/P-09/P-11, F-00, F-02, F-06, F-19, §25.2 |
 | D-13 | Folder aplikasi Laravel bernama **`Aplikasi/Web/`** (sebelumnya `Backend/`): satu aplikasi berisi API POS & Owner, back-office Inertia React, web publik, dan Platform Pengelola, sejajar dengan `Aplikasi/Kasir` & `Aplikasi/Pemilik`; kode bersama tetap di `Paket/` | 23/09/2026 | §13.0, §13.7.2, §13.8, §17.4.1, §22, §23, `CLAUDE.md`, `.claude/`, `Alat/`, CI |
 | D-14 | **Tanpa mode gelap** di semua klien (web, Aplikasi Kasir, Aplikasi Pemilik, KDS). Warna diubah di satu tempat per platform (`Aplikasi.css` untuk web, `TokenWarna.dart` untuk Flutter); halaman tidak pernah memuat warna lepas. Seluruh komponen shadcn/ui dipasang di `Komponen/Ui/` dan warnanya diturunkan dari token. Warna final menyusul | 24/09/2026 | §17.4, §17.5, §17.6.3, §17.x KDS |
-| D-15 | Nama sistem **PAYOU** (slogan "Bisnis Laris, Kelola Praktis.") beserta logo, ikon, dan palet merek dari pemilik produk. Token warna §17.6.3 menjadi final (Brand Indigo `#5558E8`, TeksUtama Navy `#0F2747`). Aset sumber & skrip turunan di `Spesifikasi/Merek/`; logo di UI adalah aset merek, bukan dekorasi (aturan tanpa gradien berlaku untuk komponen UI) | 24/09/2026 | Kepala dokumen, §17.6.3, `Spesifikasi/Merek`, `CLAUDE.md` |
+| D-15 | Nama sistem **PAYOU** dengan tagline resmi **"Smart Choice Your Business Partner"**, beserta logo, ikon, varian putih transparan untuk permukaan gelap, dan palet merek dari pemilik produk. Token warna §17.6.3 menjadi final (`Brand` `#5558E8`, `BrandGelap` `#1D29B8`, `TeksUtama` `#0F2747`). Aset sumber & skrip turunan di `Spesifikasi/Merek/`; logo di UI adalah aset merek, bukan dekorasi. Kepala sidebar Web memakai satu-satunya pengecualian gradasi UI: `BrandGelap` → `Brand`, logo putih lengkap saat terbuka, ikon P putih saat diciutkan, dan tanpa nama tenant/platform di dalam kepala sidebar. Sejak v1.73 seluruh sidebar Web berlatar solid `BrandGelap` dengan menu aktif `Brand` dan teks putih. | 25/09/2026 | Kepala dokumen, §17.6.3, §17.6.10–§17.6.11, `Spesifikasi/Merek`, `CLAUDE.md` |
 | D-16 | Dari pemilik produk: (1) semua tabel web memakai `TabelData` berbasis **TanStack Table + TanStack Query** dengan fitur lengkap (cari, saring, urut, atur kolom, pilih & aksi massal, paginasi server, ekspor, keadaan di URL); (2) seluruh web **responsif** 360px s.d. layar lebar; (3) Aplikasi POS adalah **Ruang Kerja Kasir** yang elegan dan mudah untuk kerja berjam-jam | 24/09/2026 | §13.5, §17.2.3, §17.2.7, §17.4.3, §17.4.4, §17.6, §23.3, §25 no. 22, `CLAUDE.md`, `.claude/rules/` |
 | D-17 | Dari pemilik produk: agent **boleh mengubah PRD, `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, dan dokumen/aturan lain tanpa meminta izin**, serta semua alat berjalan tanpa konfirmasi. Batas yang tetap: tidak melemahkan test/lint/CI/test arsitektur, `Dokumen/` hanya lewat `Alat/PecahPrd.py`, larangan keras (`.env`, force push, `--no-verify`, penghapus database) tetap berlaku, setiap perubahan dicatat & dilaporkan | 24/09/2026 | `CLAUDE.md`, `.claude/hooks/`, `.claude/settings.json`, §23 |
 

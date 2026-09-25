@@ -10,7 +10,7 @@
 
 | Data | Isi | Dipakai oleh |
 |---|---|---|
-| Wilayah | Provinsi & kabupaten/kota (kode wilayah resmi), zona waktu (WIB/WITA/WIT) | Profil outlet, tarif PBJT, zona waktu laporan |
+| Wilayah | Provinsi & kabupaten/kota (kode wilayah resmi, tanpa kecamatan/desa), zona waktu (WIB/WITA/WIT). Data awal wajib dari seeder (Kepmendagri 2025, v1.74) | Profil outlet, pendaftaran F-00, tarif PBJT, zona waktu laporan |
 | Tarif pajak nasional | PPN (tarif + `PengaliDpp`), jenis pajak lain | Kalkulasi penjualan & pembelian (§12) |
 | Tarif pajak daerah | PBJT makanan & minuman per kabupaten/kota, aturan service charge masuk DPP | Outlet F&B sesuai kota |
 | Hari libur | Libur nasional & cuti bersama per tahun | Forecast restock, jadwal kerja, laporan |

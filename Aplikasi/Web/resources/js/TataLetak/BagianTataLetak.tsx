@@ -24,6 +24,25 @@ import { SidebarTrigger } from '@/Komponen/Ui/sidebar';
 import { Toaster } from '@/Komponen/Ui/sonner';
 import { cn } from '@/Komponen/Ui/utils';
 
+/**
+ * Gaya menu sidebar gelap merek (D-15), dipakai tata letak tenant & pengelola: menu aktif berlatar Brand dengan
+ * teks putih tebal, hover memakai sorotan BrandGelap. Warna datang dari token --sidebar-* di Gaya/Aplikasi.css.
+ */
+export const kelasTombolMenuSidebar =
+    'h-9 rounded-lg px-3 text-label transition-[width,height,padding,background-color,color] duration-200 ease-out group-data-[collapsible=icon]:rounded-md data-[active=true]:bg-sidebar-primary data-[active=true]:font-semibold data-[active=true]:text-sidebar-primary-foreground data-[active=true]:hover:bg-sidebar-primary data-[active=true]:hover:text-sidebar-primary-foreground';
+
+/** Tombol grup menu (pembuka sub-menu): tetap Brand saat aktif walau terbuka & disorot. */
+export const kelasTombolGrupSidebar =
+    'group/grup cursor-pointer data-[active=true]:data-[state=open]:hover:bg-sidebar-primary data-[active=true]:data-[state=open]:hover:text-sidebar-primary-foreground';
+
+/** Chevron di ujung kanan tombol grup: memutar 90° saat sub-menu terbuka, disembunyikan saat sidebar jadi ikon. */
+export const kelasChevronGrupSidebar =
+    'ml-auto transition-transform duration-200 ease-out group-data-[collapsible=icon]:hidden group-data-[state=open]/grup:rotate-90';
+
+/** Sub-menu: teks redup, item aktif disorot BrandGelap dengan teks putih tebal. */
+export const kelasTombolSubMenuSidebar =
+    'h-8 rounded-md text-label transition-[background-color,color] duration-200 ease-out data-[active=true]:font-semibold';
+
 /** Cookie bawaan SidebarProvider shadcn/ui; dibaca agar bilah samping tetap diciutkan setelah pindah halaman. */
 export function BacaSidebarTerbuka(): boolean {
     if (typeof document === 'undefined') {

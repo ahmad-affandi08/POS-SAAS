@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import TabelData from './TabelData';
@@ -64,5 +65,62 @@ describe('TabelData: opsi TanStack stabil antar-render (regresi pembekuan)', () 
         expect(saring.length).toBeGreaterThanOrEqual(3);
         expect(new Set(saring).size).toBe(1);
         expect(opsiTercatat.every((o) => o.autoResetPageIndex === false)).toBe(true);
+    });
+});
+
+/*
+ * Regresi: `flexRender` memakai fungsi `cell` sebagai tipe komponen. Halaman yang membuat ulang kolom setiap render
+ * (kolom berisi isian yang bergantung pada nilai ketikan) me-remount isian → fokus lepas setelah satu angka.
+ */
+function TabelIsian() {
+    const [nilai, AturNilai] = useState('');
+
+    return (
+        <QueryClientProvider client={new QueryClient()}>
+            <TabelData
+                id="isian"
+                label="Isian"
+                kolom={[
+                    {
+                        id: 'Nama',
+                        accessorKey: 'Nama',
+                        header: 'Nama',
+                        meta: { label: 'Nama', prioritas: 'utama', wajib: true },
+                    },
+                    {
+                        id: 'Jumlah',
+                        header: 'Jumlah',
+                        meta: { label: 'Jumlah', prioritas: 'penting' },
+                        cell: ({ row }) => (
+                            <input
+                                aria-label={`Jumlah ${row.original.Nama}`}
+                                value={row.original.Nama === 'A' ? nilai : ''}
+                                onChange={(e) => AturNilai(e.target.value)}
+                            />
+                        ),
+                    },
+                ]}
+                sumber={{ mode: 'lokal', data }}
+                ambilIdBaris={(b) => b.Nama}
+                kosong={{ judul: 'Kosong' }}
+            />
+        </QueryClientProvider>
+    );
+}
+
+describe('TabelData: isian di dalam sel tidak di-remount saat kolom dibuat ulang', () => {
+    it('elemen isian yang sama tetap fokus setelah beberapa ketikan', () => {
+        const AmbilIsian = () => screen.getAllByLabelText('Jumlah A')[0] as HTMLInputElement;
+        render(<TabelIsian />);
+        const isian = AmbilIsian();
+        isian.focus();
+
+        fireEvent.change(isian, { target: { value: '1' } });
+        fireEvent.change(AmbilIsian(), { target: { value: '12' } });
+
+        const setelah = AmbilIsian();
+        expect(setelah).toBe(isian);
+        expect(document.activeElement).toBe(isian);
+        expect(setelah.value).toBe('12');
     });
 });

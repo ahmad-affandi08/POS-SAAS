@@ -9,7 +9,7 @@ import TataLetakAplikasi, { CariMenuProdukAktif, CekMenuAktif, SaringMenuTerliha
 let propsHalaman: PropsBersamaAplikasi;
 let urlHalaman = '/kelola';
 
-const tiruanRouter = vi.hoisted(() => ({ post: vi.fn() }));
+const tiruanRouter = vi.hoisted(() => ({ post: vi.fn(), visit: vi.fn() }));
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
@@ -52,6 +52,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
     afterEach(() => {
         cleanup();
         tiruanRouter.post.mockReset();
+        tiruanRouter.visit.mockReset();
         // Status ciut bilah samping disimpan SidebarProvider di cookie; jangan bocor ke test berikutnya.
         document.cookie = 'sidebar_state=; path=/; max-age=0';
     });
@@ -114,7 +115,9 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         render(<TataLetakAplikasi judul="Kategori">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        expect(utama.querySelector('a[href="/kelola/produk"]')?.getAttribute('aria-current')).toBe('page');
+        const grupProduk = within(utama).getByRole('button', { name: 'Produk' });
+        expect(grupProduk.getAttribute('data-active')).toBe('true');
+        expect(grupProduk.getAttribute('aria-expanded')).toBe('true');
         const sub = screen.getByRole('navigation', { name: 'Menu produk' });
         expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
             'Produk',
@@ -140,15 +143,48 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
     });
 
+    it('klik label grup membuka/menutup sub-menu tanpa pindah halaman; chevron memutar saat terbuka', () => {
+        propsHalaman = BuatProps({}, ['produk.lihat']);
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const grup = screen.getByRole('button', { name: 'Produk' });
+        expect(grup.getAttribute('aria-expanded')).toBe('false');
+        expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
+
+        fireEvent.click(grup);
+        expect(grup.getAttribute('aria-expanded')).toBe('true');
+        expect(grup.getAttribute('data-state')).toBe('open');
+        expect(grup.querySelector('svg:last-child')?.getAttribute('class')).toContain(
+            'group-data-[state=open]/grup:rotate-90',
+        );
+        expect(screen.getByRole('navigation', { name: 'Menu produk' })).toBeTruthy();
+        expect(tiruanRouter.visit).not.toHaveBeenCalled();
+
+        fireEvent.click(grup);
+        expect(grup.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('saat sidebar diciutkan menjadi ikon, klik grup langsung menuju sub-menu pertama yang boleh', () => {
+        document.cookie = 'sidebar_state=false; path=/';
+        propsHalaman = BuatProps({}, ['produk.lihat']);
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Produk' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/produk');
+    });
+
     it('F-05a: grup Persediaan untuk persediaan.lihat; impor & pengaturan tersembunyi tanpa izinnya', () => {
         propsHalaman = BuatProps({}, ['persediaan.lihat']);
         urlHalaman = '/kelola/persediaan/stok-awal/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
         render(<TataLetakAplikasi judul="Stok awal">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        const induk = within(utama).getByRole('link', { name: 'Persediaan' });
-        expect(induk.getAttribute('href')).toBe('/kelola/persediaan/saldo');
-        expect(induk.getAttribute('aria-current')).toBe('page');
+        const induk = within(utama).getByRole('button', { name: 'Persediaan' });
+        expect(induk.getAttribute('data-active')).toBe('true');
+        expect(induk.getAttribute('aria-expanded')).toBe('true');
+        expect(SaringMenuTerlihat(propsHalaman.Akses).find(({ menu }) => menu.label === 'Persediaan')?.menu.href).toBe(
+            '/kelola/persediaan/saldo',
+        );
         const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
         expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
             'Saldo stok',
@@ -159,7 +195,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Penyesuaian stok',
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Stok awal');
-        expect(within(utama).queryByRole('link', { name: 'Akuntansi' })).toBeNull();
+        expect(within(utama).queryByRole('button', { name: 'Akuntansi' })).toBeNull();
     });
 
     it('F-05a: persediaan.kelola + akuntansi.kelola melihat Impor stok awal & Pengaturan; awalan terpanjang aktif', () => {
@@ -180,7 +216,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Impor stok awal');
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        const aktif = Array.from(utama.querySelectorAll(':scope a[aria-current="page"]')).map((a) => a.textContent);
+        const aktif = Array.from(utama.querySelectorAll('[data-active="true"]')).map((el) => el.textContent);
         expect(aktif).toEqual(['Persediaan', 'Impor stok awal']);
     });
 
@@ -190,7 +226,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         render(<TataLetakAplikasi judul="Pengaturan persediaan">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        expect(within(utama).getByRole('link', { name: 'Persediaan' }).getAttribute('href')).toBe(
+        expect(within(utama).getByRole('button', { name: 'Persediaan' }).getAttribute('data-active')).toBe('true');
+        expect(SaringMenuTerlihat(propsHalaman.Akses).find(({ menu }) => menu.label === 'Persediaan')?.menu.href).toBe(
             '/kelola/persediaan/pengaturan',
         );
         const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
@@ -203,10 +240,11 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         render(<TataLetakAplikasi judul="Jurnal">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        expect(within(utama).getByRole('link', { name: 'Akuntansi' }).getAttribute('href')).toBe(
+        expect(within(utama).getByRole('button', { name: 'Akuntansi' }).getAttribute('data-active')).toBe('true');
+        expect(SaringMenuTerlihat(propsHalaman.Akses).find(({ menu }) => menu.label === 'Akuntansi')?.menu.href).toBe(
             '/kelola/akuntansi/jurnal',
         );
-        expect(within(utama).queryByRole('link', { name: 'Persediaan' })).toBeNull();
+        expect(within(utama).queryByRole('button', { name: 'Persediaan' })).toBeNull();
         const sub = screen.getByRole('navigation', { name: 'Menu akuntansi' });
         expect(within(sub).getByRole('link', { name: 'Jurnal' }).getAttribute('aria-current')).toBe('page');
         cleanup();
@@ -214,7 +252,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         propsHalaman = BuatProps({}, ['produk.lihat', 'persediaan.lihat']);
         urlHalaman = '/kelola';
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
-        expect(screen.queryByRole('link', { name: 'Akuntansi' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Akuntansi' })).toBeNull();
         expect(screen.queryByRole('navigation', { name: 'Menu persediaan' })).toBeNull();
     });
 
@@ -298,6 +336,30 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(within(remah).getByText('Outlet').getAttribute('aria-current')).toBe('page');
         expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Outlet');
         expect(screen.getByRole('main').textContent).toContain('isi');
+    });
+
+    it('kepala sidebar memakai gradasi merek dan logo putih, bukan nama pelanggan', () => {
+        const { container } = render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const kepala = container.querySelector('[data-slot="sidebar-header"]');
+        expect(kepala?.className).toContain('bg-linear-to-br');
+        expect(kepala?.className).toContain('from-brand-gelap');
+        expect(kepala?.className).toContain('to-brand');
+        expect(kepala?.querySelector('img[src*="LogoHorizontalPutih.png"]')).toBeTruthy();
+        expect(kepala?.querySelector('img[src*="IkonMerekPutih.png"]')).toBeTruthy();
+        expect(kepala?.textContent).not.toContain('Kopi Nusantara');
+    });
+
+    it('menu aktif di sidebar gelap merek memakai latar Brand dengan teks putih tebal', () => {
+        const { container } = render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        const aktif = within(utama).getByRole('link', { name: 'Beranda' });
+        expect(aktif.getAttribute('data-active')).toBe('true');
+        expect(aktif.className).toContain('data-[active=true]:bg-sidebar-primary');
+        expect(aktif.className).toContain('data-[active=true]:text-sidebar-primary-foreground');
+        expect(aktif.className).toContain('data-[active=true]:font-semibold');
+        expect(container.querySelector('[data-slot="sidebar-inner"]')?.className).toContain('bg-sidebar');
     });
 
     it('menu akun (DropdownMenu) menampilkan nama & email, lalu Keluar mem-POST /keluar', () => {

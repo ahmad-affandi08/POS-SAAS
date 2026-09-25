@@ -442,9 +442,9 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 **Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
 
-**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/Sumber/LembarMerek.png`):** Primary Indigo `#6366F1`, Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
+**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/`):** Primary Indigo `#6366F1`, Indigo Gelap `#1D29B8` (diambil dari kelompok warna gelap gradasi logo P), Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
 
-**Token warna (final, v1.36):**
+**Token warna (final, diperbarui v1.71):**
 
 | Token | Nilai | Fungsi |
 |---|---|---|
@@ -455,6 +455,7 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 | `TeksUtama` | `#0F2747` (Navy) | Teks utama (14,3:1) |
 | `TeksSekunder` | `#4A5873` | Keterangan, label sekunder (6,9:1) |
 | `Brand` | `#5558E8` (Indigo) | Aksi utama, penanda aktif (teks putih 5,3:1) |
+| `BrandGelap` | `#1D29B8` (Indigo Gelap) | Latar seluruh sidebar Web (menu aktif `Brand`, teks putih) dan header merek; permukaan brand kuat (teks putih 10,2:1) |
 | `Sukses` | `#2E7D32` | Lunas, berhasil, tersinkron |
 | `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
 | `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |
@@ -465,7 +466,7 @@ Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1,
 **Aturan warna:**
 - **Status tidak pernah hanya warna.** Selalu disertai teks atau ikon ("Lunas", "Tertunda 3"), agar tetap jelas bagi pengguna buta warna dan di layar murah.
 - Makna warna **sama di semua klien**: hijau selalu lunas/berhasil, merah selalu void/gagal, dan seterusnya.
-- Tanpa gradien, efek kaca, atau warna dekoratif.
+- Tanpa gradien, efek kaca, atau warna dekoratif, kecuali gradasi merek terbatas `BrandGelap` → `Brand` pada kepala sidebar (D-15).
 - **Tanpa mode gelap di semua klien, termasuk KDS** (D-14). KDS memakai tema terang berkontras tinggi dengan huruf besar.
 - **Satu sumber warna:** web di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css` (bagian "UBAH WARNA DI SINI"; variabel shadcn/ui hanya merujuk token), Flutter di `Paket/SistemDesain/lib/Token/TokenWarna.dart`. Halaman & komponen hanya memakai token; literal warna di luar dua file itu ditolak test penjaga.
 - Warna brand tenant (logo/warna struk & toko online) hanya berlaku di struk dan web publik tenant, **tidak** mengubah warna UI {{APP}}.
@@ -557,7 +558,7 @@ Setiap layar/komponen wajib punya desain untuk keadaan berikut sebelum dianggap 
 4. **Uji dengan 5 pengguna nyata** per klien (kasir, staf gudang, owner) memakai prototipe sebelum desain visual final.
 5. **Visual dari token**, bukan warna/ukuran lepas. Komponen shadcn/ui dan tema Flutter diturunkan dari token, tidak dipakai dengan tampilan bawaannya.
 6. **Referensi dari produk kerja nyata**, misalnya Square POS, Toast, Shopify POS, Loyverse (kasir); Linear, Stripe Dashboard, Xero (back-office); majoo & Moka (pembanding lokal). **Bukan** dari galeri inspirasi visual.
-7. **Jika memakai AI untuk desain/kode UI**, sertakan batasan: token §17.5–§17.6, tanpa gradien/bayangan dekoratif, data Indonesia nyata, dan daftar keadaan wajib.
+7. **Jika memakai AI untuk desain/kode UI**, sertakan batasan: token §17.5–§17.6, tanpa gradien selain pengecualian kepala sidebar merek D-15, tanpa bayangan dekoratif, data Indonesia nyata, dan daftar keadaan wajib.
 
 #### 17.6.11 Checklist Review Desain ("Anti-Slop")
 
@@ -565,7 +566,7 @@ Wajib lolos sebelum layar masuk implementasi:
 
 - [ ] Layar tetap bisa dipahami jika semua warna dihapus
 - [ ] Warna hanya muncul untuk aksi utama dan status, status selalu disertai teks/ikon
-- [ ] Tidak ada gradien, efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
+- [ ] Tidak ada gradien selain kepala sidebar merek `BrandGelap` → `Brand` (D-15), efek kaca, bayangan dekoratif, emoji, atau ilustrasi dekoratif
 - [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel
 - [ ] Tabel web memakai `TabelData` (TanStack Table + Query) dengan fitur §17.4.3
 - [ ] Rapi di lebar 360 / 768 / 1280px tanpa gulir horizontal halaman (web, §17.4.4); layar POS berada di bingkai Ruang Kerja Kasir dan rapi di 360 / 800 / 1280dp (§17.2.7)

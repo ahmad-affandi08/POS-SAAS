@@ -9,6 +9,7 @@ import {
     type ColumnDef,
     type FilterFn,
     type Header,
+    type Renderable,
     type Row,
     type RowSelectionState,
     type SortingState,
@@ -131,7 +132,7 @@ function SelKepala<T>({
 }) {
     const meta = AmbilMeta(header.column.columnDef.meta);
     const arah = header.column.getIsSorted();
-    const isi = header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext());
+    const isi = header.isPlaceholder ? null : TampilkanIsi(header.column.columnDef.header, header.getContext());
     const indeksUrut = header.column.getSortIndex();
 
     return (
@@ -180,6 +181,26 @@ function SelKepala<T>({
     );
 }
 
+/**
+ * Pengganti `flexRender` untuk `cell`/`header`. `flexRender` memakai fungsi kolom sebagai tipe komponen React, jadi
+ * halaman yang membuat ulang definisi kolom (misal kolom berisi isian yang bergantung pada nilai ketikan) me-remount
+ * isi sel di setiap render dan isian kehilangan fokus setelah satu ketikan. Di sini fungsi itu dipanggil dari dalam
+ * satu komponen yang tipenya tetap, sehingga elemen di dalam sel (dan fokusnya) dipertahankan.
+ */
+function IsiSel<P extends object>({ isi, konteks }: { isi: (konteks: P) => ReactNode; konteks: P }) {
+    return <>{isi(konteks)}</>;
+}
+
+function TampilkanIsi<P extends object>(isi: Renderable<P> | undefined, konteks: P): ReactNode {
+    const komponen = isi as unknown as { prototype?: { isReactComponent?: unknown } } | undefined;
+
+    if (typeof isi === 'function' && !komponen?.prototype?.isReactComponent) {
+        return <IsiSel isi={isi as (konteks: P) => ReactNode} konteks={konteks} />;
+    }
+
+    return flexRender(isi, konteks);
+}
+
 function SelData<T>({ cell, menempel }: { cell: Cell<T, unknown>; menempel: boolean }) {
     const meta = AmbilMeta(cell.column.columnDef.meta);
 
@@ -194,7 +215,7 @@ function SelData<T>({ cell, menempel }: { cell: Cell<T, unknown>; menempel: bool
                 meta?.kelasSel,
             )}
         >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {TampilkanIsi(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
     );
 }
@@ -239,10 +260,12 @@ function BarisBertumpuk<T>({ row, alamatDetail }: { row: Row<T>; alamatDetail: (
             )}
             onClick={(e) => TanganiKlikBaris(e, alamat)}
         >
-            {pilih ? <div className="pt-0.5">{flexRender(pilih.column.columnDef.cell, pilih.getContext())}</div> : null}
+            {pilih ? (
+                <div className="pt-0.5">{TampilkanIsi(pilih.column.columnDef.cell, pilih.getContext())}</div>
+            ) : null}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="text-isi font-semibold text-teks-utama">
-                    {utama ? flexRender(utama.column.columnDef.cell, utama.getContext()) : null}
+                    {utama ? TampilkanIsi(utama.column.columnDef.cell, utama.getContext()) : null}
                 </div>
                 {penting.length > 0 ? (
                     <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-label">
@@ -255,14 +278,14 @@ function BarisBertumpuk<T>({ row, alamatDetail }: { row: Row<T>; alamatDetail: (
                                         AmbilMeta(c.column.columnDef.meta)?.angka && 'text-right tabular-nums',
                                     )}
                                 >
-                                    {flexRender(c.column.columnDef.cell, c.getContext())}
+                                    {TampilkanIsi(c.column.columnDef.cell, c.getContext())}
                                 </dd>
                             </div>
                         ))}
                     </dl>
                 ) : null}
             </div>
-            {aksi ? <div>{flexRender(aksi.column.columnDef.cell, aksi.getContext())}</div> : null}
+            {aksi ? <div>{TampilkanIsi(aksi.column.columnDef.cell, aksi.getContext())}</div> : null}
         </li>
     );
 }

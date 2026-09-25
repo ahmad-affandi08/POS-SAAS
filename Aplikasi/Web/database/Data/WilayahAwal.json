@@ -1,0 +1,3870 @@
+{
+  "_Keterangan": "Wilayah awal P-02: 38 provinsi dan 514 kabupaten/kota sesuai Kepmendagri No. 300.2.2-2138 Tahun 2025 (sumber: github.com/cahyadsn/wilayah, lisensi MIT). Zona waktu per provinsi. Kecamatan & desa tidak dipakai (PRD §15.3).",
+  "DasarHukum": "Kepmendagri No. 300.2.2-2138 Tahun 2025",
+  "Wilayah": [
+    {
+      "Kode": "11",
+      "Nama": "Aceh",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.01",
+      "Nama": "Kabupaten Aceh Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.02",
+      "Nama": "Kabupaten Aceh Tenggara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.03",
+      "Nama": "Kabupaten Aceh Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.04",
+      "Nama": "Kabupaten Aceh Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.05",
+      "Nama": "Kabupaten Aceh Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.06",
+      "Nama": "Kabupaten Aceh Besar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.07",
+      "Nama": "Kabupaten Pidie",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.08",
+      "Nama": "Kabupaten Aceh Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.09",
+      "Nama": "Kabupaten Simeulue",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.10",
+      "Nama": "Kabupaten Aceh Singkil",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.11",
+      "Nama": "Kabupaten Bireuen",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.12",
+      "Nama": "Kabupaten Aceh Barat Daya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.13",
+      "Nama": "Kabupaten Gayo Lues",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.14",
+      "Nama": "Kabupaten Aceh Jaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.15",
+      "Nama": "Kabupaten Nagan Raya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.16",
+      "Nama": "Kabupaten Aceh Tamiang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.17",
+      "Nama": "Kabupaten Bener Meriah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.18",
+      "Nama": "Kabupaten Pidie Jaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.71",
+      "Nama": "Kota Banda Aceh",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.72",
+      "Nama": "Kota Sabang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.73",
+      "Nama": "Kota Lhokseumawe",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.74",
+      "Nama": "Kota Langsa",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "11.75",
+      "Nama": "Kota Subulussalam",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "11",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12",
+      "Nama": "Sumatera Utara",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.01",
+      "Nama": "Kabupaten Tapanuli Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.02",
+      "Nama": "Kabupaten Tapanuli Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.03",
+      "Nama": "Kabupaten Tapanuli Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.04",
+      "Nama": "Kabupaten Nias",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.05",
+      "Nama": "Kabupaten Langkat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.06",
+      "Nama": "Kabupaten Karo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.07",
+      "Nama": "Kabupaten Deli Serdang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.08",
+      "Nama": "Kabupaten Simalungun",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.09",
+      "Nama": "Kabupaten Asahan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.10",
+      "Nama": "Kabupaten Labuhanbatu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.11",
+      "Nama": "Kabupaten Dairi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.12",
+      "Nama": "Kabupaten Toba",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.13",
+      "Nama": "Kabupaten Mandailing Natal",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.14",
+      "Nama": "Kabupaten Nias Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.15",
+      "Nama": "Kabupaten Pakpak Bharat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.16",
+      "Nama": "Kabupaten Humbang Hasundutan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.17",
+      "Nama": "Kabupaten Samosir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.18",
+      "Nama": "Kabupaten Serdang Bedagai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.19",
+      "Nama": "Kabupaten Batu Bara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.20",
+      "Nama": "Kabupaten Padang Lawas Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.21",
+      "Nama": "Kabupaten Padang Lawas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.22",
+      "Nama": "Kabupaten Labuhanbatu Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.23",
+      "Nama": "Kabupaten Labuhanbatu Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.24",
+      "Nama": "Kabupaten Nias Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.25",
+      "Nama": "Kabupaten Nias Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.71",
+      "Nama": "Kota Medan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.72",
+      "Nama": "Kota Pematangsiantar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.73",
+      "Nama": "Kota Sibolga",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.74",
+      "Nama": "Kota Tanjungbalai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.75",
+      "Nama": "Kota Binjai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.76",
+      "Nama": "Kota Tebing Tinggi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.77",
+      "Nama": "Kota Padangsidimpuan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "12.78",
+      "Nama": "Kota Gunungsitoli",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "12",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13",
+      "Nama": "Sumatera Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.01",
+      "Nama": "Kabupaten Pesisir Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.02",
+      "Nama": "Kabupaten Solok",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.03",
+      "Nama": "Kabupaten Sijunjung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.04",
+      "Nama": "Kabupaten Tanah Datar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.05",
+      "Nama": "Kabupaten Padang Pariaman",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.06",
+      "Nama": "Kabupaten Agam",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.07",
+      "Nama": "Kabupaten Lima Puluh Kota",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.08",
+      "Nama": "Kabupaten Pasaman",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.09",
+      "Nama": "Kabupaten Kepulauan Mentawai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.10",
+      "Nama": "Kabupaten Dharmasraya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.11",
+      "Nama": "Kabupaten Solok Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.12",
+      "Nama": "Kabupaten Pasaman Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.71",
+      "Nama": "Kota Padang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.72",
+      "Nama": "Kota Solok",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.73",
+      "Nama": "Kota Sawahlunto",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.74",
+      "Nama": "Kota Padang Panjang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.75",
+      "Nama": "Kota Bukittinggi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.76",
+      "Nama": "Kota Payakumbuh",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "13.77",
+      "Nama": "Kota Pariaman",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "13",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14",
+      "Nama": "Riau",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.01",
+      "Nama": "Kabupaten Kampar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.02",
+      "Nama": "Kabupaten Indragiri Hulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.03",
+      "Nama": "Kabupaten Bengkalis",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.04",
+      "Nama": "Kabupaten Indragiri Hilir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.05",
+      "Nama": "Kabupaten Pelalawan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.06",
+      "Nama": "Kabupaten Rokan Hulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.07",
+      "Nama": "Kabupaten Rokan Hilir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.08",
+      "Nama": "Kabupaten Siak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.09",
+      "Nama": "Kabupaten Kuantan Singingi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.10",
+      "Nama": "Kabupaten Kepulauan Meranti",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.71",
+      "Nama": "Kota Pekanbaru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "14.72",
+      "Nama": "Kota Dumai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "14",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15",
+      "Nama": "Jambi",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.01",
+      "Nama": "Kabupaten Kerinci",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.02",
+      "Nama": "Kabupaten Merangin",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.03",
+      "Nama": "Kabupaten Sarolangun",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.04",
+      "Nama": "Kabupaten Batanghari",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.05",
+      "Nama": "Kabupaten Muaro Jambi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.06",
+      "Nama": "Kabupaten Tanjung Jabung Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.07",
+      "Nama": "Kabupaten Tanjung Jabung Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.08",
+      "Nama": "Kabupaten Bungo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.09",
+      "Nama": "Kabupaten Tebo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.71",
+      "Nama": "Kota Jambi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "15.72",
+      "Nama": "Kota Sungai Penuh",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "15",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16",
+      "Nama": "Sumatera Selatan",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.01",
+      "Nama": "Kabupaten Ogan Komering Ulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.02",
+      "Nama": "Kabupaten Ogan Komering Ilir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.03",
+      "Nama": "Kabupaten Muara Enim",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.04",
+      "Nama": "Kabupaten Lahat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.05",
+      "Nama": "Kabupaten Musi Rawas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.06",
+      "Nama": "Kabupaten Musi Banyuasin",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.07",
+      "Nama": "Kabupaten Banyuasin",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.08",
+      "Nama": "Kabupaten Ogan Komering Ulu Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.09",
+      "Nama": "Kabupaten Ogan Komering Ulu Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.10",
+      "Nama": "Kabupaten Ogan Ilir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.11",
+      "Nama": "Kabupaten Empat Lawang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.12",
+      "Nama": "Kabupaten Penukal Abab Lematang Ilir",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.13",
+      "Nama": "Kabupaten Musi Rawas Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.71",
+      "Nama": "Kota Palembang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.72",
+      "Nama": "Kota Pagar Alam",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.73",
+      "Nama": "Kota Lubuk Linggau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "16.74",
+      "Nama": "Kota Prabumulih",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "16",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17",
+      "Nama": "Bengkulu",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.01",
+      "Nama": "Kabupaten Bengkulu Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.02",
+      "Nama": "Kabupaten Rejang Lebong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.03",
+      "Nama": "Kabupaten Bengkulu Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.04",
+      "Nama": "Kabupaten Kaur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.05",
+      "Nama": "Kabupaten Seluma",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.06",
+      "Nama": "Kabupaten Mukomuko",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.07",
+      "Nama": "Kabupaten Lebong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.08",
+      "Nama": "Kabupaten Kepahiang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.09",
+      "Nama": "Kabupaten Bengkulu Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "17.71",
+      "Nama": "Kota Bengkulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "17",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18",
+      "Nama": "Lampung",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.01",
+      "Nama": "Kabupaten Lampung Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.02",
+      "Nama": "Kabupaten Lampung Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.03",
+      "Nama": "Kabupaten Lampung Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.04",
+      "Nama": "Kabupaten Lampung Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.05",
+      "Nama": "Kabupaten Tulang Bawang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.06",
+      "Nama": "Kabupaten Tanggamus",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.07",
+      "Nama": "Kabupaten Lampung Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.08",
+      "Nama": "Kabupaten Way Kanan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.09",
+      "Nama": "Kabupaten Pesawaran",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.10",
+      "Nama": "Kabupaten Pringsewu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.11",
+      "Nama": "Kabupaten Mesuji",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.12",
+      "Nama": "Kabupaten Tulang Bawang Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.13",
+      "Nama": "Kabupaten Pesisir Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.71",
+      "Nama": "Kota Bandar Lampung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "18.72",
+      "Nama": "Kota Metro",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "18",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19",
+      "Nama": "Kepulauan Bangka Belitung",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.01",
+      "Nama": "Kabupaten Bangka",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.02",
+      "Nama": "Kabupaten Belitung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.03",
+      "Nama": "Kabupaten Bangka Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.04",
+      "Nama": "Kabupaten Bangka Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.05",
+      "Nama": "Kabupaten Bangka Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.06",
+      "Nama": "Kabupaten Belitung Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "19.71",
+      "Nama": "Kota Pangkal Pinang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "19",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21",
+      "Nama": "Kepulauan Riau",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.01",
+      "Nama": "Kabupaten Bintan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.02",
+      "Nama": "Kabupaten Karimun",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.03",
+      "Nama": "Kabupaten Natuna",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.04",
+      "Nama": "Kabupaten Lingga",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.05",
+      "Nama": "Kabupaten Kepulauan Anambas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.71",
+      "Nama": "Kota Batam",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "21.72",
+      "Nama": "Kota Tanjung Pinang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "21",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31",
+      "Nama": "Daerah Khusus Ibukota Jakarta",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.01",
+      "Nama": "Kabupaten Administrasi Kepulauan Seribu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.71",
+      "Nama": "Kota Administrasi Jakarta Pusat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.72",
+      "Nama": "Kota Administrasi Jakarta Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.73",
+      "Nama": "Kota Administrasi Jakarta Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.74",
+      "Nama": "Kota Administrasi Jakarta Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "31.75",
+      "Nama": "Kota Administrasi Jakarta Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "31",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32",
+      "Nama": "Jawa Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.01",
+      "Nama": "Kabupaten Bogor",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.02",
+      "Nama": "Kabupaten Sukabumi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.03",
+      "Nama": "Kabupaten Cianjur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.04",
+      "Nama": "Kabupaten Bandung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.05",
+      "Nama": "Kabupaten Garut",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.06",
+      "Nama": "Kabupaten Tasikmalaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.07",
+      "Nama": "Kabupaten Ciamis",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.08",
+      "Nama": "Kabupaten Kuningan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.09",
+      "Nama": "Kabupaten Cirebon",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.10",
+      "Nama": "Kabupaten Majalengka",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.11",
+      "Nama": "Kabupaten Sumedang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.12",
+      "Nama": "Kabupaten Indramayu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.13",
+      "Nama": "Kabupaten Subang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.14",
+      "Nama": "Kabupaten Purwakarta",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.15",
+      "Nama": "Kabupaten Karawang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.16",
+      "Nama": "Kabupaten Bekasi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.17",
+      "Nama": "Kabupaten Bandung Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.18",
+      "Nama": "Kabupaten Pangandaran",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.71",
+      "Nama": "Kota Bogor",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.72",
+      "Nama": "Kota Sukabumi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.73",
+      "Nama": "Kota Bandung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.74",
+      "Nama": "Kota Cirebon",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.75",
+      "Nama": "Kota Bekasi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.76",
+      "Nama": "Kota Depok",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.77",
+      "Nama": "Kota Cimahi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.78",
+      "Nama": "Kota Tasikmalaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "32.79",
+      "Nama": "Kota Banjar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "32",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33",
+      "Nama": "Jawa Tengah",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.01",
+      "Nama": "Kabupaten Cilacap",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.02",
+      "Nama": "Kabupaten Banyumas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.03",
+      "Nama": "Kabupaten Purbalingga",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.04",
+      "Nama": "Kabupaten Banjarnegara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.05",
+      "Nama": "Kabupaten Kebumen",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.06",
+      "Nama": "Kabupaten Purworejo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.07",
+      "Nama": "Kabupaten Wonosobo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.08",
+      "Nama": "Kabupaten Magelang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.09",
+      "Nama": "Kabupaten Boyolali",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.10",
+      "Nama": "Kabupaten Klaten",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.11",
+      "Nama": "Kabupaten Sukoharjo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.12",
+      "Nama": "Kabupaten Wonogiri",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.13",
+      "Nama": "Kabupaten Karanganyar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.14",
+      "Nama": "Kabupaten Sragen",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.15",
+      "Nama": "Kabupaten Grobogan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.16",
+      "Nama": "Kabupaten Blora",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.17",
+      "Nama": "Kabupaten Rembang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.18",
+      "Nama": "Kabupaten Pati",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.19",
+      "Nama": "Kabupaten Kudus",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.20",
+      "Nama": "Kabupaten Jepara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.21",
+      "Nama": "Kabupaten Demak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.22",
+      "Nama": "Kabupaten Semarang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.23",
+      "Nama": "Kabupaten Temanggung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.24",
+      "Nama": "Kabupaten Kendal",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.25",
+      "Nama": "Kabupaten Batang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.26",
+      "Nama": "Kabupaten Pekalongan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.27",
+      "Nama": "Kabupaten Pemalang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.28",
+      "Nama": "Kabupaten Tegal",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.29",
+      "Nama": "Kabupaten Brebes",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.71",
+      "Nama": "Kota Magelang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.72",
+      "Nama": "Kota Surakarta",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.73",
+      "Nama": "Kota Salatiga",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.74",
+      "Nama": "Kota Semarang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.75",
+      "Nama": "Kota Pekalongan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "33.76",
+      "Nama": "Kota Tegal",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "33",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34",
+      "Nama": "Daerah Istimewa Yogyakarta",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34.01",
+      "Nama": "Kabupaten Kulon Progo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "34",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34.02",
+      "Nama": "Kabupaten Bantul",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "34",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34.03",
+      "Nama": "Kabupaten Gunungkidul",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "34",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34.04",
+      "Nama": "Kabupaten Sleman",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "34",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "34.71",
+      "Nama": "Kota Yogyakarta",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "34",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35",
+      "Nama": "Jawa Timur",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.01",
+      "Nama": "Kabupaten Pacitan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.02",
+      "Nama": "Kabupaten Ponorogo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.03",
+      "Nama": "Kabupaten Trenggalek",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.04",
+      "Nama": "Kabupaten Tulungagung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.05",
+      "Nama": "Kabupaten Blitar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.06",
+      "Nama": "Kabupaten Kediri",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.07",
+      "Nama": "Kabupaten Malang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.08",
+      "Nama": "Kabupaten Lumajang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.09",
+      "Nama": "Kabupaten Jember",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.10",
+      "Nama": "Kabupaten Banyuwangi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.11",
+      "Nama": "Kabupaten Bondowoso",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.12",
+      "Nama": "Kabupaten Situbondo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.13",
+      "Nama": "Kabupaten Probolinggo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.14",
+      "Nama": "Kabupaten Pasuruan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.15",
+      "Nama": "Kabupaten Sidoarjo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.16",
+      "Nama": "Kabupaten Mojokerto",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.17",
+      "Nama": "Kabupaten Jombang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.18",
+      "Nama": "Kabupaten Nganjuk",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.19",
+      "Nama": "Kabupaten Madiun",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.20",
+      "Nama": "Kabupaten Magetan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.21",
+      "Nama": "Kabupaten Ngawi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.22",
+      "Nama": "Kabupaten Bojonegoro",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.23",
+      "Nama": "Kabupaten Tuban",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.24",
+      "Nama": "Kabupaten Lamongan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.25",
+      "Nama": "Kabupaten Gresik",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.26",
+      "Nama": "Kabupaten Bangkalan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.27",
+      "Nama": "Kabupaten Sampang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.28",
+      "Nama": "Kabupaten Pamekasan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.29",
+      "Nama": "Kabupaten Sumenep",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.71",
+      "Nama": "Kota Kediri",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.72",
+      "Nama": "Kota Blitar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.73",
+      "Nama": "Kota Malang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.74",
+      "Nama": "Kota Probolinggo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.75",
+      "Nama": "Kota Pasuruan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.76",
+      "Nama": "Kota Mojokerto",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.77",
+      "Nama": "Kota Madiun",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.78",
+      "Nama": "Kota Surabaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "35.79",
+      "Nama": "Kota Batu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "35",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36",
+      "Nama": "Banten",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.01",
+      "Nama": "Kabupaten Pandeglang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.02",
+      "Nama": "Kabupaten Lebak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.03",
+      "Nama": "Kabupaten Tangerang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.04",
+      "Nama": "Kabupaten Serang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.71",
+      "Nama": "Kota Tangerang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.72",
+      "Nama": "Kota Cilegon",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.73",
+      "Nama": "Kota Serang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "36.74",
+      "Nama": "Kota Tangerang Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "36",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "51",
+      "Nama": "Bali",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.01",
+      "Nama": "Kabupaten Jembrana",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.02",
+      "Nama": "Kabupaten Tabanan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.03",
+      "Nama": "Kabupaten Badung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.04",
+      "Nama": "Kabupaten Gianyar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.05",
+      "Nama": "Kabupaten Klungkung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.06",
+      "Nama": "Kabupaten Bangli",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.07",
+      "Nama": "Kabupaten Karangasem",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.08",
+      "Nama": "Kabupaten Buleleng",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "51.71",
+      "Nama": "Kota Denpasar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "51",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52",
+      "Nama": "Nusa Tenggara Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.01",
+      "Nama": "Kabupaten Lombok Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.02",
+      "Nama": "Kabupaten Lombok Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.03",
+      "Nama": "Kabupaten Lombok Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.04",
+      "Nama": "Kabupaten Sumbawa",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.05",
+      "Nama": "Kabupaten Dompu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.06",
+      "Nama": "Kabupaten Bima",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.07",
+      "Nama": "Kabupaten Sumbawa Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.08",
+      "Nama": "Kabupaten Lombok Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.71",
+      "Nama": "Kota Mataram",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "52.72",
+      "Nama": "Kota Bima",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "52",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53",
+      "Nama": "Nusa Tenggara Timur",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.01",
+      "Nama": "Kabupaten Kupang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.02",
+      "Nama": "Kabupaten Timor Tengah Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.03",
+      "Nama": "Kabupaten Timor Tengah Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.04",
+      "Nama": "Kabupaten Belu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.05",
+      "Nama": "Kabupaten Alor",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.06",
+      "Nama": "Kabupaten Flores Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.07",
+      "Nama": "Kabupaten Sikka",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.08",
+      "Nama": "Kabupaten Ende",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.09",
+      "Nama": "Kabupaten Ngada",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.10",
+      "Nama": "Kabupaten Manggarai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.11",
+      "Nama": "Kabupaten Sumba Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.12",
+      "Nama": "Kabupaten Sumba Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.13",
+      "Nama": "Kabupaten Lembata",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.14",
+      "Nama": "Kabupaten Rote Ndao",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.15",
+      "Nama": "Kabupaten Manggarai Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.16",
+      "Nama": "Kabupaten Nagekeo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.17",
+      "Nama": "Kabupaten Sumba Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.18",
+      "Nama": "Kabupaten Sumba Barat Daya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.19",
+      "Nama": "Kabupaten Manggarai Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.20",
+      "Nama": "Kabupaten Sabu Raijua",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.21",
+      "Nama": "Kabupaten Malaka",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "53.71",
+      "Nama": "Kota Kupang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "53",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "61",
+      "Nama": "Kalimantan Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.01",
+      "Nama": "Kabupaten Sambas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.02",
+      "Nama": "Kabupaten Mempawah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.03",
+      "Nama": "Kabupaten Sanggau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.04",
+      "Nama": "Kabupaten Ketapang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.05",
+      "Nama": "Kabupaten Sintang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.06",
+      "Nama": "Kabupaten Kapuas Hulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.07",
+      "Nama": "Kabupaten Bengkayang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.08",
+      "Nama": "Kabupaten Landak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.09",
+      "Nama": "Kabupaten Sekadau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.10",
+      "Nama": "Kabupaten Melawi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.11",
+      "Nama": "Kabupaten Kayong Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.12",
+      "Nama": "Kabupaten Kubu Raya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.71",
+      "Nama": "Kota Pontianak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "61.72",
+      "Nama": "Kota Singkawang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "61",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62",
+      "Nama": "Kalimantan Tengah",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.01",
+      "Nama": "Kabupaten Kotawaringin Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.02",
+      "Nama": "Kabupaten Kotawaringin Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.03",
+      "Nama": "Kabupaten Kapuas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.04",
+      "Nama": "Kabupaten Barito Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.05",
+      "Nama": "Kabupaten Barito Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.06",
+      "Nama": "Kabupaten Katingan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.07",
+      "Nama": "Kabupaten Seruyan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.08",
+      "Nama": "Kabupaten Sukamara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.09",
+      "Nama": "Kabupaten Lamandau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.10",
+      "Nama": "Kabupaten Gunung Mas",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.11",
+      "Nama": "Kabupaten Pulang Pisau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.12",
+      "Nama": "Kabupaten Murung Raya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.13",
+      "Nama": "Kabupaten Barito Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "62.71",
+      "Nama": "Kota Palangkaraya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "62",
+      "ZonaWaktu": "WIB"
+    },
+    {
+      "Kode": "63",
+      "Nama": "Kalimantan Selatan",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.01",
+      "Nama": "Kabupaten Tanah Laut",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.02",
+      "Nama": "Kabupaten Kotabaru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.03",
+      "Nama": "Kabupaten Banjar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.04",
+      "Nama": "Kabupaten Barito Kuala",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.05",
+      "Nama": "Kabupaten Tapin",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.06",
+      "Nama": "Kabupaten Hulu Sungai Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.07",
+      "Nama": "Kabupaten Hulu Sungai Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.08",
+      "Nama": "Kabupaten Hulu Sungai Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.09",
+      "Nama": "Kabupaten Tabalong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.10",
+      "Nama": "Kabupaten Tanah Bumbu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.11",
+      "Nama": "Kabupaten Balangan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.71",
+      "Nama": "Kota Banjarmasin",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "63.72",
+      "Nama": "Kota Banjarbaru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "63",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64",
+      "Nama": "Kalimantan Timur",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.01",
+      "Nama": "Kabupaten Paser",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.02",
+      "Nama": "Kabupaten Kutai Kartanegara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.03",
+      "Nama": "Kabupaten Berau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.07",
+      "Nama": "Kabupaten Kutai Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.08",
+      "Nama": "Kabupaten Kutai Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.09",
+      "Nama": "Kabupaten Penajam Paser Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.11",
+      "Nama": "Kabupaten Mahakam Ulu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.71",
+      "Nama": "Kota Balikpapan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.72",
+      "Nama": "Kota Samarinda",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "64.74",
+      "Nama": "Kota Bontang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "64",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65",
+      "Nama": "Kalimantan Utara",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65.01",
+      "Nama": "Kabupaten Bulungan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "65",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65.02",
+      "Nama": "Kabupaten Malinau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "65",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65.03",
+      "Nama": "Kabupaten Nunukan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "65",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65.04",
+      "Nama": "Kabupaten Tana Tidung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "65",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "65.71",
+      "Nama": "Kota Tarakan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "65",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71",
+      "Nama": "Sulawesi Utara",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.01",
+      "Nama": "Kabupaten Bolaang Mongondow",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.02",
+      "Nama": "Kabupaten Minahasa",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.03",
+      "Nama": "Kabupaten Kepulauan Sangihe",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.04",
+      "Nama": "Kabupaten Kepulauan Talaud",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.05",
+      "Nama": "Kabupaten Minahasa Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.06",
+      "Nama": "Kabupaten Minahasa Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.07",
+      "Nama": "Kabupaten Minahasa Tenggara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.08",
+      "Nama": "Kabupaten Bolaang Mongondow Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.09",
+      "Nama": "Kabupaten Kep. Siau Tagulandang Biaro",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.10",
+      "Nama": "Kabupaten Bolaang Mongondow Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.11",
+      "Nama": "Kabupaten Bolaang Mongondow Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.71",
+      "Nama": "Kota Manado",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.72",
+      "Nama": "Kota Bitung",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.73",
+      "Nama": "Kota Tomohon",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "71.74",
+      "Nama": "Kota Kotamobagu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "71",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72",
+      "Nama": "Sulawesi Tengah",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.01",
+      "Nama": "Kabupaten Banggai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.02",
+      "Nama": "Kabupaten Poso",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.03",
+      "Nama": "Kabupaten Donggala",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.04",
+      "Nama": "Kabupaten Toli-Toli",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.05",
+      "Nama": "Kabupaten Buol",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.06",
+      "Nama": "Kabupaten Morowali",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.07",
+      "Nama": "Kabupaten Banggai Kepulauan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.08",
+      "Nama": "Kabupaten Parigi Moutong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.09",
+      "Nama": "Kabupaten Tojo Una Una",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.10",
+      "Nama": "Kabupaten Sigi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.11",
+      "Nama": "Kabupaten Banggai Laut",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.12",
+      "Nama": "Kabupaten Morowali Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "72.71",
+      "Nama": "Kota Palu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "72",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73",
+      "Nama": "Sulawesi Selatan",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.01",
+      "Nama": "Kabupaten Kepulauan Selayar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.02",
+      "Nama": "Kabupaten Bulukumba",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.03",
+      "Nama": "Kabupaten Bantaeng",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.04",
+      "Nama": "Kabupaten Jeneponto",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.05",
+      "Nama": "Kabupaten Takalar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.06",
+      "Nama": "Kabupaten Gowa",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.07",
+      "Nama": "Kabupaten Sinjai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.08",
+      "Nama": "Kabupaten Bone",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.09",
+      "Nama": "Kabupaten Maros",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.10",
+      "Nama": "Kabupaten Pangkajene dan Kepulauan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.11",
+      "Nama": "Kabupaten Barru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.12",
+      "Nama": "Kabupaten Soppeng",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.13",
+      "Nama": "Kabupaten Wajo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.14",
+      "Nama": "Kabupaten Sidenreng Rappang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.15",
+      "Nama": "Kabupaten Pinrang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.16",
+      "Nama": "Kabupaten Enrekang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.17",
+      "Nama": "Kabupaten Luwu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.18",
+      "Nama": "Kabupaten Tana Toraja",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.22",
+      "Nama": "Kabupaten Luwu Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.24",
+      "Nama": "Kabupaten Luwu Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.26",
+      "Nama": "Kabupaten Toraja Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.71",
+      "Nama": "Kota Makassar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.72",
+      "Nama": "Kota Parepare",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "73.73",
+      "Nama": "Kota Palopo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "73",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74",
+      "Nama": "Sulawesi Tenggara",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.01",
+      "Nama": "Kabupaten Kolaka",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.02",
+      "Nama": "Kabupaten Konawe",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.03",
+      "Nama": "Kabupaten Muna",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.04",
+      "Nama": "Kabupaten Buton",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.05",
+      "Nama": "Kabupaten Konawe Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.06",
+      "Nama": "Kabupaten Bombana",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.07",
+      "Nama": "Kabupaten Wakatobi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.08",
+      "Nama": "Kabupaten Kolaka Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.09",
+      "Nama": "Kabupaten Konawe Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.10",
+      "Nama": "Kabupaten Buton Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.11",
+      "Nama": "Kabupaten Kolaka Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.12",
+      "Nama": "Kabupaten Konawe Kepulauan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.13",
+      "Nama": "Kabupaten Muna Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.14",
+      "Nama": "Kabupaten Buton Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.15",
+      "Nama": "Kabupaten Buton Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.71",
+      "Nama": "Kota Kendari",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "74.72",
+      "Nama": "Kota Bau Bau",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "74",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75",
+      "Nama": "Gorontalo",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.01",
+      "Nama": "Kabupaten Gorontalo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.02",
+      "Nama": "Kabupaten Boalemo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.03",
+      "Nama": "Kabupaten Bone Bolango",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.04",
+      "Nama": "Kabupaten Pohuwato",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.05",
+      "Nama": "Kabupaten Gorontalo Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "75.71",
+      "Nama": "Kota Gorontalo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "75",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76",
+      "Nama": "Sulawesi Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.01",
+      "Nama": "Kabupaten Pasangkayu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.02",
+      "Nama": "Kabupaten Mamuju",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.03",
+      "Nama": "Kabupaten Mamasa",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.04",
+      "Nama": "Kabupaten Polewali Mandar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.05",
+      "Nama": "Kabupaten Majene",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "76.06",
+      "Nama": "Kabupaten Mamuju Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "76",
+      "ZonaWaktu": "WITA"
+    },
+    {
+      "Kode": "81",
+      "Nama": "Maluku",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.01",
+      "Nama": "Kabupaten Maluku Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.02",
+      "Nama": "Kabupaten Maluku Tenggara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.03",
+      "Nama": "Kabupaten Kepulauan Tanimbar",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.04",
+      "Nama": "Kabupaten Buru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.05",
+      "Nama": "Kabupaten Seram Bagian Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.06",
+      "Nama": "Kabupaten Seram Bagian Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.07",
+      "Nama": "Kabupaten Kepulauan Aru",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.08",
+      "Nama": "Kabupaten Maluku Barat Daya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.09",
+      "Nama": "Kabupaten Buru Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.71",
+      "Nama": "Kota Ambon",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "81.72",
+      "Nama": "Kota Tual",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "81",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82",
+      "Nama": "Maluku Utara",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.01",
+      "Nama": "Kabupaten Halmahera Barat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.02",
+      "Nama": "Kabupaten Halmahera Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.03",
+      "Nama": "Kabupaten Halmahera Utara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.04",
+      "Nama": "Kabupaten Halmahera Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.05",
+      "Nama": "Kabupaten Kepulauan Sula",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.06",
+      "Nama": "Kabupaten Halmahera Timur",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.07",
+      "Nama": "Kabupaten Pulau Morotai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.08",
+      "Nama": "Kabupaten Pulau Taliabu",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.71",
+      "Nama": "Kota Ternate",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "82.72",
+      "Nama": "Kota Tidore Kepulauan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "82",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91",
+      "Nama": "Papua",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.03",
+      "Nama": "Kabupaten Jayapura",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.05",
+      "Nama": "Kabupaten Kepulauan Yapen",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.06",
+      "Nama": "Kabupaten Biak Numfor",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.10",
+      "Nama": "Kabupaten Sarmi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.11",
+      "Nama": "Kabupaten Keerom",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.15",
+      "Nama": "Kabupaten Waropen",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.19",
+      "Nama": "Kabupaten Supiori",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.20",
+      "Nama": "Kabupaten Mamberamo Raya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "91.71",
+      "Nama": "Kota Jayapura",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "91",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92",
+      "Nama": "Papua Barat",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.02",
+      "Nama": "Kabupaten Manokwari",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.03",
+      "Nama": "Kabupaten Fak Fak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.06",
+      "Nama": "Kabupaten Teluk Bintuni",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.07",
+      "Nama": "Kabupaten Teluk Wondama",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.08",
+      "Nama": "Kabupaten Kaimana",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.11",
+      "Nama": "Kabupaten Manokwari Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "92.12",
+      "Nama": "Kabupaten Pegunungan Arfak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "92",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "93",
+      "Nama": "Papua Selatan",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "93.01",
+      "Nama": "Kabupaten Merauke",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "93",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "93.02",
+      "Nama": "Kabupaten Boven Digoel",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "93",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "93.03",
+      "Nama": "Kabupaten Mappi",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "93",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "93.04",
+      "Nama": "Kabupaten Asmat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "93",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94",
+      "Nama": "Papua Tengah",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.01",
+      "Nama": "Kabupaten Nabire",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.02",
+      "Nama": "Kabupaten Puncak Jaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.03",
+      "Nama": "Kabupaten Paniai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.04",
+      "Nama": "Kabupaten Mimika",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.05",
+      "Nama": "Kabupaten Puncak",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.06",
+      "Nama": "Kabupaten Dogiyai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.07",
+      "Nama": "Kabupaten Intan Jaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "94.08",
+      "Nama": "Kabupaten Deiyai",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "94",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95",
+      "Nama": "Papua Pegunungan",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.01",
+      "Nama": "Kabupaten Jayawijaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.02",
+      "Nama": "Kabupaten Pegunungan Bintang",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.03",
+      "Nama": "Kabupaten Yahukimo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.04",
+      "Nama": "Kabupaten Tolikara",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.05",
+      "Nama": "Kabupaten Mamberamo Tengah",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.06",
+      "Nama": "Kabupaten Yalimo",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.07",
+      "Nama": "Kabupaten Lanny Jaya",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "95.08",
+      "Nama": "Kabupaten Nduga",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "95",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96",
+      "Nama": "Papua Barat Daya",
+      "Tingkat": "Provinsi",
+      "KodeInduk": null,
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.01",
+      "Nama": "Kabupaten Sorong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.02",
+      "Nama": "Kabupaten Sorong Selatan",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.03",
+      "Nama": "Kabupaten Raja Ampat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.04",
+      "Nama": "Kabupaten Tambrauw",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.05",
+      "Nama": "Kabupaten Maybrat",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    },
+    {
+      "Kode": "96.71",
+      "Nama": "Kota Sorong",
+      "Tingkat": "KabupatenKota",
+      "KodeInduk": "96",
+      "ZonaWaktu": "WIT"
+    }
+  ]
+}
