@@ -6,6 +6,7 @@ namespace App\Domain\Persediaan\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Persediaan\Enum\MetodeHpp;
 use App\Domain\Persediaan\Kueri\CekAdaMutasi;
@@ -20,7 +21,8 @@ use Illuminate\Support\Facades\DB;
  * Kunci X baris Tenant (L1) lebih dulu: semua mutasi stok memegang kunci S baris yang sama selama transaksinya,
  * sehingga tidak ada mutasi yang sedang berjalan saat metode dibaca dan diganti. Metode HPP terkunci begitu tenant
  * punya `MutasiStok` (`MetodeHppTerkunci`); izin stok minus boleh diubah kapan saja. Tanpa perubahan = tidak ada
- * yang ditulis. Audit `persediaan.pengaturan.ubah` berisi nilai lama & baru.
+ * yang ditulis. Audit `persediaan.pengaturan.ubah` berisi nilai lama & baru. F-05b: `batasPersetujuanPenyesuaian`
+ * (null = tidak diubah) ikut dicatat di audit hanya bila berubah.
  */
 final class UbahPengaturanPersediaan
 {
@@ -33,13 +35,14 @@ final class UbahPengaturanPersediaan
         private readonly PencatatAudit $audit,
     ) {}
 
-    public function Jalankan(MetodeHpp $metode, bool $bolehMinus): void
+    public function Jalankan(MetodeHpp $metode, bool $bolehMinus, ?Uang $batasPersetujuanPenyesuaian = null): void
     {
-        DB::transaction(function () use ($metode, $bolehMinus): void {
+        DB::transaction(function () use ($metode, $bolehMinus, $batasPersetujuanPenyesuaian): void {
             $this->penguncian->Kunci($this->konteks->Wajib());
             $lama = $this->pengaturan->AmbilDenganKunciBaca();
+            $batasBerubah = $batasPersetujuanPenyesuaian !== null && ! $batasPersetujuanPenyesuaian->SamaDengan($lama->batasPersetujuanPenyesuaian);
 
-            if ($lama->metodeHpp === $metode && $lama->stokBolehMinus === $bolehMinus) {
+            if ($lama->metodeHpp === $metode && $lama->stokBolehMinus === $bolehMinus && ! $batasBerubah) {
                 return;
             }
 
@@ -51,11 +54,13 @@ final class UbahPengaturanPersediaan
                 );
             }
 
-            $this->ubahTenant->Jalankan($metode, $bolehMinus);
+            $this->ubahTenant->Jalankan($metode, $bolehMinus, $batasBerubah ? $batasPersetujuanPenyesuaian : null);
             $this->audit->Catat(
                 'persediaan.pengaturan.ubah',
-                nilaiLama: ['MetodeHpp' => $lama->metodeHpp->value, 'StokBolehMinus' => $lama->stokBolehMinus],
-                nilaiBaru: ['MetodeHpp' => $metode->value, 'StokBolehMinus' => $bolehMinus],
+                nilaiLama: ['MetodeHpp' => $lama->metodeHpp->value, 'StokBolehMinus' => $lama->stokBolehMinus]
+                    + ($batasBerubah ? ['BatasPersetujuanPenyesuaian' => $lama->batasPersetujuanPenyesuaian->KeString()] : []),
+                nilaiBaru: ['MetodeHpp' => $metode->value, 'StokBolehMinus' => $bolehMinus]
+                    + ($batasBerubah && $batasPersetujuanPenyesuaian !== null ? ['BatasPersetujuanPenyesuaian' => $batasPersetujuanPenyesuaian->KeString()] : []),
             );
         }, max(1, (int) config('persediaan.PercobaanTransaksi', 3)));
     }

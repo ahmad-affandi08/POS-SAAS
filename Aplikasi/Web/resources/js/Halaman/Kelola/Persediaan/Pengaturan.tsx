@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -14,27 +15,40 @@ import type { MetodeHpp, PropsPengaturanPersediaan } from '@/Tipe/Persediaan';
 
 const alamat = '/kelola/persediaan/pengaturan';
 
-/** F-05a: pengaturan persediaan tenant: metode HPP (terkunci setelah ada mutasi, H-4) dan izin stok minus (BR-05.2). */
+/**
+ * F-05a: pengaturan persediaan tenant: metode HPP (terkunci setelah ada mutasi, H-4) dan izin stok minus (BR-05.2).
+ * F-05b: batas nilai penyesuaian stok yang butuh persetujuan orang lain (§19.2); dikirim hanya bila berubah.
+ */
 export default function HalamanPengaturanPersediaan({
     MetodeHpp: metodeAwal,
     StokBolehMinus,
     MetodeHppTerkunci,
     AlasanTerkunci,
     OpsiMetodeHpp,
+    BatasPersetujuanPenyesuaian = '500000.00',
 }: PropsPengaturanPersediaan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
     const [metode, AturMetode] = useState<MetodeHpp>(metodeAwal);
     const [bolehMinus, AturBolehMinus] = useState(StokBolehMinus);
+    const batasAwal = BatasPersetujuanPenyesuaian.replace(/\.00$/, '');
+    const [batas, AturBatas] = useState(batasAwal);
     const [konfirmasi, AturKonfirmasi] = useState(false);
     const [memproses, AturMemproses] = useState(false);
-    const berubah = metode !== metodeAwal || bolehMinus !== StokBolehMinus;
+    const batasBerubah = batas !== batasAwal;
+    const berubah = metode !== metodeAwal || bolehMinus !== StokBolehMinus || batasBerubah;
     const labelMetode = OpsiMetodeHpp.find((opsi) => opsi.Nilai === metode)?.Label ?? metode;
 
     const KirimPengaturan = () =>
         router.put(
             alamat,
-            { MetodeHpp: metode, StokBolehMinus: bolehMinus },
+            batasBerubah
+                ? {
+                      MetodeHpp: metode,
+                      StokBolehMinus: bolehMinus,
+                      BatasPersetujuanPenyesuaian: batas === '' ? '0' : batas,
+                  }
+                : { MetodeHpp: metode, StokBolehMinus: bolehMinus },
             {
                 preserveScroll: true,
                 onStart: () => AturMemproses(true),
@@ -57,7 +71,7 @@ export default function HalamanPengaturanPersediaan({
 
     return (
         <TataLetakAplikasi judul="Pengaturan persediaan">
-            <DaftarGalatServer galat={galat} kecuali={['MetodeHpp', 'StokBolehMinus']} />
+            <DaftarGalatServer galat={galat} kecuali={['MetodeHpp', 'StokBolehMinus', 'BatasPersetujuanPenyesuaian']} />
 
             <form onSubmit={Simpan} aria-label="Pengaturan persediaan" className="flex flex-col gap-4">
                 <PanelKatalog
@@ -104,6 +118,20 @@ export default function HalamanPengaturanPersediaan({
                     {galat.StokBolehMinus ? (
                         <p className="text-keterangan font-semibold text-bahaya">{galat.StokBolehMinus}</p>
                     ) : null}
+                </PanelKatalog>
+
+                <PanelKatalog
+                    judul="Persetujuan penyesuaian stok"
+                    idJudul="judul-batas-penyesuaian"
+                    keterangan="Penyesuaian stok bernilai di atas batas ini harus disetujui pengguna lain dengan izin persediaan.penyesuaian.setujui."
+                >
+                    <BidangUang
+                        label="Batas nilai tanpa persetujuan"
+                        nilai={batas}
+                        saatBerubah={AturBatas}
+                        galat={galat.BatasPersetujuanPenyesuaian}
+                        keterangan="Bawaan Rp 500.000. Isi 0 bila semua penyesuaian harus disetujui."
+                    />
                 </PanelKatalog>
 
                 <div className="flex flex-wrap items-center gap-3">

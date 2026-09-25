@@ -11,6 +11,7 @@ import {
     ReceiptTextIcon,
     ScrollTextIcon,
     ShieldCheckIcon,
+    ShoppingCartIcon,
     StoreIcon,
     UsersIcon,
     WarehouseIcon,
@@ -66,8 +67,24 @@ const menuPersediaan: ItemMenu[] = [
     { label: 'Saldo stok', href: '/kelola/persediaan/saldo', izin: IzinTenant.PersediaanLihat },
     { label: 'Kartu stok', href: '/kelola/persediaan/kartu-stok', izin: IzinTenant.PersediaanLihat },
     { label: 'Stok awal', href: '/kelola/persediaan/stok-awal', izin: IzinTenant.PersediaanLihat },
+    // F-05b: transfer, stok opname, penyesuaian (lihat: persediaan.lihat; tindakan dijaga di rute).
+    { label: 'Transfer stok', href: '/kelola/persediaan/transfer', izin: IzinTenant.PersediaanLihat },
+    { label: 'Stok opname', href: '/kelola/persediaan/opname', izin: IzinTenant.PersediaanLihat },
+    { label: 'Penyesuaian stok', href: '/kelola/persediaan/penyesuaian', izin: IzinTenant.PersediaanLihat },
     { label: 'Impor stok awal', href: '/kelola/persediaan/stok-awal/impor', izin: IzinTenant.PersediaanKelola },
     { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
+];
+
+// F-04 fase 1: grup menu "Pembelian" (pembelian.kelola); pengaturan pembelian butuh pembelian.po.setujui.
+const menuPembelian: ItemMenu[] = [
+    { label: 'Pesanan pembelian', href: '/kelola/pembelian/pesanan', izin: IzinTenant.PembelianKelola },
+    { label: 'Penerimaan barang', href: '/kelola/pembelian/penerimaan', izin: IzinTenant.PembelianKelola },
+    { label: 'Faktur pembelian', href: '/kelola/pembelian/faktur', izin: IzinTenant.PembelianKelola },
+    { label: 'Hutang pemasok', href: '/kelola/pembelian/hutang', izin: IzinTenant.PembelianKelola },
+    { label: 'Pembayaran hutang', href: '/kelola/pembelian/pembayaran', izin: IzinTenant.PembelianKelola },
+    { label: 'Retur pembelian', href: '/kelola/pembelian/retur', izin: IzinTenant.PembelianKelola },
+    { label: 'Pemasok', href: '/kelola/pembelian/pemasok', izin: IzinTenant.PembelianKelola },
+    { label: 'Pengaturan pembelian', href: '/kelola/pembelian/pengaturan', izin: IzinTenant.PembelianPoSetujui },
 ];
 
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
@@ -137,6 +154,15 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: WarehouseIcon,
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
+    },
+    // F-04 fase 1: pembelian & hutang pemasok.
+    {
+        label: 'Pembelian',
+        href: '/kelola/pembelian/pesanan',
+        izin: null,
+        ikon: ShoppingCartIcon,
+        labelSub: 'Menu pembelian',
+        sub: menuPembelian,
     },
     // F-07b: penjualan dari aplikasi POS (baca saja); F-09: void & retur.
     {

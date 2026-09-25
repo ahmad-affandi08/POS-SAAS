@@ -153,6 +153,9 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Saldo stok',
             'Kartu stok',
             'Stok awal',
+            'Transfer stok',
+            'Stok opname',
+            'Penyesuaian stok',
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Stok awal');
         expect(within(utama).queryByRole('link', { name: 'Akuntansi' })).toBeNull();
@@ -168,6 +171,9 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             '/kelola/persediaan/saldo',
             '/kelola/persediaan/kartu-stok',
             '/kelola/persediaan/stok-awal',
+            '/kelola/persediaan/transfer',
+            '/kelola/persediaan/opname',
+            '/kelola/persediaan/penyesuaian',
             '/kelola/persediaan/stok-awal/impor',
             '/kelola/persediaan/pengaturan',
         ]);
@@ -217,6 +223,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Outlet',
             'Produk',
             'Persediaan',
+            // F-04: pembelian & hutang pemasok.
+            'Pembelian',
             // F-07b: daftar penjualan dari POS.
             'Penjualan',
             'Shift & kas',
@@ -233,6 +241,11 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/persediaan/kartu-stok?produk=01J9')).toBe(true);
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/produk')).toBe(false);
         expect(CekMenuAktif('/kelola/akuntansi/jurnal', '/kelola/akuntansi/jurnal/01J9')).toBe(true);
+        // F-04: grup Pembelian tampil untuk pembelian.kelola; pengaturan pembelian hanya untuk pembelian.po.setujui.
+        expect(
+            SaringMenuTerlihat({ Pemilik: false, Izin: ['pembelian.kelola'] }).map(({ menu }) => menu.label),
+        ).toEqual(['Beranda', 'Pembelian']);
+        expect(CekMenuAktif('/kelola/pembelian/pesanan', '/kelola/pembelian/faktur/01J9')).toBe(true);
         // F-06: grup "Shift & kas" hanya tampil bila ada sub-menu yang boleh dibuka; F-07b: menu Penjualan ikut
         // izin laporan.penjualan.lihat.
         expect(

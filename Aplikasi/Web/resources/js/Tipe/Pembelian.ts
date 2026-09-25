@@ -1,0 +1,536 @@
+import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
+import type { OpsiGudang, PelacakanProduk } from '@/Tipe/Persediaan';
+
+/**
+ * Kontrak props & JSON halaman pembelian F-04 fase 1 (PRD "Rincian F-04 fase 1"): pemasok, pesanan pembelian (PO),
+ * penerimaan barang (GRN) & belanja stok, faktur, hutang & pembayaran, retur, pengaturan. Desimal selalu string: uang
+ * "12345.68", jumlah "10.0000", HPP "1234.568000". Tanggal `YYYY-MM-DD`; cap waktu ISO UTC.
+ */
+
+export type StatusPesananPembelian =
+    'Draf' | 'MenungguPersetujuan' | 'Disetujui' | 'DiterimaSebagian' | 'Diterima' | 'Ditutup' | 'Dibatalkan';
+export type StatusDokumenPembelian = 'Diposting' | 'Dibatalkan';
+export type StatusFakturPembelian = 'BelumDibayar' | 'DibayarSebagian' | 'Lunas' | 'Dibatalkan';
+export type StatusPembelian = StatusPesananPembelian | StatusDokumenPembelian | StatusFakturPembelian;
+export type Opsi<T extends string = string> = { Nilai: T; Label: string };
+
+export type IzinPembelian = { Kelola: boolean; Setujui: boolean; LihatJurnal: boolean; Persediaan: boolean };
+export type OpsiPemasok = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    Pkp: boolean;
+    TerminHari: number;
+    Aktif: boolean;
+};
+export type OpsiAkunKas = { Uuid: string; Kode: string; Nama: string };
+export type AturanLampiran = { Ekstensi: string[]; UkuranMaksimalKb: number };
+export type RingkasPemasok = { Uuid: string; Kode: string; Nama: string };
+export type JurnalDokumen = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Keterangan: string;
+    TotalDebit: string;
+    Pembalik: boolean;
+};
+export type RiwayatDokumen = { StatusKe: string; Oleh: string | null; Pada: string; Alasan: string | null };
+export type RingkasDokumen = { Uuid: string; Nomor: string; Tanggal: string; Status: string; LabelStatus: string };
+
+/* Pemasok */
+export type BarisPemasok = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    NamaKontak: string | null;
+    NoHp: string | null;
+    Email: string | null;
+    Alamat: string | null;
+    Npwp: string | null;
+    Pkp: boolean;
+    TerminHari: number;
+    NamaBank: string | null;
+    NomorRekening: string | null;
+    AtasNamaRekening: string | null;
+    Catatan: string | null;
+    Aktif: boolean;
+};
+export type PropsDaftarPemasok = { Pemasok: HasilTabel<BarisPemasok>; Izin: IzinPembelian };
+
+/* Daftar dokumen */
+export type BarisDaftarPesanan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    PerkiraanTiba: string | null;
+    NamaPemasok: string;
+    NamaGudang: string;
+    NamaOutlet: string | null;
+    Status: StatusPesananPembelian;
+    LabelStatus: string;
+    Total: string;
+};
+export type BarisDaftarPenerimaan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NomorPesanan: string | null;
+    NamaPemasok: string | null;
+    NamaGudang: string;
+    NamaOutlet: string | null;
+    Status: StatusDokumenPembelian;
+    LabelStatus: string;
+    BelanjaStok: boolean;
+    Difakturkan: boolean;
+    Total: string;
+};
+export type BarisDaftarFaktur = {
+    Uuid: string;
+    Nomor: string;
+    NomorFakturPemasok: string;
+    Tanggal: string;
+    JatuhTempo: string;
+    NamaPemasok: string | null;
+    UuidPemasok: string | null;
+    Status: StatusFakturPembelian;
+    LabelStatus: string;
+    BelanjaStok: boolean;
+    Total: string;
+    Sisa: string;
+    HariLewat: number | null;
+    Umur: string | null;
+    LabelUmur: string | null;
+};
+export type BarisDaftarPembayaran = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NamaPemasok: string | null;
+    Status: StatusDokumenPembelian;
+    LabelStatus: string;
+    BelanjaStok: boolean;
+    Total: string;
+};
+export type BarisDaftarRetur = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NomorPenerimaan: string | null;
+    NamaPemasok: string | null;
+    Alasan: string;
+    Status: StatusDokumenPembelian;
+    LabelStatus: string;
+    Total: string;
+};
+export type RingkasanHutang = {
+    Total: string;
+    Kelompok: { Kunci: string; Label: string; Sisa: string; Jumlah: number }[];
+};
+type PropsDaftarDasar = { OpsiPemasok: OpsiPemasok[]; Izin: IzinPembelian };
+export type PropsDaftarPesanan = PropsDaftarDasar & {
+    Pesanan: HasilTabel<BarisDaftarPesanan>;
+    OpsiStatus: Opsi<StatusPesananPembelian>[];
+};
+export type PropsDaftarPenerimaan = PropsDaftarDasar & {
+    Penerimaan: HasilTabel<BarisDaftarPenerimaan>;
+    OpsiStatus: Opsi<StatusDokumenPembelian>[];
+};
+export type PropsDaftarFaktur = PropsDaftarDasar & {
+    Faktur: HasilTabel<BarisDaftarFaktur>;
+    OpsiStatus: Opsi<StatusFakturPembelian>[];
+};
+export type PropsDaftarHutang = PropsDaftarDasar & {
+    Hutang: HasilTabel<BarisDaftarFaktur, RingkasanHutang> & { Ringkasan: RingkasanHutang };
+    OpsiUmur: Opsi[];
+    HariIni: string;
+};
+export type PropsDaftarPembayaran = PropsDaftarDasar & {
+    Pembayaran: HasilTabel<BarisDaftarPembayaran>;
+    OpsiStatus: Opsi<StatusDokumenPembelian>[];
+};
+export type PropsDaftarRetur = PropsDaftarDasar & {
+    Retur: HasilTabel<BarisDaftarRetur>;
+    OpsiStatus: Opsi<StatusDokumenPembelian>[];
+};
+
+/* Produk & baris isian */
+export type SatuanPembelian = { Uuid: string; Simbol: string; Nama: string; Konversi: string; DefaultBeli: boolean };
+export type ProdukPembelian = {
+    Uuid: string;
+    Nama: string;
+    Sku: string | null;
+    Pelacakan: PelacakanProduk;
+    SimbolSatuan: string;
+    BolehDesimal: boolean;
+    Satuan: SatuanPembelian[];
+};
+export type BarisIsianBebas = {
+    Kunci: string;
+    UuidProduk: string;
+    NamaProduk: string;
+    Sku: string | null;
+    Pelacakan: PelacakanProduk;
+    SimbolSatuan: string;
+    BolehDesimal: boolean;
+    Satuan: SatuanPembelian[];
+    UuidProdukSatuan: string | null;
+    Jumlah: string;
+    Harga: string;
+    Diskon: string;
+    NomorBatch: string;
+    TanggalKedaluwarsa: string;
+    NomorSeri: string[];
+};
+
+/* Pesanan */
+export type IsianPesanan = {
+    Uuid: string;
+    Nomor: string;
+    UuidPemasok: string;
+    UuidGudang: string;
+    Tanggal: string;
+    PerkiraanTiba: string | null;
+    TerminHari: number;
+    Ongkir: string;
+    Catatan: string | null;
+    Baris: Omit<BarisIsianBebas, 'Kunci' | 'NomorBatch' | 'TanggalKedaluwarsa' | 'NomorSeri'>[];
+};
+export type PropsFormPesanan = {
+    Mode: 'Buat' | 'Ubah';
+    Pesanan: IsianPesanan | null;
+    OpsiPemasok: OpsiPemasok[];
+    OpsiGudang: OpsiGudang[];
+    HariIni: string;
+    BatasPersetujuanPo: string;
+    MaksimalBaris: number;
+};
+export type DetailPesanan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    PerkiraanTiba: string | null;
+    Status: StatusPesananPembelian;
+    LabelStatus: string;
+    Pemasok: {
+        Uuid: string;
+        Kode: string;
+        Nama: string;
+        Alamat: string | null;
+        NoHp: string | null;
+        Npwp: string | null;
+        Pkp: boolean;
+    };
+    UuidGudang: string | null;
+    NamaGudang: string;
+    NamaOutlet: string | null;
+    TerminHari: number;
+    TarifPpn: string | null;
+    Subtotal: string;
+    Diskon: string;
+    Pajak: string;
+    Ongkir: string;
+    Total: string;
+    Catatan: string | null;
+    AlasanDitolak: string | null;
+    AlasanBatal: string | null;
+    DibuatOleh: string | null;
+    DisetujuiOleh: string | null;
+    DisetujuiPada: string | null;
+    IdPembuat: number | null;
+};
+export type BarisDetailPesanan = {
+    Id: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Konversi: string;
+    Jumlah: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+    JumlahDiterima: string;
+    Sisa: string;
+};
+export type PropsDetailPesanan = {
+    Pesanan: DetailPesanan;
+    Baris: BarisDetailPesanan[];
+    Penerimaan: (RingkasDokumen & { TotalNilai: string })[];
+    Riwayat: RiwayatDokumen[];
+    Izin: IzinPembelian;
+    Tindakan: { Ubah: boolean; Ajukan: boolean; Setujui: boolean; Terima: boolean; Batalkan: boolean; Tutup: boolean };
+};
+export type PropsCetakPesanan = Omit<PropsDetailPesanan, 'Izin' | 'Tindakan'> & {
+    Usaha: { Nama?: string; Npwp?: string | null };
+};
+
+/* Penerimaan & belanja stok */
+export type BarisPesananUntukPenerimaan = {
+    IdBarisPesanan: number;
+    NamaProduk: string;
+    Sku: string | null;
+    Pelacakan: PelacakanProduk;
+    SimbolSatuan: string;
+    Konversi: string;
+    BolehDesimal: boolean;
+    Harga: string;
+    Jumlah: string;
+    JumlahDiterima: string;
+    Sisa: string;
+};
+export type PesananUntukPenerimaan = {
+    Uuid: string;
+    Nomor: string;
+    NamaPemasok: string;
+    UuidGudang: string;
+    NamaGudang: string;
+    Ongkir: string;
+    OngkirTerpakai: string;
+    Baris: BarisPesananUntukPenerimaan[];
+};
+export type PropsFormPenerimaan = {
+    Mode: 'Penerimaan' | 'BelanjaStok';
+    Pesanan: PesananUntukPenerimaan | null;
+    OpsiPemasok: OpsiPemasok[];
+    OpsiGudang: OpsiGudang[];
+    OpsiAkun: OpsiAkunKas[];
+    HariIni: string;
+    Lampiran: AturanLampiran;
+    MaksimalBaris: number;
+};
+export type DetailPenerimaan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Status: StatusDokumenPembelian;
+    LabelStatus: string;
+    Pemasok: RingkasPemasok | null;
+    Pesanan: { Uuid: string; Nomor: string } | null;
+    Faktur: { Uuid: string; Nomor: string; Status: StatusFakturPembelian } | null;
+    NamaGudang: string;
+    NamaOutlet: string | null;
+    NomorSuratJalan: string | null;
+    Catatan: string | null;
+    TarifPpn: string | null;
+    PpnDikreditkan: boolean;
+    Subtotal: string;
+    Ongkir: string;
+    Pajak: string;
+    TotalNilai: string;
+    BelanjaStok: boolean;
+    Lampiran: { Nama: string; Ukuran: number } | null;
+    AlasanBatal: string | null;
+    DibuatOleh: string | null;
+    DibatalkanOleh: string | null;
+};
+export type BarisDetailPenerimaan = {
+    Id: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Konversi: string;
+    JumlahPesanan: string | null;
+    Jumlah: string;
+    JumlahDasar: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+    AlokasiBiaya: string;
+    Nilai: string;
+    HppSatuan: string;
+    NomorBatch: string | null;
+    TanggalKedaluwarsa: string | null;
+    NomorSeri: string[];
+    NomorSeriBisaDiretur: string[];
+    JumlahDiretur: string;
+    SisaBisaDiretur: string;
+};
+export type PropsDetailPenerimaanData = {
+    Penerimaan: DetailPenerimaan;
+    Baris: BarisDetailPenerimaan[];
+    Retur: (RingkasDokumen & { Total: string })[];
+    Jurnal: JurnalDokumen[];
+    Riwayat: RiwayatDokumen[];
+};
+export type PropsDetailPenerimaan = PropsDetailPenerimaanData & {
+    Izin: IzinPembelian;
+    Tindakan: { Batalkan: boolean; Retur: boolean; Fakturkan: boolean };
+};
+
+/* Faktur */
+export type BarisPenerimaanUntukFaktur = {
+    Id: number;
+    NamaProduk: string;
+    SimbolSatuan: string;
+    Jumlah: string;
+    JumlahDasar: string;
+    JumlahDiretur: string;
+    Konversi: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+};
+export type PenerimaanUntukFaktur = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NamaOutlet: string | null;
+    Ongkir: string;
+    Pkp: boolean;
+    TerminHari: number;
+    Baris: BarisPenerimaanUntukFaktur[];
+};
+export type PropsFormFaktur = {
+    OpsiPemasok: OpsiPemasok[];
+    UuidPemasok: string | null;
+    TerminHari: number | null;
+    UuidPenerimaanAwal: string | null;
+    Penerimaan: PenerimaanUntukFaktur[];
+    HariIni: string;
+    Lampiran: AturanLampiran;
+};
+export type DetailFaktur = {
+    Uuid: string;
+    Nomor: string;
+    NomorFakturPemasok: string;
+    Tanggal: string;
+    JatuhTempo: string;
+    TerminHari: number;
+    Status: StatusFakturPembelian;
+    LabelStatus: string;
+    Pemasok: RingkasPemasok | null;
+    TarifPpn: string | null;
+    PpnDikreditkan: boolean;
+    NilaiPenerimaan: string;
+    Subtotal: string;
+    Ongkir: string;
+    Pajak: string;
+    SelisihHarga: string;
+    Total: string;
+    JumlahDibayar: string;
+    JumlahRetur: string;
+    Sisa: string;
+    BelanjaStok: boolean;
+    Catatan: string | null;
+    Lampiran: { Nama: string; Ukuran: number } | null;
+    AlasanBatal: string | null;
+    DibuatOleh: string | null;
+};
+export type BarisDetailFaktur = {
+    Id: number;
+    NamaProduk: string;
+    SimbolSatuan: string;
+    NomorPesanan: string | null;
+    NomorPenerimaan: string | null;
+    JumlahPesanan: string | null;
+    HargaPesanan: string | null;
+    JumlahDiterima: string | null;
+    Jumlah: string;
+    HargaPenerimaan: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+    SelisihHarga: string;
+    Pajak: string;
+    JumlahDiretur: string;
+};
+export type PropsDetailFaktur = {
+    Faktur: DetailFaktur;
+    Baris: BarisDetailFaktur[];
+    Penerimaan: (RingkasDokumen & { TotalNilai: string })[];
+    Pembayaran: (RingkasDokumen & { Jumlah: string })[];
+    Retur: (RingkasDokumen & { Total: string })[];
+    Jurnal: JurnalDokumen[];
+    Riwayat: RiwayatDokumen[];
+    Izin: IzinPembelian;
+    Tindakan: { Bayar: boolean; Batalkan: boolean };
+};
+
+/* Pembayaran */
+export type FakturTerbuka = {
+    Uuid: string;
+    Nomor: string;
+    NomorFakturPemasok: string;
+    Tanggal: string;
+    JatuhTempo: string;
+    Total: string;
+    Sisa: string;
+};
+export type PropsFormPembayaran = {
+    OpsiPemasok: OpsiPemasok[];
+    OpsiAkun: OpsiAkunKas[];
+    UuidPemasok: string | null;
+    UuidFakturAwal: string | null;
+    Faktur: FakturTerbuka[];
+    HariIni: string;
+    Lampiran: AturanLampiran;
+};
+export type PropsDetailPembayaran = {
+    Pembayaran: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Status: StatusDokumenPembelian;
+        LabelStatus: string;
+        Pemasok: RingkasPemasok | null;
+        Akun: string | null;
+        Jumlah: string;
+        BelanjaStok: boolean;
+        Catatan: string | null;
+        Lampiran: { Nama: string; Ukuran: number } | null;
+        AlasanBatal: string | null;
+        DibuatOleh: string | null;
+    };
+    Alokasi: {
+        UuidFaktur: string | null;
+        NomorFaktur: string | null;
+        NomorFakturPemasok: string | null;
+        JatuhTempo: string | null;
+        Jumlah: string;
+    }[];
+    Jurnal: JurnalDokumen[];
+    Riwayat: RiwayatDokumen[];
+    Izin: IzinPembelian;
+    Tindakan: { Batalkan: boolean };
+};
+
+/* Retur */
+export type PropsFormRetur = PropsDetailPenerimaanData & { HariIni: string };
+export type PropsDetailRetur = {
+    Retur: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Status: StatusDokumenPembelian;
+        LabelStatus: string;
+        Alasan: string;
+        Pemasok: RingkasPemasok | null;
+        Penerimaan: { Uuid: string; Nomor: string } | null;
+        Faktur: { Uuid: string; Nomor: string } | null;
+        NamaGudang: string;
+        NilaiBarang: string;
+        NilaiHutang: string;
+        Pajak: string;
+        Total: string;
+        AlasanBatal: string | null;
+        DibuatOleh: string | null;
+    };
+    Baris: {
+        Id: number;
+        NamaProduk: string;
+        SimbolSatuan: string;
+        JumlahDasar: string;
+        Nilai: string;
+        NilaiHutang: string;
+        Pajak: string;
+        NomorSeri: string[];
+    }[];
+    Jurnal: JurnalDokumen[];
+    Riwayat: RiwayatDokumen[];
+    Izin: IzinPembelian;
+    Tindakan: { Batalkan: boolean };
+};
+
+/* Pengaturan */
+export type PropsPengaturanPembelian = {
+    Pengaturan: { BatasPersetujuanPo: string; ToleransiPenerimaanPersen: string };
+};

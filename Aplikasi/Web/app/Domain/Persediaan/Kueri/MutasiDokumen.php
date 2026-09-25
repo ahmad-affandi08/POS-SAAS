@@ -34,7 +34,10 @@ final class MutasiDokumen
      *
      * F-09: `KunciBaris` & `HppSatuan` untuk membalik (void) atau mengembalikan (retur) mutasi penjualan.
      *
-     * @return list<array{Id: int, KunciBaris: string, IdProduk: int, IdGudang: int, IdReferensiDetail: int|null, Jumlah: string, HppSatuan: string, TotalHpp: string, TanggalBisnis: string}>
+     * F-04 fase 1: `SelisihHpp`, `IdBatchStok`, `IdNomorSeri` untuk membalik penerimaan barang/retur pembelian
+     * (nilai pembalik = TotalHpp − SelisihHpp, batch & nomor seri yang sama).
+     *
+     * @return list<array{Id: int, KunciBaris: string, IdProduk: int, IdGudang: int, IdReferensiDetail: int|null, Jumlah: string, HppSatuan: string, TotalHpp: string, TanggalBisnis: string, SelisihHpp: string, IdBatchStok: int|null, IdNomorSeri: int|null}>
      */
     public function AmbilRingkasan(JenisReferensiMutasi $jenis, int $idReferensi): array
     {
@@ -48,6 +51,9 @@ final class MutasiDokumen
             'HppSatuan' => $m->HppSatuan,
             'TotalHpp' => $m->TotalHpp,
             'TanggalBisnis' => $m->TanggalBisnis->toDateString(),
+            'SelisihHpp' => $m->SelisihHpp,
+            'IdBatchStok' => $m->IdBatchStok,
+            'IdNomorSeri' => $m->IdNomorSeri,
         ], $this->Ambil($jenis, $idReferensi));
     }
 }

@@ -24,7 +24,7 @@ final class PengaturanPersediaan
     ) {}
 
     /**
-     * @return array{MetodeHpp: string, StokBolehMinus: bool, MetodeHppTerkunci: bool, AlasanTerkunci: string|null, OpsiMetodeHpp: list<array{Nilai: string, Label: string, Keterangan: string}>}
+     * @return array{MetodeHpp: string, StokBolehMinus: bool, BatasPersetujuanPenyesuaian: string, MetodeHppTerkunci: bool, AlasanTerkunci: string|null, OpsiMetodeHpp: list<array{Nilai: string, Label: string, Keterangan: string}>}
      */
     public function Ambil(): array
     {
@@ -34,6 +34,7 @@ final class PengaturanPersediaan
         return [
             'MetodeHpp' => $data->metodeHpp->value,
             'StokBolehMinus' => $data->stokBolehMinus,
+            'BatasPersetujuanPenyesuaian' => $data->batasPersetujuanPenyesuaian->KeString(),
             'MetodeHppTerkunci' => $terkunci,
             'AlasanTerkunci' => $terkunci ? 'Metode HPP tidak bisa diubah karena sudah ada riwayat stok.' : null,
             'OpsiMetodeHpp' => array_map(fn (MetodeHpp $metode): array => [

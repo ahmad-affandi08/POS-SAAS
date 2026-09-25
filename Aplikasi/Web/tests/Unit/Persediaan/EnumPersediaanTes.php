@@ -89,7 +89,15 @@ describe('F-05a enum persediaan (DesainF05a B.4)', function (): void {
             ->and(JenisReferensiMutasi::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
             ->and(JenisReferensiMutasi::ReturPenjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/retur/{$uuid}")
             ->and(JenisReferensiMutasi::VoidPenjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
-            ->and(JenisReferensiMutasi::TransferStok->BuatTautan($uuid))->toBeNull()
+            // F-05b & F-04: dokumen transfer, opname, penyesuaian, penerimaan, retur pembelian kini punya halaman.
+            ->and(JenisReferensiMutasi::TransferStok->BuatTautan($uuid))->toBe("/kelola/persediaan/transfer/{$uuid}")
+            ->and(JenisReferensiMutasi::StokOpname->BuatTautan($uuid))->toBe("/kelola/persediaan/opname/{$uuid}")
+            ->and(JenisReferensiMutasi::PenyesuaianStok->BuatTautan($uuid))->toBe("/kelola/persediaan/penyesuaian/{$uuid}")
+            ->and(JenisReferensiMutasi::PenerimaanBarang->BuatTautan($uuid))->toBe("/kelola/pembelian/penerimaan/{$uuid}")
+            ->and(JenisReferensiMutasi::ReturPembelian->BuatTautan($uuid))->toBe("/kelola/pembelian/retur/{$uuid}")
+            // Dokumen yang halamannya belum ada tetap tanpa tautan.
+            ->and(JenisReferensiMutasi::Produksi->BuatTautan($uuid))->toBeNull()
+            ->and(JenisReferensiMutasi::Konsinyasi->BuatTautan($uuid))->toBeNull()
             ->and(JenisSumberJurnal::ReturPenjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/retur/{$uuid}")
             ->and(JenisSumberJurnal::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
             ->and(JenisSumberJurnal::StokAwal->BuatTautan($uuid))->toBe("/kelola/persediaan/stok-awal/{$uuid}")

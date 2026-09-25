@@ -63,6 +63,34 @@ final class DaftarAkunPilihan
     }
 
     /**
+     * F-04 fase 1: akun kas/bank aktif (`Akun.KasBank`) untuk pembayaran hutang & belanja stok, urut kode.
+     *
+     * @return list<BarisAkun>
+     */
+    public function AmbilKasBank(): array
+    {
+        return array_values(Akun::query()
+            ->where('Aktif', true)
+            ->where('KasBank', true)
+            ->orderBy('Kode')
+            ->get()
+            ->map(fn (Akun $a): array => self::Petakan($a))
+            ->all());
+    }
+
+    /**
+     * Akun kas/bank aktif dari Uuid; null bila tidak ada, nonaktif, milik tenant lain, atau bukan akun kas/bank.
+     *
+     * @return BarisAkun|null
+     */
+    public function CariKasBankDariUuid(string $uuid): ?array
+    {
+        $akun = Akun::query()->where('Uuid', $uuid)->where('Aktif', true)->where('KasBank', true)->first();
+
+        return $akun === null ? null : self::Petakan($akun);
+    }
+
+    /**
      * @param  list<int>  $id
      * @return array<int, BarisAkun> kunci = Id
      */

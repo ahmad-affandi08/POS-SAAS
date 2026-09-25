@@ -18,6 +18,15 @@ enum JenisSumberJurnal: string
     case TutupShift = 'TutupShift';
     // F-13a: transaksi kas & bank back-office (pengeluaran, penerimaan, transfer, dan pembaliknya).
     case TransaksiKasBank = 'TransaksiKasBank';
+    // F-05b: transfer (J-05.2/J-05.3, susut penutup J-05.4), stok opname & penyesuaian stok (J-05.4/J-05.5).
+    case TransferStok = 'TransferStok';
+    case StokOpname = 'StokOpname';
+    case PenyesuaianStok = 'PenyesuaianStok';
+    // F-04 fase 1: GRN (J-04.1, belanja stok J-04.3), faktur (J-04.2), pembayaran hutang (J-04.4), retur (J-04.5).
+    case PenerimaanBarang = 'PenerimaanBarang';
+    case FakturPembelian = 'FakturPembelian';
+    case PembayaranHutang = 'PembayaranHutang';
+    case ReturPembelian = 'ReturPembelian';
 
     public function AmbilLabel(): string
     {
@@ -28,6 +37,13 @@ enum JenisSumberJurnal: string
             self::ReturPenjualan => 'Retur penjualan',
             self::TutupShift => 'Selisih kas tutup shift',
             self::TransaksiKasBank => 'Transaksi kas & bank',
+            self::TransferStok => 'Transfer stok',
+            self::StokOpname => 'Stok opname',
+            self::PenyesuaianStok => 'Penyesuaian stok',
+            self::PenerimaanBarang => 'Penerimaan barang',
+            self::FakturPembelian => 'Faktur pembelian',
+            self::PembayaranHutang => 'Pembayaran hutang',
+            self::ReturPembelian => 'Retur pembelian',
         };
     }
 
@@ -45,6 +61,13 @@ enum JenisSumberJurnal: string
             self::ReturPenjualan => '/kelola/penjualan/retur/'.$uuid,
             self::TutupShift => '/kelola/kasir/shift/'.$uuid,
             self::TransaksiKasBank => '/kelola/akuntansi/kas-bank/'.$uuid,
+            self::TransferStok => '/kelola/persediaan/transfer/'.$uuid,
+            self::StokOpname => '/kelola/persediaan/opname/'.$uuid,
+            self::PenyesuaianStok => '/kelola/persediaan/penyesuaian/'.$uuid,
+            self::PenerimaanBarang => '/kelola/pembelian/penerimaan/'.$uuid,
+            self::FakturPembelian => '/kelola/pembelian/faktur/'.$uuid,
+            self::PembayaranHutang => '/kelola/pembelian/pembayaran/'.$uuid,
+            self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
         };
     }
 }

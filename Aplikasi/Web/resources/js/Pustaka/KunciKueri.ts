@@ -21,5 +21,8 @@ export const KunciKueri = {
             ['Persediaan', 'CariProduk', kata, uuidGudang] as const,
         StatusPosting: (uuid: string) => ['Persediaan', 'StatusPosting', uuid] as const,
         StatusImpor: (uuid: string) => ['Persediaan', 'StatusImpor', uuid] as const,
+        // F-05b: batch & nomor seri tersedia per produk & lokasi (GET /kelola/persediaan/pelacakan).
+        Pelacakan: (uuidProduk: string, uuidGudang: string) =>
+            ['Persediaan', 'Pelacakan', uuidProduk, uuidGudang] as const,
     },
 } as const;

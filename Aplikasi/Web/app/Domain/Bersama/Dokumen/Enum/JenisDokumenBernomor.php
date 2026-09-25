@@ -16,6 +16,18 @@ enum JenisDokumenBernomor: string
     case Jurnal = 'Jurnal';
     // F-13a: transaksi kas & bank back-office `KB/2026/09/0001`.
     case TransaksiKasBank = 'TransaksiKasBank';
+    // F-05b: nomor berkode lokasi stok (`TF/{ASAL}-{TUJUAN}/{YYMM}/{SEQ4}`, `SO/{LOKASI}/{YYMM}/{SEQ3}`,
+    // `PS/{LOKASI}/{YYMM}/{SEQ4}`) disusun `PenomorDokumenPersediaan`; urutnya per tenant, jenis, dan periode.
+    case TransferStok = 'TransferStok';
+    case StokOpname = 'StokOpname';
+    case PenyesuaianStok = 'PenyesuaianStok';
+    // F-04 fase 1: nomor pembelian disusun `PenomorPembelian` (`PO/{OUTLET}/{YYMM}/{SEQ4}`, `GR/…`, `RB/…` per outlet;
+    // `FB/{YYMM}/{SEQ4}`, `BH/{YYMM}/{SEQ4}` per tenant); urutnya per tenant, jenis, periode (dan outlet).
+    case PesananPembelian = 'PesananPembelian';
+    case PenerimaanBarang = 'PenerimaanBarang';
+    case FakturPembelian = 'FakturPembelian';
+    case PembayaranHutang = 'PembayaranHutang';
+    case ReturPembelian = 'ReturPembelian';
 
     public function AmbilAwalan(): string
     {
@@ -23,14 +35,24 @@ enum JenisDokumenBernomor: string
             self::StokAwal => 'SA',
             self::Jurnal => 'JU',
             self::TransaksiKasBank => 'KB',
+            self::TransferStok => 'TF',
+            self::StokOpname => 'SO',
+            self::PenyesuaianStok => 'PS',
+            self::PesananPembelian => 'PO',
+            self::PenerimaanBarang => 'GR',
+            self::FakturPembelian => 'FB',
+            self::PembayaranHutang => 'BH',
+            self::ReturPembelian => 'RB',
         };
     }
 
     public function AmbilPanjangUrut(): int
     {
         return match ($this) {
-            self::StokAwal, self::TransaksiKasBank => 4,
+            self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok => 4,
+            self::StokOpname => 3,
             self::Jurnal => 6,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian => 4,
         };
     }
 

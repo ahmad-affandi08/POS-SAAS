@@ -123,6 +123,10 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             // F-05a Stok awal & buku stok: impor stok awal didaftarkan sebelum rute stok awal, lalu jurnal.
             Route::group([], base_path('routes/PersediaanImpor.php'));
             Route::group([], base_path('routes/Persediaan.php'));
+            // F-05b Transfer stok, stok opname, penyesuaian stok.
+            Route::group([], base_path('routes/PersediaanDokumen.php'));
+            // F-04 fase 1 Pembelian (pemasok, PO, penerimaan, faktur, hutang, retur, belanja stok).
+            Route::group([], base_path('routes/Pembelian.php'));
             Route::group([], base_path('routes/Akuntansi.php'));
             Route::group([], base_path('routes/Kasir.php'));
             // F-07b Penjualan dari POS (daftar & detail back-office).

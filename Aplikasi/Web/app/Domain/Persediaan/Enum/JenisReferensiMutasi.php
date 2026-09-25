@@ -54,6 +54,13 @@ enum JenisReferensiMutasi: string
             // F-09: mutasi void memakai Uuid penjualan yang dibatalkan (void 1:1 dengan penjualan).
             self::VoidPenjualan => '/kelola/penjualan/'.$uuid,
             self::ReturPenjualan => '/kelola/penjualan/retur/'.$uuid,
+            // F-05b.
+            self::TransferStok => '/kelola/persediaan/transfer/'.$uuid,
+            self::StokOpname => '/kelola/persediaan/opname/'.$uuid,
+            self::PenyesuaianStok => '/kelola/persediaan/penyesuaian/'.$uuid,
+            // F-04 fase 1.
+            self::PenerimaanBarang => '/kelola/pembelian/penerimaan/'.$uuid,
+            self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             default => null,
         };
     }

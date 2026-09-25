@@ -1,0 +1,243 @@
+import { Link, router, usePage } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
+
+import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
+import BidangUang from '@/Komponen/Formulir/BidangUang';
+import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
+import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
+import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import {
+    BuatKunciBaris,
+    HitungTotalBaris,
+    PeriksaBaris,
+    SusunMasukanBaris,
+} from '@/Komponen/Pembelian/AturanPembelian';
+import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
+import IsianBarisPembelian from '@/Komponen/Pembelian/IsianBarisPembelian';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
+import { Button } from '@/Komponen/Ui/button';
+import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { FormatRupiah } from '@/Pustaka/Format';
+import { FormatLabelGudang } from '@/Pustaka/FormatPersediaan';
+import { BandingkanDesimal, JumlahkanDesimal } from '@/Pustaka/HitungDesimal';
+import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import type { BarisIsianBebas, PropsFormPesanan } from '@/Tipe/Pembelian';
+
+const alamat = `${AlamatPembelian}/pesanan`;
+
+/** F-04 fase 1: form draf pesanan pembelian (buat/ubah). Pengajuan & persetujuan dari halaman detail. */
+export default function HalamanFormPesanan({
+    Mode,
+    Pesanan,
+    OpsiPemasok,
+    OpsiGudang,
+    HariIni,
+    BatasPersetujuanPo,
+    MaksimalBaris,
+}: PropsFormPesanan) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    const galat = props.errors;
+    const [pemasok, AturPemasok] = useState(Pesanan?.UuidPemasok ?? '');
+    const [gudang, AturGudang] = useState(Pesanan?.UuidGudang ?? '');
+    const [tanggal, AturTanggal] = useState(Pesanan?.Tanggal ?? HariIni);
+    const [tiba, AturTiba] = useState(Pesanan?.PerkiraanTiba ?? '');
+    const [termin, AturTermin] = useState(String(Pesanan?.TerminHari ?? ''));
+    const [ongkir, AturOngkir] = useState(Pesanan?.Ongkir.replace(/\.00$/, '') ?? '');
+    const [catatan, AturCatatan] = useState(Pesanan?.Catatan ?? '');
+    const [baris, AturBaris] = useState<BarisIsianBebas[]>(() =>
+        (Pesanan?.Baris ?? []).map((b) => ({
+            ...b,
+            Kunci: BuatKunciBaris(),
+            NomorBatch: '',
+            TanggalKedaluwarsa: '',
+            NomorSeri: [],
+        })),
+    );
+    const [periksa, AturPeriksa] = useState(false);
+    const [memproses, AturMemproses] = useState(false);
+    const judul = Mode === 'Buat' ? 'Buat pesanan pembelian' : `Ubah draf ${Pesanan?.Nomor ?? ''}`;
+    const pemasokTerpilih = OpsiPemasok.find((p) => p.Uuid === pemasok);
+    const totalBarang = HitungTotalBaris(baris);
+    const perkiraanTotal = JumlahkanDesimal([totalBarang, ongkir === '' ? '0' : ongkir]);
+    const butuhPersetujuan = BandingkanDesimal(perkiraanTotal, BatasPersetujuanPo) > 0;
+
+    const PilihPemasok = (uuid: string) => {
+        AturPemasok(uuid);
+        const p = OpsiPemasok.find((o) => o.Uuid === uuid);
+
+        if (p && termin === '') {
+            AturTermin(String(p.TerminHari));
+        }
+    };
+
+    const Simpan = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        AturPeriksa(true);
+        const adaGalat =
+            pemasok === '' ||
+            gudang === '' ||
+            baris.length === 0 ||
+            baris.some((b) => Object.keys(PeriksaBaris(b, { wajibHarga: true, pelacakan: false })).length > 0);
+
+        if (adaGalat) {
+            return;
+        }
+
+        const data = {
+            UuidPemasok: pemasok,
+            UuidGudang: gudang,
+            Tanggal: tanggal,
+            PerkiraanTiba: tiba === '' ? null : tiba,
+            TerminHari: termin === '' ? null : Number(termin),
+            Ongkir: ongkir === '' ? '0' : ongkir,
+            Catatan: catatan === '' ? null : catatan,
+            Baris: baris.map((b) => SusunMasukanBaris(b, false)),
+        };
+        const opsi = {
+            preserveScroll: true,
+            onStart: () => AturMemproses(true),
+            onFinish: () => AturMemproses(false),
+        };
+
+        if (Mode === 'Buat' || Pesanan === null) {
+            router.post(alamat, data, opsi);
+        } else {
+            router.put(`${alamat}/${Pesanan.Uuid}`, data, opsi);
+        }
+    };
+
+    return (
+        <TataLetakAplikasi judul={judul}>
+            <DaftarGalatServer
+                galat={galat}
+                kecuali={['UuidPemasok', 'UuidGudang', 'Tanggal', 'PerkiraanTiba', 'TerminHari', 'Ongkir', 'Catatan']}
+            />
+            <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
+                <PanelKatalog
+                    judul="Dokumen"
+                    idJudul="judul-dokumen-pesanan"
+                    keterangan="Pesanan tidak mengubah stok. Stok bertambah saat barang diterima."
+                >
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <BidangPilihan
+                            label="Pemasok"
+                            nilai={pemasok}
+                            kosong="Pilih pemasok"
+                            opsi={OpsiPemasok.filter((p) => p.Aktif || p.Uuid === pemasok).map((p) => ({
+                                Nilai: p.Uuid,
+                                Label: p.Nama,
+                                Keterangan: `${p.Kode}${p.Pkp ? ' · PKP' : ''}`,
+                            }))}
+                            saatBerubah={PilihPemasok}
+                            galat={galat.UuidPemasok ?? (periksa && pemasok === '' ? 'Pilih pemasok.' : undefined)}
+                        />
+                        <BidangPilihan
+                            label="Lokasi tujuan"
+                            nilai={gudang}
+                            kosong="Pilih lokasi stok"
+                            opsi={OpsiGudang.filter((g) => g.Aktif || g.Uuid === gudang).map((g) => ({
+                                Nilai: g.Uuid,
+                                Label: FormatLabelGudang(g),
+                            }))}
+                            saatBerubah={AturGudang}
+                            galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi tujuan.' : undefined)}
+                        />
+                        <PemilihTanggal
+                            id="tanggal-pesanan"
+                            label="Tanggal pesanan"
+                            nilai={tanggal}
+                            required
+                            saatBerubah={AturTanggal}
+                            galat={galat.Tanggal}
+                        />
+                        <PemilihTanggal
+                            id="tiba-pesanan"
+                            label="Perkiraan tiba (opsional)"
+                            nilai={tiba}
+                            min={tanggal}
+                            saatBerubah={AturTiba}
+                            galat={galat.PerkiraanTiba}
+                        />
+                        <BidangJumlah
+                            label="Termin (hari)"
+                            nilai={termin}
+                            saatBerubah={AturTermin}
+                            desimal={0}
+                            digitBulat={3}
+                            akhiran="hari"
+                            keterangan={
+                                pemasokTerpilih
+                                    ? `Bawaan pemasok: ${pemasokTerpilih.TerminHari === 0 ? 'tunai' : `${String(pemasokTerpilih.TerminHari)} hari`}. 0 = tunai.`
+                                    : '0 = tunai. Kosongkan untuk memakai termin bawaan pemasok.'
+                            }
+                            galat={galat.TerminHari}
+                        />
+                        <BidangUang
+                            label="Ongkos kirim (opsional)"
+                            nilai={ongkir}
+                            saatBerubah={AturOngkir}
+                            keterangan="Dibagi ke barang sebanding nilainya saat diterima (landed cost)."
+                            galat={galat.Ongkir}
+                        />
+                    </div>
+                    <BidangTeksPanjang
+                        label="Catatan (opsional)"
+                        nilai={catatan}
+                        saatBerubah={AturCatatan}
+                        galat={galat.Catatan}
+                        baris={2}
+                        maksimal={500}
+                    />
+                </PanelKatalog>
+
+                <PanelKatalog
+                    judul="Barang"
+                    idJudul="judul-barang-pesanan"
+                    keterangan={`${baris.length.toLocaleString('id-ID')} dari ${MaksimalBaris.toLocaleString('id-ID')} baris`}
+                >
+                    <IsianBarisPembelian
+                        judul="Barang yang dipesan"
+                        baris={baris}
+                        saatBerubah={AturBaris}
+                        uuidGudang={gudang === '' ? null : gudang}
+                        pelacakan={false}
+                        periksa={periksa}
+                        galatServer={galat}
+                        maksimal={MaksimalBaris}
+                    />
+                    {periksa && baris.length === 0 ? (
+                        <p className="text-keterangan font-semibold text-bahaya">Tambahkan minimal satu produk.</p>
+                    ) : null}
+                    <dl className="ml-auto flex w-full max-w-md flex-col gap-1 border-t border-garis pt-3">
+                        <div className="flex justify-between gap-3">
+                            <dt className="text-teks-sekunder">Total barang</dt>
+                            <dd className="tabular-nums">{FormatRupiah(totalBarang)}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                            <dt className="font-semibold">Perkiraan total (sebelum PPN)</dt>
+                            <dd className="font-semibold tabular-nums">{FormatRupiah(perkiraanTotal)}</dd>
+                        </div>
+                    </dl>
+                    {butuhPersetujuan ? (
+                        <Pemberitahuan jenis="info" judul="Butuh persetujuan">
+                            Total di atas {FormatRupiah(BatasPersetujuanPo)}. Setelah diajukan, pesanan menunggu
+                            persetujuan pengguna lain yang berizin menyetujui pesanan pembelian.
+                        </Pemberitahuan>
+                    ) : null}
+                </PanelKatalog>
+
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={memproses}>
+                        Simpan draf pesanan
+                    </Tombol>
+                    <Button asChild variant="outline">
+                        <Link href={Pesanan ? `${alamat}/${Pesanan.Uuid}` : alamat}>Batal</Link>
+                    </Button>
+                </div>
+            </form>
+        </TataLetakAplikasi>
+    );
+}

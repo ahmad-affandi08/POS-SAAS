@@ -12,7 +12,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Halaman pengaturan persediaan, izin `akuntansi.kelola` (DesainF05a D): metode HPP dan izin stok minus tenant.
+ * Halaman pengaturan persediaan, izin `akuntansi.kelola` (DesainF05a D): metode HPP, izin stok minus tenant, dan
+ * batas persetujuan penyesuaian stok (F-05b).
  */
 final class PengaturanPersediaanKontroler extends DasarPersediaanKontroler
 {
@@ -23,7 +24,7 @@ final class PengaturanPersediaanKontroler extends DasarPersediaanKontroler
 
     public function Simpan(UbahPengaturanPersediaanPermintaan $permintaan, UbahPengaturanPersediaan $ubah): RedirectResponse
     {
-        $ubah->Jalankan($permintaan->AmbilMetodeHpp(), $permintaan->AmbilStokBolehMinus());
+        $ubah->Jalankan($permintaan->AmbilMetodeHpp(), $permintaan->AmbilStokBolehMinus(), $permintaan->AmbilBatasPersetujuanPenyesuaian());
 
         return to_route('kelola.persediaan.pengaturan')->with('Kilat', 'Pengaturan persediaan disimpan.');
     }

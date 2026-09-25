@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.51 |
+| Versi | 1.52 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -72,6 +72,7 @@
 | 1.49 | Implementasi tindak lanjut tinjauan F-07 (server & aplikasi): `JenisPajak.Kategori` (Ppn/Pbjt/Lainnya; semua kode berawalan `Pbjt` → Pbjt), kunci baru `Perangkat.NomorUrutPenjualan`/`NomorUrutRetur`, `TarifPajak[].Kategori`, `KelompokPajak[].Pajak[].Kategori`, `penjualan/cari` baris `BolehDesimal`/`UuidProdukSatuan`; kelipatan pembulatan tunai 1–1.000 juga di pengaturan kasir & template; skema lokal POS v4–v5. |
 | 1.50 | Keputusan implementasi F-13a & F-14a dicatat (penanda `Akun.KasBank`, satu sumber aturan tipe akun per peran, pemetaan tingkat tenant hanya untuk pengguna tanpa batas outlet, definisi angka laporan, kolom tambahan `RingkasanPenjualanHarian`, peristiwa penjualan & jadwal bangun ulang); utang F-13a/F-14a (§25 no. 25). |
 | 1.51 | Rincian F-04 fase 1 (pemasok, PO + persetujuan, penerimaan barang, faktur & 3-way matching, hutang & pembayaran, retur pembelian, belanja stok) dan F-05b (transfer antar lokasi, stok opname, penyesuaian stok) di back-office, diputuskan agen atas mandat D-12. Izin baru `pembelian.po.setujui`. |
+| 1.52 | Keputusan implementasi F-04 fase 1 & F-05b dicatat (selisih harga faktur fase 1 ke `SelisihHpp`, faktur satu pemasok & satu outlet, lokasi "Dalam perjalanan" per outlet asal, aturan opname aktif per lokasi/kategori); utang F-04/F-05b (§25 no. 26). |
 
 ---
 
@@ -1100,6 +1101,7 @@ flowchart LR
 - **Retur pembelian** `RB/{OUTLET}/{YYMM}/{SEQ4}`: dari GRN (jumlah ≤ diterima − sudah diretur), stok keluar `ReturPembelian` bernilai HPP penerimaan, mengurangi hutang faktur (atau hutang belum difakturkan bila belum difakturkan); J-04.5.
 - **Belanja stok** (mode UMKM): satu form pemasok opsional, lokasi, baris, total, akun kas/bank pembayar → membuat GRN + faktur + pembayaran lunas sekaligus dalam satu transaksi; J-04.3.
 - Semua dokumen di satu transaksi DB bersama stok & jurnal (aturan #9–#10), periode terkunci ditolak, daftar memakai `TabelData`, lampiran (surat jalan/faktur) privat opsional.
+- **Keputusan implementasi F-04 (v1.52):** faktur mencakup penerimaan satu pemasok & satu outlet yang belum difakturkan; jumlah baris faktur tidak bisa diubah (jumlah diterima dikurangi retur), hanya harga & diskon; selisih harga BR-04.4 fase 1 seluruhnya ke `SelisihHpp` (pemisahan stok tersisa/terjual menyusul). Nomor faktur pemasok unik per pemasok. Retur pembelian dibuat dari halaman detail penerimaan. Pengaturan pembelian (`BatasPersetujuanPo`, `ToleransiPenerimaanPersen`) berizin `pembelian.po.setujui`. Peran bawaan `StafPembelian` punya `pembelian.kelola`. Cetak PO = halaman HTML siap cetak/PDF peramban.
 
 ---
 
@@ -1135,6 +1137,7 @@ flowchart LR
 - **Stok opname** `SO/{LOKASI}/{YYMM}/{SEQ3}` per lokasi stok (seluruh produk atau per kategori): mulai = snapshot saldo sistem; lembar hitung (ketik/pindai, beberapa kali simpan), opsi hitung buta (jumlah sistem disembunyikan); tinjau selisih; setujui (izin `persediaan.penyesuaian.setujui`) → mutasi `OpnameLebih`/`OpnameKurang` dengan jumlah = fisik − (snapshot + mutasi sejak snapshot) (BR-05.3), dinilai HPP berjalan; J-05.4/J-05.5 ke `SelisihHpp`/`SusutPersediaan`. Transaksi tetap berjalan selama opname; satu opname aktif per lokasi (dan per kategori bila parsial).
 - **Penyesuaian stok** `PS/{LOKASI}/{YYMM}/{SEQ4}`: alasan wajib (Rusak, Hilang, Kedaluwarsa, Sampel, KonsumsiInternal, Lainnya + keterangan); keluar = `PenyesuaianKeluar`/`Susut` dinilai HPP berjalan (J-05.4 ke akun sesuai alasan: `SusutPersediaan` atau beban lain yang dipetakan), masuk = `PenyesuaianMasuk` dengan nilai per satuan wajib (J-05.5). Nilai di atas `BatasPersetujuanPenyesuaian` (bawaan Rp 500.000, §19.2) butuh persetujuan `persediaan.penyesuaian.setujui` oleh orang lain sebelum diposting.
 - Produk batch/seri: transfer, opname, dan penyesuaian menyebut batch/nomor seri per baris. Semua dokumen append-only (koreksi dengan dokumen baru), stok & jurnal di transaksi yang sama, daftar & detail di back-office dengan `TabelData`; aplikasi gudang (`/api/pos/v1/gudang/*`) menyusul.
+- **Keputusan implementasi F-05b (v1.52):** lokasi "Dalam perjalanan" dibuat otomatis satu per outlet asal (kode `TRANSIT[-n]`), bukan lokasi jual. Opname seluruh produk tidak boleh berbarengan dengan opname lain di lokasi itu; opname kategori tidak boleh berbarengan dengan opname seluruh produk atau kategori yang sama (`OpnameAktifSudahAda`); snapshot per produk bersaldo ≠ 0, per batch bersisa, per nomor seri tersedia; idempoten per Uuid klien. Jumlah minus ditampilkan dengan tanda "−".
 
 **Rincian F-05a (v1.33, diputuskan agen atas mandat D-12):**
 - Dokumen `StokAwal` per lokasi stok: `Draf → Memproses → Diposting → Dibatalkan`, dan `Draf → Dibuang`. Draf **tidak pernah dihapus** (status `Dibuang`), dokumen terposting tidak diedit; pembatalan = mutasi pembalik + jurnal pembalik (`IdJurnalDibalik`, `KunciSumber = Pembatalan`) dengan alasan wajib. Pembatalan ditolak (`StokSudahTerpakai`) bila stok dari dokumen itu sudah terpakai (FIFO: lapisannya sudah dikonsumsi).
@@ -3960,6 +3963,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 23. **Utang F-07** (v1.44): cetak struk & struk digital (menunggu `Paket/AdaptorPerangkat`); foto produk di ubin; sorot 150 ms & suara/getar saat pindai; daftar pintasan (`?`); keranjang aktif disimpan ke SQLite agar selamat saat aplikasi tertutup; pemilih varian untuk `IndukVarian`; pelanggan, promo, harga tier (F-16); produk batch/seri di kasir (FEFO & pilih nomor seri); periode terkunci diposting ke periode terbuka berikutnya (§18.3) — sekarang ditolak `PeriodeTerkunci`; penandaan jam perangkat > 10 menit & notifikasi manajer untuk `PerluTinjauan`; kolom `Outlet.Telepon`; satuan produk yang dihapus setelah transaksi offline (sekarang `SatuanTidakDikenal`); `sinkron/kirim` perangkat dicabut (utang F-06); tenant lama menjalankan `organisasi:siapkan-peran` untuk izin `penjualan.diskon.setujui`; void/retur (F-09) & rekonsiliasi kas penjualan di tutup shift (F-11).
 24. **Utang F-09/F-11** (v1.47): void & retur di aplikasi POS; opsi "waste" untuk retur produk resep F&B; analisis pola anti-fraud (F-14); refund gateway, tukar barang, nota kredit; buka ulang shift oleh supervisor; cetak laporan X/Z; kirim ulang `Shift.Tutup` dengan penyetuju bila server menilai selisih melewati toleransi; hitungan tutup buta disimpan saat panel ditutup; jurnal selisih di periode terkunci.
 25. **Utang F-13a/F-14a** (v1.50): neraca & arus kas (P1); jurnal umum manual (FIN-05); kunci kirim ganda form kas & bank; ekspor Excel/PDF dan Pusat Unduhan; laporan per pelanggan & promo (F-16); "hari ini" dashboard memakai jam tutup buku outlet; satukan pembagi pajak retur di laporan dengan Aksi retur; uji tampilan 360/768/1280px halaman akuntansi & laporan (bagian audit responsif §25 no. 22).
+26. **Utang F-04/F-05b** (v1.52): pemisahan selisih harga faktur ke persediaan tersisa vs HPP terjual (BR-04.4 penuh); kirim PO lewat WA/email & PDF server; permintaan pembelian & smart restock; nota debit; aplikasi gudang (`/api/pos/v1/gudang/*`) untuk penerimaan, transfer, opname; kunci kirim ganda form pembelian; uji tampilan 360/768/1280px halaman pembelian & persediaan.
 
 ### 25.1 Keputusan yang Sudah Diambil
 

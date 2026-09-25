@@ -39,6 +39,8 @@ enum IzinTenant: string
     // F-05a: posting & pembatalan stok awal (menulis jurnal ekuitas saldo awal).
     case PersediaanStokAwalPosting = 'persediaan.stok-awal.posting';
     case PembelianKelola = 'pembelian.kelola';
+    // F-04 fase 1 (§19.2): menyetujui PO di atas `BatasPersetujuanPo` (bukan pembuatnya; bawaan Pemilik & Admin).
+    case PembelianPoSetujui = 'pembelian.po.setujui';
     case PenjualanBuat = 'penjualan.buat';
     case PenjualanVoid = 'penjualan.void';
     case PenjualanDiskonManual = 'penjualan.diskon.manual';
@@ -80,7 +82,8 @@ enum IzinTenant: string
             self::PersediaanKelola => 'Penerimaan, transfer, opname, penyesuaian stok',
             self::PersediaanPenyesuaianSetujui => 'Menyetujui penyesuaian stok',
             self::PersediaanStokAwalPosting => 'Memposting & membatalkan stok awal (jurnal ekuitas saldo awal)',
-            self::PembelianKelola => 'Mengelola pemasok & pesanan pembelian',
+            self::PembelianKelola => 'Mengelola pemasok, pesanan pembelian, penerimaan, faktur, hutang, dan retur pembelian',
+            self::PembelianPoSetujui => 'Menyetujui pesanan pembelian di atas batas persetujuan',
             self::PenjualanBuat => 'Berjualan di POS (jual, bayar, simpan pesanan, shift sendiri)',
             self::PenjualanVoid => 'Membatalkan (void) transaksi',
             self::PenjualanDiskonManual => 'Memberi diskon manual',
@@ -105,7 +108,7 @@ enum IzinTenant: string
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
-            self::PembelianKelola => 'Persediaan & pembelian',
+            self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::ShiftSelisihSetujui => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',

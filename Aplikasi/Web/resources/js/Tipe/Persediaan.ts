@@ -236,6 +236,8 @@ export type PropsPengaturanPersediaan = {
     MetodeHppTerkunci: boolean;
     AlasanTerkunci: string | null;
     OpsiMetodeHpp: { Nilai: MetodeHpp; Label: string; Keterangan: string }[];
+    /** F-05b: batas nilai penyesuaian stok tanpa persetujuan (string desimal rupiah). */
+    BatasPersetujuanPenyesuaian?: string;
 };
 
 export type StatusImporStokAwal =

@@ -25,6 +25,13 @@ return [
         'HariSimpan' => 30,
     ],
 
+    // F-05b dokumen transfer, opname, penyesuaian: batas baris per dokumen (seri = satu baris per nomor) dan baris
+    // hitung per sekali simpan lembar opname.
+    'Dokumen' => [
+        'MaksimalBaris' => 500,
+        'MaksimalBarisOpname' => 5000,
+    ],
+
     // Jumlah percobaan `DB::transaction` saat deadlock (Aksi terluar mutasi stok).
     'PercobaanTransaksi' => 3,
 ];

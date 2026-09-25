@@ -7,6 +7,7 @@ namespace App\Domain\Pajak\Kueri;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pajak\Data\DataTarifBerlaku;
 use App\Domain\Pajak\Enum\CakupanPajak;
+use App\Domain\Pajak\Enum\KategoriJenisPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use Carbon\CarbonInterface;
@@ -45,6 +46,22 @@ final class TarifPajakBerlaku
             pengaliDppPembilang: $tarif->PengaliDppPembilang,
             pengaliDppPenyebut: $tarif->PengaliDppPenyebut,
         );
+    }
+
+    /**
+     * F-04 fase 1: tarif nasional terbit yang berlaku untuk jenis pajak pertama (Id terkecil) berkategori `kategori`
+     * berlingkup Nasional, misal PPN masukan pembelian, tanpa kode jenis pajak di kode pemanggil (CLAUDE.md #12).
+     * Null bila jenisnya tidak ada atau belum ada tarif terbit yang berlaku.
+     */
+    public function CariDataKategoriNasional(KategoriJenisPajak $kategori, CarbonInterface $tanggal): ?DataTarifBerlaku
+    {
+        $kode = JenisPajak::query()
+            ->where('Kategori', $kategori->value)
+            ->where('Cakupan', CakupanPajak::Nasional->value)
+            ->orderBy('Id')
+            ->value('Kode');
+
+        return is_string($kode) ? $this->CariData($kode, null, $tanggal) : null;
     }
 
     /**

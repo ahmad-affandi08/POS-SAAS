@@ -233,8 +233,9 @@ final class PemeriksaInvarian
     }
 
     /**
-     * Saldo akun persediaan (Debit − Kredit pada akun yang dipetakan ke PersediaanBarangDagang/PersediaanBahanBaku,
-     * tingkat tenant maupun outlet) = Σ `SaldoStok.NilaiPersediaan`.
+     * Saldo akun persediaan (Debit − Kredit pada akun yang dipetakan ke PersediaanBarangDagang/PersediaanBahanBaku, dan
+     * sejak F-05b PersediaanDalamPerjalanan untuk stok di lokasi dalam perjalanan transfer; tingkat tenant maupun
+     * outlet) = Σ `SaldoStok.NilaiPersediaan`.
      *
      * @return list<string>
      */
@@ -244,7 +245,7 @@ final class PemeriksaInvarian
             "SELECT
                 (SELECT COALESCE(SUM(d.Debit - d.Kredit), 0) FROM JurnalDetail d
                   WHERE d.IdTenant = ? AND d.IdAkun IN (SELECT p.IdAkun FROM PemetaanAkun p
-                                                         WHERE p.IdTenant = ? AND p.Kunci IN ('PersediaanBarangDagang', 'PersediaanBahanBaku'))) AS SaldoAkun,
+                                                         WHERE p.IdTenant = ? AND p.Kunci IN ('PersediaanBarangDagang', 'PersediaanBahanBaku', 'PersediaanDalamPerjalanan'))) AS SaldoAkun,
                 (SELECT COALESCE(SUM(s.NilaiPersediaan), 0) FROM SaldoStok s WHERE s.IdTenant = ?) AS NilaiStok",
             [$idTenant, $idTenant, $idTenant],
         );

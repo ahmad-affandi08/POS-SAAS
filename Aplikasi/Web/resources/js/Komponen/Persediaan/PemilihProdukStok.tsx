@@ -98,6 +98,8 @@ type PropsPemilihProdukStok = {
     keterangan?: string;
     galat?: string | undefined;
     disabled?: boolean;
+    /** F-04: URL pencarian lain berbentuk sama (misal `/kelola/pembelian/produk/cari` yang juga membawa satuan beli). */
+    buatUrl?: (kata: string, uuidGudang: string | null) => string;
 };
 
 /**
@@ -114,6 +116,7 @@ export default function PemilihProdukStok({
     keterangan,
     galat,
     disabled,
+    buatUrl = BuatUrlCariProdukStok,
 }: PropsPemilihProdukStok) {
     const id = useId();
     const jangkar = useRef<HTMLDivElement>(null);
@@ -123,8 +126,11 @@ export default function PemilihProdukStok({
     const kataCari = useNilaiTertunda(kata.trim(), 300);
     const aktif = terbuka && kataCari.length >= 2;
     const kueri = useQuery({
-        queryKey: KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang),
-        queryFn: ({ signal }) => AmbilHasilCari(BuatUrlCariProdukStok(kataCari, uuidGudang), signal),
+        queryKey:
+            buatUrl === BuatUrlCariProdukStok
+                ? KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang)
+                : [...KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang), buatUrl(kataCari, uuidGudang)],
+        queryFn: ({ signal }) => AmbilHasilCari(buatUrl(kataCari, uuidGudang), signal),
         enabled: aktif,
         staleTime: 0,
     });

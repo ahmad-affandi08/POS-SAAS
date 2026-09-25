@@ -32,6 +32,9 @@ export const IzinTenant = {
     // F-06 shift & kas: daftar shift memakai laporan.penjualan.lihat, persetujuan kas keluar di POS.
     LaporanPenjualanLihat: 'laporan.penjualan.lihat',
     KasKeluarSetujui: 'kas.keluar.setujui',
+    // F-04 pembelian: pemasok, PO, penerimaan, faktur, hutang, retur; persetujuan PO & pengaturan pembelian.
+    PembelianKelola: 'pembelian.kelola',
+    PembelianPoSetujui: 'pembelian.po.setujui',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

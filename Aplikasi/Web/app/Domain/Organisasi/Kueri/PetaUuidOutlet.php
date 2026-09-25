@@ -35,6 +35,27 @@ final class PetaUuidOutlet
     }
 
     /**
+     * F-04 fase 1: peta `Outlet.Id` → `Outlet.Kode` tenant aktif (nomor dokumen pembelian `PO/{OUTLET}/…`).
+     *
+     * @param  list<int>  $idOutlet
+     * @return array<int, string>
+     */
+    public function AmbilKode(array $idOutlet): array
+    {
+        if ($idOutlet === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (Outlet::query()->whereIn('Id', array_values(array_unique($idOutlet)))->get(['Id', 'Kode']) as $outlet) {
+            $hasil[$outlet->Id] = (string) $outlet->Kode;
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Outlet tenant aktif urut nama. `$idOutlet` null = semua; `$hanyaAktif` = tanpa outlet diarsipkan.
      *
      * @param  list<int>|null  $idOutlet
