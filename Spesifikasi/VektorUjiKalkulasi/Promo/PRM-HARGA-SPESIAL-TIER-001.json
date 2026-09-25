@@ -1,0 +1,97 @@
+{
+  "Id": "PRM-HARGA-SPESIAL-TIER-001",
+  "Keterangan": "Harga spesial kaos Rp 20.000 khusus tier GOLD di outlet Solo, bertumpuk setelah diskon manual baris Rp 5.000; promo tier SILVER tidak berlaku untuk pelanggan GOLD.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": "GOLD"
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KAOS",
+      "Kategori": "K-BAJU",
+      "Jumlah": "3",
+      "HargaSatuan": "25000",
+      "DiskonManual": {
+        "Jumlah": "5000"
+      }
+    },
+    {
+      "Sku": "P-TOPI",
+      "Kategori": "K-AKSES",
+      "Jumlah": "1",
+      "HargaSatuan": "10000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-GOLD",
+      "Kode": "KAOS-GOLD",
+      "Prioritas": 2,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Outlet": [
+          "O-SLO"
+        ],
+        "Tier": [
+          "GOLD"
+        ],
+        "Kondisi": {
+          "Jenis": "Produk",
+          "Uuid": [
+            "P-KAOS"
+          ]
+        },
+        "Aksi": {
+          "Jenis": "HargaSpesial",
+          "Harga": "20000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-SILVER",
+      "Kode": "SILVER10",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Tier": [
+          "SILVER"
+        ],
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "10"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "KAOS-GOLD",
+        "DiskonBaris": {
+          "P-KAOS": "15000.00"
+        },
+        "DiskonPesanan": "0.00"
+      }
+    ],
+    "Subtotal": "65000.00",
+    "DiskonBaris": "20000.00",
+    "TotalDiskon": "20000.00",
+    "TotalAkhir": "65000.00"
+  }
+}

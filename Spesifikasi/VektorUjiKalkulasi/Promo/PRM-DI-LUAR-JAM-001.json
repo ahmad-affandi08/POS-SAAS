@@ -1,0 +1,83 @@
+{
+  "Id": "PRM-DI-LUAR-JAM-001",
+  "Keterangan": "Rentang jam setengah terbuka: tepat 17:00 waktu lokal outlet promo happy hour tidak berlaku lagi.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T10:00:00Z",
+    "WaktuLokal": "2026-10-05T17:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "MakanDiTempat",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPSUS",
+      "Kategori": "K-KOPI",
+      "Jumlah": "2",
+      "HargaSatuan": "18000"
+    },
+    {
+      "Sku": "P-AMERI",
+      "Kategori": "K-KOPI",
+      "Jumlah": "1",
+      "HargaSatuan": "16000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-ROTI",
+      "Jumlah": "1",
+      "HargaSatuan": "12000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-HH",
+      "Kode": "HAPPYHOUR",
+      "Prioritas": 10,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Hari": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "JamMulai": "14:00",
+        "JamSelesai": "17:00",
+        "Kanal": [
+          "MakanDiTempat",
+          "BawaPulang"
+        ],
+        "Kondisi": {
+          "Jenis": "Kategori",
+          "Uuid": [
+            "K-KOPI"
+          ],
+          "JumlahMinimal": "2"
+        },
+        "Aksi": {
+          "Jenis": "BundelHargaTetap",
+          "Harga": "30000"
+        },
+        "BatasPerTransaksi": 3
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [],
+    "Subtotal": "64000.00",
+    "DiskonBaris": "0.00",
+    "TotalDiskon": "0.00",
+    "TotalAkhir": "64000.00"
+  }
+}

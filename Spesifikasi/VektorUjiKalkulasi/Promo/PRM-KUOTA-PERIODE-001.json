@@ -1,0 +1,93 @@
+{
+  "Id": "PRM-KUOTA-PERIODE-001",
+  "Keterangan": "Promo kuota habis dan promo yang sudah berakhir (SelesaiPada setengah terbuka) tidak berlaku; potongan tetap per satuan berlaku untuk barang timbangan 2,5 kg.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-BERAS",
+      "Kategori": "K-SEMBAKO",
+      "Jumlah": "2.5",
+      "HargaSatuan": "14000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-HABIS",
+      "Kode": "KUOTA-HABIS",
+      "Prioritas": 9,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": 0,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "50"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-LALU",
+      "Kode": "SEPTEMBER",
+      "Prioritas": 8,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": "2026-10-05T05:00:00Z",
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "10000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-BERAS",
+      "Kode": "BERAS1000",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": "2026-10-01T00:00:00Z",
+      "SelesaiPada": null,
+      "KuotaTersisa": 5,
+      "Definisi": {
+        "Kondisi": {
+          "Jenis": "Produk",
+          "Uuid": [
+            "P-BERAS"
+          ]
+        },
+        "Aksi": {
+          "Jenis": "DiskonTetapItem",
+          "Jumlah": "1000"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "BERAS1000",
+        "DiskonBaris": {
+          "P-BERAS": "2500.00"
+        },
+        "DiskonPesanan": "0.00"
+      }
+    ],
+    "Subtotal": "32500.00",
+    "TotalDiskon": "2500.00",
+    "TotalAkhir": "32500.00"
+  }
+}

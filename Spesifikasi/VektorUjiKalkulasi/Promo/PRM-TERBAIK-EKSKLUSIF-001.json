@@ -1,0 +1,94 @@
+{
+  "Id": "PRM-TERBAIK-EKSKLUSIF-001",
+  "Keterangan": "Mode Terbaik: gabungan promo non-eksklusif (10% barang = 6.000, lalu Rp 5.000 pesanan = 11.000) dibandingkan promo eksklusif 20% pesanan (12.000); yang terbesar untuk pelanggan dipakai walau prioritasnya lebih rendah.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-X",
+      "Kategori": "K-UMUM",
+      "Jumlah": "2",
+      "HargaSatuan": "25000"
+    },
+    {
+      "Sku": "P-Y",
+      "Kategori": "K-UMUM",
+      "Jumlah": "1",
+      "HargaSatuan": "10000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-A",
+      "Kode": "ITEM10",
+      "Prioritas": 5,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenItem",
+          "Persen": "10"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-B",
+      "Kode": "PESAN5RB",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MinimalSubtotal": "50000",
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "5000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-C",
+      "Kode": "EKSKL20",
+      "Prioritas": 3,
+      "Eksklusif": true,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "20"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "EKSKL20",
+        "DiskonBaris": {},
+        "DiskonPesanan": "12000.00"
+      }
+    ],
+    "Subtotal": "60000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "12000.00",
+    "TotalDiskon": "12000.00",
+    "TotalAkhir": "48000.00"
+  }
+}

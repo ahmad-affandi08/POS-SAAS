@@ -1,0 +1,93 @@
+{
+  "Id": "PRM-HAPPY-HOUR-BUNDEL-001",
+  "Keterangan": "Happy hour Senin–Jumat 14:00–17:00: 2 kopi Rp 30.000. Bundel memakai satuan kopi termahal lebih dulu (2 × 18.000), potongan 6.000 dialokasikan sebanding harga; americano tidak cukup untuk bundel kedua.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T08:00:00Z",
+    "WaktuLokal": "2026-10-05T15:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "MakanDiTempat",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPSUS",
+      "Kategori": "K-KOPI",
+      "Jumlah": "2",
+      "HargaSatuan": "18000"
+    },
+    {
+      "Sku": "P-AMERI",
+      "Kategori": "K-KOPI",
+      "Jumlah": "1",
+      "HargaSatuan": "16000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-ROTI",
+      "Jumlah": "1",
+      "HargaSatuan": "12000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-HH",
+      "Kode": "HAPPYHOUR",
+      "Prioritas": 10,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Hari": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "JamMulai": "14:00",
+        "JamSelesai": "17:00",
+        "Kanal": [
+          "MakanDiTempat",
+          "BawaPulang"
+        ],
+        "Kondisi": {
+          "Jenis": "Kategori",
+          "Uuid": [
+            "K-KOPI"
+          ],
+          "JumlahMinimal": "2"
+        },
+        "Aksi": {
+          "Jenis": "BundelHargaTetap",
+          "Harga": "30000"
+        },
+        "BatasPerTransaksi": 3
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "HAPPYHOUR",
+        "DiskonBaris": {
+          "P-KOPSUS": "6000.00"
+        },
+        "DiskonPesanan": "0.00"
+      }
+    ],
+    "Subtotal": "58000.00",
+    "DiskonBaris": "6000.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "6000.00",
+    "TotalPajak": "0.00",
+    "TotalAkhir": "58000.00"
+  }
+}

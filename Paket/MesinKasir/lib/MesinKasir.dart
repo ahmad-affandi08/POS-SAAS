@@ -2,7 +2,7 @@
 ///
 /// Dart murni (tanpa Flutter) agar bisa diuji cepat dan identik dengan engine PHP di Backend.
 /// Implementasi engine keranjang dibangun bersama flow F-07. Sudah ada: penentu harga lapis 3–5 (F-03, `Harga/`) dan
-/// mesin kalkulasi penjualan F-07a (`Kalkulasi/`).
+/// mesin kalkulasi penjualan F-07a (`Kalkulasi/`), dan mesin promo F-16c (`Promo/`).
 library;
 
 export 'package:inti/Inti.dart';
@@ -11,3 +11,4 @@ export 'package:rational/rational.dart' show Rational;
 
 export 'Harga/Harga.dart';
 export 'Kalkulasi/Kalkulasi.dart';
+export 'Promo/Promo.dart';

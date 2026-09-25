@@ -1,0 +1,107 @@
+{
+  "Id": "PRM-BXGY-BATAS-001",
+  "Keterangan": "Beli 2 gratis 1 (potongan 50%) kategori sabun, maksimal 1 set per transaksi: satuan diurutkan dari termahal, set pertama = 3 × 5.000, satuan ketiga dipotong 50%; PPN 12% DPP 11/12 dari netto setelah promo.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-10T03:00:00Z",
+    "WaktuLokal": "2026-10-10T10:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "P-SABUN-A",
+      "Kategori": "K-SABUN",
+      "Jumlah": "3",
+      "HargaSatuan": "5000"
+    },
+    {
+      "Sku": "P-SABUN-B",
+      "Kategori": "K-SABUN",
+      "Jumlah": "3",
+      "HargaSatuan": "4000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-B2G1",
+      "Kode": "SABUN-B2G1",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Kondisi": {
+          "Jenis": "Kategori",
+          "Uuid": [
+            "K-SABUN"
+          ]
+        },
+        "Aksi": {
+          "Jenis": "BeliXGratisY",
+          "Beli": 2,
+          "Gratis": 1,
+          "PersenGratis": "50"
+        },
+        "BatasPerTransaksi": 1
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "SABUN-B2G1",
+        "DiskonBaris": {
+          "P-SABUN-A": "2500.00"
+        },
+        "DiskonPesanan": "0.00"
+      }
+    ],
+    "Subtotal": "24500.00",
+    "DiskonBaris": "2500.00",
+    "TotalDiskon": "2500.00",
+    "TotalPajak": "2695.00",
+    "TotalAkhir": "27195.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "22458.33",
+        "Jumlah": "2695.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "15000.00",
+        "Diskon": "2500.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "1375.00",
+        "PajakEksklusif": "1375.00",
+        "TotalBaris": "13875.00"
+      },
+      {
+        "Bruto": "12000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "1320.00",
+        "PajakEksklusif": "1320.00",
+        "TotalBaris": "13320.00"
+      }
+    ]
+  }
+}

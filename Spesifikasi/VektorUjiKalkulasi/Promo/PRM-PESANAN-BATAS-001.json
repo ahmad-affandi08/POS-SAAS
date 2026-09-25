@@ -1,0 +1,82 @@
+{
+  "Id": "PRM-PESANAN-BATAS-001",
+  "Keterangan": "Dua promo pesanan non-eksklusif: Rp 40.000 (prioritas 5) lalu 50% dari subtotal setelah promo barang (30.000) dibatasi sisa subtotal 20.000; total nol.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-X",
+      "Kategori": "K-UMUM",
+      "Jumlah": "2",
+      "HargaSatuan": "25000"
+    },
+    {
+      "Sku": "P-Y",
+      "Kategori": "K-UMUM",
+      "Jumlah": "1",
+      "HargaSatuan": "10000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-T",
+      "Kode": "POTONG40",
+      "Prioritas": 5,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "40000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-P",
+      "Kode": "SETENGAH",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "50"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "POTONG40",
+        "DiskonBaris": {},
+        "DiskonPesanan": "40000.00"
+      },
+      {
+        "Kode": "SETENGAH",
+        "DiskonBaris": {},
+        "DiskonPesanan": "20000.00"
+      }
+    ],
+    "Subtotal": "60000.00",
+    "DiskonPesanan": "60000.00",
+    "TotalDiskon": "60000.00",
+    "TotalAkhir": "0.00"
+  }
+}
