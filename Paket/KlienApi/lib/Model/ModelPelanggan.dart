@@ -28,3 +28,35 @@ class PelangganPos {
     saldoPoin: UraiJson.AmbilBulat(json['SaldoPoin']),
   );
 }
+
+/// Saldo poin terkini & aturan tukar (F-16b, `GET /api/pos/v1/pelanggan/{uuid}/poin`); penukaran poin wajib online
+/// (§18.4). [nilaiTukarPoin] string desimal Rupiah per poin.
+class SaldoPoinPos {
+  const SaldoPoinPos({
+    required this.uuid,
+    required this.saldoPoin,
+    required this.berlaku,
+    required this.nilaiTukarPoin,
+    required this.minimalTukarPoin,
+  });
+
+  final String uuid;
+  final int saldoPoin;
+
+  /// Loyalti diaktifkan tenant dan termasuk paketnya.
+  final bool berlaku;
+  final String nilaiTukarPoin;
+  final int minimalTukarPoin;
+
+  static SaldoPoinPos DariJson(Map<String, Object?> json) {
+    final pelanggan = UraiJson.AmbilPeta(json['Pelanggan']);
+    final tukar = UraiJson.AmbilPeta(json['TukarPoin']);
+    return SaldoPoinPos(
+      uuid: UraiJson.AmbilTeks(pelanggan['Uuid']),
+      saldoPoin: UraiJson.AmbilBulat(pelanggan['SaldoPoin']),
+      berlaku: UraiJson.AmbilBenar(tukar['Berlaku']),
+      nilaiTukarPoin: UraiJson.AmbilDesimal(tukar['NilaiTukarPoin']),
+      minimalTukarPoin: UraiJson.AmbilBulat(tukar['MinimalTukarPoin'], 1),
+    );
+  }
+}

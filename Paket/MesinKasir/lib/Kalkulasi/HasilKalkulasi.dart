@@ -48,6 +48,7 @@ final class HasilKalkulasi {
     required this.subtotal,
     required this.diskonBaris,
     required this.diskonPesanan,
+    required this.diskonPoin,
     required this.totalDiskon,
     required this.biayaLayanan,
     required this.totalPajak,
@@ -63,6 +64,9 @@ final class HasilKalkulasi {
   final Uang subtotal;
   final Uang diskonBaris;
   final Uang diskonPesanan;
+
+  /// Bagian `diskonPesanan` dari penukaran poin loyalti (F-16b).
+  final Uang diskonPoin;
   final Uang totalDiskon;
   final Uang biayaLayanan;
   final Uang totalPajak;

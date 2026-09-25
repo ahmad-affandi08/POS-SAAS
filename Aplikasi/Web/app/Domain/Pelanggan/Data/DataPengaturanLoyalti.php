@@ -8,7 +8,7 @@ use Brick\Math\BigDecimal;
 
 /**
  * Pengaturan loyalti efektif tenant (F-16b). `berlaku` = diaktifkan tenant **dan** paketnya punya fitur
- * `pelanggan.loyalti`.
+ * `pelanggan.loyalti`. `nilaiTukarPoin` = Rupiah per poin saat ditukar sebagai diskon (bagian 2).
  */
 final readonly class DataPengaturanLoyalti
 {
@@ -18,6 +18,8 @@ final readonly class DataPengaturanLoyalti
         public BigDecimal $belanjaPerPoin,
         public int $masaBerlakuBulan,
         public int $bulanEvaluasiTier,
+        public BigDecimal $nilaiTukarPoin,
+        public int $minimalTukarPoin,
     ) {}
 
     public function CekBerlaku(): bool

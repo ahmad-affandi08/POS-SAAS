@@ -20,7 +20,10 @@ use Carbon\CarbonImmutable;
  * penerimaan penjualan, void, dan retur (sinkron, idempoten per dokumen).
  * - Perolehan = ⌊TotalAkhir ÷ BelanjaPerPoin × PengaliPoin tier⌋, berlaku sampai tanggal bisnis + MasaBerlakuBulan.
  *   Hanya bila loyalti berlaku (diaktifkan tenant & fitur paket `pelanggan.loyalti`).
- * - Void membalik seluruh sisa poin bersih penjualan itu.
+ * - Penukaran (bagian 2, J-16.4) memotong poin yang ditukar kasir sebagai diskon. Penjualan sudah terjadi di kasir,
+ *   jadi poin tetap dipotong (saldo boleh minus); masalahnya dikembalikan sebagai alasan tinjauan.
+ * - Void membalik seluruh sisa poin bersih penjualan itu dan mengembalikan poin yang ditukar (lot baru berlaku
+ *   sampai hari ini + MasaBerlakuBulan).
  * - Retur membalik secara proporsional: poin bersih sesudah retur = ⌊Perolehan × (TotalAkhir − Σ refund) ÷
  *   TotalAkhir⌋. Pembalikan tetap berjalan walau loyalti sudah dinonaktifkan (perolehan lama dikoreksi).
  */
@@ -63,8 +66,44 @@ final class PencatatPoinPenjualan
         return $poin;
     }
 
+    /**
+     * Potong [poin] yang ditukar pada penjualan [idPenjualan]. Hasil: daftar masalah untuk tinjauan (kosong = sesuai):
+     * saldo sebelum tukar kurang, loyalti tidak berlaku, poin di bawah minimal, atau nilai diskon ≠ poin × nilai tukar.
+     *
+     * @return list<string>
+     */
+    public function CatatPenukaran(int $idPelanggan, int $idPenjualan, int $poin, Uang $nilaiDiskon): array
+    {
+        $aturan = $this->pengaturan->Ambil();
+        $saldo = $this->buku->AmbilSaldo($idPelanggan);
+        $masalah = [];
+
+        if (! $aturan->CekBerlaku()) {
+            $masalah[] = 'loyalti tidak aktif saat penjualan diterima';
+        }
+
+        if ($saldo < $poin) {
+            $masalah[] = "saldo {$saldo} poin kurang dari {$poin} poin yang ditukar";
+        }
+
+        if ($poin < $aturan->minimalTukarPoin) {
+            $masalah[] = "{$poin} poin di bawah minimal tukar {$aturan->minimalTukarPoin} poin";
+        }
+
+        $seharusnya = Uang::Dari((string) $aturan->nilaiTukarPoin->multipliedBy($poin)->toScale(2));
+
+        if (! $seharusnya->SamaDengan($nilaiDiskon)) {
+            $masalah[] = "nilai diskon {$nilaiDiskon->FormatRupiah()} berbeda dengan {$poin} poin × nilai tukar saat ini ({$seharusnya->FormatRupiah()})";
+        }
+
+        $this->buku->Kurangi($idPelanggan, $poin, JenisMutasiPoin::Penukaran, SumberMutasiPoin::Penjualan, $idPenjualan, keterangan: "Diskon {$nilaiDiskon->FormatRupiah()}");
+
+        return $masalah;
+    }
+
     public function BalikVoid(int $idPenjualan): int
     {
+        $this->KembalikanPenukaran($idPenjualan);
         $perolehan = $this->CariPerolehan($idPenjualan);
 
         if ($perolehan === null) {
@@ -105,6 +144,28 @@ final class PencatatPoinPenjualan
         $this->buku->Kurangi($perolehan->IdPelanggan, $balik, JenisMutasiPoin::PembalikanRetur, SumberMutasiPoin::ReturPenjualan, $idRetur, $idPenjualan);
 
         return $balik;
+    }
+
+    private function KembalikanPenukaran(int $idPenjualan): void
+    {
+        $tukar = MutasiPoin::query()
+            ->where('Jenis', JenisMutasiPoin::Penukaran->value)
+            ->where('JenisSumber', SumberMutasiPoin::Penjualan->value)
+            ->where('IdSumber', $idPenjualan)
+            ->first();
+
+        if ($tukar === null) {
+            return;
+        }
+
+        $this->buku->Tambah(
+            $tukar->IdPelanggan,
+            -$tukar->Poin,
+            JenisMutasiPoin::BatalPenukaran,
+            SumberMutasiPoin::Penjualan,
+            $idPenjualan,
+            CarbonImmutable::today()->addMonthsNoOverflow($this->pengaturan->Ambil()->masaBerlakuBulan),
+        );
     }
 
     private function CariPerolehan(int $idPenjualan): ?MutasiPoin

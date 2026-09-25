@@ -306,4 +306,22 @@ void main() {
     expect(hasil.last.kodeTier, isNull);
     expect(hasil.last.saldoPoin, 0);
   });
+
+  test('F-16b saldo poin: jalur per pelanggan, aturan tukar', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'Pelanggan': {'Uuid': 'P1', 'SaldoPoin': 120},
+        'TukarPoin': {'Berlaku': true, 'NilaiTukarPoin': '100.00', 'MinimalTukarPoin': 10},
+      }, 200);
+    });
+
+    final saldo = await klien.AmbilSaldoPoin('P1');
+    expect(dikirim.single.url.path, endsWith('/api/pos/v1/pelanggan/P1/poin'));
+    expect(saldo.saldoPoin, 120);
+    expect(saldo.berlaku, isTrue);
+    expect(saldo.nilaiTukarPoin, '100.00');
+    expect(saldo.minimalTukarPoin, 10);
+  });
 }

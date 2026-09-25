@@ -97,6 +97,7 @@ DataKalkulasi SusunDataKalkulasi(Map<String, Object?> vektor) {
         ),
     ],
     potonganPesanan: potonganPesanan,
+    tukarPoin: vektor['TukarPoin'] == null ? null : Uang.Dari(vektor['TukarPoin']! as String),
     pembayaran: [
       for (final item in daftarBayar)
         DataPembayaranKalkulasi(
@@ -119,6 +120,7 @@ Map<String, Object?> UbahHasilKePeta(HasilKalkulasi hasil) => {
   'Subtotal': hasil.subtotal.KeString(),
   'DiskonBaris': hasil.diskonBaris.KeString(),
   'DiskonPesanan': hasil.diskonPesanan.KeString(),
+  'DiskonPoin': hasil.diskonPoin.KeString(),
   'TotalDiskon': hasil.totalDiskon.KeString(),
   'BiayaLayanan': hasil.biayaLayanan.KeString(),
   'TotalPajak': hasil.totalPajak.KeString(),

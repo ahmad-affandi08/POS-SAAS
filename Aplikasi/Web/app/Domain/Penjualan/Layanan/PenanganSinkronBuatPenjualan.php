@@ -32,7 +32,8 @@ use Illuminate\Validation\Rule;
  * UuidProduk, UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}],
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
- * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?}`. Uang & jumlah
+ * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
+ * TukarPoin {Poin, Nilai}|null}`. `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`. Uang & jumlah
  * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
 final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
@@ -120,8 +121,12 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Catatan' => ['sometimes', 'nullable', 'string', 'max:500'],
             'UuidPesananTerbuka' => ['sometimes', 'nullable', 'string', 'ulid'],
             'KirimDapur' => ['sometimes', 'boolean'],
-            'UuidPelanggan' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'UuidPelanggan' => ['sometimes', 'nullable', 'string', 'ulid', 'required_with:TukarPoin'],
+            'TukarPoin' => ['sometimes', 'nullable', 'array'],
+            'TukarPoin.Poin' => ['required_with:TukarPoin', 'integer', 'min:1', 'max:10000000'],
+            'TukarPoin.Nilai' => ['required_with:TukarPoin', 'string', $uang],
         ]);
+        $tukarPoin = is_array($valid['TukarPoin'] ?? null) ? $valid['TukarPoin'] : null;
 
         $pembulatan = is_array($valid['PembulatanTunai'] ?? null)
             ? new DataPembulatanTunai((int) $valid['PembulatanTunai']['Kelipatan'], ArahPembulatan::from((string) $valid['PembulatanTunai']['Arah']))
@@ -166,6 +171,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             uuidPesananTerbuka: is_string($valid['UuidPesananTerbuka'] ?? null) ? strtoupper($valid['UuidPesananTerbuka']) : null,
             kirimDapur: (bool) ($valid['KirimDapur'] ?? false),
             uuidPelanggan: is_string($valid['UuidPelanggan'] ?? null) ? strtoupper($valid['UuidPelanggan']) : null,
+            poinDitukar: $tukarPoin === null ? 0 : (int) $tukarPoin['Poin'],
+            nilaiTukarPoin: $tukarPoin === null ? null : Uang::Dari((string) $tukarPoin['Nilai']),
         ));
     }
 

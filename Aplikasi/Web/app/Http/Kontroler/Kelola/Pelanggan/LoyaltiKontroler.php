@@ -76,6 +76,8 @@ final class LoyaltiKontroler extends DasarKelolaKontroler
                 'BelanjaPerPoin' => (string) $p->belanjaPerPoin->toScale(2),
                 'MasaBerlakuBulan' => $p->masaBerlakuBulan,
                 'BulanEvaluasiTier' => $p->bulanEvaluasiTier,
+                'NilaiTukarPoin' => (string) $p->nilaiTukarPoin->toScale(2),
+                'MinimalTukarPoin' => $p->minimalTukarPoin,
             ],
             'FiturAktif' => $p->fiturAktif,
             'Izin' => ['Kelola' => $this->CekKelola()],
@@ -89,8 +91,24 @@ final class LoyaltiKontroler extends DasarKelolaKontroler
             'BelanjaPerPoin' => ['required', 'string', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'MasaBerlakuBulan' => ['required', 'integer', 'between:1,60'],
             'BulanEvaluasiTier' => ['required', 'integer', 'between:1,24'],
-        ], attributes: ['BelanjaPerPoin' => 'belanja per poin', 'MasaBerlakuBulan' => 'masa berlaku', 'BulanEvaluasiTier' => 'periode evaluasi tier']);
-        $simpan->Jalankan($permintaan->boolean('Aktif'), Uang::Dari((string) $valid['BelanjaPerPoin']), (int) $valid['MasaBerlakuBulan'], (int) $valid['BulanEvaluasiTier'], $this->Pelaku()->Id);
+            'NilaiTukarPoin' => ['nullable', 'string', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'MinimalTukarPoin' => ['nullable', 'integer', 'between:1,100000'],
+        ], attributes: [
+            'BelanjaPerPoin' => 'belanja per poin',
+            'MasaBerlakuBulan' => 'masa berlaku',
+            'BulanEvaluasiTier' => 'periode evaluasi tier',
+            'NilaiTukarPoin' => 'nilai tukar per poin',
+            'MinimalTukarPoin' => 'minimal tukar',
+        ]);
+        $simpan->Jalankan(
+            $permintaan->boolean('Aktif'),
+            Uang::Dari((string) $valid['BelanjaPerPoin']),
+            (int) $valid['MasaBerlakuBulan'],
+            (int) $valid['BulanEvaluasiTier'],
+            $this->Pelaku()->Id,
+            isset($valid['NilaiTukarPoin']) ? Uang::Dari((string) $valid['NilaiTukarPoin']) : null,
+            isset($valid['MinimalTukarPoin']) ? (int) $valid['MinimalTukarPoin'] : null,
+        );
 
         return back()->with('Kilat', 'Pengaturan loyalti disimpan.');
     }

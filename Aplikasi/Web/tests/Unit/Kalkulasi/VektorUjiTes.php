@@ -46,7 +46,8 @@ function BacaPotonganVektor(?array $potongan): ?DataPotongan
 
 /**
  * Menerjemahkan format vektor ke masukan mesin: promo item berlaku ke baris pertama ber-Sku sama, promo pesanan dan
- * `DiskonManualPesanan` menjadi potongan pesanan, `Pembayaran` boleh objek tunggal atau daftar.
+ * `DiskonManualPesanan` menjadi potongan pesanan, `TukarPoin` menjadi nilai penukaran poin (F-16b), `Pembayaran` boleh
+ * objek tunggal atau daftar.
  *
  * @param  array<string, mixed>  $vektor
  */
@@ -88,6 +89,8 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
     $pembayaran = $vektor['Pembayaran'] ?? [];
     $daftarPembayaran = isset($pembayaran['Metode']) ? [$pembayaran] : $pembayaran;
     $pembulatanTunai = $pengaturan['PembulatanTunai'] ?? null;
+    /** @var string|null $tukarPoin */
+    $tukarPoin = $vektor['TukarPoin'] ?? null;
 
     return new DataKalkulasi(
         $pengaturan['HargaTermasukPajak'],
@@ -117,6 +120,7 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
             $bayar['Metode'] === 'Tunai',
             isset($bayar['Jumlah']) ? Uang::Dari($bayar['Jumlah']) : null,
         ), $daftarPembayaran),
+        $tukarPoin === null ? null : Uang::Dari($tukarPoin),
     );
 }
 

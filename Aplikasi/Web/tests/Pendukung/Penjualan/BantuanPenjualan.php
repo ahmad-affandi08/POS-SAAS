@@ -189,7 +189,7 @@ final class BantuanPenjualan
     /**
      * Item outbox `Penjualan.Buat` lengkap. `opsi`: `Baris`, `Pembayaran`, `Pajak` (list `[Kode, Tarif, Pembilang,
      * Penyebut, DasarPengenaan?]`), `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`
-     * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
+     * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `TukarPoin` (`['Poin' => 50, 'Nilai' => '5000']`), `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
      * kunci `Data` yang ditimpa setelah dihitung (misal `Ringkasan` palsu).
      *
      * @param  array<string, mixed>  $k  hasil `Siapkan()`
@@ -237,7 +237,9 @@ final class BantuanPenjualan
         }
 
         $pembayaranMasukan = $opsi['Pembayaran'] ?? [['Metode' => $k['Tunai'], 'Jumlah' => null]];
-        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan);
+        /** @var array{Poin: int, Nilai: string}|null $tukarPoin */
+        $tukarPoin = $opsi['TukarPoin'] ?? null;
+        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan, $tukarPoin['Nilai'] ?? null);
         $pembayaran = [];
 
         foreach ($pembayaranMasukan as $p) {
@@ -258,7 +260,7 @@ final class BantuanPenjualan
             fn (array $p, array $b): array => ['Metode' => $p['Metode'], 'Jumlah' => $b['Jumlah']],
             $pembayaranMasukan,
             $pembayaran,
-        ));
+        ), $tukarPoin['Nilai'] ?? null);
 
         /** @var Pengguna $kasir */
         $kasir = $opsi['Kasir'] ?? $k['Kasir'];
@@ -290,6 +292,7 @@ final class BantuanPenjualan
                     'Kembalian' => $hasilAkhir['Kembalian']->KeString(),
                 ],
                 'Catatan' => 'Pelanggan minta struk digital',
+                ...($tukarPoin === null ? [] : ['TukarPoin' => $tukarPoin]),
             ], $timpa),
         ];
     }
@@ -435,7 +438,7 @@ final class BantuanPenjualan
      * @param  list<array<string, mixed>>  $pembayaran
      * @return array{Subtotal: Uang, TotalPajak: Uang, Pembulatan: Uang, TotalAkhir: Uang, Kembalian: Uang}
      */
-    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran): array
+    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran, ?string $tukarPoin = null): array
     {
         $hasil = (new MesinKalkulasi)->Hitung(new DataKalkulasi(
             hargaTermasukPajak: $termasukPajak,
@@ -461,6 +464,7 @@ final class BantuanPenjualan
                 $p['Metode']->Jenis === JenisMetodePembayaran::Tunai,
                 ($p['Jumlah'] ?? null) === null ? null : Uang::Dari((string) $p['Jumlah']),
             ), $pembayaran),
+            tukarPoin: $tukarPoin === null ? null : Uang::Dari($tukarPoin),
         ));
 
         return [

@@ -13,7 +13,8 @@ import 'HasilKalkulasi.dart';
 /// 1. `Bruto` = bulat((HargaSatuan + HargaPilihan) × Jumlah).
 /// 2. Diskon baris = Σ potongan (persen dari Bruto, dibulatkan), dibatasi Bruto; `Netto` = Bruto − Diskon.
 /// 3. `Subtotal` = Σ Netto.
-/// 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal, dialokasikan sebanding Netto.
+/// 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal; lalu `DiskonPoin` = nilai tukar
+///    poin (F-16b) dibatasi sisa Subtotal dan ditambahkan ke diskon pesanan; dialokasikan sebanding Netto.
 /// 5. `BiayaLayanan` = bulat(persen × (Subtotal − DiskonPesanan)), dialokasikan sebanding Netto akhir.
 /// 6. Pajak per baris dengan pecahan eksak. Eksklusif: DPP = (NettoAkhir + [biaya layanan baris bila
 ///    `SubtotalPlusLayanan`]) × p/q. Inklusif: Dasar = NettoAkhir ÷ (1 + Σ tarif × p/q), DPP = Dasar × p/q, dan
@@ -57,6 +58,8 @@ final class MesinKalkulasi {
       diskonPesanan = diskonPesanan.Tambah(HitungPotongan(potongan, subtotal));
     }
     diskonPesanan = AmbilTerkecil(diskonPesanan, subtotal);
+    final diskonPoin = AmbilTerkecil(data.tukarPoin, subtotal.Kurangi(diskonPesanan));
+    diskonPesanan = diskonPesanan.Tambah(diskonPoin);
     final diskonPesananBaris = AlokasikanSebanding(diskonPesanan, netto);
     final nettoAkhir = [for (var i = 0; i < jumlahBaris; i++) netto[i].Kurangi(diskonPesananBaris[i])];
 
@@ -142,6 +145,7 @@ final class MesinKalkulasi {
       subtotal: subtotal,
       diskonBaris: diskonBaris,
       diskonPesanan: diskonPesanan,
+      diskonPoin: diskonPoin,
       totalDiskon: diskonBaris.Tambah(diskonPesanan),
       biayaLayanan: biayaLayanan,
       totalPajak: totalPajakEksklusif.Tambah(totalPajakInklusif),
@@ -195,6 +199,9 @@ final class MesinKalkulasi {
       baris.potongan.forEach(CekPotongan);
     }
     data.potonganPesanan.forEach(CekPotongan);
+    if (data.tukarPoin.BernilaiNegatif()) {
+      throw ArgumentError.value(data.tukarPoin.KeString(), 'tukarPoin', 'Nilai tukar poin tidak boleh negatif');
+    }
     for (final bayar in data.pembayaran) {
       final jumlah = bayar.jumlah;
       if (jumlah == null && !bayar.CekTunai()) {

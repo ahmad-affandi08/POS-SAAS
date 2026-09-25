@@ -19,7 +19,8 @@ use Brick\Math\RoundingMode;
  * 1. `Bruto` = bulat((HargaSatuan + HargaPilihan) × Jumlah).
  * 2. Diskon baris = Σ potongan (persen dari Bruto), dibatasi Bruto; Netto = Bruto − Diskon.
  * 3. `Subtotal` = Σ Netto.
- * 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal, dialokasikan sebanding Netto.
+ * 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal; lalu `DiskonPoin` = nilai tukar
+ *    poin (F-16b) dibatasi sisa Subtotal dan ditambahkan ke diskon pesanan; dialokasikan sebanding Netto.
  * 5. `BiayaLayanan` = bulat(persen × (Subtotal − DiskonPesanan)), dialokasikan sebanding Netto akhir.
  * 6. Pajak per baris eksak: eksklusif `DPP = (NettoAkhir + [layanan bila SubtotalPlusLayanan]) × p/q`; inklusif
  *    `Dasar = NettoAkhir ÷ (1 + Σ tarif × p/q)`, `DPP = Dasar × p/q`, pajak atas biaya layanan selalu ditambahkan.
@@ -54,6 +55,8 @@ final class MesinKalkulasi
 
         // Langkah 4: diskon pesanan.
         $diskonPesanan = $this->BatasiMaksimum($this->JumlahkanPotongan($data->potonganPesanan, $subtotal), $subtotal);
+        $diskonPoin = $this->BatasiMaksimum($data->tukarPoin ?? Uang::Nol(), $subtotal->Kurangi($diskonPesanan));
+        $diskonPesanan = $diskonPesanan->Tambah($diskonPoin);
         $daftarDiskonPesanan = $this->pengalokasi->AlokasikanSebanding($diskonPesanan, $daftarNetto);
         $daftarNettoAkhir = [];
 
@@ -172,6 +175,7 @@ final class MesinKalkulasi
             $adaTunai ? $this->HitungKembalian($data->pembayaran, $totalAkhir->Kurangi($nonTunai)) : null,
             $rincianPajak,
             $hasilBaris,
+            $diskonPoin,
         );
     }
 

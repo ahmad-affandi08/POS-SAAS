@@ -14,7 +14,10 @@ import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsPengaturanLoyalti } from '@/Tipe/Pelanggan';
 
-/** F-16b: pengaturan poin loyalti tenant (aktif, belanja per poin, masa berlaku, periode evaluasi tier). */
+/**
+ * F-16b: pengaturan poin loyalti tenant (aktif, belanja per poin, masa berlaku, periode evaluasi tier) dan penukaran
+ * poin sebagai diskon (nilai per poin, minimal tukar).
+ */
 export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin }: PropsPengaturanLoyalti) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -23,6 +26,8 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
         BelanjaPerPoin: Pengaturan.BelanjaPerPoin.replace(/\.00$/, ''),
         MasaBerlakuBulan: String(Pengaturan.MasaBerlakuBulan),
         BulanEvaluasiTier: String(Pengaturan.BulanEvaluasiTier),
+        NilaiTukarPoin: Pengaturan.NilaiTukarPoin.replace(/\.00$/, ''),
+        MinimalTukarPoin: String(Pengaturan.MinimalTukarPoin),
     });
     const [memproses, AturMemproses] = useState(false);
     const nonaktif = !Izin.Kelola;
@@ -36,6 +41,8 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                 BelanjaPerPoin: isian.BelanjaPerPoin === '' ? '0' : isian.BelanjaPerPoin,
                 MasaBerlakuBulan: Number(isian.MasaBerlakuBulan || '0'),
                 BulanEvaluasiTier: Number(isian.BulanEvaluasiTier || '0'),
+                NilaiTukarPoin: isian.NilaiTukarPoin === '' ? '0' : isian.NilaiTukarPoin,
+                MinimalTukarPoin: Number(isian.MinimalTukarPoin || '0'),
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -86,10 +93,32 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                         galat={galat.BulanEvaluasiTier}
                         disabled={nonaktif}
                     />
+                    <BidangUang
+                        label="Nilai 1 poin saat ditukar"
+                        nilai={isian.NilaiTukarPoin}
+                        saatBerubah={(nilai) => AturIsian({ ...isian, NilaiTukarPoin: nilai })}
+                        galat={galat.NilaiTukarPoin}
+                        keterangan="Kasir menukar poin sebagai potongan harga sebelum pajak. Minimal Rp 1, tidak boleh melebihi belanja untuk 1 poin."
+                        disabled={nonaktif}
+                    />
+                    <BidangJumlah
+                        label="Minimal poin sekali tukar"
+                        nilai={isian.MinimalTukarPoin}
+                        saatBerubah={(nilai) => AturIsian({ ...isian, MinimalTukarPoin: nilai })}
+                        desimal={0}
+                        digitBulat={6}
+                        akhiran="poin"
+                        keterangan="Penukaran poin hanya bisa saat kasir online. 1–100.000 poin."
+                        galat={galat.MinimalTukarPoin}
+                        disabled={nonaktif}
+                    />
                     {isian.BelanjaPerPoin !== '' && Number(isian.BelanjaPerPoin) > 0 ? (
                         <Pemberitahuan jenis="info">
                             Contoh: belanja {FormatRupiah('250000')} mendapat{' '}
                             {Math.floor(250000 / Number(isian.BelanjaPerPoin)).toLocaleString('id-ID')} poin (tier ×1).
+                            {isian.NilaiTukarPoin !== '' && Number(isian.NilaiTukarPoin) > 0
+                                ? ` Menukar 100 poin memberi potongan ${FormatRupiah(String(100 * Number(isian.NilaiTukarPoin)))}.`
+                                : null}
                         </Pemberitahuan>
                     ) : null}
                     {Izin.Kelola ? (

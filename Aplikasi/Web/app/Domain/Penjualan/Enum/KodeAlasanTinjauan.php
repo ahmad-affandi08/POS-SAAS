@@ -22,6 +22,7 @@ enum KodeAlasanTinjauan: string
     case PesananDibayarGanda = 'PesananDibayarGanda';
     case PesananTidakDikenal = 'PesananTidakDikenal';
     case PelangganTidakDikenal = 'PelangganTidakDikenal';
+    case PenukaranPoin = 'PenukaranPoin';
 
     public function AmbilLabel(): string
     {
@@ -38,6 +39,7 @@ enum KodeAlasanTinjauan: string
             self::PesananDibayarGanda => 'Pesanan meja sudah dibayar atau dibatalkan di perangkat lain',
             self::PesananTidakDikenal => 'Pesanan meja belum diterima server',
             self::PelangganTidakDikenal => 'Pelanggan belum diterima server',
+            self::PenukaranPoin => 'Penukaran poin perlu diperiksa',
         };
     }
 

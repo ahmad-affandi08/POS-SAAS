@@ -197,4 +197,90 @@ void main() {
     expect(hasil.saldoPoin, isNull, reason: 'Saldo poin hanya dari server (online).');
     expect(PelangganTerpilih.DariJson(hasil.KeJson())?.namaTier, 'Gold');
   });
+
+  test('F-16b tukar poin: saldo wajib online; batas poin = saldo & sisa belanja; nilai = poin × nilai tukar', () async {
+    u.server.penangan = (p) async => http.Response(
+      jsonEncode({
+        'Pelanggan': {'Uuid': 'P1', 'SaldoPoin': 120},
+        'TukarPoin': {'Berlaku': true, 'NilaiTukarPoin': '100.00', 'MinimalTukarPoin': 10},
+      }),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
+    final saldo = await u.pelanggan.AmbilSaldoPoin('P1');
+    expect(u.server.permintaan.single.url.path, endsWith('/pelanggan/P1/poin'));
+    expect(saldo.saldoPoin, 120);
+
+    u.server.penangan = (p) async => throw http.ClientException('offline');
+    await expectLater(() => u.pelanggan.AmbilSaldoPoin('P1'), GalatDengan('PerluOnline'));
+
+    final seratus = Uang.Dari('100.00');
+    expect(
+      LayananPelanggan.HitungMaksimalPoin(saldo: 120, sisaTagihan: Uang.Dari('25000.00'), nilaiPerPoin: seratus),
+      120,
+    );
+    expect(
+      LayananPelanggan.HitungMaksimalPoin(saldo: 500, sisaTagihan: Uang.Dari('25050.00'), nilaiPerPoin: seratus),
+      250,
+    );
+    expect(LayananPelanggan.HitungMaksimalPoin(saldo: 0, sisaTagihan: Uang.Dari('25000.00'), nilaiPerPoin: seratus), 0);
+    expect(LayananPelanggan.HitungMaksimalPoin(saldo: 50, sisaTagihan: Uang.Nol(), nilaiPerPoin: seratus), 0);
+    expect(LayananPelanggan.HitungNilaiTukar(50, seratus), Uang.Dari('5000.00'));
+  });
+
+  test(
+    'F-16b bayar dengan tukar poin: diskon sebelum pajak, TukarPoin di outbox; melebihi sisa belanja ditolak',
+    () async {
+      await u.SiapkanKatalog();
+      final katalog = await u.MuatKatalog();
+      final k = await u.MuatKonteks();
+      await u.shift.BukaShift(kasir: rina, kasAwal: Uang.DariBulat(500000));
+      const ani = PelangganTerpilih(uuid: '01K5PELANGGAN0000000000001', nama: 'Ani', noHpSamar: '0812****7890');
+
+      final dasar = u.penjualan.TambahBaris(
+        Keranjang.kosong,
+        u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!),
+        katalog,
+        k,
+      );
+      final tanpa = u.penjualan.Hitung(dasar, k).hasil;
+      final keranjang = dasar.Salin(
+        pelanggan: () => ani,
+        tukarPoin: () => TukarPoin(poin: 50, nilai: Uang.Dari('5000.00')),
+      );
+      expect(Keranjang.DariJson(keranjang.KeJson()).tukarPoin?.poin, 50);
+      final dengan = u.penjualan.Hitung(keranjang, k).hasil;
+      expect(dengan.diskonPoin, Uang.Dari('5000.00'));
+      expect(dengan.subtotal, tanpa.subtotal);
+      expect(dengan.totalAkhir.Bandingkan(tanpa.totalAkhir), lessThan(0));
+      expect(
+        u.penjualan.HitungDiskonPesanan(keranjang, DiskonManual.DariPersen(Decimal.fromInt(10)), k).diskon,
+        Uang.Dari('2500.00'),
+        reason: 'Diskon poin tidak dihitung sebagai diskon manual.',
+      );
+
+      final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+      await expectLater(
+        () => u.penjualan.Bayar(
+          keranjang: keranjang.Salin(tukarPoin: () => TukarPoin(poin: 900, nilai: Uang.Dari('90000.00'))),
+          pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(50000))],
+          kasir: rina,
+          k: k,
+        ),
+        GalatDengan('TukarPoinMelebihiTotal'),
+      );
+
+      await u.penjualan.Bayar(
+        keranjang: keranjang,
+        pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(50000))],
+        kasir: rina,
+        k: k,
+      );
+      final outbox = await (u.db.select(u.db.outbox)..orderBy([(o) => OrderingTerm.asc(o.Id)])).get();
+      final data = jsonDecode(outbox.last.Data) as Map<String, Object?>;
+      expect(data['TukarPoin'], {'Poin': 50, 'Nilai': '5000.00'});
+      expect(data['UuidPelanggan'], ani.uuid);
+      expect((data['Ringkasan']! as Map<String, Object?>)['TotalAkhir'], dengan.totalAkhir.KeString());
+    },
+  );
 }

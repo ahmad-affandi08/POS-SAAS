@@ -83,6 +83,9 @@ export type PengaturanLoyalti = {
     BelanjaPerPoin: string;
     MasaBerlakuBulan: number;
     BulanEvaluasiTier: number;
+    /** Rupiah per poin saat ditukar sebagai diskon (string desimal). */
+    NilaiTukarPoin: string;
+    MinimalTukarPoin: number;
 };
 
 export type PropsPengaturanLoyalti = { Pengaturan: PengaturanLoyalti; FiturAktif: boolean; Izin: { Kelola: boolean } };

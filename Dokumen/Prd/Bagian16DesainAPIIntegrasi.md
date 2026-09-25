@@ -36,6 +36,7 @@
 | POST | `/api/pos/v1/detak` | Status perangkat, versi app, platform, jumlah outbox tertunda, status printer |
 | POST | `/api/pos/v1/token-notifikasi` | Daftarkan/perbarui token FCM perangkat |
 | GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
+| GET | `/api/pos/v1/pelanggan/{uuidPelanggan}/poin` | Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b, wajib online) |
 | POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
 | POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |

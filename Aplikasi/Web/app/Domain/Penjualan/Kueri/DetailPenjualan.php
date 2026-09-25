@@ -97,6 +97,8 @@ final class DetailPenjualan
                 'Subtotal' => $p->Subtotal,
                 'DiskonBaris' => $p->DiskonBaris,
                 'DiskonPesanan' => $p->DiskonPesanan,
+                'PoinDitukar' => $p->PoinDitukar,
+                'DiskonPoin' => $p->DiskonPoin,
                 'TotalDiskon' => $p->TotalDiskon,
                 'BiayaLayanan' => $p->BiayaLayanan,
                 'TotalPajak' => $p->TotalPajak,

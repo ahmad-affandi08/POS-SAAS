@@ -1,0 +1,70 @@
+{
+  "Id": "RTL-TUKAR-POIN-BATAS-001",
+  "Keterangan": "Nilai tukar poin (F-16b) melebihi sisa subtotal setelah diskon baris dan diskon pesanan dibatasi sampai sisa itu; total nol, pembulatan tidak berlaku",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Atas"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "HDH",
+      "Jumlah": "1",
+      "HargaSatuan": "15000",
+      "DiskonManual": {
+        "Jumlah": "2000"
+      }
+    }
+  ],
+  "Promo": [],
+  "DiskonManualPesanan": {
+    "Jumlah": "3000"
+  },
+  "TukarPoin": "20000",
+  "Pembayaran": {
+    "Metode": "Tunai",
+    "Jumlah": "0"
+  },
+  "Harapan": {
+    "Subtotal": "13000.00",
+    "DiskonBaris": "2000.00",
+    "DiskonPesanan": "13000.00",
+    "DiskonPoin": "10000.00",
+    "TotalDiskon": "15000.00",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "0.00",
+    "TotalPajakEksklusif": "0.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "0.00",
+    "Kembalian": "0.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "0.00",
+        "Jumlah": "0.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "15000.00",
+        "Diskon": "2000.00",
+        "DiskonPesanan": "13000.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "0.00",
+        "PajakEksklusif": "0.00",
+        "TotalBaris": "0.00"
+      }
+    ]
+  }
+}

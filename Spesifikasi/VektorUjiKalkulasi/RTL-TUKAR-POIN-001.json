@@ -1,0 +1,81 @@
+{
+  "Id": "RTL-TUKAR-POIN-001",
+  "Keterangan": "Penukaran poin (F-16b, J-16.4) sebagai potongan pesanan sebelum pajak, diterapkan setelah diskon pesanan persen; dialokasikan sebanding netto, PPN dari netto akhir, pembulatan tunai ke bawah",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "BiayaLayananMasukDpp": false,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Bawah"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "BRS",
+      "Jumlah": "2",
+      "HargaSatuan": "32500"
+    },
+    {
+      "Sku": "MNY",
+      "Jumlah": "1",
+      "HargaSatuan": "20000"
+    }
+  ],
+  "Promo": [],
+  "DiskonManualPesanan": {
+    "Persen": "10"
+  },
+  "TukarPoin": "5000",
+  "Pembayaran": {
+    "Metode": "Tunai",
+    "Jumlah": "100000"
+  },
+  "Harapan": {
+    "Subtotal": "85000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "13500.00",
+    "DiskonPoin": "5000.00",
+    "TotalDiskon": "13500.00",
+    "BiayaLayanan": "0.00",
+    "TotalPajak": "7865.00",
+    "TotalPajakEksklusif": "7865.00",
+    "Pembulatan": "-65.00",
+    "TotalAkhir": "79300.00",
+    "Kembalian": "20700.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "65541.67",
+        "Jumlah": "7865.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "65000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "10323.53",
+        "BiayaLayanan": "0.00",
+        "Pajak": "6014.41",
+        "PajakEksklusif": "6014.41",
+        "TotalBaris": "60690.88"
+      },
+      {
+        "Bruto": "20000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "3176.47",
+        "BiayaLayanan": "0.00",
+        "Pajak": "1850.59",
+        "PajakEksklusif": "1850.59",
+        "TotalBaris": "18674.12"
+      }
+    ]
+  }
+}

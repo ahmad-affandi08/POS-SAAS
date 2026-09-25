@@ -69,6 +69,8 @@ const propsDetail: PropsDetailPenjualan = {
         Subtotal: '87000.00',
         DiskonBaris: '5000.00',
         DiskonPesanan: '0.00',
+        PoinDitukar: 0,
+        DiskonPoin: '0.00',
         TotalDiskon: '5000.00',
         BiayaLayanan: '0.00',
         TotalPajak: '9570.00',

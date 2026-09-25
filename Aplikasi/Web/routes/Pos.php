@@ -65,8 +65,11 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/penjualan/cari', [PenjualanKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.penjualan.cari');
         // F-16a: cari pelanggan aktif untuk dipilih kasir (pelanggan baru lewat outbox `Pelanggan.Buat`).
         Route::get('/pelanggan', [PelangganKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.pelanggan.cari');
-        // F-07 mode meja fase 1: data meja, pesanan terbuka outlet (ditarik tiap 5–10 detik, ETag), kunci bayar online.
         $ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
+        // F-16b: saldo poin terkini sebelum tukar poin (wajib online, §18.4).
+        Route::get('/pelanggan/{uuidPelanggan}/poin', [PelangganKontroler::class, 'Poin'])
+            ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.pelanggan.poin');
+        // F-07 mode meja fase 1: data meja, pesanan terbuka outlet (ditarik tiap 5–10 detik, ETag), kunci bayar online.
         Route::get('/meja', [MejaKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.meja');
         Route::get('/pesanan-terbuka', [PesananTerbukaKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesanan-terbuka');
         Route::post('/pesanan-terbuka/{pesananTerbuka}/kunci-bayar', [PesananTerbukaKontroler::class, 'Kunci'])

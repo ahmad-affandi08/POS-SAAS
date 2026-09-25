@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Pelanggan\Enum;
 
-/** Jenis baris buku poin (F-16b). Perolehan & Penyesuaian positif punya `Sisa` untuk FIFO. */
+/**
+ * Jenis baris buku poin (F-16b). Perolehan, Penyesuaian positif, dan BatalPenukaran (poin tukar dikembalikan karena
+ * void) punya `Sisa` untuk FIFO.
+ */
 enum JenisMutasiPoin: string
 {
     case Perolehan = 'Perolehan';
@@ -13,6 +16,7 @@ enum JenisMutasiPoin: string
     case Kedaluwarsa = 'Kedaluwarsa';
     case Penyesuaian = 'Penyesuaian';
     case Penukaran = 'Penukaran';
+    case BatalPenukaran = 'BatalPenukaran';
 
     public function AmbilLabel(): string
     {
@@ -22,7 +26,8 @@ enum JenisMutasiPoin: string
             self::PembalikanRetur => 'Dikurangi karena retur',
             self::Kedaluwarsa => 'Kedaluwarsa',
             self::Penyesuaian => 'Penyesuaian manual',
-            self::Penukaran => 'Ditukar',
+            self::Penukaran => 'Ditukar jadi diskon',
+            self::BatalPenukaran => 'Dikembalikan karena void',
         };
     }
 }

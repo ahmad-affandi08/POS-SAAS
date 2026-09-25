@@ -86,6 +86,11 @@ class KlienPos {
     return UraiJson.AmbilDaftarPeta(json['Pelanggan']).map(PelangganPos.DariJson).toList();
   }
 
+  /// Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b). Pelanggan tidak ada/diarsipkan → `GalatApi`
+  /// ber-kode `PelangganTidakDitemukan` (404); offline → `GalatJaringan`.
+  Future<SaldoPoinPos> AmbilSaldoPoin(String uuidPelanggan) async =>
+      SaldoPoinPos.DariJson(await _Kirim('GET', 'pelanggan/${Uri.encodeComponent(uuidPelanggan)}/poin', null));
+
   /// Data meja outlet perangkat (F-07 mode meja fase 1).
   Future<DataMejaPos> AmbilMeja() async => DataMejaPos.DariJson(await _Kirim('GET', 'meja', null));
 

@@ -99,6 +99,30 @@ class LayananPelanggan {
     }
   }
 
+  /// F-16b: saldo poin & aturan tukar terkini. Tukar poin wajib online (§18.4): offline → `GalatKasir` `PerluOnline`.
+  Future<SaldoPoinPos> AmbilSaldoPoin(String uuidPelanggan) async {
+    try {
+      return await klien.AmbilSaldoPoin(uuidPelanggan);
+    } on GalatJaringan {
+      throw const GalatKasir('PerluOnline', 'Tukar poin perlu koneksi internet. Coba lagi saat perangkat online.');
+    } on GalatApi catch (galat) {
+      throw GalatKasir(galat.kode, galat.pesan);
+    }
+  }
+
+  /// Poin terbanyak yang bisa ditukar: saldo, dibatasi ⌊[sisaTagihan] ÷ [nilaiPerPoin]⌋ agar potongan tidak melebihi
+  /// subtotal setelah diskon lain.
+  static int HitungMaksimalPoin({required int saldo, required Uang sisaTagihan, required Uang nilaiPerPoin}) {
+    if (saldo <= 0 || nilaiPerPoin.KeDesimal() <= Decimal.zero) {
+      return 0;
+    }
+    final batas = (sisaTagihan.KeDesimal() / nilaiPerPoin.KeDesimal()).floor().toInt();
+    return batas < saldo ? (batas < 0 ? 0 : batas) : saldo;
+  }
+
+  /// Nilai potongan [poin] × [nilaiPerPoin].
+  static Uang HitungNilaiTukar(int poin, Uang nilaiPerPoin) => nilaiPerPoin.Kali(Decimal.fromInt(poin));
+
   /// Pelanggan hasil cari dipilih: disimpan ke cache agar bisa dicari lagi offline.
   Future<void> CatatDipakai(PelangganTerpilih pelanggan) => repositori.Simpan(
     pelanggan.uuid,

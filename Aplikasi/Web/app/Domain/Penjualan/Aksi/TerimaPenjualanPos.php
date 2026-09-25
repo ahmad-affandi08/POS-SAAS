@@ -268,7 +268,18 @@ final class TerimaPenjualanPos
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
 
-        // F-16b: poin pelanggan diperoleh di transaksi yang sama (idempoten per penjualan).
+        // F-16b: poin ditukar lebih dulu (poin dari penjualan ini tidak ikut ditukar), lalu perolehan; di transaksi yang
+        // sama, idempoten per penjualan. Penjualan tetap diterima walau poin bermasalah (sudah terjadi di kasir).
+        if ($data->poinDitukar > 0) {
+            $masalahPoin = $idPelanggan === null
+                ? ['pelanggan belum diterima server, poin tidak dipotong']
+                : $this->poin->CatatPenukaran($idPelanggan, $penjualan->Id, $data->poinDitukar, $hasil->diskonPoin);
+
+            if ($masalahPoin !== []) {
+                $tinjauan['PenukaranPoin'] = 'PenukaranPoin: '.implode('; ', $masalahPoin);
+            }
+        }
+
         if ($idPelanggan !== null) {
             $this->poin->CatatPerolehan($idPelanggan, $penjualan->Id, $hasil->totalAkhir, $tanggalBisnis);
         }
@@ -481,6 +492,7 @@ final class TerimaPenjualanPos
                 persenBiayaLayanan: $data->persenBiayaLayanan,
                 pembulatanTunai: $data->pembulatanTunai,
                 potonganPesanan: $data->diskonManualPesanan === null ? [] : [$data->diskonManualPesanan->KePotongan()],
+                tukarPoin: $data->nilaiTukarPoin,
                 pembayaran: array_values(array_map(fn ($b): DataPembayaranKalkulasi => new DataPembayaranKalkulasi(
                     $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tunai,
                     $b->jumlah,
@@ -488,6 +500,11 @@ final class TerimaPenjualanPos
             ));
         } catch (InvalidArgumentException $galat) {
             throw new PelanggaranAturanBisnis('DataTidakValid', 'Data penjualan tidak bisa dihitung: '.$galat->getMessage(), 'Baris');
+        }
+
+        // F-16b: nilai tukar poin tidak boleh terpotong batas sisa subtotal (perangkat wajib membatasi lebih dulu).
+        if ($data->nilaiTukarPoin !== null && ! $hasil->diskonPoin->SamaDengan($data->nilaiTukarPoin)) {
+            throw self::GalatHitungan('TukarPoin.Nilai', $data->nilaiTukarPoin, $hasil->diskonPoin);
         }
 
         $r = $data->ringkasan;
@@ -522,7 +539,8 @@ final class TerimaPenjualanPos
         }
 
         if ($data->diskonManualPesanan !== null) {
-            $diskon[] = [$hasil->subtotal, $hasil->diskonPesanan];
+            // Diskon poin (F-16b) bukan diskon manual: tidak ikut batas diskon kasir.
+            $diskon[] = [$hasil->subtotal, $hasil->diskonPesanan->Kurangi($hasil->diskonPoin)];
         }
 
         return $diskon;
@@ -613,6 +631,8 @@ final class TerimaPenjualanPos
             'Subtotal' => $hasil->subtotal->KeString(),
             'DiskonBaris' => $hasil->diskonBaris->KeString(),
             'DiskonPesanan' => $hasil->diskonPesanan->KeString(),
+            'PoinDitukar' => $data->poinDitukar,
+            'DiskonPoin' => $hasil->diskonPoin->KeString(),
             'TotalDiskon' => $hasil->totalDiskon->KeString(),
             'BiayaLayanan' => $hasil->biayaLayanan->KeString(),
             'TotalPajak' => $hasil->totalPajak->KeString(),

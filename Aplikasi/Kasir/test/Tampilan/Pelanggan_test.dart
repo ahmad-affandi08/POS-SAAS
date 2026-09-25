@@ -21,6 +21,7 @@ void main() {
     Size ukuran, {
     Map<String, Object?>? katalog,
     Map<String, Object?>? hasilCari,
+    Map<String, Object?>? saldoPoin,
   }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
@@ -33,6 +34,9 @@ void main() {
       }
       if (p.url.path.endsWith('/katalog')) {
         return JsonUji(katalog ?? KatalogUji());
+      }
+      if (saldoPoin != null && p.url.path.endsWith('/poin')) {
+        return JsonUji(saldoPoin);
       }
       if (hasilCari != null && p.url.path.endsWith('/pelanggan')) {
         return JsonUji(hasilCari);
@@ -163,6 +167,54 @@ void main() {
     // Harga Gold 22.000 + PBJT 10% = 24.200.
     expect(find.text('Rp 24.200'), findsWidgets);
     expect(find.text('Rp 27.500'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('F-16b: tukar 50 poin (online) → potongan sebelum pajak di keranjang; offline ditolak (1280 dp)', (
+    tester,
+  ) async {
+    final u = await MasukJual(
+      tester,
+      const Size(1280, 900),
+      hasilCari: {
+        'Pelanggan': [
+          {'Uuid': '01K5PELANGGAN0000000000001', 'Nama': 'Ani Rahmawati', 'NoHp': '0812****7890', 'SaldoPoin': 120},
+        ],
+      },
+      saldoPoin: {
+        'Pelanggan': {'Uuid': '01K5PELANGGAN0000000000001', 'SaldoPoin': 120},
+        'TukarPoin': {'Berlaku': true, 'NilaiTukarPoin': '100.00', 'MinimalTukarPoin': 10},
+      },
+    );
+    await Ketuk(tester, find.byWidgetPredicate((w) => w is UbinProduk && w.nama.startsWith('Croissant')));
+    await Ketuk(tester, find.textContaining('Pelanggan umum'));
+    await tester.enterText(find.widgetWithText(TextField, 'Cari nama atau nomor HP (min. 3 huruf)'), 'ani');
+    await Tunggu(tester, const Duration(milliseconds: 600));
+    await Ketuk(tester, find.text('Ani Rahmawati'));
+
+    await Ketuk(tester, find.textContaining('Ani Rahmawati · 0812****7890'));
+    await Ketuk(tester, find.text('Tukar poin'));
+    expect(find.text('Saldo 120 poin · 1 poin = Rp 100 · minimal 10 poin'), findsOneWidget);
+    // Sisa belanja 25.000 → maksimal min(120, 250) = 120 poin.
+    expect(find.text('Bisa ditukar sampai 120 poin untuk belanja ini.'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Poin yang ditukar'), '5');
+    await tester.pump();
+    await Ketuk(tester, find.text('Pakai 5 poin'));
+    expect(find.text('Minimal tukar 10 poin.'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Poin yang ditukar'), '50');
+    await tester.pump();
+    expect(find.text('−Rp 5.000'), findsOneWidget);
+    await Ketuk(tester, find.text('Pakai 50 poin'));
+
+    // (25.000 − 5.000) + PBJT 10% = 22.000.
+    expect(find.text('Tukar 50 poin'), findsOneWidget);
+    expect(find.text('Rp 22.000'), findsWidgets);
+
+    u.server.penangan = (p) async => throw http.ClientException('offline');
+    await Ketuk(tester, find.textContaining('Ani Rahmawati · 0812****7890'));
+    await Ketuk(tester, find.text('Tukar poin'));
+    expect(find.text('Tukar poin perlu koneksi internet. Coba lagi saat perangkat online.'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });

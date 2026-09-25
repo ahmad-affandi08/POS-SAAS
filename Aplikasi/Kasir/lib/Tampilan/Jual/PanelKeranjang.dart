@@ -294,13 +294,15 @@ abstract final class RingkasanTotal {
 
     return [
       Baris('Subtotal', hasil.subtotal),
-      if (!hasil.diskonPesanan.BernilaiNol())
+      if (!hasil.diskonPesanan.Kurangi(hasil.diskonPoin).BernilaiNol())
         Baris(
           keranjang.diskonPesanan?.persen != null
               ? '${keranjang.diskonPesanan!.AmbilLabel()} pesanan'
               : 'Diskon pesanan',
-          Uang.Nol().Kurangi(hasil.diskonPesanan),
+          Uang.Nol().Kurangi(hasil.diskonPesanan.Kurangi(hasil.diskonPoin)),
         ),
+      if (keranjang.tukarPoin != null)
+        Baris('Tukar ${keranjang.tukarPoin!.poin} poin', Uang.Nol().Kurangi(hasil.diskonPoin)),
       if (!hasil.biayaLayanan.BernilaiNol()) Baris('Biaya layanan', hasil.biayaLayanan),
       for (final p in hitungan.pajakDokumen)
         if (hasil.pajak[p.kode] != null && !hasil.pajak[p.kode]!.jumlah.BernilaiNol())

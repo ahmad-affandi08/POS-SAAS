@@ -40,6 +40,8 @@ use LogicException;
  * @property string $Subtotal
  * @property string $DiskonBaris
  * @property string $DiskonPesanan
+ * @property int $PoinDitukar
+ * @property string $DiskonPoin
  * @property string $TotalDiskon
  * @property string $BiayaLayanan
  * @property string $TotalPajak
@@ -112,6 +114,8 @@ final class Penjualan extends ModelDasar
             'Subtotal' => 'decimal:2',
             'DiskonBaris' => 'decimal:2',
             'DiskonPesanan' => 'decimal:2',
+            'PoinDitukar' => 'integer',
+            'DiskonPoin' => 'decimal:2',
             'TotalDiskon' => 'decimal:2',
             'BiayaLayanan' => 'decimal:2',
             'TotalPajak' => 'decimal:2',

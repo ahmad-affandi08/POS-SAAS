@@ -30,6 +30,8 @@ final class PengaturanLoyaltiTenant
             belanjaPerPoin: BigDecimal::of($p->BelanjaPerPoin),
             masaBerlakuBulan: $p->MasaBerlakuBulan,
             bulanEvaluasiTier: $p->BulanEvaluasiTier,
+            nilaiTukarPoin: BigDecimal::of($p->NilaiTukarPoin),
+            minimalTukarPoin: $p->MinimalTukarPoin,
         );
     }
 }

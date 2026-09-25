@@ -9,10 +9,11 @@ import '../../Domain/GalatKasir.dart';
 import '../../Domain/Pelanggan/LayananPelanggan.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
+import 'PanelTukarPoin.dart';
 
 /// Panel pelanggan layar Jual (F-16a, pintasan F2): cari nama/nomor HP (online; offline = pelanggan yang pernah dipakai
 /// perangkat ini), pelanggan terakhir, tambah pelanggan baru (nama + nomor HP, berlaku offline), atau "Tanpa pelanggan".
-/// Pilihan disimpan di keranjang dan dikirim bersama penjualan.
+/// Pilihan disimpan di keranjang dan dikirim bersama penjualan. F-16b: pelanggan terpilih bisa menukar poin (online).
 class PanelPelanggan extends ConsumerStatefulWidget {
   const PanelPelanggan({super.key, required this.kasir, required this.saatSelesai});
 
@@ -36,6 +37,7 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
   bool _mencari = false;
   bool _formBaru = false;
   bool _menyimpan = false;
+  bool _tukarPoin = false;
   String? _galat;
   int _urutCari = 0;
 
@@ -100,10 +102,14 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
   }
 
   /// Pasang pelanggan lalu hitung ulang harga item baru menurut tier-nya (F-16b; baris pesanan meja yang sudah
-  /// tersimpan memakai harga saat dipesan).
+  /// tersimpan memakai harga saat dipesan). Ganti pelanggan melepas tukar poin pelanggan sebelumnya.
   void _Pasang(PelangganTerpilih? pelanggan) {
     final pengatur = ref.read(penyediaKeranjang.notifier);
-    var keranjang = ref.read(penyediaKeranjang).Salin(pelanggan: () => pelanggan);
+    final lama = ref.read(penyediaKeranjang);
+    var keranjang = lama.Salin(
+      pelanggan: () => pelanggan,
+      tukarPoin: lama.pelanggan?.uuid == pelanggan?.uuid ? null : () => null,
+    );
     final katalog = ref.read(penyediaKatalog).value;
     final k = ref.read(penyediaKonteksPenjualan).value;
     if (katalog != null && k != null) {
@@ -155,6 +161,15 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
     final warna = TokenWarna.AmbilDari(context);
     final terpilih = ref.watch(penyediaKeranjang.select((k) => k.pelanggan));
     final kataCukup = _cari.text.trim().length >= LayananPelanggan.panjangKataMinimal;
+    final tukar = ref.watch(penyediaKeranjang.select((k) => k.tukarPoin));
+
+    if (_tukarPoin && terpilih != null) {
+      return PanelTukarPoin(
+        pelanggan: terpilih,
+        saatSelesai: widget.saatSelesai,
+        saatKembali: () => setState(() => _tukarPoin = false),
+      );
+    }
 
     if (_formBaru) {
       return SingleChildScrollView(
@@ -233,6 +248,32 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (terpilih != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      tukar == null
+                          ? 'Terpilih: ${terpilih.nama}'
+                          : 'Terpilih: ${terpilih.nama} · ${tukar.poin} poin ditukar (−${tukar.nilai.FormatRupiah()})',
+                      style: teks.bodyMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: TokenJarak.jarak8),
+                  SizedBox(
+                    height: TokenJarak.targetSentuh,
+                    child: OutlinedButton.icon(
+                      onPressed: () => setState(() => _tukarPoin = true),
+                      icon: const Icon(Icons.redeem_outlined),
+                      label: const Text('Tukar poin'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: TokenJarak.jarak8),
+            ],
             TextField(
               controller: _cari,
               autofocus: true,

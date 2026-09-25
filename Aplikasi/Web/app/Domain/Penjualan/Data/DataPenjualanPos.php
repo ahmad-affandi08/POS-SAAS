@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Data;
 
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Kalkulasi\DataPembulatanTunai;
 use Brick\Math\BigDecimal;
@@ -12,7 +13,8 @@ use Carbon\CarbonImmutable;
 /**
  * Masukan `TerimaPenjualanPos` (F-07b) dari item outbox `Penjualan.Buat`: penjualan lunas yang dibuat di perangkat
  * (bisa offline). `uuid` = `UuidKlien` (ULID perangkat). Semua harga, pajak, dan pengaturan adalah snapshot saat
- * transaksi (BR-07.2); server menghitung ulang dengan `MesinKalkulasi`.
+ * transaksi (BR-07.2); server menghitung ulang dengan `MesinKalkulasi`. `poinDitukar`/`nilaiTukarPoin` (F-16b): poin
+ * pelanggan yang ditukar sebagai diskon pesanan sebelum pajak.
  */
 final readonly class DataPenjualanPos
 {
@@ -42,5 +44,7 @@ final readonly class DataPenjualanPos
         public ?string $uuidPesananTerbuka = null,
         public bool $kirimDapur = false,
         public ?string $uuidPelanggan = null,
+        public int $poinDitukar = 0,
+        public ?Uang $nilaiTukarPoin = null,
     ) {}
 }

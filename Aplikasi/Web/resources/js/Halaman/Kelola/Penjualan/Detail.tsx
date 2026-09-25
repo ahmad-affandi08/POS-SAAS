@@ -366,6 +366,12 @@ export default function HalamanDetailPenjualan({
                         {!nol.test(p.DiskonPesanan) ? (
                             <BarisAngka label="Diskon pesanan" nilai={`−${FormatRupiah(p.DiskonPesanan)}`} />
                         ) : null}
+                        {p.PoinDitukar > 0 ? (
+                            <BarisAngka
+                                label={`Termasuk tukar ${p.PoinDitukar.toLocaleString('id-ID')} poin`}
+                                nilai={`−${FormatRupiah(p.DiskonPoin)}`}
+                            />
+                        ) : null}
                         {!nol.test(p.BiayaLayanan) ? (
                             <BarisAngka
                                 label={`Biaya layanan ${FormatPersen(p.PersenBiayaLayanan)}%`}

@@ -8,7 +8,7 @@ use App\Domain\Bersama\Nilai\Uang;
 
 /**
  * Keluaran mesin kalkulasi F-07a. `kembalian` null bila tidak ada pembayaran tunai. `pajak` berurutan sesuai pajak
- * dokumen dan diberi kunci kode pajak.
+ * dokumen dan diberi kunci kode pajak. `diskonPoin` (F-16b) adalah bagian `diskonPesanan` dari penukaran poin.
  */
 final readonly class HasilKalkulasi
 {
@@ -29,6 +29,7 @@ final readonly class HasilKalkulasi
         public ?Uang $kembalian,
         public array $pajak,
         public array $baris,
+        public Uang $diskonPoin,
     ) {}
 
     /**
@@ -42,6 +43,7 @@ final readonly class HasilKalkulasi
             'Subtotal' => $this->subtotal->KeString(),
             'DiskonBaris' => $this->diskonBaris->KeString(),
             'DiskonPesanan' => $this->diskonPesanan->KeString(),
+            'DiskonPoin' => $this->diskonPoin->KeString(),
             'TotalDiskon' => $this->totalDiskon->KeString(),
             'BiayaLayanan' => $this->biayaLayanan->KeString(),
             'TotalPajak' => $this->totalPajak->KeString(),

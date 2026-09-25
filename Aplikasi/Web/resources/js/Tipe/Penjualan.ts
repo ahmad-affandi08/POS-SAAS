@@ -51,6 +51,9 @@ export type RingkasanPenjualan = {
     Subtotal: string;
     DiskonBaris: string;
     DiskonPesanan: string;
+    /** F-16b: poin pelanggan yang ditukar dan nilai diskonnya (bagian dari DiskonPesanan). */
+    PoinDitukar: number;
+    DiskonPoin: string;
     TotalDiskon: string;
     BiayaLayanan: string;
     TotalPajak: string;

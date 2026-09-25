@@ -175,17 +175,33 @@ describe('Halaman pelanggan (F-16a)', () => {
     it('F-16b pengaturan loyalti: contoh perhitungan & simpan mengirim PUT', () => {
         RenderUji(
             <HalamanPengaturanLoyalti
-                Pengaturan={{ Aktif: false, BelanjaPerPoin: '10000.00', MasaBerlakuBulan: 12, BulanEvaluasiTier: 12 }}
+                Pengaturan={{
+                    Aktif: false,
+                    BelanjaPerPoin: '10000.00',
+                    MasaBerlakuBulan: 12,
+                    BulanEvaluasiTier: 12,
+                    NilaiTukarPoin: '100.00',
+                    MinimalTukarPoin: 10,
+                }}
                 FiturAktif
                 Izin={{ Kelola: true }}
             />,
         );
         expect(screen.getByText(/mendapat 25 poin/)).toBeTruthy();
+        expect(screen.getByText(/Menukar 100 poin memberi potongan Rp 10\.000/)).toBeTruthy();
+        fireEvent.change(screen.getByLabelText('Minimal poin sekali tukar'), { target: { value: '50' } });
         fireEvent.click(screen.getByRole('checkbox'));
         fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan loyalti' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             '/kelola/pelanggan/loyalti',
-            { Aktif: true, BelanjaPerPoin: '10000', MasaBerlakuBulan: 12, BulanEvaluasiTier: 12 },
+            {
+                Aktif: true,
+                BelanjaPerPoin: '10000',
+                MasaBerlakuBulan: 12,
+                BulanEvaluasiTier: 12,
+                NilaiTukarPoin: '100',
+                MinimalTukarPoin: 50,
+            },
             expect.anything(),
         );
     });

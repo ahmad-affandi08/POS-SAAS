@@ -397,6 +397,7 @@ class LayananPenjualan {
             ),
         ],
         potonganPesanan: [if (keranjang.diskonPesanan != null) keranjang.diskonPesanan!.KePotongan()],
+        tukarPoin: keranjang.tukarPoin?.nilai,
         pembayaran: pembayaran,
       ),
     );
@@ -472,7 +473,7 @@ class LayananPenjualan {
   /// Nilai diskon pesanan bila [diskon] diterapkan: subtotal (dasar) dan diskon pesanan hasil mesin.
   ({Uang dasar, Uang diskon}) HitungDiskonPesanan(Keranjang keranjang, DiskonManual diskon, KonteksPenjualan k) {
     final hasil = Hitung(keranjang.Salin(diskonPesanan: () => diskon), k).hasil;
-    return (dasar: hasil.subtotal, diskon: hasil.diskonPesanan);
+    return (dasar: hasil.subtotal, diskon: hasil.diskonPesanan.Kurangi(hasil.diskonPoin));
   }
 
   /// Penyetuju efektif: penyetuju yang lolos PIN, atau kasir sendiri bila ia punya izin menyetujui.
@@ -547,9 +548,28 @@ class LayananPenjualan {
       }
     }
     if (keranjang.diskonPesanan != null) {
-      Periksa('pesanan', hasil.subtotal, hasil.diskonPesanan);
+      // Diskon poin (F-16b) bukan diskon manual: tidak ikut batas diskon kasir.
+      Periksa('pesanan', hasil.subtotal, hasil.diskonPesanan.Kurangi(hasil.diskonPoin));
     }
     return butuhPenyetuju ? AmbilPenyetujuEfektif(kasir, keranjang.penyetuju) : null;
+  }
+
+  /// F-16b: poin hanya ditukar untuk pelanggan terpilih, dan nilainya tidak boleh terpotong batas sisa subtotal (server
+  /// menolak dokumen yang nilainya berbeda dengan hitungan mesin).
+  static void ValidasiTukarPoin(Keranjang keranjang, HasilKalkulasi hasil) {
+    final tukar = keranjang.tukarPoin;
+    if (tukar == null) {
+      return;
+    }
+    if (keranjang.pelanggan == null) {
+      throw const GalatKasir('TukarPoinTanpaPelanggan', 'Pilih pelanggan dulu sebelum menukar poin.');
+    }
+    if (!hasil.diskonPoin.SamaDengan(tukar.nilai)) {
+      throw const GalatKasir(
+        'TukarPoinMelebihiTotal',
+        'Potongan poin melebihi total belanja. Kurangi poin yang ditukar di panel Pelanggan (F2).',
+      );
+    }
   }
 
   // Bayar & simpan -----------------------------------------------------------------------------------------------------
@@ -591,6 +611,7 @@ class LayananPenjualan {
       throw GalatKasir('PembayaranKurang', 'Pembayaran kurang ${hasil.totalAkhir.Kurangi(dibayar).FormatRupiah()}.');
     }
     final penyetuju = ValidasiDiskon(keranjang, hitungan, kasir, k);
+    ValidasiTukarPoin(keranjang, hasil);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
@@ -753,6 +774,7 @@ class LayananPenjualan {
       'Catatan': catatan == null || catatan.isEmpty ? null : catatan,
       'UuidPesananTerbuka': ?pesananMeja?.uuid,
       'UuidPelanggan': ?keranjang.pelanggan?.uuid,
+      'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
     };
 
     return DokumenPenjualan(

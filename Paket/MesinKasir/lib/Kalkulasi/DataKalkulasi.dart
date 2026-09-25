@@ -102,7 +102,9 @@ final class DataKalkulasi {
     this.pajak = const [],
     this.potonganPesanan = const [],
     this.pembayaran = const [],
-  }) : persenBiayaLayanan = persenBiayaLayanan ?? Decimal.zero;
+    Uang? tukarPoin,
+  }) : tukarPoin = tukarPoin ?? Uang.Nol(),
+       persenBiayaLayanan = persenBiayaLayanan ?? Decimal.zero;
 
   /// Pengaturan bawaan harga termasuk pajak (baris boleh menimpa).
   final bool hargaTermasukPajak;
@@ -120,4 +122,8 @@ final class DataKalkulasi {
   /// Potongan tingkat pesanan: promo pesanan dan diskon manual pesanan.
   final List<DataPotongan> potonganPesanan;
   final List<DataPembayaranKalkulasi> pembayaran;
+
+  /// Nilai Rupiah penukaran poin loyalti (F-16b, J-16.4; bawaan 0): potongan pesanan sebelum pajak yang diterapkan
+  /// setelah potongan pesanan lain dan dibatasi sisa `Subtotal`.
+  final Uang tukarPoin;
 }

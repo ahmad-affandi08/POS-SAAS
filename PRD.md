@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.60 |
+| Versi | 1.61 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -81,6 +81,7 @@
 | 1.58 | Rincian F-07 mode meja & F-10b fase 1 di aplikasi POS: menu Meja (denah per area, pesanan tanpa meja), mode pesanan di layar Jual (kirim ke dapur per ronde, batal item BR-07.5, bayar menutup pesanan, harga kanal `MakanDiTempat`), tarik snapshot 7 detik dengan ETag, kunci bayar, layar dapur untuk perangkat `Kds`; skema lokal 6. |
 | 1.59 | Rincian F-16a (CRM-01 pelanggan): master pelanggan (nomor HP ternormalisasi & unik per tenant), izin `pelanggan.lihat`/`pelanggan.kelola`, back-office daftar & detail riwayat belanja, API POS cari pelanggan, item outbox `Pelanggan.Buat` (offline, alias nomor HP ganda), `Penjualan.Buat` + `UuidPelanggan`, panel pelanggan (F2) di aplikasi kasir; skema lokal 7. |
 | 1.60 | Rincian F-16b bagian 1 (CRM-02/03): tier pelanggan (ambang belanja, pengali poin, kode untuk daftar harga, naik/turun otomatis harian + kunci tier), pengaturan loyalti per tenant, buku poin `MutasiPoin` (perolehan di transaksi penjualan, pembalikan void & retur proporsional, kedaluwarsa FIFO, penyesuaian manual), harga tier di aplikasi kasir; skema lokal 8. Keputusan pemilik produk: penukaran poin dicatat sebagai **diskon** (J-16.4, bagian 2). |
+| 1.61 | Rincian F-16b bagian 2 (CRM-03 penukaran poin): poin ditukar sebagai **diskon pesanan sebelum pajak** (J-16.4 lewat Diskon Penjualan di J-07.1); mesin kalkulasi PHP & Dart menerima `TukarPoin` (dibatasi sisa subtotal, keluaran `DiskonPoin`) + 3 test vector baru; `Penjualan.Buat` membawa `TukarPoin {Poin, Nilai}`; saldo terkini `GET /api/pos/v1/pelanggan/{uuidPelanggan}/poin` (wajib online, §18.4); pengaturan nilai tukar per poin & minimal tukar; void mengembalikan poin yang ditukar. |
 
 ---
 
@@ -1496,7 +1497,16 @@ promo:
 - **Proses malam** `pelanggan:proses-loyalti` (03.00 WIB): hanguskan sisa lot yang kedaluwarsa (baris `Kedaluwarsa`, idempoten per lot), lalu evaluasi tier: tier aktif tertinggi yang `MinimalBelanja` ≤ total belanja (tanpa void) sejak hari ini − periode; pelanggan `TierTetap` & diarsipkan dilewati; belanja di bawah semua ambang = tanpa tier. Audit `pelanggan.tier-otomatis`.
 - Back-office: menu Pelanggan menjadi grup (Daftar pelanggan, Tier pelanggan, Pengaturan loyalti); daftar pelanggan menampilkan tier & poin dan bisa disaring per tier; detail pelanggan menampilkan tier & saldo poin, **Atur tier** (termasuk kunci), **Sesuaikan poin**, dan riwayat 100 mutasi poin. Audit `tier-pelanggan.*`, `pelanggan.tier`, `pelanggan.poin-sesuaikan`, `loyalti.pengaturan`.
 - **POS:** hasil `GET /api/pos/v1/pelanggan` menambah `KodeTier`, `NamaTier`, `SaldoPoin` (tambahan kompatibel mundur). Memilih pelanggan menghitung ulang harga item baru di keranjang dengan `PenentuHarga` + tier (test vector `HRG-KANAL-TIER-001` sudah mencakup); melepas pelanggan kembali ke harga umum; baris pesanan meja yang sudah tersimpan memakai harga saat dipesan. Tier ikut disimpan di `PelangganLokal` (skema lokal 8) sehingga harga tier tetap berlaku offline; saldo poin hanya tampil saat online.
-- **Bagian 2 (menyusul):** penukaran poin sebagai diskon pesanan sebelum pajak (J-16.4) dengan perluasan mesin kalkulasi PHP & Dart + test vector baru, wajib online (§18.4).
+- **Bagian 2:** lihat Rincian F-16b bagian 2 di bawah.
+
+**Rincian F-16b bagian 2 (v1.61, CRM-03 penukaran poin; keputusan pemilik produk v1.60: penukaran = diskon; rincian lain diputuskan agen atas mandat D-12):**
+- **Pengaturan loyalti** menambah **nilai 1 poin saat ditukar** (`NilaiTukarPoin`, bawaan Rp 100, Rp 1 s.d. belanja per poin agar potongan tidak melebihi belanja yang menghasilkan poin) dan **minimal poin sekali tukar** (`MinimalTukarPoin`, bawaan 10, 1–100.000). Kolom lama yang tidak dikirim tidak berubah (kompatibel mundur).
+- **Mesin kalkulasi (F-07a) diperluas**: masukan `TukarPoin` (Rupiah, ≥ 0) diterapkan di langkah 4 **setelah** potongan pesanan lain, dibatasi sisa Subtotal, lalu ikut dialokasikan sebanding netto seperti diskon pesanan sehingga **biaya layanan & pajak dihitung dari nilai setelah potongan poin**. Keluaran baru `DiskonPoin` (bagian dari `DiskonPesanan`/`TotalDiskon`). Test vector baru: `RTL-TUKAR-POIN-001` (PPN 12% DPP 11/12, setelah diskon pesanan 10%, pembulatan tunai), `FNB-TUKAR-POIN-SC-001` (biaya layanan 5% + PB1 atas subtotal + layanan, bayar QRIS), `RTL-TUKAR-POIN-BATAS-001` (nilai tukar melebihi sisa subtotal dibatasi). Vektor lama tidak berubah.
+- **POS (wajib online, §18.4):** di panel Pelanggan (F2) pelanggan terpilih punya tombol **Tukar poin**; panel mengambil saldo & aturan terkini dari `GET /api/pos/v1/pelanggan/{uuidPelanggan}/poin` → `{Pelanggan {Uuid, SaldoPoin}, TukarPoin {Berlaku, NilaiTukarPoin, MinimalTukarPoin}}` (404 `PelangganTidakDitemukan`). Offline = ditolak dengan pesan. Poin maksimal = min(saldo, ⌊(Subtotal − diskon pesanan lain) ÷ nilai per poin⌋); nilai = poin × nilai per poin. Ganti pelanggan melepas tukar poin; bayar ditolak bila potongan poin terpotong batas (keranjang berubah) sampai poin diubah. Diskon poin **bukan diskon manual** (tidak ikut batas diskon kasir BR-07.3).
+- **Sinkron:** `Penjualan.Buat` menerima `TukarPoin {Poin, Nilai}` (wajib bersama `UuidPelanggan`). Server menghitung ulang dengan mesin; `DiskonPoin` ≠ `Nilai` = ditolak `HitunganTidakCocok`. Poin **dipotong di transaksi DB yang sama sebelum perolehan** (poin dari penjualan itu tidak bisa ditukar di penjualan yang sama), baris `MutasiPoin` `Penukaran` idempoten per penjualan, FIFO lot yang paling cepat kedaluwarsa. Karena penjualan sudah terjadi di kasir, saldo kurang, loyalti nonaktif, di bawah minimal, atau nilai ≠ poin × nilai tukar saat ini **tetap diterima** (saldo boleh minus) dan ditandai `PerluTinjauan` `PenukaranPoin`; pelanggan tidak dikenal = poin tidak dipotong + tinjauan. Snapshot `Penjualan.PoinDitukar` & `DiskonPoin`; detail penjualan menampilkan "Termasuk tukar N poin".
+- **Void** mengembalikan poin yang ditukar sebagai lot baru `BatalPenukaran` (berlaku hari ini + masa berlaku) selain membalik perolehan. **Retur** tidak mengembalikan poin yang ditukar (nilai refund sudah memperhitungkan potongan poin); perolehan tetap dibalik proporsional seperti bagian 1.
+- **Jurnal (J-16.4):** tidak ada jurnal terpisah; `DiskonPoin` termasuk `TotalDiskon` sehingga didebit ke **Diskon Penjualan** dalam jurnal penjualan J-07.1 (tetap seimbang).
+
 
 ---
 
@@ -2764,7 +2774,7 @@ erDiagram
 | `Shift` | IdTenant, IdOutlet, IdPerangkat, Uuid (dari perangkat), Status, Bersama, DibukaOleh, DibukaPada, TanggalBisnis, KasAwal, PecahanKasAwal JSON, PerluTinjauan, AlasanTinjauan, DiterimaPada, DitutupOleh, DitutupPada, KasSeharusnya, KasAktual, Selisih, PecahanKasAkhir JSON (F-06; kolom tutup diisi F-11) |
 | `MutasiKas` | IdTenant, Uuid (dari perangkat), IdShift, Jenis (Masuk/Keluar/Setoran), IdKategoriKas, Jumlah, Catatan, PathLampiran, DicatatOleh, DicatatPada, TanggalBisnis, DisetujuiOleh, IdJurnal, DiterimaPada. Append-only (F-06) |
 | `KategoriKas` | IdTenant, Uuid, Nama, Jenis (Masuk/Keluar), IdAkun, Aktif, Urutan. Unik (IdTenant, Jenis, Nama) (F-06) |
-| `Penjualan` | IdTenant, IdOutlet, IdShift, IdPerangkat, Uuid, **UuidKlien (unik)**, Nomor, Kanal (MakanDiTempat/BawaPulang/Antar/Online/PesanSendiri/Marketplace), IdMeja, IdPelanggan, Status, TanggalBisnis, Subtotal, TotalDiskon, BiayaLayanan, TotalPajak, Pembulatan, TotalAkhir, TotalDibayar, Kembalian, TotalHpp, JumlahTamu, Catatan, DisinkronPada, DibuatOfflinePada. F-07b: IdPengguna (kasir), IdPenyetujuDiskon, DiskonPesanan, DiterimaPada, PerluTinjauan, AlasanTinjauan |
+| `Penjualan` | IdTenant, IdOutlet, IdShift, IdPerangkat, Uuid, **UuidKlien (unik)**, Nomor, Kanal (MakanDiTempat/BawaPulang/Antar/Online/PesanSendiri/Marketplace), IdMeja, IdPelanggan, Status, TanggalBisnis, Subtotal, TotalDiskon, BiayaLayanan, TotalPajak, Pembulatan, TotalAkhir, TotalDibayar, Kembalian, TotalHpp, JumlahTamu, Catatan, DisinkronPada, DibuatOfflinePada. F-07b: IdPengguna (kasir), IdPenyetujuDiskon, DiskonPesanan, DiterimaPada, PerluTinjauan, AlasanTinjauan. F-16b: PoinDitukar, DiskonPoin (bagian dari DiskonPesanan) |
 | `PenjualanDetail` | IdPenjualan, Uuid, IdProduk, NamaProduk (snapshot), IdSatuan, Jumlah, HargaSatuan, JumlahDiskon, IdPromo, SnapshotPajak JSON, JumlahPajak, TotalBaris, HppSatuan, TotalHpp, Pilihan JSON, Catatan, StatusDapur, IdKaryawan (komisi), AlasanVoid. F-07b: IdTenant, UuidProdukSatuan→IdSatuan & KonversiKeDasar, HargaPilihan, Bruto, JumlahDiskonPesanan, BiayaLayanan, PajakEksklusif |
 | `PenjualanPembayaran` | IdPenjualan, Uuid, IdMetodePembayaran, Jumlah, Status, Referensi (kode approval/ref gateway), RefEksternal (unik), DibayarPada |
 | `PenjualanPajak` | IdTenant, IdPenjualan, KodeJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, DasarPengenaan, Dpp, Jumlah (rincian pajak per dokumen per jenis, F-07b) |
@@ -2792,9 +2802,9 @@ erDiagram
 |---|---|
 | `Pelanggan` | IdTenant, Uuid, Nama, NoHp (ternormalisasi `62…`, unik per tenant), Email, TanggalLahir, Alamat, Tag JSON, Catatan, SetujuPemasaran, Status (Aktif/Diarsipkan), DibuatOleh, IdPerangkatPembuat (F-16a); IdTier, TierTetap, TierDievaluasiPada (F-16b); LimitKredit menyusul F-12 |
 | `PelangganAlias` | IdTenant, Uuid (dari perangkat), IdPelanggan: Uuid pelanggan offline yang nomor HP-nya sudah terdaftar (F-16a) |
-| `MutasiPoin` | IdTenant, IdPelanggan, Jenis (Perolehan/PembalikanVoid/PembalikanRetur/Kedaluwarsa/Penyesuaian/Penukaran), Poin (±, bulat), Sisa (baris positif, FIFO), JenisSumber, IdSumber, IdSumberAsal, KedaluwarsaPada, Keterangan, IdPengguna; unik (Jenis, JenisSumber, IdSumber) (F-16b) |
+| `MutasiPoin` | IdTenant, IdPelanggan, Jenis (Perolehan/PembalikanVoid/PembalikanRetur/Kedaluwarsa/Penyesuaian/Penukaran/BatalPenukaran), Poin (±, bulat), Sisa (baris positif, FIFO), JenisSumber, IdSumber, IdSumberAsal, KedaluwarsaPada, Keterangan, IdPengguna; unik (Jenis, JenisSumber, IdSumber) (F-16b) |
 | `TierPelanggan` | IdTenant, Uuid, Kode (unik per tenant), Nama, MinimalBelanja, PengaliPoin, Urutan, Status (F-16b) |
-| `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
+| `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, NilaiTukarPoin, MinimalTukarPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
 | `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
 | `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |
@@ -2935,6 +2945,7 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 | POST | `/api/pos/v1/detak` | Status perangkat, versi app, platform, jumlah outbox tertunda, status printer |
 | POST | `/api/pos/v1/token-notifikasi` | Daftarkan/perbarui token FCM perangkat |
 | GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
+| GET | `/api/pos/v1/pelanggan/{uuidPelanggan}/poin` | Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b, wajib online) |
 | POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
 | POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |

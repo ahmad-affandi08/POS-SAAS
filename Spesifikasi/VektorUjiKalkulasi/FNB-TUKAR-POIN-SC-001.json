@@ -1,0 +1,78 @@
+{
+  "Id": "FNB-TUKAR-POIN-SC-001",
+  "Keterangan": "Penukaran poin (F-16b) mengurangi dasar biaya layanan dan PB1: biaya layanan 5% dan PB1 10% dihitung dari subtotal setelah potongan poin; bayar QRIS tanpa pembulatan",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "5",
+    "BiayaLayananMasukDpp": true,
+    "PembulatanTunai": {
+      "Kelipatan": 100,
+      "Arah": "Bawah"
+    }
+  },
+  "Pajak": [
+    {
+      "Kode": "PB1",
+      "Tarif": "10",
+      "DasarPengenaan": "SubtotalPlusLayanan"
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "EKS",
+      "Jumlah": "2",
+      "HargaSatuan": "18000"
+    },
+    {
+      "Sku": "CRS",
+      "Jumlah": "1",
+      "HargaSatuan": "25000"
+    }
+  ],
+  "Promo": [],
+  "TukarPoin": "6000",
+  "Pembayaran": [
+    {
+      "Metode": "Qris",
+      "Jumlah": "63525"
+    }
+  ],
+  "Harapan": {
+    "Subtotal": "61000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "6000.00",
+    "DiskonPoin": "6000.00",
+    "TotalDiskon": "6000.00",
+    "BiayaLayanan": "2750.00",
+    "TotalPajak": "5775.00",
+    "TotalPajakEksklusif": "5775.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "63525.00",
+    "Pajak": {
+      "PB1": {
+        "Dpp": "57750.00",
+        "Jumlah": "5775.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "36000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "3540.98",
+        "BiayaLayanan": "1622.95",
+        "Pajak": "3408.20",
+        "PajakEksklusif": "3408.20",
+        "TotalBaris": "37490.17"
+      },
+      {
+        "Bruto": "25000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "2459.02",
+        "BiayaLayanan": "1127.05",
+        "Pajak": "2366.80",
+        "PajakEksklusif": "2366.80",
+        "TotalBaris": "26034.83"
+      }
+    ]
+  }
+}
