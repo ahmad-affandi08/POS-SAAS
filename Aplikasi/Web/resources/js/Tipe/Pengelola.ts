@@ -109,3 +109,23 @@ export type DampakVersiMinimum = {
     PerangkatDiBawahDenganOutbox: number;
     OutboxTertunda: number;
 };
+
+/** P-10: satu aturan flag fitur. */
+export type AturanFlagFitur = {
+    Uuid: string;
+    Kunci: string;
+    Cakupan: 'Global' | 'Paket' | 'Tenant' | 'Persentase';
+    Objek: string | null;
+    Nilai: boolean;
+    Persen: number | null;
+    Alasan: string;
+    DiubahOleh: string | null;
+    DiubahPada: string | null;
+};
+
+export type PropsFlagFitur = {
+    Aturan: AturanFlagFitur[];
+    OpsiKunci: Pilihan[];
+    OpsiPaket: Pilihan[];
+    OpsiTenant: Pilihan[];
+};

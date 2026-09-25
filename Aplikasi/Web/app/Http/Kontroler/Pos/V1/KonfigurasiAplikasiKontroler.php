@@ -7,6 +7,7 @@ namespace App\Http\Kontroler\Pos\V1;
 use App\Domain\Organisasi\Enum\PlatformPerangkat;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Tenant\Enum\AplikasiRilis;
+use App\Domain\Tenant\Kueri\FlagFiturTenant;
 use App\Domain\Tenant\Kueri\StatusLanggananTenant;
 use App\Domain\Tenant\Kueri\VersiAplikasiPerangkat;
 use App\Domain\Tenant\Model\RilisAplikasi;
@@ -18,13 +19,13 @@ use Illuminate\Http\Request;
 
 /**
  * `GET /api/pos/v1/konfigurasi-aplikasi` (§14.6, §16.3): versi terbaru & minimal per platform (P-10 `RilisAplikasi`
- * per perangkat: kanal & rollout bertahap; cadangan config/aplikasi.php), catatan rilis, status langganan (boleh
- * berjualan?), dan konfigurasi dasar outlet & perangkat. Tetap bisa dibuka saat langganan ditangguhkan agar aplikasi
- * bisa menampilkan alasannya.
+ * per perangkat: kanal & rollout bertahap; cadangan config/aplikasi.php), catatan rilis, flag fitur tenant (P-10,
+ * kunci → hidup/mati), status langganan (boleh berjualan?), dan konfigurasi dasar outlet & perangkat. Tetap bisa
+ * dibuka saat langganan ditangguhkan agar aplikasi bisa menampilkan alasannya.
  */
 final class KonfigurasiAplikasiKontroler extends Kontroler
 {
-    public function Tampilkan(Request $permintaan, StatusLanggananTenant $statusLangganan, VersiAplikasiPerangkat $versi): JsonResponse
+    public function Tampilkan(Request $permintaan, StatusLanggananTenant $statusLangganan, VersiAplikasiPerangkat $versi, FlagFiturTenant $flag): JsonResponse
     {
         $perangkat = AutentikasiPerangkat::AmbilPerangkat($permintaan);
         $outlet = Outlet::query()->findOrFail($perangkat->IdOutlet);
@@ -52,7 +53,7 @@ final class KonfigurasiAplikasiKontroler extends Kontroler
                 'WajibPembaruan' => $versiPlatform !== null && $versiSaatIni !== null && RilisAplikasi::BandingkanVersi($versiSaatIni, $versiPlatform['VersiMinimal']) < 0,
                 'PerPlatform' => array_map(fn (array $v): array => ['VersiTerbaru' => $v['VersiTerbaru'], 'VersiMinimal' => $v['VersiMinimal'], 'TautanUnduh' => $v['TautanUnduh']], $perPlatform),
             ],
-            'FlagFitur' => new \stdClass,
+            'FlagFitur' => (object) $flag->AmbilUntukTenant($perangkat->IdTenant),
             'Langganan' => PerangkatPosRespons::Langganan($status, $statusLangganan->CekBolehBertransaksiPos($status)),
             'Perangkat' => PerangkatPosRespons::Perangkat($perangkat),
             'Outlet' => PerangkatPosRespons::Outlet($outlet),

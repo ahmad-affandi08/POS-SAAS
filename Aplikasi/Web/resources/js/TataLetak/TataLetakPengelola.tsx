@@ -12,6 +12,7 @@ import {
     ReceiptIcon,
     ScaleIcon,
     ScrollTextIcon,
+    ToggleRightIcon,
     UsersRoundIcon,
     type LucideIcon,
 } from 'lucide-react';
@@ -62,6 +63,7 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
     // P-10 Rilis aplikasi & flag fitur.
     { label: 'Rilis aplikasi', href: '/rilis', izin: IzinPengelola.RilisLihat, ikon: RocketIcon },
+    { label: 'Flag fitur', href: '/flag-fitur', izin: IzinPengelola.RilisLihat, ikon: ToggleRightIcon },
     // P-11
     { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },

@@ -17,11 +17,15 @@ use Illuminate\Support\Carbon;
  * Bila ada lebih dari satu override aktif untuk kunci yang sama, baris terbaru yang menang.
  *
  * Modul outlet (F-01, BR-01.3) diisi bila outlet disebut: kunci `OutletFitur` aktif outlet itu, atau null (tanpa
- * batasan) bila outlet belum punya baris sama sekali. Add-on (F-19) dan flag fitur (P-10) belum tersedia.
+ * batasan) bila outlet belum punya baris sama sekali. Flag fitur (P-10) dari `FlagFiturTenant`; add-on (F-19) belum
+ * tersedia.
  */
 final class SumberFiturTenant
 {
-    public function __construct(private readonly FiturOutlet $fiturOutlet) {}
+    public function __construct(
+        private readonly FiturOutlet $fiturOutlet,
+        private readonly FlagFiturTenant $flagFitur,
+    ) {}
 
     /**
      * @param  bool  $kunci  kunci baris langganan (FOR UPDATE) agar penambahan outlet/pengguna bersamaan dari satu
@@ -55,6 +59,7 @@ final class SumberFiturTenant
             overrideFitur: array_values(array_unique($overrideFitur)),
             overrideBatas: $overrideBatas,
             modulOutletAktif: $idOutlet === null ? null : $this->fiturOutlet->AmbilKunciAktifAtauNull($idTenant, $idOutlet),
+            flagFitur: $this->flagFitur->Ambil($idTenant, $paket?->Id),
         );
     }
 

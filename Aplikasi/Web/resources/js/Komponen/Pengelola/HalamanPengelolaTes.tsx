@@ -9,13 +9,14 @@ import HalamanIntegrasi from '@/Halaman/Pengelola/Integrasi/Daftar';
 import HalamanTarifPajak from '@/Halaman/Pengelola/Referensi/TarifPajak';
 import HalamanWilayah from '@/Halaman/Pengelola/Referensi/Wilayah';
 import HalamanRilis, { AmbilStatusRilis } from '@/Halaman/Pengelola/Rilis/Daftar';
+import HalamanFlagFitur, { AmbilNilaiFlag } from '@/Halaman/Pengelola/Rilis/FlagFitur';
 import HalamanEditorTemplate from '@/Halaman/Pengelola/TemplateSektor/Editor';
 import BidangTanggal, { TulisTanggal, UraiTanggal } from '@/Komponen/Pengelola/BidangTanggal';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
-import { IzinPengelola, type PropsBersamaPengelola, type RilisAplikasi } from '@/Tipe/Pengelola';
+import { IzinPengelola, type AturanFlagFitur, type PropsBersamaPengelola, type RilisAplikasi } from '@/Tipe/Pengelola';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
@@ -573,5 +574,53 @@ describe('Rilis aplikasi (P-10)', () => {
         RenderDenganKueri(<HalamanRilis Rilis={rilis} />);
         expect(screen.queryByRole('button', { name: 'Catat draf rilis' })).toBeNull();
         expect(screen.queryAllByRole('button', { name: /Aksi Aplikasi POS/ })).toHaveLength(0);
+    });
+});
+
+describe('Flag fitur (P-10)', () => {
+    const dasar: AturanFlagFitur = {
+        Uuid: 'F1',
+        Kunci: 'pos.mode-meja',
+        Cakupan: 'Global',
+        Objek: null,
+        Nilai: false,
+        Persen: null,
+        Alasan: 'Crash di Android 9',
+        DiubahOleh: 'Dewi Lestari',
+        DiubahPada: '2026-10-20T03:00:00Z',
+    };
+
+    it('nilai: kill switch, persentase, hidup/mati per tenant', () => {
+        expect(
+            [
+                dasar,
+                { ...dasar, Cakupan: 'Persentase', Nilai: true, Persen: 25 },
+                { ...dasar, Cakupan: 'Tenant', Objek: 'Toko Budi', Nilai: true },
+            ].map((a) => AmbilNilaiFlag(a as AturanFlagFitur).teks),
+        ).toEqual(['Kill switch: mati untuk semua', 'Hidup untuk 25% tenant', 'Hidup']);
+    });
+
+    it('kill switch mengisi Global mati dan mengirim alasan', () => {
+        AturHalaman([IzinPengelola.RilisLihat, IzinPengelola.FlagFiturKelola], '/flag-fitur');
+        RenderDenganKueri(<HalamanFlagFitur Aturan={[dasar]} OpsiKunci={[]} OpsiPaket={[]} OpsiTenant={[]} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Kill switch' }));
+        const dialog = screen.getByRole('dialog');
+        UbahNilai(within(dialog).getByLabelText('Kunci'), 'kasir.struk-digital');
+        UbahNilai(within(dialog).getByLabelText('Alasan perubahan'), 'Crash saat cetak di Sunmi');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Simpan aturan' }));
+        expect(uji.kiriman).toEqual([
+            {
+                metode: 'post',
+                url: '/flag-fitur',
+                data: {
+                    Kunci: 'kasir.struk-digital',
+                    Cakupan: 'Global',
+                    Objek: '',
+                    Nilai: false,
+                    Persen: '',
+                    Alasan: 'Crash saat cetak di Sunmi',
+                },
+            },
+        ]);
     });
 });

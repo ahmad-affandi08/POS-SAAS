@@ -22,6 +22,7 @@ use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
+use App\Http\Kontroler\Pengelola\Rilis\FlagFiturKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\RilisAplikasiKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\Tagihan\TagihanKontroler;
@@ -184,9 +185,14 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
             });
         });
 
-        // P-10 Rilis aplikasi (§19.3: Teknis & Super Admin).
+        // P-10 Rilis aplikasi & flag fitur (§19.3: Teknis & Super Admin).
         Route::middleware($izin(IzinPengelola::RilisLihat))->group(function () use ($izin): void {
             Route::get('/rilis', [RilisAplikasiKontroler::class, 'Daftar'])->name('pengelola.rilis.daftar');
+            Route::get('/flag-fitur', [FlagFiturKontroler::class, 'Daftar'])->name('pengelola.flag-fitur.daftar');
+            Route::middleware($izin(IzinPengelola::FlagFiturKelola))->group(function (): void {
+                Route::post('/flag-fitur', [FlagFiturKontroler::class, 'Simpan'])->name('pengelola.flag-fitur.simpan');
+                Route::delete('/flag-fitur/{flagFitur}', [FlagFiturKontroler::class, 'Hapus'])->name('pengelola.flag-fitur.hapus');
+            });
             Route::middleware($izin(IzinPengelola::RilisKelola))->group(function (): void {
                 Route::post('/rilis', [RilisAplikasiKontroler::class, 'Simpan'])->name('pengelola.rilis.simpan');
                 Route::put('/rilis/{rilis}', [RilisAplikasiKontroler::class, 'Ubah'])->name('pengelola.rilis.ubah');
