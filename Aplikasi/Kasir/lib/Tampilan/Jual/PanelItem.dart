@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:klien_api/KlienApi.dart' show KaryawanPos;
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
@@ -38,6 +39,9 @@ class _PanelItemState extends ConsumerState<PanelItem> {
   );
   late final TextEditingController _catatan = TextEditingController(text: widget.baris?.catatan ?? '');
   late DiskonManual? _diskon = widget.baris?.diskon;
+
+  /// F-18: staf yang melayani baris ini (urutan pilih dipertahankan).
+  late final List<String> _staf = [...?widget.baris?.staf];
   String? _galat;
   String? _galatDiskon;
 
@@ -111,7 +115,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
           kanal: LayananPenjualan.AmbilKanal(keranjang),
           tierPelanggan: keranjang.pelanggan?.kodeTier,
         );
-        pengatur.Ganti(layanan.TambahBaris(keranjang, baris, katalog, k));
+        pengatur.Ganti(layanan.TambahBaris(keranjang, baris.Salin(staf: List.of(_staf)), katalog, k));
         widget.saatSelesai();
         return;
       }
@@ -154,7 +158,9 @@ class _PanelItemState extends ConsumerState<PanelItem> {
         penyetuju = hasil.penyetuju;
       }
       keranjang = keranjang.Salin(
-        baris: [for (final b in keranjang.baris) b.uuid == uuid ? b.Salin(diskon: () => diskon) : b],
+        baris: [
+          for (final b in keranjang.baris) b.uuid == uuid ? b.Salin(diskon: () => diskon, staf: List.of(_staf)) : b,
+        ],
         penyetuju: () => penyetuju,
       );
       pengatur.Ganti(keranjang);
@@ -171,6 +177,41 @@ class _PanelItemState extends ConsumerState<PanelItem> {
       }
     }
   }
+
+  /// F-18: pilih staf yang melayani (maks. 5, komisi dibagi rata). Tanpa data karyawan = tidak ditampilkan.
+  List<Widget> _BangunStaf(BuildContext context) {
+    final karyawan = ref.watch(penyediaKaryawanPos).value ?? const <KaryawanPos>[];
+    if (karyawan.isEmpty) {
+      return const [];
+    }
+    final teks = Theme.of(context).textTheme;
+    return [
+      const SizedBox(height: TokenJarak.jarak8),
+      Text('Dilayani oleh (opsional)', style: teks.labelLarge),
+      const SizedBox(height: TokenJarak.jarak4),
+      Wrap(
+        spacing: TokenJarak.jarak8,
+        runSpacing: TokenJarak.jarak8,
+        children: [
+          for (final k in karyawan)
+            FilterChip(
+              label: Text(k.jabatan == null ? k.nama : '${k.nama} · ${k.jabatan}'),
+              selected: _staf.contains(k.uuid),
+              onSelected: (pilih) => setState(() {
+                if (!pilih) {
+                  _staf.remove(k.uuid);
+                } else if (_staf.length < maksStaf) {
+                  _staf.add(k.uuid);
+                }
+              }),
+            ),
+        ],
+      ),
+    ];
+  }
+
+  /// Sama dengan server `PencatatKomisiPenjualan::MAKS_STAF_PER_BARIS`.
+  static const int maksStaf = 5;
 
   void _Hapus() {
     final layanan = ref.read(penyediaLayananPenjualan);
@@ -272,6 +313,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
             maxLength: 255,
             decoration: const InputDecoration(labelText: 'Catatan (opsional)', border: OutlineInputBorder()),
           ),
+          ..._BangunStaf(context),
           if (_modeUbah) ...[
             const SizedBox(height: TokenJarak.jarak8),
             Text('Diskon item', style: teks.labelLarge),

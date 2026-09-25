@@ -10,6 +10,7 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Sinkron\Data\DataKonteksSinkron;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
+use App\Domain\Karyawan\Layanan\PencatatKomisiPenjualan;
 use App\Domain\Kasir\Layanan\ValidasiItemSinkron;
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
 use App\Domain\Penjualan\Aksi\TerimaPenjualanPos;
@@ -106,6 +107,9 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Baris.*.DiskonManual.Persen' => ['sometimes', 'nullable', 'string', $persenDiskon],
             'Baris.*.DiskonManual.Jumlah' => ['sometimes', 'nullable', 'string', $uang],
             'Baris.*.Catatan' => ['sometimes', 'nullable', 'string', 'max:255'],
+            // F-18: staf yang melayani baris (komisi).
+            'Baris.*.Staf' => ['sometimes', 'nullable', 'array', 'max:'.PencatatKomisiPenjualan::MAKS_STAF_PER_BARIS],
+            'Baris.*.Staf.*' => ['string', 'ulid', 'distinct'],
             'DiskonManualPesanan' => ['sometimes', 'nullable', 'array'],
             'DiskonManualPesanan.Persen' => ['sometimes', 'nullable', 'string', $persenDiskon],
             'DiskonManualPesanan.Jumlah' => ['sometimes', 'nullable', 'string', $uang],
@@ -254,6 +258,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 kodePajak: is_array($b['KodePajak'] ?? null) ? array_values(array_map('strval', $b['KodePajak'])) : null,
                 diskonManual: self::AmbilDiskon($b['DiskonManual'] ?? null, "Baris.{$indeks}.DiskonManual"),
                 catatan: self::AmbilTeks($b['Catatan'] ?? null),
+                uuidKaryawan: is_array($b['Staf'] ?? null) ? array_values(array_map(fn ($u): string => strtoupper((string) $u), $b['Staf'])) : [],
             );
         }
 

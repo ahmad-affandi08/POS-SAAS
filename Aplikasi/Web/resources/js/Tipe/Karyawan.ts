@@ -70,3 +70,43 @@ export type PropsAbsensi = {
     OpsiKaryawan: OpsiUuidNama[];
     OpsiOutlet: OpsiUuidNama[];
 };
+
+/* F-18 bagian 2: komisi. */
+export type CakupanKomisi = 'Semua' | 'Kategori' | 'Produk';
+export type JenisKomisi = 'Persen' | 'Tetap';
+
+export type BarisAturanKomisi = {
+    Uuid: string;
+    Nama: string;
+    Cakupan: CakupanKomisi;
+    LabelCakupan: string;
+    UuidProduk: string | null;
+    UuidKategori: string | null;
+    NamaSasaran: string;
+    LevelStaf: string | null;
+    Jenis: JenisKomisi;
+    Nilai: string;
+    Status: 'Aktif' | 'Diarsipkan';
+};
+
+export type PropsAturanKomisi = {
+    Aturan: BarisAturanKomisi[];
+    OpsiKategori: OpsiUuidNama[];
+    Izin: { Kelola: boolean };
+};
+
+export type BarisLaporanKomisi = {
+    Uuid: string;
+    Nama: string;
+    Jabatan: string | null;
+    JumlahBaris: number;
+    TotalDasar: string;
+    Kotor: string;
+    Dibatalkan: string;
+    Bersih: string;
+};
+
+export type PropsLaporanKomisi = {
+    Komisi: HasilTabel<BarisLaporanKomisi, { Bersih: string }> & { Ringkasan: { Bersih: string } };
+    OpsiOutlet: OpsiUuidNama[];
+};

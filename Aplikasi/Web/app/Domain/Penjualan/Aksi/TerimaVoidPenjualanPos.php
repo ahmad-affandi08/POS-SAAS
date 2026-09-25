@@ -14,6 +14,7 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Karyawan\Layanan\PencatatKomisiPenjualan;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
@@ -72,6 +73,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatAudit $audit,
         private readonly PencatatPoinPenjualan $poin,
         private readonly PencatatPiutangPenjualan $piutang,
+        private readonly PencatatKomisiPenjualan $komisi,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -185,6 +187,8 @@ final class TerimaVoidPenjualanPos
         $this->poin->BalikVoid($penjualan->Id);
         // F-12: piutang penjualan tempo dibatalkan (jurnal pembalik sudah mengkredit Piutang Usaha).
         $this->piutang->Batalkan($penjualan->Id, $kasir->id);
+        // F-18: komisi penjualan yang di-void dibatalkan penuh.
+        $this->komisi->Batalkan($penjualan->Id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Kasir\Kueri;
 
+use App\Domain\Karyawan\Kueri\KaryawanPos;
 use App\Domain\Kasir\Model\KategoriKas;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
@@ -37,6 +38,7 @@ final class DataAwalKasir
         private readonly TanggalBisnisOutlet $tanggalBisnis,
         private readonly DaftarMetodePembayaran $metodePembayaran,
         private readonly NomorUrutPenjualanPerangkat $nomorUrut,
+        private readonly KaryawanPos $karyawan,
     ) {}
 
     /**
@@ -100,6 +102,8 @@ final class DataAwalKasir
                 ->map(fn (KategoriKas $k): array => ['Uuid' => $k->Uuid, 'Nama' => $k->Nama, 'Jenis' => $k->Jenis->value])
                 ->all()),
             'Staf' => $this->staf->Ambil($perangkat),
+            // F-18: staf yang bisa dipilih sebagai pelayan baris (komisi).
+            'Karyawan' => $this->karyawan->Ambil($perangkat->IdOutlet),
             'PinOffline' => [
                 'Tersedia' => $perangkat->KunciPinOffline !== null,
                 'Parameter' => VerifierPinOffline::AmbilParameter(),

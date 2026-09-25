@@ -65,6 +65,7 @@ class ItemKeranjang {
     this.diskon,
     this.hargaTermasukPajak,
     this.pajak = const [],
+    this.staf = const [],
   });
 
   final String uuid;
@@ -85,6 +86,9 @@ class ItemKeranjang {
   /// Jenis pajak dari kelompok pajak produk (disaring profil & tarif saat dihitung).
   final List<PajakProduk> pajak;
 
+  /// F-18: Uuid karyawan yang melayani baris ini (komisi dibagi rata di server).
+  final List<String> staf;
+
   Uang AmbilHargaPilihan() => pilihan.fold(Uang.Nol(), (total, p) => total.Tambah(p.harga));
 
   /// Baris yang sama (produk, satuan, pilihan) tanpa catatan & diskon digabung saat produk ditambah lagi.
@@ -95,6 +99,8 @@ class ItemKeranjang {
       lain.catatan == null &&
       diskon == null &&
       lain.diskon == null &&
+      staf.isEmpty &&
+      lain.staf.isEmpty &&
       pilihan.map((p) => p.uuid).toSet().containsAll(lain.pilihan.map((p) => p.uuid)) &&
       pilihan.length == lain.pilihan.length;
 
@@ -107,6 +113,7 @@ class ItemKeranjang {
     List<PilihanTerpilih>? pilihan,
     String? Function()? catatan,
     DiskonManual? Function()? diskon,
+    List<String>? staf,
   }) => ItemKeranjang(
     uuid: uuid,
     uuidProduk: uuidProduk,
@@ -121,6 +128,7 @@ class ItemKeranjang {
     diskon: diskon == null ? this.diskon : diskon(),
     hargaTermasukPajak: hargaTermasukPajak,
     pajak: pajak,
+    staf: staf ?? this.staf,
   );
 
   Map<String, Object?> KeJson() => {
@@ -137,6 +145,7 @@ class ItemKeranjang {
     'DiskonManual': diskon?.KeJson(),
     'HargaTermasukPajak': hargaTermasukPajak,
     'Pajak': [for (final p in pajak) p.KeJson()],
+    'Staf': staf,
   };
 
   static ItemKeranjang DariJson(Map<String, Object?> json) => ItemKeranjang(
@@ -159,6 +168,7 @@ class ItemKeranjang {
       for (final p in (json['Pajak'] as List<Object?>? ?? const []).whereType<Map<String, Object?>>())
         PajakProduk.DariJson(p),
     ],
+    staf: [...(json['Staf'] as List<Object?>? ?? const []).whereType<String>()],
   );
 }
 

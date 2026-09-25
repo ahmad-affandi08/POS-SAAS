@@ -345,6 +345,23 @@ class MetodePembayaranPos {
 /// `GET /data-awal` (F-06, ditambah F-07b & F-11). Kunci yang absen (server lama) memakai nilai bawaan agar
 /// kompatibel mundur: batas diskon 10% / 30%, tanpa pembulatan tunai, profil pajak kosong, tanpa tarif & metode;
 /// tutup shift buta aktif, toleransi selisih kas Rp 10.000, dan batas retur 7 hari.
+/// Staf pelayan baris penjualan (F-18, data awal `Karyawan`).
+class KaryawanPos {
+  const KaryawanPos({required this.uuid, required this.nama, this.jabatan});
+
+  final String uuid;
+  final String nama;
+  final String? jabatan;
+
+  Map<String, Object?> KeJson() => {'Uuid': uuid, 'Nama': nama, 'Jabatan': jabatan};
+
+  static KaryawanPos DariJson(Map<String, Object?> json) => KaryawanPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    nama: UraiJson.AmbilTeks(json['Nama']),
+    jabatan: UraiJson.AmbilTeksAtauNull(json['Jabatan']),
+  );
+}
+
 class DataAwal {
   const DataAwal({
     required this.batasKasKeluar,
@@ -368,6 +385,7 @@ class DataAwal {
     this.toleransiSelisihKas = toleransiSelisihKasBawaan,
     this.batasHariRetur = batasHariReturBawaan,
     this.batasHariLewatJatuhTempo = 0,
+    this.karyawan = const [],
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -414,6 +432,9 @@ class DataAwal {
   /// hari (`Pengaturan.BatasHariLewatJatuhTempo`; server lama tanpa kunci ini = 0).
   final int batasHariLewatJatuhTempo;
 
+  /// F-18: staf yang bisa dipilih sebagai pelayan baris (komisi); server lama = kosong.
+  final List<KaryawanPos> karyawan;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -439,6 +460,7 @@ class DataAwal {
       toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
+      karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
     );
   }
 }

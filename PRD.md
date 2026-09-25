@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.65 |
+| Versi | 1.66 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -86,6 +86,7 @@
 | 1.63 | Rincian F-12 bagian 1 (piutang pelanggan): limit kredit & termin di data pelanggan, metode **Tempo** di POS (hanya bila pelanggan dipilih; metode dibuat sistem saat limit kredit pertama diisi), BR-12.1 dengan PIN penyetuju ber-izin baru `penjualan.tempo.setujui` (cek dari cache perangkat; cache basi = diterima + tinjauan `TempoBermasalah`), piutang per penjualan tempo (jurnal Dr Piutang Usaha), void membatalkan piutang yang belum dibayar, retur memotong piutang lebih dulu, back-office piutang & umur 0–30/31–60/61–90/>90, pelunasan sebagian/banyak piutang sekaligus (Dr Kas/Bank, Cr Piutang Usaha) yang bisa dibatalkan, skema lokal POS v9. Keputusan pemilik produk: F-12 dipecah (DP/uang muka, pengingat WA, giro = bagian 2), PIN penyetuju untuk BR-12.1, void/retur mengurangi piutang. |
 | 1.64 | Rincian F-18 bagian 1 (EMP-01/02/03): data karyawan (opsional tertaut akun pengguna, level staf, gaji pokok hanya untuk pengelola), jadwal kerja mingguan per outlet (salin minggu lalu), absensi masuk/keluar dari aplikasi kasir dengan PIN + swafoto kamera depan bila perangkat berkamera (item outbox `Absensi.Masuk`/`Absensi.Keluar`, idempoten, karyawan dibuat otomatis dari absensi), rekap absensi dengan keterlambatan terhadap jadwal, izin `karyawan.lihat`/`karyawan.kelola`, skema lokal POS v10. Keputusan pemilik produk: F-18 dipecah (komisi = bagian 2; target, kasbon, rekap gaji, geofence HP pribadi = bagian 3), swafoto wajib bila kamera ada, karyawan tabel terpisah, komisi tanpa jurnal sampai rekap gaji. |
 | 1.65 | Cara kerja agen (D-17): keputusan pemilik produk: di lokal hanya test yang terdampak perubahan yang dijalankan (analisis statis tetap seluruh kode); suite penuh dijalankan CI `CekKepatuhan.yml` di setiap push. Langkah 3 `/cek-dod` diperbarui. |
+| 1.66 | Rincian F-18 bagian 2 (EMP-04 komisi): aturan komisi (semua produk/kategori/produk, persen atau nominal per jumlah, opsional per level staf; paling spesifik menang), kasir memilih staf pelayan per baris di panel item (`Penjualan.Buat` `Baris.*.Staf`, maks. 5, dibagi rata), komisi dicatat server di transaksi penjualan (staf tidak dikenal = tinjauan `StafTidakDikenal`), void membatalkan penuh, retur memotong proporsional kumulatif, laporan komisi per karyawan; data awal POS `Karyawan`. Tanpa jurnal sampai rekap gaji (keputusan pemilik produk v1.64). |
 
 ---
 
@@ -1557,6 +1558,15 @@ promo:
 - **Rekap absensi** `/kelola/karyawan/absensi` (`TabelData` mode server; saring tanggal, karyawan, outlet, belum keluar; pengguna terbatas outlet hanya melihat outletnya): jam masuk/keluar waktu outlet, durasi, jadwal, **terlambat** = masuk lewat jam mulai jadwal + `config('karyawan.ToleransiTerlambatMenit')` (bawaan 5 menit), status Tepat waktu / Terlambat / Tanpa jadwal / Belum keluar, tautan swafoto.
 - **Belum di bagian 1:** komisi (bagian 2), target penjualan, kasbon (J-18.1), rekap gaji & lembur, geofence dari HP pribadi (aplikasi staf belum ada), koreksi absensi manual oleh pengelola.
 
+**Rincian F-18 bagian 2 (v1.66, EMP-04 komisi; keputusan pemilik produk v1.64: komisi hanya laporan sampai rekap gaji; rincian lain diputuskan agen atas mandat D-12):**
+- **Aturan komisi** `/kelola/karyawan/komisi` (lihat `karyawan.lihat`, ubah `karyawan.kelola`; menu Karyawan › Aturan komisi): nama, berlaku untuk **semua produk / satu kategori / satu produk** (rujukan Uuid katalog), level staf opsional (kosong = semua level), jenis **persen** dari dasar komisi (0–100) atau **nominal per jumlah** (> 0). Arsip/pulihkan. Perubahan hanya untuk penjualan berikutnya. Audit `aturan-komisi.tambah|ubah|arsipkan|pulihkan`.
+- **Pemilihan aturan per staf:** aturan aktif paling spesifik (Produk > Kategori > Semua); pada tingkat sama, level staf yang cocok mengalahkan "semua level"; seri = aturan terbaru. Staf tanpa aturan yang cocok tetap tercatat (komisi 0) agar laporan "dilayani oleh" utuh.
+- **Dasar komisi** = nilai baris setelah diskon (termasuk promo & diskon pesanan) tanpa pajak dan biaya layanan: `Bruto − JumlahDiskon − JumlahDiskonPesanan − (JumlahPajak − PajakEksklusif)`.
+- **POS:** data awal `Karyawan` `[{Uuid, Nama, Jabatan}]` (karyawan aktif outlet ini atau tanpa outlet utama). Panel item menampilkan "Dilayani oleh (opsional)" (maks. 5 staf); baris dengan staf tidak digabung dengan baris lain; staf ikut disimpan di pesanan tertahan. `Penjualan.Buat` menerima `Baris.*.Staf` `[UuidKaryawan]`.
+- **Server:** tabel `Komisi` satu baris per (baris penjualan, karyawan), porsi 1/n; bila semua staf memakai aturan yang sama, sisa pembulatan ke staf terakhir sehingga Σ bagian = komisi penuh baris. Dicatat di transaksi `Penjualan.Buat` (idempoten). Staf yang belum dikenal server tidak mendapat komisi; penjualan tetap diterima + tinjauan `StafTidakDikenal`. **Void** = komisi dibatalkan penuh; **retur** = dibatalkan proporsional kumulatif `Jumlah × diretur ÷ dijual` (retur terakhir = penuh). Tanpa jurnal.
+- **Laporan komisi** `/kelola/karyawan/komisi/laporan` (`TabelData` mode server; saring tanggal bisnis & outlet, cari nama): per karyawan jumlah baris dilayani, nilai penjualan (dasar × porsi), komisi, batal (void/retur), bersih; ringkasan total bersih.
+- **Belum di bagian 2 (bagian 3):** target penjualan, kasbon (J-18.1), rekap gaji & jurnal komisi (Dr Beban Gaji & Komisi, Cr Hutang Komisi/Kas), komisi bertingkat per omzet, porsi pembagian tidak rata.
+
 ---
 
 ### F-19 · Billing Langganan SaaS
@@ -2868,8 +2878,8 @@ erDiagram
 | `Karyawan` | IdTenant, Uuid, IdPengguna (opsional, unik per tenant), IdOutlet (outlet utama, opsional), Nama, Jabatan, LevelStaf, GajiPokok, Status (Aktif/Nonaktif), DibuatOleh (F-18) |
 | `JadwalKerja` | IdTenant, IdKaryawan, IdOutlet, Tanggal, JamMulai, JamSelesai (`HH:mm`); unik (IdKaryawan, Tanggal) (F-18) |
 | `Absensi` | IdTenant, Uuid (dari perangkat), IdKaryawan, IdOutlet, IdPerangkat, TanggalBisnis, MasukPada, KeluarPada, PathSwafotoMasuk, PathSwafotoKeluar (F-18; Lintang/Bujur menyusul geofence) |
-| `AturanKomisi` | Cakupan (Produk/Kategori/Layanan), Jenis (Persen/Tetap), Nilai, LevelStaf |
-| `Komisi` | IdKaryawan, IdPenjualanDetail, Jumlah, Periode |
+| `AturanKomisi` | IdTenant, Uuid, Nama, Cakupan (Semua/Kategori/Produk), UuidProduk, UuidKategori, LevelStaf, Jenis (Persen/Tetap), Nilai, Status (Aktif/Diarsipkan) (F-18) |
+| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan; unik (IdPenjualanDetail, IdKaryawan) (F-18) |
 | `Penggajian` / `PenggajianDetail` | Periode, Status / Pendapatan JSON, Potongan JSON |
 
 **Sistem**

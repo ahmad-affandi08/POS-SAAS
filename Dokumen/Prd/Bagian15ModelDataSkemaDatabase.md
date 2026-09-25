@@ -195,8 +195,8 @@ erDiagram
 | `Karyawan` | IdTenant, Uuid, IdPengguna (opsional, unik per tenant), IdOutlet (outlet utama, opsional), Nama, Jabatan, LevelStaf, GajiPokok, Status (Aktif/Nonaktif), DibuatOleh (F-18) |
 | `JadwalKerja` | IdTenant, IdKaryawan, IdOutlet, Tanggal, JamMulai, JamSelesai (`HH:mm`); unik (IdKaryawan, Tanggal) (F-18) |
 | `Absensi` | IdTenant, Uuid (dari perangkat), IdKaryawan, IdOutlet, IdPerangkat, TanggalBisnis, MasukPada, KeluarPada, PathSwafotoMasuk, PathSwafotoKeluar (F-18; Lintang/Bujur menyusul geofence) |
-| `AturanKomisi` | Cakupan (Produk/Kategori/Layanan), Jenis (Persen/Tetap), Nilai, LevelStaf |
-| `Komisi` | IdKaryawan, IdPenjualanDetail, Jumlah, Periode |
+| `AturanKomisi` | IdTenant, Uuid, Nama, Cakupan (Semua/Kategori/Produk), UuidProduk, UuidKategori, LevelStaf, Jenis (Persen/Tetap), Nilai, Status (Aktif/Diarsipkan) (F-18) |
+| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan; unik (IdPenjualanDetail, IdKaryawan) (F-18) |
 | `Penggajian` / `PenggajianDetail` | Periode, Status / Pendapatan JSON, Potongan JSON |
 
 **Sistem**

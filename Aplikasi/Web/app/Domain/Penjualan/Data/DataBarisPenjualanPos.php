@@ -9,13 +9,15 @@ use App\Domain\Bersama\Nilai\Uang;
 
 /**
  * Satu baris item outbox `Penjualan.Buat` (F-07b). `uuidProdukSatuan` null = satuan dasar. `kodePajak` null = semua
- * pajak dokumen berlaku, `[]` = baris tanpa pajak. `hargaTermasukPajak` null = ikut dokumen.
+ * pajak dokumen berlaku, `[]` = baris tanpa pajak. `hargaTermasukPajak` null = ikut dokumen. F-18: [uuidKaryawan] staf
+ * yang melayani baris (komisi dibagi rata; kosong = tanpa komisi).
  */
 final readonly class DataBarisPenjualanPos
 {
     /**
      * @param  list<array{UuidPilihan: string, Nama: string, Harga: string}>  $pilihan
      * @param  list<string>|null  $kodePajak
+     * @param  list<string>  $uuidKaryawan
      */
     public function __construct(
         public string $uuid,
@@ -29,5 +31,6 @@ final readonly class DataBarisPenjualanPos
         public ?array $kodePajak,
         public ?DataDiskonManual $diskonManual,
         public ?string $catatan,
+        public array $uuidKaryawan = [],
     ) {}
 }

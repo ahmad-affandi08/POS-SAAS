@@ -861,6 +861,7 @@ class LayananPenjualan {
             'KodePajak': hitungan.kodePajakBaris[i],
             'DiskonManual': keranjang.baris[i].diskon?.KeJson(),
             'Catatan': keranjang.baris[i].catatan,
+            if (keranjang.baris[i].staf.isNotEmpty) 'Staf': keranjang.baris[i].staf,
           },
       ],
       'DiskonManualPesanan': keranjang.diskonPesanan?.KeJson(),

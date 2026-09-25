@@ -865,6 +865,36 @@ void main() {
     });
   });
 
+  group('F-18 staf pelayan baris (komisi)', () {
+    test(
+      'baris dengan staf mengirim Baris.Staf; tanpa staf tidak ada kunci; keranjang tertahan menyimpan staf',
+      () async {
+        await Siapkan();
+        final dasar = KeranjangContoh();
+        final keranjang = dasar.Salin(
+          baris: [
+            dasar.baris.first.Salin(staf: ['01K5KRY0000000000000000001', '01K5KRY0000000000000000002']),
+            ...dasar.baris.skip(1),
+          ],
+        );
+        expect(keranjang.baris.first.CekBisaDigabung(dasar.baris.first), isFalse);
+        final hasil = await u.penjualan.Bayar(
+          keranjang: keranjang,
+          pembayaran: [PembayaranMasukan(metode: Metode('Tunai'), jumlah: Uang.DariBulat(100000))],
+          kasir: rina,
+          k: k,
+        );
+        final baris = ((await AmbilDataOutbox(hasil.uuid))['Baris']! as List<Object?>).cast<Map<String, Object?>>();
+        expect(baris.first['Staf'], ['01K5KRY0000000000000000001', '01K5KRY0000000000000000002']);
+        expect(baris.last.containsKey('Staf'), isFalse);
+        expect(
+          ItemKeranjang.DariJson(jsonDecode(jsonEncode(keranjang.baris.first.KeJson())) as Map<String, Object?>).staf,
+          ['01K5KRY0000000000000000001', '01K5KRY0000000000000000002'],
+        );
+      },
+    );
+  });
+
   group('F-12 penjualan tempo (BR-12.1)', () {
     const toko = PelangganTerpilih(
       uuid: '01K5PELANGGAN0000000000009',

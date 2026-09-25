@@ -14,6 +14,8 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Karyawan\Data\DataBarisKomisi;
+use App\Domain\Karyawan\Layanan\PencatatKomisiPenjualan;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Katalog\Data\DataKebutuhanStok;
 use App\Domain\Katalog\Data\DataProdukPenjualan;
@@ -134,6 +136,7 @@ final class TerimaPenjualanPos
         private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
         private readonly PencatatPiutangPenjualan $piutang,
+        private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
     ) {}
 
@@ -313,6 +316,32 @@ final class TerimaPenjualanPos
         if ($tempo !== null) {
             $this->piutang->Catat($idPelanggan, $penjualan->Id, $penjualan->IdOutlet, $penjualan->Nomor, $tanggalBisnis, $tempo);
 
+        }
+
+        // F-18: komisi staf yang melayani baris (hanya laporan, tanpa jurnal) di transaksi yang sama. Staf yang belum dikenal
+        // server tidak mendapat komisi; penjualan tetap diterima + tinjauan.
+        $barisKomisi = [];
+
+        foreach ($data->baris as $indeks => $baris) {
+            if ($baris->uuidKaryawan === []) {
+                continue;
+            }
+
+            $h = $hasil->baris[$indeks];
+            $barisKomisi[] = new DataBarisKomisi(
+                $detail[$indeks]->Id,
+                $baris->uuidProduk,
+                $produk[$baris->uuidProduk]->uuidKategori,
+                $baris->jumlah,
+                $h->bruto->Kurangi($h->diskon)->Kurangi($h->diskonPesanan)->Kurangi($h->pajak->Kurangi($h->pajakEksklusif)),
+                $baris->uuidKaryawan,
+            );
+        }
+
+        $masalahKomisi = $this->komisi->Catat($penjualan->Id, $penjualan->IdOutlet, $tanggalBisnis, $barisKomisi);
+
+        if ($masalahKomisi !== []) {
+            $tinjauan['StafTidakDikenal'] = 'StafTidakDikenal: '.implode('; ', $masalahKomisi).', komisinya tidak dicatat';
         }
 
         // F-16c: pemakaian promo & kuota di transaksi yang sama.

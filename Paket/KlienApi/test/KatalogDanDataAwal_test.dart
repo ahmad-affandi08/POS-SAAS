@@ -331,6 +331,21 @@ void main() {
   });
 
   group('DataAwal F-09', () {
+    test('F-18: daftar Karyawan (server lama = kosong)', () {
+      expect(DataAwal.DariJson(DataAwalF06()).karyawan, isEmpty);
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Karyawan': [
+          {'Uuid': 'K1', 'Nama': 'Maya Senior', 'Jabatan': 'Stylist'},
+          {'Uuid': 'K2', 'Nama': 'Dewi', 'Jabatan': null},
+        ],
+      });
+      expect(data.karyawan.map((k) => (k.uuid, k.nama, k.jabatan)), [
+        ('K1', 'Maya Senior', 'Stylist'),
+        ('K2', 'Dewi', null),
+      ]);
+    });
+
     test('F-12: BatasHariLewatJatuhTempo (server lama = 0) & posisi kredit pelanggan POS', () {
       expect(DataAwal.DariJson(DataAwalF06()).batasHariLewatJatuhTempo, 0);
       expect(

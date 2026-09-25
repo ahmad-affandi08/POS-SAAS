@@ -65,7 +65,9 @@ Map<String, Object?> DataAwalUji({
   Map<String, Object?>? nomorUrutRetur,
   bool tempo = false,
   int? batasHariLewatJatuhTempo,
+  List<Map<String, Object?>>? karyawan,
 }) => {
+  'Karyawan': ?karyawan,
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
     'ShiftBersama': shiftBersama,

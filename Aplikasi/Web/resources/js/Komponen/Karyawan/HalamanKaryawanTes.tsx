@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanAbsensi, { FormatDurasiMenit } from '@/Halaman/Kelola/Karyawan/Absensi';
 import HalamanDaftarKaryawan from '@/Halaman/Kelola/Karyawan/Daftar';
+import HalamanAturanKomisi, { FormatNilaiKomisi } from '@/Halaman/Kelola/Karyawan/Komisi';
+import HalamanLaporanKomisi from '@/Halaman/Kelola/Karyawan/LaporanKomisi';
 import HalamanJadwalKerja, {
     CekJam,
     GeserTanggal,
@@ -166,5 +168,41 @@ describe('Halaman karyawan (F-18)', () => {
         expect(screen.getAllByRole('link', { name: 'Swafoto masuk' })[0]?.getAttribute('href')).toBe(
             '/kelola/karyawan/absensi/01J9ABS0000000000000000001/swafoto/masuk',
         );
+    });
+
+    it('komisi: format nilai, tombol tambah hanya untuk karyawan.kelola; laporan menampilkan total bersih', () => {
+        expect(FormatNilaiKomisi('Persen', '12.50')).toBe('12,50%');
+        expect(FormatNilaiKomisi('Persen', '10.00')).toBe('10%');
+        expect(FormatNilaiKomisi('Tetap', '5000.00')).toBe('Rp 5.000 per jumlah');
+        window.history.replaceState({}, '', '/kelola/karyawan/komisi');
+        const aturan = {
+            Uuid: '01J9ATR0000000000000000001',
+            Nama: 'Senior potong rambut',
+            Cakupan: 'Produk' as const,
+            LabelCakupan: 'Produk',
+            UuidProduk: '01J9PRD0000000000000000001',
+            UuidKategori: null,
+            NamaSasaran: 'Potong Rambut Wanita Panjang',
+            LevelStaf: 'Senior',
+            Jenis: 'Persen' as const,
+            Nilai: '20.00',
+            Status: 'Aktif' as const,
+        };
+        RenderUji(<HalamanAturanKomisi Aturan={[aturan]} OpsiKategori={[]} Izin={{ Kelola: true }} />);
+        expect(screen.getAllByRole('button', { name: 'Tambah aturan komisi' }).length).toBeGreaterThan(0);
+        expect(screen.getAllByText('20%').length).toBeGreaterThan(0);
+        cleanup();
+        RenderUji(<HalamanAturanKomisi Aturan={[aturan]} OpsiKategori={[]} Izin={{ Kelola: false }} />);
+        expect(screen.queryByRole('button', { name: 'Tambah aturan komisi' })).toBeNull();
+        cleanup();
+
+        window.history.replaceState({}, '', '/kelola/karyawan/komisi/laporan');
+        RenderUji(
+            <HalamanLaporanKomisi
+                Komisi={{ ...BuatHasilTabel([]), Ringkasan: { Bersih: '1250000.00' } }}
+                OpsiOutlet={[Outlet]}
+            />,
+        );
+        expect(screen.getByText('Rp 1.250.000')).toBeTruthy();
     });
 });

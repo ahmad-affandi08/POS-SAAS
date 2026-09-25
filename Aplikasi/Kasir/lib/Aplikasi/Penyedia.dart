@@ -324,6 +324,9 @@ final penyediaPerluTindakan = StreamProvider<List<BarisOutbox>>(
   (ref) => ref.watch(penyediaRepositori).PantauPerluTindakan(),
 );
 
+/// F-18: staf pelayan baris penjualan (komisi) dari data awal.
+final penyediaKaryawanPos = FutureProvider<List<KaryawanPos>>((ref) => ref.watch(penyediaRepositori).AmbilKaryawan());
+
 final penyediaStaf = FutureProvider<List<StafLokal>>(
   (ref) async => (await ref.watch(penyediaRepositori).AmbilStaf()).map(StafLokal.DariBaris).toList(),
 );
@@ -418,6 +421,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
   Future<void> Aktifkan(String kode) async {
     await ref.read(penyediaLayananPerangkat).Aktifkan(kode);
     ref.invalidate(penyediaStaf);
+    ref.invalidate(penyediaKaryawanPos);
     ref.invalidate(penyediaIdentitas);
     ref.invalidate(penyediaKonteksPenjualan);
     state = const KeadaanSesi(TahapSesi.PilihKasir);
@@ -460,6 +464,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       final tersambung = await ref.read(penyediaLayananPerangkat).SegarkanDataAwal();
       ref.read(penyediaKoneksi.notifier).Tandai(tersambung ? StatusKoneksi.Online : StatusKoneksi.Offline);
       ref.invalidate(penyediaStaf);
+      ref.invalidate(penyediaKaryawanPos);
       ref.invalidate(penyediaKategori);
       ref.invalidate(penyediaKonteksPenjualan);
       ref.invalidate(penyediaIdentitas);
@@ -514,6 +519,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
 
   void _Dicabut(String pesan) {
     ref.invalidate(penyediaStaf);
+    ref.invalidate(penyediaKaryawanPos);
     state = KeadaanSesi(TahapSesi.BelumAktif, pesan: pesan);
   }
 }

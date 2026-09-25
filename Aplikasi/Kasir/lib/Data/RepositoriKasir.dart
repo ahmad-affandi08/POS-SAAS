@@ -52,6 +52,9 @@ abstract final class KunciPengaturan {
   /// F-12 BR-12.1: batas hari lewat jatuh tempo piutang pelanggan sebelum penjualan tempo butuh penyetuju.
   static const String batasHariLewatJatuhTempo = 'BatasHariLewatJatuhTempo';
 
+  /// F-18: daftar staf pelayan (JSON `[{Uuid, Nama, Jabatan}]`).
+  static const String karyawan = 'Karyawan';
+
   /// Uuid shift yang baru ditutup dan laporan Z-nya belum ditutup kasir (bertahan bila aplikasi dimulai ulang).
   static const String laporanZTertunda = 'LaporanZTertunda';
 
@@ -172,6 +175,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.toleransiSelisihKas, data.toleransiSelisihKas);
     await SimpanPengaturan(KunciPengaturan.batasHariRetur, '${data.batasHariRetur}');
     await SimpanPengaturan(KunciPengaturan.batasHariLewatJatuhTempo, '${data.batasHariLewatJatuhTempo}');
+    await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);
@@ -295,6 +299,15 @@ class RepositoriKasir {
       });
 
   /// Tambah entri outbox. Hanya dipanggil di dalam `db.transaction` bersama dokumennya.
+  /// F-18: staf pelayan dari data awal terakhir.
+  Future<List<KaryawanPos>> AmbilKaryawan() async {
+    final teks = await AmbilPengaturan(KunciPengaturan.karyawan);
+    final data = teks == null ? null : jsonDecode(teks);
+    return data is List<Object?>
+        ? [for (final k in data.whereType<Map<String, Object?>>()) KaryawanPos.DariJson(k)]
+        : const [];
+  }
+
   Future<void> TambahOutbox(ItemOutbox item, DateTime sekarang) => db
       .into(db.outbox)
       .insert(

@@ -235,6 +235,8 @@ final class BantuanPenjualan
                 'KodePajak' => $b['KodePajak'] ?? null,
                 'DiskonManual' => $b['DiskonManual'] ?? null,
                 'Catatan' => $b['Catatan'] ?? null,
+                // F-18: staf yang melayani baris (Uuid karyawan).
+                ...(isset($b['Staf']) ? ['Staf' => $b['Staf']] : []),
             ];
         }
 

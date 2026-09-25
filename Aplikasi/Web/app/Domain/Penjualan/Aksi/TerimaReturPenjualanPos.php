@@ -13,6 +13,7 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Karyawan\Layanan\PencatatKomisiPenjualan;
 use App\Domain\Kasir\Data\DataInfoShift;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
@@ -99,6 +100,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatAudit $audit,
         private readonly PencatatPoinPenjualan $poin,
         private readonly PencatatPiutangPenjualan $piutang,
+        private readonly PencatatKomisiPenjualan $komisi,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -239,6 +241,12 @@ final class TerimaReturPenjualanPos
         }
 
         $this->piutang->Kurangi($penjualan->Id, $potongPiutang, $kasir->id);
+
+        // F-18: komisi baris yang diretur dibatalkan proporsional kumulatif.
+        foreach ($detail as $indeks => $d) {
+            $sesudah = ($sudah[$d->Id] ?? DataSudahDiretur::Kosong())->jumlah->Tambah($nilai[$indeks]->jumlah);
+            $this->komisi->KurangiRetur($d->Id, BigDecimal::of((string) $d->Jumlah), $sesudah->KeDesimal());
+        }
 
         // F-16b: poin penjualan asal dikurangi proporsional terhadap total refund kumulatif, di transaksi yang sama.
         $this->poin->BalikRetur(

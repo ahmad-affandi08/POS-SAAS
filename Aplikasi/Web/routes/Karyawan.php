@@ -6,13 +6,15 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Karyawan\AbsensiKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\JadwalKerjaKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KaryawanKontroler;
+use App\Http\Kontroler\Kelola\Karyawan\KomisiKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
 
 /*
  * Rute back-office F-18 karyawan (PRD "Rincian F-18 bagian 1", D-06). Didaftarkan dari routes/web.php di dalam grup
- * `/kelola`. Lihat karyawan, jadwal, absensi & swafoto: `karyawan.lihat`; ubah karyawan & jadwal: `karyawan.kelola`.
+ * `/kelola`. Lihat karyawan, jadwal, absensi & swafoto, komisi: `karyawan.lihat`; ubah karyawan, jadwal & aturan
+ * komisi: `karyawan.kelola`.
  */
 
 $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
@@ -22,6 +24,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
     Route::get('/', [KaryawanKontroler::class, 'Daftar'])->name('kelola.karyawan.daftar');
     Route::get('/jadwal', [JadwalKerjaKontroler::class, 'Tampil'])->name('kelola.karyawan.jadwal');
     Route::get('/absensi', [AbsensiKontroler::class, 'Daftar'])->name('kelola.karyawan.absensi.daftar');
+    // F-18 bagian 2: aturan & laporan komisi.
+    Route::get('/komisi', [KomisiKontroler::class, 'Aturan'])->name('kelola.karyawan.komisi');
+    Route::get('/komisi/laporan', [KomisiKontroler::class, 'Laporan'])->name('kelola.karyawan.komisi.laporan');
     Route::get('/absensi/{absensi}/swafoto/{jenis}', [AbsensiKontroler::class, 'Swafoto'])->where(['absensi' => $ulid, 'jenis' => 'masuk|keluar'])->name('kelola.karyawan.absensi.swafoto');
 
     Route::middleware($izin(IzinTenant::KaryawanKelola))->group(function () use ($ulid): void {
@@ -31,5 +36,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::post('/{karyawan}/aktifkan', [KaryawanKontroler::class, 'Aktifkan'])->where('karyawan', $ulid)->name('kelola.karyawan.aktifkan');
         Route::put('/jadwal', [JadwalKerjaKontroler::class, 'Simpan'])->name('kelola.karyawan.jadwal.simpan');
         Route::post('/jadwal/salin', [JadwalKerjaKontroler::class, 'Salin'])->name('kelola.karyawan.jadwal.salin');
+        Route::post('/komisi', [KomisiKontroler::class, 'Simpan'])->name('kelola.karyawan.komisi.simpan');
+        Route::put('/komisi/{aturan}', [KomisiKontroler::class, 'Perbarui'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.perbarui');
+        Route::post('/komisi/{aturan}/arsipkan', [KomisiKontroler::class, 'Arsipkan'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.arsipkan');
+        Route::post('/komisi/{aturan}/pulihkan', [KomisiKontroler::class, 'Pulihkan'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.pulihkan');
     });
 });

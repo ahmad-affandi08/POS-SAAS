@@ -107,6 +107,9 @@ const menuKaryawan: ItemMenu[] = [
     { label: 'Daftar karyawan', href: '/kelola/karyawan', izin: IzinTenant.KaryawanLihat },
     { label: 'Jadwal kerja', href: '/kelola/karyawan/jadwal', izin: IzinTenant.KaryawanLihat },
     { label: 'Absensi', href: '/kelola/karyawan/absensi', izin: IzinTenant.KaryawanLihat },
+    // F-18 bagian 2: komisi.
+    { label: 'Aturan komisi', href: '/kelola/karyawan/komisi', izin: IzinTenant.KaryawanLihat },
+    { label: 'Laporan komisi', href: '/kelola/karyawan/komisi/laporan', izin: IzinTenant.KaryawanLihat },
 ];
 
 const menuKasir: ItemMenu[] = [
