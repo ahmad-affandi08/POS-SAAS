@@ -1,10 +1,12 @@
 import 'package:drift/drift.dart';
 
 import 'TabelKatalog.dart';
+import 'TabelMeja.dart';
 import 'TabelPascaPenjualan.dart';
 import 'TabelPenjualan.dart';
 
 export 'TabelKatalog.dart';
+export 'TabelMeja.dart';
 export 'TabelPascaPenjualan.dart';
 export 'TabelPenjualan.dart';
 
@@ -158,6 +160,11 @@ class PercobaanPin extends Table {
     ReturPenjualanDetail,
     ReturPenjualanPembayaran,
     NomorUrutReturPenjualan,
+    // Skema 6 (F-07 mode meja fase 1): meja & pesanan terbuka.
+    AreaMeja,
+    Meja,
+    PesananTerbuka,
+    NomorUrutPesananTerbuka,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -165,9 +172,9 @@ class BasisDataKasir extends _$BasisDataKasir {
 
   /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
   /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
-  /// & retur penjualan).
+  /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka).
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -229,6 +236,11 @@ class BasisDataKasir extends _$BasisDataKasir {
           returPenjualanPembayaran,
           nomorUrutReturPenjualan,
         ]) {
+          await m.createTable(tabel);
+        }
+      }
+      if (dari < 6) {
+        for (final tabel in <TableInfo<Table, Object?>>[areaMeja, meja, pesananTerbuka, nomorUrutPesananTerbuka]) {
           await m.createTable(tabel);
         }
       }

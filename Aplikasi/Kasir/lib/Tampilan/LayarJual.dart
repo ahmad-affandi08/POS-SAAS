@@ -7,9 +7,11 @@ import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import '../Data/PesananMeja.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
+import '../Domain/Meja/KonteksPesananMeja.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
@@ -20,6 +22,7 @@ import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
 import 'Jual/PanelTertahan.dart';
 import 'Jual/PengenalPemindai.dart';
+import 'Meja/DialogPesananMeja.dart';
 
 enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan }
 
@@ -34,8 +37,12 @@ enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan }
 ///   Batalkan transaksi hanya lewat tombol di keranjang (dengan konfirmasi).
 /// - Katalog diperbarui berkala 60 detik saat online dan keranjang kosong (perubahan tidak mengejutkan di tengah
 ///   transaksi, §17.2.7).
+///
+/// Mode meja (F-07 mode meja fase 1): saat pesanan meja dibuka dari layar Meja, keranjang menampilkan baris tersimpan
+/// pesanan (dengan status dapur; ketuk = batalkan item) dan item baru. "Kirim ke dapur" menggantikan "Tahan"; Bayar
+/// menyimpan item baru ke pesanan, mengambil kunci bayar online, lalu membayar seluruh pesanan.
 class LayarJual extends ConsumerStatefulWidget {
-  const LayarJual({super.key, required this.kasir, this.aktif = true});
+  const LayarJual({super.key, required this.kasir, this.aktif = true, this.saatKeMeja});
 
   /// Lebar area kerja minimum untuk katalog + keranjang berdampingan.
   static const double lebarDuaPanel = 600;
@@ -45,6 +52,12 @@ class LayarJual extends ConsumerStatefulWidget {
 
   /// Layar Jual sedang tampil dan tidak tertutup layar kunci/panel bingkai (pemindai & pintasan aktif).
   final bool aktif;
+
+  /// Kembali ke layar Meja (mode meja aktif); null = mode meja tidak aktif.
+  final VoidCallback? saatKeMeja;
+
+  /// Selang perpanjangan kunci bayar pesanan meja selama panel Bayar terbuka (kunci server berlaku 2 menit).
+  static const Duration selangKunciBayar = Duration(seconds: 60);
 
   @override
   ConsumerState<LayarJual> createState() => _LayarJualState();
@@ -57,6 +70,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   final _pemindai = PengenalPemindai();
   final _kunciBayar = GlobalKey<PanelBayarState>();
   Timer? _pewaktuKatalog;
+  Timer? _pewaktuKunciBayar;
+
+  /// Pesanan meja yang kunci bayarnya sedang dipegang perangkat ini.
+  String? _uuidKunciBayar;
+
+  /// Transaksi terakhir menutup pesanan meja (setelah selesai kembali ke layar Meja).
+  bool _selesaiPesanan = false;
 
   String? _uuidKategori;
   _JenisPanel? _panel;
@@ -91,6 +111,11 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_SaatTombolPemindai);
     _pewaktuKatalog?.cancel();
+    _pewaktuKunciBayar?.cancel();
+    final kunci = _uuidKunciBayar;
+    if (kunci != null) {
+      unawaited(ref.read(penyediaLayananPesananMeja).LepasKunciBayar(kunci));
+    }
     _cari.dispose();
     _fokusCari.dispose();
     _fokusAkar.dispose();
@@ -239,7 +264,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     }
     final layanan = ref.read(penyediaLayananPenjualan);
     try {
-      final baris = layanan.BuatBaris(katalog, k, produk, satuan: satuan);
+      final baris = layanan.BuatBaris(
+        katalog,
+        k,
+        produk,
+        satuan: satuan,
+        kanal: LayananPenjualan.AmbilKanal(ref.read(penyediaKeranjang)),
+      );
       ref.read(penyediaKeranjang.notifier).Ganti(layanan.TambahBaris(ref.read(penyediaKeranjang), baris, katalog, k));
       if (_pesan != null) {
         setState(() => _pesan = null);
@@ -249,7 +280,17 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     }
   }
 
+  /// Baris yang sudah tersimpan di pesanan meja (bukan item baru).
+  bool _CekBarisTersimpan(String uuidBaris) =>
+      ref.read(penyediaKeranjangEfektif).pesananMeja?.CekTersimpan(uuidBaris) ?? false;
+
   void _GeserJumlah(String uuidBaris, int arah) {
+    if (_CekBarisTersimpan(uuidBaris)) {
+      _TampilPesan(
+        'Item yang sudah dipesan tidak bisa diubah jumlahnya. Ketuk item untuk membatalkan, lalu pesan lagi.',
+      );
+      return;
+    }
     final katalog = ref.read(penyediaKatalog).value ?? KatalogLokal.kosong;
     final k = ref.read(penyediaKonteksPenjualan).value;
     if (k == null) {
@@ -271,6 +312,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   void _UbahBaris(String uuidBaris) {
+    if (_CekBarisTersimpan(uuidBaris)) {
+      unawaited(_BatalkanBarisTersimpan(uuidBaris));
+      return;
+    }
     final baris = ref.read(penyediaKeranjang).baris.firstWhere((b) => b.uuid == uuidBaris);
     setState(() {
       _panel = _JenisPanel.Item;
@@ -279,20 +324,140 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     });
   }
 
+  Future<void> _BatalkanBarisTersimpan(String uuidBaris) async {
+    final konteks = ref.read(penyediaKeranjangEfektif).pesananMeja;
+    final baris = konteks?.CariBaris(uuidBaris);
+    if (konteks == null || baris == null) {
+      return;
+    }
+    final pesan = await BatalkanBarisPesanan(
+      context,
+      ref,
+      kasir: widget.kasir,
+      uuidPesanan: konteks.uuid,
+      baris: baris,
+    );
+    if (pesan != null && mounted) {
+      _TampilPesan(pesan, galat: !pesan.endsWith('dibatalkan.'));
+      unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+    }
+    _FokusAkar();
+  }
+
+  /// Mode meja: simpan item baru ke pesanan dan kirim ke dapur (termasuk item tersimpan yang belum dikirim).
+  Future<void> _KirimDapur() async {
+    final draf = ref.read(penyediaKeranjang);
+    final konteks = draf.pesananMeja;
+    if (konteks == null) {
+      return;
+    }
+    try {
+      await ref
+          .read(penyediaLayananPesananMeja)
+          .SimpanBaris(uuidPesanan: konteks.uuid, draf: draf.baris, kasir: widget.kasir, kirimDapur: true);
+      ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
+      _TampilPesan('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
+      unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+    }
+    _FokusAkar();
+  }
+
+  /// Mode meja: tutup pesanan dari layar Jual (pesanan tetap terbuka di meja). Item baru yang belum dikirim hilang,
+  /// jadi dikonfirmasi dulu.
+  Future<void> _TutupPesanan() async {
+    final draf = ref.read(penyediaKeranjang);
+    final konteks = draf.pesananMeja;
+    if (konteks == null) {
+      return;
+    }
+    if (!draf.CekKosong) {
+      final ya = await showDialog<bool>(
+        context: context,
+        builder: (konteksDialog) => AlertDialog(
+          title: Text('Tutup ${konteks.AmbilJudul()}?'),
+          content: const Text(
+            'Item baru yang belum dikirim ke dapur akan dihapus. Pesanan yang sudah tersimpan tetap ada.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(konteksDialog).pop(false), child: const Text('Kembali')),
+            FilledButton(onPressed: () => Navigator.of(konteksDialog).pop(true), child: const Text('Hapus item baru')),
+          ],
+        ),
+      );
+      if (ya != true) {
+        _FokusAkar();
+        return;
+      }
+    }
+    ref.read(penyediaKeranjang.notifier).Kosongkan();
+    _TutupPanel();
+    widget.saatKeMeja?.call();
+  }
+
   void _BukaTertahan() => setState(() {
     _panel = _JenisPanel.Tertahan;
     _pesan = null;
   });
 
   void _BukaBayar() {
-    if (ref.read(penyediaKeranjang).CekKosong) {
+    if (ref.read(penyediaKeranjangEfektif).CekKosong) {
       _TampilPesan('Keranjang masih kosong. Tambahkan produk dulu.');
+      return;
+    }
+    final konteks = ref.read(penyediaKeranjang).pesananMeja;
+    if (konteks != null) {
+      unawaited(_BukaBayarPesanan(konteks));
       return;
     }
     setState(() {
       _pesan = null;
       _panel = _JenisPanel.Bayar;
     });
+  }
+
+  /// Mode meja: item baru disimpan ke pesanan (tanpa dikirim ke dapur), lalu kunci bayar online diambil agar perangkat
+  /// lain tidak membayar pesanan yang sama. Offline tetap bisa bayar.
+  Future<void> _BukaBayarPesanan(KonteksPesananMeja konteks) async {
+    final layanan = ref.read(penyediaLayananPesananMeja);
+    final draf = ref.read(penyediaKeranjang);
+    try {
+      if (!draf.CekKosong) {
+        await layanan.SimpanBaris(uuidPesanan: konteks.uuid, draf: draf.baris, kasir: widget.kasir, kirimDapur: false);
+        ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
+      }
+      await layanan.KunciBayar(konteks.uuid);
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    _uuidKunciBayar = konteks.uuid;
+    _pewaktuKunciBayar?.cancel();
+    _pewaktuKunciBayar = Timer.periodic(LayarJual.selangKunciBayar, (_) {
+      final uuid = _uuidKunciBayar;
+      if (uuid != null) {
+        unawaited(layanan.KunciBayar(uuid).catchError((Object _) {}));
+      }
+    });
+    setState(() {
+      _pesan = null;
+      _panel = _JenisPanel.Bayar;
+    });
+  }
+
+  /// Lepas kunci bayar pesanan meja (panel Bayar ditutup tanpa bayar). Setelah dibayar server melepasnya sendiri.
+  void _LepasKunciBayar({bool keServer = true}) {
+    _pewaktuKunciBayar?.cancel();
+    _pewaktuKunciBayar = null;
+    final uuid = _uuidKunciBayar;
+    _uuidKunciBayar = null;
+    if (uuid != null && keServer) {
+      unawaited(ref.read(penyediaLayananPesananMeja).LepasKunciBayar(uuid));
+    }
   }
 
   Future<void> _Tahan() async {
@@ -340,6 +505,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (!mounted) {
       return;
     }
+    if (_panel == _JenisPanel.Bayar) {
+      _LepasKunciBayar();
+    }
     setState(() {
       _panel = null;
       _produkPanel = null;
@@ -349,11 +517,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   void _TransaksiBaru() {
+    final keMeja = _selesaiPesanan;
     setState(() {
       _selesai = null;
       _pesan = null;
+      _selesaiPesanan = false;
     });
     _TutupPanel();
+    if (keMeja) {
+      widget.saatKeMeja?.call();
+    }
   }
 
   Future<void> _PerbaruiKatalog({bool manual = false}) async {
@@ -379,7 +552,11 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   Future<void> _PerbaruiBerkala() async {
-    if (ref.read(penyediaKoneksi) == StatusKoneksi.Online && ref.read(penyediaKeranjang).CekKosong && _panel == null) {
+    final keranjang = ref.read(penyediaKeranjang);
+    if (ref.read(penyediaKoneksi) == StatusKoneksi.Online &&
+        keranjang.CekKosong &&
+        keranjang.pesananMeja == null &&
+        _panel == null) {
       await _PerbaruiKatalog();
     }
   }
@@ -393,6 +570,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final tertahan = ref.watch(penyediaPesananTertahan).value?.length ?? 0;
     final daftar = katalog?.AmbilTampil(uuidKategori: _uuidKategori, kata: _cari.text) ?? const <ProdukJual>[];
     final layanan = ref.read(penyediaLayananPenjualan);
+    final kanal = LayananPenjualan.AmbilKanal(ref.watch(penyediaKeranjang));
     final pesan = _pesan;
 
     return Column(
@@ -544,7 +722,14 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                       nama: p.nama,
                       harga: satuan == null
                           ? null
-                          : layanan.TentukanHarga(katalog, k, p.uuid, satuan.uuid, Kuantitas.DariBulat(1)),
+                          : layanan.TentukanHarga(
+                              katalog,
+                              k,
+                              p.uuid,
+                              satuan.uuid,
+                              Kuantitas.DariBulat(1),
+                              kanal: kanal,
+                            ),
                       nonaktif: alasan != null,
                       keterangan: alasan != null
                           ? 'Tidak bisa dijual'
@@ -588,24 +773,33 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     );
   }
 
-  Widget _BangunKeranjang(HitunganKeranjang? hitungan, {bool tampilKepala = true}) => PanelKeranjang(
-    keranjang: ref.watch(penyediaKeranjang),
-    hitungan: hitungan,
-    tampilKepala: tampilKepala,
-    saatUbahBaris: _UbahBaris,
-    saatTambah: (uuid) => _GeserJumlah(uuid, 1),
-    saatKurang: (uuid) => _GeserJumlah(uuid, -1),
-    saatDiskonPesanan: () => setState(() => _panel = _JenisPanel.DiskonPesanan),
-    saatTahan: () => unawaited(_Tahan()),
-    saatKosongkan: () => unawaited(_KonfirmasiBatal()),
-    saatBayar: _BukaBayar,
-  );
+  Widget _BangunKeranjang(HitunganKeranjang? hitungan, {bool tampilKepala = true}) {
+    final keranjang = ref.watch(penyediaKeranjangEfektif);
+    final pesanan = keranjang.pesananMeja;
+    return PanelKeranjang(
+      keranjang: keranjang,
+      hitungan: hitungan,
+      tampilKepala: tampilKepala,
+      judul: pesanan?.AmbilJudul(),
+      statusBaris: {for (final b in pesanan?.baris ?? const <BarisPesananMeja>[]) b.uuid: b.AmbilLabelStatus()},
+      labelTahan: pesanan == null ? 'Tahan' : 'Kirim ke dapur',
+      labelKosongkan: pesanan == null ? 'Batalkan transaksi' : 'Tutup pesanan (kembali ke Meja)',
+      saatUbahBaris: _UbahBaris,
+      saatTambah: (uuid) => _GeserJumlah(uuid, 1),
+      saatKurang: (uuid) => _GeserJumlah(uuid, -1),
+      saatDiskonPesanan: () => setState(() => _panel = _JenisPanel.DiskonPesanan),
+      saatTahan: () => unawaited(pesanan == null ? _Tahan() : _KirimDapur()),
+      saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
+      saatBayar: _BukaBayar,
+    );
+  }
 
   /// Bilah bawah HP: ringkasan keranjang (ketuk → lembar keranjang) dan tombol Bayar yang menempel.
   Widget _BangunBilahHp(BuildContext context, HitunganKeranjang? hitungan) {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
-    final keranjang = ref.watch(penyediaKeranjang);
+    final keranjang = ref.watch(penyediaKeranjangEfektif);
+    final judul = keranjang.pesananMeja?.AmbilJudul() ?? 'Keranjang';
     return Material(
       color: warna.permukaan,
       child: Container(
@@ -632,7 +826,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        keranjang.CekKosong ? 'Keranjang kosong' : 'Keranjang · ${keranjang.baris.length} baris',
+                        keranjang.CekKosong ? '$judul kosong' : '$judul · ${keranjang.baris.length} baris',
                         style: teks.bodySmall,
                       ),
                       TeksUang(hitungan?.hasil.totalAkhir ?? Uang.Nol(), rataKanan: false, gaya: teks.titleMedium),
@@ -684,10 +878,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         isi: PanelBayar(
           key: _kunciBayar,
           kasir: widget.kasir,
-          saatSelesai: (hasil) => setState(() {
-            _selesai = hasil;
-            _panel = _JenisPanel.Selesai;
-          }),
+          saatSelesai: (hasil) {
+            final pesanan = _uuidKunciBayar != null;
+            _LepasKunciBayar(keServer: false);
+            setState(() {
+              _selesai = hasil;
+              _selesaiPesanan = pesanan;
+              _panel = _JenisPanel.Selesai;
+            });
+          },
         ),
       ),
       _JenisPanel.Selesai => (
@@ -704,7 +903,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   Widget build(BuildContext context) {
     final katalog = ref.watch(penyediaKatalog).value;
     final k = ref.watch(penyediaKonteksPenjualan).value;
-    final keranjang = ref.watch(penyediaKeranjang);
+    final keranjang = ref.watch(penyediaKeranjangEfektif);
     final posisi = ref.watch(penyediaPengaturanPerangkat.select((p) => p.posisiKeranjang));
     final warna = TokenWarna.AmbilDari(context);
     final lebarLayar = MediaQuery.sizeOf(context).width;

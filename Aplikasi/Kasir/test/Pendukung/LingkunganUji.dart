@@ -10,8 +10,10 @@ import 'package:kasir/Data/PenyimpanRahasia.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Data/RepositoriKatalog.dart';
 import 'package:kasir/Data/RepositoriPenjualan.dart';
+import 'package:kasir/Data/RepositoriPesananMeja.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
+import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
@@ -147,6 +149,25 @@ Map<String, Object?> DataAwalUji({
   'WaktuServer': '2026-09-24T01:00:00Z',
 };
 
+/// Respons `GET /api/pos/v1/meja` uji.
+Map<String, Object?> DataMejaUji() => {
+  'ModeMejaAktif': true,
+  'Area': [
+    {'Uuid': '01K5AREA000000000000DALAM1', 'Nama': 'Dalam', 'Urutan': 1},
+    {'Uuid': '01K5AREA000000000000TERAS1', 'Nama': 'Teras', 'Urutan': 2},
+  ],
+  'Meja': [
+    {'Uuid': '01K5MEJA0000000000000D0101', 'Nama': 'D-01', 'UuidArea': '01K5AREA000000000000DALAM1', 'Kapasitas': 4},
+    {'Uuid': '01K5MEJA0000000000000D0201', 'Nama': 'D-02', 'UuidArea': '01K5AREA000000000000DALAM1', 'Kapasitas': 2},
+    {'Uuid': '01K5MEJA0000000000000T0101', 'Nama': 'T-01', 'UuidArea': '01K5AREA000000000000TERAS1', 'Kapasitas': 6},
+  ],
+  'StasiunDapur': [
+    {'Uuid': '01K5STAS1VN000000000BAR001', 'Nama': 'Bar'},
+    {'Uuid': '01K5STAS1VN000000000DAPUR1', 'Nama': 'Dapur'},
+  ],
+  'UuidStasiunBawaan': '01K5STAS1VN000000000DAPUR1',
+};
+
 /// Server tiruan: penangan bisa diganti per test; semua permintaan dicatat.
 class ServerTiruan {
   final List<http.Request> permintaan = [];
@@ -210,6 +231,17 @@ class LingkunganUji {
     repositoriPenjualan: repositoriPenjualan,
     jam: () => jam,
   );
+
+  late final RepositoriPesananMeja repositoriMeja = RepositoriPesananMeja(db, repositori);
+  late final LayananPesananMeja pesananMeja = LayananPesananMeja(
+    klien: klien,
+    repositori: repositori,
+    repositoriMeja: repositoriMeja,
+    jam: () => jam,
+  );
+
+  /// Area "Dalam" & "Teras", meja D-01 (4 kursi), D-02, T-01; mode meja aktif (bentuk `GET /api/pos/v1/meja`).
+  Future<void> SiapkanMeja() => repositoriMeja.SimpanDataMeja(DataMejaPos.DariJson(DataMejaUji()));
 
   static LingkunganUji Buat() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

@@ -1,6 +1,7 @@
 import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../Katalog/KatalogLokal.dart';
+import '../Meja/KonteksPesananMeja.dart';
 
 /// Diskon manual baris atau pesanan: tepat satu dari [persen] atau [jumlah] (BR-07.3).
 class DiskonManual {
@@ -176,9 +177,10 @@ class PenyetujuDiskon {
       : null;
 }
 
-/// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan).
+/// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
+/// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
-  const Keranjang({this.baris = const [], this.diskonPesanan, this.penyetuju, this.catatan});
+  const Keranjang({this.baris = const [], this.diskonPesanan, this.penyetuju, this.catatan, this.pesananMeja});
 
   static const Keranjang kosong = Keranjang();
 
@@ -186,6 +188,7 @@ class Keranjang {
   final DiskonManual? diskonPesanan;
   final PenyetujuDiskon? penyetuju;
   final String? catatan;
+  final KonteksPesananMeja? pesananMeja;
 
   bool get CekKosong => baris.isEmpty;
 
@@ -196,11 +199,13 @@ class Keranjang {
     DiskonManual? Function()? diskonPesanan,
     PenyetujuDiskon? Function()? penyetuju,
     String? Function()? catatan,
+    KonteksPesananMeja? Function()? pesananMeja,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
     penyetuju: penyetuju == null ? this.penyetuju : penyetuju(),
     catatan: catatan == null ? this.catatan : catatan(),
+    pesananMeja: pesananMeja == null ? this.pesananMeja : pesananMeja(),
   );
 
   Map<String, Object?> KeJson() => {

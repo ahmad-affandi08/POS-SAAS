@@ -17,6 +17,7 @@ import '../LayarRiwayat.dart';
 import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
 import '../LembarMutasiKas.dart';
+import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
 import '../Shift/KartuLaporanShift.dart';
@@ -43,6 +44,9 @@ class RuangKerja extends ConsumerStatefulWidget {
 
   static const Duration selangSinkron = Duration(seconds: 30);
 
+  /// Mode meja: snapshot pesanan terbuka outlet ditarik tiap 7 detik (rentang 5–10 detik, Rincian F-07 mode meja).
+  static const Duration selangPesananMeja = Duration(seconds: 7);
+
   final BarisShift shift;
   final StafLokal kasir;
   final KeadaanKunci kunci;
@@ -67,7 +71,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   bool get _adaPanel => _jenisKas != null || _panelShift != null || _panelPenjualan != null;
 
   Timer? _pewaktuSinkron;
+  Timer? _pewaktuPesanan;
   Timer? _pewaktuDiam;
+  bool _menarikPesanan = false;
   late final PenjagaLayarMenyala _penjagaLayar;
 
   bool get _terkunci => widget.kunci != KeadaanKunci.Bebas;
@@ -79,6 +85,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     unawaited(_penjagaLayar.Aktifkan());
     _pewaktuSinkron = Timer.periodic(RuangKerja.selangSinkron, (_) => unawaited(_Sinkronkan()));
     unawaited(Future<void>.microtask(_Sinkronkan));
+    _pewaktuPesanan = Timer.periodic(RuangKerja.selangPesananMeja, (_) => unawaited(_TarikPesanan()));
     HardwareKeyboard.instance.addHandler(_SaatTombol);
     _MulaiHitungDiam();
   }
@@ -105,6 +112,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   @override
   void dispose() {
     _pewaktuSinkron?.cancel();
+    _pewaktuPesanan?.cancel();
     _pewaktuDiam?.cancel();
     HardwareKeyboard.instance.removeHandler(_SaatTombol);
     unawaited(_penjagaLayar.Nonaktifkan());
@@ -114,6 +122,22 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   Future<void> _Sinkronkan() async {
     if (mounted) {
       await ref.read(penyediaSesi.notifier).Sinkronkan();
+    }
+  }
+
+  /// Tarik pesanan terbuka outlet (mode meja aktif, tidak terkunci, tidak sedang menarik). Galat diabaikan: data lokal
+  /// tetap dipakai dan dicoba lagi pada putaran berikutnya.
+  Future<void> _TarikPesanan() async {
+    if (!mounted || _menarikPesanan || _terkunci || ref.read(penyediaModeMeja).value != true) {
+      return;
+    }
+    _menarikPesanan = true;
+    try {
+      await ref.read(penyediaLayananPesananMeja).Tarik();
+    } on Object {
+      // Offline/galat server: coba lagi nanti.
+    } finally {
+      _menarikPesanan = false;
     }
   }
 
@@ -180,7 +204,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     TujuanRuangKerja.Jual => LayarJual(
       kasir: widget.kasir,
       aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && !_adaPanel,
+      saatKeMeja: ref.watch(penyediaModeMeja).value == true ? () => _Buka(TujuanRuangKerja.Meja) : null,
     ),
+    TujuanRuangKerja.Meja => LayarMeja(kasir: widget.kasir, saatBukaPesanan: () => _Buka(TujuanRuangKerja.Jual)),
     TujuanRuangKerja.Riwayat => LayarRiwayat(
       saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
@@ -332,7 +358,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final warna = TokenWarna.AmbilDari(context);
     final lebar = MediaQuery.sizeOf(context).width;
     final pakaiRel = lebar >= RuangKerja.lebarRel;
-    final item = ItemNavigasi.Saring(widget.kasir);
+    final item = ItemNavigasi.Saring(
+      widget.kasir,
+      modulAktif: {if (ref.watch(penyediaModeMeja).value == true) ItemNavigasi.modulMeja},
+    );
     final indeks = item.indexWhere((i) => i.tujuan == _tujuan).clamp(0, item.length - 1);
     final notifierSesi = ref.read(penyediaSesi.notifier);
 

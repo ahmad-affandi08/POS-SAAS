@@ -105,6 +105,9 @@ class LayananPenjualan {
 
   static const String jenisOutbox = 'Penjualan.Buat';
   static const String kanalBawaan = 'BawaPulang';
+
+  /// Kanal pembayaran pesanan meja (F-07 mode meja).
+  static const String kanalMakanDiTempat = 'MakanDiTempat';
   static const String statusLunas = 'Lunas';
 
   final RepositoriKasir repositori;
@@ -117,13 +120,18 @@ class LayananPenjualan {
 
   // Harga & keranjang --------------------------------------------------------------------------------------------------
 
+  /// Kanal harga keranjang: pesanan di meja = `MakanDiTempat` (daftar harga dine-in), selain itu `BawaPulang`.
+  static KanalPenjualan AmbilKanal(Keranjang keranjang) =>
+      keranjang.pesananMeja?.uuidMeja != null ? KanalPenjualan.MakanDiTempat : KanalPenjualan.BawaPulang;
+
   Uang? TentukanHarga(
     KatalogLokal katalog,
     KonteksPenjualan k,
     String uuidProduk,
     String uuidSatuan,
-    Kuantitas jumlah,
-  ) => const PenentuHarga()
+    Kuantitas jumlah, {
+    KanalPenjualan kanal = KanalPenjualan.BawaPulang,
+  }) => const PenentuHarga()
       .Tentukan(
         katalog.AmbilKatalogHarga(uuidProduk),
         PermintaanHarga(
@@ -131,7 +139,7 @@ class LayananPenjualan {
           uuidProdukSatuan: uuidSatuan,
           jumlah: jumlah,
           uuidOutlet: k.uuidOutlet,
-          kanal: KanalPenjualan.BawaPulang,
+          kanal: kanal,
           tierPelanggan: null,
           waktu: _jam().toUtc(),
         ),
@@ -148,6 +156,7 @@ class LayananPenjualan {
     List<PilihanTerpilih> pilihan = const [],
     Kuantitas? jumlah,
     String? catatan,
+    KanalPenjualan kanal = KanalPenjualan.BawaPulang,
   }) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
@@ -159,7 +168,7 @@ class LayananPenjualan {
     }
     ValidasiPilihan(produk, pilihan);
     final qty = jumlah ?? Kuantitas.DariBulat(1);
-    final harga = TentukanHarga(katalog, k, produk.uuid, satuanJual.uuid, qty);
+    final harga = TentukanHarga(katalog, k, produk.uuid, satuanJual.uuid, qty, kanal: kanal);
     if (harga == null) {
       throw GalatKasir(
         'HargaTidakDitemukan',
@@ -224,7 +233,7 @@ class LayananPenjualan {
       }
       final harga = b.uuidProdukSatuan == null
           ? null
-          : TentukanHarga(katalog, k, b.uuidProduk, b.uuidProdukSatuan!, jumlah);
+          : TentukanHarga(katalog, k, b.uuidProduk, b.uuidProdukSatuan!, jumlah, kanal: AmbilKanal(keranjang));
       return b.Salin(jumlah: jumlah, hargaSatuan: harga ?? b.hargaSatuan);
     });
   }
@@ -237,7 +246,7 @@ class LayananPenjualan {
     KonteksPenjualan k,
   ) => _UbahBaris(keranjang, uuidBaris, (b) {
     final jumlah = satuan.bolehDesimal ? b.jumlah : Kuantitas.DariDesimal(b.jumlah.KeDesimal().ceil());
-    final harga = TentukanHarga(katalog, k, b.uuidProduk, satuan.uuid, jumlah);
+    final harga = TentukanHarga(katalog, k, b.uuidProduk, satuan.uuid, jumlah, kanal: AmbilKanal(keranjang));
     if (harga == null) {
       throw GalatKasir('HargaTidakDitemukan', 'Harga "${b.nama}" per ${satuan.nama} belum diatur.');
     }
@@ -636,12 +645,14 @@ class LayananPenjualan {
     final dibayar = pembayaran.fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
     final pembulatan = k.pembulatanTunai;
     final catatan = keranjang.catatan?.trim();
+    final pesananMeja = keranjang.pesananMeja;
+    final kanal = pesananMeja?.uuidMeja != null ? kanalMakanDiTempat : kanalBawaan;
 
     final data = <String, Object?>{
       'UuidShift': shift.Uuid,
       'UuidPengguna': kasir.uuid,
       'Nomor': nomor,
-      'Kanal': kanalBawaan,
+      'Kanal': kanal,
       'DibuatPada': sekarang.toIso8601String(),
       'HargaTermasukPajak': k.profilPajak.hargaTermasukPajak,
       'PersenBiayaLayanan': k.AmbilPersenBiayaLayanan().toString(),
@@ -691,6 +702,7 @@ class LayananPenjualan {
         'Kembalian': kembalian.KeString(),
       },
       'Catatan': catatan == null || catatan.isEmpty ? null : catatan,
+      'UuidPesananTerbuka': ?pesananMeja?.uuid,
     };
 
     return DokumenPenjualan(
@@ -700,7 +712,7 @@ class LayananPenjualan {
         UuidShift: shift.Uuid,
         UuidPengguna: kasir.uuid,
         NamaKasir: kasir.nama,
-        Kanal: kanalBawaan,
+        Kanal: kanal,
         DibuatPada: sekarang,
         TanggalBisnis: hitungan.tanggalBisnis,
         Status: statusLunas,
@@ -752,6 +764,7 @@ class LayananPenjualan {
           ),
       ],
       outbox: ItemOutbox(jenis: jenisOutbox, uuid: uuid, data: data),
+      uuidPesananTerbuka: pesananMeja?.uuid,
     );
   }
 

@@ -49,6 +49,15 @@ abstract final class KunciPengaturan {
   /// Uuid shift yang baru ditutup dan laporan Z-nya belum ditutup kasir (bertahan bila aplikasi dimulai ulang).
   static const String laporanZTertunda = 'LaporanZTertunda';
 
+  /// F-07 mode meja: jenis perangkat dari aktivasi (`Kasir`/`Pelayan`/`Kds`/`Gudang`), mode meja outlet ('1'/'0'), dan
+  /// `ETag` snapshot pesanan terbuka terakhir.
+  static const String jenisPerangkat = 'JenisPerangkat';
+  static const String modeMejaAktif = 'ModeMejaAktif';
+  static const String etagPesananTerbuka = 'EtagPesananTerbuka';
+
+  /// F-10b: stasiun dapur yang ditampilkan perangkat KDS (Uuid dipisah koma; kosong = semua).
+  static const String stasiunKds = 'StasiunKds';
+
   // Pengaturan lokal perangkat (D-16, §17.2.7). Tidak ikut diganti data awal dan tidak dihapus saat perangkat dicabut.
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';

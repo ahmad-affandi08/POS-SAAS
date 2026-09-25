@@ -8,12 +8,16 @@ import 'package:mesin_kasir/MesinKasir.dart' show Uang;
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
+import '../Data/PesananMeja.dart';
 import '../Data/RepositoriKasir.dart';
 import '../Data/RepositoriKatalog.dart';
 import '../Data/RepositoriPenjualan.dart';
+import '../Data/RepositoriPesananMeja.dart';
+import '../Domain/Dapur/LayananDapur.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
+import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
@@ -215,6 +219,62 @@ class PengaturKeranjang extends Notifier<Keranjang> {
 
 final penyediaKeranjang = NotifierProvider<PengaturKeranjang, Keranjang>(PengaturKeranjang.new);
 
+// Mode meja (F-07 mode meja & F-10b fase 1) ----------------------------------------------------------------------------
+
+final penyediaRepositoriPesananMeja = Provider<RepositoriPesananMeja>(
+  (ref) => RepositoriPesananMeja(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+final penyediaLayananPesananMeja = Provider<LayananPesananMeja>(
+  (ref) => LayananPesananMeja(
+    klien: ref.watch(penyediaKlienPos),
+    repositori: ref.watch(penyediaRepositori),
+    repositoriMeja: ref.watch(penyediaRepositoriPesananMeja),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+/// Mode meja outlet aktif (dari `GET /api/pos/v1/meja`): menampilkan menu Meja di rel navigasi.
+final penyediaModeMeja = StreamProvider<bool>(
+  (ref) => ref.watch(penyediaRepositori).PantauPengaturan(KunciPengaturan.modeMejaAktif).map((n) => n == '1'),
+);
+
+/// Jenis perangkat dari aktivasi: `Kds` membuka layar dapur, selain itu ruang kerja kasir.
+final penyediaJenisPerangkat = StreamProvider<String>(
+  (ref) => ref.watch(penyediaRepositori).PantauPengaturan(KunciPengaturan.jenisPerangkat).map((n) => n ?? 'Kasir'),
+);
+
+final penyediaAreaMeja = StreamProvider<List<BarisAreaMeja>>(
+  (ref) => ref.watch(penyediaRepositoriPesananMeja).PantauArea(),
+);
+
+final penyediaMeja = StreamProvider<List<BarisMeja>>((ref) => ref.watch(penyediaRepositoriPesananMeja).PantauMeja());
+
+final penyediaPesananTerbuka = StreamProvider<List<PesananMeja>>(
+  (ref) => ref.watch(penyediaRepositoriPesananMeja).PantauPesananTerbuka(),
+);
+
+final penyediaPesananMeja = StreamProvider.family<PesananMeja?, String>(
+  (ref, uuid) => ref.watch(penyediaRepositoriPesananMeja).PantauPesanan(uuid),
+);
+
+/// Layar dapur (KDS) untuk perangkat berjenis `Kds`.
+final penyediaLayananDapur = Provider<LayananDapur>(
+  (ref) => LayananDapur(klien: ref.watch(penyediaKlienPos), repositori: ref.watch(penyediaRepositori)),
+);
+
+/// Keranjang yang ditampilkan & dibayar: pada pesanan meja = baris tersimpan pesanan + baris baru (draf).
+final penyediaKeranjangEfektif = Provider<Keranjang>((ref) {
+  final draf = ref.watch(penyediaKeranjang);
+  final uuid = draf.pesananMeja?.uuid;
+  if (uuid == null) {
+    return draf;
+  }
+  final pesanan = ref.watch(penyediaPesananMeja(uuid)).value;
+  final katalog = ref.watch(penyediaKatalog).value ?? KatalogLokal.kosong;
+  return LayananPesananMeja.SusunKeranjangEfektif(draf, pesanan, katalog);
+});
+
 final penyediaShiftAktif = StreamProvider<BarisShift?>((ref) => ref.watch(penyediaRepositori).PantauShiftAktif());
 
 final penyediaMutasiShift = StreamProvider.family<List<BarisMutasiKas>, String>(
@@ -325,6 +385,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     ref.invalidate(penyediaKonteksPenjualan);
     state = const KeadaanSesi(TahapSesi.PilihKasir);
     unawaited(PerbaruiKatalog());
+    unawaited(PerbaruiDataMeja());
   }
 
   Future<void> Masuk(StafLokal staf, String pin) async {
@@ -367,6 +428,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       ref.invalidate(penyediaIdentitas);
       if (tersambung) {
         await PerbaruiKatalog();
+        await PerbaruiDataMeja();
       }
     } on GalatKasir catch (galat) {
       _Dicabut(galat.pesan);
@@ -386,6 +448,15 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Offline);
     }
     return hasil;
+  }
+
+  /// Unduh data meja outlet (mode meja). Galat server tidak menghentikan kerja kasir.
+  Future<void> PerbaruiDataMeja() async {
+    try {
+      await ref.read(penyediaLayananPesananMeja).PerbaruiDataMeja();
+    } on GalatApi {
+      return;
+    }
   }
 
   /// Kirim outbox; perangkat dicabut → kembali ke aktivasi.

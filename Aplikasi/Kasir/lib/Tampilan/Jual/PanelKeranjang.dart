@@ -21,6 +21,10 @@ class PanelKeranjang extends StatelessWidget {
     required this.saatKosongkan,
     required this.saatBayar,
     this.tampilKepala = true,
+    this.judul,
+    this.statusBaris = const {},
+    this.labelTahan = 'Tahan',
+    this.labelKosongkan = 'Batalkan transaksi',
   });
 
   final Keranjang keranjang;
@@ -35,6 +39,17 @@ class PanelKeranjang extends StatelessWidget {
 
   /// Kepala "Keranjang" (disembunyikan saat tampil di dalam lembar yang sudah berjudul).
   final bool tampilKepala;
+
+  /// Judul kepala pengganti "Keranjang" (mode meja: nama meja/pesanan).
+  final String? judul;
+
+  /// Mode meja: status baris yang sudah tersimpan di pesanan (Uuid baris → "Dimasak", "Belum dikirim", …). Baris tanpa
+  /// status = item baru yang belum disimpan.
+  final Map<String, String> statusBaris;
+
+  /// Tombol kedua: "Tahan" (retail) atau "Kirim ke dapur" (mode meja).
+  final String labelTahan;
+  final String labelKosongkan;
 
   static List<String> AmbilRincian(ItemKeranjang b) => [
     if (b.namaSatuan != null && b.namaSatuan!.isNotEmpty) '@ ${b.hargaSatuan.FormatRupiah()}/${b.namaSatuan}',
@@ -79,15 +94,15 @@ class PanelKeranjang extends StatelessWidget {
                       header: true,
                       child: Text(
                         kosong
-                            ? 'Keranjang'
-                            : 'Keranjang · ${FormatAngka.FormatJumlah(keranjang.HitungJumlahItem())} item',
+                            ? judul ?? 'Keranjang'
+                            : '${judul ?? 'Keranjang'} · ${FormatAngka.FormatJumlah(keranjang.HitungJumlahItem())} item',
                         style: teks.titleMedium,
                       ),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Batalkan transaksi',
-                    onPressed: kosong ? null : saatKosongkan,
+                    tooltip: labelKosongkan,
+                    onPressed: kosong && keranjang.pesananMeja == null ? null : saatKosongkan,
                     icon: const Icon(Icons.remove_shopping_cart_outlined),
                   ),
                 ],
@@ -99,7 +114,9 @@ class PanelKeranjang extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(TokenJarak.jarak24),
                       child: Text(
-                        'Keranjang kosong. Ketuk produk atau pindai barcode untuk mulai.',
+                        keranjang.pesananMeja == null
+                            ? 'Keranjang kosong. Ketuk produk atau pindai barcode untuk mulai.'
+                            : 'Pesanan masih kosong. Ketuk produk untuk menambah, lalu Kirim ke dapur.',
                         textAlign: TextAlign.center,
                         style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
                       ),
@@ -115,7 +132,12 @@ class PanelKeranjang extends StatelessWidget {
                           total: hasil == null
                               ? keranjang.baris[i].hargaSatuan
                               : hasil.baris[i].bruto.Kurangi(hasil.baris[i].diskon),
-                          rincian: AmbilRincian(keranjang.baris[i]),
+                          rincian: [
+                            if (statusBaris[keranjang.baris[i].uuid] case final status?) 'Status: $status',
+                            if (keranjang.pesananMeja != null && !statusBaris.containsKey(keranjang.baris[i].uuid))
+                              'Item baru',
+                            ...AmbilRincian(keranjang.baris[i]),
+                          ],
                           saatDiketuk: () => saatUbahBaris(keranjang.baris[i].uuid),
                           saatTambah: () => saatTambah(keranjang.baris[i].uuid),
                           saatKurang: () => saatKurang(keranjang.baris[i].uuid),
@@ -176,7 +198,7 @@ class PanelKeranjang extends StatelessWidget {
                         child: OutlinedButton(
                           style: gayaTombolKecil,
                           onPressed: kosong ? null : saatTahan,
-                          child: const Text('Tahan', maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(labelTahan, maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
                       ),
                     ),

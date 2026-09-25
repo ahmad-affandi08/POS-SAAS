@@ -6,8 +6,8 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.57 |
-| Tanggal | 24 September 2026 |
+| Versi | 1.58 |
+| Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
 | Stack Backend & Back-office | Laravel 13 · PHP 8.3 · MySQL 8 · Inertia.js + React + TypeScript · Tailwind CSS 4 · TanStack Query |
@@ -78,6 +78,7 @@
 | 1.55 | Arus kas metode langsung (FIN-07 P1) di back-office F-13; klasifikasi aktivitas dari akun lawan (keputusan agen, D-12). `TabelData`: meta `sembunyiBilaKosong` untuk daftar bertumpuk HP dan tombol Saring di HP hanya tampil bila ada saring/urut. |
 | 1.56 | Rincian F-10a: area & meja per outlet, stasiun dapur tingkat tenant + `Kategori.IdStasiunDapur`, gerbang fitur `pos.mode-meja`, stasiun dari template sektor; penyesuaian §15 `StasiunDapur` (tanpa IdOutlet/KonfigurasiPrinter) dan `AreaMeja`/`Meja`. |
 | 1.57 | Rincian F-07 mode meja & F-10b fase 1: pesanan terbuka tersinkron (item outbox `PesananTerbuka.*`, tarik delta, kunci bayar online, bayar ganda offline → `PerluTinjauan`), tiket dapur per stasiun & ronde, API KDS. |
+| 1.58 | Rincian F-07 mode meja & F-10b fase 1 di aplikasi POS: menu Meja (denah per area, pesanan tanpa meja), mode pesanan di layar Jual (kirim ke dapur per ronde, batal item BR-07.5, bayar menutup pesanan, harga kanal `MakanDiTempat`), tarik snapshot 7 detik dengan ETag, kunci bayar, layar dapur untuk perangkat `Kds`; skema lokal 6. |
 
 ---
 
@@ -1361,6 +1362,7 @@ stateDiagram-v2
 - **Tiket dapur** (`TiketDapur` + `TiketDapurDetail`, domain Pemenuhan): dibuat server saat `PesananTerbuka.Tambah` dengan `KirimDapur` atau `Penjualan.Buat` dengan `KirimDapur` (mode cepat, bayar dulu): satu tiket per (dokumen, ronde, stasiun); baris dirutekan menurut stasiun kategori produk (kategori tanpa stasiun/stasiun diarsipkan → stasiun bawaan; tanpa stasiun sama sekali → tidak ada tiket). Status tiket `Antre → Dimasak → Siap → Disajikan` dengan `DikirimPada`, `MulaiPada`, `SiapPada`, `DisajikanPada`; void item yang sudah dikirim menandai baris tiket `Dibatalkan`.
 - **KDS** (perangkat berjenis `Kds`, online di fase 1; mode LAN offline = §18.5 fase 3): `GET /api/pos/v1/dapur/tiket?stasiun[]=` (tiket aktif outlet ≤ 12 jam, urut waktu kirim) dan `POST /api/pos/v1/dapur/tiket/{uuid}/status {Status}` (hanya maju satu langkah; mundur satu langkah untuk koreksi salah ketuk). Warna umur tiket: normal < 10 menit, kuning 10–20, merah > 20 (F-10).
 - **Batas laju API POS (perbaikan v1.57):** batas `throttle:N,1` bawaan memakai satu penghitung per IP untuk semua rute, sehingga beberapa perangkat outlet di balik satu IP (NAT) saling menghabiskan jatah (polling pesanan terbuka/KDS akan 429). Kini limiter bernama `pos-N` = N per menit **per rute per perangkat** (aktivasi tanpa token tetap per IP); angka batas tidak berubah.
+- **Aplikasi POS (v1.58, keputusan agen atas mandat D-12):** menu **Meja** di rel ruang kerja tampil bila `ModeMejaAktif` outlet (dari `GET /meja`, disimpan untuk offline; skema lokal 6: `AreaMeja`, `Meja`, `PesananTerbuka` dengan baris JSON, `NomorUrutPesananTerbuka`). Denah per area: ubin meja kosong/terisi (tamu, jumlah item, lama duduk; status selalu dengan teks & ikon) + pesanan tanpa meja (label wajib). Satu meja satu pesanan terbuka di fase 1 (`MejaTerisi`). Membuka pesanan memindahkan ke layar Jual **mode pesanan**: keranjang = baris tersimpan pesanan (status dapur: Belum dikirim/Terkirim/Di dapur/Dimasak/Siap/Disajikan; jumlah tidak bisa diubah, ketuk = batal item) + item baru; tombol "Tahan" menjadi **Kirim ke dapur** (ronde baru; baris tersimpan yang belum dikirim ikut lewat `KirimDapur`). Diskon item diberikan saat bayar (item baru berdiskon tidak bisa disimpan ke pesanan, `DiskonSaatBayar`); diskon pesanan tetap di panel Bayar. **Bayar** menyimpan item baru ke pesanan (tanpa kirim dapur), mengambil kunci bayar online (diperpanjang 60 detik selama panel Bayar terbuka; offline tetap boleh bayar; 409 menolak), lalu `Penjualan.Buat` membawa `UuidPesananTerbuka` dan kanal `MakanDiTempat` (pesanan ber-meja; harga produk memakai daftar harga kanal itu) — pesanan ditandai `Dibayar` di transaksi SQLite yang sama. Snapshot pesanan ditarik tiap **7 detik** selama ruang kerja terbuka (tidak saat terkunci); pesanan dengan item outbox tertunda tidak ditimpa snapshot dan ETag tidak disimpan selama masih ada yang tertunda (agar item yang ditolak server pulih dari snapshot utuh berikutnya). Perangkat berjenis **Kds** (dari aktivasi) langsung membuka **layar dapur** tanpa pilih kasir & shift: kartu tiket per stasiun terpilih (disimpan per perangkat), umur menurut jam server dengan warna **dan** label (Lama 10–20 menit, Terlambat > 20), tombol maju satu status dan "Mundur/Kembalikan" untuk salah ketuk, tarik ulang 5 detik; offline = pesan + tiket terakhir tetap tampil.
 - **Belum di fase 1:** pisah bill per item (split bill fase 1 = satu penjualan dengan beberapa pembayaran, BR-08.1), gabung bill/meja, course hold & fire, minimum charge, printer dapur ESC/POS (menunggu `AdaptorPerangkat`), layar antrean pelanggan, dan mode LAN.
 
 ---

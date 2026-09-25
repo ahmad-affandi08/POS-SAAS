@@ -77,7 +77,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   /// Sisa tagihan bila sisa dibayar dengan [metode] (tunai memakai pembulatan tunai).
   Uang _HitungSisa(KonteksPenjualan k, BarisMetodePembayaran? metode) {
     final layanan = ref.read(penyediaLayananPenjualan);
-    final keranjang = ref.read(penyediaKeranjang);
+    final keranjang = ref.read(penyediaKeranjangEfektif);
     if (metode?.Jenis == JenisMetodeBayar.tunai) {
       return layanan.HitungTagihanTunai(keranjang, k, _entri);
     }
@@ -163,7 +163,9 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       }
       return;
     }
-    final tagihan = ref.read(penyediaLayananPenjualan).HitungTagihanTunai(ref.read(penyediaKeranjang), k, _entri);
+    final tagihan = ref
+        .read(penyediaLayananPenjualan)
+        .HitungTagihanTunai(ref.read(penyediaKeranjangEfektif), k, _entri);
     if (tagihan.Bandingkan(Uang.Nol()) <= 0) {
       await _Selesaikan(k, List.of(_entri));
       return;
@@ -179,7 +181,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     try {
       final hasil = await ref
           .read(penyediaLayananPenjualan)
-          .Bayar(keranjang: ref.read(penyediaKeranjang), pembayaran: pembayaran, kasir: widget.kasir, k: k);
+          .Bayar(keranjang: ref.read(penyediaKeranjangEfektif), pembayaran: pembayaran, kasir: widget.kasir, k: k);
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);
       widget.saatSelesai(hasil);
@@ -352,7 +354,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final konteks = ref.watch(penyediaKonteksPenjualan);
-    final keranjang = ref.watch(penyediaKeranjang);
+    final keranjang = ref.watch(penyediaKeranjangEfektif);
     final k = konteks.value;
     if (k == null) {
       return const Padding(padding: EdgeInsets.all(TokenJarak.jarak24), child: LinearProgressIndicator());

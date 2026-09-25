@@ -3,21 +3,25 @@ import 'package:inti/Inti.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import 'BasisData/BasisDataKasir.dart';
+import 'PesananMeja.dart';
 import 'RepositoriKasir.dart';
 
-/// Dokumen penjualan siap simpan: header, detail, pembayaran, dan item outbox `Penjualan.Buat`.
+/// Dokumen penjualan siap simpan: header, detail, pembayaran, item outbox `Penjualan.Buat`, dan pesanan terbuka yang
+/// ditutup pembayaran ini (mode meja; null = penjualan biasa).
 class DokumenPenjualan {
   const DokumenPenjualan({
     required this.penjualan,
     required this.detail,
     required this.pembayaran,
     required this.outbox,
+    this.uuidPesananTerbuka,
   });
 
   final PenjualanCompanion penjualan;
   final List<PenjualanDetailCompanion> detail;
   final List<PenjualanPembayaranCompanion> pembayaran;
   final ItemOutbox outbox;
+  final String? uuidPesananTerbuka;
 }
 
 /// Status penjualan lokal (sama dengan server, keputusan implementasi F-09 v1.47): `Lunas → Void | DireturSebagian |
@@ -103,6 +107,12 @@ class RepositoriPenjualan {
       b.insertAll(db.penjualanPembayaran, dokumen.pembayaran);
     });
     await repositoriKasir.TambahOutbox(dokumen.outbox, sekarang);
+    final uuidPesanan = dokumen.uuidPesananTerbuka;
+    if (uuidPesanan != null) {
+      await (db.update(db.pesananTerbuka)..where((p) => p.Uuid.equals(uuidPesanan))).write(
+        PesananTerbukaCompanion(Status: const Value(StatusPesananMeja.dibayar), DiubahPada: Value(sekarang)),
+      );
+    }
     return dokumen;
   });
 

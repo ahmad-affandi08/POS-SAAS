@@ -165,7 +165,7 @@ class _PanelDiskonPesananState extends ConsumerState<PanelDiskonPesanan> {
   }
 
   Future<void> _Simpan() async {
-    final keranjang = ref.read(penyediaKeranjang);
+    final keranjang = ref.read(penyediaKeranjangEfektif);
     final k = await ref.read(penyediaKonteksPenjualan.future);
     final diskon = _diskon;
     if (diskon == null) {
