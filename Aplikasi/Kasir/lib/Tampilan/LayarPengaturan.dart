@@ -66,7 +66,7 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
       anak: [
         Bagian(
           'Printer struk',
-          'Printer thermal LAN/Wi-Fi di jaringan yang sama. Isi kepala & kaki struk diatur di back-office.',
+          'Printer thermal LAN/Wi-Fi atau Bluetooth. Isi kepala & kaki struk diatur di back-office.',
           const BagianPrinterStruk(),
         ),
         Bagian(

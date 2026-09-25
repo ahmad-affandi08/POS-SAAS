@@ -41,7 +41,7 @@ Future<void> PasangAplikasi(
         penyediaPemverifikasiPin.overrideWithValue(const PemverifikasiPinTiruan()),
         penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
         penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
-        penyediaPembuatTransport.overrideWithValue((_) => u.printer),
+        penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
       ],
       child: AplikasiKasir(lingkungan: lingkungan),
     ),

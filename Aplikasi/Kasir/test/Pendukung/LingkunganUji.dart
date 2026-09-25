@@ -213,6 +213,7 @@ class LingkunganUji {
 
   /// PRD v1.79: printer struk tiruan (dipasang juga di aplikasi utuh lewat `PasangAplikasi`).
   final PrinterTiruan printer = PrinterTiruan();
+  late final PemindaiTiruan pemindai = PemindaiTiruan(printer);
   late final LayananStruk struk = LayananStruk(
     repositori: repositori,
     penjualan: repositoriPenjualan,

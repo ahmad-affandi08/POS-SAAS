@@ -16,12 +16,11 @@ typedef PembuatTransport = TransportPrinter Function(ProfilPrinter profil);
 /// jadi tetap jalan saat offline (§18). Galat printer dilempar sebagai [GalatPrinter] berpesan untuk kasir; penjualan
 /// tetap tersimpan walau struk gagal dicetak.
 class LayananStruk {
-  LayananStruk({required this.repositori, required this.penjualan, PembuatTransport? pembuatTransport})
-    : _pembuatTransport = pembuatTransport ?? ((profil) => profil.BuatTransport());
+  LayananStruk({required this.repositori, required this.penjualan, required this.pembuatTransport});
 
   final RepositoriKasir repositori;
   final RepositoriPenjualan penjualan;
-  final PembuatTransport _pembuatTransport;
+  final PembuatTransport pembuatTransport;
 
   Future<ProfilPrinter?> AmbilProfil() => ProfilPrinter.Muat(repositori);
 
@@ -51,7 +50,7 @@ class LayananStruk {
       cetakUlang: cetakUlang,
       bukaLaci: laci,
     );
-    await PrinterStruk(_pembuatTransport(profil), profil.lebar).Cetak(dokumen);
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(dokumen);
   }
 
   /// Printer diatur dan cetak otomatis aktif.
@@ -68,7 +67,7 @@ class LayananStruk {
 
   Future<void> CetakUji(ProfilPrinter profil) async {
     final identitas = await IdentitasStruk.Muat(repositori);
-    await PrinterStruk(_pembuatTransport(profil), profil.lebar).CetakUji(
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).CetakUji(
       namaUsaha: identitas.pengaturan.namaDicetak ?? identitas.namaUsaha,
       keterangan: 'Printer ${profil.alamat}:${profil.port}',
     );

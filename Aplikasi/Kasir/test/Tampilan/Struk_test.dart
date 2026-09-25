@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
+import 'package:kasir/Domain/Struk/PemindaiPrinter.dart';
 import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 import 'package:sistem_desain/SistemDesain.dart';
@@ -48,6 +50,12 @@ void main() {
     await Tunggu(tester);
   }
 
+  /// Gulir area kerja ke atas sampai [finder] terbangun (daftar Pengaturan dibangun lazy di layar sempit).
+  Future<void> GulirKe(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(finder, -200, scrollable: find.byType(Scrollable).first);
+    await tester.pump();
+  }
+
   Future<void> BayarUangPas(WidgetTester tester, Size ukuran) async {
     await Ketuk(tester, find.byWidgetPredicate((w) => w is UbinProduk && w.nama.startsWith('Americano')));
     if (ukuran.width < 600) {
@@ -81,6 +89,7 @@ void main() {
       expect(find.text('Printer belum diatur'), findsOneWidget, reason: 'Cetak uji belum menyimpan printer.');
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer'));
+      await GulirKe(tester, find.text('Printer LAN/Wi-Fi 192.168.1.50:9100 · 80 mm'));
       expect(find.text('Printer LAN/Wi-Fi 192.168.1.50:9100 · 80 mm'), findsOneWidget);
       expect(find.text('Printer siap'), findsOneWidget);
       final profil = await tester.runAsync(() => ProfilPrinter.Muat(u.repositori));
@@ -145,6 +154,75 @@ void main() {
     expect(find.text('Printer struk belum diatur. Atur di menu Pengaturan agar struk tercetak.'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Cetak struk'), findsNothing);
     expect(u.printer.kiriman, isEmpty);
+    await Lepas(tester, u);
+  });
+
+  for (final ukuran in const [Size(1280, 900), Size(360, 740)]) {
+    testWidgets('printer Bluetooth: cari printer ter-pair, pilih, cetak uji, simpan ($ukuran)', (tester) async {
+      final u = await Masuk(tester, ukuran);
+      u.pemindai.hasil[JenisTransport.BluetoothKlasik] = const [
+        PrinterDitemukan(jenis: JenisTransport.BluetoothKlasik, alamat: '66:22:11:AA:BB:CC', nama: 'RPP02N'),
+        PrinterDitemukan(jenis: JenisTransport.BluetoothKlasik, alamat: '00:11:22:33:44:55', nama: 'MTP-II'),
+      ];
+      await Ketuk(tester, find.text('Pengaturan').last);
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Atur printer'));
+      await Ketuk(tester, find.text('Bluetooth'));
+      expect(find.widgetWithText(TextField, 'Alamat IP printer'), findsNothing);
+
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer'));
+      expect(find.text('Pilih printer dulu. Ketuk Cari printer untuk melihat daftarnya.'), findsOneWidget);
+
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cari printer'));
+      expect(find.text('RPP02N'), findsOneWidget);
+      await Ketuk(tester, find.text('MTP-II'));
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak uji'));
+      expect(u.printer.AmbilTeks(), contains('CETAK UJI'));
+      expect(u.pemindai.transportDibuat.last.alamat, '00:11:22:33:44:55');
+
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer'));
+      await GulirKe(tester, find.text('Printer Bluetooth MTP-II · 58 mm'));
+      expect(find.text('Printer Bluetooth MTP-II · 58 mm'), findsOneWidget);
+      expect(find.text('Printer siap'), findsOneWidget);
+      final profil = await tester.runAsync(() => ProfilPrinter.Muat(u.repositori));
+      expect(
+        (profil?.jenis, profil?.alamat, profil?.nama),
+        (JenisTransport.BluetoothKlasik, '00:11:22:33:44:55', 'MTP-II'),
+      );
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
+
+  testWidgets('Bluetooth LE: izin ditolak → pesan; tidak ada printer → petunjuk; bayar mencetak lewat BLE', (
+    tester,
+  ) async {
+    final u = await Masuk(tester, const Size(1280, 900));
+    await Ketuk(tester, find.text('Pengaturan').last);
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Atur printer'));
+    await Ketuk(tester, find.text('Bluetooth LE'));
+
+    u.pemindai.galatSiapkan = 'Bluetooth mati. Nyalakan Bluetooth, lalu coba lagi.';
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cari printer'));
+    expect(find.text('Bluetooth mati. Nyalakan Bluetooth, lalu coba lagi.'), findsOneWidget);
+
+    u.pemindai.galatSiapkan = null;
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cari printer'));
+    expect(find.textContaining('Tidak ada printer Bluetooth LE di sekitar'), findsOneWidget);
+
+    u.pemindai.hasil[JenisTransport.Ble] = const [
+      PrinterDitemukan(jenis: JenisTransport.Ble, alamat: 'BLE-01', nama: 'Printer_5D2B'),
+    ];
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cari printer'));
+    // Satu printer ditemukan langsung terpilih.
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer'));
+    await GulirKe(tester, find.text('Printer Bluetooth LE Printer_5D2B · 58 mm'));
+    expect(find.text('Printer Bluetooth LE Printer_5D2B · 58 mm'), findsOneWidget);
+
+    await Ketuk(tester, find.text('Jual').last);
+    await BayarUangPas(tester, const Size(1280, 900));
+    await Tunggu(tester);
+    expect(find.text('Struk sudah dicetak.'), findsOneWidget);
+    expect(u.pemindai.transportDibuat.last.jenis, JenisTransport.Ble);
     await Lepas(tester, u);
   });
 }

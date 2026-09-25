@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
+import 'package:kasir/Domain/Struk/PemindaiPrinter.dart';
+import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
 
 /// Printer tiruan untuk test: menyimpan setiap kiriman byte; [galat] diisi = kiriman berikutnya gagal dengan pesan itu.
 class PrinterTiruan implements TransportPrinter {
@@ -34,5 +36,35 @@ class PrinterTiruan implements TransportPrinter {
       }
     }
     return false;
+  }
+}
+
+/// Pemindai printer tiruan: semua jenis sambungan didukung, hasil cari & galat izin bisa diatur test; transport =
+/// [printer] (bukan radio sungguhan).
+class PemindaiTiruan implements PemindaiPrinter {
+  PemindaiTiruan(this.printer);
+
+  final PrinterTiruan printer;
+  final Map<JenisTransport, List<PrinterDitemukan>> hasil = {};
+  String? galatSiapkan;
+  final List<ProfilPrinter> transportDibuat = [];
+
+  @override
+  List<JenisTransport> AmbilJenisDidukung() => const [
+    JenisTransport.Jaringan,
+    JenisTransport.BluetoothKlasik,
+    JenisTransport.Ble,
+  ];
+
+  @override
+  Future<String?> SiapkanBluetooth(JenisTransport jenis) async => galatSiapkan;
+
+  @override
+  Future<List<PrinterDitemukan>> CariPrinter(JenisTransport jenis) async => hasil[jenis] ?? const [];
+
+  @override
+  TransportPrinter BuatTransport(ProfilPrinter profil) {
+    transportDibuat.add(profil);
+    return printer;
   }
 }

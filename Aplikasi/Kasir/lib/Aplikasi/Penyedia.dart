@@ -14,6 +14,7 @@ import '../Domain/Karyawan/LayananAbsensi.dart';
 import '../Domain/Perangkat/KameraSwafoto.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/PengubahLogoStruk.dart';
+import '../Data/Printer/PemindaiPrinterPlatform.dart';
 import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
 import '../Data/PesananMeja.dart';
@@ -46,6 +47,7 @@ import '../Domain/Shift/LayananShift.dart';
 import '../Domain/Shift/LayananTutupShift.dart';
 import '../Domain/Sinkron/LayananSinkron.dart';
 import '../Domain/Struk/LayananStruk.dart';
+import '../Domain/Struk/PemindaiPrinter.dart';
 import '../Domain/Struk/ProfilPrinter.dart';
 import 'Lingkungan.dart';
 
@@ -129,10 +131,9 @@ final penyediaRepositoriPenjualan = Provider<RepositoriPenjualan>(
 );
 
 /// Cetak struk (PRD v1.79): transport printer dari profil (test menggantinya dengan printer tiruan).
-final penyediaPembuatTransport = Provider<PembuatTransport>(
-  (ref) =>
-      (profil) => profil.BuatTransport(),
-);
+final penyediaPemindaiPrinter = Provider<PemindaiPrinter>((ref) => const PemindaiPrinterPlatform());
+
+final penyediaPembuatTransport = Provider<PembuatTransport>((ref) => ref.watch(penyediaPemindaiPrinter).BuatTransport);
 
 final penyediaLayananStruk = Provider<LayananStruk>(
   (ref) => LayananStruk(

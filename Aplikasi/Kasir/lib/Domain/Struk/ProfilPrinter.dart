@@ -4,11 +4,16 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 
 import '../../Data/RepositoriKasir.dart';
 
-/// Printer struk perangkat ini (PRD §17.2.5, v1.79). Disimpan lokal di tabel `Pengaturan` (kunci `ProfilPrinter`,
-/// JSON): tidak ikut data awal dan tetap ada saat data kasir diperbarui. Fase ini: printer LAN/Wi-Fi (port 9100).
+/// Printer struk perangkat ini (PRD §17.2.5, v1.79–v1.80). Disimpan lokal di tabel `Pengaturan` (kunci `ProfilPrinter`,
+/// JSON): tidak ikut data awal dan tetap ada saat data kasir diperbarui. [alamat] menurut [jenis]:
+/// - `Jaringan`: IP/nama host (+ [port]);
+/// - `BluetoothKlasik`: alamat MAC printer yang sudah di-pair (Android) atau nama COM port Bluetooth (Windows);
+/// - `Ble`: id perangkat BLE dari pemindaian (iOS, Android, Windows).
 class ProfilPrinter {
   const ProfilPrinter({
     required this.alamat,
+    this.jenis = JenisTransport.Jaringan,
+    this.nama,
     this.port = TransportJaringan.portBawaan,
     this.lebar = LebarKertas.Mm58,
     this.cetakOtomatis = true,
@@ -16,6 +21,10 @@ class ProfilPrinter {
   });
 
   final String alamat;
+  final JenisTransport jenis;
+
+  /// Nama printer untuk ditampilkan (Bluetooth); null = pakai [alamat].
+  final String? nama;
   final int port;
   final LebarKertas lebar;
 
@@ -25,9 +34,10 @@ class ProfilPrinter {
   /// Buka laci kas (lewat printer) saat pembayaran memuat tunai.
   final bool bukaLaciTunai;
 
-  String get label => '$alamat:$port · ${lebar.label}';
-
-  TransportPrinter BuatTransport() => TransportJaringan(alamat, port: port);
+  String get label => switch (jenis) {
+    JenisTransport.Jaringan => 'LAN/Wi-Fi $alamat:$port · ${lebar.label}',
+    _ => '${jenis.label} ${nama ?? alamat} · ${lebar.label}',
+  };
 
   /// Alamat IPv4 atau nama host sederhana; port 1–65535.
   static String? ValidasiAlamat(String alamat) {
@@ -53,6 +63,8 @@ class ProfilPrinter {
   ProfilPrinter copyWith({String? alamat, int? port, LebarKertas? lebar, bool? cetakOtomatis, bool? bukaLaciTunai}) =>
       ProfilPrinter(
         alamat: alamat ?? this.alamat,
+        jenis: jenis,
+        nama: nama,
         port: port ?? this.port,
         lebar: lebar ?? this.lebar,
         cetakOtomatis: cetakOtomatis ?? this.cetakOtomatis,
@@ -60,8 +72,9 @@ class ProfilPrinter {
       );
 
   Map<String, Object?> KeJson() => {
-    'Jenis': JenisTransport.Jaringan.name,
+    'Jenis': jenis.name,
     'Alamat': alamat,
+    'Nama': nama,
     'Port': port,
     'Lebar': lebar.name,
     'CetakOtomatis': cetakOtomatis,
@@ -74,11 +87,15 @@ class ProfilPrinter {
     }
     final alamat = json['Alamat'];
     final port = json['Port'];
-    if (alamat is! String || alamat.isEmpty || port is! int) {
+    final jenis = JenisTransport.values.where((j) => j.name == json['Jenis']).firstOrNull;
+    if (alamat is! String || alamat.isEmpty || port is! int || jenis == null) {
       return null;
     }
+    final nama = json['Nama'];
     return ProfilPrinter(
       alamat: alamat,
+      jenis: jenis,
+      nama: nama is String && nama.isNotEmpty ? nama : null,
       port: port,
       lebar: LebarKertas.values.where((l) => l.name == json['Lebar']).firstOrNull ?? LebarKertas.Mm58,
       cetakOtomatis: json['CetakOtomatis'] != false,
