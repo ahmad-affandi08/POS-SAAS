@@ -47,7 +47,12 @@ final class AutentikasiPerangkat
         }
 
         $versi = $request->header('X-Versi-Aplikasi');
-        $this->aktivitas->Catat($perangkat, is_string($versi) ? trim($versi) : null);
+        $outbox = $request->header('X-Outbox-Tertunda');
+        $this->aktivitas->Catat(
+            $perangkat,
+            is_string($versi) ? trim($versi) : null,
+            is_string($outbox) && ctype_digit(trim($outbox)) ? min((int) trim($outbox), 1_000_000) : null,
+        );
         $this->audit->AturKonteks(null, $request->ip(), $request->userAgent(), $perangkat->Id);
         $request->attributes->set(self::ATRIBUT, $perangkat);
 

@@ -15,6 +15,7 @@ namespace App\Domain\Pengelola\TimInternal\Enum;
  * P-05 (BR-P05.2): kredensial integrasi hanya Teknis & Super Admin; Keuangan dan Dukungan dilarang (§19.3).
  * P-07: lihat `AmbilIzinSiklusTenant()`.
  * P-09: tiket dukungan untuk Dukungan (Super Admin lewat semua izin). P-11: monitoring & job gagal untuk Teknis.
+ * P-10: rilis aplikasi & flag fitur untuk Teknis.
  */
 enum PeranPengelolaBawaan: string
 {
@@ -89,6 +90,10 @@ enum PeranPengelolaBawaan: string
                 // P-11 Monitoring operasional.
                 IzinPengelola::OperasionalLihat,
                 IzinPengelola::OperasionalKelola,
+                // P-10 Rilis aplikasi & flag fitur.
+                IzinPengelola::RilisLihat,
+                IzinPengelola::RilisKelola,
+                IzinPengelola::FlagFiturKelola,
             ],
             // P-09 Tiket dukungan: Dukungan dipisah dari Mitra & Penjualan dan Analis.
             self::Dukungan => [

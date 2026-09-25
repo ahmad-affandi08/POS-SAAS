@@ -68,6 +68,10 @@ export const IzinPengelola = {
     // P-11
     OperasionalLihat: 'operasional.lihat',
     OperasionalKelola: 'operasional.kelola',
+    // P-10
+    RilisLihat: 'rilis.lihat',
+    RilisKelola: 'rilis.kelola',
+    FlagFiturKelola: 'flag-fitur.kelola',
 } as const;
 
 export type Pilihan = { Nilai: string; Label: string };
@@ -77,3 +81,31 @@ export type KunciIzinPengelola = (typeof IzinPengelola)[keyof typeof IzinPengelo
 export function PunyaIzin(pengguna: PenggunaPengelola | null, izin: KunciIzinPengelola): boolean {
     return pengguna?.Izin.includes(izin) ?? false;
 }
+
+/** P-10: satu rilis aplikasi di halaman Rilis aplikasi. */
+export type RilisAplikasi = {
+    Uuid: string;
+    Aplikasi: 'Pos' | 'Pemilik';
+    LabelAplikasi: string;
+    Platform: 'Android' | 'Ios' | 'Windows';
+    Kanal: 'Beta' | 'Stabil';
+    Versi: string;
+    Build: number | null;
+    Status: 'Draf' | 'Aktif' | 'Dihentikan';
+    PersenRollout: number;
+    UrlUnduh: string | null;
+    CatatanRilis: string | null;
+    VersiMinimum: string | null;
+    VersiMinimumBerlakuPada: string | null;
+    PerbaikanKeamanan: boolean;
+    DiterbitkanPada: string | null;
+    DihentikanPada: string | null;
+    AlasanDihentikan: string | null;
+};
+
+/** BR-P10.2: perangkat di bawah versi yang akan menjadi minimum. */
+export type DampakVersiMinimum = {
+    PerangkatDiBawah: number;
+    PerangkatDiBawahDenganOutbox: number;
+    OutboxTertunda: number;
+};

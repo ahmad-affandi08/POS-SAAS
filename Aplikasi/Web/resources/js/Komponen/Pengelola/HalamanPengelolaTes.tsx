@@ -8,13 +8,14 @@ import HalamanFitur from '@/Halaman/Pengelola/Katalog/Fitur';
 import HalamanIntegrasi from '@/Halaman/Pengelola/Integrasi/Daftar';
 import HalamanTarifPajak from '@/Halaman/Pengelola/Referensi/TarifPajak';
 import HalamanWilayah from '@/Halaman/Pengelola/Referensi/Wilayah';
+import HalamanRilis, { AmbilStatusRilis } from '@/Halaman/Pengelola/Rilis/Daftar';
 import HalamanEditorTemplate from '@/Halaman/Pengelola/TemplateSektor/Editor';
 import BidangTanggal, { TulisTanggal, UraiTanggal } from '@/Komponen/Pengelola/BidangTanggal';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
-import { IzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import { IzinPengelola, type PropsBersamaPengelola, type RilisAplikasi } from '@/Tipe/Pengelola';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
@@ -497,5 +498,80 @@ describe('Referensi wilayah & tarif pajak (P-02, TabelData D-16)', () => {
         expect(uji.kiriman).toEqual([
             { metode: 'post', url: '/referensi/tarif-pajak/T1/tinjau', data: { Keputusan: 'Setuju', Catatan: '' } },
         ]);
+    });
+});
+
+describe('Rilis aplikasi (P-10)', () => {
+    const dasar: RilisAplikasi = {
+        Uuid: '',
+        Aplikasi: 'Pos',
+        LabelAplikasi: 'Aplikasi POS',
+        Platform: 'Android',
+        Kanal: 'Stabil',
+        Versi: '',
+        Build: null,
+        Status: 'Draf',
+        PersenRollout: 0,
+        UrlUnduh: null,
+        CatatanRilis: null,
+        VersiMinimum: null,
+        VersiMinimumBerlakuPada: null,
+        PerbaikanKeamanan: false,
+        DiterbitkanPada: null,
+        DihentikanPada: null,
+        AlasanDihentikan: null,
+    };
+    const rilis: RilisAplikasi[] = [
+        { ...dasar, Uuid: 'R1', Versi: '1.6.0' },
+        {
+            ...dasar,
+            Uuid: 'R2',
+            Versi: '1.5.0',
+            Status: 'Aktif',
+            PersenRollout: 50,
+            DiterbitkanPada: '2026-10-20T03:00:00Z',
+        },
+        { ...dasar, Uuid: 'R3', Versi: '2.0.0', Kanal: 'Beta', Status: 'Aktif', PersenRollout: 100 },
+        { ...dasar, Uuid: 'R4', Versi: '1.4.9', Status: 'Dihentikan' },
+    ];
+
+    it('status: draf, rollout sebagian, beta, dihentikan', () => {
+        expect(rilis.map((r) => AmbilStatusRilis(r).teks)).toEqual([
+            'Draf',
+            'Aktif · 50%',
+            'Aktif · Beta',
+            'Dihentikan',
+        ]);
+    });
+
+    it('terbitkan draf mengirim persen rollout; versi minimum menampilkan dampak perangkat lama (BR-P10.2)', async () => {
+        AturHalaman([IzinPengelola.RilisLihat, IzinPengelola.RilisKelola], '/rilis');
+        const ambil = vi
+            .spyOn(globalThis, 'fetch')
+            .mockResolvedValue(
+                new Response(
+                    JSON.stringify({ PerangkatDiBawah: 4, PerangkatDiBawahDenganOutbox: 1, OutboxTertunda: 3 }),
+                ),
+            );
+        RenderDenganKueri(<HalamanRilis Rilis={rilis} />);
+
+        BukaMenu(screen.getAllByRole('button', { name: /Aksi Aplikasi POS Android 1\.6\.0/ })[0] as HTMLElement);
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Terbitkan' }));
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Terbitkan rilis' }));
+        expect(uji.kiriman).toEqual([{ metode: 'post', url: '/rilis/R1/terbitkan', data: { PersenRollout: '10' } }]);
+        fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+
+        BukaMenu(screen.getAllByRole('button', { name: /Aksi Aplikasi POS Android 1\.5\.0/ })[0] as HTMLElement);
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Jadikan versi minimum' }));
+        expect(await screen.findByText('4 perangkat masih di bawah 1.5.0')).toBeTruthy();
+        expect(ambil).toHaveBeenCalledWith('/rilis/R2/dampak-versi-minimum', expect.anything());
+        ambil.mockRestore();
+    });
+
+    it('tanpa izin kelola tidak ada tombol catat & aksi baris', () => {
+        AturHalaman([IzinPengelola.RilisLihat], '/rilis');
+        RenderDenganKueri(<HalamanRilis Rilis={rilis} />);
+        expect(screen.queryByRole('button', { name: 'Catat draf rilis' })).toBeNull();
+        expect(screen.queryAllByRole('button', { name: /Aksi Aplikasi POS/ })).toHaveLength(0);
     });
 });

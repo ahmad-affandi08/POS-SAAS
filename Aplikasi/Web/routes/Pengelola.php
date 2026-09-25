@@ -22,6 +22,7 @@ use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
+use App\Http\Kontroler\Pengelola\Rilis\RilisAplikasiKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\Tagihan\TagihanKontroler;
 use App\Http\Kontroler\Pengelola\TemplateSektor\TemplateSektorKontroler;
@@ -180,6 +181,21 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 Route::put('/dukungan/tiket/{tiketDukungan}/status', [TiketDukunganKontroler::class, 'UbahStatus'])->name('pengelola.dukungan.tiket.status.ubah');
                 Route::put('/dukungan/tiket/{tiketDukungan}/prioritas', [TiketDukunganKontroler::class, 'UbahPrioritas'])
                     ->name('pengelola.dukungan.tiket.prioritas.ubah');
+            });
+        });
+
+        // P-10 Rilis aplikasi (§19.3: Teknis & Super Admin).
+        Route::middleware($izin(IzinPengelola::RilisLihat))->group(function () use ($izin): void {
+            Route::get('/rilis', [RilisAplikasiKontroler::class, 'Daftar'])->name('pengelola.rilis.daftar');
+            Route::middleware($izin(IzinPengelola::RilisKelola))->group(function (): void {
+                Route::post('/rilis', [RilisAplikasiKontroler::class, 'Simpan'])->name('pengelola.rilis.simpan');
+                Route::put('/rilis/{rilis}', [RilisAplikasiKontroler::class, 'Ubah'])->name('pengelola.rilis.ubah');
+                Route::post('/rilis/{rilis}/terbitkan', [RilisAplikasiKontroler::class, 'Terbitkan'])->name('pengelola.rilis.terbitkan');
+                Route::post('/rilis/{rilis}/rollout', [RilisAplikasiKontroler::class, 'UbahRollout'])->name('pengelola.rilis.rollout');
+                Route::post('/rilis/{rilis}/hentikan', [RilisAplikasiKontroler::class, 'Hentikan'])->name('pengelola.rilis.hentikan');
+                Route::get('/rilis/{rilis}/dampak-versi-minimum', [RilisAplikasiKontroler::class, 'DampakVersiMinimum'])->name('pengelola.rilis.versi-minimum.dampak');
+                Route::post('/rilis/{rilis}/versi-minimum', [RilisAplikasiKontroler::class, 'AturVersiMinimum'])->name('pengelola.rilis.versi-minimum.atur');
+                Route::delete('/rilis/{rilis}/versi-minimum', [RilisAplikasiKontroler::class, 'BatalkanVersiMinimum'])->name('pengelola.rilis.versi-minimum.batal');
             });
         });
 

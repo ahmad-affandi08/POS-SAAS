@@ -68,6 +68,11 @@ enum IzinPengelola: string
     case OperasionalLihat = 'operasional.lihat';
     case OperasionalKelola = 'operasional.kelola';
 
+    // P-10 Rilis aplikasi & flag fitur (§19.3: Teknis & Super Admin).
+    case RilisLihat = 'rilis.lihat';
+    case RilisKelola = 'rilis.kelola';
+    case FlagFiturKelola = 'flag-fitur.kelola';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -116,6 +121,10 @@ enum IzinPengelola: string
             // P-11
             self::OperasionalLihat => 'Melihat dasbor operasional (scheduler, antrean, job gagal, backup)',
             self::OperasionalKelola => 'Mencoba ulang/membuang job gagal dan mencatat hasil backup',
+            // P-10
+            self::RilisLihat => 'Melihat rilis aplikasi & flag fitur',
+            self::RilisKelola => 'Mencatat, menerbitkan, menghentikan rilis aplikasi dan menaikkan versi minimum',
+            self::FlagFiturKelola => 'Mengubah flag fitur & kill switch',
         };
     }
 }

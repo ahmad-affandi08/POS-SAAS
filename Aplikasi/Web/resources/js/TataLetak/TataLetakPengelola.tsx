@@ -8,6 +8,7 @@ import {
     LibraryIcon,
     LifeBuoyIcon,
     PlugIcon,
+    RocketIcon,
     ReceiptIcon,
     ScaleIcon,
     ScrollTextIcon,
@@ -59,6 +60,8 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: PlugIcon },
     // P-09
     { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
+    // P-10 Rilis aplikasi & flag fitur.
+    { label: 'Rilis aplikasi', href: '/rilis', izin: IzinPengelola.RilisLihat, ikon: RocketIcon },
     // P-11
     { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },

@@ -6,7 +6,10 @@ namespace App\Http\Kontroler\Pos\V1;
 
 use App\Domain\Organisasi\Enum\PlatformPerangkat;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Tenant\Enum\AplikasiRilis;
 use App\Domain\Tenant\Kueri\StatusLanggananTenant;
+use App\Domain\Tenant\Kueri\VersiAplikasiPerangkat;
+use App\Domain\Tenant\Model\RilisAplikasi;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Respons\Pos\V1\PerangkatPosRespons;
@@ -14,15 +17,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * `GET /api/pos/v1/konfigurasi-aplikasi` (§14.6, §16.3): versi terbaru & minimal per platform (config/aplikasi.php),
- * status langganan (boleh berjualan?), dan konfigurasi dasar outlet & perangkat. Tetap bisa dibuka saat langganan
- * ditangguhkan agar aplikasi bisa menampilkan alasannya.
- *
- * TODO P-10: flag fitur remote & kanal rilis dari `RilisAplikasi`.
+ * `GET /api/pos/v1/konfigurasi-aplikasi` (§14.6, §16.3): versi terbaru & minimal per platform (P-10 `RilisAplikasi`
+ * per perangkat: kanal & rollout bertahap; cadangan config/aplikasi.php), catatan rilis, status langganan (boleh
+ * berjualan?), dan konfigurasi dasar outlet & perangkat. Tetap bisa dibuka saat langganan ditangguhkan agar aplikasi
+ * bisa menampilkan alasannya.
  */
 final class KonfigurasiAplikasiKontroler extends Kontroler
 {
-    public function Tampilkan(Request $permintaan, StatusLanggananTenant $statusLangganan): JsonResponse
+    public function Tampilkan(Request $permintaan, StatusLanggananTenant $statusLangganan, VersiAplikasiPerangkat $versi): JsonResponse
     {
         $perangkat = AutentikasiPerangkat::AmbilPerangkat($permintaan);
         $outlet = Outlet::query()->findOrFail($perangkat->IdOutlet);
@@ -33,7 +35,7 @@ final class KonfigurasiAplikasiKontroler extends Kontroler
         $perPlatform = [];
 
         foreach (PlatformPerangkat::cases() as $platform) {
-            $perPlatform[$platform->value] = self::AmbilVersi($platform);
+            $perPlatform[$platform->value] = $versi->Tentukan(AplikasiRilis::Pos, $platform->value, $perangkat->IdTenant, $perangkat->Uuid);
         }
 
         $versiPlatform = $perangkat->Platform === null ? null : $perPlatform[$perangkat->Platform->value];
@@ -45,9 +47,10 @@ final class KonfigurasiAplikasiKontroler extends Kontroler
                 'VersiTerbaru' => $versiPlatform['VersiTerbaru'] ?? null,
                 'VersiMinimal' => $versiPlatform['VersiMinimal'] ?? null,
                 'TautanUnduh' => $versiPlatform['TautanUnduh'] ?? null,
-                'AdaPembaruan' => $versiPlatform !== null && $versiSaatIni !== null && self::BandingkanVersi($versiSaatIni, $versiPlatform['VersiTerbaru']) < 0,
-                'WajibPembaruan' => $versiPlatform !== null && $versiSaatIni !== null && self::BandingkanVersi($versiSaatIni, $versiPlatform['VersiMinimal']) < 0,
-                'PerPlatform' => $perPlatform,
+                'CatatanRilis' => $versiPlatform['CatatanRilis'] ?? null,
+                'AdaPembaruan' => $versiPlatform !== null && $versiSaatIni !== null && RilisAplikasi::BandingkanVersi($versiSaatIni, $versiPlatform['VersiTerbaru']) < 0,
+                'WajibPembaruan' => $versiPlatform !== null && $versiSaatIni !== null && RilisAplikasi::BandingkanVersi($versiSaatIni, $versiPlatform['VersiMinimal']) < 0,
+                'PerPlatform' => array_map(fn (array $v): array => ['VersiTerbaru' => $v['VersiTerbaru'], 'VersiMinimal' => $v['VersiMinimal'], 'TautanUnduh' => $v['TautanUnduh']], $perPlatform),
             ],
             'FlagFitur' => new \stdClass,
             'Langganan' => PerangkatPosRespons::Langganan($status, $statusLangganan->CekBolehBertransaksiPos($status)),
@@ -55,27 +58,5 @@ final class KonfigurasiAplikasiKontroler extends Kontroler
             'Outlet' => PerangkatPosRespons::Outlet($outlet),
             'WaktuServer' => now()->utc()->toIso8601ZuluString(),
         ]);
-    }
-
-    /**
-     * @return array{VersiTerbaru: string, VersiMinimal: string, TautanUnduh: string|null}
-     */
-    private static function AmbilVersi(PlatformPerangkat $platform): array
-    {
-        $konfigurasi = config("aplikasi.Pos.{$platform->value}");
-        $konfigurasi = is_array($konfigurasi) ? $konfigurasi : [];
-        $tautan = $konfigurasi['TautanUnduh'] ?? null;
-
-        return [
-            'VersiTerbaru' => (string) ($konfigurasi['VersiTerbaru'] ?? '1.0.0'),
-            'VersiMinimal' => (string) ($konfigurasi['VersiMinimal'] ?? '1.0.0'),
-            'TautanUnduh' => is_string($tautan) && $tautan !== '' ? $tautan : null,
-        ];
-    }
-
-    /** Versi semantik tanpa bagian `+BUILD` (§14.6). */
-    private static function BandingkanVersi(string $a, string $b): int
-    {
-        return version_compare(explode('+', $a)[0], explode('+', $b)[0]);
     }
 }

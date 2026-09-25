@@ -27,4 +27,8 @@ export const KunciKueri = {
         Pelacakan: (uuidProduk: string, uuidGudang: string) =>
             ['Persediaan', 'Pelacakan', uuidProduk, uuidGudang] as const,
     },
+    // P-10: dampak menaikkan versi minimum (BR-P10.2), dibaca saat dialog dibuka.
+    Pengelola: {
+        DampakVersiMinimum: (uuidRilis: string) => ['Pengelola', 'DampakVersiMinimum', uuidRilis] as const,
+    },
 } as const;
