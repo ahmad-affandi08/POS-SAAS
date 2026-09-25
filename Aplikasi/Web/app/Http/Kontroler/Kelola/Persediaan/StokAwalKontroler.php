@@ -88,7 +88,7 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
 
         if ($dokumen->Status !== StatusStokAwal::Draf) {
             return redirect()->route('kelola.persediaan.stok-awal.detail', ['stokAwal' => $dokumen->Uuid])
-                ->with('Kilat', "Stok awal berstatus {$dokumen->Status->AmbilLabel()} tidak bisa diubah.");
+                ->withErrors(['Umum' => "Stok awal berstatus {$dokumen->Status->AmbilLabel()} tidak bisa diubah."]);
         }
 
         return $this->RenderForm('Ubah', $detail->AmbilForm($dokumen), $detail->AmbilPeranAkun($dokumen));

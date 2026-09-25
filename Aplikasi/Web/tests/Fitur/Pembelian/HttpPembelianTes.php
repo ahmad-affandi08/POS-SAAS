@@ -70,6 +70,13 @@ describe('F-04 HTTP pembelian', function (): void {
         ])->assertSessionHasNoErrors()->assertRedirect();
         $grn = PenerimaanBarang::query()->sole();
         expect($po->refresh()->Status)->toBe(StatusPesananPembelian::Diterima);
+        // Penolakan dikirim sebagai galat Umum (bukan Kilat "Berhasil"): PO Diterima tidak bisa menerima/diubah lagi.
+        $this->get("/kelola/pembelian/penerimaan/buat?pesanan={$po->Uuid}")
+            ->assertRedirect("/kelola/pembelian/pesanan/{$po->Uuid}")->assertSessionHasErrors('Umum')->assertSessionMissing('Kilat');
+        $this->get("/kelola/pembelian/pesanan/{$po->Uuid}/ubah")
+            ->assertRedirect("/kelola/pembelian/pesanan/{$po->Uuid}")->assertSessionHasErrors('Umum')->assertSessionMissing('Kilat');
+        $this->get('/kelola/pembelian/retur/buat')
+            ->assertRedirect('/kelola/pembelian/penerimaan')->assertSessionHasErrors('Umum')->assertSessionMissing('Kilat');
         $this->get("/kelola/pembelian/penerimaan/{$grn->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Pembelian/Penerimaan/Detail')->where('Tindakan.Fakturkan', true)->where('Penerimaan.TotalNilai', '756000.00'));
 

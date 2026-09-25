@@ -87,7 +87,7 @@ final class TransferStokKontroler extends DasarDokumenPersediaanKontroler
         $t = $this->CariTransfer($transferStok, asal: true);
 
         if ($t->Status !== StatusTransferStok::Draf) {
-            return redirect()->route(self::ALAMAT, ['transferStok' => $t->Uuid])->with('Kilat', "Transfer berstatus {$t->Status->AmbilLabel()} tidak bisa diubah.");
+            return redirect()->route(self::ALAMAT, ['transferStok' => $t->Uuid])->withErrors(['Umum' => "Transfer berstatus {$t->Status->AmbilLabel()} tidak bisa diubah."]);
         }
 
         return $this->RenderForm('Ubah', $detail->AmbilForm($t));

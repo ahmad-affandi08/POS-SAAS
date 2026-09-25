@@ -81,7 +81,7 @@ final class PesananPembelianKontroler extends DasarPembelianKontroler
         $po = $this->CariDokumen(PesananPembelian::class, $pesanan);
 
         if ($po->Status !== StatusPesananPembelian::Draf) {
-            return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Pesanan berstatus {$po->Status->AmbilLabel()} tidak bisa diubah.");
+            return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->withErrors(['Umum' => "Pesanan berstatus {$po->Status->AmbilLabel()} tidak bisa diubah."]);
         }
 
         return $this->RenderForm('Ubah', app(IsianFormPembelian::class)->Pesanan($po));

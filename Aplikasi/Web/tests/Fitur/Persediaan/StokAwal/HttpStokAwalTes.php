@@ -95,7 +95,8 @@ describe('F-05a HTTP stok awal: draf', function (): void {
 
         $this->from("/kelola/persediaan/stok-awal/{$draf->Uuid}")->put("/kelola/persediaan/stok-awal/{$draf->Uuid}", $isi)->assertSessionHasErrors(['Umum']);
         $this->post("/kelola/persediaan/stok-awal/{$draf->Uuid}/buang")->assertSessionHasErrors(['Umum']);
-        $this->get("/kelola/persediaan/stok-awal/{$draf->Uuid}/ubah")->assertRedirect("/kelola/persediaan/stok-awal/{$draf->Uuid}");
+        $this->get("/kelola/persediaan/stok-awal/{$draf->Uuid}/ubah")->assertRedirect("/kelola/persediaan/stok-awal/{$draf->Uuid}")
+            ->assertSessionHasErrors('Umum')->assertSessionMissing('Kilat');
 
         expect($draf->fresh()?->Status)->toBe(StatusStokAwal::Diposting)
             ->and($draf->fresh()?->TotalNilai)->toBe('228000.00');

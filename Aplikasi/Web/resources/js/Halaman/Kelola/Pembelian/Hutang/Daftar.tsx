@@ -57,15 +57,15 @@ function Ringkasan({ ringkasan }: { ringkasan: RingkasanHutang | undefined }) {
     }
 
     return (
-        <section aria-label="Ringkasan umur hutang" className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-panel border border-garis bg-permukaan px-3 py-2">
+        <section aria-label="Ringkasan umur hutang" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="col-span-2 min-w-0 rounded-panel border border-garis bg-permukaan px-3 py-2 sm:col-span-1">
                 <p className="text-label text-teks-sekunder">Total hutang</p>
                 <p className="text-subjudul font-semibold tabular-nums">{FormatRupiah(ringkasan.Total)}</p>
             </div>
             {ringkasan.Kelompok.map((k) => (
-                <div key={k.Kunci} className="rounded-panel border border-garis bg-permukaan px-3 py-2">
+                <div key={k.Kunci} className="min-w-0 rounded-panel border border-garis bg-permukaan px-3 py-2">
                     <p className="text-label text-teks-sekunder">{k.Label}</p>
-                    <p className="font-semibold tabular-nums">{FormatRupiah(k.Sisa)}</p>
+                    <p className="font-semibold tabular-nums wrap-anywhere">{FormatRupiah(k.Sisa)}</p>
                     <p className="text-keterangan text-teks-sekunder">{k.Jumlah.toLocaleString('id-ID')} faktur</p>
                 </div>
             ))}

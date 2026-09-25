@@ -54,7 +54,7 @@ final class PenerimaanBarangKontroler extends DasarPembelianKontroler
             $po = $this->CariDokumen(PesananPembelian::class, $uuidPesanan);
 
             if (! $po->Status->CekBolehDiterima()) {
-                return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Pesanan berstatus {$po->Status->AmbilLabel()} tidak bisa menerima barang.");
+                return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->withErrors(['Umum' => "Pesanan berstatus {$po->Status->AmbilLabel()} tidak bisa menerima barang."]);
             }
 
             $pesanan = $isian->PenerimaanDariPesanan($po);

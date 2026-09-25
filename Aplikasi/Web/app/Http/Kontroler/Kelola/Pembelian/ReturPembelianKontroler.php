@@ -41,7 +41,7 @@ final class ReturPembelianKontroler extends DasarPembelianKontroler
         $uuid = $permintaan->query('penerimaan');
 
         if (! is_string($uuid) || $uuid === '') {
-            return to_route('kelola.pembelian.penerimaan.daftar')->with('Kilat', 'Pilih penerimaan barang yang akan diretur, lalu tekan "Retur barang".');
+            return to_route('kelola.pembelian.penerimaan.daftar')->withErrors(['Umum' => 'Pilih penerimaan barang yang akan diretur, lalu tekan "Retur barang".']);
         }
 
         $grn = $this->CariDokumen(PenerimaanBarang::class, $uuid);

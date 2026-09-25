@@ -31,10 +31,12 @@ export default function Pemberitahuan({ jenis, judul, children }: PropsPemberita
             className={`rounded-panel border-l-4 border-garis bg-permukaan px-4 py-3 ${kelasJenis[jenis]}`}
         >
             <Ikon aria-hidden="true" />
-            <AlertTitle className="line-clamp-none text-label font-semibold tracking-normal text-teks-utama">
+            <AlertTitle className="line-clamp-none min-w-0 text-label wrap-anywhere font-semibold tracking-normal text-teks-utama">
                 {judul ?? labelJenis[jenis]}
             </AlertTitle>
-            <AlertDescription className="block text-isi text-teks-sekunder">{children}</AlertDescription>
+            <AlertDescription className="block min-w-0 text-isi text-teks-sekunder wrap-anywhere">
+                {children}
+            </AlertDescription>
         </Alert>
     );
 }

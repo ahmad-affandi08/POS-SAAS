@@ -87,7 +87,7 @@ final class PenyesuaianStokKontroler extends DasarDokumenPersediaanKontroler
         $p = $this->CariPenyesuaian($penyesuaianStok);
 
         if ($p->Status !== StatusPenyesuaianStok::Draf) {
-            return redirect()->route(self::ALAMAT, ['penyesuaianStok' => $p->Uuid])->with('Kilat', "Penyesuaian berstatus {$p->Status->AmbilLabel()} tidak bisa diubah.");
+            return redirect()->route(self::ALAMAT, ['penyesuaianStok' => $p->Uuid])->withErrors(['Umum' => "Penyesuaian berstatus {$p->Status->AmbilLabel()} tidak bisa diubah."]);
         }
 
         return $this->RenderForm('Ubah', $detail->AmbilForm($p));
