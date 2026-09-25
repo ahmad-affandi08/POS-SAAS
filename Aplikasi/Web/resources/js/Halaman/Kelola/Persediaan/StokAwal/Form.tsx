@@ -271,25 +271,22 @@ export default function HalamanFormStokAwal({
                             <TableCaption className="sr-only">Barang stok awal</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="px-2 text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="px-2 text-label text-teks-sekunder">
                                         Produk
                                     </TableHead>
                                     <TableHead
                                         scope="col"
-                                        className="w-44 px-2 text-right text-label font-semibold text-teks-sekunder"
+                                        className="w-44 px-2 text-right text-label text-teks-sekunder"
                                     >
                                         Jumlah
                                     </TableHead>
                                     <TableHead
                                         scope="col"
-                                        className="w-56 px-2 text-right text-label font-semibold text-teks-sekunder"
+                                        className="w-56 px-2 text-right text-label text-teks-sekunder"
                                     >
                                         Harga modal per satuan
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="px-2 text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="px-2 text-right text-label text-teks-sekunder">
                                         Nilai (perkiraan)
                                     </TableHead>
                                     <TableHead scope="col" className="px-2">

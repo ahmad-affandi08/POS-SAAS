@@ -153,13 +153,13 @@ export default function PemetaanImporStokAwal({
                     <TableCaption className="sr-only">Pemetaan bidang stok awal ke kolom berkas</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
-                            <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="pl-0 text-label text-teks-sekunder">
                                 Bidang stok awal
                             </TableHead>
-                            <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="text-label text-teks-sekunder">
                                 Kolom di berkas
                             </TableHead>
-                            <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="pr-0 text-label text-teks-sekunder">
                                 Contoh isi
                             </TableHead>
                         </TableRow>

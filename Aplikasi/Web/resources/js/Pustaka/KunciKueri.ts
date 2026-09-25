@@ -7,6 +7,8 @@ export const KunciKueri = {
     Tabel: (id: string, alamat: string, query: string) => ['Tabel', id, alamat, query] as const,
     TabelSemua: (id: string) => ['Tabel', id] as const,
     Perangkat: (idOutlet: string) => ['Perangkat', idOutlet] as const,
+    // Pencarian cepat di kepala halaman: hasil per sumber (produk, pelanggan, …) untuk satu kata.
+    PencarianCepat: (idSumber: string, kata: string) => ['PencarianCepat', idSumber, kata] as const,
     Laporan: (nama: string, saring: Record<string, string>) => ['Laporan', nama, saring] as const,
     // F-03: pemilih bahan/komponen (GET /kelola/produk/cari) dan polling status impor.
     Produk: {

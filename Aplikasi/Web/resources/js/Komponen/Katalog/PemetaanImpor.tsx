@@ -130,13 +130,13 @@ export default function PemetaanImpor({
                     <TableCaption className="sr-only">Pemetaan bidang produk ke kolom berkas</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
-                            <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="pl-0 text-label text-teks-sekunder">
                                 Bidang produk
                             </TableHead>
-                            <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="text-label text-teks-sekunder">
                                 Kolom di berkas
                             </TableHead>
-                            <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="pr-0 text-label text-teks-sekunder">
                                 Contoh isi
                             </TableHead>
                         </TableRow>

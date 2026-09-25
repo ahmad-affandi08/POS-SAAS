@@ -194,31 +194,22 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             <TableCaption className="sr-only">Bahan resep</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pl-0 text-label text-teks-sekunder">
                                         Bahan
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
                                         Jumlah bersih
                                     </TableHead>
-                                    <TableHead scope="col" className="text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="text-label text-teks-sekunder">
                                         Satuan
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
                                         Susut
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
                                         Jumlah kotor
                                     </TableHead>
-                                    <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pr-0 text-label text-teks-sekunder">
                                         <span className="sr-only">Aksi</span>
                                     </TableHead>
                                 </TableRow>
@@ -372,16 +363,16 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             <TableCaption className="sr-only">Rincian HPP per bahan</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="pl-0 font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pl-0 text-teks-sekunder">
                                         Bahan
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="text-right text-teks-sekunder">
                                         Jumlah kotor (satuan dasar)
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="text-right text-teks-sekunder">
                                         HPP per satuan dasar
                                     </TableHead>
-                                    <TableHead scope="col" className="pr-0 text-right font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pr-0 text-right text-teks-sekunder">
                                         Subtotal
                                     </TableHead>
                                 </TableRow>

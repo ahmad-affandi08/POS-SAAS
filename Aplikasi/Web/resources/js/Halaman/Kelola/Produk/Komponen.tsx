@@ -107,22 +107,16 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                             <TableCaption className="sr-only">Komponen paket</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
-                                    <TableHead scope="col" className="pl-0 text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pl-0 text-label text-teks-sekunder">
                                         Produk
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
                                         Jumlah
                                     </TableHead>
-                                    <TableHead
-                                        scope="col"
-                                        className="text-right text-label font-semibold text-teks-sekunder"
-                                    >
+                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
                                         Alokasi harga
                                     </TableHead>
-                                    <TableHead scope="col" className="pr-0 text-label font-semibold text-teks-sekunder">
+                                    <TableHead scope="col" className="pr-0 text-label text-teks-sekunder">
                                         <span className="sr-only">Aksi</span>
                                     </TableHead>
                                 </TableRow>

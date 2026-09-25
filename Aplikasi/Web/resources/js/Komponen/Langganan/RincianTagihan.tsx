@@ -107,7 +107,7 @@ export default function RincianTagihan({ tagihan, namaTenant }: PropsRincianTagi
                         </>
                     ) : null}
                     <TableRow className="hover:bg-transparent">
-                        <TableHead scope="row" className="h-auto px-4 py-3 font-semibold whitespace-normal">
+                        <TableHead scope="row" className="h-auto px-4 py-3 whitespace-normal">
                             Total tagihan
                         </TableHead>
                         <TableCell className="px-4 py-3 text-right text-subjudul font-bold tabular-nums">

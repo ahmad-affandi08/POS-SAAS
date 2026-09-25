@@ -37,7 +37,7 @@ type PropsIsianBarisPembelian = {
 };
 
 const kelasSel = 'px-2 py-2 align-top whitespace-normal';
-const kelasKepala = 'px-2 text-label font-semibold text-teks-sekunder';
+const kelasKepala = 'px-2 text-label text-teks-sekunder';
 
 /**
  * Tabel isian barang pembelian (PO, penerimaan tanpa PO, belanja stok; F-04 fase 1): cari produk berstok, pilih

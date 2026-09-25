@@ -57,6 +57,7 @@ import {
     PemberitahuanMelayang,
 } from './BagianTataLetak';
 import KepalaSidebarMerek from './KepalaSidebarMerek';
+import PencarianCepat, { type HalamanPencarian, type SumberPencarian } from './PencarianCepat';
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
@@ -262,6 +263,73 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
     { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },
 ];
 
+/**
+ * Sumber data pencarian cepat. Aktif hanya bila halaman daftarnya (`alamat`) ada di menu yang boleh dilihat, jadi
+ * mengikuti izin yang sama dengan sidebar; server tetap memeriksa izin & tenant pada endpoint JSON TabelData.
+ */
+const sumberPencarian: SumberPencarian[] = [
+    {
+        id: 'produk',
+        label: 'Produk',
+        alamat: '/kelola/produk',
+        ikon: PackageIcon,
+        AmbilHasil: (b) => ({
+            judul: String(b.Nama),
+            keterangan: typeof b.Sku === 'string' ? b.Sku : null,
+            href: `/kelola/produk/${String(b.Uuid)}`,
+        }),
+    },
+    {
+        id: 'pelanggan',
+        label: 'Pelanggan',
+        alamat: '/kelola/pelanggan',
+        ikon: UsersRoundIcon,
+        AmbilHasil: (b) => ({
+            judul: String(b.Nama),
+            keterangan: typeof b.NoHp === 'string' ? b.NoHp : null,
+            href: `/kelola/pelanggan/${String(b.Uuid)}`,
+        }),
+    },
+    {
+        id: 'pemasok',
+        label: 'Pemasok',
+        alamat: '/kelola/pembelian/pemasok',
+        ikon: ShoppingCartIcon,
+        // Pemasok tidak punya halaman detail: buka daftarnya dengan pencarian nama ini.
+        AmbilHasil: (b) => ({
+            judul: String(b.Nama),
+            keterangan: typeof b.Kode === 'string' ? b.Kode : null,
+            href: `/kelola/pembelian/pemasok?${new URLSearchParams({ cari: String(b.Nama) }).toString()}`,
+        }),
+    },
+    {
+        id: 'penjualan',
+        label: 'Penjualan',
+        alamat: '/kelola/penjualan',
+        ikon: ReceiptTextIcon,
+        AmbilHasil: (b) => ({
+            judul: String(b.Nomor),
+            keterangan: typeof b.NamaOutlet === 'string' ? b.NamaOutlet : null,
+            href: `/kelola/penjualan/${String(b.Uuid)}`,
+        }),
+    },
+];
+
+/** Halaman & sumber data pencarian cepat untuk menu yang boleh dilihat (grup menu jadi keterangan halaman). */
+export function SusunPencarian(menuTerlihat: MenuTerlihat[]): {
+    halaman: HalamanPencarian[];
+    sumber: SumberPencarian[];
+} {
+    const halaman = menuTerlihat.flatMap(({ menu, sub }): HalamanPencarian[] =>
+        sub.length === 0
+            ? [{ label: menu.label, href: menu.href, grup: null, ikon: menu.ikon }]
+            : sub.map((item) => ({ label: item.label, href: item.href, grup: menu.label, ikon: menu.ikon })),
+    );
+    const alamatTerlihat = new Set(halaman.map((h) => h.href));
+
+    return { halaman, sumber: sumberPencarian.filter((s) => alamatTerlihat.has(s.alamat)) };
+}
+
 function CekGrupMenu(menu: ItemMenu | GrupMenu): menu is GrupMenu {
     return 'sub' in menu;
 }
@@ -424,6 +492,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = SaringMenuTerlihat(props.Akses);
+    const pencarian = SusunPencarian(menuTerlihat);
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
     const keamananAktif = url.startsWith('/kelola/keamanan');
     const [mengirim, AturMengirim] = useState(false);
@@ -477,6 +546,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
             </Sidebar>
             <div data-slot="sidebar-inset" className="relative flex w-full min-w-0 flex-1 flex-col bg-latar">
                 <KepalaTataLetak induk={namaInduk} judul={judul}>
+                    <PencarianCepat halaman={pencarian.halaman} sumber={pencarian.sumber} />
                     <MenuAkun nama={props.Pengguna?.Nama} email={props.Pengguna?.Email} />
                 </KepalaTataLetak>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">

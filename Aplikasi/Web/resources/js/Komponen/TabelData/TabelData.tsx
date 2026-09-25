@@ -81,7 +81,8 @@ export type PropsTabelData<T> = {
 
 const BATAS_VIRTUAL = 100;
 const TINGGI_BARIS = 44;
-const kelasKepala = 'h-auto bg-permukaan px-3 py-2 text-label font-semibold text-teks-sekunder';
+// Ketebalan (tebal) datang dari TableHead; di sini hanya ukuran, warna, dan jarak.
+const kelasKepala = 'h-auto bg-permukaan px-3 py-2 text-label text-teks-sekunder';
 
 /** Penyaring kolom mode lokal sesuai jenis definisi saring (nilai dari `saring[...]`). */
 function BuatPenyaringLokal(saring: DefinisiSaring[]): FilterFn<unknown> {

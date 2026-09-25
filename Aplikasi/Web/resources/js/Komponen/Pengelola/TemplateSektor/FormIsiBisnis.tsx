@@ -33,7 +33,7 @@ const bagianDaftar = ['Kategori', 'StasiunDapur', 'AlasanVoid', 'AlasanPenyesuai
 const jumlahProdukContohMaksimal = 100;
 const polaHarga = /^\d{1,16}(\.\d{1,2})?$/;
 const kelasSel = 'px-2 py-2 align-top whitespace-normal [&_[data-slot=native-select-wrapper]]:w-full';
-const kelasKepala = 'px-2 text-label font-semibold text-teks-sekunder';
+const kelasKepala = 'px-2 text-label text-teks-sekunder';
 const kelasInput = 'h-8 pointer-coarse:h-11 px-2 text-isi';
 
 function KeOpsi(daftar: Pilihan[]) {

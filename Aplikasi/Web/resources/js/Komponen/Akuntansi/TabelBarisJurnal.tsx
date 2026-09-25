@@ -18,7 +18,7 @@ type PropsTabelBarisJurnal = {
     nomor: string;
 };
 
-const kelasKepala = 'h-auto px-4 py-2 text-label font-semibold text-teks-sekunder';
+const kelasKepala = 'h-auto px-4 py-2 text-label text-teks-sekunder';
 const kelasUang = 'px-4 text-right whitespace-nowrap tabular-nums';
 
 /** Nilai satu sisi; sisi nol ditampilkan kosong agar sisi yang terisi mudah dibaca. */

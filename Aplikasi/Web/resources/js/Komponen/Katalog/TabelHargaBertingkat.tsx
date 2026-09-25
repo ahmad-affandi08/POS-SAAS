@@ -127,19 +127,13 @@ export default function TabelHargaBertingkat({
                     <TableCaption className="sr-only">{judul}</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
-                            <TableHead
-                                scope="col"
-                                className="h-8 pl-0 text-right text-label font-semibold text-teks-sekunder"
-                            >
+                            <TableHead scope="col" className="h-8 pl-0 text-right text-label text-teks-sekunder">
                                 Mulai jumlah ({simbolSatuan})
                             </TableHead>
-                            <TableHead
-                                scope="col"
-                                className="h-8 text-right text-label font-semibold text-teks-sekunder"
-                            >
+                            <TableHead scope="col" className="h-8 text-right text-label text-teks-sekunder">
                                 Harga per {simbolSatuan}
                             </TableHead>
-                            <TableHead scope="col" className="h-8 pr-0 text-label font-semibold text-teks-sekunder">
+                            <TableHead scope="col" className="h-8 pr-0 text-label text-teks-sekunder">
                                 <span className="sr-only">Aksi</span>
                             </TableHead>
                         </TableRow>
