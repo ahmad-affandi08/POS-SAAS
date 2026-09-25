@@ -1,0 +1,383 @@
+import { Link, router, useForm } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
+
+import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangUang from '@/Komponen/Formulir/BidangUang';
+import Tombol from '@/Komponen/Formulir/Tombol';
+import TabelData from '@/Komponen/TabelData/TabelData';
+import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
+import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
+import LabelStatus from '@/Komponen/Umpan/LabelStatus';
+import { FormatRupiah } from '@/Pustaka/Format';
+import { FormatTanggal } from '@/Pustaka/FormatWaktu';
+import { TulisTanggal } from '@/Pustaka/Tanggal';
+import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { BarisGajiKaryawan, OpsiAkunGaji, PropsDetailRekapGaji } from '@/Tipe/Karyawan';
+
+const alamatDaftar = '/kelola/karyawan/gaji';
+
+/** Akun beban gaji bawaan bagan akun awal. */
+const KODE_BEBAN_GAJI = '6-1000';
+
+function Rupiah(nilai: string) {
+    return <span className="tabular-nums">{FormatRupiah(nilai)}</span>;
+}
+
+const kolom: KolomTabel<BarisGajiKaryawan>[] = [
+    {
+        id: 'Nama',
+        accessorKey: 'Nama',
+        header: 'Karyawan',
+        meta: { label: 'Karyawan', prioritas: 'utama', wajib: true, kelasSel: 'text-teks-utama' },
+        cell: ({ row }) => (
+            <div className="flex flex-col">
+                <span>{row.original.Nama}</span>
+                {row.original.Catatan ? (
+                    <span className="text-keterangan text-teks-sekunder">{row.original.Catatan}</span>
+                ) : null}
+            </div>
+        ),
+    },
+    {
+        id: 'GajiPokok',
+        accessorKey: 'GajiPokok',
+        header: 'Gaji pokok',
+        enableSorting: false,
+        meta: { label: 'Gaji pokok', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => Rupiah(row.original.GajiPokok),
+    },
+    {
+        id: 'Komisi',
+        accessorKey: 'Komisi',
+        header: 'Komisi',
+        enableSorting: false,
+        meta: { label: 'Komisi', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => Rupiah(row.original.Komisi),
+    },
+    {
+        id: 'Tambahan',
+        accessorKey: 'Tambahan',
+        header: 'Tambahan',
+        enableSorting: false,
+        meta: { label: 'Tambahan', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => Rupiah(row.original.Tambahan),
+    },
+    {
+        id: 'PotonganKasbon',
+        accessorKey: 'PotonganKasbon',
+        header: 'Potongan kasbon',
+        enableSorting: false,
+        meta: { label: 'Potongan kasbon', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => Rupiah(row.original.PotonganKasbon),
+    },
+    {
+        id: 'PotonganLain',
+        accessorKey: 'PotonganLain',
+        header: 'Potongan lain',
+        enableSorting: false,
+        meta: { label: 'Potongan lain', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => Rupiah(row.original.PotonganLain),
+    },
+    {
+        id: 'Bersih',
+        accessorKey: 'Bersih',
+        header: 'Gaji bersih',
+        enableSorting: false,
+        meta: { label: 'Gaji bersih', prioritas: 'penting', angka: true },
+        cell: ({ row }) => Rupiah(row.original.Bersih),
+    },
+];
+
+type Dialog = { jenis: 'ubah'; baris: BarisGajiKaryawan } | { jenis: 'bayar' } | { jenis: 'hapus' };
+
+/**
+ * Rincian rekap gaji (F-18 bagian 3). Draf: ubah tambahan & potongan per karyawan, bayar (jurnal gaji + potong
+ * kasbon), atau hapus. Setelah dibayar hanya bisa dilihat dan diekspor.
+ */
+export default function HalamanDetailRekapGaji({ Rekap, Baris, OpsiAkunKasBank, OpsiAkunBeban }: PropsDetailRekapGaji) {
+    const [dialog, AturDialog] = useState<Dialog | null>(null);
+    const [menghapus, AturMenghapus] = useState(false);
+    const draf = Rekap.Status === 'Draf';
+    const alamat = `${alamatDaftar}/${Rekap.Uuid}`;
+    const Tutup = () => AturDialog(null);
+
+    const Hapus = () => {
+        AturMenghapus(true);
+        router.delete(alamat, { onFinish: () => AturMenghapus(false) });
+    };
+
+    return (
+        <TataLetakAplikasi judul={`Rekap gaji ${Rekap.LabelPeriode}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <Button asChild variant="link" className="h-auto px-0">
+                    <Link href={alamatDaftar}>Kembali ke rekap gaji</Link>
+                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="outline">
+                        <a href={`${alamat}/ekspor`}>Ekspor CSV</a>
+                    </Button>
+                    {draf ? (
+                        <>
+                            <Tombol varian="sekunder" onClick={() => AturDialog({ jenis: 'hapus' })}>
+                                Hapus draf
+                            </Tombol>
+                            <Tombol onClick={() => AturDialog({ jenis: 'bayar' })} disabled={Baris.length === 0}>
+                                Bayar gaji
+                            </Tombol>
+                        </>
+                    ) : null}
+                </div>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-isi sm:grid-cols-4">
+                <div className="flex flex-col gap-1">
+                    <dt className="text-teks-sekunder">Status</dt>
+                    <dd>
+                        <LabelStatus jenis={draf ? 'peringatan' : 'sukses'} teks={Rekap.LabelStatus} />
+                    </dd>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <dt className="text-teks-sekunder">Gaji kotor</dt>
+                    <dd className="text-teks-utama">{Rupiah(Rekap.TotalKotor)}</dd>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <dt className="text-teks-sekunder">Potongan</dt>
+                    <dd className="text-teks-utama">{Rupiah(Rekap.TotalPotongan)}</dd>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <dt className="text-teks-sekunder">Gaji bersih dibayar</dt>
+                    <dd className="font-semibold text-teks-utama">{Rupiah(Rekap.TotalBersih)}</dd>
+                </div>
+                {!draf ? (
+                    <>
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-teks-sekunder">Tanggal bayar</dt>
+                            <dd>{FormatTanggal(Rekap.TanggalBayar)}</dd>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-teks-sekunder">Dibayar dari</dt>
+                            <dd>{Rekap.AkunKasBank ?? '—'}</dd>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-teks-sekunder">Akun beban</dt>
+                            <dd>{Rekap.AkunBeban ?? '—'}</dd>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-teks-sekunder">Jurnal</dt>
+                            <dd>
+                                {Rekap.Jurnal ? (
+                                    <Link
+                                        href={`/kelola/akuntansi/jurnal/${Rekap.Jurnal.Uuid}`}
+                                        className="font-mono text-brand underline"
+                                    >
+                                        {Rekap.Jurnal.Nomor}
+                                    </Link>
+                                ) : (
+                                    '—'
+                                )}
+                            </dd>
+                        </div>
+                    </>
+                ) : null}
+            </dl>
+
+            <TabelData
+                id="karyawan-rekap-gaji-baris"
+                label="Gaji per karyawan"
+                kolom={kolom}
+                sumber={{ mode: 'lokal', data: Baris }}
+                ambilIdBaris={(b) => b.UuidKaryawan}
+                labelBaris={(b) => `gaji ${b.Nama}`}
+                cari="Cari nama karyawan"
+                {...(draf
+                    ? {
+                          aksiBaris: (b: BarisGajiKaryawan) => (
+                              <DropdownMenuItem onSelect={() => AturDialog({ jenis: 'ubah', baris: b })}>
+                                  Ubah tambahan & potongan
+                              </DropdownMenuItem>
+                          ),
+                      }
+                    : {})}
+                kosong={{ judul: 'Tidak ada karyawan dengan gaji pokok atau komisi di periode ini.' }}
+            />
+
+            {dialog?.jenis === 'ubah' ? (
+                <FormUbahBaris alamat={alamat} baris={dialog.baris} saatSelesai={Tutup} />
+            ) : null}
+            {dialog?.jenis === 'bayar' ? (
+                <FormBayar
+                    alamat={alamat}
+                    totalBersih={Rekap.TotalBersih}
+                    opsiKasBank={OpsiAkunKasBank}
+                    opsiBeban={OpsiAkunBeban}
+                    saatSelesai={Tutup}
+                />
+            ) : null}
+            {dialog?.jenis === 'hapus' ? (
+                <DialogKonfirmasi
+                    judul={`Hapus draf rekap gaji ${Rekap.LabelPeriode}?`}
+                    labelAksi="Hapus draf"
+                    memproses={menghapus}
+                    saatKonfirmasi={Hapus}
+                    saatBatal={Tutup}
+                >
+                    <p>Tambahan dan potongan yang sudah diisi ikut terhapus. Draf bisa dibuat ulang kapan saja.</p>
+                </DialogKonfirmasi>
+            ) : null}
+        </TataLetakAplikasi>
+    );
+}
+
+function TanpaDesimalNol(nilai: string): string {
+    return nilai.replace(/\.00$/, '');
+}
+
+function FormUbahBaris({
+    alamat,
+    baris,
+    saatSelesai,
+}: {
+    alamat: string;
+    baris: BarisGajiKaryawan;
+    saatSelesai: () => void;
+}) {
+    const formulir = useForm({
+        Tambahan: TanpaDesimalNol(baris.Tambahan),
+        PotonganKasbon: TanpaDesimalNol(baris.PotonganKasbon),
+        PotonganLain: TanpaDesimalNol(baris.PotonganLain),
+        Catatan: baris.Catatan ?? '',
+    });
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        formulir.put(`${alamat}/baris/${baris.UuidKaryawan}`, { preserveScroll: true, onSuccess: saatSelesai });
+    };
+
+    return (
+        <DialogFormulir
+            judul={`Gaji ${baris.Nama}`}
+            keterangan={`Gaji pokok ${FormatRupiah(baris.GajiPokok)} + komisi ${FormatRupiah(baris.Komisi)}. Sisa kasbon ${FormatRupiah(baris.SisaKasbon)}.`}
+            saatTutup={saatSelesai}
+        >
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <BidangUang
+                    label="Tambahan (lembur, tunjangan)"
+                    nilai={formulir.data.Tambahan}
+                    saatBerubah={(nilai) => formulir.setData('Tambahan', nilai)}
+                    galat={formulir.errors.Tambahan}
+                    required
+                />
+                <BidangUang
+                    label="Potongan kasbon"
+                    nilai={formulir.data.PotonganKasbon}
+                    saatBerubah={(nilai) => formulir.setData('PotonganKasbon', nilai)}
+                    galat={formulir.errors.PotonganKasbon}
+                    required
+                />
+                <BidangUang
+                    label="Potongan lain"
+                    nilai={formulir.data.PotonganLain}
+                    saatBerubah={(nilai) => formulir.setData('PotonganLain', nilai)}
+                    galat={formulir.errors.PotonganLain}
+                    required
+                />
+                <BidangTeks
+                    label="Catatan (opsional)"
+                    nilai={formulir.data.Catatan}
+                    saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
+                    galat={formulir.errors.Catatan}
+                    maxLength={255}
+                />
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan gaji
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
+    );
+}
+
+function KeOpsi(daftar: OpsiAkunGaji[]) {
+    return daftar.map((a) => ({ Nilai: a.Uuid, Label: a.Nama }));
+}
+
+function FormBayar({
+    alamat,
+    totalBersih,
+    opsiKasBank,
+    opsiBeban,
+    saatSelesai,
+}: {
+    alamat: string;
+    totalBersih: string;
+    opsiKasBank: OpsiAkunGaji[];
+    opsiBeban: OpsiAkunGaji[];
+    saatSelesai: () => void;
+}) {
+    const hariIni = TulisTanggal(new Date());
+    const formulir = useForm({
+        Tanggal: hariIni,
+        AkunKasBank: opsiKasBank[0]?.Uuid ?? '',
+        AkunBeban: (opsiBeban.find((a) => a.Kode === KODE_BEBAN_GAJI) ?? opsiBeban[0])?.Uuid ?? '',
+    });
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        formulir.post(`${alamat}/bayar`, { preserveScroll: true, onSuccess: saatSelesai });
+    };
+
+    return (
+        <DialogFormulir
+            judul="Bayar gaji"
+            keterangan={`Gaji bersih ${FormatRupiah(totalBersih)} keluar dari akun kas/bank. Potongan kasbon dicatat sebagai pelunasan kasbon. Setelah dibayar, rekap tidak bisa diubah.`}
+            saatTutup={saatSelesai}
+        >
+            <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <PemilihTanggal
+                    label="Tanggal bayar"
+                    nilai={formulir.data.Tanggal}
+                    saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
+                    galat={formulir.errors.Tanggal}
+                    max={hariIni}
+                    required
+                />
+                <BidangPilihan
+                    label="Dibayar dari"
+                    nilai={formulir.data.AkunKasBank}
+                    opsi={KeOpsi(opsiKasBank)}
+                    saatBerubah={(nilai) => formulir.setData('AkunKasBank', nilai)}
+                    galat={formulir.errors.AkunKasBank}
+                    required
+                />
+                <div className="sm:col-span-2">
+                    <BidangPilihan
+                        label="Akun beban gaji"
+                        nilai={formulir.data.AkunBeban}
+                        opsi={KeOpsi(opsiBeban)}
+                        saatBerubah={(nilai) => formulir.setData('AkunBeban', nilai)}
+                        galat={formulir.errors.AkunBeban}
+                        required
+                    />
+                </div>
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Bayar dan jurnal
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
+    );
+}

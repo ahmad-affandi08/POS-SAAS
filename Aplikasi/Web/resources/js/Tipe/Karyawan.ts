@@ -141,3 +141,53 @@ export type PropsKasbon = {
     OpsiAkunKasBank: OpsiUuidNama[];
     Izin: { Kelola: boolean };
 };
+
+/** F-18 bagian 3: rekap gaji bulanan. Uang = string desimal. */
+export type StatusRekapGaji = 'Draf' | 'Dibayar';
+
+export type BarisRekapGaji = {
+    Uuid: string;
+    Periode: string;
+    LabelPeriode: string;
+    Status: StatusRekapGaji;
+    LabelStatus: string;
+    TotalKotor: string;
+    TotalPotongan: string;
+    TotalBersih: string;
+    TanggalBayar: string | null;
+};
+
+export type PropsDaftarRekapGaji = {
+    Rekap: HasilTabel<BarisRekapGaji>;
+    OpsiPeriode: { Nilai: string; Label: string }[];
+    OpsiStatus: { Nilai: StatusRekapGaji; Label: string }[];
+};
+
+export type BarisGajiKaryawan = {
+    UuidKaryawan: string;
+    Nama: string;
+    Jabatan: string | null;
+    GajiPokok: string;
+    Komisi: string;
+    Tambahan: string;
+    Kotor: string;
+    PotonganKasbon: string;
+    PotonganLain: string;
+    Bersih: string;
+    Catatan: string | null;
+    /** Sisa kasbon aktif saat ini: batas potongan kasbon selama draf. */
+    SisaKasbon: string;
+};
+
+export type OpsiAkunGaji = { Uuid: string; Kode: string; Nama: string };
+
+export type PropsDetailRekapGaji = {
+    Rekap: BarisRekapGaji & {
+        AkunKasBank: string | null;
+        AkunBeban: string | null;
+        Jurnal: { Uuid: string; Nomor: string } | null;
+    };
+    Baris: BarisGajiKaryawan[];
+    OpsiAkunKasBank: OpsiAkunGaji[];
+    OpsiAkunBeban: OpsiAkunGaji[];
+};

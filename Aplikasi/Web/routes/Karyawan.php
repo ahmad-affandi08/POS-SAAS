@@ -8,6 +8,7 @@ use App\Http\Kontroler\Kelola\Karyawan\JadwalKerjaKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KaryawanKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KasbonKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KomisiKontroler;
+use App\Http\Kontroler\Kelola\Karyawan\RekapGajiKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -48,5 +49,13 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::post('/kasbon', [KasbonKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.karyawan.kasbon.simpan');
         Route::post('/kasbon/{kasbon}/pelunasan', [KasbonKontroler::class, 'Lunasi'])->where('kasbon', $ulid)->name('kelola.karyawan.kasbon.pelunasan');
         Route::post('/kasbon/{kasbon}/batal', [KasbonKontroler::class, 'Batalkan'])->where('kasbon', $ulid)->name('kelola.karyawan.kasbon.batal');
+        // F-18 bagian 3: rekap gaji bulanan (memuat gaji, jadi seluruhnya `karyawan.kelola`).
+        Route::get('/gaji', [RekapGajiKontroler::class, 'Daftar'])->name('kelola.karyawan.gaji');
+        Route::post('/gaji', [RekapGajiKontroler::class, 'Simpan'])->middleware('throttle:30,1')->name('kelola.karyawan.gaji.simpan');
+        Route::get('/gaji/{rekap}', [RekapGajiKontroler::class, 'Detail'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.detail');
+        Route::get('/gaji/{rekap}/ekspor', [RekapGajiKontroler::class, 'Ekspor'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.ekspor');
+        Route::put('/gaji/{rekap}/baris/{karyawan}', [RekapGajiKontroler::class, 'UbahBaris'])->where(['rekap' => $ulid, 'karyawan' => $ulid])->name('kelola.karyawan.gaji.baris');
+        Route::post('/gaji/{rekap}/bayar', [RekapGajiKontroler::class, 'Bayar'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.bayar');
+        Route::delete('/gaji/{rekap}', [RekapGajiKontroler::class, 'Hapus'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.hapus');
     });
 });

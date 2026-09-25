@@ -68,6 +68,27 @@ final class LaporanKomisi
         ];
     }
 
+    /**
+     * F-18 bagian 3 rekap gaji: komisi bersih (komisi − dibatalkan) per karyawan untuk tanggal bisnis dalam rentang.
+     *
+     * @return array<int, string> Id karyawan → komisi bersih
+     */
+    public function AmbilBersihPerKaryawan(string $dari, string $sampai): array
+    {
+        $hasil = [];
+
+        foreach (Komisi::query()
+            ->whereBetween('TanggalBisnis', [$dari, $sampai])
+            ->groupBy('IdKaryawan')
+            ->selectRaw('`IdKaryawan`, CAST(COALESCE(SUM(`Jumlah` - `JumlahDibatalkan`), 0) AS DECIMAL(18,2)) AS `Bersih`')
+            ->toBase()
+            ->get() as $b) {
+            $hasil[(int) $b->IdKaryawan] = self::Uang($b->Bersih);
+        }
+
+        return $hasil;
+    }
+
     private static function Uang(mixed $nilai): string
     {
         return (string) Uang::Dari(is_numeric($nilai) ? (string) $nilai : '0')->KeString();

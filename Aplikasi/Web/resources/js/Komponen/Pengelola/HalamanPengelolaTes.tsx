@@ -547,7 +547,7 @@ describe('Rilis aplikasi (P-10)', () => {
 
     it('terbitkan draf mengirim persen rollout; versi minimum menampilkan dampak perangkat lama (BR-P10.2)', async () => {
         AturHalaman([IzinPengelola.RilisLihat, IzinPengelola.RilisKelola], '/rilis');
-        const ambil = vi
+        const TiruanFetch = vi
             .spyOn(globalThis, 'fetch')
             .mockResolvedValue(
                 new Response(
@@ -565,8 +565,8 @@ describe('Rilis aplikasi (P-10)', () => {
         BukaMenu(screen.getAllByRole('button', { name: /Aksi Aplikasi POS Android 1\.5\.0/ })[0] as HTMLElement);
         fireEvent.click(screen.getByRole('menuitem', { name: 'Jadikan versi minimum' }));
         expect(await screen.findByText('4 perangkat masih di bawah 1.5.0')).toBeTruthy();
-        expect(ambil).toHaveBeenCalledWith('/rilis/R2/dampak-versi-minimum', expect.anything());
-        ambil.mockRestore();
+        expect(TiruanFetch).toHaveBeenCalledWith('/rilis/R2/dampak-versi-minimum', expect.anything());
+        TiruanFetch.mockRestore();
     });
 
     it('tanpa izin kelola tidak ada tombol catat & aksi baris', () => {
