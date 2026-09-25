@@ -45,6 +45,7 @@ void main() {
     test('huruf beraksen & tanda kutip pintar dirapikan ke ASCII; karakter lain jadi "?"', () {
       expect(TataLetakStruk.RapikanTeks('Café “Senja” – 2×'), 'Cafe "Senja" - 2x');
       expect(TataLetakStruk.RapikanTeks('Kopi ☕'), 'Kopi ?');
+      expect(TataLetakStruk.RapikanTeks('−Rp 2.000'), '-Rp 2.000');
     });
   });
 
@@ -60,6 +61,15 @@ void main() {
       final kecil = GambarMonokrom.DariRgba(4, 4, rgba, lebarMaksimal: 2);
       expect((kecil.lebar, kecil.tinggi), (2, 2));
       expect(kecil.titik, [1, 1, 0, 0]);
+    });
+
+    test('KeJson/DariJson bolak-balik; data rusak → null', () {
+      final gambar = GambarMonokrom(3, 3, Uint8List.fromList([1, 0, 1, 0, 1, 0, 1, 1, 1]));
+      final kembali = GambarMonokrom.DariJson(gambar.KeJson())!;
+      expect((kembali.lebar, kembali.tinggi), (3, 3));
+      expect(kembali.titik, gambar.titik);
+      expect(GambarMonokrom.DariJson({'Lebar': 3, 'Tinggi': 3, 'Titik': 'AA=='}), isNull);
+      expect(GambarMonokrom.DariJson('rusak'), isNull);
     });
   });
 }

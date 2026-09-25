@@ -511,4 +511,36 @@ void main() {
     expect(Urai('PPN').kategori, isNull);
     expect(Urai(3).kategori, isNull);
   });
+
+  test('PRD v1.79: Struk dipetakan; server lama tanpa Struk → null; saklar absen → aktif', () {
+    final struk = StrukPos.DariJson({
+      'NamaUsaha': 'Kopi Senja',
+      'Npwp': '0123456789012345',
+      'AdaLogo': true,
+      'TandaAir': true,
+      'NamaDicetak': 'Senja Coffee',
+      'TeksKepala': ['Buka 07.00', 3],
+      'TampilkanKasir': false,
+      'CatatanKaki': 'Tukar 7 hari',
+    })!;
+    expect(struk.namaDicetak, 'Senja Coffee');
+    expect(struk.teksKepala, ['Buka 07.00']);
+    expect((struk.tampilkanKasir, struk.tampilkanAlamat, struk.adaLogo, struk.tandaAir), (false, true, true, true));
+    expect(StrukPos.DariJson(struk.KeJson())!.KeJson(), struk.KeJson());
+    expect(StrukPos.DariJson(null), isNull);
+  });
+
+  test('AmbilLogoStruk: bait gambar; 404 → null', () async {
+    var ada = true;
+    final klien = BuatKlien(
+      (p) async => ada
+          ? http.Response.bytes([137, 80, 78, 71], 200, headers: {'content-type': 'image/png'})
+          : Json({
+              'Galat': {'Kode': 'TidakDitemukan', 'Pesan': 'Tidak ada.'},
+            }, 404),
+    );
+    expect(await klien.AmbilLogoStruk(), [137, 80, 78, 71]);
+    ada = false;
+    expect(await klien.AmbilLogoStruk(), isNull);
+  });
 }

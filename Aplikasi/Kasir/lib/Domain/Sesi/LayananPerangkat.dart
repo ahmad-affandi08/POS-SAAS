@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import '../../Data/PenyimpanRahasia.dart';
@@ -13,6 +17,7 @@ class LayananPerangkat {
     required this.rahasia,
     required this.platform,
     DateTime Function()? jam,
+    this.ubahLogo,
   }) : _jam = jam ?? DateTime.now;
 
   final KlienPos klien;
@@ -20,6 +25,9 @@ class LayananPerangkat {
   final PenyimpanRahasia rahasia;
   final String platform;
   final DateTime Function() _jam;
+
+  /// PRD v1.79: dekode logo usaha ke 1 bit untuk struk (null = logo tidak diunduh, misal di test domain).
+  final Future<GambarMonokrom?> Function(Uint8List byte)? ubahLogo;
 
   Future<bool> CekSudahAktif() async => (await rahasia.Baca(PenyimpanRahasia.kunciToken)) != null;
 
@@ -57,6 +65,7 @@ class LayananPerangkat {
     try {
       final data = await klien.AmbilDataAwal();
       await repositori.SimpanDataAwal(data, _jam());
+      await _SegarkanLogo(data.struk);
       return true;
     } on GalatJaringan {
       return false;
@@ -66,6 +75,30 @@ class LayananPerangkat {
         throw GalatKasir(galat.kode, galat.pesan);
       }
       rethrow;
+    }
+  }
+
+  /// Logo struk disimpan 1 bit di `Pengaturan` agar bisa dicetak offline. Gagal unduh/dekode = logo lama dipakai
+  /// (struk tetap tercetak tanpa atau dengan logo lama); logo dimatikan/dihapus = logo lokal dihapus.
+  Future<void> _SegarkanLogo(StrukPos? struk) async {
+    final ubah = ubahLogo;
+    if (ubah == null || struk == null) {
+      return;
+    }
+    if (!struk.adaLogo) {
+      await repositori.SimpanPengaturan(KunciPengaturan.logoStruk, '');
+      return;
+    }
+    try {
+      final byte = await klien.AmbilLogoStruk();
+      final gambar = byte == null ? null : await ubah(byte);
+      if (byte == null || gambar != null) {
+        await repositori.SimpanPengaturan(KunciPengaturan.logoStruk, gambar == null ? '' : jsonEncode(gambar.KeJson()));
+      }
+    } on GalatJaringan {
+      return;
+    } on GalatApi {
+      return;
     }
   }
 

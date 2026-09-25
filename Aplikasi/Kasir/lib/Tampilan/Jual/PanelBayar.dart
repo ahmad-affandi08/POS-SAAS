@@ -13,6 +13,7 @@ import '../../Domain/Penjualan/LayananPenjualan.dart';
 import '../../Domain/Penjualan/LayananPreOrder.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../LembarMutasiKas.dart';
+import '../Struk/BagianCetakStruk.dart';
 import 'PanelKeranjang.dart';
 
 /// Gambar QRIS statis metode pembayaran (diunduh sekali per sesi aplikasi).
@@ -634,10 +635,7 @@ class TampilanSelesai extends StatelessWidget {
               ],
             ),
           const SizedBox(height: TokenJarak.jarak8),
-          Text(
-            'Transaksi tersimpan di perangkat dan dikirim otomatis. Cetak struk menyusul setelah printer diatur.',
-            style: teks.bodySmall,
-          ),
+          BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
           const SizedBox(height: TokenJarak.jarak24),
           SizedBox(
             height: 56,

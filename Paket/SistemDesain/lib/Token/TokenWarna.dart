@@ -58,9 +58,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
   /// Token warna dari tema terdekat. Gagal keras bila tema belum memasang [TokenWarna].
   static TokenWarna AmbilDari(BuildContext context) =>
       Theme.of(context).extension<TokenWarna>() ??
-      (throw StateError(
-        'TokenWarna belum dipasang di ThemeData. Pakai BuatTema().',
-      ));
+      (throw StateError('TokenWarna belum dipasang di ThemeData. Pakai BuatTema().'));
 
   @override
   TokenWarna copyWith({

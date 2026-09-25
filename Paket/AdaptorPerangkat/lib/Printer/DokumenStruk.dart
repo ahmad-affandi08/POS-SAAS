@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 /// Lebar kertas thermal: jumlah kolom font printer (font A 12×24) dan lebar area cetak dalam titik (203 dpi).
@@ -83,6 +84,44 @@ class GambarMonokrom {
   final int lebar;
   final int tinggi;
   final Uint8List titik;
+
+  /// Bentuk simpan (JSON): `{Lebar, Tinggi, Titik}` dengan `Titik` = base64 bit terpadatkan (8 titik per byte).
+  Map<String, Object?> KeJson() {
+    final padat = Uint8List((titik.length + 7) ~/ 8);
+    for (var i = 0; i < titik.length; i++) {
+      if (titik[i] == 1) {
+        padat[i >> 3] |= 0x80 >> (i & 7);
+      }
+    }
+    return {'Lebar': lebar, 'Tinggi': tinggi, 'Titik': base64Encode(padat)};
+  }
+
+  /// Kebalikan [KeJson]; data rusak = null.
+  static GambarMonokrom? DariJson(Object? json) {
+    if (json is! Map<String, Object?>) {
+      return null;
+    }
+    final lebar = json['Lebar'];
+    final tinggi = json['Tinggi'];
+    final teks = json['Titik'];
+    if (lebar is! int || tinggi is! int || teks is! String || lebar <= 0 || tinggi <= 0) {
+      return null;
+    }
+    final Uint8List padat;
+    try {
+      padat = base64Decode(teks);
+    } on FormatException {
+      return null;
+    }
+    if (padat.length != (lebar * tinggi + 7) ~/ 8) {
+      return null;
+    }
+    final titik = Uint8List(lebar * tinggi);
+    for (var i = 0; i < titik.length; i++) {
+      titik[i] = (padat[i >> 3] >> (7 - (i & 7))) & 1;
+    }
+    return GambarMonokrom(lebar, tinggi, titik);
+  }
 
   /// Dari piksel RGBA 8 bit (misal hasil dekode PNG): transparan = putih, lalu ambang luminans dengan dithering
   /// Floyd–Steinberg agar logo berwarna tetap terbaca di printer thermal. Diperkecil (tetangga terdekat) bila lebih

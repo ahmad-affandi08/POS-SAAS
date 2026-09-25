@@ -29,71 +29,39 @@ void main() {
   ];
 
   test('pola penjaga mengenali pelanggaran dan pengecualian', () {
-    bool Melanggar(String baris) =>
-        polaWarnaLepas.any((p) => p.hasMatch(baris));
+    bool Melanggar(String baris) => polaWarnaLepas.any((p) => p.hasMatch(baris));
     expect(Melanggar('color: Color(0xFF000000),'), isTrue);
     expect(Melanggar('color: Color.fromARGB(255, 0, 0, 0),'), isTrue);
     expect(Melanggar('color: Colors.red,'), isTrue);
     expect(Melanggar('color: CupertinoColors.systemBlue,'), isTrue);
     expect(Melanggar('color: Colors.transparent,'), isFalse);
     expect(Melanggar('color: TokenWarna.AmbilDari(context).brand,'), isFalse);
-    expect(
-      polaModeGelap.any((p) => p.hasMatch('darkTheme: BuatTema(),')),
-      isTrue,
-    );
-    expect(
-      polaModeGelap.any((p) => p.hasMatch('themeMode: ThemeMode.system,')),
-      isTrue,
-    );
-    expect(
-      polaModeGelap.any((p) => p.hasMatch('themeMode: ThemeMode.light,')),
-      isFalse,
-    );
+    expect(polaModeGelap.any((p) => p.hasMatch('darkTheme: BuatTema(),')), isTrue);
+    expect(polaModeGelap.any((p) => p.hasMatch('themeMode: ThemeMode.system,')), isTrue);
+    expect(polaModeGelap.any((p) => p.hasMatch('themeMode: ThemeMode.light,')), isFalse);
   });
 
   test('tidak ada warna lepas di luar TokenWarna.dart', () {
     final berkas = AmbilBerkasDartLib(akar);
-    expect(
-      berkas,
-      isNotEmpty,
-      reason:
-          'Pemindai tidak menemukan file Dart di Aplikasi/*/lib dan Paket/*/lib.',
-    );
+    expect(berkas, isNotEmpty, reason: 'Pemindai tidak menemukan file Dart di Aplikasi/*/lib dan Paket/*/lib.');
     expect(berkas.map((b) => RelatifKeAkar(akar, b)), contains(fileToken));
-    final pelanggaran = CariPelanggaran(
-      akar,
-      berkas.where((b) => RelatifKeAkar(akar, b) != fileToken),
-      polaWarnaLepas,
-    );
+    final pelanggaran = CariPelanggaran(akar, berkas.where((b) => RelatifKeAkar(akar, b) != fileToken), polaWarnaLepas);
     expect(
       pelanggaran,
       isEmpty,
-      reason:
-          'Pindahkan warna ke $fileToken dan pakai tokennya:\n${pelanggaran.join('\n')}',
+      reason: 'Pindahkan warna ke $fileToken dan pakai tokennya:\n${pelanggaran.join('\n')}',
     );
   });
 
   test('tidak ada mode gelap di kode aplikasi dan paket (D-14)', () {
-    final pelanggaran = CariPelanggaran(
-      akar,
-      AmbilBerkasDartLib(akar),
-      polaModeGelap,
-    );
-    expect(
-      pelanggaran,
-      isEmpty,
-      reason: 'Mode gelap tidak didukung (D-14):\n${pelanggaran.join('\n')}',
-    );
+    final pelanggaran = CariPelanggaran(akar, AmbilBerkasDartLib(akar), polaModeGelap);
+    expect(pelanggaran, isEmpty, reason: 'Mode gelap tidak didukung (D-14):\n${pelanggaran.join('\n')}');
   });
 
   test('token warna sama dengan palet web di Aplikasi.css', () {
-    final css = File(
-      '${akar.path}/Aplikasi/Web/resources/js/Gaya/Aplikasi.css',
-    ).readAsStringSync();
+    final css = File('${akar.path}/Aplikasi/Web/resources/js/Gaya/Aplikasi.css').readAsStringSync();
     final warnaWeb = <String, int>{
-      for (final m in RegExp(
-        r'--color-([a-z-]+):\s*#([0-9a-fA-F]{6})\s*;',
-      ).allMatches(css))
+      for (final m in RegExp(r'--color-([a-z-]+):\s*#([0-9a-fA-F]{6})\s*;').allMatches(css))
         m.group(1)!: 0xFF000000 | int.parse(m.group(2)!, radix: 16),
     };
     const t = TokenWarna.bawaan;
@@ -111,17 +79,12 @@ void main() {
       'bahaya': t.bahaya.toARGB32(),
       'info': t.info.toARGB32(),
     };
-    expect(
-      warnaWeb.keys.toSet(),
-      warnaFlutter.keys.toSet(),
-      reason: 'Nama token web dan Flutter harus sama.',
-    );
+    expect(warnaWeb.keys.toSet(), warnaFlutter.keys.toSet(), reason: 'Nama token web dan Flutter harus sama.');
     for (final entri in warnaFlutter.entries) {
       expect(
         warnaWeb[entri.key],
         entri.value,
-        reason:
-            '--color-${entri.key} di Aplikasi.css berbeda dengan TokenWarna.bawaan.',
+        reason: '--color-${entri.key} di Aplikasi.css berbeda dengan TokenWarna.bawaan.',
       );
     }
   });
@@ -131,15 +94,12 @@ void main() {
 Directory CariAkarRepo() {
   var dir = Directory.current.absolute;
   while (true) {
-    if (Directory('${dir.path}/Aplikasi').existsSync() &&
-        Directory('${dir.path}/Paket').existsSync()) {
+    if (Directory('${dir.path}/Aplikasi').existsSync() && Directory('${dir.path}/Paket').existsSync()) {
       return dir;
     }
     final induk = dir.parent;
     if (induk.path == dir.path) {
-      throw StateError(
-        'Akar repo tidak ditemukan dari ${Directory.current.path}.',
-      );
+      throw StateError('Akar repo tidak ditemukan dari ${Directory.current.path}.');
     }
     dir = induk;
   }
@@ -149,19 +109,12 @@ Directory CariAkarRepo() {
 List<File> AmbilBerkasDartLib(Directory akar) {
   final hasil = <File>[];
   for (final grup in ['Aplikasi', 'Paket']) {
-    for (final proyek in Directory(
-      '${akar.path}/$grup',
-    ).listSync().whereType<Directory>()) {
+    for (final proyek in Directory('${akar.path}/$grup').listSync().whereType<Directory>()) {
       final lib = Directory('${proyek.path}/lib');
       if (!lib.existsSync()) {
         continue;
       }
-      hasil.addAll(
-        lib
-            .listSync(recursive: true)
-            .whereType<File>()
-            .where((f) => f.path.endsWith('.dart')),
-      );
+      hasil.addAll(lib.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart')));
     }
   }
   return hasil;
@@ -172,11 +125,7 @@ String RelatifKeAkar(Directory akar, File berkas) =>
     berkas.absolute.path.substring(akar.path.length + 1).replaceAll(r'\', '/');
 
 /// Baris yang cocok dengan salah satu pola, di luar baris komentar `//`.
-List<String> CariPelanggaran(
-  Directory akar,
-  Iterable<File> berkas,
-  List<RegExp> pola,
-) {
+List<String> CariPelanggaran(Directory akar, Iterable<File> berkas, List<RegExp> pola) {
   final hasil = <String>[];
   for (final file in berkas) {
     final baris = file.readAsLinesSync();

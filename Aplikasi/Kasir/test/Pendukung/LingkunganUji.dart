@@ -27,9 +27,11 @@ import 'package:kasir/Domain/Sesi/StafLokal.dart';
 import 'package:kasir/Domain/Shift/LayananShift.dart';
 import 'package:kasir/Domain/Shift/LayananTutupShift.dart';
 import 'package:kasir/Domain/Sinkron/LayananSinkron.dart';
+import 'package:kasir/Domain/Struk/LayananStruk.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import 'KatalogUji.dart';
+import 'PrinterTiruan.dart';
 
 /// Vektor PIN bersama PHP & Dart: staf uji memakai PIN, garam, dan verifier terbungkus dari sini sehingga verifikasi
 /// offline berjalan tanpa server.
@@ -193,6 +195,9 @@ class ServerTiruan {
   });
 }
 
+/// Respons berkas biner (gambar) dari server tiruan.
+http.Response BytesUji(List<int> isi) => http.Response.bytes(isi, 200, headers: {'content-type': 'image/png'});
+
 http.Response JsonUji(Object isi, [int status = 200]) =>
     http.Response(jsonEncode(isi), status, headers: {'content-type': 'application/json'});
 
@@ -205,6 +210,14 @@ class LingkunganUji {
   DateTime jam;
 
   late final RepositoriKasir repositori = RepositoriKasir(db);
+
+  /// PRD v1.79: printer struk tiruan (dipasang juga di aplikasi utuh lewat `PasangAplikasi`).
+  final PrinterTiruan printer = PrinterTiruan();
+  late final LayananStruk struk = LayananStruk(
+    repositori: repositori,
+    penjualan: repositoriPenjualan,
+    pembuatTransport: (_) => printer,
+  );
   late final RepositoriKatalog repositoriKatalog = RepositoriKatalog(db);
   late final RepositoriPenjualan repositoriPenjualan = RepositoriPenjualan(db, repositori);
   late final KlienPos klien = KlienPos(

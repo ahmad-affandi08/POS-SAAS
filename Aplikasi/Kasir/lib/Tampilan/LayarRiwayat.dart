@@ -321,20 +321,23 @@ class _BarisRiwayat extends ConsumerWidget {
                           TeksUang(Uang.Dari(p.Kembalian), gaya: teks.bodySmall),
                         ],
                       ),
-                    if (saatVoid != null) ...[
-                      const SizedBox(height: TokenJarak.jarak12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          height: TokenJarak.targetSentuh,
-                          child: OutlinedButton.icon(
-                            onPressed: saatVoid,
-                            icon: const Icon(Icons.block),
-                            label: const Text('Void transaksi'),
+                    const SizedBox(height: TokenJarak.jarak12),
+                    Wrap(
+                      spacing: TokenJarak.jarak8,
+                      runSpacing: TokenJarak.jarak8,
+                      children: [
+                        _TombolCetakUlang(uuidPenjualan: p.Uuid),
+                        if (saatVoid != null)
+                          SizedBox(
+                            height: TokenJarak.targetSentuh,
+                            child: OutlinedButton.icon(
+                              onPressed: saatVoid,
+                              icon: const Icon(Icons.block),
+                              label: const Text('Void transaksi'),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -342,4 +345,39 @@ class _BarisRiwayat extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Cetak ulang struk dari riwayat (bertanda "CETAK ULANG"). Hasil ditampilkan lewat snackbar; printer belum diatur
+/// = tombol tetap ada dan menjelaskan cara mengaturnya.
+class _TombolCetakUlang extends ConsumerStatefulWidget {
+  const _TombolCetakUlang({required this.uuidPenjualan});
+
+  final String uuidPenjualan;
+
+  @override
+  ConsumerState<_TombolCetakUlang> createState() => _TombolCetakUlangState();
+}
+
+class _TombolCetakUlangState extends ConsumerState<_TombolCetakUlang> {
+  var _mencetak = false;
+
+  Future<void> _Cetak() async {
+    setState(() => _mencetak = true);
+    final galat = await ref.read(penyediaPrinter.notifier).CetakPenjualan(widget.uuidPenjualan, cetakUlang: true);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _mencetak = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(galat ?? 'Struk dicetak ulang.')));
+  }
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: TokenJarak.targetSentuh,
+    child: OutlinedButton.icon(
+      onPressed: _mencetak ? null : _Cetak,
+      icon: const Icon(Icons.print_outlined),
+      label: Text(_mencetak ? 'Mencetak…' : 'Cetak ulang struk'),
+    ),
+  );
 }

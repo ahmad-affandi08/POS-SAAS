@@ -386,6 +386,7 @@ class DataAwal {
     this.batasHariRetur = batasHariReturBawaan,
     this.batasHariLewatJatuhTempo = 0,
     this.karyawan = const [],
+    this.struk,
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -435,6 +436,9 @@ class DataAwal {
   /// F-18: staf yang bisa dipilih sebagai pelayan baris (komisi); server lama = kosong.
   final List<KaryawanPos> karyawan;
 
+  /// PRD v1.79: pengaturan & identitas struk; server lama = null (aplikasi memakai bawaan).
+  final StrukPos? struk;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -461,8 +465,90 @@ class DataAwal {
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
+      struk: StrukPos.DariJson(json['Struk']),
     );
   }
+}
+
+/// Pengaturan struk tenant + identitas usaha (`data-awal` → `Struk`, PRD v1.79). Teks null = bawaan aplikasi.
+class StrukPos {
+  const StrukPos({
+    this.namaUsaha = '',
+    this.npwp,
+    this.adaLogo = false,
+    this.tandaAir = false,
+    this.namaDicetak,
+    this.teksKepala = const [],
+    this.tampilkanAlamat = true,
+    this.tampilkanTelepon = true,
+    this.tampilkanNpwp = true,
+    this.tampilkanKasir = true,
+    this.tampilkanPelanggan = true,
+    this.tampilkanHemat = true,
+    this.catatanKaki,
+    this.teksPenutup,
+  });
+
+  final String namaUsaha;
+
+  /// Hanya terisi bila outlet PKP.
+  final String? npwp;
+
+  /// Logo tersedia & ditampilkan (unduh lewat `GET /logo-struk`).
+  final bool adaLogo;
+
+  /// Paket tanpa fitur `struk.tanpa-watermark`: cetak "Dibuat dengan PAYOU".
+  final bool tandaAir;
+  final String? namaDicetak;
+  final List<String> teksKepala;
+  final bool tampilkanAlamat;
+  final bool tampilkanTelepon;
+  final bool tampilkanNpwp;
+  final bool tampilkanKasir;
+  final bool tampilkanPelanggan;
+  final bool tampilkanHemat;
+  final String? catatanKaki;
+  final String? teksPenutup;
+
+  static StrukPos? DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    if (peta == null) {
+      return null;
+    }
+    return StrukPos(
+      namaUsaha: UraiJson.AmbilTeks(peta['NamaUsaha']),
+      npwp: UraiJson.AmbilTeksAtauNull(peta['Npwp']),
+      adaLogo: UraiJson.AmbilBenar(peta['AdaLogo']),
+      tandaAir: UraiJson.AmbilBenar(peta['TandaAir']),
+      namaDicetak: UraiJson.AmbilTeksAtauNull(peta['NamaDicetak']),
+      teksKepala: _Daftar(peta['TeksKepala']).whereType<String>().toList(),
+      tampilkanAlamat: UraiJson.AmbilBenar(peta['TampilkanAlamat'], true),
+      tampilkanTelepon: UraiJson.AmbilBenar(peta['TampilkanTelepon'], true),
+      tampilkanNpwp: UraiJson.AmbilBenar(peta['TampilkanNpwp'], true),
+      tampilkanKasir: UraiJson.AmbilBenar(peta['TampilkanKasir'], true),
+      tampilkanPelanggan: UraiJson.AmbilBenar(peta['TampilkanPelanggan'], true),
+      tampilkanHemat: UraiJson.AmbilBenar(peta['TampilkanHemat'], true),
+      catatanKaki: UraiJson.AmbilTeksAtauNull(peta['CatatanKaki']),
+      teksPenutup: UraiJson.AmbilTeksAtauNull(peta['TeksPenutup']),
+    );
+  }
+
+  Map<String, Object?> KeJson() => {
+    'NamaUsaha': namaUsaha,
+    'Npwp': npwp,
+    'AdaLogo': adaLogo,
+    'TandaAir': tandaAir,
+    'NamaDicetak': namaDicetak,
+    'TeksKepala': teksKepala,
+    'TampilkanAlamat': tampilkanAlamat,
+    'TampilkanTelepon': tampilkanTelepon,
+    'TampilkanNpwp': tampilkanNpwp,
+    'TampilkanKasir': tampilkanKasir,
+    'TampilkanPelanggan': tampilkanPelanggan,
+    'TampilkanHemat': tampilkanHemat,
+    'CatatanKaki': catatanKaki,
+    'TeksPenutup': teksPenutup,
+  };
 }
 
 /// `POST /kasir/masuk-pin`.

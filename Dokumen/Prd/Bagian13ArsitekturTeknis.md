@@ -104,7 +104,7 @@ flowchart LR
 | Penyimpanan rahasia | **flutter_secure_storage** (Keychain/Keystore/DPAPI) | Device token & kunci enkripsi DB. |
 | Konektivitas | **connectivity_plus** + heartbeat ke server | Status online yang sebenarnya, bukan sekadar Wi-Fi tersambung. |
 | Background sync | Isolate/timer saat aplikasi aktif. **workmanager** (Android) untuk sinkron saat di latar. iOS terbatas (sinkron saat aplikasi dibuka/aktif) | Sesuai batasan OS. |
-| Printer | **esc_pos_utils_plus** (builder perintah ESC/POS) + transport per platform (§17.6) | Struk & tiket dapur. |
+| Printer | Pengode ESC/POS internal di `Paket/AdaptorPerangkat` (Dart murni, v1.79; menggantikan rencana `esc_pos_utils_plus`) + transport per platform (§17.2.5) | Struk & tiket dapur. |
 | Scanner | Scanner HID (keyboard) via `HardwareKeyboard`, kamera via **mobile_scanner** | Retail & gudang. |
 | Layar pelanggan | **desktop_multi_window** (Windows), *presentation display* Android untuk perangkat dual-screen all-in-one | Customer display. |
 | Push | **firebase_messaging** | Approval jarak jauh, order baru, pemicu sinkron. |

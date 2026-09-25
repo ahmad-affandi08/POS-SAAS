@@ -71,6 +71,14 @@ abstract final class KunciPengaturan {
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';
   static const String menitKunciOtomatis = 'MenitKunciOtomatis';
+
+  // Cetak struk (PRD v1.79): pengaturan & identitas struk dari data awal (JSON `StrukPos`), alamat & telepon outlet,
+  // logo 1 bit (JSON `GambarMonokrom`), dan profil printer perangkat ini (JSON `ProfilPrinter`, lokal saja).
+  static const String struk = 'Struk';
+  static const String alamatOutlet = 'AlamatOutlet';
+  static const String teleponOutlet = 'TeleponOutlet';
+  static const String logoStruk = 'LogoStruk';
+  static const String profilPrinter = 'ProfilPrinter';
 }
 
 /// Status shift lokal (sama dengan server).
@@ -183,6 +191,8 @@ class RepositoriKasir {
       if (outlet.nama.isNotEmpty) {
         await SimpanPengaturan(KunciPengaturan.namaOutlet, outlet.nama);
       }
+      await SimpanPengaturan(KunciPengaturan.alamatOutlet, outlet.alamat ?? '');
+      await SimpanPengaturan(KunciPengaturan.teleponOutlet, outlet.telepon ?? '');
       await SimpanPengaturan(KunciPengaturan.jamTutupBuku, outlet.jamTutupBuku ?? '00:00');
       final zona = outlet.zonaWaktu?.trim();
       if (zona != null && zona.isNotEmpty) {
@@ -225,6 +235,13 @@ class RepositoriKasir {
                 ),
               );
         }
+      }
+    }
+    final struk = data.struk;
+    if (struk != null) {
+      await SimpanPengaturan(KunciPengaturan.struk, jsonEncode(struk.KeJson()));
+      if (struk.namaUsaha.isNotEmpty) {
+        await SimpanPengaturan(KunciPengaturan.namaUsaha, struk.namaUsaha);
       }
     }
     await SimpanPengaturan(KunciPengaturan.dataAwalPada, sekarang.toUtc().toIso8601String());

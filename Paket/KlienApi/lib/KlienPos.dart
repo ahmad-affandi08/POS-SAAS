@@ -71,6 +71,18 @@ class KlienPos {
     return respons.bodyBytes;
   }
 
+  /// Logo usaha untuk kepala struk (PRD v1.79). Tanpa logo/logo dimatikan → null (404).
+  Future<Uint8List?> AmbilLogoStruk() async {
+    final respons = await _KirimMentah('GET', 'logo-struk', null, terima: 'image/*');
+    if (respons.statusCode == 404) {
+      return null;
+    }
+    if (respons.statusCode >= 400) {
+      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+    }
+    return respons.bodyBytes;
+  }
+
   /// Struk asal untuk retur (F-09 fase 1): penjualan outlet perangkat dengan [nomor] persis, beserta jumlah & nilai yang
   /// masih bisa diretur. Tidak ada → `GalatApi` ber-kode `PenjualanTidakDitemukan` (404); offline → `GalatJaringan`.
   Future<HasilCariPenjualan> CariPenjualan(String nomor) async => HasilCariPenjualan.DariJson(

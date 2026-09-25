@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +13,7 @@ import '../Data/RepositoriAbsensi.dart';
 import '../Domain/Karyawan/LayananAbsensi.dart';
 import '../Domain/Perangkat/KameraSwafoto.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
+import '../Data/PengubahLogoStruk.dart';
 import '../Data/PenjagaLayarWakelock.dart';
 import '../Data/PenyimpanRahasia.dart';
 import '../Data/PesananMeja.dart';
@@ -41,6 +45,8 @@ import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Shift/LayananShift.dart';
 import '../Domain/Shift/LayananTutupShift.dart';
 import '../Domain/Sinkron/LayananSinkron.dart';
+import '../Domain/Struk/LayananStruk.dart';
+import '../Domain/Struk/ProfilPrinter.dart';
 import 'Lingkungan.dart';
 
 /// Penyedia dependensi (Riverpod). Basis data, secure storage, dan klien HTTP di-override di `Persiapan.dart` dan
@@ -74,8 +80,12 @@ final penyediaLayananPerangkat = Provider<LayananPerangkat>(
     rahasia: ref.watch(penyediaRahasia),
     platform: ref.watch(penyediaPlatform),
     jam: ref.watch(penyediaJam),
+    ubahLogo: ref.watch(penyediaPengubahLogo),
   ),
 );
+
+/// PRD v1.79: dekode logo struk (mesin gambar Flutter); test domain boleh menggantinya.
+final penyediaPengubahLogo = Provider<Future<GambarMonokrom?> Function(Uint8List byte)?>((ref) => UbahLogoKeMonokrom);
 
 /// Verifikasi PIN offline (Argon2id). Test widget menggantinya dengan tiruan; kriptografi asli diuji di test domain.
 final penyediaPemverifikasiPin = Provider<PemverifikasiPinOffline>((ref) => const PemverifikasiPinOffline());
@@ -117,6 +127,101 @@ final penyediaRepositoriKatalog = Provider<RepositoriKatalog>((ref) => Repositor
 final penyediaRepositoriPenjualan = Provider<RepositoriPenjualan>(
   (ref) => RepositoriPenjualan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
 );
+
+/// Cetak struk (PRD v1.79): transport printer dari profil (test menggantinya dengan printer tiruan).
+final penyediaPembuatTransport = Provider<PembuatTransport>(
+  (ref) =>
+      (profil) => profil.BuatTransport(),
+);
+
+final penyediaLayananStruk = Provider<LayananStruk>(
+  (ref) => LayananStruk(
+    repositori: ref.watch(penyediaRepositori),
+    penjualan: ref.watch(penyediaRepositoriPenjualan),
+    pembuatTransport: ref.watch(penyediaPembuatTransport),
+  ),
+);
+
+enum KeadaanPrinter { BelumDiatur, Siap, Mencetak, Gagal }
+
+/// Keadaan printer untuk bilah status & layar (§17.2.7: status printer selalu terlihat).
+class StatusPrinter {
+  const StatusPrinter({this.profil, this.keadaan = KeadaanPrinter.BelumDiatur, this.pesan});
+
+  final ProfilPrinter? profil;
+  final KeadaanPrinter keadaan;
+
+  /// Pesan galat terakhir (keadaan `Gagal`).
+  final String? pesan;
+}
+
+/// Profil & keadaan printer perangkat ini. Setiap aksi cetak mengembalikan pesan galat (null = berhasil) agar layar
+/// bisa menampilkannya di tempat; keadaan `Gagal` bertahan sampai cetak berikutnya berhasil.
+class PengaturPrinter extends Notifier<StatusPrinter> {
+  var _diubah = false;
+
+  @override
+  StatusPrinter build() {
+    unawaited(_Muat());
+    return const StatusPrinter();
+  }
+
+  Future<void> _Muat() async {
+    final profil = await ref.read(penyediaLayananStruk).AmbilProfil();
+    if (!_diubah) {
+      state = StatusPrinter(profil: profil, keadaan: profil == null ? KeadaanPrinter.BelumDiatur : KeadaanPrinter.Siap);
+    }
+  }
+
+  Future<void> SimpanProfil(ProfilPrinter profil) async {
+    _diubah = true;
+    await profil.Simpan(ref.read(penyediaRepositori));
+    state = StatusPrinter(profil: profil, keadaan: KeadaanPrinter.Siap);
+  }
+
+  Future<void> HapusProfil() async {
+    _diubah = true;
+    await ProfilPrinter.Hapus(ref.read(penyediaRepositori));
+    state = const StatusPrinter();
+  }
+
+  Future<String?> CetakPenjualan(String uuidPenjualan, {bool cetakUlang = false, String? namaPelanggan}) =>
+      _Jalankan((l) => l.CetakPenjualan(uuidPenjualan, cetakUlang: cetakUlang, namaPelanggan: namaPelanggan));
+
+  /// Cetak otomatis setelah bayar (plus buka laci bila tunai). Printer belum diatur/otomatis mati = tidak apa-apa.
+  Future<String?> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan}) async {
+    final profil = await ref.read(penyediaLayananStruk).AmbilProfil();
+    if (profil == null || !profil.cetakOtomatis) {
+      return null;
+    }
+    return _Jalankan((l) => l.CetakPenjualan(uuidPenjualan, bukaLaci: true, namaPelanggan: namaPelanggan));
+  }
+
+  Future<String?> CetakUji(ProfilPrinter profil) => _Jalankan((l) => l.CetakUji(profil), profil: profil);
+
+  Future<String?> BukaLaci() => _Jalankan((l) => l.BukaLaci());
+
+  Future<String?> _Jalankan(Future<void> Function(LayananStruk layanan) aksi, {ProfilPrinter? profil}) async {
+    final profilKini = profil ?? state.profil;
+    state = StatusPrinter(profil: state.profil, keadaan: KeadaanPrinter.Mencetak);
+    try {
+      await aksi(ref.read(penyediaLayananStruk));
+      state = StatusPrinter(
+        profil: state.profil,
+        keadaan: state.profil == null && profilKini == null ? KeadaanPrinter.BelumDiatur : KeadaanPrinter.Siap,
+      );
+      return null;
+    } on GalatPrinter catch (galat) {
+      state = StatusPrinter(profil: state.profil, keadaan: KeadaanPrinter.Gagal, pesan: galat.pesan);
+      return galat.pesan;
+    } on GalatKasir catch (galat) {
+      state = StatusPrinter(profil: state.profil, keadaan: KeadaanPrinter.Gagal, pesan: galat.pesan);
+      return galat.pesan;
+    }
+  }
+}
+
+final penyediaPrinter = NotifierProvider<PengaturPrinter, StatusPrinter>(PengaturPrinter.new);
 
 /// F-12 bagian 2: pre-order + uang muka dari perangkat ini.
 final penyediaRepositoriPreOrder = Provider<RepositoriPreOrder>(

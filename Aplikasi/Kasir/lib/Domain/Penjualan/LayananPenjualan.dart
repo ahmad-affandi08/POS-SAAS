@@ -89,6 +89,7 @@ class PenjualanTersimpan {
     required this.totalDibayar,
     required this.kembalian,
     required this.pembayaran,
+    this.namaPelanggan,
   });
 
   final String uuid;
@@ -97,6 +98,9 @@ class PenjualanTersimpan {
   final Uang totalDibayar;
   final Uang kembalian;
   final List<PembayaranMasukan> pembayaran;
+
+  /// Untuk struk yang dicetak langsung setelah bayar (nama pelanggan tidak disimpan di tabel penjualan lokal).
+  final String? namaPelanggan;
 }
 
 /// Keputusan diskon manual terhadap batas BR-07.3.
@@ -785,6 +789,7 @@ class LayananPenjualan {
       totalDibayar: dibayar,
       kembalian: kembalian,
       pembayaran: pembayaran,
+      namaPelanggan: keranjang.pelanggan?.nama,
     );
   }
 

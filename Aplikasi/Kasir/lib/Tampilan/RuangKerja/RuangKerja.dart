@@ -248,7 +248,26 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         )
       else
         const ItemBilahStatus(ikon: Icons.cloud_done_outlined, teks: 'Tersinkron', nada: NadaStatus.Sukses),
-      const ItemBilahStatus(ikon: Icons.print_disabled_outlined, teks: 'Printer belum diatur'),
+      switch (ref.watch(penyediaPrinter)) {
+        StatusPrinter(keadaan: KeadaanPrinter.BelumDiatur) => const ItemBilahStatus(
+          ikon: Icons.print_disabled_outlined,
+          teks: 'Printer belum diatur',
+        ),
+        StatusPrinter(keadaan: KeadaanPrinter.Gagal) => const ItemBilahStatus(
+          ikon: Icons.print_disabled_outlined,
+          teks: 'Printer bermasalah',
+          nada: NadaStatus.Bahaya,
+        ),
+        StatusPrinter(keadaan: KeadaanPrinter.Mencetak) => const ItemBilahStatus(
+          ikon: Icons.print_outlined,
+          teks: 'Mencetak…',
+        ),
+        StatusPrinter() => const ItemBilahStatus(
+          ikon: Icons.print_outlined,
+          teks: 'Printer siap',
+          nada: NadaStatus.Sukses,
+        ),
+      },
       ItemBilahStatus(ikon: Icons.schedule, teks: 'Shift ${FormatWaktu.FormatJam(widget.shift.DibukaPada)}'),
     ];
   }
