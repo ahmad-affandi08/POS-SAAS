@@ -39,6 +39,7 @@ final class PembacaIsiTemplate
             modeKasirDefault: is_string($isi['ModeKasirDefault'] ?? null) ? $isi['ModeKasirDefault'] : null,
             pengaturan: self::BacaPengaturan($isi['Pengaturan'] ?? null),
             produkContoh: self::BacaProdukContoh($isi['ProdukContoh'] ?? null),
+            stasiunDapur: self::BacaDaftarTeks($isi['StasiunDapur'] ?? null),
         );
     }
 

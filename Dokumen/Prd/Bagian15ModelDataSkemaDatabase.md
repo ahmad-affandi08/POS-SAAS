@@ -141,8 +141,8 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `AreaMeja` / `Meja` | IdOutlet, Nama, Kapasitas, PosisiX, PosisiY, Bentuk, TokenQr, Status |
-| `StasiunDapur` | IdOutlet, Nama, KonfigurasiPrinter JSON |
+| `AreaMeja` / `Meja` | IdOutlet, Nama, Urutan, Status / IdOutlet, IdAreaMeja, Nama (unik per outlet), Kapasitas, PosisiX, PosisiY, Bentuk, Urutan, TokenQr (F-17), Status (Aktif/Diarsipkan; status pakai diturunkan dari pesanan terbuka) |
+| `StasiunDapur` | IdTenant, Uuid, Nama (unik per tenant), Urutan, Status (tingkat tenant sejak v1.56; konfigurasi printer dapur disimpan di profil perangkat) |
 | `TiketDapur` / `TiketDapurDetail` | IdPenjualan, IdStasiunDapur, Ronde, Status, DikirimPada, SiapPada |
 | `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
 | `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |

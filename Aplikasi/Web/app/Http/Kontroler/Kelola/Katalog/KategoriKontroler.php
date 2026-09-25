@@ -8,20 +8,22 @@ use App\Domain\Katalog\Aksi\HapusKategori;
 use App\Domain\Katalog\Aksi\SimpanKategori;
 use App\Domain\Katalog\Kueri\PohonKategori;
 use App\Domain\Katalog\Model\Kategori;
+use App\Domain\Organisasi\Kueri\DaftarStasiunDapur;
 use App\Http\Permintaan\Kelola\Katalog\SimpanKategoriPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Kategori produk bertingkat F-03 (E.5). Kategori dicari lewat ULID di dalam tenant aktif (tenant lain = 404).
+ * Kategori produk bertingkat F-03 (E.5) dengan stasiun dapur opsional (F-10a). Kategori dicari lewat ULID di dalam tenant aktif (tenant lain = 404).
  */
 final class KategoriKontroler extends DasarKatalogKontroler
 {
-    public function Daftar(PohonKategori $pohon): Response
+    public function Daftar(PohonKategori $pohon, DaftarStasiunDapur $stasiun): Response
     {
         return Inertia::render('Kelola/Kategori/Daftar', [
-            'Kategori' => $pohon->AmbilUntukHalaman(),
+            'Kategori' => $pohon->AmbilUntukHalaman($stasiun->AmbilPetaId()),
+            'OpsiStasiunDapur' => $stasiun->AmbilOpsiAktif(),
             'Izin' => $this->AmbilIzinKatalog(),
         ]);
     }

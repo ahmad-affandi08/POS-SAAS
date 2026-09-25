@@ -9,6 +9,7 @@ use App\Http\Kontroler\Kelola\Katalog\GambarProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\KategoriKontroler;
 use App\Http\Kontroler\Kelola\Katalog\ProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\SatuanKontroler;
+use App\Http\Kontroler\Kelola\Katalog\StasiunDapurKontroler;
 use App\Http\Kontroler\Kelola\Katalog\VarianProdukKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
@@ -56,6 +57,13 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::post('/kategori', [KategoriKontroler::class, 'Simpan'])->middleware($kelola)->name('kelola.kategori.simpan');
     Route::put('/kategori/{kategori}', [KategoriKontroler::class, 'Ubah'])->middleware($kelola)->where('kategori', $ulid)->name('kelola.kategori.ubah');
     Route::delete('/kategori/{kategori}', [KategoriKontroler::class, 'Hapus'])->middleware($kelola)->where('kategori', $ulid)->name('kelola.kategori.hapus');
+
+    // F-10a stasiun dapur (kategori → stasiun untuk KDS/printer dapur).
+    Route::get('/stasiun-dapur', [StasiunDapurKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.stasiun-dapur.daftar');
+    Route::post('/stasiun-dapur', [StasiunDapurKontroler::class, 'Simpan'])->middleware($kelola)->name('kelola.stasiun-dapur.simpan');
+    Route::put('/stasiun-dapur/{stasiunDapur}', [StasiunDapurKontroler::class, 'Ubah'])->middleware($kelola)->where('stasiunDapur', $ulid)->name('kelola.stasiun-dapur.ubah');
+    Route::post('/stasiun-dapur/{stasiunDapur}/arsipkan', [StasiunDapurKontroler::class, 'Arsipkan'])->middleware($kelola)->where('stasiunDapur', $ulid)->name('kelola.stasiun-dapur.arsipkan');
+    Route::post('/stasiun-dapur/{stasiunDapur}/pulihkan', [StasiunDapurKontroler::class, 'Pulihkan'])->middleware($kelola)->where('stasiunDapur', $ulid)->name('kelola.stasiun-dapur.pulihkan');
 
     Route::get('/satuan', [SatuanKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.satuan.daftar');
     Route::post('/satuan', [SatuanKontroler::class, 'Simpan'])->middleware($kelola)->name('kelola.satuan.simpan');

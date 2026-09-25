@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\GudangKontroler;
 use App\Http\Kontroler\Kelola\LogAuditKontroler;
+use App\Http\Kontroler\Kelola\MejaKontroler;
 use App\Http\Kontroler\Kelola\MerekKontroler;
 use App\Http\Kontroler\Kelola\OutletKontroler;
 use App\Http\Kontroler\Kelola\PenggunaKontroler;
@@ -33,6 +34,16 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::put('/outlet/{outlet}/gudang/{gudang}', [GudangKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.ubah');
     Route::post('/outlet/{outlet}/gudang/{gudang}/arsipkan', [GudangKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.arsipkan');
     Route::post('/outlet/{outlet}/gudang/{gudang}/pulihkan', [GudangKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.pulihkan');
+
+    // F-10a area & meja per outlet (mode meja).
+    Route::post('/outlet/{outlet}/area-meja', [MejaKontroler::class, 'SimpanArea'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.area-meja.simpan');
+    Route::put('/outlet/{outlet}/area-meja/{areaMeja}', [MejaKontroler::class, 'UbahArea'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.area-meja.ubah');
+    Route::post('/outlet/{outlet}/area-meja/{areaMeja}/arsipkan', [MejaKontroler::class, 'ArsipkanArea'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.area-meja.arsipkan');
+    Route::post('/outlet/{outlet}/area-meja/{areaMeja}/pulihkan', [MejaKontroler::class, 'PulihkanArea'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.area-meja.pulihkan');
+    Route::post('/outlet/{outlet}/meja', [MejaKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.simpan');
+    Route::put('/outlet/{outlet}/meja/{meja}', [MejaKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.ubah');
+    Route::post('/outlet/{outlet}/meja/{meja}/arsipkan', [MejaKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.arsipkan');
+    Route::post('/outlet/{outlet}/meja/{meja}/pulihkan', [MejaKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.pulihkan');
 
     Route::post('/merek', [MerekKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.simpan');
     Route::put('/merek/{merek}', [MerekKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.ubah');

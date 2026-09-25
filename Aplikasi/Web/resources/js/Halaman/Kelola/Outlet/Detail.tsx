@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import BagianMeja, { type ModeMejaOutlet } from '@/Komponen/Kelola/BagianMeja';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -41,10 +42,26 @@ type Outlet = {
 
 type Gudang = { Uuid: string; Kode: string; Nama: string; Jenis: string; Status: StatusOrganisasi };
 
-type PropsDetail = { Outlet: Outlet; Gudang: Gudang[]; Merek: Pilihan[]; Kota: Kota[]; JenisGudang: Pilihan[] };
+type PropsDetail = {
+    Outlet: Outlet;
+    Gudang: Gudang[];
+    Merek: Pilihan[];
+    Kota: Kota[];
+    JenisGudang: Pilihan[];
+    ModeMeja: ModeMejaOutlet;
+    BentukMeja: Pilihan[];
+};
 
-/** Profil outlet & lokasi stoknya (F-02 langkah 1–2, BR-02.2, BR-02.4). */
-export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, JenisGudang }: PropsDetail) {
+/** Profil outlet, lokasi stok (F-02 langkah 1–2, BR-02.2, BR-02.4), dan meja (F-10a). */
+export default function HalamanDetailOutlet({
+    Outlet,
+    Gudang,
+    Merek,
+    Kota,
+    JenisGudang,
+    ModeMeja,
+    BentukMeja,
+}: PropsDetail) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const bolehKelola = PunyaIzinTenant(props.Akses, IzinTenant.OutletKelola);
     const alamat = `/kelola/outlet/${Outlet.Uuid}`;
@@ -129,6 +146,13 @@ export default function HalamanDetailOutlet({ Outlet, Gudang, Merek, Kota, Jenis
                 alamatOutlet={alamat}
                 gudang={Gudang}
                 jenis={JenisGudang}
+                bolehKelola={bolehKelola && Outlet.Status === 'Aktif'}
+            />
+
+            <BagianMeja
+                alamatOutlet={alamat}
+                modeMeja={ModeMeja}
+                bentuk={BentukMeja}
                 bolehKelola={bolehKelola && Outlet.Status === 'Aktif'}
             />
         </TataLetakAplikasi>

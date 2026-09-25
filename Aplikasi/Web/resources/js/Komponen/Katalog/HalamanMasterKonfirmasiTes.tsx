@@ -5,6 +5,7 @@ import HalamanDaftarDaftarHarga from '@/Halaman/Kelola/DaftarHarga/Daftar';
 import HalamanDaftarKategori from '@/Halaman/Kelola/Kategori/Daftar';
 import HalamanDaftarKelompokPilihan from '@/Halaman/Kelola/KelompokPilihan/Daftar';
 import HalamanDaftarSatuan from '@/Halaman/Kelola/Satuan/Daftar';
+import HalamanDaftarStasiunDapur from '@/Halaman/Kelola/StasiunDapur/Daftar';
 
 import { BuatHasilTabel, IzinPenuh } from './DataUjiKatalog';
 import { AturHalamanUji, RenderUji, tiruanRouter } from './TiruanInertia';
@@ -22,15 +23,46 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
     afterEach(() => cleanup());
 
     it('kategori: formulir tambah tampil di dialog dan Batal menutupnya', () => {
-        RenderUji(<HalamanDaftarKategori Kategori={[]} Izin={IzinPenuh} />);
+        RenderUji(<HalamanDaftarKategori Kategori={[]} OpsiStasiunDapur={[]} Izin={IzinPenuh} />);
 
         expect(screen.queryByRole('dialog')).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Tambah kategori' }));
         expect(screen.getByRole('dialog', { name: 'Tambah kategori' })).toBeTruthy();
         expect(screen.getByRole('form', { name: 'Tambah kategori' })).toBeTruthy();
+        // Tanpa stasiun dapur (misal toko retail): bidang stasiun tidak tampil.
+        expect(screen.queryByRole('combobox', { name: 'Stasiun dapur' })).toBeNull();
 
         fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
         expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('F-10a kategori: stasiun dapur tampil di tabel & form ubah, termasuk stasiun yang diarsipkan', () => {
+        RenderUji(
+            <HalamanDaftarKategori
+                Kategori={[
+                    {
+                        Uuid: 'K1',
+                        Nama: 'Kopi',
+                        Jalur: 'Kopi',
+                        Kedalaman: 1,
+                        UuidInduk: null,
+                        JumlahProduk: 3,
+                        Urutan: 0,
+                        UuidStasiunDapur: 'S-LAMA',
+                        NamaStasiunDapur: 'Bar Lantai 2',
+                    },
+                ]}
+                OpsiStasiunDapur={[{ Nilai: 'S-DAPUR', Label: 'Dapur' }]}
+                Izin={IzinPenuh}
+            />,
+        );
+
+        expect(screen.getByText('Bar Lantai 2')).toBeTruthy();
+        PilihAksi('Kopi', 'Ubah kategori');
+        expect(screen.getByRole('form', { name: 'Ubah kategori Kopi' })).toBeTruthy();
+        expect(screen.getByRole('combobox', { name: 'Stasiun dapur' }).textContent).toContain(
+            'Bar Lantai 2 (diarsipkan)',
+        );
     });
 
     it('kategori: router.delete baru dipanggil setelah konfirmasi', () => {
@@ -45,8 +77,11 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
                         UuidInduk: null,
                         JumlahProduk: 0,
                         Urutan: 0,
+                        UuidStasiunDapur: null,
+                        NamaStasiunDapur: null,
                     },
                 ]}
+                OpsiStasiunDapur={[]}
                 Izin={IzinPenuh}
             />,
         );
@@ -60,6 +95,24 @@ describe('Master katalog: formulir di dialog, hapus/nonaktifkan lewat konfirmasi
             '/kelola/kategori/K9',
             expect.objectContaining({ preserveScroll: true }),
         );
+    });
+
+    it('F-10a stasiun dapur: stasiun bawaan disebut, arsipkan lewat aksi baris, tambah membuka formulir', () => {
+        RenderUji(
+            <HalamanDaftarStasiunDapur
+                Stasiun={[
+                    { Uuid: 'S1', Nama: 'Bar', Urutan: 0, Status: 'Aktif' },
+                    { Uuid: 'S2', Nama: 'Dapur', Urutan: 1, Status: 'Aktif' },
+                ]}
+                Izin={IzinPenuh}
+            />,
+        );
+
+        expect(screen.getByText(/Kategori tanpa stasiun masuk ke Bar/)).toBeTruthy();
+        PilihAksi('stasiun Dapur', 'Arsipkan');
+        expect(tiruanRouter.post).toHaveBeenCalledWith('/kelola/stasiun-dapur/S2/arsipkan', {}, expect.anything());
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah stasiun' }));
+        expect(screen.getByRole('heading', { name: 'Tambah stasiun dapur' })).toBeTruthy();
     });
 
     it('satuan: batal di konfirmasi tidak menghapus', () => {

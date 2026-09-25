@@ -55,17 +55,34 @@ function KelasIndentasi(kedalaman: number): string {
 function FormKategori({
     kategori,
     semua,
+    opsiStasiun,
     saatSelesai,
 }: {
     kategori: Kategori | null;
     semua: Kategori[];
+    opsiStasiun: PropsDaftarKategori['OpsiStasiunDapur'];
     saatSelesai: () => void;
 }) {
-    const formulir = useForm({
+    // F-10a: stasiun dapur hanya dikirim bila tenant punya stasiun (form lama tetap tidak mengubah rujukan).
+    const adaStasiun = opsiStasiun.length > 0 || kategori?.UuidStasiunDapur != null;
+    const formulir = useForm<{
+        Nama: string;
+        UuidInduk: string | null;
+        Urutan: string;
+        UuidStasiunDapur?: string | null;
+    }>({
         Nama: kategori?.Nama ?? '',
         UuidInduk: kategori?.UuidInduk ?? null,
         Urutan: kategori ? String(kategori.Urutan) : '0',
+        ...(adaStasiun ? { UuidStasiunDapur: kategori?.UuidStasiunDapur ?? null } : {}),
     });
+    const opsiStasiunForm =
+        kategori?.UuidStasiunDapur && !opsiStasiun.some((o) => o.Nilai === kategori.UuidStasiunDapur)
+            ? [
+                  ...opsiStasiun,
+                  { Nilai: kategori.UuidStasiunDapur, Label: `${kategori.NamaStasiunDapur ?? 'Stasiun'} (diarsipkan)` },
+              ]
+            : opsiStasiun;
     const galat = formulir.errors as Record<string, string | undefined>;
     const terlarang = kategori ? AmbilTurunanKategori(semua, kategori.Uuid) : new Set<string>();
     const opsiInduk = semua.filter((item) => item.Kedalaman < MaksimalKedalamanKategori && !terlarang.has(item.Uuid));
@@ -114,6 +131,16 @@ function FormKategori({
                 maxLength={4}
                 keterangan="Angka kecil tampil lebih dulu di kasir."
             />
+            {adaStasiun ? (
+                <BidangPilihan
+                    label="Stasiun dapur"
+                    nilai={formulir.data.UuidStasiunDapur ?? ''}
+                    kosong="Stasiun bawaan"
+                    opsi={opsiStasiunForm}
+                    saatBerubah={(nilai) => formulir.setData('UuidStasiunDapur', nilai === '' ? null : nilai)}
+                    galat={galat.UuidStasiunDapur}
+                />
+            ) : null}
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={saatSelesai}>
                     Batal
@@ -152,6 +179,13 @@ const kolom: KolomTabel<Kategori>[] = [
         meta: { label: 'Urutan tampil', angka: true, prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
     },
     {
+        id: 'NamaStasiunDapur',
+        accessorFn: (item) => item.NamaStasiunDapur ?? '',
+        header: 'Stasiun dapur',
+        meta: { label: 'Stasiun dapur', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
+        cell: ({ row: { original: item } }) => item.NamaStasiunDapur ?? '—',
+    },
+    {
         id: 'JumlahProduk',
         accessorKey: 'JumlahProduk',
         header: 'Produk',
@@ -160,7 +194,7 @@ const kolom: KolomTabel<Kategori>[] = [
 ];
 
 /** F-03 kategori bertingkat (maks 3 tingkat). Hapus hanya bila tanpa sub-kategori dan tanpa produk. */
-export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKategori) {
+export default function HalamanDaftarKategori({ Kategori, OpsiStasiunDapur, Izin }: PropsDaftarKategori) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [sunting, AturSunting] = useState<Kategori | 'baru' | null>(null);
     const [hapus, AturHapus] = useState<Kategori | null>(null);
@@ -169,7 +203,10 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
     return (
         <TataLetakAplikasi judul="Kategori produk">
             {!Izin.Kelola ? <PesanHanyaLihat izin="produk.kelola" objek="kategori" /> : null}
-            <DaftarGalatServer galat={props.errors} kecuali={sunting !== null ? ['Nama', 'UuidInduk', 'Urutan'] : []} />
+            <DaftarGalatServer
+                galat={props.errors}
+                kecuali={sunting !== null ? ['Nama', 'UuidInduk', 'Urutan', 'UuidStasiunDapur'] : []}
+            />
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-isi text-teks-sekunder">
                     Kelompokkan produk sampai 3 tingkat, misal Minuman › Kopi › Kopi susu.
@@ -195,6 +232,7 @@ export default function HalamanDaftarKategori({ Kategori, Izin }: PropsDaftarKat
                             key={sunting === 'baru' ? 'baru' : sunting.Uuid}
                             kategori={sunting === 'baru' ? null : sunting}
                             semua={Kategori}
+                            opsiStasiun={OpsiStasiunDapur}
                             saatSelesai={() => AturSunting(null)}
                         />
                     </DialogContent>

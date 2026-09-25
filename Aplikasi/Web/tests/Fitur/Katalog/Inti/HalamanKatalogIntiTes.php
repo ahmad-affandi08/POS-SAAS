@@ -106,7 +106,8 @@ describe('F-03 halaman katalog Tim 1 (prop kontrak E)', function (): void {
 
         $masuk()->get('/kelola/kategori')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Kategori/Daftar')
-            ->where('Kategori.1', ['Uuid' => $kopi->Uuid, 'Nama' => 'Kopi', 'Jalur' => 'Minuman › Kopi', 'Kedalaman' => 2, 'UuidInduk' => $minuman->Uuid, 'JumlahProduk' => 1, 'Urutan' => 0])
+            ->where('Kategori.1', ['Uuid' => $kopi->Uuid, 'Nama' => 'Kopi', 'Jalur' => 'Minuman › Kopi', 'Kedalaman' => 2, 'UuidInduk' => $minuman->Uuid, 'JumlahProduk' => 1, 'Urutan' => 0, 'UuidStasiunDapur' => null, 'NamaStasiunDapur' => null])
+            ->where('OpsiStasiunDapur', [])
             ->has('Izin'));
         $masuk()->get('/kelola/satuan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Satuan/Daftar')

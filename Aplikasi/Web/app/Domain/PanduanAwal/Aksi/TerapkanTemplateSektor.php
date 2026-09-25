@@ -12,6 +12,7 @@ use App\Domain\Katalog\Aksi\TambahkanKategoriTemplate;
 use App\Domain\Katalog\Aksi\TambahkanSatuanTemplate;
 use App\Domain\Katalog\Data\DataSatuanStandar;
 use App\Domain\Organisasi\Aksi\CatatTemplateOutlet;
+use App\Domain\Organisasi\Aksi\TambahkanStasiunDapurTemplate;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pajak\Aksi\TambahkanKelompokPajakTemplate;
 use App\Domain\PanduanAwal\Data\HasilPenerapanTemplate;
@@ -52,6 +53,7 @@ final class TerapkanTemplateSektor
         private readonly LengkapiPengaturanTenant $lengkapiPengaturan,
         private readonly SiapkanMetodePembayaranBawaan $siapkanMetodePembayaran,
         private readonly CatatTemplateOutlet $catatTemplate,
+        private readonly TambahkanStasiunDapurTemplate $tambahStasiun,
         private readonly TandaiLangkahPanduan $tandai,
         private readonly PencatatAudit $audit,
     ) {}
@@ -79,6 +81,7 @@ final class TerapkanTemplateSektor
             ));
             $kategori = $this->tambahKategori->Jalankan($isi->kategori);
             $kelompokPajak = $this->tambahKelompokPajak->Jalankan($isi->kelompokPajak);
+            $stasiun = $this->tambahStasiun->Jalankan($isi->stasiunDapur);
             $fitur = $this->tambahFitur->Jalankan(
                 $outlet->Id,
                 $isi->kunciFitur,
@@ -105,6 +108,7 @@ final class TerapkanTemplateSektor
                 jumlahFitur: count($fitur),
                 pengaturanDitambahkan: count($pengaturan),
                 versiBerubah: $versiBerubah,
+                jumlahStasiunDapur: count($stasiun),
             );
 
             if ($hasil->CekAdaPerubahan()) {
@@ -119,6 +123,7 @@ final class TerapkanTemplateSektor
                         'KelompokPajak' => $hasil->jumlahKelompokPajak,
                         'Fitur' => $hasil->jumlahFitur,
                         'Pengaturan' => $hasil->pengaturanDitambahkan,
+                        'StasiunDapur' => $hasil->jumlahStasiunDapur,
                     ],
                 ]);
             }

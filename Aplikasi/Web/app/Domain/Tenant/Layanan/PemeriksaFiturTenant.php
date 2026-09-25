@@ -14,6 +14,12 @@ final class PemeriksaFiturTenant
     /** §20.2: 2FA wajib untuk Owner/Admin/Akuntan di paket Bisnis ke atas. */
     public const KUNCI_2FA_WAJIB = 'keamanan.2fa-wajib';
 
+    /** F-07 mode meja & F-10a data meja. */
+    public const KUNCI_MODE_MEJA = 'pos.mode-meja';
+
+    /** F-10 kitchen display. */
+    public const KUNCI_KDS = 'pos.kds';
+
     public function __construct(
         private readonly SumberFiturTenant $sumber,
         private readonly EvaluatorFitur $evaluator,

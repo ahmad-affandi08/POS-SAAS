@@ -6,9 +6,12 @@ namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Organisasi\Aksi\SimpanOutlet;
 use App\Domain\Organisasi\Aksi\UbahStatusOutlet;
+use App\Domain\Organisasi\Enum\BentukMeja;
 use App\Domain\Organisasi\Enum\JenisGudang;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
+use App\Domain\Organisasi\Kueri\MejaOutlet;
 use App\Domain\Organisasi\Kueri\PemakaianBatasOrganisasi;
+use App\Domain\Organisasi\Layanan\PenjagaModeMeja;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
@@ -64,7 +67,7 @@ final class OutletKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    public function Detail(string $outlet, WilayahKota $wilayahKota): Response
+    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja): Response
     {
         $baris = $this->CariOutlet($outlet);
 
@@ -100,6 +103,9 @@ final class OutletKontroler extends DasarKelolaKontroler
             'Merek' => Merek::query()->orderBy('Nama')->get()->map(fn (Merek $merek): array => ['Nilai' => $merek->Uuid, 'Label' => $merek->Nama])->values(),
             'Kota' => $this->PetakanKota($wilayahKota),
             'JenisGudang' => array_map(fn (JenisGudang $jenis): array => ['Nilai' => $jenis->value, 'Label' => $jenis->AmbilLabel()], JenisGudang::cases()),
+            // F-10a: bagian meja tampil bila fitur mode meja aktif di outlet ini atau sudah ada data meja.
+            'ModeMeja' => ['Aktif' => $modeMeja->CekAktif($baris), ...$mejaOutlet->Ambil($baris->Id)],
+            'BentukMeja' => array_map(fn (BentukMeja $bentuk): array => ['Nilai' => $bentuk->value, 'Label' => $bentuk->AmbilLabel()], BentukMeja::cases()),
         ]);
     }
 

@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.55 |
+| Versi | 1.56 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -76,6 +76,7 @@
 | 1.53 | Utang D-16 (c) audit responsif selesai: Playwright 97 URL (74 back-office + 23 Platform Pengelola) × 360/768/1280px; gulir horizontal halaman 142 → 0 (teks panjang di `Pemberitahuan` kini patah baris, tombol navigasi panduan awal membungkus). Penolakan redirect (dokumen berstatus tidak sesuai) dikirim sebagai galat `Umum`, bukan `Kilat` berlabel "Berhasil" (§25 no. 22). |
 | 1.54 | Neraca (FIN-07 P1) di back-office F-13: posisi akhir periode vs sehari sebelum periode, laba belum ditutup buku di ekuitas (tahun berjalan & tahun-tahun lalu), tanda seimbang, ekspor CSV, invarian nilai persediaan neraca = Σ nilai stok. Utang §25 no. 25 & 26 diperbarui. |
 | 1.55 | Arus kas metode langsung (FIN-07 P1) di back-office F-13; klasifikasi aktivitas dari akun lawan (keputusan agen, D-12). `TabelData`: meta `sembunyiBilaKosong` untuk daftar bertumpuk HP dan tombol Saring di HP hanya tampil bila ada saring/urut. |
+| 1.56 | Rincian F-10a: area & meja per outlet, stasiun dapur tingkat tenant + `Kategori.IdStasiunDapur`, gerbang fitur `pos.mode-meja`, stasiun dari template sektor; penyesuaian §15 `StasiunDapur` (tanpa IdOutlet/KonfigurasiPrinter) dan `AreaMeja`/`Meja`. |
 
 ---
 
@@ -1342,6 +1343,14 @@ stateDiagram-v2
 - **Pre-order & Pesanan kustom (bakery, percetakan):** DP, tanggal ambil, status produksi, pelunasan saat ambil.
 - **Laundry:** status `Diterima → Dicuci → Dikeringkan → Disetrika → Siap → Diambil`, notifikasi WA saat `Siap`.
 - **Bengkel:** Perintah Kerja `Masuk → Diagnosis → MenungguPersetujuan → Dikerjakan → Qc → Selesai → Diambil`.
+
+**Rincian F-10a (v1.56, data master mode meja & dapur; diputuskan agen atas mandat D-12):**
+- **Area & meja per outlet** (domain Organisasi, dikelola di halaman detail outlet `/kelola/outlet/{outlet}`, izin `outlet.kelola`): `AreaMeja` (Nama unik per outlet, Urutan) dan `Meja` (Nama/nomor unik per outlet maks. 30 karakter, area opsional yang harus aktif di outlet yang sama, Kapasitas 1–99, Bentuk `Persegi|Bundar|Panjang`, Urutan; `PosisiX/PosisiY` disiapkan untuk editor denah). Status `Aktif|Diarsipkan` (tidak pernah dihapus karena dirujuk pesanan). Area yang masih punya meja aktif tidak bisa diarsipkan; meja hanya bisa dipulihkan bila areanya aktif. **Status pakai meja** (kosong/terisi/minta bill/perlu dibersihkan) bukan kolom, melainkan diturunkan dari pesanan terbuka di F-07 mode meja. `TokenQr` dibuat F-17.
+- **Gerbang fitur:** menambah area/meja butuh fitur paket `pos.mode-meja` aktif di outlet itu (paket/add-on/override ∩ modul template outlet, BR-P04.7, BR-01.3). Setelah turun paket, data lama tetap tampil dan bisa diubah/diarsipkan (tidak ada data yang terkunci), tetapi meja baru ditolak `FiturTidakAktif`. Bagian meja di halaman outlet tampil bila fitur aktif atau sudah ada data.
+- **Stasiun dapur tingkat tenant** (penyesuaian §15: tanpa `IdOutlet` dan tanpa `KonfigurasiPrinter`): karena kategori produk berlaku di seluruh tenant, `Kategori.IdStasiunDapur` merujuk stasiun tenant ("Dapur", "Bar", "Pastry"; nama unik per tenant, maks. 20 aktif). Setiap perangkat KDS/printer dapur di outlet memilih stasiun yang dilayaninya dan menyimpan konfigurasi printernya di profil perangkat (F-10b). Halaman `/kelola/stasiun-dapur` (lihat `produk.lihat`, ubah `produk.kelola`); stasiun kategori dipilih di form kategori. Kategori tanpa stasiun, atau yang stasiunnya diarsipkan, dirutekan ke **stasiun bawaan** = stasiun aktif dengan urutan terkecil. Form kategori yang tidak mengirim bidang stasiun (klien lama) tidak mengubah rujukannya.
+- **Template sektor:** daftar `StasiunDapur` template (misal FNB-CAF: Bar, Dapur) dibuat saat template diterapkan, aditif & idempoten (BR-01.1; nama yang sudah ada, termasuk yang diarsipkan, dilewati).
+- Audit: `area-meja.*`, `meja.*`, `stasiun-dapur.*` (buat, ubah, arsipkan, pulihkan, tambah-template), perubahan stasiun kategori ikut `kategori.ubah`.
+- **Belum (F-10b/F-07 mode meja):** editor denah seret-lepas, status pakai meja, paket data meja & stasiun untuk aplikasi kasir, pesanan terbuka tersinkron, tiket dapur (`TiketDapur`), layar KDS, dan printer dapur per stasiun.
 
 ---
 
@@ -2738,8 +2747,8 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `AreaMeja` / `Meja` | IdOutlet, Nama, Kapasitas, PosisiX, PosisiY, Bentuk, TokenQr, Status |
-| `StasiunDapur` | IdOutlet, Nama, KonfigurasiPrinter JSON |
+| `AreaMeja` / `Meja` | IdOutlet, Nama, Urutan, Status / IdOutlet, IdAreaMeja, Nama (unik per outlet), Kapasitas, PosisiX, PosisiY, Bentuk, Urutan, TokenQr (F-17), Status (Aktif/Diarsipkan; status pakai diturunkan dari pesanan terbuka) |
+| `StasiunDapur` | IdTenant, Uuid, Nama (unik per tenant), Urutan, Status (tingkat tenant sejak v1.56; konfigurasi printer dapur disimpan di profil perangkat) |
 | `TiketDapur` / `TiketDapurDetail` | IdPenjualan, IdStasiunDapur, Ronde, Status, DikirimPada, SiapPada |
 | `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
 | `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |

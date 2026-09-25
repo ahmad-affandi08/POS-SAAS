@@ -198,10 +198,21 @@ export type PropsDetailProduk = {
 
 // E.5 Kelola/Kategori/Daftar dan Kelola/Satuan/Daftar.
 export type PropsDaftarKategori = {
-    Kategori: (OpsiKategori & { JumlahProduk: number; Urutan: number })[];
+    Kategori: (OpsiKategori & {
+        JumlahProduk: number;
+        Urutan: number;
+        UuidStasiunDapur: string | null;
+        NamaStasiunDapur: string | null;
+    })[];
+    OpsiStasiunDapur: { Nilai: string; Label: string }[];
     Izin: IzinKatalog;
 };
-// Form: { Nama: string; UuidInduk: string|null; Urutan: string } → POST /kelola/kategori, PUT/DELETE /kelola/kategori/{uuid}.
+// Form: { Nama: string; UuidInduk: string|null; Urutan: string; UuidStasiunDapur?: string|null } → POST /kelola/kategori,
+// PUT/DELETE /kelola/kategori/{uuid}. UuidStasiunDapur (F-10a) hanya dikirim bila tenant punya stasiun dapur.
+
+// F-10a Kelola/StasiunDapur/Daftar.
+export type StasiunDapur = { Uuid: string; Nama: string; Urutan: number; Status: 'Aktif' | 'Diarsipkan' };
+export type PropsDaftarStasiunDapur = { Stasiun: StasiunDapur[]; Izin: IzinKatalog };
 export type PropsDaftarSatuan = {
     Satuan: (OpsiSatuan & { KodeStandar: string | null; JumlahProduk: number })[];
     Izin: IzinKatalog;

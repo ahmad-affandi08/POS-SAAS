@@ -28,9 +28,10 @@ final class PohonKategori
     }
 
     /**
-     * @return list<array{Uuid: string, Nama: string, Jalur: string, Kedalaman: int, UuidInduk: string|null, JumlahProduk: int, Urutan: int}>
+     * @param  array<int, array{Uuid: string, Nama: string, Aktif: bool}>  $stasiun  peta stasiun dapur per Id (F-10a)
+     * @return list<array{Uuid: string, Nama: string, Jalur: string, Kedalaman: int, UuidInduk: string|null, JumlahProduk: int, Urutan: int, UuidStasiunDapur: string|null, NamaStasiunDapur: string|null}>
      */
-    public function AmbilUntukHalaman(): array
+    public function AmbilUntukHalaman(array $stasiun = []): array
     {
         $jumlah = Produk::query()->whereNotNull('IdKategori')->whereNull('IdInduk')
             ->selectRaw('IdKategori, count(*) as Jumlah')->groupBy('IdKategori')->pluck('Jumlah', 'IdKategori');
@@ -43,11 +44,13 @@ final class PohonKategori
             'UuidInduk' => $baris['UuidInduk'],
             'JumlahProduk' => (int) ($jumlah->get($baris['Id']) ?? 0),
             'Urutan' => $baris['Urutan'],
+            'UuidStasiunDapur' => $baris['IdStasiunDapur'] === null ? null : ($stasiun[$baris['IdStasiunDapur']]['Uuid'] ?? null),
+            'NamaStasiunDapur' => $baris['IdStasiunDapur'] === null ? null : ($stasiun[$baris['IdStasiunDapur']]['Nama'] ?? null),
         ], $this->AmbilUrut());
     }
 
     /**
-     * @return list<array{Id: int, Uuid: string, Nama: string, Jalur: string, Kedalaman: int, UuidInduk: string|null, Urutan: int}>
+     * @return list<array{Id: int, Uuid: string, Nama: string, Jalur: string, Kedalaman: int, UuidInduk: string|null, Urutan: int, IdStasiunDapur: int|null}>
      */
     private function AmbilUrut(): array
     {
@@ -67,6 +70,7 @@ final class PohonKategori
                     'Kedalaman' => $kedalaman,
                     'UuidInduk' => $idInduk === null ? null : $uuid->get($idInduk),
                     'Urutan' => $kategori->Urutan,
+                    'IdStasiunDapur' => $kategori->IdStasiunDapur,
                 ];
                 $susun($kategori->Id, $jalur, $kedalaman + 1);
             }

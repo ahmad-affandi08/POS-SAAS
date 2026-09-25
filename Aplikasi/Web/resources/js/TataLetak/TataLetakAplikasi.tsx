@@ -59,6 +59,7 @@ const menuProduk: ItemMenu[] = [
     { label: 'Daftar harga', href: '/kelola/daftar-harga', izin: IzinTenant.ProdukLihat },
     { label: 'Pilihan (modifier)', href: '/kelola/kelompok-pilihan', izin: IzinTenant.ProdukLihat },
     { label: 'Kelompok pajak', href: '/kelola/kelompok-pajak', izin: IzinTenant.ProdukLihat },
+    { label: 'Stasiun dapur', href: '/kelola/stasiun-dapur', izin: IzinTenant.ProdukLihat },
     { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 

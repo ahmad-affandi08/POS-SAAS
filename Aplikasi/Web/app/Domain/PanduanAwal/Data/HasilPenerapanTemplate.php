@@ -21,11 +21,12 @@ final readonly class HasilPenerapanTemplate
         public int $jumlahFitur,
         public int $pengaturanDitambahkan,
         public bool $versiBerubah,
+        public int $jumlahStasiunDapur = 0,
     ) {}
 
     public function CekAdaPerubahan(): bool
     {
         return $this->versiBerubah || $this->jumlahAkun + $this->jumlahPemetaan + $this->jumlahKategori + $this->jumlahSatuan
-            + $this->jumlahKelompokPajak + $this->jumlahFitur + $this->pengaturanDitambahkan > 0;
+            + $this->jumlahKelompokPajak + $this->jumlahFitur + $this->pengaturanDitambahkan + $this->jumlahStasiunDapur > 0;
     }
 }

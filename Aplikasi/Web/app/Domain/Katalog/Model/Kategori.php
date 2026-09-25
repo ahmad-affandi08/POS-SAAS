@@ -9,7 +9,7 @@ use App\Domain\Bersama\Tenant\MilikTenant;
 
 /**
  * Kategori produk tenant (PRD §15.3). F-01 membuat kategori akar dari template sektor; F-03 mengelola sub-kategori
- * dan menambahkan `IdStasiunDapur` (F-10).
+ * dan F-10a menambahkan `IdStasiunDapur` (rujukan stasiun dapur tingkat tenant; null = stasiun bawaan).
  *
  * @property int $Id
  * @property string $Uuid
@@ -17,6 +17,7 @@ use App\Domain\Bersama\Tenant\MilikTenant;
  * @property int|null $IdInduk
  * @property string $Nama
  * @property int $Urutan
+ * @property int|null $IdStasiunDapur
  */
 final class Kategori extends ModelDasar
 {
@@ -25,13 +26,13 @@ final class Kategori extends ModelDasar
     protected $table = 'Kategori';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['IdInduk' => null, 'Urutan' => 0];
+    protected $attributes = ['IdInduk' => null, 'Urutan' => 0, 'IdStasiunDapur' => null];
 
     /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
-        return ['Urutan' => 'integer'];
+        return ['Urutan' => 'integer', 'IdStasiunDapur' => 'integer'];
     }
 }

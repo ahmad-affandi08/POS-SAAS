@@ -74,13 +74,92 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 Merek={[]}
                 Kota={[]}
                 JenisGudang={[{ Nilai: 'Jual', Label: 'Barang jual' }]}
+                ModeMeja={{ Aktif: false, Area: [], Meja: [] }}
+                BentukMeja={[]}
             />,
         );
 
         expect(screen.getByText('Barang jual')).toBeTruthy();
+        // Tanpa mode meja & tanpa data meja: bagian meja tidak tampil.
+        expect(screen.queryByRole('heading', { name: 'Meja & area' })).toBeNull();
         fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi lokasi stok Gudang utama' }), { key: 'Enter' });
         fireEvent.click(screen.getByRole('menuitem', { name: 'Arsipkan' }));
         expect(tiruanRouter.post).toHaveBeenCalledWith('/kelola/outlet/O-1/gudang/G-1/arsipkan', {}, expect.anything());
+    });
+
+    it('F-10a meja: area & meja tampil, meja diarsipkan lewat aksi baris, tambah meja membuka formulir; mode mati hanya info', () => {
+        const outletAktif = {
+            Uuid: 'O-1',
+            Kode: 'JKT1',
+            Nama: 'Kopi Nusantara Sudirman',
+            UuidMerek: null,
+            Alamat: null,
+            KodeKota: null,
+            ZonaWaktu: 'WIB',
+            JamTutupBuku: '04:00',
+            Pkp: false,
+            Nitku: null,
+            PungutPbjt: false,
+            Status: 'Aktif' as const,
+            KodeTerkunci: true,
+        };
+        const modeMeja = {
+            Aktif: true,
+            Area: [{ Uuid: 'A-1', Nama: 'Teras Belakang', Urutan: 0, Status: 'Aktif' as const, JumlahMeja: 1 }],
+            Meja: [
+                {
+                    Uuid: 'M-7',
+                    Nama: '7',
+                    UuidArea: 'A-1',
+                    NamaArea: 'Teras Belakang',
+                    Kapasitas: 4,
+                    Bentuk: 'Bundar',
+                    Urutan: 0,
+                    Status: 'Aktif' as const,
+                },
+            ],
+        };
+        const bentuk = [
+            { Nilai: 'Persegi', Label: 'Persegi' },
+            { Nilai: 'Bundar', Label: 'Bundar' },
+        ];
+        const { unmount: Lepas } = RenderUji(
+            <HalamanDetailOutlet
+                Outlet={outletAktif}
+                Gudang={[]}
+                Merek={[]}
+                Kota={[]}
+                JenisGudang={[]}
+                ModeMeja={modeMeja}
+                BentukMeja={bentuk}
+            />,
+        );
+
+        expect(screen.getByRole('heading', { name: 'Meja & area' })).toBeTruthy();
+        expect(screen.getAllByText('Teras Belakang').length).toBeGreaterThan(0);
+        expect(screen.getByText('4 orang')).toBeTruthy();
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Aksi meja 7' }), { key: 'Enter' });
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Arsipkan' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith('/kelola/outlet/O-1/meja/M-7/arsipkan', {}, expect.anything());
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah meja' }));
+        expect(screen.getByRole('heading', { name: 'Tambah meja' })).toBeTruthy();
+        expect(screen.getByLabelText('Nama atau nomor meja')).toBeTruthy();
+        Lepas();
+
+        RenderUji(
+            <HalamanDetailOutlet
+                Outlet={outletAktif}
+                Gudang={[]}
+                Merek={[]}
+                Kota={[]}
+                JenisGudang={[]}
+                ModeMeja={{ ...modeMeja, Aktif: false }}
+                BentukMeja={bentuk}
+            />,
+        );
+        expect(screen.getByText('Mode meja tidak aktif')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Tambah meja' })).toBeNull();
     });
 });
 

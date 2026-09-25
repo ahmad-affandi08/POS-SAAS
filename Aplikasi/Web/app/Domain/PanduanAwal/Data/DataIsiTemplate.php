@@ -21,6 +21,7 @@ final readonly class DataIsiTemplate
      * @param  list<string>  $kunciFitur
      * @param  list<string>  $modeKasir
      * @param  list<DataProdukContohTemplate>  $produkContoh
+     * @param  list<string>  $stasiunDapur
      */
     public function __construct(
         public array $akun,
@@ -33,5 +34,6 @@ final readonly class DataIsiTemplate
         public ?string $modeKasirDefault,
         public DataPengaturanTemplate $pengaturan,
         public array $produkContoh,
+        public array $stasiunDapur = [],
     ) {}
 }

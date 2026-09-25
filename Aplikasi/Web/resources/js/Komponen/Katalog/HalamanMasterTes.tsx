@@ -24,20 +24,30 @@ import { AmbilNilaiPilihan, UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
 vi.mock('@inertiajs/react', async () => (await import('./TiruanInertia')).TiruanInertia);
 
-const kategori: PropsDaftarKategori['Kategori'] = [
-    { Uuid: 'K1', Nama: 'Minuman', Jalur: 'Minuman', Kedalaman: 1, UuidInduk: null, JumlahProduk: 0, Urutan: 0 },
-    { Uuid: 'K2', Nama: 'Kopi', Jalur: 'Minuman › Kopi', Kedalaman: 2, UuidInduk: 'K1', JumlahProduk: 4, Urutan: 1 },
-    {
-        Uuid: 'K3',
-        Nama: 'Kopi susu',
-        Jalur: 'Minuman › Kopi › Kopi susu',
-        Kedalaman: 3,
-        UuidInduk: 'K2',
-        JumlahProduk: 0,
-        Urutan: 0,
-    },
-    { Uuid: 'K4', Nama: 'Makanan', Jalur: 'Makanan', Kedalaman: 1, UuidInduk: null, JumlahProduk: 0, Urutan: 2 },
-];
+const kategori: PropsDaftarKategori['Kategori'] = (
+    [
+        { Uuid: 'K1', Nama: 'Minuman', Jalur: 'Minuman', Kedalaman: 1, UuidInduk: null, JumlahProduk: 0, Urutan: 0 },
+        {
+            Uuid: 'K2',
+            Nama: 'Kopi',
+            Jalur: 'Minuman › Kopi',
+            Kedalaman: 2,
+            UuidInduk: 'K1',
+            JumlahProduk: 4,
+            Urutan: 1,
+        },
+        {
+            Uuid: 'K3',
+            Nama: 'Kopi susu',
+            Jalur: 'Minuman › Kopi › Kopi susu',
+            Kedalaman: 3,
+            UuidInduk: 'K2',
+            JumlahProduk: 0,
+            Urutan: 0,
+        },
+        { Uuid: 'K4', Nama: 'Makanan', Jalur: 'Makanan', Kedalaman: 1, UuidInduk: null, JumlahProduk: 0, Urutan: 2 },
+    ] as Omit<PropsDaftarKategori['Kategori'][number], 'UuidStasiunDapur' | 'NamaStasiunDapur'>[]
+).map((k) => ({ ...k, UuidStasiunDapur: null, NamaStasiunDapur: null }));
 
 describe('Kelola/Kategori & Satuan (E.5)', () => {
     beforeEach(() => AturHalamanUji());
@@ -45,7 +55,7 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
 
     it('induk tidak boleh diri sendiri/turunan atau tingkat 3; hapus hanya kategori kosong tanpa anak', () => {
         expect([...AmbilTurunanKategori(kategori, 'K1')].sort()).toEqual(['K1', 'K2', 'K3']);
-        RenderUji(<HalamanDaftarKategori Kategori={kategori} Izin={IzinPenuh} />);
+        RenderUji(<HalamanDaftarKategori Kategori={kategori} OpsiStasiunDapur={[]} Izin={IzinPenuh} />);
 
         // Aksi baris ada di menu TabelData (Radix DropdownMenu): dibuka dengan keyboard.
         const BukaAksi = (nama: string) =>
@@ -77,7 +87,7 @@ describe('Kelola/Kategori & Satuan (E.5)', () => {
     });
 
     it('kosong & tanpa izin', () => {
-        RenderUji(<HalamanDaftarKategori Kategori={[]} Izin={IzinLihat} />);
+        RenderUji(<HalamanDaftarKategori Kategori={[]} OpsiStasiunDapur={[]} Izin={IzinLihat} />);
 
         expect(screen.getByText('Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.')).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Tambah kategori' })).toBeNull();

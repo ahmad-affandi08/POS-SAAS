@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * F-03: buat atau ubah kategori bertingkat (maks. `katalog.Kategori.MaksimalKedalaman` = 3 tingkat).
  * - Tanpa siklus (induk bukan dirinya atau turunannya), nama unik di antara saudara tanpa beda huruf besar/kecil.
+ * - Stasiun dapur (F-10a) opsional: item kategori tanpa stasiun dirutekan ke stasiun bawaan.
  * - Urutan kunci: Tenant → baris kategori. Kirim ganda form buat: kiriman kedua ditolak `KategoriGanda`.
  */
 final class SimpanKategori
@@ -40,11 +41,18 @@ final class SimpanKategori
             $this->PastikanPosisi($kategori, $data->idInduk);
             $this->PastikanNamaUnik($kategori, $data->idInduk, $nama);
 
-            $lama = $kategori?->only(['Nama', 'IdInduk', 'Urutan']);
+            $kolom = ['Nama', 'IdInduk', 'Urutan', 'IdStasiunDapur'];
+            $lama = $kategori?->only($kolom);
             $kategori ??= new Kategori;
-            $kategori->fill(['Nama' => $nama, 'IdInduk' => $data->idInduk, 'Urutan' => max(0, $data->urutan)])->save();
+            $kategori->fill(['Nama' => $nama, 'IdInduk' => $data->idInduk, 'Urutan' => max(0, $data->urutan)]);
 
-            $this->audit->Catat($lama === null ? 'kategori.buat' : 'kategori.ubah', $kategori, $lama, $kategori->only(['Nama', 'IdInduk', 'Urutan']));
+            if ($data->aturStasiun) {
+                $kategori->IdStasiunDapur = $data->idStasiunDapur;
+            }
+
+            $kategori->save();
+
+            $this->audit->Catat($lama === null ? 'kategori.buat' : 'kategori.ubah', $kategori, $lama, $kategori->only($kolom));
 
             return $kategori;
         });
