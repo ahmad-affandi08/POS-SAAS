@@ -33,6 +33,9 @@ enum JenisSumberJurnal: string
     case PesananPenjualan = 'PesananPenjualan';
     // F-15 tutup tahun (J-15.1): jurnal penutup pendapatan, HPP & beban ke Laba Ditahan; IdSumber = tahun.
     case TutupTahun = 'TutupTahun';
+    // F-18 bagian 3: kasbon karyawan (J-18.1) dan pelunasannya ke kas/bank.
+    case Kasbon = 'Kasbon';
+    case PelunasanKasbon = 'PelunasanKasbon';
 
     public function AmbilLabel(): string
     {
@@ -53,6 +56,8 @@ enum JenisSumberJurnal: string
             self::PembayaranPiutang => 'Pelunasan piutang',
             self::PesananPenjualan => 'Uang muka pre-order',
             self::TutupTahun => 'Tutup tahun',
+            self::Kasbon => 'Kasbon karyawan',
+            self::PelunasanKasbon => 'Pelunasan kasbon',
         };
     }
 
@@ -80,6 +85,7 @@ enum JenisSumberJurnal: string
             self::PembayaranPiutang => '/kelola/piutang/pelunasan/'.$uuid,
             self::PesananPenjualan => '/kelola/pre-order/'.$uuid,
             self::TutupTahun => null,
+            self::Kasbon, self::PelunasanKasbon => '/kelola/karyawan/kasbon',
         };
     }
 }

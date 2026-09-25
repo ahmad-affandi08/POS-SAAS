@@ -116,3 +116,28 @@ export type PropsLaporanKomisi = {
     Komisi: HasilTabel<BarisLaporanKomisi, { Bersih: string }> & { Ringkasan: { Bersih: string } };
     OpsiOutlet: OpsiUuidNama[];
 };
+
+/** F-18 bagian 3: kasbon karyawan. */
+export type StatusKasbon = 'Aktif' | 'Lunas' | 'Dibatalkan';
+
+export type BarisKasbon = {
+    Uuid: string;
+    Karyawan: string;
+    UuidKaryawan: string | null;
+    Tanggal: string;
+    Jumlah: string;
+    Sisa: string;
+    Status: StatusKasbon;
+    LabelStatus: string;
+    Keterangan: string | null;
+    AkunKasBank: string;
+    AlasanBatal: string | null;
+};
+
+export type PropsKasbon = {
+    Kasbon: HasilTabel<BarisKasbon>;
+    TotalSisa: string;
+    OpsiKaryawan: OpsiUuidNama[];
+    OpsiAkunKasBank: OpsiUuidNama[];
+    Izin: { Kelola: boolean };
+};

@@ -123,6 +123,8 @@ const menuKaryawan: ItemMenu[] = [
     // F-18 bagian 2: komisi.
     { label: 'Aturan komisi', href: '/kelola/karyawan/komisi', izin: IzinTenant.KaryawanLihat },
     { label: 'Laporan komisi', href: '/kelola/karyawan/komisi/laporan', izin: IzinTenant.KaryawanLihat },
+    // F-18 bagian 3: kasbon.
+    { label: 'Kasbon', href: '/kelola/karyawan/kasbon', izin: IzinTenant.KaryawanLihat },
 ];
 
 const menuKasir: ItemMenu[] = [

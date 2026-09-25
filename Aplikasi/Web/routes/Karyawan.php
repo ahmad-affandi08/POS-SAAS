@@ -6,6 +6,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Karyawan\AbsensiKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\JadwalKerjaKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KaryawanKontroler;
+use App\Http\Kontroler\Kelola\Karyawan\KasbonKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KomisiKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
@@ -27,6 +28,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
     // F-18 bagian 2: aturan & laporan komisi.
     Route::get('/komisi', [KomisiKontroler::class, 'Aturan'])->name('kelola.karyawan.komisi');
     Route::get('/komisi/laporan', [KomisiKontroler::class, 'Laporan'])->name('kelola.karyawan.komisi.laporan');
+    // F-18 bagian 3: kasbon karyawan (J-18.1).
+    Route::get('/kasbon', [KasbonKontroler::class, 'Daftar'])->name('kelola.karyawan.kasbon');
     Route::get('/absensi/{absensi}/swafoto/{jenis}', [AbsensiKontroler::class, 'Swafoto'])->where(['absensi' => $ulid, 'jenis' => 'masuk|keluar'])->name('kelola.karyawan.absensi.swafoto');
 
     Route::middleware($izin(IzinTenant::KaryawanKelola))->group(function () use ($ulid): void {
@@ -42,5 +45,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::put('/komisi/{aturan}', [KomisiKontroler::class, 'Perbarui'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.perbarui');
         Route::post('/komisi/{aturan}/arsipkan', [KomisiKontroler::class, 'Arsipkan'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.arsipkan');
         Route::post('/komisi/{aturan}/pulihkan', [KomisiKontroler::class, 'Pulihkan'])->where('aturan', $ulid)->name('kelola.karyawan.komisi.pulihkan');
+        Route::post('/kasbon', [KasbonKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.karyawan.kasbon.simpan');
+        Route::post('/kasbon/{kasbon}/pelunasan', [KasbonKontroler::class, 'Lunasi'])->where('kasbon', $ulid)->name('kelola.karyawan.kasbon.pelunasan');
+        Route::post('/kasbon/{kasbon}/batal', [KasbonKontroler::class, 'Batalkan'])->where('kasbon', $ulid)->name('kelola.karyawan.kasbon.batal');
     });
 });
