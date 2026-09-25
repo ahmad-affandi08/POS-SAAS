@@ -53,6 +53,8 @@ export type RingkasanPenjualan = {
     DiskonPesanan: string;
     /** F-16b: poin pelanggan yang ditukar dan nilai diskonnya (bagian dari DiskonPesanan). */
     PoinDitukar: number;
+    /** F-16c: promo yang dipakai penjualan ini. */
+    Promo: { Uuid: string; Kode: string; Nama: string; JumlahDiskon: string }[];
     DiskonPoin: string;
     TotalDiskon: string;
     BiayaLayanan: string;

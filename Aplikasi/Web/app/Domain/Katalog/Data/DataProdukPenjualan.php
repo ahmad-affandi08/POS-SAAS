@@ -28,5 +28,6 @@ final readonly class DataProdukPenjualan
         public bool $dihapus,
         public ?int $idKelompokPajak = null,
         public ?bool $hargaTermasukPajak = null,
+        public ?string $uuidKategori = null,
     ) {}
 }

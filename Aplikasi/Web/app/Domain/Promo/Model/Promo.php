@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Promo\Model;
+
+use App\Domain\Bersama\Model\ModelDasar;
+use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Promo\Enum\StatusPromo;
+use Illuminate\Support\Carbon;
+
+/**
+ * Promo (F-16c, CRM-05). `Definisi` = syarat & aksi (lihat `App\Domain\Penjualan\Kalkulasi\DefinisiPromo::Urai`);
+ * rentang `[MulaiPada, SelesaiPada)` UTC; `Kuota` null = tanpa batas.
+ *
+ * @property int $Id
+ * @property string $Uuid
+ * @property int $IdTenant
+ * @property string $Kode
+ * @property string $Nama
+ * @property array<string, mixed> $Definisi
+ * @property int $Prioritas
+ * @property bool $Eksklusif
+ * @property Carbon|null $MulaiPada
+ * @property Carbon|null $SelesaiPada
+ * @property int|null $Kuota
+ * @property int $KuotaTerpakai
+ * @property StatusPromo $Status
+ * @property Carbon|null $DiubahPada
+ */
+final class Promo extends ModelDasar
+{
+    use MilikTenant;
+
+    protected $table = 'Promo';
+
+    /** @var array<string, mixed> */
+    protected $attributes = ['Prioritas' => 0, 'Eksklusif' => false, 'KuotaTerpakai' => 0, 'Status' => 'Aktif'];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'Definisi' => 'array',
+            'Prioritas' => 'integer',
+            'Eksklusif' => 'boolean',
+            'MulaiPada' => 'datetime',
+            'SelesaiPada' => 'datetime',
+            'Kuota' => 'integer',
+            'KuotaTerpakai' => 'integer',
+            'Status' => StatusPromo::class,
+        ];
+    }
+
+    /** Sisa kuota; null = tanpa batas. */
+    public function AmbilKuotaTersisa(): ?int
+    {
+        return $this->Kuota === null ? null : max(0, $this->Kuota - $this->KuotaTerpakai);
+    }
+}

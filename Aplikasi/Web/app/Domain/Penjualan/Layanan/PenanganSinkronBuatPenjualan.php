@@ -18,6 +18,7 @@ use App\Domain\Penjualan\Data\DataDiskonManual;
 use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPembayaranPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
+use App\Domain\Penjualan\Data\DataPromoPenjualanPos;
 use App\Domain\Penjualan\Data\DataRingkasanPenjualanPos;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
@@ -33,7 +34,8 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null}`. `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`. Uang & jumlah
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?}`.
+ * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat. Uang & jumlah
  * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
 final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
@@ -125,6 +127,13 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'TukarPoin' => ['sometimes', 'nullable', 'array'],
             'TukarPoin.Poin' => ['required_with:TukarPoin', 'integer', 'min:1', 'max:10000000'],
             'TukarPoin.Nilai' => ['required_with:TukarPoin', 'string', $uang],
+            'Promo' => ['sometimes', 'array', 'max:20'],
+            'Promo.*.UuidPromo' => ['required', 'string', 'ulid', 'distinct'],
+            'Promo.*.Kode' => ['required', 'string', 'max:30'],
+            'Promo.*.DiskonBaris' => ['present', 'array', 'max:500'],
+            'Promo.*.DiskonBaris.*.UuidBaris' => ['required', 'string', 'ulid'],
+            'Promo.*.DiskonBaris.*.Jumlah' => ['required', 'string', $uang],
+            'Promo.*.DiskonPesanan' => ['required', 'string', $uang],
         ]);
         $tukarPoin = is_array($valid['TukarPoin'] ?? null) ? $valid['TukarPoin'] : null;
 
@@ -173,7 +182,36 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             uuidPelanggan: is_string($valid['UuidPelanggan'] ?? null) ? strtoupper($valid['UuidPelanggan']) : null,
             poinDitukar: $tukarPoin === null ? 0 : (int) $tukarPoin['Poin'],
             nilaiTukarPoin: $tukarPoin === null ? null : Uang::Dari((string) $tukarPoin['Nilai']),
+            promo: self::AmbilPromo((array) ($valid['Promo'] ?? [])),
         ));
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $daftar
+     * @return list<DataPromoPenjualanPos>
+     */
+    private static function AmbilPromo(array $daftar): array
+    {
+        $hasil = [];
+
+        foreach ($daftar as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+
+            $diskonBaris = [];
+
+            foreach ((array) ($p['DiskonBaris'] ?? []) as $b) {
+                if (is_array($b)) {
+                    $uuid = strtoupper((string) $b['UuidBaris']);
+                    $diskonBaris[$uuid] = ($diskonBaris[$uuid] ?? Uang::Nol())->Tambah(Uang::Dari((string) $b['Jumlah']));
+                }
+            }
+
+            $hasil[] = new DataPromoPenjualanPos(strtoupper((string) $p['UuidPromo']), (string) $p['Kode'], $diskonBaris, Uang::Dari((string) $p['DiskonPesanan']));
+        }
+
+        return $hasil;
     }
 
     /**

@@ -14,7 +14,7 @@ use Carbon\CarbonImmutable;
  * Masukan `TerimaPenjualanPos` (F-07b) dari item outbox `Penjualan.Buat`: penjualan lunas yang dibuat di perangkat
  * (bisa offline). `uuid` = `UuidKlien` (ULID perangkat). Semua harga, pajak, dan pengaturan adalah snapshot saat
  * transaksi (BR-07.2); server menghitung ulang dengan `MesinKalkulasi`. `poinDitukar`/`nilaiTukarPoin` (F-16b): poin
- * pelanggan yang ditukar sebagai diskon pesanan sebelum pajak.
+ * pelanggan yang ditukar sebagai diskon pesanan sebelum pajak. `promo` (F-16c): promo yang diterapkan perangkat.
  */
 final readonly class DataPenjualanPos
 {
@@ -22,6 +22,7 @@ final readonly class DataPenjualanPos
      * @param  list<DataPajakPenjualanPos>  $pajak
      * @param  list<DataBarisPenjualanPos>  $baris
      * @param  list<DataPembayaranPenjualanPos>  $pembayaran
+     * @param  list<DataPromoPenjualanPos>  $promo
      */
     public function __construct(
         public string $uuid,
@@ -46,5 +47,6 @@ final readonly class DataPenjualanPos
         public ?string $uuidPelanggan = null,
         public int $poinDitukar = 0,
         public ?Uang $nilaiTukarPoin = null,
+        public array $promo = [],
     ) {}
 }

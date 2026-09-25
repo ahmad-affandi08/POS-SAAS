@@ -26,6 +26,7 @@ use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\VoidPenjualan;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
+use App\Domain\Promo\Kueri\PemakaianPromo;
 
 /**
  * Detail penjualan back-office (F-07b, izin `laporan.penjualan.lihat`): ringkasan dokumen, baris (snapshot harga,
@@ -47,6 +48,7 @@ final class DetailPenjualan
         private readonly KomposisiPenjualan $komposisi,
         private readonly PenghitungNilaiRetur $penghitungRetur,
         private readonly IdentitasPelanggan $pelanggan,
+        private readonly PemakaianPromo $pemakaianPromo,
     ) {}
 
     /**
@@ -98,6 +100,7 @@ final class DetailPenjualan
                 'DiskonBaris' => $p->DiskonBaris,
                 'DiskonPesanan' => $p->DiskonPesanan,
                 'PoinDitukar' => $p->PoinDitukar,
+                'Promo' => $this->pemakaianPromo->AmbilPerPenjualan($p->Id),
                 'DiskonPoin' => $p->DiskonPoin,
                 'TotalDiskon' => $p->TotalDiskon,
                 'BiayaLayanan' => $p->BiayaLayanan,

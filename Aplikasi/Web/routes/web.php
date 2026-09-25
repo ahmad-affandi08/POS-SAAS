@@ -135,6 +135,8 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Laporan.php'));
             // F-16a Pelanggan (CRM-01).
             Route::group([], base_path('routes/Pelanggan.php'));
+            // F-16c Promo (CRM-05).
+            Route::group([], base_path('routes/Promo.php'));
         });
     });
 });

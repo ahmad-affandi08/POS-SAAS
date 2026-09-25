@@ -8,6 +8,7 @@ use App\Domain\Katalog\Data\DataKebutuhanStok;
 use App\Domain\Katalog\Data\DataPilihanPenjualan;
 use App\Domain\Katalog\Data\DataProdukPenjualan;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Model\Satuan;
@@ -40,6 +41,7 @@ final class KomposisiPenjualan
 
         $produk = Produk::query()->withTrashed()->whereIn('Uuid', array_values(array_unique($uuid)))->get();
         $satuan = ProdukSatuan::query()->whereIn('IdProduk', $produk->pluck('Id')->all())->get()->groupBy('IdProduk');
+        $kategori = Kategori::query()->whereKey($produk->pluck('IdKategori')->filter()->unique()->values()->all())->pluck('Uuid', 'Id');
         $hasil = [];
 
         foreach ($produk as $p) {
@@ -60,6 +62,7 @@ final class KomposisiPenjualan
                 $p->DihapusPada !== null,
                 $p->IdKelompokPajak,
                 $p->HargaTermasukPajak,
+                $p->IdKategori === null ? null : ($kategori[$p->IdKategori] ?? null),
             );
         }
 

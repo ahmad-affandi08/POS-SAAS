@@ -1,0 +1,224 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Kelola\Promo;
+
+use App\Domain\Bersama\Nilai\Kuantitas;
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Katalog\Kueri\NamaProduk;
+use App\Domain\Katalog\Kueri\PohonKategori;
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
+use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
+use App\Domain\Penjualan\Enum\JenisAksiPromo;
+use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
+use App\Domain\Penjualan\Enum\ModeResolusiPromo;
+use App\Domain\Promo\Aksi\SimpanPengaturanPromo;
+use App\Domain\Promo\Aksi\SimpanPromo;
+use App\Domain\Promo\Aksi\UbahStatusPromo;
+use App\Domain\Promo\Data\DataPromo;
+use App\Domain\Promo\Enum\StatusPromo;
+use App\Domain\Promo\Kueri\DaftarPromo;
+use App\Domain\Promo\Kueri\PromoBerlaku;
+use App\Domain\Promo\Model\Promo;
+use App\Domain\Tenant\Kueri\ProfilTenant;
+use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
+use Brick\Math\BigDecimal;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * Promo back-office (F-16c, `/kelola/promo`): daftar dengan ringkasan pemakaian, formulir tambah/ubah, arsip/pulihkan,
+ * dan mode resolusi konflik. Lihat: `pelanggan.lihat`; ubah: `pelanggan.kelola`. Tanggal mulai/selesai diisi per hari
+ * di zona waktu tenant (selesai inklusif, disimpan sebagai awal hari berikutnya dalam UTC).
+ */
+final class PromoKontroler extends DasarKelolaKontroler
+{
+    public function Daftar(DaftarPromo $daftar, PromoBerlaku $berlaku): Response
+    {
+        return Inertia::render('Kelola/Promo/Daftar', [
+            'Promo' => array_map(fn (array $p): array => [...$p, 'Definisi' => null], $daftar->AmbilSemua()),
+            'ModeResolusi' => $berlaku->AmbilMode()->value,
+            'FiturAktif' => $berlaku->CekFiturAktif(),
+            'Izin' => ['Kelola' => $this->CekKelola()],
+        ]);
+    }
+
+    public function Buat(PromoBerlaku $berlaku): Response
+    {
+        return Inertia::render('Kelola/Promo/Formulir', [...$this->AmbilOpsi(), 'Promo' => null, 'FiturAktif' => $berlaku->CekFiturAktif()]);
+    }
+
+    public function Ubah(string $promo, NamaProduk $namaProduk, PromoBerlaku $berlaku): Response
+    {
+        $data = $this->CariPromo($promo);
+        $zona = $this->AmbilZona();
+        /** @var array{Kondisi?: array{Jenis?: string, Uuid?: list<string>}} $definisi */
+        $definisi = $data->Definisi;
+        $uuidKondisi = ($definisi['Kondisi']['Jenis'] ?? 'Semua') === JenisKondisiPromo::Produk->value ? ($definisi['Kondisi']['Uuid'] ?? []) : [];
+
+        return Inertia::render('Kelola/Promo/Formulir', [
+            ...$this->AmbilOpsi(),
+            'Promo' => [
+                ...DaftarPromo::Petakan($data),
+                'TanggalMulai' => $data->MulaiPada === null ? null : CarbonImmutable::instance($data->MulaiPada)->setTimezone($zona)->toDateString(),
+                'TanggalSelesai' => $data->SelesaiPada === null ? null : CarbonImmutable::instance($data->SelesaiPada)->setTimezone($zona)->subDay()->toDateString(),
+                'NamaProduk' => $namaProduk->Ambil(array_values($uuidKondisi)),
+            ],
+            'FiturAktif' => $berlaku->CekFiturAktif(),
+        ]);
+    }
+
+    public function Simpan(Request $permintaan, SimpanPromo $simpan): RedirectResponse
+    {
+        $promo = $simpan->Jalankan($this->AmbilData($permintaan, true));
+
+        return to_route('kelola.promo.daftar')->with('Kilat', "Promo {$promo->Nama} ditambahkan.");
+    }
+
+    public function Perbarui(Request $permintaan, string $promo, SimpanPromo $simpan): RedirectResponse
+    {
+        $hasil = $simpan->Jalankan($this->AmbilData($permintaan, false), $this->CariPromo($promo));
+
+        return to_route('kelola.promo.daftar')->with('Kilat', "Promo {$hasil->Nama} disimpan.");
+    }
+
+    public function Arsipkan(string $promo, UbahStatusPromo $ubah): RedirectResponse
+    {
+        $hasil = $ubah->Jalankan($this->CariPromo($promo), StatusPromo::Diarsipkan, $this->Pelaku()->Id);
+
+        return back()->with('Kilat', "Promo {$hasil->Nama} diarsipkan.");
+    }
+
+    public function Pulihkan(string $promo, UbahStatusPromo $ubah): RedirectResponse
+    {
+        $hasil = $ubah->Jalankan($this->CariPromo($promo), StatusPromo::Aktif, $this->Pelaku()->Id);
+
+        return back()->with('Kilat', "Promo {$hasil->Nama} dipulihkan.");
+    }
+
+    public function SimpanPengaturan(Request $permintaan, SimpanPengaturanPromo $simpan): RedirectResponse
+    {
+        $valid = $permintaan->validate(['ModeResolusi' => ['required', Rule::enum(ModeResolusiPromo::class)]]);
+        $simpan->Jalankan(ModeResolusiPromo::from((string) $valid['ModeResolusi']), $this->Pelaku()->Id);
+
+        return back()->with('Kilat', 'Pengaturan promo disimpan.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function AmbilOpsi(): array
+    {
+        return [
+            'OpsiOutlet' => array_map(fn (array $o): array => ['Nilai' => $o['Uuid'], 'Label' => $o['Nama']], app(PetaUuidOutlet::class)->AmbilRingkas(null, true)),
+            'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
+            'OpsiKategori' => array_map(fn (array $k): array => ['Nilai' => $k['Uuid'], 'Label' => $k['Jalur']], app(PohonKategori::class)->AmbilOpsi()),
+            'OpsiKanal' => array_map(fn (KanalPenjualan $k): array => ['Nilai' => $k->value, 'Label' => $k->AmbilLabel()], KanalPenjualan::cases()),
+        ];
+    }
+
+    private function AmbilData(Request $permintaan, bool $baru): DataPromo
+    {
+        $uang = ['nullable', 'string', 'regex:/^\d{1,16}(\.\d{1,2})?$/'];
+        $persen = ['nullable', 'string', 'regex:/^\d{1,3}(\.\d{1,2})?$/'];
+        $valid = $permintaan->validate([
+            'Kode' => $baru ? ['required', 'string', 'max:30'] : ['nullable'],
+            'Nama' => ['required', 'string', 'max:100'],
+            'Prioritas' => ['nullable', 'integer', 'between:0,999'],
+            'Eksklusif' => ['boolean'],
+            'TanggalMulai' => ['nullable', 'date_format:Y-m-d'],
+            'TanggalSelesai' => ['nullable', 'date_format:Y-m-d'],
+            'Kuota' => ['nullable', 'integer', 'min:1', 'max:10000000'],
+            'Hari' => ['array', 'max:7'],
+            'Hari.*' => ['integer', 'between:1,7'],
+            'JamMulai' => ['nullable', 'string', 'max:5'],
+            'JamSelesai' => ['nullable', 'string', 'max:5'],
+            'Outlet' => ['array', 'max:200'],
+            'Outlet.*' => ['string', 'ulid'],
+            'Kanal' => ['array', 'max:6'],
+            'Kanal.*' => [Rule::enum(KanalPenjualan::class)],
+            'Tier' => ['array', 'max:20'],
+            'Tier.*' => ['string', 'max:30'],
+            'MinimalSubtotal' => $uang,
+            'JenisKondisi' => ['required', Rule::enum(JenisKondisiPromo::class)],
+            'UuidKondisi' => ['array', 'max:200'],
+            'UuidKondisi.*' => ['string', 'ulid'],
+            'JumlahMinimal' => ['nullable', 'string', 'regex:/^\d{1,6}(\.\d{1,4})?$/'],
+            'JenisAksi' => ['required', Rule::enum(JenisAksiPromo::class)],
+            'Persen' => $persen,
+            'Jumlah' => $uang,
+            'Harga' => $uang,
+            'Beli' => ['nullable', 'integer'],
+            'Gratis' => ['nullable', 'integer'],
+            'PersenGratis' => $persen,
+            'BatasPerTransaksi' => ['nullable', 'integer'],
+        ], attributes: [
+            'Nama' => 'nama promo',
+            'TanggalMulai' => 'tanggal mulai',
+            'TanggalSelesai' => 'tanggal selesai',
+            'MinimalSubtotal' => 'minimal belanja',
+            'JumlahMinimal' => 'jumlah minimal',
+        ]);
+        $zona = $this->AmbilZona();
+        $teks = fn (string $kunci): ?string => isset($valid[$kunci]) && $valid[$kunci] !== '' ? (string) $valid[$kunci] : null;
+        $bulat = fn (string $kunci): ?int => isset($valid[$kunci]) ? (int) $valid[$kunci] : null;
+        /** @var list<string> $outlet */
+        $outlet = array_values(array_map('strtoupper', (array) ($valid['Outlet'] ?? [])));
+        /** @var list<string> $tier */
+        $tier = array_values(array_map('strval', (array) ($valid['Tier'] ?? [])));
+        /** @var list<string> $uuidKondisi */
+        $uuidKondisi = array_values(array_map('strtoupper', (array) ($valid['UuidKondisi'] ?? [])));
+
+        return new DataPromo(
+            kode: (string) ($valid['Kode'] ?? ''),
+            nama: (string) $valid['Nama'],
+            prioritas: (int) ($valid['Prioritas'] ?? 0),
+            eksklusif: $permintaan->boolean('Eksklusif'),
+            mulaiPada: ($t = $teks('TanggalMulai')) === null ? null : CarbonImmutable::createFromFormat('Y-m-d', $t, $zona)?->startOfDay()->utc(),
+            selesaiPada: ($t = $teks('TanggalSelesai')) === null ? null : CarbonImmutable::createFromFormat('Y-m-d', $t, $zona)?->startOfDay()->addDay()->utc(),
+            kuota: $bulat('Kuota'),
+            hari: array_values(array_map('intval', (array) ($valid['Hari'] ?? []))),
+            jamMulai: $teks('JamMulai'),
+            jamSelesai: $teks('JamSelesai'),
+            uuidOutlet: $outlet,
+            kanal: array_values(array_map(fn ($k): KanalPenjualan => KanalPenjualan::from((string) $k), (array) ($valid['Kanal'] ?? []))),
+            tier: $tier,
+            minimalSubtotal: Uang::Dari($teks('MinimalSubtotal') ?? '0'),
+            kondisi: JenisKondisiPromo::from((string) $valid['JenisKondisi']),
+            uuidKondisi: $uuidKondisi,
+            jumlahMinimal: Kuantitas::Dari($teks('JumlahMinimal') ?? '0'),
+            aksi: JenisAksiPromo::from((string) $valid['JenisAksi']),
+            persen: ($t = $teks('Persen')) === null ? null : BigDecimal::of($t),
+            jumlah: ($t = $teks('Jumlah')) === null ? null : Uang::Dari($t),
+            harga: ($t = $teks('Harga')) === null ? null : Uang::Dari($t),
+            beli: $bulat('Beli'),
+            gratis: $bulat('Gratis'),
+            persenGratis: ($t = $teks('PersenGratis')) === null ? null : BigDecimal::of($t),
+            batasPerTransaksi: $bulat('BatasPerTransaksi'),
+            idPengguna: $this->Pelaku()->Id,
+        );
+    }
+
+    private function AmbilZona(): string
+    {
+        return (string) app(ProfilTenant::class)->Ambil($this->IdTenant())['ZonaWaktu'];
+    }
+
+    private function CariPromo(string $uuid): Promo
+    {
+        return Promo::query()->where('Uuid', $uuid)->firstOrFail();
+    }
+
+    private function CekKelola(): bool
+    {
+        return app(AksesPengguna::class)->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PelangganKelola);
+    }
+}

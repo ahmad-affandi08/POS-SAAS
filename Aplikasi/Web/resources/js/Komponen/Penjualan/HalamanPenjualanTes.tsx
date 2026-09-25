@@ -70,6 +70,9 @@ const propsDetail: PropsDetailPenjualan = {
         DiskonBaris: '5000.00',
         DiskonPesanan: '0.00',
         PoinDitukar: 0,
+        Promo: [
+            { Uuid: '01K5PROMO00000000000000001', Kode: 'KOPI10', Nama: 'Diskon 10% kopi', JumlahDiskon: '7700.00' },
+        ],
         DiskonPoin: '0.00',
         TotalDiskon: '5000.00',
         BiayaLayanan: '0.00',
@@ -173,6 +176,7 @@ describe('F-07b halaman penjualan back-office', () => {
 
     it('detail: alasan tinjauan, ringkasan (pembulatan negatif), baris, pajak, pembayaran, mutasi stok bertautan kartu stok, jurnal & shift', () => {
         RenderUji(<HalamanDetailPenjualan {...propsDetail} />);
+        expect(screen.getByText('Promo Diskon 10% kopi')).toBeTruthy();
 
         // PRD v1.46: alasan tinjauan tampil sebagai kalimat manusiawi, bukan kode mesin.
         expect(screen.getByText('Stok tidak cukup saat penjualan diterima')).toBeTruthy();

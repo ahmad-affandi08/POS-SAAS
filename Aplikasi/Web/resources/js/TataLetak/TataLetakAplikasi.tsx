@@ -95,6 +95,7 @@ const menuPelanggan: ItemMenu[] = [
     { label: 'Daftar pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat },
     { label: 'Tier pelanggan', href: '/kelola/pelanggan/tier', izin: IzinTenant.PelangganLihat },
     { label: 'Pengaturan loyalti', href: '/kelola/pelanggan/loyalti', izin: IzinTenant.PelangganLihat },
+    { label: 'Promo', href: '/kelola/promo', izin: IzinTenant.PelangganLihat },
 ];
 
 const menuKasir: ItemMenu[] = [

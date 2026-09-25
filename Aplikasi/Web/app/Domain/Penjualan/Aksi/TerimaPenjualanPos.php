@@ -44,7 +44,10 @@ use App\Domain\Penjualan\Kalkulasi\DataPembayaranKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\MesinPromo;
+use App\Domain\Penjualan\Kalkulasi\PromoTerpakai;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
+use App\Domain\Penjualan\Layanan\PemeriksaPromoPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
@@ -63,6 +66,7 @@ use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
+use App\Domain\Promo\Layanan\PencatatPemakaianPromo;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -125,6 +129,8 @@ final class TerimaPenjualanPos
         private readonly KirimKeDapur $kirimDapur,
         private readonly IdentitasPelanggan $identitasPelanggan,
         private readonly PencatatPoinPenjualan $poin,
+        private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
+        private readonly PencatatPemakaianPromo $pemakaianPromo,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -222,12 +228,12 @@ final class TerimaPenjualanPos
         $metode = $this->AmbilMetode($data);
 
         // (8) Hitung ulang.
-        $hasil = $this->HitungUlang($data, $metode);
+        [$hasil, $hasilDasar, $dasarKalkulasi, $promoPerangkat] = $this->HitungUlang($data, $metode);
 
         // (7) BR-07.3 diskon manual (persen efektif dari hasil mesin, PRD v1.46 (c)).
         $pengaturan = $this->pengaturanKasir->Ambil();
         $pemeriksaanDiskon = $this->pemeriksaDiskon->Periksa(
-            $this->KumpulkanDiskon($data, $hasil),
+            $this->KumpulkanDiskon($data, $hasilDasar),
             $kasir,
             $data->uuidPenyetujuDiskon,
             $idTenant,
@@ -263,10 +269,28 @@ final class TerimaPenjualanPos
             $tinjauan['PelangganTidakDikenal'] = 'PelangganTidakDikenal: pelanggan belum diterima server, penjualan disimpan tanpa pelanggan';
         }
 
+        // F-16c: promo dievaluasi ulang dengan definisi server; beda dengan perangkat = diterima + tinjauan.
+        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat);
+
         // Simpan dokumen, stok, jurnal.
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
+
+        // F-16c: pemakaian promo & kuota di transaksi yang sama.
+        $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat(
+            $penjualan->Id,
+            $idPelanggan,
+            $tanggalBisnis,
+            array_combine(
+                array_map(fn (PromoTerpakai $p): string => $p->uuid, $promoPerangkat),
+                array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
+            ),
+        )];
+
+        if ($masalahPromo !== []) {
+            $tinjauan['PromoBerbeda'] = 'PromoBerbeda: '.implode('; ', $masalahPromo);
+        }
 
         // F-16b: poin ditukar lebih dulu (poin dari penjualan ini tidak ikut ditukar), lalu perolehan; di transaksi yang
         // sama, idempoten per penjualan. Penjualan tetap diterima walau poin bermasalah (sudah terjadi di kasir).
@@ -459,9 +483,13 @@ final class TerimaPenjualanPos
     }
 
     /**
+     * Hitung ulang dengan mesin. Hasil: [hasil akhir (dengan promo perangkat), hasil tanpa promo (untuk batas diskon
+     * manual), masukan tanpa promo, promo perangkat].
+     *
      * @param  array<string, MetodePembayaran>  $metode
+     * @return array{0: HasilKalkulasi, 1: HasilKalkulasi, 2: DataKalkulasi, 3: list<PromoTerpakai>}
      */
-    private function HitungUlang(DataPenjualanPos $data, array $metode): HasilKalkulasi
+    private function HitungUlang(DataPenjualanPos $data, array $metode): array
     {
         foreach ($data->baris as $indeks => $baris) {
             $totalPilihan = array_reduce($baris->pilihan, fn (Uang $t, array $p): Uang => $t->Tambah(Uang::Dari($p['Harga'])), Uang::Nol());
@@ -471,8 +499,27 @@ final class TerimaPenjualanPos
             }
         }
 
+        // F-16c: promo perangkat → potongan nominal per indeks baris (Uuid baris wajib ada di dokumen).
+        $indeksBaris = array_flip(array_map(fn (DataBarisPenjualanPos $b): string => $b->uuid, $data->baris));
+        $promoPerangkat = [];
+
+        foreach ($data->promo as $p) {
+            $diskonBaris = [];
+
+            foreach ($p->diskonBaris as $uuidBaris => $jumlah) {
+                if (! isset($indeksBaris[$uuidBaris])) {
+                    throw new PelanggaranAturanBisnis('DataTidakValid', "Promo {$p->kode} merujuk baris yang tidak ada.", 'Promo');
+                }
+
+                $diskonBaris[$indeksBaris[$uuidBaris]] = $jumlah;
+            }
+
+            ksort($diskonBaris);
+            $promoPerangkat[] = new PromoTerpakai($p->uuidPromo, $p->kode, $diskonBaris, $p->diskonPesanan);
+        }
+
         try {
-            $hasil = $this->mesin->Hitung(new DataKalkulasi(
+            $dasar = new DataKalkulasi(
                 hargaTermasukPajak: $data->hargaTermasukPajak,
                 baris: array_values(array_map(fn (DataBarisPenjualanPos $b): DataBarisKalkulasi => new DataBarisKalkulasi(
                     $b->jumlah,
@@ -497,7 +544,9 @@ final class TerimaPenjualanPos
                     $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tunai,
                     $b->jumlah,
                 ), $data->pembayaran)),
-            ));
+            );
+            $hasilDasar = $this->mesin->Hitung($dasar);
+            $hasil = $this->mesin->Hitung(MesinPromo::SusunData($dasar, $promoPerangkat));
         } catch (InvalidArgumentException $galat) {
             throw new PelanggaranAturanBisnis('DataTidakValid', 'Data penjualan tidak bisa dihitung: '.$galat->getMessage(), 'Baris');
         }
@@ -520,7 +569,7 @@ final class TerimaPenjualanPos
             }
         }
 
-        return $hasil;
+        return [$hasil, $hasilDasar, $dasar, $promoPerangkat];
     }
 
     /**

@@ -366,6 +366,13 @@ export default function HalamanDetailPenjualan({
                         {!nol.test(p.DiskonPesanan) ? (
                             <BarisAngka label="Diskon pesanan" nilai={`−${FormatRupiah(p.DiskonPesanan)}`} />
                         ) : null}
+                        {p.Promo.map((promo) => (
+                            <BarisAngka
+                                key={promo.Uuid}
+                                label={`Promo ${promo.Nama}`}
+                                nilai={`−${FormatRupiah(promo.JumlahDiskon)}`}
+                            />
+                        ))}
                         {p.PoinDitukar > 0 ? (
                             <BarisAngka
                                 label={`Termasuk tukar ${p.PoinDitukar.toLocaleString('id-ID')} poin`}

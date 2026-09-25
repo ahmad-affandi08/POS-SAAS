@@ -14,6 +14,7 @@ use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
+use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\PastikanLanggananPosAktif;
@@ -67,6 +68,8 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/pelanggan', [PelangganKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.pelanggan.cari');
         $ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
         // F-16b: saldo poin terkini sebelum tukar poin (wajib online, §18.4).
+        // F-16c: promo aktif untuk dievaluasi di perangkat (bisa offline setelah diunduh).
+        Route::get('/promo', [PromoKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.promo');
         Route::get('/pelanggan/{uuidPelanggan}/poin', [PelangganKontroler::class, 'Poin'])
             ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.pelanggan.poin');
         // F-07 mode meja fase 1: data meja, pesanan terbuka outlet (ditarik tiap 5–10 detik, ETag), kunci bayar online.

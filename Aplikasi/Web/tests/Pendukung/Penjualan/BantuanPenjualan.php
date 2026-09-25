@@ -31,6 +31,7 @@ use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\ReturPenjualanDetail;
+use App\Domain\Promo\Model\Promo;
 use App\Domain\Tenant\Model\Tenant;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -189,7 +190,8 @@ final class BantuanPenjualan
     /**
      * Item outbox `Penjualan.Buat` lengkap. `opsi`: `Baris`, `Pembayaran`, `Pajak` (list `[Kode, Tarif, Pembilang,
      * Penyebut, DasarPengenaan?]`), `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`
-     * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `TukarPoin` (`['Poin' => 50, 'Nilai' => '5000']`), `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
+     * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `TukarPoin` (`['Poin' => 50, 'Nilai' => '5000']`), `Promo`
+     * (`[['Promo' => Promo, 'Baris' => [indeks => '7700.00'], 'Pesanan' => '0.00']]`, potongan promo perangkat), `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
      * kunci `Data` yang ditimpa setelah dihitung (misal `Ringkasan` palsu).
      *
      * @param  array<string, mixed>  $k  hasil `Siapkan()`
@@ -239,7 +241,9 @@ final class BantuanPenjualan
         $pembayaranMasukan = $opsi['Pembayaran'] ?? [['Metode' => $k['Tunai'], 'Jumlah' => null]];
         /** @var array{Poin: int, Nilai: string}|null $tukarPoin */
         $tukarPoin = $opsi['TukarPoin'] ?? null;
-        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan, $tukarPoin['Nilai'] ?? null);
+        /** @var list<array{Promo: Promo, Baris?: array<int, string>, Pesanan?: string}> $promo */
+        $promo = $opsi['Promo'] ?? [];
+        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan, $tukarPoin['Nilai'] ?? null, $promo);
         $pembayaran = [];
 
         foreach ($pembayaranMasukan as $p) {
@@ -260,7 +264,7 @@ final class BantuanPenjualan
             fn (array $p, array $b): array => ['Metode' => $p['Metode'], 'Jumlah' => $b['Jumlah']],
             $pembayaranMasukan,
             $pembayaran,
-        ), $tukarPoin['Nilai'] ?? null);
+        ), $tukarPoin['Nilai'] ?? null, $promo);
 
         /** @var Pengguna $kasir */
         $kasir = $opsi['Kasir'] ?? $k['Kasir'];
@@ -293,6 +297,12 @@ final class BantuanPenjualan
                 ],
                 'Catatan' => 'Pelanggan minta struk digital',
                 ...($tukarPoin === null ? [] : ['TukarPoin' => $tukarPoin]),
+                ...($promo === [] ? [] : ['Promo' => array_map(fn (array $p): array => [
+                    'UuidPromo' => $p['Promo']->Uuid,
+                    'Kode' => $p['Promo']->Kode,
+                    'DiskonBaris' => array_values(array_map(fn (int $i, string $j): array => ['UuidBaris' => $baris[$i]['Uuid'], 'Jumlah' => $j], array_keys($p['Baris'] ?? []), array_values($p['Baris'] ?? []))),
+                    'DiskonPesanan' => $p['Pesanan'] ?? '0.00',
+                ], $promo)]),
             ], $timpa),
         ];
     }
@@ -436,10 +446,17 @@ final class BantuanPenjualan
      * @param  list<array<string, mixed>>  $baris
      * @param  array<string, string>|null  $diskonPesanan
      * @param  list<array<string, mixed>>  $pembayaran
+     * @param  list<array{Promo: Promo, Baris?: array<int, string>, Pesanan?: string}>  $promo
      * @return array{Subtotal: Uang, TotalPajak: Uang, Pembulatan: Uang, TotalAkhir: Uang, Kembalian: Uang}
      */
-    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran, ?string $tukarPoin = null): array
+    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran, ?string $tukarPoin = null, array $promo = []): array
     {
+        foreach ($promo as $p) {
+            foreach ($p['Baris'] ?? [] as $i => $jumlah) {
+                $baris[$i]['PromoTambahan'][] = $jumlah;
+            }
+        }
+
         $hasil = (new MesinKalkulasi)->Hitung(new DataKalkulasi(
             hargaTermasukPajak: $termasukPajak,
             baris: array_map(fn (array $b): DataBarisKalkulasi => new DataBarisKalkulasi(
@@ -448,7 +465,10 @@ final class BantuanPenjualan
                 Uang::Dari((string) $b['HargaPilihan']),
                 is_bool($b['HargaTermasukPajak']) ? $b['HargaTermasukPajak'] : null,
                 is_array($b['KodePajak']) ? array_values(array_map('strval', $b['KodePajak'])) : null,
-                is_array($b['DiskonManual']) ? [self::Potongan($b['DiskonManual'])] : [],
+                [
+                    ...(is_array($b['DiskonManual']) ? [self::Potongan($b['DiskonManual'])] : []),
+                    ...array_values(array_map(fn (string $j): DataPotongan => DataPotongan::BuatNominal(Uang::Dari($j)), $b['PromoTambahan'] ?? [])),
+                ],
             ), $baris),
             pajak: array_map(fn (array $p): DataPajakKalkulasi => new DataPajakKalkulasi(
                 (string) $p['Kode'],
@@ -459,7 +479,10 @@ final class BantuanPenjualan
             ), $pajak),
             persenBiayaLayanan: $persenLayanan,
             pembulatanTunai: $pembulatan === null ? null : new DataPembulatanTunai($pembulatan[0], ArahPembulatan::from($pembulatan[1])),
-            potonganPesanan: $diskonPesanan === null ? [] : [self::Potongan($diskonPesanan)],
+            potonganPesanan: [
+                ...($diskonPesanan === null ? [] : [self::Potongan($diskonPesanan)]),
+                ...array_values(array_filter(array_map(fn (array $p): ?DataPotongan => ($p['Pesanan'] ?? '0.00') === '0.00' ? null : DataPotongan::BuatNominal(Uang::Dari($p['Pesanan'])), $promo))),
+            ],
             pembayaran: array_map(fn (array $p): DataPembayaranKalkulasi => new DataPembayaranKalkulasi(
                 $p['Metode']->Jenis === JenisMetodePembayaran::Tunai,
                 ($p['Jumlah'] ?? null) === null ? null : Uang::Dari((string) $p['Jumlah']),
