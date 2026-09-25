@@ -456,9 +456,13 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
 
   /// Unduh katalog (lengkap/delta) lalu bangun ulang katalog di memori bila berubah (Rincian F-07c).
   Future<HasilPerbaruiKatalog> PerbaruiKatalog() async {
-    final hasil = await ref.read(penyediaLayananKatalog).Perbarui();
+    final layanan = ref.read(penyediaLayananKatalog);
+    final hasil = await layanan.Perbarui();
     if (hasil == HasilPerbaruiKatalog.Lengkap || hasil == HasilPerbaruiKatalog.Delta) {
+      await layanan.PerbaruiPromo();
       ref.invalidate(penyediaKatalog);
+      // F-16c: promo & kategori produk ikut konteks penjualan.
+      ref.invalidate(penyediaKonteksPenjualan);
     }
     if (hasil == HasilPerbaruiKatalog.Offline) {
       ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Offline);

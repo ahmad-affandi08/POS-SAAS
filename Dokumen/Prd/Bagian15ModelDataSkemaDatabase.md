@@ -161,9 +161,10 @@ erDiagram
 | `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, NilaiTukarPoin, MinimalTukarPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
 | `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
-| `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |
+| `Promo` | IdTenant, Uuid, Kode (unik per tenant), Nama, Definisi JSON (Rincian F-16c), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Kuota, KuotaTerpakai, Status (F-16c) |
+| `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada |
-| `PromoPemakaian` | IdPromo, IdPenjualan, IdPelanggan, JumlahDiskon |
+| `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon; unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**
 

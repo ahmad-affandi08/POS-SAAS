@@ -10,6 +10,7 @@ import 'Model/ModelKatalog.dart';
 import 'Model/ModelMeja.dart';
 import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
+import 'Model/ModelPromo.dart';
 import 'Model/ModelRetur.dart';
 import 'Model/UraiJson.dart';
 
@@ -90,6 +91,9 @@ class KlienPos {
   /// ber-kode `PelangganTidakDitemukan` (404); offline → `GalatJaringan`.
   Future<SaldoPoinPos> AmbilSaldoPoin(String uuidPelanggan) async =>
       SaldoPoinPos.DariJson(await _Kirim('GET', 'pelanggan/${Uri.encodeComponent(uuidPelanggan)}/poin', null));
+
+  /// Promo aktif tenant + mode resolusi konflik (F-16c); disimpan perangkat agar promo tetap berlaku saat offline.
+  Future<DataPromoPos> AmbilPromo() async => DataPromoPos.DariJson(await _Kirim('GET', 'promo', null));
 
   /// Data meja outlet perangkat (F-07 mode meja fase 1).
   Future<DataMejaPos> AmbilMeja() async => DataMejaPos.DariJson(await _Kirim('GET', 'meja', null));

@@ -23,10 +23,14 @@ abstract final class KodePajak {
 }
 
 /// Hasil hitung keranjang: keluaran `MesinKalkulasi` beserta pajak dokumen yang dipakai (snapshot outbox) dan
-/// peringatan pajak (tarif belum tersedia).
+/// peringatan pajak (tarif belum tersedia). F-16c: promo otomatis yang diterapkan dan hasil tanpa promo (dasar batas
+/// diskon manual, sama dengan server).
 class HitunganKeranjang {
   const HitunganKeranjang({
     required this.hasil,
+    this.hasilDasar,
+    this.promoTerpakai = const [],
+    this.namaPromo = const {},
     required this.pajakDokumen,
     required this.tarifDipakai,
     required this.kodePajakBaris,
@@ -35,7 +39,21 @@ class HitunganKeranjang {
     this.labelPajak = const {},
   });
 
+  HasilKalkulasi get hasilTanpaPromo => hasilDasar ?? hasil;
+
+  String AmbilNamaPromo(PromoTerpakai p) => namaPromo[p.uuid] ?? p.kode;
+
+  /// Σ potongan promo pesanan (bagian `hasil.diskonPesanan`).
+  Uang HitungDiskonPromoPesanan() => promoTerpakai.fold(Uang.Nol(), (t, p) => t.Tambah(p.diskonPesanan));
+
   final HasilKalkulasi hasil;
+
+  /// Hasil tanpa promo; null = sama dengan [hasil].
+  final HasilKalkulasi? hasilDasar;
+  final List<PromoTerpakai> promoTerpakai;
+
+  /// Nama promo per Uuid untuk tampilan.
+  final Map<String, String> namaPromo;
   final List<DataPajakKalkulasi> pajakDokumen;
   final Map<String, TarifPajakLokal> tarifDipakai;
   final List<List<String>> kodePajakBaris;
@@ -379,31 +397,56 @@ class LayananPenjualan {
       kodeBaris.add(kode);
     }
 
-    final hasil = _mesin.Hitung(
-      DataKalkulasi(
-        hargaTermasukPajak: k.profilPajak.hargaTermasukPajak,
-        persenBiayaLayanan: k.AmbilPersenBiayaLayanan(),
-        pembulatanTunai: k.pembulatanTunai,
-        pajak: pajakDokumen.values.toList(),
-        baris: [
-          for (var i = 0; i < keranjang.baris.length; i++)
-            DataBarisKalkulasi(
-              jumlah: keranjang.baris[i].jumlah,
-              hargaSatuan: keranjang.baris[i].hargaSatuan,
-              hargaPilihan: keranjang.baris[i].AmbilHargaPilihan(),
-              hargaTermasukPajak: keranjang.baris[i].hargaTermasukPajak,
-              kodePajak: kodeBaris[i],
-              potongan: [if (keranjang.baris[i].diskon != null) keranjang.baris[i].diskon!.KePotongan()],
-            ),
-        ],
-        potonganPesanan: [if (keranjang.diskonPesanan != null) keranjang.diskonPesanan!.KePotongan()],
-        tukarPoin: keranjang.tukarPoin?.nilai,
-        pembayaran: pembayaran,
-      ),
+    final dasar = DataKalkulasi(
+      hargaTermasukPajak: k.profilPajak.hargaTermasukPajak,
+      persenBiayaLayanan: k.AmbilPersenBiayaLayanan(),
+      pembulatanTunai: k.pembulatanTunai,
+      pajak: pajakDokumen.values.toList(),
+      baris: [
+        for (var i = 0; i < keranjang.baris.length; i++)
+          DataBarisKalkulasi(
+            jumlah: keranjang.baris[i].jumlah,
+            hargaSatuan: keranjang.baris[i].hargaSatuan,
+            hargaPilihan: keranjang.baris[i].AmbilHargaPilihan(),
+            hargaTermasukPajak: keranjang.baris[i].hargaTermasukPajak,
+            kodePajak: kodeBaris[i],
+            potongan: [if (keranjang.baris[i].diskon != null) keranjang.baris[i].diskon!.KePotongan()],
+          ),
+      ],
+      potonganPesanan: [if (keranjang.diskonPesanan != null) keranjang.diskonPesanan!.KePotongan()],
+      tukarPoin: keranjang.tukarPoin?.nilai,
+      pembayaran: pembayaran,
     );
+    final hasilTanpaPromo = _mesin.Hitung(dasar);
+    var hasil = hasilTanpaPromo;
+    var promoTerpakai = const <PromoTerpakai>[];
+    if (k.promo.isNotEmpty && keranjang.baris.isNotEmpty) {
+      final waktu = _jam().toUtc();
+      final hasilPromo = const MesinPromo().Terapkan(
+        dasar,
+        [
+          for (final b in keranjang.baris)
+            BarisPromo(uuidProduk: b.uuidProduk, uuidKategori: k.kategoriProduk[b.uuidProduk]),
+        ],
+        k.promo,
+        KonteksPromo(
+          waktu: waktu,
+          waktuLokal: ZonaWaktuOutlet.KeWaktuOutlet(waktu, k.zonaWaktu),
+          uuidOutlet: k.uuidOutlet,
+          kanal: AmbilKanal(keranjang),
+          tier: keranjang.pelanggan?.kodeTier,
+        ),
+        mode: k.modeResolusiPromo,
+      );
+      hasil = hasilPromo.hasil;
+      promoTerpakai = hasilPromo.terpakai;
+    }
 
     return HitunganKeranjang(
       hasil: hasil,
+      hasilDasar: hasilTanpaPromo,
+      promoTerpakai: promoTerpakai,
+      namaPromo: k.namaPromo,
       pajakDokumen: pajakDokumen.values.toList(),
       tarifDipakai: tarifDipakai,
       kodePajakBaris: kodeBaris,
@@ -466,13 +509,13 @@ class LayananPenjualan {
     final dengan = keranjang.Salin(
       baris: [for (final b in keranjang.baris) b.uuid == uuidBaris ? b.Salin(diskon: () => diskon) : b],
     );
-    final baris = Hitung(dengan, k).hasil.baris[indeks];
+    final baris = Hitung(dengan, k).hasilTanpaPromo.baris[indeks];
     return (dasar: baris.bruto, diskon: baris.diskon);
   }
 
   /// Nilai diskon pesanan bila [diskon] diterapkan: subtotal (dasar) dan diskon pesanan hasil mesin.
   ({Uang dasar, Uang diskon}) HitungDiskonPesanan(Keranjang keranjang, DiskonManual diskon, KonteksPenjualan k) {
-    final hasil = Hitung(keranjang.Salin(diskonPesanan: () => diskon), k).hasil;
+    final hasil = Hitung(keranjang.Salin(diskonPesanan: () => diskon), k).hasilTanpaPromo;
     return (dasar: hasil.subtotal, diskon: hasil.diskonPesanan.Kurangi(hasil.diskonPoin));
   }
 
@@ -541,7 +584,7 @@ class LayananPenjualan {
       }
     }
 
-    final hasil = hitungan.hasil;
+    final hasil = hitungan.hasilTanpaPromo;
     for (var i = 0; i < keranjang.baris.length; i++) {
       if (keranjang.baris[i].diskon != null) {
         Periksa('"${keranjang.baris[i].nama}"', hasil.baris[i].bruto, hasil.baris[i].diskon);
@@ -775,6 +818,19 @@ class LayananPenjualan {
       'UuidPesananTerbuka': ?pesananMeja?.uuid,
       'UuidPelanggan': ?keranjang.pelanggan?.uuid,
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
+      if (hitungan.promoTerpakai.isNotEmpty)
+        'Promo': [
+          for (final p in hitungan.promoTerpakai)
+            {
+              'UuidPromo': p.uuid,
+              'Kode': p.kode,
+              'DiskonBaris': [
+                for (final MapEntry(:key, :value) in p.diskonBaris.entries)
+                  {'UuidBaris': keranjang.baris[key].uuid, 'Jumlah': value.KeString()},
+              ],
+              'DiskonPesanan': p.diskonPesanan.KeString(),
+            },
+        ],
     };
 
     return DokumenPenjualan(

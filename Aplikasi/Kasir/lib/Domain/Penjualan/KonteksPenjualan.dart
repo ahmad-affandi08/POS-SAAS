@@ -89,6 +89,10 @@ class KonteksPenjualan {
     required this.batasDiskonPenyetuju,
     required this.metodePembayaran,
     this.zonaWaktu = ZonaWaktuOutlet.bawaan,
+    this.promo = const [],
+    this.namaPromo = const {},
+    this.modeResolusiPromo = ModeResolusiPromo.Terbaik,
+    this.kategoriProduk = const {},
   });
 
   final String? uuidOutlet;
@@ -108,6 +112,13 @@ class KonteksPenjualan {
 
   /// Metode aktif berjenis fase 1, urut tampil.
   final List<BarisMetodePembayaran> metodePembayaran;
+
+  /// F-16c: promo aktif tersimpan (diterapkan otomatis, juga offline), nama per Uuid, mode resolusi, dan kategori per
+  /// produk untuk kondisi promo kategori.
+  final List<DefinisiPromo> promo;
+  final Map<String, String> namaPromo;
+  final ModeResolusiPromo modeResolusiPromo;
+  final Map<String, String> kategoriProduk;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -138,6 +149,10 @@ class KonteksPenjualan {
     final petaPembulatan = pembulatan == null || pembulatan.isEmpty ? null : jsonDecode(pembulatan);
     final dataPembulatan = PembulatanTunaiPos.DariJson(petaPembulatan);
     final zona = await repositori.AmbilPengaturan(KunciPengaturan.zonaWaktu);
+    final teksPromo = await repositori.AmbilPengaturan(KunciPengaturan.promo);
+    final dataPromo = teksPromo == null || teksPromo.isEmpty
+        ? DataPromoPos.kosong
+        : DataPromoPos.DariJson(jsonDecode(teksPromo) as Map<String, Object?>);
     if (!ZonaWaktuOutlet.CekDikenal(zona)) {
       developer.log(
         'Zona waktu outlet "${zona ?? '-'}" tidak dikenal; tanggal bisnis memakai UTC+7 (WIB).',
@@ -169,6 +184,31 @@ class KonteksPenjualan {
           .where((m) => JenisMetodeBayar.fase1.contains(m.Jenis))
           .toList(),
       zonaWaktu: ZonaWaktuOutlet.CekDikenal(zona) ? zona! : ZonaWaktuOutlet.bawaan,
+      promo: [for (final p in dataPromo.promo) ?UraiPromo(p)],
+      namaPromo: {for (final p in dataPromo.promo) p.uuid: p.nama},
+      modeResolusiPromo:
+          ModeResolusiPromo.values.where((m) => m.name == dataPromo.modeResolusi).firstOrNull ??
+          ModeResolusiPromo.Terbaik,
+      kategoriProduk: await katalog.AmbilKategoriProduk(),
     );
+  }
+
+  /// Definisi promo dari server; definisi yang tidak bisa dibaca aplikasi versi ini dilewati (null).
+  static DefinisiPromo? UraiPromo(PromoPos p) {
+    try {
+      return DefinisiPromo.Urai(
+        uuid: p.uuid,
+        kode: p.kode,
+        definisi: p.definisi,
+        prioritas: p.prioritas,
+        eksklusif: p.eksklusif,
+        mulaiPada: p.mulaiPada,
+        selesaiPada: p.selesaiPada,
+        kuotaTersisa: p.kuotaTersisa,
+      );
+    } on Object catch (galat) {
+      developer.log('Promo ${p.kode} dilewati: $galat', name: 'KonteksPenjualan');
+      return null;
+    }
   }
 }

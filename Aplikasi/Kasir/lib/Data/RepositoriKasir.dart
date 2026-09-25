@@ -27,6 +27,9 @@ abstract final class KunciPengaturan {
 
   // F-07b/F-07c: identitas outlet untuk nomor penjualan, aturan diskon & pembulatan, profil pajak, katalog.
   static const String uuidOutlet = 'UuidOutlet';
+
+  /// F-16c: JSON `DataPromoPos` (promo aktif + mode resolusi) dari `GET /api/pos/v1/promo`.
+  static const String promo = 'Promo';
   static const String kodeOutlet = 'KodeOutlet';
   static const String jamTutupBuku = 'JamTutupBuku';
 

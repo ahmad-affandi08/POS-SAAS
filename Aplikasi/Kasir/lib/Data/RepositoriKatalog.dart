@@ -259,6 +259,12 @@ class RepositoriKatalog {
 
   Future<List<BarisTarifPajak>> AmbilTarifPajak() => db.select(db.tarifPajak).get();
 
+  /// F-16c: kategori per produk (kondisi promo kategori).
+  Future<Map<String, String>> AmbilKategoriProduk() async => {
+    for (final p in await db.select(db.produk).get())
+      if (p.UuidKategori != null) p.Uuid: p.UuidKategori!,
+  };
+
   Future<List<BarisMetodePembayaran>> AmbilMetodePembayaran() => (db.select(
     db.metodePembayaran,
   )..orderBy([(t) => OrderingTerm.asc(t.Urutan), (t) => OrderingTerm.asc(t.Nama)])).get();

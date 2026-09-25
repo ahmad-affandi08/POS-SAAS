@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:klien_api/KlienApi.dart';
 
 import '../../Data/RepositoriKasir.dart';
@@ -23,6 +25,19 @@ class LayananKatalog {
   final DateTime Function() _jam;
 
   bool _berjalan = false;
+
+  /// F-16c: unduh promo aktif lalu simpan (dipakai `MesinPromo` juga saat offline). Gagal = promo tersimpan terakhir
+  /// tetap dipakai; server lama tanpa endpoint promo tidak menghentikan pembaruan katalog.
+  Future<void> PerbaruiPromo() async {
+    try {
+      final promo = await klien.AmbilPromo();
+      await repositori.SimpanPengaturan(KunciPengaturan.promo, jsonEncode(promo.KeJson()));
+    } on GalatApi {
+      return;
+    } on GalatJaringan {
+      return;
+    }
+  }
 
   Future<HasilPerbaruiKatalog> Perbarui() async {
     if (_berjalan) {

@@ -182,6 +182,9 @@ class PanelKeranjang extends StatelessWidget {
                             if (keranjang.pesananMeja != null && !statusBaris.containsKey(keranjang.baris[i].uuid))
                               'Item baru',
                             ...AmbilRincian(keranjang.baris[i]),
+                            for (final p in hitungan?.promoTerpakai ?? const <PromoTerpakai>[])
+                              if (p.diskonBaris[i] case final diskon?)
+                                'Promo ${hitungan!.AmbilNamaPromo(p)} −${diskon.FormatRupiah()}',
                           ],
                           saatDiketuk: () => saatUbahBaris(keranjang.baris[i].uuid),
                           saatTambah: () => saatTambah(keranjang.baris[i].uuid),
@@ -282,6 +285,10 @@ abstract final class RingkasanTotal {
   }) {
     final teks = Theme.of(context).textTheme;
     final hasil = hitungan.hasil;
+    // Diskon pesanan manual = total diskon pesanan − tukar poin (F-16b) − promo pesanan (F-16c).
+    final diskonManualPesanan = hasil.diskonPesanan
+        .Kurangi(hasil.diskonPoin)
+        .Kurangi(hitungan.HitungDiskonPromoPesanan());
     Widget Baris(String label, Uang nilai, {TextStyle? gaya}) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -294,13 +301,16 @@ abstract final class RingkasanTotal {
 
     return [
       Baris('Subtotal', hasil.subtotal),
-      if (!hasil.diskonPesanan.Kurangi(hasil.diskonPoin).BernilaiNol())
+      if (!diskonManualPesanan.BernilaiNol())
         Baris(
           keranjang.diskonPesanan?.persen != null
               ? '${keranjang.diskonPesanan!.AmbilLabel()} pesanan'
               : 'Diskon pesanan',
-          Uang.Nol().Kurangi(hasil.diskonPesanan.Kurangi(hasil.diskonPoin)),
+          Uang.Nol().Kurangi(diskonManualPesanan),
         ),
+      for (final p in hitungan.promoTerpakai)
+        if (!p.diskonPesanan.BernilaiNol())
+          Baris('Promo ${hitungan.AmbilNamaPromo(p)}', Uang.Nol().Kurangi(p.diskonPesanan)),
       if (keranjang.tukarPoin != null)
         Baris('Tukar ${keranjang.tukarPoin!.poin} poin', Uang.Nol().Kurangi(hasil.diskonPoin)),
       if (!hasil.biayaLayanan.BernilaiNol()) Baris('Biaya layanan', hasil.biayaLayanan),

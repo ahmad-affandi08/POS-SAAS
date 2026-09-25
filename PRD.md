@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.61 |
+| Versi | 1.62 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -82,6 +82,7 @@
 | 1.59 | Rincian F-16a (CRM-01 pelanggan): master pelanggan (nomor HP ternormalisasi & unik per tenant), izin `pelanggan.lihat`/`pelanggan.kelola`, back-office daftar & detail riwayat belanja, API POS cari pelanggan, item outbox `Pelanggan.Buat` (offline, alias nomor HP ganda), `Penjualan.Buat` + `UuidPelanggan`, panel pelanggan (F2) di aplikasi kasir; skema lokal 7. |
 | 1.60 | Rincian F-16b bagian 1 (CRM-02/03): tier pelanggan (ambang belanja, pengali poin, kode untuk daftar harga, naik/turun otomatis harian + kunci tier), pengaturan loyalti per tenant, buku poin `MutasiPoin` (perolehan di transaksi penjualan, pembalikan void & retur proporsional, kedaluwarsa FIFO, penyesuaian manual), harga tier di aplikasi kasir; skema lokal 8. Keputusan pemilik produk: penukaran poin dicatat sebagai **diskon** (J-16.4, bagian 2). |
 | 1.61 | Rincian F-16b bagian 2 (CRM-03 penukaran poin): poin ditukar sebagai **diskon pesanan sebelum pajak** (J-16.4 lewat Diskon Penjualan di J-07.1); mesin kalkulasi PHP & Dart menerima `TukarPoin` (dibatasi sisa subtotal, keluaran `DiskonPoin`) + 3 test vector baru; `Penjualan.Buat` membawa `TukarPoin {Poin, Nilai}`; saldo terkini `GET /api/pos/v1/pelanggan/{uuidPelanggan}/poin` (wajib online, §18.4); pengaturan nilai tukar per poin & minimal tukar; void mengembalikan poin yang ditukar. |
+| 1.62 | Rincian F-16c bagian 1 (CRM-05 promo engine): master promo back-office (formulir terstruktur, bukan YAML), mesin promo PHP & Dart murni + 8 test vector bersama `VektorUjiKalkulasi/Promo/` (kondisi barang/kategori/minimal, tier, kanal, outlet, periode/hari/jam; aksi diskon %/nominal barang & pesanan, harga spesial, beli X gratis Y, bundel harga tetap; batas per transaksi, kuota), resolusi konflik `Terbaik`/`PrioritasKetat`, promo di POS (`GET /api/pos/v1/promo`, berlaku offline), `Penjualan.Buat` membawa `Promo` + validasi ulang server (beda = diterima + tinjauan `PromoBerbeda`), `PromoPemakaian` & kuota. Keputusan pemilik produk: dipecah (voucher dll. bagian 2), dua mode resolusi (bawaan Terbaik), beda hasil offline = terima + tinjauan. |
 
 ---
 
@@ -1507,6 +1508,15 @@ promo:
 - **Void** mengembalikan poin yang ditukar sebagai lot baru `BatalPenukaran` (berlaku hari ini + masa berlaku) selain membalik perolehan. **Retur** tidak mengembalikan poin yang ditukar (nilai refund sudah memperhitungkan potongan poin); perolehan tetap dibalik proporsional seperti bagian 1.
 - **Jurnal (J-16.4):** tidak ada jurnal terpisah; `DiskonPoin` termasuk `TotalDiskon` sehingga didebit ke **Diskon Penjualan** dalam jurnal penjualan J-07.1 (tetap seimbang).
 
+**Rincian F-16c bagian 1 (v1.62, CRM-05 promo engine; keputusan pemilik produk v1.62: F-16c dipecah, dua mode resolusi dengan bawaan "terbaik untuk pelanggan", hasil berbeda saat sinkron = diterima + tinjauan; rincian lain diputuskan agen atas mandat D-12):**
+- **Master promo** (domain Promo, `/kelola/promo`, menu Pelanggan › Promo; izin memakai `pelanggan.lihat`/`pelanggan.kelola` karena promo bagian CRM, fitur paket `promo.mesin` = Pro ke atas; tanpa fitur promo bisa disiapkan tetapi tidak dikirim ke POS dan tidak dievaluasi server). Tabel `Promo` (Kode unik per tenant & tidak bisa diubah, Nama, `Definisi` JSON kanonik, Prioritas 0–999, Eksklusif, `[MulaiPada, SelesaiPada)` UTC dari tanggal di zona tenant dengan tanggal selesai inklusif, Kuota opsional + KuotaTerpakai, Status Aktif/Diarsipkan), `PengaturanPromo.ModeResolusi` per tenant, `PromoPemakaian` (promo, penjualan, pelanggan, tanggal bisnis, nilai potongan; unik per promo & penjualan). Formulir terstruktur per aksi (bukan YAML); audit `promo.tambah|ubah|arsipkan|pulihkan|pengaturan`. Daftar (`TabelData` lokal, 200 promo terbaru) menampilkan jumlah pakai/kuota dan total potongan (laporan pemakaian dasar); detail penjualan menampilkan promo yang dipakai.
+- **`Definisi`**: `{Hari [1=Senin..7], JamMulai/JamSelesai "HH:MM" jam lokal outlet (setengah terbuka; selesai ≤ mulai = lewat tengah malam), Outlet [], Kanal [], Tier [kode], MinimalSubtotal, Kondisi {Jenis Semua|Produk|Kategori, Uuid [], JumlahMinimal}, Aksi {Jenis, Persen|Jumlah|Harga|Beli+Gratis+PersenGratis}, BatasPerTransaksi}`; daftar kosong = tanpa batasan. Aksi bagian 1: `DiskonPersenItem` (persen dari bruto baris), `DiskonTetapItem` (per satuan), `HargaSpesial` (harga per satuan), `BeliXGratisY` (satuan utuh diurutkan termahal dulu, per set X+Y satuan termurahnya dipotong PersenGratis), `BundelHargaTetap` (isi = JumlahMinimal, satuan termahal dulu, potongan = Σ harga − harga bundel dialokasikan sebanding harga), `DiskonPersenPesanan`/`DiskonTetapPesanan`. Batas per transaksi hanya untuk beli X gratis Y & bundel.
+- **Mesin promo** (`MesinPromo` PHP di `Penjualan\Kalkulasi` & Dart di `Paket/MesinKasir`, test vector `Spesifikasi/VektorUjiKalkulasi/Promo/`): syarat = kuota, waktu, hari/jam lokal, outlet, kanal, tier, subtotal awal (setelah diskon manual baris) ≥ minimal, jumlah barang kondisi; `PrioritasKetat` = urut prioritas (besar dulu, seri menurut kode), eksklusif hanya bila belum ada yang terpilih dan menghentikan evaluasi; `Terbaik` = semua non-eksklusif bersama vs tiap eksklusif sendiri, potongan terbesar (seri: kandidat lebih awal). Promo barang dulu (dibatasi sisa netto baris), lalu promo pesanan dari subtotal setelah promo barang (dibatasi sisa subtotal); semua menjadi potongan nominal lalu `MesinKalkulasi` (F-07a) menghitung pajak dari netto setelah promo. Promo selalu otomatis (tanpa kode) di bagian 1.
+- **POS:** `GET /api/pos/v1/promo` → `{ModeResolusi, Promo [{Uuid, Kode, Nama, Prioritas, Eksklusif, MulaiPada, SelesaiPada, KuotaTersisa, Definisi}], WaktuServer}` (aktif & belum berakhir) diunduh bersama pembaruan katalog dan disimpan di pengaturan lokal (tanpa migrasi skema) sehingga promo berlaku offline; definisi yang tidak dikenali versi aplikasi dilewati. Keranjang dihitung dengan promo otomatis (waktu perangkat, jam lokal outlet, kanal, tier pelanggan); baris keranjang menampilkan "Promo … −Rp", ringkasan menampilkan promo pesanan. Batas diskon manual (BR-07.3) dinilai dari hitungan **tanpa promo** di perangkat dan server.
+- **Sinkron:** `Penjualan.Buat` menerima `Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]` (maks. 20). Server menghitung ulang total **dengan potongan promo perangkat** (beda ringkasan = `HitunganTidakCocok`; baris tak dikenal = `DataTidakValid`), lalu menjalankan `MesinPromo` dengan definisi server (kuota tersisa terkini) pada waktu transaksi; hasil berbeda (promo diubah/diarsipkan/berakhir/kuota habis/promo baru belum terunduh) = **diterima + `PerluTinjauan` `PromoBerbeda`** berisi ringkasan perangkat vs server. `PromoPemakaian` & `KuotaTerpakai` dicatat di transaksi DB yang sama (baris promo dikunci urut Id), idempoten per penjualan; kuota terlampaui ikut dicatat di tinjauan.
+- **Jurnal:** tidak ada jurnal terpisah; potongan promo termasuk `TotalDiskon` → **Diskon Penjualan** dalam J-07.1 (pendanaan marketing/pemasok ke Beban Promosi menyusul).
+- **Bagian 2 (menyusul):** voucher & kode promo (online), promo metode bayar (bank/QRIS), ulang tahun & transaksi pertama, poin berlipat, gratis ongkir, laporan uplift, pendanaan promo (Beban Promosi/bagi pemasok), batas per pelanggan per hari.
+
 
 ---
 
@@ -2807,9 +2817,10 @@ erDiagram
 | `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, NilaiTukarPoin, MinimalTukarPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
 | `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
-| `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |
+| `Promo` | IdTenant, Uuid, Kode (unik per tenant), Nama, Definisi JSON (Rincian F-16c), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Kuota, KuotaTerpakai, Status (F-16c) |
+| `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada |
-| `PromoPemakaian` | IdPromo, IdPenjualan, IdPelanggan, JumlahDiskon |
+| `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon; unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**
 
@@ -2946,6 +2957,7 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 | POST | `/api/pos/v1/token-notifikasi` | Daftarkan/perbarui token FCM perangkat |
 | GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
 | GET | `/api/pos/v1/pelanggan/{uuidPelanggan}/poin` | Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b, wajib online) |
+| GET | `/api/pos/v1/promo` | Promo aktif + mode resolusi konflik untuk disimpan perangkat (F-16c, dievaluasi offline) |
 | POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
 | POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |

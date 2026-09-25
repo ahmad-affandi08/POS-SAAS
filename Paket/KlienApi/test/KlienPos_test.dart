@@ -324,4 +324,39 @@ void main() {
     expect(saldo.nilaiTukarPoin, '100.00');
     expect(saldo.minimalTukarPoin, 10);
   });
+
+  test('F-16c promo: daftar promo aktif + mode resolusi, definisi dibawa apa adanya', () async {
+    final klien = BuatKlien((permintaan) async {
+      expect(permintaan.url.path, endsWith('/api/pos/v1/promo'));
+      return Json({
+        'ModeResolusi': 'PrioritasKetat',
+        'Promo': [
+          {
+            'Uuid': 'PR1',
+            'Kode': 'KOPI10',
+            'Nama': 'Diskon 10% kopi',
+            'Prioritas': 5,
+            'Eksklusif': false,
+            'MulaiPada': '2026-10-01T00:00:00Z',
+            'SelesaiPada': null,
+            'KuotaTersisa': 12,
+            'Definisi': {
+              'Aksi': {'Jenis': 'DiskonPersenItem', 'Persen': '10'},
+            },
+          },
+        ],
+      }, 200);
+    });
+
+    final data = await klien.AmbilPromo();
+    expect(data.modeResolusi, 'PrioritasKetat');
+    expect(data.promo.single.kode, 'KOPI10');
+    expect(data.promo.single.kuotaTersisa, 12);
+    expect(data.promo.single.mulaiPada, DateTime.utc(2026, 10));
+    expect(data.promo.single.selesaiPada, isNull);
+    expect(DataPromoPos.DariJson(data.KeJson()).promo.single.definisi['Aksi'], {
+      'Jenis': 'DiskonPersenItem',
+      'Persen': '10',
+    });
+  });
 }
