@@ -2,17 +2,25 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Kasir\Enum\JenisKategoriKas;
 use App\Domain\Organisasi\Aksi\AturPinSendiri;
 use App\Domain\Organisasi\Aksi\CabutPerangkat;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Layanan\VerifierPinOffline;
+use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\OutletPengguna;
 use App\Domain\Organisasi\Model\Perangkat;
+use App\Domain\Tenant\Model\Langganan;
+use App\Domain\Tenant\Model\Paket;
+use App\Domain\Tenant\Model\Tenant;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Akuntansi\BantuanJurnal;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Organisasi\BantuanPerangkat;
+use Tests\Pendukung\Persediaan\BantuanPersediaan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
@@ -111,4 +119,90 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
         BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
         expect(Perangkat::query()->findOrFail($a['Perangkat']->Id)->KunciPinOffline)->toBeNull();
     });
+
+    it('pengaturan struk (PRD v1.79): bawaan, simpan dari back-office (audit), dan blok Struk di data awal: NPWP hanya bila outlet PKP, logo, tanda air paket', function (): void {
+        $k = BantuanKasir::Siapkan($this, 'Kopi Senja Solo');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        Tenant::query()->whereKey($k['Tenant']->Id)->update(['Npwp' => '0123456789012345']);
+        UbahLanggananStrukUji($k['Tenant']->Id, 'GRATIS');
+
+        $struk = $this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->assertOk()->json('Struk');
+        expect($struk)->toMatchArray([
+            'TampilkanLogo' => true,
+            'NamaDicetak' => null,
+            'TeksKepala' => [],
+            'TampilkanNpwp' => true,
+            'CatatanKaki' => null,
+            'TeksPenutup' => null,
+            'NamaUsaha' => 'Kopi Senja Solo',
+            'Npwp' => null,
+            'AdaLogo' => false,
+            'TandaAir' => true,
+        ]);
+        $this->withToken($k['Token'])->get('/api/pos/v1/logo-struk')->assertNotFound();
+
+        Storage::fake((string) config('tenant.DiskLogo'));
+        Storage::disk((string) config('tenant.DiskLogo'))->put("logo/{$k['Tenant']->Id}/logo.png", 'png-palsu');
+        $tenant = Tenant::query()->findOrFail($k['Tenant']->Id);
+        $tenant->Pengaturan = [...($tenant->Pengaturan ?? []), 'PathLogo' => "logo/{$k['Tenant']->Id}/logo.png"];
+        $tenant->save();
+        expect($this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->json('Struk.AdaLogo'))->toBeTrue();
+        $this->withToken($k['Token'])->get('/api/pos/v1/logo-struk')->assertOk();
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $outlet = Outlet::query()->findOrFail($k['Outlet']->Id);
+        $outlet->ProfilPajak = [...($outlet->ProfilPajak ?? []), 'Pkp' => true];
+        $outlet->save();
+        UbahLanggananStrukUji($k['Tenant']->Id, 'PRO');
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/kasir/struk')->assertForbidden();
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Admin);
+        $this->get('/kelola/kasir/struk')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Kasir/Struk')
+            ->where('Pengaturan.TampilkanKasir', true)
+            ->where('Profil.NamaUsaha', 'Kopi Senja Solo')
+            ->where('Profil.TandaAir', false));
+
+        $isian = [
+            'TampilkanLogo' => false, 'TampilkanAlamat' => true, 'TampilkanTelepon' => false, 'TampilkanNpwp' => true,
+            'TampilkanKasir' => true, 'TampilkanPelanggan' => false, 'TampilkanHemat' => true,
+            'NamaDicetak' => '  Senja Coffee  ', 'TeksKepala' => ['Buka 07.00-22.00', '', '@kopisenja'],
+            'CatatanKaki' => 'Barang yang sudah dibeli bisa ditukar 7 hari.', 'TeksPenutup' => '',
+        ];
+        $this->put('/kelola/kasir/struk', [...$isian, 'TeksKepala' => ['a', 'b', 'c', 'd']])->assertSessionHasErrors('TeksKepala');
+        $this->put('/kelola/kasir/struk', [...$isian, 'CatatanKaki' => str_repeat('a', 201)])->assertSessionHasErrors('CatatanKaki');
+        $this->put('/kelola/kasir/struk', [...$isian, 'NamaDicetak' => str_repeat('a', 49)])->assertSessionHasErrors('NamaDicetak');
+        $this->put('/kelola/kasir/struk', $isian)->assertRedirect('/kelola/kasir/struk');
+        $this->put('/kelola/kasir/struk', $isian)->assertRedirect('/kelola/kasir/struk');
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(LogAudit::query()->where('Peristiwa', 'struk.pengaturan.ubah')->count())->toBe(1);
+        // Logo dimatikan di pengaturan struk: tidak dikirim ke perangkat.
+        $this->withToken($k['Token'])->get('/api/pos/v1/logo-struk')->assertNotFound();
+
+        $struk = $this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->assertOk()->json('Struk');
+        expect($struk)->toBe([
+            'TampilkanLogo' => false,
+            'NamaDicetak' => 'Senja Coffee',
+            'TeksKepala' => ['Buka 07.00-22.00', '@kopisenja'],
+            'TampilkanAlamat' => true,
+            'TampilkanTelepon' => false,
+            'TampilkanNpwp' => true,
+            'TampilkanKasir' => true,
+            'TampilkanPelanggan' => false,
+            'TampilkanHemat' => true,
+            'CatatanKaki' => 'Barang yang sudah dibeli bisa ditukar 7 hari.',
+            'TeksPenutup' => null,
+            'NamaUsaha' => 'Kopi Senja Solo',
+            'Npwp' => '0123456789012345',
+            'AdaLogo' => false,
+            'TandaAir' => false,
+        ]);
+    });
 });
+
+function UbahLanggananStrukUji(int $idTenant, string $kodePaket): void
+{
+    Langganan::query()->where('IdTenant', $idTenant)->update(['IdPaket' => Paket::query()->where('Kode', $kodePaket)->value('Id')]);
+}

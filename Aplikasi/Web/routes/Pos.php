@@ -9,6 +9,7 @@ use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
+use App\Http\Kontroler\Pos\V1\LogoStrukKontroler;
 use App\Http\Kontroler\Pos\V1\MejaKontroler;
 use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
@@ -63,6 +64,9 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
             ->middleware('throttle:pos-60')
             ->where('metodePembayaran', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
             ->name('pos.metode-pembayaran.gambar-qris');
+
+        // PRD v1.79: logo usaha untuk kepala struk (disimpan offline, dicetak sebagai gambar raster).
+        Route::get('/logo-struk', [LogoStrukKontroler::class, 'Unduh'])->middleware('throttle:pos-60')->name('pos.logo-struk');
 
         // F-09: cari struk asal untuk retur (perlu online); hanya penjualan outlet perangkat.
         Route::get('/penjualan/cari', [PenjualanKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.penjualan.cari');

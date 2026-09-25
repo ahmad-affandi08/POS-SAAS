@@ -129,6 +129,7 @@ const menuKasir: ItemMenu[] = [
     { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
     { label: 'Pengaturan kasir', href: '/kelola/kasir/pengaturan', izin: IzinTenant.OutletKelola },
+    { label: 'Pengaturan struk', href: '/kelola/kasir/struk', izin: IzinTenant.OutletKelola },
 ];
 
 // F-07b/F-09: grup menu "Penjualan" (baca saja): daftar penjualan dan void & retur (anti-fraud BR-09.3).

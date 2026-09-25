@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Kasir\KategoriKasKontroler;
 use App\Http\Kontroler\Kelola\Kasir\PengaturanKasirKontroler;
+use App\Http\Kontroler\Kelola\Kasir\PengaturanStrukKontroler;
 use App\Http\Kontroler\Kelola\Kasir\ShiftKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
@@ -34,4 +35,8 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
 
     Route::get('/kasir/pengaturan', [PengaturanKasirKontroler::class, 'Tampilkan'])->middleware($outlet)->name('kelola.kasir.pengaturan');
     Route::put('/kasir/pengaturan', [PengaturanKasirKontroler::class, 'Simpan'])->middleware($outlet)->name('kelola.kasir.pengaturan.simpan');
+
+    // PLT-06 / POS-11 (PRD v1.79): pengaturan struk satu untuk semua outlet.
+    Route::get('/kasir/struk', [PengaturanStrukKontroler::class, 'Tampilkan'])->middleware($outlet)->name('kelola.kasir.struk');
+    Route::put('/kasir/struk', [PengaturanStrukKontroler::class, 'Simpan'])->middleware($outlet)->name('kelola.kasir.struk.simpan');
 });

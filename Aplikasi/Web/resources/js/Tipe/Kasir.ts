@@ -167,3 +167,33 @@ export type PropsPengaturanKasir = {
     /** F-12 BR-12.1: piutang lewat jatuh tempo lebih dari sekian hari = penjualan tempo butuh penyetuju (0–365). */
     BatasHariLewatJatuhTempo: number;
 };
+
+/** Pengaturan struk tenant (PLT-06, PRD v1.79): satu untuk semua outlet. Teks null = bawaan aplikasi. */
+export type PengaturanStruk = {
+    TampilkanLogo: boolean;
+    NamaDicetak: string | null;
+    TeksKepala: string[];
+    TampilkanAlamat: boolean;
+    TampilkanTelepon: boolean;
+    TampilkanNpwp: boolean;
+    TampilkanKasir: boolean;
+    TampilkanPelanggan: boolean;
+    TampilkanHemat: boolean;
+    CatatanKaki: string | null;
+    TeksPenutup: string | null;
+};
+
+/** Data profil usaha untuk pratinjau struk (diubah di profil usaha, bukan di halaman ini). */
+export type ProfilPratinjauStruk = {
+    NamaUsaha: string;
+    Npwp: string | null;
+    NamaOutlet: string | null;
+    TautanLogo: string | null;
+    /** Paket tanpa fitur `struk.tanpa-watermark`: struk diberi baris "Dibuat dengan PAYOU". */
+    TandaAir: boolean;
+};
+
+export type PropsPengaturanStruk = {
+    Pengaturan: PengaturanStruk;
+    Profil: ProfilPratinjauStruk;
+};

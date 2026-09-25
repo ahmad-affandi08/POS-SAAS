@@ -16,6 +16,9 @@ use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
+use App\Domain\Tenant\Kueri\PengaturanStrukTenant;
+use App\Domain\Tenant\Kueri\ProfilTenant;
+use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use stdClass;
 
 /**
@@ -26,6 +29,10 @@ use stdClass;
  * (F-03); bagian lain (promo, meja) ditambahkan flow masing-masing. PRD v1.46: `Perangkat.NomorUrutPenjualan`
  * = objek `{"YYMMDD": urut terakhir}` penjualan perangkat ini (14 hari terakhir) agar pemasangan ulang aplikasi tidak
  * memakai nomor yang sama (`NomorUrutRetur` sama untuk nomor retur `RJ/...`); `TarifPajak[].Kategori` = kategori jenis pajak (`Ppn`/`Pbjt`/`Lainnya`).
+ * Cetak struk (PRD v1.79): `Struk` = pengaturan struk tenant (`TampilkanLogo`, `NamaDicetak`, `TeksKepala`, saklar
+ * alamat/telepon/NPWP/kasir/pelanggan/hemat, `CatatanKaki`, `TeksPenutup`) + `NamaUsaha`, `Npwp` (hanya bila outlet
+ * PKP), `AdaLogo` (logo usaha tersedia & ditampilkan; diunduh lewat `/logo-struk`), dan `TandaAir` (paket tanpa fitur
+ * `struk.tanpa-watermark`).
  */
 final class DataAwalKasir
 {
@@ -39,6 +46,9 @@ final class DataAwalKasir
         private readonly DaftarMetodePembayaran $metodePembayaran,
         private readonly NomorUrutPenjualanPerangkat $nomorUrut,
         private readonly KaryawanPos $karyawan,
+        private readonly ProfilTenant $profilTenant,
+        private readonly PemeriksaFiturTenant $fitur,
+        private readonly PengaturanStrukTenant $pengaturanStruk,
     ) {}
 
     /**
@@ -68,6 +78,7 @@ final class DataAwalKasir
                 // F-12: tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari N hari (BR-12.1).
                 'BatasHariLewatJatuhTempo' => $pengaturan->batasHariLewatJatuhTempo,
             ],
+            'Struk' => $this->AmbilStruk($perangkat, $profil->pkp ?? false),
             'Outlet' => $outlet === null ? null : [
                 'Uuid' => $outlet->uuidOutlet,
                 'Kode' => $outlet->kodeOutlet,
@@ -110,6 +121,23 @@ final class DataAwalKasir
                 'BatasSalah' => 5,
                 'MenitKunci' => 5,
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function AmbilStruk(Perangkat $perangkat, bool $pkp): array
+    {
+        $tenant = $this->profilTenant->Ambil($perangkat->IdTenant);
+        $struk = $this->pengaturanStruk->Ambil($perangkat->IdTenant);
+
+        return [
+            ...$struk->KeLarik(),
+            'NamaUsaha' => $tenant['Nama'],
+            'Npwp' => $pkp ? $tenant['Npwp'] : null,
+            'AdaLogo' => $struk->tampilkanLogo && $tenant['PathLogo'] !== null,
+            'TandaAir' => ! $this->fitur->CekAktif($perangkat->IdTenant, 'struk.tanpa-watermark'),
         ];
     }
 }
