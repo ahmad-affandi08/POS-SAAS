@@ -1,0 +1,98 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:inti/Inti.dart';
+import 'package:kasir/Data/RepositoriKasir.dart';
+import 'package:kasir/Tampilan/LayarJual.dart';
+import 'package:kasir/Tampilan/RuangKerja/PanelWajibPembaruan.dart';
+import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
+
+import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/PasangAplikasi.dart';
+
+/// P-10 (§14.6): aplikasi membaca `konfigurasi-aplikasi` setelah sinkron berhasil, melaporkan jumlah outbox tertunda
+/// (`X-Outbox-Tertunda`), menandai versi baru di bilah status, dan mengunci layar jual bila di bawah versi minimal
+/// sambil tetap mengirim outbox.
+void main() {
+  Future<LingkunganUji> MasukDenganKonfigurasi(WidgetTester tester, Map<String, Object?> aplikasi) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(() async {
+      await u.SiapkanAktif();
+      await u.repositori.SimpanPengaturan(KunciPengaturan.namaOutlet, 'Kopi Senja Solo Baru');
+      await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
+    });
+    u.server.penangan = (permintaan) async {
+      final jalur = permintaan.url.path;
+      if (jalur.endsWith('/sinkron/kirim')) {
+        final item = (jsonDecode(permintaan.body) as Map<String, Object?>)['Item']! as List<Object?>;
+        return JsonUji({
+          'Hasil': [
+            for (final i in item.cast<Map<String, Object?>>())
+              {'Uuid': i['Uuid'], 'Jenis': i['Jenis'], 'Status': 'Diterima', 'Galat': null},
+          ],
+        });
+      }
+      if (jalur.endsWith('/konfigurasi-aplikasi')) {
+        return JsonUji({
+          'Aplikasi': aplikasi,
+          'FlagFitur': {'pos.mode-meja': false},
+        });
+      }
+      throw http.ClientException('offline');
+    };
+    await PasangAplikasi(tester, u);
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    expect(find.byType(RuangKerja), findsOneWidget);
+    await Tunggu(tester, const Duration(milliseconds: 600));
+    return u;
+  }
+
+  testWidgets('wajib perbarui: layar jual diganti panel perbarui, outbox tetap terkirim, header outbox dilaporkan', (
+    tester,
+  ) async {
+    final u = await MasukDenganKonfigurasi(tester, {
+      'VersiSaatIni': '0.1.0',
+      'VersiTerbaru': '0.2.0',
+      'VersiMinimal': '0.2.0',
+      'TautanUnduh': 'https://unduh.payou.id/payou-kasir-0.2.0.apk',
+      'CatatanRilis': 'Cetak struk Bluetooth.',
+      'AdaPembaruan': true,
+      'WajibPembaruan': true,
+    });
+
+    expect(find.byType(PanelWajibPembaruan), findsOneWidget);
+    expect(find.byType(LayarJual), findsNothing);
+    expect(find.text('Wajib perbarui aplikasi'), findsOneWidget);
+    expect(find.textContaining('Perbarui ke versi 0.2.0'), findsOneWidget);
+    expect(find.text('https://unduh.payou.id/payou-kasir-0.2.0.apk'), findsOneWidget);
+    expect(find.text('Cetak struk Bluetooth.'), findsOneWidget);
+    // Buka shift sudah terkirim (outbox tidak ditahan) dan jumlah outbox dilaporkan di setiap permintaan.
+    final kirim = u.server.permintaan.where((p) => p.url.path.endsWith('/sinkron/kirim')).toList();
+    expect(kirim, isNotEmpty);
+    expect(kirim.first.headers['X-Outbox-Tertunda'], '1');
+    final konfigurasi = u.server.permintaan.lastWhere((p) => p.url.path.endsWith('/konfigurasi-aplikasi'));
+    expect(konfigurasi.headers['X-Outbox-Tertunda'], '0');
+    expect(find.textContaining('Semua transaksi sudah terkirim'), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('versi baru tersedia (tidak wajib): bilah status memberi tahu, layar jual tetap bisa dipakai', (
+    tester,
+  ) async {
+    final u = await MasukDenganKonfigurasi(tester, {
+      'VersiSaatIni': '0.1.0',
+      'VersiTerbaru': '0.2.0',
+      'VersiMinimal': '0.1.0',
+      'AdaPembaruan': true,
+      'WajibPembaruan': false,
+    });
+
+    expect(find.text('Versi 0.2.0 tersedia'), findsOneWidget);
+    expect(find.byType(LayarJual), findsOneWidget);
+    expect(find.byType(PanelWajibPembaruan), findsNothing);
+    await Lepas(tester, u);
+  });
+}

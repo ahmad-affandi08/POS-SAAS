@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.81 |
+| Versi | 1.82 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.82 | Rincian **P-10 rilis aplikasi & flag fitur** (PGL-18; rincian diputuskan agen atas mandat D-12): `RilisAplikasi` (Draf/Aktif/Dihentikan, kanal Beta untuk tenant Uji/Internal, rollout bertahap per ember perangkat), versi minimum dengan pengumuman ≥ 7 hari (BR-P10.1) dan dampak perangkat lama + outbox (BR-P10.2, header baru `X-Outbox-Tertunda`), `FlagFitur` Global/Paket/Tenant/Persentase dengan kill switch dan audit beralasan (BR-P10.3), aplikasi kasir membaca `konfigurasi-aplikasi` dan mengunci layar jual saat wajib perbarui. Pengumuman & banner pemeliharaan (PGL-19) tetap Fase 2. |
 | 1.81 | Rincian **F-15 tutup buku** (FIN-08; rincian diputuskan agen atas mandat D-12): tutup bulan (kunci & buka kunci periode dengan alasan + audit, syarat bulan lewat & semua shift ditutup); transaksi POS di periode terkunci kini **diterima** dengan `TanggalBisnis` asli, ditandai `PerluTinjauan`, jurnal & mutasi stok dibukukan di hari pertama periode terbuka berikutnya (§18.3, sebelumnya ditolak); tutup harian per outlet (tabel baru `TutupHarian`); tutup tahun J-15.1 ke Laba Ditahan per outlet. |
 | 1.80 | Rincian **cetak struk bagian 2: printer Bluetooth** (keputusan pemilik produk v1.80: cetak Bluetooth **wajib**). Android: Bluetooth Classic SPP ke printer yang sudah di-pair (kanal Kotlin sendiri, RFCOMM UUID SPP, izin "Perangkat di sekitar") dan Bluetooth LE; iOS/iPadOS: Bluetooth LE; Windows: Bluetooth Classic lewat COM port virtual + Bluetooth LE. Pengaturan kasir memilih jenis sambungan lalu **Cari printer**. |
 | 1.79 | Rincian **cetak struk** (POS-11, POS-17, PLT-06; §22 Fase 1 no. 13 bagian 1): pengaturan struk satu untuk semua outlet di back-office `/kelola/kasir/struk` dengan pratinjau 58/80 mm (keputusan pemilik produk v1.79), paket `Paket/AdaptorPerangkat` (pengode ESC/POS internal + printer LAN/Wi-Fi port 9100), cetak otomatis setelah bayar + buka laci untuk tunai, cetak ulang bertanda, dan logo raster. Bluetooth, USB, printer bawaan Sunmi/iMin, printer sistem, wizard uji perangkat, struk digital, dan struk retur/void/tutup shift menyusul. |
@@ -829,6 +830,15 @@ And percobaan tersebut tercatat di log audit tenant dan log audit pengelola
 - BR-P10.2 Sebelum menaikkan `VersiMinimum`, sistem menampilkan jumlah perangkat di versi lama yang masih punya outbox tertunda. Perangkat tersebut tetap diizinkan mengirim outbox (§14.6).
 - BR-P10.3 Setiap perubahan flag produksi tercatat di audit, dengan alasan.
 
+**Rincian P-10 (v1.82; rincian diputuskan agen atas mandat D-12):**
+- **Rilis aplikasi** `/rilis` di Platform Pengelola (lihat `rilis.lihat`, ubah `rilis.kelola`; peran Teknis & Super Admin). Model platform `RilisAplikasi` (tanpa `MilikTenant`, di `Domain/Tenant`, aksi di `Domain/Pengelola/Rilis`). Langkah: catat draf (versi `MAJOR.MINOR.PATCH`, unik per aplikasi/platform/kanal; draf bisa diubah, rilis terbit tidak) → terbitkan: kanal **Beta** langsung ke semua perangkat tenant berpenanda Uji/Internal, kanal **Stabil** ke perangkat yang embernya (`crc32(Perangkat.Uuid) mod 100`) di bawah `PersenRollout` → ubah persen bertahap → **hentikan** (alasan wajib; perangkat yang belum memasang tidak ditawari lagi). Pencatatan otomatis dari CI belum ada; draf dicatat manual di halaman ini. Audit `rilis.draf.simpan`, `rilis.terbit`, `rilis.rollout.ubah`, `rilis.hentikan`.
+- **Versi minimum:** diambil dari rilis Stabil yang aktif (menu "Jadikan versi minimum"), berlaku mulai tanggal yang dipilih. BR-P10.1: paling cepat 7 hari dari hari ini (WIB), kecuali ditandai perbaikan keamanan (boleh hari ini, berlaku segera). BR-P10.2: dialog menampilkan jumlah perangkat aktif di platform itu yang masih di bawah versi tersebut dan berapa yang masih punya outbox tertunda; angka yang sama dicatat di audit `rilis.versi-minimum.atur`. Versi minimum yang belum berlaku bisa dibatalkan (`rilis.versi-minimum.batal`). Versi minimal efektif = `VersiMinimum` tertinggi yang sudah berlaku; rilis yang kemudian dihentikan tetap mempertahankan versi minimum yang sudah berlaku.
+- **`konfigurasi-aplikasi`** kini menghitung `VersiTerbaru`/`VersiMinimal`/`TautanUnduh` per perangkat dari `RilisAplikasi` (cadangan `config/aplikasi.php` bila belum ada rilis), menambah `Aplikasi.CatatanRilis`, dan mengisi `FlagFitur` (kunci → hidup/mati) untuk tenant perangkat. Perubahan aditif, kompatibel mundur.
+- **Header `X-Outbox-Tertunda`** (baru, opsional): aplikasi POS mengirim jumlah outbox tertunda di setiap permintaan ber-token; server menyimpannya di `Perangkat.JumlahOutboxTertunda` (header absen = nilai lama dipertahankan). Perangkat di bawah versi minimal tetap dilayani API dan boleh mengirim outbox.
+- **Flag fitur** `/flag-fitur` (lihat `rilis.lihat`, ubah `flag-fitur.kelola`): aturan per (kunci, cakupan, objek). Kunci berformat D-06, boleh kunci katalog fitur maupun flag aplikasi. Evaluasi per tenant: **Global mati = kill switch** (mengalahkan semua aturan) → aturan Tenant → aturan Paket (paket langganan) → Persentase (hidup bila `crc32(kunci|IdTenant) mod 100` < Persen, selain itu mati) → Global hidup; kunci tanpa aturan tidak dikirim dan dianggap hidup. `EvaluatorFitur` memakai hasil ini (fitur paket yang flag-nya mati = tidak aktif). Setiap simpan/hapus wajib alasan 10–500 karakter dan diaudit (`flag-fitur.simpan`, `flag-fitur.hapus`, BR-P10.3).
+- **Aplikasi kasir:** membaca `konfigurasi-aplikasi` saat data disegarkan dan setelah putaran sinkron yang tersambung (paling sering tiap 15 menit). Versi baru → bilah status "Versi X tersedia". Di bawah versi minimal → bilah status "Wajib perbarui aplikasi" dan layar Jual & Meja diganti panel "Perbarui aplikasi" (versi tujuan, tautan unduh yang bisa disalin, catatan "Yang baru", jumlah transaksi belum terkirim dengan anjuran menunggu sampai terkirim sebelum memperbarui); sinkron outbox tetap berjalan. Flag fitur tersedia di aplikasi (`KonfigurasiAplikasi.CekFlag`) untuk fitur berikutnya.
+- **Belum:** pengumuman & banner pemeliharaan per segmen serta catatan rilis di back-office (PGL-19, Fase 2), pemantauan crash-free sessions per versi (langkah 4), pencatatan rilis otomatis dari CI, pembaruan dalam aplikasi (Play in-app update) dan pemasangan installer Windows.
+
 ---
 
 ### P-11 · Monitoring Operasional
@@ -1016,7 +1026,7 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 - Langganan `Ditangguhkan`/`Berhenti`: aktivasi perangkat dan endpoint berjualan (mulai `kasir/masuk-pin`) ditolak `LanggananTidakAktif` (403); `konfigurasi-aplikasi` tetap terbuka dengan `Langganan.BolehBertransaksi = false`. Tenant yang turun ke paket Gratis boleh berjualan lagi.
 - PIN kasir: 6 angka per keanggotaan tenant (`TenantPengguna.HashPin`, `Hash::make`), ditolak bila angka sama semua atau deret naik/turun (misal 123456, 654321). Setiap anggota mengatur PIN sendiri di `/kelola/keamanan/pin`; pemegang izin `pengguna.pin.atur` (Pemilik, Admin, Manajer Outlet) mengatur ulang PIN anggota lain tanpa bisa melihatnya (bukan PIN Pemilik bila pelaku bukan Pemilik; pelaku berakses outlet terbatas hanya untuk anggota yang semua outletnya ada di outletnya). Verifikasi online `POST /api/pos/v1/kasir/masuk-pin`: hanya anggota aktif dengan akses ke outlet perangkat; 5 kali salah per perangkat + pengguna → terkunci 5 menit (`PinTerkunci`, 429). Distribusi hash PIN ke perangkat untuk verifikasi offline menyusul F-06.
 - Log audit: `perangkat.buat`, `perangkat.ubah`, `perangkat.kode-aktivasi.buat`, `perangkat.aktivasi`, `perangkat.cabut`, `outlet.kunci-kode`, `pengguna.pin.atur`, `pengguna.pin.atur-ulang`, `kasir.masuk-pin`, `kasir.pin.terkunci` (tanpa kode, token, atau PIN).
-- Versi aplikasi POS per platform (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`) sementara dari konfigurasi `config/aplikasi.php` sampai `RilisAplikasi` (P-10).
+- Versi aplikasi POS per platform (`VersiTerbaru`, `VersiMinimal`, `TautanUnduh`) dari `RilisAplikasi` per perangkat sejak P-10 (v1.82); `config/aplikasi.php` tetap menjadi cadangan selama belum ada rilis.
 
 ---
 
@@ -2608,7 +2618,7 @@ Aplikasi/Web/app/Domain/Pengelola/
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
 ├── Tagihan/            # TagihanLangganan, PembayaranLangganan, Dunning, LaporanMrr    (P-08)
 ├── Dukungan/           # TiketDukungan, AksesDukungan, AlatBantu                       (P-09)
-├── Rilis/              # RilisAplikasi, FlagFitur, Pengumuman                          (P-10)
+├── Rilis/              # Aksi RilisAplikasi, FlagFitur, Pengumuman (P-10); modelnya di Domain/Tenant
 ├── Operasional/        # DasborOperasional, Insiden, Alert                             (P-11)
 └── Mitra/              # Mitra, AtribusiMitra, KomisiMitra, PencairanKomisi            (P-12)
 
@@ -2808,7 +2818,7 @@ erDiagram
 | `Perangkat` | IdTenant, IdOutlet, Uuid, Kode (unik per tenant, tidak dipakai ulang), Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), HashToken (SHA-256 device token, F-02b), DiaktifkanPada, TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada. KunciPinOffline (terenkripsi, F-06; dikosongkan saat dicabut) |
 | `PerangkatPengguna` | IdPengguna, IdTenant, Aplikasi (Owner/Pos), Platform (Android/Ios/Windows), TokenPush, VersiAplikasi, TerakhirAktifPada, DicabutPada |
 | `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode (HMAC-SHA256), KedaluwarsaPada, DipakaiPada, DibatalkanPada, IdPenggunaPembuat. Data platform tanpa `MilikTenant` (dicari lewat `HashKode` sebelum tenant diketahui, F-02b) |
-| `RilisAplikasi` | Aplikasi (Pos/Owner), Platform, Kanal (Beta/Stabil), Versi, Build, VersiMinimum, UrlUnduh, CatatanRilis, PersenRollout |
+| `RilisAplikasi` | Aplikasi (Pos/Pemilik), Platform, Kanal (Beta/Stabil), Versi, Build, Status (Draf/Aktif/Dihentikan), PersenRollout, UrlUnduh, CatatanRilis, VersiMinimum, VersiMinimumBerlakuPada, PerbaikanKeamanan, DiterbitkanPada, DihentikanPada, AlasanDihentikan, DibuatOleh (rincian v1.82) |
 | `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran (tidak dipakai untuk anggota `SemuaOutlet`) |
 | `Peran` / `PeranIzin` | IdTenant, Uuid, Kode (peran bawaan §19.1; kosong = kustom), Nama, Keterangan, Bawaan / IdTenant, IdPeran, KunciIzin |
 | `UndanganPengguna` | IdTenant, Uuid, Email, HashToken, IdPeran, SemuaOutlet, DaftarIdOutlet JSON, IdPenggunaPengundang, BerlakuSampai (72 jam), DiterimaPada, IdPenggunaPenerima, DibatalkanPada. Tanpa `MilikTenant` (dibuka penerima sebelum menjadi anggota; dicari lewat hash token) |
@@ -2974,7 +2984,7 @@ erDiagram
 | `Addon` / `LanggananAddon` | Kode, Nama, HargaBulanan, KunciFitur, TambahanBatas JSON, Status (Aktif/Diarsipkan) / IdLangganan, IdAddon, Jumlah, MulaiPada, SelesaiPada (LanggananAddon dibuat di F-19) |
 | `KuponLangganan` / `KuponLanggananPemakaian` | Kode, Jenis (Persen/Nominal), Nilai, DurasiBulan, Kuota, DaftarKodePaket JSON (null = semua paket), BerlakuSampai, Aktif / IdKupon, IdTenant, IdTagihanLangganan (pemakaian dibuat di P-08; rincian: BulanDiskon, Diskon, DibatalkanPada; tanpa `MilikTenant` karena kuota dihitung lintas tenant) |
 | `OverrideTenant` | Uuid, IdTenant, Jenis (Batas/Fitur/Trial), Kunci, Nilai, BerakhirPada (wajib; lewat = diabaikan), Alasan, DibuatOleh. Baris tidak dihapus; jenis Trial = jejak perpanjangan trial (BR-P07.6, BR-P07.7). Tanpa `MilikTenant` (data platform) |
-| `FlagFitur` | Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek, Nilai, Persen, Alasan, DiubahOleh |
+| `FlagFitur` | Uuid, Kunci, Cakupan (Global/Paket/Tenant/Persentase), IdObjek (Paket.Id/Tenant.Id), Nilai, Persen, Alasan, DiubahOleh; unik per Kunci+Cakupan+IdObjek (v1.82) |
 | `KonfigurasiIntegrasi` | Jenis (Email/Captcha/Penyimpanan, bertambah per flow), Lingkungan (Staging/Produksi), Penyedia (Smtp/Turnstile/S3), Pengaturan JSON (tidak rahasia), Kredensial (terenkripsi), PetunjukKredensial JSON (4 karakter terakhir, BR-P05.1), Aktif, Status (BelumDiuji/Terhubung/Gagal), TerakhirDiujiPada, HasilUji JSON, GagalBeruntun, KredensialDiubahPada, RotasiSetiapHari (unik per Jenis + Lingkungan) |
 | `DokumenLegal` / `PersetujuanDokumenLegal` | Jenis (SyaratKetentuan/KebijakanPrivasi/PerjanjianPemrosesanData/Sla/KontrakMitra), Versi (angka urut per jenis), Judul, Isi (Markdown), RingkasanPerubahan, Materiil, BerlakuMulai, Status (Draf/Terbit), IdPenggunaPengelolaPenerbit, DiterbitkanPada / IdDokumenLegal, IdTenant, IdPengguna, DisetujuiPada, Ip (dibuat di F-00) |
 | `PengumumanDokumenLegal` | IdDokumenLegal, IdPengguna, DikirimPada; unik per versi per pengguna, append-only (BR-P06.5) |
@@ -3014,7 +3024,7 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 | Lapisan | Prefix | Auth | Konsumen | Versi |
 |---|---|---|---|---|
 | Internal | `/internal/*` | Sesi + CSRF (Sanctum stateful) | Back-office web & web publik {{APP}} (TanStack Query) | Tidak diversi, berubah bersama frontend |
-| POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Id-Kasir` + `Idempotency-Key` + `X-Versi-Aplikasi` | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Skema-Sinkron`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
+| POS | `/api/pos/v1/*` | **Device token** (Sanctum, abilities per tipe perangkat) + `X-Id-Kasir` + `Idempotency-Key` + `X-Versi-Aplikasi` + `X-Outbox-Tertunda` (opsional, P-10 v1.82) | Aplikasi Flutter | Berversi URL (`v1`) + versi skema sinkron (`X-Skema-Sinkron`). Wajib kompatibel mundur untuk 2 versi minor aplikasi |
 | Owner | `/api/pemilik/v1/*` | **User token** (Sanctum, berumur terbatas + refresh) | Aplikasi Owner Flutter | Berversi URL, kompatibel mundur 2 versi minor aplikasi (§17.3.4) |
 | Publik | `/api/v1/*` | Sanctum Personal Access Token dengan scope (`produk:baca`, `penjualan:baca`, `stok:tulis`, ...) | Integrasi pihak ketiga | Semantic, deprecation ≥ 6 bulan |
 

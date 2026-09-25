@@ -394,6 +394,16 @@ class RepositoriKasir {
         ),
       );
 
+  /// Jumlah outbox tertunda saat ini (header `X-Outbox-Tertunda`, P-10 BR-P10.2).
+  Future<int> HitungJumlahTertunda() {
+    final jumlah = db.outbox.Id.count();
+    return (db.selectOnly(db.outbox)
+          ..addColumns([jumlah])
+          ..where(db.outbox.Status.equals(StatusOutbox.tertunda)))
+        .map((r) => r.read(jumlah) ?? 0)
+        .getSingle();
+  }
+
   Stream<int> PantauJumlahTertunda() {
     final jumlah = db.outbox.Id.count();
     return (db.selectOnly(db.outbox)

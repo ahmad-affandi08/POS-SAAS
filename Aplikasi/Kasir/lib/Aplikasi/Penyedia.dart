@@ -72,6 +72,8 @@ final penyediaKlienPos = Provider<KlienPos>((ref) {
     versiAplikasi: '0.1.0',
     ambilToken: () => rahasia.Baca(PenyimpanRahasia.kunciToken),
     klien: ref.watch(penyediaKlienHttp),
+    // P-10 BR-P10.2: server tahu perangkat mana yang masih menyimpan transaksi belum terkirim.
+    ambilJumlahOutbox: () => ref.read(penyediaRepositori).HitungJumlahTertunda(),
   );
 });
 
@@ -521,6 +523,38 @@ class PengaturKoneksi extends Notifier<StatusKoneksi> {
 
 final penyediaKoneksi = NotifierProvider<PengaturKoneksi, StatusKoneksi>(PengaturKoneksi.new);
 
+/// P-10 (§14.6): konfigurasi aplikasi terakhir dari server (versi terbaru/minimal, catatan rilis, flag fitur). Null =
+/// belum pernah berhasil dibaca (offline): aplikasi tetap berjalan. Diperiksa saat data disegarkan dan paling sering
+/// tiap [selangPeriksa] dari putaran sinkron.
+class PengaturKonfigurasiAplikasi extends Notifier<KonfigurasiAplikasi?> {
+  static const Duration selangPeriksa = Duration(minutes: 15);
+
+  DateTime? _terakhir;
+
+  @override
+  KonfigurasiAplikasi? build() => null;
+
+  Future<void> Periksa({bool paksa = false}) async {
+    final sekarang = ref.read(penyediaJam)();
+    final terakhir = _terakhir;
+    if (!paksa && terakhir != null && sekarang.difference(terakhir) < selangPeriksa) {
+      return;
+    }
+    _terakhir = sekarang;
+    try {
+      state = await ref.read(penyediaKlienPos).AmbilKonfigurasiAplikasi();
+    } on GalatJaringan {
+      _terakhir = null;
+    } on GalatApi {
+      // Perangkat dicabut / galat server: ditangani alur sinkron; konfigurasi lama tetap dipakai.
+    }
+  }
+}
+
+final penyediaKonfigurasiAplikasi = NotifierProvider<PengaturKonfigurasiAplikasi, KonfigurasiAplikasi?>(
+  PengaturKonfigurasiAplikasi.new,
+);
+
 enum TahapSesi { Memuat, BelumAktif, PilihKasir, Masuk }
 
 /// Kunci layar ruang kerja (§17.2.7): `Terkunci` = buka dengan PIN kasir yang sama atau ganti kasir; `GantiKasir` =
@@ -607,6 +641,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       if (tersambung) {
         await PerbaruiKatalog();
         await PerbaruiDataMeja();
+        await ref.read(penyediaKonfigurasiAplikasi.notifier).Periksa(paksa: true);
       }
     } on GalatKasir catch (galat) {
       _Dicabut(galat.pesan);
@@ -649,6 +684,9 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     }
     if (hasil.perangkatDicabut) {
       _Dicabut('Perangkat ini sudah dicabut dari back-office. Data yang belum terkirim tetap tersimpan di perangkat.');
+    } else if (hasil.tersambung != false) {
+      // P-10: versi & flag diperiksa paling sering tiap 15 menit, tidak saat offline.
+      await ref.read(penyediaKonfigurasiAplikasi.notifier).Periksa();
     }
     return hasil;
   }

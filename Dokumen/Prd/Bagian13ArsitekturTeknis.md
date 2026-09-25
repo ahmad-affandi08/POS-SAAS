@@ -481,7 +481,7 @@ Aplikasi/Web/app/Domain/Pengelola/
 ├── Tenant/             # Tampilan360, OverrideTenant, SkorKesehatan, PenghapusanData   (P-07)
 ├── Tagihan/            # TagihanLangganan, PembayaranLangganan, Dunning, LaporanMrr    (P-08)
 ├── Dukungan/           # TiketDukungan, AksesDukungan, AlatBantu                       (P-09)
-├── Rilis/              # RilisAplikasi, FlagFitur, Pengumuman                          (P-10)
+├── Rilis/              # Aksi RilisAplikasi, FlagFitur, Pengumuman (P-10); modelnya di Domain/Tenant
 ├── Operasional/        # DasborOperasional, Insiden, Alert                             (P-11)
 └── Mitra/              # Mitra, AtribusiMitra, KomisiMitra, PencairanKomisi            (P-12)
 

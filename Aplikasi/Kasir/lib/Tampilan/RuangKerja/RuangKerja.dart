@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:klien_api/KlienApi.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../../Aplikasi/Penyedia.dart';
@@ -26,6 +27,7 @@ import '../Shift/LembarTutupShift.dart';
 import 'BilahAtasRuangKerja.dart';
 import 'ItemNavigasi.dart';
 import 'LayarKunci.dart';
+import 'PanelWajibPembaruan.dart';
 
 /// Bingkai Ruang Kerja Kasir (PRD §17.2.7, D-16): bilah atas, rel navigasi (bilah bawah di HP), area kerja, dan bilah
 /// status. Membungkus semua layar setelah shift terbuka; layar fitur hanya mengisi area kerja. Tugas rutin (kas
@@ -78,6 +80,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   late final PenjagaLayarMenyala _penjagaLayar;
 
   bool get _terkunci => widget.kunci != KeadaanKunci.Bebas;
+
+  KonfigurasiAplikasi? get _konfigurasi => ref.watch(penyediaKonfigurasiAplikasi);
 
   @override
   void initState() {
@@ -202,6 +206,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   }
 
   Widget _BangunLayar(TujuanRuangKerja tujuan) => switch (tujuan) {
+    // P-10: di bawah versi minimal, layar jual & meja dikunci sampai aplikasi diperbarui (outbox tetap terkirim).
+    TujuanRuangKerja.Jual ||
+    TujuanRuangKerja.Meja when _konfigurasi?.wajibPembaruan == true => PanelWajibPembaruan(konfigurasi: _konfigurasi!),
     TujuanRuangKerja.Jual => LayarJual(
       kasir: widget.kasir,
       aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && !_adaPanel,
@@ -248,6 +255,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         )
       else
         const ItemBilahStatus(ikon: Icons.cloud_done_outlined, teks: 'Tersinkron', nada: NadaStatus.Sukses),
+      if (_konfigurasi case final k? when k.wajibPembaruan)
+        const ItemBilahStatus(ikon: Icons.system_update, teks: 'Wajib perbarui aplikasi', nada: NadaStatus.Bahaya)
+      else if (_konfigurasi case final k? when k.adaPembaruan)
+        ItemBilahStatus(ikon: Icons.system_update_outlined, teks: 'Versi ${k.versiTerbaru ?? 'baru'} tersedia'),
       switch (ref.watch(penyediaPrinter)) {
         StatusPrinter(keadaan: KeadaanPrinter.BelumDiatur) => const ItemBilahStatus(
           ikon: Icons.print_disabled_outlined,

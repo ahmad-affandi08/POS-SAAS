@@ -460,4 +460,61 @@ void main() {
     expect(p.baris.single.catatan, 'Krim vanila');
     expect(hasil.uuidMetodeUangMuka, 'MUM');
   });
+
+  test(
+    'P-10 konfigurasi-aplikasi: header X-Outbox-Tertunda, versi, catatan rilis, dan flag fitur (kunci bertitik)',
+    () async {
+      late http.Request dikirim;
+      final klien = KlienPos(
+        alamatDasar: Uri.parse('https://kasir.contoh.id/'),
+        versiAplikasi: '1.4.0',
+        ambilToken: () => 'Tkn',
+        ambilJumlahOutbox: () => 3,
+        klien: MockClient((permintaan) async {
+          dikirim = permintaan;
+          return Json({
+            'Aplikasi': {
+              'VersiSaatIni': '1.4.0',
+              'VersiTerbaru': '1.5.0',
+              'VersiMinimal': '1.5.0',
+              'TautanUnduh': 'https://unduh.payou.id/kasir.apk',
+              'CatatanRilis': 'Cetak struk Bluetooth.',
+              'AdaPembaruan': true,
+              'WajibPembaruan': true,
+            },
+            'FlagFitur': {'pos.mode-meja': false, 'kasir.struk-digital': true, 'rusak': 'ya'},
+          }, 200);
+        }),
+      );
+
+      final konfigurasi = await klien.AmbilKonfigurasiAplikasi();
+
+      expect(dikirim.url.path, '/api/pos/v1/konfigurasi-aplikasi');
+      expect(dikirim.headers['X-Outbox-Tertunda'], '3');
+      expect(konfigurasi.wajibPembaruan, isTrue);
+      expect(konfigurasi.versiTerbaru, '1.5.0');
+      expect(konfigurasi.catatanRilis, 'Cetak struk Bluetooth.');
+      expect(konfigurasi.flagFitur, {'pos.mode-meja': false, 'kasir.struk-digital': true});
+      expect(konfigurasi.CekFlag('pos.mode-meja'), isFalse);
+      expect(konfigurasi.CekFlag('tidak.ada'), isTrue);
+    },
+  );
+
+  test(
+    'P-10 server lama tanpa FlagFitur & versi: nilai bawaan aman; tanpa ambilJumlahOutbox header tidak dikirim',
+    () async {
+      late http.Request dikirim;
+      final klien = BuatKlien((permintaan) async {
+        dikirim = permintaan;
+        return Json({'Aplikasi': <String, Object?>{}}, 200);
+      });
+
+      final konfigurasi = await klien.AmbilKonfigurasiAplikasi();
+
+      expect(dikirim.headers.containsKey('X-Outbox-Tertunda'), isFalse);
+      expect(konfigurasi.wajibPembaruan, isFalse);
+      expect(konfigurasi.adaPembaruan, isFalse);
+      expect(konfigurasi.flagFitur, isEmpty);
+    },
+  );
 }

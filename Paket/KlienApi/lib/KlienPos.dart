@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
+import 'Model/ModelKonfigurasi.dart';
 import 'Model/ModelMeja.dart';
 import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
@@ -15,7 +16,8 @@ import 'Model/ModelPromo.dart';
 import 'Model/ModelRetur.dart';
 import 'Model/UraiJson.dart';
 
-/// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`) dan `X-Versi-Aplikasi`.
+/// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`), `X-Versi-Aplikasi`, dan
+/// `X-Outbox-Tertunda` (P-10 BR-P10.2: jumlah transaksi belum terkirim, bila [ambilJumlahOutbox] diberikan).
 /// Galat server → `GalatApi`; server tak terjangkau, waktu habis, atau 5xx → `GalatJaringan` (aman dicoba lagi).
 class KlienPos {
   KlienPos({
@@ -24,12 +26,14 @@ class KlienPos {
     required this.ambilToken,
     http.Client? klien,
     this.batasWaktu = const Duration(seconds: 20),
+    this.ambilJumlahOutbox,
   }) : _klien = klien ?? http.Client();
 
   final Uri alamatDasar;
   final String versiAplikasi;
   final FutureOr<String?> Function() ambilToken;
   final Duration batasWaktu;
+  final FutureOr<int?> Function()? ambilJumlahOutbox;
   final http.Client _klien;
 
   Future<HasilAktivasi> AktifkanPerangkat({required String kode, required String platform, String? versiOs}) async {
@@ -41,6 +45,10 @@ class KlienPos {
     }, pakaiToken: false);
     return HasilAktivasi.DariJson(json);
   }
+
+  /// Versi terbaru/minimal, catatan rilis, dan flag fitur (§14.6, P-10).
+  Future<KonfigurasiAplikasi> AmbilKonfigurasiAplikasi() async =>
+      KonfigurasiAplikasi.DariJson(await _Kirim('GET', 'konfigurasi-aplikasi', null));
 
   Future<DataAwal> AmbilDataAwal() async => DataAwal.DariJson(await _Kirim('GET', 'data-awal', null));
 
@@ -206,6 +214,10 @@ class KlienPos {
       final token = await ambilToken();
       if (token != null && token.isNotEmpty) {
         permintaan.headers['Authorization'] = 'Bearer $token';
+      }
+      final outbox = await ambilJumlahOutbox?.call();
+      if (outbox != null) {
+        permintaan.headers['X-Outbox-Tertunda'] = '$outbox';
       }
     }
 
