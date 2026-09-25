@@ -1,0 +1,96 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'DokumenStruk.dart';
+import 'TataLetakStruk.dart';
+
+/// Perintah ESC/POS yang dipakai (subset yang didukung hampir semua printer thermal 58/80 mm).
+abstract final class PerintahEscPos {
+  static const List<int> inisialisasi = [0x1B, 0x40];
+  static const List<int> rataKiri = [0x1B, 0x61, 0x00];
+  static const List<int> rataTengah = [0x1B, 0x61, 0x01];
+  static const List<int> tebalNyala = [0x1B, 0x45, 0x01];
+  static const List<int> tebalMati = [0x1B, 0x45, 0x00];
+  static const List<int> ukuranNormal = [0x1D, 0x21, 0x00];
+  static const List<int> ukuranGanda = [0x1D, 0x21, 0x11];
+
+  /// `ESC p 0 t1 t2`: pulsa laci kas di pin 2 (50 ms nyala, 500 ms jeda).
+  static const List<int> bukaLaci = [0x1B, 0x70, 0x00, 0x19, 0xFA];
+
+  /// `ESC d 4` lalu `GS V 66 0`: dorong kertas melewati pisau, potong sebagian.
+  static const List<int> potongKertas = [0x1B, 0x64, 0x04, 0x1D, 0x56, 0x42, 0x00];
+  static const int barisBaru = 0x0A;
+}
+
+/// Mengubah [DokumenStruk] menjadi byte ESC/POS. Teks melewati [TataLetakStruk] (sudah ASCII & selebar kertas).
+abstract final class PengodeEscPos {
+  static Uint8List Kodekan(DokumenStruk dokumen, LebarKertas lebar) {
+    final keluaran = BytesBuilder(copy: false)..add(PerintahEscPos.inisialisasi);
+    if (dokumen.bukaLaci) {
+      keluaran.add(PerintahEscPos.bukaLaci);
+    }
+    for (final baris in TataLetakStruk.Susun(dokumen, lebar)) {
+      switch (baris) {
+        case BarisCetakTeks(:final teks, :final tebal, :final besar):
+          if (tebal) keluaran.add(PerintahEscPos.tebalNyala);
+          if (besar) keluaran.add(PerintahEscPos.ukuranGanda);
+          keluaran
+            ..add(ascii.encode(teks))
+            ..addByte(PerintahEscPos.barisBaru);
+          if (besar) keluaran.add(PerintahEscPos.ukuranNormal);
+          if (tebal) keluaran.add(PerintahEscPos.tebalMati);
+        case BarisCetakQr(:final data, :final ukuranModul):
+          keluaran
+            ..add(PerintahEscPos.rataTengah)
+            ..add(KodekanQr(data, ukuranModul))
+            ..addByte(PerintahEscPos.barisBaru)
+            ..add(PerintahEscPos.rataKiri);
+        case BarisCetakGambar(:final gambar):
+          keluaran
+            ..add(PerintahEscPos.rataTengah)
+            ..add(KodekanGambar(gambar, lebar))
+            ..add(PerintahEscPos.rataKiri);
+      }
+    }
+    if (dokumen.potong) {
+      keluaran.add(PerintahEscPos.potongKertas);
+    }
+    return keluaran.takeBytes();
+  }
+
+  /// Hanya pulsa laci (tombol "Buka laci" tanpa mencetak).
+  static Uint8List KodekanBukaLaci() =>
+      Uint8List.fromList([...PerintahEscPos.inisialisasi, ...PerintahEscPos.bukaLaci]);
+
+  /// QR model 2, koreksi galat M: `GS ( k` fungsi 165 (model), 167 (ukuran), 169 (koreksi), 180 (simpan), 181 (cetak).
+  static List<int> KodekanQr(String data, int ukuranModul) {
+    final isi = utf8.encode(data);
+    final panjang = isi.length + 3;
+    return [
+      ...[0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00],
+      ...[0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, ukuranModul],
+      ...[0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31],
+      ...[0x1D, 0x28, 0x6B, panjang & 0xFF, panjang >> 8, 0x31, 0x50, 0x30, ...isi],
+      ...[0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30],
+    ];
+  }
+
+  /// Gambar raster `GS v 0` (mode normal): 1 bit per titik, bit tertinggi = titik paling kiri. Dipotong ke lebar kertas.
+  static List<int> KodekanGambar(GambarMonokrom gambar, LebarKertas lebar) {
+    final lebarTitik = gambar.lebar > lebar.titik ? lebar.titik : gambar.lebar;
+    final lebarByte = (lebarTitik + 7) ~/ 8;
+    final data = Uint8List(lebarByte * gambar.tinggi);
+    for (var y = 0; y < gambar.tinggi; y++) {
+      for (var x = 0; x < lebarTitik; x++) {
+        if (gambar.titik[y * gambar.lebar + x] == 1) {
+          data[y * lebarByte + (x >> 3)] |= 0x80 >> (x & 7);
+        }
+      }
+    }
+    return [
+      0x1D, 0x76, 0x30, 0x00, //
+      lebarByte & 0xFF, lebarByte >> 8, gambar.tinggi & 0xFF, gambar.tinggi >> 8,
+      ...data,
+    ];
+  }
+}

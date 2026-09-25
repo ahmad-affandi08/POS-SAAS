@@ -107,5 +107,5 @@ jobs:
         run: dart pub get --enforce-lockfile
       - name: Pasang melos
         run: dart pub global activate melos 7.8.2
-      - name: dart format + flutter analyze + test (Inti, MesinKasir + vektor uji, SistemDesain, Kasir, Pemilik)
+      - name: dart format + flutter analyze + test (AdaptorPerangkat, Inti, MesinKasir + vektor uji, SistemDesain, Kasir, Pemilik)
         run: melos run periksa

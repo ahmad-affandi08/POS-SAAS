@@ -1,0 +1,12 @@
+name: adaptor_perangkat
+description: Adaptor perangkat keras kasir (PRD §17.2.5) - printer struk ESC/POS & transport. Dart murni, tanpa Flutter.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
