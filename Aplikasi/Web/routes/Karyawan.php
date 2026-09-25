@@ -9,6 +9,7 @@ use App\Http\Kontroler\Kelola\Karyawan\KaryawanKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KasbonKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KomisiKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\RekapGajiKontroler;
+use App\Http\Kontroler\Kelola\Karyawan\TargetPenjualanKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
     Route::get('/komisi/laporan', [KomisiKontroler::class, 'Laporan'])->name('kelola.karyawan.komisi.laporan');
     // F-18 bagian 3: kasbon karyawan (J-18.1).
     Route::get('/kasbon', [KasbonKontroler::class, 'Daftar'])->name('kelola.karyawan.kasbon');
+    // F-18 bagian 3: target penjualan & progres.
+    Route::get('/target', [TargetPenjualanKontroler::class, 'Tampil'])->name('kelola.karyawan.target');
     Route::get('/absensi/{absensi}/swafoto/{jenis}', [AbsensiKontroler::class, 'Swafoto'])->where(['absensi' => $ulid, 'jenis' => 'masuk|keluar'])->name('kelola.karyawan.absensi.swafoto');
 
     Route::middleware($izin(IzinTenant::KaryawanKelola))->group(function () use ($ulid): void {
@@ -56,6 +59,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::get('/gaji/{rekap}/ekspor', [RekapGajiKontroler::class, 'Ekspor'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.ekspor');
         Route::put('/gaji/{rekap}/baris/{karyawan}', [RekapGajiKontroler::class, 'UbahBaris'])->where(['rekap' => $ulid, 'karyawan' => $ulid])->name('kelola.karyawan.gaji.baris');
         Route::post('/gaji/{rekap}/bayar', [RekapGajiKontroler::class, 'Bayar'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.bayar');
+        Route::put('/target', [TargetPenjualanKontroler::class, 'Simpan'])->name('kelola.karyawan.target.simpan');
+        Route::delete('/target/{target}', [TargetPenjualanKontroler::class, 'Hapus'])->where('target', $ulid)->name('kelola.karyawan.target.hapus');
         Route::delete('/gaji/{rekap}', [RekapGajiKontroler::class, 'Hapus'])->where('rekap', $ulid)->name('kelola.karyawan.gaji.hapus');
     });
 });

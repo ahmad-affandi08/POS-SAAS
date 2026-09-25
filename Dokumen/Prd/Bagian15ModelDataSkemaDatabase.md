@@ -199,8 +199,10 @@ erDiagram
 | `JadwalKerja` | IdTenant, IdKaryawan, IdOutlet, Tanggal, JamMulai, JamSelesai (`HH:mm`); unik (IdKaryawan, Tanggal) (F-18) |
 | `Absensi` | IdTenant, Uuid (dari perangkat), IdKaryawan, IdOutlet, IdPerangkat, TanggalBisnis, MasukPada, KeluarPada, PathSwafotoMasuk, PathSwafotoKeluar (F-18; Lintang/Bujur menyusul geofence) |
 | `AturanKomisi` | IdTenant, Uuid, Nama, Cakupan (Semua/Kategori/Produk), UuidProduk, UuidKategori, LevelStaf, Jenis (Persen/Tetap), Nilai, Status (Aktif/Diarsipkan) (F-18) |
-| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan; unik (IdPenjualanDetail, IdKaryawan) (F-18) |
-| `Penggajian` / `PenggajianDetail` | Periode, Status / Pendapatan JSON, Potongan JSON |
+| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan, DasarDibatalkan (void/retur, untuk realisasi target); unik (IdPenjualanDetail, IdKaryawan) (F-18) |
+| `Kasbon` / `PelunasanKasbon` | IdTenant, Uuid, IdKaryawan, Tanggal, Jumlah, Sisa, Status (Aktif/Lunas/Dibatalkan), IdAkunKasBank, IdJurnal, AlasanBatal / IdKasbon, Tanggal, Jumlah, Cara (KasBank/PotongGaji), IdRekapGaji, IdJurnal (F-18 bagian 3) |
+| `RekapGaji` / `RekapGajiBaris` | IdTenant, Uuid, Periode (`YYYY-MM`, unik per tenant), Status (Draf/Dibayar), TotalKotor, TotalPotongan, TotalBersih, TanggalBayar, IdAkunKasBank, IdAkunBeban, IdJurnal / IdRekapGaji, IdKaryawan (unik per rekap), GajiPokok, Komisi, Tambahan, PotonganKasbon, PotonganLain, Bersih, Catatan (F-18 bagian 3) |
+| `TargetPenjualan` | IdTenant, Uuid, Periode, Cakupan (Outlet/Karyawan), IdOutlet, IdKaryawan, KunciSasaran (`Outlet:{Id}`/`Karyawan:{Id}`), Nilai; unik (IdTenant, Periode, KunciSasaran) (F-18 bagian 3) |
 
 **Sistem**
 

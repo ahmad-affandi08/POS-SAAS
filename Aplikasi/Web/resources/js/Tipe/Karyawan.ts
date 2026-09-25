@@ -191,3 +191,31 @@ export type PropsDetailRekapGaji = {
     OpsiAkunKasBank: OpsiAkunGaji[];
     OpsiAkunBeban: OpsiAkunGaji[];
 };
+
+/** F-18 bagian 3: target penjualan bulanan per outlet/karyawan + progres. */
+export type CakupanTargetPenjualan = 'Outlet' | 'Karyawan';
+
+export type BarisTargetPenjualan = {
+    Uuid: string;
+    Cakupan: CakupanTargetPenjualan;
+    LabelCakupan: string;
+    UuidSasaran: string;
+    NamaSasaran: string;
+    Nilai: string;
+    Realisasi: string;
+    /** Persen realisasi ÷ target, 1 desimal ("82.5"); bisa > 100. */
+    Persen: string;
+    Sisa: string;
+    /** Hanya bulan berjalan: realisasi ÷ hari berlalu × jumlah hari. */
+    Proyeksi: string | null;
+};
+
+export type PropsTargetPenjualan = {
+    Periode: string;
+    Berjalan: boolean;
+    OpsiPeriode: { Nilai: string; Label: string }[];
+    Target: BarisTargetPenjualan[];
+    OpsiOutlet: OpsiUuidNama[];
+    OpsiKaryawan: OpsiUuidNama[];
+    Izin: { Kelola: boolean };
+};

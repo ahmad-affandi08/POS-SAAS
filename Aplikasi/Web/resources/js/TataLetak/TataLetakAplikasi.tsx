@@ -123,8 +123,9 @@ const menuKaryawan: ItemMenu[] = [
     // F-18 bagian 2: komisi.
     { label: 'Aturan komisi', href: '/kelola/karyawan/komisi', izin: IzinTenant.KaryawanLihat },
     { label: 'Laporan komisi', href: '/kelola/karyawan/komisi/laporan', izin: IzinTenant.KaryawanLihat },
-    // F-18 bagian 3: kasbon.
+    // F-18 bagian 3: kasbon, target penjualan.
     { label: 'Kasbon', href: '/kelola/karyawan/kasbon', izin: IzinTenant.KaryawanLihat },
+    { label: 'Target penjualan', href: '/kelola/karyawan/target', izin: IzinTenant.KaryawanLihat },
     // F-18 bagian 3: rekap gaji bulanan (memuat gaji).
     { label: 'Rekap gaji', href: '/kelola/karyawan/gaji', izin: IzinTenant.KaryawanKelola },
 ];

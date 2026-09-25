@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.84 |
+| Versi | 1.85 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.85 | Rincian **F-18 bagian 3** (EMP-05 target penjualan, EMP-06 rekap gaji & kasbon; rincian diputuskan agen atas mandat D-12): kasbon karyawan dengan jurnal J-18.1 (catat, pelunasan ke kas/bank, batal = jurnal pembalik), rekap gaji bulanan (gaji pokok + komisi bersih + tambahan − potongan kasbon − potongan lain; bayar = jurnal J-18.2, potongan kasbon melunasi kasbon terlama dulu; append-only setelah dibayar), target penjualan bulanan per outlet/karyawan dengan progres & proyeksi. Tabel rencana `Penggajian`/`PenggajianDetail` diganti `RekapGaji`/`RekapGajiBaris`; `Komisi` mendapat `DasarDibatalkan`. |
 | 1.84 | Rincian **cetak struk bagian 3b** (POS-11; rincian diputuskan agen atas mandat D-12): aplikasi kasir mencetak bukti void, nota retur, laporan X (manual) dan laporan Z (otomatis bila cetak otomatis aktif); laci dibuka pada cetak otomatis pertama bukti void/nota retur bila ada refund tunai dari laci. |
 | 1.83 | Rincian **cetak struk bagian 3a: struk digital** (POS-11; rincian diputuskan agen atas mandat D-12): halaman publik `/s/{kodeStruk}` dengan kode `{IdTenant basis-36}.{Uuid penjualan}` yang bisa disusun kasir saat offline, QR + tautan di struk cetak, saklar "QR struk digital" di pengaturan struk. |
 | 1.82 | Rincian **P-10 rilis aplikasi & flag fitur** (PGL-18; rincian diputuskan agen atas mandat D-12): `RilisAplikasi` (Draf/Aktif/Dihentikan, kanal Beta untuk tenant Uji/Internal, rollout bertahap per ember perangkat), versi minimum dengan pengumuman ≥ 7 hari (BR-P10.1) dan dampak perangkat lama + outbox (BR-P10.2, header baru `X-Outbox-Tertunda`), `FlagFitur` Global/Paket/Tenant/Persentase dengan kill switch dan audit beralasan (BR-P10.3), aplikasi kasir membaca `konfigurasi-aplikasi` dan mengunci layar jual saat wajib perbarui. Pengumuman & banner pemeliharaan (PGL-19) tetap Fase 2. |
@@ -1648,6 +1649,12 @@ promo:
 - **Laporan komisi** `/kelola/karyawan/komisi/laporan` (`TabelData` mode server; saring tanggal bisnis & outlet, cari nama): per karyawan jumlah baris dilayani, nilai penjualan (dasar × porsi), komisi, batal (void/retur), bersih; ringkasan total bersih.
 - **Belum di bagian 2 (bagian 3):** target penjualan, kasbon (J-18.1), rekap gaji & jurnal komisi (Dr Beban Gaji & Komisi, Cr Hutang Komisi/Kas), komisi bertingkat per omzet, porsi pembagian tidak rata.
 
+**Rincian F-18 bagian 3 (v1.85, EMP-05 target penjualan & EMP-06 rekap gaji & kasbon; rincian diputuskan agen atas mandat D-12):**
+- **Kasbon** `/kelola/karyawan/kasbon` (lihat `karyawan.lihat`, ubah `karyawan.kelola`; `TabelData` mode server, saring status/karyawan/tanggal): catat kasbon karyawan aktif (tanggal ≤ hari ini, jumlah > 0, akun kas/bank sumber) = jurnal **J-18.1** Dr Piutang Karyawan / Cr kas/bank. **Pelunasan** sebagian atau penuh ke kas/bank (≤ sisa) = Dr kas/bank / Cr Piutang Karyawan; sisa 0 = `Lunas`. **Batal** (dengan alasan) hanya untuk kasbon yang belum pernah dilunasi = jurnal pembalik. Audit `kasbon.catat|lunasi|batal`.
+- **Rekap gaji** `/kelola/karyawan/gaji` (seluruhnya `karyawan.kelola` karena memuat gaji; menu Karyawan › Rekap gaji): satu rekap per periode `YYYY-MM` (tidak setelah bulan berjalan). Draf berisi karyawan aktif atau yang mendapat komisi periode itu, dengan gaji pokok atau komisi > 0: **komisi** = komisi bersih (komisi − dibatalkan) tanggal bisnis periode; **potongan kasbon** awal = min(sisa kasbon aktif, gaji kotor). Pengelola mengubah per karyawan: tambahan (lembur/tunjangan), potongan kasbon (≤ sisa kasbon), potongan lain, catatan; gaji bersih tidak boleh minus. Draf bisa dihapus. **Bayar** (tanggal ≤ hari ini, akun kas/bank, akun beban bawaan 6-1000 Beban Gaji & Komisi) = jurnal **J-18.2** per outlet utama karyawan: Dr beban Σ kotor / Cr Piutang Karyawan Σ potongan kasbon / Cr Pendapatan Lain Σ potongan lain / Cr kas/bank Σ bersih; potongan kasbon dicatat sebagai pelunasan `PotongGaji` kasbon terlama dulu. Setelah dibayar rekap tidak bisa diubah/dihapus. Ekspor CSV per rekap. Komisi yang dibatalkan setelah gaji dibayar tidak dipotong otomatis. Audit `rekap-gaji.buat|ubah|hapus|bayar`.
+- **Target penjualan** `/kelola/karyawan/target` (lihat `karyawan.lihat`, ubah `karyawan.kelola`): target bulanan per **outlet** (yang boleh diakses pengguna) atau per **karyawan aktif**, satu per sasaran per periode (simpan ulang = ganti nilai), nilai > 0. Realisasi outlet = penjualan bersih (kotor − diskon − retur, tanpa void) seperti laporan penjualan; realisasi karyawan = Σ (dasar baris − dasar dibatalkan) × porsi dari baris yang ia layani (`Baris.*.Staf`), sehingga hanya penjualan yang mencatat staf yang terhitung. Tampil persen (1 desimal, bisa > 100%), kekurangan, dan **proyeksi akhir bulan** (bulan berjalan saja) = realisasi ÷ hari berlalu × jumlah hari. Target tidak memengaruhi komisi, stok, atau jurnal. Audit `target-penjualan.simpan|hapus`.
+- **Belum di bagian 3:** payroll penuh (PPh 21, BPJS; EMP-07), komisi bertingkat per omzet/bonus target, porsi pembagian staf tidak rata, target harian/per kategori, slip gaji per karyawan.
+
 ---
 
 ### F-19 · Billing Langganan SaaS
@@ -2104,6 +2111,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-16.3 | Pemakaian sesi | Pendapatan Diterima Dimuka | Pendapatan Jasa |
 | J-16.4 | Penukaran poin (sebagai diskon) | Diskon Penjualan | (bagian dari J-07.1) |
 | J-18.1 | Kasbon karyawan | Piutang Karyawan | Kas |
+| J-18.2 | Bayar rekap gaji | Beban Gaji & Komisi (gaji kotor) | Piutang Karyawan (potongan kasbon), Pendapatan Lain (potongan lain), Kas/Bank (gaji bersih) |
 | J-15.1 | Tutup tahun | Semua akun Pendapatan | Semua akun Beban & HPP, selisih ke Laba Ditahan |
 
 > Catatan akuntansi poin loyalti: v1 memperlakukan poin sebagai diskon saat ditukar (pendekatan sederhana UMKM). Opsi akrual liabilitas poin (sesuai standar pengakuan pendapatan) disiapkan di fase 3 untuk tenant yang membutuhkan.
@@ -2964,8 +2972,10 @@ erDiagram
 | `JadwalKerja` | IdTenant, IdKaryawan, IdOutlet, Tanggal, JamMulai, JamSelesai (`HH:mm`); unik (IdKaryawan, Tanggal) (F-18) |
 | `Absensi` | IdTenant, Uuid (dari perangkat), IdKaryawan, IdOutlet, IdPerangkat, TanggalBisnis, MasukPada, KeluarPada, PathSwafotoMasuk, PathSwafotoKeluar (F-18; Lintang/Bujur menyusul geofence) |
 | `AturanKomisi` | IdTenant, Uuid, Nama, Cakupan (Semua/Kategori/Produk), UuidProduk, UuidKategori, LevelStaf, Jenis (Persen/Tetap), Nilai, Status (Aktif/Diarsipkan) (F-18) |
-| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan; unik (IdPenjualanDetail, IdKaryawan) (F-18) |
-| `Penggajian` / `PenggajianDetail` | Periode, Status / Pendapatan JSON, Potongan JSON |
+| `Komisi` | IdTenant, IdKaryawan, IdPenjualan, IdPenjualanDetail, IdAturanKomisi, IdOutlet, TanggalBisnis, Dasar, Porsi, Jumlah, JumlahDibatalkan, DasarDibatalkan (void/retur, untuk realisasi target); unik (IdPenjualanDetail, IdKaryawan) (F-18) |
+| `Kasbon` / `PelunasanKasbon` | IdTenant, Uuid, IdKaryawan, Tanggal, Jumlah, Sisa, Status (Aktif/Lunas/Dibatalkan), IdAkunKasBank, IdJurnal, AlasanBatal / IdKasbon, Tanggal, Jumlah, Cara (KasBank/PotongGaji), IdRekapGaji, IdJurnal (F-18 bagian 3) |
+| `RekapGaji` / `RekapGajiBaris` | IdTenant, Uuid, Periode (`YYYY-MM`, unik per tenant), Status (Draf/Dibayar), TotalKotor, TotalPotongan, TotalBersih, TanggalBayar, IdAkunKasBank, IdAkunBeban, IdJurnal / IdRekapGaji, IdKaryawan (unik per rekap), GajiPokok, Komisi, Tambahan, PotonganKasbon, PotonganLain, Bersih, Catatan (F-18 bagian 3) |
+| `TargetPenjualan` | IdTenant, Uuid, Periode, Cakupan (Outlet/Karyawan), IdOutlet, IdKaryawan, KunciSasaran (`Outlet:{Id}`/`Karyawan:{Id}`), Nilai; unik (IdTenant, Periode, KunciSasaran) (F-18 bagian 3) |
 
 **Sistem**
 

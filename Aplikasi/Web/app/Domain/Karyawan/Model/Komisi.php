@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $Porsi
  * @property string $Jumlah
  * @property string $JumlahDibatalkan
+ * @property string $DasarDibatalkan
  */
 final class Komisi extends ModelDasar
 {
@@ -34,7 +35,7 @@ final class Komisi extends ModelDasar
     protected bool $pakaiUuid = false;
 
     /** @var array<string, mixed> */
-    protected $attributes = ['JumlahDibatalkan' => '0.00'];
+    protected $attributes = ['JumlahDibatalkan' => '0.00', 'DasarDibatalkan' => '0.00'];
 
     /**
      * @return array<string, string>
@@ -47,6 +48,7 @@ final class Komisi extends ModelDasar
             'Porsi' => 'decimal:4',
             'Jumlah' => 'decimal:2',
             'JumlahDibatalkan' => 'decimal:2',
+            'DasarDibatalkan' => 'decimal:2',
         ];
     }
 }

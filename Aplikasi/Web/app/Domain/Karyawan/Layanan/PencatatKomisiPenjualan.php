@@ -97,22 +97,24 @@ final class PencatatKomisiPenjualan
     {
         foreach (Komisi::query()->where('IdPenjualan', $idPenjualan)->lockForUpdate()->get() as $k) {
             $k->JumlahDibatalkan = (string) $k->Jumlah;
+            $k->DasarDibatalkan = (string) $k->Dasar;
             $k->save();
         }
     }
 
     /**
      * Retur: komisi baris dibatalkan proporsional kumulatif, `Jumlah` × [diretur] ÷ [dijual] (retur terakhir = penuh),
-     * sehingga Σ pembatalan tepat sama dengan komisi baris.
+     * sehingga Σ pembatalan tepat sama dengan komisi baris. Dasar yang dibatalkan (realisasi target, v1.85) sama.
      */
     public function KurangiRetur(int $idPenjualanDetail, BigDecimal $dijual, BigDecimal $diretur): void
     {
         foreach (Komisi::query()->where('IdPenjualanDetail', $idPenjualanDetail)->lockForUpdate()->get() as $k) {
-            $jumlah = BigDecimal::of((string) $k->Jumlah);
-            $batal = $diretur->isGreaterThanOrEqualTo($dijual) || $dijual->isZero()
-                ? $jumlah
-                : $jumlah->multipliedBy($diretur)->dividedBy($dijual, 2, RoundingMode::HalfUp);
-            $k->JumlahDibatalkan = (string) $batal->toScale(2);
+            $penuh = $diretur->isGreaterThanOrEqualTo($dijual) || $dijual->isZero();
+            $bagian = fn (string $nilai): string => (string) ($penuh
+                ? BigDecimal::of($nilai)
+                : BigDecimal::of($nilai)->multipliedBy($diretur)->dividedBy($dijual, 2, RoundingMode::HalfUp))->toScale(2);
+            $k->JumlahDibatalkan = $bagian((string) $k->Jumlah);
+            $k->DasarDibatalkan = $bagian((string) $k->Dasar);
             $k->save();
         }
     }

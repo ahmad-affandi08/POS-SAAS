@@ -89,6 +89,28 @@ final class LaporanKomisi
         return $hasil;
     }
 
+    /**
+     * Realisasi penjualan per karyawan (target penjualan, v1.85): Σ (dasar baris − dasar dibatalkan) × porsi staf untuk
+     * tanggal bisnis dalam rentang. Hanya baris yang mencatat staf (`Baris.*.Staf`) yang terhitung.
+     *
+     * @return array<int, string> IdKaryawan → nilai
+     */
+    public function AmbilPenjualanPerKaryawan(string $dari, string $sampai): array
+    {
+        $hasil = [];
+
+        foreach (Komisi::query()
+            ->whereBetween('TanggalBisnis', [$dari, $sampai])
+            ->groupBy('IdKaryawan')
+            ->selectRaw('`IdKaryawan`, CAST(COALESCE(SUM(ROUND((`Dasar` - `DasarDibatalkan`) * `Porsi`, 2)), 0) AS DECIMAL(18,2)) AS `Nilai`')
+            ->toBase()
+            ->get() as $b) {
+            $hasil[(int) $b->IdKaryawan] = self::Uang($b->Nilai);
+        }
+
+        return $hasil;
+    }
+
     private static function Uang(mixed $nilai): string
     {
         return (string) Uang::Dari(is_numeric($nilai) ? (string) $nilai : '0')->KeString();
