@@ -99,9 +99,17 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
     }
   }
 
+  /// Pasang pelanggan lalu hitung ulang harga item baru menurut tier-nya (F-16b; baris pesanan meja yang sudah
+  /// tersimpan memakai harga saat dipesan).
   void _Pasang(PelangganTerpilih? pelanggan) {
     final pengatur = ref.read(penyediaKeranjang.notifier);
-    pengatur.Ganti(ref.read(penyediaKeranjang).Salin(pelanggan: () => pelanggan));
+    var keranjang = ref.read(penyediaKeranjang).Salin(pelanggan: () => pelanggan);
+    final katalog = ref.read(penyediaKatalog).value;
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    if (katalog != null && k != null) {
+      keranjang = ref.read(penyediaLayananPenjualan).HitungUlangHarga(keranjang, katalog, k);
+    }
+    pengatur.Ganti(keranjang);
     widget.saatSelesai();
   }
 
@@ -135,7 +143,9 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
     minTileHeight: TokenJarak.targetSentuh,
     leading: Icon(p.uuid == terpilih?.uuid ? Icons.check_circle : Icons.person_outline),
     title: Text(p.nama, maxLines: 2, overflow: TextOverflow.ellipsis),
-    subtitle: Text(p.noHpSamar),
+    subtitle: Text(
+      [p.noHpSamar, if (p.namaTier != null) p.namaTier!, if (p.saldoPoin != null) '${p.saldoPoin} poin'].join(' · '),
+    ),
     onTap: () => unawaited(_Pilih(p)),
   );
 

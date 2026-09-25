@@ -28,6 +28,7 @@ use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
+use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
 use App\Domain\Pemenuhan\Data\DataKirimDapur;
@@ -123,6 +124,7 @@ final class TerimaPenjualanPos
         private readonly PenutupPesananTerbuka $penutupPesanan,
         private readonly KirimKeDapur $kirimDapur,
         private readonly IdentitasPelanggan $identitasPelanggan,
+        private readonly PencatatPoinPenjualan $poin,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -265,6 +267,11 @@ final class TerimaPenjualanPos
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
+
+        // F-16b: poin pelanggan diperoleh di transaksi yang sama (idempoten per penjualan).
+        if ($idPelanggan !== null) {
+            $this->poin->CatatPerolehan($idPelanggan, $penjualan->Id, $hasil->totalAkhir, $tanggalBisnis);
+        }
 
         // F-10b mode cepat (bayar dulu): tiket dapur dari baris penjualan, di transaksi yang sama.
         if ($data->kirimDapur) {

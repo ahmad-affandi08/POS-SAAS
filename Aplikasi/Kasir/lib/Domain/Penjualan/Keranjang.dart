@@ -177,21 +177,42 @@ class PenyetujuDiskon {
       : null;
 }
 
-/// Pelanggan yang dipilih untuk transaksi (F-16a). Nomor HP hanya tersamar.
+/// Pelanggan yang dipilih untuk transaksi (F-16a). Nomor HP hanya tersamar. F-16b: [kodeTier] menentukan harga per
+/// tier; [saldoPoin] hanya informasi dari pencarian online (null = tidak diketahui/offline).
 class PelangganTerpilih {
-  const PelangganTerpilih({required this.uuid, required this.nama, required this.noHpSamar});
+  const PelangganTerpilih({
+    required this.uuid,
+    required this.nama,
+    required this.noHpSamar,
+    this.kodeTier,
+    this.namaTier,
+    this.saldoPoin,
+  });
 
   final String uuid;
   final String nama;
   final String noHpSamar;
+  final String? kodeTier;
+  final String? namaTier;
+  final int? saldoPoin;
 
-  Map<String, Object?> KeJson() => {'Uuid': uuid, 'Nama': nama, 'NoHpSamar': noHpSamar};
+  Map<String, Object?> KeJson() => {
+    'Uuid': uuid,
+    'Nama': nama,
+    'NoHpSamar': noHpSamar,
+    'KodeTier': kodeTier,
+    'NamaTier': namaTier,
+    'SaldoPoin': saldoPoin,
+  };
 
   static PelangganTerpilih? DariJson(Object? json) => json is Map<String, Object?> && json['Uuid'] is String
       ? PelangganTerpilih(
           uuid: json['Uuid']! as String,
           nama: '${json['Nama'] ?? ''}',
           noHpSamar: '${json['NoHpSamar'] ?? ''}',
+          kodeTier: json['KodeTier'] as String?,
+          namaTier: json['NamaTier'] as String?,
+          saldoPoin: json['SaldoPoin'] as int?,
         )
       : null;
 }

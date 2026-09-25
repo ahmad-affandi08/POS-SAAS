@@ -1,5 +1,10 @@
-import { Link, router } from '@inertiajs/react';
-import { useState, type ReactNode } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useState, type FormEvent, type ReactNode } from 'react';
+
+import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 
 import FormulirPelanggan, { AlamatPelanggan } from '@/Komponen/Pelanggan/FormulirPelanggan';
 import LencanaPenjualan from '@/Komponen/Penjualan/LencanaPenjualan';
@@ -11,7 +16,47 @@ import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import type { MutasiPoin, PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
+
+const kolomPoin: KolomTabel<MutasiPoin>[] = [
+    {
+        id: 'DibuatPada',
+        accessorKey: 'DibuatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DibuatPada),
+    },
+    {
+        id: 'LabelJenis',
+        accessorKey: 'LabelJenis',
+        header: 'Jenis',
+        meta: { label: 'Jenis', prioritas: 'penting' },
+        cell: ({ row: { original: m } }) => (
+            <span className="flex flex-col">
+                <span>{m.LabelJenis}</span>
+                {m.Keterangan ? <span className="text-keterangan text-teks-sekunder">{m.Keterangan}</span> : null}
+            </span>
+        ),
+    },
+    {
+        id: 'Poin',
+        accessorKey: 'Poin',
+        header: 'Poin',
+        meta: { label: 'Poin', prioritas: 'penting', angka: true },
+        cell: ({ row }) => `${row.original.Poin > 0 ? '+' : ''}${row.original.Poin.toLocaleString('id-ID')}`,
+    },
+    {
+        id: 'KedaluwarsaPada',
+        accessorKey: 'KedaluwarsaPada',
+        header: 'Berlaku sampai',
+        meta: { label: 'Berlaku sampai', prioritas: 'rendah' },
+        cell: ({ row: { original: m } }) =>
+            m.KedaluwarsaPada
+                ? `${FormatTanggal(m.KedaluwarsaPada)} (sisa ${(m.Sisa ?? 0).toLocaleString('id-ID')})`
+                : '—',
+    },
+];
 
 const labelStatus: Record<RiwayatBelanja['Status'], string> = {
     Lunas: 'Lunas',
@@ -30,8 +75,48 @@ function Nilai({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** F-16a CRM-01: profil pelanggan, ringkasan belanja, dan 50 transaksi terakhir. */
-export default function HalamanDetailPelanggan({ Pelanggan: p, Riwayat, Izin }: PropsDetailPelanggan) {
+export default function HalamanDetailPelanggan({
+    Pelanggan: p,
+    Riwayat,
+    RiwayatPoin,
+    OpsiTier,
+    LoyaltiBerlaku,
+    Izin,
+}: PropsDetailPelanggan) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    const galat = props.errors;
     const [ubah, AturUbah] = useState(false);
+    const [dialog, AturDialog] = useState<'tier' | 'poin' | null>(null);
+    const [tier, AturTier] = useState({
+        Uuid: OpsiTier.find((t) => t.Nilai === p.Tier?.Kode)?.Uuid ?? '',
+        Tetap: p.TierTetap,
+    });
+    const [penyesuaian, AturPenyesuaian] = useState({ Poin: '', Alasan: '' });
+    const [memproses, AturMemproses] = useState(false);
+    const opsiKirim = {
+        preserveScroll: true,
+        onStart: () => AturMemproses(true),
+        onFinish: () => AturMemproses(false),
+        onSuccess: () => AturDialog(null),
+    };
+
+    const SimpanTier = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        router.post(
+            `${AlamatPelanggan}/${p.Uuid}/tier`,
+            { UuidTier: tier.Uuid === '' ? null : tier.Uuid, TierTetap: tier.Tetap },
+            opsiKirim,
+        );
+    };
+
+    const SimpanPoin = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        router.post(
+            `${AlamatPelanggan}/${p.Uuid}/poin`,
+            { Poin: Number.parseInt(penyesuaian.Poin || '0', 10), Alasan: penyesuaian.Alasan },
+            opsiKirim,
+        );
+    };
 
     const kolom: KolomTabel<RiwayatBelanja>[] = [
         {
@@ -143,6 +228,46 @@ export default function HalamanDetailPelanggan({ Pelanggan: p, Riwayat, Izin }: 
                 </Card>
             </div>
 
+            <Card className="gap-3 rounded-panel p-4 shadow-none">
+                <h2 className="text-judul-kecil text-teks-utama">Tier & poin</h2>
+                {LoyaltiBerlaku ? null : (
+                    <p className="text-isi text-teks-sekunder">
+                        Loyalti belum aktif: poin tidak bertambah dari belanja. Aktifkan di Pengaturan loyalti.
+                    </p>
+                )}
+                <dl className="grid gap-4 sm:grid-cols-3">
+                    <Nilai label="Tier">
+                        {p.Tier
+                            ? `${p.Tier.Nama}${p.TierTetap ? ' (dikunci, tidak dievaluasi otomatis)' : ''}`
+                            : 'Belum ada tier'}
+                    </Nilai>
+                    <Nilai label="Saldo poin">
+                        <span className="tabular-nums">{p.SaldoPoin.toLocaleString('id-ID')}</span>
+                    </Nilai>
+                </dl>
+                {Izin.Kelola ? (
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" onClick={() => AturDialog('tier')}>
+                            Atur tier
+                        </Button>
+                        <Button variant="outline" onClick={() => AturDialog('poin')}>
+                            Sesuaikan poin
+                        </Button>
+                    </div>
+                ) : null}
+            </Card>
+
+            <h2 className="text-judul-kecil text-teks-utama">Riwayat poin</h2>
+            <TabelData
+                id="pelanggan-riwayat-poin"
+                label={`Riwayat poin ${p.Nama}`}
+                kolom={kolomPoin}
+                sumber={{ mode: 'lokal', data: RiwayatPoin }}
+                ambilIdBaris={(m) => String(m.Id)}
+                urutBawaan="-DibuatPada"
+                kosong={{ judul: 'Belum ada mutasi poin.' }}
+            />
+
             <h2 className="text-judul-kecil text-teks-utama">Riwayat belanja</h2>
             <TabelData
                 id="pelanggan-riwayat"
@@ -155,6 +280,79 @@ export default function HalamanDetailPelanggan({ Pelanggan: p, Riwayat, Izin }: 
             />
 
             {ubah ? <FormulirPelanggan pelanggan={p} saatTutup={() => AturUbah(false)} /> : null}
+
+            {dialog === 'tier' ? (
+                <DialogFormulir
+                    judul={`Atur tier ${p.Nama}`}
+                    jenis="panel"
+                    galatUmum={galat.Umum}
+                    saatTutup={() => AturDialog(null)}
+                >
+                    <form onSubmit={SimpanTier} className="flex flex-col gap-4" aria-label="Formulir tier pelanggan">
+                        <BidangPilihan
+                            label="Tier"
+                            nilai={tier.Uuid}
+                            kosong="Tanpa tier"
+                            opsi={OpsiTier.map((t) => ({ Nilai: t.Uuid, Label: t.Label }))}
+                            saatBerubah={(nilai) => AturTier({ ...tier, Uuid: nilai })}
+                            galat={galat.UuidTier}
+                        />
+                        <KotakCentang
+                            label="Kunci tier (tidak diubah evaluasi otomatis, misal reseller)"
+                            nilai={tier.Tetap}
+                            saatBerubah={(nilai) => AturTier({ ...tier, Tetap: nilai })}
+                        />
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={memproses}>
+                                Simpan tier
+                            </Button>
+                        </div>
+                    </form>
+                </DialogFormulir>
+            ) : null}
+
+            {dialog === 'poin' ? (
+                <DialogFormulir
+                    judul={`Sesuaikan poin ${p.Nama}`}
+                    jenis="panel"
+                    galatUmum={galat.Umum}
+                    saatTutup={() => AturDialog(null)}
+                >
+                    <form onSubmit={SimpanPoin} className="flex flex-col gap-4" aria-label="Formulir penyesuaian poin">
+                        <BidangTeks
+                            label="Poin (+ tambah, − kurangi)"
+                            nilai={penyesuaian.Poin}
+                            saatBerubah={(nilai) =>
+                                AturPenyesuaian({ ...penyesuaian, Poin: nilai.replace(/[^0-9-]/g, '') })
+                            }
+                            galat={galat.Poin}
+                            keterangan={`Saldo sekarang ${p.SaldoPoin.toLocaleString('id-ID')} poin. Maksimal 100.000 per penyesuaian.`}
+                            inputMode="numeric"
+                            maxLength={7}
+                            required
+                        />
+                        <BidangTeks
+                            label="Alasan"
+                            nilai={penyesuaian.Alasan}
+                            saatBerubah={(nilai) => AturPenyesuaian({ ...penyesuaian, Alasan: nilai })}
+                            galat={galat.Alasan}
+                            maxLength={255}
+                            required
+                        />
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={memproses}>
+                                Simpan penyesuaian
+                            </Button>
+                        </div>
+                    </form>
+                </DialogFormulir>
+            ) : null}
         </TataLetakAplikasi>
     );
 }

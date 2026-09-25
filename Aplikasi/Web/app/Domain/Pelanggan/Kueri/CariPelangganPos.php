@@ -6,6 +6,7 @@ namespace App\Domain\Pelanggan\Kueri;
 
 use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
+use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
 
@@ -15,12 +16,19 @@ use App\Domain\Pelanggan\Model\Pelanggan;
  */
 final class CariPelangganPos
 {
+    public function __construct(
+        private readonly DaftarTierPelanggan $tier,
+        private readonly BukuPoin $buku,
+    ) {}
+
     public const BATAS = 20;
 
     public const PANJANG_MINIMAL = 3;
 
     /**
-     * @return list<array{Uuid: string, Nama: string, NoHp: string}>
+     * F-16b: `KodeTier`/`NamaTier` (harga per tier di POS) dan `SaldoPoin`.
+     *
+     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int}>
      */
     public function Cari(string $kata): array
     {
@@ -34,14 +42,23 @@ final class CariPelangganPos
         $cariHp = $angka !== '' && strlen($angka) >= self::PANJANG_MINIMAL && preg_match('/^[0-9+() .-]+$/', $kata) === 1;
         $pola = $cariHp ? PenerapKueriTabel::PolaCari(NomorHp::Normalisasi($kata) ?? ltrim($angka, '0')) : PenerapKueriTabel::PolaCari($kata);
 
-        return array_values(Pelanggan::query()
+        $daftar = Pelanggan::query()
             ->where('Status', StatusPelanggan::Aktif->value)
             ->where($cariHp ? 'NoHp' : 'Nama', 'like', $pola)
             ->orderBy('Nama')
             ->orderBy('Id')
             ->limit(self::BATAS)
-            ->get(['Uuid', 'Nama', 'NoHp'])
-            ->map(fn (Pelanggan $p): array => ['Uuid' => $p->Uuid, 'Nama' => $p->Nama, 'NoHp' => NomorHp::Samarkan($p->NoHp)])
-            ->all());
+            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier']);
+        $tier = $this->tier->AmbilPeta(array_values(array_filter($daftar->pluck('IdTier')->all(), 'is_int')));
+        $saldo = $this->buku->AmbilSaldoBanyak(array_values($daftar->pluck('Id')->all()));
+
+        return array_values($daftar->map(fn (Pelanggan $p): array => [
+            'Uuid' => $p->Uuid,
+            'Nama' => $p->Nama,
+            'NoHp' => NomorHp::Samarkan($p->NoHp),
+            'KodeTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Kode'] ?? null),
+            'NamaTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Nama'] ?? null),
+            'SaldoPoin' => $saldo[$p->Id] ?? 0,
+        ])->all());
     }
 }

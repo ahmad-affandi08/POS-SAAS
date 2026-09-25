@@ -154,9 +154,11 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `Pelanggan` | IdTenant, Uuid, Nama, NoHp (ternormalisasi `62…`, unik per tenant), Email, TanggalLahir, Alamat, Tag JSON, Catatan, SetujuPemasaran, Status (Aktif/Diarsipkan), DibuatOleh, IdPerangkatPembuat (F-16a); IdTier, LevelHarga, LimitKredit menyusul F-16b/F-12 |
+| `Pelanggan` | IdTenant, Uuid, Nama, NoHp (ternormalisasi `62…`, unik per tenant), Email, TanggalLahir, Alamat, Tag JSON, Catatan, SetujuPemasaran, Status (Aktif/Diarsipkan), DibuatOleh, IdPerangkatPembuat (F-16a); IdTier, TierTetap, TierDievaluasiPada (F-16b); LimitKredit menyusul F-12 |
 | `PelangganAlias` | IdTenant, Uuid (dari perangkat), IdPelanggan: Uuid pelanggan offline yang nomor HP-nya sudah terdaftar (F-16a) |
-| `MutasiPoin` | IdPelanggan, Poin (±), JenisSumber, IdSumber, KedaluwarsaPada |
+| `MutasiPoin` | IdTenant, IdPelanggan, Jenis (Perolehan/PembalikanVoid/PembalikanRetur/Kedaluwarsa/Penyesuaian/Penukaran), Poin (±, bulat), Sisa (baris positif, FIFO), JenisSumber, IdSumber, IdSumberAsal, KedaluwarsaPada, Keterangan, IdPengguna; unik (Jenis, JenisSumber, IdSumber) (F-16b) |
+| `TierPelanggan` | IdTenant, Uuid, Kode (unik per tenant), Nama, MinimalBelanja, PengaliPoin, Urutan, Status (F-16b) |
+| `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
 | `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
 | `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |

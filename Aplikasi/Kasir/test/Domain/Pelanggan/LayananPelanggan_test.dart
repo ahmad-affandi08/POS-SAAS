@@ -124,4 +124,77 @@ void main() {
     expect(data['UuidPelanggan'], baru.uuid);
     expect(LayananPenjualan.jenisOutbox, 'Penjualan.Buat');
   });
+
+  test('F-16b harga tier: pelanggan GOLD mendapat harga daftar tier; lepas pelanggan kembali ke harga dasar', () async {
+    final katalogJson = KatalogUji();
+    katalogJson['DaftarHarga'] = [
+      {
+        'Uuid': '01K5DH0000000000000000G0LD',
+        'Nama': 'Harga member Gold',
+        'UuidOutlet': null,
+        'Kanal': null,
+        'TierPelanggan': 'GOLD',
+        'MulaiPada': null,
+        'SelesaiPada': null,
+        'Prioritas': 10,
+        'Aktif': true,
+      },
+    ];
+    (katalogJson['ProdukHarga']! as List<Object?>).add({
+      ...HargaUji('01K5HRG000000000000CR0G0LD', UuidUji.croissant, UuidUji.psCroissant, '22000.00'),
+      'UuidDaftarHarga': '01K5DH0000000000000000G0LD',
+    });
+    await u.SiapkanKatalog(katalogJson);
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+    const gold = PelangganTerpilih(
+      uuid: 'P1',
+      nama: 'Ani',
+      noHpSamar: '0812****7890',
+      kodeTier: 'GOLD',
+      namaTier: 'Gold',
+    );
+
+    final umum = u.penjualan.TambahBaris(
+      Keranjang.kosong,
+      u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!),
+      katalog,
+      k,
+    );
+    expect(umum.baris.single.hargaSatuan, Uang.Dari('25000.00'));
+
+    final member = u.penjualan.HitungUlangHarga(umum.Salin(pelanggan: () => gold), katalog, k);
+    expect(member.baris.single.hargaSatuan, Uang.Dari('22000.00'));
+    final baru = u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!, tierPelanggan: 'GOLD');
+    expect(baru.hargaSatuan, Uang.Dari('22000.00'));
+    expect(
+      u.penjualan
+          .UbahJumlah(member, member.baris.single.uuid, Kuantitas.DariBulat(3), katalog, k)
+          .baris
+          .single
+          .hargaSatuan,
+      Uang.Dari('22000.00'),
+    );
+
+    final lepas = u.penjualan.HitungUlangHarga(member.Salin(pelanggan: () => null), katalog, k);
+    expect(lepas.baris.single.hargaSatuan, Uang.Dari('25000.00'));
+  });
+
+  test('F-16b tier ikut tersimpan di cache pelanggan untuk harga tier saat offline', () async {
+    await u.pelanggan.CatatDipakai(
+      const PelangganTerpilih(
+        uuid: 'P1',
+        nama: 'Ani Rahmawati',
+        noHpSamar: '0812****7890',
+        kodeTier: 'GOLD',
+        namaTier: 'Gold',
+        saldoPoin: 120,
+      ),
+    );
+    u.server.penangan = (p) async => throw http.ClientException('offline');
+    final hasil = (await u.pelanggan.Cari('ani')).pelanggan.single;
+    expect(hasil.kodeTier, 'GOLD');
+    expect(hasil.saldoPoin, isNull, reason: 'Saldo poin hanya dari server (online).');
+    expect(PelangganTerpilih.DariJson(hasil.KeJson())?.namaTier, 'Gold');
+  });
 }

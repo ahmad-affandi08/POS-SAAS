@@ -17,13 +17,24 @@ export type BarisPelanggan = {
     Catatan: string | null;
     SetujuPemasaran: boolean;
     Status: StatusPelanggan;
+    /** F-16b */
+    Tier: { Kode: string; Nama: string } | null;
+    TierTetap: boolean;
+    SaldoPoin: number;
     DibuatPada: string | null;
     JumlahTransaksi: number;
     TotalBelanja: string;
     TerakhirPada: string | null;
 };
 
-export type PropsDaftarPelanggan = { Pelanggan: HasilTabel<BarisPelanggan>; Izin: IzinPelanggan; OpsiTag: string[] };
+export type OpsiTier = { Nilai: string; Label: string; Uuid: string };
+
+export type PropsDaftarPelanggan = {
+    Pelanggan: HasilTabel<BarisPelanggan>;
+    Izin: IzinPelanggan;
+    OpsiTag: string[];
+    OpsiTier: OpsiTier[];
+};
 
 export type RiwayatBelanja = {
     Uuid: string;
@@ -34,4 +45,44 @@ export type RiwayatBelanja = {
     TotalAkhir: string;
 };
 
-export type PropsDetailPelanggan = { Pelanggan: BarisPelanggan; Riwayat: RiwayatBelanja[]; Izin: IzinPelanggan };
+export type MutasiPoin = {
+    Id: number;
+    Jenis: string;
+    LabelJenis: string;
+    Poin: number;
+    Sisa: number | null;
+    KedaluwarsaPada: string | null;
+    Keterangan: string | null;
+    DibuatPada: string | null;
+};
+
+export type PropsDetailPelanggan = {
+    Pelanggan: BarisPelanggan;
+    Riwayat: RiwayatBelanja[];
+    RiwayatPoin: MutasiPoin[];
+    OpsiTier: OpsiTier[];
+    LoyaltiBerlaku: boolean;
+    Izin: IzinPelanggan;
+};
+
+export type BarisTier = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    MinimalBelanja: string;
+    PengaliPoin: string;
+    Urutan: number;
+    Status: StatusPelanggan;
+    JumlahPelanggan: number;
+};
+
+export type PropsTierPelanggan = { Tier: BarisTier[]; FiturAktif: boolean; Izin: { Kelola: boolean } };
+
+export type PengaturanLoyalti = {
+    Aktif: boolean;
+    BelanjaPerPoin: string;
+    MasaBerlakuBulan: number;
+    BulanEvaluasiTier: number;
+};
+
+export type PropsPengaturanLoyalti = { Pengaturan: PengaturanLoyalti; FiturAktif: boolean; Izin: { Kelola: boolean } };

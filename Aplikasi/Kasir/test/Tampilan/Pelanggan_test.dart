@@ -16,7 +16,12 @@ import '../Pendukung/PasangAplikasi.dart';
 /// F-16a di layar Jual (PRD §17.2.3 F2, §17.2.7): panel pelanggan dari baris pelanggan di keranjang atau F2, pelanggan
 /// baru saat offline, dan penjualan membawa `UuidPelanggan` setelah `Pelanggan.Buat` di outbox.
 void main() {
-  Future<LingkunganUji> MasukJual(WidgetTester tester, Size ukuran) async {
+  Future<LingkunganUji> MasukJual(
+    WidgetTester tester,
+    Size ukuran, {
+    Map<String, Object?>? katalog,
+    Map<String, Object?>? hasilCari,
+  }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif();
@@ -27,7 +32,10 @@ void main() {
         return JsonUji(DataAwalUji());
       }
       if (p.url.path.endsWith('/katalog')) {
-        return JsonUji(KatalogUji());
+        return JsonUji(katalog ?? KatalogUji());
+      }
+      if (hasilCari != null && p.url.path.endsWith('/pelanggan')) {
+        return JsonUji(hasilCari);
       }
       throw http.ClientException('offline');
     };
@@ -102,4 +110,60 @@ void main() {
       await Lepas(tester, u);
     });
   }
+
+  testWidgets('F-16b: pelanggan Gold dari pencarian online → harga tier di keranjang, tier & poin tampil (1280 dp)', (
+    tester,
+  ) async {
+    final katalog = KatalogUji();
+    katalog['DaftarHarga'] = [
+      {
+        'Uuid': '01K5DH0000000000000000G0LD',
+        'Nama': 'Harga member Gold',
+        'UuidOutlet': null,
+        'Kanal': null,
+        'TierPelanggan': 'GOLD',
+        'MulaiPada': null,
+        'SelesaiPada': null,
+        'Prioritas': 10,
+        'Aktif': true,
+      },
+    ];
+    (katalog['ProdukHarga']! as List<Object?>).add({
+      ...HargaUji('01K5HRG000000000000CR0G0LD', UuidUji.croissant, UuidUji.psCroissant, '22000.00'),
+      'UuidDaftarHarga': '01K5DH0000000000000000G0LD',
+    });
+    final u = await MasukJual(
+      tester,
+      const Size(1280, 900),
+      katalog: katalog,
+      hasilCari: {
+        'Pelanggan': [
+          {
+            'Uuid': '01K5PELANGGAN0000000000001',
+            'Nama': 'Ani Rahmawati',
+            'NoHp': '0812****7890',
+            'KodeTier': 'GOLD',
+            'NamaTier': 'Gold',
+            'SaldoPoin': 120,
+          },
+        ],
+      },
+    );
+    await Ketuk(tester, find.byWidgetPredicate((w) => w is UbinProduk && w.nama.startsWith('Croissant')));
+    // 25.000 + PBJT 10% = 27.500.
+    expect(find.text('Rp 27.500'), findsWidgets);
+
+    await Ketuk(tester, find.textContaining('Pelanggan umum'));
+    await tester.enterText(find.widgetWithText(TextField, 'Cari nama atau nomor HP (min. 3 huruf)'), 'ani');
+    await Tunggu(tester, const Duration(milliseconds: 600));
+    expect(find.text('0812****7890 · Gold · 120 poin'), findsOneWidget);
+    await Ketuk(tester, find.text('Ani Rahmawati'));
+
+    expect(find.text('Ani Rahmawati · 0812****7890 · Gold'), findsOneWidget);
+    // Harga Gold 22.000 + PBJT 10% = 24.200.
+    expect(find.text('Rp 24.200'), findsWidgets);
+    expect(find.text('Rp 27.500'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
 }

@@ -24,6 +24,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $Catatan
  * @property bool $SetujuPemasaran
  * @property StatusPelanggan $Status
+ * @property int|null $IdTier
+ * @property bool $TierTetap
+ * @property Carbon|null $TierDievaluasiPada
  * @property int|null $DibuatOleh
  * @property int|null $IdPerangkatPembuat
  * @property Carbon|null $DibuatPada
@@ -47,6 +50,8 @@ final class Pelanggan extends ModelDasar
             'TanggalLahir' => 'date',
             'Tag' => 'array',
             'SetujuPemasaran' => 'boolean',
+            'TierTetap' => 'boolean',
+            'TierDievaluasiPada' => 'datetime',
             'Status' => StatusPelanggan::class,
         ];
     }

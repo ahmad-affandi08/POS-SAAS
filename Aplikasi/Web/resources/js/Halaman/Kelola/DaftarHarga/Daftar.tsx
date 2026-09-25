@@ -169,6 +169,7 @@ export default function HalamanDaftarDaftarHarga({
     DaftarHarga,
     Outlet,
     Kanal,
+    OpsiTier,
     ZonaWaktu,
     Izin,
 }: PropsDaftarDaftarHarga) {
@@ -206,6 +207,7 @@ export default function HalamanDaftarDaftarHarga({
                                 awal={DaftarHargaKosong}
                                 outlet={Outlet}
                                 kanal={Kanal}
+                                tier={OpsiTier ?? []}
                                 zonaWaktu={ZonaWaktu}
                                 saatSelesai={() => AturFormTerbuka(false)}
                             />

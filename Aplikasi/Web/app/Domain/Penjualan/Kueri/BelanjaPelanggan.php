@@ -50,6 +50,27 @@ final class BelanjaPelanggan
     }
 
     /**
+     * Total belanja (tanpa void) per pelanggan sejak [dari] (tanggal bisnis, inklusif), untuk evaluasi tier F-16b.
+     *
+     * @return array<int, string> IdPelanggan → total (string desimal)
+     */
+    public function AmbilTotalSejak(string $dari): array
+    {
+        $hasil = [];
+
+        foreach (Penjualan::query()
+            ->whereNotNull('IdPelanggan')
+            ->where('TanggalBisnis', '>=', $dari)
+            ->where('Status', '!=', StatusPenjualan::Void->value)
+            ->groupBy('IdPelanggan')
+            ->get(['IdPelanggan', DB::raw('SUM(TotalAkhir) AS Total')]) as $b) {
+            $hasil[(int) $b->getAttribute('IdPelanggan')] = (string) $b->getAttribute('Total');
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Penjualan terbaru pelanggan (semua status), terbaru dulu.
      *
      * @return list<array{Uuid: string, Nomor: string, TanggalBisnis: string, DibuatPada: string|null, Status: string, TotalAkhir: string}>

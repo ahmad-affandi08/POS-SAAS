@@ -57,7 +57,7 @@ class LayananPelanggan {
 
   Future<List<PelangganTerpilih>> AmbilTerakhir() async => [
     for (final b in await repositori.AmbilTerakhir())
-      PelangganTerpilih(uuid: b.Uuid, nama: b.Nama, noHpSamar: b.NoHpSamar),
+      PelangganTerpilih(uuid: b.Uuid, nama: b.Nama, noHpSamar: b.NoHpSamar, kodeTier: b.KodeTier, namaTier: b.NamaTier),
   ];
 
   Future<HasilCariPelanggan> Cari(String kata) async {
@@ -67,14 +67,30 @@ class LayananPelanggan {
     try {
       final hasil = await klien.CariPelanggan(kata);
       return HasilCariPelanggan(
-        pelanggan: [for (final p in hasil) PelangganTerpilih(uuid: p.uuid, nama: p.nama, noHpSamar: p.noHpSamar)],
+        pelanggan: [
+          for (final p in hasil)
+            PelangganTerpilih(
+              uuid: p.uuid,
+              nama: p.nama,
+              noHpSamar: p.noHpSamar,
+              kodeTier: p.kodeTier,
+              namaTier: p.namaTier,
+              saldoPoin: p.saldoPoin,
+            ),
+        ],
         online: true,
       );
     } on GalatJaringan {
       return HasilCariPelanggan(
         pelanggan: [
           for (final b in await repositori.Cari(kata))
-            PelangganTerpilih(uuid: b.Uuid, nama: b.Nama, noHpSamar: b.NoHpSamar),
+            PelangganTerpilih(
+              uuid: b.Uuid,
+              nama: b.Nama,
+              noHpSamar: b.NoHpSamar,
+              kodeTier: b.KodeTier,
+              namaTier: b.NamaTier,
+            ),
         ],
         online: false,
       );
@@ -84,8 +100,14 @@ class LayananPelanggan {
   }
 
   /// Pelanggan hasil cari dipilih: disimpan ke cache agar bisa dicari lagi offline.
-  Future<void> CatatDipakai(PelangganTerpilih pelanggan) =>
-      repositori.Simpan(pelanggan.uuid, pelanggan.nama, pelanggan.noHpSamar, _jam());
+  Future<void> CatatDipakai(PelangganTerpilih pelanggan) => repositori.Simpan(
+    pelanggan.uuid,
+    pelanggan.nama,
+    pelanggan.noHpSamar,
+    _jam(),
+    kodeTier: pelanggan.kodeTier,
+    namaTier: pelanggan.namaTier,
+  );
 
   Future<PelangganTerpilih> Buat({required String nama, required String noHp, required StafLokal kasir}) async {
     if (!kasir.PunyaIzin(IzinKasir.penjualanBuat)) {

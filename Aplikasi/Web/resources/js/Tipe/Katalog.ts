@@ -283,6 +283,8 @@ export type PropsDaftarDaftarHarga = {
     DaftarHarga: HasilTabel<BarisDaftarHarga>;
     Outlet: Pilihan[];
     Kanal: Pilihan[];
+    /** F-16b: tier pelanggan aktif. */
+    OpsiTier?: Pilihan[];
     ZonaWaktu: string;
     Izin: IzinKatalog;
 };
@@ -299,6 +301,7 @@ export type PropsDetailDaftarHarga = {
     }>;
     Outlet: Pilihan[];
     Kanal: Pilihan[];
+    OpsiTier?: Pilihan[];
     ZonaWaktu: string;
     Izin: IzinKatalog;
 };

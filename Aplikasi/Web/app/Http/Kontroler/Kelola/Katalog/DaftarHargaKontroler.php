@@ -13,6 +13,7 @@ use App\Domain\Katalog\Harga\Enum\SumberPerubahanHarga;
 use App\Domain\Katalog\Harga\Kueri\DaftarDaftarHarga;
 use App\Domain\Katalog\Harga\Kueri\DetailDaftarHarga;
 use App\Domain\Katalog\Harga\Model\DaftarHarga;
+use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
 use App\Http\Permintaan\Kelola\Katalog\SimpanDaftarHargaPermintaan;
 use App\Http\Permintaan\Kelola\Katalog\SimpanHargaDaftarHargaPermintaan;
 use App\Http\Respons\ResponsTabel;
@@ -35,6 +36,8 @@ final class DaftarHargaKontroler extends DasarKatalogKontroler
         return ResponsTabel::Kirim($permintaan, 'Kelola/DaftarHarga/Daftar', 'DaftarHarga', fn (): array => $daftar->AmbilTabel($tabel), fn (): array => [
             'Outlet' => $daftar->AmbilOpsiOutlet($this->IdOutletBoleh()),
             'Kanal' => DaftarDaftarHarga::AmbilOpsiKanal(),
+            // F-16b: opsi tier pelanggan (kode) dari domain Pelanggan.
+            'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
             'ZonaWaktu' => $daftar->AmbilZonaWaktu(),
             'Izin' => $this->AmbilIzinKatalog(),
         ]);
@@ -56,6 +59,8 @@ final class DaftarHargaKontroler extends DasarKatalogKontroler
             'DaftarHarga' => $detail->AmbilForm($baris),
             'Outlet' => $daftar->AmbilOpsiOutlet($this->IdOutletBoleh()),
             'Kanal' => DaftarDaftarHarga::AmbilOpsiKanal(),
+            // F-16b: opsi tier pelanggan (kode) dari domain Pelanggan.
+            'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
             'ZonaWaktu' => $daftar->AmbilZonaWaktu(),
             'Izin' => $this->AmbilIzinKatalog(),
         ]);

@@ -120,6 +120,29 @@ class LayananPenjualan {
 
   // Harga & keranjang --------------------------------------------------------------------------------------------------
 
+  /// F-16b: harga ulang semua baris keranjang menurut kanal & tier pelanggan saat ini (dipanggil setelah pelanggan
+  /// dipilih/dilepas). Tanpa harga yang cocok = harga lama.
+  Keranjang HitungUlangHarga(Keranjang keranjang, KatalogLokal katalog, KonteksPenjualan k) => keranjang.Salin(
+    baris: [
+      for (final b in keranjang.baris)
+        b.uuidProdukSatuan == null
+            ? b
+            : b.Salin(
+                hargaSatuan:
+                    TentukanHarga(
+                      katalog,
+                      k,
+                      b.uuidProduk,
+                      b.uuidProdukSatuan!,
+                      b.jumlah,
+                      kanal: AmbilKanal(keranjang),
+                      tierPelanggan: keranjang.pelanggan?.kodeTier,
+                    ) ??
+                    b.hargaSatuan,
+              ),
+    ],
+  );
+
   /// Kanal harga keranjang: pesanan di meja = `MakanDiTempat` (daftar harga dine-in), selain itu `BawaPulang`.
   static KanalPenjualan AmbilKanal(Keranjang keranjang) =>
       keranjang.pesananMeja?.uuidMeja != null ? KanalPenjualan.MakanDiTempat : KanalPenjualan.BawaPulang;
@@ -131,6 +154,7 @@ class LayananPenjualan {
     String uuidSatuan,
     Kuantitas jumlah, {
     KanalPenjualan kanal = KanalPenjualan.BawaPulang,
+    String? tierPelanggan,
   }) => const PenentuHarga()
       .Tentukan(
         katalog.AmbilKatalogHarga(uuidProduk),
@@ -140,7 +164,7 @@ class LayananPenjualan {
           jumlah: jumlah,
           uuidOutlet: k.uuidOutlet,
           kanal: kanal,
-          tierPelanggan: null,
+          tierPelanggan: tierPelanggan,
           waktu: _jam().toUtc(),
         ),
       )
@@ -157,6 +181,7 @@ class LayananPenjualan {
     Kuantitas? jumlah,
     String? catatan,
     KanalPenjualan kanal = KanalPenjualan.BawaPulang,
+    String? tierPelanggan,
   }) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
@@ -168,7 +193,15 @@ class LayananPenjualan {
     }
     ValidasiPilihan(produk, pilihan);
     final qty = jumlah ?? Kuantitas.DariBulat(1);
-    final harga = TentukanHarga(katalog, k, produk.uuid, satuanJual.uuid, qty, kanal: kanal);
+    final harga = TentukanHarga(
+      katalog,
+      k,
+      produk.uuid,
+      satuanJual.uuid,
+      qty,
+      kanal: kanal,
+      tierPelanggan: tierPelanggan,
+    );
     if (harga == null) {
       throw GalatKasir(
         'HargaTidakDitemukan',
@@ -233,7 +266,15 @@ class LayananPenjualan {
       }
       final harga = b.uuidProdukSatuan == null
           ? null
-          : TentukanHarga(katalog, k, b.uuidProduk, b.uuidProdukSatuan!, jumlah, kanal: AmbilKanal(keranjang));
+          : TentukanHarga(
+              katalog,
+              k,
+              b.uuidProduk,
+              b.uuidProdukSatuan!,
+              jumlah,
+              kanal: AmbilKanal(keranjang),
+              tierPelanggan: keranjang.pelanggan?.kodeTier,
+            );
       return b.Salin(jumlah: jumlah, hargaSatuan: harga ?? b.hargaSatuan);
     });
   }
@@ -246,7 +287,15 @@ class LayananPenjualan {
     KonteksPenjualan k,
   ) => _UbahBaris(keranjang, uuidBaris, (b) {
     final jumlah = satuan.bolehDesimal ? b.jumlah : Kuantitas.DariDesimal(b.jumlah.KeDesimal().ceil());
-    final harga = TentukanHarga(katalog, k, b.uuidProduk, satuan.uuid, jumlah, kanal: AmbilKanal(keranjang));
+    final harga = TentukanHarga(
+      katalog,
+      k,
+      b.uuidProduk,
+      satuan.uuid,
+      jumlah,
+      kanal: AmbilKanal(keranjang),
+      tierPelanggan: keranjang.pelanggan?.kodeTier,
+    );
     if (harga == null) {
       throw GalatKasir('HargaTidakDitemukan', 'Harga "${b.nama}" per ${satuan.nama} belum diatur.');
     }

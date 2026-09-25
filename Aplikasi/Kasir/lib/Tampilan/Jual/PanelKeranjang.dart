@@ -137,7 +137,11 @@ class PanelKeranjang extends StatelessWidget {
                         child: Text(
                           keranjang.pelanggan == null
                               ? 'Pelanggan umum · ketuk untuk memilih (F2)'
-                              : '${keranjang.pelanggan!.nama} · ${keranjang.pelanggan!.noHpSamar}',
+                              : [
+                                  keranjang.pelanggan!.nama,
+                                  keranjang.pelanggan!.noHpSamar,
+                                  if (keranjang.pelanggan!.namaTier != null) keranjang.pelanggan!.namaTier!,
+                                ].join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: teks.bodyMedium,

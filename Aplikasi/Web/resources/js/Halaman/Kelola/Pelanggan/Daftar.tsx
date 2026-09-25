@@ -46,6 +46,20 @@ const kolom: KolomTabel<BarisPelanggan>[] = [
         ),
     },
     {
+        id: 'Tier',
+        header: 'Tier',
+        enableSorting: false,
+        meta: { label: 'Tier', prioritas: 'penting' },
+        cell: ({ row: { original: p } }) => (p.Tier ? `${p.Tier.Nama}${p.TierTetap ? ' (dikunci)' : ''}` : '—'),
+    },
+    {
+        id: 'SaldoPoin',
+        header: 'Poin',
+        enableSorting: false,
+        meta: { label: 'Poin', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => row.original.SaldoPoin.toLocaleString('id-ID'),
+    },
+    {
         id: 'JumlahTransaksi',
         header: 'Transaksi',
         enableSorting: false,
@@ -81,7 +95,7 @@ const kolom: KolomTabel<BarisPelanggan>[] = [
 ];
 
 /** F-16a CRM-01: daftar pelanggan dengan ringkasan belanja; tambah, ubah, arsipkan & pulihkan. */
-export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag }: PropsDaftarPelanggan) {
+export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiTier }: PropsDaftarPelanggan) {
     const [form, AturForm] = useState<{ pelanggan: BarisPelanggan | null } | null>(null);
 
     return (
@@ -116,6 +130,16 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag }: Pro
                             { nilai: 'Diarsipkan', label: 'Diarsipkan' },
                         ],
                     },
+                    ...(OpsiTier.length > 0
+                        ? [
+                              {
+                                  id: 'Tier',
+                                  label: 'Tier',
+                                  jenis: 'pilihanBanyak' as const,
+                                  opsi: OpsiTier.map((t) => ({ nilai: t.Nilai, label: t.Label })),
+                              },
+                          ]
+                        : []),
                     ...(OpsiTag.length > 0
                         ? [
                               {

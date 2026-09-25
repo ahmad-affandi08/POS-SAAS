@@ -109,6 +109,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
           jumlah: jumlah,
           catatan: _catatan.text,
           kanal: LayananPenjualan.AmbilKanal(keranjang),
+          tierPelanggan: keranjang.pelanggan?.kodeTier,
         );
         pengatur.Ganti(layanan.TambahBaris(keranjang, baris, katalog, k));
         widget.saatSelesai();

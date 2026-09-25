@@ -16,6 +16,7 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Penjualan\Data\DataVoidPenjualanPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
@@ -68,6 +69,7 @@ final class TerimaVoidPenjualanPos
         private readonly BalikkanJurnal $balikkanJurnal,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PencatatPoinPenjualan $poin,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -176,6 +178,9 @@ final class TerimaVoidPenjualanPos
             'Alasan' => $data->alasan,
             'DisetujuiOleh' => $penyetuju->nama,
         ], idPengguna: $kasir->id);
+
+        // F-16b: poin dari penjualan ini dibalik di transaksi yang sama.
+        $this->poin->BalikVoid($penjualan->Id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

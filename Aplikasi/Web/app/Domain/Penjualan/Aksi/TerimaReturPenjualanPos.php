@@ -19,6 +19,7 @@ use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Data\DataOutletPenjualan;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturPenjualanPos;
 use App\Domain\Penjualan\Data\DataNilaiReturBaris;
 use App\Domain\Penjualan\Data\DataReturPenjualanPos;
@@ -95,6 +96,7 @@ final class TerimaReturPenjualanPos
         private readonly PostingJurnal $postingJurnal,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PencatatPoinPenjualan $poin,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -224,6 +226,14 @@ final class TerimaReturPenjualanPos
             'DisetujuiOleh' => $penyetuju->nama,
             'PerluTinjauan' => $retur->PerluTinjauan,
         ], idPengguna: $kasir->id);
+
+        // F-16b: poin penjualan asal dikurangi proporsional terhadap total refund kumulatif, di transaksi yang sama.
+        $this->poin->BalikRetur(
+            $penjualan->Id,
+            $retur->Id,
+            Uang::Dari($penjualan->TotalAkhir),
+            Uang::Dari((string) ReturPenjualan::query()->where('IdPenjualanAsal', $penjualan->Id)->sum('TotalRefund')),
+        );
 
         // F-14a: retur mengurangi pada tanggal returnya; ringkasan dihitung ulang di antrean setelah commit.
         ReturPenjualanDiterima::dispatch($retur->IdTenant, $retur->IdOutlet, $retur->TanggalBisnis->toDateString(), $retur->Id);

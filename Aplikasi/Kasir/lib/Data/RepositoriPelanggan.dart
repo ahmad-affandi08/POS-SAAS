@@ -12,11 +12,25 @@ class RepositoriPelanggan {
   final BasisDataKasir db;
   final RepositoriKasir repositoriKasir;
 
-  /// Catat/ perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat).
-  Future<void> Simpan(String uuid, String nama, String noHpSamar, DateTime sekarang) => db
+  /// Catat/perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat), termasuk tier (F-16b).
+  Future<void> Simpan(
+    String uuid,
+    String nama,
+    String noHpSamar,
+    DateTime sekarang, {
+    String? kodeTier,
+    String? namaTier,
+  }) => db
       .into(db.pelangganLokal)
       .insertOnConflictUpdate(
-        PelangganLokalCompanion.insert(Uuid: uuid, Nama: nama, NoHpSamar: noHpSamar, DipakaiPada: sekarang.toUtc()),
+        PelangganLokalCompanion.insert(
+          Uuid: uuid,
+          Nama: nama,
+          NoHpSamar: noHpSamar,
+          DipakaiPada: sekarang.toUtc(),
+          KodeTier: Value(kodeTier),
+          NamaTier: Value(namaTier),
+        ),
       );
 
   Future<void> SimpanBaru(String uuid, String nama, String noHpSamar, ItemOutbox outbox, DateTime sekarang) =>

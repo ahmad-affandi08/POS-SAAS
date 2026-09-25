@@ -37,3 +37,6 @@ Schedule::command('persediaan:bangun-ulang-saldo --periksa')->dailyAt('02:30')->
 
 // F-14a: bangun ulang ringkasan penjualan harian H-1 & H-2 (penjualan offline terlambat, job antrean gagal).
 Schedule::command('laporan:bangun-ulang-ringkasan')->dailyAt('02:45')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// F-16b: poin kedaluwarsa dihanguskan (FIFO) lalu tier pelanggan dievaluasi dari belanja N bulan terakhir.
+Schedule::command('pelanggan:proses-loyalti')->dailyAt('03:00')->timezone('Asia/Jakarta')->withoutOverlapping();

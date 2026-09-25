@@ -9,6 +9,10 @@ class PelangganLokal extends Table {
   TextColumn get NoHpSamar => text()();
   DateTimeColumn get DipakaiPada => dateTime()();
 
+  // Skema 8 (F-16b): tier untuk harga per tier saat offline.
+  TextColumn get KodeTier => text().nullable()();
+  TextColumn get NamaTier => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

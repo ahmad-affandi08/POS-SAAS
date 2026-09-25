@@ -282,7 +282,15 @@ void main() {
       dikirim.add(permintaan);
       return Json({
         'Pelanggan': [
-          {'Uuid': 'P1', 'Nama': 'Ani Rahmawati', 'NoHp': '0812****7890'},
+          {
+            'Uuid': 'P1',
+            'Nama': 'Ani Rahmawati',
+            'NoHp': '0812****7890',
+            'KodeTier': 'GOLD',
+            'NamaTier': 'Gold',
+            'SaldoPoin': 125,
+          },
+          {'Uuid': 'P2', 'Nama': 'Anita (server lama)', 'NoHp': '0813****2222'},
         ],
       }, 200);
     });
@@ -291,7 +299,11 @@ void main() {
     expect(dikirim, isEmpty);
     final hasil = await klien.CariPelanggan('ani r');
     expect(dikirim.single.url.queryParameters['kata'], 'ani r');
-    expect(hasil.single.nama, 'Ani Rahmawati');
-    expect(hasil.single.noHpSamar, '0812****7890');
+    expect(hasil.first.nama, 'Ani Rahmawati');
+    expect(hasil.first.noHpSamar, '0812****7890');
+    expect(hasil.first.kodeTier, 'GOLD');
+    expect(hasil.first.saldoPoin, 125);
+    expect(hasil.last.kodeTier, isNull);
+    expect(hasil.last.saldoPoin, 0);
   });
 }

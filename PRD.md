@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.59 |
+| Versi | 1.60 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -80,6 +80,7 @@
 | 1.57 | Rincian F-07 mode meja & F-10b fase 1: pesanan terbuka tersinkron (item outbox `PesananTerbuka.*`, tarik delta, kunci bayar online, bayar ganda offline → `PerluTinjauan`), tiket dapur per stasiun & ronde, API KDS. |
 | 1.58 | Rincian F-07 mode meja & F-10b fase 1 di aplikasi POS: menu Meja (denah per area, pesanan tanpa meja), mode pesanan di layar Jual (kirim ke dapur per ronde, batal item BR-07.5, bayar menutup pesanan, harga kanal `MakanDiTempat`), tarik snapshot 7 detik dengan ETag, kunci bayar, layar dapur untuk perangkat `Kds`; skema lokal 6. |
 | 1.59 | Rincian F-16a (CRM-01 pelanggan): master pelanggan (nomor HP ternormalisasi & unik per tenant), izin `pelanggan.lihat`/`pelanggan.kelola`, back-office daftar & detail riwayat belanja, API POS cari pelanggan, item outbox `Pelanggan.Buat` (offline, alias nomor HP ganda), `Penjualan.Buat` + `UuidPelanggan`, panel pelanggan (F2) di aplikasi kasir; skema lokal 7. |
+| 1.60 | Rincian F-16b bagian 1 (CRM-02/03): tier pelanggan (ambang belanja, pengali poin, kode untuk daftar harga, naik/turun otomatis harian + kunci tier), pengaturan loyalti per tenant, buku poin `MutasiPoin` (perolehan di transaksi penjualan, pembalikan void & retur proporsional, kedaluwarsa FIFO, penyesuaian manual), harga tier di aplikasi kasir; skema lokal 8. Keputusan pemilik produk: penukaran poin dicatat sebagai **diskon** (J-16.4, bagian 2). |
 
 ---
 
@@ -1488,6 +1489,15 @@ promo:
 - **POS:** kasir (cukup `penjualan.buat`) memilih pelanggan lewat baris pelanggan di keranjang atau **F2**: cari online `GET /api/pos/v1/pelanggan?kata=` (min. 3 karakter, nama atau nomor HP, maks. 20, nomor tersamar); offline = cari di pelanggan yang pernah dipakai perangkat (tabel lokal `PelangganLokal`, nomor tersamar saja). Pelanggan baru (nama + nomor HP) bisa dibuat offline: item outbox **`Pelanggan.Buat`** `{Nama, NoHp, Email?, UuidPengguna, DibuatPada}` (Uuid item = Uuid pelanggan) dikirim sebelum penjualannya (FIFO). Idempoten per Uuid; nomor HP yang ternyata sudah terdaftar (dibuat perangkat lain selagi offline) **tidak ditolak**: Uuid perangkat dicatat sebagai alias (`PelangganAlias`) pelanggan lama. `Penjualan.Buat` menerima `UuidPelanggan?` (Uuid atau alias → `Penjualan.IdPelanggan`); tidak dikenal = tetap diterima tanpa pelanggan + `PerluTinjauan` `PelangganTidakDikenal`. Pelanggan ikut tersimpan di pesanan tertahan dan pesanan meja; transaksi baru kembali ke pelanggan umum.
 - **Belum di F-16a:** tier & level harga pelanggan di penentu harga, poin, limit kredit (F-12), ulang tahun & broadcast (CRM-07), impor/ekspor pelanggan, gabung pelanggan ganda, struk bernama pelanggan (menunggu cetak struk).
 
+**Rincian F-16b bagian 1 (v1.60, CRM-02/03 tier & poin; keputusan pemilik produk v1.60: tier otomatis + bisa dikunci, penukaran poin sebagai diskon; rincian lain diputuskan agen atas mandat D-12):**
+- Berlaku untuk tenant yang paketnya punya fitur `pelanggan.loyalti` (Pro ke atas) **dan** mengaktifkannya di **Pengaturan loyalti** (`/kelola/pelanggan/loyalti`, tabel `PengaturanLoyalti`): Rp belanja per poin (bawaan Rp 10.000, min. Rp 100), masa berlaku poin (bawaan 12 bulan, 1–60), periode evaluasi tier (bawaan 12 bulan, 1–24). Tanpa fitur: halaman tetap bisa diatur, perolehan & evaluasi tidak berjalan.
+- **Tier pelanggan** (`TierPelanggan`, `/kelola/pelanggan/tier`, maks. 10 aktif): Kode (unik per tenant, huruf besar, tidak bisa diubah karena dirujuk `DaftarHarga.TierPelanggan`), Nama, MinimalBelanja (ambang belanja periode evaluasi), PengaliPoin (0,1–10), Urutan, Status Aktif/Diarsipkan. Form daftar harga memilih tier dari daftar ini (kode lama tetap diterima). `Pelanggan.IdTier`, `TierTetap` (dikunci manual, misal reseller), `TierDievaluasiPada`.
+- **Buku poin** `MutasiPoin` (append-only; saldo = Σ Poin; baris positif punya `Sisa` untuk FIFO): **Perolehan** saat `Penjualan.Buat` berpelanggan diterima, di transaksi DB yang sama (idempoten per penjualan) = ⌊TotalAkhir ÷ BelanjaPerPoin × PengaliPoin tier⌋, berlaku sampai tanggal bisnis + masa berlaku. **Void** membalik sisa poin bersih penjualan; **retur** membalik proporsional: poin bersih = ⌊perolehan × (TotalAkhir − Σ TotalRefund) ÷ TotalAkhir⌋ (pembalikan tetap berjalan walau loyalti sudah dinonaktifkan; saldo boleh minus bila poinnya sudah terpakai). Pembalikan memakai lot penjualan asal lebih dulu, lalu yang paling cepat kedaluwarsa. **Penyesuaian manual** di detail pelanggan (±, alasan min. 5 karakter, maks. 100.000, tidak boleh membuat saldo minus). Perolehan poin tidak berjurnal (§11: poin menjadi diskon saat ditukar).
+- **Proses malam** `pelanggan:proses-loyalti` (03.00 WIB): hanguskan sisa lot yang kedaluwarsa (baris `Kedaluwarsa`, idempoten per lot), lalu evaluasi tier: tier aktif tertinggi yang `MinimalBelanja` ≤ total belanja (tanpa void) sejak hari ini − periode; pelanggan `TierTetap` & diarsipkan dilewati; belanja di bawah semua ambang = tanpa tier. Audit `pelanggan.tier-otomatis`.
+- Back-office: menu Pelanggan menjadi grup (Daftar pelanggan, Tier pelanggan, Pengaturan loyalti); daftar pelanggan menampilkan tier & poin dan bisa disaring per tier; detail pelanggan menampilkan tier & saldo poin, **Atur tier** (termasuk kunci), **Sesuaikan poin**, dan riwayat 100 mutasi poin. Audit `tier-pelanggan.*`, `pelanggan.tier`, `pelanggan.poin-sesuaikan`, `loyalti.pengaturan`.
+- **POS:** hasil `GET /api/pos/v1/pelanggan` menambah `KodeTier`, `NamaTier`, `SaldoPoin` (tambahan kompatibel mundur). Memilih pelanggan menghitung ulang harga item baru di keranjang dengan `PenentuHarga` + tier (test vector `HRG-KANAL-TIER-001` sudah mencakup); melepas pelanggan kembali ke harga umum; baris pesanan meja yang sudah tersimpan memakai harga saat dipesan. Tier ikut disimpan di `PelangganLokal` (skema lokal 8) sehingga harga tier tetap berlaku offline; saldo poin hanya tampil saat online.
+- **Bagian 2 (menyusul):** penukaran poin sebagai diskon pesanan sebelum pajak (J-16.4) dengan perluasan mesin kalkulasi PHP & Dart + test vector baru, wajib online (§18.4).
+
 ---
 
 ### F-17 · Online Order & Self-Order
@@ -2780,9 +2790,11 @@ erDiagram
 
 | Tabel | Kolom kunci |
 |---|---|
-| `Pelanggan` | IdTenant, Uuid, Nama, NoHp (ternormalisasi `62…`, unik per tenant), Email, TanggalLahir, Alamat, Tag JSON, Catatan, SetujuPemasaran, Status (Aktif/Diarsipkan), DibuatOleh, IdPerangkatPembuat (F-16a); IdTier, LevelHarga, LimitKredit menyusul F-16b/F-12 |
+| `Pelanggan` | IdTenant, Uuid, Nama, NoHp (ternormalisasi `62…`, unik per tenant), Email, TanggalLahir, Alamat, Tag JSON, Catatan, SetujuPemasaran, Status (Aktif/Diarsipkan), DibuatOleh, IdPerangkatPembuat (F-16a); IdTier, TierTetap, TierDievaluasiPada (F-16b); LimitKredit menyusul F-12 |
 | `PelangganAlias` | IdTenant, Uuid (dari perangkat), IdPelanggan: Uuid pelanggan offline yang nomor HP-nya sudah terdaftar (F-16a) |
-| `MutasiPoin` | IdPelanggan, Poin (±), JenisSumber, IdSumber, KedaluwarsaPada |
+| `MutasiPoin` | IdTenant, IdPelanggan, Jenis (Perolehan/PembalikanVoid/PembalikanRetur/Kedaluwarsa/Penyesuaian/Penukaran), Poin (±, bulat), Sisa (baris positif, FIFO), JenisSumber, IdSumber, IdSumberAsal, KedaluwarsaPada, Keterangan, IdPengguna; unik (Jenis, JenisSumber, IdSumber) (F-16b) |
+| `TierPelanggan` | IdTenant, Uuid, Kode (unik per tenant), Nama, MinimalBelanja, PengaliPoin, Urutan, Status (F-16b) |
+| `PengaturanLoyalti` | IdTenant (unik), Aktif, BelanjaPerPoin, MasaBerlakuBulan, BulanEvaluasiTier (F-16b) |
 | `MutasiDeposit` | IdPelanggan, Jumlah (±), SaldoSetelah, Sumber |
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
 | `Promo` | IdTenant, Nama, Definisi JSON (sesuai skema F-16), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Status, KuotaTerpakai |

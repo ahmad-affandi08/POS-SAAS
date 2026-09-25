@@ -7,8 +7,10 @@ namespace App\Domain\Pelanggan\Kueri;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
+use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use App\Domain\Pelanggan\Model\TierPelanggan;
 use App\Domain\Penjualan\Kueri\BelanjaPelanggan;
 use Illuminate\Support\Collection;
 
@@ -21,11 +23,15 @@ final class DaftarPelanggan
 {
     public const KOLOM_URUT = ['Nama', 'DibuatPada'];
 
-    public const KOLOM_SARING = ['Status', 'Tag'];
+    public const KOLOM_SARING = ['Status', 'Tag', 'Tier'];
 
     public const URUT_BAWAAN = 'Nama';
 
-    public function __construct(private readonly BelanjaPelanggan $belanja) {}
+    public function __construct(
+        private readonly BelanjaPelanggan $belanja,
+        private readonly DaftarTierPelanggan $tier,
+        private readonly BukuPoin $buku,
+    ) {}
 
     /**
      * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
@@ -34,6 +40,7 @@ final class DaftarPelanggan
     {
         $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusPelanggan $s): string => $s->value, StatusPelanggan::cases()));
         $tag = $permintaan->AmbilDaftar('Tag');
+        $kodeTier = $permintaan->AmbilDaftar('Tier');
         $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
         $hp = NomorHp::Normalisasi($permintaan->cari);
         $angka = (string) preg_replace('/\D+/', '', $permintaan->cari);
@@ -45,6 +52,7 @@ final class DaftarPelanggan
                     $dalam->orWhereJsonContains('Tag', $t);
                 }
             }))
+            ->when($kodeTier !== [], fn ($kueri) => $kueri->whereIn('IdTier', TierPelanggan::query()->whereIn('Kode', $kodeTier)->select('Id')))
             ->when($permintaan->cari !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
                 ->where('Nama', 'like', $pola)
                 ->orWhere('Email', 'like', $pola)
@@ -52,10 +60,13 @@ final class DaftarPelanggan
 
         return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Nama' => 'Nama', 'DibuatPada' => 'DibuatPada'], function (Collection $baris): array {
             /** @var Collection<int, Pelanggan> $baris */
-            $ringkasan = $this->belanja->AmbilRingkasan(array_values($baris->map(fn (Pelanggan $p): int => $p->Id)->all()));
+            $id = array_values($baris->map(fn (Pelanggan $p): int => $p->Id)->all());
+            $ringkasan = $this->belanja->AmbilRingkasan($id);
+            $tier = $this->tier->AmbilPeta(array_values(array_filter($baris->map(fn (Pelanggan $p): ?int => $p->IdTier)->all(), 'is_int')));
+            $saldo = $this->buku->AmbilSaldoBanyak($id);
 
             return array_values($baris->map(fn (Pelanggan $p): array => [
-                ...self::Petakan($p),
+                ...self::Petakan($p, $p->IdTier === null ? null : ($tier[$p->IdTier] ?? null), $saldo[$p->Id] ?? 0),
                 ...($ringkasan[$p->Id] ?? ['JumlahTransaksi' => 0, 'TotalBelanja' => '0.00', 'TerakhirPada' => null]),
             ])->all());
         });
@@ -85,9 +96,10 @@ final class DaftarPelanggan
     }
 
     /**
+     * @param  array{Kode: string, Nama: string}|null  $tier
      * @return array<string, mixed>
      */
-    public static function Petakan(Pelanggan $p): array
+    public static function Petakan(Pelanggan $p, ?array $tier = null, int $saldoPoin = 0): array
     {
         return [
             'Uuid' => $p->Uuid,
@@ -100,6 +112,9 @@ final class DaftarPelanggan
             'Catatan' => $p->Catatan,
             'SetujuPemasaran' => $p->SetujuPemasaran,
             'Status' => $p->Status->value,
+            'Tier' => $tier,
+            'TierTetap' => $p->TierTetap,
+            'SaldoPoin' => $saldoPoin,
             'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),
         ];
     }

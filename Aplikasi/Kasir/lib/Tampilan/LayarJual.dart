@@ -275,6 +275,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         produk,
         satuan: satuan,
         kanal: LayananPenjualan.AmbilKanal(ref.read(penyediaKeranjang)),
+        tierPelanggan: ref.read(penyediaKeranjang).pelanggan?.kodeTier,
       );
       ref.read(penyediaKeranjang.notifier).Ganti(layanan.TambahBaris(ref.read(penyediaKeranjang), baris, katalog, k));
       if (_pesan != null) {
@@ -586,6 +587,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final daftar = katalog?.AmbilTampil(uuidKategori: _uuidKategori, kata: _cari.text) ?? const <ProdukJual>[];
     final layanan = ref.read(penyediaLayananPenjualan);
     final kanal = LayananPenjualan.AmbilKanal(ref.watch(penyediaKeranjang));
+    final tier = ref.watch(penyediaKeranjang.select((k) => k.pelanggan?.kodeTier));
     final pesan = _pesan;
 
     return Column(
@@ -744,6 +746,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                               satuan.uuid,
                               Kuantitas.DariBulat(1),
                               kanal: kanal,
+                              tierPelanggan: tier,
                             ),
                       nonaktif: alasan != null,
                       keterangan: alasan != null

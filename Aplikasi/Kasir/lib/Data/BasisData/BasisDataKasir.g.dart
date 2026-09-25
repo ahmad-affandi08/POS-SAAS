@@ -14719,8 +14719,26 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _KodeTierMeta = const VerificationMeta('KodeTier');
   @override
-  List<GeneratedColumn> get $columns => [Uuid, Nama, NoHpSamar, DipakaiPada];
+  late final GeneratedColumn<String> KodeTier = GeneratedColumn<String>(
+    'KodeTier',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _NamaTierMeta = const VerificationMeta('NamaTier');
+  @override
+  late final GeneratedColumn<String> NamaTier = GeneratedColumn<String>(
+    'NamaTier',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [Uuid, Nama, NoHpSamar, DipakaiPada, KodeTier, NamaTier];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -14750,6 +14768,12 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
     } else if (isInserting) {
       context.missing(_DipakaiPadaMeta);
     }
+    if (data.containsKey('KodeTier')) {
+      context.handle(_KodeTierMeta, KodeTier.isAcceptableOrUnknown(data['KodeTier']!, _KodeTierMeta));
+    }
+    if (data.containsKey('NamaTier')) {
+      context.handle(_NamaTierMeta, NamaTier.isAcceptableOrUnknown(data['NamaTier']!, _NamaTierMeta));
+    }
     return context;
   }
 
@@ -14763,6 +14787,8 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
       Nama: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Nama'])!,
       NoHpSamar: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NoHpSamar'])!,
       DipakaiPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DipakaiPada'])!,
+      KodeTier: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KodeTier']),
+      NamaTier: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaTier']),
     );
   }
 
@@ -14777,11 +14803,15 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
   final String Nama;
   final String NoHpSamar;
   final DateTime DipakaiPada;
+  final String? KodeTier;
+  final String? NamaTier;
   const BarisPelangganLokal({
     required this.Uuid,
     required this.Nama,
     required this.NoHpSamar,
     required this.DipakaiPada,
+    this.KodeTier,
+    this.NamaTier,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -14790,6 +14820,12 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
     map['Nama'] = Variable<String>(Nama);
     map['NoHpSamar'] = Variable<String>(NoHpSamar);
     map['DipakaiPada'] = Variable<DateTime>(DipakaiPada);
+    if (!nullToAbsent || KodeTier != null) {
+      map['KodeTier'] = Variable<String>(KodeTier);
+    }
+    if (!nullToAbsent || NamaTier != null) {
+      map['NamaTier'] = Variable<String>(NamaTier);
+    }
     return map;
   }
 
@@ -14799,6 +14835,8 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       Nama: Value(Nama),
       NoHpSamar: Value(NoHpSamar),
       DipakaiPada: Value(DipakaiPada),
+      KodeTier: KodeTier == null && nullToAbsent ? const Value.absent() : Value(KodeTier),
+      NamaTier: NamaTier == null && nullToAbsent ? const Value.absent() : Value(NamaTier),
     );
   }
 
@@ -14809,6 +14847,8 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       Nama: serializer.fromJson<String>(json['Nama']),
       NoHpSamar: serializer.fromJson<String>(json['NoHpSamar']),
       DipakaiPada: serializer.fromJson<DateTime>(json['DipakaiPada']),
+      KodeTier: serializer.fromJson<String?>(json['KodeTier']),
+      NamaTier: serializer.fromJson<String?>(json['NamaTier']),
     );
   }
   @override
@@ -14819,22 +14859,34 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       'Nama': serializer.toJson<String>(Nama),
       'NoHpSamar': serializer.toJson<String>(NoHpSamar),
       'DipakaiPada': serializer.toJson<DateTime>(DipakaiPada),
+      'KodeTier': serializer.toJson<String?>(KodeTier),
+      'NamaTier': serializer.toJson<String?>(NamaTier),
     };
   }
 
-  BarisPelangganLokal copyWith({String? Uuid, String? Nama, String? NoHpSamar, DateTime? DipakaiPada}) =>
-      BarisPelangganLokal(
-        Uuid: Uuid ?? this.Uuid,
-        Nama: Nama ?? this.Nama,
-        NoHpSamar: NoHpSamar ?? this.NoHpSamar,
-        DipakaiPada: DipakaiPada ?? this.DipakaiPada,
-      );
+  BarisPelangganLokal copyWith({
+    String? Uuid,
+    String? Nama,
+    String? NoHpSamar,
+    DateTime? DipakaiPada,
+    Value<String?> KodeTier = const Value.absent(),
+    Value<String?> NamaTier = const Value.absent(),
+  }) => BarisPelangganLokal(
+    Uuid: Uuid ?? this.Uuid,
+    Nama: Nama ?? this.Nama,
+    NoHpSamar: NoHpSamar ?? this.NoHpSamar,
+    DipakaiPada: DipakaiPada ?? this.DipakaiPada,
+    KodeTier: KodeTier.present ? KodeTier.value : this.KodeTier,
+    NamaTier: NamaTier.present ? NamaTier.value : this.NamaTier,
+  );
   BarisPelangganLokal copyWithCompanion(PelangganLokalCompanion data) {
     return BarisPelangganLokal(
       Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
       Nama: data.Nama.present ? data.Nama.value : this.Nama,
       NoHpSamar: data.NoHpSamar.present ? data.NoHpSamar.value : this.NoHpSamar,
       DipakaiPada: data.DipakaiPada.present ? data.DipakaiPada.value : this.DipakaiPada,
+      KodeTier: data.KodeTier.present ? data.KodeTier.value : this.KodeTier,
+      NamaTier: data.NamaTier.present ? data.NamaTier.value : this.NamaTier,
     );
   }
 
@@ -14844,13 +14896,15 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
           ..write('Uuid: $Uuid, ')
           ..write('Nama: $Nama, ')
           ..write('NoHpSamar: $NoHpSamar, ')
-          ..write('DipakaiPada: $DipakaiPada')
+          ..write('DipakaiPada: $DipakaiPada, ')
+          ..write('KodeTier: $KodeTier, ')
+          ..write('NamaTier: $NamaTier')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(Uuid, Nama, NoHpSamar, DipakaiPada);
+  int get hashCode => Object.hash(Uuid, Nama, NoHpSamar, DipakaiPada, KodeTier, NamaTier);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -14858,7 +14912,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
           other.Uuid == this.Uuid &&
           other.Nama == this.Nama &&
           other.NoHpSamar == this.NoHpSamar &&
-          other.DipakaiPada == this.DipakaiPada);
+          other.DipakaiPada == this.DipakaiPada &&
+          other.KodeTier == this.KodeTier &&
+          other.NamaTier == this.NamaTier);
 }
 
 class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
@@ -14866,12 +14922,16 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
   final Value<String> Nama;
   final Value<String> NoHpSamar;
   final Value<DateTime> DipakaiPada;
+  final Value<String?> KodeTier;
+  final Value<String?> NamaTier;
   final Value<int> rowid;
   const PelangganLokalCompanion({
     this.Uuid = const Value.absent(),
     this.Nama = const Value.absent(),
     this.NoHpSamar = const Value.absent(),
     this.DipakaiPada = const Value.absent(),
+    this.KodeTier = const Value.absent(),
+    this.NamaTier = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PelangganLokalCompanion.insert({
@@ -14879,6 +14939,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     required String Nama,
     required String NoHpSamar,
     required DateTime DipakaiPada,
+    this.KodeTier = const Value.absent(),
+    this.NamaTier = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Nama = Value(Nama),
@@ -14889,6 +14951,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     Expression<String>? Nama,
     Expression<String>? NoHpSamar,
     Expression<DateTime>? DipakaiPada,
+    Expression<String>? KodeTier,
+    Expression<String>? NamaTier,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -14896,6 +14960,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
       if (Nama != null) 'Nama': Nama,
       if (NoHpSamar != null) 'NoHpSamar': NoHpSamar,
       if (DipakaiPada != null) 'DipakaiPada': DipakaiPada,
+      if (KodeTier != null) 'KodeTier': KodeTier,
+      if (NamaTier != null) 'NamaTier': NamaTier,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -14905,6 +14971,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     Value<String>? Nama,
     Value<String>? NoHpSamar,
     Value<DateTime>? DipakaiPada,
+    Value<String?>? KodeTier,
+    Value<String?>? NamaTier,
     Value<int>? rowid,
   }) {
     return PelangganLokalCompanion(
@@ -14912,6 +14980,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
       Nama: Nama ?? this.Nama,
       NoHpSamar: NoHpSamar ?? this.NoHpSamar,
       DipakaiPada: DipakaiPada ?? this.DipakaiPada,
+      KodeTier: KodeTier ?? this.KodeTier,
+      NamaTier: NamaTier ?? this.NamaTier,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -14931,6 +15001,12 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     if (DipakaiPada.present) {
       map['DipakaiPada'] = Variable<DateTime>(DipakaiPada.value);
     }
+    if (KodeTier.present) {
+      map['KodeTier'] = Variable<String>(KodeTier.value);
+    }
+    if (NamaTier.present) {
+      map['NamaTier'] = Variable<String>(NamaTier.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -14944,6 +15020,8 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
           ..write('Nama: $Nama, ')
           ..write('NoHpSamar: $NoHpSamar, ')
           ..write('DipakaiPada: $DipakaiPada, ')
+          ..write('KodeTier: $KodeTier, ')
+          ..write('NamaTier: $NamaTier, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -22908,6 +22986,8 @@ typedef $$PelangganLokalTableCreateCompanionBuilder = PelangganLokalCompanion Fu
   required String Nama,
   required String NoHpSamar,
   required DateTime DipakaiPada,
+  Value<String?> KodeTier,
+  Value<String?> NamaTier,
   Value<int> rowid,
 });
 typedef $$PelangganLokalTableUpdateCompanionBuilder = PelangganLokalCompanion Function({
@@ -22915,6 +22995,8 @@ typedef $$PelangganLokalTableUpdateCompanionBuilder = PelangganLokalCompanion Fu
   Value<String> Nama,
   Value<String> NoHpSamar,
   Value<DateTime> DipakaiPada,
+  Value<String?> KodeTier,
+  Value<String?> NamaTier,
   Value<int> rowid,
 });
 
@@ -22935,6 +23017,12 @@ class $$PelangganLokalTableFilterComposer extends Composer<_$BasisDataKasir, $Pe
 
   ColumnFilters<DateTime> get DipakaiPada =>
       $composableBuilder(column: $table.DipakaiPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get KodeTier =>
+      $composableBuilder(column: $table.KodeTier, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaTier =>
+      $composableBuilder(column: $table.NamaTier, builder: (column) => ColumnFilters(column));
 }
 
 class $$PelangganLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $PelangganLokalTable> {
@@ -22956,6 +23044,12 @@ class $$PelangganLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $
 
   ColumnOrderings<DateTime> get DipakaiPada =>
       $composableBuilder(column: $table.DipakaiPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get KodeTier =>
+      $composableBuilder(column: $table.KodeTier, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaTier =>
+      $composableBuilder(column: $table.NamaTier, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PelangganLokalTableAnnotationComposer extends Composer<_$BasisDataKasir, $PelangganLokalTable> {
@@ -22974,6 +23068,10 @@ class $$PelangganLokalTableAnnotationComposer extends Composer<_$BasisDataKasir,
 
   GeneratedColumn<DateTime> get DipakaiPada =>
       $composableBuilder(column: $table.DipakaiPada, builder: (column) => column);
+
+  GeneratedColumn<String> get KodeTier => $composableBuilder(column: $table.KodeTier, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaTier => $composableBuilder(column: $table.NamaTier, builder: (column) => column);
 }
 
 class $$PelangganLokalTableTableManager
@@ -23005,12 +23103,16 @@ class $$PelangganLokalTableTableManager
                 Value<String> Nama = const Value.absent(),
                 Value<String> NoHpSamar = const Value.absent(),
                 Value<DateTime> DipakaiPada = const Value.absent(),
+                Value<String?> KodeTier = const Value.absent(),
+                Value<String?> NamaTier = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PelangganLokalCompanion(
                 Uuid: Uuid,
                 Nama: Nama,
                 NoHpSamar: NoHpSamar,
                 DipakaiPada: DipakaiPada,
+                KodeTier: KodeTier,
+                NamaTier: NamaTier,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -23019,12 +23121,16 @@ class $$PelangganLokalTableTableManager
                 required String Nama,
                 required String NoHpSamar,
                 required DateTime DipakaiPada,
+                Value<String?> KodeTier = const Value.absent(),
+                Value<String?> NamaTier = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PelangganLokalCompanion.insert(
                 Uuid: Uuid,
                 Nama: Nama,
                 NoHpSamar: NoHpSamar,
                 DipakaiPada: DipakaiPada,
+                KodeTier: KodeTier,
+                NamaTier: NamaTier,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

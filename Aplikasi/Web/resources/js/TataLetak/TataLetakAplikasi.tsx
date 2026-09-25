@@ -90,6 +90,13 @@ const menuPembelian: ItemMenu[] = [
 ];
 
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
+// F-16a/F-16b: data pelanggan, tier, pengaturan loyalti.
+const menuPelanggan: ItemMenu[] = [
+    { label: 'Daftar pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat },
+    { label: 'Tier pelanggan', href: '/kelola/pelanggan/tier', izin: IzinTenant.PelangganLihat },
+    { label: 'Pengaturan loyalti', href: '/kelola/pelanggan/loyalti', izin: IzinTenant.PelangganLihat },
+];
+
 const menuKasir: ItemMenu[] = [
     { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
@@ -177,7 +184,14 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu penjualan',
         sub: menuPenjualan,
     },
-    { label: 'Pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat, ikon: UsersRoundIcon },
+    {
+        label: 'Pelanggan',
+        href: '/kelola/pelanggan',
+        izin: null,
+        ikon: UsersRoundIcon,
+        labelSub: 'Menu pelanggan',
+        sub: menuPelanggan,
+    },
     {
         label: 'Shift & kas',
         href: '/kelola/kasir/shift',

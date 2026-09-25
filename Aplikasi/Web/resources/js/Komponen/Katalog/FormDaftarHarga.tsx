@@ -54,12 +54,22 @@ type PropsFormDaftarHarga = {
     awal: DataFormDaftarHarga;
     outlet: Pilihan[];
     kanal: Pilihan[];
+    /** F-16b: tier pelanggan aktif (Nilai = Kode). Kosong = isian kode bebas seperti sebelumnya. */
+    tier?: Pilihan[];
     zonaWaktu: string;
     saatSelesai: () => void;
 };
 
 /** Formulir daftar harga: outlet × kanal × tingkat pelanggan × periode, dengan prioritas (price engine lapis 3–4). */
-export default function FormDaftarHarga({ uuid, awal, outlet, kanal, zonaWaktu, saatSelesai }: PropsFormDaftarHarga) {
+export default function FormDaftarHarga({
+    uuid,
+    awal,
+    outlet,
+    kanal,
+    tier = [],
+    zonaWaktu,
+    saatSelesai,
+}: PropsFormDaftarHarga) {
     const formulir = useForm<DataFormDaftarHarga>(awal);
     const data = formulir.data;
     const galat = formulir.errors as Record<string, string | undefined>;
@@ -119,15 +129,30 @@ export default function FormDaftarHarga({ uuid, awal, outlet, kanal, zonaWaktu, 
                     saatBerubah={(nilai) => formulir.setData('Kanal', nilai as KanalPenjualan | '')}
                     galat={galat.Kanal}
                 />
-                <BidangTeks
-                    label="Tingkat pelanggan (opsional)"
-                    nilai={data.TierPelanggan}
-                    saatBerubah={(nilai) => formulir.setData('TierPelanggan', nilai)}
-                    galat={galat.TierPelanggan}
-                    keterangan="Kode persis seperti level harga pelanggan, misal GROSIR. Kosongkan untuk semua pelanggan."
-                    maxLength={30}
-                    kode
-                />
+                {tier.length > 0 ? (
+                    <BidangPilihan
+                        label="Tier pelanggan (opsional)"
+                        nilai={data.TierPelanggan}
+                        kosong="Semua pelanggan"
+                        opsi={
+                            data.TierPelanggan !== '' && !tier.some((t) => t.Nilai === data.TierPelanggan)
+                                ? [...tier, { Nilai: data.TierPelanggan, Label: data.TierPelanggan }]
+                                : tier
+                        }
+                        saatBerubah={(nilai) => formulir.setData('TierPelanggan', nilai)}
+                        galat={galat.TierPelanggan}
+                    />
+                ) : (
+                    <BidangTeks
+                        label="Tingkat pelanggan (opsional)"
+                        nilai={data.TierPelanggan}
+                        saatBerubah={(nilai) => formulir.setData('TierPelanggan', nilai)}
+                        galat={galat.TierPelanggan}
+                        keterangan="Kode persis seperti tier pelanggan, misal GROSIR. Kosongkan untuk semua pelanggan."
+                        maxLength={30}
+                        kode
+                    />
+                )}
                 <BidangWaktu
                     label="Mulai berlaku (opsional)"
                     nilai={data.MulaiPada}
