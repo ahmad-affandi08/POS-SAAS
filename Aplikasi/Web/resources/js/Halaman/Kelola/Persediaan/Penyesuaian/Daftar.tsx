@@ -101,7 +101,7 @@ export default function HalamanDaftarPenyesuaianStok({
         },
     ];
     const tombolBuat = Izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${AlamatPenyesuaian}/buat`}>Buat penyesuaian</Link>
         </Button>
     ) : null;

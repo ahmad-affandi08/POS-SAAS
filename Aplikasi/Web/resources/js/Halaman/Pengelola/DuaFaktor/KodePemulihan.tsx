@@ -20,7 +20,10 @@ export default function KodePemulihan({ KodePemulihan }: { KodePemulihan: string
                         </li>
                     ))}
                 </ul>
-                <Button asChild className="h-10 px-4 text-label font-semibold focus-visible:ring-offset-2">
+                <Button
+                    asChild
+                    className="h-8 pointer-coarse:h-11 px-4 text-label font-semibold focus-visible:ring-offset-2"
+                >
                     <Link href="/">Saya sudah menyimpannya</Link>
                 </Button>
             </div>

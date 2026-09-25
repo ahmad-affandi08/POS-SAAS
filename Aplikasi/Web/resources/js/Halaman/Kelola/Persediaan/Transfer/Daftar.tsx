@@ -100,7 +100,7 @@ export default function HalamanDaftarTransferStok({ Transfer, OpsiGudang, OpsiSt
         },
     ];
     const tombolBuat = Izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${AlamatTransfer}/buat`}>Buat transfer</Link>
         </Button>
     ) : null;

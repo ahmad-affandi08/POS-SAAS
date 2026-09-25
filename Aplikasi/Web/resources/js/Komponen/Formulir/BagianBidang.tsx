@@ -12,7 +12,7 @@ import { cn } from '@/Komponen/Ui/utils';
 /** Kelas kontrol bersama (tinggi, ukuran teks token, tepi galat). */
 export function BuatKelasKontrol(galat: unknown, tambahan?: string): string {
     return cn(
-        'h-10 bg-permukaan text-isi text-teks-utama disabled:bg-latar disabled:text-teks-sekunder disabled:opacity-100',
+        'h-8 pointer-coarse:h-11 bg-permukaan text-isi text-teks-utama disabled:bg-latar disabled:text-teks-sekunder disabled:opacity-100',
         galat ? 'border-bahaya' : 'border-garis-input',
         tambahan,
     );

@@ -11,7 +11,7 @@ export default function HalamanTanpaIzin() {
             <Pemberitahuan jenis="peringatan" judul="Anda tidak punya akses ke halaman ini">
                 <p>Peran Anda belum mencakup halaman ini. Hubungi Owner bila Anda membutuhkannya.</p>
                 <p className="mt-2">
-                    <Button asChild variant="outline" className="h-10 text-label font-semibold">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11 text-label font-semibold">
                         <Link href="/kelola">Kembali ke beranda</Link>
                     </Button>
                 </p>

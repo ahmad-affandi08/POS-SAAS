@@ -254,7 +254,7 @@ function FormKelompok({
                                     onClick={() =>
                                         UbahPilihan(indeks, { UuidProdukBahan: null, Jumlah: '', NamaBahan: null })
                                     }
-                                    className="h-10 justify-start text-destructive"
+                                    className="h-8 pointer-coarse:h-11 justify-start text-destructive"
                                 >
                                     Lepas bahan
                                 </Button>

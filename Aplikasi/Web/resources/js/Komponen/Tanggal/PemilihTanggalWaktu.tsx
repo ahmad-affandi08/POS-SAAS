@@ -84,7 +84,7 @@ export default function PemilihTanggalWaktu({
                     <Label htmlFor={idJam} className="text-label font-semibold text-teks-utama">
                         Jam
                     </Label>
-                    <InputGroup className="h-10 border-garis-input bg-permukaan pointer-coarse:h-11">
+                    <InputGroup className="h-8 border-garis-input bg-permukaan pointer-coarse:h-11">
                         <InputGroupInput
                             id={idJam}
                             value={teksJam}

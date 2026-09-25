@@ -175,7 +175,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                                                     onClick={() =>
                                                         AturKomponen(komponen.filter((_, i) => i !== indeks))
                                                     }
-                                                    className="h-10 text-destructive"
+                                                    className="h-8 pointer-coarse:h-11 text-destructive"
                                                     aria-label={`Hapus komponen ${item.Nama}`}
                                                 >
                                                     Hapus

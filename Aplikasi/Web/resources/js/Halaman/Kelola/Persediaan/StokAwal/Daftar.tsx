@@ -116,10 +116,10 @@ export default function HalamanDaftarStokAwal({
     ];
     const tombolBuat = Izin.Kelola ? (
         <>
-            <Button asChild variant="outline" className="h-10">
+            <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                 <Link href={`${AlamatStokAwal}/impor`}>Impor dari Excel</Link>
             </Button>
-            <Button asChild className="h-10">
+            <Button asChild className="h-8 pointer-coarse:h-11">
                 <Link href={`${AlamatStokAwal}/buat`}>Buat stok awal</Link>
             </Button>
         </>

@@ -76,7 +76,7 @@ export default function BidangUang({
             <InputGroup
                 data-disabled={disabled ? true : undefined}
                 className={cn(
-                    'h-10 bg-permukaan',
+                    'h-8 pointer-coarse:h-11 bg-permukaan',
                     galat ? 'border-bahaya' : 'border-garis-input',
                     disabled && 'bg-latar',
                 )}

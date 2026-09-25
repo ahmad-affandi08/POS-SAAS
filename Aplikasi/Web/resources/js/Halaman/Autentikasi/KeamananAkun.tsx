@@ -59,7 +59,11 @@ export default function HalamanKeamananAkun({ DuaFaktor, Aktivasi, KodePemulihan
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="px-6">
-                    <Button asChild variant="outline" className="h-10 border-garis-input text-label font-semibold">
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="h-8 pointer-coarse:h-11 border-garis-input text-label font-semibold"
+                    >
                         <Link href="/kelola/keamanan/pin">Atur PIN kasir</Link>
                     </Button>
                 </CardContent>

@@ -141,11 +141,11 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
     ];
 
     const tombolTambah = penuh ? (
-        <Button disabled className="h-10">
+        <Button disabled className="h-8 pointer-coarse:h-11">
             Tambah produk
         </Button>
     ) : (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${alamat}/buat`}>Tambah produk</Link>
         </Button>
     );
@@ -183,7 +183,7 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
                 aksiAlat={
                     Izin.Kelola ? (
                         <>
-                            <Button asChild variant="outline" className="h-10">
+                            <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                                 <Link href={`${alamat}/impor`}>Impor dari Excel</Link>
                             </Button>
                             {tombolTambah}

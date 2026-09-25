@@ -210,7 +210,7 @@ export default function HalamanDetailProduk({
 
             {Izin.Kelola ? (
                 <div className="flex flex-wrap gap-2">
-                    <Button asChild className="h-10">
+                    <Button asChild className="h-8 pointer-coarse:h-11">
                         <Link href={`/kelola/produk/${Produk.Uuid}/ubah`}>Ubah produk</Link>
                     </Button>
                     {Produk.DiarsipkanPada === null ? (
@@ -231,7 +231,7 @@ export default function HalamanDetailProduk({
                     {Produk.AlasanTidakBisaDihapus === null ? (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="h-10">
+                                <Button variant="destructive" className="h-8 pointer-coarse:h-11">
                                     Hapus produk
                                 </Button>
                             </AlertDialogTrigger>

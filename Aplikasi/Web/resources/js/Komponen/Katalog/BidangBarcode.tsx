@@ -103,9 +103,15 @@ export default function BidangBarcode({
                     placeholder="Pindai atau ketik barcode"
                     aria-invalid={pesanGalat ? true : undefined}
                     aria-describedby={`${id}-keterangan${pesanGalat ? ` ${id}-galat` : ''}`}
-                    className="h-10 flex-1 font-mono tracking-wide"
+                    className="h-8 pointer-coarse:h-11 flex-1 font-mono tracking-wide"
                 />
-                <Button type="button" variant="outline" onClick={Tambah} disabled={disabled} className="h-10">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={Tambah}
+                    disabled={disabled}
+                    className="h-8 pointer-coarse:h-11"
+                >
                     Tambah barcode
                 </Button>
             </div>

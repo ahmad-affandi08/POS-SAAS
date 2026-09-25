@@ -181,7 +181,7 @@ export default function TabelHargaBertingkat({
                                     </TableCell>
                                     <TableCell className="py-1 pr-0">
                                         {dasar ? (
-                                            <span className="inline-flex h-10 items-center text-keterangan text-teks-sekunder">
+                                            <span className="inline-flex h-8 pointer-coarse:h-11 items-center text-keterangan text-teks-sekunder">
                                                 Harga dasar
                                             </span>
                                         ) : (
@@ -190,7 +190,7 @@ export default function TabelHargaBertingkat({
                                                 variant="ghost"
                                                 disabled={disabled}
                                                 onClick={() => saatBerubah(baris.filter((_, i) => i !== indeks))}
-                                                className="h-10 text-destructive"
+                                                className="h-8 pointer-coarse:h-11 text-destructive"
                                                 aria-label={`Hapus tingkat harga baris ${String(indeks + 1)}`}
                                             >
                                                 Hapus
@@ -214,7 +214,7 @@ export default function TabelHargaBertingkat({
                         onClick={() =>
                             saatBerubah([...baris, { JumlahMinimum: baris.length === 0 ? '1' : '', Harga: '' }])
                         }
-                        className="h-10"
+                        className="h-8 pointer-coarse:h-11"
                     >
                         {baris.length === 0
                             ? wajibDasar
@@ -228,7 +228,7 @@ export default function TabelHargaBertingkat({
                         type="button"
                         variant="link"
                         onClick={() => saatBerubah(UrutkanBarisHarga(baris))}
-                        className="h-10 px-2"
+                        className="h-8 pointer-coarse:h-11 px-2"
                     >
                         Urutkan menurut jumlah
                     </Button>

@@ -97,7 +97,7 @@ export function BuatSaringPembelian(opsiStatus: Opsi[], opsiPemasok: OpsiPemasok
 /** Tombol tautan "Buat …" (hanya bila berizin kelola). */
 export function TombolBuat({ href, label, izin }: { href: string; label: string; izin: IzinPembelian }) {
     return izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={href}>{label}</Link>
         </Button>
     ) : null;

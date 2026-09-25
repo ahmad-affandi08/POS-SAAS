@@ -311,7 +311,7 @@ export default function HalamanDetailStokOpname({
                     <LabelStatusDokumen status={Opname.Status} label={Opname.LabelStatus} />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={alamat}>Kembali ke daftar</Link>
                     </Button>
                     {Tindakan.Batalkan ? (
@@ -398,7 +398,7 @@ export default function HalamanDetailStokOpname({
                                     onChange={(e) => AturPindai(e.target.value)}
                                     onKeyDown={(e) => void Pindai(e)}
                                     placeholder="Pindai atau ketik barcode/SKU lalu Enter"
-                                    className="h-10 font-mono"
+                                    className="h-8 pointer-coarse:h-11 font-mono"
                                     autoComplete="off"
                                 />
                                 {pesanPindai ? (

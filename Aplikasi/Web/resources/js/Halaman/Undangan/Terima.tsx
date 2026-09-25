@@ -79,7 +79,10 @@ export default function HalamanTerimaUndangan({ Token, Berlaku, Email, NamaTenan
                         Email ini sudah punya akun. Masuk dulu; setelah itu Anda kembali ke halaman ini untuk menerima
                         undangan.
                     </p>
-                    <Button asChild className="h-10 px-4 text-label font-semibold focus-visible:ring-offset-2">
+                    <Button
+                        asChild
+                        className="h-8 pointer-coarse:h-11 px-4 text-label font-semibold focus-visible:ring-offset-2"
+                    >
                         <Link href="/masuk">Masuk untuk menerima undangan</Link>
                     </Button>
                 </div>

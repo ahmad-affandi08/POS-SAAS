@@ -697,7 +697,12 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                     ) : null}
                     <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                         {props.aksiMassal({ terpilih, semuaHasil, total, keadaan, bersihkan: BersihkanPilihan })}
-                        <Button type="button" variant="ghost" className="h-10 text-label" onClick={BersihkanPilihan}>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-8 pointer-coarse:h-11 text-label"
+                            onClick={BersihkanPilihan}
+                        >
                             Batal pilih
                         </Button>
                     </div>

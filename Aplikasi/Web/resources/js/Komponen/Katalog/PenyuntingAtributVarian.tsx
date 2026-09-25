@@ -61,9 +61,15 @@ function BidangNilai({
                         }
                     }}
                     aria-describedby={`${id}-keterangan`}
-                    className="h-10 flex-1"
+                    className="h-8 pointer-coarse:h-11 flex-1"
                 />
-                <Button type="button" variant="outline" onClick={Tambah} disabled={disabled || penuh} className="h-10">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={Tambah}
+                    disabled={disabled || penuh}
+                    className="h-8 pointer-coarse:h-11"
+                >
                     Tambah nilai
                 </Button>
             </div>
@@ -160,7 +166,7 @@ export default function PenyuntingAtributVarian({
                         type="button"
                         variant="outline"
                         onClick={() => saatBerubah([...nilai, { Nama: '', Nilai: [] }])}
-                        className="h-10"
+                        className="h-8 pointer-coarse:h-11"
                     >
                         Tambah atribut
                     </Button>

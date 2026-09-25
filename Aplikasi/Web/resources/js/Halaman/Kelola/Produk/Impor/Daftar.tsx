@@ -180,7 +180,7 @@ export default function HalamanDaftarImpor({
                                     onChange={Pilih}
                                     aria-invalid={pesanBerkas ? true : undefined}
                                     aria-describedby={`${id}-keterangan${pesanBerkas ? ` ${id}-galat` : ''}`}
-                                    className="h-10 py-1.5 text-isi file:mr-3 file:font-semibold"
+                                    className="h-8 pointer-coarse:h-11 py-1.5 text-isi file:mr-3 file:font-semibold"
                                 />
                                 <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder tabular-nums">
                                     Format {BatasBerkas.Ekstensi.join(', ')}, maksimal{' '}

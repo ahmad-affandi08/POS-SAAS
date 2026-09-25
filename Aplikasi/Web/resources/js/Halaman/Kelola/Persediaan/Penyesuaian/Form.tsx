@@ -401,7 +401,7 @@ export default function HalamanFormPenyesuaianStok({
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf penyesuaian
                     </Tombol>
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Penyesuaian === null ? alamat : `${alamat}/${Penyesuaian.Uuid}`}>Batal</Link>
                     </Button>
                 </div>

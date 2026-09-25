@@ -124,7 +124,7 @@ export default function PilihanCari({
                     disabled={disabled}
                     onKeyDown={SaatTombol}
                     className={cn(
-                        'flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-kontrol border bg-permukaan px-3 text-left text-isi text-teks-utama shadow-xs outline-none pointer-coarse:h-11',
+                        'flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-kontrol border bg-permukaan px-3 text-left text-isi text-teks-utama shadow-xs outline-none pointer-coarse:h-11',
                         'focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/40',
                         'disabled:cursor-not-allowed disabled:bg-latar disabled:text-teks-sekunder',
                         galat ? 'border-bahaya' : 'border-garis-input',
@@ -176,7 +176,7 @@ export default function PilihanCari({
                             aria-label={`Cari ${label}`}
                             aria-controls={idDaftar}
                             autoComplete="off"
-                            className="h-10 w-full bg-transparent text-isi text-teks-utama outline-none placeholder:text-teks-sekunder"
+                            className="h-8 pointer-coarse:h-11 w-full bg-transparent text-isi text-teks-utama outline-none placeholder:text-teks-sekunder"
                         />
                     </div>
                     <CommandList className="max-h-72">

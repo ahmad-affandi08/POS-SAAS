@@ -325,7 +325,7 @@ export default function HalamanFormStokAwal({
                                                 </th>
                                                 <TableCell className={KelasSel()}>
                                                     {baris.Pelacakan === 'Seri' ? (
-                                                        <p className="h-10 py-2 text-right text-teks-utama tabular-nums">
+                                                        <p className="h-8 pointer-coarse:h-11 py-2 text-right text-teks-utama tabular-nums">
                                                             {FormatJumlahStok(
                                                                 String(baris.NomorSeri.length),
                                                                 baris.SimbolSatuan,
@@ -459,7 +459,7 @@ export default function HalamanFormStokAwal({
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf
                     </Tombol>
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={kembali}>Batal</Link>
                     </Button>
                 </div>

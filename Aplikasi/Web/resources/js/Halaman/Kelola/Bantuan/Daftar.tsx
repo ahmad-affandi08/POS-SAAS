@@ -99,7 +99,7 @@ export default function DaftarBantuan({ Tiket }: PropsDaftar) {
                 alamatDetail={(tiket) => `/kelola/bantuan/${tiket.Uuid}`}
                 aksiAlat={
                     bolehKelola ? (
-                        <Button asChild className="h-10">
+                        <Button asChild className="h-8 pointer-coarse:h-11">
                             <Link href="/kelola/bantuan/buat">Buat tiket</Link>
                         </Button>
                     ) : null

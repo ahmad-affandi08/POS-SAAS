@@ -27,7 +27,7 @@ export default function Tombol({
             variant={varianUi[varian]}
             disabled={disabled === true || memproses}
             aria-busy={memproses || undefined}
-            className="h-10 px-4 text-label font-semibold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-8 pointer-coarse:h-11 px-4 text-label font-semibold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             {...atribut}
         >
             {memproses ? (

@@ -292,7 +292,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                                         type="button"
                                                         variant="ghost"
                                                         onClick={() => AturBahan(bahan.filter((_, i) => i !== indeks))}
-                                                        className="h-10 text-destructive"
+                                                        className="h-8 pointer-coarse:h-11 text-destructive"
                                                         aria-label={`Hapus bahan ${item.NamaBahan}`}
                                                     >
                                                         Hapus

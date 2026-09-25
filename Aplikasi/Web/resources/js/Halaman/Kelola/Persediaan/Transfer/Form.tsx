@@ -312,7 +312,7 @@ export default function HalamanFormTransferStok({
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf transfer
                     </Tombol>
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Transfer === null ? alamat : `${alamat}/${Transfer.Uuid}`}>Batal</Link>
                     </Button>
                 </div>

@@ -58,7 +58,7 @@ export default function HalamanDaftarPelunasan({ Pelunasan, OpsiStatus, Izin }: 
         },
     ];
     const tombol = Izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${alamat}/buat`}>Terima pelunasan</Link>
         </Button>
     ) : null;

@@ -538,7 +538,7 @@ export default function HalamanFormProduk({
                             {Mode === 'Buat' ? 'Simpan produk' : 'Simpan perubahan'}
                         </Tombol>
                     ) : null}
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Mode === 'Buat' ? '/kelola/produk' : `/kelola/produk/${data.Uuid}`}>Batal</Link>
                     </Button>
                 </div>

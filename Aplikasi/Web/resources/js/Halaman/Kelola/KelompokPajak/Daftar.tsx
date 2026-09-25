@@ -190,7 +190,7 @@ function FormKelompok({
                                 type="button"
                                 variant="ghost"
                                 onClick={() => AturPajak(data.Pajak.filter((_, i) => i !== indeks))}
-                                className="h-10 text-destructive"
+                                className="h-8 pointer-coarse:h-11 text-destructive"
                                 aria-label={`Hapus pajak ${String(indeks + 1)}`}
                             >
                                 Hapus

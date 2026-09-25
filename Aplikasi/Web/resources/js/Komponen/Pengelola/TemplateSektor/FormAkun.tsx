@@ -22,7 +22,7 @@ type PropsFormAkun = {
 
 const kelasSel = 'px-2 py-2 whitespace-normal [&_[data-slot=native-select-wrapper]]:w-full';
 const kelasKepala = 'px-2 text-label font-semibold text-teks-sekunder';
-const kelasInput = 'h-10 px-2 text-isi';
+const kelasInput = 'h-8 pointer-coarse:h-11 px-2 text-isi';
 
 /** Saldo normal mengikuti tipe akun (§11.2); akun kontra memakai kebalikannya. */
 function HitungSaldoNormal(pilihan: PilihanEditorTemplate, tipe: string, kontra: boolean): string {

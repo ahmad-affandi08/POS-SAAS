@@ -220,7 +220,7 @@ export default function PenyuntingSatuanProduk({
                                 },
                             ])
                         }
-                        className="h-10"
+                        className="h-8 pointer-coarse:h-11"
                     >
                         Tambah satuan alternatif
                     </Button>

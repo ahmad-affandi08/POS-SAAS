@@ -142,7 +142,7 @@ export function MenuAkun({ nama, email, gelap = false }: PropsMenuAkun) {
                     variant="ghost"
                     aria-label={`Menu akun ${nama ?? ''}`.trim()}
                     className={cn(
-                        'h-10 gap-2 px-2 text-label font-semibold',
+                        'h-8 pointer-coarse:h-11 gap-2 px-2 text-label font-semibold',
                         gelap && 'text-permukaan hover:bg-permukaan/15 hover:text-permukaan',
                     )}
                 >

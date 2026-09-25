@@ -163,11 +163,11 @@ export default function HalamanDetailTransferStok({
                     <LabelStatusDokumen status={Transfer.Status} label={Transfer.LabelStatus} />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" className="h-10">
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={alamat}>Kembali ke daftar</Link>
                     </Button>
                     {Tindakan.Ubah ? (
-                        <Button asChild variant="outline" className="h-10">
+                        <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                             <Link href={`${alamat}/${Transfer.Uuid}/ubah`}>Ubah draf</Link>
                         </Button>
                     ) : null}

@@ -62,7 +62,10 @@ export default function BidangHpp({
             <Label htmlFor={id} className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}>
                 {label}
             </Label>
-            <InputGroup data-disabled={disabled ? true : undefined} className={cn('h-10', disabled && 'bg-latar')}>
+            <InputGroup
+                data-disabled={disabled ? true : undefined}
+                className={cn('h-8 pointer-coarse:h-11', disabled && 'bg-latar')}
+            >
                 <InputGroupAddon align="inline-start" aria-hidden="true">
                     <InputGroupText className="text-isi font-normal text-teks-sekunder">Rp</InputGroupText>
                 </InputGroupAddon>

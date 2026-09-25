@@ -112,7 +112,7 @@ export default function HalamanDaftarPiutangPelanggan({ Piutang, OpsiUmur, OpsiP
         },
     ];
     const tombol = Izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${AlamatPiutang}/pelunasan/buat`}>Terima pelunasan</Link>
         </Button>
     ) : null;

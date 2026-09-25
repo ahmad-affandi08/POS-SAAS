@@ -208,7 +208,7 @@ export default function PemilihProduk({
                                 onFocus={() => AturTerbuka(true)}
                                 onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
                                 onKeyDown={TekanTombol}
-                                className="h-10 text-isi"
+                                className="h-8 pointer-coarse:h-11 text-isi"
                             />
                         </div>
                     </PopoverAnchor>

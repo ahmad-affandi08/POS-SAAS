@@ -32,7 +32,8 @@ type PropsTataLetakPanduan = {
 /** Tautan yang tampil seperti Tombol varian sekunder (Button outline shadcn/ui). */
 const kelasTautanTombol = buttonVariants({
     variant: 'outline',
-    className: 'h-10 border-garis-input px-4 text-label font-semibold text-teks-utama focus-visible:ring-offset-2',
+    className:
+        'h-8 pointer-coarse:h-11 border-garis-input px-4 text-label font-semibold text-teks-utama focus-visible:ring-offset-2',
 });
 
 /** Kerangka satu langkah panduan awal: penanda langkah, isi, lalu bilah Kembali / Lewati dulu / Lanjutkan. */

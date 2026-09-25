@@ -90,7 +90,7 @@ export default function HalamanDaftarHutang({ Hutang, OpsiUmur, OpsiPemasok, Izi
         },
     ];
     const tombol = Izin.Kelola ? (
-        <Button asChild className="h-10">
+        <Button asChild className="h-8 pointer-coarse:h-11">
             <Link href={`${AlamatPembelian}/pembayaran/buat`}>Bayar hutang</Link>
         </Button>
     ) : null;
