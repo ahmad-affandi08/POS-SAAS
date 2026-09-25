@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.82 |
+| Versi | 1.83 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.83 | Rincian **cetak struk bagian 3a: struk digital** (POS-11; rincian diputuskan agen atas mandat D-12): halaman publik `/s/{kodeStruk}` dengan kode `{IdTenant basis-36}.{Uuid penjualan}` yang bisa disusun kasir saat offline, QR + tautan di struk cetak, saklar "QR struk digital" di pengaturan struk. |
 | 1.82 | Rincian **P-10 rilis aplikasi & flag fitur** (PGL-18; rincian diputuskan agen atas mandat D-12): `RilisAplikasi` (Draf/Aktif/Dihentikan, kanal Beta untuk tenant Uji/Internal, rollout bertahap per ember perangkat), versi minimum dengan pengumuman ≥ 7 hari (BR-P10.1) dan dampak perangkat lama + outbox (BR-P10.2, header baru `X-Outbox-Tertunda`), `FlagFitur` Global/Paket/Tenant/Persentase dengan kill switch dan audit beralasan (BR-P10.3), aplikasi kasir membaca `konfigurasi-aplikasi` dan mengunci layar jual saat wajib perbarui. Pengumuman & banner pemeliharaan (PGL-19) tetap Fase 2. |
 | 1.81 | Rincian **F-15 tutup buku** (FIN-08; rincian diputuskan agen atas mandat D-12): tutup bulan (kunci & buka kunci periode dengan alasan + audit, syarat bulan lewat & semua shift ditutup); transaksi POS di periode terkunci kini **diterima** dengan `TanggalBisnis` asli, ditandai `PerluTinjauan`, jurnal & mutasi stok dibukukan di hari pertama periode terbuka berikutnya (§18.3, sebelumnya ditolak); tutup harian per outlet (tabel baru `TutupHarian`); tutup tahun J-15.1 ke Laba Ditahan per outlet. |
 | 1.80 | Rincian **cetak struk bagian 2: printer Bluetooth** (keputusan pemilik produk v1.80: cetak Bluetooth **wajib**). Android: Bluetooth Classic SPP ke printer yang sudah di-pair (kanal Kotlin sendiri, RFCOMM UUID SPP, izin "Perangkat di sekitar") dan Bluetooth LE; iOS/iPadOS: Bluetooth LE; Windows: Bluetooth Classic lewat COM port virtual + Bluetooth LE. Pengaturan kasir memilih jenis sambungan lalu **Cari printer**. |
@@ -1321,7 +1322,13 @@ stateDiagram-v2
 - **Windows Bluetooth Classic**: printer di-pair di Pengaturan Windows › Bluetooth; Windows membuat COM port virtual. Daftar dari registry `HKLM\HARDWARE\DEVICEMAP\SERIALCOMM` (nilai `\Device\BthModemN`), cetak dengan `CreateFile`/`WriteFile` ke port itu (paket `win32`, di isolate terpisah agar layar tidak macet).
 - Galat selalu berupa pesan untuk kasir: Bluetooth mati, izin ditolak (dengan jalan ke pengaturan), printer belum di-pair (dengan petunjuk PIN 0000/1234), tidak ada printer BLE di sekitar, tidak tersambung, gagal terkirim.
 - Uji: logika potongan & pemilihan karakteristik BLE, kanal Android lewat MethodChannel tiruan, dan alur pilih printer Bluetooth/BLE di layar Pengaturan (360/1280 dp). Build APK debug diverifikasi. Uji di printer fisik tetap wajib sebelum beta (HCL §22 Fase 1 no. 15).
-- **Belum**: printer USB, printer bawaan all-in-one (Sunmi, iMin), fallback printer sistem, Wizard Uji Perangkat & `Perangkat.ProfilHardware`, struk digital, buka laci manual tercatat, struk retur/void/tutup shift/pre-order, tiket dapur per stasiun.
+- **Belum**: printer USB, printer bawaan all-in-one (Sunmi, iMin), fallback printer sistem, Wizard Uji Perangkat & `Perangkat.ProfilHardware`, buka laci manual tercatat, struk retur/void/tutup shift/pre-order, tiket dapur per stasiun.
+
+**Rincian cetak struk bagian 3a: struk digital (v1.83, POS-11; rincian diputuskan agen atas mandat D-12):**
+- Halaman publik `/s/{kodeStruk}` (tanpa login, React ringan, font Mono, throttle 60/menit). `kodeStruk` = `{IdTenant basis-36}.{Uuid penjualan}`: bagian tenant hanya menetapkan scope pencarian (pola sama dengan device token), rahasianya bagian acak ULID; kode bisa disusun kasir offline tanpa tabel baru.
+- `data-awal` `Struk.AwalanStrukDigital` (tambahan aditif) = `https://{domain}/s/{tenant}.`; null bila saklar "QR struk digital" (`TampilkanStrukDigital`, bawaan hidup; boleh tidak dikirim form lama) dimatikan di `/kelola/kasir/struk`. Struk cetak menambah QR (`GS ( k`) dan tautan di atas catatan kaki.
+- Isi halaman hanya data yang juga tercetak (nama usaha/outlet, alamat & NPWP menurut saklar, nomor, waktu, kasir & pelanggan menurut saklar, baris, diskon, biaya layanan, pajak per jenis, pembulatan, total, pembayaran, kembalian, total retur, catatan kaki, penutup); tanpa HPP, catatan internal, atau tinjauan. Penjualan void ditandai "TRANSAKSI DIBATALKAN". Struk yang belum tersinkron, dimatikan, tenant lain, atau kode salah = halaman "Struk belum tersedia" (404).
+- **Belum**: kirim struk lewat WhatsApp/email (butuh integrasi WA, F-20), logo di halaman struk digital.
 
 **Keputusan implementasi F-07b/F-07c (v1.44):**
 - Kunci opsional `Penjualan.Buat`: `Kanal`, `PembulatanTunai`, `Pajak`, `HargaPilihan`, `Pilihan`, `KodePajak` (null = semua pajak dokumen, `[]` = tanpa pajak), `DiskonManual`, `Catatan`, `Referensi`. `DibuatPada` ISO-8601 berzona; > 10 menit di masa depan atau sebelum buka shift − 10 menit → `WaktuTidakValid`. `HargaPilihan` wajib = Σ harga `Pilihan`; `Ringkasan.Kembalian` ikut dicocokkan. `YYMMDD` nomor = tanggal bisnis (aplikasi memakai `Outlet.JamTutupBuku`); `{DEVICE}` = `Perangkat.Kode` apa adanya. Kode galat tambahan: `NomorTidakValid`, `ProdukTidakDikenal`, `SatuanTidakDikenal`, `MetodeBayarTidakDikenal`, `PembayaranTidakValid`, `PenyetujuTidakBerwenang`, `LokasiStokTidakAda`.

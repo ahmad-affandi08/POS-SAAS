@@ -487,6 +487,7 @@ class StrukPos {
     this.tampilkanHemat = true,
     this.catatanKaki,
     this.teksPenutup,
+    this.awalanStrukDigital,
   });
 
   final String namaUsaha;
@@ -510,6 +511,9 @@ class StrukPos {
   final String? catatanKaki;
   final String? teksPenutup;
 
+  /// POS-11: awalan tautan struk digital (`https://…/s/{tenant}.`); tautan = awalan + Uuid penjualan. Null = mati.
+  final String? awalanStrukDigital;
+
   static StrukPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
     if (peta == null) {
@@ -530,6 +534,7 @@ class StrukPos {
       tampilkanHemat: UraiJson.AmbilBenar(peta['TampilkanHemat'], true),
       catatanKaki: UraiJson.AmbilTeksAtauNull(peta['CatatanKaki']),
       teksPenutup: UraiJson.AmbilTeksAtauNull(peta['TeksPenutup']),
+      awalanStrukDigital: UraiJson.AmbilTeksAtauNull(peta['AwalanStrukDigital']),
     );
   }
 
@@ -548,6 +553,7 @@ class StrukPos {
     'TampilkanHemat': tampilkanHemat,
     'CatatanKaki': catatanKaki,
     'TeksPenutup': teksPenutup,
+    'AwalanStrukDigital': awalanStrukDigital,
   };
 }
 

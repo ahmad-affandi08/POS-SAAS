@@ -26,7 +26,7 @@ class DataStrukPenjualan {
 
 /// Menyusun struk penjualan (POS-11, PRD v1.79) sesuai pengaturan struk tenant. Angka memakai format Indonesia tanpa
 /// "Rp" di baris rincian agar muat di kertas 58 mm; total memakai "Rp". Cetak ulang diberi tanda "CETAK ULANG"
-/// (anti-fraud) dan penjualan void diberi tanda "DIBATALKAN".
+/// (anti-fraud) dan penjualan void diberi tanda "DIBATALKAN". QR struk digital dicetak bila diaktifkan tenant.
 abstract final class PenyusunStrukPenjualan {
   static const String penutupBawaan = 'Terima kasih atas kunjungan Anda';
   static const String tandaAir = 'Dibuat dengan PAYOU';
@@ -137,11 +137,22 @@ abstract final class PenyusunStrukPenjualan {
       baris.add(BarisTeks('Anda hemat ${hemat.FormatRupiah()}', rata: RataStruk.Tengah));
     }
 
-    baris
-      ..add(const BarisGaris())
-      ..addAll(SusunKaki(identitas));
+    baris.add(const BarisGaris());
+    // POS-11: QR & tautan struk digital (bisa dibuat offline; halaman tersedia setelah penjualan terkirim).
+    final awalan = p.awalanStrukDigital;
+    if (awalan != null && awalan.isNotEmpty) {
+      final tautan = TautanStrukDigital(awalan, jual.Uuid);
+      baris
+        ..add(BarisQr(tautan))
+        ..add(const BarisTeks('Struk digital:', rata: RataStruk.Tengah))
+        ..add(BarisTeks(tautan, rata: RataStruk.Tengah));
+    }
+    baris.addAll(SusunKaki(identitas));
     return DokumenStruk(baris, bukaLaci: bukaLaci);
   }
+
+  /// Tautan struk digital `/s/{kodeStruk}` = awalan dari server + Uuid penjualan (huruf besar, format ULID).
+  static String TautanStrukDigital(String awalan, String uuidPenjualan) => '$awalan${uuidPenjualan.toUpperCase()}';
 
   static List<BarisStruk> SusunKepala(IdentitasStruk identitas) {
     final p = identitas.pengaturan;

@@ -59,6 +59,7 @@ const saklar: { kunci: keyof PengaturanStruk & `Tampilkan${string}`; label: stri
     { kunci: 'TampilkanKasir', label: 'Nama kasir', bagian: 'isi' },
     { kunci: 'TampilkanPelanggan', label: 'Nama pelanggan', bagian: 'isi' },
     { kunci: 'TampilkanHemat', label: 'Total hemat dari diskon dan promo', bagian: 'isi' },
+    { kunci: 'TampilkanStrukDigital', label: 'QR struk digital untuk pelanggan', bagian: 'isi' },
 ];
 
 type KunciSaklar = (typeof saklar)[number]['kunci'];

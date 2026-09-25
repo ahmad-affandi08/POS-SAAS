@@ -23,6 +23,8 @@ final class UbahPengaturanStrukPermintaan extends FormRequest
 
         return [
             ...array_fill_keys(self::SAKLAR, ['required', 'boolean']),
+            // POS-11 (ditambah setelah v1.79): boleh tidak dikirim, bawaan hidup.
+            'TampilkanStrukDigital' => ['sometimes', 'boolean'],
             'NamaDicetak' => ['nullable', 'string', "max:{$baris}"],
             // Batas 3 baris diperiksa setelah baris kosong dibuang (Aksi); di sini hanya batas wajar masukan.
             'TeksKepala' => ['present', 'array', 'max:10'],
@@ -72,6 +74,7 @@ final class UbahPengaturanStrukPermintaan extends FormRequest
             tampilkanHemat: $this->boolean('TampilkanHemat'),
             catatanKaki: self::Rapikan($this->input('CatatanKaki')),
             teksPenutup: self::Rapikan($this->input('TeksPenutup')),
+            tampilkanStrukDigital: $this->boolean('TampilkanStrukDigital', true),
         );
     }
 

@@ -181,6 +181,8 @@ export type PengaturanStruk = {
     TampilkanHemat: boolean;
     CatatanKaki: string | null;
     TeksPenutup: string | null;
+    /** POS-11: QR & tautan struk digital `/s/{kodeStruk}` di bagian bawah struk. */
+    TampilkanStrukDigital: boolean;
 };
 
 /** Data profil usaha untuk pratinjau struk (diubah di profil usaha, bukan di halaman ini). */

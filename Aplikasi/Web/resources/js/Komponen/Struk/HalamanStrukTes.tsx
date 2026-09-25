@@ -20,6 +20,7 @@ const bawaan: PengaturanStruk = {
     TampilkanHemat: true,
     CatatanKaki: null,
     TeksPenutup: null,
+    TampilkanStrukDigital: true,
 };
 
 const profil: ProfilPratinjauStruk = {

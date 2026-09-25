@@ -15,6 +15,7 @@ use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
+use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use App\Domain\Tenant\Kueri\PengaturanStrukTenant;
 use App\Domain\Tenant\Kueri\ProfilTenant;
@@ -138,6 +139,8 @@ final class DataAwalKasir
             'Npwp' => $pkp ? $tenant['Npwp'] : null,
             'AdaLogo' => $this->pengaturanStruk->AmbilPathLogo($perangkat->IdTenant) !== null,
             'TandaAir' => ! $this->fitur->CekAktif($perangkat->IdTenant, 'struk.tanpa-watermark'),
+            // POS-11: awalan tautan struk digital; aplikasi menambah Uuid penjualan. Null = struk digital dimatikan.
+            'AwalanStrukDigital' => $struk->tampilkanStrukDigital ? KodeStrukDigital::AmbilAwalan($perangkat->IdTenant) : null,
         ];
     }
 }

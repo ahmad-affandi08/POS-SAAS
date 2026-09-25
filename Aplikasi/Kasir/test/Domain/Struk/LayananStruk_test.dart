@@ -121,6 +121,29 @@ void main() {
     expect(baris, isNot(contains('CETAK ULANG')));
   });
 
+  test('POS-11 struk digital: QR & tautan = awalan dari server + Uuid penjualan; tanpa awalan tidak dicetak', () async {
+    await Siapkan(struk: {'AwalanStrukDigital': 'https://payou.id/s/1c.'});
+    final hasil = await Jual(JenisMetodeBayar.tunai);
+    Future<DokumenStruk> Susun() async => PenyusunStrukPenjualan.Susun(
+      await IdentitasStruk.Muat(u.repositori),
+      DataStrukPenjualan(
+        penjualan: (await u.repositoriPenjualan.CariPenjualan(hasil.uuid))!,
+        detail: await u.repositoriPenjualan.AmbilDetail(hasil.uuid),
+        pembayaran: await u.repositoriPenjualan.AmbilPembayaran(hasil.uuid),
+      ),
+    );
+    final tautan = 'https://payou.id/s/1c.${hasil.uuid.toUpperCase()}';
+    final dokumen = await Susun();
+    expect(dokumen.baris.whereType<BarisQr>().single.data, tautan);
+    expect(dokumen.baris.whereType<BarisTeks>().map((b) => b.teks), containsAll(['Struk digital:', tautan]));
+
+    await u.repositori.SimpanPengaturan(
+      KunciPengaturan.struk,
+      jsonEncode({...DataAwalStruk(const {})['Struk']! as Map<String, Object?>, 'AwalanStrukDigital': null}),
+    );
+    expect((await Susun()).baris.whereType<BarisQr>(), isEmpty);
+  });
+
   test('saklar back-office dipatuhi: tanpa kasir, pelanggan, NPWP; nama & penutup kustom; tanpa tanda air', () async {
     await Siapkan(
       struk: {

@@ -34,6 +34,7 @@ final class PengaturanStrukTenant
             tampilkanHemat: $saklar('TampilkanHemat'),
             catatanKaki: self::AmbilTeks($struk['CatatanKaki'] ?? null, DataPengaturanStruk::PANJANG_CATATAN_KAKI_MAKSIMAL),
             teksPenutup: self::AmbilTeks($struk['TeksPenutup'] ?? null, DataPengaturanStruk::PANJANG_BARIS_MAKSIMAL),
+            tampilkanStrukDigital: $saklar('TampilkanStrukDigital'),
         );
     }
 

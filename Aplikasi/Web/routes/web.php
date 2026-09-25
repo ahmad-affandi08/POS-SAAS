@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Http\Kontroler\Autentikasi\KeamananAkunKontroler;
 use App\Http\Kontroler\Autentikasi\LupaKataSandiKontroler;
 use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
@@ -14,6 +15,7 @@ use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
+use App\Http\Kontroler\Publik\StrukDigitalKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\BatasiTenantDitangguhkan;
 use App\Http\Perantara\IdentifikasiTenantSesi;
@@ -39,6 +41,11 @@ $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin
 Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->group(function () use ($izin): void {
     Route::get('/', fn () => Inertia::render('Beranda'))->name('beranda');
     Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
+    // POS-11 struk digital publik (kode = tenant basis-36 . Uuid penjualan).
+    Route::get('/s/{kodeStruk}', [StrukDigitalKontroler::class, 'Tampilkan'])
+        ->where('kodeStruk', KodeStrukDigital::POLA)
+        ->middleware('throttle:60,1')
+        ->name('publik.struk-digital');
 
     // F-00 Registrasi & autentikasi tenant.
     Route::middleware('guest:web')->group(function (): void {

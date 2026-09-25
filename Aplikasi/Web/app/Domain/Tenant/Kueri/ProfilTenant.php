@@ -28,4 +28,10 @@ final class ProfilTenant
             'PathLogo' => is_string($pengaturan['PathLogo'] ?? null) ? $pengaturan['PathLogo'] : null,
         ];
     }
+
+    /** Tenant dengan Id ini ada (struk digital publik memasang konteks tenant dari kode struk). */
+    public function CekAda(int $idTenant): bool
+    {
+        return Tenant::query()->whereKey($idTenant)->exists();
+    }
 }

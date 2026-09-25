@@ -195,10 +195,12 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
             'TampilkanHemat' => true,
             'CatatanKaki' => 'Barang yang sudah dibeli bisa ditukar 7 hari.',
             'TeksPenutup' => null,
+            'TampilkanStrukDigital' => true,
             'NamaUsaha' => 'Kopi Senja Solo',
             'Npwp' => '0123456789012345',
             'AdaLogo' => false,
             'TandaAir' => false,
+            'AwalanStrukDigital' => url('/s/'.base_convert((string) $k['Tenant']->Id, 10, 36).'.'),
         ]);
     });
 });
