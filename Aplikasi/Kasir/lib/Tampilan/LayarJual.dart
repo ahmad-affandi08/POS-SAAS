@@ -511,6 +511,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       ),
     );
     if (ya == true) {
+      // F-16c bagian 2: voucher yang sudah dipesan dilepas agar bisa dipakai transaksi lain.
+      if (ref.read(penyediaKeranjang).voucher case final voucher?) {
+        unawaited(ref.read(penyediaLayananVoucher).Lepas(voucher));
+      }
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       _TutupPanel();
     }
@@ -889,7 +893,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         ),
       ),
       _JenisPanel.DiskonPesanan => (
-        judul: 'Diskon pesanan',
+        judul: 'Voucher & diskon',
         isi: PanelDiskonPesanan(kasir: widget.kasir, saatSelesai: _TutupPanel),
       ),
       _JenisPanel.Bayar => (

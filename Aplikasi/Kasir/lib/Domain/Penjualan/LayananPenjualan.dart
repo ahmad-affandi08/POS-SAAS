@@ -425,7 +425,13 @@ class LayananPenjualan {
     final hasilTanpaPromo = _mesin.Hitung(dasar);
     var hasil = hasilTanpaPromo;
     var promoTerpakai = const <PromoTerpakai>[];
-    if (k.promo.isNotEmpty && keranjang.baris.isNotEmpty) {
+    // F-16c bagian 2: promo voucher ikut dievaluasi walau daftar promo tersimpan belum memuatnya.
+    final voucher = keranjang.voucher;
+    final promoVoucher = voucher == null || k.promo.any((p) => p.uuid == voucher.uuidPromo)
+        ? null
+        : KonteksPenjualan.UraiPromo(PromoPos.DariJson(voucher.promo));
+    final daftarPromo = [...k.promo, ?promoVoucher];
+    if (daftarPromo.isNotEmpty && keranjang.baris.isNotEmpty) {
       final waktu = _jam().toUtc();
       final hasilPromo = const MesinPromo().Terapkan(
         dasar,
@@ -433,13 +439,14 @@ class LayananPenjualan {
           for (final b in keranjang.baris)
             BarisPromo(uuidProduk: b.uuidProduk, uuidKategori: k.kategoriProduk[b.uuidProduk]),
         ],
-        k.promo,
+        daftarPromo,
         KonteksPromo(
           waktu: waktu,
           waktuLokal: ZonaWaktuOutlet.KeWaktuOutlet(waktu, k.zonaWaktu),
           uuidOutlet: k.uuidOutlet,
           kanal: AmbilKanal(keranjang),
           tier: keranjang.pelanggan?.kodeTier,
+          voucher: [?voucher?.uuidPromo],
         ),
         mode: k.modeResolusiPromo,
       );
@@ -451,7 +458,7 @@ class LayananPenjualan {
       hasil: hasil,
       hasilDasar: hasilTanpaPromo,
       promoTerpakai: promoTerpakai,
-      namaPromo: k.namaPromo,
+      namaPromo: voucher == null ? k.namaPromo : {...k.namaPromo, voucher.uuidPromo: voucher.namaPromo},
       pajakDokumen: pajakDokumen.values.toList(),
       tarifDipakai: tarifDipakai,
       kodePajakBaris: kodeBaris,
@@ -719,7 +726,8 @@ class LayananPenjualan {
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
     final yymmdd = '${t.substring(2, 4)}${t.substring(5, 7)}${t.substring(8, 10)}';
-    final uuid = BuatUuid();
+    // F-16c bagian 2: voucher dipesan server untuk Uuid penjualan ini.
+    final uuid = keranjang.voucher?.uuidPenjualan ?? BuatUuid();
     final uuidPembayaran = [for (final _ in pembayaran) BuatUuid()];
     final kembalian = hasil.kembalian ?? Uang.Nol();
 
@@ -887,6 +895,7 @@ class LayananPenjualan {
       'UuidPelanggan': ?keranjang.pelanggan?.uuid,
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
       'UuidPenyetujuTempo': ?uuidPenyetujuTempo,
+      'Voucher': ?keranjang.voucher?.kode,
       if (hitungan.promoTerpakai.isNotEmpty)
         'Promo': [
           for (final p in hitungan.promoTerpakai)

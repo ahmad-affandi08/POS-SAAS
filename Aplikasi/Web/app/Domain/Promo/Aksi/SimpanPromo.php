@@ -200,6 +200,7 @@ final class SimpanPromo
             ],
             'Aksi' => $aksi,
             'BatasPerTransaksi' => $data->batasPerTransaksi,
+            ...($data->wajibVoucher ? ['WajibVoucher' => true] : []),
         ];
     }
 

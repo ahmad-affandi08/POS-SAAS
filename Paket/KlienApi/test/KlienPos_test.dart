@@ -328,6 +328,7 @@ void main() {
   test('F-16c promo: daftar promo aktif + mode resolusi, definisi dibawa apa adanya', () async {
     final klien = BuatKlien((permintaan) async {
       expect(permintaan.url.path, endsWith('/api/pos/v1/promo'));
+      expect(permintaan.url.queryParameters['voucher'], '1');
       return Json({
         'ModeResolusi': 'PrioritasKetat',
         'Promo': [
@@ -358,5 +359,56 @@ void main() {
       'Jenis': 'DiskonPersenItem',
       'Persen': '10',
     });
+  });
+
+  test('F-16c bagian 2 voucher: pesan mengirim kode & penjualan, promo ikut; habis → GalatApi VoucherHabis', () async {
+    final dikirim = <http.Request>[];
+    var habis = false;
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      if (habis) {
+        return Json({
+          'Galat': {'Kode': 'VoucherHabis', 'Pesan': 'Voucher HEMAT10K sudah habis dipakai.'},
+        }, 409);
+      }
+      if (permintaan.url.path.endsWith('/lepas')) {
+        return http.Response('', 204);
+      }
+      return Json({
+        'Voucher': {'Kode': 'HEMAT10K', 'UuidPromo': 'PR2', 'DipesanSampai': '2026-10-05T06:00:00Z', 'SisaPakai': 0},
+        'Promo': {
+          'Uuid': 'PR2',
+          'Kode': 'VCR-HEMAT',
+          'Nama': 'Voucher hemat',
+          'Prioritas': 0,
+          'Eksklusif': false,
+          'MulaiPada': null,
+          'SelesaiPada': null,
+          'KuotaTersisa': null,
+          'Definisi': {
+            'WajibVoucher': true,
+            'Aksi': {'Jenis': 'DiskonTetapPesanan', 'Jumlah': '10000'},
+          },
+        },
+      }, 200);
+    });
+
+    final voucher = await klien.PesanVoucher('hemat10k', 'J1');
+    expect(dikirim.single.url.path, endsWith('/api/pos/v1/voucher/pesan'));
+    expect(jsonDecode(dikirim.single.body), {'Kode': 'hemat10k', 'UuidPenjualan': 'J1'});
+    expect(voucher.kode, 'HEMAT10K');
+    expect(voucher.uuidPromo, 'PR2');
+    expect(voucher.sisaPakai, 0);
+    expect(voucher.dipesanSampai, DateTime.utc(2026, 10, 5, 6));
+    expect(voucher.promo.definisi['WajibVoucher'], isTrue);
+
+    await klien.LepasVoucher('HEMAT10K', 'J1');
+    expect(dikirim.last.url.path, endsWith('/api/pos/v1/voucher/lepas'));
+
+    habis = true;
+    await expectLater(
+      klien.PesanVoucher('HEMAT10K', 'J2'),
+      throwsA(isA<GalatApi>().having((g) => g.kode, 'kode', 'VoucherHabis')),
+    );
   });
 }

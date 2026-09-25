@@ -10,7 +10,8 @@ import 'DataPromo.dart';
 /// `Spesifikasi/VektorUjiKalkulasi/Promo/` (CLAUDE.md #18).
 ///
 /// 1. Promo **berlaku** bila kuota belum habis, waktu di `[mulaiPada, selesaiPada)`, hari & jam lokal cocok, outlet,
-///    kanal, dan tier cocok, subtotal awal (setelah diskon manual baris) ≥ minimal, dan barang kondisi cukup.
+///    kanal, dan tier cocok, voucher sudah divalidasi (promo wajib voucher), subtotal awal (setelah diskon manual
+///    baris) ≥ minimal, dan barang kondisi cukup.
 /// 2. Pilih promo: `PrioritasKetat` = urut prioritas (besar dulu, seri menurut kode), promo eksklusif hanya bila
 ///    belum ada yang terpilih dan menghentikan evaluasi; `Terbaik` = bandingkan semua promo non-eksklusif bersama
 ///    dengan tiap promo eksklusif sendiri, ambil potongan terbesar (seri: kandidat lebih awal).
@@ -107,6 +108,9 @@ final class MesinPromo {
       return false;
     }
     if (p.tier.isNotEmpty && !p.tier.contains(k.tier)) {
+      return false;
+    }
+    if (p.wajibVoucher && !k.voucher.contains(p.uuid)) {
       return false;
     }
     return subtotalAwal.Bandingkan(p.minimalSubtotal) >= 0;

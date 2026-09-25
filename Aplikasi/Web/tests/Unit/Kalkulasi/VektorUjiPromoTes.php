@@ -94,7 +94,7 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
             expect(basename($berkas))->toBe($id.'.json');
             /** @var list<array{Sku: string, Kategori?: string|null}> $baris */
             $baris = $vektor['Baris'];
-            /** @var array{Waktu: string, WaktuLokal: string, UuidOutlet?: string|null, Kanal?: string|null, Tier?: string|null} $konteks */
+            /** @var array{Waktu: string, WaktuLokal: string, UuidOutlet?: string|null, Kanal?: string|null, Tier?: string|null, Voucher?: list<string>} $konteks */
             $konteks = $vektor['Konteks'];
             /** @var list<array{Uuid: string, Kode: string, Prioritas: int, Eksklusif: bool, MulaiPada: string|null, SelesaiPada: string|null, KuotaTersisa: int|null, Definisi: array<string, mixed>}> $daftarPromo */
             $daftarPromo = $vektor['Promo'];
@@ -118,6 +118,7 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
                     $konteks['UuidOutlet'] ?? null,
                     isset($konteks['Kanal']) ? KanalPenjualan::from($konteks['Kanal']) : null,
                     $konteks['Tier'] ?? null,
+                    $konteks['Voucher'] ?? [],
                 ),
                 ModeResolusiPromo::from((string) $vektor['Mode']),
             );

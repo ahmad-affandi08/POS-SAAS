@@ -1,0 +1,111 @@
+{
+  "Id": "PRM-VOUCHER-001",
+  "Keterangan": "Promo wajib voucher hanya berlaku bila vouchernya sudah divalidasi server untuk transaksi ini (Konteks.Voucher): voucher HEMAT10K tervalidasi memotong pesanan Rp 10.000 setelah promo kopi 10%, sedangkan promo voucher SETENGAH tanpa voucher tidak berlaku walau potongannya lebih besar.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "Voucher": [
+      "PR-VCR-HEMAT"
+    ]
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-KOPI",
+      "Kode": "KOPI10",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Kondisi": {
+          "Jenis": "Kategori",
+          "Uuid": [
+            "K-MINUM"
+          ]
+        },
+        "Aksi": {
+          "Jenis": "DiskonPersenItem",
+          "Persen": "10"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-VCR-HEMAT",
+      "Kode": "VCR-HEMAT",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": 5,
+      "Definisi": {
+        "WajibVoucher": true,
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "10000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-VCR-SETENGAH",
+      "Kode": "VCR-SETENGAH",
+      "Prioritas": 5,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "WajibVoucher": true,
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "50"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "KOPI10",
+        "DiskonBaris": {
+          "P-KOPI": "6000.00"
+        },
+        "DiskonPesanan": "0.00"
+      },
+      {
+        "Kode": "VCR-HEMAT",
+        "DiskonBaris": {},
+        "DiskonPesanan": "10000.00"
+      }
+    ],
+    "Subtotal": "69000.00",
+    "DiskonBaris": "6000.00",
+    "DiskonPesanan": "10000.00",
+    "TotalDiskon": "16000.00",
+    "TotalAkhir": "59000.00"
+  }
+}

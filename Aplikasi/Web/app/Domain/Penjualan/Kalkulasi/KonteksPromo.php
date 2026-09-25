@@ -9,7 +9,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Konteks transaksi untuk promo (F-16c): waktu UTC, jam dinding lokal outlet (tanpa zona; hari & jam promo), outlet,
- * kanal, dan tier pelanggan.
+ * kanal, tier pelanggan, dan (F-16c bagian 2) Uuid promo yang vouchernya sudah tervalidasi untuk transaksi ini.
  */
 final readonly class KonteksPromo
 {
@@ -19,5 +19,7 @@ final readonly class KonteksPromo
         public ?string $uuidOutlet = null,
         public ?KanalPenjualan $kanal = null,
         public ?string $tier = null,
+        /** @var list<string> */
+        public array $voucher = [],
     ) {}
 }

@@ -16,6 +16,7 @@ use Carbon\CarbonImmutable;
  * transaksi (BR-07.2); server menghitung ulang dengan `MesinKalkulasi`. `poinDitukar`/`nilaiTukarPoin` (F-16b): poin
  * pelanggan yang ditukar sebagai diskon pesanan sebelum pajak. `promo` (F-16c): promo yang diterapkan perangkat.
  * `uuidPenyetujuTempo` (F-12, BR-12.1): pemberi PIN untuk tempo di atas limit / piutang lewat jatuh tempo.
+ * `kodeVoucher` (F-16c bagian 2): voucher yang dipesan online kasir untuk penjualan ini.
  */
 final readonly class DataPenjualanPos
 {
@@ -50,5 +51,6 @@ final readonly class DataPenjualanPos
         public ?Uang $nilaiTukarPoin = null,
         public array $promo = [],
         public ?string $uuidPenyetujuTempo = null,
+        public ?string $kodeVoucher = null,
     ) {}
 }

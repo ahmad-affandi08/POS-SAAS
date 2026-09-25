@@ -44,6 +44,7 @@ type Isian = {
     Nama: string;
     Prioritas: string;
     Eksklusif: boolean;
+    WajibVoucher: boolean;
     TanggalMulai: string;
     TanggalSelesai: string;
     Kuota: string;
@@ -91,6 +92,7 @@ export default function HalamanFormulirPromo({
         Nama: Promo?.Nama ?? '',
         Prioritas: String(Promo?.Prioritas ?? 0),
         Eksklusif: Promo?.Eksklusif ?? false,
+        WajibVoucher: d?.WajibVoucher ?? false,
         TanggalMulai: Promo?.TanggalMulai ?? '',
         TanggalSelesai: Promo?.TanggalSelesai ?? '',
         Kuota: Promo?.Kuota === null || Promo?.Kuota === undefined ? '' : String(Promo.Kuota),
@@ -129,6 +131,7 @@ export default function HalamanFormulirPromo({
             Nama: isian.Nama,
             Prioritas: Number(isian.Prioritas || '0'),
             Eksklusif: isian.Eksklusif,
+            WajibVoucher: isian.WajibVoucher,
             TanggalMulai: KosongJadiNull(isian.TanggalMulai),
             TanggalSelesai: KosongJadiNull(isian.TanggalSelesai),
             Kuota: isian.Kuota === '' ? null : Number(isian.Kuota),
@@ -205,6 +208,11 @@ export default function HalamanFormulirPromo({
                         label="Eksklusif (tidak digabung dengan promo lain)"
                         nilai={isian.Eksklusif}
                         saatBerubah={(nilai) => Ubah({ Eksklusif: nilai })}
+                    />
+                    <KotakCentang
+                        label="Wajib kode voucher (kasir memasukkan kode, perlu online)"
+                        nilai={isian.WajibVoucher}
+                        saatBerubah={(nilai) => Ubah({ WajibVoucher: nilai })}
                     />
                 </Card>
 

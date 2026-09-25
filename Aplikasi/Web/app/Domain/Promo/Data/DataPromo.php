@@ -14,7 +14,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Isian promo dari back-office (F-16c). Waktu `mulaiPada`/`selesaiPada` sudah UTC; `jamMulai`/`jamSelesai` "HH:MM"
- * jam lokal outlet; daftar kosong = tanpa batasan.
+ * jam lokal outlet; daftar kosong = tanpa batasan. `wajibVoucher` (F-16c bagian 2): promo hanya berlaku dengan kode voucher.
  */
 final readonly class DataPromo
 {
@@ -52,5 +52,6 @@ final readonly class DataPromo
         public ?BigDecimal $persenGratis,
         public ?int $batasPerTransaksi,
         public int $idPengguna,
+        public bool $wajibVoucher = false,
     ) {}
 }

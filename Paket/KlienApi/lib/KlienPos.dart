@@ -93,7 +93,19 @@ class KlienPos {
       SaldoPoinPos.DariJson(await _Kirim('GET', 'pelanggan/${Uri.encodeComponent(uuidPelanggan)}/poin', null));
 
   /// Promo aktif tenant + mode resolusi konflik (F-16c); disimpan perangkat agar promo tetap berlaku saat offline.
-  Future<DataPromoPos> AmbilPromo() async => DataPromoPos.DariJson(await _Kirim('GET', 'promo', null));
+  /// `?voucher=1`: aplikasi ini mengenal syarat `WajibVoucher` (F-16c bagian 2), jadi promo voucher ikut dikirim.
+  Future<DataPromoPos> AmbilPromo() async => DataPromoPos.DariJson(await _Kirim('GET', 'promo?voucher=1', null));
+
+  /// Periksa & pesan kode voucher untuk penjualan [uuidPenjualan] yang sedang dibuat (F-16c bagian 2, wajib online).
+  /// Ditolak → `GalatApi` ber-kode `VoucherTidakDitemukan` (404), `VoucherHabis` (409), `VoucherNonaktif`,
+  /// `VoucherKedaluwarsa`, atau `PromoTidakBerlaku` (422); offline → `GalatJaringan`.
+  Future<VoucherPos> PesanVoucher(String kode, String uuidPenjualan) async =>
+      VoucherPos.DariJson(await _Kirim('POST', 'voucher/pesan', {'Kode': kode, 'UuidPenjualan': uuidPenjualan}));
+
+  /// Lepas pesanan voucher (kasir menghapus voucher atau membatalkan transaksi). Idempoten.
+  Future<void> LepasVoucher(String kode, String uuidPenjualan) async {
+    await _Kirim('POST', 'voucher/lepas', {'Kode': kode, 'UuidPenjualan': uuidPenjualan});
+  }
 
   /// Data meja outlet perangkat (F-07 mode meja fase 1).
   Future<DataMejaPos> AmbilMeja() async => DataMejaPos.DariJson(await _Kirim('GET', 'meja', null));

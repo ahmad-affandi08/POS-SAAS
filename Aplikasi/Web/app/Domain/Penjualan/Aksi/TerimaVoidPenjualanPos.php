@@ -34,6 +34,7 @@ use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
+use App\Domain\Promo\Layanan\PemakaiVoucher;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
@@ -74,6 +75,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatPoinPenjualan $poin,
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
+        private readonly PemakaiVoucher $voucher,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -189,6 +191,9 @@ final class TerimaVoidPenjualanPos
         $this->piutang->Batalkan($penjualan->Id, $kasir->id);
         // F-18: komisi penjualan yang di-void dibatalkan penuh.
         $this->komisi->Batalkan($penjualan->Id);
+
+        // F-16c bagian 2: voucher penjualan yang di-void dilepas dan bisa dipakai lagi.
+        $this->voucher->Lepaskan($penjualan->Id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

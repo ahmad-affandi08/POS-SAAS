@@ -154,6 +154,7 @@ void main() {
           uuidOutlet: konteks['UuidOutlet'] as String?,
           kanal: konteks['Kanal'] == null ? null : KanalPenjualan.values.byName(konteks['Kanal']! as String),
           tier: konteks['Tier'] as String?,
+          voucher: ((konteks['Voucher'] as List<Object?>?) ?? const []).cast<String>(),
         ),
         mode: ModeResolusiPromo.values.byName(vektor['Mode']! as String),
       );

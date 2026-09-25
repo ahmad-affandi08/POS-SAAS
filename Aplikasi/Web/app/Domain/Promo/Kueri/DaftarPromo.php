@@ -54,6 +54,7 @@ final class DaftarPromo
             'Kuota' => $p->Kuota,
             'KuotaTerpakai' => $p->KuotaTerpakai,
             'Status' => $p->Status->value,
+            'WajibVoucher' => $p->CekWajibVoucher(),
             'Definisi' => $p->Definisi,
         ];
     }

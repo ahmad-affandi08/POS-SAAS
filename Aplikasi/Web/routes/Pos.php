@@ -16,6 +16,7 @@ use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
+use App\Http\Kontroler\Pos\V1\VoucherKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\PastikanLanggananPosAktif;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,9 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         // F-16b: saldo poin terkini sebelum tukar poin (wajib online, §18.4).
         // F-16c: promo aktif untuk dievaluasi di perangkat (bisa offline setelah diunduh).
         Route::get('/promo', [PromoKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.promo');
+        // F-16c bagian 2: voucher wajib online, dipesan untuk penjualan yang sedang dibuat lalu dilepas bila batal.
+        Route::post('/voucher/pesan', [VoucherKontroler::class, 'Pesan'])->middleware('throttle:pos-30')->name('pos.voucher.pesan');
+        Route::post('/voucher/lepas', [VoucherKontroler::class, 'Lepas'])->middleware('throttle:pos-60')->name('pos.voucher.lepas');
         Route::get('/pelanggan/{uuidPelanggan}/poin', [PelangganKontroler::class, 'Poin'])
             ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.pelanggan.poin');
         // F-07 mode meja fase 1: data meja, pesanan terbuka outlet (ditarik tiap 5–10 detik, ETag), kunci bayar online.

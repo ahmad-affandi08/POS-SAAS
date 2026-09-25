@@ -52,12 +52,13 @@ final readonly class DefinisiPromo
         public ?BigDecimal $persenGratis = null,
         public ?int $batasPerTransaksi = null,
         public ?int $kuotaTersisa = null,
+        public bool $wajibVoucher = false,
     ) {}
 
     /**
      * Membaca kolom promo + `Definisi` (bentuk yang sama di tabel `Promo`, katalog POS, dan test vector):
      * `{Hari, JamMulai "HH:MM", JamSelesai, Outlet, Kanal, Tier, MinimalSubtotal, Kondisi {Jenis, Uuid, JumlahMinimal},
-     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi}`.
+     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher}`.
      *
      * @param  array<string, mixed>  $definisi
      */
@@ -102,6 +103,7 @@ final readonly class DefinisiPromo
             persenGratis: ($g = self::UraiTeks($aksi['PersenGratis'] ?? null)) === null ? null : BigDecimal::of($g),
             batasPerTransaksi: is_int($definisi['BatasPerTransaksi'] ?? null) ? $definisi['BatasPerTransaksi'] : null,
             kuotaTersisa: $kuotaTersisa,
+            wajibVoucher: ($definisi['WajibVoucher'] ?? false) === true,
         );
     }
 

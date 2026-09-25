@@ -37,11 +37,12 @@ final class PromoBerlaku
     }
 
     /**
-     * Promo aktif yang belum berakhir pada [sekarang] (untuk disimpan perangkat).
+     * Promo aktif yang belum berakhir pada [sekarang] (untuk disimpan perangkat). Promo wajib voucher (F-16c bagian 2)
+     * hanya dikirim bila [termasukWajibVoucher]: aplikasi lama yang belum mengenal syarat itu akan menerapkannya otomatis.
      *
      * @return list<array{Uuid: string, Kode: string, Nama: string, Prioritas: int, Eksklusif: bool, MulaiPada: string|null, SelesaiPada: string|null, KuotaTersisa: int|null, Definisi: array<string, mixed>}>
      */
-    public function AmbilUntukPos(CarbonImmutable $sekarang): array
+    public function AmbilUntukPos(CarbonImmutable $sekarang, bool $termasukWajibVoucher = false): array
     {
         if (! $this->CekFiturAktif()) {
             return [];
@@ -53,17 +54,27 @@ final class PromoBerlaku
             ->orderByDesc('Prioritas')
             ->orderBy('Kode')
             ->get()
-            ->map(fn (Promo $p): array => [
-                'Uuid' => $p->Uuid,
-                'Kode' => $p->Kode,
-                'Nama' => $p->Nama,
-                'Prioritas' => $p->Prioritas,
-                'Eksklusif' => $p->Eksklusif,
-                'MulaiPada' => $p->MulaiPada?->toIso8601ZuluString(),
-                'SelesaiPada' => $p->SelesaiPada?->toIso8601ZuluString(),
-                'KuotaTersisa' => $p->AmbilKuotaTersisa(),
-                'Definisi' => $p->Definisi,
-            ])->all());
+            ->filter(fn (Promo $p): bool => $termasukWajibVoucher || ! $p->CekWajibVoucher())
+            ->map(fn (Promo $p): array => self::PetakanUntukPos($p))
+            ->all());
+    }
+
+    /**
+     * @return array{Uuid: string, Kode: string, Nama: string, Prioritas: int, Eksklusif: bool, MulaiPada: string|null, SelesaiPada: string|null, KuotaTersisa: int|null, Definisi: array<string, mixed>}
+     */
+    public static function PetakanUntukPos(Promo $p): array
+    {
+        return [
+            'Uuid' => $p->Uuid,
+            'Kode' => $p->Kode,
+            'Nama' => $p->Nama,
+            'Prioritas' => $p->Prioritas,
+            'Eksklusif' => $p->Eksklusif,
+            'MulaiPada' => $p->MulaiPada?->toIso8601ZuluString(),
+            'SelesaiPada' => $p->SelesaiPada?->toIso8601ZuluString(),
+            'KuotaTersisa' => $p->AmbilKuotaTersisa(),
+            'Definisi' => $p->Definisi,
+        ];
     }
 
     /**

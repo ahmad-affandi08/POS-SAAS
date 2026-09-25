@@ -27,6 +27,7 @@ import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
+import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
@@ -286,6 +287,9 @@ final penyediaLayananAbsensi = Provider<LayananAbsensi>(
 final penyediaRepositoriPelanggan = Provider<RepositoriPelanggan>(
   (ref) => RepositoriPelanggan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
 );
+
+/// F-16c bagian 2: voucher keranjang (wajib online).
+final penyediaLayananVoucher = Provider<LayananVoucher>((ref) => LayananVoucher(klien: ref.watch(penyediaKlienPos)));
 
 final penyediaLayananPelanggan = Provider<LayananPelanggan>(
   (ref) => LayananPelanggan(

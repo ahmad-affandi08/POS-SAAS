@@ -54,6 +54,7 @@ final class DefinisiPromo {
     Decimal? persenGratis,
     this.batasPerTransaksi,
     this.kuotaTersisa,
+    this.wajibVoucher = false,
   }) : minimalSubtotal = minimalSubtotal ?? Uang.Nol(),
        jumlahMinimal = jumlahMinimal ?? Kuantitas.Nol(),
        persenGratis = persenGratis ?? Decimal.fromInt(100);
@@ -104,9 +105,12 @@ final class DefinisiPromo {
   /// Sisa kuota pemakaian; null = tanpa kuota, 0 = habis.
   final int? kuotaTersisa;
 
+  /// F-16c bagian 2: promo hanya berlaku bila kode vouchernya sudah divalidasi server untuk transaksi ini.
+  final bool wajibVoucher;
+
   /// Membaca kolom promo + `Definisi` JSON (bentuk yang sama di tabel `Promo`, katalog POS, dan test vector):
   /// `{Hari, JamMulai "HH:MM", JamSelesai, Outlet, Kanal, Tier, MinimalSubtotal, Kondisi {Jenis, Uuid, JumlahMinimal},
-  /// Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi}`.
+  /// Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher}`.
   static DefinisiPromo Urai({
     required String uuid,
     required String kode,
@@ -156,6 +160,7 @@ final class DefinisiPromo {
       gratis: aksi['Gratis'] as int?,
       persenGratis: Teks(aksi['PersenGratis']) == null ? null : Decimal.parse(aksi['PersenGratis']! as String),
       batasPerTransaksi: definisi['BatasPerTransaksi'] as int?,
+      wajibVoucher: definisi['WajibVoucher'] == true,
     );
   }
 }
@@ -168,15 +173,24 @@ final class BarisPromo {
   final String? uuidKategori;
 }
 
-/// Konteks transaksi: waktu UTC, jam dinding lokal outlet (tanpa zona), outlet, kanal, dan tier pelanggan.
+/// Konteks transaksi: waktu UTC, jam dinding lokal outlet (tanpa zona), outlet, kanal, tier pelanggan, dan (F-16c
+/// bagian 2) Uuid promo yang vouchernya sudah divalidasi untuk transaksi ini.
 final class KonteksPromo {
-  const KonteksPromo({required this.waktu, required this.waktuLokal, this.uuidOutlet, this.kanal, this.tier});
+  const KonteksPromo({
+    required this.waktu,
+    required this.waktuLokal,
+    this.uuidOutlet,
+    this.kanal,
+    this.tier,
+    this.voucher = const [],
+  });
 
   final DateTime waktu;
   final DateTime waktuLokal;
   final String? uuidOutlet;
   final KanalPenjualan? kanal;
   final String? tier;
+  final List<String> voucher;
 }
 
 /// Promo yang diterapkan: potongan per indeks baris dan potongan pesanan.

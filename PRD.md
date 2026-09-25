@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.66 |
+| Versi | 1.67 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -86,6 +86,7 @@
 | 1.63 | Rincian F-12 bagian 1 (piutang pelanggan): limit kredit & termin di data pelanggan, metode **Tempo** di POS (hanya bila pelanggan dipilih; metode dibuat sistem saat limit kredit pertama diisi), BR-12.1 dengan PIN penyetuju ber-izin baru `penjualan.tempo.setujui` (cek dari cache perangkat; cache basi = diterima + tinjauan `TempoBermasalah`), piutang per penjualan tempo (jurnal Dr Piutang Usaha), void membatalkan piutang yang belum dibayar, retur memotong piutang lebih dulu, back-office piutang & umur 0–30/31–60/61–90/>90, pelunasan sebagian/banyak piutang sekaligus (Dr Kas/Bank, Cr Piutang Usaha) yang bisa dibatalkan, skema lokal POS v9. Keputusan pemilik produk: F-12 dipecah (DP/uang muka, pengingat WA, giro = bagian 2), PIN penyetuju untuk BR-12.1, void/retur mengurangi piutang. |
 | 1.64 | Rincian F-18 bagian 1 (EMP-01/02/03): data karyawan (opsional tertaut akun pengguna, level staf, gaji pokok hanya untuk pengelola), jadwal kerja mingguan per outlet (salin minggu lalu), absensi masuk/keluar dari aplikasi kasir dengan PIN + swafoto kamera depan bila perangkat berkamera (item outbox `Absensi.Masuk`/`Absensi.Keluar`, idempoten, karyawan dibuat otomatis dari absensi), rekap absensi dengan keterlambatan terhadap jadwal, izin `karyawan.lihat`/`karyawan.kelola`, skema lokal POS v10. Keputusan pemilik produk: F-18 dipecah (komisi = bagian 2; target, kasbon, rekap gaji, geofence HP pribadi = bagian 3), swafoto wajib bila kamera ada, karyawan tabel terpisah, komisi tanpa jurnal sampai rekap gaji. |
 | 1.65 | Cara kerja agen (D-17): keputusan pemilik produk: di lokal hanya test yang terdampak perubahan yang dijalankan (analisis statis tetap seluruh kode); suite penuh dijalankan CI `CekKepatuhan.yml` di setiap push. Langkah 3 `/cek-dod` diperbarui. |
+| 1.67 | Rincian F-16c bagian 2 (CRM-06 voucher & kode promo): syarat promo `WajibVoucher` di mesin promo PHP & Dart (+ test vector `PRM-VOUCHER-001`), tabel `Voucher` & `VoucherPemakaian`, kode tunggal/massal berawalan + ekspor CSV di back-office, voucher wajib online di POS (`POST /api/pos/v1/voucher/pesan|lepas`, dipesan 60 menit untuk Uuid penjualan), `Penjualan.Buat` `Voucher` (voucher bermasalah = diterima + tinjauan `VoucherTidakBerlaku`), void melepas voucher; `GET /promo?voucher=1` untuk aplikasi yang mengenal voucher (kompatibel mundur). Keputusan pemilik produk v1.67: voucher & kode promo dulu, wajib online, generate + ekspor CSV. |
 | 1.66 | Rincian F-18 bagian 2 (EMP-04 komisi): aturan komisi (semua produk/kategori/produk, persen atau nominal per jumlah, opsional per level staf; paling spesifik menang), kasir memilih staf pelayan per baris di panel item (`Penjualan.Buat` `Baris.*.Staf`, maks. 5, dibagi rata), komisi dicatat server di transaksi penjualan (staf tidak dikenal = tinjauan `StafTidakDikenal`), void membatalkan penuh, retur memotong proporsional kumulatif, laporan komisi per karyawan; data awal POS `Karyawan`. Tanpa jurnal sampai rekap gaji (keputusan pemilik produk v1.64). |
 
 ---
@@ -1528,6 +1529,16 @@ promo:
 - **Jurnal:** tidak ada jurnal terpisah; potongan promo termasuk `TotalDiskon` → **Diskon Penjualan** dalam J-07.1 (pendanaan marketing/pemasok ke Beban Promosi menyusul).
 - **Bagian 2 (menyusul):** voucher & kode promo (online), promo metode bayar (bank/QRIS), ulang tahun & transaksi pertama, poin berlipat, gratis ongkir, laporan uplift, pendanaan promo (Beban Promosi/bagi pemasok), batas per pelanggan per hari.
 
+**Rincian F-16c bagian 2 (v1.67, CRM-06 voucher & kode promo; keputusan pemilik produk v1.67: voucher & kode promo dulu, voucher wajib online, kode massal dibuat sistem + ekspor CSV; rincian lain diputuskan agen atas mandat D-12):**
+- **Promo wajib voucher:** kotak "Wajib kode voucher" di formulir promo menambah `Definisi.WajibVoucher: true` (promo biasa tidak berubah). Mesin promo (PHP & Dart) menganggap promo itu berlaku hanya bila Uuid promonya ada di konteks `Voucher` (voucher yang sudah divalidasi untuk transaksi ini); test vector `PRM-VOUCHER-001`. Kuota promo tetap berlaku di samping batas pakai voucher.
+- **Data:** `Voucher` (IdPromo, Kode huruf besar unik per tenant 4–30 karakter, MaksimalPakai null = berulang tanpa batas / 1 = sekali pakai, JumlahDipakai, KedaluwarsaPada UTC dari tanggal inklusif zona tenant, Status Aktif/Nonaktif) dan `VoucherPemakaian` (voucher × Uuid penjualan perangkat: `Dipesan` sampai `DipesanSampai` → `Dipakai` saat penjualan diterima → `Dilepas` saat dilepas kasir/void).
+- **Back-office** (`/kelola/promo/{promo}/voucher`, dari menu aksi promo wajib voucher; lihat `pelanggan.lihat`, ubah & ekspor `pelanggan.kelola`): `TabelData` server (cari kode, saring status, urut kode/pemakaian/dibuat; kolom pemakaian menampilkan pesanan kasir yang masih berlaku), tambah satu kode pilihan atau kode massal (maks. 5.000 sekali buat, `{awalan ≤ 12}{8 karakter acak}` tanpa huruf/angka mirip), batas pakai & tanggal berlaku, nonaktifkan/aktifkan, ekspor CSV (Kode, BatasPakai, Dipakai, KedaluwarsaPada, Status; aman formula injection). Audit `voucher.tambah|nonaktifkan|aktifkan`.
+- **POS (wajib online, §18.4):** kasir memasukkan kode di panel "Voucher & diskon" (tombol Diskon). `POST /api/pos/v1/voucher/pesan {Kode, UuidPenjualan}` memeriksa voucher (tidak ada/tenant lain = 404 `VoucherTidakDitemukan`; `VoucherNonaktif`, `VoucherKedaluwarsa`, `PromoTidakBerlaku` = 422; `VoucherHabis` = 409) lalu memesannya **60 menit** untuk Uuid penjualan yang akan dibuat (baris voucher dikunci; sisa = batas − dipakai − pesanan lain yang masih berlaku; memesan ulang = memperpanjang). Respons membawa promo voucher sehingga langsung dihitung walau daftar promo tersimpan belum diperbarui. Offline = `PerluOnline`. `POST /voucher/lepas` saat voucher dihapus atau transaksi dibatalkan (gagal = pesanan kedaluwarsa sendiri). Satu voucher per transaksi; penjualan memakai Uuid yang dipesan.
+- **Kompatibel mundur:** `GET /api/pos/v1/promo` hanya menyertakan promo wajib voucher bila `?voucher=1` (aplikasi versi ini), agar aplikasi lama tidak menerapkannya otomatis.
+- **Sinkron:** `Penjualan.Buat` menerima `Voucher` (kode). Server memvalidasi ulang promo dengan konteks voucher itu, lalu di transaksi DB yang sama mengubah pesanan menjadi `Dipakai` dan menambah `JumlahDipakai` (idempoten per penjualan). Voucher tidak dipesan online, nonaktif, kedaluwarsa saat transaksi, melewati batas pakai, atau tidak dikenal = **diterima + `PerluTinjauan` `VoucherTidakBerlaku`**. Void penjualan melepas voucher (bisa dipakai lagi); retur tidak.
+- **Jurnal:** sama dengan promo bagian 1 (potongan masuk Diskon Penjualan J-07.1).
+- **Menyusul:** voucher sebagai metode bayar/gift card bernilai saldo, distribusi WA/broadcast (fase 3), batas per pelanggan, promo metode bayar, ulang tahun & transaksi pertama, laporan uplift, pendanaan promo.
+
 
 ---
 
@@ -2846,7 +2857,8 @@ erDiagram
 | `Keanggotaan` / `KeanggotaanPemakaian` | IdPelanggan, IdProdukPaket, TotalSesi, SesiTerpakai, KedaluwarsaPada |
 | `Promo` | IdTenant, Uuid, Kode (unik per tenant), Nama, Definisi JSON (Rincian F-16c), Prioritas, Eksklusif, MulaiPada, SelesaiPada, Kuota, KuotaTerpakai, Status (F-16c) |
 | `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
-| `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada |
+| `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada, Status (F-16c bagian 2) |
+| `VoucherPemakaian` | IdVoucher, UuidPenjualan, IdPenjualan, IdPerangkat, Status (Dipesan/Dipakai/Dilepas), DipesanSampai (F-16c bagian 2) |
 | `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon; unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**

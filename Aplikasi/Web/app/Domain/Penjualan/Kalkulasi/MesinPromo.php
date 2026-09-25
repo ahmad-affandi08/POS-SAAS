@@ -16,7 +16,8 @@ use InvalidArgumentException;
  * `MesinPromo` di `Paket/MesinKasir`; keduanya wajib lolos test vector `Spesifikasi/VektorUjiKalkulasi/Promo/`.
  *
  * 1. Promo berlaku bila kuota belum habis, waktu di `[mulaiPada, selesaiPada)`, hari & jam lokal, outlet, kanal, dan
- *    tier cocok, subtotal awal (setelah diskon manual baris) ≥ minimal, dan jumlah barang kondisi cukup.
+ *    tier cocok, voucher sudah divalidasi (promo wajib voucher), subtotal awal (setelah diskon manual baris) ≥ minimal,
+ *    dan jumlah barang kondisi cukup.
  * 2. `PrioritasKetat`: urut prioritas (besar dulu, seri menurut kode); eksklusif hanya bila belum ada yang terpilih dan
  *    menghentikan evaluasi. `Terbaik`: semua non-eksklusif bersama vs tiap eksklusif sendiri, potongan terbesar menang
  *    (seri: kandidat lebih awal).
@@ -147,6 +148,10 @@ final class MesinPromo
         }
 
         if ($p->tier !== [] && ! in_array($k->tier, $p->tier, true)) {
+            return false;
+        }
+
+        if ($p->wajibVoucher && ! in_array($p->uuid, $k->voucher, true)) {
             return false;
         }
 

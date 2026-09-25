@@ -70,6 +70,7 @@ use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
+use App\Domain\Promo\Layanan\PemakaiVoucher;
 use App\Domain\Promo\Layanan\PencatatPemakaianPromo;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Brick\Math\BigDecimal;
@@ -135,6 +136,7 @@ final class TerimaPenjualanPos
         private readonly PencatatPoinPenjualan $poin,
         private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
+        private readonly PemakaiVoucher $voucher,
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
@@ -305,7 +307,9 @@ final class TerimaPenjualanPos
         }
 
         // F-16c: promo dievaluasi ulang dengan definisi server; beda dengan perangkat = diterima + tinjauan.
-        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat);
+        // F-16c bagian 2: promo wajib voucher hanya berlaku dengan voucher yang dikirim perangkat.
+        $uuidPromoVoucher = $this->voucher->AmbilUuidPromo($data->kodeVoucher);
+        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
 
         // Simpan dokumen, stok, jurnal.
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id);
@@ -354,6 +358,15 @@ final class TerimaPenjualanPos
                 array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
             ),
         )];
+
+        // F-16c bagian 2: voucher yang dipesan online menjadi terpakai di transaksi yang sama.
+        if ($data->kodeVoucher !== null) {
+            $masalahVoucher = $this->voucher->Pakai($data->kodeVoucher, $data->uuid, $penjualan->Id, $data->dibuatPada);
+
+            if ($masalahVoucher !== []) {
+                $tinjauan['VoucherTidakBerlaku'] = 'VoucherTidakBerlaku: '.implode('; ', $masalahVoucher);
+            }
+        }
 
         if ($masalahPromo !== []) {
             $tinjauan['PromoBerbeda'] = 'PromoBerbeda: '.implode('; ', $masalahPromo);

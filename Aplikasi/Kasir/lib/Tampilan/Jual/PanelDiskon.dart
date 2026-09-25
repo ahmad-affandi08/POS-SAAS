@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../Domain/GalatKasir.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
+import '../../Domain/Penjualan/LayananVoucher.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatAngka.dart';
 import '../LembarMutasiKas.dart';
@@ -216,6 +219,10 @@ class _PanelDiskonPesananState extends ConsumerState<PanelDiskonPesanan> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const BagianVoucher(),
+          const SizedBox(height: TokenJarak.jarak16),
+          const Divider(height: 1),
+          const SizedBox(height: TokenJarak.jarak16),
           Text(
             'Diskon dari subtotal. Di atas batas butuh persetujuan PIN.',
             style: Theme.of(context).textTheme.bodySmall,
@@ -243,6 +250,132 @@ class _PanelDiskonPesananState extends ConsumerState<PanelDiskonPesanan> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// F-16c bagian 2: kode voucher di keranjang. Wajib online: kode diperiksa & dipesan server untuk transaksi ini, lalu
+/// promonya dihitung mesin promo seperti promo otomatis. Voucher bisa dihapus (dilepas) selama belum dibayar.
+class BagianVoucher extends ConsumerStatefulWidget {
+  const BagianVoucher({super.key});
+
+  @override
+  ConsumerState<BagianVoucher> createState() => _BagianVoucherState();
+}
+
+class _BagianVoucherState extends ConsumerState<BagianVoucher> {
+  final TextEditingController _kode = TextEditingController();
+  String? _galat;
+  bool _memproses = false;
+
+  @override
+  void dispose() {
+    _kode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _Pakai() async {
+    setState(() {
+      _memproses = true;
+      _galat = null;
+    });
+    try {
+      final voucher = await ref.read(penyediaLayananVoucher).Pesan(_kode.text, ref.read(penyediaKeranjang));
+      ref.read(penyediaKeranjang.notifier).Ganti(ref.read(penyediaKeranjang).Salin(voucher: () => voucher));
+      _kode.clear();
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _galat = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _memproses = false);
+      }
+    }
+  }
+
+  Future<void> _Hapus(VoucherKeranjang voucher) async {
+    ref.read(penyediaKeranjang.notifier).Ganti(ref.read(penyediaKeranjang).Salin(voucher: () => null));
+    await ref.read(penyediaLayananVoucher).Lepas(voucher);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final keranjang = ref.watch(penyediaKeranjangEfektif);
+    final voucher = keranjang.voucher;
+    final k = ref.watch(penyediaKonteksPenjualan).value;
+    Uang? potongan;
+    if (voucher != null && k != null && !keranjang.CekKosong) {
+      try {
+        potongan = ref
+            .read(penyediaLayananPenjualan)
+            .Hitung(keranjang, k)
+            .promoTerpakai
+            .where((p) => p.uuid == voucher.uuidPromo)
+            .firstOrNull
+            ?.HitungTotal();
+      } on GalatKasir {
+        potongan = null;
+      }
+    }
+
+    if (voucher != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.confirmation_number_outlined, color: warna.brand),
+              const SizedBox(width: TokenJarak.jarak8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TeksKode(voucher.kode, gaya: teks.titleSmall),
+                    Text(
+                      potongan == null
+                          ? '${voucher.namaPromo} · belum memenuhi syarat promo'
+                          : '${voucher.namaPromo} · −${potongan.FormatRupiah()}',
+                      style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TokenJarak.jarak8),
+          SizedBox(
+            height: TokenJarak.targetSentuh,
+            child: TextButton(onPressed: () => unawaited(_Hapus(voucher)), child: const Text('Hapus voucher')),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Punya kode voucher? Perlu koneksi internet.', style: teks.bodySmall),
+        const SizedBox(height: TokenJarak.jarak12),
+        TextField(
+          controller: _kode,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [LengthLimitingTextInputFormatter(LayananVoucher.panjangKodeMaksimal)],
+          style: const TextStyle(fontFamily: fontMono, package: paketFont),
+          onSubmitted: (_) => unawaited(_Pakai()),
+          decoration: InputDecoration(labelText: 'Kode voucher', errorText: _galat, border: const OutlineInputBorder()),
+        ),
+        const SizedBox(height: TokenJarak.jarak8),
+        SizedBox(
+          height: 56,
+          child: OutlinedButton(
+            onPressed: _memproses ? null : () => unawaited(_Pakai()),
+            child: Text(_memproses ? 'Memeriksa voucher…' : 'Pakai voucher'),
+          ),
+        ),
+      ],
     );
   }
 }

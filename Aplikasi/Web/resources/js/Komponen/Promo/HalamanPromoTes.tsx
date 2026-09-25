@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarPromo from '@/Halaman/Kelola/Promo/Daftar';
 import HalamanFormulirPromo from '@/Halaman/Kelola/Promo/Formulir';
+import HalamanVoucherPromo, { FormatBerlakuSampai } from '@/Halaman/Kelola/Promo/Voucher';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import type { BarisPromo } from '@/Tipe/Promo';
+import { BuatHasilTabel } from '@/Komponen/Persediaan/DataUjiPersediaan';
+import type { BarisPromo, BarisVoucher } from '@/Tipe/Promo';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -21,6 +23,7 @@ const HappyHour: BarisPromo = {
     Kuota: 1000,
     KuotaTerpakai: 125,
     Status: 'Aktif',
+    WajibVoucher: false,
     JumlahPakai: 125,
     TotalDiskon: '1250000.00',
     Definisi: null,
@@ -84,8 +87,72 @@ describe('Halaman promo (F-16c)', () => {
                 UuidKondisi: [],
                 Jumlah: null,
                 BatasPerTransaksi: null,
+                WajibVoucher: false,
             }),
             expect.anything(),
         );
+    });
+
+    it('voucher (F-16c bagian 2): pemakaian & pesanan kasir tampil; buat kode massal berawalan dikirim sebagai POST', () => {
+        expect(FormatBerlakuSampai(null)).toBe('Ikut periode promo');
+        expect(FormatBerlakuSampai('2026-10-31T17:00:00Z')).toBe('31 Okt 2026');
+        const promo: BarisPromo & { Definisi: null } = {
+            ...HappyHour,
+            Kode: 'VCR-HUT',
+            Nama: 'Voucher HUT Rp 10.000',
+            WajibVoucher: true,
+            Definisi: null,
+        };
+        const voucher: BarisVoucher = {
+            Uuid: '01K5VOUCHER000000000000001',
+            Kode: 'HUT7K2M9QXA',
+            MaksimalPakai: 1,
+            JumlahDipakai: 0,
+            Dipesan: 1,
+            KedaluwarsaPada: null,
+            Status: 'Aktif',
+            DibuatPada: '2026-09-25T03:00:00Z',
+        };
+        window.history.replaceState({}, '', `/kelola/promo/${promo.Uuid}/voucher`);
+        RenderUji(
+            <HalamanVoucherPromo
+                Promo={promo}
+                Voucher={BuatHasilTabel([voucher])}
+                Ringkasan={{ Total: 1, Aktif: 1, Dipakai: 0 }}
+                JumlahMaksimal={5000}
+                Izin={{ Kelola: true }}
+            />,
+        );
+        expect(screen.getAllByText('HUT7K2M9QXA').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('0 / 1 · 1 sedang di kasir').length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'Tambah voucher' })[0] as HTMLElement);
+        fireEvent.change(screen.getByLabelText('Awalan kode (opsional)'), { target: { value: 'hut' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Buat voucher' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            `/kelola/promo/${promo.Uuid}/voucher`,
+            {
+                Cara: 'Massal',
+                Kode: null,
+                Jumlah: 100,
+                Awalan: 'HUT',
+                MaksimalPakai: 1,
+                TanggalKedaluwarsa: null,
+            },
+            expect.anything(),
+        );
+
+        cleanup();
+        RenderUji(
+            <HalamanVoucherPromo
+                Promo={{ ...promo, WajibVoucher: false }}
+                Voucher={BuatHasilTabel<BarisVoucher>([])}
+                Ringkasan={{ Total: 0, Aktif: 0, Dipakai: 0 }}
+                JumlahMaksimal={5000}
+                Izin={{ Kelola: true }}
+            />,
+        );
+        expect(screen.getByText('Promo ini diterapkan otomatis tanpa kode')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Tambah voucher' })).toBeNull();
     });
 });

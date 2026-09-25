@@ -54,6 +54,12 @@ final class Promo extends ModelDasar
         ];
     }
 
+    /** F-16c bagian 2: promo hanya berlaku dengan kode voucher (`Definisi.WajibVoucher`). */
+    public function CekWajibVoucher(): bool
+    {
+        return ($this->Definisi['WajibVoucher'] ?? false) === true;
+    }
+
     /** Sisa kuota; null = tanpa batas. */
     public function AmbilKuotaTersisa(): ?int
     {

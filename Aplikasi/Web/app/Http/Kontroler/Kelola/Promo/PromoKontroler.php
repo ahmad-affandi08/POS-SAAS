@@ -160,6 +160,7 @@ final class PromoKontroler extends DasarKelolaKontroler
             'Gratis' => ['nullable', 'integer'],
             'PersenGratis' => $persen,
             'BatasPerTransaksi' => ['nullable', 'integer'],
+            'WajibVoucher' => ['boolean'],
         ], attributes: [
             'Nama' => 'nama promo',
             'TanggalMulai' => 'tanggal mulai',
@@ -204,6 +205,7 @@ final class PromoKontroler extends DasarKelolaKontroler
             persenGratis: ($t = $teks('PersenGratis')) === null ? null : BigDecimal::of($t),
             batasPerTransaksi: $bulat('BatasPerTransaksi'),
             idPengguna: $this->Pelaku()->Id,
+            wajibVoucher: $permintaan->boolean('WajibVoucher'),
         );
     }
 

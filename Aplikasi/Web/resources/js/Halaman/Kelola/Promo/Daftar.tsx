@@ -41,7 +41,10 @@ const kolom: KolomTabel<BarisPromo>[] = [
         accessorKey: 'LabelAksi',
         header: 'Jenis',
         meta: { label: 'Jenis', prioritas: 'penting' },
-        cell: ({ row: { original: p } }) => (p.Eksklusif ? `${p.LabelAksi} · eksklusif` : p.LabelAksi),
+        cell: ({ row: { original: p } }) =>
+            [p.LabelAksi, p.Eksklusif ? 'eksklusif' : null, p.WajibVoucher ? 'wajib voucher' : null]
+                .filter(Boolean)
+                .join(' · '),
     },
     {
         id: 'Periode',
@@ -162,6 +165,14 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                                           label: 'Ubah promo',
                                           saatPilih: () => router.visit(`${alamat}/${p.Uuid}/ubah`),
                                       },
+                                      ...(p.WajibVoucher
+                                          ? [
+                                                {
+                                                    label: 'Kelola voucher',
+                                                    saatPilih: () => router.visit(`${alamat}/${p.Uuid}/voucher`),
+                                                },
+                                            ]
+                                          : []),
                                       p.Status === 'Aktif'
                                           ? {
                                                 label: 'Arsipkan promo',

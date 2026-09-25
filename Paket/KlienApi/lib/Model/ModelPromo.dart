@@ -68,3 +68,32 @@ class DataPromoPos {
     'Promo': [for (final p in promo) p.KeJson()],
   };
 }
+
+/// Hasil pesan voucher (F-16c bagian 2, `POST /api/pos/v1/voucher/pesan`): kode kanonik, promo voucher (definisinya ikut
+/// agar bisa langsung dievaluasi walau katalog promo belum diperbarui), dan batas pesanan. [sisaPakai] null = tanpa batas.
+class VoucherPos {
+  const VoucherPos({
+    required this.kode,
+    required this.uuidPromo,
+    required this.dipesanSampai,
+    required this.promo,
+    this.sisaPakai,
+  });
+
+  final String kode;
+  final String uuidPromo;
+  final DateTime? dipesanSampai;
+  final int? sisaPakai;
+  final PromoPos promo;
+
+  static VoucherPos DariJson(Map<String, Object?> json) {
+    final voucher = UraiJson.AmbilPeta(json['Voucher']);
+    return VoucherPos(
+      kode: UraiJson.AmbilTeks(voucher['Kode']),
+      uuidPromo: UraiJson.AmbilTeks(voucher['UuidPromo']),
+      dipesanSampai: DateTime.tryParse(UraiJson.AmbilTeks(voucher['DipesanSampai'])),
+      sisaPakai: UraiJson.AmbilBulatAtauNull(voucher['SisaPakai']),
+      promo: PromoPos.DariJson(UraiJson.AmbilPeta(json['Promo'])),
+    );
+  }
+}

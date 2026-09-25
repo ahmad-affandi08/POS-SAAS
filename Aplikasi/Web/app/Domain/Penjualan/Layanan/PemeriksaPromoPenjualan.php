@@ -17,7 +17,7 @@ use App\Domain\Promo\Kueri\PromoBerlaku;
 
 /**
  * Validasi ulang promo penjualan POS (F-16c): `MesinPromo` dijalankan dengan definisi promo server (kuota tersisa
- * terkini, waktu transaksi di jam lokal outlet, kanal, outlet, tier pelanggan) lalu dibandingkan dengan promo yang
+ * terkini, waktu transaksi di jam lokal outlet, kanal, outlet, tier pelanggan, voucher) lalu dibandingkan dengan promo yang
  * diterapkan perangkat. Beda (promo diubah/berakhir/kuota habis saat offline) = keterangan untuk tinjauan; penjualan
  * tetap memakai hitungan perangkat.
  */
@@ -31,9 +31,10 @@ final class PemeriksaPromoPenjualan
     /**
      * @param  array<string, DataProdukPenjualan>  $produk
      * @param  list<PromoTerpakai>  $perangkat
+     * @param  list<string>  $voucher  Uuid promo yang vouchernya dipakai penjualan ini (F-16c bagian 2)
      * @return list<string>
      */
-    public function Periksa(DataPenjualanPos $data, DataKalkulasi $dasar, array $produk, DataOutletPenjualan $outlet, ?string $kodeTier, array $perangkat): array
+    public function Periksa(DataPenjualanPos $data, DataKalkulasi $dasar, array $produk, DataOutletPenjualan $outlet, ?string $kodeTier, array $perangkat, array $voucher = []): array
     {
         $definisi = $this->promo->AmbilDefinisi();
 
@@ -45,7 +46,7 @@ final class PemeriksaPromoPenjualan
             $dasar,
             array_values(array_map(fn (DataBarisPenjualanPos $b): BarisPromo => new BarisPromo($b->uuidProduk, $produk[$b->uuidProduk]->uuidKategori ?? null), $data->baris)),
             $definisi,
-            new KonteksPromo($data->dibuatPada->utc(), $data->dibuatPada->setTimezone($outlet->zonaWaktu), $outlet->uuidOutlet, $data->kanal, $kodeTier),
+            new KonteksPromo($data->dibuatPada->utc(), $data->dibuatPada->setTimezone($outlet->zonaWaktu), $outlet->uuidOutlet, $data->kanal, $kodeTier, $voucher),
             $this->promo->AmbilMode(),
         )->terpakai;
 
