@@ -7,9 +7,11 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
+import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
 import '../../Domain/Sesi/StafLokal.dart';
+import '../LembarMutasiKas.dart';
 import 'PanelKeranjang.dart';
 
 /// Gambar QRIS statis metode pembayaran (diunduh sekali per sesi aplikasi).
@@ -24,6 +26,7 @@ String AmbilLabelJenisMetode(String jenis) => switch (jenis) {
   JenisMetodeBayar.edc => 'Kartu (EDC)',
   JenisMetodeBayar.transfer => 'Transfer',
   JenisMetodeBayar.ewallet => 'E-wallet',
+  JenisMetodeBayar.tempo => 'Tempo (piutang)',
   _ => jenis,
 };
 
@@ -42,7 +45,8 @@ List<Uang> HitungPecahanCepat(Uang tagihan, {int batas = 4}) {
 
 /// Panel Bayar (F-08 fase 1, Rincian F-07c): tunai (pecahan cepat & uang pas), QRIS statis (gambar + konfirmasi
 /// kasir), EDC (bank & nomor approval), transfer & e-wallet (referensi), split pembayaran (BR-08.1). Pembulatan tunai
-/// hanya untuk bagian tunai (BR-08.6). Setelah tersimpan memanggil [saatSelesai].
+/// hanya untuk bagian tunai (BR-08.6). F-12: Tempo (piutang) hanya bila pelanggan dipilih; di luar limit kredit atau
+/// ada piutang lewat jatuh tempo (BR-12.1) butuh PIN penyetuju. Setelah tersimpan memanggil [saatSelesai].
 class PanelBayar extends ConsumerStatefulWidget {
   const PanelBayar({super.key, required this.kasir, required this.saatSelesai});
 
@@ -62,6 +66,9 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   final _bank = TextEditingController();
   bool _qrisDikonfirmasi = false;
   bool _sibuk = false;
+
+  /// F-12: staf yang menyetujui tempo lewat PIN (BR-12.1).
+  StafLokal? _penyetujuTempo;
   String? _galat;
 
   @override
@@ -131,6 +138,9 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       setState(() => _galat = 'Isi nomor approval dari struk EDC.');
       return;
     }
+    if (metode.Jenis == JenisMetodeBayar.tempo && !await _PastikanTempoDisetujui(k, nominal)) {
+      return;
+    }
     final sisa = _HitungSisa(k, metode);
     if (metode.Jenis != JenisMetodeBayar.tunai && nominal.Bandingkan(sisa) > 0) {
       setState(() => _galat = 'Pembayaran ${metode.Nama} tidak boleh melebihi sisa ${sisa.FormatRupiah()}.');
@@ -148,6 +158,36 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       return;
     }
     await _Selesaikan(k, [..._entri, entri]);
+  }
+
+  /// BR-12.1: tempo di luar limit/lewat jatuh tempo → PIN penyetuju ber-izin `penjualan.tempo.setujui` (kasir
+  /// ber-izin cukup dirinya). False = dibatalkan.
+  Future<bool> _PastikanTempoDisetujui(KonteksPenjualan k, Uang nominal) async {
+    final pelanggan = ref.read(penyediaKeranjangEfektif).pelanggan;
+    if (pelanggan == null) {
+      setState(() => _galat = 'Pilih pelanggan dulu untuk pembayaran tempo.');
+      return false;
+    }
+    final alasan = LayananPenjualan.PeriksaTempo(
+      pelanggan: pelanggan,
+      jumlah: nominal,
+      batasHariLewat: k.batasHariLewatJatuhTempo,
+    );
+    if (alasan.isEmpty || _penyetujuTempo != null || widget.kasir.PunyaIzin(IzinKasir.penjualanTempoSetujui)) {
+      return true;
+    }
+    final staf = await showDialog<StafLokal>(
+      context: context,
+      builder: (_) => DialogPinSupervisor(
+        izin: IzinKasir.penjualanTempoSetujui,
+        pesan: 'Tempo ${pelanggan.nama} perlu persetujuan: ${alasan.join('; ')}. Pilih penyetuju.',
+      ),
+    );
+    if (staf == null) {
+      return false;
+    }
+    setState(() => _penyetujuTempo = staf);
+    return true;
   }
 
   /// F9: bayar sisa tagihan dengan tunai uang pas (pembulatan tunai BR-08.6 ikut dihitung) lalu simpan.
@@ -181,7 +221,15 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     try {
       final hasil = await ref
           .read(penyediaLayananPenjualan)
-          .Bayar(keranjang: ref.read(penyediaKeranjangEfektif), pembayaran: pembayaran, kasir: widget.kasir, k: k);
+          .Bayar(
+            keranjang: ref.read(penyediaKeranjangEfektif),
+            pembayaran: pembayaran,
+            kasir: widget.kasir,
+            k: k,
+            uuidPenyetujuTempo: pembayaran.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo)
+                ? _penyetujuTempo?.uuid
+                : null,
+          );
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);
       widget.saatSelesai(hasil);
@@ -315,6 +363,10 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           ),
           const SizedBox(height: TokenJarak.jarak8),
         ],
+        if (metode.Jenis == JenisMetodeBayar.tempo) ...[
+          _BangunInfoTempo(context, k),
+          const SizedBox(height: TokenJarak.jarak8),
+        ],
         if (metode.Jenis == JenisMetodeBayar.edc) ...[
           TextField(
             controller: _bank,
@@ -326,15 +378,16 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           ),
           const SizedBox(height: TokenJarak.jarak4),
         ],
-        TextField(
-          controller: _referensi,
-          maxLength: metode.Jenis == JenisMetodeBayar.edc ? LayananPenjualan.panjangMaksApprovalEdc : 60,
-          onChanged: (_) => setState(() => _galat = null),
-          decoration: InputDecoration(
-            labelText: metode.Jenis == JenisMetodeBayar.edc ? 'Nomor approval' : 'Referensi (opsional)',
-            border: const OutlineInputBorder(),
+        if (metode.Jenis != JenisMetodeBayar.tempo)
+          TextField(
+            controller: _referensi,
+            maxLength: metode.Jenis == JenisMetodeBayar.edc ? LayananPenjualan.panjangMaksApprovalEdc : 60,
+            onChanged: (_) => setState(() => _galat = null),
+            decoration: InputDecoration(
+              labelText: metode.Jenis == JenisMetodeBayar.edc ? 'Nomor approval' : 'Referensi (opsional)',
+              border: const OutlineInputBorder(),
+            ),
           ),
-        ),
         const SizedBox(height: TokenJarak.jarak4),
         TextField(
           controller: _nominal,
@@ -345,6 +398,39 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           onChanged: (_) => setState(() => _galat = null),
           decoration: const InputDecoration(labelText: 'Jumlah', prefixText: 'Rp ', border: OutlineInputBorder()),
         ),
+      ],
+    );
+  }
+
+  /// F-12: posisi kredit pelanggan (terakhir diketahui perangkat) dan alasan butuh penyetuju untuk jumlah saat ini.
+  Widget _BangunInfoTempo(BuildContext context, KonteksPenjualan k) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final pelanggan = ref.watch(penyediaKeranjangEfektif).pelanggan;
+    if (pelanggan == null) {
+      return Text('Pilih pelanggan dulu untuk pembayaran tempo.', style: TextStyle(color: warna.bahaya));
+    }
+    final alasan = LayananPenjualan.PeriksaTempo(
+      pelanggan: pelanggan,
+      jumlah: _AmbilNominal() ?? Uang.Nol(),
+      batasHariLewat: k.batasHariLewatJatuhTempo,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(PelangganTerpilihKredit.Ringkas(pelanggan), style: teks.bodyMedium),
+        if (alasan.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak4),
+            child: Text(
+              _penyetujuTempo != null
+                  ? 'Disetujui ${_penyetujuTempo!.nama}.'
+                  : widget.kasir.PunyaIzin(IzinKasir.penjualanTempoSetujui)
+                  ? 'Perhatian: ${alasan.join('; ')}.'
+                  : 'Perlu PIN penyetuju: ${alasan.join('; ')}.',
+              style: teks.bodySmall?.copyWith(color: _penyetujuTempo != null ? warna.teksSekunder : warna.peringatan),
+            ),
+          ),
       ],
     );
   }
@@ -368,6 +454,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     final hitungan = layanan.Hitung(keranjang, k, pembayaran: pembayaranHitung);
     final sisa = _HitungSisa(k, metode);
     final tunaiDipakai = _entri.any((p) => p.CekTunai());
+    final tempoDipakai = _entri.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo);
     final nominal = _AmbilNominal();
     final melunasi = nominal != null && nominal.Bandingkan(sisa) >= 0;
 
@@ -385,7 +472,12 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                 TeksUang(p.jumlah),
                 IconButton(
                   tooltip: 'Hapus pembayaran ${p.metode.Nama}',
-                  onPressed: () => setState(() => _entri.remove(p)),
+                  onPressed: () => setState(() {
+                    _entri.remove(p);
+                    if (p.metode.Jenis == JenisMetodeBayar.tempo) {
+                      _penyetujuTempo = null;
+                    }
+                  }),
                   icon: const Icon(Icons.close),
                 ),
               ],
@@ -409,7 +501,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               runSpacing: TokenJarak.jarak8,
               children: [
                 for (final m in k.metodePembayaran)
-                  if (!(tunaiDipakai && m.Jenis == JenisMetodeBayar.tunai))
+                  if (!(tunaiDipakai && m.Jenis == JenisMetodeBayar.tunai) &&
+                      !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)))
                     ChoiceChip(
                       label: Text(m.Nama),
                       tooltip: AmbilLabelJenisMetode(m.Jenis),
@@ -510,5 +603,17 @@ class TampilanSelesai extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Ringkasan posisi kredit pelanggan untuk kasir (F-12).
+abstract final class PelangganTerpilihKredit {
+  static String Ringkas(PelangganTerpilih p) {
+    if (p.sisaPiutang == null) {
+      return '${p.nama}: posisi kredit belum diketahui perangkat ini.';
+    }
+    final limit = p.limitKredit == null ? 'tanpa limit kredit' : 'limit ${Uang.Dari(p.limitKredit!).FormatRupiah()}';
+    final lewat = (p.hariLewatJatuhTempo ?? 0) > 0 ? ', lewat jatuh tempo ${p.hariLewatJatuhTempo} hari' : '';
+    return '${p.nama}: $limit, piutang ${Uang.Dari(p.sisaPiutang!).FormatRupiah()}$lewat.';
   }
 }

@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Piutang\PiutangKontroler;
+use App\Http\Perantara\SiapkanAuditTenant;
+use App\Http\Perantara\WajibIzinTenant;
+use Illuminate\Support\Facades\Route;
+
+/*
+ * Rute back-office F-12 piutang pelanggan (PRD "Rincian F-12", D-06). Didaftarkan dari routes/web.php di dalam grup
+ * `/kelola`. Lihat piutang & pelunasan: `pelanggan.lihat`; posting & batalkan pelunasan: `akuntansi.kelola`.
+ */
+
+$izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
+$ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
+
+Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)])->prefix('piutang')->group(function () use ($izin, $ulid): void {
+    Route::get('/', [PiutangKontroler::class, 'Piutang'])->name('kelola.piutang.daftar');
+    Route::get('/pelunasan', [PiutangKontroler::class, 'Daftar'])->name('kelola.piutang.pelunasan.daftar');
+
+    Route::middleware($izin(IzinTenant::AkuntansiKelola))->group(function () use ($ulid): void {
+        Route::get('/pelunasan/buat', [PiutangKontroler::class, 'Buat'])->name('kelola.piutang.pelunasan.buat');
+        Route::post('/pelunasan', [PiutangKontroler::class, 'Simpan'])->name('kelola.piutang.pelunasan.simpan');
+        Route::post('/pelunasan/{pelunasan}/batalkan', [PiutangKontroler::class, 'Batalkan'])->where('pelunasan', $ulid)->name('kelola.piutang.pelunasan.batalkan');
+    });
+
+    Route::get('/pelunasan/{pelunasan}', [PiutangKontroler::class, 'Detail'])->where('pelunasan', $ulid)->name('kelola.piutang.pelunasan.detail');
+});

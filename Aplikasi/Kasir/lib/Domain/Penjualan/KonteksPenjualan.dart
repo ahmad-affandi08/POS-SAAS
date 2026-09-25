@@ -16,7 +16,10 @@ abstract final class JenisMetodeBayar {
   static const String transfer = 'Transfer';
   static const String ewallet = 'Ewallet';
 
-  static const List<String> fase1 = [tunai, qrisStatis, edc, transfer, ewallet];
+  /// F-12: piutang pelanggan; hanya tampil bila pelanggan dipilih (BR-12.1).
+  static const String tempo = 'Tempo';
+
+  static const List<String> fase1 = [tunai, qrisStatis, edc, transfer, ewallet, tempo];
 }
 
 /// Tarif pajak terbit bertanggal berlaku (CLAUDE.md #12). Tanggal `YYYY-MM-DD`; `berlakuSampai` inklusif.
@@ -93,6 +96,7 @@ class KonteksPenjualan {
     this.namaPromo = const {},
     this.modeResolusiPromo = ModeResolusiPromo.Terbaik,
     this.kategoriProduk = const {},
+    this.batasHariLewatJatuhTempo = 0,
   });
 
   final String? uuidOutlet;
@@ -119,6 +123,9 @@ class KonteksPenjualan {
   final Map<String, String> namaPromo;
   final ModeResolusiPromo modeResolusiPromo;
   final Map<String, String> kategoriProduk;
+
+  /// F-12 BR-12.1: piutang lewat jatuh tempo lebih dari sekian hari = penjualan tempo butuh penyetuju.
+  final int batasHariLewatJatuhTempo;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -190,6 +197,8 @@ class KonteksPenjualan {
           ModeResolusiPromo.values.where((m) => m.name == dataPromo.modeResolusi).firstOrNull ??
           ModeResolusiPromo.Terbaik,
       kategoriProduk: await katalog.AmbilKategoriProduk(),
+      batasHariLewatJatuhTempo:
+          int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.batasHariLewatJatuhTempo) ?? '') ?? 0,
     );
   }
 

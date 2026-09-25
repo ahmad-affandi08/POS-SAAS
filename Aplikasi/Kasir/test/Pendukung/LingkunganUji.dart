@@ -48,7 +48,7 @@ Map<String, Object?> StafJson(String uuid, String nama, List<String> izin, int? 
 }
 
 /// Data awal uji: Rina (kasir, boleh diskon manual, PIN kasus 0 "246810"), Budi (supervisor, penyetuju kas keluar &
-/// diskon & selisih kas tutup shift & void/retur, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
+/// diskon & selisih kas tutup shift & void/retur & tempo, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
 /// Rp 200.000. F-07b: outlet SLB, perangkat POS-001, memungut PBJT 10% (bukan PKP), batas diskon 10%/30%, lima
 /// metode pembayaran fase 1.
 Map<String, Object?> DataAwalUji({
@@ -62,6 +62,8 @@ Map<String, Object?> DataAwalUji({
   String? jamTutupBuku,
   Map<String, Object?>? nomorUrutPenjualan,
   Map<String, Object?>? nomorUrutRetur,
+  bool tempo = false,
+  int? batasHariLewatJatuhTempo,
 }) => {
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
@@ -71,6 +73,7 @@ Map<String, Object?> DataAwalUji({
     'PembulatanTunai': pembulatanTunai,
     'TutupShiftButa': tutupShiftButa,
     'ToleransiSelisihKas': toleransiSelisihKas,
+    'BatasHariLewatJatuhTempo': ?batasHariLewatJatuhTempo,
   },
   'Outlet': {
     'Uuid': '01K50VT1ET0000000000000001',
@@ -130,6 +133,9 @@ Map<String, Object?> DataAwalUji({
     },
     {'Uuid': '01K5MTD0000000000000000005', 'Jenis': 'Ewallet', 'Nama': 'GoPay', 'AdaGambarQris': false, 'Urutan': 5},
     {'Uuid': '01K5MTD0000000000000000006', 'Jenis': 'Piutang', 'Nama': 'Kasbon', 'AdaGambarQris': false, 'Urutan': 6},
+    // F-12: metode Tempo (piutang) hanya bila diminta test.
+    if (tempo)
+      {'Uuid': '01K5MTD0000000000000000007', 'Jenis': 'Tempo', 'Nama': 'Tempo', 'AdaGambarQris': false, 'Urutan': 7},
   ],
   'KategoriKas': [
     {'Uuid': '01K5KATEGORI00000000000001', 'Nama': 'Beli es batu & galon', 'Jenis': 'Keluar'},
@@ -144,6 +150,7 @@ Map<String, Object?> DataAwalUji({
       'penjualan.diskon.setujui',
       'shift.selisih.setujui',
       'penjualan.void',
+      'penjualan.tempo.setujui',
     ], 1),
     StafJson('01K5STAF000000000000000003', 'Sari Lestari', ['penjualan.buat'], null),
   ],
@@ -231,6 +238,7 @@ class LingkunganUji {
   late final LayananPenjualan penjualan = LayananPenjualan(
     repositori: repositori,
     repositoriPenjualan: repositoriPenjualan,
+    repositoriPelanggan: repositoriPelanggan,
     jam: () => jam,
   );
 

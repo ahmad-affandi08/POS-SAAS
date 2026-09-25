@@ -2,6 +2,7 @@ import 'UraiJson.dart';
 
 /// Hasil cari pelanggan dari POS (F-16a, `GET /api/pos/v1/pelanggan?kata=`). Nomor HP tersamar (`0812****7890`).
 /// F-16b: kode & nama tier (harga per tier) dan saldo poin; server lama tanpa kolom ini = tanpa tier & 0 poin.
+/// F-12: posisi kredit untuk cek BR-12.1 saat offline ([limitKredit] null = tidak boleh tempo tanpa penyetuju).
 class PelangganPos {
   const PelangganPos({
     required this.uuid,
@@ -10,6 +11,9 @@ class PelangganPos {
     this.kodeTier,
     this.namaTier,
     this.saldoPoin = 0,
+    this.limitKredit,
+    this.sisaPiutang = '0',
+    this.hariLewatJatuhTempo = 0,
   });
 
   final String uuid;
@@ -18,6 +22,9 @@ class PelangganPos {
   final String? kodeTier;
   final String? namaTier;
   final int saldoPoin;
+  final String? limitKredit;
+  final String sisaPiutang;
+  final int hariLewatJatuhTempo;
 
   static PelangganPos DariJson(Map<String, Object?> json) => PelangganPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
@@ -26,6 +33,9 @@ class PelangganPos {
     kodeTier: UraiJson.AmbilTeksAtauNull(json['KodeTier']),
     namaTier: UraiJson.AmbilTeksAtauNull(json['NamaTier']),
     saldoPoin: UraiJson.AmbilBulat(json['SaldoPoin']),
+    limitKredit: UraiJson.AmbilDesimalAtauNull(json['LimitKredit']),
+    sisaPiutang: UraiJson.AmbilDesimal(json['SisaPiutang']),
+    hariLewatJatuhTempo: UraiJson.AmbilBulat(json['HariLewatJatuhTempo']),
   );
 }
 

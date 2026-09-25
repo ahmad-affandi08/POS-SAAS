@@ -115,6 +115,8 @@ final class DaftarPelanggan
             'Tier' => $tier,
             'TierTetap' => $p->TierTetap,
             'SaldoPoin' => $saldoPoin,
+            'LimitKredit' => $p->LimitKredit === null ? null : (string) $p->LimitKredit,
+            'TerminHari' => $p->TerminHari,
             'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),
         ];
     }

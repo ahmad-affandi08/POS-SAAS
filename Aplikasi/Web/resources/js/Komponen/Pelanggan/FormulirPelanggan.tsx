@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import BidangDaftarTeks from '@/Komponen/Formulir/BidangDaftarTeks';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
+import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
@@ -22,6 +23,8 @@ type IsianPelanggan = {
     Tag: string[];
     Catatan: string;
     SetujuPemasaran: boolean;
+    LimitKredit: string;
+    TerminHari: string;
 };
 
 function BuatIsian(p: BarisPelanggan | null): IsianPelanggan {
@@ -34,6 +37,8 @@ function BuatIsian(p: BarisPelanggan | null): IsianPelanggan {
         Tag: p?.Tag ?? [],
         Catatan: p?.Catatan ?? '',
         SetujuPemasaran: p?.SetujuPemasaran ?? false,
+        LimitKredit: (p?.LimitKredit ?? '').replace(/\.00$/, ''),
+        TerminHari: String(p?.TerminHari ?? 30),
     };
 }
 
@@ -59,6 +64,7 @@ export default function FormulirPelanggan({
             ...isian,
             TanggalLahir: isian.TanggalLahir === '' ? null : isian.TanggalLahir,
             Tag: isian.Tag.map((t) => t.trim()).filter((t) => t !== ''),
+            TerminHari: isian.TerminHari === '' ? null : isian.TerminHari,
         };
         const opsi = {
             preserveScroll: true,
@@ -137,6 +143,25 @@ export default function FormulirPelanggan({
                     maksimal={500}
                     baris={2}
                 />
+                <fieldset className="grid gap-3 sm:grid-cols-2">
+                    <legend className="mb-1 text-label font-semibold">Kredit (bayar tempo)</legend>
+                    <BidangUang
+                        label="Limit kredit (opsional)"
+                        nilai={isian.LimitKredit}
+                        saatBerubah={(nilai) => Ubah({ LimitKredit: nilai })}
+                        galat={galat.LimitKredit}
+                        keterangan="Kosongkan bila pelanggan tidak boleh bayar tempo."
+                    />
+                    <BidangTeks
+                        label="Termin (hari)"
+                        nilai={isian.TerminHari}
+                        saatBerubah={(nilai) => Ubah({ TerminHari: nilai.replace(/\D/g, '') })}
+                        galat={galat.TerminHari}
+                        keterangan="Jatuh tempo = tanggal penjualan + termin."
+                        inputMode="numeric"
+                        maxLength={3}
+                    />
+                </fieldset>
                 <KotakCentang
                     label="Pelanggan setuju menerima info promo (WA/email)"
                     nilai={isian.SetujuPemasaran}

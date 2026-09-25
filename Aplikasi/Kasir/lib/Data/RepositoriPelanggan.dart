@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:inti/Inti.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import 'BasisData/BasisDataKasir.dart';
@@ -12,7 +13,8 @@ class RepositoriPelanggan {
   final BasisDataKasir db;
   final RepositoriKasir repositoriKasir;
 
-  /// Catat/perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat), termasuk tier (F-16b).
+  /// Catat/perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat), termasuk tier (F-16b) dan posisi
+  /// kredit (F-12; null = tidak diketahui, nilai lama di cache dipertahankan).
   Future<void> Simpan(
     String uuid,
     String nama,
@@ -20,9 +22,10 @@ class RepositoriPelanggan {
     DateTime sekarang, {
     String? kodeTier,
     String? namaTier,
+    ({String? limitKredit, String sisaPiutang, int hariLewatJatuhTempo})? kredit,
   }) => db
       .into(db.pelangganLokal)
-      .insertOnConflictUpdate(
+      .insert(
         PelangganLokalCompanion.insert(
           Uuid: uuid,
           Nama: nama,
@@ -30,8 +33,36 @@ class RepositoriPelanggan {
           DipakaiPada: sekarang.toUtc(),
           KodeTier: Value(kodeTier),
           NamaTier: Value(namaTier),
+          LimitKredit: kredit == null ? const Value.absent() : Value(kredit.limitKredit),
+          SisaPiutang: kredit == null ? const Value.absent() : Value(kredit.sisaPiutang),
+          HariLewatJatuhTempo: kredit == null ? const Value.absent() : Value(kredit.hariLewatJatuhTempo),
+        ),
+        onConflict: DoUpdate(
+          (_) => PelangganLokalCompanion(
+            Nama: Value(nama),
+            NoHpSamar: Value(noHpSamar),
+            DipakaiPada: Value(sekarang.toUtc()),
+            KodeTier: Value(kodeTier),
+            NamaTier: Value(namaTier),
+            LimitKredit: kredit == null ? const Value.absent() : Value(kredit.limitKredit),
+            SisaPiutang: kredit == null ? const Value.absent() : Value(kredit.sisaPiutang),
+            HariLewatJatuhTempo: kredit == null ? const Value.absent() : Value(kredit.hariLewatJatuhTempo),
+          ),
         ),
       );
+
+  /// F-12: penjualan tempo tersimpan di perangkat menambah sisa piutang cache agar cek BR-12.1 berikutnya (offline)
+  /// ikut menghitungnya. Pelanggan yang belum pernah diketahui kreditnya dibiarkan (server tetap memeriksa).
+  Future<void> TambahSisaPiutang(String uuid, String jumlah) async {
+    final baris = await (db.select(db.pelangganLokal)..where((p) => p.Uuid.equals(uuid))).getSingleOrNull();
+    final sisa = baris?.SisaPiutang;
+    if (sisa == null) {
+      return;
+    }
+    await (db.update(db.pelangganLokal)..where((p) => p.Uuid.equals(uuid))).write(
+      PelangganLokalCompanion(SisaPiutang: Value(Uang.Dari(sisa).Tambah(Uang.Dari(jumlah)).KeString())),
+    );
+  }
 
   Future<void> SimpanBaru(String uuid, String nama, String noHpSamar, ItemOutbox outbox, DateTime sekarang) =>
       db.transaction(() async {

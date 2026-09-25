@@ -14,6 +14,9 @@ abstract final class IzinKasir {
 
   /// F-09: melayani & menyetujui void/retur penjualan.
   static const String penjualanVoid = 'penjualan.void';
+
+  /// F-12 BR-12.1: menyetujui penjualan tempo melebihi limit kredit / piutang lewat jatuh tempo.
+  static const String penjualanTempoSetujui = 'penjualan.tempo.setujui';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

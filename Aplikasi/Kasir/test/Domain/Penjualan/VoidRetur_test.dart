@@ -338,6 +338,67 @@ void main() {
       expect(besok.nomor, 'RJ/SLB/260925/POS-001-0001');
     });
 
+    test(
+      'F-12 retur penjualan tempo: potong piutang lebih dulu (≤ sisa), sisanya tunai; refund tunai lebih ditolak',
+      () async {
+        ServerStruk(
+          StrukUji(
+            sisaPiutang: '50000.00',
+            pembayaran: [
+              {
+                'Uuid': '01K5BYR0000000000000000009',
+                'UuidMetodePembayaran': '01K5MTD0000000000000000007',
+                'JenisMetode': 'Tempo',
+                'NamaMetode': 'Tempo',
+                'Jumlah': '287500.00',
+                'Referensi': null,
+              },
+            ],
+          ),
+        );
+        final hasil = await layananRetur.Cari(UuidStruk.nomor);
+        expect(hasil.penjualan.sisaPiutang, '50000.00');
+        final pilihan = Pilih(hasil, {
+          UuidStruk.kopiLiter: ('1', KondisiRetur.layakJual),
+          UuidStruk.bijiKopi: ('0.75', KondisiRetur.layakJual),
+        });
+        expect(LayananReturPenjualan.HitungPotongPiutang(hasil, Uang.Dari('89583.33')), Uang.DariBulat(50000));
+        expect(LayananReturPenjualan.HitungPotongPiutang(hasil, Uang.DariBulat(20000)), Uang.DariBulat(20000));
+
+        await expectLater(
+          layananRetur.Simpan(
+            hasil: hasil,
+            pilihan: pilihan,
+            alasan: 'Barang tidak sesuai pesanan',
+            refundTunai: Uang.Dari('89583.33'),
+            kasir: rina,
+            penyetuju: budi,
+            k: k,
+          ),
+          GalatDengan('RefundTidakSesuai'),
+        );
+
+        final tersimpan = await layananRetur.Simpan(
+          hasil: hasil,
+          pilihan: pilihan,
+          alasan: 'Barang tidak sesuai pesanan',
+          refundTunai: Uang.Dari('39583.33'),
+          kasir: rina,
+          penyetuju: budi,
+          k: k,
+        );
+        expect(tersimpan.potongPiutang, Uang.DariBulat(50000));
+        expect(tersimpan.refundTransfer, Uang.Nol());
+        final data = await DataOutbox('ReturPenjualan.Buat');
+        final refund = [
+          for (final r in data['Refund']! as List<Object?>)
+            ((r! as Map<String, Object?>)['UuidMetodePembayaran'], (r as Map<String, Object?>)['Jumlah']),
+        ];
+        expect(refund, [('01K5MTD0000000000000000007', '50000.00'), ('01K5MTD0000000000000000001', '39583.33')]);
+        expect((await u.db.select(u.db.returPenjualan).get()).single.MetodeRefund, 'Campuran');
+      },
+    );
+
     test('jumlah melebihi sisa, desimal untuk satuan bulat, alasan pendek, refund tidak sesuai, tanpa penyetuju → '
         'ditolak dan nomor tidak terpakai', () async {
       ServerStruk(

@@ -53,6 +53,8 @@ Map<String, Object?> StrukUji({
   String status = 'Lunas',
   List<Map<String, Object?>>? baris,
   List<Map<String, Object?>> retur = const [],
+  String? sisaPiutang,
+  List<Map<String, Object?>>? pembayaran,
 }) => {
   'Penjualan': {
     'Uuid': UuidStruk.penjualan,
@@ -75,6 +77,7 @@ Map<String, Object?> StrukUji({
     'BatasReturSampai': '2026-09-27',
     'BisaDiretur': bisaDiretur,
     'AlasanTidakBisaDiretur': alasan,
+    'SisaPiutang': ?sisaPiutang,
   },
   'Baris':
       baris ??
@@ -83,15 +86,17 @@ Map<String, Object?> StrukUji({
         BarisStrukUji(UuidStruk.bijiKopi, 'Biji Kopi Arabika Gayo', 'kg', '2.5000', '187500.00'),
         BarisStrukUji(UuidStruk.airMineral, 'Air mineral bonus', 'btl', '1.0000', '0.00'),
       ],
-  'Pembayaran': [
-    {
-      'Uuid': '01K5BYR0000000000000000001',
-      'UuidMetodePembayaran': '01K5MTD0000000000000000001',
-      'JenisMetode': 'Tunai',
-      'NamaMetode': 'Tunai',
-      'Jumlah': '300000.00',
-      'Referensi': null,
-    },
-  ],
+  'Pembayaran':
+      pembayaran ??
+      [
+        {
+          'Uuid': '01K5BYR0000000000000000001',
+          'UuidMetodePembayaran': '01K5MTD0000000000000000001',
+          'JenisMetode': 'Tunai',
+          'NamaMetode': 'Tunai',
+          'Jumlah': '300000.00',
+          'Referensi': null,
+        },
+      ],
   'Retur': retur,
 };

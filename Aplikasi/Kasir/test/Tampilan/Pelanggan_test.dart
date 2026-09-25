@@ -22,15 +22,16 @@ void main() {
     Map<String, Object?>? katalog,
     Map<String, Object?>? hasilCari,
     Map<String, Object?>? saldoPoin,
+    Map<String, Object?>? dataAwal,
   }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
-      await u.SiapkanAktif();
+      await u.SiapkanAktif(dataAwal: dataAwal);
       await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
     });
     u.server.penangan = (p) async {
       if (p.url.path.endsWith('/data-awal')) {
-        return JsonUji(DataAwalUji());
+        return JsonUji(dataAwal ?? DataAwalUji());
       }
       if (p.url.path.endsWith('/katalog')) {
         return JsonUji(katalog ?? KatalogUji());
@@ -215,6 +216,63 @@ void main() {
     await Ketuk(tester, find.textContaining('Ani Rahmawati · 0812****7890'));
     await Ketuk(tester, find.text('Tukar poin'));
     expect(find.text('Tukar poin perlu koneksi internet. Coba lagi saat perangkat online.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('F-12: Tempo hanya untuk pelanggan terpilih; di atas limit → PIN penyetuju; outbox UuidPenyetujuTempo', (
+    tester,
+  ) async {
+    final u = await MasukJual(
+      tester,
+      const Size(1280, 900),
+      dataAwal: DataAwalUji(tempo: true),
+      hasilCari: {
+        'Pelanggan': [
+          {
+            'Uuid': '01K5PELANGGAN0000000000009',
+            'Nama': 'Toko Makmur Jaya',
+            'NoHp': '0813****0001',
+            'LimitKredit': '20000.00',
+            'SisaPiutang': '0.00',
+            'HariLewatJatuhTempo': 0,
+          },
+        ],
+      },
+    );
+    await Ketuk(tester, find.byWidgetPredicate((w) => w is UbinProduk && w.nama.startsWith('Croissant')));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
+    expect(find.widgetWithText(ChoiceChip, 'Tempo'), findsNothing, reason: 'Tanpa pelanggan, Tempo disembunyikan.');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await Tunggu(tester);
+
+    await Ketuk(tester, find.textContaining('Pelanggan umum'));
+    await tester.enterText(find.widgetWithText(TextField, 'Cari nama atau nomor HP (min. 3 huruf)'), 'makmur');
+    await Tunggu(tester, const Duration(milliseconds: 600));
+    await Ketuk(tester, find.text('Toko Makmur Jaya'));
+
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
+    await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tempo'));
+    expect(find.text('Toko Makmur Jaya: limit Rp 20.000, piutang Rp 0.'), findsOneWidget);
+    // 25.000 + PBJT 10% = 27.500 > limit 20.000.
+    expect(find.text('Perlu PIN penyetuju: piutang Rp 27.500 melebihi limit Rp 20.000.'), findsOneWidget);
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    expect(find.text('Persetujuan supervisor'), findsOneWidget);
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await KetikPin(tester, KasusPin(1)['Pin']! as String);
+    await Tunggu(tester);
+    expect(find.text('Pembayaran berhasil'), findsOneWidget);
+
+    final outbox = await tester.runAsync(() => u.db.select(u.db.outbox).get());
+    final data = jsonDecode(outbox!.firstWhere((o) => o.Jenis == 'Penjualan.Buat').Data) as Map<String, Object?>;
+    expect(data['UuidPelanggan'], '01K5PELANGGAN0000000000009');
+    expect(data['UuidPenyetujuTempo'], '01K5STAF000000000000000002');
+    expect(
+      ((data['Pembayaran']! as List<Object?>).single! as Map<String, Object?>)['UuidMetodePembayaran'],
+      '01K5MTD0000000000000000007',
+    );
+    final cache = await tester.runAsync(() => u.db.select(u.db.pelangganLokal).get());
+    expect(cache!.single.SisaPiutang, '27500.00');
     expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });

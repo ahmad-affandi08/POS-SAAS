@@ -15,6 +15,7 @@ use App\Domain\Pelanggan\Aksi\UbahStatusPelanggan;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Kueri\DaftarPelanggan;
 use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
+use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Kueri\PengaturanLoyaltiTenant;
 use App\Domain\Pelanggan\Kueri\RiwayatPoin;
 use App\Domain\Pelanggan\Layanan\BukuPoin;
@@ -48,7 +49,7 @@ final class PelangganKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    public function Detail(string $pelanggan, BelanjaPelanggan $belanja, DaftarTierPelanggan $tier, BukuPoin $buku, RiwayatPoin $riwayatPoin, PengaturanLoyaltiTenant $loyalti): Response
+    public function Detail(string $pelanggan, BelanjaPelanggan $belanja, DaftarTierPelanggan $tier, BukuPoin $buku, RiwayatPoin $riwayatPoin, PengaturanLoyaltiTenant $loyalti, KreditPelanggan $kredit, TanggalBisnisOutlet $tanggal): Response
     {
         $data = $this->CariPelanggan($pelanggan);
         $tierPelanggan = $data->IdTier === null ? null : ($tier->AmbilPeta([$data->IdTier])[$data->IdTier] ?? null);
@@ -62,6 +63,8 @@ final class PelangganKontroler extends DasarKelolaKontroler
             'RiwayatPoin' => $riwayatPoin->Ambil($data->Id),
             'OpsiTier' => $tier->AmbilOpsi($tierPelanggan['Kode'] ?? null),
             'LoyaltiBerlaku' => $loyalti->Ambil()->CekBerlaku(),
+            // F-12: posisi kredit (sisa piutang terbuka & hari terlama lewat jatuh tempo).
+            'Kredit' => $kredit->AmbilRingkas([$data->Id], $tanggal->Hitung(null))[$data->Id] ?? null,
             'Izin' => $this->AmbilIzin(),
         ]);
     }

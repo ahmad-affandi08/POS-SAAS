@@ -162,11 +162,21 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
     return LayananReturPenjualan.HitungTotal(_AmbilPilihan());
   }
 
-  Uang _HitungTunai(Uang total) => switch (_cara) {
-    CaraRefund.Tunai => total,
-    CaraRefund.Transfer => Uang.Nol(),
-    CaraRefund.Campuran => MasukanUang.AmbilNilai(_tunai) ?? Uang.Nol(),
-  };
+  /// F-12: bagian retur penjualan tempo yang memotong piutang (bukan uang keluar).
+  Uang _HitungPotongPiutang(Uang total) {
+    final hasil = _hasil;
+    return hasil == null ? Uang.Nol() : LayananReturPenjualan.HitungPotongPiutang(hasil, total);
+  }
+
+  /// Bagian tunai dari yang dibayar kembali (total − potong piutang).
+  Uang _HitungTunai(Uang total) {
+    final dibayarKembali = total.Kurangi(_HitungPotongPiutang(total));
+    return switch (_cara) {
+      CaraRefund.Tunai => dibayarKembali,
+      CaraRefund.Transfer => Uang.Nol(),
+      CaraRefund.Campuran => MasukanUang.AmbilNilai(_tunai) ?? Uang.Nol(),
+    };
+  }
 
   Future<void> _Simpan(KonteksPenjualan k, List<BarisMetodePembayaran> transfer) async {
     final hasil = _hasil;
@@ -191,8 +201,9 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
       return;
     }
     final tunai = _HitungTunai(total);
-    if (tunai.Bandingkan(total) > 0) {
-      setState(() => _galat = 'Refund tunai tidak boleh lebih dari ${total.FormatRupiah()}.');
+    final dibayarKembali = total.Kurangi(_HitungPotongPiutang(total));
+    if (tunai.Bandingkan(dibayarKembali) > 0) {
+      setState(() => _galat = 'Refund tunai tidak boleh lebih dari ${dibayarKembali.FormatRupiah()}.');
       return;
     }
     final metodeTransfer = transfer.where((m) => m.Uuid == _uuidMetodeTransfer).firstOrNull ?? transfer.firstOrNull;
@@ -277,6 +288,8 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _BarisNilai(label: 'Total refund', nilai: selesai.totalRefund),
+              if (!selesai.potongPiutang.BernilaiNol())
+                _BarisNilai(label: 'Potong piutang pelanggan', nilai: selesai.potongPiutang),
               if (!selesai.refundTunai.BernilaiNol())
                 _BarisNilai(label: 'Kembalikan tunai dari laci', nilai: selesai.refundTunai, tebal: true),
               if (!selesai.refundTransfer.BernilaiNol())
@@ -450,9 +463,14 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
                 ? [Text('Periksa jumlah retur yang ditandai merah.', style: TextStyle(color: warna.bahaya))]
                 : [
                     _BarisNilai(label: 'Total refund', nilai: total, tebal: true),
+                    if (!_HitungPotongPiutang(total).BernilaiNol())
+                      _BarisNilai(label: 'Potong piutang pelanggan', nilai: _HitungPotongPiutang(total)),
                     if (!tunai!.BernilaiNol()) _BarisNilai(label: 'Tunai dari laci', nilai: tunai),
-                    if (!total.Kurangi(tunai).BernilaiNol())
-                      _BarisNilai(label: 'Transfer manual', nilai: total.Kurangi(tunai)),
+                    if (!total.Kurangi(_HitungPotongPiutang(total)).Kurangi(tunai).BernilaiNol())
+                      _BarisNilai(
+                        label: 'Transfer manual',
+                        nilai: total.Kurangi(_HitungPotongPiutang(total)).Kurangi(tunai),
+                      ),
                   ],
           ),
         ),

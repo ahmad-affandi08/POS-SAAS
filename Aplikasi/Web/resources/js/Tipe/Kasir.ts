@@ -164,4 +164,6 @@ export type PropsPengaturanKasir = {
     ToleransiSelisihKas: string;
     /** F-09: retur paling lama sekian hari sejak hari bisnis penjualan (0–365, bawaan 7). */
     BatasHariRetur: number;
+    /** F-12 BR-12.1: piutang lewat jatuh tempo lebih dari sekian hari = penjualan tempo butuh penyetuju (0–365). */
+    BatasHariLewatJatuhTempo: number;
 };

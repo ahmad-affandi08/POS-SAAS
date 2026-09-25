@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Permintaan\Kelola\Pelanggan;
 
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Data\DataPelanggan;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,9 @@ final class SimpanPelangganPermintaan extends FormRequest
             'Tag.*' => ['string', 'max:30'],
             'Catatan' => ['nullable', 'string', 'max:500'],
             'SetujuPemasaran' => ['required', 'boolean'],
+            // F-12: kosong = pelanggan tidak boleh bayar tempo.
+            'LimitKredit' => ['nullable', 'string', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'TerminHari' => ['nullable', 'integer', 'min:0', 'max:365'],
         ];
     }
 
@@ -38,6 +42,7 @@ final class SimpanPelangganPermintaan extends FormRequest
             'NoHp.regex' => 'Nomor HP hanya angka, spasi, +, (, ), titik, atau tanda hubung.',
             'TanggalLahir.before' => 'Tanggal lahir harus sebelum hari ini.',
             'Tag.max' => 'Paling banyak 10 tag per pelanggan.',
+            'LimitKredit.regex' => 'Limit kredit harus angka dengan pemisah desimal titik (maks. 2 desimal).',
         ];
     }
 
@@ -46,7 +51,7 @@ final class SimpanPelangganPermintaan extends FormRequest
      */
     public function attributes(): array
     {
-        return ['Nama' => 'nama', 'NoHp' => 'nomor HP', 'Email' => 'email', 'TanggalLahir' => 'tanggal lahir', 'Tag.*' => 'tag'];
+        return ['Nama' => 'nama', 'NoHp' => 'nomor HP', 'Email' => 'email', 'TanggalLahir' => 'tanggal lahir', 'Tag.*' => 'tag', 'LimitKredit' => 'limit kredit', 'TerminHari' => 'termin'];
     }
 
     public function AmbilData(int $idPengguna): DataPelanggan
@@ -73,6 +78,9 @@ final class SimpanPelangganPermintaan extends FormRequest
             catatan: is_string($this->validated('Catatan')) ? $this->validated('Catatan') : null,
             setujuPemasaran: $this->boolean('SetujuPemasaran'),
             idPengguna: $idPengguna,
+            aturKredit: $this->has('LimitKredit') || $this->has('TerminHari'),
+            limitKredit: is_string($limit = $this->validated('LimitKredit')) && $limit !== '' ? Uang::Dari($limit) : null,
+            terminHari: is_numeric($termin = $this->validated('TerminHari')) ? (int) $termin : 30,
         );
     }
 }

@@ -23,6 +23,9 @@ abstract final class MetodeRefundRetur {
   static const String tunai = 'Tunai';
   static const String transfer = 'Transfer';
   static const String campuran = 'Campuran';
+
+  /// F-12: retur penjualan tempo memotong sisa piutang lebih dulu.
+  static const String piutang = 'Piutang';
 }
 
 /// Satu baris penjualan asal yang dipilih untuk diretur.
@@ -36,14 +39,15 @@ class PilihanReturBaris {
 
 /// Hasil simpan retur untuk layar sukses.
 class ReturTersimpan {
-  const ReturTersimpan({
+  ReturTersimpan({
     required this.uuid,
     required this.nomor,
     required this.totalRefund,
     required this.refundTunai,
     required this.refundTransfer,
     this.namaMetodeTransfer,
-  });
+    Uang? potongPiutang,
+  }) : potongPiutang = potongPiutang ?? Uang.Nol();
 
   final String uuid;
   final String nomor;
@@ -51,6 +55,9 @@ class ReturTersimpan {
   final Uang refundTunai;
   final Uang refundTransfer;
   final String? namaMetodeTransfer;
+
+  /// F-12: bagian retur yang mengurangi piutang pelanggan (tidak ada uang keluar).
+  final Uang potongPiutang;
 }
 
 /// Retur penjualan di aplikasi POS (Rincian F-09 fase 1 & keputusan implementasi v1.47):
@@ -221,8 +228,21 @@ class LayananReturPenjualan {
     return teks.replaceAll('.', ',');
   }
 
-  /// Simpan retur. [refundTunai] = bagian tunai dari laci shift aktif; sisanya (total − tunai) ditransfer manual lewat
-  /// [metodeTransfer]. [penyetuju] = staf yang lolos PIN; null → kasir sendiri bila ber-izin `penjualan.void`.
+  /// F-12: retur penjualan tempo memotong sisa piutang lebih dulu: min(total, sisa piutang); 0 bila bukan tempo.
+  static Uang HitungPotongPiutang(HasilCariPenjualan hasil, Uang total) {
+    final sisa = hasil.penjualan.sisaPiutang;
+    if (sisa == null || !hasil.pembayaran.any((b) => b.jenisMetode == JenisMetodeBayar.tempo)) {
+      return Uang.Nol();
+    }
+    final nilai = Uang.Dari(sisa);
+    if (nilai.BernilaiNegatif()) {
+      return Uang.Nol();
+    }
+    return nilai.Bandingkan(total) < 0 ? nilai : total;
+  }
+
+  /// Simpan retur. F-12: penjualan tempo memotong piutang dulu ([HitungPotongPiutang]); [refundTunai] = bagian tunai
+  /// dari laci shift aktif; sisanya (total − potong piutang − tunai) ditransfer manual lewat [metodeTransfer]. [penyetuju] = staf yang lolos PIN; null → kasir sendiri bila ber-izin `penjualan.void`.
   Future<ReturTersimpan> Simpan({
     required HasilCariPenjualan hasil,
     required List<PilihanReturBaris> pilihan,
@@ -256,10 +276,16 @@ class LayananReturPenjualan {
     }
 
     final total = HitungTotal(terisi);
-    if (refundTunai.BernilaiNegatif() || refundTunai.Bandingkan(total) > 0) {
-      throw GalatKasir('RefundTidakSesuai', 'Refund tunai harus antara Rp 0 dan ${total.FormatRupiah()}.');
+    final potongPiutang = HitungPotongPiutang(hasil, total);
+    final dibayarKembali = total.Kurangi(potongPiutang);
+    if (refundTunai.BernilaiNegatif() || refundTunai.Bandingkan(dibayarKembali) > 0) {
+      throw GalatKasir('RefundTidakSesuai', 'Refund tunai harus antara Rp 0 dan ${dibayarKembali.FormatRupiah()}.');
     }
-    final refundTransfer = total.Kurangi(refundTunai);
+    final refundTransfer = dibayarKembali.Kurangi(refundTunai);
+    final bayarTempo = hasil.pembayaran.where((b) => b.jenisMetode == JenisMetodeBayar.tempo).firstOrNull;
+    if (!potongPiutang.BernilaiNol() && bayarTempo?.uuidMetodePembayaran == null) {
+      throw const GalatKasir('MetodeBayarTidakDikenal', 'Metode Tempo penjualan ini tidak ditemukan. Coba cari ulang.');
+    }
     final metodeTunai = k.metodePembayaran.where((m) => m.Jenis == JenisMetodeBayar.tunai).firstOrNull;
     if (!refundTunai.BernilaiNol() && metodeTunai == null) {
       throw const GalatKasir('MetodeBayarTidakDikenal', 'Metode Tunai belum aktif di outlet ini.');
@@ -295,12 +321,36 @@ class LayananReturPenjualan {
       for (final p in terisi) (uuid: _ulid.Buat(), pilihan: p, nilai: PenghitungNilaiRetur.Hitung(p.baris, p.jumlah)),
     ];
     final refund = [
-      if (!refundTunai.BernilaiNol()) (uuid: _ulid.Buat(), metode: metodeTunai!, jumlah: refundTunai),
-      if (!refundTransfer.BernilaiNol()) (uuid: _ulid.Buat(), metode: metodeTransfer!, jumlah: refundTransfer),
+      if (!potongPiutang.BernilaiNol())
+        (
+          uuid: _ulid.Buat(),
+          uuidMetode: bayarTempo!.uuidMetodePembayaran!,
+          jenis: JenisMetodeBayar.tempo,
+          nama: bayarTempo.namaMetode,
+          jumlah: potongPiutang,
+        ),
+      if (!refundTunai.BernilaiNol())
+        (
+          uuid: _ulid.Buat(),
+          uuidMetode: metodeTunai!.Uuid,
+          jenis: metodeTunai.Jenis,
+          nama: metodeTunai.Nama,
+          jumlah: refundTunai,
+        ),
+      if (!refundTransfer.BernilaiNol())
+        (
+          uuid: _ulid.Buat(),
+          uuidMetode: metodeTransfer!.Uuid,
+          jenis: metodeTransfer.Jenis,
+          nama: metodeTransfer.Nama,
+          jumlah: refundTransfer,
+        ),
     ];
     final metodeRefund = refund.length > 1
         ? MetodeRefundRetur.campuran
-        : refund.isNotEmpty && refund.first.metode.Jenis == JenisMetodeBayar.transfer
+        : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.tempo
+        ? MetodeRefundRetur.piutang
+        : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.transfer
         ? MetodeRefundRetur.transfer
         : MetodeRefundRetur.tunai;
 
@@ -352,9 +402,9 @@ class LayananReturPenjualan {
               ReturPenjualanPembayaranCompanion.insert(
                 Uuid: r.uuid,
                 UuidReturPenjualan: uuid,
-                UuidMetodePembayaran: r.metode.Uuid,
-                Jenis: r.metode.Jenis,
-                NamaMetode: r.metode.Nama,
+                UuidMetodePembayaran: r.uuidMetode,
+                Jenis: r.jenis,
+                NamaMetode: r.nama,
                 Jumlah: r.jumlah.KeString(),
               ),
           ],
@@ -383,7 +433,7 @@ class LayananReturPenjualan {
                     kondisi: b.pilihan.kondisi,
                   ),
               ],
-              refund: [for (final r in refund) (uuid: r.uuid, uuidMetodePembayaran: r.metode.Uuid, jumlah: r.jumlah)],
+              refund: [for (final r in refund) (uuid: r.uuid, uuidMetodePembayaran: r.uuidMetode, jumlah: r.jumlah)],
               totalRefund: total,
             ),
           ),
@@ -398,6 +448,7 @@ class LayananReturPenjualan {
       refundTunai: refundTunai,
       refundTransfer: refundTransfer,
       namaMetodeTransfer: refundTransfer.BernilaiNol() ? null : metodeTransfer?.Nama,
+      potongPiutang: potongPiutang,
     );
   }
 

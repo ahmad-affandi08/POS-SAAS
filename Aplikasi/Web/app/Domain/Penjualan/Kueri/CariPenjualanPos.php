@@ -8,6 +8,7 @@ use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\KomposisiPenjualan;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Penjualan\Data\DataSudahDiretur;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Layanan\PenghitungNilaiRetur;
@@ -26,7 +27,8 @@ use Carbon\CarbonImmutable;
  * lunas/diretur sebagian dan belum lewat `BatasHariRetur` (dihitung dari tanggal bisnis outlet saat ini);
  * `AlasanTidakBisaDiretur`: `Void`, `SudahDireturPenuh`, `LewatBatasHari`. Kunci tambahan per baris (kompatibel mundur):
  * `BolehDesimal` (satuan dasar produk boleh jumlah desimal) dan `UuidProdukSatuan` (satuan jual produk yang dipakai
- * baris; null bila tidak ditemukan lagi).
+ * baris; null bila tidak ditemukan lagi). F-12: `SisaPiutang` (null = bukan penjualan tempo): retur memotong piutang ini lebih
+ * dulu lewat metode Tempo, sisanya tunai/transfer.
  */
 final class CariPenjualanPos
 {
@@ -37,6 +39,7 @@ final class CariPenjualanPos
         private readonly InfoProdukStok $infoProduk,
         private readonly TanggalBisnisOutlet $tanggalBisnis,
         private readonly PengaturanKasirTenant $pengaturanKasir,
+        private readonly PencatatPiutangPenjualan $piutang,
     ) {}
 
     /**
@@ -91,6 +94,7 @@ final class CariPenjualanPos
                 'BatasReturSampai' => $batasSampai->toDateString(),
                 'BisaDiretur' => $alasan === null,
                 'AlasanTidakBisaDiretur' => $alasan,
+                'SisaPiutang' => $this->piutang->AmbilSisa($p->Id)?->KeString(),
             ],
             'Baris' => array_values($detail->map(function (PenjualanDetail $d) use ($sudah, $simbol, $produk, $satuanProduk): array {
                 $s = $sudah[$d->Id] ?? DataSudahDiretur::Kosong();

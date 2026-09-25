@@ -21,6 +21,9 @@ export type BarisPelanggan = {
     Tier: { Kode: string; Nama: string } | null;
     TierTetap: boolean;
     SaldoPoin: number;
+    /** F-12: null = tidak boleh bayar tempo. */
+    LimitKredit: string | null;
+    TerminHari: number;
     DibuatPada: string | null;
     JumlahTransaksi: number;
     TotalBelanja: string;
@@ -62,8 +65,12 @@ export type PropsDetailPelanggan = {
     RiwayatPoin: MutasiPoin[];
     OpsiTier: OpsiTier[];
     LoyaltiBerlaku: boolean;
+    /** F-12: posisi kredit pelanggan. */
+    Kredit: KreditPelanggan | null;
     Izin: IzinPelanggan;
 };
+
+export type KreditPelanggan = { LimitKredit: string | null; SisaPiutang: string; HariLewatJatuhTempo: number };
 
 export type BarisTier = {
     Uuid: string;

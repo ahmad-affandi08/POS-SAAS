@@ -1,6 +1,7 @@
 import 'package:inti/Inti.dart';
 import 'package:klien_api/KlienApi.dart';
 
+import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriPelanggan.dart';
 import '../GalatKasir.dart';
 import '../Penjualan/Keranjang.dart';
@@ -56,9 +57,19 @@ class LayananPelanggan {
   }
 
   Future<List<PelangganTerpilih>> AmbilTerakhir() async => [
-    for (final b in await repositori.AmbilTerakhir())
-      PelangganTerpilih(uuid: b.Uuid, nama: b.Nama, noHpSamar: b.NoHpSamar, kodeTier: b.KodeTier, namaTier: b.NamaTier),
+    for (final b in await repositori.AmbilTerakhir()) DariCache(b),
   ];
+
+  static PelangganTerpilih DariCache(BarisPelangganLokal b) => PelangganTerpilih(
+    uuid: b.Uuid,
+    nama: b.Nama,
+    noHpSamar: b.NoHpSamar,
+    kodeTier: b.KodeTier,
+    namaTier: b.NamaTier,
+    limitKredit: b.LimitKredit,
+    sisaPiutang: b.SisaPiutang,
+    hariLewatJatuhTempo: b.HariLewatJatuhTempo,
+  );
 
   Future<HasilCariPelanggan> Cari(String kata) async {
     if (kata.trim().length < panjangKataMinimal) {
@@ -76,24 +87,15 @@ class LayananPelanggan {
               kodeTier: p.kodeTier,
               namaTier: p.namaTier,
               saldoPoin: p.saldoPoin,
+              limitKredit: p.limitKredit,
+              sisaPiutang: p.sisaPiutang,
+              hariLewatJatuhTempo: p.hariLewatJatuhTempo,
             ),
         ],
         online: true,
       );
     } on GalatJaringan {
-      return HasilCariPelanggan(
-        pelanggan: [
-          for (final b in await repositori.Cari(kata))
-            PelangganTerpilih(
-              uuid: b.Uuid,
-              nama: b.Nama,
-              noHpSamar: b.NoHpSamar,
-              kodeTier: b.KodeTier,
-              namaTier: b.NamaTier,
-            ),
-        ],
-        online: false,
-      );
+      return HasilCariPelanggan(pelanggan: [for (final b in await repositori.Cari(kata)) DariCache(b)], online: false);
     } on GalatApi catch (galat) {
       throw GalatKasir(galat.kode, galat.pesan);
     }
@@ -131,6 +133,13 @@ class LayananPelanggan {
     _jam(),
     kodeTier: pelanggan.kodeTier,
     namaTier: pelanggan.namaTier,
+    kredit: pelanggan.sisaPiutang == null
+        ? null
+        : (
+            limitKredit: pelanggan.limitKredit,
+            sisaPiutang: pelanggan.sisaPiutang!,
+            hariLewatJatuhTempo: pelanggan.hariLewatJatuhTempo ?? 0,
+          ),
   );
 
   Future<PelangganTerpilih> Buat({required String nama, required String noHp, required StafLokal kasir}) async {

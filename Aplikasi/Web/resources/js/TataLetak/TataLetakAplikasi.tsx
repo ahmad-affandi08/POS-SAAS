@@ -96,6 +96,9 @@ const menuPelanggan: ItemMenu[] = [
     { label: 'Tier pelanggan', href: '/kelola/pelanggan/tier', izin: IzinTenant.PelangganLihat },
     { label: 'Pengaturan loyalti', href: '/kelola/pelanggan/loyalti', izin: IzinTenant.PelangganLihat },
     { label: 'Promo', href: '/kelola/promo', izin: IzinTenant.PelangganLihat },
+    // F-12: piutang pelanggan (penjualan tempo) & pelunasan.
+    { label: 'Piutang pelanggan', href: '/kelola/piutang', izin: IzinTenant.PelangganLihat },
+    { label: 'Pelunasan piutang', href: '/kelola/piutang/pelunasan', izin: IzinTenant.PelangganLihat },
 ];
 
 const menuKasir: ItemMenu[] = [

@@ -166,6 +166,8 @@ describe('F-12 void & retur penjualan tempo', function (): void {
         $jual = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
         $detail = PenjualanDetail::query()->where('IdPenjualan', $jual->Id)->sole();
         $satu = [['Detail' => $detail, 'Jumlah' => '1']];
+        $cari = fn (): mixed => $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($jual->Nomor))->assertOk()->json('Penjualan.SisaPiutang');
+        expect($cari())->toBe('77000.00');
 
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemRetur($k, $jual, $satu)]))->toBe([['Ditolak', 'RefundTidakSesuai']]);
 
@@ -177,6 +179,7 @@ describe('F-12 void & retur penjualan tempo', function (): void {
             ->and($piutang->AmbilSisa()->KeString())->toBe('38500.00')
             ->and($piutang->Status)->toBe(StatusPiutang::BelumLunas)
             ->and(ReturPenjualan::query()->sole()->MetodeRefund->value)->toBe('Piutang');
+        expect($cari())->toBe('38500.00');
     });
 });
 

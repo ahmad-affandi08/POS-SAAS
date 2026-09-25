@@ -15,6 +15,7 @@ import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { MutasiPoin, PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
@@ -81,6 +82,7 @@ export default function HalamanDetailPelanggan({
     RiwayatPoin,
     OpsiTier,
     LoyaltiBerlaku,
+    Kredit,
     Izin,
 }: PropsDetailPelanggan) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -227,6 +229,35 @@ export default function HalamanDetailPelanggan({
                     </dl>
                 </Card>
             </div>
+
+            <Card className="gap-3 rounded-panel p-4 shadow-none">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-judul-kecil text-teks-utama">Kredit & piutang</h2>
+                    {Kredit && BandingkanDesimal(Kredit.SisaPiutang, '0') > 0 ? (
+                        <Link href={`/kelola/piutang?saring[Pelanggan]=${p.Uuid}`} className="text-brand underline">
+                            Lihat piutang
+                        </Link>
+                    ) : null}
+                </div>
+                <dl className="grid gap-4 sm:grid-cols-4">
+                    <Nilai label="Limit kredit">
+                        {p.LimitKredit ? (
+                            <span className="tabular-nums">{FormatRupiah(p.LimitKredit)}</span>
+                        ) : (
+                            'Tidak boleh tempo'
+                        )}
+                    </Nilai>
+                    <Nilai label="Termin">{`${p.TerminHari.toLocaleString('id-ID')} hari`}</Nilai>
+                    <Nilai label="Sisa piutang">
+                        <span className="tabular-nums">{FormatRupiah(Kredit?.SisaPiutang ?? '0')}</span>
+                    </Nilai>
+                    <Nilai label="Lewat jatuh tempo">
+                        {Kredit && Kredit.HariLewatJatuhTempo > 0
+                            ? `${Kredit.HariLewatJatuhTempo.toLocaleString('id-ID')} hari`
+                            : 'Tidak ada'}
+                    </Nilai>
+                </dl>
+            </Card>
 
             <Card className="gap-3 rounded-panel p-4 shadow-none">
                 <h2 className="text-judul-kecil text-teks-utama">Tier & poin</h2>

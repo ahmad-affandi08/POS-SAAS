@@ -6,6 +6,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriKasir.dart';
+import '../../Data/RepositoriPelanggan.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
 import '../Katalog/KatalogLokal.dart';
@@ -116,6 +117,7 @@ class LayananPenjualan {
   LayananPenjualan({
     required this.repositori,
     required this.repositoriPenjualan,
+    this.repositoriPelanggan,
     PembuatUlid? ulid,
     DateTime Function()? jam,
   }) : _ulid = ulid ?? PembuatUlid(),
@@ -130,6 +132,9 @@ class LayananPenjualan {
 
   final RepositoriKasir repositori;
   final RepositoriPenjualan repositoriPenjualan;
+
+  /// F-12: cache posisi kredit pelanggan (sisa piutang bertambah setelah penjualan tempo); null = tidak diperbarui.
+  final RepositoriPelanggan? repositoriPelanggan;
   final PembuatUlid _ulid;
   final DateTime Function() _jam;
   final MesinKalkulasi _mesin = const MesinKalkulasi();
@@ -615,6 +620,59 @@ class LayananPenjualan {
     }
   }
 
+  /// F-12 BR-12.1: alasan penjualan tempo [jumlah] butuh PIN penyetuju ber-izin `penjualan.tempo.setujui` menurut
+  /// posisi kredit terakhir yang diketahui perangkat (kosong = boleh tanpa penyetuju). Sama dengan server
+  /// `KreditPelanggan::Periksa`; bila cache basi, server tetap menerima penjualan dan menandainya untuk ditinjau.
+  static List<String> PeriksaTempo({
+    required PelangganTerpilih pelanggan,
+    required Uang jumlah,
+    required int batasHariLewat,
+  }) {
+    final alasan = <String>[];
+    final limit = pelanggan.limitKredit == null ? null : Uang.Dari(pelanggan.limitKredit!);
+    final setelah = Uang.Dari(pelanggan.sisaPiutang ?? '0').Tambah(jumlah);
+    if (limit == null || limit.Bandingkan(Uang.Nol()) <= 0) {
+      alasan.add('pelanggan belum punya limit kredit');
+    } else if (setelah.Bandingkan(limit) > 0) {
+      alasan.add('piutang ${setelah.FormatRupiah()} melebihi limit ${limit.FormatRupiah()}');
+    }
+    final hari = pelanggan.hariLewatJatuhTempo ?? 0;
+    if (hari > batasHariLewat) {
+      alasan.add('ada piutang lewat jatuh tempo $hari hari');
+    }
+    return alasan;
+  }
+
+  /// F-12: aturan pembayaran tempo: paling banyak satu per transaksi, wajib pelanggan, dan bila BR-12.1 tidak lolos
+  /// wajib penyetuju (kasir sendiri bila ber-izin, atau [uuidPenyetujuTempo] hasil PIN).
+  static void ValidasiTempo(
+    Keranjang keranjang,
+    List<PembayaranMasukan> pembayaran,
+    StafLokal kasir,
+    KonteksPenjualan k,
+    String? uuidPenyetujuTempo,
+  ) {
+    final tempo = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.tempo).toList();
+    if (tempo.isEmpty) {
+      return;
+    }
+    if (tempo.length > 1) {
+      throw const GalatKasir('TempoGanda', 'Pembayaran tempo hanya boleh satu kali per transaksi.');
+    }
+    final pelanggan = keranjang.pelanggan;
+    if (pelanggan == null) {
+      throw const GalatKasir('TempoTanpaPelanggan', 'Pilih pelanggan dulu untuk pembayaran tempo.');
+    }
+    final alasan = PeriksaTempo(
+      pelanggan: pelanggan,
+      jumlah: tempo.single.jumlah,
+      batasHariLewat: k.batasHariLewatJatuhTempo,
+    );
+    if (alasan.isNotEmpty && uuidPenyetujuTempo == null && !kasir.PunyaIzin(IzinKasir.penjualanTempoSetujui)) {
+      throw GalatKasir('PersetujuanTempoDiperlukan', 'Tempo perlu persetujuan: ${alasan.join('; ')}.');
+    }
+  }
+
   // Bayar & simpan -----------------------------------------------------------------------------------------------------
 
   Future<PenjualanTersimpan> Bayar({
@@ -622,6 +680,7 @@ class LayananPenjualan {
     required List<PembayaranMasukan> pembayaran,
     required StafLokal kasir,
     required KonteksPenjualan k,
+    String? uuidPenyetujuTempo,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -655,6 +714,7 @@ class LayananPenjualan {
     }
     final penyetuju = ValidasiDiskon(keranjang, hitungan, kasir, k);
     ValidasiTukarPoin(keranjang, hasil);
+    ValidasiTempo(keranjang, pembayaran, kasir, k, uuidPenyetujuTempo);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
@@ -681,9 +741,15 @@ class LayananPenjualan {
           penyetuju: penyetuju,
           k: k,
           sekarang: sekarang,
+          uuidPenyetujuTempo: uuidPenyetujuTempo,
         );
       },
     );
+    final tempo = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.tempo).firstOrNull;
+    final uuidPelanggan = keranjang.pelanggan?.uuid;
+    if (tempo != null && uuidPelanggan != null) {
+      await repositoriPelanggan?.TambahSisaPiutang(uuidPelanggan, tempo.jumlah.KeString());
+    }
 
     return PenjualanTersimpan(
       uuid: uuid,
@@ -752,6 +818,7 @@ class LayananPenjualan {
     required PenyetujuDiskon? penyetuju,
     required KonteksPenjualan k,
     required DateTime sekarang,
+    String? uuidPenyetujuTempo,
   }) {
     final hasil = hitungan.hasil;
     final kembalian = hasil.kembalian ?? Uang.Nol();
@@ -818,6 +885,7 @@ class LayananPenjualan {
       'UuidPesananTerbuka': ?pesananMeja?.uuid,
       'UuidPelanggan': ?keranjang.pelanggan?.uuid,
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
+      'UuidPenyetujuTempo': ?uuidPenyetujuTempo,
       if (hitungan.promoTerpakai.isNotEmpty)
         'Promo': [
           for (final p in hitungan.promoTerpakai)

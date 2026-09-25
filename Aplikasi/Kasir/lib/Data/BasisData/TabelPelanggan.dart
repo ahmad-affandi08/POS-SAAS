@@ -13,6 +13,11 @@ class PelangganLokal extends Table {
   TextColumn get KodeTier => text().nullable()();
   TextColumn get NamaTier => text().nullable()();
 
+  // Skema 9 (F-12): posisi kredit terakhir yang diketahui (cek BR-12.1 offline); null = belum diketahui.
+  TextColumn get LimitKredit => text().nullable()();
+  TextColumn get SisaPiutang => text().nullable()();
+  IntColumn get HariLewatJatuhTempo => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

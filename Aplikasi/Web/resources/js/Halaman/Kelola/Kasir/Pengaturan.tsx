@@ -38,7 +38,7 @@ export function NormalisasiMasukanPersen(teks: string): string {
 
 /**
  * Pengaturan kasir tenant: batas kas keluar tanpa persetujuan (BR-06.4), shift bersama (BR-06.2), batas diskon manual
- * kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), tutup shift buta & toleransi selisih kas (F-11), serta batas hari retur (F-09). Berlaku di aplikasi kasir setelah data perangkat
+ * kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), tutup shift buta & toleransi selisih kas (F-11), batas hari retur (F-09), serta batas hari lewat jatuh tempo (F-12). Berlaku di aplikasi kasir setelah data perangkat
  * diperbarui.
  */
 export default function HalamanPengaturanKasir({
@@ -51,6 +51,7 @@ export default function HalamanPengaturanKasir({
     TutupShiftButa,
     ToleransiSelisihKas,
     BatasHariRetur,
+    BatasHariLewatJatuhTempo,
 }: PropsPengaturanKasir) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -65,6 +66,7 @@ export default function HalamanPengaturanKasir({
         tutupButa: TutupShiftButa,
         toleransi: UbahKeMasukanUang(ToleransiSelisihKas),
         hariRetur: String(BatasHariRetur),
+        hariLewat: String(BatasHariLewatJatuhTempo),
     };
     const [batas, AturBatas] = useState(awal.batas);
     const [bersama, AturBersama] = useState(awal.bersama);
@@ -76,6 +78,7 @@ export default function HalamanPengaturanKasir({
     const [tutupButa, AturTutupButa] = useState(awal.tutupButa);
     const [toleransi, AturToleransi] = useState(awal.toleransi);
     const [hariRetur, AturHariRetur] = useState(awal.hariRetur);
+    const [hariLewat, AturHariLewat] = useState(awal.hariLewat);
     const [memproses, AturMemproses] = useState(false);
     const berubah =
         batas !== awal.batas ||
@@ -86,6 +89,7 @@ export default function HalamanPengaturanKasir({
         tutupButa !== awal.tutupButa ||
         toleransi !== awal.toleransi ||
         hariRetur !== awal.hariRetur ||
+        hariLewat !== awal.hariLewat ||
         (bulatkan && (kelipatan !== awal.kelipatan || arah !== awal.arah));
     const opsiKelipatan = (kelipatanUmum.includes(kelipatan) ? kelipatanUmum : [...kelipatanUmum, kelipatan]).map(
         (nilai) => ({ Nilai: nilai, Label: FormatRupiah(nilai) }),
@@ -104,6 +108,7 @@ export default function HalamanPengaturanKasir({
                 TutupShiftButa: tutupButa,
                 ToleransiSelisihKas: toleransi === '' ? '0' : toleransi,
                 BatasHariRetur: hariRetur === '' ? 0 : Number.parseInt(hariRetur, 10),
+                BatasHariLewatJatuhTempo: hariLewat === '' ? 0 : Number.parseInt(hariLewat, 10),
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -123,6 +128,7 @@ export default function HalamanPengaturanKasir({
                     'TutupShiftButa',
                     'ToleransiSelisihKas',
                     'BatasHariRetur',
+                    'BatasHariLewatJatuhTempo',
                 ]}
             />
             <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4">
@@ -225,6 +231,19 @@ export default function HalamanPengaturanKasir({
                         saatBerubah={(teks) => AturHariRetur(teks.replace(/\D/g, '').slice(0, 3))}
                         inputMode="numeric"
                         galat={galat.BatasHariRetur}
+                    />
+                </PanelKatalog>
+                <PanelKatalog
+                    judul="Penjualan tempo"
+                    idJudul="judul-penjualan-tempo"
+                    keterangan="Penjualan tempo butuh PIN penyetuju bila melebihi limit kredit pelanggan atau pelanggan punya piutang yang lewat jatuh tempo lebih dari batas ini. Isi 0 agar piutang yang lewat jatuh tempo sehari pun butuh penyetuju."
+                >
+                    <BidangTeks
+                        label="Batas hari lewat jatuh tempo"
+                        nilai={hariLewat}
+                        saatBerubah={(teks) => AturHariLewat(teks.replace(/\D/g, '').slice(0, 3))}
+                        inputMode="numeric"
+                        galat={galat.BatasHariLewatJatuhTempo}
                     />
                 </PanelKatalog>
                 <div className="flex flex-wrap items-center gap-3">

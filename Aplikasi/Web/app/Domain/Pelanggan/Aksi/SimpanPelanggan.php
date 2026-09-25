@@ -6,9 +6,11 @@ namespace App\Domain\Pelanggan\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Data\DataPelanggan;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use App\Domain\Penjualan\Aksi\SiapkanMetodeTempo;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +20,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class SimpanPelanggan
 {
-    public function __construct(private readonly PencatatAudit $audit) {}
+    public function __construct(
+        private readonly PencatatAudit $audit,
+        private readonly SiapkanMetodeTempo $siapkanTempo,
+    ) {}
 
     /**
      * @throws PelanggaranAturanBisnis NoHpTidakValid, NoHpSudahTerdaftar
@@ -53,6 +58,16 @@ final class SimpanPelanggan
                 'SetujuPemasaran' => $data->setujuPemasaran,
             ];
 
+            if ($data->aturKredit) {
+                $isian['LimitKredit'] = $data->limitKredit === null || $data->limitKredit->BernilaiNol() ? null : $data->limitKredit->KeString();
+                $isian['TerminHari'] = $data->terminHari;
+
+                // F-12: limit kredit pertama di tenant = metode Tempo disiapkan agar muncul di aplikasi kasir.
+                if ($isian['LimitKredit'] !== null) {
+                    $this->siapkanTempo->Jalankan($data->idPengguna);
+                }
+            }
+
             if ($pelanggan === null) {
                 $baru = Pelanggan::query()->create([...$isian, 'DibuatOleh' => $data->idPengguna]);
                 $this->audit->Catat('pelanggan.tambah', $baru, nilaiBaru: self::UntukAudit($isian), idPengguna: $data->idPengguna);
@@ -65,8 +80,13 @@ final class SimpanPelanggan
                 ...$terkunci->only(array_keys($isian)),
                 'TanggalLahir' => $terkunci->TanggalLahir?->toDateString(),
             ];
+
+            if ($data->aturKredit) {
+                $lama['LimitKredit'] = $terkunci->LimitKredit === null ? null : Uang::Dari($terkunci->LimitKredit)->KeString();
+            }
+
             $terkunci->fill($isian);
-            $berubah = array_keys(array_filter($isian, fn (mixed $nilai, string $kolom): bool => $nilai !== $lama[$kolom], ARRAY_FILTER_USE_BOTH));
+            $berubah = array_keys(array_filter($isian, fn (mixed $nilai, string $kolom): bool => $nilai !== ($lama[$kolom] ?? null), ARRAY_FILTER_USE_BOTH));
             $terkunci->save();
 
             if ($berubah !== []) {

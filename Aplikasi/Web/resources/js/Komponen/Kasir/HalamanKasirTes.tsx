@@ -57,6 +57,7 @@ const propsPengaturan: PropsPengaturanKasir = {
     TutupShiftButa: true,
     ToleransiSelisihKas: '10000.00',
     BatasHariRetur: 7,
+    BatasHariLewatJatuhTempo: 0,
 };
 
 const laporanShift: LaporanShift = {
@@ -274,6 +275,7 @@ describe('F-06 halaman kasir back-office', () => {
         fireEvent.click(screen.getByRole('checkbox', { name: 'Bulatkan pembayaran tunai' }));
         UbahNilai(screen.getByLabelText('Kelipatan'), '500');
         UbahNilai(screen.getByLabelText('Arah pembulatan'), 'Terdekat');
+        UbahNilai(screen.getByLabelText('Batas hari lewat jatuh tempo'), '14');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
 
         expect(tiruanRouter.put).toHaveBeenCalledWith(
@@ -287,6 +289,7 @@ describe('F-06 halaman kasir back-office', () => {
                 TutupShiftButa: true,
                 ToleransiSelisihKas: '10000',
                 BatasHariRetur: 7,
+                BatasHariLewatJatuhTempo: 14,
             },
             expect.anything(),
         );

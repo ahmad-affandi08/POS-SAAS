@@ -29,6 +29,7 @@ class PenjualanCariPos {
     required this.batasReturSampai,
     required this.bisaDiretur,
     required this.alasanTidakBisaDiretur,
+    this.sisaPiutang,
   });
 
   /// Alasan `BisaDiretur` = false dari server.
@@ -63,6 +64,9 @@ class PenjualanCariPos {
   final bool bisaDiretur;
   final String? alasanTidakBisaDiretur;
 
+  /// F-12: sisa piutang penjualan tempo (null = bukan tempo / server lama). Retur memotong piutang ini lebih dulu.
+  final String? sisaPiutang;
+
   static PenjualanCariPos DariJson(Map<String, Object?> json) => PenjualanCariPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     nomor: UraiJson.AmbilTeks(json['Nomor']),
@@ -84,6 +88,7 @@ class PenjualanCariPos {
     batasReturSampai: UraiJson.AmbilTeks(json['BatasReturSampai']),
     bisaDiretur: UraiJson.AmbilBenar(json['BisaDiretur']),
     alasanTidakBisaDiretur: UraiJson.AmbilTeksAtauNull(json['AlasanTidakBisaDiretur']),
+    sisaPiutang: UraiJson.AmbilDesimalAtauNull(json['SisaPiutang']),
   );
 }
 

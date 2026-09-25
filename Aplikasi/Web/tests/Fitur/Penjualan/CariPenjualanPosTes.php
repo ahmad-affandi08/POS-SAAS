@@ -41,6 +41,7 @@ describe('F-09 GET /api/pos/v1/penjualan/cari (struk asal untuk retur)', functio
             'BatasHariRetur' => 7,
             'BisaDiretur' => true,
             'AlasanTidakBisaDiretur' => null,
+            'SisaPiutang' => null,
         ])
             ->and($respons->json('Baris'))->toHaveCount(1)
             ->and($respons->json('Baris.0'))->toMatchArray([

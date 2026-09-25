@@ -367,6 +367,7 @@ class DataAwal {
     this.tutupShiftButa = true,
     this.toleransiSelisihKas = toleransiSelisihKasBawaan,
     this.batasHariRetur = batasHariReturBawaan,
+    this.batasHariLewatJatuhTempo = 0,
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -409,6 +410,10 @@ class DataAwal {
   /// F-09: retur paling lama sekian hari sejak tanggal bisnis penjualan (`Pengaturan.BatasHariRetur`).
   final int batasHariRetur;
 
+  /// F-12 BR-12.1: penjualan tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari sekian
+  /// hari (`Pengaturan.BatasHariLewatJatuhTempo`; server lama tanpa kunci ini = 0).
+  final int batasHariLewatJatuhTempo;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -433,6 +438,7 @@ class DataAwal {
       tutupShiftButa: UraiJson.AmbilBenar(pengaturan['TutupShiftButa'], true),
       toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
+      batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
     );
   }
 }

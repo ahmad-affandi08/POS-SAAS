@@ -25,6 +25,8 @@ const Ani: BarisPelanggan = {
     Tier: { Kode: 'GOLD', Nama: 'Gold' },
     TierTetap: false,
     SaldoPoin: 1250,
+    LimitKredit: '5000000.00',
+    TerminHari: 30,
     DibuatPada: '2026-09-20T02:00:00Z',
     JumlahTransaksi: 12,
     TotalBelanja: '12500000.00',
@@ -83,6 +85,7 @@ describe('Halaman pelanggan (F-16a)', () => {
         RenderUji(
             <HalamanDetailPelanggan
                 Pelanggan={Ani}
+                Kredit={{ LimitKredit: '5000000.00', SisaPiutang: '1250000.00', HariLewatJatuhTempo: 12 }}
                 Riwayat={[
                     {
                         Uuid: '01K5JUAL000000000000000001',
@@ -114,6 +117,9 @@ describe('Halaman pelanggan (F-16a)', () => {
         expect(screen.getAllByText('+125').length).toBeGreaterThan(0);
         expect(screen.getByText('1.250')).toBeTruthy();
         expect(screen.getByText('Setuju menerima')).toBeTruthy();
+        expect(screen.getByText('Rp 5.000.000')).toBeTruthy();
+        expect(screen.getByText('12 hari')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Lihat piutang' })).toBeTruthy();
         expect(screen.getAllByRole('link', { name: 'INV/SLB/260924/POS-001-0007' })[0]?.getAttribute('href')).toBe(
             '/kelola/penjualan/01K5JUAL000000000000000001',
         );

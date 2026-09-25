@@ -177,9 +177,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
   /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
   /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka); 7 = F-16a (pelanggan lokal); 8 = F-16b
-  /// (tier pelanggan lokal).
+  /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal).
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -256,6 +256,11 @@ class BasisDataKasir extends _$BasisDataKasir {
       if (dari == 7) {
         await m.addColumn(pelangganLokal, pelangganLokal.KodeTier);
         await m.addColumn(pelangganLokal, pelangganLokal.NamaTier);
+      }
+      if (dari >= 7 && dari < 9) {
+        await m.addColumn(pelangganLokal, pelangganLokal.LimitKredit);
+        await m.addColumn(pelangganLokal, pelangganLokal.SisaPiutang);
+        await m.addColumn(pelangganLokal, pelangganLokal.HariLewatJatuhTempo);
       }
     },
     beforeOpen: (detail) async {

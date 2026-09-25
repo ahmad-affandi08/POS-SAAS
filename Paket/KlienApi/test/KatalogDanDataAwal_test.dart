@@ -331,6 +331,28 @@ void main() {
   });
 
   group('DataAwal F-09', () {
+    test('F-12: BatasHariLewatJatuhTempo (server lama = 0) & posisi kredit pelanggan POS', () {
+      expect(DataAwal.DariJson(DataAwalF06()).batasHariLewatJatuhTempo, 0);
+      expect(
+        DataAwal.DariJson({
+          ...DataAwalF06(),
+          'Pengaturan': {'BatasKasKeluar': '200000.00', 'ShiftBersama': false, 'BatasHariLewatJatuhTempo': 14},
+        }).batasHariLewatJatuhTempo,
+        14,
+      );
+      final lama = PelangganPos.DariJson({'Uuid': 'P1', 'Nama': 'Ani', 'NoHp': '0812****7890'});
+      expect([lama.limitKredit, lama.sisaPiutang, lama.hariLewatJatuhTempo], [null, '0', 0]);
+      final baru = PelangganPos.DariJson({
+        'Uuid': 'P2',
+        'Nama': 'Toko Makmur Jaya',
+        'NoHp': '0813****0001',
+        'LimitKredit': '5000000.00',
+        'SisaPiutang': '77000.00',
+        'HariLewatJatuhTempo': 12,
+      });
+      expect([baru.limitKredit, baru.sisaPiutang, baru.hariLewatJatuhTempo], ['5000000.00', '77000.00', 12]);
+    });
+
     test('server lama tanpa BatasHariRetur → 7 hari; nilai server dipetakan', () {
       expect(DataAwal.DariJson(DataAwalF06()).batasHariRetur, 7);
       final data = DataAwal.DariJson({

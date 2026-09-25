@@ -864,6 +864,115 @@ void main() {
       ]);
     });
   });
+
+  group('F-12 penjualan tempo (BR-12.1)', () {
+    const toko = PelangganTerpilih(
+      uuid: '01K5PELANGGAN0000000000009',
+      nama: 'Toko Makmur Jaya',
+      noHpSamar: '0813****0001',
+      limitKredit: '80000.00',
+      sisaPiutang: '20000.00',
+      hariLewatJatuhTempo: 0,
+    );
+
+    test('alasan butuh penyetuju: tanpa limit, melebihi limit, lewat jatuh tempo di atas batas', () {
+      expect(LayananPenjualan.PeriksaTempo(pelanggan: toko, jumlah: Uang.DariBulat(60000), batasHariLewat: 0), isEmpty);
+      expect(LayananPenjualan.PeriksaTempo(pelanggan: toko, jumlah: Uang.DariBulat(60001), batasHariLewat: 0), [
+        'piutang Rp 80.001 melebihi limit Rp 80.000',
+      ]);
+      const tanpaLimit = PelangganTerpilih(uuid: 'X', nama: 'Warung Bu Sri', noHpSamar: '0812****0002');
+      expect(LayananPenjualan.PeriksaTempo(pelanggan: tanpaLimit, jumlah: Uang.DariBulat(1), batasHariLewat: 0), [
+        'pelanggan belum punya limit kredit',
+      ]);
+      const lewat = PelangganTerpilih(
+        uuid: 'Y',
+        nama: 'CV Karya',
+        noHpSamar: '0812****0003',
+        limitKredit: '5000000.00',
+        sisaPiutang: '0.00',
+        hariLewatJatuhTempo: 20,
+      );
+      expect(LayananPenjualan.PeriksaTempo(pelanggan: lewat, jumlah: Uang.DariBulat(1), batasHariLewat: 14), [
+        'ada piutang lewat jatuh tempo 20 hari',
+      ]);
+      expect(LayananPenjualan.PeriksaTempo(pelanggan: lewat, jumlah: Uang.DariBulat(1), batasHariLewat: 30), isEmpty);
+    });
+
+    test('tempo wajib pelanggan; di luar limit tanpa penyetuju ditolak; dengan PIN tercatat di outbox', () async {
+      await Siapkan(dataAwal: DataAwalUji(tempo: true));
+      expect(k.metodePembayaran.map((m) => m.Jenis), contains('Tempo'));
+      final keranjang = KeranjangContoh();
+      final tempo = [PembayaranMasukan(metode: Metode('Tempo'), jumlah: Uang.Dari('67100'))];
+
+      await expectLater(
+        u.penjualan.Bayar(keranjang: keranjang, pembayaran: tempo, kasir: rina, k: k),
+        GalatDengan('TempoTanpaPelanggan'),
+      );
+      final denganToko = keranjang.Salin(pelanggan: () => toko);
+      await expectLater(
+        u.penjualan.Bayar(keranjang: denganToko, pembayaran: tempo, kasir: rina, k: k),
+        GalatDengan('PersetujuanTempoDiperlukan'),
+      );
+      await expectLater(
+        u.penjualan.Bayar(
+          keranjang: denganToko,
+          pembayaran: [
+            PembayaranMasukan(metode: Metode('Tempo'), jumlah: Uang.DariBulat(30000)),
+            PembayaranMasukan(metode: Metode('Tempo'), jumlah: Uang.Dari('37100')),
+          ],
+          kasir: rina,
+          k: k,
+          uuidPenyetujuTempo: budi.uuid,
+        ),
+        GalatDengan('TempoGanda'),
+      );
+      expect(await u.db.select(u.db.penjualan).get(), isEmpty);
+
+      await u.repositoriPelanggan.Simpan(
+        toko.uuid,
+        toko.nama,
+        toko.noHpSamar,
+        DateTime.utc(2026, 9, 25),
+        kredit: (limitKredit: '80000.00', sisaPiutang: '20000.00', hariLewatJatuhTempo: 0),
+      );
+      final hasil = await u.penjualan.Bayar(
+        keranjang: denganToko,
+        pembayaran: tempo,
+        kasir: rina,
+        k: k,
+        uuidPenyetujuTempo: budi.uuid,
+      );
+      final data = await AmbilDataOutbox(hasil.uuid);
+      expect(data['UuidPelanggan'], toko.uuid);
+      expect(data['UuidPenyetujuTempo'], budi.uuid);
+      expect(((data['Pembayaran']! as List<Object?>).single! as Map<String, Object?>)['Jumlah'], '67100.00');
+      // Cache kredit ikut bertambah agar cek offline berikutnya menghitung penjualan ini.
+      expect((await u.repositoriPelanggan.AmbilTerakhir()).single.SisaPiutang, '87100.00');
+    });
+
+    test('dalam limit tanpa penyetuju: outbox tanpa UuidPenyetujuTempo', () async {
+      await Siapkan(dataAwal: DataAwalUji(tempo: true, batasHariLewatJatuhTempo: 7));
+      expect(k.batasHariLewatJatuhTempo, 7);
+      final keranjang = KeranjangContoh().Salin(
+        pelanggan: () => const PelangganTerpilih(
+          uuid: '01K5PELANGGAN0000000000009',
+          nama: 'Toko Makmur Jaya',
+          noHpSamar: '0813****0001',
+          limitKredit: '5000000.00',
+          sisaPiutang: '0.00',
+          hariLewatJatuhTempo: 5,
+        ),
+      );
+      final hasil = await u.penjualan.Bayar(
+        keranjang: keranjang,
+        pembayaran: [PembayaranMasukan(metode: Metode('Tempo'), jumlah: Uang.Dari('67100'))],
+        kasir: rina,
+        k: k,
+      );
+      final data = await AmbilDataOutbox(hasil.uuid);
+      expect(data.containsKey('UuidPenyetujuTempo'), isFalse);
+    });
+  });
 }
 
 /// Layanan penjualan dengan UuidKlien tetap (untuk memaksa bentrok outbox).

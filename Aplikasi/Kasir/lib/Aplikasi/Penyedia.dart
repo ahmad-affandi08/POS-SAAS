@@ -123,6 +123,7 @@ final penyediaLayananPenjualan = Provider<LayananPenjualan>(
   (ref) => LayananPenjualan(
     repositori: ref.watch(penyediaRepositori),
     repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    repositoriPelanggan: ref.watch(penyediaRepositoriPelanggan),
     jam: ref.watch(penyediaJam),
   ),
 );

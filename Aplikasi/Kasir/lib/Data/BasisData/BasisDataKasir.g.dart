@@ -14737,8 +14737,45 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _LimitKreditMeta = const VerificationMeta('LimitKredit');
   @override
-  List<GeneratedColumn> get $columns => [Uuid, Nama, NoHpSamar, DipakaiPada, KodeTier, NamaTier];
+  late final GeneratedColumn<String> LimitKredit = GeneratedColumn<String>(
+    'LimitKredit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _SisaPiutangMeta = const VerificationMeta('SisaPiutang');
+  @override
+  late final GeneratedColumn<String> SisaPiutang = GeneratedColumn<String>(
+    'SisaPiutang',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _HariLewatJatuhTempoMeta = const VerificationMeta('HariLewatJatuhTempo');
+  @override
+  late final GeneratedColumn<int> HariLewatJatuhTempo = GeneratedColumn<int>(
+    'HariLewatJatuhTempo',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    Nama,
+    NoHpSamar,
+    DipakaiPada,
+    KodeTier,
+    NamaTier,
+    LimitKredit,
+    SisaPiutang,
+    HariLewatJatuhTempo,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -14774,6 +14811,18 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
     if (data.containsKey('NamaTier')) {
       context.handle(_NamaTierMeta, NamaTier.isAcceptableOrUnknown(data['NamaTier']!, _NamaTierMeta));
     }
+    if (data.containsKey('LimitKredit')) {
+      context.handle(_LimitKreditMeta, LimitKredit.isAcceptableOrUnknown(data['LimitKredit']!, _LimitKreditMeta));
+    }
+    if (data.containsKey('SisaPiutang')) {
+      context.handle(_SisaPiutangMeta, SisaPiutang.isAcceptableOrUnknown(data['SisaPiutang']!, _SisaPiutangMeta));
+    }
+    if (data.containsKey('HariLewatJatuhTempo')) {
+      context.handle(
+        _HariLewatJatuhTempoMeta,
+        HariLewatJatuhTempo.isAcceptableOrUnknown(data['HariLewatJatuhTempo']!, _HariLewatJatuhTempoMeta),
+      );
+    }
     return context;
   }
 
@@ -14789,6 +14838,12 @@ class $PelangganLokalTable extends PelangganLokal with TableInfo<$PelangganLokal
       DipakaiPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DipakaiPada'])!,
       KodeTier: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KodeTier']),
       NamaTier: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaTier']),
+      LimitKredit: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}LimitKredit']),
+      SisaPiutang: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}SisaPiutang']),
+      HariLewatJatuhTempo: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}HariLewatJatuhTempo'],
+      ),
     );
   }
 
@@ -14805,6 +14860,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
   final DateTime DipakaiPada;
   final String? KodeTier;
   final String? NamaTier;
+  final String? LimitKredit;
+  final String? SisaPiutang;
+  final int? HariLewatJatuhTempo;
   const BarisPelangganLokal({
     required this.Uuid,
     required this.Nama,
@@ -14812,6 +14870,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
     required this.DipakaiPada,
     this.KodeTier,
     this.NamaTier,
+    this.LimitKredit,
+    this.SisaPiutang,
+    this.HariLewatJatuhTempo,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -14826,6 +14887,15 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
     if (!nullToAbsent || NamaTier != null) {
       map['NamaTier'] = Variable<String>(NamaTier);
     }
+    if (!nullToAbsent || LimitKredit != null) {
+      map['LimitKredit'] = Variable<String>(LimitKredit);
+    }
+    if (!nullToAbsent || SisaPiutang != null) {
+      map['SisaPiutang'] = Variable<String>(SisaPiutang);
+    }
+    if (!nullToAbsent || HariLewatJatuhTempo != null) {
+      map['HariLewatJatuhTempo'] = Variable<int>(HariLewatJatuhTempo);
+    }
     return map;
   }
 
@@ -14837,6 +14907,11 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       DipakaiPada: Value(DipakaiPada),
       KodeTier: KodeTier == null && nullToAbsent ? const Value.absent() : Value(KodeTier),
       NamaTier: NamaTier == null && nullToAbsent ? const Value.absent() : Value(NamaTier),
+      LimitKredit: LimitKredit == null && nullToAbsent ? const Value.absent() : Value(LimitKredit),
+      SisaPiutang: SisaPiutang == null && nullToAbsent ? const Value.absent() : Value(SisaPiutang),
+      HariLewatJatuhTempo: HariLewatJatuhTempo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(HariLewatJatuhTempo),
     );
   }
 
@@ -14849,6 +14924,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       DipakaiPada: serializer.fromJson<DateTime>(json['DipakaiPada']),
       KodeTier: serializer.fromJson<String?>(json['KodeTier']),
       NamaTier: serializer.fromJson<String?>(json['NamaTier']),
+      LimitKredit: serializer.fromJson<String?>(json['LimitKredit']),
+      SisaPiutang: serializer.fromJson<String?>(json['SisaPiutang']),
+      HariLewatJatuhTempo: serializer.fromJson<int?>(json['HariLewatJatuhTempo']),
     );
   }
   @override
@@ -14861,6 +14939,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       'DipakaiPada': serializer.toJson<DateTime>(DipakaiPada),
       'KodeTier': serializer.toJson<String?>(KodeTier),
       'NamaTier': serializer.toJson<String?>(NamaTier),
+      'LimitKredit': serializer.toJson<String?>(LimitKredit),
+      'SisaPiutang': serializer.toJson<String?>(SisaPiutang),
+      'HariLewatJatuhTempo': serializer.toJson<int?>(HariLewatJatuhTempo),
     };
   }
 
@@ -14871,6 +14952,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
     DateTime? DipakaiPada,
     Value<String?> KodeTier = const Value.absent(),
     Value<String?> NamaTier = const Value.absent(),
+    Value<String?> LimitKredit = const Value.absent(),
+    Value<String?> SisaPiutang = const Value.absent(),
+    Value<int?> HariLewatJatuhTempo = const Value.absent(),
   }) => BarisPelangganLokal(
     Uuid: Uuid ?? this.Uuid,
     Nama: Nama ?? this.Nama,
@@ -14878,6 +14962,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
     DipakaiPada: DipakaiPada ?? this.DipakaiPada,
     KodeTier: KodeTier.present ? KodeTier.value : this.KodeTier,
     NamaTier: NamaTier.present ? NamaTier.value : this.NamaTier,
+    LimitKredit: LimitKredit.present ? LimitKredit.value : this.LimitKredit,
+    SisaPiutang: SisaPiutang.present ? SisaPiutang.value : this.SisaPiutang,
+    HariLewatJatuhTempo: HariLewatJatuhTempo.present ? HariLewatJatuhTempo.value : this.HariLewatJatuhTempo,
   );
   BarisPelangganLokal copyWithCompanion(PelangganLokalCompanion data) {
     return BarisPelangganLokal(
@@ -14887,6 +14974,9 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
       DipakaiPada: data.DipakaiPada.present ? data.DipakaiPada.value : this.DipakaiPada,
       KodeTier: data.KodeTier.present ? data.KodeTier.value : this.KodeTier,
       NamaTier: data.NamaTier.present ? data.NamaTier.value : this.NamaTier,
+      LimitKredit: data.LimitKredit.present ? data.LimitKredit.value : this.LimitKredit,
+      SisaPiutang: data.SisaPiutang.present ? data.SisaPiutang.value : this.SisaPiutang,
+      HariLewatJatuhTempo: data.HariLewatJatuhTempo.present ? data.HariLewatJatuhTempo.value : this.HariLewatJatuhTempo,
     );
   }
 
@@ -14898,13 +14988,26 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
           ..write('NoHpSamar: $NoHpSamar, ')
           ..write('DipakaiPada: $DipakaiPada, ')
           ..write('KodeTier: $KodeTier, ')
-          ..write('NamaTier: $NamaTier')
+          ..write('NamaTier: $NamaTier, ')
+          ..write('LimitKredit: $LimitKredit, ')
+          ..write('SisaPiutang: $SisaPiutang, ')
+          ..write('HariLewatJatuhTempo: $HariLewatJatuhTempo')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(Uuid, Nama, NoHpSamar, DipakaiPada, KodeTier, NamaTier);
+  int get hashCode => Object.hash(
+    Uuid,
+    Nama,
+    NoHpSamar,
+    DipakaiPada,
+    KodeTier,
+    NamaTier,
+    LimitKredit,
+    SisaPiutang,
+    HariLewatJatuhTempo,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -14914,7 +15017,10 @@ class BarisPelangganLokal extends DataClass implements Insertable<BarisPelanggan
           other.NoHpSamar == this.NoHpSamar &&
           other.DipakaiPada == this.DipakaiPada &&
           other.KodeTier == this.KodeTier &&
-          other.NamaTier == this.NamaTier);
+          other.NamaTier == this.NamaTier &&
+          other.LimitKredit == this.LimitKredit &&
+          other.SisaPiutang == this.SisaPiutang &&
+          other.HariLewatJatuhTempo == this.HariLewatJatuhTempo);
 }
 
 class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
@@ -14924,6 +15030,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
   final Value<DateTime> DipakaiPada;
   final Value<String?> KodeTier;
   final Value<String?> NamaTier;
+  final Value<String?> LimitKredit;
+  final Value<String?> SisaPiutang;
+  final Value<int?> HariLewatJatuhTempo;
   final Value<int> rowid;
   const PelangganLokalCompanion({
     this.Uuid = const Value.absent(),
@@ -14932,6 +15041,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     this.DipakaiPada = const Value.absent(),
     this.KodeTier = const Value.absent(),
     this.NamaTier = const Value.absent(),
+    this.LimitKredit = const Value.absent(),
+    this.SisaPiutang = const Value.absent(),
+    this.HariLewatJatuhTempo = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PelangganLokalCompanion.insert({
@@ -14941,6 +15053,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     required DateTime DipakaiPada,
     this.KodeTier = const Value.absent(),
     this.NamaTier = const Value.absent(),
+    this.LimitKredit = const Value.absent(),
+    this.SisaPiutang = const Value.absent(),
+    this.HariLewatJatuhTempo = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Nama = Value(Nama),
@@ -14953,6 +15068,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     Expression<DateTime>? DipakaiPada,
     Expression<String>? KodeTier,
     Expression<String>? NamaTier,
+    Expression<String>? LimitKredit,
+    Expression<String>? SisaPiutang,
+    Expression<int>? HariLewatJatuhTempo,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -14962,6 +15080,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
       if (DipakaiPada != null) 'DipakaiPada': DipakaiPada,
       if (KodeTier != null) 'KodeTier': KodeTier,
       if (NamaTier != null) 'NamaTier': NamaTier,
+      if (LimitKredit != null) 'LimitKredit': LimitKredit,
+      if (SisaPiutang != null) 'SisaPiutang': SisaPiutang,
+      if (HariLewatJatuhTempo != null) 'HariLewatJatuhTempo': HariLewatJatuhTempo,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -14973,6 +15094,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     Value<DateTime>? DipakaiPada,
     Value<String?>? KodeTier,
     Value<String?>? NamaTier,
+    Value<String?>? LimitKredit,
+    Value<String?>? SisaPiutang,
+    Value<int?>? HariLewatJatuhTempo,
     Value<int>? rowid,
   }) {
     return PelangganLokalCompanion(
@@ -14982,6 +15106,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
       DipakaiPada: DipakaiPada ?? this.DipakaiPada,
       KodeTier: KodeTier ?? this.KodeTier,
       NamaTier: NamaTier ?? this.NamaTier,
+      LimitKredit: LimitKredit ?? this.LimitKredit,
+      SisaPiutang: SisaPiutang ?? this.SisaPiutang,
+      HariLewatJatuhTempo: HariLewatJatuhTempo ?? this.HariLewatJatuhTempo,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -15007,6 +15134,15 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
     if (NamaTier.present) {
       map['NamaTier'] = Variable<String>(NamaTier.value);
     }
+    if (LimitKredit.present) {
+      map['LimitKredit'] = Variable<String>(LimitKredit.value);
+    }
+    if (SisaPiutang.present) {
+      map['SisaPiutang'] = Variable<String>(SisaPiutang.value);
+    }
+    if (HariLewatJatuhTempo.present) {
+      map['HariLewatJatuhTempo'] = Variable<int>(HariLewatJatuhTempo.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -15022,6 +15158,9 @@ class PelangganLokalCompanion extends UpdateCompanion<BarisPelangganLokal> {
           ..write('DipakaiPada: $DipakaiPada, ')
           ..write('KodeTier: $KodeTier, ')
           ..write('NamaTier: $NamaTier, ')
+          ..write('LimitKredit: $LimitKredit, ')
+          ..write('SisaPiutang: $SisaPiutang, ')
+          ..write('HariLewatJatuhTempo: $HariLewatJatuhTempo, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -22988,6 +23127,9 @@ typedef $$PelangganLokalTableCreateCompanionBuilder = PelangganLokalCompanion Fu
   required DateTime DipakaiPada,
   Value<String?> KodeTier,
   Value<String?> NamaTier,
+  Value<String?> LimitKredit,
+  Value<String?> SisaPiutang,
+  Value<int?> HariLewatJatuhTempo,
   Value<int> rowid,
 });
 typedef $$PelangganLokalTableUpdateCompanionBuilder = PelangganLokalCompanion Function({
@@ -22997,6 +23139,9 @@ typedef $$PelangganLokalTableUpdateCompanionBuilder = PelangganLokalCompanion Fu
   Value<DateTime> DipakaiPada,
   Value<String?> KodeTier,
   Value<String?> NamaTier,
+  Value<String?> LimitKredit,
+  Value<String?> SisaPiutang,
+  Value<int?> HariLewatJatuhTempo,
   Value<int> rowid,
 });
 
@@ -23023,6 +23168,15 @@ class $$PelangganLokalTableFilterComposer extends Composer<_$BasisDataKasir, $Pe
 
   ColumnFilters<String> get NamaTier =>
       $composableBuilder(column: $table.NamaTier, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get LimitKredit =>
+      $composableBuilder(column: $table.LimitKredit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get SisaPiutang =>
+      $composableBuilder(column: $table.SisaPiutang, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get HariLewatJatuhTempo =>
+      $composableBuilder(column: $table.HariLewatJatuhTempo, builder: (column) => ColumnFilters(column));
 }
 
 class $$PelangganLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $PelangganLokalTable> {
@@ -23050,6 +23204,15 @@ class $$PelangganLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $
 
   ColumnOrderings<String> get NamaTier =>
       $composableBuilder(column: $table.NamaTier, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get LimitKredit =>
+      $composableBuilder(column: $table.LimitKredit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get SisaPiutang =>
+      $composableBuilder(column: $table.SisaPiutang, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get HariLewatJatuhTempo =>
+      $composableBuilder(column: $table.HariLewatJatuhTempo, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PelangganLokalTableAnnotationComposer extends Composer<_$BasisDataKasir, $PelangganLokalTable> {
@@ -23072,6 +23235,15 @@ class $$PelangganLokalTableAnnotationComposer extends Composer<_$BasisDataKasir,
   GeneratedColumn<String> get KodeTier => $composableBuilder(column: $table.KodeTier, builder: (column) => column);
 
   GeneratedColumn<String> get NamaTier => $composableBuilder(column: $table.NamaTier, builder: (column) => column);
+
+  GeneratedColumn<String> get LimitKredit =>
+      $composableBuilder(column: $table.LimitKredit, builder: (column) => column);
+
+  GeneratedColumn<String> get SisaPiutang =>
+      $composableBuilder(column: $table.SisaPiutang, builder: (column) => column);
+
+  GeneratedColumn<int> get HariLewatJatuhTempo =>
+      $composableBuilder(column: $table.HariLewatJatuhTempo, builder: (column) => column);
 }
 
 class $$PelangganLokalTableTableManager
@@ -23105,6 +23277,9 @@ class $$PelangganLokalTableTableManager
                 Value<DateTime> DipakaiPada = const Value.absent(),
                 Value<String?> KodeTier = const Value.absent(),
                 Value<String?> NamaTier = const Value.absent(),
+                Value<String?> LimitKredit = const Value.absent(),
+                Value<String?> SisaPiutang = const Value.absent(),
+                Value<int?> HariLewatJatuhTempo = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PelangganLokalCompanion(
                 Uuid: Uuid,
@@ -23113,6 +23288,9 @@ class $$PelangganLokalTableTableManager
                 DipakaiPada: DipakaiPada,
                 KodeTier: KodeTier,
                 NamaTier: NamaTier,
+                LimitKredit: LimitKredit,
+                SisaPiutang: SisaPiutang,
+                HariLewatJatuhTempo: HariLewatJatuhTempo,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -23123,6 +23301,9 @@ class $$PelangganLokalTableTableManager
                 required DateTime DipakaiPada,
                 Value<String?> KodeTier = const Value.absent(),
                 Value<String?> NamaTier = const Value.absent(),
+                Value<String?> LimitKredit = const Value.absent(),
+                Value<String?> SisaPiutang = const Value.absent(),
+                Value<int?> HariLewatJatuhTempo = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PelangganLokalCompanion.insert(
                 Uuid: Uuid,
@@ -23131,6 +23312,9 @@ class $$PelangganLokalTableTableManager
                 DipakaiPada: DipakaiPada,
                 KodeTier: KodeTier,
                 NamaTier: NamaTier,
+                LimitKredit: LimitKredit,
+                SisaPiutang: SisaPiutang,
+                HariLewatJatuhTempo: HariLewatJatuhTempo,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
