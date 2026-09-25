@@ -197,3 +197,27 @@ export type PropsPengaturanStruk = {
     Pengaturan: PengaturanStruk;
     Profil: ProfilPratinjauStruk;
 };
+
+/** F-15 tutup harian: peringatan yang boleh diabaikan dengan konfirmasi. */
+export type PeringatanTutupHarian = { Kode: string; Pesan: string };
+
+/** Satu tanggal bisnis satu outlet di halaman Tutup harian. */
+export type BarisTutupHarian = {
+    Kunci: string;
+    Outlet: string;
+    NamaOutlet: string;
+    TanggalBisnis: string;
+    Berjalan: boolean;
+    Ditutup: boolean;
+    DitutupPada: string | null;
+    DitutupOleh: string | null;
+    JumlahTransaksi: number | null;
+    PenjualanBersih: string | null;
+    ShiftBelumDitutup: number;
+    Peringatan: PeringatanTutupHarian[];
+};
+
+export type PropsTutupHarian = {
+    Hari: BarisTutupHarian[];
+    Izin: { Kelola: boolean };
+};

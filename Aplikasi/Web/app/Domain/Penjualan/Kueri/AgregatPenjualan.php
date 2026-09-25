@@ -18,6 +18,7 @@ use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\ReturPenjualanDetail;
 use App\Domain\Penjualan\Model\ReturPenjualanPembayaran;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as KueriDasar;
 use Illuminate\Database\Query\JoinClause;
@@ -418,6 +419,30 @@ final class AgregatPenjualan
             ->where('PerluTinjauan', true)
             ->when($idOutlet !== null, fn (Builder $k) => $k->whereIn('IdOutlet', $idOutlet ?? []))
             ->count();
+    }
+
+    /**
+     * F-15 tutup harian: jumlah penjualan `PerluTinjauan` per outlet per tanggal bisnis dalam rentang, kunci
+     * `"{IdOutlet}|{Y-m-d}"`.
+     *
+     * @param  list<int>|null  $idOutlet  null = semua outlet
+     * @return array<string, int>
+     */
+    public function HitungPerluTinjauanPerHari(?array $idOutlet, CarbonInterface $dari, CarbonInterface $sampai): array
+    {
+        $hasil = [];
+
+        foreach (Penjualan::query()
+            ->where('PerluTinjauan', true)
+            ->whereBetween('TanggalBisnis', [$dari->toDateString(), $sampai->toDateString()])
+            ->when($idOutlet !== null, fn (Builder $k) => $k->whereIn('IdOutlet', $idOutlet ?? []))
+            ->groupBy('IdOutlet', 'TanggalBisnis')
+            ->toBase()
+            ->get(['IdOutlet', 'TanggalBisnis', DB::raw('COUNT(*) AS Jumlah')]) as $b) {
+            $hasil[$b->IdOutlet.'|'.substr((string) $b->TanggalBisnis, 0, 10)] = (int) $b->Jumlah;
+        }
+
+        return $hasil;
     }
 
     /**

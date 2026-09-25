@@ -7,6 +7,7 @@ use App\Http\Kontroler\Kelola\Kasir\KategoriKasKontroler;
 use App\Http\Kontroler\Kelola\Kasir\PengaturanKasirKontroler;
 use App\Http\Kontroler\Kelola\Kasir\PengaturanStrukKontroler;
 use App\Http\Kontroler\Kelola\Kasir\ShiftKontroler;
+use App\Http\Kontroler\Kelola\Kasir\TutupHarianKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,10 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::get('/kasir/shift', [ShiftKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.kasir.shift.daftar');
     Route::get('/kasir/shift/{shift}', [ShiftKontroler::class, 'Detail'])->middleware($lihat)->where('shift', $ulid)->name('kelola.kasir.shift.detail');
     Route::get('/kasir/mutasi-kas/{mutasiKas}', [ShiftKontroler::class, 'MutasiKas'])->middleware($lihat)->where('mutasiKas', $ulid)->name('kelola.kasir.mutasi-kas');
+
+    // F-15: tutup harian (End of Day) per outlet; menutup hari = tutup buku (`akuntansi.kelola`).
+    Route::get('/kasir/tutup-harian', [TutupHarianKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.kasir.tutup-harian');
+    Route::post('/kasir/tutup-harian', [TutupHarianKontroler::class, 'Tutup'])->middleware($akuntansi)->name('kelola.kasir.tutup-harian.tutup');
 
     Route::get('/kasir/kategori-kas', [KategoriKasKontroler::class, 'Daftar'])->middleware($akuntansi)->name('kelola.kasir.kategori-kas');
     Route::post('/kasir/kategori-kas', [KategoriKasKontroler::class, 'Simpan'])->middleware($akuntansi)->name('kelola.kasir.kategori-kas.simpan');

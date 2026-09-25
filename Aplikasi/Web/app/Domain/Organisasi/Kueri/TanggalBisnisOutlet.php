@@ -18,6 +18,9 @@ use Carbon\CarbonInterface;
  */
 final class TanggalBisnisOutlet
 {
+    /** @var array<int, Outlet> */
+    private array $outlet = [];
+
     public function __construct(
         private readonly KonteksTenant $konteks,
         private readonly ProfilTenant $profilTenant,
@@ -26,7 +29,7 @@ final class TanggalBisnisOutlet
     public function Hitung(?int $idOutlet, ?CarbonInterface $waktu = null): CarbonImmutable
     {
         if ($idOutlet !== null) {
-            $outlet = Outlet::query()->whereKey($idOutlet)->firstOrFail();
+            $outlet = $this->AmbilOutlet($idOutlet);
             $zona = $outlet->ZonaWaktu;
             $jamTutupBuku = $outlet->JamTutupBuku;
         } else {
@@ -41,6 +44,23 @@ final class TanggalBisnisOutlet
         }
 
         return $lokal->startOfDay();
+    }
+
+    /**
+     * F-15 tutup harian: saat tanggal bisnis `$tanggal` outlet berakhir, yaitu `JamTutupBuku` hari berikutnya di zona
+     * waktu outlet (00:00 = tengah malam).
+     */
+    public function AmbilAkhirHari(int $idOutlet, CarbonInterface $tanggal): CarbonImmutable
+    {
+        $outlet = $this->AmbilOutlet($idOutlet);
+        [$jam, $menit] = array_map('intval', explode(':', self::NormalkanJam($outlet->JamTutupBuku)));
+
+        return CarbonImmutable::parse($tanggal->format('Y-m-d'), $outlet->ZonaWaktu)->addDay()->setTime($jam, $menit);
+    }
+
+    private function AmbilOutlet(int $idOutlet): Outlet
+    {
+        return $this->outlet[$idOutlet] ??= Outlet::query()->whereKey($idOutlet)->firstOrFail(['Id', 'ZonaWaktu', 'JamTutupBuku']);
     }
 
     /** `H:i` dua digit; nilai tidak valid dianggap 00:00 (tanpa pergeseran). */

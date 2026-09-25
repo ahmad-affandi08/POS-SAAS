@@ -19,6 +19,8 @@ type PropsDialogKonfirmasi = {
     /** `bahaya` untuk tindakan merusak (nonaktifkan, cabut, hapus); `utama` untuk tindakan final biasa. */
     varian?: 'bahaya' | 'utama';
     memproses?: boolean;
+    /** Tombol aksi dinonaktifkan selama syarat belum dipenuhi (misal konfirmasi belum dicentang). */
+    nonaktif?: boolean;
     saatKonfirmasi: () => void;
     saatBatal: () => void;
 };
@@ -33,6 +35,7 @@ export default function DialogKonfirmasi({
     labelAksi,
     varian = 'bahaya',
     memproses = false,
+    nonaktif = false,
     saatKonfirmasi,
     saatBatal,
 }: PropsDialogKonfirmasi) {
@@ -56,7 +59,7 @@ export default function DialogKonfirmasi({
                     <AlertDialogCancel disabled={memproses}>Batal</AlertDialogCancel>
                     <Button
                         variant={varian === 'bahaya' ? 'destructive' : 'default'}
-                        disabled={memproses}
+                        disabled={memproses || nonaktif}
                         aria-busy={memproses || undefined}
                         onClick={saatKonfirmasi}
                     >
