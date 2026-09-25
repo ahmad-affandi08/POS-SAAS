@@ -303,7 +303,7 @@ Ringkasan dari [`CLAUDE.md`](CLAUDE.md); detailnya ada di PRD §13.7 dan `.claud
 
 ## Status pengembangan
 
-**Fase 0–1 berjalan** (PRD §22). Yang sudah dibangun:
+**Fase 1 inti selesai** (PRD §22). Yang sudah dibangun:
 
 | Area | Flow |
 |---|---|
@@ -314,8 +314,9 @@ Ringkasan dari [`CLAUDE.md`](CLAUDE.md); detailnya ada di PRD §13.7 dan `.claud
 | Kasir | F-06 (shift & kas), F-07 (penjualan: mesin kalkulasi PHP & Dart, sinkron, layar Jual & Bayar), F-08 fase 1 (pembayaran), F-09 fase 1 (void & retur), F-11 (tutup shift & rekonsiliasi) |
 | Keuangan & laporan | F-13a (bagan akun, pemetaan, kas & bank, buku besar, neraca saldo, laba rugi), F-14a (dashboard, laporan penjualan/pajak/stok) |
 | Fondasi UI | `TabelData` (TanStack), pemilih tanggal & pilihan ber-cari, bingkai Ruang Kerja Kasir |
+| Pembelian & persediaan lanjutan | F-04 fase 1 (pemasok, PO, penerimaan, faktur, hutang, retur), F-05b (transfer, opname, penyesuaian) |
 
-Sedang dikerjakan: **F-04** (pembelian & hutang) dan **F-05b** (transfer, opname, penyesuaian). Daftar utang teknis & pertanyaan terbuka ada di PRD §25.
+Berikutnya: audit tampilan responsif, utang teknis PRD §25, lalu flow fase 2 (mode meja & KDS, CRM/promo, piutang, karyawan). Daftar utang teknis & pertanyaan terbuka ada di PRD §25.
 
 ---
 
