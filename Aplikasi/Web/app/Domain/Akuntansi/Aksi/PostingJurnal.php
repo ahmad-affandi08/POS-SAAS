@@ -89,8 +89,12 @@ final class PostingJurnal
                 throw new PelanggaranAturanBisnis('JurnalKosong', 'Jurnal tanpa nilai tidak dicatat.');
             }
 
-            // 5. Periode terbuka.
-            $this->penjagaPeriode->PastikanTerbuka($data->tanggal);
+            // 5. Periode terbuka. F-15/§18: transaksi POS di periode terkunci dibukukan di periode terbuka berikutnya.
+            $tanggalPosting = $this->penjagaPeriode->SesuaikanTanggalPosting($data->tanggal);
+
+            if ($tanggalPosting->toDateString() !== $data->tanggal->toDateString()) {
+                $data = $data->DenganTanggal($tanggalPosting, " (tanggal transaksi {$data->tanggal->toDateString()}, periodenya terkunci)");
+            }
 
             // 6. Jurnal yang dibalik ada di tenant ini dan belum pernah dibalik.
             if ($data->idJurnalDibalik !== null) {

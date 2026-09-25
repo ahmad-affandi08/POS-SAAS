@@ -33,4 +33,10 @@ final readonly class DataDokumenMutasi
         public array $baris,
         public bool $abaikanBatasMinus = false,
     ) {}
+
+    /** Salinan dengan tanggal bisnis lain (F-15: periode asal terkunci, dibukukan di periode terbuka berikutnya). */
+    public function DenganTanggal(CarbonImmutable $tanggal): self
+    {
+        return new self($this->jenisReferensi, $this->idReferensi, $this->uuidReferensi, $this->nomorReferensi, $tanggal, $this->idPengguna, $this->idPerangkat, $this->baris, $this->abaikanBatasMinus);
+    }
 }

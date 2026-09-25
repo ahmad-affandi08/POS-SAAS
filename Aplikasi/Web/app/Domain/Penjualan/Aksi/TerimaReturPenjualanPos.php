@@ -172,7 +172,8 @@ final class TerimaReturPenjualanPos
 
         // (5) Nomor & periode.
         $this->PeriksaNomor($data, $outlet, $tanggalBisnis);
-        $this->penjagaPeriode->PastikanTerbuka($tanggalBisnis);
+        // F-15/§18: periode terkunci tidak menolak retur offline; jurnal & stok dibukukan di periode terbuka berikutnya.
+        $pergeseranPeriode = $this->penjagaPeriode->JelaskanPergeseran($tanggalBisnis);
 
         // (6) Baris & nilai, (7) total, (8) refund.
         [$detail, $sudah, $nilai] = $this->HitungBaris($data, $penjualan);
@@ -192,6 +193,10 @@ final class TerimaReturPenjualanPos
 
         // Simpan dokumen, stok, jurnal.
         $tinjauan = $shift->aktif ? [] : ['ShiftSudahDitutup: retur diterima setelah shift ditutup, belum masuk hitungan kas tutup shift'];
+
+        if ($pergeseranPeriode !== null) {
+            $tinjauan[] = $pergeseranPeriode;
+        }
         $idGudangRusak = $this->outletPenjualan->AmbilIdGudangRusak($outlet->idOutlet);
 
         if ($idGudangRusak === null && array_filter($data->baris, fn (DataBarisReturPenjualanPos $b): bool => $b->kondisi === KondisiBarangRetur::Rusak) !== []) {

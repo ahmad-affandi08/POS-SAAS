@@ -51,7 +51,10 @@ final class PemrosesSinkron
                 throw new PelanggaranAturanBisnis('JenisItemTidakDikenal', "Jenis data \"{$item['Jenis']}\" tidak dikenal server. Perbarui aplikasi kasir.", 'Jenis');
             }
 
-            return new HasilItemSinkron($item['Uuid'], $item['Jenis'], $penangan->Proses($item['Uuid'], $item['Data'], $konteks));
+            // F-15/§18: item POS diproses dalam mode sinkron (periode terkunci tidak menolak transaksi offline).
+            $status = $this->container->make(PenandaSinkronPos::class)->Jalankan(fn (): StatusItemSinkron => $penangan->Proses($item['Uuid'], $item['Data'], $konteks));
+
+            return new HasilItemSinkron($item['Uuid'], $item['Jenis'], $status);
         } catch (PelanggaranAturanBisnis $galat) {
             return new HasilItemSinkron($item['Uuid'], $item['Jenis'], StatusItemSinkron::Ditolak, [
                 'Kode' => $galat->kode,

@@ -9,7 +9,6 @@ use App\Domain\Akuntansi\Data\DataBarisJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
-use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
@@ -53,7 +52,6 @@ final class TerimaPesananPenjualanPos
         private readonly OutletPenjualan $outletPenjualan,
         private readonly AnggotaOutlet $anggota,
         private readonly TanggalBisnisOutlet $tanggalBisnis,
-        private readonly PenjagaKunciPeriode $penjagaPeriode,
         private readonly KomposisiPenjualan $komposisi,
         private readonly IdentitasPelanggan $identitasPelanggan,
         private readonly SiapkanMetodeUangMuka $metodeUangMuka,
@@ -131,7 +129,8 @@ final class TerimaPesananPenjualanPos
             throw new PelanggaranAturanBisnis('NomorSudahDipakai', "Nomor {$data->nomor} sudah dipakai pesanan lain.", 'Nomor', 409);
         }
 
-        $this->penjagaPeriode->PastikanTerbuka($tanggalBisnis);
+        // F-15/§18: periode terkunci tidak menolak pre-order offline; jurnal DP dibukukan di periode terbuka berikutnya
+        // (PostingJurnal menggeser tanggal dan mencatatnya di keterangan jurnal).
 
         if ($data->tanggalAmbil->toDateString() < $tanggalBisnis->toDateString()) {
             throw new PelanggaranAturanBisnis('TanggalAmbilTidakValid', 'Tanggal ambil tidak boleh sebelum tanggal pesan.', 'TanggalAmbil');

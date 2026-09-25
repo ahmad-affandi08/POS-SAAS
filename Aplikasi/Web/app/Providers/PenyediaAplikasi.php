@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Database\MakroSkema;
+use App\Domain\Bersama\Sinkron\Layanan\PenandaSinkronPos;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
@@ -39,6 +40,7 @@ final class PenyediaAplikasi extends ServiceProvider
         $this->app->scoped(KonteksPengelola::class);
         // F-02: pencatat log audit tenant (pelaku & IP diisi perantara per request).
         $this->app->scoped(PencatatAudit::class);
+        $this->app->scoped(PenandaSinkronPos::class);
     }
 
     public function boot(): void

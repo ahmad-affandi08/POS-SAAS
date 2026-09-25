@@ -49,7 +49,8 @@ use Illuminate\Support\Facades\DB;
  * ada di outlet perangkat (`PenjualanTidakDitemukan`); sudah di-void → `SudahDivoid`; (3) `VoidTidakDiizinkan` bila
  * penjualan dari perangkat lain, sudah diretur (sebagian/penuh), atau shift penjualannya sudah ditutup sebelum
  * `DivoidPada`; waktu di luar rentang wajar → `WaktuTidakValid`; (4) kasir & penyetuju ber-izin `penjualan.void`
- * (`KasirTidakDitemukan`/`TanpaIzin`/`PenyetujuTidakBerwenang`); (5) periode terbuka (`PeriodeTerkunci`).
+ * (`KasirTidakDitemukan`/`TanpaIzin`/`PenyetujuTidakBerwenang`); (5) periode terkunci tidak menolak (F-15/§18: dibukukan di
+ * periode terbuka berikutnya, penjualan ditandai tinjauan `PeriodeTerkunci`).
  *
  * Efek: `VoidPenjualan` (snapshot nominal, refund tunai = tunai bersih yang keluar dari laci shift, refund non-tunai =
  * refund manual BR-09.2), status penjualan `Void` (riwayat status), baris mutasi pembalik
@@ -137,8 +138,10 @@ final class TerimaVoidPenjualanPos
         $penyetuju = $this->pelaku->CariPenyetuju($idTenant, $data->uuidPenyetuju, $penjualan->IdOutlet);
 
         // (5) Periode.
+        // F-15/§18: periode terkunci tidak menolak void offline; jurnal & stok dibukukan di periode terbuka berikutnya dan
+        // penjualannya ditandai tinjauan.
         $tanggalBisnis = $this->tanggalBisnis->Hitung($penjualan->IdOutlet, $data->divoidPada);
-        $this->penjagaPeriode->PastikanTerbuka($tanggalBisnis);
+        $pergeseranPeriode = $this->penjagaPeriode->JelaskanPergeseran($tanggalBisnis);
 
         [$refundTunai, $refundNonTunai] = $this->HitungRefund($penjualan);
 
@@ -160,6 +163,12 @@ final class TerimaVoidPenjualanPos
         ]);
 
         $penjualan->Status = StatusPenjualan::Void;
+
+        if ($pergeseranPeriode !== null) {
+            $penjualan->PerluTinjauan = true;
+            $penjualan->AlasanTinjauan = mb_substr(ltrim(($penjualan->AlasanTinjauan ?? '').'; Void '.$pergeseranPeriode, '; '), 0, 1000);
+        }
+
         $penjualan->save();
 
         $this->BalikkanStok($penjualan, $tanggalBisnis, $kasir->id, $data->idPerangkat);

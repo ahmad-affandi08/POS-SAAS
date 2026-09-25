@@ -88,8 +88,7 @@ use InvalidArgumentException;
  * Urutan pemeriksaan: (1) Uuid sama → `Duplikat` bila Nomor & TotalAkhir sama, selain itu `UuidSudahDipakai` (juga
  * saat dua kiriman bersamaan bertabrakan di indeks unik: dibaca ulang lalu dibandingkan); (2) shift milik perangkat ini
  * (`ShiftTidakDitemukan`); (3) kasir anggota tenant (`KasirTidakDitemukan`); (4) nomor BR-07.1
- * `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}`, unik per tenant (`NomorTidakValid`/`NomorSudahDipakai`); periode
- * terbuka (`PeriodeTerkunci`); (5) produk (`ProdukTidakDikenal`/`ProdukTidakBisaDijual`/`PelacakanBelumDidukung`/
+ * `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}`, unik per tenant (`NomorTidakValid`/`NomorSudahDipakai`); (5) produk (`ProdukTidakDikenal`/`ProdukTidakBisaDijual`/`PelacakanBelumDidukung`/
  * `SatuanTidakDikenal`); (6) tarif pajak snapshot = `TarifPajak` terbit yang berlaku (`TarifPajakTidakSah`); (9) metode
  * bayar (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`); (8) hitung ulang `MesinKalkulasi` = `Ringkasan`
  * (`HitunganTidakCocok`); (7) BR-07.3 diskon (`PenyetujuTidakBerwenang`); (9) pembayaran (`PembayaranTidakValid`/
@@ -100,8 +99,9 @@ use InvalidArgumentException;
  * `PilihanTidakDikenal` (bahan pilihan yang dihapus tidak dikurangi), `ProdukDihapus` (produk dihapus, hanya mungkin
  * bila belum pernah dipakai, BR-03.2), `IzinBerubah` (kasir/penyetuju masih anggota tenant tetapi tidak lagi di outlet
  * atau tanpa izin berjualan), `DiskonMelebihiBatas` (BR-07.3 dilanggar menurut batas yang berlaku saat diterima),
- * `PengaturanBerbeda`/`PajakBerbeda` (snapshot pengaturan & pajak berbeda dari pengaturan server), dan
- * `ShiftSudahDitutup`.
+ * `PengaturanBerbeda`/`PajakBerbeda` (snapshot pengaturan & pajak berbeda dari pengaturan server),
+ * `ShiftSudahDitutup`, dan `PeriodeTerkunci` (F-15/§18: tanggal bisnis di periode terkunci, jurnal & stok dibukukan
+ * di hari pertama periode terbuka berikutnya).
  */
 final class TerimaPenjualanPos
 {
@@ -231,7 +231,12 @@ final class TerimaPenjualanPos
         // (4) Nomor & periode.
         $tanggalBisnis = $this->tanggalBisnis->Hitung($outlet->idOutlet, $data->dibuatPada);
         $this->PeriksaNomor($data, $outlet, $tanggalBisnis);
-        $this->penjagaPeriode->PastikanTerbuka($tanggalBisnis);
+        // F-15/§18: periode terkunci tidak menolak penjualan offline; jurnal & stok dibukukan di periode terbuka berikutnya.
+        $pergeseranPeriode = $this->penjagaPeriode->JelaskanPergeseran($tanggalBisnis);
+
+        if ($pergeseranPeriode !== null) {
+            $tinjauan['PeriodeTerkunci'] = $pergeseranPeriode;
+        }
 
         // (5) Produk & satuan, (6) tarif pajak, (9) metode bayar.
         $produk = $this->AmbilProduk($data);

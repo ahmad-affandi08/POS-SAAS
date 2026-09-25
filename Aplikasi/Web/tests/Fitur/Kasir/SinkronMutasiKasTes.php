@@ -158,7 +158,7 @@ describe('F-06 kas masuk/keluar/setoran lewat sinkron', function (): void {
         ]))->toBe([['Diterima', null], ['Diterima', null]]);
     });
 
-    it('penolakan: shift perangkat lain, kategori salah jenis/nonaktif, jumlah 0, waktu sebelum buka shift, periode terkunci', function (): void {
+    it('penolakan: shift perangkat lain, kategori salah jenis/nonaktif, jumlah 0, waktu sebelum buka shift; periode terkunci (§18/F-15) diterima & dibukukan di periode berikutnya', function (): void {
         $k = SiapkanShiftKasUji($this);
         $perangkat2 = BantuanPerangkat::BuatDanAktifkan($this, $k['Tenant']->Id, $k['Outlet'], 'Kasir Belakang');
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
@@ -175,13 +175,19 @@ describe('F-06 kas masuk/keluar/setoran lewat sinkron', function (): void {
             ]))->toBe([['Ditolak', 'KategoriTidakValid'], ['Ditolak', 'KategoriNonaktif'], ['Ditolak', 'JumlahTidakValid'], ['Ditolak', 'WaktuTidakValid']]);
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(MutasiKas::query()->count())->toBe(0);
+
+        // §18/F-15: kas keluar offline di periode terkunci tetap diterima; jurnalnya dibukukan di periode terbuka berikutnya.
         BantuanPersediaan::KunciPeriode(now()->format('Y-m'));
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [
             BantuanKasir::ItemMutasiKas($k['UuidShift'], $k['Kasir'], 'Keluar', '5000.00', $k['KategoriKeluar']),
-        ]))->toBe([['Ditolak', 'PeriodeTerkunci']]);
+        ]))->toBe([['Diterima', null]]);
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-        expect(MutasiKas::query()->count())->toBe(0);
+        $jurnal = Jurnal::query()->where('JenisSumber', 'MutasiKas')->sole();
+        expect(MutasiKas::query()->count())->toBe(1)
+            ->and($jurnal->Tanggal->toDateString())->toBe(now()->startOfMonth()->addMonthNoOverflow()->toDateString())
+            ->and($jurnal->TotalDebit)->toBe($jurnal->TotalKredit);
     });
 
     it('isolasi tenant: kategori dan shift tenant lain tidak bisa dipakai', function (): void {

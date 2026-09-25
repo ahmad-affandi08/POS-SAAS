@@ -40,6 +40,7 @@ use App\Domain\Persediaan\Model\SaldoStok;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Tests\Pendukung\Akuntansi\BantuanJurnal;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanHarga;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -513,20 +514,46 @@ describe('F-07b aturan penolakan', function (): void {
         expect(SaldoPeranJurnalPenjualan((int) $p->IdJurnal, PeranAkun::PiutangPencairan, $k['Outlet']->Id))->toBe('38500.00');
     });
 
-    it('periode terkunci = PeriodeTerkunci tanpa dokumen, stok, atau jurnal tersimpan (sementara; §18.3 posting ke periode berikutnya = utang)', function (): void {
+    it('§18/F-15 periode terkunci: penjualan offline diterima dengan tanggal bisnis asli + tinjauan PeriodeTerkunci; jurnal & stok dibukukan hari pertama periode terbuka berikutnya; void juga', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
         $item = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $tanggal = app(TanggalBisnisOutlet::class)->Hitung($k['Outlet']->Id, now()->subMinutes(5));
         BantuanPersediaan::KunciPeriode($tanggal->format('Y-m'));
+        $awalBerikutnya = $tanggal->startOfMonth()->addMonthNoOverflow()->toDateString();
 
-        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Ditolak', 'PeriodeTerkunci']]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-        expect(Penjualan::query()->count())->toBe(0)
-            ->and(MutasiStok::query()->where('JenisReferensi', JenisReferensiMutasi::Penjualan->value)->count())->toBe(0)
+        $p = Penjualan::query()->sole();
+        $jurnal = Jurnal::query()->findOrFail($p->IdJurnal);
+        expect($p->TanggalBisnis->toDateString())->toBe($tanggal->toDateString())
+            ->and($p->PerluTinjauan)->toBeTrue()
+            ->and($p->AlasanTinjauan)->toContain('PeriodeTerkunci: periode')
+            ->and($p->AlasanTinjauan)->toContain("dibukukan {$awalBerikutnya}")
+            ->and($jurnal->Tanggal->toDateString())->toBe($awalBerikutnya)
+            ->and($jurnal->Keterangan)->toContain('periodenya terkunci')
+            ->and($jurnal->TotalDebit)->toBe($jurnal->TotalKredit)
+            ->and(MutasiStok::query()->where('JenisReferensi', JenisReferensiMutasi::Penjualan->value)->sole()->TanggalBisnis->toDateString())->toBe($awalBerikutnya)
+            ->and(SaldoStokPenjualan($minyak->Id, $k['Gudang']->Id))->toBe('9.0000');
+
+        // Kirim ulang tetap Duplikat walau periodenya kini terkunci.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]]);
+
+        // Void offline di periode terkunci: diterima, jurnal pembalik & stok balik di periode terbuka, penjualan ditinjau.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemVoid($k, $p)]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p->refresh();
+        $pembalik = Jurnal::query()->where('IdJurnalDibalik', $jurnal->Id)->sole();
+        expect($p->Status)->toBe(StatusPenjualan::Void)
+            ->and($p->AlasanTinjauan)->toContain('Void PeriodeTerkunci')
+            ->and($pembalik->Tanggal->toDateString())->toBe($awalBerikutnya)
             ->and(SaldoStokPenjualan($minyak->Id, $k['Gudang']->Id))->toBe('10.0000');
+
+        // Transaksi back-office di periode terkunci tetap ditolak.
+        expect(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal(tanggal: $tanggal->toDateString())))
+            ->toThrow(PelanggaranAturanBisnis::class);
     });
 });
 

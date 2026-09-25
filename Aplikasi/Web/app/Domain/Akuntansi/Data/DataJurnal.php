@@ -30,4 +30,10 @@ final readonly class DataJurnal
         public bool $otomatis = true,
         public ?int $idJurnalDibalik = null,
     ) {}
+
+    /** Salinan dengan tanggal posting lain dan keterangan tambahan (F-15: periode asal terkunci). */
+    public function DenganTanggal(CarbonImmutable $tanggal, string $tambahanKeterangan = ''): self
+    {
+        return new self($this->jenisSumber, $this->idSumber, $this->uuidSumber, $this->nomorSumber, $tanggal, $this->keterangan.$tambahanKeterangan, $this->baris, $this->idPengguna, $this->kunciSumber, $this->otomatis, $this->idJurnalDibalik);
+    }
 }

@@ -106,7 +106,8 @@ final class CatatMutasiStok
             return $ulang;
         }
 
-        $this->penjagaKunciPeriode->PastikanTerbuka($dokumen->tanggalBisnis);
+        // F-15/§18: dokumen POS di periode terkunci dibukukan di hari pertama periode terbuka berikutnya.
+        $dokumen = $dokumen->DenganTanggal($this->penjagaKunciPeriode->SesuaikanTanggalPosting($dokumen->tanggalBisnis));
 
         [$produk, $gudang] = $this->AmbilProdukDanGudang($dokumen);
         $this->PeriksaMutasiAsal($dokumen);
