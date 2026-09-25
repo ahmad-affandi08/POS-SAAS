@@ -17,6 +17,8 @@ use App\Domain\Bersama\Nilai\Uang;
  * - `tunaiMasukBersih` = uang tunai yang masuk laci dari penjualan (tunai diterima − kembalian), termasuk penjualan
  *   yang kemudian di-void karena uangnya sempat masuk; pengembaliannya dihitung di `refundTunai`.
  * - `refundTunai` = uang tunai yang keluar dari laci shift ini untuk void & retur (F-09).
+ * - `jumlahUangMuka`/`nominalUangMuka` = pre-order yang uang mukanya diterima di shift ini (F-12 bagian 2; DP sudah ikut
+ *   `perMetode` & `tunaiMasukBersih`).
  */
 final readonly class DataRingkasanPenjualanShift
 {
@@ -39,6 +41,8 @@ final readonly class DataRingkasanPenjualanShift
         public Uang $nominalVoid,
         public int $jumlahRetur,
         public Uang $nominalRetur,
+        public int $jumlahUangMuka,
+        public Uang $nominalUangMuka,
     ) {}
 
     /** Total bersih satu metode (Rp 0 bila tidak ada transaksi dengan metode itu). */
@@ -76,6 +80,8 @@ final readonly class DataRingkasanPenjualanShift
             'NominalVoid' => $this->nominalVoid->KeString(),
             'JumlahRetur' => $this->jumlahRetur,
             'NominalRetur' => $this->nominalRetur->KeString(),
+            'JumlahUangMuka' => $this->jumlahUangMuka,
+            'NominalUangMuka' => $this->nominalUangMuka->KeString(),
         ];
     }
 }

@@ -23,6 +23,7 @@ use App\Domain\Penjualan\Data\DataVoidPenjualanPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaPelakuPascaPenjualan;
+use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use App\Domain\Penjualan\Model\VoidPenjualan;
@@ -76,6 +77,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly PemakaiVoucher $voucher,
+        private readonly PenutupPesananPenjualan $penutupPraPesan,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -194,6 +196,10 @@ final class TerimaVoidPenjualanPos
 
         // F-16c bagian 2: voucher penjualan yang di-void dilepas dan bisa dipakai lagi.
         $this->voucher->Lepaskan($penjualan->Id);
+
+        // F-12 bagian 2: pre-order yang diambil lewat penjualan ini kembali Siap dengan DP-nya (jurnal pembalik sudah
+        // mengkredit Uang Muka Pelanggan).
+        $this->penutupPraPesan->Batalkan($penjualan->Id, $kasir->id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

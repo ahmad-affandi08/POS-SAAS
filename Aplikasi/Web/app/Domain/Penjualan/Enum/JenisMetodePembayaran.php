@@ -23,6 +23,8 @@ enum JenisMetodePembayaran: string
     case Poin = 'Poin';
     case Voucher = 'Voucher';
     case Marketplace = 'Marketplace';
+    // F-12 bagian 2: uang muka pre-order yang dipakai saat pesanan penjualan diambil (dibuat sistem).
+    case UangMuka = 'UangMuka';
 
     public function AmbilLabel(): string
     {
@@ -38,14 +40,21 @@ enum JenisMetodePembayaran: string
             self::Poin => 'Poin',
             self::Voucher => 'Voucher',
             self::Marketplace => 'Marketplace',
+            self::UangMuka => 'Uang muka (DP)',
         };
     }
 
     /** Jenis yang bisa dipakai membayar di aplikasi POS fase 1 (F-07b; lainnya menyusul fase 2). */
     public function CekDidukungPos(): bool
     {
-        // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit.
-        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet, self::Tempo], true);
+        // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit; bagian 2: uang muka pre-order saat diambil.
+        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka], true);
+    }
+
+    /** F-12 bagian 2: jenis yang boleh dipakai membayar uang muka pre-order di POS (tanpa tempo & uang muka). */
+    public function CekBolehUangMuka(): bool
+    {
+        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet], true);
     }
 
     public function CekBisaDibuatPanduan(): bool

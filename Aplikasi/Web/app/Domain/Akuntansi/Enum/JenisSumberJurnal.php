@@ -29,6 +29,8 @@ enum JenisSumberJurnal: string
     case ReturPembelian = 'ReturPembelian';
     // F-12: pelunasan piutang (Dr kas/bank, Cr Piutang Usaha) dan pembatalannya.
     case PembayaranPiutang = 'PembayaranPiutang';
+    // F-12 bagian 2: uang muka pre-order diterima (J-07.3) dan penyelesaian sisanya (dikembalikan/hangus).
+    case PesananPenjualan = 'PesananPenjualan';
 
     public function AmbilLabel(): string
     {
@@ -47,6 +49,7 @@ enum JenisSumberJurnal: string
             self::PembayaranHutang => 'Pembayaran hutang',
             self::ReturPembelian => 'Retur pembelian',
             self::PembayaranPiutang => 'Pelunasan piutang',
+            self::PesananPenjualan => 'Uang muka pre-order',
         };
     }
 
@@ -72,6 +75,7 @@ enum JenisSumberJurnal: string
             self::PembayaranHutang => '/kelola/pembelian/pembayaran/'.$uuid,
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             self::PembayaranPiutang => '/kelola/piutang/pelunasan/'.$uuid,
+            self::PesananPenjualan => '/kelola/pre-order/'.$uuid,
         };
     }
 }

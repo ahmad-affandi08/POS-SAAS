@@ -31,6 +31,7 @@ use LogicException;
  * @property KanalPenjualan $Kanal
  * @property StatusPenjualan $Status
  * @property int|null $IdPelanggan
+ * @property int|null $IdPesananPenjualan
  * @property Carbon $TanggalBisnis
  * @property int $IdPengguna
  * @property int|null $IdPenyetujuDiskon

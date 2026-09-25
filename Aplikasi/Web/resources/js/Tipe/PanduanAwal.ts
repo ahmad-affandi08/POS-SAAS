@@ -109,7 +109,8 @@ export type JenisMetodePembayaran =
     | 'Deposit'
     | 'Poin'
     | 'Voucher'
-    | 'Marketplace';
+    | 'Marketplace'
+    | 'UangMuka';
 export type MetodePembayaranRingkas = {
     Uuid: string;
     Jenis: JenisMetodePembayaran;

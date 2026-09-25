@@ -10,6 +10,7 @@ use App\Domain\Penjualan\Kueri\PemakaianAkunDiMetodePembayaran;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBatalkanBarisPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBatalPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPenjualan;
+use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatReturPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBukaPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronKirimDapurPesananTerbuka;
@@ -38,6 +39,8 @@ final class PenyediaPenjualan extends ServiceProvider
             PenanganSinkronBatalkanBarisPesananTerbuka::class,
             PenanganSinkronUbahPesananTerbuka::class,
             PenanganSinkronBatalPesananTerbuka::class,
+            // F-12 bagian 2: pre-order + uang muka.
+            PenanganSinkronBuatPesananPenjualan::class,
         ], PenanganItemSinkron::TAG);
         // F-13a: akun yang dirujuk metode pembayaran tidak bisa dihapus dari bagan akun.
         $this->app->tag(PemakaianAkunDiMetodePembayaran::class, PemeriksaPemakaianAkun::TAG);

@@ -53,6 +53,7 @@ use App\Domain\Penjualan\Kalkulasi\PromoTerpakai;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaPromoPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
+use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
@@ -140,6 +141,7 @@ final class TerimaPenjualanPos
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
+        private readonly PenutupPesananPenjualan $penutupPraPesan,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -271,6 +273,9 @@ final class TerimaPenjualanPos
         [$pesanan, $tinjauanPesanan] = $this->penutupPesanan->Cari($data->uuidPesananTerbuka, $outlet->idOutlet);
         $tinjauan += $tinjauanPesanan;
 
+        // F-12 bagian 2: pre-order yang diambil (dikunci sebelum penjualan dibuat). Masalah = diterima + tinjauan.
+        [$praPesan, $masalahUangMuka] = $this->penutupPraPesan->Cari($data->uuidPesananPenjualan, $outlet->idOutlet);
+
         // F-16a: pelanggan dari POS (Uuid atau alias). Belum dikenal = penjualan tetap diterima tanpa pelanggan.
         $idPelanggan = $data->uuidPelanggan === null ? null : $this->identitasPelanggan->CariId($data->uuidPelanggan);
 
@@ -312,9 +317,20 @@ final class TerimaPenjualanPos
         $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
 
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
+
+        // F-12 bagian 2: DP pre-order dipakai & pesanan ditandai diambil di transaksi yang sama.
+        $uangMukaDipakai = self::JumlahkanMetode($data, $metode, JenisMetodePembayaran::UangMuka);
+
+        if ($praPesan !== null) {
+            $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupPraPesan->Tandai($praPesan, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
+        }
+
+        if ($masalahUangMuka !== []) {
+            $tinjauan['UangMukaBermasalah'] = 'UangMukaBermasalah: '.implode('; ', $masalahUangMuka);
+        }
 
         // F-12: piutang penjualan tempo di transaksi yang sama.
         if ($tempo !== null) {
@@ -676,6 +692,24 @@ final class TerimaPenjualanPos
     }
 
     /**
+     * Σ pembayaran berjenis [jenis] (F-12 bagian 2: uang muka pre-order yang dipakai).
+     *
+     * @param  array<string, MetodePembayaran>  $metode
+     */
+    private static function JumlahkanMetode(DataPenjualanPos $data, array $metode, JenisMetodePembayaran $jenis): Uang
+    {
+        $total = Uang::Nol();
+
+        foreach ($data->pembayaran as $bayar) {
+            if ($metode[$bayar->uuidMetodePembayaran]->Jenis === $jenis) {
+                $total = $total->Tambah($bayar->jumlah);
+            }
+        }
+
+        return $total;
+    }
+
+    /**
      * F-12: jumlah pembayaran tempo (null = bukan penjualan tempo).
      *
      * @param  array<string, MetodePembayaran>  $metode
@@ -715,6 +749,16 @@ final class TerimaPenjualanPos
         }
 
         $jumlahTempo = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tempo));
+        $jumlahUangMuka = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::UangMuka));
+
+        // F-12 bagian 2: DP pre-order hanya dipakai sekali per penjualan dan wajib merujuk pesanannya.
+        if ($jumlahUangMuka > 1) {
+            throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh memakai uang muka satu kali.', 'Pembayaran');
+        }
+
+        if ($jumlahUangMuka === 1 && $data->uuidPesananPenjualan === null) {
+            throw new PelanggaranAturanBisnis('UangMukaTanpaPesanan', 'Pembayaran uang muka wajib merujuk pre-order yang diambil.', 'UuidPesananPenjualan');
+        }
 
         if ($jumlahTempo > 1) {
             throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh punya satu pembayaran tempo.', 'Pembayaran');
@@ -767,6 +811,7 @@ final class TerimaPenjualanPos
         ?int $idPesananTerbuka,
         ?int $idPelanggan,
         ?int $idPenyetujuTempo = null,
+        ?int $idPesananPenjualan = null,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
@@ -774,6 +819,7 @@ final class TerimaPenjualanPos
             'IdShift' => $idShift,
             'IdPerangkat' => $data->idPerangkat,
             'IdPesananTerbuka' => $idPesananTerbuka,
+            'IdPesananPenjualan' => $idPesananPenjualan,
             'IdPelanggan' => $idPelanggan,
             'Nomor' => $data->nomor,
             'Kanal' => $data->kanal,

@@ -122,6 +122,8 @@ const menuKasir: ItemMenu[] = [
 const menuPenjualan: ItemMenu[] = [
     { label: 'Daftar penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Void & retur', href: '/kelola/penjualan/void-retur', izin: IzinTenant.LaporanPenjualanLihat },
+    // F-12 bagian 2: pre-order & uang muka.
+    { label: 'Pre-order', href: '/kelola/pre-order', izin: IzinTenant.LaporanPenjualanLihat },
 ];
 
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).

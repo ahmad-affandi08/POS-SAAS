@@ -13,6 +13,7 @@ use App\Http\Kontroler\Pos\V1\MejaKontroler;
 use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
+use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
@@ -67,6 +68,8 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/penjualan/cari', [PenjualanKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.penjualan.cari');
         // F-16a: cari pelanggan aktif untuk dipilih kasir (pelanggan baru lewat outbox `Pelanggan.Buat`).
         Route::get('/pelanggan', [PelangganKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.pelanggan.cari');
+        // F-12 bagian 2: cari pre-order untuk diambil (perlu online).
+        Route::get('/pesanan-penjualan', [PesananPenjualanKontroler::class, 'Cari'])->middleware('throttle:pos-60')->name('pos.pesanan-penjualan.cari');
         $ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
         // F-16b: saldo poin terkini sebelum tukar poin (wajib online, §18.4).
         // F-16c: promo aktif untuk dievaluasi di perangkat (bisa offline setelah diunduh).

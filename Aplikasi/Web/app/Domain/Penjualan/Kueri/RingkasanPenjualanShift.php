@@ -12,6 +12,8 @@ use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
+use App\Domain\Penjualan\Model\PesananPenjualan;
+use App\Domain\Penjualan\Model\PesananPenjualanPembayaran;
 use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\VoidPenjualan;
 
@@ -25,6 +27,10 @@ use App\Domain\Penjualan\Model\VoidPenjualan;
  * laci shift ini; `jumlahRetur`/`nominalRetur` dari retur ber-`IdShift` ini. Penjualan yang di-void tetap dihitung di
  * `tunaiMasukBersih` karena uangnya sempat masuk laci, dan pengembaliannya dikurangkan lewat `refundTunai`. Retur tidak
  * membaca ulang penjualan asal (penjualan shift lain tetap dilaporkan di shift asalnya).
+ *
+ * F-12 bagian 2: uang muka pre-order yang diterima di shift ini ikut masuk `perMetode` & `tunaiMasukBersih` (uangnya masuk
+ * laci/rekening shift ini walau pesanannya kemudian dibatalkan; pengembalian DP dilakukan di back-office dari kas/bank)
+ * dan dilaporkan di `jumlahUangMuka`/`nominalUangMuka`. Pemakaian DP saat diambil (metode Uang Muka) bukan uang masuk.
  */
 final class RingkasanPenjualanShift
 {
@@ -56,6 +62,12 @@ final class RingkasanPenjualanShift
             ->toBase()
             ->first();
 
+        $uangMuka = PesananPenjualan::query()
+            ->where('IdShift', $idShift)
+            ->selectRaw('COUNT(*) AS `Jumlah`, SUM(`UangMuka`) AS `Nominal`')
+            ->toBase()
+            ->first();
+
         $kotor = self::KeUang($total->Kotor ?? null);
         $diskon = self::KeUang($total->Diskon ?? null);
         $tunaiMasuk = Uang::Nol();
@@ -84,6 +96,8 @@ final class RingkasanPenjualanShift
             // F-09: dokumen retur yang refund-nya dikeluarkan di shift ini (bukan shift penjualan asal).
             jumlahRetur: (int) ($retur->Jumlah ?? 0),
             nominalRetur: self::KeUang($retur->Nominal ?? null),
+            jumlahUangMuka: (int) ($uangMuka->Jumlah ?? 0),
+            nominalUangMuka: self::KeUang($uangMuka->Nominal ?? null),
         );
     }
 
@@ -133,6 +147,20 @@ final class RingkasanPenjualanShift
 
         foreach ($baris as $satu) {
             $total[(int) $satu->IdMetode] = self::KeUang($satu->Total);
+        }
+
+        // F-12 bagian 2: uang muka pre-order yang diterima di shift ini (tanpa kembalian).
+        $dp = PesananPenjualanPembayaran::query()
+            ->join('PesananPenjualan', 'PesananPenjualan.Id', '=', 'PesananPenjualanPembayaran.IdPesananPenjualan')
+            ->where('PesananPenjualan.IdShift', $idShift)
+            ->groupBy('PesananPenjualanPembayaran.IdMetodePembayaran')
+            ->selectRaw('`PesananPenjualanPembayaran`.`IdMetodePembayaran` AS `IdMetode`, SUM(`PesananPenjualanPembayaran`.`Jumlah`) AS `Total`')
+            ->toBase()
+            ->get();
+
+        foreach ($dp as $satu) {
+            $id = (int) $satu->IdMetode;
+            $total[$id] = ($total[$id] ?? Uang::Nol())->Tambah(self::KeUang($satu->Total));
         }
 
         if ($total === []) {

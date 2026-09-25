@@ -35,10 +35,11 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?}`.
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?}`.
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
- * bagian 2) = kode voucher yang dipesan online untuk penjualan ini. Uang & jumlah
+ * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
+ * diambil (DP dipakai lewat pembayaran bermetode Uang Muka). Uang & jumlah
  * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
 final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
@@ -135,6 +136,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'TukarPoin.Nilai' => ['required_with:TukarPoin', 'string', $uang],
             'UuidPenyetujuTempo' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Voucher' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'UuidPesananPenjualan' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Promo' => ['sometimes', 'array', 'max:20'],
             'Promo.*.UuidPromo' => ['required', 'string', 'ulid', 'distinct'],
             'Promo.*.Kode' => ['required', 'string', 'max:30'],
@@ -193,6 +195,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             promo: self::AmbilPromo((array) ($valid['Promo'] ?? [])),
             uuidPenyetujuTempo: is_string($valid['UuidPenyetujuTempo'] ?? null) ? strtoupper($valid['UuidPenyetujuTempo']) : null,
             kodeVoucher: self::AmbilTeks($valid['Voucher'] ?? null),
+            uuidPesananPenjualan: is_string($valid['UuidPesananPenjualan'] ?? null) ? strtoupper($valid['UuidPesananPenjualan']) : null,
         ));
     }
 

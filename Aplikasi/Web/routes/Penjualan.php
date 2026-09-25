@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Penjualan\PenjualanKontroler;
+use App\Http\Kontroler\Kelola\Penjualan\PesananPenjualanKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -22,4 +23,12 @@ Route::middleware([SiapkanAuditTenant::class, $lihat])->group(function () use ($
     // F-09: daftar void & retur (dasar laporan anti-fraud BR-09.3) dan detail retur.
     Route::get('/penjualan/void-retur', [PenjualanKontroler::class, 'VoidRetur'])->name('kelola.penjualan.void-retur');
     Route::get('/penjualan/retur/{retur}', [PenjualanKontroler::class, 'DetailRetur'])->where('retur', $ulid)->name('kelola.penjualan.retur.detail');
+    // F-12 bagian 2: pre-order & uang muka (lihat: laporan.penjualan.lihat; tandai siap: penjualan.buat; batal &
+    // selesaikan sisa DP: akuntansi.kelola).
+    Route::get('/pre-order', [PesananPenjualanKontroler::class, 'Daftar'])->name('kelola.pre-order.daftar');
+    Route::get('/pre-order/{pesananPenjualan}', [PesananPenjualanKontroler::class, 'Detail'])->where('pesananPenjualan', $ulid)->name('kelola.pre-order.detail');
+    Route::post('/pre-order/{pesananPenjualan}/siap', [PesananPenjualanKontroler::class, 'Siap'])
+        ->middleware(WajibIzinTenant::class.':'.IzinTenant::PenjualanBuat->value)->where('pesananPenjualan', $ulid)->name('kelola.pre-order.siap');
+    Route::post('/pre-order/{pesananPenjualan}/selesaikan-uang-muka', [PesananPenjualanKontroler::class, 'Selesaikan'])
+        ->middleware(WajibIzinTenant::class.':'.IzinTenant::AkuntansiKelola->value)->where('pesananPenjualan', $ulid)->name('kelola.pre-order.selesaikan-uang-muka');
 });
