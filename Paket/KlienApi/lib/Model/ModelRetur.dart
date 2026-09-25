@@ -107,6 +107,8 @@ class BarisPenjualanCariPos {
     required this.jumlahSudahDiretur,
     required this.jumlahBisaDiretur,
     required this.nilaiBisaDiretur,
+    this.bolehDesimal,
+    this.uuidProdukSatuan,
   });
 
   /// Uuid `PenjualanDetail` (dikirim sebagai `UuidPenjualanDetail`).
@@ -132,6 +134,12 @@ class BarisPenjualanCariPos {
   /// Sisa `TotalBaris` yang belum dikembalikan; dipakai bila retur menghabiskan sisa baris.
   final String nilaiBisaDiretur;
 
+  /// Apakah satuan baris ini boleh jumlah desimal (`BolehDesimal`); null bila server lama tidak mengirimnya.
+  final bool? bolehDesimal;
+
+  /// Uuid `ProdukSatuan` yang dijual (`UuidProdukSatuan`); null bila tidak ada atau server lama.
+  final String? uuidProdukSatuan;
+
   static BarisPenjualanCariPos DariJson(Map<String, Object?> json) => BarisPenjualanCariPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     uuidProduk: UraiJson.AmbilTeksAtauNull(json['UuidProduk']),
@@ -153,6 +161,8 @@ class BarisPenjualanCariPos {
     jumlahSudahDiretur: UraiJson.AmbilDesimal(json['JumlahSudahDiretur']),
     jumlahBisaDiretur: UraiJson.AmbilDesimal(json['JumlahBisaDiretur'], UraiJson.AmbilDesimal(json['Jumlah'])),
     nilaiBisaDiretur: UraiJson.AmbilDesimal(json['NilaiBisaDiretur'], UraiJson.AmbilDesimal(json['TotalBaris'])),
+    bolehDesimal: UraiJson.AmbilBenarAtauNull(json['BolehDesimal']),
+    uuidProdukSatuan: UraiJson.AmbilTeksAtauNull(json['UuidProdukSatuan']),
   );
 }
 

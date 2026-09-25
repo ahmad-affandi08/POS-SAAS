@@ -146,11 +146,16 @@ class LayananReturPenjualan {
     return d != d.truncate();
   }
 
-  /// Apakah jumlah retur baris ini boleh desimal: jumlah jual/sisa sudah pecahan, atau satuan produk di katalog lokal
-  /// boleh desimal.
+  /// Apakah jumlah retur baris ini boleh desimal. Jumlah jual/sisa yang sudah pecahan selalu boleh (agar sisa bisa
+  /// diretur habis); selain itu `BolehDesimal` dari server (satuan yang dijual) dipakai bila ada, dan server lama
+  /// (null) jatuh ke heuristik satuan produk di katalog lokal.
   static bool CekBolehDesimal(BarisPenjualanCariPos baris, KatalogLokal? katalog) {
     if (_CekPecahan(baris.jumlah) || _CekPecahan(baris.jumlahBisaDiretur)) {
       return true;
+    }
+    final dariServer = baris.bolehDesimal;
+    if (dariServer != null) {
+      return dariServer;
     }
     final uuidProduk = baris.uuidProduk;
     final produk = uuidProduk == null ? null : katalog?.CariProduk(uuidProduk);

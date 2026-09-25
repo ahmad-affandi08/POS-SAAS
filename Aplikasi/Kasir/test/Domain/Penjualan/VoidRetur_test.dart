@@ -395,6 +395,73 @@ void main() {
       expect(ok.nomor, 'RJ/SLB/260924/POS-001-0001');
     });
 
+    test('nomor RJ dari data-awal: sekuens lokal = max(lokal, server) per tanggal', () async {
+      await u.repositori.SimpanDataAwal(
+        DataAwal.DariJson(DataAwalUji(nomorUrutRetur: {'260924': 5, '260923': 30, 'bukan-tanggal': 9})),
+        u.jam,
+      );
+      ServerStruk(StrukUji());
+      final hasil = await layananRetur.Cari(UuidStruk.nomor);
+      Future<ReturTersimpan> Simpan() => layananRetur.Simpan(
+        hasil: hasil,
+        pilihan: Pilih(hasil, {UuidStruk.airMineral: ('1', KondisiRetur.layakJual)}),
+        alasan: 'Salah ambil barang',
+        refundTunai: Uang.Nol(),
+        kasir: budi,
+        k: k,
+      );
+      expect((await Simpan()).nomor, 'RJ/SLB/260924/POS-001-0006', reason: 'Pasang ulang tidak memakai RJ 0001–0005.');
+
+      // Nilai server lebih kecil tidak menurunkan sekuens lokal.
+      await u.repositori.SimpanDataAwal(DataAwal.DariJson(DataAwalUji(nomorUrutRetur: {'260924': 2})), u.jam);
+      expect((await Simpan()).nomor, 'RJ/SLB/260924/POS-001-0007');
+
+      final urut = await u.db.select(u.db.nomorUrutReturPenjualan).get();
+      expect({for (final n in urut) n.Tanggal: n.Terakhir}, {'260924': 7, '260923': 30});
+    });
+
+    test('BolehDesimal dari server menentukan jumlah desimal; null → heuristik lama', () {
+      BarisPenjualanCariPos Baris(String jumlah, {bool? boleh, String? bisa}) => BarisPenjualanCariPos.DariJson(
+        BarisStrukUji('01K5BRS0000000000000000009', 'Uji', 'kg', jumlah, '10000.00', bisa: bisa, bolehDesimal: boleh),
+      );
+      // Jumlah jual bulat, satuan boleh desimal menurut server → boleh.
+      expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.0000', boleh: true), katalog), isTrue);
+      expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.0000', boleh: false), katalog), isFalse);
+      // Sisa pecahan selalu boleh agar bisa diretur habis.
+      expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.5000', boleh: false), katalog), isTrue);
+      expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.0000', boleh: false, bisa: '0.5000'), katalog), isTrue);
+      // Server lama (null) & produk tak dikenal katalog → bulat.
+      expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.0000'), katalog), isFalse);
+    });
+
+    test('BolehDesimal = true dari server: retur 0,5 atas jumlah jual bulat diterima', () async {
+      ServerStruk(
+        StrukUji(
+          baris: [
+            BarisStrukUji(
+              UuidStruk.bijiKopi,
+              'Biji Kopi Arabika Gayo',
+              'kg',
+              '2.0000',
+              '150000.00',
+              bolehDesimal: true,
+            ),
+          ],
+        ),
+      );
+      final hasil = await layananRetur.Cari(UuidStruk.nomor);
+      final ok = await layananRetur.Simpan(
+        hasil: hasil,
+        pilihan: Pilih(hasil, {UuidStruk.bijiKopi: ('0.5', KondisiRetur.rusak)}),
+        alasan: 'Kemasan sobek',
+        refundTunai: Uang.Dari('37500.00'),
+        kasir: rina,
+        penyetuju: budi,
+        k: k,
+      );
+      expect(ok.totalRefund, Uang.Dari('37500.00'));
+    });
+
     test('struk tidak bisa diretur (void / lewat batas hari) → pesan jelas', () async {
       ServerStruk(StrukUji(bisaDiretur: false, alasan: 'LewatBatasHari'));
       final hasil = await layananRetur.Cari(UuidStruk.nomor);

@@ -189,6 +189,23 @@ class RepositoriKasir {
               );
         }
       }
+      // F-09: sekuens retur (RJ) lokal = max(lokal, server) per tanggal, alasan sama dengan nomor penjualan.
+      for (final entri in perangkat.nomorUrutRetur.entries) {
+        final lama = await (db.select(
+          db.nomorUrutReturPenjualan,
+        )..where((n) => n.KodePerangkat.equals(perangkat.kode) & n.Tanggal.equals(entri.key))).getSingleOrNull();
+        if (lama == null || lama.Terakhir < entri.value) {
+          await db
+              .into(db.nomorUrutReturPenjualan)
+              .insertOnConflictUpdate(
+                NomorUrutReturPenjualanCompanion.insert(
+                  KodePerangkat: perangkat.kode,
+                  Tanggal: entri.key,
+                  Terakhir: entri.value,
+                ),
+              );
+        }
+      }
     }
     await SimpanPengaturan(KunciPengaturan.dataAwalPada, sekarang.toUtc().toIso8601String());
   });

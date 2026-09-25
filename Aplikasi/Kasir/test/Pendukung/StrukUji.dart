@@ -22,6 +22,8 @@ Map<String, Object?> BarisStrukUji(
   String sudah = '0.0000',
   String? bisa,
   String? nilaiBisa,
+  bool? bolehDesimal,
+  String? uuidProdukSatuan,
 }) => {
   'Uuid': uuid,
   'UuidProduk': null,
@@ -41,6 +43,8 @@ Map<String, Object?> BarisStrukUji(
   'JumlahSudahDiretur': sudah,
   'JumlahBisaDiretur': bisa ?? jumlah,
   'NilaiBisaDiretur': nilaiBisa ?? totalBaris,
+  'BolehDesimal': ?bolehDesimal,
+  'UuidProdukSatuan': ?uuidProdukSatuan,
 };
 
 Map<String, Object?> StrukUji({

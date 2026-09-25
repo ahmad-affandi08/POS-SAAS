@@ -193,7 +193,12 @@ class OutletPos {
 }
 
 class PerangkatPos {
-  const PerangkatPos({required this.uuid, required this.kode, this.nomorUrutPenjualan = const {}});
+  const PerangkatPos({
+    required this.uuid,
+    required this.kode,
+    this.nomorUrutPenjualan = const {},
+    this.nomorUrutRetur = const {},
+  });
 
   final String uuid;
   final String kode;
@@ -201,6 +206,10 @@ class PerangkatPos {
   /// Nomor urut penjualan terakhir perangkat ini di server per tanggal `YYMMDD` (`Perangkat.NomorUrutPenjualan`,
   /// PRD v1.46 (e)), agar pemasangan ulang aplikasi tidak memakai nomor yang sama. Kunci absen/tidak valid diabaikan.
   final Map<String, int> nomorUrutPenjualan;
+
+  /// Nomor urut retur (`RJ`) terakhir perangkat ini di server per tanggal `YYMMDD` (`Perangkat.NomorUrutRetur`, F-09),
+  /// bentuk sama dengan [nomorUrutPenjualan]. Kunci absen/tidak valid diabaikan (server lama → kosong).
+  final Map<String, int> nomorUrutRetur;
 
   static PerangkatPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
@@ -210,6 +219,7 @@ class PerangkatPos {
             uuid: UraiJson.AmbilTeks(peta['Uuid']),
             kode: UraiJson.AmbilTeks(peta['Kode']),
             nomorUrutPenjualan: _AmbilNomorUrut(peta['NomorUrutPenjualan']),
+            nomorUrutRetur: _AmbilNomorUrut(peta['NomorUrutRetur']),
           );
   }
 

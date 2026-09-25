@@ -260,6 +260,52 @@ void main() {
       });
       expect(bukanPeta.perangkat!.nomorUrutPenjualan, isEmpty);
     });
+
+    test('F-09: Perangkat.NomorUrutRetur dipetakan seperti NomorUrutPenjualan; absen/tidak valid → kosong', () {
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Perangkat': {
+          'Uuid': 'D1',
+          'Kode': 'K02',
+          'NomorUrutRetur': {'260924': 5, '260925': '2', '2609': 5, '260926': 'x', '260927': -1, '260928': null},
+        },
+      });
+      expect(data.perangkat!.nomorUrutRetur, {'260924': 5, '260925': 2});
+      expect(data.perangkat!.nomorUrutPenjualan, isEmpty);
+
+      final lama = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Perangkat': {'Uuid': 'D1', 'Kode': 'K02'},
+      });
+      expect(lama.perangkat!.nomorUrutRetur, isEmpty);
+      final bukanPeta = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Perangkat': {'Uuid': 'D1', 'Kode': 'K02', 'NomorUrutRetur': 'rusak'},
+      });
+      expect(bukanPeta.perangkat!.nomorUrutRetur, isEmpty);
+    });
+
+    test('F-09: baris penjualan/cari memetakan BolehDesimal & UuidProdukSatuan; absen → null', () {
+      Map<String, Object?> Baris([Map<String, Object?> tambahan = const {}]) => {
+        'Uuid': 'B1',
+        'NamaProduk': 'Biji Kopi Arabika Gayo',
+        'SimbolSatuan': 'kg',
+        'Jumlah': '2.5000',
+        'TotalBaris': '187500.00',
+        ...tambahan,
+      };
+      final baru = BarisPenjualanCariPos.DariJson(Baris({'BolehDesimal': true, 'UuidProdukSatuan': 'PS1'}));
+      expect(baru.bolehDesimal, isTrue);
+      expect(baru.uuidProdukSatuan, 'PS1');
+      expect(BarisPenjualanCariPos.DariJson(Baris({'BolehDesimal': false})).bolehDesimal, isFalse);
+
+      final lama = BarisPenjualanCariPos.DariJson(Baris());
+      expect(lama.bolehDesimal, isNull);
+      expect(lama.uuidProdukSatuan, isNull);
+      final salahTipe = BarisPenjualanCariPos.DariJson(Baris({'BolehDesimal': 'ya', 'UuidProdukSatuan': null}));
+      expect(salahTipe.bolehDesimal, isNull);
+      expect(salahTipe.uuidProdukSatuan, isNull);
+    });
   });
 
   group('DataAwal F-11', () {

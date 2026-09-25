@@ -57,6 +57,7 @@ Map<String, Object?> DataAwalUji({
   String? zonaWaktu,
   String? jamTutupBuku,
   Map<String, Object?>? nomorUrutPenjualan,
+  Map<String, Object?>? nomorUrutRetur,
 }) => {
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
@@ -76,7 +77,12 @@ Map<String, Object?> DataAwalUji({
     'JamTutupBuku': ?jamTutupBuku,
     'ZonaWaktu': ?zonaWaktu,
   },
-  'Perangkat': {'Uuid': '01K5PERANGKAT0000000000001', 'Kode': 'POS-001', 'NomorUrutPenjualan': ?nomorUrutPenjualan},
+  'Perangkat': {
+    'Uuid': '01K5PERANGKAT0000000000001',
+    'Kode': 'POS-001',
+    'NomorUrutPenjualan': ?nomorUrutPenjualan,
+    'NomorUrutRetur': ?nomorUrutRetur,
+  },
   'ProfilPajak':
       profilPajak ??
       {
