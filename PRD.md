@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.47 |
+| Versi | 1.48 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -68,6 +68,7 @@
 | 1.45 | Rincian F-09 fase 1 (void transaksi di shift yang sama, retur dengan refund tunai/transfer manual, daftar void & retur) dan F-11 (tutup shift buta, hitung pecahan, selisih & persetujuan, jurnal selisih, laporan shift X/Z), diputuskan agen atas mandat D-12. Izin baru `shift.selisih.setujui`. |
 | 1.46 | Tindak lanjut tinjauan F-07: snapshot pengaturan & pajak dari perangkat dicocokkan dengan pengaturan tenant/outlet (beda → diterima + `PerluTinjauan`), penolakan karena izin/batas yang berubah setelah transaksi offline diganti "terima + tinjau", definisi persen diskon efektif tunggal, tanggal bisnis perangkat memakai zona outlet, nomor urut terakhir per perangkat di `data-awal`. |
 | 1.47 | Keputusan implementasi F-09 fase 1 & F-11 dicatat (status `DireturSebagian`, jurnal void, kolom void/retur, kas shift menghitung refund tunai void & retur, idempotensi & kode galat `Shift.Tutup`, kas/penjualan/retur setelah shift ditutup diterima + tinjau). |
+| 1.48 | Rincian F-13a (bagan akun, pemetaan akun, transaksi kas/bank back-office: pengeluaran operasional, penerimaan lain, transfer; buku besar, neraca saldo, laba rugi) dan F-14a (dashboard pemilik, laporan penjualan per dimensi, laporan PB1/PBJT & PPN keluaran, nilai persediaan & stok kritis, ringkasan harian lewat antrean), diputuskan agen atas mandat D-12. |
 
 ---
 
@@ -1356,6 +1357,13 @@ stateDiagram-v2
 - **Jurnal manual/umum** hanya untuk role Akuntan/Owner, wajib seimbang.
 - **Aset tetap & penyusutan** (fase 3): garis lurus, jurnal penyusutan bulanan otomatis.
 
+**Rincian F-13a (v1.48, fase 1; diputuskan agen atas mandat D-12):**
+- Jurnal otomatis penjualan, void, retur, kas shift, dan selisih tutup shift sudah diposting oleh flow masing-masing (F-06–F-11) di transaksi yang sama (aturan #10). F-13a menambah pengelolaan dan laporannya di back-office; izin `akuntansi.kelola` (ubah) dan `laporan.keuangan.lihat` (lihat).
+- **Bagan akun** `/kelola/akuntansi/akun`: daftar pohon (`TabelData` mode lokal/server) dengan kode, nama, tipe, saldo normal, status; tambah akun anak & ubah nama/status. Kode unik per tenant; akun yang sudah punya jurnal atau dipakai pemetaan/metode bayar/kategori kas tidak bisa dihapus (hanya dinonaktifkan); tipe akun tidak bisa diubah setelah ada jurnal.
+- **Pemetaan akun** `/kelola/akuntansi/pemetaan`: setiap `PeranAkun` → akun (per tenant, override per outlet), dengan validasi tipe akun yang sama seperti BR-P03.3; perubahan dicatat di log audit dan hanya berlaku untuk jurnal berikutnya.
+- **Transaksi kas & bank** `/kelola/akuntansi/kas-bank` (dokumen `TransaksiKasBank`, nomor `KB/{YYYY}/{MM}/{SEQ4}`, append-only; koreksi dengan dokumen pembalik): `Pengeluaran` (akun kas/bank sumber → akun beban/aset, kategori beban, keterangan, lampiran opsional), `Penerimaan` (akun pendapatan lain/ekuitas/lainnya → akun kas/bank), `Transfer` (kas/bank → kas/bank, termasuk setoran brankas ke bank). Jurnal diposting saat simpan (`JenisSumberJurnal::TransaksiKasBank`); periode terkunci ditolak. Akun kas/bank = akun bertipe Kas/Bank (aset lancar) di bagan akun. Daftar saldo per akun kas/bank.
+- **Laporan keuangan** (dari `JurnalDetail`, saring periode & outlet, ekspor CSV): **Buku besar** per akun (saldo awal, mutasi, saldo berjalan, tautan ke dokumen sumber), **Neraca saldo** (per akun: saldo awal, debit, kredit, saldo akhir; Σ debit = Σ kredit ditampilkan), **Laba rugi** (pendapatan − HPP = laba kotor − beban = laba bersih, per kelompok tipe akun, perbandingan periode sebelumnya). Neraca & arus kas menyusul (P1).
+
 ---
 
 ### F-14 · Laporan, Dashboard & Insight
@@ -1363,6 +1371,14 @@ stateDiagram-v2
 Dirinci di §10 (modul Laporan). Prinsip:
 - Dashboard owner: omzet hari ini vs kemarin/minggu lalu, laba kotor, transaksi, rata-rata keranjang, produk terlaris, stok kritis, piutang jatuh tempo, performa outlet, anomali kasir.
 - Semua laporan bisa difilter (periode, outlet, kasir, kategori, channel) dan di-export (Excel/PDF). Export besar diproses di antrian lalu diunduh dari "Pusat Unduhan".
+
+**Rincian F-14a (v1.48, laporan inti fase 1; diputuskan agen atas mandat D-12):**
+- **Ringkasan harian** `RingkasanPenjualanHarian` (§15) per tenant/outlet/tanggal bisnis diperbarui lewat antrean setelah penjualan/void/retur diterima (efek non-kritis, aturan #10) dan dibangun ulang oleh perintah `laporan:bangun-ulang-ringkasan {tanggal?}` (dijadwalkan tiap malam untuk H-1 & H-2); nilai selalu dapat dihitung ulang dari dokumen sumber, dan test invariant memastikan ringkasan = Σ dokumen.
+- **Dashboard pemilik** (beranda `/kelola`, izin `laporan.penjualan.lihat`, dibatasi outlet akses): omzet bersih hari ini vs kemarin & hari yang sama minggu lalu, jumlah transaksi, rata-rata keranjang, laba kotor (bersih − HPP), grafik penjualan 14 hari, produk terlaris (5), penjualan per outlet, stok kritis (di bawah batas minimum), shift terbuka & selisih kas terbaru, jumlah penjualan `PerluTinjauan`. Pengguna tanpa izin laporan melihat beranda tanpa angka.
+- **Laporan penjualan** `/kelola/laporan/penjualan` (izin `laporan.penjualan.lihat`, batas outlet): tab Ringkasan harian, Per produk, Per kategori, Per jam (heatmap hari × jam), Per kasir, Per kanal, Per metode bayar, Diskon; saring periode (maks. 92 hari untuk laporan per baris), outlet, kasir, kanal; ekspor CSV sesuai saring. Angka: kotor, diskon, bersih, pajak, HPP, laba kotor, jumlah transaksi, qty; void dikeluarkan, retur mengurangi pada tanggal returnya.
+- **Laporan pajak** `/kelola/laporan/pajak` (izin `laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan (TAX-04: DPP, pajak, per tarif) dan PPN keluaran per bulan (TAX-05 dasar), dari `PenjualanPajak` dikurangi pajak retur.
+- **Laporan stok** (izin `persediaan.lihat`): nilai persediaan per gudang/kategori pada tanggal (dari `MutasiStok`) dan stok kritis (saldo ≤ batas minimum per gudang). Posisi & kartu stok sudah ada (F-05a).
+- Semua tabel laporan memakai `TabelData`; grafik mengikuti token warna (§17.6); angka uang `tabular-nums` rata kanan. Ekspor Excel/PDF dan Pusat Unduhan menyusul (utang).
 
 ---
 
