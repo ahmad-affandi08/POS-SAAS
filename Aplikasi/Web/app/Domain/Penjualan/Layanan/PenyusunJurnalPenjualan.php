@@ -79,13 +79,24 @@ final class PenyusunJurnalPenjualan
         );
     }
 
-    private static function BarisPembayaran(MetodePembayaran $metode, Uang $nilai, int $idOutlet): DataBarisJurnal
+    /**
+     * Akun metode pembayaran (juga dipakai refund retur F-09): tunai → akun metode atau Kas Outlet; transfer → akun
+     * metode atau Bank; QRIS statis/EDC/e-wallet → akun kliring metode atau Piutang Pencairan.
+     *
+     * @return array{0: int|null, 1: PeranAkun} [Id akun eksplisit metode, peran cadangan]
+     */
+    public static function TentukanAkunMetode(MetodePembayaran $metode): array
     {
-        [$idAkun, $peran] = match ($metode->Jenis) {
+        return match ($metode->Jenis) {
             JenisMetodePembayaran::Tunai => [$metode->IdAkun, PeranAkun::KasOutlet],
             JenisMetodePembayaran::Transfer => [$metode->IdAkun, PeranAkun::Bank],
             default => [$metode->IdAkunKliring, PeranAkun::PiutangPencairan],
         };
+    }
+
+    private static function BarisPembayaran(MetodePembayaran $metode, Uang $nilai, int $idOutlet): DataBarisJurnal
+    {
+        [$idAkun, $peran] = self::TentukanAkunMetode($metode);
 
         return $idAkun !== null
             ? new DataBarisJurnal(null, $idAkun, $idOutlet, $nilai, Uang::Nol(), $metode->Nama)

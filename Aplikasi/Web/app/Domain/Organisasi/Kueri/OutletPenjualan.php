@@ -49,4 +49,19 @@ final class OutletPenjualan
             idGudangToko: $gudang?->Id,
         );
     }
+
+    /**
+     * F-09 retur: lokasi stok jenis `Rusak` pertama outlet (aktif didahulukan, lalu Id terkecil), null bila tidak ada.
+     */
+    public function AmbilIdGudangRusak(int $idOutlet): ?int
+    {
+        $id = Gudang::query()
+            ->where('IdOutlet', $idOutlet)
+            ->where('Jenis', JenisGudang::Rusak->value)
+            ->orderByRaw('CASE WHEN `Status` = ? THEN 0 ELSE 1 END', [StatusOrganisasi::Aktif->value])
+            ->orderBy('Id')
+            ->value('Id');
+
+        return is_int($id) ? $id : null;
+    }
 }

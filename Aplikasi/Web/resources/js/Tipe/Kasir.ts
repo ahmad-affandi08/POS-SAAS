@@ -27,6 +27,10 @@ export type BarisShift = RingkasanKasShift & {
     Bersama: boolean;
     PerluTinjauan: boolean;
     KasAwal: string;
+    /** F-11: hasil tutup shift; null selama shift belum ditutup. */
+    DitutupPada: string | null;
+    KasAktual: string | null;
+    Selisih: string | null;
 };
 
 export type PropsDaftarShift = {
@@ -49,6 +53,65 @@ export type BarisMutasiKas = {
     DisetujuiOleh: string | null;
     NomorJurnal: string | null;
     UuidJurnal: string | null;
+    /** F-11: kas yang tiba setelah shift ditutup. */
+    PerluTinjauan: boolean;
+    AlasanTinjauan: string | null;
+};
+
+/** F-11: total satu metode pembayaran di laporan shift (tunai = diterima − kembalian). */
+export type MetodeLaporanShift = { UuidMetodePembayaran: string; Jenis: string; Nama: string; Jumlah: string };
+
+/** F-11: laporan shift X (berjalan) / Z (setelah tutup) dari data server. */
+export type LaporanShift = {
+    Penjualan: {
+        JumlahTransaksi: number;
+        PenjualanKotor: string;
+        TotalDiskon: string;
+        PenjualanBersih: string;
+        TotalPajak: string;
+        BiayaLayanan: string;
+        Pembulatan: string;
+        TotalAkhir: string;
+        PerMetode: MetodeLaporanShift[];
+        TunaiMasukBersih: string;
+        RefundTunai: string;
+        JumlahVoid: number;
+        NominalVoid: string;
+        JumlahRetur: number;
+        NominalRetur: string;
+    };
+    Kas: {
+        KasAwal: string;
+        TunaiMasukBersih: string;
+        TotalMasuk: string;
+        TotalKeluar: string;
+        TotalSetoran: string;
+        RefundTunai: string;
+        KasSeharusnya: string;
+    };
+};
+
+/** F-11: non-tunai per metode menurut sistem dan menurut hitungan kasir (null = tidak diisi). */
+export type NonTunaiTutupShift = {
+    UuidMetodePembayaran: string;
+    Jenis: string;
+    Nama: string;
+    JumlahSistem: string;
+    JumlahDilaporkan: string | null;
+};
+
+export type TutupShift = {
+    DitutupOleh: string;
+    DitutupPada: string;
+    KasSeharusnya: string;
+    KasAktual: string;
+    Selisih: string;
+    AlasanSelisih: string | null;
+    Penyetuju: string | null;
+    PecahanKasAkhir: PecahanKas[];
+    NonTunai: NonTunaiTutupShift[];
+    NomorJurnal: string | null;
+    UuidJurnal: string | null;
 };
 
 export type PropsDetailShift = {
@@ -61,6 +124,9 @@ export type PropsDetailShift = {
     MutasiKas: BarisMutasiKas[];
     /** F-07b: penjualan yang dibuat di shift ini. */
     Penjualan: PenjualanShift;
+    Laporan: LaporanShift;
+    /** F-11: null selama shift belum ditutup. */
+    Tutup: TutupShift | null;
 };
 
 export type OpsiAkun = { Uuid: string; Kode: string; Nama: string; Jenis: string };
@@ -92,4 +158,10 @@ export type PropsPengaturanKasir = {
     /** F-07b BR-08.6: null = tanpa pembulatan tunai. */
     PembulatanTunai: PembulatanTunai | null;
     OpsiArahPembulatan: { Nilai: string; Label: string }[];
+    /** F-11: kas seharusnya disembunyikan sampai kasir menyimpan hitungan. */
+    TutupShiftButa: boolean;
+    /** F-11: string desimal ("10000.00"); |selisih| di atasnya wajib alasan + PIN penyetuju. */
+    ToleransiSelisihKas: string;
+    /** F-09: retur paling lama sekian hari sejak hari bisnis penjualan (0–365, bawaan 7). */
+    BatasHariRetur: number;
 };

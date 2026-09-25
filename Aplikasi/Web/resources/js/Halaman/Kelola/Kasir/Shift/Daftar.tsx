@@ -4,6 +4,7 @@ import LencanaShift from '@/Komponen/Kasir/LencanaShift';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring, KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { FormatRupiah } from '@/Pustaka/Format';
+import { AmbilTandaDesimal } from '@/Pustaka/HitungDesimal';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { BarisShift, PropsDaftarShift } from '@/Tipe/Kasir';
@@ -86,9 +87,24 @@ const kolom: KolomTabel<BarisShift>[] = [
         meta: { label: 'Setoran', angka: true, prioritas: 'rendah' },
         cell: ({ row }) => FormatRupiah(row.original.TotalSetoran),
     },
+    {
+        id: 'Selisih',
+        accessorKey: 'Selisih',
+        header: 'Selisih kas',
+        meta: { label: 'Selisih kas', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: s } }) =>
+            s.Selisih === null ? (
+                <span className="text-teks-sekunder">Belum ditutup</span>
+            ) : (
+                <span className={AmbilTandaDesimal(s.Selisih) === 0 ? 'text-teks-utama' : 'font-semibold text-bahaya'}>
+                    {AmbilTandaDesimal(s.Selisih) > 0 ? '+' : ''}
+                    {FormatRupiah(s.Selisih)}
+                </span>
+            ),
+    },
 ];
 
-/** F-06: daftar shift kasir (baca saja). Shift dibuka & diisi dari aplikasi kasir; tutup shift menyusul (F-11). */
+/** F-06: daftar shift kasir (baca saja). Shift dibuka, diisi, dan ditutup (F-11) dari aplikasi kasir. */
 export default function HalamanDaftarShift({ Shift, OpsiOutlet, OpsiStatus }: PropsDaftarShift) {
     const saring: DefinisiSaring[] = [
         ...(OpsiOutlet.length > 1
@@ -115,7 +131,8 @@ export default function HalamanDaftarShift({ Shift, OpsiOutlet, OpsiStatus }: Pr
         <TataLetakAplikasi judul="Shift kasir">
             <p className="max-w-3xl text-isi text-teks-sekunder">
                 Shift dibuka kasir di aplikasi POS, termasuk saat offline, lalu terkirim ke sini begitu perangkat
-                online. Kas masuk, kas keluar, dan setoran tercatat per shift beserta jurnalnya.
+                online. Kas masuk, kas keluar, setoran, dan selisih kas saat tutup shift tercatat per shift beserta
+                jurnalnya.
             </p>
 
             <TabelData

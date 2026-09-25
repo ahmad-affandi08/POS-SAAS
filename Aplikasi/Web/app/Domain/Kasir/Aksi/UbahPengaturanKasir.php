@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Mengubah pengaturan kasir tenant: batas kas keluar tanpa persetujuan (BR-06.4), mode shift bersama (BR-06.2),
- * batas diskon manual kasir & penyetuju (BR-07.3), dan pembulatan tunai (BR-08.6). Batas kas 0 = setiap kas keluar
+ * batas diskon manual kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), serta tutup shift buta & toleransi
+ * selisih kas (F-11), dan batas hari retur (F-09). Batas kas 0 = setiap kas keluar
  * butuh persetujuan; batas diskon 0 = setiap diskon manual butuh penyetuju. Perubahan berlaku untuk transaksi
  * berikutnya setelah perangkat memperbarui data; transaksi yang sudah diterima tidak dinilai ulang. Tanpa perubahan =
  * tidak ada yang ditulis. Audit `kasir.pengaturan.ubah`.
@@ -66,6 +67,14 @@ final class UbahPengaturanKasir
             throw new PelanggaranAturanBisnis('BatasDiskonTidakValid', 'Batas diskon dengan persetujuan tidak boleh lebih kecil dari batas diskon kasir.', 'BatasDiskonPenyetuju');
         }
 
+        if ($data->toleransiSelisihKas->BernilaiNegatif() || $data->toleransiSelisihKas->Bandingkan(Uang::Dari(self::BATAS_MAKSIMAL)) > 0) {
+            throw new PelanggaranAturanBisnis('ToleransiSelisihTidakValid', 'Toleransi selisih kas harus antara Rp 0 dan Rp 1 triliun.', 'ToleransiSelisihKas');
+        }
+
+        if ($data->batasHariRetur < 0 || $data->batasHariRetur > DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL) {
+            throw new PelanggaranAturanBisnis('BatasHariReturTidakValid', 'Batas hari retur harus antara 0 dan '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.' hari.', 'BatasHariRetur');
+        }
+
         $kelipatan = $data->pembulatanTunai['Kelipatan'] ?? null;
 
         if ($kelipatan !== null && ($kelipatan <= 0 || $kelipatan > self::KELIPATAN_MAKSIMAL)) {
@@ -74,7 +83,7 @@ final class UbahPengaturanKasir
     }
 
     /**
-     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null}
+     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int}
      */
     private static function KeLarik(DataPengaturanKasir $data): array
     {
@@ -84,6 +93,9 @@ final class UbahPengaturanKasir
             'BatasDiskonManual' => (string) $data->batasDiskonManual,
             'BatasDiskonPenyetuju' => (string) $data->batasDiskonPenyetuju,
             'PembulatanTunai' => $data->AmbilPembulatanTunaiLarik(),
+            'TutupShiftButa' => $data->tutupShiftButa,
+            'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
+            'BatasHariRetur' => $data->batasHariRetur,
         ];
     }
 }

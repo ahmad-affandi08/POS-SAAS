@@ -46,6 +46,8 @@ enum IzinTenant: string
     case KasKeluarSetujui = 'kas.keluar.setujui';
     // F-07b BR-07.3: menyetujui diskon manual di atas batas kasir dengan PIN (supervisor ke atas).
     case PenjualanDiskonSetujui = 'penjualan.diskon.setujui';
+    // F-11: menyetujui selisih kas tutup shift di atas toleransi dengan PIN (supervisor ke atas).
+    case ShiftSelisihSetujui = 'shift.selisih.setujui';
     case LaporanPenjualanLihat = 'laporan.penjualan.lihat';
     case LaporanKeuanganLihat = 'laporan.keuangan.lihat';
     case AkuntansiKelola = 'akuntansi.kelola';
@@ -84,6 +86,7 @@ enum IzinTenant: string
             self::PenjualanDiskonManual => 'Memberi diskon manual',
             self::KasKeluarSetujui => 'Menyetujui kas keluar di atas batas',
             self::PenjualanDiskonSetujui => 'Menyetujui diskon manual di atas batas kasir',
+            self::ShiftSelisihSetujui => 'Menyetujui selisih kas tutup shift di atas toleransi',
             self::LaporanPenjualanLihat => 'Melihat laporan penjualan',
             self::LaporanKeuanganLihat => 'Melihat laporan keuangan',
             self::AkuntansiKelola => 'Mengelola jurnal, pajak, dan tutup buku',
@@ -104,7 +107,7 @@ enum IzinTenant: string
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
             self::PembelianKelola => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
-            self::PenjualanDiskonSetujui => 'Penjualan',
+            self::PenjualanDiskonSetujui, self::ShiftSelisihSetujui => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

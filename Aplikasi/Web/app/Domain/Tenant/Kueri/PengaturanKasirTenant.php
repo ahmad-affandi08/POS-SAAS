@@ -16,7 +16,8 @@ use Brick\Math\Exception\MathException;
  * Pengaturan kasir tenant aktif dari `Tenant.Pengaturan`: `BatasKasKeluar` (string desimal, bawaan Rp 200.000) dan
  * `ShiftBersama` (bawaan false) (F-06); `BatasDiskonManual` (persen, bawaan 10), `BatasDiskonPenyetuju` (persen,
  * bawaan 30), dan `PembulatanTunai {Kelipatan, Arah}` (diisi template sektor F-01; bawaan null = tanpa pembulatan)
- * (F-07b). Nilai rusak kembali ke bawaan.
+ * (F-07b); `TutupShiftButa` (bawaan true) dan `ToleransiSelisihKas` (string desimal, bawaan Rp 10.000) (F-11);
+ * `BatasHariRetur` (bilangan bulat 0–365, bawaan 7) (F-09). Nilai rusak kembali ke bawaan.
  */
 final class PengaturanKasirTenant
 {
@@ -37,10 +38,19 @@ final class PengaturanKasirTenant
             $manual,
             $penyetuju->isLessThan($manual) ? $manual : $penyetuju,
             self::AmbilPembulatan($pengaturan['PembulatanTunai'] ?? null),
+            tutupShiftButa: ($pengaturan['TutupShiftButa'] ?? true) !== false,
+            toleransiSelisihKas: self::AmbilUang($pengaturan['ToleransiSelisihKas'] ?? null, DataPengaturanKasir::TOLERANSI_SELISIH_KAS_BAWAAN),
+            batasHariRetur: self::AmbilBatasHariRetur($pengaturan['BatasHariRetur'] ?? null),
         );
     }
 
     private static function AmbilBatas(mixed $nilai): Uang
+    {
+        return self::AmbilUang($nilai, DataPengaturanKasir::BATAS_KAS_KELUAR_BAWAAN);
+    }
+
+    /** Uang non-negatif dari string desimal; selain itu bawaan. */
+    private static function AmbilUang(mixed $nilai, string $bawaan): Uang
     {
         if (is_string($nilai)) {
             try {
@@ -54,7 +64,15 @@ final class PengaturanKasirTenant
             }
         }
 
-        return Uang::Dari(DataPengaturanKasir::BATAS_KAS_KELUAR_BAWAAN);
+        return Uang::Dari($bawaan);
+    }
+
+    /** F-09: bilangan bulat 0–365; selain itu bawaan 7. */
+    private static function AmbilBatasHariRetur(mixed $nilai): int
+    {
+        return is_int($nilai) && $nilai >= 0 && $nilai <= DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL
+            ? $nilai
+            : DataPengaturanKasir::BATAS_HARI_RETUR_BAWAAN;
     }
 
     /** Persen 0–100 dari string/bilangan bulat; selain itu bawaan. */

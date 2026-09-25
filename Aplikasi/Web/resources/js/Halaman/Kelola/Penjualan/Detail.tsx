@@ -9,7 +9,7 @@ import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatHppSatuan, FormatJumlahStok, FormatNilai } from '@/Pustaka/FormatPersediaan';
-import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import { FormatDurasi, FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type {
     BarisDetailPenjualan,
@@ -17,6 +17,7 @@ import type {
     BarisPajakPenjualan,
     BarisPembayaranPenjualan,
     PropsDetailPenjualan,
+    ReturRingkasPenjualan,
 } from '@/Tipe/Penjualan';
 
 const nol = /^-?0+(\.0+)?$/;
@@ -47,9 +48,16 @@ const kolomBaris: KolomTabel<BarisDetailPenjualan>[] = [
         enableSorting: false,
         meta: { label: 'Jumlah × harga', angka: true, prioritas: 'penting' },
         cell: ({ row: { original: b } }) => (
-            <span className="whitespace-nowrap">
-                {FormatJumlahStok(b.Jumlah, b.SimbolSatuan)} × {FormatRupiah(b.HargaSatuan)}
-            </span>
+            <>
+                <span className="block whitespace-nowrap">
+                    {FormatJumlahStok(b.Jumlah, b.SimbolSatuan)} × {FormatRupiah(b.HargaSatuan)}
+                </span>
+                {nol.test(b.JumlahDiretur) ? null : (
+                    <span className="block text-label text-teks-sekunder">
+                        Diretur {FormatJumlahStok(b.JumlahDiretur, b.SimbolSatuan)}
+                    </span>
+                )}
+            </>
         ),
     },
     {
@@ -116,6 +124,51 @@ const kolomPembayaran: KolomTabel<BarisPembayaranPenjualan>[] = [
         enableSorting: false,
         meta: { label: 'Jumlah', angka: true, prioritas: 'penting' },
         cell: ({ row: { original: b } }) => FormatRupiah(b.Jumlah),
+    },
+];
+
+const kolomRetur: KolomTabel<ReturRingkasPenjualan>[] = [
+    {
+        id: 'Nomor',
+        accessorKey: 'Nomor',
+        header: 'Nomor retur',
+        meta: { label: 'Nomor retur', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: r } }) => (
+            <Link href={`/kelola/penjualan/retur/${r.Uuid}`} className="font-mono break-all text-brand underline">
+                {r.Nomor}
+            </Link>
+        ),
+    },
+    {
+        id: 'DibuatOfflinePada',
+        header: 'Waktu',
+        enableSorting: false,
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row: { original: r } }) => FormatTanggalWaktu(r.DibuatOfflinePada),
+    },
+    {
+        id: 'Alasan',
+        header: 'Kasir & alasan',
+        enableSorting: false,
+        meta: { label: 'Kasir & alasan', prioritas: 'rendah' },
+        cell: ({ row: { original: r } }) => (
+            <>
+                <span className="block text-teks-utama">{r.NamaKasir}</span>
+                <span className="block text-label break-words text-teks-sekunder">{r.Alasan}</span>
+            </>
+        ),
+    },
+    {
+        id: 'TotalRefund',
+        header: 'Refund',
+        enableSorting: false,
+        meta: { label: 'Refund', angka: true, prioritas: 'penting' },
+        cell: ({ row: { original: r } }) => (
+            <>
+                <span className="block font-semibold">{FormatRupiah(r.TotalRefund)}</span>
+                <span className="block text-label text-teks-sekunder">{r.LabelMetodeRefund}</span>
+            </>
+        ),
     },
 ];
 
@@ -205,7 +258,10 @@ function BarisAngka({ label, nilai, tebal = false }: { label: string; nilai: str
     );
 }
 
-/** F-07b: detail penjualan (baca saja): ringkasan, baris, pembayaran, pajak, mutasi stok, shift, dan jurnal. */
+/**
+ * F-07b: detail penjualan (baca saja): ringkasan, baris, pembayaran, pajak, mutasi stok, shift, dan jurnal. F-09: void
+ * (alasan, penyetuju, refund, jeda sejak bayar) dan daftar retur.
+ */
 export default function HalamanDetailPenjualan({
     Penjualan: p,
     Baris,
@@ -213,6 +269,8 @@ export default function HalamanDetailPenjualan({
     Pembayaran,
     MutasiStok,
     Jurnal,
+    Void,
+    Retur,
 }: PropsDetailPenjualan) {
     return (
         <TataLetakAplikasi judul={`Penjualan ${p.Nomor}`}>
@@ -223,6 +281,21 @@ export default function HalamanDetailPenjualan({
             {p.PerluTinjauan ? (
                 <Pemberitahuan jenis="peringatan" judul="Penjualan ini perlu ditinjau">
                     {p.AlasanTinjauan ?? 'Penjualan ini diterima meski ada data yang tidak sesuai saat sinkron.'}
+                </Pemberitahuan>
+            ) : null}
+
+            {Void ? (
+                <Pemberitahuan jenis="bahaya" judul="Penjualan ini dibatalkan (void)">
+                    <dl className="grid gap-2 sm:grid-cols-2">
+                        <Nilai label="Waktu void">
+                            {FormatTanggalWaktu(Void.DivoidPada)} ({FormatDurasi(Void.JedaDetik)} setelah bayar)
+                        </Nilai>
+                        <Nilai label="Alasan">{Void.Alasan}</Nilai>
+                        <Nilai label="Kasir">{Void.NamaKasir}</Nilai>
+                        <Nilai label="Disetujui">{Void.NamaPenyetuju}</Nilai>
+                        <Nilai label="Tunai dikembalikan dari laci">{FormatRupiah(Void.RefundTunai)}</Nilai>
+                        <Nilai label="Refund non-tunai (manual)">{FormatRupiah(Void.RefundNonTunai)}</Nilai>
+                    </dl>
                 </Pemberitahuan>
             ) : null}
 
@@ -314,6 +387,21 @@ export default function HalamanDetailPenjualan({
                 cari={false}
                 kosong={{ judul: 'Penjualan ini tidak punya baris.' }}
             />
+
+            {Retur.length > 0 ? (
+                <>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Retur</h2>
+                    <TabelData
+                        id="penjualan-retur"
+                        label="Retur penjualan ini"
+                        kolom={kolomRetur}
+                        sumber={{ mode: 'lokal', data: Retur }}
+                        ambilIdBaris={(r) => r.Uuid}
+                        cari={false}
+                        kosong={{ judul: 'Belum ada retur.' }}
+                    />
+                </>
+            ) : null}
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Pembayaran</h2>
             <TabelData

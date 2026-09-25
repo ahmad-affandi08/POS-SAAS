@@ -51,6 +51,9 @@ enum JenisReferensiMutasi: string
         return match ($this) {
             self::StokAwal => '/kelola/persediaan/stok-awal/'.$uuid,
             self::Penjualan => '/kelola/penjualan/'.$uuid,
+            // F-09: mutasi void memakai Uuid penjualan yang dibatalkan (void 1:1 dengan penjualan).
+            self::VoidPenjualan => '/kelola/penjualan/'.$uuid,
+            self::ReturPenjualan => '/kelola/penjualan/retur/'.$uuid,
             default => null,
         };
     }

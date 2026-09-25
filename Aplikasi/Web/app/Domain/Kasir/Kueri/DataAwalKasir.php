@@ -50,6 +50,11 @@ final class DataAwalKasir
                 'BatasDiskonManual' => (string) $pengaturan->batasDiskonManual,
                 'BatasDiskonPenyetuju' => (string) $pengaturan->batasDiskonPenyetuju,
                 'PembulatanTunai' => $pengaturan->AmbilPembulatanTunaiLarik(),
+                // F-11: tutup shift buta & toleransi selisih kas (di atasnya wajib alasan + PIN shift.selisih.setujui).
+                'TutupShiftButa' => $pengaturan->tutupShiftButa,
+                'ToleransiSelisihKas' => $pengaturan->toleransiSelisihKas->KeString(),
+                // F-09: batas hari retur sejak tanggal bisnis penjualan (aplikasi memeriksa sebelum mengirim retur).
+                'BatasHariRetur' => $pengaturan->batasHariRetur,
             ],
             'Outlet' => $outlet === null ? null : [
                 'Uuid' => $outlet->uuidOutlet,

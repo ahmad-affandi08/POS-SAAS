@@ -11,8 +11,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Isian pengaturan kasir (F-06, F-07b). Bidang F-07b (`BatasDiskonManual`, `BatasDiskonPenyetuju`,
- * `PembulatanTunai`) boleh tidak dikirim: nilai tersimpan dipertahankan. `PembulatanTunai` null = tanpa pembulatan.
+ * Isian pengaturan kasir (F-06, F-07b, F-11). Bidang F-07b (`BatasDiskonManual`, `BatasDiskonPenyetuju`,
+ * `PembulatanTunai`) F-11 (`TutupShiftButa`, `ToleransiSelisihKas`), dan F-09 (`BatasHariRetur`) boleh tidak dikirim: nilai tersimpan dipertahankan. `PembulatanTunai` null = tanpa pembulatan.
  */
 final class UbahPengaturanKasirPermintaan extends FormRequest
 {
@@ -31,6 +31,9 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             'PembulatanTunai' => ['sometimes', 'nullable', 'array'],
             'PembulatanTunai.Kelipatan' => ['required_with:PembulatanTunai', 'integer', 'min:1', 'max:1000000'],
             'PembulatanTunai.Arah' => ['required_with:PembulatanTunai', 'string', Rule::enum(ArahPembulatan::class)],
+            'TutupShiftButa' => ['sometimes', 'boolean'],
+            'ToleransiSelisihKas' => ['sometimes', 'required', 'string', 'regex:/^\d{1,13}(\.\d{1,2})?$/'],
+            'BatasHariRetur' => ['sometimes', 'required', 'integer', 'min:0', 'max:'.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL],
         ];
     }
 
@@ -45,10 +48,12 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             'BatasDiskonPenyetuju.regex' => 'Batas diskon dengan persetujuan berupa persen 0 sampai 100, misal 30.',
             'PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan berupa bilangan bulat Rupiah, misal 100.',
             'PembulatanTunai.Arah.*' => 'Pilih arah pembulatan.',
+            'ToleransiSelisihKas.regex' => 'Toleransi selisih kas harus berupa nominal rupiah, misal 10000.',
+            'BatasHariRetur.*' => 'Batas hari retur berupa bilangan bulat 0 sampai '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.', misal 7.',
         ];
     }
 
-    /** Pengaturan baru; bidang F-07b yang tidak dikirim memakai nilai `lama`. */
+    /** Pengaturan baru; bidang F-07b/F-11/F-09 yang tidak dikirim memakai nilai `lama`. */
     public function AmbilData(DataPengaturanKasir $lama): DataPengaturanKasir
     {
         $pembulatan = $lama->pembulatanTunai;
@@ -65,6 +70,9 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             $this->has('BatasDiskonManual') ? $this->string('BatasDiskonManual')->toString() : $lama->batasDiskonManual,
             $this->has('BatasDiskonPenyetuju') ? $this->string('BatasDiskonPenyetuju')->toString() : $lama->batasDiskonPenyetuju,
             $pembulatan,
+            tutupShiftButa: $this->has('TutupShiftButa') ? $this->boolean('TutupShiftButa') : $lama->tutupShiftButa,
+            toleransiSelisihKas: $this->has('ToleransiSelisihKas') ? Uang::Dari($this->string('ToleransiSelisihKas')->toString()) : $lama->toleransiSelisihKas,
+            batasHariRetur: $this->has('BatasHariRetur') ? $this->integer('BatasHariRetur') : $lama->batasHariRetur,
         );
     }
 }

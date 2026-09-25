@@ -38,7 +38,7 @@ export function NormalisasiMasukanPersen(teks: string): string {
 
 /**
  * Pengaturan kasir tenant: batas kas keluar tanpa persetujuan (BR-06.4), shift bersama (BR-06.2), batas diskon manual
- * kasir & penyetuju (BR-07.3), dan pembulatan tunai (BR-08.6). Berlaku di aplikasi kasir setelah data perangkat
+ * kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), tutup shift buta & toleransi selisih kas (F-11), serta batas hari retur (F-09). Berlaku di aplikasi kasir setelah data perangkat
  * diperbarui.
  */
 export default function HalamanPengaturanKasir({
@@ -48,6 +48,9 @@ export default function HalamanPengaturanKasir({
     BatasDiskonPenyetuju,
     PembulatanTunai,
     OpsiArahPembulatan,
+    TutupShiftButa,
+    ToleransiSelisihKas,
+    BatasHariRetur,
 }: PropsPengaturanKasir) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -59,6 +62,9 @@ export default function HalamanPengaturanKasir({
         bulatkan: PembulatanTunai !== null,
         kelipatan: String(PembulatanTunai?.Kelipatan ?? 100),
         arah: PembulatanTunai?.Arah ?? 'Bawah',
+        tutupButa: TutupShiftButa,
+        toleransi: UbahKeMasukanUang(ToleransiSelisihKas),
+        hariRetur: String(BatasHariRetur),
     };
     const [batas, AturBatas] = useState(awal.batas);
     const [bersama, AturBersama] = useState(awal.bersama);
@@ -67,6 +73,9 @@ export default function HalamanPengaturanKasir({
     const [bulatkan, AturBulatkan] = useState(awal.bulatkan);
     const [kelipatan, AturKelipatan] = useState(awal.kelipatan);
     const [arah, AturArah] = useState(awal.arah);
+    const [tutupButa, AturTutupButa] = useState(awal.tutupButa);
+    const [toleransi, AturToleransi] = useState(awal.toleransi);
+    const [hariRetur, AturHariRetur] = useState(awal.hariRetur);
     const [memproses, AturMemproses] = useState(false);
     const berubah =
         batas !== awal.batas ||
@@ -74,6 +83,9 @@ export default function HalamanPengaturanKasir({
         diskonKasir !== awal.diskonKasir ||
         diskonPenyetuju !== awal.diskonPenyetuju ||
         bulatkan !== awal.bulatkan ||
+        tutupButa !== awal.tutupButa ||
+        toleransi !== awal.toleransi ||
+        hariRetur !== awal.hariRetur ||
         (bulatkan && (kelipatan !== awal.kelipatan || arah !== awal.arah));
     const opsiKelipatan = (kelipatanUmum.includes(kelipatan) ? kelipatanUmum : [...kelipatanUmum, kelipatan]).map(
         (nilai) => ({ Nilai: nilai, Label: FormatRupiah(nilai) }),
@@ -89,6 +101,9 @@ export default function HalamanPengaturanKasir({
                 BatasDiskonManual: diskonKasir === '' ? '0' : diskonKasir,
                 BatasDiskonPenyetuju: diskonPenyetuju === '' ? '0' : diskonPenyetuju,
                 PembulatanTunai: bulatkan ? { Kelipatan: Number.parseInt(kelipatan, 10), Arah: arah } : null,
+                TutupShiftButa: tutupButa,
+                ToleransiSelisihKas: toleransi === '' ? '0' : toleransi,
+                BatasHariRetur: hariRetur === '' ? 0 : Number.parseInt(hariRetur, 10),
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -105,6 +120,9 @@ export default function HalamanPengaturanKasir({
                     'BatasDiskonPenyetuju',
                     'PembulatanTunai.Kelipatan',
                     'PembulatanTunai.Arah',
+                    'TutupShiftButa',
+                    'ToleransiSelisihKas',
+                    'BatasHariRetur',
                 ]}
             />
             <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4">
@@ -178,6 +196,36 @@ export default function HalamanPengaturanKasir({
                             />
                         </div>
                     ) : null}
+                </PanelKatalog>
+                <PanelKatalog
+                    judul="Tutup shift"
+                    idJudul="judul-tutup-shift"
+                    keterangan="Selisih kas di atas toleransi wajib diberi alasan dan disetujui supervisor dengan PIN saat tutup shift. Isi 0 agar setiap selisih butuh persetujuan."
+                >
+                    <KotakCentang
+                        label="Tutup shift buta: sembunyikan kas seharusnya sampai kasir menyimpan hitungan"
+                        nilai={tutupButa}
+                        saatBerubah={AturTutupButa}
+                    />
+                    <BidangUang
+                        label="Toleransi selisih kas"
+                        nilai={toleransi}
+                        saatBerubah={AturToleransi}
+                        galat={galat.ToleransiSelisihKas}
+                    />
+                </PanelKatalog>
+                <PanelKatalog
+                    judul="Retur penjualan"
+                    idJudul="judul-retur-penjualan"
+                    keterangan="Retur di aplikasi kasir hanya bisa untuk penjualan paling lama sekian hari sejak hari bisnis penjualannya. Isi 0 agar retur hanya di hari yang sama."
+                >
+                    <BidangTeks
+                        label="Batas hari retur"
+                        nilai={hariRetur}
+                        saatBerubah={(teks) => AturHariRetur(teks.replace(/\D/g, '').slice(0, 3))}
+                        inputMode="numeric"
+                        galat={galat.BatasHariRetur}
+                    />
                 </PanelKatalog>
                 <div className="flex flex-wrap items-center gap-3">
                     <Tombol type="submit" memproses={memproses} disabled={!berubah}>

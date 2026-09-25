@@ -8,6 +8,7 @@ use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
+use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
@@ -54,5 +55,8 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
             ->middleware('throttle:60,1')
             ->where('metodePembayaran', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
             ->name('pos.metode-pembayaran.gambar-qris');
+
+        // F-09: cari struk asal untuk retur (perlu online); hanya penjualan outlet perangkat.
+        Route::get('/penjualan/cari', [PenjualanKontroler::class, 'Cari'])->middleware('throttle:60,1')->name('pos.penjualan.cari');
     });
 });

@@ -13,6 +13,9 @@ enum JenisSumberJurnal: string
     case StokAwal = 'StokAwal';
     case MutasiKas = 'MutasiKas';
     case Penjualan = 'Penjualan';
+    // F-09 J-09.2 (void memakai jurnal pembalik ber-sumber `Penjualan`, kunci `Void`).
+    case ReturPenjualan = 'ReturPenjualan';
+    case TutupShift = 'TutupShift';
 
     public function AmbilLabel(): string
     {
@@ -20,6 +23,8 @@ enum JenisSumberJurnal: string
             self::StokAwal => 'Stok awal',
             self::MutasiKas => 'Kas masuk/keluar',
             self::Penjualan => 'Penjualan',
+            self::ReturPenjualan => 'Retur penjualan',
+            self::TutupShift => 'Selisih kas tutup shift',
         };
     }
 
@@ -34,6 +39,8 @@ enum JenisSumberJurnal: string
             self::StokAwal => '/kelola/persediaan/stok-awal/'.$uuid,
             self::MutasiKas => '/kelola/kasir/mutasi-kas/'.$uuid,
             self::Penjualan => '/kelola/penjualan/'.$uuid,
+            self::ReturPenjualan => '/kelola/penjualan/retur/'.$uuid,
+            self::TutupShift => '/kelola/kasir/shift/'.$uuid,
         };
     }
 }

@@ -12,6 +12,7 @@ import HalamanDetailShift from '@/Halaman/Kelola/Kasir/Shift/Detail';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import type {
     BarisShift,
+    LaporanShift,
     PropsDaftarShift,
     PropsDetailShift,
     PropsKategoriKas,
@@ -37,6 +38,9 @@ const barisShift: BarisShift = {
     TotalKeluar: '45000.00',
     TotalSetoran: '300000.00',
     KasNonPenjualan: '925000.00',
+    DitutupPada: null,
+    KasAktual: null,
+    Selisih: null,
 };
 
 const propsPengaturan: PropsPengaturanKasir = {
@@ -50,6 +54,46 @@ const propsPengaturan: PropsPengaturanKasir = {
         { Nilai: 'Atas', Label: 'Ke atas' },
         { Nilai: 'Terdekat', Label: 'Ke terdekat' },
     ],
+    TutupShiftButa: true,
+    ToleransiSelisihKas: '10000.00',
+    BatasHariRetur: 7,
+};
+
+const laporanShift: LaporanShift = {
+    Penjualan: {
+        JumlahTransaksi: 1,
+        PenjualanKotor: '96570.00',
+        TotalDiskon: '0.00',
+        PenjualanBersih: '96570.00',
+        TotalPajak: '0.00',
+        BiayaLayanan: '0.00',
+        Pembulatan: '0.00',
+        TotalAkhir: '96570.00',
+        PerMetode: [
+            { UuidMetodePembayaran: '01K5METODE0000000000000001', Jenis: 'Tunai', Nama: 'Tunai', Jumlah: '50000.00' },
+            {
+                UuidMetodePembayaran: '01K5METODE0000000000000002',
+                Jenis: 'QrisStatis',
+                Nama: 'QRIS Kopi Senja',
+                Jumlah: '46570.00',
+            },
+        ],
+        TunaiMasukBersih: '50000.00',
+        RefundTunai: '0.00',
+        JumlahVoid: 0,
+        NominalVoid: '0.00',
+        JumlahRetur: 0,
+        NominalRetur: '0.00',
+    },
+    Kas: {
+        KasAwal: '1250000.00',
+        TunaiMasukBersih: '50000.00',
+        TotalMasuk: '20000.00',
+        TotalKeluar: '45000.00',
+        TotalSetoran: '300000.00',
+        RefundTunai: '0.00',
+        KasSeharusnya: '975000.00',
+    },
 };
 
 function PropsDaftar(data: BarisShift[]): PropsDaftarShift {
@@ -103,6 +147,8 @@ describe('F-06 halaman kasir back-office', () => {
                     DisetujuiOleh: 'Budi Santoso',
                     NomorJurnal: 'JU/2026/09/000007',
                     UuidJurnal: '01K5JURNAL0000000000000007',
+                    PerluTinjauan: false,
+                    AlasanTinjauan: null,
                 },
             ],
             Penjualan: {
@@ -126,6 +172,8 @@ describe('F-06 halaman kasir back-office', () => {
                 JumlahTransaksi: 1,
                 TotalPenjualan: '96570.00',
             },
+            Laporan: laporanShift,
+            Tutup: null,
         };
 
         RenderUji(<HalamanDetailShift {...props} />);
@@ -217,6 +265,9 @@ describe('F-06 halaman kasir back-office', () => {
                 BatasDiskonManual: '5',
                 BatasDiskonPenyetuju: '30',
                 PembulatanTunai: { Kelipatan: 500, Arah: 'Terdekat' },
+                TutupShiftButa: true,
+                ToleransiSelisihKas: '10000',
+                BatasHariRetur: 7,
             },
             expect.anything(),
         );
@@ -229,6 +280,95 @@ describe('F-06 halaman kasir back-office', () => {
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             '/kelola/kasir/pengaturan',
             expect.objectContaining({ PembulatanTunai: null }),
+            expect.anything(),
+        );
+    });
+    it('F-11 daftar shift: selisih tutup shift bertanda; belum ditutup = "Belum ditutup"', () => {
+        window.history.replaceState({}, '', '/kelola/kasir/shift');
+        RenderUji(
+            <HalamanDaftarShift
+                {...PropsDaftar([
+                    barisShift,
+                    {
+                        ...barisShift,
+                        Uuid: '01K5SHIFT00000000000000002',
+                        Status: 'Tertutup',
+                        LabelStatus: 'Tertutup',
+                        PerluTinjauan: false,
+                        DitutupPada: '2026-09-24T10:00:00Z',
+                        KasAktual: '903000.00',
+                        Selisih: '-22000.00',
+                    },
+                ])}
+            />,
+        );
+        const tabel = screen.getByRole('table', { name: 'Daftar shift' });
+        expect(within(tabel).getByText('Belum ditutup')).toBeTruthy();
+        expect(within(tabel).getByText('−Rp 22.000')).toBeTruthy();
+    });
+
+    it('F-11 detail shift: laporan X saat berjalan; laporan Z + tutup shift (selisih, alasan, penyetuju, non-tunai vs sistem, jurnal)', () => {
+        const dasar: PropsDetailShift = {
+            Shift: { ...barisShift, DiterimaPada: '2026-09-24T05:00:00Z', AlasanTinjauan: null, PecahanKasAwal: [] },
+            MutasiKas: [],
+            Penjualan: { Daftar: [], JumlahTransaksi: 0, TotalPenjualan: '0.00' },
+            Laporan: laporanShift,
+            Tutup: null,
+        };
+
+        RenderUji(<HalamanDetailShift {...dasar} />);
+        expect(screen.getByRole('heading', { name: 'Laporan X (shift berjalan)' })).toBeTruthy();
+        expect(screen.getByText('QRIS Kopi Senja')).toBeTruthy();
+        expect(screen.getByText('Rp 975.000')).toBeTruthy();
+        expect(screen.queryByRole('heading', { name: 'Tutup shift' })).toBeNull();
+
+        cleanup();
+        RenderUji(
+            <HalamanDetailShift
+                {...dasar}
+                Shift={{ ...dasar.Shift, Status: 'Tertutup', LabelStatus: 'Tertutup' }}
+                Tutup={{
+                    DitutupOleh: 'Rina Wulandari',
+                    DitutupPada: '2026-09-24T10:00:00Z',
+                    KasSeharusnya: '975000.00',
+                    KasAktual: '953000.00',
+                    Selisih: '-22000.00',
+                    AlasanSelisih: 'Uang kembalian salah hitung saat ramai',
+                    Penyetuju: 'Budi Santoso',
+                    PecahanKasAkhir: [{ Nominal: '100000.00', Jumlah: 9 }],
+                    NonTunai: [
+                        {
+                            UuidMetodePembayaran: '01K5METODE0000000000000002',
+                            Jenis: 'QrisStatis',
+                            Nama: 'QRIS Kopi Senja',
+                            JumlahSistem: '46570.00',
+                            JumlahDilaporkan: '45000.00',
+                        },
+                    ],
+                    NomorJurnal: 'JU/2026/09/000011',
+                    UuidJurnal: '01K5JURNAL0000000000000011',
+                }}
+            />,
+        );
+        expect(screen.getByRole('heading', { name: 'Laporan Z (shift ditutup)' })).toBeTruthy();
+        expect(screen.getByText('−Rp 22.000 (kurang)')).toBeTruthy();
+        expect(screen.getByText('Uang kembalian salah hitung saat ramai')).toBeTruthy();
+        expect(screen.getByText('Budi Santoso')).toBeTruthy();
+        expect(screen.getByText(/beda −Rp 1.570/)).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'JU/2026/09/000011' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/jurnal/01K5JURNAL0000000000000011',
+        );
+    });
+
+    it('pengaturan kasir F-11: tutup shift buta & toleransi selisih kas terkirim', () => {
+        tiruanRouter.put.mockClear();
+        RenderUji(<HalamanPengaturanKasir {...propsPengaturan} />);
+        fireEvent.click(screen.getByRole('checkbox', { name: /Tutup shift buta/ }));
+        UbahNilai(screen.getByLabelText('Toleransi selisih kas'), '25000');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/kasir/pengaturan',
+            expect.objectContaining({ TutupShiftButa: false, ToleransiSelisihKas: '25000' }),
             expect.anything(),
         );
     });

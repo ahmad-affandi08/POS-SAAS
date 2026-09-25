@@ -7,16 +7,17 @@ namespace App\Providers;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
 use App\Domain\Kasir\Layanan\PenanganSinkronBukaShift;
 use App\Domain\Kasir\Layanan\PenanganSinkronMutasiKas;
+use App\Domain\Kasir\Layanan\PenanganSinkronTutupShift;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Provider F-06 shift & kas: mendaftarkan penangan item outbox POS (`Shift.Buka`, `MutasiKas.Catat`) ke
- * `PemrosesSinkron`. Rute didaftarkan dari routes/Pos.php dan routes/Kasir.php.
+ * Provider F-06 shift & kas: mendaftarkan penangan item outbox POS (`Shift.Buka`, `MutasiKas.Catat`, F-11
+ * `Shift.Tutup`) ke `PemrosesSinkron`. Rute didaftarkan dari routes/Pos.php dan routes/Kasir.php.
  */
 final class PenyediaKasir extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->tag([PenanganSinkronBukaShift::class, PenanganSinkronMutasiKas::class], PenanganItemSinkron::TAG);
+        $this->app->tag([PenanganSinkronBukaShift::class, PenanganSinkronMutasiKas::class, PenanganSinkronTutupShift::class], PenanganItemSinkron::TAG);
     }
 }

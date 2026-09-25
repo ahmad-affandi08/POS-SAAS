@@ -19,12 +19,12 @@ use Illuminate\Support\Collection;
 /**
  * Daftar shift back-office (F-06, izin `laporan.penjualan.lihat`) untuk `TabelData` (D-16): cari nama kasir, saring
  * outlet (hanya yang boleh diakses), status, rentang tanggal bisnis, dan hanya yang perlu ditinjau; urut waktu buka,
- * tanggal bisnis, atau kas awal. Total kas masuk, keluar, dan setoran dijumlah di SQL per shift (DECIMAL, eksak).
+ * tanggal bisnis, kas awal, atau selisih tutup shift (F-11). Total kas masuk, keluar, dan setoran dijumlah di SQL per shift (DECIMAL, eksak).
  * `KasNonPenjualan` = kas awal + masuk − keluar − setoran; penjualan tunai ditambahkan F-07.
  */
 final class DaftarShift
 {
-    public const KOLOM_URUT = ['DibukaPada', 'TanggalBisnis', 'KasAwal'];
+    public const KOLOM_URUT = ['DibukaPada', 'TanggalBisnis', 'KasAwal', 'Selisih'];
 
     public const KOLOM_SARING = ['Outlet', 'Status', 'TanggalBisnis', 'PerluTinjauan'];
 
@@ -61,6 +61,7 @@ final class DaftarShift
             'DibukaPada' => 'DibukaPada',
             'TanggalBisnis' => 'TanggalBisnis',
             'KasAwal' => 'KasAwal',
+            'Selisih' => 'Selisih',
         ], fn (Collection $shift): array => $this->Petakan($shift));
     }
 
@@ -135,6 +136,10 @@ final class DaftarShift
             'Bersama' => $s->Bersama,
             'PerluTinjauan' => $s->PerluTinjauan,
             'KasAwal' => $s->KasAwal,
+            // F-11: hasil tutup shift (null selama shift belum ditutup).
+            'DitutupPada' => $s->DitutupPada?->toIso8601String(),
+            'KasAktual' => $s->KasAktual,
+            'Selisih' => $s->Selisih,
         ] + self::HitungRingkasan($s->KasAwal, $total[$s->Id] ?? []))->all());
     }
 }

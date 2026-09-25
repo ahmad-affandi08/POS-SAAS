@@ -13,17 +13,23 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\DaftarPerangkat;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Penjualan\Data\DataSudahDiretur;
+use App\Domain\Penjualan\Layanan\PenghitungNilaiRetur;
+use App\Domain\Penjualan\Layanan\PetaMutasiPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\PenjualanPajak;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
+use App\Domain\Penjualan\Model\ReturPenjualan;
+use App\Domain\Penjualan\Model\VoidPenjualan;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
 
 /**
  * Detail penjualan back-office (F-07b, izin `laporan.penjualan.lihat`): ringkasan dokumen, baris (snapshot harga,
- * diskon, pajak, HPP), rincian pajak, pembayaran, mutasi stok (tautan kartu stok), shift, dan jurnal. Penjualan tenant
- * lain atau di outlet di luar akses = null (404).
+ * diskon, pajak, HPP), rincian pajak, pembayaran, mutasi stok (tautan kartu stok), shift, dan jurnal. F-09: void
+ * (alasan, kasir, penyetuju, refund, jeda sejak bayar), daftar retur, jumlah diretur per baris, dan mutasi pembalik
+ * void. Penjualan tenant lain atau di outlet di luar akses = null (404).
  */
 final class DetailPenjualan
 {
@@ -37,6 +43,7 @@ final class DetailPenjualan
         private readonly InfoProdukStok $infoProduk,
         private readonly InfoGudang $infoGudang,
         private readonly KomposisiPenjualan $komposisi,
+        private readonly PenghitungNilaiRetur $penghitungRetur,
     ) {}
 
     /**
@@ -52,7 +59,16 @@ final class DetailPenjualan
         }
 
         $detail = PenjualanDetail::query()->where('IdPenjualan', $p->Id)->orderBy('Urutan')->get();
-        $nama = $this->anggota->AmbilNama(array_values(array_filter([$p->IdPengguna, $p->IdPenyetujuDiskon])));
+        $void = VoidPenjualan::query()->where('IdPenjualan', $p->Id)->first();
+        $retur = ReturPenjualan::query()->where('IdPenjualanAsal', $p->Id)->orderBy('Id')->get();
+        $nama = $this->anggota->AmbilNama(array_values(array_filter([
+            $p->IdPengguna,
+            $p->IdPenyetujuDiskon,
+            $void?->DivoidOleh,
+            $void?->DisetujuiOleh,
+            ...$retur->pluck('IdPengguna')->all(),
+        ], fn (mixed $id): bool => is_int($id))));
+        $sudah = $this->penghitungRetur->AmbilSudahDiretur(array_values(array_map('intval', $detail->pluck('Id')->all())));
         $jurnal = $this->jurnal->Ambil(JenisSumberJurnal::Penjualan, $p->Id);
         $simbol = $this->komposisi->AmbilSimbolSatuan(array_values($detail->pluck('IdSatuan')->all()));
 
@@ -102,6 +118,7 @@ final class DetailPenjualan
                 'JumlahDiskonPesanan' => $d->JumlahDiskonPesanan,
                 'JumlahPajak' => $d->JumlahPajak,
                 'TotalBaris' => $d->TotalBaris,
+                'JumlahDiretur' => ($sudah[$d->Id] ?? DataSudahDiretur::Kosong())->jumlah->KeString(),
                 'HppSatuan' => $d->HppSatuan,
                 'TotalHpp' => $d->TotalHpp,
                 'Catatan' => $d->Catatan,
@@ -120,38 +137,40 @@ final class DetailPenjualan
                 'Jumlah' => $b->Jumlah,
                 'Referensi' => $b->Referensi,
             ])->all()),
+            'Void' => $void === null ? null : [
+                'Uuid' => $void->Uuid,
+                'Alasan' => $void->Alasan,
+                'NamaKasir' => $nama[$void->DivoidOleh]['Nama'] ?? '',
+                'NamaPenyetuju' => $nama[$void->DisetujuiOleh]['Nama'] ?? '',
+                'DivoidPada' => $void->DivoidPada->toIso8601String(),
+                'RefundTunai' => $void->RefundTunai,
+                'RefundNonTunai' => $void->RefundNonTunai,
+                'JedaDetik' => max(0, (int) $p->DibuatOfflinePada->diffInSeconds($void->DivoidPada, true)),
+            ],
+            'Retur' => array_values($retur->map(fn (ReturPenjualan $r): array => [
+                'Uuid' => $r->Uuid,
+                'Nomor' => $r->Nomor,
+                'DibuatOfflinePada' => $r->DibuatOfflinePada->toIso8601String(),
+                'NamaKasir' => $nama[$r->IdPengguna]['Nama'] ?? '',
+                'Alasan' => $r->Alasan,
+                'LabelMetodeRefund' => $r->MetodeRefund->AmbilLabel(),
+                'TotalRefund' => $r->TotalRefund,
+            ])->all()),
             'MutasiStok' => $this->AmbilMutasi($p->Id),
             'Jurnal' => array_map(fn (array $j): array => ['Uuid' => $j['Uuid'], 'Nomor' => $j['Nomor']], $jurnal),
         ];
     }
 
     /**
+     * Mutasi penjualan diikuti mutasi pembalik void (retur punya halaman sendiri).
+     *
      * @return list<array{Kunci: string, NamaProduk: string, NamaGudang: string, Jumlah: string, SimbolSatuan: string, TotalHpp: string, TautanKartuStok: string|null}>
      */
     private function AmbilMutasi(int $idPenjualan): array
     {
-        $mutasi = $this->mutasi->AmbilRingkasan(JenisReferensiMutasi::Penjualan, $idPenjualan);
-        $produk = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($mutasi, 'IdProduk'))), true);
-        $gudang = $this->infoGudang->AmbilBanyak(array_values(array_unique(array_column($mutasi, 'IdGudang'))));
-
-        return array_map(function (array $m) use ($produk, $gudang): array {
-            $p = $produk[$m['IdProduk']] ?? null;
-            $g = $gudang[$m['IdGudang']] ?? null;
-
-            return [
-                'Kunci' => (string) $m['Id'],
-                'NamaProduk' => $p === null ? '' : $p->nama,
-                'NamaGudang' => $g === null ? '' : $g->nama,
-                'Jumlah' => $m['Jumlah'],
-                'SimbolSatuan' => $p === null ? '' : $p->simbolSatuan,
-                'TotalHpp' => $m['TotalHpp'],
-                'TautanKartuStok' => $p === null || $g === null ? null : '/kelola/persediaan/kartu-stok?'.http_build_query([
-                    'produk' => $p->uuid,
-                    'gudang' => $g->uuid,
-                    'dari' => $m['TanggalBisnis'],
-                    'sampai' => $m['TanggalBisnis'],
-                ]),
-            ];
-        }, $mutasi);
+        return PetaMutasiPenjualan::Petakan([
+            ...$this->mutasi->AmbilRingkasan(JenisReferensiMutasi::Penjualan, $idPenjualan),
+            ...$this->mutasi->AmbilRingkasan(JenisReferensiMutasi::VoidPenjualan, $idPenjualan),
+        ], $this->infoProduk, $this->infoGudang);
     }
 }

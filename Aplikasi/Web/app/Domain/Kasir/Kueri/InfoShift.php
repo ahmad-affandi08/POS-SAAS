@@ -37,6 +37,18 @@ final class InfoShift
         return $hasil;
     }
 
+    /**
+     * F-09 void: waktu tutup shift per Id (null bila belum ditutup atau tidak dikenal) dengan kunci bersama baris shift,
+     * sehingga void serial dengan tutup shift F-11 (kunci eksklusif).
+     */
+    public function AmbilWaktuTutup(int $id): ?CarbonImmutable
+    {
+        $shift = Shift::query()->whereKey($id)->sharedLock()->first(['Id', 'DitutupPada']);
+        $ditutup = $shift?->DitutupPada;
+
+        return $ditutup === null ? null : CarbonImmutable::parse($ditutup);
+    }
+
     /** Id shift tenant aktif dari Uuid, null bila tidak ada. */
     public function CariId(string $uuid): ?int
     {

@@ -24,8 +24,12 @@ use App\Domain\Penjualan\Kalkulasi\DataPembulatanTunai;
 use App\Domain\Penjualan\Kalkulasi\DataPotongan;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
 use App\Domain\Penjualan\Model\MetodePembayaran;
+use App\Domain\Penjualan\Model\Penjualan;
+use App\Domain\Penjualan\Model\PenjualanDetail;
+use App\Domain\Penjualan\Model\ReturPenjualanDetail;
 use App\Domain\Tenant\Model\Tenant;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use RuntimeException;
 use Tests\Pendukung\Kasir\BantuanKasir;
@@ -44,6 +48,10 @@ use Tests\TestCase;
  * 'Pilihan' => list<Pilihan>, 'DiskonManual' => ['Persen' => '5']|['Jumlah' => '1000.00']|null, 'KodePajak' => list|null,
  * 'HargaTermasukPajak' => bool|null]`. Pembayaran: `[['Metode' => MetodePembayaran, 'Jumlah' => '...'|null]]`
  * (tunai tanpa jumlah = uang pas; bawaan satu pembayaran tunai uang pas).
+ *
+ * F-09: `Jual()` (kirim `Penjualan.Buat` lalu kembalikan `Penjualan`), `ItemVoid()` (`Penjualan.Void`), dan
+ * `ItemRetur()` (`ReturPenjualan.Buat`, `Ringkasan.TotalRefund` dihitung seperti aplikasi kasir: bagian proporsional
+ * `TotalBaris` dibulatkan ke sen, retur yang menghabiskan sisa baris mengambil sisa nilai).
  */
 final class BantuanPenjualan
 {
@@ -219,6 +227,139 @@ final class BantuanPenjualan
                 'Catatan' => 'Pelanggan minta struk digital',
             ], $timpa),
         ];
+    }
+
+    /**
+     * Kirim satu penjualan lunas lewat sinkron lalu kembalikan dokumennya (konteks tenant diatur ulang).
+     *
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     * @param  array<string, mixed>  $opsi  lihat `Item()`
+     */
+    public static function Jual(TestCase $tes, array $k, array $opsi, ?string $token = null): Penjualan
+    {
+        $item = self::Item($k, $opsi);
+        $hasil = BantuanKasir::KirimRingkas($tes, $token ?? $k['Token'], [$item]);
+
+        if ($hasil !== [['Diterima', null]]) {
+            throw new RuntimeException('Penjualan uji gagal: '.json_encode($hasil));
+        }
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        return Penjualan::query()->where('Uuid', $item['Uuid'])->firstOrFail();
+    }
+
+    /**
+     * Item outbox `Penjualan.Void`. `opsi`: `Kasir`, `Penyetuju` (Pengguna; bawaan Supervisor), `Alasan`, `DivoidPada`.
+     *
+     * @param  array<string, mixed>  $k
+     * @param  array<string, mixed>  $opsi
+     * @param  array<string, mixed>  $timpa
+     * @return array{Jenis: string, Uuid: string, Data: array<string, mixed>}
+     */
+    public static function ItemVoid(array $k, Penjualan $penjualan, array $opsi = [], array $timpa = [], ?string $uuid = null): array
+    {
+        /** @var Pengguna $kasir */
+        $kasir = $opsi['Kasir'] ?? $k['Kasir'];
+        /** @var Pengguna $penyetuju */
+        $penyetuju = $opsi['Penyetuju'] ?? $k['Supervisor'];
+        /** @var CarbonImmutable $waktu */
+        $waktu = $opsi['DivoidPada'] ?? CarbonImmutable::now()->subMinute();
+
+        return [
+            'Jenis' => 'Penjualan.Void',
+            'Uuid' => $uuid ?? BantuanKasir::Uuid(),
+            'Data' => array_replace([
+                'UuidPenjualan' => $penjualan->Uuid,
+                'UuidPengguna' => $kasir->Uuid,
+                'UuidPenyetuju' => $penyetuju->Uuid,
+                'Alasan' => $opsi['Alasan'] ?? 'Pelanggan batal membeli, salah input barang',
+                'DivoidPada' => $waktu->utc()->toIso8601ZuluString(),
+            ], $timpa),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $k
+     */
+    public static function NomorRetur(array $k, ?int $urutan = null, ?CarbonImmutable $waktu = null): string
+    {
+        return str_replace('INV/', 'RJ/', self::Nomor($k, $urutan, $waktu ?? CarbonImmutable::now()->subMinute()));
+    }
+
+    /**
+     * Item outbox `ReturPenjualan.Buat`. `baris`: `[['Detail' => PenjualanDetail, 'Jumlah' => '1', 'Kondisi' =>
+     * 'LayakJual'|'Rusak']]`. `opsi`: `Refund` (`[['Metode' => MetodePembayaran, 'Jumlah' => '...'|null]]`, bawaan satu
+     * refund tunai sebesar total), `Kasir`, `Penyetuju` (bawaan Supervisor), `Alasan`, `DibuatPada`, `UuidShift`.
+     *
+     * @param  array<string, mixed>  $k
+     * @param  list<array<string, mixed>>  $baris
+     * @param  array<string, mixed>  $opsi
+     * @param  array<string, mixed>  $timpa
+     * @return array{Jenis: string, Uuid: string, Data: array<string, mixed>}
+     */
+    public static function ItemRetur(array $k, Penjualan $penjualan, array $baris, array $opsi = [], array $timpa = [], ?string $uuid = null): array
+    {
+        /** @var CarbonImmutable $waktu */
+        $waktu = $opsi['DibuatPada'] ?? CarbonImmutable::now()->subMinute();
+        $total = Uang::Nol();
+        $dataBaris = [];
+
+        foreach ($baris as $b) {
+            /** @var PenjualanDetail $d */
+            $d = $b['Detail'];
+            $jumlah = BigDecimal::of((string) ($b['Jumlah'] ?? $d->Jumlah));
+            $total = $total->Tambah(self::NilaiRetur($d, $jumlah));
+            $dataBaris[] = [
+                'Uuid' => BantuanKasir::Uuid(),
+                'UuidPenjualanDetail' => $d->Uuid,
+                'Jumlah' => (string) $jumlah,
+                'Kondisi' => $b['Kondisi'] ?? 'LayakJual',
+            ];
+        }
+
+        $refund = [];
+
+        foreach ($opsi['Refund'] ?? [['Metode' => $k['Tunai'], 'Jumlah' => null]] as $r) {
+            /** @var MetodePembayaran $metode */
+            $metode = $r['Metode'];
+            $refund[] = ['Uuid' => BantuanKasir::Uuid(), 'UuidMetodePembayaran' => $metode->Uuid, 'Jumlah' => $r['Jumlah'] ?? $total->KeString()];
+        }
+
+        /** @var Pengguna $kasir */
+        $kasir = $opsi['Kasir'] ?? $k['Kasir'];
+        /** @var Pengguna $penyetuju */
+        $penyetuju = $opsi['Penyetuju'] ?? $k['Supervisor'];
+
+        return [
+            'Jenis' => 'ReturPenjualan.Buat',
+            'Uuid' => $uuid ?? BantuanKasir::Uuid(),
+            'Data' => array_replace([
+                'UuidPenjualanAsal' => $penjualan->Uuid,
+                'UuidShift' => $opsi['UuidShift'] ?? $k['UuidShift'],
+                'UuidPengguna' => $kasir->Uuid,
+                'UuidPenyetuju' => $penyetuju->Uuid,
+                'Nomor' => self::NomorRetur($k, waktu: $waktu),
+                'Alasan' => $opsi['Alasan'] ?? 'Kemasan bocor saat dibuka pelanggan di rumah',
+                'DibuatPada' => $waktu->utc()->toIso8601ZuluString(),
+                'Baris' => $dataBaris,
+                'Refund' => $refund,
+                'Ringkasan' => ['TotalRefund' => $total->KeString()],
+            ], $timpa),
+        ];
+    }
+
+    /** Nilai retur seperti aplikasi kasir: proporsional ke sen HalfUp; menghabiskan sisa = sisa nilai baris. */
+    private static function NilaiRetur(PenjualanDetail $d, BigDecimal $jumlah): Uang
+    {
+        $sudahJumlah = BigDecimal::of((string) (ReturPenjualanDetail::query()->where('IdPenjualanDetail', $d->Id)->sum('Jumlah') ?: '0'));
+        $sudahNilai = Uang::Dari((string) (ReturPenjualanDetail::query()->where('IdPenjualanDetail', $d->Id)->sum('NilaiBaris') ?: '0'));
+
+        if ($sudahJumlah->plus($jumlah)->isEqualTo(BigDecimal::of($d->Jumlah))) {
+            return Uang::Dari($d->TotalBaris)->Kurangi($sudahNilai);
+        }
+
+        return Uang::Dari(BigDecimal::of($d->TotalBaris)->multipliedBy($jumlah)->dividedBy($d->Jumlah, 2, RoundingMode::HalfUp));
     }
 
     /**

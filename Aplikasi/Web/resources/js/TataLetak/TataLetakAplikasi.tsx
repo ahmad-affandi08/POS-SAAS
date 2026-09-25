@@ -76,6 +76,12 @@ const menuKasir: ItemMenu[] = [
     { label: 'Pengaturan kasir', href: '/kelola/kasir/pengaturan', izin: IzinTenant.OutletKelola },
 ];
 
+// F-07b/F-09: grup menu "Penjualan" (baca saja): daftar penjualan dan void & retur (anti-fraud BR-09.3).
+const menuPenjualan: ItemMenu[] = [
+    { label: 'Daftar penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
+    { label: 'Void & retur', href: '/kelola/penjualan/void-retur', izin: IzinTenant.LaporanPenjualanLihat },
+];
+
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).
 const menuAkuntansi: ItemMenu[] = [
     { label: 'Jurnal', href: '/kelola/akuntansi/jurnal', izin: IzinTenant.LaporanKeuanganLihat },
@@ -116,8 +122,15 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
     },
-    // F-07b: penjualan dari aplikasi POS (baca saja).
-    { label: 'Penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat, ikon: ReceiptTextIcon },
+    // F-07b: penjualan dari aplikasi POS (baca saja); F-09: void & retur.
+    {
+        label: 'Penjualan',
+        href: '/kelola/penjualan',
+        izin: null,
+        ikon: ReceiptTextIcon,
+        labelSub: 'Menu penjualan',
+        sub: menuPenjualan,
+    },
     {
         label: 'Shift & kas',
         href: '/kelola/kasir/shift',

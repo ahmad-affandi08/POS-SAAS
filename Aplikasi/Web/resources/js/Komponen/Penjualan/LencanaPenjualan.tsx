@@ -4,6 +4,7 @@ import type { StatusPenjualan } from '@/Tipe/Penjualan';
 const jenis: Record<StatusPenjualan, 'sukses' | 'peringatan' | 'bahaya' | 'netral'> = {
     Lunas: 'sukses',
     Void: 'bahaya',
+    DireturSebagian: 'peringatan',
     Diretur: 'netral',
 };
 

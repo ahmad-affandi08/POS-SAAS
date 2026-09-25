@@ -16,7 +16,9 @@ use App\Domain\Penjualan\Kueri\DaftarPenjualan;
 
 /**
  * Detail shift back-office (F-06): data pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan daftar mutasi
- * kas beserta kategori, pencatat, penyetuju, dan jurnalnya. F-07b: penjualan shift (lewat kueri publik Penjualan). Shift tenant lain atau di outlet di luar akses = null.
+ * kas beserta kategori, pencatat, penyetuju, dan jurnalnya. F-07b: penjualan shift (lewat kueri publik Penjualan).
+ * F-11: laporan shift X/Z (`LaporanShift`) dan data tutup shift (kas seharusnya/aktual/selisih, alasan, penyetuju,
+ * pecahan, non-tunai per metode vs sistem, jurnal selisih). Shift tenant lain atau di outlet di luar akses = null.
  */
 final class DetailShift
 {
@@ -26,6 +28,7 @@ final class DetailShift
         private readonly AnggotaOutlet $anggota,
         private readonly JurnalSumber $jurnal,
         private readonly DaftarPenjualan $penjualan,
+        private readonly LaporanShift $laporan,
     ) {}
 
     /**
@@ -44,6 +47,8 @@ final class DetailShift
         $kategori = KategoriKas::query()->whereIn('Id', $mutasi->pluck('IdKategoriKas')->filter()->all())->get()->keyBy('Id');
         $nama = $this->anggota->AmbilNama(array_values(array_filter([
             $shift->DibukaOleh,
+            $shift->DitutupOleh,
+            $shift->IdPenyetujuSelisih,
             ...$mutasi->pluck('DicatatOleh')->all(),
             ...$mutasi->pluck('DisetujuiOleh')->filter()->all(),
         ])));
@@ -81,9 +86,43 @@ final class DetailShift
                     'DisetujuiOleh' => $m->DisetujuiOleh === null ? null : ($nama[$m->DisetujuiOleh]['Nama'] ?? ''),
                     'NomorJurnal' => $jurnal['Nomor'] ?? null,
                     'UuidJurnal' => $jurnal['Uuid'] ?? null,
+                    'PerluTinjauan' => $m->PerluTinjauan,
+                    'AlasanTinjauan' => $m->AlasanTinjauan,
                 ];
             })->all()),
             'Penjualan' => $this->penjualan->AmbilUntukShift($shift->Id),
+            // F-11: laporan X (shift berjalan) / Z (shift tertutup) dari data server saat ini.
+            'Laporan' => $this->laporan->Hitung($shift)->KeLarik(),
+            'Tutup' => $this->SusunTutup($shift, $nama),
+        ];
+    }
+
+    /**
+     * Data tutup shift (F-11); null bila shift belum ditutup.
+     *
+     * @param  array<int, array{Uuid: string, Nama: string}>  $nama
+     * @return array<string, mixed>|null
+     */
+    private function SusunTutup(Shift $shift, array $nama): ?array
+    {
+        if ($shift->DitutupPada === null) {
+            return null;
+        }
+
+        $jurnal = $this->jurnal->Ambil(JenisSumberJurnal::TutupShift, $shift->Id)[0] ?? null;
+
+        return [
+            'DitutupOleh' => $shift->DitutupOleh === null ? '' : ($nama[$shift->DitutupOleh]['Nama'] ?? ''),
+            'DitutupPada' => $shift->DitutupPada->toIso8601String(),
+            'KasSeharusnya' => $shift->KasSeharusnya,
+            'KasAktual' => $shift->KasAktual,
+            'Selisih' => $shift->Selisih,
+            'AlasanSelisih' => $shift->AlasanSelisih,
+            'Penyetuju' => $shift->IdPenyetujuSelisih === null ? null : ($nama[$shift->IdPenyetujuSelisih]['Nama'] ?? ''),
+            'PecahanKasAkhir' => $shift->PecahanKasAkhir ?? [],
+            'NonTunai' => $shift->RingkasanNonTunai ?? [],
+            'NomorJurnal' => $jurnal['Nomor'] ?? null,
+            'UuidJurnal' => $jurnal['Uuid'] ?? null,
         ];
     }
 

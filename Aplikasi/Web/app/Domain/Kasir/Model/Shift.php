@@ -37,6 +37,9 @@ use LogicException;
  * @property string|null $KasAktual
  * @property string|null $Selisih
  * @property list<array{Nominal: string, Jumlah: int}>|null $PecahanKasAkhir
+ * @property list<array{UuidMetodePembayaran: string, Jenis: string, Nama: string, JumlahSistem: string, JumlahDilaporkan: string|null}>|null $RingkasanNonTunai
+ * @property string|null $AlasanSelisih
+ * @property int|null $IdPenyetujuSelisih
  */
 final class Shift extends ModelDasar
 {
@@ -47,6 +50,9 @@ final class Shift extends ModelDasar
 
     /** Kolom pembukaan yang tidak boleh berubah setelah shift diterima. */
     private const KOLOM_PEMBUKAAN = ['IdTenant', 'IdOutlet', 'IdPerangkat', 'Uuid', 'Bersama', 'DibukaOleh', 'DibukaPada', 'TanggalBisnis', 'KasAwal', 'PecahanKasAwal', 'DiterimaPada'];
+
+    /** Kolom tutup shift (F-11): hanya diisi saat shift berubah ke `Tertutup`, tidak diubah setelahnya. */
+    private const KOLOM_TUTUP = ['DitutupOleh', 'DitutupPada', 'KasSeharusnya', 'KasAktual', 'Selisih', 'PecahanKasAkhir', 'RingkasanNonTunai', 'AlasanSelisih', 'IdPenyetujuSelisih'];
 
     protected $table = 'Shift';
 
@@ -69,6 +75,7 @@ final class Shift extends ModelDasar
             'KasAktual' => 'decimal:2',
             'Selisih' => 'decimal:2',
             'PecahanKasAkhir' => 'array',
+            'RingkasanNonTunai' => 'array',
         ];
     }
 
@@ -78,6 +85,21 @@ final class Shift extends ModelDasar
             foreach (self::KOLOM_PEMBUKAAN as $kolom) {
                 if ($shift->isDirty($kolom)) {
                     throw new LogicException("Data pembukaan shift ({$kolom}) tidak boleh diubah.");
+                }
+            }
+
+            $statusLama = $shift->getOriginal('Status');
+            $statusLama = $statusLama instanceof StatusShift ? $statusLama : StatusShift::tryFrom((string) $statusLama);
+
+            if ($shift->isDirty('Status') && ($statusLama === null || ! $statusLama->BisaBerubahKe($shift->Status))) {
+                throw new LogicException("Status shift tidak boleh berubah dari {$statusLama?->value} ke {$shift->Status->value}.");
+            }
+
+            $sedangDitutup = $shift->isDirty('Status') && $shift->Status === StatusShift::Tertutup;
+
+            foreach (self::KOLOM_TUTUP as $kolom) {
+                if (! $sedangDitutup && $shift->isDirty($kolom)) {
+                    throw new LogicException("Data tutup shift ({$kolom}) hanya diisi saat shift ditutup.");
                 }
             }
         });

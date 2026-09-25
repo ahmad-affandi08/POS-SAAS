@@ -8,9 +8,10 @@ import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
+import { AmbilTandaDesimal, KurangiDesimal } from '@/Pustaka/HitungDesimal';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { PropsDetailShift } from '@/Tipe/Kasir';
+import type { LaporanShift, PropsDetailShift, TutupShift } from '@/Tipe/Kasir';
 
 type MutasiKas = PropsDetailShift['MutasiKas'][number];
 
@@ -33,6 +34,11 @@ const kolom: KolomTabel<MutasiKas>[] = [
                 {m.NamaKategori ? <span className="block text-label text-teks-sekunder">{m.NamaKategori}</span> : null}
                 {m.Catatan ? (
                     <span className="block text-label break-words text-teks-sekunder">{m.Catatan}</span>
+                ) : null}
+                {m.PerluTinjauan ? (
+                    <span className="block text-label text-bahaya">
+                        Perlu ditinjau{m.AlasanTinjauan ? `: ${m.AlasanTinjauan}` : ''}
+                    </span>
                 ) : null}
             </>
         ),
@@ -88,11 +94,208 @@ function Nilai({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
+function Uang({ nilai, tebal = false }: { nilai: string; tebal?: boolean }) {
+    return <span className={`tabular-nums ${tebal ? 'font-semibold' : ''}`}>{FormatRupiah(nilai)}</span>;
+}
+
+/** Selisih bertanda: "+Rp 28.000" / "−Rp 7.000" / "Rp 0", warna bahaya bila tidak nol (teks tetap terbaca). */
+function Selisih({ nilai }: { nilai: string }) {
+    const tanda = AmbilTandaDesimal(nilai);
+
+    return (
+        <span className={`font-semibold tabular-nums ${tanda === 0 ? 'text-teks-utama' : 'text-bahaya'}`}>
+            {tanda > 0 ? '+' : ''}
+            {FormatRupiah(nilai)}
+            {tanda < 0 ? ' (kurang)' : tanda > 0 ? ' (lebih)' : ''}
+        </span>
+    );
+}
+
+/** F-11: laporan shift X (shift berjalan) / Z (shift tertutup) dari data server. */
+function BagianLaporan({ laporan, tertutup }: { laporan: LaporanShift; tertutup: boolean }) {
+    const p = laporan.Penjualan;
+    const k = laporan.Kas;
+
+    return (
+        <Card className="gap-4 rounded-panel p-4 shadow-none" aria-labelledby="judul-laporan-shift">
+            <div>
+                <h2 id="judul-laporan-shift" className="text-subjudul font-semibold text-teks-utama">
+                    {tertutup ? 'Laporan Z (shift ditutup)' : 'Laporan X (shift berjalan)'}
+                </h2>
+                <p className="text-keterangan text-teks-sekunder">
+                    Dihitung dari data yang sudah diterima server. Penjualan yang di-void tidak termasuk penjualan.
+                </p>
+            </div>
+            <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Nilai label="Jumlah transaksi">
+                    <span className="tabular-nums">{p.JumlahTransaksi}</span>
+                </Nilai>
+                <Nilai label="Penjualan kotor">
+                    <Uang nilai={p.PenjualanKotor} />
+                </Nilai>
+                <Nilai label="Diskon">
+                    <Uang nilai={p.TotalDiskon} />
+                </Nilai>
+                <Nilai label="Penjualan bersih">
+                    <Uang nilai={p.PenjualanBersih} tebal />
+                </Nilai>
+                <Nilai label="Pajak">
+                    <Uang nilai={p.TotalPajak} />
+                </Nilai>
+                <Nilai label="Biaya layanan">
+                    <Uang nilai={p.BiayaLayanan} />
+                </Nilai>
+                <Nilai label="Pembulatan">
+                    <Uang nilai={p.Pembulatan} />
+                </Nilai>
+                <Nilai label="Total dibayar pelanggan">
+                    <Uang nilai={p.TotalAkhir} tebal />
+                </Nilai>
+                <Nilai label="Void">
+                    <span className="tabular-nums">
+                        {p.JumlahVoid} · {FormatRupiah(p.NominalVoid)}
+                    </span>
+                </Nilai>
+                <Nilai label="Retur">
+                    <span className="tabular-nums">
+                        {p.JumlahRetur} · {FormatRupiah(p.NominalRetur)}
+                    </span>
+                </Nilai>
+            </dl>
+            <div>
+                <h3 className="text-label font-semibold text-teks-sekunder">Per metode bayar</h3>
+                {p.PerMetode.length === 0 ? (
+                    <p className="text-isi text-teks-sekunder">Belum ada pembayaran.</p>
+                ) : (
+                    <ul className="mt-1 flex flex-col divide-y divide-garis">
+                        {p.PerMetode.map((m) => (
+                            <li key={m.UuidMetodePembayaran} className="flex items-baseline justify-between gap-4 py-1">
+                                <span className="min-w-0 break-words">{m.Nama}</span>
+                                <Uang nilai={m.Jumlah} />
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+            <div>
+                <h3 className="text-label font-semibold text-teks-sekunder">Kas laci</h3>
+                <ul className="mt-1 flex flex-col divide-y divide-garis">
+                    {[
+                        ['Kas awal', k.KasAwal, ''],
+                        ['Penjualan tunai bersih', k.TunaiMasukBersih, '+'],
+                        ['Kas masuk', k.TotalMasuk, '+'],
+                        ['Kas keluar', k.TotalKeluar, '−'],
+                        ['Setoran', k.TotalSetoran, '−'],
+                        ['Refund tunai (void & retur)', k.RefundTunai, '−'],
+                    ].map(([label, nilai, tanda]) => (
+                        <li key={label} className="flex items-baseline justify-between gap-4 py-1">
+                            <span>{label}</span>
+                            <span className="tabular-nums">
+                                {tanda}
+                                {FormatRupiah(nilai ?? '0')}
+                            </span>
+                        </li>
+                    ))}
+                    <li className="flex items-baseline justify-between gap-4 py-1 font-semibold">
+                        <span>Kas seharusnya</span>
+                        <Uang nilai={k.KasSeharusnya} tebal />
+                    </li>
+                </ul>
+            </div>
+        </Card>
+    );
+}
+
+/** F-11: hasil tutup shift yang dikirim perangkat (angka kas seharusnya dihitung server saat diterima). */
+function BagianTutup({ tutup }: { tutup: TutupShift }) {
+    return (
+        <Card className="gap-4 rounded-panel p-4 shadow-none" aria-labelledby="judul-tutup-shift">
+            <h2 id="judul-tutup-shift" className="text-subjudul font-semibold text-teks-utama">
+                Tutup shift
+            </h2>
+            <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Nilai label="Ditutup">
+                    {tutup.DitutupOleh} · {FormatTanggalWaktu(tutup.DitutupPada)}
+                </Nilai>
+                <Nilai label="Kas seharusnya">
+                    <Uang nilai={tutup.KasSeharusnya} />
+                </Nilai>
+                <Nilai label="Kas aktual (dihitung kasir)">
+                    <Uang nilai={tutup.KasAktual} />
+                </Nilai>
+                <Nilai label="Selisih">
+                    <Selisih nilai={tutup.Selisih} />
+                </Nilai>
+                {tutup.AlasanSelisih ? (
+                    <Nilai label="Alasan selisih">
+                        <span className="break-words">{tutup.AlasanSelisih}</span>
+                    </Nilai>
+                ) : null}
+                {tutup.Penyetuju ? <Nilai label="Disetujui">{tutup.Penyetuju}</Nilai> : null}
+                {tutup.UuidJurnal && tutup.NomorJurnal ? (
+                    <Nilai label="Jurnal selisih">
+                        <Link
+                            href={`/kelola/akuntansi/jurnal/${tutup.UuidJurnal}`}
+                            className="font-mono text-brand underline"
+                        >
+                            {tutup.NomorJurnal}
+                        </Link>
+                    </Nilai>
+                ) : null}
+            </dl>
+            {tutup.PecahanKasAkhir.length > 0 ? (
+                <div>
+                    <h3 className="text-label font-semibold text-teks-sekunder">Hitungan pecahan kas akhir</h3>
+                    <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-isi tabular-nums">
+                        {tutup.PecahanKasAkhir.map((p) => (
+                            <li key={p.Nominal}>
+                                {FormatRupiah(p.Nominal)} × {p.Jumlah}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
+            {tutup.NonTunai.length > 0 ? (
+                <div>
+                    <h3 className="text-label font-semibold text-teks-sekunder">
+                        Non-tunai: sistem dan hitungan kasir
+                    </h3>
+                    <ul className="mt-1 flex flex-col divide-y divide-garis">
+                        {tutup.NonTunai.map((m) => {
+                            const beda =
+                                m.JumlahDilaporkan === null ? null : KurangiDesimal(m.JumlahDilaporkan, m.JumlahSistem);
+
+                            return (
+                                <li
+                                    key={m.UuidMetodePembayaran}
+                                    className="flex flex-col gap-0.5 py-1 sm:flex-row sm:justify-between sm:gap-4"
+                                >
+                                    <span className="min-w-0 break-words">{m.Nama}</span>
+                                    <span className="tabular-nums">
+                                        Sistem {FormatRupiah(m.JumlahSistem)} · Kasir{' '}
+                                        {m.JumlahDilaporkan === null ? 'tidak diisi' : FormatRupiah(m.JumlahDilaporkan)}
+                                        {beda !== null && AmbilTandaDesimal(beda) !== 0 ? (
+                                            <span className="font-semibold text-bahaya">
+                                                {' '}
+                                                · beda {FormatRupiah(beda)}
+                                            </span>
+                                        ) : null}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            ) : null}
+        </Card>
+    );
+}
+
 /**
  * F-06: detail shift (baca saja): pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan mutasi kas.
- * F-07b: penjualan yang dibuat di shift ini.
+ * F-07b: penjualan yang dibuat di shift ini. F-11: laporan shift X/Z dan hasil tutup shift.
  */
-export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan }: PropsDetailShift) {
+export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan, Laporan, Tutup }: PropsDetailShift) {
     return (
         <TataLetakAplikasi judul={`Shift ${Shift.NamaKasir} · ${FormatTanggalWaktu(Shift.DibukaPada)}`}>
             <Button asChild variant="link" className="h-auto self-start px-0">
@@ -147,6 +350,9 @@ export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan }: Prop
                     </div>
                 ) : null}
             </Card>
+
+            {Tutup ? <BagianTutup tutup={Tutup} /> : null}
+            <BagianLaporan laporan={Laporan} tertutup={Tutup !== null} />
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Kas masuk, keluar & setoran</h2>
             <TabelData

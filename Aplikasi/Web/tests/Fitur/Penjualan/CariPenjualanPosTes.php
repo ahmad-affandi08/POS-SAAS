@@ -1,0 +1,106 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Organisasi\Model\Outlet;
+use Illuminate\Support\Facades\DB;
+use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Organisasi\BantuanPerangkat;
+use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Tenant\BantuanPendaftaran;
+
+beforeEach(function (): void {
+    BantuanPendaftaran::SiapkanPrasyarat();
+});
+
+describe('F-09 GET /api/pos/v1/penjualan/cari (struk asal untuk retur)', function (): void {
+    it('mengembalikan penjualan outlet perangkat beserta baris (snapshot, jumlah sudah/bisa diretur, sisa nilai), pembayaran, dan retur sebelumnya', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+        $p = BantuanPenjualan::Jual($this, $k, [
+            'Baris' => [['Produk' => $minyak, 'Jumlah' => '3', 'Harga' => '38500.00']],
+            'Pembayaran' => [['Metode' => $k['Qris'], 'Jumlah' => '15500.00', 'Referensi' => 'QR-77'], ['Metode' => $k['Tunai'], 'Jumlah' => '100000.00']],
+        ]);
+        $d = $p->Detail()->firstOrFail();
+        $retur = BantuanPenjualan::ItemRetur($k, $p, [['Detail' => $d, 'Jumlah' => '1']]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$retur]))->toBe([['Diterima', null]]);
+
+        $respons = $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))->assertOk();
+
+        expect($respons->json('Penjualan'))->toMatchArray([
+            'Uuid' => $p->Uuid,
+            'Nomor' => $p->Nomor,
+            'Status' => 'DireturSebagian',
+            'TotalAkhir' => '115500.00',
+            'Kembalian' => '0.00',
+            'BatasHariRetur' => 7,
+            'BisaDiretur' => true,
+            'AlasanTidakBisaDiretur' => null,
+        ])
+            ->and($respons->json('Baris'))->toHaveCount(1)
+            ->and($respons->json('Baris.0'))->toMatchArray([
+                'Uuid' => $d->Uuid,
+                'UuidProduk' => $minyak->Uuid,
+                'Jumlah' => '3.0000',
+                'TotalBaris' => '115500.00',
+                'JumlahSudahDiretur' => '1.0000',
+                'JumlahBisaDiretur' => '2.0000',
+                'NilaiBisaDiretur' => '77000.00',
+            ])
+            ->and($respons->json('Pembayaran.0'))->toMatchArray(['UuidMetodePembayaran' => $k['Qris']->Uuid, 'JenisMetode' => 'QrisStatis', 'Jumlah' => '15500.00', 'Referensi' => 'QR-77'])
+            ->and($respons->json('Pembayaran.1.JenisMetode'))->toBe('Tunai')
+            ->and($respons->json('Retur'))->toBe([[
+                'Uuid' => $retur['Uuid'],
+                'Nomor' => $retur['Data']['Nomor'],
+                'DibuatPada' => $retur['Data']['DibuatPada'],
+                'TotalRefund' => '38500.00',
+            ]]);
+    });
+
+    it('penjualan void, diretur penuh, dan lewat batas hari: BisaDiretur false dengan alasan', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+        $baris = ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]];
+        $void = BantuanPenjualan::Jual($this, $k, $baris);
+        $penuh = BantuanPenjualan::Jual($this, $k, $baris);
+        $lama = BantuanPenjualan::Jual($this, $k, $baris);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [
+            BantuanPenjualan::ItemVoid($k, $void),
+            BantuanPenjualan::ItemRetur($k, $penuh, [['Detail' => $penuh->Detail()->firstOrFail()]]),
+        ]))->toBe([['Diterima', null], ['Diterima', null]]);
+        DB::table('Penjualan')->where('Id', $lama->Id)->update(['TanggalBisnis' => $lama->TanggalBisnis->copy()->subDays(10)->toDateString()]);
+
+        $cari = fn (string $nomor) => $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($nomor))->assertOk();
+
+        expect($cari($void->Nomor)->json('Penjualan.AlasanTidakBisaDiretur'))->toBe('Void')
+            ->and($cari($penuh->Nomor)->json('Penjualan'))->toMatchArray(['BisaDiretur' => false, 'AlasanTidakBisaDiretur' => 'SudahDireturPenuh'])
+            ->and($cari($penuh->Nomor)->json('Baris.0.JumlahBisaDiretur'))->toBe('0.0000')
+            ->and($cari($lama->Nomor)->json('Penjualan'))->toMatchArray(['BisaDiretur' => false, 'AlasanTidakBisaDiretur' => 'LewatBatasHari']);
+    });
+
+    it('404 PenjualanTidakDitemukan untuk nomor tidak ada, outlet lain, dan tenant lain; 422 tanpa nomor; 401 tanpa token', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+        $p = BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]]);
+
+        $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor=INV/UTAMA/000000/X-0001')
+            ->assertNotFound()
+            ->assertJsonPath('Galat.Kode', 'PenjualanTidakDitemukan');
+        $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari')->assertUnprocessable();
+
+        // Perangkat di outlet lain tenant yang sama.
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $outletLain = Outlet::query()->create(['IdMerek' => $k['Outlet']->IdMerek, 'Kode' => 'CBG2', 'Nama' => 'Cabang Kartasura']);
+        $perangkatLain = BantuanPerangkat::BuatDanAktifkan($this, $k['Tenant']->Id, $outletLain);
+        $this->withToken($perangkatLain['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))
+            ->assertNotFound()
+            ->assertJsonPath('Galat.Kode', 'PenjualanTidakDitemukan');
+
+        $b = BantuanPenjualan::Siapkan($this, 'Warung Bakso Pak Kumis');
+        $this->withToken($b['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))->assertNotFound();
+
+        $this->app['auth']->forgetGuards();
+        $this->withHeaders(['Authorization' => ''])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))->assertUnauthorized();
+    });
+});

@@ -12,6 +12,7 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Kasir\Data\DataMutasiKas;
 use App\Domain\Kasir\Enum\JenisMutasiKas;
+use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Layanan\PenyusunJurnalMutasiKas;
 use App\Domain\Kasir\Model\KategoriKas;
 use App\Domain\Kasir\Model\MutasiKas;
@@ -29,7 +30,8 @@ use Illuminate\Support\Facades\DB;
  * F-06 langkah 4: kas masuk/keluar/setoran non-penjualan dalam shift diterima server lewat sinkron.
  *
  * - Idempoten per `Uuid` (`Duplikat`); Uuid dipakai data lain = `UuidSudahDipakai`.
- * - Shift wajib milik perangkat pengirim dan masih aktif (dikunci baris agar serial dengan tutup shift F-11).
+ * - Shift wajib milik perangkat pengirim dan masih aktif (dikunci baris agar serial dengan tutup shift F-11). Shift yang
+ *   sudah `Tertutup` tetap menerima kas dengan `PerluTinjauan` (`ShiftSudahDitutup`, F-11).
  * - Pencatat: anggota outlet dengan izin `penjualan.buat`; pada shift yang bukan bersama (BR-06.2) hanya pembuka
  *   shift atau pemegang `kas.keluar.setujui` (supervisor).
  * - Masuk/Keluar wajib kategori aktif yang jenisnya sama; Setoran tanpa kategori.
@@ -93,7 +95,11 @@ final class CatatMutasiKas
             return StatusItemSinkron::Duplikat;
         }
 
-        if (! $shift->Status->CekAktif()) {
+        // F-11: kas yang tiba setelah shift ditutup (outbox FIFO, dicatat sebelum tutup di perangkat) tetap diterima
+        // dengan tanda tinjauan karena kas seharusnya shift sudah dihitung. Status lain yang tidak aktif ditolak.
+        $sudahDitutup = $shift->Status === StatusShift::Tertutup;
+
+        if (! $shift->Status->CekAktif() && ! $sudahDitutup) {
             throw new PelanggaranAturanBisnis('ShiftTidakAktif', "Shift ini sudah {$shift->Status->AmbilLabel()}; kas tidak bisa dicatat lagi.", 'UuidShift');
         }
 
@@ -126,6 +132,8 @@ final class CatatMutasiKas
             'TanggalBisnis' => $this->tanggalBisnis->Hitung($shift->IdOutlet, $data->dicatatPada)->toDateString(),
             'DisetujuiOleh' => $penyetuju?->id,
             'DiterimaPada' => CarbonImmutable::now(),
+            'PerluTinjauan' => $sudahDitutup,
+            'AlasanTinjauan' => $sudahDitutup ? 'ShiftSudahDitutup: kas diterima setelah shift ditutup, belum masuk hitungan kas tutup shift' : null,
         ]);
 
         $jurnal = $this->postingJurnal->Jalankan($this->penyusun->Susun($mutasi, $kategori, $shift->IdOutlet, $shift->Uuid));

@@ -205,6 +205,11 @@ final class TerimaPenjualanPos
 
         [$tinjauan, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id);
 
+        // F-11: penjualan yang tiba setelah shift ditutup tetap diterima (outbox FIFO), tetapi kas shift sudah dihitung.
+        if (! $shift->aktif) {
+            $tinjauan[] = 'ShiftSudahDitutup: penjualan diterima setelah shift ditutup, belum masuk hitungan kas tutup shift';
+        }
+
         $pendapatan = [];
 
         foreach ($data->baris as $indeks => $baris) {

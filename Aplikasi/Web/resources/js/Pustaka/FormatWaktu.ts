@@ -46,3 +46,34 @@ export function FormatTanggalWaktu(iso: string | null): string {
 
     return `${formatTanggalWaktu.format(waktu)} WIB`;
 }
+
+/**
+ * Durasi dari jumlah detik ("45 detik", "12 menit", "2 jam 5 menit", "3 hari 4 jam"), untuk jeda sejak bayar pada
+ * daftar void & retur (F-09, BR-09.3).
+ */
+export function FormatDurasi(detik: number): string {
+    const total = Math.max(0, Math.floor(detik));
+
+    if (total < 60) {
+        return `${String(total)} detik`;
+    }
+
+    const menit = Math.floor(total / 60);
+
+    if (menit < 60) {
+        return `${String(menit)} menit`;
+    }
+
+    const jam = Math.floor(menit / 60);
+
+    if (jam < 24) {
+        const sisaMenit = menit % 60;
+
+        return sisaMenit === 0 ? `${String(jam)} jam` : `${String(jam)} jam ${String(sisaMenit)} menit`;
+    }
+
+    const hari = Math.floor(jam / 24);
+    const sisaJam = jam % 24;
+
+    return sisaJam === 0 ? `${String(hari)} hari` : `${String(hari)} hari ${String(sisaJam)} jam`;
+}

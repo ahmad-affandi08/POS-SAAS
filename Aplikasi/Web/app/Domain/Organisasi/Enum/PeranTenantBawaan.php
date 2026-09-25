@@ -78,6 +78,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::PenjualanDiskonManual,
                 IzinTenant::KasKeluarSetujui,
                 IzinTenant::PenjualanDiskonSetujui,
+                IzinTenant::ShiftSelisihSetujui,
                 IzinTenant::LaporanPenjualanLihat,
                 // F-02b: perangkat & PIN kasir di outlet yang ditugaskan.
                 IzinTenant::PerangkatLihat,
@@ -95,6 +96,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::KasKeluarSetujui,
                 // F-07b BR-07.3: PIN supervisor untuk diskon manual di atas batas kasir.
                 IzinTenant::PenjualanDiskonSetujui,
+                // F-11: PIN supervisor untuk selisih kas tutup shift di atas toleransi.
+                IzinTenant::ShiftSelisihSetujui,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola],

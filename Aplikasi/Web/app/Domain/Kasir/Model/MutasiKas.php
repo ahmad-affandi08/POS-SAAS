@@ -14,6 +14,7 @@ use LogicException;
 /**
  * Kas masuk/keluar/setoran non-penjualan dalam shift (PRD F-06 langkah 4, §15.3). Append-only: tidak diubah atau
  * dihapus setelah diterima, kecuali mengisi `IdJurnal` sekali dan `PathLampiran` sekali (unggahan bukti menyusul).
+ * F-11: kas yang tiba setelah shift ditutup diterima dengan `PerluTinjauan` (`ShiftSudahDitutup`).
  *
  * @property int $Id
  * @property string $Uuid
@@ -30,6 +31,8 @@ use LogicException;
  * @property int|null $DisetujuiOleh
  * @property int|null $IdJurnal
  * @property Carbon $DiterimaPada
+ * @property bool $PerluTinjauan
+ * @property string|null $AlasanTinjauan
  */
 final class MutasiKas extends ModelDasar
 {
@@ -48,6 +51,7 @@ final class MutasiKas extends ModelDasar
             'DicatatPada' => 'datetime',
             'TanggalBisnis' => 'date',
             'DiterimaPada' => 'datetime',
+            'PerluTinjauan' => 'boolean',
         ];
     }
 

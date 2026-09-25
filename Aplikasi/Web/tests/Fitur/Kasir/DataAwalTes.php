@@ -87,6 +87,11 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
                 'BatasDiskonManual' => '10.00',
                 'BatasDiskonPenyetuju' => '30.00',
                 'PembulatanTunai' => null,
+                // F-11: tutup shift buta & toleransi selisih kas (§19.2).
+                'TutupShiftButa' => true,
+                'ToleransiSelisihKas' => '10000.00',
+                // F-09: batas hari retur sejak tanggal bisnis penjualan.
+                'BatasHariRetur' => 7,
             ]);
     });
 

@@ -585,6 +585,9 @@ describe('F-07b data-awal', function (): void {
             'BatasDiskonManual' => '10.00',
             'BatasDiskonPenyetuju' => '30.00',
             'PembulatanTunai' => null,
+            'TutupShiftButa' => true,
+            'ToleransiSelisihKas' => '10000.00',
+            'BatasHariRetur' => 7,
         ])
             ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00'])
             ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode])

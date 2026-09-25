@@ -15,7 +15,8 @@ use Inertia\Response;
 
 /**
  * Halaman pengaturan kasir, izin `outlet.kelola`: batas kas keluar tanpa persetujuan (BR-06.4), shift bersama
- * (BR-06.2), batas diskon manual kasir & penyetuju (BR-07.3), dan pembulatan tunai (BR-08.6).
+ * (BR-06.2), batas diskon manual kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), serta tutup shift buta &
+ * toleransi selisih kas (F-11), dan batas hari retur (F-09).
  */
 final class PengaturanKasirKontroler extends DasarKelolaKontroler
 {
@@ -29,6 +30,9 @@ final class PengaturanKasirKontroler extends DasarKelolaKontroler
             'BatasDiskonManual' => (string) $data->batasDiskonManual,
             'BatasDiskonPenyetuju' => (string) $data->batasDiskonPenyetuju,
             'PembulatanTunai' => $data->AmbilPembulatanTunaiLarik(),
+            'TutupShiftButa' => $data->tutupShiftButa,
+            'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
+            'BatasHariRetur' => $data->batasHariRetur,
             'OpsiArahPembulatan' => array_map(fn (ArahPembulatan $arah): array => ['Nilai' => $arah->value, 'Label' => $arah->AmbilLabel()], ArahPembulatan::cases()),
         ]);
     }
