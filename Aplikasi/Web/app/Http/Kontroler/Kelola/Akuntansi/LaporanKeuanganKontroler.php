@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Akuntansi;
 
+use App\Domain\Akuntansi\Kueri\ArusKas;
 use App\Domain\Akuntansi\Kueri\BukuBesar;
 use App\Domain\Akuntansi\Kueri\LabaRugi;
 use App\Domain\Akuntansi\Kueri\Neraca;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Laporan keuangan F-13a (FIN-06, FIN-07) dari `JurnalDetail`, izin `laporan.keuangan.lihat`: buku besar per
- * akun, neraca saldo, laba rugi, dan neraca, disaring periode (`dari`, `sampai`) & outlet (`outlet`), plus ekspor CSV dengan
+ * akun, neraca saldo, laba rugi, neraca, dan arus kas, disaring periode (`dari`, `sampai`) & outlet (`outlet`), plus ekspor CSV dengan
  * saringan yang sama. Pelaku berbatas outlet hanya menjumlah baris jurnal outlet aksesnya.
  */
 final class LaporanKeuanganKontroler extends DasarAkuntansiKontroler
@@ -143,6 +144,34 @@ final class LaporanKeuanganKontroler extends DasarAkuntansiKontroler
                 (string) $b['Label'],
                 is_string($b['Nilai']) ? $b['Nilai'] : '',
                 is_string($b['NilaiAwal']) ? $b['NilaiAwal'] : '',
+            ], $laporan['Baris']),
+        );
+    }
+
+    public function ArusKas(Request $permintaan, ArusKas $kueri): Response
+    {
+        $saring = $this->AmbilSaringLaporan($permintaan);
+
+        return Inertia::render('Kelola/Akuntansi/Laporan/ArusKas', [
+            'Saring' => self::PetakanSaring($saring, $permintaan),
+            'Laporan' => $kueri->Ambil($saring),
+            'OpsiOutlet' => $this->AmbilOpsiOutlet(),
+        ]);
+    }
+
+    public function EksporArusKas(Request $permintaan, ArusKas $kueri): StreamedResponse
+    {
+        $saring = $this->AmbilSaringLaporan($permintaan);
+        $laporan = $kueri->Ambil($saring);
+
+        return PenulisCsvLaporan::Alirkan(
+            'arus-kas-'.$saring->dari.'-'.$saring->sampai,
+            ['Aktivitas', 'Kode', 'Keterangan', "{$saring->dari} s.d. {$saring->sampai}"],
+            array_map(fn (array $b): array => [
+                (string) $b['Aktivitas'],
+                is_string($b['Kode']) ? $b['Kode'] : '',
+                (string) $b['Label'],
+                is_string($b['Nilai']) ? $b['Nilai'] : '',
             ], $laporan['Baris']),
         );
     }

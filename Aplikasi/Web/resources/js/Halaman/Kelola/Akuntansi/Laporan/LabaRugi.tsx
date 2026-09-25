@@ -44,9 +44,15 @@ export default function HalamanLabaRugi({ Saring, Laporan, OpsiOutlet }: PropsLa
         },
         {
             id: 'Nilai',
+            accessorKey: 'Nilai',
             header: labelKini,
             enableSorting: false,
-            meta: { label: `Periode ini (${labelKini})`, angka: true, prioritas: 'penting' },
+            meta: {
+                sembunyiBilaKosong: true,
+                label: `Periode ini (${labelKini})`,
+                angka: true,
+                prioritas: 'penting',
+            },
             cell: ({ row: { original: b } }) =>
                 b.Nilai === null ? null : (
                     <span className={cn(b.Jenis !== 'Akun' && 'font-semibold')}>{FormatRupiah(b.Nilai)}</span>
@@ -54,9 +60,11 @@ export default function HalamanLabaRugi({ Saring, Laporan, OpsiOutlet }: PropsLa
         },
         {
             id: 'NilaiSebelumnya',
+            accessorKey: 'NilaiSebelumnya',
             header: labelLalu,
             enableSorting: false,
             meta: {
+                sembunyiBilaKosong: true,
                 label: `Periode sebelumnya (${labelLalu})`,
                 angka: true,
                 prioritas: 'penting',

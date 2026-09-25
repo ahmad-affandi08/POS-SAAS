@@ -54,6 +54,8 @@ export type MetaKolom = {
     wajib?: boolean;
     /** Kelas tambahan untuk sel. */
     kelasSel?: string;
+    /** Daftar bertumpuk HP: lewati pasangan label–nilai bila nilai kolom (accessor) null, misal baris judul laporan. */
+    sembunyiBilaKosong?: boolean;
 };
 
 /** Definisi kolom halaman: kolom TanStack dengan `meta` bertipe `MetaKolom`. */

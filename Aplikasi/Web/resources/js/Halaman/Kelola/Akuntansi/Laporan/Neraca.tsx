@@ -42,9 +42,15 @@ export default function HalamanNeraca({ Saring, Laporan, OpsiOutlet }: PropsNera
         },
         {
             id: 'Nilai',
+            accessorKey: 'Nilai',
             header: `Per ${labelAkhir}`,
             enableSorting: false,
-            meta: { label: `Posisi akhir (${labelAkhir})`, angka: true, prioritas: 'penting' },
+            meta: {
+                sembunyiBilaKosong: true,
+                label: `Posisi akhir (${labelAkhir})`,
+                angka: true,
+                prioritas: 'penting',
+            },
             cell: ({ row: { original: b } }) =>
                 b.Nilai === null ? null : (
                     <span className={cn(b.Jenis !== 'Akun' && b.Jenis !== 'Laba' && 'font-semibold')}>
@@ -54,9 +60,11 @@ export default function HalamanNeraca({ Saring, Laporan, OpsiOutlet }: PropsNera
         },
         {
             id: 'NilaiAwal',
+            accessorKey: 'NilaiAwal',
             header: `Per ${labelAwal}`,
             enableSorting: false,
             meta: {
+                sembunyiBilaKosong: true,
                 label: `Posisi awal (${labelAwal})`,
                 angka: true,
                 prioritas: 'penting',

@@ -310,6 +310,51 @@ describe('TabelData (D-16, PRD §17.4.3)', () => {
         expect(screen.getByRole('button', { name: 'Saring' })).toBeTruthy();
     });
 
+    it('HP: sembunyiBilaKosong melewati label nilai null (baris judul laporan); tanpa saring & urut tidak ada tombol Saring', () => {
+        AturLebar('hp');
+        type BarisLaporan = { Id: string; Label: string; Nilai: string | null };
+        const kolomLaporan: KolomTabel<BarisLaporan>[] = [
+            {
+                id: 'Label',
+                accessorKey: 'Label',
+                enableSorting: false,
+                meta: { label: 'Keterangan', prioritas: 'utama' },
+            },
+            {
+                id: 'Nilai',
+                accessorKey: 'Nilai',
+                enableSorting: false,
+                meta: { label: 'Periode ini', prioritas: 'penting', angka: true, sembunyiBilaKosong: true },
+            },
+        ];
+        Render(
+            <TabelData
+                id="laporan"
+                label="Laba rugi"
+                kolom={kolomLaporan}
+                sumber={{
+                    mode: 'lokal',
+                    data: [
+                        { Id: 'k', Label: 'Pendapatan', Nilai: null },
+                        { Id: 'a', Label: 'Penjualan', Nilai: '115500.00' },
+                    ],
+                }}
+                ambilIdBaris={(b) => b.Id}
+                cari={false}
+                kosong={{ judul: 'Kosong.' }}
+            />,
+        );
+
+        const [judul, akun] = within(screen.getByRole('list', { name: 'Laba rugi' })).getAllByRole('listitem') as [
+            HTMLElement,
+            HTMLElement,
+        ];
+        expect(within(judul).queryByText('Periode ini')).toBeNull();
+        expect(within(akun).getByText('Periode ini')).toBeTruthy();
+        expect(within(akun).getByText('115500.00')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Saring' })).toBeNull();
+    });
+
     it('tablet menyembunyikan kolom prioritas rendah; pilihan kolom pengguna disimpan per tabel', () => {
         AturLebar('tablet');
         const { unmount: Lepas } = Render(

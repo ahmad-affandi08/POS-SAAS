@@ -272,6 +272,10 @@ export default function BilahAlat<T>(props: PropsBilahAlat<T>) {
     const jumlahSaring = HitungSaringAktif(keadaan);
     const adaPencarian = keadaan.cari.trim() !== '';
     const chip = saring.filter((d) => (keadaan.saring[d.id] ?? '') !== '');
+    // Sheet saring & urut di HP hanya bila ada yang bisa disaring atau diurutkan (laporan bertingkat tidak punya).
+    const adaSaringAtauUrut =
+        saring.length > 0 ||
+        props.tabel.getAllLeafColumns().some((k) => k.getCanSort() && AmbilMeta(k.columnDef.meta)?.label);
 
     const kotakCari =
         props.cari === false ? null : (
@@ -304,7 +308,7 @@ export default function BilahAlat<T>(props: PropsBilahAlat<T>) {
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
                 {kotakCari}
-                {lebar === 'hp' ? (
+                {lebar === 'hp' && adaSaringAtauUrut ? (
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button type="button" variant="outline" className={`${kelasTombolAlat} h-11`}>

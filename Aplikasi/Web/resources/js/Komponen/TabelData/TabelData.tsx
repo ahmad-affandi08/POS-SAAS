@@ -226,7 +226,8 @@ function BarisBertumpuk<T>({ row, alamatDetail }: { row: Row<T>; alamatDetail: (
         (c) =>
             c !== utama &&
             AmbilMeta(c.column.columnDef.meta)?.prioritas === 'penting' &&
-            AmbilMeta(c.column.columnDef.meta)?.label,
+            AmbilMeta(c.column.columnDef.meta)?.label &&
+            !(AmbilMeta(c.column.columnDef.meta)?.sembunyiBilaKosong && c.getValue() == null),
     );
     const alamat = alamatDetail?.(row.original);
 

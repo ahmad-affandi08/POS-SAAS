@@ -225,3 +225,21 @@ export type PropsNeraca = {
     };
     OpsiOutlet: { Uuid: string; Nama: string }[];
 };
+export type BarisArusKas = {
+    Id: string;
+    Jenis: 'Kepala' | 'Rincian' | 'Subtotal' | 'Total' | 'Saldo';
+    Aktivitas: string;
+    Kode: string | null;
+    Label: string;
+    Nilai: string | null;
+};
+export type PropsArusKas = {
+    Saring: SaringLaporanKeuangan;
+    Laporan: {
+        Periode: { Dari: string; Sampai: string };
+        Baris: BarisArusKas[];
+        Ringkasan: Record<'Operasi' | 'Investasi' | 'Pendanaan' | 'Kenaikan' | 'SaldoAwal' | 'SaldoAkhir', string>;
+        AdaAkunKas: boolean;
+    };
+    OpsiOutlet: { Uuid: string; Nama: string }[];
+};

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HalamanBaganAkun from '@/Halaman/Kelola/Akuntansi/Akun/Daftar';
 import HalamanDaftarTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Daftar';
 import HalamanDetailTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Detail';
+import HalamanArusKas from '@/Halaman/Kelola/Akuntansi/Laporan/ArusKas';
 import HalamanBukuBesar from '@/Halaman/Kelola/Akuntansi/Laporan/BukuBesar';
 import HalamanLabaRugi from '@/Halaman/Kelola/Akuntansi/Laporan/LabaRugi';
 import HalamanNeraca from '@/Halaman/Kelola/Akuntansi/Laporan/Neraca';
@@ -16,6 +17,7 @@ import { CekMenuAktif, SaringMenuTerlihat } from '@/TataLetak/TataLetakAplikasi'
 import type {
     BarisBaganAkun,
     BarisTransaksiKasBank,
+    PropsArusKas,
     PropsBaganAkun,
     PropsBukuBesar,
     PropsDaftarTransaksiKasBank,
@@ -101,6 +103,7 @@ describe('F-13a menu Akuntansi', () => {
             'Neraca saldo',
             'Laba rugi',
             'Neraca',
+            'Arus kas',
             'Bagan akun',
             'Pemetaan akun',
         ]);
@@ -674,6 +677,60 @@ describe('F-13a laporan keuangan', () => {
         expect(screen.getByText('Tidak seimbang')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Ekspor CSV' }).getAttribute('href')).toBe(
             '/kelola/akuntansi/laporan/neraca/ekspor?dari=2026-09-01&sampai=2026-09-30',
+        );
+    });
+
+    it('arus kas: aktivitas operasi/investasi/pendanaan, kas awal & akhir; tanpa akun kas diberi tahu', () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/laporan/arus-kas');
+        const BuatBaris = (
+            Id: string,
+            Jenis: PropsArusKas['Laporan']['Baris'][number]['Jenis'],
+            Label: string,
+            Nilai: string | null,
+            Kode: string | null = null,
+        ) => ({ Id, Jenis, Aktivitas: 'Operasi', Kode, Label, Nilai });
+        const props: PropsArusKas = {
+            Saring: saring,
+            Laporan: {
+                Periode: { Dari: '2026-09-01', Sampai: '2026-09-30' },
+                Baris: [
+                    BuatBaris('Kepala|Operasi', 'Kepala', 'Aktivitas operasi', null),
+                    BuatBaris('Sumber|Penjualan', 'Rincian', 'Penerimaan dari penjualan', '115500.00'),
+                    BuatBaris('Akun|B1', 'Rincian', 'Beban Listrik', '-250000.00', '6-2000'),
+                    BuatBaris('Subtotal|Operasi', 'Subtotal', 'Arus kas bersih dari aktivitas operasi', '-134500.00'),
+                    BuatBaris('Kepala|Pendanaan', 'Kepala', 'Aktivitas pendanaan', null),
+                    BuatBaris('Akun|E1', 'Rincian', 'Modal Pemilik', '5000000.00', '3-1000'),
+                    BuatBaris(
+                        'Subtotal|Pendanaan',
+                        'Subtotal',
+                        'Arus kas bersih dari aktivitas pendanaan',
+                        '5000000.00',
+                    ),
+                    BuatBaris('Total|Kenaikan', 'Total', 'Kenaikan (penurunan) bersih kas & bank', '4865500.00'),
+                    BuatBaris('Total|Awal', 'Saldo', 'Kas & bank awal periode', '0.00'),
+                    BuatBaris('Total|Akhir', 'Total', 'Kas & bank akhir periode', '4865500.00'),
+                ],
+                Ringkasan: {
+                    Operasi: '-134500.00',
+                    Investasi: '0.00',
+                    Pendanaan: '5000000.00',
+                    Kenaikan: '4865500.00',
+                    SaldoAwal: '0.00',
+                    SaldoAkhir: '4865500.00',
+                },
+                AdaAkunKas: false,
+            },
+            OpsiOutlet: [{ Uuid: 'O1', Nama: 'Cabang Solo Baru' }],
+        };
+        RenderUji(<HalamanArusKas {...props} />);
+        expect(screen.getByRole('columnheader', { name: /1 Sep.*30 Sep 2026/ })).toBeTruthy();
+        expect(screen.getByText('Penerimaan dari penjualan')).toBeTruthy();
+        expect(screen.getAllByText('−Rp 250.000').length).toBeGreaterThan(0);
+        expect(screen.getByText('Kas & bank akhir periode')).toBeTruthy();
+        expect(screen.getAllByText('Rp 4.865.500').length).toBeGreaterThan(0);
+        expect(screen.getByText('Belum ada akun kas atau bank')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Ekspor CSV' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/laporan/arus-kas/ekspor?dari=2026-09-01&sampai=2026-09-30',
         );
     });
 });
