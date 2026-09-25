@@ -43,6 +43,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     Route::get('/akuntansi/laporan/neraca-saldo/ekspor', [LaporanKeuanganKontroler::class, 'EksporNeracaSaldo'])->name('kelola.akuntansi.laporan.neraca-saldo.ekspor');
     Route::get('/akuntansi/laporan/laba-rugi', [LaporanKeuanganKontroler::class, 'LabaRugi'])->name('kelola.akuntansi.laporan.laba-rugi');
     Route::get('/akuntansi/laporan/laba-rugi/ekspor', [LaporanKeuanganKontroler::class, 'EksporLabaRugi'])->name('kelola.akuntansi.laporan.laba-rugi.ekspor');
+    Route::get('/akuntansi/laporan/neraca', [LaporanKeuanganKontroler::class, 'Neraca'])->name('kelola.akuntansi.laporan.neraca');
+    Route::get('/akuntansi/laporan/neraca/ekspor', [LaporanKeuanganKontroler::class, 'EksporNeraca'])->name('kelola.akuntansi.laporan.neraca.ekspor');
 });
 
 Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)])->group(function () use ($ulid): void {

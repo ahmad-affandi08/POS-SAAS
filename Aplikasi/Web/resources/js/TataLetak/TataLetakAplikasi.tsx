@@ -109,6 +109,7 @@ const menuAkuntansi: ItemMenu[] = [
     { label: 'Buku besar', href: '/kelola/akuntansi/laporan/buku-besar', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Neraca saldo', href: '/kelola/akuntansi/laporan/neraca-saldo', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Neraca', href: '/kelola/akuntansi/laporan/neraca', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Bagan akun', href: '/kelola/akuntansi/akun', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Pemetaan akun', href: '/kelola/akuntansi/pemetaan', izin: IzinTenant.LaporanKeuanganLihat },
 ];

@@ -6,6 +6,7 @@ namespace App\Http\Kontroler\Kelola\Akuntansi;
 
 use App\Domain\Akuntansi\Kueri\BukuBesar;
 use App\Domain\Akuntansi\Kueri\LabaRugi;
+use App\Domain\Akuntansi\Kueri\Neraca;
 use App\Domain\Akuntansi\Kueri\NeracaSaldo;
 use App\Domain\Akuntansi\Layanan\PenulisCsvLaporan;
 use App\Domain\Akuntansi\Model\Akun;
@@ -18,8 +19,8 @@ use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Laporan keuangan F-13a (FIN-06, FIN-07 P0) dari `JurnalDetail`, izin `laporan.keuangan.lihat`: buku besar per
- * akun, neraca saldo, dan laba rugi, disaring periode (`dari`, `sampai`) & outlet (`outlet`), plus ekspor CSV dengan
+ * Laporan keuangan F-13a (FIN-06, FIN-07) dari `JurnalDetail`, izin `laporan.keuangan.lihat`: buku besar per
+ * akun, neraca saldo, laba rugi, dan neraca, disaring periode (`dari`, `sampai`) & outlet (`outlet`), plus ekspor CSV dengan
  * saringan yang sama. Pelaku berbatas outlet hanya menjumlah baris jurnal outlet aksesnya.
  */
 final class LaporanKeuanganKontroler extends DasarAkuntansiKontroler
@@ -113,6 +114,35 @@ final class LaporanKeuanganKontroler extends DasarAkuntansiKontroler
                 (string) $b['Label'],
                 is_string($b['Nilai']) ? $b['Nilai'] : '',
                 is_string($b['NilaiSebelumnya']) ? $b['NilaiSebelumnya'] : '',
+            ], $laporan['Baris']),
+        );
+    }
+
+    public function Neraca(Request $permintaan, Neraca $kueri): Response
+    {
+        $saring = $this->AmbilSaringLaporan($permintaan);
+
+        return Inertia::render('Kelola/Akuntansi/Laporan/Neraca', [
+            'Saring' => self::PetakanSaring($saring, $permintaan),
+            'Laporan' => $kueri->Ambil($saring),
+            'OpsiOutlet' => $this->AmbilOpsiOutlet(),
+        ]);
+    }
+
+    public function EksporNeraca(Request $permintaan, Neraca $kueri): StreamedResponse
+    {
+        $saring = $this->AmbilSaringLaporan($permintaan);
+        $laporan = $kueri->Ambil($saring);
+        $posisi = $laporan['Posisi'];
+
+        return PenulisCsvLaporan::Alirkan(
+            'neraca-'.$posisi['Akhir'],
+            ['Kode', 'Keterangan', "Posisi {$posisi['Akhir']}", "Posisi {$posisi['Awal']}"],
+            array_map(fn (array $b): array => [
+                is_string($b['Kode']) ? $b['Kode'] : '',
+                (string) $b['Label'],
+                is_string($b['Nilai']) ? $b['Nilai'] : '',
+                is_string($b['NilaiAwal']) ? $b['NilaiAwal'] : '',
             ], $laporan['Baris']),
         );
     }

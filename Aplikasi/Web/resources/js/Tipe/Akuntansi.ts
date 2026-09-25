@@ -205,3 +205,23 @@ export type PropsLabaRugi = {
     };
     OpsiOutlet: { Uuid: string; Nama: string }[];
 };
+export type BarisNeraca = {
+    Id: string;
+    Jenis: 'Kepala' | 'Akun' | 'Laba' | 'Subtotal' | 'Total';
+    Kelompok: string;
+    Kode: string | null;
+    Label: string;
+    Nilai: string | null;
+    NilaiAwal: string | null;
+};
+export type NilaiPosisi = { Nilai: string; NilaiAwal: string };
+export type PropsNeraca = {
+    Saring: SaringLaporanKeuangan;
+    Laporan: {
+        Posisi: { Akhir: string; Awal: string };
+        Baris: BarisNeraca[];
+        Ringkasan: Record<'Aset' | 'Kewajiban' | 'Ekuitas' | 'KewajibanEkuitas' | 'LabaBerjalan', NilaiPosisi>;
+        Seimbang: boolean;
+    };
+    OpsiOutlet: { Uuid: string; Nama: string }[];
+};

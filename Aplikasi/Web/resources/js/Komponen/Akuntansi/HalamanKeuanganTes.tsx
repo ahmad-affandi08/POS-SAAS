@@ -6,6 +6,7 @@ import HalamanDaftarTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Da
 import HalamanDetailTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Detail';
 import HalamanBukuBesar from '@/Halaman/Kelola/Akuntansi/Laporan/BukuBesar';
 import HalamanLabaRugi from '@/Halaman/Kelola/Akuntansi/Laporan/LabaRugi';
+import HalamanNeraca from '@/Halaman/Kelola/Akuntansi/Laporan/Neraca';
 import HalamanNeracaSaldo from '@/Halaman/Kelola/Akuntansi/Laporan/NeracaSaldo';
 import HalamanPemetaanAkun from '@/Halaman/Kelola/Akuntansi/Pemetaan/Daftar';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
@@ -20,6 +21,7 @@ import type {
     PropsDaftarTransaksiKasBank,
     PropsDetailTransaksiKasBank,
     PropsLabaRugi,
+    PropsNeraca,
     PropsNeracaSaldo,
     PropsPemetaanAkun,
 } from '@/Tipe/Akuntansi';
@@ -98,6 +100,7 @@ describe('F-13a menu Akuntansi', () => {
             'Buku besar',
             'Neraca saldo',
             'Laba rugi',
+            'Neraca',
             'Bagan akun',
             'Pemetaan akun',
         ]);
@@ -614,6 +617,63 @@ describe('F-13a laporan keuangan', () => {
             '/kelola/akuntansi/laporan/laba-rugi?dari=2026-09-01&sampai=2026-09-30&outlet=O1',
             {},
             expect.anything(),
+        );
+    });
+
+    it('neraca: kelompok aset/kewajiban/ekuitas, laba belum ditutup di ekuitas, kolom posisi awal; tidak seimbang diberi tahu', () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/laporan/neraca');
+        const BuatNilai = (n: string, a: string) => ({ Nilai: n, NilaiAwal: a });
+        const BuatBaris = (
+            Id: string,
+            Jenis: PropsNeraca['Laporan']['Baris'][number]['Jenis'],
+            Label: string,
+            Nilai: string | null,
+            NilaiAwal: string | null,
+            Kode: string | null = null,
+        ) => ({ Id, Jenis, Kelompok: Id.split('|')[1] ?? '', Kode, Label, Nilai, NilaiAwal });
+        const props: PropsNeraca = {
+            Saring: saring,
+            Laporan: {
+                Posisi: { Akhir: '2026-09-30', Awal: '2026-08-31' },
+                Baris: [
+                    BuatBaris('Kepala|Aset', 'Kepala', 'Aset', null, null),
+                    BuatBaris('Akun|A1', 'Akun', 'Persediaan Barang Dagang', '12500000.00', '10000000.00', '1-1300'),
+                    BuatBaris('Subtotal|Aset', 'Subtotal', 'Total aset', '12500000.00', '10000000.00'),
+                    BuatBaris('Kepala|Kewajiban', 'Kepala', 'Kewajiban', null, null),
+                    BuatBaris('Akun|K1', 'Akun', 'Hutang Usaha', '2500000.00', '0.00', '2-1000'),
+                    BuatBaris('Subtotal|Kewajiban', 'Subtotal', 'Total kewajiban', '2500000.00', '0.00'),
+                    BuatBaris('Kepala|Ekuitas', 'Kepala', 'Ekuitas', null, null),
+                    BuatBaris('Akun|E1', 'Akun', 'Modal Saldo Awal', '10000000.00', '10000000.00', '3-1000'),
+                    BuatBaris('Laba|LabaBerjalan', 'Laba', 'Laba tahun berjalan', '-1224500.00', '0.00'),
+                    BuatBaris('Subtotal|Ekuitas', 'Subtotal', 'Total ekuitas', '8775500.00', '10000000.00'),
+                    BuatBaris(
+                        'Total|KewajibanEkuitas',
+                        'Total',
+                        'Total kewajiban dan ekuitas',
+                        '11275500.00',
+                        '10000000.00',
+                    ),
+                ],
+                Ringkasan: {
+                    Aset: BuatNilai('12500000.00', '10000000.00'),
+                    Kewajiban: BuatNilai('2500000.00', '0.00'),
+                    Ekuitas: BuatNilai('8775500.00', '10000000.00'),
+                    KewajibanEkuitas: BuatNilai('11275500.00', '10000000.00'),
+                    LabaBerjalan: BuatNilai('-1224500.00', '0.00'),
+                },
+                Seimbang: false,
+            },
+            OpsiOutlet: [{ Uuid: 'O1', Nama: 'Cabang Solo Baru' }],
+        };
+        RenderUji(<HalamanNeraca {...props} />);
+        expect(screen.getByRole('columnheader', { name: /30 Sep 2026/ })).toBeTruthy();
+        expect(screen.getByRole('columnheader', { name: /31 Agu 2026/ })).toBeTruthy();
+        expect(screen.getByText('Total kewajiban dan ekuitas')).toBeTruthy();
+        expect(screen.getAllByText('Laba tahun berjalan').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('−Rp 1.224.500').length).toBeGreaterThan(0);
+        expect(screen.getByText('Tidak seimbang')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Ekspor CSV' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/laporan/neraca/ekspor?dari=2026-09-01&sampai=2026-09-30',
         );
     });
 });
