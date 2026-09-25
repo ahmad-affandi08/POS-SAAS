@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Pajak\Model\TarifPajak;
+use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
+use App\Domain\PanduanAwal\Model\TemplateSektor;
 use App\Domain\Pengelola\Katalog\Aksi\AjukanHargaPaket;
 use App\Domain\Pengelola\Katalog\Aksi\TinjauHargaPaket;
 use App\Domain\Pengelola\Katalog\Aksi\UbahStatusPaket;
 use App\Domain\Pengelola\Konten\Aksi\SimpanDrafDokumenLegal;
 use App\Domain\Pengelola\Konten\Aksi\TerbitkanDokumenLegal;
 use App\Domain\Pengelola\Konten\Data\DataDokumenLegal;
+use App\Domain\Pengelola\Referensi\Aksi\AjukanTarifPajak;
+use App\Domain\Pengelola\Referensi\Aksi\TinjauTarifPajak;
 use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
+use App\Domain\Pengelola\TemplateSektor\Aksi\TerbitkanTemplate;
 use App\Domain\Pengelola\TimInternal\Aksi\BuatSuperAdmin;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
@@ -43,6 +50,9 @@ final class DataDemoLokal extends Seeder
 
     private const EMAIL_SUPER_ADMIN_DUA = 'admin2@payou.test';
 
+    /** Tarif pajak nasional butuh dua penyetuju selain pengaju (TinjauTarifPajak::PENYETUJU_NASIONAL). */
+    private const EMAIL_SUPER_ADMIN_TIGA = 'admin3@payou.test';
+
     private const EMAIL_PEMILIK = 'owner@payou.test';
 
     private const NAMA_USAHA = 'Toko Demo PAYOU';
@@ -60,6 +70,9 @@ final class DataDemoLokal extends Seeder
         TinjauHargaPaket $tinjauHarga,
         UbahStatusPaket $ubahStatusPaket,
         DaftarkanTenant $daftarkanTenant,
+        AjukanTarifPajak $ajukanTarif,
+        TinjauTarifPajak $tinjauTarif,
+        TerbitkanTemplate $terbitkanTemplate,
     ): void {
         if (app()->isProduction()) {
             throw new RuntimeException('DataDemoLokal hanya untuk lingkungan non-produksi.');
@@ -69,9 +82,13 @@ final class DataDemoLokal extends Seeder
 
         $superAdminSatu = $this->SiapkanSuperAdmin($buatSuperAdmin, self::EMAIL_SUPER_ADMIN_SATU, 'Super Admin PAYOU', $kataSandi);
         $superAdminDua = $this->SiapkanSuperAdmin($buatSuperAdmin, self::EMAIL_SUPER_ADMIN_DUA, 'Admin Kedua PAYOU', $kataSandi);
+        $superAdminTiga = $this->SiapkanSuperAdmin($buatSuperAdmin, self::EMAIL_SUPER_ADMIN_TIGA, 'Admin Ketiga PAYOU', $kataSandi);
 
         $this->TerbitkanDokumenWajib($simpanDraf, $terbitkanDokumen, $superAdminSatu);
         $this->AktifkanPaket($ajukanHarga, $tinjauHarga, $ubahStatusPaket, $superAdminSatu, $superAdminDua);
+        // Template sektor (P-03) baru bisa terbit bila pajak nasional di dalamnya punya tarif terbit (BR-P03.3).
+        $this->TerbitkanTarifPajakDraf($ajukanTarif, $tinjauTarif, $superAdminSatu, [$superAdminDua, $superAdminTiga]);
+        $this->TerbitkanTemplateSektor($terbitkanTemplate, $superAdminSatu);
         $this->DaftarkanTenantDemo($daftarkanTenant, $kataSandi);
 
         foreach ($this->ringkasan as $baris) {
@@ -189,6 +206,84 @@ final class DataDemoLokal extends Seeder
 
             $ubahStatusPaket->Jalankan($pengaju, $paket->refresh(), StatusPaket::Aktif);
             $this->ringkasan[] = "Paket {$kode} aktif.";
+        }
+    }
+
+    /**
+     * Tarif pajak awal dimuat sebagai draf (BR-P02.5). Untuk demo lokal saja: berlaku mulai hari ini, diajukan admin
+     * pertama, lalu disetujui admin lain sampai jumlah penyetuju terpenuhi (nasional 2, daerah 1). Tarif yang sudah
+     * menunggu tinjauan dilanjutkan. Di lingkungan nyata nilai & dasar hukum wajib diverifikasi dulu.
+     *
+     * @param  list<PenggunaPengelola>  $daftarPeninjau
+     */
+    private function TerbitkanTarifPajakDraf(
+        AjukanTarifPajak $ajukanTarif,
+        TinjauTarifPajak $tinjauTarif,
+        PenggunaPengelola $pengaju,
+        array $daftarPeninjau,
+    ): void {
+        $daftarTarif = TarifPajak::query()
+            ->whereIn('Status', [StatusDataMaster::Draf->value, StatusDataMaster::MenungguTinjauan->value])
+            ->get();
+
+        if ($daftarTarif->isEmpty()) {
+            $this->ringkasan[] = 'Tidak ada tarif pajak draf atau menunggu tinjauan.';
+
+            return;
+        }
+
+        foreach ($daftarTarif as $tarif) {
+            if ($tarif->Status === StatusDataMaster::Draf) {
+                $tarif->update(['BerlakuMulai' => now('Asia/Jakarta')->toDateString()]);
+                $ajukanTarif->Jalankan($pengaju, $tarif);
+            }
+
+            $status = StatusDataMaster::MenungguTinjauan;
+
+            foreach ($daftarPeninjau as $peninjau) {
+                try {
+                    $status = $tinjauTarif->Jalankan($peninjau, $tarif->refresh(), KeputusanTinjauan::Setuju, 'Disetujui untuk lingkungan demo lokal.');
+                } catch (PelanggaranAturanBisnis) {
+                    // Peninjau ini sudah memberi keputusan pada putaran yang sama (seeder dijalankan ulang): lanjut.
+                    continue;
+                }
+
+                if ($status === StatusDataMaster::Terbit) {
+                    break;
+                }
+            }
+
+            $this->ringkasan[] = $status === StatusDataMaster::Terbit
+                ? "Tarif pajak #{$tarif->Id} diterbitkan untuk demo lokal."
+                : "Tarif pajak #{$tarif->Id} masih {$status->value}; periksa di Platform Pengelola > Referensi > Tarif pajak.";
+        }
+    }
+
+    /** Draf versi terakhir tiap template yang belum punya versi terbit diterbitkan, supaya panduan awal F-01 bisa memilihnya. */
+    private function TerbitkanTemplateSektor(TerbitkanTemplate $terbitkanTemplate, PenggunaPengelola $pelaku): void
+    {
+        foreach (TemplateSektor::query()->orderBy('Kode')->get() as $template) {
+            if ($template->Versi()->where('Status', StatusTemplateSektor::Terbit->value)->exists()) {
+                $this->ringkasan[] = "Template {$template->Kode} sudah terbit.";
+
+                continue;
+            }
+
+            $draf = $template->Versi()->where('Status', StatusTemplateSektor::Draf->value)->orderByDesc('Versi')->first();
+
+            if ($draf === null) {
+                $this->ringkasan[] = "Template {$template->Kode} tidak punya draf; lewati.";
+
+                continue;
+            }
+
+            try {
+                $terbitkanTemplate->Jalankan($pelaku, $draf);
+                $this->ringkasan[] = "Template {$template->Kode} versi {$draf->Versi} diterbitkan.";
+            } catch (PelanggaranAturanBisnis $galat) {
+                // Hasil validasi tersimpan di versi; periksa di Platform Pengelola > Template sektor.
+                $this->ringkasan[] = "Template {$template->Kode} belum terbit: {$galat->getMessage()}";
+            }
         }
     }
 
