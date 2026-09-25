@@ -156,9 +156,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   BasisDataKasir(super.executor);
 
   /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
-  /// (kolom tutup shift).
+  /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak).
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -207,6 +207,10 @@ class BasisDataKasir extends _$BasisDataKasir {
         ]) {
           await m.addColumn(shift, kolom);
         }
+      }
+      // Dari skema 1, tabel katalog baru dibuat di atas sudah berkolom lengkap.
+      if (dari >= 2 && dari < 4) {
+        await m.addColumn(kelompokPajakDetail, kelompokPajakDetail.Kategori);
       }
     },
     beforeOpen: (detail) async {

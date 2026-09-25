@@ -44,6 +44,9 @@ class KelompokPajakDetail extends Table {
   TextColumn get DasarPengenaan => text()();
   IntColumn get Urutan => integer().withDefault(const Constant(0))();
 
+  /// `Ppn`, `Pbjt`, atau `Lainnya` dari atribut `JenisPajak` (skema 4, PRD v1.46); null = server lama.
+  TextColumn get Kategori => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {UuidKelompokPajak, KodeJenisPajak};
 }

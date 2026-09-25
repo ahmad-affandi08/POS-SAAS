@@ -125,6 +125,7 @@ void main() {
       expect(katalog.produk.single.jenis, 'Resep');
       expect(katalog.produkHarga.single.harga, '28000.00');
       expect(katalog.kelompokPajak.single.pajak.single.dasarPengenaan, 'SubtotalPlusLayanan');
+      expect(katalog.kelompokPajak.single.pajak.single.kategori, isNull, reason: 'Server lama tanpa Kategori.');
       expect(katalog.daftarHarga.single.uuidOutlet, isNull);
       expect(katalog.kelompokPilihan.single.maksimalPilih, 1);
       expect(katalog.produkBarcode.single.barcode, '8991234567890');
@@ -235,6 +236,29 @@ void main() {
       expect(data.tarifPajak.single.pengaliDppPembilang, 11);
       expect(data.tarifPajak.single.berlakuSampai, isNull);
       expect(data.metodePembayaran.single.adaGambarQris, isTrue);
+      // Server lama: tanpa ZonaWaktu & NomorUrutPenjualan.
+      expect(data.outlet!.zonaWaktu, isNull);
+      expect(data.perangkat!.nomorUrutPenjualan, isEmpty);
+    });
+
+    test('PRD v1.46: Outlet.ZonaWaktu & Perangkat.NomorUrutPenjualan dipetakan; entri tidak valid diabaikan', () {
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Outlet': {'Uuid': 'O1', 'Kode': 'MKS', 'Nama': 'Makassar', 'ZonaWaktu': 'Asia/Makassar'},
+        'Perangkat': {
+          'Uuid': 'D1',
+          'Kode': 'K02',
+          'NomorUrutPenjualan': {'260924': 12, '260925': '3', '2609': 5, '260926': 'x', '260927': 0, '260928': null},
+        },
+      });
+      expect(data.outlet!.zonaWaktu, 'Asia/Makassar');
+      expect(data.perangkat!.nomorUrutPenjualan, {'260924': 12, '260925': 3});
+
+      final bukanPeta = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Perangkat': {'Uuid': 'D1', 'Kode': 'K02', 'NomorUrutPenjualan': <Object?>[]},
+      });
+      expect(bukanPeta.perangkat!.nomorUrutPenjualan, isEmpty);
     });
   });
 
@@ -270,5 +294,19 @@ void main() {
     );
     expect(await klien.AmbilGambarQris('M1'), [137, 80, 78, 71]);
     expect(() => klien.AmbilGambarQris('M2'), throwsA(isA<GalatApi>()));
+  });
+
+  test('PRD v1.46: Pajak[].Kategori (Ppn/Pbjt/Lainnya) dipetakan; nilai lain → null', () {
+    PajakKelompokPos Urai(Object? kategori) => PajakKelompokPos.DariJson({
+      'KodeJenisPajak': 'PbjtMakananMinuman',
+      'DasarPengenaan': 'Subtotal',
+      'Urutan': 1,
+      'Kategori': kategori,
+    });
+    expect(Urai('Ppn').kategori, 'Ppn');
+    expect(Urai('Pbjt').kategori, 'Pbjt');
+    expect(Urai('Lainnya').kategori, 'Lainnya');
+    expect(Urai('PPN').kategori, isNull);
+    expect(Urai(3).kategori, isNull);
   });
 }

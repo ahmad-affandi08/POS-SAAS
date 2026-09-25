@@ -39,9 +39,22 @@ class SatuanPos {
 
 /// Satu jenis pajak di kelompok pajak produk (kode jenis, bukan tarif; tarif dari `TarifPajak`, CLAUDE.md #12).
 class PajakKelompokPos {
-  const PajakKelompokPos({required this.kodeJenisPajak, required this.dasarPengenaan, required this.urutan});
+  const PajakKelompokPos({
+    required this.kodeJenisPajak,
+    required this.dasarPengenaan,
+    required this.urutan,
+    this.kategori,
+  });
+
+  static const String kategoriPpn = 'Ppn';
+  static const String kategoriPbjt = 'Pbjt';
+  static const String kategoriLainnya = 'Lainnya';
 
   final String kodeJenisPajak;
+
+  /// Kategori jenis pajak (`Ppn`, `Pbjt`, `Lainnya`) dari atribut `JenisPajak` (PRD v1.46); null bila server lama
+  /// tidak mengirimnya atau nilainya tidak dikenal.
+  final String? kategori;
 
   /// `Subtotal` atau `SubtotalPlusLayanan`.
   final String dasarPengenaan;
@@ -51,6 +64,10 @@ class PajakKelompokPos {
     kodeJenisPajak: UraiJson.AmbilTeks(json['KodeJenisPajak']),
     dasarPengenaan: UraiJson.AmbilTeks(json['DasarPengenaan'], 'Subtotal'),
     urutan: UraiJson.AmbilBulat(json['Urutan']),
+    kategori: switch (json['Kategori']) {
+      final String k when k == kategoriPpn || k == kategoriPbjt || k == kategoriLainnya => k,
+      _ => null,
+    },
   );
 }
 

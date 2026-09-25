@@ -29,6 +29,9 @@ abstract final class KunciPengaturan {
   static const String uuidOutlet = 'UuidOutlet';
   static const String kodeOutlet = 'KodeOutlet';
   static const String jamTutupBuku = 'JamTutupBuku';
+
+  /// `Outlet.ZonaWaktu` (IANA) untuk tanggal bisnis & `YYMMDD` nomor penjualan (PRD v1.46 (d)).
+  static const String zonaWaktu = 'ZonaWaktu';
   static const String batasDiskonManual = 'BatasDiskonManual';
   static const String batasDiskonPenyetuju = 'BatasDiskonPenyetuju';
   static const String pembulatanTunai = 'PembulatanTunai';
@@ -157,10 +160,31 @@ class RepositoriKasir {
         await SimpanPengaturan(KunciPengaturan.namaOutlet, outlet.nama);
       }
       await SimpanPengaturan(KunciPengaturan.jamTutupBuku, outlet.jamTutupBuku ?? '00:00');
+      final zona = outlet.zonaWaktu?.trim();
+      if (zona != null && zona.isNotEmpty) {
+        await SimpanPengaturan(KunciPengaturan.zonaWaktu, zona);
+      }
     }
     final perangkat = data.perangkat;
     if (perangkat != null && perangkat.kode.isNotEmpty) {
       await SimpanPengaturan(KunciPengaturan.kodePerangkat, perangkat.kode);
+      // PRD v1.46 (e): sekuens lokal = max(lokal, server) per tanggal, agar pemasangan ulang tidak memakai nomor lama.
+      for (final entri in perangkat.nomorUrutPenjualan.entries) {
+        final lama = await (db.select(
+          db.nomorUrutPenjualan,
+        )..where((n) => n.KodePerangkat.equals(perangkat.kode) & n.Tanggal.equals(entri.key))).getSingleOrNull();
+        if (lama == null || lama.Terakhir < entri.value) {
+          await db
+              .into(db.nomorUrutPenjualan)
+              .insertOnConflictUpdate(
+                NomorUrutPenjualanCompanion.insert(
+                  KodePerangkat: perangkat.kode,
+                  Tanggal: entri.key,
+                  Terakhir: entri.value,
+                ),
+              );
+        }
+      }
     }
     await SimpanPengaturan(KunciPengaturan.dataAwalPada, sekarang.toUtc().toIso8601String());
   });

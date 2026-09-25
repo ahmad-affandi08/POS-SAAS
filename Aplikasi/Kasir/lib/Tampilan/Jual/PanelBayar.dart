@@ -106,9 +106,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
 
   String? _SusunReferensi(BarisMetodePembayaran metode) {
     if (metode.Jenis == JenisMetodeBayar.edc) {
-      final bank = _bank.text.trim();
-      final approval = _referensi.text.trim();
-      return [bank, approval].where((t) => t.isNotEmpty).join(' · ');
+      return LayananPenjualan.SusunReferensiEdc(_bank.text, _referensi.text);
     }
     final teks = _referensi.text.trim();
     return teks.isEmpty ? null : teks;
@@ -318,7 +316,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         if (metode.Jenis == JenisMetodeBayar.edc) ...[
           TextField(
             controller: _bank,
-            maxLength: 40,
+            maxLength: LayananPenjualan.panjangMaksBankEdc,
             decoration: const InputDecoration(
               labelText: 'Bank penerbit kartu (opsional)',
               border: OutlineInputBorder(),
@@ -328,7 +326,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         ],
         TextField(
           controller: _referensi,
-          maxLength: 60,
+          maxLength: metode.Jenis == JenisMetodeBayar.edc ? LayananPenjualan.panjangMaksApprovalEdc : 60,
           onChanged: (_) => setState(() => _galat = null),
           decoration: InputDecoration(
             labelText: metode.Jenis == JenisMetodeBayar.edc ? 'Nomor approval' : 'Referensi (opsional)',

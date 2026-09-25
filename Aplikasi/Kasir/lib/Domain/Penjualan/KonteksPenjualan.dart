@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
@@ -51,6 +52,28 @@ class TarifPajakLokal {
   );
 }
 
+/// Zona waktu outlet (`Outlet.ZonaWaktu`, IANA) untuk tanggal bisnis & `YYMMDD` nomor (PRD v1.46 (d)), bukan zona
+/// perangkat. Indonesia tidak memakai DST, jadi cukup tabel offset tetap: WIB +7, WITA +8, WIT +9. Zona tidak dikenal
+/// (atau server lama yang belum mengirimnya) → UTC+7 dan dicatat ke log.
+abstract final class ZonaWaktuOutlet {
+  static const String bawaan = 'Asia/Jakarta';
+
+  static const Map<String, int> _offsetJam = {
+    'Asia/Jakarta': 7,
+    'Asia/Pontianak': 7,
+    'Asia/Makassar': 8,
+    'Asia/Ujung_Pandang': 8,
+    'Asia/Jayapura': 9,
+  };
+
+  static bool CekDikenal(String? zona) => _offsetJam.containsKey(zona);
+
+  static Duration AmbilOffset(String? zona) => Duration(hours: _offsetJam[zona] ?? _offsetJam[bawaan]!);
+
+  /// Jam dinding outlet untuk [waktu], sebagai `DateTime` UTC yang field-nya (tahun…menit) = waktu di outlet.
+  static DateTime KeWaktuOutlet(DateTime waktu, String? zona) => waktu.toUtc().add(AmbilOffset(zona));
+}
+
 /// Pengaturan yang dipakai saat menjual: identitas outlet & perangkat (nomor BR-07.1), profil pajak, tarif, batas
 /// diskon (BR-07.3), pembulatan tunai (BR-08.6), dan metode pembayaran. Dimuat dari data awal tersimpan.
 class KonteksPenjualan {
@@ -65,14 +88,18 @@ class KonteksPenjualan {
     required this.batasDiskonManual,
     required this.batasDiskonPenyetuju,
     required this.metodePembayaran,
+    this.zonaWaktu = ZonaWaktuOutlet.bawaan,
   });
 
   final String? uuidOutlet;
   final String? kodeOutlet;
   final String? kodePerangkat;
 
-  /// `HH:mm`; transaksi sebelum jam ini masuk tanggal bisnis hari sebelumnya.
+  /// `HH:mm` waktu outlet; transaksi sebelum jam ini masuk tanggal bisnis hari sebelumnya.
   final String jamTutupBuku;
+
+  /// Zona waktu IANA outlet (`Outlet.ZonaWaktu`), lihat [ZonaWaktuOutlet].
+  final String zonaWaktu;
   final ProfilPajakPos profilPajak;
   final List<TarifPajakLokal> tarif;
   final DataPembulatanTunai? pembulatanTunai;
@@ -85,9 +112,9 @@ class KonteksPenjualan {
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
 
-  /// Tanggal bisnis `YYYY-MM-DD` dari waktu perangkat (zona waktu perangkat = zona outlet).
+  /// Tanggal bisnis `YYYY-MM-DD` dari [waktu] menurut jam dinding outlet ([zonaWaktu]), bukan zona perangkat.
   String HitungTanggalBisnis(DateTime waktu) {
-    var lokal = waktu.toLocal();
+    var lokal = ZonaWaktuOutlet.KeWaktuOutlet(waktu, zonaWaktu);
     final jam = '${lokal.hour.toString().padLeft(2, '0')}:${lokal.minute.toString().padLeft(2, '0')}';
     if (RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(jamTutupBuku) && jam.compareTo(jamTutupBuku) < 0) {
       lokal = lokal.subtract(const Duration(days: 1));
@@ -110,6 +137,13 @@ class KonteksPenjualan {
     final pembulatan = await repositori.AmbilPengaturan(KunciPengaturan.pembulatanTunai);
     final petaPembulatan = pembulatan == null || pembulatan.isEmpty ? null : jsonDecode(pembulatan);
     final dataPembulatan = PembulatanTunaiPos.DariJson(petaPembulatan);
+    final zona = await repositori.AmbilPengaturan(KunciPengaturan.zonaWaktu);
+    if (!ZonaWaktuOutlet.CekDikenal(zona)) {
+      developer.log(
+        'Zona waktu outlet "${zona ?? '-'}" tidak dikenal; tanggal bisnis memakai UTC+7 (WIB).',
+        name: 'KonteksPenjualan',
+      );
+    }
     return KonteksPenjualan(
       uuidOutlet: await repositori.AmbilPengaturan(KunciPengaturan.uuidOutlet),
       kodeOutlet: await repositori.AmbilPengaturan(KunciPengaturan.kodeOutlet),
@@ -134,6 +168,7 @@ class KonteksPenjualan {
       metodePembayaran: (await katalog.AmbilMetodePembayaran())
           .where((m) => JenisMetodeBayar.fase1.contains(m.Jenis))
           .toList(),
+      zonaWaktu: ZonaWaktuOutlet.CekDikenal(zona) ? zona! : ZonaWaktuOutlet.bawaan,
     );
   }
 }

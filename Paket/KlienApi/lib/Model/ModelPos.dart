@@ -160,6 +160,7 @@ class OutletPos {
     required this.alamat,
     required this.telepon,
     this.jamTutupBuku,
+    this.zonaWaktu,
   });
 
   final String uuid;
@@ -170,6 +171,10 @@ class OutletPos {
 
   /// `HH:mm` bila server mengirimnya (tanggal bisnis sebelum jam ini = hari sebelumnya); null = 00:00.
   final String? jamTutupBuku;
+
+  /// Zona waktu IANA outlet (`Outlet.ZonaWaktu`, misal `Asia/Makassar`) untuk tanggal bisnis & `YYMMDD` nomor
+  /// (PRD v1.46 (d)); null bila server lama tidak mengirimnya.
+  final String? zonaWaktu;
 
   static OutletPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
@@ -182,21 +187,43 @@ class OutletPos {
             alamat: UraiJson.AmbilTeksAtauNull(peta['Alamat']),
             telepon: UraiJson.AmbilTeksAtauNull(peta['Telepon']),
             jamTutupBuku: UraiJson.AmbilTeksAtauNull(peta['JamTutupBuku']),
+            zonaWaktu: UraiJson.AmbilTeksAtauNull(peta['ZonaWaktu']),
           );
   }
 }
 
 class PerangkatPos {
-  const PerangkatPos({required this.uuid, required this.kode});
+  const PerangkatPos({required this.uuid, required this.kode, this.nomorUrutPenjualan = const {}});
 
   final String uuid;
   final String kode;
+
+  /// Nomor urut penjualan terakhir perangkat ini di server per tanggal `YYMMDD` (`Perangkat.NomorUrutPenjualan`,
+  /// PRD v1.46 (e)), agar pemasangan ulang aplikasi tidak memakai nomor yang sama. Kunci absen/tidak valid diabaikan.
+  final Map<String, int> nomorUrutPenjualan;
 
   static PerangkatPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
     return peta == null
         ? null
-        : PerangkatPos(uuid: UraiJson.AmbilTeks(peta['Uuid']), kode: UraiJson.AmbilTeks(peta['Kode']));
+        : PerangkatPos(
+            uuid: UraiJson.AmbilTeks(peta['Uuid']),
+            kode: UraiJson.AmbilTeks(peta['Kode']),
+            nomorUrutPenjualan: _AmbilNomorUrut(peta['NomorUrutPenjualan']),
+          );
+  }
+
+  static final RegExp _polaYymmdd = RegExp(r'^\d{6}$');
+
+  static Map<String, int> _AmbilNomorUrut(Object? nilai) {
+    final hasil = <String, int>{};
+    UraiJson.AmbilPeta(nilai).forEach((tanggal, urut) {
+      final angka = UraiJson.AmbilBulatAtauNull(urut);
+      if (_polaYymmdd.hasMatch(tanggal) && angka != null && angka > 0) {
+        hasil[tanggal] = angka;
+      }
+    });
+    return hasil;
   }
 }
 

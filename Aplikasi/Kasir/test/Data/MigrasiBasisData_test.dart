@@ -76,8 +76,8 @@ void main() {
     expect(outbox.last.Status, 'PerluTindakan');
     expect((await db.select(db.shift).get()).single.KasAwal, '500000.00');
 
-    // Migrasi berantai sampai skema terbaru (3, F-11).
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
+    // Migrasi berantai sampai skema terbaru (4, kategori jenis pajak PRD v1.46).
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
     final tabel = await db
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .map((r) => r.read<String>('name'))
@@ -119,11 +119,11 @@ void main() {
     expect((await db.select(db.nomorUrutPenjualan).get()).single.Terakhir, 1);
   });
 
-  test('basis data baru langsung skema terbaru (3)', () async {
+  test('basis data baru langsung skema terbaru (4)', () async {
     final db = BasisDataKasir(NativeDatabase.memory());
     addTearDown(db.close);
     expect(await db.select(db.penjualan).get(), isEmpty);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
   });
 
   test('F-11 migrasi 2 → 3 hanya menambah kolom tutup shift; outbox tertunda, shift, & penjualan tetap utuh', () async {
@@ -137,6 +137,7 @@ void main() {
     for (final kolom in kolomTutupShift) {
       await lama.customStatement('ALTER TABLE "Shift" DROP COLUMN "$kolom"');
     }
+    await lama.customStatement('ALTER TABLE "KelompokPajakDetail" DROP COLUMN "Kategori"');
     await lama.customStatement(
       "INSERT INTO Shift (Uuid, DibukaOleh, NamaKasir, DibukaPada, KasAwal, PecahanKasAwal, Bersama, Status) VALUES "
       "('SHIFT1', 'STAF1', 'Rina Wulandari', '2026-09-24T01:00:00.000Z', '500000.00', NULL, 0, 'Terbuka')",
@@ -156,7 +157,7 @@ void main() {
     expect(outbox.map((o) => o.Uuid), ['SHIFT1', 'JUAL1'], reason: 'Outbox belum terkirim tidak boleh hilang.');
     expect(outbox.first.Percobaan, 2);
     expect(outbox.last.Status, 'PerluTindakan');
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
 
     final shift = (await db.select(db.shift).get()).single;
     expect(shift.KasAwal, '500000.00');
@@ -168,5 +169,40 @@ void main() {
       const ShiftCompanion(Status: Value('Tertutup'), KasAktual: Value('498000.00'), Selisih: Value('-2000.00')),
     );
     expect((await db.select(db.shift).get()).single.Selisih, '-2000.00');
+  });
+
+  test('PRD v1.46 migrasi 3 → 4 hanya menambah kolom Kategori kelompok pajak; outbox & katalog lama utuh', () async {
+    final folder = Directory.systemTemp.createTempSync('migrasi_kasir_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final berkas = File('${folder.path}/kasir.sqlite');
+
+    final lama = BasisDataKasir(NativeDatabase(berkas));
+    await lama.customSelect('SELECT 1').get();
+    await lama.customStatement('ALTER TABLE "KelompokPajakDetail" DROP COLUMN "Kategori"');
+    await lama.customStatement(
+      'INSERT INTO KelompokPajakDetail (UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan) VALUES '
+      "('KP1', 'Ppn', 'Subtotal', 1)",
+    );
+    await lama.customStatement(
+      'INSERT INTO Outbox (Uuid, Jenis, Data, Status, Percobaan, DibuatPada, BerikutnyaPada) VALUES '
+      "('JUAL1', 'Penjualan.Buat', '{}', 'Tertunda', 1, '2026-09-24T01:10:00.000Z', '2026-09-24T01:10:00.000Z')",
+    );
+    await lama.customStatement('PRAGMA user_version = 3');
+    await lama.close();
+
+    final db = BasisDataKasir(NativeDatabase(berkas));
+    addTearDown(db.close);
+    expect(
+      (await db.select(db.outbox).get()).single.Uuid,
+      'JUAL1',
+      reason: 'Outbox belum terkirim tidak boleh hilang.',
+    );
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 4);
+    final detail = (await db.select(db.kelompokPajakDetail).get()).single;
+    expect(detail.KodeJenisPajak, 'Ppn');
+    expect(detail.Kategori, isNull, reason: 'Baris lama tanpa kategori → fallback ke kode sampai katalog diperbarui.');
+
+    await db.update(db.kelompokPajakDetail).write(const KelompokPajakDetailCompanion(Kategori: Value('Ppn')));
+    expect((await db.select(db.kelompokPajakDetail).get()).single.Kategori, 'Ppn');
   });
 }

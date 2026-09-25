@@ -3766,8 +3766,17 @@ class $KelompokPajakDetailTable extends KelompokPajakDetail
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _KategoriMeta = const VerificationMeta('Kategori');
   @override
-  List<GeneratedColumn> get $columns => [UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan];
+  late final GeneratedColumn<String> Kategori = GeneratedColumn<String>(
+    'Kategori',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan, Kategori];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3804,6 +3813,9 @@ class $KelompokPajakDetailTable extends KelompokPajakDetail
     if (data.containsKey('Urutan')) {
       context.handle(_UrutanMeta, Urutan.isAcceptableOrUnknown(data['Urutan']!, _UrutanMeta));
     }
+    if (data.containsKey('Kategori')) {
+      context.handle(_KategoriMeta, Kategori.isAcceptableOrUnknown(data['Kategori']!, _KategoriMeta));
+    }
     return context;
   }
 
@@ -3820,6 +3832,7 @@ class $KelompokPajakDetailTable extends KelompokPajakDetail
       KodeJenisPajak: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KodeJenisPajak'])!,
       DasarPengenaan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}DasarPengenaan'])!,
       Urutan: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}Urutan'])!,
+      Kategori: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Kategori']),
     );
   }
 
@@ -3834,11 +3847,15 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
   final String KodeJenisPajak;
   final String DasarPengenaan;
   final int Urutan;
+
+  /// `Ppn`, `Pbjt`, atau `Lainnya` dari atribut `JenisPajak` (skema 4, PRD v1.46); null = server lama.
+  final String? Kategori;
   const BarisKelompokPajakDetail({
     required this.UuidKelompokPajak,
     required this.KodeJenisPajak,
     required this.DasarPengenaan,
     required this.Urutan,
+    this.Kategori,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3847,6 +3864,9 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
     map['KodeJenisPajak'] = Variable<String>(KodeJenisPajak);
     map['DasarPengenaan'] = Variable<String>(DasarPengenaan);
     map['Urutan'] = Variable<int>(Urutan);
+    if (!nullToAbsent || Kategori != null) {
+      map['Kategori'] = Variable<String>(Kategori);
+    }
     return map;
   }
 
@@ -3856,6 +3876,7 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
       KodeJenisPajak: Value(KodeJenisPajak),
       DasarPengenaan: Value(DasarPengenaan),
       Urutan: Value(Urutan),
+      Kategori: Kategori == null && nullToAbsent ? const Value.absent() : Value(Kategori),
     );
   }
 
@@ -3866,6 +3887,7 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
       KodeJenisPajak: serializer.fromJson<String>(json['KodeJenisPajak']),
       DasarPengenaan: serializer.fromJson<String>(json['DasarPengenaan']),
       Urutan: serializer.fromJson<int>(json['Urutan']),
+      Kategori: serializer.fromJson<String?>(json['Kategori']),
     );
   }
   @override
@@ -3876,6 +3898,7 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
       'KodeJenisPajak': serializer.toJson<String>(KodeJenisPajak),
       'DasarPengenaan': serializer.toJson<String>(DasarPengenaan),
       'Urutan': serializer.toJson<int>(Urutan),
+      'Kategori': serializer.toJson<String?>(Kategori),
     };
   }
 
@@ -3884,11 +3907,13 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
     String? KodeJenisPajak,
     String? DasarPengenaan,
     int? Urutan,
+    Value<String?> Kategori = const Value.absent(),
   }) => BarisKelompokPajakDetail(
     UuidKelompokPajak: UuidKelompokPajak ?? this.UuidKelompokPajak,
     KodeJenisPajak: KodeJenisPajak ?? this.KodeJenisPajak,
     DasarPengenaan: DasarPengenaan ?? this.DasarPengenaan,
     Urutan: Urutan ?? this.Urutan,
+    Kategori: Kategori.present ? Kategori.value : this.Kategori,
   );
   BarisKelompokPajakDetail copyWithCompanion(KelompokPajakDetailCompanion data) {
     return BarisKelompokPajakDetail(
@@ -3896,6 +3921,7 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
       KodeJenisPajak: data.KodeJenisPajak.present ? data.KodeJenisPajak.value : this.KodeJenisPajak,
       DasarPengenaan: data.DasarPengenaan.present ? data.DasarPengenaan.value : this.DasarPengenaan,
       Urutan: data.Urutan.present ? data.Urutan.value : this.Urutan,
+      Kategori: data.Kategori.present ? data.Kategori.value : this.Kategori,
     );
   }
 
@@ -3905,13 +3931,14 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
           ..write('UuidKelompokPajak: $UuidKelompokPajak, ')
           ..write('KodeJenisPajak: $KodeJenisPajak, ')
           ..write('DasarPengenaan: $DasarPengenaan, ')
-          ..write('Urutan: $Urutan')
+          ..write('Urutan: $Urutan, ')
+          ..write('Kategori: $Kategori')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan);
+  int get hashCode => Object.hash(UuidKelompokPajak, KodeJenisPajak, DasarPengenaan, Urutan, Kategori);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3919,7 +3946,8 @@ class BarisKelompokPajakDetail extends DataClass implements Insertable<BarisKelo
           other.UuidKelompokPajak == this.UuidKelompokPajak &&
           other.KodeJenisPajak == this.KodeJenisPajak &&
           other.DasarPengenaan == this.DasarPengenaan &&
-          other.Urutan == this.Urutan);
+          other.Urutan == this.Urutan &&
+          other.Kategori == this.Kategori);
 }
 
 class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDetail> {
@@ -3927,12 +3955,14 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
   final Value<String> KodeJenisPajak;
   final Value<String> DasarPengenaan;
   final Value<int> Urutan;
+  final Value<String?> Kategori;
   final Value<int> rowid;
   const KelompokPajakDetailCompanion({
     this.UuidKelompokPajak = const Value.absent(),
     this.KodeJenisPajak = const Value.absent(),
     this.DasarPengenaan = const Value.absent(),
     this.Urutan = const Value.absent(),
+    this.Kategori = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KelompokPajakDetailCompanion.insert({
@@ -3940,6 +3970,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
     required String KodeJenisPajak,
     required String DasarPengenaan,
     this.Urutan = const Value.absent(),
+    this.Kategori = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : UuidKelompokPajak = Value(UuidKelompokPajak),
        KodeJenisPajak = Value(KodeJenisPajak),
@@ -3949,6 +3980,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
     Expression<String>? KodeJenisPajak,
     Expression<String>? DasarPengenaan,
     Expression<int>? Urutan,
+    Expression<String>? Kategori,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3956,6 +3988,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
       if (KodeJenisPajak != null) 'KodeJenisPajak': KodeJenisPajak,
       if (DasarPengenaan != null) 'DasarPengenaan': DasarPengenaan,
       if (Urutan != null) 'Urutan': Urutan,
+      if (Kategori != null) 'Kategori': Kategori,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3965,6 +3998,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
     Value<String>? KodeJenisPajak,
     Value<String>? DasarPengenaan,
     Value<int>? Urutan,
+    Value<String?>? Kategori,
     Value<int>? rowid,
   }) {
     return KelompokPajakDetailCompanion(
@@ -3972,6 +4006,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
       KodeJenisPajak: KodeJenisPajak ?? this.KodeJenisPajak,
       DasarPengenaan: DasarPengenaan ?? this.DasarPengenaan,
       Urutan: Urutan ?? this.Urutan,
+      Kategori: Kategori ?? this.Kategori,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3991,6 +4026,9 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
     if (Urutan.present) {
       map['Urutan'] = Variable<int>(Urutan.value);
     }
+    if (Kategori.present) {
+      map['Kategori'] = Variable<String>(Kategori.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4004,6 +4042,7 @@ class KelompokPajakDetailCompanion extends UpdateCompanion<BarisKelompokPajakDet
           ..write('KodeJenisPajak: $KodeJenisPajak, ')
           ..write('DasarPengenaan: $DasarPengenaan, ')
           ..write('Urutan: $Urutan, ')
+          ..write('Kategori: $Kategori, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12894,6 +12933,7 @@ typedef $$KelompokPajakDetailTableCreateCompanionBuilder = KelompokPajakDetailCo
   required String KodeJenisPajak,
   required String DasarPengenaan,
   Value<int> Urutan,
+  Value<String?> Kategori,
   Value<int> rowid,
 });
 typedef $$KelompokPajakDetailTableUpdateCompanionBuilder = KelompokPajakDetailCompanion Function({
@@ -12901,6 +12941,7 @@ typedef $$KelompokPajakDetailTableUpdateCompanionBuilder = KelompokPajakDetailCo
   Value<String> KodeJenisPajak,
   Value<String> DasarPengenaan,
   Value<int> Urutan,
+  Value<String?> Kategori,
   Value<int> rowid,
 });
 
@@ -12923,6 +12964,9 @@ class $$KelompokPajakDetailTableFilterComposer extends Composer<_$BasisDataKasir
 
   ColumnFilters<int> get Urutan =>
       $composableBuilder(column: $table.Urutan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Kategori =>
+      $composableBuilder(column: $table.Kategori, builder: (column) => ColumnFilters(column));
 }
 
 class $$KelompokPajakDetailTableOrderingComposer extends Composer<_$BasisDataKasir, $KelompokPajakDetailTable> {
@@ -12944,6 +12988,9 @@ class $$KelompokPajakDetailTableOrderingComposer extends Composer<_$BasisDataKas
 
   ColumnOrderings<int> get Urutan =>
       $composableBuilder(column: $table.Urutan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Kategori =>
+      $composableBuilder(column: $table.Kategori, builder: (column) => ColumnOrderings(column));
 }
 
 class $$KelompokPajakDetailTableAnnotationComposer extends Composer<_$BasisDataKasir, $KelompokPajakDetailTable> {
@@ -12964,6 +13011,8 @@ class $$KelompokPajakDetailTableAnnotationComposer extends Composer<_$BasisDataK
       $composableBuilder(column: $table.DasarPengenaan, builder: (column) => column);
 
   GeneratedColumn<int> get Urutan => $composableBuilder(column: $table.Urutan, builder: (column) => column);
+
+  GeneratedColumn<String> get Kategori => $composableBuilder(column: $table.Kategori, builder: (column) => column);
 }
 
 class $$KelompokPajakDetailTableTableManager
@@ -12998,12 +13047,14 @@ class $$KelompokPajakDetailTableTableManager
                 Value<String> KodeJenisPajak = const Value.absent(),
                 Value<String> DasarPengenaan = const Value.absent(),
                 Value<int> Urutan = const Value.absent(),
+                Value<String?> Kategori = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KelompokPajakDetailCompanion(
                 UuidKelompokPajak: UuidKelompokPajak,
                 KodeJenisPajak: KodeJenisPajak,
                 DasarPengenaan: DasarPengenaan,
                 Urutan: Urutan,
+                Kategori: Kategori,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13012,12 +13063,14 @@ class $$KelompokPajakDetailTableTableManager
                 required String KodeJenisPajak,
                 required String DasarPengenaan,
                 Value<int> Urutan = const Value.absent(),
+                Value<String?> Kategori = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KelompokPajakDetailCompanion.insert(
                 UuidKelompokPajak: UuidKelompokPajak,
                 KodeJenisPajak: KodeJenisPajak,
                 DasarPengenaan: DasarPengenaan,
                 Urutan: Urutan,
+                Kategori: Kategori,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

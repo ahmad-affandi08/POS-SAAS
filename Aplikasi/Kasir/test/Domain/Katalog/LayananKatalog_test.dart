@@ -28,6 +28,9 @@ void main() {
     expect(katalog.produk, hasLength(7));
     expect(katalog.CariProduk(UuidUji.kopiSusu)!.kelompokPilihan.map((k) => k.nama), ['Level gula', 'Tambahan']);
     expect(katalog.CariProduk(UuidUji.kopiSusu)!.pajak.single.kode, 'PbjtMakananMinuman');
+    // PRD v1.46: kategori jenis pajak disimpan bila server mengirimnya; absen (server lama) → null, fallback ke kode.
+    expect(katalog.CariProduk(UuidUji.kopiSusu)!.pajak.single.kategori, 'Pbjt');
+    expect(katalog.CariProduk(UuidUji.roti)!.pajak.single.kategori, isNull);
   });
 
   test('delta dengan kursor: baris berubah ditimpa, produk Dihapus & bagian Terhapus diterapkan', () async {

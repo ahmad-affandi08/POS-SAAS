@@ -225,6 +225,33 @@ void main() {
     await Lepas(tester, u);
   });
 
+  testWidgets('PRD v1.46 (f): kasir tanpa izin diskon manual tetap bisa mengisi diskon → PIN penyetuju', (
+    tester,
+  ) async {
+    final dataAwal = DataAwalUji();
+    final staf = (dataAwal['Staf']! as List<Object?>).cast<Map<String, Object?>>();
+    staf[0] = StafJson('01K5STAF000000000000000001', 'Rina Wulandari', ['penjualan.buat'], 0);
+    final u = await MasukJual(tester, dataAwal: dataAwal);
+
+    await Ketuk(tester, Ubin('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo'));
+    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang), matching: find.textContaining('Croissant')));
+    expect(find.text('Diskon item'), findsOneWidget);
+    expect(find.text('Diskon perlu disetujui supervisor dengan PIN.'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Diskon (%)'), '5');
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan perubahan'));
+
+    // Di bawah batas manual 10% pun tetap diarahkan ke PIN penyetuju, bukan ditolak.
+    expect(find.text('Persetujuan supervisor'), findsOneWidget);
+    expect(find.textContaining('Diskon manual perlu persetujuan'), findsOneWidget);
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await KetikPin(tester, KasusPin(1)['Pin']! as String);
+    await Tunggu(tester);
+
+    expect(find.byType(PanelTugas), findsNothing);
+    expect(find.textContaining('Diskon 5%'), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
   testWidgets('BR-08.1 split: EDC dengan nomor approval lalu sisa tunai', (tester) async {
     final u = await MasukJual(tester);
     await Ketuk(tester, Ubin('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo'));

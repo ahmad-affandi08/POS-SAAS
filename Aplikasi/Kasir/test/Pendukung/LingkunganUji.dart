@@ -54,6 +54,9 @@ Map<String, Object?> DataAwalUji({
   List<Map<String, Object?>>? tarifPajak,
   bool tutupShiftButa = true,
   String toleransiSelisihKas = '10000.00',
+  String? zonaWaktu,
+  String? jamTutupBuku,
+  Map<String, Object?>? nomorUrutPenjualan,
 }) => {
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
@@ -70,8 +73,10 @@ Map<String, Object?> DataAwalUji({
     'Nama': 'Kopi Senja Solo Baru',
     'Alamat': 'Jl. Ir. Soekarno No. 12, Solo Baru, Sukoharjo',
     'Telepon': '0271-555123',
+    'JamTutupBuku': ?jamTutupBuku,
+    'ZonaWaktu': ?zonaWaktu,
   },
-  'Perangkat': {'Uuid': '01K5PERANGKAT0000000000001', 'Kode': 'POS-001'},
+  'Perangkat': {'Uuid': '01K5PERANGKAT0000000000001', 'Kode': 'POS-001', 'NomorUrutPenjualan': ?nomorUrutPenjualan},
   'ProfilPajak':
       profilPajak ??
       {

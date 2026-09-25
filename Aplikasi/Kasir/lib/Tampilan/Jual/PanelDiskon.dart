@@ -16,25 +16,31 @@ import '../LembarMutasiKas.dart';
 /// Hasil pemeriksaan persetujuan diskon.
 typedef HasilPersetujuanDiskon = ({bool boleh, PenyetujuDiskon? penyetuju});
 
-/// BR-07.3: periksa diskon terhadap batas; di atas batas manual → PIN penyetuju ber-izin `penjualan.diskon.setujui`;
-/// di atas batas penyetuju → hanya Pemilik. Satu dialog saja (tidak bertumpuk). Melempar `GalatKasir` bila kasir
-/// tidak punya izin diskon manual.
+/// BR-07.3: periksa diskon terhadap batas memakai persen efektif (diskon hasil mesin [nilaiDiskon] ÷ [dasar]); kasir
+/// tanpa izin diskon manual atau di atas batas manual → PIN penyetuju ber-izin `penjualan.diskon.setujui`; di atas
+/// batas penyetuju → hanya Pemilik. Satu dialog saja (tidak bertumpuk).
 Future<HasilPersetujuanDiskon> PastikanDiskonDisetujui(
   BuildContext context, {
   required Uang dasar,
-  required DiskonManual diskon,
+  required Uang nilaiDiskon,
   required StafLokal kasir,
   required KonteksPenjualan k,
   PenyetujuDiskon? penyetuju,
 }) async {
-  LayananPenjualan.ValidasiBentukDiskon(dasar, diskon);
-  var status = LayananPenjualan.PeriksaDiskon(dasar: dasar, diskon: diskon, kasir: kasir, k: k, penyetuju: penyetuju);
+  var status = LayananPenjualan.PeriksaDiskon(
+    dasar: dasar,
+    diskon: nilaiDiskon,
+    kasir: kasir,
+    k: k,
+    penyetuju: penyetuju,
+  );
   if (status == StatusDiskon.Boleh) {
     return (boleh: true, penyetuju: penyetuju);
   }
   final hanyaPemilik = status == StatusDiskon.MelebihiBatas;
   final batasManual = FormatAngka.FormatPersen(k.batasDiskonManual.toString());
   final batasPenyetuju = FormatAngka.FormatPersen(k.batasDiskonPenyetuju.toString());
+  final berizinManual = kasir.PunyaIzin(IzinKasir.penjualanDiskonManual);
   final staf = await showDialog<StafLokal>(
     context: context,
     builder: (_) => DialogPinSupervisor(
@@ -42,14 +48,16 @@ Future<HasilPersetujuanDiskon> PastikanDiskonDisetujui(
       hanyaPemilik: hanyaPemilik,
       pesan: hanyaPemilik
           ? 'Diskon ini di atas $batasPenyetuju. Hanya Pemilik yang bisa menyetujuinya.'
-          : 'Diskon ini di atas $batasManual. Pilih penyetuju diskon.',
+          : berizinManual
+          ? 'Diskon ini di atas $batasManual. Pilih penyetuju diskon.'
+          : 'Diskon manual perlu persetujuan. Pilih penyetuju diskon.',
     ),
   );
   if (staf == null) {
     return (boleh: false, penyetuju: penyetuju);
   }
   final baru = PenyetujuDiskon(uuid: staf.uuid, nama: staf.nama, pemilik: staf.pemilik);
-  status = LayananPenjualan.PeriksaDiskon(dasar: dasar, diskon: diskon, kasir: kasir, k: k, penyetuju: baru);
+  status = LayananPenjualan.PeriksaDiskon(dasar: dasar, diskon: nilaiDiskon, kasir: kasir, k: k, penyetuju: baru);
   if (status != StatusDiskon.Boleh) {
     throw GalatKasir(
       'DiskonMelebihiBatas',
@@ -165,15 +173,17 @@ class _PanelDiskonPesananState extends ConsumerState<PanelDiskonPesanan> {
       return;
     }
     final layanan = ref.read(penyediaLayananPenjualan);
-    final subtotal = layanan.Hitung(keranjang.Salin(diskonPesanan: () => null), k).hasil.subtotal;
     try {
+      final subtotal = layanan.Hitung(keranjang.Salin(diskonPesanan: () => null), k).hasil.subtotal;
+      LayananPenjualan.ValidasiBentukDiskon(subtotal, diskon);
+      final nilai = layanan.HitungDiskonPesanan(keranjang, diskon, k);
       if (!mounted) {
         return;
       }
       final hasil = await PastikanDiskonDisetujui(
         context,
-        dasar: subtotal,
-        diskon: diskon,
+        dasar: nilai.dasar,
+        nilaiDiskon: nilai.diskon,
         kasir: widget.kasir,
         k: k,
         penyetuju: keranjang.penyetuju,

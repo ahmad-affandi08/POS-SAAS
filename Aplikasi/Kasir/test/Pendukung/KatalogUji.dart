@@ -115,7 +115,12 @@ Map<String, Object?> KatalogUji() => {
       'Nama': 'Makanan & minuman',
       'Kategori': 'KenaPbjt',
       'Pajak': [
-        {'KodeJenisPajak': 'PbjtMakananMinuman', 'DasarPengenaan': 'SubtotalPlusLayanan', 'Urutan': 1},
+        {
+          'KodeJenisPajak': 'PbjtMakananMinuman',
+          'DasarPengenaan': 'SubtotalPlusLayanan',
+          'Urutan': 1,
+          'Kategori': 'Pbjt',
+        },
       ],
     },
     {

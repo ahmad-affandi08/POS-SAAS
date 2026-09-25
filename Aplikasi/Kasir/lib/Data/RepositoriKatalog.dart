@@ -137,6 +137,7 @@ class RepositoriKatalog {
               KodeJenisPajak: p.kodeJenisPajak,
               DasarPengenaan: p.dasarPengenaan,
               Urutan: Value(p.urutan),
+              Kategori: Value(p.kategori),
             ),
       ]);
       b.insertAllOnConflictUpdate(db.produk, [

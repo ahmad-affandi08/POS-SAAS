@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:klien_api/KlienApi.dart' show PajakKelompokPos;
 import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart' hide BarisProdukHarga;
@@ -60,18 +61,31 @@ class KelompokPilihanJual {
   bool CekSatuSaja() => maksimal == 1;
 }
 
-/// Jenis pajak kelompok pajak produk: kode jenis (`Ppn`, `PbjtMakananMinuman`, ...) dan dasar pengenaan.
+/// Jenis pajak kelompok pajak produk: kode jenis (`Ppn`, `PbjtMakananMinuman`, ...), dasar pengenaan, dan kategori
+/// jenis pajak (`Ppn`/`Pbjt`/`Lainnya`; null = server lama, lihat [AmbilKategori]).
 class PajakProduk {
-  const PajakProduk({required this.kode, required this.dasarPengenaan});
+  const PajakProduk({required this.kode, required this.dasarPengenaan, this.kategori});
 
   final String kode;
   final String dasarPengenaan;
+  final String? kategori;
 
-  Map<String, Object?> KeJson() => {'Kode': kode, 'DasarPengenaan': dasarPengenaan};
+  /// Kategori untuk syarat PKP/PBJT (PRD v1.46): dari atribut `JenisPajak` bila ada; bila absen, fallback ke kode lama
+  /// (`Ppn` → `Ppn`, `PbjtMakananMinuman` → `Pbjt`, lainnya → `Lainnya`).
+  String AmbilKategori() =>
+      kategori ??
+      switch (kode) {
+        'Ppn' => PajakKelompokPos.kategoriPpn,
+        'PbjtMakananMinuman' => PajakKelompokPos.kategoriPbjt,
+        _ => PajakKelompokPos.kategoriLainnya,
+      };
+
+  Map<String, Object?> KeJson() => {'Kode': kode, 'DasarPengenaan': dasarPengenaan, 'Kategori': kategori};
 
   static PajakProduk DariJson(Map<String, Object?> json) => PajakProduk(
     kode: json['Kode'] is String ? json['Kode']! as String : '',
     dasarPengenaan: json['DasarPengenaan'] is String ? json['DasarPengenaan']! as String : 'Subtotal',
+    kategori: json['Kategori'] is String ? json['Kategori']! as String : null,
   );
 }
 
@@ -274,7 +288,7 @@ class KatalogLokal {
     for (final d in isi.kelompokPajakDetail) {
       pajakKelompok
           .putIfAbsent(d.UuidKelompokPajak, () => [])
-          .add(PajakProduk(kode: d.KodeJenisPajak, dasarPengenaan: d.DasarPengenaan));
+          .add(PajakProduk(kode: d.KodeJenisPajak, dasarPengenaan: d.DasarPengenaan, kategori: d.Kategori));
     }
 
     final produk = [

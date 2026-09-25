@@ -8,6 +8,7 @@ import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/GalatKasir.dart';
 import '../../Domain/Katalog/KatalogLokal.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
+import '../../Domain/Penjualan/LayananPenjualan.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatAngka.dart';
 import 'PanelDiskon.dart';
@@ -132,14 +133,15 @@ class _PanelItemState extends ConsumerState<PanelItem> {
       var penyetuju = keranjang.penyetuju;
       if (diskon != null && diskonBerubah) {
         final indeks = keranjang.baris.indexWhere((b) => b.uuid == uuid);
-        final dasar = layanan.Hitung(keranjang, k).hasil.baris[indeks].bruto;
+        LayananPenjualan.ValidasiBentukDiskon(layanan.Hitung(keranjang, k).hasil.baris[indeks].bruto, diskon);
+        final nilai = layanan.HitungDiskonBaris(keranjang, uuid, diskon, k);
         if (!mounted) {
           return;
         }
         final hasil = await PastikanDiskonDisetujui(
           context,
-          dasar: dasar,
-          diskon: diskon,
+          dasar: nilai.dasar,
+          nilaiDiskon: nilai.diskon,
           kasir: widget.kasir,
           k: k,
           penyetuju: penyetuju,
@@ -179,7 +181,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final produk = widget.produk;
-    final bolehDiskon = widget.kasir.PunyaIzin(IzinKasir.penjualanDiskonManual);
+    final berizinDiskon = widget.kasir.PunyaIzin(IzinKasir.penjualanDiskonManual);
 
     return Padding(
       padding: const EdgeInsets.all(TokenJarak.jarak24),
@@ -268,9 +270,13 @@ class _PanelItemState extends ConsumerState<PanelItem> {
             maxLength: 255,
             decoration: const InputDecoration(labelText: 'Catatan (opsional)', border: OutlineInputBorder()),
           ),
-          if (_modeUbah && bolehDiskon) ...[
+          if (_modeUbah) ...[
             const SizedBox(height: TokenJarak.jarak8),
             Text('Diskon item', style: teks.labelLarge),
+            if (!berizinDiskon) ...[
+              const SizedBox(height: TokenJarak.jarak4),
+              Text('Diskon perlu disetujui supervisor dengan PIN.', style: teks.bodySmall),
+            ],
             const SizedBox(height: TokenJarak.jarak8),
             IsianDiskon(
               awal: _diskon,

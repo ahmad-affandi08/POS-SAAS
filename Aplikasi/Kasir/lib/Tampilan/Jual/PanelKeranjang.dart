@@ -238,7 +238,7 @@ abstract final class RingkasanTotal {
       for (final p in hitungan.pajakDokumen)
         if (hasil.pajak[p.kode] != null && !hasil.pajak[p.kode]!.jumlah.BernilaiNol())
           Baris(
-            '${KodePajak.AmbilLabel(p.kode)} ${FormatAngka.FormatPersen(hitungan.tarifDipakai[p.kode]!.tarif)}',
+            '${hitungan.labelPajak[p.kode] ?? p.kode} ${FormatAngka.FormatPersen(hitungan.tarifDipakai[p.kode]!.tarif)}',
             hasil.pajak[p.kode]!.jumlah,
           ),
       if (tampilPembulatan && !hasil.pembulatan.BernilaiNol()) Baris('Pembulatan tunai', hasil.pembulatan),

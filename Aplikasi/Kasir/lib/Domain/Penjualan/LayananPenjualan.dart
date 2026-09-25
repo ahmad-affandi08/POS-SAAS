@@ -13,15 +13,12 @@ import '../Sesi/StafLokal.dart';
 import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
 
-/// Kode jenis pajak yang punya syarat profil pajak outlet (Rincian F-07c).
+/// Label jenis pajak untuk kasir menurut kategorinya (`Ppn`/`Pbjt`, PRD v1.46); kategori lain memakai kodenya.
 abstract final class KodePajak {
-  static const String ppn = 'Ppn';
-  static const String pbjtMakananMinuman = 'PbjtMakananMinuman';
-
-  static String AmbilLabel(String kode) => switch (kode) {
-    ppn => 'PPN',
-    pbjtMakananMinuman => 'PBJT',
-    _ => kode,
+  static String AmbilLabel(PajakProduk pajak) => switch (pajak.AmbilKategori()) {
+    PajakKelompokPos.kategoriPpn => 'PPN',
+    PajakKelompokPos.kategoriPbjt => 'PBJT',
+    _ => pajak.kode,
   };
 }
 
@@ -35,6 +32,7 @@ class HitunganKeranjang {
     required this.kodePajakBaris,
     required this.peringatan,
     required this.tanggalBisnis,
+    this.labelPajak = const {},
   });
 
   final HasilKalkulasi hasil;
@@ -45,6 +43,9 @@ class HitunganKeranjang {
 
   /// `YYYY-MM-DD`.
   final String tanggalBisnis;
+
+  /// Label tampilan per kode pajak dokumen (`PPN`/`PBJT` menurut kategori jenis pajak).
+  final Map<String, String> labelPajak;
 }
 
 /// Satu pembayaran yang dimasukkan kasir. Tunai: [jumlah] = uang diterima.
@@ -88,8 +89,9 @@ enum StatusDiskon { Boleh, ButuhPenyetuju, MelebihiBatas }
 /// - harga satuan dari `PenentuHarga` (outlet, kanal `BawaPulang`), total dari `MesinKalkulasi` (paket MesinKasir);
 /// - pajak per produk dari kelompok pajaknya: PPN hanya bila PKP, PBJT makanan & minuman hanya bila memungut PBJT, tarif
 ///   dari `TarifPajak` yang berlaku pada tanggal bisnis (tanpa tarif → tidak dihitung + peringatan, CLAUDE.md #12);
-/// - BR-07.3 diskon manual butuh `penjualan.diskon.manual`; di atas `BatasDiskonManual` butuh penyetuju ber-izin
-///   `penjualan.diskon.setujui` sampai `BatasDiskonPenyetuju`; Pemilik tanpa batas;
+/// - BR-07.3 diskon manual sampai `BatasDiskonManual` oleh kasir ber-izin `penjualan.diskon.manual`; kasir tanpa izin
+///   itu atau di atas batas butuh penyetuju ber-izin `penjualan.diskon.setujui` sampai `BatasDiskonPenyetuju`;
+///   Pemilik tanpa batas. Persen = diskon hasil mesin ÷ bruto baris (pesanan: ÷ subtotal);
 /// - BR-07.4 butuh shift terbuka; BR-07.1 nomor `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ4}`;
 /// - penjualan + detail + pembayaran + outbox `Penjualan.Buat` dalam satu transaksi SQLite (PRD §18.3 no. 3).
 class LayananPenjualan {
@@ -277,21 +279,24 @@ class LayananPenjualan {
     final pajakDokumen = <String, DataPajakKalkulasi>{};
     final tarifDipakai = <String, TarifPajakLokal>{};
     final peringatan = <String>{};
+    final labelPajak = <String, String>{};
     final kodeBaris = <List<String>>[];
 
     for (final b in keranjang.baris) {
       final kode = <String>[];
       for (final p in b.pajak) {
-        if (p.kode == KodePajak.ppn && !k.profilPajak.pkp) {
+        // Syarat profil pajak outlet menurut kategori jenis pajak (PRD v1.46), bukan string kode tetap.
+        final kategori = p.AmbilKategori();
+        if (kategori == PajakKelompokPos.kategoriPpn && !k.profilPajak.pkp) {
           continue;
         }
-        if (p.kode == KodePajak.pbjtMakananMinuman && !k.profilPajak.pungutPbjt) {
+        if (kategori == PajakKelompokPos.kategoriPbjt && !k.profilPajak.pungutPbjt) {
           continue;
         }
         final tarif = k.CariTarif(p.kode, tanggal);
         if (tarif == null) {
           peringatan.add(
-            'Tarif ${KodePajak.AmbilLabel(p.kode)} belum tersedia di perangkat, jadi pajak ini tidak dihitung. '
+            'Tarif ${KodePajak.AmbilLabel(p)} belum tersedia di perangkat, jadi pajak ini tidak dihitung. '
             'Sambungkan ke internet agar tarif terbaru terunduh.',
           );
           continue;
@@ -300,6 +305,7 @@ class LayananPenjualan {
           kode.add(p.kode);
         }
         tarifDipakai.putIfAbsent(p.kode, () => tarif);
+        labelPajak.putIfAbsent(p.kode, () => KodePajak.AmbilLabel(p));
         pajakDokumen.putIfAbsent(
           p.kode,
           () => DataPajakKalkulasi(
@@ -344,6 +350,7 @@ class LayananPenjualan {
       kodePajakBaris: kodeBaris,
       peringatan: peringatan.toList(),
       tanggalBisnis: tanggal,
+      labelPajak: labelPajak,
     );
   }
 
@@ -364,15 +371,17 @@ class LayananPenjualan {
 
   // Diskon (BR-07.3) ---------------------------------------------------------------------------------------------------
 
-  /// Persen efektif diskon terhadap [dasar] (bruto baris atau subtotal untuk pesanan).
-  static Rational HitungPersenEfektif(Uang dasar, DiskonManual diskon) {
-    if (diskon.persen != null) {
-      return diskon.persen!.toRational();
+  /// Persen efektif diskon (PRD v1.46 tindak lanjut (c), sama dengan server): nilai diskon hasil `MesinKalkulasi`
+  /// (sudah dibulatkan ke sen) ÷ [dasar] × 100. Dasar = bruto baris untuk diskon baris, subtotal untuk diskon
+  /// pesanan. Bukan persen masukan: diskon 30% dari bruto Rp 4.995,45 dibulatkan menjadi Rp 1.498,64 = 30,0001%.
+  static Rational HitungPersenEfektif(Uang dasar, Uang diskon) {
+    if (diskon.Bandingkan(Uang.Nol()) <= 0) {
+      return Rational.zero;
     }
     if (dasar.Bandingkan(Uang.Nol()) <= 0) {
       return Rational.fromInt(100);
     }
-    return diskon.jumlah!.KeDesimal().toRational() * Rational.fromInt(100) / dasar.KeDesimal().toRational();
+    return diskon.KeDesimal().toRational() * Rational.fromInt(100) / dasar.KeDesimal().toRational();
   }
 
   /// Validasi bentuk diskon sebelum diterapkan: persen 0–100, nominal tidak melebihi [dasar].
@@ -387,6 +396,27 @@ class LayananPenjualan {
     }
   }
 
+  /// Nilai diskon baris [uuidBaris] bila [diskon] diterapkan: bruto (dasar) dan diskon hasil mesin.
+  ({Uang dasar, Uang diskon}) HitungDiskonBaris(
+    Keranjang keranjang,
+    String uuidBaris,
+    DiskonManual diskon,
+    KonteksPenjualan k,
+  ) {
+    final indeks = keranjang.baris.indexWhere((b) => b.uuid == uuidBaris);
+    final dengan = keranjang.Salin(
+      baris: [for (final b in keranjang.baris) b.uuid == uuidBaris ? b.Salin(diskon: () => diskon) : b],
+    );
+    final baris = Hitung(dengan, k).hasil.baris[indeks];
+    return (dasar: baris.bruto, diskon: baris.diskon);
+  }
+
+  /// Nilai diskon pesanan bila [diskon] diterapkan: subtotal (dasar) dan diskon pesanan hasil mesin.
+  ({Uang dasar, Uang diskon}) HitungDiskonPesanan(Keranjang keranjang, DiskonManual diskon, KonteksPenjualan k) {
+    final hasil = Hitung(keranjang.Salin(diskonPesanan: () => diskon), k).hasil;
+    return (dasar: hasil.subtotal, diskon: hasil.diskonPesanan);
+  }
+
   /// Penyetuju efektif: penyetuju yang lolos PIN, atau kasir sendiri bila ia punya izin menyetujui.
   static PenyetujuDiskon? AmbilPenyetujuEfektif(StafLokal kasir, PenyetujuDiskon? penyetuju) =>
       penyetuju ??
@@ -394,18 +424,22 @@ class LayananPenjualan {
           ? PenyetujuDiskon(uuid: kasir.uuid, nama: kasir.nama, pemilik: kasir.pemilik)
           : null);
 
+  /// Apakah diskon ini wajib dicatat penyetujunya: kasir tanpa `penjualan.diskon.manual` (PRD v1.46 (f): diarahkan
+  /// ke PIN penyetuju, bukan ditolak), atau persen efektif di atas `BatasDiskonManual`. Pemilik tidak pernah.
+  static bool CekButuhPenyetuju({required Rational persen, required StafLokal kasir, required KonteksPenjualan k}) =>
+      !kasir.pemilik &&
+      (!kasir.PunyaIzin(IzinKasir.penjualanDiskonManual) || persen > k.batasDiskonManual.toRational());
+
+  /// BR-07.3 terhadap persen efektif [diskon] (hasil mesin) dari [dasar].
   static StatusDiskon PeriksaDiskon({
     required Uang dasar,
-    required DiskonManual diskon,
+    required Uang diskon,
     required StafLokal kasir,
     required KonteksPenjualan k,
     PenyetujuDiskon? penyetuju,
   }) {
-    if (!kasir.PunyaIzin(IzinKasir.penjualanDiskonManual)) {
-      throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin memberi diskon manual.');
-    }
     final persen = HitungPersenEfektif(dasar, diskon);
-    if (kasir.pemilik || persen <= k.batasDiskonManual.toRational()) {
+    if (!CekButuhPenyetuju(persen: persen, kasir: kasir, k: k)) {
       return StatusDiskon.Boleh;
     }
     final penyetujuEfektif = AmbilPenyetujuEfektif(kasir, penyetuju);
@@ -418,8 +452,8 @@ class LayananPenjualan {
     return penyetujuEfektif == null ? StatusDiskon.ButuhPenyetuju : StatusDiskon.Boleh;
   }
 
-  /// Periksa semua diskon keranjang terhadap batas. Kembalikan penyetuju yang dicatat (`UuidPenyetujuDiskon`), atau
-  /// null bila semua diskon di bawah batas manual.
+  /// Periksa semua diskon keranjang terhadap batas memakai hasil mesin di [hitungan]. Kembalikan penyetuju yang
+  /// dicatat (`UuidPenyetujuDiskon`), atau null bila tidak ada diskon yang butuh penyetuju.
   static PenyetujuDiskon? ValidasiDiskon(
     Keranjang keranjang,
     HitunganKeranjang hitungan,
@@ -427,7 +461,7 @@ class LayananPenjualan {
     KonteksPenjualan k,
   ) {
     var butuhPenyetuju = false;
-    void Periksa(String nama, Uang dasar, DiskonManual diskon) {
+    void Periksa(String nama, Uang dasar, Uang diskon) {
       final status = PeriksaDiskon(dasar: dasar, diskon: diskon, kasir: kasir, k: k, penyetuju: keranjang.penyetuju);
       if (status == StatusDiskon.MelebihiBatas) {
         throw GalatKasir(
@@ -438,22 +472,24 @@ class LayananPenjualan {
       if (status == StatusDiskon.ButuhPenyetuju) {
         throw GalatKasir(
           'PersetujuanDiperlukan',
-          'Diskon $nama di atas ${k.batasDiskonManual}% wajib disetujui supervisor dengan PIN.',
+          kasir.PunyaIzin(IzinKasir.penjualanDiskonManual)
+              ? 'Diskon $nama di atas ${k.batasDiskonManual}% wajib disetujui supervisor dengan PIN.'
+              : 'Diskon $nama wajib disetujui supervisor dengan PIN.',
         );
       }
-      if (!kasir.pemilik && HitungPersenEfektif(dasar, diskon) > k.batasDiskonManual.toRational()) {
+      if (CekButuhPenyetuju(persen: HitungPersenEfektif(dasar, diskon), kasir: kasir, k: k)) {
         butuhPenyetuju = true;
       }
     }
 
+    final hasil = hitungan.hasil;
     for (var i = 0; i < keranjang.baris.length; i++) {
-      final diskon = keranjang.baris[i].diskon;
-      if (diskon != null) {
-        Periksa('"${keranjang.baris[i].nama}"', hitungan.hasil.baris[i].bruto, diskon);
+      if (keranjang.baris[i].diskon != null) {
+        Periksa('"${keranjang.baris[i].nama}"', hasil.baris[i].bruto, hasil.baris[i].diskon);
       }
     }
     if (keranjang.diskonPesanan != null) {
-      Periksa('pesanan', hitungan.hasil.subtotal, keranjang.diskonPesanan!);
+      Periksa('pesanan', hasil.subtotal, hasil.diskonPesanan);
     }
     return butuhPenyetuju ? AmbilPenyetujuEfektif(kasir, keranjang.penyetuju) : null;
   }
@@ -537,6 +573,25 @@ class LayananPenjualan {
     );
   }
 
+  /// Server membatasi `Pembayaran.*.Referensi` paling panjang 100 karakter. EDC menggabungkan bank & nomor approval
+  /// (`bank · approval`), jadi masing-masing dibatasi agar gabungannya ≤ 100 (40 + 3 + 56 = 99).
+  static const int panjangMaksReferensi = 100;
+  static const int panjangMaksBankEdc = 40;
+  static const int panjangMaksApprovalEdc = 56;
+
+  /// Referensi EDC `bank · approval` (bank opsional); tiap bagian dipangkas ke batasnya.
+  static String SusunReferensiEdc(String bank, String approval) {
+    String Pangkas(String teks, int maks) {
+      final rapi = teks.trim();
+      return rapi.runes.length <= maks ? rapi : String.fromCharCodes(rapi.runes.take(maks)).trim();
+    }
+
+    return [
+      Pangkas(bank, panjangMaksBankEdc),
+      Pangkas(approval, panjangMaksApprovalEdc),
+    ].where((t) => t.isNotEmpty).join(' · ');
+  }
+
   /// Aturan pembayaran fase 1 (Rincian F-07b langkah 9) yang bisa diperiksa sebelum dihitung.
   static void ValidasiPembayaran(List<PembayaranMasukan> pembayaran) {
     if (pembayaran.isEmpty) {
@@ -551,6 +606,12 @@ class LayananPenjualan {
       }
       if (p.jumlah.Bandingkan(Uang.Nol()) <= 0) {
         throw GalatKasir('JumlahTidakValid', 'Jumlah pembayaran ${p.metode.Nama} harus lebih dari Rp 0.');
+      }
+      if ((p.referensi?.runes.length ?? 0) > panjangMaksReferensi) {
+        throw GalatKasir(
+          'ReferensiTerlaluPanjang',
+          'Referensi ${p.metode.Nama} paling panjang $panjangMaksReferensi karakter.',
+        );
       }
     }
   }

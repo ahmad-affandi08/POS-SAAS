@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:klien_api/KlienApi.dart' show DataAwal;
 import 'package:kasir/Data/BasisData/BasisDataKasir.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Domain/GalatKasir.dart';
@@ -246,7 +247,7 @@ void main() {
       StatusDiskon Periksa(String persen, StafLokal kasir, {PenyetujuDiskon? penyetuju}) =>
           LayananPenjualan.PeriksaDiskon(
             dasar: dasar,
-            diskon: DiskonManual.DariPersen(Decimal.parse(persen)),
+            diskon: Uang.DariDesimal(Decimal.parse(persen) * Decimal.fromInt(1000)),
             kasir: kasir,
             k: k,
             penyetuju: penyetuju,
@@ -267,20 +268,121 @@ void main() {
         StatusDiskon.Boleh,
       );
       expect(Periksa('20', budi), StatusDiskon.Boleh, reason: 'Budi berizin menyetujui diskon sendiri sampai 30%.');
+    });
 
-      // Nominal: Rp 15.000 dari Rp 100.000 = 15%.
-      expect(
-        LayananPenjualan.PeriksaDiskon(
-          dasar: dasar,
-          diskon: DiskonManual.DariJumlah(Uang.DariBulat(15000)),
-          kasir: rina,
-          k: k,
-        ),
-        StatusDiskon.ButuhPenyetuju,
+    test('PRD v1.46 (f): kasir tanpa penjualan.diskon.manual diarahkan ke PIN penyetuju, bukan ditolak', () async {
+      await Siapkan(bukaShift: false);
+      final sari = await u.Staf('Sari Lestari');
+      expect(sari.PunyaIzin(IzinKasir.penjualanDiskonManual), isFalse);
+      StatusDiskon Periksa(String jumlah, {PenyetujuDiskon? penyetuju}) => LayananPenjualan.PeriksaDiskon(
+        dasar: Uang.DariBulat(100000),
+        diskon: Uang.Dari(jumlah),
+        kasir: sari,
+        k: k,
+        penyetuju: penyetuju,
       );
 
-      final sari = await u.Staf('Sari Lestari');
-      expect(() => Periksa('5', sari), GalatDengan('TanpaIzin'));
+      // Bahkan di bawah batas manual (5%): tanpa penyetuju → butuh penyetuju (bukan galat TanpaIzin).
+      expect(Periksa('5000'), StatusDiskon.ButuhPenyetuju);
+      final penyetujuBudi = PenyetujuDiskon(uuid: budi.uuid, nama: budi.nama, pemilik: false);
+      expect(Periksa('5000', penyetuju: penyetujuBudi), StatusDiskon.Boleh);
+      expect(Periksa('25000', penyetuju: penyetujuBudi), StatusDiskon.Boleh);
+      expect(Periksa('35000', penyetuju: penyetujuBudi), StatusDiskon.MelebihiBatas);
+      expect(
+        Periksa(
+          '35000',
+          penyetuju: const PenyetujuDiskon(uuid: 'P', nama: 'Pemilik', pemilik: true),
+        ),
+        StatusDiskon.Boleh,
+      );
+    });
+
+    test(
+      'PRD v1.46 (f): bayar oleh kasir tanpa izin diskon — tanpa penyetuju ditolak, dengan penyetuju tercatat',
+      () async {
+        await Siapkan();
+        final sari = await u.Staf('Sari Lestari');
+        var keranjang = KeranjangContoh().Salin(diskonPesanan: () => DiskonManual.DariPersen(Decimal.parse('5')));
+        final tunai = PembayaranMasukan(metode: Metode('Tunai'), jumlah: Uang.DariBulat(100000));
+
+        await expectLater(
+          u.penjualan.Bayar(keranjang: keranjang, pembayaran: [tunai], kasir: sari, k: k),
+          GalatDengan('PersetujuanDiperlukan'),
+        );
+
+        keranjang = keranjang.Salin(
+          penyetuju: () => PenyetujuDiskon(uuid: budi.uuid, nama: budi.nama, pemilik: false),
+        );
+        final hasil = await u.penjualan.Bayar(keranjang: keranjang, pembayaran: [tunai], kasir: sari, k: k);
+        final data = await AmbilDataOutbox(hasil.uuid);
+        expect(data['UuidPengguna'], sari.uuid);
+        expect(data['UuidPenyetujuDiskon'], budi.uuid);
+      },
+    );
+
+    test('PRD v1.46 (c): persen efektif = diskon hasil mesin (dibulatkan) ÷ bruto, bukan persen masukan', () async {
+      await Siapkan();
+      // Bruto Rp 4.995,45 × 30% = 1.498,635 → dibulatkan mesin 1.498,64 = 30,0001% > batas penyetuju 30%.
+      final keranjang = Keranjang(
+        baris: [
+          ItemKeranjang(
+            uuid: '01K5BARIS00000000000000001',
+            uuidProduk: UuidUji.croissant,
+            nama: 'Croissant Mentega',
+            uuidProdukSatuan: UuidUji.psCroissant,
+            namaSatuan: 'pcs',
+            bolehDesimal: false,
+            jumlah: Kuantitas.DariBulat(1),
+            hargaSatuan: Uang.Dari('4995.45'),
+          ),
+        ],
+      );
+      final diskon = DiskonManual.DariPersen(Decimal.parse('30'));
+      final nilai = u.penjualan.HitungDiskonBaris(keranjang, '01K5BARIS00000000000000001', diskon, k);
+      expect(nilai.dasar, Uang.Dari('4995.45'));
+      expect(nilai.diskon, Uang.Dari('1498.64'));
+      final persen = LayananPenjualan.HitungPersenEfektif(nilai.dasar, nilai.diskon);
+      expect(persen > Rational.fromInt(30), isTrue);
+      expect(persen * Rational.fromInt(10000) ~/ Rational.one, BigInt.from(300001));
+
+      // Budi (berizin menyetujui sampai 30%) tidak bisa menyetujui 30,0001%; hanya Pemilik.
+      expect(
+        LayananPenjualan.PeriksaDiskon(dasar: nilai.dasar, diskon: nilai.diskon, kasir: budi, k: k),
+        StatusDiskon.MelebihiBatas,
+      );
+      expect(
+        LayananPenjualan.PeriksaDiskon(
+          dasar: nilai.dasar,
+          diskon: nilai.diskon,
+          kasir: budi,
+          k: k,
+          penyetuju: const PenyetujuDiskon(uuid: 'P', nama: 'Pemilik', pemilik: true),
+        ),
+        StatusDiskon.Boleh,
+      );
+      final dengan = keranjang.Salin(baris: [keranjang.baris.single.Salin(diskon: () => diskon)]);
+      await expectLater(
+        u.penjualan.Bayar(
+          keranjang: dengan,
+          pembayaran: [PembayaranMasukan(metode: Metode('Tunai'), jumlah: Uang.DariBulat(10000))],
+          kasir: budi,
+          k: k,
+        ),
+        GalatDengan('DiskonMelebihiBatas'),
+      );
+
+      // Batas tepat: diskon pesanan 10% dari subtotal Rp 61.000 = Rp 6.100 = 10% → Rina boleh tanpa penyetuju.
+      final pesanan = u.penjualan.HitungDiskonPesanan(
+        KeranjangContoh(),
+        DiskonManual.DariPersen(Decimal.parse('10')),
+        k,
+      );
+      expect(pesanan.dasar, Uang.DariBulat(61000));
+      expect(pesanan.diskon, Uang.DariBulat(6100));
+      expect(
+        LayananPenjualan.PeriksaDiskon(dasar: pesanan.dasar, diskon: pesanan.diskon, kasir: rina, k: k),
+        StatusDiskon.Boleh,
+      );
     });
 
     test('bayar dengan diskon di atas batas tanpa penyetuju ditolak; dengan penyetuju tercatat di outbox', () async {
@@ -592,6 +694,174 @@ void main() {
       await u.repositori.HapusOutbox([hasil.uuid]);
       riwayat = await u.repositoriPenjualan.PantauRiwayat('2026-09-24').first;
       expect(riwayat.single.status.name, 'Terkirim');
+    });
+  });
+
+  group('PRD v1.46 tindak lanjut tinjauan', () {
+    test('(d) tanggal bisnis & YYMMDD memakai Outlet.ZonaWaktu, bukan zona perangkat', () async {
+      await Siapkan(dataAwal: DataAwalUji(zonaWaktu: 'Asia/Makassar'));
+      expect(k.zonaWaktu, 'Asia/Makassar');
+      // 15:30 UTC = 23:30 WITA tanggal 24; perangkat ber-zona UTC (atau WIB) tidak berpengaruh.
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 15, 30)), '2026-09-24');
+      // 16:30 UTC = 00:30 WITA tanggal 25 (JamTutupBuku 00:00).
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 16, 30)), '2026-09-25');
+
+      u.jam = DateTime.utc(2026, 9, 24, 16, 30);
+      final hasil = await u.penjualan.Bayar(
+        keranjang: KeranjangContoh(),
+        pembayaran: [PembayaranMasukan(metode: Metode('Tunai'), jumlah: Uang.DariBulat(100000))],
+        kasir: rina,
+        k: k,
+      );
+      expect(hasil.nomor, 'INV/SLB/260925/POS-001-0001');
+      expect((await u.repositoriPenjualan.CariPenjualan(hasil.uuid))!.TanggalBisnis, '2026-09-25');
+    });
+
+    test('(d) sebelum JamTutupBuku waktu outlet masih tanggal bisnis kemarin; WIT & zona tak dikenal', () async {
+      await Siapkan(
+        bukaShift: false,
+        dataAwal: DataAwalUji(zonaWaktu: 'Asia/Makassar', jamTutupBuku: '03:00'),
+      );
+      // 18:30 UTC = 02:30 WITA tanggal 25 < 03:00 → tanggal bisnis 24; 19:30 UTC = 03:30 WITA → 25.
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 18, 30)), '2026-09-24');
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 19, 30)), '2026-09-25');
+
+      await Siapkan(bukaShift: false, dataAwal: DataAwalUji(zonaWaktu: 'Asia/Jayapura'));
+      // 15:30 UTC = 00:30 WIT tanggal 25.
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 15, 30)), '2026-09-25');
+
+      await Siapkan(bukaShift: false, dataAwal: DataAwalUji(zonaWaktu: 'Europe/Berlin'));
+      expect(k.zonaWaktu, ZonaWaktuOutlet.bawaan, reason: 'Zona tidak dikenal → UTC+7 (WIB).');
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 16, 30)), '2026-09-24');
+      expect(k.HitungTanggalBisnis(DateTime.utc(2026, 9, 24, 17, 30)), '2026-09-25');
+    });
+
+    test('(e) nomor urut dari data-awal: sekuens lokal = max(lokal, server) per tanggal', () async {
+      await Siapkan(dataAwal: DataAwalUji(nomorUrutPenjualan: {'260924': 7, '260923': 40, 'bukan-tanggal': 9}));
+      final tunai = PembayaranMasukan(metode: Metode('Tunai'), jumlah: Uang.DariBulat(100000));
+      final pertama = await u.penjualan.Bayar(keranjang: KeranjangContoh(), pembayaran: [tunai], kasir: rina, k: k);
+      expect(pertama.nomor, 'INV/SLB/260924/POS-001-0008', reason: 'Pemasangan ulang tidak memakai nomor 0001–0007.');
+
+      // Data-awal berikutnya dengan nomor server lebih kecil tidak menurunkan sekuens lokal.
+      await u.repositori.SimpanDataAwal(DataAwal.DariJson(DataAwalUji(nomorUrutPenjualan: {'260924': 3})), u.jam);
+      final kedua = await u.penjualan.Bayar(keranjang: KeranjangContoh(), pembayaran: [tunai], kasir: rina, k: k);
+      expect(kedua.nomor, 'INV/SLB/260924/POS-001-0009');
+
+      final urut = await u.db.select(u.db.nomorUrutPenjualan).get();
+      expect({for (final n in urut) n.Tanggal: n.Terakhir}, {'260924': 9, '260923': 40});
+    });
+
+    test('kategori jenis pajak: syarat PKP/PBJT dari Kategori bila ada, fallback ke kode lama', () async {
+      await Siapkan(
+        bukaShift: false,
+        dataAwal: DataAwalUji(
+          tarifPajak: [
+            {
+              'KodeJenisPajak': 'PpnKhusus',
+              'Tarif': '12.00',
+              'PengaliDppPembilang': 11,
+              'PengaliDppPenyebut': 12,
+              'BerlakuMulai': '2025-01-01',
+              'BerlakuSampai': null,
+            },
+            {
+              'KodeJenisPajak': 'PbjtMakananMinuman',
+              'Tarif': '10.00',
+              'PengaliDppPembilang': 1,
+              'PengaliDppPenyebut': 1,
+              'BerlakuMulai': '2024-01-01',
+              'BerlakuSampai': null,
+            },
+          ],
+        ),
+      );
+      ItemKeranjang Baris(String uuid, PajakProduk pajak) => ItemKeranjang(
+        uuid: uuid,
+        uuidProduk: UuidUji.roti,
+        nama: 'Roti Tawar Gandum',
+        uuidProdukSatuan: null,
+        namaSatuan: null,
+        bolehDesimal: false,
+        jumlah: Kuantitas.DariBulat(1),
+        hargaSatuan: Uang.DariBulat(12000),
+        pajak: [pajak],
+      );
+      final keranjang = Keranjang(
+        baris: [
+          // Kode baru berkategori PPN: outlet bukan PKP → tidak dipungut.
+          Baris(
+            '01K5BARIS00000000000000001',
+            const PajakProduk(kode: 'PpnKhusus', dasarPengenaan: 'Subtotal', kategori: 'Ppn'),
+          ),
+          // Kode lama tanpa Kategori → fallback: PbjtMakananMinuman = PBJT, outlet memungut PBJT.
+          Baris(
+            '01K5BARIS00000000000000002',
+            const PajakProduk(kode: 'PbjtMakananMinuman', dasarPengenaan: 'Subtotal'),
+          ),
+        ],
+      );
+      final hitungan = u.penjualan.Hitung(keranjang, k);
+      expect(hitungan.kodePajakBaris, [
+        <String>[],
+        ['PbjtMakananMinuman'],
+      ]);
+      expect(hitungan.labelPajak, {'PbjtMakananMinuman': 'PBJT'});
+
+      await Siapkan(
+        bukaShift: false,
+        dataAwal: DataAwalUji(
+          profilPajak: {
+            'Pkp': true,
+            'PungutPbjt': false,
+            'HargaTermasukPajak': false,
+            'BiayaLayanan': {'Aktif': false, 'Persen': '0'},
+          },
+          tarifPajak: [
+            {
+              'KodeJenisPajak': 'PpnKhusus',
+              'Tarif': '12.00',
+              'PengaliDppPembilang': 11,
+              'PengaliDppPenyebut': 12,
+              'BerlakuMulai': '2025-01-01',
+              'BerlakuSampai': null,
+            },
+          ],
+        ),
+      );
+      final pkp = u.penjualan.Hitung(keranjang, k);
+      expect(pkp.kodePajakBaris, [
+        ['PpnKhusus'],
+        <String>[],
+      ]);
+      expect(pkp.labelPajak, {'PpnKhusus': 'PPN'});
+      expect(pkp.hasil.totalPajak, Uang.DariBulat(1320));
+    });
+
+    test('Referensi EDC "bank · approval" tidak pernah melebihi 100 karakter (batas server)', () {
+      final bank = 'B' * 60;
+      final approval = '9' * 80;
+      final referensi = LayananPenjualan.SusunReferensiEdc(bank, approval);
+      expect(referensi.length, lessThanOrEqualTo(LayananPenjualan.panjangMaksReferensi));
+      expect(referensi, '${'B' * 40} · ${'9' * 56}');
+      expect(
+        LayananPenjualan.panjangMaksBankEdc + 3 + LayananPenjualan.panjangMaksApprovalEdc,
+        lessThanOrEqualTo(LayananPenjualan.panjangMaksReferensi),
+      );
+      expect(LayananPenjualan.SusunReferensiEdc('  ', ' 123456 '), '123456');
+      expect(LayananPenjualan.SusunReferensiEdc('BCA', '123456'), 'BCA · 123456');
+    });
+
+    test('Referensi pembayaran > 100 karakter ditolak sebelum disimpan', () async {
+      await Siapkan(bukaShift: false);
+      expect(
+        () => LayananPenjualan.ValidasiPembayaran([
+          PembayaranMasukan(metode: Metode('Transfer'), jumlah: Uang.DariBulat(1000), referensi: 'R' * 101),
+        ]),
+        GalatDengan('ReferensiTerlaluPanjang'),
+      );
+      LayananPenjualan.ValidasiPembayaran([
+        PembayaranMasukan(metode: Metode('Transfer'), jumlah: Uang.DariBulat(1000), referensi: 'R' * 100),
+      ]);
     });
   });
 }

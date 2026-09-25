@@ -10,6 +10,12 @@ import 'Komponen/FormatAngka.dart';
 import 'Komponen/FormatWaktu.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 
+/// Pesan tetap bila riwayat gagal dimuat; detail galat hanya ke log (tidak menampilkan teks exception ke kasir).
+const String pesanGagalMuat = 'Riwayat transaksi tidak bisa dimuat. Coba lagi.';
+
+void CatatGalat(String konteks, Object galat, StackTrace? jejak) =>
+    debugPrint('LayarRiwayat: gagal memuat $konteks: $galat${jejak == null ? '' : '\n$jejak'}');
+
 /// Detail baris & pembayaran satu penjualan lokal.
 final penyediaDetailPenjualan =
     FutureProvider.family<({List<BarisPenjualanDetail> detail, List<BarisPenjualanPembayaran> pembayaran}), String>((
@@ -53,7 +59,12 @@ class LayarRiwayat extends ConsumerWidget {
       anak: [
         if (riwayat.isLoading && riwayat.value == null) const LinearProgressIndicator(),
         if (riwayat.hasError)
-          Text('Riwayat tidak bisa dimuat: ${riwayat.error}', style: TextStyle(color: warna.bahaya)),
+          Builder(
+            builder: (_) {
+              CatatGalat('riwayat hari ini', riwayat.error!, riwayat.stackTrace);
+              return Text(pesanGagalMuat, style: TextStyle(color: warna.bahaya));
+            },
+          ),
         Text(
           daftar.isEmpty
               ? 'Belum ada transaksi hari ini di perangkat ini.'
@@ -132,7 +143,10 @@ class _BarisRiwayat extends ConsumerWidget {
               .watch(penyediaDetailPenjualan(p.Uuid))
               .when(
                 loading: () => const LinearProgressIndicator(),
-                error: (galat, _) => Text('$galat'),
+                error: (galat, jejak) {
+                  CatatGalat('detail penjualan ${p.Uuid}', galat, jejak);
+                  return Text(pesanGagalMuat, style: TextStyle(color: warna.bahaya));
+                },
                 data: (isi) => Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
