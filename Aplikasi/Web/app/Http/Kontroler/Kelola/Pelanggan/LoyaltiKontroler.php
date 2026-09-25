@@ -132,6 +132,7 @@ final class LoyaltiKontroler extends DasarKelolaKontroler
             'Urutan' => ['nullable', 'integer', 'between:0,999'],
         ], [
             'Kode.regex' => 'Kode tier hanya huruf, angka, garis bawah, atau tanda hubung.',
+            'MinimalBelanja.required' => 'Isi minimal belanja. Isi 0 agar tier berlaku untuk semua pelanggan.',
         ], ['Kode' => 'kode', 'Nama' => 'nama', 'MinimalBelanja' => 'minimal belanja', 'PengaliPoin' => 'pengali poin']);
 
         return new DataTierPelanggan(

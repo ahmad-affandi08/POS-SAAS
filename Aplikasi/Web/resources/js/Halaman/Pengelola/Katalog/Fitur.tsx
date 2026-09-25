@@ -129,6 +129,7 @@ function FormFitur({ fitur, saatSelesai }: { fitur: Fitur | null; saatSelesai: (
                     nilai={formulir.data.Kunci}
                     saatBerubah={(nilai) => formulir.setData('Kunci', nilai.toLowerCase())}
                     galat={formulir.errors.Kunci}
+                    required
                     disabled={fitur !== null}
                 />
                 <BidangTeks
@@ -136,12 +137,14 @@ function FormFitur({ fitur, saatSelesai }: { fitur: Fitur | null; saatSelesai: (
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Modul"
                     nilai={formulir.data.Modul}
                     saatBerubah={(nilai) => formulir.setData('Modul', nilai)}
                     galat={formulir.errors.Modul}
+                    required
                 />
                 <BidangTeks
                     label="Keterangan (opsional)"

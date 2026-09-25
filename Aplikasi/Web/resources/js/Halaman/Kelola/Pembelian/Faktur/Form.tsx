@@ -157,6 +157,7 @@ export default function HalamanFormFaktur({
                             kosong="Pilih pemasok"
                             opsi={OpsiPemasok.map((p) => ({ Nilai: p.Uuid, Label: p.Nama, Keterangan: p.Kode }))}
                             saatBerubah={GantiPemasok}
+                            required
                             galat={
                                 galat.UuidPemasok ?? (periksa && UuidPemasok === null ? 'Pilih pemasok.' : undefined)
                             }
@@ -262,6 +263,7 @@ export default function HalamanFormFaktur({
                                                         <BidangUang
                                                             label={`Harga faktur ${b.NamaProduk}`}
                                                             nilai={h.Harga}
+                                                            required
                                                             saatBerubah={(nilai) =>
                                                                 AturHarga((lama) => ({
                                                                     ...lama,

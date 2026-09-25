@@ -183,6 +183,13 @@ describe('F-06 pengaturan kasir', function (): void {
 
         $this->put('/kelola/kasir/pengaturan', ['BatasKasKeluar' => '-1', 'ShiftBersama' => true])->assertSessionHasErrors('BatasKasKeluar');
         $this->put('/kelola/kasir/pengaturan', ['BatasKasKeluar' => '1.5e6', 'ShiftBersama' => true])->assertSessionHasErrors('BatasKasKeluar');
+        // Kosong tidak dianggap 0 (0 = setiap kas keluar/selisih butuh persetujuan): server meminta diisi.
+        $this->put('/kelola/kasir/pengaturan', ['BatasKasKeluar' => '', 'ShiftBersama' => true, 'ToleransiSelisihKas' => '', 'BatasHariRetur' => null])
+            ->assertSessionHasErrors([
+                'BatasKasKeluar' => 'Isi batas kas keluar. Isi 0 agar setiap kas keluar butuh persetujuan.',
+                'ToleransiSelisihKas' => 'Isi toleransi selisih kas. Isi 0 agar setiap selisih butuh persetujuan.',
+                'BatasHariRetur',
+            ]);
         $this->put('/kelola/kasir/pengaturan', ['BatasKasKeluar' => '500000', 'ShiftBersama' => true])->assertRedirect('/kelola/kasir/pengaturan');
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);

@@ -122,6 +122,7 @@ export default function FormDaftarHarga({
                     galat={galat.Prioritas}
                     inputMode="numeric"
                     maxLength={4}
+                    required
                     keterangan="Bila beberapa daftar cocok, prioritas lebih besar dipakai lebih dulu."
                 />
                 <BidangPilihan

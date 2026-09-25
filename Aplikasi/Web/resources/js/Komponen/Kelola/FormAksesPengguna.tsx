@@ -81,6 +81,7 @@ export default function FormAksesPengguna({
                 opsi={peran.map((baris) => ({ Nilai: baris.Uuid, Label: baris.Nama }))}
                 saatBerubah={PilihPeran}
                 galat={formulir.errors.Peran}
+                required
                 kosong="Pilih peran"
             />
             <KotakCentang
@@ -102,6 +103,7 @@ export default function FormAksesPengguna({
                     terpilih={formulir.data.Outlet}
                     saatBerubah={(terpilih) => formulir.setData('Outlet', terpilih)}
                     galat={formulir.errors.Outlet}
+                    required
                 />
             ) : null}
             <div className="flex flex-wrap gap-2">

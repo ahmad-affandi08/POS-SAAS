@@ -172,6 +172,7 @@ export default function FormKelompokPilihan({
                     nilai={data.MinimalPilih}
                     saatBerubah={(nilai) => formulir.setData('MinimalPilih', nilai.replace(/\D/g, ''))}
                     galat={galat.MinimalPilih}
+                    required
                     inputMode="numeric"
                     maxLength={2}
                     keterangan="0 = boleh dilewati kasir."
@@ -181,6 +182,7 @@ export default function FormKelompokPilihan({
                     nilai={data.MaksimalPilih}
                     saatBerubah={(nilai) => formulir.setData('MaksimalPilih', nilai.replace(/\D/g, ''))}
                     galat={galat.MaksimalPilih}
+                    required
                     inputMode="numeric"
                     maxLength={2}
                 />
@@ -200,6 +202,7 @@ export default function FormKelompokPilihan({
                                 nilai={pilihan.Nama}
                                 saatBerubah={(nilai) => UbahPilihan(indeks, { Nama: nilai })}
                                 galat={galat[`Pilihan.${String(indeks)}.Nama`]}
+                                required
                                 maxLength={100}
                             />
                             <BidangUang
@@ -207,6 +210,7 @@ export default function FormKelompokPilihan({
                                 nilai={pilihan.Harga}
                                 saatBerubah={(nilai) => UbahPilihan(indeks, { Harga: nilai })}
                                 galat={galat[`Pilihan.${String(indeks)}.Harga`]}
+                                required
                                 keterangan={
                                     bolehUbahHarga
                                         ? 'Isi 0 bila gratis.'

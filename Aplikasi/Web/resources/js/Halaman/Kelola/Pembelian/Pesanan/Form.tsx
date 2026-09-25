@@ -132,6 +132,7 @@ export default function HalamanFormPesanan({
                                 Keterangan: `${p.Kode}${p.Pkp ? ' · PKP' : ''}`,
                             }))}
                             saatBerubah={PilihPemasok}
+                            required
                             galat={galat.UuidPemasok ?? (periksa && pemasok === '' ? 'Pilih pemasok.' : undefined)}
                         />
                         <BidangPilihan
@@ -143,6 +144,7 @@ export default function HalamanFormPesanan({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={AturGudang}
+                            required
                             galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi tujuan.' : undefined)}
                         />
                         <PemilihTanggal

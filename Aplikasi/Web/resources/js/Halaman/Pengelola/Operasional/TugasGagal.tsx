@@ -85,6 +85,7 @@ export default function TugasGagal({ Tugas }: { Tugas: Tugas }) {
                                 maxLength={500}
                                 saatBerubah={AturAlasan}
                                 galat={props.errors.Alasan}
+                                required
                             />
                             <div>
                                 <Tombol

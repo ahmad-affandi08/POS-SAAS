@@ -64,6 +64,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={galat.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Nama usaha"
@@ -71,6 +72,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.NamaUsaha}
                     saatBerubah={(nilai) => formulir.setData('NamaUsaha', nilai)}
                     galat={galat.NamaUsaha}
+                    required
                 />
                 <BidangTeks
                     label="Email"
@@ -79,6 +81,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.Email}
                     saatBerubah={(nilai) => formulir.setData('Email', nilai)}
                     galat={galat.Email}
+                    required
                 />
                 <BidangTeks
                     label="Nomor WhatsApp"
@@ -88,6 +91,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.NoHp}
                     saatBerubah={(nilai) => formulir.setData('NoHp', nilai)}
                     galat={galat.NoHp}
+                    required
                 />
                 <BidangTeks
                     label="Kata sandi"
@@ -97,6 +101,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.KataSandi}
                     saatBerubah={(nilai) => formulir.setData('KataSandi', nilai)}
                     galat={galat.KataSandi}
+                    required
                 />
                 <BidangTeks
                     label="Ulangi kata sandi"
@@ -105,6 +110,7 @@ export default function HalamanDaftar({ Dibuka, Paket, PaketTerpilih, KunciSitus
                     nilai={formulir.data.KonfirmasiKataSandi}
                     saatBerubah={(nilai) => formulir.setData('KonfirmasiKataSandi', nilai)}
                     galat={galat.KonfirmasiKataSandi}
+                    required
                 />
                 <div className="sm:col-span-2">
                     <BidangPilihan

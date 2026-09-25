@@ -111,6 +111,7 @@ export default function HalamanFormPembayaran({
                                     preserveState: false,
                                 })
                             }
+                            required
                             galat={
                                 galat.UuidPemasok ?? (periksa && UuidPemasok === null ? 'Pilih pemasok.' : undefined)
                             }
@@ -121,6 +122,7 @@ export default function HalamanFormPembayaran({
                             kosong="Pilih akun kas/bank"
                             opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
                             saatBerubah={AturAkun}
+                            required
                             galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
                         />
                         <PemilihTanggal

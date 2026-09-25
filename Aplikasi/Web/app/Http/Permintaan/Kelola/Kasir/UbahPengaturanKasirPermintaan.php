@@ -44,6 +44,10 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
     public function messages(): array
     {
         return [
+            'BatasKasKeluar.required' => 'Isi batas kas keluar. Isi 0 agar setiap kas keluar butuh persetujuan.',
+            'BatasDiskonManual.required' => 'Isi batas diskon kasir dalam persen, misal 10.',
+            'BatasDiskonPenyetuju.required' => 'Isi batas diskon dengan persetujuan dalam persen, misal 30.',
+            'ToleransiSelisihKas.required' => 'Isi toleransi selisih kas. Isi 0 agar setiap selisih butuh persetujuan.',
             'BatasKasKeluar.regex' => 'Batas kas keluar harus berupa nominal rupiah, misal 200000.',
             'BatasDiskonManual.regex' => 'Batas diskon kasir berupa persen 0 sampai 100, misal 10.',
             'BatasDiskonPenyetuju.regex' => 'Batas diskon dengan persetujuan berupa persen 0 sampai 100, misal 30.',

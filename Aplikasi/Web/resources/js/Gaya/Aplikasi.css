@@ -268,6 +268,25 @@
         cursor: pointer;
     }
 
+    /*
+     * Tanda wajib otomatis: label bidang (shadcn Field) yang berisi kontrol wajib (`required`, `aria-required`, atau
+     * `data-wajib` untuk PilihanCari/GrupCentang) diberi * merah tanpa ditulis manual di halaman. Teks alternatif ''
+     * menyembunyikan * dari pembaca layar; status wajib sudah diumumkan oleh atribut kontrolnya.
+     */
+    [data-slot='field']:has(:is(input, textarea, select)[required], [aria-required='true'], [data-wajib])
+        > :is([data-slot='field-label'], [data-slot='label']):not(.sr-only)::after,
+    [data-slot='field-set'][data-wajib] > [data-slot='field-legend']::after,
+    label:not(.sr-only):has(
+            + :is(input, textarea, select)[required],
+            + [aria-required='true'],
+            + [data-slot='input-group'] :is(input, textarea, select)[required],
+            + [data-slot='input-group'] [aria-required='true']
+        )::after {
+        content: ' *' / '';
+        color: var(--color-bahaya);
+        font-weight: 700;
+    }
+
     body {
         background-color: var(--color-latar);
         color: var(--color-teks-utama);

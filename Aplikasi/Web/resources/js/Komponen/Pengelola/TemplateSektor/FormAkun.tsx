@@ -228,6 +228,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                         nilai={kelompok.Nama}
                                         saatBerubah={(nilai) => UbahKelompok(indeks, { ...kelompok, Nama: nilai })}
                                         galat={galat[`KelompokPajak.${indeks}.Nama`]}
+                                        required
                                     />
                                     {kelompok.Detail.map((detail, posisi) => (
                                         <div key={posisi} className="grid gap-3 sm:grid-cols-3">
@@ -235,6 +236,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                                 label="Jenis pajak"
                                                 nilai={detail.KodeJenisPajak}
                                                 opsi={pilihan.JenisPajak}
+                                                required
                                                 saatBerubah={(nilai) =>
                                                     UbahKelompok(indeks, {
                                                         ...kelompok,
@@ -248,6 +250,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                                 label="Dasar pengenaan"
                                                 nilai={detail.DasarPengenaan}
                                                 opsi={pilihan.DasarPengenaan}
+                                                required
                                                 saatBerubah={(nilai) =>
                                                     UbahKelompok(indeks, {
                                                         ...kelompok,

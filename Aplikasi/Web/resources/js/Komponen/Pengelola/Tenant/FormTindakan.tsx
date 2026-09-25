@@ -103,6 +103,7 @@ export function FormPerpanjangTrial({
                 nilai={formulir.data.Hari}
                 saatBerubah={(nilai) => formulir.setData('Hari', nilai)}
                 galat={formulir.errors.Hari}
+                required
             />
             <BidangTeksPanjang
                 label="Alasan"
@@ -112,6 +113,7 @@ export function FormPerpanjangTrial({
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
+                required
             />
         </KerangkaForm>
     );
@@ -168,6 +170,7 @@ export function FormOverride({
                     ]}
                     saatBerubah={GantiJenis}
                     galat={formulir.errors.Jenis}
+                    required
                 />
                 {opsiKunci.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Katalog fitur masih kosong. Isi dulu di menu Katalog.</p>
@@ -178,6 +181,7 @@ export function FormOverride({
                         opsi={opsiKunci}
                         saatBerubah={(nilai) => formulir.setData('Kunci', nilai)}
                         galat={formulir.errors.Kunci}
+                        required
                     />
                 )}
                 {formulir.data.Jenis === 'Batas' ? (
@@ -187,6 +191,7 @@ export function FormOverride({
                         nilai={formulir.data.Nilai}
                         saatBerubah={(nilai) => formulir.setData('Nilai', nilai)}
                         galat={formulir.errors.Nilai}
+                        required
                     />
                 ) : null}
                 <PemilihTanggal
@@ -195,6 +200,7 @@ export function FormOverride({
                     nilai={formulir.data.BerakhirPada}
                     saatBerubah={(nilai) => formulir.setData('BerakhirPada', nilai)}
                     galat={formulir.errors.BerakhirPada}
+                    required
                 />
             </div>
             <BidangTeksPanjang
@@ -205,6 +211,7 @@ export function FormOverride({
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
+                required
             />
         </KerangkaForm>
     );
@@ -240,6 +247,7 @@ export function FormTangguhkan({ uuid, pilihanKategori, saatSelesai }: PropsDasa
                 opsi={pilihanKategori}
                 saatBerubah={(nilai) => formulir.setData('Kategori', nilai)}
                 galat={formulir.errors.Kategori}
+                required
             />
             <BidangTeksPanjang
                 label="Catatan internal"
@@ -249,6 +257,7 @@ export function FormTangguhkan({ uuid, pilihanKategori, saatSelesai }: PropsDasa
                 maksimal={450}
                 saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
                 galat={formulir.errors.Catatan}
+                required
             />
         </KerangkaForm>
     );
@@ -291,6 +300,7 @@ export function FormAktifkan({ uuid, statusTujuan, saatSelesai }: PropsDasar & {
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
+                required
             />
         </KerangkaForm>
     );
@@ -333,6 +343,7 @@ export function FormPenanda({
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
+                required
             />
         </KerangkaForm>
     );
@@ -371,6 +382,7 @@ export function FormCabutOverride({
                 maksimal={500}
                 saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                 galat={formulir.errors.Alasan}
+                required
             />
         </KerangkaForm>
     );
@@ -393,6 +405,7 @@ export function FormCatatan({ uuid }: { uuid: string }) {
                 maksimal={2000}
                 saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                 galat={formulir.errors.Isi ?? AmbilGalatUmum(formulir.errors)}
+                required
             />
             <div>
                 <Tombol type="submit" varian="sekunder" memproses={formulir.processing}>

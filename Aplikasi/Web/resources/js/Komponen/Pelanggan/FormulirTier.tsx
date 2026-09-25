@@ -11,7 +11,8 @@ export const AlamatTier = '/kelola/pelanggan/tier';
 
 export type IsianTier = { Kode: string; Nama: string; MinimalBelanja: string; PengaliPoin: string; Urutan: string };
 
-export const TierKosong: IsianTier = { Kode: '', Nama: '', MinimalBelanja: '', PengaliPoin: '1', Urutan: '0' };
+// Minimal belanja 0 = tier berlaku untuk semua pelanggan; ditampilkan sebagai isian awal yang terlihat, bukan diisi diam-diam.
+export const TierKosong: IsianTier = { Kode: '', Nama: '', MinimalBelanja: '0', PengaliPoin: '1', Urutan: '0' };
 
 /**
  * Isi formulir tambah/ubah tier pelanggan (F-16b); `uuid` null = tambah. Dipakai di halaman penuh "Tambah tier" dan
@@ -40,7 +41,6 @@ export default function FormulirTier({
         peristiwa.preventDefault();
         const data = {
             ...isian,
-            MinimalBelanja: isian.MinimalBelanja === '' ? '0' : isian.MinimalBelanja,
             Urutan: isian.Urutan === '' ? 0 : Number(isian.Urutan),
         };
         const opsi = {
@@ -58,7 +58,7 @@ export default function FormulirTier({
     };
 
     return (
-        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir tier">
+        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir tier" noValidate>
             <BidangTeks
                 label="Kode tier"
                 nilai={isian.Kode}
@@ -72,7 +72,7 @@ export default function FormulirTier({
                 maxLength={30}
                 disabled={uuid !== null}
                 kode
-                required
+                required={uuid === null}
             />
             <BidangTeks
                 label="Nama tier"
@@ -87,6 +87,7 @@ export default function FormulirTier({
                 nilai={isian.MinimalBelanja}
                 saatBerubah={(nilai) => Ubah({ MinimalBelanja: nilai })}
                 galat={galat.MinimalBelanja}
+                required
                 keterangan="Rp 0 = semua pelanggan yang pernah belanja."
             />
             <BidangJumlah
@@ -96,6 +97,7 @@ export default function FormulirTier({
                 desimal={2}
                 digitBulat={2}
                 akhiran="×"
+                required
                 keterangan="1 = poin normal, 1,5 = poin 50% lebih banyak. Antara 0,1 dan 10."
                 galat={galat.PengaliPoin}
             />

@@ -77,7 +77,7 @@ export default function FormPemasok({ uuid, awal, saatSelesai, saatBatal }: Prop
     };
 
     return (
-        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir pemasok">
+        <form onSubmit={Simpan} noValidate className="flex flex-col gap-4" aria-label="Formulir pemasok">
             <BidangTeks
                 label="Kode pemasok"
                 nilai={isian.Kode}
@@ -132,6 +132,7 @@ export default function FormPemasok({ uuid, awal, saatSelesai, saatBatal }: Prop
                 akhiran="hari"
                 keterangan="0 = tunai. Jatuh tempo faktur = tanggal faktur + termin."
                 galat={galat.TerminHari}
+                required
             />
             <KotakCentang
                 label="Pemasok PKP (menerbitkan faktur pajak, PPN masukan dihitung)"

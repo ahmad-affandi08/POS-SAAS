@@ -216,7 +216,7 @@ export function DialogAlasan({
 
     return (
         <DialogFormulir judul={judul} keterangan={keterangan} galatUmum={props.errors.Umum} saatTutup={saatTutup}>
-            <form onSubmit={Kirim} className="flex flex-col gap-4" aria-label={judul}>
+            <form onSubmit={Kirim} noValidate className="flex flex-col gap-4" aria-label={judul}>
                 <BidangTeksPanjang
                     label="Alasan"
                     nilai={alasan}

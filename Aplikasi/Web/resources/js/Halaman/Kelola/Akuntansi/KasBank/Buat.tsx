@@ -119,7 +119,12 @@ export default function HalamanBuatTransaksiKasBank({
         <TataLetakAplikasi judul="Catat transaksi kas & bank">
             <DaftarGalatServer galat={galat} kecuali={Object.keys(isian)} />
             <KartuFormulir keterangan="Pengeluaran operasional, penerimaan di luar penjualan, atau transfer antar kas/bank. Transaksi langsung dijurnal saat disimpan dan tidak bisa diubah; koreksi dengan dokumen pembalik.">
-                <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir transaksi kas & bank">
+                <form
+                    onSubmit={Simpan}
+                    className="flex flex-col gap-4"
+                    aria-label="Formulir transaksi kas & bank"
+                    noValidate
+                >
                     <BidangPilihan
                         label="Jenis transaksi"
                         nilai={isian.Jenis}
@@ -128,6 +133,7 @@ export default function HalamanBuatTransaksiKasBank({
                             Ubah({ Jenis: nilai as JenisTransaksiKasBank, UuidAkunSumber: '', UuidAkunTujuan: '' })
                         }
                         galat={galat.Jenis}
+                        required
                     />
                     <p className="text-label text-teks-sekunder">{aturan.penjelasan}</p>
                     <PemilihTanggal
@@ -144,6 +150,7 @@ export default function HalamanBuatTransaksiKasBank({
                         {...(WajibOutlet ? { kosong: 'Pilih outlet' } : { kosong: 'Tingkat usaha (tanpa outlet)' })}
                         saatBerubah={(nilai) => Ubah({ UuidOutlet: nilai })}
                         galat={galat.UuidOutlet}
+                        required={WajibOutlet}
                     />
                     <BidangPilihan
                         label={aturan.labelSumber}
@@ -152,6 +159,7 @@ export default function HalamanBuatTransaksiKasBank({
                         opsi={OpsiAkun(akun, aturan.sumberKas, aturan.lawan)}
                         saatBerubah={(nilai) => Ubah({ UuidAkunSumber: nilai })}
                         galat={galat.UuidAkunSumber}
+                        required
                     />
                     <BidangPilihan
                         label={aturan.labelTujuan}
@@ -160,6 +168,7 @@ export default function HalamanBuatTransaksiKasBank({
                         opsi={OpsiAkun(akun, aturan.tujuanKas, aturan.lawan)}
                         saatBerubah={(nilai) => Ubah({ UuidAkunTujuan: nilai })}
                         galat={galat.UuidAkunTujuan}
+                        required
                     />
                     <BidangUang
                         label="Jumlah"

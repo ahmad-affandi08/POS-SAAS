@@ -53,7 +53,12 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
             {FiturAktif ? null : <PesanFiturLoyalti />}
             {Izin.Kelola ? null : <PesanHanyaLihat izin="pelanggan.kelola" objek="pengaturan loyalti" />}
             <Card className="max-w-2xl gap-4 rounded-panel p-4 shadow-none">
-                <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir pengaturan loyalti">
+                <form
+                    onSubmit={Simpan}
+                    className="flex flex-col gap-4"
+                    aria-label="Formulir pengaturan loyalti"
+                    noValidate
+                >
                     <KotakCentang
                         label="Aktifkan poin loyalti untuk pelanggan"
                         nilai={isian.Aktif}
@@ -68,6 +73,7 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                         nilai={isian.BelanjaPerPoin}
                         saatBerubah={(nilai) => AturIsian({ ...isian, BelanjaPerPoin: nilai })}
                         galat={galat.BelanjaPerPoin}
+                        required
                         keterangan="Poin = total belanja ÷ angka ini, dibulatkan ke bawah, dikali pengali tier. Minimal Rp 100."
                         disabled={nonaktif}
                     />
@@ -80,6 +86,7 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                         akhiran="bulan"
                         keterangan="Poin yang tidak dipakai hangus otomatis, yang paling lama lebih dulu. 1–60 bulan."
                         galat={galat.MasaBerlakuBulan}
+                        required
                         disabled={nonaktif}
                     />
                     <BidangJumlah
@@ -91,6 +98,7 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                         akhiran="bulan"
                         keterangan="Tier dinilai dari total belanja selama periode ini. 1–24 bulan."
                         galat={galat.BulanEvaluasiTier}
+                        required
                         disabled={nonaktif}
                     />
                     <BidangUang

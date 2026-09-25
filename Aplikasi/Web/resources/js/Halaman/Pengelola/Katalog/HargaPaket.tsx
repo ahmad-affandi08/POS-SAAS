@@ -244,6 +244,7 @@ function FormHarga({ alamat, harga, saatSelesai }: { alamat: string; harga: Harg
                     nilai={formulir.data.HargaBulanan}
                     saatBerubah={(nilai) => formulir.setData('HargaBulanan', nilai)}
                     galat={formulir.errors.HargaBulanan}
+                    required
                 />
                 <BidangTeks
                     label="Harga per tahun (Rp)"
@@ -251,12 +252,14 @@ function FormHarga({ alamat, harga, saatSelesai }: { alamat: string; harga: Harg
                     nilai={formulir.data.HargaTahunan}
                     saatBerubah={(nilai) => formulir.setData('HargaTahunan', nilai)}
                     galat={formulir.errors.HargaTahunan}
+                    required
                 />
                 <BidangTanggal
                     label="Berlaku mulai"
                     nilai={formulir.data.BerlakuMulai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
                     galat={formulir.errors.BerlakuMulai}
+                    required
                 />
                 <div className="sm:col-span-3">
                     <KotakCentang

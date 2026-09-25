@@ -25,6 +25,7 @@ export default function HalamanMasuk() {
                     nilai={formulir.data.Email}
                     saatBerubah={(nilai) => formulir.setData('Email', nilai)}
                     galat={formulir.errors.Email}
+                    required
                 />
                 <BidangTeks
                     label="Kata sandi"
@@ -33,6 +34,7 @@ export default function HalamanMasuk() {
                     nilai={formulir.data.KataSandi}
                     saatBerubah={(nilai) => formulir.setData('KataSandi', nilai)}
                     galat={formulir.errors.KataSandi}
+                    required
                 />
                 <Link href="/lupa-kata-sandi" className="self-start text-label font-semibold text-brand underline">
                     Lupa kata sandi?

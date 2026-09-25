@@ -145,6 +145,7 @@ function FormSatuan({ satuan, saatSelesai }: { satuan: Satuan | null; saatSelesa
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={satuan !== null}
                 />
                 <BidangTeks
@@ -152,12 +153,14 @@ function FormSatuan({ satuan, saatSelesai }: { satuan: Satuan | null; saatSelesa
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Simbol"
                     nilai={formulir.data.Simbol}
                     saatBerubah={(nilai) => formulir.setData('Simbol', nilai)}
                     galat={formulir.errors.Simbol}
+                    required
                 />
                 <KotakCentang
                     label="Boleh jumlah desimal (misal 1,5 kg)"

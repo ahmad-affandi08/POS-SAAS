@@ -79,6 +79,7 @@ export default function PemilihPelacakan({
                 placeholder={kueri.isPending ? 'Memuat…' : pelacakan === 'Batch' ? 'Pilih batch' : 'Pilih nomor seri'}
                 disabled={disabled === true || kueri.isPending}
                 galat={galat}
+                required
                 saatBerubah={(uuid) => saatBerubah(uuid, opsi.find((o) => o.Nilai === uuid)?.Label ?? '')}
             />
             {kueri.isError ? <GalatBidang>Batch/nomor seri gagal dimuat. Muat ulang halaman.</GalatBidang> : null}

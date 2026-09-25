@@ -199,6 +199,7 @@ function FormAddon({ addon, fitur, kolomBatas, saatSelesai }: PropsFormAddon) {
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={addon !== null}
                 />
                 <BidangTeks
@@ -206,6 +207,7 @@ function FormAddon({ addon, fitur, kolomBatas, saatSelesai }: PropsFormAddon) {
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Harga per bulan (Rp)"
@@ -214,6 +216,7 @@ function FormAddon({ addon, fitur, kolomBatas, saatSelesai }: PropsFormAddon) {
                     nilai={formulir.data.HargaBulanan}
                     saatBerubah={(nilai) => formulir.setData('HargaBulanan', nilai)}
                     galat={formulir.errors.HargaBulanan}
+                    required
                 />
                 <BidangPilihan
                     label="Fitur yang diberikan"
@@ -252,6 +255,7 @@ function FormAddon({ addon, fitur, kolomBatas, saatSelesai }: PropsFormAddon) {
                     ]}
                     saatBerubah={(nilai) => formulir.setData('Status', nilai)}
                     galat={formulir.errors.Status}
+                    required
                 />
                 <DialogFooter className="sm:col-span-2 sm:justify-start">
                     <Tombol type="submit" memproses={formulir.processing}>

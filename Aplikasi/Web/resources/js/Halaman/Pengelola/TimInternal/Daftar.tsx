@@ -244,6 +244,7 @@ function FormUndangan({ opsiPeran, saatSelesai }: { opsiPeran: Opsi; saatSelesai
                     terpilih={formulir.data.KodePeran}
                     saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
                     galat={formulir.errors.KodePeran}
+                    required
                 />
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={formulir.processing}>
@@ -285,6 +286,7 @@ function FormPeran({
                     terpilih={formulir.data.KodePeran}
                     saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
                     galat={formulir.errors.KodePeran}
+                    required
                 />
                 <BidangTeks
                     label="Alasan (opsional)"

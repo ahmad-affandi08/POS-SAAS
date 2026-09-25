@@ -208,6 +208,7 @@ export default function HalamanFormPenyesuaianStok({
                                     })),
                                 );
                             }}
+                            required
                             galat={
                                 galatServer.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)
                             }
@@ -224,6 +225,7 @@ export default function HalamanFormPenyesuaianStok({
                                     AturDaftar((lama) => lama.map((b) => ({ ...b, Arah: 'Keluar', HppSatuan: null })));
                                 }
                             }}
+                            required
                             galat={
                                 galatServer.KodeAlasan ??
                                 (periksa && alasan === '' ? 'Pilih alasan penyesuaian.' : undefined)
@@ -323,6 +325,7 @@ export default function HalamanFormPenyesuaianStok({
                                                     NomorSeri: null,
                                                 })
                                             }
+                                            required
                                         />
                                         {b.Pelacakan === 'Seri' ? null : (
                                             <BidangJumlah
@@ -369,6 +372,7 @@ export default function HalamanFormPenyesuaianStok({
                                                     nilai={b.NomorBatch ?? ''}
                                                     kode
                                                     saatBerubah={(nilai) => Ubah(b.Kunci, { NomorBatch: nilai })}
+                                                    required
                                                 />
                                                 <PemilihTanggal
                                                     id={`${b.Kunci}-kedaluwarsa`}
@@ -387,6 +391,7 @@ export default function HalamanFormPenyesuaianStok({
                                                 nilai={b.NomorSeri ?? ''}
                                                 kode
                                                 saatBerubah={(nilai) => Ubah(b.Kunci, { NomorSeri: nilai })}
+                                                required
                                             />
                                         ) : null}
                                     </div>

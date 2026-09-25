@@ -152,6 +152,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                                                         : undefined)
                                                 }
                                                 disabled={!Izin.Kelola}
+                                                required
                                             />
                                         </TableCell>
                                         <TableCell className="whitespace-normal">

@@ -183,6 +183,8 @@ describe('F-16b back-office', function (): void {
             ->assertSessionHasNoErrors()->assertRedirect('/kelola/pelanggan/tier');
         $this->post('/kelola/pelanggan/tier', ['Kode' => 'GOLD', 'Nama' => 'Emas', 'MinimalBelanja' => '1', 'PengaliPoin' => '1'])->assertSessionHasErrors('Kode');
         $this->post('/kelola/pelanggan/tier', ['Kode' => 'X', 'Nama' => 'X', 'MinimalBelanja' => '1', 'PengaliPoin' => '11'])->assertSessionHasErrors('PengaliPoin');
+        $this->post('/kelola/pelanggan/tier', ['Kode' => 'X', 'Nama' => 'X', 'MinimalBelanja' => '', 'PengaliPoin' => '1'])
+            ->assertSessionHasErrors(['MinimalBelanja' => 'Isi minimal belanja. Isi 0 agar tier berlaku untuk semua pelanggan.']);
         $gold = TierPelanggan::query()->where('Kode', 'GOLD')->sole();
         expect($gold->PengaliPoin)->toBe('1.50');
 

@@ -238,6 +238,7 @@ function FormBukti({
                     onChange={(peristiwa) => formulir.setData('Bukti', peristiwa.target.files?.[0] ?? null)}
                     aria-invalid={formulir.errors.Bukti ? true : undefined}
                     aria-describedby={`${idBerkas}-keterangan`}
+                    required
                 />
                 <FieldDescription id={`${idBerkas}-keterangan`} className="text-keterangan">
                     Foto atau PDF (JPG, PNG, WEBP, PDF), maksimal {Math.floor(ukuranMaksimalKb / 1024)} MB.
@@ -252,6 +253,7 @@ function FormBukti({
                 nilai={formulir.data.Jumlah}
                 saatBerubah={(nilai) => formulir.setData('Jumlah', nilai)}
                 galat={formulir.errors.Jumlah}
+                required
                 keterangan={`Harus sama dengan total ${FormatRupiah(tagihan.Total)}.`}
             />
             <PemilihTanggal
@@ -260,18 +262,21 @@ function FormBukti({
                 nilai={formulir.data.TanggalTransfer}
                 saatBerubah={(nilai) => formulir.setData('TanggalTransfer', nilai)}
                 galat={formulir.errors.TanggalTransfer}
+                required
             />
             <BidangTeks
                 label="Bank pengirim"
                 nilai={formulir.data.BankPengirim}
                 saatBerubah={(nilai) => formulir.setData('BankPengirim', nilai)}
                 galat={formulir.errors.BankPengirim}
+                required
             />
             <BidangTeks
                 label="Nama pemilik rekening pengirim"
                 nilai={formulir.data.NamaPengirim}
                 saatBerubah={(nilai) => formulir.setData('NamaPengirim', nilai)}
                 galat={formulir.errors.NamaPengirim}
+                required
             />
             {rekening.length > 1 ? (
                 <BidangPilihan
@@ -283,6 +288,7 @@ function FormBukti({
                     }))}
                     saatBerubah={(nilai) => formulir.setData('KodeRekeningTujuan', nilai)}
                     galat={formulir.errors.KodeRekeningTujuan}
+                    required
                 />
             ) : null}
             <DialogFooter className="sm:col-span-2">

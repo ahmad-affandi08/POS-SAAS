@@ -291,6 +291,7 @@ function FormTarif({
                     opsi={jenisPajak.map((jenis) => ({ Nilai: jenis.Kode, Label: jenis.Nama }))}
                     saatBerubah={(nilai) => formulir.setData('KodeJenisPajak', nilai)}
                     galat={formulir.errors.KodeJenisPajak}
+                    required
                 />
                 <BidangTeks
                     label="Tarif (persen)"
@@ -299,6 +300,7 @@ function FormTarif({
                     nilai={formulir.data.Tarif}
                     saatBerubah={(nilai) => formulir.setData('Tarif', nilai)}
                     galat={formulir.errors.Tarif}
+                    required
                 />
                 <div className="grid grid-cols-2 gap-2">
                     <BidangTeks
@@ -307,6 +309,7 @@ function FormTarif({
                         nilai={formulir.data.PengaliDppPembilang}
                         saatBerubah={(nilai) => formulir.setData('PengaliDppPembilang', nilai)}
                         galat={formulir.errors.PengaliDppPembilang}
+                        required
                     />
                     <BidangTeks
                         label="Penyebut"
@@ -315,6 +318,7 @@ function FormTarif({
                         nilai={formulir.data.PengaliDppPenyebut}
                         saatBerubah={(nilai) => formulir.setData('PengaliDppPenyebut', nilai)}
                         galat={formulir.errors.PengaliDppPenyebut}
+                        required
                     />
                 </div>
                 {cakupan === 'Daerah' ? (
@@ -325,6 +329,7 @@ function FormTarif({
                         nilai={formulir.data.KodeWilayah}
                         saatBerubah={(nilai) => formulir.setData('KodeWilayah', nilai)}
                         galat={formulir.errors.KodeWilayah}
+                        required
                     />
                 ) : null}
                 <BidangTanggal
@@ -332,6 +337,7 @@ function FormTarif({
                     nilai={formulir.data.BerlakuMulai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
                     galat={formulir.errors.BerlakuMulai}
+                    required
                 />
                 <BidangTeks
                     label="Nomor dasar hukum"

@@ -151,6 +151,7 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
                     nilai={formulir.data.Judul}
                     saatBerubah={(nilai) => formulir.setData('Judul', nilai)}
                     galat={formulir.errors.Judul}
+                    required
                 />
                 <PemilihTanggal
                     label="Berlaku mulai"
@@ -158,6 +159,7 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
                     nilai={formulir.data.BerlakuMulai}
                     saatBerubah={(nilai) => formulir.setData('BerlakuMulai', nilai)}
                     galat={formulir.errors.BerlakuMulai ?? galatHalaman.BerlakuMulai}
+                    required
                 />
                 <div className="sm:col-span-2">
                     <KotakCentang
@@ -184,6 +186,7 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
                         rows={20}
                         value={formulir.data.Isi}
                         onChange={(peristiwa) => formulir.setData('Isi', peristiwa.target.value)}
+                        required
                         aria-invalid={formulir.errors.Isi ? true : undefined}
                         aria-describedby={formulir.errors.Isi ? `${idIsi}-galat` : undefined}
                         className="font-mono text-isi"

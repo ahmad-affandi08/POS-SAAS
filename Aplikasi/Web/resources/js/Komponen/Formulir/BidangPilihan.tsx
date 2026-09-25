@@ -11,6 +11,8 @@ type PropsBidangPilihan = {
     galat?: string | undefined;
     kosong?: string;
     disabled?: boolean;
+    /** Wajib diisi: label otomatis diberi tanda * merah. */
+    required?: boolean;
 };
 
 /** Pilihan tunggal dengan kotak cari (`PilihanCari`), label & galat terhubung (PRD §17.6). */
@@ -22,6 +24,7 @@ export default function BidangPilihan({
     galat,
     kosong,
     disabled,
+    required,
 }: PropsBidangPilihan) {
     const id = useId();
 
@@ -37,6 +40,7 @@ export default function BidangPilihan({
                 kosong={kosong}
                 galat={galat}
                 disabled={disabled}
+                required={required}
                 aria-describedby={galat ? `${id}-galat` : undefined}
             />
             {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}

@@ -253,6 +253,7 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={paket !== null}
                 />
                 <BidangTeks
@@ -260,6 +261,7 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Masa trial (hari)"
@@ -267,6 +269,7 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
                     nilai={formulir.data.MasaTrialHari}
                     saatBerubah={(nilai) => formulir.setData('MasaTrialHari', nilai)}
                     galat={formulir.errors.MasaTrialHari}
+                    required
                 />
                 <BidangTeks
                     label="Urutan tampil"
@@ -274,6 +277,7 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
                     nilai={formulir.data.Urutan}
                     saatBerubah={(nilai) => formulir.setData('Urutan', nilai)}
                     galat={formulir.errors.Urutan}
+                    required
                 />
                 <div className="sm:col-span-2">
                     <BidangTeks
@@ -322,6 +326,7 @@ function FormPaket({ paket, fitur, kolomBatas, saatSelesai }: PropsFormPaket) {
                             saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                             galat={formulir.errors.Alasan}
                             maxLength={500}
+                            required
                         />
                     </div>
                 ) : null}
@@ -360,6 +365,7 @@ function FormArsip({ paket, saatSelesai }: { paket: Paket; saatSelesai: () => vo
                     saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                     galat={formulir.errors.Alasan}
                     autoFocus
+                    required
                 />
                 <DialogFooter className="sm:justify-start">
                     <Tombol type="submit" varian="bahaya" memproses={formulir.processing}>

@@ -93,7 +93,7 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                 </Pemberitahuan>
             ) : Tiket.BisaDibalas ? (
                 <Card className="p-5">
-                    <form onSubmit={Kirim} className="flex flex-col gap-3">
+                    <form onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
                         {Tiket.Status === 'Selesai' ? (
                             <Pemberitahuan jenis="info">Mengirim balasan akan membuka lagi tiket ini.</Pemberitahuan>
                         ) : null}
@@ -103,6 +103,7 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                             maksimal={10000}
                             saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                             galat={formulir.errors.Isi}
+                            required
                         />
                         <BidangBerkas
                             label="Lampiran"

@@ -166,7 +166,12 @@ export default function HalamanDetailTransaksiKasBank({ Transaksi: t, Jurnal, Iz
                     galatUmum={galat.Umum}
                     saatTutup={() => AturBalik(null)}
                 >
-                    <form onSubmit={Balikkan} className="flex flex-col gap-4" aria-label="Formulir dokumen pembalik">
+                    <form
+                        onSubmit={Balikkan}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir dokumen pembalik"
+                        noValidate
+                    >
                         <PemilihTanggal
                             label="Tanggal pembalik"
                             nilai={balik.Tanggal}

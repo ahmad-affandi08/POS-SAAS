@@ -232,6 +232,7 @@ function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
                     opsi={outlet.map((baris) => ({ Nilai: baris.Uuid, Label: `${baris.Nama} (${baris.Kode})` }))}
                     saatBerubah={(nilai) => formulir.setData('Outlet', nilai)}
                     galat={formulir.errors.Outlet}
+                    required
                 />
                 <BidangPilihan
                     label="Jenis"
@@ -239,6 +240,7 @@ function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
                     opsi={jenis}
                     saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                     galat={formulir.errors.Jenis}
+                    required
                 />
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={formulir.processing}>

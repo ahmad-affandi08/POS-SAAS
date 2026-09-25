@@ -315,6 +315,7 @@ function FormGudang({ alamatOutlet, gudang, jenis, saatSelesai }: PropsFormGudan
                 opsi={jenis}
                 saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                 galat={formulir.errors.Jenis}
+                required
             />
             <div className="flex flex-wrap gap-2">
                 <Tombol type="submit" memproses={formulir.processing}>

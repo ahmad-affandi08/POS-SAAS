@@ -162,6 +162,7 @@ export default function HalamanDaftarImpor({
                                     nilai={sumber}
                                     opsi={Preset.map((item) => ({ Nilai: item.Kode, Label: item.Nama }))}
                                     saatBerubah={AturSumber}
+                                    required
                                     galat={props.errors.Sumber}
                                 />
                                 {preset ? (
@@ -178,6 +179,7 @@ export default function HalamanDaftarImpor({
                                     type="file"
                                     accept={BatasBerkas.Ekstensi.map((item) => `.${item}`).join(',')}
                                     onChange={Pilih}
+                                    required
                                     aria-invalid={pesanBerkas ? true : undefined}
                                     aria-describedby={`${id}-keterangan${pesanBerkas ? ` ${id}-galat` : ''}`}
                                     className="h-8 pointer-coarse:h-11 py-1.5 text-isi file:mr-3 file:font-semibold"

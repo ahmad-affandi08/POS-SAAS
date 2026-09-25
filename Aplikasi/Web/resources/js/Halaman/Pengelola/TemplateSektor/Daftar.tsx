@@ -156,12 +156,14 @@ function FormBuatTemplate({ template, saatSelesai }: PropsFormBuat) {
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                 />
                 <BidangTeks
                     label="Nama"
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangTeks
                     label="Keterangan (opsional)"

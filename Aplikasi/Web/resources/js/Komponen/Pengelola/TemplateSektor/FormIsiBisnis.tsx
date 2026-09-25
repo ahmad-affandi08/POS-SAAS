@@ -202,6 +202,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                     })
                                 }
                                 galat={galat['Pengaturan.PembulatanTunai.Kelipatan']}
+                                required
                             />
                             <BidangPilihan
                                 label="Arah pembulatan tunai"
@@ -214,6 +215,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                     })
                                 }
                                 galat={galat['Pengaturan.PembulatanTunai.Arah']}
+                                required
                             />
                             <BidangPilihan
                                 label="Metode HPP"
@@ -221,6 +223,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                 opsi={pilihan.MetodeHpp}
                                 saatBerubah={(nilai) => AturPengaturan('MetodeHpp', nilai)}
                                 galat={galat['Pengaturan.MetodeHpp']}
+                                required
                             />
                             <BidangTeks
                                 label="Biaya layanan (%)"
@@ -229,6 +232,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                 nilai={data.Pengaturan.PersenBiayaLayanan}
                                 saatBerubah={(nilai) => AturPengaturan('PersenBiayaLayanan', nilai)}
                                 galat={galat['Pengaturan.PersenBiayaLayanan']}
+                                required
                             />
                             <div className="flex flex-col gap-2 sm:col-span-2">
                                 <KotakCentang

@@ -352,7 +352,12 @@ export default function HalamanDetailPelanggan({
                     galatUmum={galat.Umum}
                     saatTutup={() => AturDialog(null)}
                 >
-                    <form onSubmit={SimpanPoin} className="flex flex-col gap-4" aria-label="Formulir penyesuaian poin">
+                    <form
+                        onSubmit={SimpanPoin}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir penyesuaian poin"
+                        noValidate
+                    >
                         <BidangTeks
                             label="Poin (+ tambah, − kurangi)"
                             nilai={penyesuaian.Poin}

@@ -75,7 +75,7 @@ export function IsiFormulirAturanKomisi({
     };
 
     return (
-        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir aturan komisi">
+        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir aturan komisi" noValidate>
             <BidangTeks
                 label="Nama aturan"
                 nilai={isian.Nama}
@@ -94,6 +94,7 @@ export function IsiFormulirAturanKomisi({
                     { Nilai: 'Produk', Label: 'Satu produk' },
                 ]}
                 saatBerubah={(nilai) => Ubah({ Cakupan: nilai as CakupanKomisi })}
+                required
             />
             {isian.Cakupan === 'Kategori' ? (
                 <BidangPilihan
@@ -103,6 +104,7 @@ export function IsiFormulirAturanKomisi({
                     opsi={opsiKategori.map((k) => ({ Nilai: k.Uuid, Label: k.Nama }))}
                     saatBerubah={(nilai) => Ubah({ UuidKategori: nilai })}
                     galat={galat.UuidKategori}
+                    required
                 />
             ) : null}
             {isian.Cakupan === 'Produk' ? (
@@ -131,6 +133,7 @@ export function IsiFormulirAturanKomisi({
                     { Nilai: 'Tetap', Label: 'Nominal per jumlah' },
                 ]}
                 saatBerubah={(nilai) => Ubah({ Jenis: nilai as JenisKomisi })}
+                required
             />
             {isian.Jenis === 'Persen' ? (
                 <BidangTeks
@@ -140,6 +143,7 @@ export function IsiFormulirAturanKomisi({
                     galat={galat.Nilai}
                     inputMode="decimal"
                     maxLength={6}
+                    required
                 />
             ) : (
                 <BidangUang
@@ -147,6 +151,7 @@ export function IsiFormulirAturanKomisi({
                     nilai={isian.Nilai}
                     saatBerubah={(nilai) => Ubah({ Nilai: nilai })}
                     galat={galat.Nilai}
+                    required
                 />
             )}
             <div className="flex flex-wrap justify-end gap-2">

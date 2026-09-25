@@ -170,7 +170,7 @@ export default function HalamanFormulirPromo({
                     Promo tersimpan, tetapi baru diterapkan di kasir setelah paket dinaikkan.
                 </Pemberitahuan>
             )}
-            <form onSubmit={Simpan} className="flex max-w-3xl flex-col gap-4" aria-label="Formulir promo">
+            <form onSubmit={Simpan} className="flex max-w-3xl flex-col gap-4" aria-label="Formulir promo" noValidate>
                 <Card className="gap-4 rounded-panel p-4 shadow-none">
                     <h2 className="text-subjudul font-semibold text-teks-utama">Promo</h2>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -187,12 +187,14 @@ export default function HalamanFormulirPromo({
                                 Promo === null ? 'Huruf, angka, - atau _. Tidak bisa diubah.' : 'Tidak bisa diubah.'
                             }
                             kode
+                            required={Promo === null}
                         />
                         <BidangTeks
                             label="Nama promo"
                             nilai={isian.Nama}
                             saatBerubah={(nilai) => Ubah({ Nama: nilai })}
                             galat={galat.Nama}
+                            required
                         />
                         <BidangJumlah
                             label="Prioritas"
@@ -223,6 +225,7 @@ export default function HalamanFormulirPromo({
                         nilai={aksi}
                         opsi={opsiAksi}
                         saatBerubah={(nilai) => Ubah({ JenisAksi: nilai as JenisAksiPromo })}
+                        required
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
                         {pakaiPersen ? (
@@ -234,6 +237,7 @@ export default function HalamanFormulirPromo({
                                 digitBulat={3}
                                 akhiran="%"
                                 galat={galat.Persen}
+                                required
                             />
                         ) : null}
                         {pakaiJumlah ? (
@@ -242,6 +246,7 @@ export default function HalamanFormulirPromo({
                                 nilai={isian.Jumlah}
                                 saatBerubah={(nilai) => Ubah({ Jumlah: nilai })}
                                 galat={galat.Jumlah}
+                                required
                             />
                         ) : null}
                         {pakaiHarga ? (
@@ -250,6 +255,7 @@ export default function HalamanFormulirPromo({
                                 nilai={isian.Harga}
                                 saatBerubah={(nilai) => Ubah({ Harga: nilai })}
                                 galat={galat.Harga}
+                                required
                             />
                         ) : null}
                         {aksi === 'BundelHargaTetap' ? (
@@ -261,6 +267,7 @@ export default function HalamanFormulirPromo({
                                 digitBulat={2}
                                 akhiran="barang"
                                 galat={galat.JumlahMinimal}
+                                required
                             />
                         ) : null}
                         {aksi === 'BeliXGratisY' ? (
@@ -273,6 +280,7 @@ export default function HalamanFormulirPromo({
                                     digitBulat={2}
                                     akhiran="barang"
                                     galat={galat.Beli}
+                                    required
                                 />
                                 <BidangJumlah
                                     label="Gratis"
@@ -281,6 +289,7 @@ export default function HalamanFormulirPromo({
                                     desimal={0}
                                     digitBulat={2}
                                     akhiran="barang"
+                                    required
                                 />
                                 <BidangJumlah
                                     label="Potongan barang gratis"
@@ -316,6 +325,7 @@ export default function HalamanFormulirPromo({
                         nilai={isian.JenisKondisi}
                         opsi={opsiKondisi}
                         saatBerubah={(nilai) => Ubah({ JenisKondisi: nilai as JenisKondisiPromo, UuidKondisi: [] })}
+                        required
                     />
                     {isian.JenisKondisi === 'Produk' ? (
                         <>
@@ -355,6 +365,7 @@ export default function HalamanFormulirPromo({
                             terpilih={isian.UuidKondisi}
                             saatBerubah={(terpilih) => Ubah({ UuidKondisi: terpilih })}
                             galat={galat.UuidKondisi}
+                            required
                         />
                     ) : null}
                     {aksi !== 'BundelHargaTetap' && aksi !== 'BeliXGratisY' ? (

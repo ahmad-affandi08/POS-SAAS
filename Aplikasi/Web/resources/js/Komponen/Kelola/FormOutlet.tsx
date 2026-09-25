@@ -104,6 +104,7 @@ export default function FormOutlet({ awal, uuid, kodeTerkunci = false, merek, ko
                             opsi={merek}
                             saatBerubah={(nilai) => formulir.setData('Merek', nilai)}
                             galat={formulir.errors.Merek}
+                            required
                         />
                         <BidangTeks
                             label="Alamat (opsional)"
@@ -126,6 +127,7 @@ export default function FormOutlet({ awal, uuid, kodeTerkunci = false, merek, ko
                             opsi={pilihanZonaWaktu}
                             saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
                             galat={formulir.errors.ZonaWaktu}
+                            required
                         />
                         <BidangTeks
                             label="Jam tutup buku"

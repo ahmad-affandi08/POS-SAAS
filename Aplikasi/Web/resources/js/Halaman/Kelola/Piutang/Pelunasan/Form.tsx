@@ -126,6 +126,7 @@ export default function HalamanFormPelunasan({
                                 galat.UuidPelanggan ??
                                 (periksa && UuidPelanggan === null ? 'Pilih pelanggan.' : undefined)
                             }
+                            required
                         />
                         <BidangPilihan
                             label="Diterima di akun"
@@ -134,6 +135,7 @@ export default function HalamanFormPelunasan({
                             opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
                             saatBerubah={AturAkun}
                             galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
+                            required
                         />
                         <PemilihTanggal
                             id="tanggal-pelunasan"

@@ -142,6 +142,7 @@ export default function PemetaanImporStokAwal({
                         label="Tanggal stok awal"
                         nilai={tanggal}
                         max={TulisTanggal(new Date())}
+                        required
                         saatBerubah={AturTanggal}
                         keterangan="Tanggal saldo awal. Tidak boleh melewati hari ini."
                         galat={galatTanggal}
@@ -192,6 +193,7 @@ export default function PemetaanImporStokAwal({
                                                 })
                                             }
                                             galat={galatLokal[bidang.Kunci] ?? galatServer[`Pemetaan.${bidang.Kunci}`]}
+                                            required={bidang.Wajib}
                                         />
                                     </TableCell>
                                     <TableCell className="pr-0 text-keterangan break-all whitespace-normal text-teks-sekunder">

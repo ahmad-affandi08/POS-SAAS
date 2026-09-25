@@ -19,6 +19,8 @@ export type PropsPilihanCari = {
     placeholder?: string | undefined;
     id?: string | undefined;
     disabled?: boolean | undefined;
+    /** Wajib diisi: label bidang otomatis diberi tanda * merah (Gaya/Aplikasi.css). */
+    required?: boolean | undefined;
     galat?: unknown;
     'aria-describedby'?: string | undefined;
     /** Nama aksesibel bila tidak ada label terlihat (mis. di sel tabel isian). */
@@ -52,6 +54,7 @@ export default function PilihanCari({
     placeholder,
     id,
     disabled = false,
+    required = false,
     galat,
     'aria-describedby': dijelaskanOleh,
     'aria-label': labelAria,
@@ -119,6 +122,8 @@ export default function PilihanCari({
                     aria-controls={idDaftar}
                     aria-haspopup="listbox"
                     aria-invalid={galat ? true : undefined}
+                    aria-required={required || undefined}
+                    data-wajib={required || undefined}
                     aria-describedby={dijelaskanOleh}
                     aria-label={labelAria}
                     disabled={disabled}

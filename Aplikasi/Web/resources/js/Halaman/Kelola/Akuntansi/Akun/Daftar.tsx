@@ -221,7 +221,7 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                     galatUmum={galat.Umum}
                     saatTutup={() => AturForm(null)}
                 >
-                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir akun">
+                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir akun" noValidate>
                         <BidangTeks
                             label="Kode akun"
                             nilai={form.isian.Kode}
@@ -235,6 +235,7 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                             kode
                             maxLength={10}
                             disabled={terkunci}
+                            required
                         />
                         <BidangTeks
                             label="Nama akun"
@@ -242,6 +243,7 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                             saatBerubah={(nilai) => Ubah({ Nama: nilai })}
                             galat={galat.Nama}
                             maxLength={100}
+                            required
                         />
                         <BidangPilihan
                             label="Tipe akun"
@@ -252,6 +254,7 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                             }
                             galat={galat.Jenis}
                             disabled={tipeTetap}
+                            required
                         />
                         {terkunci ? (
                             <p className="text-label text-teks-sekunder">

@@ -170,6 +170,7 @@ export default function PemetaanImpor({
                                                 })
                                             }
                                             galat={galatLokal[bidang.Kunci] ?? galatServer[`Pemetaan.${bidang.Kunci}`]}
+                                            required={bidang.Wajib}
                                         />
                                     </TableCell>
                                     <TableCell className="pr-0 text-keterangan break-all whitespace-normal text-teks-sekunder">
@@ -210,6 +211,7 @@ export default function PemetaanImpor({
                                 .map((item) => ({ Nilai: item.Nilai, Label: item.Label }))}
                             saatBerubah={(nilai) => AturOpsi({ ...opsi, JenisBawaan: nilai as JenisProduk })}
                             galat={galatServer['Opsi.JenisBawaan']}
+                            required
                         />
                         <BidangPilihan
                             label="Kelompok pajak bawaan"

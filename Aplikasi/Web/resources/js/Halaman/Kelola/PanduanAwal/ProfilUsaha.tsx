@@ -74,6 +74,7 @@ export default function HalamanProfilUsaha({ Progres, Profil, Kota, BatasLogo }:
                                 opsi={pilihanKota}
                                 saatBerubah={(nilai) => formulir.setData('KodeKota', nilai)}
                                 galat={formulir.errors.KodeKota}
+                                required
                                 kosong={Kota.length === 0 ? 'Data wilayah belum tersedia' : 'Pilih kabupaten/kota'}
                             />
                             <p className="text-keterangan text-teks-sekunder">
@@ -110,6 +111,7 @@ export default function HalamanProfilUsaha({ Progres, Profil, Kota, BatasLogo }:
                                 nilai={formulir.data.Npwp}
                                 saatBerubah={(nilai) => formulir.setData('Npwp', nilai)}
                                 galat={formulir.errors.Npwp}
+                                required={formulir.data.Pkp}
                                 keterangan={
                                     formulir.data.Pkp
                                         ? '15 atau 16 angka. Wajib untuk usaha PKP. Titik dan tanda hubung boleh diketik.'

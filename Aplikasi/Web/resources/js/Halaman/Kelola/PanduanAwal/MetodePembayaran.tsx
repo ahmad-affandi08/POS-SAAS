@@ -275,6 +275,7 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTam
                             opsi={jenisTersedia}
                             saatBerubah={GantiJenis}
                             galat={formulir.errors.Jenis}
+                            required
                         />
                         <BidangTeks
                             label="Nama di kasir"
@@ -292,6 +293,7 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTam
                                 opsi={opsiBank}
                                 saatBerubah={(nilai) => formulir.setData('KodeBank', nilai)}
                                 galat={formulir.errors.KodeBank}
+                                required
                                 kosong={opsiBank.length === 0 ? 'Data bank belum tersedia' : 'Pilih bank'}
                             />
                         ) : null}

@@ -118,6 +118,7 @@ export default function PenyuntingSatuanProduk({
                                     }))}
                                     saatBerubah={(nilai) => Ubah(indeks, { UuidSatuan: nilai })}
                                     galat={galatBaris.UuidSatuan}
+                                    required
                                 />
                                 <BidangJumlah
                                     label={`Isi dalam ${dasar.Simbol}`}

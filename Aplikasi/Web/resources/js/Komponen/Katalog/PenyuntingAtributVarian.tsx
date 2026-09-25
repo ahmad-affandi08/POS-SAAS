@@ -106,6 +106,7 @@ export default function PenyuntingAtributVarian({
                         nilai={atribut.Nama}
                         saatBerubah={(teks) => Ubah(indeks, { Nama: teks })}
                         galat={galat[`${String(indeks)}.Nama`]}
+                        required
                         keterangan="Misal Ukuran, Warna, atau Rasa."
                         maxLength={50}
                         disabled={disabled}

@@ -188,7 +188,12 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
                     galatUmum={galat.Umum}
                     saatTutup={() => AturForm(null)}
                 >
-                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir pemetaan akun">
+                    <form
+                        onSubmit={Simpan}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir pemetaan akun"
+                        noValidate
+                    >
                         {form.tambahOutlet ? (
                             <BidangPilihan
                                 label="Outlet"
@@ -210,6 +215,7 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
                             opsi={opsiAkun}
                             saatBerubah={(nilai) => AturForm({ ...form, UuidAkun: nilai })}
                             galat={galat.UuidAkun}
+                            required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
                             <Button type="button" variant="outline" onClick={() => AturForm(null)}>

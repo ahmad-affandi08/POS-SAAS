@@ -261,6 +261,23 @@ describe('F-06 halaman kasir back-office', () => {
         expect(simpan.hasAttribute('disabled')).toBe(false);
     });
 
+    it('pengaturan kasir: bidang kosong dikirim apa adanya (tidak diam-diam menjadi 0) agar server meminta diisi', () => {
+        tiruanRouter.put.mockClear();
+        render(<HalamanPengaturanKasir {...propsPengaturan} />);
+
+        expect(screen.getByLabelText('Batas kas keluar tanpa persetujuan').hasAttribute('required')).toBe(true);
+        UbahNilai(screen.getByLabelText('Batas kas keluar tanpa persetujuan'), '');
+        UbahNilai(screen.getByLabelText('Toleransi selisih kas'), '');
+        UbahNilai(screen.getByLabelText('Batas hari lewat jatuh tempo'), '');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
+
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/kasir/pengaturan',
+            expect.objectContaining({ BatasKasKeluar: '', ToleransiSelisihKas: '', BatasHariLewatJatuhTempo: null }),
+            expect.anything(),
+        );
+    });
+
     it('pengaturan kasir F-07b: batas diskon (persen tanpa float) & pembulatan tunai terkirim; pembulatan mati = null', () => {
         expect(UbahKeMasukanPersen('10.00')).toBe('10');
         expect(UbahKeMasukanPersen('25.50')).toBe('25.5');

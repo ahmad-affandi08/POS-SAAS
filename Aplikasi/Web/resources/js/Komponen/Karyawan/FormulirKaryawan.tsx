@@ -76,7 +76,7 @@ export function IsiFormulirKaryawan({
     };
 
     return (
-        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir karyawan">
+        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir karyawan" noValidate>
             <BidangTeks
                 label="Nama karyawan"
                 nilai={isian.Nama}

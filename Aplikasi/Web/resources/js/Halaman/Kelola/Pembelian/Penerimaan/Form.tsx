@@ -248,6 +248,7 @@ export default function HalamanFormPenerimaan({
                                         Label: FormatLabelGudang(g),
                                     }))}
                                     saatBerubah={AturGudang}
+                                    required
                                     galat={
                                         galat.UuidGudang ??
                                         (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)
@@ -262,6 +263,7 @@ export default function HalamanFormPenerimaan({
                                 kosong="Pilih akun kas/bank"
                                 opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
                                 saatBerubah={AturAkun}
+                                required
                                 galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
                             />
                         ) : null}
@@ -372,6 +374,10 @@ export default function HalamanFormPenerimaan({
                                                         }
                                                         maxLength={60}
                                                         kode
+                                                        required={
+                                                            isian.Jumlah !== '' &&
+                                                            BandingkanDesimal(isian.Jumlah, '0') > 0
+                                                        }
                                                     />
                                                     <PemilihTanggal
                                                         label={`Kedaluwarsa ${b.NamaProduk} (opsional)`}

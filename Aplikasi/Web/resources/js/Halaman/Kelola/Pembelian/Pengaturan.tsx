@@ -49,7 +49,12 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
     return (
         <TataLetakAplikasi judul="Pengaturan pembelian">
             <DaftarGalatServer galat={galat} kecuali={['BatasPersetujuanPo', 'ToleransiPenerimaanPersen']} />
-            <form onSubmit={Simpan} aria-label="Pengaturan pembelian" className="flex max-w-2xl flex-col gap-4">
+            <form
+                onSubmit={Simpan}
+                noValidate
+                aria-label="Pengaturan pembelian"
+                className="flex max-w-2xl flex-col gap-4"
+            >
                 <PanelKatalog
                     judul="Persetujuan pesanan pembelian"
                     idJudul="judul-batas-po"
@@ -60,6 +65,7 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         nilai={batas}
                         saatBerubah={AturBatas}
                         galat={galat.BatasPersetujuanPo}
+                        required
                         keterangan="Bawaan Rp 5.000.000. Isi 0 bila semua pesanan harus disetujui."
                     />
                 </PanelKatalog>
@@ -76,6 +82,7 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         digitBulat={3}
                         akhiran="%"
                         galat={galat.ToleransiPenerimaanPersen}
+                        required
                         keterangan="Bawaan 0%: penerimaan tidak boleh melebihi jumlah pesanan."
                     />
                 </PanelKatalog>

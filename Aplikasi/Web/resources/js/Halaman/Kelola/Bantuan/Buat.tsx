@@ -37,7 +37,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
     return (
         <TataLetakAplikasi judul="Buat tiket bantuan">
             <Card className="max-w-2xl p-5">
-                <form onSubmit={Kirim} className="flex flex-col gap-4">
+                <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                     <BidangPilihan
                         label="Kategori"
                         nilai={formulir.data.Kategori}
@@ -45,6 +45,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                         kosong="Pilih kategori masalah"
                         saatBerubah={(nilai) => formulir.setData('Kategori', nilai)}
                         galat={formulir.errors.Kategori}
+                        required
                     />
                     <BidangPilihan
                         label="Seberapa mendesak?"
@@ -55,6 +56,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                         }))}
                         saatBerubah={(nilai) => formulir.setData('Prioritas', nilai)}
                         galat={formulir.errors.Prioritas}
+                        required
                     />
                     <BidangTeks
                         label="Judul"
@@ -63,6 +65,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                         keterangan="Ringkas masalahnya, misal: Printer struk Outlet Kemang tidak mencetak."
                         saatBerubah={(nilai) => formulir.setData('Judul', nilai)}
                         galat={formulir.errors.Judul}
+                        required
                     />
                     <BidangTeksPanjang
                         label="Uraian masalah"
@@ -72,6 +75,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                         keterangan="Tulis apa yang terjadi, sejak kapan, di outlet/perangkat mana, dan apa yang sudah dicoba."
                         saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                         galat={formulir.errors.Isi}
+                        required
                     />
                     <BidangBerkas
                         label="Lampiran (foto layar, dokumen)"

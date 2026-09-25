@@ -167,6 +167,7 @@ export default function TabelHargaBertingkat({
                                                 galatServer[`${String(indeks)}.JumlahMinimum`] ??
                                                 perBaris[indeks]?.JumlahMinimum
                                             }
+                                            required
                                         />
                                     </TableCell>
                                     <TableCell className="py-1 whitespace-normal">
@@ -177,6 +178,7 @@ export default function TabelHargaBertingkat({
                                             saatBerubah={(nilai) => Ubah(indeks, { Harga: nilai })}
                                             disabled={disabled}
                                             galat={galatServer[`${String(indeks)}.Harga`] ?? perBaris[indeks]?.Harga}
+                                            required
                                         />
                                     </TableCell>
                                     <TableCell className="py-1 pr-0">

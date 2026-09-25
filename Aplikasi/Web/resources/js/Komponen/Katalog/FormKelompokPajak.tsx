@@ -133,6 +133,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                         }))
                     }
                     galat={galat.Kategori}
+                    required
                 />
             </div>
             {tanpaPajak ? (
@@ -167,6 +168,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                                     )
                                 }
                                 galat={galat[`Pajak.${String(indeks)}.KodeJenisPajak`]}
+                                required
                             />
                             <BidangPilihan
                                 label={`Dasar pengenaan ${String(indeks + 1)}`}
@@ -181,6 +183,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                                     )
                                 }
                                 galat={galat[`Pajak.${String(indeks)}.DasarPengenaan`]}
+                                required
                             />
                             <Button
                                 type="button"

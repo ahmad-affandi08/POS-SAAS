@@ -179,6 +179,7 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
                                 saatBerubah={AturAlasan}
                                 keterangan="Dipakai saat mengaktifkan atau menonaktifkan."
                                 galat={galatAlasan}
+                                required
                             />
                         ) : null}
                         <div className="flex flex-wrap gap-2">
@@ -286,6 +287,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                                     })
                                 }
                                 galat={galat[`Pengaturan.${bidang.Kunci}`]}
+                                required
                             />
                         ) : (
                             <BidangTeks
@@ -302,6 +304,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                                     })
                                 }
                                 galat={galat[`Pengaturan.${bidang.Kunci}`]}
+                                required
                             />
                         ),
                     )}
@@ -321,6 +324,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                                 formulir.setData('Kredensial', { ...formulir.data.Kredensial, [bidang.Kunci]: nilai })
                             }
                             galat={galat[`Kredensial.${bidang.Kunci}`]}
+                            required={!konfigurasi}
                         />
                     ))}
                     <BidangTeks
@@ -329,6 +333,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                         nilai={formulir.data.RotasiSetiapHari}
                         saatBerubah={(nilai) => formulir.setData('RotasiSetiapHari', nilai)}
                         galat={formulir.errors.RotasiSetiapHari}
+                        required
                     />
                     {slot.Lingkungan === 'Produksi' ? (
                         <BidangTeks
@@ -336,6 +341,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                             nilai={formulir.data.Alasan}
                             saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                             galat={formulir.errors.Alasan}
+                            required
                         />
                     ) : null}
                     <p className="text-keterangan text-teks-sekunder sm:col-span-2">

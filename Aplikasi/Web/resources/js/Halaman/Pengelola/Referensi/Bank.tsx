@@ -166,6 +166,7 @@ function FormBank({
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={referensi !== null}
                 />
                 <BidangTeks
@@ -173,6 +174,7 @@ function FormBank({
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangPilihan
                     label="Jenis"
@@ -180,6 +182,7 @@ function FormBank({
                     opsi={pilihanJenis}
                     saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                     galat={formulir.errors.Jenis}
+                    required
                 />
                 <KotakCentang
                     label="Aktif (bisa dipilih tenant)"

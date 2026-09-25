@@ -102,6 +102,7 @@ export default function PembuatVarian({
                         .map((item) => ({ Nilai: item.Nilai, Label: item.Label }))}
                     saatBerubah={(nilai) => AturJenisAnak(nilai as JenisProduk)}
                     galat={galat.JenisAnak}
+                    required
                 />
                 {bolehUbahHarga ? (
                     <BidangUang

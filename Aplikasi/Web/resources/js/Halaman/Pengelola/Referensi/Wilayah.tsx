@@ -155,6 +155,7 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai)}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={wilayah !== null}
                 />
                 <BidangTeks
@@ -162,6 +163,7 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangPilihan
                     label="Tingkat"
@@ -169,6 +171,7 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
                     opsi={pilihanTingkat}
                     saatBerubah={(nilai) => formulir.setData('Tingkat', nilai)}
                     galat={formulir.errors.Tingkat}
+                    required
                 />
                 <BidangTeks
                     label="Kode provinsi induk"
@@ -177,6 +180,7 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
                     nilai={formulir.data.KodeInduk}
                     saatBerubah={(nilai) => formulir.setData('KodeInduk', nilai)}
                     galat={formulir.errors.KodeInduk}
+                    required={formulir.data.Tingkat === 'KabupatenKota'}
                 />
                 <BidangPilihan
                     label="Zona waktu"
@@ -184,6 +188,7 @@ function FormWilayah({ wilayah, pilihanTingkat, pilihanZonaWaktu, saatSelesai }:
                     opsi={pilihanZonaWaktu.map((zona) => ({ Nilai: zona, Label: zona }))}
                     saatBerubah={(nilai) => formulir.setData('ZonaWaktu', nilai)}
                     galat={formulir.errors.ZonaWaktu}
+                    required
                 />
                 <DialogFooter className="sm:col-span-2 sm:justify-start">
                     <Tombol type="submit" memproses={formulir.processing}>

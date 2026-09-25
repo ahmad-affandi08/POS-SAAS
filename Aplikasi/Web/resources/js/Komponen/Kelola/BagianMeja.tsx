@@ -343,6 +343,7 @@ function FormMeja({ alamatOutlet, meja, opsiArea, bentuk, saatSelesai }: PropsFo
                     opsi={bentuk}
                     saatBerubah={(nilai) => formulir.setData('Bentuk', nilai)}
                     galat={formulir.errors.Bentuk}
+                    required
                 />
             </div>
             <BidangTeks

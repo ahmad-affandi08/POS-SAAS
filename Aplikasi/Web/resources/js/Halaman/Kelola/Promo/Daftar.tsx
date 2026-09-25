@@ -132,6 +132,7 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                     opsi={opsiMode}
                     saatBerubah={SimpanMode}
                     disabled={!Izin.Kelola}
+                    required
                 />
                 <p className="text-keterangan text-teks-sekunder">
                     {mode === 'Terbaik'

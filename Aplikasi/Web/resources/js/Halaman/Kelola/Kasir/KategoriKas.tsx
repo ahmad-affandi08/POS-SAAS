@@ -150,13 +150,19 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                     galatUmum={galat.Umum}
                     saatTutup={() => AturForm(null)}
                 >
-                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir kategori kas">
+                    <form
+                        onSubmit={Simpan}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir kategori kas"
+                        noValidate
+                    >
                         <BidangTeks
                             label="Nama kategori"
                             nilai={form.isian.Nama}
                             saatBerubah={(nilai) => AturForm({ ...form, isian: { ...form.isian, Nama: nilai } })}
                             galat={galat.Nama}
                             maxLength={100}
+                            required
                         />
                         {form.uuid === null ? (
                             <BidangPilihan
@@ -170,6 +176,7 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                                     })
                                 }
                                 galat={galat.Jenis}
+                                required
                             />
                         ) : null}
                         <BidangPilihan
@@ -182,6 +189,7 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                             }))}
                             saatBerubah={(nilai) => AturForm({ ...form, isian: { ...form.isian, UuidAkun: nilai } })}
                             galat={galat.UuidAkun}
+                            required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
                             <Button type="button" variant="outline" onClick={() => AturForm(null)}>

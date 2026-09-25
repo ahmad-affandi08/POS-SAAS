@@ -247,6 +247,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                                     saatBerubah={(nilai) => Ubah(indeks, { Jumlah: nilai })}
                                                     desimal={satuan?.BolehDesimal === false ? 0 : 4}
                                                     galat={galat[`Bahan.${String(indeks)}.Jumlah`] ?? galatLokal.Jumlah}
+                                                    required
                                                     disabled={!bolehUbah}
                                                 />
                                             </TableCell>
@@ -260,6 +261,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                                     }))}
                                                     saatBerubah={(nilai) => Ubah(indeks, { UuidSatuan: nilai })}
                                                     galat={galat[`Bahan.${String(indeks)}.UuidSatuan`]}
+                                                    required
                                                 />
                                             </TableCell>
                                             <TableCell className="whitespace-normal">

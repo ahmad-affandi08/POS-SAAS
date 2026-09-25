@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.76 |
+| Versi | 1.77 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.77 | UI Web: **tanda wajib otomatis** — label bidang yang kontrolnya wajib (`required`, `aria-required`, atau `data-wajib` pada `PilihanCari`/`GrupCentang`) otomatis diberi `*` berwarna `Bahaya` lewat CSS `:has()` di `Gaya/Aplikasi.css`; halaman cukup memberi prop `required` sesuai validasi server, tanpa menulis `*` manual. `*` disembunyikan dari pembaca layar (status wajib diumumkan atribut kontrol). Label "(opsional)" tetap dipakai. Form berisi bidang `required` memakai `noValidate` agar pesan galat Indonesia dari server yang tampil. Dijaga `Komponen/Formulir/TandaWajibTes.tsx`. Bidang bertanda `*` tidak boleh diisi diam-diam oleh halaman: Pengaturan kasir (batas kas keluar, diskon, toleransi selisih, batas hari) dan minimal belanja tier dikirim apa adanya sehingga kosong ditolak server dengan pesan yang menjelaskan arti 0 (0 = pengaturan paling ketat); tier baru menampilkan isian awal 0 yang terlihat. |
 | 1.76 | UI Web: **semua elemen yang bisa diklik memakai kursor tangan** (`cursor: pointer`) — tombol, tautan, ringkasan, select, label berpasangan, checkbox/radio/unggah, serta peran ARIA yang bisa diklik (menu item, opsi, tab, switch). Aturan dasar di `Gaya/Aplikasi.css` (layer base, jadi utilitas kursor lain tetap menang; kontrol nonaktif dikecualikan), dan item menu/opsi shadcn tidak lagi memaksa `cursor-default`. Dijaga `Gaya/AturanKursorTes.ts`. |
 | 1.75 | Keputusan D-18: **ilustrasi keadaan kosong** PAYOU (10 subjek, datar 2D berpalet merek) dipakai di daftar utama back-office yang belum berisi data (160–192 px); tombol tambah tidak diulang di keadaan kosong karena sudah ada di bilah alat; hasil cari/saring kosong tetap tanpa ilustrasi. Baris "Ilustrasi" §17.6 diperbarui. Aset SVG di `Aplikasi/Web/resources/js/Aset/KeadaanKosong/`, sumber PNG di `Spesifikasi/Merek/KeadaanKosong/`. |
 | 1.74 | P-02: **wilayah menjadi data awal wajib** — 38 provinsi + 514 kabupaten/kota sesuai Kepmendagri No. 300.2.2-2138 Tahun 2025 beserta zona waktu per provinsi, dimuat seeder dari `database/Data/WilayahAwal.json` (idempoten, kode yang sudah ada tidak diubah). Tanpa data ini pendaftaran F-00 tidak bisa memilih kota. Kecamatan/desa tetap tidak dipakai. |

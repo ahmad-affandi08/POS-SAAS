@@ -97,18 +97,20 @@ export default function HalamanPengaturanKasir({
 
     const Simpan = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
+        // Bidang kosong dikirim apa adanya agar server menolaknya dengan pesan wajib diisi. Angka 0 di sini berarti
+        // pengaturan paling ketat (setiap kas keluar/selisih/diskon butuh persetujuan), jadi tidak boleh terisi diam-diam.
         router.put(
             alamat,
             {
-                BatasKasKeluar: batas === '' ? '0' : batas,
+                BatasKasKeluar: batas,
                 ShiftBersama: bersama,
-                BatasDiskonManual: diskonKasir === '' ? '0' : diskonKasir,
-                BatasDiskonPenyetuju: diskonPenyetuju === '' ? '0' : diskonPenyetuju,
+                BatasDiskonManual: diskonKasir,
+                BatasDiskonPenyetuju: diskonPenyetuju,
                 PembulatanTunai: bulatkan ? { Kelipatan: Number.parseInt(kelipatan, 10), Arah: arah } : null,
                 TutupShiftButa: tutupButa,
-                ToleransiSelisihKas: toleransi === '' ? '0' : toleransi,
-                BatasHariRetur: hariRetur === '' ? 0 : Number.parseInt(hariRetur, 10),
-                BatasHariLewatJatuhTempo: hariLewat === '' ? 0 : Number.parseInt(hariLewat, 10),
+                ToleransiSelisihKas: toleransi,
+                BatasHariRetur: hariRetur === '' ? null : Number.parseInt(hariRetur, 10),
+                BatasHariLewatJatuhTempo: hariLewat === '' ? null : Number.parseInt(hariLewat, 10),
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -131,7 +133,7 @@ export default function HalamanPengaturanKasir({
                     'BatasHariLewatJatuhTempo',
                 ]}
             />
-            <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4">
+            <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4" noValidate>
                 <PanelKatalog
                     judul="Persetujuan kas keluar"
                     idJudul="judul-kas-keluar"
@@ -142,6 +144,7 @@ export default function HalamanPengaturanKasir({
                         nilai={batas}
                         saatBerubah={AturBatas}
                         galat={galat.BatasKasKeluar}
+                        required
                     />
                 </PanelKatalog>
                 <PanelKatalog judul="Shift bersama" idJudul="judul-shift-bersama">
@@ -168,6 +171,7 @@ export default function HalamanPengaturanKasir({
                             saatBerubah={(teks) => AturDiskonKasir(NormalisasiMasukanPersen(teks))}
                             inputMode="decimal"
                             galat={galat.BatasDiskonManual}
+                            required
                         />
                         <BidangTeks
                             label="Batas diskon dengan persetujuan (%)"
@@ -175,6 +179,7 @@ export default function HalamanPengaturanKasir({
                             saatBerubah={(teks) => AturDiskonPenyetuju(NormalisasiMasukanPersen(teks))}
                             inputMode="decimal"
                             galat={galat.BatasDiskonPenyetuju}
+                            required
                         />
                     </div>
                 </PanelKatalog>
@@ -192,6 +197,7 @@ export default function HalamanPengaturanKasir({
                                 opsi={opsiKelipatan}
                                 saatBerubah={AturKelipatan}
                                 galat={galat['PembulatanTunai.Kelipatan']}
+                                required
                             />
                             <BidangPilihan
                                 label="Arah pembulatan"
@@ -199,6 +205,7 @@ export default function HalamanPengaturanKasir({
                                 opsi={OpsiArahPembulatan}
                                 saatBerubah={AturArah}
                                 galat={galat['PembulatanTunai.Arah']}
+                                required
                             />
                         </div>
                     ) : null}
@@ -218,6 +225,7 @@ export default function HalamanPengaturanKasir({
                         nilai={toleransi}
                         saatBerubah={AturToleransi}
                         galat={galat.ToleransiSelisihKas}
+                        required
                     />
                 </PanelKatalog>
                 <PanelKatalog
@@ -231,6 +239,7 @@ export default function HalamanPengaturanKasir({
                         saatBerubah={(teks) => AturHariRetur(teks.replace(/\D/g, '').slice(0, 3))}
                         inputMode="numeric"
                         galat={galat.BatasHariRetur}
+                        required
                     />
                 </PanelKatalog>
                 <PanelKatalog
@@ -244,6 +253,7 @@ export default function HalamanPengaturanKasir({
                         saatBerubah={(teks) => AturHariLewat(teks.replace(/\D/g, '').slice(0, 3))}
                         inputMode="numeric"
                         galat={galat.BatasHariLewatJatuhTempo}
+                        required
                     />
                 </PanelKatalog>
                 <div className="flex flex-wrap items-center gap-3">

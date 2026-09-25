@@ -164,13 +164,19 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                     galatUmum={galat.Umum}
                     saatTutup={() => AturDialog(false)}
                 >
-                    <form onSubmit={Kirim} className="flex flex-col gap-4" aria-label="Formulir uang muka pre-order">
+                    <form
+                        onSubmit={Kirim}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir uang muka pre-order"
+                        noValidate
+                    >
                         {adaSisa ? (
                             <BidangPilihan
                                 label={`Sisa uang muka ${FormatRupiah(p.SisaUangMuka)}`}
                                 nilai={cara}
                                 opsi={OpsiCara}
                                 saatBerubah={AturCara}
+                                required
                             />
                         ) : null}
                         {adaSisa && cara === 'Dikembalikan' ? (
@@ -180,6 +186,7 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                                 opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: `${a.Kode} · ${a.Nama}` }))}
                                 saatBerubah={AturAkun}
                                 galat={galat.UuidAkun}
+                                required
                             />
                         ) : null}
                         <BidangTeksPanjang

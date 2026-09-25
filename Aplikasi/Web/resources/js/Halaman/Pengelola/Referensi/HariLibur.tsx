@@ -311,12 +311,14 @@ function FormHariLibur({ hariLibur, tahun, pilihanJenis, saatSelesai }: PropsFor
                     nilai={formulir.data.Tanggal}
                     saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
                     galat={formulir.errors.Tanggal}
+                    required
                 />
                 <BidangTeks
                     label="Nama"
                     nilai={formulir.data.Nama}
                     saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
                     galat={formulir.errors.Nama}
+                    required
                 />
                 <BidangPilihan
                     label="Jenis"
@@ -324,6 +326,7 @@ function FormHariLibur({ hariLibur, tahun, pilihanJenis, saatSelesai }: PropsFor
                     opsi={pilihanJenis}
                     saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                     galat={formulir.errors.Jenis}
+                    required
                 />
                 <BidangTeks
                     label="Nomor dasar hukum"
@@ -417,6 +420,7 @@ function FormPembatalan({ jenis, hari, saatSelesai }: PropsFormPembatalan) {
                         nilai={formulir.data.Alasan}
                         saatBerubah={(nilai) => formulir.setData('Alasan', nilai)}
                         galat={formulir.errors.Alasan}
+                        required
                         maxLength={500}
                         autoFocus
                     />

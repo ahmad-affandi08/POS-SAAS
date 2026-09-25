@@ -275,6 +275,7 @@ function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langg
                         ]}
                         saatBerubah={(nilai) => formulir.setData('Siklus', nilai)}
                         galat={formulir.errors.Siklus}
+                        required
                     />
                     <BidangTeks
                         label="Kode kupon (opsional)"

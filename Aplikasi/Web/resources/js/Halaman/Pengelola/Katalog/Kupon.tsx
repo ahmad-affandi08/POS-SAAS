@@ -188,6 +188,7 @@ function FormKupon({
                     nilai={formulir.data.Kode}
                     saatBerubah={(nilai) => formulir.setData('Kode', nilai.toUpperCase())}
                     galat={formulir.errors.Kode}
+                    required
                     disabled={kupon !== null}
                 />
                 <BidangPilihan
@@ -199,6 +200,7 @@ function FormKupon({
                     ]}
                     saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                     galat={formulir.errors.Jenis}
+                    required
                 />
                 <BidangTeks
                     label={formulir.data.Jenis === 'Persen' ? 'Diskon (%)' : 'Diskon (Rp)'}
@@ -206,6 +208,7 @@ function FormKupon({
                     nilai={formulir.data.Nilai}
                     saatBerubah={(nilai) => formulir.setData('Nilai', nilai)}
                     galat={formulir.errors.Nilai}
+                    required
                 />
                 <BidangTeks
                     label="Durasi (bulan)"
@@ -213,6 +216,7 @@ function FormKupon({
                     nilai={formulir.data.DurasiBulan}
                     saatBerubah={(nilai) => formulir.setData('DurasiBulan', nilai)}
                     galat={formulir.errors.DurasiBulan}
+                    required
                 />
                 <BidangTeks
                     label="Kuota pemakaian (opsional)"

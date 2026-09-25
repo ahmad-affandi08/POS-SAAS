@@ -526,7 +526,7 @@ function FormCatatBackup() {
     };
 
     return (
-        <form onSubmit={Kirim} className="grid gap-3 sm:grid-cols-3">
+        <form onSubmit={Kirim} className="grid gap-3 sm:grid-cols-3" noValidate>
             <Separator className="sm:col-span-3" />
             <p className="text-label font-semibold text-teks-utama sm:col-span-3">Catat hasil secara manual</p>
             <BidangPilihan
@@ -538,6 +538,7 @@ function FormCatatBackup() {
                 ]}
                 saatBerubah={(nilai) => formulir.setData('Jenis', nilai)}
                 galat={formulir.errors.Jenis}
+                required
             />
             <BidangPilihan
                 label="Hasil"
@@ -548,6 +549,7 @@ function FormCatatBackup() {
                 ]}
                 saatBerubah={(nilai) => formulir.setData('Hasil', nilai)}
                 galat={formulir.errors.Hasil}
+                required
             />
             <BidangWaktu
                 label="Selesai pada (WIB)"

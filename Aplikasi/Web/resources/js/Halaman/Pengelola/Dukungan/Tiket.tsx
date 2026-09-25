@@ -152,7 +152,7 @@ function FormBalasan({
 
     return (
         <Card className="px-4 py-4">
-            <form onSubmit={Kirim} className="flex flex-col gap-3">
+            <form onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
                 {!masihTerbuka ? (
                     <Pemberitahuan jenis="info">
                         Tiket tidak terbuka. Hanya catatan internal yang bisa ditulis; buka lagi tiket untuk membalas
@@ -165,6 +165,7 @@ function FormBalasan({
                     maksimal={10000}
                     saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
                     galat={formulir.errors.Isi}
+                    required
                 />
                 <BidangBerkas
                     label="Lampiran"
@@ -251,6 +252,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
                         opsi={penangan.map((anggota) => ({ Nilai: anggota.Uuid, Label: anggota.Nama }))}
                         saatBerubah={AturPenanggungJawab}
                         galat={props.errors.UuidPenanggungJawab}
+                        required
                     />
                     <Tombol
                         varian="sekunder"
@@ -268,6 +270,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
                         opsi={pilihanPrioritas}
                         saatBerubah={AturPrioritas}
                         galat={props.errors.Prioritas}
+                        required
                     />
                     <Tombol
                         varian="sekunder"
@@ -288,6 +291,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
                         opsi={statusTujuan}
                         saatBerubah={AturStatus}
                         galat={props.errors.Status}
+                        required
                     />
                     <BidangTeks
                         label={status === 'Ditutup' ? 'Alasan menutup (wajib)' : 'Alasan (opsional, internal)'}
@@ -295,6 +299,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
                         maxLength={500}
                         saatBerubah={AturAlasan}
                         galat={props.errors.Alasan}
+                        required={status === 'Ditutup'}
                     />
                     <Tombol
                         varian={status === 'Ditutup' ? 'bahaya' : 'sekunder'}

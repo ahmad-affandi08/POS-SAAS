@@ -262,6 +262,7 @@ export default function HalamanFormProduk({
                         opsi={Jenis.map((item) => ({ Nilai: item.Nilai, Label: item.Label }))}
                         saatBerubah={(nilai) => GantiJenis(nilai as JenisProduk)}
                         galat={galat.Jenis}
+                        required
                     />
                 )}
                 <p className="text-keterangan text-teks-sekunder">
@@ -299,6 +300,7 @@ export default function HalamanFormProduk({
                         }))
                     }
                     galat={galat.UuidSatuanDasar}
+                    required
                 />
                 <p className="text-keterangan text-teks-sekunder">
                     Satuan terkecil untuk stok dan resep, misal pcs, gram, atau ml.
@@ -401,6 +403,7 @@ export default function HalamanFormProduk({
                     }))}
                     saatBerubah={(nilai) => Atur('UuidKelompokPajak', nilai === '' ? null : nilai)}
                     galat={galat.UuidKelompokPajak}
+                    required={bisaDijual || induk}
                 />
                 <p className="text-keterangan text-teks-sekunder">
                     Tarif diambil dari tabel tarif yang berlaku saat transaksi. Kelompok baru dibuat di menu Kelompok

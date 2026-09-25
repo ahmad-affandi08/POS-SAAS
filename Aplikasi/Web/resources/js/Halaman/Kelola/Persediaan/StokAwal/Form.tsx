@@ -206,6 +206,7 @@ export default function HalamanFormStokAwal({
                                 Label: FormatLabelGudang(gudang),
                             }))}
                             saatBerubah={GantiGudang}
+                            required
                             galat={galatGudang}
                         />
                         <PemilihTanggal

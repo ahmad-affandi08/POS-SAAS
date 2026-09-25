@@ -183,6 +183,7 @@ export default function HalamanDaftarStokOpname({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={AturGudang}
+                            required
                             galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)}
                         />
                         <BidangPilihan

@@ -176,6 +176,7 @@ export default function HalamanFormTransferStok({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={GantiAsal}
+                            required
                             galat={galatAsal}
                         />
                         <BidangPilihan
@@ -186,6 +187,7 @@ export default function HalamanFormTransferStok({
                                 (g) => ({ Nilai: g.Uuid, Label: FormatLabelGudang(g) }),
                             )}
                             saatBerubah={AturTujuan}
+                            required
                             galat={galatTujuan}
                         />
                         <PemilihTanggal

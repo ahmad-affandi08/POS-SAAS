@@ -186,6 +186,7 @@ export default function HalamanPajak({
                                         formulir.setData('PersenBiayaLayanan', NormalisasiMasukanPersen(nilai))
                                     }
                                     galat={formulir.errors.PersenBiayaLayanan}
+                                    required
                                     keterangan="0 sampai 10 persen, misal 5 atau 7,5."
                                     inputMode="decimal"
                                     maxLength={5}

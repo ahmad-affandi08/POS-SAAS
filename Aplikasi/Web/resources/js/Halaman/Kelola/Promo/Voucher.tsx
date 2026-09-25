@@ -228,12 +228,13 @@ export default function HalamanVoucherPromo({ Promo, Voucher, Ringkasan, JumlahM
 
             {isian !== null ? (
                 <DialogFormulir judul="Tambah voucher" galatUmum={galat.Umum} saatTutup={() => AturIsian(null)}>
-                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir voucher">
+                    <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir voucher" noValidate>
                         <BidangPilihan
                             label="Cara membuat"
                             nilai={isian.Cara}
                             opsi={opsiCara}
                             saatBerubah={(nilai) => Ubah({ Cara: nilai === 'Satu' ? 'Satu' : 'Massal' })}
+                            required
                         />
                         {isian.Cara === 'Satu' ? (
                             <BidangTeks

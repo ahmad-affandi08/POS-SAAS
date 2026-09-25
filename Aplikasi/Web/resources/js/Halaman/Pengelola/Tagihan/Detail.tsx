@@ -148,6 +148,7 @@ function FormTerima({ uuid, total }: { uuid: string; total: string }) {
                 nilai={formulir.data.JumlahDiterima}
                 saatBerubah={(nilai) => formulir.setData('JumlahDiterima', nilai)}
                 galat={formulir.errors.JumlahDiterima}
+                required
                 keterangan={`Harus sama dengan total tagihan ${FormatRupiah(total)}.`}
             />
             <BidangTeks
@@ -186,6 +187,7 @@ function FormTolak({ uuid }: { uuid: string }) {
                     rows={3}
                     value={formulir.data.Alasan}
                     onChange={(peristiwa) => formulir.setData('Alasan', peristiwa.target.value)}
+                    required
                     aria-invalid={formulir.errors.Alasan ? true : undefined}
                     aria-describedby={formulir.errors.Alasan ? `${id}-galat` : undefined}
                     className="text-isi"
