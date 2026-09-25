@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.50 |
+| Versi | 1.51 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -71,6 +71,7 @@
 | 1.48 | Rincian F-13a (bagan akun, pemetaan akun, transaksi kas/bank back-office: pengeluaran operasional, penerimaan lain, transfer; buku besar, neraca saldo, laba rugi) dan F-14a (dashboard pemilik, laporan penjualan per dimensi, laporan PB1/PBJT & PPN keluaran, nilai persediaan & stok kritis, ringkasan harian lewat antrean), diputuskan agen atas mandat D-12. |
 | 1.49 | Implementasi tindak lanjut tinjauan F-07 (server & aplikasi): `JenisPajak.Kategori` (Ppn/Pbjt/Lainnya; semua kode berawalan `Pbjt` → Pbjt), kunci baru `Perangkat.NomorUrutPenjualan`/`NomorUrutRetur`, `TarifPajak[].Kategori`, `KelompokPajak[].Pajak[].Kategori`, `penjualan/cari` baris `BolehDesimal`/`UuidProdukSatuan`; kelipatan pembulatan tunai 1–1.000 juga di pengaturan kasir & template; skema lokal POS v4–v5. |
 | 1.50 | Keputusan implementasi F-13a & F-14a dicatat (penanda `Akun.KasBank`, satu sumber aturan tipe akun per peran, pemetaan tingkat tenant hanya untuk pengguna tanpa batas outlet, definisi angka laporan, kolom tambahan `RingkasanPenjualanHarian`, peristiwa penjualan & jadwal bangun ulang); utang F-13a/F-14a (§25 no. 25). |
+| 1.51 | Rincian F-04 fase 1 (pemasok, PO + persetujuan, penerimaan barang, faktur & 3-way matching, hutang & pembayaran, retur pembelian, belanja stok) dan F-05b (transfer antar lokasi, stok opname, penyesuaian stok) di back-office, diputuskan agen atas mandat D-12. Izin baru `pembelian.po.setujui`. |
 
 ---
 
@@ -1090,6 +1091,16 @@ flowchart LR
 
 **Dampak Jurnal:** lihat §11.3 (J-04.x).
 
+**Rincian F-04 fase 1 (v1.51, back-office; diputuskan agen atas mandat D-12):**
+- **Pemasok** (`/kelola/pembelian/pemasok`): kode, nama, kontak, alamat, NPWP, termin bawaan (tunai / tempo N hari), rekening; nonaktifkan bukan hapus bila sudah dipakai. Izin `pembelian.kelola`.
+- **Pesanan pembelian (PO)** `PO/{OUTLET}/{YYMM}/{SEQ4}`: pemasok, lokasi stok tujuan, baris produk × jumlah × satuan pembelian (konversi ke satuan dasar) × harga, diskon baris, PPN masukan (bila pemasok PKP, tarif dari `TarifPajak`, CLAUDE.md #12), ongkir, termin. Status `Draf → MenungguPersetujuan → Disetujui → DiterimaSebagian → Diterima → Ditutup` (+ `Dibatalkan` bila belum ada penerimaan). Total di atas `BatasPersetujuanPo` (pengaturan pembelian, bawaan Rp 5.000.000, §19.2) butuh persetujuan pemegang izin baru `pembelian.po.setujui` (bawaan Pemilik & Admin) yang bukan pembuatnya; di bawah batas langsung `Disetujui`. Tampilan cetak PO (HTML siap cetak/PDF peramban); kirim WA/email menyusul.
+- **Penerimaan barang (GRN)** `GR/{OUTLET}/{YYMM}/{SEQ4}`: dari PO (sisa per baris) atau tanpa PO; jumlah diterima per baris (parsial), batch & kedaluwarsa untuk produk batch, nomor seri untuk produk seri; BR-04.1 toleransi `ToleransiPenerimaanPersen` (bawaan 0). Posting = mutasi `PenerimaanPembelian` bernilai harga landed (harga − diskon + alokasi ongkir sebanding nilai, tanpa PPN masukan yang dapat dikreditkan) → HPP BR-04.2/04.3 oleh buku stok; jurnal J-04.1 (Dr persediaan, Cr `HutangBelumDifakturkan`). Dokumen terposting tidak diubah; pembatalan = pembalik bila stok belum terpakai.
+- **Faktur pembelian** `FB/{YYMM}/{SEQ4}` (nomor faktur pemasok disimpan terpisah, unik per pemasok): memilih GRN yang belum difakturkan (3-way matching PO–GRN–faktur, tampilkan selisih jumlah & harga), PPN masukan, jatuh tempo dari termin. Jurnal J-04.2: Dr `HutangBelumDifakturkan` (nilai GRN) + Dr `PpnMasukan` + selisih harga (BR-04.4: bagian yang stoknya masih ada → persediaan, bagian yang sudah terjual → `Hpp`; fase 1 boleh seluruh selisih ke `SelisihHpp` dengan catatan bila pemisahan belum tersedia), Cr `HutangUsaha`.
+- **Pembayaran hutang** `BH/{YYMM}/{SEQ4}`: dari akun kas/bank (`Akun.KasBank`), satu atau banyak faktur satu pemasok, boleh sebagian; J-04.4. Daftar hutang & jatuh tempo (umur 0–30/31–60/61–90/>90 hari).
+- **Retur pembelian** `RB/{OUTLET}/{YYMM}/{SEQ4}`: dari GRN (jumlah ≤ diterima − sudah diretur), stok keluar `ReturPembelian` bernilai HPP penerimaan, mengurangi hutang faktur (atau hutang belum difakturkan bila belum difakturkan); J-04.5.
+- **Belanja stok** (mode UMKM): satu form pemasok opsional, lokasi, baris, total, akun kas/bank pembayar → membuat GRN + faktur + pembayaran lunas sekaligus dalam satu transaksi; J-04.3.
+- Semua dokumen di satu transaksi DB bersama stok & jurnal (aturan #9–#10), periode terkunci ditolak, daftar memakai `TabelData`, lampiran (surat jalan/faktur) privat opsional.
+
 ---
 
 ### F-05 · Inventori
@@ -1118,6 +1129,12 @@ flowchart LR
 - BR-05.2 Stok negatif **diizinkan per konfigurasi** (default: diizinkan untuk F&B resep, dilarang untuk apotek/serial).
 - BR-05.3 Selama opname berlangsung untuk sebuah lokasi, transaksi tetap berjalan. Qty penyesuaian = fisik − (snapshot + movement selama opname).
 - BR-05.4 Penjualan produk resep mengurangi bahan pada **lokasi produksi** yang ditentukan (misal "Dapur"/"Bar"), bukan lokasi toko.
+
+**Rincian F-05b (v1.51, back-office; diputuskan agen atas mandat D-12):**
+- **Transfer stok** `TF/{ASAL}-{TUJUAN}/{YYMM}/{SEQ4}` antar lokasi stok (antar outlet atau dalam outlet): `Draf → Dikirim → DiterimaSebagian → Diterima` (+ `Dibatalkan` sebelum dikirim). Kirim = mutasi `TransferKeluar` dari asal ke lokasi `DalamPerjalanan` (dinilai HPP asal; J-05.2 Dr `PersediaanDalamPerjalanan`, Cr persediaan); terima (boleh parsial) = `TransferMasuk` ke tujuan bernilai HPP kirim (J-05.3). Selisih kirim vs terima wajib alasan dan menjadi penyesuaian keluar (`Susut`, J-05.4) saat transfer ditutup. Izin `persediaan.kelola`; penerima dibatasi outlet aksesnya.
+- **Stok opname** `SO/{LOKASI}/{YYMM}/{SEQ3}` per lokasi stok (seluruh produk atau per kategori): mulai = snapshot saldo sistem; lembar hitung (ketik/pindai, beberapa kali simpan), opsi hitung buta (jumlah sistem disembunyikan); tinjau selisih; setujui (izin `persediaan.penyesuaian.setujui`) → mutasi `OpnameLebih`/`OpnameKurang` dengan jumlah = fisik − (snapshot + mutasi sejak snapshot) (BR-05.3), dinilai HPP berjalan; J-05.4/J-05.5 ke `SelisihHpp`/`SusutPersediaan`. Transaksi tetap berjalan selama opname; satu opname aktif per lokasi (dan per kategori bila parsial).
+- **Penyesuaian stok** `PS/{LOKASI}/{YYMM}/{SEQ4}`: alasan wajib (Rusak, Hilang, Kedaluwarsa, Sampel, KonsumsiInternal, Lainnya + keterangan); keluar = `PenyesuaianKeluar`/`Susut` dinilai HPP berjalan (J-05.4 ke akun sesuai alasan: `SusutPersediaan` atau beban lain yang dipetakan), masuk = `PenyesuaianMasuk` dengan nilai per satuan wajib (J-05.5). Nilai di atas `BatasPersetujuanPenyesuaian` (bawaan Rp 500.000, §19.2) butuh persetujuan `persediaan.penyesuaian.setujui` oleh orang lain sebelum diposting.
+- Produk batch/seri: transfer, opname, dan penyesuaian menyebut batch/nomor seri per baris. Semua dokumen append-only (koreksi dengan dokumen baru), stok & jurnal di transaksi yang sama, daftar & detail di back-office dengan `TabelData`; aplikasi gudang (`/api/pos/v1/gudang/*`) menyusul.
 
 **Rincian F-05a (v1.33, diputuskan agen atas mandat D-12):**
 - Dokumen `StokAwal` per lokasi stok: `Draf → Memproses → Diposting → Dibatalkan`, dan `Draf → Dibuang`. Draf **tidak pernah dihapus** (status `Dibuang`), dokumen terposting tidak diedit; pembatalan = mutasi pembalik + jurnal pembalik (`IdJurnalDibalik`, `KunciSumber = Pembatalan`) dengan alasan wajib. Pembatalan ditolak (`StokSudahTerpakai`) bila stok dari dokumen itu sudah terpakai (FIFO: lapisannya sudah dikonsumsi).
