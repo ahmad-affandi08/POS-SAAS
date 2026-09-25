@@ -238,6 +238,28 @@ void main() {
     });
   });
 
+  group('DataAwal F-11', () {
+    test('server lama tanpa kunci F-11 → tutup shift buta & toleransi Rp 10.000 (kompatibel mundur)', () {
+      final data = DataAwal.DariJson(DataAwalF06());
+      expect(data.tutupShiftButa, isTrue);
+      expect(data.toleransiSelisihKas, '10000');
+    });
+
+    test('TutupShiftButa & ToleransiSelisihKas dipetakan dari Pengaturan', () {
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Pengaturan': {
+          'BatasKasKeluar': '200000.00',
+          'ShiftBersama': false,
+          'TutupShiftButa': false,
+          'ToleransiSelisihKas': '25000.00',
+        },
+      });
+      expect(data.tutupShiftButa, isFalse);
+      expect(data.toleransiSelisihKas, '25000.00');
+    });
+  });
+
   test('AmbilGambarQris mengembalikan bait gambar; 404 → GalatApi', () async {
     final klien = BuatKlien(
       (p) async => p.url.path.endsWith('/M1/gambar-qris')

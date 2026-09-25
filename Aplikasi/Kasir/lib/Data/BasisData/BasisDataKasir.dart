@@ -58,6 +58,22 @@ class Shift extends Table {
   BoolColumn get Bersama => boolean()();
   TextColumn get Status => text()();
 
+  // Skema 3 (F-11): hasil tutup shift di perangkat. Semua nullable (diisi saat shift ditutup).
+  TextColumn get DitutupOleh => text().nullable()();
+  TextColumn get NamaPenutup => text().nullable()();
+  DateTimeColumn get DitutupPada => dateTime().nullable()();
+  TextColumn get KasSeharusnya => text().nullable()();
+  TextColumn get KasAktual => text().nullable()();
+  TextColumn get Selisih => text().nullable()();
+
+  /// JSON `[{Nominal, Jumlah}]`.
+  TextColumn get PecahanKasAkhir => text().nullable()();
+
+  /// JSON `[{UuidMetodePembayaran, Jumlah}]` (hitungan non-tunai kasir).
+  TextColumn get NonTunaiDilaporkan => text().nullable()();
+  TextColumn get AlasanSelisih => text().nullable()();
+  TextColumn get UuidPenyetujuSelisih => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }
@@ -139,9 +155,10 @@ class PercobaanPin extends Table {
 class BasisDataKasir extends _$BasisDataKasir {
   BasisDataKasir(super.executor);
 
-  /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan).
+  /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
+  /// (kolom tutup shift).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -174,6 +191,22 @@ class BasisDataKasir extends _$BasisDataKasir {
         }
         await m.createIndex(indeksProdukBarcodeBarcode);
         await m.createIndex(indeksPenjualanTanggalBisnis);
+      }
+      if (dari < 3) {
+        for (final kolom in <GeneratedColumn<Object>>[
+          shift.DitutupOleh,
+          shift.NamaPenutup,
+          shift.DitutupPada,
+          shift.KasSeharusnya,
+          shift.KasAktual,
+          shift.Selisih,
+          shift.PecahanKasAkhir,
+          shift.NonTunaiDilaporkan,
+          shift.AlasanSelisih,
+          shift.UuidPenyetujuSelisih,
+        ]) {
+          await m.addColumn(shift, kolom);
+        }
       }
     },
     beforeOpen: (detail) async {

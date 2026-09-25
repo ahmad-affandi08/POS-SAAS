@@ -7,13 +7,22 @@ import '../Domain/Sesi/StafLokal.dart';
 import 'Komponen/FormatWaktu.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 
-/// Area kerja "Shift" (F-06): ringkasan shift yang sedang berjalan. Kasir yang bertugas bisa berganti (ketuk nama
-/// kasir di bilah atas) tanpa menutup shift. Tutup shift & laporan shift menyusul bersama flow tutup shift.
+/// Area kerja "Shift" (F-06, F-11): ringkasan shift yang sedang berjalan, laporan X, dan tutup shift. Kasir yang
+/// bertugas bisa berganti (ketuk nama kasir di bilah atas) tanpa menutup shift. Laporan X & formulir tutup shift
+/// dibuka sebagai panel oleh bingkai ruang kerja.
 class LayarShift extends StatelessWidget {
-  const LayarShift({super.key, required this.shift, required this.kasir});
+  const LayarShift({
+    super.key,
+    required this.shift,
+    required this.kasir,
+    required this.saatTutupShift,
+    required this.saatLaporanX,
+  });
 
   final BarisShift shift;
   final StafLokal kasir;
+  final VoidCallback saatTutupShift;
+  final VoidCallback saatLaporanX;
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +44,31 @@ class LayarShift extends StatelessWidget {
           ),
         ),
         const SizedBox(height: TokenJarak.jarak16),
+        Wrap(
+          spacing: TokenJarak.jarak12,
+          runSpacing: TokenJarak.jarak12,
+          children: [
+            SizedBox(
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: saatLaporanX,
+                icon: const Icon(Icons.summarize_outlined),
+                label: const Text('Laporan X'),
+              ),
+            ),
+            SizedBox(
+              height: 56,
+              child: FilledButton.icon(
+                onPressed: saatTutupShift,
+                icon: const Icon(Icons.lock_clock_outlined),
+                label: const Text('Tutup shift'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: TokenJarak.jarak16),
         Text(
-          'Tutup shift dan laporan shift belum tersedia di versi aplikasi ini. Shift tetap terbuka saat kasir '
-          'berganti atau layar dikunci.',
+          'Shift tetap terbuka saat kasir berganti atau layar dikunci. Tutup shift setelah menghitung uang di laci.',
           style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
         ),
       ],

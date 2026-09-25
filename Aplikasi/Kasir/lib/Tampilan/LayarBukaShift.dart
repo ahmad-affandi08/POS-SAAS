@@ -33,12 +33,9 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
     super.dispose();
   }
 
-  Uang _TotalPecahan() =>
-      _pecahan.entries.fold(Uang.Nol(), (t, e) => t.Tambah(BarisPecahan(e.key, e.value).AmbilTotal()));
-
-  void _UbahPecahan(int nominal, int beda) => setState(() {
-    _pecahan[nominal] = (_pecahan[nominal]! + beda).clamp(0, 100000);
-    _kasAwal.text = _TotalPecahan().KeDesimal().toBigInt().toString();
+  void _UbahPecahan(int nominal, int jumlahBaru) => setState(() {
+    _pecahan[nominal] = jumlahBaru;
+    _kasAwal.text = HitungPecahan.HitungTotal(_pecahan).KeDesimal().toBigInt().toString();
   });
 
   Future<void> _Buka() async {
@@ -95,26 +92,7 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
                 subtitle: const Text('Opsional. Jumlahnya otomatis mengisi modal awal.'),
               ),
               if (_hitungPecahan)
-                for (final nominal in daftarPecahanRupiah)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Expanded(child: TeksUang(Uang.DariBulat(nominal), rataKanan: false)),
-                        IconButton(
-                          tooltip: 'Kurangi ${Uang.DariBulat(nominal).FormatRupiah()}',
-                          onPressed: () => _UbahPecahan(nominal, -1),
-                          icon: const Icon(Icons.remove),
-                        ),
-                        SizedBox(width: 48, child: Text('${_pecahan[nominal]}', textAlign: TextAlign.center)),
-                        IconButton(
-                          tooltip: 'Tambah ${Uang.DariBulat(nominal).FormatRupiah()}',
-                          onPressed: () => _UbahPecahan(nominal, 1),
-                          icon: const Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                  ),
+                HitungPecahan(nominal: daftarPecahanRupiah, jumlah: _pecahan, saatBerubah: _UbahPecahan),
               const SizedBox(height: 24),
               SizedBox(
                 height: 56,

@@ -24,6 +24,7 @@ import '../Domain/Sesi/LayananMasuk.dart';
 import '../Domain/Sesi/LayananPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Shift/LayananShift.dart';
+import '../Domain/Shift/LayananTutupShift.dart';
 import '../Domain/Sinkron/LayananSinkron.dart';
 import 'Lingkungan.dart';
 
@@ -76,6 +77,14 @@ final penyediaLayananMasuk = Provider<LayananMasuk>(
 
 final penyediaLayananShift = Provider<LayananShift>(
   (ref) => LayananShift(repositori: ref.watch(penyediaRepositori), jam: ref.watch(penyediaJam)),
+);
+
+final penyediaLayananTutupShift = Provider<LayananTutupShift>(
+  (ref) => LayananTutupShift(
+    repositori: ref.watch(penyediaRepositori),
+    repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    jam: ref.watch(penyediaJam),
+  ),
 );
 
 final penyediaLayananSinkron = Provider<LayananSinkron>(
@@ -133,6 +142,24 @@ final penyediaRiwayatHariIni = StreamProvider<List<RiwayatPenjualan>>((ref) asyn
 /// Penjualan tunai bersih (uang tunai diterima − kembalian) sebuah shift, untuk perkiraan kas di laci.
 final penyediaTunaiShift = StreamProvider.family<Uang, String>(
   (ref, uuidShift) => ref.watch(penyediaRepositoriPenjualan).PantauTunaiBersihShift(uuidShift),
+);
+
+/// Laporan shift X/Z (F-11) dari data perangkat; dihitung ulang saat penjualan atau kas shift berubah.
+final penyediaLaporanShift = FutureProvider.family<LaporanShift, String>((ref, uuidShift) async {
+  ref.watch(penyediaShift(uuidShift));
+  ref.watch(penyediaMutasiShift(uuidShift));
+  ref.watch(penyediaTunaiShift(uuidShift));
+  return ref.watch(penyediaLayananTutupShift).SusunLaporan(uuidShift);
+});
+
+/// Satu shift lokal (status & kolom tutup), untuk menghitung ulang laporan saat shift ditutup.
+final penyediaShift = StreamProvider.family<BarisShift?, String>(
+  (ref, uuidShift) => ref.watch(penyediaRepositori).PantauShift(uuidShift),
+);
+
+/// Shift yang baru ditutup dan laporan Z-nya belum ditutup kasir (layar Laporan Z sebelum buka shift berikutnya).
+final penyediaLaporanZTertunda = StreamProvider<String?>(
+  (ref) => ref.watch(penyediaLayananTutupShift).PantauLaporanZTertunda(),
 );
 
 /// Keranjang yang sedang dibangun di layar Jual (bertahan saat pindah menu atau ganti kasir).

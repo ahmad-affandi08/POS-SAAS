@@ -1,4 +1,6 @@
-import 'package:drift/drift.dart' show OrderingTerm, driftRuntimeOptions;
+import 'dart:io';
+
+import 'package:drift/drift.dart' show OrderingTerm, Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kasir/Data/BasisData/BasisDataKasir.dart';
@@ -22,6 +24,20 @@ const List<String> skemaVersi1 = [
       'NULL, "PesanGalat" TEXT NULL, "DibuatPada" TEXT NOT NULL, "BerikutnyaPada" TEXT NOT NULL)',
   'CREATE TABLE "PercobaanPin" ("UuidPengguna" TEXT NOT NULL, "JumlahGagal" INTEGER NOT NULL, "TerkunciSampai" TEXT '
       'NULL, PRIMARY KEY ("UuidPengguna"))',
+];
+
+/// Kolom `Shift` yang ditambahkan skema 3 (F-11).
+const List<String> kolomTutupShift = [
+  'DitutupOleh',
+  'NamaPenutup',
+  'DitutupPada',
+  'KasSeharusnya',
+  'KasAktual',
+  'Selisih',
+  'PecahanKasAkhir',
+  'NonTunaiDilaporkan',
+  'AlasanSelisih',
+  'UuidPenyetujuSelisih',
 ];
 
 /// PRD §18.3 no. 9 & Rincian F-07c: migrasi skema lokal 1 → 2 hanya menambah tabel; outbox yang belum terkirim, shift,
@@ -60,7 +76,8 @@ void main() {
     expect(outbox.last.Status, 'PerluTindakan');
     expect((await db.select(db.shift).get()).single.KasAwal, '500000.00');
 
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 2);
+    // Migrasi berantai sampai skema terbaru (3, F-11).
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
     final tabel = await db
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .map((r) => r.read<String>('name'))
@@ -102,10 +119,54 @@ void main() {
     expect((await db.select(db.nomorUrutPenjualan).get()).single.Terakhir, 1);
   });
 
-  test('basis data baru langsung skema 2', () async {
+  test('basis data baru langsung skema terbaru (3)', () async {
     final db = BasisDataKasir(NativeDatabase.memory());
     addTearDown(db.close);
     expect(await db.select(db.penjualan).get(), isEmpty);
-    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 2);
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
+  });
+
+  test('F-11 migrasi 2 → 3 hanya menambah kolom tutup shift; outbox tertunda, shift, & penjualan tetap utuh', () async {
+    final folder = Directory.systemTemp.createTempSync('migrasi_kasir_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final berkas = File('${folder.path}/kasir.sqlite');
+
+    // Bangun skema 2: skema terbaru dikurangi kolom F-11, lalu isi data seperti perangkat lama.
+    final lama = BasisDataKasir(NativeDatabase(berkas));
+    await lama.customSelect('SELECT 1').get();
+    for (final kolom in kolomTutupShift) {
+      await lama.customStatement('ALTER TABLE "Shift" DROP COLUMN "$kolom"');
+    }
+    await lama.customStatement(
+      "INSERT INTO Shift (Uuid, DibukaOleh, NamaKasir, DibukaPada, KasAwal, PecahanKasAwal, Bersama, Status) VALUES "
+      "('SHIFT1', 'STAF1', 'Rina Wulandari', '2026-09-24T01:00:00.000Z', '500000.00', NULL, 0, 'Terbuka')",
+    );
+    await lama.customStatement(
+      'INSERT INTO Outbox (Uuid, Jenis, Data, Status, Percobaan, DibuatPada, BerikutnyaPada) VALUES '
+      "('SHIFT1', 'Shift.Buka', '{\"KasAwal\":\"500000.00\"}', 'Tertunda', 2, '2026-09-24T01:00:00.000Z', '2026-09-24T01:00:00.000Z'),"
+      "('JUAL1', 'Penjualan.Buat', '{}', 'PerluTindakan', 0, '2026-09-24T01:10:00.000Z', '2026-09-24T01:10:00.000Z')",
+    );
+    await lama.customStatement('PRAGMA user_version = 2');
+    await lama.close();
+
+    final db = BasisDataKasir(NativeDatabase(berkas));
+    addTearDown(db.close);
+
+    final outbox = await (db.select(db.outbox)..orderBy([(o) => OrderingTerm.asc(o.Id)])).get();
+    expect(outbox.map((o) => o.Uuid), ['SHIFT1', 'JUAL1'], reason: 'Outbox belum terkirim tidak boleh hilang.');
+    expect(outbox.first.Percobaan, 2);
+    expect(outbox.last.Status, 'PerluTindakan');
+    expect(await db.customSelect('PRAGMA user_version').map((r) => r.read<int>('user_version')).getSingle(), 3);
+
+    final shift = (await db.select(db.shift).get()).single;
+    expect(shift.KasAwal, '500000.00');
+    expect(shift.KasAktual, isNull);
+    expect(shift.DitutupPada, isNull);
+
+    // Kolom baru langsung bisa ditulis.
+    await (db.update(db.shift)..where((s) => s.Uuid.equals('SHIFT1'))).write(
+      const ShiftCompanion(Status: Value('Tertutup'), KasAktual: Value('498000.00'), Selisih: Value('-2000.00')),
+    );
+    expect((await db.select(db.shift).get()).single.Selisih, '-2000.00');
   });
 }

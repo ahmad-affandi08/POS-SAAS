@@ -895,6 +895,96 @@ class $ShiftTable extends Shift with TableInfo<$ShiftTable, BarisShift> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _DitutupOlehMeta = const VerificationMeta('DitutupOleh');
+  @override
+  late final GeneratedColumn<String> DitutupOleh = GeneratedColumn<String>(
+    'DitutupOleh',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _NamaPenutupMeta = const VerificationMeta('NamaPenutup');
+  @override
+  late final GeneratedColumn<String> NamaPenutup = GeneratedColumn<String>(
+    'NamaPenutup',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _DitutupPadaMeta = const VerificationMeta('DitutupPada');
+  @override
+  late final GeneratedColumn<DateTime> DitutupPada = GeneratedColumn<DateTime>(
+    'DitutupPada',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _KasSeharusnyaMeta = const VerificationMeta('KasSeharusnya');
+  @override
+  late final GeneratedColumn<String> KasSeharusnya = GeneratedColumn<String>(
+    'KasSeharusnya',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _KasAktualMeta = const VerificationMeta('KasAktual');
+  @override
+  late final GeneratedColumn<String> KasAktual = GeneratedColumn<String>(
+    'KasAktual',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _SelisihMeta = const VerificationMeta('Selisih');
+  @override
+  late final GeneratedColumn<String> Selisih = GeneratedColumn<String>(
+    'Selisih',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _PecahanKasAkhirMeta = const VerificationMeta('PecahanKasAkhir');
+  @override
+  late final GeneratedColumn<String> PecahanKasAkhir = GeneratedColumn<String>(
+    'PecahanKasAkhir',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _NonTunaiDilaporkanMeta = const VerificationMeta('NonTunaiDilaporkan');
+  @override
+  late final GeneratedColumn<String> NonTunaiDilaporkan = GeneratedColumn<String>(
+    'NonTunaiDilaporkan',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _AlasanSelisihMeta = const VerificationMeta('AlasanSelisih');
+  @override
+  late final GeneratedColumn<String> AlasanSelisih = GeneratedColumn<String>(
+    'AlasanSelisih',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _UuidPenyetujuSelisihMeta = const VerificationMeta('UuidPenyetujuSelisih');
+  @override
+  late final GeneratedColumn<String> UuidPenyetujuSelisih = GeneratedColumn<String>(
+    'UuidPenyetujuSelisih',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Uuid,
@@ -905,6 +995,16 @@ class $ShiftTable extends Shift with TableInfo<$ShiftTable, BarisShift> {
     PecahanKasAwal,
     Bersama,
     Status,
+    DitutupOleh,
+    NamaPenutup,
+    DitutupPada,
+    KasSeharusnya,
+    KasAktual,
+    Selisih,
+    PecahanKasAkhir,
+    NonTunaiDilaporkan,
+    AlasanSelisih,
+    UuidPenyetujuSelisih,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -956,6 +1056,51 @@ class $ShiftTable extends Shift with TableInfo<$ShiftTable, BarisShift> {
     } else if (isInserting) {
       context.missing(_StatusMeta);
     }
+    if (data.containsKey('DitutupOleh')) {
+      context.handle(_DitutupOlehMeta, DitutupOleh.isAcceptableOrUnknown(data['DitutupOleh']!, _DitutupOlehMeta));
+    }
+    if (data.containsKey('NamaPenutup')) {
+      context.handle(_NamaPenutupMeta, NamaPenutup.isAcceptableOrUnknown(data['NamaPenutup']!, _NamaPenutupMeta));
+    }
+    if (data.containsKey('DitutupPada')) {
+      context.handle(_DitutupPadaMeta, DitutupPada.isAcceptableOrUnknown(data['DitutupPada']!, _DitutupPadaMeta));
+    }
+    if (data.containsKey('KasSeharusnya')) {
+      context.handle(
+        _KasSeharusnyaMeta,
+        KasSeharusnya.isAcceptableOrUnknown(data['KasSeharusnya']!, _KasSeharusnyaMeta),
+      );
+    }
+    if (data.containsKey('KasAktual')) {
+      context.handle(_KasAktualMeta, KasAktual.isAcceptableOrUnknown(data['KasAktual']!, _KasAktualMeta));
+    }
+    if (data.containsKey('Selisih')) {
+      context.handle(_SelisihMeta, Selisih.isAcceptableOrUnknown(data['Selisih']!, _SelisihMeta));
+    }
+    if (data.containsKey('PecahanKasAkhir')) {
+      context.handle(
+        _PecahanKasAkhirMeta,
+        PecahanKasAkhir.isAcceptableOrUnknown(data['PecahanKasAkhir']!, _PecahanKasAkhirMeta),
+      );
+    }
+    if (data.containsKey('NonTunaiDilaporkan')) {
+      context.handle(
+        _NonTunaiDilaporkanMeta,
+        NonTunaiDilaporkan.isAcceptableOrUnknown(data['NonTunaiDilaporkan']!, _NonTunaiDilaporkanMeta),
+      );
+    }
+    if (data.containsKey('AlasanSelisih')) {
+      context.handle(
+        _AlasanSelisihMeta,
+        AlasanSelisih.isAcceptableOrUnknown(data['AlasanSelisih']!, _AlasanSelisihMeta),
+      );
+    }
+    if (data.containsKey('UuidPenyetujuSelisih')) {
+      context.handle(
+        _UuidPenyetujuSelisihMeta,
+        UuidPenyetujuSelisih.isAcceptableOrUnknown(data['UuidPenyetujuSelisih']!, _UuidPenyetujuSelisihMeta),
+      );
+    }
     return context;
   }
 
@@ -973,6 +1118,25 @@ class $ShiftTable extends Shift with TableInfo<$ShiftTable, BarisShift> {
       PecahanKasAwal: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}PecahanKasAwal']),
       Bersama: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}Bersama'])!,
       Status: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Status'])!,
+      DitutupOleh: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}DitutupOleh']),
+      NamaPenutup: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPenutup']),
+      DitutupPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DitutupPada']),
+      KasSeharusnya: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KasSeharusnya']),
+      KasAktual: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KasAktual']),
+      Selisih: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Selisih']),
+      PecahanKasAkhir: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}PecahanKasAkhir'],
+      ),
+      NonTunaiDilaporkan: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}NonTunaiDilaporkan'],
+      ),
+      AlasanSelisih: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}AlasanSelisih']),
+      UuidPenyetujuSelisih: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidPenyetujuSelisih'],
+      ),
     );
   }
 
@@ -991,6 +1155,20 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
   final String? PecahanKasAwal;
   final bool Bersama;
   final String Status;
+  final String? DitutupOleh;
+  final String? NamaPenutup;
+  final DateTime? DitutupPada;
+  final String? KasSeharusnya;
+  final String? KasAktual;
+  final String? Selisih;
+
+  /// JSON `[{Nominal, Jumlah}]`.
+  final String? PecahanKasAkhir;
+
+  /// JSON `[{UuidMetodePembayaran, Jumlah}]` (hitungan non-tunai kasir).
+  final String? NonTunaiDilaporkan;
+  final String? AlasanSelisih;
+  final String? UuidPenyetujuSelisih;
   const BarisShift({
     required this.Uuid,
     required this.DibukaOleh,
@@ -1000,6 +1178,16 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
     this.PecahanKasAwal,
     required this.Bersama,
     required this.Status,
+    this.DitutupOleh,
+    this.NamaPenutup,
+    this.DitutupPada,
+    this.KasSeharusnya,
+    this.KasAktual,
+    this.Selisih,
+    this.PecahanKasAkhir,
+    this.NonTunaiDilaporkan,
+    this.AlasanSelisih,
+    this.UuidPenyetujuSelisih,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1014,6 +1202,36 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
     }
     map['Bersama'] = Variable<bool>(Bersama);
     map['Status'] = Variable<String>(Status);
+    if (!nullToAbsent || DitutupOleh != null) {
+      map['DitutupOleh'] = Variable<String>(DitutupOleh);
+    }
+    if (!nullToAbsent || NamaPenutup != null) {
+      map['NamaPenutup'] = Variable<String>(NamaPenutup);
+    }
+    if (!nullToAbsent || DitutupPada != null) {
+      map['DitutupPada'] = Variable<DateTime>(DitutupPada);
+    }
+    if (!nullToAbsent || KasSeharusnya != null) {
+      map['KasSeharusnya'] = Variable<String>(KasSeharusnya);
+    }
+    if (!nullToAbsent || KasAktual != null) {
+      map['KasAktual'] = Variable<String>(KasAktual);
+    }
+    if (!nullToAbsent || Selisih != null) {
+      map['Selisih'] = Variable<String>(Selisih);
+    }
+    if (!nullToAbsent || PecahanKasAkhir != null) {
+      map['PecahanKasAkhir'] = Variable<String>(PecahanKasAkhir);
+    }
+    if (!nullToAbsent || NonTunaiDilaporkan != null) {
+      map['NonTunaiDilaporkan'] = Variable<String>(NonTunaiDilaporkan);
+    }
+    if (!nullToAbsent || AlasanSelisih != null) {
+      map['AlasanSelisih'] = Variable<String>(AlasanSelisih);
+    }
+    if (!nullToAbsent || UuidPenyetujuSelisih != null) {
+      map['UuidPenyetujuSelisih'] = Variable<String>(UuidPenyetujuSelisih);
+    }
     return map;
   }
 
@@ -1027,6 +1245,18 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
       PecahanKasAwal: PecahanKasAwal == null && nullToAbsent ? const Value.absent() : Value(PecahanKasAwal),
       Bersama: Value(Bersama),
       Status: Value(Status),
+      DitutupOleh: DitutupOleh == null && nullToAbsent ? const Value.absent() : Value(DitutupOleh),
+      NamaPenutup: NamaPenutup == null && nullToAbsent ? const Value.absent() : Value(NamaPenutup),
+      DitutupPada: DitutupPada == null && nullToAbsent ? const Value.absent() : Value(DitutupPada),
+      KasSeharusnya: KasSeharusnya == null && nullToAbsent ? const Value.absent() : Value(KasSeharusnya),
+      KasAktual: KasAktual == null && nullToAbsent ? const Value.absent() : Value(KasAktual),
+      Selisih: Selisih == null && nullToAbsent ? const Value.absent() : Value(Selisih),
+      PecahanKasAkhir: PecahanKasAkhir == null && nullToAbsent ? const Value.absent() : Value(PecahanKasAkhir),
+      NonTunaiDilaporkan: NonTunaiDilaporkan == null && nullToAbsent ? const Value.absent() : Value(NonTunaiDilaporkan),
+      AlasanSelisih: AlasanSelisih == null && nullToAbsent ? const Value.absent() : Value(AlasanSelisih),
+      UuidPenyetujuSelisih: UuidPenyetujuSelisih == null && nullToAbsent
+          ? const Value.absent()
+          : Value(UuidPenyetujuSelisih),
     );
   }
 
@@ -1041,6 +1271,16 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
       PecahanKasAwal: serializer.fromJson<String?>(json['PecahanKasAwal']),
       Bersama: serializer.fromJson<bool>(json['Bersama']),
       Status: serializer.fromJson<String>(json['Status']),
+      DitutupOleh: serializer.fromJson<String?>(json['DitutupOleh']),
+      NamaPenutup: serializer.fromJson<String?>(json['NamaPenutup']),
+      DitutupPada: serializer.fromJson<DateTime?>(json['DitutupPada']),
+      KasSeharusnya: serializer.fromJson<String?>(json['KasSeharusnya']),
+      KasAktual: serializer.fromJson<String?>(json['KasAktual']),
+      Selisih: serializer.fromJson<String?>(json['Selisih']),
+      PecahanKasAkhir: serializer.fromJson<String?>(json['PecahanKasAkhir']),
+      NonTunaiDilaporkan: serializer.fromJson<String?>(json['NonTunaiDilaporkan']),
+      AlasanSelisih: serializer.fromJson<String?>(json['AlasanSelisih']),
+      UuidPenyetujuSelisih: serializer.fromJson<String?>(json['UuidPenyetujuSelisih']),
     );
   }
   @override
@@ -1055,6 +1295,16 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
       'PecahanKasAwal': serializer.toJson<String?>(PecahanKasAwal),
       'Bersama': serializer.toJson<bool>(Bersama),
       'Status': serializer.toJson<String>(Status),
+      'DitutupOleh': serializer.toJson<String?>(DitutupOleh),
+      'NamaPenutup': serializer.toJson<String?>(NamaPenutup),
+      'DitutupPada': serializer.toJson<DateTime?>(DitutupPada),
+      'KasSeharusnya': serializer.toJson<String?>(KasSeharusnya),
+      'KasAktual': serializer.toJson<String?>(KasAktual),
+      'Selisih': serializer.toJson<String?>(Selisih),
+      'PecahanKasAkhir': serializer.toJson<String?>(PecahanKasAkhir),
+      'NonTunaiDilaporkan': serializer.toJson<String?>(NonTunaiDilaporkan),
+      'AlasanSelisih': serializer.toJson<String?>(AlasanSelisih),
+      'UuidPenyetujuSelisih': serializer.toJson<String?>(UuidPenyetujuSelisih),
     };
   }
 
@@ -1067,6 +1317,16 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
     Value<String?> PecahanKasAwal = const Value.absent(),
     bool? Bersama,
     String? Status,
+    Value<String?> DitutupOleh = const Value.absent(),
+    Value<String?> NamaPenutup = const Value.absent(),
+    Value<DateTime?> DitutupPada = const Value.absent(),
+    Value<String?> KasSeharusnya = const Value.absent(),
+    Value<String?> KasAktual = const Value.absent(),
+    Value<String?> Selisih = const Value.absent(),
+    Value<String?> PecahanKasAkhir = const Value.absent(),
+    Value<String?> NonTunaiDilaporkan = const Value.absent(),
+    Value<String?> AlasanSelisih = const Value.absent(),
+    Value<String?> UuidPenyetujuSelisih = const Value.absent(),
   }) => BarisShift(
     Uuid: Uuid ?? this.Uuid,
     DibukaOleh: DibukaOleh ?? this.DibukaOleh,
@@ -1076,6 +1336,16 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
     PecahanKasAwal: PecahanKasAwal.present ? PecahanKasAwal.value : this.PecahanKasAwal,
     Bersama: Bersama ?? this.Bersama,
     Status: Status ?? this.Status,
+    DitutupOleh: DitutupOleh.present ? DitutupOleh.value : this.DitutupOleh,
+    NamaPenutup: NamaPenutup.present ? NamaPenutup.value : this.NamaPenutup,
+    DitutupPada: DitutupPada.present ? DitutupPada.value : this.DitutupPada,
+    KasSeharusnya: KasSeharusnya.present ? KasSeharusnya.value : this.KasSeharusnya,
+    KasAktual: KasAktual.present ? KasAktual.value : this.KasAktual,
+    Selisih: Selisih.present ? Selisih.value : this.Selisih,
+    PecahanKasAkhir: PecahanKasAkhir.present ? PecahanKasAkhir.value : this.PecahanKasAkhir,
+    NonTunaiDilaporkan: NonTunaiDilaporkan.present ? NonTunaiDilaporkan.value : this.NonTunaiDilaporkan,
+    AlasanSelisih: AlasanSelisih.present ? AlasanSelisih.value : this.AlasanSelisih,
+    UuidPenyetujuSelisih: UuidPenyetujuSelisih.present ? UuidPenyetujuSelisih.value : this.UuidPenyetujuSelisih,
   );
   BarisShift copyWithCompanion(ShiftCompanion data) {
     return BarisShift(
@@ -1087,6 +1357,18 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
       PecahanKasAwal: data.PecahanKasAwal.present ? data.PecahanKasAwal.value : this.PecahanKasAwal,
       Bersama: data.Bersama.present ? data.Bersama.value : this.Bersama,
       Status: data.Status.present ? data.Status.value : this.Status,
+      DitutupOleh: data.DitutupOleh.present ? data.DitutupOleh.value : this.DitutupOleh,
+      NamaPenutup: data.NamaPenutup.present ? data.NamaPenutup.value : this.NamaPenutup,
+      DitutupPada: data.DitutupPada.present ? data.DitutupPada.value : this.DitutupPada,
+      KasSeharusnya: data.KasSeharusnya.present ? data.KasSeharusnya.value : this.KasSeharusnya,
+      KasAktual: data.KasAktual.present ? data.KasAktual.value : this.KasAktual,
+      Selisih: data.Selisih.present ? data.Selisih.value : this.Selisih,
+      PecahanKasAkhir: data.PecahanKasAkhir.present ? data.PecahanKasAkhir.value : this.PecahanKasAkhir,
+      NonTunaiDilaporkan: data.NonTunaiDilaporkan.present ? data.NonTunaiDilaporkan.value : this.NonTunaiDilaporkan,
+      AlasanSelisih: data.AlasanSelisih.present ? data.AlasanSelisih.value : this.AlasanSelisih,
+      UuidPenyetujuSelisih: data.UuidPenyetujuSelisih.present
+          ? data.UuidPenyetujuSelisih.value
+          : this.UuidPenyetujuSelisih,
     );
   }
 
@@ -1100,13 +1382,42 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
           ..write('KasAwal: $KasAwal, ')
           ..write('PecahanKasAwal: $PecahanKasAwal, ')
           ..write('Bersama: $Bersama, ')
-          ..write('Status: $Status')
+          ..write('Status: $Status, ')
+          ..write('DitutupOleh: $DitutupOleh, ')
+          ..write('NamaPenutup: $NamaPenutup, ')
+          ..write('DitutupPada: $DitutupPada, ')
+          ..write('KasSeharusnya: $KasSeharusnya, ')
+          ..write('KasAktual: $KasAktual, ')
+          ..write('Selisih: $Selisih, ')
+          ..write('PecahanKasAkhir: $PecahanKasAkhir, ')
+          ..write('NonTunaiDilaporkan: $NonTunaiDilaporkan, ')
+          ..write('AlasanSelisih: $AlasanSelisih, ')
+          ..write('UuidPenyetujuSelisih: $UuidPenyetujuSelisih')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(Uuid, DibukaOleh, NamaKasir, DibukaPada, KasAwal, PecahanKasAwal, Bersama, Status);
+  int get hashCode => Object.hash(
+    Uuid,
+    DibukaOleh,
+    NamaKasir,
+    DibukaPada,
+    KasAwal,
+    PecahanKasAwal,
+    Bersama,
+    Status,
+    DitutupOleh,
+    NamaPenutup,
+    DitutupPada,
+    KasSeharusnya,
+    KasAktual,
+    Selisih,
+    PecahanKasAkhir,
+    NonTunaiDilaporkan,
+    AlasanSelisih,
+    UuidPenyetujuSelisih,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1118,7 +1429,17 @@ class BarisShift extends DataClass implements Insertable<BarisShift> {
           other.KasAwal == this.KasAwal &&
           other.PecahanKasAwal == this.PecahanKasAwal &&
           other.Bersama == this.Bersama &&
-          other.Status == this.Status);
+          other.Status == this.Status &&
+          other.DitutupOleh == this.DitutupOleh &&
+          other.NamaPenutup == this.NamaPenutup &&
+          other.DitutupPada == this.DitutupPada &&
+          other.KasSeharusnya == this.KasSeharusnya &&
+          other.KasAktual == this.KasAktual &&
+          other.Selisih == this.Selisih &&
+          other.PecahanKasAkhir == this.PecahanKasAkhir &&
+          other.NonTunaiDilaporkan == this.NonTunaiDilaporkan &&
+          other.AlasanSelisih == this.AlasanSelisih &&
+          other.UuidPenyetujuSelisih == this.UuidPenyetujuSelisih);
 }
 
 class ShiftCompanion extends UpdateCompanion<BarisShift> {
@@ -1130,6 +1451,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
   final Value<String?> PecahanKasAwal;
   final Value<bool> Bersama;
   final Value<String> Status;
+  final Value<String?> DitutupOleh;
+  final Value<String?> NamaPenutup;
+  final Value<DateTime?> DitutupPada;
+  final Value<String?> KasSeharusnya;
+  final Value<String?> KasAktual;
+  final Value<String?> Selisih;
+  final Value<String?> PecahanKasAkhir;
+  final Value<String?> NonTunaiDilaporkan;
+  final Value<String?> AlasanSelisih;
+  final Value<String?> UuidPenyetujuSelisih;
   final Value<int> rowid;
   const ShiftCompanion({
     this.Uuid = const Value.absent(),
@@ -1140,6 +1471,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
     this.PecahanKasAwal = const Value.absent(),
     this.Bersama = const Value.absent(),
     this.Status = const Value.absent(),
+    this.DitutupOleh = const Value.absent(),
+    this.NamaPenutup = const Value.absent(),
+    this.DitutupPada = const Value.absent(),
+    this.KasSeharusnya = const Value.absent(),
+    this.KasAktual = const Value.absent(),
+    this.Selisih = const Value.absent(),
+    this.PecahanKasAkhir = const Value.absent(),
+    this.NonTunaiDilaporkan = const Value.absent(),
+    this.AlasanSelisih = const Value.absent(),
+    this.UuidPenyetujuSelisih = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ShiftCompanion.insert({
@@ -1151,6 +1492,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
     this.PecahanKasAwal = const Value.absent(),
     required bool Bersama,
     required String Status,
+    this.DitutupOleh = const Value.absent(),
+    this.NamaPenutup = const Value.absent(),
+    this.DitutupPada = const Value.absent(),
+    this.KasSeharusnya = const Value.absent(),
+    this.KasAktual = const Value.absent(),
+    this.Selisih = const Value.absent(),
+    this.PecahanKasAkhir = const Value.absent(),
+    this.NonTunaiDilaporkan = const Value.absent(),
+    this.AlasanSelisih = const Value.absent(),
+    this.UuidPenyetujuSelisih = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        DibukaOleh = Value(DibukaOleh),
@@ -1168,6 +1519,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
     Expression<String>? PecahanKasAwal,
     Expression<bool>? Bersama,
     Expression<String>? Status,
+    Expression<String>? DitutupOleh,
+    Expression<String>? NamaPenutup,
+    Expression<DateTime>? DitutupPada,
+    Expression<String>? KasSeharusnya,
+    Expression<String>? KasAktual,
+    Expression<String>? Selisih,
+    Expression<String>? PecahanKasAkhir,
+    Expression<String>? NonTunaiDilaporkan,
+    Expression<String>? AlasanSelisih,
+    Expression<String>? UuidPenyetujuSelisih,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1179,6 +1540,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
       if (PecahanKasAwal != null) 'PecahanKasAwal': PecahanKasAwal,
       if (Bersama != null) 'Bersama': Bersama,
       if (Status != null) 'Status': Status,
+      if (DitutupOleh != null) 'DitutupOleh': DitutupOleh,
+      if (NamaPenutup != null) 'NamaPenutup': NamaPenutup,
+      if (DitutupPada != null) 'DitutupPada': DitutupPada,
+      if (KasSeharusnya != null) 'KasSeharusnya': KasSeharusnya,
+      if (KasAktual != null) 'KasAktual': KasAktual,
+      if (Selisih != null) 'Selisih': Selisih,
+      if (PecahanKasAkhir != null) 'PecahanKasAkhir': PecahanKasAkhir,
+      if (NonTunaiDilaporkan != null) 'NonTunaiDilaporkan': NonTunaiDilaporkan,
+      if (AlasanSelisih != null) 'AlasanSelisih': AlasanSelisih,
+      if (UuidPenyetujuSelisih != null) 'UuidPenyetujuSelisih': UuidPenyetujuSelisih,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1192,6 +1563,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
     Value<String?>? PecahanKasAwal,
     Value<bool>? Bersama,
     Value<String>? Status,
+    Value<String?>? DitutupOleh,
+    Value<String?>? NamaPenutup,
+    Value<DateTime?>? DitutupPada,
+    Value<String?>? KasSeharusnya,
+    Value<String?>? KasAktual,
+    Value<String?>? Selisih,
+    Value<String?>? PecahanKasAkhir,
+    Value<String?>? NonTunaiDilaporkan,
+    Value<String?>? AlasanSelisih,
+    Value<String?>? UuidPenyetujuSelisih,
     Value<int>? rowid,
   }) {
     return ShiftCompanion(
@@ -1203,6 +1584,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
       PecahanKasAwal: PecahanKasAwal ?? this.PecahanKasAwal,
       Bersama: Bersama ?? this.Bersama,
       Status: Status ?? this.Status,
+      DitutupOleh: DitutupOleh ?? this.DitutupOleh,
+      NamaPenutup: NamaPenutup ?? this.NamaPenutup,
+      DitutupPada: DitutupPada ?? this.DitutupPada,
+      KasSeharusnya: KasSeharusnya ?? this.KasSeharusnya,
+      KasAktual: KasAktual ?? this.KasAktual,
+      Selisih: Selisih ?? this.Selisih,
+      PecahanKasAkhir: PecahanKasAkhir ?? this.PecahanKasAkhir,
+      NonTunaiDilaporkan: NonTunaiDilaporkan ?? this.NonTunaiDilaporkan,
+      AlasanSelisih: AlasanSelisih ?? this.AlasanSelisih,
+      UuidPenyetujuSelisih: UuidPenyetujuSelisih ?? this.UuidPenyetujuSelisih,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1234,6 +1625,36 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
     if (Status.present) {
       map['Status'] = Variable<String>(Status.value);
     }
+    if (DitutupOleh.present) {
+      map['DitutupOleh'] = Variable<String>(DitutupOleh.value);
+    }
+    if (NamaPenutup.present) {
+      map['NamaPenutup'] = Variable<String>(NamaPenutup.value);
+    }
+    if (DitutupPada.present) {
+      map['DitutupPada'] = Variable<DateTime>(DitutupPada.value);
+    }
+    if (KasSeharusnya.present) {
+      map['KasSeharusnya'] = Variable<String>(KasSeharusnya.value);
+    }
+    if (KasAktual.present) {
+      map['KasAktual'] = Variable<String>(KasAktual.value);
+    }
+    if (Selisih.present) {
+      map['Selisih'] = Variable<String>(Selisih.value);
+    }
+    if (PecahanKasAkhir.present) {
+      map['PecahanKasAkhir'] = Variable<String>(PecahanKasAkhir.value);
+    }
+    if (NonTunaiDilaporkan.present) {
+      map['NonTunaiDilaporkan'] = Variable<String>(NonTunaiDilaporkan.value);
+    }
+    if (AlasanSelisih.present) {
+      map['AlasanSelisih'] = Variable<String>(AlasanSelisih.value);
+    }
+    if (UuidPenyetujuSelisih.present) {
+      map['UuidPenyetujuSelisih'] = Variable<String>(UuidPenyetujuSelisih.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1251,6 +1672,16 @@ class ShiftCompanion extends UpdateCompanion<BarisShift> {
           ..write('PecahanKasAwal: $PecahanKasAwal, ')
           ..write('Bersama: $Bersama, ')
           ..write('Status: $Status, ')
+          ..write('DitutupOleh: $DitutupOleh, ')
+          ..write('NamaPenutup: $NamaPenutup, ')
+          ..write('DitutupPada: $DitutupPada, ')
+          ..write('KasSeharusnya: $KasSeharusnya, ')
+          ..write('KasAktual: $KasAktual, ')
+          ..write('Selisih: $Selisih, ')
+          ..write('PecahanKasAkhir: $PecahanKasAkhir, ')
+          ..write('NonTunaiDilaporkan: $NonTunaiDilaporkan, ')
+          ..write('AlasanSelisih: $AlasanSelisih, ')
+          ..write('UuidPenyetujuSelisih: $UuidPenyetujuSelisih, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10938,6 +11369,16 @@ typedef $$ShiftTableCreateCompanionBuilder = ShiftCompanion Function({
   Value<String?> PecahanKasAwal,
   required bool Bersama,
   required String Status,
+  Value<String?> DitutupOleh,
+  Value<String?> NamaPenutup,
+  Value<DateTime?> DitutupPada,
+  Value<String?> KasSeharusnya,
+  Value<String?> KasAktual,
+  Value<String?> Selisih,
+  Value<String?> PecahanKasAkhir,
+  Value<String?> NonTunaiDilaporkan,
+  Value<String?> AlasanSelisih,
+  Value<String?> UuidPenyetujuSelisih,
   Value<int> rowid,
 });
 typedef $$ShiftTableUpdateCompanionBuilder = ShiftCompanion Function({
@@ -10949,6 +11390,16 @@ typedef $$ShiftTableUpdateCompanionBuilder = ShiftCompanion Function({
   Value<String?> PecahanKasAwal,
   Value<bool> Bersama,
   Value<String> Status,
+  Value<String?> DitutupOleh,
+  Value<String?> NamaPenutup,
+  Value<DateTime?> DitutupPada,
+  Value<String?> KasSeharusnya,
+  Value<String?> KasAktual,
+  Value<String?> Selisih,
+  Value<String?> PecahanKasAkhir,
+  Value<String?> NonTunaiDilaporkan,
+  Value<String?> AlasanSelisih,
+  Value<String?> UuidPenyetujuSelisih,
   Value<int> rowid,
 });
 
@@ -11000,6 +11451,36 @@ class $$ShiftTableFilterComposer extends Composer<_$BasisDataKasir, $ShiftTable>
   ColumnFilters<String> get Status =>
       $composableBuilder(column: $table.Status, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get DitutupOleh =>
+      $composableBuilder(column: $table.DitutupOleh, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaPenutup =>
+      $composableBuilder(column: $table.NamaPenutup, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get DitutupPada =>
+      $composableBuilder(column: $table.DitutupPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get KasSeharusnya =>
+      $composableBuilder(column: $table.KasSeharusnya, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get KasAktual =>
+      $composableBuilder(column: $table.KasAktual, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Selisih =>
+      $composableBuilder(column: $table.Selisih, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get PecahanKasAkhir =>
+      $composableBuilder(column: $table.PecahanKasAkhir, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NonTunaiDilaporkan =>
+      $composableBuilder(column: $table.NonTunaiDilaporkan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get AlasanSelisih =>
+      $composableBuilder(column: $table.AlasanSelisih, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPenyetujuSelisih =>
+      $composableBuilder(column: $table.UuidPenyetujuSelisih, builder: (column) => ColumnFilters(column));
+
   Expression<bool> mutasiKasRefs(Expression<bool> Function($$MutasiKasTableFilterComposer f) f) {
     final $$MutasiKasTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -11050,6 +11531,36 @@ class $$ShiftTableOrderingComposer extends Composer<_$BasisDataKasir, $ShiftTabl
 
   ColumnOrderings<String> get Status =>
       $composableBuilder(column: $table.Status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get DitutupOleh =>
+      $composableBuilder(column: $table.DitutupOleh, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaPenutup =>
+      $composableBuilder(column: $table.NamaPenutup, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get DitutupPada =>
+      $composableBuilder(column: $table.DitutupPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get KasSeharusnya =>
+      $composableBuilder(column: $table.KasSeharusnya, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get KasAktual =>
+      $composableBuilder(column: $table.KasAktual, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Selisih =>
+      $composableBuilder(column: $table.Selisih, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get PecahanKasAkhir =>
+      $composableBuilder(column: $table.PecahanKasAkhir, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NonTunaiDilaporkan =>
+      $composableBuilder(column: $table.NonTunaiDilaporkan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get AlasanSelisih =>
+      $composableBuilder(column: $table.AlasanSelisih, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPenyetujuSelisih =>
+      $composableBuilder(column: $table.UuidPenyetujuSelisih, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ShiftTableAnnotationComposer extends Composer<_$BasisDataKasir, $ShiftTable> {
@@ -11077,6 +11588,34 @@ class $$ShiftTableAnnotationComposer extends Composer<_$BasisDataKasir, $ShiftTa
   GeneratedColumn<bool> get Bersama => $composableBuilder(column: $table.Bersama, builder: (column) => column);
 
   GeneratedColumn<String> get Status => $composableBuilder(column: $table.Status, builder: (column) => column);
+
+  GeneratedColumn<String> get DitutupOleh =>
+      $composableBuilder(column: $table.DitutupOleh, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaPenutup =>
+      $composableBuilder(column: $table.NamaPenutup, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get DitutupPada =>
+      $composableBuilder(column: $table.DitutupPada, builder: (column) => column);
+
+  GeneratedColumn<String> get KasSeharusnya =>
+      $composableBuilder(column: $table.KasSeharusnya, builder: (column) => column);
+
+  GeneratedColumn<String> get KasAktual => $composableBuilder(column: $table.KasAktual, builder: (column) => column);
+
+  GeneratedColumn<String> get Selisih => $composableBuilder(column: $table.Selisih, builder: (column) => column);
+
+  GeneratedColumn<String> get PecahanKasAkhir =>
+      $composableBuilder(column: $table.PecahanKasAkhir, builder: (column) => column);
+
+  GeneratedColumn<String> get NonTunaiDilaporkan =>
+      $composableBuilder(column: $table.NonTunaiDilaporkan, builder: (column) => column);
+
+  GeneratedColumn<String> get AlasanSelisih =>
+      $composableBuilder(column: $table.AlasanSelisih, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPenyetujuSelisih =>
+      $composableBuilder(column: $table.UuidPenyetujuSelisih, builder: (column) => column);
 
   Expression<T> mutasiKasRefs<T extends Object>(Expression<T> Function($$MutasiKasTableAnnotationComposer a) f) {
     final $$MutasiKasTableAnnotationComposer composer = $composerBuilder(
@@ -11130,6 +11669,16 @@ class $$ShiftTableTableManager
                 Value<String?> PecahanKasAwal = const Value.absent(),
                 Value<bool> Bersama = const Value.absent(),
                 Value<String> Status = const Value.absent(),
+                Value<String?> DitutupOleh = const Value.absent(),
+                Value<String?> NamaPenutup = const Value.absent(),
+                Value<DateTime?> DitutupPada = const Value.absent(),
+                Value<String?> KasSeharusnya = const Value.absent(),
+                Value<String?> KasAktual = const Value.absent(),
+                Value<String?> Selisih = const Value.absent(),
+                Value<String?> PecahanKasAkhir = const Value.absent(),
+                Value<String?> NonTunaiDilaporkan = const Value.absent(),
+                Value<String?> AlasanSelisih = const Value.absent(),
+                Value<String?> UuidPenyetujuSelisih = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ShiftCompanion(
                 Uuid: Uuid,
@@ -11140,6 +11689,16 @@ class $$ShiftTableTableManager
                 PecahanKasAwal: PecahanKasAwal,
                 Bersama: Bersama,
                 Status: Status,
+                DitutupOleh: DitutupOleh,
+                NamaPenutup: NamaPenutup,
+                DitutupPada: DitutupPada,
+                KasSeharusnya: KasSeharusnya,
+                KasAktual: KasAktual,
+                Selisih: Selisih,
+                PecahanKasAkhir: PecahanKasAkhir,
+                NonTunaiDilaporkan: NonTunaiDilaporkan,
+                AlasanSelisih: AlasanSelisih,
+                UuidPenyetujuSelisih: UuidPenyetujuSelisih,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -11152,6 +11711,16 @@ class $$ShiftTableTableManager
                 Value<String?> PecahanKasAwal = const Value.absent(),
                 required bool Bersama,
                 required String Status,
+                Value<String?> DitutupOleh = const Value.absent(),
+                Value<String?> NamaPenutup = const Value.absent(),
+                Value<DateTime?> DitutupPada = const Value.absent(),
+                Value<String?> KasSeharusnya = const Value.absent(),
+                Value<String?> KasAktual = const Value.absent(),
+                Value<String?> Selisih = const Value.absent(),
+                Value<String?> PecahanKasAkhir = const Value.absent(),
+                Value<String?> NonTunaiDilaporkan = const Value.absent(),
+                Value<String?> AlasanSelisih = const Value.absent(),
+                Value<String?> UuidPenyetujuSelisih = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ShiftCompanion.insert(
                 Uuid: Uuid,
@@ -11162,6 +11731,16 @@ class $$ShiftTableTableManager
                 PecahanKasAwal: PecahanKasAwal,
                 Bersama: Bersama,
                 Status: Status,
+                DitutupOleh: DitutupOleh,
+                NamaPenutup: NamaPenutup,
+                DitutupPada: DitutupPada,
+                KasSeharusnya: KasSeharusnya,
+                KasAktual: KasAktual,
+                Selisih: Selisih,
+                PecahanKasAkhir: PecahanKasAkhir,
+                NonTunaiDilaporkan: NonTunaiDilaporkan,
+                AlasanSelisih: AlasanSelisih,
+                UuidPenyetujuSelisih: UuidPenyetujuSelisih,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

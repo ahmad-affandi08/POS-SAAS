@@ -10,6 +10,7 @@ abstract final class IzinKasir {
   static const String kasKeluarSetujui = 'kas.keluar.setujui';
   static const String penjualanDiskonManual = 'penjualan.diskon.manual';
   static const String penjualanDiskonSetujui = 'penjualan.diskon.setujui';
+  static const String shiftSelisihSetujui = 'shift.selisih.setujui';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

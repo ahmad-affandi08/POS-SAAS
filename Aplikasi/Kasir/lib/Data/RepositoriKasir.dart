@@ -36,6 +36,13 @@ abstract final class KunciPengaturan {
   static const String kursorKatalog = 'KursorKatalog';
   static const String katalogDiperbaruiPada = 'KatalogDiperbaruiPada';
 
+  // F-11: tutup shift buta ('1'/'0') & toleransi selisih kas (desimal).
+  static const String tutupShiftButa = 'TutupShiftButa';
+  static const String toleransiSelisihKas = 'ToleransiSelisihKas';
+
+  /// Uuid shift yang baru ditutup dan laporan Z-nya belum ditutup kasir (bertahan bila aplikasi dimulai ulang).
+  static const String laporanZTertunda = 'LaporanZTertunda';
+
   // Pengaturan lokal perangkat (D-16, §17.2.7). Tidak ikut diganti data awal dan tidak dihapus saat perangkat dicabut.
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';
@@ -45,6 +52,7 @@ abstract final class KunciPengaturan {
 /// Status shift lokal (sama dengan server).
 abstract final class StatusShiftLokal {
   static const String terbuka = 'Terbuka';
+  static const String tertutup = 'Tertutup';
 }
 
 /// Akses basis data lokal kasir. Setiap perubahan dokumen menulis dokumen + entri outbox dalam satu transaksi
@@ -58,6 +66,9 @@ class RepositoriKasir {
 
   Future<String?> AmbilPengaturan(String kunci) async =>
       (await (db.select(db.pengaturan)..where((p) => p.Kunci.equals(kunci))).getSingleOrNull())?.Nilai;
+
+  Stream<String?> PantauPengaturan(String kunci) =>
+      (db.select(db.pengaturan)..where((p) => p.Kunci.equals(kunci))).watchSingleOrNull().map((b) => b?.Nilai);
 
   Future<void> SimpanPengaturan(String kunci, String nilai) =>
       db.into(db.pengaturan).insertOnConflictUpdate(PengaturanCompanion.insert(Kunci: kunci, Nilai: nilai));
@@ -136,6 +147,8 @@ class RepositoriKasir {
       pembulatan == null ? '' : jsonEncode({'Kelipatan': pembulatan.kelipatan, 'Arah': pembulatan.arah}),
     );
     await SimpanPengaturan(KunciPengaturan.profilPajak, jsonEncode(data.profilPajak.KeJson()));
+    await SimpanPengaturan(KunciPengaturan.tutupShiftButa, data.tutupShiftButa ? '1' : '0');
+    await SimpanPengaturan(KunciPengaturan.toleransiSelisihKas, data.toleransiSelisihKas);
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);
@@ -192,6 +205,26 @@ class RepositoriKasir {
     await db.into(db.shift).insert(shift);
     await TambahOutbox(item, sekarang);
   });
+
+  Stream<BarisShift?> PantauShift(String uuid) =>
+      (db.select(db.shift)..where((s) => s.Uuid.equals(uuid))).watchSingleOrNull();
+
+  Future<BarisShift?> CariShift(String uuid) =>
+      (db.select(db.shift)..where((s) => s.Uuid.equals(uuid))).getSingleOrNull();
+
+  /// Tutup shift (F-11): isi kolom tutup + status `Tertutup` + entri outbox `Shift.Tutup` + penanda laporan Z dalam
+  /// satu transaksi. Hanya shift yang masih `Terbuka` yang diubah (ditutup dua kali = galat).
+  Future<void> SimpanTutupShift(String uuid, ShiftCompanion tutup, ItemOutbox item, DateTime sekarang) =>
+      db.transaction(() async {
+        final diubah = await (db.update(
+          db.shift,
+        )..where((s) => s.Uuid.equals(uuid) & s.Status.equals(StatusShiftLokal.terbuka))).write(tutup);
+        if (diubah != 1) {
+          throw StateError('Shift $uuid tidak terbuka.');
+        }
+        await TambahOutbox(item, sekarang);
+        await SimpanPengaturan(KunciPengaturan.laporanZTertunda, uuid);
+      });
 
   /// Simpan mutasi kas + entri outbox `MutasiKas.Catat` dalam satu transaksi.
   Future<void> SimpanMutasiBaru(MutasiKasCompanion mutasi, ItemOutbox item, DateTime sekarang) =>

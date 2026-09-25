@@ -18,6 +18,7 @@ import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
 import 'package:kasir/Domain/Shift/LayananShift.dart';
+import 'package:kasir/Domain/Shift/LayananTutupShift.dart';
 import 'package:kasir/Domain/Sinkron/LayananSinkron.dart';
 import 'package:klien_api/KlienApi.dart';
 
@@ -43,7 +44,7 @@ Map<String, Object?> StafJson(String uuid, String nama, List<String> izin, int? 
 }
 
 /// Data awal uji: Rina (kasir, boleh diskon manual, PIN kasus 0 "246810"), Budi (supervisor, penyetuju kas keluar &
-/// diskon, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
+/// diskon & selisih kas tutup shift, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
 /// Rp 200.000. F-07b: outlet SLB, perangkat POS-001, memungut PBJT 10% (bukan PKP), batas diskon 10%/30%, lima
 /// metode pembayaran fase 1.
 Map<String, Object?> DataAwalUji({
@@ -51,6 +52,8 @@ Map<String, Object?> DataAwalUji({
   Map<String, Object?>? pembulatanTunai,
   Map<String, Object?>? profilPajak,
   List<Map<String, Object?>>? tarifPajak,
+  bool tutupShiftButa = true,
+  String toleransiSelisihKas = '10000.00',
 }) => {
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
@@ -58,6 +61,8 @@ Map<String, Object?> DataAwalUji({
     'BatasDiskonManual': '10.00',
     'BatasDiskonPenyetuju': '30.00',
     'PembulatanTunai': pembulatanTunai,
+    'TutupShiftButa': tutupShiftButa,
+    'ToleransiSelisihKas': toleransiSelisihKas,
   },
   'Outlet': {
     'Uuid': '01K50VT1ET0000000000000001',
@@ -122,6 +127,7 @@ Map<String, Object?> DataAwalUji({
       'kas.keluar.setujui',
       'penjualan.diskon.manual',
       'penjualan.diskon.setujui',
+      'shift.selisih.setujui',
     ], 1),
     StafJson('01K5STAF000000000000000003', 'Sari Lestari', ['penjualan.buat'], null),
   ],
@@ -169,6 +175,11 @@ class LingkunganUji {
   );
   late final LayananMasuk masuk = LayananMasuk(repositori: repositori, rahasia: rahasia, klien: klien, jam: () => jam);
   late final LayananShift shift = LayananShift(repositori: repositori, jam: () => jam);
+  late final LayananTutupShift tutupShift = LayananTutupShift(
+    repositori: repositori,
+    repositoriPenjualan: repositoriPenjualan,
+    jam: () => jam,
+  );
   late final LayananSinkron sinkron = LayananSinkron(
     klien: klien,
     repositori: repositori,

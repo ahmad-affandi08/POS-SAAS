@@ -17,6 +17,8 @@ import '../LayarRiwayat.dart';
 import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
 import '../LembarMutasiKas.dart';
+import '../Shift/KartuLaporanShift.dart';
+import '../Shift/LembarTutupShift.dart';
 import 'BilahAtasRuangKerja.dart';
 import 'ItemNavigasi.dart';
 import 'LayarKunci.dart';
@@ -53,6 +55,11 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
 
   /// Jenis mutasi kas yang formulirnya sedang terbuka di panel tugas (null = tertutup).
   String? _jenisKas;
+
+  /// Panel shift yang sedang terbuka (F-11: tutup shift atau laporan X); null = tertutup.
+  _PanelShift? _panelShift;
+
+  bool get _adaPanel => _jenisKas != null || _panelShift != null;
 
   Timer? _pewaktuSinkron;
   Timer? _pewaktuDiam;
@@ -128,16 +135,27 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
 
   void _Buka(TujuanRuangKerja tujuan) => setState(() => _tujuan = tujuan);
 
-  void _BukaPanelKas(String jenis) => setState(() => _jenisKas = jenis);
+  void _BukaPanelKas(String jenis) => setState(() {
+    _panelShift = null;
+    _jenisKas = jenis;
+  });
 
-  void _TutupPanel() => setState(() => _jenisKas = null);
+  void _BukaPanelShift(_PanelShift panel) => setState(() {
+    _jenisKas = null;
+    _panelShift = panel;
+  });
+
+  void _TutupPanel() => setState(() {
+    _jenisKas = null;
+    _panelShift = null;
+  });
 
   /// Tombol kembali (Android) selalu kembali ke area kerja: tutup panel, lalu ke beranda Jual. Tidak keluar aplikasi.
   void _SaatKembali(bool sudahKembali, Object? _) {
     if (sudahKembali || _terkunci) {
       return;
     }
-    if (_jenisKas != null) {
+    if (_adaPanel) {
       _TutupPanel();
     } else if (_tujuan != TujuanRuangKerja.Jual) {
       _Buka(TujuanRuangKerja.Jual);
@@ -147,11 +165,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   Widget _BangunLayar(TujuanRuangKerja tujuan) => switch (tujuan) {
     TujuanRuangKerja.Jual => LayarJual(
       kasir: widget.kasir,
-      aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && _jenisKas == null,
+      aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && !_adaPanel,
     ),
     TujuanRuangKerja.Riwayat => const LayarRiwayat(),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift, saatCatat: _BukaPanelKas),
-    TujuanRuangKerja.Shift => LayarShift(shift: widget.shift, kasir: widget.kasir),
+    TujuanRuangKerja.Shift => LayarShift(
+      shift: widget.shift,
+      kasir: widget.kasir,
+      saatTutupShift: () => _BukaPanelShift(_PanelShift.Tutup),
+      saatLaporanX: () => _BukaPanelShift(_PanelShift.LaporanX),
+    ),
     TujuanRuangKerja.StatusSinkron => const LayarStatusSinkron(),
     TujuanRuangKerja.Pengaturan => const LayarPengaturan(),
   };
@@ -209,19 +232,29 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   Widget _BangunAreaKerja(List<ItemNavigasi> item, int indeks, double lebar) {
     final warna = TokenWarna.AmbilDari(context);
     final jenisKas = _jenisKas;
+    final panelShift = _panelShift;
     final area = IndexedStack(index: indeks, children: [for (final i in item) _BangunLayar(i.tujuan)]);
-    if (jenisKas == null) {
+    if (jenisKas == null && panelShift == null) {
       return area;
     }
 
-    final judul = LembarMutasiKas.AmbilJudul(jenisKas);
-    final formulir = LembarMutasiKas(
-      key: ValueKey(jenisKas),
-      shift: widget.shift,
-      jenis: jenisKas,
-      pencatat: widget.kasir,
-      saatTersimpan: _TutupPanel,
-    );
+    final (judul, formulir) = switch ((jenisKas, panelShift)) {
+      (final String jenis, _) => (
+        LembarMutasiKas.AmbilJudul(jenis),
+        LembarMutasiKas(
+          key: ValueKey(jenis),
+          shift: widget.shift,
+          jenis: jenis,
+          pencatat: widget.kasir,
+          saatTersimpan: _TutupPanel,
+        ) as Widget,
+      ),
+      (_, _PanelShift.Tutup) => (
+        LembarTutupShift.judul,
+        LembarTutupShift(key: const ValueKey('TutupShift'), shift: widget.shift, penutup: widget.kasir),
+      ),
+      _ => ('Laporan X', _IsiLaporanX(uuidShift: widget.shift.Uuid)),
+    };
 
     if (lebar >= RuangKerja.lebarPanelSamping) {
       return Stack(
@@ -352,4 +385,26 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       ),
     );
   }
+}
+
+/// Panel shift di ruang kerja (F-11).
+enum _PanelShift { Tutup, LaporanX }
+
+/// Laporan X: ringkasan shift berjalan dari data perangkat, bisa dibuka kapan saja dari layar Shift.
+class _IsiLaporanX extends ConsumerWidget {
+  const _IsiLaporanX({required this.uuidShift});
+
+  final String uuidShift;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
+    padding: const EdgeInsets.all(TokenJarak.jarak24),
+    child: ref
+        .watch(penyediaLaporanShift(uuidShift))
+        .when(
+          loading: () => const LinearProgressIndicator(),
+          error: (galat, _) => Text('Laporan tidak bisa dibaca: $galat'),
+          data: (laporan) => KartuLaporanShift(laporan: laporan),
+        ),
+  );
 }

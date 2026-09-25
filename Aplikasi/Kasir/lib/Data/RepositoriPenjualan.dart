@@ -127,6 +127,32 @@ class RepositoriPenjualan {
     });
   }
 
+  /// Semua penjualan sebuah shift beserta detail & pembayarannya (laporan shift X/Z, F-11).
+  Future<
+    ({List<BarisPenjualan> penjualan, List<BarisPenjualanDetail> detail, List<BarisPenjualanPembayaran> pembayaran})
+  >
+  AmbilDokumenShift(String uuidShift) async {
+    final penjualan = await (db.select(db.penjualan)..where((p) => p.UuidShift.equals(uuidShift))).get();
+    if (penjualan.isEmpty) {
+      return (
+        penjualan: penjualan,
+        detail: const <BarisPenjualanDetail>[],
+        pembayaran: const <BarisPenjualanPembayaran>[],
+      );
+    }
+    final uuid = penjualan.map((p) => p.Uuid).toList();
+    return (
+      penjualan: penjualan,
+      detail: await (db.select(db.penjualanDetail)..where((d) => d.UuidPenjualan.isIn(uuid))).get(),
+      pembayaran: await (db.select(db.penjualanPembayaran)..where((b) => b.UuidPenjualan.isIn(uuid))).get(),
+    );
+  }
+
+  Future<int> HitungPesananTertahan() async {
+    final jumlah = db.pesananTertahan.Uuid.count();
+    return (await (db.selectOnly(db.pesananTertahan)..addColumns([jumlah])).getSingle()).read(jumlah) ?? 0;
+  }
+
   // Pesanan tertahan (lokal, tidak dikirim) ----------------------------------------------------------------------------
 
   Future<void> SimpanPesananTertahan(PesananTertahanCompanion pesanan) =>

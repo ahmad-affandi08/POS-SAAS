@@ -300,8 +300,9 @@ class MetodePembayaranPos {
   );
 }
 
-/// `GET /data-awal` (F-06, ditambah F-07b). Kunci F-07b yang absen (server lama) memakai nilai bawaan agar
-/// kompatibel mundur: batas diskon 10% / 30%, tanpa pembulatan tunai, profil pajak kosong, tanpa tarif & metode.
+/// `GET /data-awal` (F-06, ditambah F-07b & F-11). Kunci yang absen (server lama) memakai nilai bawaan agar
+/// kompatibel mundur: batas diskon 10% / 30%, tanpa pembulatan tunai, profil pajak kosong, tanpa tarif & metode;
+/// tutup shift buta aktif dan toleransi selisih kas Rp 10.000.
 class DataAwal {
   const DataAwal({
     required this.batasKasKeluar,
@@ -321,9 +322,14 @@ class DataAwal {
     this.profilPajak = const ProfilPajakPos(),
     this.tarifPajak = const [],
     this.metodePembayaran = const [],
+    this.tutupShiftButa = true,
+    this.toleransiSelisihKas = toleransiSelisihKasBawaan,
   });
 
   static const String batasDiskonManualBawaan = '10';
+
+  /// F-11: toleransi selisih kas bawaan Rp 10.000 (§19.2).
+  static const String toleransiSelisihKasBawaan = '10000';
   static const String batasDiskonPenyetujuBawaan = '30';
 
   final String batasKasKeluar;
@@ -348,6 +354,12 @@ class DataAwal {
   final List<TarifPajakPos> tarifPajak;
   final List<MetodePembayaranPos> metodePembayaran;
 
+  /// F-11: kas seharusnya disembunyikan sampai kasir menyimpan hitungan tutup shift.
+  final bool tutupShiftButa;
+
+  /// F-11: |selisih kas| di atas nilai ini wajib alasan + PIN penyetuju ber-izin `shift.selisih.setujui`.
+  final String toleransiSelisihKas;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -369,6 +381,8 @@ class DataAwal {
       profilPajak: ProfilPajakPos.DariJson(json['ProfilPajak']),
       tarifPajak: UraiJson.AmbilDaftarPeta(json['TarifPajak']).map(TarifPajakPos.DariJson).toList(),
       metodePembayaran: UraiJson.AmbilDaftarPeta(json['MetodePembayaran']).map(MetodePembayaranPos.DariJson).toList(),
+      tutupShiftButa: UraiJson.AmbilBenar(pengaturan['TutupShiftButa'], true),
+      toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
     );
   }
 }
