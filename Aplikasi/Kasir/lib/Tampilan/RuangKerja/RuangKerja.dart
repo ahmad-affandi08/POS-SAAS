@@ -18,6 +18,7 @@ import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
 import '../LembarMutasiKas.dart';
 import '../Meja/LayarMeja.dart';
+import '../Penjualan/LembarAmbilPreOrder.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
 import '../Shift/KartuLaporanShift.dart';
@@ -210,6 +211,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     TujuanRuangKerja.Riwayat => LayarRiwayat(
       saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
+      saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -287,6 +289,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarVoid.judul,
         LembarVoid(key: ValueKey('Void-$uuid'), uuidPenjualan: uuid, kasir: widget.kasir, saatSelesai: _TutupPanel)
             as Widget,
+      ),
+      (_, _, _PanelPenjualan(ambilPreOrder: true)) => (
+        LembarAmbilPreOrder.judul,
+        LembarAmbilPreOrder(
+          key: const ValueKey('AmbilPreOrder'),
+          saatDimuat: () {
+            _TutupPanel();
+            _Buka(TujuanRuangKerja.Jual);
+          },
+        ) as Widget,
       ),
       (_, _, _PanelPenjualan()) => (
         LembarRetur.judul,
@@ -448,9 +460,12 @@ enum _PanelShift { Tutup, LaporanX }
 
 /// Panel void (dengan Uuid penjualan) atau retur dari struk (tanpa Uuid) di ruang kerja (F-09).
 class _PanelPenjualan {
-  const _PanelPenjualan({this.uuidPenjualanVoid});
+  const _PanelPenjualan({this.uuidPenjualanVoid, this.ambilPreOrder = false});
 
   final String? uuidPenjualanVoid;
+
+  /// F-12 bagian 2: cari & ambil pre-order.
+  final bool ambilPreOrder;
 }
 
 /// Laporan X: ringkasan shift berjalan dari data perangkat, bisa dibuka kapan saja dari layar Shift.

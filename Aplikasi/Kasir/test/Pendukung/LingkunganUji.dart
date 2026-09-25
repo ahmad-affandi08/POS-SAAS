@@ -12,6 +12,7 @@ import 'package:kasir/Data/RepositoriKatalog.dart';
 import 'package:kasir/Data/RepositoriAbsensi.dart';
 import 'package:kasir/Data/RepositoriPelanggan.dart';
 import 'package:kasir/Data/RepositoriPenjualan.dart';
+import 'package:kasir/Data/RepositoriPreOrder.dart';
 import 'package:kasir/Data/RepositoriPesananMeja.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
@@ -19,6 +20,7 @@ import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
 import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
@@ -223,6 +225,15 @@ class LingkunganUji {
   late final LayananTutupShift tutupShift = LayananTutupShift(
     repositori: repositori,
     repositoriPenjualan: repositoriPenjualan,
+    repositoriPreOrder: repositoriPreOrder,
+    jam: () => jam,
+  );
+  late final RepositoriPreOrder repositoriPreOrder = RepositoriPreOrder(db, repositori);
+  late final LayananPreOrder preOrder = LayananPreOrder(
+    klien: klien,
+    repositori: repositori,
+    repositoriPreOrder: repositoriPreOrder,
+    penjualan: penjualan,
     jam: () => jam,
   );
   late final LayananSinkron sinkron = LayananSinkron(

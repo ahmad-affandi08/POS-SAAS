@@ -7,6 +7,7 @@ import 'package:klien_api/KlienApi.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
+import '../../Data/RepositoriPreOrder.dart';
 import '../GalatKasir.dart';
 import '../Sesi/StafLokal.dart';
 import 'LayananShift.dart';
@@ -46,9 +47,15 @@ class LaporanShift {
     required this.kasMasuk,
     required this.kasKeluar,
     required this.setoran,
+    this.jumlahUangMuka = 0,
+    this.nominalUangMuka,
   });
 
   final BarisShift shift;
+
+  /// F-12 bagian 2: pre-order yang uang mukanya diterima di shift ini (DP sudah ikut [perMetode] & [tunaiMasukBersih]).
+  final int jumlahUangMuka;
+  final Uang? nominalUangMuka;
   final int jumlahTransaksi;
   final Uang penjualanKotor;
   final Uang totalDiskon;
@@ -114,10 +121,14 @@ class LayananTutupShift {
   LayananTutupShift({
     required this.repositori,
     required this.repositoriPenjualan,
+    this.repositoriPreOrder,
     PembuatUlid? ulid,
     DateTime Function()? jam,
   }) : _ulid = ulid ?? PembuatUlid(),
        _jam = jam ?? DateTime.now;
+
+  /// F-12 bagian 2: uang muka pre-order yang diterima di shift; null = tidak dihitung.
+  final RepositoriPreOrder? repositoriPreOrder;
 
   static const String jenisTunai = 'Tunai';
 
@@ -183,6 +194,22 @@ class LayananTutupShift {
       }
     }
 
+    // F-12 bagian 2: uang muka pre-order yang diterima di shift ini masuk laci/rekening (tanpa kembalian).
+    final uangMuka = await repositoriPreOrder?.AmbilShift(uuidShift) ?? const <BarisPesananPenjualanLokal>[];
+    for (final p in uangMuka) {
+      final jumlah = Uang.Dari(p.UangMuka);
+      if (p.JenisMetode == jenisTunai) {
+        tunaiMasuk = tunaiMasuk.Tambah(jumlah);
+      }
+      final lama = perMetode[p.UuidMetodePembayaran];
+      perMetode[p.UuidMetodePembayaran] = MetodeLaporanShift(
+        uuid: p.UuidMetodePembayaran,
+        jenis: p.JenisMetode,
+        nama: lama?.nama ?? p.NamaMetode,
+        jumlah: (lama?.jumlah ?? Uang.Nol()).Tambah(jumlah),
+      );
+    }
+
     Uang Jumlahkan(Iterable<String> nilai) => nilai.fold(Uang.Nol(), (t, n) => t.Tambah(Uang.Dari(n)));
     Uang JumlahMutasi(String jenis) => Jumlahkan(mutasi.where((m) => m.Jenis == jenis).map((m) => m.Jumlah));
     final void_ = dokumen.penjualan.where((p) => p.Status == statusVoid);
@@ -211,6 +238,8 @@ class LayananTutupShift {
       nominalVoid: Jumlahkan(void_.map((p) => p.TotalAkhir)),
       jumlahRetur: voidRetur.retur.length,
       nominalRetur: Jumlahkan(voidRetur.retur.map((r) => r.TotalRefund)),
+      jumlahUangMuka: uangMuka.length,
+      nominalUangMuka: Jumlahkan(uangMuka.map((p) => p.UangMuka)),
       kasMasuk: JumlahMutasi(JenisMutasi.masuk),
       kasKeluar: JumlahMutasi(JenisMutasi.keluar),
       setoran: JumlahMutasi(JenisMutasi.setoran),

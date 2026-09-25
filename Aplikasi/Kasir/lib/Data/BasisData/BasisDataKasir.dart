@@ -6,6 +6,7 @@ import 'TabelMeja.dart';
 import 'TabelPelanggan.dart';
 import 'TabelPascaPenjualan.dart';
 import 'TabelPenjualan.dart';
+import 'TabelPreOrder.dart';
 
 export 'TabelAbsensi.dart';
 export 'TabelKatalog.dart';
@@ -13,6 +14,7 @@ export 'TabelMeja.dart';
 export 'TabelPelanggan.dart';
 export 'TabelPascaPenjualan.dart';
 export 'TabelPenjualan.dart';
+export 'TabelPreOrder.dart';
 
 part 'BasisDataKasir.g.dart';
 
@@ -173,6 +175,9 @@ class PercobaanPin extends Table {
     PelangganLokal,
     // Skema 10 (F-18): absensi staf di perangkat ini.
     AbsensiLokal,
+    // Skema 11 (F-12 bagian 2): pre-order + uang muka dari perangkat ini.
+    PesananPenjualanLokal,
+    NomorUrutPesananPenjualan,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -181,9 +186,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// Riwayat skema: 1 = F-06 (shift, kas, outbox); 2 = F-07c (katalog, pajak, metode bayar, penjualan); 3 = F-11
   /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
   /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka); 7 = F-16a (pelanggan lokal); 8 = F-16b
-  /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal).
+  /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
+  /// (pre-order lokal).
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -268,6 +274,10 @@ class BasisDataKasir extends _$BasisDataKasir {
       }
       if (dari < 10) {
         await m.createTable(absensiLokal);
+      }
+      if (dari < 11) {
+        await m.createTable(pesananPenjualanLokal);
+        await m.createTable(nomorUrutPesananPenjualan);
       }
     },
     beforeOpen: (detail) async {

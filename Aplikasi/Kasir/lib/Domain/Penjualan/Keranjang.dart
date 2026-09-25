@@ -294,6 +294,43 @@ class VoucherKeranjang {
       : null;
 }
 
+/// Pre-order yang sedang diambil (F-12 bagian 2): uang mukanya dipakai lewat metode sistem "Uang muka (DP)"
+/// ([uuidMetode]) dan `Penjualan.Buat` merujuk [uuid].
+class PraPesananKeranjang {
+  const PraPesananKeranjang({
+    required this.uuid,
+    required this.nomor,
+    required this.sisaUangMuka,
+    required this.uuidMetode,
+    required this.namaMetode,
+  });
+
+  final String uuid;
+  final String nomor;
+  final Uang sisaUangMuka;
+  final String uuidMetode;
+  final String namaMetode;
+
+  Map<String, Object?> KeJson() => {
+    'Uuid': uuid,
+    'Nomor': nomor,
+    'SisaUangMuka': sisaUangMuka.KeString(),
+    'UuidMetode': uuidMetode,
+    'NamaMetode': namaMetode,
+  };
+
+  static PraPesananKeranjang? DariJson(Object? json) =>
+      json is Map<String, Object?> && json['Uuid'] is String && json['SisaUangMuka'] is String
+      ? PraPesananKeranjang(
+          uuid: json['Uuid']! as String,
+          nomor: '${json['Nomor'] ?? ''}',
+          sisaUangMuka: Uang.Dari(json['SisaUangMuka']! as String),
+          uuidMetode: '${json['UuidMetode'] ?? ''}',
+          namaMetode: '${json['NamaMetode'] ?? 'Uang muka (DP)'}',
+        )
+      : null;
+}
+
 /// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
 /// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
@@ -306,6 +343,7 @@ class Keranjang {
     this.pelanggan,
     this.tukarPoin,
     this.voucher,
+    this.praPesan,
   });
 
   static const Keranjang kosong = Keranjang();
@@ -325,6 +363,9 @@ class Keranjang {
   /// F-16c bagian 2: voucher yang sudah dipesan online.
   final VoucherKeranjang? voucher;
 
+  /// F-12 bagian 2: pre-order yang sedang diambil.
+  final PraPesananKeranjang? praPesan;
+
   bool get CekKosong => baris.isEmpty;
 
   Kuantitas HitungJumlahItem() => baris.fold(Kuantitas.Nol(), (total, b) => total.Tambah(b.jumlah));
@@ -338,6 +379,7 @@ class Keranjang {
     PelangganTerpilih? Function()? pelanggan,
     TukarPoin? Function()? tukarPoin,
     VoucherKeranjang? Function()? voucher,
+    PraPesananKeranjang? Function()? praPesan,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
@@ -347,6 +389,7 @@ class Keranjang {
     pelanggan: pelanggan == null ? this.pelanggan : pelanggan(),
     tukarPoin: tukarPoin == null ? this.tukarPoin : tukarPoin(),
     voucher: voucher == null ? this.voucher : voucher(),
+    praPesan: praPesan == null ? this.praPesan : praPesan(),
   );
 
   Map<String, Object?> KeJson() => {
@@ -357,6 +400,7 @@ class Keranjang {
     'Pelanggan': pelanggan?.KeJson(),
     'TukarPoin': tukarPoin?.KeJson(),
     'Voucher': voucher?.KeJson(),
+    'PraPesan': praPesan?.KeJson(),
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -370,5 +414,6 @@ class Keranjang {
     pelanggan: PelangganTerpilih.DariJson(json['Pelanggan']),
     tukarPoin: TukarPoin.DariJson(json['TukarPoin']),
     voucher: VoucherKeranjang.DariJson(json['Voucher']),
+    praPesan: PraPesananKeranjang.DariJson(json['PraPesan']),
   );
 }

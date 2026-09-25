@@ -40,6 +40,11 @@ class KartuLaporanShift extends StatelessWidget {
             _BarisLaporan('Total dibayar pelanggan', nilai: l.totalAkhir, tebal: true),
             _BarisLaporan('Void', teksKanan: '${l.jumlahVoid} transaksi · ${l.nominalVoid.FormatRupiah()}'),
             _BarisLaporan('Retur', teksKanan: '${l.jumlahRetur} dokumen · ${l.nominalRetur.FormatRupiah()}'),
+            if (l.jumlahUangMuka > 0)
+              _BarisLaporan(
+                'Uang muka pre-order',
+                teksKanan: '${l.jumlahUangMuka} pesanan · ${(l.nominalUangMuka ?? Uang.Nol()).FormatRupiah()}',
+              ),
           ],
         ),
         const SizedBox(height: TokenJarak.jarak12),

@@ -411,4 +411,53 @@ void main() {
       throwsA(isA<GalatApi>().having((g) => g.kode, 'kode', 'VoucherHabis')),
     );
   });
+
+  test('F-12 bagian 2: cari pre-order membawa baris, sisa DP, pelanggan, dan metode Uang Muka', () async {
+    final klien = BuatKlien((permintaan) async {
+      expect(permintaan.url.path, endsWith('/api/pos/v1/pesanan-penjualan'));
+      expect(permintaan.url.queryParameters['kata'], 'ratna');
+      return Json({
+        'Pesanan': [
+          {
+            'Uuid': 'PO1',
+            'Nomor': 'SO/SLO/260925/POS-001-0001',
+            'Status': 'Siap',
+            'TanggalAmbil': '2026-09-28',
+            'Catatan': null,
+            'TotalPesanan': '77000.00',
+            'UangMuka': '50000.00',
+            'SisaUangMuka': '50000.00',
+            'Pelanggan': {
+              'Uuid': 'PL1',
+              'Nama': 'Ibu Ratna',
+              'NoHp': '0813****0077',
+              'KodeTier': null,
+              'NamaTier': null,
+            },
+            'Baris': [
+              {
+                'Uuid': 'B1',
+                'UuidProduk': 'P1',
+                'UuidProdukSatuan': null,
+                'NamaProduk': 'Kue Cokelat',
+                'Jumlah': '2.0000',
+                'HargaSatuan': '38500.00',
+                'HargaPilihan': '0.00',
+                'Pilihan': <Object?>[],
+                'Catatan': 'Krim vanila',
+              },
+            ],
+          },
+        ],
+        'MetodeUangMuka': {'Uuid': 'MUM', 'Nama': 'Uang muka (DP)'},
+      }, 200);
+    });
+
+    final hasil = await klien.CariPesananPenjualan(' ratna ');
+    final p = hasil.pesanan.single;
+    expect(p.sisaUangMuka, '50000.00');
+    expect(p.pelanggan?['Nama'], 'Ibu Ratna');
+    expect(p.baris.single.catatan, 'Krim vanila');
+    expect(hasil.uuidMetodeUangMuka, 'MUM');
+  });
 }

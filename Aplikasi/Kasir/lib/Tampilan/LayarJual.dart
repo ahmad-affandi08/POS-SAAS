@@ -14,6 +14,7 @@ import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/KonteksPesananMeja.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
+import '../Domain/Penjualan/LayananPreOrder.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import 'Jual/PanelBayar.dart';
@@ -21,11 +22,12 @@ import 'Jual/PanelDiskon.dart';
 import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
 import 'Jual/PanelPelanggan.dart';
+import 'Jual/PanelPreOrder.dart';
 import 'Jual/PanelTertahan.dart';
 import 'Jual/PengenalPemindai.dart';
 import 'Meja/DialogPesananMeja.dart';
 
-enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan, Pelanggan }
+enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan, Pelanggan, PreOrder, PreOrderSelesai }
 
 /// Beranda ruang kerja: layar Jual (F-07 mode retail, Rincian F-07c, PRD §17.2.3 & §17.2.7).
 /// - Katalog: cari nama/SKU/barcode, kategori, ubin produk seragam; keranjang di sisi yang diatur (kiri/kanan) mulai
@@ -84,6 +86,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   ProdukJual? _produkPanel;
   String? _uuidBarisPanel;
   PenjualanTersimpan? _selesai;
+
+  /// F-12 bagian 2: pre-order yang baru tersimpan.
+  PreOrderTersimpan? _preOrderSelesai;
   ({String teks, bool galat})? _pesan;
   bool _memperbarui = false;
 
@@ -901,6 +906,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         isi: PanelBayar(
           key: _kunciBayar,
           kasir: widget.kasir,
+          saatPreOrder: _uuidKunciBayar == null ? () => setState(() => _panel = _JenisPanel.PreOrder) : null,
           saatSelesai: (hasil) {
             final pesanan = _uuidKunciBayar != null;
             _LepasKunciBayar(keServer: false);
@@ -919,6 +925,23 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             : TampilanSelesai(hasil: _selesai!, saatTransaksiBaru: _TransaksiBaru),
       ),
       _JenisPanel.Tertahan => (judul: 'Pesanan tertahan', isi: PanelTertahan(saatDibuka: _TutupPanel)),
+      _JenisPanel.PreOrder => (
+        judul: 'Pre-order',
+        isi: PanelPreOrder(
+          kasir: widget.kasir,
+          saatKembali: () => setState(() => _panel = _JenisPanel.Bayar),
+          saatSelesai: (hasil) => setState(() {
+            _preOrderSelesai = hasil;
+            _panel = _JenisPanel.PreOrderSelesai;
+          }),
+        ),
+      ),
+      _JenisPanel.PreOrderSelesai => (
+        judul: 'Pre-order tersimpan',
+        isi: _preOrderSelesai == null
+            ? const SizedBox.shrink()
+            : TampilanPreOrderSelesai(hasil: _preOrderSelesai!, saatTransaksiBaru: _TransaksiBaru),
+      ),
       _JenisPanel.Pelanggan => (judul: 'Pelanggan', isi: PanelPelanggan(kasir: widget.kasir, saatSelesai: _TutupPanel)),
     };
   }

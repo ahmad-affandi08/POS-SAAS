@@ -680,6 +680,24 @@ class LayananPenjualan {
     }
   }
 
+  /// F-12 bagian 2: uang muka hanya dipakai saat mengambil pre-order, sekali, dan tidak melebihi sisa DP.
+  static void ValidasiUangMuka(Keranjang keranjang, List<PembayaranMasukan> pembayaran) {
+    final dp = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.uangMuka).toList();
+    if (dp.isEmpty) {
+      return;
+    }
+    final praPesan = keranjang.praPesan;
+    if (praPesan == null || dp.length > 1) {
+      throw const GalatKasir('UangMukaTanpaPesanan', 'Uang muka hanya dipakai sekali saat mengambil pre-order.');
+    }
+    if (dp.single.jumlah.Bandingkan(praPesan.sisaUangMuka) > 0) {
+      throw GalatKasir(
+        'UangMukaMelebihiSisa',
+        'Uang muka ${praPesan.nomor} tinggal ${praPesan.sisaUangMuka.FormatRupiah()}.',
+      );
+    }
+  }
+
   // Bayar & simpan -----------------------------------------------------------------------------------------------------
 
   Future<PenjualanTersimpan> Bayar({
@@ -722,6 +740,7 @@ class LayananPenjualan {
     final penyetuju = ValidasiDiskon(keranjang, hitungan, kasir, k);
     ValidasiTukarPoin(keranjang, hasil);
     ValidasiTempo(keranjang, pembayaran, kasir, k, uuidPenyetujuTempo);
+    ValidasiUangMuka(keranjang, pembayaran);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
@@ -797,7 +816,7 @@ class LayananPenjualan {
       throw const GalatKasir('TunaiGanda', 'Pembayaran tunai hanya boleh satu kali per transaksi.');
     }
     for (final p in pembayaran) {
-      if (!JenisMetodeBayar.fase1.contains(p.metode.Jenis)) {
+      if (!JenisMetodeBayar.fase1.contains(p.metode.Jenis) && p.metode.Jenis != JenisMetodeBayar.uangMuka) {
         throw GalatKasir('MetodeBayarBelumDidukung', 'Metode ${p.metode.Nama} belum didukung aplikasi kasir.');
       }
       if (p.jumlah.Bandingkan(Uang.Nol()) <= 0) {
@@ -896,6 +915,7 @@ class LayananPenjualan {
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
       'UuidPenyetujuTempo': ?uuidPenyetujuTempo,
       'Voucher': ?keranjang.voucher?.kode,
+      'UuidPesananPenjualan': ?keranjang.praPesan?.uuid,
       if (hitungan.promoTerpakai.isNotEmpty)
         'Promo': [
           for (final p in hitungan.promoTerpakai)

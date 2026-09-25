@@ -10,6 +10,7 @@ import 'Model/ModelKatalog.dart';
 import 'Model/ModelMeja.dart';
 import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
+import 'Model/ModelPreOrder.dart';
 import 'Model/ModelPromo.dart';
 import 'Model/ModelRetur.dart';
 import 'Model/UraiJson.dart';
@@ -95,6 +96,12 @@ class KlienPos {
   /// Promo aktif tenant + mode resolusi konflik (F-16c); disimpan perangkat agar promo tetap berlaku saat offline.
   /// `?voucher=1`: aplikasi ini mengenal syarat `WajibVoucher` (F-16c bagian 2), jadi promo voucher ikut dikirim.
   Future<DataPromoPos> AmbilPromo() async => DataPromoPos.DariJson(await _Kirim('GET', 'promo?voucher=1', null));
+
+  /// Cari pre-order yang siap diambil di outlet perangkat (F-12 bagian 2): nomor atau nama/nomor HP pelanggan, minimal
+  /// 3 karakter. Offline → `GalatJaringan`.
+  Future<HasilCariPesananPenjualan> CariPesananPenjualan(String kata) async => HasilCariPesananPenjualan.DariJson(
+    await _Kirim('GET', 'pesanan-penjualan?kata=${Uri.encodeQueryComponent(kata.trim())}', null),
+  );
 
   /// Periksa & pesan kode voucher untuk penjualan [uuidPenjualan] yang sedang dibuat (F-16c bagian 2, wajib online).
   /// Ditolak → `GalatApi` ber-kode `VoucherTidakDitemukan` (404), `VoucherHabis` (409), `VoucherNonaktif`,

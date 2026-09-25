@@ -301,6 +301,7 @@ pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
 | modifier group / modifier | `KelompokPilihan` / `Pilihan` | recipe / production | `Resep` / `Produksi` |
 | price list / price history | `DaftarHarga` / `RiwayatHarga` | supplier | `Pemasok` |
 | customer | `Pelanggan` | purchase order | `PesananPembelian` |
+| sales order / pre-order (v1.68) | `PesananPenjualan` | down payment | `UangMuka` |
 | promotion / voucher | `Promo` / `Voucher` | goods receipt | `PenerimaanBarang` |
 | loyalty points / deposit | `MutasiPoin` / `MutasiDeposit` | purchase invoice | `FakturPembelian` |
 | employee / attendance / commission | `Karyawan` / `Absensi` / `Komisi` | receivable / payable | `Piutang` / `Hutang` |

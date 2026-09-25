@@ -20,6 +20,12 @@ abstract final class JenisMetodeBayar {
   static const String tempo = 'Tempo';
 
   static const List<String> fase1 = [tunai, qrisStatis, edc, transfer, ewallet, tempo];
+
+  /// F-12 bagian 2: uang muka pre-order yang dipakai saat diambil (metode sistem; tidak tampil sebagai pilihan bayar).
+  static const String uangMuka = 'UangMuka';
+
+  /// Jenis yang boleh membayar uang muka pre-order (tanpa tempo).
+  static const List<String> bolehUangMuka = [tunai, qrisStatis, edc, transfer, ewallet];
 }
 
 /// Tarif pajak terbit bertanggal berlaku (CLAUDE.md #12). Tanggal `YYYY-MM-DD`; `berlakuSampai` inklusif.

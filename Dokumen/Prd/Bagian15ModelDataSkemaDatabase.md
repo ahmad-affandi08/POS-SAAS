@@ -116,6 +116,7 @@ erDiagram
 |---|---|
 | `Pemasok` | IdTenant, Nama, NoHp, Npwp, TerminHari, Penitip (konsinyasi) |
 | `PesananPembelian` / `PesananPembelianDetail` | Nomor, IdPemasok, IdGudang, Status, PerkiraanTiba, Subtotal, Diskon, Pajak, Ongkir, Total, DisetujuiOleh / IdProduk, IdSatuan, Jumlah, Harga, Diskon, TarifPajak, JumlahDiterima |
+| `PesananPenjualan` / `PesananPenjualanDetail` / `PesananPenjualanPembayaran` | F-12 bagian 2 (v1.68): Nomor `SO/…`, IdOutlet, IdShift, IdPelanggan, TanggalAmbil, Status (Dipesan/Siap/Diambil/Dibatalkan), TotalPesanan, UangMuka, UangMukaTerpakai/Dikembalikan/Hangus, IdJurnal, IdPenjualan, IdJurnalPenyelesaian / IdProduk, UuidProduk, UuidProdukSatuan, Jumlah, HargaSatuan, HargaPilihan, Pilihan / IdMetodePembayaran, JenisMetode, Jumlah, Referensi |
 | `PenerimaanBarang` / `PenerimaanBarangDetail` | IdPesananPembelian, Nomor, Status, DiterimaPada, NomorSuratJalan, Lampiran / IdPesananPembelianDetail, Jumlah, NomorBatch, TanggalKedaluwarsa, HppSatuan |
 | `FakturPembelian` / `FakturPembelianDetail` | NomorFakturPemasok, JatuhTempo, Total, JumlahDibayar, Status |
 | `ReturPembelian` / `ReturPembelianDetail` | IdPenerimaanBarang, Alasan, Status |

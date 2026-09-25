@@ -10,6 +10,7 @@ import '../../Domain/GalatKasir.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
+import '../../Domain/Penjualan/LayananPreOrder.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../LembarMutasiKas.dart';
 import 'PanelKeranjang.dart';
@@ -48,10 +49,13 @@ List<Uang> HitungPecahanCepat(Uang tagihan, {int batas = 4}) {
 /// hanya untuk bagian tunai (BR-08.6). F-12: Tempo (piutang) hanya bila pelanggan dipilih; di luar limit kredit atau
 /// ada piutang lewat jatuh tempo (BR-12.1) butuh PIN penyetuju. Setelah tersimpan memanggil [saatSelesai].
 class PanelBayar extends ConsumerStatefulWidget {
-  const PanelBayar({super.key, required this.kasir, required this.saatSelesai});
+  const PanelBayar({super.key, required this.kasir, required this.saatSelesai, this.saatPreOrder});
 
   final StafLokal kasir;
   final ValueChanged<PenjualanTersimpan> saatSelesai;
+
+  /// F-12 bagian 2: jadikan keranjang ber-pelanggan sebagai pre-order dengan uang muka. Null = tidak ditampilkan.
+  final VoidCallback? saatPreOrder;
 
   @override
   ConsumerState<PanelBayar> createState() => PanelBayarState();
@@ -70,6 +74,22 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   /// F-12: staf yang menyetujui tempo lewat PIN (BR-12.1).
   StafLokal? _penyetujuTempo;
   String? _galat;
+
+  @override
+  void initState() {
+    super.initState();
+    // F-12 bagian 2: mengambil pre-order → uang muka tersisa langsung menjadi pembayaran pertama.
+    final keranjang = ref.read(penyediaKeranjangEfektif);
+    final praPesan = keranjang.praPesan;
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    if (praPesan != null && k != null && !keranjang.CekKosong) {
+      final total = ref.read(penyediaLayananPenjualan).Hitung(keranjang, k).hasil.totalAkhir;
+      final dipakai = praPesan.sisaUangMuka.Bandingkan(total) > 0 ? total : praPesan.sisaUangMuka;
+      if (dipakai.Bandingkan(Uang.Nol()) > 0) {
+        _entri.add(PembayaranMasukan(metode: LayananPreOrder.MetodeUangMuka(praPesan), jumlah: dipakai));
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -464,22 +484,30 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (keranjang.praPesan case final praPesan?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+              child: Text('Mengambil pre-order ${praPesan.nomor}', style: teks.bodySmall),
+            ),
           ...RingkasanTotal.BangunBaris(context, hitungan, keranjang, tampilPembulatan: true),
           for (final p in _entri)
             Row(
               children: [
                 Expanded(child: Text('${p.metode.Nama}${p.referensi == null ? '' : ' · ${p.referensi}'}')),
                 TeksUang(p.jumlah),
-                IconButton(
-                  tooltip: 'Hapus pembayaran ${p.metode.Nama}',
-                  onPressed: () => setState(() {
-                    _entri.remove(p);
-                    if (p.metode.Jenis == JenisMetodeBayar.tempo) {
-                      _penyetujuTempo = null;
-                    }
-                  }),
-                  icon: const Icon(Icons.close),
-                ),
+                if (p.metode.Jenis == JenisMetodeBayar.uangMuka)
+                  const SizedBox(width: TokenJarak.targetSentuh)
+                else
+                  IconButton(
+                    tooltip: 'Hapus pembayaran ${p.metode.Nama}',
+                    onPressed: () => setState(() {
+                      _entri.remove(p);
+                      if (p.metode.Jenis == JenisMetodeBayar.tempo) {
+                        _penyetujuTempo = null;
+                      }
+                    }),
+                    icon: const Icon(Icons.close),
+                  ),
               ],
             ),
           if (_entri.isNotEmpty)
@@ -537,6 +565,21 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               ),
             ),
           ),
+          if (widget.saatPreOrder != null &&
+              keranjang.pelanggan != null &&
+              keranjang.praPesan == null &&
+              keranjang.pesananMeja == null &&
+              _entri.isEmpty) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            SizedBox(
+              height: TokenJarak.targetSentuh,
+              child: OutlinedButton.icon(
+                onPressed: _sibuk ? null : widget.saatPreOrder,
+                icon: const Icon(Icons.event_available_outlined),
+                label: const Text('Jadikan pre-order (bayar DP)'),
+              ),
+            ),
+          ],
         ],
       ),
     );
