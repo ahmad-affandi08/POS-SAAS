@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.64 |
+| Versi | 1.65 |
 | Tanggal | 25 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -85,6 +85,7 @@
 | 1.62 | Rincian F-16c bagian 1 (CRM-05 promo engine): master promo back-office (formulir terstruktur, bukan YAML), mesin promo PHP & Dart murni + 8 test vector bersama `VektorUjiKalkulasi/Promo/` (kondisi barang/kategori/minimal, tier, kanal, outlet, periode/hari/jam; aksi diskon %/nominal barang & pesanan, harga spesial, beli X gratis Y, bundel harga tetap; batas per transaksi, kuota), resolusi konflik `Terbaik`/`PrioritasKetat`, promo di POS (`GET /api/pos/v1/promo`, berlaku offline), `Penjualan.Buat` membawa `Promo` + validasi ulang server (beda = diterima + tinjauan `PromoBerbeda`), `PromoPemakaian` & kuota. Keputusan pemilik produk: dipecah (voucher dll. bagian 2), dua mode resolusi (bawaan Terbaik), beda hasil offline = terima + tinjauan. |
 | 1.63 | Rincian F-12 bagian 1 (piutang pelanggan): limit kredit & termin di data pelanggan, metode **Tempo** di POS (hanya bila pelanggan dipilih; metode dibuat sistem saat limit kredit pertama diisi), BR-12.1 dengan PIN penyetuju ber-izin baru `penjualan.tempo.setujui` (cek dari cache perangkat; cache basi = diterima + tinjauan `TempoBermasalah`), piutang per penjualan tempo (jurnal Dr Piutang Usaha), void membatalkan piutang yang belum dibayar, retur memotong piutang lebih dulu, back-office piutang & umur 0–30/31–60/61–90/>90, pelunasan sebagian/banyak piutang sekaligus (Dr Kas/Bank, Cr Piutang Usaha) yang bisa dibatalkan, skema lokal POS v9. Keputusan pemilik produk: F-12 dipecah (DP/uang muka, pengingat WA, giro = bagian 2), PIN penyetuju untuk BR-12.1, void/retur mengurangi piutang. |
 | 1.64 | Rincian F-18 bagian 1 (EMP-01/02/03): data karyawan (opsional tertaut akun pengguna, level staf, gaji pokok hanya untuk pengelola), jadwal kerja mingguan per outlet (salin minggu lalu), absensi masuk/keluar dari aplikasi kasir dengan PIN + swafoto kamera depan bila perangkat berkamera (item outbox `Absensi.Masuk`/`Absensi.Keluar`, idempoten, karyawan dibuat otomatis dari absensi), rekap absensi dengan keterlambatan terhadap jadwal, izin `karyawan.lihat`/`karyawan.kelola`, skema lokal POS v10. Keputusan pemilik produk: F-18 dipecah (komisi = bagian 2; target, kasbon, rekap gaji, geofence HP pribadi = bagian 3), swafoto wajib bila kamera ada, karyawan tabel terpisah, komisi tanpa jurnal sampai rekap gaji. |
+| 1.65 | Cara kerja agen (D-17): keputusan pemilik produk: di lokal hanya test yang terdampak perubahan yang dijalankan (analisis statis tetap seluruh kode); suite penuh dijalankan CI `CekKepatuhan.yml` di setiap push. Langkah 3 `/cek-dod` diperbarui. |
 
 ---
 

@@ -9,10 +9,17 @@ Jalankan berurutan. Jangan melewati langkah yang gagal. Perbaiki kodenya, bukan 
 
 1. `python3 Alat/CekKonvensi.py --berubah` → harus "Konvensi OK".
 2. `python3 Alat/PecahPrd.py --cek` → harus sinkron (jika PRD.md berubah, manusia menjalankan ulang skripnya).
-3. Pengecekan stack yang tersedia (lewati yang belum di-scaffold, sebutkan di laporan):
-   - `Aplikasi/Web/`: `composer analisis` lalu `composer tes:cepat` (Pint, Larastan, Pest termasuk `arch()`)
-   - `Aplikasi/Web/` web: `npm run periksa`
-   - Flutter: `melos run periksa`
+3. Pengecekan stack yang tersedia (lewati yang belum di-scaffold, sebutkan di laporan). **Di lokal jalankan hanya test
+   yang terdampak** (keputusan pemilik produk v1.65): suite penuh sudah dijalankan CI (`.github/workflows/CekKepatuhan.yml`)
+   di setiap push, jadi tidak perlu diulang di lokal.
+   - `Aplikasi/Web/`: `composer analisis` (Pint + Larastan, seluruh kode), lalu Pest untuk file test yang terdampak:
+     test fitur/domain yang diubah, test yang memakai kode yang diubah (cari dengan grep nama class/rute/enum), dan
+     `tests/Arsitektur/` bila ada class/folder baru. Contoh: `vendor/bin/pest tests/Fitur/Karyawan/KaryawanTes.php`.
+   - `Aplikasi/Web/` web: `npx tsc --noEmit` + `npx eslint resources/js --max-warnings=0` (seluruh kode, cepat), lalu
+     `npx vitest run <folder/berkas terdampak>`.
+   - Flutter: `flutter analyze` + `dart format`, lalu `flutter test <berkas test terdampak>` per paket yang diubah.
+   - Suite penuh di lokal hanya bila perubahan menyentuh kode bersama yang luas (mis. `Bersama/`, mesin kalkulasi,
+     skema lokal POS, tata letak utama) atau diminta pengguna.
 4. Delegasikan ke subagent **penjaga-konvensi** untuk meninjau diff terhadap PRD & aturan. Perbaiki semua temuan "Wajib".
 5. Periksa checklist DoD:
    - [ ] Flow & BR yang dikerjakan jelas; tidak ada perluasan cakupan
