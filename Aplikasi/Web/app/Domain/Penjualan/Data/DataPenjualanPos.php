@@ -15,6 +15,7 @@ use Carbon\CarbonImmutable;
  * (bisa offline). `uuid` = `UuidKlien` (ULID perangkat). Semua harga, pajak, dan pengaturan adalah snapshot saat
  * transaksi (BR-07.2); server menghitung ulang dengan `MesinKalkulasi`. `poinDitukar`/`nilaiTukarPoin` (F-16b): poin
  * pelanggan yang ditukar sebagai diskon pesanan sebelum pajak. `promo` (F-16c): promo yang diterapkan perangkat.
+ * `uuidPenyetujuTempo` (F-12, BR-12.1): pemberi PIN untuk tempo di atas limit / piutang lewat jatuh tempo.
  */
 final readonly class DataPenjualanPos
 {
@@ -48,5 +49,6 @@ final readonly class DataPenjualanPos
         public int $poinDitukar = 0,
         public ?Uang $nilaiTukarPoin = null,
         public array $promo = [],
+        public ?string $uuidPenyetujuTempo = null,
     ) {}
 }

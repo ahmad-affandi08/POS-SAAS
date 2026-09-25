@@ -28,6 +28,8 @@ enum JenisDokumenBernomor: string
     case FakturPembelian = 'FakturPembelian';
     case PembayaranHutang = 'PembayaranHutang';
     case ReturPembelian = 'ReturPembelian';
+    // F-12: pelunasan piutang `BP/{YYMM}/{SEQ4}` per tenant.
+    case PembayaranPiutang = 'PembayaranPiutang';
 
     public function AmbilAwalan(): string
     {
@@ -43,6 +45,7 @@ enum JenisDokumenBernomor: string
             self::FakturPembelian => 'FB',
             self::PembayaranHutang => 'BH',
             self::ReturPembelian => 'RB',
+            self::PembayaranPiutang => 'BP',
         };
     }
 
@@ -52,7 +55,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang => 4,
         };
     }
 

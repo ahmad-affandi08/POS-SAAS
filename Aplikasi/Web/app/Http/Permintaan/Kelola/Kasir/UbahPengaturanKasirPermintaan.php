@@ -34,6 +34,7 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             'TutupShiftButa' => ['sometimes', 'boolean'],
             'ToleransiSelisihKas' => ['sometimes', 'required', 'string', 'regex:/^\d{1,13}(\.\d{1,2})?$/'],
             'BatasHariRetur' => ['sometimes', 'required', 'integer', 'min:0', 'max:'.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL],
+            'BatasHariLewatJatuhTempo' => ['sometimes', 'required', 'integer', 'min:0', 'max:'.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL],
         ];
     }
 
@@ -49,6 +50,7 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             'PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan berupa bilangan bulat Rupiah 1 sampai 1.000, misal 100.',
             'PembulatanTunai.Arah.*' => 'Pilih arah pembulatan.',
             'ToleransiSelisihKas.regex' => 'Toleransi selisih kas harus berupa nominal rupiah, misal 10000.',
+            'BatasHariLewatJatuhTempo.*' => 'Batas hari lewat jatuh tempo berupa bilangan bulat 0 sampai '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.', misal 0.',
             'BatasHariRetur.*' => 'Batas hari retur berupa bilangan bulat 0 sampai '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.', misal 7.',
         ];
     }
@@ -73,6 +75,7 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             tutupShiftButa: $this->has('TutupShiftButa') ? $this->boolean('TutupShiftButa') : $lama->tutupShiftButa,
             toleransiSelisihKas: $this->has('ToleransiSelisihKas') ? Uang::Dari($this->string('ToleransiSelisihKas')->toString()) : $lama->toleransiSelisihKas,
             batasHariRetur: $this->has('BatasHariRetur') ? $this->integer('BatasHariRetur') : $lama->batasHariRetur,
+            batasHariLewatJatuhTempo: $this->has('BatasHariLewatJatuhTempo') ? $this->integer('BatasHariLewatJatuhTempo') : $lama->batasHariLewatJatuhTempo,
         );
     }
 }

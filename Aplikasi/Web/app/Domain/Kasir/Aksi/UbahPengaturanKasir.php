@@ -75,6 +75,10 @@ final class UbahPengaturanKasir
             throw new PelanggaranAturanBisnis('BatasHariReturTidakValid', 'Batas hari retur harus antara 0 dan '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.' hari.', 'BatasHariRetur');
         }
 
+        if ($data->batasHariLewatJatuhTempo < 0 || $data->batasHariLewatJatuhTempo > DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL) {
+            throw new PelanggaranAturanBisnis('BatasHariLewatTidakValid', 'Batas hari lewat jatuh tempo harus antara 0 dan '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.' hari.', 'BatasHariLewatJatuhTempo');
+        }
+
         $kelipatan = $data->pembulatanTunai['Kelipatan'] ?? null;
 
         if ($kelipatan !== null && ($kelipatan <= 0 || $kelipatan > self::KELIPATAN_MAKSIMAL)) {
@@ -83,7 +87,7 @@ final class UbahPengaturanKasir
     }
 
     /**
-     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int}
+     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int, BatasHariLewatJatuhTempo: int}
      */
     private static function KeLarik(DataPengaturanKasir $data): array
     {
@@ -96,6 +100,7 @@ final class UbahPengaturanKasir
             'TutupShiftButa' => $data->tutupShiftButa,
             'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
             'BatasHariRetur' => $data->batasHariRetur,
+            'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
         ];
     }
 }

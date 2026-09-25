@@ -34,6 +34,7 @@ final class UbahPengaturanKasirTenant
             $pengaturan['TutupShiftButa'] = $data->tutupShiftButa;
             $pengaturan['ToleransiSelisihKas'] = $data->toleransiSelisihKas->KeString();
             $pengaturan['BatasHariRetur'] = $data->batasHariRetur;
+            $pengaturan['BatasHariLewatJatuhTempo'] = $data->batasHariLewatJatuhTempo;
             $tenant->Pengaturan = $pengaturan;
 
             if ($tenant->isDirty('Pengaturan')) {

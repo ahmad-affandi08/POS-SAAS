@@ -16,6 +16,7 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Penjualan\Data\DataVoidPenjualanPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
@@ -70,6 +71,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
         private readonly PencatatPoinPenjualan $poin,
+        private readonly PencatatPiutangPenjualan $piutang,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -181,6 +183,8 @@ final class TerimaVoidPenjualanPos
 
         // F-16b: poin dari penjualan ini dibalik di transaksi yang sama.
         $this->poin->BalikVoid($penjualan->Id);
+        // F-12: piutang penjualan tempo dibatalkan (jurnal pembalik sudah mengkredit Piutang Usaha).
+        $this->piutang->Batalkan($penjualan->Id, $kasir->id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);
@@ -206,6 +210,13 @@ final class TerimaVoidPenjualanPos
             throw new PelanggaranAturanBisnis('WaktuTidakValid', 'Waktu void lebih awal dari waktu penjualan.', 'DivoidPada');
         }
 
+        // F-12: piutang yang sudah dibayar sebagian tidak bisa dibatalkan lewat void.
+        $masalahPiutang = $this->piutang->PeriksaBisaBatal($penjualan->Id);
+
+        if ($masalahPiutang !== null) {
+            throw new PelanggaranAturanBisnis('VoidTidakDiizinkan', $masalahPiutang, 'UuidPenjualan');
+        }
+
         $ditutup = $this->infoShift->AmbilWaktuTutup($penjualan->IdShift);
 
         if ($ditutup !== null && $ditutup->lessThanOrEqualTo($data->divoidPada)) {
@@ -215,7 +226,7 @@ final class TerimaVoidPenjualanPos
 
     /**
      * Pengembalian mengikuti pembayaran asal: tunai bersih (diterima − kembalian) keluar dari laci; non-tunai dicatat
-     * sebagai refund manual (BR-09.2).
+     * sebagai refund manual (BR-09.2). Tempo (F-12) bukan refund: piutangnya dibatalkan.
      *
      * @return array{0: Uang, 1: Uang} [refund tunai, refund non-tunai]
      */
@@ -225,6 +236,10 @@ final class TerimaVoidPenjualanPos
         $nonTunai = Uang::Nol();
 
         foreach (PenjualanPembayaran::query()->where('IdPenjualan', $penjualan->Id)->get() as $bayar) {
+            if ($bayar->JenisMetode === JenisMetodePembayaran::Tempo) {
+                continue;
+            }
+
             if ($bayar->JenisMetode === JenisMetodePembayaran::Tunai) {
                 $tunai = $tunai->Tambah(Uang::Dari($bayar->Jumlah))->Kurangi(Uang::Dari($penjualan->Kembalian));
             } else {

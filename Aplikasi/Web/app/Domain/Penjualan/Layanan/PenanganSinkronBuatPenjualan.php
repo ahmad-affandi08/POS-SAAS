@@ -35,7 +35,8 @@ use Illuminate\Validation\Rule;
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
  * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?}`.
- * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat. Uang & jumlah
+ * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
+ * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1). Uang & jumlah
  * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
 final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
@@ -127,6 +128,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'TukarPoin' => ['sometimes', 'nullable', 'array'],
             'TukarPoin.Poin' => ['required_with:TukarPoin', 'integer', 'min:1', 'max:10000000'],
             'TukarPoin.Nilai' => ['required_with:TukarPoin', 'string', $uang],
+            'UuidPenyetujuTempo' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Promo' => ['sometimes', 'array', 'max:20'],
             'Promo.*.UuidPromo' => ['required', 'string', 'ulid', 'distinct'],
             'Promo.*.Kode' => ['required', 'string', 'max:30'],
@@ -183,6 +185,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             poinDitukar: $tukarPoin === null ? 0 : (int) $tukarPoin['Poin'],
             nilaiTukarPoin: $tukarPoin === null ? null : Uang::Dari((string) $tukarPoin['Nilai']),
             promo: self::AmbilPromo((array) ($valid['Promo'] ?? [])),
+            uuidPenyetujuTempo: is_string($valid['UuidPenyetujuTempo'] ?? null) ? strtoupper($valid['UuidPenyetujuTempo']) : null,
         ));
     }
 

@@ -13,6 +13,8 @@ enum MetodeRefund: string
     case Tunai = 'Tunai';
     case Transfer = 'Transfer';
     case Campuran = 'Campuran';
+    // F-12: retur penjualan tempo mengurangi sisa piutang lebih dulu.
+    case Piutang = 'Piutang';
 
     public function AmbilLabel(): string
     {
@@ -20,6 +22,7 @@ enum MetodeRefund: string
             self::Tunai => 'Tunai',
             self::Transfer => 'Transfer manual',
             self::Campuran => 'Tunai & transfer',
+            self::Piutang => 'Potong piutang',
         };
     }
 }

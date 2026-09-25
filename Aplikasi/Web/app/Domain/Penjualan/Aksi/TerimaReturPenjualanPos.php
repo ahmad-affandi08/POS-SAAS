@@ -19,6 +19,7 @@ use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Data\DataOutletPenjualan;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturPenjualanPos;
 use App\Domain\Penjualan\Data\DataNilaiReturBaris;
@@ -97,6 +98,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
         private readonly PencatatPoinPenjualan $poin,
+        private readonly PencatatPiutangPenjualan $piutang,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -184,7 +186,7 @@ final class TerimaReturPenjualanPos
             );
         }
 
-        $metode = $this->AmbilMetode($data, $total);
+        $metode = $this->AmbilMetode($data, $total, $this->piutang->AmbilSisa($penjualan->Id));
 
         // Simpan dokumen, stok, jurnal.
         $tinjauan = $shift->aktif ? [] : ['ShiftSudahDitutup: retur diterima setelah shift ditutup, belum masuk hitungan kas tutup shift'];
@@ -226,6 +228,17 @@ final class TerimaReturPenjualanPos
             'DisetujuiOleh' => $penyetuju->nama,
             'PerluTinjauan' => $retur->PerluTinjauan,
         ], idPengguna: $kasir->id);
+
+        // F-12: bagian refund "potong piutang" mengurangi sisa piutang penjualan asal.
+        $potongPiutang = Uang::Nol();
+
+        foreach ($data->refund as $r) {
+            if ($metode[$r->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tempo) {
+                $potongPiutang = $potongPiutang->Tambah($r->jumlah);
+            }
+        }
+
+        $this->piutang->Kurangi($penjualan->Id, $potongPiutang, $kasir->id);
 
         // F-16b: poin penjualan asal dikurangi proporsional terhadap total refund kumulatif, di transaksi yang sama.
         $this->poin->BalikRetur(
@@ -334,12 +347,14 @@ final class TerimaReturPenjualanPos
     }
 
     /**
-     * Refund fase 1: metode jenis Tunai atau Transfer, Σ refund = total nilai retur.
+     * Refund fase 1: metode jenis Tunai atau Transfer, Σ refund = total nilai retur. F-12: penjualan tempo mengurangi
+     * sisa piutang lebih dulu, refund metode Tempo wajib = min(total, sisa piutang); sisanya tunai/transfer.
      *
      * @return array<string, MetodePembayaran> kunci = Uuid metode
      */
-    private function AmbilMetode(DataReturPenjualanPos $data, Uang $total): array
+    private function AmbilMetode(DataReturPenjualanPos $data, Uang $total, ?Uang $sisaPiutang): array
     {
+        $refundPiutang = Uang::Nol();
         $uuid = array_values(array_unique(array_map(fn ($r): string => $r->uuidMetodePembayaran, $data->refund)));
         $metode = $uuid === [] ? [] : MetodePembayaran::query()->whereIn('Uuid', $uuid)->get()->keyBy('Uuid')->all();
         $jumlah = Uang::Nol();
@@ -349,6 +364,13 @@ final class TerimaReturPenjualanPos
 
             if (! $m instanceof MetodePembayaran) {
                 throw new PelanggaranAturanBisnis('MetodeBayarTidakDikenal', 'Metode refund tidak ditemukan.', "Refund.{$indeks}.UuidMetodePembayaran");
+            }
+
+            if ($m->Jenis === JenisMetodePembayaran::Tempo && $sisaPiutang !== null) {
+                $refundPiutang = $refundPiutang->Tambah($r->jumlah);
+                $jumlah = $jumlah->Tambah($r->jumlah);
+
+                continue;
             }
 
             if (! in_array($m->Jenis, [JenisMetodePembayaran::Tunai, JenisMetodePembayaran::Transfer], true)) {
@@ -366,6 +388,21 @@ final class TerimaReturPenjualanPos
                 422,
                 ['TotalRetur' => $total->KeString(), 'TotalRefund' => $jumlah->KeString()],
             );
+        }
+
+        if ($sisaPiutang !== null) {
+            $wajib = $sisaPiutang->Bandingkan($total) < 0 ? $sisaPiutang : $total;
+            $wajib = $wajib->BernilaiNegatif() ? Uang::Nol() : $wajib;
+
+            if (! $refundPiutang->SamaDengan($wajib)) {
+                throw new PelanggaranAturanBisnis(
+                    'RefundTidakSesuai',
+                    "Retur penjualan tempo mengurangi piutang lebih dulu: potong piutang {$wajib->FormatRupiah()}, sisanya tunai/transfer.",
+                    'Refund',
+                    422,
+                    ['TotalRetur' => $total->KeString(), 'RefundPiutang' => $wajib->KeString()],
+                );
+            }
         }
 
         return $metode;
@@ -464,6 +501,7 @@ final class TerimaReturPenjualanPos
 
         $metodeRefund = match (true) {
             count($jenis) > 1 => MetodeRefund::Campuran,
+            isset($jenis[JenisMetodePembayaran::Tempo->value]) => MetodeRefund::Piutang,
             isset($jenis[JenisMetodePembayaran::Transfer->value]) => MetodeRefund::Transfer,
             default => MetodeRefund::Tunai,
         };

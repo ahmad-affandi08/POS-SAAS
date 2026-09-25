@@ -488,10 +488,12 @@ describe('F-07b aturan penolakan', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
         $nonaktif = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::Ewallet, 'GoPay Toko', false);
+        // F-12: Tempo sudah didukung; contoh metode yang belum didukung kasir = Deposit.
+        $deposit = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::Deposit, 'Saldo member');
         $baris = ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]];
 
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [
-            BantuanPenjualan::Item($k, $baris + ['Pembayaran' => [['Metode' => $k['Tempo'], 'Jumlah' => '38500.00']]]),
+            BantuanPenjualan::Item($k, $baris + ['Pembayaran' => [['Metode' => $deposit, 'Jumlah' => '38500.00']]]),
             BantuanPenjualan::Item($k, $baris + ['Pembayaran' => [['Metode' => $k['Tunai'], 'Jumlah' => '20000.00'], ['Metode' => $k['Tunai'], 'Jumlah' => '20000.00']]]),
             BantuanPenjualan::Item($k, $baris + ['Pembayaran' => [['Metode' => $k['Edc'], 'Jumlah' => '40000.00']]]),
             BantuanPenjualan::Item($k, $baris + ['Pembayaran' => [['Metode' => $k['Transfer'], 'Jumlah' => '30000.00']]]),
@@ -643,6 +645,7 @@ describe('F-07b data-awal', function (): void {
             'TutupShiftButa' => true,
             'ToleransiSelisihKas' => '10000.00',
             'BatasHariRetur' => 7,
+            'BatasHariLewatJatuhTempo' => 0,
         ])
             ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00'])
             ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode, 'NomorUrutPenjualan' => [], 'NomorUrutRetur' => []])
@@ -653,7 +656,8 @@ describe('F-07b data-awal', function (): void {
             ->and(array_keys($respons->json('ProfilPajak')))->toBe(['Pkp', 'PungutPbjt', 'HargaTermasukPajak', 'BiayaLayanan'])
             ->and(array_column($respons->json('TarifPajak'), 'KodeJenisPajak'))->toBe(['PbjtMakananMinuman', 'Ppn'])
             ->and($respons->json('TarifPajak.1.PengaliDppPembilang'))->toBe(11)
-            ->and(array_column($respons->json('MetodePembayaran'), 'Jenis'))->toBe(['Tunai', 'QrisStatis', 'Edc', 'Transfer'])
+            // F-12: Tempo (piutang) ikut dikirim ke POS.
+            ->and(array_column($respons->json('MetodePembayaran'), 'Jenis'))->toBe(['Tunai', 'QrisStatis', 'Edc', 'Transfer', 'Tempo'])
             ->and($respons->json('MetodePembayaran.1'))->toHaveKeys(['Uuid', 'Jenis', 'Nama', 'NomorRekening', 'NamaPemilikRekening', 'AdaGambarQris', 'Urutan']);
     });
 

@@ -24,6 +24,7 @@ enum KodeAlasanTinjauan: string
     case PelangganTidakDikenal = 'PelangganTidakDikenal';
     case PenukaranPoin = 'PenukaranPoin';
     case PromoBerbeda = 'PromoBerbeda';
+    case TempoBermasalah = 'TempoBermasalah';
 
     public function AmbilLabel(): string
     {
@@ -42,6 +43,7 @@ enum KodeAlasanTinjauan: string
             self::PelangganTidakDikenal => 'Pelanggan belum diterima server',
             self::PenukaranPoin => 'Penukaran poin perlu diperiksa',
             self::PromoBerbeda => 'Promo di perangkat berbeda dengan promo server',
+            self::TempoBermasalah => 'Penjualan tempo perlu diperiksa',
         };
     }
 

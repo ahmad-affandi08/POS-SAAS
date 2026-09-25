@@ -243,6 +243,10 @@ describe('F-16b back-office', function (): void {
             'KodeTier' => 'GOLD',
             'NamaTier' => 'Gold',
             'SaldoPoin' => 7,
+            // F-12: data kredit ikut dikirim (tambahan kompatibel mundur).
+            'LimitKredit' => null,
+            'SisaPiutang' => '0.00',
+            'HariLewatJatuhTempo' => 0,
         ]);
     });
 });

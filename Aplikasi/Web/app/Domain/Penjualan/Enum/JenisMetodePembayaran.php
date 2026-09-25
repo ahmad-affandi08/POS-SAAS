@@ -44,7 +44,8 @@ enum JenisMetodePembayaran: string
     /** Jenis yang bisa dipakai membayar di aplikasi POS fase 1 (F-07b; lainnya menyusul fase 2). */
     public function CekDidukungPos(): bool
     {
-        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet], true);
+        // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit.
+        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet, self::Tempo], true);
     }
 
     public function CekBisaDibuatPanduan(): bool

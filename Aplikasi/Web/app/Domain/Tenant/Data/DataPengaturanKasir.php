@@ -18,6 +18,8 @@ use Brick\Math\BigDecimal;
  * - F-11 (PRD v1.45): tutup shift buta (bawaan aktif; kas seharusnya tidak ditampilkan sebelum hitungan disimpan)
  *   dan toleransi selisih kas (bawaan Rp 10.000, §19.2; di atasnya wajib alasan + PIN `shift.selisih.setujui`).
  * - F-09 (PRD v1.45): batas hari retur penjualan sejak tanggal bisnis penjualan (bawaan 7; 0 = hanya hari yang sama).
+ * - F-12 (PRD v1.63): penjualan tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari N hari
+ *   (BR-12.1, bawaan 0 = lewat jatuh tempo sehari pun butuh penyetuju).
  */
 final readonly class DataPengaturanKasir
 {
@@ -33,6 +35,8 @@ final readonly class DataPengaturanKasir
 
     /** Batas atas wajar batas hari retur (satu tahun). */
     public const BATAS_HARI_RETUR_MAKSIMAL = 365;
+
+    public const BATAS_HARI_LEWAT_JATUH_TEMPO_BAWAAN = 0;
 
     public BigDecimal $batasDiskonManual;
 
@@ -53,6 +57,7 @@ final readonly class DataPengaturanKasir
         public bool $tutupShiftButa = true,
         ?Uang $toleransiSelisihKas = null,
         public int $batasHariRetur = self::BATAS_HARI_RETUR_BAWAAN,
+        public int $batasHariLewatJatuhTempo = self::BATAS_HARI_LEWAT_JATUH_TEMPO_BAWAAN,
     ) {
         $this->batasDiskonManual = BigDecimal::of($batasDiskonManual ?? self::BATAS_DISKON_MANUAL_BAWAAN)->toScale(2);
         $this->batasDiskonPenyetuju = BigDecimal::of($batasDiskonPenyetuju ?? self::BATAS_DISKON_PENYETUJU_BAWAAN)->toScale(2);

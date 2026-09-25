@@ -33,6 +33,7 @@ final class PengaturanKasirKontroler extends DasarKelolaKontroler
             'TutupShiftButa' => $data->tutupShiftButa,
             'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
             'BatasHariRetur' => $data->batasHariRetur,
+            'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
             'OpsiArahPembulatan' => array_map(fn (ArahPembulatan $arah): array => ['Nilai' => $arah->value, 'Label' => $arah->AmbilLabel()], ArahPembulatan::cases()),
         ]);
     }

@@ -92,6 +92,8 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
                 'ToleransiSelisihKas' => '10000.00',
                 // F-09: batas hari retur sejak tanggal bisnis penjualan.
                 'BatasHariRetur' => 7,
+                // F-12: tempo butuh penyetuju bila ada piutang lewat jatuh tempo > N hari (bawaan 0).
+                'BatasHariLewatJatuhTempo' => 0,
             ]);
     });
 

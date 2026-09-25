@@ -28,6 +28,8 @@ use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
+use App\Domain\Pelanggan\Kueri\KreditPelanggan;
+use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
@@ -131,6 +133,8 @@ final class TerimaPenjualanPos
         private readonly PencatatPoinPenjualan $poin,
         private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
+        private readonly PencatatPiutangPenjualan $piutang,
+        private readonly KreditPelanggan $kredit,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -269,13 +273,47 @@ final class TerimaPenjualanPos
             $tinjauan['PelangganTidakDikenal'] = 'PelangganTidakDikenal: pelanggan belum diterima server, penjualan disimpan tanpa pelanggan';
         }
 
+        // F-12: penjualan tempo (BR-12.1). Melebihi limit / piutang lewat jatuh tempo butuh penyetuju `penjualan.tempo.setujui`
+        // (kasir sendiri ber-izin = tanpa PIN). Data cache perangkat basi = tetap diterima + tinjauan.
+        $tempo = $this->AmbilJumlahTempo($data, $metode);
+        $penyetujuTempo = null;
+
+        if ($tempo !== null) {
+            $masalahTempo = $idPelanggan === null
+                ? ['pelanggan belum diterima server']
+                : $this->kredit->Periksa($idPelanggan, $tempo, $tanggalBisnis, $pengaturan->batasHariLewatJatuhTempo);
+
+            if ($masalahTempo !== [] && $idPelanggan !== null) {
+                $calon = $data->uuidPenyetujuTempo === null ? null : $this->anggota->CariDiTenant($idTenant, $data->uuidPenyetujuTempo, $outlet->idOutlet);
+                $penyetujuTempo = match (true) {
+                    $calon !== null && $calon[0]->CekIzin(IzinTenant::PenjualanTempoSetujui->value) => $calon[0],
+                    $kasir->CekIzin(IzinTenant::PenjualanTempoSetujui->value) => $kasir,
+                    default => null,
+                };
+
+                if ($penyetujuTempo !== null) {
+                    $masalahTempo = [];
+                }
+            }
+
+            if ($masalahTempo !== []) {
+                $tinjauan['TempoBermasalah'] = 'TempoBermasalah: '.implode('; ', $masalahTempo).' (tanpa penyetuju)';
+            }
+        }
+
         // F-16c: promo dievaluasi ulang dengan definisi server; beda dengan perangkat = diterima + tinjauan.
         $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat);
 
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
+
+        // F-12: piutang penjualan tempo di transaksi yang sama.
+        if ($tempo !== null) {
+            $this->piutang->Catat($idPelanggan, $penjualan->Id, $penjualan->IdOutlet, $penjualan->Nomor, $tanggalBisnis, $tempo);
+
+        }
 
         // F-16c: pemakaian promo & kuota di transaksi yang sama.
         $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat(
@@ -596,6 +634,22 @@ final class TerimaPenjualanPos
     }
 
     /**
+     * F-12: jumlah pembayaran tempo (null = bukan penjualan tempo).
+     *
+     * @param  array<string, MetodePembayaran>  $metode
+     */
+    private function AmbilJumlahTempo(DataPenjualanPos $data, array $metode): ?Uang
+    {
+        foreach ($data->pembayaran as $bayar) {
+            if ($metode[$bayar->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tempo) {
+                return $bayar->jumlah;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Pembayaran fase 1: maksimal satu baris tunai, non-tunai tidak melebihi total, Σ pembayaran ≥ TotalAkhir, dan
      * kembalian sama dengan hitungan perangkat.
      *
@@ -616,6 +670,16 @@ final class TerimaPenjualanPos
             } else {
                 $nonTunai = $nonTunai->Tambah($bayar->jumlah);
             }
+        }
+
+        $jumlahTempo = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tempo));
+
+        if ($jumlahTempo > 1) {
+            throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh punya satu pembayaran tempo.', 'Pembayaran');
+        }
+
+        if ($jumlahTempo === 1 && $data->uuidPelanggan === null) {
+            throw new PelanggaranAturanBisnis('TempoTanpaPelanggan', 'Pembayaran tempo wajib memilih pelanggan.', 'UuidPelanggan');
         }
 
         if ($jumlahTunai > 1) {
@@ -660,6 +724,7 @@ final class TerimaPenjualanPos
         Uang $totalDibayar,
         ?int $idPesananTerbuka,
         ?int $idPelanggan,
+        ?int $idPenyetujuTempo = null,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
@@ -674,6 +739,7 @@ final class TerimaPenjualanPos
             'TanggalBisnis' => $tanggalBisnis->toDateString(),
             'IdPengguna' => $kasir->id,
             'IdPenyetujuDiskon' => $penyetuju?->id,
+            'IdPenyetujuTempo' => $idPenyetujuTempo,
             'HargaTermasukPajak' => $data->hargaTermasukPajak,
             'PersenBiayaLayanan' => (string) $data->persenBiayaLayanan->toScale(2),
             'PembulatanTunai' => $data->pembulatanTunai === null ? null : ['Kelipatan' => $data->pembulatanTunai->kelipatan, 'Arah' => $data->pembulatanTunai->arah->value],

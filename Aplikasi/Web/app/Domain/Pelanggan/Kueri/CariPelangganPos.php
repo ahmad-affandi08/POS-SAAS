@@ -9,6 +9,7 @@ use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use Carbon\CarbonImmutable;
 
 /**
  * Cari pelanggan aktif dari POS (F-16a, `GET /api/pos/v1/pelanggan?kata=`): minimal 3 karakter; cocok nama atau nomor
@@ -19,6 +20,7 @@ final class CariPelangganPos
     public function __construct(
         private readonly DaftarTierPelanggan $tier,
         private readonly BukuPoin $buku,
+        private readonly KreditPelanggan $kredit,
     ) {}
 
     public const BATAS = 20;
@@ -26,9 +28,10 @@ final class CariPelangganPos
     public const PANJANG_MINIMAL = 3;
 
     /**
-     * F-16b: `KodeTier`/`NamaTier` (harga per tier di POS) dan `SaldoPoin`.
+     * F-16b: `KodeTier`/`NamaTier` (harga per tier di POS) dan `SaldoPoin`. F-12: `LimitKredit`, `SisaPiutang`,
+     * `HariLewatJatuhTempo` (disimpan perangkat untuk cek tempo offline, BR-12.1).
      *
-     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int}>
+     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int, LimitKredit: string|null, SisaPiutang: string, HariLewatJatuhTempo: int}>
      */
     public function Cari(string $kata): array
     {
@@ -51,6 +54,7 @@ final class CariPelangganPos
             ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier']);
         $tier = $this->tier->AmbilPeta(array_values(array_filter($daftar->pluck('IdTier')->all(), 'is_int')));
         $saldo = $this->buku->AmbilSaldoBanyak(array_values($daftar->pluck('Id')->all()));
+        $kredit = $this->kredit->AmbilRingkas(array_values($daftar->pluck('Id')->all()), CarbonImmutable::today());
 
         return array_values($daftar->map(fn (Pelanggan $p): array => [
             'Uuid' => $p->Uuid,
@@ -59,6 +63,9 @@ final class CariPelangganPos
             'KodeTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Kode'] ?? null),
             'NamaTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Nama'] ?? null),
             'SaldoPoin' => $saldo[$p->Id] ?? 0,
+            'LimitKredit' => $kredit[$p->Id]['LimitKredit'] ?? null,
+            'SisaPiutang' => $kredit[$p->Id]['SisaPiutang'] ?? '0.00',
+            'HariLewatJatuhTempo' => $kredit[$p->Id]['HariLewatJatuhTempo'] ?? 0,
         ])->all());
     }
 }

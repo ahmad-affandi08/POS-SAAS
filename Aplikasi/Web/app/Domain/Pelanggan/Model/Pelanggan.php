@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property StatusPelanggan $Status
  * @property int|null $IdTier
  * @property bool $TierTetap
+ * @property string|null $LimitKredit
+ * @property int $TerminHari
  * @property Carbon|null $TierDievaluasiPada
  * @property int|null $DibuatOleh
  * @property int|null $IdPerangkatPembuat
@@ -39,7 +41,7 @@ final class Pelanggan extends ModelDasar
     protected $table = 'Pelanggan';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['SetujuPemasaran' => false, 'Status' => 'Aktif'];
+    protected $attributes = ['SetujuPemasaran' => false, 'Status' => 'Aktif', 'TerminHari' => 30];
 
     /**
      * @return array<string, string>
@@ -52,6 +54,8 @@ final class Pelanggan extends ModelDasar
             'SetujuPemasaran' => 'boolean',
             'TierTetap' => 'boolean',
             'TierDievaluasiPada' => 'datetime',
+            'LimitKredit' => 'decimal:2',
+            'TerminHari' => 'integer',
             'Status' => StatusPelanggan::class,
         ];
     }

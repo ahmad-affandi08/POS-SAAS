@@ -34,6 +34,7 @@ use LogicException;
  * @property Carbon $TanggalBisnis
  * @property int $IdPengguna
  * @property int|null $IdPenyetujuDiskon
+ * @property int|null $IdPenyetujuTempo
  * @property bool $HargaTermasukPajak
  * @property string $PersenBiayaLayanan
  * @property array{Kelipatan: int, Arah: string}|null $PembulatanTunai

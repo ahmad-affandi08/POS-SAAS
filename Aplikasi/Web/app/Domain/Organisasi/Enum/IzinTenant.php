@@ -48,6 +48,8 @@ enum IzinTenant: string
     case KasKeluarSetujui = 'kas.keluar.setujui';
     // F-07b BR-07.3: menyetujui diskon manual di atas batas kasir dengan PIN (supervisor ke atas).
     case PenjualanDiskonSetujui = 'penjualan.diskon.setujui';
+    // F-12 BR-12.1: PIN penyetuju penjualan tempo di atas limit kredit / piutang lewat jatuh tempo.
+    case PenjualanTempoSetujui = 'penjualan.tempo.setujui';
     // F-11: menyetujui selisih kas tutup shift di atas toleransi dengan PIN (supervisor ke atas).
     case ShiftSelisihSetujui = 'shift.selisih.setujui';
     case LaporanPenjualanLihat = 'laporan.penjualan.lihat';
@@ -92,6 +94,7 @@ enum IzinTenant: string
             self::PenjualanDiskonManual => 'Memberi diskon manual',
             self::KasKeluarSetujui => 'Menyetujui kas keluar di atas batas',
             self::PenjualanDiskonSetujui => 'Menyetujui diskon manual di atas batas kasir',
+            self::PenjualanTempoSetujui => 'Menyetujui penjualan tempo di atas limit kredit atau saat piutang lewat jatuh tempo',
             self::ShiftSelisihSetujui => 'Menyetujui selisih kas tutup shift di atas toleransi',
             self::LaporanPenjualanLihat => 'Melihat laporan penjualan',
             self::LaporanKeuanganLihat => 'Melihat laporan keuangan',
@@ -115,7 +118,7 @@ enum IzinTenant: string
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
-            self::PenjualanDiskonSetujui, self::ShiftSelisihSetujui => 'Penjualan',
+            self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

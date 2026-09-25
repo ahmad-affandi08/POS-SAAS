@@ -63,6 +63,8 @@ final class DataAwalKasir
                 'ToleransiSelisihKas' => $pengaturan->toleransiSelisihKas->KeString(),
                 // F-09: batas hari retur sejak tanggal bisnis penjualan (aplikasi memeriksa sebelum mengirim retur).
                 'BatasHariRetur' => $pengaturan->batasHariRetur,
+                // F-12: tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari N hari (BR-12.1).
+                'BatasHariLewatJatuhTempo' => $pengaturan->batasHariLewatJatuhTempo,
             ],
             'Outlet' => $outlet === null ? null : [
                 'Uuid' => $outlet->uuidOutlet,
