@@ -15,6 +15,7 @@ import { LabelPenanda, LabelStatusLangganan } from '@/Komponen/Pengelola/Tenant/
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { kelasDaftarTabPanel, kelasItemTabPanel } from '@/Komponen/Navigasi/TabTautan';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -244,11 +245,19 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
 
             <Tabs defaultValue="ringkasan" className="gap-4">
                 <div className="overflow-x-auto">
-                    <TabsList aria-label="Bagian tampilan tenant" className="text-label">
-                        <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
-                        <TabsTrigger value="override">Override & trial ({Tenant.Override.length})</TabsTrigger>
-                        <TabsTrigger value="catatan">Catatan & riwayat</TabsTrigger>
-                        <TabsTrigger value="menyusul">Belum tersedia</TabsTrigger>
+                    <TabsList aria-label="Bagian tampilan tenant" className={kelasDaftarTabPanel}>
+                        <TabsTrigger value="ringkasan" className={kelasItemTabPanel}>
+                            Ringkasan
+                        </TabsTrigger>
+                        <TabsTrigger value="override" className={kelasItemTabPanel}>
+                            Override & trial ({Tenant.Override.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="catatan" className={kelasItemTabPanel}>
+                            Catatan & riwayat
+                        </TabsTrigger>
+                        <TabsTrigger value="menyusul" className={kelasItemTabPanel}>
+                            Belum tersedia
+                        </TabsTrigger>
                     </TabsList>
                 </div>
 

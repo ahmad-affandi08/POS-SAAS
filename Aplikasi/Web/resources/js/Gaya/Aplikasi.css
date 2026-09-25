@@ -241,6 +241,33 @@
         --tw-ring-offset-color: var(--color-permukaan);
     }
 
+    /*
+     * Semua yang bisa diklik memakai kursor tangan (Tailwind 4 menghapus bawaan cursor: pointer pada <button>).
+     * Di layer base, jadi utilitas (cursor-text, cursor-col-resize, disabled:cursor-not-allowed) tetap menang.
+     * Kontrol nonaktif tidak ikut: mereka memakai kursor bawaan/not-allowed.
+     */
+    :is(
+        button,
+        a[href],
+        summary,
+        select,
+        label[for],
+        input:is([type='checkbox'], [type='radio'], [type='file'], [type='submit'], [type='button'], [type='reset']),
+        [role='button'],
+        [role='link'],
+        [role='tab'],
+        [role='menuitem'],
+        [role='menuitemcheckbox'],
+        [role='menuitemradio'],
+        [role='option'],
+        [role='switch'],
+        [role='checkbox'],
+        [role='radio'],
+        [role='slider']
+    ):not(:disabled, [aria-disabled='true'], [data-disabled]) {
+        cursor: pointer;
+    }
+
     body {
         background-color: var(--color-latar);
         color: var(--color-teks-utama);
