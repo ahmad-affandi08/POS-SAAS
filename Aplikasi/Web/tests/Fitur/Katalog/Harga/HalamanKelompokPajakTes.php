@@ -37,12 +37,24 @@ describe('F-03 halaman kelompok pajak (E.8, §12.2)', function (): void {
                 ->where('Izin.KelolaPajak', false));
     });
 
+    it('halaman tambah (halaman penuh): opsi jenis pajak, kategori, dasar pengenaan; tanpa daftar kelompok; Kasir & Manajer 403', function (): void {
+        BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Akuntan)->get('/kelola/kelompok-pajak/buat')->assertOk()
+            ->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/KelompokPajak/Buat')
+                ->has('JenisPajak', 3)
+                ->has('Kategori', count(KategoriPajakProduk::cases()))
+                ->where('DasarPengenaan.0', ['Nilai' => 'Subtotal', 'Label' => 'Subtotal'])
+                ->missing('KelompokPajak'));
+
+        BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Kasir)->get('/kelola/kelompok-pajak/buat')->assertForbidden();
+        BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->get('/kelola/kelompok-pajak/buat')->assertForbidden();
+    });
+
     it('Akuntan membuat dan mengubah kelompok pajak; galat konsistensi kategori di bidang Pajak', function (): void {
         $masuk = fn () => BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Akuntan);
 
-        $masuk()->post('/kelola/kelompok-pajak', ['Nama' => 'Makan & minum', 'Kategori' => 'KenaPbjt', 'Pajak' => [
+        $masuk()->from('/kelola/kelompok-pajak/buat')->post('/kelola/kelompok-pajak', ['Nama' => 'Makan & minum', 'Kategori' => 'KenaPbjt', 'Pajak' => [
             ['KodeJenisPajak' => 'PbjtMakananMinuman', 'DasarPengenaan' => 'SubtotalPlusLayanan'],
-        ]])->assertSessionHasNoErrors();
+        ]])->assertSessionHasNoErrors()->assertRedirect('/kelola/kelompok-pajak');
         $masuk()->post('/kelola/kelompok-pajak', ['Nama' => 'Salah', 'Kategori' => 'KenaPpn', 'Pajak' => []])->assertSessionHasErrors(['Pajak']);
         $masuk()->post('/kelola/kelompok-pajak', ['Nama' => 'Tanpa kategori', 'Kategori' => 'Bebas', 'Pajak' => []])->assertSessionHasErrors(['Kategori']);
 

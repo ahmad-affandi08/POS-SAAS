@@ -33,6 +33,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
 
     // Daftar harga (E.7).
     Route::get('/daftar-harga', [DaftarHargaKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.daftar-harga.daftar');
+    Route::get('/daftar-harga/buat', [DaftarHargaKontroler::class, 'Buat'])->middleware($ubahHarga)->name('kelola.daftar-harga.buat');
     Route::post('/daftar-harga', [DaftarHargaKontroler::class, 'Simpan'])->middleware($ubahHarga)->name('kelola.daftar-harga.simpan');
     Route::get('/daftar-harga/{daftarHarga}', [DaftarHargaKontroler::class, 'Detail'])->middleware($lihat)->where('daftarHarga', $ulid)->name('kelola.daftar-harga.detail');
     Route::put('/daftar-harga/{daftarHarga}', [DaftarHargaKontroler::class, 'Ubah'])->middleware($ubahHarga)->where('daftarHarga', $ulid)->name('kelola.daftar-harga.ubah');
@@ -42,6 +43,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
 
     // Kelompok pajak (E.8): lihat = produk.lihat, ubah = akuntansi.kelola (§19.1 Akuntan = pajak).
     Route::get('/kelompok-pajak', [KelompokPajakKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.kelompok-pajak.daftar');
+    Route::get('/kelompok-pajak/buat', [KelompokPajakKontroler::class, 'Buat'])->middleware($kelolaPajak)->name('kelola.kelompok-pajak.buat');
     Route::post('/kelompok-pajak', [KelompokPajakKontroler::class, 'Simpan'])->middleware($kelolaPajak)->name('kelola.kelompok-pajak.simpan');
     Route::put('/kelompok-pajak/{kelompokPajak}', [KelompokPajakKontroler::class, 'Ubah'])->middleware($kelolaPajak)->where('kelompokPajak', $ulid)->name('kelola.kelompok-pajak.ubah');
 });

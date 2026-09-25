@@ -2,6 +2,8 @@ import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanAbsensi, { FormatDurasiMenit } from '@/Halaman/Kelola/Karyawan/Absensi';
+import HalamanBuatKaryawan from '@/Halaman/Kelola/Karyawan/Buat';
+import HalamanBuatAturanKomisi from '@/Halaman/Kelola/Karyawan/BuatAturanKomisi';
 import HalamanDaftarKaryawan from '@/Halaman/Kelola/Karyawan/Daftar';
 import HalamanAturanKomisi, { FormatNilaiKomisi } from '@/Halaman/Kelola/Karyawan/Komisi';
 import HalamanLaporanKomisi from '@/Halaman/Kelola/Karyawan/LaporanKomisi';
@@ -130,7 +132,9 @@ describe('Halaman karyawan (F-18)', () => {
                 Izin={{ Kelola: true }}
             />,
         );
-        expect(screen.getAllByRole('button', { name: 'Tambah karyawan' }).length).toBeGreaterThan(0);
+        expect(screen.getAllByRole('link', { name: 'Tambah karyawan' })[0]?.getAttribute('href')).toBe(
+            '/kelola/karyawan/buat',
+        );
         expect(screen.getAllByText('Rp 3.500.000').length).toBeGreaterThan(0);
         cleanup();
 
@@ -142,7 +146,7 @@ describe('Halaman karyawan (F-18)', () => {
                 Izin={{ Kelola: false }}
             />,
         );
-        expect(screen.queryByRole('button', { name: 'Tambah karyawan' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Tambah karyawan' })).toBeNull();
         cleanup();
 
         window.history.replaceState({}, '', '/kelola/karyawan/absensi');
@@ -189,11 +193,13 @@ describe('Halaman karyawan (F-18)', () => {
             Status: 'Aktif' as const,
         };
         RenderUji(<HalamanAturanKomisi Aturan={[aturan]} OpsiKategori={[]} Izin={{ Kelola: true }} />);
-        expect(screen.getAllByRole('button', { name: 'Tambah aturan komisi' }).length).toBeGreaterThan(0);
+        expect(screen.getAllByRole('link', { name: 'Tambah aturan komisi' })[0]?.getAttribute('href')).toBe(
+            '/kelola/karyawan/komisi/buat',
+        );
         expect(screen.getAllByText('20%').length).toBeGreaterThan(0);
         cleanup();
         RenderUji(<HalamanAturanKomisi Aturan={[aturan]} OpsiKategori={[]} Izin={{ Kelola: false }} />);
-        expect(screen.queryByRole('button', { name: 'Tambah aturan komisi' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Tambah aturan komisi' })).toBeNull();
         cleanup();
 
         window.history.replaceState({}, '', '/kelola/karyawan/komisi/laporan');
@@ -204,5 +210,52 @@ describe('Halaman karyawan (F-18)', () => {
             />,
         );
         expect(screen.getByText('Rp 1.250.000')).toBeTruthy();
+    });
+
+    it('halaman tambah karyawan: kirim POST ke /kelola/karyawan (isian kosong = null); Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/karyawan/buat');
+        RenderUji(<HalamanBuatKaryawan OpsiPengguna={[]} OpsiOutlet={[Outlet]} />);
+        fireEvent.change(screen.getByLabelText('Nama karyawan'), { target: { value: 'Rina Wulandari' } });
+        fireEvent.change(screen.getByLabelText('Jabatan (opsional)'), { target: { value: 'Barista' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan karyawan' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/karyawan',
+            {
+                Nama: 'Rina Wulandari',
+                Jabatan: 'Barista',
+                LevelStaf: null,
+                GajiPokok: null,
+                UuidPengguna: null,
+                UuidOutlet: null,
+            },
+            expect.anything(),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/karyawan');
+    });
+
+    it('halaman tambah aturan komisi: kirim POST ke /kelola/karyawan/komisi; Batal kembali ke daftar aturan', () => {
+        window.history.replaceState({}, '', '/kelola/karyawan/komisi/buat');
+        RenderUji(<HalamanBuatAturanKomisi OpsiKategori={[]} />);
+        fireEvent.change(screen.getByLabelText('Nama aturan'), { target: { value: 'Umum 10%' } });
+        fireEvent.change(screen.getByLabelText('Persen komisi'), { target: { value: '10,5' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan aturan' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/karyawan/komisi',
+            {
+                Nama: 'Umum 10%',
+                Cakupan: 'Semua',
+                UuidProduk: null,
+                UuidKategori: null,
+                LevelStaf: null,
+                Jenis: 'Persen',
+                Nilai: '10.5',
+            },
+            expect.anything(),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/karyawan/komisi');
     });
 });

@@ -181,6 +181,24 @@ describe('Outlet (F-02 langkah 1)', function (): void {
             ->has('JenisGudang', count(JenisGudang::cases())));
     });
 
+    it('halaman tambah outlet (halaman penuh): opsi merek, kota, batas paket; tanpa outlet.kelola 403; simpan ke detail', function (): void {
+        ['Tenant' => $tenant, 'Tes' => $tes] = MasukPemilikOutlet($this);
+
+        $tes->get('/kelola/outlet/buat')->assertOk()->assertInertia(fn (AssertableInertia $halaman) => $halaman
+            ->component('Kelola/Outlet/Buat')
+            ->has('Merek', 1)
+            ->has('Merek.0', fn (AssertableInertia $merek) => $merek->has('Nilai')->has('Label'))
+            ->has('Kota', 2)
+            ->where('BatasOutlet', ['Batas' => 3, 'Terpakai' => 1]));
+
+        $respons = $tes->post('/kelola/outlet', IsianOutletUji($tenant->Id))->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        $respons->assertRedirect('/kelola/outlet/'.Outlet::query()->where('Kode', 'SLO1')->sole()->Uuid);
+
+        $manajer = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::ManajerOutlet);
+        BantuanOrganisasi::Masuk($this, $manajer, $tenant->Id)->get('/kelola/outlet/buat')->assertForbidden();
+    });
+
     it('anggota yang hanya ditugaskan ke satu outlet tidak melihat dan tidak bisa membuka outlet lain', function (): void {
         ['Tenant' => $tenant, 'Tes' => $tes] = MasukPemilikOutlet($this);
         $tes->post('/kelola/outlet', IsianOutletUji($tenant->Id))->assertSessionHasNoErrors();

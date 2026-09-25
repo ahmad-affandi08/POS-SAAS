@@ -76,6 +76,19 @@ final class DaftarKelompokPajak
                 ])->all()),
                 'JumlahProduk' => $jumlahProduk[$k->Id] ?? 0,
             ])->all()),
+            ...$this->AmbilOpsiFormulir(),
+        ];
+    }
+
+    /**
+     * Opsi formulir kelompok pajak (halaman daftar & halaman penuh `Kelola/KelompokPajak/Buat`): jenis pajak
+     * platform serta pilihan kategori & dasar pengenaan. Tanpa angka tarif (CLAUDE.md #12).
+     *
+     * @return array{JenisPajak: list<array{Kode: string, Nama: string, Cakupan: string}>, Kategori: list<array{Nilai: string, Label: string}>, DasarPengenaan: list<array{Nilai: string, Label: string}>}
+     */
+    public function AmbilOpsiFormulir(): array
+    {
+        return [
             'JenisPajak' => array_values(JenisPajak::query()->orderBy('Id')->get()
                 ->map(fn (JenisPajak $jenis): array => ['Kode' => $jenis->Kode, 'Nama' => $jenis->Nama, 'Cakupan' => $jenis->Cakupan->value])->all()),
             'Kategori' => array_map(fn (KategoriPajakProduk $k): array => ['Nilai' => $k->value, 'Label' => $k->AmbilLabel()], KategoriPajakProduk::cases()),

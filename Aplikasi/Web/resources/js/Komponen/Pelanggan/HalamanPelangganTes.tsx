@@ -1,11 +1,14 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import HalamanBuatPelanggan from '@/Halaman/Kelola/Pelanggan/Buat';
+import HalamanBuatTierPelanggan from '@/Halaman/Kelola/Pelanggan/BuatTier';
 import HalamanDaftarPelanggan from '@/Halaman/Kelola/Pelanggan/Daftar';
 import HalamanDetailPelanggan from '@/Halaman/Kelola/Pelanggan/Detail';
 import HalamanPengaturanLoyalti from '@/Halaman/Kelola/Pelanggan/PengaturanLoyalti';
 import HalamanTierPelanggan, { FormatPengali } from '@/Halaman/Kelola/Pelanggan/Tier';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import FormulirPelanggan from '@/Komponen/Pelanggan/FormulirPelanggan';
 import { BuatHasilTabel } from '@/Komponen/Persediaan/DataUjiPersediaan';
 import type { BarisPelanggan } from '@/Tipe/Pelanggan';
 
@@ -45,7 +48,7 @@ describe('Halaman pelanggan (F-16a)', () => {
     });
     afterEach(() => cleanup());
 
-    it('daftar: ringkasan belanja & tag tampil; tambah hanya untuk pelanggan.kelola; formulir mengirim POST', () => {
+    it('daftar: ringkasan belanja & tag tampil; tambah (halaman penuh /buat) hanya untuk pelanggan.kelola; ubah di panel', () => {
         RenderUji(
             <HalamanDaftarPelanggan
                 Pelanggan={BuatHasilTabel([Ani])}
@@ -56,18 +59,10 @@ describe('Halaman pelanggan (F-16a)', () => {
         );
         expect(screen.getAllByText('Rp 12.500.000').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Langganan · Reseller').length).toBeGreaterThan(0);
-
-        const tambah = screen.getAllByRole('button', { name: 'Tambah pelanggan' })[0];
-        expect(tambah).toBeDefined();
-        fireEvent.click(tambah as HTMLElement);
-        fireEvent.change(screen.getByLabelText('Nama pelanggan'), { target: { value: 'Budi Santoso' } });
-        fireEvent.change(screen.getByLabelText('No. HP/WA'), { target: { value: '0813 1111 2222' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Simpan pelanggan' }));
-        expect(tiruanRouter.post).toHaveBeenCalledWith(
-            '/kelola/pelanggan',
-            expect.objectContaining({ Nama: 'Budi Santoso', NoHp: '0813 1111 2222', TanggalLahir: null, Tag: [] }),
-            expect.anything(),
+        expect(screen.getByRole('link', { name: 'Tambah pelanggan' }).getAttribute('href')).toBe(
+            '/kelola/pelanggan/buat',
         );
+        expect(screen.queryByRole('button', { name: 'Tambah pelanggan' })).toBeNull();
 
         cleanup();
         RenderUji(
@@ -78,7 +73,37 @@ describe('Halaman pelanggan (F-16a)', () => {
                 Izin={{ Kelola: false, LihatPenjualan: false }}
             />,
         );
-        expect(screen.queryByRole('button', { name: 'Tambah pelanggan' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Tambah pelanggan' })).toBeNull();
+    });
+
+    it('halaman buat pelanggan: formulir mengirim POST; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/pelanggan/buat');
+        RenderUji(<HalamanBuatPelanggan />);
+        fireEvent.change(screen.getByLabelText('Nama pelanggan'), { target: { value: 'Budi Santoso' } });
+        fireEvent.change(screen.getByLabelText('No. HP/WA'), { target: { value: '0813 1111 2222' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pelanggan' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/pelanggan',
+            expect.objectContaining({ Nama: 'Budi Santoso', NoHp: '0813 1111 2222', TanggalLahir: null, Tag: [] }),
+            expect.anything(),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/pelanggan');
+    });
+
+    it('panel ubah pelanggan tetap di panel: kirim PUT; Batal menutup panel', () => {
+        const TutupPanel = vi.fn();
+        RenderUji(<FormulirPelanggan pelanggan={Ani} saatTutup={TutupPanel} />);
+        expect(screen.getByText(`Ubah pelanggan ${Ani.Nama}`)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pelanggan' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            `/kelola/pelanggan/${Ani.Uuid}`,
+            expect.objectContaining({ Nama: Ani.Nama, LimitKredit: '5000000' }),
+            expect.anything(),
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(TutupPanel).toHaveBeenCalled();
     });
 
     it('detail: profil, ringkasan, riwayat bertaut ke penjualan; arsipkan mengirim POST', () => {
@@ -138,7 +163,7 @@ describe('Halaman pelanggan (F-16a)', () => {
         );
     });
 
-    it('F-16b tier: daftar tier dengan pengali; tambah mengirim POST; tanpa fitur tampil ajakan paket', () => {
+    it('F-16b tier: daftar tier dengan pengali; tambah lewat halaman /buat; tanpa fitur tampil ajakan paket', () => {
         RenderUji(
             <HalamanTierPelanggan
                 Tier={[
@@ -160,7 +185,16 @@ describe('Halaman pelanggan (F-16a)', () => {
         expect(screen.getByText('Loyalti tersedia di paket Pro ke atas')).toBeTruthy();
         expect(screen.getAllByText('×1,5').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Rp 5.000.000').length).toBeGreaterThan(0);
-        fireEvent.click(screen.getAllByRole('button', { name: 'Tambah tier' })[0] as HTMLElement);
+        expect(screen.getByRole('link', { name: 'Tambah tier' }).getAttribute('href')).toBe(
+            '/kelola/pelanggan/tier/buat',
+        );
+        expect(FormatPengali('2.00')).toBe('×2');
+    });
+
+    it('F-16b halaman buat tier: formulir mengirim POST; Batal kembali ke daftar tier', () => {
+        window.history.replaceState({}, '', '/kelola/pelanggan/tier/buat');
+        RenderUji(<HalamanBuatTierPelanggan FiturAktif={false} />);
+        expect(screen.getByText('Loyalti tersedia di paket Pro ke atas')).toBeTruthy();
         fireEvent.change(screen.getByLabelText('Kode tier'), { target: { value: 'SILVER' } });
         fireEvent.change(screen.getByLabelText('Nama tier'), { target: { value: 'Silver' } });
         fireEvent.click(screen.getByRole('button', { name: 'Simpan tier' }));
@@ -175,7 +209,9 @@ describe('Halaman pelanggan (F-16a)', () => {
             }),
             expect.anything(),
         );
-        expect(FormatPengali('2.00')).toBe('×2');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/pelanggan/tier');
     });
 
     it('F-16b pengaturan loyalti: contoh perhitungan & simpan mengirim PUT', () => {

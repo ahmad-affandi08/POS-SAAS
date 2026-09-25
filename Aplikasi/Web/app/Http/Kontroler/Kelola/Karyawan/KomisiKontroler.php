@@ -29,7 +29,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Komisi (F-18, EMP-04): aturan komisi (`/kelola/karyawan/komisi`, tambah/ubah/arsip) dan laporan komisi per karyawan
+ * Komisi (F-18, EMP-04): aturan komisi (`/kelola/karyawan/komisi`, tambah di halaman penuh `/buat`, ubah/arsip) dan laporan komisi per karyawan
  * (`/kelola/karyawan/komisi/laporan`). Lihat `karyawan.lihat`; ubah aturan `karyawan.kelola`.
  */
 final class KomisiKontroler extends DasarKelolaKontroler
@@ -43,11 +43,19 @@ final class KomisiKontroler extends DasarKelolaKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah aturan komisi" (pola sama dengan Tambah produk). Hanya untuk `karyawan.kelola`. */
+    public function Buat(PohonKategori $kategori): Response
+    {
+        return Inertia::render('Kelola/Karyawan/BuatAturanKomisi', [
+            'OpsiKategori' => array_map(fn (array $k): array => ['Uuid' => $k['Uuid'], 'Nama' => $k['Jalur']], $kategori->AmbilOpsi()),
+        ]);
+    }
+
     public function Simpan(Request $permintaan, SimpanAturanKomisi $simpan): RedirectResponse
     {
         $a = $simpan->Jalankan($this->AmbilData($permintaan));
 
-        return back()->with('Kilat', "Aturan komisi {$a->Nama} ditambahkan.");
+        return to_route('kelola.karyawan.komisi')->with('Kilat', "Aturan komisi {$a->Nama} ditambahkan.");
     }
 
     public function Perbarui(Request $permintaan, string $aturan, SimpanAturanKomisi $simpan): RedirectResponse

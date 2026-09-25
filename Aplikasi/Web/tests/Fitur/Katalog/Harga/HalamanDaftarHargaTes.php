@@ -87,6 +87,17 @@ describe('F-03 daftar harga (E.7)', function (): void {
             ->and($semua->refresh()->Aktif)->toBeTrue();
     });
 
+    it('halaman buat (halaman penuh): opsi outlet, kanal, tier, zona waktu; Kasir 403', function (): void {
+        BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id)->get('/kelola/daftar-harga/buat')->assertOk()
+            ->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/DaftarHarga/Buat')
+                ->has('Outlet')
+                ->has('Kanal', count(KanalPenjualan::cases()))
+                ->has('OpsiTier')
+                ->where('ZonaWaktu', 'Asia/Jakarta'));
+
+        BantuanKatalog::MasukSebagai($this, $this->t['Tenant']->Id, PeranTenantBawaan::Kasir)->get('/kelola/daftar-harga/buat')->assertForbidden();
+    });
+
     it('halaman daftar: baris dengan nama outlet, label kanal, waktu lokal, jumlah produk; opsi kanal & zona waktu', function (): void {
         $daftar = BantuanHarga::BuatDaftarHarga('Harga Bandara', [
             'IdOutlet' => [$this->bandara->Id], 'Kanal' => KanalPenjualan::BawaPulang, 'Prioritas' => 5,

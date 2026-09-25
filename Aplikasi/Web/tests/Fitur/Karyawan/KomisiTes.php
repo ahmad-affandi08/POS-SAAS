@@ -125,7 +125,7 @@ describe('F-18 aturan komisi back-office', function (): void {
 
         $this->post('/kelola/karyawan/komisi', ['Nama' => 'Terlalu besar', 'Cakupan' => 'Semua', 'Jenis' => 'Persen', 'Nilai' => '150'])->assertSessionHasErrors('Nilai');
         $this->post('/kelola/karyawan/komisi', ['Nama' => 'Tanpa produk', 'Cakupan' => 'Produk', 'Jenis' => 'Tetap', 'Nilai' => '5000'])->assertSessionHasErrors('UuidProduk');
-        $this->post('/kelola/karyawan/komisi', ['Nama' => 'Cuci blow Rp 5.000', 'Cakupan' => 'Produk', 'UuidProduk' => $k['Produk']->Uuid, 'Jenis' => 'Tetap', 'Nilai' => '5000'])->assertSessionHasNoErrors();
+        $this->post('/kelola/karyawan/komisi', ['Nama' => 'Cuci blow Rp 5.000', 'Cakupan' => 'Produk', 'UuidProduk' => $k['Produk']->Uuid, 'Jenis' => 'Tetap', 'Nilai' => '5000'])->assertSessionHasNoErrors()->assertRedirect('/kelola/karyawan/komisi');
         $aturan = AturanKomisi::query()->where('Nama', 'Cuci blow Rp 5.000')->sole();
         $this->put("/kelola/karyawan/komisi/{$aturan->Uuid}", ['Nama' => 'Cuci blow Rp 6.000', 'Cakupan' => 'Produk', 'UuidProduk' => $k['Produk']->Uuid, 'Jenis' => 'Tetap', 'Nilai' => '6000'])->assertSessionHasNoErrors();
         $this->post("/kelola/karyawan/komisi/{$aturan->Uuid}/arsipkan")->assertSessionHasNoErrors();
@@ -144,5 +144,20 @@ describe('F-18 aturan komisi back-office', function (): void {
         $this->post('/kelola/karyawan/komisi', ['Nama' => 'Tidak boleh', 'Cakupan' => 'Semua', 'Jenis' => 'Persen', 'Nilai' => '5'])->assertForbidden();
         BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->get('/kelola/karyawan/komisi')->assertForbidden();
+    });
+
+    it('halaman tambah aturan (halaman penuh): opsi kategori; tanpa karyawan.kelola 403', function (): void {
+        $k = SiapkanKomisi($this);
+        BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+
+        $this->get('/kelola/karyawan/komisi/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Karyawan/BuatAturanKomisi')
+            ->has('OpsiKategori')
+            ->missing('Aturan'));
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Supervisor);
+        $this->get('/kelola/karyawan/komisi/buat')->assertForbidden();
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/karyawan/komisi/buat')->assertForbidden();
     });
 });

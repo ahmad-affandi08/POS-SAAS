@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanFormFaktur, { TambahHari } from '@/Halaman/Kelola/Pembelian/Faktur/Form';
 import HalamanDaftarHutang, { FormatHariLewat } from '@/Halaman/Kelola/Pembelian/Hutang/Daftar';
+import HalamanBuatPemasok from '@/Halaman/Kelola/Pembelian/Pemasok/Buat';
+import HalamanDaftarPemasok from '@/Halaman/Kelola/Pembelian/Pemasok/Daftar';
 import HalamanFormPembayaran, { PeriksaAlokasi } from '@/Halaman/Kelola/Pembelian/Pembayaran/Form';
 import HalamanFormPenerimaan, { PeriksaBarisDariPesanan } from '@/Halaman/Kelola/Pembelian/Penerimaan/Form';
 import HalamanPengaturanPembelian from '@/Halaman/Kelola/Pembelian/Pengaturan';
@@ -217,6 +219,41 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
             <HalamanDaftarPesanan Pesanan={BuatHasilTabel([])} OpsiStatus={[]} OpsiPemasok={[]} Izin={IzinLihat} />,
         );
         expect(screen.queryByRole('link', { name: 'Buat pesanan pembelian' })).toBeNull();
+    });
+
+    it('daftar pemasok: tombol tambah membuka halaman penuh /kelola/pembelian/pemasok/buat (hanya pembelian.kelola)', () => {
+        window.history.replaceState({}, '', '/kelola/pembelian/pemasok');
+        RenderUji(<HalamanDaftarPemasok Pemasok={BuatHasilTabel([])} Izin={IzinPenuh} />);
+        const tautan = screen.getAllByRole('link', { name: 'Tambah pemasok' });
+        expect(tautan.length).toBeGreaterThan(0);
+        expect(tautan.every((t) => t.getAttribute('href') === '/kelola/pembelian/pemasok/buat')).toBe(true);
+        expect(screen.queryByRole('dialog')).toBeNull();
+        cleanup();
+        RenderUji(<HalamanDaftarPemasok Pemasok={BuatHasilTabel([])} Izin={IzinLihat} />);
+        expect(screen.queryByRole('link', { name: 'Tambah pemasok' })).toBeNull();
+    });
+
+    it('halaman tambah pemasok: kirim POST ke /kelola/pembelian/pemasok; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/pembelian/pemasok/buat');
+        RenderUji(<HalamanBuatPemasok />);
+        UbahNilai(screen.getByLabelText('Kode pemasok'), 'SUP-001');
+        UbahNilai(screen.getByLabelText('Nama pemasok'), 'PT Sumber Pangan Nusantara');
+        UbahNilai(screen.getByLabelText('Termin bawaan (hari)'), '30');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pemasok' }));
+
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/pembelian/pemasok',
+            expect.objectContaining({
+                Kode: 'SUP-001',
+                Nama: 'PT Sumber Pangan Nusantara',
+                TerminHari: '30',
+                Pkp: false,
+            }),
+            expect.anything(),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/pembelian/pemasok');
     });
 
     it('form pesanan: di atas batas persetujuan tampil peringatan; simpan mengirim PUT dengan baris', () => {

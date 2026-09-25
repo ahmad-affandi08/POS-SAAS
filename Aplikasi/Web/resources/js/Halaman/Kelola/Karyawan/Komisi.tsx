@@ -1,23 +1,18 @@
-import { router, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
-import BidangTeks from '@/Komponen/Formulir/BidangTeks';
-import BidangUang from '@/Komponen/Formulir/BidangUang';
-import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
+import FormulirAturanKomisi, { AlamatAturanKomisi } from '@/Komponen/Karyawan/FormulirAturanKomisi';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
-import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Button } from '@/Komponen/Ui/button';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { BarisAturanKomisi, CakupanKomisi, JenisKomisi, OpsiUuidNama, PropsAturanKomisi } from '@/Tipe/Karyawan';
+import type { BarisAturanKomisi, JenisKomisi, PropsAturanKomisi } from '@/Tipe/Karyawan';
 
-const alamat = '/kelola/karyawan/komisi';
+const alamat = AlamatAturanKomisi;
 
 /** `10.00` persen → `10%`; nominal → `Rp 5.000 / jumlah`. */
 export function FormatNilaiKomisi(jenis: JenisKomisi, nilai: string): string {
@@ -66,156 +61,13 @@ const kolom: KolomTabel<BarisAturanKomisi>[] = [
     },
 ];
 
-type Isian = {
-    Nama: string;
-    Cakupan: CakupanKomisi;
-    UuidProduk: string;
-    NamaProduk: string;
-    UuidKategori: string;
-    LevelStaf: string;
-    Jenis: JenisKomisi;
-    Nilai: string;
-};
-
-function FormulirAturan({
-    aturan,
-    opsiKategori,
-    saatTutup,
-}: {
-    aturan: BarisAturanKomisi | null;
-    opsiKategori: OpsiUuidNama[];
-    saatTutup: () => void;
-}) {
-    const { props } = usePage<PropsBersamaAplikasi>();
-    const galat = props.errors;
-    const [isian, AturIsian] = useState<Isian>({
-        Nama: aturan?.Nama ?? '',
-        Cakupan: aturan?.Cakupan ?? 'Semua',
-        UuidProduk: aturan?.UuidProduk ?? '',
-        NamaProduk: aturan?.Cakupan === 'Produk' ? aturan.NamaSasaran : '',
-        UuidKategori: aturan?.UuidKategori ?? '',
-        LevelStaf: aturan?.LevelStaf ?? '',
-        Jenis: aturan?.Jenis ?? 'Persen',
-        Nilai: (aturan?.Nilai ?? '').replace(/\.00$/, ''),
-    });
-    const Ubah = (ubah: Partial<Isian>) => AturIsian({ ...isian, ...ubah });
-    const Simpan = (peristiwa: FormEvent) => {
-        peristiwa.preventDefault();
-        const data = {
-            Nama: isian.Nama,
-            Cakupan: isian.Cakupan,
-            UuidProduk: isian.Cakupan === 'Produk' && isian.UuidProduk !== '' ? isian.UuidProduk : null,
-            UuidKategori: isian.Cakupan === 'Kategori' && isian.UuidKategori !== '' ? isian.UuidKategori : null,
-            LevelStaf: isian.LevelStaf.trim() === '' ? null : isian.LevelStaf.trim(),
-            Jenis: isian.Jenis,
-            Nilai: isian.Nilai,
-        };
-        const opsi = { preserveScroll: true, onSuccess: saatTutup };
-
-        if (aturan === null) {
-            router.post(alamat, data, opsi);
-        } else {
-            router.put(`${alamat}/${aturan.Uuid}`, data, opsi);
-        }
-    };
-
-    return (
-        <DialogFormulir
-            judul={aturan === null ? 'Tambah aturan komisi' : `Ubah aturan ${aturan.Nama}`}
-            jenis="panel"
-            galatUmum={galat.Umum}
-            saatTutup={saatTutup}
-        >
-            <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir aturan komisi">
-                <BidangTeks
-                    label="Nama aturan"
-                    nilai={isian.Nama}
-                    saatBerubah={(nilai) => Ubah({ Nama: nilai })}
-                    galat={galat.Nama}
-                    keterangan="Misal Komisi potong rambut senior."
-                    maxLength={100}
-                    required
-                />
-                <BidangPilihan
-                    label="Berlaku untuk"
-                    nilai={isian.Cakupan}
-                    opsi={[
-                        { Nilai: 'Semua', Label: 'Semua produk' },
-                        { Nilai: 'Kategori', Label: 'Satu kategori' },
-                        { Nilai: 'Produk', Label: 'Satu produk' },
-                    ]}
-                    saatBerubah={(nilai) => Ubah({ Cakupan: nilai as CakupanKomisi })}
-                />
-                {isian.Cakupan === 'Kategori' ? (
-                    <BidangPilihan
-                        label="Kategori"
-                        nilai={isian.UuidKategori}
-                        kosong="Pilih kategori"
-                        opsi={opsiKategori.map((k) => ({ Nilai: k.Uuid, Label: k.Nama }))}
-                        saatBerubah={(nilai) => Ubah({ UuidKategori: nilai })}
-                        galat={galat.UuidKategori}
-                    />
-                ) : null}
-                {isian.Cakupan === 'Produk' ? (
-                    <div className="flex flex-col gap-1">
-                        <PemilihProduk
-                            label={isian.NamaProduk === '' ? 'Pilih produk' : `Produk: ${isian.NamaProduk} (ganti)`}
-                            jenis={[]}
-                            saatPilih={(produk) => Ubah({ UuidProduk: produk.Uuid, NamaProduk: produk.Nama })}
-                            galat={galat.UuidProduk}
-                        />
-                    </div>
-                ) : null}
-                <BidangTeks
-                    label="Level staf (opsional)"
-                    nilai={isian.LevelStaf}
-                    saatBerubah={(nilai) => Ubah({ LevelStaf: nilai })}
-                    galat={galat.LevelStaf}
-                    keterangan="Kosongkan agar berlaku untuk semua level. Aturan dengan level yang cocok lebih diutamakan."
-                    maxLength={40}
-                />
-                <BidangPilihan
-                    label="Jenis komisi"
-                    nilai={isian.Jenis}
-                    opsi={[
-                        { Nilai: 'Persen', Label: 'Persen dari nilai penjualan (tanpa pajak)' },
-                        { Nilai: 'Tetap', Label: 'Nominal per jumlah' },
-                    ]}
-                    saatBerubah={(nilai) => Ubah({ Jenis: nilai as JenisKomisi })}
-                />
-                {isian.Jenis === 'Persen' ? (
-                    <BidangTeks
-                        label="Persen komisi"
-                        nilai={isian.Nilai}
-                        saatBerubah={(nilai) => Ubah({ Nilai: nilai.replace(',', '.') })}
-                        galat={galat.Nilai}
-                        inputMode="decimal"
-                        maxLength={6}
-                    />
-                ) : (
-                    <BidangUang
-                        label="Nominal per jumlah"
-                        nilai={isian.Nilai}
-                        saatBerubah={(nilai) => Ubah({ Nilai: nilai })}
-                        galat={galat.Nilai}
-                    />
-                )}
-                <div className="flex flex-wrap justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={saatTutup}>
-                        Batal
-                    </Button>
-                    <Button type="submit">Simpan aturan</Button>
-                </div>
-            </form>
-        </DialogFormulir>
-    );
-}
-
 /** F-18 EMP-04: aturan komisi (produk paling spesifik menang; level staf yang cocok diutamakan). */
 export default function HalamanAturanKomisi({ Aturan, OpsiKategori, Izin }: PropsAturanKomisi) {
-    const [form, AturForm] = useState<{ aturan: BarisAturanKomisi | null } | null>(null);
+    const [ubah, AturUbah] = useState<BarisAturanKomisi | null>(null);
     const tombol = Izin.Kelola ? (
-        <Button onClick={() => AturForm({ aturan: null })}>Tambah aturan komisi</Button>
+        <Button asChild>
+            <Link href={`${alamat}/buat`}>Tambah aturan komisi</Link>
+        </Button>
     ) : null;
 
     return (
@@ -240,7 +92,7 @@ export default function HalamanAturanKomisi({ Aturan, OpsiKategori, Izin }: Prop
                           aksiBaris: (a: BarisAturanKomisi) => (
                               <ItemAksiBaris
                                   aksi={[
-                                      { label: 'Ubah aturan', saatPilih: () => AturForm({ aturan: a }) },
+                                      { label: 'Ubah aturan', saatPilih: () => AturUbah(a) },
                                       a.Status === 'Aktif'
                                           ? {
                                                 label: 'Arsipkan aturan',
@@ -268,8 +120,8 @@ export default function HalamanAturanKomisi({ Aturan, OpsiKategori, Izin }: Prop
                     : {})}
                 kosong={{ judul: 'Belum ada aturan komisi.', ...(tombol ? { aksi: tombol } : {}) }}
             />
-            {form !== null ? (
-                <FormulirAturan aturan={form.aturan} opsiKategori={OpsiKategori} saatTutup={() => AturForm(null)} />
+            {ubah !== null ? (
+                <FormulirAturanKomisi aturan={ubah} opsiKategori={OpsiKategori} saatTutup={() => AturUbah(null)} />
             ) : null}
         </TataLetakAplikasi>
     );

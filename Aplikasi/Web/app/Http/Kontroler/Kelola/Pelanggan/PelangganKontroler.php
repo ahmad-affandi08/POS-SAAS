@@ -100,11 +100,18 @@ final class PelangganKontroler extends DasarKelolaKontroler
         return back()->with('Kilat', "Poin {$data->Nama} sekarang {$saldo}.");
     }
 
+    /** Halaman penuh "Tambah pelanggan" (pola sama dengan Tambah produk). */
+    public function Buat(): Response
+    {
+        return Inertia::render('Kelola/Pelanggan/Buat');
+    }
+
+    /** Setelah ditambah, arahkan ke detail pelanggan baru (bukan kembali ke halaman buat). */
     public function Simpan(SimpanPelangganPermintaan $permintaan, SimpanPelanggan $simpan): RedirectResponse
     {
         $pelanggan = $simpan->Jalankan($permintaan->AmbilData($this->Pelaku()->Id));
 
-        return back()->with('Kilat', "Pelanggan {$pelanggan->Nama} ditambahkan.");
+        return redirect()->route('kelola.pelanggan.detail', ['pelanggan' => $pelanggan->Uuid])->with('Kilat', "Pelanggan {$pelanggan->Nama} ditambahkan.");
     }
 
     public function Perbarui(SimpanPelangganPermintaan $permintaan, string $pelanggan, SimpanPelanggan $simpan): RedirectResponse

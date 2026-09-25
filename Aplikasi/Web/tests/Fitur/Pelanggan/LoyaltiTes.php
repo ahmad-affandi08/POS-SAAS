@@ -175,7 +175,12 @@ describe('F-16b back-office', function (): void {
         $k = SiapkanLoyalti($this);
         BantuanKatalog::MasukSebagai($this, $k['Tenant']->Id);
 
-        $this->post('/kelola/pelanggan/tier', ['Kode' => 'gold', 'Nama' => 'Gold', 'MinimalBelanja' => '5000000', 'PengaliPoin' => '1.5', 'Urutan' => 2])->assertSessionHasNoErrors();
+        $this->get('/kelola/pelanggan/tier/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Pelanggan/BuatTier')
+            ->where('FiturAktif', true));
+        // Tambah dari halaman penuh /tier/buat: kembali ke daftar tier.
+        $this->post('/kelola/pelanggan/tier', ['Kode' => 'gold', 'Nama' => 'Gold', 'MinimalBelanja' => '5000000', 'PengaliPoin' => '1.5', 'Urutan' => 2])
+            ->assertSessionHasNoErrors()->assertRedirect('/kelola/pelanggan/tier');
         $this->post('/kelola/pelanggan/tier', ['Kode' => 'GOLD', 'Nama' => 'Emas', 'MinimalBelanja' => '1', 'PengaliPoin' => '1'])->assertSessionHasErrors('Kode');
         $this->post('/kelola/pelanggan/tier', ['Kode' => 'X', 'Nama' => 'X', 'MinimalBelanja' => '1', 'PengaliPoin' => '11'])->assertSessionHasErrors('PengaliPoin');
         $gold = TierPelanggan::query()->where('Kode', 'GOLD')->sole();
@@ -220,6 +225,7 @@ describe('F-16b back-office', function (): void {
         BantuanKatalog::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Supervisor);
         $this->get('/kelola/pelanggan/tier')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Izin.Kelola', false));
         $this->get('/kelola/pelanggan/loyalti')->assertOk();
+        $this->get('/kelola/pelanggan/tier/buat')->assertForbidden();
         $this->post('/kelola/pelanggan/tier', ['Kode' => 'X', 'Nama' => 'X', 'MinimalBelanja' => '0', 'PengaliPoin' => '1'])->assertForbidden();
         $this->put('/kelola/pelanggan/loyalti', ['Aktif' => false, 'BelanjaPerPoin' => '10000', 'MasaBerlakuBulan' => 12, 'BulanEvaluasiTier' => 12])->assertForbidden();
         $this->post("/kelola/pelanggan/{$k['Ani']->Uuid}/poin", ['Poin' => 5, 'Alasan' => 'Coba coba'])->assertForbidden();

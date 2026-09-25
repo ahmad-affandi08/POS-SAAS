@@ -60,7 +60,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     Route::put('/akuntansi/pemetaan', [PemetaanAkunKontroler::class, 'Simpan'])->name('kelola.akuntansi.pemetaan.simpan');
     Route::delete('/akuntansi/pemetaan', [PemetaanAkunKontroler::class, 'Hapus'])->name('kelola.akuntansi.pemetaan.hapus');
 
-    // F-13a: transaksi kas & bank (simpan & pembalik).
+    // F-13a: transaksi kas & bank (halaman catat, simpan & pembalik).
+    Route::get('/akuntansi/kas-bank/buat', [TransaksiKasBankKontroler::class, 'Buat'])->name('kelola.akuntansi.kas-bank.buat');
     Route::post('/akuntansi/kas-bank', [TransaksiKasBankKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.kas-bank.simpan');
     Route::post('/akuntansi/kas-bank/{transaksiKasBank}/pembalik', [TransaksiKasBankKontroler::class, 'Balikkan'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.pembalik');
 });

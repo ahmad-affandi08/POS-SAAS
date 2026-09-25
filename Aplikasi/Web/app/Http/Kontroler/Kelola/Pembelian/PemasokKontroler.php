@@ -14,6 +14,7 @@ use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 /** Master pemasok (F-04 fase 1, `/kelola/pembelian/pemasok`, izin `pembelian.kelola`). */
@@ -28,11 +29,17 @@ final class PemasokKontroler extends DasarPembelianKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah pemasok" (pola sama dengan Tambah produk); formulir tidak butuh opsi dari server. */
+    public function Buat(): Response
+    {
+        return Inertia::render('Kelola/Pembelian/Pemasok/Buat');
+    }
+
     public function Simpan(SimpanPemasokPermintaan $permintaan, SimpanPemasok $simpan): RedirectResponse
     {
         $pemasok = $simpan->Jalankan($permintaan->AmbilData($this->Pelaku()->Id));
 
-        return back()->with('Kilat', "Pemasok {$pemasok->Nama} ditambahkan.");
+        return to_route('kelola.pembelian.pemasok.daftar')->with('Kilat', "Pemasok {$pemasok->Nama} ditambahkan.");
     }
 
     public function Perbarui(SimpanPemasokPermintaan $permintaan, string $pemasok, SimpanPemasok $simpan): RedirectResponse

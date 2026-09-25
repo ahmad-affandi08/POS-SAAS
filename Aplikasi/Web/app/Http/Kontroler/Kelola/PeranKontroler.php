@@ -39,12 +39,15 @@ final class PeranKontroler extends DasarKelolaKontroler
                 'Izin' => $peran->CekPemilik() ? IzinTenant::AmbilSemuaKunci() : $peran->AmbilKunciIzin(),
                 'JumlahAnggota' => (int) ($jumlahAnggota->get($peran->Id) ?? 0),
             ])->values(),
-            'DaftarIzin' => array_map(fn (IzinTenant $izin): array => [
-                'Kunci' => $izin->value,
-                'Label' => $izin->AmbilLabel(),
-                'Kelompok' => $izin->AmbilKelompok(),
-                'KhususPemilik' => $izin->CekKhususPemilik(),
-            ], IzinTenant::cases()),
+            'DaftarIzin' => self::AmbilDaftarIzin(),
+        ]);
+    }
+
+    /** Halaman penuh "Buat peran" (pola sama dengan Tambah produk). */
+    public function Buat(): Response
+    {
+        return Inertia::render('Kelola/Peran/Buat', [
+            'DaftarIzin' => self::AmbilDaftarIzin(),
         ]);
     }
 
@@ -52,7 +55,7 @@ final class PeranKontroler extends DasarKelolaKontroler
     {
         $peran = $simpan->Jalankan($this->Pelaku()->Id, null, $permintaan->string('Nama')->toString(), $this->AmbilKeterangan($permintaan), $permintaan->AmbilIzin());
 
-        return back()->with('Kilat', "Peran {$peran->Nama} dibuat.");
+        return redirect()->route('kelola.peran.daftar')->with('Kilat', "Peran {$peran->Nama} dibuat.");
     }
 
     public function Ubah(string $peran, SimpanPeranPermintaan $permintaan, SimpanPeran $simpan): RedirectResponse
@@ -68,6 +71,19 @@ final class PeranKontroler extends DasarKelolaKontroler
         $hapus->Jalankan($baris);
 
         return back()->with('Kilat', "Peran {$baris->Nama} dihapus.");
+    }
+
+    /**
+     * @return list<array{Kunci: string, Label: string, Kelompok: string, KhususPemilik: bool}>
+     */
+    private static function AmbilDaftarIzin(): array
+    {
+        return array_map(fn (IzinTenant $izin): array => [
+            'Kunci' => $izin->value,
+            'Label' => $izin->AmbilLabel(),
+            'Kelompok' => $izin->AmbilKelompok(),
+            'KhususPemilik' => $izin->CekKhususPemilik(),
+        ], IzinTenant::cases());
     }
 
     private function CariPeran(string $uuid): Peran

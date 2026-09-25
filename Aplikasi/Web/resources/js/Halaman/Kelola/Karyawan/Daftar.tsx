@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 import FormulirKaryawan, { AlamatKaryawan } from '@/Komponen/Karyawan/FormulirKaryawan';
@@ -74,10 +74,14 @@ function BuatKolom(lihatGaji: boolean): KolomTabel<BarisKaryawan>[] {
     ];
 }
 
-/** F-18 EMP-01: daftar karyawan; tambah, ubah, nonaktifkan & aktifkan. */
+/** F-18 EMP-01: daftar karyawan; tambah (halaman penuh), ubah (panel), nonaktifkan & aktifkan. */
 export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutlet, Izin }: PropsDaftarKaryawan) {
-    const [form, AturForm] = useState<{ karyawan: BarisKaryawan | null } | null>(null);
-    const tombol = Izin.Kelola ? <Button onClick={() => AturForm({ karyawan: null })}>Tambah karyawan</Button> : null;
+    const [ubah, AturUbah] = useState<BarisKaryawan | null>(null);
+    const tombol = Izin.Kelola ? (
+        <Button asChild>
+            <Link href={`${AlamatKaryawan}/buat`}>Tambah karyawan</Link>
+        </Button>
+    ) : null;
 
     return (
         <TataLetakAplikasi judul="Karyawan">
@@ -118,7 +122,7 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                           aksiBaris: (k: BarisKaryawan) => (
                               <ItemAksiBaris
                                   aksi={[
-                                      { label: 'Ubah karyawan', saatPilih: () => AturForm({ karyawan: k }) },
+                                      { label: 'Ubah karyawan', saatPilih: () => AturUbah(k) },
                                       k.Status === 'Aktif'
                                           ? {
                                                 label: 'Nonaktifkan karyawan',
@@ -150,12 +154,12 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                 }}
             />
 
-            {form !== null ? (
+            {ubah !== null ? (
                 <FormulirKaryawan
-                    karyawan={form.karyawan}
+                    karyawan={ubah}
                     opsiPengguna={OpsiPengguna}
                     opsiOutlet={OpsiOutlet}
-                    saatTutup={() => AturForm(null)}
+                    saatTutup={() => AturUbah(null)}
                 />
             ) : null}
         </TataLetakAplikasi>

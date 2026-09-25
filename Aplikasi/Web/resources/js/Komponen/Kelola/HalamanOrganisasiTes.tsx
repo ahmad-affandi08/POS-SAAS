@@ -1,10 +1,14 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import HalamanBuatOutlet from '@/Halaman/Kelola/Outlet/Buat';
 import HalamanDaftarOutlet from '@/Halaman/Kelola/Outlet/Daftar';
 import HalamanDetailOutlet from '@/Halaman/Kelola/Outlet/Detail';
+import HalamanBuatUndangan from '@/Halaman/Kelola/Pengguna/Buat';
+import HalamanBuatPeran from '@/Halaman/Kelola/Peran/Buat';
+import HalamanDaftarPeran from '@/Halaman/Kelola/Peran/Daftar';
 import HalamanPin from '@/Halaman/Kelola/Pin';
-import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -50,6 +54,52 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
         fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Surabaya' } });
         await vi.waitFor(() => expect(screen.queryByText('Kopi Nusantara Sudirman')).toBeNull());
         expect(screen.getByText('Kopi Nusantara Tunjungan')).toBeTruthy();
+    });
+
+    it('tombol tambah outlet membuka halaman penuh /kelola/outlet/buat; batas penuh menonaktifkannya', () => {
+        RenderUji(<HalamanDaftarOutlet Outlet={outlet} Merek={[]} Kota={[]} BatasOutlet={batas} />);
+        expect(screen.getByRole('link', { name: 'Tambah outlet' }).getAttribute('href')).toBe('/kelola/outlet/buat');
+        cleanup();
+
+        RenderUji(<HalamanDaftarOutlet Outlet={outlet} Merek={[]} Kota={[]} BatasOutlet={{ Terpakai: 5, Batas: 5 }} />);
+        expect(screen.queryByRole('link', { name: 'Tambah outlet' })).toBeNull();
+        expect((screen.getByRole('button', { name: 'Tambah outlet' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('halaman tambah outlet: kirim POST /kelola/outlet dengan merek pertama; Batal kembali ke daftar', () => {
+        AturHalamanUji({}, '/kelola/outlet/buat');
+        RenderUji(
+            <HalamanBuatOutlet Merek={[{ Nilai: 'M-1', Label: 'Kopi Nusantara' }]} Kota={[]} BatasOutlet={batas} />,
+        );
+
+        fireEvent.change(screen.getByLabelText('Nama outlet'), { target: { value: 'Kopi Nusantara Solo' } });
+        fireEvent.change(screen.getByLabelText('Kode outlet'), { target: { value: 'SLO1' } });
+        fireEvent.submit(screen.getByLabelText('Nama outlet').closest('form') as HTMLFormElement);
+
+        expect(kirimanForm[0]).toEqual({
+            metode: 'post',
+            url: '/kelola/outlet',
+            data: {
+                Nama: 'Kopi Nusantara Solo',
+                Kode: 'SLO1',
+                Merek: 'M-1',
+                Alamat: '',
+                KodeKota: '',
+                ZonaWaktu: 'WIB',
+                JamTutupBuku: '04:00',
+                Pkp: false,
+                Nitku: '',
+                PungutPbjt: false,
+            },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/outlet');
+    });
+
+    it('halaman tambah outlet: batas paket penuh menampilkan peringatan', () => {
+        RenderUji(<HalamanBuatOutlet Merek={[]} Kota={[]} BatasOutlet={{ Terpakai: 5, Batas: 5 }} />);
+        expect(screen.getByText('Batas outlet paket sudah tercapai')).toBeTruthy();
     });
 
     it('detail outlet: lokasi stok diarsipkan lewat menu aksi baris', () => {
@@ -189,5 +239,84 @@ describe('Kelola/PIN (F-02 langkah 4)', () => {
     it('tanpa anggota: keadaan kosong', () => {
         RenderUji(<HalamanPin PinSayaDiatur={false} Anggota={[]} />);
         expect(screen.getByText('Belum ada anggota lain yang PIN-nya bisa Anda atur.')).toBeTruthy();
+    });
+});
+
+describe('Kelola/Peran (§19.1): buat peran di halaman penuh', () => {
+    const daftarIzin = [
+        { Kunci: 'penjualan.buat', Label: 'Berjualan', Kelompok: 'Penjualan', KhususPemilik: false },
+        { Kunci: 'langganan.kelola', Label: 'Kelola langganan', Kelompok: 'Organisasi', KhususPemilik: true },
+    ];
+
+    it('daftar: tombol buat peran menuju /kelola/peran/buat', () => {
+        AturHalamanUji({}, '/kelola/peran');
+        RenderUji(
+            <HalamanDaftarPeran
+                Peran={[
+                    {
+                        Uuid: 'R-1',
+                        Nama: 'Barista',
+                        Keterangan: null,
+                        Bawaan: false,
+                        Pemilik: false,
+                        Izin: ['penjualan.buat'],
+                        JumlahAnggota: 0,
+                    },
+                ]}
+                DaftarIzin={daftarIzin}
+            />,
+        );
+
+        expect(screen.getByRole('link', { name: 'Buat peran' }).getAttribute('href')).toBe('/kelola/peran/buat');
+    });
+
+    it('halaman buat: izin khusus Pemilik tidak ditawarkan; kirim POST /kelola/peran; Batal kembali ke daftar', () => {
+        AturHalamanUji({}, '/kelola/peran/buat');
+        RenderUji(<HalamanBuatPeran DaftarIzin={daftarIzin} />);
+
+        expect(screen.queryByLabelText('Kelola langganan')).toBeNull();
+        fireEvent.change(screen.getByLabelText('Nama peran'), { target: { value: 'Kasir Senior' } });
+        fireEvent.click(screen.getByLabelText('Berjualan'));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan peran' }));
+
+        expect(kirimanForm[0]).toEqual({
+            metode: 'post',
+            url: '/kelola/peran',
+            data: { Nama: 'Kasir Senior', Keterangan: '', Izin: ['penjualan.buat'] },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/peran');
+    });
+});
+
+describe('Kelola/Pengguna (F-02 langkah 3): undang pengguna di halaman penuh', () => {
+    const peran = [
+        { Uuid: 'R-P', Nama: 'Pemilik', Pemilik: true, SemuaOutletBawaan: true },
+        { Uuid: 'R-K', Nama: 'Kasir', Pemilik: false, SemuaOutletBawaan: false },
+    ];
+    const outletOpsi = [{ Uuid: 'O-1', Kode: 'JKT1', Nama: 'Kopi Nusantara Sudirman' }];
+
+    it('kirim POST /kelola/pengguna/undangan dengan outlet yang dicentang; Batal kembali ke daftar', () => {
+        AturHalamanUji({}, '/kelola/pengguna/undangan/buat');
+        RenderUji(<HalamanBuatUndangan Peran={peran} Outlet={outletOpsi} BatasPengguna={batas} />);
+
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'budi@kopinusantara.id' } });
+        fireEvent.click(screen.getByLabelText('JKT1 · Kopi Nusantara Sudirman'));
+        fireEvent.click(screen.getByRole('button', { name: 'Kirim undangan' }));
+
+        expect(kirimanForm[0]).toEqual({
+            metode: 'post',
+            url: '/kelola/pengguna/undangan',
+            data: { Email: 'budi@kopinusantara.id', Peran: '', SemuaOutlet: false, Outlet: ['O-1'] },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/pengguna');
+    });
+
+    it('kursi penuh menampilkan peringatan batas paket', () => {
+        RenderUji(<HalamanBuatUndangan Peran={peran} Outlet={outletOpsi} BatasPengguna={{ Terpakai: 5, Batas: 5 }} />);
+        expect(screen.getByText('Batas pengguna paket sudah tercapai')).toBeTruthy();
     });
 });

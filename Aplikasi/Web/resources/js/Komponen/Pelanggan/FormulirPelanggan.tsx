@@ -42,13 +42,22 @@ function BuatIsian(p: BarisPelanggan | null): IsianPelanggan {
     };
 }
 
-/** Formulir tambah/ubah pelanggan (F-16a) sebagai panel; `pelanggan` null = tambah. */
-export default function FormulirPelanggan({
+/** Kunci isian formulir pelanggan: galatnya sudah tampil di bawah isian (untuk `DaftarGalatServer` halaman buat). */
+export const IsianFormulirPelanggan = Object.keys(BuatIsian(null));
+
+/**
+ * Isi formulir tambah/ubah pelanggan (F-16a); `pelanggan` null = tambah. Dipakai di halaman penuh "Tambah pelanggan"
+ * dan di panel ubah. `saatSelesai` dipanggil setelah tersimpan (panel ubah menutup diri); halaman buat tidak
+ * memakainya karena server mengarahkan ke detail pelanggan.
+ */
+export function IsiFormulirPelanggan({
     pelanggan,
-    saatTutup,
+    saatSelesai,
+    saatBatal,
 }: {
     pelanggan: BarisPelanggan | null;
-    saatTutup: () => void;
+    saatSelesai?: () => void;
+    saatBatal: () => void;
 }) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -70,7 +79,7 @@ export default function FormulirPelanggan({
             preserveScroll: true,
             onStart: () => AturMemproses(true),
             onFinish: () => AturMemproses(false),
-            onSuccess: saatTutup,
+            onSuccess: () => saatSelesai?.(),
         };
 
         if (pelanggan === null) {
@@ -81,101 +90,116 @@ export default function FormulirPelanggan({
     };
 
     return (
+        <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir pelanggan">
+            <BidangTeks
+                label="Nama pelanggan"
+                nilai={isian.Nama}
+                saatBerubah={(nilai) => Ubah({ Nama: nilai })}
+                galat={galat.Nama}
+                maxLength={150}
+                required
+            />
+            <BidangTeks
+                label="No. HP/WA"
+                nilai={isian.NoHp}
+                saatBerubah={(nilai) => Ubah({ NoHp: nilai })}
+                galat={galat.NoHp}
+                keterangan="Kunci pelanggan: satu nomor untuk satu pelanggan. Contoh 0812-3456-7890."
+                inputMode="tel"
+                maxLength={30}
+                required
+            />
+            <BidangTeks
+                label="Email (opsional)"
+                jenis="email"
+                nilai={isian.Email}
+                saatBerubah={(nilai) => Ubah({ Email: nilai })}
+                galat={galat.Email}
+            />
+            <PemilihTanggal
+                label="Tanggal lahir (opsional)"
+                nilai={isian.TanggalLahir}
+                saatBerubah={(nilai) => Ubah({ TanggalLahir: nilai })}
+                galat={galat.TanggalLahir}
+                max={hariIni}
+            />
+            <BidangTeksPanjang
+                label="Alamat (opsional)"
+                nilai={isian.Alamat}
+                saatBerubah={(nilai) => Ubah({ Alamat: nilai })}
+                galat={galat.Alamat}
+                maksimal={500}
+                baris={2}
+            />
+            <BidangDaftarTeks
+                label="Tag (opsional)"
+                nilai={isian.Tag}
+                saatBerubah={(nilai) => Ubah({ Tag: nilai })}
+                keterangan="Satu tag per baris, misal Reseller atau Langganan. Maksimal 10."
+                galat={galat.Tag ?? galat['Tag.0']}
+            />
+            <BidangTeksPanjang
+                label="Catatan (opsional)"
+                nilai={isian.Catatan}
+                saatBerubah={(nilai) => Ubah({ Catatan: nilai })}
+                galat={galat.Catatan}
+                maksimal={500}
+                baris={2}
+            />
+            <fieldset className="grid gap-3 sm:grid-cols-2">
+                <legend className="mb-1 text-label font-semibold">Kredit (bayar tempo)</legend>
+                <BidangUang
+                    label="Limit kredit (opsional)"
+                    nilai={isian.LimitKredit}
+                    saatBerubah={(nilai) => Ubah({ LimitKredit: nilai })}
+                    galat={galat.LimitKredit}
+                    keterangan="Kosongkan bila pelanggan tidak boleh bayar tempo."
+                />
+                <BidangTeks
+                    label="Termin (hari)"
+                    nilai={isian.TerminHari}
+                    saatBerubah={(nilai) => Ubah({ TerminHari: nilai.replace(/\D/g, '') })}
+                    galat={galat.TerminHari}
+                    keterangan="Jatuh tempo = tanggal penjualan + termin."
+                    inputMode="numeric"
+                    maxLength={3}
+                />
+            </fieldset>
+            <KotakCentang
+                label="Pelanggan setuju menerima info promo (WA/email)"
+                nilai={isian.SetujuPemasaran}
+                saatBerubah={(nilai) => Ubah({ SetujuPemasaran: nilai })}
+            />
+            <div className="flex flex-wrap justify-end gap-2">
+                <Button type="button" variant="outline" onClick={saatBatal}>
+                    Batal
+                </Button>
+                <Button type="submit" disabled={memproses}>
+                    Simpan pelanggan
+                </Button>
+            </div>
+        </form>
+    );
+}
+
+/** Panel ubah pelanggan (F-16a). Tambah pelanggan memakai halaman penuh `/kelola/pelanggan/buat`. */
+export default function FormulirPelanggan({
+    pelanggan,
+    saatTutup,
+}: {
+    pelanggan: BarisPelanggan;
+    saatTutup: () => void;
+}) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+
+    return (
         <DialogFormulir
-            judul={pelanggan === null ? 'Tambah pelanggan' : `Ubah pelanggan ${pelanggan.Nama}`}
+            judul={`Ubah pelanggan ${pelanggan.Nama}`}
             jenis="panel"
-            galatUmum={galat.Umum}
+            galatUmum={props.errors.Umum}
             saatTutup={saatTutup}
         >
-            <form onSubmit={Simpan} className="flex flex-col gap-4" aria-label="Formulir pelanggan">
-                <BidangTeks
-                    label="Nama pelanggan"
-                    nilai={isian.Nama}
-                    saatBerubah={(nilai) => Ubah({ Nama: nilai })}
-                    galat={galat.Nama}
-                    maxLength={150}
-                    required
-                />
-                <BidangTeks
-                    label="No. HP/WA"
-                    nilai={isian.NoHp}
-                    saatBerubah={(nilai) => Ubah({ NoHp: nilai })}
-                    galat={galat.NoHp}
-                    keterangan="Kunci pelanggan: satu nomor untuk satu pelanggan. Contoh 0812-3456-7890."
-                    inputMode="tel"
-                    maxLength={30}
-                    required
-                />
-                <BidangTeks
-                    label="Email (opsional)"
-                    jenis="email"
-                    nilai={isian.Email}
-                    saatBerubah={(nilai) => Ubah({ Email: nilai })}
-                    galat={galat.Email}
-                />
-                <PemilihTanggal
-                    label="Tanggal lahir (opsional)"
-                    nilai={isian.TanggalLahir}
-                    saatBerubah={(nilai) => Ubah({ TanggalLahir: nilai })}
-                    galat={galat.TanggalLahir}
-                    max={hariIni}
-                />
-                <BidangTeksPanjang
-                    label="Alamat (opsional)"
-                    nilai={isian.Alamat}
-                    saatBerubah={(nilai) => Ubah({ Alamat: nilai })}
-                    galat={galat.Alamat}
-                    maksimal={500}
-                    baris={2}
-                />
-                <BidangDaftarTeks
-                    label="Tag (opsional)"
-                    nilai={isian.Tag}
-                    saatBerubah={(nilai) => Ubah({ Tag: nilai })}
-                    keterangan="Satu tag per baris, misal Reseller atau Langganan. Maksimal 10."
-                    galat={galat.Tag ?? galat['Tag.0']}
-                />
-                <BidangTeksPanjang
-                    label="Catatan (opsional)"
-                    nilai={isian.Catatan}
-                    saatBerubah={(nilai) => Ubah({ Catatan: nilai })}
-                    galat={galat.Catatan}
-                    maksimal={500}
-                    baris={2}
-                />
-                <fieldset className="grid gap-3 sm:grid-cols-2">
-                    <legend className="mb-1 text-label font-semibold">Kredit (bayar tempo)</legend>
-                    <BidangUang
-                        label="Limit kredit (opsional)"
-                        nilai={isian.LimitKredit}
-                        saatBerubah={(nilai) => Ubah({ LimitKredit: nilai })}
-                        galat={galat.LimitKredit}
-                        keterangan="Kosongkan bila pelanggan tidak boleh bayar tempo."
-                    />
-                    <BidangTeks
-                        label="Termin (hari)"
-                        nilai={isian.TerminHari}
-                        saatBerubah={(nilai) => Ubah({ TerminHari: nilai.replace(/\D/g, '') })}
-                        galat={galat.TerminHari}
-                        keterangan="Jatuh tempo = tanggal penjualan + termin."
-                        inputMode="numeric"
-                        maxLength={3}
-                    />
-                </fieldset>
-                <KotakCentang
-                    label="Pelanggan setuju menerima info promo (WA/email)"
-                    nilai={isian.SetujuPemasaran}
-                    saatBerubah={(nilai) => Ubah({ SetujuPemasaran: nilai })}
-                />
-                <div className="flex flex-wrap justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={saatTutup}>
-                        Batal
-                    </Button>
-                    <Button type="submit" disabled={memproses}>
-                        Simpan pelanggan
-                    </Button>
-                </div>
-            </form>
+            <IsiFormulirPelanggan pelanggan={pelanggan} saatSelesai={saatTutup} saatBatal={saatTutup} />
         </DialogFormulir>
     );
 }

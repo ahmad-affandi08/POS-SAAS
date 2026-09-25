@@ -67,6 +67,16 @@ final class OutletKontroler extends DasarKelolaKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah outlet" (pola sama dengan Tambah produk); batas paket tetap ditampilkan. */
+    public function Buat(WilayahKota $wilayahKota, PemakaianBatasOrganisasi $pemakaian, PastikanBatasPaket $batasPaket): Response
+    {
+        return Inertia::render('Kelola/Outlet/Buat', [
+            'Merek' => Merek::query()->orderBy('Nama')->get()->map(fn (Merek $merek): array => ['Nilai' => $merek->Uuid, 'Label' => $merek->Nama])->values(),
+            'Kota' => $this->PetakanKota($wilayahKota),
+            'BatasOutlet' => $batasPaket->AmbilRingkasan($this->IdTenant(), 'BatasOutlet', $pemakaian->HitungOutlet()),
+        ]);
+    }
+
     public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja): Response
     {
         $baris = $this->CariOutlet($outlet);

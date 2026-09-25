@@ -38,11 +38,20 @@ final class LoyaltiKontroler extends DasarKelolaKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah tier" (pola sama dengan Tambah produk). */
+    public function BuatTier(PengaturanLoyaltiTenant $loyalti): Response
+    {
+        return Inertia::render('Kelola/Pelanggan/BuatTier', [
+            'FiturAktif' => $loyalti->Ambil()->fiturAktif,
+        ]);
+    }
+
+    /** Setelah ditambah, kembali ke daftar tier (bukan ke halaman buat). */
     public function SimpanTier(Request $permintaan, SimpanTierPelanggan $simpan): RedirectResponse
     {
         $tier = $simpan->Jalankan($this->AmbilDataTier($permintaan, true));
 
-        return back()->with('Kilat', "Tier {$tier->Nama} ditambahkan.");
+        return redirect()->route('kelola.pelanggan.tier.daftar')->with('Kilat', "Tier {$tier->Nama} ditambahkan.");
     }
 
     public function PerbaruiTier(Request $permintaan, string $tier, SimpanTierPelanggan $simpan): RedirectResponse

@@ -20,10 +20,12 @@ use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Data karyawan (F-18, EMP-01, `/kelola/karyawan`): daftar, tambah/ubah (panel), nonaktifkan/aktifkan. Lihat
+ * Data karyawan (F-18, EMP-01, `/kelola/karyawan`): daftar, tambah (halaman penuh `/buat`), ubah (panel),
+ * nonaktifkan/aktifkan. Lihat
  * `karyawan.lihat`; ubah `karyawan.kelola`. Karyawan tenant lain = 404 (`MilikTenant`).
  */
 final class KaryawanKontroler extends DasarKelolaKontroler
@@ -40,11 +42,20 @@ final class KaryawanKontroler extends DasarKelolaKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah karyawan" (pola sama dengan Tambah produk). Hanya untuk `karyawan.kelola`. */
+    public function Buat(DaftarAnggota $anggota, PetaUuidOutlet $outlet): Response
+    {
+        return Inertia::render('Kelola/Karyawan/Buat', [
+            'OpsiPengguna' => array_map(fn (array $a): array => ['Uuid' => $a['Uuid'], 'Nama' => $a['Nama']], $anggota->AmbilPilihanAktif($this->IdTenant())),
+            'OpsiOutlet' => array_map(fn (array $o): array => ['Uuid' => $o['Uuid'], 'Nama' => $o['Nama']], $outlet->AmbilRingkas($this->IdOutletBoleh(), true)),
+        ]);
+    }
+
     public function Simpan(SimpanKaryawanPermintaan $permintaan, SimpanKaryawan $simpan): RedirectResponse
     {
         $k = $simpan->Jalankan($permintaan->AmbilData($this->Pelaku()->Id));
 
-        return back()->with('Kilat', "Karyawan {$k->Nama} ditambahkan.");
+        return to_route('kelola.karyawan.daftar')->with('Kilat', "Karyawan {$k->Nama} ditambahkan.");
     }
 
     public function Perbarui(SimpanKaryawanPermintaan $permintaan, string $karyawan, SimpanKaryawan $simpan): RedirectResponse

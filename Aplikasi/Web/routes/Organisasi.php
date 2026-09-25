@@ -24,6 +24,7 @@ $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin
 Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
     // Outlet, lokasi stok, merek (F-02 langkah 1–2).
     Route::get('/outlet', [OutletKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.outlet.daftar');
+    Route::get('/outlet/buat', [OutletKontroler::class, 'Buat'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.buat');
     Route::post('/outlet', [OutletKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.simpan');
     Route::get('/outlet/{outlet}', [OutletKontroler::class, 'Detail'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.outlet.detail');
     Route::put('/outlet/{outlet}', [OutletKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.ubah');
@@ -51,6 +52,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
 
     // Pengguna & peran (F-02 langkah 3, §19.1).
     Route::get('/pengguna', [PenggunaKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PenggunaLihat))->name('kelola.pengguna.daftar');
+    Route::get('/pengguna/undangan/buat', [PenggunaKontroler::class, 'BuatUndangan'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.formulir');
     Route::post('/pengguna/undangan', [PenggunaKontroler::class, 'Undang'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.buat');
     Route::post('/pengguna/undangan/{undangan}/batalkan', [PenggunaKontroler::class, 'BatalkanUndangan'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.batalkan');
     Route::put('/pengguna/{pengguna}/akses', [PenggunaKontroler::class, 'UbahAkses'])->middleware($izin(IzinTenant::PenggunaUbah))->name('kelola.pengguna.akses');
@@ -58,6 +60,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::post('/pengguna/{pengguna}/aktifkan', [PenggunaKontroler::class, 'Aktifkan'])->middleware($izin(IzinTenant::PenggunaNonaktifkan))->name('kelola.pengguna.aktifkan');
 
     Route::get('/peran', [PeranKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PenggunaLihat))->name('kelola.peran.daftar');
+    Route::get('/peran/buat', [PeranKontroler::class, 'Buat'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.buat');
     Route::post('/peran', [PeranKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.simpan');
     Route::put('/peran/{peran}', [PeranKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.ubah');
     Route::delete('/peran/{peran}', [PeranKontroler::class, 'Hapus'])->middleware($izin(IzinTenant::PeranKelola))->name('kelola.peran.hapus');

@@ -143,6 +143,27 @@ describe('Nonaktifkan & aktifkan kembali anggota', function (): void {
         expect(AnggotaUji($tenant->Id, $pemilik->Id)->Status)->toBe(StatusKeanggotaan::Aktif);
     });
 
+    it('halaman undang pengguna (halaman penuh): opsi peran, outlet, kursi; tanpa pengguna.undang 403; kirim kembali ke daftar', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->get('/kelola/pengguna/undangan/buat')->assertOk()
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman
+                ->component('Kelola/Pengguna/Buat')
+                ->has('Peran', count(PeranTenantBawaan::cases()))
+                ->has('Outlet', 1)
+                ->has('Outlet.0', fn (AssertableInertia $outlet) => $outlet->hasAll(['Uuid', 'Kode', 'Nama']))
+                ->where('BatasPengguna', ['Batas' => 20, 'Terpakai' => 1])
+                ->missing('Anggota'));
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengguna/undangan', ['Email' => 'calon@contoh.id', 'Peran' => BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Akuntan)->Uuid, 'SemuaOutlet' => true])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/kelola/pengguna');
+
+        $manajer = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::ManajerOutlet);
+        BantuanOrganisasi::Masuk($this, $manajer, $tenant->Id)->get('/kelola/pengguna/undangan/buat')->assertForbidden();
+    });
+
     it('daftar pengguna menampilkan anggota, peran, undangan menunggu, dan kursi terpakai', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
         BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);

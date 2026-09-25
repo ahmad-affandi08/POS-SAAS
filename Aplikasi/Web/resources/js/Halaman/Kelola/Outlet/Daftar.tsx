@@ -3,11 +3,11 @@ import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import FormOutlet from '@/Komponen/Kelola/FormOutlet';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -95,10 +95,9 @@ const kolom: KolomTabel<Outlet>[] = [
 ];
 
 /** Daftar outlet & merek (F-02 langkah 1, BR-02.1). */
-export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }: PropsDaftar) {
+export default function HalamanDaftarOutlet({ Outlet, Merek, BatasOutlet }: PropsDaftar) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const bolehKelola = PunyaIzinTenant(props.Akses, IzinTenant.OutletKelola);
-    const [formTerbuka, AturFormTerbuka] = useState(false);
     const penuh = CekBatasPenuh(BatasOutlet);
 
     return (
@@ -108,10 +107,11 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                     Outlet aktif:{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>
                 </p>
-                {bolehKelola ? (
-                    <Tombol onClick={() => AturFormTerbuka(true)} disabled={penuh}>
-                        Tambah outlet
-                    </Tombol>
+                {bolehKelola && penuh ? <Tombol disabled>Tambah outlet</Tombol> : null}
+                {bolehKelola && !penuh ? (
+                    <Button asChild>
+                        <Link href="/kelola/outlet/buat">Tambah outlet</Link>
+                    </Button>
                 ) : null}
             </div>
 
@@ -123,29 +123,6 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, Kota, BatasOutlet }
                     </Link>
                     . Outlet yang diarsipkan tidak dihitung.
                 </Pemberitahuan>
-            ) : null}
-
-            {formTerbuka ? (
-                <DialogFormulir jenis="panel" judul="Tambah outlet" saatTutup={() => AturFormTerbuka(false)}>
-                    <FormOutlet
-                        uuid={null}
-                        awal={{
-                            Nama: '',
-                            Kode: '',
-                            Merek: Merek[0]?.Uuid ?? '',
-                            Alamat: '',
-                            KodeKota: '',
-                            ZonaWaktu: 'WIB',
-                            JamTutupBuku: '04:00',
-                            Pkp: false,
-                            Nitku: '',
-                            PungutPbjt: false,
-                        }}
-                        merek={Merek.map((baris) => ({ Nilai: baris.Uuid, Label: baris.Nama }))}
-                        kota={Kota}
-                        saatBatal={() => AturFormTerbuka(false)}
-                    />
-                </DialogFormulir>
             ) : null}
 
             <TabelData

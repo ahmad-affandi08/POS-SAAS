@@ -45,10 +45,10 @@ describe('Kelompok pilihan (modifier)', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanKatalog::BuatTenant('Kedai Kopi Senja Solo');
         $sirup = BantuanKomposisi::BuatBahan('Sirup Hazelnut Premium Import', 'ml', 'Mililiter');
 
-        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->post('/kelola/kelompok-pilihan', IsianKelompokPilihanUji('Tambahan Rasa', [
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->from('/kelola/kelompok-pilihan/buat')->post('/kelola/kelompok-pilihan', IsianKelompokPilihanUji('Tambahan Rasa', [
             ['Uuid' => null, 'Nama' => 'Hazelnut', 'Harga' => '5000', 'Aktif' => true, 'UuidProdukBahan' => $sirup->Uuid, 'Jumlah' => '15'],
             ['Uuid' => null, 'Nama' => 'Extra Shot Espresso', 'Harga' => '6000.50', 'Aktif' => false, 'UuidProdukBahan' => null, 'Jumlah' => ''],
-        ], '0', '2'))->assertSessionHasNoErrors();
+        ], '0', '2'))->assertSessionHasNoErrors()->assertRedirect('/kelola/kelompok-pilihan');
 
         BantuanOrganisasi::AturKonteks($tenant->Id);
         $kelompok = KelompokPilihan::query()->sole();
@@ -229,6 +229,19 @@ describe('Kelompok pilihan (modifier)', function (): void {
                 'SimbolSatuanBahan' => 'ml',
             ]],
         ]]);
+    });
+
+    it('GET halaman tambah kelompok pilihan (halaman penuh) merender Kelola/KelompokPilihan/Buat dengan izin; Kasir 403', function (): void {
+        ['Tenant' => $tenant] = BantuanKatalog::BuatTenant();
+
+        BantuanKatalog::MasukSebagai($this, $tenant->Id)->get('/kelola/kelompok-pilihan/buat')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Kelola/KelompokPilihan/Buat')
+                ->where('Izin.Kelola', true)
+                ->where('Izin.UbahHarga', true)
+                ->missing('KelompokPilihan'));
+
+        BantuanKatalog::MasukSebagai($this, $tenant->Id, PeranTenantBawaan::Kasir)->get('/kelola/kelompok-pilihan/buat')->assertForbidden();
     });
 
     it('GET daftar kelompok pilihan merender Kelola/KelompokPilihan/Daftar (butuh halaman FE)', function (): void {

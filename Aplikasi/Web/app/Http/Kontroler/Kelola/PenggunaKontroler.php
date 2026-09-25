@@ -39,16 +39,22 @@ final class PenggunaKontroler extends DasarKelolaKontroler
         return Inertia::render('Kelola/Pengguna/Daftar', [
             'Anggota' => $daftar->AmbilAnggota($idTenant),
             'Undangan' => $daftar->AmbilUndanganMenunggu($idTenant),
-            'Peran' => Peran::query()->orderByDesc('Bawaan')->orderBy('Id')->get()->map(fn (Peran $peran): array => [
-                'Uuid' => $peran->Uuid,
-                'Nama' => $peran->Nama,
-                'Pemilik' => $peran->CekPemilik(),
-                'SemuaOutletBawaan' => $peran->Kode !== null && (PeranTenantBawaan::tryFrom($peran->Kode)?->CekSemuaOutletBawaan() ?? false),
-            ])->values(),
-            'Outlet' => Outlet::query()->where('Status', StatusOrganisasi::Aktif->value)->orderBy('Nama')->get()
-                ->map(fn (Outlet $outlet): array => ['Uuid' => $outlet->Uuid, 'Kode' => $outlet->Kode, 'Nama' => $outlet->Nama])->values(),
+            'Peran' => self::AmbilOpsiPeran(),
+            'Outlet' => self::AmbilOpsiOutlet(),
             'BatasPengguna' => $batasPaket->AmbilRingkasan($idTenant, 'BatasPengguna', $pemakaian->HitungPengguna($idTenant)),
             'UuidSaya' => $this->Pelaku()->Uuid,
+        ]);
+    }
+
+    /** Halaman penuh "Undang pengguna" (pola sama dengan Tambah produk); kursi paket tetap ditampilkan. */
+    public function BuatUndangan(PemakaianBatasOrganisasi $pemakaian, PastikanBatasPaket $batasPaket): Response
+    {
+        $idTenant = $this->IdTenant();
+
+        return Inertia::render('Kelola/Pengguna/Buat', [
+            'Peran' => self::AmbilOpsiPeran(),
+            'Outlet' => self::AmbilOpsiOutlet(),
+            'BatasPengguna' => $batasPaket->AmbilRingkasan($idTenant, 'BatasPengguna', $pemakaian->HitungPengguna($idTenant)),
         ]);
     }
 
@@ -58,7 +64,7 @@ final class PenggunaKontroler extends DasarKelolaKontroler
         $namaTenant = $ringkasan->Ambil([$this->IdTenant()])[0]['Nama'] ?? '';
         $undang->Jalankan($this->Pelaku(), $email, $permintaan->AmbilAkses(), $namaTenant);
 
-        return back()->with('Kilat', "Undangan terkirim ke {$email}. Berlaku ".config('organisasi.JamBerlakuUndangan').' jam.');
+        return redirect()->route('kelola.pengguna.daftar')->with('Kilat', "Undangan terkirim ke {$email}. Berlaku ".config('organisasi.JamBerlakuUndangan').' jam.');
     }
 
     public function BatalkanUndangan(string $undangan, BatalkanUndangan $batalkan): RedirectResponse
@@ -91,6 +97,28 @@ final class PenggunaKontroler extends DasarKelolaKontroler
         $ubah->Jalankan($this->Pelaku()->Id, $anggota, StatusKeanggotaan::Aktif);
 
         return back()->with('Kilat', "{$nama} aktif kembali.");
+    }
+
+    /**
+     * @return array<int, array{Uuid: string, Nama: string, Pemilik: bool, SemuaOutletBawaan: bool}>
+     */
+    private static function AmbilOpsiPeran(): array
+    {
+        return Peran::query()->orderByDesc('Bawaan')->orderBy('Id')->get()->map(fn (Peran $peran): array => [
+            'Uuid' => $peran->Uuid,
+            'Nama' => $peran->Nama,
+            'Pemilik' => $peran->CekPemilik(),
+            'SemuaOutletBawaan' => $peran->Kode !== null && (PeranTenantBawaan::tryFrom($peran->Kode)?->CekSemuaOutletBawaan() ?? false),
+        ])->values()->all();
+    }
+
+    /**
+     * @return array<int, array{Uuid: string, Kode: string, Nama: string}>
+     */
+    private static function AmbilOpsiOutlet(): array
+    {
+        return Outlet::query()->where('Status', StatusOrganisasi::Aktif->value)->orderBy('Nama')->get()
+            ->map(fn (Outlet $outlet): array => ['Uuid' => $outlet->Uuid, 'Kode' => $outlet->Kode, 'Nama' => $outlet->Nama])->values()->all();
     }
 
     /**

@@ -1,24 +1,30 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
-import BidangTeks from '@/Komponen/Formulir/BidangTeks';
-import GrupCentang from '@/Komponen/Formulir/GrupCentang';
-import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import FormAksesPengguna from '@/Komponen/Kelola/FormAksesPengguna';
 import TabPengguna from '@/Komponen/Kelola/TabPengguna';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { ItemAksiBaris, type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import { Button } from '@/Komponen/Ui/button';
 import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import { CekBatasPenuh, FormatBatas, IzinTenant, PunyaIzinTenant, type Batas } from '@/Tipe/Organisasi';
+import {
+    CekBatasPenuh,
+    FormatBatas,
+    IzinTenant,
+    PunyaIzinTenant,
+    type Batas,
+    type OpsiOutletPengguna,
+    type OpsiPeranPengguna,
+} from '@/Tipe/Organisasi';
 
 type Anggota = {
     Uuid: string;
@@ -43,15 +49,11 @@ type Undangan = {
     Pengundang: string;
 };
 
-type Peran = { Uuid: string; Nama: string; Pemilik: boolean; SemuaOutletBawaan: boolean };
-
-type Outlet = { Uuid: string; Kode: string; Nama: string };
-
 type PropsDaftar = {
     Anggota: Anggota[];
     Undangan: Undangan[];
-    Peran: Peran[];
-    Outlet: Outlet[];
+    Peran: OpsiPeranPengguna[];
+    Outlet: OpsiOutletPengguna[];
     BatasPengguna: Batas;
     UuidSaya: string;
 };
@@ -164,7 +166,6 @@ export default function HalamanDaftarPengguna({
     const bolehUbah = PunyaIzinTenant(akses, IzinTenant.PenggunaUbah);
     const bolehNonaktifkan = PunyaIzinTenant(akses, IzinTenant.PenggunaNonaktifkan);
     const sayaPemilik = akses?.Pemilik ?? false;
-    const [formUndangan, AturFormUndangan] = useState(false);
     const [pilihan, AturPilihan] = useState<Pilihan>(null);
     const penuh = CekBatasPenuh(BatasPengguna);
     const peranTerlihat = Peran.filter((peran) => sayaPemilik || !peran.Pemilik);
@@ -211,10 +212,11 @@ export default function HalamanDaftarPengguna({
                     Kursi pengguna (anggota aktif + undangan menunggu):{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasPengguna, 'pengguna')}</span>
                 </p>
-                {bolehUndang ? (
-                    <Tombol onClick={() => AturFormUndangan(true)} disabled={penuh}>
-                        Undang pengguna
-                    </Tombol>
+                {bolehUndang && penuh ? <Tombol disabled>Undang pengguna</Tombol> : null}
+                {bolehUndang && !penuh ? (
+                    <Button asChild>
+                        <Link href="/kelola/pengguna/undangan/buat">Undang pengguna</Link>
+                    </Button>
                 ) : null}
             </div>
 
@@ -228,38 +230,29 @@ export default function HalamanDaftarPengguna({
                 </Pemberitahuan>
             ) : null}
 
-            {formUndangan ? (
-                <FormAkses
-                    judul="Undang pengguna"
-                    alamat="/kelola/pengguna/undangan"
-                    metode="post"
-                    denganEmail
-                    awal={{ Email: '', Peran: '', SemuaOutlet: false, Outlet: [] }}
-                    peran={peranTerlihat}
-                    outlet={Outlet}
-                    tombol="Kirim undangan"
-                    keterangan={`Undangan dikirim ke email, berlaku 72 jam, dan hanya bisa dipakai sekali. Bila email itu sudah punya akun (misal di usaha lain), akunnya ditautkan.`}
-                    saatSelesai={() => AturFormUndangan(false)}
-                />
-            ) : null}
-
             {pilihan?.jenis === 'akses' ? (
-                <FormAkses
-                    key={pilihan.anggota.Uuid}
+                <DialogFormulir
+                    jenis="panel"
                     judul={`Peran & akses ${pilihan.anggota.Nama}`}
-                    alamat={`/kelola/pengguna/${pilihan.anggota.Uuid}/akses`}
-                    metode="put"
-                    awal={{
-                        Email: pilihan.anggota.Email,
-                        Peran: pilihan.anggota.UuidPeran ?? '',
-                        SemuaOutlet: pilihan.anggota.SemuaOutlet,
-                        Outlet: pilihan.anggota.UuidOutlet,
-                    }}
-                    peran={peranTerlihat}
-                    outlet={Outlet}
-                    tombol="Simpan akses"
-                    saatSelesai={() => AturPilihan(null)}
-                />
+                    saatTutup={() => AturPilihan(null)}
+                >
+                    <FormAksesPengguna
+                        key={pilihan.anggota.Uuid}
+                        alamat={`/kelola/pengguna/${pilihan.anggota.Uuid}/akses`}
+                        metode="put"
+                        awal={{
+                            Email: pilihan.anggota.Email,
+                            Peran: pilihan.anggota.UuidPeran ?? '',
+                            SemuaOutlet: pilihan.anggota.SemuaOutlet,
+                            Outlet: pilihan.anggota.UuidOutlet,
+                        }}
+                        peran={peranTerlihat}
+                        outlet={Outlet}
+                        tombol="Simpan akses"
+                        saatSelesai={() => AturPilihan(null)}
+                        saatBatal={() => AturPilihan(null)}
+                    />
+                </DialogFormulir>
             ) : null}
             {pilihan?.jenis === 'nonaktifkan' ? (
                 <KonfirmasiNonaktifkan
@@ -329,110 +322,6 @@ export default function HalamanDaftarPengguna({
                 />
             </section>
         </TataLetakAplikasi>
-    );
-}
-
-type IsianAkses = { Email: string; Peran: string; SemuaOutlet: boolean; Outlet: string[] };
-
-type PropsFormAkses = {
-    judul: string;
-    alamat: string;
-    metode: 'post' | 'put';
-    denganEmail?: boolean;
-    awal: IsianAkses;
-    peran: Peran[];
-    outlet: Outlet[];
-    tombol: string;
-    keterangan?: string;
-    saatSelesai: () => void;
-};
-
-function FormAkses({
-    judul,
-    alamat,
-    metode,
-    denganEmail = false,
-    awal,
-    peran,
-    outlet,
-    tombol,
-    keterangan,
-    saatSelesai,
-}: PropsFormAkses) {
-    const formulir = useForm<IsianAkses>(awal);
-    const peranTerpilih = peran.find((baris) => baris.Uuid === formulir.data.Peran);
-    const semuaOutletPaksa = peranTerpilih?.Pemilik ?? false;
-
-    const PilihPeran = (uuid: string) => {
-        const baris = peran.find((item) => item.Uuid === uuid);
-        formulir.setData({
-            ...formulir.data,
-            Peran: uuid,
-            SemuaOutlet:
-                baris?.Pemilik === true ||
-                (metode === 'post' ? (baris?.SemuaOutletBawaan ?? false) : formulir.data.SemuaOutlet),
-        });
-    };
-
-    const Kirim = (peristiwa: FormEvent) => {
-        peristiwa.preventDefault();
-        formulir.submit(metode, alamat, { preserveScroll: true, onSuccess: saatSelesai });
-    };
-
-    return (
-        <DialogFormulir jenis="panel" judul={judul} keterangan={keterangan} saatTutup={saatSelesai}>
-            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-                {denganEmail ? (
-                    <BidangTeks
-                        label="Email"
-                        jenis="email"
-                        nilai={formulir.data.Email}
-                        saatBerubah={(nilai) => formulir.setData('Email', nilai)}
-                        galat={formulir.errors.Email}
-                        maxLength={191}
-                        autoFocus
-                        required
-                    />
-                ) : null}
-                <BidangPilihan
-                    label="Peran"
-                    nilai={formulir.data.Peran}
-                    opsi={peran.map((baris) => ({ Nilai: baris.Uuid, Label: baris.Nama }))}
-                    saatBerubah={PilihPeran}
-                    galat={formulir.errors.Peran}
-                    kosong="Pilih peran"
-                />
-                <KotakCentang
-                    label={
-                        semuaOutletPaksa
-                            ? 'Semua outlet (Pemilik selalu mengakses semua outlet)'
-                            : 'Semua outlet, termasuk outlet baru'
-                    }
-                    nilai={formulir.data.SemuaOutlet || semuaOutletPaksa}
-                    saatBerubah={(nilai) => formulir.setData('SemuaOutlet', nilai)}
-                />
-                {formulir.errors.SemuaOutlet ? (
-                    <p className="text-keterangan font-semibold text-bahaya">{formulir.errors.SemuaOutlet}</p>
-                ) : null}
-                {!formulir.data.SemuaOutlet && !semuaOutletPaksa ? (
-                    <GrupCentang
-                        legenda="Outlet yang ditugaskan"
-                        opsi={outlet.map((baris) => ({ nilai: baris.Uuid, label: `${baris.Kode} · ${baris.Nama}` }))}
-                        terpilih={formulir.data.Outlet}
-                        saatBerubah={(terpilih) => formulir.setData('Outlet', terpilih)}
-                        galat={formulir.errors.Outlet}
-                    />
-                ) : null}
-                <div className="flex flex-wrap gap-2">
-                    <Tombol type="submit" memproses={formulir.processing}>
-                        {tombol}
-                    </Tombol>
-                    <Tombol varian="sekunder" onClick={saatSelesai}>
-                        Batal
-                    </Tombol>
-                </div>
-            </form>
-        </DialogFormulir>
     );
 }
 

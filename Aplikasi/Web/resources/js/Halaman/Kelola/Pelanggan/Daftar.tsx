@@ -94,9 +94,9 @@ const kolom: KolomTabel<BarisPelanggan>[] = [
     },
 ];
 
-/** F-16a CRM-01: daftar pelanggan dengan ringkasan belanja; tambah, ubah, arsipkan & pulihkan. */
+/** F-16a CRM-01: daftar pelanggan dengan ringkasan belanja; ubah (panel), arsipkan & pulihkan. Tambah di halaman `/kelola/pelanggan/buat`. */
 export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiTier }: PropsDaftarPelanggan) {
-    const [form, AturForm] = useState<{ pelanggan: BarisPelanggan | null } | null>(null);
+    const [ubah, AturUbah] = useState<BarisPelanggan | null>(null);
 
     return (
         <TataLetakAplikasi judul="Pelanggan">
@@ -106,7 +106,9 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
             </p>
             {Izin.Kelola ? (
                 <div>
-                    <Button onClick={() => AturForm({ pelanggan: null })}>Tambah pelanggan</Button>
+                    <Button asChild>
+                        <Link href={`${AlamatPelanggan}/buat`}>Tambah pelanggan</Link>
+                    </Button>
                 </div>
             ) : (
                 <PesanHanyaLihat izin="pelanggan.kelola" objek="pelanggan" />
@@ -161,7 +163,7 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                             },
                             ...(Izin.Kelola
                                 ? [
-                                      { label: 'Ubah pelanggan', saatPilih: () => AturForm({ pelanggan: p }) },
+                                      { label: 'Ubah pelanggan', saatPilih: () => AturUbah(p) },
                                       p.Status === 'Aktif'
                                           ? {
                                                 label: 'Arsipkan pelanggan',
@@ -190,12 +192,18 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                 kosong={{
                     judul: 'Belum ada pelanggan. Tambahkan di sini atau dari aplikasi kasir saat transaksi.',
                     ...(Izin.Kelola
-                        ? { aksi: <Button onClick={() => AturForm({ pelanggan: null })}>Tambah pelanggan</Button> }
+                        ? {
+                              aksi: (
+                                  <Button asChild>
+                                      <Link href={`${AlamatPelanggan}/buat`}>Tambah pelanggan</Link>
+                                  </Button>
+                              ),
+                          }
                         : {}),
                 }}
             />
 
-            {form !== null ? <FormulirPelanggan pelanggan={form.pelanggan} saatTutup={() => AturForm(null)} /> : null}
+            {ubah !== null ? <FormulirPelanggan pelanggan={ubah} saatTutup={() => AturUbah(null)} /> : null}
         </TataLetakAplikasi>
     );
 }

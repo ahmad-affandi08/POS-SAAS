@@ -20,6 +20,7 @@ use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 /**
@@ -40,6 +41,18 @@ final class DaftarHargaKontroler extends DasarKatalogKontroler
             'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
             'ZonaWaktu' => $daftar->AmbilZonaWaktu(),
             'Izin' => $this->AmbilIzinKatalog(),
+        ]);
+    }
+
+    /** Halaman penuh "Buat daftar harga" (pola sama dengan Tambah produk). */
+    public function Buat(DaftarDaftarHarga $daftar): Response
+    {
+        return Inertia::render('Kelola/DaftarHarga/Buat', [
+            'Outlet' => $daftar->AmbilOpsiOutlet($this->IdOutletBoleh()),
+            'Kanal' => DaftarDaftarHarga::AmbilOpsiKanal(),
+            // F-16b: opsi tier pelanggan (kode) dari domain Pelanggan.
+            'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
+            'ZonaWaktu' => $daftar->AmbilZonaWaktu(),
         ]);
     }
 

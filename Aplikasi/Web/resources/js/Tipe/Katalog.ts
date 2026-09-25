@@ -288,6 +288,7 @@ export type PropsDaftarDaftarHarga = {
     ZonaWaktu: string;
     Izin: IzinKatalog;
 };
+export type PropsBuatDaftarHarga = Omit<PropsDaftarDaftarHarga, 'DaftarHarga' | 'Izin'>;
 export type PropsDetailDaftarHarga = {
     DaftarHarga: FormDaftarHarga & { Uuid: string; Aktif: boolean };
     Baris: HasilTabel<{
@@ -322,6 +323,7 @@ export type PropsDaftarKelompokPajak = {
     DasarPengenaan: Pilihan[];
     Izin: IzinKatalog;
 };
+export type PropsBuatKelompokPajak = Omit<PropsDaftarKelompokPajak, 'KelompokPajak' | 'Izin'>;
 // Form { Nama; Kategori: KategoriPajakProduk; Pajak: { KodeJenisPajak; DasarPengenaan }[] } → POST /kelola/kelompok-pajak, PUT /kelola/kelompok-pajak/{uuid}.
 
 // E.9 Halaman Tim 3.
@@ -349,6 +351,7 @@ export type PropsDaftarKelompokPilihan = {
     })[];
     Izin: IzinKatalog;
 };
+export type PropsBuatKelompokPilihan = Pick<PropsDaftarKelompokPilihan, 'Izin'>;
 export type PropsPilihanProduk = {
     Kepala: KepalaProduk;
     Terpasang: { Uuid: string; Nama: string; Ringkasan: string }[];

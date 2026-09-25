@@ -1,8 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import FormDaftarHarga, { DaftarHargaKosong } from '@/Komponen/Katalog/FormDaftarHarga';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -18,7 +16,6 @@ import {
     AlertDialogTrigger,
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -165,21 +162,13 @@ const kolomAksi: KolomTabel<BarisDaftarHarga> = {
 };
 
 /** F-03 daftar harga per outlet, kanal, tingkat pelanggan, dan periode. Tidak pernah dihapus, hanya dinonaktifkan. */
-export default function HalamanDaftarDaftarHarga({
-    DaftarHarga,
-    Outlet,
-    Kanal,
-    OpsiTier,
-    ZonaWaktu,
-    Izin,
-}: PropsDaftarDaftarHarga) {
+export default function HalamanDaftarDaftarHarga({ DaftarHarga, Kanal, Izin }: PropsDaftarDaftarHarga) {
     const { props } = usePage<PropsBersamaAplikasi>();
-    const [formTerbuka, AturFormTerbuka] = useState(false);
 
     return (
         <TataLetakAplikasi judul="Daftar harga">
             {!Izin.UbahHarga ? <PesanHanyaLihat izin="produk.harga.ubah" objek="daftar harga" /> : null}
-            <DaftarGalatServer galat={props.errors} kecuali={formTerbuka ? Object.keys(props.errors) : []} />
+            <DaftarGalatServer galat={props.errors} />
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="max-w-2xl text-isi text-teks-sekunder">
                     Harga khusus untuk outlet, kanal (misal online), tingkat pelanggan, atau periode tertentu. Bila
@@ -187,34 +176,11 @@ export default function HalamanDaftarDaftarHarga({
                     tanpa harga di daftar memakai harga dasar.
                 </p>
                 {Izin.UbahHarga ? (
-                    <Button type="button" onClick={() => AturFormTerbuka(true)}>
-                        Buat daftar harga
+                    <Button asChild>
+                        <Link href="/kelola/daftar-harga/buat">Buat daftar harga</Link>
                     </Button>
                 ) : null}
             </div>
-            <Sheet open={formTerbuka} onOpenChange={AturFormTerbuka}>
-                {formTerbuka ? (
-                    <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-                        <SheetHeader>
-                            <SheetTitle>Buat daftar harga</SheetTitle>
-                            <SheetDescription>
-                                Atur untuk outlet, kanal, tingkat pelanggan, dan periode mana daftar ini berlaku.
-                            </SheetDescription>
-                        </SheetHeader>
-                        <div className="px-4 pb-4">
-                            <FormDaftarHarga
-                                uuid={null}
-                                awal={DaftarHargaKosong}
-                                outlet={Outlet}
-                                kanal={Kanal}
-                                tier={OpsiTier ?? []}
-                                zonaWaktu={ZonaWaktu}
-                                saatSelesai={() => AturFormTerbuka(false)}
-                            />
-                        </div>
-                    </SheetContent>
-                ) : null}
-            </Sheet>
 
             <TabelData
                 id="katalog-daftar-harga"

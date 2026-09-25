@@ -150,6 +150,24 @@ describe('Peran kustom', function (): void {
         $this->assertDatabaseHas('LogAudit', ['IdTenant' => $tenant->Id, 'Peristiwa' => 'peran.ubah', 'IdObjek' => $peran->Id]);
     });
 
+    it('halaman buat peran (halaman penuh): daftar izin; tanpa peran.kelola 403; simpan kembali ke daftar peran', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->get('/kelola/peran/buat')->assertOk()
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman
+                ->component('Kelola/Peran/Buat')
+                ->has('DaftarIzin', count(IzinTenant::cases()))
+                ->has('DaftarIzin.0', fn (AssertableInertia $izin) => $izin->hasAll(['Kunci', 'Label', 'Kelompok', 'KhususPemilik'])));
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/peran', ['Nama' => 'Barista', 'Izin' => ['penjualan.buat']])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/kelola/peran');
+
+        $kasir = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
+        BantuanOrganisasi::Masuk($this, $kasir, $tenant->Id)->get('/kelola/peran/buat')->assertForbidden();
+    });
+
     it('menolak izin khusus Pemilik, izin tak dikenal, dan pengubahan peran bawaan', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
         $kasir = BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Kasir);

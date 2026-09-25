@@ -122,10 +122,15 @@ export type PropsDaftarTransaksiKasBank = {
     Saldo: BarisSaldoKasBank[];
     OpsiJenis: Pilihan[];
     OpsiOutlet: { Uuid: string; Nama: string }[];
+    Izin: { Kelola: boolean };
+};
+/** Halaman penuh "Catat transaksi kas & bank" (`/kelola/akuntansi/kas-bank/buat`). */
+export type PropsBuatTransaksiKasBank = {
+    OpsiJenis: Pilihan[];
+    OpsiOutlet: { Uuid: string; Nama: string }[];
     OpsiAkun: OpsiAkunKasBank[];
     WajibOutlet: boolean;
     Lampiran: { Ekstensi: string[]; UkuranMaksimalKb: number };
-    Izin: { Kelola: boolean };
 };
 export type PropsDetailTransaksiKasBank = {
     Transaksi: BarisTransaksiKasBank & {

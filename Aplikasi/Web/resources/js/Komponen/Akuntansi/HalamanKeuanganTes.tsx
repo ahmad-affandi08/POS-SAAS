@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanBaganAkun from '@/Halaman/Kelola/Akuntansi/Akun/Daftar';
+import HalamanBuatTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Buat';
 import HalamanDaftarTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Daftar';
 import HalamanDetailTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Detail';
 import HalamanArusKas from '@/Halaman/Kelola/Akuntansi/Laporan/ArusKas';
@@ -20,6 +21,7 @@ import type {
     PropsArusKas,
     PropsBaganAkun,
     PropsBukuBesar,
+    PropsBuatTransaksiKasBank,
     PropsDaftarTransaksiKasBank,
     PropsDetailTransaksiKasBank,
     PropsLabaRugi,
@@ -280,6 +282,12 @@ const propsKasBank: PropsDaftarTransaksiKasBank = {
         { Nilai: 'Transfer', Label: 'Transfer' },
     ],
     OpsiOutlet: [{ Uuid: 'O1', Nama: 'Cabang Solo Baru' }],
+    Izin: { Kelola: true },
+};
+
+const propsBuatKasBank: PropsBuatTransaksiKasBank = {
+    OpsiJenis: propsKasBank.OpsiJenis,
+    OpsiOutlet: propsKasBank.OpsiOutlet,
     OpsiAkun: [
         { Uuid: 'K1', Kode: '1-1100', Nama: 'Kas Outlet', Jenis: 'Aset', KasBank: true },
         { Uuid: 'K2', Kode: '1-1200', Nama: 'Bank', Jenis: 'Aset', KasBank: true },
@@ -289,7 +297,6 @@ const propsKasBank: PropsDaftarTransaksiKasBank = {
     ],
     WajibOutlet: true,
     Lampiran: { Ekstensi: ['jpg', 'png', 'pdf'], UkuranMaksimalKb: 5120 },
-    Izin: { Kelola: true },
 };
 
 describe('F-13a kas & bank', () => {
@@ -305,42 +312,49 @@ describe('F-13a kas & bank', () => {
         expect(screen.getAllByText('−Rp 1.250.000').length).toBeGreaterThan(0);
         expect(screen.getByRole('link', { name: 'KB/2026/09/0001' }).className).toContain('font-mono');
         expect(screen.getByText('Sudah dibalik')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Catat transaksi kas & bank' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/kas-bank/buat',
+        );
+        expect(screen.queryByRole('dialog')).toBeNull();
+        cleanup();
+        RenderUji(<HalamanDaftarTransaksiKasBank {...propsKasBank} Izin={{ Kelola: false }} />);
+        expect(screen.queryByRole('link', { name: 'Catat transaksi kas & bank' })).toBeNull();
     });
 
-    it('formulir: akun disaring per jenis (kas/bank vs lawan), outlet wajib, dikirim sebagai string desimal', () => {
-        RenderUji(<HalamanDaftarTransaksiKasBank {...propsKasBank} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Catat transaksi kas & bank' }));
-        const dialog = screen.getByRole('dialog');
+    it('halaman catat: akun disaring per jenis (kas/bank vs lawan), outlet wajib, dikirim sebagai string desimal; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/kas-bank/buat');
+        RenderUji(<HalamanBuatTransaksiKasBank {...propsBuatKasBank} />);
+        const formulir = screen.getByRole('form', { name: 'Formulir transaksi kas & bank' });
 
-        expect(AmbilNilaiPilihan(within(dialog).getByRole('combobox', { name: 'Dibayar dari (kas/bank)' }))).toEqual([
+        expect(AmbilNilaiPilihan(within(formulir).getByRole('combobox', { name: 'Dibayar dari (kas/bank)' }))).toEqual([
             '',
             'K1',
             'K2',
         ]);
-        expect(AmbilNilaiPilihan(within(dialog).getByRole('combobox', { name: 'Untuk akun beban/aset' }))).toEqual([
+        expect(AmbilNilaiPilihan(within(formulir).getByRole('combobox', { name: 'Untuk akun beban/aset' }))).toEqual([
             '',
             'P1',
             'B1',
         ]);
-        UbahNilai(within(dialog).getByRole('combobox', { name: 'Jenis transaksi' }), 'Transfer');
-        expect(AmbilNilaiPilihan(within(dialog).getByRole('combobox', { name: 'Ke kas/bank' }))).toEqual([
+        UbahNilai(within(formulir).getByRole('combobox', { name: 'Jenis transaksi' }), 'Transfer');
+        expect(AmbilNilaiPilihan(within(formulir).getByRole('combobox', { name: 'Ke kas/bank' }))).toEqual([
             '',
             'K1',
             'K2',
         ]);
-        UbahNilai(within(dialog).getByRole('combobox', { name: 'Jenis transaksi' }), 'Penerimaan');
-        expect(AmbilNilaiPilihan(within(dialog).getByRole('combobox', { name: 'Diterima dari akun' }))).toEqual([
+        UbahNilai(within(formulir).getByRole('combobox', { name: 'Jenis transaksi' }), 'Penerimaan');
+        expect(AmbilNilaiPilihan(within(formulir).getByRole('combobox', { name: 'Diterima dari akun' }))).toEqual([
             '',
             'P1',
             'E1',
         ]);
 
-        UbahNilai(within(dialog).getByRole('combobox', { name: 'Diterima dari akun' }), 'E1');
-        UbahNilai(within(dialog).getByRole('combobox', { name: 'Masuk ke (kas/bank)' }), 'K2');
-        UbahNilai(within(dialog).getByRole('combobox', { name: 'Outlet' }), 'O1');
-        UbahNilai(within(dialog).getByLabelText('Jumlah'), '25000000');
-        UbahNilai(within(dialog).getByLabelText('Keterangan'), 'Setoran modal awal');
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Simpan & jurnal' }));
+        UbahNilai(within(formulir).getByRole('combobox', { name: 'Diterima dari akun' }), 'E1');
+        UbahNilai(within(formulir).getByRole('combobox', { name: 'Masuk ke (kas/bank)' }), 'K2');
+        UbahNilai(within(formulir).getByRole('combobox', { name: 'Outlet' }), 'O1');
+        UbahNilai(within(formulir).getByLabelText('Jumlah'), '25000000');
+        UbahNilai(within(formulir).getByLabelText('Keterangan'), 'Setoran modal awal');
+        fireEvent.click(within(formulir).getByRole('button', { name: 'Simpan & jurnal' }));
 
         expect(tiruanRouter.post).toHaveBeenCalledWith(
             '/kelola/akuntansi/kas-bank',
@@ -355,6 +369,9 @@ describe('F-13a kas & bank', () => {
             }),
             expect.objectContaining({ forceFormData: false }),
         );
+
+        fireEvent.click(within(formulir).getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/akuntansi/kas-bank');
     });
 
     it('detail: tautan pembalik, lampiran, jurnal; dokumen pembalik hanya bila belum dibalik', () => {

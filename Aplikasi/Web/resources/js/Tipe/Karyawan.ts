@@ -27,6 +27,9 @@ export type PropsDaftarKaryawan = {
     Izin: { Kelola: boolean };
 };
 
+/** Halaman penuh "Tambah karyawan" (`/kelola/karyawan/buat`). */
+export type PropsBuatKaryawan = Pick<PropsDaftarKaryawan, 'OpsiPengguna' | 'OpsiOutlet'>;
+
 export type SelJadwal = { JamMulai: string; JamSelesai: string; OutletLain: boolean } | null;
 
 export type BarisJadwal = {
@@ -94,6 +97,9 @@ export type PropsAturanKomisi = {
     OpsiKategori: OpsiUuidNama[];
     Izin: { Kelola: boolean };
 };
+
+/** Halaman penuh "Tambah aturan komisi" (`/kelola/karyawan/komisi/buat`). */
+export type PropsBuatAturanKomisi = Pick<PropsAturanKomisi, 'OpsiKategori'>;
 
 export type BarisLaporanKomisi = {
     Uuid: string;

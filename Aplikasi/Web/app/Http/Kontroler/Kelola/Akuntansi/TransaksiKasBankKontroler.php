@@ -31,18 +31,27 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class TransaksiKasBankKontroler extends DasarAkuntansiKontroler
 {
-    public function Daftar(Request $permintaan, DaftarTransaksiKasBank $daftar, SaldoAkunKasBank $saldo, DaftarAkunPilihan $akun): Response|JsonResponse
+    public function Daftar(Request $permintaan, DaftarTransaksiKasBank $daftar, SaldoAkunKasBank $saldo): Response|JsonResponse
     {
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarTransaksiKasBank::KOLOM_URUT, DaftarTransaksiKasBank::URUT_BAWAAN, DaftarTransaksiKasBank::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Akuntansi/KasBank/Daftar', 'Transaksi', fn (): array => $daftar->AmbilTabel($tabel, $this->IdOutletBoleh()), fn (): array => [
             'Saldo' => $saldo->Ambil($this->IdOutletBoleh()),
-            'OpsiJenis' => array_map(fn (JenisTransaksiKasBank $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisTransaksiKasBank::cases()),
+            'OpsiJenis' => $this->AmbilOpsiJenis(),
+            'OpsiOutlet' => $this->AmbilOpsiOutlet(),
+            'Izin' => ['Kelola' => $this->CekIzinKelola()],
+        ]);
+    }
+
+    /** Halaman penuh "Catat transaksi kas & bank" (pola sama dengan Tambah produk): opsi yang dibutuhkan formulir saja. */
+    public function Buat(DaftarAkunPilihan $akun): Response
+    {
+        return Inertia::render('Kelola/Akuntansi/KasBank/Buat', [
+            'OpsiJenis' => $this->AmbilOpsiJenis(),
             'OpsiOutlet' => $this->AmbilOpsiOutlet(),
             'OpsiAkun' => $akun->AmbilUntukKasBank(),
             'WajibOutlet' => $this->IdOutletBoleh() !== null,
             'Lampiran' => ['Ekstensi' => (array) config('akuntansi.EkstensiLampiran'), 'UkuranMaksimalKb' => (int) config('akuntansi.UkuranMaksimalLampiranKb')],
-            'Izin' => ['Kelola' => $this->CekIzinKelola()],
         ]);
     }
 
@@ -78,6 +87,12 @@ final class TransaksiKasBankKontroler extends DasarAkuntansiKontroler
     public function Lampiran(string $transaksiKasBank, DetailTransaksiKasBank $detail, PenyimpanLampiranKasBank $penyimpan): StreamedResponse
     {
         return $penyimpan->Unduh($this->Cari($transaksiKasBank, $detail));
+    }
+
+    /** @return list<array{Nilai: string, Label: string}> */
+    private function AmbilOpsiJenis(): array
+    {
+        return array_map(fn (JenisTransaksiKasBank $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisTransaksiKasBank::cases());
     }
 
     private function Cari(string $uuid, DetailTransaksiKasBank $detail): TransaksiKasBank

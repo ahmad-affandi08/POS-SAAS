@@ -83,8 +83,10 @@ describe('F-16a back-office pelanggan', function (): void {
         $t = BantuanKatalog::SiapkanTenantProduk('Toko Roti Manis Sejahtera');
         BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
 
-        $this->post('/kelola/pelanggan', IsianPelanggan())->assertSessionHasNoErrors()->assertRedirect();
+        $simpan = $this->post('/kelola/pelanggan', IsianPelanggan())->assertSessionHasNoErrors();
         $ani = Pelanggan::query()->sole();
+        // Tambah dari halaman penuh /buat: kembali ke detail pelanggan baru, bukan ke halaman buat.
+        $simpan->assertRedirect("/kelola/pelanggan/{$ani->Uuid}");
         expect($ani->NoHp)->toBe('6281234567890')
             ->and($ani->Tag)->toBe(['Langganan', 'Reseller'])
             ->and($ani->TanggalLahir?->toDateString())->toBe('1990-05-17')
@@ -118,6 +120,20 @@ describe('F-16a back-office pelanggan', function (): void {
         expect($ubah->NilaiLama)->toEqual(['Nama' => 'Budi Santoso', 'Tag' => null])
             ->and($ubah->NilaiBaru)->toEqual(['Nama' => 'Budi Santoso Wibowo', 'Tag' => ['Grosir']]);
         expect(LogAudit::query()->whereIn('Peristiwa', ['pelanggan.arsipkan', 'pelanggan.pulihkan'])->count())->toBe(2);
+    });
+
+    it('halaman buat (halaman penuh): pemilik 200; supervisor & kasir 403', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk('Toko Roti Manis Sejahtera');
+
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+        $this->get('/kelola/pelanggan/buat')->assertOk()
+            ->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/Pelanggan/Buat'));
+
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Supervisor);
+        $this->get('/kelola/pelanggan/buat')->assertForbidden();
+
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/pelanggan/buat')->assertForbidden();
     });
 
     it('izin: kasir tanpa akses, supervisor hanya melihat; tenant lain 404', function (): void {

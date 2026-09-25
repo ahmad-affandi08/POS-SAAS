@@ -37,9 +37,11 @@ describe('F-04 HTTP pembelian', function (): void {
         $minyak = BantuanKatalog::BuatProduk(['Nama' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter']);
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id);
 
+        $this->get('/kelola/pembelian/pemasok/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Pembelian/Pemasok/Buat'));
         $this->post('/kelola/pembelian/pemasok', [
             'Kode' => 'SUP-001', 'Nama' => 'PT Sumber Pangan Nusantara', 'Pkp' => false, 'TerminHari' => 30,
-        ])->assertSessionHasNoErrors()->assertRedirect();
+        ])->assertSessionHasNoErrors()->assertRedirect('/kelola/pembelian/pemasok');
         $pemasok = Pemasok::query()->where('Kode', 'SUP-001')->sole();
 
         $this->get('/kelola/pembelian/pesanan/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
@@ -137,6 +139,7 @@ describe('F-04 HTTP pembelian', function (): void {
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->get('/kelola/pembelian/pesanan')->assertForbidden();
         $this->get('/kelola/pembelian/pemasok')->assertForbidden();
+        $this->get('/kelola/pembelian/pemasok/buat')->assertForbidden();
 
         BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::StafPembelian);
         $this->get('/kelola/pembelian/pesanan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h

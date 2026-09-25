@@ -57,7 +57,9 @@ type PropsFormDaftarHarga = {
     /** F-16b: tier pelanggan aktif (Nilai = Kode). Kosong = isian kode bebas seperti sebelumnya. */
     tier?: Pilihan[];
     zonaWaktu: string;
-    saatSelesai: () => void;
+    /** Dipanggil setelah tersimpan (panel ubah menutup diri). Halaman buat tidak memakainya: server mengarahkan. */
+    saatSelesai?: () => void;
+    saatBatal: () => void;
 };
 
 /** Formulir daftar harga: outlet × kanal × tingkat pelanggan × periode, dengan prioritas (price engine lapis 3–4). */
@@ -69,6 +71,7 @@ export default function FormDaftarHarga({
     tier = [],
     zonaWaktu,
     saatSelesai,
+    saatBatal,
 }: PropsFormDaftarHarga) {
     const formulir = useForm<DataFormDaftarHarga>(awal);
     const data = formulir.data;
@@ -84,7 +87,7 @@ export default function FormDaftarHarga({
             return;
         }
 
-        const opsi = { preserveScroll: true, onSuccess: saatSelesai };
+        const opsi = { preserveScroll: true, onSuccess: () => saatSelesai?.() };
 
         if (uuid === null) {
             formulir.post('/kelola/daftar-harga', opsi);
@@ -188,7 +191,7 @@ export default function FormDaftarHarga({
                 <Tombol type="submit" memproses={formulir.processing}>
                     {uuid === null ? 'Buat daftar harga' : 'Simpan pengaturan'}
                 </Tombol>
-                <Tombol varian="sekunder" onClick={saatSelesai}>
+                <Tombol varian="sekunder" onClick={saatBatal}>
                     Batal
                 </Tombol>
             </div>

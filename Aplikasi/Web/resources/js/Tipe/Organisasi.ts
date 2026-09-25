@@ -67,3 +67,19 @@ export function FormatBatas(batas: Batas, objek: string): string {
 export function CekBatasPenuh(batas: Batas): boolean {
     return batas.Batas !== null && batas.Terpakai >= batas.Batas;
 }
+
+/** Satu izin tenant untuk formulir peran (enum IzinTenant di Backend). */
+export type IzinPeran = { Kunci: string; Label: string; Kelompok: string; KhususPemilik: boolean };
+
+/** Opsi peran & outlet untuk formulir undangan / ubah akses pengguna. */
+export type OpsiPeranPengguna = { Uuid: string; Nama: string; Pemilik: boolean; SemuaOutletBawaan: boolean };
+export type OpsiOutletPengguna = { Uuid: string; Kode: string; Nama: string };
+
+/** Props halaman penuh "Tambah outlet". */
+export type PropsBuatOutlet = { Merek: Pilihan[]; Kota: Kota[]; BatasOutlet: Batas };
+
+/** Props halaman penuh "Buat peran". */
+export type PropsBuatPeran = { DaftarIzin: IzinPeran[] };
+
+/** Props halaman penuh "Undang pengguna". */
+export type PropsBuatUndangan = { Peran: OpsiPeranPengguna[]; Outlet: OpsiOutletPengguna[]; BatasPengguna: Batas };

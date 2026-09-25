@@ -256,6 +256,7 @@ export default function HalamanDetailDaftarHarga({
                                 tier={OpsiTier ?? []}
                                 zonaWaktu={ZonaWaktu}
                                 saatSelesai={() => AturUbahPengaturan(false)}
+                                saatBatal={() => AturUbahPengaturan(false)}
                             />
                         </div>
                     </SheetContent>

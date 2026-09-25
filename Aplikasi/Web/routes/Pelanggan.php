@@ -26,12 +26,14 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
     Route::get('/{pelanggan}', [PelangganKontroler::class, 'Detail'])->where('pelanggan', $ulid)->name('kelola.pelanggan.detail');
 
     Route::middleware($izin(IzinTenant::PelangganKelola))->group(function () use ($ulid): void {
+        Route::get('/buat', [PelangganKontroler::class, 'Buat'])->name('kelola.pelanggan.buat');
         Route::post('/', [PelangganKontroler::class, 'Simpan'])->name('kelola.pelanggan.simpan');
         Route::put('/{pelanggan}', [PelangganKontroler::class, 'Perbarui'])->where('pelanggan', $ulid)->name('kelola.pelanggan.perbarui');
         Route::post('/{pelanggan}/arsipkan', [PelangganKontroler::class, 'Arsipkan'])->where('pelanggan', $ulid)->name('kelola.pelanggan.arsipkan');
         Route::post('/{pelanggan}/pulihkan', [PelangganKontroler::class, 'Pulihkan'])->where('pelanggan', $ulid)->name('kelola.pelanggan.pulihkan');
         Route::post('/{pelanggan}/tier', [PelangganKontroler::class, 'AturTier'])->where('pelanggan', $ulid)->name('kelola.pelanggan.tier');
         Route::post('/{pelanggan}/poin', [PelangganKontroler::class, 'SesuaikanPoin'])->where('pelanggan', $ulid)->name('kelola.pelanggan.poin');
+        Route::get('/tier/buat', [LoyaltiKontroler::class, 'BuatTier'])->name('kelola.pelanggan.tier.buat');
         Route::post('/tier', [LoyaltiKontroler::class, 'SimpanTier'])->name('kelola.pelanggan.tier.simpan');
         Route::put('/tier/{tier}', [LoyaltiKontroler::class, 'PerbaruiTier'])->where('tier', $ulid)->name('kelola.pelanggan.tier.perbarui');
         Route::post('/tier/{tier}/arsipkan', [LoyaltiKontroler::class, 'ArsipkanTier'])->where('tier', $ulid)->name('kelola.pelanggan.tier.arsipkan');

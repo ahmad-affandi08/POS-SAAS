@@ -27,11 +27,19 @@ final class KelompokPilihanKontroler extends DasarKatalogKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah kelompok pilihan" (pola sama dengan Tambah produk). */
+    public function Buat(): Response
+    {
+        return Inertia::render('Kelola/KelompokPilihan/Buat', [
+            'Izin' => $this->AmbilIzinKatalog(),
+        ]);
+    }
+
     public function Simpan(SimpanKelompokPilihanPermintaan $permintaan, SimpanKelompokPilihan $simpan): RedirectResponse
     {
         $kelompok = $simpan->Jalankan(null, $permintaan->AmbilData($this->CekIzin(IzinTenant::ProdukHargaUbah)));
 
-        return back()->with('Kilat', "Kelompok pilihan {$kelompok->Nama} ditambahkan.");
+        return redirect()->route('kelola.kelompok-pilihan.daftar')->with('Kilat', "Kelompok pilihan {$kelompok->Nama} ditambahkan.");
     }
 
     public function Ubah(string $kelompokPilihan, SimpanKelompokPilihanPermintaan $permintaan, SimpanKelompokPilihan $simpan): RedirectResponse

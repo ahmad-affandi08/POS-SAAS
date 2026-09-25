@@ -84,6 +84,7 @@ export type BarisTier = {
 };
 
 export type PropsTierPelanggan = { Tier: BarisTier[]; FiturAktif: boolean; Izin: { Kelola: boolean } };
+export type PropsBuatTierPelanggan = Pick<PropsTierPelanggan, 'FiturAktif'>;
 
 export type PengaturanLoyalti = {
     Aktif: boolean;

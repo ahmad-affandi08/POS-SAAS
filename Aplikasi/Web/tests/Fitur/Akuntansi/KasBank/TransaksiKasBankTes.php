@@ -219,12 +219,34 @@ describe('F-13a transaksi kas & bank (FIN-03, PRD "Rincian F-13a")', function ()
             ->component('Kelola/Akuntansi/KasBank/Daftar')
             ->where('Transaksi.Meta.Total', 3)
             ->where('Saldo', fn ($saldo): bool => collect($saldo)->pluck('Saldo', 'Kode')->all() === ['1-1100' => '1750000.00', '1-1150' => '0.00', '1-1200' => '2000000.00'])
-            ->where('WajibOutlet', false)
+            ->has('OpsiJenis', 3)
+            ->missing('OpsiAkun')
             ->where('Izin.Kelola', true));
         $this->getJson('/kelola/akuntansi/kas-bank?cari=listrik')->assertOk()->assertJsonPath('Meta.Total', 1);
         $this->getJson('/kelola/akuntansi/kas-bank?saring[Jenis]=Transfer,Penerimaan')->assertJsonPath('Meta.Total', 2);
         $this->getJson('/kelola/akuntansi/kas-bank?saring[Tanggal]=2026-09-21..2026-09-30')->assertJsonPath('Meta.Total', 0);
         $this->getJson('/kelola/akuntansi/kas-bank?urut=-Jumlah')->assertJsonPath('Data.0.Jumlah', '5000000.00');
+    });
+
+    it('halaman catat (halaman penuh): opsi jenis, outlet, akun kas/bank & lawan, aturan lampiran', function (): void {
+        $t = BantuanPersediaan::SiapkanTenant();
+        BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Akuntan);
+
+        $this->get('/kelola/akuntansi/kas-bank/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Akuntansi/KasBank/Buat')
+            ->where('OpsiJenis', fn ($jenis): bool => collect($jenis)->pluck('Nilai')->all() === ['Pengeluaran', 'Penerimaan', 'Transfer'])
+            ->has('OpsiOutlet')
+            ->where('OpsiAkun', fn ($akun): bool => collect($akun)->contains(fn (array $a): bool => $a['Kode'] === '1-1100' && $a['KasBank'] === true)
+                && collect($akun)->contains(fn (array $a): bool => $a['Kode'] === '6-2000' && $a['KasBank'] === false))
+            ->where('WajibOutlet', false)
+            ->where('Lampiran.Ekstensi', (array) config('akuntansi.EkstensiLampiran'))
+            ->where('Lampiran.UkuranMaksimalKb', (int) config('akuntansi.UkuranMaksimalLampiranKb'))
+            ->missing('Transaksi'));
+
+        // Simpan dari halaman catat: diarahkan ke detail dokumen baru (bukan kembali ke /buat).
+        $respons = $this->post('/kelola/akuntansi/kas-bank', IsianKasBank())->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        $respons->assertRedirect('/kelola/akuntansi/kas-bank/'.TransaksiKasBank::query()->sole()->Uuid);
     });
 
     it('izin, isolasi tenant, dan batas outlet', function (): void {
@@ -239,6 +261,8 @@ describe('F-13a transaksi kas & bank (FIN-03, PRD "Rincian F-13a")', function ()
 
         BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id, PeranTenantBawaan::Kasir)->get('/kelola/akuntansi/kas-bank')->assertForbidden();
         BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->post('/kelola/akuntansi/kas-bank', IsianKasBank())->assertForbidden();
+        BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id, PeranTenantBawaan::Kasir)->get('/kelola/akuntansi/kas-bank/buat')->assertForbidden();
+        BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->get('/kelola/akuntansi/kas-bank/buat')->assertForbidden();
 
         // Akuntan outlet Solo: hanya melihat & mencatat di Solo; wajib memilih outlet.
         $akuntan = BantuanOrganisasi::TambahAnggota($a['Tenant']->Id, PeranTenantBawaan::Akuntan, semuaOutlet: false);
@@ -247,8 +271,11 @@ describe('F-13a transaksi kas & bank (FIN-03, PRD "Rincian F-13a")', function ()
         $this->get('/kelola/akuntansi/kas-bank')->assertInertia(fn (AssertableInertia $h) => $h
             ->where('Transaksi.Meta.Total', 1)
             ->where('Transaksi.Data.0.Uuid', $diSolo->Uuid)
-            ->where('WajibOutlet', true)
             ->where('Saldo', fn ($saldo): bool => collect($saldo)->firstWhere('Kode', '1-1100')['Saldo'] === '-1250000.00'));
+        $this->get('/kelola/akuntansi/kas-bank/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Akuntansi/KasBank/Buat')
+            ->where('WajibOutlet', true)
+            ->where('OpsiOutlet', fn ($outlet): bool => collect($outlet)->pluck('Uuid')->all() === [$solo->Uuid]));
         $this->get("/kelola/akuntansi/kas-bank/{$diUtama->Uuid}")->assertNotFound();
         $this->get("/kelola/akuntansi/kas-bank/{$pusat->Uuid}")->assertNotFound();
         $this->post('/kelola/akuntansi/kas-bank', IsianKasBank())->assertSessionHasErrors('UuidOutlet');

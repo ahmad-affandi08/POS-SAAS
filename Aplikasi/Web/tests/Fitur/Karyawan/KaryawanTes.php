@@ -68,7 +68,7 @@ describe('F-18 data karyawan', function (): void {
         $k = SiapkanKaryawan($this);
 
         $this->post('/kelola/karyawan', ['Nama' => 'Rina Wulandari', 'Jabatan' => 'Barista', 'LevelStaf' => 'Senior', 'GajiPokok' => '3500000', 'UuidPengguna' => $k['Kasir']->Uuid, 'UuidOutlet' => $k['Outlet']->Uuid])
-            ->assertSessionHasNoErrors()->assertRedirect();
+            ->assertSessionHasNoErrors()->assertRedirect('/kelola/karyawan');
         $this->post('/kelola/karyawan', ['Nama' => 'Rina Kedua', 'UuidPengguna' => $k['Kasir']->Uuid])->assertSessionHasErrors('UuidPengguna');
         $this->post('/kelola/karyawan', ['Nama' => 'Pak Joko Tukang Parkir', 'GajiPokok' => '1,5'])->assertSessionHasErrors('GajiPokok');
         $this->post('/kelola/karyawan', ['Nama' => 'Pak Joko Tukang Parkir'])->assertSessionHasNoErrors();
@@ -96,6 +96,21 @@ describe('F-18 data karyawan', function (): void {
 
         BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->get('/kelola/karyawan')->assertForbidden();
+    });
+
+    it('halaman tambah (halaman penuh): opsi akun & outlet; tanpa karyawan.kelola 403', function (): void {
+        $k = SiapkanKaryawan($this);
+        $this->get('/kelola/karyawan/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Karyawan/Buat')
+            ->has('OpsiPengguna')
+            ->has('OpsiPengguna.0', fn (AssertableInertia $o) => $o->hasAll(['Uuid', 'Nama']))
+            ->has('OpsiOutlet.0', fn (AssertableInertia $o) => $o->hasAll(['Uuid', 'Nama']))
+            ->missing('Karyawan'));
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Supervisor);
+        $this->get('/kelola/karyawan/buat')->assertForbidden();
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/karyawan/buat')->assertForbidden();
     });
 });
 

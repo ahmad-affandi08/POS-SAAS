@@ -1,14 +1,14 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import HalamanBuatDaftarHarga from '@/Halaman/Kelola/DaftarHarga/Buat';
 import HalamanDaftarDaftarHarga, { RingkasPeriode } from '@/Halaman/Kelola/DaftarHarga/Daftar';
 import HalamanDetailDaftarHarga, { AmbilBarisBerubah } from '@/Halaman/Kelola/DaftarHarga/Detail';
 import HalamanDaftarKategori, { AmbilTurunanKategori } from '@/Halaman/Kelola/Kategori/Daftar';
-import HalamanDaftarKelompokPajak, { PeriksaKonsistensiPajak } from '@/Halaman/Kelola/KelompokPajak/Daftar';
-import HalamanDaftarKelompokPilihan, {
-    PeriksaKelompokPilihan,
-    RingkasAturanPilih,
-} from '@/Halaman/Kelola/KelompokPilihan/Daftar';
+import HalamanBuatKelompokPajak from '@/Halaman/Kelola/KelompokPajak/Buat';
+import HalamanDaftarKelompokPajak from '@/Halaman/Kelola/KelompokPajak/Daftar';
+import HalamanBuatKelompokPilihan from '@/Halaman/Kelola/KelompokPilihan/Buat';
+import HalamanDaftarKelompokPilihan from '@/Halaman/Kelola/KelompokPilihan/Daftar';
 import HalamanDaftarSatuan from '@/Halaman/Kelola/Satuan/Daftar';
 import type {
     PropsDaftarKategori,
@@ -18,6 +18,8 @@ import type {
 } from '@/Tipe/Katalog';
 
 import { PeriksaRentangWaktu } from './FormDaftarHarga';
+import { PeriksaKonsistensiPajak } from './FormKelompokPajak';
+import { PeriksaKelompokPilihan, RingkasAturanPilih } from './FormKelompokPilihan';
 import { BuatHasilTabel, IzinLihat, IzinPenuh } from './DataUjiKatalog';
 import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from './TiruanInertia';
 import { AmbilNilaiPilihan, UbahNilai } from '@/Pengujian/InteraksiPilihan';
@@ -148,7 +150,7 @@ describe('Kelola/DaftarHarga (E.7)', () => {
         expect(RingkasPeriode({ MulaiPada: null, SelesaiPada: null })).toBe('Selalu');
     });
 
-    it('daftar: kosong, lalu buat daftar harga mengirim FormDaftarHarga', () => {
+    it('daftar: kosong, tombol buat membuka halaman penuh /kelola/daftar-harga/buat', () => {
         window.history.replaceState({}, '', '/kelola/daftar-harga');
         RenderUji(
             <HalamanDaftarDaftarHarga
@@ -161,7 +163,21 @@ describe('Kelola/DaftarHarga (E.7)', () => {
         );
 
         expect(screen.getByText('Belum ada daftar harga. Semua produk memakai harga dasar.')).toBeTruthy();
-        fireEvent.click(screen.getByRole('button', { name: 'Buat daftar harga' }));
+        expect(screen.getByRole('link', { name: 'Buat daftar harga' }).getAttribute('href')).toBe(
+            '/kelola/daftar-harga/buat',
+        );
+    });
+
+    it('halaman buat: validasi rentang lalu kirim FormDaftarHarga; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/daftar-harga/buat');
+        RenderUji(
+            <HalamanBuatDaftarHarga
+                Outlet={[{ Nilai: 'O-SLO', Label: 'Solo' }]}
+                Kanal={[{ Nilai: 'Online', Label: 'Online' }]}
+                ZonaWaktu="WIB"
+            />,
+        );
+
         UbahNilai(screen.getByLabelText('Nama daftar harga'), 'Harga GoFood');
         UbahNilai(screen.getByLabelText('Kanal penjualan'), 'Online');
         UbahNilai(screen.getByLabelText('Mulai berlaku (opsional)'), '2026-11-01T00:00');
@@ -186,6 +202,9 @@ describe('Kelola/DaftarHarga (E.7)', () => {
                 Prioritas: '0',
             },
         });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/daftar-harga');
     });
 
     it('detail: hanya baris yang berubah dikirim sebagai { Baris }', () => {
@@ -310,7 +329,38 @@ describe('Kelola/KelompokPajak (E.8)', () => {
 
         RenderUji(<HalamanDaftarKelompokPajak {...props} Izin={{ ...IzinPenuh, KelolaPajak: false }} />);
         expect(screen.queryByRole('button', { name: 'Aksi Makan & minum' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Tambah kelompok pajak' })).toBeNull();
         expect(screen.getByText('akuntansi.kelola')).toBeTruthy();
+    });
+
+    it('daftar: tombol tambah membuka halaman penuh /kelola/kelompok-pajak/buat', () => {
+        RenderUji(<HalamanDaftarKelompokPajak {...props} />);
+        expect(screen.getByRole('link', { name: 'Tambah kelompok pajak' }).getAttribute('href')).toBe(
+            '/kelola/kelompok-pajak/buat',
+        );
+    });
+
+    it('halaman buat: kirim POST kelompok pajak baru; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/kelompok-pajak/buat');
+        RenderUji(
+            <HalamanBuatKelompokPajak
+                JenisPajak={props.JenisPajak}
+                Kategori={props.Kategori}
+                DasarPengenaan={props.DasarPengenaan}
+            />,
+        );
+
+        UbahNilai(screen.getByLabelText('Nama kelompok pajak'), 'Barang retail');
+        UbahNilai(screen.getByLabelText('Kategori pajak'), 'NonPajak');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan kelompok pajak' }));
+        expect(kirimanForm[0]).toEqual({
+            metode: 'post',
+            url: '/kelola/kelompok-pajak',
+            data: { Nama: 'Barang retail', Kategori: 'NonPajak', Pajak: [] },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/kelompok-pajak');
     });
 });
 
@@ -412,5 +462,30 @@ describe('Kelola/KelompokPilihan (E.9)', () => {
     it('kosong dan konfirmasi hapus', () => {
         RenderUji(<HalamanDaftarKelompokPilihan KelompokPilihan={[]} Izin={IzinPenuh} />);
         expect(screen.getByText(/Belum ada kelompok pilihan/)).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Tambah kelompok pilihan' }).getAttribute('href')).toBe(
+            '/kelola/kelompok-pilihan/buat',
+        );
+    });
+
+    it('halaman buat: kirim POST kelompok pilihan baru; Batal kembali ke daftar', () => {
+        window.history.replaceState({}, '', '/kelola/kelompok-pilihan/buat');
+        RenderUji(<HalamanBuatKelompokPilihan Izin={IzinPenuh} />);
+
+        UbahNilai(screen.getByLabelText('Nama kelompok'), 'Level gula');
+        UbahNilai(screen.getByLabelText('Nama pilihan 1'), 'Normal');
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan kelompok pilihan' }));
+        expect(kirimanForm[0]?.metode).toBe('post');
+        expect(kirimanForm[0]?.url).toBe('/kelola/kelompok-pilihan');
+        // Tiruan useForm tidak menjalankan transform; NamaBahan dibuang oleh transform di peramban sungguhan.
+        expect(kirimanForm[0]?.data).toMatchObject({
+            Nama: 'Level gula',
+            MinimalPilih: '0',
+            MaksimalPilih: '1',
+            Urutan: '0',
+            Pilihan: [{ Uuid: null, Nama: 'Normal', Harga: '0', Aktif: true, UuidProdukBahan: null, Jumlah: '' }],
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/kelompok-pilihan');
     });
 });

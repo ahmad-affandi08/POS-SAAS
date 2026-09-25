@@ -27,11 +27,17 @@ final class KelompokPajakKontroler extends DasarKatalogKontroler
         ]);
     }
 
+    /** Halaman penuh "Tambah kelompok pajak" (pola sama dengan Tambah produk). */
+    public function Buat(DaftarKelompokPajak $daftar): Response
+    {
+        return Inertia::render('Kelola/KelompokPajak/Buat', $daftar->AmbilOpsiFormulir());
+    }
+
     public function Simpan(SimpanKelompokPajakPermintaan $permintaan, SimpanKelompokPajak $simpan): RedirectResponse
     {
         $kelompok = $simpan->Jalankan(null, $permintaan->AmbilNama(), $permintaan->AmbilKategori(), $permintaan->AmbilPajak());
 
-        return back()->with('Kilat', "Kelompok pajak {$kelompok->Nama} ditambahkan.");
+        return redirect()->route('kelola.kelompok-pajak.daftar')->with('Kilat', "Kelompok pajak {$kelompok->Nama} ditambahkan.");
     }
 
     public function Ubah(string $kelompokPajak, SimpanKelompokPajakPermintaan $permintaan, SimpanKelompokPajak $simpan): RedirectResponse

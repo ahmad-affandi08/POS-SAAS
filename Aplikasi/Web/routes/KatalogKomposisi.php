@@ -30,6 +30,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     });
 
     Route::middleware($izin(IzinTenant::ProdukKelola))->group(function () use ($ulid): void {
+        Route::get('/kelompok-pilihan/buat', [KelompokPilihanKontroler::class, 'Buat'])->name('kelola.kelompok-pilihan.buat');
         Route::post('/kelompok-pilihan', [KelompokPilihanKontroler::class, 'Simpan'])->name('kelola.kelompok-pilihan.simpan');
         Route::put('/kelompok-pilihan/{kelompokPilihan}', [KelompokPilihanKontroler::class, 'Ubah'])->where('kelompokPilihan', $ulid)->name('kelola.kelompok-pilihan.ubah');
         Route::delete('/kelompok-pilihan/{kelompokPilihan}', [KelompokPilihanKontroler::class, 'Hapus'])->where('kelompokPilihan', $ulid)->name('kelola.kelompok-pilihan.hapus');

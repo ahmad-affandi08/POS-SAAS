@@ -30,6 +30,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PembelianKelola)
     Route::get('/produk/cari', [ProdukPembelianKontroler::class, 'Cari'])->name('kelola.pembelian.produk.cari');
 
     Route::get('/pemasok', [PemasokKontroler::class, 'Daftar'])->name('kelola.pembelian.pemasok.daftar');
+    Route::get('/pemasok/buat', [PemasokKontroler::class, 'Buat'])->name('kelola.pembelian.pemasok.buat');
     Route::post('/pemasok', [PemasokKontroler::class, 'Simpan'])->name('kelola.pembelian.pemasok.simpan');
     Route::put('/pemasok/{pemasok}', [PemasokKontroler::class, 'Perbarui'])->where('pemasok', $ulid)->name('kelola.pembelian.pemasok.perbarui');
     Route::post('/pemasok/{pemasok}/status', [PemasokKontroler::class, 'UbahStatus'])->where('pemasok', $ulid)->name('kelola.pembelian.pemasok.status');
