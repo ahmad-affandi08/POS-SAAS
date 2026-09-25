@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.56 |
+| Versi | 1.57 |
 | Tanggal | 24 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -77,6 +77,7 @@
 | 1.54 | Neraca (FIN-07 P1) di back-office F-13: posisi akhir periode vs sehari sebelum periode, laba belum ditutup buku di ekuitas (tahun berjalan & tahun-tahun lalu), tanda seimbang, ekspor CSV, invarian nilai persediaan neraca = Σ nilai stok. Utang §25 no. 25 & 26 diperbarui. |
 | 1.55 | Arus kas metode langsung (FIN-07 P1) di back-office F-13; klasifikasi aktivitas dari akun lawan (keputusan agen, D-12). `TabelData`: meta `sembunyiBilaKosong` untuk daftar bertumpuk HP dan tombol Saring di HP hanya tampil bila ada saring/urut. |
 | 1.56 | Rincian F-10a: area & meja per outlet, stasiun dapur tingkat tenant + `Kategori.IdStasiunDapur`, gerbang fitur `pos.mode-meja`, stasiun dari template sektor; penyesuaian §15 `StasiunDapur` (tanpa IdOutlet/KonfigurasiPrinter) dan `AreaMeja`/`Meja`. |
+| 1.57 | Rincian F-07 mode meja & F-10b fase 1: pesanan terbuka tersinkron (item outbox `PesananTerbuka.*`, tarik delta, kunci bayar online, bayar ganda offline → `PerluTinjauan`), tiket dapur per stasiun & ronde, API KDS. |
 
 ---
 
@@ -1351,6 +1352,16 @@ stateDiagram-v2
 - **Template sektor:** daftar `StasiunDapur` template (misal FNB-CAF: Bar, Dapur) dibuat saat template diterapkan, aditif & idempoten (BR-01.1; nama yang sudah ada, termasuk yang diarsipkan, dilewati).
 - Audit: `area-meja.*`, `meja.*`, `stasiun-dapur.*` (buat, ubah, arsipkan, pulihkan, tambah-template), perubahan stasiun kategori ikut `kategori.ubah`.
 - **Belum (F-10b/F-07 mode meja):** editor denah seret-lepas, status pakai meja, paket data meja & stasiun untuk aplikasi kasir, pesanan terbuka tersinkron, tiket dapur (`TiketDapur`), layar KDS, dan printer dapur per stasiun.
+
+**Rincian F-07 mode meja & F-10b fase 1 (v1.57, pesanan terbuka & tiket dapur; diputuskan agen atas mandat D-12, mengikuti §18.3):**
+- **Pesanan terbuka** (`PesananTerbuka` + `PesananTerbukaDetail`, domain Penjualan) terpisah dari `Penjualan`: tidak memengaruhi stok & jurnal sampai dibayar. Pembayaran tetap satu `Penjualan.Buat` (lunas) yang menyertakan `UuidPesananTerbuka`; stok, jurnal, snapshot harga/pajak/HPP (BR-07.2) terjadi di penjualan itu, di transaksi yang sama pesanan ditandai `Dibayar`. Status pesanan `Terbuka → Dibayar | Dibatalkan`; pesanan yang sudah ditutup menolak perubahan (`PesananSudahDitutup`). Nomor `OB/{OUTLET}/{YYMMDD}/{PERANGKAT}-{SEQ4}` dibuat di perangkat (BR-07.1).
+- **Item outbox** (idempoten per Uuid item, `sinkron/kirim`): `PesananTerbuka.Buka {Uuid pesanan, Nomor, UuidMeja|null, Label|null, JumlahTamu, UuidPengguna, DibukaPada}`; `PesananTerbuka.Tambah {UuidPesanan, Ronde, KirimDapur, Baris [{Uuid, UuidProduk, UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [..], Catatan}]}` (baris append-only ULID; Uuid baris yang sudah ada dilewati); `PesananTerbuka.BatalkanBaris {UuidPesanan, UuidBaris [..], Alasan, UuidPengguna, UuidPenyetuju|null}` (BR-07.5: baris yang sudah dikirim ke dapur hanya batal dengan alasan dan dicatat sebagai **void item**; tanpa izin `penjualan.void` wajib penyetuju); `PesananTerbuka.Ubah {UuidPesanan, UuidMeja?, Label?, JumlahTamu?, DiubahPada}` (header *last-writer-wins* menurut `DiubahPada` perangkat; perubahan lebih lama diabaikan tetapi tetap tercatat diterima); `PesananTerbuka.Batal {UuidPesanan, Alasan, UuidPengguna, UuidPenyetuju|null}` (pesanan dengan baris terkirim ke dapur butuh `penjualan.void` atau penyetuju).
+- **Bayar ganda offline** (dua perangkat membayar pesanan yang sama tanpa koneksi): penjualan kedua tetap diterima (uang sudah diterima, data tidak dibuang) dan ditandai `PerluTinjauan` alasan `PesananDibayarGanda`. Pencegahan: **kunci bayar online** `POST /api/pos/v1/pesanan-terbuka/{uuid}/kunci-bayar` (berlaku 2 menit, diperpanjang saat layar Bayar terbuka; perangkat lain mendapat 409 `PesananSedangDibayar`), dilepas saat dibayar atau `DELETE`.
+- **Tarik pesanan terbuka** `GET /api/pos/v1/pesanan-terbuka`: **snapshot** semua pesanan `Terbuka` outlet perangkat lengkap dengan baris dan status tiket dapurnya, ditambah Uuid pesanan yang ditutup dalam 12 jam terakhir (penanda hapus), dengan `ETag` (`If-None-Match` sama → 304). Dipakai perangkat lain di outlet (kasir, pelayan) setiap 5–10 detik saat online. Snapshot dipilih daripada nomor versi karena nomor auto-increment bisa ter-commit tidak berurutan sehingga perubahan terlewat, sementara pesanan terbuka per outlet sedikit. Item outbox tambahan `PesananTerbuka.KirimDapur {UuidPesanan, Ronde, UuidBaris [..]}` mengirim baris yang sebelumnya disimpan tanpa dikirim (tahan). **Data meja** `GET /api/pos/v1/meja`: area, meja aktif, stasiun dapur aktif, stasiun bawaan, dan peta kategori → stasiun.
+- **Tiket dapur** (`TiketDapur` + `TiketDapurDetail`, domain Pemenuhan): dibuat server saat `PesananTerbuka.Tambah` dengan `KirimDapur` atau `Penjualan.Buat` dengan `KirimDapur` (mode cepat, bayar dulu): satu tiket per (dokumen, ronde, stasiun); baris dirutekan menurut stasiun kategori produk (kategori tanpa stasiun/stasiun diarsipkan → stasiun bawaan; tanpa stasiun sama sekali → tidak ada tiket). Status tiket `Antre → Dimasak → Siap → Disajikan` dengan `DikirimPada`, `MulaiPada`, `SiapPada`, `DisajikanPada`; void item yang sudah dikirim menandai baris tiket `Dibatalkan`.
+- **KDS** (perangkat berjenis `Kds`, online di fase 1; mode LAN offline = §18.5 fase 3): `GET /api/pos/v1/dapur/tiket?stasiun[]=` (tiket aktif outlet ≤ 12 jam, urut waktu kirim) dan `POST /api/pos/v1/dapur/tiket/{uuid}/status {Status}` (hanya maju satu langkah; mundur satu langkah untuk koreksi salah ketuk). Warna umur tiket: normal < 10 menit, kuning 10–20, merah > 20 (F-10).
+- **Batas laju API POS (perbaikan v1.57):** batas `throttle:N,1` bawaan memakai satu penghitung per IP untuk semua rute, sehingga beberapa perangkat outlet di balik satu IP (NAT) saling menghabiskan jatah (polling pesanan terbuka/KDS akan 429). Kini limiter bernama `pos-N` = N per menit **per rute per perangkat** (aktivasi tanpa token tetap per IP); angka batas tidak berubah.
+- **Belum di fase 1:** pisah bill per item (split bill fase 1 = satu penjualan dengan beberapa pembayaran, BR-08.1), gabung bill/meja, course hold & fire, minimum charge, printer dapur ESC/POS (menunggu `AdaptorPerangkat`), layar antrean pelanggan, dan mode LAN.
 
 ---
 
@@ -2749,7 +2760,8 @@ erDiagram
 |---|---|
 | `AreaMeja` / `Meja` | IdOutlet, Nama, Urutan, Status / IdOutlet, IdAreaMeja, Nama (unik per outlet), Kapasitas, PosisiX, PosisiY, Bentuk, Urutan, TokenQr (F-17), Status (Aktif/Diarsipkan; status pakai diturunkan dari pesanan terbuka) |
 | `StasiunDapur` | IdTenant, Uuid, Nama (unik per tenant), Urutan, Status (tingkat tenant sejak v1.56; konfigurasi printer dapur disimpan di profil perangkat) |
-| `TiketDapur` / `TiketDapurDetail` | IdPenjualan, IdStasiunDapur, Ronde, Status, DikirimPada, SiapPada |
+| `PesananTerbuka` / `PesananTerbukaDetail` (v1.57) | IdOutlet, IdPerangkat, Uuid (dari perangkat), Nomor `OB/…`, IdMeja, Label, JumlahTamu, Status (Terbuka/Dibayar/Dibatalkan), IdPengguna, DibukaPada, HeaderDiubahPada (LWW), IdPenjualan, DitutupPada, AlasanBatal, IdPembatal, IdPenyetujuBatal, IdPerangkatKunciBayar, KunciBayarSampai / IdPesananTerbuka, Uuid, IdProduk, UuidProdukSatuan, NamaProduk, Jumlah, HargaSatuan, HargaPilihan, Pilihan JSON, Catatan, Ronde, Status (Aktif/Dibatalkan), DikirimKeDapurPada, IdPengguna, IdPerangkat, DibatalkanPada, AlasanBatal, IdPembatal, IdPenyetujuBatal; `Penjualan.IdPesananTerbuka` |
+| `TiketDapur` / `TiketDapurDetail` | IdOutlet, IdStasiunDapur, IdPesananTerbuka / IdPenjualan, NomorDokumen, NamaMeja, Label, Ronde, Status (Antre/Dimasak/Siap/Disajikan), DikirimPada, MulaiPada, SiapPada, DisajikanPada / IdTiketDapur, UuidBaris, NamaProduk, Jumlah, Pilihan JSON (nama), Catatan, Status (Aktif/Dibatalkan) |
 | `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
 | `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |
 | `TiketLaundry` | IdPenjualan, Berat, Item JSON, Status, SelesaiPada, DiambilPada |

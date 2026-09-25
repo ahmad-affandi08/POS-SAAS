@@ -19,6 +19,8 @@ enum KodeAlasanTinjauan: string
     case PengaturanBerbeda = 'PengaturanBerbeda';
     case PajakBerbeda = 'PajakBerbeda';
     case LokasiRusakTidakAda = 'LokasiRusakTidakAda';
+    case PesananDibayarGanda = 'PesananDibayarGanda';
+    case PesananTidakDikenal = 'PesananTidakDikenal';
 
     public function AmbilLabel(): string
     {
@@ -32,6 +34,8 @@ enum KodeAlasanTinjauan: string
             self::PengaturanBerbeda => 'Pengaturan kasir di perangkat berbeda',
             self::PajakBerbeda => 'Pajak di perangkat berbeda dengan pengaturan pajak',
             self::LokasiRusakTidakAda => 'Lokasi stok Rusak belum ada',
+            self::PesananDibayarGanda => 'Pesanan meja sudah dibayar atau dibatalkan di perangkat lain',
+            self::PesananTidakDikenal => 'Pesanan meja belum diterima server',
         };
     }
 

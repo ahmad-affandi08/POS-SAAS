@@ -35,6 +35,32 @@ final class DaftarStasiunDapur
             ->all());
     }
 
+    /**
+     * Stasiun aktif (Id → Nama) urut Urutan lalu Nama, dan stasiun bawaan (aktif pertama) untuk perutean tiket dapur.
+     *
+     * @return array{Aktif: array<int, string>, Bawaan: int|null}
+     */
+    public function AmbilPerutean(): array
+    {
+        $aktif = [];
+
+        foreach (StasiunDapur::query()->where('Status', StatusOrganisasi::Aktif->value)->orderBy('Urutan')->orderBy('Nama')->get() as $s) {
+            $aktif[$s->Id] = $s->Nama;
+        }
+
+        return ['Aktif' => $aktif, 'Bawaan' => array_key_first($aktif)];
+    }
+
+    /**
+     * Id stasiun aktif per Uuid (KDS memilih stasiun lewat Uuid).
+     *
+     * @return array<string, int>
+     */
+    public function AmbilIdAktifPerUuid(): array
+    {
+        return StasiunDapur::query()->where('Status', StatusOrganisasi::Aktif->value)->pluck('Id', 'Uuid')->map(fn ($id): int => (int) $id)->all();
+    }
+
     /** Id stasiun aktif dari Uuid; null bila tidak ada, milik tenant lain, atau diarsipkan. */
     public function CariIdAktif(string $uuid): ?int
     {

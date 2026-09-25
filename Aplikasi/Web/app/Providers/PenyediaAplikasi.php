@@ -9,12 +9,14 @@ use App\Domain\Bersama\Database\MakroSkema;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
+use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuTimTiketDukunganBaru;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Http\Perantara\AutentikasiPerangkat;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,6 +63,18 @@ final class PenyediaAplikasi extends ServiceProvider
         RateLimiter::for('pendaftaran', static fn (Request $permintaan) => Limit::perHour((int) config('tenant.BatasRegistrasiPerJam'))
             ->by((string) $permintaan->ip())
             ->response(static fn () => back()->withErrors(['Umum' => 'Terlalu banyak percobaan pendaftaran dari jaringan ini. Coba lagi dalam satu jam.'])));
+
+        // API POS: batas per rute dan per perangkat (bukan per IP bersama). Perangkat-perangkat satu outlet biasanya di
+        // balik satu IP (NAT); kunci per IP membuat polling pesanan terbuka/KDS dari beberapa perangkat saling
+        // menghabiskan jatah. Rute tanpa perangkat (aktivasi) tetap dibatasi per IP.
+        foreach ([10, 30, 60, 120, 600] as $perMenit) {
+            RateLimiter::for("pos-{$perMenit}", static function (Request $permintaan) use ($perMenit): Limit {
+                $perangkat = $permintaan->attributes->get(AutentikasiPerangkat::ATRIBUT);
+                $rute = (string) $permintaan->route()?->getName();
+
+                return Limit::perMinute($perMenit)->by($rute.'|'.($perangkat instanceof Perangkat ? 'perangkat:'.$perangkat->Id : 'ip:'.$permintaan->ip()));
+            });
+        }
 
         // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
         $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();

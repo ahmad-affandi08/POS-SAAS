@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Http\Kontroler\Pengelola\GalatKontroler;
+use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\Pengelola\SiapkanSesiPengelola;
 use App\Http\Respons\GalatApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -27,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Harus berjalan sebelum StartSession: cookie sesi pengelola terpisah dari tenant (BR-P01.4).
         $middleware->prepend(SiapkanSesiPengelola::class);
+
+        // API POS: perangkat dikenali sebelum batas laju dihitung, agar limiter `pos-*` memakai kunci per perangkat.
+        $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPerangkat::class);
 
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.masuk') : route('masuk'),

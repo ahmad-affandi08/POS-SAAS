@@ -39,5 +39,7 @@ final readonly class DataPenjualanPos
         public array $pembayaran,
         public DataRingkasanPenjualanPos $ringkasan,
         public ?string $catatan,
+        public ?string $uuidPesananTerbuka = null,
+        public bool $kirimDapur = false,
     ) {}
 }

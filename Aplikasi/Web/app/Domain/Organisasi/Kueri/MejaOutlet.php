@@ -51,4 +51,37 @@ final class MejaOutlet
             })->all()),
         ];
     }
+
+    /**
+     * Meja aktif di outlet (untuk membuka/memindah pesanan); null bila tidak ada, outlet lain, atau diarsipkan.
+     *
+     * @return array{Id: int, Nama: string}|null
+     */
+    public function CariAktif(int $idOutlet, string $uuid): ?array
+    {
+        $meja = Meja::query()->where('IdOutlet', $idOutlet)->where('Uuid', $uuid)->where('Status', StatusOrganisasi::Aktif->value)->first();
+
+        return $meja === null ? null : ['Id' => $meja->Id, 'Nama' => $meja->Nama];
+    }
+
+    /**
+     * Uuid & nama meja per Id (termasuk yang diarsipkan) untuk menampilkan pesanan.
+     *
+     * @param  list<int>  $id
+     * @return array<int, array{Uuid: string, Nama: string}>
+     */
+    public function AmbilPerId(array $id): array
+    {
+        if ($id === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (Meja::query()->whereKey($id)->get(['Id', 'Uuid', 'Nama']) as $m) {
+            $hasil[$m->Id] = ['Uuid' => $m->Uuid, 'Nama' => $m->Nama];
+        }
+
+        return $hasil;
+    }
 }

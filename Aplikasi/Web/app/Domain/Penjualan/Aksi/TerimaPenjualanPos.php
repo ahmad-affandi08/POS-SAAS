@@ -27,6 +27,9 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
+use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
+use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
+use App\Domain\Pemenuhan\Data\DataKirimDapur;
 use App\Domain\Penjualan\Data\DataBarisPenjualanPos;
 use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
@@ -41,6 +44,7 @@ use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
+use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -115,6 +119,8 @@ final class TerimaPenjualanPos
         private readonly PostingJurnal $postingJurnal,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PenutupPesananTerbuka $penutupPesanan,
+        private readonly KirimKeDapur $kirimDapur,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -242,9 +248,36 @@ final class TerimaPenjualanPos
         // (9) Pembayaran.
         [$totalDibayar, $bersih] = $this->PeriksaPembayaran($data, $metode, $hasil);
 
+        // F-07 mode meja: pesanan terbuka yang dibayar (dikunci sebelum penjualan dibuat agar IdPesananTerbuka tersimpan).
+        [$pesanan, $tinjauanPesanan] = $this->penutupPesanan->Cari($data->uuidPesananTerbuka, $outlet->idOutlet);
+        $tinjauan += $tinjauanPesanan;
+
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
+        $this->penutupPesanan->Tutup($pesanan, $penjualan);
+
+        // F-10b mode cepat (bayar dulu): tiket dapur dari baris penjualan, di transaksi yang sama.
+        if ($data->kirimDapur) {
+            $this->kirimDapur->Jalankan(new DataKirimDapur(
+                idOutlet: $penjualan->IdOutlet,
+                idPesananTerbuka: null,
+                idPenjualan: $penjualan->Id,
+                nomorDokumen: $penjualan->Nomor,
+                namaMeja: null,
+                label: $penjualan->Catatan === null ? null : mb_substr($penjualan->Catatan, 0, 60),
+                ronde: 1,
+                dikirimPada: $data->dibuatPada,
+                baris: array_map(fn (PenjualanDetail $d): DataBarisKirimDapur => new DataBarisKirimDapur(
+                    $d->Uuid,
+                    $d->IdProduk,
+                    $d->NamaProduk,
+                    (string) $d->Jumlah,
+                    array_values(array_map(fn (array $p): string => $p['Nama'], $d->Pilihan ?? [])),
+                    $d->Catatan,
+                ), $detail),
+            ));
+        }
         $this->SimpanPajak($data, $penjualan, $hasil);
         $this->SimpanPembayaran($data, $penjualan, $metode);
 
@@ -542,12 +575,14 @@ final class TerimaPenjualanPos
         CarbonImmutable $tanggalBisnis,
         HasilKalkulasi $hasil,
         Uang $totalDibayar,
+        ?int $idPesananTerbuka,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
             'IdOutlet' => $outlet->idOutlet,
             'IdShift' => $idShift,
             'IdPerangkat' => $data->idPerangkat,
+            'IdPesananTerbuka' => $idPesananTerbuka,
             'Nomor' => $data->nomor,
             'Kanal' => $data->kanal,
             'Status' => StatusPenjualan::Lunas,

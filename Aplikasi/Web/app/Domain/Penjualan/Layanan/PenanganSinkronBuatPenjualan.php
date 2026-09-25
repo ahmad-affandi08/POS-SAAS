@@ -32,7 +32,8 @@ use Illuminate\Validation\Rule;
  * UuidProduk, UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}],
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
- * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan}`. Uang & jumlah string desimal.
+ * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?}`. Uang & jumlah
+ * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
 final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
 {
@@ -117,6 +118,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Ringkasan.TotalAkhir' => ['required', 'string', $uang],
             'Ringkasan.Kembalian' => ['required', 'string', $uang],
             'Catatan' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'UuidPesananTerbuka' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'KirimDapur' => ['sometimes', 'boolean'],
         ]);
 
         $pembulatan = is_array($valid['PembulatanTunai'] ?? null)
@@ -159,6 +162,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 Uang::Dari((string) $valid['Ringkasan']['Kembalian']),
             ),
             catatan: self::AmbilTeks($valid['Catatan'] ?? null),
+            uuidPesananTerbuka: is_string($valid['UuidPesananTerbuka'] ?? null) ? strtoupper($valid['UuidPesananTerbuka']) : null,
+            kirimDapur: (bool) ($valid['KirimDapur'] ?? false),
         ));
     }
 

@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Penjualan\Data;
+
+use Carbon\CarbonImmutable;
+
+/**
+ * Item outbox `PesananTerbuka.*` (F-07 mode meja fase 1) yang sudah divalidasi. Bidang yang tidak dipakai jenis
+ * item tertentu dibiarkan kosong; `ubah*` menandai bidang header yang dikirim pada `PesananTerbuka.Ubah`.
+ */
+final readonly class DataPesananTerbukaPos
+{
+    /**
+     * @param  list<DataBarisPesananTerbuka>  $baris
+     * @param  list<string>  $uuidBaris
+     */
+    public function __construct(
+        public int $idPerangkat,
+        public int $idOutlet,
+        public string $uuidPesanan,
+        public string $uuidPengguna,
+        public CarbonImmutable $waktu,
+        public ?string $nomor = null,
+        public ?string $uuidMeja = null,
+        public ?string $label = null,
+        public ?int $jumlahTamu = null,
+        public bool $ubahMeja = false,
+        public bool $ubahLabel = false,
+        public int $ronde = 1,
+        public bool $kirimDapur = false,
+        public array $baris = [],
+        public array $uuidBaris = [],
+        public ?string $alasan = null,
+        public ?string $uuidPenyetuju = null,
+    ) {}
+}
