@@ -43,7 +43,7 @@ jobs:
           fi
 
   backend:
-    name: Aplikasi Web: PHP (8.3, MySQL 8)
+    name: "Aplikasi Web: PHP (8.3, MySQL 8)"
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -75,7 +75,7 @@ jobs:
         run: composer tes:cepat
 
   web:
-    name: Aplikasi Web: frontend (TypeScript, ESLint, Prettier, Vitest, build)
+    name: "Aplikasi Web: frontend (TypeScript, ESLint, Prettier, Vitest, build)"
     runs-on: ubuntu-latest
     defaults:
       run:
