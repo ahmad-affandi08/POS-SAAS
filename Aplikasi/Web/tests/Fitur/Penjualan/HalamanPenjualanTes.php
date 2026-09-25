@@ -57,6 +57,14 @@ describe('F-07b halaman back-office penjualan', function (): void {
             ->where('Penjualan.Nomor', $item['Data']['Nomor'])
             ->where('Penjualan.UuidShift', $k['UuidShift'])
             ->where('Penjualan.Kembalian', '34530.00')
+            // Outlet belum PKP & produk tanpa kelompok pajak, tetapi perangkat memungut PPN (PRD v1.46): alasan tinjauan
+            // tampil dengan label manusiawi.
+            ->where('Penjualan.PerluTinjauan', true)
+            ->where('Penjualan.DaftarAlasanTinjauan', [[
+                'Kode' => 'PajakBerbeda',
+                'Label' => 'Pajak di perangkat berbeda dengan pengaturan pajak',
+                'Keterangan' => 'pajak per produk Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter (perangkat PPN, seharusnya tanpa pajak)',
+            ]])
             ->has('Baris', 1)
             ->where('Baris.0.SimbolSatuan', 'pcs')
             ->where('Pajak.0.KodeJenisPajak', 'Ppn')
@@ -69,6 +77,7 @@ describe('F-07b halaman back-office penjualan', function (): void {
         $this->get("/kelola/kasir/shift/{$k['UuidShift']}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Kasir/Shift/Detail')
             ->where('Penjualan.JumlahTransaksi', 1)
+            ->where('Penjualan.DaftarTerpotong', false)
             ->where('Penjualan.TotalPenjualan', '85470.00')
             ->where('Penjualan.Daftar.0.Uuid', $item['Uuid']));
     });
@@ -123,7 +132,7 @@ describe('F-07b halaman back-office penjualan', function (): void {
 });
 
 describe('F-07b gambar QRIS untuk POS', function (): void {
-    it('GET /api/pos/v1/metode-pembayaran/{uuid}/gambar-qris: gambar metode QRIS statis tenant perangkat; tanpa gambar, bukan QRIS, atau tenant lain = 404; data-awal menandai AdaGambarQris', function (): void {
+    it('GET /api/pos/v1/metode-pembayaran/{uuid}/gambar-qris: gambar metode QRIS statis aktif tenant perangkat; tanpa gambar, bukan QRIS, nonaktif, atau tenant lain = 404; data-awal menandai AdaGambarQris', function (): void {
         Storage::fake('local');
         $a = BantuanPenjualan::Siapkan($this, 'Toko Kelontong Berkah Solo');
         $path = app(PenyimpanGambarQris::class)->Simpan($a['Tenant']->Id, UploadedFile::fake()->image('qris.png', 300, 300));
@@ -134,6 +143,11 @@ describe('F-07b gambar QRIS untuk POS', function (): void {
 
         $qrisTanpaGambar = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::QrisStatis, 'QRIS Cabang');
         $this->withToken($a['Token'])->getJson("/api/pos/v1/metode-pembayaran/{$qrisTanpaGambar->Uuid}/gambar-qris")->assertNotFound();
+
+        // Metode nonaktif tidak ada di data-awal, jadi gambarnya juga tidak disajikan.
+        $qrisNonaktif = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::QrisStatis, 'QRIS Lama Sudah Ditutup', false);
+        $qrisNonaktif->forceFill(['PathGambarQris' => $path])->save();
+        $this->withToken($a['Token'])->getJson("/api/pos/v1/metode-pembayaran/{$qrisNonaktif->Uuid}/gambar-qris")->assertNotFound();
 
         $dataAwal = $this->withToken($a['Token'])->getJson('/api/pos/v1/data-awal')->assertOk();
         expect(collect($dataAwal->json('MetodePembayaran'))->firstWhere('Uuid', $a['Qris']->Uuid)['AdaGambarQris'])->toBeTrue();
@@ -161,6 +175,8 @@ describe('F-07b pengaturan kasir: batas diskon & pembulatan tunai', function ():
         $this->put('/kelola/kasir/pengaturan', $isi + ['BatasDiskonManual' => '101', 'BatasDiskonPenyetuju' => '30'])->assertSessionHasErrors('BatasDiskonManual');
         $this->put('/kelola/kasir/pengaturan', $isi + ['BatasDiskonManual' => '20', 'BatasDiskonPenyetuju' => '15'])->assertSessionHasErrors('BatasDiskonPenyetuju');
         $this->put('/kelola/kasir/pengaturan', $isi + ['PembulatanTunai' => ['Kelipatan' => 0, 'Arah' => 'Bawah']])->assertSessionHasErrors('PembulatanTunai.Kelipatan');
+        // PRD v1.46: kelipatan pembulatan tunai hanya 1–1.000 (sama dengan validasi sinkron penjualan).
+        $this->put('/kelola/kasir/pengaturan', $isi + ['PembulatanTunai' => ['Kelipatan' => 1001, 'Arah' => 'Bawah']])->assertSessionHasErrors('PembulatanTunai.Kelipatan');
         $this->put('/kelola/kasir/pengaturan', $isi + ['PembulatanTunai' => ['Kelipatan' => 100, 'Arah' => 'Samping']])->assertSessionHasErrors('PembulatanTunai.Arah');
         $this->put('/kelola/kasir/pengaturan', $isi + ['BatasDiskonManual' => '5', 'BatasDiskonPenyetuju' => '25.5', 'PembulatanTunai' => ['Kelipatan' => 500, 'Arah' => 'Terdekat']])->assertRedirect('/kelola/kasir/pengaturan');
 
@@ -186,6 +202,10 @@ describe('F-07b pengaturan kasir: batas diskon & pembulatan tunai', function ():
         expect((string) $rusak->batasDiskonManual)->toBe('10.00')
             ->and((string) $rusak->batasDiskonPenyetuju)->toBe('30.00')
             ->and($rusak->pembulatanTunai)->toBeNull();
+
+        $tenant->Pengaturan = [...($tenant->Pengaturan ?? []), 'PembulatanTunai' => ['Kelipatan' => 5000, 'Arah' => 'Bawah']];
+        $tenant->save();
+        expect(app(PengaturanKasirTenant::class)->Ambil()->pembulatanTunai)->toBeNull();
     });
 
     it('template sektor mengisi PembulatanTunai dan data-awal meneruskannya ke POS', function (): void {

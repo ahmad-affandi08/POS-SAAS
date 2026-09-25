@@ -307,16 +307,9 @@ final class ValidatorTemplate
                 continue;
             }
 
-            $tipe = $dataAkun['Tipe'];
-
-            if ($tipe !== $peran->AmbilTipeAkun()) {
-                $this->Catat('PemetaanAkun', "Peran \"{$peran->AmbilLabel()}\" harus memakai akun {$peran->AmbilTipeAkun()->AmbilLabel()}, bukan {$tipe->AmbilLabel()} ({$kode}).");
-            }
-
-            if ($peran->CekWajibKontra() !== $dataAkun['Kontra']) {
-                $this->Catat('PemetaanAkun', $peran->CekWajibKontra()
-                    ? "Peran \"{$peran->AmbilLabel()}\" harus memakai akun kontra ({$kode} bukan akun kontra)."
-                    : "Peran \"{$peran->AmbilLabel()}\" tidak boleh memakai akun kontra ({$kode}).");
+            // Aturan tipe & kontra per peran satu sumber dengan pemetaan akun tenant (F-13a).
+            foreach ($peran->PeriksaAkun($dataAkun['Tipe'], $dataAkun['Kontra'], $kode) as $pesan) {
+                $this->Catat('PemetaanAkun', $pesan);
             }
         }
     }
@@ -445,8 +438,8 @@ final class ValidatorTemplate
         $pembulatan = is_array($pengaturan['PembulatanTunai'] ?? null) ? $pengaturan['PembulatanTunai'] : [];
         $kelipatan = $pembulatan['Kelipatan'] ?? null;
 
-        if (! is_int($kelipatan) || $kelipatan < 1) {
-            $this->Catat('Pengaturan', 'Kelipatan pembulatan tunai harus bilangan bulat Rupiah lebih dari 0 (misal 100).');
+        if (! is_int($kelipatan) || $kelipatan < 1 || $kelipatan > 1000) {
+            $this->Catat('Pengaturan', 'Kelipatan pembulatan tunai harus bilangan bulat Rupiah 1 sampai 1.000 (misal 100).');
         }
 
         if (! is_string($pembulatan['Arah'] ?? null) || ArahPembulatan::tryFrom($pembulatan['Arah']) === null) {

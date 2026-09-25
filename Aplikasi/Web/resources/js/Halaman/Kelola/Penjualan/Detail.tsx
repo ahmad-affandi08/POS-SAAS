@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import DaftarAlasanTinjauan from '@/Komponen/Penjualan/DaftarAlasanTinjauan';
 import LencanaPenjualan from '@/Komponen/Penjualan/LencanaPenjualan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -280,7 +281,10 @@ export default function HalamanDetailPenjualan({
 
             {p.PerluTinjauan ? (
                 <Pemberitahuan jenis="peringatan" judul="Penjualan ini perlu ditinjau">
-                    {p.AlasanTinjauan ?? 'Penjualan ini diterima meski ada data yang tidak sesuai saat sinkron.'}
+                    <DaftarAlasanTinjauan
+                        alasan={p.DaftarAlasanTinjauan}
+                        cadangan="Penjualan ini diterima meski ada data yang tidak sesuai saat sinkron."
+                    />
                 </Pemberitahuan>
             ) : null}
 

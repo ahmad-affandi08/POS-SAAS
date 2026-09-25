@@ -14,19 +14,22 @@ enum JenisDokumenBernomor: string
 {
     case StokAwal = 'StokAwal';
     case Jurnal = 'Jurnal';
+    // F-13a: transaksi kas & bank back-office `KB/2026/09/0001`.
+    case TransaksiKasBank = 'TransaksiKasBank';
 
     public function AmbilAwalan(): string
     {
         return match ($this) {
             self::StokAwal => 'SA',
             self::Jurnal => 'JU',
+            self::TransaksiKasBank => 'KB',
         };
     }
 
     public function AmbilPanjangUrut(): int
     {
         return match ($this) {
-            self::StokAwal => 4,
+            self::StokAwal, self::TransaksiKasBank => 4,
             self::Jurnal => 6,
         };
     }

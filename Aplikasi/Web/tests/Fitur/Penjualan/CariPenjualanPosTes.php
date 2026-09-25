@@ -2,9 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Model\Outlet;
 use Illuminate\Support\Facades\DB;
 use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Katalog\BantuanKatalog;
+use Tests\Pendukung\Katalog\BantuanKomposisi;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Organisasi\BantuanPerangkat;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
@@ -56,6 +60,28 @@ describe('F-09 GET /api/pos/v1/penjualan/cari (struk asal untuk retur)', functio
                 'DibuatPada' => $retur['Data']['DibuatPada'],
                 'TotalRefund' => '38500.00',
             ]]);
+    });
+
+    it('baris memuat UuidProdukSatuan (satuan jual yang dipakai) dan BolehDesimal (satuan dasar produk); kunci tambahan, kompatibel mundur', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, jumlah: '30');
+        $dus = BantuanKomposisi::TambahSatuanProduk($minyak, BantuanKomposisi::Satuan('Dus', 'dus', false), '12');
+        $gula = BantuanKatalog::BuatProduk(['Nama' => 'Gula Pasir Curah Kiloan', 'Jenis' => JenisProduk::NonStok], '17500.00', BantuanKomposisi::Satuan('Kilogram', 'kg'));
+        $p = BantuanPenjualan::Jual($this, $k, ['Baris' => [
+            ['Produk' => $minyak, 'Satuan' => $dus, 'Jumlah' => '1', 'Harga' => '450000.00'],
+            ['Produk' => $minyak, 'Jumlah' => '2', 'Harga' => '38500.00'],
+            ['Produk' => $gula, 'Jumlah' => '1.5', 'Harga' => '17500.00'],
+        ]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $satuanDasarMinyak = ProdukSatuan::query()->where('IdProduk', $minyak->Id)->where('IdSatuan', $minyak->IdSatuanDasar)->value('Uuid');
+
+        $baris = $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))->assertOk()->json('Baris');
+
+        expect(array_map(fn (array $b): array => [$b['UuidProdukSatuan'], $b['BolehDesimal']], $baris))->toBe([
+            [$dus->Uuid, false],
+            [$satuanDasarMinyak, false],
+            [ProdukSatuan::query()->where('IdProduk', $gula->Id)->value('Uuid'), true],
+        ]);
     });
 
     it('penjualan void, diretur penuh, dan lewat batas hari: BisaDiretur false dengan alasan', function (): void {

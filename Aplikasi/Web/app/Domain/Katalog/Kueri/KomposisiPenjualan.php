@@ -49,7 +49,18 @@ final class KomposisiPenjualan
                 $daftarSatuan[$s->Uuid] = ['IdSatuan' => $s->IdSatuan, 'KonversiKeDasar' => (string) $s->KonversiKeDasar];
             }
 
-            $hasil[$p->Uuid] = new DataProdukPenjualan($p->Id, $p->Uuid, $p->Nama, $p->Jenis, $p->Pelacakan, $p->IdSatuanDasar, $daftarSatuan, $p->DihapusPada !== null);
+            $hasil[$p->Uuid] = new DataProdukPenjualan(
+                $p->Id,
+                $p->Uuid,
+                $p->Nama,
+                $p->Jenis,
+                $p->Pelacakan,
+                $p->IdSatuanDasar,
+                $daftarSatuan,
+                $p->DihapusPada !== null,
+                $p->IdKelompokPajak,
+                $p->HargaTermasukPajak,
+            );
         }
 
         return $hasil;

@@ -24,7 +24,9 @@ use Carbon\CarbonImmutable;
  * perangkat (lainnya = null → 404). Per baris: snapshot harga & nilai, jumlah yang sudah dan masih bisa diretur, serta
  * sisa nilai (`NilaiBisaDiretur`, dipakai perangkat bila retur menghabiskan sisa baris). `BisaDiretur` = status
  * lunas/diretur sebagian dan belum lewat `BatasHariRetur` (dihitung dari tanggal bisnis outlet saat ini);
- * `AlasanTidakBisaDiretur`: `Void`, `SudahDireturPenuh`, `LewatBatasHari`.
+ * `AlasanTidakBisaDiretur`: `Void`, `SudahDireturPenuh`, `LewatBatasHari`. Kunci tambahan per baris (kompatibel mundur):
+ * `BolehDesimal` (satuan dasar produk boleh jumlah desimal) dan `UuidProdukSatuan` (satuan jual produk yang dipakai
+ * baris; null bila tidak ditemukan lagi).
  */
 final class CariPenjualanPos
 {
@@ -52,6 +54,7 @@ final class CariPenjualanPos
         $sudah = $this->penghitung->AmbilSudahDiretur(array_values(array_map('intval', $detail->pluck('Id')->all())));
         $simbol = $this->komposisi->AmbilSimbolSatuan(array_values(array_map('intval', $detail->pluck('IdSatuan')->all())));
         $produk = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_map('intval', $detail->pluck('IdProduk')->all()))), true);
+        $satuanProduk = $this->komposisi->AmbilProduk(array_values(array_filter(array_map(fn ($info): string => $info->uuid, $produk))));
         $nama = $this->anggota->AmbilNama([$p->IdPengguna]);
         $batasHari = $this->pengaturanKasir->Ambil()->batasHariRetur;
         $batasSampai = CarbonImmutable::parse($p->TanggalBisnis->toDateString())->addDays($batasHari);
@@ -89,14 +92,26 @@ final class CariPenjualanPos
                 'BisaDiretur' => $alasan === null,
                 'AlasanTidakBisaDiretur' => $alasan,
             ],
-            'Baris' => array_values($detail->map(function (PenjualanDetail $d) use ($sudah, $simbol, $produk): array {
+            'Baris' => array_values($detail->map(function (PenjualanDetail $d) use ($sudah, $simbol, $produk, $satuanProduk): array {
                 $s = $sudah[$d->Id] ?? DataSudahDiretur::Kosong();
+                $info = $produk[$d->IdProduk] ?? null;
+                $uuidSatuan = null;
+
+                foreach ($info === null ? [] : ($satuanProduk[$info->uuid]->satuan ?? []) as $uuid => $satuan) {
+                    if ($satuan['IdSatuan'] === $d->IdSatuan) {
+                        $uuidSatuan = $uuid;
+
+                        break;
+                    }
+                }
 
                 return [
                     'Uuid' => $d->Uuid,
                     'UuidProduk' => $produk[$d->IdProduk]->uuid ?? null,
                     'NamaProduk' => $d->NamaProduk,
                     'SimbolSatuan' => $simbol[$d->IdSatuan] ?? '',
+                    'UuidProdukSatuan' => $uuidSatuan,
+                    'BolehDesimal' => $info->bolehDesimal ?? false,
                     'Jumlah' => $d->Jumlah,
                     'HargaSatuan' => $d->HargaSatuan,
                     'HargaPilihan' => $d->HargaPilihan,

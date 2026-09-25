@@ -34,3 +34,6 @@ Schedule::command('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('
 
 // F-05a (DesainF05a C.9): pemeriksaan malam SaldoStok = Σ MutasiStok, rantai mutasi, lapisan FIFO, batch & seri (keluar 1 bila berbeda).
 Schedule::command('persediaan:bangun-ulang-saldo --periksa')->dailyAt('02:30')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// F-14a: bangun ulang ringkasan penjualan harian H-1 & H-2 (penjualan offline terlambat, job antrean gagal).
+Schedule::command('laporan:bangun-ulang-ringkasan')->dailyAt('02:45')->timezone('Asia/Jakarta')->withoutOverlapping();

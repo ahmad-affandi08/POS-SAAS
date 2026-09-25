@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     BanknoteIcon,
     BookOpenTextIcon,
+    ChartColumnIcon,
     CreditCardIcon,
     HouseIcon,
     LifeBuoyIcon,
@@ -83,8 +84,23 @@ const menuPenjualan: ItemMenu[] = [
 ];
 
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).
+// F-13a: bagan akun, pemetaan akun, kas & bank, dan laporan keuangan (lihat laporan.keuangan.lihat, ubah di halaman
+// butuh akuntansi.kelola).
 const menuAkuntansi: ItemMenu[] = [
     { label: 'Jurnal', href: '/kelola/akuntansi/jurnal', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Kas & bank', href: '/kelola/akuntansi/kas-bank', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Buku besar', href: '/kelola/akuntansi/laporan/buku-besar', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Neraca saldo', href: '/kelola/akuntansi/laporan/neraca-saldo', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Bagan akun', href: '/kelola/akuntansi/akun', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Pemetaan akun', href: '/kelola/akuntansi/pemetaan', izin: IzinTenant.LaporanKeuanganLihat },
+];
+
+// F-14a: grup menu "Laporan": penjualan (laporan.penjualan.lihat), pajak (laporan.keuangan.lihat), stok (persediaan.lihat).
+const menuLaporan: ItemMenu[] = [
+    { label: 'Laporan penjualan', href: '/kelola/laporan/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
+    { label: 'Laporan pajak', href: '/kelola/laporan/pajak', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Laporan stok', href: '/kelola/laporan/stok', izin: IzinTenant.PersediaanLihat },
 ];
 
 /** Item sub-menu yang aktif untuk URL ini: awalan terpanjang menang (/kelola/produk/impor vs /kelola/produk). */
@@ -146,6 +162,15 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: BookOpenTextIcon,
         labelSub: 'Menu akuntansi',
         sub: menuAkuntansi,
+    },
+    // F-14a: laporan inti (penjualan, pajak, stok).
+    {
+        label: 'Laporan',
+        href: '/kelola/laporan/penjualan',
+        izin: null,
+        ikon: ChartColumnIcon,
+        labelSub: 'Menu laporan',
+        sub: menuLaporan,
     },
     // F-02b: perangkat POS.
     { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat, ikon: MonitorSmartphoneIcon },

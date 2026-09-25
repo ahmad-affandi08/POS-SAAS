@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Akuntansi\Kontrak\PemeriksaPemakaianAkun;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
+use App\Domain\Penjualan\Kueri\PemakaianAkunDiMetodePembayaran;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatReturPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronVoidPenjualan;
@@ -24,5 +26,7 @@ final class PenyediaPenjualan extends ServiceProvider
             PenanganSinkronVoidPenjualan::class,
             PenanganSinkronBuatReturPenjualan::class,
         ], PenanganItemSinkron::TAG);
+        // F-13a: akun yang dirujuk metode pembayaran tidak bisa dihapus dari bagan akun.
+        $this->app->tag(PemakaianAkunDiMetodePembayaran::class, PemeriksaPemakaianAkun::TAG);
     }
 }

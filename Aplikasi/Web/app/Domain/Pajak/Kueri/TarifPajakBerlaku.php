@@ -68,9 +68,10 @@ final class TarifPajakBerlaku
 
     /**
      * Tarif terbit nasional dan wilayah kota outlet yang belum berakhir pada `hari` (termasuk yang akan berlaku),
-     * urut kode jenis lalu mulai berlaku (`data-awal` POS, F-07b). Tarif daerah wilayah lain tidak ikut.
+     * urut kode jenis lalu mulai berlaku (`data-awal` POS, F-07b). Tarif daerah wilayah lain tidak ikut. `Kategori`
+     * (PRD v1.46, kunci tambahan) = kategori jenis pajak `Ppn`/`Pbjt`/`Lainnya`.
      *
-     * @return list<array{KodeJenisPajak: string, Tarif: string, PengaliDppPembilang: int, PengaliDppPenyebut: int, BerlakuMulai: string, BerlakuSampai: string|null}>
+     * @return list<array{KodeJenisPajak: string, Kategori: string, Tarif: string, PengaliDppPembilang: int, PengaliDppPenyebut: int, BerlakuMulai: string, BerlakuSampai: string|null}>
      */
     public function DaftarUntukOutlet(?string $kodeKotaOutlet, CarbonInterface $hari): array
     {
@@ -94,6 +95,7 @@ final class TarifPajakBerlaku
 
             $hasil[] = [
                 'KodeJenisPajak' => $j->Kode,
+                'Kategori' => $j->Kategori->value,
                 'Tarif' => $t->Tarif,
                 'PengaliDppPembilang' => $t->PengaliDppPembilang,
                 'PengaliDppPenyebut' => $t->PengaliDppPenyebut,

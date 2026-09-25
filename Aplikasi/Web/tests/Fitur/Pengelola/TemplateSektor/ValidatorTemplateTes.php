@@ -150,6 +150,13 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
             ]);
     });
 
+    it('PRD v1.46: kelipatan pembulatan tunai di atas 1.000 ditolak', function (): void {
+        $isi = AmbilIsiTemplateAwal('FNB-CAF');
+        $isi['Pengaturan']['PembulatanTunai']['Kelipatan'] = 5000;
+
+        expect(AmbilPesanValidasi($isi, 'Pengaturan'))->toBe(['Kelipatan pembulatan tunai harus bilangan bulat Rupiah 1 sampai 1.000 (misal 100).']);
+    });
+
     it('memeriksa mode kasir, pengaturan, dan nama ganda', function (): void {
         $isi = AmbilIsiTemplateAwal('FNB-CAF');
         $isi['ModeKasir'] = ['Meja', 'Terbang'];
@@ -165,7 +172,7 @@ describe('Validasi otomatis template (BR-P03.3)', function (): void {
             'Mode kasir Terbang tidak dikenal.',
             'Mode kasir default harus salah satu mode yang dipilih.',
         ])->and(AmbilPesanValidasi($isi, 'Pengaturan'))->toBe([
-            'Kelipatan pembulatan tunai harus bilangan bulat Rupiah lebih dari 0 (misal 100).',
+            'Kelipatan pembulatan tunai harus bilangan bulat Rupiah 1 sampai 1.000 (misal 100).',
             'Biaya layanan harus 0 sampai 10 persen.',
             'Metode HPP tidak dikenal.',
             'Pengaturan StokBolehMinus wajib ya atau tidak.',

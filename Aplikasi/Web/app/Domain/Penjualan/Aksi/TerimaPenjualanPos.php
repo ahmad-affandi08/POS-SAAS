@@ -40,12 +40,14 @@ use App\Domain\Penjualan\Kalkulasi\HasilKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
+use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\PenjualanPajak;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
+use App\Domain\Penjualan\Peristiwa\PenjualanDiterima;
 use App\Domain\Persediaan\Aksi\CatatMutasiStok;
 use App\Domain\Persediaan\Data\DataBarisMutasi;
 use App\Domain\Persediaan\Data\DataDokumenMutasi;
@@ -67,23 +69,30 @@ use InvalidArgumentException;
  * F-07b (PRD "Rincian F-07b"): penjualan lunas yang dibuat di perangkat (bisa offline) diterima server lewat sinkron.
  * Satu transaksi DB per item; stok & jurnal di transaksi yang sama (aturan #9–#10).
  *
- * Urutan pemeriksaan: (1) Uuid sama → `Duplikat` bila Nomor & TotalAkhir sama, selain itu `UuidSudahDipakai`;
- * (2) shift milik perangkat ini (`ShiftTidakDitemukan`); (3) kasir anggota outlet ber-izin `penjualan.buat`
- * (`KasirTidakDitemukan`/`TanpaIzin`); (4) nomor BR-07.1 `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}`, unik per
- * tenant (`NomorTidakValid`/`NomorSudahDipakai`); periode terbuka (`PeriodeTerkunci`); (5) produk
- * (`ProdukTidakDikenal`/`ProdukTidakBisaDijual`/`PelacakanBelumDidukung`/`SatuanTidakDikenal`); (6) tarif pajak
- * snapshot = `TarifPajak` terbit yang berlaku (`TarifPajakTidakSah`); (9) metode bayar (`MetodeBayarTidakDikenal`/
- * `MetodeBayarBelumDidukung`); (8) hitung ulang `MesinKalkulasi` = `Ringkasan` (`HitunganTidakCocok`); (7) BR-07.3
- * diskon; (9) pembayaran (`PembayaranTidakValid`/`PembayaranKurang`).
+ * Urutan pemeriksaan: (1) Uuid sama → `Duplikat` bila Nomor & TotalAkhir sama, selain itu `UuidSudahDipakai` (juga
+ * saat dua kiriman bersamaan bertabrakan di indeks unik: dibaca ulang lalu dibandingkan); (2) shift milik perangkat ini
+ * (`ShiftTidakDitemukan`); (3) kasir anggota tenant (`KasirTidakDitemukan`); (4) nomor BR-07.1
+ * `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}`, unik per tenant (`NomorTidakValid`/`NomorSudahDipakai`); periode
+ * terbuka (`PeriodeTerkunci`); (5) produk (`ProdukTidakDikenal`/`ProdukTidakBisaDijual`/`PelacakanBelumDidukung`/
+ * `SatuanTidakDikenal`); (6) tarif pajak snapshot = `TarifPajak` terbit yang berlaku (`TarifPajakTidakSah`); (9) metode
+ * bayar (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`); (8) hitung ulang `MesinKalkulasi` = `Ringkasan`
+ * (`HitunganTidakCocok`); (7) BR-07.3 diskon (`PenyetujuTidakBerwenang`); (9) pembayaran (`PembayaranTidakValid`/
+ * `PembayaranKurang`).
  *
- * Stok tidak cukup tidak menolak (§18.3): mutasi tetap dicatat dan penjualan ditandai `PerluTinjauan`
- * (`StokTidakCukup`). Pilihan yang sudah dihapus setelah transaksi offline tidak mengurangi bahan dan ditandai
- * `PilihanTidakDikenal`. Produk berstok yang sudah dihapus (hanya mungkin bila belum pernah dipakai, BR-03.2) tidak
- * dikurangi dan ditandai `ProdukDihapus`.
+ * Keadaan yang bisa berubah setelah transaksi offline tidak menolak (§18.3, PRD v1.46 "Tindak lanjut tinjauan"):
+ * penjualan diterima dan ditandai `PerluTinjauan` dengan alasan `StokTidakCukup` (mutasi tetap dicatat),
+ * `PilihanTidakDikenal` (bahan pilihan yang dihapus tidak dikurangi), `ProdukDihapus` (produk dihapus, hanya mungkin
+ * bila belum pernah dipakai, BR-03.2), `IzinBerubah` (kasir/penyetuju masih anggota tenant tetapi tidak lagi di outlet
+ * atau tanpa izin berjualan), `DiskonMelebihiBatas` (BR-07.3 dilanggar menurut batas yang berlaku saat diterima),
+ * `PengaturanBerbeda`/`PajakBerbeda` (snapshot pengaturan & pajak berbeda dari pengaturan server), dan
+ * `ShiftSudahDitutup`.
  */
 final class TerimaPenjualanPos
 {
     private const TOLERANSI_JAM_DETIK = 600;
+
+    /** Panjang kolom `Penjualan.AlasanTinjauan`. */
+    private const PANJANG_ALASAN_TINJAUAN = 1000;
 
     private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku, JenisProduk::Konsinyasi];
 
@@ -98,6 +107,7 @@ final class TerimaPenjualanPos
         private readonly TarifPajakBerlaku $tarifBerlaku,
         private readonly PengaturanKasirTenant $pengaturanKasir,
         private readonly PemeriksaDiskonPenjualan $pemeriksaDiskon,
+        private readonly PemeriksaSnapshotPengaturanPenjualan $pemeriksaSnapshot,
         private readonly MesinKalkulasi $mesin,
         private readonly CatatMutasiStok $catatMutasi,
         private readonly PetaAkunPersediaan $petaAkunPersediaan,
@@ -114,18 +124,34 @@ final class TerimaPenjualanPos
         }
 
         try {
-            return DB::transaction(fn (): StatusItemSinkron => $this->Proses($data));
+            return DB::transaction(fn (): StatusItemSinkron => Penjualan::JalankanPenerimaan(fn (): StatusItemSinkron => $this->Proses($data)));
         } catch (QueryException $galat) {
-            if (($galat->errorInfo[1] ?? null) === 1062) {
-                if (str_contains($galat->getMessage(), 'UniqPenjualanIdTenantNomor')) {
-                    throw new PelanggaranAturanBisnis('NomorSudahDipakai', "Nomor {$data->nomor} sudah dipakai penjualan lain.", 'Nomor', 409);
-                }
+            return $this->SelesaikanBentrokUnik($galat, $data->uuid, $data->nomor, $data->ringkasan->totalAkhir);
+        }
+    }
 
-                throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik penjualan ini sudah dipakai data lain. Buat ulang transaksi di aplikasi.', 'Uuid');
-            }
-
+    /**
+     * Pelanggaran indeks unik (1062) karena dua kiriman bersamaan lolos pemeriksaan idempotensi: baca ulang penjualan
+     * ber-Uuid sama; bila Nomor & TotalAkhir sama = `Duplikat` (kiriman ulang yang sah), selain itu `NomorSudahDipakai`
+     * (bentrok nomor) atau `UuidSudahDipakai`. Galat database lain diteruskan.
+     */
+    private function SelesaikanBentrokUnik(QueryException $galat, string $uuid, string $nomor, Uang $totalAkhir): StatusItemSinkron
+    {
+        if (($galat->errorInfo[1] ?? null) !== 1062) {
             throw $galat;
         }
+
+        $lama = Penjualan::query()->where('Uuid', $uuid)->first();
+
+        if ($lama !== null && $lama->Nomor === $nomor && Uang::Dari($lama->TotalAkhir)->SamaDengan($totalAkhir)) {
+            return StatusItemSinkron::Duplikat;
+        }
+
+        if ($lama === null && str_contains($galat->getMessage(), 'UniqPenjualanIdTenantNomor')) {
+            throw new PelanggaranAturanBisnis('NomorSudahDipakai', "Nomor {$nomor} sudah dipakai penjualan lain.", 'Nomor', 409);
+        }
+
+        throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik penjualan ini sudah dipakai data lain. Buat ulang transaksi di aplikasi.', 'Uuid');
     }
 
     private function Proses(DataPenjualanPos $data): StatusItemSinkron
@@ -160,16 +186,20 @@ final class TerimaPenjualanPos
             throw new PelanggaranAturanBisnis('ShiftTidakDitemukan', 'Outlet shift penjualan ini tidak ditemukan.', 'UuidShift');
         }
 
-        // (3) Kasir.
-        $kasir = $this->anggota->Cari($idTenant, $data->uuidPengguna, $outlet->idOutlet);
+        // (3) Kasir: hanya pengguna yang bukan anggota tenant yang ditolak; izin/outlet yang berubah setelah transaksi
+        // offline menjadi alasan tinjauan (PRD v1.46).
+        $cariKasir = $this->anggota->CariDiTenant($idTenant, $data->uuidPengguna, $outlet->idOutlet);
 
-        if ($kasir === null) {
-            throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Kasir ini tidak terdaftar di outlet penjualan ini.', 'UuidPengguna');
+        if ($cariKasir === null) {
+            throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Kasir ini bukan anggota usaha ini.', 'UuidPengguna');
         }
 
-        if (! $kasir->CekIzin(IzinTenant::PenjualanBuat->value)) {
-            throw new PelanggaranAturanBisnis('TanpaIzin', "{$kasir->nama} tidak punya izin berjualan.", 'UuidPengguna', 403);
-        }
+        [$kasir, $kasirDiOutlet] = $cariKasir;
+        $tinjauan = [];
+        $izinBerubah = array_values(array_filter([
+            $kasirDiOutlet ? null : "{$kasir->nama} tidak lagi terdaftar di outlet ini",
+            $kasir->CekIzin(IzinTenant::PenjualanBuat->value) ? null : "{$kasir->nama} tidak lagi punya izin berjualan",
+        ]));
 
         // (4) Nomor & periode.
         $tanggalBisnis = $this->tanggalBisnis->Hitung($outlet->idOutlet, $data->dibuatPada);
@@ -184,15 +214,30 @@ final class TerimaPenjualanPos
         // (8) Hitung ulang.
         $hasil = $this->HitungUlang($data, $metode);
 
-        // (7) BR-07.3 diskon manual.
-        $penyetuju = $this->pemeriksaDiskon->Periksa(
+        // (7) BR-07.3 diskon manual (persen efektif dari hasil mesin, PRD v1.46 (c)).
+        $pengaturan = $this->pengaturanKasir->Ambil();
+        $pemeriksaanDiskon = $this->pemeriksaDiskon->Periksa(
             $this->KumpulkanDiskon($data, $hasil),
             $kasir,
             $data->uuidPenyetujuDiskon,
             $idTenant,
             $outlet->idOutlet,
-            $this->pengaturanKasir->Ambil(),
+            $pengaturan,
         );
+        $penyetuju = $pemeriksaanDiskon->penyetuju;
+
+        if (isset($pemeriksaanDiskon->tinjauan['IzinBerubah'])) {
+            $izinBerubah[] = substr($pemeriksaanDiskon->tinjauan['IzinBerubah'], strlen('IzinBerubah: '));
+        }
+
+        if ($izinBerubah !== []) {
+            $tinjauan['IzinBerubah'] = 'IzinBerubah: '.implode('; ', $izinBerubah);
+        }
+
+        $tinjauan += array_diff_key($pemeriksaanDiskon->tinjauan, ['IzinBerubah' => true]);
+
+        // PRD v1.46 (a): snapshot pengaturan & pajak dibandingkan dengan pengaturan server pada tanggal bisnis.
+        $tinjauan += $this->pemeriksaSnapshot->Periksa($data, $produk, $outlet, $pengaturan, $tanggalBisnis);
 
         // (9) Pembayaran.
         [$totalDibayar, $bersih] = $this->PeriksaPembayaran($data, $metode, $hasil);
@@ -203,7 +248,10 @@ final class TerimaPenjualanPos
         $this->SimpanPajak($data, $penjualan, $hasil);
         $this->SimpanPembayaran($data, $penjualan, $metode);
 
-        [$tinjauan, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id);
+        [$tinjauanStok, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id);
+        $tinjauan += $tinjauanStok;
+        ksort($tinjauan);
+        $tinjauan = array_values($tinjauan);
 
         // F-11: penjualan yang tiba setelah shift ditutup tetap diterima (outbox FIFO), tetapi kas shift sudah dihitung.
         if (! $shift->aktif) {
@@ -235,7 +283,7 @@ final class TerimaPenjualanPos
 
         if ($tinjauan !== []) {
             $penjualan->PerluTinjauan = true;
-            $penjualan->AlasanTinjauan = mb_substr(implode('; ', $tinjauan), 0, 255);
+            $penjualan->AlasanTinjauan = mb_substr(implode('; ', $tinjauan), 0, self::PANJANG_ALASAN_TINJAUAN);
         }
 
         $penjualan->save();
@@ -248,6 +296,9 @@ final class TerimaPenjualanPos
             'DisetujuiOleh' => $penyetuju?->nama,
             'PerluTinjauan' => $penjualan->PerluTinjauan,
         ], idPengguna: $kasir->id);
+
+        // F-14a: ringkasan laporan harian dihitung ulang di antrean setelah commit (efek non-kritis, aturan #10).
+        PenjualanDiterima::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);
 
         return StatusItemSinkron::Diterima;
     }
@@ -626,7 +677,7 @@ final class TerimaPenjualanPos
      *
      * @param  array<string, DataProdukPenjualan>  $produk
      * @param  list<PenjualanDetail>  $detail
-     * @return array{0: list<string>, 1: array<string, Uang>} [alasan tinjauan, perubahan nilai per peran akun persediaan]
+     * @return array{0: array<string, string>, 1: array<string, Uang>} [kode → alasan tinjauan, perubahan nilai per peran akun persediaan]
      */
     private function CatatStok(DataPenjualanPos $data, Penjualan $penjualan, DataOutletPenjualan $outlet, array $produk, array $detail, int $idKasir): array
     {
@@ -703,7 +754,7 @@ final class TerimaPenjualanPos
         }
 
         if ($barisMutasi === []) {
-            return [array_values($tinjauan), []];
+            return [$tinjauan, []];
         }
 
         if ($outlet->idGudangToko === null) {
@@ -749,9 +800,7 @@ final class TerimaPenjualanPos
             $perubahan[$peran] = ($perubahan[$peran] ?? Uang::Nol())->Tambah($b->totalHpp);
         }
 
-        ksort($tinjauan);
-
-        return [array_values($tinjauan), $perubahan];
+        return [$tinjauan, $perubahan];
     }
 
     private function PastikanBahanBisaDikurangi(DataKebutuhanStok $k, int $indeks): void

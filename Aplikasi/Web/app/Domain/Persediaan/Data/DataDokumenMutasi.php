@@ -13,7 +13,9 @@ use Carbon\CarbonImmutable;
  *
  * `abaikanBatasMinus` (F-07b, §18.3): transaksi yang sudah terjadi di perangkat (penjualan offline) tidak boleh ditolak
  * karena stok tidak cukup. Bila true, pemeriksaan BR-05.2 dilewati untuk dokumen ini dan baris yang sebenarnya
- * melanggar ditandai `HasilBarisMutasi::stokTidakCukup`. Aturan batch/seri tetap berlaku. Bawaan false.
+ * melanggar ditandai `HasilBarisMutasi::stokTidakCukup`. **Hanya untuk produk tanpa pelacakan batch/seri**: dokumen
+ * ber-`abaikanBatasMinus` yang memuat produk berpelacakan ditolak `PelacakanBelumDidukung` (stok batch/seri tidak
+ * pernah boleh minus, BR-05.2), jadi pemanggil wajib menolak produk berpelacakan lebih dulu. Bawaan false.
  */
 final readonly class DataDokumenMutasi
 {

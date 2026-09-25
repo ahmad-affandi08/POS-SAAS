@@ -75,7 +75,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'HargaTermasukPajak' => ['required', 'boolean'],
             'PersenBiayaLayanan' => ['required', 'string', $persen],
             'PembulatanTunai' => ['sometimes', 'nullable', 'array'],
-            'PembulatanTunai.Kelipatan' => ['required_with:PembulatanTunai', 'integer', 'min:1', 'max:1000000'],
+            'PembulatanTunai.Kelipatan' => ['required_with:PembulatanTunai', 'integer', 'min:1', 'max:1000'],
             'PembulatanTunai.Arah' => ['required_with:PembulatanTunai', 'string', Rule::enum(ArahPembulatan::class)],
             'Pajak' => ['sometimes', 'array', 'max:10'],
             'Pajak.*.Kode' => ['required', 'string', 'max:50', 'distinct'],

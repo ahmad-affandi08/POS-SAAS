@@ -60,6 +60,8 @@ export type RingkasanPenjualan = {
     Catatan: string | null;
     PerluTinjauan: boolean;
     AlasanTinjauan: string | null;
+    /** Alasan tinjauan dengan label manusiawi (kode mesin tidak ditampilkan). */
+    DaftarAlasanTinjauan: AlasanTinjauan[];
     UuidShift: string | null;
 };
 
@@ -196,6 +198,8 @@ export type RingkasanRetur = {
     TotalHpp: string;
     PerluTinjauan: boolean;
     AlasanTinjauan: string | null;
+    /** Alasan tinjauan dengan label manusiawi (kode mesin tidak ditampilkan). */
+    DaftarAlasanTinjauan: AlasanTinjauan[];
     UuidShift: string | null;
 };
 
@@ -227,9 +231,19 @@ export type PropsDetailRetur = {
     Jurnal: { Uuid: string; Nomor: string }[];
 };
 
+/** Satu alasan tinjauan dokumen POS: `Kode` null bila tidak dikenal. */
+export type AlasanTinjauan = {
+    Kode: string | null;
+    Label: string;
+    Keterangan: string;
+};
+
 /** Penjualan satu shift (detail shift F-06). */
 export type PenjualanShift = {
+    /** Paling banyak 200 penjualan terakhir shift. */
     Daftar: BarisPenjualan[];
+    /** Ada penjualan shift yang tidak ikut `Daftar` (lebih dari 200). */
+    DaftarTerpotong: boolean;
     JumlahTransaksi: number;
     TotalPenjualan: string;
 };

@@ -54,7 +54,7 @@ describe('F-05a halaman jurnal baca saja (DesainF05a D/E, H-13)', function (): v
                     'Pembalik' => false,
                 ])
                 ->missing('Saring')
-                ->where('OpsiJenisSumber', [['Nilai' => 'StokAwal', 'Label' => 'Stok awal'], ['Nilai' => 'MutasiKas', 'Label' => 'Kas masuk/keluar'], ['Nilai' => 'Penjualan', 'Label' => 'Penjualan'], ['Nilai' => 'ReturPenjualan', 'Label' => 'Retur penjualan'], ['Nilai' => 'TutupShift', 'Label' => 'Selisih kas tutup shift']]));
+                ->where('OpsiJenisSumber', [['Nilai' => 'StokAwal', 'Label' => 'Stok awal'], ['Nilai' => 'MutasiKas', 'Label' => 'Kas masuk/keluar'], ['Nilai' => 'Penjualan', 'Label' => 'Penjualan'], ['Nilai' => 'ReturPenjualan', 'Label' => 'Retur penjualan'], ['Nilai' => 'TutupShift', 'Label' => 'Selisih kas tutup shift'], ['Nilai' => 'TransaksiKasBank', 'Label' => 'Transaksi kas & bank']]));
     });
 
     it('saringan kata, rentang tanggal, dan jenis; nilai tidak valid diabaikan; halaman lewat ?halaman', function (): void {

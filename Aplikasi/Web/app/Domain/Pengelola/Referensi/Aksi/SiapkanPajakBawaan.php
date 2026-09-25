@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pajak\Enum\CakupanPajak;
+use App\Domain\Pajak\Enum\KategoriJenisPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use RuntimeException;
@@ -20,10 +21,10 @@ final class SiapkanPajakBawaan
 {
     public function Jalankan(?string $pathData = null): void
     {
-        JenisPajak::query()->firstOrCreate(['Kode' => 'Ppn'], ['Nama' => 'PPN', 'Cakupan' => CakupanPajak::Nasional]);
+        JenisPajak::query()->firstOrCreate(['Kode' => 'Ppn'], ['Nama' => 'PPN', 'Cakupan' => CakupanPajak::Nasional, 'Kategori' => KategoriJenisPajak::Ppn]);
         JenisPajak::query()->firstOrCreate(
             ['Kode' => 'PbjtMakananMinuman'],
-            ['Nama' => 'PBJT makanan & minuman (PB1)', 'Cakupan' => CakupanPajak::Daerah],
+            ['Nama' => 'PBJT makanan & minuman (PB1)', 'Cakupan' => CakupanPajak::Daerah, 'Kategori' => KategoriJenisPajak::Pbjt],
         );
 
         foreach (self::BacaData($pathData ?? database_path('Data/TarifPajakAwal.json')) as $data) {

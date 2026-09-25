@@ -221,6 +221,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Penjualan',
             'Shift & kas',
             'Akuntansi',
+            // F-14a: laporan penjualan, pajak, stok.
+            'Laporan',
             'Perangkat',
             'Pengguna & peran',
             'Log audit',
@@ -235,8 +237,14 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         // izin laporan.penjualan.lihat.
         expect(
             SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.penjualan.lihat'] }).map(({ menu }) => menu.label),
-        ).toEqual(['Beranda', 'Penjualan', 'Shift & kas']);
+        ).toEqual(['Beranda', 'Penjualan', 'Shift & kas', 'Laporan']);
         expect(CekMenuAktif('/kelola/penjualan', '/kelola/penjualan/01J9')).toBe(true);
+        // F-14a: grup "Laporan" hanya berisi laporan yang boleh dibuka; tautannya = sub-menu pertama yang boleh.
+        const laporanStok = SaringMenuTerlihat({ Pemilik: false, Izin: ['persediaan.lihat'] }).find(
+            ({ menu }) => menu.label === 'Laporan',
+        );
+        expect(laporanStok?.sub.map((m) => m.label)).toEqual(['Laporan stok']);
+        expect(CekMenuAktif('/kelola/laporan/penjualan', '/kelola/laporan/pajak?dari=2026-10-01')).toBe(true);
     });
 
     it('Pengguna & peran tetap aktif di /kelola/peran; aria-current hanya pada satu menu utama', () => {

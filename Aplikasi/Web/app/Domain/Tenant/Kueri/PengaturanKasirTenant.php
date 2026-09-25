@@ -21,8 +21,8 @@ use Brick\Math\Exception\MathException;
  */
 final class PengaturanKasirTenant
 {
-    /** Batas atas kelipatan pembulatan tunai (sama dengan validasi template sektor). */
-    private const KELIPATAN_MAKSIMAL = 1000000;
+    /** Batas atas kelipatan pembulatan tunai (PRD v1.46: 1–1.000; sama dengan validasi sinkron & template sektor). */
+    private const KELIPATAN_MAKSIMAL = 1000;
 
     public function __construct(private readonly KonteksTenant $konteks) {}
 

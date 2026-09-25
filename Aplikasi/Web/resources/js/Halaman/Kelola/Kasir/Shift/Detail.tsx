@@ -379,6 +379,16 @@ export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan, Lapora
             <p className="text-isi text-teks-sekunder">
                 {Penjualan.JumlahTransaksi} transaksi, total{' '}
                 <span className="font-semibold tabular-nums">{FormatRupiah(Penjualan.TotalPenjualan)}</span>.
+                {Penjualan.DaftarTerpotong ? (
+                    <>
+                        {' '}
+                        Tabel menampilkan {Penjualan.Daftar.length} penjualan terakhir; semua penjualan ada di{' '}
+                        <Link href="/kelola/penjualan" className="font-semibold text-brand underline">
+                            daftar penjualan
+                        </Link>
+                        .
+                    </>
+                ) : null}
             </p>
             <TabelData
                 id="kasir-shift-penjualan"

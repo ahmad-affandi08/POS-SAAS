@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pajak\Kueri;
 
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
+use App\Domain\Pajak\Enum\KategoriJenisPajak;
 use App\Domain\Pajak\Enum\KategoriPajakProduk;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\KelompokPajak;
@@ -84,9 +85,10 @@ final class DaftarKelompokPajak
 
     /**
      * Bagian `KelompokPajak` katalog POS (F-03 D.3). Delta = `DiubahPada ≥ sejak` (perubahan detail memperbarui
-     * `DiubahPada` kelompoknya). Kelompok pajak tidak pernah dihapus.
+     * `DiubahPada` kelompoknya). Kelompok pajak tidak pernah dihapus. `Pajak[].Kategori` (PRD v1.46, kunci tambahan)
+     * = kategori jenis pajak `Ppn`/`Pbjt`/`Lainnya` untuk syarat profil pajak outlet di aplikasi.
      *
-     * @return list<array{Uuid: string, Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, DasarPengenaan: string, Urutan: int}>}>
+     * @return list<array{Uuid: string, Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, Kategori: string, DasarPengenaan: string, Urutan: int}>}>
      */
     public function AmbilUntukPos(?CarbonImmutable $sejak): array
     {
@@ -101,6 +103,7 @@ final class DaftarKelompokPajak
                 'Kategori' => $k->Kategori?->value,
                 'Pajak' => array_values($k->Detail->map(fn (KelompokPajakDetail $detail): array => [
                     'KodeJenisPajak' => $detail->JenisPajak->Kode,
+                    'Kategori' => $detail->JenisPajak->Kategori->value,
                     'DasarPengenaan' => $detail->DasarPengenaan->value,
                     'Urutan' => $detail->Urutan,
                 ])->all()),
@@ -135,7 +138,7 @@ final class DaftarKelompokPajak
      * Jenis pajak platform per kode (P-02).
      *
      * @param  list<string>  $kode
-     * @return array<string, array{Kode: string, Nama: string, Cakupan: string}>
+     * @return array<string, array{Kode: string, Nama: string, Cakupan: string, Kategori: string}>
      */
     public function AmbilJenisPajak(array $kode): array
     {
@@ -146,7 +149,57 @@ final class DaftarKelompokPajak
         $hasil = [];
 
         foreach (JenisPajak::query()->whereIn('Kode', array_values(array_unique($kode)))->get() as $jenis) {
-            $hasil[$jenis->Kode] = ['Kode' => $jenis->Kode, 'Nama' => $jenis->Nama, 'Cakupan' => $jenis->Cakupan->value];
+            $hasil[$jenis->Kode] = ['Kode' => $jenis->Kode, 'Nama' => $jenis->Nama, 'Cakupan' => $jenis->Cakupan->value, 'Kategori' => $jenis->Kategori->value];
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Kategori jenis pajak per kode (PRD v1.46): pemetaan akun jurnal penjualan/retur. Kode tidak dikenal tidak ikut
+     * (pemanggil memperlakukannya sebagai `Lainnya`).
+     *
+     * @param  list<string>  $kode
+     * @return array<string, KategoriJenisPajak>
+     */
+    public function AmbilKategoriJenisPajak(array $kode): array
+    {
+        if ($kode === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (JenisPajak::query()->whereIn('Kode', array_values(array_unique($kode)))->get(['Kode', 'Kategori']) as $jenis) {
+            $hasil[$jenis->Kode] = $jenis->Kategori;
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Jenis pajak per kelompok pajak tenant aktif, urut detail (F-07b, PRD v1.46): dasar pencocokan himpunan pajak
+     * per baris penjualan POS. Kelompok tenant lain tidak ikut.
+     *
+     * @param  list<int>  $idKelompok
+     * @return array<int, list<array{Kode: string, Kategori: KategoriJenisPajak}>>
+     */
+    public function AmbilJenisPajakPerKelompok(array $idKelompok): array
+    {
+        if ($idKelompok === []) {
+            return [];
+        }
+
+        $hasil = [];
+        $detail = KelompokPajakDetail::query()
+            ->with('JenisPajak')
+            ->whereIn('IdKelompokPajak', array_values(array_unique($idKelompok)))
+            ->orderBy('Urutan')
+            ->orderBy('Id')
+            ->get();
+
+        foreach ($detail as $d) {
+            $hasil[$d->IdKelompokPajak][] = ['Kode' => $d->JenisPajak->Kode, 'Kategori' => $d->JenisPajak->Kategori];
         }
 
         return $hasil;

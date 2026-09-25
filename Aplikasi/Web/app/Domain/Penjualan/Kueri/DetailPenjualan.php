@@ -14,6 +14,7 @@ use App\Domain\Organisasi\Kueri\DaftarPerangkat;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Penjualan\Data\DataSudahDiretur;
+use App\Domain\Penjualan\Enum\KodeAlasanTinjauan;
 use App\Domain\Penjualan\Layanan\PenghitungNilaiRetur;
 use App\Domain\Penjualan\Layanan\PetaMutasiPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -103,6 +104,8 @@ final class DetailPenjualan
                 'Catatan' => $p->Catatan,
                 'PerluTinjauan' => $p->PerluTinjauan,
                 'AlasanTinjauan' => $p->AlasanTinjauan,
+                // PRD v1.46: alasan tinjauan dalam label manusiawi (kode mesin tidak ditampilkan).
+                'DaftarAlasanTinjauan' => KodeAlasanTinjauan::Urai($p->AlasanTinjauan),
                 'UuidShift' => $this->shift->AmbilBanyak([$p->IdShift])[$p->IdShift]->uuid ?? null,
             ],
             'Baris' => array_values($detail->map(fn (PenjualanDetail $d): array => [

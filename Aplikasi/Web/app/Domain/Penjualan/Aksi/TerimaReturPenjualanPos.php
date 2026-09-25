@@ -38,6 +38,7 @@ use App\Domain\Penjualan\Model\PenjualanPajak;
 use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\ReturPenjualanDetail;
 use App\Domain\Penjualan\Model\ReturPenjualanPembayaran;
+use App\Domain\Penjualan\Peristiwa\ReturPenjualanDiterima;
 use App\Domain\Persediaan\Aksi\CatatMutasiStok;
 use App\Domain\Persediaan\Data\DataBarisMutasi;
 use App\Domain\Persediaan\Data\DataDokumenMutasi;
@@ -223,6 +224,9 @@ final class TerimaReturPenjualanPos
             'DisetujuiOleh' => $penyetuju->nama,
             'PerluTinjauan' => $retur->PerluTinjauan,
         ], idPengguna: $kasir->id);
+
+        // F-14a: retur mengurangi pada tanggal returnya; ringkasan dihitung ulang di antrean setelah commit.
+        ReturPenjualanDiterima::dispatch($retur->IdTenant, $retur->IdOutlet, $retur->TanggalBisnis->toDateString(), $retur->Id);
 
         return StatusItemSinkron::Diterima;
     }

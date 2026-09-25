@@ -169,6 +169,7 @@ describe('F-06 halaman kasir back-office', () => {
                         PerluTinjauan: false,
                     },
                 ],
+                DaftarTerpotong: false,
                 JumlahTransaksi: 1,
                 TotalPenjualan: '96570.00',
             },
@@ -185,6 +186,7 @@ describe('F-06 halaman kasir back-office', () => {
                 .getAttribute('href'),
         ).toBe('/kelola/penjualan/01K5PENJUALAN0000000000001');
         expect(screen.getByText(/1 transaksi, total/)).toBeTruthy();
+        expect(screen.queryByText(/penjualan terakhir/)).toBeNull();
         expect(screen.getByText('Rp 100.000 × 12')).toBeTruthy();
         expect(screen.getByText('Disetujui Budi Santoso')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'JU/2026/09/000007' }).getAttribute('href')).toBe(
@@ -196,11 +198,28 @@ describe('F-06 halaman kasir back-office', () => {
             <HalamanDetailShift
                 {...props}
                 MutasiKas={[]}
-                Penjualan={{ Daftar: [], JumlahTransaksi: 0, TotalPenjualan: '0.00' }}
+                Penjualan={{ Daftar: [], DaftarTerpotong: false, JumlahTransaksi: 0, TotalPenjualan: '0.00' }}
             />,
         );
         expect(screen.getByText(/Belum ada kas masuk/)).toBeTruthy();
         expect(screen.getByText('Belum ada penjualan di shift ini.')).toBeTruthy();
+
+        // Shift ramai (> 200 penjualan): tabel hanya memuat penjualan terakhir dan menautkan daftar penjualan lengkap.
+        cleanup();
+        RenderUji(
+            <HalamanDetailShift
+                {...props}
+                Penjualan={{
+                    ...props.Penjualan,
+                    DaftarTerpotong: true,
+                    JumlahTransaksi: 1250,
+                    TotalPenjualan: '187500000.00',
+                }}
+            />,
+        );
+        expect(screen.getByText(/1250 transaksi, total/)).toBeTruthy();
+        expect(screen.getByText(/Tabel menampilkan 1 penjualan terakhir/)).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'daftar penjualan' }).getAttribute('href')).toBe('/kelola/penjualan');
     });
 
     it('kategori kas: keadaan kosong dan formulir tambah mengirim nama, jenis, akun', () => {
@@ -311,7 +330,7 @@ describe('F-06 halaman kasir back-office', () => {
         const dasar: PropsDetailShift = {
             Shift: { ...barisShift, DiterimaPada: '2026-09-24T05:00:00Z', AlasanTinjauan: null, PecahanKasAwal: [] },
             MutasiKas: [],
-            Penjualan: { Daftar: [], JumlahTransaksi: 0, TotalPenjualan: '0.00' },
+            Penjualan: { Daftar: [], DaftarTerpotong: false, JumlahTransaksi: 0, TotalPenjualan: '0.00' },
             Laporan: laporanShift,
             Tutup: null,
         };

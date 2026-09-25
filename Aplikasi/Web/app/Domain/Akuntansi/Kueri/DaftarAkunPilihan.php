@@ -9,7 +9,8 @@ use App\Domain\Akuntansi\Model\Akun;
 
 /**
  * API baca publik akun tenant aktif untuk domain lain yang memetakan sesuatu ke akun (F-06 kategori kas): pilihan
- * dropdown per tipe dan pencarian per Uuid, tanpa domain lain membaca tabel `Akun`.
+ * dropdown per tipe dan pencarian per Uuid, tanpa domain lain membaca tabel `Akun`. Akun nonaktif (F-13a) tidak
+ * ditawarkan dan tidak bisa dipilih; `AmbilBanyak` tetap mengembalikannya untuk tampilan data lama.
  *
  * @phpstan-type BarisAkun array{Id: int, Uuid: string, Kode: string, Nama: string, Jenis: string}
  */
@@ -22,6 +23,7 @@ final class DaftarAkunPilihan
     public function Ambil(array $tipe): array
     {
         return array_values(Akun::query()
+            ->where('Aktif', true)
             ->whereIn('Jenis', array_map(fn (TipeAkun $t): string => $t->value, $tipe))
             ->orderBy('Kode')
             ->get()
@@ -30,16 +32,34 @@ final class DaftarAkunPilihan
     }
 
     /**
-     * Akun dari Uuid bila tipenya termasuk `$tipe`; null bila tidak ada, milik tenant lain, atau tipenya lain.
+     * Akun aktif dari Uuid bila tipenya termasuk `$tipe`; null bila tidak ada, nonaktif, milik tenant lain, atau
+     * tipenya lain.
      *
      * @param  list<TipeAkun>  $tipe
      * @return BarisAkun|null
      */
     public function CariDariUuid(string $uuid, array $tipe): ?array
     {
-        $akun = Akun::query()->where('Uuid', $uuid)->first();
+        $akun = Akun::query()->where('Uuid', $uuid)->where('Aktif', true)->first();
 
         return $akun !== null && in_array($akun->Jenis, $tipe, true) ? self::Petakan($akun) : null;
+    }
+
+    /**
+     * Akun aktif untuk formulir transaksi kas & bank (F-13a): akun kas/bank dan akun lawan (tanpa HPP), disaring FE
+     * per jenis transaksi; aturan akhirnya tetap di `SimpanTransaksiKasBank::PeriksaAkun`.
+     *
+     * @return list<array{Uuid: string, Kode: string, Nama: string, Jenis: string, KasBank: bool}>
+     */
+    public function AmbilUntukKasBank(): array
+    {
+        return array_values(Akun::query()
+            ->where('Aktif', true)
+            ->where('Jenis', '!=', TipeAkun::Hpp->value)
+            ->orderBy('Kode')
+            ->get()
+            ->map(fn (Akun $a): array => ['Uuid' => $a->Uuid, 'Kode' => $a->Kode, 'Nama' => $a->Nama, 'Jenis' => $a->Jenis->value, 'KasBank' => $a->KasBank])
+            ->all());
     }
 
     /**

@@ -14,6 +14,10 @@ use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pajak\Enum\DasarPengenaanPajak;
+use App\Domain\Pajak\Model\JenisPajak;
+use App\Domain\Pajak\Model\KelompokPajak;
+use App\Domain\Pajak\Model\KelompokPajakDetail;
+use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
@@ -86,6 +90,67 @@ final class BantuanPenjualan
     public static function BuatMetode(JenisMetodePembayaran $jenis, string $nama, bool $aktif = true): MetodePembayaran
     {
         return MetodePembayaran::query()->create(['Jenis' => $jenis, 'Nama' => $nama, 'Aktif' => $aktif, 'Urutan' => 10]);
+    }
+
+    /**
+     * Profil pajak outlet uji (`Outlet.ProfilPajak`, PRD v1.46): `Pkp`, `PungutPbjt`, `HargaTermasukPajak`,
+     * `BiayaLayanan` (persen string atau null = tidak aktif).
+     *
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     */
+    public static function AturProfilPajak(array $k, bool $pkp = false, bool $pungutPbjt = false, bool $hargaTermasukPajak = false, ?string $persenBiayaLayanan = null): void
+    {
+        /** @var Outlet $outlet */
+        $outlet = $k['Outlet'];
+        $outlet->refresh()->forceFill(['ProfilPajak' => [
+            ...($outlet->ProfilPajak ?? []),
+            'Pkp' => $pkp,
+            'PungutPbjt' => $pungutPbjt,
+            'HargaTermasukPajak' => $hargaTermasukPajak,
+            'BiayaLayanan' => ['Aktif' => $persenBiayaLayanan !== null, 'Persen' => $persenBiayaLayanan ?? '0.00'],
+        ]])->save();
+    }
+
+    /**
+     * Pembulatan tunai pengaturan kasir tenant (null = tanpa pembulatan).
+     *
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     * @param  array{0: int, 1: string}|null  $pembulatan
+     */
+    public static function AturPembulatanTunai(array $k, ?array $pembulatan): void
+    {
+        /** @var Tenant $tenant */
+        $tenant = $k['Tenant'];
+        $tenant->refresh();
+        $tenant->Pengaturan = [...($tenant->Pengaturan ?? []), 'PembulatanTunai' => $pembulatan === null ? null : ['Kelipatan' => $pembulatan[0], 'Arah' => $pembulatan[1]]];
+        $tenant->save();
+    }
+
+    /**
+     * Kelompok pajak tenant konteks aktif berisi jenis pajak (kode → dasar pengenaan), lalu dipasang ke produk.
+     *
+     * @param  array<string, string>  $pajak  kode jenis pajak → `Subtotal`|`SubtotalPlusLayanan`
+     */
+    public static function PasangKelompokPajak(string $nama, array $pajak, Produk ...$produk): KelompokPajak
+    {
+        app(SiapkanPajakBawaan::class)->Jalankan();
+        $kelompok = KelompokPajak::query()->create(['Nama' => $nama]);
+        $urutan = 0;
+
+        foreach ($pajak as $kode => $dasar) {
+            KelompokPajakDetail::query()->create([
+                'IdKelompokPajak' => $kelompok->Id,
+                'IdJenisPajak' => JenisPajak::query()->where('Kode', $kode)->value('Id'),
+                'DasarPengenaan' => DasarPengenaanPajak::from($dasar),
+                'Urutan' => ++$urutan,
+            ]);
+        }
+
+        foreach ($produk as $p) {
+            $p->forceFill(['IdKelompokPajak' => $kelompok->Id])->save();
+        }
+
+        return $kelompok;
     }
 
     /** Produk barang stok (satuan pcs) dengan stok awal terposting (jurnal persediaan ikut tercatat). */

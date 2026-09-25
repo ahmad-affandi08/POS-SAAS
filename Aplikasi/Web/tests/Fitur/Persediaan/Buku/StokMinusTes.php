@@ -108,6 +108,32 @@ describe('F-05a BR-05.2 stok minus', function (): void {
             ->and(BantuanBuku::PeriksaInvarianBuku($t['Tenant']->Id))->toBe([]);
     });
 
+    it('F-07b abaikanBatasMinus hanya untuk produk tanpa pelacakan: dokumen yang memuat produk batch atau seri ditolak PelacakanBelumDidukung tanpa mutasi tersimpan', function (string $jenisProduk): void {
+        $t = BantuanPersediaan::SiapkanTenant(stokBolehMinus: true);
+        $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);
+        $g = $t['Gudang']->Id;
+        $dokumen = BantuanBuku::BuatDokumen([
+            BantuanBuku::BuatBaris('K/1', $p['Stok']->Id, $g, '-1', null, JenisMutasi::Penjualan),
+            BantuanBuku::BuatBaris('K/2', $p[$jenisProduk]->Id, $g, '-1', null, JenisMutasi::Penjualan, idBatchStok: $jenisProduk === 'Batch' ? 1 : null, idNomorSeri: $jenisProduk === 'Seri' ? 1 : null),
+        ], JenisReferensiMutasi::Penjualan);
+
+        $galat = BantuanBuku::TangkapPelanggaran(fn () => app(CatatMutasiStok::class)->Jalankan(new DataDokumenMutasi(
+            $dokumen->jenisReferensi,
+            $dokumen->idReferensi,
+            $dokumen->uuidReferensi,
+            $dokumen->nomorReferensi,
+            $dokumen->tanggalBisnis,
+            $dokumen->idPengguna,
+            $dokumen->idPerangkat,
+            $dokumen->baris,
+            abaikanBatasMinus: true,
+        )));
+
+        expect($galat->kode)->toBe('PelacakanBelumDidukung')
+            ->and($galat->detail)->toBe(['KunciBaris' => 'K/2'])
+            ->and(MutasiStok::query()->count())->toBe(0);
+    })->with(['batch' => ['Batch'], 'seri' => ['Seri']]);
+
     it('BR-05.2 tidak berlaku untuk mutasi masuk dan stok yang pas habis', function (): void {
         $t = BantuanPersediaan::SiapkanTenant();
         $p = BantuanPersediaan::BuatProdukSemuaJenis($t['Pcs'], $t['Kg']);

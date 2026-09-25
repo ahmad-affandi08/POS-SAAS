@@ -82,7 +82,8 @@ final class PenjualanDetail extends ModelDasar
     protected static function booted(): void
     {
         self::updating(function (PenjualanDetail $detail): void {
-            $hppBelumDiisi = self::CekNol($detail->getOriginal('TotalHpp')) && self::CekNol($detail->getOriginal('HppSatuan'));
+            // HPP baris diisi sekali di transaksi penerimaan (`Penjualan::JalankanPenerimaan`), tidak pernah di luarnya.
+            $hppBelumDiisi = Penjualan::CekSedangMenerima() && self::CekNol($detail->getOriginal('TotalHpp')) && self::CekNol($detail->getOriginal('HppSatuan'));
 
             foreach (array_keys($detail->getDirty()) as $kolom) {
                 if ($kolom !== self::UPDATED_AT && ! (in_array($kolom, ['HppSatuan', 'TotalHpp'], true) && $hppBelumDiisi)) {

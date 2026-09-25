@@ -105,6 +105,35 @@ enum PeranAkun: string
         return $this === self::DiskonPenjualan || $this === self::ReturPenjualan;
     }
 
+    /** Peran kas & bank: akunnya ditandai akun kas/bank di bagan akun (F-13a transaksi kas & bank). */
+    public function CekPeranKasBank(): bool
+    {
+        return $this === self::KasOutlet || $this === self::KasBrankas || $this === self::Bank;
+    }
+
+    /**
+     * Satu sumber aturan tipe akun per peran (BR-P03.3): dipakai validator template sektor dan pemetaan akun tenant
+     * (F-13a). Tipe harus sama dengan `AmbilTipeAkun()` dan sifat kontra harus sama dengan `CekWajibKontra()`.
+     *
+     * @return list<string> pesan pelanggaran (kosong = akun cocok)
+     */
+    public function PeriksaAkun(TipeAkun $tipe, bool $kontra, string $kode): array
+    {
+        $galat = [];
+
+        if ($tipe !== $this->AmbilTipeAkun()) {
+            $galat[] = "Peran \"{$this->AmbilLabel()}\" harus memakai akun {$this->AmbilTipeAkun()->AmbilLabel()}, bukan {$tipe->AmbilLabel()} ({$kode}).";
+        }
+
+        if ($this->CekWajibKontra() !== $kontra) {
+            $galat[] = $this->CekWajibKontra()
+                ? "Peran \"{$this->AmbilLabel()}\" harus memakai akun kontra ({$kode} bukan akun kontra)."
+                : "Peran \"{$this->AmbilLabel()}\" tidak boleh memakai akun kontra ({$kode}).";
+        }
+
+        return $galat;
+    }
+
     public function AmbilLabel(): string
     {
         return match ($this) {

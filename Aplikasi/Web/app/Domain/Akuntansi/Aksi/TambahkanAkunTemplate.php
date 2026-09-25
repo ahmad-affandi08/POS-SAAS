@@ -69,6 +69,11 @@ final class TambahkanAkunTemplate
                 }
 
                 PemetaanAkun::query()->create(['Kunci' => $peran->value, 'IdAkun' => $idAkun, 'IdOutlet' => null]);
+
+                // F-13a: akun peran kas/bank menjadi akun kas/bank di bagan akun (transaksi kas & bank, saldo kas/bank).
+                if ($peran->CekPeranKasBank()) {
+                    Akun::query()->whereKey($idAkun)->where('Jenis', $peran->AmbilTipeAkun()->value)->update(['KasBank' => true]);
+                }
                 $kunciAda[] = $peran->value;
                 $pemetaanBaru[] = $peran->value;
             }

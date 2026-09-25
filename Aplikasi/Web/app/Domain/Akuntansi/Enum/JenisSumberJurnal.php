@@ -16,6 +16,8 @@ enum JenisSumberJurnal: string
     // F-09 J-09.2 (void memakai jurnal pembalik ber-sumber `Penjualan`, kunci `Void`).
     case ReturPenjualan = 'ReturPenjualan';
     case TutupShift = 'TutupShift';
+    // F-13a: transaksi kas & bank back-office (pengeluaran, penerimaan, transfer, dan pembaliknya).
+    case TransaksiKasBank = 'TransaksiKasBank';
 
     public function AmbilLabel(): string
     {
@@ -25,6 +27,7 @@ enum JenisSumberJurnal: string
             self::Penjualan => 'Penjualan',
             self::ReturPenjualan => 'Retur penjualan',
             self::TutupShift => 'Selisih kas tutup shift',
+            self::TransaksiKasBank => 'Transaksi kas & bank',
         };
     }
 
@@ -41,6 +44,7 @@ enum JenisSumberJurnal: string
             self::Penjualan => '/kelola/penjualan/'.$uuid,
             self::ReturPenjualan => '/kelola/penjualan/retur/'.$uuid,
             self::TutupShift => '/kelola/kasir/shift/'.$uuid,
+            self::TransaksiKasBank => '/kelola/akuntansi/kas-bank/'.$uuid,
         };
     }
 }

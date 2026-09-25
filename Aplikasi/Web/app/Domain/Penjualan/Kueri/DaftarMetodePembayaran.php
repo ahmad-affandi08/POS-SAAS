@@ -65,10 +65,18 @@ final class DaftarMetodePembayaran
             ->all());
     }
 
-    /** Path gambar QRIS statis metode aktif tenant aktif (unduhan POS F-07b); null bila tidak ada. */
+    /**
+     * Path gambar QRIS statis untuk unduhan POS (F-07b): hanya metode QRIS statis yang **aktif** di tenant aktif, sama
+     * dengan daftar `MetodePembayaran` di `data-awal` (metode nonaktif tidak bisa dipilih di kasir, jadi gambarnya
+     * tidak disajikan). Null bila tidak ada.
+     */
     public function CariPathGambarQrisPos(string $uuid): ?string
     {
-        $metode = MetodePembayaran::query()->where('Uuid', $uuid)->where('Jenis', JenisMetodePembayaran::QrisStatis->value)->first();
+        $metode = MetodePembayaran::query()
+            ->where('Uuid', $uuid)
+            ->where('Jenis', JenisMetodePembayaran::QrisStatis->value)
+            ->where('Aktif', true)
+            ->first();
 
         return $metode?->PathGambarQris;
     }

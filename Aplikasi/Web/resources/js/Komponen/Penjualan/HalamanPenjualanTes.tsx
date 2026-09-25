@@ -78,7 +78,20 @@ const propsDetail: PropsDetailPenjualan = {
         TotalHpp: '60000.00',
         Catatan: 'Pelanggan minta struk digital',
         PerluTinjauan: true,
-        AlasanTinjauan: 'StokTidakCukup: Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter (sisa −3)',
+        AlasanTinjauan:
+            'StokTidakCukup: Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter (sisa −3); DiskonMelebihiBatas: diskon 30,0001% melebihi batas persetujuan 30%',
+        DaftarAlasanTinjauan: [
+            {
+                Kode: 'StokTidakCukup',
+                Label: 'Stok tidak cukup saat penjualan diterima',
+                Keterangan: 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter (sisa −3)',
+            },
+            {
+                Kode: 'DiskonMelebihiBatas',
+                Label: 'Diskon melebihi batas yang berlaku',
+                Keterangan: 'diskon 30,0001% melebihi batas persetujuan 30%',
+            },
+        ],
         UuidShift: '01K5SHIFT00000000000000001',
     },
     Baris: [
@@ -158,7 +171,11 @@ describe('F-07b halaman penjualan back-office', () => {
     it('detail: alasan tinjauan, ringkasan (pembulatan negatif), baris, pajak, pembayaran, mutasi stok bertautan kartu stok, jurnal & shift', () => {
         RenderUji(<HalamanDetailPenjualan {...propsDetail} />);
 
-        expect(screen.getByText(/StokTidakCukup: Minyak Goreng/)).toBeTruthy();
+        // PRD v1.46: alasan tinjauan tampil sebagai kalimat manusiawi, bukan kode mesin.
+        expect(screen.getByText('Stok tidak cukup saat penjualan diterima')).toBeTruthy();
+        expect(screen.getByText(/Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter \(sisa −3\)/)).toBeTruthy();
+        expect(screen.getByText('Diskon melebihi batas yang berlaku')).toBeTruthy();
+        expect(screen.queryByText(/StokTidakCukup|DiskonMelebihiBatas/)).toBeNull();
         expect(screen.getByText('−Rp 70')).toBeTruthy();
         expect(screen.getByText('Rp 96.500')).toBeTruthy();
         expect(screen.getByText('Budi Santoso')).toBeTruthy();
@@ -186,7 +203,13 @@ describe('F-07b halaman penjualan back-office', () => {
         RenderUji(
             <HalamanDetailPenjualan
                 {...propsDetail}
-                Penjualan={{ ...propsDetail.Penjualan, PerluTinjauan: false, AlasanTinjauan: null, UuidShift: null }}
+                Penjualan={{
+                    ...propsDetail.Penjualan,
+                    PerluTinjauan: false,
+                    AlasanTinjauan: null,
+                    DaftarAlasanTinjauan: [],
+                    UuidShift: null,
+                }}
                 Pajak={[]}
                 MutasiStok={[]}
                 Jurnal={[]}
@@ -257,6 +280,13 @@ const propsRetur: PropsDetailRetur = {
         TotalHpp: '30000.00',
         PerluTinjauan: true,
         AlasanTinjauan: 'LokasiRusakTidakAda: barang rusak dikembalikan ke lokasi Toko',
+        DaftarAlasanTinjauan: [
+            {
+                Kode: 'LokasiRusakTidakAda',
+                Label: 'Lokasi stok Rusak belum ada',
+                Keterangan: 'barang rusak dikembalikan ke lokasi Toko',
+            },
+        ],
         UuidShift: '01K5SHIFT00000000000000002',
     },
     Baris: [
@@ -378,7 +408,8 @@ describe('F-09 halaman void & retur back-office', () => {
     it('detail retur: tinjauan, penjualan asal, ringkasan refund, baris kondisi rusak, refund, mutasi stok bertautan kartu stok, jurnal, shift', () => {
         RenderUji(<HalamanDetailRetur {...propsRetur} />);
 
-        expect(screen.getByText(/LokasiRusakTidakAda/)).toBeTruthy();
+        expect(screen.getByText('Lokasi stok Rusak belum ada')).toBeTruthy();
+        expect(screen.queryByText(/LokasiRusakTidakAda/)).toBeNull();
         expect(screen.getByRole('link', { name: 'INV/UTAMA/260924/UTAMA-K01-0042' }).getAttribute('href')).toBe(
             '/kelola/penjualan/01K5PENJUALAN0000000000001',
         );

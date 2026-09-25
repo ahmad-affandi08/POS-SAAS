@@ -12,6 +12,7 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\DaftarPerangkat;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Penjualan\Enum\KodeAlasanTinjauan;
 use App\Domain\Penjualan\Layanan\PetaMutasiPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\ReturPenjualan;
@@ -80,6 +81,7 @@ final class DetailReturPenjualan
                 'TotalHpp' => $r->TotalHpp,
                 'PerluTinjauan' => $r->PerluTinjauan,
                 'AlasanTinjauan' => $r->AlasanTinjauan,
+                'DaftarAlasanTinjauan' => KodeAlasanTinjauan::Urai($r->AlasanTinjauan),
                 'UuidShift' => $this->shift->AmbilBanyak([$r->IdShift])[$r->IdShift]->uuid ?? null,
             ],
             'Baris' => array_values($detail->map(fn (ReturPenjualanDetail $d): array => [

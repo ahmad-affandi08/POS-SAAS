@@ -25,7 +25,7 @@ final class UbahPengaturanKasir
     /** Batas atas wajar agar tidak melampaui DECIMAL(18,2). */
     private const BATAS_MAKSIMAL = '1000000000000.00';
 
-    private const KELIPATAN_MAKSIMAL = 1000000;
+    private const KELIPATAN_MAKSIMAL = 1000;
 
     public function __construct(
         private readonly PengaturanKasirTenant $pengaturan,
@@ -78,7 +78,7 @@ final class UbahPengaturanKasir
         $kelipatan = $data->pembulatanTunai['Kelipatan'] ?? null;
 
         if ($kelipatan !== null && ($kelipatan <= 0 || $kelipatan > self::KELIPATAN_MAKSIMAL)) {
-            throw new PelanggaranAturanBisnis('PembulatanTidakValid', 'Kelipatan pembulatan tunai harus antara Rp 1 dan Rp 1.000.000.', 'PembulatanTunai.Kelipatan');
+            throw new PelanggaranAturanBisnis('PembulatanTidakValid', 'Kelipatan pembulatan tunai harus antara Rp 1 dan Rp 1.000.', 'PembulatanTunai.Kelipatan');
         }
     }
 

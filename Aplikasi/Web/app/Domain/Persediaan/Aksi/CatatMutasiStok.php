@@ -407,6 +407,12 @@ final class CatatMutasiStok
             }
 
             $keluar = $baris->jumlah->BernilaiNegatif();
+
+            // `abaikanBatasMinus` hanya untuk produk tanpa pelacakan: stok batch/seri tidak pernah boleh minus.
+            if ($dokumen->abaikanBatasMinus && $p->pelacakan !== PelacakanProduk::Tidak) {
+                throw self::Galat('PelacakanBelumDidukung', "Produk {$p->nama} memakai {$p->pelacakan->AmbilLabel()}; pencatatan tanpa batas stok minus hanya untuk produk tanpa batch/nomor seri.", $k, 'Produk');
+            }
+
             $cocok = match ($p->pelacakan) {
                 PelacakanProduk::Tidak => $baris->batchMasuk === null && $baris->idBatchStok === null && $baris->nomorSeriMasuk === null && $baris->idNomorSeri === null,
                 PelacakanProduk::Batch => $keluar ? $baris->idBatchStok !== null : $baris->batchMasuk !== null,

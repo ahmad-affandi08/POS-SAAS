@@ -16,13 +16,16 @@ use Carbon\CarbonImmutable;
 /**
  * Jurnal retur penjualan satu dokumen (PRD §11.3 J-09.2, "Rincian F-09 fase 1"), dimensi outlet retur:
  * - Dr Retur Penjualan = Σ nilai retur − pajak − biaya layanan (pendapatan bersih diskon yang dibalik).
- * - Dr pajak bagian retur per kode (Ppn → PPN Keluaran, lainnya → Hutang PB1/PBJT); Dr Pendapatan Biaya Layanan.
+ * - Dr pajak bagian retur per kode menurut kategori `JenisPajak` (Ppn → PPN Keluaran, lainnya → Hutang PB1/PBJT);
+ *   Dr Pendapatan Biaya Layanan.
  * - Cr per refund: tunai → akun metode atau Kas Outlet; transfer → akun metode atau Bank.
  * - Dr persediaan per peran akun (nilai stok yang kembali) / Cr HPP.
  * Seimbang karena Σ refund = Σ nilai retur (diperiksa `TerimaReturPenjualanPos`).
  */
 final class PenyusunJurnalReturPenjualan
 {
+    public function __construct(private readonly PenyusunJurnalPenjualan $penyusunPenjualan) {}
+
     /**
      * @param  array<string, Uang>  $pajak  kode jenis pajak → pajak bagian retur
      * @param  list<array{0: MetodePembayaran, 1: Uang}>  $refund
@@ -37,8 +40,10 @@ final class PenyusunJurnalReturPenjualan
             DataBarisJurnal::DariSelisih(PeranAkun::PendapatanBiayaLayanan, $biayaLayanan, $idOutlet),
         ];
 
+        $akunPajak = $this->penyusunPenjualan->TentukanAkunPajak(array_map('strval', array_keys($pajak)));
+
         foreach ($pajak as $kode => $jumlah) {
-            $baris[] = DataBarisJurnal::DariSelisih($kode === PenyusunJurnalPenjualan::KODE_PPN ? PeranAkun::PpnKeluaran : PeranAkun::HutangPbjt, $jumlah, $idOutlet);
+            $baris[] = DataBarisJurnal::DariSelisih($akunPajak[(string) $kode], $jumlah, $idOutlet);
         }
 
         foreach ($refund as [$metode, $nilai]) {

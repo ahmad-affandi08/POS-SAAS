@@ -23,6 +23,7 @@ use App\Domain\Penjualan\Layanan\PemeriksaPelakuPascaPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use App\Domain\Penjualan\Model\VoidPenjualan;
+use App\Domain\Penjualan\Peristiwa\PenjualanDivoid;
 use App\Domain\Persediaan\Aksi\CatatMutasiStok;
 use App\Domain\Persediaan\Data\DataBarisMutasi;
 use App\Domain\Persediaan\Data\DataDokumenMutasi;
@@ -175,6 +176,9 @@ final class TerimaVoidPenjualanPos
             'Alasan' => $data->alasan,
             'DisetujuiOleh' => $penyetuju->nama,
         ], idPengguna: $kasir->id);
+
+        // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
+        PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);
 
         return StatusItemSinkron::Diterima;
     }

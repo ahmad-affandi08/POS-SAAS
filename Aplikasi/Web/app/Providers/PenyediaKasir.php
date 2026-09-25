@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Akuntansi\Kontrak\PemeriksaPemakaianAkun;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
+use App\Domain\Kasir\Kueri\PemakaianAkunDiKategoriKas;
 use App\Domain\Kasir\Layanan\PenanganSinkronBukaShift;
 use App\Domain\Kasir\Layanan\PenanganSinkronMutasiKas;
 use App\Domain\Kasir\Layanan\PenanganSinkronTutupShift;
@@ -19,5 +21,7 @@ final class PenyediaKasir extends ServiceProvider
     public function register(): void
     {
         $this->app->tag([PenanganSinkronBukaShift::class, PenanganSinkronMutasiKas::class, PenanganSinkronTutupShift::class], PenanganItemSinkron::TAG);
+        // F-13a: akun yang dirujuk kategori kas tidak bisa dihapus dari bagan akun.
+        $this->app->tag(PemakaianAkunDiKategoriKas::class, PemeriksaPemakaianAkun::TAG);
     }
 }

@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import DaftarAlasanTinjauan from '@/Komponen/Penjualan/DaftarAlasanTinjauan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
@@ -156,7 +157,10 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
 
             {r.PerluTinjauan ? (
                 <Pemberitahuan jenis="peringatan" judul="Retur ini perlu ditinjau">
-                    {r.AlasanTinjauan ?? 'Retur ini diterima meski ada data yang tidak sesuai saat sinkron.'}
+                    <DaftarAlasanTinjauan
+                        alasan={r.DaftarAlasanTinjauan}
+                        cadangan="Retur ini diterima meski ada data yang tidak sesuai saat sinkron."
+                    />
                 </Pemberitahuan>
             ) : null}
 

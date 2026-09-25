@@ -9,6 +9,8 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Pajak\Enum\KategoriJenisPajak;
+use App\Domain\Pajak\Kueri\DaftarKelompokPajak;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -20,14 +22,15 @@ use Carbon\CarbonImmutable;
  *   kliring metode atau Piutang Pencairan; transfer → akun metode atau Bank.
  * - Dr Diskon Penjualan (total diskon baris + pesanan).
  * - Cr Penjualan / Pendapatan Jasa per baris = bruto − pajak inklusif baris.
- * - Cr Pendapatan Biaya Layanan; Cr pajak (Ppn → PPN Keluaran, lainnya → Hutang PB1/PBJT).
+ * - Cr Pendapatan Biaya Layanan; Cr pajak menurut kategori `JenisPajak` (PRD v1.46): kategori Ppn → PPN Keluaran,
+ *   Pbjt & lainnya → Hutang PB1/PBJT (kode jenis pajak tidak dibaca sebagai string tetap).
  * - Pembulatan tunai ke Pendapatan Lain (kredit bila positif, debit bila negatif).
  * - J-07.2: Dr HPP / Cr persediaan per peran akun persediaan (dari hasil mutasi stok).
  * Seimbang karena TotalAkhir + TotalDiskon = Σ Bruto + BiayaLayanan + PajakEksklusif + Pembulatan.
  */
 final class PenyusunJurnalPenjualan
 {
-    public const KODE_PPN = 'Ppn';
+    public function __construct(private readonly DaftarKelompokPajak $kelompokPajak) {}
 
     /**
      * @param  list<array{0: PeranAkun, 1: Uang}>  $pendapatan  per baris: [Penjualan|PendapatanJasa, bruto − pajak inklusif]
@@ -52,8 +55,10 @@ final class PenyusunJurnalPenjualan
 
         $baris[] = DataBarisJurnal::Kredit(PeranAkun::PendapatanBiayaLayanan, Uang::Dari($penjualan->BiayaLayanan), $idOutlet);
 
+        $akunPajak = $this->TentukanAkunPajak(array_map('strval', array_keys($pajak)));
+
         foreach ($pajak as $kode => $jumlah) {
-            $baris[] = DataBarisJurnal::Kredit($kode === self::KODE_PPN ? PeranAkun::PpnKeluaran : PeranAkun::HutangPbjt, $jumlah, $idOutlet);
+            $baris[] = DataBarisJurnal::Kredit($akunPajak[(string) $kode], $jumlah, $idOutlet);
         }
 
         $baris[] = DataBarisJurnal::DariSelisih(PeranAkun::PendapatanLain, Uang::Nol()->Kurangi(Uang::Dari($penjualan->Pembulatan)), $idOutlet);
@@ -77,6 +82,25 @@ final class PenyusunJurnalPenjualan
             baris: array_values(array_filter($baris, fn (?DataBarisJurnal $b): bool => $b !== null)),
             idPengguna: $penjualan->IdPengguna,
         );
+    }
+
+    /**
+     * Peran akun pajak keluaran per kode jenis pajak (juga dipakai retur F-09) dari kategori `JenisPajak` (PRD v1.46):
+     * `Ppn` → PPN Keluaran; `Pbjt` dan `Lainnya` (termasuk kode yang tidak dikenal) → Hutang PB1/PBJT.
+     *
+     * @param  list<string>  $kode
+     * @return array<string, PeranAkun>
+     */
+    public function TentukanAkunPajak(array $kode): array
+    {
+        $kategori = $this->kelompokPajak->AmbilKategoriJenisPajak($kode);
+        $hasil = [];
+
+        foreach ($kode as $k) {
+            $hasil[$k] = ($kategori[$k] ?? KategoriJenisPajak::Lainnya) === KategoriJenisPajak::Ppn ? PeranAkun::PpnKeluaran : PeranAkun::HutangPbjt;
+        }
+
+        return $hasil;
     }
 
     /**

@@ -13,14 +13,18 @@ use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
+use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
+use stdClass;
 
 /**
  * Isi `GET /api/pos/v1/data-awal` (PRD §16.3). F-06: staf & verifier PIN offline, kategori kas aktif, pengaturan
  * kasir, dan parameter Argon2id. F-07b: batas diskon & pembulatan tunai di `Pengaturan`, identitas `Outlet` &
  * `Perangkat` (nomor BR-07.1, struk), `ProfilPajak` outlet, `TarifPajak` terbit (nasional + kota outlet, belum
  * berakhir, termasuk yang akan berlaku), dan `MetodePembayaran` aktif jenis fase 1. Katalog tetap lewat `/katalog`
- * (F-03); bagian lain (promo, meja) ditambahkan flow masing-masing.
+ * (F-03); bagian lain (promo, meja) ditambahkan flow masing-masing. PRD v1.46: `Perangkat.NomorUrutPenjualan`
+ * = objek `{"YYMMDD": urut terakhir}` penjualan perangkat ini (14 hari terakhir) agar pemasangan ulang aplikasi tidak
+ * memakai nomor yang sama (`NomorUrutRetur` sama untuk nomor retur `RJ/...`); `TarifPajak[].Kategori` = kategori jenis pajak (`Ppn`/`Pbjt`/`Lainnya`).
  */
 final class DataAwalKasir
 {
@@ -32,6 +36,7 @@ final class DataAwalKasir
         private readonly TarifPajakBerlaku $tarifPajak,
         private readonly TanggalBisnisOutlet $tanggalBisnis,
         private readonly DaftarMetodePembayaran $metodePembayaran,
+        private readonly NomorUrutPenjualanPerangkat $nomorUrut,
     ) {}
 
     /**
@@ -42,6 +47,9 @@ final class DataAwalKasir
         $pengaturan = $this->pengaturan->Ambil();
         $outlet = $this->outlet->Ambil($perangkat->IdOutlet, $perangkat->Id);
         $profil = $this->profilPajak->Ambil($perangkat->IdOutlet);
+        $hariIni = $this->tanggalBisnis->Hitung($perangkat->IdOutlet);
+        $nomorUrut = $this->nomorUrut->Ambil($perangkat->Id, $hariIni);
+        $nomorUrutRetur = $this->nomorUrut->AmbilRetur($perangkat->Id, $hariIni);
 
         return [
             'Pengaturan' => [
@@ -66,14 +74,20 @@ final class DataAwalKasir
                 'ZonaWaktu' => $outlet->zonaWaktu,
                 'JamTutupBuku' => $outlet->jamTutupBuku,
             ],
-            'Perangkat' => ['Uuid' => $perangkat->Uuid, 'Kode' => $perangkat->Kode],
+            'Perangkat' => [
+                'Uuid' => $perangkat->Uuid,
+                'Kode' => $perangkat->Kode,
+                // Objek JSON walau kosong (`{}`), bukan larik.
+                'NomorUrutPenjualan' => $nomorUrut === [] ? new stdClass : $nomorUrut,
+                'NomorUrutRetur' => $nomorUrutRetur === [] ? new stdClass : $nomorUrutRetur,
+            ],
             'ProfilPajak' => [
                 'Pkp' => $profil->pkp ?? false,
                 'PungutPbjt' => $profil->pungutPbjt ?? false,
                 'HargaTermasukPajak' => $profil->hargaTermasukPajak ?? false,
                 'BiayaLayanan' => ['Aktif' => $profil->biayaLayananAktif ?? false, 'Persen' => $profil->persenBiayaLayanan ?? '0.00'],
             ],
-            'TarifPajak' => $this->tarifPajak->DaftarUntukOutlet($outlet?->kodeKota, $this->tanggalBisnis->Hitung($perangkat->IdOutlet)),
+            'TarifPajak' => $this->tarifPajak->DaftarUntukOutlet($outlet?->kodeKota, $hariIni),
             'MetodePembayaran' => $this->metodePembayaran->AmbilUntukPos(),
             'KategoriKas' => array_values(KategoriKas::query()
                 ->where('Aktif', true)

@@ -8,6 +8,7 @@ use App\Providers\PenyediaKatalog;
 use App\Providers\PenyediaKatalogHarga;
 use App\Providers\PenyediaKatalogImpor;
 use App\Providers\PenyediaKatalogKomposisi;
+use App\Providers\PenyediaLaporan;
 use App\Providers\PenyediaPenjualan;
 use App\Providers\PenyediaPersediaan;
 
@@ -24,4 +25,6 @@ return [
     PenyediaKasir::class,
     // F-07b: penjualan dari POS (penangan item sinkron `Penjualan.Buat`).
     PenyediaPenjualan::class,
+    // F-14a: laporan (penangan ringkasan penjualan harian).
+    PenyediaLaporan::class,
 ];

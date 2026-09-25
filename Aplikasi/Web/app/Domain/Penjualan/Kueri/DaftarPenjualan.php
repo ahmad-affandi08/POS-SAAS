@@ -69,20 +69,38 @@ final class DaftarPenjualan
         ], fn (Collection $penjualan): array => $this->Petakan($penjualan));
     }
 
+    /** Batas baris penjualan di detail shift (`TabelData` mode lokal ≤ 200 baris, §17.4.3). */
+    public const BATAS_DAFTAR_SHIFT = 200;
+
     /**
-     * Penjualan satu shift urut waktu (detail shift). Ringkasan: jumlah transaksi & total penjualan.
+     * Penjualan satu shift urut waktu (detail shift): paling banyak `BATAS_DAFTAR_SHIFT` penjualan terakhir
+     * (`DaftarTerpotong` = ada yang tidak ditampilkan). Ringkasan dihitung di database dari semua penjualan shift:
+     * jumlah transaksi & total penjualan lunas (dijumlahkan sebagai DECIMAL, dibaca sebagai string, tidak float).
      *
-     * @return array{Daftar: list<array<string, mixed>>, JumlahTransaksi: int, TotalPenjualan: string}
+     * @return array{Daftar: list<array<string, mixed>>, DaftarTerpotong: bool, JumlahTransaksi: int, TotalPenjualan: string}
      */
     public function AmbilUntukShift(int $idShift): array
     {
-        $penjualan = Penjualan::query()->where('IdShift', $idShift)->orderBy('DibuatOfflinePada')->orderBy('Id')->get();
-        $total = Penjualan::query()->where('IdShift', $idShift)->where('Status', StatusPenjualan::Lunas->value)->sum('TotalAkhir');
+        $penjualan = Penjualan::query()
+            ->where('IdShift', $idShift)
+            ->orderByDesc('DibuatOfflinePada')
+            ->orderByDesc('Id')
+            ->limit(self::BATAS_DAFTAR_SHIFT)
+            ->get()
+            ->reverse()
+            ->values();
+        $jumlah = Penjualan::query()->where('IdShift', $idShift)->count();
+        $total = Penjualan::query()
+            ->where('IdShift', $idShift)
+            ->where('Status', StatusPenjualan::Lunas->value)
+            ->selectRaw('COALESCE(SUM(`TotalAkhir`), 0) AS `Total`')
+            ->value('Total');
 
         return [
             'Daftar' => $this->Petakan($penjualan),
-            'JumlahTransaksi' => $penjualan->count(),
-            'TotalPenjualan' => Uang::Dari(is_numeric($total) ? (string) $total : '0')->KeString(),
+            'DaftarTerpotong' => $jumlah > $penjualan->count(),
+            'JumlahTransaksi' => $jumlah,
+            'TotalPenjualan' => Uang::Dari(is_string($total) || is_int($total) ? (string) $total : '0')->KeString(),
         ];
     }
 

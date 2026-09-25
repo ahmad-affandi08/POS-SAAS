@@ -8,6 +8,7 @@ use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
+use Closure;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use LogicException;
@@ -16,7 +17,8 @@ use LogicException;
  * Penjualan (PRD F-07, §15.3). F-07b: dibuat di perangkat POS (bisa offline), diterima server lewat sinkron sebagai
  * dokumen `Lunas`. `Uuid` = `UuidKlien` perangkat. Dokumen yang diterima tidak pernah diubah atau dihapus (CLAUDE.md
  * #8); koreksi lewat void/retur (F-09). Pengecualian: `TotalHpp` dan `IdJurnal` diisi sekali di transaksi penerimaan
- * (setelah mutasi stok & jurnal), tanda tinjauan (`PerluTinjauan`, `AlasanTinjauan`), dan `Status` lewat
+ * (setelah mutasi stok & jurnal) dan hanya selama penanda penerimaan aktif (`JalankanPenerimaan`, dipakai
+ * `TerimaPenjualanPos`), tanda tinjauan (`PerluTinjauan`, `AlasanTinjauan`), dan `Status` lewat
  * `StatusPenjualan::BisaBerubahKe()`.
  *
  * @property int $Id
@@ -65,6 +67,35 @@ final class Penjualan extends ModelDasar
 
     protected $table = 'Penjualan';
 
+    /** Penanda penerimaan: hanya aktif di dalam `JalankanPenerimaan` (transaksi `TerimaPenjualanPos`). */
+    private static bool $sedangMenerima = false;
+
+    /**
+     * Menjalankan penerimaan penjualan POS: selama `kerja` berjalan, `IdJurnal`/`TotalHpp` penjualan yang belum
+     * berjurnal dan HPP baris (`PenjualanDetail`) boleh diisi. Penanda selalu dipulihkan (juga saat galat).
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $kerja
+     * @return T
+     */
+    public static function JalankanPenerimaan(Closure $kerja): mixed
+    {
+        $lama = self::$sedangMenerima;
+        self::$sedangMenerima = true;
+
+        try {
+            return $kerja();
+        } finally {
+            self::$sedangMenerima = $lama;
+        }
+    }
+
+    public static function CekSedangMenerima(): bool
+    {
+        return self::$sedangMenerima;
+    }
+
     /**
      * @return array<string, string>
      */
@@ -98,7 +129,7 @@ final class Penjualan extends ModelDasar
     protected static function booted(): void
     {
         self::updating(function (Penjualan $penjualan): void {
-            $sedangDiterima = $penjualan->getOriginal('IdJurnal') === null;
+            $sedangDiterima = self::$sedangMenerima && $penjualan->getOriginal('IdJurnal') === null;
 
             foreach (array_keys($penjualan->getDirty()) as $kolom) {
                 $boleh = in_array($kolom, self::KOLOM_TINJAUAN, true)

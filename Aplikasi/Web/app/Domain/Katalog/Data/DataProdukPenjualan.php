@@ -10,6 +10,7 @@ use App\Domain\Katalog\Enum\PelacakanProduk;
 /**
  * Produk yang dirujuk baris penjualan (F-07b, `KomposisiPenjualan`), termasuk yang sudah diarsipkan/dihapus setelah
  * dijual offline. `satuan` = satuan produk per Uuid `ProdukSatuan` (`IdSatuan`, `KonversiKeDasar` string 4 desimal).
+ * `idKelompokPajak` & `hargaTermasukPajak` (null = ikut outlet) untuk mencocokkan snapshot pajak (PRD v1.46).
  */
 final readonly class DataProdukPenjualan
 {
@@ -25,5 +26,7 @@ final readonly class DataProdukPenjualan
         public int $idSatuanDasar,
         public array $satuan,
         public bool $dihapus,
+        public ?int $idKelompokPajak = null,
+        public ?bool $hargaTermasukPajak = null,
     ) {}
 }

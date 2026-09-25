@@ -44,7 +44,7 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
             'LaporanUnggulan.*' => ['string', Rule::enum(LaporanUnggulan::class)],
             'Pengaturan' => ['required', 'array'],
             'Pengaturan.PembulatanTunai' => ['required', 'array'],
-            'Pengaturan.PembulatanTunai.Kelipatan' => ['required', 'integer', 'min:1', 'max:1000000'],
+            'Pengaturan.PembulatanTunai.Kelipatan' => ['required', 'integer', 'min:1', 'max:1000'],
             'Pengaturan.PembulatanTunai.Arah' => ['required', 'string', Rule::enum(ArahPembulatan::class)],
             'Pengaturan.PersenBiayaLayanan' => ['required', 'string', 'regex:/^\d{1,2}(\.\d{1,2})?$/'],
             'Pengaturan.BiayaLayananMasukDpp' => ['required', 'boolean'],
@@ -67,7 +67,7 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
     public function messages(): array
     {
         return [
-            'Pengaturan.PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan bilangan bulat Rupiah, misal 100.',
+            'Pengaturan.PembulatanTunai.Kelipatan.*' => 'Kelipatan pembulatan bilangan bulat Rupiah 1 sampai 1.000, misal 100.',
             'Pengaturan.PersenBiayaLayanan.regex' => 'Biaya layanan berupa persen, misal 5 atau 7.5.',
             'ProdukContoh.present' => 'Daftar produk contoh wajib dikirim (boleh kosong).',
             'ProdukContoh.max' => 'Produk contoh paling banyak '.ValidatorTemplate::JUMLAH_PRODUK_CONTOH_MAKSIMAL.' item.',

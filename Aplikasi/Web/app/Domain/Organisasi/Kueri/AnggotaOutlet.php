@@ -35,6 +35,38 @@ final class AnggotaOutlet
     }
 
     /**
+     * F-07b (PRD v1.46): anggota tenant dari Uuid pengguna beserta tanda apakah ia (masih) punya akses ke outlet ini.
+     * Anggota yang sudah dinonaktifkan tetap dikembalikan (tanpa izin, tanpa akses outlet) karena transaksi offline-nya
+     * bisa terjadi sebelum dinonaktifkan. Null hanya bila pengguna tidak dikenal atau tidak pernah menjadi anggota
+     * tenant; pemanggil memutuskan apakah izin/akses yang hilang ditolak atau ditandai untuk ditinjau.
+     *
+     * @return array{0: DataAnggotaOutlet, 1: bool}|null [anggota, punya akses outlet]
+     */
+    public function CariDiTenant(int $idTenant, string $uuidPengguna, int $idOutlet): ?array
+    {
+        $pengguna = Pengguna::query()->where('Uuid', $uuidPengguna)->first();
+
+        if ($pengguna === null) {
+            return null;
+        }
+
+        $akses = $this->akses->Ambil($idTenant, $pengguna->Id);
+
+        if ($akses === null) {
+            $pernahAnggota = TenantPengguna::query()->where('IdTenant', $idTenant)->where('IdPengguna', $pengguna->Id)->exists();
+
+            return $pernahAnggota ? [new DataAnggotaOutlet($pengguna->Id, $pengguna->Uuid, $pengguna->Nama, false, []), false] : null;
+        }
+
+        $outlet = $this->akses->AmbilIdOutlet($idTenant, $pengguna->Id);
+
+        return [
+            new DataAnggotaOutlet($pengguna->Id, $pengguna->Uuid, $pengguna->Nama, $akses['Pemilik'], $akses['Izin']),
+            $outlet === null || in_array($idOutlet, $outlet, true),
+        ];
+    }
+
+    /**
      * Nama pengguna per Id untuk tampilan (tanpa pemeriksaan akses).
      *
      * @param  list<int>  $id

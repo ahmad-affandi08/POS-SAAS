@@ -18,6 +18,7 @@ use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\OutletPengguna;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pajak\Enum\CakupanPajak;
+use App\Domain\Pajak\Enum\KategoriJenisPajak;
 use App\Domain\Pajak\Model\JenisPajak;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 
@@ -81,9 +82,9 @@ final class BantuanHarga
     /** Jenis pajak platform (P-02): PPN, PBJT makanan & minuman, dan satu pajak daerah lain. */
     public static function SiapkanJenisPajak(): void
     {
-        JenisPajak::query()->firstOrCreate(['Kode' => 'Ppn'], ['Nama' => 'PPN', 'Cakupan' => CakupanPajak::Nasional]);
-        JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtMakananMinuman'], ['Nama' => 'PBJT makanan & minuman (PB1)', 'Cakupan' => CakupanPajak::Daerah]);
-        JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtJasaHiburan'], ['Nama' => 'PBJT jasa kesenian & hiburan', 'Cakupan' => CakupanPajak::Daerah]);
+        JenisPajak::query()->firstOrCreate(['Kode' => 'Ppn'], ['Nama' => 'PPN', 'Cakupan' => CakupanPajak::Nasional, 'Kategori' => KategoriJenisPajak::Ppn]);
+        JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtMakananMinuman'], ['Nama' => 'PBJT makanan & minuman (PB1)', 'Cakupan' => CakupanPajak::Daerah, 'Kategori' => KategoriJenisPajak::Pbjt]);
+        JenisPajak::query()->firstOrCreate(['Kode' => 'PbjtJasaHiburan'], ['Nama' => 'PBJT jasa kesenian & hiburan', 'Cakupan' => CakupanPajak::Daerah, 'Kategori' => KategoriJenisPajak::Pbjt]);
     }
 
     /** Outlet tambahan di tenant konteks aktif. */
