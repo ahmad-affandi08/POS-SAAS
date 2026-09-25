@@ -211,11 +211,6 @@ class _BagianPrinterStrukState extends ConsumerState<BagianPrinterStruk> {
           runSpacing: TokenJarak.jarak8,
           children: [
             Tombol('Cetak uji', Icons.print_outlined, _CetakUji),
-            Tombol(
-              'Buka laci',
-              Icons.point_of_sale,
-              () => _Jalankan(ref.read(penyediaPrinter.notifier).BukaLaci, 'Perintah buka laci terkirim.'),
-            ),
             Tombol('Ubah', Icons.edit_outlined, () => _MulaiUbah(profil)),
             Tombol('Hapus printer', Icons.delete_outline, _Hapus),
           ],

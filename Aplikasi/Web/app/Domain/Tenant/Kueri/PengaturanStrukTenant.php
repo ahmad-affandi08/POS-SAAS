@@ -37,6 +37,21 @@ final class PengaturanStrukTenant
         );
     }
 
+    /**
+     * Path logo usaha yang dicetak di struk: null bila tenant tanpa logo atau logo dimatikan di pengaturan struk.
+     * Dipakai `data-awal` (`AdaLogo`) dan `GET /api/pos/v1/logo-struk` agar keduanya selalu sepakat.
+     */
+    public function AmbilPathLogo(int $idTenant): ?string
+    {
+        if (! $this->Ambil($idTenant)->tampilkanLogo) {
+            return null;
+        }
+
+        $pengaturan = Tenant::query()->whereKey($idTenant)->firstOrFail()->Pengaturan ?? [];
+
+        return is_string($pengaturan['PathLogo'] ?? null) ? $pengaturan['PathLogo'] : null;
+    }
+
     private static function AmbilTeks(mixed $nilai, int $panjangMaksimal): ?string
     {
         if (! is_string($nilai)) {

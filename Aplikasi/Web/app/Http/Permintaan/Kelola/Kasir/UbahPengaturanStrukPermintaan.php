@@ -24,7 +24,8 @@ final class UbahPengaturanStrukPermintaan extends FormRequest
         return [
             ...array_fill_keys(self::SAKLAR, ['required', 'boolean']),
             'NamaDicetak' => ['nullable', 'string', "max:{$baris}"],
-            'TeksKepala' => ['present', 'array', 'max:'.DataPengaturanStruk::JUMLAH_TEKS_KEPALA_MAKSIMAL],
+            // Batas 3 baris diperiksa setelah baris kosong dibuang (Aksi); di sini hanya batas wajar masukan.
+            'TeksKepala' => ['present', 'array', 'max:10'],
             'TeksKepala.*' => ['nullable', 'string', "max:{$baris}"],
             'CatatanKaki' => ['nullable', 'string', 'max:'.DataPengaturanStruk::PANJANG_CATATAN_KAKI_MAKSIMAL],
             'TeksPenutup' => ['nullable', 'string', "max:{$baris}"],

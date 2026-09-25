@@ -117,7 +117,7 @@ export default function PratinjauStruk({ pengaturan, profil, lebar }: PropsPrati
     return (
         <figure
             aria-label={`Pratinjau struk ${lebar} mm`}
-            className="mx-auto w-fit max-w-full overflow-x-auto rounded-kontrol border border-garis bg-permukaan px-3 py-4 shadow-xs"
+            className="mx-auto w-fit max-w-full overflow-x-auto rounded-kontrol border border-garis bg-permukaan px-3 py-4"
         >
             {pengaturan.TampilkanLogo && profil.TautanLogo ? (
                 <img

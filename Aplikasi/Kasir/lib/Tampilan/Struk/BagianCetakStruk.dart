@@ -29,15 +29,22 @@ class _BagianCetakStrukState extends ConsumerState<BagianCetakStruk> {
   }
 
   Future<void> _CetakOtomatis() async {
-    final profil = await ref.read(penyediaLayananStruk).AmbilProfil();
-    if (!mounted || profil == null || !profil.cetakOtomatis) {
+    if (!await ref.read(penyediaLayananStruk).CekCetakOtomatis() || !mounted) {
       return;
     }
     setState(() => _mencetak = true);
-    final galat = await ref
+    final hasil = await ref
         .read(penyediaPrinter.notifier)
         .CetakSetelahBayar(widget.uuidPenjualan, namaPelanggan: widget.namaPelanggan);
-    _Selesai(galat);
+    if (hasil.dicetak || hasil.galat != null) {
+      _Selesai(hasil.galat);
+    } else if (mounted) {
+      // Sudah dicetak otomatis sebelumnya (layar dibangun ulang): cetak berikutnya bertanda CETAK ULANG.
+      setState(() {
+        _mencetak = false;
+        _jumlahCetak = 1;
+      });
+    }
   }
 
   Future<void> _Cetak() async {

@@ -173,7 +173,8 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
         $this->put('/kelola/kasir/struk', [...$isian, 'TeksKepala' => ['a', 'b', 'c', 'd']])->assertSessionHasErrors('TeksKepala');
         $this->put('/kelola/kasir/struk', [...$isian, 'CatatanKaki' => str_repeat('a', 201)])->assertSessionHasErrors('CatatanKaki');
         $this->put('/kelola/kasir/struk', [...$isian, 'NamaDicetak' => str_repeat('a', 49)])->assertSessionHasErrors('NamaDicetak');
-        $this->put('/kelola/kasir/struk', $isian)->assertRedirect('/kelola/kasir/struk');
+        // Baris kepala kosong dibuang sebelum batas 3 baris diperiksa.
+        $this->put('/kelola/kasir/struk', [...$isian, 'TeksKepala' => ['Buka 07.00-22.00', '', '@kopisenja', '']])->assertRedirect('/kelola/kasir/struk');
         $this->put('/kelola/kasir/struk', $isian)->assertRedirect('/kelola/kasir/struk');
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
@@ -199,6 +200,39 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
             'AdaLogo' => false,
             'TandaAir' => false,
         ]);
+    });
+});
+
+describe('Pengaturan struk: isolasi tenant', function (): void {
+    it('pengaturan, identitas, dan logo struk tenant A tidak terlihat oleh perangkat tenant B; simpan A tidak mengubah B', function (): void {
+        $a = BantuanKasir::Siapkan($this, 'Kopi Senja Solo');
+        $b = BantuanKasir::Siapkan($this, 'Warung Bakso Pak Kumis');
+        Tenant::query()->whereKey($a['Tenant']->Id)->update(['Npwp' => '0123456789012345']);
+        Storage::fake((string) config('tenant.DiskLogo'));
+        Storage::disk((string) config('tenant.DiskLogo'))->put("logo/{$a['Tenant']->Id}/logo.png", 'png-palsu');
+        $tenantA = Tenant::query()->findOrFail($a['Tenant']->Id);
+        $tenantA->Pengaturan = [...($tenantA->Pengaturan ?? []), 'PathLogo' => "logo/{$a['Tenant']->Id}/logo.png"];
+        $tenantA->save();
+
+        BantuanPersediaan::MasukSebagai($this, $a['Tenant']->Id, PeranTenantBawaan::Admin);
+        $this->put('/kelola/kasir/struk', [
+            'TampilkanLogo' => true, 'TampilkanAlamat' => true, 'TampilkanTelepon' => true, 'TampilkanNpwp' => true,
+            'TampilkanKasir' => true, 'TampilkanPelanggan' => true, 'TampilkanHemat' => true,
+            'NamaDicetak' => 'Senja Coffee', 'TeksKepala' => ['@kopisenja'], 'CatatanKaki' => 'Rahasia A', 'TeksPenutup' => null,
+        ])->assertRedirect('/kelola/kasir/struk');
+
+        $strukB = $this->withToken($b['Token'])->getJson('/api/pos/v1/data-awal')->assertOk()->json('Struk');
+        expect($strukB['NamaUsaha'])->toBe('Warung Bakso Pak Kumis')
+            ->and($strukB['NamaDicetak'])->toBeNull()
+            ->and($strukB['TeksKepala'])->toBe([])
+            ->and($strukB['CatatanKaki'])->toBeNull()
+            ->and($strukB['Npwp'])->toBeNull()
+            ->and($strukB['AdaLogo'])->toBeFalse();
+        $this->withToken($b['Token'])->get('/api/pos/v1/logo-struk')->assertNotFound();
+        $this->withToken($a['Token'])->get('/api/pos/v1/logo-struk')->assertOk();
+
+        BantuanOrganisasi::AturKonteks($b['Tenant']->Id);
+        expect(Tenant::query()->findOrFail($b['Tenant']->Id)->Pengaturan['Struk'] ?? null)->toBeNull();
     });
 });
 

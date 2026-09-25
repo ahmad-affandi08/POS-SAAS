@@ -136,7 +136,7 @@ final class DataAwalKasir
             ...$struk->KeLarik(),
             'NamaUsaha' => $tenant['Nama'],
             'Npwp' => $pkp ? $tenant['Npwp'] : null,
-            'AdaLogo' => $struk->tampilkanLogo && $tenant['PathLogo'] !== null,
+            'AdaLogo' => $this->pengaturanStruk->AmbilPathLogo($perangkat->IdTenant) !== null,
             'TandaAir' => ! $this->fitur->CekAktif($perangkat->IdTenant, 'struk.tanpa-watermark'),
         ];
     }

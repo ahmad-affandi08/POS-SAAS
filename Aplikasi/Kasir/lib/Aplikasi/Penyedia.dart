@@ -188,27 +188,35 @@ class PengaturPrinter extends Notifier<StatusPrinter> {
   Future<String?> CetakPenjualan(String uuidPenjualan, {bool cetakUlang = false, String? namaPelanggan}) =>
       _Jalankan((l) => l.CetakPenjualan(uuidPenjualan, cetakUlang: cetakUlang, namaPelanggan: namaPelanggan));
 
-  /// Cetak otomatis setelah bayar (plus buka laci bila tunai). Printer belum diatur/otomatis mati = tidak apa-apa.
-  Future<String?> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan}) async {
-    final profil = await ref.read(penyediaLayananStruk).AmbilProfil();
-    if (profil == null || !profil.cetakOtomatis) {
-      return null;
+  /// Cetak otomatis setelah bayar (plus buka laci bila tunai), sekali per transaksi walau layar selesai dibangun ulang.
+  /// Printer belum diatur/otomatis mati = tidak mencetak dan keadaan tidak berubah.
+  Future<({bool dicetak, String? galat})> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan}) async {
+    if (!_sudahOtomatis.add(uuidPenjualan) || !await ref.read(penyediaLayananStruk).CekCetakOtomatis()) {
+      return (dicetak: false, galat: null);
     }
-    return _Jalankan((l) => l.CetakPenjualan(uuidPenjualan, bukaLaci: true, namaPelanggan: namaPelanggan));
+    final galat = await _Jalankan((l) => l.CetakSetelahBayar(uuidPenjualan, namaPelanggan: namaPelanggan));
+    return (dicetak: galat == null, galat: galat);
   }
 
-  Future<String?> CetakUji(ProfilPrinter profil) => _Jalankan((l) => l.CetakUji(profil), profil: profil);
+  final Set<String> _sudahOtomatis = {};
 
-  Future<String?> BukaLaci() => _Jalankan((l) => l.BukaLaci());
+  /// Cetak uji untuk isian yang mungkin belum disimpan: keadaan bilah status tidak diubah.
+  Future<String?> CetakUji(ProfilPrinter profil) async {
+    try {
+      await ref.read(penyediaLayananStruk).CetakUji(profil);
+      return null;
+    } on GalatPrinter catch (galat) {
+      return galat.pesan;
+    }
+  }
 
-  Future<String?> _Jalankan(Future<void> Function(LayananStruk layanan) aksi, {ProfilPrinter? profil}) async {
-    final profilKini = profil ?? state.profil;
+  Future<String?> _Jalankan(Future<void> Function(LayananStruk layanan) aksi) async {
     state = StatusPrinter(profil: state.profil, keadaan: KeadaanPrinter.Mencetak);
     try {
       await aksi(ref.read(penyediaLayananStruk));
       state = StatusPrinter(
         profil: state.profil,
-        keadaan: state.profil == null && profilKini == null ? KeadaanPrinter.BelumDiatur : KeadaanPrinter.Siap,
+        keadaan: state.profil == null ? KeadaanPrinter.BelumDiatur : KeadaanPrinter.Siap,
       );
       return null;
     } on GalatPrinter catch (galat) {

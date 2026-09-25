@@ -78,6 +78,7 @@ void main() {
       await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak uji'));
       expect(u.printer.AmbilTeks(), contains('CETAK UJI'));
       expect(u.printer.AmbilTeks(), contains('1234567890' * 4), reason: 'Penggaris 48 kolom kertas 80 mm.');
+      expect(find.text('Printer belum diatur'), findsOneWidget, reason: 'Cetak uji belum menyimpan printer.');
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer'));
       expect(find.text('Printer LAN/Wi-Fi 192.168.1.50:9100 · 80 mm'), findsOneWidget);
