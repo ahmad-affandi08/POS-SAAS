@@ -26,6 +26,7 @@ class HasilAktivasi {
     required this.uuidOutlet,
     required this.namaOutlet,
     required this.namaUsaha,
+    this.jenisPerangkat = 'Kasir',
   });
 
   final String tokenPerangkat;
@@ -36,6 +37,9 @@ class HasilAktivasi {
   final String uuidOutlet;
   final String namaOutlet;
   final String namaUsaha;
+
+  /// Kasir/Pelayan/Kds/Gudang (F-10b: perangkat `Kds` membuka layar dapur, bukan layar kasir).
+  final String jenisPerangkat;
 
   static HasilAktivasi DariJson(Map<String, Object?> json) {
     final perangkat = _Peta(json['Perangkat']);
@@ -49,6 +53,7 @@ class HasilAktivasi {
       uuidOutlet: _Teks(outlet['Uuid']),
       namaOutlet: _Teks(outlet['Nama']),
       namaUsaha: _Teks(_Peta(json['Tenant'])['Nama']),
+      jenisPerangkat: _TeksAtauNull(perangkat['Jenis']) ?? 'Kasir',
     );
   }
 }

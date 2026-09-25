@@ -7,8 +7,10 @@ import 'package:http/http.dart' as http;
 
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
+import 'Model/ModelMeja.dart';
 import 'Model/ModelPos.dart';
 import 'Model/ModelRetur.dart';
+import 'Model/UraiJson.dart';
 
 /// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`) dan `X-Versi-Aplikasi`.
 /// Galat server → `GalatApi`; server tak terjangkau, waktu habis, atau 5xx → `GalatJaringan` (aman dicoba lagi).
@@ -72,6 +74,44 @@ class KlienPos {
     await _Kirim('GET', 'penjualan/cari?nomor=${Uri.encodeQueryComponent(nomor.trim())}', null),
   );
 
+  /// Data meja outlet perangkat (F-07 mode meja fase 1).
+  Future<DataMejaPos> AmbilMeja() async => DataMejaPos.DariJson(await _Kirim('GET', 'meja', null));
+
+  /// Snapshot pesanan terbuka outlet. [etag] sama dengan server → `null` (tidak berubah, 304).
+  Future<SnapshotPesananTerbuka?> AmbilPesananTerbuka({String? etag}) async {
+    final respons = await _KirimMentah('GET', 'pesanan-terbuka', null, header: {'If-None-Match': ?etag});
+    if (respons.statusCode == 304) {
+      return null;
+    }
+    if (respons.statusCode >= 400) {
+      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+    }
+    return SnapshotPesananTerbuka.DariJson(_UraiJson(respons.body), respons.headers['etag']);
+  }
+
+  /// Kunci bayar online (berlaku sebentar, diperpanjang saat layar Bayar terbuka). Perangkat lain sedang membayar →
+  /// `GalatApi` ber-kode `PesananSedangDibayar` (409).
+  Future<DateTime?> KunciBayar(String uuidPesanan) async {
+    final json = await _Kirim('POST', 'pesanan-terbuka/${Uri.encodeComponent(uuidPesanan)}/kunci-bayar', null);
+    return DateTime.tryParse(UraiJson.AmbilTeks(json['KunciBayarSampai']));
+  }
+
+  Future<void> LepasKunciBayar(String uuidPesanan) async {
+    await _Kirim('DELETE', 'pesanan-terbuka/${Uri.encodeComponent(uuidPesanan)}/kunci-bayar', null);
+  }
+
+  /// Tiket dapur aktif outlet untuk KDS; [stasiun] kosong/null = semua stasiun.
+  Future<DaftarTiketDapur> AmbilTiketDapur({List<String> stasiun = const []}) async {
+    final kueri = stasiun.map((s) => 'stasiun[]=${Uri.encodeQueryComponent(s)}').join('&');
+    return DaftarTiketDapur.DariJson(await _Kirim('GET', kueri.isEmpty ? 'dapur/tiket' : 'dapur/tiket?$kueri', null));
+  }
+
+  /// Ubah status tiket satu langkah (Antre → Dimasak → Siap → Disajikan, atau mundur satu langkah).
+  Future<String> UbahStatusTiket(String uuidTiket, String status) async {
+    final json = await _Kirim('POST', 'dapur/tiket/${Uri.encodeComponent(uuidTiket)}/status', {'Status': status});
+    return UraiJson.AmbilTeks(json['Status'], status);
+  }
+
   /// Kirim batch outbox (maks. 50) dan kembalikan hasil per item dalam urutan yang sama.
   Future<List<HasilItemSinkron>> KirimSinkron(List<ItemOutbox> item) async {
     final json = await _Kirim('POST', 'sinkron/kirim', {'Item': item.map((i) => i.toJson()).toList()});
@@ -104,10 +144,11 @@ class KlienPos {
     Map<String, Object?>? isi, {
     bool pakaiToken = true,
     String terima = 'application/json',
+    Map<String, String> header = const {},
   }) async {
     final alamat = alamatDasar.resolve('api/pos/v1/$jalur');
     final permintaan = http.Request(metode, alamat)
-      ..headers.addAll({'Accept': terima, 'X-Versi-Aplikasi': versiAplikasi});
+      ..headers.addAll({'Accept': terima, 'X-Versi-Aplikasi': versiAplikasi, ...header});
 
     if (pakaiToken) {
       final token = await ambilToken();

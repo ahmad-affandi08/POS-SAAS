@@ -107,6 +107,7 @@ describe('F-07 mode meja: pesanan terbuka', function (): void {
             ->assertJsonCount(3, 'Pesanan.0.Baris')
             ->assertJsonPath('Pesanan.0.Baris.0.StatusDapur', 'Antre')
             ->assertJsonPath('Pesanan.0.Baris.0.Catatan', 'Es sedikit')
+            ->assertJsonPath('Pesanan.0.Baris.0.UuidProduk', $k['Kopi']->Uuid)
             ->assertJsonPath('Ditutup', []);
         $etag = (string) $respons->headers->get('ETag');
         $this->withToken($k['Token'])->withHeader('If-None-Match', $etag)->getJson('/api/pos/v1/pesanan-terbuka')->assertStatus(304);

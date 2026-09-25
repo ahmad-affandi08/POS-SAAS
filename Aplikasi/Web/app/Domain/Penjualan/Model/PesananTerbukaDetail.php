@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $IdTenant
  * @property int $IdPesananTerbuka
  * @property int $IdProduk
+ * @property string|null $UuidProduk
  * @property string|null $UuidProdukSatuan
  * @property string $NamaProduk
  * @property string $Jumlah

@@ -78,6 +78,7 @@ final class TambahBarisPesananTerbukaPos
                     'Uuid' => $b->uuid,
                     'IdPesananTerbuka' => $pesanan->Id,
                     'IdProduk' => $p->id,
+                    'UuidProduk' => $p->uuid,
                     'UuidProdukSatuan' => $b->uuidProdukSatuan,
                     'NamaProduk' => $p->nama,
                     'Jumlah' => $b->jumlah,

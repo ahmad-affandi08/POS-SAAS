@@ -56,6 +56,8 @@ final class PesananTerbukaOutlet
             'DikunciBayar' => $p->KunciBayarSampai !== null && $p->KunciBayarSampai->isFuture(),
             'Baris' => array_values(collect($baris->get($p->Id, []))->map(fn (PesananTerbukaDetail $b): array => [
                 'Uuid' => $b->Uuid,
+                'UuidProduk' => $b->UuidProduk,
+                'UuidProdukSatuan' => $b->UuidProdukSatuan,
                 'NamaProduk' => $b->NamaProduk,
                 'Jumlah' => (string) $b->Jumlah,
                 'HargaSatuan' => (string) $b->HargaSatuan,
