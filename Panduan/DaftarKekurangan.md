@@ -19,6 +19,15 @@ Status per 26 September 2026 (PRD v2.10). Dokumen ini mencatat apa yang **belum 
 | A10 | Pencadangan otomatis database & file belum diatur di hosting | Risiko kehilangan data | Aktifkan backup harian hPanel + catat di konsol (`pengelola:catat-backup`) |
 | A11 | Satu test (`EksporVarianTes` round-trip) kadang gagal saat seluruh suite dijalankan, lolos bila dijalankan sendiri | Indikasi test tidak stabil (urutan/data) | Selidiki penyebabnya, jangan dilewati |
 
+## A2. Perbaikan teknis yang ditunda (diminta pemilik produk: dikerjakan setelah fitur C)
+
+| # | Pekerjaan | Rincian |
+|---|---|---|
+| T1 | Kecilkan ukuran tampilan | Situs payou.id ±169 KB gzip, dashboard ±333 KB saat pertama dibuka. Rencana: CSS situs dipisah dari CSS dashboard, pustaka JS bersama dipecah (situs tidak memuat komponen tabel/kalender), grafik Beranda dashboard dimuat belakangan, logo PNG 60 KB → WebP/SVG, kompresi & cache panjang di `.htaccess`. Target ±80–100 KB (situs), ±200 KB (dashboard). |
+| T2 | Tampilan Integrasi | Enkripsi tertulis "Ssl" → "SSL"; kata sandi SMTP/rahasia ditampilkan 4 karakter terakhir → sembunyikan penuh untuk kata sandi (kunci API boleh tetap 4 terakhir). |
+| T3 | Build otomatis | Server hosting tanpa Node: buat GitHub Actions yang membangun `public/build` + `vendor` dan menghasilkan paket ZIP siap unggah per commit `main`, agar pembaruan tidak bergantung build manual. |
+| T4 | Situs pemasaran bagian B | Persetujuan cookie + kebijakan cookie (UU PDP); formulir "Minta demo/Kontak" dengan kotak masuk prospek di konsol (data prospek dilindungi, tidak dicatat di log); ID Google Analytics & Meta Pixel diatur dari konsol dan hanya aktif setelah persetujuan; artikel/blog untuk SEO. |
+
 ## B. Fitur yang belum dibangun (urutan kerja berikutnya)
 
 1. **Situs pemasaran bagian B:** artikel/blog, formulir kontak & minta demo dengan kotak masuk prospek di konsol, persetujuan cookie (UU PDP), ID Google Analytics/Meta Pixel dari konsol.
