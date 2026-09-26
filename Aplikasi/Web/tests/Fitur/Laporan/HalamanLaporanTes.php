@@ -22,6 +22,9 @@ use Tests\Pendukung\Persediaan\BantuanPersediaan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
+    // Prasyarat pendaftaran (dokumen legal berlaku sejak "kemarin") dibuat pada tanggal tetap sebelum semua tanggal
+    // skenario, agar tidak bergantung pada tanggal saat test dijalankan.
+    $this->travelTo(CarbonImmutable::parse('2026-09-01 05:00:00', 'UTC'));
     BantuanPendaftaran::SiapkanPrasyarat();
     // Rabu 7 Oktober 2026 pukul 12.00 WIB (tanggal bisnis = tanggal kalender lokal).
     $this->travelTo(CarbonImmutable::parse('2026-10-07 05:00:00', 'UTC'));
