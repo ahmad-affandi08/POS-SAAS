@@ -36,6 +36,7 @@ use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatSesiPenjualan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
+use App\Domain\Pemenuhan\Aksi\SelesaikanReservasiPenjualan;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
 use App\Domain\Pemenuhan\Data\DataKirimDapur;
 use App\Domain\Penjualan\Data\DataBarisPenjualanPos;
@@ -149,6 +150,7 @@ final class TerimaPenjualanPos
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
+        private readonly SelesaikanReservasiPenjualan $reservasi,
         private readonly PenautTagihanQrisPenjualan $penautQris,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
@@ -392,6 +394,15 @@ final class TerimaPenjualanPos
 
         if ($masalahSesi !== []) {
             $tinjauan['PaketSesi'] = 'PaketSesi: '.implode('; ', $masalahSesi);
+        }
+
+        // F-07 mode service bagian 2: reservasi yang dibayar diselesaikan & ditautkan di transaksi yang sama.
+        if ($data->uuidReservasi !== null) {
+            $masalahReservasi = $this->reservasi->Jalankan($data->uuidReservasi, $penjualan->Id, $outlet->idOutlet, $kasir->id);
+
+            if ($masalahReservasi !== []) {
+                $tinjauan['Reservasi'] = 'Reservasi: '.implode('; ', $masalahReservasi);
+            }
         }
 
         // F-18: komisi staf yang melayani baris (hanya laporan, tanpa jurnal) di transaksi yang sama. Staf yang belum dikenal

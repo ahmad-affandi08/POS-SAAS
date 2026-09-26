@@ -369,6 +369,21 @@ class PraPesananKeranjang {
       : null;
 }
 
+/// Reservasi layanan yang sedang dilayani (F-07 mode service bagian 2): `Penjualan.Buat` merujuk [uuid] supaya server
+/// menyelesaikan dan menautkan reservasinya.
+class ReservasiKeranjang {
+  const ReservasiKeranjang({required this.uuid, required this.nomor});
+
+  final String uuid;
+  final String nomor;
+
+  Map<String, Object?> KeJson() => {'Uuid': uuid, 'Nomor': nomor};
+
+  static ReservasiKeranjang? DariJson(Object? json) => json is Map<String, Object?> && json['Uuid'] is String
+      ? ReservasiKeranjang(uuid: json['Uuid']! as String, nomor: '${json['Nomor'] ?? ''}')
+      : null;
+}
+
 /// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
 /// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
@@ -382,6 +397,7 @@ class Keranjang {
     this.tukarPoin,
     this.voucher,
     this.praPesan,
+    this.reservasi,
   });
 
   static const Keranjang kosong = Keranjang();
@@ -404,6 +420,9 @@ class Keranjang {
   /// F-12 bagian 2: pre-order yang sedang diambil.
   final PraPesananKeranjang? praPesan;
 
+  /// F-07 mode service: reservasi yang sedang dilayani.
+  final ReservasiKeranjang? reservasi;
+
   bool get CekKosong => baris.isEmpty;
 
   Kuantitas HitungJumlahItem() => baris.fold(Kuantitas.Nol(), (total, b) => total.Tambah(b.jumlah));
@@ -418,6 +437,7 @@ class Keranjang {
     TukarPoin? Function()? tukarPoin,
     VoucherKeranjang? Function()? voucher,
     PraPesananKeranjang? Function()? praPesan,
+    ReservasiKeranjang? Function()? reservasi,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
@@ -428,6 +448,7 @@ class Keranjang {
     tukarPoin: tukarPoin == null ? this.tukarPoin : tukarPoin(),
     voucher: voucher == null ? this.voucher : voucher(),
     praPesan: praPesan == null ? this.praPesan : praPesan(),
+    reservasi: reservasi == null ? this.reservasi : reservasi(),
   );
 
   Map<String, Object?> KeJson() => {
@@ -439,6 +460,7 @@ class Keranjang {
     'TukarPoin': tukarPoin?.KeJson(),
     'Voucher': voucher?.KeJson(),
     'PraPesan': praPesan?.KeJson(),
+    'Reservasi': reservasi?.KeJson(),
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -453,5 +475,6 @@ class Keranjang {
     tukarPoin: TukarPoin.DariJson(json['TukarPoin']),
     voucher: VoucherKeranjang.DariJson(json['Voucher']),
     praPesan: PraPesananKeranjang.DariJson(json['PraPesan']),
+    reservasi: ReservasiKeranjang.DariJson(json['Reservasi']),
   );
 }

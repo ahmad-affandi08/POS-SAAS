@@ -672,6 +672,52 @@ void main() {
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Alasan': 'Menu habis'});
   });
 
+  test('F-07 mode service: antrian reservasi per tanggal dan check-in', () async {
+    final dikirim = <http.Request>[];
+    final baris = {
+      'Uuid': 'R1',
+      'Nomor': 'RS/2026/10/0001',
+      'MulaiPada': '2026-10-13T03:00:00Z',
+      'SelesaiPada': '2026-10-13T04:00:00Z',
+      'NamaPelanggan': 'Rina Wulandari',
+      'NoHp': '0812-3456-7890',
+      'Pelanggan': null,
+      'UuidProduk': 'P1',
+      'NamaLayanan': 'Creambath Ginseng',
+      'UuidStaf': 'K1',
+      'NamaStaf': 'Maya',
+      'Status': 'Dikonfirmasi',
+      'LabelStatus': 'Dikonfirmasi',
+      'Catatan': null,
+    };
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      if (permintaan.method == 'GET') {
+        return Json({
+          'Reservasi': [baris],
+        }, 200);
+      }
+      return Json({
+        'Reservasi': {...baris, 'Status': 'Hadir', 'LabelStatus': 'Hadir'},
+      }, 200);
+    });
+
+    final daftar = await klien.AmbilReservasi(tanggal: '2026-10-13');
+    expect(dikirim.last.url.path, '/api/pos/v1/reservasi');
+    expect(dikirim.last.url.queryParameters, {'tanggal': '2026-10-13'});
+    expect(daftar.single.mulaiPada, DateTime.utc(2026, 10, 13, 3));
+    expect(daftar.single.uuidStaf, 'K1');
+    expect(daftar.single.BisaDilayani, isTrue);
+
+    await klien.AmbilReservasi();
+    expect(dikirim.last.url.query, isEmpty);
+
+    final hadir = await klien.HadirReservasi('R1', uuidPengguna: 'U1');
+    expect(dikirim.last.url.path, '/api/pos/v1/reservasi/R1/hadir');
+    expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1'});
+    expect(hadir.status, 'Hadir');
+  });
+
   test('v2.05 QRIS dinamis & kirim struk: bentuk permintaan dan urai respons', () async {
     final dikirim = <http.Request>[];
     final klien = BuatKlien((permintaan) async {

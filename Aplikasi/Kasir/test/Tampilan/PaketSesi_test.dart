@@ -9,10 +9,8 @@ import 'package:inti/Inti.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
 import 'package:kasir/Domain/Penjualan/Keranjang.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
-import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Domain/Pelanggan/LayananSesi_test.dart' show KatalogSalonUji, creambath;
-import '../Pendukung/KatalogUji.dart';
 import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/PasangAplikasi.dart';
 

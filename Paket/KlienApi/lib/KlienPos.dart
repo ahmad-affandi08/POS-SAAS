@@ -14,6 +14,7 @@ import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
 import 'Model/ModelPreOrder.dart';
 import 'Model/ModelPromo.dart';
+import 'Model/ModelReservasi.dart';
 import 'Model/ModelRetur.dart';
 import 'Model/UraiJson.dart';
 
@@ -176,6 +177,25 @@ class KlienPos {
   Future<void> LepasKunciBayar(String uuidPesanan) async {
     await _Kirim('DELETE', 'pesanan-terbuka/${Uri.encodeComponent(uuidPesanan)}/kunci-bayar', null);
   }
+
+  /// F-07 mode service bagian 2: reservasi outlet perangkat pada [tanggal] (`YYYY-MM-DD`, bawaan hari ini), urut jam.
+  Future<List<ReservasiPos>> AmbilReservasi({String? tanggal}) async {
+    final json = await _Kirim(
+      'GET',
+      tanggal == null ? 'reservasi' : 'reservasi?tanggal=${Uri.encodeQueryComponent(tanggal)}',
+      null,
+    );
+    return [for (final r in UraiJson.AmbilDaftarPeta(json['Reservasi'])) ReservasiPos.DariJson(r)];
+  }
+
+  /// Tandai pelanggan reservasi sudah datang (idempoten). Reservasi selesai/dibatalkan → `GalatApi` 422.
+  Future<ReservasiPos> HadirReservasi(String uuid, {required String uuidPengguna}) async => ReservasiPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'reservasi/${Uri.encodeComponent(uuid)}/hadir', {
+        'UuidPengguna': uuidPengguna,
+      }))['Reservasi'],
+    ),
+  );
 
   /// F-17 self-order (v2.02): pesanan QR meja outlet perangkat yang menunggu konfirmasi, terlama dulu.
   Future<List<PesananSendiriPos>> AmbilPesanSendiri() async {

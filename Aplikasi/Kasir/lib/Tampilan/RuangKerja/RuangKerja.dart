@@ -21,6 +21,7 @@ import '../LembarBukaLaci.dart';
 import '../LembarMutasiKas.dart';
 import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarAmbilPreOrder.dart';
+import '../Penjualan/LembarReservasi.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
 import '../Shift/KartuLaporanShift.dart';
@@ -237,6 +238,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
       saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
+      saatReservasi: () => _BukaPanelPenjualan(const _PanelPenjualan(reservasi: true)),
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -340,6 +342,17 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarVoid.judul,
         LembarVoid(key: ValueKey('Void-$uuid'), uuidPenjualan: uuid, kasir: widget.kasir, saatSelesai: _TutupPanel)
             as Widget,
+      ),
+      (_, _, _PanelPenjualan(reservasi: true)) => (
+        LembarReservasi.judul,
+        LembarReservasi(
+          key: const ValueKey('Reservasi'),
+          kasir: widget.kasir,
+          saatDimuat: () {
+            _TutupPanel();
+            _Buka(TujuanRuangKerja.Jual);
+          },
+        ) as Widget,
       ),
       (_, _, _PanelPenjualan(ambilPreOrder: true)) => (
         LembarAmbilPreOrder.judul,
@@ -522,12 +535,15 @@ enum _PanelShift { Tutup, LaporanX }
 
 /// Panel void (dengan Uuid penjualan) atau retur dari struk (tanpa Uuid) di ruang kerja (F-09).
 class _PanelPenjualan {
-  const _PanelPenjualan({this.uuidPenjualanVoid, this.ambilPreOrder = false});
+  const _PanelPenjualan({this.uuidPenjualanVoid, this.ambilPreOrder = false, this.reservasi = false});
 
   final String? uuidPenjualanVoid;
 
   /// F-12 bagian 2: cari & ambil pre-order.
   final bool ambilPreOrder;
+
+  /// F-07 mode service: antrian reservasi hari ini.
+  final bool reservasi;
 }
 
 /// Laporan X: ringkasan shift berjalan dari data perangkat, bisa dibuka kapan saja dari layar Shift.

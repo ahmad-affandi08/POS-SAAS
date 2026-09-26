@@ -33,7 +33,7 @@ final penyediaDetailPenjualan =
 /// F-09 fase 1: "Void transaksi" untuk transaksi `Lunas` shift yang masih terbuka ([saatVoid]), "Retur dari struk"
 /// ([saatRetur]), dan daftar retur hari ini. Void & retur dibuka sebagai panel tugas oleh bingkai ruang kerja.
 class LayarRiwayat extends ConsumerWidget {
-  const LayarRiwayat({super.key, this.saatVoid, this.saatRetur, this.saatAmbilPreOrder});
+  const LayarRiwayat({super.key, this.saatVoid, this.saatRetur, this.saatAmbilPreOrder, this.saatReservasi});
 
   /// Buka lembar void untuk Uuid penjualan.
   final ValueChanged<String>? saatVoid;
@@ -43,6 +43,9 @@ class LayarRiwayat extends ConsumerWidget {
 
   /// F-12 bagian 2: buka lembar cari & ambil pre-order.
   final VoidCallback? saatAmbilPreOrder;
+
+  /// F-07 mode service: buka lembar antrian reservasi hari ini.
+  final VoidCallback? saatReservasi;
 
   /// Label status dokumen penjualan selain `Lunas` (selalu berteks, bukan hanya warna).
   static String? AmbilLabelStatusDokumen(String status) => switch (status) {
@@ -118,6 +121,15 @@ class LayarRiwayat extends ConsumerWidget {
                   onPressed: saatAmbilPreOrder,
                   icon: const Icon(Icons.event_available_outlined),
                   label: const Text('Ambil pre-order'),
+                ),
+              ),
+            if (saatReservasi != null)
+              SizedBox(
+                height: TokenJarak.targetSentuh,
+                child: OutlinedButton.icon(
+                  onPressed: saatReservasi,
+                  icon: const Icon(Icons.event_note_outlined),
+                  label: const Text('Reservasi hari ini'),
                 ),
               ),
           ],

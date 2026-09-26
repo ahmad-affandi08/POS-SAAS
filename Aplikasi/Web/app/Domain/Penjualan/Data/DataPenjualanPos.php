@@ -54,5 +54,7 @@ final readonly class DataPenjualanPos
         public ?string $uuidPenyetujuTempo = null,
         public ?string $kodeVoucher = null,
         public ?string $uuidPesananPenjualan = null,
+        // F-07 mode service bagian 2: reservasi yang dibayar lewat penjualan ini (diselesaikan & ditautkan).
+        public ?string $uuidReservasi = null,
     ) {}
 }

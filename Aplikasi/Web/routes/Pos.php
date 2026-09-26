@@ -19,6 +19,7 @@ use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PesanKeluarKontroler;
 use App\Http\Kontroler\Pos\V1\PesanSendiriKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
+use App\Http\Kontroler\Pos\V1\ReservasiKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Kontroler\Pos\V1\TagihanQrisKontroler;
 use App\Http\Kontroler\Pos\V1\VoucherKontroler;
@@ -114,6 +115,10 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
             ->middleware('throttle:pos-120')->where('tagihanQris', $ulid)->name('pos.qris.status');
         Route::post('/qris/{tagihanQris}/batal', [TagihanQrisKontroler::class, 'Batal'])
             ->middleware('throttle:pos-30')->where('tagihanQris', $ulid)->name('pos.qris.batal');
+        // F-07 mode service bagian 2: antrian reservasi outlet & check-in pelanggan (online).
+        Route::get('/reservasi', [ReservasiKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.reservasi');
+        Route::post('/reservasi/{reservasi}/hadir', [ReservasiKontroler::class, 'Hadir'])
+            ->middleware('throttle:pos-60')->where('reservasi', $ulid)->name('pos.reservasi.hadir');
         // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
         Route::get('/pesan-sendiri', [PesanSendiriKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesan-sendiri');
         Route::post('/pesan-sendiri/{pesananSendiri}/terima', [PesanSendiriKontroler::class, 'Terima'])

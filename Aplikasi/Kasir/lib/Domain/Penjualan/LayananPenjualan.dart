@@ -1025,6 +1025,7 @@ class LayananPenjualan {
       'UuidPenyetujuTempo': ?uuidPenyetujuTempo,
       'Voucher': ?keranjang.voucher?.kode,
       'UuidPesananPenjualan': ?keranjang.praPesan?.uuid,
+      'UuidReservasi': ?keranjang.reservasi?.uuid,
       // Cetak struk bagian 4c: penjualan langsung di outlet berstasiun dapur dikirim ke dapur (mode cepat, bayar dulu).
       if (k.kirimDapurLangsung && pesananMeja == null && keranjang.praPesan == null) 'KirimDapur': true,
       if (hitungan.promoTerpakai.isNotEmpty)

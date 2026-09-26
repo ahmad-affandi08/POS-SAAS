@@ -70,4 +70,15 @@ final class LayananReservasi
     {
         return array_map('strval', Produk::withTrashed()->whereIn('Id', $id)->pluck('Nama', 'Id')->all());
     }
+
+    /**
+     * Uuid produk per Id (untuk antrian kasir), termasuk yang sudah diarsipkan.
+     *
+     * @param  list<int>  $id
+     * @return array<int, string>
+     */
+    public function AmbilUuid(array $id): array
+    {
+        return array_map('strval', Produk::withTrashed()->whereIn('Id', $id)->pluck('Uuid', 'Id')->all());
+    }
 }
