@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Integrasi\Data;
 
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
 
 final readonly class DataKonfigurasiIntegrasi
 {
@@ -20,5 +21,12 @@ final readonly class DataKonfigurasiIntegrasi
         public array $kredensial,
         public int $rotasiSetiapHari,
         public ?string $alasan,
+        public ?PenyediaIntegrasi $penyedia = null,
     ) {}
+
+    /** Penyedia terpilih; null = bawaan jenis (klien lama sebelum v2.04). */
+    public function AmbilPenyedia(): PenyediaIntegrasi
+    {
+        return $this->penyedia ?? $this->jenis->AmbilPenyedia();
+    }
 }

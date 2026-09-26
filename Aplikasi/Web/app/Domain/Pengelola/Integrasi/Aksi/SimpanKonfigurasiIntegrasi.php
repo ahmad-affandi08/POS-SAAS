@@ -43,14 +43,21 @@ final class SimpanKonfigurasiIntegrasi
 
     private function Simpan(PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
     {
-        $penyedia = $data->jenis->AmbilPenyedia();
+        $penyedia = $data->AmbilPenyedia();
+
+        if ($penyedia->AmbilJenis() !== $data->jenis) {
+            throw new PelanggaranAturanBisnis('PenyediaTidakCocok', 'Penyedia ini bukan untuk jenis integrasi tersebut.', 'Penyedia');
+        }
+
         $konfigurasi = KonfigurasiIntegrasi::query()
             ->where('Jenis', $data->jenis->value)
             ->where('Lingkungan', $data->lingkungan->value)
             ->lockForUpdate()
             ->first();
 
-        $kredensialLama = $konfigurasi === null ? [] : $konfigurasi->Kredensial;
+        // Ganti penyedia = kredensial lama tidak berlaku lagi (v2.04).
+        $gantiPenyedia = $konfigurasi !== null && $konfigurasi->Penyedia !== $penyedia;
+        $kredensialLama = $konfigurasi === null || $gantiPenyedia ? [] : $konfigurasi->Kredensial;
         $kredensialBaru = [];
         $kredensialBerubah = [];
 
@@ -59,6 +66,14 @@ final class SimpanKonfigurasiIntegrasi
             $nilai = $data->kredensial[$kunci] ?? '';
 
             if ($nilai === '') {
+                if (! $bidang['Wajib']) {
+                    if (isset($kredensialLama[$kunci])) {
+                        $kredensialBaru[$kunci] = $kredensialLama[$kunci];
+                    }
+
+                    continue;
+                }
+
                 if (! isset($kredensialLama[$kunci])) {
                     throw new PelanggaranAturanBisnis('KredensialWajib', "{$bidang['Label']} wajib diisi.", "Kredensial.{$kunci}");
                 }
@@ -77,7 +92,7 @@ final class SimpanKonfigurasiIntegrasi
 
         $pengaturanLama = $konfigurasi?->Pengaturan;
         $pengaturanBerubah = $pengaturanLama !== $data->pengaturan;
-        $isiBerubah = $konfigurasi === null || $pengaturanBerubah || $kredensialBerubah !== [];
+        $isiBerubah = $konfigurasi === null || $gantiPenyedia || $pengaturanBerubah || $kredensialBerubah !== [];
         $nilaiLama = $konfigurasi === null ? null : self::AmbilRingkasan($konfigurasi);
 
         $konfigurasi ??= new KonfigurasiIntegrasi([
@@ -86,13 +101,14 @@ final class SimpanKonfigurasiIntegrasi
             'Penyedia' => $penyedia,
         ]);
         $konfigurasi->fill([
+            'Penyedia' => $penyedia,
             'Pengaturan' => $data->pengaturan,
             'Kredensial' => $kredensialBaru,
             'PetunjukKredensial' => array_map(self::BuatPetunjuk(...), $kredensialBaru),
             'RotasiSetiapHari' => $data->rotasiSetiapHari,
         ]);
 
-        if ($kredensialBerubah !== []) {
+        if ($kredensialBerubah !== [] || $gantiPenyedia) {
             $konfigurasi->KredensialDiubahPada = now();
         }
 
@@ -129,6 +145,7 @@ final class SimpanKonfigurasiIntegrasi
         return [
             'Jenis' => $konfigurasi->Jenis->value,
             'Lingkungan' => $konfigurasi->Lingkungan->value,
+            'Penyedia' => $konfigurasi->Penyedia->value,
             'Pengaturan' => $konfigurasi->Pengaturan,
             'Aktif' => $konfigurasi->Aktif,
             'RotasiSetiapHari' => $konfigurasi->RotasiSetiapHari,

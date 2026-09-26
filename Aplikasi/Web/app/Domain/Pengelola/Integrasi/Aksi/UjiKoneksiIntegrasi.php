@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\Integrasi\Aksi;
 use App\Domain\Pengelola\Integrasi\Data\HasilUjiKoneksi;
 use App\Domain\Pengelola\Integrasi\Enum\StatusIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
+use App\Domain\Pengelola\Integrasi\Penguji\PengujiKoneksiPenyedia;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,10 @@ final class UjiKoneksiIntegrasi
         // Penanda isian yang diuji: isi pengaturan & kredensial, bukan waktu ubah (presisi detik).
         $isiDiuji = [$konfigurasi->Pengaturan, $konfigurasi->Kredensial];
         $mulai = hrtime(true);
-        $hasil = app($konfigurasi->Penyedia->AmbilKelasPenguji())->Uji($konfigurasi->Pengaturan, $konfigurasi->Kredensial);
+        $penguji = app($konfigurasi->Penyedia->AmbilKelasPenguji());
+        $hasil = $penguji instanceof PengujiKoneksiPenyedia
+            ? $penguji->UjiPenyedia($konfigurasi->Penyedia->value, $konfigurasi->Pengaturan, $konfigurasi->Kredensial)
+            : $penguji->Uji($konfigurasi->Pengaturan, $konfigurasi->Kredensial);
         $durasiMs = intdiv(hrtime(true) - $mulai, 1_000_000);
 
         return DB::transaction(function () use ($konfigurasi, $pelaku, $hasil, $durasiMs, $isiDiuji): array {

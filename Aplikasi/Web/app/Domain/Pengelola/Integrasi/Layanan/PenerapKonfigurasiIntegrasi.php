@@ -54,6 +54,14 @@ final class PenerapKonfigurasiIntegrasi
                     'filesystems.disks.Objek' => PenyusunKonfigurasiLaravel::DiskS3($konfigurasi->Pengaturan, $konfigurasi->Kredensial),
                     'integrasi.PenyimpananObjekAktif' => true,
                 ]),
+                // v2.04: dibaca adaptor di App\Domain\Integrasi (GerbangPembayaran, Whatsapp).
+                JenisIntegrasi::GerbangPembayaran, JenisIntegrasi::Whatsapp => config([
+                    'integrasi.'.$konfigurasi->Jenis->value => [
+                        'Penyedia' => $konfigurasi->Penyedia->value,
+                        'Pengaturan' => $konfigurasi->Pengaturan,
+                        'Kredensial' => $konfigurasi->Kredensial,
+                    ],
+                ]),
             };
         }
     }

@@ -20,7 +20,20 @@ type BidangPengaturan = {
     Jenis: 'Teks' | 'Angka' | 'Email' | 'Url' | 'Pilihan';
     Wajib: boolean;
     Opsi?: string[];
+    Bawaan?: string | number;
     Keterangan?: string;
+};
+
+type BidangKredensial = { Kunci: string; Label: string; Wajib: boolean };
+
+/** v2.04: penyedia yang bisa dipilih untuk satu jenis integrasi. */
+type OpsiPenyedia = {
+    Nilai: string;
+    Label: string;
+    Keterangan: string;
+    Resmi: boolean;
+    BidangPengaturan: BidangPengaturan[];
+    BidangKredensial: BidangKredensial[];
 };
 
 type SlotIntegrasi = {
@@ -30,7 +43,9 @@ type SlotIntegrasi = {
     LingkunganServer: boolean;
     Penyedia: { Nilai: string; Label: string };
     BidangPengaturan: BidangPengaturan[];
-    BidangKredensial: { Kunci: string; Label: string }[];
+    BidangKredensial: BidangKredensial[];
+    /** Kosong/tidak ada = hanya penyedia terpasang (data lama). */
+    DaftarPenyedia?: OpsiPenyedia[];
     Konfigurasi: {
         Uuid: string;
         Pengaturan: Record<string, string | number>;
@@ -48,7 +63,10 @@ type SlotIntegrasi = {
 
 const jenisLabelStatus = { BelumDiuji: 'peringatan', Terhubung: 'sukses', Gagal: 'bahaya' } as const;
 
-/** Konfigurasi integrasi platform: email, CAPTCHA, penyimpanan objek (P-05). */
+/**
+ * Konfigurasi integrasi platform (P-05): email (banyak penyedia SMTP), CAPTCHA, penyimpanan objek, gerbang pembayaran
+ * QRIS dinamis, dan WhatsApp (resmi & tidak resmi). Penyedia dipilih per jenis & lingkungan (v2.04).
+ */
 export default function HalamanIntegrasi({ Integrasi }: { Integrasi: SlotIntegrasi[] }) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.IntegrasiKelola);
@@ -67,9 +85,7 @@ export default function HalamanIntegrasi({ Integrasi }: { Integrasi: SlotIntegra
 
                 return (
                     <section key={jenis} className="flex flex-col gap-3">
-                        <h2 className="text-subjudul font-semibold text-teks-utama">
-                            {slot[0]?.LabelJenis} · {slot[0]?.Penyedia.Label}
-                        </h2>
+                        <h2 className="text-subjudul font-semibold text-teks-utama">{slot[0]?.LabelJenis}</h2>
                         <div className="grid gap-4 lg:grid-cols-2">
                             {slot.map((baris) => (
                                 <KartuIntegrasi key={baris.Lingkungan} slot={baris} bolehKelola={bolehKelola} />
@@ -132,6 +148,10 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
             <CardContent className="flex flex-col gap-3 px-5">
                 {konfigurasi ? (
                     <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-keterangan sm:grid-cols-2">
+                        <div className="flex flex-col sm:col-span-2">
+                            <dt className="text-teks-sekunder">Penyedia</dt>
+                            <dd className="text-teks-utama">{slot.Penyedia.Label}</dd>
+                        </div>
                         {slot.BidangPengaturan.map((bidang) => (
                             <div key={bidang.Kunci} className="flex flex-col">
                                 <dt className="text-teks-sekunder">{bidang.Label}</dt>
@@ -221,27 +241,57 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
 type IsianIntegrasi = {
     Jenis: string;
     Lingkungan: string;
+    Penyedia: string;
     Pengaturan: Record<string, string>;
     Kredensial: Record<string, string>;
     RotasiSetiapHari: string;
     Alasan: string;
 };
 
+/** Isian awal bidang pengaturan: nilai tersimpan (penyedia sama), nilai bawaan penyedia, atau opsi pertama. */
+function IsiAwalPengaturan(bidang: BidangPengaturan[], tersimpan: Record<string, string | number> | null) {
+    return Object.fromEntries(
+        bidang.map((b) => [b.Kunci, String(tersimpan?.[b.Kunci] ?? b.Bawaan ?? b.Opsi?.[0] ?? '')]),
+    );
+}
+
+function LabelOpsi(opsi: string) {
+    return opsi.length <= 3 ? opsi.toUpperCase() : opsi;
+}
+
 function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai: () => void }) {
     const konfigurasi = slot.Konfigurasi;
+    const cadangan: OpsiPenyedia = {
+        Nilai: slot.Penyedia.Nilai,
+        Label: slot.Penyedia.Label,
+        Keterangan: '',
+        Resmi: true,
+        BidangPengaturan: slot.BidangPengaturan,
+        BidangKredensial: slot.BidangKredensial,
+    };
+    const daftarPenyedia = slot.DaftarPenyedia?.length ? slot.DaftarPenyedia : [cadangan];
     const formulir = useForm<IsianIntegrasi>({
         Jenis: slot.Jenis,
         Lingkungan: slot.Lingkungan,
-        Pengaturan: Object.fromEntries(
-            slot.BidangPengaturan.map((bidang) => [
-                bidang.Kunci,
-                String(konfigurasi?.Pengaturan[bidang.Kunci] ?? bidang.Opsi?.[0] ?? ''),
-            ]),
-        ),
+        Penyedia: slot.Penyedia.Nilai,
+        Pengaturan: IsiAwalPengaturan(slot.BidangPengaturan, konfigurasi?.Pengaturan ?? null),
         Kredensial: Object.fromEntries(slot.BidangKredensial.map((bidang) => [bidang.Kunci, ''])),
         RotasiSetiapHari: String(konfigurasi?.RotasiSetiapHari ?? 90),
         Alasan: '',
     });
+    const penyedia = daftarPenyedia.find((p) => p.Nilai === formulir.data.Penyedia) ?? cadangan;
+    // Kredensial tersimpan hanya berlaku untuk penyedia yang sama (ganti penyedia = isi ulang).
+    const penyediaTersimpan = konfigurasi !== null && penyedia.Nilai === slot.Penyedia.Nilai;
+    const GantiPenyedia = (nilai: string) => {
+        const baru = daftarPenyedia.find((p) => p.Nilai === nilai);
+        if (!baru) {
+            return;
+        }
+        const sama = konfigurasi !== null && nilai === slot.Penyedia.Nilai;
+        formulir.setData('Penyedia', nilai);
+        formulir.setData('Pengaturan', IsiAwalPengaturan(baru.BidangPengaturan, sama ? konfigurasi.Pengaturan : null));
+        formulir.setData('Kredensial', Object.fromEntries(baru.BidangKredensial.map((bidang) => [bidang.Kunci, ''])));
+    };
     const galat = formulir.errors as Record<string, string | undefined>;
 
     const Kirim = (peristiwa: FormEvent) => {
@@ -264,7 +314,8 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                         {konfigurasi ? 'Ubah konfigurasi' : 'Atur konfigurasi'} {slot.LabelJenis} · {slot.Lingkungan}
                     </SheetTitle>
                     <SheetDescription>
-                        {slot.Penyedia.Label}. Kredensial disimpan terenkripsi dan tidak pernah ditampilkan ulang.
+                        Pilih penyedia lalu isi bidangnya. Kredensial disimpan terenkripsi dan tidak pernah ditampilkan
+                        ulang.
                     </SheetDescription>
                 </SheetHeader>
                 {galat.Umum ? (
@@ -273,13 +324,30 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                     </div>
                 ) : null}
                 <form onSubmit={Kirim} className="grid gap-3 px-4 sm:grid-cols-2" noValidate>
-                    {slot.BidangPengaturan.map((bidang) =>
+                    <div className="sm:col-span-2">
+                        <BidangPilihan
+                            label="Penyedia"
+                            nilai={formulir.data.Penyedia}
+                            opsi={daftarPenyedia.map((p) => ({ Nilai: p.Nilai, Label: p.Label }))}
+                            saatBerubah={GantiPenyedia}
+                            galat={galat.Penyedia}
+                            required
+                        />
+                    </div>
+                    {penyedia.Keterangan ? (
+                        <div className="sm:col-span-2">
+                            <Pemberitahuan jenis={penyedia.Resmi ? 'info' : 'peringatan'}>
+                                {penyedia.Keterangan}
+                            </Pemberitahuan>
+                        </div>
+                    ) : null}
+                    {penyedia.BidangPengaturan.map((bidang) =>
                         bidang.Jenis === 'Pilihan' ? (
                             <BidangPilihan
                                 key={bidang.Kunci}
                                 label={bidang.Label}
                                 nilai={formulir.data.Pengaturan[bidang.Kunci] ?? ''}
-                                opsi={(bidang.Opsi ?? []).map((opsi) => ({ Nilai: opsi, Label: opsi.toUpperCase() }))}
+                                opsi={(bidang.Opsi ?? []).map((opsi) => ({ Nilai: opsi, Label: LabelOpsi(opsi) }))}
                                 saatBerubah={(nilai) =>
                                     formulir.setData('Pengaturan', {
                                         ...formulir.data.Pengaturan,
@@ -287,7 +355,7 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                                     })
                                 }
                                 galat={galat[`Pengaturan.${bidang.Kunci}`]}
-                                required
+                                required={bidang.Wajib}
                             />
                         ) : (
                             <BidangTeks
@@ -304,27 +372,29 @@ function FormIntegrasi({ slot, saatSelesai }: { slot: SlotIntegrasi; saatSelesai
                                     })
                                 }
                                 galat={galat[`Pengaturan.${bidang.Kunci}`]}
-                                required
+                                required={bidang.Wajib}
                             />
                         ),
                     )}
-                    {slot.BidangKredensial.map((bidang) => (
+                    {penyedia.BidangKredensial.map((bidang) => (
                         <BidangTeks
                             key={bidang.Kunci}
                             label={bidang.Label}
                             jenis="password"
                             autoComplete="new-password"
                             keterangan={
-                                konfigurasi
-                                    ? `Tersimpan ${konfigurasi.PetunjukKredensial[bidang.Kunci] ?? '••••'}. Kosongkan bila tidak diganti.`
-                                    : 'Wajib diisi.'
+                                penyediaTersimpan && konfigurasi.PetunjukKredensial[bidang.Kunci]
+                                    ? `Tersimpan ${konfigurasi.PetunjukKredensial[bidang.Kunci]}. Kosongkan bila tidak diganti.`
+                                    : bidang.Wajib
+                                      ? 'Wajib diisi.'
+                                      : 'Opsional.'
                             }
                             nilai={formulir.data.Kredensial[bidang.Kunci] ?? ''}
                             saatBerubah={(nilai) =>
                                 formulir.setData('Kredensial', { ...formulir.data.Kredensial, [bidang.Kunci]: nilai })
                             }
                             galat={galat[`Kredensial.${bidang.Kunci}`]}
-                            required={!konfigurasi}
+                            required={bidang.Wajib && !penyediaTersimpan}
                         />
                     ))}
                     <BidangTeks

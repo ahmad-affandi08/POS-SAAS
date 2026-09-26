@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Integrasi\Kueri;
 
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 
 /**
@@ -25,10 +26,9 @@ final class DaftarIntegrasi
         $hasil = [];
 
         foreach (JenisIntegrasi::cases() as $jenis) {
-            $penyedia = $jenis->AmbilPenyedia();
-
             foreach (LingkunganIntegrasi::cases() as $lingkungan) {
                 $konfigurasi = $tersimpan->get($jenis->value.'|'.$lingkungan->value);
+                $penyedia = $konfigurasi instanceof KonfigurasiIntegrasi ? $konfigurasi->Penyedia : $jenis->AmbilPenyedia();
                 $hasil[] = [
                     'Jenis' => $jenis->value,
                     'LabelJenis' => $jenis->AmbilLabel(),
@@ -37,6 +37,15 @@ final class DaftarIntegrasi
                     'Penyedia' => ['Nilai' => $penyedia->value, 'Label' => $penyedia->AmbilLabel()],
                     'BidangPengaturan' => $penyedia->AmbilBidangPengaturan(),
                     'BidangKredensial' => $penyedia->AmbilBidangKredensial(),
+                    // v2.04: katalog penyedia yang bisa dipilih untuk jenis ini.
+                    'DaftarPenyedia' => array_map(fn (PenyediaIntegrasi $p): array => [
+                        'Nilai' => $p->value,
+                        'Label' => $p->AmbilLabel(),
+                        'Keterangan' => $p->AmbilKeterangan(),
+                        'Resmi' => $p->CekResmi(),
+                        'BidangPengaturan' => $p->AmbilBidangPengaturan(),
+                        'BidangKredensial' => $p->AmbilBidangKredensial(),
+                    ], $jenis->AmbilDaftarPenyedia()),
                     'Konfigurasi' => $konfigurasi instanceof KonfigurasiIntegrasi ? [
                         'Uuid' => $konfigurasi->Uuid,
                         'Pengaturan' => $konfigurasi->Pengaturan,

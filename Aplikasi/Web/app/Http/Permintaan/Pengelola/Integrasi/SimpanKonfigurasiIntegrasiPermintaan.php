@@ -7,6 +7,7 @@ namespace App\Http\Permintaan\Pengelola\Integrasi;
 use App\Domain\Pengelola\Integrasi\Data\DataKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,19 +25,20 @@ final class SimpanKonfigurasiIntegrasiPermintaan extends FormRequest
         $aturan = [
             'Jenis' => ['required', 'string', Rule::enum(JenisIntegrasi::class)],
             'Lingkungan' => ['required', 'string', Rule::enum(LingkunganIntegrasi::class)],
-            'Pengaturan' => ['required', 'array'],
+            'Penyedia' => ['nullable', 'string', Rule::enum(PenyediaIntegrasi::class)],
+            'Pengaturan' => ['present', 'array'],
             'Kredensial' => ['present', 'array'],
             'RotasiSetiapHari' => ['required', 'integer', 'min:7', 'max:365'],
             'Alasan' => ['nullable', 'string', 'max:500'],
         ];
-        $jenis = JenisIntegrasi::tryFrom($this->string('Jenis')->toString());
+        $penyedia = $this->AmbilPenyediaTerpilih();
 
-        if ($jenis === null) {
+        if ($penyedia === null) {
             return $aturan;
         }
 
-        foreach ($jenis->AmbilPenyedia()->AmbilBidangPengaturan() as $bidang) {
-            $aturan["Pengaturan.{$bidang['Kunci']}"] = match ($bidang['Jenis']) {
+        foreach ($penyedia->AmbilBidangPengaturan() as $bidang) {
+            $aturan["Pengaturan.{$bidang['Kunci']}"] = ! $bidang['Wajib'] ? ['nullable', 'string', 'max:255'] : match ($bidang['Jenis']) {
                 'Angka' => ['required', 'integer', 'min:1', 'max:65535'],
                 'Email' => ['required', 'email', 'max:150'],
                 'Url' => ['required', 'url:https', 'max:255'],
@@ -45,7 +47,7 @@ final class SimpanKonfigurasiIntegrasiPermintaan extends FormRequest
             };
         }
 
-        foreach ($jenis->AmbilPenyedia()->AmbilBidangKredensial() as $bidang) {
+        foreach ($penyedia->AmbilBidangKredensial() as $bidang) {
             $aturan["Kredensial.{$bidang['Kunci']}"] = ['nullable', 'string', 'max:2000'];
         }
 
@@ -57,10 +59,9 @@ final class SimpanKonfigurasiIntegrasiPermintaan extends FormRequest
      */
     public function attributes(): array
     {
-        $jenis = JenisIntegrasi::tryFrom($this->string('Jenis')->toString());
         $nama = [];
 
-        foreach ($jenis?->AmbilPenyedia()->AmbilBidangPengaturan() ?? [] as $bidang) {
+        foreach ($this->AmbilPenyediaTerpilih()?->AmbilBidangPengaturan() ?? [] as $bidang) {
             $nama["Pengaturan.{$bidang['Kunci']}"] = $bidang['Label'];
         }
 
@@ -70,7 +71,7 @@ final class SimpanKonfigurasiIntegrasiPermintaan extends FormRequest
     public function AmbilData(): DataKonfigurasiIntegrasi
     {
         $jenis = JenisIntegrasi::from($this->string('Jenis')->toString());
-        $penyedia = $jenis->AmbilPenyedia();
+        $penyedia = $this->AmbilPenyediaTerpilih() ?? $jenis->AmbilPenyedia();
         $pengaturan = [];
         $kredensial = [];
 
@@ -96,6 +97,19 @@ final class SimpanKonfigurasiIntegrasiPermintaan extends FormRequest
             kredensial: $kredensial,
             rotasiSetiapHari: $this->integer('RotasiSetiapHari'),
             alasan: $this->filled('Alasan') ? trim($this->string('Alasan')->toString()) : null,
+            penyedia: $penyedia,
         );
+    }
+
+    /** Penyedia pilihan (v2.04) atau bawaan jenis bila tidak dikirim. */
+    private function AmbilPenyediaTerpilih(): ?PenyediaIntegrasi
+    {
+        $jenis = JenisIntegrasi::tryFrom($this->string('Jenis')->toString());
+
+        if ($jenis === null) {
+            return null;
+        }
+
+        return $this->filled('Penyedia') ? PenyediaIntegrasi::tryFrom($this->string('Penyedia')->toString()) : $jenis->AmbilPenyedia();
     }
 }
