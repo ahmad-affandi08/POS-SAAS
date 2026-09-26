@@ -103,9 +103,19 @@ class UbinProduk extends StatelessWidget {
                     ),
                   ),
                   if (hargaTeks == null)
-                    Text('Harga belum diatur', style: teks.bodySmall?.copyWith(color: warna.peringatan))
+                    Text(
+                      'Harga belum diatur',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: teks.bodySmall?.copyWith(color: warna.peringatan),
+                    )
                   else
-                    TeksUang(hargaTeks, rataKanan: false, gaya: teks.bodyMedium?.copyWith(color: warnaTeks)),
+                    // Nominal besar (misal paket Rp 1.000.000) di ubin sempit tetap satu baris: mengecil, tidak meluap.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: TeksUang(hargaTeks, rataKanan: false, gaya: teks.bodyMedium?.copyWith(color: warnaTeks)),
+                    ),
                 ],
               ),
             ),

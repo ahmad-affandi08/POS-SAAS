@@ -61,6 +61,24 @@ void main() {
     expect(find.text('Harga belum diatur'), findsOneWidget);
   });
 
+  testWidgets('UbinProduk sempit (136 dp di layar 360): nominal jutaan & harga belum diatur tidak meluap', (
+    tester,
+  ) async {
+    for (final harga in [Uang.DariBulat(1000000), Uang.DariBulat(12500000), null]) {
+      await Pasang(
+        tester,
+        Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 160,
+            child: UbinProduk(nama: 'Paket Creambath Rambut Panjang 10x Sesi', harga: harga, saatDiketuk: () {}),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull, reason: 'harga ${harga?.FormatRupiah()}');
+    }
+  });
+
   testWidgets('BarisKeranjang: rincian, jumlah, total; tombol tambah/kurang 48dp', (tester) async {
     var tambah = 0;
     var kurang = 0;

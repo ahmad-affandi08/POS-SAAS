@@ -347,6 +347,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                 ? _penyetujuTempo?.uuid
                 : null,
             saldoDeposit: _saldoDeposit,
+            katalog: ref.read(penyediaKatalog).value,
           );
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);

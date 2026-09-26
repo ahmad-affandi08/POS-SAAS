@@ -23,6 +23,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
+use App\Domain\Pelanggan\Layanan\PencatatSesiPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturPenjualanPos;
 use App\Domain\Penjualan\Data\DataNilaiReturBaris;
 use App\Domain\Penjualan\Data\DataReturPenjualanPos;
@@ -103,6 +104,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly PencatatDepositPenjualan $deposit,
+        private readonly PencatatSesiPenjualan $sesi,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -345,6 +347,8 @@ final class TerimaReturPenjualanPos
     {
         $semua = PenjualanDetail::query()->where('IdPenjualan', $penjualan->Id)->get()->keyBy('Uuid');
         $sudah = $this->penghitung->AmbilSudahDiretur(array_values(array_map('intval', $semua->pluck('Id')->all())));
+        // F-16d bagian 2: baris paket sesi tidak diretur; sisa sesinya dikembalikan dari back-office (tutup sisa sesi).
+        $barisPaket = $this->sesi->SaringBarisPaket(array_values(array_map('intval', $semua->pluck('Id')->all())));
         $detail = [];
         $nilai = [];
 
@@ -353,6 +357,10 @@ final class TerimaReturPenjualanPos
 
             if (! $d instanceof PenjualanDetail) {
                 throw new PelanggaranAturanBisnis('BarisTidakDikenal', 'Baris ke-'.($indeks + 1).' bukan bagian dari penjualan asal.', "Baris.{$indeks}.UuidPenjualanDetail");
+            }
+
+            if (in_array($d->Id, $barisPaket, true)) {
+                throw new PelanggaranAturanBisnis('ReturPaketSesiTidakDidukung', "{$d->NamaProduk} adalah paket sesi dan tidak bisa diretur. Kembalikan sisa sesinya dari back-office.", "Baris.{$indeks}.UuidPenjualanDetail");
             }
 
             $s = $sudah[$d->Id] ?? DataSudahDiretur::Kosong();

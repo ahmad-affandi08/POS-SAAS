@@ -15,10 +15,12 @@ use App\Domain\Pelanggan\Aksi\SimpanPelanggan;
 use App\Domain\Pelanggan\Aksi\UbahStatusPelanggan;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Kueri\DaftarPelanggan;
+use App\Domain\Pelanggan\Kueri\DaftarSaldoSesi;
 use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Kueri\PengaturanDepositTenant;
 use App\Domain\Pelanggan\Kueri\PengaturanLoyaltiTenant;
+use App\Domain\Pelanggan\Kueri\PengaturanSesiTenant;
 use App\Domain\Pelanggan\Kueri\RiwayatDeposit;
 use App\Domain\Pelanggan\Kueri\RiwayatPoin;
 use App\Domain\Pelanggan\Layanan\BukuPoin;
@@ -64,6 +66,8 @@ final class PelangganKontroler extends DasarKelolaKontroler
         RiwayatDeposit $riwayatDeposit,
         PengaturanDepositTenant $deposit,
         DaftarAkunPilihan $akun,
+        DaftarSaldoSesi $saldoSesi,
+        PengaturanSesiTenant $sesi,
     ): Response {
         $data = $this->CariPelanggan($pelanggan);
         $izin = $this->AmbilIzin();
@@ -86,6 +90,11 @@ final class PelangganKontroler extends DasarKelolaKontroler
                 'Berlaku' => $deposit->CekBerlaku(),
                 'Riwayat' => $riwayatDeposit->Ambil($data->Id),
                 'AkunKasBank' => $izin['KelolaDeposit'] ? $akun->AmbilKasBank() : [],
+            ],
+            // F-16d bagian 2: paket sesi pelanggan (aktif lebih dulu).
+            'PaketSesi' => [
+                'Berlaku' => $sesi->CekBerlaku(),
+                'Daftar' => $saldoSesi->AmbilPerPelanggan($data->Id),
             ],
             'Izin' => $izin,
         ]);

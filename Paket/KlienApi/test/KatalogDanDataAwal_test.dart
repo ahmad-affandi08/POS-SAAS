@@ -123,6 +123,7 @@ void main() {
       expect(katalog.kursor, 'a3Vyc29y');
       expect(katalog.produk.single.hargaTermasukPajak, isNull);
       expect(katalog.produk.single.jenis, 'Resep');
+      expect(katalog.produk.single.jumlahSesiPaket, isNull);
       expect(katalog.produkHarga.single.harga, '28000.00');
       expect(katalog.kelompokPajak.single.pajak.single.dasarPengenaan, 'SubtotalPlusLayanan');
       expect(katalog.kelompokPajak.single.pajak.single.kategori, isNull, reason: 'Server lama tanpa Kategori.');
@@ -142,6 +143,12 @@ void main() {
           'WaktuServer': '2026-09-24T01:01:00Z',
           'Produk': [
             {'Uuid': 'P1', 'Nama': 'Teh', 'Dihapus': true},
+            {
+              'Uuid': 'P2',
+              'Nama': 'Paket Creambath 10x',
+              'Jenis': 'Jasa',
+              'PaketSesi': {'JumlahSesi': 10, 'MasaBerlakuHari': 90, 'Aktif': true},
+            },
           ],
           'Terhapus': [
             {'Entitas': 'ProdukBarcode', 'Uuid': 'B1'},
@@ -153,7 +160,8 @@ void main() {
 
       expect(dikirim.url.queryParameters['sejak'], 'a+b/c=');
       expect(katalog.lengkap, isFalse);
-      expect(katalog.produk.single.dihapus, isTrue);
+      expect(katalog.produk.first.dihapus, isTrue);
+      expect(katalog.produk.last.jumlahSesiPaket, 10);
       expect(katalog.terhapus.single.entitas, 'ProdukBarcode');
     });
 

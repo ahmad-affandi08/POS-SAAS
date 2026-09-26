@@ -181,6 +181,12 @@ class LayananReturPenjualan {
       penyetuju ?? (kasir.PunyaIzin(IzinKasir.penjualanVoid) ? kasir : null);
 
   /// Validasi pilihan baris (tanpa menyentuh basis data), untuk layar sebelum meminta PIN.
+  /// F-16d bagian 2: baris paket sesi tidak diretur di kasir; sisa sesinya dikembalikan dari back-office.
+  static bool CekPaketSesi(BarisPenjualanCariPos baris, KatalogLokal? katalog) {
+    final uuidProduk = baris.uuidProduk;
+    return uuidProduk != null && (katalog?.CariProduk(uuidProduk)?.paketSesi ?? false);
+  }
+
   static List<PilihanReturBaris> ValidasiPilihan(
     HasilCariPenjualan hasil,
     List<PilihanReturBaris> pilihan, {
@@ -203,6 +209,12 @@ class LayananReturPenjualan {
       }
       if (p.jumlah.BernilaiNegatif()) {
         throw GalatKasir('JumlahTidakValid', 'Jumlah retur "$nama" tidak boleh minus.');
+      }
+      if (CekPaketSesi(p.baris, katalog)) {
+        throw GalatKasir(
+          'ReturPaketSesiTidakDidukung',
+          '"$nama" adalah paket sesi dan tidak bisa diretur. Kembalikan sisa sesinya dari back-office.',
+        );
       }
       final desimal = p.jumlah.KeDesimal();
       if (desimal != desimal.truncate() && !CekBolehDesimal(p.baris, katalog)) {

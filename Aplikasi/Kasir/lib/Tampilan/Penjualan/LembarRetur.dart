@@ -412,7 +412,12 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
       ] else ...[
         const SizedBox(height: TokenJarak.jarak16),
         Text('Barang yang diretur', style: teks.titleSmall),
-        for (final b in hasil.baris)
+        if (hasil.baris.any((b) => LayananReturPenjualan.CekPaketSesi(b, katalog)))
+          Text(
+            'Paket sesi tidak bisa diretur di kasir. Kembalikan sisa sesinya dari back-office.',
+            style: teks.bodySmall,
+          ),
+        for (final b in hasil.baris.where((b) => !LayananReturPenjualan.CekPaketSesi(b, katalog)))
           _BarisRetur(
             baris: b,
             pengendali: _PengendaliJumlah(b.uuid),

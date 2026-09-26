@@ -10,12 +10,14 @@ import '../../Domain/Pelanggan/LayananPelanggan.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import 'PanelIsiDeposit.dart';
+import 'PanelPakaiSesi.dart';
 import 'PanelTukarPoin.dart';
 
 /// Panel pelanggan layar Jual (F-16a, pintasan F2): cari nama/nomor HP (online; offline = pelanggan yang pernah dipakai
 /// perangkat ini), pelanggan terakhir, tambah pelanggan baru (nama + nomor HP, berlaku offline), atau "Tanpa pelanggan".
 /// Pilihan disimpan di keranjang dan dikirim bersama penjualan. F-16b: pelanggan terpilih bisa menukar poin (online).
-/// F-16d: pelanggan terpilih bisa mengisi deposit (bisa offline) bila paket usaha termasuk deposit.
+/// F-16d: pelanggan terpilih bisa mengisi deposit (bisa offline) bila paket usaha termasuk deposit, dan memakai sesi
+/// paketnya (F-16d bagian 2) bila katalog punya paket sesi.
 class PanelPelanggan extends ConsumerStatefulWidget {
   const PanelPelanggan({super.key, required this.kasir, required this.saatSelesai});
 
@@ -41,6 +43,7 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
   bool _menyimpan = false;
   bool _tukarPoin = false;
   bool _isiDeposit = false;
+  bool _pakaiSesi = false;
   String? _galat;
   int _urutCari = 0;
 
@@ -166,6 +169,8 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
     final kataCukup = _cari.text.trim().length >= LayananPelanggan.panjangKataMinimal;
     final tukar = ref.watch(penyediaKeranjang.select((k) => k.tukarPoin));
     final depositBerlaku = ref.watch(penyediaKonteksPenjualan).value?.deposit.berlaku ?? false;
+    // F-16d bagian 2: tombol "Pakai sesi" bila katalog punya produk paket sesi.
+    final adaPaketSesi = ref.watch(penyediaKatalog).value?.produk.any((p) => p.paketSesi) ?? false;
 
     if (_tukarPoin && terpilih != null) {
       return PanelTukarPoin(
@@ -181,6 +186,15 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
         kasir: widget.kasir,
         saatSelesai: widget.saatSelesai,
         saatKembali: () => setState(() => _isiDeposit = false),
+      );
+    }
+
+    if (_pakaiSesi && terpilih != null) {
+      return PanelPakaiSesi(
+        pelanggan: terpilih,
+        kasir: widget.kasir,
+        saatSelesai: widget.saatSelesai,
+        saatKembali: () => setState(() => _pakaiSesi = false),
       );
     }
 
@@ -290,6 +304,15 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
                         onPressed: () => setState(() => _isiDeposit = true),
                         icon: const Icon(Icons.account_balance_wallet_outlined),
                         label: const Text('Isi deposit'),
+                      ),
+                    ),
+                  if (adaPaketSesi)
+                    SizedBox(
+                      height: TokenJarak.targetSentuh,
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() => _pakaiSesi = true),
+                        icon: const Icon(Icons.event_available_outlined),
+                        label: const Text('Pakai sesi'),
                       ),
                     ),
                 ],

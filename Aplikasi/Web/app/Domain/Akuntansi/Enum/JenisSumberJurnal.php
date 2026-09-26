@@ -44,6 +44,10 @@ enum JenisSumberJurnal: string
     // back-office (sumber = baris `MutasiDeposit`).
     case IsiDeposit = 'IsiDeposit';
     case MutasiDeposit = 'MutasiDeposit';
+    // F-16d bagian 2: pemakaian sesi paket dari POS (J-16.3) dan pengembalian/penghangusan sisa sesi (sumber = baris
+    // `MutasiSesi`).
+    case PemakaianSesi = 'PemakaianSesi';
+    case MutasiSesi = 'MutasiSesi';
 
     public function AmbilLabel(): string
     {
@@ -70,6 +74,8 @@ enum JenisSumberJurnal: string
             self::PenerimaanKlaimPemasok => 'Penerimaan klaim promo pemasok',
             self::IsiDeposit => 'Isi deposit pelanggan',
             self::MutasiDeposit => 'Penarikan/penyesuaian deposit',
+            self::PemakaianSesi => 'Pemakaian paket sesi',
+            self::MutasiSesi => 'Pengembalian/hangus paket sesi',
         };
     }
 
@@ -102,6 +108,8 @@ enum JenisSumberJurnal: string
             self::PenerimaanKlaimPemasok => '/kelola/promo/klaim-pemasok',
             self::IsiDeposit => '/kelola/pelanggan/isi-deposit/'.$uuid,
             self::MutasiDeposit => '/kelola/pelanggan/mutasi-deposit/'.$uuid,
+            self::PemakaianSesi => '/kelola/pelanggan/pemakaian-sesi/'.$uuid,
+            self::MutasiSesi => '/kelola/pelanggan/mutasi-sesi/'.$uuid,
         };
     }
 }

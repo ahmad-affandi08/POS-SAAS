@@ -256,7 +256,8 @@ class LayananPenjualan {
       nama: produk.nama,
       uuidProdukSatuan: satuanJual.uuid,
       namaSatuan: satuanJual.nama,
-      bolehDesimal: satuanJual.bolehDesimal,
+      // F-16d bagian 2: paket sesi selalu dijual per paket utuh.
+      bolehDesimal: satuanJual.bolehDesimal && !produk.paketSesi,
       jumlah: qty,
       hargaSatuan: harga,
       pilihan: pilihan,
@@ -767,6 +768,28 @@ class LayananPenjualan {
     }
   }
 
+  /// F-16d bagian 2: baris paket sesi wajib berpelanggan (saldo sesinya milik pelanggan itu) dan jumlahnya bulat.
+  static void ValidasiPaketSesi(Keranjang keranjang, KatalogLokal? katalog) {
+    if (katalog == null) {
+      return;
+    }
+    for (final b in keranjang.baris) {
+      final produk = katalog.CariProduk(b.uuidProduk);
+      if (produk == null || !produk.paketSesi) {
+        continue;
+      }
+      if (keranjang.pelanggan == null) {
+        throw GalatKasir(
+          'PaketSesiTanpaPelanggan',
+          '"${b.nama}" adalah paket sesi. Pilih pelanggan dulu agar sesinya tercatat atas namanya.',
+        );
+      }
+      if (b.jumlah.KeDesimal() != b.jumlah.KeDesimal().truncate()) {
+        throw GalatKasir('JumlahPaketSesiTidakValid', 'Jumlah paket "${b.nama}" harus bilangan bulat.');
+      }
+    }
+  }
+
   // Bayar & simpan -----------------------------------------------------------------------------------------------------
 
   Future<PenjualanTersimpan> Bayar({
@@ -776,6 +799,7 @@ class LayananPenjualan {
     required KonteksPenjualan k,
     String? uuidPenyetujuTempo,
     Uang? saldoDeposit,
+    KatalogLokal? katalog,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -817,6 +841,7 @@ class LayananPenjualan {
     ValidasiTempo(keranjang, pembayaran, kasir, k, uuidPenyetujuTempo);
     ValidasiUangMuka(keranjang, pembayaran);
     ValidasiDeposit(keranjang, pembayaran, saldoDeposit);
+    ValidasiPaketSesi(keranjang, katalog);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;

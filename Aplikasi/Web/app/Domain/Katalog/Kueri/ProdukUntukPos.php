@@ -9,13 +9,15 @@ use App\Domain\Katalog\Kontrak\BagianKatalogPos;
 use App\Domain\Katalog\Layanan\OpsiKelompokPajakKatalog;
 use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
 use App\Domain\Katalog\Model\Kategori;
+use App\Domain\Katalog\Model\PaketSesi;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Model\Satuan;
 
 /**
- * Bagian katalog POS Tim 1 (F-03 D.3): `Produk`, `ProdukSatuan`, `ProdukBarcode`.
+ * Bagian katalog POS Tim 1 (F-03 D.3): `Produk`, `ProdukSatuan`, `ProdukBarcode`. F-16d bagian 2: `Produk.PaketSesi`
+ * (null bila bukan paket sesi); menyimpan definisi paket menyentuh `DiubahPada` produknya sehingga ikut delta.
  * - Lengkap: produk yang belum dihapus (termasuk diarsipkan, `Aktif: false`) beserta satuan & barcodenya.
  * - Delta: baris dengan `DiubahPada ≥ sejak`, termasuk produk terhapus (`Dihapus: true`); satuan & barcode yang
  *   dihapus dikirim lewat `Terhapus`.
@@ -56,6 +58,8 @@ final class ProdukUntukPos implements BagianKatalogPos
         $uuidProdukSatuan = ProdukSatuan::query()->whereIn('Id', $barcode->pluck('IdProdukSatuan')->all())->pluck('Uuid', 'Id');
         $uuidKelompokPajak = array_column($this->kelompokPajak->AmbilOpsi(), 'Uuid', 'Id');
         $dasarGambar = url('/api/pos/v1/katalog/gambar/{uuid}');
+        // F-16d bagian 2: produk paket sesi (kasir mewajibkan pelanggan & jumlah bulat, tidak bisa diretur).
+        $paketSesi = PaketSesi::query()->whereIn('IdProduk', $produk->modelKeys())->get()->keyBy('IdProduk');
 
         return [
             'Produk' => array_values($produk->map(fn (Produk $p): array => [
@@ -78,6 +82,9 @@ final class ProdukUntukPos implements BagianKatalogPos
                 'UrlGambar' => PenyimpanGambarProduk::BuatUrl($p, 'besar', $dasarGambar),
                 'UrlGambarKecil' => PenyimpanGambarProduk::BuatUrl($p, 'kecil', $dasarGambar),
                 'Aktif' => $p->Aktif,
+                'PaketSesi' => ($ps = $paketSesi->get($p->Id)) instanceof PaketSesi
+                    ? ['JumlahSesi' => $ps->JumlahSesi, 'MasaBerlakuHari' => $ps->MasaBerlakuHari, 'Aktif' => $ps->Aktif]
+                    : null,
                 'Dihapus' => $p->DihapusPada !== null,
                 'DiubahPada' => $p->DiubahPada?->toIso8601ZuluString('microsecond'),
             ])->all()),

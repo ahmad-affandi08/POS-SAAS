@@ -127,6 +127,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Pilihan (modifier)',
             'Kelompok pajak',
             'Stasiun dapur',
+            'Paket sesi',
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Kategori');
     });

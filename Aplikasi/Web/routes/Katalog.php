@@ -7,6 +7,7 @@ use App\Http\Kontroler\Kelola\Katalog\BatasStokProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\CariProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\GambarProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\KategoriKontroler;
+use App\Http\Kontroler\Kelola\Katalog\PaketSesiKontroler;
 use App\Http\Kontroler\Kelola\Katalog\ProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\SatuanKontroler;
 use App\Http\Kontroler\Kelola\Katalog\StasiunDapurKontroler;
@@ -29,6 +30,13 @@ $ulid = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}';
 Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $ulid): void {
     $lihat = $izin(IzinTenant::ProdukLihat);
     $kelola = $izin(IzinTenant::ProdukKelola);
+
+    // F-16d bagian 2: master paket sesi (produk Jasa yang dijual sebagai N sesi).
+    Route::get('/paket-sesi', [PaketSesiKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.paket-sesi.daftar');
+    Route::get('/paket-sesi/buat', [PaketSesiKontroler::class, 'Buat'])->middleware($kelola)->name('kelola.paket-sesi.buat');
+    Route::post('/paket-sesi', [PaketSesiKontroler::class, 'Simpan'])->middleware($kelola)->name('kelola.paket-sesi.simpan');
+    Route::get('/paket-sesi/{paketSesi}/ubah', [PaketSesiKontroler::class, 'Ubah'])->middleware($kelola)->where('paketSesi', $ulid)->name('kelola.paket-sesi.ubah');
+    Route::put('/paket-sesi/{paketSesi}', [PaketSesiKontroler::class, 'Perbarui'])->middleware($kelola)->where('paketSesi', $ulid)->name('kelola.paket-sesi.perbarui');
 
     // Produk (E.2–E.4).
     Route::get('/produk', [ProdukKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.produk.daftar');

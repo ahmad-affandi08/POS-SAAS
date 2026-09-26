@@ -8,6 +8,7 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 
 import FormulirPelanggan, { AlamatPelanggan } from '@/Komponen/Pelanggan/FormulirPelanggan';
+import { AlamatSaldoSesi, BuatKolomSaldoSesi } from '@/Komponen/Pelanggan/KolomSaldoSesi';
 import LencanaPenjualan from '@/Komponen/Penjualan/LencanaPenjualan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -19,7 +20,13 @@ import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { MutasiDeposit, MutasiPoin, PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
+import type {
+    MutasiDeposit,
+    MutasiPoin,
+    PropsDetailPelanggan,
+    RingkasSaldoSesi,
+    RiwayatBelanja,
+} from '@/Tipe/Pelanggan';
 
 const kolomPoin: KolomTabel<MutasiPoin>[] = [
     {
@@ -99,6 +106,8 @@ const kolomDeposit: KolomTabel<MutasiDeposit>[] = [
     },
 ];
 
+const kolomSesi = BuatKolomSaldoSesi<RingkasSaldoSesi>();
+
 const labelStatus: Record<RiwayatBelanja['Status'], string> = {
     Lunas: 'Lunas',
     Void: 'Void',
@@ -124,6 +133,7 @@ export default function HalamanDetailPelanggan({
     LoyaltiBerlaku,
     Kredit,
     Deposit,
+    PaketSesi,
     Izin,
 }: PropsDetailPelanggan) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -391,6 +401,26 @@ export default function HalamanDetailPelanggan({
                         ambilIdBaris={(m) => m.Uuid}
                         urutBawaan="-DibuatPada"
                         kosong={{ judul: 'Belum ada mutasi deposit.' }}
+                    />
+                </Card>
+            ) : null}
+
+            {PaketSesi.Berlaku || PaketSesi.Daftar.length > 0 ? (
+                <Card className="gap-3 rounded-panel p-4 shadow-none">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-judul-kecil text-teks-utama">Paket sesi</h2>
+                        <Link href={AlamatSaldoSesi} className="text-brand underline">
+                            Lihat semua paket sesi
+                        </Link>
+                    </div>
+                    <TabelData
+                        id="pelanggan-paket-sesi"
+                        label={`Paket sesi ${p.Nama}`}
+                        kolom={kolomSesi}
+                        sumber={{ mode: 'lokal', data: PaketSesi.Daftar }}
+                        ambilIdBaris={(s) => s.Uuid}
+                        urutBawaan="-TanggalBeli"
+                        kosong={{ judul: 'Pelanggan ini belum membeli paket sesi.' }}
                     />
                 </Card>
             ) : null}

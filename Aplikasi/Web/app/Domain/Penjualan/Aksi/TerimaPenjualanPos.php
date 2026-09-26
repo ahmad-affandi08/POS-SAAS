@@ -34,6 +34,7 @@ use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
+use App\Domain\Pelanggan\Layanan\PencatatSesiPenjualan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
 use App\Domain\Pemenuhan\Data\DataKirimDapur;
@@ -46,6 +47,7 @@ use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPembayaranKalkulasi;
+use App\Domain\Penjualan\Kalkulasi\HasilBarisKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
@@ -149,6 +151,7 @@ final class TerimaPenjualanPos
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly PenautTagihanQrisPenjualan $penautQris,
         private readonly PencatatDepositPenjualan $deposit,
+        private readonly PencatatSesiPenjualan $sesi,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -247,6 +250,7 @@ final class TerimaPenjualanPos
 
         // (5) Produk & satuan, (6) tarif pajak, (9) metode bayar.
         $produk = $this->AmbilProduk($data);
+        $paketSesi = $this->AmbilPaketSesi($data, $produk);
         $this->PeriksaTarifPajak($data, $outlet, $tanggalBisnis);
         $metode = $this->AmbilMetode($data);
 
@@ -366,6 +370,30 @@ final class TerimaPenjualanPos
             }
         }
 
+        // F-16d bagian 2: baris paket sesi membuat saldo sesi pelanggan di transaksi yang sama (J-16.2).
+        $masalahSesi = [];
+
+        foreach ($paketSesi as $indeks => $paket) {
+            $h = $hasil->baris[$indeks];
+            $masalahSesi = [...$masalahSesi, ...$this->sesi->CatatPembelian(
+                $paket,
+                $idPelanggan,
+                $outlet->idOutlet,
+                $penjualan->Id,
+                $detail[$indeks]->Id,
+                $penjualan->Nomor,
+                $detail[$indeks]->NamaProduk,
+                BigDecimal::of($detail[$indeks]->JumlahDasar)->toInt(),
+                self::HitungNilaiBersihBaris($h),
+                $tanggalBisnis,
+                $kasir->id,
+            )];
+        }
+
+        if ($masalahSesi !== []) {
+            $tinjauan['PaketSesi'] = 'PaketSesi: '.implode('; ', $masalahSesi);
+        }
+
         // F-18: komisi staf yang melayani baris (hanya laporan, tanpa jurnal) di transaksi yang sama. Staf yang belum dikenal
         // server tidak mendapat komisi; penjualan tetap diterima + tinjauan.
         $barisKomisi = [];
@@ -483,6 +511,16 @@ final class TerimaPenjualanPos
 
         foreach ($data->baris as $indeks => $baris) {
             $h = $hasil->baris[$indeks];
+
+            // F-16d bagian 2 (J-16.2): paket sesi = Pendapatan Diterima Dimuka sebesar nilai bersih baris; diskon baris itu
+            // dikeluarkan dari Diskon Penjualan (kredit pengurang) karena sudah mengurangi kewajiban.
+            if (isset($paketSesi[$indeks])) {
+                $pendapatan[] = [PeranAkun::PendapatanDiterimaDimuka, self::HitungNilaiBersihBaris($h)];
+                $pendapatan[] = [PeranAkun::DiskonPenjualan, $h->diskon->Tambah($h->diskonPesanan)];
+
+                continue;
+            }
+
             $peran = $produk[$baris->uuidProduk]->jenis === JenisProduk::Jasa ? PeranAkun::PendapatanJasa : PeranAkun::Penjualan;
             $pendapatan[] = [$peran, $h->bruto->Kurangi($h->pajak->Kurangi($h->pajakEksklusif))];
         }
@@ -573,6 +611,49 @@ final class TerimaPenjualanPos
         }
 
         return $produk;
+    }
+
+    /**
+     * F-16d bagian 2: baris yang produknya paket sesi. Wajib berpelanggan dan jumlahnya bilangan bulat positif (satuan
+     * dasar); paket yang sudah tidak aktif tetap diterima (penjualan offline sudah terjadi) dan ditinjau.
+     *
+     * @param  array<string, DataProdukPenjualan>  $produk
+     * @return array<int, array{IdPaketSesi: int, JumlahSesi: int, MasaBerlakuHari: int|null, Aktif: bool}> kunci = indeks baris
+     */
+    private function AmbilPaketSesi(DataPenjualanPos $data, array $produk): array
+    {
+        $perProduk = $this->sesi->AmbilPaketPerProduk(array_values(array_map(fn (DataProdukPenjualan $p): int => $p->id, $produk)));
+        $hasil = [];
+
+        foreach ($data->baris as $indeks => $baris) {
+            $p = $produk[$baris->uuidProduk];
+            $paket = $perProduk[$p->id] ?? null;
+
+            if ($paket === null) {
+                continue;
+            }
+
+            if ($data->uuidPelanggan === null) {
+                throw new PelanggaranAturanBisnis('PaketSesiTanpaPelanggan', "Paket {$p->nama} wajib dijual ke pelanggan terdaftar.", 'UuidPelanggan');
+            }
+
+            $konversi = $baris->uuidProdukSatuan === null ? '1' : $p->satuan[$baris->uuidProdukSatuan]['KonversiKeDasar'];
+            $jumlah = $baris->jumlah->Kali($konversi)->KeDesimal();
+
+            if (! $jumlah->getFractionalPart()->isZero() || ! $jumlah->isPositive()) {
+                throw new PelanggaranAturanBisnis('JumlahPaketSesiTidakValid', "Jumlah paket {$p->nama} harus bilangan bulat positif.", "Baris.{$indeks}.Jumlah");
+            }
+
+            $hasil[$indeks] = $paket;
+        }
+
+        return $hasil;
+    }
+
+    /** Pendapatan bersih baris: bruto − diskon baris − diskon pesanan − pajak inklusif (tanpa biaya layanan & pajak). */
+    private static function HitungNilaiBersihBaris(HasilBarisKalkulasi $h): Uang
+    {
+        return $h->bruto->Kurangi($h->diskon)->Kurangi($h->diskonPesanan)->Kurangi($h->pajak->Kurangi($h->pajakEksklusif));
     }
 
     /** CLAUDE.md #12: setiap pajak snapshot = TarifPajak terbit yang berlaku pada tanggal bisnis di wilayah outlet. */

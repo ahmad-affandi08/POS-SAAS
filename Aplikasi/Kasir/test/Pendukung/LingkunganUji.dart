@@ -19,6 +19,7 @@ import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
 import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
 import 'package:kasir/Domain/Pelanggan/LayananDeposit.dart';
+import 'package:kasir/Domain/Pelanggan/LayananSesi.dart';
 import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
@@ -279,6 +280,7 @@ class LingkunganUji {
     jam: () => jam,
   );
   late final RepositoriDeposit repositoriDeposit = RepositoriDeposit(db, repositori);
+  late final LayananSesi sesi = LayananSesi(klien: klien, repositoriKasir: repositori, jam: () => jam);
   late final LayananDeposit deposit = LayananDeposit(
     klien: klien,
     repositori: repositoriDeposit,

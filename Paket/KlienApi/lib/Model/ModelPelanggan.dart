@@ -112,3 +112,61 @@ class SaldoPoinPos {
     );
   }
 }
+
+/// Paket sesi aktif pelanggan (F-16d bagian 2, `GET pelanggan/{uuid}/sesi`, wajib online).
+class SaldoSesiPos {
+  const SaldoSesiPos({required this.uuidPelanggan, required this.berlaku, required this.paket});
+
+  final String uuidPelanggan;
+
+  /// Paket usaha termasuk fitur paket sesi.
+  final bool berlaku;
+  final List<PaketSesiPelangganPos> paket;
+
+  static SaldoSesiPos DariJson(Map<String, Object?> json) => SaldoSesiPos(
+    uuidPelanggan: UraiJson.AmbilTeks(UraiJson.AmbilPeta(json['Pelanggan'])['Uuid']),
+    berlaku: UraiJson.AmbilBenar(json['Berlaku']),
+    paket: [for (final p in UraiJson.AmbilDaftarPeta(json['Paket'])) PaketSesiPelangganPos.DariJson(p)],
+  );
+}
+
+class PaketSesiPelangganPos {
+  const PaketSesiPelangganPos({
+    required this.uuid,
+    required this.namaPaket,
+    required this.jumlahSesi,
+    required this.sisaSesi,
+    required this.berlakuSampai,
+    required this.nomorPenjualan,
+    required this.semuaProdukJasa,
+    required this.produkBerlaku,
+  });
+
+  /// Uuid saldo sesi (dikirim di outbox `Sesi.Pakai`).
+  final String uuid;
+  final String namaPaket;
+  final int jumlahSesi;
+  final int sisaSesi;
+
+  /// `YYYY-MM-DD` atau null (tanpa batas).
+  final String? berlakuSampai;
+  final String nomorPenjualan;
+
+  /// Semua produk Jasa boleh ditukar; bila false hanya [produkBerlaku].
+  final bool semuaProdukJasa;
+  final List<({String uuid, String nama})> produkBerlaku;
+
+  static PaketSesiPelangganPos DariJson(Map<String, Object?> json) => PaketSesiPelangganPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    namaPaket: UraiJson.AmbilTeks(json['NamaPaket']),
+    jumlahSesi: UraiJson.AmbilBulat(json['JumlahSesi']),
+    sisaSesi: UraiJson.AmbilBulat(json['SisaSesi']),
+    berlakuSampai: UraiJson.AmbilTeksAtauNull(json['BerlakuSampai']),
+    nomorPenjualan: UraiJson.AmbilTeks(json['NomorPenjualan']),
+    semuaProdukJasa: UraiJson.AmbilBenar(json['SemuaProdukJasa']),
+    produkBerlaku: [
+      for (final p in UraiJson.AmbilDaftarPeta(json['ProdukBerlaku']))
+        (uuid: UraiJson.AmbilTeks(p['Uuid']), nama: UraiJson.AmbilTeks(p['Nama'])),
+    ],
+  );
+}

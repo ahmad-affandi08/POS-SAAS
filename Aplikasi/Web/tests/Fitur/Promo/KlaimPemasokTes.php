@@ -137,7 +137,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $kas = Akun::query()->where('KasBank', true)->orderBy('Kode')->firstOrFail();
-        $hariIni = now($k['Outlet']->ZonaWaktu)->toDateString();
+        $hariIni = BantuanPembelian::Hari()->toDateString();
         $isian = ['UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => $hariIni, 'Cara' => 'KasBank', 'UuidAkunKasBank' => $kas->Uuid, 'Keterangan' => 'Transfer klaim Oktober'];
 
         $this->post('/kelola/promo/klaim-pemasok/penerimaan', [...$isian, 'UuidAkunKasBank' => ''])->assertSessionHasErrors('UuidAkunKasBank');
@@ -191,7 +191,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $kas = Akun::query()->where('KasBank', true)->orderBy('Kode')->firstOrFail();
         $this->post('/kelola/promo/klaim-pemasok/penerimaan', [
-            'UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => now($k['Outlet']->ZonaWaktu)->toDateString(), 'Cara' => 'KasBank', 'UuidAkunKasBank' => $kas->Uuid,
+            'UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => BantuanPembelian::Hari()->toDateString(), 'Cara' => 'KasBank', 'UuidAkunKasBank' => $kas->Uuid,
         ])->assertRedirect('/kelola/promo/klaim-pemasok');
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
@@ -209,7 +209,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemPromoPemasok($k), ItemPromoPemasok($k)]))->toBe([['Diterima', null], ['Diterima', null]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $idPemilik = $k['Pemilik']->Id;
-        $hariIni = now($k['Outlet']->ZonaWaktu)->toDateString();
+        $hariIni = BantuanPembelian::Hari()->toDateString();
         $isian = ['UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => $hariIni, 'Cara' => 'PotongHutang', 'Keterangan' => 'Nota debit klaim Oktober'];
 
         // Faktur 1: Rp 6.000 (lama), faktur 2: Rp 30.000.

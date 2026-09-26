@@ -68,6 +68,9 @@ class Produk extends Table {
   TextColumn get UrlGambarKecil => text().nullable()();
   BoolColumn get Aktif => boolean()();
 
+  /// F-16d bagian 2: jumlah sesi bila produk paket sesi; null = bukan paket sesi.
+  IntColumn get JumlahSesiPaket => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

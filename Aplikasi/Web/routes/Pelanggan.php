@@ -6,6 +6,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Pelanggan\DepositPelangganKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\LoyaltiKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\PelangganKontroler;
+use App\Http\Kontroler\Kelola\Pelanggan\SesiPelangganKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -28,12 +29,22 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
     Route::get('/isi-deposit', [DepositPelangganKontroler::class, 'DaftarIsi'])->name('kelola.pelanggan.isi-deposit.daftar');
     Route::get('/isi-deposit/{isiDeposit}', [DepositPelangganKontroler::class, 'TampilkanIsi'])->where('isiDeposit', $ulid)->name('kelola.pelanggan.isi-deposit.tampil');
     Route::get('/mutasi-deposit/{mutasiDeposit}', [DepositPelangganKontroler::class, 'TampilkanMutasi'])->where('mutasiDeposit', $ulid)->name('kelola.pelanggan.mutasi-deposit.tampil');
+    // F-16d bagian 2: saldo paket sesi & tautan sumber jurnal sesi (sebelum rute {pelanggan}).
+    Route::get('/saldo-sesi', [SesiPelangganKontroler::class, 'Daftar'])->name('kelola.pelanggan.saldo-sesi.daftar');
+    Route::get('/saldo-sesi/{saldoSesi}', [SesiPelangganKontroler::class, 'Tampilkan'])->where('saldoSesi', $ulid)->name('kelola.pelanggan.saldo-sesi.tampil');
+    Route::get('/pemakaian-sesi/{pemakaianSesi}', [SesiPelangganKontroler::class, 'TampilkanPemakaian'])->where('pemakaianSesi', $ulid)->name('kelola.pelanggan.pemakaian-sesi.tampil');
+    Route::get('/mutasi-sesi/{mutasiSesi}', [SesiPelangganKontroler::class, 'TampilkanMutasi'])->where('mutasiSesi', $ulid)->name('kelola.pelanggan.mutasi-sesi.tampil');
     Route::get('/{pelanggan}', [PelangganKontroler::class, 'Detail'])->where('pelanggan', $ulid)->name('kelola.pelanggan.detail');
 
     Route::middleware($izin(IzinTenant::PelangganDepositKelola))->group(function () use ($ulid): void {
         Route::post('/{pelanggan}/deposit/tarik', [DepositPelangganKontroler::class, 'Tarik'])->where('pelanggan', $ulid)->name('kelola.pelanggan.deposit.tarik');
         Route::post('/{pelanggan}/deposit/sesuaikan', [DepositPelangganKontroler::class, 'Sesuaikan'])->where('pelanggan', $ulid)->name('kelola.pelanggan.deposit.sesuaikan');
         Route::post('/isi-deposit/{isiDeposit}/batal', [DepositPelangganKontroler::class, 'BatalIsi'])->where('isiDeposit', $ulid)->name('kelola.pelanggan.isi-deposit.batal');
+    });
+
+    Route::middleware($izin(IzinTenant::PelangganSesiKelola))->group(function () use ($ulid): void {
+        Route::post('/saldo-sesi/{saldoSesi}/tutup', [SesiPelangganKontroler::class, 'Tutup'])->where('saldoSesi', $ulid)->name('kelola.pelanggan.saldo-sesi.tutup');
+        Route::post('/pemakaian-sesi/{pemakaianSesi}/batal', [SesiPelangganKontroler::class, 'BatalPemakaian'])->where('pemakaianSesi', $ulid)->name('kelola.pelanggan.pemakaian-sesi.batal');
     });
 
     Route::middleware($izin(IzinTenant::PelangganKelola))->group(function () use ($ulid): void {

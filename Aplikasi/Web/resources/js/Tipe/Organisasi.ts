@@ -40,6 +40,8 @@ export const IzinTenant = {
     PelangganKelola: 'pelanggan.kelola',
     // F-16d bagian 1: tarik/sesuaikan deposit & batal isi deposit.
     PelangganDepositKelola: 'pelanggan.deposit.kelola',
+    // F-16d bagian 2: kembalikan/hanguskan sisa paket sesi.
+    PelangganSesiKelola: 'pelanggan.sesi.kelola',
     KaryawanLihat: 'karyawan.lihat',
     KaryawanKelola: 'karyawan.kelola',
     // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant sendiri).

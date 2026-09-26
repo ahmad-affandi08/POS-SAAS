@@ -4183,6 +4183,15 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("Aktif" IN (0, 1))'),
   );
+  static const VerificationMeta _JumlahSesiPaketMeta = const VerificationMeta('JumlahSesiPaket');
+  @override
+  late final GeneratedColumn<int> JumlahSesiPaket = GeneratedColumn<int>(
+    'JumlahSesiPaket',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Uuid,
@@ -4199,6 +4208,7 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     UuidInduk,
     UrlGambarKecil,
     Aktif,
+    JumlahSesiPaket,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4275,6 +4285,12 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     } else if (isInserting) {
       context.missing(_AktifMeta);
     }
+    if (data.containsKey('JumlahSesiPaket')) {
+      context.handle(
+        _JumlahSesiPaketMeta,
+        JumlahSesiPaket.isAcceptableOrUnknown(data['JumlahSesiPaket']!, _JumlahSesiPaketMeta),
+      );
+    }
     return context;
   }
 
@@ -4307,6 +4323,7 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
       UuidInduk: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidInduk']),
       UrlGambarKecil: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UrlGambarKecil']),
       Aktif: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}Aktif'])!,
+      JumlahSesiPaket: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}JumlahSesiPaket']),
     );
   }
 
@@ -4331,6 +4348,9 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
   final String? UuidInduk;
   final String? UrlGambarKecil;
   final bool Aktif;
+
+  /// F-16d bagian 2: jumlah sesi bila produk paket sesi; null = bukan paket sesi.
+  final int? JumlahSesiPaket;
   const BarisProduk({
     required this.Uuid,
     this.Sku,
@@ -4346,6 +4366,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     this.UuidInduk,
     this.UrlGambarKecil,
     required this.Aktif,
+    this.JumlahSesiPaket,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4380,6 +4401,9 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       map['UrlGambarKecil'] = Variable<String>(UrlGambarKecil);
     }
     map['Aktif'] = Variable<bool>(Aktif);
+    if (!nullToAbsent || JumlahSesiPaket != null) {
+      map['JumlahSesiPaket'] = Variable<int>(JumlahSesiPaket);
+    }
     return map;
   }
 
@@ -4399,6 +4423,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       UuidInduk: UuidInduk == null && nullToAbsent ? const Value.absent() : Value(UuidInduk),
       UrlGambarKecil: UrlGambarKecil == null && nullToAbsent ? const Value.absent() : Value(UrlGambarKecil),
       Aktif: Value(Aktif),
+      JumlahSesiPaket: JumlahSesiPaket == null && nullToAbsent ? const Value.absent() : Value(JumlahSesiPaket),
     );
   }
 
@@ -4419,6 +4444,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       UuidInduk: serializer.fromJson<String?>(json['UuidInduk']),
       UrlGambarKecil: serializer.fromJson<String?>(json['UrlGambarKecil']),
       Aktif: serializer.fromJson<bool>(json['Aktif']),
+      JumlahSesiPaket: serializer.fromJson<int?>(json['JumlahSesiPaket']),
     );
   }
   @override
@@ -4439,6 +4465,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       'UuidInduk': serializer.toJson<String?>(UuidInduk),
       'UrlGambarKecil': serializer.toJson<String?>(UrlGambarKecil),
       'Aktif': serializer.toJson<bool>(Aktif),
+      'JumlahSesiPaket': serializer.toJson<int?>(JumlahSesiPaket),
     };
   }
 
@@ -4457,6 +4484,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     Value<String?> UuidInduk = const Value.absent(),
     Value<String?> UrlGambarKecil = const Value.absent(),
     bool? Aktif,
+    Value<int?> JumlahSesiPaket = const Value.absent(),
   }) => BarisProduk(
     Uuid: Uuid ?? this.Uuid,
     Sku: Sku.present ? Sku.value : this.Sku,
@@ -4472,6 +4500,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     UuidInduk: UuidInduk.present ? UuidInduk.value : this.UuidInduk,
     UrlGambarKecil: UrlGambarKecil.present ? UrlGambarKecil.value : this.UrlGambarKecil,
     Aktif: Aktif ?? this.Aktif,
+    JumlahSesiPaket: JumlahSesiPaket.present ? JumlahSesiPaket.value : this.JumlahSesiPaket,
   );
   BarisProduk copyWithCompanion(ProdukCompanion data) {
     return BarisProduk(
@@ -4489,6 +4518,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       UuidInduk: data.UuidInduk.present ? data.UuidInduk.value : this.UuidInduk,
       UrlGambarKecil: data.UrlGambarKecil.present ? data.UrlGambarKecil.value : this.UrlGambarKecil,
       Aktif: data.Aktif.present ? data.Aktif.value : this.Aktif,
+      JumlahSesiPaket: data.JumlahSesiPaket.present ? data.JumlahSesiPaket.value : this.JumlahSesiPaket,
     );
   }
 
@@ -4508,7 +4538,8 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
           ..write('TampilDiPos: $TampilDiPos, ')
           ..write('UuidInduk: $UuidInduk, ')
           ..write('UrlGambarKecil: $UrlGambarKecil, ')
-          ..write('Aktif: $Aktif')
+          ..write('Aktif: $Aktif, ')
+          ..write('JumlahSesiPaket: $JumlahSesiPaket')
           ..write(')'))
         .toString();
   }
@@ -4529,6 +4560,7 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     UuidInduk,
     UrlGambarKecil,
     Aktif,
+    JumlahSesiPaket,
   );
   @override
   bool operator ==(Object other) =>
@@ -4547,7 +4579,8 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
           other.TampilDiPos == this.TampilDiPos &&
           other.UuidInduk == this.UuidInduk &&
           other.UrlGambarKecil == this.UrlGambarKecil &&
-          other.Aktif == this.Aktif);
+          other.Aktif == this.Aktif &&
+          other.JumlahSesiPaket == this.JumlahSesiPaket);
 }
 
 class ProdukCompanion extends UpdateCompanion<BarisProduk> {
@@ -4565,6 +4598,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
   final Value<String?> UuidInduk;
   final Value<String?> UrlGambarKecil;
   final Value<bool> Aktif;
+  final Value<int?> JumlahSesiPaket;
   final Value<int> rowid;
   const ProdukCompanion({
     this.Uuid = const Value.absent(),
@@ -4581,6 +4615,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     this.UuidInduk = const Value.absent(),
     this.UrlGambarKecil = const Value.absent(),
     this.Aktif = const Value.absent(),
+    this.JumlahSesiPaket = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProdukCompanion.insert({
@@ -4598,6 +4633,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     this.UuidInduk = const Value.absent(),
     this.UrlGambarKecil = const Value.absent(),
     required bool Aktif,
+    this.JumlahSesiPaket = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Nama = Value(Nama),
@@ -4620,6 +4656,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     Expression<String>? UuidInduk,
     Expression<String>? UrlGambarKecil,
     Expression<bool>? Aktif,
+    Expression<int>? JumlahSesiPaket,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4637,6 +4674,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
       if (UuidInduk != null) 'UuidInduk': UuidInduk,
       if (UrlGambarKecil != null) 'UrlGambarKecil': UrlGambarKecil,
       if (Aktif != null) 'Aktif': Aktif,
+      if (JumlahSesiPaket != null) 'JumlahSesiPaket': JumlahSesiPaket,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4656,6 +4694,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     Value<String?>? UuidInduk,
     Value<String?>? UrlGambarKecil,
     Value<bool>? Aktif,
+    Value<int?>? JumlahSesiPaket,
     Value<int>? rowid,
   }) {
     return ProdukCompanion(
@@ -4673,6 +4712,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
       UuidInduk: UuidInduk ?? this.UuidInduk,
       UrlGambarKecil: UrlGambarKecil ?? this.UrlGambarKecil,
       Aktif: Aktif ?? this.Aktif,
+      JumlahSesiPaket: JumlahSesiPaket ?? this.JumlahSesiPaket,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4722,6 +4762,9 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     if (Aktif.present) {
       map['Aktif'] = Variable<bool>(Aktif.value);
     }
+    if (JumlahSesiPaket.present) {
+      map['JumlahSesiPaket'] = Variable<int>(JumlahSesiPaket.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4745,6 +4788,7 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
           ..write('UuidInduk: $UuidInduk, ')
           ..write('UrlGambarKecil: $UrlGambarKecil, ')
           ..write('Aktif: $Aktif, ')
+          ..write('JumlahSesiPaket: $JumlahSesiPaket, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -19544,6 +19588,7 @@ typedef $$ProdukTableCreateCompanionBuilder = ProdukCompanion Function({
   Value<String?> UuidInduk,
   Value<String?> UrlGambarKecil,
   required bool Aktif,
+  Value<int?> JumlahSesiPaket,
   Value<int> rowid,
 });
 typedef $$ProdukTableUpdateCompanionBuilder = ProdukCompanion Function({
@@ -19561,6 +19606,7 @@ typedef $$ProdukTableUpdateCompanionBuilder = ProdukCompanion Function({
   Value<String?> UuidInduk,
   Value<String?> UrlGambarKecil,
   Value<bool> Aktif,
+  Value<int?> JumlahSesiPaket,
   Value<int> rowid,
 });
 
@@ -19609,6 +19655,9 @@ class $$ProdukTableFilterComposer extends Composer<_$BasisDataKasir, $ProdukTabl
       $composableBuilder(column: $table.UrlGambarKecil, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get Aktif => $composableBuilder(column: $table.Aktif, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get JumlahSesiPaket =>
+      $composableBuilder(column: $table.JumlahSesiPaket, builder: (column) => ColumnFilters(column));
 }
 
 class $$ProdukTableOrderingComposer extends Composer<_$BasisDataKasir, $ProdukTable> {
@@ -19660,6 +19709,9 @@ class $$ProdukTableOrderingComposer extends Composer<_$BasisDataKasir, $ProdukTa
 
   ColumnOrderings<bool> get Aktif =>
       $composableBuilder(column: $table.Aktif, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get JumlahSesiPaket =>
+      $composableBuilder(column: $table.JumlahSesiPaket, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ProdukTableAnnotationComposer extends Composer<_$BasisDataKasir, $ProdukTable> {
@@ -19702,6 +19754,9 @@ class $$ProdukTableAnnotationComposer extends Composer<_$BasisDataKasir, $Produk
       $composableBuilder(column: $table.UrlGambarKecil, builder: (column) => column);
 
   GeneratedColumn<bool> get Aktif => $composableBuilder(column: $table.Aktif, builder: (column) => column);
+
+  GeneratedColumn<int> get JumlahSesiPaket =>
+      $composableBuilder(column: $table.JumlahSesiPaket, builder: (column) => column);
 }
 
 class $$ProdukTableTableManager
@@ -19743,6 +19798,7 @@ class $$ProdukTableTableManager
                 Value<String?> UuidInduk = const Value.absent(),
                 Value<String?> UrlGambarKecil = const Value.absent(),
                 Value<bool> Aktif = const Value.absent(),
+                Value<int?> JumlahSesiPaket = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProdukCompanion(
                 Uuid: Uuid,
@@ -19759,6 +19815,7 @@ class $$ProdukTableTableManager
                 UuidInduk: UuidInduk,
                 UrlGambarKecil: UrlGambarKecil,
                 Aktif: Aktif,
+                JumlahSesiPaket: JumlahSesiPaket,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -19777,6 +19834,7 @@ class $$ProdukTableTableManager
                 Value<String?> UuidInduk = const Value.absent(),
                 Value<String?> UrlGambarKecil = const Value.absent(),
                 required bool Aktif,
+                Value<int?> JumlahSesiPaket = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProdukCompanion.insert(
                 Uuid: Uuid,
@@ -19793,6 +19851,7 @@ class $$ProdukTableTableManager
                 UuidInduk: UuidInduk,
                 UrlGambarKecil: UrlGambarKecil,
                 Aktif: Aktif,
+                JumlahSesiPaket: JumlahSesiPaket,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

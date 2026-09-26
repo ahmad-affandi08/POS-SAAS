@@ -20,6 +20,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
+use App\Domain\Pelanggan\Layanan\PencatatSesiPenjualan;
 use App\Domain\Penjualan\Data\DataVoidPenjualanPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
@@ -85,6 +86,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatKlaimPromoPemasok $klaimPemasok,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly PencatatDepositPenjualan $deposit,
+        private readonly PencatatSesiPenjualan $sesi,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -138,6 +140,11 @@ final class TerimaVoidPenjualanPos
 
         // (3) Syarat void fase 1.
         $this->PastikanBolehVoid($data, $penjualan);
+        $galatSesi = $this->sesi->PeriksaBisaVoid($penjualan->Id);
+
+        if ($galatSesi !== null) {
+            throw new PelanggaranAturanBisnis('VoidPaketSesiDitutup', $galatSesi, 'UuidPenjualan');
+        }
 
         // (4) Pelaku.
         $kasir = $this->pelaku->CariKasir($idTenant, $data->uuidPengguna, $penjualan->IdOutlet);
@@ -209,6 +216,8 @@ final class TerimaVoidPenjualanPos
         // F-16d bagian 1: deposit yang dipakai membayar dikembalikan ke saldo pelanggan (jurnal pembalik sudah mengkredit
         // Saldo Deposit Pelanggan).
         $this->deposit->BatalkanPemakaian($penjualan->Id, $penjualan->Nomor, $tanggalBisnis, $kasir->id);
+        // F-16d bagian 2: sisa sesi paket dibatalkan; nilai sesi yang sudah dipakai diakui balik (J-16.3 dibalik).
+        $this->sesi->BatalkanPenjualan($penjualan->Id, $penjualan->Uuid, $penjualan->Nomor, $penjualan->IdOutlet, $tanggalBisnis, $kasir->id);
         // F-18: komisi penjualan yang di-void dibatalkan penuh.
         $this->komisi->Batalkan($penjualan->Id);
 

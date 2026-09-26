@@ -192,9 +192,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
   /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka); 7 = F-16a (pelanggan lokal); 8 = F-16b
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
-  /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal).
+  /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
+  /// bagian 2 (produk paket sesi).
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -294,6 +295,17 @@ class BasisDataKasir extends _$BasisDataKasir {
       if (dari < 13) {
         await m.createTable(isiDepositLokal);
         await m.createTable(nomorUrutIsiDeposit);
+      }
+      // Skema 14 (F-16d bagian 2): tanda paket sesi di produk. Tabel produk dari skema < 2 sudah berkolom lengkap.
+      // Kursor katalog dihapus agar sinkron berikutnya lengkap dan produk paket yang sudah ada ikut tertandai.
+      if (dari >= 2 && dari < 14) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Produk') WHERE name = 'JumlahSesiPaket'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(produk, produk.JumlahSesiPaket);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
     },
     beforeOpen: (detail) async {

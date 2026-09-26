@@ -9,17 +9,19 @@ use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Aksi\EvaluasiTierPelanggan;
 use App\Domain\Pelanggan\Aksi\HanguskanPoinKedaluwarsa;
+use App\Domain\Pelanggan\Aksi\HanguskanSesiKedaluwarsa;
 use Illuminate\Console\Command;
 
 /**
- * F-16b: tiap malam menghanguskan poin kedaluwarsa (FIFO) lalu mengevaluasi tier pelanggan, per tenant dengan
+ * F-16b: tiap malam menghanguskan poin kedaluwarsa (FIFO) lalu mengevaluasi tier pelanggan; F-16d bagian 2: paket
+ * sesi yang lewat masa berlaku dihanguskan. Per tenant dengan
  * `KonteksTenant` diatur sehingga semua kueri tetap lewat scope `MilikTenant`. `--tenant` membatasi tenant.
  */
 final class ProsesLoyaltiPelangganPerintah extends Command
 {
     protected $signature = 'pelanggan:proses-loyalti {--tenant=* : Id tenant (kosong = semua)}';
 
-    protected $description = 'Menghanguskan poin kedaluwarsa dan mengevaluasi tier pelanggan (F-16b).';
+    protected $description = 'Menghanguskan poin & paket sesi kedaluwarsa dan mengevaluasi tier pelanggan (F-16b, F-16d).';
 
     public function handle(
         KeanggotaanPengguna $keanggotaan,
@@ -27,6 +29,7 @@ final class ProsesLoyaltiPelangganPerintah extends Command
         TanggalBisnisOutlet $tanggalBisnis,
         HanguskanPoinKedaluwarsa $hanguskan,
         EvaluasiTierPelanggan $evaluasi,
+        HanguskanSesiKedaluwarsa $hanguskanSesi,
     ): int {
         $diminta = [];
 
@@ -47,6 +50,7 @@ final class ProsesLoyaltiPelangganPerintah extends Command
         $sebelumnya = $konteks->Ambil();
         $poin = 0;
         $tier = 0;
+        $sesi = 0;
 
         try {
             foreach ($daftar as $idTenant) {
@@ -54,12 +58,13 @@ final class ProsesLoyaltiPelangganPerintah extends Command
                 $hariIni = $tanggalBisnis->Hitung(null);
                 $poin += $hanguskan->Jalankan($hariIni);
                 $tier += $evaluasi->Jalankan($hariIni);
+                $sesi += $hanguskanSesi->Jalankan($hariIni);
             }
         } finally {
             $sebelumnya === null ? $konteks->Kosongkan() : $konteks->Atur($sebelumnya);
         }
 
-        $this->line(count($daftar)." tenant diproses, {$poin} poin dihanguskan, {$tier} tier pelanggan berubah.");
+        $this->line(count($daftar)." tenant diproses, {$poin} poin dihanguskan, {$tier} tier pelanggan berubah, {$sesi} paket sesi hangus.");
 
         return self::SUCCESS;
     }

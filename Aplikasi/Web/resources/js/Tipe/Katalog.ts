@@ -488,3 +488,37 @@ export type StatusImpor = {
     JumlahGagal: number;
     PesanGalat: string | null;
 };
+
+/** F-16d bagian 2: definisi paket sesi (produk Jasa yang dijual sebagai N sesi). */
+export type BarisPaketSesi = {
+    Uuid: string;
+    Nama: string;
+    JumlahSesi: number;
+    MasaBerlakuHari: number | null;
+    SemuaProdukJasa: boolean;
+    JumlahProdukBerlaku: number;
+    Aktif: boolean;
+};
+
+export type PropsDaftarPaketSesi = {
+    PaketSesi: HasilTabel<BarisPaketSesi>;
+    Izin: IzinKatalog;
+    FiturAktif: boolean;
+};
+
+export type IsianPaketSesi = {
+    Uuid: string;
+    UuidProduk: string;
+    NamaProduk: string;
+    JumlahSesi: number;
+    MasaBerlakuHari: number | null;
+    SemuaProdukJasa: boolean;
+    ProdukBerlaku: string[];
+    Aktif: boolean;
+};
+
+export type PropsFormulirPaketSesi = {
+    Paket: IsianPaketSesi | null;
+    PilihanJasa: { Nilai: string; Label: string; SudahPaket: boolean }[];
+    FiturAktif: boolean;
+};

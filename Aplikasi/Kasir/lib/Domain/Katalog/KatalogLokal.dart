@@ -11,6 +11,7 @@ abstract final class JenisProdukKasir {
   static const String indukVarian = 'IndukVarian';
   static const String bahanBaku = 'BahanBaku';
   static const String konsinyasi = 'Konsinyasi';
+  static const String jasa = 'Jasa';
   static const String pelacakanTidak = 'Tidak';
 }
 
@@ -102,12 +103,18 @@ class ProdukJual {
     required this.satuan,
     required this.kelompokPilihan,
     required this.pajak,
+    this.jumlahSesiPaket,
   });
 
   final String uuid;
   final String? sku;
   final String nama;
   final String jenis;
+
+  /// F-16d bagian 2: jumlah sesi bila produk paket sesi (wajib pelanggan, jumlah bulat, tidak bisa diretur).
+  final int? jumlahSesiPaket;
+
+  bool get paketSesi => jumlahSesiPaket != null;
   final String? uuidKategori;
   final String pelacakan;
 
@@ -305,6 +312,7 @@ class KatalogLokal {
           satuan: satuanProduk[p.Uuid] ?? const [],
           kelompokPilihan: kelompokProduk[p.Uuid] ?? const [],
           pajak: p.UuidKelompokPajak == null ? const [] : pajakKelompok[p.UuidKelompokPajak] ?? const [],
+          jumlahSesiPaket: p.JumlahSesiPaket,
         ),
     ];
 

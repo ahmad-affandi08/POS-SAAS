@@ -41,6 +41,7 @@ const Ani: BarisPelanggan = {
 };
 
 const DepositKosong = { Saldo: '0.00', Berlaku: false, Riwayat: [], AkunKasBank: [] };
+const PaketSesiKosong = { Berlaku: false, Daftar: [] };
 
 const OpsiTierUji = [
     { Nilai: 'SILVER', Label: 'Silver (SILVER)', Uuid: '01K5T1ER000000000000S1LVER' },
@@ -118,6 +119,24 @@ describe('Halaman pelanggan (F-16a)', () => {
                 Pelanggan={Ani}
                 Kredit={{ LimitKredit: '5000000.00', SisaPiutang: '1250000.00', HariLewatJatuhTempo: 12 }}
                 Deposit={DepositKosong}
+                PaketSesi={{
+                    Berlaku: true,
+                    Daftar: [
+                        {
+                            Uuid: '01K5SALDOSESI0000000000001',
+                            NamaPaket: 'Paket Creambath Rambut Panjang 10x Sesi',
+                            NomorPenjualan: 'INV/SLB/260924/POS-001-0008',
+                            JumlahSesi: 10,
+                            SisaSesi: 7,
+                            NilaiAwal: '1000000.00',
+                            NilaiTersisa: '700000.00',
+                            TanggalBeli: '2026-09-24',
+                            BerlakuSampai: '2026-12-23',
+                            Status: 'Aktif',
+                            LabelStatus: 'Aktif',
+                        },
+                    ],
+                }}
                 Riwayat={[
                     {
                         Uuid: '01K5JUAL000000000000000001',
@@ -152,6 +171,11 @@ describe('Halaman pelanggan (F-16a)', () => {
         expect(screen.getByText('Rp 5.000.000')).toBeTruthy();
         expect(screen.getByText('12 hari')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Lihat piutang' })).toBeTruthy();
+        // F-16d bagian 2: paket sesi pelanggan bertaut ke detail saldo sesi.
+        expect(
+            screen.getAllByRole('link', { name: 'Paket Creambath Rambut Panjang 10x Sesi' })[0]?.getAttribute('href'),
+        ).toBe('/kelola/pelanggan/saldo-sesi/01K5SALDOSESI0000000000001');
+        expect(screen.getAllByText('7 dari 10').length).toBeGreaterThan(0);
         expect(screen.getAllByRole('link', { name: 'INV/SLB/260924/POS-001-0007' })[0]?.getAttribute('href')).toBe(
             '/kelola/penjualan/01K5JUAL000000000000000001',
         );
@@ -264,6 +288,7 @@ describe('Halaman pelanggan (F-16a)', () => {
                 OpsiTier={OpsiTierUji}
                 LoyaltiBerlaku={false}
                 Kredit={null}
+                PaketSesi={PaketSesiKosong}
                 Deposit={{
                     Saldo: '350000.00',
                     Berlaku: true,
@@ -308,6 +333,7 @@ describe('Halaman pelanggan (F-16a)', () => {
                 OpsiTier={OpsiTierUji}
                 LoyaltiBerlaku={false}
                 Kredit={null}
+                PaketSesi={PaketSesiKosong}
                 Deposit={{ Saldo: '-27000.00', Berlaku: true, Riwayat: [], AkunKasBank: [] }}
                 Izin={{ Kelola: false, LihatPenjualan: false, KelolaDeposit: true }}
             />,

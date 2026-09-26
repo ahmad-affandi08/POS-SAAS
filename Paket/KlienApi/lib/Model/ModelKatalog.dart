@@ -104,12 +104,17 @@ class ProdukPos {
     required this.urlGambarKecil,
     required this.aktif,
     required this.dihapus,
+    this.jumlahSesiPaket,
   });
 
   final String uuid;
   final String? sku;
   final String nama;
   final String? namaStruk;
+
+  /// F-16d bagian 2: jumlah sesi bila produk ini paket sesi (wajib pelanggan, jumlah bulat, tidak bisa diretur); null =
+  /// bukan paket sesi.
+  final int? jumlahSesiPaket;
 
   /// `Stok`, `IndukVarian`, `Resep`, `Produksi`, `Paket`, `Jasa`, `NonStok`, `BahanBaku`, `Konsinyasi`.
   final String jenis;
@@ -144,6 +149,7 @@ class ProdukPos {
     urlGambarKecil: UraiJson.AmbilTeksAtauNull(json['UrlGambarKecil']),
     aktif: UraiJson.AmbilBenar(json['Aktif'], true),
     dihapus: UraiJson.AmbilBenar(json['Dihapus']),
+    jumlahSesiPaket: UraiJson.AmbilBulatAtauNull(UraiJson.AmbilPetaAtauNull(json['PaketSesi'])?['JumlahSesi']),
   );
 }
 

@@ -75,6 +75,8 @@ const menuProduk: ItemMenu[] = [
     { label: 'Pilihan (modifier)', href: '/kelola/kelompok-pilihan', izin: IzinTenant.ProdukLihat },
     { label: 'Kelompok pajak', href: '/kelola/kelompok-pajak', izin: IzinTenant.ProdukLihat },
     { label: 'Stasiun dapur', href: '/kelola/stasiun-dapur', izin: IzinTenant.ProdukLihat },
+    // F-16d bagian 2: paket sesi (produk Jasa yang dijual sebagai N sesi).
+    { label: 'Paket sesi', href: '/kelola/paket-sesi', izin: IzinTenant.ProdukLihat },
     { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 
@@ -117,6 +119,8 @@ const menuPelanggan: ItemMenu[] = [
     { label: 'Pelunasan piutang', href: '/kelola/piutang/pelunasan', izin: IzinTenant.PelangganLihat },
     // F-16d bagian 1: isi deposit pelanggan dari kasir.
     { label: 'Isi deposit', href: '/kelola/pelanggan/isi-deposit', izin: IzinTenant.PelangganLihat },
+    // F-16d bagian 2: saldo paket sesi pelanggan.
+    { label: 'Saldo paket sesi', href: '/kelola/pelanggan/saldo-sesi', izin: IzinTenant.PelangganLihat },
 ];
 
 // F-18: karyawan, jadwal kerja, rekap absensi (karyawan.lihat).

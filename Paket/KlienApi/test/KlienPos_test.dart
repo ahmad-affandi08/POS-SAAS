@@ -389,6 +389,37 @@ void main() {
     expect(saldo.berlaku, isTrue);
   });
 
+  test('F-16d paket sesi: jalur per pelanggan, paket aktif & layanan yang boleh ditukar', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'Pelanggan': {'Uuid': 'P1'},
+        'Berlaku': true,
+        'Paket': [
+          {
+            'Uuid': 'SS1',
+            'NamaPaket': 'Paket Creambath 10x',
+            'JumlahSesi': 10,
+            'SisaSesi': 7,
+            'BerlakuSampai': '2026-12-31',
+            'NomorPenjualan': 'INV/SLB/260924/POS-001-0008',
+            'SemuaProdukJasa': false,
+            'ProdukBerlaku': [
+              {'Uuid': 'PR1', 'Nama': 'Creambath'},
+            ],
+          },
+        ],
+      }, 200);
+    });
+
+    final saldo = await klien.AmbilSaldoSesi('P1');
+    expect(dikirim.single.url.path, endsWith('/api/pos/v1/pelanggan/P1/sesi'));
+    expect(saldo.berlaku, isTrue);
+    expect(saldo.paket.single.sisaSesi, 7);
+    expect(saldo.paket.single.produkBerlaku.single.nama, 'Creambath');
+  });
+
   test('F-16c promo: daftar promo aktif + mode resolusi, definisi dibawa apa adanya', () async {
     final klien = BuatKlien((permintaan) async {
       expect(permintaan.url.path, endsWith('/api/pos/v1/promo'));

@@ -157,6 +157,7 @@ class RepositoriKatalog {
             UuidInduk: Value(x.uuidInduk),
             UrlGambarKecil: Value(x.urlGambarKecil),
             Aktif: x.aktif,
+            JumlahSesiPaket: Value(x.jumlahSesiPaket),
           ),
       ]);
       b.insertAllOnConflictUpdate(db.produkSatuan, [

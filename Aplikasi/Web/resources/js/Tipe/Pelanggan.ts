@@ -71,6 +71,7 @@ export type PropsDetailPelanggan = {
     Kredit: KreditPelanggan | null;
     /** F-16d bagian 1: saldo & riwayat deposit. */
     Deposit: DepositPelanggan;
+    PaketSesi: { Berlaku: boolean; Daftar: RingkasSaldoSesi[] };
     Izin: IzinPelanggan & { KelolaDeposit: boolean };
 };
 
@@ -144,3 +145,55 @@ export type PengaturanLoyalti = {
 };
 
 export type PropsPengaturanLoyalti = { Pengaturan: PengaturanLoyalti; FiturAktif: boolean; Izin: { Kelola: boolean } };
+
+/** F-16d bagian 2: paket sesi pelanggan. */
+export type StatusSaldoSesi = 'Aktif' | 'Habis' | 'Hangus' | 'Dibatalkan';
+
+export type RingkasSaldoSesi = {
+    Uuid: string;
+    NamaPaket: string;
+    NomorPenjualan: string;
+    JumlahSesi: number;
+    SisaSesi: number;
+    NilaiAwal: string;
+    NilaiTersisa: string;
+    TanggalBeli: string;
+    BerlakuSampai: string | null;
+    Status: StatusSaldoSesi;
+    LabelStatus: string;
+};
+
+export type BarisSaldoSesi = RingkasSaldoSesi & { Pelanggan: { Uuid: string; Nama: string } | null };
+
+export type PropsDaftarSaldoSesi = { SaldoSesi: HasilTabel<BarisSaldoSesi>; Izin: { KelolaSesi: boolean } };
+
+export type MutasiSesi = {
+    Uuid: string;
+    Jenis: string;
+    LabelJenis: string;
+    JumlahSesi: number;
+    Nilai: string;
+    SisaSetelah: number;
+    Tanggal: string;
+    Keterangan: string | null;
+};
+
+export type PemakaianSesi = {
+    Uuid: string;
+    NamaProduk: string | null;
+    Jumlah: number;
+    NilaiDiakui: string;
+    TanggalBisnis: string;
+    Status: 'Diterima' | 'Dibatalkan';
+    Dibatalkan: boolean;
+    PerluTinjauan: boolean;
+    AlasanTinjauan: string | null;
+};
+
+export type DetailSaldoSesi = BarisSaldoSesi & { Mutasi: MutasiSesi[]; Pemakaian: PemakaianSesi[] };
+
+export type PropsDetailSaldoSesi = {
+    Saldo: DetailSaldoSesi;
+    AkunKasBank: { Uuid: string; Kode: string; Nama: string }[];
+    Izin: { KelolaSesi: boolean };
+};

@@ -35,6 +35,7 @@ import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/LayananPesanSendiri.dart';
 import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Pelanggan/LayananDeposit.dart';
+import '../Domain/Pelanggan/LayananSesi.dart';
 import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
@@ -344,6 +345,14 @@ final penyediaLayananDeposit = Provider<LayananDeposit>(
   (ref) => LayananDeposit(
     klien: ref.watch(penyediaKlienPos),
     repositori: ref.watch(penyediaRepositoriDeposit),
+    repositoriKasir: ref.watch(penyediaRepositori),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+final penyediaLayananSesi = Provider<LayananSesi>(
+  (ref) => LayananSesi(
+    klien: ref.watch(penyediaKlienPos),
     repositoriKasir: ref.watch(penyediaRepositori),
     jam: ref.watch(penyediaJam),
   ),
