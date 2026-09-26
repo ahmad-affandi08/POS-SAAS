@@ -472,4 +472,82 @@ void main() {
       expect(await u.repositori.AmbilPengaturan(KunciPengaturan.modeMejaAktif), '1');
     });
   });
+
+  group('v1.99 pisah tagihan & gabung meja', () {
+    test('pisah: item terpilih pindah ke tagihan baru (outbox Buka lalu PindahBaris); semua dipilih ditolak', () async {
+      await Siapkan();
+      final pesanan = await u.pesananMeja.Buka(kasir: rina, k: k, meja: await Meja(mejaD01), jumlahTamu: 2);
+      final isi = await u.pesananMeja.SimpanBaris(
+        uuidPesanan: pesanan.uuid,
+        draf: DrafContoh(),
+        kasir: rina,
+        kirimDapur: true,
+      );
+      final croissant = isi.baris.last.uuid;
+
+      await expectLater(
+        () => u.pesananMeja.Pisah(
+          uuidAsal: pesanan.uuid,
+          uuidBaris: isi.baris.map((b) => b.uuid).toList(),
+          label: 'D-01 · Tagihan 2',
+          kasir: rina,
+          k: k,
+        ),
+        GalatDengan('SemuaDipilih'),
+      );
+
+      final hasil = await u.pesananMeja.Pisah(
+        uuidAsal: pesanan.uuid,
+        uuidBaris: [croissant],
+        label: 'D-01 · Tagihan 2',
+        kasir: rina,
+        k: k,
+      );
+      expect(hasil.asal.AmbilBarisAktif().map((b) => b.namaProduk), ['Es Kopi Susu Aren']);
+      expect(hasil.baru.AmbilJudul(), 'D-01 · Tagihan 2');
+      expect(hasil.baru.baris.single.uuid, croissant);
+      expect(hasil.baru.baris.single.dikirimKeDapur, isTrue, reason: 'Status dapur ikut pindah.');
+
+      final outbox = await Outbox();
+      expect(outbox[outbox.length - 2].Jenis, 'PesananTerbuka.Buka');
+      final pindah = outbox.last;
+      expect(pindah.Jenis, 'PesananTerbuka.PindahBaris');
+      expect(Data(pindah), {
+        'UuidPesanan': pesanan.uuid,
+        'UuidTujuan': hasil.baru.uuid,
+        'UuidBaris': [croissant],
+        'TutupAsal': false,
+        'UuidPengguna': rina.uuid,
+        'DipindahPada': '2026-09-24T01:00:00.000Z',
+      });
+      // Kedua pesanan menunggu PindahBaris → snapshot server tidak menimpanya.
+      expect(await u.repositoriMeja.AmbilUuidPesananTertunda(), containsAll([pesanan.uuid, hasil.baru.uuid]));
+    });
+
+    test('gabung: semua item pindah, asal ditutup Digabung & mejanya kosong; asal kosong ditolak', () async {
+      await Siapkan();
+      final d01 = await u.pesananMeja.Buka(kasir: rina, k: k, meja: await Meja(mejaD01));
+      final t01 = await u.pesananMeja.Buka(kasir: rina, k: k, meja: await Meja(mejaT01));
+      await expectLater(
+        () => u.pesananMeja.Gabung(uuidAsal: t01.uuid, uuidTujuan: d01.uuid, kasir: rina),
+        GalatDengan('PesananKosong'),
+      );
+      await u.pesananMeja.SimpanBaris(uuidPesanan: t01.uuid, draf: DrafContoh(), kasir: rina, kirimDapur: false);
+
+      final tujuan = await u.pesananMeja.Gabung(uuidAsal: t01.uuid, uuidTujuan: d01.uuid, kasir: rina);
+      expect(tujuan.AmbilBarisAktif(), hasLength(2));
+      expect((await u.repositoriMeja.CariPesanan(t01.uuid))!.status, StatusPesananMeja.digabung);
+      expect(await u.repositoriMeja.CariPesananDiMeja(mejaT01), isNull, reason: 'Meja T-01 kosong lagi.');
+      expect(Data((await Outbox()).last)['TutupAsal'], true);
+
+      await expectLater(
+        () => u.pesananMeja.Gabung(uuidAsal: t01.uuid, uuidTujuan: d01.uuid, kasir: rina),
+        GalatDengan('PesananSudahDitutup'),
+      );
+      await expectLater(
+        () => u.pesananMeja.PindahBaris(uuidAsal: d01.uuid, uuidTujuan: d01.uuid, uuidBaris: const ['x'], kasir: rina),
+        GalatDengan('TujuanSama'),
+      );
+    });
+  });
 }

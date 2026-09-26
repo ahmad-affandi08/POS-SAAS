@@ -8,7 +8,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * Item outbox `PesananTerbuka.*` (F-07 mode meja fase 1) yang sudah divalidasi. Bidang yang tidak dipakai jenis
- * item tertentu dibiarkan kosong; `ubah*` menandai bidang header yang dikirim pada `PesananTerbuka.Ubah`.
+ * item tertentu dibiarkan kosong; `ubah*` menandai bidang header yang dikirim pada `PesananTerbuka.Ubah`;
+ * `uuidTujuan` & `tutupAsal` untuk `PesananTerbuka.PindahBaris` (v1.99).
  */
 final readonly class DataPesananTerbukaPos
 {
@@ -34,5 +35,7 @@ final readonly class DataPesananTerbukaPos
         public array $uuidBaris = [],
         public ?string $alasan = null,
         public ?string $uuidPenyetuju = null,
+        public ?string $uuidTujuan = null,
+        public bool $tutupAsal = false,
     ) {}
 }

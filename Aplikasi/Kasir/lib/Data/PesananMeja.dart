@@ -9,6 +9,9 @@ abstract final class StatusPesananMeja {
   static const String terbuka = 'Terbuka';
   static const String dibayar = 'Dibayar';
   static const String dibatalkan = 'Dibatalkan';
+
+  /// v1.99: semua item dipindah ke pesanan lain (gabung meja/tagihan).
+  static const String digabung = 'Digabung';
 }
 
 /// Satu baris pesanan terbuka di perangkat (kolom JSON `PesananTerbuka.Baris`). Append-only: baris yang sudah tersimpan

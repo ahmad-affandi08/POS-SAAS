@@ -39,6 +39,7 @@ class LayananPesananMeja {
   static const String jenisBatalkanBaris = 'PesananTerbuka.BatalkanBaris';
   static const String jenisUbah = 'PesananTerbuka.Ubah';
   static const String jenisBatal = 'PesananTerbuka.Batal';
+  static const String jenisPindahBaris = 'PesananTerbuka.PindahBaris';
 
   static const int panjangAlasanMinimal = 3;
   static const int panjangLabelMaksimal = 60;
@@ -370,6 +371,120 @@ class LayananPesananMeja {
       ],
       sekarang,
     );
+  }
+
+  // Pisah & gabung (v1.99) ------------------------------------------------------------------------------------------------
+
+  /// Pindahkan baris aktif [uuidBaris] dari [uuidAsal] ke [uuidTujuan] (tanpa mengubah harga, ronde, status dapur).
+  /// [tutupAsal] (gabung): asal yang tidak lagi punya baris aktif ditutup berstatus `Digabung`.
+  Future<({PesananMeja asal, PesananMeja tujuan})> PindahBaris({
+    required String uuidAsal,
+    required String uuidTujuan,
+    required List<String> uuidBaris,
+    required StafLokal kasir,
+    bool tutupAsal = false,
+  }) async {
+    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat)) {
+      throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin mengubah pesanan.');
+    }
+    if (uuidAsal == uuidTujuan) {
+      throw const GalatKasir('TujuanSama', 'Pilih pesanan tujuan yang lain.');
+    }
+    final asal = await _CariTerbuka(uuidAsal);
+    await _CariTerbuka(uuidTujuan);
+    final dipilih = asal.AmbilBarisAktif().where((b) => uuidBaris.contains(b.uuid)).map((b) => b.uuid).toSet();
+    if (dipilih.isEmpty) {
+      throw const GalatKasir('BarisTidakDipilih', 'Pilih minimal satu item yang dipindah.');
+    }
+    final sekarang = _jam().toUtc();
+    final hasil = await repositoriMeja.UbahDuaPesanan(
+      uuidAsal,
+      uuidTujuan,
+      (a, t) {
+        final pindah = a.baris.where((b) => dipilih.contains(b.uuid)).toList();
+        final sisa = a.baris.where((b) => !dipilih.contains(b.uuid)).toList();
+        final tutup = tutupAsal && !sisa.any((b) => !b.dibatalkan);
+        return (
+          asal: PesananTerbukaCompanion(
+            Baris: Value(RepositoriPesananMeja.SusunJsonBaris(sisa)),
+            Status: tutup ? const Value(StatusPesananMeja.digabung) : const Value.absent(),
+            DiubahPada: Value(sekarang),
+          ),
+          tujuan: PesananTerbukaCompanion(
+            Baris: Value(RepositoriPesananMeja.SusunJsonBaris([...t.baris, ...pindah])),
+            DiubahPada: Value(sekarang),
+          ),
+        );
+      },
+      [
+        ItemOutbox(
+          jenis: jenisPindahBaris,
+          uuid: _ulid.Buat(),
+          data: {
+            'UuidPesanan': uuidAsal,
+            'UuidTujuan': uuidTujuan,
+            'UuidBaris': dipilih.toList(),
+            'TutupAsal': tutupAsal,
+            'UuidPengguna': kasir.uuid,
+            'DipindahPada': sekarang.toIso8601String(),
+          },
+        ),
+      ],
+      sekarang,
+    );
+    if (hasil == null) {
+      throw const GalatKasir('PesananSudahDitutup', 'Salah satu pesanan sudah dibayar atau dibatalkan.');
+    }
+    return hasil;
+  }
+
+  /// Pisah tagihan: item terpilih dipindah ke pesanan baru tanpa meja (label wajib) yang dibayar terpisah. Minimal satu
+  /// item tetap di pesanan asal.
+  Future<({PesananMeja asal, PesananMeja baru})> Pisah({
+    required String uuidAsal,
+    required List<String> uuidBaris,
+    required String label,
+    required StafLokal kasir,
+    required KonteksPenjualan k,
+    int jumlahTamu = 1,
+  }) async {
+    final asal = await _CariTerbuka(uuidAsal);
+    final aktif = asal.AmbilBarisAktif().map((b) => b.uuid).toSet();
+    final dipilih = uuidBaris.where(aktif.contains).toSet();
+    if (dipilih.isEmpty) {
+      throw const GalatKasir('BarisTidakDipilih', 'Pilih item yang dibayar terpisah.');
+    }
+    if (dipilih.length == aktif.length) {
+      throw const GalatKasir(
+        'SemuaDipilih',
+        'Sisakan minimal satu item di tagihan ini, atau bayar langsung tanpa pisah.',
+      );
+    }
+    final baru = await Buka(kasir: kasir, k: k, label: label, jumlahTamu: jumlahTamu);
+    final hasil = await PindahBaris(
+      uuidAsal: uuidAsal,
+      uuidTujuan: baru.uuid,
+      uuidBaris: dipilih.toList(),
+      kasir: kasir,
+    );
+    return (asal: hasil.asal, baru: hasil.tujuan);
+  }
+
+  /// Gabung: semua item aktif [uuidAsal] pindah ke [uuidTujuan], lalu asal ditutup (`Digabung`).
+  Future<PesananMeja> Gabung({required String uuidAsal, required String uuidTujuan, required StafLokal kasir}) async {
+    final asal = await _CariTerbuka(uuidAsal);
+    final aktif = asal.AmbilBarisAktif().map((b) => b.uuid).toList();
+    if (aktif.isEmpty) {
+      throw const GalatKasir('PesananKosong', 'Pesanan ini belum punya item. Batalkan saja pesanannya.');
+    }
+    final hasil = await PindahBaris(
+      uuidAsal: uuidAsal,
+      uuidTujuan: uuidTujuan,
+      uuidBaris: aktif,
+      kasir: kasir,
+      tutupAsal: true,
+    );
+    return hasil.tujuan;
   }
 
   // Keranjang bayar ----------------------------------------------------------------------------------------------------

@@ -6,13 +6,15 @@ namespace App\Domain\Penjualan\Enum;
 
 /**
  * Status pesanan terbuka / open bill (F-07 mode meja fase 1): `Terbuka` → `Dibayar` (lewat `Penjualan.Buat` yang
- * merujuknya) atau `Dibatalkan`. Pesanan yang sudah ditutup tidak bisa diubah.
+ * merujuknya), `Dibatalkan`, atau `Digabung` (v1.99: semua item dipindah ke pesanan lain saat gabung meja/tagihan).
+ * Pesanan yang sudah ditutup tidak bisa diubah.
  */
 enum StatusPesananTerbuka: string
 {
     case Terbuka = 'Terbuka';
     case Dibayar = 'Dibayar';
     case Dibatalkan = 'Dibatalkan';
+    case Digabung = 'Digabung';
 
     public function AmbilLabel(): string
     {
@@ -20,6 +22,7 @@ enum StatusPesananTerbuka: string
             self::Terbuka => 'Terbuka',
             self::Dibayar => 'Dibayar',
             self::Dibatalkan => 'Dibatalkan',
+            self::Digabung => 'Digabung',
         };
     }
 

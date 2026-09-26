@@ -337,3 +337,135 @@ Future<({bool dipilih, BarisMeja? meja})> PilihMejaTujuan(
   );
   return hasil == null ? (dipilih: false, meja: null) : (dipilih: true, meja: hasil.meja);
 }
+
+/// v1.99 pisah tagihan: pilih item yang dibayar terpisah + nama tagihan baru. Hasil null = batal.
+Future<({List<String> uuidBaris, String label})?> PilihItemPisah(BuildContext context, PesananMeja pesanan) =>
+    showDialog<({List<String> uuidBaris, String label})>(
+      context: context,
+      builder: (_) => _DialogPisahTagihan(pesanan: pesanan),
+    );
+
+class _DialogPisahTagihan extends StatefulWidget {
+  const _DialogPisahTagihan({required this.pesanan});
+
+  final PesananMeja pesanan;
+
+  @override
+  State<_DialogPisahTagihan> createState() => _DialogPisahTagihanState();
+}
+
+class _DialogPisahTagihanState extends State<_DialogPisahTagihan> {
+  final Set<String> _dipilih = {};
+  late final TextEditingController _label = TextEditingController(text: '${widget.pesanan.AmbilJudul()} · Tagihan 2');
+  String? _galat;
+
+  @override
+  void dispose() {
+    _label.dispose();
+    super.dispose();
+  }
+
+  void _Simpan(int jumlahAktif) {
+    final label = _label.text.trim();
+    if (_dipilih.isEmpty) {
+      setState(() => _galat = 'Pilih item yang dibayar terpisah.');
+      return;
+    }
+    if (_dipilih.length == jumlahAktif) {
+      setState(() => _galat = 'Sisakan minimal satu item di tagihan ini.');
+      return;
+    }
+    if (label.isEmpty) {
+      setState(() => _galat = 'Isi nama tagihan baru.');
+      return;
+    }
+    Navigator.of(context).pop((uuidBaris: _dipilih.toList(), label: label));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final aktif = widget.pesanan.AmbilBarisAktif().toList();
+    final teks = Theme.of(context).textTheme;
+    return AlertDialog(
+      title: Text('Pisah tagihan ${widget.pesanan.AmbilJudul()}'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Item yang dicentang pindah ke tagihan baru dan dibayar terpisah.', style: teks.bodySmall),
+              const SizedBox(height: TokenJarak.jarak8),
+              for (final b in aktif)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _dipilih.contains(b.uuid),
+                  title: Text('${b.namaProduk} × ${FormatJumlahPesanan(b.jumlah)}'),
+                  subtitle: b.catatan == null ? null : Text(b.catatan!),
+                  onChanged: (nilai) => setState(() {
+                    nilai == true ? _dipilih.add(b.uuid) : _dipilih.remove(b.uuid);
+                    _galat = null;
+                  }),
+                ),
+              const SizedBox(height: TokenJarak.jarak8),
+              TextField(
+                controller: _label,
+                maxLength: LayananPesananMeja.panjangLabelMaksimal,
+                decoration: const InputDecoration(labelText: 'Nama tagihan baru'),
+              ),
+              if (_galat != null)
+                Text(_galat!, style: teks.bodyMedium?.copyWith(color: TokenWarna.AmbilDari(context).bahaya)),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+        FilledButton(onPressed: () => _Simpan(aktif.length), child: const Text('Pisah tagihan')),
+      ],
+    );
+  }
+}
+
+/// `2.0000` → `2`; `1.5000` → `1,5`.
+String FormatJumlahPesanan(String jumlah) {
+  var teks = jumlah;
+  if (teks.contains('.')) {
+    teks = teks.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+  return teks.replaceAll('.', ',');
+}
+
+/// v1.99 gabung: pilih pesanan terbuka tujuan (meja/tagihan lain). Hasil null = batal.
+Future<PesananMeja?> PilihPesananTujuan(
+  BuildContext context, {
+  required PesananMeja asal,
+  required List<PesananMeja> pesanan,
+}) {
+  final pilihan = pesanan.where((p) => p.uuid != asal.uuid).toList();
+  return showDialog<PesananMeja>(
+    context: context,
+    builder: (konteks) => SimpleDialog(
+      title: Text('Gabungkan ${asal.AmbilJudul()} ke'),
+      children: [
+        if (pilihan.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(TokenJarak.jarak16),
+            child: Text('Tidak ada pesanan terbuka lain untuk digabung.'),
+          ),
+        for (final p in pilihan)
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(konteks).pop(p),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('${p.AmbilJudul()} · ${p.AmbilBarisAktif().length} item'),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}

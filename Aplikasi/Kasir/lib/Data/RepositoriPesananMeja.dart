@@ -131,6 +131,33 @@ class RepositoriPesananMeja {
     return CariPesanan(uuid);
   });
 
+  /// v1.99 pisah/gabung: ubah dua pesanan terbuka ([uuidAsal] & [uuidTujuan]) dan tambahkan [outbox] dalam satu
+  /// transaksi. Salah satu sudah tidak terbuka → `null`.
+  Future<({PesananMeja asal, PesananMeja tujuan})?> UbahDuaPesanan(
+    String uuidAsal,
+    String uuidTujuan,
+    ({PesananTerbukaCompanion asal, PesananTerbukaCompanion tujuan}) Function(PesananMeja asal, PesananMeja tujuan)
+    ubah,
+    List<ItemOutbox> outbox,
+    DateTime sekarang,
+  ) => db.transaction(() async {
+    final asal = await CariPesanan(uuidAsal);
+    final tujuan = await CariPesanan(uuidTujuan);
+    if (asal == null ||
+        tujuan == null ||
+        asal.status != StatusPesananMeja.terbuka ||
+        tujuan.status != StatusPesananMeja.terbuka) {
+      return null;
+    }
+    final hasil = ubah(asal, tujuan);
+    await (db.update(db.pesananTerbuka)..where((p) => p.Uuid.equals(uuidAsal))).write(hasil.asal);
+    await (db.update(db.pesananTerbuka)..where((p) => p.Uuid.equals(uuidTujuan))).write(hasil.tujuan);
+    for (final item in outbox) {
+      await repositoriKasir.TambahOutbox(item, sekarang);
+    }
+    return (asal: (await CariPesanan(uuidAsal))!, tujuan: (await CariPesanan(uuidTujuan))!);
+  });
+
   static String SusunJsonBaris(List<BarisPesananMeja> baris) => jsonEncode([for (final b in baris) b.KeJson()]);
 
   /// Uuid pesanan yang masih punya item outbox tertunda (`PesananTerbuka.*`, atau `Penjualan.Buat` yang menutupnya).
@@ -151,6 +178,11 @@ class RepositoriPesananMeja {
       final uuid = data['UuidPesanan'] ?? data['UuidPesananTerbuka'];
       if (uuid is String) {
         hasil.add(uuid);
+      }
+      // v1.99 PindahBaris: pesanan tujuan juga menunggu perubahan ini.
+      final tujuan = data['UuidTujuan'];
+      if (tujuan is String) {
+        hasil.add(tujuan);
       }
     }
     return hasil;

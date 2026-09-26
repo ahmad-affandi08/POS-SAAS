@@ -148,7 +148,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     );
   }
 
-  Future<void> _BukaMenu(PesananMeja pesanan, List<BarisMeja> meja, Set<String> terisi) async {
+  Future<void> _BukaMenu(PesananMeja pesanan, List<BarisMeja> meja, Set<String> terisi, List<PesananMeja> semua) async {
     final pilihan = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -167,6 +167,18 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
               title: const Text('Pindah meja'),
               onTap: () => Navigator.of(konteks).pop('Pindah'),
             ),
+            if (pesanan.AmbilBarisAktif().length > 1)
+              ListTile(
+                leading: const Icon(Icons.call_split),
+                title: const Text('Pisah tagihan'),
+                onTap: () => Navigator.of(konteks).pop('Pisah'),
+              ),
+            if (semua.length > 1)
+              ListTile(
+                leading: const Icon(Icons.call_merge),
+                title: const Text('Gabung ke pesanan lain'),
+                onTap: () => Navigator.of(konteks).pop('Gabung'),
+              ),
             if (pesanan.AmbilBarisAktif().any((b) => b.dikirimKeDapur))
               ListTile(
                 leading: const Icon(Icons.soup_kitchen_outlined),
@@ -195,6 +207,37 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
         _Lanjutkan(pesanan);
       case 'CetakTiket':
         await _CetakUlangTiket(pesanan);
+      case 'Pisah':
+        final pilihan = await PilihItemPisah(context, pesanan);
+        if (pilihan != null && mounted) {
+          await _Jalankan(() async {
+            final hasil = await ref
+                .read(penyediaLayananPesananMeja)
+                .Pisah(
+                  uuidAsal: pesanan.uuid,
+                  uuidBaris: pilihan.uuidBaris,
+                  label: pilihan.label,
+                  kasir: widget.kasir,
+                  k: await ref.read(penyediaKonteksPenjualan.future),
+                );
+            _SegarkanKeranjang(hasil.asal);
+            return 'Tagihan dipisah: ${hasil.baru.AmbilJudul()} (${hasil.baru.AmbilBarisAktif().length} item).';
+          });
+        }
+      case 'Gabung':
+        final tujuan = await PilihPesananTujuan(context, asal: pesanan, pesanan: semua);
+        if (tujuan != null && mounted) {
+          await _Jalankan(() async {
+            final hasil = await ref
+                .read(penyediaLayananPesananMeja)
+                .Gabung(uuidAsal: pesanan.uuid, uuidTujuan: tujuan.uuid, kasir: widget.kasir);
+            if (ref.read(penyediaKeranjang).pesananMeja?.uuid == pesanan.uuid) {
+              ref.read(penyediaKeranjang.notifier).Kosongkan();
+            }
+            _SegarkanKeranjang(hasil);
+            return '${pesanan.AmbilJudul()} digabung ke ${hasil.AmbilJudul()}.';
+          });
+        }
       case 'Pindah':
         final tujuan = await PilihMejaTujuan(context, meja: meja, terisi: terisi, uuidSekarang: pesanan.uuidMeja);
         if (!tujuan.dipilih || !mounted) {
@@ -241,6 +284,30 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
           setState(() => _pesan = pesan);
           unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
         }
+    }
+  }
+
+  /// Pesanan yang sedang dibuka di keranjang ikut diperbarui setelah pisah/gabung.
+  void _SegarkanKeranjang(PesananMeja pesanan) {
+    final draf = ref.read(penyediaKeranjang);
+    if (draf.pesananMeja?.uuid == pesanan.uuid) {
+      ref
+          .read(penyediaKeranjang.notifier)
+          .Ganti(draf.Salin(pesananMeja: () => KonteksPesananMeja.DariPesanan(pesanan)));
+    }
+  }
+
+  Future<void> _Jalankan(Future<String> Function() aksi) async {
+    try {
+      final pesan = await aksi();
+      if (mounted) {
+        setState(() => _pesan = pesan);
+      }
+      unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _pesan = galat.pesan);
+      }
     }
   }
 
@@ -406,7 +473,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
         pesanan: p,
         kapasitas: m.Kapasitas,
         saatDiketuk: () => p == null ? unawaited(_BukaBaru(m)) : _Lanjutkan(p),
-        saatMenu: p == null ? null : () => unawaited(_BukaMenu(p, meja, terisi)),
+        saatMenu: p == null ? null : () => unawaited(_BukaMenu(p, meja, terisi, pesanan)),
       );
     }
 
@@ -483,7 +550,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
                 judul: p.AmbilJudul(),
                 pesanan: p,
                 saatDiketuk: () => _Lanjutkan(p),
-                saatMenu: () => unawaited(_BukaMenu(p, meja, terisi)),
+                saatMenu: () => unawaited(_BukaMenu(p, meja, terisi, pesanan)),
               ),
           ]),
         ],

@@ -14,6 +14,7 @@ use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatReturPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBukaPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronKirimDapurPesananTerbuka;
+use App\Domain\Penjualan\Layanan\PenanganSinkronPindahBarisPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronTambahPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronUbahPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronVoidPenjualan;
@@ -37,6 +38,7 @@ final class PenyediaPenjualan extends ServiceProvider
             PenanganSinkronTambahPesananTerbuka::class,
             PenanganSinkronKirimDapurPesananTerbuka::class,
             PenanganSinkronBatalkanBarisPesananTerbuka::class,
+            PenanganSinkronPindahBarisPesananTerbuka::class,
             PenanganSinkronUbahPesananTerbuka::class,
             PenanganSinkronBatalPesananTerbuka::class,
             // F-12 bagian 2: pre-order + uang muka.
