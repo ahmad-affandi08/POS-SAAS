@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Katalog;
 
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Aksi\ArsipkanProduk;
 use App\Domain\Katalog\Aksi\BuatBarcodeInternal;
 use App\Domain\Katalog\Aksi\HapusProduk;
 use App\Domain\Katalog\Aksi\PulihkanProduk;
 use App\Domain\Katalog\Aksi\SimpanProduk;
+use App\Domain\Katalog\Aksi\SimpanProdukDenganPaketSesi;
 use App\Domain\Katalog\Data\DataSaringProduk;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\StatusProduk;
@@ -25,6 +27,7 @@ use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\OutletUtama;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
+use App\Domain\Pelanggan\Kueri\PengaturanSesiTenant;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\Katalog\SimpanProdukPermintaan;
@@ -69,11 +72,31 @@ final class ProdukKontroler extends DasarKatalogKontroler
         return $this->RenderForm('Buat', $detail->AmbilFormKosong(), null, false);
     }
 
-    public function Simpan(SimpanProdukPermintaan $permintaan, SimpanProduk $simpan): RedirectResponse
+    public function Simpan(SimpanProdukPermintaan $permintaan, SimpanProduk $simpan, SimpanProdukDenganPaketSesi $simpanPaket, PengaturanSesiTenant $sesi): RedirectResponse
     {
-        $produk = $simpan->Jalankan(null, $permintaan->AmbilData(null, $this->CekIzin(IzinTenant::ProdukHargaUbah)));
+        $data = $permintaan->AmbilData(null, $this->CekIzin(IzinTenant::ProdukHargaUbah));
+        $paket = $permintaan->AmbilPaketSesi();
 
-        return redirect()->route('kelola.produk.detail', ['produk' => $produk->Uuid])->with('Kilat', "Produk {$produk->Nama} disimpan.");
+        if ($paket === null) {
+            $produk = $simpan->Jalankan(null, $data);
+
+            return redirect()->route('kelola.produk.detail', ['produk' => $produk->Uuid])->with('Kilat', "Produk {$produk->Nama} disimpan.");
+        }
+
+        // D-23 B: produk Jasa + paket sesinya sekaligus (fitur paket sesi harus termasuk paket langganan).
+        if (! $sesi->CekBerlaku()) {
+            throw new PelanggaranAturanBisnis('FiturTidakAktif', 'Paket usaha ini belum termasuk paket sesi. Tingkatkan paket langganan untuk memakainya.', 'PaketSesi.JumlahSesi');
+        }
+
+        if ($data->jenis !== JenisProduk::Jasa) {
+            throw new PelanggaranAturanBisnis('ProdukBukanJasa', 'Paket sesi hanya untuk produk berjenis Jasa.', 'PaketSesi.JumlahSesi');
+        }
+
+        $produk = $simpanPaket->Jalankan($data, $paket['JumlahSesi'], $paket['MasaBerlakuHari'], $this->Pelaku()->Id);
+        $masa = $paket['MasaBerlakuHari'] === null ? 'tanpa batas waktu' : "berlaku {$paket['MasaBerlakuHari']} hari";
+
+        return redirect()->route('kelola.produk.detail', ['produk' => $produk->Uuid])
+            ->with('Kilat', "Produk {$produk->Nama} disimpan sebagai paket {$paket['JumlahSesi']} sesi ({$masa}).");
     }
 
     public function Detail(string $produk, DetailProduk $detail, KepalaProduk $kepala): Response
@@ -156,6 +179,7 @@ final class ProdukKontroler extends DasarKatalogKontroler
             'BatasSku' => $this->AmbilBatasSku(),
             'Pengaturan' => $this->AmbilPengaturan(),
             'Izin' => $this->AmbilIzinKatalog(),
+            'FiturPaketSesi' => $mode === 'Buat' && app(PengaturanSesiTenant::class)->CekBerlaku(),
         ]);
     }
 

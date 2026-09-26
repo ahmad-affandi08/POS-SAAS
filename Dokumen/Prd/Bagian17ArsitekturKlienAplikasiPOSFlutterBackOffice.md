@@ -400,6 +400,14 @@ Satu halaman `/kelola/tindakan` (menu "Kotak tindakan" tepat di bawah Beranda) +
 - Rincian per butir maks. 20 terbaru; sisanya muncul setelah yang tampil ditandai. Pengingat lain tidak bisa ditandai: hilang sendiri saat keadaannya berubah.
 
 
+#### 17.4.6 Formulir Sederhana (Keputusan D-23 B, v2.14)
+
+Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wajib dipahami pemilik usaha kecil, sisanya memakai bawaan yang aman dan ditampilkan sebagai satu kalimat ringkas ("Otomatis: satuan …, pajak …, tampil di kasir, SKU dibuat otomatis"). Tombol "Formulir lengkap" membuka semua isian (tab) tanpa kehilangan isian; pilihan mode diingat per peramban (kenyamanan saja). Mode Ubah selalu lengkap. Galat server pada isian yang hanya ada di formulir lengkap otomatis membuka formulir lengkap.
+
+- **Produk** (tambah): nama, jenis (Barang stok, Menu resep, Jasa, Non-stok; jenis lain di formulir lengkap), harga jual (= harga dasar mulai 1 satuan dasar; perlu izin `produk.harga.ubah`), kategori.
+- **Jual sebagai paket sesi** (produk Jasa, fitur `pelanggan.paket-sesi`): jumlah sesi (1–1.000) + masa berlaku hari (opsional). Server membuat produk dan `PaketSesi` (semua layanan Jasa bisa ditukar) dalam **satu transaksi**; kirim ulang dengan `Uuid` produk sama idempoten. Daftar layanan tertentu tetap diatur di menu Paket sesi.
+- Formulir lain (pelanggan, pemasok, promo) menyusul dengan pola yang sama bila audit kemudahan menunjukkan isian berlebih.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -3,6 +3,8 @@ import { useId, useRef, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangUang from '@/Komponen/Formulir/BidangUang';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { AmbilGalatBerawalan, CekAdaGalat } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -77,6 +79,42 @@ const opsiPelacakan: { Nilai: PelacakanProduk; Label: string; Keterangan: string
     },
 ];
 
+type ModeFormulir = 'Sederhana' | 'Lengkap';
+
+const kunciModeFormulir = 'Katalog.FormProduk.Mode';
+
+/** Preferensi mode formulir per peramban (kenyamanan saja); bawaan Sederhana (D-23 B). */
+function BacaModeFormulir(): ModeFormulir {
+    try {
+        return window.localStorage.getItem(kunciModeFormulir) === 'Lengkap' ? 'Lengkap' : 'Sederhana';
+    } catch {
+        return 'Sederhana';
+    }
+}
+
+function SimpanModeFormulir(mode: ModeFormulir): void {
+    try {
+        window.localStorage.setItem(kunciModeFormulir, mode);
+    } catch {
+        // Penyimpanan peramban diblokir: pilihan hanya berlaku di halaman ini.
+    }
+}
+
+/** Jenis yang ditawarkan di mode Sederhana, dengan contoh yang mudah dipahami. */
+const jenisSederhana: Partial<Record<JenisProduk, string>> = {
+    Stok: 'Barang yang dihitung stoknya, misal sabun atau minuman botol.',
+    Resep: 'Menu dari bahan baku, misal kopi susu. Resep diisi setelah produk disimpan.',
+    Jasa: 'Layanan tanpa stok, misal potong rambut, servis, atau paket perawatan.',
+    NonStok: 'Barang yang dijual tanpa menghitung stok.',
+};
+
+/** Galat yang isiannya tampil di mode Sederhana; galat lain membuka formulir lengkap. */
+export function CekGalatSederhana(kunci: string): boolean {
+    return (
+        ['Uuid', 'Nama', 'Jenis', 'UuidKategori'].includes(kunci) || /^(Satuan\.\d+\.HargaAwal|PaketSesi)/.test(kunci)
+    );
+}
+
 /** Keterangan singkat aturan jenis produk untuk pengguna. */
 export function JelaskanJenis(aturan: AturanJenisProduk | undefined): string {
     if (!aturan) {
@@ -116,10 +154,12 @@ export default function HalamanFormProduk({
     BatasSku,
     Pengaturan,
     Izin,
+    FiturPaketSesi = false,
 }: PropsFormProduk) {
     const formulir = useForm<FormProduk>({
         ...Produk,
         Satuan: SiapkanSatuanDasar(Produk.Satuan, Produk.UuidSatuanDasar),
+        ...(Mode === 'Buat' ? { PaketSesi: null } : {}),
     });
     const data = formulir.data;
     const galat = formulir.errors as Record<string, string | undefined>;
@@ -133,6 +173,26 @@ export default function HalamanFormProduk({
     const satuanDasar = Satuan.find((item) => item.Uuid === data.UuidSatuanDasar);
     const batasPenuh = Mode === 'Buat' && (aturan?.DihitungBatasSku ?? false) && CekBatasPenuh(BatasSku);
     const bolehUbah = Izin.Kelola;
+    const [modeFormulir, AturModeFormulir] = useState<ModeFormulir>(() =>
+        Mode === 'Buat' ? BacaModeFormulir() : 'Lengkap',
+    );
+    const [periksaSederhana, AturPeriksaSederhana] = useState(false);
+    const adaGalatLanjutan = Object.entries(galat).some(
+        ([kunci, pesan]) => Boolean(pesan) && !CekGalatSederhana(kunci),
+    );
+    const sederhana = Mode === 'Buat' && modeFormulir === 'Sederhana' && !adaGalatLanjutan;
+    const paketSesi = data.PaketSesi ?? null;
+    const bolehPaketSesi = Mode === 'Buat' && FiturPaketSesi && data.Jenis === 'Jasa';
+    const indeksDasar = data.Satuan.findIndex(
+        (baris) => baris.Uuid === null && baris.UuidSatuan === data.UuidSatuanDasar,
+    );
+    const hargaDasar = indeksDasar < 0 ? '' : (data.Satuan[indeksDasar]?.HargaAwal[0]?.Harga ?? '');
+    const kelompokPajak = KelompokPajak.find((item) => item.Uuid === data.UuidKelompokPajak);
+
+    const GantiModeFormulir = (mode: ModeFormulir) => {
+        AturModeFormulir(mode);
+        SimpanModeFormulir(mode);
+    };
 
     const Atur = <K extends keyof FormProduk>(kunci: K, nilai: FormProduk[K]) =>
         formulir.setData((lama) => ({ ...lama, [kunci]: nilai }));
@@ -146,8 +206,46 @@ export default function HalamanFormProduk({
             Pelacakan: aturanBaru?.BolehPelacakan ? lama.Pelacakan : 'Tidak',
             TampilDiPos: aturanBaru?.BisaDijual || nilai === 'IndukVarian' ? lama.TampilDiPos : false,
             AtributVarian: nilai === 'IndukVarian' ? lama.AtributVarian : [],
+            ...(lama.PaketSesi !== undefined && nilai !== 'Jasa' ? { PaketSesi: null } : {}),
         }));
     };
+
+    /** Mode Sederhana: satu isian harga = harga dasar (mulai 1) satuan dasar; baris bertingkat lain dipertahankan. */
+    const AturHargaDasar = (nilai: string) =>
+        formulir.setData((lama) => ({
+            ...lama,
+            Satuan: lama.Satuan.map((baris, i) => {
+                if (i !== indeksDasar) {
+                    return baris;
+                }
+
+                return {
+                    ...baris,
+                    HargaAwal:
+                        nilai === ''
+                            ? baris.HargaAwal.slice(1)
+                            : [
+                                  { JumlahMinimum: baris.HargaAwal[0]?.JumlahMinimum ?? '1', Harga: nilai },
+                                  ...baris.HargaAwal.slice(1),
+                              ],
+                };
+            }),
+        }));
+
+    const AturPaketSesi = (nilai: { JumlahSesi: string; MasaBerlakuHari: string } | null) =>
+        formulir.setData((lama) => ({ ...lama, PaketSesi: nilai }));
+
+    const galatHargaSederhana =
+        galat[`Satuan.${String(indeksDasar)}.HargaAwal.0.Harga`] ??
+        galat[`Satuan.${String(indeksDasar)}.HargaAwal`] ??
+        (periksaSederhana && bisaDijual && !induk && Izin.UbahHarga && hargaDasar === ''
+            ? 'Isi harga jual. Tulis 0 bila gratis.'
+            : undefined);
+    const galatJumlahSesi =
+        galat['PaketSesi.JumlahSesi'] ??
+        (periksaSederhana && paketSesi !== null && !/^[1-9]\d{0,3}$/.test(paketSesi.JumlahSesi)
+            ? 'Isi jumlah sesi, misal 10.'
+            : undefined);
 
     const satuanBaru = data.Satuan.map((baris, indeks) => ({ baris, indeks })).filter(
         ({ baris }) => baris.Uuid === null,
@@ -175,7 +273,23 @@ export default function HalamanFormProduk({
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
+        AturPeriksaSederhana(true);
+
+        const hargaKosong = sederhana && bisaDijual && !induk && Izin.UbahHarga && hargaDasar === '';
+        const sesiSalah = paketSesi !== null && bolehPaketSesi && !/^[1-9]\d{0,3}$/.test(paketSesi.JumlahSesi);
+
+        if (hargaKosong || sesiSalah) {
+            AturTabAktif('Umum');
+            FokusGalatPertama(elemenForm.current);
+
+            return;
+        }
+
         const tabSalah = PeriksaLokal();
+
+        if (tabSalah !== null && sederhana) {
+            GantiModeFormulir('Lengkap');
+        }
 
         if (tabSalah !== null) {
             AturPeriksaHarga(true);
@@ -188,6 +302,12 @@ export default function HalamanFormProduk({
         const opsi = {
             preserveScroll: true,
             onError: (galatBaru: Record<string, string | undefined>) => {
+                if (Object.keys(galatBaru).every((kunci) => CekGalatSederhana(kunci)) && sederhana) {
+                    FokusGalatPertama(elemenForm.current);
+
+                    return;
+                }
+
                 const tab = (['Umum', 'Satuan', 'Harga', 'Varian', 'Pajak'] as KunciTab[]).find((kunci) =>
                     CekGalatTab(galatBaru, kunci),
                 );
@@ -215,6 +335,117 @@ export default function HalamanFormProduk({
         { Kunci: 'Pajak', Label: 'Pajak & tampilan' },
     ];
     const daftarTab = tabDasar.map((item) => ({ ...item, AdaGalat: CekGalatTab(galat, item.Kunci) }));
+
+    const bagianPaketSesi = bolehPaketSesi ? (
+        <div className="flex flex-col gap-2 rounded-kontrol border border-garis p-3 sm:col-span-2">
+            <KotakCentang
+                label="Jual sebagai paket sesi"
+                nilai={paketSesi !== null}
+                saatBerubah={(pilih) => AturPaketSesi(pilih ? { JumlahSesi: '', MasaBerlakuHari: '' } : null)}
+            />
+            <p className="text-keterangan text-teks-sekunder">
+                Pelanggan membayar di muka untuk beberapa kali layanan, misal 10 kali creambath. Sisa sesi tercatat di
+                data pelanggan dan dipakai di kasir.
+            </p>
+            {paketSesi !== null ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <BidangTeks
+                        label="Jumlah sesi"
+                        nilai={paketSesi.JumlahSesi}
+                        saatBerubah={(nilai) => AturPaketSesi({ ...paketSesi, JumlahSesi: nilai.replace(/\D/g, '') })}
+                        galat={galatJumlahSesi}
+                        inputMode="numeric"
+                        maxLength={4}
+                        required
+                    />
+                    <BidangTeks
+                        label="Masa berlaku (hari, opsional)"
+                        nilai={paketSesi.MasaBerlakuHari}
+                        saatBerubah={(nilai) =>
+                            AturPaketSesi({ ...paketSesi, MasaBerlakuHari: nilai.replace(/\D/g, '') })
+                        }
+                        galat={galat['PaketSesi.MasaBerlakuHari']}
+                        keterangan="Kosongkan bila sesi tidak kedaluwarsa."
+                        inputMode="numeric"
+                        maxLength={4}
+                    />
+                    <p className="text-keterangan text-teks-sekunder sm:col-span-2">
+                        Semua layanan Jasa bisa ditukar dengan sesi paket ini. Batasi layanannya di menu Paket sesi.
+                    </p>
+                </div>
+            ) : null}
+        </div>
+    ) : null;
+
+    const pilihanJenisSederhana = Jenis.filter(
+        (item) => jenisSederhana[item.Nilai] !== undefined || item.Nilai === data.Jenis,
+    ).map((item) => ({
+        Nilai: item.Nilai,
+        Label: item.Label,
+        Keterangan: jenisSederhana[item.Nilai] ?? JelaskanJenis(item),
+    }));
+
+    const panelSederhana = (
+        <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+                <BidangTeks
+                    label="Nama produk"
+                    nilai={data.Nama}
+                    saatBerubah={(nilai) => Atur('Nama', nilai)}
+                    galat={galat.Nama}
+                    maxLength={150}
+                    required
+                    autoFocus
+                />
+            </div>
+            <div className="sm:col-span-2">
+                <GrupRadio<JenisProduk>
+                    legenda="Jenis produk"
+                    nilai={data.Jenis}
+                    opsi={pilihanJenisSederhana}
+                    saatBerubah={GantiJenis}
+                    galat={galat.Jenis}
+                />
+            </div>
+            {bagianPaketSesi}
+            {bisaDijual && !induk ? (
+                <div className="flex flex-col gap-1">
+                    <BidangUang
+                        label={paketSesi !== null ? 'Harga paket' : 'Harga jual'}
+                        nilai={hargaDasar}
+                        saatBerubah={AturHargaDasar}
+                        galat={galatHargaSederhana}
+                        keterangan={
+                            satuanDasar
+                                ? `Per ${satuanDasar.Nama.toLowerCase()}. Harga bertingkat ada di formulir lengkap.`
+                                : 'Harga bertingkat ada di formulir lengkap.'
+                        }
+                        disabled={!Izin.UbahHarga}
+                        required={Izin.UbahHarga}
+                    />
+                    {!Izin.UbahHarga ? (
+                        <p className="text-keterangan text-teks-sekunder">
+                            Harga diisi oleh pengguna dengan izin produk.harga.ubah setelah produk disimpan.
+                        </p>
+                    ) : null}
+                </div>
+            ) : null}
+            <BidangPilihan
+                label="Kategori"
+                nilai={data.UuidKategori ?? ''}
+                kosong="Tanpa kategori"
+                opsi={Kategori.map((item) => ({ Nilai: item.Uuid, Label: item.Jalur }))}
+                saatBerubah={(nilai) => Atur('UuidKategori', nilai === '' ? null : nilai)}
+                galat={galat.UuidKategori}
+            />
+            <p className="text-keterangan text-teks-sekunder sm:col-span-2">
+                Otomatis: satuan {satuanDasar ? `${satuanDasar.Nama} (${satuanDasar.Simbol})` : 'dasar'}, pajak{' '}
+                {kelompokPajak ? kelompokPajak.Nama : 'belum dipilih'},{' '}
+                {data.TampilDiPos && bisaDijual ? 'tampil di kasir' : 'tidak tampil di kasir'}, SKU dibuat otomatis.
+                Barcode, satuan lain, harga bertingkat, dan varian ada di formulir lengkap.
+            </p>
+        </div>
+    );
 
     const panelUmum = (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -306,6 +537,7 @@ export default function HalamanFormProduk({
                     Satuan terkecil untuk stok dan resep, misal pcs, gram, atau ml.
                 </p>
             </div>
+            {bagianPaketSesi}
             {aturan?.BolehPelacakan ? (
                 <div className="sm:col-span-2">
                     <GrupRadio
@@ -488,48 +720,80 @@ export default function HalamanFormProduk({
                         (Object.keys(galatPerTab) as KunciTab[]).some((tab) => CekGalatTab({ [kunci]: 'x' }, tab)),
                     )}
                 />
-                <Card className="gap-0 rounded-panel p-4 shadow-none">
-                    <DaftarTab
-                        label="Bagian formulir produk"
-                        tab={daftarTab}
-                        aktif={tabAktif}
-                        saatPilih={AturTabAktif}
-                        panel={{
-                            Umum: panelUmum,
-                            Satuan: (
-                                <PenyuntingSatuanProduk
-                                    satuan={data.Satuan}
-                                    uuidSatuanDasar={data.UuidSatuanDasar}
-                                    opsiSatuan={Satuan}
-                                    saatBerubah={(nilai) => Atur('Satuan', nilai)}
-                                    galat={galat}
-                                    disabled={!bolehUbah}
-                                />
-                            ),
-                            Harga: panelHarga,
-                            Varian: (
-                                <div className="flex flex-col gap-3">
-                                    <p className="text-isi text-teks-sekunder">
-                                        Tentukan atribut dan nilainya di sini. Setelah produk disimpan, buat varian dari
-                                        halaman produk: satu varian untuk setiap kombinasi.
-                                    </p>
-                                    <PenyuntingAtributVarian
-                                        nilai={data.AtributVarian}
-                                        saatBerubah={(nilai) => Atur('AtributVarian', nilai)}
-                                        galat={AmbilGalatBerawalan(galat, 'AtributVarian')}
+                {Mode === 'Buat' ? (
+                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Tampilan formulir">
+                        <Button
+                            type="button"
+                            variant={sederhana ? 'default' : 'outline'}
+                            aria-pressed={sederhana}
+                            className="h-8 pointer-coarse:h-11"
+                            onClick={() => GantiModeFormulir('Sederhana')}
+                            disabled={adaGalatLanjutan}
+                        >
+                            Formulir sederhana
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={sederhana ? 'outline' : 'default'}
+                            aria-pressed={!sederhana}
+                            className="h-8 pointer-coarse:h-11"
+                            onClick={() => GantiModeFormulir('Lengkap')}
+                        >
+                            Formulir lengkap
+                        </Button>
+                        {adaGalatLanjutan ? (
+                            <span className="text-keterangan text-teks-sekunder">
+                                Perbaiki isian yang ditandai di formulir lengkap.
+                            </span>
+                        ) : null}
+                    </div>
+                ) : null}
+                {sederhana ? (
+                    <Card className="gap-0 rounded-panel p-4 shadow-none">{panelSederhana}</Card>
+                ) : (
+                    <Card className="gap-0 rounded-panel p-4 shadow-none">
+                        <DaftarTab
+                            label="Bagian formulir produk"
+                            tab={daftarTab}
+                            aktif={tabAktif}
+                            saatPilih={AturTabAktif}
+                            panel={{
+                                Umum: panelUmum,
+                                Satuan: (
+                                    <PenyuntingSatuanProduk
+                                        satuan={data.Satuan}
+                                        uuidSatuanDasar={data.UuidSatuanDasar}
+                                        opsiSatuan={Satuan}
+                                        saatBerubah={(nilai) => Atur('Satuan', nilai)}
+                                        galat={galat}
                                         disabled={!bolehUbah}
                                     />
-                                    {galat.AtributVarian ? (
-                                        <p className="text-keterangan font-semibold text-bahaya">
-                                            {galat.AtributVarian}
+                                ),
+                                Harga: panelHarga,
+                                Varian: (
+                                    <div className="flex flex-col gap-3">
+                                        <p className="text-isi text-teks-sekunder">
+                                            Tentukan atribut dan nilainya di sini. Setelah produk disimpan, buat varian
+                                            dari halaman produk: satu varian untuk setiap kombinasi.
                                         </p>
-                                    ) : null}
-                                </div>
-                            ),
-                            Pajak: panelPajak,
-                        }}
-                    />
-                </Card>
+                                        <PenyuntingAtributVarian
+                                            nilai={data.AtributVarian}
+                                            saatBerubah={(nilai) => Atur('AtributVarian', nilai)}
+                                            galat={AmbilGalatBerawalan(galat, 'AtributVarian')}
+                                            disabled={!bolehUbah}
+                                        />
+                                        {galat.AtributVarian ? (
+                                            <p className="text-keterangan font-semibold text-bahaya">
+                                                {galat.AtributVarian}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ),
+                                Pajak: panelPajak,
+                            }}
+                        />
+                    </Card>
+                )}
                 {satuanDasar === undefined && data.UuidSatuanDasar !== '' ? (
                     <p className="text-keterangan text-bahaya">
                         Satuan dasar tidak ditemukan. Pilih ulang satuan dasar.

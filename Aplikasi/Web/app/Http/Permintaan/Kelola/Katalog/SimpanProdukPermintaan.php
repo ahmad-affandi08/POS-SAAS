@@ -6,6 +6,7 @@ namespace App\Http\Permintaan\Kelola\Katalog;
 
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Katalog\Aksi\SimpanPaketSesi;
 use App\Domain\Katalog\Data\DataAtributVarian;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataSatuanProduk;
@@ -68,6 +69,10 @@ final class SimpanProdukPermintaan extends FormRequest
             'AtributVarian.*.Nama' => ['required', 'string', 'max:30'],
             'AtributVarian.*.Nilai' => ['required', 'array', 'min:1', 'max:20'],
             'AtributVarian.*.Nilai.*' => ['required', 'string', 'max:40'],
+            // D-23 B: "Jual sebagai paket sesi" (hanya saat membuat produk Jasa).
+            'PaketSesi' => ['nullable', 'array'],
+            'PaketSesi.JumlahSesi' => ['required_with:PaketSesi', 'integer', 'min:1', 'max:'.SimpanPaketSesi::MAKS_SESI],
+            'PaketSesi.MasaBerlakuHari' => ['nullable', 'integer', 'min:1', 'max:'.SimpanPaketSesi::MAKS_HARI],
         ];
     }
 
@@ -80,6 +85,31 @@ final class SimpanProdukPermintaan extends FormRequest
             'Satuan.*.KonversiKeDasar.regex' => 'Isi satuan berupa angka, maksimal 4 angka desimal. Misal: 12 atau 0.5.',
             'Satuan.*.HargaAwal.*.JumlahMinimum.regex' => 'Jumlah minimum berupa angka, maksimal 4 angka desimal.',
             'Satuan.*.HargaAwal.*.Harga.regex' => 'Harga berupa angka tanpa titik ribuan, misal 15000 atau 15000.50.',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return ['PaketSesi.JumlahSesi' => 'jumlah sesi', 'PaketSesi.MasaBerlakuHari' => 'masa berlaku'];
+    }
+
+    /**
+     * D-23 B: isian paket sesi dari formulir produk, `null` bila tidak dicentang.
+     *
+     * @return array{JumlahSesi: int, MasaBerlakuHari: int|null}|null
+     */
+    public function AmbilPaketSesi(): ?array
+    {
+        if (! $this->filled('PaketSesi.JumlahSesi')) {
+            return null;
+        }
+
+        return [
+            'JumlahSesi' => $this->integer('PaketSesi.JumlahSesi'),
+            'MasaBerlakuHari' => $this->filled('PaketSesi.MasaBerlakuHari') ? $this->integer('PaketSesi.MasaBerlakuHari') : null,
         ];
     }
 

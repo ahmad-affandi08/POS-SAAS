@@ -167,8 +167,15 @@ function PropsForm(perubahan: Partial<PropsFormProduk> = {}): PropsFormProduk {
 }
 
 describe('Kelola/Produk/Form (DesainF03 E.3)', () => {
-    beforeEach(() => AturHalamanUji());
-    afterEach(() => cleanup());
+    // Test di blok ini menguji formulir lengkap (tab); mode Sederhana (D-23 B) diuji di blok berikutnya.
+    beforeEach(() => {
+        AturHalamanUji();
+        window.localStorage.setItem('Katalog.FormProduk.Mode', 'Lengkap');
+    });
+    afterEach(() => {
+        cleanup();
+        window.localStorage.clear();
+    });
 
     it('Buat: satuan dasar otomatis, harga dasar + bertingkat, lalu POST body = FormProduk', () => {
         render(<HalamanFormProduk {...PropsForm()} />);
@@ -283,6 +290,90 @@ describe('Kelola/Produk/Form (DesainF03 E.3)', () => {
 
         expect(screen.getByText(/produk\.harga\.ubah/)).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Isi harga dasar' })).toBeNull();
+    });
+});
+
+describe('Kelola/Produk/Form mode Sederhana (D-23 B)', () => {
+    beforeEach(() => {
+        AturHalamanUji();
+        window.localStorage.clear();
+    });
+    afterEach(() => cleanup());
+
+    it('bawaan Sederhana: nama, jenis, harga, kategori di satu layar; POST memakai harga dasar satuan dasar', () => {
+        render(<HalamanFormProduk {...PropsForm()} />);
+
+        expect(screen.queryByRole('tab', { name: 'Harga' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Formulir sederhana' }).getAttribute('aria-pressed')).toBe('true');
+        expect(screen.getByText(/Otomatis: satuan Pieces \(pcs\), pajak Makan & minum, tampil di kasir/)).toBeTruthy();
+        // Hanya jenis yang umum ditawarkan.
+        expect(screen.getAllByRole('radio').map((r) => r.getAttribute('value'))).toEqual([
+            'Stok',
+            'Resep',
+            'Jasa',
+            'NonStok',
+        ]);
+
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Teh Botol Sosro 450 ml' } });
+        fireEvent.change(screen.getByLabelText('Harga jual'), { target: { value: '6.500' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        const body = kirimanForm[0]?.data as FormProduk;
+        expect(body.Nama).toBe('Teh Botol Sosro 450 ml');
+        expect(body.Satuan[0]?.HargaAwal).toEqual([{ JumlahMinimum: '1', Harga: '6500' }]);
+        expect(body.PaketSesi).toBeNull();
+    });
+
+    it('harga jual kosong ditahan di peramban; pilihan Lengkap diingat di peramban', () => {
+        render(<HalamanFormProduk {...PropsForm()} />);
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Sabun' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        expect(kirimanForm).toHaveLength(0);
+        expect(screen.getByText('Isi harga jual. Tulis 0 bila gratis.')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Formulir lengkap' }));
+        expect(screen.getByRole('tab', { name: 'Harga' })).toBeTruthy();
+        expect(window.localStorage.getItem('Katalog.FormProduk.Mode')).toBe('Lengkap');
+    });
+
+    it('Jasa + "Jual sebagai paket sesi" mengirim PaketSesi; jumlah sesi wajib', () => {
+        render(<HalamanFormProduk {...PropsForm({ FiturPaketSesi: true })} />);
+        expect(screen.queryByText('Jual sebagai paket sesi')).toBeNull();
+
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Paket Creambath 10x' } });
+        fireEvent.click(screen.getByRole('radio', { name: /Jasa/ }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Jual sebagai paket sesi' }));
+        fireEvent.change(screen.getByLabelText('Harga paket'), { target: { value: '450.000' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+        expect(kirimanForm).toHaveLength(0);
+        expect(screen.getByText('Isi jumlah sesi, misal 10.')).toBeTruthy();
+
+        fireEvent.change(screen.getByLabelText('Jumlah sesi'), { target: { value: '10' } });
+        fireEvent.change(screen.getByLabelText('Masa berlaku (hari, opsional)'), { target: { value: '180' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        const body = kirimanForm[0]?.data as FormProduk;
+        expect(body.Jenis).toBe('Jasa');
+        expect(body.PaketSesi).toEqual({ JumlahSesi: '10', MasaBerlakuHari: '180' });
+        expect(body.Satuan[0]?.HargaAwal).toEqual([{ JumlahMinimum: '1', Harga: '450000' }]);
+    });
+
+    it('fitur paket sesi di luar paket langganan: pilihan tidak tampil; galat isian lanjutan membuka formulir lengkap', () => {
+        render(<HalamanFormProduk {...PropsForm({ Produk: { ...produkBaru, Jenis: 'Jasa' } })} />);
+        expect(screen.queryByText('Jual sebagai paket sesi')).toBeNull();
+        cleanup();
+
+        AturHalamanUji({ Sku: 'SKU sudah dipakai produk lain.' });
+        render(<HalamanFormProduk {...PropsForm()} />);
+        expect(screen.getByRole('tab', { name: /Umum.*perlu diperbaiki/ })).toBeTruthy();
+        expect(screen.getByText('Perbaiki isian yang ditandai di formulir lengkap.')).toBeTruthy();
+    });
+
+    it('mode Ubah selalu formulir lengkap tanpa sakelar', () => {
+        render(<HalamanFormProduk {...PropsForm({ Mode: 'Ubah', Kepala: BuatKepala() })} />);
+        expect(screen.queryByRole('button', { name: 'Formulir sederhana' })).toBeNull();
+        expect(screen.getByRole('tab', { name: 'Umum' })).toBeTruthy();
     });
 });
 
@@ -658,6 +749,7 @@ describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
     });
 
     it('sakelar tampil (Switch) mengubah TampilDiPos/TampilOnline di body FormProduk', () => {
+        window.localStorage.setItem('Katalog.FormProduk.Mode', 'Lengkap');
         render(<HalamanFormProduk {...PropsForm()} />);
         fireEvent.click(screen.getByRole('tab', { name: 'Pajak & tampilan' }));
 
@@ -677,5 +769,6 @@ describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
         const body = kirimanForm[0]?.data as FormProduk;
         expect(body.TampilDiPos).toBe(false);
         expect(body.TampilOnline).toBe(true);
+        window.localStorage.clear();
     });
 });

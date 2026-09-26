@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.13 |
+| Versi | 2.14 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.14 | **D-23 B** formulir produk mode **Sederhana** (bawaan saat tambah produk): nama, jenis (Barang stok/Menu resep/Jasa/Non-stok), harga jual, kategori di satu layar; satuan, pajak, SKU, tampil di kasir memakai bawaan; formulir lengkap satu klik (pilihan diingat per peramban). Produk Jasa bisa langsung **"Jual sebagai paket sesi"** (jumlah sesi + masa berlaku) → produk + `PaketSesi` satu transaksi. §17.4.6. |
 | 2.13 | **D-23** (dari pemilik produk): penyederhanaan & otomatisasi didahulukan (Kotak Tindakan, formulir sederhana, mulai 5 menit, otomatisasi terjadwal, dialog ajakan upgrade/add-on untuk fitur di luar paket); mode jasa, laundry, grosir menyusul. |
 | 2.12 | Rincian **F-16d bagian 2** (CRM-04 paket sesi, J-16.2/J-16.3): master `PaketSesi` (produk Jasa dijual sebagai N sesi, masa berlaku opsional, layanan yang boleh ditukar), penjualan paket membuat `SaldoSesi` dan mengkredit Pendapatan Diterima Dimuka sebesar nilai bersih baris, pemakaian dari kasir lewat outbox `Sesi.Pakai` (offline setelah saldo dibaca online) mengakui Pendapatan Jasa per sesi, void membatalkan sisa & membalik pengakuan, baris paket tidak bisa diretur, kembalikan/hanguskan sisa & batalkan pemakaian di back-office (izin `pelanggan.sesi.kelola`), hangus otomatis tiap malam, fitur paket `pelanggan.paket-sesi`; skema lokal kasir 14. Perbaikan ubin produk kasir: harga satu baris (mengecil) di ubin sempit. |
 | 2.11 | **D-22** (dari pemilik produk): pengguna bisa **ditambah langsung** tanpa undangan email, di konsol (P-01) dan tenant (F-02). Kata sandi awal diketik admin dan **wajib diganti saat pertama masuk** (`WajibGantiKataSandi`, sebelum 2FA/back-office; aplikasi Pemilik menolak masuk sampai diganti). Karyawan tenant **tanpa email** cukup nama + PIN (hanya aplikasi kasir; `Pengguna.Email` nullable). Undangan email tetap sebagai pilihan kedua. |
@@ -3714,6 +3715,14 @@ Satu halaman `/kelola/tindakan` (menu "Kotak tindakan" tepat di bawah Beranda) +
 - **Tandai sudah dicek**: tabel `TinjauanDokumen` (`IdTenant`, `JenisDokumen`, `UuidDokumen`, `IdPengguna`, `Catatan`, unik per dokumen). Dokumen asli **tidak diubah** (aturan #8; bendera `PerluTinjauan` tetap sebagai jejak), butir hanya menyembunyikan yang sudah punya tinjauan. Idempoten, maks. 200 dokumen per kiriman, diaudit (`tindakan.tinjau`), izin baru `tindakan.tinjau` (Pemilik, Admin, Manajer Outlet, Akuntan). Dokumen tenant lain atau di luar outlet pengguna ditolak.
 - Rincian per butir maks. 20 terbaru; sisanya muncul setelah yang tampil ditandai. Pengingat lain tidak bisa ditandai: hilang sendiri saat keadaannya berubah.
 
+
+#### 17.4.6 Formulir Sederhana (Keputusan D-23 B, v2.14)
+
+Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wajib dipahami pemilik usaha kecil, sisanya memakai bawaan yang aman dan ditampilkan sebagai satu kalimat ringkas ("Otomatis: satuan …, pajak …, tampil di kasir, SKU dibuat otomatis"). Tombol "Formulir lengkap" membuka semua isian (tab) tanpa kehilangan isian; pilihan mode diingat per peramban (kenyamanan saja). Mode Ubah selalu lengkap. Galat server pada isian yang hanya ada di formulir lengkap otomatis membuka formulir lengkap.
+
+- **Produk** (tambah): nama, jenis (Barang stok, Menu resep, Jasa, Non-stok; jenis lain di formulir lengkap), harga jual (= harga dasar mulai 1 satuan dasar; perlu izin `produk.harga.ubah`), kategori.
+- **Jual sebagai paket sesi** (produk Jasa, fitur `pelanggan.paket-sesi`): jumlah sesi (1–1.000) + masa berlaku hari (opsional). Server membuat produk dan `PaketSesi` (semua layanan Jasa bisa ditukar) dalam **satu transaksi**; kirim ulang dengan `Uuid` produk sama idempoten. Daftar layanan tertentu tetap diatur di menu Paket sesi.
+- Formulir lain (pelanggan, pemasok, promo) menyusul dengan pola yang sama bila audit kemudahan menunjukkan isian berlebih.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

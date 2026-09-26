@@ -114,6 +114,8 @@ export type FormProduk = {
     TampilOnline: boolean;
     Satuan: FormSatuanProduk[];
     AtributVarian: { Nama: string; Nilai: string[] }[];
+    /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
+    PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
 };
 export type PropsFormProduk = {
     Mode: 'Buat' | 'Ubah';
@@ -129,6 +131,8 @@ export type PropsFormProduk = {
     /** HargaTermasukPajakOutlet adalah label. */
     Pengaturan: { HargaTermasukPajakOutlet: string; StokBolehMinus: boolean };
     Izin: IzinKatalog;
+    /** D-23 B: fitur paket sesi termasuk paket langganan (hanya mode Buat). */
+    FiturPaketSesi?: boolean;
 };
 
 // E.4 Kelola/Produk/Detail.
