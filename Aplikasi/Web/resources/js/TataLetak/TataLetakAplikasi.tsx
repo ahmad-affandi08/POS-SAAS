@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     BanknoteIcon,
     BookOpenTextIcon,
+    LockIcon,
     ChevronRightIcon,
     ChartColumnIcon,
     CreditCardIcon,
@@ -24,6 +25,7 @@ import {
 import { useState, type MouseEvent, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Komponen/Ui/collapsible';
 import {
     Sidebar,
@@ -44,7 +46,7 @@ import {
 import { cn } from '@/Komponen/Ui/utils';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
-import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
+import type { FiturPaket, PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
 import {
@@ -62,7 +64,8 @@ import PencarianCepat, { type HalamanPencarian, type SumberPencarian } from './P
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
-type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null; ikon?: LucideIcon };
+/** `fitur` = kunci fitur paket (D-23): di luar paket tetap tampil dengan gembok; klik = dialog naik paket/add-on. */
+type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null; ikon?: LucideIcon; fitur?: string };
 
 /** Menu utama bersub-menu: tampil bila ada sub-menu yang boleh dibuka; tautannya = sub-menu pertama yang boleh. */
 type GrupMenu = ItemMenu & { labelSub: string; sub: ItemMenu[] };
@@ -72,12 +75,12 @@ const menuProduk: ItemMenu[] = [
     { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
     { label: 'Kategori', href: '/kelola/kategori', izin: IzinTenant.ProdukLihat },
     { label: 'Satuan', href: '/kelola/satuan', izin: IzinTenant.ProdukLihat },
-    { label: 'Daftar harga', href: '/kelola/daftar-harga', izin: IzinTenant.ProdukLihat },
+    { label: 'Daftar harga', href: '/kelola/daftar-harga', izin: IzinTenant.ProdukLihat, fitur: 'harga.daftar-harga' },
     { label: 'Pilihan (modifier)', href: '/kelola/kelompok-pilihan', izin: IzinTenant.ProdukLihat },
     { label: 'Kelompok pajak', href: '/kelola/kelompok-pajak', izin: IzinTenant.ProdukLihat },
-    { label: 'Stasiun dapur', href: '/kelola/stasiun-dapur', izin: IzinTenant.ProdukLihat },
+    { label: 'Stasiun dapur', href: '/kelola/stasiun-dapur', izin: IzinTenant.ProdukLihat, fitur: 'pos.kds' },
     // F-16d bagian 2: paket sesi (produk Jasa yang dijual sebagai N sesi).
-    { label: 'Paket sesi', href: '/kelola/paket-sesi', izin: IzinTenant.ProdukLihat },
+    { label: 'Paket sesi', href: '/kelola/paket-sesi', izin: IzinTenant.ProdukLihat, fitur: 'pelanggan.paket-sesi' },
     { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 
@@ -87,8 +90,13 @@ const menuPersediaan: ItemMenu[] = [
     { label: 'Kartu stok', href: '/kelola/persediaan/kartu-stok', izin: IzinTenant.PersediaanLihat },
     { label: 'Stok awal', href: '/kelola/persediaan/stok-awal', izin: IzinTenant.PersediaanLihat },
     // F-05b: transfer, stok opname, penyesuaian (lihat: persediaan.lihat; tindakan dijaga di rute).
-    { label: 'Transfer stok', href: '/kelola/persediaan/transfer', izin: IzinTenant.PersediaanLihat },
-    { label: 'Stok opname', href: '/kelola/persediaan/opname', izin: IzinTenant.PersediaanLihat },
+    {
+        label: 'Transfer stok',
+        href: '/kelola/persediaan/transfer',
+        izin: IzinTenant.PersediaanLihat,
+        fitur: 'stok.transfer',
+    },
+    { label: 'Stok opname', href: '/kelola/persediaan/opname', izin: IzinTenant.PersediaanLihat, fitur: 'stok.opname' },
     { label: 'Penyesuaian stok', href: '/kelola/persediaan/penyesuaian', izin: IzinTenant.PersediaanLihat },
     { label: 'Impor stok awal', href: '/kelola/persediaan/stok-awal/impor', izin: IzinTenant.PersediaanKelola },
     { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
@@ -96,7 +104,12 @@ const menuPersediaan: ItemMenu[] = [
 
 // F-04 fase 1: grup menu "Pembelian" (pembelian.kelola); pengaturan pembelian butuh pembelian.po.setujui.
 const menuPembelian: ItemMenu[] = [
-    { label: 'Pesanan pembelian', href: '/kelola/pembelian/pesanan', izin: IzinTenant.PembelianKelola },
+    {
+        label: 'Pesanan pembelian',
+        href: '/kelola/pembelian/pesanan',
+        izin: IzinTenant.PembelianKelola,
+        fitur: 'pembelian.po',
+    },
     { label: 'Penerimaan barang', href: '/kelola/pembelian/penerimaan', izin: IzinTenant.PembelianKelola },
     { label: 'Faktur pembelian', href: '/kelola/pembelian/faktur', izin: IzinTenant.PembelianKelola },
     { label: 'Hutang pemasok', href: '/kelola/pembelian/hutang', izin: IzinTenant.PembelianKelola },
@@ -110,18 +123,43 @@ const menuPembelian: ItemMenu[] = [
 // F-16a/F-16b: data pelanggan, tier, pengaturan loyalti.
 const menuPelanggan: ItemMenu[] = [
     { label: 'Daftar pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat },
-    { label: 'Tier pelanggan', href: '/kelola/pelanggan/tier', izin: IzinTenant.PelangganLihat },
-    { label: 'Pengaturan loyalti', href: '/kelola/pelanggan/loyalti', izin: IzinTenant.PelangganLihat },
-    { label: 'Promo', href: '/kelola/promo', izin: IzinTenant.PelangganLihat },
+    {
+        label: 'Tier pelanggan',
+        href: '/kelola/pelanggan/tier',
+        izin: IzinTenant.PelangganLihat,
+        fitur: 'pelanggan.loyalti',
+    },
+    {
+        label: 'Pengaturan loyalti',
+        href: '/kelola/pelanggan/loyalti',
+        izin: IzinTenant.PelangganLihat,
+        fitur: 'pelanggan.loyalti',
+    },
+    { label: 'Promo', href: '/kelola/promo', izin: IzinTenant.PelangganLihat, fitur: 'promo.mesin' },
     // F-16c bagian 4b: klaim promo yang ditanggung pemasok.
-    { label: 'Klaim promo pemasok', href: '/kelola/promo/klaim-pemasok', izin: IzinTenant.PelangganLihat },
+    {
+        label: 'Klaim promo pemasok',
+        href: '/kelola/promo/klaim-pemasok',
+        izin: IzinTenant.PelangganLihat,
+        fitur: 'promo.mesin',
+    },
     // F-12: piutang pelanggan (penjualan tempo) & pelunasan.
     { label: 'Piutang pelanggan', href: '/kelola/piutang', izin: IzinTenant.PelangganLihat },
     { label: 'Pelunasan piutang', href: '/kelola/piutang/pelunasan', izin: IzinTenant.PelangganLihat },
     // F-16d bagian 1: isi deposit pelanggan dari kasir.
-    { label: 'Isi deposit', href: '/kelola/pelanggan/isi-deposit', izin: IzinTenant.PelangganLihat },
+    {
+        label: 'Isi deposit',
+        href: '/kelola/pelanggan/isi-deposit',
+        izin: IzinTenant.PelangganLihat,
+        fitur: 'pelanggan.deposit',
+    },
     // F-16d bagian 2: saldo paket sesi pelanggan.
-    { label: 'Saldo paket sesi', href: '/kelola/pelanggan/saldo-sesi', izin: IzinTenant.PelangganLihat },
+    {
+        label: 'Saldo paket sesi',
+        href: '/kelola/pelanggan/saldo-sesi',
+        izin: IzinTenant.PelangganLihat,
+        fitur: 'pelanggan.paket-sesi',
+    },
 ];
 
 // F-18: karyawan, jadwal kerja, rekap absensi (karyawan.lihat).
@@ -130,8 +168,18 @@ const menuKaryawan: ItemMenu[] = [
     { label: 'Jadwal kerja', href: '/kelola/karyawan/jadwal', izin: IzinTenant.KaryawanLihat },
     { label: 'Absensi', href: '/kelola/karyawan/absensi', izin: IzinTenant.KaryawanLihat },
     // F-18 bagian 2: komisi.
-    { label: 'Aturan komisi', href: '/kelola/karyawan/komisi', izin: IzinTenant.KaryawanLihat },
-    { label: 'Laporan komisi', href: '/kelola/karyawan/komisi/laporan', izin: IzinTenant.KaryawanLihat },
+    {
+        label: 'Aturan komisi',
+        href: '/kelola/karyawan/komisi',
+        izin: IzinTenant.KaryawanLihat,
+        fitur: 'karyawan.komisi',
+    },
+    {
+        label: 'Laporan komisi',
+        href: '/kelola/karyawan/komisi/laporan',
+        izin: IzinTenant.KaryawanLihat,
+        fitur: 'karyawan.komisi',
+    },
     // F-18 bagian 3: kasbon, target penjualan.
     { label: 'Kasbon', href: '/kelola/karyawan/kasbon', izin: IzinTenant.KaryawanLihat },
     { label: 'Target penjualan', href: '/kelola/karyawan/target', izin: IzinTenant.KaryawanLihat },
@@ -162,16 +210,56 @@ const menuPenjualan: ItemMenu[] = [
 // F-13a: bagan akun, pemetaan akun, kas & bank, dan laporan keuangan (lihat laporan.keuangan.lihat, ubah di halaman
 // butuh akuntansi.kelola).
 const menuAkuntansi: ItemMenu[] = [
-    { label: 'Jurnal', href: '/kelola/akuntansi/jurnal', izin: IzinTenant.LaporanKeuanganLihat },
+    {
+        label: 'Jurnal',
+        href: '/kelola/akuntansi/jurnal',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
     { label: 'Kas & bank', href: '/kelola/akuntansi/kas-bank', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Buku besar', href: '/kelola/akuntansi/laporan/buku-besar', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Neraca saldo', href: '/kelola/akuntansi/laporan/neraca-saldo', izin: IzinTenant.LaporanKeuanganLihat },
+    {
+        label: 'Buku besar',
+        href: '/kelola/akuntansi/laporan/buku-besar',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+    {
+        label: 'Neraca saldo',
+        href: '/kelola/akuntansi/laporan/neraca-saldo',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
     { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Neraca', href: '/kelola/akuntansi/laporan/neraca', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Arus kas', href: '/kelola/akuntansi/laporan/arus-kas', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Tutup buku', href: '/kelola/akuntansi/tutup-buku', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Bagan akun', href: '/kelola/akuntansi/akun', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Pemetaan akun', href: '/kelola/akuntansi/pemetaan', izin: IzinTenant.LaporanKeuanganLihat },
+    {
+        label: 'Neraca',
+        href: '/kelola/akuntansi/laporan/neraca',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+    {
+        label: 'Arus kas',
+        href: '/kelola/akuntansi/laporan/arus-kas',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+    {
+        label: 'Tutup buku',
+        href: '/kelola/akuntansi/tutup-buku',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+    {
+        label: 'Bagan akun',
+        href: '/kelola/akuntansi/akun',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+    {
+        label: 'Pemetaan akun',
+        href: '/kelola/akuntansi/pemetaan',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
 ];
 
 // F-14a: grup menu "Laporan": penjualan (laporan.penjualan.lihat), pajak (laporan.keuangan.lihat), stok (persediaan.lihat).
@@ -398,7 +486,14 @@ export function SaringMenuTerlihat(akses: PropsBersamaAplikasi['Akses']): MenuTe
  * animasi tinggi dan chevron memutar 90°. Saat sidebar diciutkan menjadi ikon (sub-menu tak terlihat), klik langsung
  * menuju sub-menu pertama. Grup halaman aktif terbuka sejak awal (tanpa animasi saat dimuat).
  */
-function ItemMenuSidebar({ menu, labelSub, sub, url }: MenuTerlihat & { url: string }) {
+function ItemMenuSidebar({
+    menu,
+    labelSub,
+    sub,
+    url,
+    terkunci,
+    saatTerkunci,
+}: MenuTerlihat & { url: string; terkunci: FiturPaket['Terkunci']; saatTerkunci: (kunci: string) => void }) {
     const { state, isMobile } = useSidebar();
     const subAktif = labelSub === null ? null : CariSubMenuAktif(sub, url);
     const aktif = labelSub === null ? CekMenuAktif(menu.href, url) : subAktif !== null;
@@ -443,22 +538,40 @@ function ItemMenuSidebar({ menu, labelSub, sub, url }: MenuTerlihat & { url: str
                 <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                     <nav aria-label={labelSub}>
                         <SidebarMenuSub className="mt-1 mb-1">
-                            {sub.map((item) => (
-                                <SidebarMenuSubItem key={item.href}>
-                                    <SidebarMenuSubButton
-                                        asChild
-                                        isActive={subAktif === item.href}
-                                        className={kelasTombolSubMenuSidebar}
-                                    >
-                                        <Link
-                                            href={item.href}
-                                            aria-current={subAktif === item.href ? 'page' : undefined}
+                            {sub.map((item) => {
+                                const kunci = item.fitur !== undefined && item.fitur in terkunci ? item.fitur : null;
+
+                                return (
+                                    <SidebarMenuSubItem key={item.href}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={subAktif === item.href}
+                                            className={kelasTombolSubMenuSidebar}
                                         >
-                                            {item.label}
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                            ))}
+                                            {kunci === null ? (
+                                                <Link
+                                                    href={item.href}
+                                                    aria-current={subAktif === item.href ? 'page' : undefined}
+                                                >
+                                                    {item.label}
+                                                </Link>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    aria-haspopup="dialog"
+                                                    aria-label={`${item.label} (perlu naik paket)`}
+                                                    onClick={() => saatTerkunci(kunci)}
+                                                >
+                                                    <span className="min-w-0 flex-1 truncate text-left">
+                                                        {item.label}
+                                                    </span>
+                                                    <LockIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                                                </button>
+                                            )}
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                );
+                            })}
                         </SidebarMenuSub>
                     </nav>
                 </CollapsibleContent>
@@ -518,6 +631,10 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
     const keamananAktif = url.startsWith('/kelola/keamanan');
     const [mengirim, AturMengirim] = useState(false);
+    // D-23: fitur di luar paket (gembok di menu) dan dialog penawarannya.
+    const terkunci = props.FiturPaket?.Terkunci ?? {};
+    const [kunciPenawaran, AturKunciPenawaran] = useState<string | null>(null);
+    const penawaran = kunciPenawaran === null ? undefined : terkunci[kunciPenawaran];
     const KirimUlangVerifikasi = () =>
         router.post(
             '/verifikasi-email/kirim-ulang',
@@ -528,6 +645,15 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     return (
         <SidebarProvider defaultOpen={BacaSidebarTerbuka()}>
             <Head title={judul} />
+            {kunciPenawaran !== null && penawaran ? (
+                <DialogNaikPaket
+                    kunci={kunciPenawaran}
+                    penawaran={penawaran}
+                    namaPaket={props.FiturPaket?.NamaPaket ?? null}
+                    bolehKelola={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
+                    saatTutup={() => AturKunciPenawaran(null)}
+                />
+            ) : null}
             <Sidebar collapsible="icon" className="border-sidebar-border">
                 <KepalaSidebarMerek nama={props.NamaAplikasi} />
                 <SidebarContent>
@@ -537,7 +663,13 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                                 <SidebarGroupContent>
                                     <SidebarMenu>
                                         {menuTerlihat.map((terlihat) => (
-                                            <ItemMenuSidebar key={terlihat.menu.label} {...terlihat} url={url} />
+                                            <ItemMenuSidebar
+                                                key={terlihat.menu.label}
+                                                {...terlihat}
+                                                url={url}
+                                                terkunci={terkunci}
+                                                saatTerkunci={AturKunciPenawaran}
+                                            />
                                         ))}
                                     </SidebarMenu>
                                 </SidebarGroupContent>

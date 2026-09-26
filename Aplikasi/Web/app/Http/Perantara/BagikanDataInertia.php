@@ -9,6 +9,7 @@ use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
 use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
 use App\Domain\Tenant\Kueri\RingkasanLanggananTenant;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
@@ -92,6 +93,12 @@ final class BagikanDataInertia extends Middleware
                 $akses = $pengguna instanceof Pengguna && $idTenant !== null ? app(AksesPengguna::class)->Ambil($idTenant, $pengguna->Id) : null;
 
                 return $akses === null ? null : ['Pemilik' => $akses['Pemilik'], 'Izin' => $akses['Izin']];
+            },
+            // D-23: fitur di luar paket tetap tampil di menu; klik = dialog naik paket / add-on (hanya UX).
+            'FiturPaket' => function () use ($pengguna): ?array {
+                $idTenant = app(KonteksTenant::class)->Ambil();
+
+                return $pengguna instanceof Pengguna && $idTenant !== null ? app(PenawaranFiturTenant::class)->Ambil($idTenant) : null;
             },
         ];
     }

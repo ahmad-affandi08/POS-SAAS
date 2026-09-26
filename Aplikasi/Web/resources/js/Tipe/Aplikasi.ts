@@ -25,5 +25,16 @@ export type PropsBersamaAplikasi = {
     PengumumanLegal: PengumumanLegal[];
     /** F-02: hak akses di tenant aktif (null di luar back-office). */
     Akses: { Pemilik: boolean; Izin: string[] } | null;
+    /** D-23: fitur di luar paket (menu tetap tampil; klik = dialog naik paket / add-on). */
+    FiturPaket?: FiturPaket | null;
     errors: Record<string, string>;
 };
+
+/** D-23: penawaran untuk satu fitur yang terkunci. */
+export type PenawaranFitur = {
+    Nama: string;
+    Paket: { Kode: string; Nama: string; HargaBulanan: string | null } | null;
+    Addon: { Kode: string; Nama: string; HargaBulanan: string } | null;
+};
+
+export type FiturPaket = { NamaPaket: string | null; Terkunci: Record<string, PenawaranFitur> };

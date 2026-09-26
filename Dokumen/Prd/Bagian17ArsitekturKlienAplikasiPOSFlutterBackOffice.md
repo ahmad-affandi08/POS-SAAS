@@ -447,6 +447,14 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Jadwal `pelanggan:kirim-pengingat-piutang` pukul 09.00 WIB (jam wajar untuk pelanggan): piutang terbuka berpelanggan yang jatuh tempo dalam `HariSebelum` hari ke depan diingatkan sekali; yang lewat 1–7 hari diingatkan sekali lagi. Sekali per (piutang, jenis) lewat `PengingatPiutang.KunciOtomatis` unik. Manual paling sering sekali per 12 jam per nota.
 - Isi sopan tanpa ancaman ("Abaikan pesan ini bila sudah dibayar"); piutang yang sudah lunas/batal saat akan dikirim → `Dibatalkan`, pelanggan tidak ditagih. Tujuan terenkripsi, tidak ikut payload antrean, log, atau respons. Dasar pemrosesan data pribadi: pelaksanaan perjanjian jual-beli tempo (UU 27/2022 PDP Pasal 20 ayat 2 huruf b), bukan pemasaran, sehingga tidak bergantung pada `SetujuPemasaran`.
 
+#### 17.4.9 Fitur di luar paket: dialog naik paket / add-on (Keputusan D-23, v2.22)
+
+- Menu back-office **tidak disembunyikan per fitur paket** (izin peran tetap menyaring). Sub-menu yang mewakili fitur paket (daftar harga, stasiun dapur/KDS, paket sesi, transfer stok, opname, pesanan pembelian, tier & loyalti, promo & klaim pemasok, deposit, komisi, akuntansi penuh: jurnal, buku besar, neraca saldo, neraca, arus kas, tutup buku, bagan & pemetaan akun) tampil dengan ikon gembok bila fitur itu tidak aktif untuk tenant.
+- Klik sub-menu bergembok membuka dialog: "{fitur} belum termasuk paket {paket saat ini}", paket aktif termurah (urutan terendah) yang memuat fitur itu beserta harga bulanan berlaku (paket berharga negosiasi tanpa harga), dan add-on aktif yang membukanya. Pemilik (izin `langganan.kelola`) mendapat tombol **Lihat paket {nama}** (membuka Langganan dengan paket itu terpilih lewat `?paket=KODE`) dan **Minta add-on {nama}**; anggota lain diminta menghubungi Pemilik.
+- **Minta add-on** (`POST /kelola/langganan/addon`, izin `langganan.kelola`) membuat tiket dukungan kategori Akun & langganan berisi add-on, harga, dan fitur; tim platform mengaktifkannya (override/add-on) lalu menagih. Pembelian add-on mandiri menyusul di F-19.
+- Data dari props bersama `FiturPaket` (`NamaPaket`, `Terkunci` per kunci fitur) yang dihitung dengan `EvaluatorFitur` (paket, override, add-on, flag) sehingga sama dengan pemeriksaan server.
+- Ini lapisan UX. Rute yang sudah menjaga fitur (mode meja, KDS, self-order, WhatsApp, promo) tetap menolak di server; penegakan untuk rute lain menunggu keputusan pemilik produk karena tenant lama mungkin sudah memakai fitur di luar paketnya.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -129,6 +129,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 Route::middleware($izin(IzinTenant::LanggananKelola))->group(function (): void {
                     Route::get('/langganan', [LanggananKontroler::class, 'Tampilkan'])->name('kelola.langganan.tampil');
                     Route::post('/langganan/tagihan', [LanggananKontroler::class, 'BuatTagihan'])->name('kelola.langganan.tagihan.buat');
+                    // D-23: minta add-on dari dialog fitur terkunci (menjadi tiket dukungan).
+                    Route::post('/langganan/addon', [LanggananKontroler::class, 'MintaAddon'])->middleware('throttle:10,1')->name('kelola.langganan.addon.minta');
                     Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
                     Route::post('/langganan/tagihan/{tagihan}/pembayaran', [LanggananKontroler::class, 'UnggahBukti'])->name('kelola.langganan.tagihan.pembayaran.buat');
                     Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');

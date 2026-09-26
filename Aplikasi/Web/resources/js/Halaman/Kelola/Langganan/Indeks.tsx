@@ -161,7 +161,10 @@ function RingkasanStatus({ langganan }: { langganan: RingkasanLangganan }) {
 function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langganan: RingkasanLangganan }) {
     const idLegenda = useId();
     const bisaDipilih = pilihan.filter((paket) => paket.BisaDipilih);
+    // D-23: dialog fitur terkunci menautkan `?paket=KODE` agar paket yang memuat fitur itu langsung terpilih.
+    const diminta = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('paket');
     const bawaan =
+        bisaDipilih.find((paket) => paket.Kode === diminta) ??
         bisaDipilih.find((paket) => paket.PaketBerjalan) ??
         bisaDipilih.find((paket) => paket.Kode === langganan.KodePaket) ??
         bisaDipilih[0];

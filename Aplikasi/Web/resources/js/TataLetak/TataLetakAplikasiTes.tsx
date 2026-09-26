@@ -384,6 +384,66 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(tiruanRouter.post).toHaveBeenCalledWith('/keluar');
     });
 
+    it('D-23: fitur di luar paket tetap tampil bergembok; klik = dialog naik paket / add-on', () => {
+        propsHalaman = {
+            ...BuatProps({}, [], true),
+            FiturPaket: {
+                NamaPaket: 'Starter',
+                Terkunci: {
+                    'promo.mesin': {
+                        Nama: 'Mesin promo',
+                        Paket: { Kode: 'PRO', Nama: 'Pro', HargaBulanan: '199000.00' },
+                        Addon: null,
+                    },
+                    'kanal.self-order': {
+                        Nama: 'Self-order QR',
+                        Paket: null,
+                        Addon: { Kode: 'SELF_ORDER', Nama: 'Self-order QR', HargaBulanan: '49000.00' },
+                    },
+                },
+            },
+        };
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Pelanggan' }));
+        expect(screen.getByRole('link', { name: 'Daftar pelanggan' })).toBeTruthy();
+        expect(screen.queryByRole('link', { name: 'Promo' })).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Promo (perlu naik paket)' }));
+        const dialog = screen.getByRole('dialog');
+        expect(within(dialog).getByText('Mesin promo belum termasuk paket Starter')).toBeTruthy();
+        expect(within(dialog).getByText(/mulai Rp\s?199\.000\/bulan/)).toBeTruthy();
+        expect(within(dialog).getByRole('link', { name: 'Lihat paket Pro' }).getAttribute('href')).toBe(
+            '/kelola/langganan?paket=PRO',
+        );
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Nanti saja' }));
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(tiruanRouter.visit).not.toHaveBeenCalled();
+    });
+
+    it('D-23: anggota tanpa langganan.kelola hanya diminta menghubungi Pemilik', () => {
+        propsHalaman = {
+            ...BuatProps({}, ['pelanggan.lihat']),
+            FiturPaket: {
+                NamaPaket: 'Starter',
+                Terkunci: {
+                    'pelanggan.deposit': {
+                        Nama: 'Deposit pelanggan',
+                        Paket: { Kode: 'PRO', Nama: 'Pro', HargaBulanan: '199000.00' },
+                        Addon: null,
+                    },
+                },
+            },
+        };
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Pelanggan' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Isi deposit (perlu naik paket)' }));
+        const dialog = screen.getByRole('dialog');
+        expect(within(dialog).getByText('Minta Pemilik usaha untuk naik paket atau menambah add-on.')).toBeTruthy();
+        expect(within(dialog).queryByRole('link', { name: /Lihat paket/ })).toBeNull();
+    });
+
     it('memasang Toaster dengan label Bahasa Indonesia', () => {
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
 

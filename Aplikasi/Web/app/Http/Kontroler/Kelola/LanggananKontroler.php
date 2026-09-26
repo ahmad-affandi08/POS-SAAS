@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Dukungan\Aksi\BuatTiketDukungan;
+use App\Domain\Dukungan\Data\DataTiketBaru;
+use App\Domain\Dukungan\Enum\KategoriTiketDukungan;
+use App\Domain\Dukungan\Enum\PrioritasTiketDukungan;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Aksi\BatalkanTagihanLangganan;
 use App\Domain\Tenant\Aksi\BuatTagihanLangganan;
 use App\Domain\Tenant\Aksi\UnggahBuktiTransfer;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
+use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
 use App\Domain\Tenant\Kueri\RekeningTujuanPlatform;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
 use App\Domain\Tenant\Model\PembayaranLangganan;
@@ -17,6 +24,7 @@ use App\Http\Permintaan\Kelola\Langganan\BatalkanTagihanLanggananPermintaan;
 use App\Http\Permintaan\Kelola\Langganan\BuatTagihanLanggananPermintaan;
 use App\Http\Permintaan\Kelola\Langganan\UnggahBuktiTransferPermintaan;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -100,6 +108,34 @@ final class LanggananKontroler extends Kontroler
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
         ]);
+    }
+
+    /**
+     * D-23: minta add-on untuk fitur terkunci dari dialog menu. Pembelian add-on mandiri belum tersedia (F-19), jadi
+     * permintaan menjadi tiket dukungan kategori Akun & langganan; tim platform mengaktifkannya lalu menagih.
+     */
+    public function MintaAddon(Request $permintaan, PenawaranFiturTenant $penawaran, BuatTiketDukungan $buatTiket): RedirectResponse
+    {
+        $kunci = (string) $permintaan->validate(['KunciFitur' => ['required', 'string', 'max:60']], attributes: ['KunciFitur' => 'fitur'])['KunciFitur'];
+        $pengguna = $this->PenggunaMasuk();
+        $fitur = $penawaran->Ambil(app(KonteksTenant::class)->Wajib())['Terkunci'][$kunci] ?? null;
+        $addon = $fitur['Addon'] ?? null;
+
+        if ($fitur === null || $addon === null) {
+            return back()->withErrors(['Umum' => 'Add-on untuk fitur ini tidak tersedia atau fitur sudah aktif.']);
+        }
+
+        $harga = Uang::Dari($addon['HargaBulanan'])->FormatRupiah();
+        $tiket = $buatTiket->Jalankan($pengguna->Id, $pengguna->Nama, new DataTiketBaru(
+            KategoriTiketDukungan::AkunLangganan,
+            PrioritasTiketDukungan::Normal,
+            "Permintaan add-on {$addon['Nama']}",
+            "Mohon aktifkan add-on {$addon['Nama']} ({$harga}/bulan) untuk membuka fitur \"{$fitur['Nama']}\". Tagihan dikirim ke usaha ini.",
+            konteks: ['KodeAddon' => $addon['Kode'], 'KunciFitur' => $kunci],
+        ));
+
+        return redirect()->route('kelola.bantuan.tampil', ['tiketDukungan' => $tiket->Uuid])
+            ->with('Kilat', "Permintaan add-on {$addon['Nama']} terkirim. Tim kami akan mengaktifkannya dan mengirim tagihan.");
     }
 
     private function PenggunaMasuk(): Pengguna
