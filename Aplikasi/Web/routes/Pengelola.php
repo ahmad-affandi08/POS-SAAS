@@ -23,6 +23,7 @@ use App\Http\Kontroler\Pengelola\Referensi\SatuanStandarKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\FlagFiturKontroler;
+use App\Http\Kontroler\Pengelola\Rilis\KompatibilitasPerangkatKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\RilisAplikasiKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\Tagihan\TagihanKontroler;
@@ -189,12 +190,16 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
         Route::middleware($izin(IzinPengelola::RilisLihat))->group(function () use ($izin): void {
             Route::get('/rilis', [RilisAplikasiKontroler::class, 'Daftar'])->name('pengelola.rilis.daftar');
             Route::get('/flag-fitur', [FlagFiturKontroler::class, 'Daftar'])->name('pengelola.flag-fitur.daftar');
+            // v1.98 Hardware Compatibility List (PRD §17.2.5a).
+            Route::get('/kompatibilitas-perangkat', [KompatibilitasPerangkatKontroler::class, 'Daftar'])->name('pengelola.kompatibilitas-perangkat.daftar');
             Route::middleware($izin(IzinPengelola::FlagFiturKelola))->group(function (): void {
                 Route::post('/flag-fitur', [FlagFiturKontroler::class, 'Simpan'])->name('pengelola.flag-fitur.simpan');
                 Route::delete('/flag-fitur/{flagFitur}', [FlagFiturKontroler::class, 'Hapus'])->name('pengelola.flag-fitur.hapus');
             });
             Route::middleware($izin(IzinPengelola::RilisKelola))->group(function (): void {
                 Route::post('/rilis', [RilisAplikasiKontroler::class, 'Simpan'])->name('pengelola.rilis.simpan');
+                Route::post('/kompatibilitas-perangkat/segarkan', [KompatibilitasPerangkatKontroler::class, 'Segarkan'])->name('pengelola.kompatibilitas-perangkat.segarkan');
+                Route::put('/kompatibilitas-perangkat/{kompatibilitasPerangkat}', [KompatibilitasPerangkatKontroler::class, 'Tandai'])->name('pengelola.kompatibilitas-perangkat.tandai');
                 Route::put('/rilis/{rilis}', [RilisAplikasiKontroler::class, 'Ubah'])->name('pengelola.rilis.ubah');
                 Route::post('/rilis/{rilis}/terbitkan', [RilisAplikasiKontroler::class, 'Terbitkan'])->name('pengelola.rilis.terbitkan');
                 Route::post('/rilis/{rilis}/rollout', [RilisAplikasiKontroler::class, 'UbahRollout'])->name('pengelola.rilis.rollout');

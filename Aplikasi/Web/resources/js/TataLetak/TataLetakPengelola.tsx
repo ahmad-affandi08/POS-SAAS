@@ -5,6 +5,7 @@ import {
     Building2Icon,
     HouseIcon,
     LayoutTemplateIcon,
+    PrinterIcon,
     LibraryIcon,
     LifeBuoyIcon,
     PlugIcon,
@@ -64,6 +65,13 @@ const daftarMenu: ItemMenu[] = [
     // P-10 Rilis aplikasi & flag fitur.
     { label: 'Rilis aplikasi', href: '/rilis', izin: IzinPengelola.RilisLihat, ikon: RocketIcon },
     { label: 'Flag fitur', href: '/flag-fitur', izin: IzinPengelola.RilisLihat, ikon: ToggleRightIcon },
+    // v1.98 Hardware Compatibility List.
+    {
+        label: 'Kompatibilitas perangkat',
+        href: '/kompatibilitas-perangkat',
+        izin: IzinPengelola.RilisLihat,
+        ikon: PrinterIcon,
+    },
     // P-11
     { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
     { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },

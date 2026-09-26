@@ -10,6 +10,7 @@ import HalamanTarifPajak from '@/Halaman/Pengelola/Referensi/TarifPajak';
 import HalamanWilayah from '@/Halaman/Pengelola/Referensi/Wilayah';
 import HalamanRilis, { AmbilStatusRilis } from '@/Halaman/Pengelola/Rilis/Daftar';
 import HalamanFlagFitur, { AmbilNilaiFlag } from '@/Halaman/Pengelola/Rilis/FlagFitur';
+import HalamanKompatibilitasPerangkat from '@/Halaman/Pengelola/Rilis/KompatibilitasPerangkat';
 import HalamanEditorTemplate from '@/Halaman/Pengelola/TemplateSektor/Editor';
 import BidangTanggal, { TulisTanggal, UraiTanggal } from '@/Komponen/Pengelola/BidangTanggal';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
@@ -17,6 +18,7 @@ import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 import { IzinPengelola, type AturanFlagFitur, type PropsBersamaPengelola, type RilisAplikasi } from '@/Tipe/Pengelola';
+import type { BarisKompatibilitas } from '@/Tipe/Kompatibilitas';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
 
@@ -622,5 +624,42 @@ describe('Flag fitur (P-10)', () => {
                 },
             },
         ]);
+    });
+});
+
+describe('v1.98 kompatibilitas perangkat (HCL)', () => {
+    const printer: BarisKompatibilitas = {
+        Uuid: '01K5KOMPATIBILITAS00000001',
+        Jenis: 'Printer',
+        Nama: 'RPP02N',
+        Sambungan: 'BluetoothKlasik',
+        Status: 'Terbatas',
+        LabelStatus: 'Terbatas',
+        StatusOtomatis: 'Terbatas',
+        StatusManual: null,
+        Catatan: null,
+        JumlahPerangkat: 3,
+        JumlahTenant: 2,
+        JumlahLolos: 1,
+        JumlahGagal: 2,
+        TerakhirDiujiPada: '2026-09-26T03:15:00Z',
+        DisegarkanPada: '2026-09-26T19:30:00Z',
+    };
+
+    it('menampilkan status & angka uji; tim bisa segarkan dan menandai Tersertifikasi dengan catatan', () => {
+        AturHalaman([IzinPengelola.RilisLihat, IzinPengelola.RilisKelola], '/kompatibilitas-perangkat');
+        RenderDenganKueri(<HalamanKompatibilitasPerangkat Baris={[printer]} />);
+        expect(screen.getAllByText('RPP02N').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Terbatas').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('3 di 2 usaha').length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Segarkan sekarang' }));
+        expect(uji.router.post).toHaveBeenCalledWith('/kompatibilitas-perangkat/segarkan', {}, expect.anything());
+    });
+
+    it('tanpa izin kelola: tidak ada tombol segarkan', () => {
+        AturHalaman([IzinPengelola.RilisLihat], '/kompatibilitas-perangkat');
+        RenderDenganKueri(<HalamanKompatibilitasPerangkat Baris={[printer]} />);
+        expect(screen.queryByRole('button', { name: 'Segarkan sekarang' })).toBeNull();
     });
 });

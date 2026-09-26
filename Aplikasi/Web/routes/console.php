@@ -21,6 +21,9 @@ Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
 Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
 
 // BR-P06.5: pengumuman versi materiil dokumen legal ke Owner selama masa pengumuman (sekali per versi per pengguna).
+// v1.98 HCL: daftar kompatibilitas perangkat dari hasil Wizard Uji Perangkat.
+Schedule::command('pengelola:segarkan-kompatibilitas')->dailyAt('02:30')->timezone('Asia/Jakarta')->withoutOverlapping();
+
 Schedule::command('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // P-11 BR-P11.1: detak scheduler tiap menit + pemeriksaan alert operasional (scheduler, antrean, backup).

@@ -15,6 +15,7 @@ use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
+use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\BatasiTenantDitangguhkan;
@@ -46,6 +47,10 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
         ->where('kodeStruk', KodeStrukDigital::POLA)
         ->middleware('throttle:60,1')
         ->name('publik.struk-digital');
+    // v1.98 Hardware Compatibility List publik (PRD §17.2.5a).
+    Route::get('/kompatibilitas-perangkat', [KompatibilitasPerangkatPublikKontroler::class, 'Tampilkan'])
+        ->middleware('throttle:60,1')
+        ->name('publik.kompatibilitas-perangkat');
 
     // F-00 Registrasi & autentikasi tenant.
     Route::middleware('guest:web')->group(function (): void {
