@@ -7,6 +7,7 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
+use App\Domain\Akuntansi\Model\PemetaanAkun;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Promo\Enum\StatusKlaimPromo;
@@ -25,8 +26,9 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 use Tests\TestCase;
 
 /*
- * F-16c bagian 4b pendanaan promo (PSAK 72): potongan ke pelanggan tetap Diskon Penjualan; bagian yang ditanggung
- * pemasok menjadi klaim per transaksi; penerimaan pembayaran klaim dijurnal Dr kas/bank, Cr HPP (J-16.5).
+ * F-16c bagian 4b/4d pendanaan promo (PSAK 72, basis akrual): potongan ke pelanggan tetap Diskon Penjualan; bagian yang
+ * ditanggung pemasok menjadi klaim per transaksi, diakui saat penjualan (Dr Piutang Klaim Promosi Pemasok, Cr HPP) dan
+ * dibalik saat void; penerimaan pembayaran klaim dijurnal Dr kas/bank, Cr Piutang Klaim Promosi Pemasok (J-16.5).
  */
 
 beforeEach(function (): void {
@@ -89,15 +91,35 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         $jualDua = Penjualan::query()->where('Uuid', $dua['Uuid'])->sole();
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemVoid($k, $jualDua)]))->toBe([['Diterima', null]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-        expect(KlaimPromoPemasok::query()->where('IdPenjualan', $jualDua->Id)->sole()->Status)->toBe(StatusKlaimPromo::Dibatalkan);
+        $klaimDua = KlaimPromoPemasok::query()->where('IdPenjualan', $jualDua->Id)->sole();
+        expect($klaimDua->Status)->toBe(StatusKlaimPromo::Dibatalkan)
+            ->and($klaimDua->IdJurnalBatal)->not->toBeNull();
+
+        // Akrual (v1.93): jurnal klaim saat penjualan Dr Piutang Klaim Pemasok / Cr HPP per outlet; void membaliknya.
+        $idPiutang = BantuanJurnal::IdAkunPeran(PeranAkun::PiutangKlaimPemasok);
+        $idHpp = BantuanJurnal::IdAkunPeran(PeranAkun::Hpp);
+        $barisKlaim = fn (?int $idJurnal): array => JurnalDetail::query()->where('IdJurnal', $idJurnal)->orderBy('Urutan')->get()
+            ->map(fn (JurnalDetail $d): array => [$d->IdAkun, $d->IdOutlet, (string) $d->Debit, (string) $d->Kredit])->all();
+        $klaimSatu = KlaimPromoPemasok::query()->where('IdPenjualan', '!=', $jualDua->Id)->sole();
+        expect($barisKlaim($klaimSatu->IdJurnal))->toBe([
+            [$idPiutang, $k['Outlet']->Id, '4620.00', '0.00'],
+            [$idHpp, $k['Outlet']->Id, '0.00', '4620.00'],
+        ])
+            ->and($barisKlaim($klaimDua->IdJurnalBatal))->toBe([
+                [$idHpp, $k['Outlet']->Id, '4620.00', '0.00'],
+                [$idPiutang, $k['Outlet']->Id, '0.00', '4620.00'],
+            ])
+            ->and((string) JurnalDetail::query()->where('IdAkun', $idPiutang)->sum('Debit'))->toBe('9240.00')
+            ->and((string) JurnalDetail::query()->where('IdAkun', $idPiutang)->sum('Kredit'))->toBe('4620.00')
+            ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($k['Tenant']->Id))->toBe([]);
 
         // Diskon penjualan tetap penuh 7.700 di jurnal penjualan (kontra pendapatan).
         $jualSatu = Penjualan::query()->where('Uuid', $satu['Uuid'])->sole();
-        $jurnal = Jurnal::query()->where('JenisSumber', JenisSumberJurnal::Penjualan->value)->where('IdSumber', $jualSatu->Id)->orderBy('Id')->firstOrFail();
+        $jurnal = Jurnal::query()->where('JenisSumber', JenisSumberJurnal::Penjualan->value)->where('IdSumber', $jualSatu->Id)->where('KunciSumber', 'Utama')->firstOrFail();
         expect((string) JurnalDetail::query()->where('IdJurnal', $jurnal->Id)->where('IdAkun', BantuanJurnal::IdAkunPeran(PeranAkun::DiskonPenjualan))->sum('Debit'))->toBe('7700.00');
     });
 
-    it('penerimaan klaim: semua klaim terbuka ≤ tanggal diterima, jurnal Dr kas/bank Cr HPP seimbang; halaman & izin', function (): void {
+    it('penerimaan klaim: semua klaim terbuka ≤ tanggal diterima, jurnal Dr kas/bank Cr piutang klaim seimbang; halaman & izin', function (): void {
         $k = SiapkanPromoPemasok($this);
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemPromoPemasok($k), ItemPromoPemasok($k)]))->toBe([['Diterima', null], ['Diterima', null]]);
 
@@ -126,8 +148,9 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
             ->and($jurnal->JenisSumber)->toBe(JenisSumberJurnal::PenerimaanKlaimPemasok)
             ->and($baris)->toBe([
                 [$kas->Id, '9240.00', '0.00'],
-                [BantuanJurnal::IdAkunPeran(PeranAkun::Hpp), '0.00', '9240.00'],
+                [BantuanJurnal::IdAkunPeran(PeranAkun::PiutangKlaimPemasok), '0.00', '9240.00'],
             ])
+            ->and((string) JurnalDetail::query()->where('IdAkun', BantuanJurnal::IdAkunPeran(PeranAkun::PiutangKlaimPemasok))->selectRaw('SUM(Debit) - SUM(Kredit) AS Saldo')->value('Saldo'))->toBe('0.00')
             ->and(KlaimPromoPemasok::query()->where('Status', StatusKlaimPromo::Diterima->value)->count())->toBe(2)
             ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($k['Tenant']->Id))->toBe([]);
 
@@ -137,6 +160,44 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         // Kasir tanpa izin pelanggan.lihat tidak bisa membuka halaman klaim.
         BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->get('/kelola/promo/klaim-pemasok')->assertForbidden();
+    });
+
+    it('tenant lama tanpa peran Piutang Klaim Pemasok: akun 1-1460 & pemetaan dibuat otomatis; klaim lama tanpa jurnal dikredit ke HPP saat diterima', function (): void {
+        $k = SiapkanPromoPemasok($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        // Simulasi tenant yang menerapkan template sebelum v1.93.
+        PemetaanAkun::query()->where('Kunci', PeranAkun::PiutangKlaimPemasok->value)->delete();
+        Akun::query()->where('Kode', '1-1460')->delete();
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemPromoPemasok($k)]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $akun = Akun::query()->where('Kode', '1-1460')->sole();
+        expect($akun->Nama)->toBe('Piutang Klaim Promosi Pemasok')
+            ->and(BantuanJurnal::IdAkunPeran(PeranAkun::PiutangKlaimPemasok))->toBe($akun->Id)
+            ->and(KlaimPromoPemasok::query()->sole()->IdJurnal)->not->toBeNull();
+
+        // Klaim sebelum v1.93 (belum berjurnal akrual).
+        $lama = KlaimPromoPemasok::query()->sole()->replicate(['Uuid']);
+        $lama->IdPenjualan = 999999;
+        $lama->IdOutlet = null;
+        $lama->IdJurnal = null;
+        $lama->save();
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Pemilik);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $kas = Akun::query()->where('KasBank', true)->orderBy('Kode')->firstOrFail();
+        $this->post('/kelola/promo/klaim-pemasok/penerimaan', [
+            'UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => now($k['Outlet']->ZonaWaktu)->toDateString(), 'UuidAkunKasBank' => $kas->Uuid,
+        ])->assertRedirect('/kelola/promo/klaim-pemasok');
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $baris = JurnalDetail::query()->where('IdJurnal', PenerimaanKlaimPemasok::query()->sole()->IdJurnal)->orderBy('Urutan')->get()
+            ->map(fn (JurnalDetail $d): array => [$d->IdAkun, $d->IdOutlet, (string) $d->Debit, (string) $d->Kredit])->all();
+        expect($baris)->toBe([
+            [$kas->Id, null, '9240.00', '0.00'],
+            [$akun->Id, $k['Outlet']->Id, '0.00', '4620.00'],
+            [BantuanJurnal::IdAkunPeran(PeranAkun::Hpp), null, '0.00', '4620.00'],
+        ])->and(PemeriksaInvarian::PeriksaJurnalSeimbang($k['Tenant']->Id))->toBe([]);
     });
 
     it('formulir promo: bagian pemasok 0–100%, bagian > 0 wajib pemasok; tersimpan di promo', function (): void {

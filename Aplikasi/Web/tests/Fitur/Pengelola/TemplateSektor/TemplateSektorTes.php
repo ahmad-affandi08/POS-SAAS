@@ -75,7 +75,7 @@ describe('Izin template sektor (BR-P03.5)', function (): void {
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Pengelola/TemplateSektor/Editor')
                 ->where('Versi.Status', 'Draf')
-                ->has('Pilihan.PeranAkun', 31));
+                ->has('Pilihan.PeranAkun', 32));
         $this->put(UrlVersi('FNB-CAF', 1, '/isi-bisnis'), AmbilIsiBisnisUji('FNB-CAF'))->assertForbidden();
         $this->post(UrlVersi('FNB-CAF', 1, '/validasi'))->assertForbidden();
 

@@ -379,8 +379,9 @@ final class TerimaPenjualanPos
             array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
         );
         $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat($penjualan->Id, $idPelanggan, $tanggalBisnis, $diskonPerPromo)];
-        // F-16c bagian 4b: bagian potongan yang ditanggung pemasok menjadi klaim ke pemasok (tanpa jurnal sampai dibayar).
-        $this->klaimPemasok->Catat($penjualan->Id, $tanggalBisnis, $diskonPerPromo);
+        // F-16c bagian 4b/4d: bagian potongan yang ditanggung pemasok menjadi klaim ke pemasok, diakui akrual
+        // (Dr Piutang Klaim Promosi Pemasok, Cr HPP) di transaksi yang sama.
+        $this->klaimPemasok->Catat($penjualan->Id, $penjualan->Uuid, $penjualan->Nomor, $penjualan->IdOutlet, $tanggalBisnis, $diskonPerPromo, $kasir->id);
 
         // F-16c bagian 2: voucher yang dipesan online menjadi terpakai di transaksi yang sama.
         if ($data->kodeVoucher !== null) {

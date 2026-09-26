@@ -58,7 +58,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
         $akunTemplate = collect($versi->Isi['Akun']);
         $akun = Akun::query()->get()->keyBy('Kode');
         expect($akun->keys()->sort()->values()->all())->toBe($akunTemplate->pluck('Kode')->sort()->values()->all())
-            ->and($akun->count())->toBe(43)
+            ->and($akun->count())->toBe(44)
             ->and($akun->has('4-1010'))->toBeTrue()
             ->and($akun->has('4-1020'))->toBeTrue();
 
@@ -104,7 +104,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
             ->and($pengaturan['Sektor'])->toBe(['FNB-CAF']);
 
         expect(MetodePembayaran::query()->where('Jenis', 'Tunai')->count())->toBe(1)
-            ->and($hasil->jumlahAkun)->toBe(43)
+            ->and($hasil->jumlahAkun)->toBe(44)
             ->and($hasil->namaTemplate)->toBe('Kafe / kedai kopi');
     });
 
@@ -222,7 +222,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/sektor', ['KodeTemplate' => 'FNB-CAF', 'SektorLain' => ['RTL-GEN']])
             ->assertRedirect('/kelola/panduan-awal/pajak')
             ->assertSessionHasNoErrors()
-            ->assertSessionHas('Kilat', 'Template Kafe / kedai kopi versi 1 diterapkan: 43 akun, 5 kategori, 7 satuan, 1 kelompok pajak ditambahkan.');
+            ->assertSessionHas('Kilat', 'Template Kafe / kedai kopi versi 1 diterapkan: 44 akun, 5 kategori, 7 satuan, 1 kelompok pajak ditambahkan.');
 
         expect(($tenant->fresh()?->Pengaturan ?? [])['Sektor'])->toBe(['FNB-CAF', 'RTL-GEN']);
 

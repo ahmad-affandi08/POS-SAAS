@@ -63,6 +63,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -332,6 +339,7 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",
@@ -550,6 +558,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -833,6 +848,7 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",
@@ -1049,6 +1065,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -1332,6 +1355,7 @@
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
                     "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",
                     "PiutangUsaha": "1-1400",
                     "PpnKeluaran": "2-1300",

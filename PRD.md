@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.92 |
+| Versi | 1.93 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.93 | Rincian **F-16c bagian 4d klaim promo pemasok berbasis akrual** (keputusan pemilik produk: "kerjakan semua, yang penting sesuai dengan kebijakan yang ada di Indonesia"; perlakuan dipilih agen: SAK EMKM/PSAK 72 basis akrual): klaim diakui saat penjualan **J-16.6** Dr Piutang Klaim Promosi Pemasok (akun baru 1-1460, peran `PiutangKlaimPemasok`), Cr HPP; void membalik; **J-16.5** penerimaan kini Cr Piutang Klaim Promosi Pemasok (klaim lama tanpa jurnal akrual tetap Cr HPP). Akun & pemetaan disediakan otomatis untuk tenant lama. Kolom `KlaimPromoPemasok.IdOutlet`, `IdJurnal`, `IdJurnalBatal`. Menggantikan "klaim diakui saat pemasok membayar" di bagian 4b. |
 | 1.92 | Rincian **F-16c bagian 4c laporan efektivitas promo** (keputusan pemilik produk v1.89: praktik umum; metode dipilih agen): jumlah pakai, total & rata-rata potongan, bagian pemasok, penjualan barang promo selama promo vs periode yang sama panjang tepat sebelumnya, dan uplift %. |
 | 1.91 | Rincian **F-16c bagian 4b pendanaan promo** (keputusan pemilik produk v1.89: ikuti kebijakan di Indonesia & praktik umum; perlakuan dipilih agen: PSAK 72/SAK EMKM): potongan ke pelanggan tetap **Diskon Penjualan**; promo bisa ditanggung pemasok (`Promo.IdPemasok`, `PersenDanaPemasok`) → `KlaimPromoPemasok` per transaksi (void membatalkan); penerimaan pembayaran klaim `PenerimaanKlaimPemasok` dijurnal **J-16.5** Dr kas/bank, Cr HPP; halaman Klaim promo pemasok. |
 | 1.90 | Void penjualan **mengembalikan jatah promo** (keputusan pemilik produk v1.89: ikuti praktik umum; transaksi yang dibatalkan dianggap tidak terjadi): `PromoPemakaian.DibatalkanPada`, `KuotaTerpakai` dikurangi, batas per pelanggan & ringkasan pemakaian tidak menghitungnya. Retur tidak mengembalikan jatah. Mengubah rincian F-16c bagian 3 ("penjualan yang di-void tetap terhitung"). |
@@ -1646,6 +1647,13 @@ promo:
 - **Penerimaan klaim** (`PenerimaanKlaimPemasok`, **J-16.5**): di halaman `/kelola/promo/klaim-pemasok` (menu Pelanggan › Klaim promo pemasok; lihat `pelanggan.lihat`, catat penerimaan `akuntansi.kelola`) klaim terbuka ditampilkan per pemasok (jumlah transaksi, total, sejak, kode promo). "Catat pembayaran klaim" (tanggal ≤ hari ini, akun kas/bank, keterangan) menandai semua klaim terbuka pemasok itu dengan tanggal bisnis ≤ tanggal penerimaan sebagai `Diterima` dan memposting Dr kas/bank, Cr HPP sebesar totalnya (periode terkunci ditolak). Riwayat 100 penerimaan terakhir dengan tautan jurnal. Audit `promo.klaim-pemasok.terima`.
 - **Belum:** potong klaim dari hutang pemasok (butuh dokumen nota debit di F-04), klaim sebagian/selisih klaim, ekspor rekap klaim untuk ditagihkan.
 
+**Rincian F-16c bagian 4d (v1.93, klaim promo pemasok berbasis akrual; menggantikan "klaim diakui saat pemasok membayar" di bagian 4b; perlakuan dipilih agen atas keputusan pemilik produk "sesuai kebijakan di Indonesia"):**
+- **Dasar:** SAK EMKM dan PSAK 72 memakai basis akrual. Hak menagih bagian promo yang ditanggung pemasok timbul saat penjualan berpromo terjadi dan jumlahnya terukur andal (potongan × persen yang disepakati di promo), jadi diakui saat itu sebagai piutang, bukan saat kas diterima.
+- **J-16.6 (saat penjualan diterima server, transaksi DB yang sama):** per klaim Dr **Piutang Klaim Promosi Pemasok** (1-1460, peran `PiutangKlaimPemasok`, tipe Aset), Cr **HPP**, dimensi outlet penjualan, tanggal bisnis penjualan (periode terkunci: digeser seperti jurnal penjualan). Jurnal bersumber penjualan itu (kunci `KlaimPemasok-{IdPromo}`), jadi tampil di detail penjualan.
+- **Void:** klaim `Terbuka` menjadi `Dibatalkan` dan jurnalnya dibalik di tanggal bisnis void (kunci `KlaimPemasokBatal-{IdPromo}`). Klaim yang sudah diterima tidak diubah (koreksi dengan pemasok manual).
+- **J-16.5 (penerimaan):** Dr kas/bank, Cr Piutang Klaim Promosi Pemasok per outlet; klaim sebelum v1.93 yang belum berjurnal akrual tetap Cr HPP (tidak ada pengakuan ganda).
+- **Tenant lama:** template sektor v1.93 menambah akun 1-1460 + pemetaannya. Tenant yang menerapkan template sebelumnya mendapat akun & pemetaan otomatis saat klaim pertama dicatat (`PenyediaAkunPeran`; kode 1-1460, atau nomor kosong berikutnya bila kode itu dipakai akun lain bertipe berbeda; pemetaan yang sudah ada tidak disentuh). Audit `akun.tambah-template`.
+
 **Rincian F-16c bagian 4c (v1.92, laporan efektivitas promo; metode dipilih agen atas mandat D-12, mengikuti praktik umum analisis promo ritel "sebelum-sesudah"):**
 - Halaman `/kelola/promo/{promo}/efektivitas` (klik baris promo atau "Lihat efektivitas"; izin `pelanggan.lihat`).
 - **Periode promo** = tanggal mulai promo (tanpa tanggal mulai: pemakaian pertama) s.d. tanggal selesai atau hari ini (yang lebih awal), zona tenant, paling panjang 366 hari terakhir; promo yang belum mulai menampilkan "Promo belum berjalan". **Pembanding** = periode sama panjang tepat sebelum periode promo.
@@ -2093,6 +2101,7 @@ Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
 | 1-1300 | Piutang Pencairan (QRIS/EDC/Gateway/Ojol) | Aset |
 | 1-1400 | Piutang Usaha | Aset |
 | 1-1450 | Piutang Karyawan (Kasbon) | Aset |
+| 1-1460 | Piutang Klaim Promosi Pemasok (v1.93) | Aset |
 | 1-1500 | Persediaan Barang Dagang | Aset |
 | 1-1510 | Persediaan Bahan Baku | Aset |
 | 1-1520 | Persediaan Barang Dalam Perjalanan (transfer) | Aset |
@@ -2161,7 +2170,8 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-16.2 | Beli paket sesi | Kas | Pendapatan Diterima Dimuka |
 | J-16.3 | Pemakaian sesi | Pendapatan Diterima Dimuka | Pendapatan Jasa |
 | J-16.4 | Penukaran poin (sebagai diskon) | Diskon Penjualan | (bagian dari J-07.1) |
-| J-16.5 | Penerimaan klaim promo dari pemasok (v1.91) | Kas/Bank | HPP (imbalan pemasok mengurangi biaya pokok, PSAK 72) |
+| J-16.5 | Penerimaan klaim promo dari pemasok (v1.91; v1.93) | Kas/Bank | Piutang Klaim Promosi Pemasok (klaim sebelum v1.93: HPP) |
+| J-16.6 | Klaim promo pemasok saat penjualan (v1.93, akrual) | Piutang Klaim Promosi Pemasok | HPP (imbalan pemasok mengurangi biaya pokok, PSAK 72) |
 | J-18.1 | Kasbon karyawan | Piutang Karyawan | Kas |
 | J-18.2 | Bayar rekap gaji | Beban Gaji & Komisi (gaji kotor) | Piutang Karyawan (potongan kasbon), Pendapatan Lain (potongan lain), Kas/Bank (gaji bersih) |
 | J-15.1 | Tutup tahun | Semua akun Pendapatan | Semua akun Beban & HPP, selisih ke Laba Ditahan |
@@ -2992,7 +3002,7 @@ erDiagram
 | `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada, Status (F-16c bagian 2) |
 | `VoucherPemakaian` | IdVoucher, UuidPenjualan, IdPenjualan, IdPerangkat, Status (Dipesan/Dipakai/Dilepas), DipesanSampai (F-16c bagian 2) |
-| `KlaimPromoPemasok` | IdTenant, Uuid, IdPromo, IdPemasok, IdPenjualan, TanggalBisnis, JumlahDiskon, PersenDana, Jumlah, Status (Terbuka/Diterima/Dibatalkan), IdPenerimaanKlaimPemasok; unik (IdPromo, IdPenjualan) (F-16c bagian 4b, v1.91) |
+| `KlaimPromoPemasok` | IdTenant, Uuid, IdPromo, IdPemasok, IdPenjualan, TanggalBisnis, JumlahDiskon, PersenDana, Jumlah, Status (Terbuka/Diterima/Dibatalkan), IdPenerimaanKlaimPemasok, IdOutlet, IdJurnal (J-16.6), IdJurnalBatal (v1.93); unik (IdPromo, IdPenjualan) (F-16c bagian 4b, v1.91) |
 | `PenerimaanKlaimPemasok` | IdTenant, Uuid, IdPemasok, Tanggal, Jumlah, IdAkunKasBank, Keterangan, IdJurnal, DibuatOleh; J-16.5 (v1.91) |
 | `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon, DibatalkanPada (void, v1.90); unik (IdPromo, IdPenjualan) (F-16c) |
 

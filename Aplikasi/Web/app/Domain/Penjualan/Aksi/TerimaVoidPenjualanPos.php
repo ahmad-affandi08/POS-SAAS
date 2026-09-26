@@ -211,8 +211,8 @@ final class TerimaVoidPenjualanPos
         $this->voucher->Lepaskan($penjualan->Id);
         // v1.90: jatah promo (kuota & batas per pelanggan) penjualan yang di-void dikembalikan.
         $this->pemakaianPromo->Batalkan($penjualan->Id);
-        // F-16c bagian 4b: klaim promo ke pemasok yang belum diterima dibatalkan.
-        $this->klaimPemasok->Batalkan($penjualan->Id);
+        // F-16c bagian 4b/4d: klaim promo ke pemasok yang belum diterima dibatalkan, jurnal akrualnya dibalik.
+        $this->klaimPemasok->Batalkan($penjualan->Id, $tanggalBisnis, $kasir->id);
 
         // F-12 bagian 2: pre-order yang diambil lewat penjualan ini kembali Siap dengan DP-nya (jurnal pembalik sudah
         // mengkredit Uang Muka Pelanggan).

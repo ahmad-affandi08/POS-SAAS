@@ -36,7 +36,7 @@ describe('Isolasi tenant panduan awal (F-01, CLAUDE.md #11)', function (): void 
             ->and(Kategori::query()->count())->toBe(0)
             ->and(OutletFitur::query()->count())->toBe(0);
         BantuanOrganisasi::AturKonteks($a->Id);
-        expect(Akun::query()->count())->toBe(43);
+        expect(Akun::query()->count())->toBe(44);
     });
 
     it('tenant B tidak bisa melihat/mengubah metode pembayaran & gambar QRIS A, memakai kategori A, atau membuat kode aktivasi perangkat A', function (): void {

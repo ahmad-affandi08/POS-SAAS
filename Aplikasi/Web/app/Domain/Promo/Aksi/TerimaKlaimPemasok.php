@@ -20,13 +20,16 @@ use App\Domain\Promo\Model\KlaimPromoPemasok;
 use App\Domain\Promo\Model\PenerimaanKlaimPemasok;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
  * F-16c bagian 4b (J-16.5): pemasok membayar klaim promonya. Semua klaim `Terbuka` pemasok itu dengan tanggal bisnis ≤
- * tanggal penerimaan diterima sekaligus (lazim: pemasok membayar rekap klaim per periode). Jurnal Dr kas/bank, Cr HPP
- * sebesar total klaim (PSAK 72: imbalan dari pemasok mengurangi biaya pokok penjualan); potongan ke pelanggan tetap di
- * Diskon Penjualan jurnal penjualan. Periode terkunci ditolak oleh `PostingJurnal`. Audit `promo.klaim-pemasok.terima`.
+ * tanggal penerimaan diterima sekaligus (lazim: pemasok membayar rekap klaim per periode). Jurnal Dr kas/bank, Cr
+ * Piutang Klaim Promosi Pemasok per outlet (klaim sudah diakui akrual saat penjualan, v1.93); klaim lama tanpa jurnal
+ * akrual dikredit ke HPP (PSAK 72: imbalan dari pemasok mengurangi biaya pokok penjualan). Potongan ke pelanggan tetap
+ * di Diskon Penjualan jurnal penjualan. Periode terkunci ditolak oleh `PostingJurnal`. Audit
+ * `promo.klaim-pemasok.terima`.
  */
 final class TerimaKlaimPemasok
 {
@@ -84,7 +87,7 @@ final class TerimaKlaimPemasok
                 keterangan: "Klaim promo {$nama} ({$klaim->count()} transaksi)",
                 baris: [
                     new DataBarisJurnal(peran: null, idAkun: $akun, idOutlet: null, debit: $total, kredit: Uang::Nol()),
-                    DataBarisJurnal::Kredit(PeranAkun::Hpp, $total, null),
+                    ...$this->SusunBarisKredit($klaim),
                 ],
                 idPengguna: $idPengguna,
             ));
@@ -104,5 +107,28 @@ final class TerimaKlaimPemasok
 
             return $penerimaan;
         });
+    }
+
+    /**
+     * @param  Collection<int, KlaimPromoPemasok>  $klaim
+     * @return list<DataBarisJurnal>
+     */
+    private function SusunBarisKredit(Collection $klaim): array
+    {
+        /** @var array<string, array{Peran: PeranAkun, IdOutlet: int|null, Jumlah: Uang}> $kelompok */
+        $kelompok = [];
+
+        foreach ($klaim as $k) {
+            $peran = $k->IdJurnal !== null ? PeranAkun::PiutangKlaimPemasok : PeranAkun::Hpp;
+            $idOutlet = $k->IdJurnal !== null ? $k->IdOutlet : null;
+            $kunci = $peran->value.'-'.($idOutlet ?? 0);
+            $kelompok[$kunci] ??= ['Peran' => $peran, 'IdOutlet' => $idOutlet, 'Jumlah' => Uang::Nol()];
+            $kelompok[$kunci]['Jumlah'] = $kelompok[$kunci]['Jumlah']->Tambah(Uang::Dari((string) $k->Jumlah));
+        }
+
+        return array_values(array_map(
+            fn (array $g): DataBarisJurnal => DataBarisJurnal::Kredit($g['Peran'], $g['Jumlah'], $g['IdOutlet']),
+            $kelompok,
+        ));
     }
 }

@@ -15,7 +15,7 @@ describe('PeranAkun: istilah kamus & alias kunci lama (P-03, BR-P03.4, DesainF01
             ->and(PeranAkun::SusutPersediaan->AmbilLabel())->toBe('Susut & barang rusak')
             ->and(PeranAkun::tryFrom('PiutangSettlement'))->toBeNull()
             ->and(PeranAkun::tryFrom('Waste'))->toBeNull()
-            ->and(PeranAkun::cases())->toHaveCount(31);
+            ->and(PeranAkun::cases())->toHaveCount(32);
     });
 
     it('DariKunci membaca kunci baru, kunci lama dari versi terbit, dan menolak kunci asing', function (): void {
