@@ -32,6 +32,7 @@ export const opsiAksi: { Nilai: JenisAksiPromo; Label: string }[] = [
     { Nilai: 'BundelHargaTetap', Label: 'Bundel harga tetap (misal 2 kopi Rp 30.000)' },
     { Nilai: 'DiskonPersenPesanan', Label: 'Diskon persen pesanan' },
     { Nilai: 'DiskonTetapPesanan', Label: 'Potongan rupiah pesanan' },
+    { Nilai: 'PoinBerlipat', Label: 'Poin berlipat (tanpa potongan harga)' },
 ];
 
 const opsiKondisi: { Nilai: JenisKondisiPromo; Label: string }[] = [
@@ -71,6 +72,7 @@ type Isian = {
     Beli: string;
     Gratis: string;
     PersenGratis: string;
+    Pengali: string;
     BatasPerTransaksi: string;
     MetodeBayar: string[];
     UlangTahun: JenisUlangTahunPromo | '';
@@ -129,6 +131,7 @@ export default function HalamanFormulirPromo({
         Beli: d?.Aksi.Beli === undefined ? '2' : String(d.Aksi.Beli),
         Gratis: d?.Aksi.Gratis === undefined ? '1' : String(d.Aksi.Gratis),
         PersenGratis: HapusNolPecahan(d?.Aksi.PersenGratis) || '100',
+        Pengali: HapusNolPecahan(d?.Aksi.Pengali) || '2',
         BatasPerTransaksi:
             d?.BatasPerTransaksi === null || d?.BatasPerTransaksi === undefined ? '' : String(d.BatasPerTransaksi),
         MetodeBayar: d?.MetodeBayar ?? [],
@@ -174,6 +177,7 @@ export default function HalamanFormulirPromo({
             Beli: aksi === 'BeliXGratisY' ? Number(isian.Beli || '0') : null,
             Gratis: aksi === 'BeliXGratisY' ? Number(isian.Gratis || '0') : null,
             PersenGratis: aksi === 'BeliXGratisY' ? KosongJadiNull(isian.PersenGratis) : null,
+            Pengali: aksi === 'PoinBerlipat' ? KosongJadiNull(isian.Pengali) : null,
             BatasPerTransaksi: bertingkat && isian.BatasPerTransaksi !== '' ? Number(isian.BatasPerTransaksi) : null,
             MetodeBayar: isian.MetodeBayar,
             UlangTahun: KosongJadiNull(isian.UlangTahun),
@@ -283,6 +287,19 @@ export default function HalamanFormulirPromo({
                                 nilai={isian.Harga}
                                 saatBerubah={(nilai) => Ubah({ Harga: nilai })}
                                 galat={galat.Harga}
+                                required
+                            />
+                        ) : null}
+                        {aksi === 'PoinBerlipat' ? (
+                            <BidangJumlah
+                                label="Pengali poin"
+                                nilai={isian.Pengali}
+                                saatBerubah={(nilai) => Ubah({ Pengali: nilai })}
+                                desimal={1}
+                                digitBulat={2}
+                                akhiran="kali"
+                                keterangan="Poin loyalti transaksi yang memenuhi syarat dikalikan angka ini (lebih dari 1 sampai 10). Tidak mengubah harga dan bisa berjalan bersama promo potongan; bila beberapa promo poin berlaku, dipakai pengali terbesar."
+                                galat={galat.Pengali}
                                 required
                             />
                         ) : null}

@@ -140,10 +140,14 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
             ], $hasil->terpakai);
             expect(json_decode((string) json_encode($terpakai), true))->toBe(json_decode((string) json_encode($harapan['PromoTerpakai']), true));
 
+            // F-16c bagian 4: promo poin berlipat terpilih (tanpa kunci = tidak ada).
+            $poin = $hasil->poinBerlipat === null ? null : ['Kode' => $hasil->poinBerlipat->kode, 'Pengali' => (string) $hasil->poinBerlipat->AmbilPengali()];
+            expect($poin)->toBe($harapan['PoinBerlipat'] ?? null);
+
             $aktual = $hasil->hasil->KeLarik();
 
             foreach ($harapan as $kunci => $nilai) {
-                if ($kunci === 'PromoTerpakai') {
+                if ($kunci === 'PromoTerpakai' || $kunci === 'PoinBerlipat') {
                     continue;
                 }
 

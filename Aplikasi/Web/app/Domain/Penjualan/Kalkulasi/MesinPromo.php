@@ -25,6 +25,8 @@ use InvalidArgumentException;
  *    (seri: kandidat lebih awal).
  * 3. Promo barang dulu (dibatasi sisa netto baris), lalu promo pesanan (dari subtotal setelah promo barang, dibatasi
  *    sisa subtotal). Semua potongan menjadi nominal lalu dihitung `MesinKalkulasi`.
+ * 4. Bagian 4: promo `PoinBerlipat` tidak ikut resolusi potongan (tidak bersaing dengan promo harga, `Eksklusif`-nya
+ *    diabaikan); dari yang berlaku dipilih pengali terbesar (seri: urutan prioritas), tidak dikalikan bertumpuk.
  */
 final class MesinPromo
 {
@@ -52,6 +54,15 @@ final class MesinPromo
             fn (DefinisiPromo $p): bool => self::CekBerlaku($p, $konteks, $hasilDasar->subtotal) && $this->CekKondisi($p, $dasar, $barisPromo),
         ));
         usort($berlaku, [self::class, 'BandingkanUrutan']);
+        $poinBerlipat = null;
+
+        foreach ($berlaku as $p) {
+            if ($p->aksi === JenisAksiPromo::PoinBerlipat && $p->AmbilPengali()->isGreaterThan($poinBerlipat?->AmbilPengali() ?? BigDecimal::one())) {
+                $poinBerlipat = $p;
+            }
+        }
+
+        $berlaku = array_values(array_filter($berlaku, fn (DefinisiPromo $p): bool => $p->aksi !== JenisAksiPromo::PoinBerlipat));
         $evaluasi = fn (array $daftar): array => $this->Evaluasi(array_values($daftar), $dasar, $barisPromo, $sisaAwal, $bruto);
 
         if ($mode === ModeResolusiPromo::PrioritasKetat) {
@@ -96,7 +107,7 @@ final class MesinPromo
 
         $data = self::SusunData($dasar, $terpilih);
 
-        return new HasilPromo($terpilih, $data, $this->mesin->Hitung($data));
+        return new HasilPromo($terpilih, $data, $this->mesin->Hitung($data), $poinBerlipat);
     }
 
     public static function BandingkanUrutan(DefinisiPromo $a, DefinisiPromo $b): int
@@ -400,6 +411,7 @@ final class MesinPromo
                 break;
             case JenisAksiPromo::DiskonPersenPesanan:
             case JenisAksiPromo::DiskonTetapPesanan:
+            case JenisAksiPromo::PoinBerlipat:
                 break;
         }
 

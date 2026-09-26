@@ -182,8 +182,17 @@ void main() {
           },
       ];
       expect(terpakai, harapan['PromoTerpakai'], reason: 'PromoTerpakai');
+      // F-16c bagian 4: promo poin berlipat terpilih (tanpa kunci = tidak ada).
+      final poin = hasil.poinBerlipat;
+      expect(
+        poin == null ? null : {'Kode': poin.kode, 'Pengali': poin.pengali.toString()},
+        harapan['PoinBerlipat'],
+        reason: 'PoinBerlipat',
+      );
       final aktual = UbahHasilKePeta(hasil.hasil);
-      for (final MapEntry(:key, :value) in harapan.entries.where((e) => e.key != 'PromoTerpakai')) {
+      for (final MapEntry(:key, :value) in harapan.entries.where(
+        (e) => e.key != 'PromoTerpakai' && e.key != 'PoinBerlipat',
+      )) {
         expect(aktual[key], value, reason: 'Harapan.$key');
       }
     });

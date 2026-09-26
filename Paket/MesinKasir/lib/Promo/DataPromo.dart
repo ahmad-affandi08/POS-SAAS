@@ -17,6 +17,9 @@ enum JenisAksiPromo {
   DiskonTetapPesanan,
   BeliXGratisY,
   BundelHargaTetap,
+
+  /// Bagian 4: tidak memotong harga; poin loyalti transaksi dikalikan [DefinisiPromo.pengali].
+  PoinBerlipat,
 }
 
 /// Cara memilih promo yang berlaku bersamaan: `Terbaik` = kombinasi dengan potongan terbesar untuk pelanggan (semua
@@ -78,7 +81,9 @@ final class DefinisiPromo {
     this.transaksiPertama = false,
     this.batasPerPelanggan,
     this.periodeBatasPelanggan = PeriodeBatasPelangganPromo.Hari,
-  }) : minimalSubtotal = minimalSubtotal ?? Uang.Nol(),
+    Decimal? pengali,
+  }) : pengali = pengali ?? Decimal.one,
+       minimalSubtotal = minimalSubtotal ?? Uang.Nol(),
        jumlahMinimal = jumlahMinimal ?? Kuantitas.Nol(),
        persenGratis = persenGratis ?? Decimal.fromInt(100);
 
@@ -124,6 +129,9 @@ final class DefinisiPromo {
 
   /// Set `BeliXGratisY`/`BundelHargaTetap` terbanyak per transaksi; null = tanpa batas.
   final int? batasPerTransaksi;
+
+  /// `PoinBerlipat`: pengali poin (bagian 4); bawaan 1 = tidak berlipat.
+  final Decimal pengali;
 
   /// Sisa kuota pemakaian; null = tanpa kuota, 0 = habis.
   final int? kuotaTersisa;
@@ -207,6 +215,7 @@ final class DefinisiPromo {
           : JenisUlangTahunPromo.values.byName(ulangTahun['Jenis']! as String),
       hariUlangTahun: ulangTahun['Hari'] is int && (ulangTahun['Hari']! as int) > 0 ? ulangTahun['Hari']! as int : 0,
       transaksiPertama: definisi['TransaksiPertama'] == true,
+      pengali: Teks(aksi['Pengali']) == null ? null : Decimal.parse(aksi['Pengali']! as String),
       batasPerPelanggan: batas['Jumlah'] as int?,
       periodeBatasPelanggan: Teks(batas['Periode']) == null
           ? PeriodeBatasPelangganPromo.Hari
@@ -268,9 +277,12 @@ final class PromoTerpakai {
 }
 
 /// Hasil `MesinPromo`: promo terpakai (urut evaluasi), masukan kalkulasi yang sudah berisi potongan promo, dan hasil
-/// mesin kalkulasi atas masukan itu.
+/// mesin kalkulasi atas masukan itu. Bagian 4: [poinBerlipat] = promo poin berlipat dengan pengali terbesar yang
+/// berlaku (null = tidak ada); tidak memengaruhi harga.
 final class HasilPromo {
-  const HasilPromo({required this.terpakai, required this.data, required this.hasil});
+  const HasilPromo({required this.terpakai, required this.data, required this.hasil, this.poinBerlipat});
+
+  final DefinisiPromo? poinBerlipat;
 
   final List<PromoTerpakai> terpakai;
   final DataKalkulasi data;

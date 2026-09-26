@@ -170,6 +170,7 @@ final class PromoKontroler extends DasarKelolaKontroler
             'Beli' => ['nullable', 'integer'],
             'Gratis' => ['nullable', 'integer'],
             'PersenGratis' => $persen,
+            'Pengali' => ['nullable', 'string', 'regex:/^\d{1,2}(\.\d{1,2})?$/'],
             'BatasPerTransaksi' => ['nullable', 'integer'],
             'WajibVoucher' => ['boolean'],
             'MetodeBayar' => ['array', 'max:20'],
@@ -238,6 +239,7 @@ final class PromoKontroler extends DasarKelolaKontroler
             transaksiPertama: $permintaan->boolean('TransaksiPertama'),
             batasPerPelanggan: $bulat('BatasPerPelanggan'),
             periodeBatasPelanggan: PeriodeBatasPelangganPromo::tryFrom($teks('PeriodeBatasPelanggan') ?? '') ?? PeriodeBatasPelangganPromo::Hari,
+            pengali: ($t = $teks('Pengali')) === null ? null : BigDecimal::of($t),
         );
     }
 

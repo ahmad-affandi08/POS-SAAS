@@ -175,6 +175,15 @@ final class SimpanPromo
                 $aksi['Harga'] = $data->harga->KeString();
 
                 break;
+            case JenisAksiPromo::PoinBerlipat:
+                // F-16c bagian 4: pengali poin > 1 sampai 10, paling banyak satu angka desimal (misal 1,5).
+                if ($data->pengali === null || ! $data->pengali->isGreaterThan(1) || $data->pengali->isGreaterThan(10) || $data->pengali->strippedOfTrailingZeros()->getScale() > 1) {
+                    throw new PelanggaranAturanBisnis('PengaliTidakValid', 'Pengali poin lebih dari 1 sampai 10, misal 2 atau 1,5.', 'Pengali');
+                }
+
+                $aksi['Pengali'] = (string) $data->pengali->strippedOfTrailingZeros();
+
+                break;
         }
 
         $bertingkat = in_array($data->aksi, [JenisAksiPromo::BeliXGratisY, JenisAksiPromo::BundelHargaTetap], true);

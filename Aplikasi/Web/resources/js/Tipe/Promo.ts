@@ -9,7 +9,9 @@ export type JenisAksiPromo =
     | 'DiskonPersenPesanan'
     | 'DiskonTetapPesanan'
     | 'BeliXGratisY'
-    | 'BundelHargaTetap';
+    | 'BundelHargaTetap'
+    /** F-16c bagian 4: tidak memotong harga; poin loyalti dikalikan `Pengali`. */
+    | 'PoinBerlipat';
 
 export type JenisKondisiPromo = 'Semua' | 'Produk' | 'Kategori';
 
@@ -32,6 +34,7 @@ export type DefinisiPromo = {
         Beli?: number;
         Gratis?: number;
         PersenGratis?: string;
+        Pengali?: string;
     };
     BatasPerTransaksi: number | null;
     /** F-16c bagian 2: promo hanya berlaku dengan kode voucher. */

@@ -9,6 +9,7 @@ use App\Domain\Organisasi\Data\DataOutletPenjualan;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Penjualan\Data\DataBarisPenjualanPos;
 use App\Domain\Penjualan\Data\DataPembayaranPenjualanPos;
+use App\Domain\Penjualan\Data\DataPemeriksaanPromo;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
 use App\Domain\Penjualan\Kalkulasi\BarisPromo;
 use App\Domain\Penjualan\Kalkulasi\DataKalkulasi;
@@ -25,7 +26,8 @@ use App\Domain\Promo\Kueri\PromoBerlaku;
  * diterapkan perangkat. Beda (promo diubah/berakhir/kuota habis saat offline) = keterangan untuk tinjauan; penjualan
  * tetap memakai hitungan perangkat. F-16c bagian 3: konteks server juga memuat metode semua pembayaran, tanggal lahir
  * pelanggan, jumlah transaksinya sebelum penjualan ini, dan pemakaian promonya (hari ini & selama promo) sehingga promo
- * yang diterapkan perangkat dari data lokal yang tertinggal (offline) terdeteksi sebagai `PromoBerbeda`.
+ * yang diterapkan perangkat dari data lokal yang tertinggal (offline) terdeteksi sebagai `PromoBerbeda`. Bagian 4: promo
+ * poin berlipat ditentukan server (poin dihitung server), jadi tidak dibandingkan dengan perangkat.
  */
 final class PemeriksaPromoPenjualan
 {
@@ -41,17 +43,16 @@ final class PemeriksaPromoPenjualan
      * @param  array<string, DataProdukPenjualan>  $produk
      * @param  list<PromoTerpakai>  $perangkat
      * @param  list<string>  $voucher  Uuid promo yang vouchernya dipakai penjualan ini (F-16c bagian 2)
-     * @return list<string>
      */
-    public function Periksa(DataPenjualanPos $data, DataKalkulasi $dasar, array $produk, DataOutletPenjualan $outlet, ?int $idPelanggan, string $tanggalBisnis, array $perangkat, array $voucher = []): array
+    public function Periksa(DataPenjualanPos $data, DataKalkulasi $dasar, array $produk, DataOutletPenjualan $outlet, ?int $idPelanggan, string $tanggalBisnis, array $perangkat, array $voucher = []): DataPemeriksaanPromo
     {
         $definisi = $this->promo->AmbilDefinisi();
 
         if ($definisi === [] && $perangkat === []) {
-            return [];
+            return new DataPemeriksaanPromo([]);
         }
 
-        $server = $this->mesin->Terapkan(
+        $hasilServer = $this->mesin->Terapkan(
             $dasar,
             array_values(array_map(fn (DataBarisPenjualanPos $b): BarisPromo => new BarisPromo($b->uuidProduk, $produk[$b->uuidProduk]->uuidKategori ?? null), $data->baris)),
             $definisi,
@@ -69,18 +70,19 @@ final class PemeriksaPromoPenjualan
                 pemakaianPelanggan: $idPelanggan === null ? [] : $this->pemakaian->HitungPerPelanggan($idPelanggan, $tanggalBisnis),
             ),
             $this->promo->AmbilMode(),
-        )->terpakai;
+        );
+        $server = $hasilServer->terpakai;
 
         $petaServer = self::Petakan($server);
         $petaPerangkat = self::Petakan($perangkat);
 
         if ($petaServer === $petaPerangkat) {
-            return [];
+            return new DataPemeriksaanPromo([], $hasilServer->poinBerlipat);
         }
 
         $kode = fn (array $daftar): string => $daftar === [] ? 'tanpa promo' : implode(', ', array_map(fn (PromoTerpakai $p): string => "{$p->kode} {$p->HitungTotal()->FormatRupiah()}", $daftar));
 
-        return ["perangkat: {$kode($perangkat)}; server: {$kode($server)}"];
+        return new DataPemeriksaanPromo(["perangkat: {$kode($perangkat)}; server: {$kode($server)}"], $hasilServer->poinBerlipat);
     }
 
     /**

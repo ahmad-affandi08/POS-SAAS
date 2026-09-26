@@ -64,12 +64,13 @@ final readonly class DefinisiPromo
         public bool $transaksiPertama = false,
         public ?int $batasPerPelanggan = null,
         public PeriodeBatasPelangganPromo $periodeBatasPelanggan = PeriodeBatasPelangganPromo::Hari,
+        public ?BigDecimal $pengali = null,
     ) {}
 
     /**
      * Membaca kolom promo + `Definisi` (bentuk yang sama di tabel `Promo`, katalog POS, dan test vector):
      * `{Hari, JamMulai "HH:MM", JamSelesai, Outlet, Kanal, Tier, MinimalSubtotal, Kondisi {Jenis, Uuid, JumlahMinimal},
-     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher, MetodeBayar [],
+     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis, Pengali}, BatasPerTransaksi, WajibVoucher, MetodeBayar [],
      * UlangTahun {Jenis, Hari}, TransaksiPertama, BatasPerPelanggan {Jumlah, Periode}}`.
      *
      * @param  array<string, mixed>  $definisi
@@ -126,6 +127,7 @@ final readonly class DefinisiPromo
             transaksiPertama: ($definisi['TransaksiPertama'] ?? false) === true,
             batasPerPelanggan: is_int($batas['Jumlah'] ?? null) ? $batas['Jumlah'] : null,
             periodeBatasPelanggan: PeriodeBatasPelangganPromo::tryFrom(self::UraiTeks($batas['Periode'] ?? null) ?? '') ?? PeriodeBatasPelangganPromo::Hari,
+            pengali: ($k = self::UraiTeks($aksi['Pengali'] ?? null)) === null ? null : BigDecimal::of($k),
         );
     }
 
@@ -137,6 +139,12 @@ final readonly class DefinisiPromo
     public function AmbilJumlahMinimal(): Kuantitas
     {
         return $this->jumlahMinimal ?? Kuantitas::Nol();
+    }
+
+    /** Bagian 4: pengali poin (`PoinBerlipat`); tanpa nilai = 1 (tidak berlipat). */
+    public function AmbilPengali(): BigDecimal
+    {
+        return $this->pengali ?? BigDecimal::one();
     }
 
     public function AmbilPersenGratis(): BigDecimal

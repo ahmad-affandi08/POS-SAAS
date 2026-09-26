@@ -63,5 +63,6 @@ final readonly class DataPromo
         public bool $transaksiPertama = false,
         public ?int $batasPerPelanggan = null,
         public PeriodeBatasPelangganPromo $periodeBatasPelanggan = PeriodeBatasPelangganPromo::Hari,
+        public ?BigDecimal $pengali = null,
     ) {}
 }

@@ -34,8 +34,16 @@ final class MesinPromo {
     }
     final hasilDasar = _mesin.Hitung(dasar);
     final keadaan = _Keadaan(dasar, barisPromo, hasilDasar);
-    final berlaku = promo.where((p) => CekBerlaku(p, konteks, hasilDasar.subtotal) && keadaan.CekKondisi(p)).toList()
+    final semua = promo.where((p) => CekBerlaku(p, konteks, hasilDasar.subtotal) && keadaan.CekKondisi(p)).toList()
       ..sort(BandingkanUrutan);
+    // Bagian 4: poin berlipat tidak ikut resolusi potongan; pengali terbesar menang (seri: urutan prioritas).
+    DefinisiPromo? poinBerlipat;
+    for (final p in semua.where((p) => p.aksi == JenisAksiPromo.PoinBerlipat)) {
+      if (p.pengali > (poinBerlipat?.pengali ?? Decimal.one)) {
+        poinBerlipat = p;
+      }
+    }
+    final berlaku = semua.where((p) => p.aksi != JenisAksiPromo.PoinBerlipat).toList();
 
     List<PromoTerpakai> terpilih;
     if (mode == ModeResolusiPromo.PrioritasKetat) {
@@ -68,7 +76,7 @@ final class MesinPromo {
     }
 
     final data = SusunData(dasar, terpilih);
-    return HasilPromo(terpakai: terpilih, data: data, hasil: _mesin.Hitung(data));
+    return HasilPromo(terpakai: terpilih, data: data, hasil: _mesin.Hitung(data), poinBerlipat: poinBerlipat);
   }
 
   static int BandingkanUrutan(DefinisiPromo a, DefinisiPromo b) {
@@ -296,6 +304,7 @@ final class _Keadaan {
         }
       case JenisAksiPromo.DiskonPersenPesanan:
       case JenisAksiPromo.DiskonTetapPesanan:
+      case JenisAksiPromo.PoinBerlipat:
         break;
     }
     return hasil;

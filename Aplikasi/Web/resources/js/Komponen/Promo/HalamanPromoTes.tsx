@@ -106,6 +106,45 @@ describe('Halaman promo (F-16c)', () => {
         );
     });
 
+    it('formulir (F-16c bagian 4): promo poin berlipat menampilkan pengali dan mengirimnya tanpa nilai potongan', () => {
+        const poin = {
+            ...HappyHour,
+            Kode: 'POIN2X',
+            Nama: 'Poin 2 kali akhir pekan',
+            JenisAksi: 'PoinBerlipat' as const,
+            LabelAksi: 'Poin berlipat',
+            Definisi: {
+                Hari: [6, 7],
+                JamMulai: null,
+                JamSelesai: null,
+                Outlet: [],
+                Kanal: [],
+                Tier: [],
+                MinimalSubtotal: '0.00',
+                Kondisi: { Jenis: 'Semua' as const, Uuid: [], JumlahMinimal: '0.0000' },
+                Aksi: { Jenis: 'PoinBerlipat' as const, Pengali: '2' },
+                BatasPerTransaksi: null,
+            },
+            TanggalMulai: null,
+            TanggalSelesai: null,
+            NamaProduk: {},
+        };
+        RenderUji(<HalamanFormulirPromo Promo={poin} FiturAktif {...opsi} />);
+        fireEvent.change(screen.getByLabelText('Pengali poin'), { target: { value: '1,5' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan promo' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            `/kelola/promo/${HappyHour.Uuid}`,
+            expect.objectContaining({
+                JenisAksi: 'PoinBerlipat',
+                Pengali: '1.5',
+                Persen: null,
+                Jumlah: null,
+                Harga: null,
+            }),
+            expect.anything(),
+        );
+    });
+
     it('formulir (F-16c bagian 3): metode bayar QRIS, transaksi pertama, dan batas 1x per hari dikirim', () => {
         RenderUji(<HalamanFormulirPromo Promo={null} FiturAktif {...opsi} />);
         fireEvent.change(screen.getByLabelText('Kode promo'), { target: { value: 'qris-baru' } });

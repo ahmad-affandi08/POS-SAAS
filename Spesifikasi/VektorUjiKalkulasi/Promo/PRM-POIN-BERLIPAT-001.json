@@ -1,0 +1,103 @@
+{
+  "Id": "PRM-POIN-BERLIPAT-001",
+  "Keterangan": "Poin berlipat (F-16c bagian 4) tidak bersaing dengan promo potongan: diskon pesanan 10% eksklusif tetap dipakai, dan dari dua promo poin dipilih pengali terbesar yang berlaku. Poin 3x butuh subtotal Rp 200.000 (tidak terpenuhi), jadi poin 2x (beli minimal 2 minuman) yang dipakai. Harga tidak berubah oleh promo poin.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-POIN-2X",
+      "Kode": "POIN-2X-KOPI",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Kondisi": {
+          "Jenis": "Kategori",
+          "Uuid": ["K-MINUM"],
+          "JumlahMinimal": "2"
+        },
+        "Aksi": {
+          "Jenis": "PoinBerlipat",
+          "Pengali": "2"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-POIN-3X",
+      "Kode": "POIN-3X-BESAR",
+      "Prioritas": 5,
+      "Eksklusif": true,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MinimalSubtotal": "200000",
+        "Aksi": {
+          "Jenis": "PoinBerlipat",
+          "Pengali": "3"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-DISKON-10",
+      "Kode": "HEMAT10",
+      "Prioritas": 1,
+      "Eksklusif": true,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "10"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "HEMAT10",
+        "DiskonBaris": {},
+        "DiskonPesanan": "7500.00"
+      }
+    ],
+    "PoinBerlipat": {
+      "Kode": "POIN-2X-KOPI",
+      "Pengali": "2"
+    },
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "7500.00",
+    "TotalDiskon": "7500.00",
+    "TotalAkhir": "67500.00"
+  }
+}

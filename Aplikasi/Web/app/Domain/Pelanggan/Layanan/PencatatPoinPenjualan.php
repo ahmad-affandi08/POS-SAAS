@@ -18,7 +18,8 @@ use Carbon\CarbonImmutable;
 /**
  * Layanan publik domain Pelanggan untuk domain Penjualan (F-16b): poin dicatat di transaksi DB yang sama dengan
  * penerimaan penjualan, void, dan retur (sinkron, idempoten per dokumen).
- * - Perolehan = ⌊TotalAkhir ÷ BelanjaPerPoin × PengaliPoin tier⌋, berlaku sampai tanggal bisnis + MasaBerlakuBulan.
+ * - Perolehan = ⌊TotalAkhir ÷ BelanjaPerPoin × PengaliPoin tier × pengali promo poin berlipat (F-16c bagian 4)⌋, berlaku
+ *   sampai tanggal bisnis + MasaBerlakuBulan.
  *   Hanya bila loyalti berlaku (diaktifkan tenant & fitur paket `pelanggan.loyalti`).
  * - Penukaran (bagian 2, J-16.4) memotong poin yang ditukar kasir sebagai diskon. Penjualan sudah terjadi di kasir,
  *   jadi poin tetap dipotong (saldo boleh minus); masalahnya dikembalikan sebagai alasan tinjauan.
@@ -35,7 +36,7 @@ final class PencatatPoinPenjualan
     ) {}
 
     /** Hasil: poin yang diperoleh (0 bila loyalti tidak berlaku atau belanja di bawah satu poin). */
-    public function CatatPerolehan(int $idPelanggan, int $idPenjualan, Uang $totalAkhir, CarbonImmutable $tanggalBisnis): int
+    public function CatatPerolehan(int $idPelanggan, int $idPenjualan, Uang $totalAkhir, CarbonImmutable $tanggalBisnis, ?BigDecimal $pengaliPromo = null): int
     {
         $aturan = $this->pengaturan->Ambil();
 
@@ -47,6 +48,7 @@ final class PencatatPoinPenjualan
         $pengali = $pelanggan?->IdTier === null ? '1' : (TierPelanggan::query()->whereKey($pelanggan->IdTier)->value('PengaliPoin') ?? '1');
         $poin = BigDecimal::of($totalAkhir->KeString())
             ->multipliedBy(BigDecimal::of((string) $pengali))
+            ->multipliedBy($pengaliPromo ?? BigDecimal::one())
             ->dividedBy($aturan->belanjaPerPoin, 0, RoundingMode::Down)
             ->toInt();
 

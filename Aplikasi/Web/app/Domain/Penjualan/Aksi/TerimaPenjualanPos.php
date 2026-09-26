@@ -320,7 +320,8 @@ final class TerimaPenjualanPos
         // F-16c bagian 2: promo wajib voucher hanya berlaku dengan voucher yang dikirim perangkat.
         // F-16c bagian 3: metode bayar, ulang tahun, transaksi pertama & batas per pelanggan dinilai dari data server.
         $uuidPromoVoucher = $this->voucher->AmbilUuidPromo($data->kodeVoucher);
-        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $idPelanggan, $tanggalBisnis->toDateString(), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
+        $pemeriksaanPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $idPelanggan, $tanggalBisnis->toDateString(), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
+        $masalahPromo = $pemeriksaanPromo->masalah;
 
         // Simpan dokumen, stok, jurnal.
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id);
@@ -407,7 +408,18 @@ final class TerimaPenjualanPos
         }
 
         if ($idPelanggan !== null) {
-            $this->poin->CatatPerolehan($idPelanggan, $penjualan->Id, $hasil->totalAkhir, $tanggalBisnis);
+            // F-16c bagian 4: promo poin berlipat (ditentukan server) mengalikan perolehan; pemakaiannya dicatat (kuota &
+            // batas per pelanggan) hanya bila poin benar-benar diperoleh.
+            $poinBerlipat = $pemeriksaanPromo->poinBerlipat;
+            $diperoleh = $this->poin->CatatPerolehan($idPelanggan, $penjualan->Id, $hasil->totalAkhir, $tanggalBisnis, $poinBerlipat?->AmbilPengali());
+
+            if ($poinBerlipat !== null && $diperoleh > 0) {
+                $masalahPoinBerlipat = $this->pemakaianPromo->Catat($penjualan->Id, $idPelanggan, $tanggalBisnis, [$poinBerlipat->uuid => Uang::Nol()]);
+
+                if ($masalahPoinBerlipat !== []) {
+                    $tinjauan['PromoBerbeda'] = ($tinjauan['PromoBerbeda'] ?? 'PromoBerbeda:').' '.implode('; ', $masalahPoinBerlipat);
+                }
+            }
         }
 
         // F-10b mode cepat (bayar dulu): tiket dapur dari baris penjualan, di transaksi yang sama.
