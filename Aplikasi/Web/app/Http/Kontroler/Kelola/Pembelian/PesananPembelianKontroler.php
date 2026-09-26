@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Pembelian;
 
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pembelian\Aksi\AjukanPesananPembelian;
 use App\Domain\Pembelian\Aksi\BatalkanPesananPembelian;
+use App\Domain\Pembelian\Aksi\BuatDrafPoOtomatis;
 use App\Domain\Pembelian\Aksi\SetujuiPesananPembelian;
 use App\Domain\Pembelian\Aksi\SimpanPesananPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
@@ -54,6 +56,21 @@ final class PesananPembelianKontroler extends DasarPembelianKontroler
         $po = $simpan->Jalankan($permintaan->AmbilData($gudang->id, $this->Pelaku()->Id));
 
         return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Draf {$po->Nomor} disimpan. Ajukan PO bila sudah benar.");
+    }
+
+    /** D-23 D: draf PO sekarang juga (tanpa menunggu jadwal pagi) untuk stok di bawah minimum di outlet pelaku. */
+    public function BuatDrafOtomatis(BuatDrafPoOtomatis $buat, TanggalBisnisOutlet $tanggal): RedirectResponse
+    {
+        $hasil = $buat->Jalankan($this->Pelaku()->Id, $tanggal->Hitung(null), $this->IdOutletBoleh());
+        $pesan = $hasil['JumlahPo'] === 0
+            ? 'Tidak ada draf baru: stok di atas minimum atau sudah ada pesanan yang belum diterima.'
+            : "{$hasil['JumlahPo']} draf PO ({$hasil['JumlahBaris']} barang) disiapkan. Periksa lalu ajukan.";
+
+        if ($hasil['TanpaPemasok'] !== []) {
+            $pesan .= ' Belum pernah dibeli, jadi belum ada pemasoknya: '.implode(', ', array_slice($hasil['TanpaPemasok'], 0, 5)).(count($hasil['TanpaPemasok']) > 5 ? ', dan lainnya.' : '.');
+        }
+
+        return to_route('kelola.pembelian.pesanan.daftar')->with('Kilat', $pesan);
     }
 
     public function Detail(string $pesanan, DetailPembelian $detail): Response

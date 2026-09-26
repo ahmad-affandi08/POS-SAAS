@@ -535,5 +535,6 @@ export type PropsDetailRetur = {
 
 /* Pengaturan */
 export type PropsPengaturanPembelian = {
-    Pengaturan: { BatasPersetujuanPo: string; ToleransiPenerimaanPersen: string };
+    /** D-23 D: DrafPoOtomatis = draf PO disiapkan tiap pagi untuk stok di bawah minimum. */
+    Pengaturan: { BatasPersetujuanPo: string; ToleransiPenerimaanPersen: string; DrafPoOtomatis: boolean };
 };

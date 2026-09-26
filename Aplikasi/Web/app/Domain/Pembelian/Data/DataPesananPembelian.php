@@ -26,5 +26,6 @@ final readonly class DataPesananPembelian
         public ?string $catatan,
         public array $baris,
         public int $idPengguna,
+        public bool $dibuatOtomatis = false,
     ) {}
 }

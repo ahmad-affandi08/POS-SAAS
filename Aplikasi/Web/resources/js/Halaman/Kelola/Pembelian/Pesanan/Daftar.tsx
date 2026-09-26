@@ -1,3 +1,7 @@
+import { router } from '@inertiajs/react';
+import { useState } from 'react';
+
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
     BuatSaringPembelian,
@@ -45,7 +49,24 @@ const kolom: KolomTabel<BarisDaftarPesanan>[] = [
 
 /** F-04 fase 1: daftar pesanan pembelian (PO) dengan saring status, pemasok, tanggal. */
 export default function HalamanDaftarPesanan({ Pesanan, OpsiStatus, OpsiPemasok, Izin }: PropsDaftarPesanan) {
-    const tombol = <TombolBuat href={`${alamat}/buat`} label="Buat pesanan pembelian" izin={Izin} />;
+    const [menyiapkan, AturMenyiapkan] = useState(false);
+    // D-23 D: draf PO untuk stok di bawah minimum (juga dijalankan otomatis tiap pagi).
+    const SiapkanDraf = () =>
+        router.post(
+            `${alamat}/draf-otomatis`,
+            {},
+            { onStart: () => AturMenyiapkan(true), onFinish: () => AturMenyiapkan(false) },
+        );
+    const tombol = (
+        <div className="flex flex-wrap gap-2">
+            {Izin.Kelola ? (
+                <Tombol varian="sekunder" onClick={SiapkanDraf} memproses={menyiapkan}>
+                    Siapkan draf dari stok menipis
+                </Tombol>
+            ) : null}
+            <TombolBuat href={`${alamat}/buat`} label="Buat pesanan pembelian" izin={Izin} />
+        </div>
+    );
 
     return (
         <HalamanDaftarPembelian

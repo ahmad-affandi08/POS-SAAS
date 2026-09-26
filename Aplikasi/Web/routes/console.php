@@ -43,3 +43,6 @@ Schedule::command('laporan:bangun-ulang-ringkasan')->dailyAt('02:45')->timezone(
 
 // F-16b: poin kedaluwarsa dihanguskan (FIFO) lalu tier pelanggan dievaluasi dari belanja N bulan terakhir.
 Schedule::command('pelanggan:proses-loyalti')->dailyAt('03:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// D-23 D: draf PO otomatis untuk stok di bawah minimum, siap diperiksa pagi hari (setelah saldo stok dibangun ulang).
+Schedule::command('pembelian:draf-po-otomatis')->dailyAt('05:30')->timezone('Asia/Jakarta')->withoutOverlapping();

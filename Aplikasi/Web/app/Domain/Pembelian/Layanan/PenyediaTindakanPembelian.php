@@ -19,6 +19,7 @@ use App\Domain\Pembelian\Model\PesananPembelian;
  * Kotak Tindakan domain Pembelian (D-23 C, dibatasi outlet akses):
  * - hutang pemasok (faktur belum lunas) yang jatuh tempo dalam [HARI_HUTANG] hari atau sudah lewat (izin
  *   `pembelian.kelola`);
+ * - draf PO otomatis dari stok menipis yang belum diajukan (D-23 D, izin `pembelian.kelola`);
  * - pesanan pembelian yang menunggu persetujuan (izin `pembelian.po.setujui`).
  */
 final class PenyediaTindakanPembelian implements PenyediaTindakan
@@ -61,6 +62,28 @@ final class PenyediaTindakanPembelian implements PenyediaTindakan
                     $f->JatuhTempo->toDateString(),
                     '/kelola/pembelian/faktur/'.$f->Uuid,
                 ))->all()),
+            );
+        }
+
+        if ($konteks->CekIzin('pembelian.kelola')) {
+            // D-23 D: draf PO yang disiapkan sistem dari stok di bawah minimum, menunggu diperiksa & diajukan.
+            $draf = PesananPembelian::query()
+                ->where('Status', StatusPesananPembelian::Draf->value)
+                ->where('DibuatOtomatis', true)
+                ->when($idOutlet !== null, fn ($k) => $k->where(fn ($q) => $q->whereNull('IdOutlet')->orWhereIn('IdOutlet', $idOutlet)));
+            $jumlahDraf = (clone $draf)->count();
+            $butir[] = new DataButirTindakan(
+                'pesanan-pembelian.draf-otomatis',
+                'Pembelian',
+                TingkatTindakan::Perhatian,
+                'Draf pesanan untuk stok menipis',
+                'Disiapkan otomatis ke pemasok & harga pembelian terakhir. Periksa jumlahnya lalu ajukan.',
+                $jumlahDraf,
+                '/kelola/pembelian/pesanan?saring[Status]=Draf',
+                'Periksa draf',
+                $jumlahDraf === 0 ? [] : array_values($draf->orderBy('Id')->limit(DataButirTindakan::BATAS_RINCIAN)->get()->map(
+                    fn (PesananPembelian $p): DataRincianTindakan => new DataRincianTindakan($p->Uuid, $p->Nomor, 'Total '.Uang::Dari($p->Total)->FormatRupiah(), $p->Tanggal->toDateString(), '/kelola/pembelian/pesanan/'.$p->Uuid),
+                )->all()),
             );
         }
 

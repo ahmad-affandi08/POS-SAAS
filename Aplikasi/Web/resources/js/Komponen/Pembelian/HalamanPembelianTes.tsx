@@ -214,11 +214,19 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
         expect(screen.getAllByRole('link', { name: 'Buat pesanan pembelian' })[0]?.getAttribute('href')).toBe(
             '/kelola/pembelian/pesanan/buat',
         );
+        // D-23 D: draf dari stok menipis bisa dipicu tanpa menunggu jadwal pagi.
+        fireEvent.click(screen.getAllByRole('button', { name: 'Siapkan draf dari stok menipis' })[0] as HTMLElement);
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/pembelian/pesanan/draf-otomatis',
+            {},
+            expect.anything(),
+        );
         cleanup();
         RenderUji(
             <HalamanDaftarPesanan Pesanan={BuatHasilTabel([])} OpsiStatus={[]} OpsiPemasok={[]} Izin={IzinLihat} />,
         );
         expect(screen.queryByRole('link', { name: 'Buat pesanan pembelian' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Siapkan draf dari stok menipis' })).toBeNull();
     });
 
     it('daftar pemasok: tombol tambah membuka halaman penuh /kelola/pembelian/pemasok/buat (hanya pembelian.kelola)', () => {
@@ -566,16 +574,22 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
 
         RenderUji(
             <HalamanPengaturanPembelian
-                Pengaturan={{ BatasPersetujuanPo: '5000000.00', ToleransiPenerimaanPersen: '0.00' }}
+                Pengaturan={{
+                    BatasPersetujuanPo: '5000000.00',
+                    ToleransiPenerimaanPersen: '0.00',
+                    DrafPoOtomatis: true,
+                }}
             />,
         );
         const simpan = screen.getByRole('button', { name: 'Simpan pengaturan' });
         expect((simpan as HTMLButtonElement).disabled).toBe(true);
         UbahNilai(screen.getByLabelText('Toleransi lebih dari pesanan'), '2,5');
+        // D-23 D: draf PO otomatis bisa dimatikan.
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Siapkan draf pesanan pembelian otomatis' }));
         fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             '/kelola/pembelian/pengaturan',
-            { BatasPersetujuanPo: '5000000', ToleransiPenerimaanPersen: '2.5' },
+            { BatasPersetujuanPo: '5000000', ToleransiPenerimaanPersen: '2.5', DrafPoOtomatis: false },
             expect.anything(),
         );
     });

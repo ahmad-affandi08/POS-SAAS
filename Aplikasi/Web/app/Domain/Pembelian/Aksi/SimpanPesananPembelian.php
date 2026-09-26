@@ -99,6 +99,7 @@ final class SimpanPesananPembelian
                     ...$isian,
                     'Nomor' => $this->penomor->AmbilNomorLokasi(JenisDokumenBernomor::PesananPembelian, $data->tanggal, $gudang),
                     'Status' => StatusPesananPembelian::Draf,
+                    'DibuatOtomatis' => $data->dibuatOtomatis,
                     'DibuatOleh' => $data->idPengguna,
                 ]);
                 $this->riwayat->Catat(PesananPembelian::JENIS_DOKUMEN, $terkunci->Id, null, StatusPesananPembelian::Draf->value, $data->idPengguna);

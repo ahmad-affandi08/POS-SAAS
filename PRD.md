@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.16 |
+| Versi | 2.17 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.17 | **D-23 D bagian 1** draf PO otomatis: tiap pagi (05.30 WIB) dan lewat tombol "Siapkan draf dari stok menipis", barang dengan saldo ≤ stok minimum dibuatkan draf PO per (lokasi, pemasok) ke pemasok/satuan/harga pembelian terakhir, jumlah sampai stok maksimum (kosong = 2 × minimum) dikurangi PO terbuka; tidak pernah diajukan otomatis; pengaturan pembelian `DrafPoOtomatis` (bawaan aktif); butir Kotak Tindakan. §17.4.8. |
 | 2.16 | **D-24** (dari pemilik produk): panduan awal menjadi **halaman sendiri** (layar penuh tanpa sidebar) dan **wajib** bagi tenant yang mendaftar sesudah keputusan ini: Pemilik/Admin dialihkan ke panduan sampai profil usaha, jenis usaha, pajak, produk (min. 1), dan metode bayar selesai; perangkat kasir boleh "Nanti saja". Anggota lain melihat "Toko sedang disiapkan". Tenant lama dibebaskan (`ProgresPanduanAwal.Wajib`). Checklist "Langkah berikutnya" pindah dari Beranda ke Kotak Tindakan (butir "Persiapan toko"). |
 | 2.15 | **D-23 A** mulai jualan dalam 5 menit: tombol **"Siapkan semuanya otomatis"** di langkah Sektor panduan awal (template + pajak sesuai usulan kota + semua produk contoh dengan harga saran sebatas kuota + Tunai siap; langsung ke langkah Perangkat) dan **tempel daftar produk** dari Excel/WhatsApp di langkah Produk (`Kopi Susu 15.000`, `Es Teh 5rb`, kolom Tab). §17.4.7. |
 | 2.14 | **D-23 B** formulir produk mode **Sederhana** (bawaan saat tambah produk): nama, jenis (Barang stok/Menu resep/Jasa/Non-stok), harga jual, kategori di satu layar; satuan, pajak, SKU, tampil di kasir memakai bawaan; formulir lengkap satu klik (pilihan diingat per peramban). Produk Jasa bisa langsung **"Jual sebagai paket sesi"** (jumlah sesi + masa berlaku) → produk + `PaketSesi` satu transaksi. §17.4.6. |
@@ -3731,6 +3732,15 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - **Siapkan semuanya otomatis** (langkah Sektor): satu klik menjalankan dalam satu transaksi: terapkan template sektor → konfirmasi pajak outlet dengan usulan yang sama seperti halaman Pajak (dilewati bila PBJT diusulkan tetapi kota outlet belum diisi, atau pajak sudah dikonfirmasi) → tambah semua produk contoh template yang belum ada dengan harga saran, sebatas sisa kuota SKU paket → tandai langkah Produk (bila ada produk) dan Metode pembayaran (Tunai selalu ada) selesai → buka langkah Perangkat. Diulang tidak menggandakan produk. Pesan hasil menyebut yang perlu diperiksa (pajak, kuota).
 - **Tempel daftar** (langkah Produk): teks dari Excel/Google Sheets (kolom Tab/`;`/`|`: Nama, Harga, Kategori) atau pesan WhatsApp (harga di akhir baris: `15.000`, `Rp5.000,-`, `12rb`, `2,5k`) diurai di peramban menjadi baris tambah produk cepat (maks. 20 per simpan); baris tanpa nama/harga dan kategori yang belum ada dilaporkan. Harga tidak pernah dihitung dengan float.
 - Impor dari foto menu (AI/OCR) menunggu keputusan pemilik produk soal layanan berbayar.
+
+#### 17.4.8 Otomatisasi Terjadwal (Keputusan D-23 D, v2.17)
+
+**Bagian 1 — draf pesanan pembelian otomatis (F-04).**
+- Kebutuhan dihitung per (lokasi stok, produk) yang punya stok minimum: kritis bila saldo ≤ minimum. Jumlah dipesan = target − saldo − sisa PO terbuka (Draf, Menunggu persetujuan, Disetujui, Diterima sebagian; dalam satuan dasar), target = stok maksimum bila diisi dan > minimum, selain itu 2 × minimum.
+- Pemasok, satuan, dan harga dari pembelian terakhir produk itu (penerimaan barang diposting yang berpemasok, lalu PO yang tidak dibatalkan). Jumlah dibulatkan ke atas ke satuan pembelian itu (pecahan hanya untuk satuan dasar produk yang boleh desimal). Produk tanpa riwayat pembelian atau pemasoknya nonaktif dilaporkan, tidak dibuatkan draf.
+- Satu draf per (lokasi, pemasok) lewat Aksi yang sama dengan draf manual (nomor, PPN masukan, audit); kolom `PesananPembelian.DibuatOtomatis` = true, catatan menjelaskan asalnya. Draf **tidak pernah diajukan otomatis**; pemilik memeriksa lalu mengajukan (persetujuan tetap mengikuti batas §19.2).
+- Jadwal `pembelian:draf-po-otomatis` pukul 05.30 WIB atas nama Owner tenant, hanya bila pengaturan pembelian "Siapkan draf pesanan pembelian otomatis" aktif (bawaan aktif). Tombol "Siapkan draf dari stok menipis" di daftar pesanan pembelian menjalankannya kapan saja (izin `pembelian.kelola`, dibatasi outlet pelaku). Menjalankan ulang tidak menggandakan karena PO terbuka sudah dihitung.
+- Kotak Tindakan: butir "Draf pesanan untuk stok menipis" (Perhatian) selama draf otomatis belum diajukan.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

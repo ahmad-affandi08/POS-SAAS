@@ -42,8 +42,8 @@ final class UbahPengaturanPembelian
 
         DB::transaction(function () use ($baru, $idPengguna): void {
             $lama = $this->pengaturan->Ambil();
-            $nilaiLama = ['BatasPersetujuanPo' => $lama->batasPersetujuanPo->KeString(), 'ToleransiPenerimaanPersen' => (string) $lama->toleransiPenerimaanPersen];
-            $nilaiBaru = ['BatasPersetujuanPo' => $baru->batasPersetujuanPo->KeString(), 'ToleransiPenerimaanPersen' => (string) $baru->toleransiPenerimaanPersen];
+            $nilaiLama = ['BatasPersetujuanPo' => $lama->batasPersetujuanPo->KeString(), 'ToleransiPenerimaanPersen' => (string) $lama->toleransiPenerimaanPersen, 'DrafPoOtomatis' => $lama->drafPoOtomatis];
+            $nilaiBaru = ['BatasPersetujuanPo' => $baru->batasPersetujuanPo->KeString(), 'ToleransiPenerimaanPersen' => (string) $baru->toleransiPenerimaanPersen, 'DrafPoOtomatis' => $baru->drafPoOtomatis];
 
             if ($nilaiLama === $nilaiBaru) {
                 return;

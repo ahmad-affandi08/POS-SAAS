@@ -53,6 +53,34 @@ final class ProdukUntukLaporan
     }
 
     /**
+     * D-23 D: batas stok minimum & maksimum (maksimum boleh kosong) untuk produk aktif di lokasi stok ini.
+     *
+     * @param  list<int>  $idGudang
+     * @return list<array{IdProduk: int, IdGudang: int, StokMinimum: string, StokMaksimum: string|null}>
+     */
+    public function AmbilBatasStok(array $idGudang): array
+    {
+        if ($idGudang === []) {
+            return [];
+        }
+
+        return array_values(ProdukGudang::query()
+            ->whereIn('IdGudang', $idGudang)
+            ->whereNotNull('StokMinimum')
+            ->whereIn('IdProduk', Produk::query()->whereNull('DiarsipkanPada')->select('Id'))
+            ->orderBy('IdGudang')
+            ->orderBy('IdProduk')
+            ->get(['IdProduk', 'IdGudang', 'StokMinimum', 'StokMaksimum'])
+            ->map(fn (ProdukGudang $g): array => [
+                'IdProduk' => $g->IdProduk,
+                'IdGudang' => $g->IdGudang,
+                'StokMinimum' => (string) $g->StokMinimum,
+                'StokMaksimum' => $g->StokMaksimum === null ? null : (string) $g->StokMaksimum,
+            ])
+            ->all());
+    }
+
+    /**
      * Batas stok minimum yang diisi, untuk produk yang belum dihapus & tidak diarsipkan, di lokasi stok ini.
      *
      * @param  list<int>  $idGudang

@@ -28,6 +28,7 @@ final class UbahPengaturanPembelianTenant
             $pengaturan = $tenant->Pengaturan ?? [];
             $pengaturan['BatasPersetujuanPo'] = $data->batasPersetujuanPo->KeString();
             $pengaturan['ToleransiPenerimaanPersen'] = (string) $data->toleransiPenerimaanPersen;
+            $pengaturan['DrafPoOtomatis'] = $data->drafPoOtomatis;
             $tenant->Pengaturan = $pengaturan;
 
             if ($tenant->isDirty('Pengaturan')) {

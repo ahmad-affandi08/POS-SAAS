@@ -24,6 +24,19 @@ final class PemilikTenant
             ->exists();
     }
 
+    /** Id Owner aktif tenant ini (pelaku dokumen yang dibuat sistem atas nama usaha, misal draf PO otomatis D-23 D). */
+    public function AmbilIdPemilik(int $idTenant): ?int
+    {
+        $id = TenantPengguna::query()
+            ->where('IdTenant', $idTenant)
+            ->where('Pemilik', true)
+            ->where('Status', StatusKeanggotaan::Aktif->value)
+            ->orderBy('Id')
+            ->value('IdPengguna');
+
+        return is_int($id) ? $id : null;
+    }
+
     /**
      * Semua pengguna yang menjadi Owner aktif setidaknya di satu tenant, sekali per pengguna.
      *

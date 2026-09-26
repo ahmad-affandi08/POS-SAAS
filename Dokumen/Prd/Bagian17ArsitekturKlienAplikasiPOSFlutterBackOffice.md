@@ -414,6 +414,15 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - **Tempel daftar** (langkah Produk): teks dari Excel/Google Sheets (kolom Tab/`;`/`|`: Nama, Harga, Kategori) atau pesan WhatsApp (harga di akhir baris: `15.000`, `Rp5.000,-`, `12rb`, `2,5k`) diurai di peramban menjadi baris tambah produk cepat (maks. 20 per simpan); baris tanpa nama/harga dan kategori yang belum ada dilaporkan. Harga tidak pernah dihitung dengan float.
 - Impor dari foto menu (AI/OCR) menunggu keputusan pemilik produk soal layanan berbayar.
 
+#### 17.4.8 Otomatisasi Terjadwal (Keputusan D-23 D, v2.17)
+
+**Bagian 1 — draf pesanan pembelian otomatis (F-04).**
+- Kebutuhan dihitung per (lokasi stok, produk) yang punya stok minimum: kritis bila saldo ≤ minimum. Jumlah dipesan = target − saldo − sisa PO terbuka (Draf, Menunggu persetujuan, Disetujui, Diterima sebagian; dalam satuan dasar), target = stok maksimum bila diisi dan > minimum, selain itu 2 × minimum.
+- Pemasok, satuan, dan harga dari pembelian terakhir produk itu (penerimaan barang diposting yang berpemasok, lalu PO yang tidak dibatalkan). Jumlah dibulatkan ke atas ke satuan pembelian itu (pecahan hanya untuk satuan dasar produk yang boleh desimal). Produk tanpa riwayat pembelian atau pemasoknya nonaktif dilaporkan, tidak dibuatkan draf.
+- Satu draf per (lokasi, pemasok) lewat Aksi yang sama dengan draf manual (nomor, PPN masukan, audit); kolom `PesananPembelian.DibuatOtomatis` = true, catatan menjelaskan asalnya. Draf **tidak pernah diajukan otomatis**; pemilik memeriksa lalu mengajukan (persetujuan tetap mengikuti batas §19.2).
+- Jadwal `pembelian:draf-po-otomatis` pukul 05.30 WIB atas nama Owner tenant, hanya bila pengaturan pembelian "Siapkan draf pesanan pembelian otomatis" aktif (bawaan aktif). Tombol "Siapkan draf dari stok menipis" di daftar pesanan pembelian menjalankannya kapan saja (izin `pembelian.kelola`, dibatasi outlet pelaku). Menjalankan ulang tidak menggandakan karena PO terbuka sudah dihitung.
+- Kotak Tindakan: butir "Draf pesanan untuk stok menipis" (Perhatian) selama draf otomatis belum diajukan.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

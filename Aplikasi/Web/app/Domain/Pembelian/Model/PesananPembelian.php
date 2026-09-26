@@ -28,6 +28,7 @@ use LogicException;
  * @property Carbon $Tanggal
  * @property Carbon|null $PerkiraanTiba
  * @property StatusPesananPembelian $Status
+ * @property bool $DibuatOtomatis D-23 D: draf disiapkan sistem dari stok di bawah minimum.
  * @property int $TerminHari
  * @property bool $Pkp
  * @property string|null $TarifPpn
@@ -74,6 +75,7 @@ final class PesananPembelian extends ModelDasar
     /** @var array<string, mixed> */
     protected $attributes = [
         'Status' => 'Draf',
+        'DibuatOtomatis' => false,
         'PerkiraanTiba' => null,
         'TarifPpn' => null,
         'PengaliDppPembilang' => null,
@@ -128,6 +130,7 @@ final class PesananPembelian extends ModelDasar
     protected function casts(): array
     {
         return [
+            'DibuatOtomatis' => 'boolean',
             'Tanggal' => 'date',
             'PerkiraanTiba' => 'date',
             'Status' => StatusPesananPembelian::class,

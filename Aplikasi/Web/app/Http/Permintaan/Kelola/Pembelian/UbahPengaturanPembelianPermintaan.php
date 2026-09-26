@@ -18,6 +18,7 @@ final class UbahPengaturanPembelianPermintaan extends FormRequest
         return [
             'BatasPersetujuanPo' => ['required', 'string', AturanPembelian::UANG],
             'ToleransiPenerimaanPersen' => ['required', 'string', 'regex:/^\d{1,3}(\.\d{1,2})?$/'],
+            'DrafPoOtomatis' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -39,6 +40,10 @@ final class UbahPengaturanPembelianPermintaan extends FormRequest
 
     public function AmbilData(): DataPengaturanPembelian
     {
-        return new DataPengaturanPembelian(AturanPembelian::Uang($this->validated('BatasPersetujuanPo')), (string) $this->validated('ToleransiPenerimaanPersen'));
+        return new DataPengaturanPembelian(
+            AturanPembelian::Uang($this->validated('BatasPersetujuanPo')),
+            (string) $this->validated('ToleransiPenerimaanPersen'),
+            $this->boolean('DrafPoOtomatis', true),
+        );
     }
 }

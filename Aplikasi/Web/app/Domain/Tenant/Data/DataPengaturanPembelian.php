@@ -13,6 +13,7 @@ use Brick\Math\BigDecimal;
  *   (bawaan Rp 5.000.000, §19.2).
  * - `toleransiPenerimaanPersen`: penerimaan barang boleh melebihi jumlah PO sampai persen ini (BR-04.1, bawaan 0).
  *   Persen = BigDecimal skala 2 (tidak pernah float).
+ * - `drafPoOtomatis` (D-23 D): tiap pagi sistem menyiapkan draf PO untuk stok di bawah minimum (bawaan aktif).
  */
 final readonly class DataPengaturanPembelian
 {
@@ -28,6 +29,7 @@ final readonly class DataPengaturanPembelian
     public function __construct(
         public Uang $batasPersetujuanPo,
         BigDecimal|string|null $toleransiPenerimaanPersen = null,
+        public bool $drafPoOtomatis = true,
     ) {
         $this->toleransiPenerimaanPersen = BigDecimal::of($toleransiPenerimaanPersen ?? self::TOLERANSI_PENERIMAAN_BAWAAN)->toScale(2);
     }

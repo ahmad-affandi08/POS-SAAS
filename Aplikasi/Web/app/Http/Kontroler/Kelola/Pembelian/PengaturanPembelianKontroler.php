@@ -22,6 +22,7 @@ final class PengaturanPembelianKontroler extends DasarPembelianKontroler
             'Pengaturan' => [
                 'BatasPersetujuanPo' => $data->batasPersetujuanPo->KeString(),
                 'ToleransiPenerimaanPersen' => (string) $data->toleransiPenerimaanPersen,
+                'DrafPoOtomatis' => $data->drafPoOtomatis,
             ],
         ]);
     }

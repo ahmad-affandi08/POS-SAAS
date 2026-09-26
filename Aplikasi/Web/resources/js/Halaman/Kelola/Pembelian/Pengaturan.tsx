@@ -2,6 +2,7 @@ import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BidangUang from '@/Komponen/Formulir/BidangUang';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -27,8 +28,9 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
     const toleransiAwal = RapikanDesimal(Pengaturan.ToleransiPenerimaanPersen);
     const [batas, AturBatas] = useState(batasAwal);
     const [toleransi, AturToleransi] = useState(toleransiAwal);
+    const [drafOtomatis, AturDrafOtomatis] = useState(Pengaturan.DrafPoOtomatis);
     const [memproses, AturMemproses] = useState(false);
-    const berubah = batas !== batasAwal || toleransi !== toleransiAwal;
+    const berubah = batas !== batasAwal || toleransi !== toleransiAwal || drafOtomatis !== Pengaturan.DrafPoOtomatis;
 
     const Simpan = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -37,6 +39,7 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
             {
                 BatasPersetujuanPo: batas === '' ? '0' : batas,
                 ToleransiPenerimaanPersen: toleransi === '' ? '0' : toleransi,
+                DrafPoOtomatis: drafOtomatis,
             },
             {
                 preserveScroll: true,
@@ -84,6 +87,17 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         galat={galat.ToleransiPenerimaanPersen}
                         required
                         keterangan="Bawaan 0%: penerimaan tidak boleh melebihi jumlah pesanan."
+                    />
+                </PanelKatalog>
+                <PanelKatalog
+                    judul="Draf pesanan otomatis"
+                    idJudul="judul-draf-otomatis"
+                    keterangan="Setiap pagi sistem menyiapkan draf pesanan pembelian untuk barang yang stoknya di bawah stok minimum, ke pemasok dan harga pembelian terakhir. Draf tetap diperiksa dan diajukan oleh Anda."
+                >
+                    <KotakCentang
+                        label="Siapkan draf pesanan pembelian otomatis"
+                        nilai={drafOtomatis}
+                        saatBerubah={AturDrafOtomatis}
                     />
                 </PanelKatalog>
                 <div>

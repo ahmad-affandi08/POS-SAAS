@@ -26,6 +26,7 @@ final class PengaturanPembelianTenant
         return new DataPengaturanPembelian(
             self::AmbilUang($pengaturan['BatasPersetujuanPo'] ?? null, DataPengaturanPembelian::BATAS_PERSETUJUAN_PO_BAWAAN),
             self::AmbilPersen($pengaturan['ToleransiPenerimaanPersen'] ?? null),
+            ($pengaturan['DrafPoOtomatis'] ?? true) !== false,
         );
     }
 
