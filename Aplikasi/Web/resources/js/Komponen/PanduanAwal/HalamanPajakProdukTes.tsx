@@ -133,6 +133,7 @@ describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lew
                 JenisTersedia={[]}
                 Bank={[]}
                 BatasGambarQris={{ UkuranMaksimalKb: 2048, Ekstensi: ['png'] }}
+                GerbangPembayaran={{ Aktif: false, Penyedia: null }}
             />,
         );
 
@@ -145,5 +146,27 @@ describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lew
             {},
             expect.anything(),
         );
+    });
+
+    it('F-08 QRIS dinamis: petunjuk gerbang aktif/belum aktif tanpa isian gambar QRIS', () => {
+        const props = {
+            Progres: BuatProgresContoh({ ProfilUsaha: 'Selesai', Sektor: 'Selesai', Pajak: 'Selesai' }),
+            MetodePembayaran: [],
+            JenisTersedia: [{ Nilai: 'QrisDinamis', Label: 'QRIS dinamis' }],
+            Bank: [],
+            BatasGambarQris: { UkuranMaksimalKb: 2048, Ekstensi: ['png'] },
+        };
+        const { unmount: Lepas } = RenderUji(
+            <HalamanMetodePembayaranPanduan {...props} GerbangPembayaran={{ Aktif: false, Penyedia: null }} />,
+        );
+
+        expect(screen.getByText('Gerbang pembayaran belum aktif')).toBeTruthy();
+        expect(screen.queryByText('Gambar QRIS')).toBeNull();
+        Lepas();
+
+        RenderUji(
+            <HalamanMetodePembayaranPanduan {...props} GerbangPembayaran={{ Aktif: true, Penyedia: 'Midtrans' }} />,
+        );
+        expect(screen.getByText('Gerbang pembayaran aktif: Midtrans')).toBeTruthy();
     });
 });

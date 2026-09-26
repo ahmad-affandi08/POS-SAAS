@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('api')->prefix('api/pos/v1')->group(base_path('routes/Pos.php'));
             // OWN-01: API Aplikasi Owner (user token, tanpa sesi), prefix /api/pemilik/v1, nama rute pemilik.*.
             Route::middleware('api')->prefix('api/pemilik/v1')->group(base_path('routes/Pemilik.php'));
+            // F-08: webhook gerbang pembayaran (tanpa sesi/CSRF), `/webhook/{penyedia}`, nama rute webhook.*.
+            Route::middleware('api')->group(base_path('routes/Webhook.php'));
         },
     )
     ->withCommands([__DIR__.'/../app/Console/Perintah'])

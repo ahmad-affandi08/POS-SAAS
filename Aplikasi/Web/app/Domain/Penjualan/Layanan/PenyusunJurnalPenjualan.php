@@ -18,7 +18,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Jurnal penjualan satu dokumen (PRD §11.3 J-07.1 & J-07.2, "Rincian F-07b"), dimensi outlet penjualan:
- * - Dr per pembayaran: tunai → akun metode atau Kas Outlet (dikurangi kembalian); QRIS statis/EDC/e-wallet → akun
+ * - Dr per pembayaran: tunai → akun metode atau Kas Outlet (dikurangi kembalian); QRIS statis/dinamis/EDC/e-wallet → akun
  *   kliring metode atau Piutang Pencairan; transfer → akun metode atau Bank.
  * - Dr Diskon Penjualan (total diskon baris + pesanan).
  * - Cr Penjualan / Pendapatan Jasa per baris = bruto − pajak inklusif baris.
@@ -105,7 +105,7 @@ final class PenyusunJurnalPenjualan
 
     /**
      * Akun metode pembayaran (juga dipakai refund retur F-09): tunai → akun metode atau Kas Outlet; transfer → akun
-     * metode atau Bank; tempo (F-12) → Piutang Usaha; uang muka pre-order (F-12 bagian 2) → Uang Muka Pelanggan; QRIS statis/EDC/e-wallet → akun kliring metode atau Piutang Pencairan.
+     * metode atau Bank; tempo (F-12) → Piutang Usaha; uang muka pre-order (F-12 bagian 2) → Uang Muka Pelanggan; QRIS statis/QRIS dinamis (F-08)/EDC/e-wallet → akun kliring metode atau Piutang Pencairan.
      *
      * @return array{0: int|null, 1: PeranAkun} [Id akun eksplisit metode, peran cadangan]
      */

@@ -53,6 +53,7 @@ use App\Domain\Penjualan\Kalkulasi\PromoTerpakai;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaPromoPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
+use App\Domain\Penjualan\Layanan\PenautTagihanQrisPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
@@ -101,8 +102,9 @@ use InvalidArgumentException;
  * bila belum pernah dipakai, BR-03.2), `IzinBerubah` (kasir/penyetuju masih anggota tenant tetapi tidak lagi di outlet
  * atau tanpa izin berjualan), `DiskonMelebihiBatas` (BR-07.3 dilanggar menurut batas yang berlaku saat diterima),
  * `PengaturanBerbeda`/`PajakBerbeda` (snapshot pengaturan & pajak berbeda dari pengaturan server),
- * `ShiftSudahDitutup`, dan `PeriodeTerkunci` (F-15/§18: tanggal bisnis di periode terkunci, jurnal & stok dibukukan
- * di hari pertama periode terbuka berikutnya).
+ * `ShiftSudahDitutup`, `PeriodeTerkunci` (F-15/§18: tanggal bisnis di periode terkunci, jurnal & stok dibukukan
+ * di hari pertama periode terbuka berikutnya), dan F-08 `QrisDinamis*` (tagihan QRIS dinamis bermasalah, lihat
+ * `PenautTagihanQrisPenjualan`).
  */
 final class TerimaPenjualanPos
 {
@@ -144,6 +146,7 @@ final class TerimaPenjualanPos
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
+        private readonly PenautTagihanQrisPenjualan $penautQris,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -445,7 +448,10 @@ final class TerimaPenjualanPos
             ));
         }
         $this->SimpanPajak($data, $penjualan, $hasil);
-        $this->SimpanPembayaran($data, $penjualan, $metode);
+        // F-08 BR-08.5: pembayaran QRIS dinamis ditautkan ke tagihannya (masalah = diterima + tinjauan).
+        [$tinjauanQris, $refEksternal] = $this->penautQris->Tautkan($data, $metode);
+        $tinjauan += $tinjauanQris;
+        $this->SimpanPembayaran($data, $penjualan, $metode, $refEksternal);
 
         [$tinjauanStok, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id);
         $tinjauan += $tinjauanStok;
@@ -945,8 +951,9 @@ final class TerimaPenjualanPos
 
     /**
      * @param  array<string, MetodePembayaran>  $metode
+     * @param  array<string, string>  $refEksternal  Uuid pembayaran → nomor pesanan gerbang (F-08 QRIS dinamis)
      */
-    private function SimpanPembayaran(DataPenjualanPos $data, Penjualan $penjualan, array $metode): void
+    private function SimpanPembayaran(DataPenjualanPos $data, Penjualan $penjualan, array $metode, array $refEksternal): void
     {
         foreach ($data->pembayaran as $indeks => $bayar) {
             $m = $metode[$bayar->uuidMetodePembayaran];
@@ -961,6 +968,7 @@ final class TerimaPenjualanPos
                 'Jumlah' => $bayar->jumlah->KeString(),
                 'Status' => PenjualanPembayaran::STATUS_DITERIMA,
                 'Referensi' => $bayar->referensi,
+                'RefEksternal' => $refEksternal[$bayar->uuid] ?? null,
                 'DibayarPada' => $data->dibuatPada,
             ]);
         }

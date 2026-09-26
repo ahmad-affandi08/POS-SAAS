@@ -23,6 +23,7 @@ import {
 import { Button } from '@/Komponen/Ui/button';
 import { Card, CardContent, CardHeader } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
+import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatMasukanPersen, NormalisasiMasukanPersen } from '@/Pustaka/MasukanUang';
 import { AlamatPanduan, type MetodePembayaranRingkas, type PropsMetodePembayaranPanduan } from '@/Tipe/PanduanAwal';
@@ -47,17 +48,19 @@ const jenisBankPerMetode: Record<string, JenisBank[]> = {
 
 const contohNama: Record<string, string> = {
     QrisStatis: 'Misal "QRIS Toko". Tampil sebagai tombol di kasir.',
+    QrisDinamis: 'Misal "QRIS Otomatis". Tampil sebagai tombol di kasir.',
     Edc: 'Misal "EDC BCA". Tampil sebagai tombol di kasir.',
     Transfer: 'Misal "Transfer BCA". Tampil sebagai tombol di kasir.',
 };
 
-/** Langkah 5 F-01: Tunai selalu ada; tambah QRIS statis, EDC per bank, atau transfer. */
+/** Langkah 5 F-01: Tunai selalu ada; tambah QRIS statis, QRIS dinamis (F-08), EDC per bank, atau transfer. */
 export default function HalamanMetodePembayaran({
     Progres,
     MetodePembayaran,
     JenisTersedia,
     Bank,
     BatasGambarQris,
+    GerbangPembayaran,
 }: PropsMetodePembayaranPanduan) {
     const hanyaTunai = MetodePembayaran.every((metode) => metode.Wajib);
 
@@ -76,7 +79,12 @@ export default function HalamanMetodePembayaran({
 
             <TabelMetodePembayaran metodePembayaran={MetodePembayaran} />
 
-            <FormTambahMetode jenisTersedia={JenisTersedia} bank={Bank} batasGambarQris={BatasGambarQris} />
+            <FormTambahMetode
+                jenisTersedia={JenisTersedia}
+                bank={Bank}
+                batasGambarQris={BatasGambarQris}
+                gerbangPembayaran={GerbangPembayaran}
+            />
         </TataLetakPanduan>
     );
 }
@@ -219,9 +227,10 @@ type PropsFormTambahMetode = {
     jenisTersedia: PropsMetodePembayaranPanduan['JenisTersedia'];
     bank: PropsMetodePembayaranPanduan['Bank'];
     batasGambarQris: PropsMetodePembayaranPanduan['BatasGambarQris'];
+    gerbangPembayaran: PropsMetodePembayaranPanduan['GerbangPembayaran'];
 };
 
-function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTambahMetode) {
+function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembayaran }: PropsFormTambahMetode) {
     const elemenFormulir = useRef<HTMLFormElement>(null);
     const formulir = useForm<IsianMetodePembayaran>({
         Jenis: jenisTersedia[0]?.Nilai ?? 'QrisStatis',
@@ -330,6 +339,7 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTam
                             maxLength={7}
                         />
                     </div>
+                    {Jenis === 'QrisDinamis' ? <InfoQrisDinamis gerbangPembayaran={gerbangPembayaran} /> : null}
                     {Jenis === 'QrisStatis' ? (
                         <BidangGambar
                             label="Gambar QRIS"
@@ -349,5 +359,24 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris }: PropsFormTam
                 </form>
             </CardContent>
         </Card>
+    );
+}
+
+/** F-08: QRIS dinamis dibuat per transaksi lewat gerbang pembayaran yang diaktifkan pengelola platform. */
+function InfoQrisDinamis({
+    gerbangPembayaran,
+}: {
+    gerbangPembayaran: PropsMetodePembayaranPanduan['GerbangPembayaran'];
+}) {
+    return gerbangPembayaran.Aktif ? (
+        <Pemberitahuan jenis="info" judul={`Gerbang pembayaran aktif: ${gerbangPembayaran.Penyedia ?? 'tersedia'}`}>
+            Kasir membuat kode QR berisi jumlah tagihan untuk setiap transaksi. Status lunas masuk otomatis, jadi kasir
+            tidak perlu memeriksa mutasi rekening. Aplikasi kasir harus tersambung internet saat memakai metode ini.
+        </Pemberitahuan>
+    ) : (
+        <Pemberitahuan jenis="peringatan" judul="Gerbang pembayaran belum aktif">
+            QRIS dinamis butuh gerbang pembayaran yang diaktifkan pengelola platform PAYOU. Metode ini tetap bisa
+            ditambahkan, tetapi kasir baru bisa memakainya setelah gerbang aktif. Hubungi dukungan PAYOU.
+        </Pemberitahuan>
     );
 }

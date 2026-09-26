@@ -101,6 +101,10 @@ final class PenyediaAplikasi extends ServiceProvider
             });
         }
 
+        // F-08: webhook gerbang pembayaran, per penyedia per IP (gerbang mengirim dari sedikit IP; ulangan dibatasi).
+        RateLimiter::for('webhook', static fn (Request $permintaan): Limit => Limit::perMinute(300)
+            ->by((string) $permintaan->route('penyedia').'|'.$permintaan->ip()));
+
         // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
         $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();
 

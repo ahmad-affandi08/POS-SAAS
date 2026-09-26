@@ -7,8 +7,8 @@ namespace App\Domain\Penjualan\Enum;
 use App\Domain\Referensi\Enum\JenisReferensiBank;
 
 /**
- * Jenis metode pembayaran (PRD §15.3 `MetodePembayaran.Jenis`, F-08). Panduan awal (F-01 langkah 5) hanya membuat
- * QRIS statis, EDC, dan transfer; Tunai dibuat sistem dan selalu tersedia.
+ * Jenis metode pembayaran (PRD §15.3 `MetodePembayaran.Jenis`, F-08). Panduan awal (F-01 langkah 5) membuat QRIS
+ * statis, QRIS dinamis (F-08), EDC, dan transfer; Tunai dibuat sistem dan selalu tersedia.
  */
 enum JenisMetodePembayaran: string
 {
@@ -48,7 +48,8 @@ enum JenisMetodePembayaran: string
     public function CekDidukungPos(): bool
     {
         // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit; bagian 2: uang muka pre-order saat diambil.
-        return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka], true);
+        // F-08: QRIS dinamis lewat gerbang pembayaran aktif (tagihan dibuat online, `Referensi` = Uuid `TagihanQris`).
+        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka], true);
     }
 
     /** F-12 bagian 2: jenis yang boleh dipakai membayar uang muka pre-order di POS (tanpa tempo & uang muka). */
@@ -57,9 +58,10 @@ enum JenisMetodePembayaran: string
         return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet], true);
     }
 
+    /** Jenis yang bisa ditambahkan dari back-office (F-01 langkah 5; F-08: QRIS dinamis, butuh gerbang aktif platform). */
     public function CekBisaDibuatPanduan(): bool
     {
-        return in_array($this, [self::QrisStatis, self::Edc, self::Transfer], true);
+        return in_array($this, [self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer], true);
     }
 
     /**

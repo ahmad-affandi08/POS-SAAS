@@ -12,7 +12,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 
 /**
- * F-01 langkah 5: QRIS statis (gambar), EDC (bank), atau transfer (bank + rekening). Kolom yang tidak relevan
+ * F-01 langkah 5: QRIS statis (gambar), QRIS dinamis (F-08, tanpa isian tambahan), EDC (bank), atau transfer (bank +
+ * rekening). Kolom yang tidak relevan
  * dikirim null. Biaya (MDR) string desimal bertitik, 0–10 persen, dibandingkan dengan BigDecimal.
  */
 final class SimpanMetodePembayaranPermintaan extends FormRequest
@@ -54,7 +55,7 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
     {
         return [
             'Jenis.required' => 'Pilih jenis metode pembayaran.',
-            'Jenis.in' => 'Pilih QRIS statis, kartu (EDC), atau transfer bank.',
+            'Jenis.in' => 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), atau transfer bank.',
             'Nama.required' => 'Isi nama metode pembayaran, misal QRIS Toko.',
             'KodeBank.required_if' => 'Pilih bank.',
             'GambarQris.required_if' => 'Unggah gambar QRIS dari bank atau penyedia QRIS Anda.',

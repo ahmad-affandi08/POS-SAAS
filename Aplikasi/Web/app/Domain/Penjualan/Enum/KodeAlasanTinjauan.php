@@ -25,6 +25,11 @@ enum KodeAlasanTinjauan: string
     case PenukaranPoin = 'PenukaranPoin';
     case PromoBerbeda = 'PromoBerbeda';
     case TempoBermasalah = 'TempoBermasalah';
+    // F-08 BR-08.5: pembayaran QRIS dinamis yang tagihannya bermasalah saat penjualan diterima.
+    case QrisDinamisTidakDikenal = 'QrisDinamisTidakDikenal';
+    case QrisDinamisDipakaiUlang = 'QrisDinamisDipakaiUlang';
+    case QrisDinamisBelumLunas = 'QrisDinamisBelumLunas';
+    case QrisDinamisJumlahBerbeda = 'QrisDinamisJumlahBerbeda';
 
     public function AmbilLabel(): string
     {
@@ -44,6 +49,10 @@ enum KodeAlasanTinjauan: string
             self::PenukaranPoin => 'Penukaran poin perlu diperiksa',
             self::PromoBerbeda => 'Promo di perangkat berbeda dengan promo server',
             self::TempoBermasalah => 'Penjualan tempo perlu diperiksa',
+            self::QrisDinamisTidakDikenal => 'Tagihan QRIS dinamis tidak dikenal server',
+            self::QrisDinamisDipakaiUlang => 'Tagihan QRIS dinamis sudah dipakai penjualan lain',
+            self::QrisDinamisBelumLunas => 'Tagihan QRIS dinamis belum lunas saat penjualan diterima',
+            self::QrisDinamisJumlahBerbeda => 'Jumlah tagihan QRIS dinamis berbeda dengan pembayaran',
         };
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Integrasi\Layanan\InfoGerbangPembayaran;
 use App\Domain\Penjualan\Aksi\SimpanMetodePembayaran;
 use App\Domain\Penjualan\Aksi\UbahStatusMetodePembayaran;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
@@ -18,12 +19,13 @@ use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * F-01 langkah 5: metode pembayaran (Tunai selalu ada; tambah QRIS statis, EDC, transfer; aktif/nonaktif). Metode
- * dicari lewat Uuid di scope tenant aktif, jadi milik tenant lain = 404. Gambar QRIS hanya lewat rute unduh ini.
+ * F-01 langkah 5: metode pembayaran (Tunai selalu ada; tambah QRIS statis, QRIS dinamis F-08, EDC, transfer;
+ * aktif/nonaktif). Metode dicari lewat Uuid di scope tenant aktif, jadi milik tenant lain = 404. Gambar QRIS hanya
+ * lewat rute unduh ini.
  */
 final class PanduanAwalMetodePembayaranKontroler extends DasarPanduanAwalKontroler
 {
-    public function Tampilkan(DaftarMetodePembayaran $daftar, ReferensiBankAktif $referensiBank): Response
+    public function Tampilkan(DaftarMetodePembayaran $daftar, ReferensiBankAktif $referensiBank, InfoGerbangPembayaran $gerbang): Response
     {
         $this->OutletPanduan();
 
@@ -47,6 +49,8 @@ final class PanduanAwalMetodePembayaranKontroler extends DasarPanduanAwalKontrol
                 'UkuranMaksimalKb' => (int) config('pembayaran.UkuranMaksimalGambarQrisKb'),
                 'Ekstensi' => array_values((array) config('pembayaran.EkstensiGambarQris')),
             ],
+            // F-08: QRIS dinamis butuh gerbang pembayaran aktif dari konsol platform (tanpa kredensial).
+            'GerbangPembayaran' => $gerbang->Ambil(),
         ]);
     }
 

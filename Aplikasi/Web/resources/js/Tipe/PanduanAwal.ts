@@ -128,10 +128,12 @@ export type MetodePembayaranRingkas = {
 export type PropsMetodePembayaranPanduan = {
     Progres: ProgresPanduan;
     MetodePembayaran: MetodePembayaranRingkas[];
-    /** QrisStatis, Edc, Transfer. */
+    /** QrisStatis, QrisDinamis, Edc, Transfer. */
     JenisTersedia: Pilihan[];
     Bank: { Kode: string; Nama: string; Jenis: 'Bank' | 'Ewallet' | 'JaringanEdc' | 'PenerbitQris' }[];
     BatasGambarQris: { UkuranMaksimalKb: number; Ekstensi: string[] };
+    /** F-08: gerbang pembayaran aktif dari konsol platform (QRIS dinamis). Tanpa kredensial. */
+    GerbangPembayaran: { Aktif: boolean; Penyedia: string | null };
 };
 
 export type KodeAktivasiBaru = {

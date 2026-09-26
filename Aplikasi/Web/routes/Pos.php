@@ -19,6 +19,7 @@ use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PesanSendiriKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
+use App\Http\Kontroler\Pos\V1\TagihanQrisKontroler;
 use App\Http\Kontroler\Pos\V1\VoucherKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\PastikanLanggananPosAktif;
@@ -100,6 +101,12 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/dapur/tiket', [DapurKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.dapur.tiket');
         Route::post('/dapur/tiket/{tiketDapur}/status', [DapurKontroler::class, 'UbahStatus'])
             ->middleware('throttle:pos-120')->where('tiketDapur', $ulid)->name('pos.dapur.tiket.status');
+        // F-08 QRIS dinamis (wajib online): buat tagihan lewat gerbang aktif, cek status (polling), batalkan.
+        Route::post('/qris', [TagihanQrisKontroler::class, 'Buat'])->middleware('throttle:pos-30')->name('pos.qris.buat');
+        Route::get('/qris/{tagihanQris}', [TagihanQrisKontroler::class, 'Status'])
+            ->middleware('throttle:pos-120')->where('tagihanQris', $ulid)->name('pos.qris.status');
+        Route::post('/qris/{tagihanQris}/batal', [TagihanQrisKontroler::class, 'Batal'])
+            ->middleware('throttle:pos-30')->where('tagihanQris', $ulid)->name('pos.qris.batal');
         // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
         Route::get('/pesan-sendiri', [PesanSendiriKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesan-sendiri');
         Route::post('/pesan-sendiri/{pesananSendiri}/terima', [PesanSendiriKontroler::class, 'Terima'])

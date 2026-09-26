@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * F-01 langkah 5: menambah QRIS statis (unggah gambar QR dari penerbit), EDC per bank, atau transfer bank.
+ * F-01 langkah 5: menambah QRIS statis (unggah gambar QR dari penerbit), QRIS dinamis (F-08: tagihan dibuat lewat
+ * gerbang pembayaran yang diaktifkan platform; tanpa gambar/bank), EDC per bank, atau transfer bank.
  * - QRIS statis wajib gambar; disimpan di disk privat dan dihapus lagi bila transaksi gagal.
  * - EDC wajib bank/jaringan EDC aktif; transfer wajib bank/dompet digital aktif + nomor & nama pemilik rekening.
  * - Biaya (MDR) 0–10 persen, string desimal (tidak pernah float).
@@ -85,7 +86,7 @@ final class SimpanMetodePembayaran
         $jenis = $data->jenis;
 
         if (! $jenis->CekBisaDibuatPanduan()) {
-            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, kartu (EDC), atau transfer bank.', 'Jenis');
+            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), atau transfer bank.', 'Jenis');
         }
 
         if ($jenis === JenisMetodePembayaran::QrisStatis && $gambarQris === null) {
