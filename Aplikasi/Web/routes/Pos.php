@@ -16,6 +16,7 @@ use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
+use App\Http\Kontroler\Pos\V1\PesanKeluarKontroler;
 use App\Http\Kontroler\Pos\V1\PesanSendiriKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
@@ -113,5 +114,11 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.terima');
         Route::post('/pesan-sendiri/{pesananSendiri}/tolak', [PesanSendiriKontroler::class, 'Tolak'])
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.tolak');
+        // K3: kirim struk digital ke WhatsApp/email pelanggan (wajib online, penjualan sudah tersinkron), diantrekan;
+        // status kiriman ditarik aplikasi. Maksimal 5 kiriman per penjualan (aksi) + 20/menit per perangkat.
+        Route::post('/penjualan/{uuidPenjualan}/kirim-struk', [PesanKeluarKontroler::class, 'KirimStruk'])
+            ->middleware('throttle:pos-20')->where('uuidPenjualan', $ulid)->name('pos.penjualan.kirim-struk');
+        Route::get('/pesan-keluar/{uuidPesanKeluar}', [PesanKeluarKontroler::class, 'Tampilkan'])
+            ->middleware('throttle:pos-60')->where('uuidPesanKeluar', $ulid)->name('pos.pesan-keluar.tampil');
     });
 });

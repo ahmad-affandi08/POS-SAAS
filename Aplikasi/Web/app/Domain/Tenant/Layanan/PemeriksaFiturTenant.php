@@ -23,6 +23,9 @@ final class PemeriksaFiturTenant
     /** F-17 Self-Order QR Meja (X12, add-on). */
     public const KUNCI_PESAN_SENDIRI = 'kanal.self-order';
 
+    /** X11 pesan WhatsApp (K3 kirim struk digital lewat WhatsApp). Fitur tingkat tenant, bukan modul outlet. */
+    public const KUNCI_WHATSAPP = 'integrasi.whatsapp';
+
     public function __construct(
         private readonly SumberFiturTenant $sumber,
         private readonly EvaluatorFitur $evaluator,
