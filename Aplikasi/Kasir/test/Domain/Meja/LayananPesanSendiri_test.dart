@@ -27,30 +27,36 @@ void main() {
 
   const mejaD01 = '01K5MEJA0000000000000D0101';
 
-  PesananSendiriPos Pesanan({String produk = UuidUji.americano, String? uuidMeja = mejaD01}) =>
-      PesananSendiriPos.DariJson({
-        'Uuid': '01K5QR00000000000000000001',
-        'Nomor': 'QR/SLB/260924-0001',
-        'UuidMeja': uuidMeja,
-        'NamaMeja': 'D-01',
-        'NamaPemesan': 'Bu Ani',
-        'Catatan': null,
-        'DibuatPada': '2026-09-24T01:00:00Z',
-        'Subtotal': '30000.00',
-        'Baris': [
-          {
-            'Uuid': '01K5QRBAR1S000000000000001',
-            'UuidProduk': produk,
-            'UuidProdukSatuan': UuidUji.psAmericano,
-            'NamaProduk': 'Americano Panas',
-            'Jumlah': '2',
-            'HargaSatuan': '15000.00',
-            'HargaPilihan': '0.00',
-            'Pilihan': <Object?>[],
-            'Catatan': 'Tanpa gula',
-          },
-        ],
-      });
+  PesananSendiriPos Pesanan({
+    String produk = UuidUji.americano,
+    String? uuidMeja = mejaD01,
+    String satuan = UuidUji.psAmericano,
+    String nama = 'Americano Panas',
+    String harga = '15000.00',
+    String jumlah = '2',
+  }) => PesananSendiriPos.DariJson({
+    'Uuid': '01K5QR00000000000000000001',
+    'Nomor': 'QR/SLB/260924-0001',
+    'UuidMeja': uuidMeja,
+    'NamaMeja': 'D-01',
+    'NamaPemesan': 'Bu Ani',
+    'Catatan': null,
+    'DibuatPada': '2026-09-24T01:00:00Z',
+    'Subtotal': '30000.00',
+    'Baris': [
+      {
+        'Uuid': '01K5QRBAR1S000000000000001',
+        'UuidProduk': produk,
+        'UuidProdukSatuan': satuan,
+        'NamaProduk': nama,
+        'Jumlah': jumlah,
+        'HargaSatuan': harga,
+        'HargaPilihan': '0.00',
+        'Pilihan': <Object?>[],
+        'Catatan': 'Tanpa gula',
+      },
+    ],
+  });
 
   Future<List<BarisOutbox>> Outbox() => (u.db.select(u.db.outbox)..orderBy([(o) => OrderingTerm.asc(o.Id)])).get();
 
@@ -105,6 +111,35 @@ void main() {
     expect(hasil.uuid, ada.uuid);
     expect((jsonDecode(permintaan.single.body) as Map<String, Object?>)['UuidPesananTerbuka'], ada.uuid);
     expect((await Outbox()).map((o) => o.Jenis), ['PesananTerbuka.Buka', 'PesananTerbuka.Tambah']);
+  });
+
+  test('v2.06 baris varian dari QR: anak varian dipakai sebagai produk, harga varian dari katalog perangkat', () async {
+    // Katalog perangkat dengan anak varian "Kaos Kopi Senja L" (induk Kaos).
+    const kaosL = '01K5PRD000000000000KA0SL01';
+    const psKaosL = '01K5PS000000000000KA0SL001';
+    final isi = KatalogUji();
+    (isi['Produk']! as List<Object?>).add({
+      ...ProdukUji(kaosL, 'Kaos Kopi Senja L', sku: 'KAOS-L'),
+      'UuidInduk': UuidUji.kaos,
+      'AtributVarian': [
+        {'Nama': 'Ukuran', 'Nilai': 'L'},
+      ],
+    });
+    (isi['ProdukSatuan']! as List<Object?>).add(SatuanProdukUji(psKaosL, kaosL, UuidUji.satuanPcs));
+    (isi['ProdukHarga']! as List<Object?>).add(HargaUji('01K5HRG000000000000KA0SL01', kaosL, psKaosL, '99000.00'));
+    await u.SiapkanKatalog(isi);
+    katalog = await u.MuatKatalog();
+
+    final pesanan = await layanan.Terima(
+      Pesanan(produk: kaosL, satuan: psKaosL, nama: 'Kaos Kopi Senja — L', harga: '99000.00', jumlah: '1'),
+      kasir: rina,
+      katalog: katalog,
+      k: k,
+    );
+
+    final item = pesanan.AmbilBarisAktif().single;
+    expect(item.uuidProduk, kaosL);
+    expect(item.hargaSatuan, '99000.00');
   });
 
   test('produk belum di katalog: ditolak sebelum menghubungi server', () async {

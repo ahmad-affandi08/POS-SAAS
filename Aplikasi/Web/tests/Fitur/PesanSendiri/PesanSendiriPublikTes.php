@@ -85,7 +85,7 @@ describe('F-17 halaman publik pesan sendiri', function (): void {
         expect(PesananSendiri::query()->count())->toBe(0);
     });
 
-    it('hitung: harga dari server (harga peramban diabaikan), pilihan dijumlahkan, subtotal tanpa pajak', function (): void {
+    it('hitung: harga dari server (harga peramban diabaikan), pilihan dijumlahkan, perkiraan total = subtotal bila outlet tanpa pajak', function (): void {
         $k = BantuanPesanSendiri::Siapkan($this);
 
         $this->postJson("{$k['Alamat']}/hitung", ['Baris' => [
@@ -97,7 +97,14 @@ describe('F-17 halaman publik pesan sendiri', function (): void {
                 ['UuidProduk' => $k['Nasi']->Uuid, 'NamaProduk' => 'Nasi Goreng Kampung Spesial Telur Mata Sapi', 'Jumlah' => '1.0000', 'HargaSatuan' => '35000.00', 'HargaPilihan' => '0.00', 'Total' => '35000.00'],
             ],
             'Subtotal' => '107000.00',
-            'Catatan' => 'Pajak & biaya layanan dihitung di kasir.',
+            // PRD v2.06: estimasi total dari mesin kalkulasi (outlet ini tanpa pajak & biaya layanan).
+            'Diskon' => '0.00',
+            'BiayaLayanan' => '0.00',
+            'Pajak' => [],
+            'PajakTermasukHarga' => '0.00',
+            'Pembulatan' => '0.00',
+            'Total' => '107000.00',
+            'Catatan' => 'Perkiraan. Total akhir mengikuti tagihan di kasir (promo, pembulatan, metode bayar).',
         ]);
     });
 

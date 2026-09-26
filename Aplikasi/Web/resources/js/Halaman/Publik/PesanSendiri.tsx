@@ -29,14 +29,27 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import { BuatUlid } from '@/Pustaka/Ulid';
 
+/** PRD v2.06: varian produk (anak varian); `Harga` null = belum berharga (tidak bisa dipilih). */
+export type VarianMenu = {
+    Uuid: string;
+    Nama: string;
+    Atribut: { Nama: string; Nilai: string }[];
+    Harga: string | null;
+    Tersedia: boolean;
+};
+
 export type ProdukMenu = {
     Uuid: string;
-    UuidProdukSatuan: string;
+    /** Null untuk induk varian (satuan milik anak varian). */
+    UuidProdukSatuan: string | null;
     Nama: string;
     UuidKategori: string | null;
+    /** Induk varian: harga varian termurah. */
     Harga: string;
     UrlGambar: string | null;
     KelompokPilihan: KelompokPilihanMenu[];
+    NamaAtributVarian?: string | null;
+    Varian?: VarianMenu[];
 };
 
 export type PropsPesanSendiri = {
@@ -46,6 +59,16 @@ export type PropsPesanSendiri = {
     Token: string;
     Slug: string;
     Menu: { Kategori: { Uuid: string; Nama: string }[]; Produk: ProdukMenu[] };
+};
+
+/** Perkiraan total dari server (PRD v2.06); pesanan lama tanpa perkiraan = null. */
+export type PerkiraanTotal = {
+    Diskon: string;
+    BiayaLayanan: string;
+    Pajak: { Kode: string; Nama: string; Tarif: string; Jumlah: string }[];
+    PajakTermasukHarga: string;
+    Pembulatan: string;
+    Total: string;
 };
 
 type HasilHitung = {
@@ -59,7 +82,7 @@ type HasilHitung = {
     }[];
     Subtotal: string;
     Catatan: string;
-};
+} & Partial<PerkiraanTotal>;
 
 export type StatusPesanan = 'MenungguKonfirmasi' | 'Diterima' | 'Ditolak' | 'Kedaluwarsa';
 
@@ -69,6 +92,7 @@ type PesananTamu = {
     Status: StatusPesanan;
     Baris: { Uuid: string; NamaProduk: string; Jumlah: string; Pilihan: { Nama: string }[]; Catatan: string | null }[];
     Subtotal: string;
+    Perkiraan?: PerkiraanTotal | null;
     AlasanTolak: string | null;
 };
 
@@ -84,6 +108,51 @@ export class GalatPesanSendiri extends Error {
 }
 
 const JEDA_POLLING_MS = 5000;
+
+function CekNol(nilai: string | undefined): boolean {
+    return nilai === undefined || /^-?0+(\.0+)?$/.test(nilai);
+}
+
+/**
+ * Rincian perkiraan total (PRD v2.06): subtotal, diskon, biaya layanan, pajak per jenis, total. Semua angka dari
+ * server; halaman tidak menghitung sendiri.
+ */
+export function RincianPerkiraan({ subtotal, perkiraan }: { subtotal: string; perkiraan: Partial<PerkiraanTotal> }) {
+    const baris: { label: string; nilai: string; kurang?: boolean }[] = [
+        { label: 'Subtotal', nilai: subtotal },
+        ...(CekNol(perkiraan.Diskon) ? [] : [{ label: 'Diskon', nilai: perkiraan.Diskon ?? '0', kurang: true }]),
+        ...(CekNol(perkiraan.BiayaLayanan) ? [] : [{ label: 'Biaya layanan', nilai: perkiraan.BiayaLayanan ?? '0' }]),
+        ...(perkiraan.Pajak ?? []).map((p) => ({ label: `${p.Nama} ${p.Tarif}%`, nilai: p.Jumlah })),
+    ];
+
+    return (
+        <dl className="flex flex-col gap-1">
+            {baris.map((b) => (
+                <div key={b.label} className="flex items-center justify-between gap-3 text-isi text-teks-sekunder">
+                    <dt>{b.label}</dt>
+                    <dd className="tabular-nums">
+                        {b.kurang ? '−' : ''}
+                        {FormatRupiah(b.nilai)}
+                    </dd>
+                </div>
+            ))}
+            {CekNol(perkiraan.PajakTermasukHarga) ? null : (
+                <p className="text-keterangan text-teks-sekunder">
+                    Harga sudah termasuk pajak {FormatRupiah(perkiraan.PajakTermasukHarga ?? '0')}.
+                </p>
+            )}
+            <div className="flex items-center justify-between gap-3 text-subjudul font-semibold text-teks-utama">
+                <dt>Perkiraan total</dt>
+                <dd className="tabular-nums">{FormatRupiah(perkiraan.Total ?? subtotal)}</dd>
+            </div>
+        </dl>
+    );
+}
+
+/** Nama varian tampil untuk baris keranjang (null bila bukan varian). */
+function AmbilNamaVarian(produk: ProdukMenu | undefined, uuidVarian: string | undefined): string | null {
+    return uuidVarian === undefined ? null : (produk?.Varian?.find((v) => v.Uuid === uuidVarian)?.Nama ?? null);
+}
 const KATEGORI_SEMUA = 'semua';
 const KATEGORI_LAIN = 'lainnya';
 
@@ -251,7 +320,7 @@ function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
     );
 
     const TambahProduk = (produk: ProdukMenu) => {
-        if (produk.KelompokPilihan.length > 0) {
+        if (produk.KelompokPilihan.length > 0 || (produk.Varian?.length ?? 0) > 0) {
             AturProdukDipilih(produk);
             return;
         }
@@ -328,8 +397,15 @@ function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
                                 ) : null}
                                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                                     <p className="font-semibold break-words">{produk.Nama}</p>
-                                    <p className="text-teks-sekunder tabular-nums">{FormatRupiah(produk.Harga)}</p>
-                                    {produk.KelompokPilihan.length > 0 ? (
+                                    <p className="text-teks-sekunder tabular-nums">
+                                        {(produk.Varian?.length ?? 0) > 0 ? 'Mulai ' : ''}
+                                        {FormatRupiah(produk.Harga)}
+                                    </p>
+                                    {(produk.Varian?.length ?? 0) > 0 ? (
+                                        <p className="text-keterangan text-teks-sekunder">
+                                            Pilih {(produk.NamaAtributVarian ?? 'varian').toLowerCase()}
+                                        </p>
+                                    ) : produk.KelompokPilihan.length > 0 ? (
                                         <p className="text-keterangan text-teks-sekunder">Ada pilihan</p>
                                     ) : null}
                                 </div>
@@ -369,7 +445,7 @@ function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
                             Lihat keranjang · {jumlahItem} item
                         </span>
                         <span className="font-semibold tabular-nums">
-                            {hitung.data ? FormatRupiah(hitung.data.Subtotal) : 'Menghitung…'}
+                            {hitung.data ? FormatRupiah(hitung.data.Total ?? hitung.data.Subtotal) : 'Menghitung…'}
                         </span>
                     </button>
                 </div>
@@ -413,7 +489,14 @@ function useNilaiTertunda<T>(nilai: T, jeda: number): T {
 
 function useHitungKeranjang(alamat: string, token: string, keranjang: BarisKeranjang[]) {
     const tanda = useNilaiTertunda(
-        JSON.stringify(keranjang.map((b) => ({ UuidProduk: b.UuidProduk, Jumlah: b.Jumlah, Pilihan: b.Pilihan }))),
+        JSON.stringify(
+            keranjang.map((b) => ({
+                UuidProduk: b.UuidProduk,
+                ...(b.UuidVarian ? { UuidVarian: b.UuidVarian } : {}),
+                Jumlah: b.Jumlah,
+                Pilihan: b.Pilihan,
+            })),
+        ),
         JEDA_HITUNG_MS,
     );
     const kosong = tanda === '[]';
@@ -440,7 +523,18 @@ function LembarPilihan({ produk, saatTutup, saatTambah }: PropsLembarPilihan) {
     const [jumlah, AturJumlah] = useState(1);
     const [catatan, AturCatatan] = useState('');
     const [coba, AturCoba] = useState(false);
-    const masalah = PeriksaPilihan(produk.KelompokPilihan, dipilih);
+    const daftarVarian = produk.Varian ?? [];
+    const [varian, AturVarian] = useState<string | null>(() =>
+        daftarVarian.filter((v) => v.Tersedia).length === 1
+            ? (daftarVarian.find((v) => v.Tersedia)?.Uuid ?? null)
+            : null,
+    );
+    const varianDipilih = daftarVarian.find((v) => v.Uuid === varian);
+    const labelVarian = produk.NamaAtributVarian ?? 'Varian';
+    const masalah =
+        daftarVarian.length > 0 && !varianDipilih
+            ? `Pilih ${labelVarian.toLowerCase()} dulu.`
+            : PeriksaPilihan(produk.KelompokPilihan, dipilih);
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -450,6 +544,7 @@ function LembarPilihan({ produk, saatTutup, saatTambah }: PropsLembarPilihan) {
             saatTambah({
                 Uuid: BuatUlid(),
                 UuidProduk: produk.Uuid,
+                ...(varianDipilih ? { UuidVarian: varianDipilih.Uuid } : {}),
                 Jumlah: jumlah,
                 Pilihan: dipilih,
                 Catatan: catatan.trim(),
@@ -466,10 +561,42 @@ function LembarPilihan({ produk, saatTutup, saatTambah }: PropsLembarPilihan) {
                 <SheetHeader>
                     <SheetTitle className="text-subjudul font-semibold text-teks-utama">{produk.Nama}</SheetTitle>
                     <SheetDescription className="text-isi text-teks-sekunder tabular-nums">
-                        {FormatRupiah(produk.Harga)}
+                        {varianDipilih?.Harga
+                            ? FormatRupiah(varianDipilih.Harga)
+                            : `${daftarVarian.length > 0 ? 'Mulai ' : ''}${FormatRupiah(produk.Harga)}`}
                     </SheetDescription>
                 </SheetHeader>
                 <form onSubmit={Kirim} noValidate className="flex flex-col gap-4 px-4 pb-4">
+                    {daftarVarian.length > 0 ? (
+                        <fieldset className="flex flex-col gap-2">
+                            <legend className="text-label font-semibold">
+                                {labelVarian} <span className="font-normal text-teks-sekunder">(wajib)</span>
+                            </legend>
+                            {daftarVarian.map((v) => (
+                                <label
+                                    key={v.Uuid}
+                                    className={`flex min-h-11 items-center justify-between gap-3 rounded-kontrol border border-garis px-3 ${
+                                        v.Tersedia ? '' : 'text-teks-sekunder'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <input
+                                            type="radio"
+                                            name={`varian-${produk.Uuid}`}
+                                            checked={varian === v.Uuid}
+                                            disabled={!v.Tersedia}
+                                            onChange={() => AturVarian(v.Uuid)}
+                                            className="size-5 accent-brand disabled:cursor-not-allowed"
+                                        />
+                                        {v.Nama}
+                                    </span>
+                                    <span className="tabular-nums">
+                                        {v.Tersedia && v.Harga ? FormatRupiah(v.Harga) : 'Habis'}
+                                    </span>
+                                </label>
+                            ))}
+                        </fieldset>
+                    ) : null}
                     {produk.KelompokPilihan.map((k) => (
                         <fieldset key={k.Uuid} className="flex flex-col gap-2">
                             <legend className="text-label font-semibold">
@@ -605,6 +732,7 @@ function LembarKeranjang({
                 Baris: keranjang.map((b) => ({
                     Uuid: b.Uuid,
                     UuidProduk: b.UuidProduk,
+                    ...(b.UuidVarian ? { UuidVarian: b.UuidVarian } : {}),
                     Jumlah: b.Jumlah,
                     Pilihan: b.Pilihan,
                     Catatan: b.Catatan === '' ? null : b.Catatan,
@@ -645,14 +773,16 @@ function LembarKeranjang({
                                     .filter((p) => b.Pilihan.includes(p.Uuid))
                                     .map((p) => p.Nama);
                                 const total = hitung.data?.Baris[i]?.Total;
+                                const namaVarian = AmbilNamaVarian(produk, b.UuidVarian);
+                                const namaTampil = produk
+                                    ? `${produk.Nama}${namaVarian ? ` — ${namaVarian}` : ''}`
+                                    : 'Menu tidak tersedia';
 
                                 return (
                                     <li key={b.Uuid} className="flex flex-col gap-2 py-3">
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <p className="font-semibold break-words">
-                                                    {produk?.Nama ?? 'Menu tidak tersedia'}
-                                                </p>
+                                                <p className="font-semibold break-words">{namaTampil}</p>
                                                 {namaPilihan.length > 0 ? (
                                                     <p className="text-keterangan text-teks-sekunder">
                                                         {namaPilihan.join(', ')}
@@ -665,7 +795,7 @@ function LembarKeranjang({
                                         </div>
                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                             <PengaturJumlah
-                                                label={produk?.Nama ?? 'menu'}
+                                                label={namaTampil}
                                                 jumlah={b.Jumlah}
                                                 saatUbah={(n) => aturKeranjang((lama) => UbahJumlah(lama, b.Uuid, n))}
                                             />
@@ -679,7 +809,7 @@ function LembarKeranjang({
                                             </button>
                                         </div>
                                         <BidangTeks
-                                            label={`Catatan ${produk?.Nama ?? 'menu'} (opsional)`}
+                                            label={`Catatan ${namaTampil} (opsional)`}
                                             nilai={b.Catatan}
                                             saatBerubah={(nilai) =>
                                                 aturKeranjang((lama) =>
@@ -694,19 +824,19 @@ function LembarKeranjang({
                         </ul>
                     )}
                     <div className="flex flex-col gap-1 border-t border-garis pt-3">
-                        <div className="flex items-center justify-between gap-3 text-subjudul font-semibold">
-                            <span>Subtotal</span>
-                            {hitung.isPending && keranjang.length > 0 ? (
-                                <Skeleton className="h-5 w-24" aria-label="Menghitung subtotal" />
-                            ) : (
-                                <span className="tabular-nums">
-                                    {hitung.data ? FormatRupiah(hitung.data.Subtotal) : '–'}
-                                </span>
-                            )}
-                        </div>
+                        {hitung.isPending && keranjang.length > 0 ? (
+                            <Skeleton className="h-5 w-full" aria-label="Menghitung total" />
+                        ) : hitung.data ? (
+                            <RincianPerkiraan subtotal={hitung.data.Subtotal} perkiraan={hitung.data} />
+                        ) : (
+                            <div className="flex items-center justify-between gap-3 text-subjudul font-semibold">
+                                <span>Perkiraan total</span>
+                                <span className="tabular-nums">–</span>
+                            </div>
+                        )}
                         <p className="text-keterangan text-teks-sekunder">
-                            {hitung.data?.Catatan ?? 'Pajak & biaya layanan dihitung di kasir.'} Bayar di kasir setelah
-                            selesai.
+                            {hitung.data?.Catatan ?? 'Perkiraan. Total akhir mengikuti tagihan di kasir.'} Bayar di
+                            kasir setelah selesai.
                         </p>
                     </div>
                     {galatHitung ? <Pemberitahuan jenis="bahaya">{galatHitung}</Pemberitahuan> : null}
@@ -857,9 +987,15 @@ function PanelStatusPesanan({ alamat, token, uuid, saatKembali }: PropsPanelStat
                         <span className="shrink-0 tabular-nums">× {FormatJumlah(b.Jumlah)}</span>
                     </li>
                 ))}
-                <li className="flex justify-between gap-3 p-3 font-semibold">
-                    <span>Subtotal</span>
-                    <span className="tabular-nums">{FormatRupiah(pesanan.Subtotal)}</span>
+                <li className="p-3">
+                    {pesanan.Perkiraan ? (
+                        <RincianPerkiraan subtotal={pesanan.Subtotal} perkiraan={pesanan.Perkiraan} />
+                    ) : (
+                        <div className="flex justify-between gap-3 font-semibold">
+                            <span>Subtotal</span>
+                            <span className="tabular-nums">{FormatRupiah(pesanan.Subtotal)}</span>
+                        </div>
+                    )}
                 </li>
             </ul>
             <Tombol varian={pesanan.Status === 'MenungguKonfirmasi' ? 'sekunder' : 'utama'} onClick={saatKembali}>

@@ -7,8 +7,8 @@ namespace App\Http\Permintaan\Publik;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * F-17 `POST /{slugTenant}/meja/{tokenMeja}/hitung`: `{Baris: [{UuidProduk, Jumlah, Pilihan: [UuidPilihan]}]}`.
- * Harga dari peramban (bila dikirim) diabaikan.
+ * F-17 `POST /{slugTenant}/meja/{tokenMeja}/hitung`: `{Baris: [{UuidProduk, UuidVarian?, Jumlah, Pilihan: [UuidPilihan]}]}`.
+ * `UuidVarian` = anak varian bila `UuidProduk` induk varian (PRD v2.06). Harga dari peramban (bila dikirim) diabaikan.
  */
 final class HitungPesanSendiriPermintaan extends FormRequest
 {
@@ -25,6 +25,7 @@ final class HitungPesanSendiriPermintaan extends FormRequest
             'Baris' => ['present', 'array', 'max:'.self::BATAS_BARIS],
             'Baris.*' => ['array'],
             'Baris.*.UuidProduk' => ['required', 'ulid'],
+            'Baris.*.UuidVarian' => ['sometimes', 'nullable', 'ulid'],
             'Baris.*.Jumlah' => ['required', 'integer', 'min:1', 'max:'.self::BATAS_JUMLAH],
             'Baris.*.Pilihan' => ['sometimes', 'array', 'max:20'],
             'Baris.*.Pilihan.*' => ['ulid'],
@@ -44,7 +45,7 @@ final class HitungPesanSendiriPermintaan extends FormRequest
     }
 
     /**
-     * @return list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>}>
+     * @return list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian: string|null}>
      */
     public function AmbilBaris(): array
     {
@@ -55,6 +56,7 @@ final class HitungPesanSendiriPermintaan extends FormRequest
             'UuidProduk' => strtoupper((string) $b['UuidProduk']),
             'Jumlah' => (int) $b['Jumlah'],
             'Pilihan' => array_values(array_map(fn (mixed $u): string => strtoupper((string) $u), (array) ($b['Pilihan'] ?? []))),
+            'UuidVarian' => is_string($b['UuidVarian'] ?? null) ? strtoupper($b['UuidVarian']) : null,
         ], $baris);
     }
 }

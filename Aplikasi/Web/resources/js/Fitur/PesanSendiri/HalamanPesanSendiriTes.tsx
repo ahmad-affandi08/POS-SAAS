@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,6 +37,21 @@ const props: PropsPesanSendiri = {
                             { Uuid: 'P-SEDIKIT', Nama: 'Sedikit gula', Harga: '0.00' },
                         ],
                     },
+                ],
+            },
+            {
+                Uuid: 'ESTEH',
+                UuidProdukSatuan: null,
+                Nama: 'Es Teh Manis Melati',
+                UuidKategori: 'KAT-MINUM',
+                Harga: '8000.00',
+                UrlGambar: null,
+                KelompokPilihan: [],
+                NamaAtributVarian: 'Ukuran',
+                Varian: [
+                    { Uuid: 'ESTEH-REG', Nama: 'Reguler', Atribut: [], Harga: '8000.00', Tersedia: true },
+                    { Uuid: 'ESTEH-JUMBO', Nama: 'Jumbo', Atribut: [], Harga: '12000.00', Tersedia: true },
+                    { Uuid: 'ESTEH-RAKSASA', Nama: 'Raksasa', Atribut: [], Harga: null, Tersedia: false },
                 ],
             },
             {
@@ -78,7 +94,14 @@ function PasangFetch(
                     Total: `${String(total[i])}.00`,
                 })),
                 Subtotal: `${String(total.reduce((a, b) => a + b, 0))}.00`,
-                Catatan: 'Pajak & biaya layanan dihitung di kasir.',
+                // Perkiraan dari server: biaya layanan 5% + PBJT 10% (angka tiruan tetap).
+                Diskon: '0.00',
+                BiayaLayanan: '3500.00',
+                Pajak: [{ Kode: 'PbjtMakananMinuman', Nama: 'PBJT Makanan & Minuman', Tarif: '10', Jumlah: '7350.00' }],
+                PajakTermasukHarga: '0.00',
+                Pembulatan: '0.00',
+                Total: '80850.00',
+                Catatan: 'Perkiraan. Total akhir mengikuti tagihan di kasir (promo, pembulatan, metode bayar).',
             };
         } else if (url.endsWith('/pesan')) {
             kode = 201;
@@ -160,7 +183,8 @@ describe('Halaman publik pesan sendiri QR meja (F-17)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah Nasi Goreng Kampung Spesial Telur Mata Sapi' }));
         fireEvent.click(screen.getByRole('button', { name: 'Tambah Nasi Goreng Kampung Spesial Telur Mata Sapi' }));
-        await waitFor(() => expect(screen.getByText('Rp 70.000')).toBeTruthy());
+        // v2.06: bilah keranjang menampilkan perkiraan total dari server (subtotal Rp 70.000 + layanan + PBJT).
+        await waitFor(() => expect(screen.getByText('Rp 80.850')).toBeTruthy());
         expect(panggilan.filter((p) => p.url === `${alamat}/hitung`).map((p) => p.badan)).toEqual([
             {
                 Baris: [{ UuidProduk: 'NASI', Jumlah: 2, Pilihan: [] }],
@@ -210,5 +234,44 @@ describe('Halaman publik pesan sendiri QR meja (F-17)', () => {
             window.dispatchEvent(new Event('offline'));
         });
         expect(screen.getByText(/Tidak ada koneksi internet/)).toBeTruthy();
+    });
+
+    it('v2.06 varian wajib dipilih (varian tanpa harga nonaktif); keranjang menampilkan nama varian dan perkiraan total dari server', async () => {
+        // Test sebelumnya memicu event offline; status online TanStack Query bersifat global, jadi dipulihkan.
+        onlineManager.setOnline(true);
+        const panggilan = PasangFetch();
+        RenderUji(<HalamanPesanSendiri {...props} />);
+
+        expect(screen.getByText('Mulai Rp 8.000')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah Es Teh Manis Melati' }));
+        expect((screen.getByRole('radio', { name: /Raksasa/ }) as HTMLInputElement).disabled).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah ke keranjang' }));
+        expect(screen.getByText('Pilih ukuran dulu.')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('radio', { name: /Jumbo/ }));
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah ke keranjang' }));
+        await waitFor(() => expect(screen.getByText('Rp 80.850')).toBeTruthy());
+        await waitFor(() =>
+            expect(panggilan.filter((p) => p.url === `${alamat}/hitung`).map((p) => p.badan)).toEqual([
+                { Baris: [{ UuidProduk: 'ESTEH', UuidVarian: 'ESTEH-JUMBO', Jumlah: 1, Pilihan: [] }] },
+            ]),
+        );
+        await waitFor(() => expect(screen.getByText('Rp 80.850')).toBeTruthy());
+
+        fireEvent.click(screen.getByRole('button', { name: /Lihat keranjang · 1 item/ }));
+        expect(screen.getByText('Es Teh Manis Melati — Jumbo')).toBeTruthy();
+        expect(screen.getByText('Biaya layanan')).toBeTruthy();
+        expect(screen.getByText('PBJT Makanan & Minuman 10%')).toBeTruthy();
+        expect(screen.getByText('Perkiraan total')).toBeTruthy();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Kirim pesanan' }));
+            await Promise.resolve();
+        });
+        const kiriman = panggilan.find((p) => p.url === `${alamat}/pesan`)?.badan as Record<string, unknown>;
+        expect((kiriman.Baris as Record<string, unknown>[])[0]).toMatchObject({
+            UuidProduk: 'ESTEH',
+            UuidVarian: 'ESTEH-JUMBO',
+        });
     });
 });

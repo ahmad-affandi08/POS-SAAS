@@ -10,6 +10,8 @@ export type BarisKeranjang = {
     /** Uuid baris (ULID), dipakai juga sebagai Uuid baris pesanan saat dikirim. */
     Uuid: string;
     UuidProduk: string;
+    /** PRD v2.06: anak varian pilihan tamu bila `UuidProduk` induk varian. */
+    UuidVarian?: string;
     Jumlah: number;
     Pilihan: string[];
     Catatan: string;
@@ -59,6 +61,7 @@ function CekBaris(nilai: unknown): nilai is BarisKeranjang {
     return (
         typeof b.Uuid === 'string' &&
         typeof b.UuidProduk === 'string' &&
+        (b.UuidVarian === undefined || typeof b.UuidVarian === 'string') &&
         typeof b.Jumlah === 'number' &&
         Number.isInteger(b.Jumlah) &&
         b.Jumlah >= 1 &&
@@ -97,12 +100,16 @@ function SamaPilihan(a: string[], b: string[]): boolean {
     return a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
 }
 
-/** Tambah ke keranjang; produk & pilihan sama tanpa catatan digabung (jumlah dibatasi 50). */
+/** Tambah ke keranjang; produk, varian & pilihan sama tanpa catatan digabung (jumlah dibatasi 50). */
 export function TambahKeKeranjang(keranjang: BarisKeranjang[], baru: BarisKeranjang): BarisKeranjang[] {
     const indeks =
         baru.Catatan === ''
             ? keranjang.findIndex(
-                  (b) => b.UuidProduk === baru.UuidProduk && b.Catatan === '' && SamaPilihan(b.Pilihan, baru.Pilihan),
+                  (b) =>
+                      b.UuidProduk === baru.UuidProduk &&
+                      b.UuidVarian === baru.UuidVarian &&
+                      b.Catatan === '' &&
+                      SamaPilihan(b.Pilihan, baru.Pilihan),
               )
             : -1;
 

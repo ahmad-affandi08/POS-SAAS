@@ -23,46 +23,84 @@ use Illuminate\Support\Collection;
 
 /**
  * F-17 Self-Order QR Meja: menu publik satu outlet dan harga baris yang dihitung server (tamu tidak pernah menentukan
- * harga). Produk tampil bila aktif, `TampilDiPos`, bisa dijual (bukan induk varian/bahan baku), bukan anak varian
- * (varian menyusul), punya harga jual kanal `MakanDiTempat` (harga yang sama dengan tagihan meja di kasir), dan setiap
- * kelompok pilihan wajibnya punya cukup pilihan aktif. Satuan = satuan jual bawaan (atau satuan dasar).
+ * harga). Produk tampil bila aktif, `TampilDiPos`, bisa dijual (bukan bahan baku), bukan anak varian, punya harga jual
+ * kanal `MakanDiTempat` (harga yang sama dengan tagihan meja di kasir), dan setiap kelompok pilihan wajibnya punya cukup
+ * pilihan aktif. Satuan = satuan jual bawaan (atau satuan dasar).
+ *
+ * Varian (PRD v2.06): induk varian tampil sebagai satu kartu dengan daftar `Varian` = anak aktif & `TampilDiPos` yang
+ * jenisnya bisa dijual; harga per varian = harga kanal `MakanDiTempat` anak itu (tanpa harga → `Tersedia` false, tidak
+ * bisa dipilih). Induk tampil bila minimal satu varian tersedia; `Harga` kartu = harga varian termurah. Kelompok
+ * pilihan induk berlaku untuk semua anak. Baris pesanan menyimpan anak varian (produk yang benar-benar dijual).
  */
 final class MenuPesanSendiri
 {
+    /** Pemisah nama tampil "Induk — Varian". */
+    public const PEMISAH_VARIAN = ' — ';
+
     public function __construct(private readonly HargaProdukBerlaku $harga) {}
 
     /**
      * @param  string  $dasarGambar  URL gambar dengan penanda `{uuid}`
-     * @return array{Kategori: list<array{Uuid: string, Nama: string}>, Produk: list<array{Uuid: string, UuidProdukSatuan: string, Nama: string, UuidKategori: string|null, Harga: string, UrlGambar: string|null, KelompokPilihan: list<array{Uuid: string, Nama: string, MinimalPilih: int, MaksimalPilih: int, Pilihan: list<array{Uuid: string, Nama: string, Harga: string}>}>}>}
+     * @return array{Kategori: list<array{Uuid: string, Nama: string}>, Produk: list<array<string, mixed>>}
      */
     public function Ambil(int $idOutlet, string $dasarGambar): array
     {
         $produk = $this->KueriProduk()->orderBy('Nama')->get();
-        $satuan = $this->AmbilSatuanJual($produk);
+        $idInduk = array_values($produk->filter(fn (Produk $p): bool => $p->Jenis === JenisProduk::IndukVarian)->map(fn (Produk $p): int => $p->Id)->all());
+        $anak = $idInduk === [] ? new Collection : $this->KueriAnak()->whereIn('IdInduk', $idInduk)->orderBy('Id')->get();
+        $satuan = $this->AmbilSatuanJual(collect([...$produk->all(), ...$anak->all()]));
+        $anakPerInduk = $anak->groupBy('IdInduk');
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
         $waktu = CarbonImmutable::now();
         $hasil = [];
 
         foreach ($produk as $p) {
-            $s = $satuan[$p->Id] ?? null;
             $grup = $kelompok[$p->Id] ?? [];
 
-            if (! $s instanceof ProdukSatuan || ! self::CekKelompokBisaDipenuhi($grup)) {
+            if (! self::CekKelompokBisaDipenuhi($grup)) {
                 continue;
             }
 
-            $harga = $this->harga->Tentukan($p, $s, Kuantitas::Dari(1), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu);
+            $varian = [];
+            $s = $satuan[$p->Id] ?? null;
 
-            if ($harga === null) {
+            if ($p->Jenis === JenisProduk::IndukVarian) {
+                $hargaKartu = null;
+
+                /** @var Produk $a */
+                foreach ($anakPerInduk->get($p->Id, new Collection) as $a) {
+                    $sa = $satuan[$a->Id] ?? null;
+                    $hargaAnak = $sa instanceof ProdukSatuan
+                        ? $this->harga->Tentukan($a, $sa, Kuantitas::Dari(1), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)?->harga
+                        : null;
+                    $varian[] = [
+                        'Uuid' => $a->Uuid,
+                        'Nama' => self::AmbilNamaVarian($p, $a),
+                        'Atribut' => self::AmbilAtribut($a),
+                        'Harga' => $hargaAnak?->KeString(),
+                        'Tersedia' => $hargaAnak !== null,
+                    ];
+
+                    if ($hargaAnak !== null && ($hargaKartu === null || $hargaAnak->Bandingkan($hargaKartu) < 0)) {
+                        $hargaKartu = $hargaAnak;
+                    }
+                }
+            } else {
+                $hargaKartu = $s instanceof ProdukSatuan
+                    ? $this->harga->Tentukan($p, $s, Kuantitas::Dari(1), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)?->harga
+                    : null;
+            }
+
+            if ($hargaKartu === null) {
                 continue;
             }
 
             $hasil[] = [
                 'Uuid' => $p->Uuid,
-                'UuidProdukSatuan' => $s->Uuid,
+                'UuidProdukSatuan' => $varian === [] && $s instanceof ProdukSatuan ? $s->Uuid : null,
                 'Nama' => $p->Nama,
                 'IdKategori' => $p->IdKategori,
-                'Harga' => $harga->harga->KeString(),
+                'Harga' => $hargaKartu->KeString(),
                 'UrlGambar' => PenyimpanGambarProduk::BuatUrl($p, 'kecil', $dasarGambar),
                 'KelompokPilihan' => array_map(fn (array $g): array => [
                     'Uuid' => $g['Kelompok']->Uuid,
@@ -71,6 +109,8 @@ final class MenuPesanSendiri
                     'MaksimalPilih' => $g['Kelompok']->MaksimalPilih,
                     'Pilihan' => array_map(fn (Pilihan $pl): array => ['Uuid' => $pl->Uuid, 'Nama' => $pl->Nama, 'Harga' => Uang::Dari($pl->Harga)->KeString()], $g['Pilihan']),
                 ], $grup),
+                'NamaAtributVarian' => $varian === [] ? null : self::AmbilNamaAtribut($p),
+                'Varian' => $varian,
             ];
         }
 
@@ -92,28 +132,46 @@ final class MenuPesanSendiri
     /**
      * Harga server untuk baris pesanan tamu. Produk di luar menu → `ProdukTidakTersedia`; pilihan bukan milik
      * kelompok produk, ganda, nonaktif, atau jumlah per kelompok di luar Minimal/Maksimal → `PilihanTidakValid`.
+     * Induk varian wajib `UuidVarian` (`VarianWajibDipilih`); varian bukan anak induk itu, nonaktif, tidak tampil di
+     * POS, atau tanpa harga (juga `UuidVarian` pada produk tanpa varian) → `VarianTidakValid`. Baris varian memakai
+     * anak sebagai `UuidProduk` (harga, satuan, pajak anak) dengan kelompok pilihan induk. Kunci pajak & kategori
+     * (`IdKelompokPajak`, `HargaTermasukPajak`, `UuidKategori`) untuk estimasi total (PRD v2.06).
      *
-     * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>}>  $baris
-     * @return list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, HargaSatuan: Uang, HargaPilihan: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>}>
+     * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
+     * @return list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, HargaSatuan: Uang, HargaPilihan: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>
      */
     public function HitungBaris(int $idOutlet, array $baris): array
     {
         $uuid = array_values(array_unique(array_column($baris, 'UuidProduk')));
+        $uuidVarian = array_values(array_unique(array_filter(array_map(fn (array $b): ?string => $b['UuidVarian'] ?? null, $baris), 'is_string')));
         $produk = $this->KueriProduk()->whereIn('Uuid', $uuid)->get()->keyBy('Uuid');
-        $satuan = $this->AmbilSatuanJual($produk);
+        $anak = $uuidVarian === [] ? new Collection : $this->KueriAnak()->whereIn('Uuid', $uuidVarian)->get()->keyBy('Uuid');
+        $semua = collect([...$produk->values()->all(), ...$anak->values()->all()]);
+        $satuan = $this->AmbilSatuanJual($semua);
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
+        $idKategori = array_values(array_unique(array_filter($semua->map(fn (Produk $p): ?int => $p->IdKategori)->all(), 'is_int')));
+        $uuidKategori = $idKategori === [] ? [] : Kategori::query()->whereKey($idKategori)->pluck('Uuid', 'Id')->all();
         $waktu = CarbonImmutable::now();
         $hasil = [];
 
         foreach ($baris as $i => $b) {
             $p = $produk->get($b['UuidProduk']);
-            $s = $p instanceof Produk ? ($satuan[$p->Id] ?? null) : null;
-            $harga = $p instanceof Produk && $s instanceof ProdukSatuan
-                ? $this->harga->Tentukan($p, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)
+
+            if (! $p instanceof Produk) {
+                throw self::GalatTidakTersedia($i, $b['UuidProduk']);
+            }
+
+            $dijual = $this->TentukanProdukDijual($p, $b['UuidVarian'] ?? null, $anak, $i);
+            $varian = $dijual !== $p;
+            $s = $satuan[$dijual->Id] ?? null;
+            $harga = $s instanceof ProdukSatuan
+                ? $this->harga->Tentukan($dijual, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)
                 : null;
 
-            if (! $p instanceof Produk || ! $s instanceof ProdukSatuan || $harga === null) {
-                throw new PelanggaranAturanBisnis('ProdukTidakTersedia', 'Ada menu yang sudah tidak tersedia. Hapus dari keranjang lalu coba lagi.', "Baris.{$i}.UuidProduk", 422, ['UuidProduk' => $b['UuidProduk']]);
+            if (! $s instanceof ProdukSatuan || $harga === null) {
+                throw $varian
+                    ? self::GalatVarian($i, "Varian yang dipilih untuk {$p->Nama} sedang tidak tersedia. Pilih varian lain.")
+                    : self::GalatTidakTersedia($i, $b['UuidProduk']);
             }
 
             $pilihan = $this->PeriksaPilihan($kelompok[$p->Id] ?? [], $b['Pilihan'], $p->Nama, $i);
@@ -123,20 +181,26 @@ final class MenuPesanSendiri
                 $hargaPilihan = $hargaPilihan->Tambah(Uang::Dari($pl->Harga));
             }
 
+            $namaVarian = $varian ? self::AmbilNamaVarian($p, $dijual) : null;
             $hasil[] = [
-                'UuidProduk' => $p->Uuid,
+                'UuidProduk' => $dijual->Uuid,
                 'UuidProdukSatuan' => $s->Uuid,
-                'NamaProduk' => $p->Nama,
+                'NamaProduk' => $namaVarian === null ? $p->Nama : $p->Nama.self::PEMISAH_VARIAN.$namaVarian,
+                'UuidProdukInduk' => $varian ? $p->Uuid : null,
+                'NamaVarian' => $namaVarian,
                 'HargaSatuan' => $harga->harga,
                 'HargaPilihan' => $hargaPilihan,
                 'Pilihan' => array_map(fn (Pilihan $pl): array => ['UuidPilihan' => $pl->Uuid, 'Nama' => $pl->Nama, 'Harga' => Uang::Dari($pl->Harga)->KeString()], $pilihan),
+                'IdKelompokPajak' => $dijual->IdKelompokPajak,
+                'HargaTermasukPajak' => $dijual->HargaTermasukPajak,
+                'UuidKategori' => $dijual->IdKategori === null ? null : ($uuidKategori[$dijual->IdKategori] ?? null),
             ];
         }
 
         return $hasil;
     }
 
-    /** Produk menu dengan gambar (untuk rute gambar publik); null bila bukan menu. */
+    /** Produk menu dengan gambar (untuk rute gambar publik, termasuk induk varian); null bila bukan menu. */
     public function CariProduk(string $uuid): ?Produk
     {
         return $this->KueriProduk()->where('Uuid', $uuid)->first();
@@ -151,7 +215,116 @@ final class MenuPesanSendiri
             ->where('Aktif', true)
             ->where('TampilDiPos', true)
             ->whereNull('IdInduk')
-            ->whereNotIn('Jenis', array_map(fn (JenisProduk $j): string => $j->value, array_filter(JenisProduk::cases(), fn (JenisProduk $j): bool => ! $j->CekBisaDijual())));
+            ->whereNotIn('Jenis', self::JenisTidakDijual(JenisProduk::IndukVarian));
+    }
+
+    /**
+     * Anak varian yang boleh dipilih tamu: aktif, `TampilDiPos`, dan jenisnya bisa dijual.
+     *
+     * @return Builder<Produk>
+     */
+    private function KueriAnak(): Builder
+    {
+        return Produk::query()
+            ->where('Aktif', true)
+            ->where('TampilDiPos', true)
+            ->whereNotNull('IdInduk')
+            ->whereNotIn('Jenis', self::JenisTidakDijual());
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function JenisTidakDijual(?JenisProduk $kecuali = null): array
+    {
+        return array_values(array_map(
+            fn (JenisProduk $j): string => $j->value,
+            array_filter(JenisProduk::cases(), fn (JenisProduk $j): bool => ! $j->CekBisaDijual() && $j !== $kecuali),
+        ));
+    }
+
+    /**
+     * Produk yang benar-benar dijual untuk satu baris: produk itu sendiri, atau anak varian pilihan tamu.
+     *
+     * @param  Collection<array-key, Produk>  $anak  kunci = Uuid
+     */
+    private function TentukanProdukDijual(Produk $p, ?string $uuidVarian, Collection $anak, int $i): Produk
+    {
+        if ($p->Jenis !== JenisProduk::IndukVarian) {
+            if ($uuidVarian !== null) {
+                throw self::GalatVarian($i, "{$p->Nama} tidak punya varian. Muat ulang menu lalu pilih lagi.");
+            }
+
+            return $p;
+        }
+
+        if ($uuidVarian === null) {
+            throw new PelanggaranAturanBisnis('VarianWajibDipilih', "Pilih varian {$p->Nama} dulu.", "Baris.{$i}.UuidVarian");
+        }
+
+        $a = $anak->get($uuidVarian);
+
+        if (! $a instanceof Produk || $a->IdInduk !== $p->Id) {
+            throw self::GalatVarian($i, "Varian yang dipilih untuk {$p->Nama} sedang tidak tersedia. Pilih varian lain.");
+        }
+
+        return $a;
+    }
+
+    private static function GalatTidakTersedia(int $i, string $uuidProduk): PelanggaranAturanBisnis
+    {
+        return new PelanggaranAturanBisnis('ProdukTidakTersedia', 'Ada menu yang sudah tidak tersedia. Hapus dari keranjang lalu coba lagi.', "Baris.{$i}.UuidProduk", 422, ['UuidProduk' => $uuidProduk]);
+    }
+
+    private static function GalatVarian(int $i, string $pesan): PelanggaranAturanBisnis
+    {
+        return new PelanggaranAturanBisnis('VarianTidakValid', $pesan, "Baris.{$i}.UuidVarian");
+    }
+
+    /**
+     * Atribut anak varian `[{Nama, Nilai}]` (urutan definisi induk).
+     *
+     * @return list<array{Nama: string, Nilai: string}>
+     */
+    private static function AmbilAtribut(Produk $anak): array
+    {
+        $hasil = [];
+
+        foreach ($anak->AtributVarian ?? [] as $a) {
+            if (is_string($a['Nama'] ?? null) && is_scalar($a['Nilai'] ?? null)) {
+                $hasil[] = ['Nama' => $a['Nama'], 'Nilai' => (string) $a['Nilai']];
+            }
+        }
+
+        return $hasil;
+    }
+
+    /** Nama varian "Besar" / "Besar / Dingin" dari nilai atribut; tanpa atribut = nama anak tanpa awalan nama induk. */
+    private static function AmbilNamaVarian(Produk $induk, Produk $anak): string
+    {
+        $nilai = array_column(self::AmbilAtribut($anak), 'Nilai');
+
+        if ($nilai !== []) {
+            return implode(' / ', $nilai);
+        }
+
+        $nama = str_starts_with($anak->Nama, $induk->Nama.' ') ? trim(mb_substr($anak->Nama, mb_strlen($induk->Nama))) : '';
+
+        return $nama === '' ? $anak->Nama : $nama;
+    }
+
+    /** Label pemilih varian dari definisi atribut induk ("Ukuran", "Ukuran / Suhu"); tanpa definisi = "Varian". */
+    private static function AmbilNamaAtribut(Produk $induk): string
+    {
+        $nama = [];
+
+        foreach ($induk->AtributVarian ?? [] as $a) {
+            if (is_string($a['Nama'] ?? null) && trim($a['Nama']) !== '') {
+                $nama[] = trim($a['Nama']);
+            }
+        }
+
+        return $nama === [] ? 'Varian' : implode(' / ', $nama);
     }
 
     /**
@@ -169,6 +342,10 @@ final class MenuPesanSendiri
         }
 
         $hasil = [];
+
+        if ($dasar === []) {
+            return $hasil;
+        }
 
         foreach (ProdukSatuan::query()->whereIn('IdProduk', array_keys($dasar))->orderBy('Id')->get() as $s) {
             $lama = $hasil[$s->IdProduk] ?? null;

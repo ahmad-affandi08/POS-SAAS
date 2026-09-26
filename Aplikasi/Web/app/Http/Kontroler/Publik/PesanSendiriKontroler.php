@@ -25,7 +25,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * F-17 Self-Order QR Meja (X12, SLS-04), tanpa login: `/{slugTenant}/meja/{tokenMeja}` (halaman), `.../hitung` (harga
- * server), `.../pesan` (kirim, idempoten per Uuid), `.../pesanan/{uuid}` (polling status), `.../gambar/{produk}`.
+ * server + estimasi total PRD v2.06: `Subtotal`, `Diskon`, `BiayaLayanan`, `Pajak` [{Kode, Nama, Tarif, Jumlah}],
+ * `PajakTermasukHarga`, `Pembulatan`, `Total`, `Catatan`), `.../pesan` (kirim, idempoten per Uuid), `.../pesanan/{uuid}` (polling status), `.../gambar/{produk}`.
  * Tenant dari slug dipasang sebagai konteks (seperti struk digital) sehingga semua kueri tetap lewat `MilikTenant`.
  * Rute JSON dikecualikan dari CSRF (tanpa sesi/kredensial yang bisa disalahgunakan; dijaga batas laju, token meja
  * rahasia, dan batas pesanan tertunda per meja); galatnya berformat `{"Galat": {...}}`.
@@ -73,7 +74,7 @@ final class PesanSendiriKontroler extends Kontroler
     {
         return $this->JalankanDalamTenant($slugTenant, function () use ($tokenMeja, $permintaan, $penghitung): JsonResponse {
             $konteks = $this->penentu->WajibAktif($tokenMeja);
-            $hasil = $penghitung->Hitung($konteks->idOutlet, $permintaan->AmbilBaris());
+            $hasil = $penghitung->Hitung($konteks, $permintaan->AmbilBaris());
 
             return response()->json([
                 'Baris' => array_map(fn (array $b): array => [
@@ -83,8 +84,10 @@ final class PesanSendiriKontroler extends Kontroler
                     'HargaSatuan' => $b['HargaSatuan']->KeString(),
                     'HargaPilihan' => $b['HargaPilihan']->KeString(),
                     'Total' => $b['Total']->KeString(),
+                    ...($b['UuidProdukInduk'] === null ? [] : ['UuidProdukInduk' => $b['UuidProdukInduk'], 'NamaVarian' => $b['NamaVarian']]),
                 ], $hasil['Baris']),
                 'Subtotal' => $hasil['Subtotal']->KeString(),
+                ...PenghitungPesanSendiri::KeLarik($hasil['Perkiraan']),
                 'Catatan' => PenghitungPesanSendiri::CATATAN,
             ]);
         });

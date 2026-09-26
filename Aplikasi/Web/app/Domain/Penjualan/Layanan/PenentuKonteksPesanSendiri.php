@@ -38,7 +38,7 @@ final class PenentuKonteksPesanSendiri
             && $this->fitur->CekAktifDiOutlet($idTenant, $meja->idOutlet, PemeriksaFiturTenant::KUNCI_PESAN_SENDIRI)
             && $this->langganan->CekBolehBertransaksiPos($this->langganan->Ambil($idTenant));
 
-        return new DataKonteksPesanSendiri($idTenant, $meja->idOutlet, $meja->kodeOutlet, $meja->namaOutlet, $meja->zonaWaktu, $meja->idMeja, $meja->uuidMeja, $meja->namaMeja, $aktif);
+        return new DataKonteksPesanSendiri($idTenant, $meja->idOutlet, $meja->kodeOutlet, $meja->namaOutlet, $meja->zonaWaktu, $meja->idMeja, $meja->uuidMeja, $meja->namaMeja, $aktif, $meja->uuidOutlet, $meja->kodeKota);
     }
 
     /** Meja dikenal (404 `MejaTidakDitemukan` bila tidak). */

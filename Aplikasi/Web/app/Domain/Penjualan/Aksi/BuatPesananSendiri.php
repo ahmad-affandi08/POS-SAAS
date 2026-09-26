@@ -22,7 +22,9 @@ use Illuminate\Support\Facades\DB;
  * F-17 Self-Order QR Meja: tamu mengirim pesanan dari halaman publik meja. Idempoten per `Uuid` peramban (kiriman ulang
  * mengembalikan pesanan yang sama; Uuid yang sama di meja lain → `UuidDipakai`). Harga dihitung ulang server
  * (`PenghitungPesanSendiri`). Batas 5 pesanan `MenungguKonfirmasi` per meja (`TerlaluBanyakPesanan`). Nomor
- * `QR/{KodeOutlet}/{YYMMDD}-{SEQ4}` urut per outlet per tanggal lokal outlet. Tidak menyentuh stok/jurnal.
+ * `QR/{KodeOutlet}/{YYMMDD}-{SEQ4}` urut per outlet per tanggal lokal outlet. Tidak menyentuh stok/jurnal. PRD v2.06:
+ * baris varian menyimpan anak varian sebagai `UuidProduk` (+ `UuidProdukInduk`, `NamaVarian`, nama "Induk — Varian"),
+ * dan estimasi total yang dilihat tamu disalin ke `Perkiraan`.
  */
 final class BuatPesananSendiri
 {
@@ -45,8 +47,8 @@ final class BuatPesananSendiri
             return [$lama, false];
         }
 
-        $baris = array_map(fn (DataBarisPesanSendiri $b): array => ['UuidProduk' => $b->uuidProduk, 'Jumlah' => $b->jumlah, 'Pilihan' => $b->pilihan], $data->baris);
-        $hitung = $this->penghitung->Hitung($konteks->idOutlet, $baris);
+        $baris = array_map(fn (DataBarisPesanSendiri $b): array => ['UuidProduk' => $b->uuidProduk, 'Jumlah' => $b->jumlah, 'Pilihan' => $b->pilihan, 'UuidVarian' => $b->uuidVarian], $data->baris);
+        $hitung = $this->penghitung->Hitung($konteks, $baris);
         $this->kedaluwarsa->TandaiMeja($konteks->idMeja);
 
         try {
@@ -82,8 +84,11 @@ final class BuatPesananSendiri
                         'HargaPilihan' => $h['HargaPilihan']->KeString(),
                         'Pilihan' => $h['Pilihan'],
                         'Catatan' => $b->catatan,
+                        // PRD v2.06: kunci tambahan hanya untuk baris varian (UuidProduk = anak varian).
+                        ...($h['UuidProdukInduk'] === null ? [] : ['UuidProdukInduk' => $h['UuidProdukInduk'], 'NamaVarian' => $h['NamaVarian']]),
                     ], $data->baris, $hitung['Baris'])),
                     'Subtotal' => $hitung['Subtotal']->KeString(),
+                    'Perkiraan' => PenghitungPesanSendiri::KeLarik($hitung['Perkiraan']),
                     'Status' => StatusPesananSendiri::MenungguKonfirmasi,
                     'HashIp' => $hashIp,
                 ]);

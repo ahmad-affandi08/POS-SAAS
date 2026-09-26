@@ -39,6 +39,8 @@ final class MejaPesanSendiri
             namaOutlet: $outlet->Nama,
             zonaWaktu: $outlet->ZonaWaktu,
             bisaDipesan: $meja->Status === StatusOrganisasi::Aktif && $outlet->Status === StatusOrganisasi::Aktif && $outlet->PesanSendiriAktif,
+            uuidOutlet: $outlet->Uuid,
+            kodeKota: $outlet->KodeKota,
         );
     }
 }

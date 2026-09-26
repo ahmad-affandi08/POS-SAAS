@@ -192,10 +192,11 @@ final class DaftarKelompokPajak
 
     /**
      * Jenis pajak per kelompok pajak tenant aktif, urut detail (F-07b, PRD v1.46): dasar pencocokan himpunan pajak
-     * per baris penjualan POS. Kelompok tenant lain tidak ikut.
+     * per baris penjualan POS. Kelompok tenant lain tidak ikut. `Nama` & `DasarPengenaan` (PRD v2.06, estimasi total
+     * pesan sendiri) = nama jenis pajak dan dasar pengenaan detail kelompok.
      *
      * @param  list<int>  $idKelompok
-     * @return array<int, list<array{Kode: string, Kategori: KategoriJenisPajak}>>
+     * @return array<int, list<array{Kode: string, Kategori: KategoriJenisPajak, Nama: string, DasarPengenaan: DasarPengenaanPajak}>>
      */
     public function AmbilJenisPajakPerKelompok(array $idKelompok): array
     {
@@ -212,7 +213,7 @@ final class DaftarKelompokPajak
             ->get();
 
         foreach ($detail as $d) {
-            $hasil[$d->IdKelompokPajak][] = ['Kode' => $d->JenisPajak->Kode, 'Kategori' => $d->JenisPajak->Kategori];
+            $hasil[$d->IdKelompokPajak][] = ['Kode' => $d->JenisPajak->Kode, 'Kategori' => $d->JenisPajak->Kategori, 'Nama' => $d->JenisPajak->Nama, 'DasarPengenaan' => $d->DasarPengenaan];
         }
 
         return $hasil;

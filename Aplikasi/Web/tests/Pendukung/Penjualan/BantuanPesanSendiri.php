@@ -91,7 +91,7 @@ final class BantuanPesanSendiri
     /**
      * Kiriman `POST .../pesan`. Baris: `[Produk, Jumlah, list<Pilihan>, Catatan?]`.
      *
-     * @param  list<array{0: Produk, 1: int, 2?: list<Pilihan>, 3?: string|null}>  $baris
+     * @param  list<array{0: Produk, 1: int, 2?: list<Pilihan>, 3?: string|null, 4?: Produk}>  $baris
      * @return array<string, mixed>
      */
     public static function Kiriman(array $baris, ?string $uuid = null, ?string $nama = 'Bu Ratna', ?string $catatan = null): array
@@ -106,6 +106,8 @@ final class BantuanPesanSendiri
                 'Jumlah' => $b[1],
                 'Pilihan' => array_map(fn (Pilihan $p): string => $p->Uuid, $b[2] ?? []),
                 'Catatan' => $b[3] ?? null,
+                // PRD v2.06: anak varian pilihan tamu (indeks 4) bila produk induk varian.
+                ...(isset($b[4]) ? ['UuidVarian' => $b[4]->Uuid] : []),
             ], $baris),
         ];
     }

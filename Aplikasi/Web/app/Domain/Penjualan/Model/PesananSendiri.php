@@ -22,8 +22,9 @@ use Illuminate\Support\Carbon;
  * @property string $Nomor
  * @property string|null $NamaPemesan
  * @property string|null $Catatan
- * @property list<array{Uuid: string, UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, Jumlah: string, HargaSatuan: string, HargaPilihan: string, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, Catatan: string|null}> $Baris
+ * @property list<array{Uuid: string, UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, Jumlah: string, HargaSatuan: string, HargaPilihan: string, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, Catatan: string|null, UuidProdukInduk?: string, NamaVarian?: string|null}> $Baris
  * @property string $Subtotal
+ * @property array{Diskon: string, BiayaLayanan: string, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: string}>, PajakTermasukHarga: string, Pembulatan: string, Total: string}|null $Perkiraan
  * @property StatusPesananSendiri $Status
  * @property string|null $UuidPesananTerbuka
  * @property int|null $IdPemroses
@@ -50,6 +51,7 @@ final class PesananSendiri extends ModelDasar
         'DiprosesPada' => null,
         'AlasanTolak' => null,
         'HashIp' => null,
+        'Perkiraan' => null,
     ];
 
     /**
@@ -60,6 +62,7 @@ final class PesananSendiri extends ModelDasar
         return [
             'Baris' => 'array',
             'Subtotal' => 'decimal:2',
+            'Perkiraan' => 'array',
             'Status' => StatusPesananSendiri::class,
             'DiprosesPada' => 'datetime',
         ];
