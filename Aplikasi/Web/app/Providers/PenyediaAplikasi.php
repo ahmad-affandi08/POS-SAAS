@@ -71,7 +71,7 @@ final class PenyediaAplikasi extends ServiceProvider
         // API POS: batas per rute dan per perangkat (bukan per IP bersama). Perangkat-perangkat satu outlet biasanya di
         // balik satu IP (NAT); kunci per IP membuat polling pesanan terbuka/KDS dari beberapa perangkat saling
         // menghabiskan jatah. Rute tanpa perangkat (aktivasi) tetap dibatasi per IP.
-        foreach ([10, 30, 60, 120, 600] as $perMenit) {
+        foreach ([10, 20, 30, 60, 120, 600] as $perMenit) {
             RateLimiter::for("pos-{$perMenit}", static function (Request $permintaan) use ($perMenit): Limit {
                 $perangkat = $permintaan->attributes->get(AutentikasiPerangkat::ATRIBUT);
                 $rute = (string) $permintaan->route()?->getName();
