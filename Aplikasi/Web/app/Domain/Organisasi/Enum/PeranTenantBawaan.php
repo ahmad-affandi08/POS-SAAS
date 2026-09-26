@@ -6,7 +6,7 @@ namespace App\Domain\Organisasi\Enum;
 
 /**
  * Peran bawaan yang dibuat untuk setiap tenant (PRD §19.1). Nilai = kolom `Peran.Kode`. Peran khusus sektor
- * (Pelayan, Dapur/Barista, Apoteker, Salesman) ditambahkan template sektor di F-01.
+ * (Dapur/Barista, Apoteker, Salesman) ditambahkan template sektor di F-01. `Pelayan` (v2.00) bawaan untuk mode Pelayan.
  *
  * Peran bawaan diselaraskan sistem (tidak diubah tenant); tenant menyesuaikan lewat peran kustom.
  * `Pemilik` selalu lolos pemeriksaan izin, apa pun isi tabel `PeranIzin`.
@@ -21,6 +21,7 @@ enum PeranTenantBawaan: string
     case StafGudang = 'StafGudang';
     case StafPembelian = 'StafPembelian';
     case Akuntan = 'Akuntan';
+    case Pelayan = 'Pelayan';
 
     public function AmbilNama(): string
     {
@@ -33,6 +34,7 @@ enum PeranTenantBawaan: string
             self::StafGudang => 'Staf Gudang',
             self::StafPembelian => 'Staf Pembelian',
             self::Akuntan => 'Akuntan',
+            self::Pelayan => 'Pelayan',
         };
     }
 
@@ -47,6 +49,7 @@ enum PeranTenantBawaan: string
             self::StafGudang => 'Penerimaan, transfer, opname, penyesuaian stok (butuh persetujuan).',
             self::StafPembelian => 'Pemasok & pesanan pembelian.',
             self::Akuntan => 'Keuangan, jurnal, pajak, tutup buku; membaca semua laporan.',
+            self::Pelayan => 'Aplikasi POS mode Pelayan: ambil pesanan meja & kirim ke dapur, tanpa pembayaran.',
         };
     }
 
@@ -111,6 +114,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::KaryawanLihat,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
+            self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola],
             self::StafPembelian => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PembelianKelola],
             self::Akuntan => [

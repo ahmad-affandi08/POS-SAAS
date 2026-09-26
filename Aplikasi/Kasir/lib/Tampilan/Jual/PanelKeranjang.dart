@@ -19,7 +19,7 @@ class PanelKeranjang extends StatelessWidget {
     required this.saatDiskonPesanan,
     required this.saatTahan,
     required this.saatKosongkan,
-    required this.saatBayar,
+    this.saatBayar,
     this.tampilKepala = true,
     this.judul,
     this.statusBaris = const {},
@@ -36,7 +36,9 @@ class PanelKeranjang extends StatelessWidget {
   final VoidCallback saatDiskonPesanan;
   final VoidCallback saatTahan;
   final VoidCallback saatKosongkan;
-  final VoidCallback saatBayar;
+
+  /// Null = mode Pelayan (v2.00): tanpa Diskon & Bayar; tombol [labelTahan] menjadi aksi utama.
+  final VoidCallback? saatBayar;
 
   /// Kepala "Keranjang" (disembunyikan saat tampil di dalam lembar yang sudah berjudul).
   final bool tampilKepala;
@@ -227,45 +229,54 @@ class PanelKeranjang extends StatelessWidget {
               children: [
                 if (hasil != null) ...RingkasanTotal.BangunBaris(context, hitungan!, keranjang),
                 const SizedBox(height: TokenJarak.jarak8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 56,
-                        child: OutlinedButton(
-                          style: gayaTombolKecil,
-                          onPressed: kosong ? null : saatDiskonPesanan,
-                          child: const Text('Diskon', maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                      ),
+                if (saatBayar == null)
+                  SizedBox(
+                    height: 56,
+                    child: FilledButton(
+                      onPressed: kosong ? null : saatTahan,
+                      child: Text(labelTahan, style: teks.titleMedium?.copyWith(color: warna.permukaan)),
                     ),
-                    const SizedBox(width: TokenJarak.jarak8),
-                    Expanded(
-                      child: SizedBox(
-                        height: 56,
-                        child: OutlinedButton(
-                          style: gayaTombolKecil,
-                          onPressed: kosong ? null : saatTahan,
-                          child: Text(labelTahan, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: TokenJarak.jarak8),
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
-                        height: 56,
-                        child: Tooltip(
-                          message: 'Bayar (F8) · uang pas (F9)',
-                          child: FilledButton(
-                            onPressed: kosong ? null : saatBayar,
-                            child: Text('Bayar', style: teks.titleMedium?.copyWith(color: warna.permukaan)),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: OutlinedButton(
+                            style: gayaTombolKecil,
+                            onPressed: kosong ? null : saatDiskonPesanan,
+                            child: const Text('Diskon', maxLines: 1, overflow: TextOverflow.ellipsis),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: OutlinedButton(
+                            style: gayaTombolKecil,
+                            onPressed: kosong ? null : saatTahan,
+                            child: Text(labelTahan, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 56,
+                          child: Tooltip(
+                            message: 'Bayar (F8) · uang pas (F9)',
+                            child: FilledButton(
+                              onPressed: kosong ? null : saatBayar,
+                              child: Text('Bayar', style: teks.titleMedium?.copyWith(color: warna.permukaan)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),

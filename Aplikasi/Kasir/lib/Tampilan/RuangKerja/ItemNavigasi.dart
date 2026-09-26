@@ -74,6 +74,35 @@ class ItemNavigasi {
     ),
   ];
 
+  /// Mode Pelayan (v2.00, perangkat berjenis `Pelayan`, tanpa shift & kas): Meja sebagai beranda, Pesanan (layar Jual
+  /// tanpa bayar), Sinkron, Pengaturan.
+  static const List<ItemNavigasi> pelayan = [
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Meja,
+      label: 'Meja',
+      ikon: Icons.table_restaurant_outlined,
+      ikonAktif: Icons.table_restaurant,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Jual,
+      label: 'Pesanan',
+      ikon: Icons.restaurant_menu_outlined,
+      ikonAktif: Icons.restaurant_menu,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.StatusSinkron,
+      label: 'Sinkron',
+      ikon: Icons.cloud_sync_outlined,
+      ikonAktif: Icons.cloud_sync,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Pengaturan,
+      label: 'Pengaturan',
+      ikon: Icons.settings_outlined,
+      ikonAktif: Icons.settings,
+    ),
+  ];
+
   /// Item yang tampil untuk [kasir] dengan [modulAktif] (kode modul langganan tenant).
   static List<ItemNavigasi> Saring(
     StafLokal kasir, {

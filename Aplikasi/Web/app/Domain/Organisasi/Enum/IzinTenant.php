@@ -66,6 +66,8 @@ enum IzinTenant: string
     // F-18: karyawan, jadwal kerja, rekap absensi.
     case KaryawanLihat = 'karyawan.lihat';
     case KaryawanKelola = 'karyawan.kelola';
+    // v2.00 mode Pelayan: mencatat pesanan meja & mengirim ke dapur tanpa berjualan/menerima pembayaran.
+    case PesananMejaCatat = 'pesanan.meja.catat';
 
     public function AmbilLabel(): string
     {
@@ -109,6 +111,7 @@ enum IzinTenant: string
             self::PelangganKelola => 'Menambah, mengubah, dan mengarsipkan pelanggan',
             self::KaryawanLihat => 'Melihat karyawan, jadwal kerja, dan rekap absensi',
             self::KaryawanKelola => 'Mengelola data karyawan dan jadwal kerja',
+            self::PesananMejaCatat => 'Mencatat pesanan meja & mengirim ke dapur tanpa menerima pembayaran (Pelayan)',
         };
     }
 
@@ -123,7 +126,7 @@ enum IzinTenant: string
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
-            self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui => 'Penjualan',
+            self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

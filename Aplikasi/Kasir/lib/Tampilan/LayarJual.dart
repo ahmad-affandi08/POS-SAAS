@@ -44,8 +44,12 @@ enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan, Pel
 /// Mode meja (F-07 mode meja fase 1): saat pesanan meja dibuka dari layar Meja, keranjang menampilkan baris tersimpan
 /// pesanan (dengan status dapur; ketuk = batalkan item) dan item baru. "Kirim ke dapur" menggantikan "Tahan"; Bayar
 /// menyimpan item baru ke pesanan, mengambil kunci bayar online, lalu membayar seluruh pesanan.
+///
+/// Mode Pelayan (v2.00, perangkat berjenis `Pelayan`): hanya mencatat pesanan meja. Tanpa Diskon, Tahan, Bayar,
+/// pre-order, dan pintasan F8/F9; aksi utama "Kirim ke dapur" (lalu kembali ke Meja) atau "Pilih meja" bila belum ada
+/// pesanan yang dibuka.
 class LayarJual extends ConsumerStatefulWidget {
-  const LayarJual({super.key, required this.kasir, this.aktif = true, this.saatKeMeja});
+  const LayarJual({super.key, required this.kasir, this.aktif = true, this.saatKeMeja, this.modePelayan = false});
 
   /// Lebar area kerja minimum untuk katalog + keranjang berdampingan.
   static const double lebarDuaPanel = 600;
@@ -58,6 +62,9 @@ class LayarJual extends ConsumerStatefulWidget {
 
   /// Kembali ke layar Meja (mode meja aktif); null = mode meja tidak aktif.
   final VoidCallback? saatKeMeja;
+
+  /// v2.00: perangkat Pelayan — tanpa pembayaran.
+  final bool modePelayan;
 
   /// Selang perpanjangan kunci bayar pesanan meja selama panel Bayar terbuka (kunci server berlaku 2 menit).
   static const Duration selangKunciBayar = Duration(seconds: 60);
@@ -362,6 +369,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (konteks == null) {
       return;
     }
+    final pemberitahu = ScaffoldMessenger.maybeOf(context);
     try {
       final sebelum = await ref.read(penyediaRepositoriPesananMeja).CariPesanan(konteks.uuid);
       final dikirim = {
@@ -371,8 +379,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       final pesanan = await ref
           .read(penyediaLayananPesananMeja)
           .SimpanBaris(uuidPesanan: konteks.uuid, draf: draf.baris, kasir: widget.kasir, kirimDapur: true);
-      ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
-      _TampilPesan('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
+      if (widget.modePelayan) {
+        // Pelayan: pesanan selesai dicatat, kembali ke denah meja untuk tamu berikutnya (pesan tampil di atas denah).
+        ref.read(penyediaKeranjang.notifier).Kosongkan();
+        widget.saatKeMeja?.call();
+        pemberitahu?.showSnackBar(SnackBar(content: Text('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.')));
+      } else {
+        ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
+        _TampilPesan('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
+      }
       unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
       // Cetak struk bagian 4c: tiket per stasiun yang punya printer di perangkat ini; gagal cetak tidak membatalkan.
       final tiket = await ref
@@ -430,7 +445,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   void _BukaPelanggan() {
-    if (_panel == _JenisPanel.Bayar || _panel == _JenisPanel.Selesai) {
+    if (widget.modePelayan || _panel == _JenisPanel.Bayar || _panel == _JenisPanel.Selesai) {
       return;
     }
     setState(() {
@@ -445,6 +460,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   });
 
   void _BukaBayar() {
+    if (widget.modePelayan) {
+      return;
+    }
     if (ref.read(penyediaKeranjangEfektif).CekKosong) {
       _TampilPesan('Keranjang masih kosong. Tambahkan produk dulu.');
       return;
@@ -664,7 +682,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                     ),
                   ),
                   const SizedBox(width: TokenJarak.jarak8),
-                  if (ringkas)
+                  if (widget.modePelayan)
+                    const SizedBox.shrink()
+                  else if (ringkas)
                     IconButton(
                       tooltip: 'Pesanan tertahan ($tertahan)',
                       onPressed: _BukaTertahan,
@@ -831,16 +851,22 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       tampilKepala: tampilKepala,
       judul: pesanan?.AmbilJudul(),
       statusBaris: {for (final b in pesanan?.baris ?? const <BarisPesananMeja>[]) b.uuid: b.AmbilLabelStatus()},
-      labelTahan: pesanan == null ? 'Tahan' : 'Kirim ke dapur',
+      labelTahan: switch ((pesanan, widget.modePelayan)) {
+        (null, true) => 'Pilih meja',
+        (null, false) => 'Tahan',
+        _ => 'Kirim ke dapur',
+      },
       labelKosongkan: pesanan == null ? 'Batalkan transaksi' : 'Tutup pesanan (kembali ke Meja)',
       saatUbahBaris: _UbahBaris,
       saatTambah: (uuid) => _GeserJumlah(uuid, 1),
       saatKurang: (uuid) => _GeserJumlah(uuid, -1),
       saatDiskonPesanan: () => setState(() => _panel = _JenisPanel.DiskonPesanan),
-      saatTahan: () => unawaited(pesanan == null ? _Tahan() : _KirimDapur()),
+      saatTahan: () => pesanan == null && widget.modePelayan
+          ? widget.saatKeMeja?.call()
+          : unawaited(pesanan == null ? _Tahan() : _KirimDapur()),
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
-      saatBayar: _BukaBayar,
-      saatPelanggan: _BukaPelanggan,
+      saatBayar: widget.modePelayan ? null : _BukaBayar,
+      saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
     );
   }
 
@@ -887,7 +913,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             ),
             SizedBox(
               height: 56,
-              child: FilledButton(onPressed: keranjang.CekKosong ? null : _BukaBayar, child: const Text('Bayar')),
+              child: widget.modePelayan
+                  ? FilledButton(
+                      onPressed: keranjang.pesananMeja == null
+                          ? widget.saatKeMeja
+                          : keranjang.CekKosong
+                          ? null
+                          : () => unawaited(_KirimDapur()),
+                      child: Text(keranjang.pesananMeja == null ? 'Pilih meja' : 'Kirim ke dapur'),
+                    )
+                  : FilledButton(onPressed: keranjang.CekKosong ? null : _BukaBayar, child: const Text('Bayar')),
             ),
           ],
         ),

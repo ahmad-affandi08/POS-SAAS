@@ -243,4 +243,47 @@ void main() {
       await Lepas(tester, u);
     });
   }
+
+  for (final (nama, ukuran) in [('360', ukuranHp), ('800', ukuranTablet), ('1280', ukuranDesktop)]) {
+    testWidgets('v2.00 perangkat Pelayan di $nama dp: tanpa shift, beranda Meja, kirim ke dapur tanpa Bayar', (
+      tester,
+    ) async {
+      final u = LingkunganUji.Buat();
+      await tester.runAsync(() async {
+        await u.SiapkanAktif();
+        await u.repositori.SimpanPengaturan(KunciPengaturan.jenisPerangkat, 'Pelayan');
+      });
+      u.server.penangan = PenanganServer();
+      await PasangAplikasi(tester, u, ukuran: ukuran);
+      await Tunggu(tester, const Duration(milliseconds: 600));
+      await tester.tap(find.text('Rina Wulandari'));
+      await tester.pump();
+      await KetikPin(tester, KasusPin(0)['Pin']! as String);
+      await Tunggu(tester);
+
+      expect(find.byType(RuangKerja), findsOneWidget, reason: 'Pelayan langsung ke ruang kerja tanpa buka shift.');
+      expect(find.byType(LayarMeja).hitTestable(), findsOneWidget, reason: 'Beranda pelayan = Meja.');
+      expect(find.text('Mode pelayan'), findsOneWidget);
+      for (final tanpa in ['Kas', 'Shift', 'Riwayat']) {
+        expect(find.text(tanpa), findsNothing, reason: tanpa);
+      }
+
+      await Ketuk(tester, find.text('D-02'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Buka pesanan'));
+      await Ketuk(tester, Ubin('Americano Panas'));
+      expect(find.widgetWithText(FilledButton, 'Bayar'), findsNothing);
+      if (ukuran.width < 600) {
+        expect(find.widgetWithText(FilledButton, 'Kirim ke dapur'), findsOneWidget);
+      }
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Kirim ke dapur'));
+      expect(find.text('Pesanan D-02 dikirim ke dapur.'), findsOneWidget);
+      expect(find.byType(LayarMeja).hitTestable(), findsOneWidget, reason: 'Kembali ke denah untuk tamu berikutnya.');
+
+      final outbox = await AmbilOutbox(tester, u);
+      expect(outbox.map((o) => o.jenis), ['PesananTerbuka.Buka', 'PesananTerbuka.Tambah']);
+      expect(outbox.last.data['KirimDapur'], true);
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
 }

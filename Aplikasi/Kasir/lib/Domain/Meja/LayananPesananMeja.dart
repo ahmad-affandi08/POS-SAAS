@@ -16,8 +16,8 @@ import 'KonteksPesananMeja.dart';
 
 /// Pesanan terbuka di perangkat (Rincian F-07 mode meja & F-10b fase 1), berlaku offline. Aturan sama dengan server
 /// agar kasir langsung tahu bila ditolak:
-/// - buka pesanan butuh izin `penjualan.buat`; meja yang sudah punya pesanan terbuka tidak bisa dibuka lagi (gabung
-///   meja menyusul); tanpa meja wajib label (nama pemesan/nomor antre);
+/// - buka pesanan butuh izin `penjualan.buat` atau `pesanan.meja.catat` (pelayan, v2.00); meja yang sudah punya
+///   pesanan terbuka tidak bisa dibuka lagi (pakai gabung, v1.99); tanpa meja wajib label (nama pemesan/nomor antre);
 /// - nomor `OB/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ4}` dibuat di perangkat (BR-07.1);
 /// - baris append-only per ronde; "Kirim ke dapur" mengirim baris baru (+ baris tersimpan yang belum dikirim);
 /// - BR-07.5: baris yang sudah dikirim ke dapur hanya batal dengan alasan (void item); kasir tanpa `penjualan.void`
@@ -60,7 +60,7 @@ class LayananPesananMeja {
     String? label,
     int jumlahTamu = 1,
   }) async {
-    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat)) {
+    if (!kasir.CekBolehCatatPesanan()) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin membuat pesanan.');
     }
     final rapi = _RapikanLabel(label);
@@ -178,7 +178,7 @@ class LayananPesananMeja {
     required StafLokal kasir,
     required bool kirimDapur,
   }) async {
-    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat)) {
+    if (!kasir.CekBolehCatatPesanan()) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin menambah pesanan.');
     }
     if (draf.any((b) => b.diskon != null)) {
@@ -384,7 +384,7 @@ class LayananPesananMeja {
     required StafLokal kasir,
     bool tutupAsal = false,
   }) async {
-    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat)) {
+    if (!kasir.CekBolehCatatPesanan()) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin mengubah pesanan.');
     }
     if (uuidAsal == uuidTujuan) {

@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Pemeriksaan bersama item outbox `PesananTerbuka.*` (F-07 mode meja fase 1): pesanan di outlet perangkat (dikunci
- * baris), masih `Terbuka`, pelaku anggota outlet ber-izin `penjualan.buat`, pembatalan item yang sudah dikirim ke
+ * baris), masih `Terbuka`, pelaku anggota outlet ber-izin `penjualan.buat` atau `pesanan.meja.catat` (v2.00), pembatalan item yang sudah dikirim ke
  * dapur butuh izin `penjualan.void` pada pelaku atau penyetuju (BR-07.5), dan batas waktu wajar perangkat.
  */
 final class PenjagaPesananTerbuka
@@ -51,7 +51,8 @@ final class PenjagaPesananTerbuka
             throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Pengguna ini tidak terdaftar di outlet pesanan ini.', 'UuidPengguna');
         }
 
-        if (! $pelaku->CekIzin(IzinTenant::PenjualanBuat->value)) {
+        // v2.00: pelayan (izin `pesanan.meja.catat`) mencatat pesanan tanpa izin berjualan.
+        if (! $pelaku->CekIzin(IzinTenant::PenjualanBuat->value) && ! $pelaku->CekIzin(IzinTenant::PesananMejaCatat->value)) {
             throw new PelanggaranAturanBisnis('TanpaIzin', "{$pelaku->nama} tidak punya izin mencatat pesanan.", 'UuidPengguna', 403);
         }
 

@@ -7,8 +7,12 @@ namespace Tests\Pendukung\Penjualan;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Organisasi\Model\Meja;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\StasiunDapur;
 use Carbon\CarbonImmutable;
 use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Katalog\BantuanKatalog;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\TestCase;
 
 /**
  * Pembuat item outbox `PesananTerbuka.*` (F-07 mode meja fase 1) untuk test. `$k` = hasil `BantuanPenjualan::Siapkan()`.
@@ -91,5 +95,45 @@ final class BantuanPesananTerbuka
                 ...$data,
             ],
         ];
+    }
+
+    /**
+     * Tenant kasir + meja 7 & 9, stasiun Bar & Dapur, kopi (kategori Minuman → Bar) dan nasi goreng (kategori Makanan →
+     * Dapur).
+     *
+     * @return array<string, mixed>
+     */
+    public static function SiapkanRestoran(TestCase $tes): array
+    {
+        $k = BantuanPenjualan::Siapkan($tes, 'Kedai Kopi Senja Rasa Nusantara');
+        $bar = StasiunDapur::query()->create(['Nama' => 'Bar', 'Urutan' => 1]);
+        $dapur = StasiunDapur::query()->create(['Nama' => 'Dapur', 'Urutan' => 2]);
+        $minuman = BantuanKatalog::BuatKategori('Minuman');
+        $minuman->forceFill(['IdStasiunDapur' => $bar->Id])->save();
+        $makanan = BantuanKatalog::BuatKategori('Makanan');
+        $makanan->forceFill(['IdStasiunDapur' => $dapur->Id])->save();
+        $kopi = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Es Kopi Susu Gula Aren Ukuran Besar', '50', '8000', '25000.00');
+        $kopi->forceFill(['IdKategori' => $minuman->Id])->save();
+        $nasi = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Nasi Goreng Kampung Spesial Telur Mata Sapi', '50', '12000', '35000.00');
+        $nasi->forceFill(['IdKategori' => $makanan->Id])->save();
+        $meja = Meja::query()->create(['IdOutlet' => $k['Outlet']->Id, 'Nama' => '7', 'Kapasitas' => 4]);
+        $meja9 = Meja::query()->create(['IdOutlet' => $k['Outlet']->Id, 'Nama' => '9', 'Kapasitas' => 2]);
+
+        return $k + ['Minuman' => $minuman, 'Makanan' => $makanan, 'Bar' => $bar, 'Dapur' => $dapur, 'Kopi' => $kopi, 'Nasi' => $nasi, 'Meja' => $meja, 'Meja9' => $meja9];
+    }
+
+    /**
+     * Kirim item outbox lalu pulihkan konteks tenant untuk pemeriksaan berikutnya.
+     *
+     * @param  array<string, mixed>  $k
+     * @param  list<array{Jenis: string, Uuid: string, Data: array<string, mixed>}>  $item
+     * @return list<array{0: string, 1: string|null}>
+     */
+    public static function Kirim(TestCase $tes, array $k, array $item, ?string $token = null): array
+    {
+        $hasil = BantuanKasir::KirimRingkas($tes, $token ?? $k['Token'], $item);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        return $hasil;
     }
 }

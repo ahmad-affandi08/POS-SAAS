@@ -17,6 +17,9 @@ abstract final class IzinKasir {
 
   /// F-12 BR-12.1: menyetujui penjualan tempo melebihi limit kredit / piutang lewat jatuh tempo.
   static const String penjualanTempoSetujui = 'penjualan.tempo.setujui';
+
+  /// v2.00 mode Pelayan: mencatat pesanan meja & mengirim ke dapur tanpa berjualan/menerima pembayaran.
+  static const String pesananMejaCatat = 'pesanan.meja.catat';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).
@@ -30,6 +33,9 @@ class StafLokal {
   final PinTerbungkus? pin;
 
   bool PunyaIzin(String kunci) => pemilik || izin.contains(kunci);
+
+  /// Boleh membuka/menambah/memindah pesanan meja: kasir (`penjualan.buat`) atau pelayan (`pesanan.meja.catat`).
+  bool CekBolehCatatPesanan() => PunyaIzin(IzinKasir.penjualanBuat) || PunyaIzin(IzinKasir.pesananMejaCatat);
 
   static StafLokal DariBaris(BarisStaf baris) {
     final izin = jsonDecode(baris.Izin);

@@ -103,6 +103,22 @@ void main() {
       final antre = await u.pesananMeja.Buka(kasir: rina, k: k, label: 'Pak Joko (bungkus)');
       expect(antre.nomor, 'OB/SLB/260924/POS-001-0002');
       expect(antre.AmbilJudul(), 'Pak Joko (bungkus)');
+
+      // v2.00: pelayan (hanya `pesanan.meja.catat`) boleh membuka & mengirim pesanan ke dapur.
+      const pelayan = StafLokal(
+        uuid: '01K5STAF000000000000000008',
+        nama: 'Dewi Pelayan',
+        pemilik: false,
+        izin: [IzinKasir.pesananMejaCatat],
+      );
+      final olehPelayan = await u.pesananMeja.Buka(kasir: pelayan, k: k, label: 'Bu Ani');
+      final dikirim = await u.pesananMeja.SimpanBaris(
+        uuidPesanan: olehPelayan.uuid,
+        draf: DrafContoh(),
+        kasir: pelayan,
+        kirimDapur: true,
+      );
+      expect(dikirim.AmbilBarisAktif().every((b) => b.dikirimKeDapur), isTrue);
     });
 
     test('pindah meja: meja lain yang terisi ditolak; perubahan header dikirim dengan DiubahPada', () async {

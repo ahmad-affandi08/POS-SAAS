@@ -38,6 +38,9 @@ import 'PanelWajibPembaruan.dart';
 /// Selama bingkai ini tampil (shift terbuka): layar dijaga tetap menyala, outbox dikirim tiap 30 detik, dan layar
 /// terkunci otomatis setelah perangkat diam selama waktu di pengaturan perangkat. Saat terkunci, area kerja tetap
 /// hidup di bawah layar kunci (keranjang tidak hilang).
+///
+/// Mode Pelayan (v2.00): [shift] null untuk perangkat berjenis `Pelayan` — rel berisi Meja (beranda), Pesanan,
+/// Sinkron, Pengaturan; tanpa kas, shift, riwayat, dan pembayaran.
 class RuangKerja extends ConsumerStatefulWidget {
   const RuangKerja({super.key, required this.shift, required this.kasir, this.kunci = KeadaanKunci.Bebas});
 
@@ -52,7 +55,8 @@ class RuangKerja extends ConsumerStatefulWidget {
   /// Mode meja: snapshot pesanan terbuka outlet ditarik tiap 7 detik (rentang 5–10 detik, Rincian F-07 mode meja).
   static const Duration selangPesananMeja = Duration(seconds: 7);
 
-  final BarisShift shift;
+  /// Null = mode Pelayan (tanpa shift).
+  final BarisShift? shift;
   final StafLokal kasir;
   final KeadaanKunci kunci;
 
@@ -61,7 +65,12 @@ class RuangKerja extends ConsumerStatefulWidget {
 }
 
 class _RuangKerjaState extends ConsumerState<RuangKerja> {
-  TujuanRuangKerja _tujuan = TujuanRuangKerja.Jual;
+  late TujuanRuangKerja _tujuan = _beranda;
+
+  bool get _pelayan => widget.shift == null;
+
+  /// Beranda: Jual untuk kasir, Meja untuk pelayan.
+  TujuanRuangKerja get _beranda => _pelayan ? TujuanRuangKerja.Meja : TujuanRuangKerja.Jual;
   bool _relDiciutkan = false;
 
   /// Jenis mutasi kas yang formulirnya sedang terbuka di panel tugas (null = tertutup).
@@ -202,8 +211,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     }
     if (_adaPanel) {
       _TutupPanel();
-    } else if (_tujuan != TujuanRuangKerja.Jual) {
-      _Buka(TujuanRuangKerja.Jual);
+    } else if (_tujuan != _beranda) {
+      _Buka(_beranda);
     }
   }
 
@@ -214,7 +223,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     TujuanRuangKerja.Jual => LayarJual(
       kasir: widget.kasir,
       aktif: _tujuan == TujuanRuangKerja.Jual && !_terkunci && !_adaPanel,
-      saatKeMeja: ref.watch(penyediaModeMeja).value == true ? () => _Buka(TujuanRuangKerja.Meja) : null,
+      saatKeMeja: _pelayan || ref.watch(penyediaModeMeja).value == true ? () => _Buka(TujuanRuangKerja.Meja) : null,
+      modePelayan: _pelayan,
     ),
     TujuanRuangKerja.Meja => LayarMeja(kasir: widget.kasir, saatBukaPesanan: () => _Buka(TujuanRuangKerja.Jual)),
     TujuanRuangKerja.Riwayat => LayarRiwayat(
@@ -222,9 +232,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
       saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
     ),
-    TujuanRuangKerja.Kas => LayarKas(shift: widget.shift, saatCatat: _BukaPanelKas),
+    TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
-      shift: widget.shift,
+      shift: widget.shift!,
       kasir: widget.kasir,
       saatTutupShift: () => _BukaPanelShift(_PanelShift.Tutup),
       saatLaporanX: () => _BukaPanelShift(_PanelShift.LaporanX),
@@ -281,7 +291,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           nada: NadaStatus.Sukses,
         ),
       },
-      ItemBilahStatus(ikon: Icons.schedule, teks: 'Shift ${FormatWaktu.FormatJam(widget.shift.DibukaPada)}'),
+      if (widget.shift case final shift?)
+        ItemBilahStatus(ikon: Icons.schedule, teks: 'Shift ${FormatWaktu.FormatJam(shift.DibukaPada)}')
+      else
+        const ItemBilahStatus(ikon: Icons.room_service_outlined, teks: 'Mode pelayan'),
     ];
   }
 
@@ -340,7 +353,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarBukaLaci.judul,
         LembarBukaLaci(
           key: const ValueKey(LembarBukaLaci.kunciPanel),
-          shift: widget.shift,
+          shift: widget.shift!,
           pembuka: widget.kasir,
           saatSelesai: _TutupPanel,
         ) as Widget,
@@ -349,7 +362,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarMutasiKas.AmbilJudul(jenis),
         LembarMutasiKas(
           key: ValueKey(jenis),
-          shift: widget.shift,
+          shift: widget.shift!,
           jenis: jenis,
           pencatat: widget.kasir,
           saatTersimpan: _TutupPanel,
@@ -357,9 +370,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       ),
       (_, _PanelShift.Tutup, _) => (
         LembarTutupShift.judul,
-        LembarTutupShift(key: const ValueKey('TutupShift'), shift: widget.shift, penutup: widget.kasir),
+        LembarTutupShift(key: const ValueKey('TutupShift'), shift: widget.shift!, penutup: widget.kasir),
       ),
-      _ => ('Laporan X', _IsiLaporanX(uuidShift: widget.shift.Uuid)),
+      _ => ('Laporan X', _IsiLaporanX(uuidShift: widget.shift!.Uuid)),
     };
 
     if (lebar >= RuangKerja.lebarPanelSamping) {
@@ -411,10 +424,12 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final warna = TokenWarna.AmbilDari(context);
     final lebar = MediaQuery.sizeOf(context).width;
     final pakaiRel = lebar >= RuangKerja.lebarRel;
-    final item = ItemNavigasi.Saring(
-      widget.kasir,
-      modulAktif: {if (ref.watch(penyediaModeMeja).value == true) ItemNavigasi.modulMeja},
-    );
+    final item = _pelayan
+        ? ItemNavigasi.pelayan
+        : ItemNavigasi.Saring(
+            widget.kasir,
+            modulAktif: {if (ref.watch(penyediaModeMeja).value == true) ItemNavigasi.modulMeja},
+          );
     final indeks = item.indexWhere((i) => i.tujuan == _tujuan).clamp(0, item.length - 1);
     final notifierSesi = ref.read(penyediaSesi.notifier);
 
