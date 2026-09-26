@@ -20,6 +20,18 @@ class ProfilPrinter {
     this.bukaLaciTunai = true,
   });
 
+  /// Alamat profil printer sistem (v1.97): printer dipilih di dialog cetak sistem.
+  static const String alamatSistem = 'Sistem';
+
+  /// Printer sistem sebagai cadangan saat printer thermal bermasalah (tanpa laci).
+  static ProfilPrinter Sistem(LebarKertas lebar) => ProfilPrinter(
+    jenis: JenisTransport.CetakSistem,
+    alamat: alamatSistem,
+    nama: 'Printer sistem',
+    lebar: lebar,
+    bukaLaciTunai: false,
+  );
+
   final String alamat;
   final JenisTransport jenis;
 
@@ -36,6 +48,7 @@ class ProfilPrinter {
 
   String get label => switch (jenis) {
     JenisTransport.Jaringan => 'LAN/Wi-Fi $alamat:$port · ${lebar.label}',
+    JenisTransport.CetakSistem => 'Printer sistem (PDF/AirPrint/driver) · ${lebar.label}',
     _ => '${jenis.label} ${nama ?? alamat} · ${lebar.label}',
   };
 

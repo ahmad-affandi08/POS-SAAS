@@ -36,8 +36,9 @@ class LayananStruk {
     bool bukaLaci = false,
     String? namaPelanggan,
     String? labelPoin,
+    ProfilPrinter? lewat,
   }) async {
-    final profil = await _WajibProfil();
+    final profil = lewat ?? await _WajibProfil();
     final baris = await penjualan.CariPenjualan(uuidPenjualan);
     if (baris == null) {
       throw const GalatKasir('PenjualanTidakDitemukan', 'Transaksi ini tidak ada di perangkat.');

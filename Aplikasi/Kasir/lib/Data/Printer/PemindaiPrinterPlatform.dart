@@ -9,6 +9,7 @@ import 'KanalBluetoothKlasik.dart';
 import 'KanalUsbPrinter.dart';
 import 'PortComWindows.dart';
 import 'SpoolerWindows.dart';
+import 'TransportCetakSistem.dart';
 import 'TransportBle.dart';
 
 /// Printer yang didukung per platform (PRD §17.2.5, v1.80, v1.96):
@@ -18,6 +19,7 @@ import 'TransportBle.dart';
 /// - iOS/iPadOS: LAN/Wi-Fi dan Bluetooth LE (iOS tidak mengizinkan Bluetooth Classic tanpa sertifikasi MFi);
 /// - Windows: LAN/Wi-Fi, Bluetooth Classic (COM port virtual), Bluetooth LE, USB (printer terpasang, spooler RAW);
 /// - lainnya: LAN/Wi-Fi.
+/// Semua platform: printer sistem (v1.97) sebagai printer tetap atau cadangan saat printer thermal bermasalah.
 class PemindaiPrinterPlatform implements PemindaiPrinter {
   const PemindaiPrinterPlatform({
     this.klasik = const KanalBluetoothKlasik(),
@@ -47,6 +49,7 @@ class PemindaiPrinterPlatform implements PemindaiPrinter {
     if (Platform.isAndroid || Platform.isWindows) JenisTransport.BluetoothKlasik,
     if (Platform.isAndroid || Platform.isIOS || Platform.isWindows || Platform.isMacOS) JenisTransport.Ble,
     if (Platform.isAndroid || Platform.isWindows) JenisTransport.Usb,
+    JenisTransport.CetakSistem,
   ];
 
   @override
@@ -65,6 +68,7 @@ class PemindaiPrinterPlatform implements PemindaiPrinter {
     JenisTransport.Usb when Platform.isAndroid => usb.Daftar(),
     JenisTransport.Usb when Platform.isWindows => SpoolerWindows.DaftarPrinter(),
     JenisTransport.SdkVendor when Platform.isAndroid => CariPrinterBawaan(),
+    JenisTransport.CetakSistem => const [PrinterDitemukan.sistem],
     _ => const <PrinterDitemukan>[],
   };
 
@@ -105,6 +109,7 @@ class PemindaiPrinterPlatform implements PemindaiPrinter {
       klasik,
     ),
     JenisTransport.SdkVendor => TransportUsbAndroid(profil.alamat.replaceFirst(awalanUsb, ''), usb),
+    JenisTransport.CetakSistem => const TransportCetakSistem(),
     _ => TransportJaringan(profil.alamat, port: profil.port),
   };
 }

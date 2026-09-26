@@ -41,7 +41,7 @@ class EditorProfilPrinter extends ConsumerStatefulWidget {
     JenisTransport.Ble => 'Bluetooth LE',
     JenisTransport.Usb => 'USB',
     JenisTransport.SdkVendor => 'Printer bawaan',
-    _ => jenis.label,
+    JenisTransport.CetakSistem => 'Printer sistem',
   };
 
   @override
@@ -90,7 +90,8 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
 
   void _GantiJenis(JenisTransport jenis) => setState(() {
     _jenis = jenis;
-    _terpilih = null;
+    // Printer sistem tidak perlu dicari: printer dipilih di dialog cetak sistem.
+    _terpilih = jenis == JenisTransport.CetakSistem ? PrinterDitemukan.sistem : null;
     _hasilCari = null;
     _galatCari = null;
   });
@@ -147,7 +148,7 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
       port: _jenis == JenisTransport.Jaringan ? int.parse(_port.text.trim()) : TransportJaringan.portBawaan,
       lebar: _lebar,
       cetakOtomatis: _cetakOtomatis,
-      bukaLaciTunai: _bukaLaci,
+      bukaLaciTunai: _bukaLaci && _jenis != JenisTransport.CetakSistem,
     );
   }
 
@@ -179,6 +180,15 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
   }
 
   List<Widget> _BangunPilihBluetooth(TextTheme teks, TokenWarna warna) {
+    if (_jenis == JenisTransport.CetakSistem) {
+      return [
+        Text(
+          'Struk dibuka di dialog cetak perangkat: pilih printer kantor, AirPrint, atau simpan sebagai PDF. '
+          'Cocok sebagai cadangan; laci kas tidak bisa dibuka lewat printer sistem.',
+          style: teks.bodyMedium,
+        ),
+      ];
+    }
     final hasil = _hasilCari;
     final kosong = switch (_jenis) {
       JenisTransport.BluetoothKlasik =>
@@ -328,13 +338,14 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
             value: _cetakOtomatis,
             onChanged: (nilai) => setState(() => _cetakOtomatis = nilai),
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Buka laci kas untuk pembayaran tunai'),
-            subtitle: const Text('Laci tersambung ke printer lewat kabel RJ11.'),
-            value: _bukaLaci,
-            onChanged: (nilai) => setState(() => _bukaLaci = nilai),
-          ),
+          if (_jenis != JenisTransport.CetakSistem)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Buka laci kas untuk pembayaran tunai'),
+              subtitle: const Text('Laci tersambung ke printer lewat kabel RJ11.'),
+              value: _bukaLaci,
+              onChanged: (nilai) => setState(() => _bukaLaci = nilai),
+            ),
           const SizedBox(height: TokenJarak.jarak8),
         ],
         Wrap(

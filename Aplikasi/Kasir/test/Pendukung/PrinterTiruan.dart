@@ -41,10 +41,22 @@ class PrinterTiruan implements TransportPrinter {
 
 /// Pemindai printer tiruan: semua jenis sambungan didukung, hasil cari & galat izin bisa diatur test; transport =
 /// [printer] (bukan radio sungguhan).
+/// Printer sistem tiruan (v1.97): mencatat dokumen utuh yang dikirim ke dialog cetak.
+class PrinterSistemTiruan implements TransportDokumen {
+  final List<(DokumenStruk, LebarKertas)> dokumen = [];
+
+  @override
+  Future<void> CetakDokumen(DokumenStruk dokumen, LebarKertas lebar) async => this.dokumen.add((dokumen, lebar));
+
+  @override
+  Future<void> Kirim(List<int> data) => throw UnimplementedError('Printer sistem tidak menerima ESC/POS.');
+}
+
 class PemindaiTiruan implements PemindaiPrinter {
   PemindaiTiruan(this.printer);
 
   final PrinterTiruan printer;
+  final PrinterSistemTiruan sistem = PrinterSistemTiruan();
   final Map<JenisTransport, List<PrinterDitemukan>> hasil = {};
   String? galatSiapkan;
   final List<ProfilPrinter> transportDibuat = [];
@@ -65,6 +77,6 @@ class PemindaiTiruan implements PemindaiPrinter {
   @override
   TransportPrinter BuatTransport(ProfilPrinter profil) {
     transportDibuat.add(profil);
-    return printer;
+    return profil.jenis == JenisTransport.CetakSistem ? sistem : printer;
   }
 }

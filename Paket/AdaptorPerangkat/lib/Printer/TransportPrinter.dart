@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'DokumenStruk.dart';
+
 /// Jenis sambungan printer (PRD §17.2.5). Fase ini: `Jaringan`. Lainnya menyusul bersama adaptor native.
 enum JenisTransport {
   Jaringan('LAN / Wi-Fi'),
@@ -28,6 +30,12 @@ class GalatPrinter implements Exception {
 /// Mengirim byte mentah ke printer. Implementasi per sambungan; kode fitur hanya mengenal antarmuka ini.
 abstract interface class TransportPrinter {
   Future<void> Kirim(List<int> data);
+}
+
+/// Printer yang mencetak dokumen utuh, bukan byte ESC/POS (printer sistem: PDF, AirPrint, driver OS; PRD v1.97).
+/// [PrinterStruk] memberinya dokumen yang sama dengan printer thermal. Tidak bisa membuka laci kas.
+abstract interface class TransportDokumen implements TransportPrinter {
+  Future<void> CetakDokumen(DokumenStruk dokumen, LebarKertas lebar);
 }
 
 /// Printer LAN/Wi-Fi mentah (RAW) di port 9100. Satu sambungan per pekerjaan cetak.

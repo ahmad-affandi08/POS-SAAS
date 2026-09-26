@@ -7,6 +7,13 @@ import 'ProfilPrinter.dart';
 class PrinterDitemukan {
   const PrinterDitemukan({required this.jenis, required this.alamat, required this.nama});
 
+  /// v1.97: printer sistem (dialog cetak OS: PDF, AirPrint, driver Windows); printer dipilih saat mencetak.
+  static const PrinterDitemukan sistem = PrinterDitemukan(
+    jenis: JenisTransport.CetakSistem,
+    alamat: ProfilPrinter.alamatSistem,
+    nama: 'Printer sistem (pilih saat mencetak)',
+  );
+
   final JenisTransport jenis;
   final String alamat;
   final String nama;

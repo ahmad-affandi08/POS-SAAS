@@ -32,6 +32,8 @@ dependencies:
   universal_ble: ^2.3.0
   win32: ^6.4.0
   ffi: ^2.2.0
+  printing: ^5.15.1
+  pdf: ^3.13.1
 
 dev_dependencies:
   flutter_test:

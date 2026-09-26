@@ -9,9 +9,19 @@ class PrinterStruk {
   final TransportPrinter transport;
   final LebarKertas lebar;
 
-  Future<void> Cetak(DokumenStruk dokumen) => transport.Kirim(PengodeEscPos.Kodekan(dokumen, lebar));
+  /// Printer sistem ([TransportDokumen]) menerima dokumen utuh; laci tidak ikut dibuka.
+  Future<void> Cetak(DokumenStruk dokumen) => switch (transport) {
+    final TransportDokumen sistem => sistem.CetakDokumen(dokumen, lebar),
+    _ => transport.Kirim(PengodeEscPos.Kodekan(dokumen, lebar)),
+  };
 
-  Future<void> BukaLaci() => transport.Kirim(PengodeEscPos.KodekanBukaLaci());
+  Future<void> BukaLaci() => transport is TransportDokumen
+      ? Future.error(
+          const GalatPrinter(
+            'Printer sistem tidak bisa membuka laci kas. Laci hanya bisa dibuka lewat printer thermal.',
+          ),
+        )
+      : transport.Kirim(PengodeEscPos.KodekanBukaLaci());
 
   /// Halaman uji: lebar kertas penuh (garis & penggaris kolom), teks tebal/besar, dan QR, agar kasir bisa menilai
   /// apakah lebar kertas dan kualitas cetak sudah benar.

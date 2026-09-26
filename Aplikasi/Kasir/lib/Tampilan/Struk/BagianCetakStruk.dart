@@ -1,3 +1,4 @@
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
@@ -66,6 +67,23 @@ class _BagianCetakStrukState extends ConsumerState<BagianCetakStruk> {
     _Selesai(galat);
   }
 
+  /// v1.97: cadangan lewat printer sistem bila printer thermal bermasalah.
+  Future<void> _CetakLewatSistem() async {
+    setState(() {
+      _mencetak = true;
+      _galat = null;
+    });
+    final galat = await ref
+        .read(penyediaPrinter.notifier)
+        .CetakPenjualanLewatSistem(
+          widget.uuidPenjualan,
+          cetakUlang: _jumlahCetak > 0,
+          namaPelanggan: widget.namaPelanggan,
+          labelPoin: widget.labelPoin,
+        );
+    _Selesai(galat);
+  }
+
   void _Selesai(String? galat) {
     if (!mounted) {
       return;
@@ -122,6 +140,17 @@ class _BagianCetakStrukState extends ConsumerState<BagianCetakStruk> {
               ),
             ),
           ),
+          if (_galat != null && printer.profil?.jenis != JenisTransport.CetakSistem) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            SizedBox(
+              height: TokenJarak.targetSentuh,
+              child: OutlinedButton.icon(
+                onPressed: _mencetak ? null : _CetakLewatSistem,
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Cetak lewat printer sistem / PDF'),
+              ),
+            ),
+          ],
         ],
       ],
     );

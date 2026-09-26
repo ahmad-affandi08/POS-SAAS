@@ -232,6 +232,32 @@ class PengaturPrinter extends Notifier<StatusPrinter> {
     (l) => l.CetakPenjualan(uuidPenjualan, cetakUlang: cetakUlang, namaPelanggan: namaPelanggan, labelPoin: labelPoin),
   );
 
+  /// v1.97: cadangan saat printer thermal bermasalah: struk dibuka di dialog printer sistem (PDF/AirPrint/driver OS).
+  /// Keadaan printer thermal di bilah status tidak diubah.
+  Future<String?> CetakPenjualanLewatSistem(
+    String uuidPenjualan, {
+    bool cetakUlang = false,
+    String? namaPelanggan,
+    String? labelPoin,
+  }) async {
+    try {
+      await ref
+          .read(penyediaLayananStruk)
+          .CetakPenjualan(
+            uuidPenjualan,
+            cetakUlang: cetakUlang,
+            namaPelanggan: namaPelanggan,
+            labelPoin: labelPoin,
+            lewat: ProfilPrinter.Sistem(state.profil?.lebar ?? LebarKertas.Mm58),
+          );
+      return null;
+    } on GalatPrinter catch (galat) {
+      return galat.pesan;
+    } on GalatKasir catch (galat) {
+      return galat.pesan;
+    }
+  }
+
   /// Cetak otomatis setelah bayar (plus buka laci bila tunai), sekali per transaksi walau layar selesai dibangun ulang.
   /// Printer belum diatur/otomatis mati = tidak mencetak dan keadaan tidak berubah.
   Future<({bool dicetak, String? galat})> CetakSetelahBayar(

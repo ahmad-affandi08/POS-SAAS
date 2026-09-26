@@ -138,8 +138,17 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Coba cetak lagi'), findsOneWidget);
     expect(await tester.runAsync(() => u.db.select(u.db.penjualan).get()), hasLength(1));
 
+    // v1.97: cadangan lewat printer sistem (PDF/AirPrint/driver OS); bilah status printer thermal tidak berubah.
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak lewat printer sistem / PDF'));
+    expect(find.text('Struk sudah dicetak.'), findsOneWidget);
+    expect(u.pemindai.sistem.dokumen, hasLength(1));
+    final (dokumen, lebar) = u.pemindai.sistem.dokumen.single;
+    expect(lebar, LebarKertas.Mm58);
+    expect(dokumen.baris.whereType<BarisDuaKolom>().map((b) => b.kiri), contains('TOTAL'));
+    expect(find.text('Printer bermasalah'), findsOneWidget);
+
     u.printer.galat = null;
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Coba cetak lagi'));
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak ulang struk'));
     expect(find.text('Struk sudah dicetak.'), findsOneWidget);
     expect(find.text('Printer siap'), findsOneWidget);
 
