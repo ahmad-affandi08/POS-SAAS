@@ -29,6 +29,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PanduanAwalKelol
 
     Route::get('/sektor', [PanduanAwalKontroler::class, 'TampilkanSektor'])->name('kelola.panduan-awal.sektor');
     Route::post('/sektor', [PanduanAwalKontroler::class, 'TerapkanSektor'])->name('kelola.panduan-awal.sektor.terapkan');
+    Route::post('/sektor/siapkan-otomatis', [PanduanAwalKontroler::class, 'SiapkanOtomatis'])->name('kelola.panduan-awal.sektor.siapkan-otomatis');
 
     Route::get('/pajak', [PanduanAwalKontroler::class, 'TampilkanPajak'])->name('kelola.panduan-awal.pajak');
     Route::post('/pajak', [PanduanAwalKontroler::class, 'SimpanPajak'])->name('kelola.panduan-awal.pajak.simpan');

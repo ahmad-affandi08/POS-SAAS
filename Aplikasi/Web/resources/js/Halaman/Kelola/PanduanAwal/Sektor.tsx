@@ -65,6 +65,14 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
         });
     };
 
+    /** D-23 A: terapkan template sekaligus pajak usulan, produk contoh, dan metode bayar. */
+    const SiapkanOtomatis = () => {
+        formulir.post(`${AlamatPanduan.Sektor}/siapkan-otomatis`, {
+            preserveScroll: true,
+            onError: () => FokusGalatPertama(elemenFormulir.current),
+        });
+    };
+
     return (
         <TataLetakPanduan progres={Progres} langkah="Sektor">
             <p className="text-isi text-teks-sekunder">
@@ -157,11 +165,22 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                         </Card>
                     ) : null}
 
-                    <div>
-                        <Tombol type="submit" memproses={formulir.processing}>
-                            Terapkan template
-                        </Tombol>
-                    </div>
+                    <Card className="gap-2 p-4 shadow-none">
+                        <h2 className="text-subjudul font-semibold text-teks-utama">Mulai jualan lebih cepat</h2>
+                        <p className="text-isi text-teks-sekunder">
+                            Siapkan semuanya otomatis: template diterapkan, pajak diatur sesuai usulan untuk kota Anda,
+                            produk contoh ditambahkan dengan harga saran, dan pembayaran tunai langsung siap. Semua bisa
+                            diubah nanti.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            <Tombol type="button" onClick={SiapkanOtomatis} memproses={formulir.processing}>
+                                Siapkan semuanya otomatis
+                            </Tombol>
+                            <Tombol type="submit" varian="sekunder" memproses={formulir.processing}>
+                                Terapkan template saja
+                            </Tombol>
+                        </div>
+                    </Card>
                 </form>
             )}
         </TataLetakPanduan>

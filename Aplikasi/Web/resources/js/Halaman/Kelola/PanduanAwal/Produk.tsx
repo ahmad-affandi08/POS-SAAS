@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
@@ -18,6 +19,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
+import { UraiDaftarTempel } from '@/Pustaka/UraiDaftarTempel';
 import { CekBatasPenuh, FormatBatas, type Batas } from '@/Tipe/Organisasi';
 import { AlamatPanduan, type ProdukContoh, type PropsProdukPanduan } from '@/Tipe/PanduanAwal';
 
@@ -278,6 +280,44 @@ function FormProdukCepat({
     const formulir = useForm<{ Produk: BarisManual[] }>({ Produk: [barisKosong] });
     const galat = formulir.errors as Record<string, string | undefined>;
     const opsiKategori = kategori.map((item) => ({ Nilai: item.Uuid, Label: item.Nama }));
+    const [tempelTerbuka, AturTempelTerbuka] = useState(false);
+    const [teksTempel, AturTeksTempel] = useState('');
+    const [pesanTempel, AturPesanTempel] = useState<string | null>(null);
+
+    /** D-23 A: isi baris dari daftar yang ditempel (Excel/WhatsApp); baris kosong diganti, maksimal 20 baris. */
+    const MasukkanTempelan = () => {
+        const hasil = UraiDaftarTempel(teksTempel, kategori);
+        const terisi = formulir.data.Produk.filter((baris) => baris.Nama !== '' || baris.Harga !== '');
+        const ruang = Math.max(0, maksimalBarisManual - terisi.length);
+        const masuk = hasil.Baris.slice(0, ruang);
+        const catatan = [
+            `${String(masuk.length)} produk dimasukkan ke daftar. Periksa lalu pilih Tambah produk.`,
+            hasil.Baris.length > masuk.length
+                ? `${String(hasil.Baris.length - masuk.length)} produk belum masuk karena maksimal ${String(maksimalBarisManual)} per simpan; tempel lagi setelah disimpan.`
+                : null,
+            hasil.Dilewati.length > 0
+                ? `Baris ${hasil.Dilewati.join(', ')} dilewati karena tidak ada nama atau harga.`
+                : null,
+            hasil.KategoriTakDikenal.length > 0
+                ? `Kategori ${hasil.KategoriTakDikenal.join(', ')} belum ada, jadi produknya tanpa kategori.`
+                : null,
+        ].filter((teks): teks is string => teks !== null);
+
+        if (masuk.length > 0) {
+            formulir.setData('Produk', [...terisi, ...masuk]);
+            AturTeksTempel(
+                hasil.Baris.slice(ruang)
+                    .map((b) => `${b.Nama}\t${b.Harga}`)
+                    .join('\n'),
+            );
+        }
+
+        AturPesanTempel(
+            masuk.length > 0
+                ? catatan.join(' ')
+                : 'Tidak ada produk yang bisa dibaca. Tulis satu produk per baris, misal "Kopi Susu 15.000".',
+        );
+    };
 
     const UbahBaris = (indeks: number, ubahan: Partial<BarisManual>) =>
         formulir.setData(
@@ -309,6 +349,42 @@ function FormProdukCepat({
                     {galat.Produk ? (
                         <FieldError className="text-keterangan font-semibold">{galat.Produk}</FieldError>
                     ) : null}
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="self-start"
+                            aria-expanded={tempelTerbuka}
+                            onClick={() => AturTempelTerbuka(!tempelTerbuka)}
+                        >
+                            {tempelTerbuka ? 'Tutup tempel daftar' : 'Tempel daftar dari Excel atau WhatsApp'}
+                        </Button>
+                        {tempelTerbuka ? (
+                            <div className="flex flex-col gap-2 rounded-kontrol border border-garis p-3">
+                                <BidangTeksPanjang
+                                    label="Daftar produk"
+                                    nilai={teksTempel}
+                                    saatBerubah={AturTeksTempel}
+                                    keterangan="Satu produk per baris: nama lalu harga, misal Kopi Susu 15.000 atau Es Teh 5rb. Dari Excel, salin kolom Nama, Harga, dan Kategori (opsional) sekaligus."
+                                    baris={6}
+                                    maksimal={20000}
+                                />
+                                <Button
+                                    type="button"
+                                    className="self-start"
+                                    onClick={MasukkanTempelan}
+                                    disabled={teksTempel.trim() === ''}
+                                >
+                                    Masukkan ke daftar
+                                </Button>
+                                {pesanTempel ? (
+                                    <p role="status" className="text-keterangan text-teks-sekunder">
+                                        {pesanTempel}
+                                    </p>
+                                ) : null}
+                            </div>
+                        ) : null}
+                    </div>
                     <ol className="flex flex-col gap-3">
                         {formulir.data.Produk.map((baris, indeks) => (
                             <li

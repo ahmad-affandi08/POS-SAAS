@@ -408,6 +408,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - **Jual sebagai paket sesi** (produk Jasa, fitur `pelanggan.paket-sesi`): jumlah sesi (1–1.000) + masa berlaku hari (opsional). Server membuat produk dan `PaketSesi` (semua layanan Jasa bisa ditukar) dalam **satu transaksi**; kirim ulang dengan `Uuid` produk sama idempoten. Daftar layanan tertentu tetap diatur di menu Paket sesi.
 - Formulir lain (pelanggan, pemasok, promo) menyusul dengan pola yang sama bila audit kemudahan menunjukkan isian berlebih.
 
+#### 17.4.7 Mulai Jualan dalam 5 Menit (Keputusan D-23 A, v2.15)
+
+- **Siapkan semuanya otomatis** (langkah Sektor): satu klik menjalankan dalam satu transaksi: terapkan template sektor → konfirmasi pajak outlet dengan usulan yang sama seperti halaman Pajak (dilewati bila PBJT diusulkan tetapi kota outlet belum diisi, atau pajak sudah dikonfirmasi) → tambah semua produk contoh template yang belum ada dengan harga saran, sebatas sisa kuota SKU paket → tandai langkah Produk (bila ada produk) dan Metode pembayaran (Tunai selalu ada) selesai → buka langkah Perangkat. Diulang tidak menggandakan produk. Pesan hasil menyebut yang perlu diperiksa (pajak, kuota).
+- **Tempel daftar** (langkah Produk): teks dari Excel/Google Sheets (kolom Tab/`;`/`|`: Nama, Harga, Kategori) atau pesan WhatsApp (harga di akhir baris: `15.000`, `Rp5.000,-`, `12rb`, `2,5k`) diurai di peramban menjadi baris tambah produk cepat (maks. 20 per simpan); baris tanpa nama/harga dan kategori yang belum ada dilaporkan. Harga tidak pernah dihitung dengan float.
+- Impor dari foto menu (AI/OCR) menunggu keputusan pemilik produk soal layanan berbayar.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

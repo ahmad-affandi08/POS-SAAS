@@ -102,6 +102,33 @@ describe('Langkah 4 Produk (F-01): centang produk contoh memakai Checkbox', () =
     });
 });
 
+describe('Langkah 4 Produk (D-23 A): tempel daftar dari Excel/WhatsApp', () => {
+    beforeEach(() => AturHalamanUji({}, '/kelola/panduan-awal/produk'));
+    afterEach(() => cleanup());
+
+    it('tempelan diurai ke baris, baris tak terbaca dilaporkan, lalu dikirim sebagai Produk', () => {
+        RenderUji(<HalamanProdukPanduan {...BuatPropsProduk({ Kategori: [{ Uuid: 'KAT-KOPI', Nama: 'Kopi' }] })} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tempel daftar dari Excel atau WhatsApp' }));
+        fireEvent.change(screen.getByLabelText('Daftar produk'), {
+            target: { value: 'Kopi Susu Aren\t18.000\tKopi\nEs Teh Manis 5rb\nMenu baru' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Masukkan ke daftar' }));
+
+        expect(screen.getByText(/2 produk dimasukkan ke daftar\./)).toBeTruthy();
+        expect(screen.getByText(/Baris 3 dilewati/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah produk' }));
+
+        expect(kirimanForm[0]?.url).toBe('/kelola/panduan-awal/produk');
+        expect(kirimanForm[0]?.data).toEqual({
+            Produk: [
+                { Nama: 'Kopi Susu Aren', Harga: '18000', Kategori: 'KAT-KOPI' },
+                { Nama: 'Es Teh Manis', Harga: '5000', Kategori: '' },
+            ],
+        });
+    });
+});
+
 describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lewat konfirmasi', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola/panduan-awal/metode-pembayaran'));
     afterEach(() => cleanup());

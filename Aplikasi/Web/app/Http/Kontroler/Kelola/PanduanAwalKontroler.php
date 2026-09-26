@@ -6,6 +6,7 @@ namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\PanduanAwal\Aksi\KonfirmasiPajakPanduan;
 use App\Domain\PanduanAwal\Aksi\SelesaikanPanduanAwal;
+use App\Domain\PanduanAwal\Aksi\SiapkanOtomatisPanduan;
 use App\Domain\PanduanAwal\Aksi\SimpanProfilUsaha;
 use App\Domain\PanduanAwal\Aksi\TandaiLangkahPanduan;
 use App\Domain\PanduanAwal\Aksi\TerapkanTemplateSektor;
@@ -91,6 +92,21 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
         $hasil = $terapkan->Jalankan($this->OutletPanduan(), $permintaan->string('KodeTemplate')->toString(), $permintaan->AmbilSektorLain());
 
         return redirect()->route('kelola.panduan-awal.pajak')->with('Kilat', self::PesanPenerapan($hasil));
+    }
+
+    /** D-23 A: terapkan template + pajak usulan + produk contoh + metode bayar dalam satu klik, lalu ke langkah Perangkat. */
+    public function SiapkanOtomatis(TerapkanTemplateSektorPermintaan $permintaan, SiapkanOtomatisPanduan $siapkan): RedirectResponse
+    {
+        $hasil = $siapkan->Jalankan($this->OutletPanduan(), $permintaan->string('KodeTemplate')->toString(), $permintaan->AmbilSektorLain());
+        $pesan = array_filter([
+            "Template {$hasil['Template']} diterapkan.",
+            $hasil['PajakDikonfirmasi'] ? 'Pajak diatur sesuai usulan.' : 'Periksa pengaturan pajak di langkah Pajak.',
+            $hasil['JumlahProduk'] > 0 ? "{$hasil['JumlahProduk']} produk contoh ditambahkan; ubah harganya kapan saja di menu Produk." : null,
+            $hasil['ProdukTerlewatKuota'] > 0 ? "{$hasil['ProdukTerlewatKuota']} produk contoh tidak ditambahkan karena kuota paket penuh." : null,
+            'Tunai siap dipakai. Tinggal aktifkan perangkat kasir.',
+        ]);
+
+        return redirect()->route('kelola.panduan-awal.perangkat')->with('Kilat', implode(' ', $pesan));
     }
 
     public function TampilkanPajak(UsulanPajak $usulan): Response

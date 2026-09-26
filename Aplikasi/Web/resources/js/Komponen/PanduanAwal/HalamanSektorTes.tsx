@@ -101,9 +101,16 @@ describe('Langkah 2 Jenis usaha & template (F-01, BR-01.1 aditif)', () => {
             ),
         ).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Terapkan template' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Terapkan template saja' }));
 
         expect(tiruan.kirim).toHaveBeenCalledWith('/kelola/panduan-awal/sektor', {
+            KodeTemplate: 'RTL-GEN',
+            SektorLain: [],
+        });
+
+        // D-23 A: satu klik menyiapkan template, pajak, produk contoh, dan metode bayar.
+        fireEvent.click(screen.getByRole('button', { name: 'Siapkan semuanya otomatis' }));
+        expect(tiruan.kirim).toHaveBeenLastCalledWith('/kelola/panduan-awal/sektor/siapkan-otomatis', {
             KodeTemplate: 'RTL-GEN',
             SektorLain: [],
         });
@@ -120,7 +127,8 @@ describe('Langkah 2 Jenis usaha & template (F-01, BR-01.1 aditif)', () => {
         render(<HalamanSektor {...BuatProps({ Template: [] })} />);
 
         expect(screen.getByText(/Belum ada template yang bisa dipilih/)).toBeTruthy();
-        expect(screen.queryByRole('button', { name: 'Terapkan template' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Terapkan template saja' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Siapkan semuanya otomatis' })).toBeNull();
         expect(screen.getByRole('button', { name: 'Lewati dulu' })).toBeTruthy();
     });
 });

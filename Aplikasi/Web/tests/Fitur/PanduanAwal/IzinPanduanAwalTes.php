@@ -41,6 +41,7 @@ function DaftarRutePanduanAwalUji(): array
         ['GET', '/kelola/panduan-awal/profil-usaha/logo'],
         ['GET', '/kelola/panduan-awal/sektor'],
         ['POST', '/kelola/panduan-awal/sektor'],
+        ['POST', '/kelola/panduan-awal/sektor/siapkan-otomatis'],
         ['GET', '/kelola/panduan-awal/pajak'],
         ['POST', '/kelola/panduan-awal/pajak'],
         ['GET', '/kelola/panduan-awal/produk'],
@@ -101,6 +102,7 @@ describe('Izin panduan-awal.kelola (F-01, §19.1)', function (): void {
         $isian = [
             '/kelola/panduan-awal/profil-usaha' => ['NamaUsaha' => 'Nama Baru', 'KodeKota' => '33.72', 'Pkp' => '0'],
             '/kelola/panduan-awal/sektor' => ['KodeTemplate' => 'FNB-CAF'],
+            '/kelola/panduan-awal/sektor/siapkan-otomatis' => ['KodeTemplate' => 'FNB-CAF'],
             '/kelola/panduan-awal/produk' => ['Produk' => [['Nama' => 'Es Teh', 'Harga' => '5000', 'Kategori' => null]]],
             '/kelola/panduan-awal/metode-pembayaran' => ['Jenis' => 'Edc', 'Nama' => 'EDC', 'KodeBank' => 'BCA'],
             '/kelola/panduan-awal/perangkat' => ['Nama' => 'Kasir Depan'],

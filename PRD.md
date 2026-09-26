@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.14 |
+| Versi | 2.15 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.15 | **D-23 A** mulai jualan dalam 5 menit: tombol **"Siapkan semuanya otomatis"** di langkah Sektor panduan awal (template + pajak sesuai usulan kota + semua produk contoh dengan harga saran sebatas kuota + Tunai siap; langsung ke langkah Perangkat) dan **tempel daftar produk** dari Excel/WhatsApp di langkah Produk (`Kopi Susu 15.000`, `Es Teh 5rb`, kolom Tab). §17.4.7. |
 | 2.14 | **D-23 B** formulir produk mode **Sederhana** (bawaan saat tambah produk): nama, jenis (Barang stok/Menu resep/Jasa/Non-stok), harga jual, kategori di satu layar; satuan, pajak, SKU, tampil di kasir memakai bawaan; formulir lengkap satu klik (pilihan diingat per peramban). Produk Jasa bisa langsung **"Jual sebagai paket sesi"** (jumlah sesi + masa berlaku) → produk + `PaketSesi` satu transaksi. §17.4.6. |
 | 2.13 | **D-23** (dari pemilik produk): penyederhanaan & otomatisasi didahulukan (Kotak Tindakan, formulir sederhana, mulai 5 menit, otomatisasi terjadwal, dialog ajakan upgrade/add-on untuk fitur di luar paket); mode jasa, laundry, grosir menyusul. |
 | 2.12 | Rincian **F-16d bagian 2** (CRM-04 paket sesi, J-16.2/J-16.3): master `PaketSesi` (produk Jasa dijual sebagai N sesi, masa berlaku opsional, layanan yang boleh ditukar), penjualan paket membuat `SaldoSesi` dan mengkredit Pendapatan Diterima Dimuka sebesar nilai bersih baris, pemakaian dari kasir lewat outbox `Sesi.Pakai` (offline setelah saldo dibaca online) mengakui Pendapatan Jasa per sesi, void membatalkan sisa & membalik pengakuan, baris paket tidak bisa diretur, kembalikan/hanguskan sisa & batalkan pemakaian di back-office (izin `pelanggan.sesi.kelola`), hangus otomatis tiap malam, fitur paket `pelanggan.paket-sesi`; skema lokal kasir 14. Perbaikan ubin produk kasir: harga satu baris (mengecil) di ubin sempit. |
@@ -3723,6 +3724,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - **Produk** (tambah): nama, jenis (Barang stok, Menu resep, Jasa, Non-stok; jenis lain di formulir lengkap), harga jual (= harga dasar mulai 1 satuan dasar; perlu izin `produk.harga.ubah`), kategori.
 - **Jual sebagai paket sesi** (produk Jasa, fitur `pelanggan.paket-sesi`): jumlah sesi (1–1.000) + masa berlaku hari (opsional). Server membuat produk dan `PaketSesi` (semua layanan Jasa bisa ditukar) dalam **satu transaksi**; kirim ulang dengan `Uuid` produk sama idempoten. Daftar layanan tertentu tetap diatur di menu Paket sesi.
 - Formulir lain (pelanggan, pemasok, promo) menyusul dengan pola yang sama bila audit kemudahan menunjukkan isian berlebih.
+
+#### 17.4.7 Mulai Jualan dalam 5 Menit (Keputusan D-23 A, v2.15)
+
+- **Siapkan semuanya otomatis** (langkah Sektor): satu klik menjalankan dalam satu transaksi: terapkan template sektor → konfirmasi pajak outlet dengan usulan yang sama seperti halaman Pajak (dilewati bila PBJT diusulkan tetapi kota outlet belum diisi, atau pajak sudah dikonfirmasi) → tambah semua produk contoh template yang belum ada dengan harga saran, sebatas sisa kuota SKU paket → tandai langkah Produk (bila ada produk) dan Metode pembayaran (Tunai selalu ada) selesai → buka langkah Perangkat. Diulang tidak menggandakan produk. Pesan hasil menyebut yang perlu diperiksa (pajak, kuota).
+- **Tempel daftar** (langkah Produk): teks dari Excel/Google Sheets (kolom Tab/`;`/`|`: Nama, Harga, Kategori) atau pesan WhatsApp (harga di akhir baris: `15.000`, `Rp5.000,-`, `12rb`, `2,5k`) diurai di peramban menjadi baris tambah produk cepat (maks. 20 per simpan); baris tanpa nama/harga dan kategori yang belum ada dilaporkan. Harga tidak pernah dihitung dengan float.
+- Impor dari foto menu (AI/OCR) menunggu keputusan pemilik produk soal layanan berbayar.
 
 ### 17.5 Tipografi (Keputusan D-08)
 
