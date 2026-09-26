@@ -99,6 +99,18 @@
     --font-mono: 'Atkinson Hyperlegible Mono Variable', ui-monospace, monospace;
 
     /* Skala tipografi mode Ringkas (back-office). Mode Nyaman ada di aplikasi Flutter. */
+    /* Situs pemasaran (D-21, kepadatan Nyaman): judul pembuka, judul bagian, dan paragraf pengantar. */
+    --text-sorotan: 48px;
+    --text-sorotan--line-height: 56px;
+    --text-sorotan-hp: 34px;
+    --text-sorotan-hp--line-height: 42px;
+    --text-judul-bagian: 32px;
+    --text-judul-bagian--line-height: 40px;
+    --text-judul-bagian-hp: 26px;
+    --text-judul-bagian-hp--line-height: 34px;
+    --text-pengantar: 18px;
+    --text-pengantar--line-height: 28px;
+
     --text-tampilan: 30px;
     --text-tampilan--line-height: 38px;
     --text-judul: 20px;

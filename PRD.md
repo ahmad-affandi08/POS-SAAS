@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.09 |
+| Versi | 2.10 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.10 | **D-21** (dari pemilik produk): situs pemasaran `payou.id` dibangun dengan **React** (Inertia, bundle terpisah `Situs.tsx`, meta SEO dirender server) dan **sebagian besar isinya diatur dari konsol**: pengaturan situs (identitas, logo, SEO, kontak & WhatsApp, pengumuman, menu atas, kolom kaki, media sosial, tautan unduh), halaman berblok 14 jenis blok (draf → pratinjau bertanda tangan → terbit, sembunyikan, hapus), pustaka gambar, harga otomatis dari katalog P-04, peta situs `/peta-situs`, `X-Robots-Tag: noindex` di domain tenant; izin `situs.lihat`/`situs.kelola`; §13.9 baru. |
 | 2.09 | **D-20** (keputusan pemilik produk): pembagian domain `payou.id` (pemasaran), `dashboard.payou.id` (tenant), `consol.payou.id` (pengelola) lewat `.env` (`DOMAIN_PEMASARAN`, `DOMAIN_TENANT`, `PENGELOLA_DOMAIN`, `APP_URL`); perantara `ArahkanDomainAplikasi` mengalihkan rute non-pemasaran ke domain tenant; §13.6, §13.8 diperbarui. |
 | 2.08 | Rincian **F-16d bagian 1** (CRM-04 deposit pelanggan): isi deposit di kasir lewat outbox `Deposit.Isi` (offline, nomor `DEP/…`, J-16.1, ikut kas shift, bukti isi), buku `MutasiDeposit` + cache `Pelanggan.SaldoDeposit`, bayar dengan metode Deposit (saldo online, void mengembalikan, retur boleh ke deposit), tarik/sesuaikan/batal isi di back-office (izin `pelanggan.deposit.kelola`), fitur paket `pelanggan.deposit`. |
 | 2.07 | Rincian **F-17 self-order bagian 2** (keputusan pemilik produk v2.06): halaman tamu menampilkan **perkiraan total** (subtotal, diskon promo otomatis, biaya layanan, pajak per jenis dari `TarifPajak` bertanggal, total) yang dihitung server dengan mesin kalkulasi F-07a, disalin ke `PesananSendiri.Perkiraan`; **produk bervarian** bisa dipesan (pemilih varian wajib, baris menyimpan anak varian). |
@@ -2568,7 +2569,7 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 /{slugTenant}/meja/{tokenMeja}  Self-order meja
 /{slugTenant}/reservasi         Booking layanan
 consol.{{app}}.id              Platform Pengelola (tim internal, §13.8; D-20, dari PENGELOLA_DOMAIN)
-{{app}}.id                     Situs pemasaran/landing (D-20, DOMAIN_PEMASARAN); rute lain dialihkan ke dashboard.
+{{app}}.id                     Situs pemasaran/landing (D-20, DOMAIN_PEMASARAN; halaman dari konsol D-21 §13.9, /peta-situs); rute lain dialihkan ke dashboard.
 dashboard.{{app}}.id           Semua rute di atas selain pemasaran (D-20, DOMAIN_TENANT = host APP_URL)
 /mitra                          Portal mitra/reseller (fase 3)
 ```
@@ -2811,7 +2812,28 @@ Aplikasi/Web/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
 - Perantara rute pengelola: `PastikanPenggunaPengelola`, `WajibDuaFaktor`, `BatasiIpPengelola` (opsional), `CatatAuditPengelola`.
 - Akses dukungan (P-09) diimplementasikan sebagai **sesi tenant terbatas** yang dibuat dari izin `AksesDukungan` (bukan login memakai akun Owner), dengan cakupan dan waktu berakhir yang ditegakkan oleh perantara.
 - Hostinger mendukung subdomain. Subdomain pengelola (`consol.`, D-20) diarahkan ke folder `public` yang sama, dan rute dibedakan dengan `Route::domain()`.
-- **Pembagian domain (D-20):** satu aplikasi & satu folder `public` melayani tiga host yang diatur lewat `.env`: `DOMAIN_PEMASARAN` (`payou.id`, situs pemasaran: beranda, `/legal/*`, `/kompatibilitas-perangkat`), `DOMAIN_TENANT` (`dashboard.payou.id`: masuk/daftar, `/kelola`, API POS & Pemilik, webhook, struk digital `/s/…`, pesan sendiri QR meja; `APP_URL` = alamat ini), dan `PENGELOLA_DOMAIN` (`consol.payou.id`). Perantara `ArahkanDomainAplikasi`: di domain pemasaran rute non-pemasaran dialihkan ke domain tenant dengan jalur & query sama (GET 302, lainnya 307), beranda di domain tenant dialihkan ke back-office; `TolakDomainPengelola` tetap menjawab 404 untuk rute tenant di domain pengelola. Kosong = satu host (pengembangan & test). Aplikasi Kasir & Pemilik dibangun dengan `--dart-define=ALAMAT_SERVER=https://dashboard.payou.id/`. Cookie sesi tanpa `SESSION_DOMAIN` (hanya host masing-masing).
+- **Pembagian domain (D-20):** satu aplikasi & satu folder `public` melayani tiga host yang diatur lewat `.env`: `DOMAIN_PEMASARAN` (`payou.id`, situs pemasaran: beranda & halaman situs D-21 §13.9, `/peta-situs`, `/legal/*`, `/kompatibilitas-perangkat`), `DOMAIN_TENANT` (`dashboard.payou.id`: masuk/daftar, `/kelola`, API POS & Pemilik, webhook, struk digital `/s/…`, pesan sendiri QR meja; `APP_URL` = alamat ini), dan `PENGELOLA_DOMAIN` (`consol.payou.id`). Perantara `ArahkanDomainAplikasi`: di domain pemasaran rute non-pemasaran dialihkan ke domain tenant dengan jalur & query sama (GET 302, lainnya 307), beranda di domain tenant dialihkan ke back-office; `TolakDomainPengelola` tetap menjawab 404 untuk rute tenant di domain pengelola. Kosong = satu host (pengembangan & test). Aplikasi Kasir & Pemilik dibangun dengan `--dart-define=ALAMAT_SERVER=https://dashboard.payou.id/`. Cookie sesi tanpa `SESSION_DOMAIN` (hanya host masing-masing).
+
+
+### 13.9 Situs Pemasaran (D-21)
+
+Situs pemasaran `payou.id` (D-20) adalah bagian aplikasi Laravel yang sama, dirender dengan **React** lewat Inertia memakai view root & bundle terpisah (`resources/views/Situs.blade.php`, `resources/js/Situs.tsx`, halaman `Halaman/Situs/Halaman.tsx`) agar ringan dan tidak memuat kode back-office. Karena hosting bersama tanpa Node SSR, judul, deskripsi, kanonik, Open Graph, verifikasi Google, dan JSON-LD `Organization` dirender server di view root; halaman pratinjau diberi `noindex`.
+
+**Diatur dari konsol** (menu *Situs pemasaran*, izin `situs.lihat` untuk melihat, `situs.kelola` untuk mengubah; peran bawaan `SuperAdmin` dan `KontenLegal`):
+
+| Bagian | Isi yang bisa diatur |
+|---|---|
+| Pengaturan (`PengaturanSitus`, kunci `Umum`) | nama situs, slogan, logo (kosong = logo PAYOU), SEO umum (judul, deskripsi, kata kunci, gambar bagikan, kode verifikasi Google Search Console), kontak (WhatsApp + pesan awal, email, telepon, alamat, jam layanan), tombol WhatsApp melayang, pengumuman atas (teks + tautan), menu atas (≤ 10), kolom kaki (≤ 5 × 10 tautan), teks kaki, media sosial (https), tautan unduh Android/iOS/Windows, teks tombol daftar & masuk |
+| Halaman (`HalamanSitus`) | slug (≤ 2 segmen, bukan jalur sistem `AturanSlugSitus::TERLARANG`), judul, SEO per halaman, tampil di peta situs, dan susunan **blok**: Hero, Keunggulan (kartu ikon 2/3/4 kolom), Jenis usaha, Gambar & teks, Angka statistik, Testimoni, Harga, FAQ, Ajakan (CTA), Teks bebas, Logo mitra, Video YouTube, Unduh aplikasi, Kontak (maks. 40 blok/halaman; skema `SkemaBagianSitus`, validasi `ValidatorBagianSitus`) |
+| Gambar (`GambarSitus`) | pustaka JPG/PNG/WebP ≤ 3 MB (SVG ditolak), teks alternatif, dimensi dicatat; gambar yang masih dipakai halaman/pengaturan tidak bisa dihapus |
+
+Aturan:
+- **Draf → terbit.** Simpan hanya mengubah draf (`BagianDraf`); pengunjung melihat versi terbit (`BagianTerbit`) sampai *Terbitkan*. *Pratinjau draf* membuka tautan bertanda tangan (berlaku `situs.MenitPratinjau` menit, tanda tangan relatif lalu dipasang domain pemasaran). Halaman terbit bisa disembunyikan (404 publik) kecuali beranda; halaman bawaan (beranda, fitur, harga, solusi/kafe-resto, solusi/toko-retail, solusi/jasa, kontak, tentang) slugnya tetap dan tidak bisa dihapus. Semua perubahan tercatat di log audit pengelola (`situs.*`).
+- **Isi bawaan.** Tanpa baris di tabel, halaman bawaan dirender dari `KontenSitusBawaan` sehingga situs langsung tampil setelah dipasang; membuka daftar halaman di konsol menyalinnya ke tabel sebagai versi terbit. Isi bawaan tidak memuat testimoni, statistik, atau klaim yang dikarang; blok Testimoni/Statistik hanya diisi data nyata oleh pengelola.
+- **Tautan** hanya jalur situs (`/harga`, `#faq`), `https://`, `mailto:`, `tel:`, atau pintasan yang diterjemahkan server saat dirender: `@daftar`, `@masuk` (domain tenant), `@whatsapp` (nomor di pengaturan, `08…` → `wa.me/628…`), `@unduh-android`, `@unduh-ios`, `@unduh-windows`. Teks panjang memakai format ringan tanpa HTML (paragraf, `## `, `- `, `**tebal**`, `[teks](tautan)`) yang dirender aman di React; tautan `javascript:`/`data:` tidak pernah menjadi `<a>`.
+- **Harga** di blok Harga diambil otomatis dari katalog P-04: paket `Aktif` berurutan `Urutan` dengan harga **terbit** yang berlaku hari ini (WIB), pilihan bulanan/tahunan + hemat tahunan, batas & fitur paket; paket harga negosiasi tampil "Hubungi kami". Keterangan PPN ditulis pengelola di catatan kaki blok.
+- **Mesin pencari.** Peta situs XML di `/peta-situs` (halaman terbit, aktif, dan `TampilDiSitemap`, plus halaman bawaan yang belum disalin) didaftarkan manual di Google Search Console; `public/robots.txt` statis menolak `/kelola`, `/pratinjau-situs`, `/s/`, `/api/`. Semua respons di domain tenant diberi `X-Robots-Tag: noindex, nofollow`. Halaman situs yang dibuka di domain tenant dialihkan ke domain pemasaran dengan jalur sama.
+- Video memakai `youtube-nocookie.com` (tanpa cookie pelacak sebelum diputar). Formulir prospek, artikel/blog, persetujuan cookie & analitik menyusul (bagian B).
 
 ---
 
@@ -4362,6 +4384,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-17 | Dari pemilik produk: agent **boleh mengubah PRD, `CLAUDE.md`, `.claude/**`, `Alat/**`, `.github/**`, dan dokumen/aturan lain tanpa meminta izin**, serta semua alat berjalan tanpa konfirmasi. Batas yang tetap: tidak melemahkan test/lint/CI/test arsitektur, `Dokumen/` hanya lewat `Alat/PecahPrd.py`, larangan keras (`.env`, force push, `--no-verify`, penghapus database) tetap berlaku, setiap perubahan dicatat & dilaporkan | 24/09/2026 | `CLAUDE.md`, `.claude/hooks/`, `.claude/settings.json`, §23 |
 | D-18 | Dari pemilik produk: back-office memakai **ilustrasi keadaan kosong PAYOU** (Produk, Penjualan, Stok, Pembelian, Laporan, Akuntansi, Pelanggan, Promo, Outlet, Shift) pada daftar utama yang belum berisi data, menggantikan aturan "tampilan kosong cukup ikon sederhana". Keadaan kosong tidak mengulang tombol tambah yang sudah ada di bilah alat (cukup judul yang menjelaskan langkah berikutnya; teks untuk pengguna tanpa izin tetap). Ilustrasi adalah aset merek (boleh gradien, aksen amber `#FBBF24`, dan latar bentuk lembut pucat di dalam berkas SVG, seperti logo D-15; pengecualian eksplisit atas larangan blob §17.6 hanya untuk aset ini), bukan gaya UI: komponen tetap memakai token. Satu ilustrasi per halaman (tabel utama). Hasil cari/saring kosong dan tabel di halaman detail tetap tanpa ilustrasi | 26/09/2026 | §17.6, `Komponen/Katalog/KeadaanKosong.tsx`, `Spesifikasi/Merek/KeadaanKosong/`, `.claude/rules/FrontendWeb.md` |
 | D-20 | Dari pemilik produk (v2.09): **tiga domain produksi** diatur lewat `.env`: `payou.id` untuk pemasaran/landing page, `dashboard.payou.id` untuk tenant (back-office, API aplikasi, struk digital, pesan sendiri), `consol.payou.id` untuk Platform Pengelola (§13.8). |
+| D-21 | Dari pemilik produk (v2.10): situs pemasaran `payou.id` memakai **React** (bukan Blade) dan **sebanyak mungkin diatur dari konsol**: pengaturan situs, halaman berblok dengan draf/pratinjau/terbit, pustaka gambar, harga otomatis dari katalog (§13.9). Agent menetapkan detail: peta situs di `/peta-situs` dan `robots.txt` statis karena konvensi URL D-06 (`robots.txt`/`sitemap.xml` belum ada di pengecualian §13.7.4; usulan pengecualian menunggu pemilik produk). |
 | D-19 | Dari pemilik produk (v2.06): gerbang pembayaran QRIS dinamis memakai **akun merchant milik tiap toko** sehingga dana pelanggan langsung masuk ke rekening toko; platform hanya mengatur penyedia yang boleh dipilih (katalog) tanpa pernah melihat kredensial toko. Opsi sub-merchant menyusul. |
 
 

@@ -50,6 +50,8 @@ export const IzinPengelola = {
     IntegrasiLihat: 'integrasi.lihat',
     IntegrasiKelola: 'integrasi.kelola',
     LegalLihat: 'legal.lihat',
+    SitusLihat: 'situs.lihat',
+    SitusKelola: 'situs.kelola',
     LegalKelola: 'legal.kelola',
     // P-07 Siklus hidup tenant.
     TenantLihat: 'tenant.lihat',

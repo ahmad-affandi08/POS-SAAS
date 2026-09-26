@@ -676,10 +676,11 @@ describe('F-07b data-awal', function (): void {
             'BukaLaciPerluPin' => false,
         ])
             ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00'])
-            ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode, 'NomorUrutPenjualan' => [], 'NomorUrutRetur' => []])
+            ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode, 'NomorUrutPenjualan' => [], 'NomorUrutRetur' => [], 'NomorUrutIsiDeposit' => []])
             // Belum ada penjualan: objek JSON kosong, bukan larik.
             ->and($respons->getContent())->toContain('"NomorUrutPenjualan":{}')
             ->and($respons->getContent())->toContain('"NomorUrutRetur":{}')
+            ->and($respons->getContent())->toContain('"NomorUrutIsiDeposit":{}')
             ->and(array_column($respons->json('TarifPajak'), 'Kategori'))->toBe(['Pbjt', 'Ppn'])
             ->and(array_keys($respons->json('ProfilPajak')))->toBe(['Pkp', 'PungutPbjt', 'HargaTermasukPajak', 'BiayaLayanan'])
             ->and(array_column($respons->json('TarifPajak'), 'KodeJenisPajak'))->toBe(['PbjtMakananMinuman', 'Ppn'])

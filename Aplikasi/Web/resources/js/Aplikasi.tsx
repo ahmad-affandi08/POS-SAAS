@@ -9,8 +9,12 @@ import { BuatKlienKueri } from './Pustaka/KlienKueri';
 
 const NamaAplikasi = import.meta.env.VITE_APP_NAME ?? 'PAYOU';
 const klienKueri = BuatKlienKueri();
-// Halaman Platform Pengelola dikecualikan: bundle-nya terpisah (Pengelola.tsx, PRD §13.8).
-const daftarHalaman = import.meta.glob<{ default: ComponentType }>(['./Halaman/**/*.tsx', '!./Halaman/Pengelola/**']);
+// Halaman Platform Pengelola & situs pemasaran dikecualikan: bundle-nya terpisah (Pengelola.tsx, Situs.tsx).
+const daftarHalaman = import.meta.glob<{ default: ComponentType }>([
+    './Halaman/**/*.tsx',
+    '!./Halaman/Pengelola/**',
+    '!./Halaman/Situs/**',
+]);
 
 async function MuatHalaman(nama: string): Promise<ComponentType> {
     const MuatModul = daftarHalaman[`./Halaman/${nama}.tsx`];

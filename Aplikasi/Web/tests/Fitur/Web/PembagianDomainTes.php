@@ -24,10 +24,9 @@ beforeEach(function (): void {
 describe('D-20 pembagian domain', function (): void {
     it('domain pemasaran: beranda dilayani dengan tautan masuk & daftar ke domain tenant; legal & kompatibilitas tetap dilayani', function (): void {
         $this->get('https://payou.test/')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-            ->component('Beranda')
-            ->where('UrlMasuk', 'https://dashboard.payou.test/masuk')
-            ->where('UrlDaftar', 'https://dashboard.payou.test/daftar')
-            ->where('UrlPemasaran', 'https://payou.test/'));
+            ->component('Situs/Halaman')
+            ->where('Situs.TombolMasuk.Tautan', 'https://dashboard.payou.test/masuk')
+            ->where('Situs.TombolDaftar.Tautan', 'https://dashboard.payou.test/daftar'));
         $this->get('https://payou.test/kompatibilitas-perangkat')->assertOk();
     });
 
@@ -63,9 +62,8 @@ describe('D-20 pembagian domain', function (): void {
         config(['domain.Pemasaran' => null, 'domain.Tenant' => null]);
 
         $this->get('/')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-            ->where('UrlMasuk', '/masuk')
-            ->where('UrlDaftar', '/daftar')
-            ->where('UrlPemasaran', '/'));
+            ->where('Situs.TombolMasuk.Tautan', '/masuk')
+            ->where('Situs.TombolDaftar.Tautan', '/daftar'));
         $this->get('/masuk')->assertOk();
     });
 });

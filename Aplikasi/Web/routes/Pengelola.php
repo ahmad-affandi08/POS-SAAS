@@ -15,6 +15,7 @@ use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
+use App\Http\Kontroler\Pengelola\Konten\SitusKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Operasional\OperasionalKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
@@ -155,6 +156,27 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 Route::put('/legal/{dokumenLegal}', [DokumenLegalKontroler::class, 'Ubah'])->name('pengelola.legal.ubah');
                 Route::delete('/legal/{dokumenLegal}', [DokumenLegalKontroler::class, 'Hapus'])->name('pengelola.legal.hapus');
                 Route::post('/legal/{dokumenLegal}/terbitkan', [DokumenLegalKontroler::class, 'Terbitkan'])->name('pengelola.legal.terbitkan');
+            });
+        });
+
+        // D-21 Situs pemasaran (payou.id) diatur dari konsol.
+        Route::middleware($izin(IzinPengelola::SitusLihat))->prefix('situs')->group(function () use ($izin): void {
+            $ulidSitus = '[0-9A-HJKMNP-TV-Z]{26}';
+            Route::get('/pengaturan', [SitusKontroler::class, 'Pengaturan'])->name('pengelola.situs.pengaturan');
+            Route::get('/halaman', [SitusKontroler::class, 'DaftarHalaman'])->name('pengelola.situs.halaman.daftar');
+            Route::get('/halaman/{halamanSitus}', [SitusKontroler::class, 'UbahHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.ubah');
+            Route::get('/halaman/{halamanSitus}/pratinjau', [SitusKontroler::class, 'PratinjauHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.pratinjau');
+            Route::get('/gambar', [SitusKontroler::class, 'DaftarGambar'])->name('pengelola.situs.gambar.daftar');
+            Route::middleware($izin(IzinPengelola::SitusKelola))->group(function () use ($ulidSitus): void {
+                Route::put('/pengaturan', [SitusKontroler::class, 'SimpanPengaturan'])->name('pengelola.situs.pengaturan.simpan');
+                Route::post('/halaman', [SitusKontroler::class, 'BuatHalaman'])->name('pengelola.situs.halaman.buat');
+                Route::put('/halaman/{halamanSitus}', [SitusKontroler::class, 'SimpanHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.simpan');
+                Route::post('/halaman/{halamanSitus}/terbitkan', [SitusKontroler::class, 'TerbitkanHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.terbitkan');
+                Route::post('/halaman/{halamanSitus}/aktif', [SitusKontroler::class, 'UbahAktifHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.aktif');
+                Route::delete('/halaman/{halamanSitus}', [SitusKontroler::class, 'HapusHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.hapus');
+                Route::post('/gambar', [SitusKontroler::class, 'UnggahGambar'])->middleware('throttle:30,1')->name('pengelola.situs.gambar.unggah');
+                Route::put('/gambar/{gambarSitus}', [SitusKontroler::class, 'UbahGambar'])->where('gambarSitus', $ulidSitus)->name('pengelola.situs.gambar.ubah');
+                Route::delete('/gambar/{gambarSitus}', [SitusKontroler::class, 'HapusGambar'])->where('gambarSitus', $ulidSitus)->name('pengelola.situs.gambar.hapus');
             });
         });
 

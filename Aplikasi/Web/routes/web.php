@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
+use App\Domain\Situs\Layanan\AturanSlugSitus;
 use App\Http\Kontroler\Autentikasi\KeamananAkunKontroler;
 use App\Http\Kontroler\Autentikasi\LupaKataSandiKontroler;
 use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
@@ -18,9 +19,11 @@ use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
+use App\Http\Kontroler\Publik\SitusKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
 use App\Http\Perantara\ArahkanDomainAplikasi;
 use App\Http\Perantara\BagikanDataInertia;
+use App\Http\Perantara\BagikanDataSitus;
 use App\Http\Perantara\BatasiTenantDitangguhkan;
 use App\Http\Perantara\IdentifikasiTenantSesi;
 use App\Http\Perantara\Pengelola\BagikanDataInertiaPengelola;
@@ -33,7 +36,6 @@ use App\Http\Perantara\WajibPersetujuanLegal;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Platform Pengelola di subdomain sendiri (PRD §13.8). Didaftarkan lebih dulu agar menang atas rute tenant.
 Route::domain(config('pengelola.Domain'))
@@ -42,13 +44,27 @@ Route::domain(config('pengelola.Domain'))
 
 $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
 
+// D-21 Situs pemasaran: gambar pustaka dilayani di semua host (juga tampil di editor konsol); peta situs XML untuk mesin
+// pencari (didaftarkan di Google Search Console). robots.txt berkas statis di public/.
+Route::get('/gambar-situs/{gambarSitus}', [SitusKontroler::class, 'Gambar'])
+    ->where('gambarSitus', '[0-9A-HJKMNP-TV-Z]{26}')
+    ->middleware('throttle:300,1')
+    ->name('situs.gambar');
+Route::get('/peta-situs', [SitusKontroler::class, 'PetaSitus'])->middleware(ArahkanDomainAplikasi::class)->name('situs.peta');
+
+// D-21 beranda situs pemasaran (halaman berblok dari konsol, bundle `Situs.tsx`).
+Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])->group(function (): void {
+    Route::get('/', [SitusKontroler::class, 'Beranda'])->name('beranda');
+    Route::get('/pratinjau-situs/{halamanSitus}', [SitusKontroler::class, 'Pratinjau'])
+        ->where('halamanSitus', '[0-9A-HJKMNP-TV-Z]{26}')
+        // Tanda tangan relatif: konsol menandatangani jalur lalu memasang domain pemasaran (D-20).
+        ->middleware('signed:relative')
+        ->name('situs.pratinjau');
+});
+
 // Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya
-// melayani beranda, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
+// melayani situs pemasaran, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
 Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataInertia::class])->group(function () use ($izin): void {
-    Route::get('/', fn () => Inertia::render('Beranda', [
-        'UrlMasuk' => ArahkanDomainAplikasi::BuatUrlTenant('/masuk'),
-        'UrlDaftar' => ArahkanDomainAplikasi::BuatUrlTenant('/daftar'),
-    ]))->name('beranda');
     Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
     // POS-11 struk digital publik (kode = tenant basis-36 . Uuid penjualan).
     Route::get('/s/{kodeStruk}', [StrukDigitalKontroler::class, 'Tampilkan'])
@@ -189,3 +205,10 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 ->name('publik.pesan-sendiri.pesan');
         });
 });
+
+// D-21 halaman situs pemasaran (`/fitur`, `/solusi/kafe-resto`, …) didaftarkan paling akhir: slug maksimal dua segmen
+// dan tidak pernah memakai jalur sistem (`AturanSlugSitus::TERLARANG`), jadi tidak menaungi rute lain.
+Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])
+    ->get('/{slugHalaman}', [SitusKontroler::class, 'Halaman'])
+    ->where('slugHalaman', AturanSlugSitus::POLA)
+    ->name('situs.halaman');

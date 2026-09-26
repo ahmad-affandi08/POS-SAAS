@@ -60,6 +60,9 @@ enum PeranPengelolaBawaan: string
                 IzinPengelola::TemplateIsiUbah,
                 IzinPengelola::LegalLihat,
                 IzinPengelola::LegalKelola,
+                // D-21: situs pemasaran.
+                IzinPengelola::SitusLihat,
+                IzinPengelola::SitusKelola,
             ],
             self::Keuangan => [
                 IzinPengelola::ReferensiLihat,

@@ -49,6 +49,10 @@ enum IzinPengelola: string
     case LegalLihat = 'legal.lihat';
     case LegalKelola = 'legal.kelola';
 
+    // D-21 Situs pemasaran (payou.id) diatur dari konsol.
+    case SitusLihat = 'situs.lihat';
+    case SitusKelola = 'situs.kelola';
+
     // P-07 Siklus hidup tenant (§19.3).
     case TenantLihat = 'tenant.lihat';
     case TenantCatatanTulis = 'tenant.catatan.tulis';
@@ -104,6 +108,8 @@ enum IzinPengelola: string
             self::IntegrasiKelola => 'Mengubah kredensial, menguji, dan mengaktifkan integrasi platform',
             self::LegalLihat => 'Melihat dokumen legal',
             self::LegalKelola => 'Menyusun dan menerbitkan dokumen legal',
+            self::SitusLihat => 'Melihat pengaturan & halaman situs pemasaran',
+            self::SitusKelola => 'Mengubah, menerbitkan halaman & mengunggah gambar situs pemasaran',
             // P-07 Siklus hidup tenant.
             self::TenantLihat => 'Melihat daftar & tampilan 360° tenant',
             self::TenantCatatanTulis => 'Menulis catatan internal tenant',

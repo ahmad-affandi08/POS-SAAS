@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ActivityIcon,
     BookOpenIcon,
+    GlobeIcon,
     Building2Icon,
     HouseIcon,
     LayoutTemplateIcon,
@@ -59,6 +60,8 @@ const daftarMenu: ItemMenu[] = [
     { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat, ikon: LayoutTemplateIcon },
     { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat, ikon: LibraryIcon },
     { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat, ikon: ScaleIcon },
+    // D-21 Situs pemasaran (payou.id).
+    { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: GlobeIcon },
     { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: PlugIcon },
     // P-09
     { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
