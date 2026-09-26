@@ -116,7 +116,7 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
             ->assertDontSee(RAHASIA_SMTP_UJI)
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Pengelola/Integrasi/Daftar')
-                ->has('Integrasi', 10) // v2.04: 5 jenis × 2 lingkungan
+                ->has('Integrasi', 8) // v2.06: 4 jenis platform × 2 lingkungan (gerbang pembayaran diatur tenant)
                 ->where('Integrasi.0.Konfigurasi.PetunjukKredensial.KataSandi', '••••9876'));
 
         $log = LogAuditPengelola::query()->where('Aksi', 'integrasi.buat')->sole();

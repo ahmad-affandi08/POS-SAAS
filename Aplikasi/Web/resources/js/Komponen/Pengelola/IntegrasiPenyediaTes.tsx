@@ -159,4 +159,53 @@ describe('Integrasi: pilih penyedia (v2.04)', () => {
         const peringatan = screen.getByText('Nomor bisa diblokir WhatsApp.').closest('[data-jenis]');
         expect(peringatan?.getAttribute('data-jenis')).toBe('peringatan');
     });
+
+    it('v2.06 katalog gerbang untuk toko: larang penyedia wajib lewat lembar beralasan lalu terkirim', async () => {
+        const { router } = await import('@inertiajs/react');
+        render(
+            <HalamanIntegrasi
+                Integrasi={[]}
+                GerbangTenant={[
+                    {
+                        Penyedia: 'Midtrans',
+                        Label: 'Midtrans',
+                        Diizinkan: true,
+                        JumlahTenant: 3,
+                        JumlahAktif: 2,
+                        JumlahUjiGagal: 1,
+                        WebhookDiterima24Jam: 2,
+                        WebhookDitolak24Jam: 0,
+                    },
+                    {
+                        Penyedia: 'Doku',
+                        Label: 'DOKU',
+                        Diizinkan: false,
+                        JumlahTenant: 0,
+                        JumlahAktif: 0,
+                        JumlahUjiGagal: 0,
+                        WebhookDiterima24Jam: 0,
+                        WebhookDitolak24Jam: 0,
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText('Gerbang pembayaran untuk toko')).toBeTruthy();
+        expect(screen.getByText('Dilarang')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Izinkan DOKU' }));
+        expect(router.post).toHaveBeenCalledWith(
+            '/integrasi/gerbang-pembayaran/Doku',
+            { Diizinkan: true, Alasan: '' },
+            expect.anything(),
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Larang Midtrans' }));
+        expect(screen.getByText(/2 toko aktif memakai penyedia ini/)).toBeTruthy();
+        fireEvent.change(screen.getByLabelText(/Alasan/), { target: { value: 'Gangguan penyelesaian dana' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Larang penyedia' }));
+        expect(router.post).toHaveBeenCalledWith(
+            '/integrasi/gerbang-pembayaran/Midtrans',
+            { Diizinkan: false, Alasan: 'Gangguan penyelesaian dana' },
+            expect.anything(),
+        );
+    });
 });

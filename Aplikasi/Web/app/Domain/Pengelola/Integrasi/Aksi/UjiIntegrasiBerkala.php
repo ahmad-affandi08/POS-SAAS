@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Integrasi\Aksi;
 
+use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Penguji\PenyaringPesan;
@@ -33,6 +34,7 @@ final class UjiIntegrasiBerkala
         $daftar = KonfigurasiIntegrasi::query()
             ->where('Lingkungan', LingkunganIntegrasi::AmbilSaatIni()->value)
             ->where('Aktif', true)
+            ->whereIn('Jenis', array_map(fn (JenisIntegrasi $jenis): string => $jenis->value, JenisIntegrasi::AmbilJenisPlatform()))
             ->orderBy('Id')
             ->get();
         $baruGagal = [];

@@ -28,6 +28,8 @@ enum IzinTenant: string
     case PenggunaPinAtur = 'pengguna.pin.atur';
     // F-01 Panduan awal (onboarding wizard).
     case PanduanAwalKelola = 'panduan-awal.kelola';
+    // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant & kredensial; dana ke rekening tenant).
+    case PembayaranGerbangAtur = 'pembayaran.gerbang.atur';
 
     // Flow berikutnya (§19.1 & §19.2); penegakan dibangun bersama flow-nya.
     case ProdukLihat = 'produk.lihat';
@@ -85,6 +87,7 @@ enum IzinTenant: string
             self::PerangkatKelola => 'Menambah, mengaktifkan, dan mencabut perangkat POS',
             self::PenggunaPinAtur => 'Mengatur ulang PIN kasir anggota',
             self::PanduanAwalKelola => 'Menjalankan panduan awal (profil usaha, template sektor, pajak, produk awal, metode pembayaran)',
+            self::PembayaranGerbangAtur => 'Mengatur gerbang pembayaran QRIS dinamis (akun merchant & kredensial)',
             self::ProdukLihat => 'Melihat produk',
             self::ProdukKelola => 'Mengelola produk',
             self::ProdukHargaUbah => 'Mengubah harga jual',
@@ -119,7 +122,8 @@ enum IzinTenant: string
     public function AmbilKelompok(): string
     {
         return match ($this) {
-            self::OutletLihat, self::OutletKelola, self::PerangkatLihat, self::PerangkatKelola, self::PanduanAwalKelola => 'Organisasi',
+            self::OutletLihat, self::OutletKelola, self::PerangkatLihat, self::PerangkatKelola, self::PanduanAwalKelola,
+            self::PembayaranGerbangAtur => 'Organisasi',
             self::PenggunaLihat, self::PenggunaUndang, self::PenggunaUbah, self::PenggunaNonaktifkan,
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',

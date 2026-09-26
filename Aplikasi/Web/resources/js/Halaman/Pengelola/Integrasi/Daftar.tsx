@@ -63,11 +63,29 @@ type SlotIntegrasi = {
 
 const jenisLabelStatus = { BelumDiuji: 'peringatan', Terhubung: 'sukses', Gagal: 'bahaya' } as const;
 
+/** v2.06: penyedia gerbang pembayaran yang boleh dipilih tenant + pemakaian (tanpa kredensial tenant). */
+type GerbangTenant = {
+    Penyedia: string;
+    Label: string;
+    Diizinkan: boolean;
+    JumlahTenant: number;
+    JumlahAktif: number;
+    JumlahUjiGagal: number;
+    WebhookDiterima24Jam: number;
+    WebhookDitolak24Jam: number;
+};
+
 /**
  * Konfigurasi integrasi platform (P-05): email (banyak penyedia SMTP), CAPTCHA, penyimpanan objek, gerbang pembayaran
  * QRIS dinamis, dan WhatsApp (resmi & tidak resmi). Penyedia dipilih per jenis & lingkungan (v2.04).
  */
-export default function HalamanIntegrasi({ Integrasi }: { Integrasi: SlotIntegrasi[] }) {
+export default function HalamanIntegrasi({
+    Integrasi,
+    GerbangTenant = [],
+}: {
+    Integrasi: SlotIntegrasi[];
+    GerbangTenant?: GerbangTenant[];
+}) {
     const { props } = usePage<PropsBersamaPengelola>();
     const bolehKelola = PunyaIzin(props.Pengguna, IzinPengelola.IntegrasiKelola);
     const daftarJenis = [...new Set(Integrasi.map((slot) => slot.Jenis))];
@@ -80,6 +98,7 @@ export default function HalamanIntegrasi({ Integrasi }: { Integrasi: SlotIntegra
                 ini&rdquo;.
             </p>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
+            {GerbangTenant.length > 0 ? <BagianGerbangTenant daftar={GerbangTenant} bolehKelola={bolehKelola} /> : null}
             {daftarJenis.map((jenis) => {
                 const slot = Integrasi.filter((baris) => baris.Jenis === jenis);
 
@@ -95,6 +114,142 @@ export default function HalamanIntegrasi({ Integrasi }: { Integrasi: SlotIntegra
                 );
             })}
         </TataLetakPengelola>
+    );
+}
+
+/**
+ * v2.06: gerbang pembayaran QRIS dinamis diatur tiap toko dengan akun merchant sendiri (dana langsung ke rekening toko).
+ * Platform hanya menentukan penyedia yang boleh dipilih. Melarang penyedia wajib beralasan; toko yang memakainya tidak
+ * bisa membuat tagihan QRIS baru. Kredensial toko tidak pernah tampil di sini.
+ */
+function BagianGerbangTenant({ daftar, bolehKelola }: { daftar: GerbangTenant[]; bolehKelola: boolean }) {
+    const [larang, AturLarang] = useState<GerbangTenant | null>(null);
+    const [alasan, AturAlasan] = useState('');
+    const [memproses, AturMemproses] = useState<string | null>(null);
+    const { props } = usePage<PropsBersamaPengelola>();
+    const Ubah = (baris: GerbangTenant, diizinkan: boolean, alasanLarang = '') => {
+        router.post(
+            `/integrasi/gerbang-pembayaran/${baris.Penyedia}`,
+            { Diizinkan: diizinkan, Alasan: alasanLarang },
+            {
+                preserveScroll: true,
+                onStart: () => AturMemproses(baris.Penyedia),
+                onFinish: () => AturMemproses(null),
+                onSuccess: () => {
+                    AturLarang(null);
+                    AturAlasan('');
+                },
+            },
+        );
+    };
+
+    return (
+        <section className="flex flex-col gap-3">
+            <h2 className="text-subjudul font-semibold text-teks-utama">Gerbang pembayaran untuk toko</h2>
+            <p className="text-keterangan text-teks-sekunder">
+                Setiap toko menghubungkan akun merchant miliknya sendiri di back-office, sehingga dana pelanggan
+                langsung masuk ke rekening toko. Di sini hanya diatur penyedia yang boleh dipilih toko.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {daftar.map((baris) => (
+                    <Card key={baris.Penyedia} className="gap-2 py-4">
+                        <CardHeader className="flex flex-wrap items-center gap-2 px-4">
+                            <CardTitle>
+                                <h3 className="text-label font-semibold text-teks-utama">{baris.Label}</h3>
+                            </CardTitle>
+                            <LabelStatus
+                                jenis={baris.Diizinkan ? 'sukses' : 'netral'}
+                                teks={baris.Diizinkan ? 'Bisa dipilih toko' : 'Dilarang'}
+                            />
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-2 px-4">
+                            <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-keterangan">
+                                <dt className="text-teks-sekunder">Toko terhubung</dt>
+                                <dd className="text-right tabular-nums text-teks-utama">{baris.JumlahTenant}</dd>
+                                <dt className="text-teks-sekunder">Aktif</dt>
+                                <dd className="text-right tabular-nums text-teks-utama">{baris.JumlahAktif}</dd>
+                                <dt className="text-teks-sekunder">Uji gagal</dt>
+                                <dd className="text-right tabular-nums text-teks-utama">{baris.JumlahUjiGagal}</dd>
+                                <dt className="text-teks-sekunder">Webhook sah 24 jam</dt>
+                                <dd className="text-right tabular-nums text-teks-utama">
+                                    {baris.WebhookDiterima24Jam}
+                                </dd>
+                                <dt className="text-teks-sekunder">Webhook ditolak 24 jam</dt>
+                                <dd className="text-right tabular-nums text-teks-utama">{baris.WebhookDitolak24Jam}</dd>
+                            </dl>
+                            {bolehKelola ? (
+                                baris.Diizinkan ? (
+                                    <Tombol
+                                        varian="sekunder"
+                                        disabled={memproses !== null}
+                                        onClick={() => {
+                                            AturLarang(baris);
+                                            AturAlasan('');
+                                        }}
+                                    >
+                                        Larang {baris.Label}
+                                    </Tombol>
+                                ) : (
+                                    <Tombol
+                                        varian="sekunder"
+                                        memproses={memproses === baris.Penyedia}
+                                        disabled={memproses !== null}
+                                        onClick={() => Ubah(baris, true)}
+                                    >
+                                        Izinkan {baris.Label}
+                                    </Tombol>
+                                )
+                            ) : null}
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+            {larang ? (
+                <Sheet
+                    open
+                    onOpenChange={(terbuka) => {
+                        if (!terbuka) {
+                            AturLarang(null);
+                        }
+                    }}
+                >
+                    <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+                        <SheetHeader>
+                            <SheetTitle className="text-subjudul text-teks-utama">Larang {larang.Label}</SheetTitle>
+                            <SheetDescription>
+                                {larang.JumlahAktif > 0
+                                    ? `${larang.JumlahAktif} toko aktif memakai penyedia ini dan tidak akan bisa membuat tagihan QRIS baru.`
+                                    : 'Toko tidak bisa lagi memilih penyedia ini.'}
+                            </SheetDescription>
+                        </SheetHeader>
+                        <form
+                            className="grid gap-3 px-4"
+                            noValidate
+                            onSubmit={(peristiwa) => {
+                                peristiwa.preventDefault();
+                                Ubah(larang, false, alasan);
+                            }}
+                        >
+                            <BidangTeks
+                                label="Alasan"
+                                nilai={alasan}
+                                saatBerubah={AturAlasan}
+                                galat={props.errors.Alasan}
+                                required
+                            />
+                            <SheetFooter className="flex-row px-0">
+                                <Tombol type="submit" varian="bahaya" memproses={memproses === larang.Penyedia}>
+                                    Larang penyedia
+                                </Tombol>
+                                <Tombol varian="sekunder" onClick={() => AturLarang(null)}>
+                                    Batal
+                                </Tombol>
+                            </SheetFooter>
+                        </form>
+                    </SheetContent>
+                </Sheet>
+            ) : null}
+        </section>
     );
 }
 

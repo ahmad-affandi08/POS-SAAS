@@ -146,8 +146,7 @@ it('DOKU: header tanda tangan HMACSHA256 & notifikasi palsu ditolak; hasil berup
     expect($gerbang->UraiWebhook($notif))->toBeNull();
 });
 
-it('penyedia tidak dikenal atau belum dikonfigurasi → null', function (): void {
-    config(['integrasi.GerbangPembayaran' => null]);
-    expect(app(PembuatGerbangPembayaran::class)->Buat('Tidakada', [], []))->toBeNull()
-        ->and(app(PembuatGerbangPembayaran::class)->AmbilAktif())->toBeNull();
+// v2.06: gerbang aktif dibaca per tenant (`AmbilAktifTenant`, diuji di GerbangPembayaranTenantTes); di sini hanya pabrik.
+it('penyedia tidak dikenal → null', function (): void {
+    expect(app(PembuatGerbangPembayaran::class)->Buat('Tidakada', [], []))->toBeNull();
 });

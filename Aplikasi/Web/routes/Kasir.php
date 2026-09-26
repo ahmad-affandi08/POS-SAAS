@@ -8,12 +8,13 @@ use App\Http\Kontroler\Kelola\Kasir\PengaturanKasirKontroler;
 use App\Http\Kontroler\Kelola\Kasir\PengaturanStrukKontroler;
 use App\Http\Kontroler\Kelola\Kasir\ShiftKontroler;
 use App\Http\Kontroler\Kelola\Kasir\TutupHarianKontroler;
+use App\Http\Kontroler\Kelola\Pembayaran\GerbangPembayaranKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Rute back-office F-06 shift & kas (PRD §13.6, D-06). Didaftarkan dari routes/web.php di dalam grup `/kelola`.
+ * Rute back-office F-06 shift & kas dan gerbang pembayaran tenant (PRD §13.6, D-06). Didaftarkan dari routes/web.php di dalam grup `/kelola`.
  * Parameter berpola ULID dan dicari lewat `MilikTenant` (milik tenant lain atau outlet di luar akses = 404).
  */
 
@@ -44,4 +45,13 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     // PLT-06 / POS-11 (PRD v1.79): pengaturan struk satu untuk semua outlet.
     Route::get('/kasir/struk', [PengaturanStrukKontroler::class, 'Tampilkan'])->middleware($outlet)->name('kelola.kasir.struk');
     Route::put('/kasir/struk', [PengaturanStrukKontroler::class, 'Simpan'])->middleware($outlet)->name('kelola.kasir.struk.simpan');
+
+    // F-08 / P-05 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant sendiri).
+    Route::middleware($izin(IzinTenant::PembayaranGerbangAtur))->prefix('/pembayaran/gerbang')->group(function (): void {
+        Route::get('/', [GerbangPembayaranKontroler::class, 'Tampilkan'])->name('kelola.pembayaran.gerbang');
+        Route::post('/', [GerbangPembayaranKontroler::class, 'Simpan'])->name('kelola.pembayaran.gerbang.simpan');
+        Route::post('/uji', [GerbangPembayaranKontroler::class, 'Uji'])->name('kelola.pembayaran.gerbang.uji');
+        Route::post('/aktifkan', [GerbangPembayaranKontroler::class, 'Aktifkan'])->name('kelola.pembayaran.gerbang.aktifkan');
+        Route::post('/nonaktifkan', [GerbangPembayaranKontroler::class, 'Nonaktifkan'])->name('kelola.pembayaran.gerbang.nonaktifkan');
+    });
 });

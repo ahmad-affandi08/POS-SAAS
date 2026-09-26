@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Integrasi\Enum;
 
+use App\Domain\Integrasi\Enum\PenyediaGerbang;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiGerbangPembayaran;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiKoneksi;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiKoneksiPenyedia;
@@ -18,7 +19,8 @@ use App\Domain\Pengelola\Integrasi\Penguji\PengujiWhatsapp;
  * boleh tampil; bidang kredensial disimpan terenkripsi dan tidak pernah ditampilkan ulang (BR-P05.1).
  *
  * - Email: semua penyedia lewat SMTP (relay SMTP resmi tiap penyedia), sehingga satu jalur kirim & satu penguji.
- * - Gerbang pembayaran: adaptor di `App\Domain\Integrasi\GerbangPembayaran` (QRIS dinamis).
+ * - Gerbang pembayaran: sejak v2.06 diatur per tenant; definisi bidang di `PenyediaGerbang` (domain Integrasi), di sini
+ *   hanya diteruskan untuk data lama.
  * - WhatsApp: resmi (WhatsApp Cloud API, Meta) atau tidak resmi berbasis WhatsApp Web (risiko nomor diblokir).
  */
 enum PenyediaIntegrasi: string
@@ -89,6 +91,12 @@ enum PenyediaIntegrasi: string
             ];
         }
 
+        $gerbang = $this->AmbilPenyediaGerbang();
+
+        if ($gerbang !== null) {
+            return [...($gerbang->CekPakaiMode() ? [self::MODE] : []), ...$gerbang->AmbilBidangPengaturan()];
+        }
+
         return match ($this) {
             self::Turnstile => [
                 ['Kunci' => 'KunciSitus', 'Label' => 'Kunci situs (site key)', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Kunci publik yang dipasang di halaman registrasi'],
@@ -97,29 +105,6 @@ enum PenyediaIntegrasi: string
                 ['Kunci' => 'Endpoint', 'Label' => 'Endpoint', 'Jenis' => 'Url', 'Wajib' => true, 'Keterangan' => 'Misal https://<akun>.r2.cloudflarestorage.com'],
                 ['Kunci' => 'Wilayah', 'Label' => 'Wilayah (region)', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Cloudflare R2: auto'],
                 ['Kunci' => 'Bucket', 'Label' => 'Bucket', 'Jenis' => 'Teks', 'Wajib' => true],
-            ],
-            self::Midtrans => [
-                self::MODE,
-                ['Kunci' => 'Akuisitor', 'Label' => 'Akuisitor QRIS', 'Jenis' => 'Pilihan', 'Wajib' => true, 'Opsi' => ['gopay', 'airpay shopee'], 'Bawaan' => 'gopay'],
-            ],
-            self::Xendit => [],
-            self::Tripay => [
-                self::MODE,
-                ['Kunci' => 'KodeMerchant', 'Label' => 'Kode merchant', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Misal T12345'],
-                ['Kunci' => 'KanalQris', 'Label' => 'Kanal QRIS', 'Jenis' => 'Pilihan', 'Wajib' => true, 'Opsi' => ['QRIS', 'QRISC', 'QRIS2'], 'Bawaan' => 'QRIS', 'Keterangan' => 'Kode kanal QRIS yang aktif di akun Tripay.'],
-            ],
-            self::Duitku => [
-                self::MODE,
-                ['Kunci' => 'KodeMerchant', 'Label' => 'Kode merchant', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Misal D1234'],
-                ['Kunci' => 'KanalQris', 'Label' => 'Kanal QRIS', 'Jenis' => 'Pilihan', 'Wajib' => true, 'Opsi' => ['SP', 'NQ', 'GQ', 'SQ'], 'Bawaan' => 'SP', 'Keterangan' => 'SP ShopeePay, NQ Nobu, GQ Gudang Voucher, SQ Nusapay.'],
-            ],
-            self::Ipaymu => [
-                self::MODE,
-                ['Kunci' => 'NomorVa', 'Label' => 'Nomor VA iPaymu', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Di menu Integrasi dasbor iPaymu.'],
-            ],
-            self::Doku => [
-                self::MODE,
-                ['Kunci' => 'IdKlien', 'Label' => 'Client ID', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'DOKU Checkout menampilkan halaman bayar QRIS (QR berisi tautan halaman bayar).'],
             ],
             self::MetaCloud => [
                 ['Kunci' => 'IdNomorTelepon', 'Label' => 'Phone number ID', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Dari WhatsApp Manager › API Setup.'],
@@ -147,23 +132,18 @@ enum PenyediaIntegrasi: string
             return [['Kunci' => 'KataSandi', 'Label' => $this->AmbilLabelKataSandi(), 'Wajib' => true]];
         }
 
+        $gerbang = $this->AmbilPenyediaGerbang();
+
+        if ($gerbang !== null) {
+            return $gerbang->AmbilBidangKredensial();
+        }
+
         return match ($this) {
             self::Turnstile => [['Kunci' => 'KunciRahasia', 'Label' => 'Kunci rahasia (secret key)', 'Wajib' => true]],
             self::S3 => [
                 ['Kunci' => 'IdKunciAkses', 'Label' => 'ID kunci akses (access key ID)', 'Wajib' => true],
                 ['Kunci' => 'KunciAksesRahasia', 'Label' => 'Kunci akses rahasia (secret access key)', 'Wajib' => true],
             ],
-            self::Midtrans => [['Kunci' => 'KunciServer', 'Label' => 'Server key', 'Wajib' => true]],
-            self::Xendit => [
-                ['Kunci' => 'KunciRahasia', 'Label' => 'Secret API key', 'Wajib' => true],
-                ['Kunci' => 'TokenCallback', 'Label' => 'Token verifikasi callback', 'Wajib' => true],
-            ],
-            self::Tripay => [
-                ['Kunci' => 'KunciApi', 'Label' => 'API key', 'Wajib' => true],
-                ['Kunci' => 'KunciPrivat', 'Label' => 'Private key', 'Wajib' => true],
-            ],
-            self::Duitku, self::Ipaymu => [['Kunci' => 'KunciApi', 'Label' => 'API key', 'Wajib' => true]],
-            self::Doku => [['Kunci' => 'KunciRahasia', 'Label' => 'Secret key', 'Wajib' => true]],
             self::MetaCloud => [['Kunci' => 'TokenAkses', 'Label' => 'Token akses permanen (system user)', 'Wajib' => true]],
             self::Fonnte => [['Kunci' => 'Token', 'Label' => 'Token perangkat Fonnte', 'Wajib' => true]],
             self::Wablas => [
@@ -209,12 +189,7 @@ enum PenyediaIntegrasi: string
             self::Hostinger => 'Hostinger Email',
             self::Turnstile => 'Cloudflare Turnstile',
             self::S3 => 'S3-compatible (misal Cloudflare R2)',
-            self::Midtrans => 'Midtrans',
-            self::Xendit => 'Xendit',
-            self::Tripay => 'Tripay',
-            self::Duitku => 'Duitku',
-            self::Ipaymu => 'iPaymu',
-            self::Doku => 'DOKU',
+            self::Midtrans, self::Xendit, self::Tripay, self::Duitku, self::Ipaymu, self::Doku => $this->AmbilPenyediaGerbang()?->AmbilLabel() ?? $this->value,
             self::MetaCloud => 'WhatsApp Cloud API (resmi, Meta)',
             self::Fonnte => 'Fonnte (tidak resmi)',
             self::Wablas => 'Wablas (tidak resmi)',
@@ -241,16 +216,17 @@ enum PenyediaIntegrasi: string
             self::Microsoft365 => 'SMTP AUTH harus diaktifkan untuk kotak surat ini.',
             self::ZohoMail => 'Pakai smtp.zoho.com.au/.eu sesuai pusat data akun.',
             self::Hostinger => '',
-            self::Midtrans => 'QRIS dinamis lewat Core API. Atur URL notifikasi di dasbor Midtrans ke /webhook/midtrans.',
-            self::Xendit => 'QRIS dinamis lewat QR Codes API. Atur URL callback QR di dasbor Xendit ke /webhook/xendit.',
-            self::Tripay => 'QRIS dinamis lewat transaksi closed payment. URL callback dikirim otomatis per transaksi.',
-            self::Duitku => 'QRIS dinamis lewat API v2. URL callback dikirim otomatis per transaksi.',
-            self::Ipaymu => 'QRIS dinamis lewat direct payment. Notifikasi dikonfirmasi ulang ke iPaymu sebelum dipercaya.',
-            self::Doku => 'DOKU Checkout (halaman bayar QRIS). Atur URL notifikasi di dasbor DOKU ke /webhook/doku.',
+            self::Midtrans, self::Xendit, self::Tripay, self::Duitku, self::Ipaymu, self::Doku => $this->AmbilPenyediaGerbang()?->AmbilKeterangan() ?? '',
             self::MetaCloud => 'Resmi dan aman dari pemblokiran. Di luar 24 jam percakapan wajib memakai templat yang disetujui Meta (berbayar per percakapan).',
             self::Fonnte, self::Wablas, self::StarSender, self::Watzap => 'Tidak resmi (WhatsApp Web): murah dan mudah, tetapi nomor bisa diblokir WhatsApp bila mengirim massal. Pakai nomor khusus, bukan nomor utama usaha.',
             default => '',
         };
+    }
+
+    /** v2.06: definisi penyedia gerbang pembayaran dipindah ke katalog `PenyediaGerbang` (domain Integrasi). */
+    public function AmbilPenyediaGerbang(): ?PenyediaGerbang
+    {
+        return PenyediaGerbang::tryFrom($this->value);
     }
 
     /**

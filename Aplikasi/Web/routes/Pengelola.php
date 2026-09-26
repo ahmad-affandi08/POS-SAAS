@@ -166,6 +166,10 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
                 Route::post('/integrasi/{konfigurasiIntegrasi}/uji', [IntegrasiKontroler::class, 'Uji'])->name('pengelola.integrasi.uji');
                 Route::post('/integrasi/{konfigurasiIntegrasi}/aktifkan', [IntegrasiKontroler::class, 'Aktifkan'])->name('pengelola.integrasi.aktifkan');
                 Route::post('/integrasi/{konfigurasiIntegrasi}/nonaktifkan', [IntegrasiKontroler::class, 'Nonaktifkan'])->name('pengelola.integrasi.nonaktifkan');
+                // v2.06: katalog penyedia gerbang pembayaran yang boleh dipilih tenant.
+                Route::post('/integrasi/gerbang-pembayaran/{penyedia}', [IntegrasiKontroler::class, 'UbahIzinGerbang'])
+                    ->where('penyedia', 'Midtrans|Xendit|Tripay|Duitku|Ipaymu|Doku')
+                    ->name('pengelola.integrasi.gerbang.ubah');
             });
         });
 

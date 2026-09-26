@@ -133,7 +133,8 @@ export type PropsMetodePembayaranPanduan = {
     Bank: { Kode: string; Nama: string; Jenis: 'Bank' | 'Ewallet' | 'JaringanEdc' | 'PenerbitQris' }[];
     BatasGambarQris: { UkuranMaksimalKb: number; Ekstensi: string[] };
     /** F-08: gerbang pembayaran aktif dari konsol platform (QRIS dinamis). Tanpa kredensial. */
-    GerbangPembayaran: { Aktif: boolean; Penyedia: string | null };
+    /** v2.06: gerbang milik toko; `Tautan` = halaman pengaturan gerbang (opsional untuk data lama). */
+    GerbangPembayaran: { Aktif: boolean; Penyedia: string | null; Tautan?: string };
 };
 
 export type KodeAktivasiBaru = {

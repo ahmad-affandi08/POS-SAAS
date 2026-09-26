@@ -4,34 +4,27 @@ declare(strict_types=1);
 
 namespace App\Domain\Integrasi\Layanan;
 
-use App\Domain\Integrasi\GerbangPembayaran\PembuatGerbangPembayaran;
+use App\Domain\Integrasi\Model\GerbangPembayaranTenant;
 
 /**
- * Ringkasan gerbang pembayaran aktif untuk back-office tenant (F-08 QRIS dinamis): hanya ada/tidaknya gerbang dan
- * label penyedianya. Kredensial & pengaturan tidak pernah keluar dari sini.
+ * Ringkasan gerbang pembayaran milik tenant aktif untuk back-office (F-08 QRIS dinamis, v2.06): ada/tidaknya gerbang
+ * aktif yang bisa dipakai, label penyedianya, dan tautan ke halaman pengaturannya. Kredensial & pengaturan tidak
+ * pernah keluar dari sini.
  */
 final class InfoGerbangPembayaran
 {
-    private const LABEL = [
-        'Midtrans' => 'Midtrans',
-        'Xendit' => 'Xendit',
-        'Tripay' => 'Tripay',
-        'Duitku' => 'Duitku',
-        'Ipaymu' => 'iPaymu',
-        'Doku' => 'DOKU',
-    ];
+    public const TAUTAN = '/kelola/pembayaran/gerbang';
 
-    public function __construct(private readonly PembuatGerbangPembayaran $pembuat) {}
+    public function __construct(private readonly KatalogPenyediaGerbang $katalog) {}
 
     /**
-     * @return array{Aktif: bool, Penyedia: string|null}
+     * @return array{Aktif: bool, Penyedia: string|null, Tautan: string}
      */
     public function Ambil(): array
     {
-        $gerbang = $this->pembuat->AmbilAktif();
+        $baris = GerbangPembayaranTenant::query()->where('Aktif', true)->first(['Id', 'Penyedia', 'Aktif']);
+        $aktif = $baris !== null && $this->katalog->CekDiizinkan($baris->Penyedia);
 
-        return $gerbang === null
-            ? ['Aktif' => false, 'Penyedia' => null]
-            : ['Aktif' => true, 'Penyedia' => self::LABEL[$gerbang->AmbilKode()] ?? $gerbang->AmbilKode()];
+        return ['Aktif' => $aktif, 'Penyedia' => $aktif ? $baris->Penyedia->AmbilLabel() : null, 'Tautan' => self::TAUTAN];
     }
 }

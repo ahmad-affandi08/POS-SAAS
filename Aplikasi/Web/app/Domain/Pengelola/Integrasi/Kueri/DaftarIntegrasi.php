@@ -11,7 +11,8 @@ use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 
 /**
  * Halaman integrasi (P-05): satu slot per jenis × lingkungan. Kredensial tidak pernah ikut, hanya petunjuknya
- * (BR-P05.1).
+ * (BR-P05.1). Gerbang pembayaran sejak v2.06 diatur tenant; halaman ini hanya menampilkan katalognya
+ * (`RingkasanGerbangTenant`).
  */
 final class DaftarIntegrasi
 {
@@ -25,7 +26,7 @@ final class DaftarIntegrasi
         );
         $hasil = [];
 
-        foreach (JenisIntegrasi::cases() as $jenis) {
+        foreach (JenisIntegrasi::AmbilJenisPlatform() as $jenis) {
             foreach (LingkunganIntegrasi::cases() as $lingkungan) {
                 $konfigurasi = $tersimpan->get($jenis->value.'|'.$lingkungan->value);
                 $penyedia = $konfigurasi instanceof KonfigurasiIntegrasi ? $konfigurasi->Penyedia : $jenis->AmbilPenyedia();

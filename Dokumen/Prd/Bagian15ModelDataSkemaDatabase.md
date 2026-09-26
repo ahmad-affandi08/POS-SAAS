@@ -137,6 +137,8 @@ erDiagram
 | `MetodePembayaran` | IdTenant, Jenis (Tunai/QrisStatis/QrisDinamis/Edc/Transfer/Ewallet/Tempo/Deposit/Poin/Voucher/Marketplace), Nama, IdAkun, IdAkunKliring, PersenBiaya, BiayaTetap, Aktif, Uuid, IdReferensiBank, NomorRekening, NamaPemilikRekening, PathGambarQris (disk privat), Urutan (F-01). `IdAkun` kosong = diturunkan dari `PemetaanAkun` menurut jenis. Tunai selalu ada. MDR dikonfigurasi per metode dengan batas kewajaran 10% (`config/pembayaran.php`) |
 | `TagihanQris` | IdTenant, IdOutlet, IdPerangkat, IdMetodePembayaran, Uuid, NomorPesanan (unik), Jumlah, JumlahDiterima, Penyedia, IdReferensi, IsiQr, HalamanBayar, Status, KedaluwarsaPada, LunasPada, TerakhirDicekPada, UuidPenjualan (v2.05, F-08) |
 | `PesanKeluar` | IdTenant, Uuid, Jenis, IdReferensi, Kanal (Whatsapp/Email), Tujuan (terenkripsi), Status, PesanGalat, Percobaan, TerkirimPada (v2.05, struk digital) |
+| `GerbangPembayaranTenant` | IdTenant (unik), Uuid, Penyedia, Lingkungan (Sandbox/Produksi), Pengaturan, Kredensial (terenkripsi), PetunjukKredensial, StatusUji, PesanUji, DiujiPada, Aktif, TokenWebhook (unik), WebhookDiterimaPada, WebhookDitolakPada (v2.06, D-19) |
+| `KatalogGerbangPembayaran` | Penyedia (unik), Diizinkan — data platform tanpa IdTenant (v2.06) |
 | `ReturPenjualan` / `ReturPenjualanDetail` | IdPenjualanAsal, Nomor, Alasan, MetodeRefund, Status / IdPenjualanDetail, Jumlah, IdGudangRestok, Kondisi |
 | `VoidPenjualan` | IdPenjualan, Alasan, DisetujuiOleh, DivoidOleh |
 | `Persetujuan` | IdTenant, Jenis, JenisSubjek, IdSubjek, DimintaOleh, DisetujuiOleh, Metode (Pin/Otp/JarakJauh), Alasan, Jumlah |

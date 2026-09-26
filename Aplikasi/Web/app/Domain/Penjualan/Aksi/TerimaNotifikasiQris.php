@@ -13,10 +13,12 @@ use App\Domain\Tenant\Kueri\ProfilTenant;
 use Illuminate\Support\Facades\Log;
 
 /**
- * F-08 BR-08.5: notifikasi gerbang (tanda tangan sudah diverifikasi adaptor) diterapkan ke tagihan QRIS. Tenant
- * diambil dari `NomorPesanan` (`PY{tenant basis-36}-{Uuid}`) lalu dipasang sebagai konteks, sehingga pencarian tetap
- * lewat scope `MilikTenant` (tanpa query lintas tenant). Tagihan tidak dikenal / penyedia berbeda = false (dijawab
- * 200 agar gerbang berhenti mengulang) dan dicatat di log. Idempoten: tagihan `Lunas` tidak berubah lagi.
+ * F-08 BR-08.5: notifikasi gerbang (tanda tangan sudah diverifikasi adaptor dengan kredensial tenant pemilik URL
+ * webhook, v2.06) diterapkan ke tagihan QRIS. Tenant di `NomorPesanan` (`PY{tenant basis-36}-{Uuid}`) wajib sama dengan
+ * tenant pemilik webhook: tenant yang menandatangani notifikasi dengan kuncinya sendiri tidak bisa melunasi tagihan
+ * tenant lain. Pencarian lewat scope `MilikTenant` (tanpa query lintas tenant). Tagihan tidak dikenal / tenant atau
+ * penyedia berbeda = false (dijawab 200 agar gerbang berhenti mengulang) dan dicatat di log. Idempoten: tagihan
+ * `Lunas` tidak berubah lagi.
  */
 final class TerimaNotifikasiQris
 {
@@ -26,12 +28,16 @@ final class TerimaNotifikasiQris
         private readonly PenerapStatusTagihanQris $penerap,
     ) {}
 
-    public function Jalankan(HasilWebhook $notifikasi, string $kodePenyedia): bool
+    public function Jalankan(HasilWebhook $notifikasi, string $kodePenyedia, int $idTenantWebhook): bool
     {
         $nomor = NomorPesananQris::Urai($notifikasi->nomorPesanan);
 
         if ($nomor === null || ! $this->profil->CekAda($nomor['IdTenant'])) {
             return $this->Abaikan($notifikasi, $kodePenyedia, 'nomor pesanan tidak dikenal');
+        }
+
+        if ($nomor['IdTenant'] !== $idTenantWebhook) {
+            return $this->Abaikan($notifikasi, $kodePenyedia, 'nomor pesanan milik tenant lain');
         }
 
         $konteksLama = $this->konteks->Ambil();

@@ -16,6 +16,17 @@ enum JenisIntegrasi: string
     case GerbangPembayaran = 'GerbangPembayaran';
     case Whatsapp = 'Whatsapp';
 
+    /**
+     * Jenis yang dikonfigurasi di tingkat platform. v2.06: gerbang pembayaran diatur tiap tenant (akun merchant
+     * tenant), platform hanya mengatur katalog penyedianya; baris lama jenis ini diabaikan.
+     *
+     * @return list<self>
+     */
+    public static function AmbilJenisPlatform(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $jenis): bool => $jenis !== self::GerbangPembayaran));
+    }
+
     /** Penyedia bawaan formulir (konfigurasi lama sebelum v2.04 memakai penyedia ini). */
     public function AmbilPenyedia(): PenyediaIntegrasi
     {

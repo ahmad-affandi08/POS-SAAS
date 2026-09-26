@@ -21,6 +21,7 @@ use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
+use Tests\Pendukung\Penjualan\BantuanGerbangTenant;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
 use Tests\Pendukung\Persediaan\PemeriksaInvarian;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
@@ -36,13 +37,7 @@ const KUNCI_SERVER_UJI = 'SB-Mid-server-uji';
 
 beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
-    AktifkanMidtransUji();
 });
-
-function AktifkanMidtransUji(): void
-{
-    config(['integrasi.GerbangPembayaran' => ['Penyedia' => 'Midtrans', 'Pengaturan' => ['Mode' => 'Sandbox', 'Akuisitor' => 'gopay'], 'Kredensial' => ['KunciServer' => KUNCI_SERVER_UJI]]]);
-}
 
 /**
  * Midtrans palsu: status transaksi = isi `$status` saat dipanggil; `tolak` = charge ditolak (401, pesan memuat kunci).
@@ -82,11 +77,16 @@ function BuatQrisPos(TestCase $tes, array $k, MetodePembayaran $metode, string $
     ]);
 }
 
-function WebhookMidtrans(TestCase $tes, string $nomor, string $jumlah = '38500.00', string $status = 'settlement', string $kunci = KUNCI_SERVER_UJI, string $penyedia = 'midtrans'): TestResponse
+/**
+ * Notifikasi Midtrans ke URL webhook tenant pemilik `$k` (v2.06 `/webhook/{penyedia}/{tokenWebhook}`).
+ *
+ * @param  array<string, mixed>  $k
+ */
+function WebhookMidtrans(TestCase $tes, array $k, string $nomor, string $jumlah = '38500.00', string $status = 'settlement', string $kunci = KUNCI_SERVER_UJI, string $penyedia = 'midtrans'): TestResponse
 {
     $isi = ['order_id' => $nomor, 'status_code' => '200', 'gross_amount' => $jumlah, 'transaction_status' => $status, 'transaction_id' => 'trx-1'];
 
-    return $tes->postJson("/webhook/{$penyedia}", $isi + ['signature_key' => hash('sha512', $nomor.'200'.$jumlah.$kunci)]);
+    return $tes->postJson("/webhook/{$penyedia}/{$k['TokenWebhook']}", $isi + ['signature_key' => hash('sha512', $nomor.'200'.$jumlah.$kunci)]);
 }
 
 /**
@@ -95,8 +95,11 @@ function WebhookMidtrans(TestCase $tes, string $nomor, string $jumlah = '38500.0
 function SiapkanQrisDinamis(TestCase $tes, string $namaUsaha = 'Toko Kelontong Berkah Solo'): array
 {
     $k = BantuanPenjualan::Siapkan($tes, $namaUsaha);
+    // v2.06: gerbang milik tenant (akun merchant tenant sendiri), sudah lolos uji & aktif.
+    $gerbang = BantuanGerbangTenant::Aktifkan($k['Tenant']->Id, kredensial: ['KunciServer' => KUNCI_SERVER_UJI]);
 
     return $k + [
+        'TokenWebhook' => $gerbang->TokenWebhook,
         'QrisDinamis' => BantuanPenjualan::BuatMetode(JenisMetodePembayaran::QrisDinamis, 'QRIS Otomatis'),
         'Minyak' => BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id),
     ];
@@ -140,7 +143,7 @@ describe('F-08 QRIS dinamis: buat tagihan dari POS', function (): void {
         expect(HitungPanggilanMidtrans('/v2/charge'))->toBe(1);
         Http::assertSent(fn (PermintaanHttp $r) => str_ends_with($r->url(), '/v2/charge')
             && $r['transaction_details'] === ['order_id' => $nomor, 'gross_amount' => 38500]
-            && $r->hasHeader('X-Override-Notification', url('/webhook/midtrans')));
+            && $r->hasHeader('X-Override-Notification', url('/webhook/midtrans/'.$k['TokenWebhook'])));
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $tagihan = TagihanQris::query()->sole();
@@ -168,7 +171,7 @@ describe('F-08 QRIS dinamis: buat tagihan dari POS', function (): void {
             ->and($galat(BuatQrisPos($this, $k, $k['QrisDinamis'], '-5000')))->toBe([422, 'JumlahTidakValid'])
             ->and($galat(BuatQrisPos($this, $k, $k['QrisDinamis'], '100000000.00')))->toBe([201, null]);
 
-        config(['integrasi.GerbangPembayaran' => null]);
+        BantuanGerbangTenant::Nonaktifkan($k['Tenant']->Id);
         expect($galat(BuatQrisPos($this, $k, $k['QrisDinamis'])))->toBe([409, 'GerbangBelumAktif'])
             ->and(HitungPanggilanMidtrans('/v2/charge'))->toBe(1);
     });
@@ -233,18 +236,18 @@ describe('F-08 QRIS dinamis: status, webhook, batal', function (): void {
         $k = SiapkanQrisDinamis($this);
         $buat = BuatQrisPos($this, $k, $k['QrisDinamis'])->json();
 
-        WebhookMidtrans($this, $buat['NomorPesanan'], kunci: 'kunci-palsu')->assertStatus(401);
-        WebhookMidtrans($this, $buat['NomorPesanan'], penyedia: 'xendit')->assertNotFound();
-        WebhookMidtrans($this, $buat['NomorPesanan'], '20000.00')->assertOk()->assertExactJson(['Diterima' => true]);
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'], kunci: 'kunci-palsu')->assertStatus(401);
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'], penyedia: 'xendit')->assertNotFound();
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'], '20000.00')->assertOk()->assertExactJson(['Diterima' => true]);
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $tagihan = TagihanQris::query()->sole();
         expect($tagihan->Status)->toBe(StatusTagihanQris::Menunggu)
             ->and(LogAudit::query()->where('Peristiwa', 'tagihan-qris.jumlah-berbeda')->count())->toBe(1);
 
-        WebhookMidtrans($this, $buat['NomorPesanan'])->assertOk()->assertExactJson(['Diterima' => true]);
-        WebhookMidtrans($this, $buat['NomorPesanan'])->assertOk()->assertExactJson(['Diterima' => true]);
-        WebhookMidtrans($this, $buat['NomorPesanan'], status: 'expire')->assertOk();
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'])->assertOk()->assertExactJson(['Diterima' => true]);
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'])->assertOk()->assertExactJson(['Diterima' => true]);
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'], status: 'expire')->assertOk();
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $tagihan->refresh();
@@ -253,11 +256,11 @@ describe('F-08 QRIS dinamis: status, webhook, batal', function (): void {
             ->and($tagihan->LunasPada)->not->toBeNull()
             ->and(RiwayatStatusDokumen::query()->where('JenisDokumen', 'TagihanQris')->where('StatusKe', 'Lunas')->count())->toBe(1);
 
-        WebhookMidtrans($this, 'PY'.base_convert((string) $k['Tenant']->Id, 10, 36).'-'.BantuanKasir::Uuid())->assertOk()->assertExactJson(['Diterima' => false]);
-        WebhookMidtrans($this, 'ORDER-LAIN-1')->assertOk()->assertExactJson(['Diterima' => false]);
+        WebhookMidtrans($this, $k, 'PY'.base_convert((string) $k['Tenant']->Id, 10, 36).'-'.BantuanKasir::Uuid())->assertOk()->assertExactJson(['Diterima' => false]);
+        WebhookMidtrans($this, $k, 'ORDER-LAIN-1')->assertOk()->assertExactJson(['Diterima' => false]);
 
-        config(['integrasi.GerbangPembayaran' => null]);
-        WebhookMidtrans($this, $buat['NomorPesanan'])->assertNotFound();
+        BantuanGerbangTenant::Nonaktifkan($k['Tenant']->Id);
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'])->assertNotFound();
     });
 
     it('batal: Menunggu = Dibatalkan (idempoten); Lunas = 409 SudahLunas; gerbang ditanya dulu sehingga pembayaran yang baru masuk tidak dibatalkan', function (): void {
@@ -271,7 +274,7 @@ describe('F-08 QRIS dinamis: status, webhook, batal', function (): void {
         $batal($satu)->assertOk()->assertExactJson(['Uuid' => $satu, 'Status' => 'Dibatalkan']);
 
         $dua = BuatQrisPos($this, $k, $k['QrisDinamis'])->json();
-        WebhookMidtrans($this, $dua['NomorPesanan'])->assertOk();
+        WebhookMidtrans($this, $k, $dua['NomorPesanan'])->assertOk();
         expect($batal($dua['Uuid'])->assertStatus(409)->json('Galat.Kode'))->toBe('SudahLunas');
 
         $tiga = BuatQrisPos($this, $k, $k['QrisDinamis'])->json('Uuid');
@@ -294,7 +297,9 @@ describe('F-08 QRIS dinamis: status, webhook, batal', function (): void {
         // Metode tenant A tidak dikenal perangkat tenant B.
         expect(BuatQrisPos($this, $b, $a['QrisDinamis'])->assertStatus(422)->json('Galat.Kode'))->toBe('MetodeBukanQrisDinamis');
 
-        WebhookMidtrans($this, $tagihanB['NomorPesanan'], '12000.00')->assertOk()->assertExactJson(['Diterima' => true]);
+        // v2.06: notifikasi sah lewat URL webhook tenant A tidak bisa melunasi tagihan tenant B.
+        WebhookMidtrans($this, $a, $tagihanB['NomorPesanan'], '12000.00')->assertOk()->assertExactJson(['Diterima' => false]);
+        WebhookMidtrans($this, $b, $tagihanB['NomorPesanan'], '12000.00')->assertOk()->assertExactJson(['Diterima' => true]);
 
         BantuanOrganisasi::AturKonteks($b['Tenant']->Id);
         expect(TagihanQris::query()->sole()->Status)->toBe(StatusTagihanQris::Lunas);
@@ -310,7 +315,7 @@ describe('F-08 QRIS dinamis: pemakaian di Penjualan.Buat', function (): void {
         PalsukanMidtrans($status);
         $k = SiapkanQrisDinamis($this);
         $buat = BuatQrisPos($this, $k, $k['QrisDinamis'])->json();
-        WebhookMidtrans($this, $buat['NomorPesanan'])->assertOk();
+        WebhookMidtrans($this, $k, $buat['NomorPesanan'])->assertOk();
 
         $item = BantuanPenjualan::Item($k, [
             'Baris' => [['Produk' => $k['Minyak'], 'Jumlah' => '1', 'Harga' => '38500.00']],
@@ -337,10 +342,10 @@ describe('F-08 QRIS dinamis: pemakaian di Penjualan.Buat', function (): void {
         PalsukanMidtrans($status);
         $k = SiapkanQrisDinamis($this);
         $lunas = BuatQrisPos($this, $k, $k['QrisDinamis'])->json();
-        WebhookMidtrans($this, $lunas['NomorPesanan'])->assertOk();
+        WebhookMidtrans($this, $k, $lunas['NomorPesanan'])->assertOk();
         $menunggu = BuatQrisPos($this, $k, $k['QrisDinamis'])->json();
         $kecil = BuatQrisPos($this, $k, $k['QrisDinamis'], '20000')->json();
-        WebhookMidtrans($this, $kecil['NomorPesanan'], '20000.00')->assertOk();
+        WebhookMidtrans($this, $k, $kecil['NomorPesanan'], '20000.00')->assertOk();
         $jual = fn (?string $referensi) => BantuanPenjualan::Item($k, [
             'Baris' => [['Produk' => $k['Minyak'], 'Jumlah' => '1', 'Harga' => '38500.00']],
             'Pembayaran' => [['Metode' => $k['QrisDinamis'], 'Jumlah' => '38500.00', 'Referensi' => $referensi]],
@@ -369,10 +374,11 @@ describe('F-08 QRIS dinamis: pemakaian di Penjualan.Buat', function (): void {
 describe('F-08 QRIS dinamis: back-office & data awal POS', function (): void {
     it('pemilik menambah metode QRIS dinamis tanpa gambar/bank; halaman memberi tahu gerbang aktif (tanpa kredensial); data-awal POS memuatnya', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+        BantuanGerbangTenant::Aktifkan($tenant->Id, kredensial: ['KunciServer' => KUNCI_SERVER_UJI]);
 
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/panduan-awal/metode-pembayaran')
             ->assertInertia(fn (AssertableInertia $h) => $h
-                ->where('GerbangPembayaran', ['Aktif' => true, 'Penyedia' => 'Midtrans'])
+                ->where('GerbangPembayaran', ['Aktif' => true, 'Penyedia' => 'Midtrans', 'Tautan' => '/kelola/pembayaran/gerbang'])
                 ->where('JenisTersedia', fn ($jenis) => collect($jenis)->pluck('Nilai')->contains('QrisDinamis')));
         expect(BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/panduan-awal/metode-pembayaran')->getContent())
             ->not->toContain(KUNCI_SERVER_UJI);
@@ -385,9 +391,9 @@ describe('F-08 QRIS dinamis: back-office & data awal POS', function (): void {
         $metode = MetodePembayaran::query()->where('Jenis', 'QrisDinamis')->sole();
         expect($metode->Nama)->toBe('QRIS Otomatis')->and($metode->PathGambarQris)->toBeNull()->and($metode->IdReferensiBank)->toBeNull();
 
-        config(['integrasi.GerbangPembayaran' => null]);
+        BantuanGerbangTenant::Nonaktifkan($tenant->Id);
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/panduan-awal/metode-pembayaran')
-            ->assertInertia(fn (AssertableInertia $h) => $h->where('GerbangPembayaran', ['Aktif' => false, 'Penyedia' => null]));
+            ->assertInertia(fn (AssertableInertia $h) => $h->where('GerbangPembayaran', ['Aktif' => false, 'Penyedia' => null, 'Tautan' => '/kelola/pembayaran/gerbang']));
     });
 
     it('data-awal POS memuat metode QRIS dinamis aktif', function (): void {

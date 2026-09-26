@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Integrasi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pengelola\Integrasi\Data\DataKonfigurasiIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\StatusIntegrasi;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
@@ -26,6 +27,10 @@ final class SimpanKonfigurasiIntegrasi
 
     public function Jalankan(PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
     {
+        if ($data->jenis === JenisIntegrasi::GerbangPembayaran) {
+            throw new PelanggaranAturanBisnis('GerbangPerTenant', 'Sejak v2.06 gerbang pembayaran diatur tiap tenant dengan akun merchant sendiri. Atur penyedia yang diizinkan di bagian katalog gerbang.', 'Jenis');
+        }
+
         if ($data->lingkungan === LingkunganIntegrasi::Produksi && ($data->alasan === null || trim($data->alasan) === '')) {
             throw new PelanggaranAturanBisnis('BR-P05.2', 'Tulis alasan perubahan konfigurasi produksi.', 'Alasan');
         }

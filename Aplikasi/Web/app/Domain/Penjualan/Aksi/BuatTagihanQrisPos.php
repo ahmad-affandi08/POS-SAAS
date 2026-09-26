@@ -23,12 +23,13 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 
 /**
- * F-08 QRIS dinamis (BR-08.5): POS meminta tagihan QRIS untuk satu pembayaran lewat gerbang aktif (P-05).
+ * F-08 QRIS dinamis (BR-08.5): POS meminta tagihan QRIS untuk satu pembayaran lewat gerbang pembayaran aktif milik
+ * tenant (v2.06: akun merchant tenant, penyedia diizinkan platform; URL notifikasi = URL webhook tenant).
  * - Idempoten per `Uuid` perangkat: Uuid yang sama mengembalikan tagihan yang sama tanpa memanggil gerbang lagi.
  * - Baris dicadangkan dulu (indeks unik `IdTenant+Uuid`, `IsiQr` kosong) lalu gerbang dipanggil di luar transaksi DB;
  *   gerbang gagal = cadangan dihapus (Uuid yang sama boleh dicoba lagi) dan 502 `GerbangGagal` berpesan aman.
  * - Berlaku `MENIT_BERLAKU` menit (atau batas dari gerbang bila lebih dulu).
- * - Galat: 409 `GerbangBelumAktif`, 422 `MetodeBukanQrisDinamis`, 422 `JumlahTidakBulat`/`JumlahTidakValid`,
+ * - Galat: 409 `GerbangBelumAktif` (tenant belum mengaktifkan gerbang atau penyedianya dilarang platform), 422 `MetodeBukanQrisDinamis`, 422 `JumlahTidakBulat`/`JumlahTidakValid`,
  *   409 `UuidSudahDipakai` (Uuid milik perangkat lain), 409 `TagihanSedangDibuat` (permintaan sama masih diproses).
  *
  * Hasil: [tagihan, baru dibuat?].
@@ -62,8 +63,9 @@ final class BuatTagihanQrisPos
             return [$ada, false];
         }
 
-        $gerbang = $this->pembuatGerbang->AmbilAktif()
-            ?? throw new PelanggaranAturanBisnis('GerbangBelumAktif', 'QRIS dinamis belum bisa dipakai karena gerbang pembayaran belum diaktifkan. Pakai metode lain.', 'UuidMetode', 409);
+        $gerbangTenant = $this->pembuatGerbang->AmbilAktifTenant()
+            ?? throw new PelanggaranAturanBisnis('GerbangBelumAktif', 'QRIS dinamis belum bisa dipakai karena gerbang pembayaran toko belum diaktifkan. Pakai metode lain.', 'UuidMetode', 409);
+        $gerbang = $gerbangTenant->gerbang;
 
         $metode = MetodePembayaran::query()->where('Uuid', strtoupper($data->uuidMetode))->first();
 
@@ -104,7 +106,7 @@ final class BuatTagihanQrisPos
                 jumlah: $jumlah,
                 keterangan: $keterangan ?? 'Pembayaran QRIS',
                 kedaluwarsaPada: $kedaluwarsa,
-                urlNotifikasi: route('webhook.gerbang-pembayaran', ['penyedia' => strtolower($gerbang->AmbilKode())]),
+                urlNotifikasi: $gerbangTenant->urlNotifikasi,
             ));
         } catch (GalatGerbang $galat) {
             $tagihan->delete();

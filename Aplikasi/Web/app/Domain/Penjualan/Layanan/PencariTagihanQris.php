@@ -59,9 +59,11 @@ final class PencariTagihanQris
             return $tagihan->refresh();
         }
 
-        $gerbang = $this->pembuatGerbang->AmbilAktif();
+        // v2.06: gerbang tenant yang penyedianya sama dengan saat tagihan dibuat; tenant sudah ganti penyedia = tidak bisa
+        // dicek (tetap Menunggu sampai webhook masuk atau kedaluwarsa).
+        $gerbang = $this->pembuatGerbang->AmbilUntukTagihan($tagihan->Penyedia);
 
-        if ($gerbang === null || $gerbang->AmbilKode() !== $tagihan->Penyedia) {
+        if ($gerbang === null) {
             return $tagihan->refresh();
         }
 

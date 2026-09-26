@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\Integrasi\GerbangPembayaran\Adaptor\AdaptorMidtrans;
-use App\Domain\Integrasi\GerbangPembayaran\PembuatGerbangPembayaran;
 use App\Domain\Integrasi\Whatsapp\Adaptor\AdaptorFonnte;
 use App\Domain\Integrasi\Whatsapp\PembuatPengirimWhatsapp;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
@@ -14,6 +12,7 @@ use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
@@ -58,10 +57,12 @@ describe('v2.04 katalog penyedia', function (): void {
 
         MasukTeknisPenyedia($this);
         $this->get(BantuanPengelola::Url('/integrasi'))->assertInertia(fn (AssertableInertia $halaman) => $halaman
-            ->where('Integrasi.6.Jenis', 'GerbangPembayaran')
-            ->has('Integrasi.6.DaftarPenyedia', 6)
-            ->where('Integrasi.8.Jenis', 'Whatsapp')
-            ->where('Integrasi.8.DaftarPenyedia.1.Resmi', false));
+            // v2.06: gerbang pembayaran bukan lagi slot platform; tampil sebagai katalog untuk tenant.
+            ->where('Integrasi.6.Jenis', 'Whatsapp')
+            ->where('Integrasi.6.DaftarPenyedia.1.Resmi', false)
+            ->has('GerbangTenant', 6)
+            ->where('GerbangTenant.0.Penyedia', 'Midtrans')
+            ->where('GerbangTenant.0.Diizinkan', true));
     });
 
     it('pilih SendGrid untuk email; ganti ke Brevo mewajibkan kredensial baru dan mengulang uji', function (): void {
@@ -99,35 +100,15 @@ describe('v2.04 katalog penyedia', function (): void {
         expect(KonfigurasiIntegrasi::query()->count())->toBe(0);
     });
 
-    it('gerbang Midtrans: simpan, uji ke Midtrans (kunci diterima), aktifkan → adaptor aktif di runtime', function (): void {
-        Http::fake(['api.sandbox.midtrans.com/*' => Http::response(['status_code' => '404', 'status_message' => "Transaction doesn't exist."], 404)]);
+    it('v2.06: gerbang pembayaran tidak lagi disimpan di tingkat platform (akun merchant milik tenant)', function (): void {
         MasukTeknisPenyedia($this);
         $this->post(BantuanPengelola::Url('/integrasi'), [
             'Jenis' => 'GerbangPembayaran', 'Lingkungan' => 'Staging', 'Penyedia' => 'Midtrans',
             'Pengaturan' => ['Mode' => 'Sandbox', 'Akuisitor' => 'gopay'], 'Kredensial' => ['KunciServer' => 'SB-Mid-server-rahasia-4321'], 'RotasiSetiapHari' => 90,
-        ])->assertSessionHasNoErrors();
-        $uuid = KonfigurasiJenis('GerbangPembayaran')->Uuid;
-        $this->post(BantuanPengelola::Url("/integrasi/{$uuid}/uji"))->assertSessionHasNoErrors();
-        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://api.sandbox.midtrans.com/v2/') && $r->hasHeader('Authorization', 'Basic '.base64_encode('SB-Mid-server-rahasia-4321:')));
-        $this->post(BantuanPengelola::Url("/integrasi/{$uuid}/aktifkan"))->assertSessionHasNoErrors();
+        ])->assertSessionHasErrors('Jenis');
 
-        PenerapKonfigurasiIntegrasi::LupakanCache();
-        app(PenerapKonfigurasiIntegrasi::class)->Terapkan();
-        expect(app(PembuatGerbangPembayaran::class)->AmbilAktif())->toBeInstanceOf(AdaptorMidtrans::class)
-            ->and(config('integrasi.GerbangPembayaran.Pengaturan.Mode'))->toBe('Sandbox');
-    });
-
-    it('gerbang: kunci ditolak (401) → status Gagal dengan pesan tanpa kredensial', function (): void {
-        Http::fake(['api.xendit.co/*' => Http::response(['error_code' => 'INVALID_API_KEY', 'message' => 'API key is invalid'], 401)]);
-        MasukTeknisPenyedia($this);
-        $this->post(BantuanPengelola::Url('/integrasi'), [
-            'Jenis' => 'GerbangPembayaran', 'Lingkungan' => 'Staging', 'Penyedia' => 'Xendit', 'Pengaturan' => [],
-            'Kredensial' => ['KunciRahasia' => 'xnd_development_rahasia_9999', 'TokenCallback' => 'token-callback-rahasia'], 'RotasiSetiapHari' => 90,
-        ])->assertSessionHasNoErrors();
-        $konfigurasi = KonfigurasiJenis('GerbangPembayaran');
-        $this->post(BantuanPengelola::Url("/integrasi/{$konfigurasi->Uuid}/uji"))->assertSessionHasErrors('Umum');
-        expect($konfigurasi->refresh()->Status)->toBe(StatusIntegrasi::Gagal)
-            ->and($konfigurasi->HasilUji['Pesan'])->toContain('API key is invalid')->not->toContain('xnd_development_rahasia_9999');
+        expect(KonfigurasiIntegrasi::query()->count())->toBe(0)
+            ->and(DB::table('GerbangPembayaranTenant')->count())->toBe(0);
     });
 
     it('WhatsApp tidak resmi Fonnte: perangkat tersambung = berhasil; belum tersambung = gagal; aktif di runtime', function (): void {

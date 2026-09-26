@@ -375,8 +375,15 @@ function InfoQrisDinamis({
         </Pemberitahuan>
     ) : (
         <Pemberitahuan jenis="peringatan" judul="Gerbang pembayaran belum aktif">
-            QRIS dinamis butuh gerbang pembayaran yang diaktifkan pengelola platform PAYOU. Metode ini tetap bisa
-            ditambahkan, tetapi kasir baru bisa memakainya setelah gerbang aktif. Hubungi dukungan PAYOU.
+            QRIS dinamis butuh akun merchant toko di salah satu penyedia gerbang pembayaran (dana langsung ke rekening
+            toko). Metode ini tetap bisa ditambahkan, tetapi kasir baru bisa memakainya setelah gerbang diaktifkan di{' '}
+            <a
+                href={gerbangPembayaran.Tautan ?? '/kelola/pembayaran/gerbang'}
+                className="font-semibold text-brand underline underline-offset-2"
+            >
+                Gerbang pembayaran
+            </a>
+            .
         </Pemberitahuan>
     );
 }

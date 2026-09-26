@@ -40,6 +40,8 @@ export const IzinTenant = {
     PelangganKelola: 'pelanggan.kelola',
     KaryawanLihat: 'karyawan.lihat',
     KaryawanKelola: 'karyawan.kelola',
+    // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant sendiri).
+    PembayaranGerbangAtur: 'pembayaran.gerbang.atur',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

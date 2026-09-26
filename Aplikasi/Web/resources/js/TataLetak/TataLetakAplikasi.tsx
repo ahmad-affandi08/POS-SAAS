@@ -139,6 +139,8 @@ const menuKasir: ItemMenu[] = [
     { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
     { label: 'Pengaturan kasir', href: '/kelola/kasir/pengaturan', izin: IzinTenant.OutletKelola },
     { label: 'Pengaturan struk', href: '/kelola/kasir/struk', izin: IzinTenant.OutletKelola },
+    // F-08 v2.06: gerbang pembayaran QRIS dinamis milik toko (akun merchant sendiri).
+    { label: 'Gerbang pembayaran', href: '/kelola/pembayaran/gerbang', izin: IzinTenant.PembayaranGerbangAtur },
 ];
 
 // F-07b/F-09: grup menu "Penjualan" (baca saja): daftar penjualan dan void & retur (anti-fraud BR-09.3).
