@@ -18,6 +18,7 @@ use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Referensi\Enum\ZonaWaktu;
 use App\Domain\Referensi\Kueri\WilayahKota;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
+use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use App\Http\Permintaan\Kelola\SimpanOutletPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -77,7 +78,7 @@ final class OutletKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja): Response
+    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur): Response
     {
         $baris = $this->CariOutlet($outlet);
 
@@ -116,6 +117,11 @@ final class OutletKontroler extends DasarKelolaKontroler
             // F-10a: bagian meja tampil bila fitur mode meja aktif di outlet ini atau sudah ada data meja.
             'ModeMeja' => ['Aktif' => $modeMeja->CekAktif($baris), ...$mejaOutlet->Ambil($baris->Id)],
             'BentukMeja' => array_map(fn (BentukMeja $bentuk): array => ['Nilai' => $bentuk->value, 'Label' => $bentuk->AmbilLabel()], BentukMeja::cases()),
+            // F-17: pesan sendiri QR meja (sakelar outlet + fitur paket `kanal.self-order`).
+            'PesanSendiri' => [
+                'FiturAktif' => $fitur->CekAktifDiOutlet($baris->IdTenant, $baris->Id, PemeriksaFiturTenant::KUNCI_PESAN_SENDIRI),
+                'Aktif' => $baris->PesanSendiriAktif,
+            ],
         ]);
     }
 

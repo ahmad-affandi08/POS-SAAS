@@ -6,6 +6,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BagianMeja, { type ModeMejaOutlet } from '@/Komponen/Kelola/BagianMeja';
 import FormOutlet from '@/Komponen/Kelola/FormOutlet';
+import type { PesanSendiriOutlet } from '@/Komponen/Kelola/PesanSendiriMeja';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -50,9 +51,10 @@ type PropsDetail = {
     JenisGudang: Pilihan[];
     ModeMeja: ModeMejaOutlet;
     BentukMeja: Pilihan[];
+    PesanSendiri: PesanSendiriOutlet;
 };
 
-/** Profil outlet, lokasi stok (F-02 langkah 1–2, BR-02.2, BR-02.4), dan meja (F-10a). */
+/** Profil outlet, lokasi stok (F-02 langkah 1–2, BR-02.2, BR-02.4), meja (F-10a), dan QR pesan sendiri (F-17). */
 export default function HalamanDetailOutlet({
     Outlet,
     Gudang,
@@ -61,6 +63,7 @@ export default function HalamanDetailOutlet({
     JenisGudang,
     ModeMeja,
     BentukMeja,
+    PesanSendiri,
 }: PropsDetail) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const bolehKelola = PunyaIzinTenant(props.Akses, IzinTenant.OutletKelola);
@@ -154,6 +157,7 @@ export default function HalamanDetailOutlet({
                 modeMeja={ModeMeja}
                 bentuk={BentukMeja}
                 bolehKelola={bolehKelola && Outlet.Status === 'Aktif'}
+                pesanSendiri={PesanSendiri}
             />
         </TataLetakAplikasi>
     );

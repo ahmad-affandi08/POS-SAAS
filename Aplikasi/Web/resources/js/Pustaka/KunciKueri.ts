@@ -27,6 +27,13 @@ export const KunciKueri = {
         Pelacakan: (uuidProduk: string, uuidGudang: string) =>
             ['Persediaan', 'Pelacakan', uuidProduk, uuidGudang] as const,
     },
+    // F-17 Self-Order QR Meja: harga keranjang dari server (web publik tidak menghitung harga), polling status pesanan
+    // tamu, dan QR meja di back-office.
+    PesanSendiri: {
+        Hitung: (token: string, tanda: string) => ['PesanSendiri', 'Hitung', token, tanda] as const,
+        Status: (token: string, uuid: string) => ['PesanSendiri', 'Status', token, uuid] as const,
+        QrMeja: (uuidMeja: string) => ['PesanSendiri', 'QrMeja', uuidMeja] as const,
+    },
     // P-10: dampak menaikkan versi minimum (BR-P10.2), dibaca saat dialog dibuka.
     Pengelola: {
         DampakVersiMinimum: (uuidRilis: string) => ['Pengelola', 'DampakVersiMinimum', uuidRilis] as const,

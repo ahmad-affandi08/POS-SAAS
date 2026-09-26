@@ -34,4 +34,18 @@ final class ProfilTenant
     {
         return Tenant::query()->whereKey($idTenant)->exists();
     }
+
+    /** F-17: tenant pemilik slug URL publik (`/{slugTenant}/meja/{token}`); null bila tidak dikenal. */
+    public function CariIdDariSlug(string $slug): ?int
+    {
+        $id = Tenant::query()->where('Slug', $slug)->value('Id');
+
+        return $id === null ? null : (int) $id;
+    }
+
+    /** F-17: slug tenant untuk menyusun URL publik (QR meja). */
+    public function AmbilSlug(int $idTenant): string
+    {
+        return (string) Tenant::query()->whereKey($idTenant)->value('Slug');
+    }
 }

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Nomor urut dokumen tanpa celah per tenant, jenis, periode `YYYY-MM`, dan (opsional) outlet/perangkat
+ * Nomor urut dokumen tanpa celah per tenant, jenis, periode `YYYY-MM` (atau harian `YYYY-MM-DD`, F-17), dan (opsional) outlet/perangkat
  * (DesainF05a C.1). Dipanggil di dalam transaksi dokumennya, sebagai kunci terakhir (L7) sebelum insert: nomor yang
  * diambil ikut batal bila transaksi batal, sehingga tidak ada celah.
  *
@@ -34,6 +34,27 @@ final class PenomorDokumen
             throw new InvalidArgumentException("Periode {$periode} harus berformat YYYY-MM.");
         }
 
+        return $this->Naikkan($jenis, $periode, $idOutlet, $idPerangkat);
+    }
+
+    /**
+     * F-17: nomor urut per hari (periode `YYYY-MM-DD`), misal pesanan QR meja per outlet per tanggal lokal outlet.
+     *
+     * @param  string  $tanggal  `YYYY-MM-DD`
+     *
+     * @throws InvalidArgumentException bila tanggal tidak berformat `YYYY-MM-DD` yang sah
+     */
+    public function AmbilBerikutnyaHarian(JenisDokumenBernomor $jenis, string $tanggal, ?int $idOutlet = null, ?int $idPerangkat = null): int
+    {
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $tanggal, $cocok) !== 1 || ! checkdate((int) $cocok[2], (int) $cocok[3], (int) $cocok[1])) {
+            throw new InvalidArgumentException("Tanggal {$tanggal} harus berformat YYYY-MM-DD.");
+        }
+
+        return $this->Naikkan($jenis, $tanggal, $idOutlet, $idPerangkat);
+    }
+
+    private function Naikkan(JenisDokumenBernomor $jenis, string $periode, ?int $idOutlet, ?int $idPerangkat): int
+    {
         $idTenant = $this->konteks->Wajib();
 
         return DB::transaction(function () use ($idTenant, $jenis, $periode, $idOutlet, $idPerangkat): int {

@@ -30,6 +30,9 @@ enum JenisDokumenBernomor: string
     case ReturPembelian = 'ReturPembelian';
     // F-12: pelunasan piutang `BP/{YYMM}/{SEQ4}` per tenant.
     case PembayaranPiutang = 'PembayaranPiutang';
+    // F-17: pesanan QR meja `QR/{OUTLET}/{YYMMDD}-{SEQ4}` disusun `BuatPesananSendiri`; urutnya per outlet per hari
+    // (periode harian `YYYY-MM-DD`, `PenomorDokumen::AmbilBerikutnyaHarian`).
+    case PesananSendiri = 'PesananSendiri';
 
     public function AmbilAwalan(): string
     {
@@ -46,6 +49,7 @@ enum JenisDokumenBernomor: string
             self::PembayaranHutang => 'BH',
             self::ReturPembelian => 'RB',
             self::PembayaranPiutang => 'BP',
+            self::PesananSendiri => 'QR',
         };
     }
 
@@ -55,7 +59,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri => 4,
         };
     }
 

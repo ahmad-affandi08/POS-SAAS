@@ -45,6 +45,12 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::put('/outlet/{outlet}/meja/{meja}', [MejaKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.ubah');
     Route::post('/outlet/{outlet}/meja/{meja}/arsipkan', [MejaKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.arsipkan');
     Route::post('/outlet/{outlet}/meja/{meja}/pulihkan', [MejaKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.pulihkan');
+    // F-17 Self-Order QR Meja: sakelar outlet, QR per meja (token dibuat saat pertama ditampilkan), cetak semua QR,
+    // dan buat ulang QR (URL lama tidak berlaku).
+    Route::post('/outlet/{outlet}/pesan-sendiri', [MejaKontroler::class, 'AturPesanSendiri'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.pesan-sendiri');
+    Route::get('/outlet/{outlet}/meja/qr', [MejaKontroler::class, 'CetakQr'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.meja.qr.cetak');
+    Route::get('/outlet/{outlet}/meja/{meja}/qr', [MejaKontroler::class, 'Qr'])->middleware($izin(IzinTenant::OutletLihat))->name('kelola.meja.qr');
+    Route::post('/outlet/{outlet}/meja/{meja}/qr/buat-ulang', [MejaKontroler::class, 'BuatUlangQr'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.meja.qr.buat-ulang');
 
     Route::post('/merek', [MerekKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.simpan');
     Route::put('/merek/{merek}', [MerekKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.merek.ubah');

@@ -1,0 +1,870 @@
+import { Head } from '@inertiajs/react';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { MinusIcon, PlusIcon, ShoppingBagIcon, Trash2Icon, WifiOffIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
+import Tombol from '@/Komponen/Formulir/Tombol';
+import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Skeleton } from '@/Komponen/Ui/skeleton';
+import LabelStatus from '@/Komponen/Umpan/LabelStatus';
+import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import {
+    AlihkanPilihan,
+    BacaKeranjang,
+    BacaRiwayatPesanan,
+    BATAS_JUMLAH,
+    CatatRiwayatPesanan,
+    HitungJumlahItem,
+    PeriksaPilihan,
+    SimpanKeranjang,
+    TambahKeKeranjang,
+    UbahJumlah,
+    type BarisKeranjang,
+    type KelompokPilihanMenu,
+} from '@/Fitur/PesanSendiri/Keranjang';
+import { FormatRupiah } from '@/Pustaka/Format';
+import { KunciKueri } from '@/Pustaka/KunciKueri';
+import { BuatUlid } from '@/Pustaka/Ulid';
+
+export type ProdukMenu = {
+    Uuid: string;
+    UuidProdukSatuan: string;
+    Nama: string;
+    UuidKategori: string | null;
+    Harga: string;
+    UrlGambar: string | null;
+    KelompokPilihan: KelompokPilihanMenu[];
+};
+
+export type PropsPesanSendiri = {
+    Aktif: boolean;
+    Toko: { Nama: string; NamaOutlet: string } | null;
+    Meja: { Nama: string } | null;
+    Token: string;
+    Slug: string;
+    Menu: { Kategori: { Uuid: string; Nama: string }[]; Produk: ProdukMenu[] };
+};
+
+type HasilHitung = {
+    Baris: {
+        UuidProduk: string;
+        NamaProduk: string;
+        Jumlah: string;
+        HargaSatuan: string;
+        HargaPilihan: string;
+        Total: string;
+    }[];
+    Subtotal: string;
+    Catatan: string;
+};
+
+export type StatusPesanan = 'MenungguKonfirmasi' | 'Diterima' | 'Ditolak' | 'Kedaluwarsa';
+
+type PesananTamu = {
+    Uuid: string;
+    Nomor: string;
+    Status: StatusPesanan;
+    Baris: { Uuid: string; NamaProduk: string; Jumlah: string; Pilihan: { Nama: string }[]; Catatan: string | null }[];
+    Subtotal: string;
+    AlasanTolak: string | null;
+};
+
+/** Galat berformat `{"Galat": {"Kode", "Pesan"}}` dari server. */
+export class GalatPesanSendiri extends Error {
+    constructor(
+        public readonly kode: string,
+        pesan: string,
+        public readonly status: number,
+    ) {
+        super(pesan);
+    }
+}
+
+const JEDA_POLLING_MS = 5000;
+const KATEGORI_SEMUA = 'semua';
+const KATEGORI_LAIN = 'lainnya';
+
+async function KirimJson<T>(url: string, badan: unknown, sinyal?: AbortSignal): Promise<T> {
+    let respons: Response;
+
+    try {
+        respons = await fetch(url, {
+            method: badan === undefined ? 'GET' : 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+            ...(badan === undefined ? {} : { body: JSON.stringify(badan) }),
+            ...(sinyal ? { signal: sinyal } : {}),
+        });
+    } catch {
+        throw new GalatPesanSendiri('TanpaKoneksi', 'Tidak ada koneksi internet. Periksa sinyal lalu coba lagi.', 0);
+    }
+
+    const isi = (await respons.json().catch(() => null)) as { Galat?: { Kode: string; Pesan: string } } | null;
+
+    if (!respons.ok) {
+        throw new GalatPesanSendiri(
+            isi?.Galat?.Kode ?? 'GalatServer',
+            isi?.Galat?.Pesan ?? 'Terjadi galat. Coba lagi sebentar lagi.',
+            respons.status,
+        );
+    }
+
+    return isi as T;
+}
+
+/** Jumlah tanpa nol desimal ("2.0000" → "2"). */
+function FormatJumlah(nilai: string): string {
+    return nilai.includes('.') ? nilai.replace(/\.?0+$/, '') : nilai;
+}
+
+function useDaring(): boolean {
+    const [daring, AturDaring] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+
+    useEffect(() => {
+        const Hidup = () => AturDaring(true);
+        const Mati = () => AturDaring(false);
+        window.addEventListener('online', Hidup);
+        window.addEventListener('offline', Mati);
+
+        return () => {
+            window.removeEventListener('online', Hidup);
+            window.removeEventListener('offline', Mati);
+        };
+    }, []);
+
+    return daring;
+}
+
+const infoStatus: Record<
+    StatusPesanan,
+    { jenis: 'sukses' | 'peringatan' | 'bahaya' | 'netral'; label: string; pesan: string }
+> = {
+    MenungguKonfirmasi: {
+        jenis: 'peringatan',
+        label: 'Menunggu konfirmasi',
+        pesan: 'Menunggu konfirmasi staf. Halaman ini diperbarui otomatis.',
+    },
+    Diterima: {
+        jenis: 'sukses',
+        label: 'Diterima',
+        pesan: 'Pesanan diteruskan ke dapur. Bayar di kasir setelah selesai.',
+    },
+    Ditolak: { jenis: 'bahaya', label: 'Ditolak', pesan: 'Pesanan ditolak staf.' },
+    Kedaluwarsa: {
+        jenis: 'netral',
+        label: 'Kedaluwarsa',
+        pesan: 'Pesanan tidak dikonfirmasi dalam 30 menit. Silakan pesan ulang atau panggil staf.',
+    },
+};
+
+/**
+ * F-17 Self-Order QR Meja (X12, SLS-04): halaman publik ringan tanpa login. Menu per kategori → keranjang (disimpan di
+ * perangkat tamu) → nama & catatan opsional → "Kirim pesanan" → status dipantau tiap 5 detik sampai staf menerima
+ * atau menolak. Harga, subtotal, dan validasi pilihan selalu dari server (web publik tidak menghitung harga).
+ */
+export default function HalamanPesanSendiri({ Aktif, Toko, Meja, Token, Slug, Menu }: PropsPesanSendiri) {
+    const alamat = `/${Slug}/meja/${Token}`;
+    const daring = useDaring();
+
+    if (Meja === null || Toko === null) {
+        return (
+            <KerangkaPublik judul="QR meja tidak dikenal">
+                <section className="flex flex-col gap-2 py-10">
+                    <h1 className="text-subjudul font-semibold text-teks-utama">QR meja tidak dikenal</h1>
+                    <p className="text-isi text-teks-sekunder">
+                        QR ini sudah diganti atau tautannya salah. Minta QR terbaru ke staf, atau pesan langsung ke
+                        staf.
+                    </p>
+                </section>
+            </KerangkaPublik>
+        );
+    }
+
+    return (
+        <KerangkaPublik judul={`Meja ${Meja.Nama} · ${Toko.Nama}`}>
+            <header className="flex flex-col gap-1 border-b border-garis pb-3">
+                <p className="text-label text-teks-sekunder">
+                    {Toko.Nama} · {Toko.NamaOutlet}
+                </p>
+                <h1 className="text-judul font-semibold text-teks-utama">Meja {Meja.Nama}</h1>
+            </header>
+            {daring ? null : (
+                <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-kontrol border border-peringatan bg-peringatan-lembut p-3 text-label text-teks-utama"
+                >
+                    <WifiOffIcon aria-hidden="true" className="size-4 shrink-0 text-peringatan" />
+                    Tidak ada koneksi internet. Keranjang tetap tersimpan; kirim pesanan setelah tersambung lagi.
+                </div>
+            )}
+            {Aktif ? (
+                <PemesananAktif alamat={alamat} token={Token} menu={Menu} daring={daring} />
+            ) : (
+                <Pemberitahuan jenis="info" judul="Pesan sendiri belum aktif">
+                    Outlet ini belum menerima pesanan lewat QR. Silakan pesan langsung ke staf.
+                </Pemberitahuan>
+            )}
+        </KerangkaPublik>
+    );
+}
+
+function KerangkaPublik({ judul, children }: { judul: string; children: ReactNode }) {
+    return (
+        <>
+            <Head title={judul} />
+            <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-4 bg-latar px-4 pt-4 pb-28 text-isi text-teks-utama">
+                {children}
+            </main>
+        </>
+    );
+}
+
+type PropsPemesanan = { alamat: string; token: string; menu: PropsPesanSendiri['Menu']; daring: boolean };
+
+function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
+    const [keranjang, AturKeranjang] = useState<BarisKeranjang[]>(() => BacaKeranjang(token));
+    const [riwayat, AturRiwayat] = useState<string[]>(() => BacaRiwayatPesanan(token));
+    const [kategori, AturKategori] = useState(KATEGORI_SEMUA);
+    const [produkDipilih, AturProdukDipilih] = useState<ProdukMenu | null>(null);
+    const [keranjangTerbuka, AturKeranjangTerbuka] = useState(false);
+    const [lihatStatus, AturLihatStatus] = useState<string | null>(null);
+    const produkPerUuid = useMemo(() => new Map(menu.Produk.map((p) => [p.Uuid, p])), [menu.Produk]);
+    const adaTanpaKategori = menu.Produk.some((p) => p.UuidKategori === null);
+
+    useEffect(() => SimpanKeranjang(token, keranjang), [token, keranjang]);
+
+    const hitung = useHitungKeranjang(alamat, token, keranjang);
+    const jumlahItem = HitungJumlahItem(keranjang);
+    const produkTampil = menu.Produk.filter((p) =>
+        kategori === KATEGORI_SEMUA
+            ? true
+            : kategori === KATEGORI_LAIN
+              ? p.UuidKategori === null
+              : p.UuidKategori === kategori,
+    );
+
+    const TambahProduk = (produk: ProdukMenu) => {
+        if (produk.KelompokPilihan.length > 0) {
+            AturProdukDipilih(produk);
+            return;
+        }
+
+        AturKeranjang((lama) =>
+            TambahKeKeranjang(lama, { Uuid: BuatUlid(), UuidProduk: produk.Uuid, Jumlah: 1, Pilihan: [], Catatan: '' }),
+        );
+    };
+
+    if (lihatStatus !== null) {
+        return (
+            <PanelStatusPesanan
+                alamat={alamat}
+                token={token}
+                uuid={lihatStatus}
+                saatKembali={() => AturLihatStatus(null)}
+            />
+        );
+    }
+
+    return (
+        <>
+            {riwayat[0] ? (
+                <RingkasanPesananTerakhir
+                    alamat={alamat}
+                    token={token}
+                    uuid={riwayat[0]}
+                    saatLihat={() => AturLihatStatus(riwayat[0] ?? null)}
+                />
+            ) : null}
+
+            {menu.Produk.length === 0 ? (
+                <KeadaanKosong judul="Menu belum tersedia" ilustrasi="Produk">
+                    Belum ada menu yang bisa dipesan lewat QR. Silakan pesan langsung ke staf.
+                </KeadaanKosong>
+            ) : (
+                <>
+                    <nav aria-label="Kategori menu" className="-mx-4 overflow-x-auto px-4">
+                        <div className="flex w-max gap-2">
+                            {[
+                                { Uuid: KATEGORI_SEMUA, Nama: 'Semua' },
+                                ...menu.Kategori,
+                                ...(adaTanpaKategori ? [{ Uuid: KATEGORI_LAIN, Nama: 'Lainnya' }] : []),
+                            ].map((k) => (
+                                <button
+                                    key={k.Uuid}
+                                    type="button"
+                                    aria-pressed={kategori === k.Uuid}
+                                    onClick={() => AturKategori(k.Uuid)}
+                                    className={`min-h-11 rounded-kontrol border px-4 text-label font-semibold focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
+                                        kategori === k.Uuid
+                                            ? 'border-brand bg-brand text-brand-teks'
+                                            : 'border-garis-input bg-permukaan text-teks-utama'
+                                    }`}
+                                >
+                                    {k.Nama}
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+                    <ul
+                        aria-label="Daftar menu"
+                        className="flex flex-col divide-y divide-garis rounded-panel border border-garis bg-permukaan"
+                    >
+                        {produkTampil.map((produk) => (
+                            <li key={produk.Uuid} className="flex items-center gap-3 p-3">
+                                {produk.UrlGambar ? (
+                                    <img
+                                        src={produk.UrlGambar}
+                                        alt=""
+                                        loading="lazy"
+                                        className="size-16 shrink-0 rounded-kontrol object-cover"
+                                    />
+                                ) : null}
+                                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                    <p className="font-semibold break-words">{produk.Nama}</p>
+                                    <p className="text-teks-sekunder tabular-nums">{FormatRupiah(produk.Harga)}</p>
+                                    {produk.KelompokPilihan.length > 0 ? (
+                                        <p className="text-keterangan text-teks-sekunder">Ada pilihan</p>
+                                    ) : null}
+                                </div>
+                                <Tombol
+                                    varian="sekunder"
+                                    onClick={() => TambahProduk(produk)}
+                                    aria-label={`Tambah ${produk.Nama}`}
+                                >
+                                    Tambah
+                                </Tombol>
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+
+            {produkDipilih ? (
+                <LembarPilihan
+                    produk={produkDipilih}
+                    saatTutup={() => AturProdukDipilih(null)}
+                    saatTambah={(baris) => {
+                        AturKeranjang((lama) => TambahKeKeranjang(lama, baris));
+                        AturProdukDipilih(null);
+                    }}
+                />
+            ) : null}
+
+            {jumlahItem > 0 ? (
+                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-garis bg-permukaan p-3">
+                    <button
+                        type="button"
+                        onClick={() => AturKeranjangTerbuka(true)}
+                        className="mx-auto flex min-h-12 w-full max-w-2xl items-center justify-between gap-3 rounded-kontrol bg-brand px-4 text-brand-teks focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none"
+                    >
+                        <span className="flex items-center gap-2 font-semibold">
+                            <ShoppingBagIcon aria-hidden="true" className="size-5" />
+                            Lihat keranjang · {jumlahItem} item
+                        </span>
+                        <span className="font-semibold tabular-nums">
+                            {hitung.data ? FormatRupiah(hitung.data.Subtotal) : 'Menghitung…'}
+                        </span>
+                    </button>
+                </div>
+            ) : null}
+
+            {keranjangTerbuka ? (
+                <LembarKeranjang
+                    alamat={alamat}
+                    keranjang={keranjang}
+                    produkPerUuid={produkPerUuid}
+                    hitung={hitung}
+                    daring={daring}
+                    aturKeranjang={AturKeranjang}
+                    saatTutup={() => AturKeranjangTerbuka(false)}
+                    saatTerkirim={(uuid) => {
+                        AturRiwayat(CatatRiwayatPesanan(token, uuid));
+                        AturKeranjang([]);
+                        AturKeranjangTerbuka(false);
+                        AturLihatStatus(uuid);
+                    }}
+                />
+            ) : null}
+        </>
+    );
+}
+
+const JEDA_HITUNG_MS = 300;
+
+/** Nilai yang baru diteruskan setelah tidak berubah selama `jeda` ms (ketukan +/− beruntun = satu permintaan). */
+function useNilaiTertunda<T>(nilai: T, jeda: number): T {
+    const [tertunda, AturTertunda] = useState(nilai);
+
+    useEffect(() => {
+        const pewaktu = window.setTimeout(() => AturTertunda(nilai), jeda);
+
+        return () => window.clearTimeout(pewaktu);
+    }, [nilai, jeda]);
+
+    return tertunda;
+}
+
+function useHitungKeranjang(alamat: string, token: string, keranjang: BarisKeranjang[]) {
+    const tanda = useNilaiTertunda(
+        JSON.stringify(keranjang.map((b) => ({ UuidProduk: b.UuidProduk, Jumlah: b.Jumlah, Pilihan: b.Pilihan }))),
+        JEDA_HITUNG_MS,
+    );
+    const kosong = tanda === '[]';
+
+    return useQuery({
+        queryKey: KunciKueri.PesanSendiri.Hitung(token, tanda),
+        queryFn: ({ signal }) =>
+            KirimJson<HasilHitung>(`${alamat}/hitung`, { Baris: JSON.parse(tanda) as unknown }, signal),
+        enabled: !kosong,
+        placeholderData: keepPreviousData,
+        staleTime: 30_000,
+        retry: false,
+    });
+}
+
+type PropsLembarPilihan = {
+    produk: ProdukMenu;
+    saatTutup: () => void;
+    saatTambah: (baris: BarisKeranjang) => void;
+};
+
+function LembarPilihan({ produk, saatTutup, saatTambah }: PropsLembarPilihan) {
+    const [dipilih, AturDipilih] = useState<string[]>([]);
+    const [jumlah, AturJumlah] = useState(1);
+    const [catatan, AturCatatan] = useState('');
+    const [coba, AturCoba] = useState(false);
+    const masalah = PeriksaPilihan(produk.KelompokPilihan, dipilih);
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        AturCoba(true);
+
+        if (masalah === null) {
+            saatTambah({
+                Uuid: BuatUlid(),
+                UuidProduk: produk.Uuid,
+                Jumlah: jumlah,
+                Pilihan: dipilih,
+                Catatan: catatan.trim(),
+            });
+        }
+    };
+
+    return (
+        <Sheet open onOpenChange={(terbuka) => (terbuka ? undefined : saatTutup())}>
+            <SheetContent
+                side="bottom"
+                className="mx-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-panel"
+            >
+                <SheetHeader>
+                    <SheetTitle className="text-subjudul font-semibold text-teks-utama">{produk.Nama}</SheetTitle>
+                    <SheetDescription className="text-isi text-teks-sekunder tabular-nums">
+                        {FormatRupiah(produk.Harga)}
+                    </SheetDescription>
+                </SheetHeader>
+                <form onSubmit={Kirim} noValidate className="flex flex-col gap-4 px-4 pb-4">
+                    {produk.KelompokPilihan.map((k) => (
+                        <fieldset key={k.Uuid} className="flex flex-col gap-2">
+                            <legend className="text-label font-semibold">
+                                {k.Nama}{' '}
+                                <span className="font-normal text-teks-sekunder">
+                                    {k.MinimalPilih > 0 ? '(wajib' : '(opsional'}
+                                    {k.MaksimalPilih > 1 ? `, maks. ${String(k.MaksimalPilih)})` : ')'}
+                                </span>
+                            </legend>
+                            {k.Pilihan.map((p) => (
+                                <label
+                                    key={p.Uuid}
+                                    className="flex min-h-11 items-center justify-between gap-3 rounded-kontrol border border-garis px-3"
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <input
+                                            type={k.MaksimalPilih === 1 ? 'radio' : 'checkbox'}
+                                            name={k.Uuid}
+                                            checked={dipilih.includes(p.Uuid)}
+                                            onChange={() => AturDipilih((lama) => AlihkanPilihan(k, lama, p.Uuid))}
+                                            onClick={() => {
+                                                // Radio yang sudah terpilih bisa dibatalkan di kelompok opsional.
+                                                if (
+                                                    k.MaksimalPilih === 1 &&
+                                                    k.MinimalPilih === 0 &&
+                                                    dipilih.includes(p.Uuid)
+                                                ) {
+                                                    AturDipilih((lama) => lama.filter((u) => u !== p.Uuid));
+                                                }
+                                            }}
+                                            className="size-5 accent-brand"
+                                        />
+                                        {p.Nama}
+                                    </span>
+                                    {/^0+(\.0+)?$/.test(p.Harga) ? null : (
+                                        <span className="text-teks-sekunder tabular-nums">
+                                            +{FormatRupiah(p.Harga)}
+                                        </span>
+                                    )}
+                                </label>
+                            ))}
+                        </fieldset>
+                    ))}
+                    <PengaturJumlah label={produk.Nama} jumlah={jumlah} saatUbah={(n) => AturJumlah(Math.max(1, n))} />
+                    <BidangTeks
+                        label="Catatan untuk dapur (opsional)"
+                        nilai={catatan}
+                        saatBerubah={AturCatatan}
+                        keterangan="Misal tidak pedas atau es dipisah"
+                        maxLength={100}
+                    />
+                    {coba && masalah ? <Pemberitahuan jenis="peringatan">{masalah}</Pemberitahuan> : null}
+                    <Tombol type="submit">Tambah ke keranjang</Tombol>
+                </form>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
+function PengaturJumlah({
+    label,
+    jumlah,
+    saatUbah,
+}: {
+    label: string;
+    jumlah: number;
+    saatUbah: (jumlah: number) => void;
+}) {
+    return (
+        <div className="flex items-center gap-2" role="group" aria-label={`Jumlah ${label}`}>
+            <button
+                type="button"
+                onClick={() => saatUbah(jumlah - 1)}
+                aria-label={`Kurangi ${label}`}
+                className="flex size-11 items-center justify-center rounded-kontrol border border-garis-input bg-permukaan focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+            >
+                <MinusIcon aria-hidden="true" className="size-4" />
+            </button>
+            <span className="min-w-8 text-center font-semibold tabular-nums" aria-live="polite">
+                {jumlah}
+            </span>
+            <button
+                type="button"
+                onClick={() => saatUbah(jumlah + 1)}
+                disabled={jumlah >= BATAS_JUMLAH}
+                aria-label={`Tambah ${label}`}
+                className="flex size-11 items-center justify-center rounded-kontrol border border-garis-input bg-permukaan focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                <PlusIcon aria-hidden="true" className="size-4" />
+            </button>
+        </div>
+    );
+}
+
+type PropsLembarKeranjang = {
+    alamat: string;
+    keranjang: BarisKeranjang[];
+    produkPerUuid: Map<string, ProdukMenu>;
+    hitung: ReturnType<typeof useHitungKeranjang>;
+    daring: boolean;
+    aturKeranjang: (ubah: (lama: BarisKeranjang[]) => BarisKeranjang[]) => void;
+    saatTutup: () => void;
+    saatTerkirim: (uuid: string) => void;
+};
+
+function LembarKeranjang({
+    alamat,
+    keranjang,
+    produkPerUuid,
+    hitung,
+    daring,
+    aturKeranjang,
+    saatTutup,
+    saatTerkirim,
+}: PropsLembarKeranjang) {
+    const [nama, AturNama] = useState('');
+    const [catatan, AturCatatan] = useState('');
+    // Uuid kiriman tetap sama saat dicoba ulang (idempoten), dan diganti bila isi keranjang berubah.
+    const kiriman = useRef<{ tanda: string; uuid: string } | null>(null);
+
+    const kirim = useMutation({
+        mutationFn: () => {
+            const tanda = JSON.stringify(keranjang);
+
+            if (kiriman.current?.tanda !== tanda) {
+                kiriman.current = { tanda, uuid: BuatUlid() };
+            }
+
+            return KirimJson<{ Uuid: string; Nomor: string; Status: StatusPesanan }>(`${alamat}/pesan`, {
+                Uuid: kiriman.current.uuid,
+                NamaPemesan: nama.trim() === '' ? null : nama.trim(),
+                Catatan: catatan.trim() === '' ? null : catatan.trim(),
+                Baris: keranjang.map((b) => ({
+                    Uuid: b.Uuid,
+                    UuidProduk: b.UuidProduk,
+                    Jumlah: b.Jumlah,
+                    Pilihan: b.Pilihan,
+                    Catatan: b.Catatan === '' ? null : b.Catatan,
+                })),
+            });
+        },
+        onSuccess: (hasil) => saatTerkirim(hasil.Uuid),
+    });
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        kirim.mutate();
+    };
+
+    const galatHitung = hitung.error instanceof GalatPesanSendiri ? hitung.error.message : null;
+
+    return (
+        <Sheet open onOpenChange={(terbuka) => (terbuka || kirim.isPending ? undefined : saatTutup())}>
+            <SheetContent
+                side="bottom"
+                className="mx-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-panel"
+            >
+                <SheetHeader>
+                    <SheetTitle className="text-subjudul font-semibold text-teks-utama">Keranjang</SheetTitle>
+                    <SheetDescription className="text-isi text-teks-sekunder">
+                        Periksa pesanan sebelum dikirim ke staf.
+                    </SheetDescription>
+                </SheetHeader>
+                <form onSubmit={Kirim} noValidate className="flex flex-col gap-4 px-4 pb-4">
+                    {keranjang.length === 0 ? (
+                        <p className="text-teks-sekunder">Keranjang masih kosong. Tambah menu dulu.</p>
+                    ) : (
+                        <ul aria-label="Isi keranjang" className="flex flex-col divide-y divide-garis">
+                            {keranjang.map((b, i) => {
+                                const produk = produkPerUuid.get(b.UuidProduk);
+                                const namaPilihan = (produk?.KelompokPilihan ?? [])
+                                    .flatMap((k) => k.Pilihan)
+                                    .filter((p) => b.Pilihan.includes(p.Uuid))
+                                    .map((p) => p.Nama);
+                                const total = hitung.data?.Baris[i]?.Total;
+
+                                return (
+                                    <li key={b.Uuid} className="flex flex-col gap-2 py-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="font-semibold break-words">
+                                                    {produk?.Nama ?? 'Menu tidak tersedia'}
+                                                </p>
+                                                {namaPilihan.length > 0 ? (
+                                                    <p className="text-keterangan text-teks-sekunder">
+                                                        {namaPilihan.join(', ')}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                            <span className="shrink-0 text-right font-semibold tabular-nums">
+                                                {total ? FormatRupiah(total) : '…'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <PengaturJumlah
+                                                label={produk?.Nama ?? 'menu'}
+                                                jumlah={b.Jumlah}
+                                                saatUbah={(n) => aturKeranjang((lama) => UbahJumlah(lama, b.Uuid, n))}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => aturKeranjang((lama) => UbahJumlah(lama, b.Uuid, 0))}
+                                                className="flex min-h-11 items-center gap-1 px-2 text-label font-semibold text-bahaya focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                                            >
+                                                <Trash2Icon aria-hidden="true" className="size-4" />
+                                                Hapus
+                                            </button>
+                                        </div>
+                                        <BidangTeks
+                                            label={`Catatan ${produk?.Nama ?? 'menu'} (opsional)`}
+                                            nilai={b.Catatan}
+                                            saatBerubah={(nilai) =>
+                                                aturKeranjang((lama) =>
+                                                    lama.map((x) => (x.Uuid === b.Uuid ? { ...x, Catatan: nilai } : x)),
+                                                )
+                                            }
+                                            maxLength={100}
+                                        />
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                    <div className="flex flex-col gap-1 border-t border-garis pt-3">
+                        <div className="flex items-center justify-between gap-3 text-subjudul font-semibold">
+                            <span>Subtotal</span>
+                            {hitung.isPending && keranjang.length > 0 ? (
+                                <Skeleton className="h-5 w-24" aria-label="Menghitung subtotal" />
+                            ) : (
+                                <span className="tabular-nums">
+                                    {hitung.data ? FormatRupiah(hitung.data.Subtotal) : '–'}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-keterangan text-teks-sekunder">
+                            {hitung.data?.Catatan ?? 'Pajak & biaya layanan dihitung di kasir.'} Bayar di kasir setelah
+                            selesai.
+                        </p>
+                    </div>
+                    {galatHitung ? <Pemberitahuan jenis="bahaya">{galatHitung}</Pemberitahuan> : null}
+                    <BidangTeks
+                        label="Nama pemesan (opsional)"
+                        nilai={nama}
+                        saatBerubah={AturNama}
+                        maxLength={60}
+                        autoComplete="name"
+                    />
+                    <BidangTeksPanjang
+                        label="Catatan pesanan (opsional)"
+                        nilai={catatan}
+                        saatBerubah={AturCatatan}
+                        maksimal={200}
+                        baris={2}
+                    />
+                    {kirim.error ? (
+                        <Pemberitahuan jenis="bahaya">
+                            {kirim.error instanceof GalatPesanSendiri
+                                ? kirim.error.message
+                                : 'Pesanan gagal dikirim. Coba lagi.'}
+                        </Pemberitahuan>
+                    ) : null}
+                    <Tombol
+                        type="submit"
+                        memproses={kirim.isPending}
+                        disabled={keranjang.length === 0 || !daring || galatHitung !== null}
+                    >
+                        Kirim pesanan
+                    </Tombol>
+                    {daring ? null : (
+                        <p className="text-keterangan text-teks-sekunder">Menunggu koneksi internet untuk mengirim.</p>
+                    )}
+                </form>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
+function useStatusPesanan(alamat: string, token: string, uuid: string) {
+    return useQuery({
+        queryKey: KunciKueri.PesanSendiri.Status(token, uuid),
+        queryFn: ({ signal }) => KirimJson<PesananTamu>(`${alamat}/pesanan/${uuid}`, undefined, signal),
+        refetchInterval: (kueri) =>
+            kueri.state.data && kueri.state.data.Status !== 'MenungguKonfirmasi' ? false : JEDA_POLLING_MS,
+        retry: false,
+    });
+}
+
+function RingkasanPesananTerakhir({
+    alamat,
+    token,
+    uuid,
+    saatLihat,
+}: {
+    alamat: string;
+    token: string;
+    uuid: string;
+    saatLihat: () => void;
+}) {
+    const status = useStatusPesanan(alamat, token, uuid);
+
+    if (!status.data) {
+        return null;
+    }
+
+    const info = infoStatus[status.data.Status];
+
+    return (
+        <section
+            aria-label="Pesanan terakhir"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-panel border border-garis bg-permukaan p-3"
+        >
+            <div className="flex flex-col gap-1">
+                <p className="font-mono text-label">{status.data.Nomor}</p>
+                <LabelStatus jenis={info.jenis} teks={info.label} />
+            </div>
+            <Tombol varian="sekunder" onClick={saatLihat}>
+                Lihat status
+            </Tombol>
+        </section>
+    );
+}
+
+type PropsPanelStatus = { alamat: string; token: string; uuid: string; saatKembali: () => void };
+
+function PanelStatusPesanan({ alamat, token, uuid, saatKembali }: PropsPanelStatus) {
+    const status = useStatusPesanan(alamat, token, uuid);
+
+    if (status.isPending) {
+        return (
+            <section aria-label="Memuat status pesanan" className="flex flex-col gap-3">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-20 w-full" />
+            </section>
+        );
+    }
+
+    if (status.isError || !status.data) {
+        return (
+            <section className="flex flex-col gap-3">
+                <Pemberitahuan jenis="bahaya">
+                    {status.error instanceof GalatPesanSendiri ? status.error.message : 'Status pesanan gagal dimuat.'}
+                </Pemberitahuan>
+                <div className="flex flex-wrap gap-2">
+                    <Tombol onClick={() => void status.refetch()}>Coba lagi</Tombol>
+                    <Tombol varian="sekunder" onClick={saatKembali}>
+                        Kembali ke menu
+                    </Tombol>
+                </div>
+            </section>
+        );
+    }
+
+    const pesanan = status.data;
+    const info = infoStatus[pesanan.Status];
+
+    return (
+        <section aria-label={`Status pesanan ${pesanan.Nomor}`} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 rounded-panel border border-garis bg-permukaan p-4">
+                <p className="font-mono text-label text-teks-sekunder">{pesanan.Nomor}</p>
+                <LabelStatus jenis={info.jenis} teks={info.label} />
+                <p className="text-subjudul font-semibold" role="status" aria-live="polite">
+                    {info.pesan}
+                </p>
+                {pesanan.Status === 'Ditolak' && pesanan.AlasanTolak ? (
+                    <p className="text-teks-sekunder">Alasan: {pesanan.AlasanTolak}</p>
+                ) : null}
+            </div>
+            <ul
+                aria-label="Isi pesanan"
+                className="flex flex-col divide-y divide-garis rounded-panel border border-garis bg-permukaan"
+            >
+                {pesanan.Baris.map((b) => (
+                    <li key={b.Uuid} className="flex justify-between gap-3 p-3">
+                        <div className="min-w-0">
+                            <p className="break-words">{b.NamaProduk}</p>
+                            {b.Pilihan.length > 0 ? (
+                                <p className="text-keterangan text-teks-sekunder">
+                                    {b.Pilihan.map((p) => p.Nama).join(', ')}
+                                </p>
+                            ) : null}
+                            {b.Catatan ? (
+                                <p className="text-keterangan text-teks-sekunder">Catatan: {b.Catatan}</p>
+                            ) : null}
+                        </div>
+                        <span className="shrink-0 tabular-nums">× {FormatJumlah(b.Jumlah)}</span>
+                    </li>
+                ))}
+                <li className="flex justify-between gap-3 p-3 font-semibold">
+                    <span>Subtotal</span>
+                    <span className="tabular-nums">{FormatRupiah(pesanan.Subtotal)}</span>
+                </li>
+            </ul>
+            <Tombol varian={pesanan.Status === 'MenungguKonfirmasi' ? 'sekunder' : 'utama'} onClick={saatKembali}>
+                {pesanan.Status === 'MenungguKonfirmasi' ? 'Kembali ke menu' : 'Pesan lagi'}
+            </Tombol>
+        </section>
+    );
+}

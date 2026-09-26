@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.01 |
+| Versi | 2.02 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.02 | Rincian **F-17 self-order QR meja (X12, SLS-04) bagian 1**: token QR per meja (`Meja.TokenPesanSendiri`, buat ulang teraudit), sakelar outlet `Outlet.PesanSendiriAktif` (fitur `kanal.self-order`), halaman publik `/{slugTenant}/meja/{tokenMeja}` (menu harga kanal `MakanDiTempat`, keranjang, subtotal dari server), tabel `PesananSendiri` (nomor `QR/{OUTLET}/{YYMMDD}-{SEQ4}`, status MenungguKonfirmasi → Diterima/Ditolak/Kedaluwarsa 30 menit), API POS daftar/terima/tolak, konfirmasi di layar Meja aplikasi POS; pembayaran di kasir. |
 | 2.01 | Rincian **layar pelanggan** (POS-15, §17.2.5a `PortLayar`): `Paket/AdaptorPerangkat` `IsiLayarPelanggan` (Siaga/Keranjang/Bayar/Selesai, teks siap tampil) + `PortLayarPelanggan`; Android layar kedua (*presentation display*: POS dua layar Sunmi/iMin & monitor HDMI) lewat kanal `id.payou.kasir/layar-pelanggan`; Windows layar VFD 2×20 (perintah CD5220) lewat COM port; pengaturan per perangkat + "Tampilkan contoh"; layar Jual menyiarkan item & total, "Silakan lakukan pembayaran", kembalian + terima kasih, lalu siaga. |
 | 2.00 | Rincian **mode Pelayan** (§17.2 mode aplikasi POS, F-07 mode meja): peran bawaan baru `Pelayan` dengan izin baru `pesanan.meja.catat` (mencatat pesanan meja & kirim ke dapur tanpa berjualan; server menerima `PesananTerbuka.*` dari pelaku ber-izin `penjualan.buat` **atau** `pesanan.meja.catat`); perangkat berjenis `Pelayan` masuk dengan PIN lalu langsung ke Ruang Kerja mode Pelayan tanpa shift & kas (rel: Meja sebagai beranda, Pesanan, Sinkron, Pengaturan), layar Pesanan tanpa Diskon/Tahan/Bayar/pelanggan, "Kirim ke dapur" kembali ke denah meja. |
 | 1.99 | Rincian **pisah tagihan & gabung meja** (F-07 mode meja, fase 2 lanjutan meja): item outbox `PesananTerbuka.PindahBaris {UuidPesanan, UuidTujuan, UuidBaris [..], TutupAsal, UuidPengguna, DipindahPada}` memindahkan baris aktif antar-pesanan terbuka di outlet yang sama (idempoten, audit `pesanan-terbuka.pindah-item`); pisah = buka pesanan baru lalu pindah item terpilih, gabung = pindah semua item + tutup asal berstatus baru `Digabung`; menu "Pisah tagihan" & "Gabung ke pesanan lain" di layar Meja POS. |
@@ -1711,6 +1712,14 @@ promo:
 - BR-17.1 Order online memakai "shift virtual" harian per outlet. Pembayaran online masuk ke akun clearing gateway.
 - BR-17.2 Menu dapat ditandai habis (86) langsung dari aplikasi POS/KDS, segera tercermin di self-order web (TanStack Query polling 15–30 detik).
 - BR-17.3 Order online/self-order yang masuk diteruskan ke aplikasi POS & KDS lewat delta sync (polling 5–10 detik) dan **push notification** (FCM/APNs) sebagai pemicu tarik data segera.
+
+**Rincian F-17 self-order QR meja bagian 1 (v2.02, keputusan agen atas mandat D-12):**
+- **Aktivasi:** fitur paket `kanal.self-order` aktif di outlet + sakelar `Outlet.PesanSendiriAktif` (izin `outlet.kelola`; mematikan selalu boleh). QR per meja memuat `Meja.TokenPesanSendiri` (32 karakter acak, dibuat saat QR pertama ditampilkan di back-office; "Buat ulang QR" membatalkan URL lama seketika, audit `meja.token-pesan-sendiri.buat-ulang`). Halaman cetak kartu meja `/kelola/outlet/{outlet}/meja/qr`.
+- **Web publik** `/{slugTenant}/meja/{tokenMeja}` (tanpa login, React ringan, mobile-first): menu produk aktif tampil di POS yang bisa dijual (tanpa bahan baku, induk & anak varian di bagian 1), harga kanal `MakanDiTempat` dari server (`HargaProdukBerlaku`), pilihan wajib/maks. ditegakkan, keranjang disimpan per meja di browser. `POST …/hitung` mengembalikan **subtotal** saja dengan catatan "Pajak & biaya layanan dihitung di kasir" (mesin kalkulasi penuh butuh data pajak/promo yang hanya ada di kasir). `POST …/pesan` idempoten per Uuid dari browser; server menghitung ulang semua harga; maks. 30 baris, jumlah 1–50, maks. 5 pesanan menunggu per meja (`TerlaluBanyakPesanan`, 429); batas laju per rute+meja+IP; IP hanya disimpan sebagai HMAC. Tamu memantau status tiap 5 detik.
+- **`PesananSendiri`** (domain Penjualan): nomor `QR/{KodeOutlet}/{YYMMDD}-{SEQ4}` (penomor harian), baris snapshot JSON, Subtotal, Status `MenungguKonfirmasi → Diterima | Ditolak | Kedaluwarsa` (30 menit, ditandai saat dibaca), `UuidPesananTerbuka`, pemroses, perangkat, alasan tolak. Tidak ada efek stok/jurnal.
+- **POS:** `GET /api/pos/v1/pesan-sendiri` (menunggu, outlet perangkat), `POST …/{uuid}/terima {UuidPengguna, UuidPesananTerbuka}` dan `…/tolak {UuidPengguna, Alasan}` (izin `penjualan.buat` atau `pesanan.meja.catat`; diproses perangkat lain → 409 `SudahDiproses`; lewat waktu → 409 `Kedaluwarsa`; audit `pesan-sendiri.terima/tolak`). Aplikasi POS menarik daftar bersama pesanan terbuka (7 detik) dan menampilkannya di atas denah Meja; **Terima** memvalidasi produk di katalog perangkat → klaim di server → membuka pesanan terbuka meja bila belum ada lalu menyimpan & mengirim baris ke dapur lewat outbox `PesananTerbuka.*` (Uuid baris = Uuid baris pesanan QR). Pembayaran tetap di kasir.
+- **Belum:** bayar QRIS dinamis dari HP tamu (status `Dibayar`), tandai habis/86 (BR-17.2), push notification (BR-17.3), varian, pajak & biaya layanan di halaman tamu, toko online.
+
 
 ---
 

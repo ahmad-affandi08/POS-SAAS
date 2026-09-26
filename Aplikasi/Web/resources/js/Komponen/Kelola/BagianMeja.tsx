@@ -7,10 +7,12 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
+import { ItemAksiBaris, type AksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import type { Pilihan, StatusOrganisasi } from '@/Tipe/Organisasi';
+
+import { DialogQrMeja, SakelarPesanSendiri, type PesanSendiriOutlet } from './PesanSendiriMeja';
 
 export type AreaMeja = { Uuid: string; Nama: string; Urutan: number; Status: StatusOrganisasi; JumlahMeja: number };
 
@@ -32,6 +34,8 @@ type PropsBagianMeja = {
     modeMeja: ModeMejaOutlet;
     bentuk: Pilihan[];
     bolehKelola: boolean;
+    /** F-17: sakelar & QR pesan sendiri. */
+    pesanSendiri: PesanSendiriOutlet;
 };
 
 function LabelStatusOrganisasi({ status }: { status: StatusOrganisasi }) {
@@ -55,9 +59,10 @@ function TindakanStatus(alamat: string, status: StatusOrganisasi) {
  * F-10a: area & meja outlet untuk mode meja. Tampil bila fitur mode meja aktif di outlet atau sudah ada data meja
  * (data lama tetap bisa diubah/diarsipkan setelah turun paket; menambah butuh fitur aktif).
  */
-export default function BagianMeja({ alamatOutlet, modeMeja, bentuk, bolehKelola }: PropsBagianMeja) {
+export default function BagianMeja({ alamatOutlet, modeMeja, bentuk, bolehKelola, pesanSendiri }: PropsBagianMeja) {
     const [suntingArea, AturSuntingArea] = useState<AreaMeja | 'baru' | null>(null);
     const [suntingMeja, AturSuntingMeja] = useState<Meja | 'baru' | null>(null);
+    const [qrMeja, AturQrMeja] = useState<Meja | null>(null);
     const bolehTambah = bolehKelola && modeMeja.Aktif;
     const labelBentuk = useMemo(() => new Map(bentuk.map((b) => [b.Nilai, b.Label])), [bentuk]);
     const opsiArea: Pilihan[] = [
@@ -142,6 +147,17 @@ export default function BagianMeja({ alamatOutlet, modeMeja, bentuk, bolehKelola
                 Meja dipilih kasir atau pelayan saat membuka pesanan makan di tempat. Area (misal Indoor, Teras, VIP)
                 mengelompokkan meja di layar kasir.
             </p>
+            <SakelarPesanSendiri alamatOutlet={alamatOutlet} pesanSendiri={pesanSendiri} bolehKelola={bolehKelola} />
+            {qrMeja !== null ? (
+                <DialogQrMeja
+                    key={qrMeja.Uuid}
+                    alamatOutlet={alamatOutlet}
+                    uuidMeja={qrMeja.Uuid}
+                    namaMeja={qrMeja.Nama}
+                    bolehKelola={bolehKelola}
+                    saatTutup={() => AturQrMeja(null)}
+                />
+            ) : null}
             {modeMeja.Aktif ? null : (
                 <Pemberitahuan jenis="info" judul="Mode meja tidak aktif">
                     Paket atau template outlet ini tidak memakai mode meja. Data meja lama tetap bisa diubah atau
@@ -208,18 +224,22 @@ export default function BagianMeja({ alamatOutlet, modeMeja, bentuk, bolehKelola
                 ambilIdBaris={(m) => m.Uuid}
                 cari="Cari nama meja"
                 labelBaris={(m) => `meja ${m.Nama}`}
-                {...(bolehKelola
-                    ? {
-                          aksiBaris: (m: Meja) => (
-                              <ItemAksiBaris
-                                  aksi={[
-                                      { label: 'Ubah', saatPilih: () => AturSuntingMeja(m) },
-                                      TindakanStatus(`${alamatOutlet}/meja/${m.Uuid}`, m.Status),
-                                  ]}
-                              />
-                          ),
-                      }
-                    : {})}
+                aksiBaris={(m: Meja) => {
+                    // F-17: QR pesan sendiri untuk meja aktif (semua yang bisa melihat meja); ubah & arsip butuh izin.
+                    const aksi: AksiBaris[] = [
+                        ...(m.Status === 'Aktif'
+                            ? [{ label: 'QR pesan sendiri', saatPilih: () => AturQrMeja(m) }]
+                            : []),
+                        ...(bolehKelola
+                            ? [
+                                  { label: 'Ubah', saatPilih: () => AturSuntingMeja(m) },
+                                  TindakanStatus(`${alamatOutlet}/meja/${m.Uuid}`, m.Status),
+                              ]
+                            : []),
+                    ];
+
+                    return aksi.length > 0 ? <ItemAksiBaris aksi={aksi} /> : null;
+                }}
                 kosong={{ judul: 'Belum ada meja. Tambah meja agar kasir bisa membuka pesanan per meja.' }}
             />
         </section>

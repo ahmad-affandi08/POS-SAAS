@@ -16,6 +16,7 @@ use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
+use App\Http\Kontroler\Pos\V1\PesanSendiriKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Kontroler\Pos\V1\VoucherKontroler;
@@ -99,5 +100,11 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/dapur/tiket', [DapurKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.dapur.tiket');
         Route::post('/dapur/tiket/{tiketDapur}/status', [DapurKontroler::class, 'UbahStatus'])
             ->middleware('throttle:pos-120')->where('tiketDapur', $ulid)->name('pos.dapur.tiket.status');
+        // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
+        Route::get('/pesan-sendiri', [PesanSendiriKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesan-sendiri');
+        Route::post('/pesan-sendiri/{pesananSendiri}/terima', [PesanSendiriKontroler::class, 'Terima'])
+            ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.terima');
+        Route::post('/pesan-sendiri/{pesananSendiri}/tolak', [PesanSendiriKontroler::class, 'Tolak'])
+            ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.tolak');
     });
 });

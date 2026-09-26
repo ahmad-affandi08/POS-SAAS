@@ -20,6 +20,9 @@ final class PemeriksaFiturTenant
     /** F-10 kitchen display. */
     public const KUNCI_KDS = 'pos.kds';
 
+    /** F-17 Self-Order QR Meja (X12, add-on). */
+    public const KUNCI_PESAN_SENDIRI = 'kanal.self-order';
+
     public function __construct(
         private readonly SumberFiturTenant $sumber,
         private readonly EvaluatorFitur $evaluator,

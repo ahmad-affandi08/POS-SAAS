@@ -78,6 +78,17 @@ final class PenyediaAplikasi extends ServiceProvider
             });
         }
 
+        // F-17 Self-Order QR Meja (tanpa login): per rute, per meja (token), per IP. Tamu satu restoran biasanya di balik
+        // satu IP wifi, jadi kunci per IP saja membuat meja-meja saling menghabiskan jatah polling status.
+        foreach ([20, 60, 300] as $perMenit) {
+            RateLimiter::for("pesan-sendiri-{$perMenit}", static function (Request $permintaan) use ($perMenit): Limit {
+                $rute = $permintaan->route();
+                $token = $rute?->parameter('tokenMeja');
+
+                return Limit::perMinute($perMenit)->by($rute?->getName().'|'.(is_string($token) ? $token : '').'|'.$permintaan->ip());
+            });
+        }
+
         // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
         $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();
 

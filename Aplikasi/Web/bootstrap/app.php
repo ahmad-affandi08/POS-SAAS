@@ -49,7 +49,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(fn (SymfonyResponse $respons, Throwable $galat, Request $request) => GalatKontroler::UbahRespons($respons, $request));
 
         // F-02b: galat framework di API (validasi, 404, 429, ...) juga berformat {"Galat": {...}} (PRD §16.2).
-        $exceptions->render(fn (Throwable $galat, Request $request) => $request->is('api/*') ? GalatApi::DariGalat($galat) : null);
+        // F-17: rute JSON pesan sendiri publik memakai format yang sama.
+        $exceptions->render(fn (Throwable $galat, Request $request) => $request->is('api/*') || ($request->routeIs('publik.pesan-sendiri.*') && $request->expectsJson())
+            ? GalatApi::DariGalat($galat)
+            : null);
 
         $exceptions->dontFlash(['KataSandi', 'KonfirmasiKataSandi', 'Kode']);
 

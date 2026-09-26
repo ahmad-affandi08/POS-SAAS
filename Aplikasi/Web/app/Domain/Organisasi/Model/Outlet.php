@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property string $JamTutupBuku
  * @property array<string, mixed>|null $ProfilPajak
  * @property StatusOrganisasi $Status
+ * @property bool $PesanSendiriAktif F-17: tamu boleh memesan lewat QR meja (juga butuh fitur `kanal.self-order`)
  * @property Carbon|null $KodeDikunciPada
  * @property Carbon|null $DiarsipkanPada
  * @property-read Merek $Merek
@@ -59,6 +60,7 @@ final class Outlet extends ModelDasar
         'JamTutupBuku' => '04:00',
         'ProfilPajak' => null,
         'Status' => 'Aktif',
+        'PesanSendiriAktif' => false,
         'KodeDikunciPada' => null,
         'DiarsipkanPada' => null,
     ];
@@ -87,6 +89,7 @@ final class Outlet extends ModelDasar
         return [
             'ProfilPajak' => 'array',
             'Status' => StatusOrganisasi::class,
+            'PesanSendiriAktif' => 'boolean',
             'KodeDikunciPada' => 'datetime',
             'DiarsipkanPada' => 'datetime',
             'TemplateSektorDiterapkanPada' => 'datetime',

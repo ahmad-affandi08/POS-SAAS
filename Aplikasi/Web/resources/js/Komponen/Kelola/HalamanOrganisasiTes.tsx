@@ -126,6 +126,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 JenisGudang={[{ Nilai: 'Jual', Label: 'Barang jual' }]}
                 ModeMeja={{ Aktif: false, Area: [], Meja: [] }}
                 BentukMeja={[]}
+                PesanSendiri={{ FiturAktif: false, Aktif: false }}
             />,
         );
 
@@ -182,6 +183,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 JenisGudang={[]}
                 ModeMeja={modeMeja}
                 BentukMeja={bentuk}
+                PesanSendiri={{ FiturAktif: true, Aktif: false }}
             />,
         );
 
@@ -206,6 +208,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 JenisGudang={[]}
                 ModeMeja={{ ...modeMeja, Aktif: false }}
                 BentukMeja={bentuk}
+                PesanSendiri={{ FiturAktif: true, Aktif: false }}
             />,
         );
         expect(screen.getByText('Mode meja tidak aktif')).toBeTruthy();

@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $PosisiX
  * @property int|null $PosisiY
  * @property int $Urutan
+ * @property string|null $TokenPesanSendiri token QR pesan sendiri (F-17), null sampai QR pertama kali ditampilkan
  * @property StatusOrganisasi $Status
  * @property Carbon|null $DiarsipkanPada
  * @property-read AreaMeja|null $Area
@@ -37,7 +38,7 @@ final class Meja extends ModelDasar
     protected $table = 'Meja';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['Status' => 'Aktif', 'DiarsipkanPada' => null, 'Bentuk' => 'Persegi', 'Kapasitas' => 4, 'Urutan' => 0];
+    protected $attributes = ['Status' => 'Aktif', 'DiarsipkanPada' => null, 'Bentuk' => 'Persegi', 'Kapasitas' => 4, 'Urutan' => 0, 'TokenPesanSendiri' => null];
 
     /**
      * @return BelongsTo<AreaMeja, $this>

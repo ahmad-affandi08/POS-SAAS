@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Http\Kontroler\Autentikasi\KeamananAkunKontroler;
 use App\Http\Kontroler\Autentikasi\LupaKataSandiKontroler;
@@ -16,6 +17,7 @@ use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
+use App\Http\Kontroler\Publik\PesanSendiriKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\BatasiTenantDitangguhkan;
@@ -27,6 +29,7 @@ use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibDuaFaktorTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use App\Http\Perantara\WajibPersetujuanLegal;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -155,4 +158,29 @@ Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->gro
             Route::group([], base_path('routes/Karyawan.php'));
         });
     });
+
+    // F-17 Self-Order QR Meja (X12), tanpa login. Didaftarkan paling akhir dengan pola slug & token ketat (token 32
+    // karakter) agar tidak menaungi rute sistem; slug yang bentrok dengan rute sistem memang tidak pernah dibuat
+    // (`tenant.SlugTerlarang`). Rute JSON tanpa CSRF (tidak memakai sesi/kredensial), dibatasi per meja & IP.
+    Route::prefix('/{slugTenant}/meja/{tokenMeja}')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'tokenMeja' => MejaPesanSendiri::POLA_TOKEN])
+        ->group(function (): void {
+            Route::get('/', [PesanSendiriKontroler::class, 'Tampilkan'])->middleware('throttle:pesan-sendiri-60')->name('publik.pesan-sendiri');
+            Route::get('/gambar/{produk}', [PesanSendiriKontroler::class, 'Gambar'])
+                ->where('produk', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
+                ->middleware('throttle:pesan-sendiri-300')
+                ->name('publik.pesan-sendiri.gambar');
+            Route::get('/pesanan/{uuid}', [PesanSendiriKontroler::class, 'Status'])
+                ->where('uuid', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
+                ->middleware('throttle:pesan-sendiri-60')
+                ->name('publik.pesan-sendiri.status');
+            Route::post('/hitung', [PesanSendiriKontroler::class, 'Hitung'])
+                ->withoutMiddleware(ValidateCsrfToken::class)
+                ->middleware('throttle:pesan-sendiri-60')
+                ->name('publik.pesan-sendiri.hitung');
+            Route::post('/pesan', [PesanSendiriKontroler::class, 'Pesan'])
+                ->withoutMiddleware(ValidateCsrfToken::class)
+                ->middleware('throttle:pesan-sendiri-20')
+                ->name('publik.pesan-sendiri.pesan');
+        });
 });
