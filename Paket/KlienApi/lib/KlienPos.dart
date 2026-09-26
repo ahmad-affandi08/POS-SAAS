@@ -107,9 +107,9 @@ class KlienPos {
     final json = await _Kirim('GET', 'pelanggan?kata=${Uri.encodeQueryComponent(rapi)}', null);
     // F-16c bagian 3: tanggal bisnis yang menjadi acuan hitungan harian `PemakaianPromo` (server lama: tidak ada).
     final tanggalBisnis = UraiJson.AmbilTeksAtauNull(json['TanggalBisnis']);
-    return UraiJson.AmbilDaftarPeta(
-      json['Pelanggan'],
-    ).map((p) => PelangganPos.DariJson(p, tanggalBisnis: tanggalBisnis)).toList();
+    return UraiJson.AmbilDaftarPeta(json['Pelanggan'])
+        .map((p) => PelangganPos.DariJson(p, tanggalBisnis: tanggalBisnis))
+        .toList();
   }
 
   /// Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b). Pelanggan tidak ada/diarsipkan → `GalatApi`
