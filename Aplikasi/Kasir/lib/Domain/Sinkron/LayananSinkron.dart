@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:klien_api/KlienApi.dart';
 
+import '../Perangkat/LayananUjiPerangkat.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../Sesi/LayananPerangkat.dart';
 
@@ -29,14 +30,22 @@ class RingkasanSinkron {
 /// `Diterima`/`Duplikat` → dihapus dari outbox; `Ditolak` → "Perlu Tindakan" beserta alasannya. Gagal jaringan/5xx →
 /// dijadwalkan ulang dengan mundur eksponensial. Perangkat dicabut → data sensitif lokal dihapus, transaksi tetap.
 class LayananSinkron {
-  LayananSinkron({required this.klien, required this.repositori, required this.perangkat, DateTime Function()? jam})
-    : _jam = jam ?? DateTime.now;
+  LayananSinkron({
+    required this.klien,
+    required this.repositori,
+    required this.perangkat,
+    this.ujiPerangkat,
+    DateTime Function()? jam,
+  }) : _jam = jam ?? DateTime.now;
 
   static const int ukuranBatch = 50;
 
   final KlienPos klien;
   final RepositoriKasir repositori;
   final LayananPerangkat perangkat;
+
+  /// v1.96: laporan Wizard Uji Perangkat yang tertunda ikut dikirim setelah outbox kosong.
+  final LayananUjiPerangkat? ujiPerangkat;
   final DateTime Function() _jam;
 
   bool _berjalan = false;
@@ -54,6 +63,7 @@ class LayananSinkron {
       while (true) {
         final batch = await repositori.AmbilOutboxSiapKirim(ukuranBatch, _jam());
         if (batch.isEmpty) {
+          await ujiPerangkat?.KirimTertunda();
           return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: dijawabServer ? true : null);
         }
 

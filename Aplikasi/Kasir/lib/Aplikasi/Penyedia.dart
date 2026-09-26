@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart' show Uang;
 
+import '../Data/Printer/InfoPerangkatPlatform.dart';
 import '../Data/KameraSwafotoPlatform.dart';
 import '../Data/RepositoriAbsensi.dart';
 import '../Domain/Karyawan/LayananAbsensi.dart';
@@ -37,6 +38,7 @@ import '../Domain/Penjualan/LayananPreOrder.dart';
 import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
+import '../Domain/Perangkat/LayananUjiPerangkat.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
 import '../Domain/Pin/PemverifikasiPinOffline.dart';
@@ -124,6 +126,19 @@ final penyediaLayananSinkron = Provider<LayananSinkron>(
     klien: ref.watch(penyediaKlienPos),
     repositori: ref.watch(penyediaRepositori),
     perangkat: ref.watch(penyediaLayananPerangkat),
+    ujiPerangkat: ref.watch(penyediaLayananUjiPerangkat),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+/// v1.96: info merek/model perangkat (test menggantinya dengan tiruan) dan Wizard Uji Perangkat.
+final penyediaSumberInfoPerangkat = Provider<SumberInfoPerangkat>((ref) => const InfoPerangkatPlatform());
+
+final penyediaLayananUjiPerangkat = Provider<LayananUjiPerangkat>(
+  (ref) => LayananUjiPerangkat(
+    repositori: ref.watch(penyediaRepositori),
+    klien: ref.watch(penyediaKlienPos),
+    info: ref.watch(penyediaSumberInfoPerangkat),
     jam: ref.watch(penyediaJam),
   ),
 );

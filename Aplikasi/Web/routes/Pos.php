@@ -41,6 +41,11 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
 
     // F-06: kirim batch outbox (shift, mutasi kas; F-07b penjualan). Sengaja di luar penjaga langganan agar
     // data yang dibuat offline sebelum langganan ditangguhkan tetap bisa tersimpan di server (tanpa kehilangan data).
+    // v1.96: profil hardware & hasil Wizard Uji Perangkat (dukungan teknis); tetap terbuka saat langganan ditangguhkan.
+    Route::post('/perangkat/profil-hardware', [PerangkatKontroler::class, 'SimpanProfilHardware'])
+        ->middleware('throttle:pos-10')
+        ->name('pos.perangkat.profil-hardware');
+
     Route::post('/sinkron/kirim', [SinkronKontroler::class, 'Kirim'])->middleware('throttle:pos-120')->name('pos.sinkron.kirim');
 
     // Endpoint berjualan: POS terkunci saat langganan Ditangguhkan/Berhenti.

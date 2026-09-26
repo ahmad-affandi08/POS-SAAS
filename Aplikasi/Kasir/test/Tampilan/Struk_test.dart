@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
+import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Domain/Dapur/LayananTiketDapur.dart';
 import 'package:kasir/Domain/Struk/PemindaiPrinter.dart';
 import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
@@ -270,4 +271,42 @@ void main() {
     expect(u.pemindai.transportDibuat.last.jenis, JenisTransport.Ble);
     await Lepas(tester, u);
   });
+
+  for (final ukuran in const [Size(1280, 900), Size(360, 740)]) {
+    testWidgets('v1.96 wizard uji perangkat: cetak uji, jawab langkah, pindai, simpan (offline → tertunda) ($ukuran)', (
+      tester,
+    ) async {
+      final u = await Masuk(tester, ukuran, printer: const ProfilPrinter(alamat: '192.168.1.50'));
+      await Ketuk(tester, find.text('Pengaturan').last);
+      // Bagian uji perangkat berada di bawah printer struk: gulir turun (daftar Pengaturan dibangun lazy).
+      await tester.scrollUntilVisible(find.text('Mulai uji perangkat'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pump();
+      expect(find.text('Perangkat ini belum pernah diuji.'), findsOneWidget);
+      await Ketuk(tester, find.text('Mulai uji perangkat'));
+
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak halaman uji'));
+      expect(u.printer.AmbilTeks(), contains('CETAK UJI'));
+      await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Berhasil').first);
+      await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tidak ada pemotong'));
+      await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tidak pakai laci'));
+      final simpan = find.widgetWithText(FilledButton, 'Simpan hasil uji');
+      expect(tester.widget<FilledButton>(simpan).onPressed, isNull, reason: 'Pemindai belum diuji.');
+      await tester.enterText(find.widgetWithText(TextField, 'Hasil pindai'), '8991002101234');
+      await tester.pump();
+      await Ketuk(tester, simpan);
+      await Tunggu(tester, const Duration(seconds: 2));
+      final profil = await tester.runAsync(() => u.repositori.AmbilPengaturan(KunciPengaturan.profilHardwareTertunda));
+      expect(profil, '1', reason: 'Server tiruan offline: laporan tertunda.');
+      // Bagian menyusut setelah disimpan (di 360 dp daftar lazy membangunnya ulang): kembali ke atas lalu gulir turun ke
+      // ringkasan hasil uji terakhir.
+      const ringkasan = 'Uji terakhir: cetak berhasil, potong tidak dipakai, laci tidak dipakai, pemindai berhasil.';
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 5000));
+      await tester.pump();
+      await tester.scrollUntilVisible(find.text(ringkasan), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pump();
+      expect(find.text(ringkasan), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
 }

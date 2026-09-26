@@ -32,6 +32,8 @@ type Perangkat = {
     Status: StatusPerangkat;
     Platform: string | null;
     VersiAplikasi: string | null;
+    /** v1.96: ringkasan profil hardware & hasil wizard uji perangkat. */
+    PerangkatKeras?: string | null;
     DiaktifkanPada: string | null;
     TerakhirAktifPada: string | null;
     DicabutPada: string | null;
@@ -72,6 +74,9 @@ const kolom: KolomTabel<Perangkat>[] = [
                     {baris.Platform ? ` · ${baris.Platform}` : ''}
                     {baris.VersiAplikasi ? ` · versi ${baris.VersiAplikasi}` : ''}
                 </span>
+                {baris.PerangkatKeras ? (
+                    <span className="block text-keterangan text-teks-sekunder">{baris.PerangkatKeras}</span>
+                ) : null}
             </>
         ),
     },

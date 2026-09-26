@@ -179,6 +179,11 @@ class KlienPos {
     return UraiJson.AmbilTeks(json['Status'], status);
   }
 
+  /// Laporkan profil hardware & hasil Wizard Uji Perangkat (PRD v1.96) untuk dukungan teknis. Offline → `GalatJaringan`.
+  Future<void> KirimProfilHardware(Map<String, Object?> profil) async {
+    await _Kirim('POST', 'perangkat/profil-hardware', profil);
+  }
+
   /// Kirim batch outbox (maks. 50) dan kembalikan hasil per item dalam urutan yang sama.
   Future<List<HasilItemSinkron>> KirimSinkron(List<ItemOutbox> item) async {
     final json = await _Kirim('POST', 'sinkron/kirim', {'Item': item.map((i) => i.toJson()).toList()});

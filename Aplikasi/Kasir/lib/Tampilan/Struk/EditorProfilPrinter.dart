@@ -8,9 +8,10 @@ import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/Struk/PemindaiPrinter.dart';
 import '../../Domain/Struk/ProfilPrinter.dart';
 
-/// Isian satu profil printer (PRD v1.79–v1.80, dipakai juga printer dapur v1.89): LAN/Wi-Fi (alamat IP & port),
-/// Bluetooth (printer yang sudah di-pair; Android & Windows), Bluetooth LE (pindai; iOS, Android, Windows), atau port COM
-/// Windows sesuai [PemindaiPrinter.AmbilJenisDidukung]; lebar kertas; dan untuk printer struk: cetak otomatis & buka laci.
+/// Isian satu profil printer (PRD v1.79–v1.80, v1.96, dipakai juga printer dapur v1.89): LAN/Wi-Fi (alamat IP & port),
+/// Bluetooth (printer yang sudah di-pair; Android & Windows), Bluetooth LE (pindai; iOS, Android, Windows), USB (Android
+/// OTG & printer terpasang di Windows), atau printer bawaan POS all-in-one (Android) sesuai
+/// [PemindaiPrinter.AmbilJenisDidukung]; lebar kertas; dan untuk printer struk: cetak otomatis & buka laci.
 /// Cetak uji memakai isian yang sedang dipilih sebelum disimpan.
 class EditorProfilPrinter extends ConsumerStatefulWidget {
   const EditorProfilPrinter({
@@ -38,6 +39,8 @@ class EditorProfilPrinter extends ConsumerStatefulWidget {
     JenisTransport.Jaringan => 'LAN/Wi-Fi',
     JenisTransport.BluetoothKlasik => 'Bluetooth',
     JenisTransport.Ble => 'Bluetooth LE',
+    JenisTransport.Usb => 'USB',
+    JenisTransport.SdkVendor => 'Printer bawaan',
     _ => jenis.label,
   };
 
@@ -181,21 +184,30 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
       JenisTransport.BluetoothKlasik =>
         'Belum ada printer Bluetooth yang di-pair. Pasangkan printer di pengaturan Bluetooth perangkat '
             '(PIN biasanya 0000 atau 1234), lalu ketuk Cari printer lagi.',
+      JenisTransport.Usb =>
+        'Tidak ada printer USB yang tersambung. Pasang kabel USB (pakai OTG di tablet/HP), nyalakan printer, '
+            'lalu cari lagi. Di Windows, pasang dulu driver printernya.',
+      JenisTransport.SdkVendor =>
+        'Printer bawaan perangkat ini belum dikenali. Pilih sambungan Bluetooth atau USB, lalu jalankan uji perangkat.',
       _ => 'Tidak ada printer Bluetooth LE di sekitar. Nyalakan printer dan dekatkan ke perangkat, lalu cari lagi.',
     };
     return [
-      Text(
-        _jenis == JenisTransport.BluetoothKlasik
-            ? 'Printer harus sudah di-pair di pengaturan Bluetooth perangkat.'
-            : 'Printer dicari di sekitar selama beberapa detik.',
-        style: teks.bodySmall,
-      ),
+      Text(switch (_jenis) {
+        JenisTransport.BluetoothKlasik => 'Printer harus sudah di-pair di pengaturan Bluetooth perangkat.',
+        JenisTransport.Usb => 'Printer USB yang tersambung ke perangkat ini.',
+        JenisTransport.SdkVendor => 'Printer yang menyatu dengan mesin kasir (Sunmi, iMin, dan merek lain).',
+        _ => 'Printer dicari di sekitar selama beberapa detik.',
+      }, style: teks.bodySmall),
       const SizedBox(height: TokenJarak.jarak8),
       SizedBox(
         height: TokenJarak.targetSentuh,
         child: OutlinedButton.icon(
           onPressed: _mencari || _sibuk ? null : _CariPrinter,
-          icon: const Icon(Icons.bluetooth_searching),
+          icon: Icon(switch (_jenis) {
+            JenisTransport.Usb => Icons.usb,
+            JenisTransport.SdkVendor => Icons.point_of_sale,
+            _ => Icons.bluetooth_searching,
+          }),
           label: Text(_mencari ? 'Mencari printer…' : 'Cari printer'),
         ),
       ),
@@ -253,13 +265,19 @@ class _EditorProfilPrinterState extends ConsumerState<EditorProfilPrinter> {
         if (jenisDidukung.length > 1) ...[
           Text('Sambungan printer', style: teks.labelLarge),
           const SizedBox(height: TokenJarak.jarak4),
-          SegmentedButton<JenisTransport>(
-            showSelectedIcon: false,
-            segments: [
-              for (final j in jenisDidukung) ButtonSegment(value: j, label: Text(EditorProfilPrinter.LabelJenis(j))),
+          // Chip bisa turun baris: sampai 5 jenis sambungan tetap muat di layar 360 dp.
+          Wrap(
+            spacing: TokenJarak.jarak8,
+            runSpacing: TokenJarak.jarak8,
+            children: [
+              for (final j in jenisDidukung)
+                ChoiceChip(
+                  label: Text(EditorProfilPrinter.LabelJenis(j)),
+                  selected: _jenis == j,
+                  showCheckmark: false,
+                  onSelected: (_) => _GantiJenis(j),
+                ),
             ],
-            selected: {_jenis},
-            onSelectionChanged: (pilihan) => _GantiJenis(pilihan.single),
           ),
           const SizedBox(height: TokenJarak.jarak12),
         ],

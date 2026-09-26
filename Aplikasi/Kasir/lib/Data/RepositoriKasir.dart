@@ -88,6 +88,10 @@ abstract final class KunciPengaturan {
 
   /// Cetak struk bagian 4c: printer tiket dapur per stasiun di perangkat ini (JSON; tidak ikut data awal).
   static const String printerDapur = 'PrinterDapur';
+
+  /// v1.96: profil hardware & hasil Wizard Uji Perangkat terakhir (JSON) dan tanda belum terkirim ke server ("1").
+  static const String profilHardware = 'ProfilHardware';
+  static const String profilHardwareTertunda = 'ProfilHardwareTertunda';
 }
 
 /// Status shift lokal (sama dengan server).

@@ -37,11 +37,36 @@ final class DaftarPerangkat
                 'Status' => $perangkat->AmbilStatus(),
                 'Platform' => $perangkat->Platform?->value,
                 'VersiAplikasi' => $perangkat->VersiAplikasi,
+                'PerangkatKeras' => self::RingkasProfilHardware($perangkat->ProfilHardware),
                 'DiaktifkanPada' => $perangkat->DiaktifkanPada?->toIso8601String(),
                 'TerakhirAktifPada' => $perangkat->TerakhirAktifPada?->toIso8601String(),
                 'DicabutPada' => $perangkat->DicabutPada?->toIso8601String(),
             ])
             ->all());
+    }
+
+    /**
+     * v1.96: ringkasan `ProfilHardware` untuk daftar perangkat, misal "SUNMI V2s · Printer bawaan (58 mm) · uji lolos".
+     *
+     * @param  array<string, mixed>|null  $profil
+     */
+    public static function RingkasProfilHardware(?array $profil): ?string
+    {
+        if ($profil === null) {
+            return null;
+        }
+
+        $teks = fn (mixed $nilai): string => is_string($nilai) ? trim($nilai) : '';
+        $printer = is_array($profil['Printer'] ?? null) ? $profil['Printer'] : [];
+        $uji = is_array($profil['Uji'] ?? null) ? array_filter($profil['Uji'], fn (mixed $h): bool => in_array($h, ['Lolos', 'Gagal'], true)) : [];
+        $bagian = [
+            trim($teks($profil['Produsen'] ?? null).' '.$teks($profil['Model'] ?? null)),
+            $teks($printer['Nama'] ?? null) === '' ? '' : $teks($printer['Nama']).($teks($printer['Lebar'] ?? null) === '' ? '' : ' ('.$teks($printer['Lebar']).')'),
+            $uji === [] ? '' : (in_array('Gagal', $uji, true) ? 'uji ada yang gagal' : 'uji lolos'),
+        ];
+        $hasil = implode(' · ', array_filter($bagian, fn (string $b): bool => $b !== ''));
+
+        return $hasil === '' ? null : $hasil;
     }
 
     /**

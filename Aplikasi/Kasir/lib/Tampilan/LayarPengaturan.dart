@@ -7,6 +7,7 @@ import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 import 'Struk/BagianPrinterDapur.dart';
 import 'Struk/BagianPrinterStruk.dart';
+import 'Struk/BagianUjiPerangkat.dart';
 
 /// Pengaturan perangkat kasir (PRD §17.2.7): printer struk (v1.79), printer dapur per stasiun (v1.87), ukuran tampilan, posisi keranjang, kunci otomatis,
 /// dan perbarui data kasir dari back-office. Tersimpan lokal di perangkat ini dan langsung berlaku.
@@ -67,7 +68,8 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
       anak: [
         Bagian(
           'Printer struk',
-          'Printer thermal LAN/Wi-Fi atau Bluetooth. Isi kepala & kaki struk diatur di back-office.',
+          'Printer thermal LAN/Wi-Fi, Bluetooth, USB, atau printer bawaan mesin kasir (Sunmi, iMin). '
+              'Isi kepala & kaki struk diatur di back-office.',
           const BagianPrinterStruk(),
         ),
         Bagian(
@@ -132,6 +134,11 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
                 ),
             ],
           ),
+        ),
+        Bagian(
+          'Uji perangkat',
+          'Periksa printer, pemotong kertas, laci, dan pemindai. Hasilnya membantu tim dukungan bila ada kendala.',
+          const BagianUjiPerangkat(),
         ),
       ],
     );
