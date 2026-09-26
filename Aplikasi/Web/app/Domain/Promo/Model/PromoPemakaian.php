@@ -9,7 +9,8 @@ use App\Domain\Bersama\Tenant\MilikTenant;
 use Illuminate\Support\Carbon;
 
 /**
- * Pemakaian promo pada satu penjualan (F-16c): nilai potongan promo itu (baris + pesanan).
+ * Pemakaian promo pada satu penjualan (F-16c): nilai potongan promo itu (baris + pesanan). v1.90: penjualan yang di-void
+ * menandai `DibatalkanPada`; pemakaian yang dibatalkan tidak dihitung kuota, batas per pelanggan, maupun ringkasan.
  *
  * @property int $Id
  * @property int $IdTenant
@@ -18,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $IdPelanggan
  * @property Carbon $TanggalBisnis
  * @property string $JumlahDiskon
+ * @property Carbon|null $DibatalkanPada
  */
 final class PromoPemakaian extends ModelDasar
 {
@@ -32,6 +34,6 @@ final class PromoPemakaian extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['TanggalBisnis' => 'date', 'JumlahDiskon' => 'decimal:2'];
+        return ['TanggalBisnis' => 'date', 'JumlahDiskon' => 'decimal:2', 'DibatalkanPada' => 'datetime'];
     }
 }

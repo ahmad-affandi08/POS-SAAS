@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.89 |
+| Versi | 1.90 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.90 | Void penjualan **mengembalikan jatah promo** (keputusan pemilik produk v1.89: ikuti praktik umum; transaksi yang dibatalkan dianggap tidak terjadi): `PromoPemakaian.DibatalkanPada`, `KuotaTerpakai` dikurangi, batas per pelanggan & ringkasan pemakaian tidak menghitungnya. Retur tidak mengembalikan jatah. Mengubah rincian F-16c bagian 3 ("penjualan yang di-void tetap terhitung"). |
 | 1.89 | **Keputusan pemilik produk v1.89**: semua printer (struk & dapur) mendukung Bluetooth; hal lain mengikuti kebijakan di Indonesia dan praktik umum usaha. Rincian **cetak struk bagian 4d**: printer dapur per stasiun memakai isian printer yang sama dengan printer struk (LAN/Wi-Fi, Bluetooth, Bluetooth LE, COM); penjualan langsung di outlet berstasiun dapur dikirim ke dapur (`KirimDapur`) dan tiketnya dicetak setelah bayar; cetak ulang tiket dari layar selesai bayar dan menu pesanan meja. |
 | 1.88 | Rincian **F-16c bagian 4a** (CRM-05 poin berlipat; rincian diputuskan agen atas mandat D-12, dicatat untuk ditinjau pemilik produk): aksi promo `PoinBerlipat` {Pengali > 1 s.d. 10, satu desimal} di mesin promo PHP & Dart + test vector `PRM-POIN-BERLIPAT-001`; tidak bersaing dengan promo potongan, pengali terbesar yang berlaku dipakai (tidak bertumpuk), dikalikan dengan pengali tier saat perolehan poin di server. |
 | 1.87 | Rincian **cetak struk bagian 4** (POS-11, POS-17, §17.2.5, §19.2; rincian diputuskan agen atas mandat D-12): bukti uang muka pre-order tercetak (otomatis sekali + cetak ulang, laci untuk DP tunai); buka laci manual tanpa transaksi selalu dicatat (tabel `BukaLaci`, outbox `Laci.Buka`, pengaturan `BukaLaciPerluPin` bawaan mati, log di detail shift); tiket dapur per stasiun tercetak di aplikasi kasir saat pesanan meja dikirim ke dapur (printer per stasiun di perangkat: printer struk atau printer LAN/Wi-Fi sendiri; `GET /api/pos/v1/meja` menambah `KategoriStasiun` secara aditif). |
@@ -1634,6 +1635,7 @@ promo:
 - **Aplikasi kasir:** cache `PelangganLokal` skema 12 menyimpan hari lahir, jumlah transaksi, pemakaian promo & tanggal acuannya (dari hasil cari online); penjualan berpelanggan yang tersimpan menambah jumlah transaksi & pemakaian di cache sehingga promo transaksi pertama/batas tidak terpakai ulang selagi offline (hitungan hari mulai dari 0 di tanggal bisnis lain). Promo metode bayar tidak tampil di keranjang; di layar Bayar total dihitung ulang saat metode dipilih (pembayaran yang sudah dimasukkan + metode terpilih; sisa tunai = metode tunai ikut dihitung).
 - **Sinkron:** server menilai ulang promo dengan metode semua pembayaran, tanggal lahir, jumlah transaksi sebelum waktu transaksi, dan pemakaian pelanggan dari data server; beda dengan perangkat (misal dua perangkat offline memakai promo transaksi pertama) = diterima + `PerluTinjauan` `PromoBerbeda`. Tanpa jurnal baru (potongan tetap Diskon Penjualan J-07.1).
 - **Menyusul:** poin berlipat, gratis ongkir, laporan uplift, pendanaan promo (Beban Promosi/bagi pemasok), voucher sebagai metode bayar/gift card, distribusi WA/broadcast (fase 3).
+- **v1.90 (menggantikan "penjualan yang di-void tetap terhitung"):** void penjualan mengembalikan jatah promo: pemakaian ditandai `DibatalkanPada` (tidak dihapus, tetap tampil di detail penjualan), `KuotaTerpakai` dikurangi di transaksi DB void yang sama (idempoten), dan batas per pelanggan, ringkasan pemakaian (jumlah pakai & total potongan), serta `PemakaianPromo` di API POS tidak menghitungnya. Retur tidak mengembalikan jatah. Cache pemakaian di perangkat tidak dikurangi saat void (konservatif); nilainya diperbarui saat pelanggan dicari online lagi.
 
 **Rincian F-16c bagian 4a (v1.88, CRM-05 poin berlipat; rincian diputuskan agen atas mandat D-12):**
 - **Aksi `PoinBerlipat`** `{Jenis: "PoinBerlipat", Pengali}` (lebih dari 1 sampai 10, paling banyak satu desimal, misal `2` atau `1.5`): tidak memotong harga; memakai semua syarat promo yang sama (waktu, hari/jam, outlet, kanal, tier, minimal subtotal, kondisi produk/kategori + jumlah minimal, kuota, syarat bagian 3). Kondisi produk/kategori hanya menjadi syarat; yang dikalikan tetap seluruh poin transaksi.
@@ -2972,7 +2974,7 @@ erDiagram
 | `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada, Status (F-16c bagian 2) |
 | `VoucherPemakaian` | IdVoucher, UuidPenjualan, IdPenjualan, IdPerangkat, Status (Dipesan/Dipakai/Dilepas), DipesanSampai (F-16c bagian 2) |
-| `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon; unik (IdPromo, IdPenjualan) (F-16c) |
+| `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon, DibatalkanPada (void, v1.90); unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**
 

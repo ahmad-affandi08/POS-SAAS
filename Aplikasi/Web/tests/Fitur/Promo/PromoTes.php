@@ -6,6 +6,7 @@ use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Penjualan\Enum\ModeResolusiPromo;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Promo\Enum\StatusPromo;
+use App\Domain\Promo\Kueri\PemakaianPromo;
 use App\Domain\Promo\Model\PengaturanPromo;
 use App\Domain\Promo\Model\Promo;
 use App\Domain\Promo\Model\PromoPemakaian;
@@ -115,6 +116,30 @@ describe('F-16c promo di penjualan POS', function (): void {
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect(PromoPemakaian::query()->count())->toBe(1)
+            ->and($k['Promo']->refresh()->KuotaTerpakai)->toBe(1);
+    });
+
+    it('v1.90 void mengembalikan jatah promo: kuota berkurang, pemakaian ditandai dibatalkan, ringkasan tidak menghitungnya', function (): void {
+        $k = SiapkanPromo($this, kuota: 1);
+        $item = ItemPromo($k);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $jual = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+        expect($k['Promo']->refresh()->KuotaTerpakai)->toBe(1);
+
+        $void = BantuanPenjualan::ItemVoid($k, $jual);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$void]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect($k['Promo']->refresh()->KuotaTerpakai)->toBe(0)
+            ->and(PromoPemakaian::query()->sole()->DibatalkanPada)->not->toBeNull()
+            ->and(app(PemakaianPromo::class)->AmbilRingkasan([$k['Promo']->Id]))->toBe([]);
+
+        // Kirim ulang void tidak mengurangi kuota dua kali; kuota 1 bisa dipakai lagi tanpa tinjauan.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$void]))->toBe([['Duplikat', null]]);
+        $lagi = ItemPromo($k);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$lagi]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(Penjualan::query()->where('Uuid', $lagi['Uuid'])->sole()->PerluTinjauan)->toBeFalse()
             ->and($k['Promo']->refresh()->KuotaTerpakai)->toBe(1);
     });
 

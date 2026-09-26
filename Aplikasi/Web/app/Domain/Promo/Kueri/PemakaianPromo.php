@@ -8,7 +8,10 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Promo\Model\Promo;
 use App\Domain\Promo\Model\PromoPemakaian;
 
-/** Pemakaian promo (F-16c): rincian per penjualan (detail penjualan) dan ringkasan per promo (daftar promo). */
+/**
+ * Pemakaian promo (F-16c): rincian per penjualan (detail penjualan, termasuk yang dibatalkan void) dan ringkasan per promo
+ * (daftar promo; tanpa pemakaian yang dibatalkan).
+ */
 final class PemakaianPromo
 {
     /**
@@ -39,7 +42,7 @@ final class PemakaianPromo
 
         $hasil = [];
 
-        foreach (PromoPemakaian::query()->whereIn('IdPromo', $idPromo)->groupBy('IdPromo')->selectRaw('IdPromo, COUNT(*) AS Jumlah, SUM(JumlahDiskon) AS Total')->get() as $b) {
+        foreach (PromoPemakaian::query()->whereIn('IdPromo', $idPromo)->whereNull('DibatalkanPada')->groupBy('IdPromo')->selectRaw('IdPromo, COUNT(*) AS Jumlah, SUM(JumlahDiskon) AS Total')->get() as $b) {
             $hasil[(int) $b->getAttribute('IdPromo')] = [
                 'JumlahPakai' => (int) $b->getAttribute('Jumlah'),
                 'TotalDiskon' => Uang::Dari((string) ($b->getAttribute('Total') ?? '0'))->KeString(),
@@ -51,7 +54,8 @@ final class PemakaianPromo
 
     /**
      * Pemakaian promo oleh satu pelanggan (F-16c bagian 3, batas per pelanggan): per Uuid promo, jumlah pada tanggal
-     * bisnis [tanggalBisnis] dan selama masa promo. Seperti kuota, penjualan yang di-void tetap terhitung.
+     * bisnis [tanggalBisnis] dan selama masa promo. v1.90: seperti kuota, pemakaian dari penjualan yang di-void tidak
+     * dihitung (jatah kembali ke pelanggan).
      *
      * @param  int|null  $kecualiIdPenjualan  penjualan yang sedang diperiksa (bila sudah tercatat)
      * @return array<string, array{Hari: int, Promo: int}>
@@ -75,6 +79,7 @@ final class PemakaianPromo
 
         $baris = PromoPemakaian::query()
             ->whereIn('IdPelanggan', $idPelanggan)
+            ->whereNull('DibatalkanPada')
             ->when($kecualiIdPenjualan !== null, fn ($k) => $k->where('IdPenjualan', '!=', $kecualiIdPenjualan))
             ->groupBy('IdPelanggan', 'IdPromo')
             ->selectRaw('IdPelanggan, IdPromo, COUNT(*) AS Semua, SUM(CASE WHEN TanggalBisnis = ? THEN 1 ELSE 0 END) AS Hari', [$tanggalBisnis])

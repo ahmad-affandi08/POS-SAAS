@@ -12,7 +12,8 @@ use Carbon\CarbonImmutable;
 /**
  * Layanan publik domain Promo untuk domain Penjualan (F-16c): mencatat pemakaian promo sebuah penjualan di transaksi
  * DB yang sama dan menambah `KuotaTerpakai` (baris promo dikunci urut Id). Idempoten per (promo, penjualan). Promo yang
- * tidak dikenal atau kuotanya terlampaui tidak menggagalkan penjualan; masalahnya dikembalikan untuk tinjauan.
+ * tidak dikenal atau kuotanya terlampaui tidak menggagalkan penjualan; masalahnya dikembalikan untuk tinjauan. Void
+ * mengembalikan jatah lewat [Batalkan].
  */
 final class PencatatPemakaianPromo
 {
@@ -59,5 +60,32 @@ final class PencatatPemakaianPromo
         }
 
         return $masalah;
+    }
+
+    /**
+     * v1.90: void penjualan [idPenjualan] mengembalikan jatah promonya: pemakaian ditandai `DibatalkanPada` dan
+     * `KuotaTerpakai` dikurangi (tidak di bawah 0), di transaksi DB void yang sama. Idempoten (yang sudah dibatalkan
+     * dilewati). Retur tidak mengembalikan jatah (penjualan tetap terjadi).
+     */
+    public function Batalkan(int $idPenjualan): void
+    {
+        $pemakaian = PromoPemakaian::query()->where('IdPenjualan', $idPenjualan)->whereNull('DibatalkanPada')->orderBy('Id')->get();
+
+        if ($pemakaian->isEmpty()) {
+            return;
+        }
+
+        $promo = Promo::query()->whereKey($pemakaian->pluck('IdPromo')->all())->orderBy('Id')->lockForUpdate()->get()->keyBy('Id');
+
+        foreach ($pemakaian as $p) {
+            $p->DibatalkanPada = now();
+            $p->save();
+            $induk = $promo->get($p->IdPromo);
+
+            if ($induk !== null && $induk->KuotaTerpakai > 0) {
+                $induk->KuotaTerpakai--;
+                $induk->save();
+            }
+        }
     }
 }
