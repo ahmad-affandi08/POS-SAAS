@@ -96,7 +96,9 @@ final class BantuanPembelian
 
     public static function Hari(int $mundur = 0): CarbonImmutable
     {
-        return CarbonImmutable::now('Asia/Jakarta')->startOfDay()->subDays($mundur);
+        // Tanggal bisnis outlet uji (WIB, jam tutup buku bawaan 04:00), bukan tanggal kalender WIB: antara 00.00–04.00 WIB
+        // tanggal kalender sudah maju sehari sehingga dianggap tanggal masa depan.
+        return CarbonImmutable::now('Asia/Jakarta')->subHours(4)->startOfDay()->subDays($mundur);
     }
 
     /**

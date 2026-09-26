@@ -5,10 +5,15 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
     plugins: [
-        laravel({
-            input: ["resources/js/Aplikasi.tsx", "resources/js/Pengelola.tsx"],
-            refresh: true,
-        }),
+        // Plugin Laravel hanya untuk dev server & build; di Vitest ia menolak berjalan saat `CI=true`.
+        ...(process.env.VITEST
+            ? []
+            : [
+                  laravel({
+                      input: ["resources/js/Aplikasi.tsx", "resources/js/Pengelola.tsx"],
+                      refresh: true,
+                  }),
+              ]),
         react(),
         tailwindcss(),
     ],

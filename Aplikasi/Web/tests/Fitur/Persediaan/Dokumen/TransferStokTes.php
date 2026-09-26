@@ -111,7 +111,8 @@ describe('F-05b transfer stok: status & alur', function (): void {
     it('terima parsial lalu tutup dengan selisih: DiterimaSebagian → Diterima, susut dari dalam perjalanan (J-05.3, J-05.4)', function (): void {
         $t = SiapkanTransfer();
         $transfer = app(KirimTransferStok::class)->Jalankan(B::DrafTransfer($t['Gudang'], $t['GudangCabang'], [B::Baris($t['Produk']['Stok'], '30')]), $t['Pemilik']->Id);
-        $hariIni = CarbonImmutable::now('Asia/Jakarta')->startOfDay();
+        // Tanggal bisnis (jam tutup buku bawaan 04:00 WIB), bukan tanggal kalender WIB.
+        $hariIni = CarbonImmutable::now('Asia/Jakarta')->subHours(4)->startOfDay();
 
         $transfer = app(TerimaTransferStok::class)->Jalankan($transfer, [new DataTerimaTransfer(1, Kuantitas::Dari('12'))], $hariIni, $t['Pemilik']->Id);
         expect($transfer->Status)->toBe(StatusTransferStok::DiterimaSebagian)
