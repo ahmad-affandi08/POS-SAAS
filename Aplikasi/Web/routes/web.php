@@ -121,6 +121,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             // D-23 C: Kotak Tindakan (butir disaring izin & outlet; menandai dicek butuh `tindakan.tinjau`).
             Route::get('/tindakan', [TindakanKontroler::class, 'Daftar'])->name('kelola.tindakan.daftar');
             Route::post('/tindakan/tinjau', [TindakanKontroler::class, 'Tandai'])->middleware([SiapkanAuditTenant::class, $izin(IzinTenant::TindakanTinjau)])->name('kelola.tindakan.tinjau');
+            // D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat email (pilihan pribadi tiap pengguna).
+            Route::put('/tindakan/ringkasan-email', [TindakanKontroler::class, 'UbahRingkasanEmail'])->middleware(SiapkanAuditTenant::class)->name('kelola.tindakan.ringkasan-email');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
                 // P-08 Langganan & tagihan (transfer manual + bukti). Izin `langganan.kelola` khusus Pemilik (§19.1).

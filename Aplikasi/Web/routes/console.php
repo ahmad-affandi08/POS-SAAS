@@ -52,3 +52,6 @@ Schedule::command('akuntansi:jalankan-jadwal-kas-bank')->dailyAt('05:45')->timez
 
 // D-23 D: tutup harian otomatis untuk hari yang aman ditutup (setelah jam tutup buku bawaan 04.00).
 Schedule::command('kasir:tutup-harian-otomatis')->dailyAt('06:15')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// D-23 D: ringkasan pagi Kotak Tindakan lewat email (setelah otomatisasi pagi di atas).
+Schedule::command('tindakan:kirim-ringkasan-harian')->dailyAt('07:00')->timezone('Asia/Jakarta')->withoutOverlapping();

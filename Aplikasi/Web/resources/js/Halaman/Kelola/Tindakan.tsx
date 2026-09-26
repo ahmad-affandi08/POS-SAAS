@@ -8,11 +8,12 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import { JenisLabelTingkat } from '@/Komponen/Kelola/RingkasTindakan';
 import { Card } from '@/Komponen/Ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/Komponen/Ui/empty';
+import { Switch } from '@/Komponen/Ui/switch';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { ButirTindakan, PropsKotakTindakan } from '@/Tipe/Tindakan';
+import type { ButirTindakan, PropsKotakTindakan, RingkasanEmailTindakan } from '@/Tipe/Tindakan';
 
 function KartuButir({ butir }: { butir: ButirTindakan }) {
     const [dipilih, AturDipilih] = useState<string[]>([]);
@@ -138,12 +139,48 @@ function KartuButir({ butir }: { butir: ButirTindakan }) {
     );
 }
 
+/** D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat email (pilihan pribadi; Owner bawaan aktif). */
+function PilihanRingkasanEmail({ ringkasan }: { ringkasan: RingkasanEmailTindakan }) {
+    const [memproses, AturMemproses] = useState(false);
+
+    return (
+        <div className="flex max-w-3xl items-start gap-3 rounded-panel border border-garis bg-permukaan p-4">
+            <Switch
+                id="RingkasanEmail"
+                checked={ringkasan.Aktif}
+                disabled={!ringkasan.BisaEmail || memproses}
+                onCheckedChange={(aktif) =>
+                    router.put(
+                        '/kelola/tindakan/ringkasan-email',
+                        { Aktif: aktif },
+                        {
+                            preserveScroll: true,
+                            onStart: () => AturMemproses(true),
+                            onFinish: () => AturMemproses(false),
+                        },
+                    )
+                }
+            />
+            <div className="flex min-w-0 flex-col gap-0.5">
+                <label htmlFor="RingkasanEmail" className="text-isi font-semibold text-teks-utama">
+                    Kirim ringkasan ke email saya setiap pagi
+                </label>
+                <span className="text-label text-teks-sekunder">
+                    {ringkasan.BisaEmail
+                        ? 'Butir penting & perlu perhatian dikirim pukul 07.00 WIB, hanya bila ada.'
+                        : 'Akun Anda belum punya email, jadi ringkasan tidak bisa dikirim.'}
+                </span>
+            </div>
+        </div>
+    );
+}
+
 /**
  * Kotak Tindakan (D-23 C): semua yang perlu perhatian di satu tempat, dari yang paling penting. Transaksi offline yang
  * perlu dicek bisa ditandai "sudah dicek" (izin `tindakan.tinjau`); pengingat lain selesai sendiri saat keadaannya
  * berubah (stok diisi, piutang dilunasi, buku ditutup).
  */
-export default function HalamanKotakTindakan({ Butir }: PropsKotakTindakan) {
+export default function HalamanKotakTindakan({ Butir, RingkasanEmail }: PropsKotakTindakan) {
     const { props } = usePage<PropsBersamaAplikasi>();
 
     return (
@@ -152,6 +189,7 @@ export default function HalamanKotakTindakan({ Butir }: PropsKotakTindakan) {
                 Semua yang perlu Anda perhatikan hari ini, dari yang paling penting. Butir hilang sendiri setelah
                 diselesaikan.
             </p>
+            {RingkasanEmail ? <PilihanRingkasanEmail ringkasan={RingkasanEmail} /> : null}
             <DaftarGalatServer galat={props.errors} />
             {Butir.length === 0 ? (
                 <Empty className="rounded-panel border border-garis bg-permukaan px-4 py-6 md:p-8">

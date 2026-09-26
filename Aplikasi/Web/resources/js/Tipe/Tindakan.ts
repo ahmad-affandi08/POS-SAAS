@@ -23,4 +23,11 @@ export type ButirTindakan = {
     Rincian: RincianTindakan[];
 };
 
-export type PropsKotakTindakan = { Butir: ButirTindakan[]; Izin: { Tandai: boolean } };
+/** D-23 D: pilihan pribadi menerima ringkasan pagi lewat email. */
+export type RingkasanEmailTindakan = { BisaEmail: boolean; Aktif: boolean };
+
+export type PropsKotakTindakan = {
+    Butir: ButirTindakan[];
+    Izin: { Tandai: boolean };
+    RingkasanEmail?: RingkasanEmailTindakan;
+};

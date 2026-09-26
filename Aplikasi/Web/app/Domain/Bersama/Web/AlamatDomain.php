@@ -26,6 +26,14 @@ final class AlamatDomain
         return $pemasaran === null || self::AmbilDomain('domain.Tenant') === null ? $jalur : self::BuatUrl($pemasaran, $jalur);
     }
 
+    /** Alamat absolut [jalur] di domain tenant (atau `APP_URL` bila satu host), misal tautan di email. */
+    public static function BuatUrlAbsolutTenant(string $jalur): string
+    {
+        $url = self::BuatUrlTenant($jalur);
+
+        return str_starts_with($url, 'http') ? $url : rtrim((string) config('app.url'), '/').'/'.ltrim($url, '/');
+    }
+
     /** Alamat absolut [jalur] di domain pemasaran (atau `APP_URL` bila satu host). */
     public static function BuatUrlAbsolutPemasaran(string $jalur): string
     {

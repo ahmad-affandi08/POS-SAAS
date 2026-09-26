@@ -20,7 +20,10 @@ vi.mock('@inertiajs/react', () => ({
             {children}
         </a>
     ),
-    router: { post: (url: string, data: unknown) => uji.kiriman.push({ url, data }) },
+    router: {
+        post: (url: string, data: unknown) => uji.kiriman.push({ url, data }),
+        put: (url: string, data: unknown) => uji.kiriman.push({ url, data }),
+    },
     usePage: () => ({ props: { errors: {} }, url: '/kelola/tindakan' }),
 }));
 
@@ -123,5 +126,33 @@ describe('Kotak Tindakan (D-23 C)', () => {
 
         render(<HalamanKotakTindakan Butir={[]} Izin={{ Tandai: false }} />);
         expect(screen.getByText('Semua beres')).toBeTruthy();
+    });
+
+    it('D-23 D: ringkasan pagi lewat email bisa dimatikan; akun tanpa email tidak bisa mengaktifkan', () => {
+        render(
+            <HalamanKotakTindakan
+                Butir={[]}
+                Izin={{ Tandai: false }}
+                RingkasanEmail={{ BisaEmail: true, Aktif: true }}
+            />,
+        );
+        const saklar = screen.getByRole('switch', { name: 'Kirim ringkasan ke email saya setiap pagi' });
+        expect(saklar.getAttribute('aria-checked')).toBe('true');
+        fireEvent.click(saklar);
+        expect(uji.kiriman).toEqual([{ url: '/kelola/tindakan/ringkasan-email', data: { Aktif: false } }]);
+        cleanup();
+
+        render(
+            <HalamanKotakTindakan
+                Butir={[]}
+                Izin={{ Tandai: false }}
+                RingkasanEmail={{ BisaEmail: false, Aktif: false }}
+            />,
+        );
+        expect(
+            (screen.getByRole('switch', { name: 'Kirim ringkasan ke email saya setiap pagi' }) as HTMLButtonElement)
+                .disabled,
+        ).toBe(true);
+        expect(screen.getByText(/belum punya email/)).toBeTruthy();
     });
 });

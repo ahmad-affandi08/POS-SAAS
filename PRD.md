@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.19 |
+| Versi | 2.20 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.20 | **D-23 D bagian 4a** ringkasan pagi Kotak Tindakan lewat email (07.00 WIB): butir Penting & Perhatian sesuai izin penerima (hutang/piutang jatuh tempo, shift lupa ditutup, dokumen perlu dicek, tutup buku); Owner bawaan berlangganan, anggota lain memilih sendiri di halaman Kotak Tindakan; tabel `LanggananRingkasanTindakan` (sekali per tanggal bisnis). |
 | 2.19 | **D-23 D bagian 3** tutup harian otomatis: tiap pagi (06.15 WIB) hari yang aman ditutup (sudah berakhir, ada shift & semuanya ditutup, tanpa peringatan perangkat/tinjauan) ditutup atas nama Owner lewat Aksi tutup harian yang sama; kolom `TutupHarian.DitutupOtomatis`, label "otomatis" di daftar tutup harian. Kunci bulan **tidak** otomatis (tetap pengingat; keputusan agen D-12). |
 | 2.18 | **D-23 D bagian 2** transaksi kas & bank berulang: pilihan "Ulangi otomatis" (tiap bulan/tiap minggu) di formulir kas & bank; tiap pagi (05.45 WIB) jatuh tempo dicatat sebagai transaksi kas & bank biasa (nomor, jurnal, audit), tertinggal disusul, idempoten per (jadwal, tanggal); ditolak (periode terkunci, akun nonaktif) = alasan di Kotak Tindakan; halaman `/kelola/akuntansi/kas-bank/berulang` (hentikan/aktifkan lagi, ubah jumlah). |
 | 2.17 | **D-23 D bagian 1** draf PO otomatis: tiap pagi (05.30 WIB) dan lewat tombol "Siapkan draf dari stok menipis", barang dengan saldo ≤ stok minimum dibuatkan draf PO per (lokasi, pemasok) ke pemasok/satuan/harga pembelian terakhir, jumlah sampai stok maksimum (kosong = 2 × minimum) dikurangi PO terbuka; tidak pernah diajukan otomatis; pengaturan pembelian `DrafPoOtomatis` (bawaan aktif); butir Kotak Tindakan. §17.4.8. |
@@ -3756,6 +3757,11 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Penutupan lewat Aksi `TutupHarianOutlet` yang sama (ringkasan dihitung ulang & dicuplik, audit) atas nama Owner tenant, dengan `TutupHarian.DitutupOtomatis` = true; daftar tutup harian menampilkan "otomatis" menggantikan nama penutup.
 - Hari dengan shift terbuka, peringatan, atau tanpa shift dibiarkan untuk ditutup manual (pengingat shift lupa ditutup & penjualan perlu dicek sudah ada di Kotak Tindakan). Menjalankan ulang tidak menggandakan.
 - Tutup bulan / kunci periode **tidak** dijalankan otomatis karena berdampak ke pembukuan dan butuh tinjauan Akuntan; tetap sebagai pengingat (keputusan agen, D-12).
+
+**Bagian 4a — ringkasan pagi Kotak Tindakan lewat email.**
+- Jadwal `tindakan:kirim-ringkasan-harian` pukul 07.00 WIB (setelah otomatisasi pagi) mengirim email teks berisi butir **Penting & Perhatian** Kotak Tindakan menurut izin & outlet akses penerima, masing-masing dengan tautan langsung ke halaman penyelesaiannya (domain tenant). Butir Info tidak ikut; tanpa butir = tidak ada email.
+- Tabel `LanggananRingkasanTindakan` (`IdTenant`, `IdPengguna`, `Aktif`, `TerakhirDikirim`): Owner tanpa baris dianggap berlangganan, anggota lain memilih sendiri lewat sakelar "Kirim ringkasan ke email saya setiap pagi" di halaman Kotak Tindakan (tercatat audit). Anggota tanpa email (kasir PIN, D-22) tidak bisa berlangganan.
+- Paling banyak sekali per tanggal bisnis per penerima; email yang gagal terkirim dicoba lagi pada putaran berikutnya. Email tidak memuat data pribadi pelanggan (hanya judul, jumlah, total).
 
 ### 17.5 Tipografi (Keputusan D-08)
 

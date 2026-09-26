@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Bersama\Tindakan\Aksi\TandaiDokumenDitinjau;
+use App\Domain\Bersama\Tindakan\Aksi\UbahLanggananRingkasanTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataButirTindakan;
 use App\Domain\Bersama\Tindakan\Kueri\KotakTindakan;
+use App\Domain\Bersama\Tindakan\Kueri\LanggananRingkasan;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KonteksTindakanPengguna;
@@ -18,18 +20,38 @@ use Inertia\Response;
 
 /**
  * Kotak Tindakan back-office (D-23 C): semua yang perlu perhatian di satu halaman, disaring izin & outlet akses pelaku.
- * Menandai dokumen "sudah dicek": izin `tindakan.tinjau`.
+ * Menandai dokumen "sudah dicek": izin `tindakan.tinjau`. Tiap pengguna ber-email memilih sendiri menerima ringkasan
+ * pagi lewat email (D-23 D bagian 4; Owner bawaan berlangganan).
  */
 final class TindakanKontroler extends DasarKelolaKontroler
 {
-    public function Daftar(KotakTindakan $kotak, AksesPengguna $akses, KonteksTindakanPengguna $konteks, TanggalBisnisOutlet $tanggal): Response
+    public function Daftar(KotakTindakan $kotak, AksesPengguna $akses, KonteksTindakanPengguna $konteks, TanggalBisnisOutlet $tanggal, LanggananRingkasan $langganan): Response
     {
-        $bolehTandai = $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::TindakanTinjau);
+        $pelaku = $this->Pelaku();
+        $bolehTandai = $akses->CekIzin($this->IdTenant(), $pelaku->Id, IzinTenant::TindakanTinjau);
+        $pemilik = ($akses->Ambil($this->IdTenant(), $pelaku->Id)['Pemilik'] ?? false) === true;
 
         return Inertia::render('Kelola/Tindakan', [
-            'Butir' => array_map(fn (DataButirTindakan $b): array => $b->KeLarik($bolehTandai), $kotak->Ambil($konteks->Buat($this->IdTenant(), $this->Pelaku()->Id, $tanggal->Hitung(null)))),
+            'Butir' => array_map(fn (DataButirTindakan $b): array => $b->KeLarik($bolehTandai), $kotak->Ambil($konteks->Buat($this->IdTenant(), $pelaku->Id, $tanggal->Hitung(null)))),
             'Izin' => ['Tandai' => $bolehTandai],
+            'RingkasanEmail' => [
+                'BisaEmail' => $pelaku->Email !== null,
+                'Aktif' => $pelaku->Email !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
+            ],
         ]);
+    }
+
+    public function UbahRingkasanEmail(Request $permintaan, UbahLanggananRingkasanTindakan $ubah): RedirectResponse
+    {
+        $aktif = (bool) $permintaan->validate(['Aktif' => ['required', 'boolean']], attributes: ['Aktif' => 'ringkasan email'])['Aktif'];
+
+        if ($aktif && $this->Pelaku()->Email === null) {
+            return back()->withErrors(['Aktif' => 'Akun Anda belum punya email. Tambahkan email dulu untuk menerima ringkasan.']);
+        }
+
+        $ubah->Jalankan($this->Pelaku()->Id, $aktif);
+
+        return back()->with('Kilat', $aktif ? 'Ringkasan dikirim ke email Anda setiap pagi.' : 'Ringkasan pagi lewat email dimatikan.');
     }
 
     public function Tandai(Request $permintaan, TandaiDokumenDitinjau $tandai, KotakTindakan $kotak, KonteksTindakanPengguna $konteks, TanggalBisnisOutlet $tanggal): RedirectResponse
