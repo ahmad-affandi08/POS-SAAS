@@ -38,7 +38,8 @@
 | GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
 | GET | `/api/pos/v1/pelanggan/{uuidPelanggan}/poin` | Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b, wajib online) |
 | GET | `/api/pos/v1/promo` | Promo aktif + mode resolusi konflik untuk disimpan perangkat (F-16c, dievaluasi offline) |
-| POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
+| POST | `/api/pos/v1/qris` · `GET /api/pos/v1/qris/{uuid}` · `POST /api/pos/v1/qris/{uuid}/batal` | Buat QRIS dinamis, cek status, batal (v2.05) |
+| POST | `/api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk` · `GET /api/pos/v1/pesan-keluar/{uuid}` | Kirim struk digital lewat WhatsApp/email & status (v2.05) |
 | POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |
 | POST | `/api/pos/v1/gudang/penerimaan-barang`, `/gudang/transfer-stok`, `/gudang/stok-opname` | Operasi gudang dari aplikasi |

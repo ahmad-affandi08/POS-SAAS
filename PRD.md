@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.04 |
+| Versi | 2.05 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.05 | Rincian **QRIS dinamis (F-08, BR-08.5)** dan **struk digital lewat WhatsApp/email**: tabel `TagihanQris` & `PesanKeluar`, API POS `/api/pos/v1/qris` (buat, status, batal) dan `/api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk` + `/pesan-keluar/{uuid}`, webhook `/webhook/{penyedia}` untuk 6 gerbang, penautan tagihan ke penjualan (alasan tinjauan `QrisDinamis*`), metode QRIS dinamis di Panduan Awal; kasir: dialog QR (juga di layar pelanggan), status dipantau server, tombol Kirim struk. Path API di §16 disesuaikan. |
 | 2.04 | Rincian **katalog penyedia integrasi P-05** (permintaan pemilik produk: semua penyedia disediakan, tinggal pilih di konsol platform): setiap jenis integrasi memilih satu penyedia per lingkungan. **Email** 15 penyedia lewat SMTP (SMTP umum, Amazon SES, Mailgun, SendGrid, Brevo, Postmark, Resend, Mailjet, Mailtrap, ZeptoMail, Elastic Email, Gmail/Google Workspace, Microsoft 365, Zoho Mail, Hostinger) dengan nilai bawaan terisi otomatis; jenis baru **Gerbang pembayaran (QRIS dinamis)**: Midtrans, Xendit, Tripay, Duitku, iPaymu, DOKU; jenis baru **WhatsApp**: WhatsApp Cloud API resmi (Meta) dan tidak resmi (Fonnte, Wablas, StarSender, Watzap, dengan peringatan risiko blokir). Adaptor runtime di `App\Domain\Integrasi`, uji koneksi tanpa transaksi, ganti penyedia = kredensial diisi ulang & uji ulang. |
 | 2.03 | Rincian **Aplikasi Owner v1** (OWN-01/02/05/08): API `/api/pemilik/v1` dengan user token berhash (`TokenAksesPengguna`, 30 hari, dicabut saat keluar & atur ulang kata sandi) karena Sanctum belum terpasang; masuk email + kata sandi + 2FA (tantangan sekali pakai 5 menit), header `X-Tenant`; dasbor (omzet + perbandingan kemarin/minggu lalu, laba kotor ber-izin, per outlet, per jam, produk teratas, perlu tindakan), laporan ringkas per produk/kategori/kasir/jam/kanal (maks. 31 hari), shift & selisih kas, status perangkat; Aplikasi Owner Flutter (masuk, pilih usaha, Beranda/Laporan/Shift/Perangkat). Path autentikasi §17.3.4 disederhanakan menjadi `/masuk`, `/masuk/dua-faktor`, `/keluar`, `/profil`. |
 | 2.02 | Rincian **F-17 self-order QR meja (X12, SLS-04) bagian 1**: token QR per meja (`Meja.TokenPesanSendiri`, buat ulang teraudit), sakelar outlet `Outlet.PesanSendiriAktif` (fitur `kanal.self-order`), halaman publik `/{slugTenant}/meja/{tokenMeja}` (menu harga kanal `MakanDiTempat`, keranjang, subtotal dari server), tabel `PesananSendiri` (nomor `QR/{OUTLET}/{YYMMDD}-{SEQ4}`, status MenungguKonfirmasi → Diterima/Ditolak/Kedaluwarsa 30 menit), API POS daftar/terima/tolak, konfirmasi di layar Meja aplikasi POS; pembayaran di kasir. |
@@ -1358,7 +1359,12 @@ stateDiagram-v2
 - Halaman publik `/s/{kodeStruk}` (tanpa login, React ringan, font Mono, throttle 60/menit). `kodeStruk` = `{IdTenant basis-36}.{Uuid penjualan}`: bagian tenant hanya menetapkan scope pencarian (pola sama dengan device token), rahasianya bagian acak ULID; kode bisa disusun kasir offline tanpa tabel baru.
 - `data-awal` `Struk.AwalanStrukDigital` (tambahan aditif) = `https://{domain}/s/{tenant}.`; null bila saklar "QR struk digital" (`TampilkanStrukDigital`, bawaan hidup; boleh tidak dikirim form lama) dimatikan di `/kelola/kasir/struk`. Struk cetak menambah QR (`GS ( k`) dan tautan di atas catatan kaki.
 - Isi halaman hanya data yang juga tercetak (nama usaha/outlet, alamat & NPWP menurut saklar, nomor, waktu, kasir & pelanggan menurut saklar, baris, diskon, biaya layanan, pajak per jenis, pembulatan, total, pembayaran, kembalian, total retur, catatan kaki, penutup); tanpa HPP, catatan internal, atau tinjauan. Penjualan void ditandai "TRANSAKSI DIBATALKAN". Struk yang belum tersinkron, dimatikan, tenant lain, atau kode salah = halaman "Struk belum tersedia" (404).
-- **Belum**: kirim struk lewat WhatsApp/email (butuh integrasi WA, F-20), logo di halaman struk digital.
+- **Belum**: logo di halaman struk digital. (Kirim struk lewat WhatsApp/email: v2.05, di bawah.)
+
+**Rincian struk digital lewat WhatsApp/email (v2.05; rincian diputuskan agen atas mandat D-12):**
+- Kasir menekan **Kirim struk** di layar selesai bayar atau Riwayat, memilih WhatsApp/Email, mengisi nomor/email pelanggan (wajib online, penjualan sudah tersinkron). `POST /api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk` `{Uuid, Kanal, Tujuan}` → 202 `{Uuid, Status:"Diantrekan"}` (Uuid sama = 200, tanpa baris baru); status `GET /api/pos/v1/pesan-keluar/{uuid}` → `{Uuid, Status (Diantrekan/Terkirim/Gagal), PesanGalat}`. Galat: 404 `PenjualanBelumTersinkron`, 409 `WhatsappBelumAktif`/`EmailBelumAktif`/`StrukDigitalNonaktif`, 422 `TujuanTidakValid` (nomor dirapikan ke `628…`), 429 `BatasKirimStrukTercapai` (maks 5 kali per penjualan) dan batas 20/menit per perangkat.
+- Tabel `PesanKeluar` (IdTenant, Uuid, Jenis, IdReferensi, Kanal, Tujuan **terenkripsi**, Status, PesanGalat, Percobaan, TerkirimPada). Tugas antrean `KirimStrukDigitalTugas` (3 percobaan, jeda 30 s & 120 s). WhatsApp resmi (Meta) memakai templat `NamaTemplatStruk` [nama toko, total, tautan]; penyedia tidak resmi mengirim teks biasa berisi tautan `/s/{kodeStruk}`. Email teks polos, nama pengirim = nama toko, alamat pengirim platform. Fitur paket `integrasi.whatsapp` diperiksa per tenant.
+- Data pribadi: nomor/email tidak disimpan di perangkat, tidak dicatat di log; `PesanGalat` disamarkan (nomor, email, kredensial SMTP) dan dibatasi 300 karakter.
 
 **Rincian cetak struk bagian 3b: dokumen kasir lain (v1.84; rincian diputuskan agen atas mandat D-12):**
 - **Bukti void** (setelah void di aplikasi): kepala struk tenant, "BUKTI VOID", nomor penjualan, waktu void, kasir, penyetuju, alasan, total dibatalkan, refund tunai & non-tunai, kaki struk. **Nota retur** (setelah retur): "NOTA RETUR", nomor retur, nomor penjualan asal, waktu, kasir (menurut saklar), baris barang dengan jumlah, satuan, tanda "(rusak)", nilai, total refund per metode, alasan.
@@ -1432,6 +1438,15 @@ stateDiagram-v2
 - BR-08.4 MDR/biaya (QRIS, EDC, ojol) dicatat otomatis sebagai beban saat settlement (§11).
 - BR-08.5 QRIS dinamis: timeout default 15 menit. Jika webhook terlambat, kasir bisa "Cek Status". Pembayaran ganda terdeteksi via kolom unik `PenjualanPembayaran.RefEksternal`.
 - BR-08.6 Pembulatan tunai hanya untuk bagian tunai.
+
+**Rincian QRIS dinamis (v2.05; rincian diputuskan agen atas mandat D-12, penyedia dipilih di konsol P-05 v2.04):**
+- **Alur kasir (wajib online):** kasir memilih metode berjenis `QrisDinamis` → aplikasi membuat tagihan lewat `POST /api/pos/v1/qris` `{Uuid, UuidMetode, Jumlah, Keterangan?}` (Uuid ULID dibuat perangkat; permintaan ulang dengan Uuid sama = tagihan yang sama, tanpa memanggil gerbang lagi) → server memanggil gerbang aktif dan mengembalikan `{Uuid, NomorPesanan, IsiQr, HalamanBayar, KedaluwarsaPada, Status, Jumlah}` → QR digambar di perangkat (juga di layar pelanggan) dengan hitung mundur → aplikasi memantau `GET /api/pos/v1/qris/{uuid}` tiap 2 detik; server memanggil `CekStatus` gerbang paling sering sekali per 5 detik per tagihan (bila webhook terlambat) → `Lunas` → pembayaran dicatat dengan `Referensi` = Uuid tagihan. Kasir **tidak bisa** menandai lunas sendiri. Batal → `POST .../batal` (bila ternyata sudah lunas: 409 `SudahLunas`, pembayaran tetap dipakai). Offline/gerbang gagal → pesan jelas, saran QRIS statis/tunai.
+- **Tabel `TagihanQris`:** IdTenant, IdOutlet, IdPerangkat, IdMetodePembayaran, Uuid, NomorPesanan (unik global, `PY{IdTenant basis-36}-{Uuid}`, dipakai untuk memulihkan tenant dari webhook), Jumlah, JumlahDiterima, Penyedia, IdReferensi gerbang, IsiQr, HalamanBayar, Status (`Menunggu/Lunas/Kedaluwarsa/Gagal/Dibatalkan`, riwayat di `RiwayatStatusDokumen`), KedaluwarsaPada (15 menit atau lebih cepat menurut gerbang), LunasPada, TerakhirDicekPada, UuidPenjualan (unik per tenant bila terisi).
+- **Webhook** `POST /webhook/{midtrans|xendit|tripay|duitku|ipaymu|doku}` (tanpa CSRF, batas 300/menit): hanya penyedia yang aktif, tanda tangan diverifikasi (401 bila salah); notifikasi ulang idempoten; jumlah berbeda → tagihan tetap Menunggu + `LogAudit` `tagihan-qris.jumlah-berbeda`; pembayaran yang datang setelah status akhir tetap membuat `Lunas` (dengan peringatan log).
+- **Penautan ke penjualan** (di transaksi `Penjualan.Buat`, baris tagihan dikunci): tagihan dikenal & belum dipakai → `TagihanQris.UuidPenjualan` diisi dan `PenjualanPembayaran.RefEksternal` = NomorPesanan (indeks unik mencegah pembayaran ganda, BR-08.5). Masalah tidak menolak penjualan (offline-first) tetapi menjadi alasan tinjauan: `QrisDinamisTidakDikenal`, `QrisDinamisDipakaiUlang`, `QrisDinamisBelumLunas`, `QrisDinamisJumlahBerbeda`. Jurnal sama dengan non-tunai lain (akun kliring metode / Piutang Pencairan, J-07.1).
+- QRIS dinamis tidak dipakai untuk uang muka pre-order dan tamu self-order (menyusul). Pembayaran QRIS dinamis yang sudah lunas tidak bisa dihapus kasir dari daftar pembayaran; bila penyimpanan gagal, kasir menyelesaikan ulang tanpa QR baru.
+- **Belum:** pencatatan MDR saat settlement & rekonsiliasi settlement (BR-08.4), refund/batal di sisi gerbang (BR-09.2 tetap refund manual), tugas terjadwal pengedaluwarsa tagihan (saat ini diterapkan ketika dibaca).
+- **Catatan regulasi:** lihat catatan P-05 v2.04 (model akun gerbang platform vs sub-merchant vs akun milik tenant) — menunggu keputusan pemilik produk.
 
 ---
 
@@ -3022,6 +3037,8 @@ erDiagram
 | `PenjualanPembayaran` | IdPenjualan, Uuid, IdMetodePembayaran, Jumlah, Status, Referensi (kode approval/ref gateway), RefEksternal (unik), DibayarPada |
 | `PenjualanPajak` | IdTenant, IdPenjualan, KodeJenisPajak, Tarif, PengaliDppPembilang, PengaliDppPenyebut, DasarPengenaan, Dpp, Jumlah (rincian pajak per dokumen per jenis, F-07b) |
 | `MetodePembayaran` | IdTenant, Jenis (Tunai/QrisStatis/QrisDinamis/Edc/Transfer/Ewallet/Tempo/Deposit/Poin/Voucher/Marketplace), Nama, IdAkun, IdAkunKliring, PersenBiaya, BiayaTetap, Aktif, Uuid, IdReferensiBank, NomorRekening, NamaPemilikRekening, PathGambarQris (disk privat), Urutan (F-01). `IdAkun` kosong = diturunkan dari `PemetaanAkun` menurut jenis. Tunai selalu ada. MDR dikonfigurasi per metode dengan batas kewajaran 10% (`config/pembayaran.php`) |
+| `TagihanQris` | IdTenant, IdOutlet, IdPerangkat, IdMetodePembayaran, Uuid, NomorPesanan (unik), Jumlah, JumlahDiterima, Penyedia, IdReferensi, IsiQr, HalamanBayar, Status, KedaluwarsaPada, LunasPada, TerakhirDicekPada, UuidPenjualan (v2.05, F-08) |
+| `PesanKeluar` | IdTenant, Uuid, Jenis, IdReferensi, Kanal (Whatsapp/Email), Tujuan (terenkripsi), Status, PesanGalat, Percobaan, TerkirimPada (v2.05, struk digital) |
 | `ReturPenjualan` / `ReturPenjualanDetail` | IdPenjualanAsal, Nomor, Alasan, MetodeRefund, Status / IdPenjualanDetail, Jumlah, IdGudangRestok, Kondisi |
 | `VoidPenjualan` | IdPenjualan, Alasan, DisetujuiOleh, DivoidOleh |
 | `Persetujuan` | IdTenant, Jenis, JenisSubjek, IdSubjek, DimintaOleh, DisetujuiOleh, Metode (Pin/Otp/JarakJauh), Alasan, Jumlah |
@@ -3198,7 +3215,8 @@ Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `Jen
 | GET | `/api/pos/v1/pelanggan/cari?kata=` | Cari pelanggan di server (online) |
 | GET | `/api/pos/v1/pelanggan/{uuidPelanggan}/poin` | Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b, wajib online) |
 | GET | `/api/pos/v1/promo` | Promo aktif + mode resolusi konflik untuk disimpan perangkat (F-16c, dievaluasi offline) |
-| POST | `/api/pos/v1/pembayaran/qris` · `GET /api/pos/v1/pembayaran/qris/{id}` | Buat QRIS dinamis & cek status |
+| POST | `/api/pos/v1/qris` · `GET /api/pos/v1/qris/{uuid}` · `POST /api/pos/v1/qris/{uuid}/batal` | Buat QRIS dinamis, cek status, batal (v2.05) |
+| POST | `/api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk` · `GET /api/pos/v1/pesan-keluar/{uuid}` | Kirim struk digital lewat WhatsApp/email & status (v2.05) |
 | POST | `/api/pos/v1/persetujuan/jarak-jauh` | Minta approval jarak jauh (dikirim ke HP supervisor/owner via push) |
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |
 | POST | `/api/pos/v1/gudang/penerimaan-barang`, `/gudang/transfer-stok`, `/gudang/stok-opname` | Operasi gudang dari aplikasi |
