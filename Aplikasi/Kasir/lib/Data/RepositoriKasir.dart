@@ -52,6 +52,9 @@ abstract final class KunciPengaturan {
   /// F-12 BR-12.1: batas hari lewat jatuh tempo piutang pelanggan sebelum penjualan tempo butuh penyetuju.
   static const String batasHariLewatJatuhTempo = 'BatasHariLewatJatuhTempo';
 
+  /// Cetak struk bagian 4: buka laci manual wajib PIN supervisor ('1'/'0').
+  static const String bukaLaciPerluPin = 'BukaLaciPerluPin';
+
   /// F-18: daftar staf pelayan (JSON `[{Uuid, Nama, Jabatan}]`).
   static const String karyawan = 'Karyawan';
 
@@ -183,6 +186,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.toleransiSelisihKas, data.toleransiSelisihKas);
     await SimpanPengaturan(KunciPengaturan.batasHariRetur, '${data.batasHariRetur}');
     await SimpanPengaturan(KunciPengaturan.batasHariLewatJatuhTempo, '${data.batasHariLewatJatuhTempo}');
+    await SimpanPengaturan(KunciPengaturan.bukaLaciPerluPin, data.bukaLaciPerluPin ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
     final outlet = data.outlet;
     if (outlet != null) {
@@ -314,6 +318,10 @@ class RepositoriKasir {
         await db.into(db.mutasiKas).insert(mutasi);
         await TambahOutbox(item, sekarang);
       });
+
+  /// Cetak struk bagian 4: log buka laci manual hanya berupa entri outbox `Laci.Buka` (tidak ada tabel lokal).
+  Future<void> SimpanBukaLaci(ItemOutbox item, DateTime sekarang) =>
+      db.transaction(() async => TambahOutbox(item, sekarang));
 
   /// Tambah entri outbox. Hanya dipanggil di dalam `db.transaction` bersama dokumennya.
   /// F-18: staf pelayan dari data awal terakhir.

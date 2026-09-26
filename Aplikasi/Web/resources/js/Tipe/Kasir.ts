@@ -58,6 +58,17 @@ export type BarisMutasiKas = {
     AlasanTinjauan: string | null;
 };
 
+/** Cetak struk bagian 4: buka laci manual tanpa transaksi (§19.2 selalu dicatat). */
+export type BarisBukaLaci = {
+    Uuid: string;
+    Alasan: string;
+    DibukaOleh: string;
+    DisetujuiOleh: string | null;
+    DibukaPada: string;
+    PerluTinjauan: boolean;
+    AlasanTinjauan: string | null;
+};
+
 /** F-11: total satu metode pembayaran di laporan shift (tunai = diterima − kembalian). */
 export type MetodeLaporanShift = { UuidMetodePembayaran: string; Jenis: string; Nama: string; Jumlah: string };
 
@@ -122,6 +133,7 @@ export type PropsDetailShift = {
         PecahanKasAwal: PecahanKas[];
     };
     MutasiKas: BarisMutasiKas[];
+    BukaLaci: BarisBukaLaci[];
     /** F-07b: penjualan yang dibuat di shift ini. */
     Penjualan: PenjualanShift;
     Laporan: LaporanShift;
@@ -166,6 +178,8 @@ export type PropsPengaturanKasir = {
     BatasHariRetur: number;
     /** F-12 BR-12.1: piutang lewat jatuh tempo lebih dari sekian hari = penjualan tempo butuh penyetuju (0–365). */
     BatasHariLewatJatuhTempo: number;
+    /** Cetak struk bagian 4: buka laci manual wajib PIN penyetuju `kas.keluar.setujui` (bawaan mati). */
+    BukaLaciPerluPin: boolean;
 };
 
 /** Pengaturan struk tenant (PLT-06, PRD v1.79): satu untuk semua outlet. Teks null = bawaan aplikasi. */

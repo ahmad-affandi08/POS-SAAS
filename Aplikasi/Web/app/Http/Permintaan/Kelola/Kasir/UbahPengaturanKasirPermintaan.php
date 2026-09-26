@@ -35,6 +35,7 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             'ToleransiSelisihKas' => ['sometimes', 'required', 'string', 'regex:/^\d{1,13}(\.\d{1,2})?$/'],
             'BatasHariRetur' => ['sometimes', 'required', 'integer', 'min:0', 'max:'.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL],
             'BatasHariLewatJatuhTempo' => ['sometimes', 'required', 'integer', 'min:0', 'max:'.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL],
+            'BukaLaciPerluPin' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -80,6 +81,7 @@ final class UbahPengaturanKasirPermintaan extends FormRequest
             toleransiSelisihKas: $this->has('ToleransiSelisihKas') ? Uang::Dari($this->string('ToleransiSelisihKas')->toString()) : $lama->toleransiSelisihKas,
             batasHariRetur: $this->has('BatasHariRetur') ? $this->integer('BatasHariRetur') : $lama->batasHariRetur,
             batasHariLewatJatuhTempo: $this->has('BatasHariLewatJatuhTempo') ? $this->integer('BatasHariLewatJatuhTempo') : $lama->batasHariLewatJatuhTempo,
+            bukaLaciPerluPin: $this->has('BukaLaciPerluPin') ? $this->boolean('BukaLaciPerluPin') : $lama->bukaLaciPerluPin,
         );
     }
 }

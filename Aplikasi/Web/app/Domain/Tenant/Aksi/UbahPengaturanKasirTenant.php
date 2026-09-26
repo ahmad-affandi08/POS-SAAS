@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Menulis pengaturan kasir (`BatasKasKeluar`, `ShiftBersama`, `BatasDiskonManual`, `BatasDiskonPenyetuju`,
- * `PembulatanTunai`, `TutupShiftButa`, `ToleransiSelisihKas`, `BatasHariRetur`) ke `Tenant.Pengaturan` tenant aktif
+ * `PembulatanTunai`, `TutupShiftButa`, `ToleransiSelisihKas`, `BatasHariRetur`, `BatasHariLewatJatuhTempo`, `BukaLaciPerluPin`) ke `Tenant.Pengaturan` tenant aktif
  * (F-06, F-07b, F-11, F-09). Dipanggil `Kasir\Aksi\UbahPengaturanKasir` yang memvalidasi dan mencatat audit. Kunci lain di `Pengaturan` tidak disentuh.
  */
 final class UbahPengaturanKasirTenant
@@ -35,6 +35,7 @@ final class UbahPengaturanKasirTenant
             $pengaturan['ToleransiSelisihKas'] = $data->toleransiSelisihKas->KeString();
             $pengaturan['BatasHariRetur'] = $data->batasHariRetur;
             $pengaturan['BatasHariLewatJatuhTempo'] = $data->batasHariLewatJatuhTempo;
+            $pengaturan['BukaLaciPerluPin'] = $data->bukaLaciPerluPin;
             $tenant->Pengaturan = $pengaturan;
 
             if ($tenant->isDirty('Pengaturan')) {

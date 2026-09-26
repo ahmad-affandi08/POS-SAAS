@@ -11,7 +11,7 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { AmbilTandaDesimal, KurangiDesimal } from '@/Pustaka/HitungDesimal';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { LaporanShift, PropsDetailShift, TutupShift } from '@/Tipe/Kasir';
+import type { BarisBukaLaci, LaporanShift, PropsDetailShift, TutupShift } from '@/Tipe/Kasir';
 
 type MutasiKas = PropsDetailShift['MutasiKas'][number];
 
@@ -81,6 +81,46 @@ const kolom: KolomTabel<MutasiKas>[] = [
                 {m.Jenis === 'Masuk' ? '+' : '−'}
                 {FormatRupiah(m.Jumlah)}
             </span>
+        ),
+    },
+];
+
+const kolomBukaLaci: KolomTabel<BarisBukaLaci>[] = [
+    {
+        id: 'DibukaPada',
+        accessorKey: 'DibukaPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DibukaPada),
+    },
+    {
+        id: 'Alasan',
+        accessorKey: 'Alasan',
+        header: 'Alasan',
+        meta: { label: 'Alasan', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block break-words text-teks-utama">{b.Alasan}</span>
+                {b.PerluTinjauan ? (
+                    <span className="block text-label text-bahaya">
+                        Perlu ditinjau{b.AlasanTinjauan ? `: ${b.AlasanTinjauan}` : ''}
+                    </span>
+                ) : null}
+            </>
+        ),
+    },
+    {
+        id: 'DibukaOleh',
+        accessorKey: 'DibukaOleh',
+        header: 'Dibuka oleh',
+        meta: { label: 'Dibuka oleh', prioritas: 'penting' },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block">{b.DibukaOleh}</span>
+                {b.DisetujuiOleh ? (
+                    <span className="block text-label text-teks-sekunder">Disetujui {b.DisetujuiOleh}</span>
+                ) : null}
+            </>
         ),
     },
 ];
@@ -293,9 +333,17 @@ function BagianTutup({ tutup }: { tutup: TutupShift }) {
 
 /**
  * F-06: detail shift (baca saja): pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan mutasi kas.
- * F-07b: penjualan yang dibuat di shift ini. F-11: laporan shift X/Z dan hasil tutup shift.
+ * F-07b: penjualan yang dibuat di shift ini. F-11: laporan shift X/Z dan hasil tutup shift. Cetak struk bagian 4:
+ * log buka laci manual tanpa transaksi.
  */
-export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan, Laporan, Tutup }: PropsDetailShift) {
+export default function HalamanDetailShift({
+    Shift,
+    MutasiKas,
+    BukaLaci,
+    Penjualan,
+    Laporan,
+    Tutup,
+}: PropsDetailShift) {
     return (
         <TataLetakAplikasi judul={`Shift ${Shift.NamaKasir} · ${FormatTanggalWaktu(Shift.DibukaPada)}`}>
             <Button asChild variant="link" className="h-auto self-start px-0">
@@ -373,6 +421,18 @@ export default function HalamanDetailShift({ Shift, MutasiKas, Penjualan, Lapora
                     },
                 ]}
                 kosong={{ judul: 'Belum ada kas masuk, kas keluar, atau setoran di shift ini.' }}
+            />
+
+            <h2 className="text-subjudul font-semibold text-teks-utama">Buka laci tanpa transaksi</h2>
+            <TabelData
+                id="kasir-shift-buka-laci"
+                label="Buka laci tanpa transaksi"
+                kolom={kolomBukaLaci}
+                sumber={{ mode: 'lokal', data: BukaLaci }}
+                ambilIdBaris={(b) => b.Uuid}
+                urutBawaan="DibukaPada"
+                cari="Cari alasan"
+                kosong={{ judul: 'Laci tidak pernah dibuka tanpa transaksi di shift ini.' }}
             />
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Penjualan</h2>

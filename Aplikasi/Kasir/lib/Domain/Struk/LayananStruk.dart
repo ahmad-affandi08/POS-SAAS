@@ -16,8 +16,8 @@ import 'ProfilPrinter.dart';
 typedef PembuatTransport = TransportPrinter Function(ProfilPrinter profil);
 
 /// Cetak struk penjualan (plus buka laci untuk tunai), cetak ulang, cetak uji (POS-11, POS-17, PRD v1.79), serta bukti
-/// void, nota retur, dan laporan shift X/Z (PRD v1.84). Buka laci
-/// manual tanpa transaksi belum ada karena wajib dicatat (§19.2). Semua dari data lokal,
+/// void, nota retur, dan laporan shift X/Z (PRD v1.84), serta pulsa buka laci manual (PRD v1.87; pencatatannya di
+/// `LayananBukaLaci`, §19.2). Semua dari data lokal,
 /// jadi tetap jalan saat offline (§18). Galat printer dilempar sebagai [GalatPrinter] berpesan untuk kasir; penjualan
 /// tetap tersimpan walau struk gagal dicetak.
 class LayananStruk {
@@ -134,6 +134,12 @@ class LayananStruk {
     }
     await CetakPenjualan(uuidPenjualan, bukaLaci: true, namaPelanggan: namaPelanggan);
     return true;
+  }
+
+  /// Kirim pulsa laci (ESC p) lewat printer tanpa mencetak. Dipanggil `LayananBukaLaci` yang mencatat log-nya.
+  Future<void> BukaLaci() async {
+    final profil = await _WajibProfil();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).BukaLaci();
   }
 
   Future<void> CetakUji(ProfilPrinter profil) async {

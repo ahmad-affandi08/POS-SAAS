@@ -6,11 +6,12 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Domain/Shift/LayananShift.dart';
+import 'LembarBukaLaci.dart';
 import 'LembarMutasiKas.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 
 /// Area kerja "Kas" (F-06 langkah 4): ringkasan kas non-penjualan shift, tombol kas masuk/keluar/setoran, dan riwayat
-/// mutasi. Formulir kas dibuka sebagai panel/lembar oleh bingkai ruang kerja lewat [saatCatat].
+/// mutasi, serta tombol buka laci tanpa transaksi. Formulir kas dibuka sebagai panel/lembar oleh bingkai ruang kerja lewat [saatCatat].
 class LayarKas extends ConsumerWidget {
   const LayarKas({super.key, required this.shift, required this.saatCatat});
 
@@ -68,6 +69,15 @@ class LayarKas extends ConsumerWidget {
                   child: Text(LembarMutasiKas.AmbilJudul(jenis)),
                 ),
               ),
+            // Cetak struk bagian 4 (§19.2): buka laci tanpa transaksi, selalu dicatat.
+            SizedBox(
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: () => saatCatat(LembarBukaLaci.kunciPanel),
+                icon: const Icon(Icons.point_of_sale),
+                label: const Text(LembarBukaLaci.judul),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: TokenJarak.jarak24),

@@ -385,6 +385,7 @@ class DataAwal {
     this.toleransiSelisihKas = toleransiSelisihKasBawaan,
     this.batasHariRetur = batasHariReturBawaan,
     this.batasHariLewatJatuhTempo = 0,
+    this.bukaLaciPerluPin = false,
     this.karyawan = const [],
     this.struk,
   });
@@ -433,6 +434,10 @@ class DataAwal {
   /// hari (`Pengaturan.BatasHariLewatJatuhTempo`; server lama tanpa kunci ini = 0).
   final int batasHariLewatJatuhTempo;
 
+  /// Cetak struk bagian 4 (§19.2): buka laci manual tanpa transaksi wajib PIN supervisor `kas.keluar.setujui`
+  /// (`Pengaturan.BukaLaciPerluPin`; server lama tanpa kunci ini = false).
+  final bool bukaLaciPerluPin;
+
   /// F-18: staf yang bisa dipilih sebagai pelayan baris (komisi); server lama = kosong.
   final List<KaryawanPos> karyawan;
 
@@ -464,6 +469,7 @@ class DataAwal {
       toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
+      bukaLaciPerluPin: UraiJson.AmbilBenar(pengaturan['BukaLaciPerluPin']),
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
       struk: StrukPos.DariJson(json['Struk']),
     );

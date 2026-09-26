@@ -102,6 +102,8 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
                 'BatasHariRetur' => 7,
                 // F-12: tempo butuh penyetuju bila ada piutang lewat jatuh tempo > N hari (bawaan 0).
                 'BatasHariLewatJatuhTempo' => 0,
+                // Cetak struk bagian 4: buka laci manual wajib PIN (bawaan mati).
+                'BukaLaciPerluPin' => false,
             ]);
     });
 

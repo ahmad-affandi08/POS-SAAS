@@ -17,6 +17,7 @@ import '../LayarPengaturan.dart';
 import '../LayarRiwayat.dart';
 import '../LayarShift.dart';
 import '../LayarStatusSinkron.dart';
+import '../LembarBukaLaci.dart';
 import '../LembarMutasiKas.dart';
 import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarAmbilPreOrder.dart';
@@ -334,6 +335,15 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       (_, _, _PanelPenjualan()) => (
         LembarRetur.judul,
         LembarRetur(key: const ValueKey('Retur'), kasir: widget.kasir, saatSelesai: _TutupPanel),
+      ),
+      (LembarBukaLaci.kunciPanel, _, _) => (
+        LembarBukaLaci.judul,
+        LembarBukaLaci(
+          key: const ValueKey(LembarBukaLaci.kunciPanel),
+          shift: widget.shift,
+          pembuka: widget.kasir,
+          saatSelesai: _TutupPanel,
+        ) as Widget,
       ),
       (final String jenis, _, _) => (
         LembarMutasiKas.AmbilJudul(jenis),

@@ -58,6 +58,7 @@ const propsPengaturan: PropsPengaturanKasir = {
     ToleransiSelisihKas: '10000.00',
     BatasHariRetur: 7,
     BatasHariLewatJatuhTempo: 0,
+    BukaLaciPerluPin: false,
 };
 
 const laporanShift: LaporanShift = {
@@ -152,6 +153,17 @@ describe('F-06 halaman kasir back-office', () => {
                     AlasanTinjauan: null,
                 },
             ],
+            BukaLaci: [
+                {
+                    Uuid: '01K5BUKALACI00000000000001',
+                    Alasan: 'Tukar uang kecil untuk kembalian',
+                    DibukaOleh: 'Rina Wulandari',
+                    DisetujuiOleh: null,
+                    DibukaPada: '2026-09-24T04:00:00Z',
+                    PerluTinjauan: true,
+                    AlasanTinjauan: 'PenyetujuTidakAda: buka laci wajib PIN penyetuju',
+                },
+            ],
             Penjualan: {
                 Daftar: [
                     {
@@ -190,6 +202,10 @@ describe('F-06 halaman kasir back-office', () => {
         expect(screen.queryByText(/penjualan terakhir/)).toBeNull();
         expect(screen.getByText('Rp 100.000 × 12')).toBeTruthy();
         expect(screen.getByText('Disetujui Budi Santoso')).toBeTruthy();
+        // Cetak struk bagian 4: log buka laci tanpa transaksi beserta tanda tinjauan.
+        const tabelLaci = screen.getByRole('table', { name: 'Buka laci tanpa transaksi' });
+        expect(within(tabelLaci).getByText('Tukar uang kecil untuk kembalian')).toBeTruthy();
+        expect(within(tabelLaci).getByText(/Perlu ditinjau: PenyetujuTidakAda/)).toBeTruthy();
         expect(screen.getByRole('link', { name: 'JU/2026/09/000007' }).getAttribute('href')).toBe(
             '/kelola/akuntansi/jurnal/01K5JURNAL0000000000000007',
         );
@@ -293,6 +309,9 @@ describe('F-06 halaman kasir back-office', () => {
         UbahNilai(screen.getByLabelText('Kelipatan'), '500');
         UbahNilai(screen.getByLabelText('Arah pembulatan'), 'Terdekat');
         UbahNilai(screen.getByLabelText('Batas hari lewat jatuh tempo'), '14');
+        fireEvent.click(
+            screen.getByRole('checkbox', { name: 'Wajib PIN supervisor untuk membuka laci tanpa transaksi' }),
+        );
         fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
 
         expect(tiruanRouter.put).toHaveBeenCalledWith(
@@ -307,6 +326,7 @@ describe('F-06 halaman kasir back-office', () => {
                 ToleransiSelisihKas: '10000',
                 BatasHariRetur: 7,
                 BatasHariLewatJatuhTempo: 14,
+                BukaLaciPerluPin: true,
             },
             expect.anything(),
         );
@@ -350,6 +370,7 @@ describe('F-06 halaman kasir back-office', () => {
         const dasar: PropsDetailShift = {
             Shift: { ...barisShift, DiterimaPada: '2026-09-24T05:00:00Z', AlasanTinjauan: null, PecahanKasAwal: [] },
             MutasiKas: [],
+            BukaLaci: [],
             Penjualan: { Daftar: [], DaftarTerpotong: false, JumlahTransaksi: 0, TotalPenjualan: '0.00' },
             Laporan: laporanShift,
             Tutup: null,

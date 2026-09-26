@@ -78,6 +78,8 @@ final class DataAwalKasir
                 'BatasHariRetur' => $pengaturan->batasHariRetur,
                 // F-12: tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari N hari (BR-12.1).
                 'BatasHariLewatJatuhTempo' => $pengaturan->batasHariLewatJatuhTempo,
+                // Cetak struk bagian 4: buka laci manual (tanpa transaksi) wajib PIN penyetuju kas.keluar.setujui.
+                'BukaLaciPerluPin' => $pengaturan->bukaLaciPerluPin,
             ],
             'Struk' => $this->AmbilStruk($perangkat, $profil->pkp ?? false),
             'Outlet' => $outlet === null ? null : [

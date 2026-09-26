@@ -52,6 +52,7 @@ export default function HalamanPengaturanKasir({
     ToleransiSelisihKas,
     BatasHariRetur,
     BatasHariLewatJatuhTempo,
+    BukaLaciPerluPin,
 }: PropsPengaturanKasir) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -67,6 +68,7 @@ export default function HalamanPengaturanKasir({
         toleransi: UbahKeMasukanUang(ToleransiSelisihKas),
         hariRetur: String(BatasHariRetur),
         hariLewat: String(BatasHariLewatJatuhTempo),
+        laciPin: BukaLaciPerluPin,
     };
     const [batas, AturBatas] = useState(awal.batas);
     const [bersama, AturBersama] = useState(awal.bersama);
@@ -79,6 +81,7 @@ export default function HalamanPengaturanKasir({
     const [toleransi, AturToleransi] = useState(awal.toleransi);
     const [hariRetur, AturHariRetur] = useState(awal.hariRetur);
     const [hariLewat, AturHariLewat] = useState(awal.hariLewat);
+    const [laciPin, AturLaciPin] = useState(awal.laciPin);
     const [memproses, AturMemproses] = useState(false);
     const berubah =
         batas !== awal.batas ||
@@ -90,6 +93,7 @@ export default function HalamanPengaturanKasir({
         toleransi !== awal.toleransi ||
         hariRetur !== awal.hariRetur ||
         hariLewat !== awal.hariLewat ||
+        laciPin !== awal.laciPin ||
         (bulatkan && (kelipatan !== awal.kelipatan || arah !== awal.arah));
     const opsiKelipatan = (kelipatanUmum.includes(kelipatan) ? kelipatanUmum : [...kelipatanUmum, kelipatan]).map(
         (nilai) => ({ Nilai: nilai, Label: FormatRupiah(nilai) }),
@@ -111,6 +115,7 @@ export default function HalamanPengaturanKasir({
                 ToleransiSelisihKas: toleransi,
                 BatasHariRetur: hariRetur === '' ? null : Number.parseInt(hariRetur, 10),
                 BatasHariLewatJatuhTempo: hariLewat === '' ? null : Number.parseInt(hariLewat, 10),
+                BukaLaciPerluPin: laciPin,
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -131,6 +136,7 @@ export default function HalamanPengaturanKasir({
                     'ToleransiSelisihKas',
                     'BatasHariRetur',
                     'BatasHariLewatJatuhTempo',
+                    'BukaLaciPerluPin',
                 ]}
             />
             <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4" noValidate>
@@ -146,6 +152,17 @@ export default function HalamanPengaturanKasir({
                         galat={galat.BatasKasKeluar}
                         required
                     />
+                </PanelKatalog>
+                <PanelKatalog judul="Buka laci tanpa transaksi" idJudul="judul-buka-laci">
+                    <KotakCentang
+                        label="Wajib PIN supervisor untuk membuka laci tanpa transaksi"
+                        nilai={laciPin}
+                        saatBerubah={AturLaciPin}
+                    />
+                    <p className="text-keterangan text-teks-sekunder">
+                        Setiap buka laci tanpa transaksi selalu dicatat beserta alasan dan nama kasirnya, dan tampil di
+                        detail shift. Jika dicentang, supervisor dengan izin menyetujui kas keluar harus memasukkan PIN.
+                    </p>
                 </PanelKatalog>
                 <PanelKatalog judul="Shift bersama" idJudul="judul-shift-bersama">
                     <KotakCentang

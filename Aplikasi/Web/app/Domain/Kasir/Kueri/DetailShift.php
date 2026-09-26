@@ -6,6 +6,7 @@ namespace App\Domain\Kasir\Kueri;
 
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Kueri\JurnalSumber;
+use App\Domain\Kasir\Model\BukaLaci;
 use App\Domain\Kasir\Model\KategoriKas;
 use App\Domain\Kasir\Model\MutasiKas;
 use App\Domain\Kasir\Model\Shift;
@@ -44,6 +45,7 @@ final class DetailShift
         }
 
         $mutasi = MutasiKas::query()->where('IdShift', $shift->Id)->orderBy('DicatatPada')->orderBy('Id')->get();
+        $bukaLaci = BukaLaci::query()->where('IdShift', $shift->Id)->orderBy('DibukaPada')->orderBy('Id')->get();
         $kategori = KategoriKas::query()->whereIn('Id', $mutasi->pluck('IdKategoriKas')->filter()->all())->get()->keyBy('Id');
         $nama = $this->anggota->AmbilNama(array_values(array_filter([
             $shift->DibukaOleh,
@@ -51,6 +53,8 @@ final class DetailShift
             $shift->IdPenyetujuSelisih,
             ...$mutasi->pluck('DicatatOleh')->all(),
             ...$mutasi->pluck('DisetujuiOleh')->filter()->all(),
+            ...$bukaLaci->pluck('DibukaOleh')->all(),
+            ...$bukaLaci->pluck('DisetujuiOleh')->filter()->all(),
         ])));
         $total = DaftarShift::AmbilTotalMutasi([$shift->Id])[$shift->Id] ?? [];
 
@@ -90,6 +94,16 @@ final class DetailShift
                     'AlasanTinjauan' => $m->AlasanTinjauan,
                 ];
             })->all()),
+            // Cetak struk bagian 4: buka laci manual tanpa transaksi (§19.2 selalu dicatat).
+            'BukaLaci' => array_values($bukaLaci->map(fn (BukaLaci $b): array => [
+                'Uuid' => $b->Uuid,
+                'Alasan' => $b->Alasan,
+                'DibukaOleh' => $nama[$b->DibukaOleh]['Nama'] ?? '',
+                'DisetujuiOleh' => $b->DisetujuiOleh === null ? null : ($nama[$b->DisetujuiOleh]['Nama'] ?? ''),
+                'DibukaPada' => $b->DibukaPada->toIso8601String(),
+                'PerluTinjauan' => $b->PerluTinjauan,
+                'AlasanTinjauan' => $b->AlasanTinjauan,
+            ])->all()),
             'Penjualan' => $this->penjualan->AmbilUntukShift($shift->Id),
             // F-11: laporan X (shift berjalan) / Z (shift tertutup) dari data server saat ini.
             'Laporan' => $this->laporan->Hitung($shift)->KeLarik(),

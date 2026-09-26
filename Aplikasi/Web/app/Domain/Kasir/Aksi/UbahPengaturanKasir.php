@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Mengubah pengaturan kasir tenant: batas kas keluar tanpa persetujuan (BR-06.4), mode shift bersama (BR-06.2),
  * batas diskon manual kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), serta tutup shift buta & toleransi
- * selisih kas (F-11), dan batas hari retur (F-09). Batas kas 0 = setiap kas keluar
+ * selisih kas (F-11), batas hari retur (F-09), dan PIN buka laci manual (cetak struk bagian 4). Batas kas 0 = setiap kas keluar
  * butuh persetujuan; batas diskon 0 = setiap diskon manual butuh penyetuju. Perubahan berlaku untuk transaksi
  * berikutnya setelah perangkat memperbarui data; transaksi yang sudah diterima tidak dinilai ulang. Tanpa perubahan =
  * tidak ada yang ditulis. Audit `kasir.pengaturan.ubah`.
@@ -87,7 +87,7 @@ final class UbahPengaturanKasir
     }
 
     /**
-     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int, BatasHariLewatJatuhTempo: int}
+     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int, BatasHariLewatJatuhTempo: int, BukaLaciPerluPin: bool}
      */
     private static function KeLarik(DataPengaturanKasir $data): array
     {
@@ -101,6 +101,7 @@ final class UbahPengaturanKasir
             'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
             'BatasHariRetur' => $data->batasHariRetur,
             'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
+            'BukaLaciPerluPin' => $data->bukaLaciPerluPin,
         ];
     }
 }

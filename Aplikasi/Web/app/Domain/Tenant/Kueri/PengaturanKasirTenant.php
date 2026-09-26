@@ -17,7 +17,8 @@ use Brick\Math\Exception\MathException;
  * `ShiftBersama` (bawaan false) (F-06); `BatasDiskonManual` (persen, bawaan 10), `BatasDiskonPenyetuju` (persen,
  * bawaan 30), dan `PembulatanTunai {Kelipatan, Arah}` (diisi template sektor F-01; bawaan null = tanpa pembulatan)
  * (F-07b); `TutupShiftButa` (bawaan true) dan `ToleransiSelisihKas` (string desimal, bawaan Rp 10.000) (F-11);
- * `BatasHariRetur` (bilangan bulat 0–365, bawaan 7) (F-09); `BatasHariLewatJatuhTempo` (0–365, bawaan 0) (F-12). Nilai rusak
+ * `BatasHariRetur` (bilangan bulat 0–365, bawaan 7) (F-09); `BatasHariLewatJatuhTempo` (0–365, bawaan 0) (F-12);
+ * `BukaLaciPerluPin` (bawaan false) (cetak struk bagian 4). Nilai rusak
  * kembali ke bawaan.
  */
 final class PengaturanKasirTenant
@@ -43,6 +44,7 @@ final class PengaturanKasirTenant
             toleransiSelisihKas: self::AmbilUang($pengaturan['ToleransiSelisihKas'] ?? null, DataPengaturanKasir::TOLERANSI_SELISIH_KAS_BAWAAN),
             batasHariRetur: self::AmbilBatasHariRetur($pengaturan['BatasHariRetur'] ?? null),
             batasHariLewatJatuhTempo: self::AmbilBatasHariLewat($pengaturan['BatasHariLewatJatuhTempo'] ?? null),
+            bukaLaciPerluPin: ($pengaturan['BukaLaciPerluPin'] ?? false) === true,
         );
     }
 

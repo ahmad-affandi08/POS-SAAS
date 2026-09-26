@@ -43,6 +43,7 @@ import '../Domain/Pin/PemverifikasiPinOffline.dart';
 import '../Domain/Sesi/LayananMasuk.dart';
 import '../Domain/Sesi/LayananPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
+import '../Domain/Shift/LayananBukaLaci.dart';
 import '../Domain/Shift/LayananShift.dart';
 import '../Domain/Shift/LayananTutupShift.dart';
 import '../Domain/Sinkron/LayananSinkron.dart';
@@ -142,6 +143,15 @@ final penyediaLayananStruk = Provider<LayananStruk>(
     repositori: ref.watch(penyediaRepositori),
     penjualan: ref.watch(penyediaRepositoriPenjualan),
     pembuatTransport: ref.watch(penyediaPembuatTransport),
+  ),
+);
+
+/// Cetak struk bagian 4: buka laci manual tanpa transaksi yang dicatat (§19.2).
+final penyediaLayananBukaLaci = Provider<LayananBukaLaci>(
+  (ref) => LayananBukaLaci(
+    repositori: ref.watch(penyediaRepositori),
+    struk: ref.watch(penyediaLayananStruk),
+    jam: ref.watch(penyediaJam),
   ),
 );
 

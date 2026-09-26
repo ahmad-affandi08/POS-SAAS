@@ -34,6 +34,7 @@ final class PengaturanKasirKontroler extends DasarKelolaKontroler
             'ToleransiSelisihKas' => $data->toleransiSelisihKas->KeString(),
             'BatasHariRetur' => $data->batasHariRetur,
             'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
+            'BukaLaciPerluPin' => $data->bukaLaciPerluPin,
             'OpsiArahPembulatan' => array_map(fn (ArahPembulatan $arah): array => ['Nilai' => $arah->value, 'Label' => $arah->AmbilLabel()], ArahPembulatan::cases()),
         ]);
     }

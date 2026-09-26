@@ -20,6 +20,8 @@ use Brick\Math\BigDecimal;
  * - F-09 (PRD v1.45): batas hari retur penjualan sejak tanggal bisnis penjualan (bawaan 7; 0 = hanya hari yang sama).
  * - F-12 (PRD v1.63): penjualan tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari N hari
  *   (BR-12.1, bawaan 0 = lewat jatuh tempo sehari pun butuh penyetuju).
+ * - Cetak struk bagian 4 (PRD v1.87, §19.2): buka laci manual tanpa transaksi selalu dicatat; PIN penyetuju
+ *   `kas.keluar.setujui` opsional (bawaan mati).
  */
 final readonly class DataPengaturanKasir
 {
@@ -58,6 +60,7 @@ final readonly class DataPengaturanKasir
         ?Uang $toleransiSelisihKas = null,
         public int $batasHariRetur = self::BATAS_HARI_RETUR_BAWAAN,
         public int $batasHariLewatJatuhTempo = self::BATAS_HARI_LEWAT_JATUH_TEMPO_BAWAAN,
+        public bool $bukaLaciPerluPin = false,
     ) {
         $this->batasDiskonManual = BigDecimal::of($batasDiskonManual ?? self::BATAS_DISKON_MANUAL_BAWAAN)->toScale(2);
         $this->batasDiskonPenyetuju = BigDecimal::of($batasDiskonPenyetuju ?? self::BATAS_DISKON_PENYETUJU_BAWAAN)->toScale(2);

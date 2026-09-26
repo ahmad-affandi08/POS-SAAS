@@ -69,6 +69,7 @@ Map<String, Object?> DataAwalUji({
   Map<String, Object?>? nomorUrutRetur,
   bool tempo = false,
   int? batasHariLewatJatuhTempo,
+  bool? bukaLaciPerluPin,
   List<Map<String, Object?>>? karyawan,
 }) => {
   'Karyawan': ?karyawan,
@@ -81,6 +82,7 @@ Map<String, Object?> DataAwalUji({
     'TutupShiftButa': tutupShiftButa,
     'ToleransiSelisihKas': toleransiSelisihKas,
     'BatasHariLewatJatuhTempo': ?batasHariLewatJatuhTempo,
+    'BukaLaciPerluPin': ?bukaLaciPerluPin,
   },
   'Outlet': {
     'Uuid': '01K50VT1ET0000000000000001',
