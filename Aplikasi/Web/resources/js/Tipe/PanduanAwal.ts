@@ -19,6 +19,10 @@ export type ProgresPanduan = {
     /** ISO-8601 UTC. */
     SelesaiPada: string | null;
     Outlet: { Uuid: string; Kode: string; Nama: string };
+    /** D-24: tenant baru yang belum selesai; hanya langkah Perangkat yang boleh dilewati. */
+    Wajib?: boolean;
+    /** D-24: langkah wajib yang belum Selesai. */
+    WajibBelumSelesai?: LangkahPanduan[];
 };
 export type PropsIndeksPanduan = { Progres: ProgresPanduan };
 
@@ -159,18 +163,6 @@ export type PropsPerangkatPanduan = {
     /** Izin perangkat.kelola. */
     BolehKelolaPerangkat: boolean;
 };
-
-export type KunciLangkahBerikutnya =
-    'PanduanAwal' | 'TambahProduk' | 'AturMetodePembayaran' | 'AktifkanPerangkat' | 'UndangStaf' | 'AturPin';
-export type ItemLangkahBerikutnya = {
-    Kunci: KunciLangkahBerikutnya;
-    Judul: string;
-    Keterangan: string;
-    Tautan: string;
-    Selesai: boolean;
-};
-/** Daftar kosong = bagian "Langkah berikutnya" disembunyikan. */
-export type PropsBerandaKelola = { LangkahBerikutnya: ItemLangkahBerikutnya[] };
 
 /** Alamat POST panduan awal (DesainF01 §D). Hanya string URL; rute dimiliki Backend. */
 export const AlamatPanduan = {

@@ -5,7 +5,7 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import IndikatorLangkah from '@/Komponen/PanduanAwal/IndikatorLangkah';
 import { buttonVariants } from '@/Komponen/Ui/button';
 import { Separator } from '@/Komponen/Ui/separator';
-import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import TataLetakPanduanAwal from '@/TataLetak/TataLetakPanduanAwal';
 import {
     AlamatPanduan,
     AmbilAlamatLewati,
@@ -43,6 +43,9 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
     const sekarang = progres.Langkah[indeks];
     const sebelumnya = indeks > 0 ? progres.Langkah[indeks - 1] : undefined;
     const berikutnya = progres.Langkah[indeks + 1];
+    const wajib = progres.Wajib === true;
+    // D-24: tenant baru hanya boleh melewati langkah Perangkat kasir.
+    const bolehLewati = !wajib || langkah === 'Perangkat';
     const BuatOpsiKirim = (jenis: 'lewati' | 'lanjut') => ({
         onStart: () => AturMemproses(jenis),
         onFinish: () => AturMemproses(null),
@@ -81,16 +84,22 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
     };
 
     return (
-        <TataLetakAplikasi judul={sekarang?.Judul ?? 'Panduan awal'}>
+        <TataLetakPanduanAwal judul={sekarang?.Judul ?? 'Panduan awal'} wajib={wajib}>
             <IndikatorLangkah langkah={progres.Langkah} aktif={langkah} />
             <p className="text-isi text-teks-sekunder">
                 Panduan awal untuk outlet <span className="font-semibold text-teks-utama">{progres.Outlet.Nama}</span>{' '}
-                <span className="font-mono text-label">({progres.Outlet.Kode})</span>. Semua langkah bisa dilewati dulu
-                dan dilanjutkan kapan saja dari{' '}
-                <Link href={AlamatPanduan.Indeks} className="font-semibold text-brand underline">
-                    ringkasan panduan
-                </Link>
-                .
+                <span className="font-mono text-label">({progres.Outlet.Kode})</span>.{' '}
+                {wajib
+                    ? 'Selesaikan langkah ini supaya toko siap berjualan. Perangkat kasir boleh diatur nanti.'
+                    : 'Semua langkah bisa dilewati dulu dan dilanjutkan kapan saja dari '}
+                {wajib ? null : (
+                    <>
+                        <Link href={AlamatPanduan.Indeks} className="font-semibold text-brand underline">
+                            ringkasan panduan
+                        </Link>
+                        .
+                    </>
+                )}
             </p>
 
             {children}
@@ -107,14 +116,14 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
                                 Ke langkah berikutnya
                             </Link>
                         ) : null
-                    ) : (
+                    ) : !bolehLewati ? null : (
                         <Tombol
                             varian="sekunder"
                             onClick={Lewati}
                             memproses={memproses === 'lewati'}
                             disabled={memproses !== null}
                         >
-                            Lewati dulu
+                            {wajib ? 'Nanti saja' : 'Lewati dulu'}
                         </Tombol>
                     )}
                     {lanjut !== 'formulir' ? (
@@ -124,6 +133,6 @@ export default function TataLetakPanduan({ progres, langkah, lanjut = 'formulir'
                     ) : null}
                 </div>
             </div>
-        </TataLetakAplikasi>
+        </TataLetakPanduanAwal>
     );
 }

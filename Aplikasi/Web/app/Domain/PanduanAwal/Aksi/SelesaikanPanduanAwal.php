@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\PanduanAwal\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +34,14 @@ final class SelesaikanPanduanAwal
 
             if ($progres->SelesaiPada !== null) {
                 return;
+            }
+
+            $kurang = $progres->Wajib ? $progres->AmbilLangkahWajibBelumSelesai() : [];
+
+            if ($kurang !== []) {
+                $daftar = implode(', ', array_map(fn (LangkahPanduan $l): string => $l->AmbilJudul(), $kurang));
+
+                throw new PelanggaranAturanBisnis('LangkahWajibBelumSelesai', "Selesaikan dulu: {$daftar}.");
             }
 
             $progres->fill(['SelesaiPada' => now(), 'IdPenggunaPenyelesai' => $idPengguna])->save();

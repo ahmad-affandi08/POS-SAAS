@@ -1,27 +1,24 @@
 import { ChartNoAxesColumnIcon } from 'lucide-react';
 
-import DaftarLangkahBerikutnya from '@/Komponen/Kelola/DaftarLangkahBerikutnya';
 import RingkasTindakan from '@/Komponen/Kelola/RingkasTindakan';
 import DasborPemilik from '@/Komponen/Laporan/DasborPemilik';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@/Komponen/Ui/empty';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { DasborPemilik as DataDasbor } from '@/Tipe/Laporan';
-import type { PropsBerandaKelola } from '@/Tipe/PanduanAwal';
 import type { ButirTindakan } from '@/Tipe/Tindakan';
 
-type PropsBeranda = PropsBerandaKelola & { Dasbor?: DataDasbor | null; Tindakan?: ButirTindakan[] };
+type PropsBeranda = { Dasbor?: DataDasbor | null; Tindakan?: ButirTindakan[] };
 
 /**
- * Beranda back-office: checklist "Langkah berikutnya" (F-01 langkah 7) dan dasbor pemilik (F-14a) untuk pemegang
- * izin laporan penjualan. Tanpa izin: beranda tanpa angka. D-23 C: kartu "Perlu tindakan" di paling atas.
+ * Beranda back-office: kartu "Perlu tindakan" (D-23 C; D-24: termasuk persiapan toko yang dulu berupa checklist)
+ * dan dasbor pemilik (F-14a) untuk pemegang izin laporan penjualan. Tanpa izin: beranda tanpa angka.
  */
-export default function HalamanBerandaKelola({ LangkahBerikutnya, Dasbor = null, Tindakan = [] }: PropsBeranda) {
+export default function HalamanBerandaKelola({ Dasbor = null, Tindakan = [] }: PropsBeranda) {
     return (
         <TataLetakAplikasi judul="Beranda">
             <RingkasTindakan butir={Tindakan} />
-            <DaftarLangkahBerikutnya daftar={LangkahBerikutnya} />
             {Dasbor ? <DasborPemilik data={Dasbor} /> : null}
-            {!Dasbor && LangkahBerikutnya.length === 0 && Tindakan.length === 0 ? (
+            {!Dasbor && Tindakan.length === 0 ? (
                 <Empty className="rounded-panel border border-garis bg-permukaan px-4 py-6 md:p-8">
                     <EmptyHeader>
                         <EmptyMedia variant="icon" aria-hidden="true">

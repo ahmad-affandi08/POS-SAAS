@@ -140,7 +140,7 @@ describe('F-14a dasbor pemilik di beranda', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola'));
 
     it('angka hari ini dengan perbandingan kemarin & minggu lalu, grafik 14 hari, produk terlaris, perlu perhatian', () => {
-        RenderUji(<HalamanBerandaKelola LangkahBerikutnya={[]} Dasbor={dasbor} />);
+        RenderUji(<HalamanBerandaKelola Dasbor={dasbor} />);
 
         expect(screen.getByRole('heading', { name: /Ringkasan hari ini/ })).toBeTruthy();
         expect(screen.getAllByText('Rp 12.500.000').length).toBeGreaterThan(0);
@@ -163,7 +163,7 @@ describe('F-14a dasbor pemilik di beranda', () => {
     });
 
     it('tanpa izin laporan: tanpa angka', () => {
-        RenderUji(<HalamanBerandaKelola LangkahBerikutnya={[]} Dasbor={null} />);
+        RenderUji(<HalamanBerandaKelola Dasbor={null} />);
 
         expect(screen.queryByText(/Ringkasan hari ini/)).toBeNull();
         expect(screen.queryByText(/Rp /)).toBeNull();

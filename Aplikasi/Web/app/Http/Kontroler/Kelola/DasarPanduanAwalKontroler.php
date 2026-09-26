@@ -7,6 +7,7 @@ namespace App\Http\Kontroler\Kelola;
 use App\Domain\Organisasi\Data\DataOutletRingkas;
 use App\Domain\Organisasi\Kueri\OutletUtama;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\PanduanAwal\Aksi\SelesaikanPanduanAwal;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Kueri\ProgresPanduan;
 use Illuminate\Http\RedirectResponse;
@@ -46,6 +47,14 @@ abstract class DasarPanduanAwalKontroler extends DasarKelolaKontroler
     protected function KeLangkahBerikutnya(LangkahPanduan $langkah, string $pesan): RedirectResponse
     {
         $berikutnya = $langkah->AmbilBerikutnya();
+        $baris = app(ProgresPanduan::class)->AmbilBaris();
+
+        // D-24: tenant baru yang semua langkah wajibnya selesai langsung menuntaskan panduan dan masuk ke Beranda.
+        if ($berikutnya === null && $baris !== null && $baris->Wajib && $baris->SelesaiPada === null && $baris->AmbilLangkahWajibBelumSelesai() === []) {
+            app(SelesaikanPanduanAwal::class)->Jalankan($this->Pelaku()->Id, $this->OutletPanduan()->Id);
+
+            return redirect()->route('kelola.beranda')->with('Kilat', 'Panduan awal selesai. Toko Anda siap berjualan.');
+        }
 
         return redirect()->route($berikutnya === null ? 'kelola.panduan-awal' : $berikutnya->AmbilNamaRute())->with('Kilat', $pesan);
     }

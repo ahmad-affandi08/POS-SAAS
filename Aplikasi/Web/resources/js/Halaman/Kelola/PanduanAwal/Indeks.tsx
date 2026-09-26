@@ -9,7 +9,7 @@ import { Separator } from '@/Komponen/Ui/separator';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
-import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import TataLetakPanduanAwal from '@/TataLetak/TataLetakPanduanAwal';
 import { AlamatPanduan, type PropsIndeksPanduan, type StatusLangkahPanduan } from '@/Tipe/PanduanAwal';
 
 const jenisLabel: Record<StatusLangkahPanduan, 'sukses' | 'peringatan' | 'netral'> = {
@@ -24,6 +24,8 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
     const belumSelesai = Progres.Langkah.filter((item) => item.Status !== 'Selesai');
     const langkahBerikutnya = Progres.Langkah.find((item) => item.Status === 'Belum') ?? belumSelesai[0];
     const jumlahDilewati = Progres.Langkah.filter((item) => item.Status === 'Dilewati').length;
+    const wajib = Progres.Wajib === true;
+    const kurangWajib = Progres.Langkah.filter((item) => (Progres.WajibBelumSelesai ?? []).includes(item.Kunci));
 
     const Selesaikan = () =>
         router.post(
@@ -33,13 +35,15 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
         );
 
     return (
-        <TataLetakAplikasi judul="Panduan awal">
+        <TataLetakPanduanAwal judul="Panduan awal" wajib={wajib}>
             <IndikatorLangkah langkah={Progres.Langkah} aktif={null} />
             <p className="text-isi text-teks-sekunder">
                 Siapkan outlet <span className="font-semibold text-teks-utama">{Progres.Outlet.Nama}</span>{' '}
                 <span className="font-mono text-label">({Progres.Outlet.Kode})</span> sampai siap berjualan: profil
-                usaha, jenis usaha, pajak, produk, metode pembayaran, dan perangkat kasir. Langkah yang dilewati bisa
-                dikerjakan nanti.
+                usaha, jenis usaha, pajak, produk, metode pembayaran, dan perangkat kasir.{' '}
+                {wajib
+                    ? 'Lima langkah pertama wajib diselesaikan sebelum membuka menu lain; perangkat kasir boleh diatur nanti.'
+                    : 'Langkah yang dilewati bisa dikerjakan nanti.'}
             </p>
 
             {Progres.SelesaiPada ? (
@@ -84,13 +88,14 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                         ? 'Semua langkah selesai.'
                         : `${String(belumSelesai.length)} langkah belum selesai${
                               jumlahDilewati > 0 ? `, ${String(jumlahDilewati)} di antaranya dilewati` : ''
-                          }. Langkah yang belum selesai tetap muncul di Beranda.`}
+                          }. ${wajib ? 'Selesaikan dulu langkah yang wajib.' : 'Langkah yang belum selesai muncul di Kotak Tindakan.'}`}
                 </p>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row">
                     <Tombol
                         varian={langkahBerikutnya ? 'sekunder' : 'utama'}
                         onClick={Selesaikan}
                         memproses={memproses}
+                        disabled={kurangWajib.length > 0}
                     >
                         Selesaikan panduan
                     </Tombol>
@@ -101,6 +106,6 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                     ) : null}
                 </div>
             </div>
-        </TataLetakAplikasi>
+        </TataLetakPanduanAwal>
     );
 }

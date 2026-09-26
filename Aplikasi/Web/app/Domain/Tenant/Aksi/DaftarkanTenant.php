@@ -11,6 +11,7 @@ use App\Domain\Organisasi\Aksi\BuatPemilikTenant;
 use App\Domain\Organisasi\Aksi\SiapkanOrganisasiAwal;
 use App\Domain\Organisasi\Galat\IdentitasSudahTerdaftar;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\PanduanAwal\Aksi\WajibkanPanduanAwal;
 use App\Domain\Penjualan\Aksi\SiapkanMetodePembayaranBawaan;
 use App\Domain\Tenant\Data\DataPendaftaran;
 use App\Domain\Tenant\Enum\JenisDokumenLegal;
@@ -47,13 +48,15 @@ final class DaftarkanTenant
     public const PERCOBAAN_SLUG = 3;
 
     /**
+     * `wajibPanduanAwal` (D-24): pendaftaran lewat formulir web mewajibkan panduan awal sebelum back-office terbuka.
+     *
      * @return array{Tenant: Tenant, Pengguna: Pengguna}
      */
-    public function Jalankan(DataPendaftaran $data): array
+    public function Jalankan(DataPendaftaran $data, bool $wajibPanduanAwal = false): array
     {
         for ($percobaan = 1; ; $percobaan++) {
             try {
-                return $this->Simpan($data);
+                return $this->Simpan($data, $wajibPanduanAwal);
             } catch (IdentitasSudahTerdaftar $galat) {
                 $this->beritahuPendaftaranGanda->Jalankan($galat->identitasPerPengguna);
 
@@ -77,9 +80,9 @@ final class DaftarkanTenant
     /**
      * @return array{Tenant: Tenant, Pengguna: Pengguna}
      */
-    private function Simpan(DataPendaftaran $data): array
+    private function Simpan(DataPendaftaran $data, bool $wajibPanduanAwal): array
     {
-        return DB::transaction(function () use ($data): array {
+        return DB::transaction(function () use ($data, $wajibPanduanAwal): array {
             $dokumen = $this->AmbilDokumenWajib();
             $paket = $this->TentukanPaket($data->kodePaket);
 
@@ -114,6 +117,10 @@ final class DaftarkanTenant
             app(PencatatAudit::class)->CatatSesi('tenant.daftar', $tenant->Id, $pengguna->Id, $data->ip, null, ['Nama' => $tenant->Nama, 'Paket' => $paket->Kode]);
             // F-01: Tunai selalu tersedia di kasir sejak tenant dibuat.
             $this->siapkanMetodePembayaran->Jalankan($tenant->Id);
+            // D-24: pemilik yang mendaftar lewat formulir wajib menyelesaikan panduan awal sebelum membuka back-office.
+            if ($wajibPanduanAwal) {
+                app(WajibkanPanduanAwal::class)->Jalankan($tenant->Id);
+            }
 
             return ['Tenant' => $tenant, 'Pengguna' => $pengguna];
         });

@@ -101,7 +101,14 @@ it('kasir tanpa izin laporan tidak melihat butir penjualan dan tidak bisa menand
     $k = SiapkanTindakan($this);
 
     BantuanOrganisasi::Masuk($this, $k['Kasir'], $k['Tenant']->Id);
-    $this->get('/kelola/tindakan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Butir', [])->where('Izin.Tandai', false));
+    // D-24: kasir tetap melihat butir "Persiapan toko" miliknya (misal atur PIN), tetapi tidak butir penjualan.
+    $this->get('/kelola/tindakan')->assertOk()->assertInertia(function (AssertableInertia $h) {
+        $h->where('Izin.Tandai', false);
+        $kunci = array_column($h->toArray()['props']['Butir'], 'Kunci');
+        expect(array_filter($kunci, fn (string $k): bool => ! str_starts_with($k, 'awal.')))->toBe([]);
+
+        return $h;
+    });
     $this->post('/kelola/tindakan/tinjau', ['Jenis' => 'Penjualan', 'Uuid' => [$k['Penjualan']->Uuid]])->assertForbidden();
 
     $lain = BantuanOrganisasi::BuatTenant('Toko Lain Tindakan Boyolali');

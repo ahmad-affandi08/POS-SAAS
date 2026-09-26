@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $Id
  * @property int $IdTenant
  * @property int|null $IdOutlet
+ * @property bool $Wajib D-24: tenant baru wajib menyelesaikan panduan sebelum membuka back-office.
  * @property array<string, array{Status: string, Pada: string}>|null $StatusLangkah
  * @property Carbon|null $SelesaiPada
  * @property int|null $IdPenggunaPenyelesai
@@ -30,7 +31,7 @@ final class ProgresPanduanAwal extends ModelDasar
     protected bool $pakaiUuid = false;
 
     /** @var array<string, mixed> */
-    protected $attributes = ['IdOutlet' => null, 'StatusLangkah' => null, 'SelesaiPada' => null, 'IdPenggunaPenyelesai' => null];
+    protected $attributes = ['IdOutlet' => null, 'Wajib' => false, 'StatusLangkah' => null, 'SelesaiPada' => null, 'IdPenggunaPenyelesai' => null];
 
     public function AmbilStatus(LangkahPanduan $langkah): StatusLangkahPanduan
     {
@@ -40,10 +41,23 @@ final class ProgresPanduanAwal extends ModelDasar
     }
 
     /**
+     * D-24: langkah wajib (semua kecuali Perangkat) yang belum Selesai.
+     *
+     * @return list<LangkahPanduan>
+     */
+    public function AmbilLangkahWajibBelumSelesai(): array
+    {
+        return array_values(array_filter(
+            LangkahPanduan::cases(),
+            fn (LangkahPanduan $langkah): bool => $langkah->CekWajib() && $this->AmbilStatus($langkah) !== StatusLangkahPanduan::Selesai,
+        ));
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
-        return ['StatusLangkah' => 'array', 'SelesaiPada' => 'datetime'];
+        return ['StatusLangkah' => 'array', 'SelesaiPada' => 'datetime', 'Wajib' => 'boolean'];
     }
 }

@@ -44,6 +44,44 @@ describe('TataLetakPanduan: lewati & lanjutkan kapan saja (F-01)', () => {
         expect(screen.queryByRole('button', { name: 'Lanjutkan' })).toBeNull();
     });
 
+    it('D-24 panduan wajib: tanpa sidebar & tanpa tautan Beranda; langkah wajib tanpa "Lewati", Perangkat "Nanti saja"', () => {
+        const progres = { ...BuatProgresContoh({ ProfilUsaha: 'Selesai' }), Wajib: true };
+        const { unmount: Lepas } = render(
+            <TataLetakPanduan progres={progres} langkah="Pajak">
+                isi
+            </TataLetakPanduan>,
+        );
+
+        expect(screen.queryByRole('link', { name: 'Ke Beranda' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Keluar' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Lewati dulu' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Nanti saja' })).toBeNull();
+        expect(screen.getByText(/Perangkat kasir boleh diatur nanti/)).toBeTruthy();
+        Lepas();
+
+        render(
+            <TataLetakPanduan progres={progres} langkah="Perangkat" lanjut="selesaikan">
+                isi
+            </TataLetakPanduan>,
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Nanti saja' }));
+        expect(tiruan.kirim).toHaveBeenCalledWith(
+            '/kelola/panduan-awal/langkah/perangkat/lewati',
+            {},
+            expect.any(Object),
+        );
+    });
+
+    it('tenant lama (tidak wajib): tautan Ke Beranda tersedia', () => {
+        render(
+            <TataLetakPanduan progres={BuatProgresContoh()} langkah="Pajak">
+                isi
+            </TataLetakPanduan>,
+        );
+
+        expect(screen.getByRole('link', { name: 'Ke Beranda' }).getAttribute('href')).toBe('/kelola');
+    });
+
     it('langkah pertama kembali ke ringkasan; langkah yang sudah selesai tidak menawarkan "Lewati dulu"', () => {
         render(
             <TataLetakPanduan progres={BuatProgresContoh({ ProfilUsaha: 'Selesai' })} langkah="ProfilUsaha">

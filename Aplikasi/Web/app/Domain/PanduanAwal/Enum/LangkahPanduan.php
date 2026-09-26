@@ -51,6 +51,15 @@ enum LangkahPanduan: string
         return in_array($this, [self::Produk, self::MetodePembayaran, self::Perangkat], true);
     }
 
+    /**
+     * D-24: langkah yang wajib Selesai sebelum tenant baru boleh membuka back-office. Perangkat kasir boleh dilewati
+     * (pemilik sering mendaftar dari laptop sebelum tablet kasir tersedia); pengingatnya pindah ke Kotak Tindakan.
+     */
+    public function CekWajib(): bool
+    {
+        return $this !== self::Perangkat;
+    }
+
     public function AmbilJudul(): string
     {
         return match ($this) {

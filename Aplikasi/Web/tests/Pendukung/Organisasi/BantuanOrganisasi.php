@@ -27,9 +27,12 @@ final class BantuanOrganisasi
     private static int $urutan = 0;
 
     /**
+     * Tenant uji yang sudah berjalan: panduan awal tidak diwajibkan (D-24). Uji aturan wajib memakai
+     * `$panduanWajib = true` (sama seperti pendaftaran lewat formulir web).
+     *
      * @return array{Tenant: Tenant, Pemilik: Pengguna}
      */
-    public static function BuatTenant(string $namaUsaha = 'Kopi Nusantara', ?string $kodePaket = null): array
+    public static function BuatTenant(string $namaUsaha = 'Kopi Nusantara', ?string $kodePaket = null, bool $panduanWajib = false): array
     {
         self::$urutan++;
         $slug = strtolower((string) preg_replace('/\W+/', '', $namaUsaha)).self::$urutan;
@@ -38,7 +41,7 @@ final class BantuanOrganisasi
             noHp: '0812'.str_pad((string) (7000000 + self::$urutan), 8, '0', STR_PAD_LEFT),
             kodePaket: $kodePaket,
             namaUsaha: $namaUsaha,
-        ));
+        ), $panduanWajib);
 
         return ['Tenant' => $hasil['Tenant'], 'Pemilik' => $hasil['Pengguna']];
     }

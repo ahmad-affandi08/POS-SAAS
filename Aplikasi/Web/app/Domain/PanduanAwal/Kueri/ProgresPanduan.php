@@ -34,10 +34,18 @@ final class ProgresPanduan
         return $this->AmbilBaris()?->AmbilStatus($langkah) ?? StatusLangkahPanduan::Belum;
     }
 
+    /** D-24: tenant baru yang panduan awalnya belum selesai (back-office dialihkan ke panduan). */
+    public function CekWajibBelumSelesai(): bool
+    {
+        $baris = $this->AmbilBaris();
+
+        return $baris !== null && $baris->Wajib && $baris->SelesaiPada === null;
+    }
+
     /**
      * Bentuk `ProgresPanduan` (kontrak frontend §E).
      *
-     * @return array{Langkah: list<array{Kunci: string, Slug: string, Judul: string, Status: string, Tautan: string}>, SelesaiPada: string|null, Outlet: array{Uuid: string, Kode: string, Nama: string}|null}
+     * @return array{Langkah: list<array{Kunci: string, Slug: string, Judul: string, Status: string, Tautan: string}>, SelesaiPada: string|null, Outlet: array{Uuid: string, Kode: string, Nama: string}|null, Wajib: bool, WajibBelumSelesai: list<string>}
      */
     public function Ambil(): array
     {
@@ -54,6 +62,8 @@ final class ProgresPanduan
             ], LangkahPanduan::cases()),
             'SelesaiPada' => $baris?->SelesaiPada?->toIso8601ZuluString(),
             'Outlet' => $outlet === null ? null : ['Uuid' => $outlet->uuid, 'Kode' => $outlet->kode, 'Nama' => $outlet->nama],
+            'Wajib' => $baris !== null && $baris->Wajib && $baris->SelesaiPada === null,
+            'WajibBelumSelesai' => array_map(fn (LangkahPanduan $l): string => $l->value, $baris?->AmbilLangkahWajibBelumSelesai() ?? []),
         ];
     }
 }

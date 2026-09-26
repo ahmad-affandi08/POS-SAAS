@@ -11,7 +11,6 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KonteksTindakanPengguna;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
-use App\Domain\PanduanAwal\Kueri\LangkahBerikutnya;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,14 +22,13 @@ use Inertia\Response;
  */
 final class BerandaKelolaKontroler extends DasarKelolaKontroler
 {
-    public function Beranda(LangkahBerikutnya $langkahBerikutnya, AksesPengguna $akses, DasborPemilik $dasbor, TanggalBisnisOutlet $tanggal, KotakTindakan $kotak, KonteksTindakanPengguna $konteks): Response
+    public function Beranda(AksesPengguna $akses, DasborPemilik $dasbor, TanggalBisnisOutlet $tanggal, KotakTindakan $kotak, KonteksTindakanPengguna $konteks): Response
     {
         $idTenant = $this->IdTenant();
         $idPengguna = $this->Pelaku()->Id;
 
         return Inertia::render('Kelola/Beranda', [
-            'LangkahBerikutnya' => $langkahBerikutnya->Ambil($idTenant, $idPengguna),
-            // D-23 C: ringkasan Kotak Tindakan (tanpa rincian; rincian & tandai di /kelola/tindakan).
+            // D-23 C: ringkasan Kotak Tindakan (D-24: termasuk checklist persiapan toko yang dulu di Beranda) (tanpa rincian; rincian & tandai di /kelola/tindakan).
             'Tindakan' => array_map(
                 fn (DataButirTindakan $b): array => [...$b->KeLarik(false), 'Rincian' => []],
                 $kotak->Ambil($konteks->Buat($idTenant, $idPengguna, $tanggal->Hitung(null))),

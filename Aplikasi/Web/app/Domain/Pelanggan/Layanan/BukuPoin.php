@@ -66,7 +66,13 @@ final class BukuPoin
         $lot = MutasiPoin::query()
             ->where('IdPelanggan', $idPelanggan)
             ->where('Sisa', '>', 0)
-            ->orderByRaw('CASE WHEN JenisSumber = ? AND IdSumber = ? THEN 0 ELSE 1 END', [SumberMutasiPoin::Penjualan->value, $idSumberAsal ?? 0])
+            // Pembalikan (void/retur) mengurangi lot perolehan penjualan asal lebih dulu, baru lot lain dari penjualan yang
+            // sama (misal poin tukar yang dikembalikan), lalu FIFO kedaluwarsa. Tanpa ini urutan bergantung pada tanggal
+            // kedaluwarsa lot, yang bisa berbeda sehari antara tanggal bisnis dan tanggal server.
+            ->orderByRaw(
+                'CASE WHEN JenisSumber = ? AND IdSumber = ? AND Jenis = ? THEN 0 WHEN JenisSumber = ? AND IdSumber = ? THEN 1 ELSE 2 END',
+                [SumberMutasiPoin::Penjualan->value, $idSumberAsal ?? 0, JenisMutasiPoin::Perolehan->value, SumberMutasiPoin::Penjualan->value, $idSumberAsal ?? 0],
+            )
             ->orderByRaw('KedaluwarsaPada IS NULL')
             ->orderBy('KedaluwarsaPada')
             ->orderBy('Id')

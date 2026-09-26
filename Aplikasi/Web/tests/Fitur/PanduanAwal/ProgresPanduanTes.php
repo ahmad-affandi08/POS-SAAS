@@ -13,6 +13,7 @@ use App\Domain\Katalog\Model\Satuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Gudang;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\PanduanAwal\Kueri\LangkahBerikutnya;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
 use Illuminate\Support\Facades\Mail;
@@ -94,18 +95,34 @@ describe('F-01: progres wizard (lewati, lanjutkan, selesai)', function (): void 
     });
 });
 
-describe('F-01 langkah 7: checklist "Langkah Berikutnya" di beranda', function (): void {
+/**
+ * Checklist "Langkah berikutnya" (kueri `LangkahBerikutnya`) untuk satu anggota.
+ *
+ * @return list<array{Kunci: string, Judul: string, Keterangan: string, Tautan: string, Selesai: bool}>
+ */
+function AmbilLangkahUji(Pengguna $pengguna, int $idTenant): array
+{
+    BantuanOrganisasi::AturKonteks($idTenant);
+
+    return app(LangkahBerikutnya::class)->Ambil($idTenant, $pengguna->Id);
+}
+
+describe('F-01 langkah 7 (D-24: kini butir "Persiapan toko" di Kotak Tindakan): checklist "Langkah berikutnya"', function (): void {
     it('status item mengikuti data: produk ada, metode pembayaran, perangkat aktif, staf diundang, PIN sendiri', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
 
+        $langkah = AmbilLangkahUji($pemilik, $tenant->Id);
+        expect(collect($langkah)->pluck('Selesai', 'Kunci')->all())->toBe([
+            'PanduanAwal' => false, 'TambahProduk' => false, 'AturMetodePembayaran' => false, 'AktifkanPerangkat' => false, 'UndangStaf' => false, 'AturPin' => false,
+        ])->and($langkah[0]['Tautan'])->toBe(route('kelola.panduan-awal'));
+
+        // Butir yang belum selesai tampil di Kotak Tindakan & ringkasan Beranda; Beranda tidak lagi memuat checklist.
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Kelola/Beranda')
-                ->where('LangkahBerikutnya', fn ($item) => collect($item)->pluck('Selesai', 'Kunci')->all() === [
-                    'PanduanAwal' => false, 'TambahProduk' => false, 'AturMetodePembayaran' => false, 'AktifkanPerangkat' => false, 'UndangStaf' => false, 'AturPin' => false,
-                ])
-                ->where('LangkahBerikutnya.0.Tautan', route('kelola.panduan-awal')));
+                ->missing('LangkahBerikutnya')
+                ->where('Tindakan', fn ($butir) => collect($butir)->pluck('Kunci')->intersect(['awal.PanduanAwal', 'awal.AturPin'])->count() === 2));
 
         BantuanOrganisasi::AturKonteks($tenant->Id);
         app(TambahProdukCepat::class)->Jalankan([new DataProdukCepat('Kopi Susu Aren', Uang::Dari('18000'), null, app(PastikanSatuanStandar::class)->Jalankan(new DataSatuanStandar('PCS', 'Pcs', 'pcs', false)), JenisProduk::NonStok, null)]);
@@ -113,13 +130,14 @@ describe('F-01 langkah 7: checklist "Langkah Berikutnya" di beranda', function (
         BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
         BantuanPerangkat::AturPin($tenant->Id, $pemilik->Id, '482915');
 
-        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola')
+        // Yang belum selesai tampil lebih dulu.
+        expect(collect(AmbilLangkahUji($pemilik, $tenant->Id))->map(fn ($baris) => [$baris['Kunci'], $baris['Selesai']])->all())->toBe([
+            ['PanduanAwal', false], ['AturMetodePembayaran', false],
+            ['TambahProduk', true], ['AktifkanPerangkat', true], ['UndangStaf', true], ['AturPin', true],
+        ]);
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/tindakan')
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
-                // Yang belum selesai tampil lebih dulu.
-                ->where('LangkahBerikutnya', fn ($item) => collect($item)->map(fn ($baris) => [$baris['Kunci'], $baris['Selesai']])->all() === [
-                    ['PanduanAwal', false], ['AturMetodePembayaran', false],
-                    ['TambahProduk', true], ['AktifkanPerangkat', true], ['UndangStaf', true], ['AturPin', true],
-                ]));
+                ->where('Butir', fn ($butir) => collect($butir)->filter(fn ($b) => str_starts_with($b['Kunci'], 'awal.'))->pluck('Kunci')->sort()->values()->all() === ['awal.AturMetodePembayaran', 'awal.PanduanAwal']));
         expect(Satuan::query()->count())->toBe(1);
     });
 
@@ -128,22 +146,18 @@ describe('F-01 langkah 7: checklist "Langkah Berikutnya" di beranda', function (
         $kasir = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
         $manajer = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::ManajerOutlet);
 
-        BantuanPanduanAwal::Masuk($this, $kasir, $tenant)->get('/kelola')
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('LangkahBerikutnya', fn ($item) => collect($item)->pluck('Kunci')->all() === ['AturPin']));
-        BantuanPanduanAwal::Masuk($this, $manajer, $tenant)->get('/kelola')
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('LangkahBerikutnya', fn ($item) => collect($item)->pluck('Kunci')->all() === ['AktifkanPerangkat', 'AturPin']));
+        expect(collect(AmbilLangkahUji($kasir, $tenant->Id))->pluck('Kunci')->all())->toBe(['AturPin'])
+            ->and(collect(AmbilLangkahUji($manajer, $tenant->Id))->pluck('Kunci')->all())->toBe(['AktifkanPerangkat', 'AturPin']);
 
         BantuanPerangkat::AturPin($tenant->Id, $kasir->Id, '193847');
-        BantuanPanduanAwal::Masuk($this, $kasir, $tenant)->get('/kelola')
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('LangkahBerikutnya', []));
+        expect(AmbilLangkahUji($kasir, $tenant->Id))->toBe([]);
     });
 
     it('F-05a butir "Isi stok awal": tampil bila ada produk berstok & izin persediaan.kelola; selesai hanya bila ada stok awal Diposting', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik, 'Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant();
         $kasir = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Kasir);
         $stafGudang = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::StafGudang);
-        $butirStokAwal = fn (Pengguna $pengguna): ?array => collect(BantuanPanduanAwal::Masuk($this, $pengguna, $tenant)->get('/kelola')->assertOk()->inertiaProps('LangkahBerikutnya'))
-            ->firstWhere('Kunci', 'StokAwal');
+        $butirStokAwal = fn (Pengguna $pengguna): ?array => collect(AmbilLangkahUji($pengguna, $tenant->Id))->firstWhere('Kunci', 'StokAwal');
 
         // Belum ada produk berstok (Jasa/NonStok tidak dihitung) → butir tidak tampil.
         BantuanOrganisasi::AturKonteks($tenant->Id);

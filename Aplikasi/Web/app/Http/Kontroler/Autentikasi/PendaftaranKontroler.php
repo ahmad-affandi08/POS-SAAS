@@ -64,7 +64,8 @@ final class PendaftaranKontroler extends Kontroler
             throw new PelanggaranAturanBisnis('BR-00.4', 'Verifikasi CAPTCHA gagal. Selesaikan CAPTCHA sekali lagi.', 'TokenCaptcha');
         }
 
-        $hasil = $daftarkan->Jalankan($permintaan->AmbilData());
+        // D-24: pendaftaran baru wajib menyelesaikan panduan awal dulu.
+        $hasil = $daftarkan->Jalankan($permintaan->AmbilData(), wajibPanduanAwal: true);
 
         Auth::guard('web')->login($hasil['Pengguna']);
         $permintaan->session()->regenerate();
