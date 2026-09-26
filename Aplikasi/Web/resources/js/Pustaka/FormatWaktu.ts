@@ -18,19 +18,37 @@ const formatTanggal = new Intl.DateTimeFormat('id-ID', {
     timeZone: 'UTC',
 });
 
-/** Tanggal kalender tanpa jam dari API ("2027-01-01") → "1 Jan 2027". Tidak terpengaruh zona waktu peramban. */
+const formatTanggalWib = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+});
+
+/**
+ * Tanggal tanpa jam → "1 Jan 2027". Menerima tanggal kalender API ("2027-01-01", tidak terpengaruh zona waktu
+ * peramban) atau waktu ISO-8601 lengkap ("2026-09-26T18:17:54+00:00", ditampilkan sebagai tanggal WIB).
+ */
 export function FormatTanggal(tanggal: string | null): string {
     if (tanggal === null) {
         return '—';
     }
 
-    const waktu = new Date(`${tanggal}T00:00:00Z`);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+        const waktu = new Date(`${tanggal}T00:00:00Z`);
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal) || Number.isNaN(waktu.getTime())) {
-        throw new Error(`Tanggal tidak valid: "${tanggal}"`);
+        if (!Number.isNaN(waktu.getTime())) {
+            return formatTanggal.format(waktu);
+        }
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/.test(tanggal)) {
+        const waktu = new Date(tanggal);
+
+        if (!Number.isNaN(waktu.getTime())) {
+            return formatTanggalWib.format(waktu);
+        }
     }
 
-    return formatTanggal.format(waktu);
+    throw new Error(`Tanggal tidak valid: "${tanggal}"`);
 }
 
 export function FormatTanggalWaktu(iso: string | null): string {

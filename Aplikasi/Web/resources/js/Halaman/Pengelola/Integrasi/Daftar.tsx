@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Switch } from '@/Komponen/Ui/switch';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
-import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
@@ -334,7 +334,7 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
                         <div className="flex flex-col sm:col-span-2">
                             <dt className="text-teks-sekunder">Kredensial terakhir diganti</dt>
                             <dd className="text-teks-utama">
-                                {FormatTanggal(konfigurasi.KredensialDiubahPada)} · rotasi setiap{' '}
+                                {FormatTanggalWaktu(konfigurasi.KredensialDiubahPada)} · rotasi setiap{' '}
                                 {konfigurasi.RotasiSetiapHari} hari
                             </dd>
                         </div>

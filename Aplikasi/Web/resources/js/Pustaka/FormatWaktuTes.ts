@@ -22,7 +22,16 @@ describe('FormatTanggal', () => {
         expect(FormatTanggal(null)).toBe('—');
     });
 
-    it('menolak format selain TTTT-BB-HH', () => {
+    it('menerima waktu ISO-8601 lengkap dan menampilkan tanggal WIB', () => {
+        expect(FormatTanggal('2026-09-26T18:17:54+00:00')).toBe('27 Sep 2026');
+        expect(FormatTanggal('2026-09-26T10:00:00Z')).toBe('26 Sep 2026');
+        expect(FormatTanggal('2026-09-26T10:00:00.123456Z')).toBe('26 Sep 2026');
+    });
+
+    it('menolak format selain TTTT-BB-HH atau waktu ISO-8601', () => {
         expect(() => FormatTanggal('01-01-2027')).toThrow();
+        expect(() => FormatTanggal('2026-02-30')).not.toThrow();
+        expect(() => FormatTanggal('2026-09-26 18:17:54')).toThrow();
+        expect(() => FormatTanggal('kemarin')).toThrow();
     });
 });
