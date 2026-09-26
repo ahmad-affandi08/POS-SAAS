@@ -25,6 +25,7 @@ use Throwable;
  * - QRIS statis wajib gambar; disimpan di disk privat dan dihapus lagi bila transaksi gagal.
  * - EDC wajib bank/jaringan EDC aktif; transfer wajib bank/dompet digital aktif + nomor & nama pemilik rekening.
  * - Biaya (MDR) 0–10 persen, string desimal (tidak pernah float).
+ * - F-16d: deposit pelanggan (satu per tenant, tanpa biaya; akun Saldo Deposit Pelanggan dari pemetaan akun).
  * - Tunai dipastikan ada lebih dulu (idempoten). Nama unik per tenant (tanpa beda huruf besar/kecil): kirim ganda ditolak.
  */
 final class SimpanMetodePembayaran
@@ -58,6 +59,11 @@ final class SimpanMetodePembayaran
                     throw new PelanggaranAturanBisnis('NamaMetodeSudahAda', 'Metode pembayaran dengan nama ini sudah ada.', 'Nama');
                 }
 
+                // F-16d: satu metode deposit per tenant (saldo pelanggan hanya satu buku).
+                if ($data->jenis === JenisMetodePembayaran::Deposit && MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::Deposit->value)->exists()) {
+                    throw new PelanggaranAturanBisnis('MetodeDepositSudahAda', 'Metode deposit pelanggan sudah ada. Aktifkan metode yang ada bila dinonaktifkan.', 'Jenis');
+                }
+
                 $urutan = (int) MetodePembayaran::query()->max('Urutan');
 
                 $metode = MetodePembayaran::query()->create([...$isian, 'PathGambarQris' => $path, 'Urutan' => $urutan + 1, 'Aktif' => true]);
@@ -86,7 +92,7 @@ final class SimpanMetodePembayaran
         $jenis = $data->jenis;
 
         if (! $jenis->CekBisaDibuatPanduan()) {
-            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), atau transfer bank.', 'Jenis');
+            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, atau deposit pelanggan.', 'Jenis');
         }
 
         if ($jenis === JenisMetodePembayaran::QrisStatis && $gambarQris === null) {
@@ -123,7 +129,8 @@ final class SimpanMetodePembayaran
             'IdReferensiBank' => $idBank,
             'NomorRekening' => $jenis === JenisMetodePembayaran::Transfer ? $nomorRekening : null,
             'NamaPemilikRekening' => $jenis === JenisMetodePembayaran::Transfer ? $namaPemilik : null,
-            'PersenBiaya' => $this->AmbilPersenBiaya($data->persenBiaya),
+            // F-16d: deposit bukan layanan penyedia pembayaran, jadi tanpa biaya MDR.
+            'PersenBiaya' => $jenis === JenisMetodePembayaran::Deposit ? '0' : $this->AmbilPersenBiaya($data->persenBiaya),
         ];
     }
 

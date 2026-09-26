@@ -49,7 +49,14 @@ enum JenisMetodePembayaran: string
     {
         // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit; bagian 2: uang muka pre-order saat diambil.
         // F-08: QRIS dinamis lewat gerbang pembayaran aktif (tagihan dibuat online, `Referensi` = Uuid `TagihanQris`).
-        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka], true);
+        // F-16d bagian 1: deposit pelanggan (wajib online saat dipakai; aplikasi lama melewati jenis yang tidak dikenalnya).
+        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka, self::Deposit], true);
+    }
+
+    /** F-16d bagian 1: jenis yang boleh dipakai mengisi saldo deposit di POS (bukan tempo, deposit, atau uang muka). */
+    public function CekBolehIsiDeposit(): bool
+    {
+        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet], true);
     }
 
     /** F-12 bagian 2: jenis yang boleh dipakai membayar uang muka pre-order di POS (tanpa tempo & uang muka). */
@@ -58,10 +65,13 @@ enum JenisMetodePembayaran: string
         return in_array($this, [self::Tunai, self::QrisStatis, self::Edc, self::Transfer, self::Ewallet], true);
     }
 
-    /** Jenis yang bisa ditambahkan dari back-office (F-01 langkah 5; F-08: QRIS dinamis, butuh gerbang aktif platform). */
+    /**
+     * Jenis yang bisa ditambahkan dari back-office (F-01 langkah 5; F-08: QRIS dinamis, butuh gerbang aktif platform;
+     * F-16d: deposit pelanggan, satu per tenant, akun Saldo Deposit Pelanggan).
+     */
     public function CekBisaDibuatPanduan(): bool
     {
-        return in_array($this, [self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer], true);
+        return in_array($this, [self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Deposit], true);
     }
 
     /**

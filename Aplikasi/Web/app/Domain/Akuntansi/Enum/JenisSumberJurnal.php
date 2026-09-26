@@ -40,6 +40,10 @@ enum JenisSumberJurnal: string
     case RekapGaji = 'RekapGaji';
     // F-16c bagian 4b: penerimaan klaim promo dari pemasok (J-16.5: Dr kas/bank, Cr HPP).
     case PenerimaanKlaimPemasok = 'PenerimaanKlaimPemasok';
+    // F-16d bagian 1: isi deposit pelanggan dari POS (J-16.1) & pembatalannya; penarikan/penyesuaian deposit
+    // back-office (sumber = baris `MutasiDeposit`).
+    case IsiDeposit = 'IsiDeposit';
+    case MutasiDeposit = 'MutasiDeposit';
 
     public function AmbilLabel(): string
     {
@@ -64,6 +68,8 @@ enum JenisSumberJurnal: string
             self::PelunasanKasbon => 'Pelunasan kasbon',
             self::RekapGaji => 'Rekap gaji',
             self::PenerimaanKlaimPemasok => 'Penerimaan klaim promo pemasok',
+            self::IsiDeposit => 'Isi deposit pelanggan',
+            self::MutasiDeposit => 'Penarikan/penyesuaian deposit',
         };
     }
 
@@ -94,6 +100,8 @@ enum JenisSumberJurnal: string
             self::Kasbon, self::PelunasanKasbon => '/kelola/karyawan/kasbon',
             self::RekapGaji => '/kelola/karyawan/gaji/'.$uuid,
             self::PenerimaanKlaimPemasok => '/kelola/promo/klaim-pemasok',
+            self::IsiDeposit => '/kelola/pelanggan/isi-deposit/'.$uuid,
+            self::MutasiDeposit => '/kelola/pelanggan/mutasi-deposit/'.$uuid,
         };
     }
 }

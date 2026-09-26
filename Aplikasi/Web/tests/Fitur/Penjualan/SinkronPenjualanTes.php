@@ -489,8 +489,8 @@ describe('F-07b aturan penolakan', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
         $nonaktif = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::Ewallet, 'GoPay Toko', false);
-        // F-12: Tempo sudah didukung; contoh metode yang belum didukung kasir = Deposit.
-        $deposit = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::Deposit, 'Saldo member');
+        // F-12: Tempo sudah didukung; F-16d: Deposit juga. Contoh metode yang belum didukung kasir = Marketplace.
+        $deposit = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::Marketplace, 'Saldo marketplace');
         $baris = ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]];
 
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [

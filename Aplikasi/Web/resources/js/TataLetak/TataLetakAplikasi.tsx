@@ -115,6 +115,8 @@ const menuPelanggan: ItemMenu[] = [
     // F-12: piutang pelanggan (penjualan tempo) & pelunasan.
     { label: 'Piutang pelanggan', href: '/kelola/piutang', izin: IzinTenant.PelangganLihat },
     { label: 'Pelunasan piutang', href: '/kelola/piutang/pelunasan', izin: IzinTenant.PelangganLihat },
+    // F-16d bagian 1: isi deposit pelanggan dari kasir.
+    { label: 'Isi deposit', href: '/kelola/pelanggan/isi-deposit', izin: IzinTenant.PelangganLihat },
 ];
 
 // F-18: karyawan, jadwal kerja, rekap absensi (karyawan.lihat).

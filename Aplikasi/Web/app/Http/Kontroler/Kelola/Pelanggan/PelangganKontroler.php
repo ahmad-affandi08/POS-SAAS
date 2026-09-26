@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Pelanggan;
 
+use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
@@ -16,7 +17,9 @@ use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Kueri\DaftarPelanggan;
 use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
+use App\Domain\Pelanggan\Kueri\PengaturanDepositTenant;
 use App\Domain\Pelanggan\Kueri\PengaturanLoyaltiTenant;
+use App\Domain\Pelanggan\Kueri\RiwayatDeposit;
 use App\Domain\Pelanggan\Kueri\RiwayatPoin;
 use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Model\Pelanggan;
@@ -49,9 +52,21 @@ final class PelangganKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    public function Detail(string $pelanggan, BelanjaPelanggan $belanja, DaftarTierPelanggan $tier, BukuPoin $buku, RiwayatPoin $riwayatPoin, PengaturanLoyaltiTenant $loyalti, KreditPelanggan $kredit, TanggalBisnisOutlet $tanggal): Response
-    {
+    public function Detail(
+        string $pelanggan,
+        BelanjaPelanggan $belanja,
+        DaftarTierPelanggan $tier,
+        BukuPoin $buku,
+        RiwayatPoin $riwayatPoin,
+        PengaturanLoyaltiTenant $loyalti,
+        KreditPelanggan $kredit,
+        TanggalBisnisOutlet $tanggal,
+        RiwayatDeposit $riwayatDeposit,
+        PengaturanDepositTenant $deposit,
+        DaftarAkunPilihan $akun,
+    ): Response {
         $data = $this->CariPelanggan($pelanggan);
+        $izin = $this->AmbilIzin();
         $tierPelanggan = $data->IdTier === null ? null : ($tier->AmbilPeta([$data->IdTier])[$data->IdTier] ?? null);
 
         return Inertia::render('Kelola/Pelanggan/Detail', [
@@ -65,7 +80,14 @@ final class PelangganKontroler extends DasarKelolaKontroler
             'LoyaltiBerlaku' => $loyalti->Ambil()->CekBerlaku(),
             // F-12: posisi kredit (sisa piutang terbuka & hari terlama lewat jatuh tempo).
             'Kredit' => $kredit->AmbilRingkas([$data->Id], $tanggal->Hitung(null))[$data->Id] ?? null,
-            'Izin' => $this->AmbilIzin(),
+            // F-16d bagian 1: saldo & riwayat deposit; akun kas/bank hanya untuk yang boleh menarik deposit.
+            'Deposit' => [
+                'Saldo' => (string) $data->SaldoDeposit,
+                'Berlaku' => $deposit->CekBerlaku(),
+                'Riwayat' => $riwayatDeposit->Ambil($data->Id),
+                'AkunKasBank' => $izin['KelolaDeposit'] ? $akun->AmbilKasBank() : [],
+            ],
+            'Izin' => $izin,
         ]);
     }
 
@@ -141,7 +163,7 @@ final class PelangganKontroler extends DasarKelolaKontroler
     }
 
     /**
-     * @return array{Kelola: bool, LihatPenjualan: bool}
+     * @return array{Kelola: bool, LihatPenjualan: bool, KelolaDeposit: bool}
      */
     private function AmbilIzin(): array
     {
@@ -150,6 +172,7 @@ final class PelangganKontroler extends DasarKelolaKontroler
         return [
             'Kelola' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PelangganKelola),
             'LihatPenjualan' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::LaporanPenjualanLihat),
+            'KelolaDeposit' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PelangganDepositKelola),
         ];
     }
 }

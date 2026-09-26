@@ -15,6 +15,8 @@ enum MetodeRefund: string
     case Campuran = 'Campuran';
     // F-12: retur penjualan tempo mengurangi sisa piutang lebih dulu.
     case Piutang = 'Piutang';
+    // F-16d bagian 1: refund ke saldo deposit pelanggan.
+    case Deposit = 'Deposit';
 
     public function AmbilLabel(): string
     {
@@ -23,6 +25,7 @@ enum MetodeRefund: string
             self::Transfer => 'Transfer manual',
             self::Campuran => 'Tunai & transfer',
             self::Piutang => 'Potong piutang',
+            self::Deposit => 'Ke deposit pelanggan',
         };
     }
 }

@@ -55,7 +55,7 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
     {
         return [
             'Jenis.required' => 'Pilih jenis metode pembayaran.',
-            'Jenis.in' => 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), atau transfer bank.',
+            'Jenis.in' => 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, atau deposit pelanggan.',
             'Nama.required' => 'Isi nama metode pembayaran, misal QRIS Toko.',
             'KodeBank.required_if' => 'Pilih bank.',
             'GambarQris.required_if' => 'Unggah gambar QRIS dari bank atau penyedia QRIS Anda.',

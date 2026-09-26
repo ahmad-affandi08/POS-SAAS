@@ -13,6 +13,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
+use App\Domain\Pelanggan\Kueri\PengaturanDepositTenant;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
@@ -33,7 +34,8 @@ use stdClass;
  * Cetak struk (PRD v1.79): `Struk` = pengaturan struk tenant (`TampilkanLogo`, `NamaDicetak`, `TeksKepala`, saklar
  * alamat/telepon/NPWP/kasir/pelanggan/hemat, `CatatanKaki`, `TeksPenutup`) + `NamaUsaha`, `Npwp` (hanya bila outlet
  * PKP), `AdaLogo` (logo usaha tersedia & ditampilkan; diunduh lewat `/logo-struk`), dan `TandaAir` (paket tanpa fitur
- * `struk.tanpa-watermark`).
+ * `struk.tanpa-watermark`). F-16d: `Deposit` (`Berlaku`, `MinimalIsi`, `MaksimalIsi`) &
+ * `Perangkat.NomorUrutIsiDeposit`.
  */
 final class DataAwalKasir
 {
@@ -50,6 +52,7 @@ final class DataAwalKasir
         private readonly ProfilTenant $profilTenant,
         private readonly PemeriksaFiturTenant $fitur,
         private readonly PengaturanStrukTenant $pengaturanStruk,
+        private readonly PengaturanDepositTenant $deposit,
     ) {}
 
     /**
@@ -63,6 +66,7 @@ final class DataAwalKasir
         $hariIni = $this->tanggalBisnis->Hitung($perangkat->IdOutlet);
         $nomorUrut = $this->nomorUrut->Ambil($perangkat->Id, $hariIni);
         $nomorUrutRetur = $this->nomorUrut->AmbilRetur($perangkat->Id, $hariIni);
+        $nomorUrutDeposit = $this->nomorUrut->AmbilIsiDeposit($perangkat->Id, $hariIni);
 
         return [
             'Pengaturan' => [
@@ -98,7 +102,10 @@ final class DataAwalKasir
                 // Objek JSON walau kosong (`{}`), bukan larik.
                 'NomorUrutPenjualan' => $nomorUrut === [] ? new stdClass : $nomorUrut,
                 'NomorUrutRetur' => $nomorUrutRetur === [] ? new stdClass : $nomorUrutRetur,
+                'NomorUrutIsiDeposit' => $nomorUrutDeposit === [] ? new stdClass : $nomorUrutDeposit,
             ],
+            // F-16d bagian 1: deposit pelanggan (fitur paket, batas isi per transaksi Rupiah bulat).
+            'Deposit' => $this->deposit->KeLarik(),
             'ProfilPajak' => [
                 'Pkp' => $profil->pkp ?? false,
                 'PungutPbjt' => $profil->pungutPbjt ?? false,

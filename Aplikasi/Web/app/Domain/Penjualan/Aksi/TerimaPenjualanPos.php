@@ -31,6 +31,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
+use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
@@ -147,6 +148,7 @@ final class TerimaPenjualanPos
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly PenautTagihanQrisPenjualan $penautQris,
+        private readonly PencatatDepositPenjualan $deposit,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -348,6 +350,20 @@ final class TerimaPenjualanPos
         if ($tempo !== null) {
             $this->piutang->Catat($idPelanggan, $penjualan->Id, $penjualan->IdOutlet, $penjualan->Nomor, $tanggalBisnis, $tempo);
 
+        }
+
+        // F-16d bagian 1: pembayaran deposit memotong saldo pelanggan di transaksi yang sama (idempoten per penjualan).
+        // Saldo kurang (dua perangkat memakai saldo yang sama) = tetap diterima, saldo minus, ditandai tinjauan.
+        $bayarDeposit = self::JumlahkanMetode($data, $metode, JenisMetodePembayaran::Deposit);
+
+        if (! $bayarDeposit->BernilaiNol()) {
+            $masalahDeposit = $idPelanggan === null
+                ? ['pelanggan belum diterima server, saldo deposit tidak dipotong']
+                : $this->deposit->CatatPemakaian($idPelanggan, $penjualan->Id, $penjualan->Nomor, $bayarDeposit, $tanggalBisnis, $kasir->id);
+
+            if ($masalahDeposit !== []) {
+                $tinjauan['DepositKurang'] = 'DepositKurang: '.implode('; ', $masalahDeposit);
+            }
         }
 
         // F-18: komisi staf yang melayani baris (hanya laporan, tanpa jurnal) di transaksi yang sama. Staf yang belum dikenal
@@ -787,6 +803,17 @@ final class TerimaPenjualanPos
 
         if ($jumlahTempo > 1) {
             throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh punya satu pembayaran tempo.', 'Pembayaran');
+        }
+
+        // F-16d bagian 1: deposit sekali per penjualan dan wajib atas nama pelanggan.
+        $jumlahDeposit = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Deposit));
+
+        if ($jumlahDeposit > 1) {
+            throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh punya satu pembayaran deposit.', 'Pembayaran');
+        }
+
+        if ($jumlahDeposit === 1 && $data->uuidPelanggan === null) {
+            throw new PelanggaranAturanBisnis('DepositTanpaPelanggan', 'Pembayaran deposit wajib memilih pelanggan.', 'UuidPelanggan');
         }
 
         if ($jumlahTempo === 1 && $data->uuidPelanggan === null) {

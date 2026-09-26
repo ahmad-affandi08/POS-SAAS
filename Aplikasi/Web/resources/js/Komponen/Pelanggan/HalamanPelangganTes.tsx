@@ -5,11 +5,14 @@ import HalamanBuatPelanggan from '@/Halaman/Kelola/Pelanggan/Buat';
 import HalamanBuatTierPelanggan from '@/Halaman/Kelola/Pelanggan/BuatTier';
 import HalamanDaftarPelanggan from '@/Halaman/Kelola/Pelanggan/Daftar';
 import HalamanDetailPelanggan from '@/Halaman/Kelola/Pelanggan/Detail';
+import HalamanIsiDeposit from '@/Halaman/Kelola/Pelanggan/IsiDeposit';
 import HalamanPengaturanLoyalti from '@/Halaman/Kelola/Pelanggan/PengaturanLoyalti';
 import HalamanTierPelanggan, { FormatPengali } from '@/Halaman/Kelola/Pelanggan/Tier';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import FormulirPelanggan from '@/Komponen/Pelanggan/FormulirPelanggan';
 import { BuatHasilTabel } from '@/Komponen/Persediaan/DataUjiPersediaan';
+import { PilihOpsi } from '@/Pengujian/InteraksiPilihan';
+import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 import type { BarisPelanggan } from '@/Tipe/Pelanggan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
@@ -34,7 +37,10 @@ const Ani: BarisPelanggan = {
     JumlahTransaksi: 12,
     TotalBelanja: '12500000.00',
     TerakhirPada: '2026-09-24T05:30:00Z',
+    SaldoDeposit: '350000.00',
 };
+
+const DepositKosong = { Saldo: '0.00', Berlaku: false, Riwayat: [], AkunKasBank: [] };
 
 const OpsiTierUji = [
     { Nilai: 'SILVER', Label: 'Silver (SILVER)', Uuid: '01K5T1ER000000000000S1LVER' },
@@ -111,6 +117,7 @@ describe('Halaman pelanggan (F-16a)', () => {
             <HalamanDetailPelanggan
                 Pelanggan={Ani}
                 Kredit={{ LimitKredit: '5000000.00', SisaPiutang: '1250000.00', HariLewatJatuhTempo: 12 }}
+                Deposit={DepositKosong}
                 Riwayat={[
                     {
                         Uuid: '01K5JUAL000000000000000001',
@@ -135,7 +142,7 @@ describe('Halaman pelanggan (F-16a)', () => {
                 ]}
                 OpsiTier={OpsiTierUji}
                 LoyaltiBerlaku
-                Izin={{ Kelola: true, LihatPenjualan: true }}
+                Izin={{ Kelola: true, LihatPenjualan: true, KelolaDeposit: false }}
             />,
         );
         expect(screen.getByText('0812-3456-7890')).toBeTruthy();
@@ -244,6 +251,115 @@ describe('Halaman pelanggan (F-16a)', () => {
                 NilaiTukarPoin: '100',
                 MinimalTukarPoin: 50,
             },
+            expect.anything(),
+        );
+    });
+
+    it('F-16d detail: saldo & riwayat deposit, tarik ke akun kas dan sesuaikan (kurangi) terkirim', () => {
+        RenderUji(
+            <HalamanDetailPelanggan
+                Pelanggan={Ani}
+                Riwayat={[]}
+                RiwayatPoin={[]}
+                OpsiTier={OpsiTierUji}
+                LoyaltiBerlaku={false}
+                Kredit={null}
+                Deposit={{
+                    Saldo: '350000.00',
+                    Berlaku: true,
+                    Riwayat: [
+                        {
+                            Uuid: '01K5MUTASIDEPOSIT000000001',
+                            Jenis: 'Isi',
+                            LabelJenis: 'Isi deposit',
+                            Jumlah: '350000.00',
+                            SaldoSetelah: '350000.00',
+                            NomorSumber: 'DEP/SLB/260924/POS-001-0001',
+                            Tanggal: '2026-09-24',
+                            Keterangan: null,
+                            DibuatPada: '2026-09-24T05:30:00Z',
+                        },
+                    ],
+                    AkunKasBank: [{ Uuid: '01K5AKUNKAS000000000000001', Kode: '1-1100', Nama: 'Kas Besar' }],
+                }}
+                Izin={{ Kelola: false, LihatPenjualan: false, KelolaDeposit: true }}
+            />,
+        );
+        expect(screen.getAllByText('Rp 350.000').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('+Rp 350.000').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('DEP/SLB/260924/POS-001-0001').length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tarik deposit' }));
+        fireEvent.change(screen.getByLabelText('Jumlah ditarik'), { target: { value: '100000' } });
+        fireEvent.change(screen.getByLabelText('Alasan'), { target: { value: 'Pelanggan pindah kota' } });
+        fireEvent.submit(screen.getByRole('form', { name: 'Formulir tarik deposit' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            `/kelola/pelanggan/${Ani.Uuid}/deposit/tarik`,
+            { Jumlah: '100000', UuidAkun: '01K5AKUNKAS000000000000001', Alasan: 'Pelanggan pindah kota' },
+            expect.anything(),
+        );
+        cleanup();
+
+        RenderUji(
+            <HalamanDetailPelanggan
+                Pelanggan={Ani}
+                Riwayat={[]}
+                RiwayatPoin={[]}
+                OpsiTier={OpsiTierUji}
+                LoyaltiBerlaku={false}
+                Kredit={null}
+                Deposit={{ Saldo: '-27000.00', Berlaku: true, Riwayat: [], AkunKasBank: [] }}
+                Izin={{ Kelola: false, LihatPenjualan: false, KelolaDeposit: true }}
+            />,
+        );
+        expect(screen.getByText(/Saldo minus/)).toBeTruthy();
+        expect((screen.getByRole('button', { name: 'Tarik deposit' }) as HTMLButtonElement).disabled).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Sesuaikan deposit' }));
+        PilihOpsi(screen.getByRole('combobox', { name: 'Arah' }), 'Kurangi');
+        fireEvent.change(screen.getByLabelText('Jumlah'), { target: { value: '5000' } });
+        fireEvent.change(screen.getByLabelText('Alasan'), { target: { value: 'Koreksi salah input kasir' } });
+        fireEvent.submit(screen.getByRole('form', { name: 'Formulir penyesuaian deposit' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            `/kelola/pelanggan/${Ani.Uuid}/deposit/sesuaikan`,
+            { Jumlah: '-5000', Alasan: 'Koreksi salah input kasir' },
+            expect.anything(),
+        );
+    });
+
+    it('F-16d daftar isi deposit: tinjauan tampil; batal isi butuh alasan ≥ 5 karakter lalu terkirim', () => {
+        window.history.replaceState({}, '', '/kelola/pelanggan/isi-deposit');
+        RenderUji(
+            <HalamanIsiDeposit
+                IsiDeposit={BuatHasilTabel([
+                    {
+                        Uuid: '01K5ISIDEPOSIT000000000001',
+                        Nomor: 'DEP/SLB/260924/POS-001-0001',
+                        Pelanggan: { Uuid: Ani.Uuid, Nama: 'Ani Rahmawati' },
+                        NamaMetode: 'Tunai',
+                        Jumlah: '150000.00',
+                        Status: 'Diterima',
+                        LabelStatus: 'Diterima',
+                        TanggalBisnis: '2026-09-24',
+                        PerluTinjauan: true,
+                        AlasanTinjauan: 'ShiftSudahDitutup: isi deposit diterima setelah shift ditutup',
+                        AlasanBatal: null,
+                        DiterimaPada: '2026-09-24T05:30:00Z',
+                    },
+                ])}
+                Izin={{ KelolaDeposit: true }}
+            />,
+        );
+        expect(screen.getAllByText('Perlu ditinjau').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Rp 150.000').length).toBeGreaterThan(0);
+        BukaMenu(screen.getByRole('button', { name: 'Aksi isi deposit DEP/SLB/260924/POS-001-0001' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Batalkan isi deposit' }));
+        const tombol = screen.getByRole('button', { name: 'Batalkan isi deposit' }) as HTMLButtonElement;
+        expect(tombol.disabled).toBe(true);
+        fireEvent.change(screen.getByLabelText('Alasan'), { target: { value: 'Salah pelanggan' } });
+        fireEvent.click(tombol);
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/pelanggan/isi-deposit/01K5ISIDEPOSIT000000000001/batal',
+            { Alasan: 'Salah pelanggan' },
             expect.anything(),
         );
     });

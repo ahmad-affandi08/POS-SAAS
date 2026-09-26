@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Pelanggan\DepositPelangganKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\LoyaltiKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\PelangganKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
@@ -23,7 +24,17 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
     // F-16b: tier pelanggan & pengaturan loyalti.
     Route::get('/tier', [LoyaltiKontroler::class, 'Tier'])->name('kelola.pelanggan.tier.daftar');
     Route::get('/loyalti', [LoyaltiKontroler::class, 'Pengaturan'])->name('kelola.pelanggan.loyalti');
+    // F-16d bagian 1: daftar isi deposit & tautan sumber jurnal deposit (sebelum rute {pelanggan}).
+    Route::get('/isi-deposit', [DepositPelangganKontroler::class, 'DaftarIsi'])->name('kelola.pelanggan.isi-deposit.daftar');
+    Route::get('/isi-deposit/{isiDeposit}', [DepositPelangganKontroler::class, 'TampilkanIsi'])->where('isiDeposit', $ulid)->name('kelola.pelanggan.isi-deposit.tampil');
+    Route::get('/mutasi-deposit/{mutasiDeposit}', [DepositPelangganKontroler::class, 'TampilkanMutasi'])->where('mutasiDeposit', $ulid)->name('kelola.pelanggan.mutasi-deposit.tampil');
     Route::get('/{pelanggan}', [PelangganKontroler::class, 'Detail'])->where('pelanggan', $ulid)->name('kelola.pelanggan.detail');
+
+    Route::middleware($izin(IzinTenant::PelangganDepositKelola))->group(function () use ($ulid): void {
+        Route::post('/{pelanggan}/deposit/tarik', [DepositPelangganKontroler::class, 'Tarik'])->where('pelanggan', $ulid)->name('kelola.pelanggan.deposit.tarik');
+        Route::post('/{pelanggan}/deposit/sesuaikan', [DepositPelangganKontroler::class, 'Sesuaikan'])->where('pelanggan', $ulid)->name('kelola.pelanggan.deposit.sesuaikan');
+        Route::post('/isi-deposit/{isiDeposit}/batal', [DepositPelangganKontroler::class, 'BatalIsi'])->where('isiDeposit', $ulid)->name('kelola.pelanggan.isi-deposit.batal');
+    });
 
     Route::middleware($izin(IzinTenant::PelangganKelola))->group(function () use ($ulid): void {
         Route::get('/buat', [PelangganKontroler::class, 'Buat'])->name('kelola.pelanggan.buat');

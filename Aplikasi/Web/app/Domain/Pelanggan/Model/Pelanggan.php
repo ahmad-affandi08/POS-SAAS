@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property bool $TierTetap
  * @property string|null $LimitKredit
  * @property int $TerminHari
+ * @property string $SaldoDeposit cache Σ `MutasiDeposit.Jumlah` (F-16d)
  * @property Carbon|null $TierDievaluasiPada
  * @property int|null $DibuatOleh
  * @property int|null $IdPerangkatPembuat
@@ -41,7 +42,7 @@ final class Pelanggan extends ModelDasar
     protected $table = 'Pelanggan';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['SetujuPemasaran' => false, 'Status' => 'Aktif', 'TerminHari' => 30];
+    protected $attributes = ['SetujuPemasaran' => false, 'Status' => 'Aktif', 'TerminHari' => 30, 'SaldoDeposit' => '0.00'];
 
     /**
      * @return array<string, string>
@@ -56,6 +57,7 @@ final class Pelanggan extends ModelDasar
             'TierDievaluasiPada' => 'datetime',
             'LimitKredit' => 'decimal:2',
             'TerminHari' => 'integer',
+            'SaldoDeposit' => 'decimal:2',
             'Status' => StatusPelanggan::class,
         ];
     }

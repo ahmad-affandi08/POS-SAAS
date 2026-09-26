@@ -9,6 +9,7 @@ use App\Domain\Penjualan\Data\DataMetodeRingkasanShift;
 use App\Domain\Penjualan\Data\DataRingkasanPenjualanShift;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
+use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
@@ -31,6 +32,10 @@ use App\Domain\Penjualan\Model\VoidPenjualan;
  * F-12 bagian 2: uang muka pre-order yang diterima di shift ini ikut masuk `perMetode` & `tunaiMasukBersih` (uangnya masuk
  * laci/rekening shift ini walau pesanannya kemudian dibatalkan; pengembalian DP dilakukan di back-office dari kas/bank)
  * dan dilaporkan di `jumlahUangMuka`/`nominalUangMuka`. Pemakaian DP saat diambil (metode Uang Muka) bukan uang masuk.
+ *
+ * F-16d: isi saldo deposit yang diterima di shift ini ikut `perMetode` & `tunaiMasukBersih` (uangnya masuk laci/rekening
+ * shift ini walau kemudian dibatalkan; pengembalian lewat back-office dari kas/bank) dan dilaporkan di
+ * `jumlahIsiDeposit`/`nominalIsiDeposit`. Pembayaran penjualan dengan metode Deposit bukan uang masuk laci.
  */
 final class RingkasanPenjualanShift
 {
@@ -68,6 +73,12 @@ final class RingkasanPenjualanShift
             ->toBase()
             ->first();
 
+        $isiDeposit = IsiDeposit::query()
+            ->where('IdShift', $idShift)
+            ->selectRaw('COUNT(*) AS `Jumlah`, SUM(`Jumlah`) AS `Nominal`')
+            ->toBase()
+            ->first();
+
         $kotor = self::KeUang($total->Kotor ?? null);
         $diskon = self::KeUang($total->Diskon ?? null);
         $tunaiMasuk = Uang::Nol();
@@ -98,6 +109,8 @@ final class RingkasanPenjualanShift
             nominalRetur: self::KeUang($retur->Nominal ?? null),
             jumlahUangMuka: (int) ($uangMuka->Jumlah ?? 0),
             nominalUangMuka: self::KeUang($uangMuka->Nominal ?? null),
+            jumlahIsiDeposit: (int) ($isiDeposit->Jumlah ?? 0),
+            nominalIsiDeposit: self::KeUang($isiDeposit->Nominal ?? null),
         );
     }
 
@@ -159,6 +172,19 @@ final class RingkasanPenjualanShift
             ->get();
 
         foreach ($dp as $satu) {
+            $id = (int) $satu->IdMetode;
+            $total[$id] = ($total[$id] ?? Uang::Nol())->Tambah(self::KeUang($satu->Total));
+        }
+
+        // F-16d: isi saldo deposit yang diterima di shift ini.
+        $isi = IsiDeposit::query()
+            ->where('IdShift', $idShift)
+            ->groupBy('IdMetodePembayaran')
+            ->selectRaw('`IdMetodePembayaran` AS `IdMetode`, SUM(`Jumlah`) AS `Total`')
+            ->toBase()
+            ->get();
+
+        foreach ($isi as $satu) {
             $id = (int) $satu->IdMetode;
             $total[$id] = ($total[$id] ?? Uang::Nol())->Tambah(self::KeUang($satu->Total));
         }

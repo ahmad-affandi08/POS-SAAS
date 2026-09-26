@@ -105,7 +105,7 @@ final class PenyusunJurnalPenjualan
 
     /**
      * Akun metode pembayaran (juga dipakai refund retur F-09): tunai → akun metode atau Kas Outlet; transfer → akun
-     * metode atau Bank; tempo (F-12) → Piutang Usaha; uang muka pre-order (F-12 bagian 2) → Uang Muka Pelanggan; QRIS statis/QRIS dinamis (F-08)/EDC/e-wallet → akun kliring metode atau Piutang Pencairan.
+     * metode atau Bank; tempo (F-12) → Piutang Usaha; uang muka pre-order (F-12 bagian 2) → Uang Muka Pelanggan; deposit (F-16d) → Saldo Deposit Pelanggan; QRIS statis/QRIS dinamis (F-08)/EDC/e-wallet → akun kliring metode atau Piutang Pencairan.
      *
      * @return array{0: int|null, 1: PeranAkun} [Id akun eksplisit metode, peran cadangan]
      */
@@ -116,6 +116,8 @@ final class PenyusunJurnalPenjualan
             JenisMetodePembayaran::Transfer => [$metode->IdAkun, PeranAkun::Bank],
             JenisMetodePembayaran::Tempo => [null, PeranAkun::PiutangUsaha],
             JenisMetodePembayaran::UangMuka => [null, PeranAkun::UangMukaPelanggan],
+            // F-16d bagian 1 (J-07.1 & retur): deposit pelanggan → Saldo Deposit Pelanggan (2-1500).
+            JenisMetodePembayaran::Deposit => [null, PeranAkun::DepositPelanggan],
             default => [$metode->IdAkunKliring, PeranAkun::PiutangPencairan],
         };
     }

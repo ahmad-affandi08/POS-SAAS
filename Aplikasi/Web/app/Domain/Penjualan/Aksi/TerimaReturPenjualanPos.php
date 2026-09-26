@@ -20,6 +20,7 @@ use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Data\DataOutletPenjualan;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturPenjualanPos;
@@ -69,8 +70,8 @@ use Illuminate\Support\Facades\DB;
  * `PenyetujuTidakBerwenang`); (5) nomor `RJ/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}` unik per tenant
  * (`NomorTidakValid`/`NomorSudahDipakai`) dan periode terbuka (`PeriodeTerkunci`); (6) baris milik penjualan asal
  * (`BarisTidakDikenal`) dan jumlah ≤ sisa (`JumlahReturMelebihi`); (7) Σ nilai retur = `Ringkasan.TotalRefund`
- * (`HitunganTidakCocok`); (8) refund metode Tunai/Transfer (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`) dan
- * Σ refund = total (`RefundTidakSesuai`).
+ * (`HitunganTidakCocok`); (8) refund metode Tunai/Transfer, atau Deposit bila penjualan asal berpelanggan (F-16d)
+ * (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`) dan Σ refund = total (`RefundTidakSesuai`).
  *
  * Stok: setiap mutasi keluar penjualan baris itu dikembalikan proporsional (kumulatif, sisa terakhir tepat habis)
  * sebagai mutasi `ReturPenjualan` bernilai HPP snapshot: `LayakJual` ke lokasi asal (Toko), `Rusak` ke lokasi Rusak
@@ -101,6 +102,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatPoinPenjualan $poin,
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
+        private readonly PencatatDepositPenjualan $deposit,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -189,7 +191,7 @@ final class TerimaReturPenjualanPos
             );
         }
 
-        $metode = $this->AmbilMetode($data, $total, $this->piutang->AmbilSisa($penjualan->Id));
+        $metode = $this->AmbilMetode($data, $total, $this->piutang->AmbilSisa($penjualan->Id), $penjualan->IdPelanggan !== null);
 
         // Simpan dokumen, stok, jurnal.
         $tinjauan = $shift->aktif ? [] : ['ShiftSudahDitutup: retur diterima setelah shift ditutup, belum masuk hitungan kas tutup shift'];
@@ -246,6 +248,20 @@ final class TerimaReturPenjualanPos
         }
 
         $this->piutang->Kurangi($penjualan->Id, $potongPiutang, $kasir->id);
+
+        // F-16d bagian 1: bagian refund "ke deposit" menambah saldo deposit pelanggan penjualan asal (jurnal retur sudah
+        // mengkredit Saldo Deposit Pelanggan).
+        $refundDeposit = Uang::Nol();
+
+        foreach ($data->refund as $r) {
+            if ($metode[$r->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Deposit) {
+                $refundDeposit = $refundDeposit->Tambah($r->jumlah);
+            }
+        }
+
+        if (! $refundDeposit->BernilaiNol() && $penjualan->IdPelanggan !== null) {
+            $this->deposit->CatatRefund($penjualan->IdPelanggan, $retur->Id, $retur->Nomor, $refundDeposit, $tanggalBisnis, $kasir->id);
+        }
 
         // F-18: komisi baris yang diretur dibatalkan proporsional kumulatif.
         foreach ($detail as $indeks => $d) {
@@ -365,7 +381,7 @@ final class TerimaReturPenjualanPos
      *
      * @return array<string, MetodePembayaran> kunci = Uuid metode
      */
-    private function AmbilMetode(DataReturPenjualanPos $data, Uang $total, ?Uang $sisaPiutang): array
+    private function AmbilMetode(DataReturPenjualanPos $data, Uang $total, ?Uang $sisaPiutang, bool $berpelanggan): array
     {
         $refundPiutang = Uang::Nol();
         $uuid = array_values(array_unique(array_map(fn ($r): string => $r->uuidMetodePembayaran, $data->refund)));
@@ -386,8 +402,11 @@ final class TerimaReturPenjualanPos
                 continue;
             }
 
-            if (! in_array($m->Jenis, [JenisMetodePembayaran::Tunai, JenisMetodePembayaran::Transfer], true)) {
-                throw new PelanggaranAturanBisnis('MetodeBayarBelumDidukung', "Refund lewat {$m->Jenis->AmbilLabel()} belum didukung. Pakai tunai atau transfer manual.", "Refund.{$indeks}.UuidMetodePembayaran");
+            // F-16d bagian 1: refund ke deposit hanya untuk penjualan berpelanggan.
+            $bolehDeposit = $m->Jenis === JenisMetodePembayaran::Deposit && $berpelanggan;
+
+            if (! $bolehDeposit && ! in_array($m->Jenis, [JenisMetodePembayaran::Tunai, JenisMetodePembayaran::Transfer], true)) {
+                throw new PelanggaranAturanBisnis('MetodeBayarBelumDidukung', "Refund lewat {$m->Jenis->AmbilLabel()} belum didukung. Pakai tunai, transfer manual, atau deposit pelanggan.", "Refund.{$indeks}.UuidMetodePembayaran");
             }
 
             $jumlah = $jumlah->Tambah($r->jumlah);
@@ -515,6 +534,7 @@ final class TerimaReturPenjualanPos
         $metodeRefund = match (true) {
             count($jenis) > 1 => MetodeRefund::Campuran,
             isset($jenis[JenisMetodePembayaran::Tempo->value]) => MetodeRefund::Piutang,
+            isset($jenis[JenisMetodePembayaran::Deposit->value]) => MetodeRefund::Deposit,
             isset($jenis[JenisMetodePembayaran::Transfer->value]) => MetodeRefund::Transfer,
             default => MetodeRefund::Tunai,
         };

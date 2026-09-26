@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Kueri;
 
+use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\ReturPenjualan;
 use Carbon\CarbonInterface;
@@ -15,7 +16,8 @@ use Illuminate\Support\Collection;
  * `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ}` tanpa memakai nomor yang sudah ada di server. `YYMMDD` & SEQ dibaca
  * dari `Nomor` (bukan dari `TanggalBisnis`) karena itulah yang dipakai perangkat. Hanya penjualan dengan tanggal
  * bisnis sejak `JUMLAH_HARI` hari terakhir (sekuens hari lama tidak dipakai lagi). `AmbilRetur` sama untuk nomor retur
- * `RJ/...` (`Perangkat.NomorUrutRetur`).
+ * `RJ/...` (`Perangkat.NomorUrutRetur`); F-16d: `AmbilIsiDeposit` untuk nomor isi deposit `DEP/...`
+ * (`Perangkat.NomorUrutIsiDeposit`).
  */
 final class NomorUrutPenjualanPerangkat
 {
@@ -45,6 +47,19 @@ final class NomorUrutPenjualanPerangkat
     public function AmbilRetur(int $idPerangkat, CarbonInterface $hariIni): array
     {
         return self::Petakan(ReturPenjualan::query()
+            ->where('IdPerangkat', $idPerangkat)
+            ->where('TanggalBisnis', '>=', $hariIni->copy()->subDays(self::JUMLAH_HARI)->toDateString())
+            ->pluck('Nomor'));
+    }
+
+    /**
+     * F-16d bagian 1: nomor urut isi deposit terakhir perangkat ini per `YYMMDD` (`DEP/{KodeOutlet}/{YYMMDD}/{Kode}-{SEQ}`).
+     *
+     * @return array<int|string, int>
+     */
+    public function AmbilIsiDeposit(int $idPerangkat, CarbonInterface $hariIni): array
+    {
+        return self::Petakan(IsiDeposit::query()
             ->where('IdPerangkat', $idPerangkat)
             ->where('TanggalBisnis', '>=', $hariIni->copy()->subDays(self::JUMLAH_HARI)->toDateString())
             ->pluck('Nomor'));

@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
  */
 final class DaftarPelanggan
 {
-    public const KOLOM_URUT = ['Nama', 'DibuatPada'];
+    public const KOLOM_URUT = ['Nama', 'DibuatPada', 'SaldoDeposit'];
 
     public const KOLOM_SARING = ['Status', 'Tag', 'Tier'];
 
@@ -58,7 +58,7 @@ final class DaftarPelanggan
                 ->orWhere('Email', 'like', $pola)
                 ->when(strlen($angka) >= 4, fn ($k) => $k->orWhere('NoHp', 'like', PenerapKueriTabel::PolaCari($hp ?? ltrim($angka, '0'))))));
 
-        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Nama' => 'Nama', 'DibuatPada' => 'DibuatPada'], function (Collection $baris): array {
+        return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Nama' => 'Nama', 'DibuatPada' => 'DibuatPada', 'SaldoDeposit' => 'SaldoDeposit'], function (Collection $baris): array {
             /** @var Collection<int, Pelanggan> $baris */
             $id = array_values($baris->map(fn (Pelanggan $p): int => $p->Id)->all());
             $ringkasan = $this->belanja->AmbilRingkasan($id);
@@ -115,6 +115,8 @@ final class DaftarPelanggan
             'Tier' => $tier,
             'TierTetap' => $p->TierTetap,
             'SaldoPoin' => $saldoPoin,
+            // F-16d bagian 1: cache Σ MutasiDeposit.
+            'SaldoDeposit' => (string) $p->SaldoDeposit,
             'LimitKredit' => $p->LimitKredit === null ? null : (string) $p->LimitKredit,
             'TerminHari' => $p->TerminHari,
             'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),

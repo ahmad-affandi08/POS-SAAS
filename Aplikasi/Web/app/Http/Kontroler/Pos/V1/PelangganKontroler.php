@@ -7,6 +7,7 @@ namespace App\Http\Kontroler\Pos\V1;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Kueri\CariPelangganPos;
+use App\Domain\Pelanggan\Kueri\SaldoDepositPos;
 use App\Domain\Pelanggan\Kueri\SaldoPoinPos;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
@@ -31,6 +32,13 @@ final class PelangganKontroler extends Kontroler
     }
 
     public function Poin(string $uuidPelanggan, SaldoPoinPos $saldo): JsonResponse
+    {
+        return response()->json($saldo->Ambil($uuidPelanggan)
+            ?? throw new PelanggaranAturanBisnis('PelangganTidakDitemukan', 'Pelanggan tidak ditemukan atau sudah diarsipkan.', 'UuidPelanggan', 404));
+    }
+
+    /** F-16d bagian 1: saldo deposit terkini sebelum kasir membayar dengan deposit (wajib online). */
+    public function Deposit(string $uuidPelanggan, SaldoDepositPos $saldo): JsonResponse
     {
         return response()->json($saldo->Ambil($uuidPelanggan)
             ?? throw new PelanggaranAturanBisnis('PelangganTidakDitemukan', 'Pelanggan tidak ditemukan atau sudah diarsipkan.', 'UuidPelanggan', 404));

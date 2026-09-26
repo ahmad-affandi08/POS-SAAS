@@ -60,6 +60,12 @@ const kolom: KolomTabel<BarisPelanggan>[] = [
         cell: ({ row }) => row.original.SaldoPoin.toLocaleString('id-ID'),
     },
     {
+        id: 'SaldoDeposit',
+        header: 'Deposit',
+        meta: { label: 'Deposit', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => FormatRupiah(row.original.SaldoDeposit),
+    },
+    {
         id: 'JumlahTransaksi',
         header: 'Transaksi',
         enableSorting: false,

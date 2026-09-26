@@ -19,6 +19,8 @@ use App\Domain\Bersama\Nilai\Uang;
  * - `refundTunai` = uang tunai yang keluar dari laci shift ini untuk void & retur (F-09).
  * - `jumlahUangMuka`/`nominalUangMuka` = pre-order yang uang mukanya diterima di shift ini (F-12 bagian 2; DP sudah ikut
  *   `perMetode` & `tunaiMasukBersih`).
+ * - `jumlahIsiDeposit`/`nominalIsiDeposit` = isi saldo deposit pelanggan yang uangnya diterima di shift ini (F-16d; sudah
+ *   ikut `perMetode` & `tunaiMasukBersih`; bukan penjualan).
  */
 final readonly class DataRingkasanPenjualanShift
 {
@@ -43,6 +45,8 @@ final readonly class DataRingkasanPenjualanShift
         public Uang $nominalRetur,
         public int $jumlahUangMuka,
         public Uang $nominalUangMuka,
+        public int $jumlahIsiDeposit = 0,
+        public ?Uang $nominalIsiDeposit = null,
     ) {}
 
     /** Total bersih satu metode (Rp 0 bila tidak ada transaksi dengan metode itu). */

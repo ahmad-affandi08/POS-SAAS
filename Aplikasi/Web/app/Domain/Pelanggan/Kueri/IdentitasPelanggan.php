@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pelanggan\Kueri;
 
+use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PelangganAlias;
@@ -28,6 +29,12 @@ final class IdentitasPelanggan
         $alias = PelangganAlias::query()->where('Uuid', $uuid)->value('IdPelanggan');
 
         return $alias === null ? null : (int) $alias;
+    }
+
+    /** F-16d: pelanggan berstatus Aktif (bukan diarsipkan). */
+    public function CekAktif(int $id): bool
+    {
+        return Pelanggan::query()->whereKey($id)->where('Status', StatusPelanggan::Aktif->value)->exists();
     }
 
     /** F-16c: kode tier pelanggan (syarat promo); null = tanpa tier. */

@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 
@@ -18,7 +19,7 @@ import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { MutasiPoin, PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
+import type { MutasiDeposit, MutasiPoin, PropsDetailPelanggan, RiwayatBelanja } from '@/Tipe/Pelanggan';
 
 const kolomPoin: KolomTabel<MutasiPoin>[] = [
     {
@@ -59,6 +60,45 @@ const kolomPoin: KolomTabel<MutasiPoin>[] = [
     },
 ];
 
+const kolomDeposit: KolomTabel<MutasiDeposit>[] = [
+    {
+        id: 'DibuatPada',
+        accessorKey: 'DibuatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: m } }) =>
+            m.DibuatPada ? FormatTanggalWaktu(m.DibuatPada) : FormatTanggal(m.Tanggal),
+    },
+    {
+        id: 'LabelJenis',
+        accessorKey: 'LabelJenis',
+        header: 'Jenis',
+        meta: { label: 'Jenis', prioritas: 'penting' },
+        cell: ({ row: { original: m } }) => (
+            <span className="flex flex-col">
+                <span>{m.LabelJenis}</span>
+                {m.NomorSumber ? <span className="font-mono text-keterangan break-all">{m.NomorSumber}</span> : null}
+                {m.Keterangan ? <span className="text-keterangan text-teks-sekunder">{m.Keterangan}</span> : null}
+            </span>
+        ),
+    },
+    {
+        id: 'Jumlah',
+        accessorKey: 'Jumlah',
+        header: 'Jumlah',
+        meta: { label: 'Jumlah', prioritas: 'penting', angka: true },
+        cell: ({ row }) =>
+            `${BandingkanDesimal(row.original.Jumlah, '0') > 0 ? '+' : ''}${FormatRupiah(row.original.Jumlah)}`,
+    },
+    {
+        id: 'SaldoSetelah',
+        accessorKey: 'SaldoSetelah',
+        header: 'Saldo',
+        meta: { label: 'Saldo', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => FormatRupiah(row.original.SaldoSetelah),
+    },
+];
+
 const labelStatus: Record<RiwayatBelanja['Status'], string> = {
     Lunas: 'Lunas',
     Void: 'Void',
@@ -83,17 +123,21 @@ export default function HalamanDetailPelanggan({
     OpsiTier,
     LoyaltiBerlaku,
     Kredit,
+    Deposit,
     Izin,
 }: PropsDetailPelanggan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
     const [ubah, AturUbah] = useState(false);
-    const [dialog, AturDialog] = useState<'tier' | 'poin' | null>(null);
+    const [dialog, AturDialog] = useState<'tier' | 'poin' | 'tarik' | 'sesuaikan' | null>(null);
     const [tier, AturTier] = useState({
         Uuid: OpsiTier.find((t) => t.Nilai === p.Tier?.Kode)?.Uuid ?? '',
         Tetap: p.TierTetap,
     });
     const [penyesuaian, AturPenyesuaian] = useState({ Poin: '', Alasan: '' });
+    const [tarik, AturTarik] = useState({ Jumlah: '', UuidAkun: Deposit.AkunKasBank[0]?.Uuid ?? '', Alasan: '' });
+    const [sesuai, AturSesuai] = useState({ Arah: 'Tambah', Jumlah: '', Alasan: '' });
+    const saldoDepositPositif = BandingkanDesimal(Deposit.Saldo, '0') > 0;
     const [memproses, AturMemproses] = useState(false);
     const opsiKirim = {
         preserveScroll: true,
@@ -116,6 +160,20 @@ export default function HalamanDetailPelanggan({
         router.post(
             `${AlamatPelanggan}/${p.Uuid}/poin`,
             { Poin: Number.parseInt(penyesuaian.Poin || '0', 10), Alasan: penyesuaian.Alasan },
+            opsiKirim,
+        );
+    };
+
+    const SimpanTarik = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        router.post(`${AlamatPelanggan}/${p.Uuid}/deposit/tarik`, tarik, opsiKirim);
+    };
+
+    const SimpanSesuai = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        router.post(
+            `${AlamatPelanggan}/${p.Uuid}/deposit/sesuaikan`,
+            { Jumlah: sesuai.Arah === 'Kurangi' ? `-${sesuai.Jumlah}` : sesuai.Jumlah, Alasan: sesuai.Alasan },
             opsiKirim,
         );
     };
@@ -288,6 +346,55 @@ export default function HalamanDetailPelanggan({
                 ) : null}
             </Card>
 
+            {Deposit.Berlaku || Deposit.Riwayat.length > 0 ? (
+                <Card className="gap-3 rounded-panel p-4 shadow-none">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-judul-kecil text-teks-utama">Deposit</h2>
+                        <Link href="/kelola/pelanggan/isi-deposit" className="text-brand underline">
+                            Lihat semua isi deposit
+                        </Link>
+                    </div>
+                    {Deposit.Berlaku ? null : (
+                        <p className="text-isi text-teks-sekunder">
+                            Paket usaha belum termasuk deposit pelanggan: kasir tidak bisa mengisi atau memakai deposit.
+                        </p>
+                    )}
+                    <dl className="grid gap-4 sm:grid-cols-3">
+                        <Nilai label="Saldo deposit">
+                            <span className="tabular-nums">{FormatRupiah(Deposit.Saldo)}</span>
+                            {BandingkanDesimal(Deposit.Saldo, '0') < 0 ? (
+                                <span className="block text-keterangan text-bahaya">
+                                    Saldo minus: deposit dipakai melebihi saldo. Periksa penjualan yang perlu ditinjau.
+                                </span>
+                            ) : null}
+                        </Nilai>
+                    </dl>
+                    {Izin.KelolaDeposit ? (
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                variant="outline"
+                                disabled={!saldoDepositPositif}
+                                onClick={() => AturDialog('tarik')}
+                            >
+                                Tarik deposit
+                            </Button>
+                            <Button variant="outline" onClick={() => AturDialog('sesuaikan')}>
+                                Sesuaikan deposit
+                            </Button>
+                        </div>
+                    ) : null}
+                    <TabelData
+                        id="pelanggan-riwayat-deposit"
+                        label={`Riwayat deposit ${p.Nama}`}
+                        kolom={kolomDeposit}
+                        sumber={{ mode: 'lokal', data: Deposit.Riwayat }}
+                        ambilIdBaris={(m) => m.Uuid}
+                        urutBawaan="-DibuatPada"
+                        kosong={{ judul: 'Belum ada mutasi deposit.' }}
+                    />
+                </Card>
+            ) : null}
+
             <h2 className="text-judul-kecil text-teks-utama">Riwayat poin</h2>
             <TabelData
                 id="pelanggan-riwayat-poin"
@@ -384,6 +491,118 @@ export default function HalamanDetailPelanggan({
                             </Button>
                             <Button type="submit" disabled={memproses}>
                                 Simpan penyesuaian
+                            </Button>
+                        </div>
+                    </form>
+                </DialogFormulir>
+            ) : null}
+
+            {dialog === 'tarik' ? (
+                <DialogFormulir
+                    judul={`Tarik deposit ${p.Nama}`}
+                    jenis="panel"
+                    galatUmum={galat.Umum}
+                    saatTutup={() => AturDialog(null)}
+                >
+                    <form
+                        onSubmit={SimpanTarik}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir tarik deposit"
+                        noValidate
+                    >
+                        <p className="text-isi text-teks-sekunder">
+                            Uang dikembalikan ke pelanggan dari akun kas/bank di bawah, bukan dari laci shift.
+                        </p>
+                        <BidangUang
+                            label="Jumlah ditarik"
+                            nilai={tarik.Jumlah}
+                            saatBerubah={(nilai) => AturTarik({ ...tarik, Jumlah: nilai })}
+                            galat={galat.Jumlah}
+                            keterangan={`Saldo sekarang ${FormatRupiah(Deposit.Saldo)}.`}
+                            required
+                        />
+                        <BidangPilihan
+                            label="Dibayar dari akun"
+                            nilai={tarik.UuidAkun}
+                            kosong="Pilih akun kas/bank"
+                            opsi={Deposit.AkunKasBank.map((a) => ({
+                                Nilai: a.Uuid,
+                                Label: a.Nama,
+                                Keterangan: a.Kode,
+                            }))}
+                            saatBerubah={(nilai) => AturTarik({ ...tarik, UuidAkun: nilai })}
+                            galat={galat.UuidAkun}
+                            required
+                        />
+                        <BidangTeks
+                            label="Alasan"
+                            nilai={tarik.Alasan}
+                            saatBerubah={(nilai) => AturTarik({ ...tarik, Alasan: nilai })}
+                            galat={galat.Alasan}
+                            maxLength={255}
+                            required
+                        />
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={memproses}>
+                                Tarik deposit
+                            </Button>
+                        </div>
+                    </form>
+                </DialogFormulir>
+            ) : null}
+
+            {dialog === 'sesuaikan' ? (
+                <DialogFormulir
+                    judul={`Sesuaikan deposit ${p.Nama}`}
+                    jenis="panel"
+                    galatUmum={galat.Umum}
+                    saatTutup={() => AturDialog(null)}
+                >
+                    <form
+                        onSubmit={SimpanSesuai}
+                        className="flex flex-col gap-4"
+                        aria-label="Formulir penyesuaian deposit"
+                        noValidate
+                    >
+                        <p className="text-isi text-teks-sekunder">
+                            Untuk koreksi atau kompensasi tanpa uang masuk/keluar. Tercatat di jurnal sebagai pendapatan
+                            lain-lain.
+                        </p>
+                        <BidangPilihan
+                            label="Arah"
+                            nilai={sesuai.Arah}
+                            opsi={[
+                                { Nilai: 'Tambah', Label: 'Tambah saldo' },
+                                { Nilai: 'Kurangi', Label: 'Kurangi saldo' },
+                            ]}
+                            saatBerubah={(nilai) => AturSesuai({ ...sesuai, Arah: nilai })}
+                            required
+                        />
+                        <BidangUang
+                            label="Jumlah"
+                            nilai={sesuai.Jumlah}
+                            saatBerubah={(nilai) => AturSesuai({ ...sesuai, Jumlah: nilai })}
+                            galat={galat.Jumlah}
+                            keterangan={`Saldo sekarang ${FormatRupiah(Deposit.Saldo)}.`}
+                            required
+                        />
+                        <BidangTeks
+                            label="Alasan"
+                            nilai={sesuai.Alasan}
+                            saatBerubah={(nilai) => AturSesuai({ ...sesuai, Alasan: nilai })}
+                            galat={galat.Alasan}
+                            maxLength={255}
+                            required
+                        />
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={memproses}>
+                                Simpan penyesuaian deposit
                             </Button>
                         </div>
                     </form>

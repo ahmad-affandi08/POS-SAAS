@@ -91,6 +91,9 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::post('/voucher/lepas', [VoucherKontroler::class, 'Lepas'])->middleware('throttle:pos-60')->name('pos.voucher.lepas');
         Route::get('/pelanggan/{uuidPelanggan}/poin', [PelangganKontroler::class, 'Poin'])
             ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.pelanggan.poin');
+        // F-16d bagian 1: saldo deposit pelanggan (wajib online saat membayar dengan deposit).
+        Route::get('/pelanggan/{uuidPelanggan}/deposit', [PelangganKontroler::class, 'Deposit'])
+            ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.pelanggan.deposit');
         // F-07 mode meja fase 1: data meja, pesanan terbuka outlet (ditarik tiap 5–10 detik, ETag), kunci bayar online.
         Route::get('/meja', [MejaKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.meja');
         Route::get('/pesanan-terbuka', [PesananTerbukaKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesanan-terbuka');

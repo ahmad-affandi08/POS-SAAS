@@ -12,6 +12,7 @@
         { "Kunci": "pembelian.po", "Nama": "Pesanan pembelian & pemasok", "Modul": "Pembelian" },
         { "Kunci": "pelanggan.dasar", "Nama": "Data pelanggan", "Modul": "Pelanggan" },
         { "Kunci": "pelanggan.loyalti", "Nama": "Loyalti & poin", "Modul": "Pelanggan" },
+        { "Kunci": "pelanggan.deposit", "Nama": "Deposit pelanggan", "Modul": "Pelanggan" },
         { "Kunci": "promo.mesin", "Nama": "Mesin promo", "Modul": "Promo" },
         { "Kunci": "karyawan.komisi", "Nama": "Karyawan & komisi", "Modul": "Karyawan" },
         { "Kunci": "laporan.dasar", "Nama": "Laporan dasar", "Modul": "Laporan" },

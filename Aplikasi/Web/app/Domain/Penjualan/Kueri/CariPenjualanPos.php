@@ -28,7 +28,7 @@ use Carbon\CarbonImmutable;
  * `AlasanTidakBisaDiretur`: `Void`, `SudahDireturPenuh`, `LewatBatasHari`. Kunci tambahan per baris (kompatibel mundur):
  * `BolehDesimal` (satuan dasar produk boleh jumlah desimal) dan `UuidProdukSatuan` (satuan jual produk yang dipakai
  * baris; null bila tidak ditemukan lagi). F-12: `SisaPiutang` (null = bukan penjualan tempo): retur memotong piutang ini lebih
- * dulu lewat metode Tempo, sisanya tunai/transfer.
+ * dulu lewat metode Tempo, sisanya tunai/transfer. F-16d: `BisaRefundDeposit` (penjualan berpelanggan).
  */
 final class CariPenjualanPos
 {
@@ -95,6 +95,8 @@ final class CariPenjualanPos
                 'BisaDiretur' => $alasan === null,
                 'AlasanTidakBisaDiretur' => $alasan,
                 'SisaPiutang' => $this->piutang->AmbilSisa($p->Id)?->KeString(),
+                // F-16d bagian 1 (tambahan kompatibel mundur): refund boleh ke deposit bila penjualan berpelanggan.
+                'BisaRefundDeposit' => $p->IdPelanggan !== null,
             ],
             'Baris' => array_values($detail->map(function (PenjualanDetail $d) use ($sudah, $simbol, $produk, $satuanProduk): array {
                 $s = $sudah[$d->Id] ?? DataSudahDiretur::Kosong();

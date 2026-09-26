@@ -28,6 +28,8 @@ export type BarisPelanggan = {
     JumlahTransaksi: number;
     TotalBelanja: string;
     TerakhirPada: string | null;
+    /** F-16d: saldo deposit (bisa minus bila dipakai dua perangkat bersamaan). */
+    SaldoDeposit: string;
 };
 
 export type OpsiTier = { Nilai: string; Label: string; Uuid: string };
@@ -67,7 +69,52 @@ export type PropsDetailPelanggan = {
     LoyaltiBerlaku: boolean;
     /** F-12: posisi kredit pelanggan. */
     Kredit: KreditPelanggan | null;
-    Izin: IzinPelanggan;
+    /** F-16d bagian 1: saldo & riwayat deposit. */
+    Deposit: DepositPelanggan;
+    Izin: IzinPelanggan & { KelolaDeposit: boolean };
+};
+
+export type MutasiDeposit = {
+    Uuid: string;
+    Jenis: 'Isi' | 'BatalIsi' | 'Pemakaian' | 'BatalPemakaian' | 'Refund' | 'Penarikan' | 'Penyesuaian';
+    LabelJenis: string;
+    Jumlah: string;
+    SaldoSetelah: string;
+    NomorSumber: string | null;
+    Tanggal: string;
+    Keterangan: string | null;
+    DibuatPada: string | null;
+};
+
+export type DepositPelanggan = {
+    Saldo: string;
+    /** Paket usaha termasuk fitur deposit pelanggan. */
+    Berlaku: boolean;
+    Riwayat: MutasiDeposit[];
+    /** Akun kas/bank sumber penarikan (kosong bila tidak berizin). */
+    AkunKasBank: { Uuid: string; Kode: string; Nama: string }[];
+};
+
+export type StatusIsiDeposit = 'Diterima' | 'Dibatalkan';
+
+export type BarisIsiDeposit = {
+    Uuid: string;
+    Nomor: string;
+    Pelanggan: { Uuid: string; Nama: string } | null;
+    NamaMetode: string;
+    Jumlah: string;
+    Status: StatusIsiDeposit;
+    LabelStatus: string;
+    TanggalBisnis: string;
+    PerluTinjauan: boolean;
+    AlasanTinjauan: string | null;
+    AlasanBatal: string | null;
+    DiterimaPada: string;
+};
+
+export type PropsIsiDeposit = {
+    IsiDeposit: HasilTabel<BarisIsiDeposit>;
+    Izin: { KelolaDeposit: boolean };
 };
 
 export type KreditPelanggan = { LimitKredit: string | null; SisaPiutang: string; HariLewatJatuhTempo: number };

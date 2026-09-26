@@ -30,6 +30,9 @@ enum KodeAlasanTinjauan: string
     case QrisDinamisDipakaiUlang = 'QrisDinamisDipakaiUlang';
     case QrisDinamisBelumLunas = 'QrisDinamisBelumLunas';
     case QrisDinamisJumlahBerbeda = 'QrisDinamisJumlahBerbeda';
+    // F-16d bagian 1: saldo deposit kurang saat penjualan dibayar deposit diterima; isi deposit untuk pelanggan arsip.
+    case DepositKurang = 'DepositKurang';
+    case PelangganDiarsipkan = 'PelangganDiarsipkan';
 
     public function AmbilLabel(): string
     {
@@ -53,6 +56,8 @@ enum KodeAlasanTinjauan: string
             self::QrisDinamisDipakaiUlang => 'Tagihan QRIS dinamis sudah dipakai penjualan lain',
             self::QrisDinamisBelumLunas => 'Tagihan QRIS dinamis belum lunas saat penjualan diterima',
             self::QrisDinamisJumlahBerbeda => 'Jumlah tagihan QRIS dinamis berbeda dengan pembayaran',
+            self::DepositKurang => 'Saldo deposit pelanggan kurang',
+            self::PelangganDiarsipkan => 'Pelanggan sudah diarsipkan',
         };
     }
 
