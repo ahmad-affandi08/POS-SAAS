@@ -11,12 +11,14 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
 use App\Domain\Organisasi\Model\Perangkat;
+use App\Domain\Organisasi\Model\TokenAksesPengguna;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuTimTiketDukunganBaru;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -75,6 +77,16 @@ final class PenyediaAplikasi extends ServiceProvider
                 $rute = (string) $permintaan->route()?->getName();
 
                 return Limit::perMinute($perMenit)->by($rute.'|'.($perangkat instanceof Perangkat ? 'perangkat:'.$perangkat->Id : 'ip:'.$permintaan->ip()));
+            });
+        }
+
+        // API Pemilik (OWN-01): batas per rute per pengguna (token); sebelum masuk per IP.
+        foreach ([30, 60] as $perMenit) {
+            RateLimiter::for("pemilik-{$perMenit}", static function (Request $permintaan) use ($perMenit): Limit {
+                $token = $permintaan->attributes->get(AutentikasiPemilik::ATRIBUT_TOKEN);
+                $rute = (string) $permintaan->route()?->getName();
+
+                return Limit::perMinute($perMenit)->by($rute.'|'.($token instanceof TokenAksesPengguna ? 'pengguna:'.$token->IdPengguna : 'ip:'.$permintaan->ip()));
             });
         }
 

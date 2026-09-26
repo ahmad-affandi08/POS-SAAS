@@ -6,6 +6,7 @@ namespace App\Domain\Organisasi\Kueri;
 
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Perangkat;
+use Carbon\CarbonInterface;
 
 /**
  * Daftar perangkat di tenant aktif untuk halaman Perangkat back-office (F-02b), dibatasi outlet yang boleh diakses
@@ -41,6 +42,60 @@ final class DaftarPerangkat
                 'DiaktifkanPada' => $perangkat->DiaktifkanPada?->toIso8601String(),
                 'TerakhirAktifPada' => $perangkat->TerakhirAktifPada?->toIso8601String(),
                 'DicabutPada' => $perangkat->DicabutPada?->toIso8601String(),
+            ])
+            ->all());
+    }
+
+    /**
+     * OWN-08: status perangkat untuk Aplikasi Owner (online terakhir, outbox tertunda, versi aplikasi), dibatasi outlet
+     * akses. Urutan sama dengan `Ambil` (aktif lebih dulu, yang dicabut di akhir).
+     *
+     * @param  list<int>|null  $idOutletBoleh  null = semua outlet
+     * @return list<array{Uuid: string, Kode: string, Nama: string, Jenis: string, Outlet: string, Status: string, TerakhirAktifPada: string|null, JumlahOutboxTertunda: int, VersiAplikasi: string|null}>
+     */
+    public function AmbilStatus(?array $idOutletBoleh): array
+    {
+        $outlet = Outlet::query()->get(['Id', 'Nama'])->keyBy('Id');
+
+        return array_values(Perangkat::query()
+            ->when($idOutletBoleh !== null, fn ($kueri) => $kueri->whereIn('IdOutlet', $idOutletBoleh ?? []))
+            ->orderByRaw('DicabutPada IS NOT NULL')
+            ->orderBy('Kode')
+            ->get()
+            ->map(fn (Perangkat $perangkat): array => [
+                'Uuid' => $perangkat->Uuid,
+                'Kode' => $perangkat->Kode,
+                'Nama' => $perangkat->Nama,
+                'Jenis' => $perangkat->Jenis->value,
+                'Outlet' => (string) $outlet->get($perangkat->IdOutlet)?->Nama,
+                'Status' => $perangkat->AmbilStatus(),
+                'TerakhirAktifPada' => $perangkat->TerakhirAktifPada?->utc()->toIso8601ZuluString(),
+                'JumlahOutboxTertunda' => $perangkat->JumlahOutboxTertunda,
+                'VersiAplikasi' => $perangkat->VersiAplikasi,
+            ])
+            ->all());
+    }
+
+    /**
+     * OWN-02: perangkat aktif (sudah diaktifkan, belum dicabut) yang tidak menghubungi server sejak `$batas`.
+     *
+     * @param  list<int>|null  $idOutletBoleh  null = semua outlet
+     * @return list<array{Nama: string, Kode: string, IdOutlet: int, TerakhirAktifPada: CarbonInterface|null}>
+     */
+    public function AmbilTidakAktif(?array $idOutletBoleh, CarbonInterface $batas): array
+    {
+        return array_values(Perangkat::query()
+            ->when($idOutletBoleh !== null, fn ($kueri) => $kueri->whereIn('IdOutlet', $idOutletBoleh ?? []))
+            ->whereNull('DicabutPada')
+            ->whereNotNull('DiaktifkanPada')
+            ->where(fn ($kueri) => $kueri->whereNull('TerakhirAktifPada')->orWhere('TerakhirAktifPada', '<', $batas))
+            ->orderBy('Kode')
+            ->get(['Id', 'IdOutlet', 'Kode', 'Nama', 'TerakhirAktifPada'])
+            ->map(fn (Perangkat $perangkat): array => [
+                'Nama' => $perangkat->Nama,
+                'Kode' => $perangkat->Kode,
+                'IdOutlet' => $perangkat->IdOutlet,
+                'TerakhirAktifPada' => $perangkat->TerakhirAktifPada,
             ])
             ->all());
     }

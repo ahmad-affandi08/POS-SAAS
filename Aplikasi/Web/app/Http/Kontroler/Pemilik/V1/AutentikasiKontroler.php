@@ -1,0 +1,144 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Pemilik\V1;
+
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Aksi\CabutTokenPengguna;
+use App\Domain\Organisasi\Aksi\TerbitkanTokenPengguna;
+use App\Domain\Organisasi\Aksi\VerifikasiDuaFaktorPengguna;
+use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
+use App\Domain\Organisasi\Kueri\ProfilPemilik;
+use App\Domain\Organisasi\Layanan\PenyimpanTantanganDuaFaktor;
+use App\Domain\Organisasi\Model\Pengguna;
+use App\Http\Kontroler\Autentikasi\SesiKontroler;
+use App\Http\Kontroler\Kontroler;
+use App\Http\Perantara\AutentikasiPemilik;
+use App\Http\Permintaan\Pemilik\V1\MasukDuaFaktorPermintaan;
+use App\Http\Permintaan\Pemilik\V1\MasukPermintaan;
+use Illuminate\Auth\SessionGuard;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+
+/**
+ * Autentikasi Aplikasi Owner (OWN-01, PRD §16 "user token"): masuk dengan email + kata sandi, langkah kedua 2FA
+ * (BR-00.8) lewat `TokenTantangan` sekali pakai, keluar (cabut token), dan profil (akun + tenant anggota aktif).
+ * Batas percobaan sama dengan masuk back-office (`SesiKontroler`): 5 per menit per email+IP, 20 per menit per IP, dan
+ * 5 kode 2FA per 5 menit per pengguna.
+ */
+final class AutentikasiKontroler extends Kontroler
+{
+    public function __construct(
+        private readonly ProfilPemilik $profil,
+        private readonly KeanggotaanPengguna $keanggotaan,
+        private readonly TerbitkanTokenPengguna $terbitkan,
+    ) {}
+
+    public function Masuk(MasukPermintaan $permintaan, PenyimpanTantanganDuaFaktor $tantangan): JsonResponse
+    {
+        $email = mb_strtolower($permintaan->string('Email')->toString());
+        $kunci = 'pemilik-masuk:'.$email.'|'.$permintaan->ip();
+        $kunciIp = 'pemilik-masuk-ip:'.$permintaan->ip();
+
+        if (RateLimiter::tooManyAttempts($kunci, SesiKontroler::BATAS_PERCOBAAN_MASUK)
+            || RateLimiter::tooManyAttempts($kunciIp, SesiKontroler::BATAS_PERCOBAAN_MASUK_PER_IP)) {
+            $detik = max(RateLimiter::availableIn($kunci), RateLimiter::availableIn($kunciIp));
+
+            throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaan', "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik.", 'Email', 429, ['Detik' => $detik]);
+        }
+
+        $penjaga = Auth::guard('web');
+        abort_unless($penjaga instanceof SessionGuard, 500);
+        // validate(), bukan attempt(): API ini tanpa sesi; yang diterbitkan adalah token akses.
+        $berhasil = $penjaga->validate(['Email' => $email, 'password' => $permintaan->string('KataSandi')->toString()]);
+        $pengguna = $penjaga->getLastAttempted();
+
+        if (! $berhasil || ! $pengguna instanceof Pengguna) {
+            RateLimiter::hit($kunci, 60);
+            RateLimiter::hit($kunciIp, 60);
+
+            throw new PelanggaranAturanBisnis('KredensialSalah', 'Email atau kata sandi salah.', 'Email');
+        }
+
+        RateLimiter::clear($kunci);
+        $this->PastikanBolehMasuk($pengguna);
+
+        if ($pengguna->CekDuaFaktorAktif()) {
+            return response()->json(['PerluDuaFaktor' => true, 'TokenTantangan' => $tantangan->Buat($pengguna)]);
+        }
+
+        return $this->SelesaikanMasuk($permintaan, $pengguna);
+    }
+
+    public function MasukDuaFaktor(
+        MasukDuaFaktorPermintaan $permintaan,
+        PenyimpanTantanganDuaFaktor $tantangan,
+        VerifikasiDuaFaktorPengguna $verifikasi,
+    ): JsonResponse {
+        $tokenTantangan = $permintaan->string('TokenTantangan')->toString();
+        $pengguna = $tantangan->Ambil($tokenTantangan);
+
+        if ($pengguna === null) {
+            throw new PelanggaranAturanBisnis('TantanganTidakBerlaku', 'Waktu verifikasi habis. Masuk lagi dengan email dan kata sandi.', 'TokenTantangan');
+        }
+
+        // Kunci sama dengan masuk back-office: percobaan kode lewat web dan aplikasi dihitung bersama.
+        $kunci = 'masuk-dua-faktor:'.$pengguna->Id;
+
+        if (RateLimiter::tooManyAttempts($kunci, SesiKontroler::BATAS_PERCOBAAN_DUA_FAKTOR)) {
+            $tantangan->Hapus($tokenTantangan);
+            $detik = RateLimiter::availableIn($kunci);
+
+            throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaan', "Terlalu banyak percobaan. Coba lagi dalam {$detik} detik.", 'Kode', 429, ['Detik' => $detik]);
+        }
+
+        RateLimiter::hit($kunci, 300);
+
+        try {
+            $verifikasi->Jalankan($pengguna, $permintaan->string('Kode')->toString());
+        } catch (PelanggaranAturanBisnis $galat) {
+            throw new PelanggaranAturanBisnis('KodeSalah', $galat->getMessage(), 'Kode');
+        }
+
+        RateLimiter::clear($kunci);
+        $tantangan->Hapus($tokenTantangan);
+        $this->PastikanBolehMasuk($pengguna);
+
+        return $this->SelesaikanMasuk($permintaan, $pengguna);
+    }
+
+    public function Keluar(Request $permintaan, CabutTokenPengguna $cabut): Response
+    {
+        $cabut->Jalankan(AutentikasiPemilik::AmbilToken($permintaan), AutentikasiPemilik::AmbilPengguna($permintaan));
+
+        return response()->noContent();
+    }
+
+    public function Profil(Request $permintaan): JsonResponse
+    {
+        return response()->json($this->profil->Ambil(AutentikasiPemilik::AmbilPengguna($permintaan)));
+    }
+
+    /** Email wajib terverifikasi dan pengguna harus anggota aktif minimal satu tenant. */
+    private function PastikanBolehMasuk(Pengguna $pengguna): void
+    {
+        if ($pengguna->EmailDiverifikasiPada === null) {
+            throw new PelanggaranAturanBisnis('EmailBelumDiverifikasi', 'Email belum diverifikasi. Buka tautan verifikasi di email Anda, lalu masuk lagi.', 'Email', 403);
+        }
+
+        if ($this->keanggotaan->AmbilIdTenant($pengguna->Id) === []) {
+            throw new PelanggaranAturanBisnis('TanpaTenantAktif', 'Akun ini belum menjadi anggota aktif usaha mana pun.', 'Email', 403);
+        }
+    }
+
+    private function SelesaikanMasuk(Request $permintaan, Pengguna $pengguna): JsonResponse
+    {
+        $token = $this->terbitkan->Jalankan($pengguna, $permintaan->string('NamaPerangkat')->toString(), $permintaan->ip(), $permintaan->userAgent());
+
+        return response()->json(['Token' => $token, ...$this->profil->Ambil($pengguna)]);
+    }
+}

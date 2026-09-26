@@ -7,6 +7,7 @@ namespace App\Domain\Organisasi\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Layanan\PencatatAuditAkun;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\TokenAksesPengguna;
 use App\Domain\Organisasi\Surel\KataSandiDiubah;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ use Throwable;
  * Mengganti kata sandi dari tautan lupa kata sandi (F-00, BR-00.9). Token sekali pakai dan dihapus broker setelah
  * berhasil. Token "ingat saya" diganti, dan sesi lain berakhir karena hash kata sandi di sesi tidak cocok lagi
  * (perantara `AuthenticateSession` di rute ber-auth). Tautan dari email membuktikan kepemilikan email, sehingga email
- * yang belum terverifikasi ikut ditandai terverifikasi (BR-00.5). Dicatat di `LogAudit` setiap tenant anggota.
+ * yang belum terverifikasi ikut ditandai terverifikasi (BR-00.5). Token Aplikasi Owner dicabut (OWN-01). Dicatat di `LogAudit` setiap tenant anggota.
  */
 final class AturUlangKataSandi
 {
@@ -44,6 +45,8 @@ final class AturUlangKataSandi
                         'TokenIngat' => Str::random(60),
                         'EmailDiverifikasiPada' => $pengguna->EmailDiverifikasiPada ?? now(),
                     ])->save();
+                    // OWN-01 (PRD §16): token Aplikasi Owner ikut dicabut saat kata sandi diganti.
+                    TokenAksesPengguna::query()->where('IdPengguna', $pengguna->Id)->whereNull('DicabutPada')->update(['DicabutPada' => now()]);
                     $this->auditAkun->Catat('akun.kata-sandi-atur-ulang', $pengguna);
                     $diubah = $pengguna;
                 },
