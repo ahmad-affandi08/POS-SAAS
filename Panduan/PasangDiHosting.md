@@ -35,6 +35,8 @@ ls -la                       # sekarang hanya tersisa dashboard dan console
 
 ## 1. Cek kemampuan server
 
+Hasil di hosting payou.id (26/09/2026): PHP 8.3.33, Composer 2.9.8, **MariaDB 11.8** (migrasi & seed berhasil), **tanpa Node**, fungsi `exec()` dimatikan, ekstensi `sodium` perlu diaktifkan manual di hPanel.
+
 ```bash
 php -v                  # wajib 8.3 atau lebih baru
 php -m | grep -Ei 'intl|bcmath|gd|zip|sodium|pdo_mysql|mbstring|fileinfo'
@@ -91,7 +93,7 @@ php artisan key:generate
 php artisan migrate --force
 php artisan db:seed --force                  # peran, satuan, wilayah, pajak, katalog paket, template sektor
 php artisan panduan-awal:siapkan-bawaan
-php artisan storage:link
+php artisan storage:link                     # bila galat "undefined function exec()": ln -s ../storage/app/public public/storage
 php artisan pengelola:buat-super-admin --nama="Nama Anda" --email="email@anda"   # akun pertama konsol; kata sandi ditanyakan
 ```
 
@@ -106,7 +108,12 @@ npm ci
 npm run build
 ```
 
-Kalau Node tidak tersedia di server, jalankan `npm ci && npm run build` di komputer sendiri (folder `Aplikasi/Web`), lalu unggah folder `public/build` ke `~/domains/payou.id/aplikasi/Aplikasi/Web/public/build` (lewat File Manager atau `scp`).
+Kalau Node tidak tersedia di server (kasus hosting payou.id), jalankan `npm ci && npm run build` di komputer lain dari **commit yang sama** dengan kode di server, zip folder `public/build` (±360 file, ±3 MB), unggah ke `~/domains/payou.id/aplikasi/Aplikasi/Web/public/`, lalu:
+
+```bash
+cd ~/domains/payou.id/aplikasi/Aplikasi/Web/public
+rm -rf build && unzip -q build-payou.zip && rm build-payou.zip
+```
 
 ## 6. Hubungkan tiga domain ke folder `public`
 
@@ -137,11 +144,13 @@ hPanel → **Keamanan → SSL** → pasang SSL gratis untuk `payou.id`, `www.pay
 
 ## 8. Cron (jadwal & antrean)
 
-hPanel → **Lanjutan → Cron Jobs** → tambahkan perintah kustom tiap menit (`* * * * *`):
+hPanel → **Tingkat Lanjut → Cron Job** → pilih **Kustom** (mode "PHP" memakai `/usr/bin/php` yang belum tentu 8.3), jadwal sekali per menit (`* * * * *`):
 
 ```
-cd /home/u704813174/domains/payou.id/aplikasi/Aplikasi/Web && php artisan schedule:run >> /dev/null 2>&1
+/opt/alt/php83/usr/bin/php /home/u704813174/domains/payou.id/aplikasi/Aplikasi/Web/artisan schedule:run >> /dev/null 2>&1
 ```
+
+Periksa dengan `php artisan schedule:list` (jam tampil dalam UTC) dan dasbor Operasional di konsol.
 
 Scheduler juga menjalankan antrean (`queue:work --stop-when-empty`), jadi tidak perlu proses lain.
 

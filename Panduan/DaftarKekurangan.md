@@ -6,14 +6,15 @@ Status per 26 September 2026 (PRD v2.10). Dokumen ini mencatat apa yang **belum 
 
 | # | Kekurangan | Dampak | Yang perlu dilakukan |
 |---|---|---|---|
-| A1 | Belum pernah dipasang di hosting produksi | Bisa ada galat khusus server (versi PHP, ekstensi, izin folder) | Ikuti `Panduan/PasangDiHosting.md`, kirim galat yang muncul |
-| A2 | Hosting bersama umumnya memakai **MariaDB**, sedangkan PRD mensyaratkan MySQL 8 (§13.7.5) dan semua test berjalan di MySQL 8 | Migrasi atau kueri tertentu bisa gagal atau berperilaku beda | Cek `mysql --version`; bila MariaDB dan ada galat, laporkan untuk disesuaikan, atau pindah ke VPS/MySQL 8 |
+| A1 | Baru dipasang di hosting produksi (26/09/2026): situs & halaman masuk sudah terbuka, cron aktif | Alur lengkap (daftar tenant, kasir sinkron, email) belum diuji di produksi | Uji alur ujung ke ujung setelah email, CAPTCHA, legal, dan harga paket diatur |
+| A2 | Hosting memakai **MariaDB 11.8** (migrasi & seed berhasil), sedangkan PRD mensyaratkan MySQL 8 (§13.7.5) dan semua test berjalan di MySQL 8 | Migrasi atau kueri tertentu bisa gagal atau berperilaku beda | Cek `mysql --version`; bila MariaDB dan ada galat, laporkan untuk disesuaikan, atau pindah ke VPS/MySQL 8 |
 | A3 | Belum ada **uji beban** (§23) | Kapasitas hosting bersama belum terukur | Batasi jumlah tenant awal (beta), pantau dasbor Operasional di konsol |
 | A4 | Harga paket bawaan masih **Draf** | Halaman `payou.id/harga` hanya menampilkan paket harga negosiasi (Enterprise) | Ajukan & tinjau harga paket di konsol (butuh dua orang: pengaju ≠ peninjau) |
 | A5 | Dokumen legal (S&K, Kebijakan Privasi) belum terbit di database produksi | Pendaftaran tenant tertutup | Terbitkan dari konsol → Legal. Isi hukumnya perlu ditinjau ahli hukum (UU PDP, UU ITE) |
 | A6 | Penyedia email & CAPTCHA belum diatur | Verifikasi email, reset kata sandi, dan pendaftaran belum berfungsi penuh | Konsol → Integrasi |
 | A7 | Situs pemasaran belum punya **persetujuan cookie** & kebijakan cookie | Wajib sebelum memasang analitik/iklan (UU PDP) | Jangan pasang Google Analytics/Meta Pixel manual dulu. Menunggu Situs pemasaran bagian B |
 | A8 | Kontak, WhatsApp, media sosial, logo, dan tautan unduh situs masih kosong | Tombol WhatsApp & blok Kontak belum tampil | Konsol → Situs pemasaran → Pengaturan |
+| A12 | Server tanpa Node: setiap pembaruan tampilan perlu build di tempat lain lalu unggah `public/build` | Pembaruan manual dan rawan beda versi | Buat alur build otomatis (GitHub Actions) yang menghasilkan paket siap unggah |
 | A9 | Aplikasi Kasir & Pemilik belum dirilis ke Play Store/App Store/Windows | Pengguna belum bisa mengunduh aplikasi kasir | Build dengan `ALAMAT_SERVER=https://dashboard.payou.id/`, tanda tangan rilis, unggah ke toko aplikasi (akun developer) |
 | A10 | Pencadangan otomatis database & file belum diatur di hosting | Risiko kehilangan data | Aktifkan backup harian hPanel + catat di konsol (`pengelola:catat-backup`) |
 | A11 | Satu test (`EksporVarianTes` round-trip) kadang gagal saat seluruh suite dijalankan, lolos bila dijalankan sendiri | Indikasi test tidak stabil (urutan/data) | Selidiki penyebabnya, jangan dilewati |
