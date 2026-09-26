@@ -25,5 +25,6 @@ final readonly class DataTransaksiKasBank
         public string $keterangan,
         public ?UploadedFile $lampiran,
         public ?int $idPengguna,
+        public ?int $idJadwalKasBank = null,
     ) {}
 }

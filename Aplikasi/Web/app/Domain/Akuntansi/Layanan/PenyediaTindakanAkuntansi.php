@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Akuntansi\Layanan;
 
+use App\Domain\Akuntansi\Model\JadwalKasBank;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\KunciPeriode;
 use App\Domain\Bersama\Tindakan\Data\DataButirTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
+use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
 use App\Domain\Bersama\Tindakan\Enum\TingkatTindakan;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan;
 
@@ -23,8 +25,32 @@ final class PenyediaTindakanAkuntansi implements PenyediaTindakan
 
     public function Kumpulkan(DataKonteksTindakan $konteks): array
     {
-        if (! $konteks->CekIzin('akuntansi.kelola') || $konteks->hariIni->day < self::TANGGAL_PENGINGAT) {
+        if (! $konteks->CekIzin('akuntansi.kelola')) {
             return [];
+        }
+
+        // D-23 D: transaksi kas & bank berulang yang ditolak saat dicatat otomatis (misal periode terkunci).
+        $gagal = JadwalKasBank::query()->where('Aktif', true)->whereNotNull('GalatTerakhir')->orderBy('Id')->get();
+        $butir = [new DataButirTindakan(
+            'kas-bank.berulang-gagal',
+            'Keuangan',
+            TingkatTindakan::Penting,
+            'Transaksi rutin gagal dicatat otomatis',
+            'Perbaiki penyebabnya (misal buka kunci periode atau aktifkan akun), atau hentikan jadwalnya.',
+            $gagal->count(),
+            '/kelola/akuntansi/kas-bank/berulang',
+            'Lihat jadwal',
+            array_values($gagal->take(DataButirTindakan::BATAS_RINCIAN)->map(fn (JadwalKasBank $j): DataRincianTindakan => new DataRincianTindakan(
+                $j->Uuid,
+                $j->Keterangan,
+                (string) $j->GalatTerakhir,
+                $j->TanggalBerikutnya->toDateString(),
+                null,
+            ))->all()),
+        )];
+
+        if ($konteks->hariIni->day < self::TANGGAL_PENGINGAT) {
+            return $butir;
         }
 
         $bulanLalu = $konteks->hariIni->startOfMonth()->subMonth();
@@ -32,7 +58,7 @@ final class PenyediaTindakanAkuntansi implements PenyediaTindakan
         $terkunci = KunciPeriode::query()->where('Periode', $periode)->whereNotNull('DikunciPada')->exists();
         $adaJurnal = ! $terkunci && Jurnal::query()->where('Periode', $periode)->exists();
 
-        return [new DataButirTindakan(
+        return [...$butir, new DataButirTindakan(
             'periode.belum-ditutup',
             'Keuangan',
             TingkatTindakan::Perhatian,

@@ -46,3 +46,6 @@ Schedule::command('pelanggan:proses-loyalti')->dailyAt('03:00')->timezone('Asia/
 
 // D-23 D: draf PO otomatis untuk stok di bawah minimum, siap diperiksa pagi hari (setelah saldo stok dibangun ulang).
 Schedule::command('pembelian:draf-po-otomatis')->dailyAt('05:30')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// D-23 D: transaksi kas & bank berulang (sewa, listrik, internet) yang jatuh tempo dicatat otomatis.
+Schedule::command('akuntansi:jalankan-jadwal-kas-bank')->dailyAt('05:45')->timezone('Asia/Jakarta')->withoutOverlapping();

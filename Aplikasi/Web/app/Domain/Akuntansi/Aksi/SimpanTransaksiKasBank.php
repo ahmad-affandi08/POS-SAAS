@@ -76,6 +76,7 @@ final class SimpanTransaksiKasBank
                     'NamaLampiran' => $berkas['NamaAsli'] ?? null,
                     'MimeLampiran' => $berkas['Mime'] ?? null,
                     'UkuranLampiran' => $berkas['Ukuran'] ?? null,
+                    'IdJadwalKasBank' => $data->idJadwalKasBank,
                     'DibuatOleh' => $data->idPengguna,
                 ]);
 

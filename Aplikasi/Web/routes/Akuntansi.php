@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Akuntansi\BaganAkunKontroler;
+use App\Http\Kontroler\Kelola\Akuntansi\JadwalKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\LaporanKeuanganKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\PemetaanAkunKontroler;
@@ -36,6 +37,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
 
     // F-13a: transaksi kas & bank (lihat) dan lampirannya.
     Route::get('/akuntansi/kas-bank', [TransaksiKasBankKontroler::class, 'Daftar'])->name('kelola.akuntansi.kas-bank.daftar');
+    // D-23 D: transaksi kas & bank berulang.
+    Route::get('/akuntansi/kas-bank/berulang', [JadwalKasBankKontroler::class, 'Daftar'])->name('kelola.akuntansi.kas-bank.berulang.daftar');
     Route::get('/akuntansi/kas-bank/{transaksiKasBank}', [TransaksiKasBankKontroler::class, 'Detail'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.detail');
     Route::get('/akuntansi/kas-bank/{transaksiKasBank}/lampiran', [TransaksiKasBankKontroler::class, 'Lampiran'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.lampiran');
 
@@ -66,6 +69,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     // F-13a: transaksi kas & bank (halaman catat, simpan & pembalik).
     Route::get('/akuntansi/kas-bank/buat', [TransaksiKasBankKontroler::class, 'Buat'])->name('kelola.akuntansi.kas-bank.buat');
     Route::post('/akuntansi/kas-bank', [TransaksiKasBankKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.kas-bank.simpan');
+    Route::put('/akuntansi/kas-bank/berulang/{jadwalKasBank}', [JadwalKasBankKontroler::class, 'Ubah'])->where('jadwalKasBank', $ulid)->name('kelola.akuntansi.kas-bank.berulang.ubah');
     // F-15: kunci & buka kunci periode (YYYY-MM).
     Route::post('/akuntansi/tutup-buku/{periode}/kunci', [TutupBukuKontroler::class, 'Kunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.kunci');
     Route::post('/akuntansi/tutup-buku/{periode}/buka-kunci', [TutupBukuKontroler::class, 'BukaKunci'])->where('periode', '\d{4}-\d{2}')->name('kelola.akuntansi.tutup-buku.buka-kunci');

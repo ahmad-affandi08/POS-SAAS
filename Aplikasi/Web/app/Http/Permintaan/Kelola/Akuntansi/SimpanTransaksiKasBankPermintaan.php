@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Permintaan\Kelola\Akuntansi;
 
 use App\Domain\Akuntansi\Data\DataTransaksiKasBank;
+use App\Domain\Akuntansi\Enum\FrekuensiJadwalKasBank;
 use App\Domain\Akuntansi\Enum\JenisTransaksiKasBank;
 use App\Domain\Bersama\Nilai\Uang;
 use Carbon\CarbonImmutable;
@@ -31,6 +32,8 @@ final class SimpanTransaksiKasBankPermintaan extends FormRequest
             'UuidAkunTujuan' => ['required', 'string', 'ulid'],
             'Jumlah' => ['required', 'string', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'Keterangan' => ['required', 'string', 'max:255'],
+            // D-23 D: ulangi otomatis (kosong = sekali saja).
+            'Ulangi' => ['nullable', 'string', Rule::enum(FrekuensiJadwalKasBank::class)],
             'Lampiran' => [
                 'nullable',
                 'file',
@@ -63,6 +66,11 @@ final class SimpanTransaksiKasBankPermintaan extends FormRequest
             'Keterangan' => 'keterangan',
             'Lampiran' => 'lampiran',
         ];
+    }
+
+    public function AmbilFrekuensi(): ?FrekuensiJadwalKasBank
+    {
+        return FrekuensiJadwalKasBank::tryFrom((string) ($this->validated('Ulangi') ?? ''));
     }
 
     public function AmbilUuidOutlet(): ?string

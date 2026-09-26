@@ -7,6 +7,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KartuFormulir from '@/Komponen/Formulir/KartuFormulir';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
+import GrupRadio from '@/Komponen/Katalog/GrupRadio';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
 import { TulisTanggal } from '@/Pustaka/Tanggal';
@@ -69,6 +70,8 @@ type IsianTransaksi = {
     Jumlah: string;
     Keterangan: string;
     Lampiran: File[];
+    /** D-23 D: 'Tidak' = sekali saja. */
+    Ulangi: 'Tidak' | 'Mingguan' | 'Bulanan';
 };
 
 /**
@@ -93,6 +96,7 @@ export default function HalamanBuatTransaksiKasBank({
         Jumlah: '',
         Keterangan: '',
         Lampiran: [],
+        Ulangi: 'Tidak',
     }));
     const [memproses, AturMemproses] = useState(false);
     const aturan = aturanJenis[isian.Jenis];
@@ -105,7 +109,12 @@ export default function HalamanBuatTransaksiKasBank({
         const { Lampiran: berkas, ...data } = isian;
         router.post(
             alamat,
-            { ...data, UuidOutlet: data.UuidOutlet === '' ? null : data.UuidOutlet, Lampiran: berkas[0] ?? null },
+            {
+                ...data,
+                UuidOutlet: data.UuidOutlet === '' ? null : data.UuidOutlet,
+                Ulangi: data.Ulangi === 'Tidak' ? null : data.Ulangi,
+                Lampiran: berkas[0] ?? null,
+            },
             {
                 forceFormData: berkas.length > 0,
                 preserveScroll: true,
@@ -193,6 +202,22 @@ export default function HalamanBuatTransaksiKasBank({
                         maksimal={1}
                         ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
                         galat={galat.Lampiran}
+                    />
+                    <GrupRadio<IsianTransaksi['Ulangi']>
+                        legenda="Ulangi otomatis"
+                        nilai={isian.Ulangi}
+                        opsi={[
+                            { Nilai: 'Tidak', Label: 'Tidak, sekali ini saja' },
+                            {
+                                Nilai: 'Bulanan',
+                                Label: 'Tiap bulan',
+                                Keterangan:
+                                    'Misal sewa, listrik, internet: dicatat lagi pada tanggal yang sama tiap bulan.',
+                            },
+                            { Nilai: 'Mingguan', Label: 'Tiap minggu', Keterangan: 'Dicatat lagi 7 hari sekali.' },
+                        ]}
+                        saatBerubah={(nilai) => Ubah({ Ulangi: nilai })}
+                        galat={galat.Ulangi}
                     />
                     <div className="flex flex-wrap justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => router.visit(alamat)}>

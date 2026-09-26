@@ -423,6 +423,13 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Jadwal `pembelian:draf-po-otomatis` pukul 05.30 WIB atas nama Owner tenant, hanya bila pengaturan pembelian "Siapkan draf pesanan pembelian otomatis" aktif (bawaan aktif). Tombol "Siapkan draf dari stok menipis" di daftar pesanan pembelian menjalankannya kapan saja (izin `pembelian.kelola`, dibatasi outlet pelaku). Menjalankan ulang tidak menggandakan karena PO terbuka sudah dihitung.
 - Kotak Tindakan: butir "Draf pesanan untuk stok menipis" (Perhatian) selama draf otomatis belum diajukan.
 
+**Bagian 2 — transaksi kas & bank berulang (F-13a).**
+- Formulir "Catat transaksi kas & bank" punya pilihan **Ulangi otomatis**: tidak / tiap bulan / tiap minggu. Transaksi pertama dicatat seperti biasa; tabel baru `JadwalKasBank` menyimpan pola (jenis, outlet, akun, jumlah, keterangan, `TanggalAcuan`, `TanggalBerikutnya`, `Aktif`, `JumlahDicatat`, `GalatTerakhir`).
+- Bulanan mengikuti tanggal acuan; tanggal 29–31 menjadi hari terakhir bulan pendek lalu kembali ke tanggal acuan. Mingguan tiap 7 hari.
+- Jadwal `akuntansi:jalankan-jadwal-kas-bank` pukul 05.45 WIB mencatat setiap jatuh tempo s.d. tanggal bisnis hari ini (tanggal transaksi = tanggal jatuh tempo; tertinggal disusul, maks. 12 per jadwal per putaran) lewat Aksi `SimpanTransaksiKasBank` yang sama (nomor KB, jurnal seimbang, audit, atas nama pembuat jadwal). `TransaksiKasBank.IdJadwalKasBank` unik per tanggal sehingga tidak pernah dobel.
+- Ditolak aturan bisnis (periode terkunci, akun nonaktif): jadwal tidak dimajukan, alasan di `GalatTerakhir`, butir Kotak Tindakan "Transaksi rutin gagal dicatat otomatis" (Penting, izin `akuntansi.kelola`).
+- Halaman `/kelola/akuntansi/kas-bank/berulang` (TabelData): hentikan / aktifkan lagi (tanggal yang terlewat selama berhenti tidak disusul), ubah jumlah (misal sewa naik); transaksi yang sudah tercatat tetap append-only.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -124,6 +124,23 @@ export type PropsDaftarTransaksiKasBank = {
     OpsiOutlet: { Uuid: string; Nama: string }[];
     Izin: { Kelola: boolean };
 };
+/** D-23 D: transaksi kas & bank berulang (`/kelola/akuntansi/kas-bank/berulang`). */
+export type BarisJadwalKasBank = {
+    Uuid: string;
+    Keterangan: string;
+    Jenis: JenisTransaksiKasBank;
+    LabelJenis: string;
+    AkunSumber: string;
+    AkunTujuan: string;
+    Jumlah: string;
+    Frekuensi: 'Mingguan' | 'Bulanan';
+    LabelFrekuensi: string;
+    TanggalBerikutnya: string;
+    Aktif: boolean;
+    JumlahDicatat: number;
+    GalatTerakhir: string | null;
+};
+export type PropsJadwalKasBank = { Jadwal: HasilTabel<BarisJadwalKasBank>; Izin: { Kelola: boolean } };
 /** Halaman penuh "Catat transaksi kas & bank" (`/kelola/akuntansi/kas-bank/buat`). */
 export type PropsBuatTransaksiKasBank = {
     OpsiJenis: Pilihan[];

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanBaganAkun from '@/Halaman/Kelola/Akuntansi/Akun/Daftar';
+import HalamanJadwalKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Berulang';
 import HalamanBuatTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Buat';
 import HalamanDaftarTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Daftar';
 import HalamanDetailTransaksiKasBank from '@/Halaman/Kelola/Akuntansi/KasBank/Detail';
@@ -16,6 +17,7 @@ import { AmbilNilaiPilihan, UbahNilai } from '@/Pengujian/InteraksiPilihan';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
 import { CekMenuAktif, SaringMenuTerlihat } from '@/TataLetak/TataLetakAplikasi';
 import type {
+    BarisJadwalKasBank,
     BarisBaganAkun,
     BarisTransaksiKasBank,
     PropsArusKas,
@@ -366,13 +368,57 @@ describe('F-13a kas & bank', () => {
                 UuidAkunTujuan: 'K2',
                 Jumlah: '25000000',
                 Keterangan: 'Setoran modal awal',
+                Ulangi: null,
                 Lampiran: null,
             }),
             expect.objectContaining({ forceFormData: false }),
         );
 
+        // D-23 D: ulangi otomatis tiap bulan.
+        fireEvent.click(within(formulir).getByRole('radio', { name: /Tiap bulan/ }));
+        fireEvent.click(within(formulir).getByRole('button', { name: 'Simpan & jurnal' }));
+        expect(tiruanRouter.post).toHaveBeenLastCalledWith(
+            '/kelola/akuntansi/kas-bank',
+            expect.objectContaining({ Ulangi: 'Bulanan' }),
+            expect.anything(),
+        );
+
         fireEvent.click(within(formulir).getByRole('button', { name: 'Batal' }));
         expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/akuntansi/kas-bank');
+    });
+
+    it('transaksi berulang (D-23 D): status & galat tampil, hentikan/aktifkan lewat menu baris', async () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/kas-bank/berulang');
+        const baris: BarisJadwalKasBank = {
+            Uuid: 'J1',
+            Keterangan: 'Sewa ruko Jl. Slamet Riyadi Solo',
+            Jenis: 'Pengeluaran',
+            LabelJenis: 'Pengeluaran',
+            AkunSumber: '1-1100 Kas Outlet',
+            AkunTujuan: '6-2000 Beban Sewa',
+            Jumlah: '4500000.00',
+            Frekuensi: 'Bulanan',
+            LabelFrekuensi: 'Tiap bulan',
+            TanggalBerikutnya: '2026-02-28',
+            Aktif: true,
+            JumlahDicatat: 3,
+            GalatTerakhir: 'Periode 2026-02 sudah dikunci.',
+        };
+        RenderUji(
+            <HalamanJadwalKasBank
+                Jadwal={{ Data: [baris], Meta: { Halaman: 1, PerHalaman: 25, Total: 1, JumlahHalaman: 1 } }}
+                Izin={{ Kelola: true }}
+            />,
+        );
+        expect(screen.getAllByText('Sewa ruko Jl. Slamet Riyadi Solo').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Gagal: Periode 2026-02 sudah dikunci.').length).toBeGreaterThan(0);
+        await BukaMenu(screen.getAllByRole('button', { name: /Aksi/ })[0] as HTMLElement);
+        fireEvent.click(await screen.findByRole('menuitem', { name: 'Hentikan jadwal' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/akuntansi/kas-bank/berulang/J1',
+            { Aktif: false },
+            expect.anything(),
+        );
     });
 
     it('detail: tautan pembalik, lampiran, jurnal; dokumen pembalik hanya bila belum dibalik', () => {

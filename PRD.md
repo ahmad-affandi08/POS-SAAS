@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.17 |
+| Versi | 2.18 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.18 | **D-23 D bagian 2** transaksi kas & bank berulang: pilihan "Ulangi otomatis" (tiap bulan/tiap minggu) di formulir kas & bank; tiap pagi (05.45 WIB) jatuh tempo dicatat sebagai transaksi kas & bank biasa (nomor, jurnal, audit), tertinggal disusul, idempoten per (jadwal, tanggal); ditolak (periode terkunci, akun nonaktif) = alasan di Kotak Tindakan; halaman `/kelola/akuntansi/kas-bank/berulang` (hentikan/aktifkan lagi, ubah jumlah). |
 | 2.17 | **D-23 D bagian 1** draf PO otomatis: tiap pagi (05.30 WIB) dan lewat tombol "Siapkan draf dari stok menipis", barang dengan saldo ≤ stok minimum dibuatkan draf PO per (lokasi, pemasok) ke pemasok/satuan/harga pembelian terakhir, jumlah sampai stok maksimum (kosong = 2 × minimum) dikurangi PO terbuka; tidak pernah diajukan otomatis; pengaturan pembelian `DrafPoOtomatis` (bawaan aktif); butir Kotak Tindakan. §17.4.8. |
 | 2.16 | **D-24** (dari pemilik produk): panduan awal menjadi **halaman sendiri** (layar penuh tanpa sidebar) dan **wajib** bagi tenant yang mendaftar sesudah keputusan ini: Pemilik/Admin dialihkan ke panduan sampai profil usaha, jenis usaha, pajak, produk (min. 1), dan metode bayar selesai; perangkat kasir boleh "Nanti saja". Anggota lain melihat "Toko sedang disiapkan". Tenant lama dibebaskan (`ProgresPanduanAwal.Wajib`). Checklist "Langkah berikutnya" pindah dari Beranda ke Kotak Tindakan (butir "Persiapan toko"). |
 | 2.15 | **D-23 A** mulai jualan dalam 5 menit: tombol **"Siapkan semuanya otomatis"** di langkah Sektor panduan awal (template + pajak sesuai usulan kota + semua produk contoh dengan harga saran sebatas kuota + Tunai siap; langsung ke langkah Perangkat) dan **tempel daftar produk** dari Excel/WhatsApp di langkah Produk (`Kopi Susu 15.000`, `Es Teh 5rb`, kolom Tab). §17.4.7. |
@@ -3741,6 +3742,13 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Satu draf per (lokasi, pemasok) lewat Aksi yang sama dengan draf manual (nomor, PPN masukan, audit); kolom `PesananPembelian.DibuatOtomatis` = true, catatan menjelaskan asalnya. Draf **tidak pernah diajukan otomatis**; pemilik memeriksa lalu mengajukan (persetujuan tetap mengikuti batas §19.2).
 - Jadwal `pembelian:draf-po-otomatis` pukul 05.30 WIB atas nama Owner tenant, hanya bila pengaturan pembelian "Siapkan draf pesanan pembelian otomatis" aktif (bawaan aktif). Tombol "Siapkan draf dari stok menipis" di daftar pesanan pembelian menjalankannya kapan saja (izin `pembelian.kelola`, dibatasi outlet pelaku). Menjalankan ulang tidak menggandakan karena PO terbuka sudah dihitung.
 - Kotak Tindakan: butir "Draf pesanan untuk stok menipis" (Perhatian) selama draf otomatis belum diajukan.
+
+**Bagian 2 — transaksi kas & bank berulang (F-13a).**
+- Formulir "Catat transaksi kas & bank" punya pilihan **Ulangi otomatis**: tidak / tiap bulan / tiap minggu. Transaksi pertama dicatat seperti biasa; tabel baru `JadwalKasBank` menyimpan pola (jenis, outlet, akun, jumlah, keterangan, `TanggalAcuan`, `TanggalBerikutnya`, `Aktif`, `JumlahDicatat`, `GalatTerakhir`).
+- Bulanan mengikuti tanggal acuan; tanggal 29–31 menjadi hari terakhir bulan pendek lalu kembali ke tanggal acuan. Mingguan tiap 7 hari.
+- Jadwal `akuntansi:jalankan-jadwal-kas-bank` pukul 05.45 WIB mencatat setiap jatuh tempo s.d. tanggal bisnis hari ini (tanggal transaksi = tanggal jatuh tempo; tertinggal disusul, maks. 12 per jadwal per putaran) lewat Aksi `SimpanTransaksiKasBank` yang sama (nomor KB, jurnal seimbang, audit, atas nama pembuat jadwal). `TransaksiKasBank.IdJadwalKasBank` unik per tanggal sehingga tidak pernah dobel.
+- Ditolak aturan bisnis (periode terkunci, akun nonaktif): jadwal tidak dimajukan, alasan di `GalatTerakhir`, butir Kotak Tindakan "Transaksi rutin gagal dicatat otomatis" (Penting, izin `akuntansi.kelola`).
+- Halaman `/kelola/akuntansi/kas-bank/berulang` (TabelData): hentikan / aktifkan lagi (tanggal yang terlewat selama berhenti tidak disusul), ubah jumlah (misal sewa naik); transaksi yang sudah tercatat tetap append-only.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

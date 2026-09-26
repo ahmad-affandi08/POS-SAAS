@@ -151,9 +151,12 @@ export default function HalamanTransaksiKasBank({
             />
 
             {Izin.Kelola ? (
-                <div>
+                <div className="flex flex-wrap gap-2">
                     <Button asChild>
                         <Link href={`${alamat}/buat`}>Catat transaksi kas & bank</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                        <Link href={`${alamat}/berulang`}>Transaksi berulang</Link>
                     </Button>
                 </div>
             ) : (

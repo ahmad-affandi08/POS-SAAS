@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Akuntansi;
 
 use App\Domain\Akuntansi\Aksi\BalikkanTransaksiKasBank;
+use App\Domain\Akuntansi\Aksi\CatatTransaksiKasBankBerulang;
 use App\Domain\Akuntansi\Aksi\SimpanTransaksiKasBank;
 use App\Domain\Akuntansi\Enum\JenisTransaksiKasBank;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
@@ -55,7 +56,7 @@ final class TransaksiKasBankKontroler extends DasarAkuntansiKontroler
         ]);
     }
 
-    public function Simpan(SimpanTransaksiKasBankPermintaan $permintaan, SimpanTransaksiKasBank $simpan): RedirectResponse
+    public function Simpan(SimpanTransaksiKasBankPermintaan $permintaan, SimpanTransaksiKasBank $simpan, CatatTransaksiKasBankBerulang $berulang): RedirectResponse
     {
         $uuidOutlet = $permintaan->AmbilUuidOutlet();
 
@@ -63,7 +64,17 @@ final class TransaksiKasBankKontroler extends DasarAkuntansiKontroler
             return back()->withErrors(['UuidOutlet' => 'Pilih outlet transaksi ini.'])->withInput();
         }
 
-        $transaksi = $simpan->Jalankan($permintaan->AmbilData($uuidOutlet === null ? null : $this->CariOutlet($uuidOutlet)->Id, $this->Pelaku()->Id));
+        $data = $permintaan->AmbilData($uuidOutlet === null ? null : $this->CariOutlet($uuidOutlet)->Id, $this->Pelaku()->Id);
+        $frekuensi = $permintaan->AmbilFrekuensi();
+
+        if ($frekuensi !== null) {
+            ['Transaksi' => $transaksi, 'Jadwal' => $jadwal] = $berulang->Jalankan($data, $frekuensi);
+
+            return to_route('kelola.akuntansi.kas-bank.detail', ['transaksiKasBank' => $transaksi->Uuid])
+                ->with('Kilat', "{$transaksi->Jenis->AmbilLabel()} {$transaksi->Nomor} disimpan dan dijurnal. Dicatat otomatis lagi ".mb_strtolower($frekuensi->AmbilLabel()).", berikutnya {$jadwal->TanggalBerikutnya->toDateString()}.");
+        }
+
+        $transaksi = $simpan->Jalankan($data);
 
         return to_route('kelola.akuntansi.kas-bank.detail', ['transaksiKasBank' => $transaksi->Uuid])->with('Kilat', "{$transaksi->Jenis->AmbilLabel()} {$transaksi->Nomor} disimpan dan dijurnal.");
     }

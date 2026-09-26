@@ -32,6 +32,7 @@ use LogicException;
  * @property string|null $MimeLampiran
  * @property int|null $UkuranLampiran
  * @property int|null $IdTransaksiDibalik
+ * @property int|null $IdJadwalKasBank D-23 D: transaksi dicatat otomatis oleh jadwal berulang ini.
  * @property int|null $DibuatOleh
  * @property Carbon|null $DibuatPada
  * @property Carbon|null $DiubahPada
@@ -57,6 +58,7 @@ final class TransaksiKasBank extends ModelDasar
         'MimeLampiran' => null,
         'UkuranLampiran' => null,
         'IdTransaksiDibalik' => null,
+        'IdJadwalKasBank' => null,
     ];
 
     /**
