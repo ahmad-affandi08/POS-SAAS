@@ -5,6 +5,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
+import 'Struk/BagianLayarPelanggan.dart';
 import 'Struk/BagianPrinterDapur.dart';
 import 'Struk/BagianPrinterStruk.dart';
 import 'Struk/BagianUjiPerangkat.dart';
@@ -134,6 +135,11 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
                 ),
             ],
           ),
+        ),
+        Bagian(
+          'Layar pelanggan',
+          'Tampilkan item, total, dan kembalian ke pelanggan lewat layar kedua mesin kasir, monitor HDMI, atau layar VFD.',
+          const BagianLayarPelanggan(),
         ),
         Bagian(
           'Uji perangkat',

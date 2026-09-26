@@ -7,9 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart' show Uang;
+import 'package:sistem_desain/SistemDesain.dart' show TokenWarna;
 
 import '../Data/Printer/InfoPerangkatPlatform.dart';
 import '../Data/KameraSwafotoPlatform.dart';
+import '../Data/LayarPelanggan/PabrikLayarPelanggan.dart';
 import '../Data/RepositoriAbsensi.dart';
 import '../Domain/Karyawan/LayananAbsensi.dart';
 import '../Domain/Perangkat/KameraSwafoto.dart';
@@ -38,6 +40,7 @@ import '../Domain/Penjualan/LayananPreOrder.dart';
 import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
+import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/LayananUjiPerangkat.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
@@ -597,6 +600,74 @@ class PengaturPengaturanPerangkat extends Notifier<PengaturanPerangkat> {
 
 final penyediaPengaturanPerangkat = NotifierProvider<PengaturPengaturanPerangkat, PengaturanPerangkat>(
   PengaturPengaturanPerangkat.new,
+);
+
+/// v2.01: pembuat adaptor layar pelanggan menurut pengaturan (test mengganti dengan tiruan).
+typedef PembuatLayarPelanggan = PortLayarPelanggan Function(PengaturanLayarPelanggan pengaturan);
+
+final penyediaPembuatLayarPelanggan = Provider<PembuatLayarPelanggan>((ref) {
+  const w = TokenWarna.bawaan;
+  final warna = {
+    'Latar': w.permukaan.toARGB32(),
+    'Teks': w.teksUtama.toARGB32(),
+    'TeksSekunder': w.teksSekunder.toARGB32(),
+    'Aksen': w.brandGelap.toARGB32(),
+  };
+  return (pengaturan) => PabrikLayarPelanggan.Buat(pengaturan, warna);
+});
+
+/// Mode layar pelanggan yang didukung platform ini (Mati selalu ada).
+final penyediaModeLayarPelanggan = Provider<List<String>>((ref) => PabrikLayarPelanggan.AmbilModeTersedia());
+
+/// Layar pelanggan perangkat ini (PRD §17.2.5a, v2.01). Galat layar pelanggan tidak pernah mengganggu transaksi:
+/// [Tampilkan] mengembalikan pesan galat (untuk tombol uji di Pengaturan) dan tidak melempar.
+class PengaturLayarPelanggan extends Notifier<PengaturanLayarPelanggan> {
+  PortLayarPelanggan _port = const LayarPelangganTidakAda();
+  var _diubah = false;
+
+  @override
+  PengaturanLayarPelanggan build() {
+    unawaited(_Muat());
+    ref.onDispose(() => unawaited(_port.Tutup().catchError((Object _) {})));
+    return const PengaturanLayarPelanggan();
+  }
+
+  Future<void> _Muat() async {
+    final dimuat = await PengaturanLayarPelanggan.Muat(ref.read(penyediaRepositori));
+    if (!_diubah) {
+      state = dimuat;
+      _port = ref.read(penyediaPembuatLayarPelanggan)(dimuat);
+    }
+  }
+
+  Future<String?> Simpan(PengaturanLayarPelanggan baru) async {
+    _diubah = true;
+    await _port.Tutup().catchError((Object _) {});
+    final lengkap = baru.Salin(namaToko: baru.namaToko.isEmpty ? state.namaToko : baru.namaToko);
+    state = lengkap;
+    _port = ref.read(penyediaPembuatLayarPelanggan)(lengkap);
+    await lengkap.Simpan(ref.read(penyediaRepositori));
+    return Tampilkan(PenyusunLayarPelanggan.Siaga(lengkap.namaToko));
+  }
+
+  /// null = berhasil (atau layar pelanggan mati).
+  Future<String?> Tampilkan(IsiLayarPelanggan isi) async {
+    if (!state.aktif) {
+      return null;
+    }
+    try {
+      await _port.Tampilkan(isi);
+      return null;
+    } on GalatPrinter catch (galat) {
+      return galat.pesan;
+    } on Object catch (galat) {
+      return 'Layar pelanggan tidak bisa dipakai: $galat';
+    }
+  }
+}
+
+final penyediaLayarPelanggan = NotifierProvider<PengaturLayarPelanggan, PengaturanLayarPelanggan>(
+  PengaturLayarPelanggan.new,
 );
 
 /// Koneksi ke server menurut hasil sinkron terakhir (bilah status ruang kerja).

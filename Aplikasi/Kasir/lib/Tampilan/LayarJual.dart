@@ -12,9 +12,11 @@ import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/KonteksPesananMeja.dart';
+import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
+import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import 'Jual/PanelBayar.dart';
@@ -93,6 +95,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   ProdukJual? _produkPanel;
   String? _uuidBarisPanel;
   PenjualanTersimpan? _selesai;
+
+  /// Isi terakhir yang dikirim ke layar pelanggan (hindari kirim ulang tiap build).
+  String? _sidikLayarPelanggan;
 
   /// F-12 bagian 2: pre-order yang baru tersimpan.
   PreOrderTersimpan? _preOrderSelesai;
@@ -1003,6 +1008,29 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     };
   }
 
+  /// v2.01 layar pelanggan: keranjang (item & total), "Silakan lakukan pembayaran" saat panel Bayar terbuka, kembalian
+  /// setelah bayar, lalu layar siaga. Dikirim setelah frame dan hanya bila isinya berubah.
+  void _SiarkanLayarPelanggan(Keranjang keranjang, HitunganKeranjang? hitungan) {
+    final layar = ref.watch(penyediaLayarPelanggan);
+    if (widget.modePelayan || !layar.aktif || !widget.aktif) {
+      return;
+    }
+    final selesai = _selesai;
+    final isi = _panel == _JenisPanel.Selesai && selesai != null
+        ? PenyusunLayarPelanggan.Selesai(layar.namaToko, selesai)
+        : PenyusunLayarPelanggan.DariKeranjang(layar.namaToko, keranjang, hitungan, bayar: _panel == _JenisPanel.Bayar);
+    final sidik = isi.AmbilSidik();
+    if (sidik == _sidikLayarPelanggan) {
+      return;
+    }
+    _sidikLayarPelanggan = sidik;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(ref.read(penyediaLayarPelanggan.notifier).Tampilkan(isi));
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final katalog = ref.watch(penyediaKatalog).value;
@@ -1019,6 +1047,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         hitungan = null;
       }
     }
+    _SiarkanLayarPelanggan(keranjang, hitungan);
 
     return Focus(
       focusNode: _fokusAkar,

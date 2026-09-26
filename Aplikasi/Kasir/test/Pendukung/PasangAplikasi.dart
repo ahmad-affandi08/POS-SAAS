@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
 import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
+import 'package:kasir/Domain/Perangkat/LayananLayarPelanggan.dart';
 import 'package:kasir/Domain/Perangkat/PenjagaLayarMenyala.dart';
 import 'package:kasir/Domain/Pin/PemverifikasiPinOffline.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -42,6 +44,14 @@ Future<void> PasangAplikasi(
         penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
         penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
+        penyediaPembuatLayarPelanggan.overrideWithValue(
+          (p) => p.aktif ? u.layarPelanggan : const LayarPelangganTidakAda(),
+        ),
+        penyediaModeLayarPelanggan.overrideWithValue(const [
+          ModeLayarPelanggan.mati,
+          ModeLayarPelanggan.layarKedua,
+          ModeLayarPelanggan.vfd,
+        ]),
       ],
       child: AplikasiKasir(lingkungan: lingkungan),
     ),

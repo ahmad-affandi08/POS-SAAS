@@ -92,6 +92,9 @@ abstract final class KunciPengaturan {
   /// v1.96: profil hardware & hasil Wizard Uji Perangkat terakhir (JSON) dan tanda belum terkirim ke server ("1").
   static const String profilHardware = 'ProfilHardware';
   static const String profilHardwareTertunda = 'ProfilHardwareTertunda';
+
+  /// v2.01: layar pelanggan perangkat ini (JSON `{Mode, PortVfd}`; tidak ikut data awal).
+  static const String layarPelanggan = 'LayarPelanggan';
 }
 
 /// Status shift lokal (sama dengan server).

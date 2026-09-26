@@ -80,3 +80,21 @@ class PemindaiTiruan implements PemindaiPrinter {
     return profil.jenis == JenisTransport.CetakSistem ? sistem : printer;
   }
 }
+
+/// Layar pelanggan tiruan (v2.01): mencatat setiap isi yang ditampilkan.
+class LayarPelangganTiruan implements PortLayarPelanggan {
+  final List<IsiLayarPelanggan> isi = [];
+  var ditutup = 0;
+
+  @override
+  String get nama => 'Layar tiruan';
+
+  @override
+  Future<bool> CekTersedia() async => true;
+
+  @override
+  Future<void> Tampilkan(IsiLayarPelanggan baru) async => isi.add(baru);
+
+  @override
+  Future<void> Tutup() async => ditutup++;
+}
