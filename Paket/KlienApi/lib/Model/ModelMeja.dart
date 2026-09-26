@@ -61,6 +61,7 @@ class DataMejaPos {
     required this.meja,
     required this.stasiunDapur,
     required this.uuidStasiunBawaan,
+    this.kategoriStasiun = const {},
   });
 
   final bool modeMejaAktif;
@@ -69,12 +70,19 @@ class DataMejaPos {
   final List<StasiunDapurPos> stasiunDapur;
   final String? uuidStasiunBawaan;
 
+  /// Cetak struk bagian 4c: Uuid stasiun aktif per Uuid kategori yang diatur langsung (server lama = kosong).
+  final Map<String, String> kategoriStasiun;
+
   static DataMejaPos DariJson(Map<String, Object?> json) => DataMejaPos(
     modeMejaAktif: UraiJson.AmbilBenar(json['ModeMejaAktif']),
     area: UraiJson.AmbilDaftarPeta(json['Area']).map(AreaMejaPos.DariJson).toList(),
     meja: UraiJson.AmbilDaftarPeta(json['Meja']).map(MejaPos.DariJson).toList(),
     stasiunDapur: UraiJson.AmbilDaftarPeta(json['StasiunDapur']).map(StasiunDapurPos.DariJson).toList(),
     uuidStasiunBawaan: UraiJson.AmbilTeksAtauNull(json['UuidStasiunBawaan']),
+    kategoriStasiun: {
+      for (final k in UraiJson.AmbilDaftarPeta(json['KategoriStasiun']))
+        UraiJson.AmbilTeks(k['UuidKategori']): UraiJson.AmbilTeks(k['UuidStasiun']),
+    },
   );
 }
 

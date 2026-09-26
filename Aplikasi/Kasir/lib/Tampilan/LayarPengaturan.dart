@@ -5,9 +5,10 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
+import 'Struk/BagianPrinterDapur.dart';
 import 'Struk/BagianPrinterStruk.dart';
 
-/// Pengaturan perangkat kasir (PRD §17.2.7): printer struk (v1.79), ukuran tampilan, posisi keranjang, kunci otomatis,
+/// Pengaturan perangkat kasir (PRD §17.2.7): printer struk (v1.79), printer dapur per stasiun (v1.87), ukuran tampilan, posisi keranjang, kunci otomatis,
 /// dan perbarui data kasir dari back-office. Tersimpan lokal di perangkat ini dan langsung berlaku.
 class LayarPengaturan extends ConsumerStatefulWidget {
   const LayarPengaturan({super.key});
@@ -68,6 +69,11 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
           'Printer struk',
           'Printer thermal LAN/Wi-Fi atau Bluetooth. Isi kepala & kaki struk diatur di back-office.',
           const BagianPrinterStruk(),
+        ),
+        Bagian(
+          'Printer dapur',
+          'Tiket dapur dicetak per stasiun saat pesanan meja dikirim ke dapur. Stasiun tanpa printer memakai layar dapur.',
+          const BagianPrinterDapur(),
         ),
         Bagian(
           'Ukuran tampilan',

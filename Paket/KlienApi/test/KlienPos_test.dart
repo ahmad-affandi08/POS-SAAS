@@ -165,6 +165,9 @@ void main() {
             {'Uuid': 'S1', 'Nama': 'Bar'},
           ],
           'UuidStasiunBawaan': 'S1',
+          'KategoriStasiun': [
+            {'UuidKategori': 'K1', 'UuidStasiun': 'S1'},
+          ],
         }, 200);
       }
       if (jalur.endsWith('/pesanan-terbuka')) {
@@ -216,6 +219,7 @@ void main() {
     expect(meja.modeMejaAktif, isTrue);
     expect(meja.meja.single.uuidArea, 'A1');
     expect(meja.uuidStasiunBawaan, 'S1');
+    expect(meja.kategoriStasiun, {'K1': 'S1'});
 
     final snapshot = await klien.AmbilPesananTerbuka();
     expect(snapshot!.etag, '"abc"');

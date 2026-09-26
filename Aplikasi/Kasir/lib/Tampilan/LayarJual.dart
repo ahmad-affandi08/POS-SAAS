@@ -363,12 +363,34 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       return;
     }
     try {
-      await ref
+      final sebelum = await ref.read(penyediaRepositoriPesananMeja).CariPesanan(konteks.uuid);
+      final dikirim = {
+        ...draf.baris.map((b) => b.uuid),
+        ...?sebelum?.AmbilBarisAktif().where((b) => !b.dikirimKeDapur).map((b) => b.uuid),
+      };
+      final pesanan = await ref
           .read(penyediaLayananPesananMeja)
           .SimpanBaris(uuidPesanan: konteks.uuid, draf: draf.baris, kasir: widget.kasir, kirimDapur: true);
       ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
       _TampilPesan('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
       unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+      // Cetak struk bagian 4c: tiket per stasiun yang punya printer di perangkat ini; gagal cetak tidak membatalkan.
+      final tiket = await ref
+          .read(penyediaLayananTiketDapur)
+          .Cetak(
+            pesanan: pesanan,
+            uuidBaris: dikirim,
+            katalog: ref.read(penyediaKatalog).value ?? KatalogLokal.kosong,
+            waktu: ref.read(penyediaJam)(),
+            namaKasir: widget.kasir.nama,
+          );
+      final gagal = tiket.where((t) => t.galat != null).toList();
+      if (gagal.isNotEmpty && mounted) {
+        _TampilPesan(
+          'Pesanan terkirim, tetapi tiket ${gagal.map((t) => t.stasiun.nama).join(', ')} gagal dicetak: '
+          '${gagal.first.galat} Periksa printer dapur di Pengaturan.',
+        );
+      }
     } on GalatKasir catch (galat) {
       _TampilPesan(galat.pesan);
     }

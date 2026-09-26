@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Pos\V1;
 
+use App\Domain\Katalog\Kueri\StasiunDapurProduk;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
 use App\Domain\Organisasi\Kueri\DaftarStasiunDapur;
 use App\Domain\Organisasi\Kueri\MejaOutlet;
@@ -16,11 +17,12 @@ use Illuminate\Http\Request;
 
 /**
  * `GET /api/pos/v1/meja` (F-07 mode meja fase 1): data meja outlet perangkat untuk kerja offline: apakah mode meja
- * aktif, area & meja aktif, stasiun dapur aktif, dan stasiun bawaan.
+ * aktif, area & meja aktif, stasiun dapur aktif, dan stasiun bawaan. Cetak struk bagian 4c (aditif): `KategoriStasiun`
+ * = kategori yang diatur langsung ke stasiun aktif, agar perangkat merutekan tiket dapur tercetak secara offline.
  */
 final class MejaKontroler extends Kontroler
 {
-    public function Ambil(Request $permintaan, MejaOutlet $meja, DaftarStasiunDapur $stasiun, PenjagaModeMeja $modeMeja): JsonResponse
+    public function Ambil(Request $permintaan, MejaOutlet $meja, DaftarStasiunDapur $stasiun, PenjagaModeMeja $modeMeja, StasiunDapurProduk $stasiunProduk): JsonResponse
     {
         $perangkat = AutentikasiPerangkat::AmbilPerangkat($permintaan);
         $outlet = Outlet::query()->findOrFail($perangkat->IdOutlet);
@@ -41,6 +43,24 @@ final class MejaKontroler extends Kontroler
             )),
             'StasiunDapur' => array_map(fn (array $s): array => ['Uuid' => $s['Uuid'], 'Nama' => $s['Nama']], $aktif),
             'UuidStasiunBawaan' => $aktif[0]['Uuid'] ?? null,
+            'KategoriStasiun' => $this->SusunKategoriStasiun($stasiun, $stasiunProduk),
         ]);
+    }
+
+    /**
+     * @return list<array{UuidKategori: string, UuidStasiun: string}>
+     */
+    private function SusunKategoriStasiun(DaftarStasiunDapur $stasiun, StasiunDapurProduk $stasiunProduk): array
+    {
+        $uuidStasiun = array_flip($stasiun->AmbilIdAktifPerUuid());
+        $hasil = [];
+
+        foreach ($stasiunProduk->AmbilPerKategori() as $uuidKategori => $idStasiun) {
+            if (isset($uuidStasiun[$idStasiun])) {
+                $hasil[] = ['UuidKategori' => (string) $uuidKategori, 'UuidStasiun' => $uuidStasiun[$idStasiun]];
+            }
+        }
+
+        return $hasil;
     }
 }

@@ -2,13 +2,14 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
+import '../../Data/PesananMeja.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
 import 'IdentitasStruk.dart';
 import 'PenyusunStrukPenjualan.dart';
 
 /// Dokumen cetak kasir selain struk penjualan (cetak struk bagian 3b): bukti void, nota retur, dan laporan shift X/Z;
-/// bagian 4a: bukti uang muka pre-order.
+/// bagian 4a: bukti uang muka pre-order; bagian 4c: tiket dapur per stasiun.
 /// Kepala & kaki mengikuti pengaturan struk tenant; angka memakai format yang sama dengan struk penjualan. Bukti void
 /// dan nota retur bisa membuka laci bila ada refund tunai dari laci.
 abstract final class PenyusunDokumenKasir {
@@ -123,6 +124,38 @@ abstract final class PenyusunDokumenKasir {
       const BarisGaris(),
       ...PenyusunStrukPenjualan.SusunKaki(identitas),
     ], bukaLaci: bukaLaci);
+  }
+
+  /// Tiket dapur satu stasiun untuk satu kiriman (cetak struk bagian 4c): tanpa harga, nama meja & jumlah dicetak
+  /// besar agar terbaca dari jauh, pilihan & catatan per item di bawahnya.
+  static DokumenStruk SusunTiketDapur({
+    required String namaStasiun,
+    required PesananMeja pesanan,
+    required List<BarisPesananMeja> baris,
+    required DateTime waktu,
+    String? namaKasir,
+    bool cetakUlang = false,
+  }) {
+    final (tanggal, jam) = PenyusunStrukPenjualan.TanggalJam(waktu);
+    final ronde = baris.fold(0, (maks, b) => b.ronde > maks ? b.ronde : maks);
+    return DokumenStruk([
+      BarisTeks('TIKET ${namaStasiun.toUpperCase()}', rata: RataStruk.Tengah, tebal: true),
+      if (cetakUlang) const BarisTeks('CETAK ULANG', rata: RataStruk.Tengah, tebal: true),
+      BarisTeks(pesanan.AmbilJudul(), rata: RataStruk.Tengah, tebal: true, besar: true),
+      BarisTeks(pesanan.nomor),
+      BarisDuaKolom('Ronde $ronde', '$tanggal $jam'),
+      if (namaKasir != null && namaKasir.isNotEmpty) BarisTeks('Kasir: $namaKasir'),
+      const BarisGaris(),
+      for (final b in baris) ...[
+        BarisTeks('${PenyusunStrukPenjualan.Jumlah(b.jumlah)} x ${b.namaProduk}', tebal: true, besar: true),
+        for (final p in b.pilihan)
+          if (p['Nama'] case final String nama when nama.isNotEmpty) BarisTeks('  + $nama'),
+        if (b.catatan case final String catatan when catatan.trim().isNotEmpty)
+          BarisTeks('  Catatan: ${catatan.trim()}'),
+      ],
+      const BarisGaris(),
+      BarisTeks('${baris.length} item', rata: RataStruk.Kanan),
+    ]);
   }
 
   /// Laporan X (shift berjalan) atau Z (shift tertutup). [tampilkanKasSeharusnya] = false untuk tutup buta.

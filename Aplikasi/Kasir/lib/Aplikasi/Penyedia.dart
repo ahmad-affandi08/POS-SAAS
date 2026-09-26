@@ -43,6 +43,7 @@ import '../Domain/Pin/PemverifikasiPinOffline.dart';
 import '../Domain/Sesi/LayananMasuk.dart';
 import '../Domain/Sesi/LayananPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
+import '../Domain/Dapur/LayananTiketDapur.dart';
 import '../Domain/Shift/LayananBukaLaci.dart';
 import '../Domain/Shift/LayananShift.dart';
 import '../Domain/Shift/LayananTutupShift.dart';
@@ -153,6 +154,11 @@ final penyediaLayananBukaLaci = Provider<LayananBukaLaci>(
     struk: ref.watch(penyediaLayananStruk),
     jam: ref.watch(penyediaJam),
   ),
+);
+
+/// Cetak struk bagian 4c: tiket dapur per stasiun di printer.
+final penyediaLayananTiketDapur = Provider<LayananTiketDapur>(
+  (ref) => LayananTiketDapur(repositori: ref.watch(penyediaRepositori), struk: ref.watch(penyediaLayananStruk)),
 );
 
 enum KeadaanPrinter { BelumDiatur, Siap, Mencetak, Gagal }

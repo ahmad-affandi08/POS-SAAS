@@ -39,6 +39,16 @@ class RepositoriPesananMeja {
       ]);
     });
     await repositoriKasir.SimpanPengaturan(KunciPengaturan.modeMejaAktif, data.modeMejaAktif ? '1' : '0');
+    await repositoriKasir.SimpanPengaturan(
+      KunciPengaturan.ruteDapur,
+      jsonEncode({
+        'Stasiun': [
+          for (final s in data.stasiunDapur) {'Uuid': s.uuid, 'Nama': s.nama},
+        ],
+        'Bawaan': data.uuidStasiunBawaan,
+        'Kategori': data.kategoriStasiun,
+      }),
+    );
   });
 
   Stream<List<BarisAreaMeja>> PantauArea() =>

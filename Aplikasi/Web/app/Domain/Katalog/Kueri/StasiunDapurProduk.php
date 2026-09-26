@@ -57,4 +57,16 @@ final class StasiunDapurProduk
 
         return $hasil;
     }
+
+    /**
+     * Cetak struk bagian 4c: stasiun yang diatur langsung di kategori (tanpa warisan; perangkat menelusuri induknya
+     * sendiri seperti [AmbilPerProduk]) untuk merutekan tiket dapur tercetak secara offline.
+     *
+     * @return array<string, int> IdStasiunDapur per Uuid kategori
+     */
+    public function AmbilPerKategori(): array
+    {
+        return Kategori::query()->whereNotNull('IdStasiunDapur')->pluck('IdStasiunDapur', 'Uuid')
+            ->map(fn ($id): int => (int) $id)->all();
+    }
 }

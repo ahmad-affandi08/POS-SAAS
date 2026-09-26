@@ -82,6 +82,12 @@ abstract final class KunciPengaturan {
   static const String teleponOutlet = 'TeleponOutlet';
   static const String logoStruk = 'LogoStruk';
   static const String profilPrinter = 'ProfilPrinter';
+
+  /// Cetak struk bagian 4c: stasiun dapur aktif, stasiun bawaan, dan peta kategori → stasiun dari data meja (JSON).
+  static const String ruteDapur = 'RuteDapur';
+
+  /// Cetak struk bagian 4c: printer tiket dapur per stasiun di perangkat ini (JSON; tidak ikut data awal).
+  static const String printerDapur = 'PrinterDapur';
 }
 
 /// Status shift lokal (sama dengan server).

@@ -184,6 +184,10 @@ Map<String, Object?> DataMejaUji() => {
     {'Uuid': '01K5STAS1VN000000000DAPUR1', 'Nama': 'Dapur'},
   ],
   'UuidStasiunBawaan': '01K5STAS1VN000000000DAPUR1',
+  // Cetak struk bagian 4c: kategori Kopi → Bar; Makanan tanpa stasiun → bawaan (Dapur).
+  'KategoriStasiun': [
+    {'UuidKategori': '01K5KAT0000000000000K0P101', 'UuidStasiun': '01K5STAS1VN000000000BAR001'},
+  ],
 };
 
 /// Server tiruan: penangan bisa diganti per test; semua permintaan dicatat.

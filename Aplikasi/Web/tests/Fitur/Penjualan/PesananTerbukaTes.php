@@ -60,7 +60,7 @@ function SiapkanRestoran(TestCase $tes): array
     $meja = Meja::query()->create(['IdOutlet' => $k['Outlet']->Id, 'Nama' => '7', 'Kapasitas' => 4]);
     $meja9 = Meja::query()->create(['IdOutlet' => $k['Outlet']->Id, 'Nama' => '9', 'Kapasitas' => 2]);
 
-    return $k + ['Bar' => $bar, 'Dapur' => $dapur, 'Kopi' => $kopi, 'Nasi' => $nasi, 'Meja' => $meja, 'Meja9' => $meja9];
+    return $k + ['Minuman' => $minuman, 'Makanan' => $makanan, 'Bar' => $bar, 'Dapur' => $dapur, 'Kopi' => $kopi, 'Nasi' => $nasi, 'Meja' => $meja, 'Meja9' => $meja9];
 }
 
 /**
@@ -272,6 +272,14 @@ describe('F-10b KDS', function (): void {
             ->assertJsonPath('Meja.0.Nama', '7')
             ->assertJsonPath('StasiunDapur.0.Nama', 'Bar')
             ->assertJsonPath('UuidStasiunBawaan', $k['Bar']->Uuid);
+        // Cetak struk bagian 4c: peta kategori → stasiun aktif untuk tiket dapur tercetak offline; stasiun diarsipkan
+        // tidak ikut (kategorinya dirutekan ke stasiun bawaan oleh perangkat).
+        $peta = collect($this->withToken($tokenKds)->getJson('/api/pos/v1/meja')->json('KategoriStasiun'))->pluck('UuidStasiun', 'UuidKategori')->all();
+        expect($peta)->toEqual([$k['Minuman']->Uuid => $k['Bar']->Uuid, $k['Makanan']->Uuid => $k['Dapur']->Uuid]);
+        StasiunDapur::query()->whereKey($k['Dapur']->Id)->update(['Status' => 'Diarsipkan']);
+        expect($this->withToken($tokenKds)->getJson('/api/pos/v1/meja')->json('KategoriStasiun'))
+            ->toBe([['UuidKategori' => $k['Minuman']->Uuid, 'UuidStasiun' => $k['Bar']->Uuid]]);
+        StasiunDapur::query()->whereKey($k['Dapur']->Id)->update(['Status' => 'Aktif']);
         $this->withToken($tokenKds)->getJson('/api/pos/v1/dapur/tiket')->assertOk()->assertJsonCount(2, 'Tiket');
         $respons = $this->withToken($tokenKds)->getJson('/api/pos/v1/dapur/tiket?stasiun[]='.$k['Dapur']->Uuid)->assertOk()
             ->assertJsonCount(1, 'Tiket')

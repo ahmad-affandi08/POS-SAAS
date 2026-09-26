@@ -136,6 +136,12 @@ class LayananStruk {
     return true;
   }
 
+  /// Cetak [dokumen] ke printer [profil] (null = printer struk perangkat ini); dipakai tiket dapur (bagian 4c).
+  Future<void> CetakDokumenKe(ProfilPrinter? profil, DokumenStruk dokumen) async {
+    final tujuan = profil ?? await _WajibProfil();
+    await PrinterStruk(pembuatTransport(tujuan), tujuan.lebar).Cetak(dokumen);
+  }
+
   /// Kirim pulsa laci (ESC p) lewat printer tanpa mencetak. Dipanggil `LayananBukaLaci` yang mencatat log-nya.
   Future<void> BukaLaci() async {
     final profil = await _WajibProfil();
