@@ -16,6 +16,7 @@ use App\Domain\Pelanggan\Model\Piutang;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -164,8 +165,11 @@ describe('F-12 pelunasan piutang', function (): void {
 
     it('umur piutang dikelompokkan per tanggal laporan dan bisa disaring', function (): void {
         $k = SiapkanPiutangDuaFaktur($this);
-        Piutang::query()->whereKey($k['P1']->Id)->update(['JatuhTempo' => BantuanPembelian::Hari(45)->toDateString()]);
-        Piutang::query()->whereKey($k['P2']->Id)->update(['JatuhTempo' => BantuanPembelian::Hari(95)->toDateString()]);
+        // Umur piutang tingkat usaha dihitung dari tanggal kalender zona tenant (tanpa jam tutup buku outlet), jadi
+        // jatuh tempo diatur dari tanggal kalender WIB agar test juga benar antara 00.00–04.00 WIB.
+        $hariIni = CarbonImmutable::now('Asia/Jakarta')->startOfDay();
+        Piutang::query()->whereKey($k['P1']->Id)->update(['JatuhTempo' => $hariIni->subDays(45)->toDateString()]);
+        Piutang::query()->whereKey($k['P2']->Id)->update(['JatuhTempo' => $hariIni->subDays(95)->toDateString()]);
 
         $this->get('/kelola/piutang')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->where('Piutang.Ringkasan.Kelompok.2.Kunci', 'Hari31Sampai60')->where('Piutang.Ringkasan.Kelompok.2.Sisa', '77000.00')

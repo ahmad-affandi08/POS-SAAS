@@ -18,20 +18,22 @@ import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 
-type AnggotaPin = { Uuid: string; Nama: string; Email: string; NamaPeran: string | null; PinDiatur: boolean };
+type AnggotaPin = { Uuid: string; Nama: string; Email: string | null; NamaPeran: string | null; PinDiatur: boolean };
 
 type PropsPin = { PinSayaDiatur: boolean; Anggota: AnggotaPin[] | null };
 
 const kolom: KolomTabel<AnggotaPin>[] = [
     {
         id: 'Nama',
-        accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email}`,
+        accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email ?? 'kasir'}`,
         header: 'Nama',
         meta: { label: 'Nama', prioritas: 'utama', wajib: true },
         cell: ({ row: { original: anggota } }) => (
             <>
                 <span className="block text-teks-utama">{anggota.Nama}</span>
-                <span className="block text-keterangan break-all text-teks-sekunder">{anggota.Email}</span>
+                <span className="block text-keterangan break-all text-teks-sekunder">
+                    {anggota.Email ?? 'Hanya kasir (masuk dengan PIN)'}
+                </span>
             </>
         ),
     },

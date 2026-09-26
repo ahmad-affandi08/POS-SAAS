@@ -25,9 +25,10 @@ use Illuminate\Support\Carbon;
  * @property int $Id
  * @property string $Uuid
  * @property string $Nama
- * @property string $Email
+ * @property string|null $Email null = karyawan hanya kasir (masuk aplikasi kasir dengan PIN, D-22)
  * @property string|null $NoHp
  * @property string $KataSandi
+ * @property bool $WajibGantiKataSandi kata sandi awal dibuat admin (D-22), wajib diganti saat pertama masuk
  * @property Carbon|null $EmailDiverifikasiPada
  * @property string|null $Rahasia2fa
  * @property list<string>|null $KodePemulihan2fa
@@ -58,6 +59,7 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
         'Rahasia2fa' => null,
         'KodePemulihan2fa' => null,
         'DuaFaktorAktifPada' => null,
+        'WajibGantiKataSandi' => false,
     ];
 
     public function getAuthPasswordName(): string
@@ -72,12 +74,18 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
 
     public function getEmailForPasswordReset(): string
     {
+        return (string) $this->Email;
+    }
+
+    public function routeNotificationForMail(): ?string
+    {
         return $this->Email;
     }
 
-    public function routeNotificationForMail(): string
+    /** D-22: karyawan tanpa email hanya bisa masuk aplikasi kasir dengan PIN, tidak ke back-office. */
+    public function CekHanyaKasir(): bool
     {
-        return $this->Email;
+        return $this->Email === null;
     }
 
     /** 2FA TOTP akun tenant (§20.2): aktif bila rahasia sudah dikonfirmasi dengan kode pertama. */
@@ -97,6 +105,7 @@ final class Pengguna extends ModelDasar implements KontrakDapatDiautentikasi, Ko
             'KodePemulihan2fa' => 'encrypted:array',
             'DuaFaktorAktifPada' => 'datetime',
             'EmailDiverifikasiPada' => 'datetime',
+            'WajibGantiKataSandi' => 'boolean',
         ];
     }
 }

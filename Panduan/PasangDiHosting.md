@@ -178,7 +178,7 @@ Kalau muncul "500 Server Error": `tail -50 storage/logs/laravel.log` lalu kirimk
 ## 11. Langkah pertama di konsol (`console.payou.id`)
 
 1. Masuk dengan akun Super Admin, aktifkan 2FA (wajib, aplikasi authenticator).
-2. **Tim internal:** undang minimal satu orang lagi. Tarif pajak dan harga paket memakai persetujuan dua orang (pengaju ≠ peninjau).
+2. **Tim internal → Tambah anggota:** tambahkan minimal satu orang lagi dengan kata sandi awal (tidak perlu email aktif; ia wajib menggantinya saat pertama masuk). Tarif pajak dan harga paket memakai persetujuan dua orang (pengaju ≠ peninjau).
 3. **Legal:** terbitkan Syarat & Ketentuan dan Kebijakan Privasi. Pendaftaran tenant baru tertutup sampai keduanya berlaku.
 4. **Katalog → Harga paket:** ajukan lalu tinjau harga. Paket baru tampil di `payou.id/harga` setelah harganya terbit.
 5. **Integrasi:** atur penyedia email (verifikasi email & reset kata sandi), CAPTCHA pendaftaran, lalu WhatsApp bila dipakai.

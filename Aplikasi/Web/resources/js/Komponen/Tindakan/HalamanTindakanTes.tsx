@@ -202,7 +202,11 @@ describe('Kelola/Pengguna: aksi baris & konfirmasi nonaktifkan (F-02, BR-02.1)',
         RenderDenganKueri(<HalamanDaftarPengguna {...props} />);
 
         expect(screen.queryByRole('button', { name: 'Aksi untuk Budi Santoso' })).toBeNull();
-        expect(screen.getByRole('link', { name: 'Undang pengguna' }).getAttribute('href')).toBe(
+        // D-22: tambah langsung sebagai aksi utama, undangan email tetap tersedia.
+        expect(screen.getByRole('link', { name: 'Tambah pengguna' }).getAttribute('href')).toBe(
+            '/kelola/pengguna/buat',
+        );
+        expect(screen.getByRole('link', { name: 'Undang lewat email' }).getAttribute('href')).toBe(
             '/kelola/pengguna/undangan/buat',
         );
     });

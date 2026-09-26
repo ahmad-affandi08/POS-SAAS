@@ -18,7 +18,7 @@ use App\Domain\Organisasi\Model\UndanganPengguna;
 final class DaftarAnggota
 {
     /**
-     * @return list<array{Uuid: string, Nama: string, Email: string, Pemilik: bool, UuidPeran: string|null, NamaPeran: string|null, SemuaOutlet: bool, UuidOutlet: list<string>, Status: string, DinonaktifkanPada: string|null}>
+     * @return list<array{Uuid: string, Nama: string, Email: string|null, Pemilik: bool, UuidPeran: string|null, NamaPeran: string|null, SemuaOutlet: bool, UuidOutlet: list<string>, Status: string, DinonaktifkanPada: string|null}>
      */
     public function AmbilAnggota(int $idTenant): array
     {

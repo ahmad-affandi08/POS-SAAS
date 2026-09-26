@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Pengelola;
 
 use App\Domain\Pengelola\TimInternal\Aksi\NonaktifkanAnggotaTim;
+use App\Domain\Pengelola\TimInternal\Aksi\TambahAnggotaTim;
 use App\Domain\Pengelola\TimInternal\Aksi\TetapkanPeran;
 use App\Domain\Pengelola\TimInternal\Aksi\UndangAnggotaTim;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -13,6 +14,7 @@ use App\Domain\Pengelola\TimInternal\Model\UndanganPengelola;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Perantara\Pengelola\SesiPengelola;
 use App\Http\Permintaan\Pengelola\NonaktifkanAnggotaTimPermintaan;
+use App\Http\Permintaan\Pengelola\TambahAnggotaTimPermintaan;
 use App\Http\Permintaan\Pengelola\TetapkanPeranPermintaan;
 use App\Http\Permintaan\Pengelola\UndangAnggotaTimPermintaan;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +23,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Manajemen tim internal: daftar, undang, tetapkan peran, nonaktifkan (P-01 langkah 3, 5, 6).
+ * Manajemen tim internal: daftar, tambah langsung (D-22) atau undang, tetapkan peran, nonaktifkan (P-01 langkah 3, 5, 6).
  */
 final class TimInternalKontroler extends Kontroler
 {
@@ -39,6 +41,7 @@ final class TimInternalKontroler extends Kontroler
                 'KodePeran' => $pengguna->AmbilKodePeran(),
                 'Aktif' => $pengguna->Aktif,
                 'DuaFaktorAktif' => $pengguna->CekDuaFaktorAktif(),
+                'WajibGantiKataSandi' => $pengguna->WajibGantiKataSandi,
                 'TerakhirMasukPada' => $pengguna->TerakhirMasukPada?->toIso8601String(),
                 'DinonaktifkanPada' => $pengguna->DinonaktifkanPada?->toIso8601String(),
             ]);
@@ -66,6 +69,22 @@ final class TimInternalKontroler extends Kontroler
             'Undangan' => $undangan,
             'Peran' => $peran,
         ]);
+    }
+
+    /** D-22: tambah anggota langsung dengan kata sandi awal (tanpa email), wajib diganti saat pertama masuk. */
+    public function Tambah(TambahAnggotaTimPermintaan $permintaan, TambahAnggotaTim $tambah): RedirectResponse
+    {
+        /** @var list<string> $kodePeran */
+        $kodePeran = $permintaan->array('KodePeran');
+        $pengguna = $tambah->Jalankan(
+            $this->Pelaku(),
+            $permintaan->string('Nama')->toString(),
+            $permintaan->string('Email')->toString(),
+            $permintaan->string('KataSandi')->toString(),
+            $kodePeran,
+        );
+
+        return back()->with('Kilat', "{$pengguna->Nama} ditambahkan. Berikan email & kata sandi awal kepadanya; ia wajib menggantinya dan mengaktifkan 2FA saat pertama masuk.");
     }
 
     public function Undang(UndangAnggotaTimPermintaan $permintaan, UndangAnggotaTim $undang): RedirectResponse

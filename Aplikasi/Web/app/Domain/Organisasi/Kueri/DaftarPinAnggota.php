@@ -28,7 +28,7 @@ final class DaftarPinAnggota
     }
 
     /**
-     * @return list<array{Uuid: string, Nama: string, Email: string, NamaPeran: string|null, PinDiatur: bool}>
+     * @return list<array{Uuid: string, Nama: string, Email: string|null, NamaPeran: string|null, PinDiatur: bool}>
      */
     public function Ambil(int $idTenant, int $idPelaku): array
     {

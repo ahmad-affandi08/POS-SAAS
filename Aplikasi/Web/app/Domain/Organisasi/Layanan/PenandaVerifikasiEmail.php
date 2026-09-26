@@ -13,7 +13,7 @@ final class PenandaVerifikasiEmail
 {
     public function BuatHash(Pengguna $pengguna): string
     {
-        return hash('sha256', mb_strtolower($pengguna->Email));
+        return hash('sha256', mb_strtolower((string) $pengguna->Email));
     }
 
     public function CekCocok(Pengguna $pengguna, string $hash): bool

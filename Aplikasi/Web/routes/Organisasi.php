@@ -58,6 +58,9 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
 
     // Pengguna & peran (F-02 langkah 3, §19.1).
     Route::get('/pengguna', [PenggunaKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PenggunaLihat))->name('kelola.pengguna.daftar');
+    // D-22: tambah pengguna langsung (email + kata sandi awal, atau karyawan kasir tanpa email dengan PIN).
+    Route::get('/pengguna/buat', [PenggunaKontroler::class, 'Buat'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.formulir');
+    Route::post('/pengguna', [PenggunaKontroler::class, 'Tambah'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.tambah');
     Route::get('/pengguna/undangan/buat', [PenggunaKontroler::class, 'BuatUndangan'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.formulir');
     Route::post('/pengguna/undangan', [PenggunaKontroler::class, 'Undang'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.buat');
     Route::post('/pengguna/undangan/{undangan}/batalkan', [PenggunaKontroler::class, 'BatalkanUndangan'])->middleware($izin(IzinTenant::PenggunaUndang))->name('kelola.pengguna.undangan.batalkan');

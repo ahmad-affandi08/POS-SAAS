@@ -14,6 +14,7 @@ use App\Http\Kontroler\Pengelola\Katalog\FiturKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
+use App\Http\Kontroler\Pengelola\KataSandiKontroler;
 use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
 use App\Http\Kontroler\Pengelola\Konten\SitusKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
@@ -35,6 +36,7 @@ use App\Http\Kontroler\Pengelola\TimInternalKontroler;
 use App\Http\Kontroler\Pengelola\UndanganKontroler;
 use App\Http\Perantara\Pengelola\PastikanPenggunaPengelola;
 use App\Http\Perantara\Pengelola\WajibDuaFaktor;
+use App\Http\Perantara\Pengelola\WajibGantiKataSandi;
 use App\Http\Perantara\Pengelola\WajibIzinPengelola;
 use Illuminate\Routing\Route as RouteLaravel;
 use Illuminate\Support\Facades\Route;
@@ -64,8 +66,12 @@ Route::middleware('guest:pengelola')->group(function (): void {
     Route::post('/undangan/{token}', [UndanganKontroler::class, 'Terima'])->name('pengelola.undangan.terima');
 });
 
-Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(function () use ($izin): void {
+Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGantiKataSandi::class])->group(function () use ($izin): void {
     Route::post('/keluar', [SesiKontroler::class, 'Keluar'])->name('pengelola.keluar');
+
+    // D-22: ganti kata sandi (wajib bila kata sandi awal dibuat Super Admin), bisa dibuka sebelum 2FA.
+    Route::get('/ganti-kata-sandi', [KataSandiKontroler::class, 'Tampilkan'])->name('pengelola.kata-sandi.ganti');
+    Route::post('/ganti-kata-sandi', [KataSandiKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('pengelola.kata-sandi.simpan');
 
     // Aktivasi & verifikasi 2FA dapat dibuka sebelum 2FA terverifikasi; menu lain tidak (AC P-01).
     Route::get('/dua-faktor/aktifkan', [DuaFaktorKontroler::class, 'TampilkanAktivasi'])->name('pengelola.dua-faktor.aktifkan');
@@ -80,6 +86,9 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class])->group(f
         Route::get('/tim-internal', [TimInternalKontroler::class, 'Daftar'])
             ->middleware($izin(IzinPengelola::TimAnggotaLihat))
             ->name('pengelola.tim-internal.daftar');
+        Route::post('/tim-internal', [TimInternalKontroler::class, 'Tambah'])
+            ->middleware($izin(IzinPengelola::TimAnggotaUndang))
+            ->name('pengelola.tim-internal.tambah');
         Route::post('/tim-internal/undangan', [TimInternalKontroler::class, 'Undang'])
             ->middleware($izin(IzinPengelola::TimAnggotaUndang))
             ->name('pengelola.tim-internal.undangan.buat');

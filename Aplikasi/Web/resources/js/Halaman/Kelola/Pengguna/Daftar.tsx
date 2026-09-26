@@ -29,7 +29,8 @@ import {
 type Anggota = {
     Uuid: string;
     Nama: string;
-    Email: string;
+    /** null = karyawan hanya kasir (masuk aplikasi kasir dengan PIN, D-22). */
+    Email: string | null;
     Pemilik: boolean;
     UuidPeran: string | null;
     NamaPeran: string | null;
@@ -65,7 +66,7 @@ function BuatKolom(namaOutlet: Map<string, string>, uuidSaya: string): KolomTabe
     return [
         {
             id: 'Nama',
-            accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email}`,
+            accessorFn: (anggota) => `${anggota.Nama} ${anggota.Email ?? 'kasir'}`,
             header: 'Nama',
             meta: { label: 'Nama', prioritas: 'utama', wajib: true },
             cell: ({ row: { original: anggota } }) => (
@@ -76,7 +77,9 @@ function BuatKolom(namaOutlet: Map<string, string>, uuidSaya: string): KolomTabe
                             <span className="font-normal text-teks-sekunder"> (Anda)</span>
                         ) : null}
                     </span>
-                    <span className="block text-keterangan break-all text-teks-sekunder">{anggota.Email}</span>
+                    <span className="block text-keterangan break-all text-teks-sekunder">
+                        {anggota.Email ?? 'Hanya kasir (masuk dengan PIN)'}
+                    </span>
                 </>
             ),
         },
@@ -212,11 +215,16 @@ export default function HalamanDaftarPengguna({
                     Kursi pengguna (anggota aktif + undangan menunggu):{' '}
                     <span className="font-semibold text-teks-utama">{FormatBatas(BatasPengguna, 'pengguna')}</span>
                 </p>
-                {bolehUndang && penuh ? <Tombol disabled>Undang pengguna</Tombol> : null}
+                {bolehUndang && penuh ? <Tombol disabled>Tambah pengguna</Tombol> : null}
                 {bolehUndang && !penuh ? (
-                    <Button asChild>
-                        <Link href="/kelola/pengguna/undangan/buat">Undang pengguna</Link>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline">
+                            <Link href="/kelola/pengguna/undangan/buat">Undang lewat email</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/kelola/pengguna/buat">Tambah pengguna</Link>
+                        </Button>
+                    </div>
                 ) : null}
             </div>
 
@@ -241,7 +249,7 @@ export default function HalamanDaftarPengguna({
                         alamat={`/kelola/pengguna/${pilihan.anggota.Uuid}/akses`}
                         metode="put"
                         awal={{
-                            Email: pilihan.anggota.Email,
+                            Email: pilihan.anggota.Email ?? '',
                             Peran: pilihan.anggota.UuidPeran ?? '',
                             SemuaOutlet: pilihan.anggota.SemuaOutlet,
                             Outlet: pilihan.anggota.UuidOutlet,
@@ -286,7 +294,7 @@ export default function HalamanDaftarPengguna({
 
                     return aksi.length === 0 ? null : <ItemAksiBaris aksi={aksi} />;
                 }}
-                kosong={{ judul: 'Belum ada pengguna lain. Undang pengguna agar tim bisa ikut bekerja.' }}
+                kosong={{ judul: 'Belum ada pengguna lain. Tambahkan kasir atau staf agar tim bisa ikut bekerja.' }}
             />
 
             <section className="flex flex-col gap-2" aria-labelledby="judul-undangan">

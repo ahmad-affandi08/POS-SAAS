@@ -46,7 +46,7 @@ final class KeamananAkunKontroler extends Kontroler
             }
 
             $aktivasi = [
-                'QrSvg' => $duaFaktor->BuatQrSvg($duaFaktor->BuatUrlOtp($pengguna->Email, $rahasia)),
+                'QrSvg' => $duaFaktor->BuatQrSvg($duaFaktor->BuatUrlOtp((string) $pengguna->Email, $rahasia)),
                 'Rahasia' => trim(chunk_split($rahasia, 4, ' ')),
             ];
         }

@@ -37,7 +37,10 @@ final class PemilikTenant
             ->where('Status', StatusKeanggotaan::Aktif->value);
 
         foreach (Pengguna::query()->whereIn('Id', $pemilik)->lazyById(200, 'Id') as $pengguna) {
-            yield ['Id' => $pengguna->Id, 'Nama' => $pengguna->Nama, 'Email' => $pengguna->Email];
+            // Pemilik selalu memakai email (D-22: hanya karyawan kasir yang boleh tanpa email).
+            if ($pengguna->Email !== null) {
+                yield ['Id' => $pengguna->Id, 'Nama' => $pengguna->Nama, 'Email' => $pengguna->Email];
+            }
         }
     }
 }

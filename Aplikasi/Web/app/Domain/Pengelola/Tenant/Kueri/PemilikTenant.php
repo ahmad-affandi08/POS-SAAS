@@ -25,7 +25,7 @@ final class PemilikTenant
             ->where('Status', StatusKeanggotaan::Aktif->value)
             ->orderBy('Id')
             ->get()
-            ->map(fn (TenantPengguna $anggota): array => ['Nama' => $anggota->Pengguna->Nama, 'Email' => $anggota->Pengguna->Email])
+            ->map(fn (TenantPengguna $anggota): array => ['Nama' => $anggota->Pengguna->Nama, 'Email' => (string) $anggota->Pengguna->Email])
             ->all());
     }
 }

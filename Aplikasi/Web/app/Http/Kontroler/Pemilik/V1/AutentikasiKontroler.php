@@ -130,6 +130,11 @@ final class AutentikasiKontroler extends Kontroler
             throw new PelanggaranAturanBisnis('EmailBelumDiverifikasi', 'Email belum diverifikasi. Buka tautan verifikasi di email Anda, lalu masuk lagi.', 'Email', 403);
         }
 
+        // D-22: kata sandi awal dari admin harus diganti dulu di dashboard web.
+        if ($pengguna->WajibGantiKataSandi) {
+            throw new PelanggaranAturanBisnis('WajibGantiKataSandi', 'Ganti kata sandi awal dari admin usaha Anda di dashboard web, lalu masuk lagi.', 'Email', 403);
+        }
+
         if ($this->keanggotaan->AmbilIdTenant($pengguna->Id) === []) {
             throw new PelanggaranAturanBisnis('TanpaTenantAktif', 'Akun ini belum menjadi anggota aktif usaha mana pun.', 'Email', 403);
         }

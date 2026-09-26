@@ -85,5 +85,5 @@ export type PropsBuatOutlet = { Merek: Pilihan[]; Kota: Kota[]; BatasOutlet: Bat
 /** Props halaman penuh "Buat peran". */
 export type PropsBuatPeran = { DaftarIzin: IzinPeran[] };
 
-/** Props halaman penuh "Undang pengguna". */
+/** Props halaman penuh "Undang pengguna" dan "Tambah pengguna" (D-22). */
 export type PropsBuatUndangan = { Peran: OpsiPeranPengguna[]; Outlet: OpsiOutletPengguna[]; BatasPengguna: Batas };

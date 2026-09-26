@@ -93,7 +93,7 @@ final class TerimaUndanganAnggota
     private function TentukanPengguna(string $email, ?Pengguna $akunLama, ?Pengguna $penggunaMasuk, ?DataAkunBaru $akunBaru): Pengguna
     {
         if ($penggunaMasuk !== null) {
-            if (mb_strtolower($penggunaMasuk->Email) !== $email) {
+            if (mb_strtolower((string) $penggunaMasuk->Email) !== $email) {
                 throw new PelanggaranAturanBisnis('EmailBerbeda', "Undangan ini untuk {$email}. Keluar, lalu masuk dengan email tersebut.");
             }
 

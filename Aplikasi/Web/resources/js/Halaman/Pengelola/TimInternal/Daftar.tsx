@@ -22,6 +22,7 @@ type Anggota = {
     KodePeran: string[];
     Aktif: boolean;
     DuaFaktorAktif: boolean;
+    WajibGantiKataSandi: boolean;
     TerakhirMasukPada: string | null;
     DinonaktifkanPada: string | null;
 };
@@ -69,6 +70,9 @@ function BuatKolom(namaPeran: Map<string, string>): KolomTabel<Anggota>[] {
                     ) : (
                         <LabelStatus jenis="netral" teks="Nonaktif" />
                     )}
+                    {anggota.WajibGantiKataSandi ? (
+                        <LabelStatus jenis="peringatan" teks="Belum mengganti kata sandi awal" />
+                    ) : null}
                     {anggota.DuaFaktorAktif ? null : (
                         <LabelStatus jenis="peringatan" teks="Verifikasi dua langkah belum aktif" />
                     )}
@@ -94,7 +98,7 @@ function BuatKolom(namaPeran: Map<string, string>): KolomTabel<Anggota>[] {
 export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const { props } = usePage<PropsBersamaPengelola>();
     const pengguna = props.Pengguna;
-    const [formUndanganTerbuka, AturFormUndanganTerbuka] = useState(false);
+    const [formTerbuka, AturFormTerbuka] = useState<'tambah' | 'undang' | null>(null);
     const [pilihan, AturPilihan] = useState<Pilihan>(null);
     const namaPeran = new Map(Peran.map((peran) => [peran.Kode, peran.Nama]));
     const opsiPeran = Peran.map((peran) => ({ nilai: peran.Kode, label: peran.Nama }));
@@ -109,12 +113,20 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
             judul="Tim internal"
             aksi={
                 PunyaIzin(pengguna, IzinPengelola.TimAnggotaUndang) ? (
-                    <Tombol onClick={() => AturFormUndanganTerbuka(true)}>Undang anggota</Tombol>
+                    <div className="flex flex-wrap gap-2">
+                        <Tombol varian="sekunder" onClick={() => AturFormTerbuka('undang')}>
+                            Undang lewat email
+                        </Tombol>
+                        <Tombol onClick={() => AturFormTerbuka('tambah')}>Tambah anggota</Tombol>
+                    </div>
                 ) : null
             }
         >
-            {formUndanganTerbuka ? (
-                <FormUndangan opsiPeran={opsiPeran} saatSelesai={() => AturFormUndanganTerbuka(false)} />
+            {formTerbuka === 'tambah' ? (
+                <FormTambah opsiPeran={opsiPeran} saatSelesai={() => AturFormTerbuka(null)} />
+            ) : null}
+            {formTerbuka === 'undang' ? (
+                <FormUndangan opsiPeran={opsiPeran} saatSelesai={() => AturFormTerbuka(null)} />
             ) : null}
 
             {pilihan?.jenis === 'peran' ? (
@@ -177,7 +189,7 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                               ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada anggota tim internal. Undang anggota pertama.' }}
+                kosong={{ judul: 'Belum ada anggota tim internal. Tambahkan anggota pertama.' }}
             />
 
             <section className="flex flex-col gap-2">
@@ -208,6 +220,81 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
 }
 
 type Opsi = { nilai: string; label: string }[];
+
+/** D-22: tambah anggota langsung dengan kata sandi awal (tanpa email); wajib diganti saat pertama masuk. */
+function FormTambah({ opsiPeran, saatSelesai }: { opsiPeran: Opsi; saatSelesai: () => void }) {
+    const formulir = useForm<{ Nama: string; Email: string; KataSandi: string; KodePeran: string[] }>({
+        Nama: '',
+        Email: '',
+        KataSandi: '',
+        KodePeran: [],
+    });
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        formulir.post('/tim-internal', { preserveScroll: true, onSuccess: saatSelesai });
+    };
+
+    return (
+        <DialogFormulir
+            judul="Tambah anggota tim"
+            keterangan={
+                <p>
+                    Berikan email dan kata sandi awal kepada anggota secara langsung. Saat pertama masuk ia wajib
+                    mengganti kata sandi dan mengaktifkan verifikasi dua langkah.
+                </p>
+            }
+            saatTutup={saatSelesai}
+        >
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangTeks
+                    label="Nama lengkap"
+                    nilai={formulir.data.Nama}
+                    saatBerubah={(nilai) => formulir.setData('Nama', nilai)}
+                    galat={formulir.errors.Nama}
+                    maxLength={150}
+                    autoFocus
+                    required
+                />
+                <BidangTeks
+                    label="Email (untuk masuk)"
+                    jenis="email"
+                    nilai={formulir.data.Email}
+                    saatBerubah={(nilai) => formulir.setData('Email', nilai)}
+                    galat={formulir.errors.Email}
+                    maxLength={191}
+                    required
+                />
+                <BidangTeks
+                    label="Kata sandi awal"
+                    jenis="password"
+                    keterangan="Minimal 12 karakter, berisi huruf dan angka. Wajib diganti anggota saat pertama masuk."
+                    nilai={formulir.data.KataSandi}
+                    saatBerubah={(nilai) => formulir.setData('KataSandi', nilai)}
+                    galat={formulir.errors.KataSandi}
+                    autoComplete="new-password"
+                    required
+                />
+                <GrupCentang
+                    legenda="Peran"
+                    opsi={opsiPeran}
+                    terpilih={formulir.data.KodePeran}
+                    saatBerubah={(terpilih) => formulir.setData('KodePeran', terpilih)}
+                    galat={formulir.errors.KodePeran}
+                    required
+                />
+                <div className="flex flex-wrap gap-2">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Tambah anggota
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatSelesai}>
+                        Batal
+                    </Tombol>
+                </div>
+            </form>
+        </DialogFormulir>
+    );
+}
 
 function FormUndangan({ opsiPeran, saatSelesai }: { opsiPeran: Opsi; saatSelesai: () => void }) {
     const formulir = useForm<{ Email: string; KodePeran: string[] }>({ Email: '', KodePeran: [] });

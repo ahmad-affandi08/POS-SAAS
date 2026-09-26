@@ -76,7 +76,7 @@ final class LanggananKontroler extends Kontroler
     public function UnggahBukti(string $tagihan, UnggahBuktiTransferPermintaan $permintaan, UnggahBuktiTransfer $unggah): RedirectResponse
     {
         $pengguna = $this->PenggunaMasuk();
-        $unggah->Jalankan($tagihan, $permintaan->AmbilData(), $pengguna->Id, $pengguna->Nama, $pengguna->Email);
+        $unggah->Jalankan($tagihan, $permintaan->AmbilData(), $pengguna->Id, $pengguna->Nama, (string) $pengguna->Email);
 
         return back()->with('Kilat', 'Bukti transfer terkirim. Kami memverifikasinya pada hari kerja dan mengabari Anda lewat email.');
     }

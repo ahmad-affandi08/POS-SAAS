@@ -26,7 +26,7 @@ final class ProfilPemilik
         $pemilik = $this->keanggotaan->AmbilTandaPemilik($pengguna->Id);
 
         return [
-            'Pengguna' => ['Uuid' => $pengguna->Uuid, 'Nama' => $pengguna->Nama, 'Email' => $pengguna->Email],
+            'Pengguna' => ['Uuid' => $pengguna->Uuid, 'Nama' => $pengguna->Nama, 'Email' => (string) $pengguna->Email],
             'Tenant' => array_map(fn (array $t): array => [
                 'Uuid' => $t['Uuid'],
                 'Nama' => $t['Nama'],

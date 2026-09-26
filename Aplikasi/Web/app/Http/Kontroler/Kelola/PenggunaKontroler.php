@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Organisasi\Aksi\BatalkanUndangan;
+use App\Domain\Organisasi\Aksi\TambahPengguna;
 use App\Domain\Organisasi\Aksi\UbahAksesAnggota;
 use App\Domain\Organisasi\Aksi\UbahStatusAnggota;
 use App\Domain\Organisasi\Aksi\UndangPengguna;
@@ -21,13 +22,15 @@ use App\Domain\Organisasi\Model\UndanganPengguna;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\AksesAnggotaPermintaan;
+use App\Http\Permintaan\Kelola\TambahPenggunaPermintaan;
 use App\Http\Permintaan\Kelola\UndangPenggunaPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Pengguna tenant: daftar anggota, undangan, peran & akses outlet, nonaktif/aktif (F-02 langkah 3, BR-02.1).
+ * Pengguna tenant: daftar anggota, tambah langsung (D-22) atau undangan, peran & akses outlet, nonaktif/aktif
+ * (F-02 langkah 3, BR-02.1).
  * Anggota dicari lewat `Uuid` pengguna di dalam tenant aktif; pengguna yang bukan anggota tenant ini → 404.
  */
 final class PenggunaKontroler extends DasarKelolaKontroler
@@ -44,6 +47,29 @@ final class PenggunaKontroler extends DasarKelolaKontroler
             'BatasPengguna' => $batasPaket->AmbilRingkasan($idTenant, 'BatasPengguna', $pemakaian->HitungPengguna($idTenant)),
             'UuidSaya' => $this->Pelaku()->Uuid,
         ]);
+    }
+
+    /** D-22: halaman "Tambah pengguna" (langsung, tanpa undangan email); kursi paket tetap ditampilkan. */
+    public function Buat(PemakaianBatasOrganisasi $pemakaian, PastikanBatasPaket $batasPaket): Response
+    {
+        $idTenant = $this->IdTenant();
+
+        return Inertia::render('Kelola/Pengguna/Tambah', [
+            'Peran' => self::AmbilOpsiPeran(),
+            'Outlet' => self::AmbilOpsiOutlet(),
+            'BatasPengguna' => $batasPaket->AmbilRingkasan($idTenant, 'BatasPengguna', $pemakaian->HitungPengguna($idTenant)),
+        ]);
+    }
+
+    public function Tambah(TambahPenggunaPermintaan $permintaan, TambahPengguna $tambah): RedirectResponse
+    {
+        $data = $permintaan->AmbilPenggunaBaru();
+        $pengguna = $tambah->Jalankan($this->Pelaku(), $data, $permintaan->AmbilAkses());
+        $pesan = $pengguna->CekHanyaKasir()
+            ? "{$pengguna->Nama} ditambahkan sebagai karyawan kasir. Ia masuk aplikasi kasir dengan PIN yang Anda buat."
+            : "{$pengguna->Nama} ditambahkan. Berikan email & kata sandi awal kepadanya; ia wajib menggantinya saat pertama masuk.";
+
+        return redirect()->route('kelola.pengguna.daftar')->with('Kilat', $pesan);
     }
 
     /** Halaman penuh "Undang pengguna" (pola sama dengan Tambah produk); kursi paket tetap ditampilkan. */

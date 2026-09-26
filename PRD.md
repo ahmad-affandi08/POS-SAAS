@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.10 |
+| Versi | 2.11 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.11 | **D-22** (dari pemilik produk): pengguna bisa **ditambah langsung** tanpa undangan email, di konsol (P-01) dan tenant (F-02). Kata sandi awal diketik admin dan **wajib diganti saat pertama masuk** (`WajibGantiKataSandi`, sebelum 2FA/back-office; aplikasi Pemilik menolak masuk sampai diganti). Karyawan tenant **tanpa email** cukup nama + PIN (hanya aplikasi kasir; `Pengguna.Email` nullable). Undangan email tetap sebagai pilihan kedua. |
 | 2.10 | **D-21** (dari pemilik produk): situs pemasaran `payou.id` dibangun dengan **React** (Inertia, bundle terpisah `Situs.tsx`, meta SEO dirender server) dan **sebagian besar isinya diatur dari konsol**: pengaturan situs (identitas, logo, SEO, kontak & WhatsApp, pengumuman, menu atas, kolom kaki, media sosial, tautan unduh), halaman berblok 14 jenis blok (draf → pratinjau bertanda tangan → terbit, sembunyikan, hapus), pustaka gambar, harga otomatis dari katalog P-04, peta situs `/peta-situs`, `X-Robots-Tag: noindex` di domain tenant; izin `situs.lihat`/`situs.kelola`; §13.9 baru. |
 | 2.09 | **D-20** (keputusan pemilik produk): pembagian domain `payou.id` (pemasaran), `dashboard.payou.id` (tenant), `consol.payou.id` (pengelola) lewat `.env` (`DOMAIN_PEMASARAN`, `DOMAIN_TENANT`, `PENGELOLA_DOMAIN`, `APP_URL`); perantara `ArahkanDomainAplikasi` mengalihkan rute non-pemasaran ke domain tenant; §13.6, §13.8 diperbarui. |
 | 2.08 | Rincian **F-16d bagian 1** (CRM-04 deposit pelanggan): isi deposit di kasir lewat outbox `Deposit.Isi` (offline, nomor `DEP/…`, J-16.1, ikut kas shift, bukti isi), buku `MutasiDeposit` + cache `Pelanggan.SaldoDeposit`, bayar dengan metode Deposit (saldo online, void mengembalikan, retur boleh ke deposit), tarik/sesuaikan/batal isi di back-office (izin `pelanggan.deposit.kelola`), fitur paket `pelanggan.deposit`. |
@@ -544,7 +545,7 @@ flowchart LR
 **Langkah:**
 1. Super Admin pertama dibuat lewat perintah server `php artisan pengelola:buat-super-admin` (tidak ada halaman daftar publik untuk pengelola).
 2. Sistem membuat peran internal default (§19.3): Super Admin, Keuangan, Dukungan, Teknis, Konten & Legal, Mitra & Penjualan, Analis.
-3. Super Admin mengundang anggota tim lewat email. Undangan berlaku 48 jam.
+3. Super Admin **menambah anggota langsung** (nama, email, kata sandi awal, peran; D-22) atau mengundang lewat email (berlaku 48 jam). Anggota yang ditambah langsung wajib mengganti kata sandi awal saat pertama masuk, sebelum aktivasi 2FA.
 4. Anggota tim membuat kata sandi dan **wajib mengaktifkan 2FA** sebelum bisa membuka menu apa pun.
 5. Super Admin menetapkan peran. Satu orang boleh punya lebih dari satu peran.
 6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.
@@ -1038,7 +1039,7 @@ Tenant 1─* User *─* Outlet (penugasan) + Role per outlet
 **Langkah:**
 1. Tambah outlet (nama, kode 3–5 huruf untuk penomoran dokumen, alamat, zona waktu, template sektor, jam operasional).
 2. Tambah gudang/lokasi stok per outlet (default: 1 lokasi "Toko"). Bisa tambah "Gudang Belakang", "Dapur", "Bar".
-3. Undang user via email/WA dengan role & outlet yang ditugaskan.
+3. **Tambah pengguna langsung** dengan peran & outlet yang ditugaskan (D-22): karyawan kasir cukup nama + PIN tanpa email (hanya masuk aplikasi kasir); pengguna dengan email diberi kata sandi awal yang wajib diganti saat pertama masuk. Email yang sudah punya akun PAYOU tetap lewat undangan email (persetujuan pemilik akun). Undangan via email tetap tersedia sebagai pilihan.
 4. Kasir mendapat **PIN 6 digit** untuk login cepat di perangkat kasir bersama.
 5. **Aktivasi perangkat**: di back-office, admin membuat perangkat (tipe: Kasir / KDS / Gudang / Pelayan) dan mendapat **kode aktivasi 8 karakter + QR** (berlaku 15 menit). Di aplikasi Flutter, pengguna memindai QR atau mengetik kode. Server mengembalikan **device token** (disimpan di secure storage) dan kode perangkat `Perangkat.Kode` (misal `JKT1-K02`) untuk penomoran offline. Satu instalasi aplikasi = satu perangkat terdaftar.
 
@@ -4385,6 +4386,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-18 | Dari pemilik produk: back-office memakai **ilustrasi keadaan kosong PAYOU** (Produk, Penjualan, Stok, Pembelian, Laporan, Akuntansi, Pelanggan, Promo, Outlet, Shift) pada daftar utama yang belum berisi data, menggantikan aturan "tampilan kosong cukup ikon sederhana". Keadaan kosong tidak mengulang tombol tambah yang sudah ada di bilah alat (cukup judul yang menjelaskan langkah berikutnya; teks untuk pengguna tanpa izin tetap). Ilustrasi adalah aset merek (boleh gradien, aksen amber `#FBBF24`, dan latar bentuk lembut pucat di dalam berkas SVG, seperti logo D-15; pengecualian eksplisit atas larangan blob §17.6 hanya untuk aset ini), bukan gaya UI: komponen tetap memakai token. Satu ilustrasi per halaman (tabel utama). Hasil cari/saring kosong dan tabel di halaman detail tetap tanpa ilustrasi | 26/09/2026 | §17.6, `Komponen/Katalog/KeadaanKosong.tsx`, `Spesifikasi/Merek/KeadaanKosong/`, `.claude/rules/FrontendWeb.md` |
 | D-20 | Dari pemilik produk (v2.09): **tiga domain produksi** diatur lewat `.env`: `payou.id` untuk pemasaran/landing page, `dashboard.payou.id` untuk tenant (back-office, API aplikasi, struk digital, pesan sendiri), `consol.payou.id` untuk Platform Pengelola (§13.8). |
 | D-21 | Dari pemilik produk (v2.10): situs pemasaran `payou.id` memakai **React** (bukan Blade) dan **sebanyak mungkin diatur dari konsol**: pengaturan situs, halaman berblok dengan draf/pratinjau/terbit, pustaka gambar, harga otomatis dari katalog (§13.9). Agent menetapkan detail: peta situs di `/peta-situs` dan `robots.txt` statis karena konvensi URL D-06 (`robots.txt`/`sitemap.xml` belum ada di pengecualian §13.7.4; usulan pengecualian menunggu pemilik produk). |
+| D-22 | Dari pemilik produk (v2.11): seperti aplikasi kasir lain, admin **menambah pengguna langsung** tanpa bergantung email aktif, di konsol dan tenant. Kata sandi awal **diketik admin** dan wajib diganti saat pertama masuk; karyawan kasir **boleh tanpa email** (nama + PIN, hanya aplikasi kasir); undangan email **dipertahankan** sebagai pilihan kedua. Agent menetapkan: email yang sudah punya akun PAYOU hanya lewat undangan (akun global lintas usaha, BR-00.1), email yang diisi admin dianggap terverifikasi. |
 | D-19 | Dari pemilik produk (v2.06): gerbang pembayaran QRIS dinamis memakai **akun merchant milik tiap toko** sehingga dana pelanggan langsung masuk ke rekening toko; platform hanya mengatur penyedia yang boleh dipilih (katalog) tanpa pernah melihat kredensial toko. Opsi sub-merchant menyusul. |
 
 

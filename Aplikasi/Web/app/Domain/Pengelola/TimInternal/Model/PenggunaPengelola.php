@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $Nama
  * @property string $Email
  * @property string $KataSandi
+ * @property bool $WajibGantiKataSandi kata sandi awal dibuat Super Admin (D-22), wajib diganti saat pertama masuk
  * @property string|null $Rahasia2fa
  * @property list<string>|null $KodePemulihan2fa
  * @property Carbon|null $DuaFaktorAktifPada
@@ -55,6 +56,7 @@ final class PenggunaPengelola extends ModelDasar implements KontrakDapatDiautent
         'KodePemulihan2fa' => null,
         'DuaFaktorAktifPada' => null,
         'Aktif' => true,
+        'WajibGantiKataSandi' => false,
         'DinonaktifkanPada' => null,
         'TerakhirMasukPada' => null,
     ];
@@ -152,6 +154,7 @@ final class PenggunaPengelola extends ModelDasar implements KontrakDapatDiautent
             'KodePemulihan2fa' => 'encrypted:array',
             'DuaFaktorAktifPada' => 'datetime',
             'Aktif' => 'boolean',
+            'WajibGantiKataSandi' => 'boolean',
             'DinonaktifkanPada' => 'datetime',
             'TerakhirMasukPada' => 'datetime',
         ];

@@ -9,7 +9,7 @@
 **Langkah:**
 1. Super Admin pertama dibuat lewat perintah server `php artisan pengelola:buat-super-admin` (tidak ada halaman daftar publik untuk pengelola).
 2. Sistem membuat peran internal default (§19.3): Super Admin, Keuangan, Dukungan, Teknis, Konten & Legal, Mitra & Penjualan, Analis.
-3. Super Admin mengundang anggota tim lewat email. Undangan berlaku 48 jam.
+3. Super Admin **menambah anggota langsung** (nama, email, kata sandi awal, peran; D-22) atau mengundang lewat email (berlaku 48 jam). Anggota yang ditambah langsung wajib mengganti kata sandi awal saat pertama masuk, sebelum aktivasi 2FA.
 4. Anggota tim membuat kata sandi dan **wajib mengaktifkan 2FA** sebelum bisa membuka menu apa pun.
 5. Super Admin menetapkan peran. Satu orang boleh punya lebih dari satu peran.
 6. Anggota yang keluar dinonaktifkan (tidak dihapus): sesi langsung diputus, token dicabut, riwayat audit tetap ada.

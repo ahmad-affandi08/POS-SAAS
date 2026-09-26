@@ -94,7 +94,9 @@ final class DaftarTenant
             ->get();
 
         foreach ($anggota as $baris) {
-            $hasil[$baris->IdTenant] ??= $baris->Pengguna->Email;
+            if ($baris->Pengguna->Email !== null) {
+                $hasil[$baris->IdTenant] ??= $baris->Pengguna->Email;
+            }
         }
 
         return $hasil;

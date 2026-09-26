@@ -6,6 +6,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Situs\Layanan\AturanSlugSitus;
+use App\Http\Kontroler\Autentikasi\KataSandiKontroler;
 use App\Http\Kontroler\Autentikasi\KeamananAkunKontroler;
 use App\Http\Kontroler\Autentikasi\LupaKataSandiKontroler;
 use App\Http\Kontroler\Autentikasi\PendaftaranKontroler;
@@ -31,6 +32,7 @@ use App\Http\Perantara\Pengelola\CatatAuditPengelola;
 use App\Http\Perantara\Pengelola\TolakDomainPengelola;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibDuaFaktorTenant;
+use App\Http\Perantara\WajibGantiKataSandiTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use App\Http\Perantara\WajibPersetujuanLegal;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -103,13 +105,16 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
     // Auth tenant: AuthenticateSession mengakhiri sesi lain setelah kata sandi diatur ulang (BR-00.9).
     Route::middleware(['auth:web', AuthenticateSession::class])->group(function () use ($izin): void {
         Route::post('/keluar', [SesiKontroler::class, 'Keluar'])->name('keluar');
-        Route::get('/pilih-tenant', [SesiKontroler::class, 'TampilkanPilihTenant'])->name('pilih-tenant');
-        Route::post('/pilih-tenant', [SesiKontroler::class, 'PilihTenant'])->name('pilih-tenant.kirim');
+        // D-22: ganti kata sandi (wajib bila kata sandi awal dibuat admin tenant) sebelum memilih usaha.
+        Route::get('/ganti-kata-sandi', [KataSandiKontroler::class, 'Tampilkan'])->name('kata-sandi.ganti');
+        Route::post('/ganti-kata-sandi', [KataSandiKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('kata-sandi.simpan');
+        Route::get('/pilih-tenant', [SesiKontroler::class, 'TampilkanPilihTenant'])->middleware(WajibGantiKataSandiTenant::class)->name('pilih-tenant');
+        Route::post('/pilih-tenant', [SesiKontroler::class, 'PilihTenant'])->middleware(WajibGantiKataSandiTenant::class)->name('pilih-tenant.kirim');
         Route::post('/verifikasi-email/kirim-ulang', [VerifikasiEmailKontroler::class, 'KirimUlang'])->name('verifikasi-email.kirim-ulang');
 
         // Auth tenant: persetujuan ulang dokumen legal (BR-P06.5) lalu 2FA wajib (BR-00.8), setelah tenant aktif diketahui.
         // F-00: saat langganan Ditangguhkan, perubahan data ditolak kecuali langganan, keamanan, bantuan, dan legal.
-        Route::middleware([IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class])->prefix('kelola')->group(function () use ($izin): void {
+        Route::middleware([WajibGantiKataSandiTenant::class, IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class])->prefix('kelola')->group(function () use ($izin): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {

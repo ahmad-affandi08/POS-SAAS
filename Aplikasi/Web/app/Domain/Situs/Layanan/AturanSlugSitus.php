@@ -15,7 +15,7 @@ final class AturanSlugSitus
     public const TERLARANG = [
         'masuk', 'daftar', 'kelola', 'legal', 's', 'api', 'webhook', 'sehat', 'undangan', 'verifikasi-email',
         'lupa-kata-sandi', 'atur-ulang-kata-sandi', 'keluar', 'pilih-tenant', 'kompatibilitas-perangkat', 'gambar-situs',
-        'pratinjau-situs', 'peta-situs', 'build', 'storage', 'meja', 'up', 'unduh-berkas',
+        'pratinjau-situs', 'peta-situs', 'ganti-kata-sandi', 'build', 'storage', 'meja', 'up', 'unduh-berkas',
     ];
 
     /** Pesan galat, atau null bila slug boleh dipakai. */
