@@ -38,6 +38,8 @@ import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
+import '../Domain/Penjualan/LayananQrisDinamis.dart';
+import '../Domain/Struk/LayananKirimStruk.dart';
 import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
@@ -466,6 +468,28 @@ final penyediaLayananPesananMeja = Provider<LayananPesananMeja>(
     repositoriMeja: ref.watch(penyediaRepositoriPesananMeja),
     jam: ref.watch(penyediaJam),
   ),
+);
+
+/// QRIS dinamis lewat gerbang pembayaran aktif (v2.05, wajib online).
+final penyediaLayananQrisDinamis = Provider<LayananQrisDinamis>(
+  (ref) => LayananQrisDinamis(klien: ref.watch(penyediaKlienPos)),
+);
+
+/// Struk digital lewat WhatsApp/email (v2.05, wajib online).
+final penyediaLayananKirimStruk = Provider<LayananKirimStruk>(
+  (ref) => LayananKirimStruk(klien: ref.watch(penyediaKlienPos)),
+);
+
+/// Isi QRIS dinamis yang sedang menunggu dibayar, untuk ditampilkan juga di layar pelanggan (null = tidak ada).
+class PengaturQrisLayarPelanggan extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void Atur(String? isiQr) => state = isiQr;
+}
+
+final penyediaQrisLayarPelanggan = NotifierProvider<PengaturQrisLayarPelanggan, String?>(
+  PengaturQrisLayarPelanggan.new,
 );
 
 /// F-17 self-order (v2.02): pesanan QR meja yang menunggu konfirmasi staf.

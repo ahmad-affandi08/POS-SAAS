@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
@@ -15,6 +16,8 @@ import '../../Domain/Sesi/StafLokal.dart';
 import '../LembarMutasiKas.dart';
 import '../Struk/BagianCetakStruk.dart';
 import '../Struk/BagianTiketDapur.dart';
+import '../Struk/TombolKirimStruk.dart';
+import 'DialogQrisDinamis.dart';
 import 'PanelKeranjang.dart';
 
 /// Gambar QRIS statis metode pembayaran (diunduh sekali per sesi aplikasi).
@@ -26,6 +29,7 @@ final penyediaGambarQris = FutureProvider.family<Uint8List, String>(
 String AmbilLabelJenisMetode(String jenis) => switch (jenis) {
   JenisMetodeBayar.tunai => 'Tunai',
   JenisMetodeBayar.qrisStatis => 'QRIS',
+  JenisMetodeBayar.qrisDinamis => 'QRIS dinamis',
   JenisMetodeBayar.edc => 'Kartu (EDC)',
   JenisMetodeBayar.transfer => 'Transfer',
   JenisMetodeBayar.ewallet => 'E-wallet',
@@ -173,6 +177,10 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       setState(() => _galat = 'Pembayaran ${metode.Nama} tidak boleh melebihi sisa ${sisa.FormatRupiah()}.');
       return;
     }
+    if (metode.Jenis == JenisMetodeBayar.qrisDinamis) {
+      await _BayarQrisDinamis(k, metode, nominal, sisa);
+      return;
+    }
     final entri = PembayaranMasukan(metode: metode, jumlah: nominal, referensi: _SusunReferensi(metode));
     if (nominal.Bandingkan(sisa) < 0) {
       // Split (BR-08.1): simpan bagian ini, lanjutkan dengan metode lain.
@@ -185,6 +193,30 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       return;
     }
     await _Selesaikan(k, [..._entri, entri]);
+  }
+
+  /// v2.05: QRIS dinamis. Pembayaran baru dicatat setelah server menyatakan tagihan lunas; Uuid tagihan menjadi
+  /// referensi. Dana sudah masuk sehingga entri langsung disimpan di daftar (tidak bisa dihapus kasir) sebelum
+  /// penjualan diselesaikan: bila penyimpanan gagal, kasir cukup menekan "Selesaikan pembayaran" lagi tanpa QRIS baru.
+  Future<void> _BayarQrisDinamis(KonteksPenjualan k, BarisMetodePembayaran metode, Uang nominal, Uang sisa) async {
+    // Tanpa keterangan: nama pelanggan/label meja tidak dikirim ke gerbang pembayaran (data pribadi).
+    final tagihan = await showDialog<TagihanQrisPos>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => DialogQrisDinamis(metode: metode, jumlah: nominal),
+    );
+    if (tagihan == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _entri.add(PembayaranMasukan(metode: metode, jumlah: nominal, referensi: tagihan.uuid));
+      _metode = null;
+      _nominal.clear();
+      _galat = null;
+    });
+    if (nominal.Bandingkan(sisa) >= 0) {
+      await _Selesaikan(k, List.of(_entri));
+    }
   }
 
   /// BR-12.1: tempo di luar limit/lewat jatuh tempo → PIN penyetuju ber-izin `penjualan.tempo.setujui` (kasir
@@ -490,6 +522,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     final tempoDipakai = _entri.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo);
     final nominal = _AmbilNominal();
     final melunasi = nominal != null && nominal.Bandingkan(sisa) >= 0;
+    // Semua tagihan sudah tertutup (misal QRIS dinamis lunas tetapi penyimpanan gagal): cukup selesaikan lagi.
+    final lunasTanpaMetode = metode == null && _entri.isNotEmpty && sisa.Bandingkan(Uang.Nol()) <= 0;
 
     return Padding(
       padding: const EdgeInsets.all(TokenJarak.jarak24),
@@ -508,7 +542,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               children: [
                 Expanded(child: Text('${p.metode.Nama}${p.referensi == null ? '' : ' · ${p.referensi}'}')),
                 TeksUang(p.jumlah),
-                if (p.metode.Jenis == JenisMetodeBayar.uangMuka)
+                if (p.metode.Jenis == JenisMetodeBayar.uangMuka || p.metode.Jenis == JenisMetodeBayar.qrisDinamis)
                   const SizedBox(width: TokenJarak.targetSentuh)
                 else
                   IconButton(
@@ -568,7 +602,13 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           SizedBox(
             height: 56,
             child: FilledButton(
-              onPressed: _sibuk || metode == null ? null : () => _Terapkan(k),
+              onPressed: _sibuk
+                  ? null
+                  : metode != null
+                  ? () => _Terapkan(k)
+                  : lunasTanpaMetode
+                  ? () => _Selesaikan(k, List.of(_entri))
+                  : null,
               child: Text(
                 _sibuk
                     ? 'Menyimpan…'
@@ -648,6 +688,10 @@ class TampilanSelesai extends StatelessWidget {
             ),
           const SizedBox(height: TokenJarak.jarak8),
           BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan, labelPoin: hasil.labelPoin),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TombolKirimStruk(uuidPenjualan: hasil.uuid),
+          ),
           BagianTiketDapur(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
           const SizedBox(height: TokenJarak.jarak24),
           SizedBox(

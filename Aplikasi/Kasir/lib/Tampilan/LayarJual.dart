@@ -1018,7 +1018,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final selesai = _selesai;
     final isi = _panel == _JenisPanel.Selesai && selesai != null
         ? PenyusunLayarPelanggan.Selesai(layar.namaToko, selesai)
-        : PenyusunLayarPelanggan.DariKeranjang(layar.namaToko, keranjang, hitungan, bayar: _panel == _JenisPanel.Bayar);
+        : PenyusunLayarPelanggan.DariKeranjang(
+            layar.namaToko,
+            keranjang,
+            hitungan,
+            bayar: _panel == _JenisPanel.Bayar,
+            dataQr: ref.watch(penyediaQrisLayarPelanggan),
+          );
     final sidik = isi.AmbilSidik();
     if (sidik == _sidikLayarPelanggan) {
       return;

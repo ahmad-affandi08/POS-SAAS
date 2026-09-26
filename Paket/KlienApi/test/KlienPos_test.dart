@@ -624,4 +624,49 @@ void main() {
     );
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Alasan': 'Menu habis'});
   });
+
+  test('v2.05 QRIS dinamis & kirim struk: bentuk permintaan dan urai respons', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      final jalur = permintaan.url.path;
+      if (jalur.endsWith('/qris')) {
+        return Json({
+          'Uuid': 'Q1',
+          'NomorPesanan': 'PY1-Q1',
+          'IsiQr': '000201010212',
+          'HalamanBayar': false,
+          'KedaluwarsaPada': '2026-09-26T03:15:00Z',
+          'Status': 'Menunggu',
+          'Jumlah': '25000.00',
+        }, 201);
+      }
+      if (jalur.endsWith('/qris/Q1')) {
+        return Json({'Uuid': 'Q1', 'Status': 'Lunas', 'LunasPada': '2026-09-26T03:02:00Z'}, 200);
+      }
+      if (jalur.endsWith('/batal')) {
+        return Json({
+          'Galat': {'Kode': 'SudahLunas', 'Pesan': 'Tagihan sudah dibayar.'},
+        }, 409);
+      }
+      if (jalur.endsWith('/kirim-struk')) {
+        return Json({'Uuid': 'M1', 'Status': 'Diantrekan'}, 202);
+      }
+      return Json({'Uuid': 'M1', 'Status': 'Gagal', 'PesanGalat': 'Nomor tidak terdaftar di WhatsApp.'}, 200);
+    });
+
+    final tagihan = await klien.BuatQris(uuid: 'Q1', uuidMetode: 'MQ', jumlah: '25000.00');
+    expect(tagihan.isiQr, '000201010212');
+    expect(tagihan.kedaluwarsaPada, DateTime.utc(2026, 9, 26, 3, 15));
+    expect(jsonDecode(dikirim.last.body), {'Uuid': 'Q1', 'UuidMetode': 'MQ', 'Jumlah': '25000.00'});
+
+    final status = await klien.AmbilStatusQris('Q1');
+    expect(status.lunas, isTrue);
+    await expectLater(klien.BatalkanQris('Q1'), throwsA(isA<GalatApi>().having((g) => g.kode, 'kode', 'SudahLunas')));
+
+    final pesan = await klien.KirimStruk(uuidPenjualan: 'P1', uuid: 'M1', kanal: 'Whatsapp', tujuan: '0812');
+    expect(pesan.status, 'Diantrekan');
+    expect(dikirim.last.url.path, '/api/pos/v1/penjualan/P1/kirim-struk');
+    expect((await klien.AmbilPesanKeluar('M1')).pesanGalat, 'Nomor tidak terdaftar di WhatsApp.');
+  });
 }

@@ -68,6 +68,7 @@ Map<String, Object?> DataAwalUji({
   Map<String, Object?>? nomorUrutPenjualan,
   Map<String, Object?>? nomorUrutRetur,
   bool tempo = false,
+  bool qrisDinamis = false,
   int? batasHariLewatJatuhTempo,
   bool? bukaLaciPerluPin,
   List<Map<String, Object?>>? karyawan,
@@ -145,6 +146,15 @@ Map<String, Object?> DataAwalUji({
     // F-12: metode Tempo (piutang) hanya bila diminta test.
     if (tempo)
       {'Uuid': '01K5MTD0000000000000000007', 'Jenis': 'Tempo', 'Nama': 'Tempo', 'AdaGambarQris': false, 'Urutan': 7},
+    // v2.05: QRIS dinamis lewat gerbang pembayaran hanya bila diminta test.
+    if (qrisDinamis)
+      {
+        'Uuid': '01K5MTD0000000000000000008',
+        'Jenis': 'QrisDinamis',
+        'Nama': 'QRIS Dinamis',
+        'AdaGambarQris': false,
+        'Urutan': 8,
+      },
   ],
   'KategoriKas': [
     {'Uuid': '01K5KATEGORI00000000000001', 'Nama': 'Beli es batu & galon', 'Jenis': 'Keluar'},

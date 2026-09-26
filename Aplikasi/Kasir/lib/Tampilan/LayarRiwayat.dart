@@ -10,6 +10,7 @@ import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import 'Komponen/FormatAngka.dart';
 import 'Komponen/FormatWaktu.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
+import 'Struk/TombolKirimStruk.dart';
 
 /// Pesan tetap bila riwayat gagal dimuat; detail galat hanya ke log (tidak menampilkan teks exception ke kasir).
 const String pesanGagalMuat = 'Riwayat transaksi tidak bisa dimuat. Coba lagi.';
@@ -327,6 +328,7 @@ class _BarisRiwayat extends ConsumerWidget {
                       runSpacing: TokenJarak.jarak8,
                       children: [
                         _TombolCetakUlang(uuidPenjualan: p.Uuid),
+                        TombolKirimStruk(uuidPenjualan: p.Uuid),
                         if (saatVoid != null)
                           SizedBox(
                             height: TokenJarak.targetSentuh,

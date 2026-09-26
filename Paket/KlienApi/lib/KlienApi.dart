@@ -6,6 +6,7 @@ export 'KlienPos.dart';
 export 'Model/ModelKatalog.dart';
 export 'Model/ModelKonfigurasi.dart';
 export 'Model/ModelMeja.dart';
+export 'Model/ModelPembayaranDigital.dart';
 export 'Model/ModelPelanggan.dart';
 export 'Model/ModelPreOrder.dart';
 export 'Model/ModelPos.dart';

@@ -13,6 +13,9 @@ import '../Dapur/LayananTiketDapur.dart';
 abstract final class JenisMetodeBayar {
   static const String tunai = 'Tunai';
   static const String qrisStatis = 'QrisStatis';
+
+  /// v2.05: QRIS dinamis lewat gerbang pembayaran aktif (wajib online; lunas dipastikan server, bukan kasir).
+  static const String qrisDinamis = 'QrisDinamis';
   static const String edc = 'Edc';
   static const String transfer = 'Transfer';
   static const String ewallet = 'Ewallet';
@@ -20,7 +23,7 @@ abstract final class JenisMetodeBayar {
   /// F-12: piutang pelanggan; hanya tampil bila pelanggan dipilih (BR-12.1).
   static const String tempo = 'Tempo';
 
-  static const List<String> fase1 = [tunai, qrisStatis, edc, transfer, ewallet, tempo];
+  static const List<String> fase1 = [tunai, qrisStatis, qrisDinamis, edc, transfer, ewallet, tempo];
 
   /// F-12 bagian 2: uang muka pre-order yang dipakai saat diambil (metode sistem; tidak tampil sebagai pilihan bayar).
   static const String uangMuka = 'UangMuka';

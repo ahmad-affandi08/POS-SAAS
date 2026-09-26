@@ -66,6 +66,7 @@ abstract final class PenyusunLayarPelanggan {
     Keranjang keranjang,
     HitunganKeranjang? hitungan, {
     bool bayar = false,
+    String? dataQr,
   }) {
     if (keranjang.CekKosong) {
       return Siaga(namaToko);
@@ -97,7 +98,12 @@ abstract final class PenyusunLayarPelanggan {
         ],
       ],
       total: hasil?.totalAkhir.FormatRupiah(),
-      pesan: bayar ? 'Silakan lakukan pembayaran' : null,
+      pesan: bayar && dataQr != null
+          ? 'Pindai QRIS untuk membayar'
+          : bayar
+          ? 'Silakan lakukan pembayaran'
+          : null,
+      dataQr: bayar ? dataQr : null,
     );
   }
 

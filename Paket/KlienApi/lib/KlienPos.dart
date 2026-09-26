@@ -9,6 +9,7 @@ import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
 import 'Model/ModelKonfigurasi.dart';
 import 'Model/ModelMeja.dart';
+import 'Model/ModelPembayaranDigital.dart';
 import 'Model/ModelPelanggan.dart';
 import 'Model/ModelPos.dart';
 import 'Model/ModelPreOrder.dart';
@@ -186,6 +187,40 @@ class KlienPos {
     'pesan-sendiri/${Uri.encodeComponent(uuid)}/tolak',
     {'UuidPengguna': uuidPengguna, 'Alasan': alasan},
   );
+
+  /// F-08 QRIS dinamis (v2.05): buat tagihan lewat gerbang aktif platform; idempoten per [uuid]. Gerbang belum aktif
+  /// → `GalatApi` `GerbangBelumAktif` (409); gerbang menolak → `GerbangGagal` (502 dipetakan ke `GalatJaringan`).
+  Future<TagihanQrisPos> BuatQris({
+    required String uuid,
+    required String uuidMetode,
+    required String jumlah,
+    String? keterangan,
+  }) async => TagihanQrisPos.DariJson(
+    await _Kirim('POST', 'qris', {'Uuid': uuid, 'UuidMetode': uuidMetode, 'Jumlah': jumlah, 'Keterangan': ?keterangan}),
+  );
+
+  Future<StatusQrisPos> AmbilStatusQris(String uuid) async =>
+      StatusQrisPos.DariJson(await _Kirim('GET', 'qris/${Uri.encodeComponent(uuid)}', null));
+
+  /// Batalkan tagihan yang belum dibayar; sudah lunas → `GalatApi` `SudahLunas` (409).
+  Future<void> BatalkanQris(String uuid) => _Kirim('POST', 'qris/${Uri.encodeComponent(uuid)}/batal', null);
+
+  /// v2.05: kirim struk digital penjualan yang sudah tersinkron lewat WhatsApp atau email (antre di server).
+  Future<PesanKeluarPos> KirimStruk({
+    required String uuidPenjualan,
+    required String uuid,
+    required String kanal,
+    required String tujuan,
+  }) async => PesanKeluarPos.DariJson(
+    await _Kirim('POST', 'penjualan/${Uri.encodeComponent(uuidPenjualan)}/kirim-struk', {
+      'Uuid': uuid,
+      'Kanal': kanal,
+      'Tujuan': tujuan,
+    }),
+  );
+
+  Future<PesanKeluarPos> AmbilPesanKeluar(String uuid) async =>
+      PesanKeluarPos.DariJson(await _Kirim('GET', 'pesan-keluar/${Uri.encodeComponent(uuid)}', null));
 
   /// Tiket dapur aktif outlet untuk KDS; [stasiun] kosong/null = semua stasiun.
   Future<DaftarTiketDapur> AmbilTiketDapur({List<String> stasiun = const []}) async {

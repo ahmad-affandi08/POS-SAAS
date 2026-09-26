@@ -3,6 +3,8 @@ package id.possaas.kasir
 import android.app.Activity
 import android.app.Presentation
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -27,7 +29,7 @@ import org.json.JSONObject
  * - `CekTersedia` → bool (ada display kategori presentation)
  * - `Tampilkan` {Isi: JSON `IsiLayarPelanggan` + `Warna`} → tampilkan/perbarui
  * - `Tutup` → tutup layar kedua
- * Isi berupa teks yang sudah diformat Dart; warna dikirim dari token desain Dart (tidak ada warna lepas di sini).
+ * Isi berupa teks yang sudah diformat Dart (QRIS dinamis: `ModulQr` = matriks modul "0/1" per baris, v2.05); warna dikirim dari token desain Dart (tidak ada warna lepas di sini).
  */
 class KanalLayarPelanggan(private val aktivitas: Activity, messenger: BinaryMessenger) : MethodChannel.MethodCallHandler {
     companion object {
@@ -109,6 +111,7 @@ private class PresentasiPelanggan(konteks: Context, display: Display) : Presenta
     private lateinit var labelTotal: TextView
     private lateinit var total: TextView
     private lateinit var pesan: TextView
+    private lateinit var qr: TampilanQr
     private var huruf: Typeface = Typeface.DEFAULT
     private var hurufTebal: Typeface = Typeface.DEFAULT_BOLD
 
@@ -134,6 +137,7 @@ private class PresentasiPelanggan(konteks: Context, display: Display) : Presenta
         labelTotal = Teks(28f, tebal = true)
         total = Teks(56f, tebal = true).apply { gravity = Gravity.END }
         pesan = Teks(28f).apply { gravity = Gravity.CENTER }
+        qr = TampilanQr(context).apply { visibility = View.GONE }
         val barisTotal = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -145,6 +149,7 @@ private class PresentasiPelanggan(konteks: Context, display: Display) : Presenta
         akar.addView(ringkasan)
         akar.addView(barisTotal)
         akar.addView(pesan)
+        akar.addView(qr, LinearLayout.LayoutParams(Dp(280), Dp(280)).apply { gravity = Gravity.CENTER_HORIZONTAL })
         setContentView(akar)
     }
 
@@ -208,5 +213,45 @@ private class PresentasiPelanggan(konteks: Context, display: Display) : Presenta
         pesan.visibility = if (adaPesan) View.VISIBLE else View.GONE
         pesan.text = if (adaPesan) isi.optString("Pesan") else ""
         pesan.setTextColor(teks)
+
+        // QRIS dinamis (v2.05): matriks modul dari Dart ("0/1" per baris), digambar tanpa pustaka QR.
+        val modul = isi.optJSONArray("ModulQr")
+        if (modul == null || modul.length() == 0) {
+            qr.visibility = View.GONE
+        } else {
+            qr.Atur(List(modul.length()) { modul.getString(it) }, latar, teks)
+            qr.visibility = View.VISIBLE
+        }
+    }
+}
+
+/** Kode QR dari matriks modul dengan zona tenang 4 modul. */
+private class TampilanQr(konteks: Context) : View(konteks) {
+    private var modul: List<String> = emptyList()
+    private val kuasModul = Paint().apply { isAntiAlias = false }
+    private var warnaLatar = 0
+
+    fun Atur(baru: List<String>, latar: Int, gelap: Int) {
+        modul = baru
+        warnaLatar = latar
+        kuasModul.color = gelap
+        invalidate()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (modul.isEmpty()) return
+        canvas.drawColor(warnaLatar)
+        val jumlah = modul.size + 8
+        val sisi = minOf(width, height).toFloat() / jumlah
+        for ((r, baris) in modul.withIndex()) {
+            for ((c, nilai) in baris.withIndex()) {
+                if (nilai == '1') {
+                    val x = (c + 4) * sisi
+                    val y = (r + 4) * sisi
+                    canvas.drawRect(x, y, x + sisi + 0.5f, y + sisi + 0.5f, kuasModul)
+                }
+            }
+        }
     }
 }
