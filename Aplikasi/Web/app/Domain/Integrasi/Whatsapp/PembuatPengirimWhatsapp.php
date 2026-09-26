@@ -54,4 +54,12 @@ final class PembuatPengirimWhatsapp
 
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
+
+    /** Nama templat resmi untuk pengingat piutang (D-23 D, hanya WhatsApp Cloud API); null = kirim teks. */
+    public function AmbilTemplatPengingatPiutang(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatPengingatPiutang');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
 }

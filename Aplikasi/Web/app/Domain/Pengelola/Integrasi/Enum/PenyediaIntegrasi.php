@@ -110,6 +110,7 @@ enum PenyediaIntegrasi: string
                 ['Kunci' => 'IdNomorTelepon', 'Label' => 'Phone number ID', 'Jenis' => 'Teks', 'Wajib' => true, 'Keterangan' => 'Dari WhatsApp Manager › API Setup.'],
                 ['Kunci' => 'VersiApi', 'Label' => 'Versi Graph API', 'Jenis' => 'Teks', 'Wajib' => true, 'Bawaan' => 'v21.0'],
                 ['Kunci' => 'NamaTemplatStruk', 'Label' => 'Nama templat struk', 'Jenis' => 'Teks', 'Wajib' => false, 'Keterangan' => 'Templat utilitas yang disetujui Meta dengan 3 variabel: {{1}} toko, {{2}} total, {{3}} tautan struk. Kosong = kirim teks (hanya dalam 24 jam setelah pelanggan mengirim pesan).'],
+                ['Kunci' => 'NamaTemplatPengingatPiutang', 'Label' => 'Nama templat pengingat piutang', 'Jenis' => 'Teks', 'Wajib' => false, 'Keterangan' => 'Templat utilitas yang disetujui Meta dengan 4 variabel: {{1}} toko, {{2}} nomor nota, {{3}} sisa tagihan, {{4}} tanggal jatuh tempo. Kosong = kirim teks (hanya dalam 24 jam setelah pelanggan mengirim pesan).'],
                 ['Kunci' => 'BahasaTemplat', 'Label' => 'Kode bahasa templat', 'Jenis' => 'Teks', 'Wajib' => true, 'Bawaan' => 'id'],
             ],
             self::Fonnte, self::StarSender => [],

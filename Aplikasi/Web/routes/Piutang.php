@@ -26,5 +26,11 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
         Route::post('/pelunasan/{pelunasan}/batalkan', [PiutangKontroler::class, 'Batalkan'])->where('pelunasan', $ulid)->name('kelola.piutang.pelunasan.batalkan');
     });
 
+    // D-23 D: pengingat piutang ke pelanggan (kirim sekarang & pengaturan otomatis).
+    Route::middleware($izin(IzinTenant::PelangganKelola))->group(function () use ($ulid): void {
+        Route::put('/pengingat-otomatis', [PiutangKontroler::class, 'SimpanPengingat'])->name('kelola.piutang.pengingat.pengaturan');
+        Route::post('/{piutang}/pengingat', [PiutangKontroler::class, 'KirimPengingat'])->where('piutang', $ulid)->name('kelola.piutang.pengingat.kirim');
+    });
+
     Route::get('/pelunasan/{pelunasan}', [PiutangKontroler::class, 'Detail'])->where('pelunasan', $ulid)->name('kelola.piutang.pelunasan.detail');
 });

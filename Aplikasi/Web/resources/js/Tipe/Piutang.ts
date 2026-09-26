@@ -12,7 +12,17 @@ export type KelompokUmurPiutang =
     'BelumJatuhTempo' | 'Hari0Sampai30' | 'Hari31Sampai60' | 'Hari61Sampai90' | 'LebihDari90';
 export type OpsiNilai = { Nilai: string; Label: string };
 export type OpsiPelangganPiutang = { Uuid: string; Nama: string };
-export type IzinPiutang = { Kelola: boolean; LihatJurnal: boolean };
+export type IzinPiutang = { Kelola: boolean; LihatJurnal: boolean; Ingatkan?: boolean };
+
+/** D-23 D: pengingat piutang terakhir (tanpa tujuan pelanggan). */
+export type PengingatPiutangTerakhir = {
+    Waktu: string | null;
+    Kanal: 'Whatsapp' | 'Email';
+    Status: 'Diantrekan' | 'Terkirim' | 'Gagal' | 'Dibatalkan';
+    LabelStatus: string;
+};
+
+export type PengaturanPengingatPiutang = { Aktif: boolean; HariSebelum: number; IngatkanSaatLewat: boolean };
 
 export type BarisPiutang = {
     Uuid: string;
@@ -28,6 +38,7 @@ export type BarisPiutang = {
     Sisa: string;
     Status: StatusPiutang;
     LabelStatus: string;
+    PengingatTerakhir?: PengingatPiutangTerakhir | null;
 };
 
 export type RingkasanPiutang = {
@@ -41,6 +52,7 @@ export type PropsDaftarPiutang = {
     OpsiPelanggan: OpsiPelangganPiutang[];
     HariIni: string;
     Izin: IzinPiutang;
+    Pengingat?: PengaturanPengingatPiutang;
 };
 
 export type BarisPelunasan = {

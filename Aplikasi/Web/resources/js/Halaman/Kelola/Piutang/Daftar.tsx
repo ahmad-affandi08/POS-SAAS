@@ -1,15 +1,27 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { type FormEvent, useState } from 'react';
 
 import { AmbilJenisUmur } from '@/Komponen/Pembelian/AturanPembelian';
+import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { KolomUang } from '@/Komponen/Pembelian/DaftarPembelian';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring, HasilTabel, KolomTabel } from '@/Komponen/TabelData/Tipe';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Button } from '@/Komponen/Ui/button';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
-import type { BarisPiutang, PropsDaftarPiutang, RingkasanPiutang } from '@/Tipe/Piutang';
+import type {
+    BarisPiutang,
+    PengaturanPengingatPiutang,
+    PengingatPiutangTerakhir,
+    PropsDaftarPiutang,
+    RingkasanPiutang,
+} from '@/Tipe/Piutang';
 
 import { FormatHariLewat } from '@/Halaman/Kelola/Pembelian/Hutang/Daftar';
 import { AlamatPiutang, HalamanDaftarPiutang, LabelStatusPiutang } from '@/Komponen/Piutang/BagianPiutang';
@@ -71,7 +83,96 @@ const kolom: KolomTabel<BarisPiutang>[] = [
     },
     KolomUang('Jumlah', 'Jumlah', (p) => p.Jumlah, true),
     KolomUang('Sisa', 'Sisa piutang', (p) => p.Sisa),
+    {
+        id: 'Pengingat',
+        header: 'Pengingat',
+        enableSorting: false,
+        meta: { label: 'Pengingat terakhir', prioritas: 'rendah' },
+        cell: ({ row: { original: p } }) => <SelPengingat pengingat={p.PengingatTerakhir ?? null} />,
+    },
 ];
+
+const JenisLabelPengingat = {
+    Diantrekan: 'netral',
+    Terkirim: 'sukses',
+    Gagal: 'bahaya',
+    Dibatalkan: 'netral',
+} as const;
+
+/** D-23 D: kapan & lewat apa pelanggan terakhir diingatkan. */
+function SelPengingat({ pengingat }: { pengingat: PengingatPiutangTerakhir | null }) {
+    if (pengingat === null) {
+        return <span className="text-teks-sekunder">Belum pernah</span>;
+    }
+
+    return (
+        <span className="flex flex-col items-start gap-1">
+            <LabelStatus jenis={JenisLabelPengingat[pengingat.Status]} teks={pengingat.LabelStatus} />
+            <span className="text-keterangan whitespace-nowrap text-teks-sekunder">
+                {pengingat.Kanal === 'Whatsapp' ? 'WhatsApp' : 'Email'}
+                {pengingat.Waktu ? ` · ${FormatTanggal(pengingat.Waktu)}` : ''}
+            </span>
+        </span>
+    );
+}
+
+const OpsiHariSebelum = [0, 1, 2, 3, 5, 7, 14].map((h) => ({
+    Nilai: String(h),
+    Label: h === 0 ? 'Pada hari jatuh tempo' : `${String(h)} hari sebelum jatuh tempo`,
+}));
+
+/** D-23 D: pengaturan pengingat piutang otomatis ke pelanggan lewat WhatsApp/email. */
+function DialogPengingatOtomatis({
+    pengaturan,
+    saatTutup,
+}: {
+    pengaturan: PengaturanPengingatPiutang;
+    saatTutup: () => void;
+}) {
+    const formulir = useForm<PengaturanPengingatPiutang>({ ...pengaturan });
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        formulir.put(`${AlamatPiutang}/pengingat-otomatis`, { preserveScroll: true, onSuccess: saatTutup });
+    };
+
+    return (
+        <DialogFormulir
+            judul="Pengingat piutang otomatis"
+            keterangan="Pelanggan diingatkan lewat WhatsApp (bila nomor HP ada dan WhatsApp aktif) atau email, sekitar pukul 09.00. Setiap pengingat hanya dikirim sekali per nota."
+            saatTutup={saatTutup}
+            galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
+        >
+            <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <KotakCentang
+                    label="Kirim pengingat otomatis"
+                    nilai={formulir.data.Aktif}
+                    saatBerubah={(nilai) => formulir.setData('Aktif', nilai)}
+                />
+                <BidangPilihan
+                    label="Kirim pengingat"
+                    nilai={String(formulir.data.HariSebelum)}
+                    opsi={OpsiHariSebelum}
+                    saatBerubah={(nilai) => formulir.setData('HariSebelum', Number(nilai))}
+                    galat={formulir.errors.HariSebelum}
+                    disabled={!formulir.data.Aktif}
+                />
+                <KotakCentang
+                    label="Ingatkan sekali lagi setelah lewat jatuh tempo"
+                    nilai={formulir.data.IngatkanSaatLewat}
+                    saatBerubah={(nilai) => formulir.setData('IngatkanSaatLewat', nilai)}
+                />
+                <DialogFooter className="sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan pengaturan
+                    </Tombol>
+                    <Tombol varian="sekunder" onClick={saatTutup}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
+    );
+}
 
 function Ringkasan({ ringkasan }: { ringkasan: RingkasanPiutang | undefined }) {
     if (ringkasan === undefined) {
@@ -96,7 +197,15 @@ function Ringkasan({ ringkasan }: { ringkasan: RingkasanPiutang | undefined }) {
 }
 
 /** F-12: piutang pelanggan terbuka dari penjualan tempo, umur 0–30/31–60/61–90/>90 hari, dan pintasan pelunasan. */
-export default function HalamanDaftarPiutangPelanggan({ Piutang, OpsiUmur, OpsiPelanggan, Izin }: PropsDaftarPiutang) {
+export default function HalamanDaftarPiutangPelanggan({
+    Piutang,
+    OpsiUmur,
+    OpsiPelanggan,
+    Izin,
+    Pengingat,
+}: PropsDaftarPiutang) {
+    const [aturPengingat, AturAturPengingat] = useState(false);
+    const bolehIngatkan = Izin.Ingatkan === true;
     const saring: DefinisiSaring[] = [
         {
             id: 'Umur',
@@ -111,11 +220,43 @@ export default function HalamanDaftarPiutangPelanggan({ Piutang, OpsiUmur, OpsiP
             opsi: OpsiPelanggan.map((p) => ({ nilai: p.Uuid, label: p.Nama })),
         },
     ];
-    const tombol = Izin.Kelola ? (
-        <Button asChild className="h-8 pointer-coarse:h-11">
-            <Link href={`${AlamatPiutang}/pelunasan/buat`}>Terima pelunasan</Link>
-        </Button>
-    ) : null;
+    const tombol =
+        Izin.Kelola || (bolehIngatkan && Pengingat) ? (
+            <div className="flex flex-wrap gap-2">
+                {bolehIngatkan && Pengingat ? (
+                    <Tombol varian="sekunder" onClick={() => AturAturPengingat(true)}>
+                        Pengingat otomatis: {Pengingat.Aktif ? 'aktif' : 'mati'}
+                    </Tombol>
+                ) : null}
+                {Izin.Kelola ? (
+                    <Button asChild className="h-8 pointer-coarse:h-11">
+                        <Link href={`${AlamatPiutang}/pelunasan/buat`}>Terima pelunasan</Link>
+                    </Button>
+                ) : null}
+            </div>
+        ) : null;
+    const AksiBaris = (p: BarisPiutang) => [
+        ...(Izin.Kelola
+            ? [
+                  {
+                      label: 'Terima pelunasan',
+                      saatPilih: () =>
+                          router.visit(
+                              `${AlamatPiutang}/pelunasan/buat?pelanggan=${p.UuidPelanggan ?? ''}&piutang=${p.Uuid}`,
+                          ),
+                  },
+              ]
+            : []),
+        ...(bolehIngatkan && p.UuidPelanggan
+            ? [
+                  {
+                      label: 'Kirim pengingat',
+                      saatPilih: () =>
+                          router.post(`${AlamatPiutang}/${p.Uuid}/pengingat`, {}, { preserveScroll: true }),
+                  },
+              ]
+            : []),
+    ];
 
     return (
         <HalamanDaftarPiutang
@@ -143,28 +284,17 @@ export default function HalamanDaftarPiutangPelanggan({ Piutang, OpsiUmur, OpsiP
                     />
                 )}
                 labelBaris={(p) => `piutang ${p.Nomor}`}
-                {...(Izin.Kelola
-                    ? {
-                          aksiBaris: (p: BarisPiutang) => (
-                              <ItemAksiBaris
-                                  aksi={[
-                                      {
-                                          label: 'Terima pelunasan',
-                                          saatPilih: () =>
-                                              router.visit(
-                                                  `${AlamatPiutang}/pelunasan/buat?pelanggan=${p.UuidPelanggan ?? ''}&piutang=${p.Uuid}`,
-                                              ),
-                                      },
-                                  ]}
-                              />
-                          ),
-                      }
+                {...(Izin.Kelola || bolehIngatkan
+                    ? { aksiBaris: (p: BarisPiutang) => <ItemAksiBaris aksi={AksiBaris(p)} /> }
                     : {})}
                 kosong={{
                     ilustrasi: 'Pelanggan',
                     judul: 'Tidak ada piutang terbuka. Semua penjualan tempo sudah lunas.',
                 }}
             />
+            {aturPengingat && Pengingat ? (
+                <DialogPengingatOtomatis pengaturan={Pengingat} saatTutup={() => AturAturPengingat(false)} />
+            ) : null}
         </HalamanDaftarPiutang>
     );
 }

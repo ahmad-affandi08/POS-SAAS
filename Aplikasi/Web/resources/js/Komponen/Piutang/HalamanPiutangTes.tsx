@@ -5,10 +5,10 @@ import HalamanDaftarPiutangPelanggan from '@/Halaman/Kelola/Piutang/Daftar';
 import HalamanDaftarPelunasan from '@/Halaman/Kelola/Piutang/Pelunasan/Daftar';
 import HalamanDetailPelunasan from '@/Halaman/Kelola/Piutang/Pelunasan/Detail';
 import HalamanFormPelunasan, { PeriksaAlokasiPiutang } from '@/Halaman/Kelola/Piutang/Pelunasan/Form';
-import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, kirimanForm, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import { BuatHasilTabel } from '@/Komponen/Persediaan/DataUjiPersediaan';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
-import type { IzinPiutang, PiutangTerbuka } from '@/Tipe/Piutang';
+import type { BarisPiutang, IzinPiutang, PiutangTerbuka } from '@/Tipe/Piutang';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);
 
@@ -76,6 +76,56 @@ describe('Halaman piutang pelanggan (F-12)', () => {
             />,
         );
         expect(screen.getByText('Belum ada pelunasan piutang.')).toBeTruthy();
+    });
+
+    it('D-23 D: pengingat terakhir tampil; pengaturan pengingat otomatis dikirim; tanpa izin tidak tampil', () => {
+        const baris: BarisPiutang = {
+            Uuid: '01J9PTG0000000000000000001',
+            Nomor: 'UTM-K01-260924-0001',
+            Tanggal: '2026-09-01',
+            JatuhTempo: '2026-10-01',
+            HariLewat: 0,
+            Umur: 'BelumJatuhTempo',
+            LabelUmur: 'Belum jatuh tempo',
+            UuidPelanggan: Toko.Uuid,
+            NamaPelanggan: Toko.Nama,
+            Jumlah: '1250000000.00',
+            Sisa: '1250000000.00',
+            Status: 'BelumLunas',
+            LabelStatus: 'Belum lunas',
+            PengingatTerakhir: {
+                Waktu: '2026-09-28T02:00:00Z',
+                Kanal: 'Whatsapp',
+                Status: 'Terkirim',
+                LabelStatus: 'Terkirim',
+            },
+        };
+        const props = {
+            Piutang: { ...BuatHasilTabel([baris]), Ringkasan: { Total: '1250000000.00', Kelompok: [] } },
+            OpsiUmur: [],
+            OpsiPelanggan: [Toko],
+            HariIni: '2026-09-28',
+            Pengingat: { Aktif: false, HariSebelum: 3, IngatkanSaatLewat: true },
+        };
+        kirimanForm.length = 0;
+        RenderUji(<HalamanDaftarPiutangPelanggan {...props} Izin={{ ...IzinLihat, Ingatkan: true }} />);
+        expect(screen.getAllByText('Terkirim').length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/WhatsApp/).length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Pengingat otomatis: mati' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Kirim pengingat otomatis' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan' }));
+        expect(kirimanForm).toEqual([
+            {
+                metode: 'put',
+                url: '/kelola/piutang/pengingat-otomatis',
+                data: { Aktif: true, HariSebelum: 3, IngatkanSaatLewat: true },
+            },
+        ]);
+        cleanup();
+
+        RenderUji(<HalamanDaftarPiutangPelanggan {...props} Izin={IzinLihat} />);
+        expect(screen.queryByRole('button', { name: /Pengingat otomatis/ })).toBeNull();
     });
 
     it('form pelunasan: menolak jumlah di atas sisa, lalu mengirim alokasi per piutang', () => {

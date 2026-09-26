@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.20 |
+| Versi | 2.21 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.21 | **D-23 D bagian 4b** pengingat piutang ke pelanggan lewat WhatsApp/email: kirim manual dari daftar piutang (jeda 12 jam per nota) dan otomatis tiap pagi 09.00 WIB bila diaktifkan (sekali H-n "akan jatuh tempo", sekali setelah lewat); tabel `PengaturanPengingatPiutang` & `PengingatPiutang` (tujuan terenkripsi); templat WhatsApp resmi `NamaTemplatPengingatPiutang` di konsol integrasi. |
 | 2.20 | **D-23 D bagian 4a** ringkasan pagi Kotak Tindakan lewat email (07.00 WIB): butir Penting & Perhatian sesuai izin penerima (hutang/piutang jatuh tempo, shift lupa ditutup, dokumen perlu dicek, tutup buku); Owner bawaan berlangganan, anggota lain memilih sendiri di halaman Kotak Tindakan; tabel `LanggananRingkasanTindakan` (sekali per tanggal bisnis). |
 | 2.19 | **D-23 D bagian 3** tutup harian otomatis: tiap pagi (06.15 WIB) hari yang aman ditutup (sudah berakhir, ada shift & semuanya ditutup, tanpa peringatan perangkat/tinjauan) ditutup atas nama Owner lewat Aksi tutup harian yang sama; kolom `TutupHarian.DitutupOtomatis`, label "otomatis" di daftar tutup harian. Kunci bulan **tidak** otomatis (tetap pengingat; keputusan agen D-12). |
 | 2.18 | **D-23 D bagian 2** transaksi kas & bank berulang: pilihan "Ulangi otomatis" (tiap bulan/tiap minggu) di formulir kas & bank; tiap pagi (05.45 WIB) jatuh tempo dicatat sebagai transaksi kas & bank biasa (nomor, jurnal, audit), tertinggal disusul, idempoten per (jadwal, tanggal); ditolak (periode terkunci, akun nonaktif) = alasan di Kotak Tindakan; halaman `/kelola/akuntansi/kas-bank/berulang` (hentikan/aktifkan lagi, ubah jumlah). |
@@ -3762,6 +3763,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Jadwal `tindakan:kirim-ringkasan-harian` pukul 07.00 WIB (setelah otomatisasi pagi) mengirim email teks berisi butir **Penting & Perhatian** Kotak Tindakan menurut izin & outlet akses penerima, masing-masing dengan tautan langsung ke halaman penyelesaiannya (domain tenant). Butir Info tidak ikut; tanpa butir = tidak ada email.
 - Tabel `LanggananRingkasanTindakan` (`IdTenant`, `IdPengguna`, `Aktif`, `TerakhirDikirim`): Owner tanpa baris dianggap berlangganan, anggota lain memilih sendiri lewat sakelar "Kirim ringkasan ke email saya setiap pagi" di halaman Kotak Tindakan (tercatat audit). Anggota tanpa email (kasir PIN, D-22) tidak bisa berlangganan.
 - Paling banyak sekali per tanggal bisnis per penerima; email yang gagal terkirim dicoba lagi pada putaran berikutnya. Email tidak memuat data pribadi pelanggan (hanya judul, jumlah, total).
+
+**Bagian 4b — pengingat piutang ke pelanggan (F-12).**
+- Daftar piutang punya aksi baris **Kirim pengingat** (izin `pelanggan.kelola`) dan tombol **Pengingat otomatis** (aktif/mati, 0/1/2/3/5/7/14 hari sebelum jatuh tempo, sekali lagi setelah lewat). Kolom "Pengingat" menampilkan status & kanal pengingat terakhir.
+- Kanal dipilih otomatis: WhatsApp bila nomor HP pelanggan sah dan WhatsApp aktif untuk usaha (integrasi P-05 + fitur `integrasi.whatsapp`), selain itu email pelanggan. Tanpa kontak = ditolak (manual) atau dilewati (otomatis). WhatsApp Cloud API memakai templat utilitas `NamaTemplatPengingatPiutang` (4 variabel: toko, nomor nota, sisa, jatuh tempo); tanpa templat dikirim teks.
+- Jadwal `pelanggan:kirim-pengingat-piutang` pukul 09.00 WIB (jam wajar untuk pelanggan): piutang terbuka berpelanggan yang jatuh tempo dalam `HariSebelum` hari ke depan diingatkan sekali; yang lewat 1–7 hari diingatkan sekali lagi. Sekali per (piutang, jenis) lewat `PengingatPiutang.KunciOtomatis` unik. Manual paling sering sekali per 12 jam per nota.
+- Isi sopan tanpa ancaman ("Abaikan pesan ini bila sudah dibayar"); piutang yang sudah lunas/batal saat akan dikirim → `Dibatalkan`, pelanggan tidak ditagih. Tujuan terenkripsi, tidak ikut payload antrean, log, atau respons. Dasar pemrosesan data pribadi: pelaksanaan perjanjian jual-beli tempo (UU 27/2022 PDP Pasal 20 ayat 2 huruf b), bukan pemasaran, sehingga tidak bergantung pada `SetujuPemasaran`.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

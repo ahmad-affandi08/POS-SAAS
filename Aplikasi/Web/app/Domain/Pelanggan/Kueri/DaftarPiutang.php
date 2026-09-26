@@ -12,6 +12,7 @@ use App\Domain\Pelanggan\Enum\StatusPembayaranPiutang;
 use App\Domain\Pelanggan\Enum\StatusPiutang;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PembayaranPiutang;
+use App\Domain\Pelanggan\Model\PengingatPiutang;
 use App\Domain\Pelanggan\Model\Piutang;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -173,11 +174,18 @@ final class DaftarPiutang
     private function Petakan(Collection $baris, CarbonImmutable $hariIni): array
     {
         $pelanggan = Pelanggan::query()->whereKey($baris->pluck('IdPelanggan')->filter()->all())->get(['Id', 'Uuid', 'Nama'])->keyBy('Id');
+        // D-23 D: pengingat terakhir per piutang (tanpa tujuan pelanggan).
+        $pengingat = PengingatPiutang::query()
+            ->whereIn('IdPiutang', $baris->pluck('Id')->all())
+            ->orderBy('Id')
+            ->get(['Id', 'IdPiutang', 'Kanal', 'Status', 'DibuatPada'])
+            ->keyBy('IdPiutang');
 
-        return array_values($baris->map(function (Piutang $p) use ($pelanggan, $hariIni): array {
+        return array_values($baris->map(function (Piutang $p) use ($pelanggan, $hariIni, $pengingat): array {
             $hari = self::HitungHariLewat($p, $hariIni);
             $umur = KelompokUmurPiutang::DariHariLewat($hari);
             $pel = $p->IdPelanggan === null ? null : $pelanggan->get($p->IdPelanggan);
+            $ingat = $pengingat->get($p->Id);
 
             return [
                 'Uuid' => $p->Uuid,
@@ -193,6 +201,12 @@ final class DaftarPiutang
                 'Sisa' => $p->AmbilSisa()->KeString(),
                 'Status' => $p->Status->value,
                 'LabelStatus' => $p->Status->AmbilLabel(),
+                'PengingatTerakhir' => $ingat === null ? null : [
+                    'Waktu' => $ingat->DibuatPada?->toIso8601String(),
+                    'Kanal' => $ingat->Kanal->value,
+                    'Status' => $ingat->Status->value,
+                    'LabelStatus' => $ingat->Status->AmbilLabel(),
+                ],
             ];
         })->all());
     }

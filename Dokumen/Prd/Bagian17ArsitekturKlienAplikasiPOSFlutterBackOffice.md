@@ -441,6 +441,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Tabel `LanggananRingkasanTindakan` (`IdTenant`, `IdPengguna`, `Aktif`, `TerakhirDikirim`): Owner tanpa baris dianggap berlangganan, anggota lain memilih sendiri lewat sakelar "Kirim ringkasan ke email saya setiap pagi" di halaman Kotak Tindakan (tercatat audit). Anggota tanpa email (kasir PIN, D-22) tidak bisa berlangganan.
 - Paling banyak sekali per tanggal bisnis per penerima; email yang gagal terkirim dicoba lagi pada putaran berikutnya. Email tidak memuat data pribadi pelanggan (hanya judul, jumlah, total).
 
+**Bagian 4b — pengingat piutang ke pelanggan (F-12).**
+- Daftar piutang punya aksi baris **Kirim pengingat** (izin `pelanggan.kelola`) dan tombol **Pengingat otomatis** (aktif/mati, 0/1/2/3/5/7/14 hari sebelum jatuh tempo, sekali lagi setelah lewat). Kolom "Pengingat" menampilkan status & kanal pengingat terakhir.
+- Kanal dipilih otomatis: WhatsApp bila nomor HP pelanggan sah dan WhatsApp aktif untuk usaha (integrasi P-05 + fitur `integrasi.whatsapp`), selain itu email pelanggan. Tanpa kontak = ditolak (manual) atau dilewati (otomatis). WhatsApp Cloud API memakai templat utilitas `NamaTemplatPengingatPiutang` (4 variabel: toko, nomor nota, sisa, jatuh tempo); tanpa templat dikirim teks.
+- Jadwal `pelanggan:kirim-pengingat-piutang` pukul 09.00 WIB (jam wajar untuk pelanggan): piutang terbuka berpelanggan yang jatuh tempo dalam `HariSebelum` hari ke depan diingatkan sekali; yang lewat 1–7 hari diingatkan sekali lagi. Sekali per (piutang, jenis) lewat `PengingatPiutang.KunciOtomatis` unik. Manual paling sering sekali per 12 jam per nota.
+- Isi sopan tanpa ancaman ("Abaikan pesan ini bila sudah dibayar"); piutang yang sudah lunas/batal saat akan dikirim → `Dibatalkan`, pelanggan tidak ditagih. Tujuan terenkripsi, tidak ikut payload antrean, log, atau respons. Dasar pemrosesan data pribadi: pelaksanaan perjanjian jual-beli tempo (UU 27/2022 PDP Pasal 20 ayat 2 huruf b), bukan pemasaran, sehingga tidak bergantung pada `SetujuPemasaran`.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -9,14 +9,20 @@ use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Aksi\AntrekanPengingatPiutang;
 use App\Domain\Pelanggan\Aksi\BatalkanPembayaranPiutang;
 use App\Domain\Pelanggan\Aksi\SimpanPembayaranPiutang;
+use App\Domain\Pelanggan\Aksi\SimpanPengaturanPengingatPiutang;
+use App\Domain\Pelanggan\Enum\JenisPengingatPiutang;
+use App\Domain\Pelanggan\Enum\KanalPengingatPiutang;
 use App\Domain\Pelanggan\Enum\KelompokUmurPiutang;
 use App\Domain\Pelanggan\Enum\StatusPembayaranPiutang;
 use App\Domain\Pelanggan\Kueri\DaftarPiutang;
 use App\Domain\Pelanggan\Kueri\DetailPembayaranPiutang;
+use App\Domain\Pelanggan\Kueri\PengaturanPengingatPiutangTenant;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PembayaranPiutang;
+use App\Domain\Pelanggan\Model\Piutang;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Permintaan\Kelola\Pembelian\AlasanPembelianPermintaan;
 use App\Http\Permintaan\Kelola\Piutang\SimpanPembayaranPiutangPermintaan;
@@ -44,7 +50,33 @@ final class PiutangKontroler extends DasarKelolaKontroler
             'OpsiPelanggan' => $daftar->AmbilOpsiPelanggan(),
             'HariIni' => $hariIni->format('Y-m-d'),
             'Izin' => $this->AmbilIzin(),
+            'Pengingat' => app(PengaturanPengingatPiutangTenant::class)->Ambil(),
         ]);
+    }
+
+    /** D-23 D: kirim pengingat piutang ke pelanggan sekarang (WhatsApp bila bisa, selain itu email). */
+    public function KirimPengingat(string $piutang, AntrekanPengingatPiutang $antrekan): RedirectResponse
+    {
+        // Parameter string (bukan binding model): konteks tenant baru ditetapkan setelah binding rute.
+        $piutang = Piutang::query()->where('Uuid', $piutang)->firstOrFail();
+        abort_if(($idOutlet = $this->IdOutletBoleh()) !== null && ! in_array($piutang->IdOutlet, $idOutlet, true), 404);
+        $pengingat = $antrekan->Jalankan($this->IdTenant(), $piutang, JenisPengingatPiutang::Manual, $this->Pelaku()->Id);
+        $kanal = $pengingat?->Kanal === KanalPengingatPiutang::Whatsapp ? 'WhatsApp' : 'email';
+
+        return back()->with('Kilat', "Pengingat {$piutang->Nomor} sedang dikirim lewat {$kanal}.");
+    }
+
+    /** D-23 D: pengaturan pengingat piutang otomatis. */
+    public function SimpanPengingat(Request $permintaan, SimpanPengaturanPengingatPiutang $simpan): RedirectResponse
+    {
+        $valid = $permintaan->validate([
+            'Aktif' => ['required', 'boolean'],
+            'HariSebelum' => ['required', 'integer', 'min:0', 'max:'.SimpanPengaturanPengingatPiutang::MAKS_HARI_SEBELUM],
+            'IngatkanSaatLewat' => ['required', 'boolean'],
+        ], attributes: ['HariSebelum' => 'hari sebelum jatuh tempo', 'IngatkanSaatLewat' => 'pengingat saat lewat jatuh tempo']);
+        $simpan->Jalankan((bool) $valid['Aktif'], (int) $valid['HariSebelum'], (bool) $valid['IngatkanSaatLewat'], $this->Pelaku()->Id);
+
+        return back()->with('Kilat', $valid['Aktif'] ? 'Pengingat piutang otomatis aktif.' : 'Pengingat piutang otomatis dimatikan.');
     }
 
     public function Daftar(Request $permintaan, DaftarPiutang $daftar): Response|JsonResponse
@@ -109,6 +141,7 @@ final class PiutangKontroler extends DasarKelolaKontroler
         return [
             'Kelola' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::AkuntansiKelola),
             'LihatJurnal' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::LaporanKeuanganLihat),
+            'Ingatkan' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PelangganKelola),
         ];
     }
 }
