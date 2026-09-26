@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
+import 'package:kasir/Domain/Dapur/LayananTiketDapur.dart';
 import 'package:kasir/Domain/Struk/PemindaiPrinter.dart';
 import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
@@ -15,11 +16,14 @@ import '../Pendukung/PasangAplikasi.dart';
 /// Cetak struk di aplikasi (PRD v1.79): atur printer di Pengaturan (cetak uji sebelum simpan), cetak otomatis setelah
 /// bayar tunai (plus buka laci), cetak ulang bertanda, galat printer tampil tanpa membatalkan transaksi, bilah status.
 void main() {
-  Future<LingkunganUji> Masuk(WidgetTester tester, Size ukuran, {ProfilPrinter? printer}) async {
+  Future<LingkunganUji> Masuk(WidgetTester tester, Size ukuran, {ProfilPrinter? printer, bool meja = false}) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif();
       await u.SiapkanKatalog();
+      if (meja) {
+        await u.SiapkanMeja();
+      }
       await printer?.Simpan(u.repositori);
       await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
     });
@@ -191,6 +195,47 @@ void main() {
       expect(tester.takeException(), isNull);
       await Lepas(tester, u);
     });
+  }
+
+  for (final ukuran in const [Size(1280, 900), Size(360, 740)]) {
+    testWidgets(
+      'v1.89 printer dapur per stasiun lewat Bluetooth: cari, pilih, simpan; stasiun lain pakai printer struk ($ukuran)',
+      (tester) async {
+        final u = await Masuk(tester, ukuran, meja: true);
+        u.pemindai.hasil[JenisTransport.BluetoothKlasik] = const [
+          PrinterDitemukan(jenis: JenisTransport.BluetoothKlasik, alamat: '66:22:11:AA:BB:DD', nama: 'Printer Dapur'),
+        ];
+        await Ketuk(tester, find.text('Pengaturan').last);
+        await GulirKe(tester, find.text('Bar'));
+        expect(find.text('Tidak dicetak (memakai layar dapur atau perangkat lain)'), findsNWidgets(2));
+
+        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Pakai printer struk').first);
+        expect(find.text('Printer struk perangkat ini'), findsOneWidget);
+
+        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Atur printer sendiri').last);
+        await Ketuk(tester, find.text('Bluetooth'));
+        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cari printer'));
+        expect(find.text('Printer terpilih: Printer Dapur'), findsNothing);
+        await Ketuk(tester, find.text('Printer Dapur'));
+        // Stasiun Bar juga punya tombol Cetak uji (printer struk); editor Dapur ada di bawahnya.
+        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Cetak uji').last);
+        expect(u.printer.AmbilTeks(), contains('TIKET DAPUR'));
+        await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan printer dapur'));
+        expect(find.text('Printer Bluetooth Printer Dapur · 80 mm'), findsOneWidget);
+
+        final tersimpan = await tester.runAsync(() => PrinterDapur.MuatSemua(u.repositori));
+        expect(tersimpan!['01K5STAS1VN000000000BAR001']?.samaDenganStruk, isTrue);
+        expect(
+          (
+            tersimpan['01K5STAS1VN000000000DAPUR1']?.profil?.jenis,
+            tersimpan['01K5STAS1VN000000000DAPUR1']?.profil?.alamat,
+          ),
+          (JenisTransport.BluetoothKlasik, '66:22:11:AA:BB:DD'),
+        );
+        expect(tester.takeException(), isNull);
+        await Lepas(tester, u);
+      },
+    );
   }
 
   testWidgets('Bluetooth LE: izin ditolak → pesan; tidak ada printer → petunjuk; bayar mencetak lewat BLE', (

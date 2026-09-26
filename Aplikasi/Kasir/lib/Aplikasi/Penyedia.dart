@@ -158,7 +158,11 @@ final penyediaLayananBukaLaci = Provider<LayananBukaLaci>(
 
 /// Cetak struk bagian 4c: tiket dapur per stasiun di printer.
 final penyediaLayananTiketDapur = Provider<LayananTiketDapur>(
-  (ref) => LayananTiketDapur(repositori: ref.watch(penyediaRepositori), struk: ref.watch(penyediaLayananStruk)),
+  (ref) => LayananTiketDapur(
+    repositori: ref.watch(penyediaRepositori),
+    struk: ref.watch(penyediaLayananStruk),
+    penjualan: ref.watch(penyediaRepositoriPenjualan),
+  ),
 );
 
 enum KeadaanPrinter { BelumDiatur, Siap, Mencetak, Gagal }

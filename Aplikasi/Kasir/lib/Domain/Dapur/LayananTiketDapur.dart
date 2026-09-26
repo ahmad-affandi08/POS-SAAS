@@ -4,6 +4,7 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 
 import '../../Data/PesananMeja.dart';
 import '../../Data/RepositoriKasir.dart';
+import '../../Data/RepositoriPenjualan.dart';
 import '../Katalog/KatalogLokal.dart';
 import '../Struk/LayananStruk.dart';
 import '../Struk/PenyusunDokumenKasir.dart';
@@ -136,10 +137,74 @@ class HasilTiketDapur {
 /// layar dapur/KDS atau perangkat lain). Semua dari data lokal sehingga jalan offline; gagal cetak tidak membatalkan
 /// kiriman (tiket tetap masuk KDS lewat sinkron).
 class LayananTiketDapur {
-  LayananTiketDapur({required this.repositori, required this.struk});
+  LayananTiketDapur({required this.repositori, required this.struk, required this.penjualan});
 
   final RepositoriKasir repositori;
   final LayananStruk struk;
+  final RepositoriPenjualan penjualan;
+
+  /// Apakah ada printer dapur di perangkat ini.
+  Future<bool> CekAdaPrinter() async => (await PrinterDapur.MuatSemua(repositori)).isNotEmpty;
+
+  /// Tiket dapur penjualan langsung (mode cepat, bayar dulu): semua baris penjualan [uuidPenjualan]; judul tiket =
+  /// nama pelanggan atau kanal ("Bawa pulang"/"Makan di tempat").
+  Future<List<HasilTiketDapur>> CetakPenjualan(
+    String uuidPenjualan, {
+    required KatalogLokal katalog,
+    String? namaPelanggan,
+    bool cetakUlang = false,
+  }) async {
+    final jual = await penjualan.CariPenjualan(uuidPenjualan);
+    if (jual == null) {
+      return const [];
+    }
+    final detail = await penjualan.AmbilDetail(uuidPenjualan);
+    final baris = [
+      for (final d in detail)
+        BarisPesananMeja(
+          uuid: d.Uuid,
+          uuidProduk: d.UuidProduk,
+          uuidProdukSatuan: d.UuidProdukSatuan,
+          namaProduk: d.NamaProduk,
+          jumlah: d.Jumlah,
+          hargaSatuan: d.HargaSatuan,
+          hargaPilihan: d.HargaPilihan,
+          pilihan: _UraiPilihan(d.Pilihan),
+          catatan: d.Catatan,
+          dikirimKeDapur: true,
+        ),
+    ];
+    final pesanan = PesananMeja(
+      uuid: jual.Uuid,
+      nomor: jual.Nomor,
+      uuidMeja: null,
+      namaMeja: null,
+      label: namaPelanggan ?? (jual.Kanal == 'MakanDiTempat' ? 'Makan di tempat' : 'Bawa pulang'),
+      jumlahTamu: 0,
+      dibukaOleh: jual.UuidPengguna,
+      dibukaPada: jual.DibuatPada,
+      status: jual.Status,
+      dikunciBayar: false,
+      baris: baris,
+    );
+    return Cetak(
+      pesanan: pesanan,
+      uuidBaris: baris.map((b) => b.uuid),
+      katalog: katalog,
+      waktu: jual.DibuatPada,
+      namaKasir: jual.NamaKasir,
+      cetakUlang: cetakUlang,
+    );
+  }
+
+  static List<Map<String, Object?>> _UraiPilihan(String teks) {
+    try {
+      final json = jsonDecode(teks);
+      return json is List<Object?> ? json.whereType<Map<String, Object?>>().toList() : const [];
+    } on FormatException {
+      return const [];
+    }
+  }
 
   /// Cetak baris [uuidBaris] pesanan [pesanan] ke printer stasiunnya.
   Future<List<HasilTiketDapur>> Cetak({

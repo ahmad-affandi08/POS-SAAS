@@ -8,6 +8,7 @@ import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/PesananMeja.dart';
 import '../../Domain/GalatKasir.dart';
+import '../../Domain/Katalog/KatalogLokal.dart';
 import '../../Domain/Meja/KonteksPesananMeja.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
@@ -122,6 +123,31 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     _PasangPesanan(pesanan);
   }
 
+  /// Cetak struk bagian 4c (v1.89): cetak ulang tiket dapur semua item yang sudah dikirim, bertanda CETAK ULANG.
+  Future<void> _CetakUlangTiket(PesananMeja pesanan) async {
+    final hasil = await ref
+        .read(penyediaLayananTiketDapur)
+        .Cetak(
+          pesanan: pesanan,
+          uuidBaris: pesanan.AmbilBarisAktif().where((b) => b.dikirimKeDapur).map((b) => b.uuid),
+          katalog: ref.read(penyediaKatalog).value ?? KatalogLokal.kosong,
+          waktu: ref.read(penyediaJam)(),
+          namaKasir: widget.kasir.nama,
+          cetakUlang: true,
+        );
+    if (!mounted) {
+      return;
+    }
+    final gagal = hasil.where((h) => h.galat != null).toList();
+    setState(
+      () => _pesan = hasil.isEmpty
+          ? 'Belum ada printer dapur untuk item pesanan ini. Atur di Pengaturan › Printer dapur.'
+          : gagal.isEmpty
+          ? 'Tiket dapur ${pesanan.AmbilJudul()} dicetak ulang.'
+          : 'Tiket ${gagal.map((g) => g.stasiun.nama).join(', ')} gagal dicetak: ${gagal.first.galat}',
+    );
+  }
+
   Future<void> _BukaMenu(PesananMeja pesanan, List<BarisMeja> meja, Set<String> terisi) async {
     final pilihan = await showModalBottomSheet<String>(
       context: context,
@@ -141,6 +167,12 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
               title: const Text('Pindah meja'),
               onTap: () => Navigator.of(konteks).pop('Pindah'),
             ),
+            if (pesanan.AmbilBarisAktif().any((b) => b.dikirimKeDapur))
+              ListTile(
+                leading: const Icon(Icons.soup_kitchen_outlined),
+                title: const Text('Cetak ulang tiket dapur'),
+                onTap: () => Navigator.of(konteks).pop('CetakTiket'),
+              ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: const Text('Ubah tamu & nama'),
@@ -161,6 +193,8 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     switch (pilihan) {
       case 'Buka':
         _Lanjutkan(pesanan);
+      case 'CetakTiket':
+        await _CetakUlangTiket(pesanan);
       case 'Pindah':
         final tujuan = await PilihMejaTujuan(context, meja: meja, terisi: terisi, uuidSekarang: pesanan.uuidMeja);
         if (!tujuan.dipilih || !mounted) {

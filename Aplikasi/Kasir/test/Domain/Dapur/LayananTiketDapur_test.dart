@@ -1,10 +1,15 @@
+import 'dart:convert';
+
+import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kasir/Data/PesananMeja.dart';
 import 'package:kasir/Domain/Dapur/LayananTiketDapur.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Penjualan/Keranjang.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
+import 'package:kasir/Domain/Struk/LayananStruk.dart';
 import 'package:kasir/Domain/Struk/ProfilPrinter.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 
@@ -34,7 +39,7 @@ void main() {
     katalog = await u.MuatKatalog();
     k = await u.MuatKonteks();
     rina = await u.Staf('Rina Wulandari');
-    layanan = LayananTiketDapur(repositori: u.repositori, struk: u.struk);
+    layanan = LayananTiketDapur(repositori: u.repositori, struk: u.struk, penjualan: u.repositoriPenjualan);
     await const ProfilPrinter(alamat: '192.168.1.50').Simpan(u.repositori);
   }
 
@@ -137,5 +142,100 @@ void main() {
     hasil = await layanan.Cetak(pesanan: pesanan, uuidBaris: [kopi], katalog: katalog, waktu: u.jam);
     expect(hasil.single.stasiun.nama, 'Bar');
     expect(hasil.single.galat, contains('tidak tersambung'));
+  });
+
+  group('v1.89 printer dapur Bluetooth & penjualan langsung (mode cepat)', () {
+    /// 1× Es Kopi Susu Aren + 1× Croissant dibayar QRIS sebagai penjualan langsung (bukan pesanan meja).
+    Future<PenjualanTersimpan> JualLangsung() async {
+      var keranjang = Keranjang.kosong;
+      final gula = [PilihanTerpilih(uuid: UuidUji.gulaKurang, nama: 'Kurang manis', harga: Uang.Nol())];
+      for (final (uuid, pilihan) in [(UuidUji.kopiSusu, gula), (UuidUji.croissant, <PilihanTerpilih>[])]) {
+        keranjang = u.penjualan.TambahBaris(
+          keranjang,
+          u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(uuid)!, pilihan: pilihan),
+          katalog,
+          k,
+        );
+      }
+      final total = u.penjualan.Hitung(keranjang, k).hasil.totalAkhir;
+      final metode = k.metodePembayaran.firstWhere((m) => m.Jenis == JenisMetodeBayar.qrisStatis);
+      return u.penjualan.Bayar(
+        keranjang: keranjang,
+        pembayaran: [PembayaranMasukan(metode: metode, jumlah: total)],
+        kasir: rina,
+        k: k,
+      );
+    }
+
+    Future<Map<String, Object?>> DataOutboxPenjualan(String uuid) async {
+      final baris = (await u.db.select(u.db.outbox).get()).firstWhere((o) => o.Uuid == uuid);
+      return jsonDecode(baris.Data) as Map<String, Object?>;
+    }
+
+    test(
+      'outlet berstasiun: penjualan langsung dikirim ke dapur (KirimDapur) dan tiketnya dicetak per stasiun',
+      () async {
+        await Siapkan();
+        await u.shift.BukaShift(kasir: rina, kasAwal: Uang.DariBulat(500000));
+        expect(k.kirimDapurLangsung, isTrue);
+        await PrinterDapur.SimpanSemua(u.repositori, {
+          bar: const PrinterDapur.Struk(),
+          dapur: const PrinterDapur.Struk(),
+        });
+        final jual = await JualLangsung();
+
+        expect((await DataOutboxPenjualan(jual.uuid))['KirimDapur'], isTrue);
+        final hasil = await layanan.CetakPenjualan(jual.uuid, katalog: katalog);
+        expect(hasil.map((h) => (h.stasiun.nama, h.galat)), [('Bar', null), ('Dapur', null)]);
+        expect(u.printer.AmbilTeks(0), contains('Bawa pulang'));
+        expect(u.printer.AmbilTeks(0), contains(jual.nomor.substring(0, 10)));
+        expect(u.printer.AmbilTeks(1), contains('1 x Croissant'));
+
+        await layanan.CetakPenjualan(jual.uuid, katalog: katalog, namaPelanggan: 'Bu Ani', cetakUlang: true);
+        expect(u.printer.AmbilTeks(), contains('CETAK ULANG'));
+        expect(u.printer.AmbilTeks(), contains('Bu Ani'));
+      },
+    );
+
+    test('outlet tanpa stasiun dapur: penjualan tidak dikirim ke dapur', () async {
+      await u.SiapkanAktif();
+      await u.SiapkanKatalog();
+      katalog = await u.MuatKatalog();
+      k = await u.MuatKonteks();
+      rina = await u.Staf('Rina Wulandari');
+      await u.shift.BukaShift(kasir: rina, kasAwal: Uang.DariBulat(500000));
+      expect(k.kirimDapurLangsung, isFalse);
+      final jual = await JualLangsung();
+      expect((await DataOutboxPenjualan(jual.uuid)).containsKey('KirimDapur'), isFalse);
+    });
+
+    test('printer dapur Bluetooth & Bluetooth LE tersimpan per stasiun dan dipakai saat mencetak', () async {
+      await Siapkan();
+      const bluetooth = ProfilPrinter(
+        jenis: JenisTransport.BluetoothKlasik,
+        alamat: '66:22:C4:10:AB:01',
+        nama: 'RPP02N Dapur',
+        lebar: LebarKertas.Mm80,
+      );
+      const ble = ProfilPrinter(jenis: JenisTransport.Ble, alamat: 'BLE-BAR-01', nama: 'Printer Bar');
+      await PrinterDapur.SimpanSemua(u.repositori, {
+        dapur: const PrinterDapur.Sendiri(bluetooth),
+        bar: const PrinterDapur.Sendiri(ble),
+      });
+      final tersimpan = await PrinterDapur.MuatSemua(u.repositori);
+      expect(tersimpan[dapur]?.profil?.jenis, JenisTransport.BluetoothKlasik);
+      expect(tersimpan[dapur]?.profil?.nama, 'RPP02N Dapur');
+      expect(tersimpan[bar]?.profil?.jenis, JenisTransport.Ble);
+
+      final struk = LayananStruk(
+        repositori: u.repositori,
+        penjualan: u.repositoriPenjualan,
+        pembuatTransport: u.pemindai.BuatTransport,
+      );
+      final layananBt = LayananTiketDapur(repositori: u.repositori, struk: struk, penjualan: u.repositoriPenjualan);
+      final pesanan = await KirimPesanan();
+      await layananBt.Cetak(pesanan: pesanan, uuidBaris: Semua(pesanan), katalog: katalog, waktu: u.jam);
+      expect(u.pemindai.transportDibuat.map((p) => p.jenis), [JenisTransport.Ble, JenisTransport.BluetoothKlasik]);
+    });
   });
 }

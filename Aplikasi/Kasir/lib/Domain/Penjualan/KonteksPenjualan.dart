@@ -7,6 +7,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriKatalog.dart';
+import '../Dapur/LayananTiketDapur.dart';
 
 /// Jenis metode pembayaran fase 1 (sama dengan server, Rincian F-07b langkah 9).
 abstract final class JenisMetodeBayar {
@@ -103,6 +104,7 @@ class KonteksPenjualan {
     this.modeResolusiPromo = ModeResolusiPromo.Terbaik,
     this.kategoriProduk = const {},
     this.batasHariLewatJatuhTempo = 0,
+    this.kirimDapurLangsung = false,
   });
 
   final String? uuidOutlet;
@@ -132,6 +134,10 @@ class KonteksPenjualan {
 
   /// F-12 BR-12.1: piutang lewat jatuh tempo lebih dari sekian hari = penjualan tempo butuh penyetuju.
   final int batasHariLewatJatuhTempo;
+
+  /// Cetak struk bagian 4c (v1.89): outlet punya stasiun dapur aktif, jadi penjualan langsung (mode cepat, bukan pesanan
+  /// meja atau pengambilan pre-order) dikirim ke dapur (`KirimDapur`) dan tiketnya dicetak.
+  final bool kirimDapurLangsung;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -205,6 +211,7 @@ class KonteksPenjualan {
       kategoriProduk: await katalog.AmbilKategoriProduk(),
       batasHariLewatJatuhTempo:
           int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.batasHariLewatJatuhTempo) ?? '') ?? 0,
+      kirimDapurLangsung: (await RuteDapur.Muat(repositori)).stasiun.isNotEmpty,
     );
   }
 
