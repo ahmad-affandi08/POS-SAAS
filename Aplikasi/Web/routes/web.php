@@ -19,6 +19,7 @@ use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
+use App\Http\Perantara\ArahkanDomainAplikasi;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\BatasiTenantDitangguhkan;
 use App\Http\Perantara\IdentifikasiTenantSesi;
@@ -41,9 +42,13 @@ Route::domain(config('pengelola.Domain'))
 
 $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
 
-// Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06).
-Route::middleware([TolakDomainPengelola::class, BagikanDataInertia::class])->group(function () use ($izin): void {
-    Route::get('/', fn () => Inertia::render('Beranda'))->name('beranda');
+// Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya
+// melayani beranda, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
+Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataInertia::class])->group(function () use ($izin): void {
+    Route::get('/', fn () => Inertia::render('Beranda', [
+        'UrlMasuk' => ArahkanDomainAplikasi::BuatUrlTenant('/masuk'),
+        'UrlDaftar' => ArahkanDomainAplikasi::BuatUrlTenant('/daftar'),
+    ]))->name('beranda');
     Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
     // POS-11 struk digital publik (kode = tenant basis-36 . Uuid penjualan).
     Route::get('/s/{kodeStruk}', [StrukDigitalKontroler::class, 'Tampilkan'])

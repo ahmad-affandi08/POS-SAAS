@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Http\Kontroler\Pengelola\GalatKontroler;
+use App\Http\Perantara\ArahkanDomainAplikasi;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\Pengelola\SiapkanSesiPengelola;
 use App\Http\Respons\GalatApi;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -39,6 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPerangkat::class);
         // API Pemilik: pengguna dikenali dari token sebelum batas laju `pemilik-*` dihitung per pengguna.
         $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPemilik::class);
+
+        // D-20: pengalihan domain pemasaran → tenant terjadi sebelum `auth` mengalihkan tamu ke halaman masuk.
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: ArahkanDomainAplikasi::class);
 
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.masuk') : route('masuk'),

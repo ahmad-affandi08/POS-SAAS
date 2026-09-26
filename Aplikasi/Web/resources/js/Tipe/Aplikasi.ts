@@ -17,6 +17,8 @@ export type TenantAktif = {
 
 export type PropsBersamaAplikasi = {
     NamaAplikasi: string;
+    /** D-20: alamat situs pemasaran (absolut bila domain pemasaran terpisah, selain itu `/`). */
+    UrlPemasaran?: string;
     Kilat: string | null;
     Pengguna: PenggunaAplikasi | null;
     TenantAktif: TenantAktif | null;

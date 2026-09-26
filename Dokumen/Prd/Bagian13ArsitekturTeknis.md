@@ -253,7 +253,9 @@ Endpoint `/internal/*` memakai **autentikasi sesi** (cookie + CSRF, Sanctum SPA 
 /{slugTenant}                   Toko online publik
 /{slugTenant}/meja/{tokenMeja}  Self-order meja
 /{slugTenant}/reservasi         Booking layanan
-pengelola.{{app}}.id           Platform Pengelola (tim internal, §13.8)
+consol.{{app}}.id              Platform Pengelola (tim internal, §13.8; D-20, dari PENGELOLA_DOMAIN)
+{{app}}.id                     Situs pemasaran/landing (D-20, DOMAIN_PEMASARAN); rute lain dialihkan ke dashboard.
+dashboard.{{app}}.id           Semua rute di atas selain pemasaran (D-20, DOMAIN_TENANT = host APP_URL)
 /mitra                          Portal mitra/reseller (fase 3)
 ```
 
@@ -460,7 +462,7 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 
 | Aspek | Tenant (back-office) | Platform Pengelola |
 |---|---|---|
-| Alamat | `https://{{app}}.id/kelola/...` | `https://pengelola.{{app}}.id` (subdomain Hostinger) |
+| Alamat | `https://dashboard.{{app}}.id/kelola/...` (D-20) | `https://consol.{{app}}.id` (D-20, subdomain Hostinger) |
 | Tabel akun | `Pengguna` | `PenggunaPengelola` |
 | Guard autentikasi | `web` (sesi tenant) | `pengelola` (sesi terpisah, cookie berbeda) |
 | 2FA | Wajib untuk Owner/Admin di paket Bisnis | **Wajib untuk semua akun** |
@@ -494,4 +496,5 @@ Aplikasi/Web/resources/js/Halaman/Pengelola/    # halaman Inertia pengelola
 - Melewati scope `MilikTenant` hanya boleh dilakukan melalui `KonteksPengelola::JalankanLintasTenant(alasan, fn)`, yang **mencatat audit** setiap pemanggilan. Aturan ini ditegakkan dengan **test arsitektur Pest** (`arch()`): kelas di luar `App\Domain\Pengelola` dilarang memanggilnya.
 - Perantara rute pengelola: `PastikanPenggunaPengelola`, `WajibDuaFaktor`, `BatasiIpPengelola` (opsional), `CatatAuditPengelola`.
 - Akses dukungan (P-09) diimplementasikan sebagai **sesi tenant terbatas** yang dibuat dari izin `AksesDukungan` (bukan login memakai akun Owner), dengan cakupan dan waktu berakhir yang ditegakkan oleh perantara.
-- Hostinger mendukung subdomain. Subdomain `pengelola.` diarahkan ke folder `public` yang sama, dan rute dibedakan dengan `Route::domain()`.
+- Hostinger mendukung subdomain. Subdomain pengelola (`consol.`, D-20) diarahkan ke folder `public` yang sama, dan rute dibedakan dengan `Route::domain()`.
+- **Pembagian domain (D-20):** satu aplikasi & satu folder `public` melayani tiga host yang diatur lewat `.env`: `DOMAIN_PEMASARAN` (`payou.id`, situs pemasaran: beranda, `/legal/*`, `/kompatibilitas-perangkat`), `DOMAIN_TENANT` (`dashboard.payou.id`: masuk/daftar, `/kelola`, API POS & Pemilik, webhook, struk digital `/s/…`, pesan sendiri QR meja; `APP_URL` = alamat ini), dan `PENGELOLA_DOMAIN` (`consol.payou.id`). Perantara `ArahkanDomainAplikasi`: di domain pemasaran rute non-pemasaran dialihkan ke domain tenant dengan jalur & query sama (GET 302, lainnya 307), beranda di domain tenant dialihkan ke back-office; `TolakDomainPengelola` tetap menjawab 404 untuk rute tenant di domain pengelola. Kosong = satu host (pengembangan & test). Aplikasi Kasir & Pemilik dibangun dengan `--dart-define=ALAMAT_SERVER=https://dashboard.payou.id/`. Cookie sesi tanpa `SESSION_DOMAIN` (hanya host masing-masing).

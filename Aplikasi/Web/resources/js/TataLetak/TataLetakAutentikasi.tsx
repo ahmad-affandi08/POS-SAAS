@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
@@ -23,9 +23,10 @@ export default function TataLetakAutentikasi({ judul, keterangan, children, leba
                 }`}
             >
                 <header className="flex flex-col gap-1">
-                    <Link href="/" className="mb-4 self-start">
+                    {/* D-20: situs pemasaran bisa di domain lain, jadi tautan biasa (bukan kunjungan Inertia). */}
+                    <a href={props.UrlPemasaran ?? '/'} className="mb-4 self-start">
                         <LogoMerek nama={props.NamaAplikasi} />
-                    </Link>
+                    </a>
                     <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
                     {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}
                 </header>

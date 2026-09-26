@@ -45,6 +45,8 @@ final class BagikanDataInertia extends Middleware
         return [
             ...parent::share($request),
             'NamaAplikasi' => config('app.name'),
+            // D-20: logo di halaman masuk/daftar menuju situs pemasaran (bisa host lain).
+            'UrlPemasaran' => ArahkanDomainAplikasi::BuatUrlPemasaran('/'),
             'Kilat' => fn () => $request->session()->get('Kilat'),
             'Pengguna' => fn () => $pengguna instanceof Pengguna ? [
                 'Uuid' => $pengguna->Uuid,

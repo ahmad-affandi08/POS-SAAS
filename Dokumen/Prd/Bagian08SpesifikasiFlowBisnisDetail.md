@@ -9,7 +9,7 @@
 
 > **Platform Pengelola** adalah lapisan yang dipakai **tim internal {{APP}}** (bukan tenant) untuk mengoperasikan bisnis SaaS: menyiapkan data master, paket, template, regulasi, mengelola tenant, tagihan, dukungan, rilis aplikasi, dan mitra. Flow P-01 s.d. P-06 **wajib selesai sebelum** flow tenant F-00 bisa berjalan. Flow P-07 s.d. P-12 berjalan paralel selama platform beroperasi.
 >
-> Diakses melalui `https://pengelola.{{app}}.id` (atau `/pengelola`), dengan akun, autentikasi, dan layout terpisah dari back-office tenant (§13.8).
+> Diakses melalui `https://consol.{{app}}.id` (D-20, dari `PENGELOLA_DOMAIN`), dengan akun, autentikasi, dan layout terpisah dari back-office tenant (§13.8).
 
 ```mermaid
 flowchart LR
