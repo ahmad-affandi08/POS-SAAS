@@ -382,6 +382,23 @@ Semua halaman web (back-office, Platform Pengelola, autentikasi, web publik) **w
 - Teks tidak pernah terpotong tanpa cara membaca penuh (tooltip/detail); nama panjang dibungkus atau dipotong dengan elipsis + judul.
 - Diuji di tiga lebar acuan **360, 768, 1280px** untuk setiap halaman baru/berubah (tangkapan layar Playwright), selain test komponen Vitest.
 
+#### 17.4.5 Kotak Tindakan (Keputusan D-23 C, v2.13)
+
+Satu halaman `/kelola/tindakan` (menu "Kotak tindakan" tepat di bawah Beranda) + kartu "Perlu tindakan" di Beranda (5 butir teratas) berisi **semua yang perlu ditindaklanjuti**, urut Penting → Perhatian → Info. Butir dikumpulkan dari **penyedia per domain** (kontrak `PenyediaTindakan`, di-tag di kontainer), sehingga domain tidak saling membaca tabel (aturan #14). Setiap penyedia menyaring butir menurut izin pengguna dan outlet yang boleh diakses.
+
+| Butir | Domain | Tingkat | Selesai bila |
+|---|---|---|---|
+| Penjualan / retur / isi deposit offline perlu dicek (`PerluTinjauan`) | Penjualan | Penting | Ditandai "sudah dicek" |
+| Shift & mutasi kas perlu dicek; shift terbuka > 24 jam | Kasir | Penting/Perhatian | Ditandai / shift ditutup |
+| Pemakaian sesi perlu dicek; piutang lewat jatuh tempo; saldo sesi tanpa pelanggan | Pelanggan | Penting/Perhatian | Ditandai / dilunasi |
+| Stok kritis (≤ stok minimum) | Laporan (stok) | Perhatian | Stok diisi |
+| Faktur pemasok jatuh tempo ≤ 7 hari (lewat = Penting); PO menunggu persetujuan | Pembelian | Penting/Perhatian | Dibayar / disetujui |
+| Bulan lalu belum ditutup buku (mulai tanggal 10) | Akuntansi | Perhatian | Periode dikunci |
+| Klaim promo pemasok terbuka > 30 hari | Promo | Info | Klaim diterima/dipotong |
+
+- **Tandai sudah dicek**: tabel `TinjauanDokumen` (`IdTenant`, `JenisDokumen`, `UuidDokumen`, `IdPengguna`, `Catatan`, unik per dokumen). Dokumen asli **tidak diubah** (aturan #8; bendera `PerluTinjauan` tetap sebagai jejak), butir hanya menyembunyikan yang sudah punya tinjauan. Idempoten, maks. 200 dokumen per kiriman, diaudit (`tindakan.tinjau`), izin baru `tindakan.tinjau` (Pemilik, Admin, Manajer Outlet, Akuntan). Dokumen tenant lain atau di luar outlet pengguna ditolak.
+- Rincian per butir maks. 20 terbaru; sisanya muncul setelah yang tampil ditandai. Pengingat lain tidak bisa ditandai: hilang sendiri saat keadaannya berubah.
+
 
 ### 17.5 Tipografi (Keputusan D-08)
 

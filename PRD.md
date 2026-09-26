@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.12 |
+| Versi | 2.13 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.13 | **D-23** (dari pemilik produk): penyederhanaan & otomatisasi didahulukan (Kotak Tindakan, formulir sederhana, mulai 5 menit, otomatisasi terjadwal, dialog ajakan upgrade/add-on untuk fitur di luar paket); mode jasa, laundry, grosir menyusul. |
 | 2.12 | Rincian **F-16d bagian 2** (CRM-04 paket sesi, J-16.2/J-16.3): master `PaketSesi` (produk Jasa dijual sebagai N sesi, masa berlaku opsional, layanan yang boleh ditukar), penjualan paket membuat `SaldoSesi` dan mengkredit Pendapatan Diterima Dimuka sebesar nilai bersih baris, pemakaian dari kasir lewat outbox `Sesi.Pakai` (offline setelah saldo dibaca online) mengakui Pendapatan Jasa per sesi, void membatalkan sisa & membalik pengakuan, baris paket tidak bisa diretur, kembalikan/hanguskan sisa & batalkan pemakaian di back-office (izin `pelanggan.sesi.kelola`), hangus otomatis tiap malam, fitur paket `pelanggan.paket-sesi`; skema lokal kasir 14. Perbaikan ubin produk kasir: harga satu baris (mengecil) di ubin sempit. |
 | 2.11 | **D-22** (dari pemilik produk): pengguna bisa **ditambah langsung** tanpa undangan email, di konsol (P-01) dan tenant (F-02). Kata sandi awal diketik admin dan **wajib diganti saat pertama masuk** (`WajibGantiKataSandi`, sebelum 2FA/back-office; aplikasi Pemilik menolak masuk sampai diganti). Karyawan tenant **tanpa email** cukup nama + PIN (hanya aplikasi kasir; `Pengguna.Email` nullable). Undangan email tetap sebagai pilihan kedua. |
 | 2.10 | **D-21** (dari pemilik produk): situs pemasaran `payou.id` dibangun dengan **React** (Inertia, bundle terpisah `Situs.tsx`, meta SEO dirender server) dan **sebagian besar isinya diatur dari konsol**: pengaturan situs (identitas, logo, SEO, kontak & WhatsApp, pengumuman, menu atas, kolom kaki, media sosial, tautan unduh), halaman berblok 14 jenis blok (draf → pratinjau bertanda tangan → terbit, sembunyikan, hapus), pustaka gambar, harga otomatis dari katalog P-04, peta situs `/peta-situs`, `X-Robots-Tag: noindex` di domain tenant; izin `situs.lihat`/`situs.kelola`; §13.9 baru. |
@@ -3696,6 +3697,23 @@ Semua halaman web (back-office, Platform Pengelola, autentikasi, web publik) **w
 - Teks tidak pernah terpotong tanpa cara membaca penuh (tooltip/detail); nama panjang dibungkus atau dipotong dengan elipsis + judul.
 - Diuji di tiga lebar acuan **360, 768, 1280px** untuk setiap halaman baru/berubah (tangkapan layar Playwright), selain test komponen Vitest.
 
+#### 17.4.5 Kotak Tindakan (Keputusan D-23 C, v2.13)
+
+Satu halaman `/kelola/tindakan` (menu "Kotak tindakan" tepat di bawah Beranda) + kartu "Perlu tindakan" di Beranda (5 butir teratas) berisi **semua yang perlu ditindaklanjuti**, urut Penting → Perhatian → Info. Butir dikumpulkan dari **penyedia per domain** (kontrak `PenyediaTindakan`, di-tag di kontainer), sehingga domain tidak saling membaca tabel (aturan #14). Setiap penyedia menyaring butir menurut izin pengguna dan outlet yang boleh diakses.
+
+| Butir | Domain | Tingkat | Selesai bila |
+|---|---|---|---|
+| Penjualan / retur / isi deposit offline perlu dicek (`PerluTinjauan`) | Penjualan | Penting | Ditandai "sudah dicek" |
+| Shift & mutasi kas perlu dicek; shift terbuka > 24 jam | Kasir | Penting/Perhatian | Ditandai / shift ditutup |
+| Pemakaian sesi perlu dicek; piutang lewat jatuh tempo; saldo sesi tanpa pelanggan | Pelanggan | Penting/Perhatian | Ditandai / dilunasi |
+| Stok kritis (≤ stok minimum) | Laporan (stok) | Perhatian | Stok diisi |
+| Faktur pemasok jatuh tempo ≤ 7 hari (lewat = Penting); PO menunggu persetujuan | Pembelian | Penting/Perhatian | Dibayar / disetujui |
+| Bulan lalu belum ditutup buku (mulai tanggal 10) | Akuntansi | Perhatian | Periode dikunci |
+| Klaim promo pemasok terbuka > 30 hari | Promo | Info | Klaim diterima/dipotong |
+
+- **Tandai sudah dicek**: tabel `TinjauanDokumen` (`IdTenant`, `JenisDokumen`, `UuidDokumen`, `IdPengguna`, `Catatan`, unik per dokumen). Dokumen asli **tidak diubah** (aturan #8; bendera `PerluTinjauan` tetap sebagai jejak), butir hanya menyembunyikan yang sudah punya tinjauan. Idempoten, maks. 200 dokumen per kiriman, diaudit (`tindakan.tinjau`), izin baru `tindakan.tinjau` (Pemilik, Admin, Manajer Outlet, Akuntan). Dokumen tenant lain atau di luar outlet pengguna ditolak.
+- Rincian per butir maks. 20 terbaru; sisanya muncul setelah yang tampil ditandai. Pengingat lain tidak bisa ditandai: hilang sendiri saat keadaannya berubah.
+
 
 ### 17.5 Tipografi (Keputusan D-08)
 
@@ -4401,6 +4419,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-20 | Dari pemilik produk (v2.09): **tiga domain produksi** diatur lewat `.env`: `payou.id` untuk pemasaran/landing page, `dashboard.payou.id` untuk tenant (back-office, API aplikasi, struk digital, pesan sendiri), `consol.payou.id` untuk Platform Pengelola (§13.8). |
 | D-21 | Dari pemilik produk (v2.10): situs pemasaran `payou.id` memakai **React** (bukan Blade) dan **sebanyak mungkin diatur dari konsol**: pengaturan situs, halaman berblok dengan draf/pratinjau/terbit, pustaka gambar, harga otomatis dari katalog (§13.9). Agent menetapkan detail: peta situs di `/peta-situs` dan `robots.txt` statis karena konvensi URL D-06 (`robots.txt`/`sitemap.xml` belum ada di pengecualian §13.7.4; usulan pengecualian menunggu pemilik produk). |
 | D-22 | Dari pemilik produk (v2.11): seperti aplikasi kasir lain, admin **menambah pengguna langsung** tanpa bergantung email aktif, di konsol dan tenant. Kata sandi awal **diketik admin** dan wajib diganti saat pertama masuk; karyawan kasir **boleh tanpa email** (nama + PIN, hanya aplikasi kasir); undangan email **dipertahankan** sebagai pilihan kedua. Agent menetapkan: email yang sudah punya akun PAYOU hanya lewat undangan (akun global lintas usaha, BR-00.1), email yang diisi admin dianggap terverifikasi. |
+| D-23 | Dari pemilik produk (v2.13): **penyederhanaan & otomatisasi didahulukan** sebelum flow baru (mode jasa, laundry, grosir). Fitur sudah lengkap tetapi pemakaiannya terlalu rumit dan banyak isian manual. Disetujui: **(A)** mulai jualan dalam 5 menit (sektor → data awal lengkap otomatis, impor produk dari Excel/tempel teks; impor dari foto menu dengan AI/OCR menunggu keputusan layanan berbayar), **(B)** formulir mode Sederhana sebagai bawaan (isian penting saja, sisanya bawaan; opsi lanjutan dilipat; paket sesi/varian dicentang di form produk), **(C)** **Kotak Tindakan**: semua yang perlu perhatian (tinjauan dokumen offline, stok menipis, piutang/hutang jatuh tempo, shift lupa ditutup, periode belum ditutup, klaim pemasok) di satu tempat dengan penyelesaian satu klik, **(D)** otomatisasi terjadwal (draf PO saat stok menipis, pengeluaran berulang, tutup harian/bulan otomatis, pengingat WA/email). **Menu tidak disembunyikan per fitur**: fitur di luar paket langganan tetap tampil, dan saat diklik muncul dialog ajakan naik paket atau beli add-on (seperti Majoo). Urutan kerja: C + B, lalu A, D, dialog upgrade/add-on. Agent mengukur kemudahan per tugas harian (klik & isian, sebelum/sesudah) di `Panduan/AuditKemudahan.md`. |
 | D-19 | Dari pemilik produk (v2.06): gerbang pembayaran QRIS dinamis memakai **akun merchant milik tiap toko** sehingga dana pelanggan langsung masuk ke rekening toko; platform hanya mengatur penyedia yang boleh dipilih (katalog) tanpa pernah melihat kredensial toko. Opsi sub-merchant menyusul. |
 
 

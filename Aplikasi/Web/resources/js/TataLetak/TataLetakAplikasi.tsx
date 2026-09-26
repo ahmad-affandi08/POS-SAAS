@@ -6,6 +6,7 @@ import {
     ChartColumnIcon,
     CreditCardIcon,
     HouseIcon,
+    InboxIcon,
     IdCardIcon,
     LifeBuoyIcon,
     MonitorSmartphoneIcon,
@@ -198,6 +199,8 @@ export function CariMenuProdukAktif(url: string): string | null {
 // Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
 const daftarMenu: (ItemMenu | GrupMenu)[] = [
     { label: 'Beranda', href: '/kelola', izin: null, ikon: HouseIcon },
+    // D-23 C: semua yang perlu ditindaklanjuti (butir disaring izin di server).
+    { label: 'Kotak tindakan', href: '/kelola/tindakan', izin: null, ikon: InboxIcon },
     { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat, ikon: StoreIcon },
     {
         label: 'Produk',

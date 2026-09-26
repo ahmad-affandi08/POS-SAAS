@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use App\Domain\Akuntansi\Layanan\PenyediaTindakanAkuntansi;
+use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan as KontrakPenyediaTindakan;
+use App\Domain\Kasir\Layanan\PenyediaTindakanKasir;
+use App\Domain\Laporan\Layanan\PenyediaTindakanStok;
+use App\Domain\Pelanggan\Layanan\PenyediaTindakanPelanggan;
+use App\Domain\Pembelian\Layanan\PenyediaTindakanPembelian;
+use App\Domain\Penjualan\Layanan\PenyediaTindakanPenjualan;
+use App\Domain\Promo\Layanan\PenyediaTindakanPromo;
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * D-23 C Kotak Tindakan: mendaftarkan penyedia butir tindakan tiap domain dengan tag `PenyediaTindakan::TAG`.
+ * Domain baru cukup menambah penyedianya di sini.
+ */
+final class PenyediaTindakan extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->tag([
+            PenyediaTindakanPenjualan::class,
+            PenyediaTindakanKasir::class,
+            PenyediaTindakanPelanggan::class,
+            PenyediaTindakanStok::class,
+            PenyediaTindakanPembelian::class,
+            PenyediaTindakanAkuntansi::class,
+            PenyediaTindakanPromo::class,
+        ], KontrakPenyediaTindakan::TAG);
+    }
+}

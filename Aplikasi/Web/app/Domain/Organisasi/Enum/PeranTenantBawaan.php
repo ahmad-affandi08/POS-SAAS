@@ -96,6 +96,8 @@ enum PeranTenantBawaan: string
                 // F-18: karyawan & jadwal outlet.
                 IzinTenant::KaryawanLihat,
                 IzinTenant::KaryawanKelola,
+                // D-23 C: menandai transaksi outlet yang perlu dicek.
+                IzinTenant::TindakanTinjau,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -128,6 +130,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::AkuntansiKelola,
                 IzinTenant::PelangganLihat,
                 IzinTenant::KaryawanLihat,
+                IzinTenant::TindakanTinjau,
             ],
         };
     }

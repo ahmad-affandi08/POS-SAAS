@@ -74,6 +74,8 @@ enum IzinTenant: string
     case KaryawanKelola = 'karyawan.kelola';
     // v2.00 mode Pelayan: mencatat pesanan meja & mengirim ke dapur tanpa berjualan/menerima pembayaran.
     case PesananMejaCatat = 'pesanan.meja.catat';
+    // D-23 C: menandai dokumen offline yang perlu ditinjau "sudah dicek" di Kotak Tindakan.
+    case TindakanTinjau = 'tindakan.tinjau';
 
     public function AmbilLabel(): string
     {
@@ -121,6 +123,7 @@ enum IzinTenant: string
             self::KaryawanLihat => 'Melihat karyawan, jadwal kerja, dan rekap absensi',
             self::KaryawanKelola => 'Mengelola data karyawan dan jadwal kerja',
             self::PesananMejaCatat => 'Mencatat pesanan meja & mengirim ke dapur tanpa menerima pembayaran (Pelayan)',
+            self::TindakanTinjau => 'Menandai transaksi yang perlu dicek sebagai sudah dicek (Kotak Tindakan)',
         };
     }
 
@@ -137,7 +140,7 @@ enum IzinTenant: string
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat => 'Penjualan',
-            self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola => 'Keuangan & laporan',
+            self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola, self::TindakanTinjau => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',
             self::PelangganLihat, self::PelangganKelola, self::PelangganDepositKelola, self::PelangganSesiKelola => 'Pelanggan',

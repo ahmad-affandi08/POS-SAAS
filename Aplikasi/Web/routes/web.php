@@ -17,6 +17,7 @@ use App\Http\Kontroler\Kelola\BantuanKontroler;
 use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
+use App\Http\Kontroler\Kelola\TindakanKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
@@ -116,6 +117,9 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         // F-00: saat langganan Ditangguhkan, perubahan data ditolak kecuali langganan, keamanan, bantuan, dan legal.
         Route::middleware([WajibGantiKataSandiTenant::class, IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class])->prefix('kelola')->group(function () use ($izin): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
+            // D-23 C: Kotak Tindakan (butir disaring izin & outlet; menandai dicek butuh `tindakan.tinjau`).
+            Route::get('/tindakan', [TindakanKontroler::class, 'Daftar'])->name('kelola.tindakan.daftar');
+            Route::post('/tindakan/tinjau', [TindakanKontroler::class, 'Tandai'])->middleware([SiapkanAuditTenant::class, $izin(IzinTenant::TindakanTinjau)])->name('kelola.tindakan.tinjau');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
                 // P-08 Langganan & tagihan (transfer manual + bukti). Izin `langganan.kelola` khusus Pemilik (§19.1).

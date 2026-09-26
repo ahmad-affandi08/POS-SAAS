@@ -13,6 +13,7 @@ use App\Providers\PenyediaLaporan;
 use App\Providers\PenyediaPelanggan;
 use App\Providers\PenyediaPenjualan;
 use App\Providers\PenyediaPersediaan;
+use App\Providers\PenyediaTindakan;
 
 return [
     PenyediaAplikasi::class,
@@ -33,4 +34,6 @@ return [
     PenyediaPelanggan::class,
     // F-18: karyawan (penangan item sinkron `Absensi.Masuk` & `Absensi.Keluar`).
     PenyediaKaryawan::class,
+    // D-23 C: penyedia butir Kotak Tindakan semua domain.
+    PenyediaTindakan::class,
 ];
