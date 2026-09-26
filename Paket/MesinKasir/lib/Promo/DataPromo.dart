@@ -24,6 +24,23 @@ enum JenisAksiPromo {
 /// menghentikan evaluasi.
 enum ModeResolusiPromo { Terbaik, PrioritasKetat }
 
+/// Jendela promo ulang tahun (F-16c bagian 3) terhadap tanggal lokal outlet: `Hari` = tepat hari ulang tahun,
+/// `Rentang` = ulang tahun ± N hari, `Bulan` = sepanjang bulan lahir. 29 Februari = 28 Februari di tahun bukan kabisat.
+enum JenisUlangTahunPromo { Hari, Rentang, Bulan }
+
+/// Periode batas pemakaian promo per pelanggan (F-16c bagian 3): per tanggal bisnis, atau selama masa promo.
+enum PeriodeBatasPelangganPromo { Hari, Promo }
+
+/// Pemakaian satu promo oleh pelanggan sebelum transaksi ini: hari ini dan selama masa promo.
+final class PemakaianPromoPelanggan {
+  const PemakaianPromoPelanggan({this.hari = 0, this.promo = 0});
+
+  final int hari;
+  final int promo;
+
+  int Ambil(PeriodeBatasPelangganPromo periode) => periode == PeriodeBatasPelangganPromo.Hari ? hari : promo;
+}
+
 /// Definisi satu promo (PRD F-16 Promo Engine, "Rincian F-16c"). Daftar kosong = tanpa batasan. Waktu
 /// `[mulaiPada, selesaiPada)` UTC; [hari] 1 = Senin … 7 = Minggu dan jam `[jamMulai, jamSelesai)` (menit sejak 00:00)
 /// memakai jam lokal outlet; jam selesai ≤ jam mulai = melewati tengah malam.
@@ -55,6 +72,12 @@ final class DefinisiPromo {
     this.batasPerTransaksi,
     this.kuotaTersisa,
     this.wajibVoucher = false,
+    this.metodeBayar = const [],
+    this.ulangTahun,
+    this.hariUlangTahun = 0,
+    this.transaksiPertama = false,
+    this.batasPerPelanggan,
+    this.periodeBatasPelanggan = PeriodeBatasPelangganPromo.Hari,
   }) : minimalSubtotal = minimalSubtotal ?? Uang.Nol(),
        jumlahMinimal = jumlahMinimal ?? Kuantitas.Nol(),
        persenGratis = persenGratis ?? Decimal.fromInt(100);
@@ -108,9 +131,24 @@ final class DefinisiPromo {
   /// F-16c bagian 2: promo hanya berlaku bila kode vouchernya sudah divalidasi server untuk transaksi ini.
   final bool wajibVoucher;
 
+  /// F-16c bagian 3: Uuid metode pembayaran; semua pembayaran transaksi wajib memakai salah satunya.
+  final List<String> metodeBayar;
+
+  /// F-16c bagian 3: promo ulang tahun pelanggan; [hariUlangTahun] = jarak ± hari untuk `Rentang`.
+  final JenisUlangTahunPromo? ulangTahun;
+  final int hariUlangTahun;
+
+  /// F-16c bagian 3: hanya untuk pelanggan yang belum pernah bertransaksi.
+  final bool transaksiPertama;
+
+  /// F-16c bagian 3: pemakaian maksimal per pelanggan per [periodeBatasPelanggan]; null = tanpa batas.
+  final int? batasPerPelanggan;
+  final PeriodeBatasPelangganPromo periodeBatasPelanggan;
+
   /// Membaca kolom promo + `Definisi` JSON (bentuk yang sama di tabel `Promo`, katalog POS, dan test vector):
   /// `{Hari, JamMulai "HH:MM", JamSelesai, Outlet, Kanal, Tier, MinimalSubtotal, Kondisi {Jenis, Uuid, JumlahMinimal},
-  /// Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher}`.
+  /// Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher, MetodeBayar [],
+  /// UlangTahun {Jenis, Hari}, TransaksiPertama, BatasPerPelanggan {Jumlah, Periode}}`.
   static DefinisiPromo Urai({
     required String uuid,
     required String kode,
@@ -123,6 +161,8 @@ final class DefinisiPromo {
   }) {
     final kondisi = (definisi['Kondisi'] as Map<String, Object?>?) ?? const {};
     final aksi = definisi['Aksi']! as Map<String, Object?>;
+    final ulangTahun = (definisi['UlangTahun'] as Map<String, Object?>?) ?? const {};
+    final batas = (definisi['BatasPerPelanggan'] as Map<String, Object?>?) ?? const {};
     String? Teks(Object? nilai) => nilai is String && nilai.isNotEmpty ? nilai : null;
     List<String> Daftar(Object? nilai) => nilai is List ? nilai.whereType<String>().toList() : const [];
     int? Menit(Object? nilai) {
@@ -161,6 +201,16 @@ final class DefinisiPromo {
       persenGratis: Teks(aksi['PersenGratis']) == null ? null : Decimal.parse(aksi['PersenGratis']! as String),
       batasPerTransaksi: definisi['BatasPerTransaksi'] as int?,
       wajibVoucher: definisi['WajibVoucher'] == true,
+      metodeBayar: Daftar(definisi['MetodeBayar']),
+      ulangTahun: Teks(ulangTahun['Jenis']) == null
+          ? null
+          : JenisUlangTahunPromo.values.byName(ulangTahun['Jenis']! as String),
+      hariUlangTahun: ulangTahun['Hari'] is int && (ulangTahun['Hari']! as int) > 0 ? ulangTahun['Hari']! as int : 0,
+      transaksiPertama: definisi['TransaksiPertama'] == true,
+      batasPerPelanggan: batas['Jumlah'] as int?,
+      periodeBatasPelanggan: Teks(batas['Periode']) == null
+          ? PeriodeBatasPelangganPromo.Hari
+          : PeriodeBatasPelangganPromo.values.byName(batas['Periode']! as String),
     );
   }
 }
@@ -174,7 +224,9 @@ final class BarisPromo {
 }
 
 /// Konteks transaksi: waktu UTC, jam dinding lokal outlet (tanpa zona), outlet, kanal, tier pelanggan, dan (F-16c
-/// bagian 2) Uuid promo yang vouchernya sudah divalidasi untuk transaksi ini.
+/// bagian 2) Uuid promo yang vouchernya sudah divalidasi untuk transaksi ini. Bagian 3: Uuid metode semua pembayaran
+/// (null = belum memilih pembayaran), ada tidaknya pelanggan, tanggal lahirnya `YYYY-MM-DD`, jumlah transaksinya
+/// sebelum ini (null = tidak diketahui), dan pemakaian promo oleh pelanggan itu per Uuid promo.
 final class KonteksPromo {
   const KonteksPromo({
     required this.waktu,
@@ -183,6 +235,11 @@ final class KonteksPromo {
     this.kanal,
     this.tier,
     this.voucher = const [],
+    this.metodeBayar,
+    this.berpelanggan = false,
+    this.tanggalLahir,
+    this.jumlahTransaksiPelanggan,
+    this.pemakaianPelanggan = const {},
   });
 
   final DateTime waktu;
@@ -191,6 +248,11 @@ final class KonteksPromo {
   final KanalPenjualan? kanal;
   final String? tier;
   final List<String> voucher;
+  final List<String>? metodeBayar;
+  final bool berpelanggan;
+  final String? tanggalLahir;
+  final int? jumlahTransaksiPelanggan;
+  final Map<String, PemakaianPromoPelanggan> pemakaianPelanggan;
 }
 
 /// Promo yang diterapkan: potongan per indeks baris dan potongan pesanan.

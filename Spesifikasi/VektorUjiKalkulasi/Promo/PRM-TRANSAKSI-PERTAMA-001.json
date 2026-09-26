@@ -1,0 +1,85 @@
+{
+  "Id": "PRM-TRANSAKSI-PERTAMA-001",
+  "Keterangan": "Pelanggan baru belum pernah bertransaksi (JumlahTransaksiPelanggan 0): promo transaksi pertama berlaku. Promo ulang tahun tidak berlaku karena tanggal lahir tidak diisi.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "Berpelanggan": true,
+    "TanggalLahir": null,
+    "JumlahTransaksiPelanggan": 0
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-PERTAMA",
+      "Kode": "PERTAMA10K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "TransaksiPertama": true,
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "10000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-ULTAH-BULAN",
+      "Kode": "ULTAH-BULAN",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "UlangTahun": {
+          "Jenis": "Bulan"
+        },
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "30"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "PERTAMA10K",
+        "DiskonBaris": {},
+        "DiskonPesanan": "10000.00"
+      }
+    ],
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "10000.00",
+    "TotalDiskon": "10000.00",
+    "TotalAkhir": "65000.00"
+  }
+}

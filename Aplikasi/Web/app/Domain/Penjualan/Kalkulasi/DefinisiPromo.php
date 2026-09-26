@@ -8,7 +8,9 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
+use App\Domain\Penjualan\Enum\PeriodeBatasPelangganPromo;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 
@@ -16,6 +18,8 @@ use Carbon\CarbonImmutable;
  * Definisi satu promo (PRD F-16 Promo Engine, "Rincian F-16c"); padanan `DefinisiPromo` di `Paket/MesinKasir`.
  * Daftar kosong = tanpa batasan. Waktu `[mulaiPada, selesaiPada)` UTC; `hari` 1 = Senin … 7 = Minggu dan jam
  * `[jamMulai, jamSelesai)` (menit sejak 00:00) memakai jam lokal outlet; jam selesai ≤ jam mulai = lewat tengah malam.
+ * Bagian 3: `metodeBayar` (semua pembayaran wajib memakai salah satunya), ulang tahun, transaksi pertama pelanggan, dan
+ * batas pemakaian per pelanggan (per hari atau selama promo).
  */
 final readonly class DefinisiPromo
 {
@@ -25,6 +29,7 @@ final readonly class DefinisiPromo
      * @param  list<KanalPenjualan>  $kanal
      * @param  list<string>  $tier
      * @param  list<string>  $uuidKondisi
+     * @param  list<string>  $metodeBayar
      */
     public function __construct(
         public string $uuid,
@@ -53,12 +58,19 @@ final readonly class DefinisiPromo
         public ?int $batasPerTransaksi = null,
         public ?int $kuotaTersisa = null,
         public bool $wajibVoucher = false,
+        public array $metodeBayar = [],
+        public ?JenisUlangTahunPromo $ulangTahun = null,
+        public int $hariUlangTahun = 0,
+        public bool $transaksiPertama = false,
+        public ?int $batasPerPelanggan = null,
+        public PeriodeBatasPelangganPromo $periodeBatasPelanggan = PeriodeBatasPelangganPromo::Hari,
     ) {}
 
     /**
      * Membaca kolom promo + `Definisi` (bentuk yang sama di tabel `Promo`, katalog POS, dan test vector):
      * `{Hari, JamMulai "HH:MM", JamSelesai, Outlet, Kanal, Tier, MinimalSubtotal, Kondisi {Jenis, Uuid, JumlahMinimal},
-     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher}`.
+     * Aksi {Jenis, Persen, Jumlah, Harga, Beli, Gratis, PersenGratis}, BatasPerTransaksi, WajibVoucher, MetodeBayar [],
+     * UlangTahun {Jenis, Hari}, TransaksiPertama, BatasPerPelanggan {Jumlah, Periode}}`.
      *
      * @param  array<string, mixed>  $definisi
      */
@@ -76,6 +88,10 @@ final readonly class DefinisiPromo
         $kondisi = is_array($definisi['Kondisi'] ?? null) ? $definisi['Kondisi'] : [];
         /** @var array<string, mixed> $aksi */
         $aksi = is_array($definisi['Aksi'] ?? null) ? $definisi['Aksi'] : [];
+        /** @var array<string, mixed> $ulangTahun */
+        $ulangTahun = is_array($definisi['UlangTahun'] ?? null) ? $definisi['UlangTahun'] : [];
+        /** @var array<string, mixed> $batas */
+        $batas = is_array($definisi['BatasPerPelanggan'] ?? null) ? $definisi['BatasPerPelanggan'] : [];
 
         return new self(
             uuid: $uuid,
@@ -104,6 +120,12 @@ final readonly class DefinisiPromo
             batasPerTransaksi: is_int($definisi['BatasPerTransaksi'] ?? null) ? $definisi['BatasPerTransaksi'] : null,
             kuotaTersisa: $kuotaTersisa,
             wajibVoucher: ($definisi['WajibVoucher'] ?? false) === true,
+            metodeBayar: self::UraiDaftar($definisi['MetodeBayar'] ?? null),
+            ulangTahun: JenisUlangTahunPromo::tryFrom(self::UraiTeks($ulangTahun['Jenis'] ?? null) ?? ''),
+            hariUlangTahun: is_int($ulangTahun['Hari'] ?? null) ? max(0, $ulangTahun['Hari']) : 0,
+            transaksiPertama: ($definisi['TransaksiPertama'] ?? false) === true,
+            batasPerPelanggan: is_int($batas['Jumlah'] ?? null) ? $batas['Jumlah'] : null,
+            periodeBatasPelanggan: PeriodeBatasPelangganPromo::tryFrom(self::UraiTeks($batas['Periode'] ?? null) ?? '') ?? PeriodeBatasPelangganPromo::Hari,
         );
     }
 

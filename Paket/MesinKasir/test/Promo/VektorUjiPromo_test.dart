@@ -155,6 +155,17 @@ void main() {
           kanal: konteks['Kanal'] == null ? null : KanalPenjualan.values.byName(konteks['Kanal']! as String),
           tier: konteks['Tier'] as String?,
           voucher: ((konteks['Voucher'] as List<Object?>?) ?? const []).cast<String>(),
+          metodeBayar: (konteks['MetodeBayar'] as List<Object?>?)?.cast<String>(),
+          berpelanggan: konteks['Berpelanggan'] == true,
+          tanggalLahir: konteks['TanggalLahir'] as String?,
+          jumlahTransaksiPelanggan: konteks['JumlahTransaksiPelanggan'] as int?,
+          pemakaianPelanggan: {
+            for (final e in ((konteks['PemakaianPelanggan'] as Map<String, Object?>?) ?? const {}).entries)
+              e.key: PemakaianPromoPelanggan(
+                hari: (e.value! as Map<String, Object?>)['Hari']! as int,
+                promo: (e.value! as Map<String, Object?>)['Promo']! as int,
+              ),
+          },
         ),
         mode: ModeResolusiPromo.values.byName(vektor['Mode']! as String),
       );

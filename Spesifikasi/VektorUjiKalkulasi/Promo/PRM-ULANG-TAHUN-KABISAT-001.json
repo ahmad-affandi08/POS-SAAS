@@ -1,0 +1,69 @@
+{
+  "Id": "PRM-ULANG-TAHUN-KABISAT-001",
+  "Keterangan": "Pelanggan lahir 29 Februari: di tahun bukan kabisat ulang tahunnya dirayakan 28 Februari, jadi promo hari-H berlaku pada 28 Februari 2027.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2027-02-28T05:00:00Z",
+    "WaktuLokal": "2027-02-28T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "Berpelanggan": true,
+    "TanggalLahir": "2000-02-29",
+    "JumlahTransaksiPelanggan": 3
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-ULTAH-HARI",
+      "Kode": "ULTAH-HARI",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "UlangTahun": {
+          "Jenis": "Hari"
+        },
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "25000"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "ULTAH-HARI",
+        "DiskonBaris": {},
+        "DiskonPesanan": "25000.00"
+      }
+    ],
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "25000.00",
+    "TotalDiskon": "25000.00",
+    "TotalAkhir": "50000.00"
+  }
+}

@@ -113,7 +113,48 @@ final class MesinPromo {
     if (p.wajibVoucher && !k.voucher.contains(p.uuid)) {
       return false;
     }
+    if (p.metodeBayar.isNotEmpty &&
+        (k.metodeBayar == null || k.metodeBayar!.isEmpty || !k.metodeBayar!.every(p.metodeBayar.contains))) {
+      return false;
+    }
+    if (p.ulangTahun != null && !CekUlangTahun(p, k)) {
+      return false;
+    }
+    if (p.transaksiPertama && (!k.berpelanggan || k.jumlahTransaksiPelanggan != 0)) {
+      return false;
+    }
+    if (p.batasPerPelanggan != null) {
+      final pakai = k.pemakaianPelanggan[p.uuid] ?? const PemakaianPromoPelanggan();
+      if (!k.berpelanggan || pakai.Ambil(p.periodeBatasPelanggan) >= p.batasPerPelanggan!) {
+        return false;
+      }
+    }
     return subtotalAwal.Bandingkan(p.minimalSubtotal) >= 0;
+  }
+
+  /// Tanggal lokal outlet vs tanggal lahir pelanggan (tahun lahir diabaikan; 29 Februari = 28 Februari di tahun bukan
+  /// kabisat). `Rentang` memeriksa ulang tahun tahun lalu, tahun ini, dan tahun depan agar ± N hari melewati tahun baru.
+  static bool CekUlangTahun(DefinisiPromo p, KonteksPromo k) {
+    final cocok = RegExp(r'^\d{4}-(\d{2})-(\d{2})$').firstMatch(k.tanggalLahir ?? '');
+    if (cocok == null) {
+      return false;
+    }
+    final bulan = int.parse(cocok.group(1)!);
+    final tanggal = int.parse(cocok.group(2)!);
+    final hariIni = DateTime.utc(k.waktuLokal.year, k.waktuLokal.month, k.waktuLokal.day);
+    if (p.ulangTahun == JenisUlangTahunPromo.Bulan) {
+      return hariIni.month == bulan;
+    }
+    final jarak = p.ulangTahun == JenisUlangTahunPromo.Rentang ? p.hariUlangTahun : 0;
+    for (final geser in const [-1, 0, 1]) {
+      final tahun = hariIni.year + geser;
+      final kabisat = (tahun % 4 == 0 && tahun % 100 != 0) || tahun % 400 == 0;
+      final hari = bulan == 2 && tanggal == 29 && !kabisat ? 28 : tanggal;
+      if (DateTime.utc(tahun, bulan, hari).difference(hariIni).inDays.abs() <= jarak) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static bool CekAksiPesanan(JenisAksiPromo aksi) =>

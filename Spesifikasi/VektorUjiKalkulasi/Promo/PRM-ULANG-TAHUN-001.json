@@ -1,0 +1,106 @@
+{
+  "Id": "PRM-ULANG-TAHUN-001",
+  "Keterangan": "Ulang tahun 30 Desember, transaksi 2 Januari (jam lokal outlet): jendela ± 3 hari melewati tahun baru sehingga ULTAH-RENTANG berlaku; ULTAH-HARI (hari-H) dan ULTAH-BULAN (bulan Desember) tidak.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2027-01-02T05:00:00Z",
+    "WaktuLokal": "2027-01-02T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "Berpelanggan": true,
+    "TanggalLahir": "1990-12-30",
+    "JumlahTransaksiPelanggan": 12
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-ULTAH-HARI",
+      "Kode": "ULTAH-HARI",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "UlangTahun": {
+          "Jenis": "Hari"
+        },
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "50"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-ULTAH-RENTANG",
+      "Kode": "ULTAH-RENTANG",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "UlangTahun": {
+          "Jenis": "Rentang",
+          "Hari": 3
+        },
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "20000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-ULTAH-BULAN",
+      "Kode": "ULTAH-BULAN",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "UlangTahun": {
+          "Jenis": "Bulan"
+        },
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "30"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "ULTAH-RENTANG",
+        "DiskonBaris": {},
+        "DiskonPesanan": "20000.00"
+      }
+    ],
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "20000.00",
+    "TotalDiskon": "20000.00",
+    "TotalAkhir": "55000.00"
+  }
+}

@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Kalkulasi;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
 use App\Domain\Penjualan\Enum\ModeResolusiPromo;
 use Brick\Math\BigDecimal;
 use InvalidArgumentException;
@@ -17,7 +18,8 @@ use InvalidArgumentException;
  *
  * 1. Promo berlaku bila kuota belum habis, waktu di `[mulaiPada, selesaiPada)`, hari & jam lokal, outlet, kanal, dan
  *    tier cocok, voucher sudah divalidasi (promo wajib voucher), subtotal awal (setelah diskon manual baris) ≥ minimal,
- *    dan jumlah barang kondisi cukup.
+ *    dan jumlah barang kondisi cukup. Bagian 3: semua pembayaran memakai metode promo, hari ulang tahun pelanggan,
+ *    transaksi pertama pelanggan, dan pemakaian pelanggan di bawah batas (per hari/selama promo).
  * 2. `PrioritasKetat`: urut prioritas (besar dulu, seri menurut kode); eksklusif hanya bila belum ada yang terpilih dan
  *    menghentikan evaluasi. `Terbaik`: semua non-eksklusif bersama vs tiap eksklusif sendiri, potongan terbesar menang
  *    (seri: kandidat lebih awal).
@@ -155,7 +157,60 @@ final class MesinPromo
             return false;
         }
 
+        if ($p->metodeBayar !== [] && ($k->metodeBayar === null || $k->metodeBayar === [] || array_diff($k->metodeBayar, $p->metodeBayar) !== [])) {
+            return false;
+        }
+
+        if ($p->ulangTahun !== null && ! self::CekUlangTahun($p, $k)) {
+            return false;
+        }
+
+        if ($p->transaksiPertama && (! $k->berpelanggan || $k->jumlahTransaksiPelanggan !== 0)) {
+            return false;
+        }
+
+        if ($p->batasPerPelanggan !== null) {
+            $pakai = $k->pemakaianPelanggan[$p->uuid] ?? ['Hari' => 0, 'Promo' => 0];
+
+            if (! $k->berpelanggan || $pakai[$p->periodeBatasPelanggan->value] >= $p->batasPerPelanggan) {
+                return false;
+            }
+        }
+
         return $subtotalAwal->Bandingkan($p->AmbilMinimalSubtotal()) >= 0;
+    }
+
+    /**
+     * Tanggal lokal outlet vs tanggal lahir pelanggan (tahun lahir diabaikan; 29 Februari = 28 Februari di tahun bukan
+     * kabisat). `Rentang` memeriksa ulang tahun tahun lalu, tahun ini, dan tahun depan agar ± N hari melewati tahun baru.
+     */
+    public static function CekUlangTahun(DefinisiPromo $p, KonteksPromo $k): bool
+    {
+        if ($k->tanggalLahir === null || preg_match('/^\d{4}-(\d{2})-(\d{2})$/', $k->tanggalLahir, $m) !== 1) {
+            return false;
+        }
+
+        $bulan = (int) $m[1];
+        $tanggal = (int) $m[2];
+        $hariIni = $k->waktuLokal->startOfDay();
+
+        if ($p->ulangTahun === JenisUlangTahunPromo::Bulan) {
+            return (int) $hariIni->format('n') === $bulan;
+        }
+
+        $jarak = $p->ulangTahun === JenisUlangTahunPromo::Rentang ? $p->hariUlangTahun : 0;
+
+        foreach ([-1, 0, 1] as $geser) {
+            $tahun = (int) $hariIni->format('Y') + $geser;
+            $hari = $bulan === 2 && $tanggal === 29 && ! checkdate(2, 29, $tahun) ? 28 : $tanggal;
+            $ulangTahun = $hariIni->setDate($tahun, $bulan, $hari);
+
+            if (abs((int) $hariIni->diffInDays($ulangTahun, false)) <= $jarak) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -94,7 +94,7 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
             expect(basename($berkas))->toBe($id.'.json');
             /** @var list<array{Sku: string, Kategori?: string|null}> $baris */
             $baris = $vektor['Baris'];
-            /** @var array{Waktu: string, WaktuLokal: string, UuidOutlet?: string|null, Kanal?: string|null, Tier?: string|null, Voucher?: list<string>} $konteks */
+            /** @var array{Waktu: string, WaktuLokal: string, UuidOutlet?: string|null, Kanal?: string|null, Tier?: string|null, Voucher?: list<string>, MetodeBayar?: list<string>|null, Berpelanggan?: bool, TanggalLahir?: string|null, JumlahTransaksiPelanggan?: int|null, PemakaianPelanggan?: array<string, array{Hari: int, Promo: int}>} $konteks */
             $konteks = $vektor['Konteks'];
             /** @var list<array{Uuid: string, Kode: string, Prioritas: int, Eksklusif: bool, MulaiPada: string|null, SelesaiPada: string|null, KuotaTersisa: int|null, Definisi: array<string, mixed>}> $daftarPromo */
             $daftarPromo = $vektor['Promo'];
@@ -119,6 +119,11 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
                     isset($konteks['Kanal']) ? KanalPenjualan::from($konteks['Kanal']) : null,
                     $konteks['Tier'] ?? null,
                     $konteks['Voucher'] ?? [],
+                    $konteks['MetodeBayar'] ?? null,
+                    $konteks['Berpelanggan'] ?? false,
+                    $konteks['TanggalLahir'] ?? null,
+                    $konteks['JumlahTransaksiPelanggan'] ?? null,
+                    $konteks['PemakaianPelanggan'] ?? [],
                 ),
                 ModeResolusiPromo::from((string) $vektor['Mode']),
             );

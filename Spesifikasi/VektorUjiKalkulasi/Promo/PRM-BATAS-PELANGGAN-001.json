@@ -1,0 +1,98 @@
+{
+  "Id": "PRM-BATAS-PELANGGAN-001",
+  "Keterangan": "Batas per pelanggan: HARIAN20 (1 kali per hari) sudah dipakai hari ini sehingga tidak berlaku; MUSIM8K (3 kali selama promo) baru dipakai 2 kali sehingga masih berlaku.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "Berpelanggan": true,
+    "JumlahTransaksiPelanggan": 9,
+    "PemakaianPelanggan": {
+      "PR-HARIAN": {
+        "Hari": 1,
+        "Promo": 4
+      },
+      "PR-MUSIM": {
+        "Hari": 0,
+        "Promo": 2
+      }
+    }
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-HARIAN",
+      "Kode": "HARIAN20",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "BatasPerPelanggan": {
+          "Jumlah": 1,
+          "Periode": "Hari"
+        },
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "20"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-MUSIM",
+      "Kode": "MUSIM8K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "BatasPerPelanggan": {
+          "Jumlah": 3,
+          "Periode": "Promo"
+        },
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "8000"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "MUSIM8K",
+        "DiskonBaris": {},
+        "DiskonPesanan": "8000.00"
+      }
+    ],
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "8000.00",
+    "TotalDiskon": "8000.00",
+    "TotalAkhir": "67000.00"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "Id": "PRM-METODE-BAYAR-CAMPUR-001",
+  "Keterangan": "Pembayaran dipecah QRIS + tunai: promo khusus QRIS tidak berlaku (tidak semua pembayaran QRIS), promo yang menerima QRIS atau tunai tetap berlaku.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "BawaPulang",
+    "Tier": null,
+    "MetodeBayar": [
+      "M-QRIS",
+      "M-TUNAI"
+    ]
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-KOPI",
+      "Kategori": "K-MINUM",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "P-ROTI",
+      "Kategori": "K-MAKAN",
+      "Jumlah": "1",
+      "HargaSatuan": "15000"
+    }
+  ],
+  "Promo": [
+    {
+      "Uuid": "PR-QRIS",
+      "Kode": "QRIS10",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MetodeBayar": [
+          "M-QRIS"
+        ],
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "10"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-HEMAT",
+      "Kode": "HEMAT5K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MetodeBayar": [
+          "M-QRIS",
+          "M-TUNAI"
+        ],
+        "Aksi": {
+          "Jenis": "DiskonTetapPesanan",
+          "Jumlah": "5000"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "HEMAT5K",
+        "DiskonBaris": {},
+        "DiskonPesanan": "5000.00"
+      }
+    ],
+    "Subtotal": "75000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "5000.00",
+    "TotalDiskon": "5000.00",
+    "TotalAkhir": "70000.00"
+  }
+}
