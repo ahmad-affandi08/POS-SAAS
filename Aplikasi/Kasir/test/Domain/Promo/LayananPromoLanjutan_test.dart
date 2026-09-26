@@ -171,5 +171,15 @@ void main() {
     expect(denganPelanggan.AmbilLabelPoinBerlipat(), 'Poin 2× · Poin dobel akhir pekan');
     expect(denganPelanggan.hasil.totalAkhir, tanpaPelanggan.hasil.totalAkhir);
     expect(denganPelanggan.promoTerpakai, isEmpty, reason: 'Promo poin tidak dikirim sebagai potongan.');
+
+    // Struk setelah bayar mencetak label poin (diteruskan lewat hasil bayar).
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    final hasil = await u.penjualan.Bayar(
+      keranjang: keranjang.Salin(pelanggan: () => budi),
+      pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(100000))],
+      kasir: rina,
+      k: k,
+    );
+    expect(hasil.labelPoin, 'Poin 2× · Poin dobel akhir pekan');
   });
 }

@@ -122,6 +122,37 @@ void main() {
     expect(baris[baris.length - 2], 'Terima kasih atas kunjungan Anda');
     expect(baris.last, 'Dibuat dengan PAYOU');
     expect(baris, isNot(contains('CETAK ULANG')));
+    expect(baris, isNot(contains('Poin masuk setelah transaksi tersinkron')));
+  });
+
+  test('F-16c bagian 4a: promo poin berlipat dicetak di bawah total; tidak dicetak pada penjualan void', () async {
+    await Siapkan();
+    final hasil = await Jual(JenisMetodeBayar.tunai);
+    Future<List<String>> Teks() async => TataLetakStruk.KeTeks(
+      PenyusunStrukPenjualan.Susun(
+        await IdentitasStruk.Muat(u.repositori),
+        DataStrukPenjualan(
+          penjualan: (await u.repositoriPenjualan.CariPenjualan(hasil.uuid))!,
+          detail: await u.repositoriPenjualan.AmbilDetail(hasil.uuid),
+          pembayaran: await u.repositoriPenjualan.AmbilPembayaran(hasil.uuid),
+          namaPelanggan: 'Budi Santoso',
+          labelPoin: 'Poin 2× · Poin dobel akhir pekan',
+        ),
+      ),
+      LebarKertas.Mm80,
+    ).map((b) => b.trim()).toList();
+
+    final baris = await Teks();
+    final total = baris.indexWhere((b) => b.startsWith('TOTAL'));
+    // Printer thermal hanya ASCII: "×" → "x", "·" → "-".
+    final poin = baris.indexOf('Poin 2x - Poin dobel akhir pekan');
+    expect(poin, greaterThan(total), reason: baris.join('\n'));
+    expect(baris[poin + 1], 'Poin masuk setelah transaksi tersinkron');
+
+    await (u.db.update(
+      u.db.penjualan,
+    )..where((p) => p.Uuid.equals(hasil.uuid))).write(const PenjualanCompanion(Status: Value('Void')));
+    expect(await Teks(), isNot(contains('Poin masuk setelah transaksi tersinkron')));
   });
 
   test('POS-11 struk digital: QR & tautan = awalan dari server + Uuid penjualan; tanpa awalan tidak dicetak', () async {

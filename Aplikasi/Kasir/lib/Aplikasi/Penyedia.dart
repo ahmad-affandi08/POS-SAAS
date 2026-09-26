@@ -208,16 +208,28 @@ class PengaturPrinter extends Notifier<StatusPrinter> {
     state = const StatusPrinter();
   }
 
-  Future<String?> CetakPenjualan(String uuidPenjualan, {bool cetakUlang = false, String? namaPelanggan}) =>
-      _Jalankan((l) => l.CetakPenjualan(uuidPenjualan, cetakUlang: cetakUlang, namaPelanggan: namaPelanggan));
+  Future<String?> CetakPenjualan(
+    String uuidPenjualan, {
+    bool cetakUlang = false,
+    String? namaPelanggan,
+    String? labelPoin,
+  }) => _Jalankan(
+    (l) => l.CetakPenjualan(uuidPenjualan, cetakUlang: cetakUlang, namaPelanggan: namaPelanggan, labelPoin: labelPoin),
+  );
 
   /// Cetak otomatis setelah bayar (plus buka laci bila tunai), sekali per transaksi walau layar selesai dibangun ulang.
   /// Printer belum diatur/otomatis mati = tidak mencetak dan keadaan tidak berubah.
-  Future<({bool dicetak, String? galat})> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan}) async {
+  Future<({bool dicetak, String? galat})> CetakSetelahBayar(
+    String uuidPenjualan, {
+    String? namaPelanggan,
+    String? labelPoin,
+  }) async {
     if (!_sudahOtomatis.add(uuidPenjualan) || !await ref.read(penyediaLayananStruk).CekCetakOtomatis()) {
       return (dicetak: false, galat: null);
     }
-    final galat = await _Jalankan((l) => l.CetakSetelahBayar(uuidPenjualan, namaPelanggan: namaPelanggan));
+    final galat = await _Jalankan(
+      (l) => l.CetakSetelahBayar(uuidPenjualan, namaPelanggan: namaPelanggan, labelPoin: labelPoin),
+    );
     return (dicetak: galat == null, galat: galat);
   }
 

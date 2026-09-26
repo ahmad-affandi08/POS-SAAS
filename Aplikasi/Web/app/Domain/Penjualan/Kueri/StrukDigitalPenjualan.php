@@ -9,6 +9,7 @@ use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
+use App\Domain\Pelanggan\Kueri\RiwayatPoin;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
@@ -33,6 +34,7 @@ final class StrukDigitalPenjualan
         private readonly IdentitasPelanggan $pelanggan,
         private readonly OutletPenjualan $outlet,
         private readonly ProfilPajakOutlet $pajakOutlet,
+        private readonly RiwayatPoin $poin,
     ) {}
 
     /**
@@ -91,6 +93,8 @@ final class StrukDigitalPenjualan
             ])->all()),
             'Kembalian' => $p->Kembalian,
             'TotalRetur' => $totalRetur?->KeString(),
+            // F-16c bagian 4a: poin pasti dihitung server (termasuk pengali tier & promo poin berlipat).
+            'PoinDiperoleh' => $p->IdPelanggan === null || $p->Status === StatusPenjualan::Void ? null : $this->poin->AmbilPerolehanPenjualan($p->Id),
             'CatatanKaki' => $struk->catatanKaki,
             'TeksPenutup' => $struk->teksPenutup,
         ];

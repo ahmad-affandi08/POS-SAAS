@@ -100,6 +100,7 @@ class PenjualanTersimpan {
     required this.kembalian,
     required this.pembayaran,
     this.namaPelanggan,
+    this.labelPoin,
   });
 
   final String uuid;
@@ -111,6 +112,9 @@ class PenjualanTersimpan {
 
   /// Untuk struk yang dicetak langsung setelah bayar (nama pelanggan tidak disimpan di tabel penjualan lokal).
   final String? namaPelanggan;
+
+  /// F-16c bagian 4a: "Poin 2× · nama promo" bila promo poin berlipat berlaku (dicetak di struk setelah bayar).
+  final String? labelPoin;
 }
 
 /// Keputusan diskon manual terhadap batas BR-07.3.
@@ -839,6 +843,7 @@ class LayananPenjualan {
       kembalian: kembalian,
       pembayaran: pembayaran,
       namaPelanggan: keranjang.pelanggan?.nama,
+      labelPoin: hitungan.AmbilLabelPoinBerlipat(),
     );
   }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Pelanggan\Kueri;
 
+use App\Domain\Pelanggan\Enum\JenisMutasiPoin;
+use App\Domain\Pelanggan\Enum\SumberMutasiPoin;
 use App\Domain\Pelanggan\Model\MutasiPoin;
 
 /** Riwayat buku poin satu pelanggan (F-16b), terbaru dulu, maks. [batas] baris. */
@@ -29,5 +31,17 @@ final class RiwayatPoin
                 'Keterangan' => $m->Keterangan,
                 'DibuatPada' => $m->DibuatPada?->toIso8601ZuluString(),
             ])->all());
+    }
+
+    /** F-16c bagian 4a: poin yang diperoleh dari satu penjualan (termasuk pengali promo), null bila tidak ada. */
+    public function AmbilPerolehanPenjualan(int $idPenjualan): ?int
+    {
+        $poin = MutasiPoin::query()
+            ->where('Jenis', JenisMutasiPoin::Perolehan->value)
+            ->where('JenisSumber', SumberMutasiPoin::Penjualan->value)
+            ->where('IdSumber', $idPenjualan)
+            ->value('Poin');
+
+        return $poin === null ? null : (int) $poin;
     }
 }

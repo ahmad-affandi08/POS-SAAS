@@ -35,6 +35,7 @@ class LayananStruk {
     bool cetakUlang = false,
     bool bukaLaci = false,
     String? namaPelanggan,
+    String? labelPoin,
   }) async {
     final profil = await _WajibProfil();
     final baris = await penjualan.CariPenjualan(uuidPenjualan);
@@ -47,6 +48,7 @@ class LayananStruk {
       detail: await penjualan.AmbilDetail(uuidPenjualan),
       pembayaran: pembayaran,
       namaPelanggan: namaPelanggan,
+      labelPoin: labelPoin,
     );
     final laci = bukaLaci && profil.bukaLaciTunai && pembayaran.any((b) => b.Jenis == JenisMetodeBayar.tunai);
     final dokumen = PenyusunStrukPenjualan.Susun(
@@ -128,11 +130,11 @@ class LayananStruk {
   Future<bool> CekCetakOtomatis() async => (await AmbilProfil())?.cetakOtomatis ?? false;
 
   /// Dipanggil setelah pembayaran tersimpan: cetak (plus buka laci bila tunai) bila [CekCetakOtomatis]. true = dicetak.
-  Future<bool> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan}) async {
+  Future<bool> CetakSetelahBayar(String uuidPenjualan, {String? namaPelanggan, String? labelPoin}) async {
     if (!await CekCetakOtomatis()) {
       return false;
     }
-    await CetakPenjualan(uuidPenjualan, bukaLaci: true, namaPelanggan: namaPelanggan);
+    await CetakPenjualan(uuidPenjualan, bukaLaci: true, namaPelanggan: namaPelanggan, labelPoin: labelPoin);
     return true;
   }
 

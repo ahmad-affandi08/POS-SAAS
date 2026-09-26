@@ -7,9 +7,11 @@ use App\Domain\Pelanggan\Model\MutasiPoin;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PengaturanLoyalti;
 use App\Domain\Pelanggan\Model\TierPelanggan;
+use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Promo\Model\Promo;
 use App\Domain\Promo\Model\PromoPemakaian;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
@@ -96,6 +98,15 @@ describe('F-16c bagian 4 poin berlipat', function (): void {
             ->and(Penjualan::query()->where('Uuid', $item['Uuid'])->sole()->PerluTinjauan)->toBeFalse()
             ->and(PromoPemakaian::query()->where('IdPromo', $dua->Id)->sole()->JumlahDiskon)->toBe('0.00')
             ->and($dua->fresh()?->KuotaTerpakai)->toBe(1);
+
+        // Struk digital menampilkan poin pasti dari server (termasuk pengali promo).
+        $this->get('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $item['Uuid']))->assertOk()
+            ->assertInertia(fn (AssertableInertia $h) => $h->where('Struk.PoinDiperoleh', 15));
+        $tanpa = ItemPoinBerlipat($k, null);
+        BantuanKasir::KirimRingkas($this, $k['Token'], [$tanpa]);
+        $this->get('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $tanpa['Uuid']))->assertOk()
+            ->assertInertia(fn (AssertableInertia $h) => $h->where('Struk.PoinDiperoleh', null));
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
 
         // Tier Gold ×1,5 dan promo ×1,5 lagi (promo 2× tetap berlaku, pengali terbesar = 2).
         $gold = TierPelanggan::query()->create(['Kode' => 'GOLD', 'Nama' => 'Gold', 'MinimalBelanja' => '0', 'PengaliPoin' => '1.50']);

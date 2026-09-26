@@ -14,6 +14,7 @@ class DataStrukPenjualan {
     required this.detail,
     required this.pembayaran,
     this.namaPelanggan,
+    this.labelPoin,
   });
 
   final BarisPenjualan penjualan;
@@ -22,6 +23,9 @@ class DataStrukPenjualan {
 
   /// Diketahui saat struk dicetak langsung setelah bayar; tidak disimpan lokal, jadi cetak ulang tanpa nama pelanggan.
   final String? namaPelanggan;
+
+  /// F-16c bagian 4a: promo poin berlipat yang berlaku (seperti nama pelanggan, hanya saat dicetak setelah bayar).
+  final String? labelPoin;
 }
 
 /// Menyusun struk penjualan (POS-11, PRD v1.79) sesuai pengaturan struk tenant. Angka memakai format Indonesia tanpa
@@ -135,6 +139,13 @@ abstract final class PenyusunStrukPenjualan {
     final hemat = Uang.Dari(jual.TotalDiskon);
     if (p.tampilkanHemat && _Positif(hemat)) {
       baris.add(BarisTeks('Anda hemat ${hemat.FormatRupiah()}', rata: RataStruk.Tengah));
+    }
+    // F-16c bagian 4a: poin dihitung server saat transaksi tersinkron; struk hanya memberi tahu pengalinya.
+    final labelPoin = data.labelPoin?.trim();
+    if (labelPoin != null && labelPoin.isNotEmpty && jual.Status != StatusPenjualanLokal.divoid) {
+      baris
+        ..add(BarisTeks(labelPoin, rata: RataStruk.Tengah, tebal: true))
+        ..add(const BarisTeks('Poin masuk setelah transaksi tersinkron', rata: RataStruk.Tengah));
     }
 
     baris.add(const BarisGaris());

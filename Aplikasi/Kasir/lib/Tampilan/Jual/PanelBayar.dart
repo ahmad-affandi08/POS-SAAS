@@ -647,7 +647,7 @@ class TampilanSelesai extends StatelessWidget {
               ],
             ),
           const SizedBox(height: TokenJarak.jarak8),
-          BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
+          BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan, labelPoin: hasil.labelPoin),
           BagianTiketDapur(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
           const SizedBox(height: TokenJarak.jarak24),
           SizedBox(

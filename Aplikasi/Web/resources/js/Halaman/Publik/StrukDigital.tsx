@@ -32,6 +32,8 @@ export type StrukDigital = {
     Pembayaran: { NamaMetode: string; Jumlah: string }[];
     Kembalian: string;
     TotalRetur: string | null;
+    /** F-16c bagian 4a: poin yang diperoleh pelanggan dari transaksi ini (null = tidak ada). */
+    PoinDiperoleh?: number | null;
     CatatanKaki: string | null;
     TeksPenutup: string | null;
 };
@@ -147,6 +149,9 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
                         )}
                         {Struk.TotalRetur ? (
                             <Baris kiri="Dikembalikan (retur)" kanan={`-${FormatRupiah(Struk.TotalRetur)}`} />
+                        ) : null}
+                        {Struk.PoinDiperoleh ? (
+                            <Baris kiri="Poin diperoleh" kanan={Struk.PoinDiperoleh.toLocaleString('id-ID')} />
                         ) : null}
                     </section>
                     <footer className="border-t border-dashed border-garis pt-2 text-center">

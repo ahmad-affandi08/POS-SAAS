@@ -55,6 +55,12 @@ describe('Struk digital publik (POS-11)', () => {
         expect(screen.queryByText('TRANSAKSI DIBATALKAN')).toBeNull();
     });
 
+    it('F-16c bagian 4a: poin diperoleh tampil bila ada', () => {
+        RenderUji(<HalamanStrukDigital Struk={{ ...struk, PoinDiperoleh: 1250 }} />);
+        expect(screen.getByText('Poin diperoleh')).toBeTruthy();
+        expect(screen.getByText('1.250')).toBeTruthy();
+    });
+
     it('void ditandai dan struk tidak dikenal menampilkan keadaan belum tersedia', () => {
         RenderUji(<HalamanStrukDigital Struk={{ ...struk, Dibatalkan: true, TotalRetur: null }} />);
         expect(screen.getByRole('status').textContent).toBe('TRANSAKSI DIBATALKAN');

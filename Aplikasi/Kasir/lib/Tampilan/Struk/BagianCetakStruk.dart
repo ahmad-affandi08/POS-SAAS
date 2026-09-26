@@ -8,10 +8,13 @@ import '../../Aplikasi/Penyedia.dart';
 /// dan cetak otomatis aktif), menampilkan hasilnya, dan tombol cetak manual. Cetak kedua dan seterusnya bertanda
 /// "CETAK ULANG". Gagal cetak tidak membatalkan transaksi.
 class BagianCetakStruk extends ConsumerStatefulWidget {
-  const BagianCetakStruk({super.key, required this.uuidPenjualan, this.namaPelanggan});
+  const BagianCetakStruk({super.key, required this.uuidPenjualan, this.namaPelanggan, this.labelPoin});
 
   final String uuidPenjualan;
   final String? namaPelanggan;
+
+  /// F-16c bagian 4a: baris poin berlipat di struk.
+  final String? labelPoin;
 
   @override
   ConsumerState<BagianCetakStruk> createState() => _BagianCetakStrukState();
@@ -35,7 +38,7 @@ class _BagianCetakStrukState extends ConsumerState<BagianCetakStruk> {
     setState(() => _mencetak = true);
     final hasil = await ref
         .read(penyediaPrinter.notifier)
-        .CetakSetelahBayar(widget.uuidPenjualan, namaPelanggan: widget.namaPelanggan);
+        .CetakSetelahBayar(widget.uuidPenjualan, namaPelanggan: widget.namaPelanggan, labelPoin: widget.labelPoin);
     if (hasil.dicetak || hasil.galat != null) {
       _Selesai(hasil.galat);
     } else if (mounted) {
@@ -54,7 +57,12 @@ class _BagianCetakStrukState extends ConsumerState<BagianCetakStruk> {
     });
     final galat = await ref
         .read(penyediaPrinter.notifier)
-        .CetakPenjualan(widget.uuidPenjualan, cetakUlang: _jumlahCetak > 0, namaPelanggan: widget.namaPelanggan);
+        .CetakPenjualan(
+          widget.uuidPenjualan,
+          cetakUlang: _jumlahCetak > 0,
+          namaPelanggan: widget.namaPelanggan,
+          labelPoin: widget.labelPoin,
+        );
     _Selesai(galat);
   }
 

@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.94 |
+| Versi | 1.95 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.95 | **Poin di struk** (keputusan pemilik produk: "kerjakan semua"): struk cetak setelah bayar mencetak "Poin 2× · nama promo" + "Poin masuk setelah transaksi tersinkron" bila promo poin berlipat berlaku (tidak pada void; cetak ulang dari riwayat tidak memuatnya, sama seperti nama pelanggan); struk digital `/s/{kodeStruk}` menampilkan **Poin diperoleh** yang pasti dari server. Printer thermal: "·" dicetak "-". **Gratis ongkir** belum dikerjakan karena penjualan belum punya ongkos kirim (menunggu flow pesan-antar/toko online). |
 | 1.94 | Rincian **F-16c bagian 4e potong klaim promo dari hutang pemasok** (keputusan pemilik produk: "sesuai kebijakan di Indonesia"; praktik umum distributor: klaim promo dikompensasikan dengan tagihan/nota debit): penyelesaian klaim punya cara `KasBank` atau `PotongHutang`; potong hutang membuat `PembayaranHutang` bertanda `Kompensasi` yang dialokasikan ke faktur terbuka paling lama, jurnal **J-16.7** Dr Hutang Usaha, Cr Piutang Klaim Promosi Pemasok; ditolak bila sisa hutang kurang; pembayaran kompensasi tidak bisa dibatalkan. Kolom `PembayaranHutang.Kompensasi`, `PenerimaanKlaimPemasok.Cara`, `IdPembayaranHutang` (`IdAkunKasBank` boleh kosong). |
 | 1.93 | Rincian **F-16c bagian 4d klaim promo pemasok berbasis akrual** (keputusan pemilik produk: "kerjakan semua, yang penting sesuai dengan kebijakan yang ada di Indonesia"; perlakuan dipilih agen: SAK EMKM/PSAK 72 basis akrual): klaim diakui saat penjualan **J-16.6** Dr Piutang Klaim Promosi Pemasok (akun baru 1-1460, peran `PiutangKlaimPemasok`), Cr HPP; void membalik; **J-16.5** penerimaan kini Cr Piutang Klaim Promosi Pemasok (klaim lama tanpa jurnal akrual tetap Cr HPP). Akun & pemetaan disediakan otomatis untuk tenant lama. Kolom `KlaimPromoPemasok.IdOutlet`, `IdJurnal`, `IdJurnalBatal`. Menggantikan "klaim diakui saat pemasok membayar" di bagian 4b. |
 | 1.92 | Rincian **F-16c bagian 4c laporan efektivitas promo** (keputusan pemilik produk v1.89: praktik umum; metode dipilih agen): jumlah pakai, total & rata-rata potongan, bagian pemasok, penjualan barang promo selama promo vs periode yang sama panjang tepat sebelumnya, dan uplift %. |
@@ -1674,7 +1675,8 @@ promo:
 - **Server:** poin dihitung server, jadi promo poin berlipat ditentukan server saat penjualan diterima (tidak dibandingkan dengan perangkat, tidak memicu `PromoBerbeda`): perolehan = ⌊TotalAkhir ÷ BelanjaPerPoin × PengaliPoin tier × Pengali promo⌋. Pemakaian promo (`PromoPemakaian` dengan potongan Rp 0, kuota, batas per pelanggan) dicatat hanya bila penjualan berpelanggan dan poin benar-benar diperoleh; kuota terlampaui = diterima + tinjauan. Void/retur membalik perolehan seperti F-16b (sudah termasuk pengali).
 - **Back-office:** jenis "Poin berlipat (tanpa potongan harga)" di formulir promo dengan bidang **Pengali poin**. **API POS:** promo poin ikut `GET /api/pos/v1/promo`; aplikasi kasir lama melewati definisi yang tidak dikenalnya, aplikasi versi ini menghitungnya di mesin tanpa mengubah harga.
 - **v1.92:** keranjang kasir menampilkan "Poin 2× · nama promo" bila pelanggan dipilih dan promo poin berlipat berlaku (tanpa mengubah harga; poin tetap dihitung server). Laporan efektivitas & pendanaan promo: lihat bagian 4b & 4c.
-- **Belum:** baris poin berlipat di struk cetak, gratis ongkir.
+- **v1.95:** struk cetak setelah bayar mencetak label poin berlipat + "Poin masuk setelah transaksi tersinkron" (tidak pada void; cetak ulang dari riwayat tidak memuatnya karena label tidak disimpan lokal). Struk digital menampilkan **Poin diperoleh** (angka pasti dari `MutasiPoin` perolehan penjualan itu; kosong bila tanpa pelanggan/void).
+- **Belum:** gratis ongkir (penjualan belum punya ongkos kirim; menunggu flow pesan-antar/toko online).
 
 
 ---

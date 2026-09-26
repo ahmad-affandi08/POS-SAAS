@@ -105,7 +105,7 @@ abstract final class TataLetakStruk {
     'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i', 'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o', 'õ': 'o', 'ú': 'u', //
     'ù': 'u', 'û': 'u', 'ü': 'u', 'ñ': 'n', 'ç': 'c', 'Á': 'A', 'À': 'A', 'É': 'E', 'È': 'E', 'Í': 'I', //
     'Ó': 'O', 'Ú': 'U', 'Ñ': 'N', 'Ç': 'C', '‘': "'", '’': "'", '“': '"', '”': '"', '–': '-', '—': '-', '−': '-', //
-    '…': '...', '×': 'x', '•': '*', ' ': ' ', '\t': ' ',
+    '…': '...', '×': 'x', '•': '*', '·': '-', ' ': ' ', '\t': ' ',
   };
 
   /// Printer thermal murah hanya andal untuk ASCII: huruf beraksen diganti padanannya, karakter lain menjadi "?".
