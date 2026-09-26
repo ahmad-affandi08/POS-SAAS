@@ -75,7 +75,13 @@ const kolom: KolomTabel<BarisTutupHarian>[] = [
         meta: { label: 'Ditutup', prioritas: 'rendah', kelasSel: 'text-teks-sekunder' },
         cell: ({ row }) =>
             row.original.Ditutup
-                ? `${FormatTanggalWaktu(row.original.DitutupPada)}${row.original.DitutupOleh ? ` · ${row.original.DitutupOleh}` : ''}`
+                ? `${FormatTanggalWaktu(row.original.DitutupPada)}${
+                      row.original.DitutupOtomatis === true
+                          ? ' · otomatis'
+                          : row.original.DitutupOleh
+                            ? ` · ${row.original.DitutupOleh}`
+                            : ''
+                  }`
                 : '—',
     },
 ];

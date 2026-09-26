@@ -60,7 +60,7 @@ final class PemeriksaanTutupHarian
      * Outlet aktif yang boleh diakses × 14 tanggal bisnis terakhir (terbaru dulu).
      *
      * @param  list<int>|null  $idOutletBoleh  null = semua outlet
-     * @return list<array{Kunci: string, Outlet: string, NamaOutlet: string, TanggalBisnis: string, Berjalan: bool, Ditutup: bool, DitutupPada: string|null, DitutupOleh: string|null, JumlahTransaksi: int|null, PenjualanBersih: string|null, ShiftBelumDitutup: int, Peringatan: list<array{Kode: string, Pesan: string}>}>
+     * @return list<array{Kunci: string, Outlet: string, NamaOutlet: string, TanggalBisnis: string, Berjalan: bool, Ditutup: bool, DitutupPada: string|null, DitutupOleh: string|null, DitutupOtomatis: bool, JumlahTransaksi: int|null, PenjualanBersih: string|null, ShiftBelumDitutup: int, Peringatan: list<array{Kode: string, Pesan: string}>}>
      */
     public function Daftar(int $idTenant, ?array $idOutletBoleh): array
     {
@@ -109,6 +109,7 @@ final class PemeriksaanTutupHarian
                     'Ditutup' => $baris !== null,
                     'DitutupPada' => $baris?->DitutupPada->toIso8601String(),
                     'DitutupOleh' => $baris === null ? null : ($nama[$baris->DitutupOleh] ?? null),
+                    'DitutupOtomatis' => $baris !== null && $baris->DitutupOtomatis,
                     'JumlahTransaksi' => $baris?->JumlahTransaksi,
                     'PenjualanBersih' => $baris?->PenjualanBersih,
                     'ShiftBelumDitutup' => $periksa['ShiftBelumDitutup'],

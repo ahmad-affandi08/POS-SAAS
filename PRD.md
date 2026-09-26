@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.18 |
+| Versi | 2.19 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.19 | **D-23 D bagian 3** tutup harian otomatis: tiap pagi (06.15 WIB) hari yang aman ditutup (sudah berakhir, ada shift & semuanya ditutup, tanpa peringatan perangkat/tinjauan) ditutup atas nama Owner lewat Aksi tutup harian yang sama; kolom `TutupHarian.DitutupOtomatis`, label "otomatis" di daftar tutup harian. Kunci bulan **tidak** otomatis (tetap pengingat; keputusan agen D-12). |
 | 2.18 | **D-23 D bagian 2** transaksi kas & bank berulang: pilihan "Ulangi otomatis" (tiap bulan/tiap minggu) di formulir kas & bank; tiap pagi (05.45 WIB) jatuh tempo dicatat sebagai transaksi kas & bank biasa (nomor, jurnal, audit), tertinggal disusul, idempoten per (jadwal, tanggal); ditolak (periode terkunci, akun nonaktif) = alasan di Kotak Tindakan; halaman `/kelola/akuntansi/kas-bank/berulang` (hentikan/aktifkan lagi, ubah jumlah). |
 | 2.17 | **D-23 D bagian 1** draf PO otomatis: tiap pagi (05.30 WIB) dan lewat tombol "Siapkan draf dari stok menipis", barang dengan saldo ≤ stok minimum dibuatkan draf PO per (lokasi, pemasok) ke pemasok/satuan/harga pembelian terakhir, jumlah sampai stok maksimum (kosong = 2 × minimum) dikurangi PO terbuka; tidak pernah diajukan otomatis; pengaturan pembelian `DrafPoOtomatis` (bawaan aktif); butir Kotak Tindakan. §17.4.8. |
 | 2.16 | **D-24** (dari pemilik produk): panduan awal menjadi **halaman sendiri** (layar penuh tanpa sidebar) dan **wajib** bagi tenant yang mendaftar sesudah keputusan ini: Pemilik/Admin dialihkan ke panduan sampai profil usaha, jenis usaha, pajak, produk (min. 1), dan metode bayar selesai; perangkat kasir boleh "Nanti saja". Anggota lain melihat "Toko sedang disiapkan". Tenant lama dibebaskan (`ProgresPanduanAwal.Wajib`). Checklist "Langkah berikutnya" pindah dari Beranda ke Kotak Tindakan (butir "Persiapan toko"). |
@@ -3749,6 +3750,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Jadwal `akuntansi:jalankan-jadwal-kas-bank` pukul 05.45 WIB mencatat setiap jatuh tempo s.d. tanggal bisnis hari ini (tanggal transaksi = tanggal jatuh tempo; tertinggal disusul, maks. 12 per jadwal per putaran) lewat Aksi `SimpanTransaksiKasBank` yang sama (nomor KB, jurnal seimbang, audit, atas nama pembuat jadwal). `TransaksiKasBank.IdJadwalKasBank` unik per tanggal sehingga tidak pernah dobel.
 - Ditolak aturan bisnis (periode terkunci, akun nonaktif): jadwal tidak dimajukan, alasan di `GalatTerakhir`, butir Kotak Tindakan "Transaksi rutin gagal dicatat otomatis" (Penting, izin `akuntansi.kelola`).
 - Halaman `/kelola/akuntansi/kas-bank/berulang` (TabelData): hentikan / aktifkan lagi (tanggal yang terlewat selama berhenti tidak disusul), ubah jumlah (misal sewa naik); transaksi yang sudah tercatat tetap append-only.
+
+**Bagian 3 — tutup harian otomatis (F-15).**
+- Jadwal `kasir:tutup-harian-otomatis` pukul 06.15 WIB memeriksa 14 hari terakhir tiap outlet aktif (sama dengan halaman Tutup harian) dan menutup hari yang **aman**: tanggal bisnis sudah berakhir, belum ditutup, ada minimal satu shift dan semuanya sudah ditutup, serta tanpa peringatan (perangkat belum sinkron sejak hari berakhir, penjualan perlu ditinjau).
+- Penutupan lewat Aksi `TutupHarianOutlet` yang sama (ringkasan dihitung ulang & dicuplik, audit) atas nama Owner tenant, dengan `TutupHarian.DitutupOtomatis` = true; daftar tutup harian menampilkan "otomatis" menggantikan nama penutup.
+- Hari dengan shift terbuka, peringatan, atau tanpa shift dibiarkan untuk ditutup manual (pengingat shift lupa ditutup & penjualan perlu dicek sudah ada di Kotak Tindakan). Menjalankan ulang tidak menggandakan.
+- Tutup bulan / kunci periode **tidak** dijalankan otomatis karena berdampak ke pembukuan dan butuh tinjauan Akuntan; tetap sebagai pengingat (keputusan agen, D-12).
 
 ### 17.5 Tipografi (Keputusan D-08)
 

@@ -32,7 +32,7 @@ final class TutupHarianOutlet
         private readonly PencatatAudit $audit,
     ) {}
 
-    public function Jalankan(int $idOutlet, CarbonImmutable $tanggal, int $idPengguna, bool $abaikanPeringatan): TutupHarian
+    public function Jalankan(int $idOutlet, CarbonImmutable $tanggal, int $idPengguna, bool $abaikanPeringatan, bool $otomatis = false): TutupHarian
     {
         $tanggal = $tanggal->startOfDay();
         $label = $tanggal->translatedFormat('j F Y');
@@ -60,7 +60,7 @@ final class TutupHarianOutlet
             );
         }
 
-        return DB::transaction(function () use ($idOutlet, $tanggal, $idPengguna, $label, $hasil): TutupHarian {
+        return DB::transaction(function () use ($idOutlet, $tanggal, $idPengguna, $label, $hasil, $otomatis): TutupHarian {
             if (TutupHarian::query()->where('IdOutlet', $idOutlet)->whereDate('TanggalBisnis', $tanggal->toDateString())->lockForUpdate()->exists()) {
                 throw new PelanggaranAturanBisnis('HariSudahDitutup', "Tanggal {$label} di outlet ini sudah ditutup.", 'TanggalBisnis');
             }
@@ -73,6 +73,7 @@ final class TutupHarianOutlet
                 'TanggalBisnis' => $tanggal->toDateString(),
                 'DitutupPada' => now(),
                 'DitutupOleh' => $idPengguna,
+                'DitutupOtomatis' => $otomatis,
                 'JumlahTransaksi' => $ringkasan['JumlahTransaksi'],
                 'PenjualanBersih' => $ringkasan['Bersih'],
                 'Peringatan' => $hasil['Peringatan'] === [] ? null : $hasil['Peringatan'],
@@ -81,6 +82,7 @@ final class TutupHarianOutlet
                 'IdOutlet' => $idOutlet,
                 'TanggalBisnis' => $tanggal->toDateString(),
                 'Peringatan' => array_column($hasil['Peringatan'], 'Kode'),
+                'Otomatis' => $otomatis,
             ]);
 
             return $tutup;

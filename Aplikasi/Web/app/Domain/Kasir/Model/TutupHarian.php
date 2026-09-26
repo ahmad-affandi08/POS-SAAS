@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $TanggalBisnis
  * @property Carbon $DitutupPada
  * @property int $DitutupOleh
+ * @property bool $DitutupOtomatis D-23 D: ditutup sistem karena aman (semua shift ditutup, tanpa peringatan).
  * @property int $JumlahTransaksi
  * @property string $PenjualanBersih
  * @property list<array{Kode: string, Pesan: string}>|null $Peringatan
@@ -41,6 +42,7 @@ final class TutupHarian extends ModelDasar
             'TanggalBisnis' => 'date',
             'DitutupPada' => 'datetime',
             'JumlahTransaksi' => 'integer',
+            'DitutupOtomatis' => 'boolean',
             'Peringatan' => 'array',
         ];
     }

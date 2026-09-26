@@ -430,6 +430,12 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Ditolak aturan bisnis (periode terkunci, akun nonaktif): jadwal tidak dimajukan, alasan di `GalatTerakhir`, butir Kotak Tindakan "Transaksi rutin gagal dicatat otomatis" (Penting, izin `akuntansi.kelola`).
 - Halaman `/kelola/akuntansi/kas-bank/berulang` (TabelData): hentikan / aktifkan lagi (tanggal yang terlewat selama berhenti tidak disusul), ubah jumlah (misal sewa naik); transaksi yang sudah tercatat tetap append-only.
 
+**Bagian 3 — tutup harian otomatis (F-15).**
+- Jadwal `kasir:tutup-harian-otomatis` pukul 06.15 WIB memeriksa 14 hari terakhir tiap outlet aktif (sama dengan halaman Tutup harian) dan menutup hari yang **aman**: tanggal bisnis sudah berakhir, belum ditutup, ada minimal satu shift dan semuanya sudah ditutup, serta tanpa peringatan (perangkat belum sinkron sejak hari berakhir, penjualan perlu ditinjau).
+- Penutupan lewat Aksi `TutupHarianOutlet` yang sama (ringkasan dihitung ulang & dicuplik, audit) atas nama Owner tenant, dengan `TutupHarian.DitutupOtomatis` = true; daftar tutup harian menampilkan "otomatis" menggantikan nama penutup.
+- Hari dengan shift terbuka, peringatan, atau tanpa shift dibiarkan untuk ditutup manual (pengingat shift lupa ditutup & penjualan perlu dicek sudah ada di Kotak Tindakan). Menjalankan ulang tidak menggandakan.
+- Tutup bulan / kunci periode **tidak** dijalankan otomatis karena berdampak ke pembukuan dan butuh tinjauan Akuntan; tetap sebagai pengingat (keputusan agen, D-12).
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

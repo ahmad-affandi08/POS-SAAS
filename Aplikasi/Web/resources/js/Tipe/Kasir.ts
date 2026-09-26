@@ -227,6 +227,8 @@ export type BarisTutupHarian = {
     Ditutup: boolean;
     DitutupPada: string | null;
     DitutupOleh: string | null;
+    /** D-23 D: ditutup sistem karena aman ditutup. Opsional agar kompatibel dengan data lama. */
+    DitutupOtomatis?: boolean;
     JumlahTransaksi: number | null;
     PenjualanBersih: string | null;
     ShiftBelumDitutup: number;

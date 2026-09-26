@@ -41,6 +41,17 @@ const hari: BarisTutupHarian[] = [
         JumlahTransaksi: 12,
         PenjualanBersih: '462000.00',
     },
+    {
+        ...dasar,
+        Kunci: 'd',
+        TanggalBisnis: '2026-10-12',
+        Ditutup: true,
+        DitutupPada: '2026-10-13T23:15:00Z',
+        DitutupOleh: 'Sari Pemilik',
+        DitutupOtomatis: true,
+        JumlahTransaksi: 9,
+        PenjualanBersih: '315000.00',
+    },
 ];
 
 describe('Tutup harian (F-15)', () => {
@@ -48,9 +59,16 @@ describe('Tutup harian (F-15)', () => {
     afterEach(() => cleanup());
 
     it('status hari: shift belum ditutup, peringatan, ditutup', () => {
-        expect(hari.map((h) => AmbilStatusHari(h).teks)).toEqual(['1 shift belum ditutup', '1 peringatan', 'Ditutup']);
+        expect(hari.map((h) => AmbilStatusHari(h).teks)).toEqual([
+            '1 shift belum ditutup',
+            '1 peringatan',
+            'Ditutup',
+            'Ditutup',
+        ]);
         RenderUji(<HalamanTutupHarian Hari={hari} Izin={{ Kelola: true }} />);
         expect(screen.getAllByText(/Sari Pemilik/).length).toBeGreaterThan(0);
+        // D-23 D: ditutup otomatis oleh jadwal pagi ditandai "otomatis", bukan nama Owner.
+        expect(screen.getAllByText(/· otomatis/).length).toBeGreaterThan(0);
     });
 
     it('peringatan wajib dicentang sebelum hari bisa ditutup', () => {

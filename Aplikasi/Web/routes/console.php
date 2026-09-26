@@ -49,3 +49,6 @@ Schedule::command('pembelian:draf-po-otomatis')->dailyAt('05:30')->timezone('Asi
 
 // D-23 D: transaksi kas & bank berulang (sewa, listrik, internet) yang jatuh tempo dicatat otomatis.
 Schedule::command('akuntansi:jalankan-jadwal-kas-bank')->dailyAt('05:45')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// D-23 D: tutup harian otomatis untuk hari yang aman ditutup (setelah jam tutup buku bawaan 04.00).
+Schedule::command('kasir:tutup-harian-otomatis')->dailyAt('06:15')->timezone('Asia/Jakarta')->withoutOverlapping();
