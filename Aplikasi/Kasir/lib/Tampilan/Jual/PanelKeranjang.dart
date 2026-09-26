@@ -313,6 +313,17 @@ abstract final class RingkasanTotal {
           Baris('Promo ${hitungan.AmbilNamaPromo(p)}', Uang.Nol().Kurangi(p.diskonPesanan)),
       if (keranjang.tukarPoin != null)
         Baris('Tukar ${keranjang.tukarPoin!.poin} poin', Uang.Nol().Kurangi(hasil.diskonPoin)),
+      if (hitungan.AmbilLabelPoinBerlipat() case final String label)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak4 / 2),
+          child: Row(
+            children: [
+              Icon(Icons.stars_outlined, size: 18, color: TokenWarna.AmbilDari(context).brand),
+              const SizedBox(width: TokenJarak.jarak4),
+              Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+            ],
+          ),
+        ),
       if (!hasil.biayaLayanan.BernilaiNol()) Baris('Biaya layanan', hasil.biayaLayanan),
       for (final p in hitungan.pajakDokumen)
         if (hasil.pajak[p.kode] != null && !hasil.pajak[p.kode]!.jumlah.BernilaiNol())

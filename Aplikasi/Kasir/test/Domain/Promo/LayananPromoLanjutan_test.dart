@@ -143,4 +143,33 @@ void main() {
       expect(setelah.AmbilPemakaianPada('2099-01-01')['01K5PROMO00000000000000013']?.hari, 0);
     },
   );
+
+  test('F-16c bagian 4a poin berlipat: tidak mengubah harga; label "Poin 2×" hanya bila pelanggan dipilih', () async {
+    final (katalog, k) = await Siapkan([
+      {
+        'Uuid': '01K5PROMO00000000000000021',
+        'Kode': 'POIN2X',
+        'Nama': 'Poin dobel akhir pekan',
+        'Prioritas': 0,
+        'Eksklusif': false,
+        'MulaiPada': null,
+        'SelesaiPada': null,
+        'KuotaTersisa': null,
+        'Definisi': {
+          'Aksi': {'Jenis': 'PoinBerlipat', 'Pengali': '2'},
+        },
+      },
+    ]);
+    final keranjang = SatuAmericano(katalog, k);
+    final tanpaPelanggan = u.penjualan.Hitung(keranjang, k);
+    expect(tanpaPelanggan.promoTerpakai, isEmpty);
+    expect(tanpaPelanggan.AmbilLabelPoinBerlipat(), isNull);
+
+    await u.repositoriPelanggan.Simpan('PLG2', 'Budi Hartono', '0813****1111', DateTime.now());
+    final budi = LayananPelanggan.DariCache((await u.repositoriPelanggan.AmbilTerakhir()).single);
+    final denganPelanggan = u.penjualan.Hitung(keranjang.Salin(pelanggan: () => budi), k);
+    expect(denganPelanggan.AmbilLabelPoinBerlipat(), 'Poin 2× · Poin dobel akhir pekan');
+    expect(denganPelanggan.hasil.totalAkhir, tanpaPelanggan.hasil.totalAkhir);
+    expect(denganPelanggan.promoTerpakai, isEmpty, reason: 'Promo poin tidak dikirim sebagai potongan.');
+  });
 }

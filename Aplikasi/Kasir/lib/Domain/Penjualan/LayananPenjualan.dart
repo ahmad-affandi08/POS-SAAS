@@ -38,6 +38,7 @@ class HitunganKeranjang {
     required this.peringatan,
     required this.tanggalBisnis,
     this.labelPajak = const {},
+    this.poinBerlipat,
   });
 
   HasilKalkulasi get hasilTanpaPromo => hasilDasar ?? hasil;
@@ -65,6 +66,15 @@ class HitunganKeranjang {
 
   /// Label tampilan per kode pajak dokumen (`PPN`/`PBJT` menurut kategori jenis pajak).
   final Map<String, String> labelPajak;
+
+  /// F-16c bagian 4a: promo poin berlipat yang berlaku (hanya bila pelanggan dipilih); poin dihitung server.
+  final DefinisiPromo? poinBerlipat;
+
+  /// `2×` / `1,5×` untuk tampilan.
+  String? AmbilLabelPoinBerlipat() {
+    final p = poinBerlipat;
+    return p == null ? null : 'Poin ${p.pengali.toString().replaceAll('.', ',')}× · ${namaPromo[p.uuid] ?? p.kode}';
+  }
 }
 
 /// Satu pembayaran yang dimasukkan kasir. Tunai: [jumlah] = uang diterima.
@@ -432,6 +442,7 @@ class LayananPenjualan {
     final hasilTanpaPromo = _mesin.Hitung(dasar);
     var hasil = hasilTanpaPromo;
     var promoTerpakai = const <PromoTerpakai>[];
+    DefinisiPromo? poinBerlipat;
     // F-16c bagian 2: promo voucher ikut dievaluasi walau daftar promo tersimpan belum memuatnya.
     final voucher = keranjang.voucher;
     final promoVoucher = voucher == null || k.promo.any((p) => p.uuid == voucher.uuidPromo)
@@ -465,6 +476,7 @@ class LayananPenjualan {
       );
       hasil = hasilPromo.hasil;
       promoTerpakai = hasilPromo.terpakai;
+      poinBerlipat = keranjang.pelanggan == null ? null : hasilPromo.poinBerlipat;
     }
 
     return HitunganKeranjang(
@@ -478,6 +490,7 @@ class LayananPenjualan {
       peringatan: peringatan.toList(),
       tanggalBisnis: tanggal,
       labelPajak: labelPajak,
+      poinBerlipat: poinBerlipat,
     );
   }
 
