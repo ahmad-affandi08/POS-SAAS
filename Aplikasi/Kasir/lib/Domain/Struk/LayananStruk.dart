@@ -5,8 +5,9 @@ import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
 import '../Penjualan/KonteksPenjualan.dart';
-import 'IdentitasStruk.dart';
+import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
+import 'IdentitasStruk.dart';
 import 'PenyusunDokumenKasir.dart';
 import 'PenyusunStrukPenjualan.dart';
 import 'ProfilPrinter.dart';
@@ -98,6 +99,20 @@ class LayananStruk {
   }
 
   /// Laporan shift X/Z (cetak struk bagian 3b).
+  /// Bukti uang muka pre-order (cetak struk bagian 4a) dari data di memori setelah pre-order dibuat. Laci dibuka
+  /// bila [bukaLaci] (cetak otomatis pertama), profil mengizinkan, dan uang muka tunai.
+  Future<void> CetakPreOrder(PreOrderTersimpan preOrder, {bool cetakUlang = false, bool bukaLaci = false}) async {
+    final profil = await _WajibProfil();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunPreOrder(
+        await IdentitasStruk.Muat(repositori),
+        preOrder,
+        cetakUlang: cetakUlang,
+        bukaLaci: bukaLaci && profil.bukaLaciTunai && preOrder.uangMukaTunai,
+      ),
+    );
+  }
+
   Future<void> CetakLaporanShift(LaporanShift laporan, {bool tampilkanKasSeharusnya = true}) async {
     final profil = await _WajibProfil();
     await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(

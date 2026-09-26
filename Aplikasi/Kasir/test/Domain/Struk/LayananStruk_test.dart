@@ -12,6 +12,7 @@ import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Penjualan/Keranjang.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
 import 'package:kasir/Domain/Penjualan/LayananVoidPenjualan.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
@@ -391,6 +392,62 @@ void main() {
     expect(teks, contains('Alasan: Kemasan bocor'));
     expect(dokumen.bukaLaci, isTrue);
   });
+
+  test(
+    '4a bukti uang muka pre-order: pelanggan, tanggal ambil, barang, DP & sisa; laci hanya bila DP tunai & diminta',
+    () async {
+      await Siapkan();
+      await profil.Simpan(u.repositori);
+      var keranjang = Keranjang.kosong.Salin(
+        pelanggan: () => const PelangganTerpilih(uuid: 'PLG1', nama: 'Ani Rahmawati', noHpSamar: '0812****7890'),
+      );
+      keranjang = u.penjualan.TambahBaris(
+        keranjang,
+        u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!),
+        katalog,
+        k,
+      );
+      final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == JenisMetodeBayar.tunai);
+      final tanggalAmbil = u.penjualan.Hitung(keranjang, k).tanggalBisnis;
+      final hasil = await u.preOrder.Buat(
+        keranjang: keranjang,
+        k: k,
+        kasir: rina,
+        tanggalAmbil: tanggalAmbil,
+        uangMuka: Uang.DariBulat(10000),
+        metode: tunai,
+        catatan: 'Tulisan: Selamat ulang tahun',
+      );
+      expect(hasil.baris.single.nama, contains('Croissant'));
+
+      await u.struk.CetakPreOrder(hasil, bukaLaci: true);
+      final teks = u.printer.AmbilTeks();
+      expect(teks, contains('BUKTI UANG MUKA'));
+      expect(teks, contains(hasil.nomor));
+      expect(teks, contains('Pelanggan: Ani Rahmawati'));
+      expect(teks, contains('Diambil: ${tanggalAmbil.substring(8, 10)}/${tanggalAmbil.substring(5, 7)}'));
+      expect(RegExp(r'UANG MUKA\s+Rp 10\.000').hasMatch(teks), isTrue, reason: teks);
+      final sisa = PenyusunStrukPenjualan.Angka(hasil.totalPesanan.Kurangi(Uang.DariBulat(10000)));
+      expect(RegExp('Sisa saat diambil\\s+${RegExp.escape(sisa)}').hasMatch(teks), isTrue, reason: teks);
+      expect(_AdaPulsaLaci(u.printer.kiriman.last), isTrue);
+
+      await u.struk.CetakPreOrder(hasil, cetakUlang: true);
+      expect(u.printer.AmbilTeks(), contains('CETAK ULANG'));
+      expect(_AdaPulsaLaci(u.printer.kiriman.last), isFalse);
+
+      // DP non-tunai: laci tidak dibuka walau diminta.
+      final nonTunai = PreOrderTersimpan(
+        uuid: 'PO2',
+        nomor: 'SO/SLO/260926/POS-001-0002',
+        uangMuka: Uang.DariBulat(5000),
+        totalPesanan: Uang.DariBulat(25000),
+        tanggalAmbil: '2026-09-30',
+        namaMetode: 'QRIS',
+      );
+      await u.struk.CetakPreOrder(nonTunai, bukaLaci: true);
+      expect(_AdaPulsaLaci(u.printer.kiriman.last), isFalse);
+    },
+  );
 }
 
 /// Pulsa buka laci `ESC p` ada di kiriman printer.

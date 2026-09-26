@@ -12,7 +12,8 @@ import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
 import 'LayananPenjualan.dart';
 
-/// Pre-order yang tersimpan di perangkat.
+/// Pre-order yang tersimpan di perangkat. Data cetak (pelanggan, kasir, metode DP, baris) untuk bukti uang muka
+/// (cetak struk bagian 4a) hanya ada di memori setelah pre-order dibuat.
 class PreOrderTersimpan {
   const PreOrderTersimpan({
     required this.uuid,
@@ -20,6 +21,13 @@ class PreOrderTersimpan {
     required this.uangMuka,
     required this.totalPesanan,
     required this.tanggalAmbil,
+    this.namaPelanggan = '',
+    this.namaKasir = '',
+    this.namaMetode = '',
+    this.uangMukaTunai = false,
+    this.dibuatPada,
+    this.catatan,
+    this.baris = const [],
   });
 
   final String uuid;
@@ -29,6 +37,25 @@ class PreOrderTersimpan {
 
   /// `YYYY-MM-DD`.
   final String tanggalAmbil;
+  final String namaPelanggan;
+  final String namaKasir;
+  final String namaMetode;
+
+  /// Uang muka dibayar tunai (laci dibuka pada cetak otomatis pertama).
+  final bool uangMukaTunai;
+  final DateTime? dibuatPada;
+  final String? catatan;
+  final List<BarisBuktiPreOrder> baris;
+}
+
+/// Satu baris barang di bukti uang muka pre-order: nilai = total baris setelah diskon & pajak.
+class BarisBuktiPreOrder {
+  const BarisBuktiPreOrder({required this.nama, required this.jumlah, this.satuan, required this.nilai});
+
+  final String nama;
+  final Kuantitas jumlah;
+  final String? satuan;
+  final Uang nilai;
 }
 
 /// Pre-order + uang muka di aplikasi kasir (F-12 bagian 2, SLS-02):
@@ -193,6 +220,21 @@ class LayananPreOrder {
       uangMuka: uangMuka,
       totalPesanan: total,
       tanggalAmbil: tanggalAmbil,
+      namaPelanggan: pelanggan.nama,
+      namaKasir: kasir.nama,
+      namaMetode: metode.Nama,
+      uangMukaTunai: metode.Jenis == JenisMetodeBayar.tunai,
+      dibuatPada: sekarang,
+      catatan: rapiCatatan == null || rapiCatatan.isEmpty ? null : rapiCatatan,
+      baris: [
+        for (var i = 0; i < keranjang.baris.length; i++)
+          BarisBuktiPreOrder(
+            nama: keranjang.baris[i].nama,
+            jumlah: keranjang.baris[i].jumlah,
+            satuan: keranjang.baris[i].namaSatuan,
+            nilai: hitungan.hasil.baris[i].totalBaris,
+          ),
+      ],
     );
   }
 

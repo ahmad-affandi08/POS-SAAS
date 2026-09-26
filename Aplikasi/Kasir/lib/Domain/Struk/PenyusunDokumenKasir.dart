@@ -2,11 +2,13 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
+import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
 import 'IdentitasStruk.dart';
 import 'PenyusunStrukPenjualan.dart';
 
-/// Dokumen cetak kasir selain struk penjualan (cetak struk bagian 3b): bukti void, nota retur, dan laporan shift X/Z.
+/// Dokumen cetak kasir selain struk penjualan (cetak struk bagian 3b): bukti void, nota retur, dan laporan shift X/Z;
+/// bagian 4a: bukti uang muka pre-order.
 /// Kepala & kaki mengikuti pengaturan struk tenant; angka memakai format yang sama dengan struk penjualan. Bukti void
 /// dan nota retur bisa membuka laci bila ada refund tunai dari laci.
 abstract final class PenyusunDokumenKasir {
@@ -71,6 +73,53 @@ abstract final class PenyusunDokumenKasir {
       BarisDuaKolom('TOTAL REFUND', Uang.Dari(retur.TotalRefund).FormatRupiah(), tebal: true),
       for (final b in pembayaran) BarisDuaKolom(b.NamaMetode, PenyusunStrukPenjualan.Angka(Uang.Dari(b.Jumlah))),
       BarisTeks('Alasan: ${retur.Alasan}'),
+      const BarisGaris(),
+      ...PenyusunStrukPenjualan.SusunKaki(identitas),
+    ], bukaLaci: bukaLaci);
+  }
+
+  /// Bukti uang muka pre-order (cetak struk bagian 4a): nomor pre-order, pelanggan, tanggal ambil, barang pesanan,
+  /// total pesanan, uang muka per metode, dan sisa yang dibayar saat diambil (perkiraan: harga dikunci, pajak & promo
+  /// dihitung ulang saat pengambilan).
+  static DokumenStruk SusunPreOrder(
+    IdentitasStruk identitas,
+    PreOrderTersimpan preOrder, {
+    bool cetakUlang = false,
+    bool bukaLaci = false,
+  }) {
+    final (tanggal, jam) = PenyusunStrukPenjualan.TanggalJam(preOrder.dibuatPada ?? DateTime.now().toUtc());
+    final t = preOrder.tanggalAmbil;
+    return DokumenStruk([
+      ...PenyusunStrukPenjualan.SusunKepala(identitas),
+      const BarisGaris(),
+      const BarisTeks('BUKTI UANG MUKA', rata: RataStruk.Tengah, tebal: true),
+      const BarisTeks('PRE-ORDER', rata: RataStruk.Tengah),
+      if (cetakUlang) const BarisTeks('CETAK ULANG', rata: RataStruk.Tengah, tebal: true),
+      BarisTeks(preOrder.nomor),
+      BarisDuaKolom(tanggal, jam),
+      if (identitas.pengaturan.tampilkanKasir && preOrder.namaKasir.isNotEmpty)
+        BarisTeks('Kasir: ${preOrder.namaKasir}'),
+      BarisTeks('Pelanggan: ${preOrder.namaPelanggan}'),
+      BarisTeks('Diambil: ${t.substring(8, 10)}/${t.substring(5, 7)}/${t.substring(0, 4)}', tebal: true),
+      const BarisGaris(),
+      for (final b in preOrder.baris) ...[
+        BarisTeks(b.nama),
+        BarisDuaKolom(
+          '  ${PenyusunStrukPenjualan.Jumlah(b.jumlah.KeString())} ${b.satuan ?? ''}'.trimRight(),
+          PenyusunStrukPenjualan.Angka(b.nilai),
+        ),
+      ],
+      const BarisGaris(),
+      BarisDuaKolom('Total pesanan', PenyusunStrukPenjualan.Angka(preOrder.totalPesanan)),
+      BarisDuaKolom('UANG MUKA', preOrder.uangMuka.FormatRupiah(), tebal: true),
+      BarisDuaKolom(preOrder.namaMetode, PenyusunStrukPenjualan.Angka(preOrder.uangMuka)),
+      BarisDuaKolom(
+        'Sisa saat diambil',
+        PenyusunStrukPenjualan.Angka(preOrder.totalPesanan.Kurangi(preOrder.uangMuka)),
+      ),
+      const BarisTeks('Sisa dapat berubah bila pajak atau promo berubah saat diambil.'),
+      if (preOrder.catatan != null) BarisTeks('Catatan: ${preOrder.catatan}'),
+      const BarisTeks('Simpan bukti ini untuk mengambil pesanan.'),
       const BarisGaris(),
       ...PenyusunStrukPenjualan.SusunKaki(identitas),
     ], bukaLaci: bukaLaci);

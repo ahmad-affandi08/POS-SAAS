@@ -11,6 +11,7 @@ import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananPreOrder.dart';
+import '../Struk/BagianCetakDokumen.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 
 /// F-12 bagian 2: jadikan keranjang ber-pelanggan sebagai pre-order dengan uang muka (bisa offline). Tanggal ambil, DP
@@ -259,6 +260,14 @@ class TampilanPreOrderSelesai extends StatelessWidget {
             'Diambil ${t.substring(8, 10)}/${t.substring(5, 7)}/${t.substring(0, 4)}. Ambil lewat menu Riwayat › Ambil '
             'pre-order.',
             style: teks.bodySmall,
+          ),
+          const SizedBox(height: TokenJarak.jarak16),
+          // Cetak struk bagian 4a: bukti uang muka dicetak otomatis sekali; laci dibuka bila DP tunai.
+          BagianCetakDokumen(
+            kunci: 'PreOrder:${hasil.uuid}',
+            namaDokumen: 'bukti uang muka',
+            cetak: (layanan, cetakUlang, otomatis) =>
+                layanan.CetakPreOrder(hasil, cetakUlang: cetakUlang, bukaLaci: otomatis),
           ),
           const SizedBox(height: TokenJarak.jarak24),
           SizedBox(
