@@ -3,6 +3,7 @@ import 'package:inti/Inti.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/PesananMeja.dart';
+import '../Pelanggan/LayananDeposit.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
 import 'IdentitasStruk.dart';
@@ -126,6 +127,36 @@ abstract final class PenyusunDokumenKasir {
     ], bukaLaci: bukaLaci);
   }
 
+  /// Bukti isi deposit pelanggan (F-16d bagian 1): nomor, pelanggan, jumlah per metode, dan saldo sesudah bila saldo
+  /// sebelumnya sempat dibaca online. Bukan struk penjualan (tanpa pajak): deposit adalah titipan pelanggan.
+  static DokumenStruk SusunIsiDeposit(
+    IdentitasStruk identitas,
+    IsiDepositTersimpan isi, {
+    bool cetakUlang = false,
+    bool bukaLaci = false,
+  }) {
+    final (tanggal, jam) = PenyusunStrukPenjualan.TanggalJam(isi.dibuatPada);
+    final saldo = isi.saldoSesudah;
+    return DokumenStruk([
+      ...PenyusunStrukPenjualan.SusunKepala(identitas),
+      const BarisGaris(),
+      const BarisTeks('BUKTI ISI DEPOSIT', rata: RataStruk.Tengah, tebal: true),
+      if (cetakUlang) const BarisTeks('CETAK ULANG', rata: RataStruk.Tengah, tebal: true),
+      BarisTeks(isi.nomor),
+      BarisDuaKolom(tanggal, jam),
+      if (identitas.pengaturan.tampilkanKasir && isi.namaKasir.isNotEmpty) BarisTeks('Kasir: ${isi.namaKasir}'),
+      BarisTeks('Pelanggan: ${isi.namaPelanggan}'),
+      const BarisGaris(),
+      BarisDuaKolom('ISI DEPOSIT', isi.jumlah.FormatRupiah(), tebal: true),
+      BarisDuaKolom(isi.namaMetode, PenyusunStrukPenjualan.Angka(isi.jumlah)),
+      if (isi.referensi != null) BarisTeks('Ref: ${isi.referensi}'),
+      if (saldo != null) BarisDuaKolom('Saldo deposit', PenyusunStrukPenjualan.Angka(saldo)),
+      const BarisTeks('Saldo deposit bisa dipakai untuk belanja di toko ini.'),
+      const BarisGaris(),
+      ...PenyusunStrukPenjualan.SusunKaki(identitas),
+    ], bukaLaci: bukaLaci);
+  }
+
   /// Tiket dapur satu stasiun untuk satu kiriman (cetak struk bagian 4c): tanpa harga, nama meja & jumlah dicetak
   /// besar agar terbaca dari jauh, pilihan & catatan per item di bawahnya.
   static DokumenStruk SusunTiketDapur({
@@ -191,6 +222,8 @@ abstract final class PenyusunDokumenKasir {
       BarisDuaKolom('Total', laporan.totalAkhir.FormatRupiah(), tebal: true),
       BarisDuaKolom('Void ${laporan.jumlahVoid}x', Nilai(laporan.nominalVoid)),
       BarisDuaKolom('Retur ${laporan.jumlahRetur}x', Nilai(laporan.nominalRetur)),
+      if (laporan.jumlahIsiDeposit > 0)
+        BarisDuaKolom('Isi deposit ${laporan.jumlahIsiDeposit}x', Nilai(laporan.nominalIsiDeposit ?? Uang.Nol())),
       const BarisGaris(),
       const BarisTeks('Per metode bayar', tebal: true),
       for (final m in laporan.perMetode) BarisDuaKolom(m.nama, Nilai(m.jumlah)),

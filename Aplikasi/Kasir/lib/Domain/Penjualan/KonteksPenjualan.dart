@@ -23,13 +23,19 @@ abstract final class JenisMetodeBayar {
   /// F-12: piutang pelanggan; hanya tampil bila pelanggan dipilih (BR-12.1).
   static const String tempo = 'Tempo';
 
-  static const List<String> fase1 = [tunai, qrisStatis, qrisDinamis, edc, transfer, ewallet, tempo];
+  /// F-16d bagian 1: saldo deposit pelanggan; hanya tampil bila pelanggan dipilih dan paket berlaku, saldo dicek online.
+  static const String deposit = 'Deposit';
+
+  static const List<String> fase1 = [tunai, qrisStatis, qrisDinamis, edc, transfer, ewallet, tempo, deposit];
 
   /// F-12 bagian 2: uang muka pre-order yang dipakai saat diambil (metode sistem; tidak tampil sebagai pilihan bayar).
   static const String uangMuka = 'UangMuka';
 
   /// Jenis yang boleh membayar uang muka pre-order (tanpa tempo).
   static const List<String> bolehUangMuka = [tunai, qrisStatis, edc, transfer, ewallet];
+
+  /// F-16d bagian 1: jenis yang boleh dipakai mengisi saldo deposit di kasir (tanpa tempo, deposit, uang muka).
+  static const List<String> bolehIsiDeposit = [tunai, qrisStatis, edc, transfer, ewallet];
 }
 
 /// Tarif pajak terbit bertanggal berlaku (CLAUDE.md #12). Tanggal `YYYY-MM-DD`; `berlakuSampai` inklusif.
@@ -108,6 +114,7 @@ class KonteksPenjualan {
     this.kategoriProduk = const {},
     this.batasHariLewatJatuhTempo = 0,
     this.kirimDapurLangsung = false,
+    this.deposit = const DepositPos(),
   });
 
   final String? uuidOutlet;
@@ -141,6 +148,9 @@ class KonteksPenjualan {
   /// Cetak struk bagian 4c (v1.89): outlet punya stasiun dapur aktif, jadi penjualan langsung (mode cepat, bukan pesanan
   /// meja atau pengambilan pre-order) dikirim ke dapur (`KirimDapur`) dan tiketnya dicetak.
   final bool kirimDapurLangsung;
+
+  /// F-16d bagian 1: deposit pelanggan berlaku (fitur paket) & batas isi per transaksi.
+  final DepositPos deposit;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -215,7 +225,14 @@ class KonteksPenjualan {
       batasHariLewatJatuhTempo:
           int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.batasHariLewatJatuhTempo) ?? '') ?? 0,
       kirimDapurLangsung: (await RuteDapur.Muat(repositori)).stasiun.isNotEmpty,
+      deposit: await MuatDeposit(repositori),
     );
+  }
+
+  /// Pengaturan deposit tersimpan dari data awal (tidak ada = tidak berlaku).
+  static Future<DepositPos> MuatDeposit(RepositoriKasir repositori) async {
+    final teks = await repositori.AmbilPengaturan(KunciPengaturan.deposit);
+    return teks == null || teks.isEmpty ? const DepositPos() : DepositPos.DariJson(jsonDecode(teks));
   }
 
   /// Definisi promo dari server; definisi yang tidak bisa dibaca aplikasi versi ini dilewati (null).

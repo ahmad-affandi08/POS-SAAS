@@ -363,7 +363,18 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
     final katalog = ref.watch(penyediaKatalog).value;
     final k = ref.watch(penyediaKonteksPenjualan).value;
     final metode = k?.metodePembayaran ?? const <BarisMetodePembayaran>[];
-    final transfer = metode.where((m) => m.Jenis == JenisMetodeBayar.transfer).toList();
+    // F-16d: penjualan berpelanggan boleh direfund ke saldo deposit (dipilih seperti rekening transfer).
+    final transfer = metode
+        .where(
+          (m) =>
+              m.Jenis == JenisMetodeBayar.transfer ||
+              (m.Jenis == JenisMetodeBayar.deposit && p.bisaRefundDeposit && (k?.deposit.berlaku ?? false)),
+        )
+        .toList();
+    final metodeNonTunai = transfer.where((m) => m.Uuid == _uuidMetodeTransfer).firstOrNull ?? transfer.firstOrNull;
+    final labelNonTunai = metodeNonTunai?.Jenis == JenisMetodeBayar.deposit
+        ? 'Ke deposit pelanggan'
+        : 'Transfer manual';
     final total = _HitungTotal();
     final tunai = total == null ? null : _HitungTunai(total);
 
@@ -431,7 +442,11 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
           showSelectedIcon: false,
           segments: [
             const ButtonSegment(value: CaraRefund.Tunai, label: Text('Tunai')),
-            ButtonSegment(value: CaraRefund.Transfer, label: const Text('Transfer'), enabled: transfer.isNotEmpty),
+            ButtonSegment(
+              value: CaraRefund.Transfer,
+              label: Text(transfer.any((m) => m.Jenis == JenisMetodeBayar.deposit) ? 'Non-tunai' : 'Transfer'),
+              enabled: transfer.isNotEmpty,
+            ),
             ButtonSegment(value: CaraRefund.Campuran, label: const Text('Keduanya'), enabled: transfer.isNotEmpty),
           ],
           selected: {_cara},
@@ -450,7 +465,10 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
             padding: const EdgeInsets.only(top: TokenJarak.jarak8),
             child: DropdownButtonFormField<String>(
               initialValue: _uuidMetodeTransfer ?? transfer.first.Uuid,
-              decoration: const InputDecoration(labelText: 'Rekening transfer', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Rekening transfer atau deposit',
+                border: OutlineInputBorder(),
+              ),
               items: [for (final m in transfer) DropdownMenuItem(value: m.Uuid, child: Text(m.Nama))],
               onChanged: (uuid) => setState(() => _uuidMetodeTransfer = uuid),
             ),
@@ -477,7 +495,7 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
                     if (!tunai!.BernilaiNol()) _BarisNilai(label: 'Tunai dari laci', nilai: tunai),
                     if (!total.Kurangi(_HitungPotongPiutang(total)).Kurangi(tunai).BernilaiNol())
                       _BarisNilai(
-                        label: 'Transfer manual',
+                        label: labelNonTunai,
                         nilai: total.Kurangi(_HitungPotongPiutang(total)).Kurangi(tunai),
                       ),
                   ],

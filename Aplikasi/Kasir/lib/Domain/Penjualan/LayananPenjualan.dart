@@ -726,6 +726,29 @@ class LayananPenjualan {
     }
   }
 
+  /// F-16d bagian 1: pembayaran deposit paling banyak satu per transaksi, wajib pelanggan, dan tidak melebihi saldo
+  /// terakhir yang dibaca online ([saldoDeposit], null = belum dicek). Server tetap memotong saldo; saldo yang berubah di
+  /// perangkat lain ditandai tinjauan.
+  static void ValidasiDeposit(Keranjang keranjang, List<PembayaranMasukan> pembayaran, Uang? saldoDeposit) {
+    final deposit = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.deposit).toList();
+    if (deposit.isEmpty) {
+      return;
+    }
+    if (deposit.length > 1) {
+      throw const GalatKasir('DepositGanda', 'Pembayaran deposit hanya boleh satu kali per transaksi.');
+    }
+    final pelanggan = keranjang.pelanggan;
+    if (pelanggan == null) {
+      throw const GalatKasir('DepositTanpaPelanggan', 'Pilih pelanggan dulu untuk membayar dengan deposit.');
+    }
+    if (saldoDeposit == null) {
+      throw const GalatKasir('PerluOnline', 'Saldo deposit harus dicek online dulu sebelum dipakai.');
+    }
+    if (deposit.single.jumlah.Bandingkan(saldoDeposit) > 0) {
+      throw GalatKasir('SaldoDepositKurang', 'Saldo deposit ${pelanggan.nama} tinggal ${saldoDeposit.FormatRupiah()}.');
+    }
+  }
+
   /// F-12 bagian 2: uang muka hanya dipakai saat mengambil pre-order, sekali, dan tidak melebihi sisa DP.
   static void ValidasiUangMuka(Keranjang keranjang, List<PembayaranMasukan> pembayaran) {
     final dp = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.uangMuka).toList();
@@ -752,6 +775,7 @@ class LayananPenjualan {
     required StafLokal kasir,
     required KonteksPenjualan k,
     String? uuidPenyetujuTempo,
+    Uang? saldoDeposit,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -792,6 +816,7 @@ class LayananPenjualan {
     ValidasiTukarPoin(keranjang, hasil);
     ValidasiTempo(keranjang, pembayaran, kasir, k, uuidPenyetujuTempo);
     ValidasiUangMuka(keranjang, pembayaran);
+    ValidasiDeposit(keranjang, pembayaran, saldoDeposit);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;

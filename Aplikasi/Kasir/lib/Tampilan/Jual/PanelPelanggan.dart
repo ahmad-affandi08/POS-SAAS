@@ -9,11 +9,13 @@ import '../../Domain/GalatKasir.dart';
 import '../../Domain/Pelanggan/LayananPelanggan.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
+import 'PanelIsiDeposit.dart';
 import 'PanelTukarPoin.dart';
 
 /// Panel pelanggan layar Jual (F-16a, pintasan F2): cari nama/nomor HP (online; offline = pelanggan yang pernah dipakai
 /// perangkat ini), pelanggan terakhir, tambah pelanggan baru (nama + nomor HP, berlaku offline), atau "Tanpa pelanggan".
 /// Pilihan disimpan di keranjang dan dikirim bersama penjualan. F-16b: pelanggan terpilih bisa menukar poin (online).
+/// F-16d: pelanggan terpilih bisa mengisi deposit (bisa offline) bila paket usaha termasuk deposit.
 class PanelPelanggan extends ConsumerStatefulWidget {
   const PanelPelanggan({super.key, required this.kasir, required this.saatSelesai});
 
@@ -38,6 +40,7 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
   bool _formBaru = false;
   bool _menyimpan = false;
   bool _tukarPoin = false;
+  bool _isiDeposit = false;
   String? _galat;
   int _urutCari = 0;
 
@@ -162,12 +165,22 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
     final terpilih = ref.watch(penyediaKeranjang.select((k) => k.pelanggan));
     final kataCukup = _cari.text.trim().length >= LayananPelanggan.panjangKataMinimal;
     final tukar = ref.watch(penyediaKeranjang.select((k) => k.tukarPoin));
+    final depositBerlaku = ref.watch(penyediaKonteksPenjualan).value?.deposit.berlaku ?? false;
 
     if (_tukarPoin && terpilih != null) {
       return PanelTukarPoin(
         pelanggan: terpilih,
         saatSelesai: widget.saatSelesai,
         saatKembali: () => setState(() => _tukarPoin = false),
+      );
+    }
+
+    if (_isiDeposit && terpilih != null) {
+      return PanelIsiDeposit(
+        pelanggan: terpilih,
+        kasir: widget.kasir,
+        saatSelesai: widget.saatSelesai,
+        saatKembali: () => setState(() => _isiDeposit = false),
       );
     }
 
@@ -249,19 +262,19 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (terpilih != null) ...[
-              Row(
+              Text(
+                tukar == null
+                    ? 'Terpilih: ${terpilih.nama}'
+                    : 'Terpilih: ${terpilih.nama} · ${tukar.poin} poin ditukar (−${tukar.nilai.FormatRupiah()})',
+                style: teks.bodyMedium,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: TokenJarak.jarak8),
+              Wrap(
+                spacing: TokenJarak.jarak8,
+                runSpacing: TokenJarak.jarak8,
                 children: [
-                  Expanded(
-                    child: Text(
-                      tukar == null
-                          ? 'Terpilih: ${terpilih.nama}'
-                          : 'Terpilih: ${terpilih.nama} · ${tukar.poin} poin ditukar (−${tukar.nilai.FormatRupiah()})',
-                      style: teks.bodyMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: TokenJarak.jarak8),
                   SizedBox(
                     height: TokenJarak.targetSentuh,
                     child: OutlinedButton.icon(
@@ -270,6 +283,15 @@ class _PanelPelangganState extends ConsumerState<PanelPelanggan> {
                       label: const Text('Tukar poin'),
                     ),
                   ),
+                  if (depositBerlaku)
+                    SizedBox(
+                      height: TokenJarak.targetSentuh,
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() => _isiDeposit = true),
+                        icon: const Icon(Icons.account_balance_wallet_outlined),
+                        label: const Text('Isi deposit'),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: TokenJarak.jarak8),

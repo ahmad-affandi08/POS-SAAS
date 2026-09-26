@@ -12,11 +12,13 @@ import 'package:kasir/Data/RepositoriKatalog.dart';
 import 'package:kasir/Data/RepositoriAbsensi.dart';
 import 'package:kasir/Data/RepositoriPelanggan.dart';
 import 'package:kasir/Data/RepositoriPenjualan.dart';
+import 'package:kasir/Data/RepositoriDeposit.dart';
 import 'package:kasir/Data/RepositoriPreOrder.dart';
 import 'package:kasir/Data/RepositoriPesananMeja.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
 import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
+import 'package:kasir/Domain/Pelanggan/LayananDeposit.dart';
 import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
@@ -72,8 +74,12 @@ Map<String, Object?> DataAwalUji({
   int? batasHariLewatJatuhTempo,
   bool? bukaLaciPerluPin,
   List<Map<String, Object?>>? karyawan,
+  bool deposit = false,
+  Map<String, Object?>? nomorUrutIsiDeposit,
 }) => {
   'Karyawan': ?karyawan,
+  // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
+  if (deposit) 'Deposit': {'Berlaku': true, 'MinimalIsi': '1000.00', 'MaksimalIsi': '10000000.00'},
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
     'ShiftBersama': shiftBersama,
@@ -99,6 +105,7 @@ Map<String, Object?> DataAwalUji({
     'Kode': 'POS-001',
     'NomorUrutPenjualan': ?nomorUrutPenjualan,
     'NomorUrutRetur': ?nomorUrutRetur,
+    'NomorUrutIsiDeposit': ?nomorUrutIsiDeposit,
   },
   'ProfilPajak':
       profilPajak ??
@@ -146,6 +153,15 @@ Map<String, Object?> DataAwalUji({
     // F-12: metode Tempo (piutang) hanya bila diminta test.
     if (tempo)
       {'Uuid': '01K5MTD0000000000000000007', 'Jenis': 'Tempo', 'Nama': 'Tempo', 'AdaGambarQris': false, 'Urutan': 7},
+    // F-16d: metode Deposit pelanggan hanya bila diminta test.
+    if (deposit)
+      {
+        'Uuid': '01K5MTD0000000000000000009',
+        'Jenis': 'Deposit',
+        'Nama': 'Deposit pelanggan',
+        'AdaGambarQris': false,
+        'Urutan': 9,
+      },
     // v2.05: QRIS dinamis lewat gerbang pembayaran hanya bila diminta test.
     if (qrisDinamis)
       {
@@ -259,6 +275,14 @@ class LingkunganUji {
     repositori: repositori,
     repositoriPenjualan: repositoriPenjualan,
     repositoriPreOrder: repositoriPreOrder,
+    repositoriDeposit: repositoriDeposit,
+    jam: () => jam,
+  );
+  late final RepositoriDeposit repositoriDeposit = RepositoriDeposit(db, repositori);
+  late final LayananDeposit deposit = LayananDeposit(
+    klien: klien,
+    repositori: repositoriDeposit,
+    repositoriKasir: repositori,
     jam: () => jam,
   );
   late final RepositoriPreOrder repositoriPreOrder = RepositoriPreOrder(db, repositori);

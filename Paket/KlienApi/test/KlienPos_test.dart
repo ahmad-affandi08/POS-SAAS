@@ -373,6 +373,22 @@ void main() {
     expect(saldo.minimalTukarPoin, 10);
   });
 
+  test('F-16d saldo deposit: jalur per pelanggan, saldo desimal apa adanya (boleh minus)', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'Pelanggan': {'Uuid': 'P1', 'SaldoDeposit': '-27000.00'},
+        'Berlaku': true,
+      }, 200);
+    });
+
+    final saldo = await klien.AmbilSaldoDeposit('P1');
+    expect(dikirim.single.url.path, endsWith('/api/pos/v1/pelanggan/P1/deposit'));
+    expect(saldo.saldoDeposit, '-27000.00');
+    expect(saldo.berlaku, isTrue);
+  });
+
   test('F-16c promo: daftar promo aktif + mode resolusi, definisi dibawa apa adanya', () async {
     final klien = BuatKlien((permintaan) async {
       expect(permintaan.url.path, endsWith('/api/pos/v1/promo'));

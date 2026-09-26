@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +36,7 @@ String AmbilLabelJenisMetode(String jenis) => switch (jenis) {
   JenisMetodeBayar.transfer => 'Transfer',
   JenisMetodeBayar.ewallet => 'E-wallet',
   JenisMetodeBayar.tempo => 'Tempo (piutang)',
+  JenisMetodeBayar.deposit => 'Deposit pelanggan',
   _ => jenis,
 };
 
@@ -53,7 +56,8 @@ List<Uang> HitungPecahanCepat(Uang tagihan, {int batas = 4}) {
 /// Panel Bayar (F-08 fase 1, Rincian F-07c): tunai (pecahan cepat & uang pas), QRIS statis (gambar + konfirmasi
 /// kasir), EDC (bank & nomor approval), transfer & e-wallet (referensi), split pembayaran (BR-08.1). Pembulatan tunai
 /// hanya untuk bagian tunai (BR-08.6). F-12: Tempo (piutang) hanya bila pelanggan dipilih; di luar limit kredit atau
-/// ada piutang lewat jatuh tempo (BR-12.1) butuh PIN penyetuju. Setelah tersimpan memanggil [saatSelesai].
+/// ada piutang lewat jatuh tempo (BR-12.1) butuh PIN penyetuju. F-16d: Deposit hanya bila pelanggan dipilih dan paket
+/// berlaku; saldo dibaca online saat dipilih dan jumlah tidak boleh melebihinya. Setelah tersimpan memanggil [saatSelesai].
 class PanelBayar extends ConsumerStatefulWidget {
   const PanelBayar({super.key, required this.kasir, required this.saatSelesai, this.saatPreOrder});
 
@@ -79,6 +83,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
 
   /// F-12: staf yang menyetujui tempo lewat PIN (BR-12.1).
   StafLokal? _penyetujuTempo;
+
+  /// F-16d: saldo deposit pelanggan terakhir dibaca online (null = belum/ gagal dibaca).
+  Uang? _saldoDeposit;
+  bool _memuatSaldoDeposit = false;
+  String? _pesanSaldoDeposit;
   String? _galat;
 
   @override
@@ -135,6 +144,44 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           ? ''
           : sisa.KeDesimal().ceil().toString();
     });
+    if (metode.Jenis == JenisMetodeBayar.deposit) {
+      unawaited(_MuatSaldoDeposit(k));
+    }
+  }
+
+  /// F-16d: baca saldo deposit pelanggan (wajib online); jumlah bawaan = sisa tagihan atau saldo bila lebih kecil.
+  Future<void> _MuatSaldoDeposit(KonteksPenjualan k) async {
+    final pelanggan = ref.read(penyediaKeranjangEfektif).pelanggan;
+    if (pelanggan == null) {
+      return;
+    }
+    setState(() {
+      _memuatSaldoDeposit = true;
+      _pesanSaldoDeposit = null;
+      _saldoDeposit = null;
+    });
+    try {
+      final saldo = await ref.read(penyediaLayananDeposit).AmbilSaldo(pelanggan.uuid);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _saldoDeposit = saldo;
+        if (_metode?.Jenis == JenisMetodeBayar.deposit) {
+          final sisa = _HitungSisa(k, _metode);
+          final pakai = saldo.Bandingkan(sisa) < 0 ? saldo : sisa;
+          _nominal.text = pakai.Bandingkan(Uang.Nol()) <= 0 ? '' : pakai.KeDesimal().floor().toString();
+        }
+      });
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _pesanSaldoDeposit = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _memuatSaldoDeposit = false);
+      }
+    }
   }
 
   Uang? _AmbilNominal() {
@@ -171,6 +218,17 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     }
     if (metode.Jenis == JenisMetodeBayar.tempo && !await _PastikanTempoDisetujui(k, nominal)) {
       return;
+    }
+    if (metode.Jenis == JenisMetodeBayar.deposit) {
+      final saldo = _saldoDeposit;
+      if (saldo == null) {
+        setState(() => _galat = _pesanSaldoDeposit ?? 'Tunggu saldo deposit selesai dicek.');
+        return;
+      }
+      if (nominal.Bandingkan(saldo) > 0) {
+        setState(() => _galat = 'Saldo deposit tinggal ${saldo.FormatRupiah()}. Bayar sisanya dengan metode lain.');
+        return;
+      }
     }
     final sisa = _HitungSisa(k, metode);
     if (metode.Jenis != JenisMetodeBayar.tunai && nominal.Bandingkan(sisa) > 0) {
@@ -288,6 +346,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
             uuidPenyetujuTempo: pembayaran.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo)
                 ? _penyetujuTempo?.uuid
                 : null,
+            saldoDeposit: _saldoDeposit,
           );
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);
@@ -437,7 +496,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           ),
           const SizedBox(height: TokenJarak.jarak4),
         ],
-        if (metode.Jenis != JenisMetodeBayar.tempo)
+        if (metode.Jenis == JenisMetodeBayar.deposit) ...[
+          _BangunInfoDeposit(context),
+          const SizedBox(height: TokenJarak.jarak8),
+        ],
+        if (metode.Jenis != JenisMetodeBayar.tempo && metode.Jenis != JenisMetodeBayar.deposit)
           TextField(
             controller: _referensi,
             maxLength: metode.Jenis == JenisMetodeBayar.edc ? LayananPenjualan.panjangMaksApprovalEdc : 60,
@@ -457,6 +520,28 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           onChanged: (_) => setState(() => _galat = null),
           decoration: const InputDecoration(labelText: 'Jumlah', prefixText: 'Rp ', border: OutlineInputBorder()),
         ),
+      ],
+    );
+  }
+
+  /// F-16d: saldo deposit pelanggan (online) atau alasan belum bisa dipakai.
+  Widget _BangunInfoDeposit(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final saldo = _saldoDeposit;
+    if (_memuatSaldoDeposit) {
+      return const LinearProgressIndicator();
+    }
+    if (saldo == null) {
+      return Text(
+        _pesanSaldoDeposit ?? 'Saldo deposit belum dicek.',
+        style: teks.bodyMedium?.copyWith(color: warna.bahaya),
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: Text('Saldo deposit', style: teks.bodyMedium)),
+        TeksUang(saldo, gaya: teks.titleMedium),
       ],
     );
   }
@@ -520,6 +605,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     final sisa = _HitungSisa(k, metode);
     final tunaiDipakai = _entri.any((p) => p.CekTunai());
     final tempoDipakai = _entri.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo);
+    final depositDipakai = _entri.any((p) => p.metode.Jenis == JenisMetodeBayar.deposit);
     final nominal = _AmbilNominal();
     final melunasi = nominal != null && nominal.Bandingkan(sisa) >= 0;
     // Semua tagihan sudah tertutup (misal QRIS dinamis lunas tetapi penyimpanan gagal): cukup selesaikan lagi.
@@ -577,7 +663,9 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               children: [
                 for (final m in k.metodePembayaran)
                   if (!(tunaiDipakai && m.Jenis == JenisMetodeBayar.tunai) &&
-                      !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)))
+                      !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)) &&
+                      !(m.Jenis == JenisMetodeBayar.deposit &&
+                          (keranjang.pelanggan == null || depositDipakai || !k.deposit.berlaku)))
                     ChoiceChip(
                       label: Text(m.Nama),
                       tooltip: AmbilLabelJenisMetode(m.Jenis),

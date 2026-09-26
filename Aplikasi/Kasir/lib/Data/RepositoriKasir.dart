@@ -55,6 +55,9 @@ abstract final class KunciPengaturan {
   /// Cetak struk bagian 4: buka laci manual wajib PIN supervisor ('1'/'0').
   static const String bukaLaciPerluPin = 'BukaLaciPerluPin';
 
+  /// F-16d bagian 1: pengaturan deposit pelanggan (JSON `{Berlaku, MinimalIsi, MaksimalIsi}`).
+  static const String deposit = 'Deposit';
+
   /// F-18: daftar staf pelayan (JSON `[{Uuid, Nama, Jabatan}]`).
   static const String karyawan = 'Karyawan';
 
@@ -201,6 +204,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.batasHariLewatJatuhTempo, '${data.batasHariLewatJatuhTempo}');
     await SimpanPengaturan(KunciPengaturan.bukaLaciPerluPin, data.bukaLaciPerluPin ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
+    await SimpanPengaturan(KunciPengaturan.deposit, jsonEncode(data.deposit.KeJson()));
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);
@@ -229,6 +233,23 @@ class RepositoriKasir {
               .into(db.nomorUrutPenjualan)
               .insertOnConflictUpdate(
                 NomorUrutPenjualanCompanion.insert(
+                  KodePerangkat: perangkat.kode,
+                  Tanggal: entri.key,
+                  Terakhir: entri.value,
+                ),
+              );
+        }
+      }
+      // F-16d: sekuens isi deposit (DEP) lokal = max(lokal, server) per tanggal.
+      for (final entri in perangkat.nomorUrutIsiDeposit.entries) {
+        final lama = await (db.select(
+          db.nomorUrutIsiDeposit,
+        )..where((n) => n.KodePerangkat.equals(perangkat.kode) & n.Tanggal.equals(entri.key))).getSingleOrNull();
+        if (lama == null || lama.Terakhir < entri.value) {
+          await db
+              .into(db.nomorUrutIsiDeposit)
+              .insertOnConflictUpdate(
+                NomorUrutIsiDepositCompanion.insert(
                   KodePerangkat: perangkat.kode,
                   Tanggal: entri.key,
                   Terakhir: entri.value,

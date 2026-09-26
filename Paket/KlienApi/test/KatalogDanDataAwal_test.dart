@@ -285,6 +285,27 @@ void main() {
       expect(bukanPeta.perangkat!.nomorUrutRetur, isEmpty);
     });
 
+    test('F-16d: Deposit & Perangkat.NomorUrutIsiDeposit dipetakan; server lama → tidak berlaku & kosong', () {
+      final data = DataAwal.DariJson({
+        ...DataAwalF06(),
+        'Perangkat': {
+          'Uuid': 'D1',
+          'Kode': 'K02',
+          'NomorUrutIsiDeposit': {'260924': 3, '2609': 1},
+        },
+        'Deposit': {'Berlaku': true, 'MinimalIsi': '5000.00', 'MaksimalIsi': '2000000.00'},
+      });
+      expect(data.perangkat!.nomorUrutIsiDeposit, {'260924': 3});
+      expect(data.deposit.berlaku, isTrue);
+      expect(data.deposit.minimalIsi, '5000.00');
+      expect(data.deposit.maksimalIsi, '2000000.00');
+      expect(DepositPos.DariJson(data.deposit.KeJson()).maksimalIsi, '2000000.00');
+
+      final lama = DataAwal.DariJson(DataAwalF06());
+      expect(lama.deposit.berlaku, isFalse);
+      expect(lama.deposit.minimalIsi, DepositPos.minimalIsiBawaan);
+    });
+
     test('F-09: baris penjualan/cari memetakan BolehDesimal & UuidProdukSatuan; absen → null', () {
       Map<String, Object?> Baris([Map<String, Object?> tambahan = const {}]) => {
         'Uuid': 'B1',

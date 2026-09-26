@@ -45,6 +45,11 @@ class KartuLaporanShift extends StatelessWidget {
                 'Uang muka pre-order',
                 teksKanan: '${l.jumlahUangMuka} pesanan · ${(l.nominalUangMuka ?? Uang.Nol()).FormatRupiah()}',
               ),
+            if (l.jumlahIsiDeposit > 0)
+              _BarisLaporan(
+                'Isi deposit pelanggan',
+                teksKanan: '${l.jumlahIsiDeposit} kali · ${(l.nominalIsiDeposit ?? Uang.Nol()).FormatRupiah()}',
+              ),
           ],
         ),
         const SizedBox(height: TokenJarak.jarak12),

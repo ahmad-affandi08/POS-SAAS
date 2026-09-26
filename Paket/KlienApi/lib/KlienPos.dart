@@ -118,6 +118,11 @@ class KlienPos {
   Future<SaldoPoinPos> AmbilSaldoPoin(String uuidPelanggan) async =>
       SaldoPoinPos.DariJson(await _Kirim('GET', 'pelanggan/${Uri.encodeComponent(uuidPelanggan)}/poin', null));
 
+  /// Saldo deposit terkini sebelum kasir membayar dengan deposit (F-16d bagian 1, wajib online). Pelanggan tidak
+  /// ada/diarsipkan → `GalatApi` `PelangganTidakDitemukan`.
+  Future<SaldoDepositPos> AmbilSaldoDeposit(String uuidPelanggan) async =>
+      SaldoDepositPos.DariJson(await _Kirim('GET', 'pelanggan/${Uri.encodeComponent(uuidPelanggan)}/deposit', null));
+
   /// Promo aktif tenant + mode resolusi konflik (F-16c); disimpan perangkat agar promo tetap berlaku saat offline.
   /// `?voucher=1`: aplikasi ini mengenal syarat `WajibVoucher` (F-16c bagian 2), jadi promo voucher ikut dikirim.
   /// `&lanjutan=1`: aplikasi ini juga mengenal syarat bagian 3 (metode bayar, ulang tahun, transaksi pertama, batas per

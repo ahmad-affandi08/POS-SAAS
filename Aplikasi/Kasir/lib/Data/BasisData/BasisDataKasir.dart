@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import 'TabelAbsensi.dart';
+import 'TabelDeposit.dart';
 import 'TabelKatalog.dart';
 import 'TabelMeja.dart';
 import 'TabelPelanggan.dart';
@@ -9,6 +10,7 @@ import 'TabelPenjualan.dart';
 import 'TabelPreOrder.dart';
 
 export 'TabelAbsensi.dart';
+export 'TabelDeposit.dart';
 export 'TabelKatalog.dart';
 export 'TabelMeja.dart';
 export 'TabelPelanggan.dart';
@@ -178,6 +180,9 @@ class PercobaanPin extends Table {
     // Skema 11 (F-12 bagian 2): pre-order + uang muka dari perangkat ini.
     PesananPenjualanLokal,
     NomorUrutPesananPenjualan,
+    // Skema 13 (F-16d bagian 1): isi deposit pelanggan dari perangkat ini.
+    IsiDepositLokal,
+    NomorUrutIsiDeposit,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -187,9 +192,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (kolom tutup shift); 4 = F-07 tindak lanjut v1.46 (kategori jenis pajak di kelompok pajak); 5 = F-09 fase 1 (void
   /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka); 7 = F-16a (pelanggan lokal); 8 = F-16b
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
-  /// (pre-order lokal).
+  /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal).
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -285,6 +290,10 @@ class BasisDataKasir extends _$BasisDataKasir {
         await m.addColumn(pelangganLokal, pelangganLokal.JumlahTransaksi);
         await m.addColumn(pelangganLokal, pelangganLokal.PemakaianPromo);
         await m.addColumn(pelangganLokal, pelangganLokal.PemakaianPada);
+      }
+      if (dari < 13) {
+        await m.createTable(isiDepositLokal);
+        await m.createTable(nomorUrutIsiDeposit);
       }
     },
     beforeOpen: (detail) async {

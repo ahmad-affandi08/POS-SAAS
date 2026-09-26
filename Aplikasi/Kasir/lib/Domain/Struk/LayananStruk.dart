@@ -4,6 +4,7 @@ import 'package:inti/Inti.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
+import '../Pelanggan/LayananDeposit.dart';
 import '../Penjualan/KonteksPenjualan.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
@@ -112,6 +113,20 @@ class LayananStruk {
         preOrder,
         cetakUlang: cetakUlang,
         bukaLaci: bukaLaci && profil.bukaLaciTunai && preOrder.uangMukaTunai,
+      ),
+    );
+  }
+
+  /// Bukti isi deposit (F-16d bagian 1) dari data di memori setelah isi deposit dibuat. Laci dibuka bila [bukaLaci]
+  /// (cetak otomatis pertama), profil mengizinkan, dan dibayar tunai.
+  Future<void> CetakIsiDeposit(IsiDepositTersimpan isi, {bool cetakUlang = false, bool bukaLaci = false}) async {
+    final profil = await _WajibProfil();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunIsiDeposit(
+        await IdentitasStruk.Muat(repositori),
+        isi,
+        cetakUlang: cetakUlang,
+        bukaLaci: bukaLaci && profil.bukaLaciTunai && isi.tunai,
       ),
     );
   }

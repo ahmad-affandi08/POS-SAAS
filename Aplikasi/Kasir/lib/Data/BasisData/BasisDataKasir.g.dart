@@ -16465,6 +16465,822 @@ class NomorUrutPesananPenjualanCompanion extends UpdateCompanion<BarisNomorUrutP
   }
 }
 
+class $IsiDepositLokalTable extends IsiDepositLokal with TableInfo<$IsiDepositLokalTable, BarisIsiDepositLokal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $IsiDepositLokalTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidShiftMeta = const VerificationMeta('UuidShift');
+  @override
+  late final GeneratedColumn<String> UuidShift = GeneratedColumn<String>(
+    'UuidShift',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NomorMeta = const VerificationMeta('Nomor');
+  @override
+  late final GeneratedColumn<String> Nomor = GeneratedColumn<String>(
+    'Nomor',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidPelangganMeta = const VerificationMeta('UuidPelanggan');
+  @override
+  late final GeneratedColumn<String> UuidPelanggan = GeneratedColumn<String>(
+    'UuidPelanggan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaPelangganMeta = const VerificationMeta('NamaPelanggan');
+  @override
+  late final GeneratedColumn<String> NamaPelanggan = GeneratedColumn<String>(
+    'NamaPelanggan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JumlahMeta = const VerificationMeta('Jumlah');
+  @override
+  late final GeneratedColumn<String> Jumlah = GeneratedColumn<String>(
+    'Jumlah',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidMetodePembayaranMeta = const VerificationMeta('UuidMetodePembayaran');
+  @override
+  late final GeneratedColumn<String> UuidMetodePembayaran = GeneratedColumn<String>(
+    'UuidMetodePembayaran',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JenisMetodeMeta = const VerificationMeta('JenisMetode');
+  @override
+  late final GeneratedColumn<String> JenisMetode = GeneratedColumn<String>(
+    'JenisMetode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaMetodeMeta = const VerificationMeta('NamaMetode');
+  @override
+  late final GeneratedColumn<String> NamaMetode = GeneratedColumn<String>(
+    'NamaMetode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ReferensiMeta = const VerificationMeta('Referensi');
+  @override
+  late final GeneratedColumn<String> Referensi = GeneratedColumn<String>(
+    'Referensi',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _DibuatPadaMeta = const VerificationMeta('DibuatPada');
+  @override
+  late final GeneratedColumn<DateTime> DibuatPada = GeneratedColumn<DateTime>(
+    'DibuatPada',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    UuidShift,
+    Nomor,
+    UuidPelanggan,
+    NamaPelanggan,
+    Jumlah,
+    UuidMetodePembayaran,
+    JenisMetode,
+    NamaMetode,
+    Referensi,
+    DibuatPada,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'IsiDepositLokal';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisIsiDepositLokal> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidShift')) {
+      context.handle(_UuidShiftMeta, UuidShift.isAcceptableOrUnknown(data['UuidShift']!, _UuidShiftMeta));
+    } else if (isInserting) {
+      context.missing(_UuidShiftMeta);
+    }
+    if (data.containsKey('Nomor')) {
+      context.handle(_NomorMeta, Nomor.isAcceptableOrUnknown(data['Nomor']!, _NomorMeta));
+    } else if (isInserting) {
+      context.missing(_NomorMeta);
+    }
+    if (data.containsKey('UuidPelanggan')) {
+      context.handle(
+        _UuidPelangganMeta,
+        UuidPelanggan.isAcceptableOrUnknown(data['UuidPelanggan']!, _UuidPelangganMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidPelangganMeta);
+    }
+    if (data.containsKey('NamaPelanggan')) {
+      context.handle(
+        _NamaPelangganMeta,
+        NamaPelanggan.isAcceptableOrUnknown(data['NamaPelanggan']!, _NamaPelangganMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_NamaPelangganMeta);
+    }
+    if (data.containsKey('Jumlah')) {
+      context.handle(_JumlahMeta, Jumlah.isAcceptableOrUnknown(data['Jumlah']!, _JumlahMeta));
+    } else if (isInserting) {
+      context.missing(_JumlahMeta);
+    }
+    if (data.containsKey('UuidMetodePembayaran')) {
+      context.handle(
+        _UuidMetodePembayaranMeta,
+        UuidMetodePembayaran.isAcceptableOrUnknown(data['UuidMetodePembayaran']!, _UuidMetodePembayaranMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_UuidMetodePembayaranMeta);
+    }
+    if (data.containsKey('JenisMetode')) {
+      context.handle(_JenisMetodeMeta, JenisMetode.isAcceptableOrUnknown(data['JenisMetode']!, _JenisMetodeMeta));
+    } else if (isInserting) {
+      context.missing(_JenisMetodeMeta);
+    }
+    if (data.containsKey('NamaMetode')) {
+      context.handle(_NamaMetodeMeta, NamaMetode.isAcceptableOrUnknown(data['NamaMetode']!, _NamaMetodeMeta));
+    } else if (isInserting) {
+      context.missing(_NamaMetodeMeta);
+    }
+    if (data.containsKey('Referensi')) {
+      context.handle(_ReferensiMeta, Referensi.isAcceptableOrUnknown(data['Referensi']!, _ReferensiMeta));
+    }
+    if (data.containsKey('DibuatPada')) {
+      context.handle(_DibuatPadaMeta, DibuatPada.isAcceptableOrUnknown(data['DibuatPada']!, _DibuatPadaMeta));
+    } else if (isInserting) {
+      context.missing(_DibuatPadaMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisIsiDepositLokal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisIsiDepositLokal(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidShift: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidShift'])!,
+      Nomor: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Nomor'])!,
+      UuidPelanggan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPelanggan'])!,
+      NamaPelanggan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPelanggan'])!,
+      Jumlah: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Jumlah'])!,
+      UuidMetodePembayaran: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}UuidMetodePembayaran'],
+      )!,
+      JenisMetode: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}JenisMetode'])!,
+      NamaMetode: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaMetode'])!,
+      Referensi: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Referensi']),
+      DibuatPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DibuatPada'])!,
+    );
+  }
+
+  @override
+  $IsiDepositLokalTable createAlias(String alias) {
+    return $IsiDepositLokalTable(attachedDatabase, alias);
+  }
+}
+
+class BarisIsiDepositLokal extends DataClass implements Insertable<BarisIsiDepositLokal> {
+  final String Uuid;
+  final String UuidShift;
+  final String Nomor;
+  final String UuidPelanggan;
+  final String NamaPelanggan;
+  final String Jumlah;
+  final String UuidMetodePembayaran;
+  final String JenisMetode;
+  final String NamaMetode;
+  final String? Referensi;
+  final DateTime DibuatPada;
+  const BarisIsiDepositLokal({
+    required this.Uuid,
+    required this.UuidShift,
+    required this.Nomor,
+    required this.UuidPelanggan,
+    required this.NamaPelanggan,
+    required this.Jumlah,
+    required this.UuidMetodePembayaran,
+    required this.JenisMetode,
+    required this.NamaMetode,
+    this.Referensi,
+    required this.DibuatPada,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidShift'] = Variable<String>(UuidShift);
+    map['Nomor'] = Variable<String>(Nomor);
+    map['UuidPelanggan'] = Variable<String>(UuidPelanggan);
+    map['NamaPelanggan'] = Variable<String>(NamaPelanggan);
+    map['Jumlah'] = Variable<String>(Jumlah);
+    map['UuidMetodePembayaran'] = Variable<String>(UuidMetodePembayaran);
+    map['JenisMetode'] = Variable<String>(JenisMetode);
+    map['NamaMetode'] = Variable<String>(NamaMetode);
+    if (!nullToAbsent || Referensi != null) {
+      map['Referensi'] = Variable<String>(Referensi);
+    }
+    map['DibuatPada'] = Variable<DateTime>(DibuatPada);
+    return map;
+  }
+
+  IsiDepositLokalCompanion toCompanion(bool nullToAbsent) {
+    return IsiDepositLokalCompanion(
+      Uuid: Value(Uuid),
+      UuidShift: Value(UuidShift),
+      Nomor: Value(Nomor),
+      UuidPelanggan: Value(UuidPelanggan),
+      NamaPelanggan: Value(NamaPelanggan),
+      Jumlah: Value(Jumlah),
+      UuidMetodePembayaran: Value(UuidMetodePembayaran),
+      JenisMetode: Value(JenisMetode),
+      NamaMetode: Value(NamaMetode),
+      Referensi: Referensi == null && nullToAbsent ? const Value.absent() : Value(Referensi),
+      DibuatPada: Value(DibuatPada),
+    );
+  }
+
+  factory BarisIsiDepositLokal.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisIsiDepositLokal(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidShift: serializer.fromJson<String>(json['UuidShift']),
+      Nomor: serializer.fromJson<String>(json['Nomor']),
+      UuidPelanggan: serializer.fromJson<String>(json['UuidPelanggan']),
+      NamaPelanggan: serializer.fromJson<String>(json['NamaPelanggan']),
+      Jumlah: serializer.fromJson<String>(json['Jumlah']),
+      UuidMetodePembayaran: serializer.fromJson<String>(json['UuidMetodePembayaran']),
+      JenisMetode: serializer.fromJson<String>(json['JenisMetode']),
+      NamaMetode: serializer.fromJson<String>(json['NamaMetode']),
+      Referensi: serializer.fromJson<String?>(json['Referensi']),
+      DibuatPada: serializer.fromJson<DateTime>(json['DibuatPada']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidShift': serializer.toJson<String>(UuidShift),
+      'Nomor': serializer.toJson<String>(Nomor),
+      'UuidPelanggan': serializer.toJson<String>(UuidPelanggan),
+      'NamaPelanggan': serializer.toJson<String>(NamaPelanggan),
+      'Jumlah': serializer.toJson<String>(Jumlah),
+      'UuidMetodePembayaran': serializer.toJson<String>(UuidMetodePembayaran),
+      'JenisMetode': serializer.toJson<String>(JenisMetode),
+      'NamaMetode': serializer.toJson<String>(NamaMetode),
+      'Referensi': serializer.toJson<String?>(Referensi),
+      'DibuatPada': serializer.toJson<DateTime>(DibuatPada),
+    };
+  }
+
+  BarisIsiDepositLokal copyWith({
+    String? Uuid,
+    String? UuidShift,
+    String? Nomor,
+    String? UuidPelanggan,
+    String? NamaPelanggan,
+    String? Jumlah,
+    String? UuidMetodePembayaran,
+    String? JenisMetode,
+    String? NamaMetode,
+    Value<String?> Referensi = const Value.absent(),
+    DateTime? DibuatPada,
+  }) => BarisIsiDepositLokal(
+    Uuid: Uuid ?? this.Uuid,
+    UuidShift: UuidShift ?? this.UuidShift,
+    Nomor: Nomor ?? this.Nomor,
+    UuidPelanggan: UuidPelanggan ?? this.UuidPelanggan,
+    NamaPelanggan: NamaPelanggan ?? this.NamaPelanggan,
+    Jumlah: Jumlah ?? this.Jumlah,
+    UuidMetodePembayaran: UuidMetodePembayaran ?? this.UuidMetodePembayaran,
+    JenisMetode: JenisMetode ?? this.JenisMetode,
+    NamaMetode: NamaMetode ?? this.NamaMetode,
+    Referensi: Referensi.present ? Referensi.value : this.Referensi,
+    DibuatPada: DibuatPada ?? this.DibuatPada,
+  );
+  BarisIsiDepositLokal copyWithCompanion(IsiDepositLokalCompanion data) {
+    return BarisIsiDepositLokal(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidShift: data.UuidShift.present ? data.UuidShift.value : this.UuidShift,
+      Nomor: data.Nomor.present ? data.Nomor.value : this.Nomor,
+      UuidPelanggan: data.UuidPelanggan.present ? data.UuidPelanggan.value : this.UuidPelanggan,
+      NamaPelanggan: data.NamaPelanggan.present ? data.NamaPelanggan.value : this.NamaPelanggan,
+      Jumlah: data.Jumlah.present ? data.Jumlah.value : this.Jumlah,
+      UuidMetodePembayaran: data.UuidMetodePembayaran.present
+          ? data.UuidMetodePembayaran.value
+          : this.UuidMetodePembayaran,
+      JenisMetode: data.JenisMetode.present ? data.JenisMetode.value : this.JenisMetode,
+      NamaMetode: data.NamaMetode.present ? data.NamaMetode.value : this.NamaMetode,
+      Referensi: data.Referensi.present ? data.Referensi.value : this.Referensi,
+      DibuatPada: data.DibuatPada.present ? data.DibuatPada.value : this.DibuatPada,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisIsiDepositLokal(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('Nomor: $Nomor, ')
+          ..write('UuidPelanggan: $UuidPelanggan, ')
+          ..write('NamaPelanggan: $NamaPelanggan, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('UuidMetodePembayaran: $UuidMetodePembayaran, ')
+          ..write('JenisMetode: $JenisMetode, ')
+          ..write('NamaMetode: $NamaMetode, ')
+          ..write('Referensi: $Referensi, ')
+          ..write('DibuatPada: $DibuatPada')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    Uuid,
+    UuidShift,
+    Nomor,
+    UuidPelanggan,
+    NamaPelanggan,
+    Jumlah,
+    UuidMetodePembayaran,
+    JenisMetode,
+    NamaMetode,
+    Referensi,
+    DibuatPada,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisIsiDepositLokal &&
+          other.Uuid == this.Uuid &&
+          other.UuidShift == this.UuidShift &&
+          other.Nomor == this.Nomor &&
+          other.UuidPelanggan == this.UuidPelanggan &&
+          other.NamaPelanggan == this.NamaPelanggan &&
+          other.Jumlah == this.Jumlah &&
+          other.UuidMetodePembayaran == this.UuidMetodePembayaran &&
+          other.JenisMetode == this.JenisMetode &&
+          other.NamaMetode == this.NamaMetode &&
+          other.Referensi == this.Referensi &&
+          other.DibuatPada == this.DibuatPada);
+}
+
+class IsiDepositLokalCompanion extends UpdateCompanion<BarisIsiDepositLokal> {
+  final Value<String> Uuid;
+  final Value<String> UuidShift;
+  final Value<String> Nomor;
+  final Value<String> UuidPelanggan;
+  final Value<String> NamaPelanggan;
+  final Value<String> Jumlah;
+  final Value<String> UuidMetodePembayaran;
+  final Value<String> JenisMetode;
+  final Value<String> NamaMetode;
+  final Value<String?> Referensi;
+  final Value<DateTime> DibuatPada;
+  final Value<int> rowid;
+  const IsiDepositLokalCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidShift = const Value.absent(),
+    this.Nomor = const Value.absent(),
+    this.UuidPelanggan = const Value.absent(),
+    this.NamaPelanggan = const Value.absent(),
+    this.Jumlah = const Value.absent(),
+    this.UuidMetodePembayaran = const Value.absent(),
+    this.JenisMetode = const Value.absent(),
+    this.NamaMetode = const Value.absent(),
+    this.Referensi = const Value.absent(),
+    this.DibuatPada = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  IsiDepositLokalCompanion.insert({
+    required String Uuid,
+    required String UuidShift,
+    required String Nomor,
+    required String UuidPelanggan,
+    required String NamaPelanggan,
+    required String Jumlah,
+    required String UuidMetodePembayaran,
+    required String JenisMetode,
+    required String NamaMetode,
+    this.Referensi = const Value.absent(),
+    required DateTime DibuatPada,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidShift = Value(UuidShift),
+       Nomor = Value(Nomor),
+       UuidPelanggan = Value(UuidPelanggan),
+       NamaPelanggan = Value(NamaPelanggan),
+       Jumlah = Value(Jumlah),
+       UuidMetodePembayaran = Value(UuidMetodePembayaran),
+       JenisMetode = Value(JenisMetode),
+       NamaMetode = Value(NamaMetode),
+       DibuatPada = Value(DibuatPada);
+  static Insertable<BarisIsiDepositLokal> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidShift,
+    Expression<String>? Nomor,
+    Expression<String>? UuidPelanggan,
+    Expression<String>? NamaPelanggan,
+    Expression<String>? Jumlah,
+    Expression<String>? UuidMetodePembayaran,
+    Expression<String>? JenisMetode,
+    Expression<String>? NamaMetode,
+    Expression<String>? Referensi,
+    Expression<DateTime>? DibuatPada,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidShift != null) 'UuidShift': UuidShift,
+      if (Nomor != null) 'Nomor': Nomor,
+      if (UuidPelanggan != null) 'UuidPelanggan': UuidPelanggan,
+      if (NamaPelanggan != null) 'NamaPelanggan': NamaPelanggan,
+      if (Jumlah != null) 'Jumlah': Jumlah,
+      if (UuidMetodePembayaran != null) 'UuidMetodePembayaran': UuidMetodePembayaran,
+      if (JenisMetode != null) 'JenisMetode': JenisMetode,
+      if (NamaMetode != null) 'NamaMetode': NamaMetode,
+      if (Referensi != null) 'Referensi': Referensi,
+      if (DibuatPada != null) 'DibuatPada': DibuatPada,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  IsiDepositLokalCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidShift,
+    Value<String>? Nomor,
+    Value<String>? UuidPelanggan,
+    Value<String>? NamaPelanggan,
+    Value<String>? Jumlah,
+    Value<String>? UuidMetodePembayaran,
+    Value<String>? JenisMetode,
+    Value<String>? NamaMetode,
+    Value<String?>? Referensi,
+    Value<DateTime>? DibuatPada,
+    Value<int>? rowid,
+  }) {
+    return IsiDepositLokalCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidShift: UuidShift ?? this.UuidShift,
+      Nomor: Nomor ?? this.Nomor,
+      UuidPelanggan: UuidPelanggan ?? this.UuidPelanggan,
+      NamaPelanggan: NamaPelanggan ?? this.NamaPelanggan,
+      Jumlah: Jumlah ?? this.Jumlah,
+      UuidMetodePembayaran: UuidMetodePembayaran ?? this.UuidMetodePembayaran,
+      JenisMetode: JenisMetode ?? this.JenisMetode,
+      NamaMetode: NamaMetode ?? this.NamaMetode,
+      Referensi: Referensi ?? this.Referensi,
+      DibuatPada: DibuatPada ?? this.DibuatPada,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidShift.present) {
+      map['UuidShift'] = Variable<String>(UuidShift.value);
+    }
+    if (Nomor.present) {
+      map['Nomor'] = Variable<String>(Nomor.value);
+    }
+    if (UuidPelanggan.present) {
+      map['UuidPelanggan'] = Variable<String>(UuidPelanggan.value);
+    }
+    if (NamaPelanggan.present) {
+      map['NamaPelanggan'] = Variable<String>(NamaPelanggan.value);
+    }
+    if (Jumlah.present) {
+      map['Jumlah'] = Variable<String>(Jumlah.value);
+    }
+    if (UuidMetodePembayaran.present) {
+      map['UuidMetodePembayaran'] = Variable<String>(UuidMetodePembayaran.value);
+    }
+    if (JenisMetode.present) {
+      map['JenisMetode'] = Variable<String>(JenisMetode.value);
+    }
+    if (NamaMetode.present) {
+      map['NamaMetode'] = Variable<String>(NamaMetode.value);
+    }
+    if (Referensi.present) {
+      map['Referensi'] = Variable<String>(Referensi.value);
+    }
+    if (DibuatPada.present) {
+      map['DibuatPada'] = Variable<DateTime>(DibuatPada.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IsiDepositLokalCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidShift: $UuidShift, ')
+          ..write('Nomor: $Nomor, ')
+          ..write('UuidPelanggan: $UuidPelanggan, ')
+          ..write('NamaPelanggan: $NamaPelanggan, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('UuidMetodePembayaran: $UuidMetodePembayaran, ')
+          ..write('JenisMetode: $JenisMetode, ')
+          ..write('NamaMetode: $NamaMetode, ')
+          ..write('Referensi: $Referensi, ')
+          ..write('DibuatPada: $DibuatPada, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $NomorUrutIsiDepositTable extends NomorUrutIsiDeposit
+    with TableInfo<$NomorUrutIsiDepositTable, BarisNomorUrutIsiDeposit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NomorUrutIsiDepositTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _KodePerangkatMeta = const VerificationMeta('KodePerangkat');
+  @override
+  late final GeneratedColumn<String> KodePerangkat = GeneratedColumn<String>(
+    'KodePerangkat',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TanggalMeta = const VerificationMeta('Tanggal');
+  @override
+  late final GeneratedColumn<String> Tanggal = GeneratedColumn<String>(
+    'Tanggal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TerakhirMeta = const VerificationMeta('Terakhir');
+  @override
+  late final GeneratedColumn<int> Terakhir = GeneratedColumn<int>(
+    'Terakhir',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [KodePerangkat, Tanggal, Terakhir];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'NomorUrutIsiDeposit';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisNomorUrutIsiDeposit> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('KodePerangkat')) {
+      context.handle(
+        _KodePerangkatMeta,
+        KodePerangkat.isAcceptableOrUnknown(data['KodePerangkat']!, _KodePerangkatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_KodePerangkatMeta);
+    }
+    if (data.containsKey('Tanggal')) {
+      context.handle(_TanggalMeta, Tanggal.isAcceptableOrUnknown(data['Tanggal']!, _TanggalMeta));
+    } else if (isInserting) {
+      context.missing(_TanggalMeta);
+    }
+    if (data.containsKey('Terakhir')) {
+      context.handle(_TerakhirMeta, Terakhir.isAcceptableOrUnknown(data['Terakhir']!, _TerakhirMeta));
+    } else if (isInserting) {
+      context.missing(_TerakhirMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {KodePerangkat, Tanggal};
+  @override
+  BarisNomorUrutIsiDeposit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisNomorUrutIsiDeposit(
+      KodePerangkat: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}KodePerangkat'])!,
+      Tanggal: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Tanggal'])!,
+      Terakhir: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}Terakhir'])!,
+    );
+  }
+
+  @override
+  $NomorUrutIsiDepositTable createAlias(String alias) {
+    return $NomorUrutIsiDepositTable(attachedDatabase, alias);
+  }
+}
+
+class BarisNomorUrutIsiDeposit extends DataClass implements Insertable<BarisNomorUrutIsiDeposit> {
+  final String KodePerangkat;
+
+  /// `YYMMDD`.
+  final String Tanggal;
+  final int Terakhir;
+  const BarisNomorUrutIsiDeposit({required this.KodePerangkat, required this.Tanggal, required this.Terakhir});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['KodePerangkat'] = Variable<String>(KodePerangkat);
+    map['Tanggal'] = Variable<String>(Tanggal);
+    map['Terakhir'] = Variable<int>(Terakhir);
+    return map;
+  }
+
+  NomorUrutIsiDepositCompanion toCompanion(bool nullToAbsent) {
+    return NomorUrutIsiDepositCompanion(
+      KodePerangkat: Value(KodePerangkat),
+      Tanggal: Value(Tanggal),
+      Terakhir: Value(Terakhir),
+    );
+  }
+
+  factory BarisNomorUrutIsiDeposit.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisNomorUrutIsiDeposit(
+      KodePerangkat: serializer.fromJson<String>(json['KodePerangkat']),
+      Tanggal: serializer.fromJson<String>(json['Tanggal']),
+      Terakhir: serializer.fromJson<int>(json['Terakhir']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'KodePerangkat': serializer.toJson<String>(KodePerangkat),
+      'Tanggal': serializer.toJson<String>(Tanggal),
+      'Terakhir': serializer.toJson<int>(Terakhir),
+    };
+  }
+
+  BarisNomorUrutIsiDeposit copyWith({String? KodePerangkat, String? Tanggal, int? Terakhir}) =>
+      BarisNomorUrutIsiDeposit(
+        KodePerangkat: KodePerangkat ?? this.KodePerangkat,
+        Tanggal: Tanggal ?? this.Tanggal,
+        Terakhir: Terakhir ?? this.Terakhir,
+      );
+  BarisNomorUrutIsiDeposit copyWithCompanion(NomorUrutIsiDepositCompanion data) {
+    return BarisNomorUrutIsiDeposit(
+      KodePerangkat: data.KodePerangkat.present ? data.KodePerangkat.value : this.KodePerangkat,
+      Tanggal: data.Tanggal.present ? data.Tanggal.value : this.Tanggal,
+      Terakhir: data.Terakhir.present ? data.Terakhir.value : this.Terakhir,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisNomorUrutIsiDeposit(')
+          ..write('KodePerangkat: $KodePerangkat, ')
+          ..write('Tanggal: $Tanggal, ')
+          ..write('Terakhir: $Terakhir')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(KodePerangkat, Tanggal, Terakhir);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisNomorUrutIsiDeposit &&
+          other.KodePerangkat == this.KodePerangkat &&
+          other.Tanggal == this.Tanggal &&
+          other.Terakhir == this.Terakhir);
+}
+
+class NomorUrutIsiDepositCompanion extends UpdateCompanion<BarisNomorUrutIsiDeposit> {
+  final Value<String> KodePerangkat;
+  final Value<String> Tanggal;
+  final Value<int> Terakhir;
+  final Value<int> rowid;
+  const NomorUrutIsiDepositCompanion({
+    this.KodePerangkat = const Value.absent(),
+    this.Tanggal = const Value.absent(),
+    this.Terakhir = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NomorUrutIsiDepositCompanion.insert({
+    required String KodePerangkat,
+    required String Tanggal,
+    required int Terakhir,
+    this.rowid = const Value.absent(),
+  }) : KodePerangkat = Value(KodePerangkat),
+       Tanggal = Value(Tanggal),
+       Terakhir = Value(Terakhir);
+  static Insertable<BarisNomorUrutIsiDeposit> custom({
+    Expression<String>? KodePerangkat,
+    Expression<String>? Tanggal,
+    Expression<int>? Terakhir,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (KodePerangkat != null) 'KodePerangkat': KodePerangkat,
+      if (Tanggal != null) 'Tanggal': Tanggal,
+      if (Terakhir != null) 'Terakhir': Terakhir,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NomorUrutIsiDepositCompanion copyWith({
+    Value<String>? KodePerangkat,
+    Value<String>? Tanggal,
+    Value<int>? Terakhir,
+    Value<int>? rowid,
+  }) {
+    return NomorUrutIsiDepositCompanion(
+      KodePerangkat: KodePerangkat ?? this.KodePerangkat,
+      Tanggal: Tanggal ?? this.Tanggal,
+      Terakhir: Terakhir ?? this.Terakhir,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (KodePerangkat.present) {
+      map['KodePerangkat'] = Variable<String>(KodePerangkat.value);
+    }
+    if (Tanggal.present) {
+      map['Tanggal'] = Variable<String>(Tanggal.value);
+    }
+    if (Terakhir.present) {
+      map['Terakhir'] = Variable<int>(Terakhir.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NomorUrutIsiDepositCompanion(')
+          ..write('KodePerangkat: $KodePerangkat, ')
+          ..write('Tanggal: $Tanggal, ')
+          ..write('Terakhir: $Terakhir, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BasisDataKasir extends GeneratedDatabase {
   _$BasisDataKasir(QueryExecutor e) : super(e);
   $BasisDataKasirManager get managers => $BasisDataKasirManager(this);
@@ -16507,6 +17323,8 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
   late final $AbsensiLokalTable absensiLokal = $AbsensiLokalTable(this);
   late final $PesananPenjualanLokalTable pesananPenjualanLokal = $PesananPenjualanLokalTable(this);
   late final $NomorUrutPesananPenjualanTable nomorUrutPesananPenjualan = $NomorUrutPesananPenjualanTable(this);
+  late final $IsiDepositLokalTable isiDepositLokal = $IsiDepositLokalTable(this);
+  late final $NomorUrutIsiDepositTable nomorUrutIsiDeposit = $NomorUrutIsiDepositTable(this);
   late final Index indeksProdukBarcodeBarcode = Index(
     'IndeksProdukBarcodeBarcode',
     'CREATE INDEX IndeksProdukBarcodeBarcode ON ProdukBarcode (Barcode)',
@@ -16558,6 +17376,8 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
     absensiLokal,
     pesananPenjualanLokal,
     nomorUrutPesananPenjualan,
+    isiDepositLokal,
+    nomorUrutIsiDeposit,
     indeksProdukBarcodeBarcode,
     indeksPenjualanTanggalBisnis,
   ];
@@ -25291,6 +26111,402 @@ typedef $$NomorUrutPesananPenjualanTableProcessedTableManager =
       BarisNomorUrutPesananPenjualan,
       PrefetchHooks Function()
     >;
+typedef $$IsiDepositLokalTableCreateCompanionBuilder = IsiDepositLokalCompanion Function({
+  required String Uuid,
+  required String UuidShift,
+  required String Nomor,
+  required String UuidPelanggan,
+  required String NamaPelanggan,
+  required String Jumlah,
+  required String UuidMetodePembayaran,
+  required String JenisMetode,
+  required String NamaMetode,
+  Value<String?> Referensi,
+  required DateTime DibuatPada,
+  Value<int> rowid,
+});
+typedef $$IsiDepositLokalTableUpdateCompanionBuilder = IsiDepositLokalCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidShift,
+  Value<String> Nomor,
+  Value<String> UuidPelanggan,
+  Value<String> NamaPelanggan,
+  Value<String> Jumlah,
+  Value<String> UuidMetodePembayaran,
+  Value<String> JenisMetode,
+  Value<String> NamaMetode,
+  Value<String?> Referensi,
+  Value<DateTime> DibuatPada,
+  Value<int> rowid,
+});
+
+class $$IsiDepositLokalTableFilterComposer extends Composer<_$BasisDataKasir, $IsiDepositLokalTable> {
+  $$IsiDepositLokalTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Nomor =>
+      $composableBuilder(column: $table.Nomor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPelanggan =>
+      $composableBuilder(column: $table.UuidPelanggan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaPelanggan =>
+      $composableBuilder(column: $table.NamaPelanggan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get JenisMetode =>
+      $composableBuilder(column: $table.JenisMetode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaMetode =>
+      $composableBuilder(column: $table.NamaMetode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Referensi =>
+      $composableBuilder(column: $table.Referensi, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnFilters(column));
+}
+
+class $$IsiDepositLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $IsiDepositLokalTable> {
+  $$IsiDepositLokalTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidShift =>
+      $composableBuilder(column: $table.UuidShift, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Nomor =>
+      $composableBuilder(column: $table.Nomor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPelanggan =>
+      $composableBuilder(column: $table.UuidPelanggan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaPelanggan =>
+      $composableBuilder(column: $table.NamaPelanggan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get JenisMetode =>
+      $composableBuilder(column: $table.JenisMetode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaMetode =>
+      $composableBuilder(column: $table.NamaMetode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Referensi =>
+      $composableBuilder(column: $table.Referensi, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnOrderings(column));
+}
+
+class $$IsiDepositLokalTableAnnotationComposer extends Composer<_$BasisDataKasir, $IsiDepositLokalTable> {
+  $$IsiDepositLokalTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidShift => $composableBuilder(column: $table.UuidShift, builder: (column) => column);
+
+  GeneratedColumn<String> get Nomor => $composableBuilder(column: $table.Nomor, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPelanggan =>
+      $composableBuilder(column: $table.UuidPelanggan, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaPelanggan =>
+      $composableBuilder(column: $table.NamaPelanggan, builder: (column) => column);
+
+  GeneratedColumn<String> get Jumlah => $composableBuilder(column: $table.Jumlah, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidMetodePembayaran =>
+      $composableBuilder(column: $table.UuidMetodePembayaran, builder: (column) => column);
+
+  GeneratedColumn<String> get JenisMetode =>
+      $composableBuilder(column: $table.JenisMetode, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaMetode => $composableBuilder(column: $table.NamaMetode, builder: (column) => column);
+
+  GeneratedColumn<String> get Referensi => $composableBuilder(column: $table.Referensi, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => column);
+}
+
+class $$IsiDepositLokalTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $IsiDepositLokalTable,
+          BarisIsiDepositLokal,
+          $$IsiDepositLokalTableFilterComposer,
+          $$IsiDepositLokalTableOrderingComposer,
+          $$IsiDepositLokalTableAnnotationComposer,
+          $$IsiDepositLokalTableCreateCompanionBuilder,
+          $$IsiDepositLokalTableUpdateCompanionBuilder,
+          (BarisIsiDepositLokal, BaseReferences<_$BasisDataKasir, $IsiDepositLokalTable, BarisIsiDepositLokal>),
+          BarisIsiDepositLokal,
+          PrefetchHooks Function()
+        > {
+  $$IsiDepositLokalTableTableManager(_$BasisDataKasir db, $IsiDepositLokalTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$IsiDepositLokalTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$IsiDepositLokalTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$IsiDepositLokalTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidShift = const Value.absent(),
+                Value<String> Nomor = const Value.absent(),
+                Value<String> UuidPelanggan = const Value.absent(),
+                Value<String> NamaPelanggan = const Value.absent(),
+                Value<String> Jumlah = const Value.absent(),
+                Value<String> UuidMetodePembayaran = const Value.absent(),
+                Value<String> JenisMetode = const Value.absent(),
+                Value<String> NamaMetode = const Value.absent(),
+                Value<String?> Referensi = const Value.absent(),
+                Value<DateTime> DibuatPada = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => IsiDepositLokalCompanion(
+                Uuid: Uuid,
+                UuidShift: UuidShift,
+                Nomor: Nomor,
+                UuidPelanggan: UuidPelanggan,
+                NamaPelanggan: NamaPelanggan,
+                Jumlah: Jumlah,
+                UuidMetodePembayaran: UuidMetodePembayaran,
+                JenisMetode: JenisMetode,
+                NamaMetode: NamaMetode,
+                Referensi: Referensi,
+                DibuatPada: DibuatPada,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidShift,
+                required String Nomor,
+                required String UuidPelanggan,
+                required String NamaPelanggan,
+                required String Jumlah,
+                required String UuidMetodePembayaran,
+                required String JenisMetode,
+                required String NamaMetode,
+                Value<String?> Referensi = const Value.absent(),
+                required DateTime DibuatPada,
+                Value<int> rowid = const Value.absent(),
+              }) => IsiDepositLokalCompanion.insert(
+                Uuid: Uuid,
+                UuidShift: UuidShift,
+                Nomor: Nomor,
+                UuidPelanggan: UuidPelanggan,
+                NamaPelanggan: NamaPelanggan,
+                Jumlah: Jumlah,
+                UuidMetodePembayaran: UuidMetodePembayaran,
+                JenisMetode: JenisMetode,
+                NamaMetode: NamaMetode,
+                Referensi: Referensi,
+                DibuatPada: DibuatPada,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$IsiDepositLokalTable, BarisIsiDepositLokal>(table),
+                  BaseReferences<_$BasisDataKasir, $IsiDepositLokalTable, BarisIsiDepositLokal>(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$IsiDepositLokalTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $IsiDepositLokalTable,
+      BarisIsiDepositLokal,
+      $$IsiDepositLokalTableFilterComposer,
+      $$IsiDepositLokalTableOrderingComposer,
+      $$IsiDepositLokalTableAnnotationComposer,
+      $$IsiDepositLokalTableCreateCompanionBuilder,
+      $$IsiDepositLokalTableUpdateCompanionBuilder,
+      (BarisIsiDepositLokal, BaseReferences<_$BasisDataKasir, $IsiDepositLokalTable, BarisIsiDepositLokal>),
+      BarisIsiDepositLokal,
+      PrefetchHooks Function()
+    >;
+typedef $$NomorUrutIsiDepositTableCreateCompanionBuilder = NomorUrutIsiDepositCompanion Function({
+  required String KodePerangkat,
+  required String Tanggal,
+  required int Terakhir,
+  Value<int> rowid,
+});
+typedef $$NomorUrutIsiDepositTableUpdateCompanionBuilder = NomorUrutIsiDepositCompanion Function({
+  Value<String> KodePerangkat,
+  Value<String> Tanggal,
+  Value<int> Terakhir,
+  Value<int> rowid,
+});
+
+class $$NomorUrutIsiDepositTableFilterComposer extends Composer<_$BasisDataKasir, $NomorUrutIsiDepositTable> {
+  $$NomorUrutIsiDepositTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Tanggal =>
+      $composableBuilder(column: $table.Tanggal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get Terakhir =>
+      $composableBuilder(column: $table.Terakhir, builder: (column) => ColumnFilters(column));
+}
+
+class $$NomorUrutIsiDepositTableOrderingComposer extends Composer<_$BasisDataKasir, $NomorUrutIsiDepositTable> {
+  $$NomorUrutIsiDepositTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Tanggal =>
+      $composableBuilder(column: $table.Tanggal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get Terakhir =>
+      $composableBuilder(column: $table.Terakhir, builder: (column) => ColumnOrderings(column));
+}
+
+class $$NomorUrutIsiDepositTableAnnotationComposer extends Composer<_$BasisDataKasir, $NomorUrutIsiDepositTable> {
+  $$NomorUrutIsiDepositTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get KodePerangkat =>
+      $composableBuilder(column: $table.KodePerangkat, builder: (column) => column);
+
+  GeneratedColumn<String> get Tanggal => $composableBuilder(column: $table.Tanggal, builder: (column) => column);
+
+  GeneratedColumn<int> get Terakhir => $composableBuilder(column: $table.Terakhir, builder: (column) => column);
+}
+
+class $$NomorUrutIsiDepositTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $NomorUrutIsiDepositTable,
+          BarisNomorUrutIsiDeposit,
+          $$NomorUrutIsiDepositTableFilterComposer,
+          $$NomorUrutIsiDepositTableOrderingComposer,
+          $$NomorUrutIsiDepositTableAnnotationComposer,
+          $$NomorUrutIsiDepositTableCreateCompanionBuilder,
+          $$NomorUrutIsiDepositTableUpdateCompanionBuilder,
+          (
+            BarisNomorUrutIsiDeposit,
+            BaseReferences<_$BasisDataKasir, $NomorUrutIsiDepositTable, BarisNomorUrutIsiDeposit>,
+          ),
+          BarisNomorUrutIsiDeposit,
+          PrefetchHooks Function()
+        > {
+  $$NomorUrutIsiDepositTableTableManager(_$BasisDataKasir db, $NomorUrutIsiDepositTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$NomorUrutIsiDepositTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$NomorUrutIsiDepositTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$NomorUrutIsiDepositTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> KodePerangkat = const Value.absent(),
+                Value<String> Tanggal = const Value.absent(),
+                Value<int> Terakhir = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NomorUrutIsiDepositCompanion(
+                KodePerangkat: KodePerangkat,
+                Tanggal: Tanggal,
+                Terakhir: Terakhir,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String KodePerangkat,
+                required String Tanggal,
+                required int Terakhir,
+                Value<int> rowid = const Value.absent(),
+              }) => NomorUrutIsiDepositCompanion.insert(
+                KodePerangkat: KodePerangkat,
+                Tanggal: Tanggal,
+                Terakhir: Terakhir,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NomorUrutIsiDepositTable, BarisNomorUrutIsiDeposit>(table),
+                  BaseReferences<_$BasisDataKasir, $NomorUrutIsiDepositTable, BarisNomorUrutIsiDeposit>(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NomorUrutIsiDepositTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $NomorUrutIsiDepositTable,
+      BarisNomorUrutIsiDeposit,
+      $$NomorUrutIsiDepositTableFilterComposer,
+      $$NomorUrutIsiDepositTableOrderingComposer,
+      $$NomorUrutIsiDepositTableAnnotationComposer,
+      $$NomorUrutIsiDepositTableCreateCompanionBuilder,
+      $$NomorUrutIsiDepositTableUpdateCompanionBuilder,
+      (BarisNomorUrutIsiDeposit, BaseReferences<_$BasisDataKasir, $NomorUrutIsiDepositTable, BarisNomorUrutIsiDeposit>),
+      BarisNomorUrutIsiDeposit,
+      PrefetchHooks Function()
+    >;
 
 class $BasisDataKasirManager {
   final _$BasisDataKasir _db;
@@ -25348,4 +26564,8 @@ class $BasisDataKasirManager {
       $$PesananPenjualanLokalTableTableManager(_db, _db.pesananPenjualanLokal);
   $$NomorUrutPesananPenjualanTableTableManager get nomorUrutPesananPenjualan =>
       $$NomorUrutPesananPenjualanTableTableManager(_db, _db.nomorUrutPesananPenjualan);
+  $$IsiDepositLokalTableTableManager get isiDepositLokal =>
+      $$IsiDepositLokalTableTableManager(_db, _db.isiDepositLokal);
+  $$NomorUrutIsiDepositTableTableManager get nomorUrutIsiDeposit =>
+      $$NomorUrutIsiDepositTableTableManager(_db, _db.nomorUrutIsiDeposit);
 }

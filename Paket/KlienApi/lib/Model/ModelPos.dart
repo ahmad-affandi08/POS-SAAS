@@ -203,6 +203,7 @@ class PerangkatPos {
     required this.kode,
     this.nomorUrutPenjualan = const {},
     this.nomorUrutRetur = const {},
+    this.nomorUrutIsiDeposit = const {},
   });
 
   final String uuid;
@@ -216,6 +217,10 @@ class PerangkatPos {
   /// bentuk sama dengan [nomorUrutPenjualan]. Kunci absen/tidak valid diabaikan (server lama → kosong).
   final Map<String, int> nomorUrutRetur;
 
+  /// F-16d: nomor urut isi deposit (`DEP`) terakhir perangkat ini per `YYMMDD` (`Perangkat.NomorUrutIsiDeposit`); server
+  /// lama → kosong.
+  final Map<String, int> nomorUrutIsiDeposit;
+
   static PerangkatPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
     return peta == null
@@ -225,6 +230,7 @@ class PerangkatPos {
             kode: UraiJson.AmbilTeks(peta['Kode']),
             nomorUrutPenjualan: _AmbilNomorUrut(peta['NomorUrutPenjualan']),
             nomorUrutRetur: _AmbilNomorUrut(peta['NomorUrutRetur']),
+            nomorUrutIsiDeposit: _AmbilNomorUrut(peta['NomorUrutIsiDeposit']),
           );
   }
 
@@ -388,6 +394,7 @@ class DataAwal {
     this.bukaLaciPerluPin = false,
     this.karyawan = const [],
     this.struk,
+    this.deposit = const DepositPos(),
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -444,6 +451,9 @@ class DataAwal {
   /// PRD v1.79: pengaturan & identitas struk; server lama = null (aplikasi memakai bawaan).
   final StrukPos? struk;
 
+  /// F-16d bagian 1: deposit pelanggan; server lama = tidak berlaku.
+  final DepositPos deposit;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -472,8 +482,35 @@ class DataAwal {
       bukaLaciPerluPin: UraiJson.AmbilBenar(pengaturan['BukaLaciPerluPin']),
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
       struk: StrukPos.DariJson(json['Struk']),
+      deposit: DepositPos.DariJson(json['Deposit']),
     );
   }
+}
+
+/// Deposit pelanggan (`data-awal` → `Deposit`, F-16d bagian 1): berlaku bila paket punya fitur `pelanggan.deposit`;
+/// batas isi per transaksi (Rupiah bulat).
+class DepositPos {
+  const DepositPos({this.berlaku = false, this.minimalIsi = minimalIsiBawaan, this.maksimalIsi = maksimalIsiBawaan});
+
+  static const String minimalIsiBawaan = '1000.00';
+  static const String maksimalIsiBawaan = '10000000.00';
+
+  final bool berlaku;
+  final String minimalIsi;
+  final String maksimalIsi;
+
+  static DepositPos DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    return peta == null
+        ? const DepositPos()
+        : DepositPos(
+            berlaku: UraiJson.AmbilBenar(peta['Berlaku']),
+            minimalIsi: UraiJson.AmbilDesimal(peta['MinimalIsi'], minimalIsiBawaan),
+            maksimalIsi: UraiJson.AmbilDesimal(peta['MaksimalIsi'], maksimalIsiBawaan),
+          );
+  }
+
+  Map<String, Object?> KeJson() => {'Berlaku': berlaku, 'MinimalIsi': minimalIsi, 'MaksimalIsi': maksimalIsi};
 }
 
 /// Pengaturan struk tenant + identitas usaha (`data-awal` → `Struk`, PRD v1.79). Teks null = bawaan aplikasi.

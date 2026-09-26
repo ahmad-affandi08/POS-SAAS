@@ -62,6 +62,27 @@ class PelangganPos {
 
 /// Saldo poin terkini & aturan tukar (F-16b, `GET /api/pos/v1/pelanggan/{uuid}/poin`); penukaran poin wajib online
 /// (§18.4). [nilaiTukarPoin] string desimal Rupiah per poin.
+/// Saldo deposit terkini pelanggan (`GET /pelanggan/{uuid}/deposit`, F-16d bagian 1). Bisa minus bila dipakai
+/// dua perangkat bersamaan.
+class SaldoDepositPos {
+  const SaldoDepositPos({required this.uuid, required this.saldoDeposit, required this.berlaku});
+
+  final String uuid;
+  final String saldoDeposit;
+
+  /// Paket usaha termasuk fitur deposit.
+  final bool berlaku;
+
+  static SaldoDepositPos DariJson(Map<String, Object?> json) {
+    final pelanggan = UraiJson.AmbilPeta(json['Pelanggan']);
+    return SaldoDepositPos(
+      uuid: UraiJson.AmbilTeks(pelanggan['Uuid']),
+      saldoDeposit: UraiJson.AmbilDesimal(pelanggan['SaldoDeposit']),
+      berlaku: UraiJson.AmbilBenar(json['Berlaku']),
+    );
+  }
+}
+
 class SaldoPoinPos {
   const SaldoPoinPos({
     required this.uuid,

@@ -25,6 +25,7 @@ import '../Data/RepositoriKasir.dart';
 import '../Data/RepositoriKatalog.dart';
 import '../Data/RepositoriPelanggan.dart';
 import '../Data/RepositoriPenjualan.dart';
+import '../Data/RepositoriDeposit.dart';
 import '../Data/RepositoriPreOrder.dart';
 import '../Data/RepositoriPesananMeja.dart';
 import '../Domain/Dapur/LayananDapur.dart';
@@ -33,6 +34,7 @@ import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/LayananPesanSendiri.dart';
 import '../Domain/Meja/LayananPesananMeja.dart';
+import '../Domain/Pelanggan/LayananDeposit.dart';
 import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
@@ -123,6 +125,7 @@ final penyediaLayananTutupShift = Provider<LayananTutupShift>(
     repositori: ref.watch(penyediaRepositori),
     repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
     repositoriPreOrder: ref.watch(penyediaRepositoriPreOrder),
+    repositoriDeposit: ref.watch(penyediaRepositoriDeposit),
     jam: ref.watch(penyediaJam),
   ),
 );
@@ -331,6 +334,19 @@ final penyediaPrinter = NotifierProvider<PengaturPrinter, StatusPrinter>(Pengatu
 /// F-12 bagian 2: pre-order + uang muka dari perangkat ini.
 final penyediaRepositoriPreOrder = Provider<RepositoriPreOrder>(
   (ref) => RepositoriPreOrder(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+final penyediaRepositoriDeposit = Provider<RepositoriDeposit>(
+  (ref) => RepositoriDeposit(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+final penyediaLayananDeposit = Provider<LayananDeposit>(
+  (ref) => LayananDeposit(
+    klien: ref.watch(penyediaKlienPos),
+    repositori: ref.watch(penyediaRepositoriDeposit),
+    repositoriKasir: ref.watch(penyediaRepositori),
+    jam: ref.watch(penyediaJam),
+  ),
 );
 
 final penyediaLayananPreOrder = Provider<LayananPreOrder>(

@@ -26,6 +26,9 @@ abstract final class MetodeRefundRetur {
 
   /// F-12: retur penjualan tempo memotong sisa piutang lebih dulu.
   static const String piutang = 'Piutang';
+
+  /// F-16d: refund masuk saldo deposit pelanggan (penjualan berpelanggan).
+  static const String deposit = 'Deposit';
 }
 
 /// Satu baris penjualan asal yang dipilih untuk diretur.
@@ -297,10 +300,12 @@ class LayananReturPenjualan {
           'Pilih rekening transfer untuk refund ${refundTransfer.FormatRupiah()}.',
         );
       }
-      if (metodeTransfer.Jenis != JenisMetodeBayar.transfer) {
+      // F-16d: sisa refund boleh masuk saldo deposit bila penjualan asal atas nama pelanggan.
+      final keDeposit = metodeTransfer.Jenis == JenisMetodeBayar.deposit && hasil.penjualan.bisaRefundDeposit;
+      if (metodeTransfer.Jenis != JenisMetodeBayar.transfer && !keDeposit) {
         throw GalatKasir(
           'MetodeBayarBelumDidukung',
-          'Refund lewat ${metodeTransfer.Nama} belum didukung. Pakai tunai atau transfer manual.',
+          'Refund lewat ${metodeTransfer.Nama} belum didukung. Pakai tunai, transfer manual, atau deposit pelanggan.',
         );
       }
     }
@@ -352,6 +357,8 @@ class LayananReturPenjualan {
         ? MetodeRefundRetur.piutang
         : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.transfer
         ? MetodeRefundRetur.transfer
+        : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.deposit
+        ? MetodeRefundRetur.deposit
         : MetodeRefundRetur.tunai;
 
     // Status penjualan asal bila ada di perangkat ini: Diretur bila semua sisa baris habis oleh retur ini.
