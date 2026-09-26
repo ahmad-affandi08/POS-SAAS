@@ -20,6 +20,10 @@ export default defineConfig({
     resolve: {
         alias: { "@": "/resources/js" },
     },
+    // Sama dengan bawaan plugin Laravel: aset selalu berkas (bukan data URI), juga di Vitest tanpa plugin itu.
+    build: {
+        assetsInlineLimit: 0,
+    },
     server: {
         watch: {
             ignored: ["**/storage/framework/views/**"],
