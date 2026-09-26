@@ -565,4 +565,63 @@ void main() {
       expect(konfigurasi.flagFitur, isEmpty);
     },
   );
+
+  test('F-17 pesan sendiri: daftar menunggu, terima & tolak, 409 SudahDiproses', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      if (permintaan.method == 'GET') {
+        return Json({
+          'Pesanan': [
+            {
+              'Uuid': 'Q1',
+              'Nomor': 'QR/JKT1/260926-0001',
+              'UuidMeja': 'M7',
+              'NamaMeja': '7',
+              'NamaPemesan': 'Bu Ani',
+              'Catatan': null,
+              'DibuatPada': '2026-09-26T03:00:00Z',
+              'Subtotal': '50000.00',
+              'Baris': [
+                {
+                  'Uuid': 'B1',
+                  'UuidProduk': 'P1',
+                  'UuidProdukSatuan': 'PS1',
+                  'NamaProduk': 'Es Kopi Susu',
+                  'Jumlah': '2',
+                  'HargaSatuan': '25000.00',
+                  'HargaPilihan': '0.00',
+                  'Pilihan': <Object?>[],
+                  'Catatan': 'Es sedikit',
+                },
+              ],
+            },
+          ],
+        }, 200);
+      }
+      if (permintaan.url.path.endsWith('/tolak')) {
+        return Json({
+          'Galat': {'Kode': 'SudahDiproses', 'Pesan': 'Pesanan sudah diterima perangkat lain.'},
+        }, 409);
+      }
+      return Json({'Uuid': 'Q1', 'Status': 'Diterima', 'UuidPesananTerbuka': 'OB1'}, 200);
+    });
+
+    final daftar = await klien.AmbilPesanSendiri();
+    expect(daftar.single.nomor, 'QR/JKT1/260926-0001');
+    expect(daftar.single.namaMeja, '7');
+    expect(daftar.single.dibuatPada, DateTime.utc(2026, 9, 26, 3));
+    expect(daftar.single.baris.single.catatan, 'Es sedikit');
+    expect(dikirim.last.url.path, '/api/pos/v1/pesan-sendiri');
+
+    await klien.TerimaPesanSendiri('Q1', uuidPengguna: 'U1', uuidPesananTerbuka: 'OB1');
+    expect(dikirim.last.url.path, '/api/pos/v1/pesan-sendiri/Q1/terima');
+    expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'UuidPesananTerbuka': 'OB1'});
+
+    await expectLater(
+      klien.TolakPesanSendiri('Q1', uuidPengguna: 'U1', alasan: 'Menu habis'),
+      throwsA(isA<GalatApi>().having((g) => g.kode, 'kode', 'SudahDiproses')),
+    );
+    expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Alasan': 'Menu habis'});
+  });
 }

@@ -152,6 +152,12 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       await ref.read(penyediaLayananPesananMeja).Tarik();
     } on Object {
       // Offline/galat server: coba lagi nanti.
+    }
+    try {
+      // F-17: pesanan QR meja yang menunggu konfirmasi.
+      await ref.read(penyediaPesanSendiri.notifier).Tarik();
+    } on Object {
+      // Offline/galat server: daftar terakhir tetap tampil.
     } finally {
       _menarikPesanan = false;
     }

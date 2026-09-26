@@ -167,6 +167,26 @@ class KlienPos {
     await _Kirim('DELETE', 'pesanan-terbuka/${Uri.encodeComponent(uuidPesanan)}/kunci-bayar', null);
   }
 
+  /// F-17 self-order (v2.02): pesanan QR meja outlet perangkat yang menunggu konfirmasi, terlama dulu.
+  Future<List<PesananSendiriPos>> AmbilPesanSendiri() async {
+    final json = await _Kirim('GET', 'pesan-sendiri', null);
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['Pesanan'])) PesananSendiriPos.DariJson(p)];
+  }
+
+  /// Terima pesanan QR; baris lalu dicatat perangkat ke pesanan terbuka [uuidPesananTerbuka]. Sudah diproses perangkat
+  /// lain → `GalatApi` ber-kode `SudahDiproses` (409); lewat 30 menit → `Kedaluwarsa`.
+  Future<void> TerimaPesanSendiri(String uuid, {required String uuidPengguna, required String uuidPesananTerbuka}) =>
+      _Kirim('POST', 'pesan-sendiri/${Uri.encodeComponent(uuid)}/terima', {
+        'UuidPengguna': uuidPengguna,
+        'UuidPesananTerbuka': uuidPesananTerbuka,
+      });
+
+  Future<void> TolakPesanSendiri(String uuid, {required String uuidPengguna, required String alasan}) => _Kirim(
+    'POST',
+    'pesan-sendiri/${Uri.encodeComponent(uuid)}/tolak',
+    {'UuidPengguna': uuidPengguna, 'Alasan': alasan},
+  );
+
   /// Tiket dapur aktif outlet untuk KDS; [stasiun] kosong/null = semua stasiun.
   Future<DaftarTiketDapur> AmbilTiketDapur({List<String> stasiun = const []}) async {
     final kueri = stasiun.map((s) => 'stasiun[]=${Uri.encodeQueryComponent(s)}').join('&');

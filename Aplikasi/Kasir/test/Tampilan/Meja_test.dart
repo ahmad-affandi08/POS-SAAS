@@ -22,27 +22,35 @@ void main() {
   const ukuranTablet = Size(800, 1280);
   const ukuranDesktop = Size(1280, 900);
 
-  Future<http.Response> Function(http.Request) PenanganServer({List<Map<String, Object?>> tiket = const []}) =>
-      (p) async {
-        final jalur = p.url.path;
-        if (jalur.endsWith('/data-awal')) {
-          return JsonUji(DataAwalUji());
-        }
-        if (jalur.endsWith('/katalog')) {
-          return JsonUji(KatalogUji());
-        }
-        if (jalur.endsWith('/meja')) {
-          return JsonUji(DataMejaUji());
-        }
-        if (jalur.endsWith('/dapur/tiket')) {
-          return JsonUji({'Tiket': tiket, 'WaktuServer': '2026-09-24T01:30:00Z'});
-        }
-        if (jalur.endsWith('/status')) {
-          return JsonUji({'Status': (jsonDecode(p.body) as Map<String, Object?>)['Status']});
-        }
-        // Sinkron, pesanan terbuka, dan kunci bayar: offline (mode meja tetap bisa dipakai).
-        throw http.ClientException('offline');
-      };
+  Future<http.Response> Function(http.Request) PenanganServer({
+    List<Map<String, Object?>> tiket = const [],
+    List<Map<String, Object?>>? pesanSendiri,
+  }) => (p) async {
+    final jalur = p.url.path;
+    if (pesanSendiri != null && jalur.endsWith('/pesan-sendiri')) {
+      return JsonUji({'Pesanan': pesanSendiri});
+    }
+    if (pesanSendiri != null && jalur.contains('/pesan-sendiri/')) {
+      return JsonUji({'Status': jalur.endsWith('/terima') ? 'Diterima' : 'Ditolak'});
+    }
+    if (jalur.endsWith('/data-awal')) {
+      return JsonUji(DataAwalUji());
+    }
+    if (jalur.endsWith('/katalog')) {
+      return JsonUji(KatalogUji());
+    }
+    if (jalur.endsWith('/meja')) {
+      return JsonUji(DataMejaUji());
+    }
+    if (jalur.endsWith('/dapur/tiket')) {
+      return JsonUji({'Tiket': tiket, 'WaktuServer': '2026-09-24T01:30:00Z'});
+    }
+    if (jalur.endsWith('/status')) {
+      return JsonUji({'Status': (jsonDecode(p.body) as Map<String, Object?>)['Status']});
+    }
+    // Sinkron, pesanan terbuka, dan kunci bayar: offline (mode meja tetap bisa dipakai).
+    throw http.ClientException('offline');
+  };
 
   Future<LingkunganUji> MasukKasir(WidgetTester tester, Size ukuran) async {
     final u = LingkunganUji.Buat();
@@ -188,6 +196,64 @@ void main() {
     'DikirimPada': dikirim,
     'Baris': baris,
   };
+
+  testWidgets('F-17 pesanan QR menunggu konfirmasi → terima & kirim ke dapur (800 dp)', (tester) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(() async {
+      await u.SiapkanAktif();
+      await u.SiapkanKatalog();
+      await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
+    });
+    u.server.penangan = PenanganServer(
+      pesanSendiri: [
+        {
+          'Uuid': '01K5QR00000000000000000001',
+          'Nomor': 'QR/SLB/260924-0001',
+          'UuidMeja': '01K5MEJA0000000000000D0101',
+          'NamaMeja': 'D-01',
+          'NamaPemesan': 'Bu Ani',
+          'Catatan': null,
+          'DibuatPada': '2026-09-24T01:00:00Z',
+          'Subtotal': '30000.00',
+          'Baris': [
+            {
+              'Uuid': '01K5QRBAR1S000000000000001',
+              'UuidProduk': UuidUji.americano,
+              'UuidProdukSatuan': UuidUji.psAmericano,
+              'NamaProduk': 'Americano Panas',
+              'Jumlah': '2',
+              'HargaSatuan': '15000.00',
+              'HargaPilihan': '0.00',
+              'Pilihan': <Object?>[],
+              'Catatan': 'Tanpa gula',
+            },
+          ],
+        },
+      ],
+    );
+    await PasangAplikasi(tester, u, ukuran: ukuranTablet);
+    await Tunggu(tester, const Duration(milliseconds: 600));
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    await Tunggu(tester);
+    await Ketuk(tester, find.text('Meja'));
+    await Tunggu(tester, const Duration(seconds: 8));
+
+    expect(find.text('Pesanan QR menunggu konfirmasi (1)'), findsOneWidget);
+    expect(find.text('Meja D-01 · Bu Ani'), findsOneWidget);
+    expect(find.text('2 × Americano Panas · Tanpa gula'), findsOneWidget);
+
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Terima & kirim ke dapur'));
+    expect(find.textContaining('Pesanan QR/SLB/260924-0001 diterima'), findsOneWidget);
+    expect(find.text('Pesanan QR menunggu konfirmasi (1)'), findsNothing);
+    final outbox = (await AmbilOutbox(tester, u)).where((o) => o.jenis.startsWith('PesananTerbuka.')).toList();
+    expect(outbox.map((o) => o.jenis), ['PesananTerbuka.Buka', 'PesananTerbuka.Tambah']);
+    final terima = u.server.permintaan.lastWhere((p) => p.url.path.endsWith('/terima'));
+    expect((jsonDecode(terima.body) as Map<String, Object?>)['UuidPesananTerbuka'], outbox.first.uuid);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
 
   for (final (nama, ukuran) in [('360', ukuranHp), ('1280', ukuranDesktop)]) {
     testWidgets('perangkat Kds membuka layar dapur di $nama dp: umur tiket berwarna & berlabel, ketuk maju status', (

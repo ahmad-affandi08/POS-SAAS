@@ -12,6 +12,7 @@ import '../../Domain/Katalog/KatalogLokal.dart';
 import '../../Domain/Meja/KonteksPesananMeja.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
+import 'BagianPesanSendiri.dart';
 import 'DialogPesananMeja.dart';
 
 /// Denah meja (F-07 mode meja fase 1, PRD §17.2.7): meja per area sebagai ubin (kosong / terisi dengan nomor, jumlah
@@ -519,6 +520,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
           ),
         ],
         if (_sibuk) const LinearProgressIndicator(),
+        BagianPesanSendiri(kasir: widget.kasir, saatPesan: (pesan) => setState(() => _pesan = pesan)),
         if (mejaAsync.isLoading && meja.isEmpty)
           const Padding(
             padding: EdgeInsets.all(TokenJarak.jarak24),

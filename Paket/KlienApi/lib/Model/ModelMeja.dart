@@ -278,3 +278,41 @@ class DaftarTiketDapur {
     waktuServer: DateTime.tryParse(UraiJson.AmbilTeks(json['WaktuServer'])),
   );
 }
+
+/// Pesanan dari QR meja (F-17 self-order, v2.02) yang menunggu konfirmasi staf. Baris berbentuk sama dengan baris
+/// pesanan terbuka (harga dari server) tanpa status dapur.
+class PesananSendiriPos {
+  const PesananSendiriPos({
+    required this.uuid,
+    required this.nomor,
+    required this.uuidMeja,
+    required this.namaMeja,
+    required this.namaPemesan,
+    required this.catatan,
+    required this.dibuatPada,
+    required this.subtotal,
+    required this.baris,
+  });
+
+  final String uuid;
+  final String nomor;
+  final String? uuidMeja;
+  final String? namaMeja;
+  final String? namaPemesan;
+  final String? catatan;
+  final DateTime dibuatPada;
+  final String subtotal;
+  final List<BarisPesananTerbukaPos> baris;
+
+  static PesananSendiriPos DariJson(Map<String, Object?> json) => PesananSendiriPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    nomor: UraiJson.AmbilTeks(json['Nomor']),
+    uuidMeja: UraiJson.AmbilTeksAtauNull(json['UuidMeja']),
+    namaMeja: UraiJson.AmbilTeksAtauNull(json['NamaMeja']),
+    namaPemesan: UraiJson.AmbilTeksAtauNull(json['NamaPemesan']),
+    catatan: UraiJson.AmbilTeksAtauNull(json['Catatan']),
+    dibuatPada: DateTime.tryParse(UraiJson.AmbilTeks(json['DibuatPada']))?.toUtc() ?? DateTime.utc(1970),
+    subtotal: UraiJson.AmbilDesimal(json['Subtotal']),
+    baris: [for (final b in UraiJson.AmbilDaftarPeta(json['Baris'])) BarisPesananTerbukaPos.DariJson(b)],
+  );
+}

@@ -31,6 +31,7 @@ import '../Domain/Dapur/LayananDapur.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
+import '../Domain/Meja/LayananPesanSendiri.dart';
 import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
@@ -466,6 +467,41 @@ final penyediaLayananPesananMeja = Provider<LayananPesananMeja>(
     jam: ref.watch(penyediaJam),
   ),
 );
+
+/// F-17 self-order (v2.02): pesanan QR meja yang menunggu konfirmasi staf.
+final penyediaLayananPesanSendiri = Provider<LayananPesanSendiri>(
+  (ref) => LayananPesanSendiri(
+    klien: ref.watch(penyediaKlienPos),
+    pesananMeja: ref.watch(penyediaLayananPesananMeja),
+    repositoriMeja: ref.watch(penyediaRepositoriPesananMeja),
+    penjualan: ref.watch(penyediaLayananPenjualan),
+  ),
+);
+
+/// Daftar pesanan QR menunggu konfirmasi (ditarik bersama pesanan terbuka tiap 7 detik saat online; kosong bila
+/// offline atau fitur belum aktif).
+class PengaturPesanSendiri extends Notifier<List<PesananSendiriPos>> {
+  @override
+  List<PesananSendiriPos> build() => const [];
+
+  Future<void> Tarik() async {
+    try {
+      state = await ref.read(penyediaLayananPesanSendiri).AmbilMenunggu();
+    } on GalatApi catch (galat) {
+      // Fitur belum aktif / endpoint belum ada di server lama: tidak ada pesanan QR.
+      if (galat.statusHttp == 403 || galat.statusHttp == 404) {
+        state = const [];
+      }
+    }
+  }
+
+  void Hapus(String uuid) => state = [
+    for (final p in state)
+      if (p.uuid != uuid) p,
+  ];
+}
+
+final penyediaPesanSendiri = NotifierProvider<PengaturPesanSendiri, List<PesananSendiriPos>>(PengaturPesanSendiri.new);
 
 /// Mode meja outlet aktif (dari `GET /api/pos/v1/meja`): menampilkan menu Meja di rel navigasi.
 final penyediaModeMeja = StreamProvider<bool>(

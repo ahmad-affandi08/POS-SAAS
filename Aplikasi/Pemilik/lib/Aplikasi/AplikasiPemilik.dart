@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Tampilan/GerbangPemilik.dart';
 import 'Lingkungan.dart';
 
-/// Akar widget Aplikasi Owner. Rute & fitur ditambahkan per flow (PRD §8, §17).
+/// Akar widget Aplikasi Owner (PRD §10.2a): masuk, pilih usaha, dasbor, laporan ringkas, shift, perangkat.
 class AplikasiPemilik extends StatelessWidget {
   const AplikasiPemilik({super.key, required this.lingkungan});
 
@@ -25,29 +26,7 @@ class AplikasiPemilik extends StatelessWidget {
               child: anak,
             )
           : anak!,
-      home: const LayarAwal(),
-    );
-  }
-}
-
-/// Layar sementara sampai flow pertama aplikasi ini dibangun.
-class LayarAwal extends StatelessWidget {
-  const LayarAwal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final teks = Theme.of(context).textTheme;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const LogoMerek.lengkap(),
-            const SizedBox(height: 24),
-            Text('Pemilik', style: teks.headlineSmall),
-          ],
-        ),
-      ),
+      home: const GerbangPemilik(),
     );
   }
 }

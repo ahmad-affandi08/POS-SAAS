@@ -59,6 +59,7 @@ class LayananPesananMeja {
     BarisMeja? meja,
     String? label,
     int jumlahTamu = 1,
+    String? uuid,
   }) async {
     if (!kasir.CekBolehCatatPesanan()) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin membuat pesanan.');
@@ -83,7 +84,7 @@ class LayananPesananMeja {
     final sekarang = _jam().toUtc();
     final t = k.HitungTanggalBisnis(sekarang);
     final yymmdd = '${t.substring(2, 4)}${t.substring(5, 7)}${t.substring(8, 10)}';
-    final uuid = _ulid.Buat();
+    final uuidPesanan = uuid ?? _ulid.Buat();
     return repositoriMeja.SimpanPesananBaru(
       kodePerangkat: kodePerangkat,
       tanggal: yymmdd,
@@ -92,7 +93,7 @@ class LayananPesananMeja {
         final nomor = 'OB/$kodeOutlet/$yymmdd/$kodePerangkat-${urut.toString().padLeft(4, '0')}';
         return (
           pesanan: PesananTerbukaCompanion.insert(
-            Uuid: uuid,
+            Uuid: uuidPesanan,
             Nomor: nomor,
             UuidMeja: Value(meja?.Uuid),
             NamaMeja: Value(meja?.Nama),
@@ -106,7 +107,7 @@ class LayananPesananMeja {
           ),
           outbox: ItemOutbox(
             jenis: jenisBuka,
-            uuid: uuid,
+            uuid: uuidPesanan,
             data: {
               'Nomor': nomor,
               'UuidMeja': meja?.Uuid,
