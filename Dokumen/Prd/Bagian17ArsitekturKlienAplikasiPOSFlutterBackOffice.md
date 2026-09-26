@@ -265,8 +265,9 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/autentikasi/masuk`, `/autentikasi/otp/verifikasi`, `/autentikasi/perbarui-token`, `/autentikasi/keluar` | Autentikasi |
-| GET | `/saya`, `/tenant`, `/outlet` | Profil, pilihan tenant & outlet |
+| POST | `/masuk`, `/masuk/dua-faktor`, `/keluar` (v2.03; OTP WA & perbarui token menyusul) | Autentikasi |
+| GET | `/profil` (pengguna + daftar tenant; v2.03), `/outlet` | Profil, pilihan tenant & outlet |
+| GET | `/shift?tanggal=&outlet=` (v2.03) | Shift & selisih kas |
 | GET | `/dasbor?outlet=&tanggal=` | Kartu KPI + grafik per jam |
 | GET | `/laporan/{nama}?saring[...]` | Laporan ringkas |
 | GET/POST | `/persetujuan`, `/persetujuan/{id}/setujui`, `/persetujuan/{id}/tolak` | Approval jarak jauh |
@@ -275,6 +276,14 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 | POST | `/pengeluaran` | Pengeluaran + foto nota |
 | GET/POST | `/perangkat`, `/perangkat/{id}/cabut` | Status & cabut perangkat POS |
 | POST | `/token-notifikasi` | Daftar token FCM |
+
+**Rincian Aplikasi Owner v1 (v2.03, keputusan agen atas mandat D-12):**
+- **Token pengguna:** Sanctum belum terpasang, jadi dipakai tabel `TokenAksesPengguna` (IdPengguna, Nama = nama perangkat, Cakupan `pemilik`, HashToken SHA-256 unik, KedaluwarsaPada 30 hari, TerakhirDipakaiPada, DicabutPada) mengikuti pola token perangkat POS; token acak 256-bit hanya ditampilkan sekali. `POST /keluar` mencabut token berjalan; atur ulang kata sandi mencabut semua token pengguna. Token hilang/dicabut/kedaluwarsa → 401 `TokenTidakValid` (aplikasi kembali ke layar masuk). Belum ada refresh token.
+- **Masuk:** email + kata sandi (validasi guard web, batas 5/menit per email+IP & 20 per IP → 429 `TerlaluBanyakPercobaan`, email belum terverifikasi 403 `EmailBelumDiverifikasi`, tanpa keanggotaan aktif 403 `TanpaTenantAktif`, salah 422 `KredensialSalah`). Akun ber-2FA → `{PerluDuaFaktor, TokenTantangan}` (hash di cache 5 menit, sekali pakai, hangus setelah 5 salah) lalu `POST /masuk/dua-faktor` dengan TOTP atau kode pemulihan (`KodeSalah`, `TantanganTidakBerlaku`). Audit `pemilik.masuk` / `pemilik.keluar`.
+- **Konteks tenant:** header `X-Tenant: {UuidTenant}` diperiksa tiap permintaan (keanggotaan aktif, akses outlet anggota, 2FA wajib per paket → 403 `DuaFaktorWajib`); asing → 403 `TenantTidakDiizinkan`.
+- **Data:** `GET /dasbor` (izin `laporan.penjualan.lihat`): omzet bersih, transaksi, rata-rata, laba kotor (null tanpa `laporan.keuangan.lihat`), omzet kemarin & hari yang sama minggu lalu, per outlet, per jam (zona waktu outlet), 5 produk teratas, **perlu tindakan**: `SelisihKas` (shift ditutup dengan selisih), `PenjualanPerluTinjauan`, dan untuk hari ini `PerangkatTidakAktif` (> 30 menit) & `StokMenipis` (butuh `persediaan.lihat`). `GET /laporan/penjualan?dari&sampai&kelompok=Produk|Kategori|Kasir|Jam|Kanal` (maks. 31 hari, `RentangTerlaluPanjang`), `GET /shift?tanggal` (selisih hanya untuk shift tertutup), `GET /perangkat` (izin `perangkat.lihat`). Semua data dihitung langsung dari dokumen dengan definisi sama dengan dasbor back-office.
+- **Aplikasi Owner (Flutter):** masuk (+ kode 2FA), pilih usaha (langsung bila satu), bingkai dengan navigasi bawah **Beranda** (angka omzet besar + perbandingan, lalu perlu tindakan, per outlet, grafik per jam, produk terlaris), **Laporan** (pilih kelompok), **Shift** (selisih berwarna + teks), **Perangkat** (lama tidak tersambung, data belum terkirim, versi); saringan tanggal & outlet; token & tenant aktif di secure storage; keadaan memuat/galat/offline dengan "Coba lagi"; 401 → kembali ke layar masuk.
+- **Belum:** OTP WhatsApp, refresh token, kunci PIN/biometrik aplikasi, cache lokal Drift, persetujuan jarak jauh, notifikasi push, aksi cepat, cabut perangkat.
 
 #### 17.3.5 Target Kualitas
 

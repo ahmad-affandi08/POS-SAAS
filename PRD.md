@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.02 |
+| Versi | 2.03 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.03 | Rincian **Aplikasi Owner v1** (OWN-01/02/05/08): API `/api/pemilik/v1` dengan user token berhash (`TokenAksesPengguna`, 30 hari, dicabut saat keluar & atur ulang kata sandi) karena Sanctum belum terpasang; masuk email + kata sandi + 2FA (tantangan sekali pakai 5 menit), header `X-Tenant`; dasbor (omzet + perbandingan kemarin/minggu lalu, laba kotor ber-izin, per outlet, per jam, produk teratas, perlu tindakan), laporan ringkas per produk/kategori/kasir/jam/kanal (maks. 31 hari), shift & selisih kas, status perangkat; Aplikasi Owner Flutter (masuk, pilih usaha, Beranda/Laporan/Shift/Perangkat). Path autentikasi §17.3.4 disederhanakan menjadi `/masuk`, `/masuk/dua-faktor`, `/keluar`, `/profil`. |
 | 2.02 | Rincian **F-17 self-order QR meja (X12, SLS-04) bagian 1**: token QR per meja (`Meja.TokenPesanSendiri`, buat ulang teraudit), sakelar outlet `Outlet.PesanSendiriAktif` (fitur `kanal.self-order`), halaman publik `/{slugTenant}/meja/{tokenMeja}` (menu harga kanal `MakanDiTempat`, keranjang, subtotal dari server), tabel `PesananSendiri` (nomor `QR/{OUTLET}/{YYMMDD}-{SEQ4}`, status MenungguKonfirmasi → Diterima/Ditolak/Kedaluwarsa 30 menit), API POS daftar/terima/tolak, konfirmasi di layar Meja aplikasi POS; pembayaran di kasir. |
 | 2.01 | Rincian **layar pelanggan** (POS-15, §17.2.5a `PortLayar`): `Paket/AdaptorPerangkat` `IsiLayarPelanggan` (Siaga/Keranjang/Bayar/Selesai, teks siap tampil) + `PortLayarPelanggan`; Android layar kedua (*presentation display*: POS dua layar Sunmi/iMin & monitor HDMI) lewat kanal `id.payou.kasir/layar-pelanggan`; Windows layar VFD 2×20 (perintah CD5220) lewat COM port; pengaturan per perangkat + "Tampilkan contoh"; layar Jual menyiarkan item & total, "Silakan lakukan pembayaran", kembalian + terima kasih, lalu siaga. |
 | 2.00 | Rincian **mode Pelayan** (§17.2 mode aplikasi POS, F-07 mode meja): peran bawaan baru `Pelayan` dengan izin baru `pesanan.meja.catat` (mencatat pesanan meja & kirim ke dapur tanpa berjualan; server menerima `PesananTerbuka.*` dari pelaku ber-izin `penjualan.buat` **atau** `pesanan.meja.catat`); perangkat berjenis `Pelayan` masuk dengan PIN lalu langsung ke Ruang Kerja mode Pelayan tanpa shift & kas (rel: Meja sebagai beranda, Pesanan, Sinkron, Pengaturan), layar Pesanan tanpa Diskon/Tahan/Bayar/pelanggan, "Kirim ke dapur" kembali ke denah meja. |
@@ -3483,8 +3484,9 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 
 | Method | Endpoint | Fungsi |
 |---|---|---|
-| POST | `/autentikasi/masuk`, `/autentikasi/otp/verifikasi`, `/autentikasi/perbarui-token`, `/autentikasi/keluar` | Autentikasi |
-| GET | `/saya`, `/tenant`, `/outlet` | Profil, pilihan tenant & outlet |
+| POST | `/masuk`, `/masuk/dua-faktor`, `/keluar` (v2.03; OTP WA & perbarui token menyusul) | Autentikasi |
+| GET | `/profil` (pengguna + daftar tenant; v2.03), `/outlet` | Profil, pilihan tenant & outlet |
+| GET | `/shift?tanggal=&outlet=` (v2.03) | Shift & selisih kas |
 | GET | `/dasbor?outlet=&tanggal=` | Kartu KPI + grafik per jam |
 | GET | `/laporan/{nama}?saring[...]` | Laporan ringkas |
 | GET/POST | `/persetujuan`, `/persetujuan/{id}/setujui`, `/persetujuan/{id}/tolak` | Approval jarak jauh |
@@ -3493,6 +3495,14 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 | POST | `/pengeluaran` | Pengeluaran + foto nota |
 | GET/POST | `/perangkat`, `/perangkat/{id}/cabut` | Status & cabut perangkat POS |
 | POST | `/token-notifikasi` | Daftar token FCM |
+
+**Rincian Aplikasi Owner v1 (v2.03, keputusan agen atas mandat D-12):**
+- **Token pengguna:** Sanctum belum terpasang, jadi dipakai tabel `TokenAksesPengguna` (IdPengguna, Nama = nama perangkat, Cakupan `pemilik`, HashToken SHA-256 unik, KedaluwarsaPada 30 hari, TerakhirDipakaiPada, DicabutPada) mengikuti pola token perangkat POS; token acak 256-bit hanya ditampilkan sekali. `POST /keluar` mencabut token berjalan; atur ulang kata sandi mencabut semua token pengguna. Token hilang/dicabut/kedaluwarsa → 401 `TokenTidakValid` (aplikasi kembali ke layar masuk). Belum ada refresh token.
+- **Masuk:** email + kata sandi (validasi guard web, batas 5/menit per email+IP & 20 per IP → 429 `TerlaluBanyakPercobaan`, email belum terverifikasi 403 `EmailBelumDiverifikasi`, tanpa keanggotaan aktif 403 `TanpaTenantAktif`, salah 422 `KredensialSalah`). Akun ber-2FA → `{PerluDuaFaktor, TokenTantangan}` (hash di cache 5 menit, sekali pakai, hangus setelah 5 salah) lalu `POST /masuk/dua-faktor` dengan TOTP atau kode pemulihan (`KodeSalah`, `TantanganTidakBerlaku`). Audit `pemilik.masuk` / `pemilik.keluar`.
+- **Konteks tenant:** header `X-Tenant: {UuidTenant}` diperiksa tiap permintaan (keanggotaan aktif, akses outlet anggota, 2FA wajib per paket → 403 `DuaFaktorWajib`); asing → 403 `TenantTidakDiizinkan`.
+- **Data:** `GET /dasbor` (izin `laporan.penjualan.lihat`): omzet bersih, transaksi, rata-rata, laba kotor (null tanpa `laporan.keuangan.lihat`), omzet kemarin & hari yang sama minggu lalu, per outlet, per jam (zona waktu outlet), 5 produk teratas, **perlu tindakan**: `SelisihKas` (shift ditutup dengan selisih), `PenjualanPerluTinjauan`, dan untuk hari ini `PerangkatTidakAktif` (> 30 menit) & `StokMenipis` (butuh `persediaan.lihat`). `GET /laporan/penjualan?dari&sampai&kelompok=Produk|Kategori|Kasir|Jam|Kanal` (maks. 31 hari, `RentangTerlaluPanjang`), `GET /shift?tanggal` (selisih hanya untuk shift tertutup), `GET /perangkat` (izin `perangkat.lihat`). Semua data dihitung langsung dari dokumen dengan definisi sama dengan dasbor back-office.
+- **Aplikasi Owner (Flutter):** masuk (+ kode 2FA), pilih usaha (langsung bila satu), bingkai dengan navigasi bawah **Beranda** (angka omzet besar + perbandingan, lalu perlu tindakan, per outlet, grafik per jam, produk terlaris), **Laporan** (pilih kelompok), **Shift** (selisih berwarna + teks), **Perangkat** (lama tidak tersambung, data belum terkirim, versi); saringan tanggal & outlet; token & tenant aktif di secure storage; keadaan memuat/galat/offline dengan "Coba lagi"; 401 → kembali ke layar masuk.
+- **Belum:** OTP WhatsApp, refresh token, kunci PIN/biometrik aplikasi, cache lokal Drift, persetujuan jarak jauh, notifikasi push, aksi cepat, cabut perangkat.
 
 #### 17.3.5 Target Kualitas
 

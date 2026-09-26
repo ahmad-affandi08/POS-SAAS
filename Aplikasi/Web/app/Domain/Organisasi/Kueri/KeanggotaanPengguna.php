@@ -26,6 +26,26 @@ final class KeanggotaanPengguna
     }
 
     /**
+     * OWN-01: keanggotaan aktif pengguna beserta tanda pemilik (daftar tenant Aplikasi Owner).
+     *
+     * @return array<int, bool> IdTenant → Pemilik
+     */
+    public function AmbilTandaPemilik(int $idPengguna): array
+    {
+        $hasil = [];
+
+        foreach (TenantPengguna::query()
+            ->where('IdPengguna', $idPengguna)
+            ->where('Status', StatusKeanggotaan::Aktif->value)
+            ->orderBy('Id')
+            ->get(['IdTenant', 'Pemilik']) as $anggota) {
+            $hasil[$anggota->IdTenant] = $anggota->Pemilik;
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Semua tenant yang punya anggota (dipakai perintah penyelarasan peran bawaan, F-02).
      *
      * @return list<int>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Http\Kontroler\Pengelola\GalatKontroler;
+use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\Pengelola\SiapkanSesiPengelola;
 use App\Http\Respons\GalatApi;
@@ -23,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // F-02b: API Aplikasi POS (device token, tanpa sesi), prefix /api/pos/v1, nama rute pos.*.
         then: function (): void {
             Route::middleware('api')->prefix('api/pos/v1')->group(base_path('routes/Pos.php'));
+            // OWN-01: API Aplikasi Owner (user token, tanpa sesi), prefix /api/pemilik/v1, nama rute pemilik.*.
+            Route::middleware('api')->prefix('api/pemilik/v1')->group(base_path('routes/Pemilik.php'));
         },
     )
     ->withCommands([__DIR__.'/../app/Console/Perintah'])
@@ -32,6 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // API POS: perangkat dikenali sebelum batas laju dihitung, agar limiter `pos-*` memakai kunci per perangkat.
         $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPerangkat::class);
+        // API Pemilik: pengguna dikenali dari token sebelum batas laju `pemilik-*` dihitung per pengguna.
+        $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPemilik::class);
 
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->getHost() === config('pengelola.Domain') ? route('pengelola.masuk') : route('masuk'),
