@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.22 |
+| Versi | 2.23 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.23 | **F-07 mode service bagian 1** (POS-04, SLS-07, §9.8): reservasi layanan per staf. `Produk.DurasiMenit` untuk jasa, tabel `Reservasi` (`RS/YYYY/MM/NNNN`, status Menunggu/Dikonfirmasi/Hadir/Selesai/Batal/TidakDatang) & `PengaturanReservasi`; slot dari jadwal kerja staf, anti-bentrok per staf; back-office `/kelola/reservasi` (catat, konfirmasi, datang, selesai, tidak datang, batal beralasan, pindah jadwal, pengaturan); reservasi online publik `/{slug}/reservasi` (persetujuan data, maks 3 aktif per nomor, lihat/batal lewat kode akses); pengingat WhatsApp H-1; butir Kotak Tindakan; izin baru `reservasi.kelola`. |
 | 2.22 | **D-23 dialog naik paket / add-on**: menu tidak disembunyikan per fitur; sub-menu fitur di luar paket tampil dengan gembok dan membuka dialog (paket termurah yang memuat fitur + harga, add-on aktif bila ada). "Lihat paket" membuka Langganan dengan paket terpilih; "Minta add-on" membuat tiket dukungan (pembelian add-on mandiri F-19 belum ada). Props bersama `FiturPaket`. Penegakan fitur paket di server untuk rute yang belum dijaga menunggu keputusan pemilik produk (tenant lama yang sudah memakai fitur di luar paket). |
 | 2.21 | **D-23 D bagian 4b** pengingat piutang ke pelanggan lewat WhatsApp/email: kirim manual dari daftar piutang (jeda 12 jam per nota) dan otomatis tiap pagi 09.00 WIB bila diaktifkan (sekali H-n "akan jatuh tempo", sekali setelah lewat); tabel `PengaturanPengingatPiutang` & `PengingatPiutang` (tujuan terenkripsi); templat WhatsApp resmi `NamaTemplatPengingatPiutang` di konsol integrasi. |
 | 2.20 | **D-23 D bagian 4a** ringkasan pagi Kotak Tindakan lewat email (07.00 WIB): butir Penting & Perhatian sesuai izin penerima (hutang/piutang jatuh tempo, shift lupa ditutup, dokumen perlu dicek, tutup buku); Owner bawaan berlangganan, anggota lain memilih sendiri di halaman Kotak Tindakan; tabel `LanggananRingkasanTindakan` (sekali per tanggal bisnis). |
@@ -1940,6 +1941,16 @@ Booking online/WA → Konfirmasi → Reminder H-1 (WA) → Check-in
 - Komisi bertingkat (staf senior/junior), komisi penjualan produk.
 - Pemakaian bahan per layanan (cat rambut) sebagai resep layanan.
 
+**Rincian F-07 mode service bagian 1 (v2.23; rincian diputuskan agen atas mandat D-12 dan urutan §22):**
+- **Layanan yang bisa direservasi** = produk berjenis Jasa, aktif, dengan isian baru **Durasi layanan** (`Produk.DurasiMenit`, 5–720 menit). Reservasi online hanya layanan yang juga "Tampil di toko online". Harga yang ditampilkan = harga dasar produk (pembayaran tetap di kasir).
+- **Slot**: dihitung server dari **jadwal kerja staf** (F-18 `JadwalKerja`) di outlet pada tanggal itu, mulai tiap `IntervalSlotMenit` (bawaan 30) sejak jam mulai jadwal dan selesai paling lambat jam selesai jadwal. Slot dibuang bila bentrok dengan reservasi staf yang masih memakai slot (Menunggu/Dikonfirmasi/Hadir, di outlet mana pun) ditambah `JedaMenit` sebelum/sesudah. Staf boleh dipilih atau "siapa saja" (staf kosong pertama menurut nama). Tanpa jadwal kerja = tidak ada slot (layar memberi petunjuk mengisi jadwal).
+- **Anti-bentrok**: pembuatan & pindah jadwal dikunci per staf (kunci cache atomik) lalu slot dihitung ulang di dalam kunci, sehingga dua pemesan tidak mendapat staf & jam yang sama.
+- **Tabel `Reservasi`**: `Nomor` `RS/YYYY/MM/NNNN`, outlet, pelanggan (ditautkan bila nomor HP terdaftar), `NamaPelanggan`, `NoHp` (dinormalisasi `62…`), layanan, staf, `MulaiPada`/`SelesaiPada` (UTC), `Status`, `Sumber` (BackOffice/Online/Pos), catatan, alasan batal, `KodeAkses` (12 karakter, untuk halaman publik), `IdPenjualan` (disiapkan untuk bagian 2), `HadirPada`, `PengingatTerkirimPada`. Transisi: Menunggu → Dikonfirmasi/Hadir/Batal; Dikonfirmasi → Hadir/Batal/TidakDatang (hanya setelah jam mulai lewat); Hadir → Selesai/Batal. Setiap perubahan dicatat di `RiwayatStatusDokumen` dan audit (bila oleh pengguna). Batal oleh toko wajib alasan.
+- **Back-office `/kelola/reservasi`** (izin baru `reservasi.kelola`: Owner, Admin, Manajer Outlet, Supervisor; peran kustom bisa ditambah; dibatasi outlet akses): TabelData (cari nomor/nama/HP, saring tanggal, status, staf, outlet), **Catat reservasi** (telepon/WA/datang langsung), aksi status, **Pindah jadwal** (slot tanpa reservasi itu sendiri; pengingat dikirim ulang), **Pengaturan** (pengguna tanpa batas outlet): reservasi online, konfirmasi otomatis, interval 10–120 menit, jeda 0–60 menit, paling jauh 1–180 hari, paling cepat 0–2.880 menit sebelumnya, pengingat H-1.
+- **Reservasi online** `/{slugToko}/reservasi` (tanpa login, hanya bila diaktifkan): pilih outlet, layanan, staf (opsional), tanggal (hari ini s.d. batas hari), jam kosong, nama, nomor WhatsApp, catatan, dan **persetujuan** pemakaian data untuk reservasi & pengingat (UU 27/2022 PDP). Status awal Dikonfirmasi bila konfirmasi otomatis aktif, selain itu Menunggu (butir Kotak Tindakan "Reservasi online menunggu konfirmasi"). Anti-spam: batas laju per IP dan paling banyak 3 reservasi mendatang aktif per nomor. Setelah memesan pelanggan dibawa ke `/{slugToko}/reservasi/{kodeAkses}` (status + tombol batal selama belum datang dan jam belum lewat). Slug situs pemasaran dengan bagian kedua `reservasi` ditolak.
+- **Pengingat H-1**: jadwal `reservasi:kirim-pengingat` tiap jam mengantrekan WhatsApp untuk reservasi Menunggu/Dikonfirmasi yang mulai 20–28 jam lagi dan belum diingatkan (bila pengaturan pengingat aktif dan WhatsApp platform aktif). Templat resmi opsional `NamaTemplatPengingatReservasi` (toko, layanan, waktu, tautan). Nomor pelanggan tidak ikut antrean maupun log.
+- **Belum di bagian 1** (bagian 2): antrian walk-in & check-in di aplikasi kasir (reservasi → keranjang dengan staf, `Penjualan.Buat` menautkan `IdPenjualan` lalu Selesai), deposit/DP reservasi, pemakaian bahan per layanan, follow-up/rebooking.
+
 ### 9.9 Laundry
 
 - Tiket laundry: berat (kg) atau per item (jas, bed cover), layanan (reguler/express), parfum, estimasi selesai otomatis.
@@ -2473,7 +2484,7 @@ Aplikasi/Web/app/
 │   ├── Persediaan/       # MutasiStok, SaldoStok, TransferStok, StokOpname, Produksi (F-05)
 │   ├── Kasir/            # Shift, MutasiKas, SesiPerangkat                   (F-06, F-11)
 │   ├── Penjualan/        # Penjualan, PenjualanDetail, Pembayaran, Retur, Void (F-07–F-09)
-│   ├── Pemenuhan/        # TiketDapur, Pengiriman, PerintahKerja, TiketLaundry (F-10)
+│   ├── Pemenuhan/        # TiketDapur, Reservasi, Pengiriman, PerintahKerja, TiketLaundry (F-10, F-07 service)
 │   ├── Piutang/          # Faktur, Piutang, Penagihan                        (F-12)
 │   ├── Akuntansi/        # Akun, Jurnal, AturanPosting, KunciPeriode         (F-13, F-15)
 │   ├── Pelanggan/        # Pelanggan, Poin, Deposit, Keanggotaan             (F-16)

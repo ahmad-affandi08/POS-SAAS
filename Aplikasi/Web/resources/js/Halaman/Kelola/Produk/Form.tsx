@@ -39,7 +39,7 @@ type KunciTab = 'Umum' | 'Satuan' | 'Harga' | 'Varian' | 'Pajak';
 
 /** Kunci galat server per tab (untuk penanda "perlu diperbaiki" dan pindah tab otomatis). */
 const galatPerTab: Record<KunciTab, string[]> = {
-    Umum: ['Nama', 'NamaStruk', 'Sku', 'Jenis', 'UuidKategori', 'Merek', 'UuidSatuanDasar', 'Pelacakan'],
+    Umum: ['Nama', 'NamaStruk', 'Sku', 'Jenis', 'UuidKategori', 'Merek', 'UuidSatuanDasar', 'Pelacakan', 'DurasiMenit'],
     Satuan: ['Satuan'],
     Harga: [],
     Varian: ['AtributVarian'],
@@ -336,6 +336,22 @@ export default function HalamanFormProduk({
     ];
     const daftarTab = tabDasar.map((item) => ({ ...item, AdaGalat: CekGalatTab(galat, item.Kunci) }));
 
+    // F-07 mode service: durasi layanan jasa untuk slot reservasi.
+    const bagianDurasi =
+        data.Jenis === 'Jasa' ? (
+            <BidangTeks
+                label="Durasi layanan (menit, opsional)"
+                nilai={data.DurasiMenit ? String(data.DurasiMenit) : ''}
+                saatBerubah={(nilai) => {
+                    const angka = nilai.replace(/\D/g, '');
+                    Atur('DurasiMenit', angka === '' ? null : Number(angka));
+                }}
+                galat={galat.DurasiMenit}
+                keterangan="Isi agar layanan ini bisa dipesan lewat reservasi (misal 45 untuk potong rambut)."
+                inputMode="numeric"
+                maxLength={3}
+            />
+        ) : null;
     const bagianPaketSesi = bolehPaketSesi ? (
         <div className="flex flex-col gap-2 rounded-kontrol border border-garis p-3 sm:col-span-2">
             <KotakCentang
@@ -407,6 +423,7 @@ export default function HalamanFormProduk({
                     galat={galat.Jenis}
                 />
             </div>
+            {bagianDurasi}
             {bagianPaketSesi}
             {bisaDijual && !induk ? (
                 <div className="flex flex-col gap-1">
@@ -537,6 +554,7 @@ export default function HalamanFormProduk({
                     Satuan terkecil untuk stok dan resep, misal pcs, gram, atau ml.
                 </p>
             </div>
+            {bagianDurasi}
             {bagianPaketSesi}
             {aturan?.BolehPelacakan ? (
                 <div className="sm:col-span-2">

@@ -58,3 +58,6 @@ Schedule::command('tindakan:kirim-ringkasan-harian')->dailyAt('07:00')->timezone
 
 // D-23 D: pengingat piutang jatuh tempo ke pelanggan (jam wajar, bila tenant mengaktifkannya).
 Schedule::command('pelanggan:kirim-pengingat-piutang')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+
+// F-07 mode service: pengingat reservasi H-1 lewat WhatsApp (jendela 20–28 jam, tiap jam).
+Schedule::command('reservasi:kirim-pengingat')->hourlyAt(5)->withoutOverlapping();

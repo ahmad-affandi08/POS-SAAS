@@ -133,7 +133,7 @@ Aplikasi/Web/app/
 │   ├── Persediaan/       # MutasiStok, SaldoStok, TransferStok, StokOpname, Produksi (F-05)
 │   ├── Kasir/            # Shift, MutasiKas, SesiPerangkat                   (F-06, F-11)
 │   ├── Penjualan/        # Penjualan, PenjualanDetail, Pembayaran, Retur, Void (F-07–F-09)
-│   ├── Pemenuhan/        # TiketDapur, Pengiriman, PerintahKerja, TiketLaundry (F-10)
+│   ├── Pemenuhan/        # TiketDapur, Reservasi, Pengiriman, PerintahKerja, TiketLaundry (F-10, F-07 service)
 │   ├── Piutang/          # Faktur, Piutang, Penagihan                        (F-12)
 │   ├── Akuntansi/        # Akun, Jurnal, AturanPosting, KunciPeriode         (F-13, F-15)
 │   ├── Pelanggan/        # Pelanggan, Poin, Deposit, Keanggotaan             (F-16)

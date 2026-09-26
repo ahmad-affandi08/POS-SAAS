@@ -98,6 +98,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::KaryawanKelola,
                 // D-23 C: menandai transaksi outlet yang perlu dicek.
                 IzinTenant::TindakanTinjau,
+                // F-07 mode service: reservasi layanan outlet.
+                IzinTenant::ReservasiKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -114,6 +116,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::ShiftSelisihSetujui,
                 IzinTenant::PelangganLihat,
                 IzinTenant::KaryawanLihat,
+                IzinTenant::ReservasiKelola,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],

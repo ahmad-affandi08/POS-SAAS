@@ -54,6 +54,7 @@ final class SimpanProdukPermintaan extends FormRequest
             'BolehMinus' => ['required', $tigaKeadaan],
             'TampilDiPos' => ['required', 'boolean'],
             'TampilOnline' => ['required', 'boolean'],
+            'DurasiMenit' => ['nullable', 'integer', 'min:5', 'max:720'],
             'Satuan' => ['required', 'array', 'min:1', 'max:10'],
             'Satuan.*.Uuid' => ['nullable', 'ulid'],
             'Satuan.*.UuidSatuan' => ['required', 'ulid'],
@@ -166,6 +167,7 @@ final class SimpanProdukPermintaan extends FormRequest
                 array_values(array_map('strval', (array) $atribut['Nilai'])),
             ), array_values((array) $this->input('AtributVarian', [])))),
             bolehUbahHarga: $bolehUbahHarga,
+            durasiMenit: $this->filled('DurasiMenit') ? $this->integer('DurasiMenit') : null,
         );
     }
 

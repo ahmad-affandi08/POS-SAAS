@@ -38,5 +38,7 @@ final readonly class DataProduk
         public array $atributVarian,
         public bool $bolehUbahHarga,
         public SumberPerubahanKatalog $sumber = SumberPerubahanKatalog::Manual,
+        // F-07 mode service: lama layanan jasa (menit) untuk slot reservasi; hanya untuk jenis Jasa.
+        public ?int $durasiMenit = null,
     ) {}
 }

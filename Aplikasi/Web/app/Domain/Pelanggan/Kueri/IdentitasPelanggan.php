@@ -31,6 +31,15 @@ final class IdentitasPelanggan
         return $alias === null ? null : (int) $alias;
     }
 
+    /** F-07 mode service: pelanggan aktif dengan nomor HP ini (dinormalisasi), untuk menautkan reservasi. */
+    public function CariIdDariNoHp(string $noHp): ?int
+    {
+        $nomor = NomorHp::Normalisasi($noHp);
+        $id = $nomor === null ? null : Pelanggan::query()->where('NoHp', $nomor)->where('Status', StatusPelanggan::Aktif->value)->value('Id');
+
+        return $id === null ? null : (int) $id;
+    }
+
     /** F-16d: pelanggan berstatus Aktif (bukan diarsipkan). */
     public function CekAktif(int $id): bool
     {

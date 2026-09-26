@@ -55,6 +55,14 @@ final class PembuatPengirimWhatsapp
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
 
+    /** Nama templat resmi untuk pengingat reservasi H-1 (F-07 mode service); null = kirim teks. */
+    public function AmbilTemplatPengingatReservasi(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatPengingatReservasi');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
     /** Nama templat resmi untuk pengingat piutang (D-23 D, hanya WhatsApp Cloud API); null = kirim teks. */
     public function AmbilTemplatPengingatPiutang(): ?string
     {

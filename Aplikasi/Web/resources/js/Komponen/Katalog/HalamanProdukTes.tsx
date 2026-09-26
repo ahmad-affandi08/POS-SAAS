@@ -370,6 +370,16 @@ describe('Kelola/Produk/Form mode Sederhana (D-23 B)', () => {
         expect(screen.getByText('Perbaiki isian yang ditandai di formulir lengkap.')).toBeTruthy();
     });
 
+    it('F-07 mode service: produk Jasa punya isian durasi layanan yang ikut dikirim; jenis lain tanpa isian', () => {
+        render(<HalamanFormProduk {...PropsForm({ Produk: { ...produkBaru, Jenis: 'Jasa' } })} />);
+        fireEvent.change(screen.getByLabelText(/Durasi layanan/), { target: { value: '45 menit' } });
+        expect((screen.getByLabelText(/Durasi layanan/) as HTMLInputElement).value).toBe('45');
+        cleanup();
+
+        render(<HalamanFormProduk {...PropsForm()} />);
+        expect(screen.queryByLabelText(/Durasi layanan/)).toBeNull();
+    });
+
     it('mode Ubah selalu formulir lengkap tanpa sakelar', () => {
         render(<HalamanFormProduk {...PropsForm({ Mode: 'Ubah', Kepala: BuatKepala() })} />);
         expect(screen.queryByRole('button', { name: 'Formulir sederhana' })).toBeNull();

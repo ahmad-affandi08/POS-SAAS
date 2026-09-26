@@ -21,6 +21,7 @@ use App\Http\Kontroler\Kelola\TindakanKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
+use App\Http\Kontroler\Publik\ReservasiPublikKontroler;
 use App\Http\Kontroler\Publik\SitusKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
 use App\Http\Perantara\ArahkanDomainAplikasi;
@@ -191,8 +192,22 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Piutang.php'));
             // F-18 Karyawan, jadwal kerja, absensi.
             Route::group([], base_path('routes/Karyawan.php'));
+            // F-07 mode service: reservasi layanan.
+            Route::group([], base_path('routes/Reservasi.php'));
         });
     });
+
+    // F-07 mode service (SLS-07): reservasi online tanpa login `/{slugTenant}/reservasi` (slug situs pemasaran bagian
+    // kedua `reservasi` ditolak `AturanSlugSitus`). Batas laju per IP; kode akses 12 karakter untuk lihat/batal.
+    Route::prefix('/{slugTenant}/reservasi')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
+        ->group(function (): void {
+            Route::get('/', [ReservasiPublikKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.reservasi');
+            Route::get('/slot', [ReservasiPublikKontroler::class, 'Slot'])->middleware('throttle:120,1')->name('publik.reservasi.slot');
+            Route::post('/', [ReservasiPublikKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('publik.reservasi.simpan');
+            Route::get('/{kodeAkses}', [ReservasiPublikKontroler::class, 'Status'])->where('kodeAkses', '[A-Za-z0-9]{12}')->middleware('throttle:60,1')->name('publik.reservasi.status');
+            Route::post('/{kodeAkses}/batal', [ReservasiPublikKontroler::class, 'Batal'])->where('kodeAkses', '[A-Za-z0-9]{12}')->middleware('throttle:10,1')->name('publik.reservasi.batal');
+        });
 
     // F-17 Self-Order QR Meja (X12), tanpa login. Didaftarkan paling akhir dengan pola slug & token ketat (token 32
     // karakter) agar tidak menaungi rute sistem; slug yang bentrok dengan rute sistem memang tidak pernah dibuat

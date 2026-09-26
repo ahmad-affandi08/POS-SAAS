@@ -121,6 +121,7 @@ final class SimpanProduk
             'BolehMinus' => $bolehMinus,
             'TampilDiPos' => AturanProduk::TentukanTampilDiPos($data->jenis, $data->tampilDiPos),
             'TampilOnline' => $data->tampilOnline,
+            'DurasiMenit' => $data->jenis === JenisProduk::Jasa ? $data->durasiMenit : null,
         ])->save();
 
         $this->penyelaras->Terapkan($produk, $rencanaSatuan, $data->sumber->value);

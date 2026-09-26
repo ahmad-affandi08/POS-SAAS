@@ -76,6 +76,8 @@ enum IzinTenant: string
     case PesananMejaCatat = 'pesanan.meja.catat';
     // D-23 C: menandai dokumen offline yang perlu ditinjau "sudah dicek" di Kotak Tindakan.
     case TindakanTinjau = 'tindakan.tinjau';
+    // F-07 mode service: melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal).
+    case ReservasiKelola = 'reservasi.kelola';
 
     public function AmbilLabel(): string
     {
@@ -124,6 +126,7 @@ enum IzinTenant: string
             self::KaryawanKelola => 'Mengelola data karyawan dan jadwal kerja',
             self::PesananMejaCatat => 'Mencatat pesanan meja & mengirim ke dapur tanpa menerima pembayaran (Pelayan)',
             self::TindakanTinjau => 'Menandai transaksi yang perlu dicek sebagai sudah dicek (Kotak Tindakan)',
+            self::ReservasiKelola => 'Melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal)',
         };
     }
 
@@ -139,7 +142,8 @@ enum IzinTenant: string
             self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
-            self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat => 'Penjualan',
+            self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat,
+            self::ReservasiKelola => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola, self::TindakanTinjau => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

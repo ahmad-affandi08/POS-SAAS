@@ -29,4 +29,12 @@ final class ZonaWaktuOutlet
 
         return $hasil;
     }
+
+    /** F-07 mode service: zona waktu IANA satu outlet tenant aktif (bawaan Asia/Jakarta bila tidak ada). */
+    public function Ambil(int $idOutlet): string
+    {
+        $zona = Outlet::query()->whereKey($idOutlet)->value('ZonaWaktu');
+
+        return is_string($zona) && $zona !== '' ? $zona : 'Asia/Jakarta';
+    }
 }

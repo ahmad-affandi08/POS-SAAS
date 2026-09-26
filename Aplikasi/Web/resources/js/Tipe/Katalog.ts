@@ -114,6 +114,8 @@ export type FormProduk = {
     TampilOnline: boolean;
     Satuan: FormSatuanProduk[];
     AtributVarian: { Nama: string; Nilai: string[] }[];
+    /** F-07 mode service: lama layanan jasa (menit) untuk reservasi; null = tidak bisa direservasi. */
+    DurasiMenit?: number | null;
     /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
     PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
 };

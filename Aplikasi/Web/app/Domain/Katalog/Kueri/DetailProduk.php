@@ -59,6 +59,7 @@ final class DetailProduk
             'BolehMinus' => self::KeTigaKeadaan($produk->BolehMinus),
             'TampilDiPos' => $produk->TampilDiPos,
             'TampilOnline' => $produk->TampilOnline,
+            'DurasiMenit' => $produk->DurasiMenit,
             'UrlGambar' => PenyimpanGambarProduk::BuatUrl($produk, 'besar'),
             'UrlGambarKecil' => PenyimpanGambarProduk::BuatUrl($produk, 'kecil'),
             'Satuan' => $this->AmbilSatuan($produk),
@@ -163,6 +164,7 @@ final class DetailProduk
             'BolehMinus' => self::KeTigaKeadaan($produk->BolehMinus),
             'TampilDiPos' => $produk->TampilDiPos,
             'TampilOnline' => $produk->TampilOnline,
+            'DurasiMenit' => $produk->DurasiMenit,
             'Satuan' => array_values(ProdukSatuan::query()->where('IdProduk', $produk->Id)->orderBy('Id')->get()
                 ->sortBy(fn (ProdukSatuan $s): int => $s->IdSatuan === $produk->IdSatuanDasar ? 0 : 1)
                 ->map(fn (ProdukSatuan $s): array => [
@@ -203,6 +205,7 @@ final class DetailProduk
             'BolehMinus' => 'Ikut',
             'TampilDiPos' => true,
             'TampilOnline' => false,
+            'DurasiMenit' => null,
             'Satuan' => [[
                 'Uuid' => null,
                 'UuidSatuan' => $uuidSatuan,

@@ -34,6 +34,11 @@ export const KunciKueri = {
         Status: (token: string, uuid: string) => ['PesanSendiri', 'Status', token, uuid] as const,
         QrMeja: (uuidMeja: string) => ['PesanSendiri', 'QrMeja', uuidMeja] as const,
     },
+    // F-07 mode service: slot reservasi kosong (back-office & halaman publik) per outlet/layanan/tanggal/staf.
+    Reservasi: {
+        Slot: (alamat: string, outlet: string, layanan: string, tanggal: string, staf: string) =>
+            ['Reservasi', 'Slot', alamat, outlet, layanan, tanggal, staf] as const,
+    },
     // P-10: dampak menaikkan versi minimum (BR-P10.2), dibaca saat dialog dibuka.
     Pengelola: {
         DampakVersiMinimum: (uuidRilis: string) => ['Pengelola', 'DampakVersiMinimum', uuidRilis] as const,
