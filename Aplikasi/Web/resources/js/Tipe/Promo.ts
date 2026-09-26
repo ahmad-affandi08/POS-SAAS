@@ -82,6 +82,9 @@ export type PromoFormulir = BarisPromo & {
     TanggalMulai: string | null;
     TanggalSelesai: string | null;
     NamaProduk: Record<string, string>;
+    /** F-16c bagian 4b: pemasok yang menanggung sebagian potongan (null = ditanggung usaha sendiri). */
+    UuidPemasok: string | null;
+    PersenDanaPemasok: string;
 };
 
 export type PropsFormulirPromo = {
@@ -93,6 +96,7 @@ export type PropsFormulirPromo = {
     OpsiMetodeBayar: OpsiNilai[];
     OpsiUlangTahun: { Nilai: JenisUlangTahunPromo; Label: string }[];
     OpsiPeriodeBatas: { Nilai: PeriodeBatasPelangganPromo; Label: string }[];
+    OpsiPemasok: OpsiNilai[];
     FiturAktif: boolean;
 };
 
@@ -115,4 +119,34 @@ export type PropsVoucherPromo = {
     Ringkasan: { Total: number; Aktif: number; Dipakai: number };
     JumlahMaksimal: number;
     Izin: { Kelola: boolean };
+};
+
+/** F-16c bagian 4b: klaim promo terbuka per pemasok. */
+export type BarisKlaimTerbuka = {
+    UuidPemasok: string;
+    NamaPemasok: string;
+    JumlahTransaksi: number;
+    Total: string;
+    TanggalTertua: string;
+    Promo: string;
+};
+
+/** F-16c bagian 4b: penerimaan pembayaran klaim dari pemasok (J-16.5). */
+export type BarisPenerimaanKlaim = {
+    Uuid: string;
+    Tanggal: string;
+    NamaPemasok: string;
+    Jumlah: string;
+    JumlahKlaim: number;
+    AkunKasBank: string | null;
+    Keterangan: string | null;
+    UuidJurnal: string | null;
+    NomorJurnal: string | null;
+};
+
+export type PropsKlaimPemasok = {
+    Terbuka: BarisKlaimTerbuka[];
+    Penerimaan: BarisPenerimaanKlaim[];
+    OpsiAkunKasBank: { Uuid: string; Nama: string }[];
+    Izin: { Terima: boolean };
 };

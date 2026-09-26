@@ -12,6 +12,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
+use App\Domain\Pembelian\Kueri\DaftarPemasok;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
 use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
@@ -75,6 +76,8 @@ final class PromoKontroler extends DasarKelolaKontroler
                 'TanggalMulai' => $data->MulaiPada === null ? null : CarbonImmutable::instance($data->MulaiPada)->setTimezone($zona)->toDateString(),
                 'TanggalSelesai' => $data->SelesaiPada === null ? null : CarbonImmutable::instance($data->SelesaiPada)->setTimezone($zona)->subDay()->toDateString(),
                 'NamaProduk' => $namaProduk->Ambil(array_values($uuidKondisi)),
+                'UuidPemasok' => $data->IdPemasok === null ? null : (app(DaftarPemasok::class)->AmbilRingkas([$data->IdPemasok])[$data->IdPemasok]['Uuid'] ?? null),
+                'PersenDanaPemasok' => (string) $data->PersenDanaPemasok,
             ],
             'FiturAktif' => $berlaku->CekFiturAktif(),
         ]);
@@ -133,6 +136,8 @@ final class PromoKontroler extends DasarKelolaKontroler
             )),
             'OpsiUlangTahun' => array_map(fn (JenisUlangTahunPromo $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisUlangTahunPromo::cases()),
             'OpsiPeriodeBatas' => array_map(fn (PeriodeBatasPelangganPromo $p): array => ['Nilai' => $p->value, 'Label' => $p->AmbilLabel()], PeriodeBatasPelangganPromo::cases()),
+            // F-16c bagian 4b: pemasok yang ikut menanggung potongan promo.
+            'OpsiPemasok' => array_map(fn (array $p): array => ['Nilai' => $p['Uuid'], 'Label' => $p['Nama']], app(DaftarPemasok::class)->AmbilPilihan()),
         ];
     }
 
@@ -171,6 +176,8 @@ final class PromoKontroler extends DasarKelolaKontroler
             'Gratis' => ['nullable', 'integer'],
             'PersenGratis' => $persen,
             'Pengali' => ['nullable', 'string', 'regex:/^\d{1,2}(\.\d{1,2})?$/'],
+            'UuidPemasok' => ['nullable', 'string', 'ulid'],
+            'PersenDanaPemasok' => ['nullable', 'string', 'regex:/^\d{1,3}(\.\d{1,2})?$/'],
             'BatasPerTransaksi' => ['nullable', 'integer'],
             'WajibVoucher' => ['boolean'],
             'MetodeBayar' => ['array', 'max:20'],
@@ -200,6 +207,13 @@ final class PromoKontroler extends DasarKelolaKontroler
 
         if (array_diff($metodeBayar, array_map('strtoupper', $metodeDikenal)) !== []) {
             throw ValidationException::withMessages(['MetodeBayar' => 'Pilih metode pembayaran dari daftar.']);
+        }
+
+        $idPemasok = null;
+
+        if (($uuidPemasok = $teks('UuidPemasok')) !== null) {
+            $idPemasok = app(DaftarPemasok::class)->AmbilIdDariUuid(strtoupper($uuidPemasok))
+                ?? throw ValidationException::withMessages(['UuidPemasok' => 'Pilih pemasok dari daftar.']);
         }
 
         /** @var list<string> $uuidKondisi */
@@ -240,6 +254,8 @@ final class PromoKontroler extends DasarKelolaKontroler
             batasPerPelanggan: $bulat('BatasPerPelanggan'),
             periodeBatasPelanggan: PeriodeBatasPelangganPromo::tryFrom($teks('PeriodeBatasPelanggan') ?? '') ?? PeriodeBatasPelangganPromo::Hari,
             pengali: ($t = $teks('Pengali')) === null ? null : BigDecimal::of($t),
+            idPemasok: $idPemasok,
+            persenDanaPemasok: ($t = $teks('PersenDanaPemasok')) === null ? null : BigDecimal::of($t),
         );
     }
 

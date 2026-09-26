@@ -11,7 +11,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Promo (F-16c, CRM-05). `Definisi` = syarat & aksi (lihat `App\Domain\Penjualan\Kalkulasi\DefinisiPromo::Urai`);
- * rentang `[MulaiPada, SelesaiPada)` UTC; `Kuota` null = tanpa batas.
+ * rentang `[MulaiPada, SelesaiPada)` UTC; `Kuota` null = tanpa batas. Bagian 4b (v1.91): `IdPemasok` +
+ * `PersenDanaPemasok` = bagian potongan yang ditanggung pemasok (diklaim lewat `KlaimPromoPemasok`).
  *
  * @property int $Id
  * @property string $Uuid
@@ -27,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property int $KuotaTerpakai
  * @property StatusPromo $Status
  * @property Carbon|null $DiubahPada
+ * @property int|null $IdPemasok
+ * @property string $PersenDanaPemasok
  */
 final class Promo extends ModelDasar
 {
@@ -35,7 +38,7 @@ final class Promo extends ModelDasar
     protected $table = 'Promo';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['Prioritas' => 0, 'Eksklusif' => false, 'KuotaTerpakai' => 0, 'Status' => 'Aktif'];
+    protected $attributes = ['Prioritas' => 0, 'Eksklusif' => false, 'KuotaTerpakai' => 0, 'Status' => 'Aktif', 'PersenDanaPemasok' => '0.00'];
 
     /**
      * @return array<string, string>
@@ -51,6 +54,7 @@ final class Promo extends ModelDasar
             'Kuota' => 'integer',
             'KuotaTerpakai' => 'integer',
             'Status' => StatusPromo::class,
+            'PersenDanaPemasok' => 'decimal:2',
         ];
     }
 

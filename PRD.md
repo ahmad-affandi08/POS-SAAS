@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 1.90 |
+| Versi | 1.91 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 1.91 | Rincian **F-16c bagian 4b pendanaan promo** (keputusan pemilik produk v1.89: ikuti kebijakan di Indonesia & praktik umum; perlakuan dipilih agen: PSAK 72/SAK EMKM): potongan ke pelanggan tetap **Diskon Penjualan**; promo bisa ditanggung pemasok (`Promo.IdPemasok`, `PersenDanaPemasok`) → `KlaimPromoPemasok` per transaksi (void membatalkan); penerimaan pembayaran klaim `PenerimaanKlaimPemasok` dijurnal **J-16.5** Dr kas/bank, Cr HPP; halaman Klaim promo pemasok. |
 | 1.90 | Void penjualan **mengembalikan jatah promo** (keputusan pemilik produk v1.89: ikuti praktik umum; transaksi yang dibatalkan dianggap tidak terjadi): `PromoPemakaian.DibatalkanPada`, `KuotaTerpakai` dikurangi, batas per pelanggan & ringkasan pemakaian tidak menghitungnya. Retur tidak mengembalikan jatah. Mengubah rincian F-16c bagian 3 ("penjualan yang di-void tetap terhitung"). |
 | 1.89 | **Keputusan pemilik produk v1.89**: semua printer (struk & dapur) mendukung Bluetooth; hal lain mengikuti kebijakan di Indonesia dan praktik umum usaha. Rincian **cetak struk bagian 4d**: printer dapur per stasiun memakai isian printer yang sama dengan printer struk (LAN/Wi-Fi, Bluetooth, Bluetooth LE, COM); penjualan langsung di outlet berstasiun dapur dikirim ke dapur (`KirimDapur`) dan tiketnya dicetak setelah bayar; cetak ulang tiket dari layar selesai bayar dan menu pesanan meja. |
 | 1.88 | Rincian **F-16c bagian 4a** (CRM-05 poin berlipat; rincian diputuskan agen atas mandat D-12, dicatat untuk ditinjau pemilik produk): aksi promo `PoinBerlipat` {Pengali > 1 s.d. 10, satu desimal} di mesin promo PHP & Dart + test vector `PRM-POIN-BERLIPAT-001`; tidak bersaing dengan promo potongan, pengali terbesar yang berlaku dipakai (tidak bertumpuk), dikalikan dengan pengali tier saat perolehan poin di server. |
@@ -1637,6 +1638,13 @@ promo:
 - **Menyusul:** poin berlipat, gratis ongkir, laporan uplift, pendanaan promo (Beban Promosi/bagi pemasok), voucher sebagai metode bayar/gift card, distribusi WA/broadcast (fase 3).
 - **v1.90 (menggantikan "penjualan yang di-void tetap terhitung"):** void penjualan mengembalikan jatah promo: pemakaian ditandai `DibatalkanPada` (tidak dihapus, tetap tampil di detail penjualan), `KuotaTerpakai` dikurangi di transaksi DB void yang sama (idempoten), dan batas per pelanggan, ringkasan pemakaian (jumlah pakai & total potongan), serta `PemakaianPromo` di API POS tidak menghitungnya. Retur tidak mengembalikan jatah. Cache pemakaian di perangkat tidak dikurangi saat void (konservatif); nilainya diperbarui saat pelanggan dicari online lagi.
 
+**Rincian F-16c bagian 4b (v1.91, pendanaan promo; keputusan pemilik produk v1.89: mengikuti kebijakan di Indonesia & praktik umum usaha; perlakuan akuntansi dipilih agen atas mandat D-12):**
+- **Perlakuan akuntansi (PSAK 72 / SAK EMKM):** potongan harga yang diberikan ke pelanggan adalah pengurang pendapatan, jadi **tetap Diskon Penjualan** di jurnal penjualan J-07.1 siapa pun yang menanggungnya (bukan Beban Promosi). Bagian yang ditanggung pemasok adalah imbalan dari pemasok yang **mengurangi biaya pokok penjualan (HPP)**. Klaim diakui saat pemasok membayar (jumlahnya baru pasti setelah disepakati, lazim lewat rekap klaim per periode); klaim yang belum dibayar dipantau sebagai dokumen, bukan piutang di buku besar.
+- **Promo:** formulir promo bagian "Pendanaan promo": pemasok (dari daftar pemasok) + **bagian pemasok** 0–100% (maks. 2 desimal); bagian > 0 wajib pemasok. Kolom `Promo.IdPemasok`, `Promo.PersenDanaPemasok`. Tidak berlaku untuk promo poin berlipat.
+- **Klaim per transaksi** (`KlaimPromoPemasok`): saat penjualan berpromo itu diterima server, di transaksi DB yang sama, klaim = potongan promo × bagian pemasok (snapshot persen), idempoten per promo & penjualan, status `Terbuka`. Void penjualan membatalkan klaim yang belum diterima (`Dibatalkan`); retur tidak mengubah klaim (koreksi disepakati dengan pemasok).
+- **Penerimaan klaim** (`PenerimaanKlaimPemasok`, **J-16.5**): di halaman `/kelola/promo/klaim-pemasok` (menu Pelanggan › Klaim promo pemasok; lihat `pelanggan.lihat`, catat penerimaan `akuntansi.kelola`) klaim terbuka ditampilkan per pemasok (jumlah transaksi, total, sejak, kode promo). "Catat pembayaran klaim" (tanggal ≤ hari ini, akun kas/bank, keterangan) menandai semua klaim terbuka pemasok itu dengan tanggal bisnis ≤ tanggal penerimaan sebagai `Diterima` dan memposting Dr kas/bank, Cr HPP sebesar totalnya (periode terkunci ditolak). Riwayat 100 penerimaan terakhir dengan tautan jurnal. Audit `promo.klaim-pemasok.terima`.
+- **Belum:** potong klaim dari hutang pemasok (butuh dokumen nota debit di F-04), klaim sebagian/selisih klaim, ekspor rekap klaim untuk ditagihkan.
+
 **Rincian F-16c bagian 4a (v1.88, CRM-05 poin berlipat; rincian diputuskan agen atas mandat D-12):**
 - **Aksi `PoinBerlipat`** `{Jenis: "PoinBerlipat", Pengali}` (lebih dari 1 sampai 10, paling banyak satu desimal, misal `2` atau `1.5`): tidak memotong harga; memakai semua syarat promo yang sama (waktu, hari/jam, outlet, kanal, tier, minimal subtotal, kondisi produk/kategori + jumlah minimal, kuota, syarat bagian 3). Kondisi produk/kategori hanya menjadi syarat; yang dikalikan tetap seluruh poin transaksi.
 - **Mesin promo (PHP & Dart):** promo poin berlipat dipisahkan dari resolusi potongan (tidak bersaing dengan promo harga; `Eksklusif`-nya diabaikan). Dari yang berlaku dipilih **pengali terbesar** (seri: urutan prioritas); pengali tidak dikalikan bertumpuk. Keluaran baru `PoinBerlipat` (promo terpilih atau null). Test vector baru `PRM-POIN-BERLIPAT-001`; runner PHP & Dart memeriksa `Harapan.PoinBerlipat` (tanpa kunci = tidak ada).
@@ -2144,6 +2152,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-16.2 | Beli paket sesi | Kas | Pendapatan Diterima Dimuka |
 | J-16.3 | Pemakaian sesi | Pendapatan Diterima Dimuka | Pendapatan Jasa |
 | J-16.4 | Penukaran poin (sebagai diskon) | Diskon Penjualan | (bagian dari J-07.1) |
+| J-16.5 | Penerimaan klaim promo dari pemasok (v1.91) | Kas/Bank | HPP (imbalan pemasok mengurangi biaya pokok, PSAK 72) |
 | J-18.1 | Kasbon karyawan | Piutang Karyawan | Kas |
 | J-18.2 | Bayar rekap gaji | Beban Gaji & Komisi (gaji kotor) | Piutang Karyawan (potongan kasbon), Pendapatan Lain (potongan lain), Kas/Bank (gaji bersih) |
 | J-15.1 | Tutup tahun | Semua akun Pendapatan | Semua akun Beban & HPP, selisih ke Laba Ditahan |
@@ -2974,6 +2983,8 @@ erDiagram
 | `PengaturanPromo` | IdTenant (unik), ModeResolusi (Terbaik/PrioritasKetat) (F-16c) |
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada, Status (F-16c bagian 2) |
 | `VoucherPemakaian` | IdVoucher, UuidPenjualan, IdPenjualan, IdPerangkat, Status (Dipesan/Dipakai/Dilepas), DipesanSampai (F-16c bagian 2) |
+| `KlaimPromoPemasok` | IdTenant, Uuid, IdPromo, IdPemasok, IdPenjualan, TanggalBisnis, JumlahDiskon, PersenDana, Jumlah, Status (Terbuka/Diterima/Dibatalkan), IdPenerimaanKlaimPemasok; unik (IdPromo, IdPenjualan) (F-16c bagian 4b, v1.91) |
+| `PenerimaanKlaimPemasok` | IdTenant, Uuid, IdPemasok, Tanggal, Jumlah, IdAkunKasBank, Keterangan, IdJurnal, DibuatOleh; J-16.5 (v1.91) |
 | `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon, DibatalkanPada (void, v1.90); unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**

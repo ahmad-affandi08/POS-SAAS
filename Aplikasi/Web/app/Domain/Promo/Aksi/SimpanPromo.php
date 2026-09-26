@@ -43,6 +43,16 @@ final class SimpanPromo
             throw new PelanggaranAturanBisnis('PeriodeTidakValid', 'Tanggal selesai harus setelah tanggal mulai.', 'SelesaiPada');
         }
 
+        $persenDana = $data->persenDanaPemasok ?? BigDecimal::zero();
+
+        if ($persenDana->isNegative() || $persenDana->isGreaterThan(100) || $persenDana->strippedOfTrailingZeros()->getScale() > 2) {
+            throw new PelanggaranAturanBisnis('PersenDanaTidakValid', 'Bagian pemasok 0 sampai 100%.', 'PersenDanaPemasok');
+        }
+
+        if ($persenDana->isPositive() && $data->idPemasok === null) {
+            throw new PelanggaranAturanBisnis('PemasokWajib', 'Pilih pemasok yang menanggung promo ini.', 'UuidPemasok');
+        }
+
         if ($data->kuota !== null && $data->kuota < 1) {
             throw new PelanggaranAturanBisnis('KuotaTidakValid', 'Kuota minimal 1 atau kosongkan untuk tanpa batas.', 'Kuota');
         }
@@ -65,6 +75,9 @@ final class SimpanPromo
                     'MulaiPada' => $data->mulaiPada,
                     'SelesaiPada' => $data->selesaiPada,
                     'Kuota' => $data->kuota,
+                    // F-16c bagian 4b: pendanaan pemasok (0% = ditanggung usaha sendiri).
+                    'IdPemasok' => $data->idPemasok,
+                    'PersenDanaPemasok' => (string) ($data->persenDanaPemasok ?? BigDecimal::zero())->toScale(2),
                 ]);
                 $promo->save();
                 $this->audit->Catat($baru ? 'promo.tambah' : 'promo.ubah', $promo, $lama, self::AmbilNilaiAudit($promo), idPengguna: $data->idPengguna);
@@ -244,6 +257,8 @@ final class SimpanPromo
             'MulaiPada' => $promo->MulaiPada?->toIso8601ZuluString(),
             'SelesaiPada' => $promo->SelesaiPada?->toIso8601ZuluString(),
             'Kuota' => $promo->Kuota,
+            'IdPemasok' => $promo->IdPemasok,
+            'PersenDanaPemasok' => (string) $promo->PersenDanaPemasok,
         ];
     }
 }

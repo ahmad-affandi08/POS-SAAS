@@ -73,6 +73,8 @@ type Isian = {
     Gratis: string;
     PersenGratis: string;
     Pengali: string;
+    UuidPemasok: string;
+    PersenDanaPemasok: string;
     BatasPerTransaksi: string;
     MetodeBayar: string[];
     UlangTahun: JenisUlangTahunPromo | '';
@@ -87,7 +89,7 @@ const HapusNolPecahan = (nilai: string | undefined): string => (nilai ?? '').rep
 /**
  * F-16c: formulir promo. Barang pemicu, aksi, syarat (minimal belanja, tier, kanal, outlet), waktu (tanggal, hari, jam
  * lokal outlet), dan batas (kuota total, batas per transaksi untuk beli X gratis Y & bundel). Bagian 3: metode bayar,
- * ulang tahun, transaksi pertama, dan batas per pelanggan.
+ * ulang tahun, transaksi pertama, dan batas per pelanggan. Bagian 4b: pendanaan pemasok (bagian potongan yang diklaim).
  */
 export default function HalamanFormulirPromo({
     Promo,
@@ -98,6 +100,7 @@ export default function HalamanFormulirPromo({
     OpsiMetodeBayar,
     OpsiUlangTahun,
     OpsiPeriodeBatas,
+    OpsiPemasok,
     FiturAktif,
 }: PropsFormulirPromo) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -132,6 +135,8 @@ export default function HalamanFormulirPromo({
         Gratis: d?.Aksi.Gratis === undefined ? '1' : String(d.Aksi.Gratis),
         PersenGratis: HapusNolPecahan(d?.Aksi.PersenGratis) || '100',
         Pengali: HapusNolPecahan(d?.Aksi.Pengali) || '2',
+        UuidPemasok: Promo?.UuidPemasok ?? '',
+        PersenDanaPemasok: HapusNolPecahan(Promo?.PersenDanaPemasok) || '0',
         BatasPerTransaksi:
             d?.BatasPerTransaksi === null || d?.BatasPerTransaksi === undefined ? '' : String(d.BatasPerTransaksi),
         MetodeBayar: d?.MetodeBayar ?? [],
@@ -178,6 +183,8 @@ export default function HalamanFormulirPromo({
             Gratis: aksi === 'BeliXGratisY' ? Number(isian.Gratis || '0') : null,
             PersenGratis: aksi === 'BeliXGratisY' ? KosongJadiNull(isian.PersenGratis) : null,
             Pengali: aksi === 'PoinBerlipat' ? KosongJadiNull(isian.Pengali) : null,
+            UuidPemasok: KosongJadiNull(isian.UuidPemasok),
+            PersenDanaPemasok: isian.UuidPemasok === '' ? '0' : isian.PersenDanaPemasok || '0',
             BatasPerTransaksi: bertingkat && isian.BatasPerTransaksi !== '' ? Number(isian.BatasPerTransaksi) : null,
             MetodeBayar: isian.MetodeBayar,
             UlangTahun: KosongJadiNull(isian.UlangTahun),
@@ -502,6 +509,38 @@ export default function HalamanFormulirPromo({
                         />
                     ) : null}
                 </Card>
+
+                {aksi !== 'PoinBerlipat' ? (
+                    <Card className="gap-4 rounded-panel p-4 shadow-none">
+                        <h2 className="text-subjudul font-semibold text-teks-utama">Pendanaan promo</h2>
+                        <p className="text-isi text-teks-sekunder">
+                            Potongan ke pelanggan tetap tercatat sebagai diskon penjualan. Bila pemasok ikut menanggung,
+                            bagiannya menjadi klaim ke pemasok di menu Klaim promo pemasok.
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <BidangPilihan
+                                label="Ditanggung pemasok"
+                                nilai={isian.UuidPemasok}
+                                opsi={[{ Nilai: '', Label: 'Tidak (ditanggung usaha sendiri)' }, ...OpsiPemasok]}
+                                saatBerubah={(nilai) => Ubah({ UuidPemasok: nilai })}
+                                galat={galat.UuidPemasok}
+                            />
+                            {isian.UuidPemasok !== '' ? (
+                                <BidangJumlah
+                                    label="Bagian pemasok"
+                                    nilai={isian.PersenDanaPemasok}
+                                    saatBerubah={(nilai) => Ubah({ PersenDanaPemasok: nilai })}
+                                    desimal={2}
+                                    digitBulat={3}
+                                    akhiran="%"
+                                    keterangan="Persen dari potongan promo yang diklaim ke pemasok, misal 50 atau 100."
+                                    galat={galat.PersenDanaPemasok}
+                                    required
+                                />
+                            ) : null}
+                        </div>
+                    </Card>
+                ) : null}
 
                 <Card className="gap-4 rounded-panel p-4 shadow-none">
                     <h2 className="text-subjudul font-semibold text-teks-utama">Syarat pembayaran & pelanggan</h2>

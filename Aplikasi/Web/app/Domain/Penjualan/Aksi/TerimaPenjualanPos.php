@@ -72,6 +72,7 @@ use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
+use App\Domain\Promo\Layanan\PencatatKlaimPromoPemasok;
 use App\Domain\Promo\Layanan\PencatatPemakaianPromo;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Brick\Math\BigDecimal;
@@ -137,6 +138,7 @@ final class TerimaPenjualanPos
         private readonly PencatatPoinPenjualan $poin,
         private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
+        private readonly PencatatKlaimPromoPemasok $klaimPemasok,
         private readonly PemakaiVoucher $voucher,
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
@@ -372,15 +374,13 @@ final class TerimaPenjualanPos
         }
 
         // F-16c: pemakaian promo & kuota di transaksi yang sama.
-        $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat(
-            $penjualan->Id,
-            $idPelanggan,
-            $tanggalBisnis,
-            array_combine(
-                array_map(fn (PromoTerpakai $p): string => $p->uuid, $promoPerangkat),
-                array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
-            ),
-        )];
+        $diskonPerPromo = array_combine(
+            array_map(fn (PromoTerpakai $p): string => $p->uuid, $promoPerangkat),
+            array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
+        );
+        $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat($penjualan->Id, $idPelanggan, $tanggalBisnis, $diskonPerPromo)];
+        // F-16c bagian 4b: bagian potongan yang ditanggung pemasok menjadi klaim ke pemasok (tanpa jurnal sampai dibayar).
+        $this->klaimPemasok->Catat($penjualan->Id, $tanggalBisnis, $diskonPerPromo);
 
         // F-16c bagian 2: voucher yang dipesan online menjadi terpakai di transaksi yang sama.
         if ($data->kodeVoucher !== null) {

@@ -64,5 +64,7 @@ final readonly class DataPromo
         public ?int $batasPerPelanggan = null,
         public PeriodeBatasPelangganPromo $periodeBatasPelanggan = PeriodeBatasPelangganPromo::Hari,
         public ?BigDecimal $pengali = null,
+        public ?int $idPemasok = null,
+        public ?BigDecimal $persenDanaPemasok = null,
     ) {}
 }

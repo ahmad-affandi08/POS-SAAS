@@ -57,6 +57,34 @@ final class DaftarPemasok
             ->all());
     }
 
+    /** F-16c bagian 4b: Id pemasok aktif dari Uuid (null bila tidak ada, nonaktif, atau tenant lain). */
+    public function CariIdAktif(string $uuid): ?int
+    {
+        $id = Pemasok::query()->where('Uuid', $uuid)->where('Aktif', true)->value('Id');
+
+        return is_int($id) ? $id : null;
+    }
+
+    /** F-16c bagian 4b: Id pemasok (termasuk nonaktif) dari Uuid; null bila tidak ada atau tenant lain. */
+    public function AmbilIdDariUuid(string $uuid): ?int
+    {
+        $id = Pemasok::query()->where('Uuid', $uuid)->value('Id');
+
+        return is_int($id) ? $id : null;
+    }
+
+    /**
+     * F-16c bagian 4b: Uuid & nama pemasok per Id (termasuk nonaktif), untuk menampilkan rujukan.
+     *
+     * @param  list<int>  $id
+     * @return array<int, array{Uuid: string, Nama: string}>
+     */
+    public function AmbilRingkas(array $id): array
+    {
+        return $id === [] ? [] : Pemasok::query()->whereKey($id)->get(['Id', 'Uuid', 'Nama'])
+            ->mapWithKeys(fn (Pemasok $p): array => [$p->Id => ['Uuid' => $p->Uuid, 'Nama' => $p->Nama]])->all();
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarPromo from '@/Halaman/Kelola/Promo/Daftar';
 import HalamanFormulirPromo from '@/Halaman/Kelola/Promo/Formulir';
+import HalamanKlaimPemasok from '@/Halaman/Kelola/Promo/KlaimPemasok';
 import HalamanVoucherPromo, { FormatBerlakuSampai } from '@/Halaman/Kelola/Promo/Voucher';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import { BuatHasilTabel } from '@/Komponen/Persediaan/DataUjiPersediaan';
@@ -50,6 +51,7 @@ const opsi = {
         { Nilai: 'Hari' as const, Label: 'Per hari' },
         { Nilai: 'Promo' as const, Label: 'Selama promo' },
     ],
+    OpsiPemasok: [{ Nilai: '01K5PEMASOK000000000000001', Label: 'PT Kopi Nusantara Distribusi' }],
 };
 
 describe('Halaman promo (F-16c)', () => {
@@ -128,6 +130,8 @@ describe('Halaman promo (F-16c)', () => {
             TanggalMulai: null,
             TanggalSelesai: null,
             NamaProduk: {},
+            UuidPemasok: null,
+            PersenDanaPemasok: '0.00',
         };
         RenderUji(<HalamanFormulirPromo Promo={poin} FiturAktif {...opsi} />);
         fireEvent.change(screen.getByLabelText('Pengali poin'), { target: { value: '1,5' } });
@@ -141,6 +145,77 @@ describe('Halaman promo (F-16c)', () => {
                 Jumlah: null,
                 Harga: null,
             }),
+            expect.anything(),
+        );
+    });
+
+    it('klaim pemasok (F-16c bagian 4b): klaim terbuka & riwayat tampil; catat pembayaran klaim dikirim sebagai POST', () => {
+        window.history.replaceState({}, '', '/kelola/promo/klaim-pemasok');
+        RenderUji(
+            <HalamanKlaimPemasok
+                Terbuka={[
+                    {
+                        UuidPemasok: '01K5PEMASOK000000000000001',
+                        NamaPemasok: 'PT Kopi Nusantara Distribusi',
+                        JumlahTransaksi: 2,
+                        Total: '9240.00',
+                        TanggalTertua: '2026-09-20',
+                        Promo: 'KOPI10',
+                    },
+                ]}
+                Penerimaan={[
+                    {
+                        Uuid: '01K5PENERIMAAN000000000001',
+                        Tanggal: '2026-09-01',
+                        NamaPemasok: 'PT Susu Segar Jaya',
+                        Jumlah: '1500000.00',
+                        JumlahKlaim: 120,
+                        AkunKasBank: '1-1200 Bank BCA',
+                        Keterangan: null,
+                        UuidJurnal: '01K5JURNAL0000000000000009',
+                        NomorJurnal: 'JU/2026/09/000009',
+                    },
+                ]}
+                OpsiAkunKasBank={[{ Uuid: '01K5AKUN00000000000000001', Nama: '1-1200 Bank BCA' }]}
+                Izin={{ Terima: true }}
+            />,
+        );
+        expect(screen.getAllByText('PT Kopi Nusantara Distribusi').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Rp 9.240').length).toBeGreaterThan(0);
+        expect(screen.getByRole('link', { name: 'JU/2026/09/000009' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/jurnal/01K5JURNAL0000000000000009',
+        );
+    });
+
+    it('formulir (F-16c bagian 4b): promo ditanggung pemasok mengirim pemasok & bagian persen', () => {
+        const didanai = {
+            ...HappyHour,
+            Kode: 'SUSU20',
+            JenisAksi: 'DiskonPersenPesanan' as const,
+            Definisi: {
+                Hari: [],
+                JamMulai: null,
+                JamSelesai: null,
+                Outlet: [],
+                Kanal: [],
+                Tier: [],
+                MinimalSubtotal: '0.00',
+                Kondisi: { Jenis: 'Semua' as const, Uuid: [], JumlahMinimal: '0.0000' },
+                Aksi: { Jenis: 'DiskonPersenPesanan' as const, Persen: '20' },
+                BatasPerTransaksi: null,
+            },
+            TanggalMulai: null,
+            TanggalSelesai: null,
+            NamaProduk: {},
+            UuidPemasok: '01K5PEMASOK000000000000001',
+            PersenDanaPemasok: '50.00',
+        };
+        RenderUji(<HalamanFormulirPromo Promo={didanai} FiturAktif {...opsi} />);
+        fireEvent.change(screen.getByLabelText('Bagian pemasok'), { target: { value: '60' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan promo' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            `/kelola/promo/${HappyHour.Uuid}`,
+            expect.objectContaining({ UuidPemasok: '01K5PEMASOK000000000000001', PersenDanaPemasok: '60' }),
             expect.anything(),
         );
     });

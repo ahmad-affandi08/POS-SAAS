@@ -36,6 +36,7 @@ use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
+use App\Domain\Promo\Layanan\PencatatKlaimPromoPemasok;
 use App\Domain\Promo\Layanan\PencatatPemakaianPromo;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
@@ -80,6 +81,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly PemakaiVoucher $voucher,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
+        private readonly PencatatKlaimPromoPemasok $klaimPemasok,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
     ) {}
 
@@ -209,6 +211,8 @@ final class TerimaVoidPenjualanPos
         $this->voucher->Lepaskan($penjualan->Id);
         // v1.90: jatah promo (kuota & batas per pelanggan) penjualan yang di-void dikembalikan.
         $this->pemakaianPromo->Batalkan($penjualan->Id);
+        // F-16c bagian 4b: klaim promo ke pemasok yang belum diterima dibatalkan.
+        $this->klaimPemasok->Batalkan($penjualan->Id);
 
         // F-12 bagian 2: pre-order yang diambil lewat penjualan ini kembali Siap dengan DP-nya (jurnal pembalik sudah
         // mengkredit Uang Muka Pelanggan).

@@ -38,6 +38,8 @@ enum JenisSumberJurnal: string
     case PelunasanKasbon = 'PelunasanKasbon';
     // F-18 bagian 3: pembayaran rekap gaji (gaji pokok + komisi + tambahan − potongan).
     case RekapGaji = 'RekapGaji';
+    // F-16c bagian 4b: penerimaan klaim promo dari pemasok (J-16.5: Dr kas/bank, Cr HPP).
+    case PenerimaanKlaimPemasok = 'PenerimaanKlaimPemasok';
 
     public function AmbilLabel(): string
     {
@@ -61,6 +63,7 @@ enum JenisSumberJurnal: string
             self::Kasbon => 'Kasbon karyawan',
             self::PelunasanKasbon => 'Pelunasan kasbon',
             self::RekapGaji => 'Rekap gaji',
+            self::PenerimaanKlaimPemasok => 'Penerimaan klaim promo pemasok',
         };
     }
 
@@ -90,6 +93,7 @@ enum JenisSumberJurnal: string
             self::TutupTahun => null,
             self::Kasbon, self::PelunasanKasbon => '/kelola/karyawan/kasbon',
             self::RekapGaji => '/kelola/karyawan/gaji/'.$uuid,
+            self::PenerimaanKlaimPemasok => '/kelola/promo/klaim-pemasok',
         };
     }
 }
