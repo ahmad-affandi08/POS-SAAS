@@ -104,6 +104,12 @@ promo:
 - **J-16.5 (penerimaan):** Dr kas/bank, Cr Piutang Klaim Promosi Pemasok per outlet; klaim sebelum v1.93 yang belum berjurnal akrual tetap Cr HPP (tidak ada pengakuan ganda).
 - **Tenant lama:** template sektor v1.93 menambah akun 1-1460 + pemetaannya. Tenant yang menerapkan template sebelumnya mendapat akun & pemetaan otomatis saat klaim pertama dicatat (`PenyediaAkunPeran`; kode 1-1460, atau nomor kosong berikutnya bila kode itu dipakai akun lain bertipe berbeda; pemetaan yang sudah ada tidak disentuh). Audit `akun.tambah-template`.
 
+**Rincian F-16c bagian 4e (v1.94, potong klaim promo dari hutang pemasok; praktik umum distributor di Indonesia: klaim promo dikompensasikan dengan tagihan pemasok lewat nota debit):**
+- Dialog "Catat penyelesaian klaim" di `/kelola/promo/klaim-pemasok` memilih **cara penyelesaian**: *Dibayar ke kas/bank* (J-16.5) atau *Potong hutang ke pemasok*. Tabel klaim terbuka menampilkan **hutang ke pemasok** (sisa faktur terbuka, tanpa belanja stok) sebagai dasar pilihan.
+- **Potong hutang** (aksi publik Pembelian `KompensasiHutangPemasok`): total klaim terbuka ≤ tanggal penyelesaian dialokasikan ke faktur terbuka pemasok itu mulai yang paling lama (jatuh tempo, tanggal), status faktur ikut sisa. Dokumen `PembayaranHutang` bernomor biasa dengan `Kompensasi = true` dan akun Piutang Klaim Promosi Pemasok; jurnal **J-16.7** Dr Hutang Usaha per outlet faktur, Cr Piutang Klaim Promosi Pemasok per outlet klaim (klaim sebelum v1.93: Cr HPP). Total klaim > sisa hutang ditolak (`HutangTidakCukup`, pilih kas/bank). Periode terkunci ditolak. Audit `pembayaran-hutang.kompensasi` dan `promo.klaim-pemasok.terima`.
+- Pembayaran hasil kompensasi tampil "Potong klaim promo" di daftar/detail pembayaran hutang dan **tidak bisa dibatalkan** (`BagianKompensasi`); koreksi lewat jurnal atau transaksi kas/bank.
+- **Belum:** klaim sebagian/selisih klaim, dokumen nota debit tercetak, ekspor rekap klaim.
+
 **Rincian F-16c bagian 4c (v1.92, laporan efektivitas promo; metode dipilih agen atas mandat D-12, mengikuti praktik umum analisis promo ritel "sebelum-sesudah"):**
 - Halaman `/kelola/promo/{promo}/efektivitas` (klik baris promo atau "Lihat efektivitas"; izin `pelanggan.lihat`).
 - **Periode promo** = tanggal mulai promo (tanpa tanggal mulai: pemakaian pertama) s.d. tanggal selesai atau hari ini (yang lebih awal), zona tenant, paling panjang 366 hari terakhir; promo yang belum mulai menampilkan "Promo belum berjalan". **Pembanding** = periode sama panjang tepat sebelum periode promo.

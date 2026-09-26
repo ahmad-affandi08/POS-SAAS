@@ -9,7 +9,11 @@ use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Akuntansi\Model\PemetaanAkun;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
+use App\Domain\Pembelian\Enum\StatusFakturPembelian;
+use App\Domain\Pembelian\Model\PembayaranHutang;
 use App\Domain\Penjualan\Model\Penjualan;
+use App\Domain\Promo\Enum\CaraPenerimaanKlaim;
 use App\Domain\Promo\Enum\StatusKlaimPromo;
 use App\Domain\Promo\Model\KlaimPromoPemasok;
 use App\Domain\Promo\Model\PenerimaanKlaimPemasok;
@@ -134,7 +138,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $kas = Akun::query()->where('KasBank', true)->orderBy('Kode')->firstOrFail();
         $hariIni = now($k['Outlet']->ZonaWaktu)->toDateString();
-        $isian = ['UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => $hariIni, 'UuidAkunKasBank' => $kas->Uuid, 'Keterangan' => 'Transfer klaim Oktober'];
+        $isian = ['UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => $hariIni, 'Cara' => 'KasBank', 'UuidAkunKasBank' => $kas->Uuid, 'Keterangan' => 'Transfer klaim Oktober'];
 
         $this->post('/kelola/promo/klaim-pemasok/penerimaan', [...$isian, 'UuidAkunKasBank' => ''])->assertSessionHasErrors('UuidAkunKasBank');
         $this->post('/kelola/promo/klaim-pemasok/penerimaan', $isian)->assertRedirect('/kelola/promo/klaim-pemasok');
@@ -187,7 +191,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $kas = Akun::query()->where('KasBank', true)->orderBy('Kode')->firstOrFail();
         $this->post('/kelola/promo/klaim-pemasok/penerimaan', [
-            'UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => now($k['Outlet']->ZonaWaktu)->toDateString(), 'UuidAkunKasBank' => $kas->Uuid,
+            'UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => now($k['Outlet']->ZonaWaktu)->toDateString(), 'Cara' => 'KasBank', 'UuidAkunKasBank' => $kas->Uuid,
         ])->assertRedirect('/kelola/promo/klaim-pemasok');
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
@@ -198,6 +202,62 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
             [$akun->Id, $k['Outlet']->Id, '0.00', '4620.00'],
             [BantuanJurnal::IdAkunPeran(PeranAkun::Hpp), null, '0.00', '4620.00'],
         ])->and(PemeriksaInvarian::PeriksaJurnalSeimbang($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('bagian 4e potong hutang: klaim mengurangi faktur terbuka paling lama (Dr Hutang Usaha, Cr piutang klaim); hutang kurang ditolak; tidak bisa dibatalkan', function (): void {
+        $k = SiapkanPromoPemasok($this);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemPromoPemasok($k), ItemPromoPemasok($k)]))->toBe([['Diterima', null], ['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $idPemilik = $k['Pemilik']->Id;
+        $hariIni = now($k['Outlet']->ZonaWaktu)->toDateString();
+        $isian = ['UuidPemasok' => $k['Pemasok']->Uuid, 'Tanggal' => $hariIni, 'Cara' => 'PotongHutang', 'Keterangan' => 'Nota debit klaim Oktober'];
+
+        // Faktur 1: Rp 6.000 (lama), faktur 2: Rp 30.000.
+        $faktur1 = BantuanPembelian::Fakturkan($k['Pemasok'], [BantuanPembelian::TerimaTanpaPo($k['Pemasok'], $k['Gudang'], [[$k['Produk'], '1', '6000']], $idPemilik, tanggal: BantuanPembelian::Hari(3))], $idPemilik, tanggal: BantuanPembelian::Hari(3));
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Pemilik);
+        // Total klaim 9.240 > sisa hutang 6.000: ditolak, klaim tetap terbuka.
+        $this->post('/kelola/promo/klaim-pemasok/penerimaan', $isian)->assertSessionHasErrors('Cara');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(KlaimPromoPemasok::query()->where('Status', StatusKlaimPromo::Terbuka->value)->count())->toBe(2);
+
+        $faktur2 = BantuanPembelian::Fakturkan($k['Pemasok'], [BantuanPembelian::TerimaTanpaPo($k['Pemasok'], $k['Gudang'], [[$k['Produk'], '1', '30000']], $idPemilik, tanggal: BantuanPembelian::Hari(1))], $idPemilik, tanggal: BantuanPembelian::Hari(1));
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Pemilik);
+        $this->get('/kelola/promo/klaim-pemasok')->assertInertia(fn (AssertableInertia $h) => $h->where('Terbuka.0.SisaHutang', '36000.00'));
+        $this->post('/kelola/promo/klaim-pemasok/penerimaan', $isian)->assertRedirect('/kelola/promo/klaim-pemasok');
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $penerimaan = PenerimaanKlaimPemasok::query()->sole();
+        $pembayaran = PembayaranHutang::query()->whereKey($penerimaan->IdPembayaranHutang)->sole();
+        expect($penerimaan->Cara)->toBe(CaraPenerimaanKlaim::PotongHutang)
+            ->and($penerimaan->IdAkunKasBank)->toBeNull()
+            ->and($pembayaran->Kompensasi)->toBeTrue()
+            ->and((string) $pembayaran->Jumlah)->toBe('9240.00')
+            ->and($penerimaan->IdJurnal)->toBe($pembayaran->IdJurnal)
+            // Faktur terlama lunas dulu (6.000), sisanya 3.240 ke faktur berikutnya.
+            ->and((string) $faktur1->refresh()->JumlahDibayar)->toBe('6000.00')
+            ->and($faktur1->Status)->toBe(StatusFakturPembelian::Lunas)
+            ->and((string) $faktur2->refresh()->JumlahDibayar)->toBe('3240.00')
+            ->and($faktur2->Status)->toBe(StatusFakturPembelian::DibayarSebagian);
+
+        $baris = JurnalDetail::query()->where('IdJurnal', $pembayaran->IdJurnal)->orderBy('Urutan')->get()
+            ->map(fn (JurnalDetail $d): array => [$d->IdAkun, (string) $d->Debit, (string) $d->Kredit])->all();
+        $idHutang = BantuanJurnal::IdAkunPeran(PeranAkun::HutangUsaha);
+        $idPiutang = BantuanJurnal::IdAkunPeran(PeranAkun::PiutangKlaimPemasok);
+        // Baris hutang satu outlet digabung oleh PostingJurnal.
+        expect($baris)->toBe([
+            [$idHutang, '9240.00', '0.00'],
+            [$idPiutang, '0.00', '9240.00'],
+        ])
+            ->and(BantuanPembelian::SaldoPeran($k['Tenant']->Id, PeranAkun::PiutangKlaimPemasok))->toBe('0.00')
+            ->and(PemeriksaInvarian::PeriksaJurnalSeimbang($k['Tenant']->Id))->toBe([]);
+
+        // Pembayaran hasil kompensasi tidak bisa dibatalkan dari halaman hutang.
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Pemilik);
+        $this->post("/kelola/pembelian/pembayaran/{$pembayaran->Uuid}/batalkan", ['Alasan' => 'Salah input pembayaran'])
+            ->assertSessionHasErrors();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect($pembayaran->refresh()->Status)->toBe(StatusDokumenPembelian::Diposting);
     });
 
     it('formulir promo: bagian pemasok 0–100%, bagian > 0 wajib pemasok; tersimpan di promo', function (): void {

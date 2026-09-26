@@ -27,6 +27,7 @@ use LogicException;
  * @property string $Jumlah
  * @property StatusDokumenPembelian $Status
  * @property bool $BelanjaStok
+ * @property bool $Kompensasi
  * @property string|null $Catatan
  * @property string|null $PathLampiran
  * @property string|null $NamaLampiran
@@ -59,6 +60,7 @@ final class PembayaranHutang extends ModelDasar
         'Status' => 'Diposting',
         'IdOutlet' => null,
         'BelanjaStok' => false,
+        'Kompensasi' => false,
         'Catatan' => null,
         'PathLampiran' => null,
         'NamaLampiran' => null,
@@ -105,6 +107,7 @@ final class PembayaranHutang extends ModelDasar
             'Tanggal' => 'date',
             'Status' => StatusDokumenPembelian::class,
             'BelanjaStok' => 'boolean',
+            'Kompensasi' => 'boolean',
             'UkuranLampiran' => 'integer',
             'DibatalkanPada' => 'datetime',
         ];

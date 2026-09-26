@@ -282,6 +282,7 @@ final class DetailPembelian
                 'Akun' => $akun === null ? null : "{$akun['Kode']} {$akun['Nama']}",
                 'Jumlah' => $p->Jumlah,
                 'BelanjaStok' => $p->BelanjaStok,
+                'Kompensasi' => $p->Kompensasi,
                 'Catatan' => $p->Catatan,
                 'Lampiran' => $p->PathLampiran === null ? null : ['Nama' => (string) $p->NamaLampiran, 'Ukuran' => (int) $p->UkuranLampiran],
                 'AlasanBatal' => $p->AlasanBatal,

@@ -94,7 +94,7 @@ final class HutangKontroler extends DasarPembelianKontroler
         return Inertia::render('Kelola/Pembelian/Pembayaran/Detail', [
             ...$detail->Pembayaran($p),
             'Izin' => $izin,
-            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $p->Status === StatusDokumenPembelian::Diposting && ! $p->BelanjaStok],
+            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $p->Status === StatusDokumenPembelian::Diposting && ! $p->BelanjaStok && ! $p->Kompensasi],
         ]);
     }
 

@@ -10,12 +10,16 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
+use App\Domain\Akuntansi\Layanan\PenyediaAkunPeran;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Pembelian\Aksi\KompensasiHutangPemasok;
 use App\Domain\Pembelian\Kueri\DaftarPemasok;
+use App\Domain\Promo\Enum\CaraPenerimaanKlaim;
 use App\Domain\Promo\Enum\StatusKlaimPromo;
+use App\Domain\Promo\Layanan\PencatatKlaimPromoPemasok;
 use App\Domain\Promo\Model\KlaimPromoPemasok;
 use App\Domain\Promo\Model\PenerimaanKlaimPemasok;
 use App\Domain\Tenant\Kueri\ProfilTenant;
@@ -30,6 +34,10 @@ use Illuminate\Support\Facades\DB;
  * akrual dikredit ke HPP (PSAK 72: imbalan dari pemasok mengurangi biaya pokok penjualan). Potongan ke pelanggan tetap
  * di Diskon Penjualan jurnal penjualan. Periode terkunci ditolak oleh `PostingJurnal`. Audit
  * `promo.klaim-pemasok.terima`.
+ *
+ * Bagian 4e: pemasok juga lazim menyelesaikan klaim dengan memotong tagihannya (nota debit dari tenant): cara
+ * `PotongHutang` memanggil `KompensasiHutangPemasok` (domain Pembelian), jurnal Dr Hutang Usaha per outlet faktur, Cr
+ * Piutang Klaim Promosi Pemasok; ditolak bila sisa hutang ke pemasok itu kurang dari total klaim.
  */
 final class TerimaKlaimPemasok
 {
@@ -40,9 +48,11 @@ final class TerimaKlaimPemasok
         private readonly DaftarAkunPilihan $akun,
         private readonly PostingJurnal $posting,
         private readonly PencatatAudit $audit,
+        private readonly PenyediaAkunPeran $penyediaAkun,
+        private readonly KompensasiHutangPemasok $kompensasi,
     ) {}
 
-    public function Jalankan(string $uuidPemasok, CarbonImmutable $tanggal, string $uuidAkunKasBank, ?string $keterangan, int $idPengguna): PenerimaanKlaimPemasok
+    public function Jalankan(string $uuidPemasok, CarbonImmutable $tanggal, CaraPenerimaanKlaim $cara, ?string $uuidAkunKasBank, ?string $keterangan, int $idPengguna): PenerimaanKlaimPemasok
     {
         $idPemasok = $this->pemasok->AmbilIdDariUuid($uuidPemasok)
             ?? throw new PelanggaranAturanBisnis('PemasokTidakDitemukan', 'Pemasok tidak ditemukan.', 'Pemasok', 404);
@@ -52,10 +62,14 @@ final class TerimaKlaimPemasok
             throw new PelanggaranAturanBisnis('TanggalDiMasaDepan', 'Tanggal tidak boleh setelah hari ini.', 'Tanggal');
         }
 
-        $akun = $this->akun->CariKasBankDariUuid($uuidAkunKasBank)['Id']
-            ?? throw new PelanggaranAturanBisnis('AkunKasBankWajib', 'Pilih akun kas atau bank.', 'AkunKasBank');
+        $akun = null;
 
-        return DB::transaction(function () use ($idPemasok, $tanggal, $akun, $keterangan, $idPengguna): PenerimaanKlaimPemasok {
+        if ($cara === CaraPenerimaanKlaim::KasBank) {
+            $akun = ($uuidAkunKasBank === null ? null : $this->akun->CariKasBankDariUuid($uuidAkunKasBank)['Id'] ?? null)
+                ?? throw new PelanggaranAturanBisnis('AkunKasBankWajib', 'Pilih akun kas atau bank.', 'AkunKasBank');
+        }
+
+        return DB::transaction(function () use ($idPemasok, $tanggal, $cara, $akun, $keterangan, $idPengguna): PenerimaanKlaimPemasok {
             $klaim = KlaimPromoPemasok::query()
                 ->where('IdPemasok', $idPemasok)
                 ->where('Status', StatusKlaimPromo::Terbuka->value)
@@ -74,24 +88,35 @@ final class TerimaKlaimPemasok
                 'IdPemasok' => $idPemasok,
                 'Tanggal' => $tanggal->toDateString(),
                 'Jumlah' => $total->KeString(),
+                'Cara' => $cara,
                 'IdAkunKasBank' => $akun,
                 'Keterangan' => $keterangan,
                 'DibuatOleh' => $idPengguna,
             ]);
-            $hasil = $this->posting->Jalankan(new DataJurnal(
-                jenisSumber: JenisSumberJurnal::PenerimaanKlaimPemasok,
-                idSumber: $penerimaan->Id,
-                uuidSumber: $penerimaan->Uuid,
-                nomorSumber: null,
-                tanggal: $tanggal,
-                keterangan: "Klaim promo {$nama} ({$klaim->count()} transaksi)",
-                baris: [
-                    new DataBarisJurnal(peran: null, idAkun: $akun, idOutlet: null, debit: $total, kredit: Uang::Nol()),
-                    ...$this->SusunBarisKredit($klaim),
-                ],
-                idPengguna: $idPengguna,
-            ));
-            $penerimaan->IdJurnal = $hasil->idJurnal;
+            $uraian = "Klaim promo {$nama} ({$klaim->count()} transaksi)";
+
+            if ($akun !== null) {
+                $penerimaan->IdJurnal = $this->posting->Jalankan(new DataJurnal(
+                    jenisSumber: JenisSumberJurnal::PenerimaanKlaimPemasok,
+                    idSumber: $penerimaan->Id,
+                    uuidSumber: $penerimaan->Uuid,
+                    nomorSumber: null,
+                    tanggal: $tanggal,
+                    keterangan: $uraian,
+                    baris: [
+                        new DataBarisJurnal(peran: null, idAkun: $akun, idOutlet: null, debit: $total, kredit: Uang::Nol()),
+                        ...$this->SusunBarisKredit($klaim),
+                    ],
+                    idPengguna: $idPengguna,
+                ))->idJurnal;
+            } else {
+                // F-16c bagian 4e: dipotong dari hutang ke pemasok (Dr Hutang Usaha, Cr Piutang Klaim Promosi Pemasok).
+                $idAkunPiutang = $this->penyediaAkun->Pastikan(PeranAkun::PiutangKlaimPemasok, PencatatKlaimPromoPemasok::KODE_AKUN, PencatatKlaimPromoPemasok::NAMA_AKUN);
+                $pembayaran = $this->kompensasi->Jalankan($idPemasok, $tanggal, $idAkunPiutang, $this->SusunBarisKredit($klaim), $uraian, $idPengguna);
+                $penerimaan->IdPembayaranHutang = $pembayaran['Id'];
+                $penerimaan->IdJurnal = $pembayaran['IdJurnal'];
+            }
+
             $penerimaan->save();
             KlaimPromoPemasok::query()->whereKey($klaim->pluck('Id')->all())->update([
                 'Status' => StatusKlaimPromo::Diterima->value,
@@ -103,6 +128,7 @@ final class TerimaKlaimPemasok
                 'Jumlah' => $total->KeString(),
                 'JumlahKlaim' => $klaim->count(),
                 'Tanggal' => $tanggal->toDateString(),
+                'Cara' => $cara->value,
             ], idPengguna: $idPengguna);
 
             return $penerimaan;

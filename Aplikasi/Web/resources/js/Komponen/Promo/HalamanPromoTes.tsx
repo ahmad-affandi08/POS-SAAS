@@ -196,6 +196,7 @@ describe('Halaman promo (F-16c)', () => {
                         JumlahTransaksi: 2,
                         Total: '9240.00',
                         TanggalTertua: '2026-09-20',
+                        SisaHutang: '12500000.00',
                         Promo: 'KOPI10',
                     },
                 ]}
@@ -206,6 +207,7 @@ describe('Halaman promo (F-16c)', () => {
                         NamaPemasok: 'PT Susu Segar Jaya',
                         Jumlah: '1500000.00',
                         JumlahKlaim: 120,
+                        Cara: 'Diterima di kas/bank',
                         AkunKasBank: '1-1200 Bank BCA',
                         Keterangan: null,
                         UuidJurnal: '01K5JURNAL0000000000000009',
@@ -218,6 +220,9 @@ describe('Halaman promo (F-16c)', () => {
         );
         expect(screen.getAllByText('PT Kopi Nusantara Distribusi').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Rp 9.240').length).toBeGreaterThan(0);
+        // Bagian 4e: sisa hutang ke pemasok tampil (dasar opsi potong hutang) dan cara penyelesaian di riwayat.
+        expect(screen.getAllByText('Rp 12.500.000').length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Diterima di kas\/bank/).length).toBeGreaterThan(0);
         expect(screen.getByRole('link', { name: 'JU/2026/09/000009' }).getAttribute('href')).toBe(
             '/kelola/akuntansi/jurnal/01K5JURNAL0000000000000009',
         );

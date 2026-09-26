@@ -6,10 +6,13 @@ namespace App\Domain\Promo\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Promo\Enum\CaraPenerimaanKlaim;
 use Illuminate\Support\Carbon;
 
 /**
- * Penerimaan pembayaran klaim promo dari pemasok (F-16c bagian 4b, J-16.5): Dr kas/bank, Cr HPP. Append-only.
+ * Penerimaan pembayaran klaim promo dari pemasok (F-16c bagian 4b/4e, J-16.5): diterima di kas/bank, atau dipotong
+ * dari hutang ke pemasok (`Cara` = `PotongHutang`, dokumen `PembayaranHutang` kompensasi di `IdPembayaranHutang`).
+ * Append-only.
  *
  * @property int $Id
  * @property string $Uuid
@@ -17,7 +20,9 @@ use Illuminate\Support\Carbon;
  * @property int $IdPemasok
  * @property Carbon $Tanggal
  * @property string $Jumlah
- * @property int $IdAkunKasBank
+ * @property CaraPenerimaanKlaim $Cara
+ * @property int|null $IdAkunKasBank
+ * @property int|null $IdPembayaranHutang
  * @property string|null $Keterangan
  * @property int|null $IdJurnal
  * @property int|null $DibuatOleh
@@ -33,6 +38,6 @@ final class PenerimaanKlaimPemasok extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['Tanggal' => 'date', 'Jumlah' => 'decimal:2'];
+        return ['Tanggal' => 'date', 'Jumlah' => 'decimal:2', 'Cara' => CaraPenerimaanKlaim::class];
     }
 }

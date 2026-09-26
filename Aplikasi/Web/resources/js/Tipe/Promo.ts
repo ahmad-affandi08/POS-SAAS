@@ -128,6 +128,8 @@ export type BarisKlaimTerbuka = {
     JumlahTransaksi: number;
     Total: string;
     TanggalTertua: string;
+    /** Bagian 4e: sisa hutang ke pemasok ini yang bisa dipotong klaim. */
+    SisaHutang: string;
     Promo: string;
 };
 
@@ -138,6 +140,8 @@ export type BarisPenerimaanKlaim = {
     NamaPemasok: string;
     Jumlah: string;
     JumlahKlaim: number;
+    /** Label cara penyelesaian: kas/bank atau potong hutang (bagian 4e). */
+    Cara: string;
     AkunKasBank: string | null;
     Keterangan: string | null;
     UuidJurnal: string | null;

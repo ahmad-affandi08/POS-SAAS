@@ -120,7 +120,7 @@ erDiagram
 | `PenerimaanBarang` / `PenerimaanBarangDetail` | IdPesananPembelian, Nomor, Status, DiterimaPada, NomorSuratJalan, Lampiran / IdPesananPembelianDetail, Jumlah, NomorBatch, TanggalKedaluwarsa, HppSatuan |
 | `FakturPembelian` / `FakturPembelianDetail` | NomorFakturPemasok, JatuhTempo, Total, JumlahDibayar, Status |
 | `ReturPembelian` / `ReturPembelianDetail` | IdPenerimaanBarang, Alasan, Status |
-| `PembayaranHutang` / `PembayaranHutangAlokasi` | IdAkun, Jumlah / IdFakturPembelian, Jumlah |
+| `PembayaranHutang` / `PembayaranHutangAlokasi` | IdAkun, Jumlah, Kompensasi (potong klaim promo, v1.94) / IdFakturPembelian, Jumlah |
 
 **Kasir & Penjualan**
 
@@ -168,7 +168,7 @@ erDiagram
 | `Voucher` | IdPromo, Kode, MaksimalPakai, JumlahDipakai, KedaluwarsaPada, Status (F-16c bagian 2) |
 | `VoucherPemakaian` | IdVoucher, UuidPenjualan, IdPenjualan, IdPerangkat, Status (Dipesan/Dipakai/Dilepas), DipesanSampai (F-16c bagian 2) |
 | `KlaimPromoPemasok` | IdTenant, Uuid, IdPromo, IdPemasok, IdPenjualan, TanggalBisnis, JumlahDiskon, PersenDana, Jumlah, Status (Terbuka/Diterima/Dibatalkan), IdPenerimaanKlaimPemasok, IdOutlet, IdJurnal (J-16.6), IdJurnalBatal (v1.93); unik (IdPromo, IdPenjualan) (F-16c bagian 4b, v1.91) |
-| `PenerimaanKlaimPemasok` | IdTenant, Uuid, IdPemasok, Tanggal, Jumlah, IdAkunKasBank, Keterangan, IdJurnal, DibuatOleh; J-16.5 (v1.91) |
+| `PenerimaanKlaimPemasok` | IdTenant, Uuid, IdPemasok, Tanggal, Jumlah, Cara (KasBank/PotongHutang, v1.94), IdAkunKasBank (kosong bila potong hutang), IdPembayaranHutang (v1.94), Keterangan, IdJurnal, DibuatOleh; J-16.5/J-16.7 (v1.91) |
 | `PromoPemakaian` | IdTenant, IdPromo, IdPenjualan, IdPelanggan, TanggalBisnis, JumlahDiskon, DibatalkanPada (void, v1.90); unik (IdPromo, IdPenjualan) (F-16c) |
 
 **Piutang & Akuntansi**

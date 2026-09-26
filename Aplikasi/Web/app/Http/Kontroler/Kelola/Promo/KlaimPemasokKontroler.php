@@ -9,17 +9,19 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Promo\Aksi\TerimaKlaimPemasok;
+use App\Domain\Promo\Enum\CaraPenerimaanKlaim;
 use App\Domain\Promo\Kueri\DaftarKlaimPemasok;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Klaim promo ke pemasok (F-16c bagian 4b): klaim terbuka per pemasok dan riwayat penerimaan (lihat `pelanggan.lihat`);
- * catat penerimaan pembayaran klaim ke kas/bank (J-16.5, izin `akuntansi.kelola`).
+ * catat penyelesaian klaim ke kas/bank (J-16.5) atau potong hutang ke pemasok (bagian 4e), izin `akuntansi.kelola`.
  */
 final class KlaimPemasokKontroler extends DasarKelolaKontroler
 {
@@ -38,18 +40,22 @@ final class KlaimPemasokKontroler extends DasarKelolaKontroler
         $data = $permintaan->validate([
             'UuidPemasok' => ['required', 'string', 'ulid'],
             'Tanggal' => ['required', 'date_format:Y-m-d'],
-            'UuidAkunKasBank' => ['required', 'string', 'ulid'],
+            'Cara' => ['required', Rule::enum(CaraPenerimaanKlaim::class)],
+            'UuidAkunKasBank' => ['required_if:Cara,KasBank', 'nullable', 'string', 'ulid'],
             'Keterangan' => ['nullable', 'string', 'max:255'],
-        ], attributes: ['UuidAkunKasBank' => 'akun kas/bank', 'Tanggal' => 'tanggal']);
+        ], attributes: ['UuidAkunKasBank' => 'akun kas/bank', 'Tanggal' => 'tanggal', 'Cara' => 'cara penyelesaian']);
 
         $penerimaan = $terima->Jalankan(
             strtoupper((string) $data['UuidPemasok']),
             CarbonImmutable::createFromFormat('Y-m-d', (string) $data['Tanggal']) ?: CarbonImmutable::now(),
-            strtoupper((string) $data['UuidAkunKasBank']),
+            CaraPenerimaanKlaim::from((string) $data['Cara']),
+            isset($data['UuidAkunKasBank']) ? strtoupper((string) $data['UuidAkunKasBank']) : null,
             isset($data['Keterangan']) && trim((string) $data['Keterangan']) !== '' ? trim((string) $data['Keterangan']) : null,
             $this->Pelaku()->Id,
         );
 
-        return to_route('kelola.promo.klaim-pemasok')->with('Kilat', 'Penerimaan klaim '.Uang::Dari((string) $penerimaan->Jumlah)->FormatRupiah().' dicatat.');
+        $pesan = $penerimaan->Cara === CaraPenerimaanKlaim::PotongHutang ? ' dipotong dari hutang ke pemasok.' : ' dicatat.';
+
+        return to_route('kelola.promo.klaim-pemasok')->with('Kilat', 'Penerimaan klaim '.Uang::Dari((string) $penerimaan->Jumlah)->FormatRupiah().$pesan);
     }
 }

@@ -34,7 +34,7 @@ final class BatalkanPembayaranHutang
     ) {}
 
     /**
-     * @throws PelanggaranAturanBisnis AlasanTidakValid, BagianBelanjaStok
+     * @throws PelanggaranAturanBisnis AlasanTidakValid, BagianBelanjaStok, BagianKompensasi
      */
     public function Jalankan(PembayaranHutang $pembayaran, string $alasan, int $idPengguna): PembayaranHutang
     {
@@ -55,6 +55,11 @@ final class BatalkanPembayaranHutang
 
             if ($terkunci->BelanjaStok) {
                 throw new PelanggaranAturanBisnis('BagianBelanjaStok', 'Pembayaran ini bagian dari belanja stok. Batalkan belanja stoknya dari halaman penerimaan barang.');
+            }
+
+            // F-16c bagian 4e: potong hutang dari klaim promo sudah menyelesaikan klaimnya; koreksi dengan dokumen lain.
+            if ($terkunci->Kompensasi) {
+                throw new PelanggaranAturanBisnis('BagianKompensasi', 'Pembayaran ini hasil potong klaim promo pemasok dan tidak bisa dibatalkan. Koreksi selisihnya dengan jurnal atau transaksi kas/bank.');
             }
 
             foreach ($alokasi as $a) {

@@ -181,6 +181,7 @@ final class DaftarDokumenPembelian
                 'Status' => $d->Status->value,
                 'LabelStatus' => $d->Status->AmbilLabel(),
                 'BelanjaStok' => $d->BelanjaStok,
+                'Kompensasi' => $d->Kompensasi,
                 'Total' => $d->Jumlah,
             ])->all());
         });

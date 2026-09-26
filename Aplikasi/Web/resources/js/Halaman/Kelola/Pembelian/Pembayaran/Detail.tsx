@@ -36,6 +36,9 @@ export default function HalamanDetailPembayaran({
             <div className="flex flex-wrap items-center gap-2">
                 <LabelStatusPembelian status={p.Status} label={p.LabelStatus} />
                 {p.BelanjaStok ? <span className="text-isi text-teks-sekunder">Dari belanja stok</span> : null}
+                {p.Kompensasi ? (
+                    <span className="text-isi text-teks-sekunder">Potong klaim promo pemasok (tanpa kas)</span>
+                ) : null}
             </div>
             {p.AlasanBatal ? (
                 <Pemberitahuan jenis="bahaya" judul="Pembayaran dibatalkan">

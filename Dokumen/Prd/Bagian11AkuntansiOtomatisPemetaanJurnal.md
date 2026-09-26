@@ -91,6 +91,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-16.4 | Penukaran poin (sebagai diskon) | Diskon Penjualan | (bagian dari J-07.1) |
 | J-16.5 | Penerimaan klaim promo dari pemasok (v1.91; v1.93) | Kas/Bank | Piutang Klaim Promosi Pemasok (klaim sebelum v1.93: HPP) |
 | J-16.6 | Klaim promo pemasok saat penjualan (v1.93, akrual) | Piutang Klaim Promosi Pemasok | HPP (imbalan pemasok mengurangi biaya pokok, PSAK 72) |
+| J-16.7 | Klaim promo dipotong dari hutang pemasok (v1.94) | Hutang Usaha | Piutang Klaim Promosi Pemasok (klaim sebelum v1.93: HPP) |
 | J-18.1 | Kasbon karyawan | Piutang Karyawan | Kas |
 | J-18.2 | Bayar rekap gaji | Beban Gaji & Komisi (gaji kotor) | Piutang Karyawan (potongan kasbon), Pendapatan Lain (potongan lain), Kas/Bank (gaji bersih) |
 | J-15.1 | Tutup tahun | Semua akun Pendapatan | Semua akun Beban & HPP, selisih ke Laba Ditahan |

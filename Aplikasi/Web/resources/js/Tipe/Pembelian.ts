@@ -109,6 +109,7 @@ export type BarisDaftarPembayaran = {
     Status: StatusDokumenPembelian;
     LabelStatus: string;
     BelanjaStok: boolean;
+    Kompensasi: boolean;
     Total: string;
 };
 export type BarisDaftarRetur = {
@@ -475,6 +476,8 @@ export type PropsDetailPembayaran = {
         Akun: string | null;
         Jumlah: string;
         BelanjaStok: boolean;
+        /** F-16c bagian 4e: potong hutang dari klaim promo pemasok (tanpa kas, tidak bisa dibatalkan). */
+        Kompensasi: boolean;
         Catatan: string | null;
         Lampiran: { Nama: string; Ukuran: number } | null;
         AlasanBatal: string | null;

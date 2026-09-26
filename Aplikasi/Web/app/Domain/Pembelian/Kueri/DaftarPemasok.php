@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Kueri;
 
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
+use App\Domain\Pembelian\Enum\StatusFakturPembelian;
+use App\Domain\Pembelian\Model\FakturPembelian;
 use App\Domain\Pembelian\Model\Pemasok;
 use Illuminate\Support\Collection;
 
@@ -83,6 +86,40 @@ final class DaftarPemasok
     {
         return $id === [] ? [] : Pemasok::query()->whereKey($id)->get(['Id', 'Uuid', 'Nama'])
             ->mapWithKeys(fn (Pemasok $p): array => [$p->Id => ['Uuid' => $p->Uuid, 'Nama' => $p->Nama]])->all();
+    }
+
+    /**
+     * F-16c bagian 4e: sisa hutang terbuka per pemasok (faktur belum lunas, tanpa belanja stok) yang bisa dipotong klaim.
+     *
+     * @param  list<int>  $id
+     * @return array<int, string>
+     */
+    public function AmbilSisaHutang(array $id): array
+    {
+        if ($id === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach ($id as $i) {
+            $hasil[$i] = Uang::Nol();
+        }
+
+        FakturPembelian::query()->whereIn('IdPemasok', $id)->where('BelanjaStok', false)
+            ->whereIn('Status', [StatusFakturPembelian::BelumDibayar->value, StatusFakturPembelian::DibayarSebagian->value])
+            ->get(['Id', 'IdPemasok', 'Total', 'JumlahDibayar', 'JumlahRetur'])
+            ->each(function (FakturPembelian $f) use (&$hasil): void {
+                $hasil[$f->IdPemasok] = $hasil[$f->IdPemasok]->Tambah($f->AmbilSisa());
+            });
+
+        $keluar = [];
+
+        foreach ($id as $i) {
+            $keluar[$i] = $hasil[$i]->KeString();
+        }
+
+        return $keluar;
     }
 
     /**

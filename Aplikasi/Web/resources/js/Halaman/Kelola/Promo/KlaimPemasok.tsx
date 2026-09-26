@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import GrupRadio from '@/Komponen/Katalog/GrupRadio';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
@@ -15,6 +16,8 @@ import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import { TulisTanggal } from '@/Pustaka/Tanggal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { BarisKlaimTerbuka, BarisPenerimaanKlaim, PropsKlaimPemasok } from '@/Tipe/Promo';
+
+type CaraPenerimaanKlaim = 'KasBank' | 'PotongHutang';
 
 const alamat = '/kelola/promo/klaim-pemasok';
 
@@ -52,6 +55,13 @@ const kolomTerbuka: KolomTabel<BarisKlaimTerbuka>[] = [
         meta: { label: 'Klaim belum diterima', prioritas: 'penting', angka: true },
         cell: ({ row }) => FormatRupiah(row.original.Total),
     },
+    {
+        id: 'SisaHutang',
+        accessorKey: 'SisaHutang',
+        header: 'Hutang ke pemasok',
+        meta: { label: 'Hutang ke pemasok', prioritas: 'rendah', angka: true },
+        cell: ({ row }) => FormatRupiah(row.original.SisaHutang),
+    },
 ];
 
 const kolomPenerimaan: KolomTabel<BarisPenerimaanKlaim>[] = [
@@ -71,7 +81,8 @@ const kolomPenerimaan: KolomTabel<BarisPenerimaanKlaim>[] = [
             <>
                 <span className="block">{p.NamaPemasok}</span>
                 <span className="block text-label text-teks-sekunder">
-                    {p.JumlahKlaim} transaksi{p.AkunKasBank ? ` · ke ${p.AkunKasBank}` : ''}
+                    {p.JumlahKlaim} transaksi · {p.Cara}
+                    {p.AkunKasBank ? ` ke ${p.AkunKasBank}` : ''}
                     {p.Keterangan ? ` · ${p.Keterangan}` : ''}
                 </span>
             </>
@@ -101,9 +112,9 @@ const kolomPenerimaan: KolomTabel<BarisPenerimaanKlaim>[] = [
 ];
 
 /**
- * Klaim promo ke pemasok (F-16c bagian 4b): bagian potongan promo yang ditanggung pemasok, per pemasok, dan riwayat
- * penerimaan pembayarannya. Potongan ke pelanggan tetap tercatat sebagai Diskon Penjualan; pembayaran klaim dijurnal
- * Dr kas/bank, Cr HPP (PSAK 72: imbalan dari pemasok mengurangi biaya pokok).
+ * Klaim promo ke pemasok (F-16c bagian 4b, 4d, 4e): bagian potongan promo yang ditanggung pemasok, per pemasok, dan
+ * riwayat penyelesaiannya. Potongan ke pelanggan tetap Diskon Penjualan; klaim diakui saat penjualan sebagai Piutang
+ * Klaim Promosi Pemasok (Cr HPP, PSAK 72), lalu diselesaikan lewat kas/bank atau dipotong dari hutang ke pemasok.
  */
 export default function HalamanKlaimPemasok({ Terbuka, Penerimaan, OpsiAkunKasBank, Izin }: PropsKlaimPemasok) {
     const [terima, AturTerima] = useState<BarisKlaimTerbuka | null>(null);
@@ -111,8 +122,9 @@ export default function HalamanKlaimPemasok({ Terbuka, Penerimaan, OpsiAkunKasBa
     return (
         <TataLetakAplikasi judul="Klaim promo pemasok">
             <p className="max-w-3xl text-isi text-teks-sekunder">
-                Promo yang ditanggung pemasok menimbulkan klaim di setiap transaksi. Tagihkan klaim ke pemasok, lalu
-                catat pembayarannya di sini. Transaksi yang dibatalkan (void) tidak diklaim.
+                Promo yang ditanggung pemasok menimbulkan klaim di setiap transaksi dan langsung dicatat sebagai piutang
+                ke pemasok. Tagihkan klaim ke pemasok, lalu catat penyelesaiannya di sini: dibayar ke kas/bank atau
+                dipotong dari hutang ke pemasok. Transaksi yang dibatalkan (void) tidak diklaim.
             </p>
             <h2 className="text-subjudul font-semibold text-teks-utama">Klaim belum diterima</h2>
             <TabelData
@@ -127,7 +139,9 @@ export default function HalamanKlaimPemasok({ Terbuka, Penerimaan, OpsiAkunKasBa
                 {...(Izin.Terima
                     ? {
                           aksiBaris: (k: BarisKlaimTerbuka) => (
-                              <DropdownMenuItem onSelect={() => AturTerima(k)}>Catat pembayaran klaim</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => AturTerima(k)}>
+                                  Catat penyelesaian klaim
+                              </DropdownMenuItem>
                           ),
                       }
                     : {})}
@@ -161,12 +175,21 @@ function FormTerima({
     saatSelesai: () => void;
 }) {
     const hariIni = TulisTanggal(new Date());
-    const formulir = useForm({
+    const bisaPotong = Number(klaim.SisaHutang) >= Number(klaim.Total);
+    const formulir = useForm<{
+        UuidPemasok: string;
+        Tanggal: string;
+        Cara: CaraPenerimaanKlaim;
+        UuidAkunKasBank: string;
+        Keterangan: string;
+    }>({
         UuidPemasok: klaim.UuidPemasok,
         Tanggal: hariIni,
+        Cara: 'KasBank',
         UuidAkunKasBank: opsiAkun[0]?.Uuid ?? '',
         Keterangan: '',
     });
+    const potong = formulir.data.Cara === 'PotongHutang';
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -175,27 +198,51 @@ function FormTerima({
 
     return (
         <DialogFormulir
-            judul={`Pembayaran klaim ${klaim.NamaPemasok}`}
-            keterangan={`Semua klaim terbuka sampai tanggal penerimaan (${FormatRupiah(klaim.Total)} untuk ${klaim.JumlahTransaksi} transaksi) ditandai diterima.`}
+            judul={`Penyelesaian klaim ${klaim.NamaPemasok}`}
+            keterangan={`Semua klaim terbuka sampai tanggal penyelesaian (${FormatRupiah(klaim.Total)} untuk ${klaim.JumlahTransaksi} transaksi) ditandai diterima.`}
             saatTutup={saatSelesai}
         >
             <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
+                <div className="sm:col-span-2">
+                    <GrupRadio<CaraPenerimaanKlaim>
+                        legenda="Cara penyelesaian"
+                        nilai={formulir.data.Cara}
+                        opsi={[
+                            {
+                                Nilai: 'KasBank',
+                                Label: 'Dibayar ke kas/bank',
+                                Keterangan: 'Pemasok mentransfer atau membayar tunai.',
+                            },
+                            {
+                                Nilai: 'PotongHutang',
+                                Label: 'Potong hutang ke pemasok',
+                                Keterangan: bisaPotong
+                                    ? `Mengurangi faktur terbuka paling lama (sisa hutang ${FormatRupiah(klaim.SisaHutang)}).`
+                                    : `Sisa hutang ${FormatRupiah(klaim.SisaHutang)} kurang dari total klaim.`,
+                            },
+                        ]}
+                        saatBerubah={(nilai) => formulir.setData('Cara', nilai)}
+                        galat={formulir.errors.Cara}
+                    />
+                </div>
                 <PemilihTanggal
-                    label="Tanggal diterima"
+                    label={potong ? 'Tanggal dipotong' : 'Tanggal diterima'}
                     nilai={formulir.data.Tanggal}
                     saatBerubah={(nilai) => formulir.setData('Tanggal', nilai)}
                     galat={formulir.errors.Tanggal}
                     max={hariIni}
                     required
                 />
-                <BidangPilihan
-                    label="Diterima di"
-                    nilai={formulir.data.UuidAkunKasBank}
-                    opsi={opsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama }))}
-                    saatBerubah={(nilai) => formulir.setData('UuidAkunKasBank', nilai)}
-                    galat={formulir.errors.UuidAkunKasBank}
-                    required
-                />
+                {potong ? null : (
+                    <BidangPilihan
+                        label="Diterima di"
+                        nilai={formulir.data.UuidAkunKasBank}
+                        opsi={opsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama }))}
+                        saatBerubah={(nilai) => formulir.setData('UuidAkunKasBank', nilai)}
+                        galat={formulir.errors.UuidAkunKasBank}
+                        required
+                    />
+                )}
                 <div className="sm:col-span-2">
                     <BidangTeks
                         label="Keterangan (opsional)"
@@ -206,8 +253,8 @@ function FormTerima({
                     />
                 </div>
                 <DialogFooter className="sm:col-span-2 sm:justify-start">
-                    <Tombol type="submit" memproses={formulir.processing}>
-                        Simpan penerimaan
+                    <Tombol type="submit" memproses={formulir.processing} disabled={potong && !bisaPotong}>
+                        {potong ? 'Potong dari hutang' : 'Simpan penerimaan'}
                     </Tombol>
                     <Tombol varian="sekunder" onClick={saatSelesai}>
                         Batal

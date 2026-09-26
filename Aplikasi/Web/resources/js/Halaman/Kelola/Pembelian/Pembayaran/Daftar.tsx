@@ -24,7 +24,12 @@ const kolom: KolomTabel<BarisDaftarPembayaran>[] = [
         header: 'Asal',
         enableSorting: false,
         meta: { label: 'Asal', prioritas: 'rendah' },
-        cell: ({ row }) => (row.original.BelanjaStok ? 'Belanja stok' : 'Pembayaran hutang'),
+        cell: ({ row }) =>
+            row.original.BelanjaStok
+                ? 'Belanja stok'
+                : row.original.Kompensasi
+                  ? 'Potong klaim promo'
+                  : 'Pembayaran hutang',
     },
     KolomStatus(),
     KolomUang('Total', 'Jumlah', (p) => p.Total, true),
