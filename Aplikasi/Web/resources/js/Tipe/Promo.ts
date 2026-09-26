@@ -150,3 +150,28 @@ export type PropsKlaimPemasok = {
     OpsiAkunKasBank: { Uuid: string; Nama: string }[];
     Izin: { Terima: boolean };
 };
+
+/** F-16c bagian 4c: angka satu periode di laporan efektivitas promo. */
+export type AngkaPeriodePromo = { Bersih: string; JumlahTransaksi: number; Qty: string | null; RataHarian: string };
+
+export type EfektivitasPromo =
+    | { Berjalan: false; Periode: { Dari: string; Sampai: string; Hari: number } }
+    | {
+          Berjalan: true;
+          Periode: { Dari: string; Sampai: string; Hari: number };
+          Pembanding: { Dari: string; Sampai: string };
+          Cakupan: string;
+          SemuaOutlet: boolean;
+          JumlahPakai: number;
+          TotalPotongan: string;
+          RataPotongan: string;
+          DitanggungPemasok: string;
+          Sekarang: AngkaPeriodePromo;
+          Sebelum: AngkaPeriodePromo;
+          UpliftPersen: string | null;
+      };
+
+export type PropsEfektivitasPromo = {
+    Promo: { Uuid: string; Kode: string; Nama: string; Status: string };
+    Efektivitas: EfektivitasPromo;
+};

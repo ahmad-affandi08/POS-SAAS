@@ -157,6 +157,7 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                 ambilIdBaris={(p) => p.Uuid}
                 urutBawaan="-Prioritas"
                 labelBaris={(p) => `untuk promo ${p.Nama}`}
+                alamatDetail={(p) => `${alamat}/${p.Uuid}/efektivitas`}
                 {...(Izin.Kelola
                     ? {
                           aksiBaris: (p: BarisPromo) => (
@@ -165,6 +166,10 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                                       {
                                           label: 'Ubah promo',
                                           saatPilih: () => router.visit(`${alamat}/${p.Uuid}/ubah`),
+                                      },
+                                      {
+                                          label: 'Lihat efektivitas',
+                                          saatPilih: () => router.visit(`${alamat}/${p.Uuid}/efektivitas`),
                                       },
                                       ...(p.WajibVoucher
                                           ? [

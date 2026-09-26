@@ -24,6 +24,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
     Route::get('/', [PromoKontroler::class, 'Daftar'])->name('kelola.promo.daftar');
     Route::get('/{promo}/voucher', [VoucherKontroler::class, 'Daftar'])->where('promo', $ulid)->name('kelola.promo.voucher.daftar');
     Route::get('/klaim-pemasok', [KlaimPemasokKontroler::class, 'Daftar'])->name('kelola.promo.klaim-pemasok');
+    Route::get('/{promo}/efektivitas', [PromoKontroler::class, 'Efektivitas'])->where('promo', $ulid)->name('kelola.promo.efektivitas');
     Route::post('/klaim-pemasok/penerimaan', [KlaimPemasokKontroler::class, 'Terima'])
         ->middleware([$izin(IzinTenant::AkuntansiKelola), 'throttle:60,1'])
         ->name('kelola.promo.klaim-pemasok.terima');

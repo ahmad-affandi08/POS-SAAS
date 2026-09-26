@@ -26,6 +26,7 @@ use App\Domain\Promo\Aksi\UbahStatusPromo;
 use App\Domain\Promo\Data\DataPromo;
 use App\Domain\Promo\Enum\StatusPromo;
 use App\Domain\Promo\Kueri\DaftarPromo;
+use App\Domain\Promo\Kueri\EfektivitasPromo;
 use App\Domain\Promo\Kueri\PromoBerlaku;
 use App\Domain\Promo\Model\Promo;
 use App\Domain\Tenant\Kueri\ProfilTenant;
@@ -59,6 +60,17 @@ final class PromoKontroler extends DasarKelolaKontroler
     public function Buat(PromoBerlaku $berlaku): Response
     {
         return Inertia::render('Kelola/Promo/Formulir', [...$this->AmbilOpsi(), 'Promo' => null, 'FiturAktif' => $berlaku->CekFiturAktif()]);
+    }
+
+    /** F-16c bagian 4c: efektivitas promo (pakai, potongan, bagian pemasok, uplift vs periode sebelumnya). */
+    public function Efektivitas(string $promo, EfektivitasPromo $efektivitas): Response
+    {
+        $data = $this->CariPromo($promo);
+
+        return Inertia::render('Kelola/Promo/Efektivitas', [
+            'Promo' => ['Uuid' => $data->Uuid, 'Kode' => $data->Kode, 'Nama' => $data->Nama, 'Status' => $data->Status->value],
+            'Efektivitas' => $efektivitas->Hitung($data),
+        ]);
     }
 
     public function Ubah(string $promo, NamaProduk $namaProduk, PromoBerlaku $berlaku): Response

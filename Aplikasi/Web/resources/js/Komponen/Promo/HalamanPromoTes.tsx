@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanDaftarPromo from '@/Halaman/Kelola/Promo/Daftar';
+import HalamanEfektivitasPromo from '@/Halaman/Kelola/Promo/Efektivitas';
 import HalamanFormulirPromo from '@/Halaman/Kelola/Promo/Formulir';
 import HalamanKlaimPemasok from '@/Halaman/Kelola/Promo/KlaimPemasok';
 import HalamanVoucherPromo, { FormatBerlakuSampai } from '@/Halaman/Kelola/Promo/Voucher';
@@ -147,6 +148,41 @@ describe('Halaman promo (F-16c)', () => {
             }),
             expect.anything(),
         );
+    });
+
+    it('efektivitas (F-16c bagian 4c): pakai, potongan, uplift naik; promo belum berjalan = pemberitahuan', () => {
+        const promo = { Uuid: HappyHour.Uuid, Kode: 'KOPI10', Nama: 'Diskon 10% kopi susu', Status: 'Aktif' };
+        RenderUji(
+            <HalamanEfektivitasPromo
+                Promo={promo}
+                Efektivitas={{
+                    Berjalan: true,
+                    Periode: { Dari: '2026-10-08', Sampai: '2026-10-10', Hari: 3 },
+                    Pembanding: { Dari: '2026-10-05', Sampai: '2026-10-07' },
+                    Cakupan: 'Produk promo',
+                    SemuaOutlet: true,
+                    JumlahPakai: 2,
+                    TotalPotongan: '15400.00',
+                    RataPotongan: '7700.00',
+                    DitanggungPemasok: '0.00',
+                    Sekarang: { Bersih: '138600.00', JumlahTransaksi: 2, Qty: '4.0000', RataHarian: '46200.00' },
+                    Sebelum: { Bersih: '38500.00', JumlahTransaksi: 1, Qty: '1.0000', RataHarian: '12833.33' },
+                    UpliftPersen: '260.0',
+                }}
+            />,
+        );
+        expect(screen.getByText('+260,0% (naik)')).toBeTruthy();
+        expect(screen.getByText('Rp 15.400')).toBeTruthy();
+        expect(screen.getByText('Rp 138.600')).toBeTruthy();
+
+        cleanup();
+        RenderUji(
+            <HalamanEfektivitasPromo
+                Promo={promo}
+                Efektivitas={{ Berjalan: false, Periode: { Dari: '2026-12-01', Sampai: '2026-10-10', Hari: 0 } }}
+            />,
+        );
+        expect(screen.getByText('Promo belum berjalan')).toBeTruthy();
     });
 
     it('klaim pemasok (F-16c bagian 4b): klaim terbuka & riwayat tampil; catat pembayaran klaim dikirim sebagai POST', () => {
