@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:inti/Inti.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -13,8 +15,9 @@ class RepositoriPelanggan {
   final BasisDataKasir db;
   final RepositoriKasir repositoriKasir;
 
-  /// Catat/perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat), termasuk tier (F-16b) dan posisi
-  /// kredit (F-12; null = tidak diketahui, nilai lama di cache dipertahankan).
+  /// Catat/perbarui pelanggan yang dipakai (hasil cari online atau baru dibuat), termasuk tier (F-16b), posisi kredit
+  /// (F-12), dan data promo (F-16c bagian 3: hari lahir `MM-DD`, jumlah transaksi, pemakaian promo JSON beserta tanggal
+  /// bisnisnya). [kredit]/[promo] null = tidak diketahui, nilai lama di cache dipertahankan.
   Future<void> Simpan(
     String uuid,
     String nama,
@@ -23,6 +26,7 @@ class RepositoriPelanggan {
     String? kodeTier,
     String? namaTier,
     ({String? limitKredit, String sisaPiutang, int hariLewatJatuhTempo})? kredit,
+    ({String? hariLahir, int? jumlahTransaksi, String pemakaianPromo, String? pemakaianPada})? promo,
   }) => db
       .into(db.pelangganLokal)
       .insert(
@@ -36,6 +40,10 @@ class RepositoriPelanggan {
           LimitKredit: kredit == null ? const Value.absent() : Value(kredit.limitKredit),
           SisaPiutang: kredit == null ? const Value.absent() : Value(kredit.sisaPiutang),
           HariLewatJatuhTempo: kredit == null ? const Value.absent() : Value(kredit.hariLewatJatuhTempo),
+          HariLahir: promo == null ? const Value.absent() : Value(promo.hariLahir),
+          JumlahTransaksi: promo == null ? const Value.absent() : Value(promo.jumlahTransaksi),
+          PemakaianPromo: promo == null ? const Value.absent() : Value(promo.pemakaianPromo),
+          PemakaianPada: promo == null ? const Value.absent() : Value(promo.pemakaianPada),
         ),
         onConflict: DoUpdate(
           (_) => PelangganLokalCompanion(
@@ -47,9 +55,42 @@ class RepositoriPelanggan {
             LimitKredit: kredit == null ? const Value.absent() : Value(kredit.limitKredit),
             SisaPiutang: kredit == null ? const Value.absent() : Value(kredit.sisaPiutang),
             HariLewatJatuhTempo: kredit == null ? const Value.absent() : Value(kredit.hariLewatJatuhTempo),
+            HariLahir: promo == null ? const Value.absent() : Value(promo.hariLahir),
+            JumlahTransaksi: promo == null ? const Value.absent() : Value(promo.jumlahTransaksi),
+            PemakaianPromo: promo == null ? const Value.absent() : Value(promo.pemakaianPromo),
+            PemakaianPada: promo == null ? const Value.absent() : Value(promo.pemakaianPada),
           ),
         ),
       );
+
+  /// F-16c bagian 3: penjualan berpelanggan tersimpan di perangkat menambah jumlah transaksi (bila sudah diketahui) dan
+  /// pemakaian promo [uuidPromo] pada tanggal bisnis [tanggal] di cache, agar promo transaksi pertama & batas per
+  /// pelanggan tidak terpakai ulang selagi offline. Hitungan hari dari tanggal lain dimulai dari 0.
+  Future<void> CatatTransaksi(String uuid, String tanggal, List<String> uuidPromo) async {
+    final baris = await (db.select(db.pelangganLokal)..where((p) => p.Uuid.equals(uuid))).getSingleOrNull();
+    if (baris == null) {
+      return;
+    }
+    final lama = baris.PemakaianPromo == null ? const <String, Object?>{} : jsonDecode(baris.PemakaianPromo!);
+    final hariSama = baris.PemakaianPada == tanggal;
+    final baru = <String, Map<String, int>>{
+      if (lama is Map<String, Object?>)
+        for (final e in lama.entries)
+          if (e.value case final Map<String, Object?> v)
+            e.key: {'Hari': hariSama ? (v['Hari'] as int? ?? 0) : 0, 'Promo': v['Promo'] as int? ?? 0},
+    };
+    for (final u in uuidPromo) {
+      final p = baru[u] ?? {'Hari': 0, 'Promo': 0};
+      baru[u] = {'Hari': p['Hari']! + 1, 'Promo': p['Promo']! + 1};
+    }
+    await (db.update(db.pelangganLokal)..where((p) => p.Uuid.equals(uuid))).write(
+      PelangganLokalCompanion(
+        JumlahTransaksi: baris.JumlahTransaksi == null ? const Value.absent() : Value(baris.JumlahTransaksi! + 1),
+        PemakaianPromo: Value(jsonEncode(baru)),
+        PemakaianPada: Value(tanggal),
+      ),
+    );
+  }
 
   /// F-12: penjualan tempo tersimpan di perangkat menambah sisa piutang cache agar cek BR-12.1 berikutnya (offline)
   /// ikut menghitungnya. Pelanggan yang belum pernah diketahui kreditnya dibiarkan (server tetap memeriksa).

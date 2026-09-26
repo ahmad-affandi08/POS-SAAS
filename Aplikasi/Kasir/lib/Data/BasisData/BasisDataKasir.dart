@@ -189,7 +189,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
   /// (pre-order lokal).
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -278,6 +278,13 @@ class BasisDataKasir extends _$BasisDataKasir {
       if (dari < 11) {
         await m.createTable(pesananPenjualanLokal);
         await m.createTable(nomorUrutPesananPenjualan);
+      }
+      // Skema 12 (F-16c bagian 3): data promo pelanggan; tabel yang dibuat di skema < 7 sudah berkolom lengkap.
+      if (dari >= 7 && dari < 12) {
+        await m.addColumn(pelangganLokal, pelangganLokal.HariLahir);
+        await m.addColumn(pelangganLokal, pelangganLokal.JumlahTransaksi);
+        await m.addColumn(pelangganLokal, pelangganLokal.PemakaianPromo);
+        await m.addColumn(pelangganLokal, pelangganLokal.PemakaianPada);
       }
     },
     beforeOpen: (detail) async {

@@ -18,6 +18,13 @@ class PelangganLokal extends Table {
   TextColumn get SisaPiutang => text().nullable()();
   IntColumn get HariLewatJatuhTempo => integer().nullable()();
 
+  // Skema 12 (F-16c bagian 3): data promo pelanggan terakhir yang diketahui: hari lahir `MM-DD` (tanpa tahun), jumlah
+  // transaksi, pemakaian promo JSON `{UuidPromo: {Hari, Promo}}` dan tanggal bisnis hitungan harinya.
+  TextColumn get HariLahir => text().nullable()();
+  IntColumn get JumlahTransaksi => integer().nullable()();
+  TextColumn get PemakaianPromo => text().nullable()();
+  TextColumn get PemakaianPada => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

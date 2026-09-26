@@ -26,7 +26,8 @@ final class PelangganKontroler extends Kontroler
         $valid = $permintaan->validate(['kata' => ['nullable', 'string', 'max:100']]);
         $hariIni = $tanggalBisnis->Hitung(AutentikasiPerangkat::AmbilPerangkat($permintaan)->IdOutlet)->toDateString();
 
-        return response()->json(['Pelanggan' => $cari->Cari((string) ($valid['kata'] ?? ''), $hariIni)]);
+        // F-16c bagian 3: `TanggalBisnis` = acuan hitungan harian `PemakaianPromo` (tambahan kompatibel mundur).
+        return response()->json(['Pelanggan' => $cari->Cari((string) ($valid['kata'] ?? ''), $hariIni), 'TanggalBisnis' => $hariIni]);
     }
 
     public function Poin(string $uuidPelanggan, SaldoPoinPos $saldo): JsonResponse

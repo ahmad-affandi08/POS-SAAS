@@ -189,7 +189,9 @@ class PenyetujuDiskon {
 
 /// Pelanggan yang dipilih untuk transaksi (F-16a). Nomor HP hanya tersamar. F-16b: [kodeTier] menentukan harga per
 /// tier; [saldoPoin] hanya informasi dari pencarian online (null = tidak diketahui/offline). F-12: posisi kredit
-/// terakhir yang diketahui perangkat untuk cek BR-12.1 ([sisaPiutang] null = belum pernah diketahui).
+/// terakhir yang diketahui perangkat untuk cek BR-12.1 ([sisaPiutang] null = belum pernah diketahui). F-16c bagian 3:
+/// [hariLahir] `MM-DD`, [jumlahTransaksi] (null = tidak diketahui), dan [pemakaianPromo] per Uuid promo yang hitungan
+/// harinya berlaku untuk tanggal bisnis [pemakaianPada] (`YYYY-MM-DD`).
 class PelangganTerpilih {
   const PelangganTerpilih({
     required this.uuid,
@@ -201,6 +203,10 @@ class PelangganTerpilih {
     this.limitKredit,
     this.sisaPiutang,
     this.hariLewatJatuhTempo,
+    this.hariLahir,
+    this.jumlahTransaksi,
+    this.pemakaianPromo = const {},
+    this.pemakaianPada,
   });
 
   final String uuid;
@@ -212,6 +218,16 @@ class PelangganTerpilih {
   final String? limitKredit;
   final String? sisaPiutang;
   final int? hariLewatJatuhTempo;
+  final String? hariLahir;
+  final int? jumlahTransaksi;
+  final Map<String, PemakaianPromoPelanggan> pemakaianPromo;
+  final String? pemakaianPada;
+
+  /// Pemakaian promo untuk tanggal bisnis [tanggal]: hitungan hari berlaku hanya pada tanggal [pemakaianPada].
+  Map<String, PemakaianPromoPelanggan> AmbilPemakaianPada(String tanggal) => {
+    for (final e in pemakaianPromo.entries)
+      e.key: PemakaianPromoPelanggan(hari: pemakaianPada == tanggal ? e.value.hari : 0, promo: e.value.promo),
+  };
 
   Map<String, Object?> KeJson() => {
     'Uuid': uuid,
@@ -223,6 +239,10 @@ class PelangganTerpilih {
     'LimitKredit': limitKredit,
     'SisaPiutang': sisaPiutang,
     'HariLewatJatuhTempo': hariLewatJatuhTempo,
+    'HariLahir': hariLahir,
+    'JumlahTransaksi': jumlahTransaksi,
+    'PemakaianPromo': KodekPemakaianPromo.KeJson(pemakaianPromo),
+    'PemakaianPada': pemakaianPada,
   };
 
   static PelangganTerpilih? DariJson(Object? json) => json is Map<String, Object?> && json['Uuid'] is String
@@ -236,8 +256,26 @@ class PelangganTerpilih {
           limitKredit: json['LimitKredit'] as String?,
           sisaPiutang: json['SisaPiutang'] as String?,
           hariLewatJatuhTempo: json['HariLewatJatuhTempo'] as int?,
+          hariLahir: json['HariLahir'] as String?,
+          jumlahTransaksi: json['JumlahTransaksi'] as int?,
+          pemakaianPromo: KodekPemakaianPromo.DariJson(json['PemakaianPromo']),
+          pemakaianPada: json['PemakaianPada'] as String?,
         )
       : null;
+}
+
+/// Bentuk JSON pemakaian promo pelanggan `{UuidPromo: {Hari, Promo}}` (keranjang tersimpan & cache `PelangganLokal`).
+abstract final class KodekPemakaianPromo {
+  static Map<String, Object?> KeJson(Map<String, PemakaianPromoPelanggan> peta) => {
+    for (final e in peta.entries) e.key: {'Hari': e.value.hari, 'Promo': e.value.promo},
+  };
+
+  static Map<String, PemakaianPromoPelanggan> DariJson(Object? json) => {
+    if (json is Map<String, Object?>)
+      for (final e in json.entries)
+        if (e.value case final Map<String, Object?> v)
+          e.key: PemakaianPromoPelanggan(hari: v['Hari'] as int? ?? 0, promo: v['Promo'] as int? ?? 0),
+  };
 }
 
 /// Poin pelanggan yang ditukar sebagai diskon pesanan sebelum pajak (F-16b, J-16.4). Diperiksa online saat dipasang

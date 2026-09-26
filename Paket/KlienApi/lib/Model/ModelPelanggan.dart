@@ -3,6 +3,8 @@ import 'UraiJson.dart';
 /// Hasil cari pelanggan dari POS (F-16a, `GET /api/pos/v1/pelanggan?kata=`). Nomor HP tersamar (`0812****7890`).
 /// F-16b: kode & nama tier (harga per tier) dan saldo poin; server lama tanpa kolom ini = tanpa tier & 0 poin.
 /// F-12: posisi kredit untuk cek BR-12.1 saat offline ([limitKredit] null = tidak boleh tempo tanpa penyetuju).
+/// F-16c bagian 3 (promo): [hariLahir] `MM-DD` (tanpa tahun), [jumlahTransaksi] (null = server lama), dan
+/// [pemakaianPromo] per Uuid promo pada tanggal bisnis hari ini.
 class PelangganPos {
   const PelangganPos({
     required this.uuid,
@@ -14,6 +16,10 @@ class PelangganPos {
     this.limitKredit,
     this.sisaPiutang = '0',
     this.hariLewatJatuhTempo = 0,
+    this.hariLahir,
+    this.jumlahTransaksi,
+    this.pemakaianPromo = const {},
+    this.pemakaianPada,
   });
 
   final String uuid;
@@ -25,8 +31,14 @@ class PelangganPos {
   final String? limitKredit;
   final String sisaPiutang;
   final int hariLewatJatuhTempo;
+  final String? hariLahir;
+  final int? jumlahTransaksi;
+  final Map<String, ({int hari, int promo})> pemakaianPromo;
 
-  static PelangganPos DariJson(Map<String, Object?> json) => PelangganPos(
+  /// Tanggal bisnis `YYYY-MM-DD` acuan hitungan harian [pemakaianPromo].
+  final String? pemakaianPada;
+
+  static PelangganPos DariJson(Map<String, Object?> json, {String? tanggalBisnis}) => PelangganPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     nama: UraiJson.AmbilTeks(json['Nama']),
     noHpSamar: UraiJson.AmbilTeks(json['NoHp']),
@@ -36,6 +48,15 @@ class PelangganPos {
     limitKredit: UraiJson.AmbilDesimalAtauNull(json['LimitKredit']),
     sisaPiutang: UraiJson.AmbilDesimal(json['SisaPiutang']),
     hariLewatJatuhTempo: UraiJson.AmbilBulat(json['HariLewatJatuhTempo']),
+    hariLahir: UraiJson.AmbilTeksAtauNull(json['HariLahir']),
+    jumlahTransaksi: json['JumlahTransaksi'] is int ? json['JumlahTransaksi']! as int : null,
+    pemakaianPromo: {
+      if (json['PemakaianPromo'] case final Map<String, Object?> peta)
+        for (final e in peta.entries)
+          if (e.value case final Map<String, Object?> v)
+            e.key: (hari: UraiJson.AmbilBulat(v['Hari']), promo: UraiJson.AmbilBulat(v['Promo'])),
+    },
+    pemakaianPada: tanggalBisnis,
   );
 }
 

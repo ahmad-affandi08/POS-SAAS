@@ -355,10 +355,13 @@ class LayananPenjualan {
 
   // Hitung & pajak -----------------------------------------------------------------------------------------------------
 
+  /// [metodeBayar]: Uuid metode semua pembayaran transaksi (F-16c bagian 3, promo metode bayar); null = belum memilih
+  /// pembayaran (promo metode bayar tidak berlaku, seperti di server).
   HitunganKeranjang Hitung(
     Keranjang keranjang,
     KonteksPenjualan k, {
     List<DataPembayaranKalkulasi> pembayaran = const [],
+    List<String>? metodeBayar,
   }) {
     final tanggal = k.HitungTanggalBisnis(_jam());
     final pajakDokumen = <String, DataPajakKalkulasi>{};
@@ -451,6 +454,12 @@ class LayananPenjualan {
           kanal: AmbilKanal(keranjang),
           tier: keranjang.pelanggan?.kodeTier,
           voucher: [?voucher?.uuidPromo],
+          // F-16c bagian 3: data pelanggan terakhir yang diketahui perangkat; server menilai ulang saat sinkron.
+          metodeBayar: metodeBayar,
+          berpelanggan: keranjang.pelanggan != null,
+          tanggalLahir: keranjang.pelanggan?.hariLahir == null ? null : '2000-${keranjang.pelanggan!.hariLahir}',
+          jumlahTransaksiPelanggan: keranjang.pelanggan?.jumlahTransaksi,
+          pemakaianPelanggan: keranjang.pelanggan?.AmbilPemakaianPada(tanggal) ?? const {},
         ),
         mode: k.modeResolusiPromo,
       );
@@ -482,9 +491,25 @@ class LayananPenjualan {
         for (final p in nonTunai) p.KeKalkulasi(),
         const DataPembayaranKalkulasi(metode: 'Tunai'),
       ],
+      metodeBayar: AmbilMetodeBayar(k, [for (final p in nonTunai) p.metode], tambahanTunai: true),
     );
     final dibayar = nonTunai.fold(Uang.Nol(), (total, p) => total.Tambah(p.jumlah));
     return hitungan.hasil.totalAkhir.Kurangi(dibayar);
+  }
+
+  /// Uuid metode pembayaran untuk promo metode bayar (F-16c bagian 3): metode [dipakai] + metode tunai outlet bila
+  /// [tambahanTunai] (sisa akan dibayar tunai). Kosong = null (belum memilih pembayaran).
+  static List<String>? AmbilMetodeBayar(
+    KonteksPenjualan k,
+    Iterable<BarisMetodePembayaran> dipakai, {
+    bool tambahanTunai = false,
+  }) {
+    final hasil = <String>{
+      for (final m in dipakai) m.Uuid,
+      if (tambahanTunai)
+        for (final m in k.metodePembayaran.where((m) => m.Jenis == JenisMetodeBayar.tunai)) m.Uuid,
+    };
+    return hasil.isEmpty ? null : hasil.toList();
   }
 
   // Diskon (BR-07.3) ---------------------------------------------------------------------------------------------------
@@ -731,7 +756,12 @@ class LayananPenjualan {
     }
 
     ValidasiPembayaran(pembayaran);
-    final hitungan = Hitung(keranjang, k, pembayaran: [for (final p in pembayaran) p.KeKalkulasi()]);
+    final hitungan = Hitung(
+      keranjang,
+      k,
+      pembayaran: [for (final p in pembayaran) p.KeKalkulasi()],
+      metodeBayar: AmbilMetodeBayar(k, [for (final p in pembayaran) p.metode]),
+    );
     final hasil = hitungan.hasil;
     final nonTunai = pembayaran.where((p) => !p.CekTunai()).fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
     if (nonTunai.Bandingkan(hasil.totalAkhir) > 0) {
@@ -780,6 +810,12 @@ class LayananPenjualan {
     final uuidPelanggan = keranjang.pelanggan?.uuid;
     if (tempo != null && uuidPelanggan != null) {
       await repositoriPelanggan?.TambahSisaPiutang(uuidPelanggan, tempo.jumlah.KeString());
+    }
+    // F-16c bagian 3: jumlah transaksi & pemakaian promo pelanggan di cache ikut bertambah (promo offline berikutnya).
+    if (uuidPelanggan != null) {
+      await repositoriPelanggan?.CatatTransaksi(uuidPelanggan, hitungan.tanggalBisnis, [
+        for (final p in hitungan.promoTerpakai) p.uuid,
+      ]);
     }
 
     return PenjualanTersimpan(

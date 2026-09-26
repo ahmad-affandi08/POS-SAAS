@@ -109,7 +109,12 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     if (metode?.Jenis == JenisMetodeBayar.tunai) {
       return layanan.HitungTagihanTunai(keranjang, k, _entri);
     }
-    final hasil = layanan.Hitung(keranjang, k, pembayaran: [for (final p in _entri) p.KeKalkulasi()]).hasil;
+    final hasil = layanan.Hitung(
+      keranjang,
+      k,
+      pembayaran: [for (final p in _entri) p.KeKalkulasi()],
+      metodeBayar: LayananPenjualan.AmbilMetodeBayar(k, [for (final p in _entri) p.metode, ?metode]),
+    ).hasil;
     return hasil.totalAkhir.Kurangi(_AmbilDibayar());
   }
 
@@ -472,7 +477,13 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       for (final p in _entri) p.KeKalkulasi(),
       if (metode?.Jenis == JenisMetodeBayar.tunai) const DataPembayaranKalkulasi(metode: 'Tunai'),
     ];
-    final hitungan = layanan.Hitung(keranjang, k, pembayaran: pembayaranHitung);
+    // F-16c bagian 3: metode yang sedang dipilih ikut dinilai agar promo metode bayar langsung tampil di total.
+    final hitungan = layanan.Hitung(
+      keranjang,
+      k,
+      pembayaran: pembayaranHitung,
+      metodeBayar: LayananPenjualan.AmbilMetodeBayar(k, [for (final p in _entri) p.metode, ?metode]),
+    );
     final sisa = _HitungSisa(k, metode);
     final tunaiDipakai = _entri.any((p) => p.CekTunai());
     final tempoDipakai = _entri.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo);

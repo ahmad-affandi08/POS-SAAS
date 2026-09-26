@@ -1,5 +1,7 @@
-import 'package:inti/Inti.dart';
+import 'dart:convert';
+
 import 'package:klien_api/KlienApi.dart';
+import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriPelanggan.dart';
@@ -69,6 +71,10 @@ class LayananPelanggan {
     limitKredit: b.LimitKredit,
     sisaPiutang: b.SisaPiutang,
     hariLewatJatuhTempo: b.HariLewatJatuhTempo,
+    hariLahir: b.HariLahir,
+    jumlahTransaksi: b.JumlahTransaksi,
+    pemakaianPromo: b.PemakaianPromo == null ? const {} : KodekPemakaianPromo.DariJson(jsonDecode(b.PemakaianPromo!)),
+    pemakaianPada: b.PemakaianPada,
   );
 
   Future<HasilCariPelanggan> Cari(String kata) async {
@@ -90,6 +96,13 @@ class LayananPelanggan {
               limitKredit: p.limitKredit,
               sisaPiutang: p.sisaPiutang,
               hariLewatJatuhTempo: p.hariLewatJatuhTempo,
+              hariLahir: p.hariLahir,
+              jumlahTransaksi: p.jumlahTransaksi,
+              pemakaianPromo: {
+                for (final e in p.pemakaianPromo.entries)
+                  e.key: PemakaianPromoPelanggan(hari: e.value.hari, promo: e.value.promo),
+              },
+              pemakaianPada: p.pemakaianPada,
             ),
         ],
         online: true,
@@ -139,6 +152,15 @@ class LayananPelanggan {
             limitKredit: pelanggan.limitKredit,
             sisaPiutang: pelanggan.sisaPiutang!,
             hariLewatJatuhTempo: pelanggan.hariLewatJatuhTempo ?? 0,
+          ),
+    // F-16c bagian 3: hanya dari hasil cari online (jumlah transaksi diketahui); pilihan dari cache tidak menimpa.
+    promo: pelanggan.jumlahTransaksi == null
+        ? null
+        : (
+            hariLahir: pelanggan.hariLahir,
+            jumlahTransaksi: pelanggan.jumlahTransaksi,
+            pemakaianPromo: jsonEncode(KodekPemakaianPromo.KeJson(pelanggan.pemakaianPromo)),
+            pemakaianPada: pelanggan.pemakaianPada,
           ),
   );
 

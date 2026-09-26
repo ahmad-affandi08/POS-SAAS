@@ -307,6 +307,50 @@ void main() {
     expect(hasil.last.saldoPoin, 0);
   });
 
+  test(
+    'F-16c bagian 3: data promo pelanggan (hari lahir, jumlah transaksi, pemakaian) + tanggal bisnis acuannya',
+    () async {
+      final klien = BuatKlien(
+        (permintaan) async => Json({
+          'Pelanggan': [
+            {
+              'Uuid': 'P1',
+              'Nama': 'Ani Rahmawati',
+              'NoHp': '0812****7890',
+              'HariLahir': '09-26',
+              'JumlahTransaksi': 3,
+              'PemakaianPromo': {
+                'PR-HARIAN': {'Hari': 1, 'Promo': 4},
+              },
+            },
+            {'Uuid': 'P2', 'Nama': 'Anita (server lama)', 'NoHp': '0813****2222', 'PemakaianPromo': <Object?>[]},
+          ],
+          'TanggalBisnis': '2026-09-26',
+        }, 200),
+      );
+
+      final hasil = await klien.CariPelanggan('ani');
+      expect(hasil.first.hariLahir, '09-26');
+      expect(hasil.first.jumlahTransaksi, 3);
+      expect(hasil.first.pemakaianPromo['PR-HARIAN'], (hari: 1, promo: 4));
+      expect(hasil.first.pemakaianPada, '2026-09-26');
+      expect(hasil.last.hariLahir, isNull);
+      expect(hasil.last.jumlahTransaksi, isNull);
+      expect(hasil.last.pemakaianPromo, isEmpty);
+    },
+  );
+
+  test('F-16c bagian 3: promo diminta dengan voucher=1&lanjutan=1', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({'ModeResolusi': 'Terbaik', 'Promo': <Object?>[], 'WaktuServer': '2026-09-26T03:00:00Z'}, 200);
+    });
+
+    await klien.AmbilPromo();
+    expect(dikirim.single.url.queryParameters, {'voucher': '1', 'lanjutan': '1'});
+  });
+
   test('F-16b saldo poin: jalur per pelanggan, aturan tukar', () async {
     final dikirim = <http.Request>[];
     final klien = BuatKlien((permintaan) async {

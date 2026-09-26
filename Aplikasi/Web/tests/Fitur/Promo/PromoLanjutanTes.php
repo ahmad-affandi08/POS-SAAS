@@ -118,7 +118,8 @@ describe('F-16c bagian 3 promo bersyarat di penjualan POS', function (): void {
 
         // Data pelanggan untuk POS: tanpa tahun lahir, jumlah transaksi & pemakaian promo hari ini.
         $cari = $this->withToken($k['Token'])->getJson('/api/pos/v1/pelanggan?kata=Ani')->assertOk();
-        expect($cari->json('Pelanggan.0.HariLahir'))->toBe($hariIni->format('m-d'))
+        expect($cari->json('TanggalBisnis'))->toBe($hariIni->subHours(4)->toDateString())
+            ->and($cari->json('Pelanggan.0.HariLahir'))->toBe($hariIni->format('m-d'))
             ->and($cari->json('Pelanggan.0.JumlahTransaksi'))->toBe(3)
             ->and($cari->json('Pelanggan.0.PemakaianPromo'))->toBe([
                 $pertama->Uuid => ['Hari' => 2, 'Promo' => 2],

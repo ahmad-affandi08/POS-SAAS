@@ -105,7 +105,11 @@ class KlienPos {
       return const [];
     }
     final json = await _Kirim('GET', 'pelanggan?kata=${Uri.encodeQueryComponent(rapi)}', null);
-    return UraiJson.AmbilDaftarPeta(json['Pelanggan']).map(PelangganPos.DariJson).toList();
+    // F-16c bagian 3: tanggal bisnis yang menjadi acuan hitungan harian `PemakaianPromo` (server lama: tidak ada).
+    final tanggalBisnis = UraiJson.AmbilTeksAtauNull(json['TanggalBisnis']);
+    return UraiJson.AmbilDaftarPeta(
+      json['Pelanggan'],
+    ).map((p) => PelangganPos.DariJson(p, tanggalBisnis: tanggalBisnis)).toList();
   }
 
   /// Saldo poin terkini & aturan tukar sebelum kasir menukar poin (F-16b). Pelanggan tidak ada/diarsipkan → `GalatApi`
@@ -115,7 +119,10 @@ class KlienPos {
 
   /// Promo aktif tenant + mode resolusi konflik (F-16c); disimpan perangkat agar promo tetap berlaku saat offline.
   /// `?voucher=1`: aplikasi ini mengenal syarat `WajibVoucher` (F-16c bagian 2), jadi promo voucher ikut dikirim.
-  Future<DataPromoPos> AmbilPromo() async => DataPromoPos.DariJson(await _Kirim('GET', 'promo?voucher=1', null));
+  /// `&lanjutan=1`: aplikasi ini juga mengenal syarat bagian 3 (metode bayar, ulang tahun, transaksi pertama, batas per
+  /// pelanggan).
+  Future<DataPromoPos> AmbilPromo() async =>
+      DataPromoPos.DariJson(await _Kirim('GET', 'promo?voucher=1&lanjutan=1', null));
 
   /// Cari pre-order yang siap diambil di outlet perangkat (F-12 bagian 2): nomor atau nama/nomor HP pelanggan, minimal
   /// 3 karakter. Offline → `GalatJaringan`.
