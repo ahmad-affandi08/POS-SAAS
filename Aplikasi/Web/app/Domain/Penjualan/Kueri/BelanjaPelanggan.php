@@ -50,6 +50,18 @@ final class BelanjaPelanggan
     }
 
     /**
+     * Jumlah penjualan (tanpa void) pelanggan yang dibuat sebelum [sebelum] (F-16c bagian 3, promo transaksi pertama).
+     */
+    public function HitungTransaksiSebelum(int $idPelanggan, \DateTimeInterface $sebelum): int
+    {
+        return Penjualan::query()
+            ->where('IdPelanggan', $idPelanggan)
+            ->where('Status', '!=', StatusPenjualan::Void->value)
+            ->where('DibuatOfflinePada', '<', $sebelum)
+            ->count();
+    }
+
+    /**
      * Total belanja (tanpa void) per pelanggan sejak [dari] (tanggal bisnis, inklusif), untuk evaluasi tier F-16b.
      *
      * @return array<int, string> IdPelanggan → total (string desimal)

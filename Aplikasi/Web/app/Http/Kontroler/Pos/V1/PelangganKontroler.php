@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Pos\V1;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Kueri\CariPelangganPos;
 use App\Domain\Pelanggan\Kueri\SaldoPoinPos;
 use App\Http\Kontroler\Kontroler;
+use App\Http\Perantara\AutentikasiPerangkat;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,11 +21,12 @@ use Illuminate\Http\Request;
  */
 final class PelangganKontroler extends Kontroler
 {
-    public function Cari(Request $permintaan, CariPelangganPos $cari): JsonResponse
+    public function Cari(Request $permintaan, CariPelangganPos $cari, TanggalBisnisOutlet $tanggalBisnis): JsonResponse
     {
         $valid = $permintaan->validate(['kata' => ['nullable', 'string', 'max:100']]);
+        $hariIni = $tanggalBisnis->Hitung(AutentikasiPerangkat::AmbilPerangkat($permintaan)->IdOutlet)->toDateString();
 
-        return response()->json(['Pelanggan' => $cari->Cari((string) ($valid['kata'] ?? ''))]);
+        return response()->json(['Pelanggan' => $cari->Cari((string) ($valid['kata'] ?? ''), $hariIni)]);
     }
 
     public function Poin(string $uuidPelanggan, SaldoPoinPos $saldo): JsonResponse

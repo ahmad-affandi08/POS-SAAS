@@ -318,8 +318,9 @@ final class TerimaPenjualanPos
 
         // F-16c: promo dievaluasi ulang dengan definisi server; beda dengan perangkat = diterima + tinjauan.
         // F-16c bagian 2: promo wajib voucher hanya berlaku dengan voucher yang dikirim perangkat.
+        // F-16c bagian 3: metode bayar, ulang tahun, transaksi pertama & batas per pelanggan dinilai dari data server.
         $uuidPromoVoucher = $this->voucher->AmbilUuidPromo($data->kodeVoucher);
-        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $this->identitasPelanggan->AmbilKodeTier($idPelanggan), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
+        $masalahPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $idPelanggan, $tanggalBisnis->toDateString(), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
 
         // Simpan dokumen, stok, jurnal.
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id);

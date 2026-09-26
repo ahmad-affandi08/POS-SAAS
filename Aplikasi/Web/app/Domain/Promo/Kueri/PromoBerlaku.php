@@ -39,10 +39,12 @@ final class PromoBerlaku
     /**
      * Promo aktif yang belum berakhir pada [sekarang] (untuk disimpan perangkat). Promo wajib voucher (F-16c bagian 2)
      * hanya dikirim bila [termasukWajibVoucher]: aplikasi lama yang belum mengenal syarat itu akan menerapkannya otomatis.
+     * Promo bersyarat bagian 3 (metode bayar, ulang tahun, transaksi pertama, batas per pelanggan) hanya bila
+     * [termasukSyaratLanjutan], dengan alasan yang sama.
      *
      * @return list<array{Uuid: string, Kode: string, Nama: string, Prioritas: int, Eksklusif: bool, MulaiPada: string|null, SelesaiPada: string|null, KuotaTersisa: int|null, Definisi: array<string, mixed>}>
      */
-    public function AmbilUntukPos(CarbonImmutable $sekarang, bool $termasukWajibVoucher = false): array
+    public function AmbilUntukPos(CarbonImmutable $sekarang, bool $termasukWajibVoucher = false, bool $termasukSyaratLanjutan = false): array
     {
         if (! $this->CekFiturAktif()) {
             return [];
@@ -54,7 +56,7 @@ final class PromoBerlaku
             ->orderByDesc('Prioritas')
             ->orderBy('Kode')
             ->get()
-            ->filter(fn (Promo $p): bool => $termasukWajibVoucher || ! $p->CekWajibVoucher())
+            ->filter(fn (Promo $p): bool => ($termasukWajibVoucher || ! $p->CekWajibVoucher()) && ($termasukSyaratLanjutan || ! $p->CekSyaratLanjutan()))
             ->map(fn (Promo $p): array => self::PetakanUntukPos($p))
             ->all());
     }

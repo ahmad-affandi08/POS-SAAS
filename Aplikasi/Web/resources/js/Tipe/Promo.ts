@@ -36,7 +36,15 @@ export type DefinisiPromo = {
     BatasPerTransaksi: number | null;
     /** F-16c bagian 2: promo hanya berlaku dengan kode voucher. */
     WajibVoucher?: boolean;
+    /** F-16c bagian 3: semua pembayaran wajib memakai salah satu metode ini (Uuid). */
+    MetodeBayar?: string[];
+    UlangTahun?: { Jenis: JenisUlangTahunPromo; Hari?: number };
+    TransaksiPertama?: boolean;
+    BatasPerPelanggan?: { Jumlah: number; Periode: PeriodeBatasPelangganPromo };
 };
+
+export type JenisUlangTahunPromo = 'Hari' | 'Rentang' | 'Bulan';
+export type PeriodeBatasPelangganPromo = 'Hari' | 'Promo';
 
 export type BarisPromo = {
     Uuid: string;
@@ -79,6 +87,9 @@ export type PropsFormulirPromo = {
     OpsiTier: OpsiNilai[];
     OpsiKategori: OpsiNilai[];
     OpsiKanal: OpsiNilai[];
+    OpsiMetodeBayar: OpsiNilai[];
+    OpsiUlangTahun: { Nilai: JenisUlangTahunPromo; Label: string }[];
+    OpsiPeriodeBatas: { Nilai: PeriodeBatasPelangganPromo; Label: string }[];
     FiturAktif: boolean;
 };
 

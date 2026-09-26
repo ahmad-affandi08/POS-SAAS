@@ -48,4 +48,48 @@ final class PemakaianPromo
 
         return $hasil;
     }
+
+    /**
+     * Pemakaian promo oleh satu pelanggan (F-16c bagian 3, batas per pelanggan): per Uuid promo, jumlah pada tanggal
+     * bisnis [tanggalBisnis] dan selama masa promo. Seperti kuota, penjualan yang di-void tetap terhitung.
+     *
+     * @param  int|null  $kecualiIdPenjualan  penjualan yang sedang diperiksa (bila sudah tercatat)
+     * @return array<string, array{Hari: int, Promo: int}>
+     */
+    public function HitungPerPelanggan(int $idPelanggan, string $tanggalBisnis, ?int $kecualiIdPenjualan = null): array
+    {
+        return $this->HitungBanyakPelanggan([$idPelanggan], $tanggalBisnis, $kecualiIdPenjualan)[$idPelanggan] ?? [];
+    }
+
+    /**
+     * Seperti [HitungPerPelanggan] untuk banyak pelanggan sekaligus (hasil cari pelanggan POS).
+     *
+     * @param  list<int>  $idPelanggan
+     * @return array<int, array<string, array{Hari: int, Promo: int}>>
+     */
+    public function HitungBanyakPelanggan(array $idPelanggan, string $tanggalBisnis, ?int $kecualiIdPenjualan = null): array
+    {
+        if ($idPelanggan === []) {
+            return [];
+        }
+
+        $baris = PromoPemakaian::query()
+            ->whereIn('IdPelanggan', $idPelanggan)
+            ->when($kecualiIdPenjualan !== null, fn ($k) => $k->where('IdPenjualan', '!=', $kecualiIdPenjualan))
+            ->groupBy('IdPelanggan', 'IdPromo')
+            ->selectRaw('IdPelanggan, IdPromo, COUNT(*) AS Semua, SUM(CASE WHEN TanggalBisnis = ? THEN 1 ELSE 0 END) AS Hari', [$tanggalBisnis])
+            ->get();
+        $uuid = Promo::query()->whereKey($baris->map(fn ($b): int => (int) $b->getAttribute('IdPromo'))->unique()->values()->all())->pluck('Uuid', 'Id');
+        $hasil = [];
+
+        foreach ($baris as $b) {
+            $id = (int) $b->getAttribute('IdPromo');
+
+            if (isset($uuid[$id])) {
+                $hasil[(int) $b->getAttribute('IdPelanggan')][(string) $uuid[$id]] = ['Hari' => (int) $b->getAttribute('Hari'), 'Promo' => (int) $b->getAttribute('Semua')];
+            }
+        }
+
+        return $hasil;
+    }
 }

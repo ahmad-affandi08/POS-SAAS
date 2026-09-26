@@ -14,8 +14,11 @@ use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\DaftarTierPelanggan;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Enum\ModeResolusiPromo;
+use App\Domain\Penjualan\Enum\PeriodeBatasPelangganPromo;
+use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Promo\Aksi\SimpanPengaturanPromo;
 use App\Domain\Promo\Aksi\SimpanPromo;
 use App\Domain\Promo\Aksi\UbahStatusPromo;
@@ -31,6 +34,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -122,6 +126,13 @@ final class PromoKontroler extends DasarKelolaKontroler
             'OpsiTier' => array_map(fn (array $t): array => ['Nilai' => $t['Nilai'], 'Label' => $t['Label']], app(DaftarTierPelanggan::class)->AmbilOpsi()),
             'OpsiKategori' => array_map(fn (array $k): array => ['Nilai' => $k['Uuid'], 'Label' => $k['Jalur']], app(PohonKategori::class)->AmbilOpsi()),
             'OpsiKanal' => array_map(fn (KanalPenjualan $k): array => ['Nilai' => $k->value, 'Label' => $k->AmbilLabel()], KanalPenjualan::cases()),
+            // F-16c bagian 3.
+            'OpsiMetodeBayar' => array_values(array_map(
+                fn (array $m): array => ['Nilai' => $m['Uuid'], 'Label' => $m['Nama'].($m['Aktif'] ? '' : ' (nonaktif)')],
+                app(DaftarMetodePembayaran::class)->Ambil(),
+            )),
+            'OpsiUlangTahun' => array_map(fn (JenisUlangTahunPromo $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisUlangTahunPromo::cases()),
+            'OpsiPeriodeBatas' => array_map(fn (PeriodeBatasPelangganPromo $p): array => ['Nilai' => $p->value, 'Label' => $p->AmbilLabel()], PeriodeBatasPelangganPromo::cases()),
         ];
     }
 
@@ -161,6 +172,13 @@ final class PromoKontroler extends DasarKelolaKontroler
             'PersenGratis' => $persen,
             'BatasPerTransaksi' => ['nullable', 'integer'],
             'WajibVoucher' => ['boolean'],
+            'MetodeBayar' => ['array', 'max:20'],
+            'MetodeBayar.*' => ['string', 'ulid'],
+            'UlangTahun' => ['nullable', Rule::enum(JenisUlangTahunPromo::class)],
+            'HariUlangTahun' => ['nullable', 'integer'],
+            'TransaksiPertama' => ['boolean'],
+            'BatasPerPelanggan' => ['nullable', 'integer'],
+            'PeriodeBatasPelanggan' => ['nullable', Rule::enum(PeriodeBatasPelangganPromo::class)],
         ], attributes: [
             'Nama' => 'nama promo',
             'TanggalMulai' => 'tanggal mulai',
@@ -175,6 +193,14 @@ final class PromoKontroler extends DasarKelolaKontroler
         $outlet = array_values(array_map('strtoupper', (array) ($valid['Outlet'] ?? [])));
         /** @var list<string> $tier */
         $tier = array_values(array_map('strval', (array) ($valid['Tier'] ?? [])));
+        /** @var list<string> $metodeBayar */
+        $metodeBayar = array_values(array_map('strtoupper', (array) ($valid['MetodeBayar'] ?? [])));
+        $metodeDikenal = array_column(app(DaftarMetodePembayaran::class)->Ambil(), 'Uuid');
+
+        if (array_diff($metodeBayar, array_map('strtoupper', $metodeDikenal)) !== []) {
+            throw ValidationException::withMessages(['MetodeBayar' => 'Pilih metode pembayaran dari daftar.']);
+        }
+
         /** @var list<string> $uuidKondisi */
         $uuidKondisi = array_values(array_map('strtoupper', (array) ($valid['UuidKondisi'] ?? [])));
 
@@ -206,6 +232,12 @@ final class PromoKontroler extends DasarKelolaKontroler
             batasPerTransaksi: $bulat('BatasPerTransaksi'),
             idPengguna: $this->Pelaku()->Id,
             wajibVoucher: $permintaan->boolean('WajibVoucher'),
+            metodeBayar: $metodeBayar,
+            ulangTahun: ($t = $teks('UlangTahun')) === null ? null : JenisUlangTahunPromo::from($t),
+            hariUlangTahun: $bulat('HariUlangTahun') ?? 0,
+            transaksiPertama: $permintaan->boolean('TransaksiPertama'),
+            batasPerPelanggan: $bulat('BatasPerPelanggan'),
+            periodeBatasPelanggan: PeriodeBatasPelangganPromo::tryFrom($teks('PeriodeBatasPelanggan') ?? '') ?? PeriodeBatasPelangganPromo::Hari,
         );
     }
 

@@ -227,7 +227,7 @@ describe('F-16a pelanggan di POS', function (): void {
         $cari = fn (string $kata) => $this->withToken($k['Token'])->getJson('/api/pos/v1/pelanggan?kata='.urlencode($kata))->assertOk()->json('Pelanggan');
 
         expect($cari('an'))->toBe([])
-            ->and($cari('ani'))->toBe([['Uuid' => Pelanggan::withoutGlobalScopes()->where('Nama', 'Ani Rahmawati')->value('Uuid'), 'Nama' => 'Ani Rahmawati', 'NoHp' => '0812****7890', 'KodeTier' => null, 'NamaTier' => null, 'SaldoPoin' => 0, 'LimitKredit' => null, 'SisaPiutang' => '0.00', 'HariLewatJatuhTempo' => 0]])
+            ->and($cari('ani'))->toBe([['Uuid' => Pelanggan::withoutGlobalScopes()->where('Nama', 'Ani Rahmawati')->value('Uuid'), 'Nama' => 'Ani Rahmawati', 'NoHp' => '0812****7890', 'KodeTier' => null, 'NamaTier' => null, 'SaldoPoin' => 0, 'LimitKredit' => null, 'SisaPiutang' => '0.00', 'HariLewatJatuhTempo' => 0, 'HariLahir' => null, 'JumlahTransaksi' => 0, 'PemakaianPromo' => []]])
             ->and($cari('0812-3456'))->toHaveCount(1)
             ->and($cari('7890'))->toHaveCount(1)
             ->and($cari('arsip'))->toBe([]);

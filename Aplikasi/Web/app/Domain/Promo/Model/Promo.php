@@ -60,6 +60,17 @@ final class Promo extends ModelDasar
         return ($this->Definisi['WajibVoucher'] ?? false) === true;
     }
 
+    /**
+     * Syarat F-16c bagian 3 (metode bayar, ulang tahun, transaksi pertama, batas per pelanggan) yang belum dikenal
+     * aplikasi kasir versi lama: promo seperti ini hanya dikirim ke aplikasi yang memintanya (`?lanjutan=1`).
+     */
+    public function CekSyaratLanjutan(): bool
+    {
+        $d = $this->Definisi;
+
+        return ($d['MetodeBayar'] ?? []) !== [] || isset($d['UlangTahun']) || ($d['TransaksiPertama'] ?? false) === true || isset($d['BatasPerPelanggan']);
+    }
+
     /** Sisa kuota; null = tanpa batas. */
     public function AmbilKuotaTersisa(): ?int
     {

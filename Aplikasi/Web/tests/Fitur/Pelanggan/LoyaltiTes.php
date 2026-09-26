@@ -255,6 +255,10 @@ describe('F-16b back-office', function (): void {
             'LimitKredit' => null,
             'SisaPiutang' => '0.00',
             'HariLewatJatuhTempo' => 0,
+            // F-16c bagian 3: data promo pelanggan (tambahan kompatibel mundur).
+            'HariLahir' => null,
+            'JumlahTransaksi' => 1,
+            'PemakaianPromo' => [],
         ]);
     });
 });

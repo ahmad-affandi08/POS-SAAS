@@ -9,6 +9,8 @@ use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use App\Domain\Penjualan\Kueri\BelanjaPelanggan;
+use App\Domain\Promo\Kueri\PemakaianPromo;
 use Carbon\CarbonImmutable;
 
 /**
@@ -21,6 +23,8 @@ final class CariPelangganPos
         private readonly DaftarTierPelanggan $tier,
         private readonly BukuPoin $buku,
         private readonly KreditPelanggan $kredit,
+        private readonly BelanjaPelanggan $belanja,
+        private readonly PemakaianPromo $pemakaian,
     ) {}
 
     public const BATAS = 20;
@@ -29,11 +33,13 @@ final class CariPelangganPos
 
     /**
      * F-16b: `KodeTier`/`NamaTier` (harga per tier di POS) dan `SaldoPoin`. F-12: `LimitKredit`, `SisaPiutang`,
-     * `HariLewatJatuhTempo` (disimpan perangkat untuk cek tempo offline, BR-12.1).
+     * `HariLewatJatuhTempo` (disimpan perangkat untuk cek tempo offline, BR-12.1). F-16c bagian 3 (promo): `HariLahir`
+     * `MM-DD` (tanpa tahun lahir, data minimal), `JumlahTransaksi` (tanpa void), dan `PemakaianPromo` `{UuidPromo:
+     * {Hari, Promo}}` pada tanggal bisnis [tanggalBisnis].
      *
-     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int, LimitKredit: string|null, SisaPiutang: string, HariLewatJatuhTempo: int}>
+     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int, LimitKredit: string|null, SisaPiutang: string, HariLewatJatuhTempo: int, HariLahir: string|null, JumlahTransaksi: int, PemakaianPromo: array<string, array{Hari: int, Promo: int}>|object}>
      */
-    public function Cari(string $kata): array
+    public function Cari(string $kata, ?string $tanggalBisnis = null): array
     {
         $kata = trim($kata);
 
@@ -51,10 +57,13 @@ final class CariPelangganPos
             ->orderBy('Nama')
             ->orderBy('Id')
             ->limit(self::BATAS)
-            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier']);
+            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier', 'TanggalLahir']);
         $tier = $this->tier->AmbilPeta(array_values(array_filter($daftar->pluck('IdTier')->all(), 'is_int')));
         $saldo = $this->buku->AmbilSaldoBanyak(array_values($daftar->pluck('Id')->all()));
         $kredit = $this->kredit->AmbilRingkas(array_values($daftar->pluck('Id')->all()), CarbonImmutable::today());
+        $id = array_values(array_map('intval', $daftar->pluck('Id')->all()));
+        $belanja = $this->belanja->AmbilRingkasan($id);
+        $pemakaian = $this->pemakaian->HitungBanyakPelanggan($id, $tanggalBisnis ?? CarbonImmutable::today()->toDateString());
 
         return array_values($daftar->map(fn (Pelanggan $p): array => [
             'Uuid' => $p->Uuid,
@@ -66,6 +75,10 @@ final class CariPelangganPos
             'LimitKredit' => $kredit[$p->Id]['LimitKredit'] ?? null,
             'SisaPiutang' => $kredit[$p->Id]['SisaPiutang'] ?? '0.00',
             'HariLewatJatuhTempo' => $kredit[$p->Id]['HariLewatJatuhTempo'] ?? 0,
+            'HariLahir' => $p->TanggalLahir?->format('m-d'),
+            'JumlahTransaksi' => $belanja[$p->Id]['JumlahTransaksi'] ?? 0,
+            // Objek JSON walau kosong (`{}`), bukan larik.
+            'PemakaianPromo' => ($pemakaian[$p->Id] ?? []) === [] ? (object) [] : $pemakaian[$p->Id],
         ])->all());
     }
 }

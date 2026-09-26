@@ -23,7 +23,7 @@ final class PromoKontroler extends Kontroler
 
         return response()->json([
             'ModeResolusi' => $berlaku->AmbilMode()->value,
-            'Promo' => $berlaku->AmbilUntukPos($sekarang, $permintaan->boolean('voucher')),
+            'Promo' => $berlaku->AmbilUntukPos($sekarang, $permintaan->boolean('voucher'), $permintaan->boolean('lanjutan')),
             'WaktuServer' => $sekarang->utc()->toIso8601ZuluString(),
         ]);
     }

@@ -14,7 +14,13 @@ import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { JenisAksiPromo, JenisKondisiPromo, PropsFormulirPromo } from '@/Tipe/Promo';
+import type {
+    JenisAksiPromo,
+    JenisKondisiPromo,
+    JenisUlangTahunPromo,
+    PeriodeBatasPelangganPromo,
+    PropsFormulirPromo,
+} from '@/Tipe/Promo';
 
 const alamat = '/kelola/promo';
 
@@ -66,13 +72,20 @@ type Isian = {
     Gratis: string;
     PersenGratis: string;
     BatasPerTransaksi: string;
+    MetodeBayar: string[];
+    UlangTahun: JenisUlangTahunPromo | '';
+    HariUlangTahun: string;
+    TransaksiPertama: boolean;
+    BatasPerPelanggan: string;
+    PeriodeBatasPelanggan: PeriodeBatasPelangganPromo;
 };
 
 const HapusNolPecahan = (nilai: string | undefined): string => (nilai ?? '').replace(/\.0+$/, '');
 
 /**
  * F-16c: formulir promo. Barang pemicu, aksi, syarat (minimal belanja, tier, kanal, outlet), waktu (tanggal, hari, jam
- * lokal outlet), dan batas (kuota total, batas per transaksi untuk beli X gratis Y & bundel).
+ * lokal outlet), dan batas (kuota total, batas per transaksi untuk beli X gratis Y & bundel). Bagian 3: metode bayar,
+ * ulang tahun, transaksi pertama, dan batas per pelanggan.
  */
 export default function HalamanFormulirPromo({
     Promo,
@@ -80,6 +93,9 @@ export default function HalamanFormulirPromo({
     OpsiTier,
     OpsiKategori,
     OpsiKanal,
+    OpsiMetodeBayar,
+    OpsiUlangTahun,
+    OpsiPeriodeBatas,
     FiturAktif,
 }: PropsFormulirPromo) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -115,6 +131,12 @@ export default function HalamanFormulirPromo({
         PersenGratis: HapusNolPecahan(d?.Aksi.PersenGratis) || '100',
         BatasPerTransaksi:
             d?.BatasPerTransaksi === null || d?.BatasPerTransaksi === undefined ? '' : String(d.BatasPerTransaksi),
+        MetodeBayar: d?.MetodeBayar ?? [],
+        UlangTahun: d?.UlangTahun?.Jenis ?? '',
+        HariUlangTahun: String(d?.UlangTahun?.Hari ?? 7),
+        TransaksiPertama: d?.TransaksiPertama ?? false,
+        BatasPerPelanggan: d?.BatasPerPelanggan === undefined ? '' : String(d.BatasPerPelanggan.Jumlah),
+        PeriodeBatasPelanggan: d?.BatasPerPelanggan?.Periode ?? 'Hari',
     });
     const Ubah = (ubah: Partial<Isian>) => AturIsian({ ...isian, ...ubah });
     const aksi = isian.JenisAksi;
@@ -153,6 +175,12 @@ export default function HalamanFormulirPromo({
             Gratis: aksi === 'BeliXGratisY' ? Number(isian.Gratis || '0') : null,
             PersenGratis: aksi === 'BeliXGratisY' ? KosongJadiNull(isian.PersenGratis) : null,
             BatasPerTransaksi: bertingkat && isian.BatasPerTransaksi !== '' ? Number(isian.BatasPerTransaksi) : null,
+            MetodeBayar: isian.MetodeBayar,
+            UlangTahun: KosongJadiNull(isian.UlangTahun),
+            HariUlangTahun: isian.UlangTahun === 'Rentang' ? Number(isian.HariUlangTahun || '0') : null,
+            TransaksiPertama: isian.TransaksiPertama,
+            BatasPerPelanggan: isian.BatasPerPelanggan === '' ? null : Number(isian.BatasPerPelanggan),
+            PeriodeBatasPelanggan: isian.PeriodeBatasPelanggan,
         };
         const opsi = { onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) };
 
@@ -456,6 +484,72 @@ export default function HalamanFormulirPromo({
                             saatBerubah={(terpilih) => Ubah({ Outlet: terpilih })}
                         />
                     ) : null}
+                </Card>
+
+                <Card className="gap-4 rounded-panel p-4 shadow-none">
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Syarat pembayaran & pelanggan</h2>
+                    <p className="text-isi text-teks-sekunder">
+                        Syarat pelanggan berlaku hanya bila kasir memilih pelanggan. Saat kasir offline, riwayat
+                        pelanggan memakai data terakhir di perangkat; bila ternyata tidak memenuhi syarat, penjualan
+                        tetap diterima dan masuk tinjauan.
+                    </p>
+                    {OpsiMetodeBayar.length > 0 ? (
+                        <GrupCentang
+                            legenda="Metode bayar (kosong = semua; semua pembayaran wajib memakai metode terpilih)"
+                            opsi={OpsiMetodeBayar.map((o) => ({ nilai: o.Nilai, label: o.Label }))}
+                            terpilih={isian.MetodeBayar}
+                            saatBerubah={(terpilih) => Ubah({ MetodeBayar: terpilih })}
+                            galat={galat.MetodeBayar}
+                        />
+                    ) : null}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <BidangPilihan
+                            label="Ulang tahun pelanggan"
+                            nilai={isian.UlangTahun}
+                            opsi={[{ Nilai: '', Label: 'Tanpa syarat ulang tahun' }, ...OpsiUlangTahun]}
+                            saatBerubah={(nilai) => Ubah({ UlangTahun: nilai as JenisUlangTahunPromo | '' })}
+                            galat={galat.UlangTahun}
+                        />
+                        {isian.UlangTahun === 'Rentang' ? (
+                            <BidangJumlah
+                                label="Jarak dari hari ulang tahun (hari)"
+                                nilai={isian.HariUlangTahun}
+                                saatBerubah={(nilai) => Ubah({ HariUlangTahun: nilai })}
+                                desimal={0}
+                                digitBulat={2}
+                                keterangan="Misal 7 = seminggu sebelum sampai seminggu sesudah (1–30)."
+                                galat={galat.HariUlangTahun}
+                                required
+                            />
+                        ) : null}
+                    </div>
+                    <KotakCentang
+                        label="Hanya transaksi pertama pelanggan"
+                        nilai={isian.TransaksiPertama}
+                        saatBerubah={(nilai) => Ubah({ TransaksiPertama: nilai })}
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <BidangJumlah
+                            label="Batas pakai per pelanggan"
+                            nilai={isian.BatasPerPelanggan}
+                            saatBerubah={(nilai) => Ubah({ BatasPerPelanggan: nilai })}
+                            desimal={0}
+                            digitBulat={3}
+                            keterangan="Kosong = tanpa batas. Diisi = hanya untuk pembeli dengan data pelanggan."
+                            galat={galat.BatasPerPelanggan}
+                        />
+                        {isian.BatasPerPelanggan !== '' ? (
+                            <BidangPilihan
+                                label="Periode batas"
+                                nilai={isian.PeriodeBatasPelanggan}
+                                opsi={OpsiPeriodeBatas}
+                                saatBerubah={(nilai) =>
+                                    Ubah({ PeriodeBatasPelanggan: nilai as PeriodeBatasPelangganPromo })
+                                }
+                                required
+                            />
+                        ) : null}
+                    </div>
                 </Card>
 
                 <div className="flex flex-wrap gap-2">

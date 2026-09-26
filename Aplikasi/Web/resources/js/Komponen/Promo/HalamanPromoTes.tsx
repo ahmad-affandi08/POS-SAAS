@@ -37,6 +37,19 @@ const opsi = {
         { Nilai: 'MakanDiTempat', Label: 'Makan di tempat' },
         { Nilai: 'BawaPulang', Label: 'Bawa pulang' },
     ],
+    OpsiMetodeBayar: [
+        { Nilai: '01K5METODE0000000000000001', Label: 'Tunai' },
+        { Nilai: '01K5METODE0000000000000002', Label: 'QRIS Toko' },
+    ],
+    OpsiUlangTahun: [
+        { Nilai: 'Hari' as const, Label: 'Tepat di hari ulang tahun' },
+        { Nilai: 'Rentang' as const, Label: 'Sekitar hari ulang tahun (± hari)' },
+        { Nilai: 'Bulan' as const, Label: 'Sepanjang bulan ulang tahun' },
+    ],
+    OpsiPeriodeBatas: [
+        { Nilai: 'Hari' as const, Label: 'Per hari' },
+        { Nilai: 'Promo' as const, Label: 'Selama promo' },
+    ],
 };
 
 describe('Halaman promo (F-16c)', () => {
@@ -88,6 +101,30 @@ describe('Halaman promo (F-16c)', () => {
                 Jumlah: null,
                 BatasPerTransaksi: null,
                 WajibVoucher: false,
+            }),
+            expect.anything(),
+        );
+    });
+
+    it('formulir (F-16c bagian 3): metode bayar QRIS, transaksi pertama, dan batas 1x per hari dikirim', () => {
+        RenderUji(<HalamanFormulirPromo Promo={null} FiturAktif {...opsi} />);
+        fireEvent.change(screen.getByLabelText('Kode promo'), { target: { value: 'qris-baru' } });
+        fireEvent.change(screen.getByLabelText('Nama promo'), { target: { value: 'Pelanggan baru bayar QRIS 10%' } });
+        fireEvent.change(screen.getByLabelText('Persen diskon'), { target: { value: '10' } });
+        fireEvent.click(screen.getByLabelText('QRIS Toko'));
+        fireEvent.click(screen.getByLabelText('Hanya transaksi pertama pelanggan'));
+        fireEvent.change(screen.getByLabelText('Batas pakai per pelanggan'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan promo' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/promo',
+            expect.objectContaining({
+                Kode: 'QRIS-BARU',
+                MetodeBayar: ['01K5METODE0000000000000002'],
+                UlangTahun: null,
+                HariUlangTahun: null,
+                TransaksiPertama: true,
+                BatasPerPelanggan: 1,
+                PeriodeBatasPelanggan: 'Hari',
             }),
             expect.anything(),
         );

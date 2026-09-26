@@ -8,13 +8,16 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
+use App\Domain\Penjualan\Enum\PeriodeBatasPelangganPromo;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 
 /**
  * Isian promo dari back-office (F-16c). Waktu `mulaiPada`/`selesaiPada` sudah UTC; `jamMulai`/`jamSelesai` "HH:MM"
  * jam lokal outlet; daftar kosong = tanpa batasan. `wajibVoucher` (F-16c bagian 2): promo hanya berlaku dengan kode voucher.
+ * Bagian 3: metode bayar (Uuid), ulang tahun (+ jarak hari untuk `Rentang`), transaksi pertama, batas per pelanggan.
  */
 final readonly class DataPromo
 {
@@ -24,6 +27,7 @@ final readonly class DataPromo
      * @param  list<KanalPenjualan>  $kanal
      * @param  list<string>  $tier
      * @param  list<string>  $uuidKondisi
+     * @param  list<string>  $metodeBayar
      */
     public function __construct(
         public string $kode,
@@ -53,5 +57,11 @@ final readonly class DataPromo
         public ?int $batasPerTransaksi,
         public int $idPengguna,
         public bool $wajibVoucher = false,
+        public array $metodeBayar = [],
+        public ?JenisUlangTahunPromo $ulangTahun = null,
+        public int $hariUlangTahun = 0,
+        public bool $transaksiPertama = false,
+        public ?int $batasPerPelanggan = null,
+        public PeriodeBatasPelangganPromo $periodeBatasPelanggan = PeriodeBatasPelangganPromo::Hari,
     ) {}
 }

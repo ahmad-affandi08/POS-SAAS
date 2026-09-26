@@ -38,6 +38,14 @@ final class IdentitasPelanggan
         return $idTier === null ? null : TierPelanggan::query()->whereKey($idTier)->value('Kode');
     }
 
+    /** Tanggal lahir `YYYY-MM-DD` untuk promo ulang tahun (F-16c bagian 3); null bila tidak diisi/tidak dikenal. */
+    public function AmbilTanggalLahir(?int $id): ?string
+    {
+        $pelanggan = $id === null ? null : Pelanggan::query()->whereKey($id)->first(['Id', 'TanggalLahir']);
+
+        return $pelanggan?->TanggalLahir?->toDateString();
+    }
+
     /**
      * Uuid & nama pelanggan untuk tampilan dokumen (detail penjualan).
      *

@@ -10,6 +10,7 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\JenisAksiPromo;
 use App\Domain\Penjualan\Enum\JenisKondisiPromo;
+use App\Domain\Penjualan\Enum\JenisUlangTahunPromo;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Promo\Data\DataPromo;
 use App\Domain\Promo\Model\Promo;
@@ -182,6 +183,14 @@ final class SimpanPromo
             throw new PelanggaranAturanBisnis('BatasTidakValid', 'Batas per transaksi 1–999, hanya untuk Beli X gratis Y dan bundel.', 'BatasPerTransaksi');
         }
 
+        if ($data->ulangTahun === JenisUlangTahunPromo::Rentang && ($data->hariUlangTahun < 1 || $data->hariUlangTahun > 30)) {
+            throw new PelanggaranAturanBisnis('HariUlangTahunTidakValid', 'Isi jarak 1–30 hari dari hari ulang tahun.', 'HariUlangTahun');
+        }
+
+        if ($data->batasPerPelanggan !== null && ($data->batasPerPelanggan < 1 || $data->batasPerPelanggan > 999)) {
+            throw new PelanggaranAturanBisnis('BatasPelangganTidakValid', 'Batas per pelanggan 1–999 kali.', 'BatasPerPelanggan');
+        }
+
         $hari = array_values(array_unique($data->hari));
         sort($hari);
 
@@ -201,6 +210,14 @@ final class SimpanPromo
             'Aksi' => $aksi,
             'BatasPerTransaksi' => $data->batasPerTransaksi,
             ...($data->wajibVoucher ? ['WajibVoucher' => true] : []),
+            // F-16c bagian 3: kunci hanya ditulis bila dipakai (promo tanpa syarat ini tetap terkirim ke aplikasi lama).
+            ...($data->metodeBayar !== [] ? ['MetodeBayar' => array_values(array_unique($data->metodeBayar))] : []),
+            ...($data->ulangTahun !== null ? ['UlangTahun' => [
+                'Jenis' => $data->ulangTahun->value,
+                ...($data->ulangTahun === JenisUlangTahunPromo::Rentang ? ['Hari' => $data->hariUlangTahun] : []),
+            ]] : []),
+            ...($data->transaksiPertama ? ['TransaksiPertama' => true] : []),
+            ...($data->batasPerPelanggan !== null ? ['BatasPerPelanggan' => ['Jumlah' => $data->batasPerPelanggan, 'Periode' => $data->periodeBatasPelanggan->value]] : []),
         ];
     }
 
