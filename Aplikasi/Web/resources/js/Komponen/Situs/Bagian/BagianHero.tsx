@@ -1,3 +1,4 @@
+import { SPESIMEN } from '@/Komponen/Situs/SpesimenSitus';
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
 import { cn } from '@/Komponen/Ui/utils';
 import type { BagianSitus } from '@/Tipe/Situs';
@@ -22,9 +23,11 @@ const KELAS_LATAR = {
  */
 export default function BagianHero({ bagian, utama }: Props) {
     const Judul = utama ? 'h1' : 'h2';
-    const adaGambar = bagian.Gambar !== null;
     const latar = bagian.Latar ?? 'Terang';
     const gelap = latar !== 'Terang';
+    // Spesimen keluaran produk dipakai sebagai jangkar visual selama belum ada gambar (D-25).
+    const Spesimen = bagian.Gambar === null && bagian.Spesimen ? SPESIMEN[bagian.Spesimen] : null;
+    const adaGambar = bagian.Gambar !== null || Spesimen !== null;
 
     return (
         <section className={KELAS_LATAR[latar]}>
@@ -95,6 +98,8 @@ export default function BagianHero({ bagian, utama }: Props) {
                             gelap ? 'border-brand-gelap-garis' : 'border-garis',
                         )}
                     />
+                ) : Spesimen ? (
+                    <Spesimen className="justify-self-center lg:justify-self-end" />
                 ) : null}
             </div>
         </section>

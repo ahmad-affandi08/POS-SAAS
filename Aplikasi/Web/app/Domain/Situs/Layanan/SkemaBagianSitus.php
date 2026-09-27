@@ -67,6 +67,7 @@ final class SkemaBagianSitus
                 'Gambar' => ['Gambar'],
                 'Catatan' => ['Teks', 160],
                 'Latar' => ['Pilihan', ['Terang', 'Merek', 'Navy']],
+                'Spesimen' => ['Pilihan', ['Struk', 'Jurnal']],
             ],
             'Keunggulan' => $judulBagian + [
                 'TataLetak' => ['Pilihan', ['Grid', 'Daftar', 'Sorot']],
@@ -87,6 +88,7 @@ final class SkemaBagianSitus
                 'Poin' => ['Daftar', 0, 8, ['Teks' => ['Teks', 140, true]]],
                 'Gambar' => ['Gambar'],
                 'PosisiGambar' => ['Pilihan', ['Kanan', 'Kiri']],
+                'Spesimen' => ['Pilihan', ['Struk', 'Jurnal']],
                 'Tombol' => ['Tombol'],
             ],
             'Statistik' => $judulBagian + [

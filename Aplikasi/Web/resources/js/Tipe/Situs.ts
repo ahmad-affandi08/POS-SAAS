@@ -65,6 +65,8 @@ export type BagianSitus =
           Catatan: string | null;
           /** D-25: latar hero. `Merek`/`Navy` memberi jangkar gelap penuh tanpa gradien. */
           Latar: 'Terang' | 'Merek' | 'Navy' | null;
+          /** D-25: spesimen keluaran produk sebagai jangkar visual bila belum ada gambar. */
+          Spesimen: 'Struk' | 'Jurnal' | null;
       })
     | ({ Jenis: 'Keunggulan' } & JudulBagian & {
               Kolom: '2' | '3' | '4' | null;
@@ -86,6 +88,8 @@ export type BagianSitus =
               Poin: { Teks: string }[];
               Gambar: GambarSitus | null;
               PosisiGambar: 'Kanan' | 'Kiri' | null;
+              /** D-25: dipakai bila `Gambar` kosong. */
+              Spesimen: 'Struk' | 'Jurnal' | null;
               Tombol: Tombol;
           })
     | ({ Jenis: 'Statistik' } & JudulBagian & { Item: { Angka: string; Keterangan: string }[] })

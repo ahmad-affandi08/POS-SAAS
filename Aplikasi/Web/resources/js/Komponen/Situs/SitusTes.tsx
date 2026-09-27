@@ -173,6 +173,7 @@ describe('Situs pemasaran D-21: tata letak & blok', () => {
                         TombolUtama: { Label: 'Coba gratis', Tautan: '/daftar' },
                         TombolKedua: null,
                         Latar: null,
+                        Spesimen: null,
                         Gambar: null,
                         Catatan: null,
                     },
@@ -326,5 +327,72 @@ describe('Situs pemasaran D-21: tata letak & blok', () => {
         // Di latar gelap tombol kedua bergaris terang, bukan isian penuh.
         expect(screen.getByRole('link', { name: 'Lihat fitur' }).className).toContain('border-brand-gelap-teks');
         expect(container.querySelector('section')?.className).toContain('bg-teks-utama');
+    });
+    it('hero tanpa gambar memakai spesimen struk, bukan ilustrasi hiasan (D-25)', () => {
+        situs = BuatSitus();
+        const { container } = render(
+            <RenderBagian
+                bagian={[
+                    {
+                        Jenis: 'Hero',
+                        Label: null,
+                        Judul: 'Kasir tetap mencatat',
+                        Subjudul: null,
+                        TombolUtama: null,
+                        TombolKedua: null,
+                        Gambar: null,
+                        Catatan: null,
+                        Latar: 'Navy',
+                        Spesimen: 'Struk',
+                    } as BagianSitus,
+                ]}
+            />,
+        );
+
+        // Pembaca layar menerima satu kalimat, bukan deretan angka struk.
+        const spesimen = screen.getByRole('img');
+        expect(spesimen.getAttribute('aria-label')).toContain('Contoh struk PAYOU');
+        // Struk memakai font Mono dan angka tabular seperti struk sungguhan (token §17.5).
+        expect(spesimen.className).toContain('font-mono');
+        expect(spesimen.className).toContain('tabular-nums');
+        expect(screen.getByText('Rp 77.000')).toBeTruthy();
+
+        // Penanda offline: kuning hanya sah berteks Navy, dan maknanya dibawa teks bukan warna.
+        const penanda = screen.getByText(/Dibuat offline/);
+        expect(penanda.className).toContain('bg-aksen');
+        expect(penanda.className).toContain('text-teks-utama');
+        expect(penanda.className).not.toContain('text-permukaan');
+
+        // Bukan gambar unggahan: tidak ada <img> yang perlu tersedia per pemasangan.
+        expect(container.querySelector('img')).toBeNull();
+    });
+
+    it('spesimen jurnal memperlihatkan debit sama dengan kredit (D-25)', () => {
+        situs = BuatSitus();
+        render(
+            <RenderBagian
+                bagian={[
+                    {
+                        Jenis: 'GambarTeks',
+                        Label: null,
+                        Judul: 'Pembukuan',
+                        Subjudul: null,
+                        Teks: null,
+                        Poin: [],
+                        Gambar: null,
+                        PosisiGambar: 'Kanan',
+                        Spesimen: 'Jurnal',
+                        Tombol: null,
+                    } as BagianSitus,
+                ]}
+            />,
+        );
+
+        const jurnal = screen.getByRole('img');
+        expect(jurnal.getAttribute('aria-label')).toContain('total debit sama dengan total kredit');
+        // Invariant Σ debit = Σ kredit terlihat langsung di baris penutup: dua kolom bernilai sama.
+        const penutup = screen.getByText('Seimbang').closest('li');
+        const angka = [...(penutup?.querySelectorAll('span.tabular-nums') ?? [])].map((e) => e.textContent);
+        expect(angka).toEqual(['77.000', '77.000']);
     });
 });

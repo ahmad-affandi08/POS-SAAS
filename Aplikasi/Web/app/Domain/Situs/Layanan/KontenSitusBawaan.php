@@ -36,6 +36,7 @@ final class KontenSitusBawaan
                     [
                         'Jenis' => 'Hero',
                         'Latar' => 'Navy',
+                        'Spesimen' => 'Struk',
                         'Label' => 'Aplikasi kasir & pembukuan',
                         'Judul' => 'Kasir tetap mencatat walau internet mati',
                         'Subjudul' => "Penjualan, stok, pajak, dan pembukuan berjalan dari satu aplikasi.\nBegitu internet kembali, semuanya terkirim sendiri — tanpa Anda rekap ulang.",
@@ -158,6 +159,7 @@ final class KontenSitusBawaan
                     [
                         'Jenis' => 'GambarTeks',
                         'Label' => 'Keuangan',
+                        'Spesimen' => 'Jurnal',
                         'Judul' => 'Pembukuan yang tidak menunggu akhir bulan',
                         'Teks' => 'Setiap penjualan, pembelian, dan pembayaran menulis jurnal seimbang di transaksi yang sama. Tutup harian dan tutup bulan hanya mengunci periode, bukan mulai menghitung.',
                         'Poin' => [

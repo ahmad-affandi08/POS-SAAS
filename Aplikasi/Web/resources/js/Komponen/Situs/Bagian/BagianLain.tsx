@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { Check, ChevronDown, Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 
+import { SPESIMEN } from '@/Komponen/Situs/SpesimenSitus';
 import TeksKaya from '@/Komponen/Situs/TeksKaya';
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
 import { cn } from '@/Komponen/Ui/utils';
@@ -18,10 +19,13 @@ type PropsBagian<J extends BagianSitus['Jenis']> = {
 export function BagianGambarTeks({ bagian, latar, garisAtas }: PropsBagian<'GambarTeks'>) {
     const gambarKiri = bagian.PosisiGambar === 'Kiri';
     const gelap = CekGelap(latar);
+    // Spesimen keluaran produk dipakai sebagai jangkar visual selama belum ada gambar (D-25).
+    const Spesimen = bagian.Gambar === null && bagian.Spesimen ? SPESIMEN[bagian.Spesimen] : null;
+    const adaVisual = bagian.Gambar !== null || Spesimen !== null;
 
     return (
         <WadahBagian latar={latar} garisAtas={garisAtas}>
-            <div className={cn('grid items-center gap-10', bagian.Gambar ? 'lg:grid-cols-2' : 'max-w-3xl')}>
+            <div className={cn('grid items-center gap-10', adaVisual ? 'lg:grid-cols-2' : 'max-w-3xl')}>
                 <div className={cn('flex flex-col gap-4', gambarKiri && 'lg:order-2')}>
                     <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
                     {bagian.Teks ? (
@@ -73,6 +77,8 @@ export function BagianGambarTeks({ bagian, latar, garisAtas }: PropsBagian<'Gamb
                             gelap ? 'border-brand-gelap-garis' : 'border-garis',
                         )}
                     />
+                ) : Spesimen ? (
+                    <Spesimen />
                 ) : null}
             </div>
         </WadahBagian>
