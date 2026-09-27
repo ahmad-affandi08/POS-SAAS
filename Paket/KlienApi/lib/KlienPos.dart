@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
 import 'Model/ModelKonfigurasi.dart';
+import 'Model/ModelLaundry.dart';
 import 'Model/ModelMeja.dart';
 import 'Model/ModelPembayaranDigital.dart';
 import 'Model/ModelPelanggan.dart';
@@ -194,6 +195,27 @@ class KlienPos {
       (await _Kirim('POST', 'reservasi/${Uri.encodeComponent(uuid)}/hadir', {
         'UuidPengguna': uuidPengguna,
       }))['Reservasi'],
+    ),
+  );
+
+  /// Laundry (§9.9): cucian aktif outlet perangkat; [kata] kosong = siap diambil, selain itu cari nomor/nama/HP.
+  Future<List<TiketLaundryPos>> CariLaundry({String kata = ''}) async {
+    final rapi = kata.trim();
+    final json = await _Kirim('GET', rapi.isEmpty ? 'laundry' : 'laundry?kata=${Uri.encodeQueryComponent(rapi)}', null);
+    return [for (final t in UraiJson.AmbilDaftarPeta(json['Tiket'])) TiketLaundryPos.DariJson(t)];
+  }
+
+  /// Ubah status proses cucian atau tandai diambil (idempoten). Mundur/tidak sah → `GalatApi` 409.
+  Future<TiketLaundryPos> UbahStatusLaundry(
+    String uuid, {
+    required String status,
+    required String uuidPengguna,
+  }) async => TiketLaundryPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'laundry/${Uri.encodeComponent(uuid)}/status', {
+        'Status': status,
+        'UuidPengguna': uuidPengguna,
+      }))['Tiket'],
     ),
   );
 

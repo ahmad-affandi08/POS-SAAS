@@ -23,13 +23,25 @@ import 'Jual/PanelBayar.dart';
 import 'Jual/PanelDiskon.dart';
 import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
+import 'Jual/PanelLaundry.dart';
 import 'Jual/PanelPelanggan.dart';
 import 'Jual/PanelPreOrder.dart';
 import 'Jual/PanelTertahan.dart';
 import 'Jual/PengenalPemindai.dart';
 import 'Meja/DialogPesananMeja.dart';
 
-enum _JenisPanel { Keranjang, Item, DiskonPesanan, Bayar, Selesai, Tertahan, Pelanggan, PreOrder, PreOrderSelesai }
+enum _JenisPanel {
+  Keranjang,
+  Item,
+  DiskonPesanan,
+  Bayar,
+  Selesai,
+  Tertahan,
+  Pelanggan,
+  PreOrder,
+  PreOrderSelesai,
+  Laundry,
+}
 
 /// Beranda ruang kerja: layar Jual (F-07 mode retail, Rincian F-07c, PRD §17.2.3 & §17.2.7).
 /// - Katalog: cari nama/SKU/barcode, kategori, ubin produk seragam; keranjang di sisi yang diatur (kiri/kanan) mulai
@@ -872,6 +884,14 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
       saatBayar: widget.modePelayan ? null : _BukaBayar,
       saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
+      // Laundry (§9.9): tiket laundry untuk penjualan langsung (bukan pesanan meja/pengambilan pre-order).
+      saatLaundry:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif != true
+          ? null
+          : () => setState(() => _panel = _JenisPanel.Laundry),
     );
   }
 
@@ -1005,6 +1025,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             : TampilanPreOrderSelesai(hasil: _preOrderSelesai!, saatTransaksiBaru: _TransaksiBaru),
       ),
       _JenisPanel.Pelanggan => (judul: 'Pelanggan', isi: PanelPelanggan(kasir: widget.kasir, saatSelesai: _TutupPanel)),
+      _JenisPanel.Laundry => (judul: 'Tiket laundry', isi: PanelLaundry(saatSelesai: _TutupPanel)),
     };
   }
 

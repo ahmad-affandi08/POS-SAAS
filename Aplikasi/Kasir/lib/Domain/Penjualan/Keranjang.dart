@@ -384,6 +384,79 @@ class ReservasiKeranjang {
       : null;
 }
 
+/// Tiket laundry yang dibuat bersama penjualan (§9.9): jenis layanan, berat (kg, 2 desimal) dan/atau item satuan,
+/// parfum, catatan, perkiraan selesai (UTC), serta nama & HP penerima (bila tanpa pelanggan tertaut). Dikirim sebagai
+/// blok `Laundry` di `Penjualan.Buat`.
+class LaundryKeranjang {
+  const LaundryKeranjang({
+    required this.jenisLayanan,
+    required this.estimasiSelesaiPada,
+    this.berat,
+    this.item = const [],
+    this.parfum,
+    this.catatan,
+    this.namaPelanggan,
+    this.noHp,
+  });
+
+  static const String reguler = 'Reguler';
+  static const String express = 'Express';
+
+  final String jenisLayanan;
+  final DateTime estimasiSelesaiPada;
+  final Decimal? berat;
+  final List<({String nama, int jumlah})> item;
+  final String? parfum;
+  final String? catatan;
+  final String? namaPelanggan;
+  final String? noHp;
+
+  /// "3,5 kg · Bed cover ×1".
+  String RingkasIsi() {
+    final b = berat;
+    return [
+      if (b != null) '${b.toString().replaceAll('.', ',')} kg',
+      for (final i in item) '${i.nama} ×${i.jumlah}',
+    ].join(' · ');
+  }
+
+  Map<String, Object?> KeJson() => {
+    'JenisLayanan': jenisLayanan,
+    'Berat': berat?.toStringAsFixed(2),
+    'Item': [
+      for (final i in item) {'Nama': i.nama, 'Jumlah': i.jumlah},
+    ],
+    'Parfum': parfum,
+    'Catatan': catatan,
+    'EstimasiSelesaiPada': estimasiSelesaiPada.toUtc().toIso8601String(),
+    'NamaPelanggan': namaPelanggan,
+    'NoHp': noHp,
+  };
+
+  static LaundryKeranjang? DariJson(Object? json) {
+    if (json is! Map<String, Object?> || json['JenisLayanan'] is! String) {
+      return null;
+    }
+    final estimasi = DateTime.tryParse('${json['EstimasiSelesaiPada'] ?? ''}');
+    if (estimasi == null) {
+      return null;
+    }
+    return LaundryKeranjang(
+      jenisLayanan: json['JenisLayanan']! as String,
+      estimasiSelesaiPada: estimasi.toUtc(),
+      berat: json['Berat'] is String ? Decimal.tryParse(json['Berat']! as String) : null,
+      item: [
+        for (final i in (json['Item'] as List<Object?>? ?? const []).whereType<Map<String, Object?>>())
+          (nama: '${i['Nama'] ?? ''}', jumlah: i['Jumlah'] is int ? i['Jumlah']! as int : 1),
+      ],
+      parfum: json['Parfum'] as String?,
+      catatan: json['Catatan'] as String?,
+      namaPelanggan: json['NamaPelanggan'] as String?,
+      noHp: json['NoHp'] as String?,
+    );
+  }
+}
+
 /// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
 /// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
@@ -398,6 +471,7 @@ class Keranjang {
     this.voucher,
     this.praPesan,
     this.reservasi,
+    this.laundry,
   });
 
   static const Keranjang kosong = Keranjang();
@@ -423,6 +497,9 @@ class Keranjang {
   /// F-07 mode service: reservasi yang sedang dilayani.
   final ReservasiKeranjang? reservasi;
 
+  /// Laundry (§9.9): tiket laundry yang dibuat bersama penjualan ini.
+  final LaundryKeranjang? laundry;
+
   bool get CekKosong => baris.isEmpty;
 
   Kuantitas HitungJumlahItem() => baris.fold(Kuantitas.Nol(), (total, b) => total.Tambah(b.jumlah));
@@ -438,6 +515,7 @@ class Keranjang {
     VoucherKeranjang? Function()? voucher,
     PraPesananKeranjang? Function()? praPesan,
     ReservasiKeranjang? Function()? reservasi,
+    LaundryKeranjang? Function()? laundry,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
@@ -449,6 +527,7 @@ class Keranjang {
     voucher: voucher == null ? this.voucher : voucher(),
     praPesan: praPesan == null ? this.praPesan : praPesan(),
     reservasi: reservasi == null ? this.reservasi : reservasi(),
+    laundry: laundry == null ? this.laundry : laundry(),
   );
 
   Map<String, Object?> KeJson() => {
@@ -461,6 +540,7 @@ class Keranjang {
     'Voucher': voucher?.KeJson(),
     'PraPesan': praPesan?.KeJson(),
     'Reservasi': reservasi?.KeJson(),
+    'Laundry': laundry?.KeJson(),
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -476,5 +556,6 @@ class Keranjang {
     voucher: VoucherKeranjang.DariJson(json['Voucher']),
     praPesan: PraPesananKeranjang.DariJson(json['PraPesan']),
     reservasi: ReservasiKeranjang.DariJson(json['Reservasi']),
+    laundry: LaundryKeranjang.DariJson(json['Laundry']),
   );
 }

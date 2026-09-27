@@ -5,6 +5,7 @@ import 'package:inti/Inti.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
+import '../Penjualan/Keranjang.dart';
 import 'IdentitasStruk.dart';
 
 /// Isi satu penjualan untuk dicetak (dari tabel lokal, jadi bisa offline dan dicetak ulang).
@@ -15,6 +16,8 @@ class DataStrukPenjualan {
     required this.pembayaran,
     this.namaPelanggan,
     this.labelPoin,
+    this.laundry,
+    this.awalanLacakLaundry,
   });
 
   final BarisPenjualan penjualan;
@@ -26,6 +29,10 @@ class DataStrukPenjualan {
 
   /// F-16c bagian 4a: promo poin berlipat yang berlaku (seperti nama pelanggan, hanya saat dicetak setelah bayar).
   final String? labelPoin;
+
+  /// Laundry (§9.9): tiket laundry penjualan ini (tersimpan lokal, jadi ikut cetak ulang) dan awalan tautan lacak.
+  final LaundryKeranjang? laundry;
+  final String? awalanLacakLaundry;
 }
 
 /// Menyusun struk penjualan (POS-11, PRD v1.79) sesuai pengaturan struk tenant. Angka memakai format Indonesia tanpa
@@ -149,9 +156,46 @@ abstract final class PenyusunStrukPenjualan {
     }
 
     baris.add(const BarisGaris());
+    // Laundry (§9.9): rincian tiket + QR lacak cucian (tautan sama dengan struk digital, tetap dicetak walau struk
+    // digital dimatikan).
+    final laundry = data.laundry;
+    final awalanLacak = data.awalanLacakLaundry;
+    if (laundry != null) {
+      baris
+        ..add(const BarisTeks('TIKET LAUNDRY', rata: RataStruk.Tengah, tebal: true))
+        ..add(BarisDuaKolom('Layanan', laundry.jenisLayanan));
+      if (laundry.berat != null) {
+        baris.add(BarisDuaKolom('Berat', '${laundry.berat.toString().replaceAll('.', ',')} kg'));
+      }
+      for (final i in laundry.item) {
+        baris.add(BarisDuaKolom(i.nama, '${i.jumlah}'));
+      }
+      if (laundry.parfum != null) {
+        baris.add(BarisDuaKolom('Parfum', laundry.parfum!));
+      }
+      if (laundry.catatan != null) {
+        baris.add(BarisTeks('Catatan: ${laundry.catatan}'));
+      }
+      final selesai = laundry.estimasiSelesaiPada.toLocal();
+      baris
+        ..add(
+          BarisDuaKolom(
+            'Selesai',
+            '${selesai.day} ${_bulan[selesai.month - 1]} ${_Dua(selesai.hour)}.${_Dua(selesai.minute)}',
+          ),
+        )
+        ..add(const BarisGaris());
+    }
     // POS-11: QR & tautan struk digital (bisa dibuat offline; halaman tersedia setelah penjualan terkirim).
-    final awalan = p.awalanStrukDigital;
-    if (awalan != null && awalan.isNotEmpty) {
+    final awalanStruk = p.awalanStrukDigital;
+    final awalan = laundry != null && awalanLacak != null && awalanLacak.isNotEmpty ? awalanLacak : awalanStruk;
+    if (laundry != null && awalan != null && awalan.isNotEmpty) {
+      final tautan = TautanStrukDigital(awalan, jual.Uuid);
+      baris
+        ..add(BarisQr(tautan))
+        ..add(const BarisTeks('Lacak cucian:', rata: RataStruk.Tengah))
+        ..add(BarisTeks(tautan, rata: RataStruk.Tengah));
+    } else if (awalan != null && awalan.isNotEmpty) {
       final tautan = TautanStrukDigital(awalan, jual.Uuid);
       baris
         ..add(BarisQr(tautan))

@@ -623,6 +623,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
               child: Text('Mengambil pre-order ${praPesan.nomor}', style: teks.bodySmall),
             ),
+          if (keranjang.laundry case final laundry?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+              child: Text('Tiket laundry ${laundry.jenisLayanan} · ${laundry.RingkasIsi()}', style: teks.bodySmall),
+            ),
           if (keranjang.reservasi case final reservasi?)
             Padding(
               padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
@@ -716,6 +721,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               keranjang.pelanggan != null &&
               keranjang.praPesan == null &&
               keranjang.reservasi == null &&
+              keranjang.laundry == null &&
               keranjang.pesananMeja == null &&
               _entri.isEmpty) ...[
             const SizedBox(height: TokenJarak.jarak8),

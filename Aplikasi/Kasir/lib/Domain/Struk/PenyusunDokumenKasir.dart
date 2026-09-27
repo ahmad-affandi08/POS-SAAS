@@ -2,6 +2,9 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
+
+import 'package:klien_api/KlienApi.dart';
+
 import '../../Data/PesananMeja.dart';
 import '../Pelanggan/LayananDeposit.dart';
 import '../Penjualan/LayananPreOrder.dart';
@@ -125,6 +128,34 @@ abstract final class PenyusunDokumenKasir {
       const BarisGaris(),
       ...PenyusunStrukPenjualan.SusunKaki(identitas),
     ], bukaLaci: bukaLaci);
+  }
+
+  /// Nota/label laundry (§9.9) dari daftar cucian (online): nomor nota besar, pemilik, layanan, isi, parfum, perkiraan
+  /// selesai, dan QR lacak `/s/{kode}` agar mudah ditempel di kantong cucian.
+  static DokumenStruk SusunNotaLaundry(IdentitasStruk identitas, TiketLaundryPos tiket, {String? awalanLacak}) {
+    final (tanggalSelesai, jamSelesai) = PenyusunStrukPenjualan.TanggalJam(tiket.estimasiSelesaiPada);
+    return DokumenStruk([
+      ...PenyusunStrukPenjualan.SusunKepala(identitas),
+      const BarisGaris(),
+      const BarisTeks('NOTA LAUNDRY', rata: RataStruk.Tengah, tebal: true),
+      BarisTeks(tiket.nomor, rata: RataStruk.Tengah, tebal: true),
+      BarisTeks('Pemilik: ${tiket.namaPelanggan}'),
+      BarisDuaKolom('Layanan', tiket.jenisLayanan),
+      if (tiket.berat != null)
+        BarisDuaKolom('Berat', '${PenyusunStrukPenjualan.Jumlah(tiket.berat!).replaceAll('.', ',')} kg'),
+      for (final i in tiket.item) BarisDuaKolom(i.nama, '${i.jumlah}'),
+      if (tiket.parfum != null) BarisDuaKolom('Parfum', tiket.parfum!),
+      if (tiket.catatan != null) BarisTeks('Catatan: ${tiket.catatan}'),
+      BarisDuaKolom('Selesai', '$tanggalSelesai $jamSelesai', tebal: true),
+      BarisDuaKolom('Status', tiket.labelStatus),
+      const BarisGaris(),
+      if (awalanLacak != null && awalanLacak.isNotEmpty) ...[
+        BarisQr(PenyusunStrukPenjualan.TautanStrukDigital(awalanLacak, tiket.uuid)),
+        const BarisTeks('Lacak cucian:', rata: RataStruk.Tengah),
+        BarisTeks(PenyusunStrukPenjualan.TautanStrukDigital(awalanLacak, tiket.uuid), rata: RataStruk.Tengah),
+      ],
+      ...PenyusunStrukPenjualan.SusunKaki(identitas),
+    ]);
   }
 
   /// Bukti isi deposit pelanggan (F-16d bagian 1): nomor, pelanggan, jumlah per metode, dan saldo sesudah bila saldo

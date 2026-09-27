@@ -26,6 +26,7 @@ class PanelKeranjang extends StatelessWidget {
     this.labelTahan = 'Tahan',
     this.labelKosongkan = 'Batalkan transaksi',
     this.saatPelanggan,
+    this.saatLaundry,
   });
 
   final Keranjang keranjang;
@@ -56,6 +57,9 @@ class PanelKeranjang extends StatelessWidget {
 
   /// F-16a: buka panel pelanggan (F2). Null = tombol pelanggan tidak ditampilkan.
   final VoidCallback? saatPelanggan;
+
+  /// Laundry (§9.9): buka isian tiket laundry. Null = tidak ditampilkan (laundry belum aktif).
+  final VoidCallback? saatLaundry;
 
   static List<String> AmbilRincian(ItemKeranjang b) => [
     if (b.namaSatuan != null && b.namaSatuan!.isNotEmpty) '@ ${b.hargaSatuan.FormatRupiah()}/${b.namaSatuan}',
@@ -144,6 +148,43 @@ class PanelKeranjang extends StatelessWidget {
                                   keranjang.pelanggan!.noHpSamar,
                                   if (keranjang.pelanggan!.namaTier != null) keranjang.pelanggan!.namaTier!,
                                 ].join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (saatLaundry != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                onTap: saatLaundry,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.local_laundry_service_outlined,
+                        size: TokenJarak.ikonSedang,
+                        color: keranjang.laundry == null ? warna.teksSekunder : warna.brand,
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          keranjang.laundry == null
+                              ? 'Tanpa tiket laundry · ketuk untuk mengisi'
+                              : 'Laundry ${keranjang.laundry!.jenisLayanan} · ${keranjang.laundry!.RingkasIsi()}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: teks.bodyMedium,

@@ -5,6 +5,7 @@ export 'Galat/GalatApi.dart';
 export 'KlienPos.dart';
 export 'Model/ModelKatalog.dart';
 export 'Model/ModelKonfigurasi.dart';
+export 'Model/ModelLaundry.dart';
 export 'Model/ModelMeja.dart';
 export 'Model/ModelPembayaranDigital.dart';
 export 'Model/ModelPelanggan.dart';

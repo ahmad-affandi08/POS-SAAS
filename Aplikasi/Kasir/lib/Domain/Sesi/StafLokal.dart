@@ -23,6 +23,9 @@ abstract final class IzinKasir {
 
   /// F-07 mode service: mengelola reservasi (check-in pelanggan juga boleh dengan `penjualan.buat`).
   static const String reservasiKelola = 'reservasi.kelola';
+
+  /// Laundry: mengubah status proses cucian (juga boleh dengan `penjualan.buat`).
+  static const String laundryKelola = 'laundry.kelola';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

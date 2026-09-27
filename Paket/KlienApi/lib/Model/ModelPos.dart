@@ -395,6 +395,7 @@ class DataAwal {
     this.karyawan = const [],
     this.struk,
     this.deposit = const DepositPos(),
+    this.laundry = const LaundryPos(),
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -454,6 +455,9 @@ class DataAwal {
   /// F-16d bagian 1: deposit pelanggan; server lama = tidak berlaku.
   final DepositPos deposit;
 
+  /// Laundry (§9.9): isian tiket laundry di kasir & awalan tautan lacak; server lama = tidak aktif.
+  final LaundryPos laundry;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -483,8 +487,48 @@ class DataAwal {
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
       struk: StrukPos.DariJson(json['Struk']),
       deposit: DepositPos.DariJson(json['Deposit']),
+      laundry: LaundryPos.DariJson(json['Laundry']),
     );
   }
+}
+
+/// Laundry (`data-awal` → `Laundry`, §9.9): isian tiket di kasir aktif, durasi reguler/express (jam) untuk estimasi
+/// selesai, pilihan parfum, dan awalan tautan lacak `/s/{kode}` untuk QR nota.
+class LaundryPos {
+  const LaundryPos({
+    this.aktif = false,
+    this.jamReguler = 48,
+    this.jamExpress = 24,
+    this.parfum = const [],
+    this.awalanLacak,
+  });
+
+  final bool aktif;
+  final int jamReguler;
+  final int jamExpress;
+  final List<String> parfum;
+  final String? awalanLacak;
+
+  static LaundryPos DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    return peta == null
+        ? const LaundryPos()
+        : LaundryPos(
+            aktif: UraiJson.AmbilBenar(peta['Aktif']),
+            jamReguler: UraiJson.AmbilBulat(peta['JamReguler'], 48),
+            jamExpress: UraiJson.AmbilBulat(peta['JamExpress'], 24),
+            parfum: UraiJson.AmbilDaftarTeks(peta['Parfum']),
+            awalanLacak: UraiJson.AmbilTeksAtauNull(peta['AwalanLacak']),
+          );
+  }
+
+  Map<String, Object?> KeJson() => {
+    'Aktif': aktif,
+    'JamReguler': jamReguler,
+    'JamExpress': jamExpress,
+    'Parfum': parfum,
+    'AwalanLacak': awalanLacak,
+  };
 }
 
 /// Deposit pelanggan (`data-awal` → `Deposit`, F-16d bagian 1): berlaku bila paket punya fitur `pelanggan.deposit`;

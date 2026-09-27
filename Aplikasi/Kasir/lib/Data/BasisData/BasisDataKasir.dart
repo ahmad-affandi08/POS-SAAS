@@ -195,7 +195,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi).
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -306,6 +306,15 @@ class BasisDataKasir extends _$BasisDataKasir {
           await m.addColumn(produk, produk.JumlahSesiPaket);
         }
         await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
+      }
+      // Skema 15 (laundry §9.9): blok tiket laundry di penjualan lokal (nota & cetak ulang offline). Aditif; outbox utuh.
+      if (dari >= 2 && dari < 15) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Penjualan') WHERE name = 'Laundry'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(penjualan, penjualan.Laundry);
+        }
       }
     },
     beforeOpen: (detail) async {

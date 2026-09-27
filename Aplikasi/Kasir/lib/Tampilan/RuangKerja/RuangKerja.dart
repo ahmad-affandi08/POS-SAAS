@@ -21,6 +21,7 @@ import '../LembarBukaLaci.dart';
 import '../LembarMutasiKas.dart';
 import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarAmbilPreOrder.dart';
+import '../Penjualan/LembarCucian.dart';
 import '../Penjualan/LembarReservasi.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
@@ -239,6 +240,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
       saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
       saatReservasi: () => _BukaPanelPenjualan(const _PanelPenjualan(reservasi: true)),
+      saatCucian: ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif == true
+          ? () => _BukaPanelPenjualan(const _PanelPenjualan(cucian: true))
+          : null,
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -342,6 +346,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarVoid.judul,
         LembarVoid(key: ValueKey('Void-$uuid'), uuidPenjualan: uuid, kasir: widget.kasir, saatSelesai: _TutupPanel)
             as Widget,
+      ),
+      (_, _, _PanelPenjualan(cucian: true)) => (
+        LembarCucian.judul,
+        LembarCucian(key: const ValueKey('Cucian'), kasir: widget.kasir) as Widget,
       ),
       (_, _, _PanelPenjualan(reservasi: true)) => (
         LembarReservasi.judul,
@@ -535,7 +543,12 @@ enum _PanelShift { Tutup, LaporanX }
 
 /// Panel void (dengan Uuid penjualan) atau retur dari struk (tanpa Uuid) di ruang kerja (F-09).
 class _PanelPenjualan {
-  const _PanelPenjualan({this.uuidPenjualanVoid, this.ambilPreOrder = false, this.reservasi = false});
+  const _PanelPenjualan({
+    this.uuidPenjualanVoid,
+    this.ambilPreOrder = false,
+    this.reservasi = false,
+    this.cucian = false,
+  });
 
   final String? uuidPenjualanVoid;
 
@@ -544,6 +557,9 @@ class _PanelPenjualan {
 
   /// F-07 mode service: antrian reservasi hari ini.
   final bool reservasi;
+
+  /// Laundry: daftar cucian (siap diambil, ubah status, cetak nota).
+  final bool cucian;
 }
 
 /// Laporan X: ringkasan shift berjalan dari data perangkat, bisa dibuka kapan saja dari layar Shift.

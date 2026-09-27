@@ -718,6 +718,74 @@ void main() {
     expect(hadir.status, 'Hadir');
   });
 
+  test('laundry: cari cucian (kosong = siap), ubah status, data awal membawa pengaturan laundry', () async {
+    final dikirim = <http.Request>[];
+    final tiket = {
+      'Uuid': 'P1',
+      'Nomor': 'INV/SLO/261013/K01-0001',
+      'DibuatPada': '2026-10-13T02:25:00Z',
+      'EstimasiSelesaiPada': '2026-10-14T02:25:00Z',
+      'SiapPada': null,
+      'NamaPelanggan': 'Ratna',
+      'NoHp': '0812-3456-7890',
+      'JenisLayanan': 'Express',
+      'Berat': '3.50',
+      'Item': [
+        {'Nama': 'Bed cover', 'Jumlah': 1},
+      ],
+      'Parfum': 'Lavender',
+      'Catatan': null,
+      'Status': 'Dicuci',
+      'LabelStatus': 'Dicuci',
+      'LewatEstimasi': false,
+      'NotifikasiTerkirim': false,
+      'StatusBerikutnya': ['Dikeringkan', 'Disetrika', 'Siap'],
+    };
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return permintaan.method == 'GET'
+          ? Json({
+              'Tiket': [tiket],
+            }, 200)
+          : Json({
+              'Tiket': {
+                ...tiket,
+                'Status': 'Siap',
+                'StatusBerikutnya': ['Diambil'],
+              },
+            }, 200);
+    });
+
+    final daftar = await klien.CariLaundry();
+    expect(dikirim.last.url.path, '/api/pos/v1/laundry');
+    expect(dikirim.last.url.query, isEmpty);
+    expect(daftar.single.berat, '3.50');
+    expect(daftar.single.item.single.nama, 'Bed cover');
+    expect(daftar.single.estimasiSelesaiPada, DateTime.utc(2026, 10, 14, 2, 25));
+
+    await klien.CariLaundry(kata: ' ratna ');
+    expect(dikirim.last.url.queryParameters, {'kata': 'ratna'});
+
+    final siap = await klien.UbahStatusLaundry('P1', status: 'Siap', uuidPengguna: 'U1');
+    expect(dikirim.last.url.path, '/api/pos/v1/laundry/P1/status');
+    expect(jsonDecode(dikirim.last.body), {'Status': 'Siap', 'UuidPengguna': 'U1'});
+    expect(siap.statusBerikutnya, ['Diambil']);
+
+    final awal = DataAwal.DariJson({
+      'Laundry': {
+        'Aktif': true,
+        'JamReguler': 72,
+        'JamExpress': 12,
+        'Parfum': ['Lavender'],
+        'AwalanLacak': 'https://x.id/s/1a.',
+      },
+    });
+    expect(awal.laundry.aktif, isTrue);
+    expect(awal.laundry.jamExpress, 12);
+    expect(LaundryPos.DariJson(awal.laundry.KeJson()).awalanLacak, 'https://x.id/s/1a.');
+    expect(DataAwal.DariJson(const {}).laundry.aktif, isFalse);
+  });
+
   test('v2.05 QRIS dinamis & kirim struk: bentuk permintaan dan urai respons', () async {
     final dikirim = <http.Request>[];
     final klien = BuatKlien((permintaan) async {

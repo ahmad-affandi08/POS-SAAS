@@ -23,6 +23,7 @@ import 'package:kasir/Domain/Pelanggan/LayananSesi.dart';
 import 'package:kasir/Domain/Pelanggan/LayananPelanggan.dart';
 import 'package:kasir/Domain/Penjualan/KonteksPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
+import 'package:kasir/Domain/Penjualan/LayananLaundry.dart';
 import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
 import 'package:kasir/Domain/Penjualan/LayananReservasi.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
@@ -78,10 +79,20 @@ Map<String, Object?> DataAwalUji({
   List<Map<String, Object?>>? karyawan,
   bool deposit = false,
   Map<String, Object?>? nomorUrutIsiDeposit,
+  bool laundry = false,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
   if (deposit) 'Deposit': {'Berlaku': true, 'MinimalIsi': '1000.00', 'MaksimalIsi': '10000000.00'},
+  // Laundry (§9.9): isian tiket laundry di kasir hanya bila diminta test.
+  if (laundry)
+    'Laundry': {
+      'Aktif': true,
+      'JamReguler': 48,
+      'JamExpress': 24,
+      'Parfum': ['Lavender', 'Sakura'],
+      'AwalanLacak': 'https://payou.test/s/1a.',
+    },
   'Pengaturan': {
     'BatasKasKeluar': '200000.00',
     'ShiftBersama': shiftBersama,
@@ -297,6 +308,7 @@ class LingkunganUji {
     jam: () => jam,
   );
   late final LayananReservasi reservasi = LayananReservasi(klien: klien, penjualan: penjualan);
+  late final LayananLaundry laundry = LayananLaundry(klien: klien, jam: () => jam);
   late final LayananSinkron sinkron = LayananSinkron(
     klien: klien,
     repositori: repositori,

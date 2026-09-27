@@ -58,6 +58,9 @@ abstract final class KunciPengaturan {
   /// F-16d bagian 1: pengaturan deposit pelanggan (JSON `{Berlaku, MinimalIsi, MaksimalIsi}`).
   static const String deposit = 'Deposit';
 
+  /// Laundry (§9.9): pengaturan laundry (JSON `{Aktif, JamReguler, JamExpress, Parfum, AwalanLacak}`).
+  static const String laundry = 'Laundry';
+
   /// F-18: daftar staf pelayan (JSON `[{Uuid, Nama, Jabatan}]`).
   static const String karyawan = 'Karyawan';
 
@@ -205,6 +208,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.bukaLaciPerluPin, data.bukaLaciPerluPin ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
     await SimpanPengaturan(KunciPengaturan.deposit, jsonEncode(data.deposit.KeJson()));
+    await SimpanPengaturan(KunciPengaturan.laundry, jsonEncode(data.laundry.KeJson()));
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);

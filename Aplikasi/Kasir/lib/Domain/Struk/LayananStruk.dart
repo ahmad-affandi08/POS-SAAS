@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:inti/Inti.dart';
+import 'package:klien_api/KlienApi.dart';
 
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
 import '../Pelanggan/LayananDeposit.dart';
+import '../Penjualan/Keranjang.dart';
 import '../Penjualan/KonteksPenjualan.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
@@ -51,6 +55,8 @@ class LayananStruk {
       pembayaran: pembayaran,
       namaPelanggan: namaPelanggan,
       labelPoin: labelPoin,
+      laundry: baris.Laundry == null ? null : LaundryKeranjang.DariJson(jsonDecode(baris.Laundry!)),
+      awalanLacakLaundry: baris.Laundry == null ? null : (await KonteksPenjualan.MuatLaundry(repositori)).awalanLacak,
     );
     final laci = bukaLaci && profil.bukaLaciTunai && pembayaran.any((b) => b.Jenis == JenisMetodeBayar.tunai);
     final dokumen = PenyusunStrukPenjualan.Susun(
@@ -113,6 +119,18 @@ class LayananStruk {
         preOrder,
         cetakUlang: cetakUlang,
         bukaLaci: bukaLaci && profil.bukaLaciTunai && preOrder.uangMukaTunai,
+      ),
+    );
+  }
+
+  /// Nota/label laundry (§9.9) dari daftar cucian; QR lacak memakai awalan dari data awal.
+  Future<void> CetakNotaLaundry(TiketLaundryPos tiket) async {
+    final profil = await _WajibProfil();
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(
+      PenyusunDokumenKasir.SusunNotaLaundry(
+        await IdentitasStruk.Muat(repositori),
+        tiket,
+        awalanLacak: (await KonteksPenjualan.MuatLaundry(repositori)).awalanLacak,
       ),
     );
   }

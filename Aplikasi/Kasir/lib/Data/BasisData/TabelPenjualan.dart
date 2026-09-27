@@ -29,6 +29,9 @@ class Penjualan extends Table {
   TextColumn get UuidPenyetujuDiskon => text().nullable()();
   TextColumn get Catatan => text().nullable()();
 
+  /// Laundry (§9.9, skema 15): blok tiket laundry (JSON `LaundryKeranjang`) untuk nota & cetak ulang offline.
+  TextColumn get Laundry => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

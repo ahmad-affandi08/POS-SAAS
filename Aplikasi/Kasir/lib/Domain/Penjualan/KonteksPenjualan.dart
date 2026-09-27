@@ -115,6 +115,7 @@ class KonteksPenjualan {
     this.batasHariLewatJatuhTempo = 0,
     this.kirimDapurLangsung = false,
     this.deposit = const DepositPos(),
+    this.laundry = const LaundryPos(),
   });
 
   final String? uuidOutlet;
@@ -151,6 +152,9 @@ class KonteksPenjualan {
 
   /// F-16d bagian 1: deposit pelanggan berlaku (fitur paket) & batas isi per transaksi.
   final DepositPos deposit;
+
+  /// Laundry (§9.9): isian tiket laundry di keranjang, durasi estimasi, parfum, awalan tautan lacak.
+  final LaundryPos laundry;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -226,6 +230,7 @@ class KonteksPenjualan {
           int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.batasHariLewatJatuhTempo) ?? '') ?? 0,
       kirimDapurLangsung: (await RuteDapur.Muat(repositori)).stasiun.isNotEmpty,
       deposit: await MuatDeposit(repositori),
+      laundry: await MuatLaundry(repositori),
     );
   }
 
@@ -233,6 +238,12 @@ class KonteksPenjualan {
   static Future<DepositPos> MuatDeposit(RepositoriKasir repositori) async {
     final teks = await repositori.AmbilPengaturan(KunciPengaturan.deposit);
     return teks == null || teks.isEmpty ? const DepositPos() : DepositPos.DariJson(jsonDecode(teks));
+  }
+
+  /// Pengaturan laundry tersimpan dari data awal (tidak ada = tidak aktif).
+  static Future<LaundryPos> MuatLaundry(RepositoriKasir repositori) async {
+    final teks = await repositori.AmbilPengaturan(KunciPengaturan.laundry);
+    return teks == null || teks.isEmpty ? const LaundryPos() : LaundryPos.DariJson(jsonDecode(teks));
   }
 
   /// Definisi promo dari server; definisi yang tidak bisa dibaca aplikasi versi ini dilewati (null).

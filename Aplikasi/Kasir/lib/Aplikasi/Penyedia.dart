@@ -40,6 +40,7 @@ import '../Domain/Pelanggan/LayananPelanggan.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
+import '../Domain/Penjualan/LayananLaundry.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
 import '../Domain/Penjualan/LayananReservasi.dart';
 import '../Domain/Penjualan/LayananQrisDinamis.dart';
@@ -367,6 +368,10 @@ final penyediaLayananPreOrder = Provider<LayananPreOrder>(
     penjualan: ref.watch(penyediaLayananPenjualan),
     jam: ref.watch(penyediaJam),
   ),
+);
+
+final penyediaLayananLaundry = Provider<LayananLaundry>(
+  (ref) => LayananLaundry(klien: ref.watch(penyediaKlienPos), jam: ref.watch(penyediaJam)),
 );
 
 final penyediaLayananReservasi = Provider<LayananReservasi>(
