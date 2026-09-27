@@ -32,21 +32,30 @@ it('setiap halaman bawaan punya judul dan deskripsi SEO', function (): void {
 });
 
 it('tidak ada dua blok sejenis berurutan dengan bentuk sama (D-25)', function (): void {
+    // Pelanggaran dikumpulkan dulu, lalu diasersi sekali. Versi sebelumnya hanya memanggil `expect()` di dalam
+    // `if`, sehingga begitu tidak ada blok sejenis yang berurutan test ini tidak melakukan asersi apa pun —
+    // Pest menandainya "risky" dan job CI gagal walau tidak ada test yang benar-benar salah. Aturan yang
+    // dijaga tetap sama; yang berubah hanya cara melaporkannya supaya tidak bergantung pada isi data.
+    $pelanggar = [];
+
     foreach (KontenSitusBawaan::AmbilHalaman() as $slug => $isi) {
         $sebelumnya = null;
 
         foreach ($isi['Bagian'] as $i => $blok) {
             $jenis = $blok['Jenis'];
 
-            if ($sebelumnya !== null && $sebelumnya['Jenis'] === $jenis) {
-                // Dua blok sejenis hanya boleh berdampingan bila bentuknya memang berbeda.
-                expect($blok['TataLetak'] ?? null)
-                    ->not->toBe($sebelumnya['TataLetak'] ?? null, "Halaman {$slug} blok {$i}: dua blok {$jenis} berurutan dengan bentuk sama.");
+            // Dua blok sejenis hanya boleh berdampingan bila bentuknya memang berbeda.
+            if ($sebelumnya !== null
+                && $sebelumnya['Jenis'] === $jenis
+                && ($blok['TataLetak'] ?? null) === ($sebelumnya['TataLetak'] ?? null)) {
+                $pelanggar[] = "Halaman {$slug} blok {$i}: dua blok {$jenis} berurutan dengan bentuk sama.";
             }
 
             $sebelumnya = $blok;
         }
     }
+
+    expect($pelanggar)->toBe([]);
 });
 
 it('halaman fitur tidak lagi berisi tiga grid keunggulan berturut-turut (D-25)', function (): void {
