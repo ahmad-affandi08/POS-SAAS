@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
 
-import TataLetakAplikasi, { CariMenuProdukAktif, CekMenuAktif, SaringMenuTerlihat } from './TataLetakAplikasi';
+import TataLetakAplikasi, {
+    CariMenuProdukAktif,
+    CariSubMenuAktif,
+    CekMenuAktif,
+    SaringMenuTerlihat,
+} from './TataLetakAplikasi';
 
 let propsHalaman: PropsBersamaAplikasi;
 let urlHalaman = '/kelola';
@@ -126,7 +131,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(screen.queryByRole('link', { name: 'Bayar tagihan di menu Langganan' })).toBeNull();
     });
 
-    it('F-03: grup menu Produk tampil sebagai sub-menu; Impor produk hanya untuk produk.kelola', () => {
+    it('F-03: grup menu Produk tampil sebagai sub-menu berisi kerja katalog harian', () => {
         propsHalaman = BuatProps({}, ['produk.lihat']);
         urlHalaman = '/kelola/kategori';
         render(<TataLetakAplikasi judul="Kategori">isi</TataLetakAplikasi>);
@@ -146,11 +151,21 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
     });
 
     it('F-03: sub-menu memilih awalan terpanjang dan tersembunyi di luar grup Produk', () => {
-        expect(CariMenuProdukAktif('/kelola/produk/impor/01J9?x=1')).toBe('/kelola/produk/impor');
         expect(CariMenuProdukAktif('/kelola/produk/01J9/harga')).toBe('/kelola/produk');
         expect(CariMenuProdukAktif('/kelola/produk?kata=kopi')).toBe('/kelola/produk');
+        // D-27: Impor produk pindah ke Pengaturan, jadi jalurnya kembali ke sub-menu Produk.
+        expect(CariMenuProdukAktif('/kelola/produk/impor/01J9?x=1')).toBe('/kelola/produk');
         expect(CariMenuProdukAktif('/kelola/produk-lain')).toBeNull();
         expect(CariMenuProdukAktif('/kelola/outlet')).toBeNull();
+
+        // Awalan terpanjang diuji pada pasangan bersarang yang masih ada di menu: Promo vs Klaim promo pemasok.
+        const pelanggan = SaringMenuTerlihat({ Pemilik: true, Izin: [] }).find(
+            ({ menu }) => menu.label === 'Pelanggan',
+        );
+        expect(CariSubMenuAktif(pelanggan?.sub ?? [], '/kelola/promo/klaim-pemasok?dari=2026-01-01')).toBe(
+            '/kelola/promo/klaim-pemasok',
+        );
+        expect(CariSubMenuAktif(pelanggan?.sub ?? [], '/kelola/promo/01J9')).toBe('/kelola/promo');
 
         propsHalaman = BuatProps({}, ['produk.lihat']);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);

@@ -77,13 +77,14 @@ type ItemMenu = {
 type GrupMenu = ItemMenu & { labelSub: string; sub: ItemMenu[] };
 
 // F-03: grup menu "Produk". Tampil sebagai sub-menu saat salah satu halamannya dibuka.
-// D-27: master yang diatur sekali (Satuan, Pilihan, Kelompok pajak, Daftar harga, Stasiun dapur) pindah ke Pengaturan.
+// D-27: master yang diatur sekali (Satuan, Pilihan, Kelompok pajak, Daftar harga, Stasiun dapur) dan alat impor
+// massal pindah ke Pengaturan. Impor tetap punya tombol "Impor dari Excel" di halaman Produk, sama seperti
+// Impor stok awal di halaman Stok awal.
 const menuProduk: ItemMenu[] = [
     { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
     { label: 'Kategori', href: '/kelola/kategori', izin: IzinTenant.ProdukLihat },
     // F-16d bagian 2: paket sesi (produk Jasa yang dijual sebagai N sesi).
     { label: 'Paket sesi', href: '/kelola/paket-sesi', izin: IzinTenant.ProdukLihat, fitur: 'pelanggan.paket-sesi' },
-    { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 
 // F-05a: grup menu "Persediaan" (DesainF05a E). D-27: stok awal, impornya, dan pengaturan persediaan pindah ke

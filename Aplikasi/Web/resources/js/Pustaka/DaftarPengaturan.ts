@@ -79,6 +79,12 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 izin: IzinTenant.ProdukLihat,
                 fitur: 'pos.kds',
             },
+            {
+                label: 'Impor produk',
+                keterangan: 'Unggah banyak produk sekaligus dari Excel/CSV, beserta riwayat imporannya.',
+                href: '/kelola/produk/impor',
+                izin: IzinTenant.ProdukKelola,
+            },
         ],
     },
     {

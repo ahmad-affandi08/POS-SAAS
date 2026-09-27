@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { daftarPengaturan, SaringPengaturan } from '@/Pustaka/DaftarPengaturan';
@@ -102,5 +105,19 @@ describe('Anggaran navigasi back-office (D-27)', () => {
             .map((item) => `${item.judul}: ${item.href}`);
 
         expect(kosong).toEqual([]);
+    });
+});
+
+describe('Alat impor tetap punya pintu masuk di halaman subjeknya (D-27)', () => {
+    // Impor massal tinggal di Pengaturan, bukan di menu samping. Kalau tombol di halaman subjeknya hilang,
+    // satu-satunya jalan tinggal Pengaturan & Ctrl+K — jadi tombol itu bagian dari keputusan ini, bukan hiasan.
+    it.each([
+        ['resources/js/Halaman/Kelola/Produk/Daftar.tsx', '/impor'],
+        ['resources/js/Halaman/Kelola/Persediaan/StokAwal/Daftar.tsx', '/impor'],
+    ])('%s menautkan halaman impornya', (berkas, jalur) => {
+        const isi = readFileSync(join(process.cwd(), berkas), 'utf8');
+
+        expect(isi).toContain(`${jalur}`);
+        expect(isi).toContain('Impor dari Excel');
     });
 });

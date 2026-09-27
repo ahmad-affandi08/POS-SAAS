@@ -485,6 +485,8 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 
 **Halaman Pengaturan punya kotak cari (v2.44).** 25 butir di 8 grup terlalu banyak untuk dipindai mata. Pencariannya mencocokkan nama grup, label, **dan keterangan** sekaligus (mengetik "pajak" ikut menemukan butir yang hanya menyebut pajak di keterangannya), tidak membedakan huruf besar/kecil, dan tidak pernah menembus penyaringan izin. Logikanya `SaringPengaturan()` di `Pustaka/DaftarPengaturan.ts` — fungsi murni supaya bisa diuji tanpa merender halaman. Hasil kosong memberi pesan yang bisa ditindaklanjuti (tanpa ilustrasi, karena ini hasil saring, bukan data kosong) dan jumlah hasil dibacakan lewat `aria-live`.
 
+**Alat impor massal ikut di Pengaturan, bukan di menu harian (v2.45).** Impor produk dan Impor stok awal sama-sama tinggal di Pengaturan, karena keduanya dipakai saat menyiapkan atau memperbarui data secara borongan — bukan kerja harian. Sebelumnya Impor stok awal pindah tetapi Impor produk tertinggal di grup Produk, tanpa alasan yang bisa dipertahankan. **Syaratnya:** setiap alat impor wajib tetap punya tombol di halaman subjeknya ("Impor dari Excel" di halaman Produk dan halaman Stok awal), karena di situlah orang mencarinya; tombol itu bagian dari keputusan ini, bukan hiasan, dan dijaga `AnggaranNavigasiTes`.
+
 **Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
 
 
