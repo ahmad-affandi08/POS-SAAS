@@ -68,9 +68,14 @@ final class ProspekSitus extends ModelDasar
         ];
     }
 
-    /** HMAC stabil (kunci aplikasi) untuk membatasi pengiriman per nomor/IP tanpa menyimpan nilai mentah. */
+    /**
+     * HMAC stabil untuk membatasi pengiriman per nomor/IP tanpa menyimpan nilai mentah. Kunci tersendiri
+     * `situs.KunciSidik` (audit F-21) agar tidak ikut berubah saat APP_KEY dirotasi; kosong = APP_KEY.
+     */
     public static function BuatSidik(string $nilai): string
     {
-        return hash_hmac('sha256', $nilai, (string) config('app.key'));
+        $kunci = config('situs.KunciSidik');
+
+        return hash_hmac('sha256', $nilai, is_string($kunci) && $kunci !== '' ? $kunci : (string) config('app.key'));
     }
 }

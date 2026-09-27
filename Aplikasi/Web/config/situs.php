@@ -16,4 +16,8 @@ return [
 
     // Pratinjau draf halaman dari konsol: tautan bertanda tangan berlaku sekian menit.
     'MenitPratinjau' => 30,
+
+    // Audit F-21: kunci HMAC sidik nomor/IP prospek, terpisah dari APP_KEY agar rotasi APP_KEY tidak mengacak sidik
+    // (batas kiriman & pencarian). Kosong = memakai APP_KEY (perilaku lama).
+    'KunciSidik' => env('SITUS_KUNCI_SIDIK'),
 ];

@@ -228,3 +228,17 @@ it('pengingat WhatsApp H-1 sekali; izin: supervisor boleh, tanpa izin 403; reser
     BantuanOrganisasi::Masuk($this, $lain['Pemilik'], $lain['Tenant']->Id)->post("/kelola/reservasi/{$r->Uuid}/status", ['Status' => 'Hadir'])->assertNotFound();
     expect(Tenant::query()->count())->toBeGreaterThanOrEqual(2);
 });
+
+it('audit F-19: batas hari ke depan eksklusif — tepat tengah malam setelah hari terakhir ditolak TerlaluJauh', function (): void {
+    $k = SiapkanSalon($this);
+    $slug = $k['Tenant']->Slug;
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    PengaturanReservasi::query()->create(['OnlineAktif' => true, 'KonfirmasiOtomatis' => true, 'MinimalMenitSebelum' => 60, 'BatasHariKeDepan' => 1]);
+    app(KonteksTenant::class)->Kosongkan();
+    $isian = ['Outlet' => $k['Outlet']->Uuid, 'UuidLayanan' => $k['Layanan']->Uuid, 'NamaPelanggan' => 'Ayu Lestari', 'NoHp' => '081299887766', 'Setuju' => '1'];
+
+    // Hari ini 12 Oktober; batas 1 hari = sampai 13 Oktober 23.59. 14 Oktober 00.00 sudah terlalu jauh.
+    $this->post("/{$slug}/reservasi", ['Tanggal' => '2026-10-14', 'Jam' => '00:00'] + $isian)
+        ->assertSessionHasErrors(['Tanggal' => 'Reservasi paling jauh 1 hari ke depan.']);
+    $this->post("/{$slug}/reservasi", ['Tanggal' => '2026-10-13', 'Jam' => '09:00'] + $isian)->assertSessionHasNoErrors();
+});

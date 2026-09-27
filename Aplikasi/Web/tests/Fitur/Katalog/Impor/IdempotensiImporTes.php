@@ -13,6 +13,8 @@ use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\ProdukHarga;
 use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Tenant\Enum\StatusLangganan;
 use Illuminate\Bus\UniqueLock;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -248,4 +250,29 @@ describe('F-03 BR-03.6 impor idempoten & bisa dilanjutkan', function (): void {
             ->and($laporan[1][1])->toBe('IDM-2')
             ->and($laporan[1][6])->toBe('Gagal diimpor');
     });
+});
+
+describe('audit F-03: otorisasi diperiksa ulang di tiap potongan tugas antrean', function (): void {
+    it('pengunggah dinonaktifkan atau langganan ditangguhkan setelah impor dimulai → tugas berhenti tanpa menulis produk', function (string $perubahan): void {
+        $t = BantuanKatalog::SiapkanTenantProduk();
+        $masuk = BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+        $impor = BantuanImpor::Unggah($masuk, BantuanImpor::BuatCsv(BarisIdempotensi(3)));
+        BantuanImpor::Petakan($masuk, $impor)->assertSessionHasNoErrors();
+        Queue::fake();
+        $masuk->post("/kelola/produk/impor/{$impor->Uuid}/terapkan")->assertSessionHasNoErrors();
+        $impor->refresh();
+
+        if ($perubahan === 'nonaktif') {
+            DB::table('TenantPengguna')->where('IdTenant', $impor->IdTenant)->where('IdPengguna', $impor->IdPengguna)->update(['Status' => StatusKeanggotaan::Nonaktif->value]);
+        } else {
+            DB::table('Langganan')->where('IdTenant', $impor->IdTenant)->update(['Status' => StatusLangganan::Ditangguhkan->value]);
+        }
+
+        JalankanTugasTerapkan($impor);
+
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        expect(Produk::query()->count())->toBe(0)
+            ->and($impor->refresh()->Status)->toBe(StatusImporProduk::Gagal)
+            ->and($impor->PesanGalat)->toStartWith('Impor dihentikan karena '.($perubahan === 'nonaktif' ? 'pengguna yang memulai sudah tidak aktif' : 'langganan usaha sedang ditangguhkan'));
+    })->with(['nonaktif', 'ditangguhkan']);
 });

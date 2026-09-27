@@ -13,6 +13,7 @@ use App\Http\Permintaan\Pengelola\MasukPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,13 @@ final class SesiKontroler extends Kontroler
 {
     private const MAKS_PERCOBAAN = 5;
 
+    /** Audit F-24: batas gagal global per IP (banyak email dari satu IP) & per akun (dari banyak IP), per 15 menit. */
+    private const MAKS_GAGAL_PER_IP = 20;
+
+    private const MAKS_GAGAL_PER_AKUN = 10;
+
+    private const DETIK_JENDELA = 900;
+
     public function TampilkanMasuk(): Response
     {
         return Inertia::render('Pengelola/Masuk');
@@ -35,11 +43,22 @@ final class SesiKontroler extends Kontroler
     {
         $email = Str::lower(trim($permintaan->string('Email')->toString()));
         $kunciBatas = 'pengelola-masuk:'.$email.'|'.$permintaan->ip();
+        $kunciIp = 'pengelola-masuk-ip:'.$permintaan->ip();
+        $kunciAkun = 'pengelola-masuk-akun:'.hash('sha256', $email);
 
-        if (RateLimiter::tooManyAttempts($kunciBatas, self::MAKS_PERCOBAAN)) {
-            throw ValidationException::withMessages([
-                'Email' => 'Terlalu banyak percobaan masuk. Coba lagi dalam '.RateLimiter::availableIn($kunciBatas).' detik.',
-            ]);
+        foreach ([[$kunciBatas, self::MAKS_PERCOBAAN], [$kunciIp, self::MAKS_GAGAL_PER_IP], [$kunciAkun, self::MAKS_GAGAL_PER_AKUN]] as [$kunci, $maks]) {
+            if (RateLimiter::tooManyAttempts($kunci, $maks)) {
+                if ($kunci !== $kunciBatas) {
+                    Log::warning('Percobaan masuk konsol pengelola diblokir sementara (dugaan penebakan kata sandi).', [
+                        'Batas' => $kunci === $kunciIp ? 'PerIp' : 'PerAkun',
+                        'Ip' => $permintaan->ip(),
+                    ]);
+                }
+
+                throw ValidationException::withMessages([
+                    'Email' => 'Terlalu banyak percobaan masuk. Coba lagi dalam '.RateLimiter::availableIn($kunci).' detik.',
+                ]);
+            }
         }
 
         $berhasil = Auth::guard(SesiPengelola::GUARD)->attempt([
@@ -50,6 +69,8 @@ final class SesiKontroler extends Kontroler
 
         if (! $berhasil) {
             RateLimiter::hit($kunciBatas);
+            RateLimiter::hit($kunciIp, self::DETIK_JENDELA);
+            RateLimiter::hit($kunciAkun, self::DETIK_JENDELA);
 
             throw ValidationException::withMessages(['Email' => 'Email atau kata sandi salah.']);
         }

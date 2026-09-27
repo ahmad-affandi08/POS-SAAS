@@ -99,6 +99,11 @@ class LayananSinkron {
           return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, offline: true, tersambung: false);
         } on GalatApi catch (galat) {
           dijawabServer = true;
+          if (galat.kode == 'PermintaanSedangDiproses') {
+            // Audit F-12: batch yang sama masih diproses server (kiriman ganda); coba lagi nanti, bukan ditolak.
+            await repositori.JadwalkanUlang(batch, _jam(), galat.pesan);
+            return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: true);
+          }
           if (galat.CekPerangkatDitolak()) {
             await perangkat.CabutLokal();
             return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, perangkatDicabut: true, tersambung: true);

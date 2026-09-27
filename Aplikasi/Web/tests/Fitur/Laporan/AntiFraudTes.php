@@ -89,3 +89,25 @@ it('kasir dengan void tunai cepat, void tinggi, buka laci manual, dan kas kurang
     $kasir = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Kasir);
     BantuanOrganisasi::Masuk($this, $kasir, $k['Tenant']->Id)->get($url)->assertForbidden();
 });
+
+it('audit F-15/F-16: kas kurang dibebankan ke kasir pemilik shift walau ditutup supervisor; void berjam mundur tidak dihitung void cepat', function (): void {
+    $k = BantuanPenjualan::Siapkan($this, 'Minimarket Adil Sukoharjo');
+    $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+    $baris = ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]];
+
+    // Jam perangkat mundur: waktu void 5 menit SEBELUM penjualan (masih dalam toleransi server).
+    $p = BantuanPenjualan::Jual($this, $k, $baris);
+    $mundur = CarbonImmutable::instance($p->DibuatOfflinePada)->subMinutes(5);
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemVoid($k, $p, ['DivoidPada' => $mundur])]))->toBe([['Diterima', null]]);
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $shift = Shift::query()->firstOrFail();
+    expect($shift->DibukaOleh)->toBe($k['Kasir']->Id);
+    Shift::query()->whereKey($shift->Id)->update(['DitutupOleh' => $k['Supervisor']->Id, 'DitutupPada' => now(), 'Selisih' => '-50000.00', 'KasSeharusnya' => '538500.00', 'KasAktual' => '488500.00']);
+
+    BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id);
+    $this->get('/kelola/laporan/penjualan?dari=2026-10-01&sampai=2026-10-07&tab=anti-fraud')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+        ->where('Isi', fn ($isi): bool => collect($isi)->contains(fn ($b): bool => $b['NamaKasir'] === $k['Kasir']->Nama
+            && $b['ShiftSelisihKurang'] === 1 && $b['SelisihKurang'] === '50000.00' && $b['JumlahVoid'] === 1 && $b['VoidCepatTunai'] === 0)
+            && ! collect($isi)->contains(fn ($b): bool => $b['NamaKasir'] === $k['Supervisor']->Nama && $b['ShiftSelisihKurang'] > 0)));
+});

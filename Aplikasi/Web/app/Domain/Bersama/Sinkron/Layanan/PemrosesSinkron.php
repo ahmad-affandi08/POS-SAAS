@@ -12,6 +12,8 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
 use App\Domain\Bersama\Sinkron\Kontrak\PenjagaAsalItemSinkron;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Database\DetectsConcurrencyErrors;
+use Throwable;
 
 /**
  * Memproses batch outbox POS berurutan (PRD §18: FIFO per perangkat, shift sebelum transaksinya). Setiap item
@@ -22,9 +24,17 @@ use Illuminate\Contracts\Container\Container;
  * Audit P0 F-01: tiap item dikreditkan ke perangkat asalnya (`PenjagaAsalItemSinkron`): item boleh membawa
  * `UuidPerangkatAsal` (outbox perangkat lama yang dikirim setelah aktivasi ulang) dan perangkat dicabut hanya boleh
  * mengirim item yang dibuat sebelum dicabut. Item jalur pemulihan yang diterima ditandai untuk ditinjau.
+ *
+ * Audit F-07: item yang sama dikirim dua perangkat/permintaan bersamaan bisa membuat MySQL memilih salah satu transaksi
+ * sebagai korban deadlock/lock wait. Item itu diulang (maks. [PERCOBAAN_KONKURENSI] kali, jeda singkat acak); karena
+ * setiap item berjalan di transaksinya sendiri dan idempoten per Uuid, ulangan menghasilkan `Duplikat`, bukan HTTP 500.
  */
 final class PemrosesSinkron
 {
+    use DetectsConcurrencyErrors;
+
+    public const PERCOBAAN_KONKURENSI = 3;
+
     /** @var array<string, PenanganItemSinkron>|null */
     private ?array $penangan = null;
 
@@ -43,10 +53,28 @@ final class PemrosesSinkron
         $hasil = [];
 
         foreach ($item as $satu) {
-            $hasil[] = $this->ProsesSatu($satu, $konteks);
+            $hasil[] = $this->ProsesDenganUlangan($satu, $konteks);
         }
 
         return $hasil;
+    }
+
+    /**
+     * @param  array{Jenis: string, Uuid: string, Data: array<string, mixed>, UuidPerangkatAsal?: string|null}  $item
+     */
+    private function ProsesDenganUlangan(array $item, DataKonteksSinkron $konteks): HasilItemSinkron
+    {
+        for ($percobaan = 1; ; $percobaan++) {
+            try {
+                return $this->ProsesSatu($item, $konteks);
+            } catch (Throwable $galat) {
+                if ($percobaan >= self::PERCOBAAN_KONKURENSI || ! $this->causedByConcurrencyError($galat)) {
+                    throw $galat;
+                }
+
+                usleep(random_int(20_000, 120_000) * $percobaan);
+            }
+        }
     }
 
     /**

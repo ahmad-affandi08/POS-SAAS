@@ -12,6 +12,8 @@ use App\Domain\Situs\Enum\StatusProspek;
 use App\Domain\Situs\Kueri\PengaturanSitusBerlaku;
 use App\Domain\Situs\Model\ProspekSitus;
 use App\Domain\Situs\Surel\ProspekSitusBaru;
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -40,6 +42,35 @@ final class TerimaProspekSitus
 
         $sidikNoHp = ProspekSitus::BuatSidik($noHp);
 
+        // Audit F-20: hitung + simpan di dalam kunci per nomor agar kiriman bersamaan tidak sama-sama lolos batas.
+        try {
+            $p = Cache::lock('prospek-situs:'.$sidikNoHp, 10)->block(5, fn (): ProspekSitus => $this->Simpan($isian, $noHp, $sidikNoHp, $ip));
+        } catch (LockTimeoutException) {
+            throw new PelanggaranAturanBisnis('SudahDikirim', 'Pesan dari nomor ini sedang kami proses. Tim kami akan segera menghubungi Anda.', 'NoHp', 429);
+        }
+
+        $pengaturan = $this->pengaturan->Ambil();
+        $tujuan = $pengaturan['Prospek']['EmailNotifikasi'] ?? $pengaturan['Kontak']['Email'] ?? null;
+
+        if (is_string($tujuan) && $tujuan !== '') {
+            Mail::to($tujuan)->queue(new ProspekSitusBaru(
+                $p->Jenis->AmbilLabel(),
+                $p->Nama,
+                $p->NamaUsaha,
+                $p->JenisUsaha,
+                $p->Kota,
+                AlamatDomain::BuatUrl((string) config('pengelola.Domain'), '/situs/prospek'),
+            ));
+        }
+
+        return $p;
+    }
+
+    /**
+     * @param  Isian  $isian
+     */
+    private function Simpan(array $isian, string $noHp, string $sidikNoHp, string $ip): ProspekSitus
+    {
         if (ProspekSitus::query()->where('SidikNoHp', $sidikNoHp)->where('DibuatPada', '>=', now()->subDay())->count() >= self::BATAS_PER_NOMOR) {
             throw new PelanggaranAturanBisnis('SudahDikirim', 'Pesan dari nomor ini sudah kami terima. Tim kami akan segera menghubungi Anda.', 'NoHp', 429);
         }
@@ -59,20 +90,6 @@ final class TerimaProspekSitus
         $p->PersetujuanPada = now();
         $p->SidikIp = ProspekSitus::BuatSidik($ip);
         $p->save();
-
-        $pengaturan = $this->pengaturan->Ambil();
-        $tujuan = $pengaturan['Prospek']['EmailNotifikasi'] ?? $pengaturan['Kontak']['Email'] ?? null;
-
-        if (is_string($tujuan) && $tujuan !== '') {
-            Mail::to($tujuan)->queue(new ProspekSitusBaru(
-                $p->Jenis->AmbilLabel(),
-                $p->Nama,
-                $p->NamaUsaha,
-                $p->JenisUsaha,
-                $p->Kota,
-                AlamatDomain::BuatUrl((string) config('pengelola.Domain'), '/situs/prospek'),
-            ));
-        }
 
         return $p;
     }

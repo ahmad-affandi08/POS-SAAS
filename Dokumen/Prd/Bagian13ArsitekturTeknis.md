@@ -200,7 +200,7 @@ final class SelesaikanPenjualan
 
 **State machine dokumen:** backed enum dengan method `BisaBerubahKe()`, dan setiap transisi dicatat di tabel `RiwayatStatusDokumen`.
 
-**Idempotensi:** semua endpoint mutasi dari POS menerima header `Idempotency-Key` (= `UuidKlien`). Unique index `(IdTenant, UuidKlien)`.
+**Idempotensi:** semua endpoint mutasi dari POS menerima header `Idempotency-Key` (= `UuidKlien`). Unique index `(IdTenant, UuidKlien)`. *(v2.32, audit F-12)*: server menegakkan header ini di mutasi `/api/pos/v1/*` lewat tabel `KunciIdempotensi` per (tenant, perangkat, kunci) selama 24 jam: permintaan sama = respons tersimpan diputar ulang (`Idempotency-Replayed: true`), kunci sama dengan isi berbeda = 409 `KunciIdempotensiBentrok`, masih diproses = 409 `PermintaanSedangDiproses`; tanpa header tetap diproses (kompatibel mundur). Aplikasi kasir mengirim kunci unik per permintaan; item outbox tetap idempoten per Uuid.
 
 **Konkurensi stok:** update `SaldoStok` memakai `SELECT ... FOR UPDATE` per (produk, gudang), dengan urutan penguncian konsisten (urut `IdProduk`) untuk menghindari deadlock. Nomor dokumen server-side memakai tabel `NomorUrutDokumen` dengan row lock.
 

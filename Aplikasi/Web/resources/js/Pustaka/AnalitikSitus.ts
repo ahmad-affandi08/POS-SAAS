@@ -45,6 +45,33 @@ export function SimpanPilihanCookie(pilihan: PilihanCookie): void {
     }
 }
 
+/** Audit F-22: peristiwa untuk membuka ulang bilah persetujuan dari tautan "Pengaturan cookie" di kaki situs. */
+export const PERISTIWA_ATUR_COOKIE = 'payou:atur-cookie';
+
+export function BukaPengaturanCookie(): void {
+    window.dispatchEvent(new Event(PERISTIWA_ATUR_COOKIE));
+}
+
+/**
+ * Hapus cookie analitik pihak pertama (GA4 `_ga*`, `_gid`, `_gat*`; Meta `_fbp`, `_fbc`) di domain ini dan domain
+ * induknya setelah pengunjung menarik persetujuan.
+ */
+export function HapusCookieAnalitik(): void {
+    const nama = document.cookie
+        .split(';')
+        .map((c) => c.split('=')[0]?.trim() ?? '')
+        .filter((n) => /^(_ga|_gid|_gat|_fbp|_fbc)/.test(n));
+    const bagian = window.location.hostname.split('.');
+    const domain = bagian.map((_, i) => bagian.slice(i).join('.')).filter((d) => d.includes('.'));
+
+    for (const n of nama) {
+        document.cookie = `${n}=; Max-Age=0; path=/`;
+        for (const d of domain) {
+            document.cookie = `${n}=; Max-Age=0; path=/; domain=.${d}`;
+        }
+    }
+}
+
 function PasangSkrip(src: string): void {
     if (document.querySelector(`script[src="${src}"]`)) {
         return;

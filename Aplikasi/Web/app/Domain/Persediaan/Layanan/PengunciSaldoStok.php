@@ -9,10 +9,11 @@ use App\Domain\Persediaan\Model\SaldoStok;
 
 /**
  * Mengunci baris SaldoStok (kunci L3, DesainF05a C.2) urut (IdProduk, IdGudang):
- * 1. upsert baris nol untuk semua pasangan dalam satu pernyataan terurut. `INSERT … ON DUPLICATE KEY UPDATE`
- *    langsung mengambil kunci X baris yang sudah ada maupun yang baru (tanpa naik S→X yang rawan deadlock), dan
- *    tidak mengubah isi baris yang sudah ada;
- * 2. membacanya kembali dengan `FOR UPDATE` urut (IdProduk, IdGudang).
+ * 1. baris yang sudah ada dikunci langsung dengan `FOR UPDATE` urut (IdProduk, IdGudang);
+ * 2. hanya pasangan yang belum punya baris dibuat lewat upsert baris nol (`INSERT … ON DUPLICATE KEY UPDATE`, aman
+ *    bila pemanggil lain membuat baris yang sama bersamaan), lalu dikunci `FOR UPDATE`.
+ * Audit F-07 (test konkurensi dua koneksi): upsert pada baris yang SUDAH ada oleh dua transaksi bersamaan terbukti
+ * bisa deadlock di MySQL, sehingga jalur umum (baris sudah ada) tidak memakai upsert.
  *
  * Publik dan reentran (memanggil ulang di transaksi yang sama aman). Wajib dipanggil di dalam transaksi pemanggil
  * (di luar transaksi kunci langsung lepas).
@@ -36,10 +37,16 @@ final class PengunciSaldoStok
         }
 
         $idTenant = $this->konteks->Wajib();
-        $sekarang = now();
-        $hasil = [];
+        $hasil = $this->KunciAda($urut);
+        $hilang = array_values(array_filter($urut, fn (array $p): bool => ! isset($hasil[SaldoStok::BuatKunciPasangan($p[0], $p[1])])));
 
-        foreach (array_chunk($urut, self::UKURAN_POTONGAN) as $potongan) {
+        if ($hilang === []) {
+            return $hasil;
+        }
+
+        $sekarang = now();
+
+        foreach (array_chunk($hilang, self::UKURAN_POTONGAN) as $potongan) {
             SaldoStok::query()->toBase()->upsert(
                 array_map(fn (array $p): array => [
                     'IdTenant' => $idTenant,
@@ -55,6 +62,17 @@ final class PengunciSaldoStok
                 ['IdTenant'],
             );
         }
+
+        return $hasil + $this->KunciAda($hilang);
+    }
+
+    /**
+     * @param  list<array{int, int}>  $urut
+     * @return array<string, SaldoStok>
+     */
+    private function KunciAda(array $urut): array
+    {
+        $hasil = [];
 
         foreach (array_chunk($urut, self::UKURAN_POTONGAN) as $potongan) {
             $saldo = SaldoStok::query()

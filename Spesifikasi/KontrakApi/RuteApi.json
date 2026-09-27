@@ -1,0 +1,227 @@
+{
+    "DELETE api/pos/v1/pesanan-terbuka/{pesananTerbuka}/kunci-bayar": {
+        "Metode": "DELETE",
+        "Jalur": "api/pos/v1/pesanan-terbuka/{pesananTerbuka}/kunci-bayar",
+        "Nama": "pos.pesanan-terbuka.lepas-kunci-bayar"
+    },
+    "GET api/pemilik/v1/dasbor": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/dasbor",
+        "Nama": "pemilik.dasbor"
+    },
+    "GET api/pemilik/v1/laporan/penjualan": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/laporan/penjualan",
+        "Nama": "pemilik.laporan.penjualan"
+    },
+    "GET api/pemilik/v1/perangkat": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/perangkat",
+        "Nama": "pemilik.perangkat"
+    },
+    "GET api/pemilik/v1/profil": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/profil",
+        "Nama": "pemilik.profil"
+    },
+    "GET api/pemilik/v1/shift": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/shift",
+        "Nama": "pemilik.shift"
+    },
+    "GET api/pos/v1/dapur/tiket": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/dapur/tiket",
+        "Nama": "pos.dapur.tiket"
+    },
+    "GET api/pos/v1/data-awal": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/data-awal",
+        "Nama": "pos.data-awal"
+    },
+    "GET api/pos/v1/katalog": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/katalog",
+        "Nama": "pos.katalog"
+    },
+    "GET api/pos/v1/katalog/gambar/{produk}": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/katalog/gambar/{produk}",
+        "Nama": "pos.katalog.gambar"
+    },
+    "GET api/pos/v1/konfigurasi-aplikasi": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/konfigurasi-aplikasi",
+        "Nama": "pos.konfigurasi-aplikasi"
+    },
+    "GET api/pos/v1/laundry": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/laundry",
+        "Nama": "pos.laundry"
+    },
+    "GET api/pos/v1/logo-struk": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/logo-struk",
+        "Nama": "pos.logo-struk"
+    },
+    "GET api/pos/v1/meja": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/meja",
+        "Nama": "pos.meja"
+    },
+    "GET api/pos/v1/metode-pembayaran/{metodePembayaran}/gambar-qris": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/metode-pembayaran/{metodePembayaran}/gambar-qris",
+        "Nama": "pos.metode-pembayaran.gambar-qris"
+    },
+    "GET api/pos/v1/pelanggan": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pelanggan",
+        "Nama": "pos.pelanggan.cari"
+    },
+    "GET api/pos/v1/pelanggan/{uuidPelanggan}/deposit": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pelanggan/{uuidPelanggan}/deposit",
+        "Nama": "pos.pelanggan.deposit"
+    },
+    "GET api/pos/v1/pelanggan/{uuidPelanggan}/poin": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pelanggan/{uuidPelanggan}/poin",
+        "Nama": "pos.pelanggan.poin"
+    },
+    "GET api/pos/v1/pelanggan/{uuidPelanggan}/sesi": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pelanggan/{uuidPelanggan}/sesi",
+        "Nama": "pos.pelanggan.sesi"
+    },
+    "GET api/pos/v1/penjualan/cari": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/penjualan/cari",
+        "Nama": "pos.penjualan.cari"
+    },
+    "GET api/pos/v1/pesan-keluar/{uuidPesanKeluar}": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesan-keluar/{uuidPesanKeluar}",
+        "Nama": "pos.pesan-keluar.tampil"
+    },
+    "GET api/pos/v1/pesan-sendiri": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesan-sendiri",
+        "Nama": "pos.pesan-sendiri"
+    },
+    "GET api/pos/v1/pesanan-penjualan": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesanan-penjualan",
+        "Nama": "pos.pesanan-penjualan.cari"
+    },
+    "GET api/pos/v1/pesanan-terbuka": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesanan-terbuka",
+        "Nama": "pos.pesanan-terbuka"
+    },
+    "GET api/pos/v1/promo": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/promo",
+        "Nama": "pos.promo"
+    },
+    "GET api/pos/v1/qris/{tagihanQris}": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/qris/{tagihanQris}",
+        "Nama": "pos.qris.status"
+    },
+    "GET api/pos/v1/reservasi": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/reservasi",
+        "Nama": "pos.reservasi"
+    },
+    "POST api/pemilik/v1/keluar": {
+        "Metode": "POST",
+        "Jalur": "api/pemilik/v1/keluar",
+        "Nama": "pemilik.keluar"
+    },
+    "POST api/pemilik/v1/masuk": {
+        "Metode": "POST",
+        "Jalur": "api/pemilik/v1/masuk",
+        "Nama": "pemilik.masuk"
+    },
+    "POST api/pemilik/v1/masuk/dua-faktor": {
+        "Metode": "POST",
+        "Jalur": "api/pemilik/v1/masuk/dua-faktor",
+        "Nama": "pemilik.masuk.dua-faktor"
+    },
+    "POST api/pos/v1/dapur/tiket/{tiketDapur}/status": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/dapur/tiket/{tiketDapur}/status",
+        "Nama": "pos.dapur.tiket.status"
+    },
+    "POST api/pos/v1/kasir/masuk-pin": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/kasir/masuk-pin",
+        "Nama": "pos.kasir.masuk-pin"
+    },
+    "POST api/pos/v1/laundry/{tiket}/status": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/laundry/{tiket}/status",
+        "Nama": "pos.laundry.status"
+    },
+    "POST api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk",
+        "Nama": "pos.penjualan.kirim-struk"
+    },
+    "POST api/pos/v1/perangkat/aktivasi": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/perangkat/aktivasi",
+        "Nama": "pos.perangkat.aktivasi"
+    },
+    "POST api/pos/v1/perangkat/profil-hardware": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/perangkat/profil-hardware",
+        "Nama": "pos.perangkat.profil-hardware"
+    },
+    "POST api/pos/v1/pesan-sendiri/{pesananSendiri}/terima": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/pesan-sendiri/{pesananSendiri}/terima",
+        "Nama": "pos.pesan-sendiri.terima"
+    },
+    "POST api/pos/v1/pesan-sendiri/{pesananSendiri}/tolak": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/pesan-sendiri/{pesananSendiri}/tolak",
+        "Nama": "pos.pesan-sendiri.tolak"
+    },
+    "POST api/pos/v1/pesanan-terbuka/{pesananTerbuka}/kunci-bayar": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/pesanan-terbuka/{pesananTerbuka}/kunci-bayar",
+        "Nama": "pos.pesanan-terbuka.kunci-bayar"
+    },
+    "POST api/pos/v1/qris": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/qris",
+        "Nama": "pos.qris.buat"
+    },
+    "POST api/pos/v1/qris/{tagihanQris}/batal": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/qris/{tagihanQris}/batal",
+        "Nama": "pos.qris.batal"
+    },
+    "POST api/pos/v1/reservasi/{reservasi}/hadir": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/reservasi/{reservasi}/hadir",
+        "Nama": "pos.reservasi.hadir"
+    },
+    "POST api/pos/v1/sinkron/kirim": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/sinkron/kirim",
+        "Nama": "pos.sinkron.kirim"
+    },
+    "POST api/pos/v1/voucher/lepas": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/voucher/lepas",
+        "Nama": "pos.voucher.lepas"
+    },
+    "POST api/pos/v1/voucher/pesan": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/voucher/pesan",
+        "Nama": "pos.voucher.pesan"
+    }
+}

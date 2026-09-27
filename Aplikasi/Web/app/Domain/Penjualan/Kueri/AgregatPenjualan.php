@@ -430,7 +430,7 @@ final class AgregatPenjualan
             ->selectRaw('`Penjualan`.`IdPengguna` AS `IdKasir`, COUNT(*) AS `Jumlah`, COALESCE(SUM('.self::KOTOR.'), 0) AS `Kotor`')
             ->selectRaw('SUM(CASE WHEN `VoidPenjualan`.`Id` IS NULL THEN 0 ELSE 1 END) AS `JumlahVoid`')
             ->selectRaw('COALESCE(SUM(CASE WHEN `VoidPenjualan`.`Id` IS NULL THEN 0 ELSE `VoidPenjualan`.`Nominal` END), 0) AS `NilaiVoid`')
-            ->selectRaw('SUM(CASE WHEN `VoidPenjualan`.`Id` IS NOT NULL AND `VoidPenjualan`.`RefundTunai` > 0 AND TIMESTAMPDIFF(SECOND, `Penjualan`.`DibuatOfflinePada`, `VoidPenjualan`.`DivoidPada`) <= ? THEN 1 ELSE 0 END) AS `VoidCepat`', [$menitCepat * 60])
+            ->selectRaw('SUM(CASE WHEN `VoidPenjualan`.`Id` IS NOT NULL AND `VoidPenjualan`.`RefundTunai` > 0 AND TIMESTAMPDIFF(SECOND, `Penjualan`.`DibuatOfflinePada`, `VoidPenjualan`.`DivoidPada`) BETWEEN 0 AND ? THEN 1 ELSE 0 END) AS `VoidCepat`', [$menitCepat * 60])
             ->groupBy('Penjualan.IdPengguna')
             ->toBase()
             ->get() as $b) {

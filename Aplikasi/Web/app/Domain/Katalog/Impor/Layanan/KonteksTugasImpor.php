@@ -6,6 +6,8 @@ namespace App\Domain\Katalog\Impor\Layanan;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Layanan\PenjagaOtorisasiTugas;
 use Closure;
 use Illuminate\Contracts\Auth\Factory as PabrikAutentikasi;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -15,6 +17,10 @@ use Illuminate\Contracts\Auth\StatefulGuard;
  * sebelum menyentuh data (scope `MilikTenant` membatasi semua kueri ke tenant itu). Pengunggah impor dijadikan
  * pelaku audit & pengubah `RiwayatHarga` bila tugas berjalan di luar request (worker antrean). Konteks sebelumnya
  * dipulihkan setelah selesai.
+ *
+ * Audit F-03: bila `izin` diisi, otorisasi pengunggah diperiksa ulang sebelum setiap potongan (langganan tidak
+ * ditangguhkan, masih anggota aktif, masih berizin). Ditolak = `kerja` tidak dijalankan dan `saatDitolak` dipanggil
+ * dengan alasannya (tugas menggagalkan impor dengan status yang bisa dilanjutkan pengguna berizin).
  */
 final class KonteksTugasImpor
 {
@@ -22,18 +28,37 @@ final class KonteksTugasImpor
         private readonly KonteksTenant $konteks,
         private readonly PencatatAudit $audit,
         private readonly PabrikAutentikasi $autentikasi,
+        private readonly PenjagaOtorisasiTugas $penjaga,
     ) {}
 
     /**
      * @template T
      *
      * @param  Closure(): T  $kerja
-     * @return T
+     * @param  (Closure(string): void)|null  $saatDitolak
+     * @return T|null
      */
-    public function Jalankan(int $idTenant, int $idPengguna, Closure $kerja): mixed
+    public function Jalankan(int $idTenant, int $idPengguna, Closure $kerja, ?IzinTenant $izin = null, ?Closure $saatDitolak = null): mixed
     {
         $tenantSebelumnya = $this->konteks->Ambil();
         $this->konteks->Atur($idTenant);
+
+        if ($izin !== null) {
+            $alasan = $this->penjaga->AmbilAlasanDitolak($idTenant, $idPengguna, $izin);
+
+            if ($alasan !== null) {
+                try {
+                    if ($saatDitolak !== null) {
+                        $saatDitolak($alasan);
+                    }
+                } finally {
+                    $tenantSebelumnya === null ? $this->konteks->Kosongkan() : $this->konteks->Atur($tenantSebelumnya);
+                }
+
+                return null;
+            }
+        }
+
         $guard = $this->autentikasi->guard('web');
         $pelakuDiatur = false;
 

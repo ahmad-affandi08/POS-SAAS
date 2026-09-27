@@ -57,7 +57,7 @@ final class JadwalkanUlangReservasi
 
         foreach ($kosong() as $idKaryawan) {
             try {
-                $hasil = Cache::lock("reservasi-staf:{$idTenant}:{$idKaryawan}", 10)->block(5, function () use ($kosong, $idKaryawan, $reservasi, $mulai, $durasi, $idPengguna): ?Reservasi {
+                $hasil = Cache::lock("reservasi-staf:{$idTenant}:{$idKaryawan}", BuatReservasi::DETIK_KUNCI)->block(10, function () use ($kosong, $idKaryawan, $reservasi, $mulai, $durasi, $idPengguna): ?Reservasi {
                     if (! in_array($idKaryawan, $kosong(), true)) {
                         return null;
                     }

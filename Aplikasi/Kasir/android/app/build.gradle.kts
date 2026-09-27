@@ -1,8 +1,26 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Audit F-04: build rilis wajib ditandatangani kunci unggah produksi (Play App Signing), bukan kunci debug.
+// Sumber kunci: android/key.properties (tidak di-commit, lihat .gitignore) atau variabel lingkungan CI
+// PAYOU_KEYSTORE_FILE, PAYOU_KEYSTORE_PASSWORD, PAYOU_KEY_ALIAS, PAYOU_KEY_PASSWORD.
+val propertiKunci = Properties().apply {
+    val berkas = rootProject.file("key.properties")
+    if (berkas.exists()) {
+        FileInputStream(berkas).use { load(it) }
+    }
+}
+
+fun nilaiKunci(properti: String, lingkungan: String): String? =
+    (propertiKunci.getProperty(properti) ?: System.getenv(lingkungan))?.takeIf { it.isNotBlank() }
+
+val berkasKeystore = nilaiKunci("storeFile", "PAYOU_KEYSTORE_FILE")
 
 android {
     namespace = "id.possaas.kasir"
@@ -29,11 +47,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (berkasKeystore != null) {
+            create("rilis") {
+                storeFile = file(berkasKeystore)
+                storePassword = nilaiKunci("storePassword", "PAYOU_KEYSTORE_PASSWORD")
+                keyAlias = nilaiKunci("keyAlias", "PAYOU_KEY_ALIAS")
+                keyPassword = nilaiKunci("keyPassword", "PAYOU_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Tanpa kunci rilis, build rilis dihentikan (lihat tugas pemeriksa di bawah), bukan diam-diam memakai debug.
+            signingConfig = if (berkasKeystore != null) signingConfigs.getByName("rilis") else null
         }
     }
 }
@@ -46,4 +74,15 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// Audit F-04: hentikan build rilis yang tidak punya kunci penandatangan produksi (sebelum kompilasi dimulai).
+gradle.taskGraph.whenReady {
+    val minta = allTasks.any { it.project == project && (it.name == "assembleRelease" || it.name == "bundleRelease") }
+    if (berkasKeystore == null && minta) {
+        throw GradleException(
+            "Build rilis butuh kunci penandatangan produksi: isi android/key.properties " +
+                "(storeFile, storePassword, keyAlias, keyPassword) atau variabel PAYOU_KEYSTORE_*.",
+        )
+    }
 }

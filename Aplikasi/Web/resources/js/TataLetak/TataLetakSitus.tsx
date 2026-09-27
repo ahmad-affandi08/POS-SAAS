@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
 import PersetujuanCookie from '@/Komponen/Situs/PersetujuanCookie';
+import { AdaAnalitik, BukaPengaturanCookie } from '@/Pustaka/AnalitikSitus';
 import TautanSitus from '@/Komponen/Situs/TautanSitus';
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/Komponen/Ui/sheet';
@@ -229,6 +230,11 @@ function KakiSitus({ situs }: { situs: DataSitus }) {
                         {situs.Slogan ? ` · ${situs.Slogan}` : ''}
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
+                        {AdaAnalitik(situs.Analitik) ? (
+                            <button type="button" onClick={BukaPengaturanCookie} className="hover:text-permukaan">
+                                Pengaturan cookie
+                            </button>
+                        ) : null}
                         {unduhan.map(([kunci, tautan]) => (
                             <a
                                 key={kunci}

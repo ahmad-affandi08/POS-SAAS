@@ -44,7 +44,7 @@
 | GET | `/api/pos/v1/kds/tiket?stasiun=&sejak=` | Antrean tiket dapur (mode KDS) |
 | POST | `/api/pos/v1/gudang/penerimaan-barang`, `/gudang/transfer-stok`, `/gudang/stok-opname` | Operasi gudang dari aplikasi |
 
-**Kontrak API** didokumentasikan otomatis dalam OpenAPI (`Spesifikasi/OpenApi/PosV1.yaml`, dihasilkan Scramble di CI). Model DTO Dart di-generate/diverifikasi dari spesifikasi tersebut. CI gagal jika kontrak berubah tanpa kenaikan versi.
+**Kontrak API** didokumentasikan otomatis dalam OpenAPI (`Spesifikasi/OpenApi/PosV1.yaml`, dihasilkan Scramble di CI). Model DTO Dart di-generate/diverifikasi dari spesifikasi tersebut. CI gagal jika kontrak berubah tanpa kenaikan versi. *(v2.32, audit F-13: sebelum Scramble dipasang, gerbang minimum = test `tests/Arsitektur/KontrakApiTes.php` terhadap baseline `Spesifikasi/KontrakApi/RuteApi.json`: rute POS/Pemilik yang sudah dirilis tidak boleh dihapus, diganti metode/jalur, atau diganti nama.)*
 
 ### 16.4 Webhook Keluar (X7)
 

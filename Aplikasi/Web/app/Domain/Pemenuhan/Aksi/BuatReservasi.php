@@ -31,12 +31,17 @@ use Illuminate\Support\Str;
  * F-07 mode service: buat reservasi. Layanan harus jasa berdurasi (online: juga `TampilOnline`); slot dihitung ulang
  * di server (`SlotReservasi`) sehingga jam di luar jadwal staf atau yang bentrok ditolak. Staf kosong = staf pertama
  * yang kosong pada jam itu. Pembuatan dikunci per staf (kunci cache atomik) agar dua pemesan tidak mendapat slot yang
- * sama. Reservasi online berstatus `Menunggu` bila toko tidak mengaktifkan konfirmasi otomatis, selain itu
+ * sama; reservasi online juga dikunci per nomor HP (kuota aktif per nomor). Reservasi online berstatus `Menunggu` bila toko tidak mengaktifkan konfirmasi otomatis, selain itu
  * `Dikonfirmasi`. Pelanggan ditautkan bila nomor HP sudah terdaftar. Nomor `RS/YYYY/MM/NNNN`.
  */
 final class BuatReservasi
 {
     public const MAKS_AKTIF_PER_HP = 3;
+
+    /** Masa berlaku kunci (detik) dibuat longgar agar tidak lepas sebelum transaksi selesai saat DB lambat (audit F-18). */
+    public const DETIK_KUNCI = 30;
+
+    private const DETIK_TUNGGU_KUNCI = 10;
 
     public function __construct(
         private readonly LayananReservasi $layanan,
@@ -80,21 +85,43 @@ final class BuatReservasi
         $sekarang = CarbonImmutable::now();
         $palingCepat = $online ? $sekarang->addMinutes($atur->MinimalMenitSebelum) : $sekarang->subMinutes(5);
 
-        if ($online && $mulai->gt($sekarang->setTimezone($zona)->startOfDay()->addDays($atur->BatasHariKeDepan + 1))) {
+        // Batas atas eksklusif (audit F-19): tepat tengah malam setelah hari terakhir yang diizinkan sudah terlalu jauh.
+        if ($online && $mulai->gte($sekarang->setTimezone($zona)->startOfDay()->addDays($atur->BatasHariKeDepan + 1))) {
             throw new PelanggaranAturanBisnis('TerlaluJauh', "Reservasi paling jauh {$atur->BatasHariKeDepan} hari ke depan.", 'Tanggal');
         }
 
-        // Anti-spam reservasi online: paling banyak MAKS_AKTIF_PER_HP reservasi mendatang per nomor HP.
-        if ($online && Reservasi::query()->where('NoHp', $noHp)->whereIn('Status', StatusReservasi::AmbilNilaiMemakaiSlot())->where('MulaiPada', '>', $sekarang)->count() >= self::MAKS_AKTIF_PER_HP) {
-            throw new PelanggaranAturanBisnis('TerlaluBanyak', 'Nomor ini sudah punya '.self::MAKS_AKTIF_PER_HP.' reservasi aktif. Hubungi toko untuk menambah.', 'NoHp', 429);
+        if (! $online) {
+            return $this->BuatDiSlot($idTenant, $data, $layanan, $idStaf, $atur, $palingCepat, $mulai, $noHp, $nama, $online);
         }
 
+        // Anti-spam reservasi online: paling banyak MAKS_AKTIF_PER_HP reservasi mendatang per nomor HP. Hitung + buat
+        // di dalam kunci per nomor (audit F-18) agar permintaan bersamaan ke staf/jam berbeda tidak sama-sama lolos.
+        try {
+            return Cache::lock('reservasi-hp:'.$idTenant.':'.hash('sha256', $noHp), self::DETIK_KUNCI)->block(self::DETIK_TUNGGU_KUNCI, function () use ($idTenant, $data, $layanan, $idStaf, $atur, $palingCepat, $mulai, $noHp, $nama, $online, $sekarang): Reservasi {
+                if (Reservasi::query()->where('NoHp', $noHp)->whereIn('Status', StatusReservasi::AmbilNilaiMemakaiSlot())->where('MulaiPada', '>', $sekarang)->count() >= self::MAKS_AKTIF_PER_HP) {
+                    throw new PelanggaranAturanBisnis('TerlaluBanyak', 'Nomor ini sudah punya '.self::MAKS_AKTIF_PER_HP.' reservasi aktif. Hubungi toko untuk menambah.', 'NoHp', 429);
+                }
+
+                return $this->BuatDiSlot($idTenant, $data, $layanan, $idStaf, $atur, $palingCepat, $mulai, $noHp, $nama, $online);
+            });
+        } catch (LockTimeoutException) {
+            throw new PelanggaranAturanBisnis('SedangDiproses', 'Reservasi dengan nomor ini sedang diproses. Coba lagi sebentar.', 'NoHp', 429);
+        }
+    }
+
+    /**
+     * Ambil staf kosong pertama di jam itu (kunci per staf, slot dihitung ulang di dalam kunci).
+     *
+     * @param  array{Id: int, Nama: string, DurasiMenit: int}  $layanan
+     */
+    private function BuatDiSlot(int $idTenant, DataReservasi $data, array $layanan, ?int $idStaf, PengaturanReservasi $atur, CarbonImmutable $palingCepat, CarbonImmutable $mulai, string $noHp, string $nama, bool $online): Reservasi
+    {
         $kandidat = $this->CariStafKosong($data, $layanan['DurasiMenit'], $idStaf, $atur, $palingCepat);
         $idPelanggan = $this->pelanggan->CariIdDariNoHp($noHp);
 
         foreach ($kandidat as $idKaryawan) {
             try {
-                $reservasi = Cache::lock("reservasi-staf:{$idTenant}:{$idKaryawan}", 10)->block(5, function () use ($data, $layanan, $idKaryawan, $atur, $palingCepat, $mulai, $noHp, $nama, $idPelanggan, $online): ?Reservasi {
+                $reservasi = Cache::lock("reservasi-staf:{$idTenant}:{$idKaryawan}", self::DETIK_KUNCI)->block(self::DETIK_TUNGGU_KUNCI, function () use ($data, $layanan, $idKaryawan, $atur, $palingCepat, $mulai, $noHp, $nama, $idPelanggan, $online): ?Reservasi {
                     // Dihitung ulang di dalam kunci: slot bisa baru saja diambil pemesan lain.
                     if (! in_array($idKaryawan, $this->CariStafKosong($data, $layanan['DurasiMenit'], $idKaryawan, $atur, $palingCepat), true)) {
                         return null;

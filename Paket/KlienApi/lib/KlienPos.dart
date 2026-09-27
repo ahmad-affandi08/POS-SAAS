@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:inti/Inti.dart';
 
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
@@ -38,6 +39,7 @@ class KlienPos {
   final Duration batasWaktu;
   final FutureOr<int?> Function()? ambilJumlahOutbox;
   final http.Client _klien;
+  final PembuatUlid _ulid = PembuatUlid();
 
   Future<HasilAktivasi> AktifkanPerangkat({required String kode, required String platform, String? versiOs}) async {
     final json = await _Kirim('POST', 'perangkat/aktivasi', {
@@ -307,8 +309,15 @@ class KlienPos {
     String jalur,
     Map<String, Object?>? isi, {
     bool pakaiToken = true,
+    String? kunciIdempotensi,
   }) async {
-    final respons = await _KirimMentah(metode, jalur, isi, pakaiToken: pakaiToken);
+    final respons = await _KirimMentah(
+      metode,
+      jalur,
+      isi,
+      pakaiToken: pakaiToken,
+      header: {'Idempotency-Key': ?kunciIdempotensi},
+    );
     final json = _UraiJson(respons.body);
 
     if (respons.statusCode >= 400) {
@@ -330,6 +339,12 @@ class KlienPos {
     final alamat = alamatDasar.resolve('api/pos/v1/$jalur');
     final permintaan = http.Request(metode, alamat)
       ..headers.addAll({'Accept': terima, 'X-Versi-Aplikasi': versiAplikasi, ...header});
+    // Audit F-12 (aturan emas #13): setiap mutasi berperangkat membawa `Idempotency-Key` unik per permintaan (kirim
+    // ulang di lapisan HTTP diputar ulang server). Item outbox tetap idempoten lewat Uuid-nya, sehingga "Coba lagi"
+    // kasir memakai kunci baru dan benar-benar diproses ulang.
+    if (pakaiToken && metode != 'GET' && !permintaan.headers.containsKey('Idempotency-Key')) {
+      permintaan.headers['Idempotency-Key'] = 'pos-${_ulid.Buat()}';
+    }
 
     if (pakaiToken) {
       final token = await ambilToken();

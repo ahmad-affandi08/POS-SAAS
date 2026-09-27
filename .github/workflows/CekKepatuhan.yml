@@ -69,6 +69,8 @@ jobs:
           coverage: none
       - name: Pasang dependensi (sesuai composer.lock)
         run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Audit keamanan dependensi PHP (audit F-11)
+        run: composer audit --no-dev --locked
       - name: Pint + Larastan level 8
         run: composer analisis
       - name: Pest (Unit, Fitur di MySQL, Arsitektur)
@@ -88,6 +90,8 @@ jobs:
           cache: npm
           cache-dependency-path: Aplikasi/Web/package-lock.json
       - run: npm ci
+      - name: Audit keamanan dependensi npm produksi (audit F-11)
+        run: npm audit --omit=dev --audit-level=high
       - name: tsc + ESLint (penamaan) + Prettier + Vitest
         run: npm run periksa
       - name: Build produksi
@@ -109,3 +113,44 @@ jobs:
         run: dart pub global activate melos 7.8.2
       - name: dart format + flutter analyze + test (AdaptorPerangkat, Inti, MesinKasir + vektor uji, SistemDesain, Kasir, Pemilik)
         run: melos run periksa
+
+  # Audit F-25: artefak rilis tunggal (PHP tanpa dev + public/build) yang terikat SHA commit, dengan checksum SHA-256.
+  # Deploy memakai berkas ini, bukan build manual di tempat lain.
+  rilis:
+    name: Artefak rilis (SHA ${{ github.sha }})
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [konvensi, backend, web, flutter]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Aplikasi/Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Aplikasi/Web/package-lock.json
+      - name: Dependensi produksi PHP
+        run: composer install --no-dev --no-interaction --no-progress --prefer-dist --classmap-authoritative
+      - name: Build frontend
+        run: npm ci && npm run build
+      - name: Paket rilis + checksum
+        run: |
+          NAMA="payou-web-${GITHUB_SHA}"
+          tar --exclude=node_modules --exclude=tests --exclude=.env --exclude='.env.*' --exclude=storage/logs \
+            -czf "../../${NAMA}.tar.gz" .
+          cd ../..
+          sha256sum "${NAMA}.tar.gz" > "${NAMA}.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payou-web-${{ github.sha }}
+          path: |
+            payou-web-${{ github.sha }}.tar.gz
+            payou-web-${{ github.sha }}.tar.gz.sha256
+          retention-days: 30

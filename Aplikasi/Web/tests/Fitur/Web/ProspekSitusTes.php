@@ -252,3 +252,16 @@ describe('retensi & analitik', function (): void {
         expect(app(PengaturanSitusBerlaku::class)->Ambil()['Prospek']['EmailNotifikasi'])->toBe('sales@payou.test');
     });
 });
+
+it('audit F-21: sidik nomor/IP memakai kunci situs.KunciSidik bila diisi (tidak ikut rotasi APP_KEY), bawaan APP_KEY', function (): void {
+    config(['situs.KunciSidik' => null]);
+    $lama = ProspekSitus::BuatSidik('6281234567890');
+    expect($lama)->toBe(hash_hmac('sha256', '6281234567890', (string) config('app.key')));
+
+    config(['situs.KunciSidik' => 'kunci-sidik-khusus-uji']);
+    $baru = ProspekSitus::BuatSidik('6281234567890');
+    config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
+
+    expect($baru)->toBe(hash_hmac('sha256', '6281234567890', 'kunci-sidik-khusus-uji'))
+        ->and(ProspekSitus::BuatSidik('6281234567890'))->toBe($baru);
+});

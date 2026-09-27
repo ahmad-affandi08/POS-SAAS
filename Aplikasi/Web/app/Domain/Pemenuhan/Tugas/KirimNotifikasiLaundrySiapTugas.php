@@ -19,6 +19,10 @@ use Illuminate\Support\Facades\Log;
  * Laundry (§9.9): WhatsApp "cucian siap diambil" dengan tautan lacak `/s/{kode}` (teks, atau templat resmi
  * `NamaTemplatLaundrySiap` bila diatur). Payload hanya `IdTenant` & `IdTiket`; nomor pelanggan tidak ikut antrean
  * maupun log. Dikirim sekali (`NotifikasiSiapPada`); tiket yang sudah diambil/dibatalkan dilewati.
+ *
+ * Audit F-17 (paling banyak sekali): kiriman diklaim atomik lewat `NotifikasiSiapDiprosesPada` sebelum memanggil
+ * penyedia. Penyedia menjawab gagal = klaim dilepas (boleh dicoba lagi); galat tak terduga (pesan mungkin sudah
+ * terkirim) = klaim dipertahankan sehingga percobaan ulang antrean tidak mengirim pesan ganda.
  */
 final class KirimNotifikasiLaundrySiapTugas implements ShouldQueue
 {
@@ -46,6 +50,13 @@ final class KirimNotifikasiLaundrySiapTugas implements ShouldQueue
                 return;
             }
 
+            $klaim = TiketLaundry::query()->whereKey($t->Id)->whereNull('NotifikasiSiapPada')->whereNull('NotifikasiSiapDiprosesPada')
+                ->update(['NotifikasiSiapDiprosesPada' => now()]);
+
+            if ($klaim !== 1) {
+                return;
+            }
+
             $toko = $profil->Ambil($this->idTenant)['Nama'];
             $tautan = url('/s/'.KodeStrukDigital::Buat($this->idTenant, $t->Uuid));
             $templat = $pengirim->CekResmi() ? $whatsapp->AmbilTemplatLaundrySiap() : null;
@@ -63,6 +74,7 @@ final class KirimNotifikasiLaundrySiapTugas implements ShouldQueue
                 return;
             }
 
+            TiketLaundry::query()->whereKey($t->Id)->whereNull('NotifikasiSiapPada')->update(['NotifikasiSiapDiprosesPada' => null]);
             Log::warning('Notifikasi laundry siap gagal dikirim.', ['IdTenant' => $this->idTenant, 'IdTiket' => $t->Id, 'Penyedia' => $pengirim->AmbilKode()]);
         } finally {
             $sebelumnya === null ? $konteks->Kosongkan() : $konteks->Atur($sebelumnya);

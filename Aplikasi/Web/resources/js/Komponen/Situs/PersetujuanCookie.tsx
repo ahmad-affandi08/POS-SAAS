@@ -5,7 +5,9 @@ import {
     AdaAnalitik,
     AmbilPilihanCookie,
     CatatTampilanHalaman,
+    HapusCookieAnalitik,
     MuatAnalitik,
+    PERISTIWA_ATUR_COOKIE,
     SimpanPilihanCookie,
     type PengaturanAnalitik,
     type PilihanCookie,
@@ -13,12 +15,22 @@ import {
 
 /**
  * Bilah persetujuan cookie analitik (bagian B, UU PDP): tampil hanya bila konsol memasang GA4/Meta Pixel dan
- * pengunjung belum memilih. Tanpa "Terima", tidak ada skrip pihak ketiga yang dimuat.
+ * pengunjung belum memilih. Tanpa "Terima", tidak ada skrip pihak ketiga yang dimuat. Audit F-22: tautan
+ * "Pengaturan cookie" di kaki situs membuka bilah lagi; menarik persetujuan (Tolak setelah Terima) menghapus cookie
+ * analitik dan memuat ulang halaman agar skrip yang sudah berjalan berhenti.
  */
 export default function PersetujuanCookie({ analitik }: { analitik: PengaturanAnalitik | undefined }) {
     // Situs dirender di peramban (tanpa SSR), jadi pilihan tersimpan bisa dibaca saat render pertama.
     const [pilihan, AturPilihan] = useState<PilihanCookie | null>(AmbilPilihanCookie);
+    const [diubah, AturDiubah] = useState(false);
     const ada = AdaAnalitik(analitik);
+
+    useEffect(() => {
+        const Buka = () => AturDiubah(true);
+        window.addEventListener(PERISTIWA_ATUR_COOKIE, Buka);
+
+        return () => window.removeEventListener(PERISTIWA_ATUR_COOKIE, Buka);
+    }, []);
 
     useEffect(() => {
         if (!ada || pilihan !== 'terima') {
@@ -30,13 +42,20 @@ export default function PersetujuanCookie({ analitik }: { analitik: PengaturanAn
         return router.on('navigate', (peristiwa) => CatatTampilanHalaman(analitik, peristiwa.detail.page.url));
     }, [ada, analitik, pilihan]);
 
-    if (!ada || pilihan !== null) {
+    if (!ada || (pilihan !== null && !diubah)) {
         return null;
     }
 
     const Pilih = (nilai: PilihanCookie) => {
+        const tarik = pilihan === 'terima' && nilai === 'tolak';
         SimpanPilihanCookie(nilai);
         AturPilihan(nilai);
+        AturDiubah(false);
+
+        if (tarik) {
+            HapusCookieAnalitik();
+            window.location.reload();
+        }
     };
 
     return (
@@ -47,6 +66,9 @@ export default function PersetujuanCookie({ analitik }: { analitik: PengaturanAn
         >
             <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-isi text-teks-utama">
+                    {pilihan !== null
+                        ? `Pilihan Anda saat ini: ${pilihan === 'terima' ? 'diterima' : 'ditolak'}. `
+                        : ''}
                     Kami memakai cookie analitik untuk memahami cara situs ini dipakai. Anda boleh menolak; situs tetap
                     berfungsi normal.{' '}
                     <a href="/legal/kebijakan-privasi" className="text-brand underline">

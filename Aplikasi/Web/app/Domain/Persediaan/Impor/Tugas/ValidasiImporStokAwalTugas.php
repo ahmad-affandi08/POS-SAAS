@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Persediaan\Impor\Tugas;
 
 use App\Domain\Katalog\Impor\Layanan\KonteksTugasImpor;
+use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Persediaan\Enum\StatusImporStokAwal;
 use App\Domain\Persediaan\Impor\Layanan\PemvalidasiImporStokAwal;
 use App\Domain\Persediaan\Impor\Layanan\PengirimTugasImporStokAwal;
@@ -53,6 +54,8 @@ final class ValidasiImporStokAwalTugas implements ShouldBeUniqueUntilProcessing,
             if (! $pemvalidasi->Jalankan($impor, (int) config('persediaan.Impor.MaksimalDetikPerTugas', 40))) {
                 PengirimTugasImporStokAwal::KirimLanjutan(new self($this->idTenant, $this->idPengguna, $this->idImporStokAwal));
             }
+        }, IzinTenant::PersediaanKelola, function (string $alasan): void {
+            PengirimTugasImporStokAwal::Gagalkan($this->idImporStokAwal, 'Impor dihentikan karena '.$alasan.'. Baris yang sudah diimpor tetap tersimpan; pengguna yang berizin bisa melanjutkan impor.');
         });
     }
 

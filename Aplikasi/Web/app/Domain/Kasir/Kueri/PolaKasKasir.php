@@ -13,8 +13,9 @@ use Illuminate\Database\Query\JoinClause;
 
 /**
  * F-14 anti-fraud (OWN-09): pola kas per kasir dalam rentang tanggal bisnis shift: buka laci manual tanpa transaksi
- * (per pembuka) dan selisih kas tutup shift (per penutup). `SelisihKurang` = jumlah mutlak selisih negatif (uang di laci
- * kurang dari seharusnya).
+ * (per pembuka) dan selisih kas tutup shift. `SelisihKurang` = jumlah mutlak selisih negatif (uang di laci kurang dari
+ * seharusnya). Audit F-15: selisih dikreditkan ke kasir pemilik shift (`DibukaOleh`), bukan ke penutup (supervisor boleh
+ * menutup shift orang lain); shift bersama tidak dibebankan ke satu kasir.
  */
 final class PolaKasKasir
 {
@@ -42,14 +43,15 @@ final class PolaKasKasir
 
         foreach (Shift::query()
             ->whereNotNull('DitutupOleh')
+            ->where('Bersama', false)
             ->whereBetween('TanggalBisnis', $rentang)
             ->when($idOutlet !== null, fn (Builder $k) => $k->whereIn('IdOutlet', $idOutlet ?? []))
-            ->when($idKasir !== null, fn (Builder $k) => $k->where('DitutupOleh', $idKasir))
-            ->selectRaw('`DitutupOleh` AS `IdKasir`, COUNT(*) AS `Jumlah`')
+            ->when($idKasir !== null, fn (Builder $k) => $k->where('DibukaOleh', $idKasir))
+            ->selectRaw('`DibukaOleh` AS `IdKasir`, COUNT(*) AS `Jumlah`')
             ->selectRaw('SUM(CASE WHEN `Selisih` < 0 THEN 1 ELSE 0 END) AS `JumlahKurang`')
             ->selectRaw('COALESCE(SUM(CASE WHEN `Selisih` < 0 THEN -`Selisih` ELSE 0 END), 0) AS `Kurang`')
             ->selectRaw('COALESCE(SUM(CASE WHEN `Selisih` > 0 THEN `Selisih` ELSE 0 END), 0) AS `Lebih`')
-            ->groupBy('DitutupOleh')
+            ->groupBy('DibukaOleh')
             ->toBase()
             ->get() as $b) {
             $hasil[(int) $b->IdKasir] = [

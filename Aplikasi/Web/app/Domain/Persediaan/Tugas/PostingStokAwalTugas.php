@@ -6,6 +6,8 @@ namespace App\Domain\Persediaan\Tugas;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Layanan\PenjagaOtorisasiTugas;
 use App\Domain\Persediaan\Aksi\GagalkanPostingStokAwal;
 use App\Domain\Persediaan\Aksi\PostingStokAwal;
 use App\Domain\Persediaan\Enum\StatusStokAwal;
@@ -41,6 +43,15 @@ final class PostingStokAwalTugas implements ShouldQueue
             $dokumen = StokAwal::query()->find($this->idStokAwal);
 
             if ($dokumen === null || $dokumen->Status !== StatusStokAwal::Memproses) {
+                return;
+            }
+
+            // Audit F-03: otorisasi pemosting diperiksa ulang saat tugas berjalan (bisa berubah sejak dikirim).
+            $alasan = app(PenjagaOtorisasiTugas::class)->AmbilAlasanDitolak($this->idTenant, $this->idPengguna, IzinTenant::PersediaanStokAwalPosting);
+
+            if ($alasan !== null) {
+                $gagalkan->Jalankan($dokumen->Id, 'Posting dihentikan karena '.$alasan.'. Stok dan jurnal tidak berubah.', $this->idPengguna);
+
                 return;
             }
 

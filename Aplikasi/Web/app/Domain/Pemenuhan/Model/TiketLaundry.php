@@ -35,6 +35,7 @@ use LogicException;
  * @property Carbon|null $DiambilPada
  * @property int|null $DiambilOleh
  * @property Carbon|null $NotifikasiSiapPada
+ * @property Carbon|null $NotifikasiSiapDiprosesPada
  * @property Carbon|null $DibuatPada
  */
 final class TiketLaundry extends ModelDasar
@@ -57,6 +58,7 @@ final class TiketLaundry extends ModelDasar
         'DiambilPada' => null,
         'DiambilOleh' => null,
         'NotifikasiSiapPada' => null,
+        'NotifikasiSiapDiprosesPada' => null,
     ];
 
     /**
@@ -72,6 +74,7 @@ final class TiketLaundry extends ModelDasar
             'SiapPada' => 'datetime',
             'DiambilPada' => 'datetime',
             'NotifikasiSiapPada' => 'datetime',
+            'NotifikasiSiapDiprosesPada' => 'datetime',
         ];
     }
 

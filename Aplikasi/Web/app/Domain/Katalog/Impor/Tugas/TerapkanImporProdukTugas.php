@@ -9,6 +9,7 @@ use App\Domain\Katalog\Impor\Layanan\KonteksTugasImpor;
 use App\Domain\Katalog\Impor\Layanan\PenerapImpor;
 use App\Domain\Katalog\Impor\Layanan\PengirimTugasImpor;
 use App\Domain\Katalog\Impor\Model\ImporProduk;
+use App\Domain\Organisasi\Enum\IzinTenant;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -51,6 +52,8 @@ final class TerapkanImporProdukTugas implements ShouldBeUniqueUntilProcessing, S
             if (! $penerap->Jalankan($impor, (int) config('katalog.Impor.MaksimalDetikPerTugas', 40))) {
                 PengirimTugasImpor::KirimLanjutan(new self($this->idTenant, $this->idPengguna, $this->idImporProduk));
             }
+        }, IzinTenant::ProdukKelola, function (string $alasan): void {
+            PengirimTugasImpor::Gagalkan($this->idImporProduk, 'Impor dihentikan karena '.$alasan.'. Baris yang sudah diimpor tetap tersimpan; pengguna yang berizin bisa melanjutkan impor.');
         });
     }
 

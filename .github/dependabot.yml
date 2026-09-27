@@ -1,0 +1,31 @@
+# Audit F-11: konfigurasi Dependabot repo harus di .github akar (yang di Aplikasi/Web/.github tidak dibaca GitHub).
+version: 2
+updates:
+  - package-ecosystem: "composer"
+    directory: "/Aplikasi/Web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      composer:
+        patterns: ["*"]
+  - package-ecosystem: "npm"
+    directory: "/Aplikasi/Web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm:
+        patterns: ["*"]
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]

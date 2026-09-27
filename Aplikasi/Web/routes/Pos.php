@@ -25,6 +25,7 @@ use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Kontroler\Pos\V1\TagihanQrisKontroler;
 use App\Http\Kontroler\Pos\V1\VoucherKontroler;
 use App\Http\Perantara\AutentikasiPerangkat;
+use App\Http\Perantara\IdempotensiPos;
 use App\Http\Perantara\PastikanLanggananPosAktif;
 use Illuminate\Support\Facades\Route;
 
@@ -40,7 +41,8 @@ Route::post('/perangkat/aktivasi', [PerangkatKontroler::class, 'Aktivasi'])
     ->middleware('throttle:pos-10')
     ->name('pos.perangkat.aktivasi');
 
-Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
+// Audit F-12: mutasi boleh membawa `Idempotency-Key` (respons diputar ulang untuk permintaan yang sama).
+Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(function (): void {
     // F-02b: versi aplikasi & status langganan; tetap terbuka saat langganan ditangguhkan.
     Route::get('/konfigurasi-aplikasi', [KonfigurasiAplikasiKontroler::class, 'Tampilkan'])->name('pos.konfigurasi-aplikasi');
 

@@ -8,9 +8,11 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pemenuhan\Enum\StatusLaundry;
 use App\Domain\Pemenuhan\Model\TiketLaundry;
+use App\Domain\Pemenuhan\Tugas\KirimNotifikasiLaundrySiapTugas;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Penjualan\Model\Penjualan;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\Factory as FabrikHttp;
 use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -191,4 +193,27 @@ it('back-office: daftar & saring terlambat, ubah status, pengaturan diaudit & di
     $b = BantuanPenjualan::Siapkan($this, 'Laundry Kilat Klaten');
     app(KonteksTenant::class)->Kosongkan();
     BantuanOrganisasi::Masuk($this, $b['Pemilik'], $b['Tenant']->Id)->post("/kelola/laundry/{$item['Uuid']}/status", ['Status' => 'Diambil'])->assertNotFound();
+});
+
+it('audit F-17: WhatsApp siap paling banyak sekali — pekerja terhenti setelah kirim tidak mengulang; penyedia gagal boleh dicoba lagi', function (): void {
+    [$k, $item] = SiapkanCucian($this);
+    BantuanKasir::KirimRingkas($this, $k['Token'], [$item]);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $t = TiketLaundry::query()->sole();
+    TiketLaundry::query()->whereKey($t->Id)->update(['Status' => StatusLaundry::Siap->value]);
+    $jalankan = fn () => app()->call([new KirimNotifikasiLaundrySiapTugas($k['Tenant']->Id, $t->Id), 'handle']);
+
+    // Penyedia menolak: klaim dilepas, percobaan berikutnya mengirim.
+    Http::swap(new FabrikHttp);
+    Http::fake(['api.fonnte.com/send' => Http::sequence()->push(['status' => false, 'reason' => 'quota'])->push(['status' => true, 'id' => ['8002']])]);
+    $jalankan();
+    expect($t->refresh()->NotifikasiSiapPada)->toBeNull()->and($t->NotifikasiSiapDiprosesPada)->toBeNull();
+    $jalankan();
+    expect($t->refresh()->NotifikasiSiapPada)->not->toBeNull();
+    Http::assertSentCount(2);
+
+    // Pekerja lain terhenti setelah penyedia menerima (klaim ada, belum tercatat terkirim): percobaan ulang tidak mengirim.
+    TiketLaundry::query()->whereKey($t->Id)->update(['NotifikasiSiapPada' => null, 'NotifikasiSiapDiprosesPada' => now()]);
+    $jalankan();
+    Http::assertSentCount(2);
 });

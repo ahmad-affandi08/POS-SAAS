@@ -317,6 +317,11 @@ final class CatatMutasiStok
 
     /**
      * C.2 langkah 4: semua kunci sudah tercatat → pemutaran ulang; sebagian → `MutasiGanda`; tidak ada → lanjut.
+     *
+     * Audit F-07: dibaca tanpa `FOR UPDATE`. Kunci baca pada baris yang belum ada memasang kunci celah indeks
+     * (JenisReferensi, IdReferensi, KunciBaris); dua dokumen berbeda yang dicatat bersamaan lalu saling menunggu saat
+     * menyisipkan mutasi (terbukti deadlock di test dua koneksi). Dokumen yang sama sudah diserialkan kunci dokumen
+     * pemanggil (L2), dan indeks unik tetap menjadi pengaman terakhir.
      */
     private function PeriksaIdempotensi(DataDokumenMutasi $dokumen): ?HasilCatatMutasi
     {
@@ -329,7 +334,6 @@ final class CatatMutasiStok
                 ->where('IdReferensi', $dokumen->idReferensi)
                 ->whereIn('KunciBaris', $potongan)
                 ->orderBy('Id')
-                ->lockForUpdate()
                 ->get();
 
             foreach ($baris as $m) {

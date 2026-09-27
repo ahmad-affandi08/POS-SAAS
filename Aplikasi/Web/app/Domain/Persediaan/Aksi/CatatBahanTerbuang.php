@@ -27,6 +27,7 @@ use App\Domain\Persediaan\Layanan\PencatatJurnalPersediaan;
 use App\Domain\Persediaan\Layanan\PenyusunJurnalPersediaan;
 use App\Domain\Persediaan\Model\BahanTerbuang;
 use Brick\Math\RoundingMode;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
  * F-05f: mencatat bahan/menu terbuang di dalam transaksi pemanggil. Produk berstok dikurangi dirinya sendiri; menu
@@ -51,7 +52,9 @@ final class CatatBahanTerbuang
 
     public function Jalankan(DataBahanTerbuang $data): BahanTerbuang
     {
-        $lama = BahanTerbuang::query()->where('Uuid', $data->uuid)->lockForUpdate()->first();
+        // Tanpa kunci baris: `lockForUpdate` pada Uuid yang belum ada memasang kunci celah yang membuat dua pencatatan
+        // bersamaan saling deadlock (audit F-07). Keunikan dijaga indeks unik Uuid (lihat penyimpanan di bawah).
+        $lama = BahanTerbuang::query()->where('Uuid', $data->uuid)->first();
 
         if ($lama !== null) {
             return $lama;
@@ -123,7 +126,14 @@ final class CatatBahanTerbuang
             'IdPengguna' => $data->idPengguna,
             'DibuatOfflinePada' => $data->dibuatOfflinePada,
             'TanggalBisnis' => $data->tanggalBisnis->toDateString(),
-        ])->save();
+        ]);
+
+        try {
+            $dokumen->save();
+        } catch (UniqueConstraintViolationException) {
+            // Pencatatan ber-Uuid sama baru saja disimpan permintaan lain: kembalikan yang sudah ada (idempoten).
+            return BahanTerbuang::query()->where('Uuid', $data->uuid)->firstOrFail();
+        }
 
         $hasil = $this->catatMutasi->Jalankan(new DataDokumenMutasi(
             JenisReferensiMutasi::BahanTerbuang,

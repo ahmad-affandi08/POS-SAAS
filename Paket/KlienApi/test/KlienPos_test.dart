@@ -74,6 +74,8 @@ void main() {
     expect(hasil.map((h) => h.status), [StatusItemSinkron.Diterima, StatusItemSinkron.Ditolak]);
     expect(hasil[1].kodeGalat, 'PersetujuanDiperlukan');
     expect(jawaban.perangkatDicabut, isFalse);
+    // Audit F-12: mutasi membawa Idempotency-Key berformat yang diterima server.
+    expect(dikirim.headers['Idempotency-Key'], matches(RegExp(r'^pos-[0-9A-HJKMNP-TV-Z]{26}$')));
   });
 
   test(

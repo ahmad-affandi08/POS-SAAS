@@ -54,6 +54,20 @@ describe('Masuk Platform Pengelola & pemisahan sesi (BR-P01.2, BR-P01.4)', funct
         $this->assertGuest('pengelola');
     });
 
+    it('audit F-24: satu IP yang mencoba banyak email dibatasi secara global (penebakan kata sandi)', function (): void {
+        $pengguna = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Dukungan);
+
+        for ($i = 0; $i < 20; $i++) {
+            $this->post(BantuanPengelola::Url('/masuk'), ['Email' => "tebak{$i}@contoh.id", 'KataSandi' => 'salah-sandi-123']);
+        }
+
+        // Email lain dengan kata sandi benar pun ditahan sampai jendela lewat.
+        $this->post(BantuanPengelola::Url('/masuk'), ['Email' => $pengguna->Email, 'KataSandi' => PenggunaPengelolaPabrik::KATA_SANDI])
+            ->assertSessionHasErrors('Email');
+        expect(session('errors')->first('Email'))->toStartWith('Terlalu banyak percobaan masuk.');
+        $this->assertGuest('pengelola');
+    });
+
     it('tidak menerima sesi tenant di Platform Pengelola walau emailnya sama', function (): void {
         $pengelola = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $tenant = Pengguna::factory()->create(['Email' => $pengelola->Email]);

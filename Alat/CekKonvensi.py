@@ -260,6 +260,29 @@ def AmbilFileBerubah():
     return sorted(Daftar)
 
 
+def CekUrutanMigrasi():
+    """Migrasi baru (belum ada di main) wajib bernama setelah migrasi terakhir di main (audit F-23): Laravel mengurutkan
+    migrasi dari nama berkas, jadi tanggal di nama berkas adalah urutan, bukan tanggal kalender."""
+    Folder = "Aplikasi/Web/database/migrations/"
+    Dasar = ""
+    for Kandidat in ("origin/main", "main"):
+        Dasar = JalankanGit("merge-base", "HEAD", Kandidat).strip()
+        if Dasar:
+            break
+    if not Dasar:
+        return []
+    DiDasar = [os.path.basename(F) for F in JalankanGit("ls-tree", "--name-only", Dasar, Folder).split() if F.endswith(".php")]
+    if not DiDasar:
+        return []
+    Terakhir = max(DiDasar)
+    Sekarang = set(os.path.basename(F) for F in JalankanGit("ls-files", Folder).split() + JalankanGit("ls-files", "--others", "--exclude-standard", Folder).split())
+    Hasil = []
+    for Nama in sorted(Sekarang - set(DiDasar)):
+        if Nama.endswith(".php") and Nama <= Terakhir:
+            Hasil.append(Pelanggaran(Folder + Nama, 0, f"migrasi baru harus bernama setelah migrasi terakhir di main ('{Terakhir}'); urutan dari nama berkas", "aturan emas #15"))
+    return Hasil
+
+
 def AmbilSemuaFile():
     Daftar = JalankanGit("ls-files").split() + JalankanGit("ls-files", "--others", "--exclude-standard").split()
     return sorted(set(Daftar))
@@ -278,6 +301,8 @@ def Utama(Argumen):
     SemuaPelanggaran = []
     for PathRelatif in Daftar:
         SemuaPelanggaran += CekFile(PathRelatif)
+    if Argumen[0] in ("--semua", "--berubah"):
+        SemuaPelanggaran += CekUrutanMigrasi()
     for P in SemuaPelanggaran:
         print(P)
     if SemuaPelanggaran:
