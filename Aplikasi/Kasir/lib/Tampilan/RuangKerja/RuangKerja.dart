@@ -9,6 +9,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/Perangkat/PenjagaLayarMenyala.dart';
+import '../../Domain/Persediaan/LayananGudang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatWaktu.dart';
 import '../LayarJual.dart';
@@ -27,6 +28,7 @@ import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
 import '../Persediaan/LayarStok.dart';
 import '../Persediaan/LembarBahanTerbuang.dart';
+import '../Persediaan/LembarGudang.dart';
 import '../Shift/KartuLaporanShift.dart';
 import '../Shift/LembarTutupShift.dart';
 import '../Struk/BagianCetakDokumen.dart';
@@ -89,7 +91,11 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   /// Panel catat bahan terbuang (F-05f bagian 2) sedang terbuka.
   bool _panelTerbuang = false;
 
-  bool get _adaPanel => _jenisKas != null || _panelShift != null || _panelPenjualan != null || _panelTerbuang;
+  /// Panel modul Gudang (POS-25) yang sedang terbuka; null = tertutup.
+  JenisGudang? _panelGudang;
+
+  bool get _adaPanel =>
+      _jenisKas != null || _panelShift != null || _panelPenjualan != null || _panelTerbuang || _panelGudang != null;
 
   Timer? _pewaktuSinkron;
   Timer? _pewaktuPesanan;
@@ -213,11 +219,17 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     _panelTerbuang = true;
   });
 
+  void _BukaPanelGudang(JenisGudang jenis) => setState(() {
+    _TutupSemuaPanel();
+    _panelGudang = jenis;
+  });
+
   void _TutupSemuaPanel() {
     _jenisKas = null;
     _panelShift = null;
     _panelPenjualan = null;
     _panelTerbuang = false;
+    _panelGudang = null;
   }
 
   void _TutupPanel() => setState(_TutupSemuaPanel);
@@ -256,6 +268,11 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     ),
     TujuanRuangKerja.Stok => LayarStok(
       saatCatatTerbuang: widget.kasir.PunyaIzin(IzinKasir.persediaanTerbuangCatat) ? _BukaPanelTerbuang : null,
+      jenisGudang: [
+        for (final j in JenisGudang.values)
+          if (LayananGudang.CekBoleh(widget.kasir, j)) j,
+      ],
+      saatGudang: _BukaPanelGudang,
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -350,11 +367,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final panelShift = _panelShift;
     final panelPenjualan = _panelPenjualan;
     final area = IndexedStack(index: indeks, children: [for (final i in item) _BangunLayar(i.tujuan)]);
-    if (jenisKas == null && panelShift == null && panelPenjualan == null && !_panelTerbuang) {
+    final panelGudang = _panelGudang;
+    if (jenisKas == null && panelShift == null && panelPenjualan == null && !_panelTerbuang && panelGudang == null) {
       return area;
     }
 
     final (judul, formulir) = switch ((jenisKas, panelShift, panelPenjualan)) {
+      _ when panelGudang != null => (
+        panelGudang.judul,
+        LembarGudang(key: ValueKey('Gudang-${panelGudang.name}'), jenis: panelGudang, staf: widget.kasir) as Widget,
+      ),
       _ when _panelTerbuang => (
         LembarBahanTerbuang.judul,
         LembarBahanTerbuang(key: const ValueKey('BahanTerbuang'), pencatat: widget.kasir, saatTersimpan: _TutupPanel)

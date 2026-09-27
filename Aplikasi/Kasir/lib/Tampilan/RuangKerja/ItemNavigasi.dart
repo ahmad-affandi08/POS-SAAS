@@ -5,8 +5,8 @@ import '../../Domain/Sesi/StafLokal.dart';
 /// Tujuan area kerja di rel navigasi (PRD §17.2.7). Urutan enum = urutan tampil.
 enum TujuanRuangKerja { Jual, Meja, Riwayat, Stok, Kas, Shift, StatusSinkron, Pengaturan }
 
-/// Satu item rel navigasi. Item hanya tampil bila [modul] aktif (null = inti, selalu aktif) dan kasir punya [izin]
-/// (null = semua kasir). Maksimal 8 item (§17.2.7).
+/// Satu item rel navigasi. Item hanya tampil bila [modul] aktif (null = inti, selalu aktif) dan kasir punya salah satu
+/// [izin] (kosong = semua kasir). Maksimal 8 item (§17.2.7).
 @immutable
 class ItemNavigasi {
   const ItemNavigasi({
@@ -14,7 +14,7 @@ class ItemNavigasi {
     required this.label,
     required this.ikon,
     required this.ikonAktif,
-    this.izin,
+    this.izin = const [],
     this.modul,
   });
 
@@ -22,10 +22,17 @@ class ItemNavigasi {
   final String label;
   final IconData ikon;
   final IconData ikonAktif;
-  final String? izin;
+  final List<String> izin;
   final String? modul;
 
   static const int batasItem = 8;
+
+  /// Menu Stok: bahan terbuang (F-05f bagian 2) dan modul Gudang (POS-25: terima barang, transfer masuk, opname).
+  static const List<String> izinStok = [
+    IzinKasir.persediaanTerbuangCatat,
+    IzinKasir.persediaanKelola,
+    IzinKasir.pembelianKelola,
+  ];
 
   /// Kode modul Meja: aktif bila mode meja outlet aktif (F-07 mode meja fase 1).
   static const String modulMeja = 'Meja';
@@ -58,7 +65,7 @@ class ItemNavigasi {
       label: 'Stok',
       ikon: Icons.inventory_2_outlined,
       ikonAktif: Icons.inventory_2,
-      izin: IzinKasir.persediaanTerbuangCatat,
+      izin: izinStok,
     ),
     ItemNavigasi(tujuan: TujuanRuangKerja.Kas, label: 'Kas', ikon: Icons.payments_outlined, ikonAktif: Icons.payments),
     ItemNavigasi(
@@ -101,7 +108,7 @@ class ItemNavigasi {
       label: 'Stok',
       ikon: Icons.inventory_2_outlined,
       ikonAktif: Icons.inventory_2,
-      izin: IzinKasir.persediaanTerbuangCatat,
+      izin: izinStok,
     ),
     ItemNavigasi(
       tujuan: TujuanRuangKerja.StatusSinkron,
@@ -123,7 +130,9 @@ class ItemNavigasi {
     Set<String> modulAktif = const {},
     List<ItemNavigasi> daftar = semua,
   }) => daftar
-      .where((i) => (i.modul == null || modulAktif.contains(i.modul)) && (i.izin == null || kasir.PunyaIzin(i.izin!)))
+      .where(
+        (i) => (i.modul == null || modulAktif.contains(i.modul)) && (i.izin.isEmpty || i.izin.any(kasir.PunyaIzin)),
+      )
       .take(batasItem)
       .toList();
 }

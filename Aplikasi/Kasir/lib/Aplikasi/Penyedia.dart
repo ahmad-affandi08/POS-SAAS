@@ -51,6 +51,7 @@ import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Persediaan/LayananBahanTerbuang.dart';
+import '../Domain/Persediaan/LayananGudang.dart';
 import '../Domain/Perangkat/LayananUjiPerangkat.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
@@ -361,6 +362,11 @@ final penyediaRepositoriPersediaan = Provider<RepositoriPersediaan>(
 /// F-05f bagian 2: catat bahan/menu terbuang dari perangkat (offline).
 final penyediaLayananBahanTerbuang = Provider<LayananBahanTerbuang>(
   (ref) => LayananBahanTerbuang(repositori: ref.watch(penyediaRepositoriPersediaan), jam: ref.watch(penyediaJam)),
+);
+
+/// POS-25 modul Gudang (online): terima barang, transfer masuk, hitung stok opname.
+final penyediaLayananGudang = Provider<LayananGudang>(
+  (ref) => LayananGudang(klien: ref.watch(penyediaKlienPos), repositori: ref.watch(penyediaRepositori)),
 );
 
 /// Catatan bahan terbuang perangkat ini pada tanggal bisnis outlet hari ini, terbaru dulu, dengan status kirim.

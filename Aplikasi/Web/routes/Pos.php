@@ -6,6 +6,7 @@ use App\Http\Kontroler\Pos\V1\DapurKontroler;
 use App\Http\Kontroler\Pos\V1\DataAwalKontroler;
 use App\Http\Kontroler\Pos\V1\GambarProdukKontroler;
 use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
+use App\Http\Kontroler\Pos\V1\GudangKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
@@ -123,6 +124,16 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::post('/reservasi/{reservasi}/hadir', [ReservasiKontroler::class, 'Hadir'])
             ->middleware('throttle:pos-60')->where('reservasi', $ulid)->name('pos.reservasi.hadir');
         // Laundry (§9.9): cari cucian aktif outlet & ubah status proses/diambil (online).
+        // POS-25 modul Gudang (online): terima barang dari PO, terima transfer masuk, hitung stok opname.
+        Route::get('/gudang/pesanan-pembelian', [GudangKontroler::class, 'DaftarPesanan'])->middleware('throttle:pos-30')->name('pos.gudang.pesanan-pembelian');
+        Route::post('/gudang/penerimaan', [GudangKontroler::class, 'Terima'])->middleware('throttle:pos-30')->name('pos.gudang.penerimaan');
+        Route::get('/gudang/transfer', [GudangKontroler::class, 'DaftarTransfer'])->middleware('throttle:pos-30')->name('pos.gudang.transfer');
+        Route::post('/gudang/transfer/{transfer}/terima', [GudangKontroler::class, 'TerimaTransfer'])
+            ->middleware('throttle:pos-30')->where('transfer', $ulid)->name('pos.gudang.transfer.terima');
+        Route::get('/gudang/opname', [GudangKontroler::class, 'DaftarOpname'])->middleware('throttle:pos-30')->name('pos.gudang.opname');
+        Route::post('/gudang/opname/{opname}/hitung', [GudangKontroler::class, 'SimpanHitung'])
+            ->middleware('throttle:pos-60')->where('opname', $ulid)->name('pos.gudang.opname.hitung');
+
         Route::get('/laundry', [LaundryKontroler::class, 'Cari'])->middleware('throttle:pos-30')->name('pos.laundry');
         Route::post('/laundry/{tiket}/status', [LaundryKontroler::class, 'UbahStatus'])
             ->middleware('throttle:pos-60')->where('tiket', $ulid)->name('pos.laundry.status');

@@ -223,5 +223,35 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/voucher/pesan",
         "Nama": "pos.voucher.pesan"
+    },
+    "GET api/pos/v1/gudang/opname": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/gudang/opname",
+        "Nama": "pos.gudang.opname"
+    },
+    "GET api/pos/v1/gudang/pesanan-pembelian": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/gudang/pesanan-pembelian",
+        "Nama": "pos.gudang.pesanan-pembelian"
+    },
+    "GET api/pos/v1/gudang/transfer": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/gudang/transfer",
+        "Nama": "pos.gudang.transfer"
+    },
+    "POST api/pos/v1/gudang/opname/{opname}/hitung": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/gudang/opname/{opname}/hitung",
+        "Nama": "pos.gudang.opname.hitung"
+    },
+    "POST api/pos/v1/gudang/penerimaan": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/gudang/penerimaan",
+        "Nama": "pos.gudang.penerimaan"
+    },
+    "POST api/pos/v1/gudang/transfer/{transfer}/terima": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/gudang/transfer/{transfer}/terima",
+        "Nama": "pos.gudang.transfer.terima"
     }
 }

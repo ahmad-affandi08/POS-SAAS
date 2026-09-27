@@ -29,6 +29,12 @@ abstract final class IzinKasir {
 
   /// F-05f bagian 2: mencatat bahan/menu terbuang dari perangkat.
   static const String persediaanTerbuangCatat = 'persediaan.terbuang.catat';
+
+  /// POS-25 modul Gudang: terima transfer masuk & hitung stok opname (juga terima barang dari PO).
+  static const String persediaanKelola = 'persediaan.kelola';
+
+  /// POS-25 modul Gudang: terima barang dari PO yang sudah disetujui.
+  static const String pembelianKelola = 'pembelian.kelola';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

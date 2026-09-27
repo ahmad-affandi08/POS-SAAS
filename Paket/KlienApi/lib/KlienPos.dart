@@ -8,6 +8,7 @@ import 'package:inti/Inti.dart';
 
 import 'Galat/GalatApi.dart';
 import 'Model/ModelKatalog.dart';
+import 'Model/ModelGudang.dart';
 import 'Model/ModelKonfigurasi.dart';
 import 'Model/ModelLaundry.dart';
 import 'Model/ModelMeja.dart';
@@ -218,6 +219,80 @@ class KlienPos {
         'Status': status,
         'UuidPengguna': uuidPengguna,
       }))['Tiket'],
+    ),
+  );
+
+  /// POS-25 modul Gudang: PO siap diterima di lokasi outlet perangkat ([kata] = cari nomor PO).
+  Future<List<PesananGudangPos>> AmbilPesananGudang({String kata = ''}) async {
+    final rapi = kata.trim();
+    final json = await _Kirim(
+      'GET',
+      rapi.isEmpty ? 'gudang/pesanan-pembelian' : 'gudang/pesanan-pembelian?kata=${Uri.encodeQueryComponent(rapi)}',
+      null,
+    );
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['Pesanan'])) PesananGudangPos.DariJson(p)];
+  }
+
+  /// Posting penerimaan barang (GRN) dari PO. [kunciIdempotensi] tetap per draf, sehingga kirim ulang setelah koneksi
+  /// putus diputar ulang server (tidak menggandakan GRN). [baris] = `{Urutan, Jumlah, NomorBatch?, TanggalKedaluwarsa?,
+  /// NomorSeri?}`.
+  Future<HasilPenerimaanGudang> TerimaBarangGudang({
+    required String uuidPesanan,
+    required String uuidPengguna,
+    required String kunciIdempotensi,
+    required List<Map<String, Object?>> baris,
+    String? nomorSuratJalan,
+    String? catatan,
+  }) async => HasilPenerimaanGudang.DariJson(
+    await _Kirim('POST', 'gudang/penerimaan', {
+      'UuidPesananPembelian': uuidPesanan,
+      'UuidPengguna': uuidPengguna,
+      'NomorSuratJalan': ?nomorSuratJalan,
+      'Catatan': ?catatan,
+      'Baris': baris,
+    }, kunciIdempotensi: kunciIdempotensi),
+  );
+
+  /// Transfer stok yang sedang menuju lokasi outlet perangkat.
+  Future<List<TransferGudangPos>> AmbilTransferMasuk() async {
+    final json = await _Kirim('GET', 'gudang/transfer', null);
+    return [for (final t in UraiJson.AmbilDaftarPeta(json['Transfer'])) TransferGudangPos.DariJson(t)];
+  }
+
+  /// Terima transfer (boleh sebagian); [baris] = `{Urutan, Jumlah}` satuan dasar. Hasil: transfer terbaru.
+  Future<TransferGudangPos> TerimaTransfer(
+    String uuid, {
+    required String uuidPengguna,
+    required String kunciIdempotensi,
+    required List<Map<String, Object?>> baris,
+  }) async => TransferGudangPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'gudang/transfer/${Uri.encodeComponent(uuid)}/terima', {
+        'UuidPengguna': uuidPengguna,
+        'Baris': baris,
+      }, kunciIdempotensi: kunciIdempotensi))['Transfer'],
+    ),
+  );
+
+  /// Stok opname yang sedang berlangsung di lokasi outlet perangkat.
+  Future<List<OpnameGudangPos>> AmbilOpname() async {
+    final json = await _Kirim('GET', 'gudang/opname', null);
+    return [for (final o in UraiJson.AmbilDaftarPeta(json['Opname'])) OpnameGudangPos.DariJson(o)];
+  }
+
+  /// Simpan lembar hitung; [hitung] = `{Urutan, JumlahFisik}` (baris lama) atau `{UuidProduk, JumlahFisik}` (produk
+  /// baru hasil pindai). Hasil: opname terbaru.
+  Future<OpnameGudangPos> SimpanHitungOpname(
+    String uuid, {
+    required String uuidPengguna,
+    required String kunciIdempotensi,
+    required List<Map<String, Object?>> hitung,
+  }) async => OpnameGudangPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'gudang/opname/${Uri.encodeComponent(uuid)}/hitung', {
+        'UuidPengguna': uuidPengguna,
+        'Hitung': hitung,
+      }, kunciIdempotensi: kunciIdempotensi))['Opname'],
     ),
   );
 

@@ -127,6 +127,8 @@ class RepositoriKasir {
   Future<void> SimpanPengaturan(String kunci, String nilai) =>
       db.into(db.pengaturan).insertOnConflictUpdate(PengaturanCompanion.insert(Kunci: kunci, Nilai: nilai));
 
+  Future<void> HapusPengaturan(String kunci) => (db.delete(db.pengaturan)..where((p) => p.Kunci.equals(kunci))).go();
+
   Future<ParameterPin?> AmbilParameterPin() async {
     final teks = await AmbilPengaturan(KunciPengaturan.parameterPin);
     return teks == null ? null : ParameterPin.DariJson(jsonDecode(teks) as Map<String, Object?>);

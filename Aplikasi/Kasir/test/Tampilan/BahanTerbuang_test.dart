@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
+import 'package:kasir/Tampilan/Persediaan/LayarStok.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 
 import '../Pendukung/KatalogUji.dart';
@@ -54,7 +55,14 @@ void main() {
       final u = await Masuk(tester, ukuran);
 
       await Ketuk(tester, find.text('Stok').last);
-      expect(find.text('Belum ada bahan terbuang yang dicatat hari ini di perangkat ini.'), findsOneWidget);
+      // Di layar sempit bagian Bahan terbuang ada di bawah bagian Gudang: gulir dulu.
+      final kosong = find.text('Belum ada bahan terbuang yang dicatat hari ini di perangkat ini.');
+      await tester.scrollUntilVisible(
+        kosong,
+        200,
+        scrollable: find.descendant(of: find.byType(LayarStok), matching: find.byType(Scrollable)).first,
+      );
+      expect(kosong, findsOneWidget);
       await Ketuk(tester, find.text('Catat bahan terbuang').last);
 
       // Cari lalu pilih roti; bahan baku & produk berpelacakan batch tidak tercampur.
@@ -80,6 +88,11 @@ void main() {
       await Tunggu(tester, const Duration(milliseconds: 400));
 
       // Panel tertutup; daftar hari ini menampilkan catatan dengan status berteks (offline = belum terkirim).
+      await tester.scrollUntilVisible(
+        find.text('Belum terkirim'),
+        200,
+        scrollable: find.descendant(of: find.byType(LayarStok), matching: find.byType(Scrollable)).first,
+      );
       expect(find.text('Roti Tawar Gandum'), findsOneWidget);
       expect(find.text('4 Pcs'), findsOneWidget);
       expect(find.textContaining('Kedaluwarsa / basi · Budi Santoso'), findsOneWidget);

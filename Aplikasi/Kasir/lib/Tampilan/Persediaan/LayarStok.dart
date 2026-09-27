@@ -6,18 +6,24 @@ import '../../Aplikasi/Penyedia.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../../Data/RepositoriPersediaan.dart';
 import '../../Domain/Persediaan/LayananBahanTerbuang.dart';
+import '../../Domain/Persediaan/LayananGudang.dart';
 import '../Komponen/FormatWaktu.dart';
 import '../LayarRiwayat.dart';
 import '../RuangKerja/IsiAreaKerja.dart';
 
-/// Layar Stok di ruang kerja (F-05f bagian 2): pencatatan persediaan dari perangkat. Bagian pertama: bahan/menu
-/// terbuang hari ini dengan status kirim per catatan (selalu berteks), dan tombol "Catat bahan terbuang" yang membuka
-/// panel tugas lewat [saatCatatTerbuang].
+/// Layar Stok di ruang kerja: pencatatan persediaan dari perangkat. **Gudang** (POS-25, online): terima barang dari
+/// PO, terima transfer masuk, hitung stok opname — tiap tombol tampil hanya bila staf berizin ([jenisGudang]) dan
+/// membuka panel tugas lewat [saatGudang]. **Bahan terbuang** (F-05f bagian 2, offline): catatan hari ini dengan status
+/// kirim berteks dan tombol "Catat bahan terbuang" ([saatCatatTerbuang]).
 class LayarStok extends ConsumerWidget {
-  const LayarStok({super.key, this.saatCatatTerbuang});
+  const LayarStok({super.key, this.saatCatatTerbuang, this.jenisGudang = const [], this.saatGudang});
 
   /// Buka lembar catat bahan terbuang (null = kasir tidak punya izin).
   final VoidCallback? saatCatatTerbuang;
+
+  /// Pekerjaan gudang yang boleh dibuka staf ini (kosong = bagian Gudang tidak tampil).
+  final List<JenisGudang> jenisGudang;
+  final ValueChanged<JenisGudang>? saatGudang;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,6 +36,35 @@ class LayarStok extends ConsumerWidget {
       judul: 'Stok',
       lebarMaksimum: 840,
       anak: [
+        if (jenisGudang.isNotEmpty && saatGudang != null) ...[
+          Text('Gudang', style: teks.titleMedium),
+          const SizedBox(height: TokenJarak.jarak8),
+          Wrap(
+            spacing: TokenJarak.jarak12,
+            runSpacing: TokenJarak.jarak8,
+            children: [
+              for (final j in jenisGudang)
+                SizedBox(
+                  height: TokenJarak.targetSentuh,
+                  child: OutlinedButton.icon(
+                    onPressed: () => saatGudang!(j),
+                    icon: Icon(switch (j) {
+                      JenisGudang.Penerimaan => Icons.local_shipping_outlined,
+                      JenisGudang.Transfer => Icons.swap_horiz,
+                      JenisGudang.Opname => Icons.fact_check_outlined,
+                    }),
+                    label: Text(j.judul),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: TokenJarak.jarak8),
+          Text(
+            'Perlu online. Pindai barcode dengan pemindai atau ketik SKU; isian tersimpan di perangkat sampai dikirim.',
+            style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+          ),
+          const SizedBox(height: TokenJarak.jarak24),
+        ],
         Wrap(
           spacing: TokenJarak.jarak12,
           runSpacing: TokenJarak.jarak8,
