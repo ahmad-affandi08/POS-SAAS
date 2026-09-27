@@ -108,12 +108,26 @@ npm ci
 npm run build
 ```
 
-Kalau Node tidak tersedia di server (kasus hosting payou.id), jalankan `npm ci && npm run build` di komputer lain dari **commit yang sama** dengan kode di server, zip folder `public/build` (±360 file, ±3 MB), unggah ke `~/domains/payou.id/aplikasi/Aplikasi/Web/public/`, lalu:
+Kalau Node tidak tersedia di server (kasus hosting payou.id), **tidak perlu build dan zip manual lagi**.
+Setiap push ke `main` yang lolos CI menerbitkan `public/build` sebagai aset rilis bertag tetap `aset-terbaru`
+(lihat job `rilis` di `.github/workflows/CekKepatuhan.yml`). Repo ini publik, jadi server bisa mengambilnya
+tanpa token:
 
 ```bash
 cd ~/domains/payou.id/aplikasi/Aplikasi/Web/public
-rm -rf build && unzip -q build-payou.zip && rm build-payou.zip
+curl -fL -o build.zip https://github.com/ahmad-affandi08/Payou/releases/download/aset-terbaru/public-build.zip
+curl -fL -o build.zip.sha256 https://github.com/ahmad-affandi08/Payou/releases/download/aset-terbaru/public-build.zip.sha256
+sed -i 's|public-build.zip|build.zip|' build.zip.sha256
+sha256sum -c build.zip.sha256          # wajib: pastikan berkas utuh sebelum dipasang
+rm -rf build && unzip -q build.zip && rm build.zip build.zip.sha256
 ```
+
+**Cocokkan dengan kode di server.** Aset harus berasal dari commit yang sama dengan kode yang sedang jalan.
+Halaman rilis `aset-terbaru` menyebut SHA commit-nya; bandingkan dengan `git rev-parse HEAD` di server. Kalau
+berbeda, `git pull` dulu lalu ambil ulang asetnya.
+
+Kalau Node **ada** di komputer lain dan Anda ingin membangun sendiri dari commit yang sama, cara lama tetap sah:
+`npm ci && npm run build`, lalu salin folder `public/build` (±360 file, ±3 MB) ke server.
 
 ## 6. Hubungkan tiga domain ke folder `public`
 

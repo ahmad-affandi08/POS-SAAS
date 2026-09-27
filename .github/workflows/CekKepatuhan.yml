@@ -121,6 +121,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [konvensi, backend, web, flutter]
     runs-on: ubuntu-latest
+    # Hanya job ini boleh menulis rilis; izin global tetap contents: read.
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: Aplikasi/Web
@@ -154,3 +157,27 @@ jobs:
             payou-web-${{ github.sha }}.tar.gz
             payou-web-${{ github.sha }}.tar.gz.sha256
           retention-days: 30
+
+      # Hosting payou.id tanpa Node (Panduan/PasangDiHosting.md langkah 5), jadi public/build harus
+      # dibangun di luar server. Artefak Actions di atas kedaluwarsa 30 hari dan hanya bisa diunduh
+      # lewat peramban, karena itu berkasnya juga diterbitkan sebagai aset rilis bertag tetap
+      # `aset-terbaru` yang bisa diambil server dengan satu perintah curl (repo publik, tanpa token).
+      - name: Paket public/build + checksum
+        run: |
+          cd public
+          zip -qr ../../../public-build.zip build
+          cd ../../..
+          sha256sum public-build.zip > public-build.zip.sha256
+      - name: Terbitkan aset tampilan ke rilis aset-terbaru
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: .
+        run: |
+          CATATAN="Aset tampilan (public/build) hasil build commit ${GITHUB_SHA}.
+          Tag ini selalu menunjuk build terbaru dari main; unduh lewat Panduan/PasangDiHosting.md langkah 5."
+          # Dihapus lalu dibuat ulang, bukan diedit: `gh release edit --target` tidak memindahkan tag
+          # yang sudah ada, sehingga tag akan menunjuk commit lama dan menyesatkan saat dicocokkan.
+          gh release delete aset-terbaru --yes --cleanup-tag || true
+          gh release create aset-terbaru --target "${GITHUB_SHA}" \
+            --title "Aset tampilan terbaru" --notes "${CATATAN}" \
+            public-build.zip public-build.zip.sha256
