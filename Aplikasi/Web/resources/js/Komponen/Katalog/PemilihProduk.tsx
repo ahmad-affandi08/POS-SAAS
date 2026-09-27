@@ -194,9 +194,11 @@ export function KerangkaPemilihProduk({
                         <p
                             id={`${id}-status`}
                             aria-live="polite"
+                            // Saat tidak ada status, elemennya tetap ada sebagai area live tetapi tanpa kotak:
+                            // sebelumnya padding-nya menyisakan pita putih kosong di bawah daftar.
                             className={cn(
-                                'shrink-0 border-garis px-3 py-2 text-keterangan text-teks-sekunder',
-                                status !== null && 'border-t',
+                                'shrink-0 text-keterangan text-teks-sekunder',
+                                status !== null ? 'border-t border-garis px-3 py-2' : 'sr-only',
                             )}
                         >
                             {status ?? ''}
