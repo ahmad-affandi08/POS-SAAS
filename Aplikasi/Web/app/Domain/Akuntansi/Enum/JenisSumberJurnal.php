@@ -51,6 +51,8 @@ enum JenisSumberJurnal: string
     // F-05e: order produksi (J-05.6: Dr persediaan barang jadi, Cr persediaan bahan + overhead dibebankan) dan
     // pembatalannya (jurnal pembalik).
     case OrderProduksi = 'OrderProduksi';
+    // F-05f: bahan terbuang (J-05.4: Dr Susut & Barang Rusak, Cr persediaan) dan pembatalannya.
+    case BahanTerbuang = 'BahanTerbuang';
 
     public function AmbilLabel(): string
     {
@@ -80,6 +82,7 @@ enum JenisSumberJurnal: string
             self::PemakaianSesi => 'Pemakaian paket sesi',
             self::MutasiSesi => 'Pengembalian/hangus paket sesi',
             self::OrderProduksi => 'Order produksi',
+            self::BahanTerbuang => 'Bahan terbuang',
         };
     }
 
@@ -113,6 +116,7 @@ enum JenisSumberJurnal: string
             self::IsiDeposit => '/kelola/pelanggan/isi-deposit/'.$uuid,
             self::MutasiDeposit => '/kelola/pelanggan/mutasi-deposit/'.$uuid,
             self::OrderProduksi => '/kelola/persediaan/produksi/'.$uuid,
+            self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             self::PemakaianSesi => '/kelola/pelanggan/pemakaian-sesi/'.$uuid,
             self::MutasiSesi => '/kelola/pelanggan/mutasi-sesi/'.$uuid,
         };

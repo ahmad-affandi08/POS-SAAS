@@ -81,7 +81,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-11.3 | Setoran kas ke bank (F-06: `MutasiKas` jenis Setoran ke Kas Brankas) | Bank/Kas Brankas | Kas Outlet |
 | J-05.2 | Transfer stok dikirim | Persediaan Dalam Perjalanan | Persediaan (lokasi asal) |
 | J-05.3 | Transfer stok diterima | Persediaan (lokasi tujuan) | Persediaan Dalam Perjalanan |
-| J-05.4 | Opname/penyesuaian kurang | Selisih HPP / Susut & Barang Rusak | Persediaan |
+| J-05.4 | Opname/penyesuaian kurang, bahan terbuang (F-05f v2.30) | Selisih HPP / Susut & Barang Rusak | Persediaan |
 | J-05.5 | Opname/penyesuaian lebih | Persediaan | Selisih HPP |
 | J-05.6 | Produksi (F-05e v2.29: persediaan hasil per jenis produk; overhead ke `OverheadProduksiDibebankan`) | Persediaan Barang Jadi | Persediaan Bahan Baku (+ Overhead Dibebankan) |
 | J-05.7 | Konsinyasi terjual | HPP | Hutang Konsinyasi |

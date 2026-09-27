@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
 use App\Domain\Katalog\Kontrak\PemeriksaPemakaianProduk;
 use App\Domain\Katalog\Kontrak\PemeriksaRiwayatStok;
 use App\Domain\Katalog\Kontrak\PenyediaHppBahan;
 use App\Domain\Persediaan\Kueri\HppBahanDariSaldo;
 use App\Domain\Persediaan\Kueri\PemakaianProdukDiPersediaan;
 use App\Domain\Persediaan\Kueri\RiwayatStokProduk;
+use App\Domain\Persediaan\Layanan\PenanganSinkronBahanTerbuang;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -27,6 +29,9 @@ final class PenyediaPersediaan extends ServiceProvider
         // pemakaian produk dari sisi persediaan (riwayat stok / draf stok awal, BR-03.2).
         $this->app->bind(PenyediaHppBahan::class, HppBahanDariSaldo::class);
         $this->app->tag(PemakaianProdukDiPersediaan::class, PemeriksaPemakaianProduk::TAG);
+
+        // F-05f: item outbox POS `BahanTerbuang.Catat`.
+        $this->app->tag([PenanganSinkronBahanTerbuang::class], PenanganItemSinkron::TAG);
     }
 
     public function boot(): void

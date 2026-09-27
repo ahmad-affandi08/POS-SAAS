@@ -102,6 +102,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::ReservasiKelola,
                 // Laundry: tiket & status proses cucian outlet.
                 IzinTenant::LaundryKelola,
+                // F-05f: bahan terbuang outlet.
+                IzinTenant::PersediaanTerbuangCatat,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -120,10 +122,11 @@ enum PeranTenantBawaan: string
                 IzinTenant::KaryawanLihat,
                 IzinTenant::ReservasiKelola,
                 IzinTenant::LaundryKelola,
+                IzinTenant::PersediaanTerbuangCatat,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],
-            self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola],
+            self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola, IzinTenant::PersediaanTerbuangCatat],
             self::StafPembelian => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PembelianKelola],
             self::Akuntan => [
                 IzinTenant::OutletLihat,

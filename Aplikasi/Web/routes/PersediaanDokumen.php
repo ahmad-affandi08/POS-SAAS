@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Persediaan\BahanTerbuangKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\OrderProduksiKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\PelacakanStokKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\PenyesuaianStokKontroler;
@@ -68,6 +69,11 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::put('/persediaan/produksi/{orderProduksi}', [OrderProduksiKontroler::class, 'Perbarui'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.perbarui');
     Route::post('/persediaan/produksi/{orderProduksi}/posting', [OrderProduksiKontroler::class, 'Posting'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.posting');
     Route::post('/persediaan/produksi/{orderProduksi}/batalkan', [OrderProduksiKontroler::class, 'Batalkan'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.batalkan');
+
+    // F-05f bahan terbuang (waste) + ringkasan food cost.
+    Route::get('/persediaan/bahan-terbuang', [BahanTerbuangKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.persediaan.bahan-terbuang.daftar');
+    Route::post('/persediaan/bahan-terbuang', [BahanTerbuangKontroler::class, 'Catat'])->middleware($izin(IzinTenant::PersediaanTerbuangCatat))->name('kelola.persediaan.bahan-terbuang.catat');
+    Route::post('/persediaan/bahan-terbuang/{bahanTerbuang}/batalkan', [BahanTerbuangKontroler::class, 'Batalkan'])->middleware($kelola)->where('bahanTerbuang', $ulid)->name('kelola.persediaan.bahan-terbuang.batalkan');
 
     Route::get('/persediaan/pelacakan', [PelacakanStokKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.pelacakan');
 });

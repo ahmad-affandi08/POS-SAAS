@@ -63,6 +63,7 @@ enum JenisReferensiMutasi: string
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             // F-05e.
             self::Produksi => '/kelola/persediaan/produksi/'.$uuid,
+            self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             default => null,
         };
     }

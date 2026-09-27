@@ -80,6 +80,8 @@ enum IzinTenant: string
     case ReservasiKelola = 'reservasi.kelola';
     // Laundry (§9.9): melihat tiket laundry, mengubah status proses, pengaturan laundry.
     case LaundryKelola = 'laundry.kelola';
+    // F-05f: mencatat bahan terbuang (waste) dari kasir/dapur atau back-office.
+    case PersediaanTerbuangCatat = 'persediaan.terbuang.catat';
 
     public function AmbilLabel(): string
     {
@@ -130,6 +132,7 @@ enum IzinTenant: string
             self::TindakanTinjau => 'Menandai transaksi yang perlu dicek sebagai sudah dicek (Kotak Tindakan)',
             self::ReservasiKelola => 'Melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal)',
             self::LaundryKelola => 'Melihat tiket laundry & mengubah status proses cucian (cuci, kering, setrika, siap, diambil)',
+            self::PersediaanTerbuangCatat => 'Mencatat bahan/menu terbuang (waste) dari kasir, dapur, atau back-office',
         };
     }
 
@@ -142,7 +145,7 @@ enum IzinTenant: string
             self::PenggunaLihat, self::PenggunaUndang, self::PenggunaUbah, self::PenggunaNonaktifkan,
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',
-            self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting,
+            self::PersediaanLihat, self::PersediaanKelola, self::PersediaanPenyesuaianSetujui, self::PersediaanStokAwalPosting, self::PersediaanTerbuangCatat,
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat,

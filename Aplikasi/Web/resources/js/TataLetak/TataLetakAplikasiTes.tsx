@@ -195,6 +195,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Stok opname',
             'Penyesuaian stok',
             'Produksi',
+            'Bahan terbuang',
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Stok awal');
         expect(within(utama).queryByRole('button', { name: 'Akuntansi' })).toBeNull();
@@ -214,6 +215,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             '/kelola/persediaan/opname',
             '/kelola/persediaan/penyesuaian',
             '/kelola/persediaan/produksi',
+            '/kelola/persediaan/bahan-terbuang',
             '/kelola/persediaan/stok-awal/impor',
             '/kelola/persediaan/pengaturan',
         ]);
