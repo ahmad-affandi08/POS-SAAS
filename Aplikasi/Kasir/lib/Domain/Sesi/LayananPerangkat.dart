@@ -32,13 +32,16 @@ class LayananPerangkat {
   Future<bool> CekSudahAktif() async => (await rahasia.Baca(PenyimpanRahasia.kunciToken)) != null;
 
   Future<void> Aktifkan(String kode) async {
-    if (!RegExp(r'^[A-Za-z0-9]{6,20}$').hasMatch(kode.trim())) {
+    // Spasi & tanda hubung dibuang dulu, sama seperti KodeAktivasi::Normalkan() di server: kode boleh ditulis
+    // "A7K9-M2QT" atau "a7k9 m2qt" tanpa ditolak di perangkat sebelum sempat dikirim.
+    final bersih = kode.trim().replaceAll(RegExp(r'[\s-]+'), '').toUpperCase();
+    if (!RegExp(r'^[A-Za-z0-9]{6,20}$').hasMatch(bersih)) {
       throw const GalatKasir('KodeTidakValid', 'Masukkan kode aktivasi dari back-office menu Perangkat.');
     }
 
     final HasilAktivasi hasil;
     try {
-      hasil = await klien.AktifkanPerangkat(kode: kode, platform: platform);
+      hasil = await klien.AktifkanPerangkat(kode: bersih, platform: platform);
     } on GalatApi catch (galat) {
       throw GalatKasir(galat.kode, galat.pesan);
     } on GalatJaringan {

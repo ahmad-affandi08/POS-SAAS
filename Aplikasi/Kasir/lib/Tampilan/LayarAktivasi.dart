@@ -26,6 +26,17 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
     super.dispose();
   }
 
+  Future<void> _Pindai() async {
+    final pemindai = ref.read(penyediaPemindaiQr);
+    final hasil = await pemindai.Pindai(context);
+    if (hasil == null || !mounted) {
+      return;
+    }
+    // Isi QR = kode aktivasi apa adanya (PembuatQrKodeAktivasi), jadi langsung dipakai.
+    _kode.text = hasil;
+    await _Aktifkan();
+  }
+
   Future<void> _Aktifkan() async {
     setState(() {
       _sibuk = true;
@@ -48,6 +59,8 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
   Widget build(BuildContext context) {
     final warna = TokenWarna.AmbilDari(context);
     final teks = Theme.of(context).textTheme;
+    // Windows & perangkat tanpa kamera: isian manual saja (mobile_scanner tidak mendukung Windows).
+    final adaPemindai = ref.watch(penyediaPemindaiQr).CekTersedia();
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -63,7 +76,9 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
                 Text('Aktifkan perangkat kasir', style: teks.headlineSmall),
                 const SizedBox(height: 8),
                 Text(
-                  'Buka back-office, menu Perangkat, lalu buat kode aktivasi untuk perangkat ini.',
+                  adaPemindai
+                      ? 'Buka back-office, menu Perangkat, lalu buat kode aktivasi untuk perangkat ini. Pindai QR-nya atau ketik kodenya.'
+                      : 'Buka back-office, menu Perangkat, lalu buat kode aktivasi untuk perangkat ini.',
                   style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
                 ),
                 if (widget.pesan != null) ...[
@@ -71,6 +86,23 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
                   Text(widget.pesan!, style: teks.bodyMedium?.copyWith(color: warna.bahaya)),
                 ],
                 const SizedBox(height: 24),
+                if (adaPemindai) ...[
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: _sibuk ? null : _Pindai,
+                      icon: const Icon(Icons.qr_code_scanner_outlined),
+                      label: const Text('Pindai kode QR'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'atau ketik kodenya',
+                    textAlign: TextAlign.center,
+                    style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 TextField(
                   controller: _kode,
                   textCapitalization: TextCapitalization.characters,

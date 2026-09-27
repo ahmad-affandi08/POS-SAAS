@@ -35,11 +35,12 @@ describe('KartuKodeAktivasi (F-02b BR-02.3)', () => {
         await waitFor(() => expect(screen.getByRole('button', { name: /Kode tersalin/ })).toBeTruthy());
     });
 
-    it('tidak menjanjikan pemindaian QR karena aplikasi kasir belum punya pemindai', () => {
+    it('menyebut pemindaian QR sekaligus batasnya di Windows', () => {
         render(<KartuKodeAktivasi kode={kode} />);
 
-        // PRD F-02 langkah 5 menyebut pemindaian QR, tetapi aplikasi kasir belum mengimplementasikannya.
-        // Sampai ada pemindai, teks di sini tidak boleh menjanjikannya.
-        expect(screen.queryByText(/pindai/i)).toBeNull();
+        // Pemindai (mobile_scanner) hanya ada di Android & iOS, jadi janji "pindai" harus disertai
+        // keterangan bahwa di Windows kodenya diketik.
+        expect(screen.getByText(/pindai QR ini atau ketik/i)).toBeTruthy();
+        expect(screen.getByText(/Windows tidak punya pemindai/i)).toBeTruthy();
     });
 });

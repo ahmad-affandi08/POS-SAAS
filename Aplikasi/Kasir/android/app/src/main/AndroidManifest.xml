@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Printer struk Bluetooth (PRD v1.80). Android 11 ke bawah: izin lama; Android 12+: "Perangkat di sekitar".
          Pindai BLE tidak dipakai untuk menentukan lokasi (neverForLocation). -->
+    <!-- Pemindai QR kode aktivasi (F-02). required="false" agar perangkat POS tanpa kamera tetap bisa memasang. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />

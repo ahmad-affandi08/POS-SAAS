@@ -11,10 +11,12 @@ import 'package:sistem_desain/SistemDesain.dart' show TokenWarna;
 
 import '../Data/Printer/InfoPerangkatPlatform.dart';
 import '../Data/KameraSwafotoPlatform.dart';
+import '../Data/PemindaiQrPlatform.dart';
 import '../Data/LayarPelanggan/PabrikLayarPelanggan.dart';
 import '../Data/RepositoriAbsensi.dart';
 import '../Domain/Karyawan/LayananAbsensi.dart';
 import '../Domain/Perangkat/KameraSwafoto.dart';
+import '../Domain/Perangkat/PemindaiQr.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/PengubahLogoStruk.dart';
 import '../Data/Printer/PemindaiPrinterPlatform.dart';
@@ -621,6 +623,9 @@ final penyediaPesananMeja = StreamProvider.family<PesananMeja?, String>(
 
 /// F-18: kamera swafoto absensi (tiruan di test).
 final penyediaKameraSwafoto = Provider<KameraSwafoto>((ref) => KameraSwafotoPlatform());
+
+/// F-02 langkah 5: pemindai QR kode aktivasi (tiruan di test). Tidak tersedia di Windows.
+final penyediaPemindaiQr = Provider<PemindaiQr>((ref) => PemindaiQrPlatform());
 
 final penyediaRepositoriAbsensi = Provider<RepositoriAbsensi>(
   (ref) => RepositoriAbsensi(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),

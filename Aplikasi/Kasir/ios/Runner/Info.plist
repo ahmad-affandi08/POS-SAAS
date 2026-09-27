@@ -7,7 +7,7 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>PAYOU POS memakai Bluetooth untuk mencetak struk ke printer thermal.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Kamera dipakai untuk swafoto saat absen masuk dan keluar.</string>
+	<string>Kamera dipakai untuk swafoto saat absen masuk dan keluar, dan untuk memindai kode QR aktivasi perangkat.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

@@ -35,6 +35,9 @@ dependencies:
   printing: ^5.15.1
   pdf: ^3.13.1
   qr: ^3.0.2
+  # Pemindai QR kode aktivasi (F-02 langkah 5). Android & iOS saja; Windows tidak didukung paket ini,
+  # di sana kode aktivasi diketik manual (PemindaiQrPlatform.CekTersedia()).
+  mobile_scanner: ^7.4.2
 
 dev_dependencies:
   flutter_test:

@@ -58,6 +58,12 @@ Jangan mencoba melewati penjaga tersebut. Kalau penjaga menolak, perbaiki kodeny
 
 ## Perintah pengecekan
 
+**Jalankan hanya yang terkena dampak perubahan** (diminta pemilik produk): test berkas/paket yang tersentuh, bukan
+seluruh suite. `npx vitest run <berkas>` alih-alih `npm run periksa`, `pest <berkas>` alih-alih seluruh test, dan
+`CekKonvensi.py --berubah` alih-alih `--semua`. Suite penuh hanya saat diminta, saat `/cek-dod` sebelum PR, atau
+saat perubahan menyentuh sesuatu yang dipakai banyak tempat (token, komponen bersama, skema). CI tetap menjalankan
+semuanya, jadi itu jaring pengamannya.
+
 ```bash
 python3 Alat/CekKonvensi.py --berubah   # konvensi penamaan & pola terlarang (file yang berubah)
 python3 Alat/CekKonvensi.py --semua     # seluruh repo

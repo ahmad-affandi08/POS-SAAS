@@ -34,7 +34,8 @@ export default function KartuKodeAktivasi({ kode }: { kode: KodeAktivasiBaru }) 
                         Aktifkan {kode.NamaPerangkat} ({kode.KodePerangkat})
                     </h2>
                     <p className="text-isi text-teks-sekunder">
-                        Buka aplikasi kasir, pilih &quot;Aktifkan perangkat&quot;, lalu ketik kode ini:
+                        Buka aplikasi kasir, pilih &quot;Aktifkan perangkat&quot;, lalu pindai QR ini atau ketik
+                        kodenya. Perangkat Windows tidak punya pemindai, jadi kodenya diketik:
                     </p>
                     {/*
                      * Ditampilkan apa adanya tanpa tanda hubung supaya persis sama dengan yang diketik dan

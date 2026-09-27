@@ -10,6 +10,7 @@ import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
 import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
 import 'package:kasir/Domain/Perangkat/LayananLayarPelanggan.dart';
+import 'package:kasir/Domain/Perangkat/PemindaiQr.dart';
 import 'package:kasir/Domain/Perangkat/PenjagaLayarMenyala.dart';
 import 'package:kasir/Domain/Pin/PemverifikasiPinOffline.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -25,6 +26,7 @@ Future<void> PasangAplikasi(
   Size ukuran = const Size(1280, 900),
   PenjagaLayarTiruan? penjagaLayar,
   KameraSwafoto? kamera,
+  PemindaiQr? pemindaiQr,
 }) async {
   // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
   tester.view.devicePixelRatio = 1;
@@ -43,6 +45,7 @@ Future<void> PasangAplikasi(
         penyediaPemverifikasiPin.overrideWithValue(const PemverifikasiPinTiruan()),
         penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
         penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
+        penyediaPemindaiQr.overrideWithValue(pemindaiQr ?? PemindaiQrTiruan(tersedia: false)),
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
         penyediaPembuatLayarPelanggan.overrideWithValue(
           (p) => p.aktif ? u.layarPelanggan : const LayarPelangganTidakAda(),
@@ -123,6 +126,25 @@ class PenjagaLayarTiruan implements PenjagaLayarMenyala {
 }
 
 /// Kamera swafoto tiruan (F-18): [foto] null = pengguna membatalkan.
+/// Pemindai QR tiruan: `tersedia` mengatur apakah tombol Pindai muncul, `hasil` isi QR yang dikembalikan
+/// (null = pengguna membatalkan).
+class PemindaiQrTiruan implements PemindaiQr {
+  PemindaiQrTiruan({this.tersedia = true, this.hasil});
+
+  final bool tersedia;
+  final String? hasil;
+  int dipanggil = 0;
+
+  @override
+  bool CekTersedia() => tersedia;
+
+  @override
+  Future<String?> Pindai(BuildContext context) async {
+    dipanggil++;
+    return hasil;
+  }
+}
+
 class KameraSwafotoTiruan implements KameraSwafoto {
   KameraSwafotoTiruan({this.tersedia = true, this.foto});
 

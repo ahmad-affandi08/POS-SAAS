@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/PasangAplikasi.dart';
+
+/// F-02 langkah 5 di aplikasi kasir: kode aktivasi dipindai dari QR atau diketik.
+/// Pemindai (`mobile_scanner`) hanya ada di Android & iOS; di Windows layar ini hanya menyediakan isian manual.
+void main() {
+  testWidgets('tanpa pemindai hanya ada isian manual, tanpa tombol pindai', (tester) async {
+    final u = LingkunganUji.Buat();
+    await PasangAplikasi(tester, u, pemindaiQr: PemindaiQrTiruan(tersedia: false));
+
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Pindai kode QR'), findsNothing);
+    expect(find.text('atau ketik kodenya'), findsNothing);
+    expect(find.widgetWithText(TextField, 'Kode aktivasi'), findsOneWidget);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('dengan pemindai, tombol pindai muncul di atas isian manual', (tester) async {
+    final u = LingkunganUji.Buat();
+    await PasangAplikasi(tester, u, pemindaiQr: PemindaiQrTiruan(hasil: 'A7K9M2QT'));
+
+    expect(find.widgetWithText(OutlinedButton, 'Pindai kode QR'), findsOneWidget);
+    // Isian manual tetap jadi jalur utama, bukan disembunyikan.
+    expect(find.text('atau ketik kodenya'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Kode aktivasi'), findsOneWidget);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('hasil pindai mengisi kode lalu langsung mencoba mengaktifkan', (tester) async {
+    final u = LingkunganUji.Buat();
+    final pemindai = PemindaiQrTiruan(hasil: 'A7K9M2QT');
+    await PasangAplikasi(tester, u, pemindaiQr: pemindai);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Pindai kode QR'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    expect(pemindai.dipanggil, 1);
+    // Kode dari QR masuk ke isian, jadi pengguna bisa melihat & memperbaikinya bila aktivasi gagal.
+    expect(find.widgetWithText(TextField, 'A7K9M2QT'), findsOneWidget);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('kode berisi tanda hubung tidak ditolak di perangkat', (tester) async {
+    final u = LingkunganUji.Buat();
+    await PasangAplikasi(tester, u, pemindaiQr: PemindaiQrTiruan(tersedia: false));
+
+    await tester.enterText(find.widgetWithText(TextField, 'Kode aktivasi'), 'A7K9-M2QT');
+    await tester.tap(find.widgetWithText(FilledButton, 'Aktifkan perangkat'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    // Back-office pernah menampilkan kode berstrip, sedangkan validasi lokal hanya menerima huruf & angka;
+    // kodenya kini dinormalkan dulu seperti di server, jadi galatnya bukan lagi "kode tidak valid".
+    expect(find.text('Masukkan kode aktivasi dari back-office menu Perangkat.'), findsNothing);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('pindai dibatalkan tidak mengisi kode dan tidak mengaktifkan', (tester) async {
+    final u = LingkunganUji.Buat();
+    final pemindai = PemindaiQrTiruan();
+    await PasangAplikasi(tester, u, pemindaiQr: pemindai);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Pindai kode QR'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    expect(pemindai.dipanggil, 1);
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'A7K9M2QT'), findsNothing);
+
+    await Lepas(tester, u);
+  });
+}
