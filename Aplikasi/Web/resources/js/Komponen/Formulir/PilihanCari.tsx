@@ -110,8 +110,15 @@ export default function PilihanCari({
         }
     };
 
+    /*
+     * `modal` wajib: saat popover ini dipakai di dalam Dialog, react-remove-scroll milik Dialog memblokir
+     * `touchmove` untuk semua yang ada di luar subtree dialog — dan isi popover di-portal ke body. Akibatnya
+     * daftar tidak bisa digulir dengan jari di HP, sementara di desktop masih bisa karena scrollbar diseret
+     * dengan tetikus; itu sebabnya bug ini lama tidak terlihat. Dengan `modal`, popover mengurus scroll-lock
+     * sendiri dan isinya kembali bisa digulir sentuh.
+     */
     return (
-        <Popover open={terbuka} onOpenChange={Buka}>
+        <Popover modal open={terbuka} onOpenChange={Buka}>
             <PopoverTrigger asChild>
                 <button
                     ref={pemicu}
