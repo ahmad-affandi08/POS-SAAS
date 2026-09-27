@@ -25,6 +25,8 @@ import '../Penjualan/LembarCucian.dart';
 import '../Penjualan/LembarReservasi.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
+import '../Persediaan/LayarStok.dart';
+import '../Persediaan/LembarBahanTerbuang.dart';
 import '../Shift/KartuLaporanShift.dart';
 import '../Shift/LembarTutupShift.dart';
 import '../Struk/BagianCetakDokumen.dart';
@@ -84,7 +86,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   /// Panel void/retur yang sedang terbuka (F-09); null = tertutup.
   _PanelPenjualan? _panelPenjualan;
 
-  bool get _adaPanel => _jenisKas != null || _panelShift != null || _panelPenjualan != null;
+  /// Panel catat bahan terbuang (F-05f bagian 2) sedang terbuka.
+  bool _panelTerbuang = false;
+
+  bool get _adaPanel => _jenisKas != null || _panelShift != null || _panelPenjualan != null || _panelTerbuang;
 
   Timer? _pewaktuSinkron;
   Timer? _pewaktuPesanan;
@@ -189,28 +194,33 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   void _Buka(TujuanRuangKerja tujuan) => setState(() => _tujuan = tujuan);
 
   void _BukaPanelKas(String jenis) => setState(() {
-    _panelShift = null;
-    _panelPenjualan = null;
+    _TutupSemuaPanel();
     _jenisKas = jenis;
   });
 
   void _BukaPanelShift(_PanelShift panel) => setState(() {
-    _jenisKas = null;
-    _panelPenjualan = null;
+    _TutupSemuaPanel();
     _panelShift = panel;
   });
 
   void _BukaPanelPenjualan(_PanelPenjualan panel) => setState(() {
-    _jenisKas = null;
-    _panelShift = null;
+    _TutupSemuaPanel();
     _panelPenjualan = panel;
   });
 
-  void _TutupPanel() => setState(() {
+  void _BukaPanelTerbuang() => setState(() {
+    _TutupSemuaPanel();
+    _panelTerbuang = true;
+  });
+
+  void _TutupSemuaPanel() {
     _jenisKas = null;
     _panelShift = null;
     _panelPenjualan = null;
-  });
+    _panelTerbuang = false;
+  }
+
+  void _TutupPanel() => setState(_TutupSemuaPanel);
 
   /// Tombol kembali (Android) selalu kembali ke area kerja: tutup panel, lalu ke beranda Jual. Tidak keluar aplikasi.
   void _SaatKembali(bool sudahKembali, Object? _) {
@@ -243,6 +253,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       saatCucian: ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif == true
           ? () => _BukaPanelPenjualan(const _PanelPenjualan(cucian: true))
           : null,
+    ),
+    TujuanRuangKerja.Stok => LayarStok(
+      saatCatatTerbuang: widget.kasir.PunyaIzin(IzinKasir.persediaanTerbuangCatat) ? _BukaPanelTerbuang : null,
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -337,11 +350,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final panelShift = _panelShift;
     final panelPenjualan = _panelPenjualan;
     final area = IndexedStack(index: indeks, children: [for (final i in item) _BangunLayar(i.tujuan)]);
-    if (jenisKas == null && panelShift == null && panelPenjualan == null) {
+    if (jenisKas == null && panelShift == null && panelPenjualan == null && !_panelTerbuang) {
       return area;
     }
 
     final (judul, formulir) = switch ((jenisKas, panelShift, panelPenjualan)) {
+      _ when _panelTerbuang => (
+        LembarBahanTerbuang.judul,
+        LembarBahanTerbuang(key: const ValueKey('BahanTerbuang'), pencatat: widget.kasir, saatTersimpan: _TutupPanel)
+            as Widget,
+      ),
       (_, _, _PanelPenjualan(uuidPenjualanVoid: final String uuid)) => (
         LembarVoid.judul,
         LembarVoid(key: ValueKey('Void-$uuid'), uuidPenjualan: uuid, kasir: widget.kasir, saatSelesai: _TutupPanel)
@@ -452,7 +470,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final lebar = MediaQuery.sizeOf(context).width;
     final pakaiRel = lebar >= RuangKerja.lebarRel;
     final item = _pelayan
-        ? ItemNavigasi.pelayan
+        ? ItemNavigasi.Saring(widget.kasir, daftar: ItemNavigasi.pelayan)
         : ItemNavigasi.Saring(
             widget.kasir,
             modulAktif: {if (ref.watch(penyediaModeMeja).value == true) ItemNavigasi.modulMeja},

@@ -104,6 +104,8 @@ class ProdukJual {
     required this.kelompokPilihan,
     required this.pajak,
     this.jumlahSesiPaket,
+    this.aktif = true,
+    this.satuanDasar,
   });
 
   final String uuid;
@@ -123,6 +125,12 @@ class ProdukJual {
 
   /// Aktif & tampil di POS.
   final bool tampil;
+
+  /// Aktif di katalog (termasuk yang tidak tampil di POS, mis. bahan baku; dipakai pencatatan bahan terbuang).
+  final bool aktif;
+
+  /// Satuan dasar produk (konversi 1; Uuid = Uuid `Satuan`, bukan `ProdukSatuan`). Null bila katalog tidak memuatnya.
+  final SatuanJual? satuanDasar;
   final List<SatuanJual> satuan;
   final List<KelompokPilihanJual> kelompokPilihan;
   final List<PajakProduk> pajak;
@@ -313,6 +321,17 @@ class KatalogLokal {
           kelompokPilihan: kelompokProduk[p.Uuid] ?? const [],
           pajak: p.UuidKelompokPajak == null ? const [] : pajakKelompok[p.UuidKelompokPajak] ?? const [],
           jumlahSesiPaket: p.JumlahSesiPaket,
+          aktif: p.Aktif,
+          satuanDasar: switch (satuan[p.UuidSatuanDasar]) {
+            final s? => SatuanJual(
+              uuid: s.Uuid,
+              nama: s.Nama,
+              konversiKeDasar: '1',
+              defaultJual: false,
+              bolehDesimal: s.BolehDesimal,
+            ),
+            null => null,
+          },
         ),
     ];
 

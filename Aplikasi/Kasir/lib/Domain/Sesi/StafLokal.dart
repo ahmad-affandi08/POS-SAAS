@@ -26,6 +26,9 @@ abstract final class IzinKasir {
 
   /// Laundry: mengubah status proses cucian (juga boleh dengan `penjualan.buat`).
   static const String laundryKelola = 'laundry.kelola';
+
+  /// F-05f bagian 2: mencatat bahan/menu terbuang dari perangkat.
+  static const String persediaanTerbuangCatat = 'persediaan.terbuang.catat';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

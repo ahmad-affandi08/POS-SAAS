@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 
 /// Tujuan area kerja di rel navigasi (PRD §17.2.7). Urutan enum = urutan tampil.
-enum TujuanRuangKerja { Jual, Meja, Riwayat, Kas, Shift, StatusSinkron, Pengaturan }
+enum TujuanRuangKerja { Jual, Meja, Riwayat, Stok, Kas, Shift, StatusSinkron, Pengaturan }
 
 /// Satu item rel navigasi. Item hanya tampil bila [modul] aktif (null = inti, selalu aktif) dan kasir punya [izin]
 /// (null = semua kasir). Maksimal 8 item (§17.2.7).
@@ -53,6 +53,13 @@ class ItemNavigasi {
       ikon: Icons.receipt_long_outlined,
       ikonAktif: Icons.receipt_long,
     ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Stok,
+      label: 'Stok',
+      ikon: Icons.inventory_2_outlined,
+      ikonAktif: Icons.inventory_2,
+      izin: IzinKasir.persediaanTerbuangCatat,
+    ),
     ItemNavigasi(tujuan: TujuanRuangKerja.Kas, label: 'Kas', ikon: Icons.payments_outlined, ikonAktif: Icons.payments),
     ItemNavigasi(
       tujuan: TujuanRuangKerja.Shift,
@@ -75,7 +82,7 @@ class ItemNavigasi {
   ];
 
   /// Mode Pelayan (v2.00, perangkat berjenis `Pelayan`, tanpa shift & kas): Meja sebagai beranda, Pesanan (layar Jual
-  /// tanpa bayar), Sinkron, Pengaturan.
+  /// tanpa bayar), Stok (F-05f bagian 2, hanya dengan izin), Sinkron, Pengaturan.
   static const List<ItemNavigasi> pelayan = [
     ItemNavigasi(
       tujuan: TujuanRuangKerja.Meja,
@@ -88,6 +95,13 @@ class ItemNavigasi {
       label: 'Pesanan',
       ikon: Icons.restaurant_menu_outlined,
       ikonAktif: Icons.restaurant_menu,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Stok,
+      label: 'Stok',
+      ikon: Icons.inventory_2_outlined,
+      ikonAktif: Icons.inventory_2,
+      izin: IzinKasir.persediaanTerbuangCatat,
     ),
     ItemNavigasi(
       tujuan: TujuanRuangKerja.StatusSinkron,

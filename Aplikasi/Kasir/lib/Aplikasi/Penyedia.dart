@@ -27,6 +27,7 @@ import '../Data/RepositoriPelanggan.dart';
 import '../Data/RepositoriPenjualan.dart';
 import '../Data/RepositoriDeposit.dart';
 import '../Data/RepositoriPreOrder.dart';
+import '../Data/RepositoriPersediaan.dart';
 import '../Data/RepositoriPesananMeja.dart';
 import '../Domain/Dapur/LayananDapur.dart';
 import '../Domain/GalatKasir.dart';
@@ -49,6 +50,7 @@ import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
+import '../Domain/Persediaan/LayananBahanTerbuang.dart';
 import '../Domain/Perangkat/LayananUjiPerangkat.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
@@ -351,6 +353,23 @@ final penyediaLayananDeposit = Provider<LayananDeposit>(
     jam: ref.watch(penyediaJam),
   ),
 );
+
+final penyediaRepositoriPersediaan = Provider<RepositoriPersediaan>(
+  (ref) => RepositoriPersediaan(ref.watch(penyediaBasisData), ref.watch(penyediaRepositori)),
+);
+
+/// F-05f bagian 2: catat bahan/menu terbuang dari perangkat (offline).
+final penyediaLayananBahanTerbuang = Provider<LayananBahanTerbuang>(
+  (ref) => LayananBahanTerbuang(repositori: ref.watch(penyediaRepositoriPersediaan), jam: ref.watch(penyediaJam)),
+);
+
+/// Catatan bahan terbuang perangkat ini pada tanggal bisnis outlet hari ini, terbaru dulu, dengan status kirim.
+final penyediaBahanTerbuangHariIni = StreamProvider<List<RiwayatBahanTerbuang>>((ref) async* {
+  final konteks = await ref.watch(penyediaKonteksPenjualan.future);
+  yield* ref
+      .watch(penyediaRepositoriPersediaan)
+      .PantauBahanTerbuang(konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
+});
 
 final penyediaLayananSesi = Provider<LayananSesi>(
   (ref) => LayananSesi(

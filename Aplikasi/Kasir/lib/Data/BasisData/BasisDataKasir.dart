@@ -7,6 +7,7 @@ import 'TabelMeja.dart';
 import 'TabelPelanggan.dart';
 import 'TabelPascaPenjualan.dart';
 import 'TabelPenjualan.dart';
+import 'TabelPersediaan.dart';
 import 'TabelPreOrder.dart';
 
 export 'TabelAbsensi.dart';
@@ -16,6 +17,7 @@ export 'TabelMeja.dart';
 export 'TabelPelanggan.dart';
 export 'TabelPascaPenjualan.dart';
 export 'TabelPenjualan.dart';
+export 'TabelPersediaan.dart';
 export 'TabelPreOrder.dart';
 
 part 'BasisDataKasir.g.dart';
@@ -186,6 +188,8 @@ class PercobaanPin extends Table {
     // Skema 13 (F-16d bagian 1): isi deposit pelanggan dari perangkat ini.
     IsiDepositLokal,
     NomorUrutIsiDeposit,
+    // Skema 17 (F-05f bagian 2): bahan terbuang yang dicatat perangkat ini.
+    BahanTerbuangLokal,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -197,9 +201,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
-  /// outbox).
+  /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal).
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -333,6 +337,9 @@ class BasisDataKasir extends _$BasisDataKasir {
           "UPDATE Outbox SET UuidPerangkat = (SELECT Nilai FROM Pengaturan WHERE Kunci = 'UuidPerangkat') "
           'WHERE UuidPerangkat IS NULL',
         );
+      }
+      if (dari < 17) {
+        await m.createTable(bahanTerbuangLokal);
       }
     },
     beforeOpen: (detail) async {

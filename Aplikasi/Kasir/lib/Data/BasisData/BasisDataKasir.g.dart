@@ -17418,6 +17418,621 @@ class NomorUrutIsiDepositCompanion extends UpdateCompanion<BarisNomorUrutIsiDepo
   }
 }
 
+class $BahanTerbuangLokalTable extends BahanTerbuangLokal
+    with TableInfo<$BahanTerbuangLokalTable, BarisBahanTerbuangLokal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BahanTerbuangLokalTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _UuidMeta = const VerificationMeta('Uuid');
+  @override
+  late final GeneratedColumn<String> Uuid = GeneratedColumn<String>(
+    'Uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _UuidProdukMeta = const VerificationMeta('UuidProduk');
+  @override
+  late final GeneratedColumn<String> UuidProduk = GeneratedColumn<String>(
+    'UuidProduk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaProdukMeta = const VerificationMeta('NamaProduk');
+  @override
+  late final GeneratedColumn<String> NamaProduk = GeneratedColumn<String>(
+    'NamaProduk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JumlahMeta = const VerificationMeta('Jumlah');
+  @override
+  late final GeneratedColumn<String> Jumlah = GeneratedColumn<String>(
+    'Jumlah',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaSatuanMeta = const VerificationMeta('NamaSatuan');
+  @override
+  late final GeneratedColumn<String> NamaSatuan = GeneratedColumn<String>(
+    'NamaSatuan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _JumlahDasarMeta = const VerificationMeta('JumlahDasar');
+  @override
+  late final GeneratedColumn<String> JumlahDasar = GeneratedColumn<String>(
+    'JumlahDasar',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _AlasanMeta = const VerificationMeta('Alasan');
+  @override
+  late final GeneratedColumn<String> Alasan = GeneratedColumn<String>(
+    'Alasan',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _CatatanMeta = const VerificationMeta('Catatan');
+  @override
+  late final GeneratedColumn<String> Catatan = GeneratedColumn<String>(
+    'Catatan',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _UuidPenggunaMeta = const VerificationMeta('UuidPengguna');
+  @override
+  late final GeneratedColumn<String> UuidPengguna = GeneratedColumn<String>(
+    'UuidPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _NamaPenggunaMeta = const VerificationMeta('NamaPengguna');
+  @override
+  late final GeneratedColumn<String> NamaPengguna = GeneratedColumn<String>(
+    'NamaPengguna',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _TanggalBisnisMeta = const VerificationMeta('TanggalBisnis');
+  @override
+  late final GeneratedColumn<String> TanggalBisnis = GeneratedColumn<String>(
+    'TanggalBisnis',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _DibuatPadaMeta = const VerificationMeta('DibuatPada');
+  @override
+  late final GeneratedColumn<DateTime> DibuatPada = GeneratedColumn<DateTime>(
+    'DibuatPada',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    Uuid,
+    UuidProduk,
+    NamaProduk,
+    Jumlah,
+    NamaSatuan,
+    JumlahDasar,
+    Alasan,
+    Catatan,
+    UuidPengguna,
+    NamaPengguna,
+    TanggalBisnis,
+    DibuatPada,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'BahanTerbuangLokal';
+  @override
+  VerificationContext validateIntegrity(Insertable<BarisBahanTerbuangLokal> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('Uuid')) {
+      context.handle(_UuidMeta, Uuid.isAcceptableOrUnknown(data['Uuid']!, _UuidMeta));
+    } else if (isInserting) {
+      context.missing(_UuidMeta);
+    }
+    if (data.containsKey('UuidProduk')) {
+      context.handle(_UuidProdukMeta, UuidProduk.isAcceptableOrUnknown(data['UuidProduk']!, _UuidProdukMeta));
+    } else if (isInserting) {
+      context.missing(_UuidProdukMeta);
+    }
+    if (data.containsKey('NamaProduk')) {
+      context.handle(_NamaProdukMeta, NamaProduk.isAcceptableOrUnknown(data['NamaProduk']!, _NamaProdukMeta));
+    } else if (isInserting) {
+      context.missing(_NamaProdukMeta);
+    }
+    if (data.containsKey('Jumlah')) {
+      context.handle(_JumlahMeta, Jumlah.isAcceptableOrUnknown(data['Jumlah']!, _JumlahMeta));
+    } else if (isInserting) {
+      context.missing(_JumlahMeta);
+    }
+    if (data.containsKey('NamaSatuan')) {
+      context.handle(_NamaSatuanMeta, NamaSatuan.isAcceptableOrUnknown(data['NamaSatuan']!, _NamaSatuanMeta));
+    } else if (isInserting) {
+      context.missing(_NamaSatuanMeta);
+    }
+    if (data.containsKey('JumlahDasar')) {
+      context.handle(_JumlahDasarMeta, JumlahDasar.isAcceptableOrUnknown(data['JumlahDasar']!, _JumlahDasarMeta));
+    } else if (isInserting) {
+      context.missing(_JumlahDasarMeta);
+    }
+    if (data.containsKey('Alasan')) {
+      context.handle(_AlasanMeta, Alasan.isAcceptableOrUnknown(data['Alasan']!, _AlasanMeta));
+    } else if (isInserting) {
+      context.missing(_AlasanMeta);
+    }
+    if (data.containsKey('Catatan')) {
+      context.handle(_CatatanMeta, Catatan.isAcceptableOrUnknown(data['Catatan']!, _CatatanMeta));
+    }
+    if (data.containsKey('UuidPengguna')) {
+      context.handle(_UuidPenggunaMeta, UuidPengguna.isAcceptableOrUnknown(data['UuidPengguna']!, _UuidPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_UuidPenggunaMeta);
+    }
+    if (data.containsKey('NamaPengguna')) {
+      context.handle(_NamaPenggunaMeta, NamaPengguna.isAcceptableOrUnknown(data['NamaPengguna']!, _NamaPenggunaMeta));
+    } else if (isInserting) {
+      context.missing(_NamaPenggunaMeta);
+    }
+    if (data.containsKey('TanggalBisnis')) {
+      context.handle(
+        _TanggalBisnisMeta,
+        TanggalBisnis.isAcceptableOrUnknown(data['TanggalBisnis']!, _TanggalBisnisMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_TanggalBisnisMeta);
+    }
+    if (data.containsKey('DibuatPada')) {
+      context.handle(_DibuatPadaMeta, DibuatPada.isAcceptableOrUnknown(data['DibuatPada']!, _DibuatPadaMeta));
+    } else if (isInserting) {
+      context.missing(_DibuatPadaMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {Uuid};
+  @override
+  BarisBahanTerbuangLokal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BarisBahanTerbuangLokal(
+      Uuid: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Uuid'])!,
+      UuidProduk: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidProduk'])!,
+      NamaProduk: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaProduk'])!,
+      Jumlah: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Jumlah'])!,
+      NamaSatuan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaSatuan'])!,
+      JumlahDasar: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}JumlahDasar'])!,
+      Alasan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Alasan'])!,
+      Catatan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Catatan']),
+      UuidPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPengguna'])!,
+      NamaPengguna: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPengguna'])!,
+      TanggalBisnis: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TanggalBisnis'])!,
+      DibuatPada: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}DibuatPada'])!,
+    );
+  }
+
+  @override
+  $BahanTerbuangLokalTable createAlias(String alias) {
+    return $BahanTerbuangLokalTable(attachedDatabase, alias);
+  }
+}
+
+class BarisBahanTerbuangLokal extends DataClass implements Insertable<BarisBahanTerbuangLokal> {
+  final String Uuid;
+  final String UuidProduk;
+  final String NamaProduk;
+
+  /// Jumlah pada satuan yang dipilih pencatat dan nama satuannya (tampilan).
+  final String Jumlah;
+  final String NamaSatuan;
+
+  /// Jumlah dalam satuan dasar produk (yang dikirim ke server).
+  final String JumlahDasar;
+  final String Alasan;
+  final String? Catatan;
+  final String UuidPengguna;
+  final String NamaPengguna;
+
+  /// Tanggal bisnis outlet `YYYY-MM-DD` saat dicatat.
+  final String TanggalBisnis;
+  final DateTime DibuatPada;
+  const BarisBahanTerbuangLokal({
+    required this.Uuid,
+    required this.UuidProduk,
+    required this.NamaProduk,
+    required this.Jumlah,
+    required this.NamaSatuan,
+    required this.JumlahDasar,
+    required this.Alasan,
+    this.Catatan,
+    required this.UuidPengguna,
+    required this.NamaPengguna,
+    required this.TanggalBisnis,
+    required this.DibuatPada,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['Uuid'] = Variable<String>(Uuid);
+    map['UuidProduk'] = Variable<String>(UuidProduk);
+    map['NamaProduk'] = Variable<String>(NamaProduk);
+    map['Jumlah'] = Variable<String>(Jumlah);
+    map['NamaSatuan'] = Variable<String>(NamaSatuan);
+    map['JumlahDasar'] = Variable<String>(JumlahDasar);
+    map['Alasan'] = Variable<String>(Alasan);
+    if (!nullToAbsent || Catatan != null) {
+      map['Catatan'] = Variable<String>(Catatan);
+    }
+    map['UuidPengguna'] = Variable<String>(UuidPengguna);
+    map['NamaPengguna'] = Variable<String>(NamaPengguna);
+    map['TanggalBisnis'] = Variable<String>(TanggalBisnis);
+    map['DibuatPada'] = Variable<DateTime>(DibuatPada);
+    return map;
+  }
+
+  BahanTerbuangLokalCompanion toCompanion(bool nullToAbsent) {
+    return BahanTerbuangLokalCompanion(
+      Uuid: Value(Uuid),
+      UuidProduk: Value(UuidProduk),
+      NamaProduk: Value(NamaProduk),
+      Jumlah: Value(Jumlah),
+      NamaSatuan: Value(NamaSatuan),
+      JumlahDasar: Value(JumlahDasar),
+      Alasan: Value(Alasan),
+      Catatan: Catatan == null && nullToAbsent ? const Value.absent() : Value(Catatan),
+      UuidPengguna: Value(UuidPengguna),
+      NamaPengguna: Value(NamaPengguna),
+      TanggalBisnis: Value(TanggalBisnis),
+      DibuatPada: Value(DibuatPada),
+    );
+  }
+
+  factory BarisBahanTerbuangLokal.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BarisBahanTerbuangLokal(
+      Uuid: serializer.fromJson<String>(json['Uuid']),
+      UuidProduk: serializer.fromJson<String>(json['UuidProduk']),
+      NamaProduk: serializer.fromJson<String>(json['NamaProduk']),
+      Jumlah: serializer.fromJson<String>(json['Jumlah']),
+      NamaSatuan: serializer.fromJson<String>(json['NamaSatuan']),
+      JumlahDasar: serializer.fromJson<String>(json['JumlahDasar']),
+      Alasan: serializer.fromJson<String>(json['Alasan']),
+      Catatan: serializer.fromJson<String?>(json['Catatan']),
+      UuidPengguna: serializer.fromJson<String>(json['UuidPengguna']),
+      NamaPengguna: serializer.fromJson<String>(json['NamaPengguna']),
+      TanggalBisnis: serializer.fromJson<String>(json['TanggalBisnis']),
+      DibuatPada: serializer.fromJson<DateTime>(json['DibuatPada']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'Uuid': serializer.toJson<String>(Uuid),
+      'UuidProduk': serializer.toJson<String>(UuidProduk),
+      'NamaProduk': serializer.toJson<String>(NamaProduk),
+      'Jumlah': serializer.toJson<String>(Jumlah),
+      'NamaSatuan': serializer.toJson<String>(NamaSatuan),
+      'JumlahDasar': serializer.toJson<String>(JumlahDasar),
+      'Alasan': serializer.toJson<String>(Alasan),
+      'Catatan': serializer.toJson<String?>(Catatan),
+      'UuidPengguna': serializer.toJson<String>(UuidPengguna),
+      'NamaPengguna': serializer.toJson<String>(NamaPengguna),
+      'TanggalBisnis': serializer.toJson<String>(TanggalBisnis),
+      'DibuatPada': serializer.toJson<DateTime>(DibuatPada),
+    };
+  }
+
+  BarisBahanTerbuangLokal copyWith({
+    String? Uuid,
+    String? UuidProduk,
+    String? NamaProduk,
+    String? Jumlah,
+    String? NamaSatuan,
+    String? JumlahDasar,
+    String? Alasan,
+    Value<String?> Catatan = const Value.absent(),
+    String? UuidPengguna,
+    String? NamaPengguna,
+    String? TanggalBisnis,
+    DateTime? DibuatPada,
+  }) => BarisBahanTerbuangLokal(
+    Uuid: Uuid ?? this.Uuid,
+    UuidProduk: UuidProduk ?? this.UuidProduk,
+    NamaProduk: NamaProduk ?? this.NamaProduk,
+    Jumlah: Jumlah ?? this.Jumlah,
+    NamaSatuan: NamaSatuan ?? this.NamaSatuan,
+    JumlahDasar: JumlahDasar ?? this.JumlahDasar,
+    Alasan: Alasan ?? this.Alasan,
+    Catatan: Catatan.present ? Catatan.value : this.Catatan,
+    UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+    NamaPengguna: NamaPengguna ?? this.NamaPengguna,
+    TanggalBisnis: TanggalBisnis ?? this.TanggalBisnis,
+    DibuatPada: DibuatPada ?? this.DibuatPada,
+  );
+  BarisBahanTerbuangLokal copyWithCompanion(BahanTerbuangLokalCompanion data) {
+    return BarisBahanTerbuangLokal(
+      Uuid: data.Uuid.present ? data.Uuid.value : this.Uuid,
+      UuidProduk: data.UuidProduk.present ? data.UuidProduk.value : this.UuidProduk,
+      NamaProduk: data.NamaProduk.present ? data.NamaProduk.value : this.NamaProduk,
+      Jumlah: data.Jumlah.present ? data.Jumlah.value : this.Jumlah,
+      NamaSatuan: data.NamaSatuan.present ? data.NamaSatuan.value : this.NamaSatuan,
+      JumlahDasar: data.JumlahDasar.present ? data.JumlahDasar.value : this.JumlahDasar,
+      Alasan: data.Alasan.present ? data.Alasan.value : this.Alasan,
+      Catatan: data.Catatan.present ? data.Catatan.value : this.Catatan,
+      UuidPengguna: data.UuidPengguna.present ? data.UuidPengguna.value : this.UuidPengguna,
+      NamaPengguna: data.NamaPengguna.present ? data.NamaPengguna.value : this.NamaPengguna,
+      TanggalBisnis: data.TanggalBisnis.present ? data.TanggalBisnis.value : this.TanggalBisnis,
+      DibuatPada: data.DibuatPada.present ? data.DibuatPada.value : this.DibuatPada,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BarisBahanTerbuangLokal(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidProduk: $UuidProduk, ')
+          ..write('NamaProduk: $NamaProduk, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('NamaSatuan: $NamaSatuan, ')
+          ..write('JumlahDasar: $JumlahDasar, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('Catatan: $Catatan, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaPengguna: $NamaPengguna, ')
+          ..write('TanggalBisnis: $TanggalBisnis, ')
+          ..write('DibuatPada: $DibuatPada')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    Uuid,
+    UuidProduk,
+    NamaProduk,
+    Jumlah,
+    NamaSatuan,
+    JumlahDasar,
+    Alasan,
+    Catatan,
+    UuidPengguna,
+    NamaPengguna,
+    TanggalBisnis,
+    DibuatPada,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BarisBahanTerbuangLokal &&
+          other.Uuid == this.Uuid &&
+          other.UuidProduk == this.UuidProduk &&
+          other.NamaProduk == this.NamaProduk &&
+          other.Jumlah == this.Jumlah &&
+          other.NamaSatuan == this.NamaSatuan &&
+          other.JumlahDasar == this.JumlahDasar &&
+          other.Alasan == this.Alasan &&
+          other.Catatan == this.Catatan &&
+          other.UuidPengguna == this.UuidPengguna &&
+          other.NamaPengguna == this.NamaPengguna &&
+          other.TanggalBisnis == this.TanggalBisnis &&
+          other.DibuatPada == this.DibuatPada);
+}
+
+class BahanTerbuangLokalCompanion extends UpdateCompanion<BarisBahanTerbuangLokal> {
+  final Value<String> Uuid;
+  final Value<String> UuidProduk;
+  final Value<String> NamaProduk;
+  final Value<String> Jumlah;
+  final Value<String> NamaSatuan;
+  final Value<String> JumlahDasar;
+  final Value<String> Alasan;
+  final Value<String?> Catatan;
+  final Value<String> UuidPengguna;
+  final Value<String> NamaPengguna;
+  final Value<String> TanggalBisnis;
+  final Value<DateTime> DibuatPada;
+  final Value<int> rowid;
+  const BahanTerbuangLokalCompanion({
+    this.Uuid = const Value.absent(),
+    this.UuidProduk = const Value.absent(),
+    this.NamaProduk = const Value.absent(),
+    this.Jumlah = const Value.absent(),
+    this.NamaSatuan = const Value.absent(),
+    this.JumlahDasar = const Value.absent(),
+    this.Alasan = const Value.absent(),
+    this.Catatan = const Value.absent(),
+    this.UuidPengguna = const Value.absent(),
+    this.NamaPengguna = const Value.absent(),
+    this.TanggalBisnis = const Value.absent(),
+    this.DibuatPada = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BahanTerbuangLokalCompanion.insert({
+    required String Uuid,
+    required String UuidProduk,
+    required String NamaProduk,
+    required String Jumlah,
+    required String NamaSatuan,
+    required String JumlahDasar,
+    required String Alasan,
+    this.Catatan = const Value.absent(),
+    required String UuidPengguna,
+    required String NamaPengguna,
+    required String TanggalBisnis,
+    required DateTime DibuatPada,
+    this.rowid = const Value.absent(),
+  }) : Uuid = Value(Uuid),
+       UuidProduk = Value(UuidProduk),
+       NamaProduk = Value(NamaProduk),
+       Jumlah = Value(Jumlah),
+       NamaSatuan = Value(NamaSatuan),
+       JumlahDasar = Value(JumlahDasar),
+       Alasan = Value(Alasan),
+       UuidPengguna = Value(UuidPengguna),
+       NamaPengguna = Value(NamaPengguna),
+       TanggalBisnis = Value(TanggalBisnis),
+       DibuatPada = Value(DibuatPada);
+  static Insertable<BarisBahanTerbuangLokal> custom({
+    Expression<String>? Uuid,
+    Expression<String>? UuidProduk,
+    Expression<String>? NamaProduk,
+    Expression<String>? Jumlah,
+    Expression<String>? NamaSatuan,
+    Expression<String>? JumlahDasar,
+    Expression<String>? Alasan,
+    Expression<String>? Catatan,
+    Expression<String>? UuidPengguna,
+    Expression<String>? NamaPengguna,
+    Expression<String>? TanggalBisnis,
+    Expression<DateTime>? DibuatPada,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (Uuid != null) 'Uuid': Uuid,
+      if (UuidProduk != null) 'UuidProduk': UuidProduk,
+      if (NamaProduk != null) 'NamaProduk': NamaProduk,
+      if (Jumlah != null) 'Jumlah': Jumlah,
+      if (NamaSatuan != null) 'NamaSatuan': NamaSatuan,
+      if (JumlahDasar != null) 'JumlahDasar': JumlahDasar,
+      if (Alasan != null) 'Alasan': Alasan,
+      if (Catatan != null) 'Catatan': Catatan,
+      if (UuidPengguna != null) 'UuidPengguna': UuidPengguna,
+      if (NamaPengguna != null) 'NamaPengguna': NamaPengguna,
+      if (TanggalBisnis != null) 'TanggalBisnis': TanggalBisnis,
+      if (DibuatPada != null) 'DibuatPada': DibuatPada,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BahanTerbuangLokalCompanion copyWith({
+    Value<String>? Uuid,
+    Value<String>? UuidProduk,
+    Value<String>? NamaProduk,
+    Value<String>? Jumlah,
+    Value<String>? NamaSatuan,
+    Value<String>? JumlahDasar,
+    Value<String>? Alasan,
+    Value<String?>? Catatan,
+    Value<String>? UuidPengguna,
+    Value<String>? NamaPengguna,
+    Value<String>? TanggalBisnis,
+    Value<DateTime>? DibuatPada,
+    Value<int>? rowid,
+  }) {
+    return BahanTerbuangLokalCompanion(
+      Uuid: Uuid ?? this.Uuid,
+      UuidProduk: UuidProduk ?? this.UuidProduk,
+      NamaProduk: NamaProduk ?? this.NamaProduk,
+      Jumlah: Jumlah ?? this.Jumlah,
+      NamaSatuan: NamaSatuan ?? this.NamaSatuan,
+      JumlahDasar: JumlahDasar ?? this.JumlahDasar,
+      Alasan: Alasan ?? this.Alasan,
+      Catatan: Catatan ?? this.Catatan,
+      UuidPengguna: UuidPengguna ?? this.UuidPengguna,
+      NamaPengguna: NamaPengguna ?? this.NamaPengguna,
+      TanggalBisnis: TanggalBisnis ?? this.TanggalBisnis,
+      DibuatPada: DibuatPada ?? this.DibuatPada,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (Uuid.present) {
+      map['Uuid'] = Variable<String>(Uuid.value);
+    }
+    if (UuidProduk.present) {
+      map['UuidProduk'] = Variable<String>(UuidProduk.value);
+    }
+    if (NamaProduk.present) {
+      map['NamaProduk'] = Variable<String>(NamaProduk.value);
+    }
+    if (Jumlah.present) {
+      map['Jumlah'] = Variable<String>(Jumlah.value);
+    }
+    if (NamaSatuan.present) {
+      map['NamaSatuan'] = Variable<String>(NamaSatuan.value);
+    }
+    if (JumlahDasar.present) {
+      map['JumlahDasar'] = Variable<String>(JumlahDasar.value);
+    }
+    if (Alasan.present) {
+      map['Alasan'] = Variable<String>(Alasan.value);
+    }
+    if (Catatan.present) {
+      map['Catatan'] = Variable<String>(Catatan.value);
+    }
+    if (UuidPengguna.present) {
+      map['UuidPengguna'] = Variable<String>(UuidPengguna.value);
+    }
+    if (NamaPengguna.present) {
+      map['NamaPengguna'] = Variable<String>(NamaPengguna.value);
+    }
+    if (TanggalBisnis.present) {
+      map['TanggalBisnis'] = Variable<String>(TanggalBisnis.value);
+    }
+    if (DibuatPada.present) {
+      map['DibuatPada'] = Variable<DateTime>(DibuatPada.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BahanTerbuangLokalCompanion(')
+          ..write('Uuid: $Uuid, ')
+          ..write('UuidProduk: $UuidProduk, ')
+          ..write('NamaProduk: $NamaProduk, ')
+          ..write('Jumlah: $Jumlah, ')
+          ..write('NamaSatuan: $NamaSatuan, ')
+          ..write('JumlahDasar: $JumlahDasar, ')
+          ..write('Alasan: $Alasan, ')
+          ..write('Catatan: $Catatan, ')
+          ..write('UuidPengguna: $UuidPengguna, ')
+          ..write('NamaPengguna: $NamaPengguna, ')
+          ..write('TanggalBisnis: $TanggalBisnis, ')
+          ..write('DibuatPada: $DibuatPada, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BasisDataKasir extends GeneratedDatabase {
   _$BasisDataKasir(QueryExecutor e) : super(e);
   $BasisDataKasirManager get managers => $BasisDataKasirManager(this);
@@ -17462,6 +18077,7 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
   late final $NomorUrutPesananPenjualanTable nomorUrutPesananPenjualan = $NomorUrutPesananPenjualanTable(this);
   late final $IsiDepositLokalTable isiDepositLokal = $IsiDepositLokalTable(this);
   late final $NomorUrutIsiDepositTable nomorUrutIsiDeposit = $NomorUrutIsiDepositTable(this);
+  late final $BahanTerbuangLokalTable bahanTerbuangLokal = $BahanTerbuangLokalTable(this);
   late final Index indeksProdukBarcodeBarcode = Index(
     'IndeksProdukBarcodeBarcode',
     'CREATE INDEX IndeksProdukBarcodeBarcode ON ProdukBarcode (Barcode)',
@@ -17515,6 +18131,7 @@ abstract class _$BasisDataKasir extends GeneratedDatabase {
     nomorUrutPesananPenjualan,
     isiDepositLokal,
     nomorUrutIsiDeposit,
+    bahanTerbuangLokal,
     indeksProdukBarcodeBarcode,
     indeksPenjualanTanggalBisnis,
   ];
@@ -26688,6 +27305,277 @@ typedef $$NomorUrutIsiDepositTableProcessedTableManager =
       BarisNomorUrutIsiDeposit,
       PrefetchHooks Function()
     >;
+typedef $$BahanTerbuangLokalTableCreateCompanionBuilder = BahanTerbuangLokalCompanion Function({
+  required String Uuid,
+  required String UuidProduk,
+  required String NamaProduk,
+  required String Jumlah,
+  required String NamaSatuan,
+  required String JumlahDasar,
+  required String Alasan,
+  Value<String?> Catatan,
+  required String UuidPengguna,
+  required String NamaPengguna,
+  required String TanggalBisnis,
+  required DateTime DibuatPada,
+  Value<int> rowid,
+});
+typedef $$BahanTerbuangLokalTableUpdateCompanionBuilder = BahanTerbuangLokalCompanion Function({
+  Value<String> Uuid,
+  Value<String> UuidProduk,
+  Value<String> NamaProduk,
+  Value<String> Jumlah,
+  Value<String> NamaSatuan,
+  Value<String> JumlahDasar,
+  Value<String> Alasan,
+  Value<String?> Catatan,
+  Value<String> UuidPengguna,
+  Value<String> NamaPengguna,
+  Value<String> TanggalBisnis,
+  Value<DateTime> DibuatPada,
+  Value<int> rowid,
+});
+
+class $$BahanTerbuangLokalTableFilterComposer extends Composer<_$BasisDataKasir, $BahanTerbuangLokalTable> {
+  $$BahanTerbuangLokalTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidProduk =>
+      $composableBuilder(column: $table.UuidProduk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaProduk =>
+      $composableBuilder(column: $table.NamaProduk, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaSatuan =>
+      $composableBuilder(column: $table.NamaSatuan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get JumlahDasar =>
+      $composableBuilder(column: $table.JumlahDasar, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Catatan =>
+      $composableBuilder(column: $table.Catatan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnFilters(column));
+}
+
+class $$BahanTerbuangLokalTableOrderingComposer extends Composer<_$BasisDataKasir, $BahanTerbuangLokalTable> {
+  $$BahanTerbuangLokalTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get Uuid =>
+      $composableBuilder(column: $table.Uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidProduk =>
+      $composableBuilder(column: $table.UuidProduk, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaProduk =>
+      $composableBuilder(column: $table.NamaProduk, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Jumlah =>
+      $composableBuilder(column: $table.Jumlah, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaSatuan =>
+      $composableBuilder(column: $table.NamaSatuan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get JumlahDasar =>
+      $composableBuilder(column: $table.JumlahDasar, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Alasan =>
+      $composableBuilder(column: $table.Alasan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Catatan =>
+      $composableBuilder(column: $table.Catatan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => ColumnOrderings(column));
+}
+
+class $$BahanTerbuangLokalTableAnnotationComposer extends Composer<_$BasisDataKasir, $BahanTerbuangLokalTable> {
+  $$BahanTerbuangLokalTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get Uuid => $composableBuilder(column: $table.Uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidProduk => $composableBuilder(column: $table.UuidProduk, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaProduk => $composableBuilder(column: $table.NamaProduk, builder: (column) => column);
+
+  GeneratedColumn<String> get Jumlah => $composableBuilder(column: $table.Jumlah, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaSatuan => $composableBuilder(column: $table.NamaSatuan, builder: (column) => column);
+
+  GeneratedColumn<String> get JumlahDasar =>
+      $composableBuilder(column: $table.JumlahDasar, builder: (column) => column);
+
+  GeneratedColumn<String> get Alasan => $composableBuilder(column: $table.Alasan, builder: (column) => column);
+
+  GeneratedColumn<String> get Catatan => $composableBuilder(column: $table.Catatan, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPengguna =>
+      $composableBuilder(column: $table.UuidPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get NamaPengguna =>
+      $composableBuilder(column: $table.NamaPengguna, builder: (column) => column);
+
+  GeneratedColumn<String> get TanggalBisnis =>
+      $composableBuilder(column: $table.TanggalBisnis, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get DibuatPada =>
+      $composableBuilder(column: $table.DibuatPada, builder: (column) => column);
+}
+
+class $$BahanTerbuangLokalTableTableManager
+    extends
+        RootTableManager<
+          _$BasisDataKasir,
+          $BahanTerbuangLokalTable,
+          BarisBahanTerbuangLokal,
+          $$BahanTerbuangLokalTableFilterComposer,
+          $$BahanTerbuangLokalTableOrderingComposer,
+          $$BahanTerbuangLokalTableAnnotationComposer,
+          $$BahanTerbuangLokalTableCreateCompanionBuilder,
+          $$BahanTerbuangLokalTableUpdateCompanionBuilder,
+          (
+            BarisBahanTerbuangLokal,
+            BaseReferences<_$BasisDataKasir, $BahanTerbuangLokalTable, BarisBahanTerbuangLokal>,
+          ),
+          BarisBahanTerbuangLokal,
+          PrefetchHooks Function()
+        > {
+  $$BahanTerbuangLokalTableTableManager(_$BasisDataKasir db, $BahanTerbuangLokalTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$BahanTerbuangLokalTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$BahanTerbuangLokalTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$BahanTerbuangLokalTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> Uuid = const Value.absent(),
+                Value<String> UuidProduk = const Value.absent(),
+                Value<String> NamaProduk = const Value.absent(),
+                Value<String> Jumlah = const Value.absent(),
+                Value<String> NamaSatuan = const Value.absent(),
+                Value<String> JumlahDasar = const Value.absent(),
+                Value<String> Alasan = const Value.absent(),
+                Value<String?> Catatan = const Value.absent(),
+                Value<String> UuidPengguna = const Value.absent(),
+                Value<String> NamaPengguna = const Value.absent(),
+                Value<String> TanggalBisnis = const Value.absent(),
+                Value<DateTime> DibuatPada = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BahanTerbuangLokalCompanion(
+                Uuid: Uuid,
+                UuidProduk: UuidProduk,
+                NamaProduk: NamaProduk,
+                Jumlah: Jumlah,
+                NamaSatuan: NamaSatuan,
+                JumlahDasar: JumlahDasar,
+                Alasan: Alasan,
+                Catatan: Catatan,
+                UuidPengguna: UuidPengguna,
+                NamaPengguna: NamaPengguna,
+                TanggalBisnis: TanggalBisnis,
+                DibuatPada: DibuatPada,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String Uuid,
+                required String UuidProduk,
+                required String NamaProduk,
+                required String Jumlah,
+                required String NamaSatuan,
+                required String JumlahDasar,
+                required String Alasan,
+                Value<String?> Catatan = const Value.absent(),
+                required String UuidPengguna,
+                required String NamaPengguna,
+                required String TanggalBisnis,
+                required DateTime DibuatPada,
+                Value<int> rowid = const Value.absent(),
+              }) => BahanTerbuangLokalCompanion.insert(
+                Uuid: Uuid,
+                UuidProduk: UuidProduk,
+                NamaProduk: NamaProduk,
+                Jumlah: Jumlah,
+                NamaSatuan: NamaSatuan,
+                JumlahDasar: JumlahDasar,
+                Alasan: Alasan,
+                Catatan: Catatan,
+                UuidPengguna: UuidPengguna,
+                NamaPengguna: NamaPengguna,
+                TanggalBisnis: TanggalBisnis,
+                DibuatPada: DibuatPada,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$BahanTerbuangLokalTable, BarisBahanTerbuangLokal>(table),
+                  BaseReferences<_$BasisDataKasir, $BahanTerbuangLokalTable, BarisBahanTerbuangLokal>(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BahanTerbuangLokalTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BasisDataKasir,
+      $BahanTerbuangLokalTable,
+      BarisBahanTerbuangLokal,
+      $$BahanTerbuangLokalTableFilterComposer,
+      $$BahanTerbuangLokalTableOrderingComposer,
+      $$BahanTerbuangLokalTableAnnotationComposer,
+      $$BahanTerbuangLokalTableCreateCompanionBuilder,
+      $$BahanTerbuangLokalTableUpdateCompanionBuilder,
+      (BarisBahanTerbuangLokal, BaseReferences<_$BasisDataKasir, $BahanTerbuangLokalTable, BarisBahanTerbuangLokal>),
+      BarisBahanTerbuangLokal,
+      PrefetchHooks Function()
+    >;
 
 class $BasisDataKasirManager {
   final _$BasisDataKasir _db;
@@ -26749,4 +27637,6 @@ class $BasisDataKasirManager {
       $$IsiDepositLokalTableTableManager(_db, _db.isiDepositLokal);
   $$NomorUrutIsiDepositTableTableManager get nomorUrutIsiDeposit =>
       $$NomorUrutIsiDepositTableTableManager(_db, _db.nomorUrutIsiDeposit);
+  $$BahanTerbuangLokalTableTableManager get bahanTerbuangLokal =>
+      $$BahanTerbuangLokalTableTableManager(_db, _db.bahanTerbuangLokal);
 }

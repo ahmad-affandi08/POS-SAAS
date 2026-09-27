@@ -14,6 +14,7 @@ import 'package:kasir/Data/RepositoriPelanggan.dart';
 import 'package:kasir/Data/RepositoriPenjualan.dart';
 import 'package:kasir/Data/RepositoriDeposit.dart';
 import 'package:kasir/Data/RepositoriPreOrder.dart';
+import 'package:kasir/Data/RepositoriPersediaan.dart';
 import 'package:kasir/Data/RepositoriPesananMeja.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
@@ -26,6 +27,7 @@ import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananLaundry.dart';
 import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
 import 'package:kasir/Domain/Penjualan/LayananReservasi.dart';
+import 'package:kasir/Domain/Persediaan/LayananBahanTerbuang.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
@@ -58,7 +60,7 @@ Map<String, Object?> StafJson(String uuid, String nama, List<String> izin, int? 
 }
 
 /// Data awal uji: Rina (kasir, boleh diskon manual, PIN kasus 0 "246810"), Budi (supervisor, penyetuju kas keluar &
-/// diskon & selisih kas tutup shift & void/retur & tempo, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
+/// diskon & selisih kas tutup shift & void/retur & tempo & bahan terbuang, PIN kasus 1 "135790"), Sari (kasir tanpa verifier offline), kategori keluar & masuk, batas kas keluar
 /// Rp 200.000. F-07b: outlet SLB, perangkat POS-001, memungut PBJT 10% (bukan PKP), batas diskon 10%/30%, lima
 /// metode pembayaran fase 1.
 Map<String, Object?> DataAwalUji({
@@ -199,6 +201,7 @@ Map<String, Object?> DataAwalUji({
       'shift.selisih.setujui',
       'penjualan.void',
       'penjualan.tempo.setujui',
+      'persediaan.terbuang.catat',
     ], 1),
     StafJson('01K5STAF000000000000000003', 'Sari Lestari', ['penjualan.buat'], null),
   ],
@@ -334,6 +337,12 @@ class LingkunganUji {
     klien: klien,
     repositori: repositori,
     repositoriMeja: repositoriMeja,
+    jam: () => jam,
+  );
+
+  late final RepositoriPersediaan repositoriPersediaan = RepositoriPersediaan(db, repositori);
+  late final LayananBahanTerbuang bahanTerbuang = LayananBahanTerbuang(
+    repositori: repositoriPersediaan,
     jam: () => jam,
   );
 
