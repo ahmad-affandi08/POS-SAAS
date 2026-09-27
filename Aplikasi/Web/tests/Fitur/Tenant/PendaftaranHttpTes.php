@@ -167,13 +167,23 @@ describe('Verifikasi email (BR-00.5)', function (): void {
         $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => app(PenandaVerifikasiEmail::class)->BuatHash($pengguna)];
 
         // Tanda tangan relatif (D-20): jalur yang ditandatangani, bukan skema & host.
-        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter, false))->assertForbidden();
+        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter, false))
+            ->assertRedirect(route('masuk'));
         $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), [...$parameter, 'hash' => 'salah'], false))
             ->assertSessionHasErrors('Umum');
         expect($pengguna->refresh()->EmailDiverifikasiPada)->toBeNull();
 
         $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), $parameter, false))->assertRedirect(route('masuk'));
         expect($pengguna->refresh()->EmailDiverifikasiPada)->not->toBeNull();
+    });
+
+    it('tautan kedaluwarsa memberi pesan yang bisa ditindaklanjuti, bukan 403 mentah', function (): void {
+        $pengguna = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Pengguna'];
+        $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => app(PenandaVerifikasiEmail::class)->BuatHash($pengguna)];
+
+        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter, false))
+            ->assertRedirect(route('masuk'))
+            ->assertSessionHasErrors('Umum');
     });
 
     it('tautan tetap sah walau dibuka di host lain (D-20: payou.id dialihkan ke domain tenant)', function (): void {
@@ -200,7 +210,8 @@ describe('Verifikasi email (BR-00.5)', function (): void {
 
         $this->travel(24)->hours();
         $this->travel(1)->minutes();
-        $this->get($tautan)->assertForbidden();
+        // Lewat masa berlaku: dialihkan dengan pesan yang bisa ditindaklanjuti, bukan 403 mentah.
+        $this->get($tautan)->assertRedirect(route('masuk'))->assertSessionHasErrors('Umum');
     });
 
     it('kirim ulang tautan dibatasi', function (): void {

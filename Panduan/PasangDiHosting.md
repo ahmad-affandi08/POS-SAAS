@@ -219,6 +219,10 @@ php artisan optimize
 php artisan queue:restart
 ```
 
+`php artisan optimize` menyimpan cache **rute beserta middleware-nya**. Kalau perubahan menyentuh `routes/`,
+jalankan `php artisan optimize:clear` lebih dulu; tanpa itu rute lama yang ter-cache masih dipakai walau kodenya
+sudah diperbarui.
+
 **Kalau copy situs pemasaran ikut berubah**, jalankan juga:
 
 ```bash

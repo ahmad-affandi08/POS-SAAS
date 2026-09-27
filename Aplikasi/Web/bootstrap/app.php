@@ -15,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -71,6 +72,18 @@ return Application::configure(basePath: dirname(__DIR__))
             : null);
 
         $exceptions->dontFlash(['KataSandi', 'KonfirmasiKataSandi', 'Kode']);
+
+        // Tautan verifikasi email kedaluwarsa/rusak adalah kejadian normal (berlaku terbatas, sekali pakai), jadi
+        // jangan ditampilkan sebagai "403 Invalid signature" mentah yang tidak bisa ditindaklanjuti pengguna.
+        $exceptions->render(function (InvalidSignatureException $galat, Request $request) {
+            if (! $request->routeIs('verifikasi-email')) {
+                return null;
+            }
+
+            return redirect()->route($request->user('web') === null ? 'masuk' : 'kelola.beranda')->withErrors([
+                'Umum' => 'Tautan verifikasi sudah kedaluwarsa atau pernah dipakai. Masuk lalu minta tautan baru lewat tombol kirim ulang.',
+            ]);
+        });
 
         // Pelanggaran aturan bisnis → galat validasi (Inertia) atau format galat seragam (JSON), PRD §16.
         $exceptions->render(function (PelanggaranAturanBisnis $galat, Request $request) {
