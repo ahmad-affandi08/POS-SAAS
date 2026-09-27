@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
+import { ChevronsUpDownIcon } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react';
 
 import { Command, CommandItem, CommandList } from '@/Komponen/Ui/command';
@@ -206,7 +207,7 @@ export default function PemilihProdukStok({
                     }}
                 >
                     <PopoverAnchor asChild>
-                        <div ref={jangkar}>
+                        <div ref={jangkar} className="relative">
                             <MasukanPemilih
                                 id={id}
                                 daftarTerlihat={daftarTerlihat}
@@ -229,15 +230,27 @@ export default function PemilihProdukStok({
                                 onFocus={() => AturTerbuka(true)}
                                 onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
                                 onKeyDown={TekanTombol}
-                                className="h-8 pointer-coarse:h-11 text-isi"
+                                className="h-8 pointer-coarse:h-11 text-isi pr-9"
+                            />
+                            <ChevronsUpDownIcon
+                                aria-hidden="true"
+                                className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-teks-sekunder"
                             />
                         </div>
                     </PopoverAnchor>
                     <PopoverContent
                         align="start"
-                        className="w-(--radix-popover-trigger-width) p-0"
+                        side="bottom"
+                        sideOffset={4}
+                        collisionPadding={8}
+                        // Gaya disamakan dengan PilihanCari agar daftar produk tidak terlihat asing di antara
+                        // dropdown lain (garis, permukaan, lebar minimum).
+                        className="w-(--radix-popover-trigger-width) min-w-56 border-garis bg-permukaan p-0"
                         onOpenAutoFocus={(peristiwa) => peristiwa.preventDefault()}
                         onCloseAutoFocus={(peristiwa) => peristiwa.preventDefault()}
+                        // Menekan tetikus di dalam daftar tidak boleh memindahkan fokus dari input: tanpa ini,
+                        // menyeret scrollbar membuat input blur dan daftar menutup, sehingga daftar tidak bisa digulir.
+                        onMouseDown={(peristiwa) => peristiwa.preventDefault()}
                         onInteractOutside={(peristiwa) => {
                             if (jangkar.current?.contains(peristiwa.target as Node)) {
                                 peristiwa.preventDefault();
@@ -255,7 +268,7 @@ export default function PemilihProdukStok({
                                         disabled={tertolak}
                                         onSelect={() => Pilih(produk)}
                                         onMouseDown={(peristiwa) => peristiwa.preventDefault()}
-                                        className="flex cursor-pointer flex-col items-start gap-0 px-3 py-2 text-isi"
+                                        className="flex min-h-9 cursor-pointer flex-col items-start gap-0 rounded-kontrol px-3 py-2 text-isi data-[selected=true]:bg-brand-lembut data-[selected=true]:text-teks-utama pointer-coarse:min-h-11"
                                     >
                                         <span className="font-semibold break-words text-teks-utama">{produk.Nama}</span>
                                         <span className="text-keterangan text-teks-sekunder">
