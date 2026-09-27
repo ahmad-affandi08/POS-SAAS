@@ -219,6 +219,17 @@ php artisan optimize
 php artisan queue:restart
 ```
 
+**Kalau copy situs pemasaran ikut berubah**, jalankan juga:
+
+```bash
+php artisan situs:segarkan-bawaan          # menimpa halaman payou.id dengan isi bawaan terbaru
+```
+
+Halaman `payou.id` diambil dari baris `HalamanSitus` di database, dan `SiapkanHalamanSitusBawaan` sengaja tidak
+menyentuh halaman yang sudah ada. Jadi perubahan copy di kode **tidak** tampil sampai perintah di atas dijalankan.
+Perintah ini **menimpa**: suntingan yang dibuat lewat konsol pada halaman tersebut akan hilang, karena itu ia
+meminta konfirmasi lebih dulu (pakai `--paksa` di skrip, atau `--halaman=beranda` untuk satu halaman saja).
+
 Peran bawaan (Admin, Manajer Outlet, Supervisor, Kasir, Staf Gudang, dst.) hanya menerima izin baru setelah
 `organisasi:siapkan-peran` dijalankan. Peran kustom buatan tenant tidak diubah; izin barunya dicentang sendiri di
 back-office menu Pengguna › Peran.
