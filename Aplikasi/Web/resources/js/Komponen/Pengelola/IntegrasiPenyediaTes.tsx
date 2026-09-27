@@ -122,7 +122,7 @@ describe('Integrasi: pilih penyedia (v2.04)', () => {
         expect((screen.getByLabelText(/Host SMTP/) as HTMLInputElement).value).toBe('smtp.sendgrid.net');
         expect((screen.getByLabelText(/Nama pengguna/) as HTMLInputElement).value).toBe('apikey');
         expect(screen.getByText('Nama pengguna selalu "apikey".')).toBeTruthy();
-        expect(screen.getByLabelText(/Kunci Twilio SendGrid/)).toBeTruthy();
+        expect(screen.getByLabelText(/Kunci Twilio SendGrid/, { selector: 'input' })).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Simpan konfigurasi' }));
         expect(uji.kiriman[0]?.url).toBe('/integrasi');

@@ -18,6 +18,7 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
   final _email = TextEditingController();
   final _sandi = TextEditingController();
   final _kode = TextEditingController();
+  bool _sandiTerlihat = false;
 
   @override
   void dispose() {
@@ -74,9 +75,19 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
                       const SizedBox(height: TokenJarak.jarak12),
                       TextField(
                         controller: _sandi,
-                        obscureText: true,
+                        obscureText: !_sandiTerlihat,
                         autofillHints: const [AutofillHints.password],
-                        decoration: const InputDecoration(labelText: 'Kata sandi'),
+                        decoration: InputDecoration(
+                          labelText: 'Kata sandi',
+                          // Tombol mata: target sentuh IconButton sudah 48dp (§17.6.4).
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(() => _sandiTerlihat = !_sandiTerlihat),
+                            icon: Icon(
+                              _sandiTerlihat ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            ),
+                            tooltip: _sandiTerlihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi',
+                          ),
+                        ),
                         onSubmitted: (_) => unawaited(notifier.Masuk(_email.text, _sandi.text)),
                       ),
                     ],

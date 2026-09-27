@@ -107,10 +107,12 @@ describe('Gerbang pembayaran toko (v2.06)', () => {
         render(<HalamanGerbangPembayaran Gerbang={null} DaftarPenyedia={penyedia} DaftarLingkungan={lingkungan} />);
 
         expect(screen.getByText('Dana langsung ke rekening toko')).toBeTruthy();
-        expect(screen.getByLabelText(/Server key/)).toBeTruthy();
+        expect(screen.getByLabelText(/Server key/, { selector: 'input' })).toBeTruthy();
         PilihOpsi(screen.getByRole('combobox', { name: 'Penyedia' }), 'Xendit');
         expect(screen.queryByLabelText(/Server key/)).toBeNull();
-        fireEvent.change(screen.getByLabelText(/Secret API key/), { target: { value: 'xnd_development_toko' } });
+        fireEvent.change(screen.getByLabelText(/Secret API key/, { selector: 'input' }), {
+            target: { value: 'xnd_development_toko' },
+        });
 
         fireEvent.click(screen.getByRole('button', { name: 'Simpan akun merchant' }));
         expect(uji.kiriman[0]).toEqual({
