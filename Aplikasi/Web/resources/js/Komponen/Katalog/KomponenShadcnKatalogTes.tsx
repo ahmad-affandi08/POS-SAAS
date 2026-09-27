@@ -2,6 +2,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { BukaPilihan } from '@/Pengujian/InteraksiPilihan';
+
 import DaftarTab from './DaftarTab';
 import GrupRadio from './GrupRadio';
 import LangkahImpor from './LangkahImpor';
@@ -155,32 +157,30 @@ describe('PemilihProduk (Command + Popover)', () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(hasil) }));
         const SaatPilih = vi.fn();
         RenderUji(<PemilihProduk label="Cari bahan" jenis={['BahanBaku']} saatPilih={SaatPilih} />);
-        const input = screen.getByRole('combobox', { name: 'Cari bahan' });
+        const pemicu = screen.getByRole('combobox', { name: 'Cari bahan' });
 
-        expect(input.getAttribute('aria-expanded')).toBe('false');
-        fireEvent.focus(input);
-        fireEvent.change(input, { target: { value: 'gula' } });
+        // Pola PilihanCari: pemicunya tombol, sorotan keyboard dipegang cmdk di dalam popover.
+        expect(pemicu.getAttribute('aria-expanded')).toBe('false');
+        BukaPilihan(pemicu);
+        expect(pemicu.getAttribute('aria-expanded')).toBe('true');
 
-        await waitFor(() => expect(screen.getByRole('listbox', { name: 'Hasil Cari bahan' })).toBeTruthy());
-        expect(input.getAttribute('aria-expanded')).toBe('true');
-        expect(input.getAttribute('aria-controls')).toBe(screen.getByRole('listbox').id);
+        const cari = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
+        fireEvent.change(cari, { target: { value: 'gula' } });
+
+        // Opsi pertama tersorot sendiri, jadi Enter langsung memilih tanpa menekan panah dulu.
         await waitFor(() =>
-            expect(input.getAttribute('aria-activedescendant')).toBe(
-                screen.getByRole('option', { name: /Gula pasir/ }).id,
-            ),
+            expect(screen.getByRole('option', { name: /Gula pasir/ }).getAttribute('aria-selected')).toBe('true'),
         );
 
-        fireEvent.keyDown(input, { key: 'ArrowDown' });
+        fireEvent.keyDown(cari, { key: 'ArrowDown' });
         await waitFor(() =>
-            expect(input.getAttribute('aria-activedescendant')).toBe(
-                screen.getByRole('option', { name: /Gula aren/ }).id,
-            ),
+            expect(screen.getByRole('option', { name: /Gula aren/ }).getAttribute('aria-selected')).toBe('true'),
         );
-        expect(screen.getByRole('option', { name: /Gula aren/ }).getAttribute('aria-selected')).toBe('true');
 
         fireEvent.click(screen.getByRole('option', { name: /Gula pasir/ }));
         expect(SaatPilih).toHaveBeenCalledWith(expect.objectContaining({ Uuid: 'P-GULA' }));
-        expect((input as HTMLInputElement).value).toBe('');
+        // Daftar menutup setelah memilih, siap untuk baris berikutnya.
+        await waitFor(() => expect(pemicu.getAttribute('aria-expanded')).toBe('false'));
     });
 
     it('Enter tanpa daftar terbuka tidak ditahan (formulir induk tetap bisa dikirim); Home/End tetap milik input', () => {

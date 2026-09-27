@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { BukaPilihan } from '@/Pengujian/InteraksiPilihan';
 
 import {
     CariBarisGanda,
@@ -238,13 +239,13 @@ describe('PemilihProdukStok (KunciKueri.Persediaan.CariProduk)', () => {
                 tolakStokAwalAda
             />,
         );
-        const input = screen.getByRole('combobox', { name: 'Tambah produk' });
-
-        fireEvent.focus(input);
+        // Pola PilihanCari: tombol pemicu membuka popover, kotak carinya di dalam popover.
+        BukaPilihan(screen.getByRole('combobox', { name: 'Tambah produk' }));
+        const input = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
         fireEvent.change(input, { target: { value: 'kopi' } });
 
         await waitFor(() => expect(screen.getByRole('option', { name: /Arabika Gayo/ })).toBeTruthy());
-        // Fokus memicu daftar awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu, bukan diambil dari urutan.
+        // Membuka daftar memicu permintaan awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu.
         await waitFor(() =>
             expect(Ambil.mock.calls.map((panggilan) => panggilan[0])).toContain(
                 `/kelola/persediaan/produk/cari?kata=kopi&gudang=${GudangUtama.Uuid}&batas=20`,
@@ -264,9 +265,9 @@ describe('PemilihProdukStok (KunciKueri.Persediaan.CariProduk)', () => {
     it('galat jaringan ditulis di area aria-live', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({}) }));
         RenderUji(<PemilihProdukStok label="Produk" uuidGudang={null} saatPilih={vi.fn()} />);
-        const input = screen.getByRole('combobox', { name: 'Produk' });
+        BukaPilihan(screen.getByRole('combobox', { name: 'Produk' }));
+        const input = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
 
-        fireEvent.focus(input);
         fireEvent.change(input, { target: { value: 'xyz' } });
         await waitFor(() =>
             expect(screen.getByText('Pencarian gagal. Periksa koneksi lalu ketik ulang.')).toBeTruthy(),

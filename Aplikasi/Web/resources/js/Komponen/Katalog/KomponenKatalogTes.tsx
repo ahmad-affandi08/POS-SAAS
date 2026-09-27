@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { BukaPilihan } from '@/Pengujian/InteraksiPilihan';
 import type { BarisHarga } from '@/Tipe/Katalog';
 
 import { AmbilGalatBerawalan, HitungKombinasiVarian, PindahkanItem } from './BantuanKatalog';
@@ -247,21 +248,21 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
                 saatPilih={SaatPilih}
             />,
         );
-        const input = screen.getByRole('combobox', { name: 'Cari bahan' });
-
-        fireEvent.focus(input);
-        fireEvent.change(input, { target: { value: 'su' } });
+        // Pola PilihanCari: tombol pemicu membuka popover, kotak carinya di dalam popover.
+        BukaPilihan(screen.getByRole('combobox', { name: 'Cari bahan' }));
+        const cari = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
+        fireEvent.change(cari, { target: { value: 'su' } });
 
         await waitFor(() => expect(screen.getByRole('option', { name: /Susu UHT 1 L/ })).toBeTruthy());
         expect(screen.queryByRole('option', { name: /diri sendiri/ })).toBeNull();
-        // Fokus memicu daftar awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu, bukan diambil dari urutan.
+        // Membuka daftar memicu permintaan awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu.
         await waitFor(() =>
             expect(Ambil.mock.calls.map((panggilan) => panggilan[0])).toContain(
                 '/kelola/produk/cari?kata=su&jenis%5B%5D=BahanBaku&jenis%5B%5D=Stok&batas=20',
             ),
         );
 
-        fireEvent.keyDown(input, { key: 'Enter' });
+        fireEvent.keyDown(cari, { key: 'Enter' });
         expect(SaatPilih).toHaveBeenCalledWith(expect.objectContaining({ Uuid: 'P-SUSU' }));
     });
 
@@ -283,7 +284,7 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
         vi.stubGlobal('fetch', Ambil);
         RenderUji(<PemilihProduk label="Cari bahan" jenis={['Stok']} saatPilih={vi.fn()} />);
 
-        fireEvent.focus(screen.getByRole('combobox', { name: 'Cari bahan' }));
+        BukaPilihan(screen.getByRole('combobox', { name: 'Cari bahan' }));
 
         // Pengguna yang belum hafal nama/SKU/barcode tetap bisa melihat produk yang ada.
         await waitFor(() => expect(screen.getByRole('option', { name: /Kopi Arabika 0/ })).toBeTruthy());
@@ -296,9 +297,9 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
     it('galat jaringan dan hasil kosong ditulis di area aria-live', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({}) }));
         RenderUji(<PemilihProduk label="Cari komponen" jenis={['Stok']} saatPilih={vi.fn()} />);
-        const input = screen.getByRole('combobox', { name: 'Cari komponen' });
+        BukaPilihan(screen.getByRole('combobox', { name: 'Cari komponen' }));
+        const input = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
 
-        fireEvent.focus(input);
         fireEvent.change(input, { target: { value: 'x' } });
         // Satu huruf pun sudah dicari; batas 2 huruf dihapus agar daftar bisa dibuka tanpa mengetik.
         expect(screen.queryByText('Ketik minimal 2 huruf.')).toBeNull();

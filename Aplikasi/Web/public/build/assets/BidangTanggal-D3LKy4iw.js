@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-Df18k4-U.js";import{t}from"./PemilihTanggal-dibY-lrP.js";var n=e();function r(e){return(0,n.jsx)(t,{...e})}export{r as t};

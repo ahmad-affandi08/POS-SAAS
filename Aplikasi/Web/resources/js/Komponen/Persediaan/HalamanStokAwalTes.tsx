@@ -5,6 +5,7 @@ import HalamanDaftarStokAwal from '@/Halaman/Kelola/Persediaan/StokAwal/Daftar';
 import HalamanDetailStokAwal, { PeriksaAlasanBatal } from '@/Halaman/Kelola/Persediaan/StokAwal/Detail';
 import HalamanFormStokAwal from '@/Halaman/Kelola/Persediaan/StokAwal/Form';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { BukaPilihan } from '@/Pengujian/InteraksiPilihan';
 import type { PropsDaftarStokAwal, PropsFormStokAwal } from '@/Tipe/Persediaan';
 
 import {
@@ -227,9 +228,14 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
         RenderUji(<HalamanFormStokAwal {...PropsForm()} />);
 
         UbahNilai(screen.getByRole('combobox', { name: 'Lokasi stok' }), GudangUtama.Uuid);
-        const cari = screen.getByRole('combobox', { name: 'Tambah produk' });
-        fireEvent.focus(cari);
-        UbahNilai(cari, 'gayo');
+        // Pemilih produk memakai pola PilihanCari, tetapi opsinya dari server: buka dulu, lalu ketik di kotak cari
+        // di dalam popover (UbahNilai hanya untuk daftar opsi statis).
+        // Tunggu PilihanCari "Lokasi stok" selesai mengembalikan fokus ke pemicunya; bila pemilih produk dibuka
+        // sebelum itu, pengembalian fokus tersebut menutup popover produk.
+        await waitFor(() => expect(document.querySelector('[data-slot="popover-content"]')).toBeNull());
+        BukaPilihan(screen.getByRole('combobox', { name: 'Tambah produk' }));
+        const cari = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
+        fireEvent.change(cari, { target: { value: 'gayo' } });
         await waitFor(() => expect(screen.getByRole('option', { name: /Arabika Gayo/ })).toBeTruthy());
         fireEvent.keyDown(cari, { key: 'Enter' });
 

@@ -1,14 +1,15 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useCommandState } from 'cmdk';
-import { ChevronsUpDownIcon } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react';
+import { useState } from 'react';
 
-import { Command, CommandItem, CommandList } from '@/Komponen/Ui/command';
-import { Input } from '@/Komponen/Ui/input';
-import { Label } from '@/Komponen/Ui/label';
-import { Popover, PopoverAnchor, PopoverContent } from '@/Komponen/Ui/popover';
+import {
+    AmbilHasilCari,
+    BATAS_CARI_PRODUK,
+    KerangkaPemilihProduk,
+    useNilaiTertunda,
+    useSorotPertama,
+} from '@/Komponen/Katalog/PemilihProduk';
+import { CommandItem } from '@/Komponen/Ui/command';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
-import { BATAS_CARI_PRODUK } from '@/Komponen/Katalog/PemilihProduk';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import type { HasilCariProdukStok } from '@/Tipe/Persediaan';
 
@@ -18,74 +19,13 @@ export type ProdukStokTerpilih = HasilCariProdukStok['Data'][number];
 export function BuatUrlCariProdukStok(kata: string, uuidGudang: string | null, batas = BATAS_CARI_PRODUK): string {
     const parameter = new URLSearchParams({ kata });
 
-    if (uuidGudang) {
+    if (uuidGudang !== null) {
         parameter.set('gudang', uuidGudang);
     }
 
     parameter.set('batas', String(batas));
 
     return `/kelola/persediaan/produk/cari?${parameter.toString()}`;
-}
-
-async function AmbilHasilCari(url: string, sinyal: AbortSignal): Promise<HasilCariProdukStok> {
-    const respons = await fetch(url, {
-        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        credentials: 'same-origin',
-        signal: sinyal,
-    });
-
-    if (!respons.ok) {
-        throw new Error(`Pencarian produk gagal (${String(respons.status)})`);
-    }
-
-    return (await respons.json()) as HasilCariProdukStok;
-}
-
-/** Nilai yang baru berubah setelah pengguna berhenti mengetik `jeda` ms. */
-function useNilaiTertunda(nilai: string, jeda: number): string {
-    const [tertunda, AturTertunda] = useState(nilai);
-
-    useEffect(() => {
-        const pewaktu = window.setTimeout(() => AturTertunda(nilai), jeda);
-
-        return () => window.clearTimeout(pewaktu);
-    }, [nilai, jeda]);
-
-    return tertunda;
-}
-
-function CariIdOpsi(idDaftar: string | undefined, nilai: string): string | undefined {
-    if (idDaftar === undefined || nilai === '') {
-        return undefined;
-    }
-
-    const opsi = Array.from(document.getElementById(idDaftar)?.querySelectorAll('[cmdk-item]') ?? []).find(
-        (elemen) => elemen.getAttribute('data-value') === nilai,
-    );
-
-    return opsi?.id || undefined;
-}
-
-/** Input combobox di dalam `Command`; `aria-activedescendant` mengikuti opsi yang disorot cmdk (pola PemilihProduk). */
-function MasukanPemilih({
-    daftarTerlihat,
-    idDaftar,
-    ...atribut
-}: ComponentProps<typeof Input> & { daftarTerlihat: boolean; idDaftar: string | undefined }) {
-    const idTersorot = useCommandState((keadaan) => CariIdOpsi(idDaftar, keadaan.value) ?? keadaan.selectedItemId);
-
-    return (
-        <Input
-            type="search"
-            role="combobox"
-            aria-expanded={daftarTerlihat}
-            aria-controls={daftarTerlihat ? idDaftar : undefined}
-            aria-autocomplete="list"
-            aria-activedescendant={daftarTerlihat ? idTersorot : undefined}
-            autoComplete="off"
-            {...atribut}
-        />
-    );
 }
 
 type PropsPemilihProdukStok = {
@@ -105,9 +45,10 @@ type PropsPemilihProdukStok = {
 };
 
 /**
- * Pemilih produk berstok untuk stok awal & kartu stok (DesainF05a E), mengikuti pola `PemilihProduk`: pencarian server
- * lewat TanStack Query (`KunciKueri.Persediaan.CariProduk`), combobox ARIA (panah, Enter, Escape), keadaan memuat,
- * kosong, dan galat tertulis. Server hanya mengembalikan produk yang punya stok (bukan konsinyasi, tidak diarsipkan).
+ * Pemilih produk berstok untuk stok awal, kartu stok, dan pembelian (DesainF05a E). Memakai
+ * {@link KerangkaPemilihProduk} yang sama dengan `PemilihProduk`, jadi bentuk & perilakunya mengikuti
+ * `Komponen/Formulir/PilihanCari` seperti dropdown lain. Server hanya mengembalikan produk yang punya stok
+ * (bukan konsinyasi, tidak diarsipkan).
  */
 export default function PemilihProdukStok({
     label,
@@ -120,30 +61,35 @@ export default function PemilihProdukStok({
     disabled,
     buatUrl = BuatUrlCariProdukStok,
 }: PropsPemilihProdukStok) {
-    const id = useId();
-    const jangkar = useRef<HTMLDivElement>(null);
     const [kata, AturKata] = useState('');
     const [terbuka, AturTerbuka] = useState(false);
-    const [idDaftar, AturIdDaftar] = useState<string | undefined>(undefined);
+    const [sorot, AturSorot] = useState('');
     const kataCari = useNilaiTertunda(kata.trim(), 300);
-    // Terbuka saja sudah cukup: kata kosong = daftar produk berstok pertama urut nama (server sudah mendukungnya).
-    const aktif = terbuka;
     const kueri = useQuery({
         queryKey:
             buatUrl === BuatUrlCariProdukStok
                 ? KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang)
                 : [...KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang), buatUrl(kataCari, uuidGudang)],
-        queryFn: ({ signal }) => AmbilHasilCari(buatUrl(kataCari, uuidGudang), signal),
-        enabled: aktif,
-        // Hasil lama tetap tampil selama hasil baru dimuat; tanpa ini daftar menutup lalu membuka lagi
-        // setiap kali mengetik (hasil sesaat kosong) dan sorotan keyboard ikut hilang.
-        placeholderData: keepPreviousData,
+        queryFn: ({ signal }) => AmbilHasilCari<HasilCariProdukStok>(buatUrl(kataCari, uuidGudang), signal),
+        enabled: terbuka,
         staleTime: 0,
+        // Hasil lama tetap tampil selama hasil baru dimuat, jadi daftar tidak berkedip saat mengetik.
+        placeholderData: keepPreviousData,
     });
     const hasil = (kueri.data?.Data ?? []).filter((produk) => !kecuali.includes(produk.Uuid));
-    const daftarTerlihat = aktif && hasil.length > 0;
-    const AturRefDaftar = useCallback((elemen: HTMLDivElement | null) => AturIdDaftar(elemen?.id), []);
     const CekTertolak = (produk: ProdukStokTerpilih) => tolakStokAwalAda && produk.StokAwalSudahAda;
+
+    useSorotPertama(
+        hasil.map((produk) => produk.Uuid),
+        AturSorot,
+    );
+
+    const Buka = (buka: boolean) => {
+        AturTerbuka(buka);
+        if (!buka) {
+            AturKata('');
+        }
+    };
 
     const Pilih = (produk: ProdukStokTerpilih) => {
         if (CekTertolak(produk)) {
@@ -151,160 +97,71 @@ export default function PemilihProdukStok({
         }
 
         saatPilih(produk);
-        AturKata('');
-        AturTerbuka(false);
-    };
-
-    const TekanTombol = (peristiwa: KeyboardEvent<HTMLInputElement>) => {
-        if (peristiwa.key === 'Home' || peristiwa.key === 'End') {
-            peristiwa.stopPropagation();
-        } else if (peristiwa.key === 'Escape') {
-            AturTerbuka(false);
-        } else if (!daftarTerlihat) {
-            if (peristiwa.key === 'ArrowDown') {
-                peristiwa.preventDefault();
-                AturTerbuka(true);
-            } else if (peristiwa.key === 'ArrowUp') {
-                peristiwa.preventDefault();
-            } else if (peristiwa.key === 'Enter') {
-                peristiwa.stopPropagation();
-            }
-        }
+        Buka(false);
     };
 
     let status: string | null = null;
 
-    if (aktif && kueri.isPending) {
+    if (terbuka && kueri.isPending) {
         status = kataCari === '' ? 'Memuat produk…' : 'Mencari produk…';
-    } else if (aktif && kueri.isError) {
+    } else if (terbuka && kueri.isError) {
         status = 'Pencarian gagal. Periksa koneksi lalu ketik ulang.';
-    } else if (aktif && hasil.length === 0) {
+    } else if (terbuka && hasil.length === 0) {
         status =
             kataCari === ''
                 ? 'Belum ada produk berstok yang bisa dipilih.'
                 : `Tidak ada produk berstok yang cocok dengan "${kataCari}".`;
-    } else if (aktif && kataCari === '' && (kueri.data?.Data.length ?? 0) >= BATAS_CARI_PRODUK) {
-        // Daftar awal dipotong server; tanpa keterangan ini pengguna mengira produknya memang cuma segitu.
+    } else if (terbuka && kataCari === '' && (kueri.data?.Data.length ?? 0) >= BATAS_CARI_PRODUK) {
+        // Daftar dipotong server; tanpa keterangan ini pengguna mengira produknya memang cuma segitu.
         status = `Menampilkan ${String(BATAS_CARI_PRODUK)} produk pertama. Ketik untuk mencari yang lain.`;
     }
 
     return (
-        <div className="flex flex-col gap-1">
-            <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
-                {label}
-            </Label>
-            <Command
-                shouldFilter={false}
-                vimBindings={false}
-                className="h-auto overflow-visible rounded-none bg-transparent"
-            >
-                <Popover
-                    open={daftarTerlihat}
-                    onOpenChange={(buka) => {
-                        if (!buka) {
-                            AturTerbuka(false);
-                        }
-                    }}
-                >
-                    <PopoverAnchor asChild>
-                        <div ref={jangkar} className="relative">
-                            <MasukanPemilih
-                                id={id}
-                                daftarTerlihat={daftarTerlihat}
-                                idDaftar={idDaftar}
-                                aria-invalid={galat ? true : undefined}
-                                aria-describedby={[
-                                    keterangan ? `${id}-keterangan` : null,
-                                    galat ? `${id}-galat` : null,
-                                    `${id}-status`,
-                                ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                value={kata}
-                                disabled={disabled}
-                                placeholder="Cari nama, SKU, atau barcode"
-                                onChange={(peristiwa) => {
-                                    AturKata(peristiwa.target.value);
-                                    AturTerbuka(true);
-                                }}
-                                onFocus={() => AturTerbuka(true)}
-                                onBlur={() => window.setTimeout(() => AturTerbuka(false), 150)}
-                                onKeyDown={TekanTombol}
-                                className="h-8 pointer-coarse:h-11 text-isi pr-9"
-                            />
-                            <ChevronsUpDownIcon
-                                aria-hidden="true"
-                                className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-teks-sekunder"
-                            />
-                        </div>
-                    </PopoverAnchor>
-                    <PopoverContent
-                        align="start"
-                        side="bottom"
-                        sideOffset={4}
-                        collisionPadding={8}
-                        // Gaya disamakan dengan PilihanCari agar daftar produk tidak terlihat asing di antara
-                        // dropdown lain (garis, permukaan, lebar minimum).
-                        className="w-(--radix-popover-trigger-width) min-w-56 border-garis bg-permukaan p-0"
-                        onOpenAutoFocus={(peristiwa) => peristiwa.preventDefault()}
-                        onCloseAutoFocus={(peristiwa) => peristiwa.preventDefault()}
-                        // Menekan tetikus di dalam daftar tidak boleh memindahkan fokus dari input: tanpa ini,
-                        // menyeret scrollbar membuat input blur dan daftar menutup, sehingga daftar tidak bisa digulir.
-                        onMouseDown={(peristiwa) => peristiwa.preventDefault()}
-                        onInteractOutside={(peristiwa) => {
-                            if (jangkar.current?.contains(peristiwa.target as Node)) {
-                                peristiwa.preventDefault();
-                            }
-                        }}
-                    >
-                        <CommandList ref={AturRefDaftar} label={`Hasil ${label}`} className="max-h-72">
-                            {hasil.map((produk) => {
-                                const tertolak = CekTertolak(produk);
+        <KerangkaPemilihProduk
+            label={label}
+            keterangan={keterangan}
+            galat={galat}
+            disabled={disabled}
+            placeholder="Cari nama, SKU, atau barcode"
+            kata={kata}
+            saatKata={AturKata}
+            terbuka={terbuka}
+            saatTerbuka={Buka}
+            sorot={sorot}
+            saatSorot={AturSorot}
+            status={status}
+        >
+            {hasil.map((produk) => {
+                const tertolak = CekTertolak(produk);
 
-                                return (
-                                    <CommandItem
-                                        key={produk.Uuid}
-                                        value={produk.Uuid}
-                                        disabled={tertolak}
-                                        onSelect={() => Pilih(produk)}
-                                        onMouseDown={(peristiwa) => peristiwa.preventDefault()}
-                                        className="flex min-h-9 cursor-pointer flex-col items-start gap-0 rounded-kontrol px-3 py-2 text-isi data-[selected=true]:bg-brand-lembut data-[selected=true]:text-teks-utama pointer-coarse:min-h-11"
-                                    >
-                                        <span className="font-semibold break-words text-teks-utama">{produk.Nama}</span>
-                                        <span className="text-keterangan text-teks-sekunder">
-                                            {produk.Sku ? <span className="font-mono">{produk.Sku}</span> : 'Tanpa SKU'}
-                                            {' · '}
-                                            {produk.SaldoDiGudang === null
-                                                ? `satuan ${produk.SimbolSatuan}`
-                                                : `stok ${FormatJumlahStok(produk.SaldoDiGudang, produk.SimbolSatuan)}`}
-                                            {produk.Pelacakan === 'Batch' ? ' · batch' : null}
-                                            {produk.Pelacakan === 'Seri' ? ' · nomor seri' : null}
-                                        </span>
-                                        {tertolak ? (
-                                            <span className="text-keterangan font-semibold text-teks-sekunder">
-                                                Stok awal sudah diposting di lokasi ini
-                                            </span>
-                                        ) : null}
-                                    </CommandItem>
-                                );
-                            })}
-                        </CommandList>
-                    </PopoverContent>
-                </Popover>
-            </Command>
-            {keterangan ? (
-                <p id={`${id}-keterangan`} className="text-keterangan text-teks-sekunder">
-                    {keterangan}
-                </p>
-            ) : null}
-            <p id={`${id}-status`} aria-live="polite" className="text-keterangan text-teks-sekunder">
-                {status ?? ''}
-            </p>
-            {galat ? (
-                <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">
-                    {galat}
-                </p>
-            ) : null}
-        </div>
+                return (
+                    <CommandItem
+                        key={produk.Uuid}
+                        value={produk.Uuid}
+                        data-slot="pilihan-cari-item"
+                        data-nilai={produk.Uuid}
+                        disabled={tertolak}
+                        onSelect={() => Pilih(produk)}
+                        className="flex min-h-9 cursor-pointer flex-col items-start gap-0 rounded-kontrol px-3 py-2 text-isi data-[selected=true]:bg-brand-lembut data-[selected=true]:text-teks-utama pointer-coarse:min-h-11"
+                    >
+                        <span className="font-semibold break-words text-teks-utama">{produk.Nama}</span>
+                        <span className="text-keterangan text-teks-sekunder">
+                            {produk.Sku ? <span className="font-mono">{produk.Sku}</span> : 'Tanpa SKU'}
+                            {' · '}
+                            {produk.SaldoDiGudang === null
+                                ? `satuan ${produk.SimbolSatuan}`
+                                : `stok ${FormatJumlahStok(produk.SaldoDiGudang, produk.SimbolSatuan)}`}
+                            {produk.Pelacakan === 'Batch' ? ' · batch' : null}
+                            {produk.Pelacakan === 'Seri' ? ' · nomor seri' : null}
+                        </span>
+                        {tertolak ? (
+                            <span className="text-keterangan font-semibold text-teks-sekunder">
+                                Stok awal sudah diposting di lokasi ini
+                            </span>
+                        ) : null}
+                    </CommandItem>
+                );
+            })}
+        </KerangkaPemilihProduk>
     );
 }
