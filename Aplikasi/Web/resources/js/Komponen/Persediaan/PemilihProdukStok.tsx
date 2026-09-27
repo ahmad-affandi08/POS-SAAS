@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
 import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react';
 
@@ -7,13 +7,14 @@ import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
 import { Popover, PopoverAnchor, PopoverContent } from '@/Komponen/Ui/popover';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
+import { BATAS_CARI_PRODUK } from '@/Komponen/Katalog/PemilihProduk';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import type { HasilCariProdukStok } from '@/Tipe/Persediaan';
 
 export type ProdukStokTerpilih = HasilCariProdukStok['Data'][number];
 
 /** URL pencarian produk berstok (DesainF05a D: `GET /kelola/persediaan/produk/cari?kata=&gudang=&batas=`). */
-export function BuatUrlCariProdukStok(kata: string, uuidGudang: string | null, batas = 20): string {
+export function BuatUrlCariProdukStok(kata: string, uuidGudang: string | null, batas = BATAS_CARI_PRODUK): string {
     const parameter = new URLSearchParams({ kata });
 
     if (uuidGudang) {
@@ -124,7 +125,8 @@ export default function PemilihProdukStok({
     const [terbuka, AturTerbuka] = useState(false);
     const [idDaftar, AturIdDaftar] = useState<string | undefined>(undefined);
     const kataCari = useNilaiTertunda(kata.trim(), 300);
-    const aktif = terbuka && kataCari.length >= 2;
+    // Terbuka saja sudah cukup: kata kosong = daftar produk berstok pertama urut nama (server sudah mendukungnya).
+    const aktif = terbuka;
     const kueri = useQuery({
         queryKey:
             buatUrl === BuatUrlCariProdukStok
@@ -132,6 +134,9 @@ export default function PemilihProdukStok({
                 : [...KunciKueri.Persediaan.CariProduk(kataCari, uuidGudang), buatUrl(kataCari, uuidGudang)],
         queryFn: ({ signal }) => AmbilHasilCari(buatUrl(kataCari, uuidGudang), signal),
         enabled: aktif,
+        // Hasil lama tetap tampil selama hasil baru dimuat; tanpa ini daftar menutup lalu membuka lagi
+        // setiap kali mengetik (hasil sesaat kosong) dan sorotan keyboard ikut hilang.
+        placeholderData: keepPreviousData,
         staleTime: 0,
     });
     const hasil = (kueri.data?.Data ?? []).filter((produk) => !kecuali.includes(produk.Uuid));
@@ -169,13 +174,17 @@ export default function PemilihProdukStok({
     let status: string | null = null;
 
     if (aktif && kueri.isPending) {
-        status = 'Mencari produk…';
+        status = kataCari === '' ? 'Memuat produk…' : 'Mencari produk…';
     } else if (aktif && kueri.isError) {
         status = 'Pencarian gagal. Periksa koneksi lalu ketik ulang.';
     } else if (aktif && hasil.length === 0) {
-        status = `Tidak ada produk berstok yang cocok dengan "${kataCari}".`;
-    } else if (terbuka && kata.trim().length > 0 && kata.trim().length < 2) {
-        status = 'Ketik minimal 2 huruf.';
+        status =
+            kataCari === ''
+                ? 'Belum ada produk berstok yang bisa dipilih.'
+                : `Tidak ada produk berstok yang cocok dengan "${kataCari}".`;
+    } else if (aktif && kataCari === '' && (kueri.data?.Data.length ?? 0) >= BATAS_CARI_PRODUK) {
+        // Daftar awal dipotong server; tanpa keterangan ini pengguna mengira produknya memang cuma segitu.
+        status = `Menampilkan ${String(BATAS_CARI_PRODUK)} produk pertama. Ketik untuk mencari yang lain.`;
     }
 
     return (

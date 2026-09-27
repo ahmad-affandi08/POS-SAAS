@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
 import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react';
 
@@ -11,8 +11,11 @@ import type { HasilCariProduk, JenisProduk } from '@/Tipe/Katalog';
 
 export type ProdukTerpilih = HasilCariProduk['Data'][number];
 
+/** Jumlah produk yang diambil sekali minta, termasuk saat daftar awal dibuka tanpa kata kunci. */
+export const BATAS_CARI_PRODUK = 20;
+
 /** URL pencarian produk untuk pemilih bahan/komponen (DesainF03 D.2). */
-export function BuatUrlCariProduk(kata: string, jenis: readonly JenisProduk[], batas = 20): string {
+export function BuatUrlCariProduk(kata: string, jenis: readonly JenisProduk[], batas = BATAS_CARI_PRODUK): string {
     const parameter = new URLSearchParams({ kata });
 
     jenis.forEach((item) => parameter.append('jenis[]', item));
@@ -103,6 +106,11 @@ type PropsPemilihProduk = {
  * Pemilih produk dengan pencarian server (TanStack Query, KunciKueri.Produk.Cari), dibangun dari Command + Popover.
  * Combobox ARIA: panah atas/bawah memilih, Enter memasukkan, Escape menutup. Keadaan memuat, kosong, dan galat tertulis.
  * Penyaringan dilakukan server (`shouldFilter` mati); cmdk hanya mengatur sorotan (opsi pertama saat hasil baru) dan keyboard.
+ *
+ * **Daftar awal dibuka tanpa mengetik**: sebelumnya hasil baru diambil setelah 2 huruf, sehingga pengguna yang belum
+ * hafal nama/SKU/barcode melihat kotak kosong dan tidak tahu produk apa saja yang ada. Kata kunci kosong memang sudah
+ * didukung server (`CariProduk`: `when($kata !== '', ...)`), jadi membuka bidang langsung menampilkan produk pertama
+ * urut nama, dan mengetik mempersempitnya.
  */
 export default function PemilihProduk({
     label,
@@ -119,11 +127,15 @@ export default function PemilihProduk({
     const [terbuka, AturTerbuka] = useState(false);
     const [idDaftar, AturIdDaftar] = useState<string | undefined>(undefined);
     const kataCari = useNilaiTertunda(kata.trim(), 300);
-    const aktif = terbuka && kataCari.length >= 2;
+    // Terbuka saja sudah cukup: kata kosong = daftar produk pertama urut nama.
+    const aktif = terbuka;
     const kueri = useQuery({
         queryKey: KunciKueri.Produk.Cari(kataCari, jenis),
         queryFn: ({ signal }) => AmbilHasilCari(BuatUrlCariProduk(kataCari, jenis), signal),
         enabled: aktif,
+        // Hasil lama tetap tampil selama hasil baru dimuat; tanpa ini daftar menutup lalu membuka lagi
+        // setiap kali mengetik (hasil sesaat kosong) dan sorotan keyboard ikut hilang.
+        placeholderData: keepPreviousData,
         staleTime: 30_000,
     });
     const hasil = (kueri.data?.Data ?? []).filter((produk) => !kecuali.includes(produk.Uuid));
@@ -157,13 +169,17 @@ export default function PemilihProduk({
     let status: string | null = null;
 
     if (aktif && kueri.isPending) {
-        status = 'Mencari produk…';
+        status = kataCari === '' ? 'Memuat produk…' : 'Mencari produk…';
     } else if (aktif && kueri.isError) {
         status = 'Pencarian gagal. Periksa koneksi lalu ketik ulang.';
     } else if (aktif && hasil.length === 0) {
-        status = `Tidak ada produk yang cocok dengan "${kataCari}".`;
-    } else if (terbuka && kata.trim().length > 0 && kata.trim().length < 2) {
-        status = 'Ketik minimal 2 huruf.';
+        status =
+            kataCari === ''
+                ? 'Belum ada produk yang bisa dipilih.'
+                : `Tidak ada produk yang cocok dengan "${kataCari}".`;
+    } else if (aktif && kataCari === '' && (kueri.data?.Data.length ?? 0) >= BATAS_CARI_PRODUK) {
+        // Daftar awal dipotong server; tanpa keterangan ini pengguna mengira produknya memang cuma segitu.
+        status = `Menampilkan ${String(BATAS_CARI_PRODUK)} produk pertama. Ketik untuk mencari yang lain.`;
     }
 
     return (

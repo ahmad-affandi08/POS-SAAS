@@ -254,12 +254,43 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
 
         await waitFor(() => expect(screen.getByRole('option', { name: /Susu UHT 1 L/ })).toBeTruthy());
         expect(screen.queryByRole('option', { name: /diri sendiri/ })).toBeNull();
-        expect(Ambil.mock.calls[0]?.[0]).toBe(
-            '/kelola/produk/cari?kata=su&jenis%5B%5D=BahanBaku&jenis%5B%5D=Stok&batas=20',
+        // Fokus memicu daftar awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu, bukan diambil dari urutan.
+        await waitFor(() =>
+            expect(Ambil.mock.calls.map((panggilan) => panggilan[0])).toContain(
+                '/kelola/produk/cari?kata=su&jenis%5B%5D=BahanBaku&jenis%5B%5D=Stok&batas=20',
+            ),
         );
 
         fireEvent.keyDown(input, { key: 'Enter' });
         expect(SaatPilih).toHaveBeenCalledWith(expect.objectContaining({ Uuid: 'P-SUSU' }));
+    });
+
+    it('membuka bidang langsung menampilkan daftar produk tanpa perlu mengetik', async () => {
+        const Ambil = vi.fn().mockResolvedValue({
+            ok: true,
+            json: () =>
+                Promise.resolve({
+                    Data: Array.from({ length: 20 }, (_, i) => ({
+                        Uuid: `P-${String(i)}`,
+                        Nama: `Kopi Arabika ${String(i)}`,
+                        Sku: `SKU-${String(i)}`,
+                        Jenis: 'Stok',
+                        UuidSatuanDasar: 'SAT-PCS',
+                        Satuan: [],
+                    })),
+                }),
+        });
+        vi.stubGlobal('fetch', Ambil);
+        RenderUji(<PemilihProduk label="Cari bahan" jenis={['Stok']} saatPilih={vi.fn()} />);
+
+        fireEvent.focus(screen.getByRole('combobox', { name: 'Cari bahan' }));
+
+        // Pengguna yang belum hafal nama/SKU/barcode tetap bisa melihat produk yang ada.
+        await waitFor(() => expect(screen.getByRole('option', { name: /Kopi Arabika 0/ })).toBeTruthy());
+        expect(Ambil.mock.calls[0]?.[0]).toBe('/kelola/produk/cari?kata=&jenis%5B%5D=Stok&batas=20');
+
+        // Daftar awal dipotong server, jadi harus dikatakan supaya tidak dikira produknya cuma segitu.
+        expect(screen.getByText('Menampilkan 20 produk pertama. Ketik untuk mencari yang lain.')).toBeTruthy();
     });
 
     it('galat jaringan dan hasil kosong ditulis di area aria-live', async () => {
@@ -269,7 +300,8 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
 
         fireEvent.focus(input);
         fireEvent.change(input, { target: { value: 'x' } });
-        expect(screen.getByText('Ketik minimal 2 huruf.')).toBeTruthy();
+        // Satu huruf pun sudah dicari; batas 2 huruf dihapus agar daftar bisa dibuka tanpa mengetik.
+        expect(screen.queryByText('Ketik minimal 2 huruf.')).toBeNull();
 
         await act(async () => {
             fireEvent.change(input, { target: { value: 'xyz' } });

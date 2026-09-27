@@ -244,8 +244,11 @@ describe('PemilihProdukStok (KunciKueri.Persediaan.CariProduk)', () => {
         fireEvent.change(input, { target: { value: 'kopi' } });
 
         await waitFor(() => expect(screen.getByRole('option', { name: /Arabika Gayo/ })).toBeTruthy());
-        expect(Ambil.mock.calls[0]?.[0]).toBe(
-            `/kelola/persediaan/produk/cari?kata=kopi&gudang=${GudangUtama.Uuid}&batas=20`,
+        // Fokus memicu daftar awal (kata kosong) lebih dulu, jadi URL ketikan ditunggu, bukan diambil dari urutan.
+        await waitFor(() =>
+            expect(Ambil.mock.calls.map((panggilan) => panggilan[0])).toContain(
+                `/kelola/persediaan/produk/cari?kata=kopi&gudang=${GudangUtama.Uuid}&batas=20`,
+            ),
         );
         expect(screen.getByRole('option', { name: /Arabika Gayo/ }).textContent).toContain('stok −4 kg');
         const robusta = screen.getByRole('option', { name: /Robusta/ });
