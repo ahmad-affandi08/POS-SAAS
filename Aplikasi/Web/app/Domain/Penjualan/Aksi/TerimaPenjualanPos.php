@@ -39,6 +39,7 @@ use App\Domain\Pemenuhan\Aksi\KirimKeDapur;
 use App\Domain\Pemenuhan\Aksi\SelesaikanReservasiPenjualan;
 use App\Domain\Pemenuhan\Data\DataBarisKirimDapur;
 use App\Domain\Pemenuhan\Data\DataKirimDapur;
+use App\Domain\Pemenuhan\Layanan\PencatatLaundryPenjualan;
 use App\Domain\Penjualan\Data\DataBarisPenjualanPos;
 use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
@@ -151,6 +152,7 @@ final class TerimaPenjualanPos
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly SelesaikanReservasiPenjualan $reservasi,
+        private readonly PencatatLaundryPenjualan $laundry,
         private readonly PenautTagihanQrisPenjualan $penautQris,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
@@ -402,6 +404,15 @@ final class TerimaPenjualanPos
 
             if ($masalahReservasi !== []) {
                 $tinjauan['Reservasi'] = 'Reservasi: '.implode('; ', $masalahReservasi);
+            }
+        }
+
+        // Laundry (§9.9): tiket laundry dibuat bersama penjualannya (offline-first; masalah isian = tinjauan).
+        if ($data->laundry !== null) {
+            $masalahLaundry = $this->laundry->Buat($data->laundry, $penjualan->Id, $penjualan->Uuid, $penjualan->Nomor, $outlet->idOutlet, $idPelanggan, $data->dibuatPada, $kasir->id);
+
+            if ($masalahLaundry !== []) {
+                $tinjauan['Laundry'] = 'Laundry: '.implode('; ', $masalahLaundry);
             }
         }
 

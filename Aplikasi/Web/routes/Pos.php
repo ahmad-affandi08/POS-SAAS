@@ -9,6 +9,7 @@ use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
+use App\Http\Kontroler\Pos\V1\LaundryKontroler;
 use App\Http\Kontroler\Pos\V1\LogoStrukKontroler;
 use App\Http\Kontroler\Pos\V1\MejaKontroler;
 use App\Http\Kontroler\Pos\V1\PelangganKontroler;
@@ -119,6 +120,10 @@ Route::middleware(AutentikasiPerangkat::class)->group(function (): void {
         Route::get('/reservasi', [ReservasiKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.reservasi');
         Route::post('/reservasi/{reservasi}/hadir', [ReservasiKontroler::class, 'Hadir'])
             ->middleware('throttle:pos-60')->where('reservasi', $ulid)->name('pos.reservasi.hadir');
+        // Laundry (§9.9): cari cucian aktif outlet & ubah status proses/diambil (online).
+        Route::get('/laundry', [LaundryKontroler::class, 'Cari'])->middleware('throttle:pos-30')->name('pos.laundry');
+        Route::post('/laundry/{tiket}/status', [LaundryKontroler::class, 'UbahStatus'])
+            ->middleware('throttle:pos-60')->where('tiket', $ulid)->name('pos.laundry.status');
         // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
         Route::get('/pesan-sendiri', [PesanSendiriKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesan-sendiri');
         Route::post('/pesan-sendiri/{pesananSendiri}/terima', [PesanSendiriKontroler::class, 'Terima'])

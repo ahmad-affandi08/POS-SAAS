@@ -21,6 +21,7 @@ use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatPoinPenjualan;
 use App\Domain\Pelanggan\Layanan\PencatatSesiPenjualan;
+use App\Domain\Pemenuhan\Layanan\PencatatLaundryPenjualan;
 use App\Domain\Penjualan\Data\DataVoidPenjualanPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
@@ -87,6 +88,7 @@ final class TerimaVoidPenjualanPos
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
+        private readonly PencatatLaundryPenjualan $laundry,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -231,6 +233,8 @@ final class TerimaVoidPenjualanPos
         // F-12 bagian 2: pre-order yang diambil lewat penjualan ini kembali Siap dengan DP-nya (jurnal pembalik sudah
         // mengkredit Uang Muka Pelanggan).
         $this->penutupPraPesan->Batalkan($penjualan->Id, $kasir->id);
+        // Laundry (§9.9): tiket laundry penjualan yang di-void dibatalkan (kecuali sudah diambil).
+        $this->laundry->Batalkan($penjualan->Id, $kasir->id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

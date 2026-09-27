@@ -61,6 +61,37 @@ describe('Struk digital publik (POS-11)', () => {
         expect(screen.getByText('1.250')).toBeTruthy();
     });
 
+    it('laundry: status cucian & tahap proses tampil di atas struk (lacak dari QR nota)', () => {
+        RenderUji(
+            <HalamanStrukDigital
+                Struk={{
+                    ...struk,
+                    Laundry: {
+                        Status: 'Dicuci',
+                        LabelStatus: 'Dicuci',
+                        Tahap: [
+                            { Status: 'Diterima', Label: 'Diterima', Selesai: true },
+                            { Status: 'Dicuci', Label: 'Dicuci', Selesai: true },
+                            { Status: 'Siap', Label: 'Siap diambil', Selesai: false },
+                        ],
+                        JenisLayanan: 'Express',
+                        Berat: '3.50',
+                        Item: [{ Nama: 'Bed cover king', Jumlah: 1 }],
+                        Parfum: 'Lavender',
+                        EstimasiSelesaiPada: '2026-10-14T02:25:00Z',
+                        SiapPada: null,
+                        DiambilPada: null,
+                    },
+                }}
+            />,
+        );
+        expect(screen.getByRole('heading', { name: 'Status cucian: Dicuci' })).toBeTruthy();
+        expect(screen.getByText('Express · 3,5 kg · Bed cover king ×1 · parfum Lavender')).toBeTruthy();
+        expect(screen.getByText(/Perkiraan selesai/)).toBeTruthy();
+        expect(screen.getAllByText('(sudah)')).toHaveLength(2);
+        expect(screen.getAllByText('(belum)')).toHaveLength(1);
+    });
+
     it('void ditandai dan struk tidak dikenal menampilkan keadaan belum tersedia', () => {
         RenderUji(<HalamanStrukDigital Struk={{ ...struk, Dibatalkan: true, TotalRetur: null }} />);
         expect(screen.getByRole('status').textContent).toBe('TRANSAKSI DIBATALKAN');

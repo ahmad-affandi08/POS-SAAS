@@ -45,6 +45,7 @@ export const IzinTenant = {
     // D-23 C: tandai transaksi "sudah dicek" di Kotak Tindakan.
     TindakanTinjau: 'tindakan.tinjau',
     ReservasiKelola: 'reservasi.kelola',
+    LaundryKelola: 'laundry.kelola',
     KaryawanLihat: 'karyawan.lihat',
     KaryawanKelola: 'karyawan.kelola',
     // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant sendiri).

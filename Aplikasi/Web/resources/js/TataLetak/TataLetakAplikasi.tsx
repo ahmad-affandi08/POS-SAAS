@@ -206,6 +206,7 @@ const menuPenjualan: ItemMenu[] = [
     { label: 'Pre-order', href: '/kelola/pre-order', izin: IzinTenant.LaporanPenjualanLihat },
     // F-07 mode service: reservasi layanan jasa per staf.
     { label: 'Reservasi', href: '/kelola/reservasi', izin: IzinTenant.ReservasiKelola },
+    { label: 'Laundry', href: '/kelola/laundry', izin: IzinTenant.LaundryKelola },
 ];
 
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).

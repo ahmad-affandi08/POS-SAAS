@@ -78,6 +78,8 @@ enum IzinTenant: string
     case TindakanTinjau = 'tindakan.tinjau';
     // F-07 mode service: melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal).
     case ReservasiKelola = 'reservasi.kelola';
+    // Laundry (§9.9): melihat tiket laundry, mengubah status proses, pengaturan laundry.
+    case LaundryKelola = 'laundry.kelola';
 
     public function AmbilLabel(): string
     {
@@ -127,6 +129,7 @@ enum IzinTenant: string
             self::PesananMejaCatat => 'Mencatat pesanan meja & mengirim ke dapur tanpa menerima pembayaran (Pelayan)',
             self::TindakanTinjau => 'Menandai transaksi yang perlu dicek sebagai sudah dicek (Kotak Tindakan)',
             self::ReservasiKelola => 'Melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal)',
+            self::LaundryKelola => 'Melihat tiket laundry & mengubah status proses cucian (cuci, kering, setrika, siap, diambil)',
         };
     }
 
@@ -143,7 +146,7 @@ enum IzinTenant: string
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat,
-            self::ReservasiKelola => 'Penjualan',
+            self::ReservasiKelola, self::LaundryKelola => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola, self::TindakanTinjau => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

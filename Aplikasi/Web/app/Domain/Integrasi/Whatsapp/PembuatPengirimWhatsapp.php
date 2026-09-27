@@ -63,6 +63,14 @@ final class PembuatPengirimWhatsapp
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
 
+    /** Nama templat resmi untuk notifikasi cucian siap diambil (laundry §9.9); null = kirim teks. */
+    public function AmbilTemplatLaundrySiap(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatLaundrySiap');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
     /** Nama templat resmi untuk pengingat piutang (D-23 D, hanya WhatsApp Cloud API); null = kirim teks. */
     public function AmbilTemplatPengingatPiutang(): ?string
     {

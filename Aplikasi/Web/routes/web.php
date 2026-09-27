@@ -194,6 +194,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Karyawan.php'));
             // F-07 mode service: reservasi layanan.
             Route::group([], base_path('routes/Reservasi.php'));
+            // Laundry (§9.9): tiket & status proses cucian.
+            Route::group([], base_path('routes/Laundry.php'));
         });
     });
 

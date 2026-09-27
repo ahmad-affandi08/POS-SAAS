@@ -100,6 +100,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::TindakanTinjau,
                 // F-07 mode service: reservasi layanan outlet.
                 IzinTenant::ReservasiKelola,
+                // Laundry: tiket & status proses cucian outlet.
+                IzinTenant::LaundryKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -117,6 +119,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::PelangganLihat,
                 IzinTenant::KaryawanLihat,
                 IzinTenant::ReservasiKelola,
+                IzinTenant::LaundryKelola,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],

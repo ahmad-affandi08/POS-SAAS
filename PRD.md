@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.24 |
+| Versi | 2.25 |
 | Tanggal | 26 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -90,6 +90,7 @@
 | 1.69 | D-15 diperbarui oleh pemilik produk: tagline resmi PAYOU menjadi **"Smart Choice Your Business Partner"**. Logo utama, horizontal, monokrom, lembar merek, serta turunan logo Web dan Flutter diselaraskan; ikon aplikasi tanpa tagline tidak berubah. |
 | 1.70 | D-15 dilengkapi varian logo putih transparan untuk permukaan gelap: logo horizontal lengkap dan ikon sidebar, masing-masing tersedia sebagai sumber serta turunan Web dan Flutter. Komponen merek menyediakan pemilih varian tanpa mengubah tampilan bawaan. |
 | 1.71 | D-15 menambahkan **Indigo Gelap `#1D29B8`** dari gradasi logo P sebagai token `BrandGelap` di Web dan Flutter. Token disiapkan untuk latar sidebar/header merek dengan konten putih (kontras 10,2:1), tanpa langsung mengubah tampilan sidebar saat ini. |
+| 2.25 | **Laundry bagian 1** (SLS-09, §9.9, F-10): tabel `TiketLaundry` (satu per penjualan, Uuid & nomor = penjualan) & `PengaturanLaundry`; blok `Laundry` di `Penjualan.Buat` (offline-first, estimasi dari perangkat atau durasi reguler/express); status proses Diterima → Dicuci → Dikeringkan → Disetrika → Siap → Diambil (maju boleh melompat, void = Dibatalkan); WhatsApp "siap diambil" dengan tautan lacak; lacak publik lewat `/s/{kode}` (walau struk digital mati); API POS `GET /laundry`, `POST /laundry/{uuid}/status`; back-office `/kelola/laundry` (saring terlambat = laporan cucian belum diambil > N hari); Kotak Tindakan; izin baru `laundry.kelola`. |
 | 2.24 | **F-07 mode service bagian 2** (POS-04, SLS-07): reservasi di aplikasi kasir. `GET /api/pos/v1/reservasi?tanggal=` (antrian outlet perangkat), `POST /api/pos/v1/reservasi/{uuid}/hadir` (check-in, idempoten); Riwayat › "Reservasi hari ini" → "Layani" memuat layanan + staf pelaksana + pelanggan ke keranjang; `Penjualan.Buat` membawa `UuidReservasi` sehingga reservasi menjadi Selesai dan tertaut ke penjualan di transaksi yang sama (reservasi tak dikenal/selesai = diterima + tinjauan `Reservasi`). |
 | 2.23 | **F-07 mode service bagian 1** (POS-04, SLS-07, §9.8): reservasi layanan per staf. `Produk.DurasiMenit` untuk jasa, tabel `Reservasi` (`RS/YYYY/MM/NNNN`, status Menunggu/Dikonfirmasi/Hadir/Selesai/Batal/TidakDatang) & `PengaturanReservasi`; slot dari jadwal kerja staf, anti-bentrok per staf; back-office `/kelola/reservasi` (catat, konfirmasi, datang, selesai, tidak datang, batal beralasan, pindah jadwal, pengaturan); reservasi online publik `/{slug}/reservasi` (persetujuan data, maks 3 aktif per nomor, lihat/batal lewat kode akses); pengingat WhatsApp H-1; butir Kotak Tindakan; izin baru `reservasi.kelola`. |
 | 2.22 | **D-23 dialog naik paket / add-on**: menu tidak disembunyikan per fitur; sub-menu fitur di luar paket tampil dengan gembok dan membuka dialog (paket termurah yang memuat fitur + harga, add-on aktif bila ada). "Lihat paket" membuka Langganan dengan paket terpilih; "Minta add-on" membuat tiket dukungan (pembelian add-on mandiri F-19 belum ada). Props bersama `FiturPaket`. Penegakan fitur paket di server untuk rute yang belum dijaga menunggu keputusan pemilik produk (tenant lama yang sudah memakai fitur di luar paket). |
@@ -1967,6 +1968,16 @@ Booking online/WA → Konfirmasi → Reminder H-1 (WA) → Check-in
 - Bayar di depan / saat ambil (piutang pendek), deposit langganan.
 - Laporan cucian belum diambil > N hari.
 
+**Rincian laundry bagian 1 (v2.25; server, back-office, lacak publik; rincian diputuskan agen atas mandat D-12):**
+- **Tiket = penjualan.** Kasir menjual layanan laundry (produk jasa, mis. "Cuci kering setrika /kg") seperti biasa; `Penjualan.Buat` membawa blok opsional `Laundry {JenisLayanan: Reguler|Express, Berat? (kg, maks 2 desimal, DECIMAL), Item? [{Nama, Jumlah}] (maks 50), Parfum?, Catatan?, EstimasiSelesaiPada?, NamaPelanggan?, NoHp?}`. Server membuat satu `TiketLaundry` di transaksi DB yang sama (idempoten per penjualan) dengan `Uuid` & `Nomor` = penjualan, sehingga perangkat bisa mencetak QR lacak saat offline. Nama & HP diambil dari pelanggan tertaut (F-16a) bila ada, selain itu dari blok (HP dinormalisasi `62…`). Estimasi selesai dari perangkat; kosong/di luar 0–60 hari dari transaksi = waktu transaksi + durasi pengaturan. Tanpa nama, atau tanpa berat maupun item = tiket tetap dibuat + tinjauan **`Laundry`**. "Bayar saat ambil" memakai metode Tempo (F-12); deposit langganan memakai deposit/paket sesi (F-16d).
+- **Status (F-10):** Diterima → Dicuci → Dikeringkan → Disetrika → Siap → Diambil. Maju boleh melompat (cuci lipat tanpa setrika), tidak boleh mundur; Diambil hanya dari Siap; status sama = idempoten. Void penjualan (F-09) membatalkan tiket yang belum diambil (`Dibatalkan`). Setiap perubahan dicatat di `RiwayatStatusDokumen` + audit `laundry.status`.
+- **Notifikasi:** saat Siap, bila `NotifikasiSiap` aktif dan nomor HP ada, WhatsApp "cucian {Nomor} di {toko} sudah siap diambil" + tautan lacak dikirim sekali (antrean, `NotifikasiSiapPada`); templat resmi opsional `NamaTemplatLaundrySiap` (toko, nomor, tautan). Nomor tidak ikut antrean maupun log.
+- **Lacak publik:** QR label/nota menuju struk digital `/s/{kode}` (kode = awalan `Laundry.AwalanLacak` di data-awal + Uuid penjualan). Halaman menampilkan status & tahap proses (berteks + ikon), jenis layanan, berat/item, parfum, perkiraan selesai; tanpa nomor HP. Transaksi bertiket laundry tetap bisa dilacak walau struk digital dimatikan.
+- **Aplikasi kasir (API, online):** `GET /api/pos/v1/laundry?kata=` (cucian aktif outlet perangkat; tanpa kata = siap diambil; cari nomor/nama/HP; maks 50) dan `POST /api/pos/v1/laundry/{uuid}/status {Status, UuidPengguna}` (izin `penjualan.buat` atau `laundry.kelola`). Layar kasir di bagian 2.
+- **Back-office `/kelola/laundry`** (izin baru `laundry.kelola`: Owner, Admin, Manajer Outlet, Supervisor; dibatasi outlet akses): TabelData (cari, saring tanggal terima, status, outlet, **Perlu perhatian**: lewat perkiraan belum siap / siap lebih dari N hari = laporan cucian belum diambil), aksi ubah status. **Pengaturan** (pengguna tanpa batas outlet, audit `laundry.pengaturan`): isian laundry di kasir aktif, durasi reguler & express 1–720 jam (express ≤ reguler), daftar parfum (maks 20), notifikasi siap, batas belum diambil 1–90 hari. Data-awal POS membawa blok `Laundry {Aktif, JamReguler, JamExpress, Parfum, AwalanLacak}`.
+- **Kotak Tindakan:** "Cucian lewat estimasi selesai" (Penting) dan "Cucian siap belum diambil lebih dari N hari" (Perhatian).
+- **Bagian 2 (berikutnya):** isian laundry & label/nota ber-QR di aplikasi kasir, daftar cucian siap & tandai diambil dari kasir.
+
 ### 9.10 Bengkel
 
 - Data kendaraan (plat, merk, tipe, tahun, km) terhubung ke pelanggan.
@@ -3149,7 +3160,8 @@ erDiagram
 | `TiketDapur` / `TiketDapurDetail` | IdOutlet, IdStasiunDapur, IdPesananTerbuka / IdPenjualan, NomorDokumen, NamaMeja, Label, Ronde, Status (Antre/Dimasak/Siap/Disajikan), DikirimPada, MulaiPada, SiapPada, DisajikanPada / IdTiketDapur, UuidBaris, NamaProduk, Jumlah, Pilihan JSON (nama), Catatan, Status (Aktif/Dibatalkan) |
 | `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
 | `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |
-| `TiketLaundry` | IdPenjualan, Berat, Item JSON, Status, SelesaiPada, DiambilPada |
+| `TiketLaundry` | IdPenjualan (unik; `Uuid` & `Nomor` = penjualan), IdOutlet, IdPelanggan, NamaPelanggan, NoHp, JenisLayanan (Reguler/Express), Berat DECIMAL(8,2), Item JSON, Parfum, Catatan, Status, EstimasiSelesaiPada, SiapPada, DiambilPada, DiambilOleh, NotifikasiSiapPada (v2.25) |
+| `PengaturanLaundry` | IdTenant (unik), Aktif, JamReguler, JamExpress, Parfum JSON, NotifikasiSiap, HariBelumDiambil (v2.25) |
 | `Kendaraan` | IdPelanggan, NomorPolisi, Merek, Tipe, Tahun, KmTerakhir |
 
 **CRM & Promo**

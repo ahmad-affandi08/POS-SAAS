@@ -35,7 +35,7 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidReservasi?}`.
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidReservasi?, Laundry?}`.
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
  * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
@@ -138,6 +138,17 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Voucher' => ['sometimes', 'nullable', 'string', 'max:30'],
             'UuidPesananPenjualan' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidReservasi' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'Laundry' => ['sometimes', 'nullable', 'array'],
+            'Laundry.JenisLayanan' => ['required_with:Laundry', 'string', 'in:Reguler,Express'],
+            'Laundry.Berat' => ['nullable', 'string', 'regex:/^\d{1,4}(\.\d{1,2})?$/'],
+            'Laundry.Item' => ['nullable', 'array', 'max:50'],
+            'Laundry.Item.*.Nama' => ['required', 'string', 'max:60'],
+            'Laundry.Item.*.Jumlah' => ['required', 'integer', 'min:1', 'max:999'],
+            'Laundry.Parfum' => ['nullable', 'string', 'max:50'],
+            'Laundry.Catatan' => ['nullable', 'string', 'max:255'],
+            'Laundry.EstimasiSelesaiPada' => ['nullable', 'string', 'max:40'],
+            'Laundry.NamaPelanggan' => ['nullable', 'string', 'max:100'],
+            'Laundry.NoHp' => ['nullable', 'string', 'max:20'],
             'Promo' => ['sometimes', 'array', 'max:20'],
             'Promo.*.UuidPromo' => ['required', 'string', 'ulid', 'distinct'],
             'Promo.*.Kode' => ['required', 'string', 'max:30'],
@@ -198,6 +209,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             kodeVoucher: self::AmbilTeks($valid['Voucher'] ?? null),
             uuidPesananPenjualan: is_string($valid['UuidPesananPenjualan'] ?? null) ? strtoupper($valid['UuidPesananPenjualan']) : null,
             uuidReservasi: is_string($valid['UuidReservasi'] ?? null) ? strtoupper($valid['UuidReservasi']) : null,
+            laundry: is_array($valid['Laundry'] ?? null) ? self::AmbilLaundry($valid['Laundry']) : null,
         ));
     }
 
@@ -306,5 +318,23 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
         $teks = trim($nilai);
 
         return $teks === '' ? null : $teks;
+    }
+
+    /**
+     * @param  array<mixed>  $blok
+     * @return array{JenisLayanan: string, Berat: string|null, Item: list<array{Nama: string, Jumlah: int}>, Parfum: string|null, Catatan: string|null, EstimasiSelesaiPada: string|null, NamaPelanggan: string|null, NoHp: string|null}
+     */
+    private static function AmbilLaundry(array $blok): array
+    {
+        return [
+            'JenisLayanan' => (string) $blok['JenisLayanan'],
+            'Berat' => self::AmbilTeks($blok['Berat'] ?? null),
+            'Item' => array_values(array_map(fn (array $i): array => ['Nama' => (string) $i['Nama'], 'Jumlah' => (int) $i['Jumlah']], (array) ($blok['Item'] ?? []))),
+            'Parfum' => self::AmbilTeks($blok['Parfum'] ?? null),
+            'Catatan' => self::AmbilTeks($blok['Catatan'] ?? null),
+            'EstimasiSelesaiPada' => self::AmbilTeks($blok['EstimasiSelesaiPada'] ?? null),
+            'NamaPelanggan' => self::AmbilTeks($blok['NamaPelanggan'] ?? null),
+            'NoHp' => self::AmbilTeks($blok['NoHp'] ?? null),
+        ];
     }
 }

@@ -75,6 +75,18 @@ final class IdentitasPelanggan
     }
 
     /**
+     * Laundry (§9.9): nama & nomor HP (format `62…`, null bila tidak valid) untuk tiket dan notifikasi WhatsApp.
+     *
+     * @return array{Nama: string, NoHp: string|null}|null
+     */
+    public function AmbilKontak(int $id): ?array
+    {
+        $p = Pelanggan::query()->whereKey($id)->first(['Id', 'Nama', 'NoHp']);
+
+        return $p === null ? null : ['Nama' => $p->Nama, 'NoHp' => NomorHp::Normalisasi($p->NoHp)];
+    }
+
+    /**
      * F-12 bagian 2: identitas pelanggan pre-order untuk POS (nomor HP tersamar, tier untuk harga) per Id.
      *
      * @param  list<int>  $id

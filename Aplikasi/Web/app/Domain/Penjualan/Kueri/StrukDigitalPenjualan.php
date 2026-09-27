@@ -10,6 +10,7 @@ use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Kueri\RiwayatPoin;
+use App\Domain\Pemenuhan\Kueri\StatusLaundryPublik;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
@@ -22,8 +23,9 @@ use App\Domain\Tenant\Kueri\ProfilTenant;
 /**
  * Isi struk digital publik (POS-11, `/s/{kodeStruk}`) untuk satu penjualan tenant aktif: hanya data yang juga tercetak
  * di struk (tanpa HPP, catatan internal, atau tinjauan), mengikuti pengaturan struk tenant (alamat, NPWP, kasir,
- * pelanggan, catatan kaki). Penjualan yang di-void ditandai; retur disebut total pengembaliannya. Null bila tidak ada
- * atau struk digital dimatikan.
+ * pelanggan, catatan kaki). Penjualan yang di-void ditandai; retur disebut total pengembaliannya. Laundry (§9.9):
+ * penjualan bertiket laundry selalu bisa dilacak (QR label/nota) walau struk digital dimatikan, dengan status proses
+ * cucian. Null bila tidak ada, atau struk digital dimatikan dan bukan tiket laundry.
  */
 final class StrukDigitalPenjualan
 {
@@ -35,6 +37,7 @@ final class StrukDigitalPenjualan
         private readonly OutletPenjualan $outlet,
         private readonly ProfilPajakOutlet $pajakOutlet,
         private readonly RiwayatPoin $poin,
+        private readonly StatusLaundryPublik $laundry,
     ) {}
 
     /**
@@ -43,9 +46,10 @@ final class StrukDigitalPenjualan
     public function Ambil(int $idTenant, string $uuid): ?array
     {
         $struk = $this->pengaturan->Ambil($idTenant);
-        $p = $struk->tampilkanStrukDigital ? Penjualan::query()->where('Uuid', $uuid)->first() : null;
+        $p = Penjualan::query()->where('Uuid', $uuid)->first();
+        $laundry = $p === null ? null : $this->laundry->AmbilUntukPenjualan($p->Id);
 
-        if ($p === null) {
+        if ($p === null || (! $struk->tampilkanStrukDigital && $laundry === null)) {
             return null;
         }
 
@@ -97,6 +101,7 @@ final class StrukDigitalPenjualan
             'PoinDiperoleh' => $p->IdPelanggan === null || $p->Status === StatusPenjualan::Void ? null : $this->poin->AmbilPerolehanPenjualan($p->Id),
             'CatatanKaki' => $struk->catatanKaki,
             'TeksPenutup' => $struk->teksPenutup,
+            'Laundry' => $laundry,
         ];
     }
 }

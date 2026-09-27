@@ -11,6 +11,7 @@ use App\Domain\Laporan\Layanan\PenyediaTindakanStok;
 use App\Domain\PanduanAwal\Layanan\PenyediaTindakanPanduanAwal;
 use App\Domain\Pelanggan\Layanan\PenyediaTindakanPelanggan;
 use App\Domain\Pembelian\Layanan\PenyediaTindakanPembelian;
+use App\Domain\Pemenuhan\Layanan\PenyediaTindakanLaundry;
 use App\Domain\Pemenuhan\Layanan\PenyediaTindakanReservasi;
 use App\Domain\Penjualan\Layanan\PenyediaTindakanPenjualan;
 use App\Domain\Promo\Layanan\PenyediaTindakanPromo;
@@ -34,6 +35,7 @@ final class PenyediaTindakan extends ServiceProvider
             PenyediaTindakanPromo::class,
             PenyediaTindakanPanduanAwal::class,
             PenyediaTindakanReservasi::class,
+            PenyediaTindakanLaundry::class,
         ], KontrakPenyediaTindakan::TAG);
     }
 }

@@ -1,8 +1,10 @@
 import { Head } from '@inertiajs/react';
 
+import StatusLacakLaundry from '@/Komponen/Laundry/StatusLacakLaundry';
 import { PENUTUP_BAWAAN } from '@/Komponen/Struk/PratinjauStruk';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import type { StatusLaundryPublik } from '@/Tipe/Laundry';
 
 export type StrukDigital = {
     NamaUsaha: string;
@@ -36,6 +38,8 @@ export type StrukDigital = {
     PoinDiperoleh?: number | null;
     CatatanKaki: string | null;
     TeksPenutup: string | null;
+    /** Laundry (§9.9): status proses cucian bila transaksi ini bertiket laundry. */
+    Laundry?: StatusLaundryPublik | null;
 };
 
 /** Nilai uang nol ("0.00", "-0.00"). */
@@ -79,7 +83,8 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
     return (
         <>
             <Head title={`Struk ${Struk.Nomor}`} />
-            <main className="mx-auto max-w-md px-4 py-8">
+            <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-8">
+                {Struk.Laundry ? <StatusLacakLaundry Laundry={Struk.Laundry} /> : null}
                 <article
                     aria-label={`Struk ${Struk.Nomor}`}
                     className="flex flex-col gap-3 rounded-kontrol border border-garis bg-permukaan p-4 font-mono text-keterangan text-teks-sekunder"

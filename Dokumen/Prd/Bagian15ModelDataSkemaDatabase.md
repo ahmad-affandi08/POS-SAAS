@@ -153,7 +153,8 @@ erDiagram
 | `TiketDapur` / `TiketDapurDetail` | IdOutlet, IdStasiunDapur, IdPesananTerbuka / IdPenjualan, NomorDokumen, NamaMeja, Label, Ronde, Status (Antre/Dimasak/Siap/Disajikan), DikirimPada, MulaiPada, SiapPada, DisajikanPada / IdTiketDapur, UuidBaris, NamaProduk, Jumlah, Pilihan JSON (nama), Catatan, Status (Aktif/Dibatalkan) |
 | `Reservasi` | IdOutlet, IdPelanggan, IdKaryawan, IdProdukLayanan, MulaiPada, SelesaiPada, Status, Deposit |
 | `PerintahKerja` (work order) | IdOutlet, IdPelanggan, IdKendaraan, Status, Keluhan, Estimasi JSON, IdPenjualan |
-| `TiketLaundry` | IdPenjualan, Berat, Item JSON, Status, SelesaiPada, DiambilPada |
+| `TiketLaundry` | IdPenjualan (unik; `Uuid` & `Nomor` = penjualan), IdOutlet, IdPelanggan, NamaPelanggan, NoHp, JenisLayanan (Reguler/Express), Berat DECIMAL(8,2), Item JSON, Parfum, Catatan, Status, EstimasiSelesaiPada, SiapPada, DiambilPada, DiambilOleh, NotifikasiSiapPada (v2.25) |
+| `PengaturanLaundry` | IdTenant (unik), Aktif, JamReguler, JamExpress, Parfum JSON, NotifikasiSiap, HariBelumDiambil (v2.25) |
 | `Kendaraan` | IdPelanggan, NomorPolisi, Merek, Tipe, Tahun, KmTerakhir |
 
 **CRM & Promo**

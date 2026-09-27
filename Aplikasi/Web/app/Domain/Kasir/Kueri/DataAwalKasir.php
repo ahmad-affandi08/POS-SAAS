@@ -14,6 +14,7 @@ use App\Domain\Organisasi\Layanan\VerifierPinOffline;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Pelanggan\Kueri\PengaturanDepositTenant;
+use App\Domain\Pemenuhan\Kueri\PengaturanLaundryTenant;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
@@ -35,7 +36,8 @@ use stdClass;
  * alamat/telepon/NPWP/kasir/pelanggan/hemat, `CatatanKaki`, `TeksPenutup`) + `NamaUsaha`, `Npwp` (hanya bila outlet
  * PKP), `AdaLogo` (logo usaha tersedia & ditampilkan; diunduh lewat `/logo-struk`), dan `TandaAir` (paket tanpa fitur
  * `struk.tanpa-watermark`). F-16d: `Deposit` (`Berlaku`, `MinimalIsi`, `MaksimalIsi`) &
- * `Perangkat.NomorUrutIsiDeposit`.
+ * `Perangkat.NomorUrutIsiDeposit`. Laundry (§9.9): `Laundry` (`Aktif`, `JamReguler`, `JamExpress`, `Parfum`,
+ * `AwalanLacak` = awalan tautan `/s/{kode}` untuk QR label cucian, selalu terisi).
  */
 final class DataAwalKasir
 {
@@ -53,6 +55,7 @@ final class DataAwalKasir
         private readonly PemeriksaFiturTenant $fitur,
         private readonly PengaturanStrukTenant $pengaturanStruk,
         private readonly PengaturanDepositTenant $deposit,
+        private readonly PengaturanLaundryTenant $laundry,
     ) {}
 
     /**
@@ -106,6 +109,7 @@ final class DataAwalKasir
             ],
             // F-16d bagian 1: deposit pelanggan (fitur paket, batas isi per transaksi Rupiah bulat).
             'Deposit' => $this->deposit->KeLarik(),
+            'Laundry' => $this->AmbilLaundry($perangkat->IdTenant),
             'ProfilPajak' => [
                 'Pkp' => $profil->pkp ?? false,
                 'PungutPbjt' => $profil->pungutPbjt ?? false,
@@ -150,6 +154,22 @@ final class DataAwalKasir
             'TandaAir' => ! $this->fitur->CekAktif($perangkat->IdTenant, 'struk.tanpa-watermark'),
             // POS-11: awalan tautan struk digital; aplikasi menambah Uuid penjualan. Null = struk digital dimatikan.
             'AwalanStrukDigital' => $struk->tampilkanStrukDigital ? KodeStrukDigital::AmbilAwalan($perangkat->IdTenant) : null,
+        ];
+    }
+
+    /**
+     * @return array{Aktif: bool, JamReguler: int, JamExpress: int, Parfum: list<string>, AwalanLacak: string}
+     */
+    private function AmbilLaundry(int $idTenant): array
+    {
+        $p = $this->laundry->AmbilLarik();
+
+        return [
+            'Aktif' => $p['Aktif'],
+            'JamReguler' => $p['JamReguler'],
+            'JamExpress' => $p['JamExpress'],
+            'Parfum' => $p['Parfum'],
+            'AwalanLacak' => KodeStrukDigital::AmbilAwalan($idTenant),
         ];
     }
 }
