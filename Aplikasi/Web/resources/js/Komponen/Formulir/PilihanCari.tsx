@@ -148,7 +148,7 @@ export default function PilihanCari({
                 side="bottom"
                 sideOffset={4}
                 collisionPadding={8}
-                className="w-(--radix-popover-trigger-width) min-w-56 border-garis bg-permukaan p-0"
+                className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) min-w-56 flex-col overflow-hidden border-garis bg-permukaan p-0"
                 onCloseAutoFocus={(peristiwa) => {
                     // Kembalikan fokus ke pemicu hanya bila masih terpasang. Di kalender, pemicu bulan/tahun dibuat
                     // ulang saat bulan berganti; fokus bawaan Radix lalu jatuh ke luar dan menutup popover induk.
@@ -169,10 +169,10 @@ export default function PilihanCari({
                     loop
                     value={sorot}
                     onValueChange={AturSorot}
-                    className="bg-permukaan"
+                    className="flex min-h-0 flex-col bg-permukaan"
                     label={label}
                 >
-                    <div className="flex items-center gap-2 border-b border-garis px-3">
+                    <div className="flex shrink-0 items-center gap-2 border-b border-garis px-3">
                         <SearchIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
                         <input
                             value={kata}
@@ -184,7 +184,7 @@ export default function PilihanCari({
                             className="h-8 pointer-coarse:h-11 w-full bg-transparent text-isi text-teks-utama outline-none placeholder:text-teks-sekunder"
                         />
                     </div>
-                    <CommandList className="max-h-72">
+                    <CommandList className="max-h-72 min-h-0 flex-1 touch-pan-y overscroll-contain">
                         <CommandEmpty className="px-3 py-6 text-center text-label text-teks-sekunder">
                             Tidak ada yang cocok dengan “{kata}”.
                         </CommandEmpty>

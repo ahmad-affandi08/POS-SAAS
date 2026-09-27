@@ -42,6 +42,23 @@ describe('PilihanCari (select ber-cari, §17.6)', () => {
         expect(CocokkanCari(opsiKota[2] ?? { Nilai: '', Label: '' }, 'yogyakarta')).toBe(false);
     });
 
+    it('daftar dibatasi tinggi layar yang tersedia dan tetap bisa digulir (regresi layar HP)', () => {
+        render(<Terkendali saatBerubah={vi.fn()} />);
+        BukaPilihan(screen.getByRole('combobox', { name: 'Kota' }));
+
+        // Tanpa batas ini popover lebih tinggi dari layar HP, terpotong viewport, dan tidak ada yang bisa digulir:
+        // hanya beberapa baris pertama yang terlihat.
+        const isi = document.querySelector('[data-slot="popover-content"]');
+        expect(isi?.className).toContain('max-h-(--radix-popover-content-available-height)');
+        expect(isi?.className).toContain('overflow-hidden');
+
+        // Daftarnya yang menyusut dan menggulir, bukan popover-nya yang meluber.
+        const daftar = document.querySelector('[data-slot="command-list"]');
+        expect(daftar?.className).toContain('overflow-y-auto');
+        expect(daftar?.className).toContain('flex-1');
+        expect(daftar?.className).toContain('overscroll-contain');
+    });
+
     it('daftar terbuka di bawah pemicu (tidak menimpanya), bisa dicari, dan menandai pilihan aktif', () => {
         const SaatBerubah = vi.fn();
         render(<Terkendali saatBerubah={SaatBerubah} />);

@@ -294,6 +294,21 @@ describe('PemilihProduk (TanStack Query, KunciKueri.Produk.Cari)', () => {
         expect(screen.getByText('Menampilkan 20 produk pertama. Ketik untuk mencari yang lain.')).toBeTruthy();
     });
 
+    it('daftar produk dibatasi tinggi layar yang tersedia dan tetap bisa digulir (regresi layar HP)', () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ Data: [] }) }));
+        RenderUji(<PemilihProduk label="Cari bahan" jenis={['Stok']} saatPilih={vi.fn()} />);
+
+        BukaPilihan(screen.getByRole('combobox', { name: 'Cari bahan' }));
+
+        // Tanpa batas ini popover lebih tinggi dari layar HP, terpotong viewport, dan tidak ada yang bisa digulir.
+        const isi = document.querySelector('[data-slot="popover-content"]');
+        expect(isi?.className).toContain('max-h-(--radix-popover-content-available-height)');
+
+        const daftar = document.querySelector('[data-slot="command-list"]');
+        expect(daftar?.className).toContain('overflow-y-auto');
+        expect(daftar?.className).toContain('flex-1');
+    });
+
     it('galat jaringan dan hasil kosong ditulis di area aria-live', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({}) }));
         RenderUji(<PemilihProduk label="Cari komponen" jenis={['Stok']} saatPilih={vi.fn()} />);

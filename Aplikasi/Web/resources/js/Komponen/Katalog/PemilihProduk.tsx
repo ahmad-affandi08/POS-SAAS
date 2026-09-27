@@ -155,7 +155,7 @@ export function KerangkaPemilihProduk({
                     side="bottom"
                     sideOffset={4}
                     collisionPadding={8}
-                    className="w-(--radix-popover-trigger-width) min-w-56 border-garis bg-permukaan p-0"
+                    className="flex max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) min-w-56 flex-col overflow-hidden border-garis bg-permukaan p-0"
                     onOpenAutoFocus={(peristiwa) => {
                         // Fokus ke kotak cari, bukan ke item pertama.
                         peristiwa.preventDefault();
@@ -174,10 +174,10 @@ export function KerangkaPemilihProduk({
                         loop
                         value={sorot}
                         onValueChange={saatSorot}
-                        className="bg-permukaan"
+                        className="flex min-h-0 flex-col bg-permukaan"
                         label={label}
                     >
-                        <div className="flex items-center gap-2 border-b border-garis px-3">
+                        <div className="flex shrink-0 items-center gap-2 border-b border-garis px-3">
                             <SearchIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
                             <input
                                 value={kata}
@@ -188,12 +188,14 @@ export function KerangkaPemilihProduk({
                                 className="h-8 w-full bg-transparent text-isi text-teks-utama outline-none pointer-coarse:h-11 placeholder:text-teks-sekunder"
                             />
                         </div>
-                        <CommandList className="max-h-72">{children}</CommandList>
+                        <CommandList className="max-h-72 min-h-0 flex-1 touch-pan-y overscroll-contain">
+                            {children}
+                        </CommandList>
                         <p
                             id={`${id}-status`}
                             aria-live="polite"
                             className={cn(
-                                'border-garis px-3 py-2 text-keterangan text-teks-sekunder',
+                                'shrink-0 border-garis px-3 py-2 text-keterangan text-teks-sekunder',
                                 status !== null && 'border-t',
                             )}
                         >
