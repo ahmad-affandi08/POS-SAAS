@@ -58,6 +58,7 @@ import '../Domain/Perangkat/PenjagaLayarMenyala.dart';
 import '../Domain/Pin/PemverifikasiPinOffline.dart';
 import '../Domain/Sesi/LayananMasuk.dart';
 import '../Domain/Sesi/LayananPerangkat.dart';
+import '../Domain/Sesi/LayananPersetujuanJarakJauh.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Dapur/LayananTiketDapur.dart';
 import '../Domain/Shift/LayananBukaLaci.dart';
@@ -362,6 +363,11 @@ final penyediaRepositoriPersediaan = Provider<RepositoriPersediaan>(
 /// F-05f bagian 2: catat bahan/menu terbuang dari perangkat (offline).
 final penyediaLayananBahanTerbuang = Provider<LayananBahanTerbuang>(
   (ref) => LayananBahanTerbuang(repositori: ref.watch(penyediaRepositoriPersediaan), jam: ref.watch(penyediaJam)),
+);
+
+/// X4 persetujuan jarak jauh (online): minta, pantau, batalkan.
+final penyediaLayananPersetujuanJarakJauh = Provider<LayananPersetujuanJarakJauh>(
+  (ref) => LayananPersetujuanJarakJauh(klien: ref.watch(penyediaKlienPos), repositori: ref.watch(penyediaRepositori)),
 );
 
 /// POS-25 modul Gudang (online): terima barang, transfer masuk, hitung stok opname.

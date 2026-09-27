@@ -217,6 +217,8 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
         builder: (_) => DialogPinSupervisor(
           izin: IzinKasir.penjualanVoid,
           pesan: 'Retur ${total.FormatRupiah()} wajib disetujui. Pilih supervisor yang menyetujui.',
+          judul: 'Retur penjualan',
+          nilai: total,
         ),
       );
       if (penyetuju == null) {

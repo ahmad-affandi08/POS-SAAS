@@ -87,6 +87,8 @@ final class DataAwalKasir
                 'BatasHariLewatJatuhTempo' => $pengaturan->batasHariLewatJatuhTempo,
                 // Cetak struk bagian 4: buka laci manual (tanpa transaksi) wajib PIN penyetuju kas.keluar.setujui.
                 'BukaLaciPerluPin' => $pengaturan->bukaLaciPerluPin,
+                // X4 (aditif): tombol "Minta persetujuan jarak jauh" di dialog PIN penyetuju hanya bila fitur paket aktif.
+                'PersetujuanJarakJauh' => $this->fitur->CekAktif($perangkat->IdTenant, 'persetujuan.jarak-jauh'),
             ],
             'Struk' => $this->AmbilStruk($perangkat, $profil->pkp ?? false),
             'Outlet' => $outlet === null ? null : [

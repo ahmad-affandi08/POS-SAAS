@@ -674,6 +674,7 @@ describe('F-07b data-awal', function (): void {
             'BatasHariRetur' => 7,
             'BatasHariLewatJatuhTempo' => 0,
             'BukaLaciPerluPin' => false,
+            'PersetujuanJarakJauh' => false,
         ])
             ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00'])
             ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode, 'NomorUrutPenjualan' => [], 'NomorUrutRetur' => [], 'NomorUrutIsiDeposit' => []])

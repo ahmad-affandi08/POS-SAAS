@@ -290,6 +290,26 @@ class KlienPemilik {
     return [for (final p in UraiJson.AmbilDaftarPeta(json['Perangkat'])) PerangkatPemilik.DariJson(p)];
   }
 
+  /// OWN-03 / X4: antrean persetujuan jarak jauh yang boleh diputuskan pengguna (terlama dulu).
+  Future<List<PermintaanPersetujuanPos>> AmbilPersetujuan() async {
+    final json = await _Kirim('GET', 'persetujuan', null);
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['Persetujuan'])) PermintaanPersetujuanPos.DariJson(p)];
+  }
+
+  Future<PermintaanPersetujuanPos> SetujuiPersetujuan(String uuid) async => PermintaanPersetujuanPos.DariJson(
+    UraiJson.AmbilPeta((await _Kirim('POST', 'persetujuan/${Uri.encodeComponent(uuid)}/setujui', null))['Persetujuan']),
+  );
+
+  /// Tolak dengan [alasan] 5–255 karakter (ditampilkan ke kasir).
+  Future<PermintaanPersetujuanPos> TolakPersetujuan(String uuid, String alasan) async =>
+      PermintaanPersetujuanPos.DariJson(
+        UraiJson.AmbilPeta(
+          (await _Kirim('POST', 'persetujuan/${Uri.encodeComponent(uuid)}/tolak', {
+            'Alasan': alasan.trim(),
+          }))['Persetujuan'],
+        ),
+      );
+
   static String _Jalur(String jalur, Map<String, String> kueri) =>
       kueri.isEmpty ? jalur : '$jalur?${Uri(queryParameters: kueri).query}';
 

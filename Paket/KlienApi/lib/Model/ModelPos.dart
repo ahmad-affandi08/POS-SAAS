@@ -392,6 +392,7 @@ class DataAwal {
     this.batasHariRetur = batasHariReturBawaan,
     this.batasHariLewatJatuhTempo = 0,
     this.bukaLaciPerluPin = false,
+    this.persetujuanJarakJauh = false,
     this.karyawan = const [],
     this.struk,
     this.deposit = const DepositPos(),
@@ -446,6 +447,9 @@ class DataAwal {
   /// (`Pengaturan.BukaLaciPerluPin`; server lama tanpa kunci ini = false).
   final bool bukaLaciPerluPin;
 
+  /// X4: fitur paket persetujuan jarak jauh aktif (`Pengaturan.PersetujuanJarakJauh`; server lama = false).
+  final bool persetujuanJarakJauh;
+
   /// F-18: staf yang bisa dipilih sebagai pelayan baris (komisi); server lama = kosong.
   final List<KaryawanPos> karyawan;
 
@@ -484,6 +488,7 @@ class DataAwal {
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
       bukaLaciPerluPin: UraiJson.AmbilBenar(pengaturan['BukaLaciPerluPin']),
+      persetujuanJarakJauh: UraiJson.AmbilBenar(pengaturan['PersetujuanJarakJauh']),
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
       struk: StrukPos.DariJson(json['Struk']),
       deposit: DepositPos.DariJson(json['Deposit']),

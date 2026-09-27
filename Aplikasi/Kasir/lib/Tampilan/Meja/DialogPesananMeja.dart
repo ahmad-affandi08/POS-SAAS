@@ -204,7 +204,8 @@ Future<({bool lanjut, StafLokal? penyetuju})> MintaPenyetujuVoid(
   }
   final penyetuju = await showDialog<StafLokal>(
     context: context,
-    builder: (_) => DialogPinSupervisor(izin: IzinKasir.penjualanVoid, pesan: pesan),
+    builder: (_) =>
+        DialogPinSupervisor(izin: IzinKasir.penjualanVoid, pesan: pesan, judul: 'Batalkan item pesanan meja'),
   );
   return (lanjut: penyetuju != null, penyetuju: penyetuju);
 }

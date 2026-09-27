@@ -260,3 +260,11 @@ final penyediaShift = FutureProvider.autoDispose<List<ShiftPemilik>>((ref) {
 final penyediaPerangkat = FutureProvider.autoDispose<List<PerangkatPemilik>>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPerangkat()),
 );
+
+/// OWN-03 / X4: antrean persetujuan jarak jauh.
+final penyediaPersetujuan = FutureProvider.autoDispose<List<PermintaanPersetujuanPos>>(
+  (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPersetujuan()),
+);
+
+/// Selang pantau antrean persetujuan saat aplikasi terbuka (belum ada push notification). Null = tidak memantau (test).
+final penyediaSelangPantauPersetujuan = Provider<Duration?>((ref) => const Duration(seconds: 15));

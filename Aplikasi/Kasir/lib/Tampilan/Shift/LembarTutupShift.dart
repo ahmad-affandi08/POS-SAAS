@@ -142,6 +142,7 @@ class _LembarTutupShiftState extends ConsumerState<LembarTutupShift> {
             pesan:
                 'Selisih kas ${KartuLaporanShift.FormatSelisih(pratinjau.selisih)} melebihi toleransi '
                 '${pratinjau.toleransi.FormatRupiah()}. Pilih supervisor yang menyetujui.',
+            rincian: [(label: 'Selisih kas', nilai: KartuLaporanShift.FormatSelisih(pratinjau.selisih))],
           ),
         );
         if (penyetuju == null) {

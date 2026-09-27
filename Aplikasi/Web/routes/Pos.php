@@ -16,6 +16,7 @@ use App\Http\Kontroler\Pos\V1\MejaKontroler;
 use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
+use App\Http\Kontroler\Pos\V1\PersetujuanJarakJauhKontroler;
 use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PesanKeluarKontroler;
@@ -124,6 +125,13 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::post('/reservasi/{reservasi}/hadir', [ReservasiKontroler::class, 'Hadir'])
             ->middleware('throttle:pos-60')->where('reservasi', $ulid)->name('pos.reservasi.hadir');
         // Laundry (§9.9): cari cucian aktif outlet & ubah status proses/diambil (online).
+        // X4 persetujuan jarak jauh (online): kasir meminta, Aplikasi Owner memutuskan, kasir menunggu status.
+        Route::post('/persetujuan/jarak-jauh', [PersetujuanJarakJauhKontroler::class, 'Ajukan'])->middleware('throttle:pos-30')->name('pos.persetujuan.jarak-jauh');
+        Route::get('/persetujuan/jarak-jauh/{persetujuan}', [PersetujuanJarakJauhKontroler::class, 'Tampilkan'])
+            ->middleware('throttle:pos-120')->where('persetujuan', $ulid)->name('pos.persetujuan.jarak-jauh.tampil');
+        Route::post('/persetujuan/jarak-jauh/{persetujuan}/batal', [PersetujuanJarakJauhKontroler::class, 'Batal'])
+            ->middleware('throttle:pos-30')->where('persetujuan', $ulid)->name('pos.persetujuan.jarak-jauh.batal');
+
         // POS-25 modul Gudang (online): terima barang dari PO, terima transfer masuk, hitung stok opname.
         Route::get('/gudang/pesanan-pembelian', [GudangKontroler::class, 'DaftarPesanan'])->middleware('throttle:pos-30')->name('pos.gudang.pesanan-pembelian');
         Route::post('/gudang/penerimaan', [GudangKontroler::class, 'Terima'])->middleware('throttle:pos-30')->name('pos.gudang.penerimaan');

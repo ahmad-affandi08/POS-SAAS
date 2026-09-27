@@ -80,6 +80,9 @@ class _LembarVoidState extends ConsumerState<LembarVoid> {
         builder: (_) => DialogPinSupervisor(
           izin: IzinKasir.penjualanVoid,
           pesan: 'Void transaksi ${_data?.penjualan.Nomor ?? ''} wajib disetujui. Pilih supervisor yang menyetujui.',
+          judul: 'Void transaksi ${_data?.penjualan.Nomor ?? ''}'.trim(),
+          nilai: _data == null ? null : Uang.Dari(_data!.penjualan.TotalAkhir),
+          rincian: [(label: 'Alasan', nilai: _alasan.text.trim())],
         ),
       );
       if (penyetuju == null) {

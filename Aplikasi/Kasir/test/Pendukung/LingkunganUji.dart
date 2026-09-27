@@ -83,6 +83,7 @@ Map<String, Object?> DataAwalUji({
   bool deposit = false,
   Map<String, Object?>? nomorUrutIsiDeposit,
   bool laundry = false,
+  bool persetujuanJarakJauh = false,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -106,6 +107,8 @@ Map<String, Object?> DataAwalUji({
     'ToleransiSelisihKas': toleransiSelisihKas,
     'BatasHariLewatJatuhTempo': ?batasHariLewatJatuhTempo,
     'BukaLaciPerluPin': ?bukaLaciPerluPin,
+    // X4: tombol minta persetujuan jarak jauh di dialog PIN penyetuju.
+    'PersetujuanJarakJauh': persetujuanJarakJauh,
   },
   'Outlet': {
     'Uuid': '01K50VT1ET0000000000000001',

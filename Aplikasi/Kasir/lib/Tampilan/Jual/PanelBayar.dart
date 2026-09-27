@@ -298,6 +298,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       builder: (_) => DialogPinSupervisor(
         izin: IzinKasir.penjualanTempoSetujui,
         pesan: 'Tempo ${pelanggan.nama} perlu persetujuan: ${alasan.join('; ')}. Pilih penyetuju.',
+        judul: 'Penjualan tempo ${pelanggan.nama}',
+        nilai: nominal,
       ),
     );
     if (staf == null) {

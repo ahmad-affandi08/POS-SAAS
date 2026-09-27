@@ -41,6 +41,8 @@ Future<void> PasangPemilik(
         penyediaKlienHttp.overrideWithValue(server.BuatKlien()),
         penyediaPenyimpanSesi.overrideWithValue(sesi),
         penyediaJam.overrideWithValue(() => DateTime(2026, 9, 26, 15)),
+        // Tanpa pemantau berkala di test (timer tidak boleh tertinggal); muat ulang lewat tab/tarik.
+        penyediaSelangPantauPersetujuan.overrideWithValue(null),
       ],
       child: AplikasiPemilik(lingkungan: lingkungan),
     ),

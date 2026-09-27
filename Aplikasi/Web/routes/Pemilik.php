@@ -7,6 +7,7 @@ use App\Http\Kontroler\Pemilik\V1\AutentikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\DasborKontroler;
 use App\Http\Kontroler\Pemilik\V1\LaporanKontroler;
 use App\Http\Kontroler\Pemilik\V1\PerangkatKontroler;
+use App\Http\Kontroler\Pemilik\V1\PersetujuanKontroler;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\IdentifikasiTenantPemilik;
 use App\Http\Perantara\WajibIzinPemilik;
@@ -37,6 +38,13 @@ Route::middleware(AutentikasiPemilik::class)->group(function () use ($izin): voi
         // OWN-05: laporan ringkas penjualan & shift.
         Route::get('/laporan/penjualan', [LaporanKontroler::class, 'Penjualan'])->middleware($izin(IzinTenant::LaporanPenjualanLihat))->name('pemilik.laporan.penjualan');
         Route::get('/shift', [LaporanKontroler::class, 'Shift'])->middleware($izin(IzinTenant::LaporanPenjualanLihat))->name('pemilik.shift');
+
+        // OWN-03 / X4: persetujuan jarak jauh (izin diperiksa per permintaan: izin yang diminta kasir atau pemilik).
+        Route::get('/persetujuan', [PersetujuanKontroler::class, 'Daftar'])->name('pemilik.persetujuan');
+        Route::post('/persetujuan/{persetujuan}/setujui', [PersetujuanKontroler::class, 'Setujui'])
+            ->where('persetujuan', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('pemilik.persetujuan.setujui');
+        Route::post('/persetujuan/{persetujuan}/tolak', [PersetujuanKontroler::class, 'Tolak'])
+            ->where('persetujuan', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('pemilik.persetujuan.tolak');
 
         // OWN-08: status perangkat POS.
         Route::get('/perangkat', [PerangkatKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PerangkatLihat))->name('pemilik.perangkat');

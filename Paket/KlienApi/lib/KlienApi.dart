@@ -10,6 +10,7 @@ export 'Model/ModelLaundry.dart';
 export 'Model/ModelMeja.dart';
 export 'Model/ModelPembayaranDigital.dart';
 export 'Model/ModelPelanggan.dart';
+export 'Model/ModelPersetujuan.dart';
 export 'Model/ModelPreOrder.dart';
 export 'Model/ModelPos.dart';
 export 'Model/ModelPromo.dart';

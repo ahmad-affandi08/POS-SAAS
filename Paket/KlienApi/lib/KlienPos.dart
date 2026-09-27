@@ -14,6 +14,7 @@ import 'Model/ModelLaundry.dart';
 import 'Model/ModelMeja.dart';
 import 'Model/ModelPembayaranDigital.dart';
 import 'Model/ModelPelanggan.dart';
+import 'Model/ModelPersetujuan.dart';
 import 'Model/ModelPos.dart';
 import 'Model/ModelPreOrder.dart';
 import 'Model/ModelPromo.dart';
@@ -219,6 +220,42 @@ class KlienPos {
         'Status': status,
         'UuidPengguna': uuidPengguna,
       }))['Tiket'],
+    ),
+  );
+
+  /// X4: minta persetujuan jarak jauh (idempoten per [uuid]). [izin] null = khusus pemilik. [rincian] ditampilkan apa
+  /// adanya di Aplikasi Owner. Fitur paket belum aktif → `GalatApi` `FiturTidakTersedia` (403).
+  Future<PermintaanPersetujuanPos> AjukanPersetujuanJarakJauh({
+    required String uuid,
+    required String? izin,
+    required String uuidPengguna,
+    required String judul,
+    required List<({String label, String nilai})> rincian,
+    String? nilai,
+  }) async => PermintaanPersetujuanPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'persetujuan/jarak-jauh', {
+        'Uuid': uuid,
+        'Izin': izin,
+        'UuidPengguna': uuidPengguna,
+        'Judul': judul,
+        'Rincian': [
+          for (final r in rincian) {'Label': r.label, 'Nilai': r.nilai},
+        ],
+        'Nilai': ?nilai,
+      }, kunciIdempotensi: 'persetujuan-$uuid'))['Persetujuan'],
+    ),
+  );
+
+  Future<PermintaanPersetujuanPos> AmbilPersetujuanJarakJauh(String uuid) async => PermintaanPersetujuanPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('GET', 'persetujuan/jarak-jauh/${Uri.encodeComponent(uuid)}', null))['Persetujuan'],
+    ),
+  );
+
+  Future<PermintaanPersetujuanPos> BatalkanPersetujuanJarakJauh(String uuid) async => PermintaanPersetujuanPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'persetujuan/jarak-jauh/${Uri.encodeComponent(uuid)}/batal', null))['Persetujuan'],
     ),
   );
 

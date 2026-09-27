@@ -54,7 +54,11 @@ class _LembarBukaLaciState extends ConsumerState<LembarBukaLaci> {
       }
       penyetuju = await showDialog<StafLokal>(
         context: context,
-        builder: (_) => const DialogPinSupervisor(pesan: 'Buka laci tanpa transaksi perlu persetujuan supervisor.'),
+        builder: (_) => DialogPinSupervisor(
+          pesan: 'Buka laci tanpa transaksi perlu persetujuan supervisor.',
+          judul: 'Buka laci tanpa transaksi',
+          rincian: [(label: 'Alasan', nilai: _alasan.text.trim().isEmpty ? '-' : _alasan.text.trim())],
+        ),
       );
       if (penyetuju == null) {
         return;

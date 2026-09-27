@@ -253,5 +253,35 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/gudang/transfer/{transfer}/terima",
         "Nama": "pos.gudang.transfer.terima"
+    },
+    "GET api/pemilik/v1/persetujuan": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/persetujuan",
+        "Nama": "pemilik.persetujuan"
+    },
+    "GET api/pos/v1/persetujuan/jarak-jauh/{persetujuan}": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/persetujuan/jarak-jauh/{persetujuan}",
+        "Nama": "pos.persetujuan.jarak-jauh.tampil"
+    },
+    "POST api/pemilik/v1/persetujuan/{persetujuan}/setujui": {
+        "Metode": "POST",
+        "Jalur": "api/pemilik/v1/persetujuan/{persetujuan}/setujui",
+        "Nama": "pemilik.persetujuan.setujui"
+    },
+    "POST api/pemilik/v1/persetujuan/{persetujuan}/tolak": {
+        "Metode": "POST",
+        "Jalur": "api/pemilik/v1/persetujuan/{persetujuan}/tolak",
+        "Nama": "pemilik.persetujuan.tolak"
+    },
+    "POST api/pos/v1/persetujuan/jarak-jauh": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/persetujuan/jarak-jauh",
+        "Nama": "pos.persetujuan.jarak-jauh"
+    },
+    "POST api/pos/v1/persetujuan/jarak-jauh/{persetujuan}/batal": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/persetujuan/jarak-jauh/{persetujuan}/batal",
+        "Nama": "pos.persetujuan.jarak-jauh.batal"
     }
 }
