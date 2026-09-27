@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { LabelStatusDokumen } from '@/Komponen/Persediaan/Dokumen/KomponenDokumen';
@@ -113,6 +114,7 @@ export default function HalamanDaftarTransferStok({ Transfer, OpsiGudang, OpsiSt
             </p>
             {!Izin.Kelola ? <PesanHanyaLihat izin="persediaan.kelola" objek="transfer stok" /> : null}
             <DaftarGalatServer galat={props.errors} />
+            <AksiHalaman>{tombolBuat}</AksiHalaman>
             <TabelData
                 id="persediaan-transfer"
                 label="Daftar transfer stok"
@@ -123,7 +125,6 @@ export default function HalamanDaftarTransferStok({ Transfer, OpsiGudang, OpsiSt
                 cari="Cari nomor, catatan, atau nama/SKU produk"
                 saring={saring}
                 alamatDetail={(t) => `${AlamatTransfer}/${t.Uuid}`}
-                aksiAlat={tombolBuat}
                 kosong={{
                     ilustrasi: 'Stok',
                     judul: 'Belum ada transfer stok.',

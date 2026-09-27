@@ -1,3 +1,4 @@
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
     BuatSaringPembelian,
@@ -46,6 +47,7 @@ export default function HalamanDaftarPembayaran({ Pembayaran, OpsiStatus, OpsiPe
             izin={Izin}
             objek="pembayaran hutang"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="pembelian-pembayaran"
                 label="Daftar pembayaran hutang"
@@ -56,7 +58,6 @@ export default function HalamanDaftarPembayaran({ Pembayaran, OpsiStatus, OpsiPe
                 cari="Cari nomor atau catatan"
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
-                aksiAlat={tombol}
                 kosong={{
                     ilustrasi: 'Pembelian',
                     judul: 'Belum ada pembayaran hutang.',

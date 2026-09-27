@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { LabelStatusDokumen } from '@/Komponen/Persediaan/Dokumen/KomponenDokumen';
@@ -120,6 +121,7 @@ export default function HalamanDaftarOrderProduksi({ Order, OpsiGudang, OpsiStat
             </p>
             {!Izin.Kelola ? <PesanHanyaLihat izin="persediaan.kelola" objek="order produksi" /> : null}
             <DaftarGalatServer galat={props.errors} />
+            <AksiHalaman>{tombolBuat}</AksiHalaman>
             <TabelData
                 id="persediaan-produksi"
                 label="Daftar order produksi"
@@ -130,7 +132,6 @@ export default function HalamanDaftarOrderProduksi({ Order, OpsiGudang, OpsiStat
                 cari="Cari nomor, produk, SKU, atau batch"
                 saring={saring}
                 alamatDetail={(o) => `${AlamatProduksi}/${o.Uuid}`}
-                aksiAlat={tombolBuat}
                 kosong={{
                     ilustrasi: 'Stok',
                     judul: 'Belum ada order produksi.',

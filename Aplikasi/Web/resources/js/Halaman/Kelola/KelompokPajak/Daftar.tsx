@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormKelompokPajak from '@/Komponen/Katalog/FormKelompokPajak';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -71,17 +72,20 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
         <TataLetakAplikasi judul="Kelompok pajak">
             {!Izin.KelolaPajak ? <PesanHanyaLihat izin="akuntansi.kelola" objek="kelompok pajak" /> : null}
             <DaftarGalatServer galat={props.errors} kecuali={sunting !== null ? Object.keys(props.errors) : []} />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="max-w-2xl text-isi text-teks-sekunder">
-                    Setiap produk yang dijual memakai satu kelompok pajak. PBJT makanan & minuman dan PPN tidak boleh
-                    dikenakan bersamaan pada satu produk.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="max-w-2xl text-isi text-teks-sekunder">
+                        Setiap produk yang dijual memakai satu kelompok pajak. PBJT makanan & minuman dan PPN tidak
+                        boleh dikenakan bersamaan pada satu produk.
+                    </p>
+                }
+            >
                 {Izin.KelolaPajak ? (
                     <Button asChild>
                         <Link href="/kelola/kelompok-pajak/buat">Tambah kelompok pajak</Link>
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
                     <SheetContent className="w-full overflow-y-auto sm:max-w-xl">

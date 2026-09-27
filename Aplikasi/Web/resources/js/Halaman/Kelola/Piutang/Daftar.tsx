@@ -1,6 +1,7 @@
 import { Link, router, useForm } from '@inertiajs/react';
 import { type FormEvent, useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AmbilJenisUmur } from '@/Komponen/Pembelian/AturanPembelian';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -265,6 +266,7 @@ export default function HalamanDaftarPiutangPelanggan({
             izin={Izin}
             objek="pelunasan piutang"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="piutang-pelanggan"
                 label="Daftar piutang pelanggan"
@@ -274,7 +276,6 @@ export default function HalamanDaftarPiutangPelanggan({
                 urutBawaan="JatuhTempo"
                 cari="Cari nomor penjualan atau nama pelanggan"
                 saring={saring}
-                aksiAlat={tombol}
                 ringkasan={(hasil) => (
                     <Ringkasan
                         ringkasan={

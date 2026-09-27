@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
 
 type PropsAksiHalaman = {
     /** Keterangan singkat di kiri (opsional); aksi tetap rata kanan walau ini kosong. */
@@ -18,6 +18,12 @@ type PropsAksiHalaman = {
  * tombolnya juga sudah rata kanan. Dijaga `AksiHalamanTes`.
  */
 export default function AksiHalaman({ keterangan, children }: PropsAksiHalaman) {
+    // Banyak halaman mengisi aksinya dengan nilai yang bisa `null` (tombol disembunyikan karena izin). Tanpa
+    // penjagaan ini barisnya tetap terbentuk dan menyisakan celah kosong di atas tabel.
+    if (Children.toArray(children).length === 0 && keterangan === undefined) {
+        return null;
+    }
+
     return (
         <div className="flex flex-wrap items-center gap-2">
             {keterangan}

@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -169,18 +170,21 @@ export default function HalamanDaftarDaftarHarga({ DaftarHarga, Kanal, Izin }: P
         <TataLetakAplikasi judul="Daftar harga">
             {!Izin.UbahHarga ? <PesanHanyaLihat izin="produk.harga.ubah" objek="daftar harga" /> : null}
             <DaftarGalatServer galat={props.errors} />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="max-w-2xl text-isi text-teks-sekunder">
-                    Harga khusus untuk outlet, kanal (misal online), tingkat pelanggan, atau periode tertentu. Bila
-                    beberapa daftar cocok, prioritas terbesar dipakai; bila sama, yang syaratnya lebih spesifik. Produk
-                    tanpa harga di daftar memakai harga dasar.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="max-w-2xl text-isi text-teks-sekunder">
+                        Harga khusus untuk outlet, kanal (misal online), tingkat pelanggan, atau periode tertentu. Bila
+                        beberapa daftar cocok, prioritas terbesar dipakai; bila sama, yang syaratnya lebih spesifik.
+                        Produk tanpa harga di daftar memakai harga dasar.
+                    </p>
+                }
+            >
                 {Izin.UbahHarga ? (
                     <Button asChild>
                         <Link href="/kelola/daftar-harga/buat">Buat daftar harga</Link>
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             <TabelData
                 id="katalog-daftar-harga"

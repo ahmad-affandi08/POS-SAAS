@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -207,16 +208,19 @@ export default function HalamanDaftarKategori({ Kategori, OpsiStasiunDapur, Izin
                 galat={props.errors}
                 kecuali={sunting !== null ? ['Nama', 'UuidInduk', 'Urutan', 'UuidStasiunDapur'] : []}
             />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-isi text-teks-sekunder">
-                    Kelompokkan produk sampai 3 tingkat, misal Minuman › Kopi › Kopi susu.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="text-isi text-teks-sekunder">
+                        Kelompokkan produk sampai 3 tingkat, misal Minuman › Kopi › Kopi susu.
+                    </p>
+                }
+            >
                 {Izin.Kelola ? (
                     <Button type="button" onClick={() => AturSunting('baru')}>
                         Tambah kategori
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <Dialog open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
                     <DialogContent>

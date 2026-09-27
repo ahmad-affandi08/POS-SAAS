@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { LabelStatusDokumen } from '@/Komponen/Persediaan/Dokumen/KomponenDokumen';
@@ -114,6 +115,7 @@ export default function HalamanDaftarPenyesuaianStok({
             </p>
             {!Izin.Kelola ? <PesanHanyaLihat izin="persediaan.kelola" objek="penyesuaian stok" /> : null}
             <DaftarGalatServer galat={props.errors} />
+            <AksiHalaman>{tombolBuat}</AksiHalaman>
             <TabelData
                 id="persediaan-penyesuaian"
                 label="Daftar penyesuaian stok"
@@ -124,7 +126,6 @@ export default function HalamanDaftarPenyesuaianStok({
                 cari="Cari nomor, keterangan, atau nama/SKU produk"
                 saring={saring}
                 alamatDetail={(p) => `${AlamatPenyesuaian}/${p.Uuid}`}
-                aksiAlat={tombolBuat}
                 kosong={{
                     ilustrasi: 'Stok',
                     judul: 'Belum ada penyesuaian stok.',

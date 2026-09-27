@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import LabelStatusStokAwal from '@/Komponen/Persediaan/LabelStatusStokAwal';
@@ -136,6 +137,8 @@ export default function HalamanDaftarStokAwal({
             {!Izin.Kelola ? <PesanHanyaLihat izin="persediaan.kelola" objek="dokumen stok awal" /> : null}
             <DaftarGalatServer galat={props.errors} />
 
+            <AksiHalaman>{tombolBuat}</AksiHalaman>
+
             <TabelData
                 id="persediaan-stok-awal"
                 label="Daftar stok awal"
@@ -146,7 +149,6 @@ export default function HalamanDaftarStokAwal({
                 cari="Cari nomor, catatan, atau nama/SKU produk"
                 saring={saring}
                 alamatDetail={(dokumen) => `${AlamatStokAwal}/${dokumen.Uuid}`}
-                aksiAlat={tombolBuat}
                 kosong={{
                     ilustrasi: 'Stok',
                     judul: 'Belum ada stok awal. Isi stok awal agar saldo stok dan HPP benar sejak hari pertama.',

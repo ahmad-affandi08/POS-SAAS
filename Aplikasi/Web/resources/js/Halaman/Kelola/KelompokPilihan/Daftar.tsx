@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormKelompokPilihan, { AmbilPilihanTampil, RingkasAturanPilih } from '@/Komponen/Katalog/FormKelompokPilihan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -87,17 +88,20 @@ export default function HalamanDaftarKelompokPilihan({ KelompokPilihan, Izin }: 
         <TataLetakAplikasi judul="Pilihan (modifier)">
             {!Izin.Kelola ? <PesanHanyaLihat izin="produk.kelola" objek="kelompok pilihan" /> : null}
             <DaftarGalatServer galat={props.errors} kecuali={sunting !== null ? Object.keys(props.errors) : []} />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="max-w-2xl text-isi text-teks-sekunder">
-                    Pilihan yang ditanyakan kasir saat menjual, misal Level gula atau Topping. Pasang ke produk dari
-                    halaman produk, tab Pilihan.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="max-w-2xl text-isi text-teks-sekunder">
+                        Pilihan yang ditanyakan kasir saat menjual, misal Level gula atau Topping. Pasang ke produk dari
+                        halaman produk, tab Pilihan.
+                    </p>
+                }
+            >
                 {Izin.Kelola ? (
                     <Button asChild>
                         <Link href="/kelola/kelompok-pilihan/buat">Tambah kelompok pilihan</Link>
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <Sheet open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
                     <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">

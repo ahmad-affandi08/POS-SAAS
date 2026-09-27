@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -86,13 +87,16 @@ export default function HalamanRekapGaji({ Rekap, OpsiPeriode, OpsiStatus }: Pro
 
     return (
         <TataLetakAplikasi judul="Rekap gaji">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="max-w-3xl text-isi text-teks-sekunder">
-                    Gaji pokok diambil dari data karyawan dan komisi dari laporan komisi bulan itu. Sisa kasbon dipotong
-                    otomatis dan bisa diubah sebelum gaji dibayar.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="max-w-3xl text-isi text-teks-sekunder">
+                        Gaji pokok diambil dari data karyawan dan komisi dari laporan komisi bulan itu. Sisa kasbon
+                        dipotong otomatis dan bisa diubah sebelum gaji dibayar.
+                    </p>
+                }
+            >
                 {OpsiPeriode.length > 0 ? <Tombol onClick={() => AturBuat(true)}>Buat rekap gaji</Tombol> : null}
-            </div>
+            </AksiHalaman>
             <TabelData
                 id="karyawan-rekap-gaji"
                 label="Daftar rekap gaji"

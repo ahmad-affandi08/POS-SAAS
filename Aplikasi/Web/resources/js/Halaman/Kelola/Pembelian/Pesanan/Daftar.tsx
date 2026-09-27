@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
@@ -75,6 +76,7 @@ export default function HalamanDaftarPesanan({ Pesanan, OpsiStatus, OpsiPemasok,
             izin={Izin}
             objek="pesanan pembelian"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="pembelian-pesanan"
                 label="Daftar pesanan pembelian"
@@ -85,7 +87,6 @@ export default function HalamanDaftarPesanan({ Pesanan, OpsiStatus, OpsiPemasok,
                 cari="Cari nomor pesanan atau catatan"
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
-                aksiAlat={tombol}
                 kosong={{
                     ilustrasi: 'Pembelian',
                     judul: 'Belum ada pesanan pembelian.',

@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -102,18 +103,21 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, BatasOutlet }: Prop
 
     return (
         <TataLetakAplikasi judul="Outlet">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-isi text-teks-sekunder">
-                    Outlet aktif:{' '}
-                    <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="text-isi text-teks-sekunder">
+                        Outlet aktif:{' '}
+                        <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>
+                    </p>
+                }
+            >
                 {bolehKelola && penuh ? <Tombol disabled>Tambah outlet</Tombol> : null}
                 {bolehKelola && !penuh ? (
                     <Button asChild>
                         <Link href="/kelola/outlet/buat">Tambah outlet</Link>
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             {bolehKelola && penuh ? (
                 <Pemberitahuan jenis="info" judul="Batas outlet paket sudah tercapai">

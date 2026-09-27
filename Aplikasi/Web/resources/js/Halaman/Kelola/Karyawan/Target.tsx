@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -127,19 +128,22 @@ export default function HalamanTargetPenjualan({
                 Realisasi outlet adalah penjualan bersih outlet itu. Realisasi karyawan adalah nilai baris penjualan
                 yang ia layani (dipilih kasir sebagai staf), dikurangi void dan retur.
             </p>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="w-full sm:w-64">
-                    <BidangPilihan
-                        label="Periode"
-                        nilai={Periode}
-                        opsi={OpsiPeriode}
-                        saatBerubah={(periode) => router.get(alamat, { periode }, { preserveState: false })}
-                    />
-                </div>
+            <AksiHalaman
+                keterangan={
+                    <div className="w-full sm:w-64">
+                        <BidangPilihan
+                            label="Periode"
+                            nilai={Periode}
+                            opsi={OpsiPeriode}
+                            saatBerubah={(periode) => router.get(alamat, { periode }, { preserveState: false })}
+                        />
+                    </div>
+                }
+            >
                 {Izin.Kelola ? (
                     <Tombol onClick={() => AturDialog({ jenis: 'simpan', target: null })}>Tambah target</Tombol>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <TabelData
                 id="karyawan-target-penjualan"
                 label="Target penjualan"

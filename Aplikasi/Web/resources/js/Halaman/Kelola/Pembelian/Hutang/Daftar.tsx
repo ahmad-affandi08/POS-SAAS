@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AmbilJenisUmur } from '@/Komponen/Pembelian/AturanPembelian';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import { HalamanDaftarPembelian, KolomNomor, KolomPemasok, KolomUang } from '@/Komponen/Pembelian/DaftarPembelian';
@@ -102,6 +103,7 @@ export default function HalamanDaftarHutang({ Hutang, OpsiUmur, OpsiPemasok, Izi
             izin={Izin}
             objek="hutang"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="pembelian-hutang"
                 label="Daftar hutang pemasok"
@@ -112,7 +114,6 @@ export default function HalamanDaftarHutang({ Hutang, OpsiUmur, OpsiPemasok, Izi
                 cari="Cari nomor atau nomor faktur pemasok"
                 saring={saring}
                 alamatDetail={(f) => `${alamatFaktur}/${f.Uuid}`}
-                aksiAlat={tombol}
                 ringkasan={(hasil) => (
                     <Ringkasan
                         ringkasan={

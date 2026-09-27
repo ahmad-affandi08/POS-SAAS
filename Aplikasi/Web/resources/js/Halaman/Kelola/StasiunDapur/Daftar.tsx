@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -56,20 +57,23 @@ export default function HalamanDaftarStasiunDapur({ Stasiun, Izin }: PropsDaftar
         <TataLetakAplikasi judul="Stasiun dapur">
             {!Izin.Kelola ? <PesanHanyaLihat izin="produk.kelola" objek="stasiun dapur" /> : null}
             <DaftarGalatServer galat={props.errors} kecuali={sunting !== null ? ['Nama', 'Urutan'] : []} />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="max-w-3xl text-isi text-teks-sekunder">
-                    Pesanan dikirim ke layar dapur (KDS) atau printer dapur per stasiun. Atur stasiun tiap kategori di
-                    halaman{' '}
-                    <Link href="/kelola/kategori" className="font-semibold text-brand underline">
-                        kategori produk
-                    </Link>
-                    .{' '}
-                    {bawaan
-                        ? `Kategori tanpa stasiun masuk ke ${bawaan.Nama} (stasiun bawaan).`
-                        : 'Tambah minimal satu stasiun bila usaha Anda memakai dapur atau bar.'}
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="max-w-3xl text-isi text-teks-sekunder">
+                        Pesanan dikirim ke layar dapur (KDS) atau printer dapur per stasiun. Atur stasiun tiap kategori
+                        di halaman{' '}
+                        <Link href="/kelola/kategori" className="font-semibold text-brand underline">
+                            kategori produk
+                        </Link>
+                        .{' '}
+                        {bawaan
+                            ? `Kategori tanpa stasiun masuk ke ${bawaan.Nama} (stasiun bawaan).`
+                            : 'Tambah minimal satu stasiun bila usaha Anda memakai dapur atau bar.'}
+                    </p>
+                }
+            >
                 {Izin.Kelola ? <Tombol onClick={() => AturSunting('baru')}>Tambah stasiun</Tombol> : null}
-            </div>
+            </AksiHalaman>
             {sunting !== null ? (
                 <DialogFormulir
                     judul={sunting === 'baru' ? 'Tambah stasiun dapur' : `Ubah stasiun ${sunting.Nama}`}

@@ -1,3 +1,4 @@
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
     BuatSaringPembelian,
@@ -50,6 +51,7 @@ export default function HalamanDaftarFaktur({ Faktur, OpsiStatus, OpsiPemasok, I
             izin={Izin}
             objek="faktur pembelian"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="pembelian-faktur"
                 label="Daftar faktur pembelian"
@@ -60,7 +62,6 @@ export default function HalamanDaftarFaktur({ Faktur, OpsiStatus, OpsiPemasok, I
                 cari="Cari nomor atau nomor faktur pemasok"
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(f) => `${alamat}/${f.Uuid}`}
-                aksiAlat={tombol}
                 kosong={{
                     ilustrasi: 'Pembelian',
                     judul: 'Belum ada faktur pembelian.',

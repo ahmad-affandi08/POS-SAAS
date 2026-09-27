@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -251,6 +252,13 @@ export default function HalamanDaftarLaundry({ Tiket, OpsiStatus, OpsiOutlet, Pe
                 pelanggan dikabari dan bisa melacak lewat QR di nota.
                 {Pengaturan.Aktif ? null : ' Isian laundry di aplikasi kasir belum aktif (buka Pengaturan).'}
             </p>
+            <AksiHalaman>
+                {Izin.Pengaturan ? (
+                    <Tombol varian="sekunder" onClick={() => AturDialog('pengaturan')}>
+                        Pengaturan
+                    </Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="laundry"
                 label="Daftar cucian"
@@ -260,13 +268,6 @@ export default function HalamanDaftarLaundry({ Tiket, OpsiStatus, OpsiOutlet, Pe
                 urutBawaan="-DibuatPada"
                 cari="Cari nomor nota, nama, atau nomor HP"
                 saring={saring}
-                aksiAlat={
-                    Izin.Pengaturan ? (
-                        <Tombol varian="sekunder" onClick={() => AturDialog('pengaturan')}>
-                            Pengaturan
-                        </Tombol>
-                    ) : null
-                }
                 aksiBaris={(t: TiketLaundry) =>
                     t.StatusBerikutnya.length === 0 ? null : (
                         <>

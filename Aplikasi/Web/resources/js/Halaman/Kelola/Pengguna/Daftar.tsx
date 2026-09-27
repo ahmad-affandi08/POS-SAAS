@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormAksesPengguna from '@/Komponen/Kelola/FormAksesPengguna';
 import TabPengguna from '@/Komponen/Kelola/TabPengguna';
@@ -210,11 +211,14 @@ export default function HalamanDaftarPengguna({
     return (
         <TataLetakAplikasi judul="Pengguna & peran">
             <TabPengguna />
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-isi text-teks-sekunder">
-                    Kursi pengguna (anggota aktif + undangan menunggu):{' '}
-                    <span className="font-semibold text-teks-utama">{FormatBatas(BatasPengguna, 'pengguna')}</span>
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="text-isi text-teks-sekunder">
+                        Kursi pengguna (anggota aktif + undangan menunggu):{' '}
+                        <span className="font-semibold text-teks-utama">{FormatBatas(BatasPengguna, 'pengguna')}</span>
+                    </p>
+                }
+            >
                 {bolehUndang && penuh ? <Tombol disabled>Tambah pengguna</Tombol> : null}
                 {bolehUndang && !penuh ? (
                     <div className="flex flex-wrap gap-2">
@@ -226,7 +230,7 @@ export default function HalamanDaftarPengguna({
                         </Button>
                     </div>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             {bolehUndang && penuh ? (
                 <Pemberitahuan jenis="info" judul="Batas pengguna paket sudah tercapai">

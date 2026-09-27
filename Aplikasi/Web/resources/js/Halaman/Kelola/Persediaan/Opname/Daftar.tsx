@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -147,6 +148,7 @@ export default function HalamanDaftarStokOpname({
             </p>
             {!Izin.Kelola ? <PesanHanyaLihat izin="persediaan.kelola" objek="stok opname" /> : null}
             {!buka ? <DaftarGalatServer galat={galat} /> : null}
+            <AksiHalaman>{tombolMulai}</AksiHalaman>
             <TabelData
                 id="persediaan-opname"
                 label="Daftar stok opname"
@@ -157,7 +159,6 @@ export default function HalamanDaftarStokOpname({
                 cari="Cari nomor, catatan, atau kategori"
                 saring={saring}
                 alamatDetail={(o) => `${AlamatOpname}/${o.Uuid}`}
-                aksiAlat={tombolMulai}
                 kosong={{
                     ilustrasi: 'Stok',
                     judul: 'Belum ada stok opname.',

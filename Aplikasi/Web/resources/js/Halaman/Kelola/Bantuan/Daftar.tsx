@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { jenisLabelStatusTiket, type StatusTiket } from '@/Komponen/Dukungan/StatusTiket';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { HasilTabel, KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -76,6 +77,14 @@ export default function DaftarBantuan({ Tiket }: PropsDaftar) {
                 Ada kendala? Kirim tiket ke Tim Dukungan dan pantau balasannya di sini.
             </p>
 
+            <AksiHalaman>
+                {bolehKelola ? (
+                    <Button asChild className="h-8 pointer-coarse:h-11">
+                        <Link href="/kelola/bantuan/buat">Buat tiket</Link>
+                    </Button>
+                ) : null}
+            </AksiHalaman>
+
             <TabelData
                 id="kelola-bantuan"
                 label="Tiket bantuan"
@@ -97,13 +106,6 @@ export default function DaftarBantuan({ Tiket }: PropsDaftar) {
                     },
                 ]}
                 alamatDetail={(tiket) => `/kelola/bantuan/${tiket.Uuid}`}
-                aksiAlat={
-                    bolehKelola ? (
-                        <Button asChild className="h-8 pointer-coarse:h-11">
-                            <Link href="/kelola/bantuan/buat">Buat tiket</Link>
-                        </Button>
-                    ) : null
-                }
                 kosong={{ judul: 'Tidak ada tiket yang masih terbuka. Buat tiket bila Anda butuh bantuan.' }}
             />
         </TataLetakAplikasi>

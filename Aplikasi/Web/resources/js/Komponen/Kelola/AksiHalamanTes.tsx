@@ -85,4 +85,41 @@ describe('Baris aksi di halaman daftar', () => {
 
         expect(pelanggar).toEqual([]);
     });
+
+    it('tombol utama tidak dititipkan ke bilah alat tabel (aksiAlat)', () => {
+        // D-27: bilah alat berisi kontrol yang bekerja pada isi tabel (cari, saring, atur kolom, ekspor). Tombol
+        // utama di sana membuat tingginya berbeda dari halaman lain dan bisa terkubur saat bilahnya membungkus di HP.
+        const pelanggar: string[] = [];
+
+        for (const jalur of BerkasTsx('resources/js/Halaman/Kelola')) {
+            if (readFileSync(jalur, 'utf8').includes('aksiAlat')) {
+                pelanggar.push(jalur.replace('resources/js/Halaman/Kelola/', ''));
+            }
+        }
+
+        expect(pelanggar).toEqual([]);
+    });
+
+    it('setiap halaman daftar dengan aksi utama memakai AksiHalaman', () => {
+        const pelanggar: string[] = [];
+
+        for (const jalur of BerkasTsx('resources/js/Halaman/Kelola')) {
+            const isi = readFileSync(jalur, 'utf8');
+            const batasTabel = isi.indexOf('<TabelData');
+
+            if (batasTabel === -1) {
+                continue;
+            }
+
+            const kepala = isi.slice(0, batasTabel);
+            const sebelumForm = kepala.includes('<form') ? kepala.slice(0, kepala.indexOf('<form')) : kepala;
+            const adaAksi = /<(?:Button|Tombol)\b[\s\S]{0,200}?>\s*(?:Tambah|Buat|Mulai) /.test(sebelumForm);
+
+            if (adaAksi && !isi.includes('AksiHalaman')) {
+                pelanggar.push(jalur.replace('resources/js/Halaman/Kelola/', ''));
+            }
+        }
+
+        expect(pelanggar).toEqual([]);
+    });
 });

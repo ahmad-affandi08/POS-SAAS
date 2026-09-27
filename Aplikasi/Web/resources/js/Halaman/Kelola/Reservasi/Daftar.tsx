@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -525,16 +526,8 @@ export default function HalamanDaftarReservasi(props: PropsDaftarReservasi) {
                     Belum ada layanan yang bisa direservasi. Isi &quot;Durasi layanan&quot; pada produk berjenis Jasa.
                 </p>
             ) : null}
-            <TabelData
-                id="reservasi"
-                label="Daftar reservasi"
-                kolom={kolom}
-                sumber={{ mode: 'server', alamat, awal: Reservasi }}
-                ambilIdBaris={(r) => r.Uuid}
-                urutBawaan="MulaiPada"
-                cari="Cari nomor, nama, atau nomor HP"
-                saring={saring}
-                aksiAlat={
+            <AksiHalaman>
+                {
                     <div className="flex flex-wrap gap-2">
                         {Izin.Pengaturan ? (
                             <Tombol varian="sekunder" onClick={() => AturDialog({ jenis: 'pengaturan' })}>
@@ -546,6 +539,16 @@ export default function HalamanDaftarReservasi(props: PropsDaftarReservasi) {
                         </Tombol>
                     </div>
                 }
+            </AksiHalaman>
+            <TabelData
+                id="reservasi"
+                label="Daftar reservasi"
+                kolom={kolom}
+                sumber={{ mode: 'server', alamat, awal: Reservasi }}
+                ambilIdBaris={(r) => r.Uuid}
+                urutBawaan="MulaiPada"
+                cari="Cari nomor, nama, atau nomor HP"
+                saring={saring}
                 aksiBaris={(r: BarisReservasi) => (
                     <>
                         {r.StatusBerikutnya.filter((s) => s !== 'Batal').map((s) => (

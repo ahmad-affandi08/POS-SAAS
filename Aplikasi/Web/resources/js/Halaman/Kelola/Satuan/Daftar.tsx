@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -155,16 +156,19 @@ export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan)
                 galat={props.errors}
                 kecuali={sunting !== null ? ['Nama', 'Simbol', 'BolehDesimal'] : []}
             />
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-isi text-teks-sekunder">
-                    Satuan dipakai untuk stok, harga, dan resep. Konversi (misal 1 dus = 24 pcs) diatur per produk.
-                </p>
+            <AksiHalaman
+                keterangan={
+                    <p className="text-isi text-teks-sekunder">
+                        Satuan dipakai untuk stok, harga, dan resep. Konversi (misal 1 dus = 24 pcs) diatur per produk.
+                    </p>
+                }
+            >
                 {Izin.Kelola ? (
                     <Button type="button" onClick={() => AturSunting('baru')}>
                         Tambah satuan
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <Dialog open={sunting !== null} onOpenChange={(buka) => (buka ? undefined : AturSunting(null))}>
                 {sunting !== null ? (
                     <DialogContent>

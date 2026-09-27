@@ -1,3 +1,4 @@
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
     BuatSaringPembelian,
@@ -72,6 +73,7 @@ export default function HalamanDaftarPenerimaan({ Penerimaan, OpsiStatus, OpsiPe
             izin={Izin}
             objek="penerimaan barang"
         >
+            <AksiHalaman>{Izin.Kelola ? tombol : null}</AksiHalaman>
             <TabelData
                 id="pembelian-penerimaan"
                 label="Daftar penerimaan barang"
@@ -82,7 +84,6 @@ export default function HalamanDaftarPenerimaan({ Penerimaan, OpsiStatus, OpsiPe
                 cari="Cari nomor, surat jalan, atau catatan"
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
-                aksiAlat={Izin.Kelola ? tombol : null}
                 kosong={{
                     ilustrasi: 'Pembelian',
                     judul: 'Belum ada penerimaan barang.',

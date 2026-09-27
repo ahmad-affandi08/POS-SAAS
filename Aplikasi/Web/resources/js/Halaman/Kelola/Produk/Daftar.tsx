@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -169,6 +170,18 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
             {!Izin.Kelola ? <PesanHanyaLihat izin="produk.kelola" objek="produk" /> : null}
             <DaftarGalatServer galat={props.errors} />
 
+            <AksiHalaman>
+                {Izin.Kelola ? (
+                    <>
+                        <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                            <Link href={`${alamat}/impor`}>Impor dari Excel</Link>
+                        </Button>
+
+                        {tombolTambah}
+                    </>
+                ) : null}
+            </AksiHalaman>
+
             <TabelData
                 id="katalog-produk"
                 label="Daftar produk"
@@ -180,16 +193,6 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
                 saring={saring}
                 alamatDetail={(produk) => `${alamat}/${produk.Uuid}`}
                 ekspor={{ alamat: `${alamat}/ekspor`, label: 'Ekspor ke Excel' }}
-                aksiAlat={
-                    Izin.Kelola ? (
-                        <>
-                            <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
-                                <Link href={`${alamat}/impor`}>Impor dari Excel</Link>
-                            </Button>
-                            {tombolTambah}
-                        </>
-                    ) : null
-                }
                 {...(Izin.Kelola
                     ? {
                           aksiBaris: (produk: BarisProduk) => {

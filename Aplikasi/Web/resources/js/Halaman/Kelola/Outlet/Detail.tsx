@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -215,14 +216,13 @@ function BagianGudang({ alamatOutlet, gudang, jenis, bolehKelola }: PropsBagianG
 
     return (
         <section className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-subjudul font-semibold text-teks-utama">Lokasi stok</h2>
+            <AksiHalaman keterangan={<h2 className="text-subjudul font-semibold text-teks-utama">Lokasi stok</h2>}>
                 {bolehKelola ? (
                     <Tombol varian="sekunder" onClick={() => AturSunting('baru')}>
                         Tambah lokasi stok
                     </Tombol>
                 ) : null}
-            </div>
+            </AksiHalaman>
             <p className="text-keterangan text-teks-sekunder">
                 Setiap outlet wajib punya minimal satu lokasi stok untuk barang jual. Tambah Dapur, Bar, atau Gudang
                 Belakang bila stoknya dipisah.

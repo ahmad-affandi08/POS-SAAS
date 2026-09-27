@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { KolomUang } from '@/Komponen/Pembelian/DaftarPembelian';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring, KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -70,6 +71,7 @@ export default function HalamanDaftarPelunasan({ Pelunasan, OpsiStatus, Izin }: 
             izin={Izin}
             objek="pelunasan piutang"
         >
+            <AksiHalaman>{tombol}</AksiHalaman>
             <TabelData
                 id="piutang-pelunasan"
                 label="Daftar pelunasan piutang"
@@ -80,7 +82,6 @@ export default function HalamanDaftarPelunasan({ Pelunasan, OpsiStatus, Izin }: 
                 cari="Cari nomor pelunasan"
                 saring={saring}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
-                aksiAlat={tombol}
                 kosong={{
                     ilustrasi: 'Pelanggan',
                     judul: 'Belum ada pelunasan piutang.',

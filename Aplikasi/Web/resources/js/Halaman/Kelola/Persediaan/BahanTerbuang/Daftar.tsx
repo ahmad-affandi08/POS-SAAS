@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -226,6 +227,10 @@ export default function HalamanBahanTerbuang({
                 </dl>
             </PanelKatalog>
 
+            <AksiHalaman>
+                {Izin.Catat ? <Tombol onClick={() => AturCatat(true)}>Catat bahan terbuang</Tombol> : null}
+            </AksiHalaman>
+
             <TabelData
                 id="persediaan-bahan-terbuang"
                 label="Daftar bahan terbuang"
@@ -235,7 +240,6 @@ export default function HalamanBahanTerbuang({
                 urutBawaan="-TanggalBisnis"
                 cari="Cari nama produk atau catatan"
                 saring={saring}
-                aksiAlat={Izin.Catat ? <Tombol onClick={() => AturCatat(true)}>Catat bahan terbuang</Tombol> : null}
                 {...(Izin.Batalkan
                     ? {
                           aksiBaris: (b: BarisBahanTerbuang) =>
