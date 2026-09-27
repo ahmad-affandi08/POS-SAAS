@@ -193,9 +193,16 @@ git pull origin main                       # bila folder .git & akses GitHub ter
 cd Aplikasi/Web
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
+php artisan organisasi:siapkan-peran       # izin baru masuk ke peran bawaan semua tenant (aman diulang)
+php artisan panduan-awal:siapkan-bawaan    # metode Tunai & data bawaan tenant lama (aman diulang)
 npm ci && npm run build                    # atau unggah public/build hasil build di komputer sendiri
 php artisan optimize
+php artisan queue:restart
 ```
+
+Peran bawaan (Admin, Manajer Outlet, Supervisor, Kasir, Staf Gudang, dst.) hanya menerima izin baru setelah
+`organisasi:siapkan-peran` dijalankan. Peran kustom buatan tenant tidak diubah; izin barunya dicentang sendiri di
+back-office menu Pengguna › Peran.
 
 Selama pembaruan, pengunjung bisa diberi halaman perawatan: `php artisan down`, lalu `php artisan up` setelah selesai.
 
