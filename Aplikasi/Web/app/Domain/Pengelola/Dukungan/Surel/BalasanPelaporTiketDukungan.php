@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Dukungan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Pemberitahuan ke penanggung jawab tiket bahwa pelapor membalas atau membuka lagi tiket (P-09).
  */
-final class BalasanPelaporTiketDukungan extends Mailable
+final class BalasanPelaporTiketDukungan extends SurelDasar
 {
     public function __construct(
         public readonly string $nomor,
@@ -18,7 +18,7 @@ final class BalasanPelaporTiketDukungan extends Mailable
         public readonly string $tautan,
     ) {
         $this->subject(($dibukaLagi ? 'Tiket dibuka lagi' : 'Balasan pelapor')." {$nomor}: {$judul}")
-            ->text('Surel.Pengelola.BalasanPelaporTiketDukungan', [
+            ->IsiSurel('Pengelola.BalasanPelaporTiketDukungan', [
                 'Nomor' => $nomor, 'Judul' => $judul, 'DibukaLagi' => $dibukaLagi, 'Tautan' => $tautan,
             ]);
     }

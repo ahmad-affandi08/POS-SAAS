@@ -1,0 +1,18 @@
+@extends('Surel.TataLetak')
+
+@section('Judul', 'Undangan bergabung ke Platform Pengelola')
+@section('Pratinjau', $NamaPengundang.' mengundang Anda bergabung ke Platform Pengelola '.config('app.name').'.')
+
+@section('Isi')
+    <p style="margin:0 0 16px 0; font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:24px; color:#4a5873;"><strong style="color:#0f2747;">{{ $NamaPengundang }}</strong> mengundang Anda bergabung ke Platform Pengelola.</p>
+
+    <p style="margin:0 0 16px 0; font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:24px; color:#4a5873;">Di halaman undangan Anda akan membuat kata sandi dan mengaktifkan verifikasi dua langkah.</p>
+
+    @include('Surel.Komponen.Tombol', ['Url' => $Tautan, 'Label' => 'Aktifkan akun saya'])
+
+    @include('Surel.Komponen.TautanCadangan', ['Url' => $Tautan])
+
+    <p style="margin:0; font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:24px; color:#4a5873;">Undangan berlaku sampai {{ $BerlakuSampai }} dan hanya bisa dipakai sekali.</p>
+@endsection
+
+@section('CatatanKaki', 'Jika Anda tidak merasa diundang, abaikan email ini. Undangan akan kedaluwarsa sendiri.')

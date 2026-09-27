@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Bersama\Tindakan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Ringkasan pagi Kotak Tindakan (D-23 D bagian 4): butir Penting & Perhatian yang boleh dilihat penerima, dengan
  * tautan langsung ke halaman penyelesaiannya. Berhenti berlangganan di halaman Kotak Tindakan.
  */
-final class RingkasanTindakanHarian extends Mailable
+final class RingkasanTindakanHarian extends SurelDasar
 {
     /**
      * @param  list<array{Tingkat: string, Judul: string, Jumlah: int, Keterangan: string, Tautan: string}>  $butir
@@ -24,7 +24,7 @@ final class RingkasanTindakanHarian extends Mailable
     ) {
         $jumlah = count($butir);
         $this->subject("{$namaUsaha}: {$jumlah} hal perlu diperhatikan hari ini")
-            ->text('Surel.Tenant.RingkasanTindakanHarian', [
+            ->IsiSurel('Tenant.RingkasanTindakanHarian', [
                 'Nama' => $nama,
                 'NamaUsaha' => $namaUsaha,
                 'Tanggal' => $tanggal,

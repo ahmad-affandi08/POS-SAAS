@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Pelanggan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /** Email pengingat piutang ke pelanggan (D-23 D bagian 4b); isi sama dengan teks WhatsApp. */
-final class PengingatPiutangPelanggan extends Mailable
+final class PengingatPiutangPelanggan extends SurelDasar
 {
     public function __construct(
         public readonly string $namaUsaha,
@@ -15,6 +15,6 @@ final class PengingatPiutangPelanggan extends Mailable
         public readonly string $isi,
     ) {
         $this->subject("Pengingat tagihan {$nomor} dari {$namaUsaha}")
-            ->text('Surel.Tenant.PengingatPiutangPelanggan', ['Isi' => $isi, 'NamaUsaha' => $namaUsaha]);
+            ->IsiSurel('Tenant.PengingatPiutangPelanggan', ['Isi' => $isi, 'NamaUsaha' => $namaUsaha]);
     }
 }

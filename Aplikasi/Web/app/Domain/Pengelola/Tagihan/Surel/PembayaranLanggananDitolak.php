@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Tagihan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Pemberitahuan ke Owner: bukti transfer ditolak beserta alasannya; tagihan tetap bisa dibayar (P-08 langkah 3).
  */
-final class PembayaranLanggananDitolak extends Mailable
+final class PembayaranLanggananDitolak extends SurelDasar
 {
     public function __construct(
         public readonly string $nama,
@@ -18,7 +18,7 @@ final class PembayaranLanggananDitolak extends Mailable
         public readonly string $alasan,
     ) {
         $this->subject("Bukti transfer tagihan {$nomorTagihan} perlu diperbaiki")
-            ->text('Surel.Tenant.PembayaranLanggananDitolak', [
+            ->IsiSurel('Tenant.PembayaranLanggananDitolak', [
                 'Nama' => $nama,
                 'NomorTagihan' => $nomorTagihan,
                 'Total' => $total,

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Organisasi\Surel;
 
+use App\Domain\Bersama\Surel\SurelDasar;
 use App\Domain\Organisasi\Model\UndanganPengguna;
-use Illuminate\Mail\Mailable;
 
 /**
  * Email undangan anggota tenant (F-02 langkah 3). Template final dikelola lewat P-06.
  */
-final class UndanganAnggota extends Mailable
+final class UndanganAnggota extends SurelDasar
 {
     public function __construct(
         public readonly UndanganPengguna $undangan,
@@ -18,7 +18,7 @@ final class UndanganAnggota extends Mailable
         public readonly string $namaPengundang,
         public readonly string $namaTenant,
     ) {
-        $this->subject("Undangan bergabung ke {$namaTenant}")->text('Surel.Tenant.UndanganAnggota', [
+        $this->subject("Undangan bergabung ke {$namaTenant}")->IsiSurel('Tenant.UndanganAnggota', [
             'Tautan' => $this->Tautan(),
             'NamaPengundang' => $namaPengundang,
             'NamaTenant' => $namaTenant,

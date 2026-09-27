@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Dukungan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Pemberitahuan tiket baru ke tim Dukungan (P-09). Tidak memuat isi pesan tenant: dibaca di Platform Pengelola.
  */
-final class TiketDukunganBaru extends Mailable
+final class TiketDukunganBaru extends SurelDasar
 {
     public function __construct(
         public readonly string $nomor,
@@ -21,7 +21,7 @@ final class TiketDukunganBaru extends Mailable
         public readonly string $tautan,
     ) {
         $this->subject("[{$prioritas}] Tiket baru {$nomor}: {$judul}")
-            ->text('Surel.Pengelola.TiketDukunganBaru', [
+            ->IsiSurel('Pengelola.TiketDukunganBaru', [
                 'Nomor' => $nomor, 'Judul' => $judul, 'NamaTenant' => $namaTenant, 'Kategori' => $kategori,
                 'Prioritas' => $prioritas, 'BatasSla' => $batasSla, 'Tautan' => $tautan,
             ]);

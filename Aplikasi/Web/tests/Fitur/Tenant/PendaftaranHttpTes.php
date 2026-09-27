@@ -305,6 +305,72 @@ describe('Masuk & pemilih tenant (BR-00.1, isolasi tenant)', function (): void {
     });
 });
 
+describe('Badan email verifikasi (D-26)', function (): void {
+    // Regresi: badan `text/plain` dirender Blade dengan `{{ }}`, yang meng-escape `&` menjadi `&amp;`. PHP lalu
+    // membaca `&amp;signature=` sebagai parameter bernama `amp;signature`, `signature` terbaca kosong, dan
+    // tautan yang diklik dari email ditolak 403 "Invalid signature". Test verifikasi lain memakai properti
+    // `$surel->tautan` langsung, jadi tidak pernah menyentuh templat dan tidak bisa menangkap ini.
+
+    it('tautan di badan teks utuh dan bisa diklik apa adanya', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        $this->post('/keluar');
+
+        $surel = null;
+        Mail::assertSent(VerifikasiEmail::class, function (VerifikasiEmail $dikirim) use (&$surel): bool {
+            $surel = $dikirim;
+
+            return true;
+        });
+
+        $teks = view('Surel.Tenant.VerifikasiEmail', [
+            'Nama' => $surel->nama,
+            'Tautan' => $surel->tautan,
+            'JamBerlaku' => $surel->jamBerlaku,
+        ])->render();
+
+        expect($teks)->toContain($surel->tautan)
+            ->and($teks)->not->toContain('&amp;');
+
+        // Diklik persis seperti yang tertulis di badan email, bukan dari properti mailable.
+        preg_match('#https?://\S+#', $teks, $cocok);
+        $this->get($cocok[0] ?? '')->assertRedirect(route('masuk'))->assertSessionHasNoErrors();
+
+        expect(Pengguna::query()->firstOrFail()->EmailDiverifikasiPada)->not->toBeNull();
+    });
+
+    it('tautan di badan HTML kembali utuh setelah entitas dipulihkan peramban', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        $this->post('/keluar');
+
+        $surel = null;
+        Mail::assertSent(VerifikasiEmail::class, function (VerifikasiEmail $dikirim) use (&$surel): bool {
+            $surel = $dikirim;
+
+            return true;
+        });
+
+        // Di badan HTML `&amp;` justru benar: peramban memulihkannya menjadi `&` saat tautan diklik.
+        preg_match('#href="(https?://[^"]*verifikasi-email[^"]*)"#', $surel->render(), $cocok);
+        $tautan = html_entity_decode($cocok[1] ?? '', ENT_QUOTES, 'UTF-8');
+
+        expect($tautan)->toBe($surel->tautan);
+        $this->get($tautan)->assertRedirect(route('masuk'))->assertSessionHasNoErrors();
+
+        expect(Pengguna::query()->firstOrFail()->EmailDiverifikasiPada)->not->toBeNull();
+    });
+
+    it('nama dan alamat dengan & tampil apa adanya di badan teks', function (): void {
+        $teks = view('Surel.Tenant.VerifikasiEmail', [
+            'Nama' => 'Toko A & B',
+            'Tautan' => 'https://contoh.test/verifikasi-email/a/b?expires=1&signature=abc',
+            'JamBerlaku' => 24,
+        ])->render();
+
+        expect($teks)->toContain('Toko A & B')
+            ->and($teks)->toContain('?expires=1&signature=abc');
+    });
+});
+
 describe('Dokumen legal publik', function (): void {
     it('menampilkan versi yang berlaku; jenis tidak dikenal 404', function (): void {
         $this->get('/legal/syarat-ketentuan')

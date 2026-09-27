@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
- * Email struk digital ke pelanggan (K3). Teks biasa (tanpa gambar/piksel pelacak): ringkasan belanja + tautan
- * `/s/{kodeStruk}`. Nama pengirim memakai nama usaha tenant; alamat pengirim tetap alamat platform dari P-05 (domain
- * yang terverifikasi SPF/DKIM).
+ * Email struk digital ke pelanggan (K3): ringkasan belanja + tautan `/s/{kodeStruk}`. Nama pengirim memakai nama
+ * usaha tenant; alamat pengirim tetap alamat platform dari P-05 (domain yang terverifikasi SPF/DKIM).
+ *
+ * Sejak D-26 dikirim dua bagian (HTML + teks). **Tetap tanpa gambar dan tanpa piksel pelacak**: tata letak email
+ * PAYOU tidak memuat satu pun `<img>`, dijaga `tests/Arsitektur/SurelTes.php`.
  */
-final class StrukBelanjaDigital extends Mailable
+final class StrukBelanjaDigital extends SurelDasar
 {
     /**
      * @param  list<array{Nama: string, Jumlah: string, Total: string}>  $baris
@@ -32,7 +34,7 @@ final class StrukBelanjaDigital extends Mailable
             $this->from($alamat, $namaUsaha);
         }
 
-        $this->subject("Struk belanja {$nomor} dari {$namaUsaha}")->text('Surel.Tenant.StrukBelanjaDigital', [
+        $this->subject("Struk belanja {$nomor} dari {$namaUsaha}")->IsiSurel('Tenant.StrukBelanjaDigital', [
             'NamaUsaha' => $namaUsaha,
             'NamaOutlet' => $namaOutlet,
             'Nomor' => $nomor,

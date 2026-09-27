@@ -663,3 +663,29 @@ Wajib lolos sebelum layar masuk implementasi:
 - [ ] Diuji dengan data ekstrem dan di perangkat acuan
 - [ ] Microcopy mengikuti §17.6.7 dan kamus istilah
 - [ ] Setiap elemen dekoratif yang tidak membantu tugas sudah dibuang
+
+#### 17.6.12 Email (Keputusan D-26)
+
+Semua email dikirim **dua bagian**: HTML bermerek untuk klien biasa, dan teks biasa sebagai cadangan (klien yang memblokir HTML, sekaligus penjaga reputasi pengiriman). Keduanya dipasang bersama lewat `SurelDasar::IsiSurel('{Grup}.{Nama}')` sehingga tidak bisa terpisah; templatnya `resources/views/Surel/Html/{Grup}/{Nama}.blade.php` dan `resources/views/Surel/{Grup}/{Nama}.blade.php`.
+
+Tata letak bersama `resources/views/Surel/TataLetak.blade.php`:
+
+- Lebar 600px, dirakit dari tabel `role="presentation"` karena klien email tidak bisa diandalkan untuk flexbox/grid; satu kolom di bawah 600px.
+- Kepala berlatar `BrandGelap` dengan wordmark teks, digarisi `Aksen` 4px. Kartu isi `Permukaan` bergaris `Garis`.
+- Tombol aksi utama dirakit dari tabel dengan `mso-padding-alt`, karena Outlook mengabaikan padding pada `<a>` sehingga tombol menyusut jadi teks biasa.
+- Setiap email bertautan wajib menyertakan **alamat lengkap sebagai teks** di bawah tombol, untuk penerima yang tombolnya tidak bisa diklik.
+- Satu baris cuplikan kotak masuk (preheader) tersembunyi, wajib diisi.
+- Kaki bersama: nama produk, satu baris penjelas, dan alamat dukungan.
+
+Pengecualian terhadap §17.5 & §17.6 yang berlaku **hanya untuk email**:
+
+| Aturan | Pengecualian | Alasan |
+|---|---|---|
+| Warna & ukuran hanya dari token | Gaya ditulis *inline* dengan **hex literal** | Klien email tidak mendukung variabel CSS, `color-mix()`, maupun kelas Tailwind. Nilainya wajib sama dengan token `Gaya/Aplikasi.css`, dijaga `tests/Arsitektur/SurelTes.php` |
+| Tipografi Atkinson Hyperlegible | Hanya diminta lewat tumpukan fallback | Webfont tidak bisa diandalkan di klien email |
+| Ilustrasi & aset merek | **Dilarang `<img>` sama sekali** | Gambar diblokir bawaan di banyak klien, dan struk digital berjanji tanpa piksel pelacak (K3) |
+| Tanpa mode gelap (D-14) | Diperkuat meta `color-scheme: light only` | Tanpa itu Gmail & Apple Mail membalik warna sendiri dan kontras rusak |
+
+**Badan teks biasa tidak boleh di-escape HTML.** Di `text/plain`, `{{ $Tautan }}` mengubah `&` menjadi `&amp;`, sehingga `?expires=...&signature=...` terbaca PHP sebagai parameter `amp;signature` dan tautan bertanda tangan ditolak 403 "Invalid signature"; nama usaha pun tampil rusak ("Toko A &amp; B"). Templat teks memakai `{!! !!}` untuk tautan. Dijaga `tests/Arsitektur/SurelTes.php`.
+
+Setiap perubahan templat email diuji dari **hasil render badan email**, bukan dari properti mailable.

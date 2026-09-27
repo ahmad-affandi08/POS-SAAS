@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Tagihan\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Pemberitahuan ke Owner: bukti transfer diterima, tagihan lunas, langganan aktif (P-08 langkah 3).
  */
-final class PembayaranLanggananDiterima extends Mailable
+final class PembayaranLanggananDiterima extends SurelDasar
 {
     public function __construct(
         public readonly string $nama,
@@ -19,7 +19,7 @@ final class PembayaranLanggananDiterima extends Mailable
         public readonly string $periodeSelesai,
     ) {
         $this->subject("Pembayaran tagihan {$nomorTagihan} diterima")
-            ->text('Surel.Tenant.PembayaranLanggananDiterima', [
+            ->IsiSurel('Tenant.PembayaranLanggananDiterima', [
                 'Nama' => $nama,
                 'NomorTagihan' => $nomorTagihan,
                 'Total' => $total,

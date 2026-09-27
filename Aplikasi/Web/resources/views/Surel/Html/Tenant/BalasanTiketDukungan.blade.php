@@ -1,0 +1,20 @@
+@extends('Surel.TataLetak')
+
+@section('Judul', 'Balasan untuk tiket '.$Nomor)
+@section('Pratinjau', $NamaPetugas.' membalas tiket Anda: '.$Judul)
+
+@section('Isi')
+    <p style="margin:0 0 20px 0; font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:24px; color:#4a5873;"><strong style="color:#0f2747;">{{ $NamaPetugas }}</strong> dari Tim Dukungan membalas tiket Anda.</p>
+
+    @include('Surel.Komponen.Rincian', ['Baris' => [
+        'Nomor tiket' => $Nomor,
+        'Judul' => $Judul,
+        'Status sekarang' => $Status,
+    ]])
+
+    @include('Surel.Komponen.Kutipan', ['Teks' => $Isi])
+
+    @include('Surel.Komponen.Tombol', ['Url' => $Tautan, 'Label' => 'Buka percakapan lengkap'])
+@endsection
+
+@section('CatatanKaki', 'Mohon jangan membalas email ini. Kirim balasan lewat halaman Bantuan agar tercatat di tiket Anda.')

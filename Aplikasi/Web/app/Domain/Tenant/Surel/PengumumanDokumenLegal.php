@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Surel;
 
-use Illuminate\Mail\Mailable;
+use App\Domain\Bersama\Surel\SurelDasar;
 
 /**
  * Pengumuman versi materiil dokumen legal ke Owner, paling lambat 30 hari sebelum berlaku (P-06, BR-P06.5).
  */
-final class PengumumanDokumenLegal extends Mailable
+final class PengumumanDokumenLegal extends SurelDasar
 {
     public function __construct(
         public readonly string $nama,
@@ -20,7 +20,7 @@ final class PengumumanDokumenLegal extends Mailable
         public readonly string $tautan,
     ) {
         $this->subject("Perubahan {$labelDokumen} berlaku mulai {$berlakuMulai}")
-            ->text('Surel.Tenant.PengumumanDokumenLegal', [
+            ->IsiSurel('Tenant.PengumumanDokumenLegal', [
                 'Nama' => $nama,
                 'LabelDokumen' => $labelDokumen,
                 'Versi' => $versi,
