@@ -16,7 +16,7 @@ workspace:
   - Aplikasi/Pemilik
 
 dev_dependencies:
-  melos: ^7.0.0
+  melos: ^8.6.0
 
 melos:
   scripts:
