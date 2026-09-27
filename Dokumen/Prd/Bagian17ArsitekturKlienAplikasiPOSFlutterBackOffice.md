@@ -480,6 +480,8 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Laporan keuangan (Laba rugi, Neraca, Arus kas) **pindah dari Akuntansi ke Laporan**, karena pemilik mencarinya sebagai laporan, bukan sebagai pekerjaan pembukuan. **Akuntansi** menyisakan pekerjaan pembukuannya: Jurnal, Kas & bank, Buku besar, Neraca saldo, Tutup buku.
 - **Keamanan akun** pindah dari footer menu samping ke **menu akun di kanan atas**, tempat orang mencari pengaturan akunnya; di sana bersama Ganti kata sandi (D-22).
 
+**Jejak halaman, bukan remah roti di kepala.** Remah roti pindah dari bilah atas ke **paling atas isi halaman**, di atas `<h1>`, sebagai `JejakHalaman` (`aria-label="Jejak halaman"`). Isinya induk halaman saja — nama usaha, lalu grup menunya; untuk halaman yang rumahnya di Pengaturan, **tautan Pengaturan** beserta nama grupnya (`/kelola/peran` ikut grup Pengguna & peran). Halaman saat ini tidak diulang karena sudah menjadi `<h1>`. Tanpa ini halaman yang keluar dari menu samping tidak punya satu pun petunjuk letak maupun jalan kembali — justru memperburuk orientasi yang mau diperbaiki. Bilah atas menyisakan tombol menu, pencarian cepat, dan menu akun. Kepala Platform Pengelola tidak berubah (`KepalaTataLetak remah` tetap `true` di sana).
+
 **Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
 
 

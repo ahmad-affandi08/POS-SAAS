@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { ChevronDownIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 import { Avatar, AvatarFallback } from '@/Komponen/Ui/avatar';
 import {
@@ -78,6 +78,8 @@ type PropsKepala = {
     /** Rantai remah roti: induk (nama usaha/platform) lalu halaman ini. */
     induk: string;
     judul: string;
+    /** false = remah roti tidak di kepala, tetapi di atas judul halaman sebagai `JejakHalaman` (D-27). */
+    remah?: boolean;
     /** Kepala gelap untuk Platform Pengelola (PRD §13.8). */
     gelap?: boolean;
     /** false bila pembungkusnya sudah sticky (misal bersama penanda lingkungan Pengelola). */
@@ -86,7 +88,7 @@ type PropsKepala = {
 };
 
 /** Bilah atas di samping bilah menu: tombol buka/tutup menu, remah roti, lalu menu akun. */
-export function KepalaTataLetak({ induk, judul, gelap = false, lengket = true, children }: PropsKepala) {
+export function KepalaTataLetak({ induk, judul, gelap = false, lengket = true, remah = true, children }: PropsKepala) {
     return (
         <header
             className={cn(
@@ -104,26 +106,71 @@ export function KepalaTataLetak({ induk, judul, gelap = false, lengket = true, c
                 orientation="vertical"
                 className={cn('mr-1 data-[orientation=vertical]:h-5', gelap ? 'bg-permukaan/40' : 'bg-garis')}
             />
-            <Breadcrumb aria-label="Remah roti" className="min-w-0 flex-1">
-                <BreadcrumbList className={cn('text-label', gelap ? 'text-permukaan/80' : 'text-teks-sekunder')}>
-                    <BreadcrumbItem className="min-w-0">
-                        <span className="truncate font-semibold">{induk}</span>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem className="min-w-0">
-                        {/* shadcn memberi role="link" + aria-disabled; halaman saat ini cukup aria-current. */}
-                        <BreadcrumbPage
-                            role={undefined}
-                            aria-disabled={undefined}
-                            className={cn('truncate', gelap ? 'text-permukaan' : 'text-teks-utama')}
-                        >
-                            {judul}
-                        </BreadcrumbPage>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
+            {remah ? (
+                <Breadcrumb aria-label="Remah roti" className="min-w-0 flex-1">
+                    <BreadcrumbList className={cn('text-label', gelap ? 'text-permukaan/80' : 'text-teks-sekunder')}>
+                        <BreadcrumbItem className="min-w-0">
+                            <span className="truncate font-semibold">{induk}</span>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem className="min-w-0">
+                            {/* shadcn memberi role="link" + aria-disabled; halaman saat ini cukup aria-current. */}
+                            <BreadcrumbPage
+                                role={undefined}
+                                aria-disabled={undefined}
+                                className={cn('truncate', gelap ? 'text-permukaan' : 'text-teks-utama')}
+                            >
+                                {judul}
+                            </BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            ) : (
+                <span className="min-w-0 flex-1" />
+            )}
             {children}
         </header>
+    );
+}
+
+export type ButirJejak = { label: string; href?: string };
+
+/**
+ * Jejak halaman di atas judul (D-27), bukan di kepala halaman.
+ *
+ * Menunjukkan induk halaman ini: nama usaha, lalu grup menunya — dan untuk halaman yang rumahnya di Pengaturan,
+ * tautan kembali ke Pengaturan beserta nama grupnya. Tanpa ini halaman yang keluar dari menu samping (Satuan,
+ * Outlet, Pengguna & peran, dan seterusnya) tidak punya satu pun petunjuk letaknya.
+ *
+ * Halaman saat ini tidak diulang di sini karena sudah menjadi `<h1>` di bawahnya.
+ */
+export function JejakHalaman({ jejak }: { jejak: ButirJejak[] }) {
+    if (jejak.length === 0) {
+        return null;
+    }
+
+    return (
+        <Breadcrumb aria-label="Jejak halaman" className="-mb-1">
+            <BreadcrumbList className="text-keterangan text-teks-sekunder">
+                {jejak.map((butir, urutan) => (
+                    <Fragment key={`${butir.label}-${String(urutan)}`}>
+                        {urutan > 0 ? <BreadcrumbSeparator /> : null}
+                        <BreadcrumbItem className="min-w-0">
+                            {butir.href === undefined ? (
+                                <span className="truncate">{butir.label}</span>
+                            ) : (
+                                <Link
+                                    href={butir.href}
+                                    className="truncate font-semibold text-brand underline-offset-2 hover:underline"
+                                >
+                                    {butir.label}
+                                </Link>
+                            )}
+                        </BreadcrumbItem>
+                    </Fragment>
+                ))}
+            </BreadcrumbList>
+        </Breadcrumb>
     );
 }
 

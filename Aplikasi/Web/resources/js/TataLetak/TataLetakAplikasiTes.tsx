@@ -339,11 +339,41 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(sidebar?.getAttribute('data-state')).toBe('collapsed');
         expect(sidebar?.getAttribute('data-collapsible')).toBe('icon');
 
-        const remah = screen.getByRole('navigation', { name: 'Remah roti' });
-        expect(within(remah).getByText('Kopi Nusantara')).toBeTruthy();
-        expect(within(remah).getByText('Outlet').getAttribute('aria-current')).toBe('page');
+        // D-27: remah roti tidak lagi di kepala halaman, tetapi di atas judul di dalam <main>.
+        expect(screen.queryByRole('navigation', { name: 'Remah roti' })).toBeNull();
+        const jejak = screen.getByRole('navigation', { name: 'Jejak halaman' });
+        expect(within(jejak).getByText('Kopi Nusantara')).toBeTruthy();
+        expect(screen.getByRole('main').contains(jejak)).toBe(true);
         expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Outlet');
         expect(screen.getByRole('main').textContent).toContain('isi');
+    });
+
+    it('D-27: jejak halaman menunjukkan letak & jalan kembali ke Pengaturan', () => {
+        propsHalaman = BuatProps({}, ['produk.lihat']);
+        urlHalaman = '/kelola/satuan';
+        render(<TataLetakAplikasi judul="Satuan">isi</TataLetakAplikasi>);
+
+        const jejak = screen.getByRole('navigation', { name: 'Jejak halaman' });
+        expect(within(jejak).getByRole('link', { name: 'Pengaturan' }).getAttribute('href')).toBe('/kelola/pengaturan');
+        expect(within(jejak).getByText('Katalog & harga')).toBeTruthy();
+        // Halaman saat ini tidak diulang di jejak karena sudah menjadi <h1>.
+        expect(within(jejak).queryByText('Satuan')).toBeNull();
+        expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Satuan');
+    });
+
+    it('D-27: halaman di dalam grup menu menampilkan nama grupnya; /kelola/peran ikut Pengaturan', () => {
+        propsHalaman = BuatProps({}, ['persediaan.lihat']);
+        urlHalaman = '/kelola/persediaan/opname';
+        render(<TataLetakAplikasi judul="Stok opname">isi</TataLetakAplikasi>);
+        expect(within(screen.getByRole('navigation', { name: 'Jejak halaman' })).getByText('Persediaan')).toBeTruthy();
+        cleanup();
+
+        propsHalaman = BuatProps({}, ['pengguna.lihat']);
+        urlHalaman = '/kelola/peran/01J9';
+        render(<TataLetakAplikasi judul="Peran">isi</TataLetakAplikasi>);
+        const jejakPeran = screen.getByRole('navigation', { name: 'Jejak halaman' });
+        expect(within(jejakPeran).getByRole('link', { name: 'Pengaturan' })).toBeTruthy();
+        expect(within(jejakPeran).getByText('Akses & keamanan')).toBeTruthy();
     });
 
     it('kepala sidebar memakai gradasi merek dan logo putih, bukan nama pelanggan', () => {

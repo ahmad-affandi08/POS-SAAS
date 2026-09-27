@@ -20,7 +20,7 @@ import { useState, type MouseEvent, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
-import { daftarPengaturan } from '@/Pustaka/DaftarPengaturan';
+import { daftarPengaturan, type GrupPengaturan } from '@/Pustaka/DaftarPengaturan';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Komponen/Ui/collapsible';
 import {
     Sidebar,
@@ -45,6 +45,8 @@ import { IzinTenant, PunyaIzinTenant, type KunciIzinTenant } from '@/Tipe/Organi
 
 import {
     BacaSidebarTerbuka,
+    type ButirJejak,
+    JejakHalaman,
     kelasChevronGrupSidebar,
     kelasTombolGrupSidebar,
     kelasTombolMenuSidebar,
@@ -442,6 +444,40 @@ function CekGrupMenu(menu: ItemMenu | GrupMenu): menu is GrupMenu {
 /** Halaman yang rumahnya di Pengaturan (D-27), untuk menyalakan menu Pengaturan saat salah satunya dibuka. */
 const butirPengaturan: ItemMenu[] = daftarPengaturan.flatMap(({ butir }) => butir);
 
+/** Grup Pengaturan yang memuat jalur ini; `/kelola/peran` ikut grup "Pengguna & peran". */
+function CariGrupPengaturan(jalur: string): GrupPengaturan | undefined {
+    const rumah = jalur.startsWith('/kelola/peran') ? '/kelola/pengguna' : null;
+
+    return daftarPengaturan.find(({ butir }) =>
+        butir.some((item) =>
+            rumah === null ? jalur === item.href || jalur.startsWith(`${item.href}/`) : item.href === rumah,
+        ),
+    );
+}
+
+/**
+ * Jejak halaman di atas judul (D-27): nama usaha, lalu induk halaman ini.
+ *
+ * Untuk halaman yang rumahnya di Pengaturan, induknya adalah tautan **Pengaturan** beserta nama grupnya — tanpa itu
+ * halaman yang keluar dari menu samping tidak punya petunjuk letak maupun jalan kembali. Halaman saat ini tidak
+ * diulang karena sudah menjadi `<h1>`.
+ */
+export function SusunJejak(url: string, namaInduk: string, menuTerlihat: MenuTerlihat[]): ButirJejak[] {
+    const jalur = url.split('?')[0] ?? url;
+    const awal: ButirJejak[] = [{ label: namaInduk }];
+    const grupPengaturan = CariGrupPengaturan(jalur);
+
+    if (grupPengaturan !== undefined) {
+        return [...awal, { label: 'Pengaturan', href: '/kelola/pengaturan' }, { label: grupPengaturan.judul }];
+    }
+
+    const grupMenu = menuTerlihat.find(
+        ({ labelSub, sub }) => labelSub !== null && CariSubMenuAktif(sub, jalur) !== null,
+    );
+
+    return grupMenu === undefined ? awal : [...awal, { label: grupMenu.menu.label }];
+}
+
 /**
  * Menu utama yang aktif untuk URL ini (grup untuk seluruh sub-menunya).
  *
@@ -692,11 +728,13 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                 <SidebarRail aria-hidden="true" aria-label={undefined} title="Buka atau tutup menu samping" />
             </Sidebar>
             <div data-slot="sidebar-inset" className="relative flex w-full min-w-0 flex-1 flex-col bg-latar">
-                <KepalaTataLetak induk={namaInduk} judul={judul}>
+                {/* D-27: remah roti pindah dari kepala ke atas judul halaman sebagai `JejakHalaman`. */}
+                <KepalaTataLetak induk={namaInduk} judul={judul} remah={false}>
                     <PencarianCepat halaman={pencarian.halaman} sumber={pencarian.sumber} />
                     <MenuAkun nama={props.Pengguna?.Nama} email={props.Pengguna?.Email} />
                 </KepalaTataLetak>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
+                    <JejakHalaman jejak={SusunJejak(url, namaInduk, menuTerlihat)} />
                     <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
                     {props.Pengguna && !props.Pengguna.EmailTerverifikasi ? (
                         <Pemberitahuan jenis="peringatan" judul="Verifikasi email Anda">
