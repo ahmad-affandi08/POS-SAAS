@@ -191,6 +191,9 @@ class MetodePembayaran extends Table {
   BoolColumn get AdaGambarQris => boolean()();
   IntColumn get Urutan => integer()();
 
+  /// X8 (skema 18): kanal platform metode `Marketplace` (GoFood, GrabFood, …); null untuk jenis lain.
+  TextColumn get Kanal => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Permintaan\Kelola\PanduanAwal;
 
+use App\Domain\Penjualan\Aksi\SimpanMetodePembayaran;
 use App\Domain\Penjualan\Data\DataMetodePembayaran;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
 use Brick\Math\BigDecimal;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,8 +15,8 @@ use Illuminate\Http\UploadedFile;
 
 /**
  * F-01 langkah 5: QRIS statis (gambar), QRIS dinamis (F-08, tanpa isian tambahan), EDC (bank), atau transfer (bank +
- * rekening). Kolom yang tidak relevan
- * dikirim null. Biaya (MDR) string desimal bertitik, 0–10 persen, dibandingkan dengan BigDecimal.
+ * rekening), deposit, atau (X8) platform ojol/marketplace (wajib kanal platform). Kolom yang tidak relevan dikirim
+ * null. Biaya string desimal bertitik, dibandingkan dengan BigDecimal: MDR 0–10 persen, komisi platform 0–40 persen.
  */
 final class SimpanMetodePembayaranPermintaan extends FormRequest
 {
@@ -26,6 +28,8 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
     public function rules(): array
     {
         $jenis = implode(',', array_map(fn (JenisMetodePembayaran $satu) => $satu->value, JenisMetodePembayaran::AmbilJenisPanduan()));
+        $kanal = implode(',', array_map(fn (KanalPenjualan $satu) => $satu->value, KanalPenjualan::AmbilPlatform()));
+        $maksimal = SimpanMetodePembayaran::AmbilPersenMaksimal(JenisMetodePembayaran::tryFrom($this->string('Jenis')->toString()) ?? JenisMetodePembayaran::Edc);
 
         return [
             'Jenis' => ['required', 'in:'.$jenis],
@@ -34,14 +38,15 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
             'GambarQris' => ['nullable', 'required_if:Jenis,QrisStatis', 'file', 'mimes:'.implode(',', (array) config('pembayaran.EkstensiGambarQris')), 'max:'.config('pembayaran.UkuranMaksimalGambarQrisKb')],
             'NomorRekening' => ['nullable', 'required_if:Jenis,Transfer', 'string', 'regex:/^\d{5,30}$/'],
             'NamaPemilikRekening' => ['nullable', 'required_if:Jenis,Transfer', 'string', 'max:100'],
+            'Kanal' => ['nullable', 'required_if:Jenis,Marketplace', 'in:'.$kanal],
             'PersenBiaya' => [
                 'nullable',
                 'string',
                 'regex:'.self::POLA_PERSEN_BIAYA,
-                function (string $atribut, mixed $nilai, Closure $gagal): void {
+                function (string $atribut, mixed $nilai, Closure $gagal) use ($maksimal): void {
                     if (is_string($nilai) && preg_match(self::POLA_PERSEN_BIAYA, $nilai) === 1
-                        && BigDecimal::of($nilai)->isGreaterThan((string) config('pembayaran.PersenBiayaMaksimal'))) {
-                        $gagal('Biaya 0 sampai '.config('pembayaran.PersenBiayaMaksimal').' persen.');
+                        && BigDecimal::of($nilai)->isGreaterThan($maksimal)) {
+                        $gagal("Biaya 0 sampai {$maksimal} persen.");
                     }
                 },
             ],
@@ -55,7 +60,7 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
     {
         return [
             'Jenis.required' => 'Pilih jenis metode pembayaran.',
-            'Jenis.in' => 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, atau deposit pelanggan.',
+            'Jenis.in' => 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, deposit pelanggan, atau platform ojol/marketplace.',
             'Nama.required' => 'Isi nama metode pembayaran, misal QRIS Toko.',
             'KodeBank.required_if' => 'Pilih bank.',
             'GambarQris.required_if' => 'Unggah gambar QRIS dari bank atau penyedia QRIS Anda.',
@@ -64,6 +69,8 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
             'NomorRekening.required_if' => 'Isi nomor rekening tujuan transfer.',
             'NomorRekening.regex' => 'Nomor rekening berisi 5–30 angka tanpa spasi atau tanda baca.',
             'NamaPemilikRekening.required_if' => 'Isi nama pemilik rekening.',
+            'Kanal.required_if' => 'Pilih platform: GoFood, GrabFood, ShopeeFood, atau Marketplace.',
+            'Kanal.in' => 'Pilih platform: GoFood, GrabFood, ShopeeFood, atau Marketplace.',
             'PersenBiaya.regex' => 'Biaya berupa angka persen dengan titik, misal 0.7.',
         ];
     }
@@ -77,6 +84,7 @@ final class SimpanMetodePembayaranPermintaan extends FormRequest
             nomorRekening: $this->filled('NomorRekening') ? $this->string('NomorRekening')->toString() : null,
             namaPemilikRekening: $this->filled('NamaPemilikRekening') ? $this->string('NamaPemilikRekening')->trim()->toString() : null,
             persenBiaya: $this->filled('PersenBiaya') ? $this->string('PersenBiaya')->toString() : null,
+            kanal: $this->filled('Kanal') ? KanalPenjualan::tryFrom($this->string('Kanal')->toString()) : null,
         );
     }
 

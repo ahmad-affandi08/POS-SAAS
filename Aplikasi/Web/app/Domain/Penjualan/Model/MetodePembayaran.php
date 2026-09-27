@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Model;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
 
 /**
  * Metode pembayaran tenant (PRD §15.3, F-01 langkah 5, F-08). Tunai selalu ada dan tidak bisa dinonaktifkan.
@@ -21,6 +22,7 @@ use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
  * @property int|null $IdReferensiBank
  * @property string|null $NomorRekening
  * @property string|null $NamaPemilikRekening
+ * @property KanalPenjualan|null $Kanal X8: kanal platform metode `Marketplace` (ojol/marketplace); null untuk jenis lain
  * @property string|null $PathGambarQris
  * @property int|null $IdAkun
  * @property int|null $IdAkunKliring
@@ -40,6 +42,7 @@ final class MetodePembayaran extends ModelDasar
         'IdReferensiBank' => null,
         'NomorRekening' => null,
         'NamaPemilikRekening' => null,
+        'Kanal' => null,
         'PathGambarQris' => null,
         'IdAkun' => null,
         'IdAkunKliring' => null,
@@ -56,6 +59,7 @@ final class MetodePembayaran extends ModelDasar
     {
         return [
             'Jenis' => JenisMetodePembayaran::class,
+            'Kanal' => KanalPenjualan::class,
             'PersenBiaya' => 'decimal:6',
             'BiayaTetap' => 'decimal:2',
             'Aktif' => 'boolean',

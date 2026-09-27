@@ -84,6 +84,7 @@ Map<String, Object?> DataAwalUji({
   Map<String, Object?>? nomorUrutIsiDeposit,
   bool laundry = false,
   bool persetujuanJarakJauh = false,
+  bool ojol = false,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -181,6 +182,25 @@ Map<String, Object?> DataAwalUji({
         'AdaGambarQris': false,
         'Urutan': 9,
       },
+    // X8: metode platform ojol (GoFood & GrabFood) hanya bila diminta test.
+    if (ojol) ...[
+      {
+        'Uuid': '01K5MTD000000000000G0F00D1',
+        'Jenis': 'Marketplace',
+        'Nama': 'GoFood',
+        'AdaGambarQris': false,
+        'Urutan': 10,
+        'Kanal': 'GoFood',
+      },
+      {
+        'Uuid': '01K5MTD00000000000GRABF00D',
+        'Jenis': 'Marketplace',
+        'Nama': 'GrabFood',
+        'AdaGambarQris': false,
+        'Urutan': 11,
+        'Kanal': 'GrabFood',
+      },
+    ],
     // v2.05: QRIS dinamis lewat gerbang pembayaran hanya bila diminta test.
     if (qrisDinamis)
       {

@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
-import 'package:inti/Inti.dart';
+import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../Penjualan/Keranjang.dart';
+import '../Penjualan/KonteksPenjualan.dart';
+import '../Penjualan/LayananPenjualan.dart';
 import 'IdentitasStruk.dart';
 
 /// Isi satu penjualan untuk dicetak (dari tabel lokal, jadi bisa offline dan dicetak ulang).
@@ -89,6 +91,22 @@ abstract final class PenyusunStrukPenjualan {
     final pelanggan = data.namaPelanggan?.trim();
     if (p.tampilkanPelanggan && pelanggan != null && pelanggan.isNotEmpty) {
       baris.add(BarisTeks('Pelanggan: $pelanggan'));
+    }
+    // X8: pesanan platform ojol dicetak jelas agar mudah dicocokkan dengan pengemudi; nomor pesanan dari referensi
+    // pembayaran platform bila diisi kasir.
+    final kanal = KanalPenjualan.values.where((k) => k.name == jual.Kanal).firstOrNull;
+    if (kanal != null && LayananPenjualan.kanalPlatform.contains(kanal)) {
+      final nomorPesanan = data.pembayaran
+          .where((b) => b.Jenis == JenisMetodeBayar.marketplace)
+          .map((b) => b.Referensi?.trim())
+          .where((r) => r != null && r.isNotEmpty)
+          .firstOrNull;
+      baris.add(
+        BarisTeks(
+          'Pesanan ${LayananPenjualan.AmbilLabelKanal(kanal)}${nomorPesanan == null ? '' : ' #$nomorPesanan'}',
+          tebal: true,
+        ),
+      );
     }
     baris.add(const BarisGaris());
 

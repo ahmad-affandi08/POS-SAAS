@@ -201,9 +201,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
-  /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal).
+  /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol).
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -340,6 +340,16 @@ class BasisDataKasir extends _$BasisDataKasir {
       }
       if (dari < 17) {
         await m.createTable(bahanTerbuangLokal);
+      }
+      // Skema 18 (X8): kanal metode pembayaran platform. Tabel metode dari skema < 2 sudah berkolom lengkap. Isinya
+      // diganti utuh saat data awal berikutnya dimuat, jadi baris lama cukup berkanal null.
+      if (dari >= 2 && dari < 18) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('MetodePembayaran') WHERE name = 'Kanal'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(metodePembayaran, metodePembayaran.Kanal);
+        }
       }
     },
     beforeOpen: (detail) async {

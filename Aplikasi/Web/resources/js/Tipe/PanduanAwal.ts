@@ -123,6 +123,9 @@ export type MetodePembayaranRingkas = {
     NamaBank: string | null;
     NomorRekening: string | null;
     NamaPemilikRekening: string | null;
+    /** X8: kanal platform metode Marketplace (GoFood, GrabFood, ShopeeFood, Marketplace). */
+    Kanal?: string | null;
+    LabelKanal?: string | null;
     PersenBiaya: string;
     TautanGambarQris: string | null;
     Aktif: boolean;
@@ -132,8 +135,12 @@ export type MetodePembayaranRingkas = {
 export type PropsMetodePembayaranPanduan = {
     Progres: ProgresPanduan;
     MetodePembayaran: MetodePembayaranRingkas[];
-    /** QrisStatis, QrisDinamis, Edc, Transfer. */
+    /** QrisStatis, QrisDinamis, Edc, Transfer, Deposit, Marketplace (X8). */
     JenisTersedia: Pilihan[];
+    /** X8: platform untuk metode Marketplace (opsional untuk data lama). */
+    KanalPlatform?: Pilihan[];
+    /** Batas biaya (persen): MDR umum dan komisi platform ojol/marketplace. */
+    PersenBiayaMaksimal?: { Umum: string; Platform: string };
     Bank: { Kode: string; Nama: string; Jenis: 'Bank' | 'Ewallet' | 'JaringanEdc' | 'PenerbitQris' }[];
     BatasGambarQris: { UkuranMaksimalKb: number; Ekstensi: string[] };
     /** F-08: gerbang pembayaran aktif dari konsol platform (QRIS dinamis). Tanpa kredensial. */

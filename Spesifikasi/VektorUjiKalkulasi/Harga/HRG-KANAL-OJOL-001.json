@@ -1,0 +1,163 @@
+{
+  "Id": "HRG-KANAL-OJOL-001",
+  "Keterangan": "X8 (v2.36): harga per kanal ojol input manual. Daftar harga GoFood, GrabFood, ShopeeFood masing-masing hanya berlaku untuk kanalnya; kanal ojol tanpa daftar harga (dan kanal di toko) memakai harga dasar. Tier pelanggan tidak mengubah daftar harga berkanal tanpa tier.",
+  "Katalog": {
+    "DaftarHarga": [
+      {
+        "Uuid": "DH-GOFOOD",
+        "Nama": "Harga GoFood",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "GoFood",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      },
+      {
+        "Uuid": "DH-GRABFOOD",
+        "Nama": "Harga GrabFood",
+        "Aktif": true,
+        "UuidOutlet": null,
+        "Kanal": "GrabFood",
+        "TierPelanggan": null,
+        "MulaiPada": null,
+        "SelesaiPada": null,
+        "Prioritas": 0
+      }
+    ],
+    "ProdukHarga": [
+      {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000",
+        "Harga": "25000.00"
+      },
+      {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "UuidDaftarHarga": "DH-GOFOOD",
+        "JumlahMinimum": "1.0000",
+        "Harga": "31000.00"
+      },
+      {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "UuidDaftarHarga": "DH-GRABFOOD",
+        "JumlahMinimum": "1.0000",
+        "Harga": "30500.00"
+      }
+    ]
+  },
+  "Kasus": [
+    {
+      "Nama": "GoFood: daftar GoFood",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "GoFood",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "31000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-GOFOOD",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "GrabFood: daftar GrabFood",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "GrabFood",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "30500.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-GRABFOOD",
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "ShopeeFood tanpa daftar: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "ShopeeFood",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "25000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "Bawa pulang: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "BawaPulang",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "25000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "Makan di tempat: harga dasar",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "MakanDiTempat",
+        "TierPelanggan": null,
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "25000.00",
+        "Sumber": "Dasar",
+        "UuidDaftarHarga": null,
+        "JumlahMinimum": "1.0000"
+      }
+    },
+    {
+      "Nama": "GoFood + tier Gold: daftar GoFood tetap berlaku",
+      "Masukan": {
+        "UuidProduk": "P-AYAM",
+        "UuidProdukSatuan": "PS-AYAM-PRS",
+        "Jumlah": "1",
+        "UuidOutlet": "O-SLO",
+        "Kanal": "GoFood",
+        "TierPelanggan": "Gold",
+        "Waktu": "2026-10-01T05:00:00Z"
+      },
+      "Harapan": {
+        "Harga": "31000.00",
+        "Sumber": "DaftarHarga",
+        "UuidDaftarHarga": "DH-GOFOOD",
+        "JumlahMinimum": "1.0000"
+      }
+    }
+  ]
+}

@@ -15,7 +15,7 @@
 | Deposit / Saldo Member | Potong saldo prabayar pelanggan | Terbatas (cache saldo) | 2 |
 | Poin Loyalti | Tukar poin sebagai potongan | Terbatas | 2 |
 | Voucher / Gift Card | Kode voucher tervalidasi | Terbatas | 2 |
-| Platform Ojol | GoFood/GrabFood/ShopeeFood sebagai metode (settlement dari platform) | Ya | 2 |
+| Platform Ojol | GoFood/GrabFood/ShopeeFood sebagai metode (settlement dari platform); v2.36: metode `Marketplace` berkanal | Ya | 2 |
 
 **Aturan Bisnis:**
 - BR-08.1 **Split payment** diizinkan (misal Rp 50rb tunai + sisa QRIS).
@@ -24,6 +24,7 @@
 - BR-08.4 MDR/biaya (QRIS, EDC, ojol) dicatat otomatis sebagai beban saat settlement (§11).
 - BR-08.5 QRIS dinamis: timeout default 15 menit. Jika webhook terlambat, kasir bisa "Cek Status". Pembayaran ganda terdeteksi via kolom unik `PenjualanPembayaran.RefEksternal`.
 - BR-08.6 Pembulatan tunai hanya untuk bagian tunai.
+- BR-08.7 (v2.36) Metode platform ojol/marketplace (`Marketplace`) terikat satu kanal (`MetodePembayaran.Kanal`: GoFood/GrabFood/ShopeeFood/Marketplace), satu metode per kanal, dan hanya sah untuk penjualan kanal yang sama (`MetodeBayarBedaKanal`). Kasir memilih kanal di keranjang; harga dari daftar harga berkanal (X8).
 
 **Rincian QRIS dinamis (v2.05; rincian diputuskan agen atas mandat D-12, penyedia dipilih di konsol P-05 v2.04):**
 - **Alur kasir (wajib online):** kasir memilih metode berjenis `QrisDinamis` → aplikasi membuat tagihan lewat `POST /api/pos/v1/qris` `{Uuid, UuidMetode, Jumlah, Keterangan?}` (Uuid ULID dibuat perangkat; permintaan ulang dengan Uuid sama = tagihan yang sama, tanpa memanggil gerbang lagi) → server memanggil gerbang aktif dan mengembalikan `{Uuid, NomorPesanan, IsiQr, HalamanBayar, KedaluwarsaPada, Status, Jumlah}` → QR digambar di perangkat (juga di layar pelanggan) dengan hitung mundur → aplikasi memantau `GET /api/pos/v1/qris/{uuid}` tiap 2 detik; server memanggil `CekStatus` gerbang paling sering sekali per 5 detik per tagihan (bila webhook terlambat) → `Lunas` → pembayaran dicatat dengan `Referensi` = Uuid tagihan. Kasir **tidak bisa** menandai lunas sendiri. Batal → `POST .../batal` (bila ternyata sudah lunas: 409 `SudahLunas`, pembayaran tetap dipakai). Offline/gerbang gagal → pesan jelas, saran QRIS statis/tunai.

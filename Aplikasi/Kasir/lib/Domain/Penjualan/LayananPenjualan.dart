@@ -142,10 +142,14 @@ class LayananPenjualan {
        _jam = jam ?? DateTime.now;
 
   static const String jenisOutbox = 'Penjualan.Buat';
-  static const String kanalBawaan = 'BawaPulang';
 
-  /// Kanal pembayaran pesanan meja (F-07 mode meja).
-  static const String kanalMakanDiTempat = 'MakanDiTempat';
+  /// X8: kanal platform (dibayar lewat pencairan platform, metode `Marketplace` berkanal sama).
+  static const List<KanalPenjualan> kanalPlatform = [
+    KanalPenjualan.GoFood,
+    KanalPenjualan.GrabFood,
+    KanalPenjualan.ShopeeFood,
+    KanalPenjualan.Marketplace,
+  ];
   static const String statusLunas = 'Lunas';
 
   final RepositoriKasir repositori;
@@ -184,9 +188,52 @@ class LayananPenjualan {
     ],
   );
 
-  /// Kanal harga keranjang: pesanan di meja = `MakanDiTempat` (daftar harga dine-in), selain itu `BawaPulang`.
-  static KanalPenjualan AmbilKanal(Keranjang keranjang) =>
-      keranjang.pesananMeja?.uuidMeja != null ? KanalPenjualan.MakanDiTempat : KanalPenjualan.BawaPulang;
+  /// Kanal harga keranjang: pesanan di meja = `MakanDiTempat` (daftar harga dine-in); selain itu kanal pilihan kasir
+  /// (X8: GoFood, GrabFood, …) atau `BawaPulang`.
+  static KanalPenjualan AmbilKanal(Keranjang keranjang) => keranjang.pesananMeja?.uuidMeja != null
+      ? KanalPenjualan.MakanDiTempat
+      : keranjang.kanal ?? KanalPenjualan.BawaPulang;
+
+  static String AmbilLabelKanal(KanalPenjualan kanal) => switch (kanal) {
+    KanalPenjualan.MakanDiTempat => 'Makan di tempat',
+    KanalPenjualan.BawaPulang => 'Bawa pulang',
+    KanalPenjualan.Antar => 'Antar',
+    KanalPenjualan.Online => 'Online',
+    KanalPenjualan.PesanSendiri => 'Pesan sendiri',
+    KanalPenjualan.Marketplace => 'Marketplace',
+    KanalPenjualan.GoFood => 'GoFood',
+    KanalPenjualan.GrabFood => 'GrabFood',
+    KanalPenjualan.ShopeeFood => 'ShopeeFood',
+  };
+
+  /// X8: pilihan kanal keranjang. Bawa pulang, makan di tempat, dan antar selalu ada; kanal platform ditawarkan bila
+  /// punya metode pembayaran platform atau daftar harga aktif. Kosong = tidak ada kanal platform/harga berkanal, jadi
+  /// pilihan kanal tidak perlu ditampilkan (toko biasa tetap sederhana).
+  static List<KanalPenjualan> AmbilPilihanKanal(KonteksPenjualan k, KatalogLokal katalog) {
+    final berharga = katalog.AmbilKanalBerharga();
+    final platform = [
+      for (final kanal in kanalPlatform)
+        if (berharga.contains(kanal) ||
+            k.metodePembayaran.any((m) => m.Jenis == JenisMetodeBayar.marketplace && m.Kanal == kanal.name))
+          kanal,
+    ];
+    const kanalToko = [KanalPenjualan.BawaPulang, KanalPenjualan.MakanDiTempat, KanalPenjualan.Antar];
+    if (platform.isEmpty && !berharga.any(kanalToko.contains)) {
+      return const [];
+    }
+    return [...kanalToko, ...platform];
+  }
+
+  /// X8: ganti kanal keranjang lalu harga ulang semua baris menurut daftar harga kanal baru. Baris tanpa harga di kanal
+  /// baru memakai harga dasar (sama seperti `HitungUlangHarga`).
+  Keranjang GantiKanal(Keranjang keranjang, KanalPenjualan kanal, KatalogLokal katalog, KonteksPenjualan k) =>
+      HitungUlangHarga(keranjang.Salin(kanal: () => kanal == KanalPenjualan.BawaPulang ? null : kanal), katalog, k);
+
+  /// X8: metode yang boleh dipakai untuk [kanal]: metode platform hanya untuk kanal miliknya.
+  static List<BarisMetodePembayaran> SaringMetodeKanal(List<BarisMetodePembayaran> metode, KanalPenjualan kanal) => [
+    for (final m in metode)
+      if (m.Jenis != JenisMetodeBayar.marketplace || m.Kanal == kanal.name) m,
+  ];
 
   Uang? TentukanHarga(
     KatalogLokal katalog,
@@ -962,7 +1009,7 @@ class LayananPenjualan {
     final pembulatan = k.pembulatanTunai;
     final catatan = keranjang.catatan?.trim();
     final pesananMeja = keranjang.pesananMeja;
-    final kanal = pesananMeja?.uuidMeja != null ? kanalMakanDiTempat : kanalBawaan;
+    final kanal = AmbilKanal(keranjang).name;
 
     final data = <String, Object?>{
       'UuidShift': shift.Uuid,

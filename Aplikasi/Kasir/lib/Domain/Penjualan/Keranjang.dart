@@ -472,6 +472,7 @@ class Keranjang {
     this.praPesan,
     this.reservasi,
     this.laundry,
+    this.kanal,
   });
 
   static const Keranjang kosong = Keranjang();
@@ -500,6 +501,10 @@ class Keranjang {
   /// Laundry (§9.9): tiket laundry yang dibuat bersama penjualan ini.
   final LaundryKeranjang? laundry;
 
+  /// X8: kanal yang dipilih kasir (GoFood, GrabFood, …). Null = bawaan (pesanan meja `MakanDiTempat`, selain itu
+  /// `BawaPulang`); lihat `LayananPenjualan.AmbilKanal`.
+  final KanalPenjualan? kanal;
+
   bool get CekKosong => baris.isEmpty;
 
   Kuantitas HitungJumlahItem() => baris.fold(Kuantitas.Nol(), (total, b) => total.Tambah(b.jumlah));
@@ -516,6 +521,7 @@ class Keranjang {
     PraPesananKeranjang? Function()? praPesan,
     ReservasiKeranjang? Function()? reservasi,
     LaundryKeranjang? Function()? laundry,
+    KanalPenjualan? Function()? kanal,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
@@ -528,6 +534,7 @@ class Keranjang {
     praPesan: praPesan == null ? this.praPesan : praPesan(),
     reservasi: reservasi == null ? this.reservasi : reservasi(),
     laundry: laundry == null ? this.laundry : laundry(),
+    kanal: kanal == null ? this.kanal : kanal(),
   );
 
   Map<String, Object?> KeJson() => {
@@ -541,6 +548,7 @@ class Keranjang {
     'PraPesan': praPesan?.KeJson(),
     'Reservasi': reservasi?.KeJson(),
     'Laundry': laundry?.KeJson(),
+    'Kanal': kanal?.name,
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -557,5 +565,7 @@ class Keranjang {
     praPesan: PraPesananKeranjang.DariJson(json['PraPesan']),
     reservasi: ReservasiKeranjang.DariJson(json['Reservasi']),
     laundry: LaundryKeranjang.DariJson(json['Laundry']),
+    // Kanal yang tidak dikenal aplikasi versi ini = bawaan.
+    kanal: KanalPenjualan.values.where((k) => k.name == json['Kanal']).firstOrNull,
   );
 }

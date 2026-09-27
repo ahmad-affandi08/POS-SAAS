@@ -471,6 +471,51 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     });
   }
 
+  List<KanalPenjualan> _AmbilPilihanKanal() {
+    final k = ref.watch(penyediaKonteksPenjualan).value;
+    final katalog = ref.watch(penyediaKatalog).value;
+    return k == null || katalog == null ? const [] : LayananPenjualan.AmbilPilihanKanal(k, katalog);
+  }
+
+  /// X8: pilih kanal penjualan; harga semua baris ditentukan ulang menurut daftar harga kanal baru.
+  Future<void> _PilihKanal() async {
+    final pilihan = _AmbilPilihanKanal();
+    final sekarang = LayananPenjualan.AmbilKanal(ref.read(penyediaKeranjang));
+    final kanal = await showDialog<KanalPenjualan>(
+      context: context,
+      builder: (konteks) => SimpleDialog(
+        title: const Text('Kanal penjualan'),
+        children: [
+          for (final p in pilihan)
+            ListTile(
+              key: ValueKey('Kanal-${p.name}'),
+              leading: Icon(
+                LayananPenjualan.kanalPlatform.contains(p) ? Icons.delivery_dining : Icons.storefront_outlined,
+              ),
+              title: Text(LayananPenjualan.AmbilLabelKanal(p)),
+              subtitle: LayananPenjualan.kanalPlatform.contains(p)
+                  ? const Text('Pesanan dari aplikasi; harga & pembayaran platform')
+                  : null,
+              trailing: p == sekarang ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.of(konteks).pop(p),
+            ),
+        ],
+      ),
+    );
+    if (kanal == null || kanal == sekarang || !mounted) {
+      return;
+    }
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    final katalog = ref.read(penyediaKatalog).value;
+    if (k == null || katalog == null) {
+      return;
+    }
+    ref
+        .read(penyediaKeranjang.notifier)
+        .Ganti(ref.read(penyediaLayananPenjualan).GantiKanal(ref.read(penyediaKeranjang), kanal, katalog, k));
+    _TampilPesan('Kanal ${LayananPenjualan.AmbilLabelKanal(kanal)}. Harga keranjang disesuaikan.');
+  }
+
   void _BukaTertahan() => setState(() {
     _panel = _JenisPanel.Tertahan;
     _pesan = null;
@@ -884,6 +929,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
       saatBayar: widget.modePelayan ? null : _BukaBayar,
       saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
+      // X8: kanal (GoFood, GrabFood, …) untuk penjualan langsung; pesanan meja selalu makan di tempat.
+      saatKanal:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              keranjang.reservasi != null ||
+              _AmbilPilihanKanal().isEmpty
+          ? null
+          : () => unawaited(_PilihKanal()),
       // Laundry (§9.9): tiket laundry untuk penjualan langsung (bukan pesanan meja/pengambilan pre-order).
       saatLaundry:
           widget.modePelayan ||

@@ -8,6 +8,7 @@ use App\Domain\Integrasi\Layanan\InfoGerbangPembayaran;
 use App\Domain\Penjualan\Aksi\SimpanMetodePembayaran;
 use App\Domain\Penjualan\Aksi\UbahStatusMetodePembayaran;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Layanan\PenyimpanGambarQris;
 use App\Domain\Penjualan\Model\MetodePembayaran;
@@ -44,6 +45,9 @@ final class PanduanAwalMetodePembayaranKontroler extends DasarPanduanAwalKontrol
                 fn (JenisMetodePembayaran $jenis): array => ['Nilai' => $jenis->value, 'Label' => $jenis->AmbilLabel()],
                 JenisMetodePembayaran::AmbilJenisPanduan(),
             ),
+            // X8: platform untuk metode Marketplace + batas komisinya.
+            'KanalPlatform' => array_map(fn (KanalPenjualan $kanal): array => ['Nilai' => $kanal->value, 'Label' => $kanal->AmbilLabel()], KanalPenjualan::AmbilPlatform()),
+            'PersenBiayaMaksimal' => ['Umum' => (string) config('pembayaran.PersenBiayaMaksimal'), 'Platform' => (string) config('pembayaran.PersenBiayaPlatformMaksimal')],
             'Bank' => array_map(fn (array $bank): array => ['Kode' => $bank['Kode'], 'Nama' => $bank['Nama'], 'Jenis' => $bank['Jenis']], $referensiBank->Ambil()),
             'BatasGambarQris' => [
                 'UkuranMaksimalKb' => (int) config('pembayaran.UkuranMaksimalGambarQrisKb'),

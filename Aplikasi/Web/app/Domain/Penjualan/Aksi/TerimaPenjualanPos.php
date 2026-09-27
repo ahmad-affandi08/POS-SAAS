@@ -97,7 +97,7 @@ use InvalidArgumentException;
  * (`ShiftTidakDitemukan`); (3) kasir anggota tenant (`KasirTidakDitemukan`); (4) nomor BR-07.1
  * `INV/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}`, unik per tenant (`NomorTidakValid`/`NomorSudahDipakai`); (5) produk (`ProdukTidakDikenal`/`ProdukTidakBisaDijual`/`PelacakanBelumDidukung`/
  * `SatuanTidakDikenal`); (6) tarif pajak snapshot = `TarifPajak` terbit yang berlaku (`TarifPajakTidakSah`); (9) metode
- * bayar (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`); (8) hitung ulang `MesinKalkulasi` = `Ringkasan`
+ * bayar (`MetodeBayarTidakDikenal`/`MetodeBayarBelumDidukung`/X8 `MetodeBayarBedaKanal`); (8) hitung ulang `MesinKalkulasi` = `Ringkasan`
  * (`HitunganTidakCocok`); (7) BR-07.3 diskon (`PenyetujuTidakBerwenang`); (9) pembayaran (`PembayaranTidakValid`/
  * `PembayaranKurang`).
  *
@@ -716,6 +716,12 @@ final class TerimaPenjualanPos
             // Metode yang dinonaktifkan setelah transaksi offline tetap diterima (tidak memeriksa `Aktif`).
             if (! $m->Jenis->CekDidukungPos()) {
                 throw new PelanggaranAturanBisnis('MetodeBayarBelumDidukung', "Pembayaran {$m->Jenis->AmbilLabel()} belum didukung di aplikasi kasir.", "Pembayaran.{$indeks}.UuidMetodePembayaran");
+            }
+
+            // X8: metode platform (GoFood, GrabFood, …) hanya untuk penjualan kanal platform yang sama; dana dari
+            // platform lain atau penjualan di toko tidak boleh tercatat sebagai pencairan platform ini.
+            if ($m->Jenis === JenisMetodePembayaran::Marketplace && $m->Kanal !== $data->kanal) {
+                throw new PelanggaranAturanBisnis('MetodeBayarBedaKanal', "{$m->Nama} hanya untuk penjualan kanal {$m->Kanal?->AmbilLabel()}.", "Pembayaran.{$indeks}.UuidMetodePembayaran");
             }
         }
 

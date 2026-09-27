@@ -26,7 +26,21 @@ abstract final class JenisMetodeBayar {
   /// F-16d bagian 1: saldo deposit pelanggan; hanya tampil bila pelanggan dipilih dan paket berlaku, saldo dicek online.
   static const String deposit = 'Deposit';
 
-  static const List<String> fase1 = [tunai, qrisStatis, qrisDinamis, edc, transfer, ewallet, tempo, deposit];
+  /// X8 (v2.36): pesanan platform ojol/marketplace yang dibayar platform (dana lewat pencairan). Hanya tampil untuk
+  /// penjualan kanal yang sama dengan `MetodePembayaran.Kanal`.
+  static const String marketplace = 'Marketplace';
+
+  static const List<String> fase1 = [
+    tunai,
+    qrisStatis,
+    qrisDinamis,
+    edc,
+    transfer,
+    ewallet,
+    tempo,
+    deposit,
+    marketplace,
+  ];
 
   /// F-12 bagian 2: uang muka pre-order yang dipakai saat diambil (metode sistem; tidak tampil sebagai pilihan bayar).
   static const String uangMuka = 'UangMuka';

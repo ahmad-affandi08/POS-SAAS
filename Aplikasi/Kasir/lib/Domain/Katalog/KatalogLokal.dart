@@ -198,6 +198,12 @@ class KatalogLokal {
   final List<ProdukJual> produk;
   final List<BarisKategori> kategori;
   final List<DaftarHargaResolusi> daftarHarga;
+
+  /// X8: kanal yang punya daftar harga aktif (misal harga GoFood), untuk menawarkan pilihan kanal di keranjang.
+  Set<KanalPenjualan> AmbilKanalBerharga() => {
+    for (final d in daftarHarga)
+      if (d.aktif && d.kanal != null) d.kanal!,
+  };
   final Map<String, ProdukJual> _petaProduk;
   final Map<String, ({String uuidProduk, String? uuidProdukSatuan})> _barcode;
   final Map<String, List<BarisProdukHarga>> _hargaPerProduk;

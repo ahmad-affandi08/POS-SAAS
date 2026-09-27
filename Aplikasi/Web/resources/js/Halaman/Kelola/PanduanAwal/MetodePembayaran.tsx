@@ -35,6 +35,7 @@ type IsianMetodePembayaran = {
     GambarQris: File | null;
     NomorRekening: string;
     NamaPemilikRekening: string;
+    Kanal: string;
     PersenBiaya: string;
 };
 
@@ -51,9 +52,13 @@ const contohNama: Record<string, string> = {
     QrisDinamis: 'Misal "QRIS Otomatis". Tampil sebagai tombol di kasir.',
     Edc: 'Misal "EDC BCA". Tampil sebagai tombol di kasir.',
     Transfer: 'Misal "Transfer BCA". Tampil sebagai tombol di kasir.',
+    Marketplace: 'Misal "GoFood". Tampil di kasir hanya untuk pesanan kanal platform ini.',
 };
 
-/** Langkah 5 F-01: Tunai selalu ada; tambah QRIS statis, QRIS dinamis (F-08), EDC per bank, atau transfer. */
+/**
+ * Langkah 5 F-01: Tunai selalu ada; tambah QRIS statis, QRIS dinamis (F-08), EDC per bank, transfer, atau (X8) platform
+ * ojol/marketplace yang dananya dicairkan platform.
+ */
 export default function HalamanMetodePembayaran({
     Progres,
     MetodePembayaran,
@@ -61,6 +66,8 @@ export default function HalamanMetodePembayaran({
     Bank,
     BatasGambarQris,
     GerbangPembayaran,
+    KanalPlatform = [],
+    PersenBiayaMaksimal = { Umum: '10', Platform: '40' },
 }: PropsMetodePembayaranPanduan) {
     const hanyaTunai = MetodePembayaran.every((metode) => metode.Wajib);
 
@@ -84,6 +91,8 @@ export default function HalamanMetodePembayaran({
                 bank={Bank}
                 batasGambarQris={BatasGambarQris}
                 gerbangPembayaran={GerbangPembayaran}
+                kanalPlatform={KanalPlatform}
+                persenBiayaMaksimal={PersenBiayaMaksimal}
             />
         </TataLetakPanduan>
     );
@@ -133,13 +142,16 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
                         />
                     ) : null}
                     {metode.NamaBank ? <span className="block">{metode.NamaBank}</span> : null}
+                    {metode.LabelKanal ? <span className="block">Pesanan {metode.LabelKanal}</span> : null}
                     {metode.NomorRekening ? (
                         <span className="block font-mono text-label">
                             {metode.NomorRekening}
                             {metode.NamaPemilikRekening ? ` a.n. ${metode.NamaPemilikRekening}` : ''}
                         </span>
                     ) : null}
-                    {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening ? '—' : null}
+                    {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening && !metode.LabelKanal
+                        ? '—'
+                        : null}
                 </>
             ),
         },
@@ -228,9 +240,18 @@ type PropsFormTambahMetode = {
     bank: PropsMetodePembayaranPanduan['Bank'];
     batasGambarQris: PropsMetodePembayaranPanduan['BatasGambarQris'];
     gerbangPembayaran: PropsMetodePembayaranPanduan['GerbangPembayaran'];
+    kanalPlatform: NonNullable<PropsMetodePembayaranPanduan['KanalPlatform']>;
+    persenBiayaMaksimal: NonNullable<PropsMetodePembayaranPanduan['PersenBiayaMaksimal']>;
 };
 
-function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembayaran }: PropsFormTambahMetode) {
+function FormTambahMetode({
+    jenisTersedia,
+    bank,
+    batasGambarQris,
+    gerbangPembayaran,
+    kanalPlatform,
+    persenBiayaMaksimal,
+}: PropsFormTambahMetode) {
     const elemenFormulir = useRef<HTMLFormElement>(null);
     const formulir = useForm<IsianMetodePembayaran>({
         Jenis: jenisTersedia[0]?.Nilai ?? 'QrisStatis',
@@ -239,6 +260,7 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembaya
         GambarQris: null,
         NomorRekening: '',
         NamaPemilikRekening: '',
+        Kanal: '',
         PersenBiaya: '',
     });
     const { Jenis } = formulir.data;
@@ -247,7 +269,8 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembaya
         .map((baris) => ({ Nilai: baris.Kode, Label: baris.Nama }));
 
     const GantiJenis = (jenis: string) =>
-        formulir.setData({ ...formulir.data, Jenis: jenis, KodeBank: '', GambarQris: null });
+        formulir.setData({ ...formulir.data, Jenis: jenis, KodeBank: '', GambarQris: null, Kanal: '' });
+    const platform = Jenis === 'Marketplace';
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -258,6 +281,7 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembaya
             GambarQris: data.Jenis === 'QrisStatis' ? data.GambarQris : null,
             NomorRekening: data.Jenis === 'Transfer' ? data.NomorRekening || null : null,
             NamaPemilikRekening: data.Jenis === 'Transfer' ? data.NamaPemilikRekening || null : null,
+            Kanal: data.Jenis === 'Marketplace' ? data.Kanal || null : null,
             PersenBiaya: data.PersenBiaya || null,
         }));
         formulir.post(AlamatPanduan.MetodePembayaran, {
@@ -306,6 +330,17 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembaya
                                 kosong={opsiBank.length === 0 ? 'Data bank belum tersedia' : 'Pilih bank'}
                             />
                         ) : null}
+                        {platform ? (
+                            <BidangPilihan
+                                label="Platform"
+                                nilai={formulir.data.Kanal}
+                                opsi={kanalPlatform}
+                                saatBerubah={(nilai) => formulir.setData('Kanal', nilai)}
+                                galat={formulir.errors.Kanal}
+                                required
+                                kosong="Pilih platform"
+                            />
+                        ) : null}
                         {Jenis === 'Transfer' ? (
                             <>
                                 <BidangTeks
@@ -330,16 +365,31 @@ function FormTambahMetode({ jenisTersedia, bank, batasGambarQris, gerbangPembaya
                             </>
                         ) : null}
                         <BidangTeks
-                            label="Biaya per transaksi (persen, opsional)"
+                            label={
+                                platform
+                                    ? 'Komisi platform (persen, opsional)'
+                                    : 'Biaya per transaksi (persen, opsional)'
+                            }
                             nilai={FormatMasukanPersen(formulir.data.PersenBiaya)}
                             saatBerubah={(nilai) => formulir.setData('PersenBiaya', NormalisasiMasukanPersen(nilai))}
                             galat={formulir.errors.PersenBiaya}
-                            keterangan="Potongan dari penyedia (MDR), 0 sampai 10 persen, misal 0,7. Dipakai untuk laporan biaya."
+                            keterangan={
+                                platform
+                                    ? `Potongan komisi dari platform, 0 sampai ${persenBiayaMaksimal.Platform} persen, misal 20. Dipakai untuk laporan biaya.`
+                                    : `Potongan dari penyedia (MDR), 0 sampai ${persenBiayaMaksimal.Umum} persen, misal 0,7. Dipakai untuk laporan biaya.`
+                            }
                             inputMode="decimal"
                             maxLength={7}
                         />
                     </div>
                     {Jenis === 'QrisDinamis' ? <InfoQrisDinamis gerbangPembayaran={gerbangPembayaran} /> : null}
+                    {platform ? (
+                        <Pemberitahuan jenis="info" judul="Pesanan ojol dicatat manual di kasir">
+                            Kasir memilih kanal (misal GoFood) di keranjang, lalu membayar dengan metode ini. Harga
+                            khusus platform diatur lewat Daftar harga dengan kanal yang sama. Dana tercatat sebagai
+                            piutang pencairan sampai platform mentransfer ke rekening toko.
+                        </Pemberitahuan>
+                    ) : null}
                     {Jenis === 'QrisStatis' ? (
                         <BidangGambar
                             label="Gambar QRIS"

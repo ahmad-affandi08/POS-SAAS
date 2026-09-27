@@ -166,6 +166,7 @@ class RepositoriKasir {
             NamaPemilikRekening: Value(m.namaPemilikRekening),
             AdaGambarQris: m.adaGambarQris,
             Urutan: m.urutan,
+            Kanal: Value(m.kanal),
           ),
       ]);
       b.insertAll(db.staf, [

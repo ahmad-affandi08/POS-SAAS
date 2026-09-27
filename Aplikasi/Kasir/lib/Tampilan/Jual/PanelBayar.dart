@@ -37,6 +37,7 @@ String AmbilLabelJenisMetode(String jenis) => switch (jenis) {
   JenisMetodeBayar.ewallet => 'E-wallet',
   JenisMetodeBayar.tempo => 'Tempo (piutang)',
   JenisMetodeBayar.deposit => 'Deposit pelanggan',
+  JenisMetodeBayar.marketplace => 'Platform ojol / marketplace',
   _ => jenis,
 };
 
@@ -103,6 +104,18 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       if (dipakai.Bandingkan(Uang.Nol()) > 0) {
         _entri.add(PembayaranMasukan(metode: LayananPreOrder.MetodeUangMuka(praPesan), jumlah: dipakai));
       }
+    }
+    // X8: pesanan platform (GoFood, …) langsung memilih metode platform yang sama; kasir tinggal menyelesaikan.
+    final kanal = LayananPenjualan.AmbilKanal(keranjang);
+    final platform = k == null || !LayananPenjualan.kanalPlatform.contains(kanal)
+        ? null
+        : k.metodePembayaran.where((m) => m.Jenis == JenisMetodeBayar.marketplace && m.Kanal == kanal.name).firstOrNull;
+    if (platform != null && _entri.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _metode == null) {
+          _PilihMetode(k!, platform);
+        }
+      });
     }
   }
 
@@ -509,7 +522,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
             maxLength: metode.Jenis == JenisMetodeBayar.edc ? LayananPenjualan.panjangMaksApprovalEdc : 60,
             onChanged: (_) => setState(() => _galat = null),
             decoration: InputDecoration(
-              labelText: metode.Jenis == JenisMetodeBayar.edc ? 'Nomor approval' : 'Referensi (opsional)',
+              labelText: switch (metode.Jenis) {
+                JenisMetodeBayar.edc => 'Nomor approval',
+                JenisMetodeBayar.marketplace => 'Nomor pesanan ${metode.Nama} (opsional)',
+                _ => 'Referensi (opsional)',
+              },
               border: const OutlineInputBorder(),
             ),
           ),
@@ -674,7 +691,10 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               spacing: TokenJarak.jarak8,
               runSpacing: TokenJarak.jarak8,
               children: [
-                for (final m in k.metodePembayaran)
+                for (final m in LayananPenjualan.SaringMetodeKanal(
+                  k.metodePembayaran,
+                  LayananPenjualan.AmbilKanal(keranjang),
+                ))
                   if (!(tunaiDipakai && m.Jenis == JenisMetodeBayar.tunai) &&
                       !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)) &&
                       !(m.Jenis == JenisMetodeBayar.deposit &&

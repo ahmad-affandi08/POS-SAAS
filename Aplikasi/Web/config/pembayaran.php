@@ -13,4 +13,7 @@ return [
 
     // Biaya MDR/EDC maksimal yang bisa diisi di panduan awal (persen).
     'PersenBiayaMaksimal' => '10',
+
+    // X8: komisi platform ojol/marketplace (metode `Marketplace`) maksimal (persen); komisi GoFood/GrabFood umumnya 20–30%.
+    'PersenBiayaPlatformMaksimal' => '40',
 ];

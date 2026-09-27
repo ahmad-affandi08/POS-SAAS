@@ -9,6 +9,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Penjualan\Data\DataMetodePembayaran;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Layanan\PenyimpanGambarQris;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Referensi\Kueri\ReferensiBankAktif;
@@ -26,6 +27,8 @@ use Throwable;
  * - EDC wajib bank/jaringan EDC aktif; transfer wajib bank/dompet digital aktif + nomor & nama pemilik rekening.
  * - Biaya (MDR) 0–10 persen, string desimal (tidak pernah float).
  * - F-16d: deposit pelanggan (satu per tenant, tanpa biaya; akun Saldo Deposit Pelanggan dari pemetaan akun).
+ * - X8: platform ojol/marketplace wajib satu kanal platform (GoFood/GrabFood/ShopeeFood/Marketplace), satu metode per
+ *   kanal; komisi platform 0–40 persen; dana masuk lewat pencairan platform (Piutang Pencairan).
  * - Tunai dipastikan ada lebih dulu (idempoten). Nama unik per tenant (tanpa beda huruf besar/kecil): kirim ganda ditolak.
  */
 final class SimpanMetodePembayaran
@@ -64,6 +67,11 @@ final class SimpanMetodePembayaran
                     throw new PelanggaranAturanBisnis('MetodeDepositSudahAda', 'Metode deposit pelanggan sudah ada. Aktifkan metode yang ada bila dinonaktifkan.', 'Jenis');
                 }
 
+                // X8: kasir memilih metode platform menurut kanal penjualan, jadi satu metode per kanal.
+                if ($isian['Kanal'] instanceof KanalPenjualan && MetodePembayaran::query()->where('Kanal', $isian['Kanal']->value)->exists()) {
+                    throw new PelanggaranAturanBisnis('MetodeKanalSudahAda', "Metode pembayaran untuk {$isian['Kanal']->AmbilLabel()} sudah ada. Aktifkan metode yang ada bila dinonaktifkan.", 'Kanal');
+                }
+
                 $urutan = (int) MetodePembayaran::query()->max('Urutan');
 
                 $metode = MetodePembayaran::query()->create([...$isian, 'PathGambarQris' => $path, 'Urutan' => $urutan + 1, 'Aktif' => true]);
@@ -72,6 +80,7 @@ final class SimpanMetodePembayaran
                     'Nama' => $metode->Nama,
                     'KodeBank' => $data->kodeBank,
                     'NomorRekening' => $metode->NomorRekening,
+                    'Kanal' => $metode->Kanal?->value,
                     'PersenBiaya' => $metode->PersenBiaya,
                 ]);
 
@@ -92,7 +101,13 @@ final class SimpanMetodePembayaran
         $jenis = $data->jenis;
 
         if (! $jenis->CekBisaDibuatPanduan()) {
-            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, atau deposit pelanggan.', 'Jenis');
+            throw new PelanggaranAturanBisnis('JenisTidakDidukung', 'Pilih QRIS statis, QRIS dinamis, kartu (EDC), transfer bank, deposit pelanggan, atau platform ojol/marketplace.', 'Jenis');
+        }
+
+        $kanal = $jenis === JenisMetodePembayaran::Marketplace ? $data->kanal : null;
+
+        if ($jenis === JenisMetodePembayaran::Marketplace && ($kanal === null || ! $kanal->CekPlatform())) {
+            throw new PelanggaranAturanBisnis('KanalPlatformWajib', 'Pilih platform: GoFood, GrabFood, ShopeeFood, atau Marketplace.', 'Kanal');
         }
 
         if ($jenis === JenisMetodePembayaran::QrisStatis && $gambarQris === null) {
@@ -129,12 +144,19 @@ final class SimpanMetodePembayaran
             'IdReferensiBank' => $idBank,
             'NomorRekening' => $jenis === JenisMetodePembayaran::Transfer ? $nomorRekening : null,
             'NamaPemilikRekening' => $jenis === JenisMetodePembayaran::Transfer ? $namaPemilik : null,
+            'Kanal' => $kanal,
             // F-16d: deposit bukan layanan penyedia pembayaran, jadi tanpa biaya MDR.
-            'PersenBiaya' => $jenis === JenisMetodePembayaran::Deposit ? '0' : $this->AmbilPersenBiaya($data->persenBiaya),
+            'PersenBiaya' => $jenis === JenisMetodePembayaran::Deposit ? '0' : $this->AmbilPersenBiaya($data->persenBiaya, self::AmbilPersenMaksimal($jenis)),
         ];
     }
 
-    private function AmbilPersenBiaya(?string $persen): string
+    /** Batas biaya: MDR penyedia pembayaran, atau (X8) komisi platform ojol/marketplace yang lebih besar. */
+    public static function AmbilPersenMaksimal(JenisMetodePembayaran $jenis): string
+    {
+        return (string) config($jenis === JenisMetodePembayaran::Marketplace ? 'pembayaran.PersenBiayaPlatformMaksimal' : 'pembayaran.PersenBiayaMaksimal');
+    }
+
+    private function AmbilPersenBiaya(?string $persen, string $maksimal): string
     {
         if ($persen === null || trim($persen) === '') {
             return '0';
@@ -146,8 +168,8 @@ final class SimpanMetodePembayaran
             $nilai = null;
         }
 
-        if ($nilai === null || $nilai->isNegative() || $nilai->isGreaterThan((string) config('pembayaran.PersenBiayaMaksimal')) || $nilai->getScale() > 4) {
-            throw new PelanggaranAturanBisnis('PersenBiayaTidakSah', 'Biaya 0 sampai '.config('pembayaran.PersenBiayaMaksimal').' persen, maksimal 4 angka di belakang titik.', 'PersenBiaya');
+        if ($nilai === null || $nilai->isNegative() || $nilai->isGreaterThan($maksimal) || $nilai->getScale() > 4) {
+            throw new PelanggaranAturanBisnis('PersenBiayaTidakSah', "Biaya 0 sampai {$maksimal} persen, maksimal 4 angka di belakang titik.", 'PersenBiaya');
         }
 
         return (string) $nilai;

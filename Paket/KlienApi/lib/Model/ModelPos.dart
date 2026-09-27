@@ -317,7 +317,8 @@ class TarifPajakPos {
   }
 }
 
-/// Metode pembayaran aktif outlet (jenis fase 1: `Tunai`, `QrisStatis`, `Edc`, `Transfer`, `Ewallet`).
+/// Metode pembayaran aktif outlet (jenis fase 1: `Tunai`, `QrisStatis`, `Edc`, `Transfer`, `Ewallet`; X8: `Marketplace`
+/// ber-[kanal] platform).
 class MetodePembayaranPos {
   const MetodePembayaranPos({
     required this.uuid,
@@ -327,6 +328,7 @@ class MetodePembayaranPos {
     required this.namaPemilikRekening,
     required this.adaGambarQris,
     required this.urutan,
+    this.kanal,
   });
 
   final String uuid;
@@ -337,6 +339,9 @@ class MetodePembayaranPos {
   final bool adaGambarQris;
   final int urutan;
 
+  /// X8: kanal platform metode `Marketplace` (`GoFood`, `GrabFood`, …); null untuk jenis lain dan server lama.
+  final String? kanal;
+
   static MetodePembayaranPos DariJson(Map<String, Object?> json) => MetodePembayaranPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     jenis: UraiJson.AmbilTeks(json['Jenis']),
@@ -345,6 +350,7 @@ class MetodePembayaranPos {
     namaPemilikRekening: UraiJson.AmbilTeksAtauNull(json['NamaPemilikRekening']),
     adaGambarQris: UraiJson.AmbilBenar(json['AdaGambarQris']),
     urutan: UraiJson.AmbilBulat(json['Urutan']),
+    kanal: UraiJson.AmbilTeksAtauNull(json['Kanal']),
   );
 }
 

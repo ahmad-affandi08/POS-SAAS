@@ -230,6 +230,15 @@ void main() {
             'AdaGambarQris': true,
             'Urutan': 2,
           },
+          // X8: metode platform ojol membawa kanalnya.
+          {
+            'Uuid': 'M2',
+            'Jenis': 'Marketplace',
+            'Nama': 'GoFood',
+            'AdaGambarQris': false,
+            'Urutan': 3,
+            'Kanal': 'GoFood',
+          },
         ],
       });
       expect(data.batasDiskonManual, '15.00');
@@ -243,7 +252,9 @@ void main() {
       expect(data.profilPajak.persenBiayaLayanan, '5.00');
       expect(data.tarifPajak.single.pengaliDppPembilang, 11);
       expect(data.tarifPajak.single.berlakuSampai, isNull);
-      expect(data.metodePembayaran.single.adaGambarQris, isTrue);
+      expect(data.metodePembayaran.first.adaGambarQris, isTrue);
+      expect(data.metodePembayaran.first.kanal, isNull);
+      expect(data.metodePembayaran.last.kanal, 'GoFood');
       // Server lama: tanpa ZonaWaktu & NomorUrutPenjualan.
       expect(data.outlet!.zonaWaktu, isNull);
       expect(data.perangkat!.nomorUrutPenjualan, isEmpty);

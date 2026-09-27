@@ -39,7 +39,7 @@ enum JenisMetodePembayaran: string
             self::Deposit => 'Deposit pelanggan',
             self::Poin => 'Poin',
             self::Voucher => 'Voucher',
-            self::Marketplace => 'Marketplace',
+            self::Marketplace => 'Platform ojol / marketplace',
             self::UangMuka => 'Uang muka (DP)',
         };
     }
@@ -50,7 +50,8 @@ enum JenisMetodePembayaran: string
         // F-12: Tempo (piutang) untuk pelanggan ber-limit kredit; bagian 2: uang muka pre-order saat diambil.
         // F-08: QRIS dinamis lewat gerbang pembayaran aktif (tagihan dibuat online, `Referensi` = Uuid `TagihanQris`).
         // F-16d bagian 1: deposit pelanggan (wajib online saat dipakai; aplikasi lama melewati jenis yang tidak dikenalnya).
-        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka, self::Deposit], true);
+        // X8 (v2.36): Marketplace = pesanan ojol/marketplace yang dibayar platform (dana lewat pencairan).
+        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka, self::Deposit, self::Marketplace], true);
     }
 
     /** F-16d bagian 1: jenis yang boleh dipakai mengisi saldo deposit di POS (bukan tempo, deposit, atau uang muka). */
@@ -67,11 +68,12 @@ enum JenisMetodePembayaran: string
 
     /**
      * Jenis yang bisa ditambahkan dari back-office (F-01 langkah 5; F-08: QRIS dinamis, butuh gerbang aktif platform;
-     * F-16d: deposit pelanggan, satu per tenant, akun Saldo Deposit Pelanggan).
+     * F-16d: deposit pelanggan, satu per tenant, akun Saldo Deposit Pelanggan; X8: platform ojol/marketplace, satu per
+     * kanal, akun Piutang Pencairan).
      */
     public function CekBisaDibuatPanduan(): bool
     {
-        return in_array($this, [self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Deposit], true);
+        return in_array($this, [self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Deposit, self::Marketplace], true);
     }
 
     /**

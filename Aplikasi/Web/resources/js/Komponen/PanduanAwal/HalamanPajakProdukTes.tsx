@@ -196,4 +196,43 @@ describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lew
         );
         expect(screen.getByText('Gerbang pembayaran aktif: Midtrans')).toBeTruthy();
     });
+    it('X8 platform ojol: isian Platform, petunjuk pencatatan manual, komisi sampai 40 persen, kanal tampil di tabel', () => {
+        RenderUji(
+            <HalamanMetodePembayaranPanduan
+                Progres={BuatProgresContoh({ ProfilUsaha: 'Selesai', Sektor: 'Selesai', Pajak: 'Selesai' })}
+                MetodePembayaran={[
+                    {
+                        Uuid: 'M3',
+                        Jenis: 'Marketplace',
+                        LabelJenis: 'Platform ojol / marketplace',
+                        Nama: 'GoFood',
+                        NamaBank: null,
+                        NomorRekening: null,
+                        NamaPemilikRekening: null,
+                        Kanal: 'GoFood',
+                        LabelKanal: 'GoFood',
+                        PersenBiaya: '20',
+                        TautanGambarQris: null,
+                        Aktif: true,
+                        Wajib: false,
+                    },
+                ]}
+                JenisTersedia={[{ Nilai: 'Marketplace', Label: 'Platform ojol / marketplace' }]}
+                KanalPlatform={[
+                    { Nilai: 'GoFood', Label: 'GoFood' },
+                    { Nilai: 'GrabFood', Label: 'GrabFood' },
+                ]}
+                PersenBiayaMaksimal={{ Umum: '10', Platform: '40' }}
+                Bank={[]}
+                BatasGambarQris={{ UkuranMaksimalKb: 2048, Ekstensi: ['png'] }}
+                GerbangPembayaran={{ Aktif: false, Penyedia: null }}
+            />,
+        );
+
+        expect(screen.getByText('Pesanan GoFood')).toBeTruthy();
+        expect(screen.getByText('Pesanan ojol dicatat manual di kasir')).toBeTruthy();
+        expect(screen.getByText('Platform')).toBeTruthy();
+        expect(screen.getByText('Komisi platform (persen, opsional)')).toBeTruthy();
+        expect(screen.getByText(/0 sampai 40 persen/)).toBeTruthy();
+    });
 });

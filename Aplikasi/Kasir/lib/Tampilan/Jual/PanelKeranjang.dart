@@ -27,6 +27,7 @@ class PanelKeranjang extends StatelessWidget {
     this.labelKosongkan = 'Batalkan transaksi',
     this.saatPelanggan,
     this.saatLaundry,
+    this.saatKanal,
   });
 
   final Keranjang keranjang;
@@ -60,6 +61,10 @@ class PanelKeranjang extends StatelessWidget {
 
   /// Laundry (§9.9): buka isian tiket laundry. Null = tidak ditampilkan (laundry belum aktif).
   final VoidCallback? saatLaundry;
+
+  /// X8: pilih kanal (bawa pulang, GoFood, …). Null = tidak ditampilkan (tidak ada kanal platform/harga berkanal, mode
+  /// meja, atau mode Pelayan).
+  final VoidCallback? saatKanal;
 
   static List<String> AmbilRincian(ItemKeranjang b) => [
     if (b.namaSatuan != null && b.namaSatuan!.isNotEmpty) '@ ${b.hargaSatuan.FormatRupiah()}/${b.namaSatuan}',
@@ -116,6 +121,44 @@ class PanelKeranjang extends StatelessWidget {
                     icon: const Icon(Icons.remove_shopping_cart_outlined),
                   ),
                 ],
+              ),
+            ),
+          if (saatKanal != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                key: const ValueKey('PilihKanal'),
+                onTap: saatKanal,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        LayananPenjualan.kanalPlatform.contains(LayananPenjualan.AmbilKanal(keranjang))
+                            ? Icons.delivery_dining
+                            : Icons.storefront_outlined,
+                        size: TokenJarak.ikonSedang,
+                        color: keranjang.kanal == null ? warna.teksSekunder : warna.brand,
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          'Kanal: ${LayananPenjualan.AmbilLabelKanal(LayananPenjualan.AmbilKanal(keranjang))} · ketuk untuk mengganti',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
+                ),
               ),
             ),
           if (saatPelanggan != null)

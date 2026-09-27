@@ -231,3 +231,32 @@ Map<String, Object?> PilihanUji(String uuid, String kelompok, String nama, Strin
   'Aktif': true,
   'Urutan': urutan,
 };
+
+/// X8: katalog uji dengan daftar harga GoFood (Americano 19.000, Croissant 31.000; produk lain harga dasar).
+Map<String, Object?> KatalogOjolUji() {
+  final katalog = KatalogUji();
+  katalog['DaftarHarga'] = [
+    {
+      'Uuid': '01K5DH000000000000G0F00DXX',
+      'Nama': 'Harga GoFood',
+      'UuidOutlet': null,
+      'Kanal': 'GoFood',
+      'TierPelanggan': null,
+      'MulaiPada': null,
+      'SelesaiPada': null,
+      'Prioritas': 0,
+      'Aktif': true,
+    },
+  ];
+  (katalog['ProdukHarga']! as List<Map<String, Object?>>).addAll([
+    {
+      ...HargaUji('01K5HRG00000000AMERG0F00D1', UuidUji.americano, UuidUji.psAmericano, '19000.00'),
+      'UuidDaftarHarga': '01K5DH000000000000G0F00DXX',
+    },
+    {
+      ...HargaUji('01K5HRG00000000CR01G0F00D1', UuidUji.croissant, UuidUji.psCroissant, '31000.00'),
+      'UuidDaftarHarga': '01K5DH000000000000G0F00DXX',
+    },
+  ]);
+  return katalog;
+}

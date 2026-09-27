@@ -17,7 +17,7 @@ final class DaftarMetodePembayaran
     public function __construct(private readonly ReferensiBankAktif $referensiBank) {}
 
     /**
-     * @return list<array{Uuid: string, Jenis: string, LabelJenis: string, Nama: string, NamaBank: string|null, NomorRekening: string|null, NamaPemilikRekening: string|null, PersenBiaya: string, AdaGambarQris: bool, Aktif: bool, Wajib: bool}>
+     * @return list<array{Uuid: string, Jenis: string, LabelJenis: string, Nama: string, NamaBank: string|null, NomorRekening: string|null, NamaPemilikRekening: string|null, Kanal: string|null, LabelKanal: string|null, PersenBiaya: string, AdaGambarQris: bool, Aktif: bool, Wajib: bool}>
      */
     public function Ambil(): array
     {
@@ -32,6 +32,8 @@ final class DaftarMetodePembayaran
             'NamaBank' => $metode->IdReferensiBank === null ? null : ($namaBank[$metode->IdReferensiBank] ?? null),
             'NomorRekening' => $metode->NomorRekening,
             'NamaPemilikRekening' => $metode->NamaPemilikRekening,
+            'Kanal' => $metode->Kanal?->value,
+            'LabelKanal' => $metode->Kanal?->AmbilLabel(),
             'PersenBiaya' => $metode->PersenBiaya,
             'AdaGambarQris' => $metode->PathGambarQris !== null,
             'Aktif' => $metode->Aktif,
@@ -43,7 +45,7 @@ final class DaftarMetodePembayaran
      * Metode aktif berjenis fase 1 untuk `data-awal` POS (F-07b). Path gambar QRIS tidak dikirim; perangkat mengunduh
      * lewat `GET /api/pos/v1/metode-pembayaran/{uuid}/gambar-qris`.
      *
-     * @return list<array{Uuid: string, Jenis: string, Nama: string, NomorRekening: string|null, NamaPemilikRekening: string|null, AdaGambarQris: bool, Urutan: int}>
+     * @return list<array{Uuid: string, Jenis: string, Nama: string, NomorRekening: string|null, NamaPemilikRekening: string|null, AdaGambarQris: bool, Urutan: int, Kanal: string|null}>
      */
     public function AmbilUntukPos(): array
     {
@@ -61,6 +63,8 @@ final class DaftarMetodePembayaran
                 'NamaPemilikRekening' => $metode->NamaPemilikRekening,
                 'AdaGambarQris' => $metode->PathGambarQris !== null,
                 'Urutan' => $metode->Urutan,
+                // X8: kanal platform metode Marketplace (kasir memakainya hanya untuk penjualan kanal itu).
+                'Kanal' => $metode->Kanal?->value,
             ])
             ->all());
     }

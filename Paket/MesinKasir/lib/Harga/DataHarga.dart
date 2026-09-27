@@ -1,7 +1,17 @@
 import 'package:inti/Inti.dart';
 
 /// Kanal penjualan (PRD §15.3 `Penjualan.Kanal`); padanan `App\Domain\Penjualan\Enum\KanalPenjualan`.
-enum KanalPenjualan { MakanDiTempat, BawaPulang, Antar, Online, PesanSendiri, Marketplace }
+enum KanalPenjualan {
+  MakanDiTempat,
+  BawaPulang,
+  Antar,
+  Online,
+  PesanSendiri,
+  Marketplace,
+  GoFood,
+  GrabFood,
+  ShopeeFood,
+}
 
 /// Lapisan price engine yang menghasilkan harga; padanan `App\Domain\Katalog\Harga\Enum\SumberHarga`.
 enum SumberHarga { DaftarHarga, Bertingkat, Dasar }

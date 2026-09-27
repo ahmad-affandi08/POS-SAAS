@@ -39,6 +39,9 @@ void main() {
       'Online',
       'PesanSendiri',
       'Marketplace',
+      'GoFood',
+      'GrabFood',
+      'ShopeeFood',
     ]);
     expect(SumberHarga.values.map((sumber) => sumber.name), ['DaftarHarga', 'Bertingkat', 'Dasar']);
   });
