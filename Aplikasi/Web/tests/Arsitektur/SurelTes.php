@@ -70,13 +70,47 @@ it('setiap badan teks punya pasangan HTML dan sebaliknya', function (): void {
     expect($teks)->not->toBeEmpty()->and($html)->toBe($teks);
 });
 
-it('badan teks tidak meng-escape tautan, sehingga tanda tangan tautan tidak rusak', function (): void {
-    // Regresi 403 "Invalid signature": di `text/plain`, `{{ $Tautan }}` mengubah `&` menjadi `&amp;`.
+it('badan teks tidak meng-escape apa pun, karena escaping HTML di text/plain merusak isi', function (): void {
+    // Regresi 403 "Invalid signature": di `text/plain`, `{{ $Tautan }}` mengubah `&` menjadi `&amp;`, sehingga
+    // `&signature=` terbaca PHP sebagai parameter `amp;signature`. Aturannya berlaku untuk semua echo, bukan
+    // hanya tautan: `'`, `"`, `<`, dan `>` pada nama usaha atau isi pesan sama-sama rusak.
     $pelanggar = [];
 
     foreach (BerkasSurelTeks() as $berkas) {
-        if (preg_match_all('/\{\{\s*\$[A-Za-z]*Tautan[A-Za-z]*\b/', (string) $berkas->getContents(), $cocok) > 0) {
+        // Komentar Blade `{{-- --}}` dibuang dulu; yang dilarang adalah echo.
+        $isi = preg_replace('/\{\{--.*?--\}\}/s', '', (string) $berkas->getContents());
+
+        if (preg_match_all('/\{\{.*?\}\}/s', (string) $isi, $cocok) > 0) {
             $pelanggar[] = $berkas->getRelativePathname().': '.implode(', ', $cocok[0]);
+        }
+    }
+
+    expect($pelanggar)->toBe([]);
+});
+
+it('badan HTML tidak pernah mengeluarkan nilai mentah tanpa e()', function (): void {
+    // Kebalikan dari aturan di atas: di badan HTML escaping wajib. `{!! !!}` hanya sah bila nilainya sudah
+    // dilewatkan `e()` lebih dulu (mis. `nl2br(e($Teks))` di komponen Kutipan).
+    $pelanggar = [];
+
+    $berkasHtml = [resource_path('views/Surel/TataLetak.blade.php')];
+
+    foreach (['Html', 'Komponen'] as $folder) {
+        foreach (Finder::create()->files()->in(resource_path('views/Surel/'.$folder))->name('*.blade.php') as $berkas) {
+            $berkasHtml[] = (string) $berkas->getRealPath();
+        }
+    }
+
+    foreach ($berkasHtml as $jalur) {
+        $isi = preg_replace('/\{\{--.*?--\}\}/s', '', (string) file_get_contents($jalur));
+
+        preg_match_all('/\{!!(.*?)!!\}/s', (string) $isi, $cocok);
+
+        foreach ($cocok[1] as $ungkapan) {
+            // `\be\(` agar `route(`/`nl2br(` tidak lolos hanya karena mengandung "e(".
+            if (preg_match('/\be\(/', $ungkapan) !== 1) {
+                $pelanggar[] = basename($jalur).': {!!'.$ungkapan.'!!}';
+            }
         }
     }
 

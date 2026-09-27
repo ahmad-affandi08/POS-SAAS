@@ -359,15 +359,22 @@ describe('Badan email verifikasi (D-26)', function (): void {
         expect(Pengguna::query()->firstOrFail()->EmailDiverifikasiPada)->not->toBeNull();
     });
 
-    it('nama dan alamat dengan & tampil apa adanya di badan teks', function (): void {
+    it('karakter yang biasanya di-escape tampil apa adanya di badan teks', function (): void {
+        // Bukan cuma `&` di tautan: `'`, `"`, `<`, dan `>` pada nama usaha juga rusak kalau di-escape
+        // (`&#039;`, `&quot;`, `&lt;`), dan badan teks tidak pernah dirender sebagai HTML.
+        $nama = 'Toko A & B "Jaya" <Pusat> milik Ani\'s';
         $teks = view('Surel.Tenant.VerifikasiEmail', [
-            'Nama' => 'Toko A & B',
+            'Nama' => $nama,
             'Tautan' => 'https://contoh.test/verifikasi-email/a/b?expires=1&signature=abc',
             'JamBerlaku' => 24,
         ])->render();
 
-        expect($teks)->toContain('Toko A & B')
-            ->and($teks)->toContain('?expires=1&signature=abc');
+        expect($teks)->toContain($nama)
+            ->and($teks)->toContain('?expires=1&signature=abc')
+            ->and($teks)->not->toContain('&amp;')
+            ->and($teks)->not->toContain('&#039;')
+            ->and($teks)->not->toContain('&quot;')
+            ->and($teks)->not->toContain('&lt;');
     });
 });
 

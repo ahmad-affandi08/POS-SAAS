@@ -1,12 +1,12 @@
 Halo,
 
-{{ $NamaPetugas }} dari Tim Dukungan membalas tiket Anda {{ $Nomor }} ({{ $Judul }}):
+{!! $NamaPetugas !!} dari Tim Dukungan membalas tiket Anda {!! $Nomor !!} ({!! $Judul !!}):
 
-{{ $Isi }}
+{!! $Isi !!}
 
-Status tiket sekarang: {{ $Status }}.
+Status tiket sekarang: {!! $Status !!}.
 
 Balas atau lihat percakapan lengkap di:
-{{ $Tautan }}
+{!! $Tautan !!}
 
 Mohon jangan membalas email ini. Kirim balasan lewat halaman Bantuan agar tercatat di tiket.

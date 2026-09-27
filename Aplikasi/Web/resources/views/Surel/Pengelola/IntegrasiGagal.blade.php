@@ -1,9 +1,9 @@
 Halo,
 
-Tes koneksi berkala di lingkungan {{ $Lingkungan }} gagal untuk integrasi berikut:
+Tes koneksi berkala di lingkungan {!! $Lingkungan !!} gagal untuk integrasi berikut:
 
 @foreach ($Gagal as $baris)
-- {{ $baris['Label'] }}: {{ $baris['Pesan'] }}
+- {!! $baris['Label'] !!}: {!! $baris['Pesan'] !!}
 @endforeach
 
 Periksa di Platform Pengelola > Integrasi, perbaiki kredensial atau layanan penyedia, lalu uji ulang.

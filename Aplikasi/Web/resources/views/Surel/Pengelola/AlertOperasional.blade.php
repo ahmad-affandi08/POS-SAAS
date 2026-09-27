@@ -1,11 +1,11 @@
 Halo Tim Teknis,
 
-Alert {{ $Tingkat }}: {{ $Label }}
-Mulai: {{ $MulaiPada }}
+Alert {!! $Tingkat !!}: {!! $Label !!}
+Mulai: {!! $MulaiPada !!}
 
-{{ $Pesan }}
+{!! $Pesan !!}
 
 Periksa dasbor operasional:
-{{ $Tautan }}
+{!! $Tautan !!}
 
 Email ini dikirim sekali per insiden. Alert tertutup otomatis saat kondisi pulih.

@@ -1,10 +1,10 @@
-Halo {{ $Nama }},
+Halo {!! $Nama !!},
 
-Pembayaran tagihan {{ $NomorTagihan }} sebesar {{ $Total }} sudah kami terima.
+Pembayaran tagihan {!! $NomorTagihan !!} sebesar {!! $Total !!} sudah kami terima.
 
-Langganan paket {{ $NamaPaket }} aktif sampai {{ $PeriodeSelesai }}.
+Langganan paket {!! $NamaPaket !!} aktif sampai {!! $PeriodeSelesai !!}.
 
 Lihat rincian tagihan dan langganan Anda di:
-{{ $Tautan }}
+{!! $Tautan !!}
 
 Terima kasih sudah berlangganan.

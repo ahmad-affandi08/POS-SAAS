@@ -1,4 +1,4 @@
-{{ $Isi }}
+{!! $Isi !!}
 
 Salam,
-{{ $NamaUsaha }}
+{!! $NamaUsaha !!}

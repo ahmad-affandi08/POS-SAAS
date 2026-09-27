@@ -1,9 +1,9 @@
 Halo,
 
-{{ $NamaPengundang }} mengundang Anda bergabung ke Platform Pengelola.
+{!! $NamaPengundang !!} mengundang Anda bergabung ke Platform Pengelola.
 
 Buka tautan berikut untuk membuat kata sandi dan mengaktifkan verifikasi dua langkah:
-{{ $Tautan }}
+{!! $Tautan !!}
 
-Undangan berlaku sampai {{ $BerlakuSampai }} dan hanya bisa dipakai sekali.
+Undangan berlaku sampai {!! $BerlakuSampai !!} dan hanya bisa dipakai sekali.
 Jika Anda tidak merasa diundang, abaikan email ini.
