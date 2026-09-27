@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Organisasi\Aksi;
 
+use App\Domain\Bersama\Web\AlamatDomain;
 use App\Domain\Organisasi\Layanan\PenandaVerifikasiEmail;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Surel\VerifikasiEmail;
@@ -13,6 +14,11 @@ use Illuminate\Support\Facades\URL;
 /**
  * Mengirim tautan verifikasi email bertanda tangan (BR-00.5). Tautan memuat hash email sehingga tidak berlaku lagi
  * bila email diganti.
+ *
+ * **Tanda tangan relatif** (D-20): jalurnya ditandatangani, domain tenant dipasang belakangan — sama seperti tautan
+ * pratinjau situs. Tanda tangan absolut ikut menghitung skema & host, sehingga tautan menjadi "Invalid signature"
+ * begitu host yang menandatangani berbeda dari host yang melayani (mis. `payou.id` dialihkan ke `dashboard.payou.id`
+ * oleh `ArahkanDomainAplikasi`, atau skema terbaca `http` di balik proxy yang tidak dipercaya).
  */
 final class KirimVerifikasiEmail
 {
@@ -25,10 +31,11 @@ final class KirimVerifikasiEmail
         }
 
         $jam = (int) config('tenant.JamBerlakuVerifikasiEmail');
-        $tautan = URL::temporarySignedRoute('verifikasi-email', now()->addHours($jam), [
+        $relatif = URL::temporarySignedRoute('verifikasi-email', now()->addHours($jam), [
             'pengguna' => $pengguna->Uuid,
             'hash' => $this->penanda->BuatHash($pengguna),
-        ]);
+        ], false);
+        $tautan = AlamatDomain::BuatUrlAbsolutTenant($relatif);
 
         Mail::to($pengguna->Email)->send(new VerifikasiEmail($pengguna->Nama, $tautan, $jam));
     }

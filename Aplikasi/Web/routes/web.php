@@ -109,7 +109,9 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
     Route::post('/undangan/{token}', [TerimaUndanganKontroler::class, 'Terima'])->middleware(['throttle:10,1', SiapkanAuditTenant::class])->name('undangan.terima');
 
     Route::get('/verifikasi-email/{pengguna}/{hash}', [VerifikasiEmailKontroler::class, 'Verifikasi'])
-        ->middleware('signed')
+        // Tanda tangan relatif: jalurnya ditandatangani lalu domain tenant dipasang (D-20), sehingga tautan tetap
+        // sah walau host penandatangan berbeda atau skema terbaca http di balik proxy.
+        ->middleware('signed:relative')
         ->name('verifikasi-email');
 
     // Auth tenant: AuthenticateSession mengakhiri sesi lain setelah kata sandi diatur ulang (BR-00.9).

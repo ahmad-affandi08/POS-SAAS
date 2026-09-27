@@ -166,12 +166,25 @@ describe('Verifikasi email (BR-00.5)', function (): void {
         $pengguna = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Pengguna'];
         $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => app(PenandaVerifikasiEmail::class)->BuatHash($pengguna)];
 
-        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter))->assertForbidden();
-        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), [...$parameter, 'hash' => 'salah']))
+        // Tanda tangan relatif (D-20): jalur yang ditandatangani, bukan skema & host.
+        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->subMinute(), $parameter, false))->assertForbidden();
+        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), [...$parameter, 'hash' => 'salah'], false))
             ->assertSessionHasErrors('Umum');
         expect($pengguna->refresh()->EmailDiverifikasiPada)->toBeNull();
 
-        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), $parameter))->assertRedirect(route('masuk'));
+        $this->get(URL::temporarySignedRoute('verifikasi-email', now()->addHour(), $parameter, false))->assertRedirect(route('masuk'));
+        expect($pengguna->refresh()->EmailDiverifikasiPada)->not->toBeNull();
+    });
+
+    it('tautan tetap sah walau dibuka di host lain (D-20: payou.id dialihkan ke domain tenant)', function (): void {
+        // Regresi: tanda tangan absolut ikut menghitung skema & host, sehingga tautan yang ditandatangani di satu
+        // domain menjadi "Invalid signature" begitu ArahkanDomainAplikasi mengalihkannya ke domain tenant.
+        $pengguna = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data())['Pengguna'];
+        $parameter = ['pengguna' => $pengguna->Uuid, 'hash' => app(PenandaVerifikasiEmail::class)->BuatHash($pengguna)];
+        $relatif = URL::temporarySignedRoute('verifikasi-email', now()->addHour(), $parameter, false);
+
+        $this->get('https://host-lain.test'.$relatif)->assertRedirect(route('masuk'));
+
         expect($pengguna->refresh()->EmailDiverifikasiPada)->not->toBeNull();
     });
 
