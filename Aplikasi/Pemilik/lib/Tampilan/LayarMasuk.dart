@@ -82,9 +82,7 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
                           // Tombol mata: target sentuh IconButton sudah 48dp (§17.6.4).
                           suffixIcon: IconButton(
                             onPressed: () => setState(() => _sandiTerlihat = !_sandiTerlihat),
-                            icon: Icon(
-                              _sandiTerlihat ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            ),
+                            icon: Icon(_sandiTerlihat ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                             tooltip: _sandiTerlihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi',
                           ),
                         ),

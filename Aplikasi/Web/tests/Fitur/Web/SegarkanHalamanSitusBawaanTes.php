@@ -12,6 +12,30 @@ use App\Domain\Situs\Model\HalamanSitus;
  * tampil di pemasangan yang halamannya sudah terlanjur dibuat.
  */
 
+/**
+ * Urutkan kunci array secara rekursif.
+ *
+ * Kolom JSON MySQL menormalkan urutan kunci objek (panjang kunci dulu, lalu alfabet), sedangkan array sumber di
+ * PHP memakai urutan penulisan. Perbandingan identik (`toBe`) peka urutan kunci, jadi test ini pernah lolos di
+ * SQLite lokal tetapi gagal di MySQL CI. Yang dijanjikan kontraknya adalah isinya, bukan urutan kuncinya, jadi
+ * kedua sisi dinormalkan dulu — nilai & strukturnya tetap dibandingkan ketat.
+ *
+ * @param  array<array-key, mixed>  $data
+ * @return array<array-key, mixed>
+ */
+function UrutkanKunciSitus(array $data): array
+{
+    ksort($data);
+
+    foreach ($data as $kunci => $nilai) {
+        if (is_array($nilai)) {
+            $data[$kunci] = UrutkanKunciSitus($nilai);
+        }
+    }
+
+    return $data;
+}
+
 it('menimpa halaman yang sudah ada dengan isi bawaan terbaru dan langsung menerbitkannya', function (): void {
     app(SiapkanHalamanSitusBawaan::class)->Jalankan();
 
@@ -26,8 +50,10 @@ it('menimpa halaman yang sudah ada dengan isi bawaan terbaru dan langsung menerb
     $beranda = HalamanSitus::query()->where('Slug', 'beranda')->firstOrFail();
     $bawaan = KontenSitusBawaan::AmbilHalaman()['beranda'];
 
-    expect($beranda->BagianTerbit)->toBe($bawaan['Bagian'])
-        ->and($beranda->BagianDraf)->toBe($bawaan['Bagian'])
+    $bagianBawaan = UrutkanKunciSitus($bawaan['Bagian']);
+
+    expect(UrutkanKunciSitus($beranda->BagianTerbit))->toBe($bagianBawaan)
+        ->and(UrutkanKunciSitus($beranda->BagianDraf))->toBe($bagianBawaan)
         ->and($beranda->JudulTerbit)->toBe($bawaan['Judul'])
         ->and($beranda->DiterbitkanPada)->not->toBeNull();
 });

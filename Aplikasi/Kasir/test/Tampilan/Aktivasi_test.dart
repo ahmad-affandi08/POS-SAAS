@@ -31,7 +31,7 @@ void main() {
     await Lepas(tester, u);
   });
 
-  testWidgets('hasil pindai mengisi kode lalu langsung mencoba mengaktifkan', (tester) async {
+  testWidgets('hasil pindai langsung mengaktifkan perangkat tanpa ketukan tambahan', (tester) async {
     final u = LingkunganUji.Buat();
     final pemindai = PemindaiQrTiruan(hasil: 'A7K9M2QT');
     await PasangAplikasi(tester, u, pemindaiQr: pemindai);
@@ -40,8 +40,27 @@ void main() {
     await Tunggu(tester, const Duration(milliseconds: 600));
 
     expect(pemindai.dipanggil, 1);
-    // Kode dari QR masuk ke isian, jadi pengguna bisa melihat & memperbaikinya bila aktivasi gagal.
-    expect(find.widgetWithText(TextField, 'A7K9M2QT'), findsOneWidget);
+    // Aktivasinya berhasil, jadi layar aktivasi selesai dan layar pilih kasir mengambil alih. Asersi lama di
+    // sini mencari kode di isian setelah aktivasi sukses — isian itu memang sudah tidak ada lagi.
+    expect(find.text('Aktifkan perangkat kasir'), findsNothing);
+    expect(find.widgetWithText(TextField, 'Kode aktivasi'), findsNothing);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('kode hasil pindai yang ditolak tetap terisi supaya bisa diperbaiki', (tester) async {
+    final u = LingkunganUji.Buat();
+    // Kurang dari 6 karakter ditolak di perangkat sebelum dikirim (LayananPerangkat.Aktifkan).
+    final pemindai = PemindaiQrTiruan(hasil: 'A7K9');
+    await PasangAplikasi(tester, u, pemindaiQr: pemindai);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Pindai kode QR'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    expect(pemindai.dipanggil, 1);
+    expect(find.text('Masukkan kode aktivasi dari back-office menu Perangkat.'), findsOneWidget);
+    // Kode dari QR tetap di isian, jadi pengguna bisa melihat & memperbaikinya.
+    expect(find.widgetWithText(TextField, 'A7K9'), findsOneWidget);
 
     await Lepas(tester, u);
   });

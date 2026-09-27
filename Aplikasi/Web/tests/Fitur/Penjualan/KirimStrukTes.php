@@ -184,12 +184,19 @@ describe('K3 kirim struk digital dari POS', function (): void {
 
         $url = url('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $p->Uuid));
         Mail::assertSent(StrukBelanjaDigital::class, function (StrukBelanjaDigital $surel) use ($url, $p): bool {
-            $teks = $surel->render();
+            // Sejak D-26 email dikirim dua bagian, dan `render()` mengembalikan badan **HTML**. Asersi lama di sini
+            // mencari format baris badan teks ("Nama x 2: Rp 77.000") di hasil `render()`, jadi tidak pernah cocok.
+            // Sekarang kedua badan diperiksa pada formatnya masing-masing.
+            $html = $surel->render();
+            $teks = (string) view($surel->textView, $surel->buildViewData())->render();
 
             return $surel->hasTo('bu.ratna@contoh.co.id') && $surel->hasFrom('struk@payou.id', 'Toko Kelontong Berkah Solo')
                 && $surel->nomor === $p->Nomor && $surel->total === 'Rp 77.000'
-                && str_contains($teks, $url) && str_contains($teks, 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter x 2: Rp 77.000')
-                && ! str_contains($teks, '<img');
+                && str_contains($html, $url) && str_contains($teks, $url)
+                && str_contains($html, 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter')
+                && str_contains($html, 'Rp 77.000')
+                && str_contains($teks, 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter x 2: Rp 77.000')
+                && ! str_contains($html, '<img') && ! str_contains($teks, '<img');
         });
         expect($pesan->refresh()->Status)->toBe(StatusPesanKeluar::Terkirim);
     });

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -31,7 +32,9 @@ class _LayarPindaiQrState extends State<_LayarPindaiQr> {
 
   @override
   void dispose() {
-    _kendali.dispose();
+    // `MobileScannerController.dispose()` mengembalikan Future, sedangkan `State.dispose()` sinkron. Kameranya
+    // dilepas di latar belakang; tidak ada yang perlu ditunggu setelah layar ini ditutup.
+    unawaited(_kendali.dispose());
     super.dispose();
   }
 

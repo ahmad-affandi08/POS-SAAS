@@ -226,7 +226,11 @@ describe('Verifikasi email (BR-00.5)', function (): void {
 
     it('kirim ulang untuk email yang sudah terverifikasi tidak mengaku mengirim', function (): void {
         $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
-        Pengguna::query()->firstOrFail()->forceFill(['EmailDiverifikasiPada' => now()])->save();
+        Pengguna::query()->sole()->forceFill(['EmailDiverifikasiPada' => now()])->save();
+        // Lapisan test Laravel tidak pernah memanggil `forgetGuards()`, jadi guard `web` masih memegang instance
+        // Pengguna hasil request `/daftar` dan tidak melihat perubahan di atas. Di produksi setiap request memuat
+        // penggunanya ulang dari basis data, jadi guard-nya dilupakan dulu supaya skenarionya sama.
+        $this->app['auth']->forgetGuards();
         Mail::fake();
 
         $this->post('/verifikasi-email/kirim-ulang')
