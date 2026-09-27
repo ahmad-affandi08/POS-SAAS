@@ -73,6 +73,12 @@ final class AdaptorMidtrans extends AdaptorDasar
         );
     }
 
+    /** Status ditanyakan dengan nomor pesanan (order id) milik PAYOU (audit P0 F-02). */
+    public function CekDapatCekDariNomorPesanan(): bool
+    {
+        return true;
+    }
+
     public function CekStatus(string $nomorPesanan, string $idReferensi): StatusPembayaranGerbang
     {
         $respons = $this->Kirim(fn () => $this->Klien()->get($this->AlamatDasar().'/v2/'.rawurlencode($nomorPesanan).'/status'));

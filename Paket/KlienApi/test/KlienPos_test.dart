@@ -59,15 +59,21 @@ void main() {
       }, 200);
     });
 
-    final hasil = await klien.KirimSinkron([
+    final jawaban = await klien.KirimSinkron([
       const ItemOutbox(jenis: 'Shift.Buka', uuid: 'A', data: {'KasAwal': '500000.00'}),
-      const ItemOutbox(jenis: 'MutasiKas.Catat', uuid: 'B', data: {}),
+      const ItemOutbox(jenis: 'MutasiKas.Catat', uuid: 'B', data: {}, uuidPerangkatAsal: 'PRGLAMA'),
     ]);
+    final hasil = jawaban.hasil;
+    final item = (jsonDecode(dikirim.body) as Map<String, Object?>)['Item']! as List<Object?>;
 
     expect(dikirim.headers['Authorization'], 'Bearer Tkn');
-    expect((jsonDecode(dikirim.body) as Map<String, Object?>)['Item'], hasLength(2));
+    expect(item, hasLength(2));
+    // Audit P0 F-01: perangkat asal hanya dikirim bila diketahui.
+    expect((item[0]! as Map<String, Object?>).containsKey('UuidPerangkatAsal'), isFalse);
+    expect((item[1]! as Map<String, Object?>)['UuidPerangkatAsal'], 'PRGLAMA');
     expect(hasil.map((h) => h.status), [StatusItemSinkron.Diterima, StatusItemSinkron.Ditolak]);
     expect(hasil[1].kodeGalat, 'PersetujuanDiperlukan');
+    expect(jawaban.perangkatDicabut, isFalse);
   });
 
   test(

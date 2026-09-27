@@ -2313,6 +2313,15 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, BarisOutbox> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _UuidPerangkatMeta = const VerificationMeta('UuidPerangkat');
+  @override
+  late final GeneratedColumn<String> UuidPerangkat = GeneratedColumn<String>(
+    'UuidPerangkat',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Id,
@@ -2325,6 +2334,7 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, BarisOutbox> {
     PesanGalat,
     DibuatPada,
     BerikutnyaPada,
+    UuidPerangkat,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2380,6 +2390,12 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, BarisOutbox> {
     } else if (isInserting) {
       context.missing(_BerikutnyaPadaMeta);
     }
+    if (data.containsKey('UuidPerangkat')) {
+      context.handle(
+        _UuidPerangkatMeta,
+        UuidPerangkat.isAcceptableOrUnknown(data['UuidPerangkat']!, _UuidPerangkatMeta),
+      );
+    }
     return context;
   }
 
@@ -2402,6 +2418,7 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, BarisOutbox> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}BerikutnyaPada'],
       )!,
+      UuidPerangkat: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}UuidPerangkat']),
     );
   }
 
@@ -2422,6 +2439,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
   final String? PesanGalat;
   final DateTime DibuatPada;
   final DateTime BerikutnyaPada;
+  final String? UuidPerangkat;
   const BarisOutbox({
     required this.Id,
     required this.Uuid,
@@ -2433,6 +2451,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
     this.PesanGalat,
     required this.DibuatPada,
     required this.BerikutnyaPada,
+    this.UuidPerangkat,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2451,6 +2470,9 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
     }
     map['DibuatPada'] = Variable<DateTime>(DibuatPada);
     map['BerikutnyaPada'] = Variable<DateTime>(BerikutnyaPada);
+    if (!nullToAbsent || UuidPerangkat != null) {
+      map['UuidPerangkat'] = Variable<String>(UuidPerangkat);
+    }
     return map;
   }
 
@@ -2466,6 +2488,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
       PesanGalat: PesanGalat == null && nullToAbsent ? const Value.absent() : Value(PesanGalat),
       DibuatPada: Value(DibuatPada),
       BerikutnyaPada: Value(BerikutnyaPada),
+      UuidPerangkat: UuidPerangkat == null && nullToAbsent ? const Value.absent() : Value(UuidPerangkat),
     );
   }
 
@@ -2482,6 +2505,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
       PesanGalat: serializer.fromJson<String?>(json['PesanGalat']),
       DibuatPada: serializer.fromJson<DateTime>(json['DibuatPada']),
       BerikutnyaPada: serializer.fromJson<DateTime>(json['BerikutnyaPada']),
+      UuidPerangkat: serializer.fromJson<String?>(json['UuidPerangkat']),
     );
   }
   @override
@@ -2498,6 +2522,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
       'PesanGalat': serializer.toJson<String?>(PesanGalat),
       'DibuatPada': serializer.toJson<DateTime>(DibuatPada),
       'BerikutnyaPada': serializer.toJson<DateTime>(BerikutnyaPada),
+      'UuidPerangkat': serializer.toJson<String?>(UuidPerangkat),
     };
   }
 
@@ -2512,6 +2537,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
     Value<String?> PesanGalat = const Value.absent(),
     DateTime? DibuatPada,
     DateTime? BerikutnyaPada,
+    Value<String?> UuidPerangkat = const Value.absent(),
   }) => BarisOutbox(
     Id: Id ?? this.Id,
     Uuid: Uuid ?? this.Uuid,
@@ -2523,6 +2549,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
     PesanGalat: PesanGalat.present ? PesanGalat.value : this.PesanGalat,
     DibuatPada: DibuatPada ?? this.DibuatPada,
     BerikutnyaPada: BerikutnyaPada ?? this.BerikutnyaPada,
+    UuidPerangkat: UuidPerangkat.present ? UuidPerangkat.value : this.UuidPerangkat,
   );
   BarisOutbox copyWithCompanion(OutboxCompanion data) {
     return BarisOutbox(
@@ -2536,6 +2563,7 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
       PesanGalat: data.PesanGalat.present ? data.PesanGalat.value : this.PesanGalat,
       DibuatPada: data.DibuatPada.present ? data.DibuatPada.value : this.DibuatPada,
       BerikutnyaPada: data.BerikutnyaPada.present ? data.BerikutnyaPada.value : this.BerikutnyaPada,
+      UuidPerangkat: data.UuidPerangkat.present ? data.UuidPerangkat.value : this.UuidPerangkat,
     );
   }
 
@@ -2551,14 +2579,26 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
           ..write('KodeGalat: $KodeGalat, ')
           ..write('PesanGalat: $PesanGalat, ')
           ..write('DibuatPada: $DibuatPada, ')
-          ..write('BerikutnyaPada: $BerikutnyaPada')
+          ..write('BerikutnyaPada: $BerikutnyaPada, ')
+          ..write('UuidPerangkat: $UuidPerangkat')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(Id, Uuid, Jenis, Data, Status, Percobaan, KodeGalat, PesanGalat, DibuatPada, BerikutnyaPada);
+  int get hashCode => Object.hash(
+    Id,
+    Uuid,
+    Jenis,
+    Data,
+    Status,
+    Percobaan,
+    KodeGalat,
+    PesanGalat,
+    DibuatPada,
+    BerikutnyaPada,
+    UuidPerangkat,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2572,7 +2612,8 @@ class BarisOutbox extends DataClass implements Insertable<BarisOutbox> {
           other.KodeGalat == this.KodeGalat &&
           other.PesanGalat == this.PesanGalat &&
           other.DibuatPada == this.DibuatPada &&
-          other.BerikutnyaPada == this.BerikutnyaPada);
+          other.BerikutnyaPada == this.BerikutnyaPada &&
+          other.UuidPerangkat == this.UuidPerangkat);
 }
 
 class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
@@ -2586,6 +2627,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
   final Value<String?> PesanGalat;
   final Value<DateTime> DibuatPada;
   final Value<DateTime> BerikutnyaPada;
+  final Value<String?> UuidPerangkat;
   const OutboxCompanion({
     this.Id = const Value.absent(),
     this.Uuid = const Value.absent(),
@@ -2597,6 +2639,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
     this.PesanGalat = const Value.absent(),
     this.DibuatPada = const Value.absent(),
     this.BerikutnyaPada = const Value.absent(),
+    this.UuidPerangkat = const Value.absent(),
   });
   OutboxCompanion.insert({
     this.Id = const Value.absent(),
@@ -2609,6 +2652,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
     this.PesanGalat = const Value.absent(),
     required DateTime DibuatPada,
     required DateTime BerikutnyaPada,
+    this.UuidPerangkat = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Jenis = Value(Jenis),
        Data = Value(Data),
@@ -2626,6 +2670,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
     Expression<String>? PesanGalat,
     Expression<DateTime>? DibuatPada,
     Expression<DateTime>? BerikutnyaPada,
+    Expression<String>? UuidPerangkat,
   }) {
     return RawValuesInsertable({
       if (Id != null) 'Id': Id,
@@ -2638,6 +2683,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
       if (PesanGalat != null) 'PesanGalat': PesanGalat,
       if (DibuatPada != null) 'DibuatPada': DibuatPada,
       if (BerikutnyaPada != null) 'BerikutnyaPada': BerikutnyaPada,
+      if (UuidPerangkat != null) 'UuidPerangkat': UuidPerangkat,
     });
   }
 
@@ -2652,6 +2698,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
     Value<String?>? PesanGalat,
     Value<DateTime>? DibuatPada,
     Value<DateTime>? BerikutnyaPada,
+    Value<String?>? UuidPerangkat,
   }) {
     return OutboxCompanion(
       Id: Id ?? this.Id,
@@ -2664,6 +2711,7 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
       PesanGalat: PesanGalat ?? this.PesanGalat,
       DibuatPada: DibuatPada ?? this.DibuatPada,
       BerikutnyaPada: BerikutnyaPada ?? this.BerikutnyaPada,
+      UuidPerangkat: UuidPerangkat ?? this.UuidPerangkat,
     );
   }
 
@@ -2700,6 +2748,9 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
     if (BerikutnyaPada.present) {
       map['BerikutnyaPada'] = Variable<DateTime>(BerikutnyaPada.value);
     }
+    if (UuidPerangkat.present) {
+      map['UuidPerangkat'] = Variable<String>(UuidPerangkat.value);
+    }
     return map;
   }
 
@@ -2715,7 +2766,8 @@ class OutboxCompanion extends UpdateCompanion<BarisOutbox> {
           ..write('KodeGalat: $KodeGalat, ')
           ..write('PesanGalat: $PesanGalat, ')
           ..write('DibuatPada: $DibuatPada, ')
-          ..write('BerikutnyaPada: $BerikutnyaPada')
+          ..write('BerikutnyaPada: $BerikutnyaPada, ')
+          ..write('UuidPerangkat: $UuidPerangkat')
           ..write(')'))
         .toString();
   }
@@ -18681,6 +18733,7 @@ typedef $$OutboxTableCreateCompanionBuilder = OutboxCompanion Function({
   Value<String?> PesanGalat,
   required DateTime DibuatPada,
   required DateTime BerikutnyaPada,
+  Value<String?> UuidPerangkat,
 });
 typedef $$OutboxTableUpdateCompanionBuilder = OutboxCompanion Function({
   Value<int> Id,
@@ -18693,6 +18746,7 @@ typedef $$OutboxTableUpdateCompanionBuilder = OutboxCompanion Function({
   Value<String?> PesanGalat,
   Value<DateTime> DibuatPada,
   Value<DateTime> BerikutnyaPada,
+  Value<String?> UuidPerangkat,
 });
 
 class $$OutboxTableFilterComposer extends Composer<_$BasisDataKasir, $OutboxTable> {
@@ -18729,6 +18783,9 @@ class $$OutboxTableFilterComposer extends Composer<_$BasisDataKasir, $OutboxTabl
 
   ColumnFilters<DateTime> get BerikutnyaPada =>
       $composableBuilder(column: $table.BerikutnyaPada, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get UuidPerangkat =>
+      $composableBuilder(column: $table.UuidPerangkat, builder: (column) => ColumnFilters(column));
 }
 
 class $$OutboxTableOrderingComposer extends Composer<_$BasisDataKasir, $OutboxTable> {
@@ -18767,6 +18824,9 @@ class $$OutboxTableOrderingComposer extends Composer<_$BasisDataKasir, $OutboxTa
 
   ColumnOrderings<DateTime> get BerikutnyaPada =>
       $composableBuilder(column: $table.BerikutnyaPada, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get UuidPerangkat =>
+      $composableBuilder(column: $table.UuidPerangkat, builder: (column) => ColumnOrderings(column));
 }
 
 class $$OutboxTableAnnotationComposer extends Composer<_$BasisDataKasir, $OutboxTable> {
@@ -18798,6 +18858,9 @@ class $$OutboxTableAnnotationComposer extends Composer<_$BasisDataKasir, $Outbox
 
   GeneratedColumn<DateTime> get BerikutnyaPada =>
       $composableBuilder(column: $table.BerikutnyaPada, builder: (column) => column);
+
+  GeneratedColumn<String> get UuidPerangkat =>
+      $composableBuilder(column: $table.UuidPerangkat, builder: (column) => column);
 }
 
 class $$OutboxTableTableManager
@@ -18835,6 +18898,7 @@ class $$OutboxTableTableManager
                 Value<String?> PesanGalat = const Value.absent(),
                 Value<DateTime> DibuatPada = const Value.absent(),
                 Value<DateTime> BerikutnyaPada = const Value.absent(),
+                Value<String?> UuidPerangkat = const Value.absent(),
               }) => OutboxCompanion(
                 Id: Id,
                 Uuid: Uuid,
@@ -18846,6 +18910,7 @@ class $$OutboxTableTableManager
                 PesanGalat: PesanGalat,
                 DibuatPada: DibuatPada,
                 BerikutnyaPada: BerikutnyaPada,
+                UuidPerangkat: UuidPerangkat,
               ),
           createCompanionCallback:
               ({
@@ -18859,6 +18924,7 @@ class $$OutboxTableTableManager
                 Value<String?> PesanGalat = const Value.absent(),
                 required DateTime DibuatPada,
                 required DateTime BerikutnyaPada,
+                Value<String?> UuidPerangkat = const Value.absent(),
               }) => OutboxCompanion.insert(
                 Id: Id,
                 Uuid: Uuid,
@@ -18870,6 +18936,7 @@ class $$OutboxTableTableManager
                 PesanGalat: PesanGalat,
                 DibuatPada: DibuatPada,
                 BerikutnyaPada: BerikutnyaPada,
+                UuidPerangkat: UuidPerangkat,
               ),
           withReferenceMapper: (p0) => p0
               .map(

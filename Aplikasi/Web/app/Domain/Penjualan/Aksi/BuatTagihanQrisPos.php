@@ -21,13 +21,18 @@ use App\Domain\Penjualan\Model\TagihanQris;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
+use Throwable;
 
 /**
  * F-08 QRIS dinamis (BR-08.5): POS meminta tagihan QRIS untuk satu pembayaran lewat gerbang pembayaran aktif milik
  * tenant (v2.06: akun merchant tenant, penyedia diizinkan platform; URL notifikasi = URL webhook tenant).
  * - Idempoten per `Uuid` perangkat: Uuid yang sama mengembalikan tagihan yang sama tanpa memanggil gerbang lagi.
- * - Baris dicadangkan dulu (indeks unik `IdTenant+Uuid`, `IsiQr` kosong) lalu gerbang dipanggil di luar transaksi DB;
- *   gerbang gagal = cadangan dihapus (Uuid yang sama boleh dicoba lagi) dan 502 `GerbangGagal` berpesan aman.
+ * - Baris dicadangkan dulu (indeks unik `IdTenant+Uuid`, `IsiQr` kosong) lalu gerbang dipanggil di luar transaksi DB.
+ *   Gerbang pasti menolak (4xx jelas) = cadangan dihapus (Uuid yang sama boleh dicoba lagi) dan 502 `GerbangGagal`.
+ * - Audit P0 F-02: hasil tidak pasti (koneksi putus/waktu habis, 5xx, respons rusak, galat tak terduga, atau proses
+ *   terhenti sebelum QR tersimpan) = cadangan TIDAK dihapus: status `TidakPasti` + `NomorPesanan` tetap tersimpan agar
+ *   webhook/rekonsiliasi (`RekonsiliasiTagihanQris`) bisa mencocokkannya; POS diminta membuat tagihan baru (Uuid baru)
+ *   lewat 502 `GerbangTidakPasti`, dan Uuid lama dijawab 409 `TagihanTidakPasti`. QR tagihan itu tidak pernah tampil.
  * - Berlaku `MENIT_BERLAKU` menit (atau batas dari gerbang bila lebih dulu).
  * - Galat: 409 `GerbangBelumAktif` (tenant belum mengaktifkan gerbang atau penyedianya dilarang platform), 422 `MetodeBukanQrisDinamis`, 422 `JumlahTidakBulat`/`JumlahTidakValid`,
  *   409 `UuidSudahDipakai` (Uuid milik perangkat lain), 409 `TagihanSedangDibuat` (permintaan sama masih diproses).
@@ -109,9 +114,19 @@ final class BuatTagihanQrisPos
                 urlNotifikasi: $gerbangTenant->urlNotifikasi,
             ));
         } catch (GalatGerbang $galat) {
-            $tagihan->delete();
+            if (! $galat->tidakPasti) {
+                $tagihan->delete();
 
-            throw new PelanggaranAturanBisnis('GerbangGagal', $galat->getMessage(), 'Umum', 502);
+                throw new PelanggaranAturanBisnis('GerbangGagal', $galat->getMessage(), 'Umum', 502);
+            }
+
+            $this->TandaiTidakPasti($tagihan, $galat->getMessage());
+
+            throw self::GalatTidakPasti('GerbangTidakPasti', 502);
+        } catch (Throwable $galat) {
+            $this->TandaiTidakPasti($tagihan, 'Galat tak terduga saat menghubungi gerbang.');
+
+            throw $galat;
         }
 
         $tagihan->forceFill([
@@ -150,13 +165,51 @@ final class BuatTagihanQrisPos
             return $ada;
         }
 
-        if ($ada->DibuatPada !== null && $ada->DibuatPada->lessThan(CarbonImmutable::now()->subSeconds(self::DETIK_CADANGAN_BASI))) {
-            $ada->delete();
+        if ($ada->Status === StatusTagihanQris::TidakPasti) {
+            throw self::GalatTidakPasti('TagihanTidakPasti', 409);
+        }
 
-            return null;
+        // Cadangan basi = proses sebelumnya terhenti setelah (mungkin) memanggil gerbang: jangan dihapus (audit P0 F-02).
+        if ($ada->DibuatPada !== null && $ada->DibuatPada->lessThan(CarbonImmutable::now()->subSeconds(self::DETIK_CADANGAN_BASI))) {
+            $this->TandaiTidakPasti($ada, 'Proses pembuatan tagihan terhenti sebelum QR tersimpan.');
+
+            throw self::GalatTidakPasti('TagihanTidakPasti', 409);
         }
 
         throw new PelanggaranAturanBisnis('TagihanSedangDibuat', 'Tagihan QRIS ini masih dibuat. Coba lagi beberapa detik lagi.', 'Uuid', 409);
+    }
+
+    /** Cadangan yang hasilnya di gerbang tidak pasti: disimpan (bukan dihapus) untuk rekonsiliasi. Idempoten. */
+    private function TandaiTidakPasti(TagihanQris $tagihan, string $pesan): void
+    {
+        $diubah = TagihanQris::query()->whereKey($tagihan->Id)->where('Status', StatusTagihanQris::Menunggu->value)->where('IsiQr', '')
+            ->update([
+                'Status' => StatusTagihanQris::TidakPasti->value,
+                'PesanGalatGerbang' => mb_substr($pesan, 0, 300),
+                'DiubahPada' => now(),
+            ]);
+
+        if ($diubah !== 1) {
+            return;
+        }
+
+        $tagihan->refresh();
+        $this->riwayat->Catat(TagihanQris::JENIS_DOKUMEN, $tagihan->Id, StatusTagihanQris::Menunggu->value, StatusTagihanQris::TidakPasti->value, null, 'Hasil gerbang tidak pasti');
+        $this->audit->Catat('tagihan-qris.tidak-pasti', $tagihan, nilaiBaru: [
+            'NomorPesanan' => $tagihan->NomorPesanan,
+            'Penyedia' => $tagihan->Penyedia,
+            'Jumlah' => $tagihan->Jumlah,
+        ]);
+    }
+
+    private static function GalatTidakPasti(string $kode, int $statusHttp): PelanggaranAturanBisnis
+    {
+        return new PelanggaranAturanBisnis(
+            $kode,
+            'Koneksi ke gerbang pembayaran terputus sebelum QRIS diterima, jadi tagihan ini belum pasti dan tidak ditampilkan. Buat tagihan QRIS baru atau pakai metode lain; tagihan lama dicek otomatis.',
+            'Umum',
+            $statusHttp,
+        );
     }
 
     /** Rupiah penuh 1 s.d. `JUMLAH_MAKSIMAL` (QRIS tidak mengenal sen). */

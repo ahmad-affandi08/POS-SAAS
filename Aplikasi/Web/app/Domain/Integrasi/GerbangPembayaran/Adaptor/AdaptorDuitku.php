@@ -73,6 +73,12 @@ final class AdaptorDuitku extends AdaptorDasar
         return new HasilQris((string) $respons->json('reference'), $qr, $permintaan->kedaluwarsaPada);
     }
 
+    /** Status ditanyakan dengan nomor pesanan (order id) milik PAYOU (audit P0 F-02). */
+    public function CekDapatCekDariNomorPesanan(): bool
+    {
+        return true;
+    }
+
     public function CekStatus(string $nomorPesanan, string $idReferensi): StatusPembayaranGerbang
     {
         $kode = $this->Pengaturan('KodeMerchant');

@@ -898,7 +898,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
         await ref.read(penyediaKonfigurasiAplikasi.notifier).Periksa(paksa: true);
       }
     } on GalatKasir catch (galat) {
-      _Dicabut(galat.pesan);
+      await _TanganiDicabut(galat.pesan);
     } on GalatApi {
       // Galat server lain: tetap pakai data lokal terakhir.
       ref.read(penyediaKoneksi.notifier).Tandai(StatusKoneksi.Online);
@@ -937,12 +937,30 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       ref.read(penyediaKoneksi.notifier).Tandai(hasil.tersambung! ? StatusKoneksi.Online : StatusKoneksi.Offline);
     }
     if (hasil.perangkatDicabut) {
-      _Dicabut('Perangkat ini sudah dicabut dari back-office. Data yang belum terkirim tetap tersimpan di perangkat.');
+      final sisa = await ref.read(penyediaRepositori).HitungJumlahTertunda();
+      _Dicabut(
+        sisa == 0
+            ? 'Perangkat ini sudah dicabut dari back-office. Semua data sudah terkirim.'
+            : 'Perangkat ini sudah dicabut dari back-office. $sisa data belum terkirim dan tetap tersimpan; data dikirim '
+                  'atas nama perangkat ini setelah aktivasi ulang.',
+      );
     } else if (hasil.tersambung != false) {
       // P-10: versi & flag diperiksa paling sering tiap 15 menit, tidak saat offline.
       await ref.read(penyediaKonfigurasiAplikasi.notifier).Periksa();
     }
     return hasil;
+  }
+
+  /// Audit P0 F-01: perangkat dicabut. Kirim sisa outbox dulu (masa pemulihan), baru kembali ke aktivasi.
+  Future<void> _TanganiDicabut(String pesan) async {
+    final selesai = await ref.read(penyediaLayananSinkron).SelesaikanPencabutan();
+    final sisa = await ref.read(penyediaRepositori).HitungJumlahTertunda();
+    _Dicabut(
+      selesai && sisa == 0
+          ? pesan
+          : '$pesan $sisa data belum terkirim dan tetap tersimpan. Data dikirim atas nama perangkat ini setelah '
+                'aktivasi ulang, atau saat aplikasi dibuka lagi dalam keadaan online.',
+    );
   }
 
   void _Dicabut(String pesan) {

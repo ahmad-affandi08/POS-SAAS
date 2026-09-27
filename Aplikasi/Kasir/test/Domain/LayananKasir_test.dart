@@ -324,5 +324,108 @@ void main() {
       expect(await u.repositori.AmbilShiftAktif(), isNotNull);
       expect(await u.repositori.AmbilOutboxSiapKirim(50, u.jam), hasLength(1));
     });
+
+    test('audit P0 F-01 masa pemulihan: outbox dikosongkan dulu (termasuk yang menunggu jadwal ulang), baru token '
+        'dihapus; item membawa perangkat pembuatnya', () async {
+      await u.SiapkanAktif();
+      await u.repositori.SimpanPengaturan(KunciPengaturan.uuidPerangkat, '01K5PRGLAMA000000000000001');
+      final rina = await u.Staf('Rina Wulandari');
+      final shift = await u.shift.BukaShift(kasir: rina, kasAwal: Uang.Nol());
+      final mutasi = await u.shift.CatatMutasi(
+        shift: shift,
+        jenis: JenisMutasi.masuk,
+        jumlah: Uang.Dari('20000'),
+        pencatat: rina,
+        uuidKategori: '01K5KATEGORI00000000000002',
+      );
+      // Mutasi sedang menunggu jadwal ulang (gagal jaringan sebelumnya).
+      final barisMutasi = (await u.repositori.AmbilOutboxSiapKirim(50, u.jam)).last;
+      await u.repositori.JadwalkanUlang([barisMutasi], u.jam, 'Putus');
+      final dikirim = <String>[];
+      u.server.penangan = (p) async {
+        final item = ((jsonDecode(p.body) as Map<String, Object?>)['Item']! as List<Object?>)
+            .cast<Map<String, Object?>>();
+        dikirim.addAll(item.map((i) => '${i['Uuid']}@${i['UuidPerangkatAsal']}'));
+        return JsonUji({
+          'Hasil': [
+            for (final i in item) {'Uuid': i['Uuid'], 'Jenis': i['Jenis'], 'Status': 'Diterima', 'Galat': null},
+          ],
+          'PerangkatDicabut': true,
+        });
+      };
+
+      final ringkasan = await u.sinkron.KirimTertunda();
+
+      expect(ringkasan.perangkatDicabut, isTrue);
+      expect(ringkasan.terkirim, 2);
+      expect(dikirim, ['${shift.Uuid}@01K5PRGLAMA000000000000001', '${mutasi.Uuid}@01K5PRGLAMA000000000000001']);
+      expect(await u.repositori.HitungJumlahTertunda(), 0);
+      expect(u.rahasia.isi, isEmpty);
+      expect(await u.repositori.AmbilStaf(), isEmpty);
+    });
+
+    test('audit P0 F-01 aktivasi ulang: outbox lama dikirim atas nama perangkat lama, item baru atas nama perangkat '
+        'baru', () async {
+      await u.SiapkanAktif();
+      await u.repositori.SimpanPengaturan(KunciPengaturan.uuidPerangkat, '01K5PRGLAMA000000000000001');
+      final lama = await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.Nol());
+      u.server.penangan = (_) async => JsonUji({
+        'Galat': {'Kode': 'PerangkatDicabut', 'Pesan': 'Dicabut.'},
+      }, 403);
+      expect((await u.sinkron.KirimTertunda()).perangkatDicabut, isTrue);
+
+      // Diaktifkan ulang sebagai perangkat baru (token & identitas baru), lalu tutup shift lama di perangkat baru.
+      await u.SiapkanAktif();
+      await u.repositori.SimpanPengaturan(KunciPengaturan.uuidPerangkat, '01K5PRGBARU000000000000001');
+      await u.shift.CatatMutasi(
+        shift: lama,
+        jenis: JenisMutasi.masuk,
+        jumlah: Uang.Dari('5000'),
+        pencatat: await u.Staf('Rina Wulandari'),
+        uuidKategori: '01K5KATEGORI00000000000002',
+      );
+      late List<Map<String, Object?>> item;
+      u.server.penangan = (p) async {
+        item = ((jsonDecode(p.body) as Map<String, Object?>)['Item']! as List<Object?>).cast<Map<String, Object?>>();
+        return JsonUji({
+          'Hasil': [
+            for (final i in item) {'Uuid': i['Uuid'], 'Jenis': i['Jenis'], 'Status': 'Diterima', 'Galat': null},
+          ],
+          'PerangkatDicabut': false,
+        });
+      };
+
+      expect((await u.sinkron.KirimTertunda()).terkirim, 2);
+      expect(item.map((i) => i['UuidPerangkatAsal']), ['01K5PRGLAMA000000000000001', '01K5PRGBARU000000000000001']);
+      expect(u.rahasia.isi, isNotEmpty);
+    });
+
+    test(
+      'audit P0 F-01 SelesaikanPencabutan: offline = token dipertahankan; online = sisa dikirim lalu token dihapus',
+      () async {
+        await u.SiapkanAktif();
+        await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.Nol());
+        u.server.penangan = (_) async => http.Response('gangguan', 503);
+
+        expect(await u.sinkron.SelesaikanPencabutan(), isFalse);
+        expect(u.rahasia.isi, isNotEmpty);
+        expect(await u.repositori.HitungJumlahTertunda(), 1);
+
+        u.server.penangan = (p) async {
+          final item = ((jsonDecode(p.body) as Map<String, Object?>)['Item']! as List<Object?>)
+              .cast<Map<String, Object?>>();
+          return JsonUji({
+            'Hasil': [
+              for (final i in item) {'Uuid': i['Uuid'], 'Jenis': i['Jenis'], 'Status': 'Diterima', 'Galat': null},
+            ],
+            'PerangkatDicabut': true,
+          });
+        };
+        // Item sedang menunggu jadwal ulang; pencabutan tetap mengirimnya sekarang.
+        expect(await u.sinkron.SelesaikanPencabutan(), isTrue);
+        expect(await u.repositori.HitungJumlahTertunda(), 0);
+        expect(u.rahasia.isi, isEmpty);
+      },
+    );
   });
 }

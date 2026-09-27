@@ -51,7 +51,8 @@ abstract class AdaptorDasar implements GerbangPembayaran
         try {
             return $kirim();
         } catch (ConnectionException) {
-            throw new GalatGerbang('Gerbang pembayaran tidak bisa dihubungi. Coba lagi sebentar lagi.');
+            // Waktu habis/koneksi putus: permintaan mungkin sudah sampai dan diproses gerbang.
+            throw new GalatGerbang('Gerbang pembayaran tidak bisa dihubungi. Coba lagi sebentar lagi.', tidakPasti: true);
         }
     }
 
@@ -68,6 +69,20 @@ abstract class AdaptorDasar implements GerbangPembayaran
 
     protected function GagalRespons(Response $respons, string $pesanPenyedia): GalatGerbang
     {
-        return new GalatGerbang($this->Saring("Gerbang menolak permintaan (HTTP {$respons->status()}): {$pesanPenyedia}"));
+        return new GalatGerbang(
+            $this->Saring("Gerbang menolak permintaan (HTTP {$respons->status()}): {$pesanPenyedia}"),
+            tidakPasti: self::CekTidakPasti($respons),
+        );
+    }
+
+    public function CekDapatCekDariNomorPesanan(): bool
+    {
+        return false;
+    }
+
+    /** Hanya 4xx yang jelas menolak (bukan 408/409/425/429) yang pasti tidak membuat apa pun di gerbang. */
+    private static function CekTidakPasti(Response $respons): bool
+    {
+        return $respons->status() < 400 || $respons->serverError() || in_array($respons->status(), [408, 409, 425, 429], true);
     }
 }

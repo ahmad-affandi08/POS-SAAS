@@ -21,7 +21,8 @@ use InvalidArgumentException;
  * - `Lunas` hanya bila jumlah yang dilaporkan gerbang (bila ada) sama dengan `Jumlah` tagihan; beda jumlah = status
  *   tidak berubah, dicatat sebagai peringatan log + `LogAudit` `tagihan-qris.jumlah-berbeda` untuk ditelusuri.
  * - `Kedaluwarsa`/`Gagal` hanya dari `Menunggu`; tagihan `Lunas` tidak pernah berubah lagi.
- * - Tagihan kedaluwarsa/gagal/dibatalkan yang ternyata dibayar tetap menjadi `Lunas` (uang nyata diterima).
+ * - Tagihan kedaluwarsa/gagal/dibatalkan/tidak pasti yang ternyata dibayar tetap menjadi `Lunas` (uang nyata
+ *   diterima) dan ditandai `PerluTinjauan` untuk Kotak Tindakan (audit P0 F-02).
  * Setiap perubahan dicatat di `RiwayatStatusDokumen` (tanpa pengguna; sumber di alasan).
  */
 final class PenerapStatusTagihanQris
@@ -83,11 +84,14 @@ final class PenerapStatusTagihanQris
             $tagihan->save();
             $this->riwayat->Catat(TagihanQris::JENIS_DOKUMEN, $tagihan->Id, $asal->value, $tujuan->value, null, $sumber);
 
-            if ($asal !== StatusTagihanQris::Menunggu) {
+            if ($asal !== StatusTagihanQris::Menunggu && $tujuan === StatusTagihanQris::Lunas) {
                 Log::warning('Tagihan QRIS dinamis dibayar setelah berstatus akhir; periksa penjualan terkait.', [
                     'NomorPesanan' => $tagihan->NomorPesanan,
                     'StatusAsal' => $asal->value,
                 ]);
+                $tagihan->PerluTinjauan = true;
+                $tagihan->AlasanTinjauan = mb_substr("Uang QRIS diterima setelah tagihan berstatus {$asal->value}; cocokkan dengan penjualan atau kembalikan dana ke pelanggan.", 0, 255);
+                $tagihan->save();
             }
 
             $this->audit->Catat('tagihan-qris.status', $tagihan, ['Status' => $asal->value], ['Status' => $tujuan->value, 'Sumber' => $sumber], idTenant: $tagihan->IdTenant);
@@ -96,19 +100,23 @@ final class PenerapStatusTagihanQris
         });
     }
 
-    /** Menandai `Kedaluwarsa` tagihan `Menunggu` yang lewat batas + tenggang (tanpa kabar gerbang). */
+    /**
+     * Menandai `Kedaluwarsa` tagihan `Menunggu`/`TidakPasti` yang lewat batas + tenggang (tanpa kabar gerbang). Bukan
+     * status final: pembayaran yang ternyata masuk tetap menjadikannya `Lunas`.
+     */
     public function TandaiKedaluwarsa(int $idTagihan): TagihanQris
     {
         return DB::transaction(function () use ($idTagihan): TagihanQris {
             $tagihan = TagihanQris::query()->whereKey($idTagihan)->lockForUpdate()->firstOrFail();
 
-            if ($tagihan->Status !== StatusTagihanQris::Menunggu) {
+            if (! in_array($tagihan->Status, [StatusTagihanQris::Menunggu, StatusTagihanQris::TidakPasti], true)) {
                 return $tagihan;
             }
 
+            $asal = $tagihan->Status;
             $tagihan->Status = StatusTagihanQris::Kedaluwarsa;
             $tagihan->save();
-            $this->riwayat->Catat(TagihanQris::JENIS_DOKUMEN, $tagihan->Id, StatusTagihanQris::Menunggu->value, StatusTagihanQris::Kedaluwarsa->value, null, 'Batas waktu lewat');
+            $this->riwayat->Catat(TagihanQris::JENIS_DOKUMEN, $tagihan->Id, $asal->value, StatusTagihanQris::Kedaluwarsa->value, null, 'Batas waktu lewat');
 
             return $tagihan;
         });

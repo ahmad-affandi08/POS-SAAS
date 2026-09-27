@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Bersama\Sinkron\Layanan;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Sinkron\Data\DataKonteksSinkron;
 use App\Domain\Bersama\Sinkron\Data\HasilItemSinkron;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
+use App\Domain\Bersama\Sinkron\Kontrak\PenjagaAsalItemSinkron;
 use Illuminate\Contracts\Container\Container;
 
 /**
@@ -16,16 +18,24 @@ use Illuminate\Contracts\Container\Container;
  * diteruskan ke penangan sesuai `Jenis`; pelanggaran aturan bisnis menjadi `Ditolak` tanpa menghentikan item
  * berikutnya. Galat tak terduga dibiarkan naik (HTTP 500): perangkat mengirim ulang seluruh batch dan item yang sudah
  * diterima kembali sebagai `Duplikat`, sehingga aman.
+ *
+ * Audit P0 F-01: tiap item dikreditkan ke perangkat asalnya (`PenjagaAsalItemSinkron`): item boleh membawa
+ * `UuidPerangkatAsal` (outbox perangkat lama yang dikirim setelah aktivasi ulang) dan perangkat dicabut hanya boleh
+ * mengirim item yang dibuat sebelum dicabut. Item jalur pemulihan yang diterima ditandai untuk ditinjau.
  */
 final class PemrosesSinkron
 {
     /** @var array<string, PenanganItemSinkron>|null */
     private ?array $penangan = null;
 
-    public function __construct(private readonly Container $container) {}
+    public function __construct(
+        private readonly Container $container,
+        private readonly PenjagaAsalItemSinkron $penjagaAsal,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     /**
-     * @param  list<array{Jenis: string, Uuid: string, Data: array<string, mixed>}>  $item
+     * @param  list<array{Jenis: string, Uuid: string, Data: array<string, mixed>, UuidPerangkatAsal?: string|null}>  $item
      * @return list<HasilItemSinkron>
      */
     public function Proses(array $item, DataKonteksSinkron $konteks): array
@@ -40,7 +50,7 @@ final class PemrosesSinkron
     }
 
     /**
-     * @param  array{Jenis: string, Uuid: string, Data: array<string, mixed>}  $item
+     * @param  array{Jenis: string, Uuid: string, Data: array<string, mixed>, UuidPerangkatAsal?: string|null}  $item
      */
     private function ProsesSatu(array $item, DataKonteksSinkron $konteks): HasilItemSinkron
     {
@@ -51,8 +61,19 @@ final class PemrosesSinkron
                 throw new PelanggaranAturanBisnis('JenisItemTidakDikenal', "Jenis data \"{$item['Jenis']}\" tidak dikenal server. Perbarui aplikasi kasir.", 'Jenis');
             }
 
-            // F-15/§18: item POS diproses dalam mode sinkron (periode terkunci tidak menolak transaksi offline).
-            $status = $this->container->make(PenandaSinkronPos::class)->Jalankan(fn (): StatusItemSinkron => $penangan->Proses($item['Uuid'], $item['Data'], $konteks));
+            $asal = $this->penjagaAsal->Tentukan($item['Uuid'], $item['UuidPerangkatAsal'] ?? null, $konteks);
+            $this->audit->AturPerangkat($asal->idPerangkat);
+
+            try {
+                // F-15/§18: item POS diproses dalam mode sinkron (periode terkunci tidak menolak transaksi offline).
+                $status = $this->container->make(PenandaSinkronPos::class)->Jalankan(fn (): StatusItemSinkron => $penangan->Proses($item['Uuid'], $item['Data'], $asal));
+            } finally {
+                $this->audit->AturPerangkat($konteks->idPerangkat);
+            }
+
+            if ($status !== StatusItemSinkron::Ditolak) {
+                $this->penjagaAsal->CatatPemulihan($item['Uuid'], $item['Jenis'], $asal, $konteks);
+            }
 
             return new HasilItemSinkron($item['Uuid'], $item['Jenis'], $status);
         } catch (PelanggaranAturanBisnis $galat) {

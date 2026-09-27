@@ -8,12 +8,16 @@ use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Nilai\Kuantitas;
+use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusTagihanQris;
+use App\Domain\Penjualan\Layanan\PenyediaTindakanPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use App\Domain\Penjualan\Model\TagihanQris;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
@@ -192,6 +196,130 @@ describe('F-08 QRIS dinamis: buat tagihan dari POS', function (): void {
 
         $status = 'pending';
         BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertCreated();
+    });
+});
+
+/**
+ * Midtrans palsu untuk hasil tidak pasti (audit P0 F-02): `$charge` = 'putus' (koneksi putus/waktu habis), '500', atau
+ * 'rusak' (HTTP 200 tanpa QR); status transaksi = isi `$status`, atau per Uuid tagihan (`[Uuid => status]`, lainnya
+ * 'pending').
+ *
+ * @param  string|array<string, string>  $status
+ */
+function PalsukanMidtransTidakPasti(string &$charge, string|array &$status): void
+{
+    Http::fake(function (PermintaanHttp $r) use (&$charge, &$status) {
+        if (str_ends_with($r->url(), '/v2/charge')) {
+            return match ($charge) {
+                'putus' => throw new ConnectionException('cURL error 28: Operation timed out'),
+                '500' => Http::response(['status_code' => '500', 'status_message' => 'Internal error'], 500),
+                'rusak' => Http::response(['status_code' => '201']),
+                default => Http::response(['status_code' => '201', 'transaction_id' => 'trx-1', 'qr_string' => '00020101021226670016COM.NOBUBANK.WWW']),
+            };
+        }
+
+        $hasil = is_string($status) ? $status : (collect($status)->first(fn (string $nilai, string $uuid): bool => str_contains($r->url(), $uuid)) ?? 'pending');
+
+        return Http::response(['status_code' => '200', 'transaction_status' => $hasil]);
+    });
+}
+
+describe('audit P0 F-02 QRIS dinamis: hasil gerbang tidak pasti', function (): void {
+    it('koneksi putus/5xx/respons rusak: tagihan tidak dihapus (TidakPasti + NomorPesanan), Uuid sama 409 TagihanTidakPasti, Uuid baru bisa', function (string $mode): void {
+        $charge = $mode;
+        $status = 'pending';
+        PalsukanMidtransTidakPasti($charge, $status);
+        $k = SiapkanQrisDinamis($this);
+        $uuid = BantuanKasir::Uuid();
+
+        expect(BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertStatus(502)->json('Galat.Kode'))->toBe('GerbangTidakPasti')
+            ->and(BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertStatus(409)->json('Galat.Kode'))->toBe('TagihanTidakPasti');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $tagihan = TagihanQris::query()->sole();
+        expect($tagihan->Uuid)->toBe(strtoupper($uuid))
+            ->and($tagihan->Status)->toBe(StatusTagihanQris::TidakPasti)
+            ->and($tagihan->IsiQr)->toBe('')
+            ->and($tagihan->NomorPesanan)->toStartWith('PY')
+            ->and($tagihan->PesanGalatGerbang)->not->toBeNull()
+            ->and(LogAudit::query()->where('Peristiwa', 'tagihan-qris.tidak-pasti')->count())->toBe(1)
+            // QR tagihan tidak pasti tidak pernah dikirim ke kasir.
+            ->and($this->withToken($k['Token'])->getJson("/api/pos/v1/qris/{$uuid}")->assertNotFound()->json('Galat.Kode'))->toBe('TagihanTidakDitemukan');
+
+        $charge = 'ok';
+        BuatQrisPos($this, $k, $k['QrisDinamis'])->assertCreated();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(TagihanQris::query()->count())->toBe(2);
+    })->with(['putus', '500', 'rusak']);
+
+    it('webhook lunas untuk tagihan tidak pasti = Lunas (uang nyata menang) + tinjauan di Kotak Tindakan', function (): void {
+        $charge = 'putus';
+        $status = 'pending';
+        PalsukanMidtransTidakPasti($charge, $status);
+        $k = SiapkanQrisDinamis($this);
+        BuatQrisPos($this, $k, $k['QrisDinamis'], '38500')->assertStatus(502);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $nomor = TagihanQris::query()->sole()->NomorPesanan;
+
+        WebhookMidtrans($this, $k, $nomor)->assertOk()->assertExactJson(['Diterima' => true]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $tagihan = TagihanQris::query()->sole();
+
+        expect($tagihan->Status)->toBe(StatusTagihanQris::Lunas)
+            ->and($tagihan->PerluTinjauan)->toBeTrue()
+            ->and($tagihan->AlasanTinjauan)->toContain('TidakPasti');
+
+        $konteks = new DataKonteksTindakan($k['Tenant']->Id, $k['Pemilik']->Id, true, [], null, CarbonImmutable::now('Asia/Jakarta')->startOfDay());
+        $butir = collect(app(PenyediaTindakanPenjualan::class)->Kumpulkan($konteks))->firstWhere('kunci', 'tagihan-qris.tinjauan');
+        expect($butir->jumlah)->toBe(1)
+            ->and($butir->rincian[0]->judul)->toBe($nomor)
+            ->and(app(PenyediaTindakanPenjualan::class)->SaringDokumen('TagihanQris', [$tagihan->Uuid]))->toBe([$tagihan->Uuid]);
+    });
+
+    it('rekonsiliasi terjadwal: gerbang ditanya dengan NomorPesanan; lunas diterapkan; tanpa kabar lewat batas = Kedaluwarsa', function (): void {
+        $charge = '500';
+        $status = 'pending';
+        PalsukanMidtransTidakPasti($charge, $status);
+        $k = SiapkanQrisDinamis($this);
+        $satu = BantuanKasir::Uuid();
+        $dua = BantuanKasir::Uuid();
+        BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $satu)->assertStatus(502);
+        BuatQrisPos($this, $k, $k['QrisDinamis'], '12000', $dua)->assertStatus(502);
+        $ambil = function (string $uuid) use ($k): TagihanQris {
+            BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+            return TagihanQris::query()->where('Uuid', strtoupper($uuid))->sole();
+        };
+
+        $this->artisan('penjualan:rekonsiliasi-qris')->assertSuccessful();
+        expect($ambil($satu)->Status)->toBe(StatusTagihanQris::TidakPasti)
+            ->and($ambil($satu)->PercobaanRekonsiliasi)->toBe(1)
+            ->and(HitungPanggilanMidtrans('/status'))->toBe(2);
+
+        // Tagihan pertama ternyata dibayar; yang kedua tidak pernah ada kabar.
+        $status = [strtoupper($satu) => 'settlement'];
+        $this->travel(18)->minutes();
+        $this->artisan('penjualan:rekonsiliasi-qris')->assertSuccessful();
+
+        expect($ambil($satu)->Status)->toBe(StatusTagihanQris::Lunas)
+            ->and($ambil($satu)->PerluTinjauan)->toBeTrue()
+            ->and($ambil($dua)->Status)->toBe(StatusTagihanQris::Kedaluwarsa)
+            ->and($ambil($dua)->PerluTinjauan)->toBeFalse();
+    });
+
+    it('proses terhenti setelah memanggil gerbang (cadangan basi tanpa QR) tidak dihapus lagi: menjadi TidakPasti', function (): void {
+        $charge = 'ok';
+        $status = 'pending';
+        PalsukanMidtransTidakPasti($charge, $status);
+        $k = SiapkanQrisDinamis($this);
+        $uuid = BantuanKasir::Uuid();
+        BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertCreated();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        // Tiru proses yang terhenti sebelum QR tersimpan.
+        TagihanQris::query()->update(['IsiQr' => '', 'DibuatPada' => now()->subMinutes(2)]);
+
+        expect(BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertStatus(409)->json('Galat.Kode'))->toBe('TagihanTidakPasti');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(TagihanQris::query()->sole()->Status)->toBe(StatusTagihanQris::TidakPasti);
     });
 });
 

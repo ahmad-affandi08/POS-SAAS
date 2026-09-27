@@ -32,6 +32,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $JumlahDiterima
  * @property string|null $UuidPenjualan
  * @property Carbon|null $TerakhirDicekPada
+ * @property string|null $PesanGalatGerbang
+ * @property int $PercobaanRekonsiliasi
+ * @property bool $PerluTinjauan
+ * @property string|null $AlasanTinjauan
  * @property Carbon|null $DibuatPada
  * @property Carbon|null $DiubahPada
  */
@@ -52,6 +56,10 @@ final class TagihanQris extends ModelDasar
         'JumlahDiterima' => null,
         'UuidPenjualan' => null,
         'TerakhirDicekPada' => null,
+        'PesanGalatGerbang' => null,
+        'PercobaanRekonsiliasi' => 0,
+        'PerluTinjauan' => false,
+        'AlasanTinjauan' => null,
     ];
 
     /**
@@ -67,6 +75,8 @@ final class TagihanQris extends ModelDasar
             'KedaluwarsaPada' => 'datetime',
             'LunasPada' => 'datetime',
             'TerakhirDicekPada' => 'datetime',
+            'PercobaanRekonsiliasi' => 'integer',
+            'PerluTinjauan' => 'boolean',
         ];
     }
 

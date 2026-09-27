@@ -108,6 +108,8 @@ class MutasiKas extends Table {
 }
 
 /// Antrean kirim FIFO per perangkat (PRD §18 no. 4). Satu baris per item; `Status` Tertunda/PerluTindakan.
+/// `UuidPerangkat` = perangkat yang membuat item (audit P0 F-01): setelah aktivasi ulang, item lama dikirim atas nama
+/// perangkat asalnya (`UuidPerangkatAsal`), tidak diklaim perangkat baru.
 @DataClassName('BarisOutbox')
 class Outbox extends Table {
   IntColumn get Id => integer().autoIncrement()();
@@ -120,6 +122,7 @@ class Outbox extends Table {
   TextColumn get PesanGalat => text().nullable()();
   DateTimeColumn get DibuatPada => dateTime()();
   DateTimeColumn get BerikutnyaPada => dateTime()();
+  TextColumn get UuidPerangkat => text().nullable()();
 }
 
 /// Penguncian PIN lokal: 5 kali salah → kunci 5 menit (PRD §20.2, §25.2 no. 3), berlaku juga offline.
@@ -193,9 +196,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// & retur penjualan); 6 = F-07 mode meja fase 1 (meja & pesanan terbuka); 7 = F-16a (pelanggan lokal); 8 = F-16b
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
-  /// bagian 2 (produk paket sesi).
+  /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
+  /// outbox).
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -315,6 +319,20 @@ class BasisDataKasir extends _$BasisDataKasir {
         if (kolom == 0) {
           await m.addColumn(penjualan, penjualan.Laundry);
         }
+      }
+      // Skema 16 (audit P0 F-01): perangkat pembuat item outbox. Item tertunda yang sudah ada dibuat oleh perangkat yang
+      // aktif saat ini (identitasnya di `Pengaturan`), jadi ditandai dengan perangkat itu. Outbox tidak dihapus.
+      if (dari < 16) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Outbox') WHERE name = 'UuidPerangkat'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(outbox, outbox.UuidPerangkat);
+        }
+        await customStatement(
+          "UPDATE Outbox SET UuidPerangkat = (SELECT Nilai FROM Pengaturan WHERE Kunci = 'UuidPerangkat') "
+          'WHERE UuidPerangkat IS NULL',
+        );
       }
     },
     beforeOpen: (detail) async {

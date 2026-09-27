@@ -6,10 +6,12 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Database\MakroSkema;
+use App\Domain\Bersama\Sinkron\Kontrak\PenjagaAsalItemSinkron;
 use App\Domain\Bersama\Sinkron\Layanan\PenandaSinkronPos;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
+use App\Domain\Organisasi\Layanan\PenjagaAsalSinkronPerangkat;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Organisasi\Model\TokenAksesPengguna;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor;
@@ -43,6 +45,8 @@ final class PenyediaAplikasi extends ServiceProvider
         // F-02: pencatat log audit tenant (pelaku & IP diisi perantara per request).
         $this->app->scoped(PencatatAudit::class);
         $this->app->scoped(PenandaSinkronPos::class);
+        // Audit P0 F-01: perangkat asal item outbox (cache perangkat per permintaan).
+        $this->app->scoped(PenjagaAsalItemSinkron::class, PenjagaAsalSinkronPerangkat::class);
     }
 
     public function boot(): void

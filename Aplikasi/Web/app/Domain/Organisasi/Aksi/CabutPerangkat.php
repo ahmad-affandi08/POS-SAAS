@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\DB;
  * (`PerangkatDicabut`) dan kode aktivasi yang belum dipakai dibatalkan. Kode perangkat tidak dipakai ulang dan
  * perangkat tidak lagi dihitung dalam batas paket.
  *
- * TODO F-07: batch sinkron yang dibuat offline sebelum `DicabutPada` tetap diterima dengan flag review; batch
- * setelahnya ditolak (BR-02.3, §18).
+ * Audit P0 F-01: selama `AutentikasiPerangkat::HARI_PEMULIHAN` hari perangkat masih boleh mengirim outbox yang dibuat
+ * sebelum `DicabutPada` (ditandai untuk ditinjau); item yang dibuat setelahnya ditolak (BR-02.3, §18).
  */
 final class CabutPerangkat
 {

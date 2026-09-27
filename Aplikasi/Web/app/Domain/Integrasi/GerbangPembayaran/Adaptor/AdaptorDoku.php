@@ -93,6 +93,12 @@ final class AdaptorDoku extends AdaptorDasar
         return new HasilQris((string) ($respons->json('response.payment.token_id') ?? $permintaan->nomorPesanan), $url, $permintaan->kedaluwarsaPada, true);
     }
 
+    /** Status ditanyakan dengan nomor pesanan (order id) milik PAYOU (audit P0 F-02). */
+    public function CekDapatCekDariNomorPesanan(): bool
+    {
+        return true;
+    }
+
     public function CekStatus(string $nomorPesanan, string $idReferensi): StatusPembayaranGerbang
     {
         $target = '/orders/v1/status/'.rawurlencode($nomorPesanan);

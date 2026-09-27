@@ -371,7 +371,9 @@ class RepositoriKasir {
         : const [];
   }
 
-  Future<void> TambahOutbox(ItemOutbox item, DateTime sekarang) => db
+  /// Audit P0 F-01: item ditandai perangkat pembuatnya (identitas perangkat aktif) agar setelah aktivasi ulang tetap
+  /// dikirim atas nama perangkat asal.
+  Future<void> TambahOutbox(ItemOutbox item, DateTime sekarang) async => db
       .into(db.outbox)
       .insert(
         OutboxCompanion.insert(
@@ -381,6 +383,7 @@ class RepositoriKasir {
           Status: StatusOutbox.tertunda,
           DibuatPada: sekarang.toUtc(),
           BerikutnyaPada: sekarang.toUtc(),
+          UuidPerangkat: Value(await AmbilPengaturan(KunciPengaturan.uuidPerangkat)),
         ),
       );
 
@@ -429,6 +432,12 @@ class RepositoriKasir {
       );
     }
   });
+
+  /// Audit P0 F-01: semua item tertunda jatuh tempo sekarang (mengosongkan outbox sebelum token perangkat dicabut).
+  Future<void> SegerakanTertunda(DateTime sekarang) =>
+      (db.update(db.outbox)..where((o) => o.Status.equals(StatusOutbox.tertunda))).write(
+        OutboxCompanion(BerikutnyaPada: Value(sekarang.toUtc())),
+      );
 
   /// Kirim ulang item "Perlu Tindakan" (misal setelah admin memperbaiki kategori/izin di back-office).
   Future<void> CobaLagi(String uuid, DateTime sekarang) =>

@@ -59,8 +59,9 @@ class LayananPerangkat {
     await SegarkanDataAwal();
   }
 
-  /// Unduh data awal terbaru. Offline = pakai data lokal terakhir (tidak melempar). Perangkat dicabut = hapus data
-  /// sensitif lalu lempar `PerangkatDicabut`.
+  /// Unduh data awal terbaru. Offline = pakai data lokal terakhir (tidak melempar). Perangkat dicabut = lempar
+  /// `PerangkatDicabut`; token belum dihapus agar outbox tertunda masih bisa dikirim dulu
+  /// (`LayananSinkron.SelesaikanPencabutan`, audit P0 F-01).
   Future<bool> SegarkanDataAwal() async {
     try {
       final data = await klien.AmbilDataAwal();
@@ -71,7 +72,6 @@ class LayananPerangkat {
       return false;
     } on GalatApi catch (galat) {
       if (galat.CekPerangkatDitolak()) {
-        await CabutLokal();
         throw GalatKasir(galat.kode, galat.pesan);
       }
       rethrow;
@@ -102,7 +102,8 @@ class LayananPerangkat {
     }
   }
 
-  /// Hapus rahasia & data PIN lokal (perangkat dicabut). Transaksi yang belum terkirim tidak dihapus.
+  /// Hapus rahasia & data PIN lokal (perangkat dicabut). Transaksi & outbox yang belum terkirim tidak dihapus: setelah
+  /// aktivasi ulang, outbox dikirim atas nama perangkat asalnya (audit P0 F-01).
   Future<void> CabutLokal() async {
     await rahasia.HapusSemua();
     await repositori.HapusDataSensitif();

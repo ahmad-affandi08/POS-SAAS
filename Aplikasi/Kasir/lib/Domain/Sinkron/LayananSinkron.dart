@@ -28,7 +28,12 @@ class RingkasanSinkron {
 
 /// Kirim outbox FIFO per perangkat (PRD §18 no. 4): batch maks. 50, berurutan (shift sebelum mutasinya).
 /// `Diterima`/`Duplikat` → dihapus dari outbox; `Ditolak` → "Perlu Tindakan" beserta alasannya. Gagal jaringan/5xx →
-/// dijadwalkan ulang dengan mundur eksponensial. Perangkat dicabut → data sensitif lokal dihapus, transaksi tetap.
+/// dijadwalkan ulang dengan mundur eksponensial.
+///
+/// Audit P0 F-01: setiap item membawa perangkat pembuatnya (`UuidPerangkatAsal`). Perangkat dicabut: selama masa
+/// pemulihan server masih menerima outbox (jawaban `PerangkatDicabut`), jadi outbox dikosongkan dulu baru token & data
+/// sensitif dihapus. Bila server sudah menolak (403), token dihapus; outbox tetap tersimpan dan dikirim atas nama
+/// perangkat asal setelah perangkat ini diaktifkan ulang.
 class LayananSinkron {
   LayananSinkron({
     required this.klien,
@@ -58,21 +63,37 @@ class LayananSinkron {
     var terkirim = 0;
     var ditolak = 0;
     var dijawabServer = false;
+    var dicabut = false;
 
     try {
       while (true) {
         final batch = await repositori.AmbilOutboxSiapKirim(ukuranBatch, _jam());
         if (batch.isEmpty) {
+          if (dicabut) {
+            await perangkat.CabutLokal();
+            return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, perangkatDicabut: true, tersambung: true);
+          }
           await ujiPerangkat?.KirimTertunda();
           return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: dijawabServer ? true : null);
         }
 
         final List<HasilItemSinkron> hasil;
         try {
-          hasil = await klien.KirimSinkron([
+          final jawaban = await klien.KirimSinkron([
             for (final b in batch)
-              ItemOutbox(jenis: b.Jenis, uuid: b.Uuid, data: (jsonDecode(b.Data) as Map<String, Object?>)),
+              ItemOutbox(
+                jenis: b.Jenis,
+                uuid: b.Uuid,
+                data: (jsonDecode(b.Data) as Map<String, Object?>),
+                uuidPerangkatAsal: b.UuidPerangkat,
+              ),
           ]);
+          hasil = jawaban.hasil;
+          if (jawaban.perangkatDicabut && !dicabut) {
+            // Masa pemulihan: kirim semua sisa sekarang, termasuk yang sedang menunggu jadwal ulang.
+            dicabut = true;
+            await repositori.SegerakanTertunda(_jam());
+          }
         } on GalatJaringan catch (galat) {
           await repositori.JadwalkanUlang(batch, _jam(), galat.pesan);
           return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, offline: true, tersambung: false);
@@ -108,11 +129,30 @@ class LayananSinkron {
         final terlewat = batch.where((b) => !dijawab.contains(b.Uuid)).toList();
         if (terlewat.isNotEmpty) {
           await repositori.JadwalkanUlang(terlewat, _jam(), 'Server tidak menjawab item ini.');
-          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: true);
+          return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: true, perangkatDicabut: dicabut);
         }
       }
     } finally {
       _berjalan = false;
     }
+  }
+
+  /// Audit P0 F-01: server menyatakan perangkat dicabut (misal saat unduh data awal). Kirim sisa outbox selama masa
+  /// pemulihan, lalu hapus token & data sensitif. Offline = token dipertahankan agar sisa outbox bisa dikirim nanti
+  /// (mengembalikan `false`); outbox tidak pernah dihapus.
+  Future<bool> SelesaikanPencabutan() async {
+    if (_berjalan) {
+      // Sinkron lain sedang berjalan dan akan menghapus token sendiri setelah outbox kosong.
+      return false;
+    }
+    await repositori.SegerakanTertunda(_jam());
+    final hasil = await KirimTertunda();
+    if (hasil.offline) {
+      return false;
+    }
+    if (!hasil.perangkatDicabut) {
+      await perangkat.CabutLokal();
+    }
+    return true;
   }
 }

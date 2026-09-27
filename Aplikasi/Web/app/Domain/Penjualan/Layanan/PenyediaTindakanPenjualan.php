@@ -11,12 +11,14 @@ use App\Domain\Bersama\Tindakan\Layanan\PembuatButirTinjauan;
 use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\ReturPenjualan;
+use App\Domain\Penjualan\Model\TagihanQris;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Kotak Tindakan domain Penjualan (D-23 C): penjualan, retur, dan isi deposit dari kasir yang diterima dengan
  * `PerluTinjauan` dan belum ditandai dicek (dibatasi outlet akses). Lihat: `laporan.penjualan.lihat` (isi deposit:
- * `pelanggan.lihat`).
+ * `pelanggan.lihat`). Audit P0 F-02: uang QRIS dinamis yang masuk setelah tagihan berstatus akhir/tidak pasti dan belum
+ * dipakai penjualan mana pun.
  */
 final class PenyediaTindakanPenjualan implements PenyediaTindakan
 {
@@ -35,6 +37,17 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
                 'Diterima dari kasir dengan catatan (misal stok minus, diskon/izin berubah, dikirim setelah shift ditutup).',
                 '/kelola/penjualan?saring[PerluTinjauan]=Ya',
                 fn (Penjualan $p): DataRincianTindakan => new DataRincianTindakan($p->Uuid, $p->Nomor, $p->AlasanTinjauan, $p->TanggalBisnis->toDateString(), '/kelola/penjualan/'.$p->Uuid),
+            );
+            $butir[] = PembuatButirTinjauan::Buat(
+                $this->KueriTagihanQris($konteks->idOutletBoleh),
+                'TagihanQris',
+                'TagihanQris',
+                'tagihan-qris.tinjauan',
+                'Penjualan',
+                'Uang QRIS masuk tanpa penjualan',
+                'Pelanggan membayar QRIS dinamis setelah tagihannya kedaluwarsa, dibatalkan, atau tidak pasti. Cocokkan dengan penjualan atau kembalikan dananya.',
+                '/kelola/penjualan',
+                fn (TagihanQris $t): DataRincianTindakan => new DataRincianTindakan($t->Uuid, $t->NomorPesanan, $t->AlasanTinjauan, $t->LunasPada?->setTimezone('Asia/Jakarta')->toDateString(), null),
             );
             $butir[] = PembuatButirTinjauan::Buat(
                 $this->KueriRetur($konteks->idOutletBoleh),
@@ -68,7 +81,7 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
 
     public function AmbilJenisDokumen(): array
     {
-        return ['Penjualan', 'ReturPenjualan', 'IsiDeposit'];
+        return ['Penjualan', 'ReturPenjualan', 'IsiDeposit', 'TagihanQris'];
     }
 
     public function SaringDokumen(string $jenisDokumen, array $uuid): array
@@ -77,6 +90,7 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
             'Penjualan' => PembuatButirTinjauan::Saring($this->KueriPenjualan(null), 'Penjualan', $uuid),
             'ReturPenjualan' => PembuatButirTinjauan::Saring($this->KueriRetur(null), 'ReturPenjualan', $uuid),
             'IsiDeposit' => PembuatButirTinjauan::Saring($this->KueriIsiDeposit(null), 'IsiDeposit', $uuid),
+            'TagihanQris' => PembuatButirTinjauan::Saring($this->KueriTagihanQris(null), 'TagihanQris', $uuid),
             default => [],
         };
     }
@@ -97,6 +111,16 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
     private function KueriRetur(?array $idOutlet): Builder
     {
         return ReturPenjualan::query()->where('ReturPenjualan.PerluTinjauan', true)->when($idOutlet !== null, fn ($k) => $k->whereIn('ReturPenjualan.IdOutlet', $idOutlet));
+    }
+
+    /**
+     * @param  list<int>|null  $idOutlet
+     * @return Builder<TagihanQris>
+     */
+    private function KueriTagihanQris(?array $idOutlet): Builder
+    {
+        return TagihanQris::query()->where('TagihanQris.PerluTinjauan', true)->whereNull('TagihanQris.UuidPenjualan')
+            ->when($idOutlet !== null, fn ($k) => $k->whereIn('TagihanQris.IdOutlet', $idOutlet));
     }
 
     /**

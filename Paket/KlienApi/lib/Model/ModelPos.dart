@@ -666,13 +666,30 @@ class HasilMasukPin {
 
 /// Satu item outbox yang dikirim ke `POST /sinkron/kirim`.
 class ItemOutbox {
-  const ItemOutbox({required this.jenis, required this.uuid, required this.data});
+  const ItemOutbox({required this.jenis, required this.uuid, required this.data, this.uuidPerangkatAsal});
 
   final String jenis;
   final String uuid;
   final Map<String, Object?> data;
 
-  Map<String, Object?> toJson() => {'Jenis': jenis, 'Uuid': uuid, 'Data': data};
+  /// Perangkat yang membuat item (audit P0 F-01). Server mengkreditkan item ke perangkat ini, bukan ke pengirim.
+  final String? uuidPerangkatAsal;
+
+  Map<String, Object?> toJson() => {
+    'Jenis': jenis,
+    'Uuid': uuid,
+    'Data': data,
+    if (uuidPerangkatAsal != null) 'UuidPerangkatAsal': uuidPerangkatAsal,
+  };
+}
+
+/// Jawaban `sinkron/kirim`: hasil per item + `PerangkatDicabut` (perangkat pengirim sudah dicabut, masa pemulihan:
+/// kosongkan outbox lalu hapus token).
+class JawabanSinkron {
+  const JawabanSinkron({required this.hasil, this.perangkatDicabut = false});
+
+  final List<HasilItemSinkron> hasil;
+  final bool perangkatDicabut;
 }
 
 enum StatusItemSinkron { Diterima, Duplikat, Ditolak }

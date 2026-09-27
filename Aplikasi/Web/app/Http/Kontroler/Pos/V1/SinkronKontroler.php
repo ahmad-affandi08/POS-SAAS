@@ -15,7 +15,8 @@ use Illuminate\Http\JsonResponse;
 /**
  * `POST /api/pos/v1/sinkron/kirim` (PRD §16.3, §18): menerima batch outbox perangkat dan membalas hasil per item
  * (`Diterima`/`Duplikat`/`Ditolak`) dalam urutan yang sama. F-06: `Shift.Buka`, `MutasiKas.Catat`; F-07b:
- * `Penjualan.Buat`; F-11: `Shift.Tutup`.
+ * `Penjualan.Buat`; F-11: `Shift.Tutup`. `PerangkatDicabut` = true bila pengirim sudah dicabut (masa pemulihan, audit
+ * P0 F-01): aplikasi mengosongkan outbox lalu menghapus tokennya.
  */
 final class SinkronKontroler extends Kontroler
 {
@@ -27,6 +28,7 @@ final class SinkronKontroler extends Kontroler
         return response()->json([
             'Hasil' => array_map(fn (HasilItemSinkron $satu): array => $satu->KeArray(), $hasil),
             'WaktuServer' => now()->utc()->toIso8601ZuluString(),
+            'PerangkatDicabut' => $perangkat->CekDicabut(),
         ]);
     }
 }

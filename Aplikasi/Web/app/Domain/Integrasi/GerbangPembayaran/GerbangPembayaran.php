@@ -25,6 +25,12 @@ interface GerbangPembayaran
     public function CekStatus(string $nomorPesanan, string $idReferensi): StatusPembayaranGerbang;
 
     /**
+     * Audit P0 F-02: `CekStatus` cukup dengan `NomorPesanan` (tanpa `IdReferensi` dari gerbang), sehingga tagihan yang
+     * hasil pembuatannya tidak pasti bisa direkonsiliasi.
+     */
+    public function CekDapatCekDariNomorPesanan(): bool;
+
+    /**
      * Verifikasi & urai notifikasi masuk. Null = tanda tangan/token tidak sah (webhook diabaikan, dijawab 401).
      */
     public function UraiWebhook(Request $permintaan): ?HasilWebhook;

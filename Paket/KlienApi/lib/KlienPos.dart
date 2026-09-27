@@ -291,12 +291,15 @@ class KlienPos {
   }
 
   /// Kirim batch outbox (maks. 50) dan kembalikan hasil per item dalam urutan yang sama.
-  Future<List<HasilItemSinkron>> KirimSinkron(List<ItemOutbox> item) async {
+  Future<JawabanSinkron> KirimSinkron(List<ItemOutbox> item) async {
     final json = await _Kirim('POST', 'sinkron/kirim', {'Item': item.map((i) => i.toJson()).toList()});
     final hasil = json['Hasil'];
-    return hasil is List<Object?>
-        ? hasil.whereType<Map<String, Object?>>().map(HasilItemSinkron.DariJson).toList()
-        : const <HasilItemSinkron>[];
+    return JawabanSinkron(
+      hasil: hasil is List<Object?>
+          ? hasil.whereType<Map<String, Object?>>().map(HasilItemSinkron.DariJson).toList()
+          : const <HasilItemSinkron>[],
+      perangkatDicabut: json['PerangkatDicabut'] == true,
+    );
   }
 
   Future<Map<String, Object?>> _Kirim(
