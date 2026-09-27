@@ -212,6 +212,33 @@ describe('Verifikasi email (BR-00.5)', function (): void {
         $this->post('/verifikasi-email/kirim-ulang')->assertSessionHasErrors('Umum');
         Mail::assertSent(VerifikasiEmail::class, 4);
     });
+
+    it('kirim ulang untuk email yang sudah terverifikasi tidak mengaku mengirim', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        Pengguna::query()->firstOrFail()->forceFill(['EmailDiverifikasiPada' => now()])->save();
+        Mail::fake();
+
+        $this->post('/verifikasi-email/kirim-ulang')
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('Kilat', 'Email Anda sudah terverifikasi, jadi tautan tidak perlu dikirim lagi.');
+
+        Mail::assertNothingSent();
+    });
+
+    it('kirim ulang yang gagal dilaporkan sebagai galat, bukan sukses', function (): void {
+        $this->post('/daftar', IsianDaftarUji())->assertSessionHasNoErrors();
+        Mail::shouldReceive('to')->andThrow(new RuntimeException('SMTP ditolak'));
+
+        $this->post('/verifikasi-email/kirim-ulang')->assertSessionHasErrors('Umum');
+    });
+
+    it('pendaftaran yang gagal mengirim email tidak menyuruh pengguna mengecek email', function (): void {
+        Mail::shouldReceive('to')->andThrow(new RuntimeException('SMTP ditolak'));
+
+        $this->post('/daftar', IsianDaftarUji())
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('Kilat', fn (string $pesan): bool => str_contains($pesan, 'belum berhasil dikirim'));
+    });
 });
 
 describe('Masuk & pemilih tenant (BR-00.1, isolasi tenant)', function (): void {

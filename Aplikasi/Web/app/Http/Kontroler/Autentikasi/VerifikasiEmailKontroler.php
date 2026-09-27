@@ -10,7 +10,9 @@ use App\Domain\Organisasi\Model\Pengguna;
 use App\Http\Kontroler\Kontroler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Throwable;
 
 /**
  * Verifikasi email dari tautan dan kirim ulang tautan (BR-00.5).
@@ -36,7 +38,19 @@ final class VerifikasiEmailKontroler extends Kontroler
         }
 
         RateLimiter::hit($kunci, 600);
-        $kirim->Jalankan($pengguna);
+
+        try {
+            // Jalankan() false = email sudah terverifikasi, jadi memang tidak ada yang dikirim.
+            if (! $kirim->Jalankan($pengguna)) {
+                return back()->with('Kilat', 'Email Anda sudah terverifikasi, jadi tautan tidak perlu dikirim lagi.');
+            }
+        } catch (Throwable $galat) {
+            // Sebelumnya kegagalan pengiriman tetap dilaporkan sebagai berhasil, sehingga pengguna menunggu email
+            // yang tidak pernah datang dan penyebabnya hanya terlihat di log.
+            Log::error('Email verifikasi gagal dikirim ulang.', ['Pesan' => $galat->getMessage()]);
+
+            return back()->withErrors(['Umum' => 'Email verifikasi gagal dikirim. Coba lagi beberapa saat; bila tetap gagal, hubungi dukungan.']);
+        }
 
         return back()->with('Kilat', "Tautan verifikasi dikirim ulang ke {$pengguna->Email}.");
     }

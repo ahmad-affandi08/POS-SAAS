@@ -24,10 +24,11 @@ final class KirimVerifikasiEmail
 {
     public function __construct(private readonly PenandaVerifikasiEmail $penanda) {}
 
-    public function Jalankan(Pengguna $pengguna): void
+    /** @return bool false = email sudah terverifikasi, jadi tidak ada yang dikirim (bukan kegagalan). */
+    public function Jalankan(Pengguna $pengguna): bool
     {
         if ($pengguna->EmailDiverifikasiPada !== null) {
-            return;
+            return false;
         }
 
         $jam = (int) config('tenant.JamBerlakuVerifikasiEmail');
@@ -38,5 +39,7 @@ final class KirimVerifikasiEmail
         $tautan = AlamatDomain::BuatUrlAbsolutTenant($relatif);
 
         Mail::to($pengguna->Email)->send(new VerifikasiEmail($pengguna->Nama, $tautan, $jam));
+
+        return true;
     }
 }

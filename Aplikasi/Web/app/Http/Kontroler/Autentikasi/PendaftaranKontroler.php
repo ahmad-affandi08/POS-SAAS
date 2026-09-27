@@ -71,14 +71,19 @@ final class PendaftaranKontroler extends Kontroler
         $permintaan->session()->regenerate();
         $permintaan->session()->put(IdentifikasiTenantSesi::KUNCI_SESI, $hasil['Tenant']->Id);
 
+        $terkirim = true;
+
         try {
             $kirimVerifikasi->Jalankan($hasil['Pengguna']);
         } catch (Throwable $galat) {
             // Tenant sudah terbentuk; email bisa dikirim ulang dari banner (BR-00.5).
             Log::error('Email verifikasi gagal dikirim.', ['Pesan' => $galat->getMessage()]);
+            $terkirim = false;
         }
 
-        return redirect()->route('kelola.panduan-awal')
-            ->with('Kilat', "Selamat datang di {$hasil['Tenant']->Nama}! Cek email Anda untuk verifikasi.");
+        // Kegagalan kirim tidak boleh diam: sebelumnya pengguna tetap disuruh "cek email" walau tidak ada yang dikirim.
+        return redirect()->route('kelola.panduan-awal')->with('Kilat', $terkirim
+            ? "Selamat datang di {$hasil['Tenant']->Nama}! Cek email Anda untuk verifikasi."
+            : "Selamat datang di {$hasil['Tenant']->Nama}! Email verifikasi belum berhasil dikirim; kirim ulang dari banner di atas.");
     }
 }
