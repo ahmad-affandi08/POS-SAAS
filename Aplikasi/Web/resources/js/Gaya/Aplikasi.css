@@ -46,6 +46,10 @@
     --color-peringatan: #9a5b00;
     --color-bahaya: #b3261e;
     --color-info: #1f5fad;
+    /* Accent Yellow D-15. HANYA situs pemasaran payou.id (D-25): aksen grafis, bukan status.
+     * Latar/grafis saja: teks di atasnya wajib teks-utama (8,98:1), putih dilarang (1,67:1).
+     * Sebagai teks hanya sah di atas brand-gelap (6,10:1), tidak pernah di atas permukaan/latar. */
+    --color-aksen: #fbbf24;
 }
 
 /* ============================================================================================
@@ -70,6 +74,7 @@
     --color-peringatan-lembut: color-mix(in oklab, var(--color-peringatan) 12%, var(--color-permukaan));
     --color-bahaya-lembut: color-mix(in oklab, var(--color-bahaya) 12%, var(--color-permukaan));
     --color-info-lembut: color-mix(in oklab, var(--color-info) 12%, var(--color-permukaan));
+    --color-aksen-lembut: color-mix(in oklab, var(--color-aksen) 22%, var(--color-permukaan));
 
     /* Sidebar merek gelap (D-15): latar BrandGelap, teks menu tidak aktif ~6,7:1, sorotan hover, garis pemisah */
     --color-brand-gelap-teks: color-mix(in oklab, var(--color-permukaan) 80%, var(--color-brand-gelap));
@@ -100,6 +105,12 @@
 
     /* Skala tipografi mode Ringkas (back-office). Mode Nyaman ada di aplikasi Flutter. */
     /* Situs pemasaran (D-21, kepadatan Nyaman): judul pembuka, judul bagian, dan paragraf pengantar. */
+    /* Hero situs pemasaran payou.id saja (D-25); tidak dipakai back-office, konsol, POS, Pemilik. */
+    --text-sorotan-besar: 64px;
+    --text-sorotan-besar--line-height: 70px;
+    --text-sorotan-besar-hp: 40px;
+    --text-sorotan-besar-hp--line-height: 46px;
+
     --text-sorotan: 48px;
     --text-sorotan--line-height: 56px;
     --text-sorotan-hp: 34px;

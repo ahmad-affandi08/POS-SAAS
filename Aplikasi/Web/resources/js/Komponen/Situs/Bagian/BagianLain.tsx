@@ -3,48 +3,76 @@ import { Check, ChevronDown, Clock, Mail, MapPin, MessageCircle, Phone } from 'l
 
 import TeksKaya from '@/Komponen/Situs/TeksKaya';
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
+import { cn } from '@/Komponen/Ui/utils';
 import type { BagianSitus, DataSitus } from '@/Tipe/Situs';
 
-import { GambarBagian, KepalaBagian, WadahBagian } from './KepalaBagian';
+import { CekGelap, GambarBagian, KelasKartu, KepalaBagian, type LatarBagian, WadahBagian } from './KepalaBagian';
 
-type LatarBagian = 'latar' | 'permukaan';
+type PropsBagian<J extends BagianSitus['Jenis']> = {
+    bagian: Extract<BagianSitus, { Jenis: J }>;
+    latar: LatarBagian;
+    garisAtas?: boolean | undefined;
+};
 
 /** Gambar di satu sisi, teks + poin + tombol di sisi lain. */
-export function BagianGambarTeks({
-    bagian,
-    latar,
-}: {
-    bagian: Extract<BagianSitus, { Jenis: 'GambarTeks' }>;
-    latar: LatarBagian;
-}) {
+export function BagianGambarTeks({ bagian, latar, garisAtas }: PropsBagian<'GambarTeks'>) {
     const gambarKiri = bagian.PosisiGambar === 'Kiri';
+    const gelap = CekGelap(latar);
 
     return (
-        <WadahBagian latar={latar}>
-            <div className={`grid items-center gap-10 ${bagian.Gambar ? 'lg:grid-cols-2' : 'max-w-3xl'}`}>
-                <div className={`flex flex-col gap-4 ${gambarKiri ? 'lg:order-2' : ''}`}>
-                    <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} rata="kiri" />
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <div className={cn('grid items-center gap-10', bagian.Gambar ? 'lg:grid-cols-2' : 'max-w-3xl')}>
+                <div className={cn('flex flex-col gap-4', gambarKiri && 'lg:order-2')}>
+                    <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
                     {bagian.Teks ? (
-                        <TeksKaya teks={bagian.Teks} className="-mt-6 text-subjudul text-teks-sekunder" />
+                        <TeksKaya
+                            teks={bagian.Teks}
+                            className={cn(
+                                'text-subjudul -mt-6',
+                                gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                            )}
+                        />
                     ) : null}
                     {bagian.Poin.length > 0 ? (
                         <ul className="flex flex-col gap-3">
                             {bagian.Poin.map((poin, i) => (
-                                <li key={`${poin.Teks}-${i}`} className="flex gap-3 text-subjudul text-teks-utama">
-                                    <Check className="mt-1 size-5 shrink-0 text-sukses" aria-hidden />
+                                <li
+                                    key={`${poin.Teks}-${i}`}
+                                    className={cn(
+                                        'text-subjudul flex gap-3',
+                                        gelap ? 'text-permukaan' : 'text-teks-utama',
+                                    )}
+                                >
+                                    <Check
+                                        className={cn(
+                                            'mt-1 size-5 shrink-0',
+                                            gelap ? 'text-brand-gelap-teks' : 'text-sukses',
+                                        )}
+                                        aria-hidden
+                                    />
                                     <span>{poin.Teks}</span>
                                 </li>
                             ))}
                         </ul>
                     ) : null}
                     {bagian.Tombol ? (
-                        <TombolSitus href={bagian.Tombol.Tautan} className="self-start">
+                        <TombolSitus
+                            href={bagian.Tombol.Tautan}
+                            varian={gelap ? 'terang' : 'garis-merek'}
+                            className="self-start"
+                        >
                             {bagian.Tombol.Label}
                         </TombolSitus>
                     ) : null}
                 </div>
                 {bagian.Gambar ? (
-                    <GambarBagian gambar={bagian.Gambar} className="h-auto w-full rounded-panel border border-garis" />
+                    <GambarBagian
+                        gambar={bagian.Gambar}
+                        className={cn(
+                            'h-auto w-full rounded-panel border',
+                            gelap ? 'border-brand-gelap-garis' : 'border-garis',
+                        )}
+                    />
                 ) : null}
             </div>
         </WadahBagian>
@@ -52,24 +80,34 @@ export function BagianGambarTeks({
 }
 
 /** Tanya jawab dengan `<details>` bawaan (bisa dibuka tanpa JavaScript, terbaca mesin pencari). */
-export function BagianFaq({ bagian, latar }: { bagian: Extract<BagianSitus, { Jenis: 'Faq' }>; latar: LatarBagian }) {
+export function BagianFaq({ bagian, latar, garisAtas }: PropsBagian<'Faq'>) {
+    const gelap = CekGelap(latar);
+
     return (
-        <WadahBagian latar={latar} id="faq" sempit>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <div className="flex flex-col gap-3">
+        <WadahBagian latar={latar} id="faq" sempit garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
+            <div className="flex flex-col">
                 {bagian.Item.map((item, i) => (
                     <details
                         key={`${item.Pertanyaan}-${i}`}
-                        className={`group rounded-panel border border-garis ${latar === 'latar' ? 'bg-permukaan' : 'bg-latar'}`}
+                        className={cn('group border-b', gelap ? 'border-brand-gelap-garis' : 'border-garis')}
                     >
-                        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-subjudul font-semibold text-teks-utama [&::-webkit-details-marker]:hidden">
+                        <summary
+                            className={cn(
+                                'text-subjudul flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold [&::-webkit-details-marker]:hidden',
+                                gelap ? 'text-permukaan' : 'text-teks-utama',
+                            )}
+                        >
                             {item.Pertanyaan}
                             <ChevronDown
                                 className="size-5 shrink-0 transition-transform group-open:rotate-180"
                                 aria-hidden
                             />
                         </summary>
-                        <TeksKaya teks={item.Jawaban} className="px-5 pb-5 text-isi text-teks-sekunder" />
+                        <TeksKaya
+                            teks={item.Jawaban}
+                            className={cn('text-isi pb-5', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}
+                        />
                     </details>
                 ))}
             </div>
@@ -77,7 +115,7 @@ export function BagianFaq({ bagian, latar }: { bagian: Extract<BagianSitus, { Je
     );
 }
 
-/** Ajakan penutup berlatar merek. */
+/** Ajakan penutup berlatar merek. Satu-satunya bagian yang memang dibaca sebagai pengumuman, jadi rata tengah. */
 export function BagianCta({ bagian }: { bagian: Extract<BagianSitus, { Jenis: 'Cta' }> }) {
     return (
         <WadahBagian latar="merek">
@@ -104,37 +142,35 @@ export function BagianCta({ bagian }: { bagian: Extract<BagianSitus, { Jenis: 'C
 }
 
 /** Teks panjang (tentang kami, kebijakan singkat, artikel sederhana). */
-export function BagianTeksBebas({
-    bagian,
-    latar,
-}: {
-    bagian: Extract<BagianSitus, { Jenis: 'TeksBebas' }>;
-    latar: LatarBagian;
-}) {
+export function BagianTeksBebas({ bagian, latar, garisAtas }: PropsBagian<'TeksBebas'>) {
+    const gelap = CekGelap(latar);
+
     return (
-        <WadahBagian latar={latar} sempit>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} rata="kiri" />
-            <TeksKaya teks={bagian.Isi} className="text-subjudul text-teks-utama" />
+        <WadahBagian latar={latar} sempit garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
+            <TeksKaya
+                teks={bagian.Isi}
+                className={cn('text-subjudul', gelap ? 'text-brand-gelap-teks' : 'text-teks-utama')}
+            />
         </WadahBagian>
     );
 }
 
 /** Video YouTube lewat youtube-nocookie (tanpa cookie pelacak sampai diputar). */
-export function BagianVideo({
-    bagian,
-    latar,
-}: {
-    bagian: Extract<BagianSitus, { Jenis: 'Video' }>;
-    latar: LatarBagian;
-}) {
+export function BagianVideo({ bagian, latar, garisAtas }: PropsBagian<'Video'>) {
     if (!bagian.IdYoutube) {
         return null;
     }
 
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <div className="mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-panel border border-garis bg-teks-utama">
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian
+                label={bagian.Label}
+                judul={bagian.Judul}
+                subjudul={bagian.Subjudul}
+                gelap={CekGelap(latar)}
+            />
+            <div className="aspect-video w-full overflow-hidden rounded-panel border border-garis bg-teks-utama">
                 <iframe
                     src={`https://www.youtube-nocookie.com/embed/${bagian.IdYoutube}`}
                     title={bagian.Judul ?? 'Video'}
@@ -156,35 +192,33 @@ const PLATFORM_UNDUH = [
 ] as const;
 
 /** Tautan unduh aplikasi dari pengaturan situs; platform tanpa tautan tidak ditampilkan. */
-export function BagianUnduhAplikasi({
-    bagian,
-    latar,
-}: {
-    bagian: Extract<BagianSitus, { Jenis: 'UnduhAplikasi' }>;
-    latar: LatarBagian;
-}) {
+export function BagianUnduhAplikasi({ bagian, latar, garisAtas }: PropsBagian<'UnduhAplikasi'>) {
     const { props } = usePage<{ Situs: DataSitus }>();
     const tersedia = PLATFORM_UNDUH.filter((p) => props.Situs.TautanUnduh[p.Kunci]);
+    const gelap = CekGelap(latar);
 
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
             {tersedia.length === 0 ? (
-                <p className="text-center text-isi text-teks-sekunder">
+                <p className={cn('text-isi', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}>
                     Tautan unduhan segera tersedia. Hubungi kami untuk mendapatkan aplikasinya.
                 </p>
             ) : (
-                <ul className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+                <ul className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start">
                     {tersedia.map((p) => (
-                        <li key={p.Kunci} className="flex flex-col items-center gap-1">
+                        <li key={p.Kunci} className="flex flex-col gap-1">
                             <TombolSitus
                                 href={props.Situs.TautanUnduh[p.Kunci] ?? '#'}
                                 ukuran="besar"
+                                varian={gelap ? 'terang' : 'utama'}
                                 className="w-full sm:w-auto"
                             >
                                 {p.Label}
                             </TombolSitus>
-                            <span className="text-label text-teks-sekunder">{p.Keterangan}</span>
+                            <span className={cn('text-label', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}>
+                                {p.Keterangan}
+                            </span>
                         </li>
                     ))}
                 </ul>
@@ -194,32 +228,47 @@ export function BagianUnduhAplikasi({
 }
 
 /** Kartu kontak dari pengaturan situs. */
-export function BagianKontak({
-    bagian,
-    latar,
-}: {
-    bagian: Extract<BagianSitus, { Jenis: 'Kontak' }>;
-    latar: LatarBagian;
-}) {
+export function BagianKontak({ bagian, latar, garisAtas }: PropsBagian<'Kontak'>) {
     const { props } = usePage<{ Situs: DataSitus }>();
     const k = props.Situs.Kontak;
-    const kartu = `flex gap-4 rounded-panel border border-garis p-6 ${latar === 'latar' ? 'bg-permukaan' : 'bg-latar'}`;
+    const gelap = CekGelap(latar);
+    const kartu = cn('flex gap-4', KelasKartu(latar));
+    const judulKartu = cn('text-subjudul font-semibold', gelap ? 'text-permukaan' : 'text-teks-utama');
+    const tautanKartu = cn('text-isi font-semibold underline', gelap ? 'text-permukaan' : 'text-brand');
     const ada = k.TautanWhatsApp || k.Email || k.Telepon || k.Alamat;
 
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
             {!ada ? (
-                <p className="text-center text-isi text-teks-sekunder">Kontak sedang disiapkan.</p>
+                <p className={cn('text-isi', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}>
+                    Kontak sedang disiapkan.
+                </p>
             ) : (
                 <ul className="grid gap-4 sm:grid-cols-2">
                     {k.TautanWhatsApp ? (
                         <li className={kartu}>
-                            <MessageCircle className="size-6 shrink-0 text-sukses" aria-hidden />
+                            <MessageCircle
+                                className={cn('size-6 shrink-0', gelap ? 'text-brand-gelap-teks' : 'text-sukses')}
+                                aria-hidden
+                            />
                             <div className="flex flex-col gap-2">
-                                <h3 className="text-subjudul font-semibold text-teks-utama">WhatsApp</h3>
-                                {k.WhatsApp ? <p className="text-isi text-teks-sekunder">{k.WhatsApp}</p> : null}
-                                <TombolSitus href={k.TautanWhatsApp} className="self-start">
+                                <h3 className={judulKartu}>WhatsApp</h3>
+                                {k.WhatsApp ? (
+                                    <p
+                                        className={cn(
+                                            'text-isi',
+                                            gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                                        )}
+                                    >
+                                        {k.WhatsApp}
+                                    </p>
+                                ) : null}
+                                <TombolSitus
+                                    href={k.TautanWhatsApp}
+                                    varian={gelap ? 'terang' : 'utama'}
+                                    className="self-start"
+                                >
                                     Chat sekarang
                                 </TombolSitus>
                             </div>
@@ -227,13 +276,13 @@ export function BagianKontak({
                     ) : null}
                     {k.Email ? (
                         <li className={kartu}>
-                            <Mail className="size-6 shrink-0 text-brand" aria-hidden />
+                            <Mail
+                                className={cn('size-6 shrink-0', gelap ? 'text-brand-gelap-teks' : 'text-brand')}
+                                aria-hidden
+                            />
                             <div className="flex flex-col gap-1">
-                                <h3 className="text-subjudul font-semibold text-teks-utama">Email</h3>
-                                <a
-                                    href={`mailto:${k.Email}`}
-                                    className="text-isi font-semibold break-all text-brand underline"
-                                >
+                                <h3 className={judulKartu}>Email</h3>
+                                <a href={`mailto:${k.Email}`} className={cn(tautanKartu, 'break-all')}>
                                     {k.Email}
                                 </a>
                             </div>
@@ -241,13 +290,13 @@ export function BagianKontak({
                     ) : null}
                     {k.Telepon ? (
                         <li className={kartu}>
-                            <Phone className="size-6 shrink-0 text-brand" aria-hidden />
+                            <Phone
+                                className={cn('size-6 shrink-0', gelap ? 'text-brand-gelap-teks' : 'text-brand')}
+                                aria-hidden
+                            />
                             <div className="flex flex-col gap-1">
-                                <h3 className="text-subjudul font-semibold text-teks-utama">Telepon</h3>
-                                <a
-                                    href={`tel:${k.Telepon.replace(/[^\d+]/g, '')}`}
-                                    className="text-isi font-semibold text-brand underline"
-                                >
+                                <h3 className={judulKartu}>Telepon</h3>
+                                <a href={`tel:${k.Telepon.replace(/[^\d+]/g, '')}`} className={tautanKartu}>
                                     {k.Telepon}
                                 </a>
                             </div>
@@ -255,17 +304,32 @@ export function BagianKontak({
                     ) : null}
                     {k.Alamat ? (
                         <li className={kartu}>
-                            <MapPin className="size-6 shrink-0 text-brand" aria-hidden />
+                            <MapPin
+                                className={cn('size-6 shrink-0', gelap ? 'text-brand-gelap-teks' : 'text-brand')}
+                                aria-hidden
+                            />
                             <div className="flex flex-col gap-1">
-                                <h3 className="text-subjudul font-semibold text-teks-utama">Alamat</h3>
-                                <p className="text-isi whitespace-pre-line text-teks-sekunder">{k.Alamat}</p>
+                                <h3 className={judulKartu}>Alamat</h3>
+                                <p
+                                    className={cn(
+                                        'text-isi whitespace-pre-line',
+                                        gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                                    )}
+                                >
+                                    {k.Alamat}
+                                </p>
                             </div>
                         </li>
                     ) : null}
                 </ul>
             )}
             {k.JamLayanan ? (
-                <p className="mt-6 flex items-center justify-center gap-2 text-isi text-teks-sekunder">
+                <p
+                    className={cn(
+                        'text-isi mt-6 flex items-center gap-2',
+                        gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                    )}
+                >
                     <Clock className="size-4" aria-hidden /> Jam layanan: {k.JamLayanan}
                 </p>
             ) : null}

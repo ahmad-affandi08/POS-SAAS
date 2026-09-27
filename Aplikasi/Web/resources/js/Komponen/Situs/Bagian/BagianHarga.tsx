@@ -8,7 +8,7 @@ import { cn } from '@/Komponen/Ui/utils';
 import { FormatRupiah } from '@/Pustaka/Format';
 import type { BagianSitus, DataSitus, PaketHarga } from '@/Tipe/Situs';
 
-import { KepalaBagian, WadahBagian } from './KepalaBagian';
+import { CekGelap, KepalaBagian, type LatarBagian, WadahBagian } from './KepalaBagian';
 
 type Periode = 'Bulanan' | 'Tahunan';
 
@@ -46,9 +46,11 @@ function TampilkanHarga({ paket, periode }: { paket: PaketHarga; periode: Period
 export default function BagianHarga({
     bagian,
     latar,
+    garisAtas,
 }: {
     bagian: Extract<BagianSitus, { Jenis: 'Harga' }>;
-    latar: 'latar' | 'permukaan';
+    latar: LatarBagian;
+    garisAtas?: boolean | undefined;
 }) {
     const { props } = usePage<{ Situs: DataSitus }>();
     const [periode, AturPeriode] = useState<Periode>('Bulanan');
@@ -57,10 +59,15 @@ export default function BagianHarga({
     const tautanKontak = props.Situs.Kontak.TautanWhatsApp ?? '/kontak';
 
     return (
-        <WadahBagian latar={latar} id="harga">
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
+        <WadahBagian latar={latar} id="harga" garisAtas={garisAtas}>
+            <KepalaBagian
+                label={bagian.Label}
+                judul={bagian.Judul}
+                subjudul={bagian.Subjudul}
+                gelap={CekGelap(latar)}
+            />
             {adaTahunan ? (
-                <div className="mb-8 flex justify-center">
+                <div className="mb-8 flex">
                     <div
                         role="radiogroup"
                         aria-label="Periode tagihan"
@@ -87,7 +94,7 @@ export default function BagianHarga({
                 </div>
             ) : null}
             {bagian.Paket.length === 0 ? (
-                <p className="text-center text-isi text-teks-sekunder">
+                <p className="text-isi text-teks-sekunder">
                     Harga paket sedang diperbarui. Hubungi kami untuk informasi terbaru.
                 </p>
             ) : (
@@ -104,7 +111,7 @@ export default function BagianHarga({
                                 )}
                             >
                                 {disorot ? (
-                                    <p className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-keterangan font-semibold text-brand-teks">
+                                    <p className="text-keterangan absolute -top-3 left-6 rounded-full bg-aksen px-3 py-0.5 font-semibold text-teks-utama">
                                         Paling populer
                                     </p>
                                 ) : null}
@@ -114,7 +121,7 @@ export default function BagianHarga({
                                         <p className="text-isi text-teks-sekunder">{paket.Keterangan}</p>
                                     ) : null}
                                 </div>
-                                <div className="flex flex-col gap-1">
+                                <div key={periode} className="muncul-cepat flex flex-col gap-1">
                                     <TampilkanHarga paket={paket} periode={periode} />
                                     {periode === 'Tahunan' && paket.HematTahunan ? (
                                         <p className="text-label font-semibold text-sukses">
@@ -129,7 +136,7 @@ export default function BagianHarga({
                                 </div>
                                 <TombolSitus
                                     href={paket.HargaNegosiasi ? tautanKontak : bagian.TautanDaftar}
-                                    varian={disorot ? 'utama' : 'kedua'}
+                                    varian={disorot ? 'utama' : 'garis-merek'}
                                 >
                                     {paket.HargaNegosiasi ? 'Hubungi kami' : (bagian.TeksTombol ?? 'Mulai sekarang')}
                                 </TombolSitus>
@@ -147,10 +154,7 @@ export default function BagianHarga({
                 </ul>
             )}
             {bagian.CatatanKaki ? (
-                <TeksKaya
-                    teks={bagian.CatatanKaki}
-                    className="mx-auto mt-8 max-w-3xl text-center text-label text-teks-sekunder"
-                />
+                <TeksKaya teks={bagian.CatatanKaki} className="text-label mt-8 max-w-3xl text-teks-sekunder" />
             ) : null}
         </WadahBagian>
     );

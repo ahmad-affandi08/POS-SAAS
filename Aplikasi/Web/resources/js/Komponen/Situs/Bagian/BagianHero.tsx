@@ -1,51 +1,99 @@
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
+import { cn } from '@/Komponen/Ui/utils';
 import type { BagianSitus } from '@/Tipe/Situs';
 
 import { GambarBagian } from './KepalaBagian';
 
 type Props = { bagian: Extract<BagianSitus, { Jenis: 'Hero' }>; utama: boolean };
 
-/** Pembuka halaman: judul besar (h1 bila blok pertama), pengantar, dua tombol, gambar produk opsional. */
+const KELAS_LATAR = {
+    Terang: 'bg-permukaan',
+    Merek: 'bg-brand-gelap',
+    Navy: 'bg-teks-utama',
+} as const;
+
+/**
+ * Pembuka halaman (D-25): judul besar **rata kiri**, pengantar, satu tombol utama berisi + satu tombol
+ * bergaris tipis, gambar produk opsional. Latar bisa terang, merek, atau Navy sehingga halaman pemasaran
+ * punya jangkar gelap penuh tanpa gradien.
+ *
+ * Label memakai latar `Aksen` dengan teks `TeksUtama` (8,98:1) — satu-satunya pemakaian kuning di hero,
+ * dan tidak pernah berteks putih (1,67:1, gagal WCAG).
+ */
 export default function BagianHero({ bagian, utama }: Props) {
     const Judul = utama ? 'h1' : 'h2';
     const adaGambar = bagian.Gambar !== null;
+    const latar = bagian.Latar ?? 'Terang';
+    const gelap = latar !== 'Terang';
 
     return (
-        <section className="bg-permukaan">
+        <section className={KELAS_LATAR[latar]}>
             <div
-                className={`mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 ${adaGambar ? 'lg:grid-cols-2' : ''}`}
+                className={cn(
+                    'muncul-saat-gulir mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:py-24',
+                    adaGambar && 'lg:grid-cols-[1fr_1.1fr]',
+                )}
             >
-                <div className={`flex flex-col gap-5 ${adaGambar ? '' : 'mx-auto max-w-3xl items-center text-center'}`}>
+                <div className={cn('flex flex-col items-start gap-6', adaGambar ? '' : 'max-w-3xl')}>
                     {bagian.Label ? (
-                        <p className="self-start rounded-full bg-brand-lembut px-3 py-1 text-label font-semibold text-brand-gelap max-lg:self-auto">
+                        <p className="rounded-full bg-aksen px-3 py-1 text-label font-semibold text-teks-utama">
                             {bagian.Label}
                         </p>
                     ) : null}
-                    <Judul className="text-sorotan-hp font-bold text-teks-utama sm:text-sorotan">{bagian.Judul}</Judul>
+                    <Judul
+                        className={cn(
+                            'text-sorotan-besar-hp font-bold sm:text-sorotan-besar',
+                            gelap ? 'text-permukaan' : 'text-teks-utama',
+                        )}
+                    >
+                        {bagian.Judul}
+                    </Judul>
                     {bagian.Subjudul ? (
-                        <p className="text-pengantar whitespace-pre-line text-teks-sekunder">{bagian.Subjudul}</p>
+                        <p
+                            className={cn(
+                                'text-pengantar max-w-xl whitespace-pre-line',
+                                gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                            )}
+                        >
+                            {bagian.Subjudul}
+                        </p>
                     ) : null}
                     {bagian.TombolUtama || bagian.TombolKedua ? (
-                        <div className={`flex flex-col gap-3 sm:flex-row ${adaGambar ? '' : 'sm:justify-center'}`}>
+                        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                             {bagian.TombolUtama ? (
-                                <TombolSitus href={bagian.TombolUtama.Tautan} ukuran="besar">
+                                <TombolSitus
+                                    href={bagian.TombolUtama.Tautan}
+                                    ukuran="besar"
+                                    varian={gelap ? 'terang' : 'utama'}
+                                >
                                     {bagian.TombolUtama.Label}
                                 </TombolSitus>
                             ) : null}
                             {bagian.TombolKedua ? (
-                                <TombolSitus href={bagian.TombolKedua.Tautan} ukuran="besar" varian="kedua">
+                                <TombolSitus
+                                    href={bagian.TombolKedua.Tautan}
+                                    ukuran="besar"
+                                    varian={gelap ? 'garis-terang' : 'garis-merek'}
+                                >
                                     {bagian.TombolKedua.Label}
                                 </TombolSitus>
                             ) : null}
                         </div>
                     ) : null}
-                    {bagian.Catatan ? <p className="text-label text-teks-sekunder">{bagian.Catatan}</p> : null}
+                    {bagian.Catatan ? (
+                        <p className={cn('text-label', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}>
+                            {bagian.Catatan}
+                        </p>
+                    ) : null}
                 </div>
                 {bagian.Gambar ? (
                     <GambarBagian
                         gambar={bagian.Gambar}
                         prioritas={utama}
-                        className="h-auto w-full rounded-panel border border-garis"
+                        className={cn(
+                            'h-auto w-full rounded-panel border',
+                            gelap ? 'border-brand-gelap-garis' : 'border-garis',
+                        )}
                     />
                 ) : null}
             </div>

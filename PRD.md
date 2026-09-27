@@ -6,7 +6,8 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.36 |
+| Versi | 2.37 | **D-25 desain ulang situs pemasaran `payou.id`** dengan squareup.com sebagai referensi: token `Aksen` `#FBBF24` (hanya `payou.id`, bukan status, latar/grafis berteks `TeksUtama`), token judul `SorotanBesar`/`SorotanBesarHp`, animasi masuk saat gulir 200–400 ms yang menghormati `prefers-reduced-motion`, dan pelonggaran aturan 90/10 khusus situs pemasaran (§17.5, §17.6.3, §17.6.4). Blok situs dirombak: kotak ikon `BrandLembut` dibuang, `KepalaBagian` rata kiri sebagai bawaan, tata letak blok keunggulan bervariasi (Grid/Daftar/Sorot), sektor menjadi kartu bergambar, irama latar bagian memakai jeda gelap, dan halaman `/fitur` tidak lagi tiga grid berturut-turut. |
+| 2.36 |
 | Tanggal | 27 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -3888,7 +3889,7 @@ Format `ukuran/tinggi baris` dalam px (web) atau logical pixel (Flutter). KDS me
 
 **Aturan pemakaian:**
 - Semua angka uang dan jumlah memakai **angka tabular** dan rata kanan di tabel.
-- Hierarki dari ukuran dan ketebalan, bukan warna. Maksimal 6 token di atas, tidak membuat ukuran baru di luar token.
+- Hierarki dari ukuran dan ketebalan, bukan warna. Maksimal 6 token di atas, tidak membuat ukuran baru di luar token. **Pengecualian D-25:** situs pemasaran `payou.id` menambah `SorotanBesar` 64/70 dan `SorotanBesarHp` 40/46 khusus judul hero, tidak dipakai klien lain.
 - *Sentence case* ("Tambah produk", bukan "Tambah Produk" atau "TAMBAH PRODUK"). Huruf kapital penuh hanya untuk label status pendek bila perlu.
 - Tidak memakai letter-spacing negatif pada judul, dan tidak memakai teks bergradien.
 - **Anti-referensi** (tidak dipakai di UI {{APP}}): Inter, Geist, Plus Jakarta Sans, DM Sans, Manrope, Outfit, Poppins, Space Grotesk.
@@ -3931,9 +3932,9 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 
 #### 17.6.3 Warna
 
-**Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**.
+**Aturan 90/10:** sekitar 90% permukaan memakai warna netral. Warna brand hanya untuk **aksi utama** (Bayar, Simpan, Setujui) dan **penanda posisi aktif** (menu terpilih, tab aktif). Warna semantik hanya untuk **status**. **Pengecualian D-25:** di situs pemasaran `payou.id` blok boleh berlatar penuh `BrandGelap`, `TeksUtama`, atau `Aksen`; warna semantik di situs pemasaran pun tetap hanya untuk status.
 
-**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/`):** Primary Indigo `#6366F1`, Indigo Gelap `#1D29B8` (diambil dari kelompok warna gelap gradasi logo P), Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen **tidak** menjadi token UI (tetap hanya di logo) agar tidak tertukar dengan `Peringatan`.
+**Palet merek PAYOU (D-15, sumber `Spesifikasi/Merek/`):** Primary Indigo `#6366F1`, Indigo Gelap `#1D29B8` (diambil dari kelompok warna gelap gradasi logo P), Navy `#0F2747`, Accent Yellow `#FBBF24`, Warm Neutral `#F9FAFB`, Cool Gray `#E5E7EB`. Warna merek dipakai utuh di logo dan ikon aplikasi. Di UI, warna dipetakan ke token berikut; Indigo digelapkan sedikit menjadi `#5558E8` karena teks putih di atas `#6366F1` hanya 4,47:1 (di bawah WCAG AA). Kuning aksen menjadi token `Aksen` **sejak D-25**, tetapi hanya boleh dipakai di situs pemasaran `payou.id` dan tidak pernah menandai status, agar tidak tertukar dengan `Peringatan` (sebelum D-25 kuning tidak menjadi token UI sama sekali).
 
 **Token warna (final, diperbarui v1.71):**
 
@@ -3951,12 +3952,14 @@ Token font menjadi bagian dari `Spesifikasi/TokenDesain/Token.json` sehingga web
 | `Peringatan` | `#9A5B00` | Menunggu, tertunda, stok menipis |
 | `Bahaya` | `#B3261E` | Void, gagal, selisih kas, offline lama |
 | `Info` | `#1F5FAD` | Informasi netral, tautan |
+| `Aksen` | `#FBBF24` (Accent Yellow) | **Hanya situs pemasaran `payou.id`** (D-25): aksen grafis (garis bawah judul, lencana paket tersorot, blok kutipan). Bukan penanda status. Wajib berteks `TeksUtama` (8,98:1); teks putih di atasnya hanya 1,67:1 |
 
 Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1, dihitung saat penyusunan). Teks putih di atas `Brand` dan `Bahaya` juga ≥ 4,5:1. Setiap warna semantik punya varian latar lembut (misal `SuksesLatar`) untuk lencana dan baris tabel.
 
 **Aturan warna:**
 - **Status tidak pernah hanya warna.** Selalu disertai teks atau ikon ("Lunas", "Tertunda 3"), agar tetap jelas bagi pengguna buta warna dan di layar murah.
 - Makna warna **sama di semua klien**: hijau selalu lunas/berhasil, merah selalu void/gagal, dan seterusnya.
+- **`Aksen` tidak punya makna status** dan terbatas pada situs pemasaran `payou.id` (D-25). Dilarang di back-office, Platform Pengelola, aplikasi kasir, KDS, dan Aplikasi Pemilik; dijaga test. Karena kontrasnya rendah, `Aksen` adalah warna **latar dan grafis**, bukan warna teks: teks di atasnya wajib `TeksUtama` (8,98:1) dan **tidak boleh putih** (1,67:1); sebagai teks, `Aksen` hanya sah di atas `BrandGelap` (6,10:1) dan tidak pernah di atas `Permukaan`/`Latar` (1,67:1).
 - Tanpa gradien, efek kaca, atau warna dekoratif, kecuali gradasi merek terbatas `BrandGelap` → `Brand` pada kepala sidebar (D-15).
 - **Tanpa mode gelap di semua klien, termasuk KDS** (D-14). KDS memakai tema terang berkontras tinggi dengan huruf besar.
 - **Satu sumber warna:** web di `Aplikasi/Web/resources/js/Gaya/Aplikasi.css` (bagian "UBAH WARNA DI SINI"; variabel shadcn/ui hanya merujuk token), Flutter di `Paket/SistemDesain/lib/Token/TokenWarna.dart`. Halaman & komponen hanya memakai token; literal warna di luar dua file itu ditolak test penjaga.
@@ -3971,7 +3974,7 @@ Semua pasangan teks di atas `Permukaan`/`Latar` memenuhi **WCAG AA** (≥ 4,5:1,
 | Spasi | Kelipatan 4 (4, 8, 12, 16, 24, 32) |
 | Ikon | Satu set: **Lucide** (web & Flutter), garis 1,5–2px, ukuran 16/20/24. Ikon hanya bila membantu mengenali. Tanpa emoji di UI |
 | Ilustrasi | Tidak memakai ilustrasi 3D/blob sebagai gaya UI. Foto produk nyata di katalog. Tampilan kosong: teks + tombol aksi; daftar utama back-office yang belum berisi data memakai **ilustrasi keadaan kosong PAYOU** (D-18: datar 2D, palet merek, 160–192 px, dekoratif `alt=""`) lewat `KeadaanKosong`/`TabelData` `kosong.ilustrasi`, satu per halaman. Di tablet/desktop kepala kolom tabel tetap tampil dan keadaan kosong menjadi satu baris selebar tabel tanpa bingkai sendiri. Hasil cari/saring kosong dan tabel di halaman detail tanpa ilustrasi |
-| Animasi | Singkat (100–200 ms) dan fungsional (umpan balik tekan, masuk/keluar panel). Hormati pengaturan "kurangi gerakan" |
+| Animasi | Singkat (100–200 ms) dan fungsional (umpan balik tekan, masuk/keluar panel). Hormati pengaturan "kurangi gerakan". **Pengecualian D-25** di situs pemasaran `payou.id`: animasi masuk saat gulir 200–400 ms (pudar + geser ≤ 16px) dan transisi angka harga. Isi wajib dirender penuh di HTML (animasi hanya lapisan CSS, halaman tetap lengkap tanpa JavaScript), `prefers-reduced-motion: reduce` mematikan seluruhnya, dan dilarang parallax, gerakan berulang tanpa henti, atau elemen yang bergerak saat sedang dibaca |
 
 **Dua mode kepadatan** (terhubung dengan skala tipografi §17.5):
 
@@ -4568,6 +4571,7 @@ PRD tidak menjamin AI agent patuh. **Instruksi hanyalah saran; pengecekan otomat
 | D-22 | Dari pemilik produk (v2.11): seperti aplikasi kasir lain, admin **menambah pengguna langsung** tanpa bergantung email aktif, di konsol dan tenant. Kata sandi awal **diketik admin** dan wajib diganti saat pertama masuk; karyawan kasir **boleh tanpa email** (nama + PIN, hanya aplikasi kasir); undangan email **dipertahankan** sebagai pilihan kedua. Agent menetapkan: email yang sudah punya akun PAYOU hanya lewat undangan (akun global lintas usaha, BR-00.1), email yang diisi admin dianggap terverifikasi. |
 | D-23 | Dari pemilik produk (v2.13): **penyederhanaan & otomatisasi didahulukan** sebelum flow baru (mode jasa, laundry, grosir). Fitur sudah lengkap tetapi pemakaiannya terlalu rumit dan banyak isian manual. Disetujui: **(A)** mulai jualan dalam 5 menit (sektor → data awal lengkap otomatis, impor produk dari Excel/tempel teks; impor dari foto menu dengan AI/OCR menunggu keputusan layanan berbayar), **(B)** formulir mode Sederhana sebagai bawaan (isian penting saja, sisanya bawaan; opsi lanjutan dilipat; paket sesi/varian dicentang di form produk), **(C)** **Kotak Tindakan**: semua yang perlu perhatian (tinjauan dokumen offline, stok menipis, piutang/hutang jatuh tempo, shift lupa ditutup, periode belum ditutup, klaim pemasok) di satu tempat dengan penyelesaian satu klik, **(D)** otomatisasi terjadwal (draf PO saat stok menipis, pengeluaran berulang, tutup harian/bulan otomatis, pengingat WA/email). **Menu tidak disembunyikan per fitur**: fitur di luar paket langganan tetap tampil, dan saat diklik muncul dialog ajakan naik paket atau beli add-on (seperti Majoo). Urutan kerja: C + B, lalu A, D, dialog upgrade/add-on. Agent mengukur kemudahan per tugas harian (klik & isian, sebelum/sesudah) di `Panduan/AuditKemudahan.md`. |
 | D-24 | Dari pemilik produk (v2.16): **panduan awal wajib & halaman sendiri**. Setelah daftar lalu masuk, Pemilik/Admin tenant baru harus menyelesaikan panduan awal dulu di halaman layar penuh (tanpa sidebar/menu; hanya logo, nama usaha, Keluar). Langkah wajib: profil usaha, jenis usaha/template, pajak, minimal satu produk, metode bayar (Tunai otomatis). **Perangkat kasir boleh dilewati** ("Nanti saja"; pengingat di Kotak Tindakan). Selama belum selesai, semua rute `/kelola` dialihkan ke panduan kecuali langganan, bantuan, keamanan akun, dan persetujuan legal; anggota tanpa izin `panduan-awal.kelola` melihat halaman "Toko sedang disiapkan". Langkah terakhir yang selesai/dilewati langsung menuntaskan panduan dan membuka Beranda. **Tenant lama dibebaskan** (kolom `ProgresPanduanAwal.Wajib` = false; hanya pendaftaran baru yang diberi true). Checklist "Langkah berikutnya" tidak lagi di Beranda: butir yang belum selesai tampil di Kotak Tindakan sebagai "Persiapan toko" (tingkat Info). Menggantikan aturan F-01 "setiap langkah bisa dilewati, beranda menampilkan checklist" untuk tenant baru. |
+| D-25 | Dari pemilik produk (v2.37): **situs pemasaran `payou.id` memakai squareup.com sebagai referensi desain** dan boleh keluar dari tiga aturan §17 yang terikat D-15, **hanya untuk `payou.id`**: **(a)** kuning aksen `#FBBF24` menjadi token UI `Aksen` (sebelumnya sengaja dikecualikan agar tidak tertukar dengan `Peringatan`); `Aksen` tidak pernah menandai status, dilarang di back-office/konsol/kasir/KDS/Pemilik (dijaga test), dan karena kontrasnya rendah hanya dipakai sebagai latar/grafis dengan teks `TeksUtama` (8,98:1) — teks putih di atasnya dilarang (1,67:1), dan `Aksen` sebagai teks hanya sah di atas `BrandGelap` (6,10:1); **(b)** dua token ukuran judul baru `SorotanBesar` 64/70 dan `SorotanBesarHp` 40/46 khusus hero pemasaran, menyimpang dari §17.5 "tidak membuat ukuran baru di luar token"; **(c)** animasi masuk saat gulir 200–400 ms dan transisi angka harga, menyimpang dari batas §17.6.4 100–200 ms, dengan syarat isi dirender penuh di HTML, `prefers-reduced-motion` dihormati, dan tanpa parallax/gerakan tak berhenti; **(d)** aturan 90/10 dilonggarkan di `payou.id` sehingga blok boleh berlatar penuh `BrandGelap`/`TeksUtama`/`Aksen`, tetapi warna semantik tetap hanya untuk status. Alasan: halaman pemasaran sebelumnya terasa generik karena semua bagian berbentuk sama (judul rata tengah + grid kartu berbingkai) dan kotak ikon `BrandLembut` di setiap kartu. Checklist §17.6.11 "tetap dipahami jika semua warna dihapus" dan anggaran < 150 KB JS tetap berlaku. Rencana kerja di `Panduan/RencanaDesainSitusPemasaran.md`. |
 | D-19 | Dari pemilik produk (v2.06): gerbang pembayaran QRIS dinamis memakai **akun merchant milik tiap toko** sehingga dana pelanggan langsung masuk ke rekening toko; platform hanya mengatur penyedia yang boleh dipilih (katalog) tanpa pernah melihat kredensial toko. Opsi sub-merchant menyusul. |
 
 

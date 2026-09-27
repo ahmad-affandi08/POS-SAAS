@@ -9,9 +9,7 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import { CatatProspek } from '@/Pustaka/AnalitikSitus';
 import type { BagianSitus } from '@/Tipe/Situs';
 
-import { KepalaBagian, WadahBagian } from './KepalaBagian';
-
-type LatarBagian = 'latar' | 'permukaan';
+import { KepalaBagian, type LatarBagian, WadahBagian } from './KepalaBagian';
 
 /**
  * Formulir kontak/minta demo (situs bagian B). Isian dikirim ke `/prospek`; bidang `Situs` adalah perangkap bot yang
@@ -20,9 +18,11 @@ type LatarBagian = 'latar' | 'permukaan';
 export default function BagianFormulirProspek({
     bagian,
     latar,
+    garisAtas,
 }: {
     bagian: Extract<BagianSitus, { Jenis: 'FormulirProspek' }>;
     latar: LatarBagian;
+    garisAtas?: boolean | undefined;
 }) {
     const { props, url } = usePage<{ ProspekTerkirim?: boolean }>();
     const demo = bagian.JenisProspek === 'Demo';
@@ -54,9 +54,9 @@ export default function BagianFormulirProspek({
     };
 
     return (
-        <WadahBagian latar={latar} id="formulir-prospek">
+        <WadahBagian latar={latar} id="formulir-prospek" garisAtas={garisAtas}>
             <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <div className="mx-auto w-full max-w-2xl rounded-panel border border-garis bg-permukaan p-4 sm:p-6">
+            <div className="w-full max-w-2xl rounded-panel border border-garis bg-permukaan p-4 sm:p-6">
                 {props.ProspekTerkirim ? (
                     <div role="status" className="flex flex-col items-center gap-2 py-6 text-center">
                         <CircleCheck className="size-10 text-sukses" aria-hidden />

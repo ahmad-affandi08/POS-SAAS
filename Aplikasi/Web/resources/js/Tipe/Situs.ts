@@ -63,9 +63,13 @@ export type BagianSitus =
           TombolKedua: Tombol;
           Gambar: GambarSitus | null;
           Catatan: string | null;
+          /** D-25: latar hero. `Merek`/`Navy` memberi jangkar gelap penuh tanpa gradien. */
+          Latar: 'Terang' | 'Merek' | 'Navy' | null;
       })
     | ({ Jenis: 'Keunggulan' } & JudulBagian & {
               Kolom: '2' | '3' | '4' | null;
+              /** D-25: bentuk blok, supaya dua blok keunggulan berurutan tidak terbaca sebagai satu grid. */
+              TataLetak: 'Grid' | 'Daftar' | 'Sorot' | null;
               Item: { Ikon: string | null; Judul: string; Teks: string | null }[];
           })
     | ({ Jenis: 'Sektor' } & JudulBagian & {

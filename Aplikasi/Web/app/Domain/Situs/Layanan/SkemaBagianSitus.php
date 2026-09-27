@@ -34,7 +34,7 @@ final class SkemaBagianSitus
     /** @var array<string, string> */
     public const LABEL = [
         'Hero' => 'Pembuka (hero)',
-        'Keunggulan' => 'Keunggulan / fitur (kartu ikon)',
+        'Keunggulan' => 'Keunggulan / fitur',
         'Sektor' => 'Jenis usaha',
         'GambarTeks' => 'Gambar & teks',
         'Statistik' => 'Angka statistik',
@@ -66,8 +66,10 @@ final class SkemaBagianSitus
                 'TombolKedua' => ['Tombol'],
                 'Gambar' => ['Gambar'],
                 'Catatan' => ['Teks', 160],
+                'Latar' => ['Pilihan', ['Terang', 'Merek', 'Navy']],
             ],
             'Keunggulan' => $judulBagian + [
+                'TataLetak' => ['Pilihan', ['Grid', 'Daftar', 'Sorot']],
                 'Kolom' => ['Pilihan', ['2', '3', '4']],
                 'Item' => ['Daftar', 1, 12, ['Ikon' => ['Ikon'], 'Judul' => ['Teks', 80, true], 'Teks' => ['TeksPanjang', 300]]],
             ],

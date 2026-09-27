@@ -183,7 +183,68 @@
     }
 }
 
+/* ============================================================================================
+ * muncul-saat-gulir: animasi masuk blok situs pemasaran payou.id (D-25, PRD §17.6.4).
+ *
+ * Hanya lapisan CSS: isi sudah dirender penuh di HTML, jadi halaman tetap lengkap tanpa
+ * JavaScript dan tanpa dukungan `animation-timeline`. Tidak ada parallax dan tidak ada gerakan
+ * berulang; animasi berjalan sekali lalu berhenti (`animation-fill-mode: both`).
+ * Dipakai hanya oleh Komponen/Situs/** (dijaga test `AksenSitusPemasaran_test`).
+ * ============================================================================================ */
+@theme inline {
+    @keyframes muncul-saat-gulir {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+@utility muncul-saat-gulir {
+    @supports (animation-timeline: view()) {
+        animation: muncul-saat-gulir 320ms ease-out;
+        animation-timeline: view();
+        animation-range: entry 0% entry 60%;
+        animation-fill-mode: both;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .muncul-saat-gulir {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* muncul-cepat: umpan balik 180 ms saat isi berganti (mis. angka harga bulanan/tahunan).
+ * Masih di dalam batas fungsional 100–200 ms PRD §17.6.4, jadi boleh dipakai di klien mana pun. */
+@theme inline {
+    @keyframes muncul-cepat {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+@utility muncul-cepat {
+    animation: muncul-cepat 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .muncul-cepat {
+        animation: none;
+    }
+
     .shimmer {
         animation: none;
         background-image: none;

@@ -1,8 +1,9 @@
 import IkonSitus from '@/Komponen/Situs/IkonSitus';
 import TautanSitus from '@/Komponen/Situs/TautanSitus';
+import { cn } from '@/Komponen/Ui/utils';
 import type { BagianSitus } from '@/Tipe/Situs';
 
-import { GambarBagian, KepalaBagian, WadahBagian } from './KepalaBagian';
+import { CekGelap, GambarBagian, KelasKartu, KepalaBagian, type LatarBagian, WadahBagian } from './KepalaBagian';
 
 const KOLOM = {
     '2': 'sm:grid-cols-2',
@@ -10,88 +11,191 @@ const KOLOM = {
     '4': 'sm:grid-cols-2 lg:grid-cols-4',
 } as const;
 
-type LatarBagian = 'latar' | 'permukaan';
+/** Judul item + ikon 20px monokrom sebaris. Ikon tidak lagi dibungkus kotak berwarna (D-25). */
+function JudulItem({ ikon, judul, gelap }: { ikon: string | null; judul: string; gelap: boolean }) {
+    return (
+        <h3
+            className={cn(
+                'text-subjudul flex items-center gap-2 font-semibold',
+                gelap ? 'text-permukaan' : 'text-teks-utama',
+            )}
+        >
+            {ikon ? (
+                <IkonSitus
+                    nama={ikon}
+                    className={cn('size-5 shrink-0', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}
+                />
+            ) : null}
+            <span>{judul}</span>
+        </h3>
+    );
+}
 
-/** Kartu ikon keunggulan/fitur. */
-export function BagianKeunggulan({
-    bagian,
-    latar,
-}: {
+function TeksItem({ teks, gelap }: { teks: string; gelap: boolean }) {
+    return (
+        <p className={cn('text-isi whitespace-pre-line', gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder')}>
+            {teks}
+        </p>
+    );
+}
+
+type PropsKeunggulan = {
     bagian: Extract<BagianSitus, { Jenis: 'Keunggulan' }>;
     latar: LatarBagian;
-}) {
+    garisAtas?: boolean | undefined;
+};
+
+/**
+ * Keunggulan/fitur dengan tiga tata letak (D-25) agar dua blok sejenis tidak pernah terlihat sama:
+ *
+ * - `Grid` — kartu ringkas sejajar, ikon 20px sebaris dengan judul (tanpa kotak ikon berwarna);
+ * - `Daftar` — dua kolom mengalir tanpa bingkai, dipisah garis 1px; cocok untuk daftar panjang;
+ * - `Sorot` — item pertama besar, sisanya ringkas di sampingnya.
+ */
+export function BagianKeunggulan({ bagian, latar, garisAtas }: PropsKeunggulan) {
+    const gelap = CekGelap(latar);
+    const tataLetak = bagian.TataLetak ?? 'Grid';
+
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <ul className={`grid gap-4 ${KOLOM[bagian.Kolom ?? '3']}`}>
-                {bagian.Item.map((item, i) => (
-                    <li
-                        key={`${item.Judul}-${i}`}
-                        className={`flex flex-col gap-3 rounded-panel border border-garis p-6 ${
-                            latar === 'latar' ? 'bg-permukaan' : 'bg-latar'
-                        }`}
-                    >
-                        {item.Ikon ? (
-                            <span className="inline-flex size-12 items-center justify-center rounded-panel bg-brand-lembut text-brand">
-                                <IkonSitus nama={item.Ikon} />
-                            </span>
-                        ) : null}
-                        <h3 className="text-subjudul font-semibold text-teks-utama">{item.Judul}</h3>
-                        {item.Teks ? (
-                            <p className="text-isi whitespace-pre-line text-teks-sekunder">{item.Teks}</p>
-                        ) : null}
-                    </li>
-                ))}
-            </ul>
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
+            {tataLetak === 'Daftar' ? (
+                <ul className="grid gap-x-10 sm:grid-cols-2">
+                    {bagian.Item.map((item, i) => (
+                        <li
+                            key={`${item.Judul}-${i}`}
+                            className={cn(
+                                'flex flex-col gap-2 border-t py-5',
+                                gelap ? 'border-brand-gelap-garis' : 'border-garis',
+                            )}
+                        >
+                            <JudulItem ikon={item.Ikon} judul={item.Judul} gelap={gelap} />
+                            {item.Teks ? <TeksItem teks={item.Teks} gelap={gelap} /> : null}
+                        </li>
+                    ))}
+                </ul>
+            ) : tataLetak === 'Sorot' ? (
+                <ul className="grid gap-4 lg:grid-cols-2">
+                    {bagian.Item.map((item, i) => (
+                        <li
+                            key={`${item.Judul}-${i}`}
+                            className={cn(
+                                'flex flex-col gap-3',
+                                KelasKartu(latar),
+                                // Item pertama mengambil seluruh baris pertama dan judulnya naik satu tingkat.
+                                i === 0 && 'lg:col-span-2 lg:gap-4',
+                            )}
+                        >
+                            {i === 0 ? (
+                                <>
+                                    <h3
+                                        className={cn(
+                                            'text-judul flex items-center gap-2 font-bold',
+                                            gelap ? 'text-permukaan' : 'text-teks-utama',
+                                        )}
+                                    >
+                                        {item.Ikon ? (
+                                            <IkonSitus
+                                                nama={item.Ikon}
+                                                className={cn(
+                                                    'size-6 shrink-0',
+                                                    gelap ? 'text-brand-gelap-teks' : 'text-brand',
+                                                )}
+                                            />
+                                        ) : null}
+                                        <span>{item.Judul}</span>
+                                    </h3>
+                                    {item.Teks ? (
+                                        <p
+                                            className={cn(
+                                                'text-subjudul max-w-3xl whitespace-pre-line',
+                                                gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                                            )}
+                                        >
+                                            {item.Teks}
+                                        </p>
+                                    ) : null}
+                                </>
+                            ) : (
+                                <>
+                                    <JudulItem ikon={item.Ikon} judul={item.Judul} gelap={gelap} />
+                                    {item.Teks ? <TeksItem teks={item.Teks} gelap={gelap} /> : null}
+                                </>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <ul className={`grid gap-4 ${KOLOM[bagian.Kolom ?? '3']}`}>
+                    {bagian.Item.map((item, i) => (
+                        <li key={`${item.Judul}-${i}`} className={cn('flex flex-col gap-3', KelasKartu(latar))}>
+                            <JudulItem ikon={item.Ikon} judul={item.Judul} gelap={gelap} />
+                            {item.Teks ? <TeksItem teks={item.Teks} gelap={gelap} /> : null}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </WadahBagian>
     );
 }
 
-/** Kartu jenis usaha, bisa bertautan ke halaman solusi. */
+/**
+ * Jenis usaha sebagai kartu bergambar (D-25): gambar besar di atas, nama dan teks di bawah. Bentuknya
+ * sengaja berbeda dari blok keunggulan supaya dua blok berurutan tidak terbaca sebagai grid yang sama.
+ * Ikon hanya dipakai bila item belum punya gambar.
+ */
 export function BagianSektor({
     bagian,
     latar,
+    garisAtas,
 }: {
     bagian: Extract<BagianSitus, { Jenis: 'Sektor' }>;
     latar: LatarBagian;
+    garisAtas?: boolean | undefined;
 }) {
+    const gelap = CekGelap(latar);
+
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
+            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {bagian.Item.map((item, i) => {
                     const isi = (
                         <>
                             {item.Gambar ? (
                                 <GambarBagian
                                     gambar={item.Gambar}
-                                    className="aspect-video w-full rounded-kontrol object-cover"
+                                    className={cn(
+                                        'aspect-[4/3] w-full rounded-panel border object-cover',
+                                        gelap ? 'border-brand-gelap-garis' : 'border-garis',
+                                    )}
                                 />
                             ) : null}
-                            <div className="flex items-center gap-3">
-                                {item.Ikon ? (
-                                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-panel bg-brand-lembut text-brand">
-                                        <IkonSitus nama={item.Ikon} className="size-5" />
-                                    </span>
-                                ) : null}
-                                <h3 className="text-subjudul font-semibold text-teks-utama">{item.Nama}</h3>
+                            <div className="flex flex-col gap-2">
+                                <JudulItem ikon={item.Gambar ? null : item.Ikon} judul={item.Nama} gelap={gelap} />
+                                {item.Teks ? <TeksItem teks={item.Teks} gelap={gelap} /> : null}
                             </div>
-                            {item.Teks ? (
-                                <p className="text-isi whitespace-pre-line text-teks-sekunder">{item.Teks}</p>
-                            ) : null}
                             {item.Tautan ? (
-                                <span className="mt-auto text-isi font-semibold text-brand">Selengkapnya →</span>
+                                <span
+                                    className={cn(
+                                        'text-isi mt-auto font-semibold',
+                                        gelap ? 'text-permukaan' : 'text-brand',
+                                    )}
+                                >
+                                    Selengkapnya →
+                                </span>
                             ) : null}
                         </>
                     );
-                    const kelas = `flex h-full flex-col gap-3 rounded-panel border border-garis p-6 ${
-                        latar === 'latar' ? 'bg-permukaan' : 'bg-latar'
-                    }`;
+                    const kelas = 'flex h-full flex-col gap-4';
 
                     return (
                         <li key={`${item.Nama}-${i}`}>
                             {item.Tautan ? (
-                                <TautanSitus href={item.Tautan} className={`${kelas} hover:border-brand`}>
+                                <TautanSitus
+                                    href={item.Tautan}
+                                    className={cn(kelas, 'group', gelap ? 'hover:text-permukaan' : 'hover:text-brand')}
+                                >
                                     {isi}
                                 </TautanSitus>
                             ) : (
@@ -112,7 +216,7 @@ export function BagianStatistik({ bagian }: { bagian: Extract<BagianSitus, { Jen
             <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap />
             <dl className="grid grid-cols-2 gap-6 lg:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
                 {bagian.Item.map((item, i) => (
-                    <div key={`${item.Angka}-${i}`} className="flex flex-col-reverse gap-1 text-center">
+                    <div key={`${item.Angka}-${i}`} className="flex flex-col-reverse gap-1">
                         <dt className="text-isi text-brand-gelap-teks">{item.Keterangan}</dt>
                         <dd className="text-judul-bagian-hp font-bold text-permukaan sm:text-judul-bagian">
                             {item.Angka}
@@ -128,28 +232,43 @@ export function BagianStatistik({ bagian }: { bagian: Extract<BagianSitus, { Jen
 export function BagianTestimoni({
     bagian,
     latar,
+    garisAtas,
 }: {
     bagian: Extract<BagianSitus, { Jenis: 'Testimoni' }>;
     latar: LatarBagian;
+    garisAtas?: boolean | undefined;
 }) {
+    const gelap = CekGelap(latar);
+
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
             <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {bagian.Item.map((item, i) => (
                     <li
                         key={`${item.Nama}-${i}`}
-                        className={`flex flex-col gap-4 rounded-panel border border-garis p-6 ${
-                            latar === 'latar' ? 'bg-permukaan' : 'bg-latar'
-                        }`}
+                        className={cn(
+                            'flex flex-col gap-4 border-l-[3px] pl-5',
+                            gelap ? 'border-permukaan' : 'border-aksen',
+                        )}
                     >
                         {item.Bintang ? (
-                            <p className="text-subjudul text-peringatan" aria-label={`${item.Bintang} dari 5 bintang`}>
+                            <p
+                                className={cn('text-subjudul', gelap ? 'text-permukaan' : 'text-peringatan')}
+                                aria-label={`${item.Bintang} dari 5 bintang`}
+                            >
                                 {'★'.repeat(item.Bintang)}
-                                <span className="text-garis">{'★'.repeat(5 - item.Bintang)}</span>
+                                <span className={gelap ? 'text-brand-gelap-garis' : 'text-garis'}>
+                                    {'★'.repeat(5 - item.Bintang)}
+                                </span>
                             </p>
                         ) : null}
-                        <blockquote className="text-isi whitespace-pre-line text-teks-utama">
+                        <blockquote
+                            className={cn(
+                                'text-subjudul whitespace-pre-line',
+                                gelap ? 'text-permukaan' : 'text-teks-utama',
+                            )}
+                        >
                             “{item.Kutipan}”
                         </blockquote>
                         <div className="mt-auto flex items-center gap-3">
@@ -157,8 +276,24 @@ export function BagianTestimoni({
                                 <GambarBagian gambar={item.Foto} className="size-11 rounded-full object-cover" />
                             ) : null}
                             <div>
-                                <p className="text-isi font-semibold text-teks-utama">{item.Nama}</p>
-                                {item.Usaha ? <p className="text-label text-teks-sekunder">{item.Usaha}</p> : null}
+                                <p
+                                    className={cn(
+                                        'text-isi font-semibold',
+                                        gelap ? 'text-permukaan' : 'text-teks-utama',
+                                    )}
+                                >
+                                    {item.Nama}
+                                </p>
+                                {item.Usaha ? (
+                                    <p
+                                        className={cn(
+                                            'text-label',
+                                            gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                                        )}
+                                    >
+                                        {item.Usaha}
+                                    </p>
+                                ) : null}
                             </div>
                         </div>
                     </li>
@@ -172,19 +307,30 @@ export function BagianTestimoni({
 export function BagianLogoMitra({
     bagian,
     latar,
+    garisAtas,
 }: {
     bagian: Extract<BagianSitus, { Jenis: 'LogoMitra' }>;
     latar: LatarBagian;
+    garisAtas?: boolean | undefined;
 }) {
+    const gelap = CekGelap(latar);
+
     return (
-        <WadahBagian latar={latar}>
-            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} />
-            <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+        <WadahBagian latar={latar} garisAtas={garisAtas}>
+            <KepalaBagian label={bagian.Label} judul={bagian.Judul} subjudul={bagian.Subjudul} gelap={gelap} />
+            <ul className="flex flex-wrap items-center gap-x-10 gap-y-6">
                 {bagian.Item.map((item, i) => {
                     const logo = item.Gambar ? (
                         <GambarBagian gambar={{ ...item.Gambar, Alt: item.Nama }} className="h-10 w-auto sm:h-12" />
                     ) : (
-                        <span className="text-subjudul font-semibold text-teks-sekunder">{item.Nama}</span>
+                        <span
+                            className={cn(
+                                'text-subjudul font-semibold',
+                                gelap ? 'text-brand-gelap-teks' : 'text-teks-sekunder',
+                            )}
+                        >
+                            {item.Nama}
+                        </span>
                     );
 
                     return (

@@ -7,7 +7,7 @@ import TautanSitus from './TautanSitus';
 type PropsTombolSitus = {
     href: string;
     children: ReactNode;
-    varian?: 'utama' | 'kedua' | 'terang' | 'garis-terang';
+    varian?: 'utama' | 'kedua' | 'garis-merek' | 'terang' | 'garis-terang';
     ukuran?: 'sedang' | 'besar';
     className?: string;
 };
@@ -15,6 +15,8 @@ type PropsTombolSitus = {
 const KELAS_VARIAN = {
     utama: 'bg-brand text-brand-teks hover:bg-brand-gelap',
     kedua: 'border border-garis-input bg-permukaan text-teks-utama hover:bg-permukaan-sorot',
+    // Tombol kedua bergaris tipis warna merek: warna dipakai sebagai garis, bukan isian (aturan 90/10 §17.6.3).
+    'garis-merek': 'border border-brand text-brand hover:bg-brand-lembut',
     terang: 'bg-permukaan text-brand-gelap hover:bg-brand-lembut',
     'garis-terang': 'border border-brand-gelap-teks text-permukaan hover:bg-brand-gelap-sorot',
 } as const;

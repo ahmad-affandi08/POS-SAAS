@@ -25,6 +25,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     required this.peringatan,
     required this.bahaya,
     required this.info,
+    required this.aksen,
   });
 
   static const TokenWarna bawaan = TokenWarna(
@@ -40,6 +41,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     peringatan: Color(0xFF9A5B00),
     bahaya: Color(0xFFB3261E),
     info: Color(0xFF1F5FAD),
+    aksen: Color(0xFFFBBF24),
   );
 
   final Color latar;
@@ -54,6 +56,11 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
   final Color peringatan;
   final Color bahaya;
   final Color info;
+
+  /// Accent Yellow (D-15) sebagai token sejak D-25. **Hanya untuk situs pemasaran `payou.id`**,
+  /// bukan penanda status, dan tidak dipakai di aplikasi Flutter mana pun; ada di sini hanya agar
+  /// palet web dan Flutter tetap satu sumber (dijaga `SumberWarna_test.dart`).
+  final Color aksen;
 
   /// Token warna dari tema terdekat. Gagal keras bila tema belum memasang [TokenWarna].
   static TokenWarna AmbilDari(BuildContext context) =>
@@ -74,6 +81,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     Color? peringatan,
     Color? bahaya,
     Color? info,
+    Color? aksen,
   }) => TokenWarna(
     latar: latar ?? this.latar,
     permukaan: permukaan ?? this.permukaan,
@@ -87,6 +95,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
     peringatan: peringatan ?? this.peringatan,
     bahaya: bahaya ?? this.bahaya,
     info: info ?? this.info,
+    aksen: aksen ?? this.aksen,
   );
 
   @override
@@ -107,6 +116,7 @@ final class TokenWarna extends ThemeExtension<TokenWarna> {
       peringatan: Color.lerp(peringatan, other.peringatan, t)!,
       bahaya: Color.lerp(bahaya, other.bahaya, t)!,
       info: Color.lerp(info, other.info, t)!,
+      aksen: Color.lerp(aksen, other.aksen, t)!,
     );
   }
 }
