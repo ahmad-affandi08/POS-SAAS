@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Bersama\Surel;
 
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\View;
+use InvalidArgumentException;
 
 /**
  * Induk semua email PAYOU (D-26).
@@ -26,7 +28,30 @@ abstract class SurelDasar extends Mailable
      */
     protected function IsiSurel(string $templat, array $data = []): static
     {
-        return $this->view('Surel.Html.'.$templat, $data)
-            ->text('Surel.'.$templat, $data);
+        return $this->view($this->PastikanTemplatAda('Surel.Html.'.$templat), $data)
+            ->text($this->PastikanTemplatAda('Surel.'.$templat), $data);
+    }
+
+    /**
+     * Pastikan nama templat yang disusun benar-benar ada, lalu kembalikan sebagai nama view.
+     *
+     * Nama kedua badan disusun dari satu argumen supaya HTML dan teks tidak bisa terpisah. Konsekuensinya
+     * Larastan tidak bisa lagi memeriksanya: tipe `view-string` hanya berlaku untuk nama view yang literal,
+     * bukan hasil penggabungan string. Pemeriksaan yang hilang itu dikembalikan di sini — templat yang tidak
+     * ada gagal saat mailable dibuat, bukan diam-diam saat email dirender di antrean — dan `SurelTes`
+     * menjaga hal yang sama di tingkat test untuk seluruh mailable sekaligus.
+     *
+     * @return view-string
+     */
+    private function PastikanTemplatAda(string $nama): string
+    {
+        if (! View::exists($nama)) {
+            throw new InvalidArgumentException("Templat email [{$nama}] tidak ada.");
+        }
+
+        /** @var view-string $terperiksa */
+        $terperiksa = $nama;
+
+        return $terperiksa;
     }
 }

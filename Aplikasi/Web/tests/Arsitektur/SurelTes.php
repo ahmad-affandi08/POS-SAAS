@@ -151,6 +151,27 @@ it('warna di templat email memakai nilai token, bukan hex lepas', function (): v
     expect($token)->not->toBeEmpty()->and($pelanggar)->toBe([]);
 });
 
+it('setiap nama templat yang dipakai mailable benar-benar ada, HTML maupun teks', function (): void {
+    // `IsiSurel()` menyusun nama view dengan penggabungan string, dan `view-string` Larastan hanya bisa
+    // memeriksa nama yang literal. Test ini yang menggantikan pemeriksaan statis itu: salah tulis nama
+    // templat gagal di sini, bukan saat email dirender di antrean pelanggan.
+    $pelanggar = [];
+
+    foreach (Finder::create()->files()->in(app_path())->name('*.php') as $berkas) {
+        preg_match_all("/IsiSurel\\(\\s*'([^']+)'/", (string) $berkas->getContents(), $cocok);
+
+        foreach ($cocok[1] as $templat) {
+            foreach (['Surel.Html.'.$templat, 'Surel.'.$templat] as $nama) {
+                if (! view()->exists($nama)) {
+                    $pelanggar[] = $berkas->getRelativePathname().': '.$nama;
+                }
+            }
+        }
+    }
+
+    expect($pelanggar)->toBe([]);
+});
+
 it('setiap badan HTML memakai tata letak bersama', function (): void {
     $pelanggar = [];
 
