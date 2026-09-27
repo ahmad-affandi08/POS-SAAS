@@ -91,6 +91,11 @@ final class PenyusunHalamanSitus
             'TombolMasuk' => ['Label' => $p['TeksTombolMasuk'], 'Tautan' => AlamatDomain::BuatUrlTenant('/masuk')],
             'WhatsAppMelayang' => (bool) $p['TombolWhatsAppMelayang'] && self::BuatTautanWhatsApp($p) !== null,
             'Tahun' => (int) now('Asia/Jakarta')->format('Y'),
+            // Bagian B: dimuat di peramban hanya setelah pengunjung menerima cookie analitik.
+            'Analitik' => [
+                'IdGoogleAnalytics' => is_string($p['Analitik']['IdGoogleAnalytics'] ?? null) ? $p['Analitik']['IdGoogleAnalytics'] : null,
+                'IdMetaPixel' => is_string($p['Analitik']['IdMetaPixel'] ?? null) ? $p['Analitik']['IdMetaPixel'] : null,
+            ],
         ];
     }
 

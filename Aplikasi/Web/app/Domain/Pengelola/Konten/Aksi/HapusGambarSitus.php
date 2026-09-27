@@ -7,13 +7,14 @@ namespace App\Domain\Pengelola\Konten\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
+use App\Domain\Situs\Model\ArtikelSitus;
 use App\Domain\Situs\Model\GambarSitus;
 use App\Domain\Situs\Model\HalamanSitus;
 use App\Domain\Situs\Model\PengaturanSitus;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * D-21: menghapus gambar dari pustaka situs. Ditolak bila masih dipakai halaman (draf atau terbit) atau pengaturan
+ * D-21: menghapus gambar dari pustaka situs. Ditolak bila masih dipakai halaman (draf atau terbit), sampul artikel, atau pengaturan
  * (logo, gambar pratinjau tautan), agar situs publik tidak menampilkan gambar rusak.
  */
 final class HapusGambarSitus
@@ -29,8 +30,14 @@ final class HapusGambarSitus
             ->pluck('Judul')
             ->all();
 
-        if ($dipakai !== [] || PengaturanSitus::query()->where('Nilai', 'like', $pola)->exists()) {
-            $tempat = $dipakai === [] ? 'pengaturan situs' : 'halaman '.implode(', ', array_slice($dipakai, 0, 3));
+        $artikel = ArtikelSitus::query()->where('UuidGambarSampul', $gambar->Uuid)->pluck('Judul')->all();
+
+        if ($dipakai !== [] || $artikel !== [] || PengaturanSitus::query()->where('Nilai', 'like', $pola)->exists()) {
+            $tempat = match (true) {
+                $dipakai !== [] => 'halaman '.implode(', ', array_slice($dipakai, 0, 3)),
+                $artikel !== [] => 'artikel '.implode(', ', array_slice($artikel, 0, 3)),
+                default => 'pengaturan situs',
+            };
 
             throw new PelanggaranAturanBisnis('GambarDipakai', "Gambar masih dipakai di {$tempat}. Ganti gambarnya dulu.");
         }

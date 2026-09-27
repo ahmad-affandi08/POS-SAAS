@@ -66,6 +66,9 @@ final class SimpanPengaturanSitusPermintaan extends FormRequest
             'TeksTombolDaftar' => ['required', 'string', 'max:30'],
             'TeksTombolMasuk' => ['required', 'string', 'max:30'],
             'TombolWhatsAppMelayang' => ['boolean'],
+            'Analitik.IdGoogleAnalytics' => ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]{4,16}$/i'],
+            'Analitik.IdMetaPixel' => ['nullable', 'string', 'regex:/^[0-9]{6,20}$/'],
+            'Prospek.EmailNotifikasi' => ['nullable', 'email', 'max:150'],
         ];
     }
 
@@ -118,6 +121,11 @@ final class SimpanPengaturanSitusPermintaan extends FormRequest
             'TeksTombolDaftar' => (string) $t('TeksTombolDaftar'),
             'TeksTombolMasuk' => (string) $t('TeksTombolMasuk'),
             'TombolWhatsAppMelayang' => $this->boolean('TombolWhatsAppMelayang'),
+            'Analitik' => [
+                'IdGoogleAnalytics' => ($u = $t('Analitik.IdGoogleAnalytics')) === null ? null : strtoupper($u),
+                'IdMetaPixel' => $t('Analitik.IdMetaPixel'),
+            ],
+            'Prospek' => ['EmailNotifikasi' => ($u = $t('Prospek.EmailNotifikasi')) === null ? null : mb_strtolower($u)],
         ];
     }
 
@@ -137,6 +145,9 @@ final class SimpanPengaturanSitusPermintaan extends FormRequest
             'Menu.*.Tautan' => 'tautan menu',
             'TeksTombolDaftar' => 'teks tombol daftar',
             'TeksTombolMasuk' => 'teks tombol masuk',
+            'Analitik.IdGoogleAnalytics' => 'ID Google Analytics',
+            'Analitik.IdMetaPixel' => 'ID Meta Pixel',
+            'Prospek.EmailNotifikasi' => 'email notifikasi prospek',
         ];
     }
 }

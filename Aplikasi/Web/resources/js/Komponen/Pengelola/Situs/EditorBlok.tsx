@@ -36,7 +36,8 @@ const LABEL_BIDANG: Record<string, string> = {
     Bintang: 'Bintang (0–5)',
     TampilkanTahunan: 'Tampilkan pilihan harga tahunan',
     PaketDisorot: 'Kode paket yang disorot (misal PRO)',
-    TeksTombol: 'Teks tombol paket',
+    TeksTombol: 'Teks tombol (kosong = teks bawaan)',
+    JenisProspek: 'Jenis formulir (Kontak = pertanyaan, Demo = minta demo)',
     CatatanKaki: 'Catatan di bawah tabel harga (misal "Harga belum termasuk PPN")',
     Pertanyaan: 'Pertanyaan',
     Jawaban: 'Jawaban',
@@ -422,6 +423,12 @@ export default function EditorBlok({
                     <p className="rounded-kontrol bg-info-lembut p-3 text-isi text-teks-utama sm:col-span-2">
                         Daftar paket & harga diambil otomatis dari Katalog → Paket dan Harga paket (harga terbit yang
                         berlaku hari ini).
+                    </p>
+                ) : null}
+                {blok.Jenis === 'FormulirProspek' ? (
+                    <p className="rounded-kontrol bg-info-lembut p-3 text-isi text-teks-utama sm:col-span-2">
+                        Pengunjung mengisi nama, nomor WhatsApp, dan pesan. Isian masuk ke tab Prospek dan dikirim ke
+                        email notifikasi prospek (tab Pengaturan).
                     </p>
                 ) : null}
                 {blok.Jenis === 'UnduhAplikasi' || blok.Jenis === 'Kontak' ? (

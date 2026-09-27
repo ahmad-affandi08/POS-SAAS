@@ -26,6 +26,8 @@ final class BagikanDataSitus extends Middleware
         return [
             ...parent::share($request),
             'Situs' => fn (): array => $this->penyusun->AmbilDataBersama(),
+            // Bagian B: tanda formulir prospek terkirim (sekali tampil).
+            'ProspekTerkirim' => fn (): bool => (bool) $request->session()->get('ProspekTerkirim', false),
         ];
     }
 }

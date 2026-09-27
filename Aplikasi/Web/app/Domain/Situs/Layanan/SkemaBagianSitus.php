@@ -47,6 +47,7 @@ final class SkemaBagianSitus
         'Video' => 'Video YouTube',
         'UnduhAplikasi' => 'Unduh aplikasi',
         'Kontak' => 'Kontak',
+        'FormulirProspek' => 'Formulir kontak / minta demo',
     ];
 
     /**
@@ -120,6 +121,11 @@ final class SkemaBagianSitus
             'Video' => $judulBagian + ['UrlYoutube' => ['Tautan', true]],
             'UnduhAplikasi' => $judulBagian,
             'Kontak' => $judulBagian,
+            // Bagian B: isian masuk ke konsol Situs → Prospek (persetujuan data wajib, UU PDP).
+            'FormulirProspek' => $judulBagian + [
+                'JenisProspek' => ['Pilihan', ['Kontak', 'Demo']],
+                'TeksTombol' => ['Teks', 40],
+            ],
         ];
     }
 }

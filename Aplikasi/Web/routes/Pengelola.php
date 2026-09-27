@@ -15,7 +15,9 @@ use App\Http\Kontroler\Pengelola\Katalog\HargaPaketKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\KuponKontroler;
 use App\Http\Kontroler\Pengelola\Katalog\PaketKontroler;
 use App\Http\Kontroler\Pengelola\KataSandiKontroler;
+use App\Http\Kontroler\Pengelola\Konten\ArtikelSitusKontroler;
 use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
+use App\Http\Kontroler\Pengelola\Konten\ProspekSitusKontroler;
 use App\Http\Kontroler\Pengelola\Konten\SitusKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
 use App\Http\Kontroler\Pengelola\Operasional\OperasionalKontroler;
@@ -176,6 +178,9 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
             Route::get('/halaman/{halamanSitus}', [SitusKontroler::class, 'UbahHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.ubah');
             Route::get('/halaman/{halamanSitus}/pratinjau', [SitusKontroler::class, 'PratinjauHalaman'])->where('halamanSitus', $ulidSitus)->name('pengelola.situs.halaman.pratinjau');
             Route::get('/gambar', [SitusKontroler::class, 'DaftarGambar'])->name('pengelola.situs.gambar.daftar');
+            Route::get('/prospek', [ProspekSitusKontroler::class, 'Daftar'])->name('pengelola.situs.prospek.daftar');
+            Route::get('/artikel', [ArtikelSitusKontroler::class, 'Daftar'])->name('pengelola.situs.artikel.daftar');
+            Route::get('/artikel/{artikelSitus}', [ArtikelSitusKontroler::class, 'Ubah'])->where('artikelSitus', $ulidSitus)->name('pengelola.situs.artikel.ubah');
             Route::middleware($izin(IzinPengelola::SitusKelola))->group(function () use ($ulidSitus): void {
                 Route::put('/pengaturan', [SitusKontroler::class, 'SimpanPengaturan'])->name('pengelola.situs.pengaturan.simpan');
                 Route::post('/halaman', [SitusKontroler::class, 'BuatHalaman'])->name('pengelola.situs.halaman.buat');
@@ -186,6 +191,12 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
                 Route::post('/gambar', [SitusKontroler::class, 'UnggahGambar'])->middleware('throttle:30,1')->name('pengelola.situs.gambar.unggah');
                 Route::put('/gambar/{gambarSitus}', [SitusKontroler::class, 'UbahGambar'])->where('gambarSitus', $ulidSitus)->name('pengelola.situs.gambar.ubah');
                 Route::delete('/gambar/{gambarSitus}', [SitusKontroler::class, 'HapusGambar'])->where('gambarSitus', $ulidSitus)->name('pengelola.situs.gambar.hapus');
+                Route::put('/prospek/{prospekSitus}', [ProspekSitusKontroler::class, 'Ubah'])->where('prospekSitus', $ulidSitus)->name('pengelola.situs.prospek.ubah');
+                Route::post('/artikel', [ArtikelSitusKontroler::class, 'Buat'])->name('pengelola.situs.artikel.buat');
+                Route::put('/artikel/{artikelSitus}', [ArtikelSitusKontroler::class, 'Simpan'])->where('artikelSitus', $ulidSitus)->name('pengelola.situs.artikel.simpan');
+                Route::post('/artikel/{artikelSitus}/terbitkan', [ArtikelSitusKontroler::class, 'Terbitkan'])->where('artikelSitus', $ulidSitus)->name('pengelola.situs.artikel.terbitkan');
+                Route::post('/artikel/{artikelSitus}/tarik', [ArtikelSitusKontroler::class, 'Tarik'])->where('artikelSitus', $ulidSitus)->name('pengelola.situs.artikel.tarik');
+                Route::delete('/artikel/{artikelSitus}', [ArtikelSitusKontroler::class, 'Hapus'])->where('artikelSitus', $ulidSitus)->name('pengelola.situs.artikel.hapus');
             });
         });
 

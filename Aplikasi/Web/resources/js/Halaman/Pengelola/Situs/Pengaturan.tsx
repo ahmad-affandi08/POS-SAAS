@@ -43,6 +43,8 @@ export type PengaturanSitus = {
     TeksTombolDaftar: string;
     TeksTombolMasuk: string;
     TombolWhatsAppMelayang: boolean;
+    Analitik: { IdGoogleAnalytics: string | null; IdMetaPixel: string | null };
+    Prospek: { EmailNotifikasi: string | null };
 };
 
 const MEDIA_SOSIAL: { Kunci: KunciMediaSosial; Label: string }[] = [
@@ -317,6 +319,40 @@ export default function HalamanPengaturanSitus({
                             saatBerubah={(v) => formulir.setData('TombolWhatsAppMelayang', v)}
                         />
                     </div>
+                </Kartu>
+
+                <Kartu
+                    judul="Prospek & analitik"
+                    keterangan="Formulir kontak/minta demo dan pelacakan pengunjung. Analitik baru dimuat setelah pengunjung menyetujui cookie."
+                >
+                    <BidangTeks
+                        label="Email notifikasi prospek"
+                        keterangan="Kosong = email kontak di atas."
+                        jenis="email"
+                        nilai={Teks(d.Prospek.EmailNotifikasi)}
+                        saatBerubah={(v) => formulir.setData('Prospek', { ...d.Prospek, EmailNotifikasi: v })}
+                        galat={galat['Prospek.EmailNotifikasi']}
+                        maxLength={150}
+                    />
+                    <BidangTeks
+                        label="ID Google Analytics 4"
+                        keterangan="Contoh G-ABC123XYZ. Kosong = tidak dipasang."
+                        kode
+                        nilai={Teks(d.Analitik.IdGoogleAnalytics)}
+                        saatBerubah={(v) => formulir.setData('Analitik', { ...d.Analitik, IdGoogleAnalytics: v })}
+                        galat={galat['Analitik.IdGoogleAnalytics']}
+                        maxLength={20}
+                    />
+                    <BidangTeks
+                        label="ID Meta Pixel"
+                        keterangan="Angka dari Meta Events Manager. Kosong = tidak dipasang."
+                        kode
+                        inputMode="numeric"
+                        nilai={Teks(d.Analitik.IdMetaPixel)}
+                        saatBerubah={(v) => formulir.setData('Analitik', { ...d.Analitik, IdMetaPixel: v })}
+                        galat={galat['Analitik.IdMetaPixel']}
+                        maxLength={20}
+                    />
                 </Kartu>
 
                 <Kartu

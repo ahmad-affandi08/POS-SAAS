@@ -33,6 +33,8 @@ export type DataSitus = {
     TombolMasuk: TautanSitus;
     WhatsAppMelayang: boolean;
     Tahun: number;
+    /** Bagian B: dimuat hanya setelah pengunjung menyetujui cookie analitik. */
+    Analitik?: { IdGoogleAnalytics: string | null; IdMetaPixel: string | null };
 };
 
 export type Tombol = { Label: string; Tautan: string } | null;
@@ -108,7 +110,11 @@ export type BagianSitus =
           })
     | ({ Jenis: 'Video' } & JudulBagian & { UrlYoutube: string; IdYoutube: string | null })
     | ({ Jenis: 'UnduhAplikasi' } & JudulBagian)
-    | ({ Jenis: 'Kontak' } & JudulBagian);
+    | ({ Jenis: 'Kontak' } & JudulBagian)
+    | ({ Jenis: 'FormulirProspek' } & JudulBagian & {
+              JenisProspek: 'Kontak' | 'Demo' | null;
+              TeksTombol: string | null;
+          });
 
 export type HalamanSitus = {
     Slug: string;
@@ -119,3 +125,33 @@ export type HalamanSitus = {
 };
 
 export type PropsHalamanSitus = { Halaman: HalamanSitus; Situs: DataSitus };
+
+/** Situs bagian B2: artikel blog. */
+export type RingkasanArtikel = {
+    Slug: string;
+    Judul: string;
+    Ringkasan: string | null;
+    Kategori: string | null;
+    NamaPenulis: string | null;
+    Sampul: GambarSitus | null;
+    DiterbitkanPada: string | null;
+};
+
+export type SeoSitus = { Judul: string; Deskripsi: string };
+
+export type PropsBlogSitus = {
+    Halaman: { Seo: SeoSitus };
+    Artikel: RingkasanArtikel[];
+    Kategori: string[];
+    KategoriAktif: string | null;
+    HalamanKe: number;
+    JumlahHalaman: number;
+    Situs: DataSitus;
+};
+
+export type PropsArtikelSitus = {
+    Halaman: { Seo: SeoSitus };
+    Artikel: RingkasanArtikel & { Isi: string; DiubahPada: string | null };
+    Terkait: RingkasanArtikel[];
+    Situs: DataSitus;
+};

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Publik;
 
 use App\Domain\Bersama\Web\AlamatDomain;
+use App\Domain\Situs\Kueri\ArtikelSitusPublik;
 use App\Domain\Situs\Kueri\DaftarHalamanSitusPublik;
 use App\Domain\Situs\Kueri\PenyusunHalamanSitus;
 use App\Domain\Situs\Model\GambarSitus;
 use App\Domain\Situs\Model\HalamanSitus;
 use App\Http\Kontroler\Kontroler;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response as ResponsHttp;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -40,6 +42,34 @@ final class SitusKontroler extends Kontroler
         return Inertia::render('Situs/Halaman', ['Halaman' => $penyusun->AmbilDraf($halamanSitus)]);
     }
 
+    /** Bagian B2: daftar artikel blog (`?kategori=`, `?halaman=`). */
+    public function Blog(Request $permintaan, ArtikelSitusPublik $artikel): Response
+    {
+        $kategori = $permintaan->query('kategori');
+        $data = $artikel->AmbilDaftar(max(1, (int) $permintaan->query('halaman', '1')), is_string($kategori) ? mb_substr($kategori, 0, 60) : null);
+
+        return Inertia::render('Situs/Blog', [
+            'Halaman' => ['Seo' => $data['Seo']],
+            'Artikel' => $data['Artikel'],
+            'Kategori' => $data['Kategori'],
+            'KategoriAktif' => $data['KategoriAktif'],
+            'HalamanKe' => $data['Halaman'],
+            'JumlahHalaman' => $data['JumlahHalaman'],
+        ]);
+    }
+
+    public function Artikel(string $slugArtikel, ArtikelSitusPublik $artikel): Response
+    {
+        $data = $artikel->AmbilArtikel($slugArtikel);
+        abort_if($data === null, 404);
+
+        return Inertia::render('Situs/Artikel', [
+            'Halaman' => ['Seo' => $data['Seo']],
+            'Artikel' => $data['Artikel'],
+            'Terkait' => $data['Terkait'],
+        ]);
+    }
+
     public function Gambar(GambarSitus $gambarSitus): StreamedResponse
     {
         $disk = Storage::disk((string) config('situs.Disk'));
@@ -52,14 +82,25 @@ final class SitusKontroler extends Kontroler
         ]);
     }
 
-    public function PetaSitus(DaftarHalamanSitusPublik $daftar): ResponsHttp
+    public function PetaSitus(DaftarHalamanSitusPublik $daftar, ArtikelSitusPublik $artikel): ResponsHttp
     {
         $baris = [];
+        $daftarArtikel = $artikel->AmbilUntukPetaSitus();
 
         foreach ($daftar->Ambil() as $halaman) {
             $jalur = $halaman['Slug'] === HalamanSitus::SLUG_BERANDA ? '/' : '/'.$halaman['Slug'];
             $baris[] = '  <url><loc>'.htmlspecialchars(AlamatDomain::BuatUrlAbsolutPemasaran($jalur), ENT_XML1).'</loc>'
                 .($halaman['DiubahPada'] !== null ? '<lastmod>'.$halaman['DiubahPada'].'</lastmod>' : '')
+                .'</url>';
+        }
+
+        if ($daftarArtikel !== []) {
+            $baris[] = '  <url><loc>'.htmlspecialchars(AlamatDomain::BuatUrlAbsolutPemasaran('/blog'), ENT_XML1).'</loc></url>';
+        }
+
+        foreach ($daftarArtikel as $a) {
+            $baris[] = '  <url><loc>'.htmlspecialchars(AlamatDomain::BuatUrlAbsolutPemasaran('/blog/'.$a['Slug']), ENT_XML1).'</loc>'
+                .($a['DiubahPada'] !== null ? '<lastmod>'.$a['DiubahPada'].'</lastmod>' : '')
                 .'</url>';
         }
 

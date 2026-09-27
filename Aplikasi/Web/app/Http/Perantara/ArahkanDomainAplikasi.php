@@ -19,10 +19,10 @@ use Symfony\Component\HttpFoundation\Response;
 final class ArahkanDomainAplikasi
 {
     /** Rute yang tetap dilayani di domain pemasaran. Dokumen legal & kompatibilitas juga dilayani di domain tenant. */
-    public const RUTE_PEMASARAN = ['beranda', 'legal.tampil', 'publik.kompatibilitas-perangkat', 'situs.halaman', 'situs.pratinjau', 'situs.peta'];
+    public const RUTE_PEMASARAN = ['beranda', 'legal.tampil', 'publik.kompatibilitas-perangkat', 'situs.halaman', 'situs.pratinjau', 'situs.peta', 'situs.prospek.kirim', 'situs.blog.daftar', 'situs.blog.artikel'];
 
     /** D-21: rute situs pemasaran yang di domain tenant dialihkan ke domain pemasaran. */
-    public const RUTE_KHUSUS_PEMASARAN = ['situs.halaman', 'situs.pratinjau', 'situs.peta'];
+    public const RUTE_KHUSUS_PEMASARAN = ['situs.halaman', 'situs.pratinjau', 'situs.peta', 'situs.blog.daftar', 'situs.blog.artikel'];
 
     public function handle(Request $request, Closure $next): Response
     {

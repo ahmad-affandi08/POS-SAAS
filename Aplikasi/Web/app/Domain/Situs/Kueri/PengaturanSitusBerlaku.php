@@ -85,6 +85,9 @@ final class PengaturanSitusBerlaku
             'TeksTombolDaftar' => 'Coba gratis',
             'TeksTombolMasuk' => 'Masuk',
             'TombolWhatsAppMelayang' => true,
+            // Bagian B: analitik hanya dimuat setelah pengunjung menyetujui cookie (UU PDP).
+            'Analitik' => ['IdGoogleAnalytics' => null, 'IdMetaPixel' => null],
+            'Prospek' => ['EmailNotifikasi' => null],
         ];
     }
 

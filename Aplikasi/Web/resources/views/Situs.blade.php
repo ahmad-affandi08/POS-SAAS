@@ -22,7 +22,10 @@
     @if (! empty($seo['VerifikasiGoogle']))
         <meta name="google-site-verification" content="{{ $seo['VerifikasiGoogle'] }}">
     @endif
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ ($seo['Jenis'] ?? 'website') === 'article' ? 'article' : 'website' }}">
+    @if (! empty($seo['Artikel']['DiterbitkanPada']))
+        <meta property="article:published_time" content="{{ $seo['Artikel']['DiterbitkanPada'] }}">
+    @endif
     <meta property="og:site_name" content="{{ $namaSitus }}">
     <meta property="og:locale" content="id_ID">
     <meta property="og:title" content="{{ $seo['Judul'] ?? $namaSitus }}">
@@ -36,7 +39,18 @@
     @else
         <meta name="twitter:card" content="summary">
     @endif
-    <script type="application/ld+json">{!! json_encode(array_filter([
+    <script type="application/ld+json">{!! json_encode(! empty($seo['Artikel']) ? array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'BlogPosting',
+        'headline' => $seo['Artikel']['Judul'] ?? null,
+        'description' => $seo['Deskripsi'] ?? null,
+        'image' => $seo['Gambar'] ?? null,
+        'datePublished' => $seo['Artikel']['DiterbitkanPada'] ?? null,
+        'dateModified' => $seo['Artikel']['DiubahPada'] ?? null,
+        'author' => ['@type' => 'Organization', 'name' => $seo['Artikel']['Penulis'] ?? $namaSitus],
+        'publisher' => ['@type' => 'Organization', 'name' => $namaSitus],
+        'mainEntityOfPage' => $seo['Kanonik'] ?? null,
+    ]) : array_filter([
         '@context' => 'https://schema.org',
         '@type' => 'Organization',
         'name' => $namaSitus,

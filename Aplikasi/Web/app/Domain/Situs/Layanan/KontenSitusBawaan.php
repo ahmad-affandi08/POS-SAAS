@@ -263,6 +263,13 @@ final class KontenSitusBawaan
                         'Subjudul' => 'Tim kami siap membantu demo, pertanyaan paket, dan pemasangan perangkat.',
                     ],
                     [
+                        'Jenis' => 'FormulirProspek',
+                        'Judul' => 'Minta demo gratis',
+                        'Subjudul' => 'Tinggalkan nomor WhatsApp Anda. Tim kami menghubungi dalam 1 hari kerja.',
+                        'JenisProspek' => 'Demo',
+                        'TeksTombol' => 'Kirim permintaan demo',
+                    ],
+                    [
                         'Jenis' => 'UnduhAplikasi',
                         'Judul' => 'Unduh aplikasi PAYOU',
                         'Subjudul' => 'Aplikasi kasir untuk Android, iPhone/iPad, dan Windows.',

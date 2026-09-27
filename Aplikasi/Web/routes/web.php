@@ -6,6 +6,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Situs\Layanan\AturanSlugSitus;
+use App\Domain\Situs\Model\ArtikelSitus;
 use App\Http\Kontroler\Autentikasi\KataSandiKontroler;
 use App\Http\Kontroler\Autentikasi\KeamananAkunKontroler;
 use App\Http\Kontroler\Autentikasi\LupaKataSandiKontroler;
@@ -21,6 +22,7 @@ use App\Http\Kontroler\Kelola\TindakanKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
+use App\Http\Kontroler\Publik\ProspekSitusKontroler;
 use App\Http\Kontroler\Publik\ReservasiPublikKontroler;
 use App\Http\Kontroler\Publik\SitusKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
@@ -65,6 +67,11 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         // Tanda tangan relatif: konsol menandatangani jalur lalu memasang domain pemasaran (D-20).
         ->middleware('signed:relative')
         ->name('situs.pratinjau');
+    // Bagian B: formulir kontak/minta demo (perangkap bot + batas per nomor di Aksi).
+    Route::post('/prospek', [ProspekSitusKontroler::class, 'Kirim'])->middleware('throttle:5,1')->name('situs.prospek.kirim');
+    // Bagian B2: blog (artikel terbit dari konsol).
+    Route::get('/blog', [SitusKontroler::class, 'Blog'])->name('situs.blog.daftar');
+    Route::get('/blog/{slugArtikel}', [SitusKontroler::class, 'Artikel'])->where('slugArtikel', ArtikelSitus::POLA_SLUG)->name('situs.blog.artikel');
 });
 
 // Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya

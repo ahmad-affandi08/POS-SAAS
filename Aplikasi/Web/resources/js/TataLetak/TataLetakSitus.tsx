@@ -3,6 +3,7 @@ import { Menu, MessageCircle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
+import PersetujuanCookie from '@/Komponen/Situs/PersetujuanCookie';
 import TautanSitus from '@/Komponen/Situs/TautanSitus';
 import TombolSitus from '@/Komponen/Situs/TombolSitus';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/Komponen/Ui/sheet';
@@ -163,6 +164,7 @@ export default function TataLetakSitus({ judul, children, pratinjau = false }: P
                     <span>Chat WhatsApp</span>
                 </a>
             ) : null}
+            {pratinjau ? null : <PersetujuanCookie analitik={situs.Analitik} />}
         </>
     );
 }

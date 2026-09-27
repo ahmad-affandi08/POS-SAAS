@@ -1,5 +1,6 @@
 import type { BagianSitus } from '@/Tipe/Situs';
 
+import BagianFormulirProspek from './BagianFormulirProspek';
 import BagianHarga from './BagianHarga';
 import BagianHero from './BagianHero';
 import { BagianKeunggulan, BagianLogoMitra, BagianSektor, BagianStatistik, BagianTestimoni } from './BagianKartu';
@@ -76,6 +77,8 @@ export default function RenderBagian({ bagian }: { bagian: BagianSitus[] }) {
                         return <BagianUnduhAplikasi key={kunci} bagian={b} latar={latar} />;
                     case 'Kontak':
                         return <BagianKontak key={kunci} bagian={b} latar={latar} />;
+                    case 'FormulirProspek':
+                        return <BagianFormulirProspek key={kunci} bagian={b} latar={latar} />;
                     default:
                         return null;
                 }

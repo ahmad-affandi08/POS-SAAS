@@ -4,6 +4,8 @@ const daftarTab = [
     { label: 'Halaman', href: '/situs/halaman' },
     { label: 'Pengaturan', href: '/situs/pengaturan' },
     { label: 'Gambar', href: '/situs/gambar' },
+    { label: 'Artikel', href: '/situs/artikel' },
+    { label: 'Prospek', href: '/situs/prospek' },
 ];
 
 /** Navigasi antar bagian konsol situs pemasaran (D-21). */

@@ -61,3 +61,6 @@ Schedule::command('pelanggan:kirim-pengingat-piutang')->dailyAt('09:00')->timezo
 
 // F-07 mode service: pengingat reservasi H-1 lewat WhatsApp (jendela 20–28 jam, tiap jam).
 Schedule::command('reservasi:kirim-pengingat')->hourlyAt(5)->withoutOverlapping();
+
+// Situs pemasaran bagian B: retensi data prospek (UU PDP).
+Schedule::command('situs:bersihkan-prospek')->dailyAt('03:30')->timezone('Asia/Jakarta')->withoutOverlapping();
