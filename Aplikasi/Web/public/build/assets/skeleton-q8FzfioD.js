@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-ZuDPbGGP.js";import{o as t}from"./dist-B-F-dVpu.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{"data-slot":`skeleton`,className:t(`animate-pulse rounded-md bg-accent`,e),...r})}export{r as t};

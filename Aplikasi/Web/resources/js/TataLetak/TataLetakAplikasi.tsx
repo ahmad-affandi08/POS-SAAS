@@ -14,6 +14,7 @@ import {
     PackageIcon,
     ReceiptTextIcon,
     ScrollTextIcon,
+    SettingsIcon,
     ShieldCheckIcon,
     ShoppingCartIcon,
     StoreIcon,
@@ -375,6 +376,8 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
     // F-02b: perangkat POS.
     { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat, ikon: MonitorSmartphoneIcon },
     { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat, ikon: UsersIcon },
+    // Indeks semua pengaturan; butirnya tetap tinggal di menu modulnya masing-masing (Pustaka/DaftarPengaturan).
+    { label: 'Pengaturan', href: '/kelola/pengaturan', izin: null, ikon: SettingsIcon },
     { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat, ikon: ScrollTextIcon },
     { label: 'Langganan', href: '/kelola/langganan', izin: IzinTenant.LanggananKelola, ikon: CreditCardIcon },
     { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },

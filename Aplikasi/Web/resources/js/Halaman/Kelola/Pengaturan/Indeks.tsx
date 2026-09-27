@@ -1,0 +1,98 @@
+import { Link, usePage } from '@inertiajs/react';
+import { ChevronRightIcon, LockIcon } from 'lucide-react';
+import { useState } from 'react';
+
+import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
+import { daftarPengaturan, type ButirPengaturan } from '@/Pustaka/DaftarPengaturan';
+import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { IzinTenant, PunyaIzinTenant } from '@/Tipe/Organisasi';
+
+/**
+ * Halaman Pengaturan: satu tempat untuk menemukan semua pengaturan usaha. Butirnya tetap tinggal di modul
+ * masing-masing (lihat `Pustaka/DaftarPengaturan`), halaman ini hanya menautkannya.
+ *
+ * Penyaringan izin & gembok fitur paket memakai `Akses` dan `FiturPaket` dari props bersama, sama seperti menu
+ * samping, supaya tidak ada butir yang tampil di satu tempat tapi hilang di tempat lain.
+ */
+export default function HalamanPengaturan() {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    const terkunci = props.FiturPaket?.Terkunci ?? {};
+    const [kunciPenawaran, AturKunciPenawaran] = useState<string | null>(null);
+    const penawaran = kunciPenawaran === null ? undefined : terkunci[kunciPenawaran];
+
+    const CekBoleh = (butir: ButirPengaturan) => butir.izin === null || PunyaIzinTenant(props.Akses, butir.izin);
+    const CekTerkunci = (butir: ButirPengaturan) => butir.fitur !== undefined && terkunci[butir.fitur] !== undefined;
+
+    const grup = daftarPengaturan
+        .map((baris) => ({ ...baris, butir: baris.butir.filter(CekBoleh) }))
+        .filter((baris) => baris.butir.length > 0);
+
+    return (
+        <TataLetakAplikasi judul="Pengaturan">
+            {kunciPenawaran !== null && penawaran ? (
+                <DialogNaikPaket
+                    kunci={kunciPenawaran}
+                    penawaran={penawaran}
+                    namaPaket={props.FiturPaket?.NamaPaket ?? null}
+                    bolehKelola={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
+                    saatTutup={() => AturKunciPenawaran(null)}
+                />
+            ) : null}
+
+            <p className="text-isi text-teks-sekunder">
+                Pengaturan tetap berada di menu modulnya masing-masing. Halaman ini mengumpulkan tautannya supaya mudah
+                ditemukan.
+            </p>
+
+            {grup.map((baris) => (
+                <section key={baris.judul} className="flex flex-col gap-2">
+                    <h2 className="text-label font-semibold text-teks-utama">{baris.judul}</h2>
+                    <ul className="divide-y divide-garis overflow-hidden rounded-panel border border-garis bg-permukaan">
+                        {baris.butir.map((butir) => (
+                            <li key={butir.href}>
+                                {CekTerkunci(butir) ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => AturKunciPenawaran(butir.fitur ?? null)}
+                                        className="flex w-full min-h-11 items-start gap-3 px-4 py-3 text-left hover:bg-permukaan-redup focus-visible:bg-permukaan-redup"
+                                    >
+                                        <BarisPengaturan butir={butir} terkunci />
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href={butir.href}
+                                        className="flex min-h-11 items-start gap-3 px-4 py-3 hover:bg-permukaan-redup focus-visible:bg-permukaan-redup"
+                                    >
+                                        <BarisPengaturan butir={butir} />
+                                    </Link>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            ))}
+        </TataLetakAplikasi>
+    );
+}
+
+/** Isi satu baris: label (+ penanda gembok berteks) dan keterangannya. */
+function BarisPengaturan({ butir, terkunci = false }: { butir: ButirPengaturan; terkunci?: boolean }) {
+    return (
+        <>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="flex flex-wrap items-center gap-2 text-label font-semibold text-teks-utama">
+                    {butir.label}
+                    {terkunci ? (
+                        <span className="inline-flex items-center gap-1 text-keterangan font-semibold text-teks-sekunder">
+                            <LockIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                            Di luar paket
+                        </span>
+                    ) : null}
+                </span>
+                <span className="text-keterangan text-teks-sekunder">{butir.keterangan}</span>
+            </span>
+            <ChevronRightIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-teks-sekunder" />
+        </>
+    );
+}

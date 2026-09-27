@@ -20,6 +20,27 @@ type PropsKeamananAkun = {
 export default function HalamanKeamananAkun({ DuaFaktor, Aktivasi, KodePemulihanBaru }: PropsKeamananAkun) {
     return (
         <TataLetakAplikasi judul="Keamanan akun">
+            {/* D-22: ganti kata sandi sendiri. Sebelumnya halamannya hanya muncul saat dipaksa, jadi tidak ada
+                jalan mengganti kata sandi tanpa keluar dulu dan memakai "Lupa kata sandi". */}
+            <Card className="max-w-xl gap-3 rounded-panel py-6 shadow-none">
+                <CardHeader className="gap-1 px-6">
+                    <CardTitle className="text-subjudul font-bold text-teks-utama">
+                        <h2>Kata sandi</h2>
+                    </CardTitle>
+                    <CardDescription className="text-isi text-teks-sekunder">
+                        Setelah kata sandi diganti, perangkat lain yang masuk dengan akun ini keluar otomatis.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="px-6">
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="h-8 pointer-coarse:h-11 border-garis-input text-label font-semibold"
+                    >
+                        <Link href="/ganti-kata-sandi">Ganti kata sandi</Link>
+                    </Button>
+                </CardContent>
+            </Card>
             <Card className="max-w-xl gap-4 rounded-panel py-6 shadow-none">
                 <CardHeader className="gap-1 px-6">
                     <CardTitle className="text-subjudul font-bold text-teks-utama">

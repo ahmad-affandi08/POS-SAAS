@@ -281,14 +281,16 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Laporan',
             'Perangkat',
             'Pengguna & peran',
+            'Pengaturan',
             'Log audit',
             'Langganan',
             'Bantuan',
         ]);
-        // Kotak tindakan (D-23 C) tampil untuk semua; butirnya disaring izin di server.
+        // Kotak tindakan (D-23 C) dan Pengaturan (F-01) tampil untuk semua; butirnya disaring izin di halamannya.
         expect(SaringMenuTerlihat({ Pemilik: false, Izin: [] }).map(({ menu }) => menu.label)).toEqual([
             'Beranda',
             'Kotak tindakan',
+            'Pengaturan',
         ]);
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/persediaan/kartu-stok?produk=01J9')).toBe(true);
         expect(CekMenuAktif('/kelola/persediaan/saldo', '/kelola/produk')).toBe(false);
@@ -296,17 +298,17 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         // F-04: grup Pembelian tampil untuk pembelian.kelola; pengaturan pembelian hanya untuk pembelian.po.setujui.
         expect(
             SaringMenuTerlihat({ Pemilik: false, Izin: ['pembelian.kelola'] }).map(({ menu }) => menu.label),
-        ).toEqual(['Beranda', 'Kotak tindakan', 'Pembelian']);
+        ).toEqual(['Beranda', 'Kotak tindakan', 'Pembelian', 'Pengaturan']);
         expect(CekMenuAktif('/kelola/pembelian/pesanan', '/kelola/pembelian/faktur/01J9')).toBe(true);
         // F-06: grup "Shift & kas" hanya tampil bila ada sub-menu yang boleh dibuka; F-07b: menu Penjualan ikut
         // izin laporan.penjualan.lihat.
         expect(
             SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.penjualan.lihat'] }).map(({ menu }) => menu.label),
-        ).toEqual(['Beranda', 'Kotak tindakan', 'Penjualan', 'Shift & kas', 'Laporan']);
+        ).toEqual(['Beranda', 'Kotak tindakan', 'Penjualan', 'Shift & kas', 'Laporan', 'Pengaturan']);
         expect(CekMenuAktif('/kelola/penjualan', '/kelola/penjualan/01J9')).toBe(true);
         // F-16a: menu Pelanggan ikut izin pelanggan.lihat.
         expect(SaringMenuTerlihat({ Pemilik: false, Izin: ['pelanggan.lihat'] }).map(({ menu }) => menu.label)).toEqual(
-            ['Beranda', 'Kotak tindakan', 'Pelanggan'],
+            ['Beranda', 'Kotak tindakan', 'Pelanggan', 'Pengaturan'],
         );
         // F-14a: grup "Laporan" hanya berisi laporan yang boleh dibuka; tautannya = sub-menu pertama yang boleh.
         const laporanStok = SaringMenuTerlihat({ Pemilik: false, Izin: ['persediaan.lihat'] }).find(

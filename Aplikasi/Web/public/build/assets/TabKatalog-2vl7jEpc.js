@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-ZuDPbGGP.js";import{t}from"./NavigasiTab-CClb59Oj.js";var n=e(),r=[{label:`Paket`,href:`/katalog/paket`},{label:`Add-on`,href:`/katalog/add-on`},{label:`Kupon`,href:`/katalog/kupon`},{label:`Fitur`,href:`/katalog/fitur`}];function i(){return(0,n.jsx)(t,{label:`Katalog`,daftarTab:r})}export{i as t};

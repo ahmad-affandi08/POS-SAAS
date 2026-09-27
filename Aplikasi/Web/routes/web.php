@@ -175,6 +175,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Perangkat.php'));
             // F-01 Panduan awal (onboarding wizard & template sektor).
             Route::group([], base_path('routes/PanduanAwal.php'));
+            // F-01 Pengaturan: indeks semua pengaturan + profil usaha di luar wizard.
+            Route::group([], base_path('routes/Pengaturan.php'));
             // F-03 Master produk, harga & pajak (satu file rute per tim).
             Route::group([], base_path('routes/Katalog.php'));
             Route::group([], base_path('routes/KatalogHarga.php'));

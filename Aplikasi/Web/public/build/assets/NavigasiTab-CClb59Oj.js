@@ -1,0 +1,1 @@
+import{o as e,t}from"./jsx-runtime-ZuDPbGGP.js";import{t as n}from"./TabTautan-CghQlcDL.js";var r=t();function i({label:t,daftarTab:i}){let{url:a}=e();return(0,r.jsx)(n,{label:t,tab:i.map(e=>({...e,aktif:a.startsWith(e.href)}))})}export{i as t};
