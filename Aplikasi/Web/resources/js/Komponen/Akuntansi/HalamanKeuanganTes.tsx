@@ -94,23 +94,25 @@ const propsBagan: PropsBaganAkun = {
 };
 
 describe('F-13a menu Akuntansi', () => {
-    it('laporan.keuangan.lihat membuka jurnal, kas & bank, laporan, bagan & pemetaan akun; tautan grup tetap Jurnal', () => {
-        const akuntansi = SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.keuangan.lihat'] }).find(
-            ({ menu }) => menu.label === 'Akuntansi',
-        );
+    it('laporan.keuangan.lihat membuka pekerjaan pembukuan; laporan keuangan pindah ke menu Laporan (D-27)', () => {
+        const menu = SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.keuangan.lihat'] });
+        const akuntansi = menu.find(({ menu: induk }) => induk.label === 'Akuntansi');
 
         expect(akuntansi?.menu.href).toBe('/kelola/akuntansi/jurnal');
+        // D-27: Akuntansi berisi pekerjaan pembukuan; Bagan & pemetaan akun pindah ke Pengaturan.
         expect(akuntansi?.sub.map((m) => m.label)).toEqual([
             'Jurnal',
             'Kas & bank',
             'Buku besar',
             'Neraca saldo',
+            'Tutup buku',
+        ]);
+        // Laba rugi, Neraca, dan Arus kas dicari pemilik sebagai laporan, jadi rumahnya di menu Laporan.
+        expect(menu.find(({ menu: induk }) => induk.label === 'Laporan')?.sub.map((m) => m.label)).toEqual([
+            'Laporan pajak',
             'Laba rugi',
             'Neraca',
             'Arus kas',
-            'Tutup buku',
-            'Bagan akun',
-            'Pemetaan akun',
         ]);
         expect(CekMenuAktif('/kelola/akuntansi/jurnal', '/kelola/akuntansi/laporan/buku-besar?akun=01J9')).toBe(true);
         expect(CekMenuAktif('/kelola/akuntansi/jurnal', '/kelola/akuntansi/kas-bank/01J9ZC5V7Q8R2T4W6Y8A0B2C4D')).toBe(

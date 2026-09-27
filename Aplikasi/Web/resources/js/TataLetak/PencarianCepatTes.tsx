@@ -83,12 +83,30 @@ describe('Pencarian cepat di kepala halaman', () => {
     });
 
     it('halaman & sumber data mengikuti menu yang boleh dilihat (izin)', () => {
-        const tanpaIzin = SusunPencarian(SaringMenuTerlihat({ Pemilik: false, Izin: [] }));
+        const aksesKosong = { Pemilik: false, Izin: [] };
+        const tanpaIzin = SusunPencarian(SaringMenuTerlihat(aksesKosong), aksesKosong);
         expect(tanpaIzin.sumber.map((s) => s.id)).not.toContain('produk');
         expect(tanpaIzin.halaman.some((h) => h.href === '/kelola')).toBe(true);
 
-        const denganProduk = SusunPencarian(SaringMenuTerlihat({ Pemilik: false, Izin: ['produk.lihat'] }));
+        const aksesProduk = { Pemilik: false, Izin: ['produk.lihat'] };
+        const denganProduk = SusunPencarian(SaringMenuTerlihat(aksesProduk), aksesProduk);
         expect(denganProduk.sumber.map((s) => s.id)).toContain('produk');
         expect(denganProduk.halaman.find((h) => h.href === '/kelola/produk')?.grup).toBe('Produk');
+    });
+
+    it('halaman yang pindah ke Pengaturan tetap bisa ditemukan lewat pencarian (D-27)', () => {
+        // Regresi: setelah Outlet, Pengguna, Satuan, dsb. keluar dari menu samping, Ctrl+K adalah satu-satunya
+        // jalan cepat ke sana selain halaman Pengaturan.
+        const akses = { Pemilik: true, Izin: [] };
+        const { halaman } = SusunPencarian(SaringMenuTerlihat(akses), akses);
+        const alamat = halaman.map((h) => h.href);
+
+        expect(alamat).toContain('/kelola/outlet');
+        expect(alamat).toContain('/kelola/pengguna');
+        expect(alamat).toContain('/kelola/satuan');
+        expect(alamat).toContain('/kelola/kasir/struk');
+        expect(halaman.find((h) => h.href === '/kelola/outlet')?.grup).toBe('Pengaturan › Usaha');
+        // Tidak ada alamat kembar walau halaman Pengaturan juga ada di menu samping.
+        expect(alamat.filter((href, i) => alamat.indexOf(href) !== i)).toEqual([]);
     });
 });

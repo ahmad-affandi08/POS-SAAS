@@ -14,6 +14,7 @@ paths:
 - [ ] Warna hanya untuk aksi utama & status; status selalu disertai teks/ikon.
 - [ ] Tanpa gradien (kecuali kepala sidebar merek `BrandGelap` → `Brand`, D-15), efek kaca, bayangan dekoratif, emoji, ilustrasi dekoratif.
 - [ ] Tidak ada kartu yang lebih jelas bila dijadikan baris tabel.
+- [ ] Halaman punya **satu rumah**: menu samping (kerja harian) atau Pengaturan (sekali atur), tidak keduanya; anggaran navigasi §17.4.10 masih terpenuhi (maks. 12 entri level utama, 7 sub-menu per grup).
 - [ ] Web: tabel memakai `TabelData` (TanStack Table + Query, §17.4.3) dengan cari, saring, urut, atur kolom, paginasi server, keadaan di URL.
 - [ ] Web: rapi di 360 / 768 / 1280px tanpa gulir horizontal halaman (§17.4.4).
 - [ ] POS: layar berada di bingkai Ruang Kerja Kasir, maksimal dua ketukan dari layar Jual, rapi di 360 / 800 / 1280dp (§17.2.7).

@@ -1,0 +1,73 @@
+import { describe, expect, it } from 'vitest';
+
+import { daftarPengaturan } from '@/Pustaka/DaftarPengaturan';
+
+import { daftarMenu } from './TataLetakAplikasi';
+
+/*
+ * Penjaga anggaran & peta navigasi back-office (D-27). File penjaga: kalau test ini gagal, perbaiki menunya,
+ * bukan angkanya.
+ *
+ * Latar belakang: navigasi tumbuh satu flow demi satu flow tanpa ada yang memegang peta keseluruhannya, sampai
+ * menu samping berisi 77 tautan dengan grup berisi 10 sub-menu, dan halaman seperti profil usaha malah tidak
+ * punya entri menu sama sekali. Penjaga lama hanya mengawasi piksel (token, tabel, keadaan) — tidak ada satu pun
+ * yang mengawasi struktur, jadi setiap penambahan selalu lolos.
+ */
+
+const BATAS_LEVEL_SATU = 12;
+const BATAS_SUB_MENU = 7;
+
+type Butir = { label: string; href: string; sub?: { label: string; href: string }[] };
+
+const menu = daftarMenu as Butir[];
+const grup = menu.filter(
+    (butir): butir is Butir & { sub: { label: string; href: string }[] } => butir.sub !== undefined,
+);
+
+describe('Anggaran navigasi back-office (D-27)', () => {
+    it(`menu utama maksimal ${String(BATAS_LEVEL_SATU)} entri`, () => {
+        // Lebih dari ini tidak bisa dipindai sekali lihat. Yang jarang dipakai pindah ke Pengaturan.
+        expect(menu.map((butir) => butir.label).length).toBeLessThanOrEqual(BATAS_LEVEL_SATU);
+    });
+
+    it(`setiap grup maksimal ${String(BATAS_SUB_MENU)} sub-menu`, () => {
+        const kelebihan = grup
+            .filter((butir) => butir.sub.length > BATAS_SUB_MENU)
+            .map((butir) => `${butir.label}: ${String(butir.sub.length)}`);
+
+        expect(kelebihan).toEqual([]);
+    });
+
+    it('grup berisi minimal dua sub-menu, kalau tidak jadikan item biasa', () => {
+        const terlaluTipis = grup.filter((butir) => butir.sub.length < 2).map((butir) => butir.label);
+
+        expect(terlaluTipis).toEqual([]);
+    });
+
+    it('satu halaman satu rumah: tidak ada tautan menu samping yang juga ada di Pengaturan', () => {
+        // Kalau halaman muncul di dua tempat, pengguna tidak bisa membangun peta mental yang stabil.
+        const alamatPengaturan = new Set(daftarPengaturan.flatMap(({ butir }) => butir.map((item) => item.href)));
+        const bentrok = menu
+            .flatMap((butir) => [butir, ...(butir.sub ?? [])])
+            .filter((butir) => butir.href !== '/kelola/pengaturan' && alamatPengaturan.has(butir.href))
+            .map((butir) => `${butir.label} (${butir.href})`);
+
+        expect(bentrok).toEqual([]);
+    });
+
+    it('tidak ada tautan kembar di dalam menu samping', () => {
+        const alamat = menu.flatMap((butir) => (butir.sub === undefined ? [butir.href] : butir.sub.map((s) => s.href)));
+        const kembar = alamat.filter((href, i) => alamat.indexOf(href) !== i);
+
+        expect(kembar).toEqual([]);
+    });
+
+    it('setiap butir Pengaturan punya label & keterangan yang terisi', () => {
+        const kosong = daftarPengaturan
+            .flatMap(({ judul, butir }) => butir.map((item) => ({ judul, ...item })))
+            .filter((item) => item.label.trim() === '' || item.keterangan.trim() === '')
+            .map((item) => `${item.judul}: ${item.href}`);
+
+        expect(kosong).toEqual([]);
+    });
+});

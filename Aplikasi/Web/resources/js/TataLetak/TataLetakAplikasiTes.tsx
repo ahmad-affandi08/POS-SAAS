@@ -57,22 +57,40 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         document.cookie = 'sidebar_state=; path=/; max-age=0';
     });
 
-    it('Pemilik melihat menu Langganan dan Bantuan; Keamanan akun selalu ada', () => {
+    it('Pemilik melihat menu Pengaturan dan Bantuan; Langganan kini rumahnya di Pengaturan (D-27)', () => {
         propsHalaman = BuatProps({}, [], true);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
 
-        expect(screen.getByRole('link', { name: 'Langganan' }).getAttribute('href')).toBe('/kelola/langganan');
+        expect(screen.getByRole('link', { name: 'Pengaturan' }).getAttribute('href')).toBe('/kelola/pengaturan');
         expect(screen.getByRole('link', { name: 'Bantuan' }).getAttribute('href')).toBe('/kelola/bantuan');
-        expect(screen.getByRole('link', { name: 'Keamanan akun' })).toBeTruthy();
+        // D-27: Langganan, Outlet, Pengguna, Perangkat, dan Log audit keluar dari menu samping.
+        expect(screen.queryByRole('link', { name: 'Langganan' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Outlet' })).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Pengguna & peran' })).toBeNull();
     });
 
-    it('Kasir tanpa izin tidak melihat menu Langganan maupun Bantuan', () => {
+    it('Kasir tanpa izin tidak melihat Bantuan, tetapi Pengaturan tetap ada', () => {
         propsHalaman = BuatProps({}, ['produk.lihat', 'penjualan.buat']);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
 
-        expect(screen.queryByRole('link', { name: 'Langganan' })).toBeNull();
         expect(screen.queryByRole('link', { name: 'Bantuan' })).toBeNull();
-        expect(screen.getByRole('link', { name: 'Keamanan akun' })).toBeTruthy();
+        // Isi halaman Pengaturan disaring per butir, jadi menunya sendiri terbuka untuk semua anggota.
+        expect(screen.getByRole('link', { name: 'Pengaturan' })).toBeTruthy();
+    });
+
+    it('Keamanan akun ada di menu akun kanan atas, bukan di menu samping (D-27)', () => {
+        propsHalaman = BuatProps({}, [], true);
+        render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        expect(within(utama).queryByRole('link', { name: 'Keamanan akun' })).toBeNull();
+
+        // Radix membuka dropdown lewat keyboard/pointer, bukan click biasa (sama seperti test menu akun di bawah).
+        fireEvent.keyDown(screen.getByRole('button', { name: /Menu akun/ }), { key: 'Enter' });
+        const menu = screen.getByRole('menu');
+        expect(within(menu).getByRole('menuitem', { name: 'Keamanan akun' }).getAttribute('href')).toBe(
+            '/kelola/keamanan',
+        );
     });
 
     it('tanpa tenant aktif, menu tenant disembunyikan', () => {
@@ -80,7 +98,6 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         render(<TataLetakAplikasi judul="Keamanan akun">isi</TataLetakAplikasi>);
 
         expect(screen.queryByRole('navigation', { name: 'Menu utama' })).toBeNull();
-        expect(screen.getByRole('link', { name: 'Keamanan akun' })).toBeTruthy();
     });
 
     it('Tertunggak: banner menyebut batas masa tenggang dan tautan bayar untuk pemegang langganan.kelola', () => {
@@ -119,14 +136,10 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(grupProduk.getAttribute('data-active')).toBe('true');
         expect(grupProduk.getAttribute('aria-expanded')).toBe('true');
         const sub = screen.getByRole('navigation', { name: 'Menu produk' });
+        // D-27: Satuan, Daftar harga, Pilihan, Kelompok pajak, dan Stasiun dapur pindah ke Pengaturan.
         expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
             'Produk',
             'Kategori',
-            'Satuan',
-            'Daftar harga',
-            'Pilihan (modifier)',
-            'Kelompok pajak',
-            'Stasiun dapur',
             'Paket sesi',
         ]);
         expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Kategori');
@@ -174,10 +187,10 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(tiruanRouter.visit).toHaveBeenCalledWith('/kelola/produk');
     });
 
-    it('F-05a: grup Persediaan untuk persediaan.lihat; impor & pengaturan tersembunyi tanpa izinnya', () => {
+    it('F-05a: grup Persediaan untuk persediaan.lihat berisi kerja stok harian saja', () => {
         propsHalaman = BuatProps({}, ['persediaan.lihat']);
-        urlHalaman = '/kelola/persediaan/stok-awal/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
-        render(<TataLetakAplikasi judul="Stok awal">isi</TataLetakAplikasi>);
+        urlHalaman = '/kelola/persediaan/kartu-stok?produk=01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
+        render(<TataLetakAplikasi judul="Kartu stok">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
         const induk = within(utama).getByRole('button', { name: 'Persediaan' });
@@ -187,56 +200,46 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             '/kelola/persediaan/saldo',
         );
         const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
+        // D-27: stok awal, impornya, dan pengaturan persediaan pindah ke Pengaturan (kegiatan menyiapkan toko).
         expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
             'Saldo stok',
             'Kartu stok',
-            'Stok awal',
             'Transfer stok',
             'Stok opname',
             'Penyesuaian stok',
             'Produksi',
             'Bahan terbuang',
         ]);
-        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Stok awal');
+        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Kartu stok');
         expect(within(utama).queryByRole('button', { name: 'Akuntansi' })).toBeNull();
     });
 
-    it('F-05a: persediaan.kelola + akuntansi.kelola melihat Impor stok awal & Pengaturan; awalan terpanjang aktif', () => {
+    it('D-27: halaman penyiapan stok tidak lagi di menu Persediaan meski izinnya lengkap', () => {
         propsHalaman = BuatProps({}, ['persediaan.lihat', 'persediaan.kelola', 'akuntansi.kelola']);
-        urlHalaman = '/kelola/persediaan/stok-awal/impor/01J9ZC5V7Q8R2T4W6Y8A0B2C4D';
-        render(<TataLetakAplikasi judul="Impor stok awal">isi</TataLetakAplikasi>);
+        urlHalaman = '/kelola/persediaan/saldo';
+        render(<TataLetakAplikasi judul="Saldo stok">isi</TataLetakAplikasi>);
 
         const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
-        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
-            '/kelola/persediaan/saldo',
-            '/kelola/persediaan/kartu-stok',
-            '/kelola/persediaan/stok-awal',
-            '/kelola/persediaan/transfer',
-            '/kelola/persediaan/opname',
-            '/kelola/persediaan/penyesuaian',
-            '/kelola/persediaan/produksi',
-            '/kelola/persediaan/bahan-terbuang',
-            '/kelola/persediaan/stok-awal/impor',
-            '/kelola/persediaan/pengaturan',
-        ]);
-        expect(sub.querySelector('a[aria-current="page"]')?.textContent).toBe('Impor stok awal');
-        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        const aktif = Array.from(utama.querySelectorAll('[data-active="true"]')).map((el) => el.textContent);
-        expect(aktif).toEqual(['Persediaan', 'Impor stok awal']);
+        const alamat = Array.from(sub.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+
+        expect(alamat).not.toContain('/kelola/persediaan/stok-awal');
+        expect(alamat).not.toContain('/kelola/persediaan/stok-awal/impor');
+        expect(alamat).not.toContain('/kelola/persediaan/pengaturan');
+        expect(alamat).toHaveLength(7);
     });
 
-    it('F-05a: tanpa persediaan.lihat tetapi dengan akuntansi.kelola, grup Persediaan menuju Pengaturan persediaan', () => {
+    it('D-27: menu Pengaturan menyala saat membuka halaman yang rumahnya di sana', () => {
         propsHalaman = BuatProps({}, ['akuntansi.kelola']);
         urlHalaman = '/kelola/persediaan/pengaturan';
         render(<TataLetakAplikasi judul="Pengaturan persediaan">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
-        expect(within(utama).getByRole('button', { name: 'Persediaan' }).getAttribute('data-active')).toBe('true');
-        expect(SaringMenuTerlihat(propsHalaman.Akses).find(({ menu }) => menu.label === 'Persediaan')?.menu.href).toBe(
-            '/kelola/persediaan/pengaturan',
-        );
-        const sub = screen.getByRole('navigation', { name: 'Menu persediaan' });
-        expect(Array.from(sub.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Pengaturan persediaan']);
+        // Grup Persediaan tidak lagi punya sub-menu untuk izin ini, jadi grupnya tidak tampil.
+        expect(within(utama).queryByRole('button', { name: 'Persediaan' })).toBeNull();
+        expect(within(utama).getByRole('link', { name: 'Pengaturan' }).getAttribute('aria-current')).toBe('page');
+        expect(CekMenuAktif('/kelola/pengaturan', '/kelola/peran/01J9')).toBe(true);
+        expect(CekMenuAktif('/kelola/pengaturan', '/kelola/keamanan/pin')).toBe(true);
+        expect(CekMenuAktif('/kelola/pengaturan', '/kelola/produk')).toBe(false);
     });
 
     it('F-05a: menu Akuntansi › Jurnal hanya untuk laporan.keuangan.lihat', () => {
@@ -261,29 +264,24 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(screen.queryByRole('navigation', { name: 'Menu persediaan' })).toBeNull();
     });
 
-    it('F-05a: Pemilik melihat seluruh menu persediaan dan jurnal; sub-menu aktif memakai awalan terpanjang', () => {
+    it('F-05a: Pemilik melihat seluruh menu; urutannya dari yang paling sering dipakai (D-27)', () => {
+        // D-27: 12 entri, diurutkan per frekuensi pakai. Outlet, Perangkat, Pengguna & peran, Log audit, dan
+        // Langganan pindah ke Pengaturan; "Shift & kas" digabung ke "Penjualan & kasir".
         expect(SaringMenuTerlihat({ Pemilik: true, Izin: [] }).map(({ menu }) => menu.label)).toEqual([
             'Beranda',
             'Kotak tindakan',
-            'Outlet',
-            'Produk',
+            'Penjualan & kasir',
+            // F-14a: laporan yang dibaca pemilik, termasuk laporan keuangan.
+            'Laporan',
             'Persediaan',
+            'Produk',
             // F-04: pembelian & hutang pemasok.
             'Pembelian',
-            // F-07b: daftar penjualan dari POS.
-            'Penjualan',
             // F-16a: data pelanggan.
             'Pelanggan',
             'Karyawan',
-            'Shift & kas',
             'Akuntansi',
-            // F-14a: laporan penjualan, pajak, stok.
-            'Laporan',
-            'Perangkat',
-            'Pengguna & peran',
             'Pengaturan',
-            'Log audit',
-            'Langganan',
             'Bantuan',
         ]);
         // Kotak tindakan (D-23 C) dan Pengaturan (F-01) tampil untuk semua; butirnya disaring izin di halamannya.
@@ -300,11 +298,10 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             SaringMenuTerlihat({ Pemilik: false, Izin: ['pembelian.kelola'] }).map(({ menu }) => menu.label),
         ).toEqual(['Beranda', 'Kotak tindakan', 'Pembelian', 'Pengaturan']);
         expect(CekMenuAktif('/kelola/pembelian/pesanan', '/kelola/pembelian/faktur/01J9')).toBe(true);
-        // F-06: grup "Shift & kas" hanya tampil bila ada sub-menu yang boleh dibuka; F-07b: menu Penjualan ikut
-        // izin laporan.penjualan.lihat.
+        // F-07b/F-06: menu "Penjualan & kasir" (termasuk shift & tutup harian) ikut izin laporan.penjualan.lihat.
         expect(
             SaringMenuTerlihat({ Pemilik: false, Izin: ['laporan.penjualan.lihat'] }).map(({ menu }) => menu.label),
-        ).toEqual(['Beranda', 'Kotak tindakan', 'Penjualan', 'Shift & kas', 'Laporan', 'Pengaturan']);
+        ).toEqual(['Beranda', 'Kotak tindakan', 'Penjualan & kasir', 'Laporan', 'Pengaturan']);
         expect(CekMenuAktif('/kelola/penjualan', '/kelola/penjualan/01J9')).toBe(true);
         // F-16a: menu Pelanggan ikut izin pelanggan.lihat.
         expect(SaringMenuTerlihat({ Pemilik: false, Izin: ['pelanggan.lihat'] }).map(({ menu }) => menu.label)).toEqual(
@@ -318,16 +315,15 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(CekMenuAktif('/kelola/laporan/penjualan', '/kelola/laporan/pajak?dari=2026-10-01')).toBe(true);
     });
 
-    it('Pengguna & peran tetap aktif di /kelola/peran; aria-current hanya pada satu menu utama', () => {
+    it('Pengaturan aktif di /kelola/peran; aria-current hanya pada satu menu utama (D-27)', () => {
         propsHalaman = BuatProps({}, ['pengguna.lihat', 'outlet.lihat']);
         urlHalaman = '/kelola/peran/01J9';
         render(<TataLetakAplikasi judul="Peran">isi</TataLetakAplikasi>);
 
         const utama = screen.getByRole('navigation', { name: 'Menu utama' });
         const aktif = Array.from(utama.querySelectorAll('a[aria-current="page"]'));
-        expect(aktif.map((a) => a.textContent)).toEqual(['Pengguna & peran']);
+        expect(aktif.map((a) => a.textContent)).toEqual(['Pengaturan']);
         expect(CekMenuAktif('/kelola', '/kelola/outlet')).toBe(false);
-        expect(CekMenuAktif('/kelola/outlet', '/kelola/outlet/01J9')).toBe(true);
     });
 
     it('bilah samping bisa diciutkan lewat tombol di bilah atas; remah roti menyebut usaha dan halaman', () => {

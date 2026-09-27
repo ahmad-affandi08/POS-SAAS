@@ -1,11 +1,11 @@
 import { IzinTenant, type KunciIzinTenant } from '@/Tipe/Organisasi';
 
 /**
- * Isi halaman Pengaturan (`/kelola/pengaturan`).
+ * Isi halaman Pengaturan (`/kelola/pengaturan`) — rumah semua halaman yang **diatur sekali lalu jarang disentuh**.
  *
- * Pengaturan PAYOU tinggal di dalam modulnya masing-masing (Pengaturan kasir di menu Shift & kas, Pengaturan
- * persediaan di menu Persediaan, dan seterusnya) karena di situlah konteksnya. Halaman ini tidak memindahkannya,
- * hanya mengumpulkan tautannya di satu tempat supaya bisa ditemukan tanpa hafal letak menunya.
+ * D-27: halaman di sini tidak boleh ikut muncul di menu samping (dijaga `AnggaranNavigasiTes`), supaya satu halaman
+ * hanya punya satu rumah dan menu harian tetap pendek. Semuanya tetap bisa dicari lewat Ctrl+K karena
+ * `SusunPencarian` ikut membaca daftar ini.
  *
  * `izin` null = semua anggota boleh. `fitur` = kunci fitur paket (D-23): di luar paket tetap tampil dengan gembok,
  * kliknya membuka dialog naik paket, sama seperti di menu samping.
@@ -41,6 +41,43 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 keterangan: 'Paket yang aktif, batas pemakaian, tagihan, dan bukti pembayaran.',
                 href: '/kelola/langganan',
                 izin: IzinTenant.LanggananKelola,
+            },
+        ],
+    },
+    {
+        judul: 'Katalog & harga',
+        butir: [
+            {
+                label: 'Satuan',
+                keterangan: 'Satuan jual & beli beserta konversinya, misal dus ke pcs.',
+                href: '/kelola/satuan',
+                izin: IzinTenant.ProdukLihat,
+            },
+            {
+                label: 'Pilihan (modifier)',
+                keterangan: 'Kelompok pilihan seperti tingkat gula atau ukuran, beserta tambahan harganya.',
+                href: '/kelola/kelompok-pilihan',
+                izin: IzinTenant.ProdukLihat,
+            },
+            {
+                label: 'Kelompok pajak',
+                keterangan: 'Kelompok tarif pajak yang dipasang ke produk.',
+                href: '/kelola/kelompok-pajak',
+                izin: IzinTenant.ProdukLihat,
+            },
+            {
+                label: 'Daftar harga',
+                keterangan: 'Harga per tier pelanggan dan per kanal, misal harga GoFood atau GrabFood.',
+                href: '/kelola/daftar-harga',
+                izin: IzinTenant.ProdukLihat,
+                fitur: 'harga.daftar-harga',
+            },
+            {
+                label: 'Stasiun dapur',
+                keterangan: 'Stasiun pembuatan pesanan dan tiket dapur yang dicetak untuk masing-masing.',
+                href: '/kelola/stasiun-dapur',
+                izin: IzinTenant.ProdukLihat,
+                fitur: 'pos.kds',
             },
         ],
     },
@@ -83,6 +120,18 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 izin: IzinTenant.AkuntansiKelola,
             },
             {
+                label: 'Stok awal',
+                keterangan: 'Saldo stok pembuka per produk & lokasi, diposting sekali saat mulai memakai PAYOU.',
+                href: '/kelola/persediaan/stok-awal',
+                izin: IzinTenant.PersediaanLihat,
+            },
+            {
+                label: 'Impor stok awal',
+                keterangan: 'Unggah stok awal banyak produk sekaligus dari Excel/CSV.',
+                href: '/kelola/persediaan/stok-awal/impor',
+                izin: IzinTenant.PersediaanKelola,
+            },
+            {
                 label: 'Pengaturan pembelian',
                 keterangan: 'Persetujuan pesanan pembelian, toleransi penerimaan, dan draf PO otomatis.',
                 href: '/kelola/pembelian/pengaturan',
@@ -110,6 +159,18 @@ export const daftarPengaturan: GrupPengaturan[] = [
         ],
     },
     {
+        judul: 'Karyawan',
+        butir: [
+            {
+                label: 'Aturan komisi',
+                keterangan: 'Dasar perhitungan komisi per staf pelayan atau per produk.',
+                href: '/kelola/karyawan/komisi',
+                izin: IzinTenant.KaryawanLihat,
+                fitur: 'karyawan.komisi',
+            },
+        ],
+    },
+    {
         judul: 'Akuntansi',
         butir: [
             {
@@ -123,13 +184,6 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 label: 'Pemetaan akun',
                 keterangan: 'Akun yang dipakai jurnal otomatis untuk penjualan, stok, pajak, dan kas.',
                 href: '/kelola/akuntansi/pemetaan',
-                izin: IzinTenant.LaporanKeuanganLihat,
-                fitur: 'akuntansi.penuh',
-            },
-            {
-                label: 'Tutup buku',
-                keterangan: 'Kunci periode bulanan & tahunan, dan buka kunci bila perlu koreksi.',
-                href: '/kelola/akuntansi/tutup-buku',
                 izin: IzinTenant.LaporanKeuanganLihat,
                 fitur: 'akuntansi.penuh',
             },

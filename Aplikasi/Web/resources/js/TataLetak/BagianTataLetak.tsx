@@ -1,5 +1,5 @@
-import { router } from '@inertiajs/react';
-import { ChevronDownIcon, LogOutIcon } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { ChevronDownIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Avatar, AvatarFallback } from '@/Komponen/Ui/avatar';
@@ -133,7 +133,7 @@ type PropsMenuAkun = {
     gelap?: boolean;
 };
 
-/** Menu akun (DropdownMenu): nama & email pengguna, lalu Keluar (POST /keluar). */
+/** Menu akun (DropdownMenu): nama & email pengguna, Keamanan akun (D-27), lalu Keluar (POST /keluar). */
 export function MenuAkun({ nama, email, gelap = false }: PropsMenuAkun) {
     return (
         <DropdownMenu modal={false}>
@@ -161,6 +161,13 @@ export function MenuAkun({ nama, email, gelap = false }: PropsMenuAkun) {
                     {email ? <span className="truncate text-keterangan text-teks-sekunder">{email}</span> : null}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {/* D-27: pindah dari footer menu samping ke sini, tempat orang mencari pengaturan akunnya. */}
+                <DropdownMenuItem asChild className="text-label">
+                    <Link href="/kelola/keamanan">
+                        <ShieldCheckIcon aria-hidden="true" />
+                        Keamanan akun
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="text-label" onSelect={() => router.post('/keluar')}>
                     <LogOutIcon aria-hidden="true" />
                     Keluar

@@ -455,6 +455,34 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - Data dari props bersama `FiturPaket` (`NamaPaket`, `Terkunci` per kunci fitur) yang dihitung dengan `EvaluatorFitur` (paket, override, add-on, flag) sehingga sama dengan pemeriksaan server.
 - Ini lapisan UX. Rute yang sudah menjaga fitur (mode meja, KDS, self-order, WhatsApp, promo) tetap menolak di server; penegakan untuk rute lain menunggu keputusan pemilik produk karena tenant lama mungkin sudah memakai fitur di luar paketnya.
 
+#### 17.4.10 Anggaran & Peta Navigasi (Keputusan D-27, v2.42)
+
+**Masalah yang diperbaiki:** navigasi tumbuh satu flow demi satu flow tanpa ada yang memegang peta keseluruhannya. Menu samping sempat berisi **77 tautan** dengan **18 entri di level utama** dan grup berisi sampai **10 sub-menu**, diurutkan mengikuti modul kode (Produk, Persediaan, Pembelian, Akuntansi) alih-alih pekerjaan pengguna. Sebaliknya ada halaman yang tidak punya entri menu sama sekali (profil usaha). Penjaga yang sudah ada hanya mengawasi piksel — token warna, `TabelData`, keadaan wajib, responsif — dan **tidak satu pun mengawasi struktur**, sehingga setiap penambahan menu selalu lolos semua pengecekan.
+
+**Anggaran navigasi** (dijaga `resources/js/TataLetak/AnggaranNavigasiTes.ts`):
+
+| Aturan | Batas |
+|---|---|
+| Entri di level utama menu samping | maksimal 12 |
+| Sub-menu per grup | maksimal 7 |
+| Sub-menu minimum per grup | 2; kurang dari itu jadikan item biasa |
+| Satu halaman satu rumah | tautan di menu samping tidak boleh juga ada di Pengaturan |
+| Tautan kembar di menu samping | tidak boleh |
+
+**Urutan menu mengikuti frekuensi pakai, bukan urutan modul:** Beranda, Kotak tindakan, Penjualan & kasir, Laporan, Persediaan, Produk, Pembelian, Pelanggan, Karyawan, Akuntansi, lalu **garis pemisah**, Pengaturan, Bantuan.
+
+**Halaman yang diatur sekali lalu jarang disentuh tidak ada di menu samping.** Rumahnya `/kelola/pengaturan` (F-01), daftarnya `resources/js/Pustaka/DaftarPengaturan.ts`: master katalog (Satuan, Pilihan/modifier, Kelompok pajak, Daftar harga, Stasiun dapur), pengaturan modul (kasir, struk, kategori kas, gerbang pembayaran, persediaan, pembelian), penyiapan stok (Stok awal & impornya), Tier & Pengaturan loyalti, Aturan komisi, Bagan & Pemetaan akun, Outlet & gudang, Pengguna & peran, Perangkat kasir, Log audit, Langganan, dan Keamanan akun.
+
+**Pencarian cepat tetap memuat semuanya.** `SusunPencarian` membaca menu samping **dan** daftar Pengaturan, jadi Ctrl+K tetap menemukan halaman yang keluar dari menu samping (dijaga test). Menu **Pengaturan** menyala saat halaman yang rumahnya di sana dibuka, termasuk `/kelola/peran` dan `/kelola/keamanan/pin`, supaya menu samping tetap menunjukkan posisi pengguna.
+
+**Perubahan grup:**
+- "Shift & kas" **digabung ke "Penjualan & kasir"**. Setelah pengaturan kasir/struk/kategori kas/gerbang pindah, grup itu hanya menyisakan Shift kasir & Tutup harian — yang menjawab pertanyaan sama dengan daftar penjualan: apa yang terjadi di kasir.
+- Laporan keuangan (Laba rugi, Neraca, Arus kas) **pindah dari Akuntansi ke Laporan**, karena pemilik mencarinya sebagai laporan, bukan sebagai pekerjaan pembukuan. **Akuntansi** menyisakan pekerjaan pembukuannya: Jurnal, Kas & bank, Buku besar, Neraca saldo, Tutup buku.
+- **Keamanan akun** pindah dari footer menu samping ke **menu akun di kanan atas**, tempat orang mencari pengaturan akunnya; di sana bersama Ganti kata sandi (D-22).
+
+**Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
+
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):
@@ -662,6 +690,7 @@ Wajib lolos sebelum layar masuk implementasi:
 - [ ] Semua keadaan di §17.6.6 sudah didesain
 - [ ] Diuji dengan data ekstrem dan di perangkat acuan
 - [ ] Microcopy mengikuti §17.6.7 dan kamus istilah
+- [ ] Halaman baru punya **satu rumah**: menu samping (kerja harian) atau Pengaturan (sekali atur), tidak keduanya; anggaran navigasi §17.4.10 tetap terpenuhi
 - [ ] Setiap elemen dekoratif yang tidak membantu tugas sudah dibuang
 
 #### 17.6.12 Email (Keputusan D-26)

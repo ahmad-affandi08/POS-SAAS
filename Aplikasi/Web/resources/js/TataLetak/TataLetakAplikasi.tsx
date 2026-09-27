@@ -1,24 +1,17 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    BanknoteIcon,
     BookOpenTextIcon,
     LockIcon,
     ChevronRightIcon,
     ChartColumnIcon,
-    CreditCardIcon,
     HouseIcon,
     InboxIcon,
     IdCardIcon,
     LifeBuoyIcon,
-    MonitorSmartphoneIcon,
     PackageIcon,
     ReceiptTextIcon,
-    ScrollTextIcon,
     SettingsIcon,
-    ShieldCheckIcon,
     ShoppingCartIcon,
-    StoreIcon,
-    UsersIcon,
     UsersRoundIcon,
     WarehouseIcon,
     type LucideIcon,
@@ -27,11 +20,11 @@ import { useState, type MouseEvent, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
+import { daftarPengaturan } from '@/Pustaka/DaftarPengaturan';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Komponen/Ui/collapsible';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarMenu,
@@ -65,31 +58,37 @@ import PencarianCepat, { type HalamanPencarian, type SumberPencarian } from './P
 
 type PropsTataLetak = { judul: string; children: ReactNode };
 
-/** `fitur` = kunci fitur paket (D-23): di luar paket tetap tampil dengan gembok; klik = dialog naik paket/add-on. */
-type ItemMenu = { label: string; href: string; izin: KunciIzinTenant | null; ikon?: LucideIcon; fitur?: string };
+/**
+ * `fitur` = kunci fitur paket (D-23): di luar paket tetap tampil dengan gembok; klik = dialog naik paket/add-on.
+ * `pemisah` = garis pemisah di atas item ini (D-27: memisahkan kerja harian dari pengaturan & bantuan).
+ */
+type ItemMenu = {
+    label: string;
+    href: string;
+    izin: KunciIzinTenant | null;
+    ikon?: LucideIcon;
+    fitur?: string;
+    pemisah?: boolean;
+};
 
 /** Menu utama bersub-menu: tampil bila ada sub-menu yang boleh dibuka; tautannya = sub-menu pertama yang boleh. */
 type GrupMenu = ItemMenu & { labelSub: string; sub: ItemMenu[] };
 
 // F-03: grup menu "Produk". Tampil sebagai sub-menu saat salah satu halamannya dibuka.
+// D-27: master yang diatur sekali (Satuan, Pilihan, Kelompok pajak, Daftar harga, Stasiun dapur) pindah ke Pengaturan.
 const menuProduk: ItemMenu[] = [
     { label: 'Produk', href: '/kelola/produk', izin: IzinTenant.ProdukLihat },
     { label: 'Kategori', href: '/kelola/kategori', izin: IzinTenant.ProdukLihat },
-    { label: 'Satuan', href: '/kelola/satuan', izin: IzinTenant.ProdukLihat },
-    { label: 'Daftar harga', href: '/kelola/daftar-harga', izin: IzinTenant.ProdukLihat, fitur: 'harga.daftar-harga' },
-    { label: 'Pilihan (modifier)', href: '/kelola/kelompok-pilihan', izin: IzinTenant.ProdukLihat },
-    { label: 'Kelompok pajak', href: '/kelola/kelompok-pajak', izin: IzinTenant.ProdukLihat },
-    { label: 'Stasiun dapur', href: '/kelola/stasiun-dapur', izin: IzinTenant.ProdukLihat, fitur: 'pos.kds' },
     // F-16d bagian 2: paket sesi (produk Jasa yang dijual sebagai N sesi).
     { label: 'Paket sesi', href: '/kelola/paket-sesi', izin: IzinTenant.ProdukLihat, fitur: 'pelanggan.paket-sesi' },
     { label: 'Impor produk', href: '/kelola/produk/impor', izin: IzinTenant.ProdukKelola },
 ];
 
-// F-05a: grup menu "Persediaan" (DesainF05a E). Impor butuh persediaan.kelola, pengaturan butuh akuntansi.kelola.
+// F-05a: grup menu "Persediaan" (DesainF05a E). D-27: stok awal, impornya, dan pengaturan persediaan pindah ke
+// Pengaturan karena dipakai saat menyiapkan toko, bukan saat bekerja harian.
 const menuPersediaan: ItemMenu[] = [
     { label: 'Saldo stok', href: '/kelola/persediaan/saldo', izin: IzinTenant.PersediaanLihat },
     { label: 'Kartu stok', href: '/kelola/persediaan/kartu-stok', izin: IzinTenant.PersediaanLihat },
-    { label: 'Stok awal', href: '/kelola/persediaan/stok-awal', izin: IzinTenant.PersediaanLihat },
     // F-05b: transfer, stok opname, penyesuaian (lihat: persediaan.lihat; tindakan dijaga di rute).
     {
         label: 'Transfer stok',
@@ -103,8 +102,6 @@ const menuPersediaan: ItemMenu[] = [
     { label: 'Produksi', href: '/kelola/persediaan/produksi', izin: IzinTenant.PersediaanLihat },
     // F-05f: bahan terbuang (waste) & food cost.
     { label: 'Bahan terbuang', href: '/kelola/persediaan/bahan-terbuang', izin: IzinTenant.PersediaanLihat },
-    { label: 'Impor stok awal', href: '/kelola/persediaan/stok-awal/impor', izin: IzinTenant.PersediaanKelola },
-    { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
 ];
 
 // F-04 fase 1: grup menu "Pembelian" (pembelian.kelola); pengaturan pembelian butuh pembelian.po.setujui.
@@ -121,25 +118,12 @@ const menuPembelian: ItemMenu[] = [
     { label: 'Pembayaran hutang', href: '/kelola/pembelian/pembayaran', izin: IzinTenant.PembelianKelola },
     { label: 'Retur pembelian', href: '/kelola/pembelian/retur', izin: IzinTenant.PembelianKelola },
     { label: 'Pemasok', href: '/kelola/pembelian/pemasok', izin: IzinTenant.PembelianKelola },
-    { label: 'Pengaturan pembelian', href: '/kelola/pembelian/pengaturan', izin: IzinTenant.PembelianPoSetujui },
 ];
 
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
 // F-16a/F-16b: data pelanggan, tier, pengaturan loyalti.
 const menuPelanggan: ItemMenu[] = [
     { label: 'Daftar pelanggan', href: '/kelola/pelanggan', izin: IzinTenant.PelangganLihat },
-    {
-        label: 'Tier pelanggan',
-        href: '/kelola/pelanggan/tier',
-        izin: IzinTenant.PelangganLihat,
-        fitur: 'pelanggan.loyalti',
-    },
-    {
-        label: 'Pengaturan loyalti',
-        href: '/kelola/pelanggan/loyalti',
-        izin: IzinTenant.PelangganLihat,
-        fitur: 'pelanggan.loyalti',
-    },
     { label: 'Promo', href: '/kelola/promo', izin: IzinTenant.PelangganLihat, fitur: 'promo.mesin' },
     // F-16c bagian 4b: klaim promo yang ditanggung pemasok.
     {
@@ -172,13 +156,7 @@ const menuKaryawan: ItemMenu[] = [
     { label: 'Daftar karyawan', href: '/kelola/karyawan', izin: IzinTenant.KaryawanLihat },
     { label: 'Jadwal kerja', href: '/kelola/karyawan/jadwal', izin: IzinTenant.KaryawanLihat },
     { label: 'Absensi', href: '/kelola/karyawan/absensi', izin: IzinTenant.KaryawanLihat },
-    // F-18 bagian 2: komisi.
-    {
-        label: 'Aturan komisi',
-        href: '/kelola/karyawan/komisi',
-        izin: IzinTenant.KaryawanLihat,
-        fitur: 'karyawan.komisi',
-    },
+    // F-18 bagian 2: komisi (aturannya pindah ke Pengaturan, D-27).
     {
         label: 'Laporan komisi',
         href: '/kelola/karyawan/komisi/laporan',
@@ -192,21 +170,20 @@ const menuKaryawan: ItemMenu[] = [
     { label: 'Rekap gaji', href: '/kelola/karyawan/gaji', izin: IzinTenant.KaryawanKelola },
 ];
 
-const menuKasir: ItemMenu[] = [
-    { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
-    // F-15: tutup harian (End of Day) per outlet.
-    { label: 'Tutup harian', href: '/kelola/kasir/tutup-harian', izin: IzinTenant.LaporanPenjualanLihat },
-    { label: 'Kategori kas', href: '/kelola/kasir/kategori-kas', izin: IzinTenant.AkuntansiKelola },
-    { label: 'Pengaturan kasir', href: '/kelola/kasir/pengaturan', izin: IzinTenant.OutletKelola },
-    { label: 'Pengaturan struk', href: '/kelola/kasir/struk', izin: IzinTenant.OutletKelola },
-    // F-08 v2.06: gerbang pembayaran QRIS dinamis milik toko (akun merchant sendiri).
-    { label: 'Gerbang pembayaran', href: '/kelola/pembayaran/gerbang', izin: IzinTenant.PembayaranGerbangAtur },
-];
-
-// F-07b/F-09: grup menu "Penjualan" (baca saja): daftar penjualan dan void & retur (anti-fraud BR-09.3).
+/*
+ * F-07b/F-09/F-06/F-15: grup menu "Penjualan & kasir" — semua yang terjadi di kasir hari itu, baca saja dari
+ * back-office (layar kasirnya ada di aplikasi Flutter).
+ *
+ * D-27: grup "Shift & kas" digabung ke sini. Setelah pengaturan kasir/struk/gerbang & kategori kas pindah ke
+ * Pengaturan, grup itu hanya menyisakan dua halaman, dan keduanya menjawab pertanyaan yang sama dengan daftar
+ * penjualan: apa yang terjadi di kasir.
+ */
 const menuPenjualan: ItemMenu[] = [
     { label: 'Daftar penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Void & retur', href: '/kelola/penjualan/void-retur', izin: IzinTenant.LaporanPenjualanLihat },
+    { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
+    // F-15: tutup harian (End of Day) per outlet.
+    { label: 'Tutup harian', href: '/kelola/kasir/tutup-harian', izin: IzinTenant.LaporanPenjualanLihat },
     // F-12 bagian 2: pre-order & uang muka.
     { label: 'Pre-order', href: '/kelola/pre-order', izin: IzinTenant.LaporanPenjualanLihat },
     // F-07 mode service: reservasi layanan jasa per staf.
@@ -237,6 +214,25 @@ const menuAkuntansi: ItemMenu[] = [
         izin: IzinTenant.LaporanKeuanganLihat,
         fitur: 'akuntansi.penuh',
     },
+    {
+        label: 'Tutup buku',
+        href: '/kelola/akuntansi/tutup-buku',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
+];
+
+/*
+ * F-14a: grup menu "Laporan" — yang dibaca pemilik.
+ *
+ * D-27: laporan keuangan (Laba rugi, Neraca, Arus kas) pindah ke sini dari grup Akuntansi. Pemilik mencarinya
+ * sebagai laporan, bukan sebagai pekerjaan pembukuan; Akuntansi kini berisi pekerjaan pembukuannya sendiri
+ * (jurnal, kas & bank, buku besar, neraca saldo, tutup buku). Bagan & pemetaan akun pindah ke Pengaturan.
+ */
+const menuLaporan: ItemMenu[] = [
+    { label: 'Laporan penjualan', href: '/kelola/laporan/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
+    { label: 'Laporan pajak', href: '/kelola/laporan/pajak', izin: IzinTenant.LaporanKeuanganLihat },
+    { label: 'Laporan stok', href: '/kelola/laporan/stok', izin: IzinTenant.PersediaanLihat },
     { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
     {
         label: 'Neraca',
@@ -250,31 +246,6 @@ const menuAkuntansi: ItemMenu[] = [
         izin: IzinTenant.LaporanKeuanganLihat,
         fitur: 'akuntansi.penuh',
     },
-    {
-        label: 'Tutup buku',
-        href: '/kelola/akuntansi/tutup-buku',
-        izin: IzinTenant.LaporanKeuanganLihat,
-        fitur: 'akuntansi.penuh',
-    },
-    {
-        label: 'Bagan akun',
-        href: '/kelola/akuntansi/akun',
-        izin: IzinTenant.LaporanKeuanganLihat,
-        fitur: 'akuntansi.penuh',
-    },
-    {
-        label: 'Pemetaan akun',
-        href: '/kelola/akuntansi/pemetaan',
-        izin: IzinTenant.LaporanKeuanganLihat,
-        fitur: 'akuntansi.penuh',
-    },
-];
-
-// F-14a: grup menu "Laporan": penjualan (laporan.penjualan.lihat), pajak (laporan.keuangan.lihat), stok (persediaan.lihat).
-const menuLaporan: ItemMenu[] = [
-    { label: 'Laporan penjualan', href: '/kelola/laporan/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
-    { label: 'Laporan pajak', href: '/kelola/laporan/pajak', izin: IzinTenant.LaporanKeuanganLihat },
-    { label: 'Laporan stok', href: '/kelola/laporan/stok', izin: IzinTenant.PersediaanLihat },
 ];
 
 /** Item sub-menu yang aktif untuk URL ini: awalan terpanjang menang (/kelola/produk/impor vs /kelola/produk). */
@@ -293,18 +264,35 @@ export function CariMenuProdukAktif(url: string): string | null {
 }
 
 // Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
-const daftarMenu: (ItemMenu | GrupMenu)[] = [
+/*
+ * Menu back-office tenant berbasis izin (hanya UX; server tetap memeriksa izin lewat WajibIzinTenant).
+ *
+ * D-27 anggaran & peta navigasi: maksimal 12 entri di level ini dan 7 sub-menu per grup, diurutkan dari yang
+ * paling sering dipakai ke yang paling jarang — bukan urutan modul kode. Halaman yang diatur sekali lalu tidak
+ * disentuh lagi (master, pengaturan modul, outlet, pengguna, perangkat, log audit, langganan) tidak ada di sini;
+ * rumahnya di `/kelola/pengaturan` (`Pustaka/DaftarPengaturan`), dan semuanya tetap bisa dicari lewat Ctrl+K.
+ * Dijaga `AnggaranNavigasiTes`.
+ */
+export const daftarMenu: (ItemMenu | GrupMenu)[] = [
     { label: 'Beranda', href: '/kelola', izin: null, ikon: HouseIcon },
     // D-23 C: semua yang perlu ditindaklanjuti (butir disaring izin di server).
     { label: 'Kotak tindakan', href: '/kelola/tindakan', izin: null, ikon: InboxIcon },
-    { label: 'Outlet', href: '/kelola/outlet', izin: IzinTenant.OutletLihat, ikon: StoreIcon },
     {
-        label: 'Produk',
-        href: '/kelola/produk',
-        izin: IzinTenant.ProdukLihat,
-        ikon: PackageIcon,
-        labelSub: 'Menu produk',
-        sub: menuProduk,
+        label: 'Penjualan & kasir',
+        href: '/kelola/penjualan',
+        izin: null,
+        ikon: ReceiptTextIcon,
+        labelSub: 'Menu penjualan & kasir',
+        sub: menuPenjualan,
+    },
+    // F-14a: laporan yang dibaca pemilik, termasuk laporan keuangan.
+    {
+        label: 'Laporan',
+        href: '/kelola/laporan/penjualan',
+        izin: null,
+        ikon: ChartColumnIcon,
+        labelSub: 'Menu laporan',
+        sub: menuLaporan,
     },
     {
         label: 'Persediaan',
@@ -314,6 +302,14 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
     },
+    {
+        label: 'Produk',
+        href: '/kelola/produk',
+        izin: IzinTenant.ProdukLihat,
+        ikon: PackageIcon,
+        labelSub: 'Menu produk',
+        sub: menuProduk,
+    },
     // F-04 fase 1: pembelian & hutang pemasok.
     {
         label: 'Pembelian',
@@ -322,15 +318,6 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: ShoppingCartIcon,
         labelSub: 'Menu pembelian',
         sub: menuPembelian,
-    },
-    // F-07b: penjualan dari aplikasi POS (baca saja); F-09: void & retur.
-    {
-        label: 'Penjualan',
-        href: '/kelola/penjualan',
-        izin: null,
-        ikon: ReceiptTextIcon,
-        labelSub: 'Menu penjualan',
-        sub: menuPenjualan,
     },
     {
         label: 'Pelanggan',
@@ -349,14 +336,6 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         sub: menuKaryawan,
     },
     {
-        label: 'Shift & kas',
-        href: '/kelola/kasir/shift',
-        izin: null,
-        ikon: BanknoteIcon,
-        labelSub: 'Menu shift & kas',
-        sub: menuKasir,
-    },
-    {
         label: 'Akuntansi',
         href: '/kelola/akuntansi/jurnal',
         izin: null,
@@ -364,22 +343,8 @@ const daftarMenu: (ItemMenu | GrupMenu)[] = [
         labelSub: 'Menu akuntansi',
         sub: menuAkuntansi,
     },
-    // F-14a: laporan inti (penjualan, pajak, stok).
-    {
-        label: 'Laporan',
-        href: '/kelola/laporan/penjualan',
-        izin: null,
-        ikon: ChartColumnIcon,
-        labelSub: 'Menu laporan',
-        sub: menuLaporan,
-    },
-    // F-02b: perangkat POS.
-    { label: 'Perangkat', href: '/kelola/perangkat', izin: IzinTenant.PerangkatLihat, ikon: MonitorSmartphoneIcon },
-    { label: 'Pengguna & peran', href: '/kelola/pengguna', izin: IzinTenant.PenggunaLihat, ikon: UsersIcon },
-    // Indeks semua pengaturan; butirnya tetap tinggal di menu modulnya masing-masing (Pustaka/DaftarPengaturan).
-    { label: 'Pengaturan', href: '/kelola/pengaturan', izin: null, ikon: SettingsIcon },
-    { label: 'Log audit', href: '/kelola/log-audit', izin: IzinTenant.AuditLihat, ikon: ScrollTextIcon },
-    { label: 'Langganan', href: '/kelola/langganan', izin: IzinTenant.LanggananKelola, ikon: CreditCardIcon },
+    // Pemisah: di bawah sini bukan kerja harian lagi.
+    { label: 'Pengaturan', href: '/kelola/pengaturan', izin: null, ikon: SettingsIcon, pemisah: true },
     { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },
 ];
 
@@ -435,16 +400,36 @@ const sumberPencarian: SumberPencarian[] = [
     },
 ];
 
-/** Halaman & sumber data pencarian cepat untuk menu yang boleh dilihat (grup menu jadi keterangan halaman). */
-export function SusunPencarian(menuTerlihat: MenuTerlihat[]): {
+/**
+ * Halaman & sumber data pencarian cepat untuk menu yang boleh dilihat (grup menu jadi keterangan halaman).
+ *
+ * D-27: halaman yang pindah dari menu samping ke Pengaturan (master, pengaturan modul, outlet, pengguna, perangkat,
+ * log audit, langganan) tetap ikut di sini, jadi Ctrl+K tetap menemukan semuanya walau menu sampingnya diringkas.
+ */
+export function SusunPencarian(
+    menuTerlihat: MenuTerlihat[],
+    akses: PropsBersamaAplikasi['Akses'],
+): {
     halaman: HalamanPencarian[];
     sumber: SumberPencarian[];
 } {
-    const halaman = menuTerlihat.flatMap(({ menu, sub }): HalamanPencarian[] =>
+    const menu = menuTerlihat.flatMap(({ menu: induk, sub }): HalamanPencarian[] =>
         sub.length === 0
-            ? [{ label: menu.label, href: menu.href, grup: null, ikon: menu.ikon }]
-            : sub.map((item) => ({ label: item.label, href: item.href, grup: menu.label, ikon: menu.ikon })),
+            ? [{ label: induk.label, href: induk.href, grup: null, ikon: induk.ikon }]
+            : sub.map((item) => ({ label: item.label, href: item.href, grup: induk.label, ikon: induk.ikon })),
     );
+    const pengaturan = daftarPengaturan.flatMap(({ judul, butir }): HalamanPencarian[] =>
+        butir
+            .filter((item) => item.izin === null || PunyaIzinTenant(akses, item.izin))
+            .map((item) => ({
+                label: item.label,
+                href: item.href,
+                grup: `Pengaturan › ${judul}`,
+                ikon: SettingsIcon,
+            })),
+    );
+    // Menu samping menang bila alamatnya sama, supaya satu halaman tidak muncul dua kali di hasil pencarian.
+    const halaman = [...menu, ...pengaturan.filter((item) => !menu.some((ada) => ada.href === item.href))];
     const alamatTerlihat = new Set(halaman.map((h) => h.href));
 
     return { halaman, sumber: sumberPencarian.filter((s) => alamatTerlihat.has(s.alamat)) };
@@ -454,7 +439,16 @@ function CekGrupMenu(menu: ItemMenu | GrupMenu): menu is GrupMenu {
     return 'sub' in menu;
 }
 
-/** Menu utama yang aktif untuk URL ini (grup untuk seluruh sub-menunya; Pengguna & peran juga untuk /kelola/peran). */
+/** Halaman yang rumahnya di Pengaturan (D-27), untuk menyalakan menu Pengaturan saat salah satunya dibuka. */
+const butirPengaturan: ItemMenu[] = daftarPengaturan.flatMap(({ butir }) => butir);
+
+/**
+ * Menu utama yang aktif untuk URL ini (grup untuk seluruh sub-menunya).
+ *
+ * D-27: Pengaturan menyala untuk seluruh halaman yang rumahnya di sana — termasuk `/kelola/peran` (di bawah
+ * Pengguna & peran) dan `/kelola/keamanan/pin` — supaya menu samping tetap menunjukkan posisi pengguna setelah
+ * halaman-halaman itu keluar dari level utama.
+ */
 export function CekMenuAktif(href: string, url: string): boolean {
     if (href === '/kelola') {
         return url === '/kelola';
@@ -466,7 +460,13 @@ export function CekMenuAktif(href: string, url: string): boolean {
         return CariSubMenuAktif(grup.sub, url) !== null;
     }
 
-    return url.startsWith(href) || (href === '/kelola/pengguna' && url.startsWith('/kelola/peran'));
+    if (href === '/kelola/pengaturan') {
+        return (
+            url.startsWith(href) || url.startsWith('/kelola/peran') || CariSubMenuAktif(butirPengaturan, url) !== null
+        );
+    }
+
+    return url.startsWith(href);
 }
 
 type MenuTerlihat = { menu: ItemMenu; labelSub: string | null; sub: ItemMenu[] };
@@ -513,7 +513,8 @@ function ItemMenuSidebar({
 
     if (labelSub === null) {
         return (
-            <SidebarMenuItem>
+            // D-27: `pemisah` memberi garis di atas item, memisahkan kerja harian dari pengaturan & bantuan.
+            <SidebarMenuItem className={menu.pemisah === true ? 'mt-2 border-t border-sidebar-border pt-2' : undefined}>
                 <SidebarMenuButton asChild isActive={aktif} tooltip={menu.label} className={kelasTombolMenuSidebar}>
                     <Link href={menu.href} aria-current={aktif ? 'page' : undefined}>
                         {ikon}
@@ -637,9 +638,8 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = SaringMenuTerlihat(props.Akses);
-    const pencarian = SusunPencarian(menuTerlihat);
+    const pencarian = SusunPencarian(menuTerlihat, props.Akses);
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
-    const keamananAktif = url.startsWith('/kelola/keamanan');
     const [mengirim, AturMengirim] = useState(false);
     // D-23: fitur di luar paket (gembok di menu) dan dialog penawarannya.
     const terkunci = props.FiturPaket?.Terkunci ?? {};
@@ -687,24 +687,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                         </nav>
                     ) : null}
                 </SidebarContent>
-                <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            {/* Auth tenant: keamanan akun & 2FA (BR-00.8). */}
-                            <SidebarMenuButton
-                                asChild
-                                isActive={keamananAktif}
-                                tooltip="Keamanan akun"
-                                className={kelasTombolMenuSidebar}
-                            >
-                                <Link href="/kelola/keamanan" aria-current={keamananAktif ? 'page' : undefined}>
-                                    <ShieldCheckIcon aria-hidden="true" />
-                                    <span>Keamanan akun</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarFooter>
+                {/* D-27: Keamanan akun pindah ke menu akun di kanan atas, tempat orang mencarinya. */}
                 {/* Rel hanya pintasan tetikus (tabIndex -1); tombol di bilah atas adalah kontrol yang diumumkan. */}
                 <SidebarRail aria-hidden="true" aria-label={undefined} title="Buka atau tutup menu samping" />
             </Sidebar>
