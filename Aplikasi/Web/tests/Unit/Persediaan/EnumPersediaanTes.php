@@ -95,8 +95,9 @@ describe('F-05a enum persediaan (DesainF05a B.4)', function (): void {
             ->and(JenisReferensiMutasi::PenyesuaianStok->BuatTautan($uuid))->toBe("/kelola/persediaan/penyesuaian/{$uuid}")
             ->and(JenisReferensiMutasi::PenerimaanBarang->BuatTautan($uuid))->toBe("/kelola/pembelian/penerimaan/{$uuid}")
             ->and(JenisReferensiMutasi::ReturPembelian->BuatTautan($uuid))->toBe("/kelola/pembelian/retur/{$uuid}")
+            // F-05e: order produksi.
+            ->and(JenisReferensiMutasi::Produksi->BuatTautan($uuid))->toBe('/kelola/persediaan/produksi/'.$uuid)
             // Dokumen yang halamannya belum ada tetap tanpa tautan.
-            ->and(JenisReferensiMutasi::Produksi->BuatTautan($uuid))->toBeNull()
             ->and(JenisReferensiMutasi::Konsinyasi->BuatTautan($uuid))->toBeNull()
             ->and(JenisSumberJurnal::ReturPenjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/retur/{$uuid}")
             ->and(JenisSumberJurnal::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")

@@ -40,6 +40,8 @@ enum PeranAkun: string
     case Hpp = 'Hpp';
     case SelisihHpp = 'SelisihHpp';
     case SusutPersediaan = 'SusutPersediaan';
+    // F-05e: overhead produksi yang dibebankan ke HPP barang jadi (J-05.6, sisi kredit; pengurang biaya).
+    case OverheadProduksiDibebankan = 'OverheadProduksiDibebankan';
     case BebanBiayaPembayaran = 'BebanBiayaPembayaran';
     case BebanSelisihKas = 'BebanSelisihKas';
 
@@ -95,7 +97,7 @@ enum PeranAkun: string
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
             self::PendapatanBiayaLayanan, self::PendapatanLain => TipeAkun::Pendapatan,
-            self::Hpp, self::SelisihHpp, self::SusutPersediaan => TipeAkun::Hpp,
+            self::Hpp, self::SelisihHpp, self::SusutPersediaan, self::OverheadProduksiDibebankan => TipeAkun::Hpp,
             self::BebanBiayaPembayaran, self::BebanSelisihKas => TipeAkun::Beban,
         };
     }
@@ -168,6 +170,7 @@ enum PeranAkun: string
             self::Hpp => 'Harga pokok penjualan',
             self::SelisihHpp => 'Selisih HPP / penyesuaian persediaan',
             self::SusutPersediaan => 'Susut & barang rusak',
+            self::OverheadProduksiDibebankan => 'Overhead produksi dibebankan',
             self::BebanBiayaPembayaran => 'Beban biaya pembayaran (MDR, komisi ojol)',
             self::BebanSelisihKas => 'Beban selisih kas',
         };

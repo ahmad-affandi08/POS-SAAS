@@ -98,6 +98,8 @@ const menuPersediaan: ItemMenu[] = [
     },
     { label: 'Stok opname', href: '/kelola/persediaan/opname', izin: IzinTenant.PersediaanLihat, fitur: 'stok.opname' },
     { label: 'Penyesuaian stok', href: '/kelola/persediaan/penyesuaian', izin: IzinTenant.PersediaanLihat },
+    // F-05e: order produksi (resep → bahan keluar, hasil masuk).
+    { label: 'Produksi', href: '/kelola/persediaan/produksi', izin: IzinTenant.PersediaanLihat },
     { label: 'Impor stok awal', href: '/kelola/persediaan/stok-awal/impor', izin: IzinTenant.PersediaanKelola },
     { label: 'Pengaturan persediaan', href: '/kelola/persediaan/pengaturan', izin: IzinTenant.AkuntansiKelola },
 ];

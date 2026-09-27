@@ -7,6 +7,7 @@ namespace App\Domain\Katalog\Kueri;
 use App\Domain\Katalog\Data\DataKebutuhanStok;
 use App\Domain\Katalog\Data\DataPilihanPenjualan;
 use App\Domain\Katalog\Data\DataProdukPenjualan;
+use App\Domain\Katalog\Data\DataResepProduksi;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
@@ -84,6 +85,39 @@ final class KomposisiPenjualan
         }
 
         return $hasil;
+    }
+
+    /**
+     * F-05e: resep versi terbaru produk jenis Produksi beserta kebutuhan bahan berstok per 1 satuan dasar hasil; null
+     * bila bukan produk Produksi atau belum punya resep.
+     */
+    public function AmbilResepProduksi(int $idProduk): ?DataResepProduksi
+    {
+        $produk = Produk::query()->whereKey($idProduk)->first();
+
+        if ($produk === null || $produk->Jenis !== JenisProduk::Produksi) {
+            return null;
+        }
+
+        $resep = Resep::query()->where('IdProduk', $produk->Id)->orderByDesc('Versi')->first();
+
+        if ($resep === null) {
+            return null;
+        }
+
+        $bahan = [];
+
+        foreach (ResepDetail::query()->where('IdResep', $resep->Id)->orderBy('Urutan')->get() as $baris) {
+            array_push($bahan, ...$this->Uraikan(
+                $baris->IdProdukBahan,
+                HppResep::HitungJumlahKotor($baris->JumlahDasar, $baris->PersenSusut),
+                BigDecimal::of($resep->JumlahHasil),
+                'Resep '.$produk->Nama.' v'.$resep->Versi,
+                1,
+            ));
+        }
+
+        return new DataResepProduksi($resep->Id, $resep->Versi, BigDecimal::of($resep->JumlahHasil), $bahan);
     }
 
     /**

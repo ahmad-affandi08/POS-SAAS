@@ -273,6 +273,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "6-1000",
                         "Nama": "Beban Gaji & Komisi",
                         "Tipe": "Beban",
@@ -346,6 +353,7 @@
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400"
                 },
@@ -782,6 +790,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "6-1000",
                         "Nama": "Beban Gaji & Komisi",
                         "Tipe": "Beban",
@@ -855,6 +870,7 @@
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400"
                 },
@@ -1289,6 +1305,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "6-1000",
                         "Nama": "Beban Gaji & Komisi",
                         "Tipe": "Beban",
@@ -1362,6 +1385,7 @@
                     "PpnMasukan": "1-1600",
                     "ReturPenjualan": "4-1200",
                     "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400"
                 },

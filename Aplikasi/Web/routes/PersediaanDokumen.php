@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Persediaan\OrderProduksiKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\PelacakanStokKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\PenyesuaianStokKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\StokOpnameKontroler;
@@ -56,6 +57,17 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::post('/persediaan/penyesuaian/{penyesuaianStok}/setujui', [PenyesuaianStokKontroler::class, 'Setujui'])->middleware($setujui)->where('penyesuaianStok', $ulid)->name('kelola.persediaan.penyesuaian.setujui');
     Route::post('/persediaan/penyesuaian/{penyesuaianStok}/tolak', [PenyesuaianStokKontroler::class, 'Tolak'])->middleware($setujui)->where('penyesuaianStok', $ulid)->name('kelola.persediaan.penyesuaian.tolak');
     Route::post('/persediaan/penyesuaian/{penyesuaianStok}/batalkan', [PenyesuaianStokKontroler::class, 'Batalkan'])->middleware($kelola)->where('penyesuaianStok', $ulid)->name('kelola.persediaan.penyesuaian.batalkan');
+
+    // F-05e order produksi (resep → bahan keluar, hasil masuk, J-05.6).
+    Route::get('/persediaan/produksi', [OrderProduksiKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.persediaan.produksi.daftar');
+    Route::get('/persediaan/produksi/buat', [OrderProduksiKontroler::class, 'Buat'])->middleware($kelola)->name('kelola.persediaan.produksi.buat');
+    Route::get('/persediaan/produksi/resep', [OrderProduksiKontroler::class, 'Resep'])->middleware($kelola)->name('kelola.persediaan.produksi.resep');
+    Route::post('/persediaan/produksi', [OrderProduksiKontroler::class, 'Simpan'])->middleware($kelola)->name('kelola.persediaan.produksi.simpan');
+    Route::get('/persediaan/produksi/{orderProduksi}', [OrderProduksiKontroler::class, 'Detail'])->middleware($lihat)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.detail');
+    Route::get('/persediaan/produksi/{orderProduksi}/ubah', [OrderProduksiKontroler::class, 'Ubah'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.ubah');
+    Route::put('/persediaan/produksi/{orderProduksi}', [OrderProduksiKontroler::class, 'Perbarui'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.perbarui');
+    Route::post('/persediaan/produksi/{orderProduksi}/posting', [OrderProduksiKontroler::class, 'Posting'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.posting');
+    Route::post('/persediaan/produksi/{orderProduksi}/batalkan', [OrderProduksiKontroler::class, 'Batalkan'])->middleware($kelola)->where('orderProduksi', $ulid)->name('kelola.persediaan.produksi.batalkan');
 
     Route::get('/persediaan/pelacakan', [PelacakanStokKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.pelacakan');
 });

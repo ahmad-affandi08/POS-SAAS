@@ -35,6 +35,8 @@ enum JenisDokumenBernomor: string
     case PesananSendiri = 'PesananSendiri';
     // F-07 mode service: reservasi layanan `RS/{YYYY}/{MM}/{SEQ4}` per tenant.
     case Reservasi = 'Reservasi';
+    // F-05e: order produksi `PR/{LOKASI}/{YYMM}/{SEQ4}` disusun `PenomorDokumenPersediaan`.
+    case OrderProduksi = 'OrderProduksi';
 
     public function AmbilAwalan(): string
     {
@@ -53,13 +55,14 @@ enum JenisDokumenBernomor: string
             self::PembayaranPiutang => 'BP',
             self::PesananSendiri => 'QR',
             self::Reservasi => 'RS',
+            self::OrderProduksi => 'PR',
         };
     }
 
     public function AmbilPanjangUrut(): int
     {
         return match ($this) {
-            self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok => 4,
+            self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
             self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi => 4,

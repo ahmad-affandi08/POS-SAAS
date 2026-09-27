@@ -37,6 +37,11 @@ final class PenomorDokumenPersediaan
         return $this->Susun(JenisDokumenBernomor::PenyesuaianStok, $tanggal, self::Rapikan($kodeLokasi, 20));
     }
 
+    public function AmbilProduksi(CarbonInterface $tanggal, string $kodeLokasi): string
+    {
+        return $this->Susun(JenisDokumenBernomor::OrderProduksi, $tanggal, self::Rapikan($kodeLokasi, 20));
+    }
+
     private function Susun(JenisDokumenBernomor $jenis, CarbonInterface $tanggal, string $kode): string
     {
         $urut = $this->penomor->AmbilBerikutnya($jenis, $tanggal->format('Y-m'));

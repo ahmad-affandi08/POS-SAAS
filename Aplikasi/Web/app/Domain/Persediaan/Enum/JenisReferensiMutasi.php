@@ -61,6 +61,8 @@ enum JenisReferensiMutasi: string
             // F-04 fase 1.
             self::PenerimaanBarang => '/kelola/pembelian/penerimaan/'.$uuid,
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
+            // F-05e.
+            self::Produksi => '/kelola/persediaan/produksi/'.$uuid,
             default => null,
         };
     }
