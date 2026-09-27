@@ -7,8 +7,10 @@ namespace App\Domain\Laporan\Kueri;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Kasir\Kueri\PolaKasKasir;
 use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
 use App\Domain\Laporan\Data\DataPeriodeLaporan;
+use App\Domain\Laporan\Layanan\PenilaiRisikoKasir;
 use App\Domain\Laporan\Model\RingkasanPenjualanHarian;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
@@ -18,6 +20,7 @@ use App\Domain\Penjualan\Data\DataSaringLaporanPenjualan;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Kueri\AgregatPenjualan;
+use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -26,11 +29,13 @@ use Illuminate\Database\Eloquent\Builder;
  * akses). Saring halaman: `tab`, `dari`/`sampai` (maks. 92 hari), `outlet` (Uuid), `kasir` (Uuid), `kanal`. Tab:
  * ringkasan harian (dari `RingkasanPenjualanHarian`; bila menyaring kasir/kanal dihitung langsung dari dokumen),
  * per produk (`TabelData` mode server), per kategori, per jam (heatmap hari × jam lokal outlet), per kasir, per kanal,
- * per metode bayar, dan diskon per kasir. Angka dari kueri publik domain Penjualan (`AgregatPenjualan`).
+ * per metode bayar, diskon per kasir, dan anti-fraud per kasir (F-14/OWN-09: void, void tunai cepat, retur, diskon, buka
+ * laci manual, selisih kas, skor risiko `PenilaiRisikoKasir`). Angka dari kueri publik domain Penjualan
+ * (`AgregatPenjualan`) dan Kasir (`PolaKasKasir`).
  */
 final class LaporanPenjualan
 {
-    public const TAB = ['harian', 'produk', 'kategori', 'jam', 'kasir', 'kanal', 'metode', 'diskon'];
+    public const TAB = ['harian', 'produk', 'kategori', 'jam', 'kasir', 'kanal', 'metode', 'diskon', 'anti-fraud'];
 
     public function __construct(
         private readonly AgregatPenjualan $agregat,
@@ -38,6 +43,9 @@ final class LaporanPenjualan
         private readonly AnggotaOutlet $anggota,
         private readonly ProdukUntukLaporan $produk,
         private readonly ZonaWaktuOutlet $zonaWaktu,
+        private readonly PolaKasKasir $polaKas,
+        private readonly PengaturanKasirTenant $pengaturanKasir,
+        private readonly PenilaiRisikoKasir $penilai,
     ) {}
 
     /**
@@ -129,6 +137,7 @@ final class LaporanPenjualan
             'kanal' => $this->PerKanal($saring),
             'metode' => $this->PerMetode($saring),
             'diskon' => $this->Diskon($saring),
+            'anti-fraud' => $this->AntiFraud($saring),
             default => $this->Harian($saring),
         };
     }
@@ -333,6 +342,58 @@ final class LaporanPenjualan
     }
 
     /**
+     * F-14 anti-fraud per kasir (OWN-09, BR-09.3): pola void (termasuk void tunai ≤ 10 menit setelah bayar), retur,
+     * diskon, buka laci tanpa transaksi, dan selisih kas tutup shift, beserta skor risiko & alasannya. Urut skor menurun.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function AntiFraud(DataSaringLaporanPenjualan $saring): array
+    {
+        if ($saring->CekTanpaOutlet()) {
+            return [];
+        }
+
+        $pola = $this->agregat->PolaVoidReturPerKasir($saring, PenilaiRisikoKasir::MENIT_VOID_CEPAT);
+
+        foreach ($this->agregat->DiskonPerKasir($saring) as $d) {
+            $pola[$d['IdKasir']] = [...($pola[$d['IdKasir']] ?? []), 'JumlahBerdiskon' => $d['JumlahBerdiskon'], 'JumlahDisetujui' => $d['JumlahDisetujui'], 'TotalDiskon' => $d['TotalDiskon']];
+        }
+
+        foreach ($this->polaKas->PerKasir($saring->dari, $saring->sampai, $saring->idOutlet, $saring->idKasir) as $idKasir => $k) {
+            $pola[$idKasir] = [...($pola[$idKasir] ?? []), ...$k];
+        }
+
+        $skor = $this->penilai->Nilai($pola, $this->pengaturanKasir->Ambil()->toleransiSelisihKas);
+        $nama = $this->anggota->AmbilNama(array_keys($pola));
+        $baris = [];
+
+        foreach ($pola as $idKasir => $p) {
+            $baris[] = [
+                'Kunci' => $nama[$idKasir]['Uuid'] ?? (string) $idKasir,
+                'NamaKasir' => $nama[$idKasir]['Nama'] ?? 'Pengguna tidak dikenal',
+                'JumlahTransaksi' => (int) ($p['JumlahTransaksi'] ?? 0),
+                'JumlahVoid' => (int) ($p['JumlahVoid'] ?? 0),
+                'NilaiVoid' => (string) ($p['NilaiVoid'] ?? '0.00'),
+                'VoidCepatTunai' => (int) ($p['VoidCepatTunai'] ?? 0),
+                'JumlahRetur' => (int) ($p['JumlahRetur'] ?? 0),
+                'NilaiRetur' => (string) ($p['NilaiRetur'] ?? '0.00'),
+                'JumlahBerdiskon' => (int) ($p['JumlahBerdiskon'] ?? 0),
+                'TotalDiskon' => (string) ($p['TotalDiskon'] ?? '0.00'),
+                'BukaLaciManual' => (int) ($p['BukaLaciManual'] ?? 0),
+                'ShiftSelisihKurang' => (int) ($p['ShiftSelisihKurang'] ?? 0),
+                'SelisihKurang' => (string) ($p['SelisihKurang'] ?? '0.00'),
+                'Skor' => $skor[$idKasir]['Skor'],
+                'Tingkat' => $skor[$idKasir]['Tingkat'],
+                'Alasan' => $skor[$idKasir]['Alasan'],
+            ];
+        }
+
+        usort($baris, fn (array $a, array $b): int => [$b['Skor'], $a['NamaKasir']] <=> [$a['Skor'], $b['NamaKasir']]);
+
+        return $baris;
+    }
+
+    /**
      * Isi ekspor CSV tab aktif (semua baris sesuai saring; tab produk mengikuti kata cari).
      *
      * @return array{0: list<string>, 1: list<list<string|int|null>>}
@@ -351,6 +412,10 @@ final class LaporanPenjualan
             'kanal' => [['Kanal', ...$judulAngka, 'Rata-rata keranjang'], $ambil($this->PerKanal($saring), ['LabelKanal', ...$angka, 'RataRataKeranjang'])],
             'metode' => [['Metode bayar', 'Jenis', 'Diterima', 'Refund', 'Bersih', 'Jumlah transaksi'], $ambil($this->PerMetode($saring), ['NamaMetode', 'LabelJenis', 'Diterima', 'Refund', 'Bersih', 'JumlahTransaksi'])],
             'diskon' => [['Kasir', 'Jumlah transaksi', 'Transaksi berdiskon', 'Diskon disetujui', 'Diskon baris', 'Diskon pesanan', 'Total diskon', 'Kotor'], $ambil($this->Diskon($saring), ['NamaKasir', 'JumlahTransaksi', 'JumlahBerdiskon', 'JumlahDisetujui', 'DiskonBaris', 'DiskonPesanan', 'TotalDiskon', 'Kotor'])],
+            'anti-fraud' => [
+                ['Kasir', 'Skor risiko', 'Tingkat', 'Transaksi', 'Void', 'Nilai void', 'Void tunai cepat', 'Retur', 'Nilai retur', 'Transaksi berdiskon', 'Total diskon', 'Buka laci manual', 'Shift kas kurang', 'Total kas kurang', 'Alasan'],
+                $ambil(array_map(fn (array $b): array => [...$b, 'Alasan' => implode('; ', $b['Alasan'])], $this->AntiFraud($saring)), ['NamaKasir', 'Skor', 'Tingkat', 'JumlahTransaksi', 'JumlahVoid', 'NilaiVoid', 'VoidCepatTunai', 'JumlahRetur', 'NilaiRetur', 'JumlahBerdiskon', 'TotalDiskon', 'BukaLaciManual', 'ShiftSelisihKurang', 'SelisihKurang', 'Alasan']),
+            ],
             default => [['Tanggal', ...$judulAngka, 'Rata-rata keranjang'], $ambil($this->Harian($saring), ['Tanggal', ...$angka, 'RataRataKeranjang'])],
         };
     }

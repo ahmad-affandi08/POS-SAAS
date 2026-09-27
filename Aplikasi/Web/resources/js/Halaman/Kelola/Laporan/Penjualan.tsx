@@ -4,11 +4,13 @@ import { KolomAngkaPenjualan, KolomBilangan, KolomQty, KolomUang } from '@/Kompo
 import NavigasiTab, { TautanEkspor } from '@/Komponen/Laporan/NavigasiTab';
 import PetaPanasJam from '@/Komponen/Laporan/PetaPanasJam';
 import SaringLaporan from '@/Komponen/Laporan/SaringLaporan';
+import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type {
+    BarisAntiFraudLaporan,
     BarisDiskonLaporan,
     BarisHarian,
     BarisKanalLaporan,
@@ -32,6 +34,7 @@ const daftarTab: { nilai: TabLaporanPenjualan; label: string }[] = [
     { nilai: 'kanal', label: 'Per kanal' },
     { nilai: 'metode', label: 'Metode bayar' },
     { nilai: 'diskon', label: 'Diskon' },
+    { nilai: 'anti-fraud', label: 'Anti-fraud' },
 ];
 
 const kolomHarian: KolomTabel<BarisHarian>[] = [
@@ -143,6 +146,48 @@ const kolomDiskon: KolomTabel<BarisDiskonLaporan>[] = [
     KolomUang<BarisDiskonLaporan>('DiskonPesanan', 'Diskon pesanan', 'rendah'),
     KolomUang<BarisDiskonLaporan>('TotalDiskon', 'Total diskon'),
     KolomUang<BarisDiskonLaporan>('Kotor', 'Kotor', 'rendah'),
+];
+
+const JenisTingkat: Record<BarisAntiFraudLaporan['Tingkat'], 'sukses' | 'peringatan' | 'bahaya'> = {
+    Rendah: 'sukses',
+    Sedang: 'peringatan',
+    Tinggi: 'bahaya',
+};
+
+const kolomAntiFraud: KolomTabel<BarisAntiFraudLaporan>[] = [
+    {
+        id: 'NamaKasir',
+        accessorKey: 'NamaKasir',
+        header: 'Kasir',
+        meta: { label: 'Kasir', prioritas: 'utama', wajib: true },
+    },
+    {
+        id: 'Skor',
+        accessorKey: 'Skor',
+        header: 'Risiko',
+        meta: { label: 'Risiko', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: b } }) => (
+            <span className="flex flex-col items-start gap-1">
+                <LabelStatus jenis={JenisTingkat[b.Tingkat]} teks={`${b.Tingkat} · ${String(b.Skor)}`} />
+                {b.Alasan.map((a) => (
+                    <span key={a} className="text-keterangan text-teks-sekunder">
+                        {a}
+                    </span>
+                ))}
+            </span>
+        ),
+    },
+    KolomBilangan<BarisAntiFraudLaporan>('JumlahTransaksi', 'Transaksi'),
+    KolomBilangan<BarisAntiFraudLaporan>('JumlahVoid', 'Void', 'penting'),
+    KolomUang<BarisAntiFraudLaporan>('NilaiVoid', 'Nilai void', 'rendah'),
+    KolomBilangan<BarisAntiFraudLaporan>('VoidCepatTunai', 'Void tunai ≤ 10 menit', 'penting'),
+    KolomBilangan<BarisAntiFraudLaporan>('JumlahRetur', 'Retur'),
+    KolomUang<BarisAntiFraudLaporan>('NilaiRetur', 'Nilai retur', 'rendah'),
+    KolomBilangan<BarisAntiFraudLaporan>('JumlahBerdiskon', 'Berdiskon', 'rendah'),
+    KolomUang<BarisAntiFraudLaporan>('TotalDiskon', 'Total diskon', 'rendah'),
+    KolomBilangan<BarisAntiFraudLaporan>('BukaLaciManual', 'Buka laci manual'),
+    KolomBilangan<BarisAntiFraudLaporan>('ShiftSelisihKurang', 'Shift kas kurang', 'rendah'),
+    KolomUang<BarisAntiFraudLaporan>('SelisihKurang', 'Total kas kurang'),
 ];
 
 const kosong = { judul: 'Belum ada penjualan pada periode dan saring ini.' };
@@ -257,6 +302,29 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
                         judul: 'Belum ada penjualan berdiskon pada periode dan saring ini.',
                     }}
                 />
+            );
+        case 'anti-fraud':
+            return (
+                <>
+                    <p className="max-w-3xl text-keterangan text-teks-sekunder">
+                        Skor risiko adalah petunjuk untuk diperiksa, bukan bukti. Dibandingkan dengan rata-rata kasir
+                        lain pada periode yang sama: void tunai ≤ 10 menit setelah bayar, rasio void/diskon/retur
+                        minimal 2× rata-rata, buka laci tanpa transaksi, dan kas kurang saat tutup shift.
+                    </p>
+                    <TabelData
+                        id="laporan-penjualan-anti-fraud"
+                        label="Anti-fraud per kasir"
+                        kolom={kolomAntiFraud}
+                        sumber={{ mode: 'lokal', data: isi as BarisAntiFraudLaporan[] }}
+                        ambilIdBaris={(b) => b.Kunci}
+                        urutBawaan="-Skor"
+                        cari="Cari nama kasir"
+                        kosong={{
+                            ilustrasi: 'Laporan',
+                            judul: 'Belum ada transaksi kasir pada periode dan saring ini.',
+                        }}
+                    />
+                </>
             );
         default:
             return (

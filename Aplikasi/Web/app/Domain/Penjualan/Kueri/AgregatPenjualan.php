@@ -409,6 +409,57 @@ final class AgregatPenjualan
     }
 
     /**
+     * F-14 anti-fraud (BR-09.3, OWN-09): pola void & retur per kasir penjualan. Void dihitung pada kasir & tanggal bisnis
+     * penjualan asalnya (siapa yang menerima uang); `VoidCepatTunai` = void dengan refund tunai paling lama
+     * [menitCepat] menit setelah transaksi dibuat (pola "uang diterima lalu transaksinya dihapus"). Retur pada kasir &
+     * tanggal returnya. `JumlahTransaksi` & `Kotor` memuat penjualan yang kemudian di-void (dasar rasio void).
+     *
+     * @return array<int, array{JumlahTransaksi: int, Kotor: string, JumlahVoid: int, NilaiVoid: string, VoidCepatTunai: int, JumlahRetur: int, NilaiRetur: string}>
+     */
+    public function PolaVoidReturPerKasir(DataSaringLaporanPenjualan $saring, int $menitCepat = 10): array
+    {
+        if ($saring->CekTanpaOutlet()) {
+            return [];
+        }
+
+        $hasil = [];
+        $kosong = fn (): array => ['JumlahTransaksi' => 0, 'Kotor' => '0.00', 'JumlahVoid' => 0, 'NilaiVoid' => '0.00', 'VoidCepatTunai' => 0, 'JumlahRetur' => 0, 'NilaiRetur' => '0.00'];
+
+        foreach ($this->KueriDasarJual($saring)
+            ->leftJoin('VoidPenjualan', fn (JoinClause $j) => $j->on('VoidPenjualan.IdPenjualan', '=', 'Penjualan.Id')->on('VoidPenjualan.IdTenant', '=', 'Penjualan.IdTenant'))
+            ->selectRaw('`Penjualan`.`IdPengguna` AS `IdKasir`, COUNT(*) AS `Jumlah`, COALESCE(SUM('.self::KOTOR.'), 0) AS `Kotor`')
+            ->selectRaw('SUM(CASE WHEN `VoidPenjualan`.`Id` IS NULL THEN 0 ELSE 1 END) AS `JumlahVoid`')
+            ->selectRaw('COALESCE(SUM(CASE WHEN `VoidPenjualan`.`Id` IS NULL THEN 0 ELSE `VoidPenjualan`.`Nominal` END), 0) AS `NilaiVoid`')
+            ->selectRaw('SUM(CASE WHEN `VoidPenjualan`.`Id` IS NOT NULL AND `VoidPenjualan`.`RefundTunai` > 0 AND TIMESTAMPDIFF(SECOND, `Penjualan`.`DibuatOfflinePada`, `VoidPenjualan`.`DivoidPada`) <= ? THEN 1 ELSE 0 END) AS `VoidCepat`', [$menitCepat * 60])
+            ->groupBy('Penjualan.IdPengguna')
+            ->toBase()
+            ->get() as $b) {
+            $hasil[(int) $b->IdKasir] = [
+                ...$kosong(),
+                'JumlahTransaksi' => (int) $b->Jumlah,
+                'Kotor' => Uang::Dari(self::Teks($b->Kotor))->KeString(),
+                'JumlahVoid' => (int) $b->JumlahVoid,
+                'NilaiVoid' => Uang::Dari(self::Teks($b->NilaiVoid))->KeString(),
+                'VoidCepatTunai' => (int) $b->VoidCepat,
+            ];
+        }
+
+        foreach ($this->KueriRetur($saring)
+            ->selectRaw('`ReturPenjualan`.`IdPengguna` AS `IdKasir`, COUNT(*) AS `Jumlah`, COALESCE(SUM(`ReturPenjualan`.`TotalRefund`), 0) AS `Nilai`')
+            ->groupBy('ReturPenjualan.IdPengguna')
+            ->toBase()
+            ->get() as $b) {
+            $hasil[(int) $b->IdKasir] = [
+                ...($hasil[(int) $b->IdKasir] ?? $kosong()),
+                'JumlahRetur' => (int) $b->Jumlah,
+                'NilaiRetur' => Uang::Dari(self::Teks($b->Nilai))->KeString(),
+            ];
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Jumlah penjualan yang ditandai `PerluTinjauan` (dasbor).
      *
      * @param  list<int>|null  $idOutlet  null = semua outlet

@@ -61,7 +61,8 @@ export type DasborPemilik = {
     JumlahPerluTinjauan: number;
 };
 
-export type TabLaporanPenjualan = 'harian' | 'produk' | 'kategori' | 'jam' | 'kasir' | 'kanal' | 'metode' | 'diskon';
+export type TabLaporanPenjualan =
+    'harian' | 'produk' | 'kategori' | 'jam' | 'kasir' | 'kanal' | 'metode' | 'diskon' | 'anti-fraud';
 
 export type SaringLaporanPenjualan = {
     Tab: TabLaporanPenjualan;
@@ -126,6 +127,26 @@ export type BarisDiskonLaporan = {
     Kotor: string;
 };
 
+/** F-14 anti-fraud (OWN-09): pola & skor risiko per kasir; skor adalah petunjuk untuk diperiksa, bukan bukti. */
+export type BarisAntiFraudLaporan = {
+    Kunci: string;
+    NamaKasir: string;
+    JumlahTransaksi: number;
+    JumlahVoid: number;
+    NilaiVoid: string;
+    VoidCepatTunai: number;
+    JumlahRetur: number;
+    NilaiRetur: string;
+    JumlahBerdiskon: number;
+    TotalDiskon: string;
+    BukaLaciManual: number;
+    ShiftSelisihKurang: number;
+    SelisihKurang: string;
+    Skor: number;
+    Tingkat: 'Rendah' | 'Sedang' | 'Tinggi';
+    Alasan: string[];
+};
+
 export type PropsLaporanPenjualan = {
     Saring: SaringLaporanPenjualan;
     Peringatan: string | null;
@@ -142,7 +163,8 @@ export type PropsLaporanPenjualan = {
         | BarisKasirLaporan[]
         | BarisKanalLaporan[]
         | BarisMetodeLaporan[]
-        | BarisDiskonLaporan[];
+        | BarisDiskonLaporan[]
+        | BarisAntiFraudLaporan[];
 };
 
 export type BarisPajakLaporan = {

@@ -235,6 +235,48 @@ describe('F-14a laporan penjualan', () => {
         expect(screen.getByRole('table', { name: 'Penjualan per jam' })).toBeTruthy();
     });
 
+    it('tab anti-fraud: tingkat risiko berteks + alasan, penjelasan skor', () => {
+        RenderUji(
+            <HalamanLaporanPenjualan
+                {...PropsPenjualan({
+                    Saring: {
+                        Tab: 'anti-fraud',
+                        Dari: '2026-10-01',
+                        Sampai: '2026-10-07',
+                        Outlet: '',
+                        Kasir: '',
+                        Kanal: '',
+                    },
+                    Isi: [
+                        {
+                            Kunci: 'k1',
+                            NamaKasir: 'Rina Wulandari',
+                            JumlahTransaksi: 4,
+                            JumlahVoid: 3,
+                            NilaiVoid: '115500.00',
+                            VoidCepatTunai: 3,
+                            JumlahRetur: 0,
+                            NilaiRetur: '0.00',
+                            JumlahBerdiskon: 0,
+                            TotalDiskon: '0.00',
+                            BukaLaciManual: 3,
+                            ShiftSelisihKurang: 1,
+                            SelisihKurang: '150000.00',
+                            Skor: 80,
+                            Tingkat: 'Tinggi',
+                            Alasan: ['3 void tunai ≤ 10 menit setelah bayar', 'Buka laci tanpa transaksi 3 kali'],
+                        },
+                    ],
+                })}
+            />,
+        );
+
+        expect(screen.getByRole('table', { name: 'Anti-fraud per kasir' })).toBeTruthy();
+        expect(screen.getAllByText('Tinggi · 80').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('3 void tunai ≤ 10 menit setelah bayar').length).toBeGreaterThan(0);
+        expect(screen.getByText(/Skor risiko adalah petunjuk untuk diperiksa, bukan bukti/)).toBeTruthy();
+    });
+
     it('tab per produk: TabelData mode server dengan ekspor sesuai saring; keadaan kosong', () => {
         RenderUji(
             <HalamanLaporanPenjualan
