@@ -17,7 +17,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -80,9 +82,29 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            return redirect()->route($request->user('web') === null ? 'masuk' : 'kelola.beranda')->withErrors([
-                'Umum' => 'Tautan verifikasi sudah kedaluwarsa atau pernah dipakai. Masuk lalu minta tautan baru lewat tombol kirim ulang.',
-            ]);
+            // Tanda tangan salah dan tanda tangan kedaluwarsa sama-sama melempar galat ini. Keduanya dipisah agar
+            // pesannya benar, dan agar penyebab salah tanda tangan bisa ditelusuri dari log alih-alih ditebak.
+            $tandaTanganBenar = URL::hasCorrectSignature($request, absolute: false);
+            $belumKedaluwarsa = URL::signatureHasNotExpired($request);
+
+            if ($tandaTanganBenar && ! $belumKedaluwarsa) {
+                $pesan = 'Tautan verifikasi sudah lewat masa berlakunya. Masuk lalu minta tautan baru lewat tombol kirim ulang.';
+            } else {
+                // Cocok sebagai tanda tangan absolut = tautan dibuat kode/cache rute lama (sebelum D-20 relatif).
+                $gayaLama = URL::hasCorrectSignature($request, absolute: true);
+                Log::warning('Tanda tangan tautan verifikasi email tidak cocok.', [
+                    'Jalur' => $request->path(),
+                    'Host' => $request->getHost(),
+                    'Skema' => $request->getScheme(),
+                    'CocokSebagaiAbsolut' => $gayaLama,
+                ]);
+                $pesan = $gayaLama
+                    ? 'Tautan ini dibuat versi lama aplikasi. Masuk lalu minta tautan baru lewat tombol kirim ulang.'
+                    : 'Tautan verifikasi tidak dikenali. Masuk lalu minta tautan baru lewat tombol kirim ulang.';
+            }
+
+            return redirect()->route($request->user('web') === null ? 'masuk' : 'kelola.beranda')
+                ->withErrors(['Umum' => $pesan]);
         });
 
         // Pelanggaran aturan bisnis → galat validasi (Inertia) atau format galat seragam (JSON), PRD §16.
