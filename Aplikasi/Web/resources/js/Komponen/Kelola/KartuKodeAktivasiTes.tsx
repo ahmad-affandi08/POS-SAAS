@@ -1,0 +1,45 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import KartuKodeAktivasi from './KartuKodeAktivasi';
+
+afterEach(cleanup);
+
+const kode = {
+    UuidPerangkat: '0198f0c2-3f6a-7a12-9c31-5b2d4e6f8a10',
+    Kode: 'A7K9M2QT',
+    NamaPerangkat: 'Kasir Depan',
+    KodePerangkat: 'JKT1-K02',
+    QrSvg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+    KedaluwarsaPada: '2026-09-27T10:15:00+07:00',
+};
+
+describe('KartuKodeAktivasi (F-02b BR-02.3)', () => {
+    it('menampilkan kode apa adanya tanpa tanda hubung', () => {
+        render(<KartuKodeAktivasi kode={kode} />);
+
+        // Server memang menormalkan tanda hubung, tetapi yang tampil harus persis sama dengan isi QR
+        // dan dengan yang diketik di aplikasi kasir supaya tidak membingungkan.
+        expect(screen.getByText('A7K9M2QT')).toBeTruthy();
+        expect(screen.queryByText('A7K9-M2QT')).toBeNull();
+    });
+
+    it('tombol salin menyalin kode tanpa tanda hubung lalu berubah menjadi konfirmasi', async () => {
+        const TulisTeks = vi.fn().mockResolvedValue(undefined);
+        Object.assign(navigator, { clipboard: { writeText: TulisTeks } });
+
+        render(<KartuKodeAktivasi kode={kode} />);
+        fireEvent.click(screen.getByRole('button', { name: /Salin kode/ }));
+
+        expect(TulisTeks).toHaveBeenCalledWith('A7K9M2QT');
+        await waitFor(() => expect(screen.getByRole('button', { name: /Kode tersalin/ })).toBeTruthy());
+    });
+
+    it('tidak menjanjikan pemindaian QR karena aplikasi kasir belum punya pemindai', () => {
+        render(<KartuKodeAktivasi kode={kode} />);
+
+        // PRD F-02 langkah 5 menyebut pemindaian QR, tetapi aplikasi kasir belum mengimplementasikannya.
+        // Sampai ada pemindai, teks di sini tidak boleh menjanjikannya.
+        expect(screen.queryByText(/pindai/i)).toBeNull();
+    });
+});
