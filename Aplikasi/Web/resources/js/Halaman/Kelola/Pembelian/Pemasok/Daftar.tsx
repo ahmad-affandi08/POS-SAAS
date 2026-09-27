@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import FormPemasok, { AlamatPemasok as alamat, BuatIsianPemasok } from '@/Komponen/Pembelian/FormPemasok';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -97,7 +98,11 @@ export default function HalamanDaftarPemasok({ Pemasok, Izin }: PropsDaftarPemas
                 Daftar pemasok untuk pesanan pembelian, penerimaan barang, dan hutang. Termin bawaan dipakai untuk
                 menghitung jatuh tempo faktur. Pemasok yang sudah dipakai tidak bisa dihapus; nonaktifkan saja.
             </p>
-            {Izin.Kelola ? <div>{tombolTambah}</div> : <PesanHanyaLihat izin="pembelian.kelola" objek="pemasok" />}
+            {Izin.Kelola ? (
+                <AksiHalaman>{tombolTambah}</AksiHalaman>
+            ) : (
+                <PesanHanyaLihat izin="pembelian.kelola" objek="pemasok" />
+            )}
 
             <TabelData
                 id="pembelian-pemasok"

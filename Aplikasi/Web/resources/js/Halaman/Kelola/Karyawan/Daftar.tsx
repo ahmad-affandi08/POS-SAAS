@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import FormulirKaryawan, { AlamatKaryawan } from '@/Komponen/Karyawan/FormulirKaryawan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -89,7 +90,11 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                 Karyawan dijadwalkan per outlet dan absen masuk/keluar di aplikasi kasir dengan PIN akunnya. Karyawan
                 tanpa akun tetap bisa dijadwalkan, tetapi tidak bisa absen di POS.
             </p>
-            {Izin.Kelola ? <div>{tombol}</div> : <PesanHanyaLihat izin="karyawan.kelola" objek="karyawan" />}
+            {Izin.Kelola ? (
+                <AksiHalaman>{tombol}</AksiHalaman>
+            ) : (
+                <PesanHanyaLihat izin="karyawan.kelola" objek="karyawan" />
+            )}
 
             <TabelData
                 id="karyawan"

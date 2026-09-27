@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -142,11 +143,11 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
             </Card>
 
             {Izin.Kelola ? (
-                <div>
+                <AksiHalaman>
                     <Button asChild>
                         <Link href={`${alamat}/buat`}>Tambah promo</Link>
                     </Button>
-                </div>
+                </AksiHalaman>
             ) : null}
 
             <TabelData

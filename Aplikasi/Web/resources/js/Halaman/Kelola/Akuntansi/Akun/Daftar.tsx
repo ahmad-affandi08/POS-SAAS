@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -152,9 +153,9 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                 setelah akun punya jurnal.
             </p>
             {Izin.Kelola ? (
-                <div>
+                <AksiHalaman>
                     <Button onClick={() => Buka(null, null)}>Tambah akun</Button>
-                </div>
+                </AksiHalaman>
             ) : (
                 <PesanHanyaLihat izin="akuntansi.kelola" objek="bagan akun" />
             )}

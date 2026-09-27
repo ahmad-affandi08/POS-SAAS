@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -147,11 +148,11 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
             ) : null}
 
             {bolehKelola ? (
-                <div>
+                <AksiHalaman>
                     <Tombol onClick={() => AturFormTerbuka(true)} disabled={Outlet.length === 0}>
                         Tambah perangkat
                     </Tombol>
-                </div>
+                </AksiHalaman>
             ) : null}
             {bolehKelola && formTerbuka ? (
                 <FormTambah outlet={Outlet} jenis={JenisPerangkat} saatSelesai={() => AturFormTerbuka(false)} />

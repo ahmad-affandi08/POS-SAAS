@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import PesanFiturPaketSesi from '@/Komponen/Pelanggan/PesanFiturPaketSesi';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -85,11 +86,11 @@ export default function HalamanDaftarPaketSesi({ PaketSesi, Izin, FiturAktif }: 
                 kasir. Harga paket mengikuti harga jual produknya.
             </p>
             {Izin.Kelola && FiturAktif ? (
-                <div>
+                <AksiHalaman>
                     <Button asChild>
                         <Link href={`${alamat}/buat`}>Tambah paket sesi</Link>
                     </Button>
-                </div>
+                </AksiHalaman>
             ) : null}
             <TabelData
                 id="paket-sesi"

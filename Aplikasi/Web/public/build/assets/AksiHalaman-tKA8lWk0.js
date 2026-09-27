@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-C92uVOon.js";var t=e();function n({keterangan:e,children:n}){return(0,t.jsxs)(`div`,{className:`flex flex-wrap items-center gap-2`,children:[e,(0,t.jsx)(`div`,{className:`ml-auto flex flex-wrap items-center gap-2`,children:n})]})}export{n as t};

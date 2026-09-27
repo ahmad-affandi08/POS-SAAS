@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import FormulirAturanKomisi, { AlamatAturanKomisi } from '@/Komponen/Karyawan/FormulirAturanKomisi';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -77,7 +78,11 @@ export default function HalamanAturanKomisi({ Aturan, OpsiKategori, Izin }: Prop
                 spesifik (produk, lalu kategori, lalu semua produk) dan dibagi rata bila beberapa staf. Perubahan aturan
                 berlaku untuk penjualan berikutnya.
             </p>
-            {Izin.Kelola ? <div>{tombol}</div> : <PesanHanyaLihat izin="karyawan.kelola" objek="aturan komisi" />}
+            {Izin.Kelola ? (
+                <AksiHalaman>{tombol}</AksiHalaman>
+            ) : (
+                <PesanHanyaLihat izin="karyawan.kelola" objek="aturan komisi" />
+            )}
             <TabelData
                 id="aturan-komisi"
                 label="Daftar aturan komisi"

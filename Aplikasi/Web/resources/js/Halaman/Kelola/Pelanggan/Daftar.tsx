@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import FormulirPelanggan, { AlamatPelanggan } from '@/Komponen/Pelanggan/FormulirPelanggan';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -111,11 +112,11 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                 memilih atau menambah pelanggan langsung dari aplikasi POS, juga saat offline.
             </p>
             {Izin.Kelola ? (
-                <div>
+                <AksiHalaman>
                     <Button asChild>
                         <Link href={`${AlamatPelanggan}/buat`}>Tambah pelanggan</Link>
                     </Button>
-                </div>
+                </AksiHalaman>
             ) : (
                 <PesanHanyaLihat izin="pelanggan.kelola" objek="pelanggan" />
             )}

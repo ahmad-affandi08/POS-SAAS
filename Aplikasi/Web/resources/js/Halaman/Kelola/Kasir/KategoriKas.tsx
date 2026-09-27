@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -101,9 +102,9 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                 di luar penjualan. Setiap kategori dijurnal ke akun yang dipilih. Kategori yang sudah dipakai cukup
                 dinonaktifkan, tidak dihapus.
             </p>
-            <div>
+            <AksiHalaman>
                 <Button onClick={() => Buka(null)}>Tambah kategori kas</Button>
-            </div>
+            </AksiHalaman>
 
             <TabelData
                 id="kasir-kategori-kas"

@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
@@ -174,9 +175,9 @@ export default function HalamanVoucherPromo({ Promo, Voucher, Ringkasan, JumlahM
             {Izin.Kelola ? null : <PesanHanyaLihat izin="pelanggan.kelola" objek="voucher" />}
 
             {bisaTambah ? (
-                <div>
+                <AksiHalaman>
                     <Button onClick={() => AturIsian(isianAwal)}>Tambah voucher</Button>
-                </div>
+                </AksiHalaman>
             ) : null}
 
             <TabelData

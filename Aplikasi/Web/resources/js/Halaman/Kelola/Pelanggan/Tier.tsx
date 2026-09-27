@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import FormulirTier, { AlamatTier, type IsianTier } from '@/Komponen/Pelanggan/FormulirTier';
 import PesanFiturLoyalti from '@/Komponen/Pelanggan/PesanFiturLoyalti';
@@ -105,7 +106,7 @@ export default function HalamanTierPelanggan({ Tier, FiturAktif, Izin }: PropsTi
             </p>
             {FiturAktif ? null : <PesanFiturLoyalti />}
             {Izin.Kelola ? (
-                <div>{tombolTambah}</div>
+                <AksiHalaman>{tombolTambah}</AksiHalaman>
             ) : (
                 <PesanHanyaLihat izin="pelanggan.kelola" objek="tier pelanggan" />
             )}

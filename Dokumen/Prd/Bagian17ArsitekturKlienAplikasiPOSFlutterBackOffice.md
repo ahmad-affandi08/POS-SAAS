@@ -487,6 +487,8 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 
 **Alat impor massal ikut di Pengaturan, bukan di menu harian (v2.45).** Impor produk dan Impor stok awal sama-sama tinggal di Pengaturan, karena keduanya dipakai saat menyiapkan atau memperbarui data secara borongan — bukan kerja harian. Sebelumnya Impor stok awal pindah tetapi Impor produk tertinggal di grup Produk, tanpa alasan yang bisa dipertahankan. **Syaratnya:** setiap alat impor wajib tetap punya tombol di halaman subjeknya ("Impor dari Excel" di halaman Produk dan halaman Stok awal), karena di situlah orang mencarinya; tombol itu bagian dari keputusan ini, bukan hiasan, dan dijaga `AnggaranNavigasiTes`.
 
+**Tombol aksi halaman selalu rata kanan (v2.46).** Sebelumnya tiap halaman daftar merakit baris aksinya sendiri: sebagian memakai `justify-between` (tombol di kanan), sebagian hanya `<div>` biasa (tombol di kiri), sehingga posisi tombol "Tambah" berpindah-pindah antar halaman. Sekarang barisnya memakai `Komponen/Kelola/AksiHalaman`: keterangan di kiri, aksi rata kanan lewat `ml-auto` — bukan `justify-between`, supaya tetap kanan walau keterangannya tidak diisi. Halaman yang tombolnya sudah di bilah alat `TabelData` (`aksiAlat`) tidak berubah; di sana pun sudah rata kanan. **Bukan termasuk** tombol simpan di dalam `<form>` (tetap rata kiri, dan di bawah 640px menempel di bawah, §17.4.4) serta tautan navigasi seperti "Kembali ke …". Dijaga `AksiHalamanTes`: tidak boleh ada tombol Tambah/Buat yang dibungkus `<div>` telanjang di atas tabel.
+
 **Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
 
 
