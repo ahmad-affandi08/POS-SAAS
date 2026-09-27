@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-C92uVOon.js";import{t}from"./card-0ZVZp3He.js";var n=e();function r({keterangan:e,children:r}){return(0,n.jsxs)(`div`,{className:`flex flex-col gap-4`,children:[e?(0,n.jsx)(`p`,{className:`max-w-3xl text-isi text-teks-sekunder`,children:e}):null,(0,n.jsx)(t,{className:`gap-0 rounded-panel p-4 shadow-none`,children:r})]})}export{r as t};

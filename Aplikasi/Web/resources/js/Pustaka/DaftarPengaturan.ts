@@ -219,3 +219,24 @@ export const daftarPengaturan: GrupPengaturan[] = [
         ],
     },
 ];
+
+/**
+ * Butir pengaturan yang boleh dilihat dan cocok dengan kata cari, tetap terkelompok; grup tanpa hasil dibuang.
+ *
+ * Pencocokan mencakup nama grup, label, dan keterangannya sekaligus, jadi mengetik "pajak" juga menemukan butir
+ * yang hanya menyebut pajak di keterangannya. Fungsi murni supaya bisa diuji tanpa merender halaman.
+ */
+export function SaringPengaturan(kata: string, BolehLihat: (butir: ButirPengaturan) => boolean): GrupPengaturan[] {
+    const cari = kata.trim().toLowerCase();
+
+    return daftarPengaturan
+        .map((grup) => ({
+            ...grup,
+            butir: grup.butir.filter(
+                (butir) =>
+                    BolehLihat(butir) &&
+                    (cari === '' || `${grup.judul} ${butir.label} ${butir.keterangan}`.toLowerCase().includes(cari)),
+            ),
+        }))
+        .filter((grup) => grup.butir.length > 0);
+}

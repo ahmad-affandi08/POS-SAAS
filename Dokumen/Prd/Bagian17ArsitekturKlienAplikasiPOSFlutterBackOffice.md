@@ -381,6 +381,7 @@ Semua halaman web (back-office, Platform Pengelola, autentikasi, web publik) **w
 - Target sentuh ≥ 44px pada perangkat sentuh (`pointer: coarse`) walau dalam mode Ringkas.
 - Teks tidak pernah terpotong tanpa cara membaca penuh (tooltip/detail); nama panjang dibungkus atau dipotong dengan elipsis + judul.
 - Diuji di tiga lebar acuan **360, 768, 1280px** untuk setiap halaman baru/berubah (tangkapan layar Playwright), selain test komponen Vitest.
+- **Kontrol formulir 16px di perangkat sentuh (v2.44).** iOS Safari otomatis memperbesar halaman begitu `<input>`/`<textarea>` dengan `font-size` di bawah 16px mendapat fokus, dan halaman tertinggal ter-zoom. Token teks kita di bawah itu (`--text-isi` 14px, `--text-label` 13px) dan beberapa komponen memasangnya langsung pada input — termasuk kotak cari `cmdk` di setiap dropdown (`text-sm`) dan isian uang (`text-isi`). `Gaya/Aplikasi.css` karena itu memaksa `input`, `textarea`, `select`, dan `[contenteditable]` menjadi 16px di `@media (pointer: coarse)`; di desktop ukuran token tetap. Aturannya sengaja **di luar `@layer`** supaya mengalahkan utilitas Tailwind yang dipasang di komponen. **Dilarang** memakai `maximum-scale=1` atau `user-scalable=no` sebagai jalan pintas: itu mematikan zoom manual (WCAG 1.4.4). Dijaga `Gaya/ZoomInputTes.ts`.
 
 #### 17.4.5 Kotak Tindakan (Keputusan D-23 C, v2.13)
 
@@ -481,6 +482,8 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 - **Keamanan akun** pindah dari footer menu samping ke **menu akun di kanan atas**, tempat orang mencari pengaturan akunnya; di sana bersama Ganti kata sandi (D-22).
 
 **Jejak halaman, bukan remah roti di kepala.** Remah roti pindah dari bilah atas ke **paling atas isi halaman**, di atas `<h1>`, sebagai `JejakHalaman` (`aria-label="Jejak halaman"`). Isinya induk halaman saja — nama usaha, lalu grup menunya; untuk halaman yang rumahnya di Pengaturan, **tautan Pengaturan** beserta nama grupnya (`/kelola/peran` ikut grup Pengguna & peran). Halaman saat ini tidak diulang karena sudah menjadi `<h1>`. Tanpa ini halaman yang keluar dari menu samping tidak punya satu pun petunjuk letak maupun jalan kembali — justru memperburuk orientasi yang mau diperbaiki. Bilah atas menyisakan tombol menu, pencarian cepat, dan menu akun. Kepala Platform Pengelola tidak berubah (`KepalaTataLetak remah` tetap `true` di sana).
+
+**Halaman Pengaturan punya kotak cari (v2.44).** 25 butir di 8 grup terlalu banyak untuk dipindai mata. Pencariannya mencocokkan nama grup, label, **dan keterangan** sekaligus (mengetik "pajak" ikut menemukan butir yang hanya menyebut pajak di keterangannya), tidak membedakan huruf besar/kecil, dan tidak pernah menembus penyaringan izin. Logikanya `SaringPengaturan()` di `Pustaka/DaftarPengaturan.ts` — fungsi murni supaya bisa diuji tanpa merender halaman. Hasil kosong memberi pesan yang bisa ditindaklanjuti (tanpa ilustrasi, karena ini hasil saring, bukan data kosong) dan jumlah hasil dibacakan lewat `aria-live`.
 
 **Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
 

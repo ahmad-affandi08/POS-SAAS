@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { daftarPengaturan } from '@/Pustaka/DaftarPengaturan';
+import { daftarPengaturan, SaringPengaturan } from '@/Pustaka/DaftarPengaturan';
 
 import { daftarMenu } from './TataLetakAplikasi';
 
@@ -60,6 +60,39 @@ describe('Anggaran navigasi back-office (D-27)', () => {
         const kembar = alamat.filter((href, i) => alamat.indexOf(href) !== i);
 
         expect(kembar).toEqual([]);
+    });
+
+    it('kotak cari Pengaturan menyaring nama grup, label, dan keterangan', () => {
+        const BolehSemua = () => true;
+
+        // Kata kosong = seluruh butir yang boleh dilihat.
+        expect(SaringPengaturan('', BolehSemua)).toEqual(daftarPengaturan);
+
+        // Cocok dari label.
+        const struk = SaringPengaturan('struk', BolehSemua).flatMap(({ butir }) => butir.map((b) => b.label));
+        expect(struk).toContain('Pengaturan struk');
+
+        // Cocok dari keterangan saja: "NPWP" hanya muncul di keterangan Profil usaha.
+        const npwp = SaringPengaturan('npwp', BolehSemua).flatMap(({ butir }) => butir.map((b) => b.label));
+        expect(npwp).toEqual(['Profil usaha']);
+
+        // Cocok dari nama grup: seluruh butir grup itu ikut.
+        const katalog = SaringPengaturan('katalog', BolehSemua);
+        expect(katalog).toHaveLength(1);
+        expect(katalog[0]?.judul).toBe('Katalog & harga');
+
+        // Tanpa huruf besar/kecil, dan tanpa hasil = daftar kosong (bukan grup kosong).
+        expect(SaringPengaturan('  STRUK  ', BolehSemua).flatMap(({ butir }) => butir).length).toBeGreaterThan(0);
+        expect(SaringPengaturan('zzz tidak ada', BolehSemua)).toEqual([]);
+    });
+
+    it('kotak cari tidak pernah menembus penyaringan izin', () => {
+        // Regresi: pencarian tidak boleh memunculkan halaman yang pengguna tidak berhak melihatnya.
+        const hanyaTanpaIzin = SaringPengaturan('', (butir) => butir.izin === null);
+        const label = hanyaTanpaIzin.flatMap(({ butir }) => butir.map((b) => b.label));
+
+        expect(label).toEqual(['Keamanan akun saya']);
+        expect(SaringPengaturan('outlet', (butir) => butir.izin === null)).toEqual([]);
     });
 
     it('setiap butir Pengaturan punya label & keterangan yang terisi', () => {

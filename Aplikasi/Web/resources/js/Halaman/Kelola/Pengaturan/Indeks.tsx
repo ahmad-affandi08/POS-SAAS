@@ -2,8 +2,9 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronRightIcon, LockIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
-import { daftarPengaturan, type ButirPengaturan } from '@/Pustaka/DaftarPengaturan';
+import { SaringPengaturan, type ButirPengaturan } from '@/Pustaka/DaftarPengaturan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import { IzinTenant, PunyaIzinTenant } from '@/Tipe/Organisasi';
@@ -24,9 +25,12 @@ export default function HalamanPengaturan() {
     const CekBoleh = (butir: ButirPengaturan) => butir.izin === null || PunyaIzinTenant(props.Akses, butir.izin);
     const CekTerkunci = (butir: ButirPengaturan) => butir.fitur !== undefined && terkunci[butir.fitur] !== undefined;
 
-    const grup = daftarPengaturan
-        .map((baris) => ({ ...baris, butir: baris.butir.filter(CekBoleh) }))
-        .filter((baris) => baris.butir.length > 0);
+    // Kotak cari: 25 butir di 8 grup terlalu banyak untuk dipindai mata. Penyaringannya di `SaringPengaturan`
+    // supaya bisa diuji tanpa merender halaman.
+    const [kata, AturKata] = useState('');
+    const cari = kata.trim();
+    const grup = SaringPengaturan(kata, CekBoleh);
+    const jumlah = grup.reduce((total, baris) => total + baris.butir.length, 0);
 
     return (
         <TataLetakAplikasi judul="Pengaturan">
@@ -41,9 +45,29 @@ export default function HalamanPengaturan() {
             ) : null}
 
             <p className="text-isi text-teks-sekunder">
-                Pengaturan tetap berada di menu modulnya masing-masing. Halaman ini mengumpulkan tautannya supaya mudah
-                ditemukan.
+                Semua yang diatur sekali lalu jarang disentuh ada di sini, dikelompokkan per bagian usaha.
             </p>
+
+            <div className="max-w-md">
+                <BidangTeks
+                    label="Cari pengaturan"
+                    nilai={kata}
+                    saatBerubah={AturKata}
+                    keterangan="Ketik nama pengaturan, misal struk, pajak, atau perangkat."
+                />
+            </div>
+
+            {/* Keadaan hasil cari kosong (§17.6.6): tanpa ilustrasi, karena ini hasil saring, bukan data kosong. */}
+            <p aria-live="polite" className="sr-only">
+                {cari === '' ? '' : `${String(jumlah)} pengaturan cocok dengan "${kata.trim()}".`}
+            </p>
+
+            {jumlah === 0 ? (
+                <p className="rounded-panel border border-garis bg-permukaan px-4 py-6 text-isi text-teks-sekunder">
+                    Tidak ada pengaturan yang cocok dengan &quot;{kata.trim()}&quot;. Coba kata lain, atau cari halaman
+                    lewat pencarian cepat di kanan atas (Ctrl K).
+                </p>
+            ) : null}
 
             {grup.map((baris) => (
                 <section key={baris.judul} className="flex flex-col gap-2">
