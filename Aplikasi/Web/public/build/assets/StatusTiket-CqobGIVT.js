@@ -1,0 +1,1 @@
+var e={Baru:`peringatan`,Ditangani:`netral`,MenungguPelanggan:`peringatan`,Selesai:`sukses`,Ditutup:`netral`};export{e as t};

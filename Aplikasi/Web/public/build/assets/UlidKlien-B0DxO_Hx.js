@@ -1,0 +1,1 @@
+function e(e,t){let n=``,r=e;for(let e=0;e<t;e+=1)n=`${`0123456789ABCDEFGHJKMNPQRSTVWXYZ`[Number(r%32n)]??`0`}${n}`,r/=32n;return n}function t(t=Date.now()){let n=new Uint8Array(10);crypto.getRandomValues(n);let r=n.reduce((e,t)=>e<<8n|BigInt(t),0n);return`${e(BigInt(t),10)}${e(r,16)}`}export{t};

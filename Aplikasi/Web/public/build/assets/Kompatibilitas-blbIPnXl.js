@@ -1,0 +1,1 @@
+function e(e){return e===`Tersertifikasi`||e===`Kompatibel`?`sukses`:e===`Terbatas`?`peringatan`:`netral`}var t={BluetoothKlasik:`Bluetooth`,Ble:`Bluetooth LE`,Usb:`USB`,SdkVendor:`Printer bawaan`};export{t as n,e as t};

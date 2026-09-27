@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CDNLR9TU.js";import{t}from"./NavigasiTab-DZ9S_RAS.js";var n=e(),r=[{label:`Paket`,href:`/katalog/paket`},{label:`Add-on`,href:`/katalog/add-on`},{label:`Kupon`,href:`/katalog/kupon`},{label:`Fitur`,href:`/katalog/fitur`}];function i(){return(0,n.jsx)(t,{label:`Katalog`,daftarTab:r})}export{i as t};

@@ -109,9 +109,14 @@ npm run build
 ```
 
 Kalau Node tidak tersedia di server (kasus hosting payou.id), **tidak perlu build dan zip manual lagi**.
-Setiap push ke `main` yang lolos CI menerbitkan `public/build` sebagai aset rilis bertag tetap `aset-terbaru`
-(lihat job `rilis` di `.github/workflows/CekKepatuhan.yml`). Repo ini publik, jadi server bisa mengambilnya
-tanpa token:
+
+**Saat ini `public/build` ikut di-commit** (lihat catatan di `Aplikasi/Web/.gitignore`), jadi `git pull` di
+langkah 8 sudah membawa aset tampilan sekaligus dan langkah ini bisa dilewati. Karena aset dan kode berasal
+dari commit yang sama, keduanya otomatis cocok.
+
+Cara di bawah dipakai bila `public/build` kembali di-ignore. Setiap push ke `main` yang lolos CI juga
+menerbitkan `public/build` sebagai aset rilis bertag tetap `aset-terbaru` (job `rilis` di
+`.github/workflows/CekKepatuhan.yml`). Repo ini publik, jadi server bisa mengambilnya tanpa token:
 
 ```bash
 cd ~/domains/payou.id/aplikasi/Aplikasi/Web/public

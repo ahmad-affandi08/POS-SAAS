@@ -14,7 +14,14 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# SEMENTARA (atas permintaan pemilik produk): /public/build ikut di-commit supaya deploy ke hosting
+# tanpa Node cukup `git pull`, tanpa zip manual. Konsekuensinya setiap perubahan tampilan mengubah
+# ~398 berkas dan `manifest.json` hampir pasti bentrok bila dua orang bekerja bersamaan.
+# Kembalikan baris di bawah begitu deploy memakai aset rilis `aset-terbaru` (Panduan/PasangDiHosting.md).
+# /public/build
+# Negasi wajib: `.gitignore` akar mengecualikan `build/` di level mana pun, dan berkas di dalam
+# direktori yang dikecualikan tidak bisa di-include ulang tanpa membuka direktorinya lebih dulu.
+!/public/build/
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
