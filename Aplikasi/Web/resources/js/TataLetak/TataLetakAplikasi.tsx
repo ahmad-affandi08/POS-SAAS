@@ -58,7 +58,19 @@ import {
 import KepalaSidebarMerek from './KepalaSidebarMerek';
 import PencarianCepat, { type HalamanPencarian, type SumberPencarian } from './PencarianCepat';
 
-type PropsTataLetak = { judul: string; children: ReactNode };
+type PropsTataLetak = {
+    judul: string;
+    /**
+     * Langkah tambahan di akhir jejak halaman, untuk halaman rincian yang butuh jalan kembali ke daftarnya
+     * (misal `[{ label: 'Semua outlet', href: '/kelola/outlet' }]`).
+     *
+     * Halaman **tidak boleh** merender remah rotinya sendiri: jejak dari tata letak sudah memakai
+     * `aria-label="Jejak halaman"`, jadi remah roti kedua menghasilkan dua landmark bernama sama dan dua jejak
+     * bertumpuk. Dijaga `JejakHalamanTes`.
+     */
+    jejak?: ButirJejak[];
+    children: ReactNode;
+};
 
 /**
  * `fitur` = kunci fitur paket (D-23): di luar paket tetap tampil dengan gembok; klik = dialog naik paket/add-on.
@@ -671,7 +683,7 @@ function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBay
  * menjadi Sheet di layar sempit), bilah atas dengan remah roti & menu akun, lalu banner status dan isi halaman.
  * Menu modul ditambahkan per flow (F-01 dst.).
  */
-export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
+export default function TataLetakAplikasi({ judul, jejak = [], children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = SaringMenuTerlihat(props.Akses);
@@ -735,7 +747,7 @@ export default function TataLetakAplikasi({ judul, children }: PropsTataLetak) {
                     <MenuAkun nama={props.Pengguna?.Nama} email={props.Pengguna?.Email} />
                 </KepalaTataLetak>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
-                    <JejakHalaman jejak={SusunJejak(url, namaInduk, menuTerlihat)} />
+                    <JejakHalaman jejak={[...SusunJejak(url, namaInduk, menuTerlihat), ...jejak]} />
                     <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
                     {props.Pengguna && !props.Pengguna.EmailTerverifikasi ? (
                         <Pemberitahuan jenis="peringatan" judul="Verifikasi email Anda">

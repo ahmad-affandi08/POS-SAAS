@@ -1,18 +1,10 @@
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/Komponen/Ui/breadcrumb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -62,22 +54,8 @@ export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
     const [sunting, AturSunting] = useState<AnggotaPin | null>(null);
 
     return (
-        <TataLetakAplikasi judul="PIN kasir">
-            <Breadcrumb aria-label="Jalur halaman">
-                <BreadcrumbList className="text-isi text-teks-sekunder">
-                    <BreadcrumbItem>
-                        <BreadcrumbLink asChild className="font-semibold text-brand underline">
-                            <Link href="/kelola/keamanan">Keamanan akun</Link>
-                        </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator>/</BreadcrumbSeparator>
-                    <BreadcrumbItem>
-                        <BreadcrumbPage role={undefined} aria-disabled={undefined} className="text-teks-sekunder">
-                            PIN kasir
-                        </BreadcrumbPage>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
+        // D-27: remah roti halaman dihapus; jalan kembali ke Keamanan akun ikut jejak halaman di tata letak.
+        <TataLetakAplikasi judul="PIN kasir" jejak={[{ label: 'Keamanan akun', href: '/kelola/keamanan' }]}>
             <Card className="max-w-xl gap-4 rounded-panel py-6 shadow-none">
                 <CardHeader className="gap-1 px-6">
                     <CardTitle className="text-subjudul font-bold text-teks-utama">

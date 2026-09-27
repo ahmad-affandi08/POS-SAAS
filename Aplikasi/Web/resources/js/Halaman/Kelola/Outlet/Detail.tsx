@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
@@ -12,14 +12,6 @@ import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/Komponen/Ui/breadcrumb';
 import { Card, CardContent } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -72,26 +64,11 @@ export default function HalamanDetailOutlet({
     const namaKota = Kota.find((baris) => baris.Kode === Outlet.KodeKota)?.Nama ?? 'Belum diisi';
 
     return (
-        <TataLetakAplikasi judul={Outlet.Nama}>
+        // D-27: jalan kembali ke daftar ikut jejak halaman di tata letak; halaman tidak merender remah roti sendiri.
+        <TataLetakAplikasi judul={Outlet.Nama} jejak={[{ label: 'Semua outlet', href: '/kelola/outlet' }]}>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                    <Breadcrumb aria-label="Jejak halaman">
-                        <BreadcrumbList className="text-isi">
-                            <BreadcrumbItem>
-                                <BreadcrumbLink asChild>
-                                    <Link href="/kelola/outlet" className="font-semibold text-brand underline">
-                                        Semua outlet
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="font-mono text-label text-teks-utama">
-                                    {Outlet.Kode}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
+                    <span className="font-mono text-label text-teks-utama">{Outlet.Kode}</span>
                     {Outlet.Status === 'Aktif' ? (
                         <LabelStatus jenis="sukses" teks="Aktif" />
                     ) : (

@@ -6,14 +6,6 @@ import { jenisLabelStatusTiket, type BatasLampiran, type StatusTiket } from '@/K
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/Komponen/Ui/breadcrumb';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -59,21 +51,10 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
         );
 
     return (
-        <TataLetakAplikasi judul={Tiket.Judul}>
+        // D-27: remah roti halaman dihapus; jalan kembali ke daftar tiket ikut jejak halaman di tata letak.
+        <TataLetakAplikasi judul={Tiket.Judul} jejak={[{ label: 'Semua tiket', href: '/kelola/bantuan' }]}>
             <div className="flex flex-wrap items-center gap-2 text-label text-teks-sekunder">
-                <Breadcrumb aria-label="Lokasi halaman">
-                    <BreadcrumbList className="text-label">
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild className="font-semibold text-brand underline">
-                                <Link href="/kelola/bantuan">Semua tiket</Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator>/</BreadcrumbSeparator>
-                        <BreadcrumbItem>
-                            <BreadcrumbPage className="font-mono">{Tiket.Nomor}</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
+                <span className="font-mono">{Tiket.Nomor}</span>
                 <LabelStatus jenis={jenisLabelStatusTiket[Tiket.Status]} teks={Tiket.LabelStatus} />
                 <span>
                     {Tiket.LabelKategori} · Prioritas {Tiket.LabelPrioritas} · Dibuat{' '}
