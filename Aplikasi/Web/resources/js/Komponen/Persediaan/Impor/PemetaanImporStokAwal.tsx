@@ -1,11 +1,12 @@
 import { router } from '@inertiajs/react';
 import { useId, useState, type FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { Alert, AlertTitle } from '@/Komponen/Ui/alert';
 import { Card } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type { BidangImporStokAwal, OpsiGudang, PropsDetailImporStokAwal } from '@/Tipe/Persediaan';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { TulisTanggal } from '@/Pustaka/Tanggal';
@@ -149,7 +150,7 @@ export default function PemetaanImporStokAwal({
                     />
                 </fieldset>
 
-                <Table className="min-w-[640px] text-left text-isi">
+                <TabelForm label="Pemetaan kolom impor stok awal" lebar="sedang">
                     <TableCaption className="sr-only">Pemetaan bidang stok awal ke kolom berkas</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
@@ -203,7 +204,7 @@ export default function PemetaanImporStokAwal({
                             );
                         })}
                     </TableBody>
-                </Table>
+                </TabelForm>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

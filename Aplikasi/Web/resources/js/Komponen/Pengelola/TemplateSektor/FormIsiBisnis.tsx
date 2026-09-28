@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangDaftarTeks from '@/Komponen/Formulir/BidangDaftarTeks';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -10,7 +11,7 @@ import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalat from '@/Komponen/Pengelola/TemplateSektor/RingkasanGalat';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import { Input } from '@/Komponen/Ui/input';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import type { Pilihan } from '@/Tipe/Pengelola';
 import type {
@@ -268,7 +269,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                     sendiri.
                                 </p>
                             ) : (
-                                <Table className="min-w-[48rem] text-isi">
+                                <TabelForm label="Isi bisnis template sektor" lebar="lebar">
                                     <TableCaption className="sr-only">Produk contoh template</TableCaption>
                                     <TableHeader>
                                         <TableRow>
@@ -419,7 +420,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
                                             );
                                         })}
                                     </TableBody>
-                                </Table>
+                                </TabelForm>
                             )}
                             {bolehUbah ? (
                                 <div className="flex flex-wrap items-center gap-3">

@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
@@ -26,7 +27,7 @@ import PanelKesiapanAkun from '@/Komponen/Persediaan/PanelKesiapanAkun';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatHppSatuan, FormatJumlahStok, FormatLabelGudang, FormatNilai } from '@/Pustaka/FormatPersediaan';
 import { HitungNilaiBaris, HitungTotalNilai } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -268,7 +269,7 @@ export default function HalamanFormStokAwal({
                             Belum ada barang. Cari produk di atas untuk menambah baris.
                         </p>
                     ) : (
-                        <Table className="min-w-[860px] text-left text-isi">
+                        <TabelForm label="Baris stok awal" lebar="dokumen">
                             <TableCaption className="sr-only">Barang stok awal</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
@@ -440,7 +441,7 @@ export default function HalamanFormStokAwal({
                                     );
                                 })}
                             </TableBody>
-                        </Table>
+                        </TabelForm>
                     )}
 
                     <div className="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 border-t border-garis pt-3">

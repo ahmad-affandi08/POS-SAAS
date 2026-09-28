@@ -1,12 +1,13 @@
 import { router } from '@inertiajs/react';
 import { useId, useState, type FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { Alert, AlertTitle } from '@/Komponen/Ui/alert';
 import { Card } from '@/Komponen/Ui/card';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type {
     AturanJenisProduk,
     BidangImpor,
@@ -126,7 +127,7 @@ export default function PemetaanImpor({
                         </Alert>
                     ) : null}
                 </div>
-                <Table className="min-w-[640px] text-left text-isi">
+                <TabelForm label="Pemetaan kolom impor" lebar="sedang">
                     <TableCaption className="sr-only">Pemetaan bidang produk ke kolom berkas</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
@@ -180,7 +181,7 @@ export default function PemetaanImpor({
                             );
                         })}
                     </TableBody>
-                </Table>
+                </TabelForm>
 
                 <fieldset className="grid gap-4 sm:grid-cols-2">
                     <legend className="mb-2 text-label font-semibold text-teks-utama">Pengaturan impor</legend>

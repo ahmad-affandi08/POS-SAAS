@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -13,7 +14,7 @@ import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import Panel from '@/Komponen/Kelola/Panel';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -190,7 +191,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             Belum ada bahan.
                         </p>
                     ) : (
-                        <Table className="min-w-[760px] text-left text-isi">
+                        <TabelForm label="Bahan resep" lebar="lebar">
                             <TableCaption className="sr-only">Bahan resep</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
@@ -296,7 +297,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                     );
                                 })}
                             </TableBody>
-                        </Table>
+                        </TabelForm>
                     )}
                     <div aria-live="polite">
                         {periksa && bahan.length === 0 ? (
@@ -359,7 +360,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                         </p>
                     )}
                     {Hpp.Baris.length > 0 ? (
-                        <Table className="min-w-[520px] text-left text-label">
+                        <TabelForm label="Ringkasan biaya resep" lebar="sedang" kelasTabel="text-label">
                             <TableCaption className="sr-only">Rincian HPP per bahan</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
@@ -393,7 +394,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                     </TableRow>
                                 ))}
                             </TableBody>
-                        </Table>
+                        </TabelForm>
                     ) : null}
                 </Panel>
             ) : null}

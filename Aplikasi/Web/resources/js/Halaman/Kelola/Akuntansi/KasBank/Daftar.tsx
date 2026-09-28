@@ -146,6 +146,7 @@ export default function HalamanTransaksiKasBank({
                 ambilIdBaris={(a) => a.Uuid}
                 cari={false}
                 kosong={{
+                    ilustrasi: 'Akuntansi',
                     judul: 'Belum ada akun kas/bank. Tandai akun kas atau bank di Bagan akun.',
                 }}
             />

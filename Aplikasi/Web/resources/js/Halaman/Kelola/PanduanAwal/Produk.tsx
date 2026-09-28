@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useRef, useState, type FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -15,7 +16,7 @@ import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -153,7 +154,7 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                         <FieldError className="text-keterangan font-semibold">{galat.ProdukContoh}</FieldError>
                     ) : null}
                     <div className="max-h-120 overflow-auto rounded-panel border border-garis">
-                        <Table className="min-w-[640px] text-isi">
+                        <TabelForm label="Produk yang akan dibuat" lebar="sedang">
                             <TableCaption className="sr-only">Produk contoh dari template</TableCaption>
                             <TableHeader className="sticky top-0 z-10 bg-permukaan">
                                 <TableRow>
@@ -239,7 +240,7 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
                                     );
                                 })}
                             </TableBody>
-                        </Table>
+                        </TabelForm>
                     </div>
                     <div aria-live="polite" className="flex flex-col gap-2">
                         <p className="text-label text-teks-sekunder">

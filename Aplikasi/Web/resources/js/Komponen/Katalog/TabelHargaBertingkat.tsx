@@ -1,6 +1,7 @@
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { BandingkanDesimal, CekDesimalBulat, CekDesimalPositif, FormatMasukanJumlah } from '@/Pustaka/MasukanJumlah';
 import type { BarisHarga } from '@/Tipe/Katalog';
@@ -123,7 +124,7 @@ export default function TabelHargaBertingkat({
                     Belum ada harga. Tanpa harga dasar, satuan ini hanya untuk pembelian dan tidak muncul di kasir.
                 </p>
             ) : (
-                <Table className="min-w-[420px] text-left text-isi">
+                <TabelForm label="Harga bertingkat" lebar="sempit">
                     <TableCaption className="sr-only">{judul}</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
@@ -197,7 +198,7 @@ export default function TabelHargaBertingkat({
                             );
                         })}
                     </TableBody>
-                </Table>
+                </TabelForm>
             )}
             <div aria-live="polite">
                 {umum ? <p className="text-keterangan font-semibold text-bahaya">{umum}</p> : null}

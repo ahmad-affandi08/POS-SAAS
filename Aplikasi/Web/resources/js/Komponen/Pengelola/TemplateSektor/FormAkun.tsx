@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -9,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { Input } from '@/Komponen/Ui/input';
 import { Separator } from '@/Komponen/Ui/separator';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import type { AkunTemplate, IsiAkunTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 
@@ -91,7 +92,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                     template.
                                 </p>
                             ) : null}
-                            <Table className="min-w-[40rem] text-isi">
+                            <TabelForm label="Akun template sektor" lebar="sedang">
                                 <TableCaption className="sr-only">Bagan akun template</TableCaption>
                                 <TableHeader>
                                     <TableRow>
@@ -173,7 +174,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                         </TableRow>
                                     ))}
                                 </TableBody>
-                            </Table>
+                            </TabelForm>
                             {bolehUbah ? (
                                 <div>
                                     <Tombol varian="sekunder" onClick={TambahAkun}>

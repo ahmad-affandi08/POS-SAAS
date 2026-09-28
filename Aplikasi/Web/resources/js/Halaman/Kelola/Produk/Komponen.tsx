@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { JenisKomponenPaket } from '@/Komponen/Katalog/BantuanKatalog';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
@@ -11,16 +12,7 @@ import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import Panel from '@/Komponen/Kelola/Panel';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { BandingkanDesimal, CekDesimalPositif, FormatMasukanJumlah, JumlahkanDesimal } from '@/Pustaka/MasukanJumlah';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -103,7 +95,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                             Paket belum berisi produk. Cari produk di bawah untuk menambahkannya.
                         </p>
                     ) : (
-                        <Table className="min-w-[620px] text-left text-isi">
+                        <TabelForm label="Komponen paket" lebar="sedang">
                             <TableCaption className="sr-only">Komponen paket</TableCaption>
                             <TableHeader>
                                 <TableRow className="border-garis hover:bg-transparent">
@@ -193,7 +185,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                                     </TableRow>
                                 </TableFooter>
                             ) : null}
-                        </Table>
+                        </TabelForm>
                     )}
                     <div aria-live="polite">
                         {(periksa || alokasi.total !== null) && alokasi.pesan ? (

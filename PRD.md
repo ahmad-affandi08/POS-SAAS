@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.57 |
+| Versi | 2.58 |
 | Tanggal | 27 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -119,6 +119,7 @@
 | 2.55 | **Token ukuran teks yang dibuang `cn`, judul halaman, & tepi bawah situs (D-28, §17.4.11)**, menutup UI-10 & UI-14 audit frontend plus satu bug yang tidak ada di audit. **(a)** `cn` (tailwind-merge) tidak bisa membedakan `text-<ukuran>` dari `text-<warna>` kecuali didaftarkan, dan **tujuh token skala situs** (`sorotan-besar`, `sorotan-besar-hp`, `sorotan`, `sorotan-hp`, `judul-bagian`, `judul-bagian-hp`, `pengantar`) yang ditambah untuk D-21/D-25 tidak pernah didaftarkan — jadi ukuran dasarnya **dibuang** dan judul hero & judul bagian situs pemasaran di HP turun ke ukuran warisan, sementara `sm:` di layar lebar tetap berlaku. Lolos uji 1280px, hanya terlihat di 360px. Ketujuhnya didaftarkan; `Gaya/TokenGabungKelasTes.ts` menurunkan daftarnya dari `Aplikasi.css`. **(b)** Semua `<h1>` lewat `Komponen/Umpan/JudulHalaman` (skala lewat prop `halaman`/`situs`/`ringkas`, bukan timpa `className`); sebelumnya QR meja & cetak pesanan `font-semibold` dan reservasi publik lupa `text-teks-utama`. Pengecualian tercatat: `BagianHero` memilih `h1`/`h2` menurut posisi blok. **(c)** Banner cookie `z-50 bottom-0` menutupi tombol WhatsApp melayang `z-30 bottom-4`; keduanya kini satu tumpukan tepi bawah dengan `pointer-events-none` pada wadahnya. Tiga penjaga baru, masing-masing dibuktikan menangkap regresinya. Suite frontend penuh: 97 berkas, 606 test. |
 | 2.56 | **Tata letak tenant & konsol beridentitas sama (D-28, §17.4.11)**, menutup UI-07 audit frontend. `TataLetakAplikasi` punya `jejak` tanpa `aksi`, `TataLetakPengelola` punya `aksi` tanpa `jejak`, dan D-27 sebelumnya hanya ditegakkan di `Halaman/Kelola` — jadi **17 halaman daftar konsol** menaruh tombol utamanya di kepala halaman, dan jalan kembali ditulis ulang **empat cara berbeda**, termasuk satu tautan "Kembali ke daftar tenant" yang dititipkan ke prop `aksi`. D-27 ditegakkan di konsol (bukan dibalik): 17 halaman daftar pindah ke `AksiHalaman`, `TataLetakPengelola` mendapat `jejak`, empat tautan kembali jadi jejak, dan `Referensi/HariLibur` sekalian melepas baris `justify-between`-nya (penyaring tahun jadi `keterangan`). Prop `aksi` disisakan untuk 5 halaman rincian/formulir, karena D-27 mengatur halaman daftar; apakah halaman rincian tenant juga perlu aksi kepala adalah keputusan pemilik produk. `AksiHalamanTes` kini memindai kedua folder, plus aturan baru yang melarang aksi kepala di halaman daftar konsol — dibuktikan menangkap regresinya. Suite frontend penuh: 97 berkas, 607 test. |
 | 2.57 | **Bilah aksi formulir menempel di bawah, satu pola (D-28, §17.4.4 & §17.4.11)**, menutup UI-08 audit frontend. Dari **17 formulir satu halaman** hanya 3 yang benar-benar menempel; sisanya memakai enam kombinasi kelas berbeda, tiga di antaranya `justify-end` walau D-27 menetapkan tombol simpan dalam `<form>` rata kiri, dan satu halaman menaruh "Batal" sebelum "Simpan". Di Produk (833 baris) pengguna harus menggulir sampai habis untuk menemukan Simpan, sementara di Penyesuaian stok Simpan selalu terlihat. Semua 17 kini memakai `Komponen/Formulir/BilahAksiForm` (menempel di bawah 640px dengan `tepi-bawah-aman`, baris biasa dari 640px, rata kiri, aksi utama dulu). Dijaga `BilahAksiFormTes` — dibuktikan menangkap regresinya. Suite frontend penuh: 98 berkas, 609 test. |
+| 2.58 | **Satu primitif tabel isian/rincian + laporan ilustrasi kosong (D-28, §17.4.3 & §17.4.11)**, menutup UI-13 dan memetakan UI-09. Tabel yang dikecualikan `TabelData` memakai **11 nilai `min-w-[...]` berbeda di 13 berkas** (420px–880px, dua dalam `rem`), dan container gulir bawaan `Table` shadcn tidak punya `tabIndex` — pengguna keyboard tidak bisa menggeser tabel yang lebih lebar dari layar (WCAG 2.1.1). Ketiga belas kini memakai `Komponen/TabelData/TabelForm`: empat preset lebar (`sempit` 480, `sedang` 640, `lebar` 768, `dokumen` 896 — dibulatkan ke atas, jadi tidak ada tabel yang menyempit) dan area gulir berupa `region` bernama yang bisa difokus keyboard; container bawaan dimatikan lewat aturan `.tabel-form` di CSS, bukan dengan menyunting `Komponen/Ui/table.tsx`. **UI-09:** 19 halaman daftar utama belum memberi `kosong.ilustrasi`, sedangkan hanya 10 aset ada; satu yang cocok domain sudah dipasang (akun kas/bank → Akuntansi), 18 sisanya butuh ilustrasi baru (pengguna/karyawan, perangkat, satuan, stasiun dapur, log audit, bantuan, tenant, rilis, halaman & artikel situs, tagihan, template sektor, tim internal, riwayat impor) — itu keputusan desain, dilaporkan bukan dikarang. Suite frontend penuh: 99 berkas, 612 test. |
 | 2.28 | **Situs pemasaran bagian B** (§13.9): **blog** `/blog` & `/blog/{slug}` (tabel `ArtikelSitus`, konsol *Situs → Artikel*: tulis draf, terbitkan, tarik, hapus; kategori, penulis, sampul, SEO per artikel; `og:type article` + JSON-LD `BlogPosting`; artikel terbit masuk peta situs; 12 artikel per halaman, saring kategori, artikel terkait). Blok baru **Formulir kontak / minta demo** (`FormulirProspek`) → `POST /prospek` (persetujuan data wajib, perangkap bot, `throttle:5,1`, maks. 3 per nomor per 24 jam); tabel `ProspekSitus` (nomor & email terenkripsi, sidik HMAC nomor & IP, retensi: Spam 30 hari, lainnya 24 bulan lewat `situs:bersihkan-prospek` 03.30 WIB); email ke tim (`Prospek.EmailNotifikasi` atau email kontak) tanpa data kontak pengunjung; konsol *Situs → Prospek* (TabelData, cari nama/usaha/kota/nomor, saring status & jenis, ubah status + catatan tercatat audit; kontak utuh hanya `situs.kelola`); pengaturan **Google Analytics 4 & Meta Pixel** yang dimuat hanya setelah pengunjung menekan *Terima* di bilah persetujuan cookie (UU 27/2022 PDP). Jalur `prospek` & `blog` dicadangkan dari slug halaman. |
 | 2.27 | **Laporan anti-fraud** (F-14, OWN-09, BR-09.3): tab "Anti-fraud" di laporan penjualan per kasir: transaksi, void (nilai & void tunai ≤ 10 menit setelah bayar), retur, diskon, buka laci tanpa transaksi, kas kurang saat tutup shift, dan **skor risiko 0–100** yang bisa dijelaskan (alasan berteks, pembanding rata-rata kasir lain); ekspor CSV. Usulan grosir dicatat sebagai pertanyaan terbuka §25 no. 27 (menunggu keputusan pemilik). |
 | 2.26 | **Laundry bagian 2** (aplikasi kasir): baris "Tiket laundry" di keranjang (bila laundry aktif) membuka isian layanan reguler/express (perkiraan selesai otomatis), berat kg dan/atau item, parfum, catatan, nama & WhatsApp pemilik (tanpa pelanggan); blok `Laundry` ikut `Penjualan.Buat` dan tersimpan lokal (skema Drift 15, kolom `Penjualan.Laundry`) sehingga struk & cetak ulang memuat rincian cucian + QR lacak; Riwayat › Cucian (online): siap diambil/cari, maju status, tandai diambil, cetak nota ber-QR. |
@@ -4069,6 +4070,29 @@ didaftarkan gagal di test.
     `tepi-bawah-aman`, kembali jadi baris biasa dari 640px, rata kiri, aksi utama dulu. Dijaga
     `Komponen/Formulir/BilahAksiFormTes.tsx` — pembungkus terdekat sebelum `type="submit"` di berkas
     `Form/Buat/Ubah/Formulir` wajib `BilahAksiForm`, bukan `<div>` rakitan sendiri.
+
+12. **Tabel isian/rincian dirakit per modul (UI-13, v2.58).** `TabelData` sudah terstandar, tetapi tabel yang
+    memang dikecualikan §17.4.3 (baris berisi bidang yang diedit, rincian dokumen kecil) memakai **11 nilai
+    `min-w-[...]` berbeda di 13 berkas** — 420px sampai 880px, dua di antaranya dalam `rem` — jadi tabel dengan
+    kolom sejenis punya titik gulir yang berbeda-beda. Lebih penting: container gulir bawaan `Table` shadcn
+    **tidak punya `tabIndex`**, sehingga pengguna keyboard tidak bisa menggeser tabel yang lebih lebar dari layar
+    (WCAG 2.1.1).
+
+    Ketiga belas tabel kini memakai `Komponen/TabelData/TabelForm` dengan empat preset lebar (`sempit` 480px,
+    `sedang` 640px, `lebar` 768px, `dokumen` 896px) — nilainya dibulatkan **ke atas** dari lebar sebelumnya, jadi
+    tidak ada tabel yang jadi lebih sempit. Area gulirnya menjadi `region` bernama yang bisa difokus keyboard.
+    Container bawaan shadcn dimatikan lewat aturan `.tabel-form` di `Gaya/Aplikasi.css`, **bukan** dengan menyunting
+    `Komponen/Ui/table.tsx` — jadi komponennya tetap boleh dipasang ulang lewat CLI. Dijaga
+    `Komponen/TabelData/TabelFormTes.tsx`.
+
+**Ilustrasi keadaan kosong (UI-09): butuh aset, bukan kode.** D-18 mewajibkan daftar utama yang belum berisi data
+memberi `kosong.ilustrasi`. **19 halaman daftar utama** belum memberikannya, sedangkan `Aset/KeadaanKosong/` hanya
+punya sepuluh ilustrasi (Akuntansi, Laporan, Outlet, Pelanggan, Pembelian, Penjualan, Produk, Promo, Shift, Stok).
+Hanya satu yang cocok secara domain dan sudah dipasang: daftar akun kas/bank memakai ilustrasi Akuntansi. Delapan
+belas sisanya butuh ilustrasi **baru** — pengguna & karyawan, perangkat, satuan, stasiun dapur, log audit, tiket
+bantuan, tenant, rilis, halaman & artikel situs, tagihan, template sektor, tim internal, riwayat impor — dan
+menggambar ilustrasi merek baru adalah keputusan desain, bukan sesuatu yang layak dikarang agent. Daftar lengkapnya
+ada di riwayat versi ini.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

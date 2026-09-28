@@ -1,8 +1,9 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { BandingkanDesimal, CekDesimalValid } from '@/Pustaka/MasukanJumlah';
 import type { BarisBatasStok } from '@/Tipe/Katalog';
 
@@ -80,7 +81,7 @@ export default function FormBatasStok({
                     Belum ada lokasi stok aktif. Tambah gudang di menu Outlet.
                 </p>
             ) : (
-                <Table className="min-w-[560px] text-left text-isi">
+                <TabelForm label="Batas stok per outlet" lebar="sedang">
                     <TableCaption className="sr-only">Batas stok per lokasi</TableCaption>
                     <TableHeader>
                         <TableRow className="border-garis hover:bg-transparent">
@@ -133,7 +134,7 @@ export default function FormBatasStok({
                             );
                         })}
                     </TableBody>
-                </Table>
+                </TabelForm>
             )}
             {bolehUbah && baris.length > 0 ? (
                 <div>

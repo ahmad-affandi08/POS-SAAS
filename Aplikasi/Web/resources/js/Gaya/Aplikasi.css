@@ -384,3 +384,16 @@
         padding-bottom: calc(var(--spacing) * 3 + env(safe-area-inset-bottom, 0px));
     }
 }
+
+/*
+ * Tabel isian/rincian (`Komponen/TabelData/TabelForm`, D-28).
+ *
+ * `Table` shadcn membungkus dirinya sendiri dengan container `overflow-x-auto`, dan container itu tidak punya
+ * `tabIndex` — jadi pengguna keyboard tidak bisa menggeser tabel yang lebih lebar dari layar (WCAG 2.1.1).
+ * Di dalam `TabelForm`, yang menggulir dan bisa difokus adalah wadah luarnya, jadi container bawaan dimatikan
+ * di sini. Diletakkan di CSS supaya `Komponen/Ui/table.tsx` tidak perlu disunting manual dan tetap boleh
+ * dipasang ulang lewat CLI shadcn.
+ */
+.tabel-form > [data-slot='table-container'] {
+    overflow: visible;
+}

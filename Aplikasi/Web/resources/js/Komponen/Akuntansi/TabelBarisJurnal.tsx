@@ -1,13 +1,5 @@
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import { cn } from '@/Komponen/Ui/utils';
 import { FormatRupiah } from '@/Pustaka/Format';
 import type { PropsDetailJurnal } from '@/Tipe/Akuntansi';
@@ -35,7 +27,7 @@ export default function TabelBarisJurnal({ baris, total, nomor }: PropsTabelBari
 
     return (
         <section className="rounded-panel border border-garis bg-card">
-            <Table className="min-w-[720px] text-left text-isi">
+            <TabelForm label="Baris jurnal" lebar="lebar">
                 <TableCaption className="sr-only">Baris jurnal {nomor}</TableCaption>
                 <TableHeader>
                     <TableRow className="border-garis hover:bg-transparent">
@@ -92,7 +84,7 @@ export default function TabelBarisJurnal({ baris, total, nomor }: PropsTabelBari
                         <TableCell className="px-4" />
                     </TableRow>
                 </TableFooter>
-            </Table>
+            </TabelForm>
         </section>
     );
 }

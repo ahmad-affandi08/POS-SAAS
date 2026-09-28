@@ -1,0 +1,1 @@
+import{o as e,t}from"./jsx-runtime-DuxheeL_.js";import{t as n}from"./TabTautan-DCv21_tY.js";var r=t();function i({label:t,daftarTab:i}){let{url:a}=e();return(0,r.jsx)(n,{label:t,tab:i.map(e=>({...e,aktif:a.startsWith(e.href)}))})}export{i as t};

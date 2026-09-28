@@ -641,6 +641,29 @@ didaftarkan gagal di test.
     `Komponen/Formulir/BilahAksiFormTes.tsx` — pembungkus terdekat sebelum `type="submit"` di berkas
     `Form/Buat/Ubah/Formulir` wajib `BilahAksiForm`, bukan `<div>` rakitan sendiri.
 
+12. **Tabel isian/rincian dirakit per modul (UI-13, v2.58).** `TabelData` sudah terstandar, tetapi tabel yang
+    memang dikecualikan §17.4.3 (baris berisi bidang yang diedit, rincian dokumen kecil) memakai **11 nilai
+    `min-w-[...]` berbeda di 13 berkas** — 420px sampai 880px, dua di antaranya dalam `rem` — jadi tabel dengan
+    kolom sejenis punya titik gulir yang berbeda-beda. Lebih penting: container gulir bawaan `Table` shadcn
+    **tidak punya `tabIndex`**, sehingga pengguna keyboard tidak bisa menggeser tabel yang lebih lebar dari layar
+    (WCAG 2.1.1).
+
+    Ketiga belas tabel kini memakai `Komponen/TabelData/TabelForm` dengan empat preset lebar (`sempit` 480px,
+    `sedang` 640px, `lebar` 768px, `dokumen` 896px) — nilainya dibulatkan **ke atas** dari lebar sebelumnya, jadi
+    tidak ada tabel yang jadi lebih sempit. Area gulirnya menjadi `region` bernama yang bisa difokus keyboard.
+    Container bawaan shadcn dimatikan lewat aturan `.tabel-form` di `Gaya/Aplikasi.css`, **bukan** dengan menyunting
+    `Komponen/Ui/table.tsx` — jadi komponennya tetap boleh dipasang ulang lewat CLI. Dijaga
+    `Komponen/TabelData/TabelFormTes.tsx`.
+
+**Ilustrasi keadaan kosong (UI-09): butuh aset, bukan kode.** D-18 mewajibkan daftar utama yang belum berisi data
+memberi `kosong.ilustrasi`. **19 halaman daftar utama** belum memberikannya, sedangkan `Aset/KeadaanKosong/` hanya
+punya sepuluh ilustrasi (Akuntansi, Laporan, Outlet, Pelanggan, Pembelian, Penjualan, Produk, Promo, Shift, Stok).
+Hanya satu yang cocok secara domain dan sudah dipasang: daftar akun kas/bank memakai ilustrasi Akuntansi. Delapan
+belas sisanya butuh ilustrasi **baru** — pengguna & karyawan, perangkat, satuan, stasiun dapur, log audit, tiket
+bantuan, tenant, rilis, halaman & artikel situs, tagihan, template sektor, tim internal, riwayat impor — dan
+menggambar ilustrasi merek baru adalah keputusan desain, bukan sesuatu yang layak dikarang agent. Daftar lengkapnya
+ada di riwayat versi ini.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

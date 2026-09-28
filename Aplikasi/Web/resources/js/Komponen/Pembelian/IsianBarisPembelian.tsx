@@ -1,6 +1,7 @@
 import { Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
 
+import TabelForm from '@/Komponen/TabelData/TabelForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -10,7 +11,7 @@ import BidangNomorSeri from '@/Komponen/Persediaan/BidangNomorSeri';
 import PemilihProdukStok from '@/Komponen/Persediaan/PemilihProdukStok';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
+import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatRupiah } from '@/Pustaka/Format';
 import type { BarisIsianBebas, ProdukPembelian } from '@/Tipe/Pembelian';
 
@@ -84,7 +85,7 @@ export default function IsianBarisPembelian({
                 </p>
             ) : (
                 <div className="overflow-x-auto">
-                    <Table className="min-w-[880px] text-left text-isi">
+                    <TabelForm label="Baris dokumen pembelian" lebar="dokumen">
                         <TableCaption className="sr-only">{judul}</TableCaption>
                         <TableHeader>
                             <TableRow className="border-garis hover:bg-transparent">
@@ -261,7 +262,7 @@ export default function IsianBarisPembelian({
                                 );
                             })}
                         </TableBody>
-                    </Table>
+                    </TabelForm>
                 </div>
             )}
         </div>
