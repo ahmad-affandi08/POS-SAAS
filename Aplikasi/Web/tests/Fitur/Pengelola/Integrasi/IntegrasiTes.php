@@ -116,7 +116,9 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
             ->assertDontSee(RAHASIA_SMTP_UJI)
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Pengelola/Integrasi/Daftar')
-                ->has('Integrasi', 8) // v2.06: 4 jenis platform × 2 lingkungan (gerbang pembayaran diatur tenant)
+                // v2.69/v2.70: 6 jenis platform × 2 lingkungan. Gerbang pembayaran QRIS tidak termasuk (diatur
+                // tenant sejak v2.06); Push (FCM) & GerbangBilling (Midtrans penagih langganan) termasuk.
+                ->has('Integrasi', 12)
                 ->where('Integrasi.0.Konfigurasi.PetunjukKredensial.KataSandi', '••••9876'));
 
         $log = LogAuditPengelola::query()->where('Aksi', 'integrasi.buat')->sole();

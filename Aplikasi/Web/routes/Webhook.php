@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Integrasi\Layanan\PencariGerbangWebhook;
+use App\Http\Kontroler\Publik\WebhookBillingKontroler;
 use App\Http\Kontroler\Publik\WebhookGerbangPembayaranKontroler;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,13 @@ use Illuminate\Support\Facades\Route;
  */
 
 $penyedia = 'midtrans|xendit|tripay|duitku|ipaymu|doku';
+
+// BR-P08.11: notifikasi gerbang billing platform (tagihan langganan PAYOU sendiri). Akun gerbangnya milik platform,
+// jadi URL-nya tunggal tanpa token dan tenant ditentukan dari nomor pesanan. Didaftarkan lebih dulu agar tidak pernah
+// tertangkap pola `/webhook/{penyedia}/{tokenWebhook}` gerbang tenant di bawahnya.
+Route::post('/webhook/billing/midtrans', [WebhookBillingKontroler::class, 'Terima'])
+    ->middleware('throttle:webhook')
+    ->name('webhook.billing.midtrans');
 
 // F-08 BR-08.5, v2.06: notifikasi gerbang pembayaran QRIS dinamis milik tenant (kode adaptor huruf kecil + token
 // webhook tenant). URL ini ditampilkan di back-office tenant untuk disalin ke dasbor penyedia.

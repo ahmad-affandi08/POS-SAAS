@@ -144,6 +144,9 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                     Route::post('/langganan/addon', [LanggananKontroler::class, 'MintaAddon'])->middleware('throttle:10,1')->name('kelola.langganan.addon.minta');
                     Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
                     Route::post('/langganan/tagihan/{tagihan}/pembayaran', [LanggananKontroler::class, 'UnggahBukti'])->name('kelola.langganan.tagihan.pembayaran.buat');
+                    // BR-P08.11: buat transaksi Snap di gerbang billing platform. Dibatasi laju karena setiap klik
+                    // membuat satu transaksi di Midtrans.
+                    Route::post('/langganan/tagihan/{tagihan}/bayar-online', [LanggananKontroler::class, 'BayarOnline'])->middleware('throttle:10,1')->name('kelola.langganan.tagihan.bayar-online');
                     Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');
                     Route::get('/langganan/pembayaran/{pembayaran}/bukti', [LanggananKontroler::class, 'LihatBukti'])->name('kelola.langganan.pembayaran.bukti');
                 });

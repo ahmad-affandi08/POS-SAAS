@@ -178,6 +178,8 @@ final class TagihanLanggananTenant
     {
         return [
             'Uuid' => $pembayaran->Uuid,
+            'Metode' => $pembayaran->Metode->value,
+            'LabelMetode' => $pembayaran->Metode->AmbilLabel(),
             'Status' => $pembayaran->Status->value,
             'LabelStatus' => $pembayaran->Status->AmbilLabel(),
             'Jumlah' => $pembayaran->Jumlah,

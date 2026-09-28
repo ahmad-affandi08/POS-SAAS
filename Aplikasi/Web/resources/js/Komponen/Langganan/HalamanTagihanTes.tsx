@@ -35,17 +35,28 @@ const tagihan: TagihanLangganan = {
     PeriodeSelesai: null,
 };
 
-function RenderTagihan(bolehUnggah = true) {
+const gerbangAktif = { KunciKlien: 'SB-Mid-client-abc', UrlSnapJs: 'https://app.sandbox.midtrans.com/snap/snap.js' };
+
+function RenderTagihan(bolehUnggah = true, tambahan: Partial<PropsRender> = {}) {
     return render(
         <HalamanTagihanLangganan
             Tagihan={tagihan}
             Pembayaran={[]}
             RekeningTujuan={[{ Kode: 'BCA', NamaBank: 'BCA', NomorRekening: '1234567890', AtasNama: 'PT Kasir' }]}
             BolehUnggah={bolehUnggah}
+            BolehBayarOnline={tambahan.BolehBayarOnline ?? false}
+            BolehBatalkan={tambahan.BolehBatalkan ?? bolehUnggah}
+            Gerbang={tambahan.Gerbang ?? null}
             UkuranBuktiMaksimalKb={5120}
         />,
     );
 }
+
+type PropsRender = {
+    BolehBayarOnline: boolean;
+    BolehBatalkan: boolean;
+    Gerbang: { KunciKlien: string; UrlSnapJs: string } | null;
+};
 
 describe('Langganan/Tagihan (P-08): dialog unggah bukti & konfirmasi batal', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola/langganan/tagihan/TG-1'));
@@ -104,5 +115,27 @@ describe('Langganan/Tagihan (P-08): dialog unggah bukti & konfirmasi batal', () 
         expect(screen.queryByRole('button', { name: 'Unggah bukti transfer' })).toBeNull();
         expect(screen.queryByRole('button', { name: 'Batalkan tagihan' })).toBeNull();
         expect(screen.getByText('Transfer ke rekening berikut')).toBeTruthy();
+    });
+    it('BR-P08.11: tombol bayar online hanya muncul saat gerbang billing aktif', () => {
+        RenderTagihan(true, { BolehBayarOnline: true, Gerbang: gerbangAktif });
+
+        expect(screen.getByRole('button', { name: 'Bayar online' })).toBeTruthy();
+        // Transfer manual tetap tersedia: tenant memilih, bukan dipaksa salah satu.
+        expect(screen.getByRole('button', { name: 'Unggah bukti transfer' })).toBeTruthy();
+    });
+
+    it('BR-P08.11: gerbang belum dikonfigurasi = tidak ada tombol bayar online', () => {
+        RenderTagihan(true, { BolehBayarOnline: true, Gerbang: null });
+
+        expect(screen.queryByRole('button', { name: 'Bayar online' })).toBeNull();
+    });
+
+    it('percobaan bayar online yang tertunda memblokir pembatalan, tetapi tidak memblokir unggah bukti', () => {
+        // Cerminan aturan server: `BatalkanTagihanLangganan` menolak selama ada pembayaran `Menunggu` apa pun,
+        // sedangkan BR-P08.8 hanya melarang bukti transfer kedua.
+        RenderTagihan(true, { BolehBatalkan: false, BolehBayarOnline: false });
+
+        expect(screen.queryByRole('button', { name: 'Batalkan tagihan' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Unggah bukti transfer' })).toBeTruthy();
     });
 });

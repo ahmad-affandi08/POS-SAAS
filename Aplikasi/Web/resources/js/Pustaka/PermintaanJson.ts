@@ -1,0 +1,52 @@
+/**
+ * POST JSON ke endpoint back-office dari luar alur Inertia, untuk hal yang jawabannya memang data — misal token
+ * transaksi Snap (BR-P08.11) yang dipakai skrip gerbang, bukan halaman baru.
+ *
+ * Inertia mengirim CSRF lewat axios bawaannya, yang membaca cookie `XSRF-TOKEN` dan memasangnya sebagai header
+ * `X-XSRF-TOKEN`. `fetch` tidak melakukannya sendiri, jadi dikerjakan di sini.
+ */
+
+/** Token CSRF Laravel dari string cookie. String kosong bila cookienya tidak ada. */
+export function AmbilTokenXsrf(kuki: string): string {
+    const cocok = /(?:^|;\s*)XSRF-TOKEN=([^;]*)/.exec(kuki);
+
+    return cocok === null ? '' : decodeURIComponent(cocok[1] ?? '');
+}
+
+/** Pesan galat dari format galat API PAYOU (`{"Galat": {"Kode", "Pesan"}}`, §16); null bila bukan bentuk itu. */
+export function AmbilPesanGalat(isi: unknown): string | null {
+    if (typeof isi !== 'object' || isi === null || !('Galat' in isi)) {
+        return null;
+    }
+
+    const galat = (isi as { Galat: unknown }).Galat;
+
+    if (typeof galat !== 'object' || galat === null || !('Pesan' in galat)) {
+        return null;
+    }
+
+    const pesan = (galat as { Pesan: unknown }).Pesan;
+
+    return typeof pesan === 'string' && pesan !== '' ? pesan : null;
+}
+
+export async function KirimJson<T>(alamat: string, data: unknown = {}): Promise<T> {
+    const respons = await fetch(alamat, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-XSRF-TOKEN': AmbilTokenXsrf(document.cookie),
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(data),
+    });
+    const isi: unknown = await respons.json().catch(() => null);
+
+    if (!respons.ok) {
+        throw new Error(AmbilPesanGalat(isi) ?? `Permintaan gagal (${String(respons.status)}).`);
+    }
+
+    return isi as T;
+}

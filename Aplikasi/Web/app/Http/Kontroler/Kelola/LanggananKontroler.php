@@ -10,10 +10,13 @@ use App\Domain\Dukungan\Aksi\BuatTiketDukungan;
 use App\Domain\Dukungan\Data\DataTiketBaru;
 use App\Domain\Dukungan\Enum\KategoriTiketDukungan;
 use App\Domain\Dukungan\Enum\PrioritasTiketDukungan;
+use App\Domain\Integrasi\Billing\GerbangBillingPlatform;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Aksi\BatalkanTagihanLangganan;
 use App\Domain\Tenant\Aksi\BuatTagihanLangganan;
+use App\Domain\Tenant\Aksi\MulaiPembayaranGerbangLangganan;
 use App\Domain\Tenant\Aksi\UnggahBuktiTransfer;
+use App\Domain\Tenant\Enum\MetodePembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
 use App\Domain\Tenant\Kueri\RekeningTujuanPlatform;
@@ -23,6 +26,7 @@ use App\Http\Kontroler\Kontroler;
 use App\Http\Permintaan\Kelola\Langganan\BatalkanTagihanLanggananPermintaan;
 use App\Http\Permintaan\Kelola\Langganan\BuatTagihanLanggananPermintaan;
 use App\Http\Permintaan\Kelola\Langganan\UnggahBuktiTransferPermintaan;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,20 +69,44 @@ final class LanggananKontroler extends Kontroler
             ->with('Kilat', "Tagihan {$tagihan->Nomor} dibuat. Transfer sesuai total, lalu unggah buktinya di halaman ini.");
     }
 
-    public function TampilkanTagihan(string $tagihan, RekeningTujuanPlatform $rekening): Response
+    public function TampilkanTagihan(string $tagihan, RekeningTujuanPlatform $rekening, GerbangBillingPlatform $gerbang): Response
     {
         $data = $this->kueri->CariTagihan($tagihan);
         abort_if($data === null, 404);
         $pembayaran = $data->Pembayaran->sortByDesc('Id')->values();
+        // Hanya bukti transfer yang sedang diverifikasi menutup kedua jalur bayar (BR-P08.8 "satu bukti Menunggu per
+        // tagihan"). Percobaan bayar online yang ditinggalkan tidak boleh ikut mengunci, karena tenant tidak punya
+        // cara menutupnya sendiri dan akan terjebak sampai transaksinya kedaluwarsa di gerbang (BR-P08.11).
+        $adaBuktiManual = $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Metode === MetodePembayaranLangganan::TransferManual
+            && $baris->Status === StatusPembayaranLangganan::Menunggu);
+        // Pembatalan tetap diblokir pembayaran `Menunggu` apa pun, termasuk percobaan bayar online: kalau tidak,
+        // tagihan bisa dibatalkan tepat saat uangnya sedang masuk (`BatalkanTagihanLangganan` menolaknya juga).
+        $adaPembayaranMenunggu = $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Status === StatusPembayaranLangganan::Menunggu);
+        $terbuka = $data->Status->CekTerbuka();
 
         return Inertia::render('Kelola/Langganan/Tagihan', [
             'Tagihan' => TagihanLanggananTenant::PetakanTagihan($data),
             'Pembayaran' => array_values($pembayaran->map(fn (PembayaranLangganan $baris): array => TagihanLanggananTenant::PetakanPembayaran($baris))->all()),
             'RekeningTujuan' => $rekening->Ambil(),
-            'BolehUnggah' => $data->Status->CekTerbuka()
-                && ! $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Status === StatusPembayaranLangganan::Menunggu),
+            'BolehUnggah' => $terbuka && ! $adaBuktiManual,
+            'BolehBayarOnline' => $terbuka && ! $adaBuktiManual && $gerbang->CekAktif(),
+            'BolehBatalkan' => $terbuka && ! $adaPembayaranMenunggu,
+            'Gerbang' => $gerbang->CekAktif() ? ['KunciKlien' => $gerbang->KunciKlien(), 'UrlSnapJs' => $gerbang->UrlSnapJs()] : null,
             'UkuranBuktiMaksimalKb' => (int) config('tagihan.UkuranBuktiMaksimalKb'),
         ]);
+    }
+
+    /**
+     * Membuat transaksi Snap untuk tagihan ini (BR-P08.11). Menjawab JSON, bukan redirect Inertia, karena token-nya
+     * dipakai langsung oleh popup Snap.js di halaman. Tagihan tidak pernah lunas dari sini: pelunasan hanya dari
+     * notifikasi webhook bertanda tangan.
+     */
+    public function BayarOnline(string $tagihan, MulaiPembayaranGerbangLangganan $mulai): JsonResponse
+    {
+        $pengguna = $this->PenggunaMasuk();
+        $hasil = $mulai->Jalankan($tagihan, $pengguna->Id, $pengguna->Nama, (string) $pengguna->Email);
+
+        return response()->json(['Token' => $hasil->token, 'UrlRedirect' => $hasil->urlRedirect]);
     }
 
     public function UnggahBukti(string $tagihan, UnggahBuktiTransferPermintaan $permintaan, UnggahBuktiTransfer $unggah): RedirectResponse

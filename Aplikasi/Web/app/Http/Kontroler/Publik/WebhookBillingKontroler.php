@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Publik;
+
+use App\Domain\Integrasi\Billing\GerbangBillingPlatform;
+use App\Domain\Pengelola\Tagihan\Aksi\TerimaNotifikasiBillingLangganan;
+use App\Http\Kontroler\Kontroler;
+use App\Http\Respons\GalatApi;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+/**
+ * BR-P08.11: notifikasi gerbang billing platform untuk tagihan langganan PAYOU (tanpa login/CSRF, dibatasi laju).
+ *
+ * Berbeda dari `WebhookGerbangPembayaranKontroler` (QRIS milik toko, D-19) yang URL-nya bertoken per tenant: akun
+ * gerbang di sini milik platform, jadi URL-nya tunggal dan tenant ditentukan dari nomor pesanan di dalam notifikasi.
+ *
+ * - Tanda tangan tidak sah, gerbang belum dikonfigurasi, atau nomor pesanan bukan format PAYOU = 401. Midtrans akan
+ *   mengulang, yang memang diinginkan bila penyebabnya kredensial yang belum terpasang.
+ * - Nomor pesanan yang sah tetapi tidak dikenal dijawab 200 `{Diterima: false}` supaya gerbang berhenti mengulang.
+ */
+final class WebhookBillingKontroler extends Kontroler
+{
+    public function Terima(Request $permintaan, GerbangBillingPlatform $gerbang, TerimaNotifikasiBillingLangganan $terima): JsonResponse
+    {
+        $notifikasi = $gerbang->UraiNotifikasi($permintaan);
+
+        if ($notifikasi === null) {
+            return GalatApi::Buat('TandaTanganTidakSah', 'Tanda tangan notifikasi tidak sah.', 401);
+        }
+
+        return response()->json(['Diterima' => $terima->Jalankan($notifikasi)]);
+    }
+}

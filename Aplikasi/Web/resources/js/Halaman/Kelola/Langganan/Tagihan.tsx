@@ -5,6 +5,7 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RincianTagihan from '@/Komponen/Langganan/RincianTagihan';
+import TombolBayarOnline from '@/Komponen/Langganan/TombolBayarOnline';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
@@ -48,6 +49,10 @@ type PropsTagihan = {
     Pembayaran: PembayaranLangganan[];
     RekeningTujuan: Rekening[];
     BolehUnggah: boolean;
+    BolehBayarOnline: boolean;
+    BolehBatalkan: boolean;
+    /** Null bila integrasi gerbang billing platform belum aktif (P-05). */
+    Gerbang: { KunciKlien: string; UrlSnapJs: string } | null;
     UkuranBuktiMaksimalKb: number;
 };
 
@@ -57,10 +62,15 @@ export default function HalamanTagihanLangganan({
     Pembayaran,
     RekeningTujuan,
     BolehUnggah,
+    BolehBayarOnline,
+    BolehBatalkan,
+    Gerbang,
     UkuranBuktiMaksimalKb,
 }: PropsTagihan) {
     const terbuka = Tagihan.Status === 'Terbit' || Tagihan.Status === 'JatuhTempo';
-    const menunggu = Pembayaran.find((pembayaran) => pembayaran.Status === 'Menunggu');
+    const menunggu = Pembayaran.find(
+        (pembayaran) => pembayaran.Status === 'Menunggu' && pembayaran.Metode === 'TransferManual',
+    );
     const [membatalkan, AturMembatalkan] = useState(false);
 
     const Batalkan = () =>
@@ -88,6 +98,13 @@ export default function HalamanTagihanLangganan({
                 </Pemberitahuan>
             ) : null}
             <RincianTagihan tagihan={Tagihan} />
+            {BolehBayarOnline && Gerbang !== null ? (
+                <TombolBayarOnline
+                    uuidTagihan={Tagihan.Uuid}
+                    kunciKlien={Gerbang.KunciKlien}
+                    urlSnapJs={Gerbang.UrlSnapJs}
+                />
+            ) : null}
             {terbuka ? <DaftarRekening rekening={RekeningTujuan} total={Tagihan.Total} /> : null}
             {BolehUnggah ? (
                 <div>
@@ -95,7 +112,7 @@ export default function HalamanTagihanLangganan({
                 </div>
             ) : null}
             <RiwayatPembayaran pembayaran={Pembayaran} />
-            {BolehUnggah ? (
+            {BolehBatalkan ? (
                 <div>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -312,18 +329,29 @@ const kolomPembayaran: KolomTabel<PembayaranLangganan>[] = [
         cell: ({ row }) => FormatTanggalWaktu(row.original.DiunggahPada),
     },
     {
+        id: 'Metode',
+        accessorKey: 'LabelMetode',
+        header: 'Cara bayar',
+        enableSorting: false,
+        meta: { label: 'Cara bayar', prioritas: 'penting', kelasSel: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.LabelMetode,
+    },
+    {
         id: 'Transfer',
         header: 'Transfer',
         enableSorting: false,
         meta: { label: 'Transfer', prioritas: 'rendah' },
-        cell: ({ row: { original: baris } }) => (
-            <>
-                <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
-                <span className="block text-keterangan text-teks-sekunder">
-                    {baris.BankPengirim} · {baris.NamaPengirim}
-                </span>
-            </>
-        ),
+        cell: ({ row: { original: baris } }) =>
+            baris.Metode === 'Gateway' ? (
+                <span className="text-teks-sekunder">Lewat gerbang pembayaran</span>
+            ) : (
+                <>
+                    <span className="block">{FormatTanggal(baris.TanggalTransfer)}</span>
+                    <span className="block text-keterangan text-teks-sekunder">
+                        {baris.BankPengirim} · {baris.NamaPengirim}
+                    </span>
+                </>
+            ),
     },
     {
         id: 'Jumlah',
@@ -372,16 +400,16 @@ function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }
     return (
         <section aria-labelledby="judul-pembayaran" className="flex flex-col gap-2">
             <h2 id="judul-pembayaran" className="text-subjudul font-semibold text-teks-utama">
-                Bukti transfer terkirim
+                Riwayat pembayaran
             </h2>
             <TabelData
                 id="langganan-riwayat-pembayaran"
-                label="Riwayat bukti transfer"
+                label="Riwayat pembayaran tagihan"
                 kolom={kolomPembayaran}
                 sumber={{ mode: 'lokal', data: pembayaran }}
                 ambilIdBaris={(baris) => baris.Uuid}
                 urutBawaan="-DiunggahPada"
-                kosong={{ ilustrasi: true, judul: 'Belum ada bukti transfer.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada pembayaran.' }}
             />
         </section>
     );

@@ -18,6 +18,17 @@ use App\Domain\Tenant\Model\Paket;
  */
 final class BantuanPendaftaran
 {
+    /**
+     * Tanggal berlaku dokumen legal prasyarat, **tetap** dan jauh di belakang setiap tanggal skenario di suite ini
+     * (yang paling awal 31/01/2026).
+     *
+     * Sebelumnya nilainya `now()->subDay()`, yang dihitung dari jam dinding sungguhan karena pembantu ini dipanggil
+     * di `beforeEach` sebelum test membekukan waktunya. Begitu tanggal nyata melewati tanggal skenario sebuah test,
+     * dokumennya jadi "belum berlaku" dan `DaftarkanTenant` menolak dengan BR-P06.2 — test yang tadinya hijau mulai
+     * merah sendiri tanpa ada kode yang berubah.
+     */
+    private const BERLAKU_MULAI = '2025-01-01';
+
     public static function SiapkanPrasyarat(): void
     {
         app(SiapkanKatalogBawaan::class)->Jalankan();
@@ -29,7 +40,7 @@ final class BantuanPendaftaran
                 'Versi' => 1,
                 'Judul' => $jenis->AmbilLabel(),
                 'Isi' => "# {$jenis->AmbilLabel()}",
-                'BerlakuMulai' => now('Asia/Jakarta')->subDay()->toDateString(),
+                'BerlakuMulai' => self::BERLAKU_MULAI,
                 'Status' => StatusDokumenLegal::Terbit,
             ]);
         }

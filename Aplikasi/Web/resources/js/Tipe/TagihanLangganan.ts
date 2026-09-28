@@ -32,8 +32,12 @@ export type TagihanLangganan = {
 
 export type StatusPembayaranLangganan = 'Menunggu' | 'Diterima' | 'Ditolak';
 
+export type MetodePembayaranLangganan = 'TransferManual' | 'Gateway';
+
 export type PembayaranLangganan = {
     Uuid: string;
+    Metode: MetodePembayaranLangganan;
+    LabelMetode: string;
     Status: StatusPembayaranLangganan;
     LabelStatus: string;
     Jumlah: string;

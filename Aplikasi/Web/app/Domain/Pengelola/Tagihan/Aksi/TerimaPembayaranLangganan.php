@@ -10,11 +10,9 @@ use App\Domain\Pengelola\Tagihan\Kueri\DaftarTagihanPlatform;
 use App\Domain\Pengelola\Tagihan\Surel\PembayaranLanggananDiterima;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
-use App\Domain\Tenant\Enum\JenisTagihanLangganan;
-use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
-use App\Domain\Tenant\Layanan\PenghitungPeriodeLangganan;
+use App\Domain\Tenant\Layanan\PelunasTagihanLangganan;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
@@ -31,7 +29,8 @@ use Throwable;
  * - Jumlah yang benar-benar masuk ke rekening wajib diisi dan harus sama dengan total tagihan.
  * - Kunci berurutan Langganan → Tagihan → Pembayaran (sama dengan `UnggahBuktiTransfer` dan penjadwal tunggakan) lalu
  *   status diperiksa ulang, sehingga dua verifikator bersamaan atau klik ganda hanya menghasilkan satu penerimaan.
- * - Penangguhan manual Super Admin (penipuan, permintaan hukum) tidak bisa dicabut lewat pembayaran (BR-P07.4).
+ * - Keputusan & tulisannya sendiri ada di `PelunasTagihanLangganan`, yang dipakai bersama jalur gerbang pembayaran
+ *   (BR-P08.11) supaya periode dan status yang dihasilkan tidak bisa berbeda antar jalur.
  * - Tanpa four-eyes: verifikasi berbasis mutasi rekening dan tercatat di audit; persetujuan kedua P-08 hanya untuk
  *   refund > Rp 1.000.000 (BR-P08.2).
  * - Email pemberitahuan ke Owner dikirim setelah transaksi tersimpan; kegagalan email tidak membatalkan verifikasi.
@@ -40,7 +39,7 @@ final class TerimaPembayaranLangganan
 {
     public function __construct(
         private readonly DaftarTagihanPlatform $daftar,
-        private readonly PenghitungPeriodeLangganan $periode,
+        private readonly PelunasTagihanLangganan $pelunas,
         private readonly PencatatAuditPengelola $audit,
     ) {}
 
@@ -55,93 +54,26 @@ final class TerimaPembayaranLangganan
             $tagihan = DaftarTagihanPlatform::KueriTagihan()->with('Paket')->whereKey($awal->IdTagihanLangganan)->lockForUpdate()->firstOrFail();
             $pembayaran = DaftarTagihanPlatform::KueriPembayaran()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
 
-            if ($pembayaran->Status !== StatusPembayaranLangganan::Menunggu) {
-                throw new PelanggaranAturanBisnis('SudahDiverifikasi', "Pembayaran ini sudah {$pembayaran->Status->AmbilLabel()}.");
-            }
-
-            if (! $tagihan->Status->CekTerbuka()) {
-                throw new PelanggaranAturanBisnis('TagihanTidakTerbuka', "Tagihan {$tagihan->Nomor} sudah {$tagihan->Status->AmbilLabel()}.");
-            }
-
             $diterima = Uang::Dari($jumlahDiterima);
-
-            if (! $diterima->SamaDengan($tagihan->AmbilTotal()) || ! $diterima->SamaDengan($pembayaran->AmbilJumlah())) {
-                throw new PelanggaranAturanBisnis(
-                    'JumlahTidakCocok',
-                    'Jumlah diterima harus sama dengan total tagihan '.$tagihan->AmbilTotal()->FormatRupiah().'. Bila berbeda, tolak dengan alasan.',
-                    'JumlahDiterima',
-                );
-            }
-
-            if ($langganan->CekDitangguhkanManual()) {
-                throw new PelanggaranAturanBisnis(
-                    'BR-P07.4',
-                    'Tenant ini ditangguhkan manual oleh Super Admin. Penangguhan harus dicabut lewat "Aktifkan kembali" di halaman tenant sebelum pembayaran bisa diterima.',
-                );
-            }
-
-            if ($langganan->Status !== StatusLangganan::Aktif && ! $langganan->Status->BisaBerubahKe(StatusLangganan::Aktif)) {
-                throw new PelanggaranAturanBisnis('LanggananTidakBisaAktif', "Langganan berstatus {$langganan->Status->AmbilLabel()} tidak bisa diaktifkan dari tagihan.");
-            }
-
-            $sekarang = CarbonImmutable::now();
-            $lanjutan = $tagihan->Jenis === JenisTagihanLangganan::Perpanjangan
-                && in_array($langganan->Status, [StatusLangganan::Aktif, StatusLangganan::Tertunggak], true)
-                && $langganan->IdPaket === $tagihan->IdPaket;
-            $periode = $this->periode->Hitung(
-                $lanjutan ? JenisTagihanLangganan::Perpanjangan : JenisTagihanLangganan::Aktivasi,
-                $tagihan->Siklus,
-                $sekarang,
-                $langganan->PeriodeSelesai,
+            $hasil = $this->pelunas->Lunasi(
+                $langganan,
+                $tagihan,
+                $pembayaran,
+                $diterima,
+                CarbonImmutable::now(),
+                idVerifikatorPengelola: $verifikator->Id,
+                mulaiPaketSebelumnya: $this->AmbilMulaiPaketSebelumnya($tagihan),
             );
-            $mulaiPaket = $lanjutan ? $this->AmbilMulaiPaketSebelumnya($tagihan) : null;
-
-            $statusTagihanLama = $tagihan->Status->value;
-            $pembayaran->update([
-                'Status' => StatusPembayaranLangganan::Diterima,
-                'IdPenggunaPengelolaVerifikator' => $verifikator->Id,
-                'DiverifikasiPada' => $sekarang,
-                'JumlahDiterima' => $diterima->KeString(),
-            ]);
-
-            $tagihan->update([
-                'Status' => StatusTagihanLangganan::Lunas,
-                'DibayarPada' => $sekarang,
-                'PeriodeMulai' => $periode['Mulai'],
-                'PeriodeSelesai' => $periode['Selesai'],
-                'MulaiLanggananPaket' => ($mulaiPaket ?? $periode['Mulai'])->toDateString(),
-            ]);
-
-            $lama = [
-                'Status' => $langganan->Status->value,
-                'IdPaket' => $langganan->IdPaket,
-                'SiklusTagihan' => $langganan->SiklusTagihan->value,
-                'PeriodeMulai' => $langganan->PeriodeMulai?->toIso8601ZuluString(),
-                'PeriodeSelesai' => $langganan->PeriodeSelesai?->toIso8601ZuluString(),
-            ];
-            $langganan->update([
-                'Status' => StatusLangganan::Aktif,
-                'IdPaket' => $tagihan->IdPaket,
-                'SiklusTagihan' => $tagihan->Siklus,
-                'PeriodeMulai' => $periode['Mulai'],
-                'PeriodeSelesai' => $periode['Selesai'],
-            ]);
 
             $this->audit->Catat(
                 'tagihan.pembayaran.terima',
                 $pembayaran,
-                nilaiLama: ['Pembayaran' => StatusPembayaranLangganan::Menunggu->value, 'Tagihan' => $statusTagihanLama, 'Langganan' => $lama],
+                nilaiLama: ['Pembayaran' => StatusPembayaranLangganan::Menunggu->value, 'Tagihan' => $hasil->statusTagihanLama, 'Langganan' => $hasil->langgananLama],
                 nilaiBaru: [
                     'Pembayaran' => StatusPembayaranLangganan::Diterima->value,
                     'NomorTagihan' => $tagihan->Nomor,
                     'JumlahDiterima' => $diterima->KeString(),
-                    'Langganan' => [
-                        'Status' => StatusLangganan::Aktif->value,
-                        'IdPaket' => $tagihan->IdPaket,
-                        'SiklusTagihan' => $tagihan->Siklus->value,
-                        'PeriodeMulai' => $periode['Mulai']->toIso8601ZuluString(),
-                        'PeriodeSelesai' => $periode['Selesai']->toIso8601ZuluString(),
-                    ],
+                    'Langganan' => $hasil->LanggananBaru($tagihan->IdPaket, $tagihan->Siklus),
                 ],
                 alasan: $catatan,
                 idPelaku: $verifikator->Id,

@@ -5,10 +5,19 @@ declare(strict_types=1);
 namespace App\Domain\Tenant\Enum;
 
 /**
- * Metode pembayaran langganan (PRD §15.3). Fase 0–1 hanya transfer manual; gateway menyusul (Fase 2).
+ * Metode pembayaran langganan (PRD §15.3): transfer manual dengan bukti yang diverifikasi Keuangan, atau gerbang
+ * pembayaran platform yang melunasi sendiri dari notifikasi webhook (BR-P08.11).
  */
 enum MetodePembayaranLangganan: string
 {
     case TransferManual = 'TransferManual';
     case Gateway = 'Gateway';
+
+    public function AmbilLabel(): string
+    {
+        return match ($this) {
+            self::TransferManual => 'Transfer manual',
+            self::Gateway => 'Pembayaran online',
+        };
+    }
 }
