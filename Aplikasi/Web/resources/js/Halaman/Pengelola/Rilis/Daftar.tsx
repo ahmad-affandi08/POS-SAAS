@@ -18,6 +18,7 @@ import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
+import TabRilis from '@/Komponen/Pengelola/TabRilis';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import {
     IzinPengelola,
@@ -143,6 +144,7 @@ export default function HalamanRilis({ Rilis }: { Rilis: RilisAplikasi[] }) {
 
     return (
         <TataLetakPengelola judul="Rilis aplikasi">
+            <TabRilis />
             <AksiHalaman>
                 {bolehKelola ? (
                     <Tombol onClick={() => AturDialog({ jenis: 'draf', rilis: null })}>Catat draf rilis</Tombol>

@@ -65,6 +65,39 @@ describe('TataLetakPengelola: menu sesuai izin, penanda lingkungan, banner (P-01
         expect(CekMenuPengelolaAktif('/referensi/tarif-pajak', '/referensi/wilayah')).toBe(true);
     });
 
+    it('menu dikelompokkan menurut pekerjaan; Tenant tepat di bawah Beranda, bukan paling bawah (D-30)', () => {
+        propsHalaman = BuatProps([
+            'tenant.lihat',
+            'tagihan.lihat',
+            'dukungan.tiket.lihat',
+            'operasional.lihat',
+            'katalog.lihat',
+            'template.lihat',
+            'rilis.lihat',
+            'situs.lihat',
+            'integrasi.lihat',
+            'referensi.lihat',
+            'legal.lihat',
+            'tim.anggota.lihat',
+            'audit.lihat',
+        ]);
+        urlHalaman = '/flag-fitur';
+        render(<TataLetakPengelola judul="Rilis aplikasi">isi</TataLetakPengelola>);
+
+        const utama = screen.getByRole('navigation', { name: 'Menu utama' });
+        expect(
+            Array.from(utama.querySelectorAll('[data-slot="sidebar-group-label"]')).map((l) => l.textContent),
+        ).toEqual(['Pekerjaan harian', 'Produk & pemasaran', 'Data platform', 'Internal']);
+        expect(
+            Array.from(utama.querySelectorAll('a'))
+                .map((a) => a.textContent)
+                .slice(0, 3),
+        ).toEqual(['Beranda', 'Tenant', 'Tagihan']);
+        // Halaman flag fitur berada di bawah entri Rilis aplikasi lewat `alamatLain`, jadi menunya ikut menyala.
+        expect(within(utama).getByRole('link', { name: 'Rilis aplikasi' }).getAttribute('aria-current')).toBe('page');
+        expect(within(utama).queryByRole('link', { name: 'Flag fitur' })).toBeNull();
+    });
+
     it('kepala sidebar memakai gradasi merek dan logo putih, bukan nama platform', () => {
         propsHalaman = BuatProps([]);
         const { container } = render(<TataLetakPengelola judul="Beranda">isi</TataLetakPengelola>);

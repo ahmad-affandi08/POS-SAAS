@@ -470,6 +470,32 @@ Platform Pengelola berada di aplikasi Laravel yang sama (satu kode, satu databas
 | Entry frontend | `resources/js/Aplikasi.tsx` | `resources/js/Pengelola.tsx` (bundle terpisah, kode pengelola tidak pernah terkirim ke browser tenant) |
 | Layout | `TataLetakAplikasi` | `TataLetakPengelola` (warna berbeda, penanda lingkungan staging/produksi) |
 
+#### 13.8.1 Anggaran & peta navigasi konsol (Keputusan D-30, v2.62)
+
+Konsol dipakai staf internal, bukan pemilik toko, jadi batasnya berbeda dari back-office (§17.4.10): halaman tidak disembunyikan ke Pengaturan, melainkan **dikelompokkan dengan label** supaya tetap terlihat sekaligus terpindai. Konsol juga belum punya pencarian cepat Ctrl+K, jadi menyembunyikan halaman justru membuatnya hilang.
+
+| Aturan | Batas |
+|---|---|
+| Grup di menu samping | maksimal 5 |
+| Entri per grup | maksimal 7 |
+| Entri minimum per grup | 2; kurang dari itu gabungkan ke grup lain |
+| Total entri | maksimal 16, supaya menu muat di layar 768px tanpa digulir |
+| Satu halaman satu rumah | setiap tab halaman (`TabKatalog`, `TabReferensi`, `TabSitus`, `TabRilis`) dimiliki tepat satu entri menu |
+| Tautan kembar | tidak boleh |
+
+**Urutan mengikuti frekuensi pakai, bukan nomor flow:**
+
+| Grup | Entri |
+|---|---|
+| Pekerjaan harian | Beranda, Tenant, Tagihan, Dukungan, Operasional |
+| Produk & pemasaran | Katalog, Template sektor, Rilis aplikasi, Situs pemasaran |
+| Data platform | Integrasi, Referensi, Legal |
+| Internal | Tim internal, Log audit |
+
+Beberapa halaman sekeluarga masih beralamat di akar (`/flag-fitur`, `/kompatibilitas-perangkat`) sehingga entri menunya menyimpan `alamatLain` agar menu tetap menyala. Menyeragamkan alamat itu menjadi `/rilis/...` adalah pekerjaan tersendiri (§25).
+
+Dijaga `resources/js/TataLetak/AnggaranNavigasiPengelolaTes.ts`.
+
 **Struktur kode:**
 
 ```

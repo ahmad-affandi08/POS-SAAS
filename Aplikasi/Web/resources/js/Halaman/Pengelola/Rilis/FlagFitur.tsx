@@ -13,6 +13,7 @@ import { DialogFooter } from '@/Komponen/Ui/dialog';
 import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import TabRilis from '@/Komponen/Pengelola/TabRilis';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import {
     IzinPengelola,
@@ -94,7 +95,8 @@ export default function HalamanFlagFitur({ Aturan, OpsiKunci, OpsiPaket, OpsiTen
     const Tutup = () => AturDialog(null);
 
     return (
-        <TataLetakPengelola judul="Flag fitur">
+        <TataLetakPengelola judul="Rilis aplikasi">
+            <TabRilis />
             <p className="max-w-3xl text-isi text-teks-sekunder">
                 Urutan: kill switch (Global mati) mengalahkan semua aturan, lalu aturan tenant, paket, persentase, dan
                 Global hidup. Kunci tanpa aturan dianggap hidup.

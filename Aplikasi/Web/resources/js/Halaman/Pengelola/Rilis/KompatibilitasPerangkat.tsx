@@ -12,6 +12,7 @@ import { DialogFooter } from '@/Komponen/Ui/dialog';
 import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import TabRilis from '@/Komponen/Pengelola/TabRilis';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
 import { AmbilJenisStatusKompatibilitas, LabelSambunganPrinter, type BarisKompatibilitas } from '@/Tipe/Kompatibilitas';
 import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
@@ -100,7 +101,8 @@ export default function HalamanKompatibilitasPerangkat({ Baris }: { Baris: Baris
     };
 
     return (
-        <TataLetakPengelola judul="Kompatibilitas perangkat">
+        <TataLetakPengelola judul="Rilis aplikasi">
+            <TabRilis />
             <p className="max-w-3xl text-isi text-teks-sekunder">
                 Disusun dari hasil Wizard Uji Perangkat di aplikasi kasir, tanpa nama usaha. Kompatibel = lolos uji di
                 lapangan; Terbatas = kegagalan sama atau lebih banyak dari keberhasilan. Tanda tim mengalahkan status

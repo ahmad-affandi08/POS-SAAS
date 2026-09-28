@@ -1,6 +1,6 @@
 import NavigasiTab from '@/Komponen/Pengelola/NavigasiTab';
 
-const daftarTab = [
+export const daftarTab = [
     { label: 'Halaman', href: '/situs/halaman' },
     { label: 'Pengaturan', href: '/situs/pengaturan' },
     { label: 'Gambar', href: '/situs/gambar' },

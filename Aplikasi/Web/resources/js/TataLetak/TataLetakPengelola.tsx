@@ -6,7 +6,6 @@ import {
     Building2Icon,
     HouseIcon,
     LayoutTemplateIcon,
-    PrinterIcon,
     LibraryIcon,
     LifeBuoyIcon,
     PlugIcon,
@@ -14,7 +13,6 @@ import {
     ReceiptIcon,
     ScaleIcon,
     ScrollTextIcon,
-    ToggleRightIcon,
     UsersRoundIcon,
     type LucideIcon,
 } from 'lucide-react';
@@ -25,6 +23,7 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
+    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -64,44 +63,95 @@ type PropsTataLetak = {
     children: ReactNode;
 };
 
-type ItemMenu = { label: string; href: string; izin: KunciIzinPengelola | null; ikon: LucideIcon };
+type ItemMenu = {
+    label: string;
+    href: string;
+    izin: KunciIzinPengelola | null;
+    ikon: LucideIcon;
+    /**
+     * Alamat lain yang dimiliki entri ini, untuk halaman sekeluarga yang alamatnya belum seragam
+     * (`/flag-fitur`, `/kompatibilitas-perangkat` di bawah Rilis aplikasi). Tanpa ini menu tidak ikut menyala.
+     */
+    alamatLain?: string[];
+};
 
-const daftarMenu: ItemMenu[] = [
-    { label: 'Beranda', href: '/', izin: null, ikon: HouseIcon },
-    { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat, ikon: BookOpenIcon },
-    // P-08 Tagihan langganan & verifikasi transfer.
-    { label: 'Tagihan', href: '/tagihan', izin: IzinPengelola.TagihanLihat, ikon: ReceiptIcon },
-    { label: 'Template sektor', href: '/template-sektor', izin: IzinPengelola.TemplateLihat, ikon: LayoutTemplateIcon },
-    { label: 'Referensi', href: '/referensi/tarif-pajak', izin: IzinPengelola.ReferensiLihat, ikon: LibraryIcon },
-    { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat, ikon: ScaleIcon },
-    // D-21 Situs pemasaran (payou.id).
-    { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: GlobeIcon },
-    { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: PlugIcon },
-    // P-09
-    { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
-    // P-10 Rilis aplikasi & flag fitur.
-    { label: 'Rilis aplikasi', href: '/rilis', izin: IzinPengelola.RilisLihat, ikon: RocketIcon },
-    { label: 'Flag fitur', href: '/flag-fitur', izin: IzinPengelola.RilisLihat, ikon: ToggleRightIcon },
-    // v1.98 Hardware Compatibility List.
+type GrupMenu = { grup: string; item: ItemMenu[] };
+
+/**
+ * Menu samping Platform Pengelola, dikelompokkan menurut pekerjaan dan diurutkan menurut seberapa sering dipakai
+ * (D-30). Sebelumnya 16 entri datar berurut nomor flow, sehingga `Tenant` — subjek yang paling sering dibuka —
+ * justru paling bawah, dan tiga halaman P-10 yang satu subjek tampil sebagai tiga entri terpisah.
+ *
+ * Aturannya dijaga `AnggaranNavigasiPengelolaTes`. Menambah halaman berarti memilih grupnya, bukan menambah entri
+ * di ujung daftar.
+ */
+export const daftarMenuPengelola: GrupMenu[] = [
     {
-        label: 'Kompatibilitas perangkat',
-        href: '/kompatibilitas-perangkat',
-        izin: IzinPengelola.RilisLihat,
-        ikon: PrinterIcon,
+        grup: 'Pekerjaan harian',
+        item: [
+            { label: 'Beranda', href: '/', izin: null, ikon: HouseIcon },
+            // P-07 Siklus hidup tenant: subjek yang paling sering dibuka, jadi paling atas setelah Beranda.
+            { label: 'Tenant', href: '/tenant', izin: IzinPengelola.TenantLihat, ikon: Building2Icon },
+            // P-08 Tagihan langganan & verifikasi transfer.
+            { label: 'Tagihan', href: '/tagihan', izin: IzinPengelola.TagihanLihat, ikon: ReceiptIcon },
+            // P-09
+            { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
+            // P-11
+            { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
+        ],
     },
-    // P-11
-    { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
-    { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },
-    { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat, ikon: ScrollTextIcon },
-    // P-07 Siklus hidup tenant.
-    { label: 'Tenant', href: '/tenant', izin: IzinPengelola.TenantLihat, ikon: Building2Icon },
+    {
+        grup: 'Produk & pemasaran',
+        item: [
+            { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat, ikon: BookOpenIcon },
+            {
+                label: 'Template sektor',
+                href: '/template-sektor',
+                izin: IzinPengelola.TemplateLihat,
+                ikon: LayoutTemplateIcon,
+            },
+            // P-10: rilis, flag fitur, dan HCL adalah satu subjek, jadi satu entri dengan tab halaman (TabRilis).
+            {
+                label: 'Rilis aplikasi',
+                href: '/rilis',
+                izin: IzinPengelola.RilisLihat,
+                ikon: RocketIcon,
+                alamatLain: ['/flag-fitur', '/kompatibilitas-perangkat'],
+            },
+            // D-21 Situs pemasaran (payou.id).
+            { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: GlobeIcon },
+        ],
+    },
+    {
+        grup: 'Data platform',
+        item: [
+            { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: PlugIcon },
+            {
+                label: 'Referensi',
+                href: '/referensi/tarif-pajak',
+                izin: IzinPengelola.ReferensiLihat,
+                ikon: LibraryIcon,
+            },
+            { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat, ikon: ScaleIcon },
+        ],
+    },
+    {
+        grup: 'Internal',
+        item: [
+            { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },
+            { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat, ikon: ScrollTextIcon },
+        ],
+    },
 ];
 
-/** Menu aktif: Beranda hanya untuk "/", lainnya menurut segmen pertama URL (/katalog/addon → Katalog). */
-export function CekMenuPengelolaAktif(href: string, url: string): boolean {
-    const awalan = href.split('/').slice(0, 2).join('/');
+/**
+ * Menu aktif: Beranda hanya untuk "/", lainnya menurut segmen pertama URL (/katalog/addon → Katalog), ditambah
+ * alamat lain yang dimiliki entri yang sama (/flag-fitur → Rilis aplikasi).
+ */
+export function CekMenuPengelolaAktif(href: string, url: string, alamatLain: string[] = []): boolean {
+    const Cocok = (alamat: string) => url.startsWith(alamat.split('/').slice(0, 2).join('/'));
 
-    return href === '/' ? url === '/' : url.startsWith(awalan);
+    return href === '/' ? url === '/' : Cocok(href) || alamatLain.some(Cocok);
 }
 
 /**
@@ -111,7 +161,12 @@ export function CekMenuPengelolaAktif(href: string, url: string): boolean {
 export default function TataLetakPengelola({ judul, jejak = [], aksi, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaPengelola>();
     const pengguna = props.Pengguna;
-    const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzin(pengguna, menu.izin));
+    const grupTerlihat = daftarMenuPengelola
+        .map((grup) => ({
+            ...grup,
+            item: grup.item.filter((menu) => menu.izin === null || PunyaIzin(pengguna, menu.izin)),
+        }))
+        .filter((grup) => grup.item.length > 0);
     const namaPlatform = `${props.NamaAplikasi} · Pengelola`;
 
     return (
@@ -121,32 +176,38 @@ export default function TataLetakPengelola({ judul, jejak = [], aksi, children }
                 <KepalaSidebarMerek nama={props.NamaAplikasi} />
                 <SidebarContent>
                     <nav aria-label="Menu utama">
-                        <SidebarGroup className="px-3 py-3">
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {menuTerlihat.map((menu) => {
-                                        const aktif = CekMenuPengelolaAktif(menu.href, url);
-                                        const Ikon = menu.ikon;
+                        {grupTerlihat.map((grup) => (
+                            <SidebarGroup key={grup.grup} className="px-3 py-2">
+                                <SidebarGroupLabel>{grup.grup}</SidebarGroupLabel>
+                                <SidebarGroupContent>
+                                    <SidebarMenu>
+                                        {grup.item.map((menu) => {
+                                            const aktif = CekMenuPengelolaAktif(menu.href, url, menu.alamatLain);
+                                            const Ikon = menu.ikon;
 
-                                        return (
-                                            <SidebarMenuItem key={menu.href}>
-                                                <SidebarMenuButton
-                                                    asChild
-                                                    isActive={aktif}
-                                                    tooltip={menu.label}
-                                                    className={kelasTombolMenuSidebar}
-                                                >
-                                                    <Link href={menu.href} aria-current={aktif ? 'page' : undefined}>
-                                                        <Ikon aria-hidden="true" />
-                                                        <span>{menu.label}</span>
-                                                    </Link>
-                                                </SidebarMenuButton>
-                                            </SidebarMenuItem>
-                                        );
-                                    })}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
+                                            return (
+                                                <SidebarMenuItem key={menu.href}>
+                                                    <SidebarMenuButton
+                                                        asChild
+                                                        isActive={aktif}
+                                                        tooltip={menu.label}
+                                                        className={kelasTombolMenuSidebar}
+                                                    >
+                                                        <Link
+                                                            href={menu.href}
+                                                            aria-current={aktif ? 'page' : undefined}
+                                                        >
+                                                            <Ikon aria-hidden="true" />
+                                                            <span>{menu.label}</span>
+                                                        </Link>
+                                                    </SidebarMenuButton>
+                                                </SidebarMenuItem>
+                                            );
+                                        })}
+                                    </SidebarMenu>
+                                </SidebarGroupContent>
+                            </SidebarGroup>
+                        ))}
                     </nav>
                 </SidebarContent>
                 {/* Rel hanya pintasan tetikus (tabIndex -1); tombol di bilah atas adalah kontrol yang diumumkan. */}
