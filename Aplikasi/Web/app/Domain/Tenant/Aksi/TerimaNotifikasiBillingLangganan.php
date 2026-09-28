@@ -50,6 +50,10 @@ final class TerimaNotifikasiBillingLangganan
     public function Jalankan(NotifikasiBilling $notifikasi): bool
     {
         $this->konteks->Atur($notifikasi->idTenant);
+        // Pelakunya sistem, jadi konteks audit dikosongkan **secara eksplisit**. Tanpa ini pelaku dari request atau job
+        // lain di proses yang sama bisa terbawa dan tercatat sebagai orang yang melunasi tagihan — persis yang
+        // tertangkap test: pemilik yang menekan "Bayar online" ikut tercatat di audit notifikasi webhook.
+        $this->audit->AturKonteks(null, null, null);
         $awal = PembayaranLangganan::query()->where('RefGateway', $notifikasi->nomorPesanan)->first();
 
         if ($awal === null || $awal->Metode !== MetodePembayaranLangganan::Gateway) {
