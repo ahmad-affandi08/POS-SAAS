@@ -70,6 +70,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -345,6 +352,7 @@
                     "PersediaanBahanBaku": "1-1510",
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
                     "PiutangKaryawan": "1-1450",
                     "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",
@@ -573,6 +581,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -862,6 +877,7 @@
                     "PersediaanBahanBaku": "1-1510",
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
                     "PiutangKaryawan": "1-1450",
                     "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",
@@ -1088,6 +1104,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -1377,6 +1400,7 @@
                     "PersediaanBahanBaku": "1-1510",
                     "PersediaanBarangDagang": "1-1500",
                     "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
                     "PiutangKaryawan": "1-1450",
                     "PiutangKlaimPemasok": "1-1460",
                     "PiutangPencairan": "1-1300",

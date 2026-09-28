@@ -15,7 +15,11 @@ describe('PeranAkun: istilah kamus & alias kunci lama (P-03, BR-P03.4, DesainF01
             ->and(PeranAkun::SusutPersediaan->AmbilLabel())->toBe('Susut & barang rusak')
             ->and(PeranAkun::tryFrom('PiutangSettlement'))->toBeNull()
             ->and(PeranAkun::tryFrom('Waste'))->toBeNull()
-            ->and(PeranAkun::cases())->toHaveCount(33);
+            // v2.74 BR-12.2: piutang belum difakturkan, cermin `HutangBelumDifakturkan` di sisi pembelian.
+            ->and(PeranAkun::PiutangBelumDifakturkan->AmbilTipeAkun())->toBe(TipeAkun::Aset)
+            ->and(PeranAkun::PiutangBelumDifakturkan->AmbilLabel())->toBe('Piutang belum difakturkan')
+            ->and(PeranAkun::PiutangBelumDifakturkan->CekWajibKontra())->toBeFalse()
+            ->and(PeranAkun::cases())->toHaveCount(34);
     });
 
     it('DariKunci membaca kunci baru, kunci lama dari versi terbit, dan menolak kunci asing', function (): void {

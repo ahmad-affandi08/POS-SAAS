@@ -17,6 +17,7 @@ enum PeranAkun: string
     case PiutangUsaha = 'PiutangUsaha';
     case PiutangKaryawan = 'PiutangKaryawan';
     case PiutangKlaimPemasok = 'PiutangKlaimPemasok';
+    case PiutangBelumDifakturkan = 'PiutangBelumDifakturkan';
     case PersediaanBarangDagang = 'PersediaanBarangDagang';
     case PersediaanBahanBaku = 'PersediaanBahanBaku';
     case PersediaanDalamPerjalanan = 'PersediaanDalamPerjalanan';
@@ -89,7 +90,8 @@ enum PeranAkun: string
     {
         return match ($this) {
             self::KasOutlet, self::KasBrankas, self::Bank, self::PiutangPencairan, self::PiutangUsaha,
-            self::PiutangKaryawan, self::PiutangKlaimPemasok, self::PersediaanBarangDagang, self::PersediaanBahanBaku,
+            self::PiutangKaryawan, self::PiutangKlaimPemasok, self::PiutangBelumDifakturkan,
+            self::PersediaanBarangDagang, self::PersediaanBahanBaku,
             self::PersediaanDalamPerjalanan, self::PpnMasukan => TipeAkun::Aset,
             self::HutangUsaha, self::HutangBelumDifakturkan, self::HutangKonsinyasi, self::PpnKeluaran,
             self::HutangPbjt, self::UangMukaPelanggan, self::DepositPelanggan,
@@ -147,6 +149,7 @@ enum PeranAkun: string
             self::PiutangUsaha => 'Piutang usaha',
             self::PiutangKaryawan => 'Piutang karyawan (kasbon)',
             self::PiutangKlaimPemasok => 'Piutang klaim promosi pemasok',
+            self::PiutangBelumDifakturkan => 'Piutang belum difakturkan',
             self::PersediaanBarangDagang => 'Persediaan barang dagang',
             self::PersediaanBahanBaku => 'Persediaan bahan baku',
             self::PersediaanDalamPerjalanan => 'Persediaan dalam perjalanan',

@@ -58,7 +58,8 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
         $akunTemplate = collect($versi->Isi['Akun']);
         $akun = Akun::query()->get()->keyBy('Kode');
         expect($akun->keys()->sort()->values()->all())->toBe($akunTemplate->pluck('Kode')->sort()->values()->all())
-            ->and($akun->count())->toBe(45)
+            // 46 sejak v2.74: peran akun PiutangBelumDifakturkan (1-1470) masuk template (BR-12.2).
+            ->and($akun->count())->toBe(46)
             ->and($akun->has('4-1010'))->toBeTrue()
             ->and($akun->has('4-1020'))->toBeTrue();
 
@@ -104,7 +105,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
             ->and($pengaturan['Sektor'])->toBe(['FNB-CAF']);
 
         expect(MetodePembayaran::query()->where('Jenis', 'Tunai')->count())->toBe(1)
-            ->and($hasil->jumlahAkun)->toBe(45)
+            ->and($hasil->jumlahAkun)->toBe(46)
             ->and($hasil->namaTemplate)->toBe('Kafe / kedai kopi');
     });
 
