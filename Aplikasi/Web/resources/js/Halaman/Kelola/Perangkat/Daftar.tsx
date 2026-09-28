@@ -126,7 +126,7 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
                 <ul className="grid grid-cols-1 gap-2 text-label sm:grid-cols-2 lg:grid-cols-4">
                     {Outlet.map((outlet) => (
                         <li key={outlet.Uuid}>
-                            <Card className="gap-1 px-4 py-3">
+                            <Card className="gap-1 px-4 py-3 rounded-panel shadow-none">
                                 <span className="text-teks-sekunder">{outlet.Nama}: </span>
                                 <span className="font-semibold text-teks-utama">
                                     {FormatBatas(outlet.BatasPerangkat, 'perangkat')}

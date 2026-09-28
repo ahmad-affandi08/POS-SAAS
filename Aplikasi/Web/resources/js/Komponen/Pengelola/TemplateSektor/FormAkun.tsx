@@ -72,7 +72,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
     };
 
     return (
-        <Card className="gap-4">
+        <Card className="gap-4 rounded-panel shadow-none">
             <CardHeader>
                 <CardTitle>
                     <h2 className="text-subjudul font-semibold text-teks-utama">Akun & pajak</h2>
@@ -222,7 +222,7 @@ export default function FormAkun({ url, isi, pilihan, bolehUbah }: PropsFormAkun
                                 </p>
                             ) : null}
                             {data.KelompokPajak.map((kelompok, indeks) => (
-                                <Card key={indeks} className="gap-3 p-4 shadow-none">
+                                <Card key={indeks} className="gap-3 p-4 shadow-none rounded-panel">
                                     <BidangTeks
                                         label="Nama kelompok"
                                         nilai={kelompok.Nama}

@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
 import { Progress } from '@/Komponen/Ui/progress';
 import { Skeleton } from '@/Komponen/Ui/skeleton';
@@ -61,7 +61,7 @@ export default function KemajuanImporStokAwal({ impor }: { impor: RingkasanImpor
     }, [status, impor.Status]);
 
     return (
-        <PanelKatalog
+        <Panel
             judul={membuatDraf ? 'Membuat draf stok awal' : 'Memeriksa data'}
             idJudul="judul-kemajuan-impor-stok-awal"
         >
@@ -94,6 +94,6 @@ export default function KemajuanImporStokAwal({ impor }: { impor: RingkasanImpor
             <p className="text-keterangan text-teks-sekunder">
                 Anda boleh meninggalkan halaman ini. Proses tetap berjalan dan hasilnya tersimpan di riwayat impor.
             </p>
-        </PanelKatalog>
+        </Panel>
     );
 }

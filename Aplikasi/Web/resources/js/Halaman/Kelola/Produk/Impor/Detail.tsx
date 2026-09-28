@@ -6,7 +6,7 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KemajuanImpor, { StatusBerjalan } from '@/Komponen/Katalog/KemajuanImpor';
 import LangkahImpor, { JenisLabelImpor } from '@/Komponen/Katalog/LangkahImpor';
 import PemetaanImpor from '@/Komponen/Katalog/PemetaanImpor';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import TabelBarisGalatImpor from '@/Komponen/Katalog/TabelBarisGalatImpor';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
@@ -132,7 +132,7 @@ export default function HalamanDetailImpor({
             ) : null}
 
             {Impor.Status === 'Pratinjau' && Pratinjau !== null && !ubahPemetaan ? (
-                <PanelKatalog judul="Pratinjau" idJudul="judul-pratinjau">
+                <Panel judul="Pratinjau" idJudul="judul-pratinjau">
                     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                         <Angka label="Baris valid" nilai={Impor.JumlahValid} />
                         <Angka label="Baris bermasalah" nilai={Impor.JumlahGalat} />
@@ -193,11 +193,11 @@ export default function HalamanDetailImpor({
                             ) : null}
                         </div>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {Impor.Status === 'Selesai' ? (
-                <PanelKatalog judul="Impor selesai" idJudul="judul-hasil">
+                <Panel judul="Impor selesai" idJudul="judul-hasil">
                     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <Angka label="Produk dibuat" nilai={Impor.JumlahDibuat} />
                         <Angka label="Produk diperbarui" nilai={Impor.JumlahDiperbarui} />
@@ -215,7 +215,7 @@ export default function HalamanDetailImpor({
                             <Link href="/kelola/produk">Lihat daftar produk</Link>
                         </Button>
                     </p>
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {Impor.Status === 'Gagal' ? (

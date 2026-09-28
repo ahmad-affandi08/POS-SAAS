@@ -7,7 +7,7 @@ import { BandingkanDesimal, CekDesimalValid } from '@/Pustaka/MasukanJumlah';
 import type { BarisBatasStok } from '@/Tipe/Katalog';
 
 import BidangJumlah from './BidangJumlah';
-import PanelKatalog from './PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 
 /** Galat lokal per gudang: minimum tidak boleh melebihi maksimum (BatasStokTidakValid). */
 export function PeriksaBatasStok(baris: BarisBatasStok[]): Record<string, string> {
@@ -70,7 +70,7 @@ export default function FormBatasStok({
     };
 
     return (
-        <PanelKatalog
+        <Panel
             judul="Stok minimum & maksimum per lokasi"
             idJudul="judul-batas-stok"
             keterangan="Dipakai untuk peringatan stok menipis dan saran pembelian. Kosongkan maksimum bila tidak dibatasi."
@@ -147,6 +147,6 @@ export default function FormBatasStok({
                     Perlu izin <span className="font-mono">persediaan.kelola</span> untuk mengubah batas stok.
                 </p>
             ) : null}
-        </PanelKatalog>
+        </Panel>
     );
 }

@@ -64,7 +64,7 @@ const UNDUH: { Kunci: KunciUnduh; Label: string }[] = [
 
 function Kartu({ judul, keterangan, children }: { judul: string; keterangan?: string; children: ReactNode }) {
     return (
-        <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2">
+        <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2 rounded-panel shadow-none">
             <div className="flex flex-col gap-1 sm:col-span-2">
                 <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
                 {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}

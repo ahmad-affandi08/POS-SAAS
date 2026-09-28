@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { HitungBarisMutasi } from '@/Komponen/Persediaan/AturanFormStokAwal';
 import LabelStatusStokAwal from '@/Komponen/Persediaan/LabelStatusStokAwal';
 import PanelKesiapanAkun from '@/Komponen/Persediaan/PanelKesiapanAkun';
@@ -252,7 +252,7 @@ export default function HalamanDetailStokAwal({
             ) : null}
             {dialog === null ? <DaftarGalatServer galat={galat} /> : null}
 
-            <PanelKatalog judul="Ringkasan" idJudul="judul-ringkasan-stok-awal">
+            <Panel judul="Ringkasan" idJudul="judul-ringkasan-stok-awal">
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <Keterangan label="Lokasi stok">
                         {StokAwal.NamaGudang}
@@ -302,9 +302,9 @@ export default function HalamanDetailStokAwal({
                     ) : null}
                     {StokAwal.Catatan ? <Keterangan label="Catatan">{StokAwal.Catatan}</Keterangan> : null}
                 </dl>
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog judul="Barang" idJudul="judul-barang-detail-stok-awal">
+            <Panel judul="Barang" idJudul="judul-barang-detail-stok-awal">
                 <TabelData
                     id="persediaan-stok-awal-baris"
                     label={`Barang stok awal, ${String(Baris.length)} baris`}
@@ -315,9 +315,9 @@ export default function HalamanDetailStokAwal({
                     cari="Cari nama produk atau SKU"
                     kosong={{ judul: 'Dokumen ini belum berisi barang.' }}
                 />
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog
+            <Panel
                 judul="Jurnal"
                 idJudul="judul-jurnal-stok-awal"
                 keterangan="Jurnal otomatis: Debit persediaan, Kredit ekuitas saldo awal. Pembatalan membuat jurnal pembalik."
@@ -362,9 +362,9 @@ export default function HalamanDetailStokAwal({
                                 : 'Jurnal dibuat saat stok awal diposting.',
                     }}
                 />
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog judul="Riwayat status" idJudul="judul-riwayat-stok-awal">
+            <Panel judul="Riwayat status" idJudul="judul-riwayat-stok-awal">
                 {Riwayat.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Belum ada perubahan status.</p>
                 ) : (
@@ -386,7 +386,7 @@ export default function HalamanDetailStokAwal({
                         ))}
                     </ol>
                 )}
-            </PanelKatalog>
+            </Panel>
 
             {dialog === 'Posting' ? (
                 <DialogKonfirmasi

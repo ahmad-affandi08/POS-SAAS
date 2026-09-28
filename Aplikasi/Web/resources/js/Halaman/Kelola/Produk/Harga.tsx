@@ -8,7 +8,7 @@ import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -109,7 +109,7 @@ function EditorDaftarHarga({
     };
 
     return (
-        <PanelKatalog
+        <Panel
             tingkat="h3"
             idJudul={`judul-daftar-${daftar.Uuid}`}
             judul={
@@ -149,7 +149,7 @@ function EditorDaftarHarga({
                     </Tombol>
                 </div>
             ) : null}
-        </PanelKatalog>
+        </Panel>
     );
 }
 
@@ -252,7 +252,7 @@ export default function HalamanHargaProduk({
                 kecuali={Object.keys(galat).filter((kunci) => /^(Satuan|Harga)\./.test(kunci))}
             />
 
-            <PanelKatalog
+            <Panel
                 judul="Harga dasar & harga bertingkat"
                 idJudul="judul-harga-dasar"
                 keterangan={`Harga ${LabelHargaTermasukPajak}. Satuan tanpa harga dasar hanya dipakai untuk pembelian dan tidak muncul di kasir. Harga satuan lain tidak dihitung otomatis dari isi satuan.`}
@@ -289,7 +289,7 @@ export default function HalamanHargaProduk({
                         </Tombol>
                     </div>
                 ) : null}
-            </PanelKatalog>
+            </Panel>
 
             <section aria-labelledby="judul-daftar-harga" className="flex flex-col gap-3">
                 <h2 id="judul-daftar-harga" className="text-subjudul font-semibold text-teks-utama">
@@ -318,7 +318,7 @@ export default function HalamanHargaProduk({
                 )}
             </section>
 
-            <PanelKatalog judul="Riwayat harga" idJudul="judul-riwayat-harga">
+            <Panel judul="Riwayat harga" idJudul="judul-riwayat-harga">
                 <TabelData
                     id={`katalog-riwayat-harga-${Kepala.Uuid}`}
                     label="Riwayat perubahan harga"
@@ -339,7 +339,7 @@ export default function HalamanHargaProduk({
                     ]}
                     kosong={{ judul: 'Belum ada perubahan harga.' }}
                 />
-            </PanelKatalog>
+            </Panel>
         </TataLetakAplikasi>
     );
 }

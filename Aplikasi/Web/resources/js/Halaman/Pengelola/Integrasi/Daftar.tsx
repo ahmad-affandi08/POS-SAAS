@@ -152,7 +152,7 @@ function BagianGerbangTenant({ daftar, bolehKelola }: { daftar: GerbangTenant[];
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {daftar.map((baris) => (
-                    <Card key={baris.Penyedia} className="gap-2 py-4">
+                    <Card key={baris.Penyedia} className="gap-2 py-4 rounded-panel shadow-none">
                         <CardHeader className="flex flex-wrap items-center gap-2 px-4">
                             <CardTitle>
                                 <h3 className="text-label font-semibold text-teks-utama">{baris.Label}</h3>
@@ -281,7 +281,7 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
     };
 
     return (
-        <Card className="gap-3 py-5">
+        <Card className="gap-3 py-5 rounded-panel shadow-none">
             <CardHeader className="flex flex-wrap items-center gap-2 px-5">
                 <CardTitle>
                     <h3 className="text-label font-semibold text-teks-utama">{slot.Lingkungan}</h3>

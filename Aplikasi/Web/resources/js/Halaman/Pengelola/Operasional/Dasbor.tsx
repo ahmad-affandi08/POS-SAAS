@@ -407,7 +407,7 @@ function Ringkasan({
     keterangan: string;
 }) {
     return (
-        <Card className="gap-1 py-4">
+        <Card className="gap-1 py-4 rounded-panel shadow-none">
             <CardHeader className="px-4">
                 <CardTitle>
                     <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
@@ -426,7 +426,7 @@ function Ringkasan({
 
 function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
     return (
-        <Card className="gap-3 py-4">
+        <Card className="gap-3 py-4 rounded-panel shadow-none">
             <CardHeader className="px-4">
                 <CardTitle>
                     <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>

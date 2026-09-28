@@ -5,7 +5,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     DialogAlasan,
     Keterangan,
@@ -347,7 +347,7 @@ export default function HalamanDetailStokOpname({
             ) : null}
             {dialog === null ? <DaftarGalatServer galat={galat} /> : null}
 
-            <PanelKatalog judul="Ringkasan" idJudul="judul-ringkasan-opname">
+            <Panel judul="Ringkasan" idJudul="judul-ringkasan-opname">
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <Keterangan label="Lokasi stok">
                         {Opname.NamaGudang}
@@ -378,11 +378,11 @@ export default function HalamanDetailStokOpname({
                     ) : null}
                     {Opname.Catatan ? <Keterangan label="Catatan">{Opname.Catatan}</Keterangan> : null}
                 </dl>
-            </PanelKatalog>
+            </Panel>
 
             {Tindakan.Hitung ? (
                 <form onSubmit={Simpan} noValidate aria-label="Lembar hitung" className="flex flex-col gap-4">
-                    <PanelKatalog
+                    <Panel
                         judul="Lembar hitung"
                         idJudul="judul-lembar-hitung"
                         keterangan="Kosongkan jumlah bila barang belum dihitung; baris yang belum dihitung tidak disesuaikan."
@@ -454,9 +454,9 @@ export default function HalamanDetailStokOpname({
                                 <li className="py-2 text-isi text-teks-sekunder">Tidak ada baris yang cocok.</li>
                             ) : null}
                         </ul>
-                    </PanelKatalog>
+                    </Panel>
 
-                    <PanelKatalog
+                    <Panel
                         judul="Barang di luar snapshot"
                         idJudul="judul-baris-baru"
                         keterangan="Barang yang ditemukan tetapi tidak ada di daftar (batch baru, nomor seri lain, atau produk tanpa saldo)."
@@ -538,7 +538,7 @@ export default function HalamanDetailStokOpname({
                                 ))}
                             </ul>
                         ) : null}
-                    </PanelKatalog>
+                    </Panel>
 
                     <div className="sticky bottom-0 flex flex-wrap items-center gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
                         <Tombol
@@ -556,7 +556,7 @@ export default function HalamanDetailStokOpname({
                     </div>
                 </form>
             ) : (
-                <PanelKatalog judul="Hasil hitung" idJudul="judul-hasil-hitung">
+                <Panel judul="Hasil hitung" idJudul="judul-hasil-hitung">
                     <TabelData
                         id="persediaan-opname-baris"
                         label={`Baris opname, ${String(Baris.length)} baris`}
@@ -566,7 +566,7 @@ export default function HalamanDetailStokOpname({
                         cari="Cari produk, SKU, batch, atau nomor seri"
                         kosong={{ judul: 'Lokasi ini tidak punya stok saat opname dimulai.' }}
                     />
-                </PanelKatalog>
+                </Panel>
             )}
 
             <PanelJurnalDokumen

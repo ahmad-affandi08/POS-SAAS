@@ -197,7 +197,7 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                 {Undangan.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Tidak ada undangan yang menunggu diterima.</p>
                 ) : (
-                    <Card className="gap-0 py-0">
+                    <Card className="gap-0 py-0 rounded-panel shadow-none">
                         <ul className="divide-y divide-garis">
                             {Undangan.map((undangan) => (
                                 <li

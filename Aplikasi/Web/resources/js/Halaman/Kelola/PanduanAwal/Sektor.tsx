@@ -148,7 +148,7 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                     </div>
 
                     {Template.length > 1 ? (
-                        <Card className="gap-2 p-4">
+                        <Card className="gap-2 p-4 rounded-panel shadow-none">
                             <GrupCentang
                                 legenda="Usaha Anda juga bergerak di bidang lain? (opsional)"
                                 opsi={Template.filter((item) => item.Kode !== formulir.data.KodeTemplate).map(
@@ -165,7 +165,7 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                         </Card>
                     ) : null}
 
-                    <Card className="gap-2 p-4 shadow-none">
+                    <Card className="gap-2 p-4 shadow-none rounded-panel">
                         <h2 className="text-subjudul font-semibold text-teks-utama">Mulai jualan lebih cepat</h2>
                         <p className="text-isi text-teks-sekunder">
                             Siapkan semuanya otomatis: template diterapkan, pajak diatur sesuai usulan untuk kota Anda,
@@ -200,7 +200,9 @@ function PilihanTemplate({ template, terpilih, diterapkan, tandaiTidakValid }: P
     const fiturTerkunci = template.Fitur.filter((fitur) => !fitur.TersediaDiPaket);
 
     return (
-        <Card className={cn('gap-2 p-4 shadow-none', terpilih ? 'border-2 border-primary' : 'border-garis')}>
+        <Card
+            className={cn('gap-2 p-4 shadow-none rounded-panel', terpilih ? 'border-2 border-primary' : 'border-garis')}
+        >
             <div className="flex items-start gap-3">
                 <RadioGroupItem
                     id={idPilihan}

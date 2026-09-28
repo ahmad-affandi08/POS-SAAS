@@ -115,7 +115,7 @@ export default function HalamanGerbangPembayaran({
                 {galatUmum ? <Pemberitahuan jenis="bahaya">{galatUmum}</Pemberitahuan> : null}
 
                 {Gerbang ? (
-                    <Card>
+                    <Card className="rounded-panel shadow-none">
                         <CardHeader>
                             <CardTitle className="text-subjudul text-teks-utama">Status gerbang</CardTitle>
                         </CardHeader>
@@ -207,7 +207,7 @@ export default function HalamanGerbangPembayaran({
                     </Card>
                 ) : null}
 
-                <Card>
+                <Card className="rounded-panel shadow-none">
                     <CardHeader>
                         <CardTitle className="text-subjudul text-teks-utama">
                             {Gerbang ? 'Ubah akun merchant' : 'Hubungkan akun merchant'}

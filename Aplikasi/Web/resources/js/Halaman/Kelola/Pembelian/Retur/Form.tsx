@@ -6,7 +6,7 @@ import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
@@ -101,7 +101,7 @@ export default function HalamanFormRetur({ Penerimaan: p, Baris, HariIni }: Prop
             </p>
             <DaftarGalatServer galat={galat} kecuali={['Tanggal', 'Alasan']} />
             <form onSubmit={Simpan} noValidate aria-label="Retur pembelian" className="flex flex-col gap-4">
-                <PanelKatalog judul="Dokumen" idJudul="judul-dokumen-retur">
+                <Panel judul="Dokumen" idJudul="judul-dokumen-retur">
                     <div className="grid gap-3 sm:grid-cols-2">
                         <PemilihTanggal
                             id="tanggal-retur"
@@ -126,9 +126,9 @@ export default function HalamanFormRetur({ Penerimaan: p, Baris, HariIni }: Prop
                         maksimal={255}
                         required
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog judul="Barang diretur" idJudul="judul-barang-retur">
+                <Panel judul="Barang diretur" idJudul="judul-barang-retur">
                     {bisaDiretur.length === 0 ? (
                         <p className="text-isi text-teks-sekunder">Semua barang dari penerimaan ini sudah diretur.</p>
                     ) : (
@@ -190,7 +190,7 @@ export default function HalamanFormRetur({ Penerimaan: p, Baris, HariIni }: Prop
                         </p>
                     ) : null}
                     {galat.Baris ? <p className="text-keterangan font-semibold text-bahaya">{galat.Baris}</p> : null}
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses} varian="bahaya">

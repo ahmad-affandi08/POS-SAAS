@@ -111,7 +111,7 @@ export default function HalamanDetailOutlet({
                     kota={Kota}
                 />
             ) : (
-                <Card className="py-6">
+                <Card className="py-6 rounded-panel shadow-none">
                     <CardContent>
                         <dl className="grid grid-cols-1 gap-3 text-isi md:grid-cols-2">
                             <Rincian label="Alamat" nilai={Outlet.Alamat ?? 'Belum diisi'} />

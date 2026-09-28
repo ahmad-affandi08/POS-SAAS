@@ -6,7 +6,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PratinjauStruk, { PENUTUP_BAWAAN, type LebarKertas } from '@/Komponen/Struk/PratinjauStruk';
 import { ToggleGroup, ToggleGroupItem } from '@/Komponen/Ui/toggle-group';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -134,7 +134,7 @@ export default function HalamanPengaturanStruk({ Pengaturan, Profil }: PropsPeng
                     className="flex min-w-0 flex-col gap-4"
                     noValidate
                 >
-                    <PanelKatalog
+                    <Panel
                         judul="Kepala struk"
                         idJudul="judul-kepala-struk"
                         keterangan={
@@ -177,11 +177,11 @@ export default function HalamanPengaturanStruk({ Pengaturan, Profil }: PropsPeng
                             />
                         ))}
                         <DaftarSaklar bagian="kepala" isian={isian} saatBerubah={Ubah} />
-                    </PanelKatalog>
-                    <PanelKatalog judul="Isi struk" idJudul="judul-isi-struk">
+                    </Panel>
+                    <Panel judul="Isi struk" idJudul="judul-isi-struk">
                         <DaftarSaklar bagian="isi" isian={isian} saatBerubah={Ubah} />
-                    </PanelKatalog>
-                    <PanelKatalog judul="Kaki struk" idJudul="judul-kaki-struk">
+                    </Panel>
+                    <Panel judul="Kaki struk" idJudul="judul-kaki-struk">
                         <BidangTeksPanjang
                             label="Catatan kaki"
                             nilai={isian.CatatanKaki}
@@ -205,7 +205,7 @@ export default function HalamanPengaturanStruk({ Pengaturan, Profil }: PropsPeng
                                 menghapusnya.
                             </p>
                         ) : null}
-                    </PanelKatalog>
+                    </Panel>
                     <div className="flex flex-wrap items-center gap-3">
                         <Tombol type="submit" memproses={memproses} disabled={!berubah}>
                             Simpan pengaturan struk

@@ -130,7 +130,11 @@ function BagianProdukContoh({ adaTemplate, produkContoh, batasSku, kuotaPenuh }:
     };
 
     return (
-        <Card aria-labelledby="judul-produk-contoh" role="region" className="gap-3 p-4 sm:p-6">
+        <Card
+            aria-labelledby="judul-produk-contoh"
+            role="region"
+            className="gap-3 p-4 sm:p-6 rounded-panel shadow-none"
+        >
             <h2 id="judul-produk-contoh" className="text-subjudul font-semibold text-teks-utama">
                 Produk contoh dari template
             </h2>
@@ -338,7 +342,7 @@ function FormProdukCepat({
     };
 
     return (
-        <Card aria-labelledby="judul-produk-cepat" role="region" className="gap-3 p-4 sm:p-6">
+        <Card aria-labelledby="judul-produk-cepat" role="region" className="gap-3 p-4 sm:p-6 rounded-panel shadow-none">
             <h2 id="judul-produk-cepat" className="text-subjudul font-semibold text-teks-utama">
                 Tambah produk sendiri
             </h2>

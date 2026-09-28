@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { KartuKeterangan, Keterangan, RingkasanNilai } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { Button } from '@/Komponen/Ui/button';
@@ -107,7 +107,7 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                 {p.Catatan ? <Keterangan label="Catatan">{p.Catatan}</Keterangan> : null}
             </KartuKeterangan>
 
-            <PanelKatalog judul="Barang dipesan" idJudul="judul-barang-pre-order">
+            <Panel judul="Barang dipesan" idJudul="judul-barang-pre-order">
                 <ul className="flex flex-col gap-2">
                     {p.Baris.map((b) => (
                         <li
@@ -129,9 +129,9 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                         </li>
                     ))}
                 </ul>
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog judul="Uang muka" idJudul="judul-uang-muka-pre-order">
+            <Panel judul="Uang muka" idJudul="judul-uang-muka-pre-order">
                 <ul className="flex flex-col gap-2">
                     {p.Pembayaran.map((b) => (
                         <li key={b.Uuid} className="flex flex-wrap items-center justify-between gap-2">
@@ -157,7 +157,7 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                         { label: 'Sisa uang muka', nilai: p.SisaUangMuka, tebal: true },
                     ]}
                 />
-            </PanelKatalog>
+            </Panel>
 
             {dialog ? (
                 <DialogFormulir

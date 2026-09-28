@@ -9,7 +9,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { HitungSubtotal } from '@/Komponen/Pembelian/AturanPembelian';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
@@ -149,7 +149,7 @@ export default function HalamanFormFaktur({
                 ]}
             />
             <form onSubmit={Simpan} noValidate aria-label="Catat faktur pembelian" className="flex flex-col gap-4">
-                <PanelKatalog judul="Faktur" idJudul="judul-faktur">
+                <Panel judul="Faktur" idJudul="judul-faktur">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <BidangPilihan
                             label="Pemasok"
@@ -215,9 +215,9 @@ export default function HalamanFormFaktur({
                         ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
                         galat={galat.Lampiran}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog judul="Penerimaan yang ditagih" idJudul="judul-penerimaan-faktur">
+                <Panel judul="Penerimaan yang ditagih" idJudul="judul-penerimaan-faktur">
                     {UuidPemasok === null ? (
                         <p className="text-isi text-teks-sekunder">Pilih pemasok untuk melihat penerimaan barangnya.</p>
                     ) : Penerimaan.length === 0 ? (
@@ -318,7 +318,7 @@ export default function HalamanFormFaktur({
                             <dd className="font-semibold tabular-nums">{FormatRupiah(selisih)}</dd>
                         </div>
                     </dl>
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

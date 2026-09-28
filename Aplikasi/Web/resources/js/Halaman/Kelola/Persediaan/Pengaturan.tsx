@@ -6,7 +6,7 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import GrupRadio from '@/Komponen/Katalog/GrupRadio';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -74,7 +74,7 @@ export default function HalamanPengaturanPersediaan({
             <DaftarGalatServer galat={galat} kecuali={['MetodeHpp', 'StokBolehMinus', 'BatasPersetujuanPenyesuaian']} />
 
             <form onSubmit={Simpan} aria-label="Pengaturan persediaan" className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Metode HPP"
                     idJudul="judul-metode-hpp"
                     keterangan="Cara menghitung harga pokok barang yang keluar. Berlaku untuk semua outlet."
@@ -102,9 +102,9 @@ export default function HalamanPengaturanPersediaan({
                                   keterangan: 'Pilih sebelum stok awal pertama diposting. Setelah itu metode terkunci.',
                               })}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog judul="Stok minus" idJudul="judul-stok-minus">
+                <Panel judul="Stok minus" idJudul="judul-stok-minus">
                     <KotakCentang
                         label="Izinkan penjualan dan pengeluaran saat stok tidak cukup (stok minus)"
                         nilai={bolehMinus}
@@ -118,9 +118,9 @@ export default function HalamanPengaturanPersediaan({
                     {galat.StokBolehMinus ? (
                         <p className="text-keterangan font-semibold text-bahaya">{galat.StokBolehMinus}</p>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Persetujuan penyesuaian stok"
                     idJudul="judul-batas-penyesuaian"
                     keterangan="Penyesuaian stok bernilai di atas batas ini harus disetujui pengguna lain dengan izin persediaan.penyesuaian.setujui."
@@ -132,7 +132,7 @@ export default function HalamanPengaturanPersediaan({
                         galat={galat.BatasPersetujuanPenyesuaian}
                         keterangan="Bawaan Rp 500.000. Isi 0 bila semua penyesuaian harus disetujui."
                     />
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap items-center gap-3">
                     <Tombol type="submit" memproses={memproses && !konfirmasi} disabled={!berubah}>

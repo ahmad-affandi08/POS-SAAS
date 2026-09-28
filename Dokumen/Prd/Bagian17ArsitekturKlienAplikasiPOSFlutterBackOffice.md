@@ -560,6 +560,29 @@ Tiga penjaga tambahan: `TataLetak/AturanBundelTes.ts` (tata letak cocok dengan f
 `Komponen/Formulir/AturanBidangTes.ts` (`Textarea` ber-`rows` wajib `field-sizing-fixed`), dan kasus baru di
 `Komponen/Situs/SitusTes.tsx` untuk judul bertingkat & daftar bernomor.
 
+**Satu permukaan panel (v2.54).** Pola panel bagian halaman ditulis ulang di **tiga tempat** dengan kelas yang
+berbeda-beda:
+
+7. `Komponen/Katalog/PanelKatalog` — komponen yang sudah benar, tetapi bernama domain padahal dipakai **40 berkas**
+   di luar katalog (Persediaan, Kasir, Produk, Pembelian, …), jadi halaman lain tidak merasa boleh memakainya.
+   Dua berkas malah mendefinisikan **fungsi `Panel` lokalnya sendiri** — `Komponen/Laporan/DasborPemilik` dan
+   `Halaman/Pengelola/Tenant/Tampil` — struktur sama persis, hanya lupa `rounded-panel` & `shadow-none`. Ditambah
+   itu, **45 dari 96 `Card` mentah** memakai bawaan shadcn (`rounded-xl`, `shadow-sm`). Akibatnya halaman yang
+   fungsinya serupa punya radius dan elevasi berbeda, dan sebagian tampak dibuat di periode desain yang lain.
+
+**Aturannya sekarang:** `Komponen/Kelola/Panel` adalah satu-satunya panel bagian halaman back-office —
+`rounded-panel`, tanpa bayangan, judul `text-subjudul font-semibold` yang sekaligus menjadi nama `region` sehingga
+pembaca layar bisa melompat antar bagian (`tingkat="h3"` bila panel berada di bawah judul bagian lain). Tanpa
+`judul`, ia hanya permukaan berpadding; `keterangan` & `aksi` **tidak tersedia** di bentuk itu (tipe union
+mencegahnya), karena keduanya tinggal di kepala panel dan akan hilang tanpa diketahui. Setiap `Card` yang dipakai
+langsung wajib membawa `rounded-panel` **dan** `shadow-none`, dan **dilarang mendefinisikan komponen `Panel`
+tandingan** di berkas lain. Dijaga `Komponen/Kelola/PanelTes.tsx`.
+
+Yang **belum** diseragamkan dan disengaja: padding & kerapatan (`p-4` vs `py-6` vs `px-4 py-3`) masih beragam di
+`Card` yang dipakai langsung. Menyeragamkannya mengubah tata letak 27 berkas yang tidak bisa diperiksa mata di sesi
+ini, jadi yang diseragamkan dulu permukaannya — radius & elevasi, yang justru jadi sebab halaman terasa dari era
+berbeda. Padding ikut rapi sendiri saat halamannya pindah ke `Panel`.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -5,7 +5,7 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import KerangkaMemuat from '@/Komponen/Persediaan/KerangkaMemuat';
 import PemilihProdukStok from '@/Komponen/Persediaan/PemilihProdukStok';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -314,7 +314,7 @@ export default function HalamanKartuStok({
                     </span>
                 </KeadaanKosong>
             ) : (
-                <PanelKatalog
+                <Panel
                     judul={`${Produk.Nama} di ${Gudang.Nama}`}
                     idJudul="judul-kartu-stok"
                     keterangan={
@@ -357,7 +357,7 @@ export default function HalamanKartuStok({
                         }
                         kosong={{ judul: 'Tidak ada mutasi stok di rentang tanggal ini.' }}
                     />
-                </PanelKatalog>
+                </Panel>
             )}
         </TataLetakAplikasi>
     );

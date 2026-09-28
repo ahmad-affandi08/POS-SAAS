@@ -14,7 +14,7 @@ import {
 import { LabelPenanda, LabelStatusLangganan } from '@/Komponen/Pengelola/Tenant/LabelLangganan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import Panel from '@/Komponen/Kelola/Panel';
 import { kelasDaftarTabPanel, kelasItemTabPanel } from '@/Komponen/Navigasi/TabTautan';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Komponen/Ui/tabs';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -514,19 +514,6 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                 </TabsContent>
             </Tabs>
         </TataLetakPengelola>
-    );
-}
-
-function Panel({ judul, children }: { judul: string; children: ReactNode }) {
-    return (
-        <Card className="gap-3 py-4">
-            <CardHeader className="px-4">
-                <CardTitle>
-                    <h2 className="text-subjudul font-semibold text-teks-utama">{judul}</h2>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 px-4">{children}</CardContent>
-        </Card>
     );
 }
 

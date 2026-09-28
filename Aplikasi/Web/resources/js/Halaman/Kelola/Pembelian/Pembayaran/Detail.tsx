@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     AlamatPembelian,
     DaftarJurnalDokumen,
@@ -74,7 +74,7 @@ export default function HalamanDetailPembayaran({
                 {p.Catatan ? <Keterangan label="Catatan">{p.Catatan}</Keterangan> : null}
             </KartuKeterangan>
 
-            <PanelKatalog judul="Faktur yang dibayar" idJudul="judul-alokasi-pembayaran">
+            <Panel judul="Faktur yang dibayar" idJudul="judul-alokasi-pembayaran">
                 <ul className="flex flex-col gap-2">
                     {Alokasi.map((a, i) => (
                         <li
@@ -101,7 +101,7 @@ export default function HalamanDetailPembayaran({
                         </li>
                     ))}
                 </ul>
-            </PanelKatalog>
+            </Panel>
 
             <DaftarJurnalDokumen jurnal={Jurnal} bolehLihat={Izin.LihatJurnal} />
             <DaftarRiwayatDokumen riwayat={Riwayat} />

@@ -46,7 +46,7 @@ export default function HalamanDaftarLegal({ Dokumen }: { Dokumen: KelompokDokum
                 const adaDraf = kelompok.Versi.some((versi) => versi.StatusTampilan === 'Draf');
 
                 return (
-                    <Card key={kelompok.Jenis} className="gap-2 px-5 py-5">
+                    <Card key={kelompok.Jenis} className="gap-2 px-5 py-5 rounded-panel shadow-none">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h2 className="text-subjudul font-semibold text-teks-utama">{kelompok.Label}</h2>
                             {bolehKelola && !adaDraf ? (

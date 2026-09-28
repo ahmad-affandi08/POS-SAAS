@@ -9,7 +9,7 @@ import type { AturanJenisProduk, BarisVarian, JenisProduk } from '@/Tipe/Katalog
 import type { Batas } from '@/Tipe/Organisasi';
 
 import { AmbilGalatBerawalan, HitungKombinasiVarian } from './BantuanKatalog';
-import PanelKatalog from './PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PenyuntingAtributVarian, { MaksimalKombinasi } from './PenyuntingAtributVarian';
 
 /** Jenis yang boleh menjadi anak varian (DesainF03 C.1 `CekBolehAnakVarian`). */
@@ -84,7 +84,7 @@ export default function PembuatVarian({
         );
 
     return (
-        <PanelKatalog judul="Buat varian" idJudul="judul-generator-varian">
+        <Panel judul="Buat varian" idJudul="judul-generator-varian">
             <PenyuntingAtributVarian
                 nilai={atribut}
                 saatBerubah={AturAtribut}
@@ -152,6 +152,6 @@ export default function PembuatVarian({
                     Buat {baru.length > 0 ? `${String(baru.length)} ` : ''}varian
                 </Tombol>
             </div>
-        </PanelKatalog>
+        </Panel>
     );
 }

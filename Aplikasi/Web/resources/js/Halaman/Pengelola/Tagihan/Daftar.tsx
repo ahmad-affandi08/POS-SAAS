@@ -143,7 +143,7 @@ const kolomTagihan: KolomTabel<BarisTagihan>[] = [
 /** Angka ringkasan antrean (kartu ringkas, tanpa warna: angka + teks sudah cukup). */
 function KartuRingkasan({ nilai, label }: { nilai: number; label: string }) {
     return (
-        <Card className="gap-1 px-4 py-3">
+        <Card className="gap-1 px-4 py-3 rounded-panel shadow-none">
             <span className="text-judul font-semibold tabular-nums text-teks-utama">{nilai}</span>
             <span className="text-label text-teks-sekunder">{label}</span>
         </Card>

@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -59,7 +59,7 @@ export function Keterangan({ label, children }: { label: string; children: React
 /** Riwayat status dokumen (urut waktu), dengan pelaku dan alasan bila ada. */
 export function PanelRiwayatDokumen({ riwayat, id }: { riwayat: RiwayatDokumenPersediaan[]; id: string }) {
     return (
-        <PanelKatalog judul="Riwayat status" idJudul={id}>
+        <Panel judul="Riwayat status" idJudul={id}>
             {riwayat.length === 0 ? (
                 <p className="text-isi text-teks-sekunder">Belum ada perubahan status.</p>
             ) : (
@@ -81,7 +81,7 @@ export function PanelRiwayatDokumen({ riwayat, id }: { riwayat: RiwayatDokumenPe
                     ))}
                 </ol>
             )}
-        </PanelKatalog>
+        </Panel>
     );
 }
 
@@ -100,7 +100,7 @@ export function PanelJurnalDokumen({
     kosong: string;
 }) {
     return (
-        <PanelKatalog judul="Jurnal" idJudul={`judul-${id}`} keterangan={keterangan}>
+        <Panel judul="Jurnal" idJudul={`judul-${id}`} keterangan={keterangan}>
             <TabelData
                 id={id}
                 label="Jurnal dokumen"
@@ -148,7 +148,7 @@ export function PanelJurnalDokumen({
                 ambilIdBaris={(j) => j.Uuid}
                 kosong={{ judul: kosong }}
             />
-        </PanelKatalog>
+        </Panel>
     );
 }
 

@@ -8,7 +8,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PemilihPelacakan from '@/Komponen/Persediaan/Dokumen/PemilihPelacakan';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
@@ -161,7 +161,7 @@ export default function HalamanFormTransferStok({
                 kecuali={['UuidGudangAsal', 'UuidGudangTujuan', 'Tanggal', 'Catatan', 'Baris']}
             />
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Dokumen"
                     idJudul="judul-dokumen-transfer"
                     keterangan="Stok berpindah saat transfer dikirim, bukan saat draf disimpan."
@@ -208,9 +208,9 @@ export default function HalamanFormTransferStok({
                         baris={2}
                         maksimal={500}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Barang"
                     idJudul="judul-barang-transfer"
                     keterangan={`${daftar.length.toLocaleString('id-ID')} dari ${BatasBaris.toLocaleString('id-ID')} baris`}
@@ -308,7 +308,7 @@ export default function HalamanFormTransferStok({
                             })}
                         </ul>
                     )}
-                </PanelKatalog>
+                </Panel>
 
                 <div className="sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
                     <Tombol type="submit" memproses={memproses}>

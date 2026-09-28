@@ -36,7 +36,7 @@ export default function TugasGagal({ Tugas }: { Tugas: Tugas }) {
                 <Link href="/operasional">Kembali ke dasbor operasional</Link>
             </Button>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
-            <Card className="py-4">
+            <Card className="py-4 rounded-panel shadow-none">
                 <CardContent className="flex flex-col gap-3 px-4">
                     <dl className="grid gap-2 text-label sm:grid-cols-2">
                         <div>
@@ -70,7 +70,7 @@ export default function TugasGagal({ Tugas }: { Tugas: Tugas }) {
             </Card>
 
             {bolehKelola ? (
-                <Card className="py-4">
+                <Card className="py-4 rounded-panel shadow-none">
                     <CardContent className="flex flex-col gap-3 px-4">
                         <div>
                             <Tombol memproses={memproses} onClick={() => router.post(`${alamat}/coba-ulang`, {}, opsi)}>

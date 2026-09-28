@@ -6,7 +6,7 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -58,7 +58,7 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                 aria-label="Pengaturan pembelian"
                 className="flex max-w-2xl flex-col gap-4"
             >
-                <PanelKatalog
+                <Panel
                     judul="Persetujuan pesanan pembelian"
                     idJudul="judul-batas-po"
                     keterangan="Pesanan dengan total di atas batas ini harus disetujui pengguna lain yang punya izin menyetujui pesanan pembelian."
@@ -71,8 +71,8 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         required
                         keterangan="Bawaan Rp 5.000.000. Isi 0 bila semua pesanan harus disetujui."
                     />
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Toleransi penerimaan barang"
                     idJudul="judul-toleransi"
                     keterangan="Batas barang diterima melebihi jumlah pesanan, dalam persen per baris."
@@ -88,8 +88,8 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         required
                         keterangan="Bawaan 0%: penerimaan tidak boleh melebihi jumlah pesanan."
                     />
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Draf pesanan otomatis"
                     idJudul="judul-draf-otomatis"
                     keterangan="Setiap pagi sistem menyiapkan draf pesanan pembelian untuk barang yang stoknya di bawah stok minimum, ke pemasok dan harga pembelian terakhir. Draf tetap diperiksa dan diajukan oleh Anda."
@@ -99,7 +99,7 @@ export default function HalamanPengaturanPembelian({ Pengaturan }: PropsPengatur
                         nilai={drafOtomatis}
                         saatBerubah={AturDrafOtomatis}
                     />
-                </PanelKatalog>
+                </Panel>
                 <div>
                     <Tombol type="submit" memproses={memproses} disabled={!berubah}>
                         Simpan pengaturan

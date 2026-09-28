@@ -36,7 +36,7 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
 
     return (
         <TataLetakAplikasi judul="Buat tiket bantuan">
-            <Card className="max-w-2xl p-5">
+            <Card className="max-w-2xl p-5 rounded-panel shadow-none">
                 <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                     <BidangPilihan
                         label="Kategori"

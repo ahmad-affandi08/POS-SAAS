@@ -9,7 +9,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     CariBarisGanda,
     CekSaldoMinus,
@@ -191,7 +191,7 @@ export default function HalamanFormStokAwal({
             />
 
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Dokumen"
                     idJudul="judul-dokumen-stok-awal"
                     keterangan="Satu dokumen untuk satu lokasi stok. Jumlah dan harga modal memakai satuan dasar produk."
@@ -236,9 +236,9 @@ export default function HalamanFormStokAwal({
                         baris={2}
                         maksimal={500}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Barang"
                     idJudul="judul-barang-stok-awal"
                     keterangan={`${daftarBaris.length.toLocaleString('id-ID')} dari ${BatasBaris.toLocaleString('id-ID')} baris`}
@@ -451,7 +451,7 @@ export default function HalamanFormStokAwal({
                             Nilai akhir dihitung server saat draf disimpan.
                         </span>
                     </div>
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

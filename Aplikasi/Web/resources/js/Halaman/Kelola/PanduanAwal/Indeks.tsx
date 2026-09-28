@@ -53,7 +53,7 @@ export default function HalamanIndeksPanduanAwal({ Progres }: PropsIndeksPanduan
                 </Pemberitahuan>
             ) : null}
 
-            <Card className="gap-0 py-0">
+            <Card className="gap-0 py-0 rounded-panel shadow-none">
                 <ol aria-label="Status setiap langkah" className="divide-y divide-garis">
                     {Progres.Langkah.map((item, indeks) => (
                         <li

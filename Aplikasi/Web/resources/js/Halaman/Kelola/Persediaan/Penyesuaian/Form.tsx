@@ -9,7 +9,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PemilihPelacakan from '@/Komponen/Persediaan/Dokumen/PemilihPelacakan';
 import BidangHpp from '@/Komponen/Persediaan/BidangHpp';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
@@ -183,7 +183,7 @@ export default function HalamanFormPenyesuaianStok({
                 kecuali={['UuidGudang', 'Tanggal', 'KodeAlasan', 'Keterangan', 'Baris']}
             />
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Dokumen"
                     idJudul="judul-dokumen-penyesuaian"
                     keterangan="Stok berubah setelah penyesuaian diajukan dan diposting, bukan saat draf disimpan."
@@ -250,9 +250,9 @@ export default function HalamanFormPenyesuaianStok({
                         maksimal={500}
                         required={opsiAlasan?.WajibKeterangan === true}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Barang"
                     idJudul="judul-barang-penyesuaian"
                     keterangan={`${daftar.length.toLocaleString('id-ID')} dari ${BatasBaris.toLocaleString('id-ID')} baris`}
@@ -400,7 +400,7 @@ export default function HalamanFormPenyesuaianStok({
                             );
                         })}
                     </ul>
-                </PanelKatalog>
+                </Panel>
 
                 <div className="sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
                     <Tombol type="submit" memproses={memproses}>

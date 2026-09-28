@@ -2,7 +2,8 @@ import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/Komponen/Ui/button';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import Panel from '@/Komponen/Kelola/Panel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
@@ -54,7 +55,7 @@ function KartuAngka({
     const KeAngka = (nilai: string) => (ukuran === 'uang' ? nilai : `${nilai}.00`);
 
     return (
-        <Card className="gap-1 py-4">
+        <Card className="gap-1 py-4 rounded-panel shadow-none">
             <CardHeader className="px-4">
                 <CardTitle>
                     <h3 className="text-label font-semibold text-teks-sekunder">{judul}</h3>
@@ -77,20 +78,6 @@ function KartuAngka({
                     />
                 </p>
             </CardContent>
-        </Card>
-    );
-}
-
-function Panel({ judul, aksi, children }: { judul: string; aksi?: ReactNode; children: ReactNode }) {
-    return (
-        <Card className="gap-3 py-4">
-            <CardHeader className="px-4">
-                <CardTitle>
-                    <h3 className="text-subjudul font-semibold text-teks-utama">{judul}</h3>
-                </CardTitle>
-                {aksi ? <CardAction>{aksi}</CardAction> : null}
-            </CardHeader>
-            <CardContent className="px-4">{children}</CardContent>
         </Card>
     );
 }
@@ -163,12 +150,13 @@ export default function DasborPemilik({ data }: { data: DataDasbor }) {
                 />
             </div>
 
-            <Panel judul="Penjualan bersih 14 hari terakhir">
+            <Panel tingkat="h3" judul="Penjualan bersih 14 hari terakhir">
                 <GrafikPenjualanHarian data={data.Grafik} judul="Penjualan bersih 14 hari terakhir" />
             </Panel>
 
             <div className="grid gap-3 lg:grid-cols-2">
                 <Panel
+                    tingkat="h3"
                     judul="Produk terlaris 7 hari"
                     aksi={<TautanPanel href="/kelola/laporan/penjualan?tab=produk">Semua produk</TautanPanel>}
                 >
@@ -188,7 +176,7 @@ export default function DasborPemilik({ data }: { data: DataDasbor }) {
                     )}
                 </Panel>
 
-                <Panel judul="Penjualan per outlet hari ini">
+                <Panel tingkat="h3" judul="Penjualan per outlet hari ini">
                     {data.PerOutlet.length === 0 ? (
                         <p className="text-isi text-teks-sekunder">Belum ada outlet.</p>
                     ) : (
@@ -206,6 +194,7 @@ export default function DasborPemilik({ data }: { data: DataDasbor }) {
                 </Panel>
 
                 <Panel
+                    tingkat="h3"
                     judul="Perlu perhatian"
                     aksi={
                         data.JumlahPerluTinjauan > 0 ? (
@@ -254,6 +243,7 @@ export default function DasborPemilik({ data }: { data: DataDasbor }) {
                 </Panel>
 
                 <Panel
+                    tingkat="h3"
                     judul="Selisih kas shift terbaru"
                     aksi={<TautanPanel href="/kelola/kasir/shift">Semua shift</TautanPanel>}
                 >

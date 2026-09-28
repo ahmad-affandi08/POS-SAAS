@@ -10,7 +10,7 @@ import PembuatVarian from '@/Komponen/Katalog/PembuatVarian';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
@@ -267,7 +267,7 @@ export default function HalamanDetailProduk({
             ) : null}
 
             <div className="grid gap-4 lg:grid-cols-3">
-                <PanelKatalog judul="Informasi produk" idJudul="judul-info" className="lg:col-span-2">
+                <Panel judul="Informasi produk" idJudul="judul-info" className="lg:col-span-2">
                     <dl>
                         <Baris label="Nama di struk">{Produk.NamaStruk ?? 'Sama dengan nama produk'}</Baris>
                         <Baris label="SKU">
@@ -304,8 +304,8 @@ export default function HalamanDetailProduk({
                             </Baris>
                         ) : null}
                     </dl>
-                </PanelKatalog>
-                <PanelKatalog judul="Gambar" idJudul="judul-gambar">
+                </Panel>
+                <Panel judul="Gambar" idJudul="judul-gambar">
                     <BidangGambar
                         label="Gambar produk"
                         berkas={gambar}
@@ -330,10 +330,10 @@ export default function HalamanDetailProduk({
                             </Tombol>
                         </div>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
             </div>
 
-            <PanelKatalog
+            <Panel
                 judul="Satuan & barcode"
                 idJudul="judul-satuan"
                 keterangan="Barcode internal (EAN-13 berawalan 20) untuk barang tanpa barcode pabrik."
@@ -346,10 +346,10 @@ export default function HalamanDetailProduk({
                     ambilIdBaris={(satuan) => satuan.Uuid}
                     kosong={{ judul: 'Belum ada satuan.' }}
                 />
-            </PanelKatalog>
+            </Panel>
 
             {induk ? (
-                <PanelKatalog judul={`Varian (${String(Varian.length)})`} idJudul="judul-varian">
+                <Panel judul={`Varian (${String(Varian.length)})`} idJudul="judul-varian">
                     <TabelData
                         id="katalog-produk-varian"
                         label="Daftar varian"
@@ -361,7 +361,7 @@ export default function HalamanDetailProduk({
                         alamatDetail={(varian) => `/kelola/produk/${varian.Uuid}`}
                         kosong={{ judul: 'Belum ada varian. Buat varian dari atribut di bawah.' }}
                     />
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {induk && Izin.Kelola ? (
@@ -387,7 +387,7 @@ export default function HalamanDetailProduk({
                 />
             ) : null}
 
-            <PanelKatalog judul="Riwayat perubahan" idJudul="judul-riwayat">
+            <Panel judul="Riwayat perubahan" idJudul="judul-riwayat">
                 {Riwayat.length === 0 ? (
                     <p className="text-isi text-teks-sekunder">Belum ada riwayat.</p>
                 ) : (
@@ -405,7 +405,7 @@ export default function HalamanDetailProduk({
                         ))}
                     </ol>
                 )}
-            </PanelKatalog>
+            </Panel>
         </TataLetakAplikasi>
     );
 }

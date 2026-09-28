@@ -73,7 +73,7 @@ export default function TiketBantuan({ Tiket, Lampiran }: { Tiket: DetailTiket; 
                     ini.
                 </Pemberitahuan>
             ) : Tiket.BisaDibalas ? (
-                <Card className="p-5">
+                <Card className="p-5 rounded-panel shadow-none">
                     <form onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
                         {Tiket.Status === 'Selesai' ? (
                             <Pemberitahuan jenis="info">Mengirim balasan akan membuka lagi tiket ini.</Pemberitahuan>

@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     AlamatPembelian,
     DaftarJurnalDokumen,
@@ -128,7 +128,7 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Jurnal, Riwayat, I
                 <Keterangan label="Dicatat oleh">{r.DibuatOleh ?? '—'}</Keterangan>
             </KartuKeterangan>
 
-            <PanelKatalog judul="Barang diretur" idJudul="judul-barang-retur">
+            <Panel judul="Barang diretur" idJudul="judul-barang-retur">
                 <TabelData
                     id="pembelian-retur-baris"
                     label={`Barang diretur, ${String(Baris.length)} baris`}
@@ -146,7 +146,7 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Jurnal, Riwayat, I
                         { label: 'Total retur', nilai: r.Total, tebal: true },
                     ]}
                 />
-            </PanelKatalog>
+            </Panel>
 
             <DaftarJurnalDokumen jurnal={Jurnal} bolehLihat={Izin.LihatJurnal} />
             <DaftarRiwayatDokumen riwayat={Riwayat} />

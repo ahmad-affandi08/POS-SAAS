@@ -104,7 +104,7 @@ export default function FormIsiBisnis({ url, isi, pilihan, bolehUbah }: PropsFor
     };
 
     return (
-        <Card className="gap-4">
+        <Card className="gap-4 rounded-panel shadow-none">
             <CardHeader>
                 <CardTitle>
                     <h2 className="text-subjudul font-semibold text-teks-utama">Isi bisnis</h2>

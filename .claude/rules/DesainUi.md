@@ -18,6 +18,7 @@ paths:
 - [ ] Web: setiap kelas `text-*` berasal dari token `@theme` (D-28); tidak ada kelas semantik karangan sendiri.
 - [ ] Web: tombol aksi bisnis memakai `Tombol` (spinner & `aria-busy`), bukan `Button` shadcn mentah (D-28).
 - [ ] Web: bilah yang menempel di `bottom-0` memakai `tepi-bawah-aman` supaya tidak tertimpa indikator home (D-28).
+- [ ] Web: panel bagian memakai `Komponen/Kelola/Panel`; `Card` langsung tetap `rounded-panel` + `shadow-none` (D-28).
 - [ ] Web: tabel memakai `TabelData` (TanStack Table + Query, §17.4.3) dengan cari, saring, urut, atur kolom, paginasi server, keadaan di URL.
 - [ ] Web: rapi di 360 / 768 / 1280px tanpa gulir horizontal halaman (§17.4.4).
 - [ ] POS: layar berada di bingkai Ruang Kerja Kasir, maksimal dua ketukan dari layar Jual, rapi di 360 / 800 / 1280dp (§17.2.7).

@@ -170,7 +170,7 @@ export default function HalamanUbahArtikelSitus({
                 </DialogKonfirmasi>
             ) : null}
             <form onSubmit={Simpan} className="flex flex-col gap-4" noValidate>
-                <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2">
+                <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2 rounded-panel shadow-none">
                     <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">Artikel</h2>
                     <BidangTeks
                         label="Judul"
@@ -263,7 +263,7 @@ export default function HalamanUbahArtikelSitus({
                     </div>
                 ) : null}
             </form>
-            <Card className="flex flex-col gap-3 px-6 py-6">
+            <Card className="flex flex-col gap-3 px-6 py-6 rounded-panel shadow-none">
                 <h2 className="text-subjudul font-semibold text-teks-utama">Pratinjau isi</h2>
                 {d.Isi.trim() === '' ? (
                     <p className="text-isi text-teks-sekunder">Isi artikel masih kosong.</p>

@@ -81,7 +81,7 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
                 <FormDraf dokumen={Dokumen} url={url} galatHalaman={props.errors} />
             ) : (
                 <article>
-                    <Card className="gap-3 px-6 py-6">
+                    <Card className="gap-3 px-6 py-6 rounded-panel shadow-none">
                         <h2 className="text-subjudul font-semibold text-teks-utama">{Dokumen.Judul}</h2>
                         {Dokumen.RingkasanPerubahan ? (
                             <p className="text-keterangan text-teks-sekunder">
@@ -131,7 +131,7 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
     };
 
     return (
-        <Card className="py-6">
+        <Card className="py-6 rounded-panel shadow-none">
             {konfirmasiTerbit ? (
                 <DialogKonfirmasi
                     judul={`Terbitkan ${dokumen.Label} versi ${dokumen.Versi}?`}

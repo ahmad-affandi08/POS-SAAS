@@ -10,7 +10,7 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
@@ -136,7 +136,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
             {Resep === null && !Izin.Kelola ? (
                 <KeadaanKosong judul="Belum ada resep untuk produk ini." />
             ) : (
-                <PanelKatalog
+                <Panel
                     judul={Resep === null ? 'Resep baru' : `Resep versi ${String(Resep.Versi)}`}
                     idJudul="judul-resep"
                     keterangan={
@@ -343,11 +343,11 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             </div>
                         </>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
             )}
 
             {Hpp.Status !== 'TanpaResep' ? (
-                <PanelKatalog judul="HPP resep (versi terbaru)" idJudul="judul-hpp">
+                <Panel judul="HPP resep (versi terbaru)" idJudul="judul-hpp">
                     {Hpp.Status === 'BelumTersedia' ? (
                         <p className="text-isi text-teks-sekunder">
                             HPP belum tersedia. HPP bahan muncul setelah stok awal diisi.
@@ -395,11 +395,11 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             </TableBody>
                         </Table>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {DaftarVersi.length > 0 ? (
-                <PanelKatalog judul="Riwayat versi" idJudul="judul-versi">
+                <Panel judul="Riwayat versi" idJudul="judul-versi">
                     <ol className="flex flex-col divide-y divide-garis">
                         {DaftarVersi.map((versi) => (
                             <li
@@ -424,7 +424,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                             </li>
                         ))}
                     </ol>
-                </PanelKatalog>
+                </Panel>
             ) : null}
         </TataLetakAplikasi>
     );

@@ -7,7 +7,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { DialogAlasan, Keterangan, LabelStatusDokumen } from '@/Komponen/Persediaan/Dokumen/KomponenDokumen';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
@@ -188,7 +188,7 @@ export default function HalamanBahanTerbuang({
                 />
             ) : null}
 
-            <PanelKatalog
+            <Panel
                 judul="Food cost"
                 idJudul="judul-food-cost"
                 keterangan="Nilai terbuang dibanding HPP penjualan pada periode yang sama."
@@ -225,7 +225,7 @@ export default function HalamanBahanTerbuang({
                         </span>
                     </Keterangan>
                 </dl>
-            </PanelKatalog>
+            </Panel>
 
             <AksiHalaman>
                 {Izin.Catat ? <Tombol onClick={() => AturCatat(true)}>Catat bahan terbuang</Tombol> : null}

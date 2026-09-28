@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import LangkahImpor, { JenisLabelImpor } from '@/Komponen/Katalog/LangkahImpor';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import TabelBarisGalatImpor from '@/Komponen/Katalog/TabelBarisGalatImpor';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -209,7 +209,7 @@ export default function HalamanDetailImporStokAwal({
             ) : null}
 
             {Impor.Status === 'Pratinjau' && Pratinjau !== null && !ubahPemetaan ? (
-                <PanelKatalog judul="Pratinjau" idJudul="judul-pratinjau-stok-awal">
+                <Panel judul="Pratinjau" idJudul="judul-pratinjau-stok-awal">
                     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         <Angka label="Baris valid" nilai={Impor.JumlahValid} />
                         <Angka label="Baris bermasalah" nilai={Impor.JumlahGalat} />
@@ -271,11 +271,11 @@ export default function HalamanDetailImporStokAwal({
                             </Tombol>
                         ) : null}
                     </div>
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {Impor.Status === 'Selesai' ? (
-                <PanelKatalog judul="Draf stok awal dibuat" idJudul="judul-hasil-impor-stok-awal">
+                <Panel judul="Draf stok awal dibuat" idJudul="judul-hasil-impor-stok-awal">
                     <p className="text-isi text-teks-utama">
                         Periksa setiap draf, lalu posting agar stok dan jurnal saldo awal tercatat.
                     </p>
@@ -285,7 +285,7 @@ export default function HalamanDetailImporStokAwal({
                         </p>
                     ) : null}
                     <TautanLaporan impor={Impor} />
-                </PanelKatalog>
+                </Panel>
             ) : null}
 
             {Dokumen.length > 0 || Impor.Status === 'Selesai' ? (

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     DialogAlasan,
     Keterangan,
@@ -137,7 +137,7 @@ export default function HalamanDetailOrderProduksi({
             ) : null}
             {dialog === null ? <DaftarGalatServer galat={galat} /> : null}
 
-            <PanelKatalog judul="Ringkasan" idJudul="judul-ringkasan-produksi">
+            <Panel judul="Ringkasan" idJudul="judul-ringkasan-produksi">
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <Keterangan label="Hasil produksi">
                         {Order.NamaProduk}
@@ -179,9 +179,9 @@ export default function HalamanDetailOrderProduksi({
                         </Keterangan>
                     ) : null}
                 </dl>
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog judul="Bahan" idJudul="judul-bahan-produksi">
+            <Panel judul="Bahan" idJudul="judul-bahan-produksi">
                 <TabelData
                     id="persediaan-produksi-bahan"
                     label={`Bahan produksi, ${String(Bahan.length)} baris`}
@@ -191,7 +191,7 @@ export default function HalamanDetailOrderProduksi({
                     cari="Cari nama bahan atau SKU"
                     kosong={{ judul: 'Order ini belum berisi bahan.' }}
                 />
-            </PanelKatalog>
+            </Panel>
 
             <PanelJurnalDokumen
                 id="persediaan-produksi-jurnal"

@@ -7,7 +7,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { FormatRupiah } from '@/Pustaka/Format';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -140,7 +140,7 @@ export default function HalamanPengaturanKasir({
                 ]}
             />
             <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4" noValidate>
-                <PanelKatalog
+                <Panel
                     judul="Persetujuan kas keluar"
                     idJudul="judul-kas-keluar"
                     keterangan="Kas keluar di atas batas ini wajib disetujui supervisor dengan PIN di aplikasi kasir. Isi 0 agar setiap kas keluar butuh persetujuan."
@@ -152,8 +152,8 @@ export default function HalamanPengaturanKasir({
                         galat={galat.BatasKasKeluar}
                         required
                     />
-                </PanelKatalog>
-                <PanelKatalog judul="Buka laci tanpa transaksi" idJudul="judul-buka-laci">
+                </Panel>
+                <Panel judul="Buka laci tanpa transaksi" idJudul="judul-buka-laci">
                     <KotakCentang
                         label="Wajib PIN supervisor untuk membuka laci tanpa transaksi"
                         nilai={laciPin}
@@ -163,8 +163,8 @@ export default function HalamanPengaturanKasir({
                         Setiap buka laci tanpa transaksi selalu dicatat beserta alasan dan nama kasirnya, dan tampil di
                         detail shift. Jika dicentang, supervisor dengan izin menyetujui kas keluar harus memasukkan PIN.
                     </p>
-                </PanelKatalog>
-                <PanelKatalog judul="Shift bersama" idJudul="judul-shift-bersama">
+                </Panel>
+                <Panel judul="Shift bersama" idJudul="judul-shift-bersama">
                     <KotakCentang
                         label="Beberapa kasir boleh berbagi satu laci dalam satu shift"
                         nilai={bersama}
@@ -175,8 +175,8 @@ export default function HalamanPengaturanKasir({
                         setiap kasir membuka shift sendiri dan hanya kasir itu atau supervisor yang bisa mencatat kas di
                         shiftnya.
                     </p>
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Diskon manual"
                     idJudul="judul-diskon-manual"
                     keterangan="Kasir yang punya izin diskon boleh memberi diskon sampai batas kasir. Di atasnya wajib disetujui supervisor dengan PIN, sampai batas persetujuan. Hanya Pemilik yang boleh memberi diskon lebih besar."
@@ -199,8 +199,8 @@ export default function HalamanPengaturanKasir({
                             required
                         />
                     </div>
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Pembulatan tunai"
                     idJudul="judul-pembulatan-tunai"
                     keterangan="Hanya bagian yang dibayar tunai yang dibulatkan. Selisihnya tercatat sebagai pendapatan lain."
@@ -226,8 +226,8 @@ export default function HalamanPengaturanKasir({
                             />
                         </div>
                     ) : null}
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Tutup shift"
                     idJudul="judul-tutup-shift"
                     keterangan="Selisih kas di atas toleransi wajib diberi alasan dan disetujui supervisor dengan PIN saat tutup shift. Isi 0 agar setiap selisih butuh persetujuan."
@@ -244,8 +244,8 @@ export default function HalamanPengaturanKasir({
                         galat={galat.ToleransiSelisihKas}
                         required
                     />
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Retur penjualan"
                     idJudul="judul-retur-penjualan"
                     keterangan="Retur di aplikasi kasir hanya bisa untuk penjualan paling lama sekian hari sejak hari bisnis penjualannya. Isi 0 agar retur hanya di hari yang sama."
@@ -258,8 +258,8 @@ export default function HalamanPengaturanKasir({
                         galat={galat.BatasHariRetur}
                         required
                     />
-                </PanelKatalog>
-                <PanelKatalog
+                </Panel>
+                <Panel
                     judul="Penjualan tempo"
                     idJudul="judul-penjualan-tempo"
                     keterangan="Penjualan tempo butuh PIN penyetuju bila melebihi limit kredit pelanggan atau pelanggan punya piutang yang lewat jatuh tempo lebih dari batas ini. Isi 0 agar piutang yang lewat jatuh tempo sehari pun butuh penyetuju."
@@ -272,7 +272,7 @@ export default function HalamanPengaturanKasir({
                         galat={galat.BatasHariLewatJatuhTempo}
                         required
                     />
-                </PanelKatalog>
+                </Panel>
                 <div className="flex flex-wrap items-center gap-3">
                     <Tombol type="submit" memproses={memproses} disabled={!berubah}>
                         Simpan pengaturan

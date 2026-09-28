@@ -6,7 +6,7 @@ import { PindahkanItem } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Alert, AlertDescription } from '@/Komponen/Ui/alert';
 import { Button } from '@/Komponen/Ui/button';
@@ -61,7 +61,7 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
                 </KeadaanKosong>
             ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <PanelKatalog
+                    <Panel
                         judul={`Terpasang (${String(terpasang.length)})`}
                         idJudul="judul-terpasang"
                         keterangan="Urutan di sini = urutan tampil di kasir."
@@ -129,8 +129,8 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
                                 ))}
                             </ol>
                         )}
-                    </PanelKatalog>
-                    <PanelKatalog judul={`Tersedia (${String(tersedia.length)})`} idJudul="judul-tersedia">
+                    </Panel>
+                    <Panel judul={`Tersedia (${String(tersedia.length)})`} idJudul="judul-tersedia">
                         {tersedia.length === 0 ? (
                             <p className="text-isi text-teks-sekunder">Semua kelompok pilihan sudah terpasang.</p>
                         ) : (
@@ -163,7 +163,7 @@ export default function HalamanPilihanProduk({ Kepala, Terpasang, Tersedia, Dari
                                 ))}
                             </ul>
                         )}
-                    </PanelKatalog>
+                    </Panel>
                 </div>
             )}
             {bolehUbah && semua.length > 0 ? (

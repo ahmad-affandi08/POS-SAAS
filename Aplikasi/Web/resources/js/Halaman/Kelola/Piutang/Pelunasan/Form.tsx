@@ -6,7 +6,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import { AlamatPiutang } from '@/Komponen/Piutang/BagianPiutang';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
@@ -110,7 +110,7 @@ export default function HalamanFormPelunasan({
                 ]}
             />
             <form onSubmit={Simpan} noValidate aria-label="Terima pelunasan piutang" className="flex flex-col gap-4">
-                <PanelKatalog judul="Pelunasan" idJudul="judul-pelunasan">
+                <Panel judul="Pelunasan" idJudul="judul-pelunasan">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <BidangPilihan
                             label="Pelanggan"
@@ -155,9 +155,9 @@ export default function HalamanFormPelunasan({
                         baris={2}
                         maksimal={500}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Penjualan yang dilunasi"
                     idJudul="judul-alokasi-piutang"
                     keterangan="Isi jumlah per penjualan. Kosongkan penjualan yang belum dibayar sekarang."
@@ -209,7 +209,7 @@ export default function HalamanFormPelunasan({
                         <dt className="font-semibold">Total diterima</dt>
                         <dd className="font-semibold tabular-nums">{FormatRupiah(total)}</dd>
                     </dl>
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

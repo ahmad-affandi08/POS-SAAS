@@ -109,7 +109,7 @@ export default function HalamanPerangkatPanduan({
                     .
                 </Pemberitahuan>
             ) : (
-                <Card className="p-4 sm:p-6">
+                <Card className="p-4 sm:p-6 rounded-panel shadow-none">
                     <form ref={elemenFormulir} onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                         <RingkasanGalatFormulir galat={formulir.errors} />
                         <div className="max-w-md">

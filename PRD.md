@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.53 |
+| Versi | 2.54 |
 | Tanggal | 27 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -115,6 +115,7 @@
 | 2.51 | **Kegagalan CI ketujuh: test tanpa asersi.** Setelah enam perbaikan sebelumnya, Pest melaporkan **0 test gagal** (189.301 asersi) tetapi job tetap merah karena satu test "risky": `KontenSitusBawaanTes > tidak ada dua blok sejenis berurutan dengan bentuk sama` hanya memanggil `expect()` di dalam `if`, dan sejak desain ulang D-25 tidak ada lagi blok sejenis yang berurutan — jadi test itu tidak melakukan asersi apa pun. Pelanggaran sekarang dikumpulkan lalu diasersi sekali (`expect($pelanggar)->toBe([])`, pola yang sudah dipakai penjaga lain), jadi aturannya tetap dijaga tanpa bergantung pada isi data. **Catatan untuk pemilik produk:** job PHP mengeluarkan **2.261 peringatan** `file_get_contents(.env): No such file or directory` (satu per boot aplikasi), yang membuat log CI 41.000 baris dan menyembunyikan test yang gagal di antaranya. Perbaikannya ada di sisi CI (menyiapkan berkas env untuk job test), dan agent dilarang membaca atau menulis `.env`, jadi ini diserahkan ke pemilik produk. |
 | 2.52 | **D-28 primitif & token dijaga CI (§17.4.11)**, menutup temuan UI-04, UI-05, UI-12 & UI-15 audit frontend. `text-judul-kecil` (9 heading Pelanggan › Detail & Saldo sesi › Detail) dan `text-body` (Pembayaran › Gerbang) tidak pernah ada di `@theme` — Tailwind tidak mengeluh untuk kelas asing, jadi heading itu diam-diam turun ke ukuran warisan; keduanya kini memakai token yang sama dengan 80 heading lain. **52 tombol aksi bisnis di 25 berkas** pindah dari `Button` shadcn mentah ke `Komponen/Formulir/Tombol` (spinner, "Memproses…", `aria-busy`, `h-8 pointer-coarse:h-11`, `text-label font-semibold`), termasuk `DialogKonfirmasi` yang dipakai semua dialog konfirmasi. Sembilan bilah `fixed`/`sticky bottom-0` mendapat kelas `tepi-bawah-aman` (`env(safe-area-inset-bottom)` di bawah 640px) dan ketiga blade aplikasi memakai `viewport-fit=cover`, sehingga tombol "Simpan"/"Bayar" tidak lagi tertimpa indikator home iPhone. Tiga penjaga baru (`AturanTipografiTes`, `AturanTombolTes`, `TepiAmanTes`), masing-masing dibuktikan menangkap regresinya sebelum dipakai. Suite frontend penuh: 92 berkas, 589 test. |
 | 2.53 | **Dokumen legal tampil seperti dokumen (D-28, §17.4.11)**, menutup UI-01, UI-02, UI-03 & UI-11 audit frontend. `DokumenLegal.Isi` memang Markdown (§13.6) tetapi halaman publik merendernya sebagai teks mentah, jadi `#` dan `-` tampil sebagai tanda baca; sekarang memakai `Komponen/Situs/TeksKaya` — kontrak teks-kaya yang sudah dipakai artikel blog, tanpa HTML sama sekali — diperluas dengan `# ` → `h2`, `### ` → `h4`, dan daftar bernomor `1. ` (`## ` tetap `h3` supaya artikel yang sudah terbit tidak berubah). Halaman legal publik pindah ke `Halaman/Situs/DokumenLegal` + grup rute situs, jadi ia berada di dalam shell `payou.id` (kepala, kaki, jalan kembali) dan root view ber-meta SEO; menaruh `TataLetakSitus` di `Halaman/Publik/` justru akan mematikan halamannya karena bundle `Aplikasi` tidak pernah dibagikan prop `Situs`. `Textarea` shadcn memakai `field-sizing-content` sehingga `rows` tidak berpengaruh: editor legal (`rows={20}`) dan Tagihan › Detail (`rows={3}`) karena itu setinggi dua baris; editor legal kini memakai `BidangTeksPanjang` dengan prop `kode` baru. Tiga penjaga tambahan (`AturanBundelTes`, `AturanBidangTes`, kasus baru `SitusTes`), masing-masing dibuktikan menangkap regresinya. Suite frontend penuh: 94 berkas, 595 test. |
+| 2.54 | **Satu permukaan panel (D-28, §17.4.11)**, menutup UI-06 audit frontend. Pola panel ditulis ulang di tiga tempat: `PanelKatalog` (nama domain padahal dipakai 40 berkas di luar katalog) dan **fungsi `Panel` lokal** di `Komponen/Laporan/DasborPemilik` serta `Halaman/Pengelola/Tenant/Tampil` — struktur sama persis, hanya lupa `rounded-panel` & `shadow-none`. Ditambah **45 dari 96 `Card` mentah** yang memakai bawaan shadcn (`rounded-xl`, `shadow-sm`), sehingga halaman berfungsi serupa punya radius & elevasi berbeda. Ketiganya disatukan jadi `Komponen/Kelola/Panel` (judul opsional; tanpa judul hanya permukaan, dan `keterangan`/`aksi` dicegah tipe union supaya tidak hilang tanpa diketahui), dipakai **42 berkas**, dan 45 `Card` mentah diberi permukaan panel. Penjaga baru `Komponen/Kelola/PanelTes.tsx`: setiap `Card` wajib `rounded-panel` + `shadow-none`, dan dilarang ada komponen `Panel` tandingan; keduanya dibuktikan menangkap regresinya. Padding & kerapatan sengaja belum diseragamkan (perlu diperiksa mata di 27 berkas). Suite frontend penuh: 95 berkas, 599 test. |
 | 2.28 | **Situs pemasaran bagian B** (§13.9): **blog** `/blog` & `/blog/{slug}` (tabel `ArtikelSitus`, konsol *Situs → Artikel*: tulis draf, terbitkan, tarik, hapus; kategori, penulis, sampul, SEO per artikel; `og:type article` + JSON-LD `BlogPosting`; artikel terbit masuk peta situs; 12 artikel per halaman, saring kategori, artikel terkait). Blok baru **Formulir kontak / minta demo** (`FormulirProspek`) → `POST /prospek` (persetujuan data wajib, perangkap bot, `throttle:5,1`, maks. 3 per nomor per 24 jam); tabel `ProspekSitus` (nomor & email terenkripsi, sidik HMAC nomor & IP, retensi: Spam 30 hari, lainnya 24 bulan lewat `situs:bersihkan-prospek` 03.30 WIB); email ke tim (`Prospek.EmailNotifikasi` atau email kontak) tanpa data kontak pengunjung; konsol *Situs → Prospek* (TabelData, cari nama/usaha/kota/nomor, saring status & jenis, ubah status + catatan tercatat audit; kontak utuh hanya `situs.kelola`); pengaturan **Google Analytics 4 & Meta Pixel** yang dimuat hanya setelah pengunjung menekan *Terima* di bilah persetujuan cookie (UU 27/2022 PDP). Jalur `prospek` & `blog` dicadangkan dari slug halaman. |
 | 2.27 | **Laporan anti-fraud** (F-14, OWN-09, BR-09.3): tab "Anti-fraud" di laporan penjualan per kasir: transaksi, void (nilai & void tunai ≤ 10 menit setelah bayar), retur, diskon, buka laci tanpa transaksi, kas kurang saat tutup shift, dan **skor risiko 0–100** yang bisa dijelaskan (alasan berteks, pembanding rata-rata kasir lain); ekspor CSV. Usulan grosir dicatat sebagai pertanyaan terbuka §25 no. 27 (menunggu keputusan pemilik). |
 | 2.26 | **Laundry bagian 2** (aplikasi kasir): baris "Tiket laundry" di keranjang (bila laundry aktif) membuka isian layanan reguler/express (perkiraan selesai otomatis), berat kg dan/atau item, parfum, catatan, nama & WhatsApp pemilik (tanpa pelanggan); blok `Laundry` ikut `Penjualan.Buat` dan tersimpan lokal (skema Drift 15, kolom `Penjualan.Laundry`) sehingga struk & cetak ulang memuat rincian cucian + QR lacak; Riwayat › Cucian (online): siap diambil/cari, maju status, tandai diambil, cetak nota ber-QR. |
@@ -3984,6 +3985,29 @@ Aturan lama (`AturanWarnaTes`, kursor, kepala tabel) tetap berlaku.
 Tiga penjaga tambahan: `TataLetak/AturanBundelTes.ts` (tata letak cocok dengan folder & bundle halamannya),
 `Komponen/Formulir/AturanBidangTes.ts` (`Textarea` ber-`rows` wajib `field-sizing-fixed`), dan kasus baru di
 `Komponen/Situs/SitusTes.tsx` untuk judul bertingkat & daftar bernomor.
+
+**Satu permukaan panel (v2.54).** Pola panel bagian halaman ditulis ulang di **tiga tempat** dengan kelas yang
+berbeda-beda:
+
+7. `Komponen/Katalog/PanelKatalog` — komponen yang sudah benar, tetapi bernama domain padahal dipakai **40 berkas**
+   di luar katalog (Persediaan, Kasir, Produk, Pembelian, …), jadi halaman lain tidak merasa boleh memakainya.
+   Dua berkas malah mendefinisikan **fungsi `Panel` lokalnya sendiri** — `Komponen/Laporan/DasborPemilik` dan
+   `Halaman/Pengelola/Tenant/Tampil` — struktur sama persis, hanya lupa `rounded-panel` & `shadow-none`. Ditambah
+   itu, **45 dari 96 `Card` mentah** memakai bawaan shadcn (`rounded-xl`, `shadow-sm`). Akibatnya halaman yang
+   fungsinya serupa punya radius dan elevasi berbeda, dan sebagian tampak dibuat di periode desain yang lain.
+
+**Aturannya sekarang:** `Komponen/Kelola/Panel` adalah satu-satunya panel bagian halaman back-office —
+`rounded-panel`, tanpa bayangan, judul `text-subjudul font-semibold` yang sekaligus menjadi nama `region` sehingga
+pembaca layar bisa melompat antar bagian (`tingkat="h3"` bila panel berada di bawah judul bagian lain). Tanpa
+`judul`, ia hanya permukaan berpadding; `keterangan` & `aksi` **tidak tersedia** di bentuk itu (tipe union
+mencegahnya), karena keduanya tinggal di kepala panel dan akan hilang tanpa diketahui. Setiap `Card` yang dipakai
+langsung wajib membawa `rounded-panel` **dan** `shadow-none`, dan **dilarang mendefinisikan komponen `Panel`
+tandingan** di berkas lain. Dijaga `Komponen/Kelola/PanelTes.tsx`.
+
+Yang **belum** diseragamkan dan disengaja: padding & kerapatan (`p-4` vs `py-6` vs `px-4 py-3`) masih beragam di
+`Card` yang dipakai langsung. Menyeragamkannya mengubah tata letak 27 berkas yang tidak bisa diperiksa mata di sesi
+ini, jadi yang diseragamkan dulu permukaannya — radius & elevasi, yang justru jadi sebab halaman terasa dari era
+berbeda. Padding ikut rapi sendiri saat halamannya pindah ke `Panel`.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

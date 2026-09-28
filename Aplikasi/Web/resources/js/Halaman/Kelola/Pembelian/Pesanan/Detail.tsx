@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     AlamatPembelian,
     DaftarDokumenTerkait,
@@ -197,7 +197,7 @@ export default function HalamanDetailPesanan({ Pesanan, Baris, Penerimaan, Riway
                 {Pesanan.Catatan ? <Keterangan label="Catatan">{Pesanan.Catatan}</Keterangan> : null}
             </KartuKeterangan>
 
-            <PanelKatalog judul="Barang" idJudul="judul-barang-pesanan">
+            <Panel judul="Barang" idJudul="judul-barang-pesanan">
                 <TabelData
                     id="pembelian-pesanan-baris"
                     label={`Barang pesanan, ${String(Baris.length)} baris`}
@@ -219,7 +219,7 @@ export default function HalamanDetailPesanan({ Pesanan, Baris, Penerimaan, Riway
                         { label: 'Total', nilai: Pesanan.Total, tebal: true },
                     ]}
                 />
-            </PanelKatalog>
+            </Panel>
 
             <DaftarDokumenTerkait
                 judul="Penerimaan barang"

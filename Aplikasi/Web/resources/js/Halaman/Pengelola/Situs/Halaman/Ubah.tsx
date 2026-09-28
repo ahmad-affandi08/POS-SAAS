@@ -181,7 +181,7 @@ export default function HalamanUbahHalamanSitus({ Halaman: halaman, LabelBlok, S
                 </DialogKonfirmasi>
             ) : null}
             <form onSubmit={Simpan} className="flex flex-col gap-4" noValidate>
-                <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2">
+                <Card className="grid gap-4 px-6 py-6 sm:grid-cols-2 rounded-panel shadow-none">
                     <h2 className="text-subjudul font-semibold text-teks-utama sm:col-span-2">Halaman & SEO</h2>
                     <BidangTeks
                         label="Judul halaman"
@@ -276,7 +276,7 @@ export default function HalamanUbahHalamanSitus({ Halaman: halaman, LabelBlok, S
                         ) : null;
                     })}
                     {Izin.Kelola ? (
-                        <Card className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end">
+                        <Card className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end rounded-panel shadow-none">
                             <div className="sm:w-80">
                                 <BidangPilihan
                                     label="Jenis blok baru"

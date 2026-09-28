@@ -58,7 +58,7 @@ export default function HalamanDaftarPeran({ Peran, DaftarIzin }: PropsDaftar) {
                 </DialogFormulir>
             ) : null}
 
-            <Card className="gap-0 py-0">
+            <Card className="gap-0 py-0 rounded-panel shadow-none">
                 <ul className="flex flex-col divide-y divide-garis">
                     {Peran.map((peran) => (
                         <li key={peran.Uuid} className="flex flex-col gap-2 px-4 py-3">

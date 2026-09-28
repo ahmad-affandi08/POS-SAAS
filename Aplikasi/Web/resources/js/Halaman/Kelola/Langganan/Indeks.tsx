@@ -122,7 +122,7 @@ function BannerStatus({ langganan, hariMasaTenggang }: { langganan: RingkasanLan
 
 function RingkasanStatus({ langganan }: { langganan: RingkasanLangganan }) {
     return (
-        <Card aria-labelledby="judul-status" role="region" className="px-4 py-3">
+        <Card aria-labelledby="judul-status" role="region" className="px-4 py-3 rounded-panel shadow-none">
             <h2 id="judul-status" className="sr-only">
                 Status langganan
             </h2>
@@ -189,7 +189,7 @@ function FormPilihPaket({ pilihan, langganan }: { pilihan: PilihanPaket[]; langg
     }
 
     return (
-        <Card className="p-4">
+        <Card className="p-4 rounded-panel shadow-none">
             <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
                 <h2 className="text-subjudul font-semibold text-teks-utama">
                     {perpanjangan ? 'Perpanjang langganan' : 'Pilih paket berbayar'}

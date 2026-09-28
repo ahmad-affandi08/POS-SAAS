@@ -132,7 +132,7 @@ export default function HalamanTagihanLangganan({
 
 function DaftarRekening({ rekening, total }: { rekening: Rekening[]; total: string }) {
     return (
-        <Card aria-labelledby="judul-rekening" role="region" className="gap-1 px-4 py-3">
+        <Card aria-labelledby="judul-rekening" role="region" className="gap-1 px-4 py-3 rounded-panel shadow-none">
             <h2 id="judul-rekening" className="text-subjudul font-semibold text-teks-utama">
                 Transfer ke rekening berikut
             </h2>

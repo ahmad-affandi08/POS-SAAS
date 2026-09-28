@@ -7,7 +7,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     BuatKunciBaris,
     HitungTotalBaris,
@@ -116,7 +116,7 @@ export default function HalamanFormPesanan({
                 kecuali={['UuidPemasok', 'UuidGudang', 'Tanggal', 'PerkiraanTiba', 'TerminHari', 'Ongkir', 'Catatan']}
             />
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Dokumen"
                     idJudul="judul-dokumen-pesanan"
                     keterangan="Pesanan tidak mengubah stok. Stok bertambah saat barang diterima."
@@ -193,9 +193,9 @@ export default function HalamanFormPesanan({
                         baris={2}
                         maksimal={500}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Barang"
                     idJudul="judul-barang-pesanan"
                     keterangan={`${baris.length.toLocaleString('id-ID')} dari ${MaksimalBaris.toLocaleString('id-ID')} baris`}
@@ -229,7 +229,7 @@ export default function HalamanFormPesanan({
                             persetujuan pengguna lain yang berizin menyetujui pesanan pembelian.
                         </Pemberitahuan>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

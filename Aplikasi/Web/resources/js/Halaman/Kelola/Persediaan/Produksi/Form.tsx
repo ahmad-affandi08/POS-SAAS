@@ -10,7 +10,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaan/PemilihProdukStok';
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
@@ -212,7 +212,7 @@ export default function HalamanFormOrderProduksi({
                 ]}
             />
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog
+                <Panel
                     judul="Hasil produksi"
                     idJudul="judul-hasil-produksi"
                     keterangan="Stok berubah setelah order diposting dari halaman detail, bukan saat draf disimpan."
@@ -326,9 +326,9 @@ export default function HalamanFormOrderProduksi({
                         baris={2}
                         maksimal={500}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Bahan"
                     idJudul="judul-bahan-produksi"
                     keterangan={`${bahan.length.toLocaleString('id-ID')} dari ${MaksBahan.toLocaleString('id-ID')} baris. Isi dari resep, lalu ubah jumlah sesuai pemakaian nyata.`}
@@ -410,7 +410,7 @@ export default function HalamanFormOrderProduksi({
                             </li>
                         ))}
                     </ul>
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex justify-end gap-2">
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">

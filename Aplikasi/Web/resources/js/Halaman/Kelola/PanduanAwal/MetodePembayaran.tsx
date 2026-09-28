@@ -292,7 +292,11 @@ function FormTambahMetode({
     };
 
     return (
-        <Card aria-labelledby="judul-tambah-metode" className="gap-4 p-4 sm:p-6" role="region">
+        <Card
+            aria-labelledby="judul-tambah-metode"
+            className="gap-4 p-4 sm:p-6 rounded-panel shadow-none"
+            role="region"
+        >
             <CardHeader className="px-0">
                 <h2 id="judul-tambah-metode" className="text-subjudul font-semibold text-teks-utama">
                     Tambah metode pembayaran

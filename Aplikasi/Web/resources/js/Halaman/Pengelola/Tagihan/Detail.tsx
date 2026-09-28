@@ -68,7 +68,7 @@ function KartuPembayaran({
 }) {
     return (
         <article>
-            <Card className="gap-3 px-4 py-4">
+            <Card className="gap-3 px-4 py-4 rounded-panel shadow-none">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <LabelStatus jenis={JenisLabelPembayaran(pembayaran.Status)} teks={pembayaran.LabelStatus} />
                     <a

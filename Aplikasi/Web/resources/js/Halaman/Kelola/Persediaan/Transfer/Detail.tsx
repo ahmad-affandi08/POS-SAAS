@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     DialogAlasan,
     Keterangan,
@@ -206,7 +206,7 @@ export default function HalamanDetailTransferStok({
             ) : null}
             {dialog === null ? <DaftarGalatServer galat={galat} /> : null}
 
-            <PanelKatalog judul="Ringkasan" idJudul="judul-ringkasan-transfer">
+            <Panel judul="Ringkasan" idJudul="judul-ringkasan-transfer">
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <Keterangan label="Dari">
                         {Transfer.NamaGudangAsal}
@@ -248,9 +248,9 @@ export default function HalamanDetailTransferStok({
                     ) : null}
                     {Transfer.Catatan ? <Keterangan label="Catatan">{Transfer.Catatan}</Keterangan> : null}
                 </dl>
-            </PanelKatalog>
+            </Panel>
 
-            <PanelKatalog judul="Barang" idJudul="judul-barang-transfer">
+            <Panel judul="Barang" idJudul="judul-barang-transfer">
                 <TabelData
                     id="persediaan-transfer-baris"
                     label={`Barang transfer, ${String(Baris.length)} baris`}
@@ -260,7 +260,7 @@ export default function HalamanDetailTransferStok({
                     cari="Cari nama produk atau SKU"
                     kosong={{ judul: 'Transfer ini belum berisi barang.' }}
                 />
-            </PanelKatalog>
+            </Panel>
 
             <PanelJurnalDokumen
                 id="persediaan-transfer-jurnal"

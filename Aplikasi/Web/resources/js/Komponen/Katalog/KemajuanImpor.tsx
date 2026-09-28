@@ -7,7 +7,7 @@ import { Progress } from '@/Komponen/Ui/progress';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 import type { RingkasanImpor, StatusImpor, StatusImporProduk } from '@/Tipe/Katalog';
 
-import PanelKatalog from './PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 
 /** Status yang masih berjalan di antrean: halaman menanyakan status tiap 3 detik (DesainF03 E.10). */
 export const StatusBerjalan: StatusImporProduk[] = ['Diunggah', 'Memvalidasi', 'Menerapkan'];
@@ -56,7 +56,7 @@ export default function KemajuanImpor({ impor }: { impor: RingkasanImpor }) {
     }, [status, impor.Status]);
 
     return (
-        <PanelKatalog
+        <Panel
             judul={impor.Status === 'Menerapkan' ? 'Mengimpor produk' : 'Memeriksa data'}
             idJudul="judul-kemajuan-impor"
         >
@@ -85,6 +85,6 @@ export default function KemajuanImpor({ impor }: { impor: RingkasanImpor }) {
             <p className="text-keterangan text-teks-sekunder">
                 Anda boleh meninggalkan halaman ini. Proses tetap berjalan dan hasilnya tersimpan di riwayat impor.
             </p>
-        </PanelKatalog>
+        </Panel>
     );
 }

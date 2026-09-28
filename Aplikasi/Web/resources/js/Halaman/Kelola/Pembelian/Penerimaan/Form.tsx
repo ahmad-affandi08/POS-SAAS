@@ -9,7 +9,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import {
     HitungTotalBaris,
     PeriksaBaris,
@@ -212,7 +212,7 @@ export default function HalamanFormPenerimaan({
                 ]}
             />
             <form onSubmit={Simpan} noValidate aria-label={judul} className="flex flex-col gap-4">
-                <PanelKatalog judul="Dokumen" idJudul="judul-dokumen-penerimaan">
+                <Panel judul="Dokumen" idJudul="judul-dokumen-penerimaan">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {Pesanan ? (
                             <>
@@ -313,9 +313,9 @@ export default function HalamanFormPenerimaan({
                         ukuranMaksimalKb={Lampiran.UkuranMaksimalKb}
                         galat={galat.Lampiran}
                     />
-                </PanelKatalog>
+                </Panel>
 
-                <PanelKatalog
+                <Panel
                     judul="Barang diterima"
                     idJudul="judul-barang-penerimaan"
                     keterangan={
@@ -435,7 +435,7 @@ export default function HalamanFormPenerimaan({
                             {galat.Baris ?? 'Isi jumlah diterima minimal satu baris.'}
                         </p>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
 
                 <div className="flex flex-wrap gap-2">
                     <Tombol type="submit" memproses={memproses}>

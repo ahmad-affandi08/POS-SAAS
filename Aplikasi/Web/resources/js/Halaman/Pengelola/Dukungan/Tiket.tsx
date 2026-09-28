@@ -79,7 +79,7 @@ export default function TiketDukungan({ Tiket, Penangan, PilihanStatus, PilihanP
                 </div>
 
                 <aside className="flex flex-col gap-4">
-                    <Card className="gap-2 px-4 py-4">
+                    <Card className="gap-2 px-4 py-4 rounded-panel shadow-none">
                         <h2 className="text-subjudul font-semibold text-teks-utama">Rincian</h2>
                         <dl className="grid grid-cols-1 gap-2 text-label">
                             <Rincian
@@ -151,7 +151,7 @@ function FormBalasan({
     };
 
     return (
-        <Card className="px-4 py-4">
+        <Card className="px-4 py-4 rounded-panel shadow-none">
             <form onSubmit={Kirim} className="flex flex-col gap-3" noValidate>
                 {!masihTerbuka ? (
                     <Pemberitahuan jenis="info">
@@ -232,7 +232,7 @@ function PanelAksi({ tiket, alamat, masihTerbuka, penangan, pilihanStatus, pilih
     );
 
     return (
-        <Card className="gap-4 px-4 py-4">
+        <Card className="gap-4 px-4 py-4 rounded-panel shadow-none">
             <h2 className="text-subjudul font-semibold text-teks-utama">Tindakan</h2>
             {masihTerbuka ? (
                 <div className="flex flex-col gap-2">

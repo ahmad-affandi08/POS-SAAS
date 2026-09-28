@@ -8,7 +8,7 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
-import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
+import Panel from '@/Komponen/Kelola/Panel';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import { Button } from '@/Komponen/Ui/button';
 import {
@@ -93,7 +93,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
             {komponen.length === 0 && !Izin.Kelola ? (
                 <KeadaanKosong judul="Paket ini belum berisi produk." />
             ) : (
-                <PanelKatalog
+                <Panel
                     judul="Isi paket"
                     idJudul="judul-komponen"
                     keterangan="Stok setiap komponen terpotong saat paket terjual. Alokasi harga membagi harga paket ke tiap komponen untuk laporan; kosongkan semua agar dibagi otomatis menurut harga dasar."
@@ -232,7 +232,7 @@ export default function HalamanKomponenProduk({ Kepala, Komponen, Izin }: PropsK
                             </div>
                         </>
                     ) : null}
-                </PanelKatalog>
+                </Panel>
             )}
         </TataLetakAplikasi>
     );

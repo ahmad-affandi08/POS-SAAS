@@ -188,7 +188,7 @@ function BagianMerek({ merek, bolehKelola }: { merek: Merek[]; bolehKelola: bool
                     />
                 </DialogFormulir>
             ) : null}
-            <Card className="gap-0 py-0">
+            <Card className="gap-0 py-0 rounded-panel shadow-none">
                 <ul className="divide-y divide-garis">
                     {merek.map((baris) => (
                         <li
