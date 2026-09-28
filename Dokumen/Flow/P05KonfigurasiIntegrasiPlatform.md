@@ -41,4 +41,4 @@
 - **Tahap berikutnya (belum):** opsi sub-merchant (xenPlatform/Midtrans) untuk toko yang belum punya akun merchant.
 
 
-**Lingkup Fase 0 (PGL-05):** Email (SMTP), CAPTCHA (Cloudflare Turnstile, BR-00.4), penyimpanan objek (S3-compatible). Konfigurasi dengan lingkungan yang sama dengan server (Staging untuk server non-produksi) diterapkan ke aplikasi saat berjalan. Gateway billing (P-08), WhatsApp BSP, Sentry/uptime, dan daftar gateway tenant ditambahkan bersama flow pemakainya; **FCM sudah masuk sejak v2.69** (jenis `Push`, penyedia `Fcm`) bersama OWN-03.
+**Lingkup Fase 0 (PGL-05):** Email (SMTP), CAPTCHA (Cloudflare Turnstile, BR-00.4), penyimpanan objek (S3-compatible). Konfigurasi dengan lingkungan yang sama dengan server (Staging untuk server non-produksi) diterapkan ke aplikasi saat berjalan. WhatsApp BSP, Sentry/uptime, dan daftar gateway tenant ditambahkan bersama flow pemakainya; **FCM sudah masuk sejak v2.69** (jenis `Push`, penyedia `Fcm`) bersama OWN-03, dan **gateway billing sejak v2.70** (jenis `GerbangBilling`, penyedia `MidtransBilling`) bersama P-08.

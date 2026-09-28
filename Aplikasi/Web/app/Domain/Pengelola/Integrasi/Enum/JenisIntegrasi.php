@@ -16,6 +16,7 @@ enum JenisIntegrasi: string
     case GerbangPembayaran = 'GerbangPembayaran';
     case Whatsapp = 'Whatsapp';
     case Push = 'Push';
+    case GerbangBilling = 'GerbangBilling';
 
     /**
      * Jenis yang dikonfigurasi di tingkat platform. v2.06: gerbang pembayaran diatur tiap tenant (akun merchant
@@ -38,6 +39,7 @@ enum JenisIntegrasi: string
             self::GerbangPembayaran => PenyediaIntegrasi::Midtrans,
             self::Whatsapp => PenyediaIntegrasi::MetaCloud,
             self::Push => PenyediaIntegrasi::Fcm,
+            self::GerbangBilling => PenyediaIntegrasi::MidtransBilling,
         };
     }
 
@@ -58,6 +60,7 @@ enum JenisIntegrasi: string
             self::GerbangPembayaran => 'Gerbang pembayaran (QRIS dinamis)',
             self::Whatsapp => 'WhatsApp',
             self::Push => 'Push notification (aplikasi Pemilik & POS)',
+            self::GerbangBilling => 'Gerbang pembayaran tagihan langganan',
         };
     }
 }
