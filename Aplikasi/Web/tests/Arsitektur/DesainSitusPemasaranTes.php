@@ -19,13 +19,20 @@ use Symfony\Component\Finder\Finder;
  * (nilai token web & Flutter wajib sama) dan oleh larangan warna lepas di luar `TokenWarna.dart`.
  */
 
-/** Berkas sumber frontend yang diperiksa (TSX/TS/CSS di `resources/js`). */
+/**
+ * Berkas sumber frontend yang diperiksa (TSX/TS/CSS di `resources/js`).
+ *
+ * Berkas penjaga (`*Tes.ts`/`*Tes.tsx`) dikecualikan: isinya justru **menyebut** pola terlarang sebagai bahan uji
+ * atau di dalam penjelasan regresinya, dan berkas penjaga tidak pernah ikut dirender ke antarmuka. Tanpa
+ * pengecualian ini, menulis penjelasan yang jelas di sebuah penjaga akan menggagalkan penjaga yang lain.
+ */
 function BerkasFrontend(): Finder
 {
     return Finder::create()
         ->files()
         ->in(resource_path('js'))
-        ->name(['*.tsx', '*.ts', '*.css']);
+        ->name(['*.tsx', '*.ts', '*.css'])
+        ->notName(['*Tes.ts', '*Tes.tsx']);
 }
 
 /**
@@ -39,6 +46,10 @@ function JalurBolehD25(): array
     return [
         'Gaya/Aplikasi.css',
         'Gaya/UtilitasKomponen.css',
+        // Registry tailwind-merge `cn` (D-28): wajib memuat SELURUH nama token `--text-*`, termasuk skala hero
+        // pemasaran. Tanpa terdaftar di sini, tailwind-merge menganggap token itu warna teks dan membuang
+        // ukurannya — jadi daftar ini bagian dari definisi tokennya, bukan pemakaian di antarmuka.
+        'Komponen/Ui/utils.ts',
         'Komponen/Situs/',
         'Halaman/Situs/',
         'TataLetak/TataLetakSitus.tsx',
