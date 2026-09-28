@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Integrasi\Enum;
 
 use App\Domain\Integrasi\Enum\PenyediaGerbang;
+use App\Domain\Pengelola\Integrasi\Penguji\PengujiFcm;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiGerbangPembayaran;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiKoneksi;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiKoneksiPenyedia;
@@ -53,6 +54,7 @@ enum PenyediaIntegrasi: string
     case Wablas = 'Wablas';
     case StarSender = 'StarSender';
     case Watzap = 'Watzap';
+    case Fcm = 'Fcm';
 
     private const MODE = ['Kunci' => 'Mode', 'Label' => 'Mode', 'Jenis' => 'Pilihan', 'Wajib' => true, 'Opsi' => ['Sandbox', 'Produksi'], 'Bawaan' => 'Sandbox', 'Keterangan' => 'Sandbox untuk uji coba tanpa uang sungguhan.'];
 
@@ -63,6 +65,7 @@ enum PenyediaIntegrasi: string
             self::S3 => JenisIntegrasi::Penyimpanan,
             self::Midtrans, self::Xendit, self::Tripay, self::Duitku, self::Ipaymu, self::Doku => JenisIntegrasi::GerbangPembayaran,
             self::MetaCloud, self::Fonnte, self::Wablas, self::StarSender, self::Watzap => JenisIntegrasi::Whatsapp,
+            self::Fcm => JenisIntegrasi::Push,
             default => JenisIntegrasi::Email,
         };
     }
@@ -154,6 +157,8 @@ enum PenyediaIntegrasi: string
                 ['Kunci' => 'KunciRahasia', 'Label' => 'Secret key Wablas (bila diaktifkan)', 'Wajib' => false],
             ],
             self::StarSender, self::Watzap => [['Kunci' => 'KunciApi', 'Label' => 'API key', 'Wajib' => true]],
+            // Satu berkas JSON berisi client_email, private_key, dan project_id; tidak ada yang perlu diketik terpisah.
+            self::Fcm => [['Kunci' => 'AkunLayanan', 'Label' => 'Akun layanan Firebase (isi berkas JSON)', 'Wajib' => true]],
             default => [],
         };
     }
@@ -169,6 +174,7 @@ enum PenyediaIntegrasi: string
             JenisIntegrasi::Penyimpanan => PengujiS3::class,
             JenisIntegrasi::GerbangPembayaran => PengujiGerbangPembayaran::class,
             JenisIntegrasi::Whatsapp => PengujiWhatsapp::class,
+            JenisIntegrasi::Push => PengujiFcm::class,
         };
     }
 
@@ -198,6 +204,7 @@ enum PenyediaIntegrasi: string
             self::Wablas => 'Wablas (tidak resmi)',
             self::StarSender => 'StarSender (tidak resmi)',
             self::Watzap => 'Watzap (tidak resmi)',
+            self::Fcm => 'Firebase Cloud Messaging',
         };
     }
 
@@ -221,6 +228,7 @@ enum PenyediaIntegrasi: string
             self::Hostinger => '',
             self::Midtrans, self::Xendit, self::Tripay, self::Duitku, self::Ipaymu, self::Doku => $this->AmbilPenyediaGerbang()?->AmbilKeterangan() ?? '',
             self::MetaCloud => 'Resmi dan aman dari pemblokiran. Di luar 24 jam percakapan wajib memakai templat yang disetujui Meta (berbayar per percakapan).',
+            self::Fcm => 'Satu proyek Firebase melayani Android & iOS sekaligus; sertifikat APNs diunggah di Firebase, bukan di sini. Isi berkas akun layanan dari Setelan proyek → Akun layanan → Buat kunci baru.',
             self::Fonnte, self::Wablas, self::StarSender, self::Watzap => 'Tidak resmi (WhatsApp Web): murah dan mudah, tetapi nomor bisa diblokir WhatsApp bila mengirim massal. Pakai nomor khusus, bukan nomor utama usaha.',
             default => '',
         };
