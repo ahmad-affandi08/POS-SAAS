@@ -299,7 +299,7 @@ class LingkunganUji {
   late final RepositoriPenjualan repositoriPenjualan = RepositoriPenjualan(db, repositori);
   late final KlienPos klien = KlienPos(
     alamatDasar: Uri.parse('https://kasir.contoh.id/'),
-    versiAplikasi: '0.1.0',
+    versiAplikasi: '1.0.0',
     ambilToken: () => rahasia.isi[PenyimpanRahasia.kunciToken],
     klien: server.BuatKlien(),
   );
