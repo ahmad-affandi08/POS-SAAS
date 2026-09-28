@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -30,6 +31,36 @@ class LayananPerangkat {
   final Future<GambarMonokrom?> Function(Uint8List byte)? ubahLogo;
 
   Future<bool> CekSudahAktif() async => (await rahasia.Baca(PenyimpanRahasia.kunciToken)) != null;
+
+  /// Batas tunggu pemeriksaan perangkat saat kasir masuk. Sengaja pendek: kasir menunggu di depan pelanggan, dan
+  /// jaringan yang lambat tidak boleh menahannya lebih lama dari ini.
+  static const Duration batasPeriksaMasuk = Duration(seconds: 6);
+
+  /// Keputusan pemilik produk (v2.64): saat online, perangkat yang sudah dicabut tidak boleh masuk sama sekali.
+  ///
+  /// Memakai `konfigurasi-aplikasi` karena itu endpoint bertoken paling murah dan **tidak** ikut dijaga
+  /// `PastikanLanggananPosAktif`, jadi yang diuji benar-benar keabsahan perangkat, bukan status langganan.
+  ///
+  /// `true` = server menjawab dan perangkat masih berlaku. `false` = server tidak terjangkau (offline atau
+  /// melewati [batasPeriksaMasuk]); masuk tetap diizinkan karena kasir harus bisa bekerja tanpa internet
+  /// (BR-06.3). Perangkat dicabut = lempar `GalatKasir`; token belum dihapus di sini, penanganannya lewat kait
+  /// `KlienPos.saatPerangkatDitolak` seperti jalur pencabutan lain.
+  Future<bool> PeriksaMasihBerlaku() async {
+    try {
+      await klien.AmbilKonfigurasiAplikasi().timeout(batasPeriksaMasuk);
+      return true;
+    } on TimeoutException {
+      return false;
+    } on GalatJaringan {
+      return false;
+    } on GalatApi catch (galat) {
+      if (galat.CekPerangkatDitolak()) {
+        throw GalatKasir(galat.kode, galat.pesan);
+      }
+      // Galat server lain bukan urusan kasir yang sedang masuk.
+      return true;
+    }
+  }
 
   Future<void> Aktifkan(String kode) async {
     // Spasi & tanda hubung dibuang dulu, sama seperti KodeAktivasi::Normalkan() di server: kode boleh ditulis

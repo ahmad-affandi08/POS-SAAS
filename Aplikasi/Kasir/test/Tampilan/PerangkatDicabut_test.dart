@@ -20,7 +20,7 @@ void main() {
     'Galat': {'Kode': 'PerangkatDicabut', 'Pesan': 'Perangkat ini sudah dicabut dari back-office.'},
   }, 403);
 
-  testWidgets('dicabut saat aplikasi terbuka: kasir masuk dengan PIN, lalu langsung kembali ke layar aktivasi', (
+  testWidgets('dicabut lalu online: masuk kasir diblokir di papan PIN, bukan masuk dulu baru dikeluarkan', (
     tester,
   ) async {
     final u = LingkunganUji.Buat();
@@ -31,14 +31,38 @@ void main() {
     expect(find.text('Siapa yang bertugas?'), findsOneWidget);
 
     u.server.penangan = Dicabut;
+    u.server.permintaan.clear();
     await tester.tap(find.text('Rina Wulandari'));
     await tester.pump();
     await KetikPin(tester, KasusPin(0)['Pin']! as String);
     await Tunggu(tester);
 
+    // Keputusan pemilik produk (v2.64): masuk diperiksa ke server dulu. Endpointnya `konfigurasi-aplikasi` karena
+    // bertoken, murah, dan di luar penjaga langganan — yang diuji keabsahan perangkat, bukan status langganan.
+    // Tidak ada permintaan data awal/katalog: itu baru terjadi kalau sesi sempat terbuka.
+    expect(u.server.permintaan.map((p) => p.url.path).toSet(), {'/api/pos/v1/konfigurasi-aplikasi'});
+    expect(find.byType(RuangKerja), findsNothing);
     expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
     expect(find.textContaining('sudah dicabut dari back-office'), findsOneWidget);
-    expect(find.byType(RuangKerja), findsNothing);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('offline tetap boleh masuk: pemblokiran hanya saat server menjawab (BR-06.3)', (tester) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(() async {
+      await u.SiapkanAktif();
+      await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
+    });
+    u.server.penangan = (_) async => throw http.ClientException('offline');
+    await PasangAplikasi(tester, u);
+
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    await Tunggu(tester);
+
+    expect(find.byType(RuangKerja), findsOneWidget, reason: 'Kasir harus tetap bisa bekerja tanpa internet.');
+    expect(find.text('Offline'), findsOneWidget);
     await Lepas(tester, u);
   });
 

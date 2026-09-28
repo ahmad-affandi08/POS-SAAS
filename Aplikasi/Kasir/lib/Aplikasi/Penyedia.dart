@@ -899,11 +899,13 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
 
   Future<void> Masuk(StafLokal staf, String pin) async {
     final kasir = await ref.read(penyediaLayananMasuk).Masuk(staf, pin);
+    // PIN diverifikasi lokal supaya kasir tetap bisa masuk tanpa internet (BR-06.3), jadi pencabutan perangkat
+    // tidak ketahuan dari PIN saja. Keputusan pemilik produk (v2.64): saat online, masuk **diblokir** — galatnya
+    // dilempar supaya papan PIN menyebut alasannya, sementara kait penolakan token membawa aplikasi kembali ke
+    // layar aktivasi. Offline (atau server tidak menjawab dalam batas waktu): masuk tetap diizinkan.
+    final tersambung = await ref.read(penyediaLayananPerangkat).PeriksaMasihBerlaku();
+    ref.read(penyediaKoneksi.notifier).Tandai(tersambung ? StatusKoneksi.Online : StatusKoneksi.Offline);
     state = KeadaanSesi(TahapSesi.Masuk, kasir: kasir);
-    // PIN diverifikasi lokal supaya kasir tetap bisa masuk tanpa internet (BR-06.3), jadi perangkat yang sudah
-    // dicabut tidak ketahuan saat masuk. Pemeriksaan ini berjalan di latar: online → sesi langsung berakhir dan
-    // kembali ke layar aktivasi; offline → kasir tetap bisa bekerja dan pencabutan ketahuan saat tersambung.
-    unawaited(SegarkanData());
   }
 
   void Keluar() => state = const KeadaanSesi(TahapSesi.PilihKasir);
