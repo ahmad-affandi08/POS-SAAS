@@ -223,7 +223,7 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/sektor', ['KodeTemplate' => 'FNB-CAF', 'SektorLain' => ['RTL-GEN']])
             ->assertRedirect('/kelola/panduan-awal/pajak')
             ->assertSessionHasNoErrors()
-            ->assertSessionHas('Kilat', 'Template Kafe / kedai kopi versi 1 diterapkan: 45 akun, 5 kategori, 7 satuan, 1 kelompok pajak ditambahkan.');
+            ->assertSessionHas('Kilat', 'Template Kafe / kedai kopi versi 1 diterapkan: 46 akun, 5 kategori, 7 satuan, 1 kelompok pajak ditambahkan.');
 
         expect(($tenant->fresh()?->Pengaturan ?? [])['Sektor'])->toBe(['FNB-CAF', 'RTL-GEN']);
 
