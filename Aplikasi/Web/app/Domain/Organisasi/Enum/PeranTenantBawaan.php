@@ -104,6 +104,10 @@ enum PeranTenantBawaan: string
                 IzinTenant::LaundryKelola,
                 // F-05f: bahan terbuang outlet.
                 IzinTenant::PersediaanTerbuangCatat,
+                // Grosir (F-12): SO, surat jalan, dan faktur penjualan outletnya; BR-12.6 penyetuju limit kredit,
+                // sejajar dengan PenjualanTempoSetujui untuk penjualan tempo di kasir.
+                IzinTenant::GrosirKelola,
+                IzinTenant::GrosirSetujuiKredit,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -123,6 +127,10 @@ enum PeranTenantBawaan: string
                 IzinTenant::ReservasiKelola,
                 IzinTenant::LaundryKelola,
                 IzinTenant::PersediaanTerbuangCatat,
+                // Grosir: Supervisor boleh mengelola dokumennya, tetapi persetujuan limit kredit (BR-12.6) TIDAK
+                // diberikan bawaan — itu keputusan atas risiko piutang usaha, bukan kelonggaran satu transaksi seperti
+                // diskon atau selisih kas. Owner bisa menambahkannya lewat peran kustom bila memang diinginkan.
+                IzinTenant::GrosirKelola,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],

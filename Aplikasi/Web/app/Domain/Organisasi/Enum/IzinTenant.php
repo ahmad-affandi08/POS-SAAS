@@ -82,6 +82,10 @@ enum IzinTenant: string
     case LaundryKelola = 'laundry.kelola';
     // F-05f: mencatat bahan terbuang (waste) dari kasir/dapur atau back-office.
     case PersediaanTerbuangCatat = 'persediaan.terbuang.catat';
+    // Grosir (F-12, §9.7): sales order, surat jalan, dan faktur penjualan grosir.
+    case GrosirKelola = 'grosir.kelola';
+    // BR-12.6: mengonfirmasi SO grosir yang melampaui limit kredit atau pelanggannya punya piutang lewat jatuh tempo.
+    case GrosirSetujuiKredit = 'grosir.setujui-kredit';
 
     public function AmbilLabel(): string
     {
@@ -133,6 +137,8 @@ enum IzinTenant: string
             self::ReservasiKelola => 'Melihat & mengelola reservasi layanan (buat, konfirmasi, check-in, pindah jadwal, batal)',
             self::LaundryKelola => 'Melihat tiket laundry & mengubah status proses cucian (cuci, kering, setrika, siap, diambil)',
             self::PersediaanTerbuangCatat => 'Mencatat bahan/menu terbuang (waste) dari kasir, dapur, atau back-office',
+            self::GrosirKelola => 'Mengelola pesanan grosir, surat jalan, dan faktur penjualan',
+            self::GrosirSetujuiKredit => 'Menyetujui pesanan grosir yang melampaui limit kredit',
         };
     }
 
@@ -149,7 +155,7 @@ enum IzinTenant: string
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat,
-            self::ReservasiKelola, self::LaundryKelola => 'Penjualan',
+            self::ReservasiKelola, self::LaundryKelola, self::GrosirKelola, self::GrosirSetujuiKredit => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola, self::TindakanTinjau => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

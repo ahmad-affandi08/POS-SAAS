@@ -37,6 +37,9 @@ enum JenisDokumenBernomor: string
     case Reservasi = 'Reservasi';
     // F-05e: order produksi `PR/{LOKASI}/{YYMM}/{SEQ4}` disusun `PenomorDokumenPersediaan`.
     case OrderProduksi = 'OrderProduksi';
+    // Grosir (F-12, §9.7, D-32): sales order grosir `PG/{OUTLET}/{YYMM}/{SEQ4}` disusun `PenomorGrosir`.
+    // Awalan `SO` tidak dipakai karena sudah milik `StokOpname`.
+    case PesananGrosir = 'PesananGrosir';
 
     public function AmbilAwalan(): string
     {
@@ -56,6 +59,7 @@ enum JenisDokumenBernomor: string
             self::PesananSendiri => 'QR',
             self::Reservasi => 'RS',
             self::OrderProduksi => 'PR',
+            self::PesananGrosir => 'PG',
         };
     }
 
@@ -65,7 +69,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi, self::PesananGrosir => 4,
         };
     }
 
