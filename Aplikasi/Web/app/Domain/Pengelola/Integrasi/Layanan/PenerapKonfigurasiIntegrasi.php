@@ -56,8 +56,11 @@ final class PenerapKonfigurasiIntegrasi
                 ]),
                 // v2.06: gerbang pembayaran diatur tiap tenant (`GerbangPembayaranTenant`); baris platform lama diabaikan.
                 JenisIntegrasi::GerbangPembayaran => null,
-                // v2.04: dibaca adaptor di App\Domain\Integrasi\Whatsapp.
-                JenisIntegrasi::Whatsapp => config([
+                // v2.04 WhatsApp, v2.69 Push (FCM), v2.70 gerbang billing: bentuknya sama — penyedia, pengaturan,
+                // dan kredensial diterbitkan apa adanya, lalu dibaca layanan pemakainya lewat `config('integrasi.*')`.
+                // `match` ini tanpa `default` dengan sengaja: menambah jenis integrasi baru tanpa menerbitkannya di
+                // sini akan gagal keras, bukan diam-diam tidak aktif. Dijaga `PenerapKonfigurasiIntegrasiTes`.
+                JenisIntegrasi::Whatsapp, JenisIntegrasi::Push, JenisIntegrasi::GerbangBilling => config([
                     'integrasi.'.$konfigurasi->Jenis->value => [
                         'Penyedia' => $konfigurasi->Penyedia->value,
                         'Pengaturan' => $konfigurasi->Pengaturan,
