@@ -190,7 +190,7 @@ function FormTolak({ uuid }: { uuid: string }) {
                     required
                     aria-invalid={formulir.errors.Alasan ? true : undefined}
                     aria-describedby={formulir.errors.Alasan ? `${id}-galat` : undefined}
-                    className="text-isi"
+                    className="h-auto py-2 text-isi field-sizing-fixed"
                 />
                 {formulir.errors.Alasan ? (
                     <p id={`${id}-galat`} className="text-keterangan font-semibold text-bahaya">

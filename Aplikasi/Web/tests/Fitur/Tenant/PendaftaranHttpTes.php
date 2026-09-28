@@ -385,7 +385,7 @@ describe('Badan email verifikasi (D-26)', function (): void {
 describe('Dokumen legal publik', function (): void {
     it('menampilkan versi yang berlaku; jenis tidak dikenal 404', function (): void {
         $this->get('/legal/syarat-ketentuan')
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Publik/DokumenLegal')->where('Dokumen.Versi', 1));
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Situs/DokumenLegal')->where('Dokumen.Versi', 1));
         $this->get('/legal/tidak-ada')->assertNotFound();
     });
 });

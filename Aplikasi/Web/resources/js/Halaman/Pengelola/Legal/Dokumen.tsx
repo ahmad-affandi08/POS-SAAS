@@ -1,13 +1,13 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
+import TeksKaya from '@/Komponen/Situs/TeksKaya';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { Card } from '@/Komponen/Ui/card';
-import { Label } from '@/Komponen/Ui/label';
-import { Textarea } from '@/Komponen/Ui/textarea';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -88,7 +88,7 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
                                 Perubahan: {Dokumen.RingkasanPerubahan}
                             </p>
                         ) : null}
-                        <div className="whitespace-pre-wrap text-isi text-teks-utama">{Dokumen.Isi}</div>
+                        <TeksKaya teks={Dokumen.Isi} className="text-isi text-teks-utama" />
                     </Card>
                 </article>
             )}
@@ -99,7 +99,6 @@ export default function HalamanDokumenLegal({ Dokumen }: { Dokumen: DokumenLegal
 type PropsFormDraf = { dokumen: DokumenLegal; url: string; galatHalaman: Record<string, string> };
 
 function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
-    const idIsi = useId();
     const [menerbitkan, AturMenerbitkan] = useState(false);
     const formulir = useForm({
         Jenis: dokumen.Jenis,
@@ -177,25 +176,17 @@ function FormDraf({ dokumen, url, galatHalaman }: PropsFormDraf) {
                         galat={formulir.errors.RingkasanPerubahan}
                     />
                 </div>
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                    <Label htmlFor={idIsi} className="text-label font-semibold text-teks-utama">
-                        Isi dokumen (Markdown)
-                    </Label>
-                    <Textarea
-                        id={idIsi}
-                        rows={20}
-                        value={formulir.data.Isi}
-                        onChange={(peristiwa) => formulir.setData('Isi', peristiwa.target.value)}
+                <div className="sm:col-span-2">
+                    <BidangTeksPanjang
+                        label="Isi dokumen"
+                        keterangan="# judul, ## subjudul, ### sub-subjudul, - butir, 1. bernomor, **tebal**, [teks](tautan). HTML tidak dirender."
+                        nilai={formulir.data.Isi}
+                        saatBerubah={(nilai) => formulir.setData('Isi', nilai)}
+                        galat={formulir.errors.Isi}
+                        baris={20}
+                        kode
                         required
-                        aria-invalid={formulir.errors.Isi ? true : undefined}
-                        aria-describedby={formulir.errors.Isi ? `${idIsi}-galat` : undefined}
-                        className="font-mono text-isi"
                     />
-                    {formulir.errors.Isi ? (
-                        <p id={`${idIsi}-galat`} className="text-keterangan font-semibold text-bahaya">
-                            {formulir.errors.Isi}
-                        </p>
-                    ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
                     <Tombol type="submit" memproses={formulir.processing}>

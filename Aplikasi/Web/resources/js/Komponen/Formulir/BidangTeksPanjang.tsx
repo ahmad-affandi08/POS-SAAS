@@ -1,6 +1,7 @@
 import { useId } from 'react';
 
 import { Textarea } from '@/Komponen/Ui/textarea';
+import { cn } from '@/Komponen/Ui/utils';
 
 import {
     BuatKelasKontrol,
@@ -19,6 +20,8 @@ type PropsBidangTeksPanjang = {
     keterangan?: string;
     baris?: number;
     maksimal?: number;
+    /** Isi berupa kode/markup: font Mono, sejajar dengan `BidangTeks`. */
+    kode?: boolean;
     required?: boolean;
 };
 
@@ -31,6 +34,7 @@ export default function BidangTeksPanjang({
     keterangan,
     baris = 5,
     maksimal,
+    kode = false,
     required,
 }: PropsBidangTeksPanjang) {
     const id = useId();
@@ -47,7 +51,7 @@ export default function BidangTeksPanjang({
                 onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
                 aria-invalid={galat ? true : undefined}
                 aria-describedby={GabungDijelaskanOleh(keterangan && `${id}-keterangan`, galat && `${id}-galat`)}
-                className={BuatKelasKontrol(galat, 'h-auto py-2 field-sizing-fixed')}
+                className={BuatKelasKontrol(galat, cn('h-auto py-2 field-sizing-fixed', kode && 'font-mono'))}
             />
             {keterangan ? <KeteranganBidang id={`${id}-keterangan`}>{keterangan}</KeteranganBidang> : null}
             {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}

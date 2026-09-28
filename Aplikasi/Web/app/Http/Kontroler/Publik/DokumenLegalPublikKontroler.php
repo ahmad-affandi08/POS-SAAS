@@ -14,6 +14,9 @@ use Inertia\Response;
 
 /**
  * Halaman publik dokumen legal versi yang berlaku (P-06, F-00 langkah 1), misal `/legal/syarat-ketentuan`.
+ *
+ * D-28: halamannya ikut bundle & shell situs pemasaran (`Situs/DokumenLegal` + perantara `BagikanDataSitus`),
+ * karena alamatnya ada di domain pemasaran dan pengunjung sampai ke sini dari kaki situs.
  * `?versi=N` menampilkan versi terbit tertentu, termasuk yang terjadwal selama masa pengumuman (BR-P06.5).
  */
 final class DokumenLegalPublikKontroler extends Kontroler
@@ -26,7 +29,7 @@ final class DokumenLegalPublikKontroler extends Kontroler
         $dokumen = $versi > 0 ? $berlaku->CariVersiTerbit($jenisDokumen, $versi) : $berlaku->Cari($jenisDokumen, now());
         abort_if($dokumen === null, 404);
 
-        return Inertia::render('Publik/DokumenLegal', [
+        return Inertia::render('Situs/DokumenLegal', [
             'Dokumen' => [
                 'Label' => $jenisDokumen->AmbilLabel(),
                 'Judul' => $dokumen->Judul,

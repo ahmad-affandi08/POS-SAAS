@@ -44,8 +44,12 @@ function RenderInline(teks: string, kunci: string): ReactNode[] {
 }
 
 /**
- * Teks bebas situs (D-21) tanpa HTML: paragraf dipisah baris kosong, `## ` judul, `- ` butir daftar, baris baru di
- * dalam paragraf dipertahankan, **tebal**, dan [tautan](url).
+ * Teks bebas tanpa HTML (D-21, dipakai juga dokumen legal D-28): paragraf dipisah baris kosong, `# `/`## `/`### `
+ * judul bertingkat, `- ` butir daftar, `1. ` daftar bernomor, baris baru di dalam paragraf dipertahankan,
+ * **tebal**, dan [tautan](url).
+ *
+ * Tidak ada HTML yang dirender sama sekali — React meng-escape isinya, dan tautan disaring `CekTautanAman` — jadi
+ * isi yang ditulis pengelola tidak bisa menyuntikkan skrip ke halaman publik.
  */
 export default function TeksKaya({ teks, className }: { teks: string; className?: string }) {
     const blok = teks.split(/\n{2,}/);
@@ -65,11 +69,43 @@ export default function TeksKaya({ teks, className }: { teks: string; className?
                     );
                 }
 
+                // Daftar bernomor: setiap baris diawali "1. ", "2. ", dan seterusnya. Nomor awalnya dipakai apa
+                // adanya supaya pasal yang dikutip sebagian tetap bernomor benar.
+                if (baris.length > 0 && baris.every((b) => /^\s*\d+\.\s/.test(b))) {
+                    const mulai = Number(/^\s*(\d+)\./.exec(baris[0] ?? '')?.[1] ?? 1);
+
+                    return (
+                        <ol key={i} start={mulai} className="flex list-decimal flex-col gap-1 pl-5">
+                            {baris.map((b, j) => (
+                                <li key={j}>{RenderInline(b.replace(/^\s*\d+\.\s/, ''), `${i}-${j}`)}</li>
+                            ))}
+                        </ol>
+                    );
+                }
+
+                // Judul bertingkat. `## ` tetap `h3` seperti sebelumnya supaya artikel blog yang sudah terbit tidak
+                // berubah tampilannya; `# ` dan `### ` menambah tingkat di atas & di bawahnya.
+                if (baris.length === 1 && baris[0]?.startsWith('### ')) {
+                    return (
+                        <h4 key={i} className="text-subjudul font-semibold text-teks-utama">
+                            {baris[0].slice(4)}
+                        </h4>
+                    );
+                }
+
                 if (baris.length === 1 && baris[0]?.startsWith('## ')) {
                     return (
                         <h3 key={i} className="text-judul font-bold text-teks-utama">
                             {baris[0].slice(3)}
                         </h3>
+                    );
+                }
+
+                if (baris.length === 1 && baris[0]?.startsWith('# ')) {
+                    return (
+                        <h2 key={i} className="text-tampilan font-bold text-teks-utama">
+                            {baris[0].slice(2)}
+                        </h2>
                     );
                 }
 

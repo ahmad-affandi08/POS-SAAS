@@ -127,6 +127,25 @@ describe('Situs pemasaran D-21: utilitas', () => {
         expect(screen.queryByRole('link', { name: 'jahat' })).toBeNull();
         expect(screen.getAllByRole('listitem')).toHaveLength(2);
     });
+
+    it('TeksKaya merender judul bertingkat & daftar bernomor yang dipakai dokumen legal (D-28)', () => {
+        // `## ` tetap h3 seperti sebelum D-28, supaya artikel blog yang sudah terbit tidak berubah tampilannya.
+        render(
+            <TeksKaya
+                teks={'# Kebijakan Privasi\n\n## 1. Tentang PAYOU\n\n### 1.1 Ruang lingkup\n\n3. tiga\n4. empat'}
+            />,
+        );
+
+        expect(screen.getByRole('heading', { name: 'Kebijakan Privasi', level: 2 })).toBeTruthy();
+        expect(screen.getByRole('heading', { name: '1. Tentang PAYOU', level: 3 })).toBeTruthy();
+        expect(screen.getByRole('heading', { name: '1.1 Ruang lingkup', level: 4 })).toBeTruthy();
+
+        const bernomor = screen.getByRole('list');
+        expect(bernomor.tagName).toBe('OL');
+        // Nomor awal dipakai apa adanya, jadi pasal yang dikutip sebagian tetap bernomor benar.
+        expect(bernomor.getAttribute('start')).toBe('3');
+        expect(screen.getAllByRole('listitem').map((b) => b.textContent)).toEqual(['tiga', 'empat']);
+    });
 });
 
 describe('Situs pemasaran D-21: tata letak & blok', () => {

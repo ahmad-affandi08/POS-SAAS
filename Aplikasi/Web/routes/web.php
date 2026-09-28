@@ -72,12 +72,13 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
     // Bagian B2: blog (artikel terbit dari konsol).
     Route::get('/blog', [SitusKontroler::class, 'Blog'])->name('situs.blog.daftar');
     Route::get('/blog/{slugArtikel}', [SitusKontroler::class, 'Artikel'])->where('slugArtikel', ArtikelSitus::POLA_SLUG)->name('situs.blog.artikel');
+    // P-06 dokumen legal publik. D-28: ikut shell & bundle situs, jadi ada kepala, kaki, dan jalan kembali.
+    Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
 });
 
 // Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya
 // melayani situs pemasaran, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
 Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataInertia::class])->group(function () use ($izin): void {
-    Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
     // POS-11 struk digital publik (kode = tenant basis-36 . Uuid penjualan).
     Route::get('/s/{kodeStruk}', [StrukDigitalKontroler::class, 'Tampilkan'])
         ->where('kodeStruk', KodeStrukDigital::POLA)

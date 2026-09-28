@@ -532,6 +532,34 @@ kursor, dan ketebalan kepala tabel. Akibatnya tiga hal melenceng tanpa tertangka
 Ketiganya dijaga test: `Gaya/AturanTipografiTes.ts`, `Komponen/Formulir/AturanTombolTes.ts`, `Gaya/TepiAmanTes.ts`.
 Aturan lama (`AturanWarnaTes`, kursor, kepala tabel) tetap berlaku.
 
+**Dokumen legal & teks kaya (v2.53).** Tiga hal lagi yang melenceng dari desainnya sendiri:
+
+4. **Isi Markdown dirender sebagai teks mentah.** `DokumenLegal.Isi` memang Markdown (§13.6) dan editornya berlabel
+   "Isi dokumen (Markdown)", tetapi halaman publik merender `{Dokumen.Isi}` dengan `whitespace-pre-wrap` — jadi `#`
+   dan `-` tampil sebagai tanda baca dan dokumen belasan pasal jadi satu dinding teks. Repo sudah punya kontraknya:
+   `Komponen/Situs/TeksKaya`, yang dipakai artikel blog & blok situs. Ia dipakai sekarang untuk halaman legal publik
+   **dan** pratinjau di konsol, dan diperluas seperlunya: `# ` → `h2`, `### ` → `h4`, daftar bernomor `1. ` (nomor
+   awal dipakai apa adanya supaya pasal yang dikutip sebagian tetap benar). `## ` **tidak diubah** — tetap `h3` —
+   supaya artikel blog yang sudah terbit tidak berubah tampilannya. `TeksKaya` tidak merender HTML sama sekali
+   (React meng-escape, tautan disaring), jadi isi dari konsol tidak bisa menyuntikkan skrip ke halaman publik.
+   Label editornya kini menyebut sintaks yang benar-benar didukung, bukan "Markdown" yang menjanjikan lebih banyak.
+5. **Halaman legal keluar dari identitas situs.** Alamatnya di domain pemasaran dan pengunjung sampai ke sini dari
+   kaki situs, tetapi halamannya berdiri sendiri tanpa kepala & kaki — tidak ada jalan kembali. Karena ketiga entry
+   point punya bundle & root view sendiri (`Aplikasi.tsx`, `Pengelola.tsx`, `Situs.tsx`) dan perantaranya
+   membagikan prop yang berbeda, memakai `TataLetakSitus` dari `Halaman/Publik/` akan **mematikan halamannya**:
+   `props.Situs` tidak pernah dibagikan `BagikanDataInertia`. Jadi halamannya pindah ke `Halaman/Situs/DokumenLegal`
+   dan rutenya pindah ke grup situs (`BagikanDataSitus`, root view `Situs` dengan meta SEO dari server).
+6. **`rows` pada `Textarea` tidak berpengaruh.** `Textarea` shadcn memakai `field-sizing-content`, yang membuat
+   tinggi kotak mengikuti isinya dan mengabaikan `rows`. `BidangTeksPanjang`, `BidangDaftarTeks`, dan
+   `BidangNomorSeri` sudah menambahkan `field-sizing-fixed`, tetapi editor dokumen legal (`rows={20}`) dan Tagihan ›
+   Detail (`rows={3}`) memakai `Textarea` mentah tanpa itu — jadi pengelola menyunting dokumen belasan pasal lewat
+   kotak setinggi dua baris. Editor legal kini memakai `BidangTeksPanjang` (prop `kode` baru untuk font Mono,
+   sejajar `BidangTeks`), dan Tagihan › Detail memakai kelas yang sama.
+
+Tiga penjaga tambahan: `TataLetak/AturanBundelTes.ts` (tata letak cocok dengan folder & bundle halamannya),
+`Komponen/Formulir/AturanBidangTes.ts` (`Textarea` ber-`rows` wajib `field-sizing-fixed`), dan kasus baru di
+`Komponen/Situs/SitusTes.tsx` untuk judul bertingkat & daftar bernomor.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):
