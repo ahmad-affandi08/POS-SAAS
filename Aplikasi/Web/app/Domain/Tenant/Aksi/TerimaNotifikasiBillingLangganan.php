@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Pengelola\Tagihan\Aksi;
+namespace App\Domain\Tenant\Aksi;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Integrasi\Billing\NotifikasiBilling;
 use App\Domain\Integrasi\GerbangPembayaran\StatusPembayaranGerbang;
-use App\Domain\Pengelola\Tagihan\Kueri\DaftarTagihanPlatform;
-use App\Domain\Pengelola\Tagihan\Surel\PembayaranLanggananDiterima;
-use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Tenant\Enum\MetodePembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
@@ -18,11 +17,10 @@ use App\Domain\Tenant\Layanan\PelunasTagihanLangganan;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
+use App\Domain\Tenant\Peristiwa\TagihanLanggananDilunasiGerbang;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Throwable;
 
 /**
  * Notifikasi gerbang billing platform (P-08 langkah 3, BR-P08.11): satu-satunya jalan tagihan langganan menjadi
@@ -34,23 +32,27 @@ use Throwable;
  *   `Menunggu` dijawab "sudah diproses" tanpa menyentuh apa pun, jadi periode langganan tidak pernah diperpanjang
  *   dua kali untuk satu pembayaran.
  * - Kunci berurutan Langganan → Tagihan → Pembayaran, sama dengan jalur manual dan penjadwal tunggakan.
- * - Data tagihan adalah data platform ke tenant, dibaca lintas tenant lewat `DaftarTagihanPlatform`
- *   (`KonteksPengelola::KueriDataPlatform`, CLAUDE.md #11). Pelaku audit dikosongkan: pelakunya sistem, bukan orang.
+ * - **Tenant ditetapkan dari nomor pesanan lalu semua kueri lewat scope `MilikTenant` seperti biasa** (pola yang
+ *   sama dengan `PencariGerbangWebhook`), jadi tidak ada kueri lintas tenant: pembayaran tenant lain secara struktural
+ *   tidak terlihat, bukan hanya dibandingkan.
+ * - Pelakunya sistem, bukan orang, jadi audit ditulis ke `LogAudit` tenant tanpa pengguna — bukan ke
+ *   `LogAuditPengelola` yang dipakai jalur manual, karena di sana memang ada verifikator yang bertanggung jawab.
  */
 final class TerimaNotifikasiBillingLangganan
 {
     public function __construct(
+        private readonly KonteksTenant $konteks,
         private readonly PelunasTagihanLangganan $pelunas,
-        private readonly PencatatAuditPengelola $audit,
+        private readonly PencatatAudit $audit,
     ) {}
 
     /** @return bool `false` = notifikasi tidak dikenal atau tidak bisa diproses; tetap dijawab 200 agar tidak diulang. */
     public function Jalankan(NotifikasiBilling $notifikasi): bool
     {
-        $awal = DaftarTagihanPlatform::KueriPembayaran()->where('RefGateway', $notifikasi->nomorPesanan)->first();
+        $this->konteks->Atur($notifikasi->idTenant);
+        $awal = PembayaranLangganan::query()->where('RefGateway', $notifikasi->nomorPesanan)->first();
 
-        // `IdTenant` di nomor pesanan hanya penanda; yang menentukan tetap baris pembayarannya sendiri.
-        if ($awal === null || $awal->IdTenant !== $notifikasi->idTenant || $awal->Metode !== MetodePembayaranLangganan::Gateway) {
+        if ($awal === null || $awal->Metode !== MetodePembayaranLangganan::Gateway) {
             Log::warning('Notifikasi gerbang billing tanpa pembayaran yang cocok.', ['NomorPesanan' => $notifikasi->nomorPesanan, 'Status' => $notifikasi->statusAsli]);
 
             return false;
@@ -82,8 +84,8 @@ final class TerimaNotifikasiBillingLangganan
     private function Proses(PembayaranLangganan $awal, NotifikasiBilling $notifikasi): bool
     {
         $langganan = Langganan::query()->where('IdTenant', $awal->IdTenant)->lockForUpdate()->first();
-        $tagihan = DaftarTagihanPlatform::KueriTagihan()->with('Paket')->whereKey($awal->IdTagihanLangganan)->lockForUpdate()->firstOrFail();
-        $pembayaran = DaftarTagihanPlatform::KueriPembayaran()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
+        $tagihan = TagihanLangganan::query()->with('Paket')->whereKey($awal->IdTagihanLangganan)->lockForUpdate()->firstOrFail();
+        $pembayaran = PembayaranLangganan::query()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
 
         // Notifikasi ulang untuk pembayaran yang sudah selesai: sudah diproses, tidak ada yang perlu diubah.
         if ($pembayaran->Status !== StatusPembayaranLangganan::Menunggu) {
@@ -96,7 +98,7 @@ final class TerimaNotifikasiBillingLangganan
                 'AlasanTolak' => "Pembayaran online tidak selesai (status gerbang: {$notifikasi->statusAsli}).",
             ]);
             $this->audit->Catat(
-                'tagihan.pembayaran-gerbang.gagal',
+                'langganan.pembayaran-gerbang-gagal',
                 $pembayaran,
                 nilaiLama: ['Pembayaran' => StatusPembayaranLangganan::Menunggu->value],
                 nilaiBaru: ['Pembayaran' => StatusPembayaranLangganan::Ditolak->value, 'StatusGerbang' => $notifikasi->statusAsli, 'IdTransaksiGerbang' => $notifikasi->idTransaksi],
@@ -122,7 +124,7 @@ final class TerimaNotifikasiBillingLangganan
         );
 
         $this->audit->Catat(
-            'tagihan.pembayaran-gerbang.lunas',
+            'langganan.pembayaran-gerbang-lunas',
             $pembayaran,
             nilaiLama: ['Pembayaran' => StatusPembayaranLangganan::Menunggu->value, 'Tagihan' => $hasil->statusTagihanLama, 'Langganan' => $hasil->langgananLama],
             nilaiBaru: [
@@ -135,7 +137,7 @@ final class TerimaNotifikasiBillingLangganan
             idTenant: $tagihan->IdTenant,
         );
 
-        DB::afterCommit(fn () => $this->KirimPemberitahuan($pembayaran, $tagihan));
+        $this->BeritahuOwner($pembayaran, $tagihan);
 
         return true;
     }
@@ -143,8 +145,7 @@ final class TerimaNotifikasiBillingLangganan
     /** Jangkar grandfathering (BR-P04.1) diteruskan dari tagihan lunas sebelumnya untuk paket yang sama. */
     private function AmbilMulaiPaketSebelumnya(TagihanLangganan $tagihan): ?CarbonImmutable
     {
-        $sebelumnya = DaftarTagihanPlatform::KueriTagihan()
-            ->where('IdTenant', $tagihan->IdTenant)
+        $sebelumnya = TagihanLangganan::query()
             ->where('Status', StatusTagihanLangganan::Lunas->value)
             ->where('Id', '!=', $tagihan->Id)
             ->orderByDesc('DibayarPada')
@@ -156,22 +157,20 @@ final class TerimaNotifikasiBillingLangganan
             : null;
     }
 
-    private function KirimPemberitahuan(PembayaranLangganan $pembayaran, TagihanLangganan $tagihan): void
+    private function BeritahuOwner(PembayaranLangganan $pembayaran, TagihanLangganan $tagihan): void
     {
         if ($pembayaran->EmailPemberitahuan === null) {
             return;
         }
 
-        try {
-            Mail::to($pembayaran->EmailPemberitahuan)->send(new PembayaranLanggananDiterima(
-                nama: $pembayaran->NamaPemberitahuan ?? 'Pemilik usaha',
-                nomorTagihan: $tagihan->Nomor,
-                total: $tagihan->AmbilTotal()->FormatRupiah(),
-                namaPaket: $tagihan->Paket->Nama,
-                periodeSelesai: $tagihan->PeriodeSelesai?->copy()->setTimezone('Asia/Jakarta')->translatedFormat('j F Y') ?? '—',
-            ));
-        } catch (Throwable $galat) {
-            Log::warning('Email pelunasan langganan lewat gerbang gagal dikirim.', ['IdTenant' => $tagihan->IdTenant, 'Nomor' => $tagihan->Nomor, 'Galat' => $galat->getMessage()]);
-        }
+        TagihanLanggananDilunasiGerbang::dispatch(
+            $tagihan->IdTenant,
+            $tagihan->Nomor,
+            $pembayaran->EmailPemberitahuan,
+            $pembayaran->NamaPemberitahuan ?? 'Pemilik usaha',
+            $tagihan->AmbilTotal()->FormatRupiah(),
+            $tagihan->Paket->Nama,
+            $tagihan->PeriodeSelesai?->copy()->setTimezone('Asia/Jakarta')->translatedFormat('j F Y') ?? '—',
+        );
     }
 }

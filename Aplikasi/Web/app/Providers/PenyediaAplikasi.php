@@ -18,8 +18,10 @@ use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuTimTiketDukunganBaru;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
+use App\Domain\Pengelola\Tagihan\Penangan\KirimSurelPelunasanGerbang;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Domain\Tenant\Peristiwa\TagihanLanggananDilunasiGerbang;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -114,6 +116,8 @@ final class PenyediaAplikasi extends ServiceProvider
 
         // P-09: pemberitahuan tiket dukungan (penangan di antrean, setelah commit).
         Event::listen(TiketDukunganDibuat::class, BeritahuTimTiketDukunganBaru::class);
+        // BR-P08.11: email pelunasan tagihan langganan lewat gerbang (templat sama dengan jalur transfer manual).
+        Event::listen(TagihanLanggananDilunasiGerbang::class, KirimSurelPelunasanGerbang::class);
         Event::listen(TiketDukunganDibalasPelapor::class, BeritahuPenanggungJawabBalasanPelapor::class);
 
         // P-11 BR-P11.1: /sehat (uptime monitor eksternal) ikut memeriksa alert, agar scheduler mati tetap terdeteksi.

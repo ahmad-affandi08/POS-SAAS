@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Publik;
 
 use App\Domain\Integrasi\Billing\GerbangBillingPlatform;
-use App\Domain\Pengelola\Tagihan\Aksi\TerimaNotifikasiBillingLangganan;
+use App\Domain\Tenant\Aksi\TerimaNotifikasiBillingLangganan;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Respons\GalatApi;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +16,10 @@ use Illuminate\Http\Request;
  *
  * Berbeda dari `WebhookGerbangPembayaranKontroler` (QRIS milik toko, D-19) yang URL-nya bertoken per tenant: akun
  * gerbang di sini milik platform, jadi URL-nya tunggal dan tenant ditentukan dari nomor pesanan di dalam notifikasi.
+ *
+ * Aksinya berada di domain Tenant, bukan Pengelola: endpoint ini publik tanpa login, dan test arsitektur
+ * `PengelolaTes` melarang kode di luar Platform Pengelola memakai domain Pengelola. Tenant ditetapkan dari nomor
+ * pesanan sehingga pembayaran dicari lewat scope `MilikTenant` seperti biasa.
  *
  * - Tanda tangan tidak sah, gerbang belum dikonfigurasi, atau nomor pesanan bukan format PAYOU = 401. Midtrans akan
  *   mengulang, yang memang diinginkan bila penyebabnya kredensial yang belum terpasang.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Integrasi\Billing\NomorPesananBilling;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pengelola\Tagihan\Aksi\TerimaPembayaranLangganan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
-use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
 use App\Domain\Tenant\Enum\MetodePembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
@@ -198,8 +198,10 @@ describe('BR-P08.11 notifikasi webhook', function (): void {
             ->and($langganan->PeriodeMulai?->toDateTimeString())->toBe('2026-09-27 03:00:00')
             ->and($langganan->PeriodeSelesai?->toDateTimeString())->toBe('2026-10-27 03:00:00');
 
-        $log = LogAuditPengelola::query()->where('Aksi', 'tagihan.pembayaran-gerbang.lunas')->sole();
-        expect($log->IdPenggunaPengelola)->toBeNull()
+        // Pelakunya sistem, jadi audit masuk LogAudit tenant tanpa pengguna — bukan LogAuditPengelola, yang dipakai
+        // jalur manual karena di sana ada verifikator yang bertanggung jawab.
+        $log = LogAudit::query()->withoutGlobalScopes()->where('Peristiwa', 'langganan.pembayaran-gerbang-lunas')->sole();
+        expect($log->IdPengguna)->toBeNull()
             ->and($log->IdTenant)->toBe($tenant->Id)
             ->and($log->NilaiBaru['IdTransaksiGerbang'])->toBe('trx-midtrans-uji-1');
     });
@@ -219,7 +221,7 @@ describe('BR-P08.11 notifikasi webhook', function (): void {
 
         expect(LanggananGerbangUji($tenant)->PeriodeSelesai?->toDateTimeString())->toBe($selesaiPertama)
             ->and(PembayaranLangganan::query()->withoutGlobalScopes()->where('Status', StatusPembayaranLangganan::Menunggu->value)->count())->toBe(0)
-            ->and(LogAuditPengelola::query()->where('Aksi', 'tagihan.pembayaran-gerbang.lunas')->count())->toBe(1);
+            ->and(LogAudit::query()->withoutGlobalScopes()->where('Peristiwa', 'langganan.pembayaran-gerbang-lunas')->count())->toBe(1);
     });
 
     it('tanda tangan tidak sah dijawab 401 dan tidak menyentuh tagihan', function (): void {
@@ -297,7 +299,9 @@ describe('BR-P08.11 notifikasi webhook', function (): void {
         MulaiBayarOnlineUji($this, $pemilikA, $tenantA, $tagihanA);
         $pembayaranA = PembayaranGerbangUji($tagihanA);
 
-        // ULID pembayaran tenant A, tetapi bagian IdTenant diganti tenant B: penanda dan barisnya tidak cocok.
+        // ULID pembayaran tenant A, tetapi bagian IdTenant diganti tenant B. Karena tenant ditetapkan dari nomor
+        // pesanan lalu pencarian lewat scope MilikTenant, pembayaran tenant A tidak terlihat sama sekali dari
+        // lingkup tenant B — isolasinya struktural, bukan hasil perbandingan.
         $nomorPalsu = NomorPesananBilling::Buat($tenantB->Id, $pembayaranA->Uuid);
         KirimNotifikasiBilling($this, $nomorPalsu, 'settlement', $tagihanA->Total)
             ->assertOk()
