@@ -1,4 +1,4 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { useId, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -28,12 +28,7 @@ export default function HalamanDetailTagihan({ Tagihan, Pembayaran }: PropsDetai
     const bolehVerifikasi = PunyaIzin(props.Pengguna, IzinPengelola.TagihanVerifikasi);
 
     return (
-        <TataLetakPengelola judul={`Tagihan ${Tagihan.Nomor}`}>
-            <p>
-                <Link href="/tagihan" className="text-label font-semibold underline">
-                    Kembali ke daftar tagihan
-                </Link>
-            </p>
+        <TataLetakPengelola judul={`Tagihan ${Tagihan.Nomor}`} jejak={[{ label: 'Semua tagihan', href: '/tagihan' }]}>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
             <RincianTagihan tagihan={Tagihan} namaTenant={Tagihan.NamaTenant} />
             <section aria-labelledby="judul-pembayaran" className="flex flex-col gap-3">

@@ -1,9 +1,8 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
-import { Button } from '@/Komponen/Ui/button';
 import { Card, CardContent } from '@/Komponen/Ui/card';
 import { Separator } from '@/Komponen/Ui/separator';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -31,10 +30,7 @@ export default function TugasGagal({ Tugas }: { Tugas: Tugas }) {
     const alamat = `/operasional/tugas-gagal/${Tugas.Uuid}`;
 
     return (
-        <TataLetakPengelola judul="Detail job gagal">
-            <Button asChild variant="link" className="h-auto self-start px-0 text-label font-semibold">
-                <Link href="/operasional">Kembali ke dasbor operasional</Link>
-            </Button>
+        <TataLetakPengelola judul="Detail job gagal" jejak={[{ label: 'Dasbor operasional', href: '/operasional' }]}>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
             <Card className="py-4 rounded-panel shadow-none">
                 <CardContent className="flex flex-col gap-3 px-4">

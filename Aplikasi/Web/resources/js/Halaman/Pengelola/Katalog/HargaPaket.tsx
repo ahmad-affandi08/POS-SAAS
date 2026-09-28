@@ -1,6 +1,7 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -10,7 +11,6 @@ import DialogTinjauan from '@/Komponen/Tindakan/DialogTinjauan';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
-import { Button } from '@/Komponen/Ui/button';
 import { DialogFooter } from '@/Komponen/Ui/dialog';
 import { DropdownMenuItem } from '@/Komponen/Ui/dropdown-menu';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -114,18 +114,8 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
         !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
 
     return (
-        <TataLetakPengelola
-            judul={`Harga ${Paket.Nama}`}
-            aksi={
-                bolehAjukan && !Paket.HargaNegosiasi && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Usulkan harga baru</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul={`Harga ${Paket.Nama}`} jejak={[{ label: 'Katalog paket', href: '/katalog/paket' }]}>
             <TabKatalog />
-            <Button asChild variant="link" className="h-auto self-start px-0 text-label font-semibold">
-                <Link href="/katalog/paket">Kembali ke daftar paket</Link>
-            </Button>
             <Pemberitahuan jenis="info" judul="Aturan harga paket">
                 Harga baru hanya berlaku untuk tagihan berikutnya. Bila &quot;terapkan ke pelanggan lama&quot; tidak
                 dicentang, langganan yang sudah berjalan tetap memakai harga lamanya. Harga terbit tidak bisa diubah;
@@ -155,6 +145,11 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
                 />
             ) : null}
 
+            <AksiHalaman>
+                {bolehAjukan && !Paket.HargaNegosiasi && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Usulkan harga baru</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-katalog-harga-paket"
                 label={`Versi harga paket ${Paket.Nama}`}

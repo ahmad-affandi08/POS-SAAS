@@ -2,6 +2,7 @@ import { Link, useForm } from '@inertiajs/react';
 import { ExternalLink } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabSitus from '@/Komponen/Pengelola/Situs/TabSitus';
@@ -89,24 +90,24 @@ export default function HalamanDaftarArtikelSitus({
     const [buat, AturBuat] = useState(false);
 
     return (
-        <TataLetakPengelola
-            judul="Situs pemasaran"
-            aksi={
-                <div className="flex flex-wrap gap-2">
-                    <a
-                        href={UrlBlog}
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex h-8 items-center gap-2 rounded-kontrol border border-garis-input px-3 text-isi font-medium text-teks-utama hover:bg-permukaan-sorot pointer-coarse:h-11"
-                    >
-                        Buka blog <ExternalLink className="size-4" aria-hidden />
-                    </a>
-                    {Izin.Kelola ? <Tombol onClick={() => AturBuat(true)}>Tulis artikel</Tombol> : null}
-                </div>
-            }
-        >
+        <TataLetakPengelola judul="Situs pemasaran">
             <TabSitus />
             {buat ? <FormBuatArtikel saatTutup={() => AturBuat(false)} /> : null}
+            <AksiHalaman>
+                {
+                    <div className="flex flex-wrap gap-2">
+                        <a
+                            href={UrlBlog}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex h-8 items-center gap-2 rounded-kontrol border border-garis-input px-3 text-isi font-medium text-teks-utama hover:bg-permukaan-sorot pointer-coarse:h-11"
+                        >
+                            Buka blog <ExternalLink className="size-4" aria-hidden />
+                        </a>
+                        {Izin.Kelola ? <Tombol onClick={() => AturBuat(true)}>Tulis artikel</Tombol> : null}
+                    </div>
+                }
+            </AksiHalaman>
             <TabelData
                 id="pengelola-situs-artikel"
                 label="Artikel situs"

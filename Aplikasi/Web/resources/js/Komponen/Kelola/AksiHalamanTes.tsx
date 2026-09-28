@@ -52,11 +52,28 @@ function BerkasTsx(folder: string): string[] {
     });
 }
 
+/*
+ * D-28: konsol ikut dijaga. Sebelumnya penjaga ini hanya memeriksa `Halaman/Kelola`, jadi Platform Pengelola
+ * memakai pola sendiri — 17 halaman daftarnya menaruh tombol utama di kepala halaman lewat prop `aksi`
+ * `TataLetakPengelola`, sementara back-office tenant sudah memakai baris sendiri di atas tabel (D-27).
+ */
+const FOLDER_HALAMAN = ['resources/js/Halaman/Kelola', 'resources/js/Halaman/Pengelola'];
+
+/** Semua berkas halaman back-office (tenant & konsol), bukan berkas penjaga. */
+function BerkasBackOffice(): string[] {
+    return FOLDER_HALAMAN.flatMap((folder) => BerkasTsx(folder)).filter((jalur) => !/Tes\.tsx$/.test(jalur));
+}
+
+/** Jalur tanpa awalan folder, supaya pesan gagalnya pendek. */
+function Ringkas(jalur: string): string {
+    return jalur.replace('resources/js/Halaman/', '');
+}
+
 describe('Baris aksi di halaman daftar', () => {
     it('tidak ada tombol Tambah/Buat yang dibungkus <div> telanjang (bikin rata kiri)', () => {
         const pelanggar: string[] = [];
 
-        for (const jalur of BerkasTsx('resources/js/Halaman/Kelola')) {
+        for (const jalur of BerkasBackOffice()) {
             const isi = readFileSync(jalur, 'utf8');
             const batasTabel = isi.indexOf('<TabelData');
 
@@ -79,7 +96,7 @@ describe('Baris aksi di halaman daftar', () => {
                 .some((isiDiv) => /<(?:Button|Tombol)\b/.test(isiDiv) && />\s*(?:Tambah|Buat) /.test(isiDiv));
 
             if (bungkusVariabel || bungkusLangsung) {
-                pelanggar.push(jalur.replace('resources/js/Halaman/Kelola/', ''));
+                pelanggar.push(Ringkas(jalur));
             }
         }
 
@@ -91,9 +108,9 @@ describe('Baris aksi di halaman daftar', () => {
         // utama di sana membuat tingginya berbeda dari halaman lain dan bisa terkubur saat bilahnya membungkus di HP.
         const pelanggar: string[] = [];
 
-        for (const jalur of BerkasTsx('resources/js/Halaman/Kelola')) {
+        for (const jalur of BerkasBackOffice()) {
             if (readFileSync(jalur, 'utf8').includes('aksiAlat')) {
-                pelanggar.push(jalur.replace('resources/js/Halaman/Kelola/', ''));
+                pelanggar.push(Ringkas(jalur));
             }
         }
 
@@ -103,7 +120,7 @@ describe('Baris aksi di halaman daftar', () => {
     it('setiap halaman daftar dengan aksi utama memakai AksiHalaman', () => {
         const pelanggar: string[] = [];
 
-        for (const jalur of BerkasTsx('resources/js/Halaman/Kelola')) {
+        for (const jalur of BerkasBackOffice()) {
             const isi = readFileSync(jalur, 'utf8');
             const batasTabel = isi.indexOf('<TabelData');
 
@@ -116,7 +133,34 @@ describe('Baris aksi di halaman daftar', () => {
             const adaAksi = /<(?:Button|Tombol)\b[\s\S]{0,200}?>\s*(?:Tambah|Buat|Mulai) /.test(sebelumForm);
 
             if (adaAksi && !isi.includes('AksiHalaman')) {
-                pelanggar.push(jalur.replace('resources/js/Halaman/Kelola/', ''));
+                pelanggar.push(Ringkas(jalur));
+            }
+        }
+
+        expect(pelanggar).toEqual([]);
+    });
+
+    it('halaman daftar konsol tidak menitipkan aksi utama ke kepala halaman', () => {
+        // Prop `aksi` `TataLetakPengelola` disisakan untuk halaman rincian/formulir. Di halaman daftar, tombol
+        // utamanya harus berada di baris sendiri di atas tabel — sama seperti back-office tenant (D-27).
+        const pelanggar: string[] = [];
+
+        for (const jalur of BerkasTsx('resources/js/Halaman/Pengelola')) {
+            if (/Tes\.tsx$/.test(jalur)) {
+                continue;
+            }
+
+            const isi = readFileSync(jalur, 'utf8');
+
+            if (!isi.includes('<TabelData')) {
+                continue;
+            }
+
+            // Prop `aksi` milik tata letak, bukan `aksi` pada `Panel` di dalam halaman.
+            const tag = /<TataLetakPengelola\b[\s\S]*?\n\s*>/.exec(isi)?.[0] ?? '';
+
+            if (/\n\s*aksi=\{/.test(tag)) {
+                pelanggar.push(Ringkas(jalur));
             }
         }
 

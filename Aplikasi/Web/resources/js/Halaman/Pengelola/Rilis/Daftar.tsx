@@ -2,6 +2,7 @@ import { router, useForm, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -141,14 +142,12 @@ export default function HalamanRilis({ Rilis }: { Rilis: RilisAplikasi[] }) {
     const Tutup = () => AturDialog(null);
 
     return (
-        <TataLetakPengelola
-            judul="Rilis aplikasi"
-            aksi={
-                bolehKelola ? (
+        <TataLetakPengelola judul="Rilis aplikasi">
+            <AksiHalaman>
+                {bolehKelola ? (
                     <Tombol onClick={() => AturDialog({ jenis: 'draf', rilis: null })}>Catat draf rilis</Tombol>
-                ) : null
-            }
-        >
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-rilis"
                 label="Daftar rilis aplikasi"

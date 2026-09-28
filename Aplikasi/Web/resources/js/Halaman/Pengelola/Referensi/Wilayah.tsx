@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -64,14 +65,7 @@ export default function HalamanWilayah({ Wilayah, PilihanTingkat, PilihanZonaWak
     );
 
     return (
-        <TataLetakPengelola
-            judul="Referensi"
-            aksi={
-                bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah wilayah</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Referensi">
             <TabReferensi />
             {sunting !== null ? (
                 <FormWilayah
@@ -83,6 +77,11 @@ export default function HalamanWilayah({ Wilayah, PilihanTingkat, PilihanZonaWak
                 />
             ) : null}
 
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah wilayah</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-referensi-wilayah"
                 label="Daftar wilayah"

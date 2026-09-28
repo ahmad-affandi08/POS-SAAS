@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -137,28 +138,30 @@ export default function HalamanHariLibur({
     const pilihanTahun = [Tahun - 1, Tahun, Tahun + 1].map((tahun) => ({ Nilai: String(tahun), Label: String(tahun) }));
 
     return (
-        <TataLetakPengelola
-            judul="Referensi"
-            aksi={
-                bolehAjukan && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah hari libur</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Referensi">
             <TabReferensi />
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
 
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="w-40">
-                    <BidangPilihan label="Tahun" nilai={String(Tahun)} opsi={pilihanTahun} saatBerubah={PilihTahun} />
-                </div>
-                <div className="flex gap-2">
-                    {bolehAjukan && adaDraf ? <Tombol onClick={AjukanTahun}>Ajukan semua draf {Tahun}</Tombol> : null}
-                    {bisaTinjau && !meninjau ? (
-                        <Tombol onClick={() => AturMeninjau(true)}>Tinjau hari libur {Tahun}</Tombol>
-                    ) : null}
-                </div>
-            </div>
+            <AksiHalaman
+                keterangan={
+                    <div className="w-40">
+                        <BidangPilihan
+                            label="Tahun"
+                            nilai={String(Tahun)}
+                            opsi={pilihanTahun}
+                            saatBerubah={PilihTahun}
+                        />
+                    </div>
+                }
+            >
+                {bolehAjukan && adaDraf ? <Tombol onClick={AjukanTahun}>Ajukan semua draf {Tahun}</Tombol> : null}
+                {bisaTinjau && !meninjau ? (
+                    <Tombol onClick={() => AturMeninjau(true)}>Tinjau hari libur {Tahun}</Tombol>
+                ) : null}
+                {bolehAjukan && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah hari libur</Tombol>
+                ) : null}
+            </AksiHalaman>
 
             {sunting !== null ? (
                 <FormHariLibur

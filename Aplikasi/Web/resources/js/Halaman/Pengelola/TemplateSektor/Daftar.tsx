@@ -1,6 +1,7 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -97,15 +98,15 @@ export default function HalamanDaftarTemplateSektor({ Template }: { Template: Ri
     const [buatBaru, AturBuatBaru] = useState(false);
 
     return (
-        <TataLetakPengelola
-            judul="Template sektor"
-            aksi={bolehBuat && !buatBaru ? <Tombol onClick={() => AturBuatBaru(true)}>Buat template</Tombol> : null}
-        >
+        <TataLetakPengelola judul="Template sektor">
             <p className="text-isi text-teks-sekunder">
                 Paket konfigurasi yang diterapkan saat tenant onboarding. Versi terbit tidak diubah; perbaikan dibuat
                 sebagai draf versi baru. Tenant lama tidak berubah tanpa persetujuannya.
             </p>
             {buatBaru ? <FormBuatTemplate template={Template} saatSelesai={() => AturBuatBaru(false)} /> : null}
+            <AksiHalaman>
+                {bolehBuat && !buatBaru ? <Tombol onClick={() => AturBuatBaru(true)}>Buat template</Tombol> : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-template-sektor"
                 label="Daftar template sektor"

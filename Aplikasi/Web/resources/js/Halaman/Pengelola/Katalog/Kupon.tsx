@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
@@ -84,12 +85,7 @@ export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
     const [sunting, AturSunting] = useState<Kupon | 'baru' | null>(null);
 
     return (
-        <TataLetakPengelola
-            judul="Katalog"
-            aksi={
-                bolehKelola && sunting === null ? <Tombol onClick={() => AturSunting('baru')}>Buat kupon</Tombol> : null
-            }
-        >
+        <TataLetakPengelola judul="Katalog">
             <TabKatalog />
             {sunting !== null ? (
                 <FormKupon
@@ -99,6 +95,11 @@ export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Buat kupon</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-katalog-kupon"
                 label="Daftar kupon langganan"

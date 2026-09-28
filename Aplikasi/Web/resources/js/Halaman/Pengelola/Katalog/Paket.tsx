@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -123,12 +124,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
     const kolom = useMemo(() => BuatKolom(KolomBatas), [KolomBatas]);
 
     return (
-        <TataLetakPengelola
-            judul="Katalog"
-            aksi={
-                bolehAjukan && sunting === null ? <Tombol onClick={() => AturSunting('baru')}>Buat paket</Tombol> : null
-            }
-        >
+        <TataLetakPengelola judul="Katalog">
             <TabKatalog />
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
             {sunting !== null ? (
@@ -142,6 +138,11 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
             ) : null}
             {arsip !== null ? <FormArsip key={arsip.Uuid} paket={arsip} saatSelesai={() => AturArsip(null)} /> : null}
 
+            <AksiHalaman>
+                {bolehAjukan && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Buat paket</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-katalog-paket"
                 label="Daftar paket langganan"

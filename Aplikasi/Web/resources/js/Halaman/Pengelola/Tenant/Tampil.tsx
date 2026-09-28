@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -162,14 +162,7 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
     const tombolTerlihat = tombol.filter((item) => item.boleh);
 
     return (
-        <TataLetakPengelola
-            judul={Profil.Nama}
-            aksi={
-                <Link href="/tenant" className="text-label font-semibold text-brand underline">
-                    Kembali ke daftar tenant
-                </Link>
-            }
-        >
+        <TataLetakPengelola judul={Profil.Nama} jejak={[{ label: 'Semua tenant', href: '/tenant' }]}>
             <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-label text-teks-sekunder">{Profil.Slug}</span>
                 <LabelStatusLangganan status={status} />

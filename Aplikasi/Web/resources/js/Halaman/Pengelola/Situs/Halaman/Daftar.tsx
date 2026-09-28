@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabSitus from '@/Komponen/Pengelola/Situs/TabSitus';
@@ -98,10 +99,7 @@ export default function HalamanDaftarHalamanSitus({
     const [buat, AturBuat] = useState(false);
 
     return (
-        <TataLetakPengelola
-            judul="Situs pemasaran"
-            aksi={Izin.Kelola ? <Tombol onClick={() => AturBuat(true)}>Buat halaman</Tombol> : null}
-        >
+        <TataLetakPengelola judul="Situs pemasaran">
             <TabSitus />
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
             <p className="text-isi text-teks-sekunder">
@@ -109,6 +107,9 @@ export default function HalamanDaftarHalamanSitus({
                 Terbitkan agar tampil ke pengunjung.
             </p>
             {buat ? <FormBuatHalaman saatTutup={() => AturBuat(false)} /> : null}
+            <AksiHalaman>
+                {Izin.Kelola ? <Tombol onClick={() => AturBuat(true)}>Buat halaman</Tombol> : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-situs-halaman"
                 label="Halaman situs"

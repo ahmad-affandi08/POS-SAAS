@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TabKatalog from '@/Komponen/Pengelola/TabKatalog';
@@ -50,14 +51,7 @@ export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
     const [sunting, AturSunting] = useState<Fitur | 'baru' | null>(null);
 
     return (
-        <TataLetakPengelola
-            judul="Katalog"
-            aksi={
-                bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah fitur</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Katalog">
             <TabKatalog />
             {sunting !== null ? (
                 <FormFitur
@@ -66,6 +60,11 @@ export default function HalamanFitur({ Fitur }: { Fitur: Fitur[] }) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah fitur</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-katalog-fitur"
                 label="Katalog fitur"

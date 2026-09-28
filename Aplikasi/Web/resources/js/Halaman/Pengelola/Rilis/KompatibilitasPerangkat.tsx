@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -99,22 +100,20 @@ export default function HalamanKompatibilitasPerangkat({ Baris }: { Baris: Baris
     };
 
     return (
-        <TataLetakPengelola
-            judul="Kompatibilitas perangkat"
-            aksi={
-                bolehKelola ? (
-                    <Tombol onClick={Segarkan} memproses={menyegarkan}>
-                        Segarkan sekarang
-                    </Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Kompatibilitas perangkat">
             <p className="max-w-3xl text-isi text-teks-sekunder">
                 Disusun dari hasil Wizard Uji Perangkat di aplikasi kasir, tanpa nama usaha. Kompatibel = lolos uji di
                 lapangan; Terbatas = kegagalan sama atau lebih banyak dari keberhasilan. Tanda tim mengalahkan status
                 otomatis.{' '}
                 {disegarkan ? `Terakhir disegarkan ${FormatTanggalWaktu(disegarkan)}.` : 'Belum pernah disegarkan.'}
             </p>
+            <AksiHalaman>
+                {bolehKelola ? (
+                    <Tombol onClick={Segarkan} memproses={menyegarkan}>
+                        Segarkan sekarang
+                    </Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-kompatibilitas-perangkat"
                 label="Daftar kompatibilitas perangkat"

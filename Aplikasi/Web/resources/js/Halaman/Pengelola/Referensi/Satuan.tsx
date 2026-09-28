@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -63,14 +64,7 @@ export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
     const [sunting, AturSunting] = useState<Satuan | 'baru' | null>(null);
 
     return (
-        <TataLetakPengelola
-            judul="Referensi"
-            aksi={
-                bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah satuan</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Referensi">
             <TabReferensi />
             {sunting !== null ? (
                 <FormSatuan
@@ -80,6 +74,11 @@ export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
                 />
             ) : null}
 
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah satuan</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-referensi-satuan"
                 label="Daftar satuan standar"

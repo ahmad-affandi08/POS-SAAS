@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -66,14 +67,7 @@ export default function HalamanBank({ Referensi, PilihanJenis }: PropsBank) {
     );
 
     return (
-        <TataLetakPengelola
-            judul="Referensi"
-            aksi={
-                bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah referensi</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Referensi">
             <TabReferensi />
             {sunting !== null ? (
                 <FormBank
@@ -84,6 +78,11 @@ export default function HalamanBank({ Referensi, PilihanJenis }: PropsBank) {
                 />
             ) : null}
 
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah referensi</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-referensi-bank"
                 label="Daftar referensi pembayaran"

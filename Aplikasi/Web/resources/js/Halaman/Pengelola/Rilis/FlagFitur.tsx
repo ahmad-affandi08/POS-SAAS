@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -93,10 +94,13 @@ export default function HalamanFlagFitur({ Aturan, OpsiKunci, OpsiPaket, OpsiTen
     const Tutup = () => AturDialog(null);
 
     return (
-        <TataLetakPengelola
-            judul="Flag fitur"
-            aksi={
-                bolehKelola ? (
+        <TataLetakPengelola judul="Flag fitur">
+            <p className="max-w-3xl text-isi text-teks-sekunder">
+                Urutan: kill switch (Global mati) mengalahkan semua aturan, lalu aturan tenant, paket, persentase, dan
+                Global hidup. Kunci tanpa aturan dianggap hidup.
+            </p>
+            <AksiHalaman>
+                {bolehKelola ? (
                     <div className="flex flex-wrap gap-2">
                         <Tombol
                             varian="sekunder"
@@ -106,13 +110,8 @@ export default function HalamanFlagFitur({ Aturan, OpsiKunci, OpsiPaket, OpsiTen
                         </Tombol>
                         <Tombol onClick={() => AturDialog({ jenis: 'simpan', awal: null })}>Tambah aturan</Tombol>
                     </div>
-                ) : null
-            }
-        >
-            <p className="max-w-3xl text-isi text-teks-sekunder">
-                Urutan: kill switch (Global mati) mengalahkan semua aturan, lalu aturan tenant, paket, persentase, dan
-                Global hidup. Kunci tanpa aturan dianggap hidup.
-            </p>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-flag-fitur"
                 label="Aturan flag fitur"

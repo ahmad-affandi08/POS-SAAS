@@ -610,6 +610,25 @@ didaftarkan gagal di test.
    tinggi banner yang berubah mengikuti panjang teks & lebar layar. Wadahnya `pointer-events-none` supaya jalur
    kosong di sebelah tombol tidak menelan klik ke isi halaman.
 
+10. **Tata letak tenant & konsol beda kemampuan (UI-07, v2.56).** `TataLetakAplikasi` punya `jejak` tanpa `aksi`;
+    `TataLetakPengelola` punya `aksi` tanpa `jejak` — asimetris di dua arah, dan D-27 sebelumnya hanya ditegakkan
+    di `Halaman/Kelola`. Akibatnya **17 halaman daftar konsol** menaruh tombol utamanya di kepala halaman lewat
+    prop `aksi`, sementara back-office tenant sudah memakai baris sendiri di atas tabel; dan jalan kembali di
+    konsol ditulis ulang **empat cara berbeda** (`Button asChild variant="link"` dua kali, `<p><Link>`, bahkan
+    sebuah tautan "Kembali ke daftar tenant" yang dititipkan ke prop `aksi` — jadi tautan navigasi menempati
+    tempat aksi).
+
+    D-27 ditegakkan di konsol, bukan dibalik: ke-17 halaman daftar pindah ke `Komponen/Kelola/AksiHalaman`
+    (`Referensi/HariLibur` sekalian melepas baris `justify-between`-nya, penyaring tahun jadi `keterangan`),
+    `TataLetakPengelola` mendapat `jejak` yang sama dengan tenant, dan keempat tautan kembali itu jadi jejak.
+    Prop `aksi` **disisakan untuk halaman rincian/formulir** (5 halaman: editor legal, artikel, halaman situs,
+    pengaturan situs, editor template sektor) — D-27 mengatur halaman daftar, dan menghapus aksi kepala di
+    halaman rincian berarti membuat kebijakan baru tanpa diminta. Bahwa halaman rincian **tenant** belum punya
+    pilihan itu adalah asimetri yang tersisa, dan itu keputusan pemilik produk, bukan agent.
+
+    `AksiHalamanTes` kini memindai `Halaman/Kelola` **dan** `Halaman/Pengelola`, plus aturan baru: halaman daftar
+    konsol tidak boleh menitipkan aksi utama ke prop `aksi` tata letak.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -109,19 +110,7 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
     const kolom = useMemo(() => BuatKolom(new Map(Peran.map((peran) => [peran.Kode, peran.Nama]))), [Peran]);
 
     return (
-        <TataLetakPengelola
-            judul="Tim internal"
-            aksi={
-                PunyaIzin(pengguna, IzinPengelola.TimAnggotaUndang) ? (
-                    <div className="flex flex-wrap gap-2">
-                        <Tombol varian="sekunder" onClick={() => AturFormTerbuka('undang')}>
-                            Undang lewat email
-                        </Tombol>
-                        <Tombol onClick={() => AturFormTerbuka('tambah')}>Tambah anggota</Tombol>
-                    </div>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Tim internal">
             {formTerbuka === 'tambah' ? (
                 <FormTambah opsiPeran={opsiPeran} saatSelesai={() => AturFormTerbuka(null)} />
             ) : null}
@@ -145,6 +134,16 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                 />
             ) : null}
 
+            <AksiHalaman>
+                {PunyaIzin(pengguna, IzinPengelola.TimAnggotaUndang) ? (
+                    <div className="flex flex-wrap gap-2">
+                        <Tombol varian="sekunder" onClick={() => AturFormTerbuka('undang')}>
+                            Undang lewat email
+                        </Tombol>
+                        <Tombol onClick={() => AturFormTerbuka('tambah')}>Tambah anggota</Tombol>
+                    </div>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-tim-internal"
                 label="Daftar anggota tim internal"

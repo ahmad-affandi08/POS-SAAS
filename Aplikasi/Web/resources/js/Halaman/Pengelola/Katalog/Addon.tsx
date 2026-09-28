@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -94,14 +95,7 @@ export default function HalamanAddon({ Addon, Fitur, KolomBatas }: PropsAddon) {
     const kolom = useMemo(() => BuatKolom(new Map(Fitur.map((fitur) => [fitur.Kunci, fitur.Nama]))), [Fitur]);
 
     return (
-        <TataLetakPengelola
-            judul="Katalog"
-            aksi={
-                bolehKelola && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Tambah add-on</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Katalog">
             <TabKatalog />
             {sunting !== null ? (
                 <FormAddon
@@ -112,6 +106,11 @@ export default function HalamanAddon({ Addon, Fitur, KolomBatas }: PropsAddon) {
                     saatSelesai={() => AturSunting(null)}
                 />
             ) : null}
+            <AksiHalaman>
+                {bolehKelola && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Tambah add-on</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-katalog-addon"
                 label="Daftar add-on"

@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -154,14 +155,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
         !tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
 
     return (
-        <TataLetakPengelola
-            judul="Referensi"
-            aksi={
-                bolehAjukan && sunting === null ? (
-                    <Tombol onClick={() => AturSunting('baru')}>Buat draf tarif</Tombol>
-                ) : null
-            }
-        >
+        <TataLetakPengelola judul="Referensi">
             <TabReferensi />
             <Pemberitahuan jenis="info" judul="Aturan tarif pajak">
                 Tarif terbit tidak pernah diubah atau dihapus; koreksi dibuat sebagai tarif baru dengan tanggal berlaku
@@ -182,6 +176,11 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
                 <FormTinjau key={ditinjau.Uuid} tarif={ditinjau} saatSelesai={() => AturDitinjau(null)} />
             ) : null}
 
+            <AksiHalaman>
+                {bolehAjukan && sunting === null ? (
+                    <Tombol onClick={() => AturSunting('baru')}>Buat draf tarif</Tombol>
+                ) : null}
+            </AksiHalaman>
             <TabelData
                 id="pengelola-referensi-tarif-pajak"
                 label="Daftar tarif pajak"

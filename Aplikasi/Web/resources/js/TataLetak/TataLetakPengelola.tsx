@@ -38,15 +38,28 @@ import { IzinPengelola, PunyaIzin, type KunciIzinPengelola, type PropsBersamaPen
 
 import {
     BacaSidebarTerbuka,
+    JejakHalaman,
     kelasTombolMenuSidebar,
     KepalaTataLetak,
     MenuAkun,
     PemberitahuanMelayang,
+    type ButirJejak,
 } from './BagianTataLetak';
 import KepalaSidebarMerek from './KepalaSidebarMerek';
 
 type PropsTataLetak = {
     judul: string;
+    /**
+     * Langkah tambahan di jejak halaman, untuk halaman rincian yang butuh jalan kembali ke daftarnya
+     * (misal `[{ label: 'Semua tenant', href: '/tenant' }]`). Sama dengan `TataLetakAplikasi`: sebelum D-28 hanya
+     * tenant yang punya jejak, sedangkan konsol memakai tautan "Kembali ke …" yang ditulis ulang per halaman.
+     */
+    jejak?: ButirJejak[];
+    /**
+     * Aksi di kepala halaman. **Hanya untuk halaman rincian/formulir.** Halaman daftar memakai
+     * `Komponen/Kelola/AksiHalaman` — baris sendiri di atas tabel (D-27), sama seperti back-office tenant.
+     * Dijaga `Komponen/Kelola/AksiHalamanTes.tsx`.
+     */
     aksi?: ReactNode;
     children: ReactNode;
 };
@@ -95,7 +108,7 @@ export function CekMenuPengelolaAktif(href: string, url: string): boolean {
  * Tata letak Platform Pengelola (PRD §13.8): kepala gelap yang berbeda dari back-office tenant, penanda lingkungan
  * selalu terlihat, menu samping shadcn/ui sesuai izin.
  */
-export default function TataLetakPengelola({ judul, aksi, children }: PropsTataLetak) {
+export default function TataLetakPengelola({ judul, jejak = [], aksi, children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaPengelola>();
     const pengguna = props.Pengguna;
     const menuTerlihat = daftarMenu.filter((menu) => menu.izin === null || PunyaIzin(pengguna, menu.izin));
@@ -147,6 +160,7 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                     </KepalaTataLetak>
                 </div>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
+                    <JejakHalaman jejak={jejak} />
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <JudulHalaman>{judul}</JudulHalaman>
                         {aksi}
