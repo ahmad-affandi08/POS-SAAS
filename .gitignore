@@ -15,3 +15,7 @@ coverage/
 
 # Pengaturan lokal Claude Code per developer
 .claude/settings.local.json
+
+# Keluaran pembanding golden Flutter (`flutter test` menulisnya saat golden tidak cocok). Bukan sumber, tidak
+# pernah di-commit, dan namanya snake_case bahasa Inggris sehingga selalu ditandai CekKonvensi bila dibiarkan.
+**/test/**/failures/

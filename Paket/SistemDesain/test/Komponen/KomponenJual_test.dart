@@ -23,8 +23,10 @@ void main() {
       tester,
       Align(
         alignment: Alignment.topLeft,
+        // Kotak yang sama dengan yang diberikan grid: lebar kolom, tinggi = lebar + blok teks.
         child: SizedBox(
-          width: UbinProduk.lebarMaksimum,
+          width: 148,
+          height: 148 + UbinProduk.tinggiTeks,
           child: UbinProduk(
             nama: 'Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo Edisi Spesial',
             harga: Uang.DariBulat(1250000),
@@ -38,7 +40,9 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('CM'), findsOneWidget);
     expect(find.text('Rp 1.250.000'), findsOneWidget);
-    expect(tester.getSize(find.byType(UbinProduk)).height, UbinProduk.tinggi);
+    // Tinggi ubin mengikuti lebarnya: gambar persegi + blok teks, bukan tinggi tetap seperti sebelum papan menu.
+    expect(tester.getSize(find.byType(UbinProduk)).height, 148 + UbinProduk.tinggiTeks);
+    expect(find.byIcon(Icons.tune), findsOneWidget, reason: 'Penanda memakai ikon + teks, bukan warna saja.');
     final nama = tester.widget<Text>(find.textContaining('Croissant'));
     expect(nama.maxLines, 2);
     final harga = tester.widget<Text>(find.text('Rp 1.250.000'));
@@ -136,5 +140,15 @@ void main() {
     expect(PapanAngka.Terapkan(nilai, PapanAngka.tombolHapus), '5000');
     expect(PapanAngka.Terapkan('', PapanAngka.tombolHapus), '');
     expect(PapanAngka.Terapkan('1234567890123', '4'), '1234567890123');
+  });
+
+  test('tangga kolom papan menu: makin lebar area katalog, makin banyak kolom', () {
+    // Angka acuan dari lebar area katalog sungguhan (sudah dikurangi rel, keranjang, dan padding).
+    expect(UbinProduk.HitungKolom(328), 2, reason: 'HP 360dp');
+    expect(UbinProduk.HitungKolom(392), 3, reason: 'Tablet 800dp');
+    expect(UbinProduk.HitungKolom(792), 5, reason: 'Desktop 1280dp');
+    expect(UbinProduk.HitungKolom(1400), 6);
+    // Rasio: ubin selalu setinggi lebarnya (gambar persegi) + blok teks.
+    expect(UbinProduk.HitungRasio(148), closeTo(148 / (148 + UbinProduk.tinggiTeks), 0.0001));
   });
 }

@@ -852,40 +852,47 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                   _cari.text.isEmpty ? 'Belum ada produk di kategori ini.' : 'Tidak ada produk yang cocok.',
                   _cari.text.isEmpty ? 'Pilih kategori lain.' : 'Periksa ejaan atau cari dengan SKU/barcode.',
                 )
-              : GridView.builder(
-                  padding: EdgeInsets.fromLTRB(tepi, TokenJarak.jarak8, tepi, tepi),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: UbinProduk.lebarMaksimum,
-                    mainAxisExtent: UbinProduk.tinggi,
-                    crossAxisSpacing: TokenJarak.jarak8,
-                    mainAxisSpacing: TokenJarak.jarak8,
-                  ),
-                  itemCount: daftar.length,
-                  itemBuilder: (context, i) {
-                    final p = daftar[i];
-                    final satuan = p.AmbilSatuanBawaan();
-                    final alasan = p.AmbilAlasanTidakBisaDijual();
-                    return UbinProduk(
-                      key: ValueKey(p.uuid),
-                      nama: p.nama,
-                      harga: satuan == null
-                          ? null
-                          : layanan.TentukanHarga(
-                              katalog,
-                              k,
-                              p.uuid,
-                              satuan.uuid,
-                              Kuantitas.DariBulat(1),
-                              kanal: kanal,
-                              tierPelanggan: tier,
-                            ),
-                      nonaktif: alasan != null,
-                      keterangan: alasan != null
-                          ? 'Tidak bisa dijual'
-                          : p.kelompokPilihan.isNotEmpty
-                          ? 'Ada pilihan'
-                          : null,
-                      saatDiketuk: () => _TambahProduk(p),
+              : LayoutBuilder(
+                  builder: (context, batas) {
+                    // Papan menu: jumlah kolom ditentukan lebar area, ubin membagi habis lebarnya sampai tepi.
+                    final kolom = UbinProduk.HitungKolom(batas.maxWidth - tepi * 2);
+                    final lebarUbin = (batas.maxWidth - tepi * 2 - (kolom - 1) * TokenJarak.jarak12) / kolom;
+                    return GridView.builder(
+                      padding: EdgeInsets.fromLTRB(tepi, TokenJarak.jarak8, tepi, tepi),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: kolom,
+                        childAspectRatio: UbinProduk.HitungRasio(lebarUbin),
+                        crossAxisSpacing: TokenJarak.jarak12,
+                        mainAxisSpacing: TokenJarak.jarak12,
+                      ),
+                      itemCount: daftar.length,
+                      itemBuilder: (context, i) {
+                        final p = daftar[i];
+                        final satuan = p.AmbilSatuanBawaan();
+                        final alasan = p.AmbilAlasanTidakBisaDijual();
+                        return UbinProduk(
+                          key: ValueKey(p.uuid),
+                          nama: p.nama,
+                          harga: satuan == null
+                              ? null
+                              : layanan.TentukanHarga(
+                                  katalog,
+                                  k,
+                                  p.uuid,
+                                  satuan.uuid,
+                                  Kuantitas.DariBulat(1),
+                                  kanal: kanal,
+                                  tierPelanggan: tier,
+                                ),
+                          nonaktif: alasan != null,
+                          keterangan: alasan != null
+                              ? 'Tidak bisa dijual'
+                              : p.kelompokPilihan.isNotEmpty
+                              ? 'Ada pilihan'
+                              : null,
+                          saatDiketuk: () => _TambahProduk(p),
+                        );
+                      },
                     );
                   },
                 ),
@@ -1218,7 +1225,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       child: LayoutBuilder(
         builder: (context, batas) {
           final duaPanel = batas.maxWidth >= LayarJual.lebarDuaPanel;
-          final lebarKeranjang = batas.maxWidth >= 960 ? 400.0 : 320.0;
+          // Diramping dari 400/320 (v2.67): 40dp itu bedanya satu kolom penuh di papan menu, sedangkan isi
+          // keranjang (nama item, nominal) tetap muat.
+          final lebarKeranjang = batas.maxWidth >= 960 ? 360.0 : 280.0;
           final Widget isi;
           if (duaPanel) {
             final keranjangSamping = SizedBox(width: lebarKeranjang, child: _BangunKeranjang(hitungan));

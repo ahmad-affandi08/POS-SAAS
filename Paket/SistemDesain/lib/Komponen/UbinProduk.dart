@@ -6,9 +6,16 @@ import '../Token/TokenTipografi.dart';
 import '../Token/TokenWarna.dart';
 import 'TeksUang.dart';
 
-/// Ubin produk di katalog layar Jual (PRD §17.2.7): ukuran seragam, inisial di atas latar netral bila tanpa foto,
-/// nama maksimal dua baris, harga tabular. [keterangan] untuk penanda singkat (misal "Ada pilihan"); [nonaktif] =
-/// produk belum bisa dijual (tetap bisa diketuk agar kasir melihat alasannya).
+/// Ubin produk di katalog layar Jual (PRD §17.2.3, §17.2.7): area gambar persegi di atas — foto produk bila ada,
+/// inisial di atas latar netral bila belum — lalu nama maksimal dua baris dan harga tabular.
+///
+/// Ubin tidak lagi berlebar/tinggi tetap. Sebelumnya lebarnya dibatasi 176dp dan tingginya dikunci 136dp, sehingga
+/// di tablet 10" katalog hanya muat dua kolom pendek dan layar terasa kosong. Sekarang jumlah kolom ditentukan
+/// [HitungKolom] dari lebar area katalog dan ubin membagi habis lebarnya, jadi grid selalu penuh sampai tepi.
+///
+/// [keterangan] penanda singkat (misal "Ada pilihan") yang tampil sebagai chip berikon di atas gambar — ikon +
+/// teks, bukan warna saja, supaya tetap terbaca bila warna dihapus (§17.6.11). [nonaktif] = produk belum bisa
+/// dijual (tetap bisa diketuk agar kasir melihat alasannya).
 class UbinProduk extends StatelessWidget {
   const UbinProduk({
     super.key,
@@ -17,13 +24,27 @@ class UbinProduk extends StatelessWidget {
     required this.saatDiketuk,
     this.keterangan,
     this.nonaktif = false,
+    this.gambar,
   });
 
-  /// Tinggi ubin seragam (kisi 8dp).
-  static const double tinggi = 136;
+  /// Tinggi blok teks di bawah gambar: nama dua baris + harga, tanpa saling tabrak di ubin tersempit.
+  static const double tinggiTeks = 88;
 
-  /// Lebar maksimum ubin di grid.
-  static const double lebarMaksimum = 176;
+  /// Lebar ubin minimum yang masih nyaman disentuh & terbaca; dipakai [HitungKolom] sebagai batas bawah.
+  static const double lebarMinimum = 104;
+
+  /// Jumlah kolom katalog menurut lebar areanya (sudah dikurangi padding). Tangga ini yang menggantikan batas lebar
+  /// ubin tetap: di tablet 10" (±390dp bersih) jadi 3 kolom, di desktop (±790dp) jadi 5.
+  static int HitungKolom(double lebarArea) => switch (lebarArea) {
+    < 360 => 2,
+    < 560 => 3,
+    < 768 => 4,
+    < 1024 => 5,
+    _ => 6,
+  };
+
+  /// Rasio lebar:tinggi ubin untuk grid berjumlah kolom tetap; gambar persegi + [tinggiTeks].
+  static double HitungRasio(double lebarUbin) => lebarUbin / (lebarUbin + tinggiTeks);
 
   final String nama;
 
@@ -32,6 +53,9 @@ class UbinProduk extends StatelessWidget {
   final VoidCallback saatDiketuk;
   final String? keterangan;
   final bool nonaktif;
+
+  /// Foto produk bila sudah tersedia di perangkat; null = pakai inisial.
+  final Widget? gambar;
 
   /// Inisial dua huruf pertama kata (misal "Es Kopi Susu" → "EK").
   static String AmbilInisial(String nama) {
@@ -62,65 +86,115 @@ class UbinProduk extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: saatDiketuk,
-          child: SizedBox(
-            height: tinggi,
-            child: Padding(
-              padding: const EdgeInsets.all(TokenJarak.jarak12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColoredBox(
+                      color: warna.latar,
+                      child:
+                          gambar ??
+                          Center(
+                            child: Text(
+                              AmbilInisial(nama),
+                              style: teks.headlineSmall?.copyWith(color: warna.teksSekunder, fontFamily: fontMono),
+                            ),
+                          ),
+                    ),
+                    if (keterangan case final String tanda)
+                      Positioned(
+                        left: TokenJarak.jarak4,
+                        bottom: TokenJarak.jarak4,
+                        right: TokenJarak.jarak4,
+                        child: _Tanda(tanda: tanda, nonaktif: nonaktif),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(TokenJarak.jarak8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: warna.latar,
-                          border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
-                          borderRadius: BorderRadius.circular(TokenJarak.radiusKontrol),
-                        ),
+                      Expanded(
                         child: Text(
-                          AmbilInisial(nama),
-                          style: teks.labelLarge?.copyWith(color: warna.teksSekunder, fontFamily: fontMono),
+                          nama,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium?.copyWith(color: warnaTeks),
                         ),
                       ),
-                      if (keterangan != null) ...[
-                        const SizedBox(width: TokenJarak.jarak8),
-                        Expanded(
-                          child: Text(keterangan!, maxLines: 2, overflow: TextOverflow.ellipsis, style: teks.bodySmall),
+                      if (hargaTeks == null)
+                        Text(
+                          'Harga belum diatur',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodySmall?.copyWith(color: warna.peringatan),
+                        )
+                      else
+                        // Nominal besar (misal paket Rp 1.000.000) di ubin sempit tetap satu baris: mengecil, tidak meluap.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: TeksUang(
+                            hargaTeks,
+                            rataKanan: false,
+                            gaya: teks.labelLarge?.copyWith(color: warnaTeks, fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ],
                     ],
                   ),
-                  const SizedBox(height: TokenJarak.jarak8),
-                  Expanded(
-                    child: Text(
-                      nama,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: teks.labelLarge?.copyWith(color: warnaTeks),
-                    ),
-                  ),
-                  if (hargaTeks == null)
-                    Text(
-                      'Harga belum diatur',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: teks.bodySmall?.copyWith(color: warna.peringatan),
-                    )
-                  else
-                    // Nominal besar (misal paket Rp 1.000.000) di ubin sempit tetap satu baris: mengecil, tidak meluap.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: TeksUang(hargaTeks, rataKanan: false, gaya: teks.bodyMedium?.copyWith(color: warnaTeks)),
-                    ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Chip penanda di atas gambar: ikon + teks, bukan warna saja (§17.6.11).
+class _Tanda extends StatelessWidget {
+  const _Tanda({required this.tanda, required this.nonaktif});
+
+  final String tanda;
+  final bool nonaktif;
+
+  @override
+  Widget build(BuildContext context) {
+    final warna = TokenWarna.AmbilDari(context);
+    final teks = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak4, vertical: 2),
+      decoration: BoxDecoration(
+        color: warna.permukaan,
+        border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
+        borderRadius: BorderRadius.circular(TokenJarak.radiusKontrol),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            nonaktif ? Icons.block : Icons.tune,
+            size: TokenJarak.ikonKecil,
+            color: nonaktif ? warna.bahaya : warna.teksSekunder,
+          ),
+          const SizedBox(width: 2),
+          Flexible(
+            child: Text(
+              tanda,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+            ),
+          ),
+        ],
       ),
     );
   }

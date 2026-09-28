@@ -208,7 +208,7 @@ Aplikasi POS **bukan kumpulan layar**, melainkan **ruang kerja** tempat kasir be
 **Prinsip elegan & mudah:**
 1. **Tenang untuk mata.** Latar netral `Latar`, panel `Permukaan`, pemisah garis tipis, satu warna brand hanya untuk aksi utama (BAYAR) dan penanda aktif. **Pengecualian D-29:** kulit aplikasi (bilah atas, rel navigasi/bilah bawah, dan panel merek layar masuk) berlatar `BrandGelap`; area kerja, katalog, keranjang, panel, dan dialog tetap netral. Tidak ada animasi berulang, banner berkedip, atau warna jenuh selain status.
 2. **Hierarki jelas dalam satu pandangan.** Yang terbesar selalu TOTAL, lalu tombol BAYAR, lalu isi keranjang. Ukuran dari token §17.5 (`Tampilan` untuk TOTAL & kembalian).
-3. **Ritme konsisten.** Kisi 8dp, radius 8 panel / 6 kontrol, tinggi baris keranjang tetap, ubin produk seragam (foto nyata atau inisial di atas latar netral bila tanpa foto).
+3. **Ritme konsisten.** Kisi 8dp, radius 8 panel / 6 kontrol, tinggi baris keranjang tetap, ubin produk seragam dengan **area gambar persegi** di atas (foto nyata atau inisial di atas latar netral bila tanpa foto), jumlah kolom mengikuti lebar area katalog (`UbinProduk.HitungKolom`, v2.67) sehingga grid selalu penuh sampai tepi.
 4. **Umpan balik halus tetapi pasti.** Tekan tombol berubah dalam < 100 ms; pindai berhasil/gagal ditandai suara pendek + getar (bisa dimatikan) dan sorot baris keranjang 150 ms; tidak ada toast untuk hal rutin.
 5. **Tidak pernah membuat kasir tersesat.** Maksimal dua ketukan dari beranda ke fitur rutin; tombol kembali selalu ke area kerja; tidak ada dialog bertumpuk.
 
