@@ -363,3 +363,24 @@
         font-size: 16px;
     }
 }
+
+/*
+ * Ruang aman untuk bilah aksi yang menempel di bawah (§17.4.4).
+ *
+ * Di iPhone berlayar penuh, area paling bawah dipakai indikator home. Bilah `fixed bottom-0`/`sticky bottom-0`
+ * kita menempel persis di sana, jadi tombol "Simpan"/"Bayar" dan banner persetujuan cookie tertimpa indikator
+ * itu — bisa terlihat, tetapi sulit diketuk karena sapuan sistem menang. `env(safe-area-inset-bottom)` hanya
+ * berisi nilai bila meta viewport memakai `viewport-fit=cover`, jadi ketiga blade aplikasi memakainya.
+ *
+ * Aturannya dibatasi di bawah 640px: di atas itu bilahnya jadi `sm:static` dan perangkatnya tidak punya inset,
+ * sehingga `sm:py-0`/`py-4` milik masing-masing bilah tetap berlaku apa adanya. Seperti aturan zoom di atas,
+ * rule ini sengaja **di luar `@layer`** supaya mengalahkan utilitas `py-*` Tailwind pada elemen yang sama;
+ * di dalam `@layer` ia akan kalah dan bilahnya kembali menempel ke indikator home.
+ *
+ * Dijaga `Gaya/TepiAmanTes.ts`: setiap elemen yang menempel di bawah wajib memakai kelas ini.
+ */
+@media (max-width: 639px) {
+    .tepi-bawah-aman {
+        padding-bottom: calc(var(--spacing) * 3 + env(safe-area-inset-bottom, 0px));
+    }
+}

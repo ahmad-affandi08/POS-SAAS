@@ -402,7 +402,7 @@ export default function HalamanFormPenyesuaianStok({
                     </ul>
                 </PanelKatalog>
 
-                <div className="sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 sm:static sm:bg-transparent sm:py-0">
+                <div className="sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf penyesuaian
                     </Tombol>

@@ -6,7 +6,7 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import PesanFiturLoyalti from '@/Komponen/Pelanggan/PesanFiturLoyalti';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -131,9 +131,9 @@ export default function HalamanPengaturanLoyalti({ Pengaturan, FiturAktif, Izin 
                     ) : null}
                     {Izin.Kelola ? (
                         <div>
-                            <Button type="submit" disabled={memproses}>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan pengaturan loyalti
-                            </Button>
+                            </Tombol>
                         </div>
                     ) : null}
                 </form>

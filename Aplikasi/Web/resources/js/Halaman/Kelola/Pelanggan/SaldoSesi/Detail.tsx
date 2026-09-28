@@ -10,6 +10,7 @@ import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -219,7 +220,7 @@ export default function HalamanDetailSaldoSesi({ Saldo: s, AkunKasBank, Izin }: 
                 ) : null}
             </Card>
 
-            <h2 className="text-judul-kecil text-teks-utama">Pemakaian sesi</h2>
+            <h2 className="text-subjudul font-semibold text-teks-utama">Pemakaian sesi</h2>
             <TabelData
                 id="saldo-sesi-pemakaian"
                 label={`Pemakaian paket ${s.NamaPaket}`}
@@ -242,7 +243,7 @@ export default function HalamanDetailSaldoSesi({ Saldo: s, AkunKasBank, Izin }: 
                 kosong={{ judul: 'Belum ada sesi yang dipakai.' }}
             />
 
-            <h2 className="text-judul-kecil text-teks-utama">Riwayat sesi</h2>
+            <h2 className="text-subjudul font-semibold text-teks-utama">Riwayat sesi</h2>
             <TabelData
                 id="saldo-sesi-mutasi"
                 label={`Riwayat sesi paket ${s.NamaPaket}`}
@@ -290,16 +291,17 @@ export default function HalamanDetailSaldoSesi({ Saldo: s, AkunKasBank, Izin }: 
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturTutup(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturTutup(null)}>
                                 Batal
-                            </Button>
-                            <Button
+                            </Tombol>
+                            <Tombol
                                 type="submit"
-                                variant="destructive"
-                                disabled={memproses || tutup.Alasan.trim().length < 5}
+                                varian="bahaya"
+                                memproses={memproses}
+                                disabled={tutup.Alasan.trim().length < 5}
                             >
                                 {tutup.Jenis === 'Refund' ? 'Kembalikan sisa' : 'Hanguskan sisa'}
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>
@@ -331,16 +333,17 @@ export default function HalamanDetailSaldoSesi({ Saldo: s, AkunKasBank, Izin }: 
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturBatal(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturBatal(null)}>
                                 Batal
-                            </Button>
-                            <Button
+                            </Tombol>
+                            <Tombol
                                 type="submit"
-                                variant="destructive"
-                                disabled={memproses || alasanBatal.trim().length < 5}
+                                varian="bahaya"
+                                memproses={memproses}
+                                disabled={alasanBatal.trim().length < 5}
                             >
                                 Batalkan pemakaian
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

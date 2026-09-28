@@ -495,7 +495,7 @@ export default function HalamanPengaturanSitus({
                 </Kartu>
 
                 {Izin.Kelola ? (
-                    <div className="sticky bottom-0 z-10 flex gap-2 border-t border-garis bg-latar py-3">
+                    <div className="sticky bottom-0 z-10 flex gap-2 border-t border-garis bg-latar py-3 tepi-bawah-aman">
                         <Tombol type="submit" memproses={formulir.processing} disabled={!formulir.isDirty}>
                             Simpan pengaturan
                         </Tombol>

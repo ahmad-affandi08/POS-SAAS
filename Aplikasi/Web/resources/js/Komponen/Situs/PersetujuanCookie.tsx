@@ -62,7 +62,7 @@ export default function PersetujuanCookie({ analitik }: { analitik: PengaturanAn
         <div
             role="region"
             aria-label="Persetujuan cookie"
-            className="fixed inset-x-0 bottom-0 z-50 border-t border-garis bg-permukaan px-4 py-4"
+            className="fixed inset-x-0 bottom-0 z-50 border-t border-garis bg-permukaan px-4 py-4 tepi-bawah-aman"
         >
             <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-isi text-teks-utama">

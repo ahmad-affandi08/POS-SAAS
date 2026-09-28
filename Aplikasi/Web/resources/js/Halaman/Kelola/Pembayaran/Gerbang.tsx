@@ -121,7 +121,7 @@ export default function HalamanGerbangPembayaran({
                         </CardHeader>
                         <CardContent className="grid gap-3">
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-body font-semibold text-teks-utama">{Gerbang.LabelPenyedia}</span>
+                                <span className="text-isi font-semibold text-teks-utama">{Gerbang.LabelPenyedia}</span>
                                 <LabelStatus jenis={jenisStatusUji[Gerbang.StatusUji]} teks={Gerbang.LabelStatusUji} />
                                 <LabelStatus
                                     jenis={Gerbang.Aktif ? 'sukses' : 'netral'}

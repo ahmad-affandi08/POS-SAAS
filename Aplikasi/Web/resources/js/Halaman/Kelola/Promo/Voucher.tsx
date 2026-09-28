@@ -12,6 +12,7 @@ import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -284,12 +285,12 @@ export default function HalamanVoucherPromo({ Promo, Voucher, Ringkasan, JumlahM
                             galat={galat.TanggalKedaluwarsa}
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturIsian(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturIsian(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Buat voucher
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

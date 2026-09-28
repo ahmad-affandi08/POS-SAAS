@@ -10,6 +10,7 @@ import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisKategoriKas, JenisKategoriKas, PropsKategoriKas } from '@/Tipe/Kasir';
@@ -193,12 +194,12 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturForm(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturForm(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan kategori
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

@@ -7,7 +7,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     {{-- D-21: meta SEO & pratinjau tautan diisi server (tanpa SSR Node di hosting bersama). --}}
     <title inertia>{{ $seo['Judul'] ?? $namaSitus }}</title>
     <meta name="description" content="{{ $seo['Deskripsi'] ?? '' }}">

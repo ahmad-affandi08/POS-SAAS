@@ -8,7 +8,7 @@ import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisPelanggan } from '@/Tipe/Pelanggan';
 
@@ -171,12 +171,12 @@ export function IsiFormulirPelanggan({
                 saatBerubah={(nilai) => Ubah({ SetujuPemasaran: nilai })}
             />
             <div className="flex flex-wrap justify-end gap-2">
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
-                <Button type="submit" disabled={memproses}>
+                </Tombol>
+                <Tombol type="submit" memproses={memproses}>
                     Simpan pelanggan
-                </Button>
+                </Tombol>
             </div>
         </form>
     );

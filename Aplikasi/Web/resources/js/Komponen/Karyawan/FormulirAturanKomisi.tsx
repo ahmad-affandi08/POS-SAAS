@@ -6,7 +6,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisAturanKomisi, CakupanKomisi, JenisKomisi, OpsiUuidNama } from '@/Tipe/Karyawan';
 
@@ -155,10 +155,10 @@ export function IsiFormulirAturanKomisi({
                 />
             )}
             <div className="flex flex-wrap justify-end gap-2">
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
-                <Button type="submit">Simpan aturan</Button>
+                </Tombol>
+                <Tombol type="submit">Simpan aturan</Tombol>
             </div>
         </form>
     );

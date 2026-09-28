@@ -274,7 +274,7 @@ export default function HalamanDetailDaftarHarga({
                 kosong={{ judul: 'Belum ada produk yang bisa dijual.' }}
             />
             {Izin.UbahHarga && barisDilihat.length > 0 ? (
-                <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-garis bg-latar py-3">
+                <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-garis bg-latar py-3 tepi-bawah-aman">
                     <Tombol onClick={Simpan} memproses={memproses} disabled={berubah.length === 0}>
                         Simpan harga
                     </Tombol>

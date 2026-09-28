@@ -540,7 +540,7 @@ export default function HalamanDetailStokOpname({
                         ) : null}
                     </PanelKatalog>
 
-                    <div className="sticky bottom-0 flex flex-wrap items-center gap-2 bg-latar py-2 sm:static sm:bg-transparent sm:py-0">
+                    <div className="sticky bottom-0 flex flex-wrap items-center gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
                         <Tombol
                             type="submit"
                             memproses={memproses}

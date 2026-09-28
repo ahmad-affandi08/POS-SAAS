@@ -434,7 +434,7 @@ function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
             ) : null}
 
             {jumlahItem > 0 ? (
-                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-garis bg-permukaan p-3">
+                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-garis bg-permukaan p-3 tepi-bawah-aman">
                     <button
                         type="button"
                         onClick={() => AturKeranjangTerbuka(true)}

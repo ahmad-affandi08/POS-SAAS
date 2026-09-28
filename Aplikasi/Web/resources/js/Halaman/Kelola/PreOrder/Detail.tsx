@@ -7,6 +7,7 @@ import PanelKatalog from '@/Komponen/Katalog/PanelKatalog';
 import { KartuKeterangan, Keterangan, RingkasanNilai } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -198,12 +199,12 @@ export default function HalamanDetailPreOrder({ Pesanan: p, OpsiAkun, OpsiCara, 
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturDialog(false)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturDialog(false)}>
                                 Kembali
-                            </Button>
-                            <Button type="submit" variant={terbuka ? 'destructive' : 'default'} disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" varian={terbuka ? 'bahaya' : 'utama'} memproses={memproses}>
                                 {labelSelesaikan}
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

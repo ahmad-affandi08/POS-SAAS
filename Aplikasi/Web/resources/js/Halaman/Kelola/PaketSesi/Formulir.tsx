@@ -8,7 +8,7 @@ import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanFiturPaketSesi from '@/Komponen/Pelanggan/PesanFiturPaketSesi';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { PropsFormulirPaketSesi } from '@/Tipe/Katalog';
@@ -136,12 +136,12 @@ export default function HalamanFormulirPaketSesi({ Paket, PilihanJasa, FiturAkti
                         saatBerubah={(nilai) => Ubah({ Aktif: nilai })}
                     />
                     <div className="flex flex-wrap justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => router.visit(alamat)}>
+                        <Tombol type="button" varian="sekunder" onClick={() => router.visit(alamat)}>
                             Batal
-                        </Button>
-                        <Button type="submit" disabled={memproses || !FiturAktif}>
+                        </Tombol>
+                        <Tombol type="submit" memproses={memproses} disabled={!FiturAktif}>
                             Simpan paket sesi
-                        </Button>
+                        </Tombol>
                     </div>
                 </form>
             </KartuFormulir>

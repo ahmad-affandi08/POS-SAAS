@@ -6,6 +6,7 @@ import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -189,12 +190,12 @@ export default function HalamanDetailTransaksiKasBank({ Transaksi: t, Jurnal, Iz
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturBalik(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturBalik(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" variant="destructive" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" varian="bahaya" memproses={memproses}>
                                 Buat pembalik
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

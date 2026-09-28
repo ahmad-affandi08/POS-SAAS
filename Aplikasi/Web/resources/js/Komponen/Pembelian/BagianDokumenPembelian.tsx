@@ -3,7 +3,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -226,12 +226,12 @@ export function DialogAlasan({
                     required
                 />
                 <div className="flex flex-wrap justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={saatTutup}>
+                    <Tombol type="button" varian="sekunder" onClick={saatTutup}>
                         Batal
-                    </Button>
-                    <Button type="submit" variant="destructive" disabled={memproses || alasan.trim().length < 5}>
+                    </Tombol>
+                    <Tombol type="submit" varian="bahaya" memproses={memproses} disabled={alasan.trim().length < 5}>
                         {labelAksi}
-                    </Button>
+                    </Tombol>
                 </div>
             </form>
         </DialogFormulir>

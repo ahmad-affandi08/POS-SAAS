@@ -12,6 +12,7 @@ import {
 import type { ReactNode } from 'react';
 
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
@@ -341,9 +342,9 @@ export default function BilahAlat<T>(props: PropsBilahAlat<T>) {
                                 ))}
                             </div>
                             <SheetFooter>
-                                <Button type="button" variant="outline" className="h-11" onClick={props.HapusSemua}>
+                                <Tombol varian="sekunder" onClick={props.HapusSemua}>
                                     Hapus semua saring
-                                </Button>
+                                </Tombol>
                             </SheetFooter>
                         </SheetContent>
                     </Sheet>

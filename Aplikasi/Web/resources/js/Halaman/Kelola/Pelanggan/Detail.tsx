@@ -13,6 +13,7 @@ import LencanaPenjualan from '@/Komponen/Penjualan/LencanaPenjualan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -285,7 +286,7 @@ export default function HalamanDetailPelanggan({
                     </dl>
                 </Card>
                 <Card className="gap-3 rounded-panel p-4 shadow-none">
-                    <h2 className="text-judul-kecil text-teks-utama">Ringkasan belanja</h2>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Ringkasan belanja</h2>
                     <dl className="grid gap-3">
                         <Nilai label="Jumlah transaksi">{p.JumlahTransaksi.toLocaleString('id-ID')}</Nilai>
                         <Nilai label="Total belanja (sebelum retur, tanpa void)">
@@ -300,7 +301,7 @@ export default function HalamanDetailPelanggan({
 
             <Card className="gap-3 rounded-panel p-4 shadow-none">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="text-judul-kecil text-teks-utama">Kredit & piutang</h2>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Kredit & piutang</h2>
                     {Kredit && BandingkanDesimal(Kredit.SisaPiutang, '0') > 0 ? (
                         <Link href={`/kelola/piutang?saring[Pelanggan]=${p.Uuid}`} className="text-brand underline">
                             Lihat piutang
@@ -328,7 +329,7 @@ export default function HalamanDetailPelanggan({
             </Card>
 
             <Card className="gap-3 rounded-panel p-4 shadow-none">
-                <h2 className="text-judul-kecil text-teks-utama">Tier & poin</h2>
+                <h2 className="text-subjudul font-semibold text-teks-utama">Tier & poin</h2>
                 {LoyaltiBerlaku ? null : (
                     <p className="text-isi text-teks-sekunder">
                         Loyalti belum aktif: poin tidak bertambah dari belanja. Aktifkan di Pengaturan loyalti.
@@ -359,7 +360,7 @@ export default function HalamanDetailPelanggan({
             {Deposit.Berlaku || Deposit.Riwayat.length > 0 ? (
                 <Card className="gap-3 rounded-panel p-4 shadow-none">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-judul-kecil text-teks-utama">Deposit</h2>
+                        <h2 className="text-subjudul font-semibold text-teks-utama">Deposit</h2>
                         <Link href="/kelola/pelanggan/isi-deposit" className="text-brand underline">
                             Lihat semua isi deposit
                         </Link>
@@ -408,7 +409,7 @@ export default function HalamanDetailPelanggan({
             {PaketSesi.Berlaku || PaketSesi.Daftar.length > 0 ? (
                 <Card className="gap-3 rounded-panel p-4 shadow-none">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-judul-kecil text-teks-utama">Paket sesi</h2>
+                        <h2 className="text-subjudul font-semibold text-teks-utama">Paket sesi</h2>
                         <Link href={AlamatSaldoSesi} className="text-brand underline">
                             Lihat semua paket sesi
                         </Link>
@@ -425,7 +426,7 @@ export default function HalamanDetailPelanggan({
                 </Card>
             ) : null}
 
-            <h2 className="text-judul-kecil text-teks-utama">Riwayat poin</h2>
+            <h2 className="text-subjudul font-semibold text-teks-utama">Riwayat poin</h2>
             <TabelData
                 id="pelanggan-riwayat-poin"
                 label={`Riwayat poin ${p.Nama}`}
@@ -436,7 +437,7 @@ export default function HalamanDetailPelanggan({
                 kosong={{ judul: 'Belum ada mutasi poin.' }}
             />
 
-            <h2 className="text-judul-kecil text-teks-utama">Riwayat belanja</h2>
+            <h2 className="text-subjudul font-semibold text-teks-utama">Riwayat belanja</h2>
             <TabelData
                 id="pelanggan-riwayat"
                 label={`Riwayat belanja ${p.Nama}`}
@@ -471,12 +472,12 @@ export default function HalamanDetailPelanggan({
                             saatBerubah={(nilai) => AturTier({ ...tier, Tetap: nilai })}
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturDialog(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan tier
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>
@@ -516,12 +517,12 @@ export default function HalamanDetailPelanggan({
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturDialog(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan penyesuaian
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>
@@ -573,12 +574,12 @@ export default function HalamanDetailPelanggan({
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturDialog(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Tarik deposit
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>
@@ -628,12 +629,12 @@ export default function HalamanDetailPelanggan({
                             required
                         />
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturDialog(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturDialog(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan penyesuaian deposit
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

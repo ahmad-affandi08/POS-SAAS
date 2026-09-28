@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-Ccs91acS.js";import{t}from"./Pemberitahuan-D9ql4vBB.js";var n=e();function r({izin:e,objek:r}){return(0,n.jsxs)(t,{jenis:`info`,judul:`Hanya bisa melihat`,children:[`Anda bisa melihat `,r,`, tetapi tidak bisa mengubahnya. Minta Owner menambahkan izin`,` `,(0,n.jsx)(`span`,{className:`font-mono`,children:e}),` ke peran Anda.`]})}export{r as t};

@@ -492,6 +492,46 @@ Formulir tambah data harian dibuka dalam **mode Sederhana**: hanya isian yang wa
 **Hasil:** 12 entri level utama (dari 18) dan maksimal 7 sub-menu per grup (dari 10), tanpa satu pun halaman dihilangkan.
 
 
+#### 17.4.11 Primitif & Token yang Dijaga (Keputusan D-28, v2.52)
+
+**Masalah yang diperbaiki:** aturan desain sudah ada di §17.5 & §17.6, tetapi yang menjaganya di CI hanya warna,
+kursor, dan ketebalan kepala tabel. Akibatnya tiga hal melenceng tanpa tertangkap siapa pun:
+
+1. **Kelas tipografi yang tidak ada.** `text-judul-kecil` dipakai di 9 heading (Pelanggan › Detail, Saldo sesi ›
+   Detail) dan `text-body` di 1 tempat (Pembayaran › Gerbang), padahal `--text-judul-kecil` dan `--text-body`
+   tidak pernah ada di `@theme`. Tailwind tidak mengeluh untuk kelas yang tidak dikenal — kelasnya hanya diam-diam
+   tidak menghasilkan apa pun, jadi heading itu turun ke ukuran warisan dan berbeda dari panel di halaman lain.
+   Keduanya kini memakai token yang memang dipakai 80 heading lain: `text-subjudul font-semibold text-teks-utama`
+   (heading bagian) dan `text-isi` (teks isi).
+2. **Dua API tombol hidup bersamaan.** `Komponen/Formulir/Tombol` memberi spinner, label "Memproses…",
+   `aria-busy`, tinggi `h-8 pointer-coarse:h-11`, dan `text-label font-semibold`; `Button` shadcn mentah tidak
+   memberi satu pun dari itu dan memakai `text-sm font-medium`. Tombol Simpan di sebagian dialog karena itu hanya
+   redup tanpa tanda proses, dan tingginya beda dengan tombol di halaman sebelahnya. **52 tombol aksi bisnis di 25
+   berkas** dipindahkan ke `Tombol`, termasuk `Komponen/Tindakan/DialogKonfirmasi` yang dipakai semua dialog
+   konfirmasi (sebelumnya menyalin sendiri `aria-busy` + "Memproses…" tanpa spinner). `Button` mentah **tetap sah**
+   untuk yang bukan aksi bisnis: tautan navigasi (`asChild`), pemicu Popover/Sheet, chip saring bilah alat, tombol
+   ikon.
+3. **Tidak ada pola ruang aman tepi bawah.** Sembilan bilah menempel di `bottom-0` (bilah aksi massal `TabelData`,
+   banner persetujuan cookie, bilah simpan editor situs, keranjang self-order, bilah aksi opname/transfer/
+   penyesuaian, bilah daftar harga) tanpa satu pun memperhitungkan `env(safe-area-inset-bottom)`. Di iPhone
+   berlayar penuh area itu milik indikator home, jadi tombol "Simpan"/"Bayar" tertimpa indikator dan sulit diketuk
+   karena sapuan sistem menang.
+
+**Aturannya sekarang:**
+
+- Di luar `Komponen/Ui/` (keluaran CLI shadcn), **setiap kelas `text-*` wajib berasal dari token `@theme`** —
+  ukuran (`--text-*`) atau warna (`--color-*`) — kecuali utilitas yang memang bukan keduanya (perataan, `balance`,
+  `ellipsis`, dan sejenisnya). Ukuran Tailwind mentah (`text-sm`, `text-xs`) hanya boleh di `Komponen/Ui/`.
+- **Tombol aksi bisnis memakai `Tombol`.** Dilarang `<Button type="submit">` mentah di mana pun, dan footer
+  `DialogFooter`/`AlertDialogFooter`/`SheetFooter` hanya boleh memuat `Tombol` atau tautan `asChild`.
+- **Setiap elemen `fixed`/`sticky` di `bottom-0` memakai kelas `tepi-bawah-aman`**, yang menambahkan
+  `env(safe-area-inset-bottom)` pada padding bawah di bawah 640px. Ketiga blade aplikasi memakai
+  `viewport-fit=cover`, karena tanpa itu `env()` selalu 0 di iOS. `maximum-scale`/`user-scalable` tetap dilarang
+  (WCAG 1.4.4, §17.4.4).
+
+Ketiganya dijaga test: `Gaya/AturanTipografiTes.ts`, `Komponen/Formulir/AturanTombolTes.ts`, `Gaya/TepiAmanTes.ts`.
+Aturan lama (`AturanWarnaTes`, kursor, kepala tabel) tetap berlaku.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -292,9 +292,9 @@ function FormBukti({
                 />
             ) : null}
             <DialogFooter className="sm:col-span-2">
-                <Button type="button" variant="outline" onClick={saatSelesai}>
+                <Tombol type="button" varian="sekunder" onClick={saatSelesai}>
                     Batal
-                </Button>
+                </Tombol>
                 <Tombol type="submit" memproses={formulir.processing} disabled={formulir.data.Bukti === null}>
                     Kirim bukti transfer
                 </Tombol>

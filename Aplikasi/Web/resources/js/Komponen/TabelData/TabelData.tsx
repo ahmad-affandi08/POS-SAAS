@@ -691,7 +691,7 @@ export default function TabelData<T>(props: PropsTabelData<T>) {
                 <div
                     role="region"
                     aria-label="Aksi untuk baris terpilih"
-                    className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-panel border border-garis bg-brand-lembut px-3 py-2 sm:static"
+                    className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-panel border border-garis bg-brand-lembut px-3 py-2 tepi-bawah-aman sm:static"
                 >
                     <span className="text-label font-semibold text-teks-utama">
                         {semuaHasil ? `Semua ${String(total)} hasil dipilih` : `${String(terpilih.length)} dipilih`}

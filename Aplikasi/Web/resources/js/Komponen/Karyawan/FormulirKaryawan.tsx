@@ -5,7 +5,7 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisKaryawan, OpsiUuidNama } from '@/Tipe/Karyawan';
 
@@ -124,12 +124,12 @@ export function IsiFormulirKaryawan({
                 galat={galat.UuidOutlet}
             />
             <div className="flex flex-wrap justify-end gap-2">
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
-                <Button type="submit" disabled={memproses}>
+                </Tombol>
+                <Tombol type="submit" memproses={memproses}>
                     Simpan karyawan
-                </Button>
+                </Tombol>
             </div>
         </form>
     );

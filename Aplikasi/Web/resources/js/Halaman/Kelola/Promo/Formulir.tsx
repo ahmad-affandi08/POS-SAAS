@@ -10,6 +10,7 @@ import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import PemilihProduk from '@/Komponen/Katalog/PemilihProduk';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -609,9 +610,9 @@ export default function HalamanFormulirPromo({
                 </Card>
 
                 <div className="flex flex-wrap gap-2">
-                    <Button type="submit" disabled={memproses}>
+                    <Tombol type="submit" memproses={memproses}>
                         Simpan promo
-                    </Button>
+                    </Tombol>
                     <Button asChild variant="outline">
                         <Link href={alamat}>Batal</Link>
                     </Button>

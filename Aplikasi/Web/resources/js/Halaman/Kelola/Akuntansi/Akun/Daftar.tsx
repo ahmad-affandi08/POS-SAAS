@@ -13,6 +13,7 @@ import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { BarisBaganAkun, PropsBaganAkun, TipeAkun } from '@/Tipe/Akuntansi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -279,12 +280,12 @@ export default function HalamanBaganAkun({ Akun, OpsiTipe, Izin }: PropsBaganAku
                         ) : null}
                         {galat.KasBank ? <p className="text-label text-bahaya">{galat.KasBank}</p> : null}
                         <div className="flex flex-wrap justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => AturForm(null)}>
+                            <Tombol type="button" varian="sekunder" onClick={() => AturForm(null)}>
                                 Batal
-                            </Button>
-                            <Button type="submit" disabled={memproses}>
+                            </Tombol>
+                            <Tombol type="submit" memproses={memproses}>
                                 Simpan akun
-                            </Button>
+                            </Tombol>
                         </div>
                     </form>
                 </DialogFormulir>

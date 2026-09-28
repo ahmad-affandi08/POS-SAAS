@@ -295,7 +295,7 @@ export default function HalamanUbahHalamanSitus({ Halaman: halaman, LabelBlok, S
                     ) : null}
                 </section>
                 {Izin.Kelola ? (
-                    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-2 border-t border-garis bg-latar py-3">
+                    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-2 border-t border-garis bg-latar py-3 tepi-bawah-aman">
                         <div className="flex gap-2">
                             <Tombol type="submit" memproses={formulir.processing} disabled={!berubah}>
                                 Simpan draf

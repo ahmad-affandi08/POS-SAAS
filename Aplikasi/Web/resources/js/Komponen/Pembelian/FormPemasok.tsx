@@ -6,7 +6,7 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisPemasok } from '@/Tipe/Pembelian';
 
@@ -176,12 +176,12 @@ export default function FormPemasok({ uuid, awal, saatSelesai, saatBatal }: Prop
                 baris={2}
             />
             <div className="flex flex-wrap justify-end gap-2">
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
-                <Button type="submit" disabled={memproses}>
+                </Tombol>
+                <Tombol type="submit" memproses={memproses}>
                     Simpan pemasok
-                </Button>
+                </Tombol>
             </div>
         </form>
     );

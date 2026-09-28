@@ -416,9 +416,9 @@ function FormProdukCepat({
                                 />
                                 <div className="md:pt-6">
                                     {formulir.data.Produk.length > 1 ? (
-                                        <Button
+                                        <Tombol
                                             type="button"
-                                            variant="outline"
+                                            varian="sekunder"
                                             onClick={() =>
                                                 formulir.setData(
                                                     'Produk',
@@ -428,7 +428,7 @@ function FormProdukCepat({
                                             aria-label={`Hapus baris produk ${String(indeks + 1)}`}
                                         >
                                             Hapus baris
-                                        </Button>
+                                        </Tombol>
                                     ) : null}
                                 </div>
                             </li>
@@ -438,14 +438,14 @@ function FormProdukCepat({
                         <Tombol type="submit" memproses={formulir.processing}>
                             Tambah produk
                         </Tombol>
-                        <Button
+                        <Tombol
                             type="button"
-                            variant="outline"
+                            varian="sekunder"
                             onClick={() => formulir.setData('Produk', [...formulir.data.Produk, barisKosong])}
                             disabled={formulir.data.Produk.length >= maksimalBarisManual}
                         >
                             Tambah baris
-                        </Button>
+                        </Tombol>
                     </div>
                     <FieldDescription className="text-keterangan">
                         Maksimal {maksimalBarisManual} produk sekali simpan. Nama yang sudah ada dilewati.

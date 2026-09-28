@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import Tombol from '@/Komponen/Formulir/Tombol';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -9,7 +10,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/Komponen/Ui/alert-dialog';
-import { Button } from '@/Komponen/Ui/button';
 
 type PropsDialogKonfirmasi = {
     judul: string;
@@ -57,14 +57,9 @@ export default function DialogKonfirmasi({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={memproses}>Batal</AlertDialogCancel>
-                    <Button
-                        variant={varian === 'bahaya' ? 'destructive' : 'default'}
-                        disabled={memproses || nonaktif}
-                        aria-busy={memproses || undefined}
-                        onClick={saatKonfirmasi}
-                    >
-                        {memproses ? 'Memproses…' : labelAksi}
-                    </Button>
+                    <Tombol varian={varian} memproses={memproses} disabled={nonaktif} onClick={saatKonfirmasi}>
+                        {labelAksi}
+                    </Tombol>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

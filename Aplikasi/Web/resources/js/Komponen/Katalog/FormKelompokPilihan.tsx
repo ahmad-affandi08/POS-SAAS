@@ -286,9 +286,9 @@ export default function FormKelompokPilihan({
                 ))}
                 {data.Pilihan.length < MaksimalPilihan ? (
                     <p>
-                        <Button
+                        <Tombol
                             type="button"
-                            variant="outline"
+                            varian="sekunder"
                             onClick={() =>
                                 formulir.setData((lama) => ({
                                     ...lama,
@@ -308,7 +308,7 @@ export default function FormKelompokPilihan({
                             }
                         >
                             Tambah pilihan
-                        </Button>
+                        </Tombol>
                     </p>
                 ) : null}
             </FieldSet>
@@ -321,9 +321,9 @@ export default function FormKelompokPilihan({
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kelompok pilihan
                 </Tombol>
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
+                </Tombol>
             </div>
         </form>
     );

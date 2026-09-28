@@ -143,9 +143,9 @@ function FormKategori({
                 />
             ) : null}
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={saatSelesai}>
+                <Tombol type="button" varian="sekunder" onClick={saatSelesai}>
                     Batal
-                </Button>
+                </Tombol>
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kategori
                 </Tombol>

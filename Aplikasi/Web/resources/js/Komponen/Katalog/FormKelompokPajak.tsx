@@ -197,9 +197,9 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                         </div>
                     ))}
                     <p>
-                        <Button
+                        <Tombol
                             type="button"
-                            variant="outline"
+                            varian="sekunder"
                             onClick={() =>
                                 AturPajak([
                                     ...data.Pajak,
@@ -208,7 +208,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                             }
                         >
                             Tambah pajak
-                        </Button>
+                        </Tombol>
                     </p>
                 </FieldSet>
             )}
@@ -221,9 +221,9 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                 <Tombol type="submit" memproses={formulir.processing}>
                     Simpan kelompok pajak
                 </Tombol>
-                <Button type="button" variant="outline" onClick={saatBatal}>
+                <Tombol type="button" varian="sekunder" onClick={saatBatal}>
                     Batal
-                </Button>
+                </Tombol>
             </div>
         </form>
     );

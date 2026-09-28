@@ -9,7 +9,7 @@ import KartuFormulir from '@/Komponen/Formulir/KartuFormulir';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import GrupRadio from '@/Komponen/Katalog/GrupRadio';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
-import { Button } from '@/Komponen/Ui/button';
+import Tombol from '@/Komponen/Formulir/Tombol';
 import { TulisTanggal } from '@/Pustaka/Tanggal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { JenisTransaksiKasBank, OpsiAkunKasBank, PropsBuatTransaksiKasBank, TipeAkun } from '@/Tipe/Akuntansi';
@@ -220,12 +220,12 @@ export default function HalamanBuatTransaksiKasBank({
                         galat={galat.Ulangi}
                     />
                     <div className="flex flex-wrap justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => router.visit(alamat)}>
+                        <Tombol type="button" varian="sekunder" onClick={() => router.visit(alamat)}>
                             Batal
-                        </Button>
-                        <Button type="submit" disabled={memproses}>
+                        </Tombol>
+                        <Tombol type="submit" memproses={memproses}>
                             Simpan & jurnal
-                        </Button>
+                        </Tombol>
                     </div>
                 </form>
             </KartuFormulir>
