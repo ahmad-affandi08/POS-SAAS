@@ -11,6 +11,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Pendukung/KatalogUji.dart';
 import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/MuatFont.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
 /// Layar Jual & Bayar (Rincian F-07c, PRD §17.2.3, §17.2.7) di 360/800/1280dp dengan server tiruan: katalog diunduh
@@ -419,6 +420,7 @@ void main() {
   });
 
   testWidgets('golden: layar Jual berisi keranjang & panel Bayar tunai (1280dp)', (tester) async {
+    await MuatFontMerek();
     final u = await MasukJual(tester);
     await Ketuk(tester, Ubin('Americano Panas'));
     await Ketuk(tester, Ubin('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo'));
