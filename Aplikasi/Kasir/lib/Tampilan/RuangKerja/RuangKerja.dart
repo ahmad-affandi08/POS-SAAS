@@ -36,6 +36,7 @@ import 'BilahAtasRuangKerja.dart';
 import 'ItemNavigasi.dart';
 import 'LayarKunci.dart';
 import 'PanelWajibPembaruan.dart';
+import 'TemaNavigasiRuangKerja.dart';
 
 /// Bingkai Ruang Kerja Kasir (PRD §17.2.7, D-16): bilah atas, rel navigasi (bilah bawah di HP), area kerja, dan bilah
 /// status. Membungkus semua layar setelah shift terbuka; layar fitur hanya mengisi area kerja. Tugas rutin (kas
@@ -341,23 +342,31 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   }
 
   Widget _BangunRel(List<ItemNavigasi> item, int indeks, double lebar) {
+    final warna = TokenWarna.AmbilDari(context);
     final lebarPenuh = lebar >= RuangKerja.lebarPanelSamping;
     final diperluas = !_relDiciutkan && lebarPenuh;
-    return NavigationRail(
-      extended: diperluas,
-      minExtendedWidth: 208,
-      labelType: _relDiciutkan || diperluas ? NavigationRailLabelType.none : NavigationRailLabelType.all,
-      selectedIndex: indeks,
-      onDestinationSelected: (i) => _Buka(item[i].tujuan),
-      leading: IconButton(
-        tooltip: _relDiciutkan ? 'Lebarkan menu' : 'Ciutkan menu',
-        onPressed: () => setState(() => _relDiciutkan = !_relDiciutkan),
-        icon: Icon(_relDiciutkan ? Icons.menu : Icons.menu_open),
+    return NavigationRailTheme(
+      data: TemaNavigasiRuangKerja.BuatTemaRel(warna, Theme.of(context).textTheme),
+      child: NavigationRail(
+        extended: diperluas,
+        minExtendedWidth: 208,
+        labelType: _relDiciutkan || diperluas ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+        selectedIndex: indeks,
+        onDestinationSelected: (i) => _Buka(item[i].tujuan),
+        leading: Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: IconButton(
+            tooltip: _relDiciutkan ? 'Lebarkan menu' : 'Ciutkan menu',
+            onPressed: () => setState(() => _relDiciutkan = !_relDiciutkan),
+            color: warna.permukaan,
+            icon: Icon(_relDiciutkan ? Icons.menu : Icons.menu_open),
+          ),
+        ),
+        destinations: [
+          for (final i in item)
+            NavigationRailDestination(icon: Icon(i.ikon), selectedIcon: Icon(i.ikonAktif), label: Text(i.label)),
+        ],
       ),
-      destinations: [
-        for (final i in item)
-          NavigationRailDestination(icon: Icon(i.ikon), selectedIcon: Icon(i.ikonAktif), label: Text(i.label)),
-      ],
     );
   }
 
@@ -501,7 +510,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final notifierSesi = ref.read(penyediaSesi.notifier);
 
     final bingkai = Scaffold(
+      // `top: false`: bilah atas yang menangani inset atas sendiri, supaya warna merek ikut mengisi area
+      // status bar dan bingkai tidak terpotong garis putih di puncak layar.
       body: SafeArea(
+        top: false,
         bottom: pakaiRel,
         child: Column(
           children: [
@@ -533,14 +545,17 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       ),
       bottomNavigationBar: pakaiRel
           ? null
-          : NavigationBar(
-              selectedIndex: indeks,
-              onDestinationSelected: (i) => _Buka(item[i].tujuan),
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: [
-                for (final i in item)
-                  NavigationDestination(icon: Icon(i.ikon), selectedIcon: Icon(i.ikonAktif), label: i.label),
-              ],
+          : NavigationBarTheme(
+              data: TemaNavigasiRuangKerja.BuatTemaBilah(warna, Theme.of(context).textTheme),
+              child: NavigationBar(
+                selectedIndex: indeks,
+                onDestinationSelected: (i) => _Buka(item[i].tujuan),
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: [
+                  for (final i in item)
+                    NavigationDestination(icon: Icon(i.ikon), selectedIcon: Icon(i.ikonAktif), label: i.label),
+                ],
+              ),
             ),
     );
 

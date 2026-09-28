@@ -7,6 +7,7 @@ import '../Aplikasi/Penyedia.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Shift/LayananShift.dart';
+import 'Komponen/BingkaiMasuk.dart';
 import 'Komponen/MasukanUang.dart';
 
 /// F-06 langkah 2: layar Buka Shift. Modal awal diketik langsung atau dihitung per pecahan (opsional); keduanya
@@ -66,49 +67,33 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
 
   @override
   Widget build(BuildContext context) {
-    final teks = Theme.of(context).textTheme;
-    final warna = TokenWarna.AmbilDari(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Buka shift · ${widget.kasir.nama}'),
-        actions: [
-          TextButton(onPressed: () => ref.read(penyediaSesi.notifier).Keluar(), child: const Text('Ganti kasir')),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              Text('Hitung uang di laci sebelum mulai berjualan.', style: teks.bodyLarge),
-              const SizedBox(height: 16),
-              MasukanUang(pengendali: _kasAwal, label: 'Modal awal (kas awal)', autofocus: true, galat: _galat),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _hitungPecahan,
-                onChanged: (nilai) => setState(() => _hitungPecahan = nilai),
-                title: const Text('Hitung per pecahan'),
-                subtitle: const Text('Opsional. Jumlahnya otomatis mengisi modal awal.'),
-              ),
-              if (_hitungPecahan)
-                HitungPecahan(nominal: daftarPecahanRupiah, jumlah: _pecahan, saatBerubah: _UbahPecahan),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 56,
-                child: FilledButton(
-                  onPressed: _sibuk ? null : _Buka,
-                  child: Text(_sibuk ? 'Membuka shift…' : 'Buka shift'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Shift tetap bisa dibuka tanpa internet dan akan terkirim otomatis saat online.',
-                style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
-              ),
-            ],
+    return BingkaiMasuk(
+      judul: 'Buka shift · ${widget.kasir.nama}',
+      keterangan: 'Hitung uang di laci sebelum mulai berjualan.',
+      catatan: 'Shift tetap bisa dibuka tanpa internet dan akan terkirim otomatis saat online.',
+      lebarIsi: 520,
+      aksi: [TextButton(onPressed: () => ref.read(penyediaSesi.notifier).Keluar(), child: const Text('Ganti kasir'))],
+      isi: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MasukanUang(pengendali: _kasAwal, label: 'Modal awal (kas awal)', autofocus: true, galat: _galat),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _hitungPecahan,
+            onChanged: (nilai) => setState(() => _hitungPecahan = nilai),
+            title: const Text('Hitung per pecahan'),
+            subtitle: const Text('Opsional. Jumlahnya otomatis mengisi modal awal.'),
           ),
-        ),
+          if (_hitungPecahan) HitungPecahan(nominal: daftarPecahanRupiah, jumlah: _pecahan, saatBerubah: _UbahPecahan),
+          const SizedBox(height: TokenJarak.jarak24),
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              onPressed: _sibuk ? null : _Buka,
+              child: Text(_sibuk ? 'Membuka shift…' : 'Buka shift'),
+            ),
+          ),
+        ],
       ),
     );
   }

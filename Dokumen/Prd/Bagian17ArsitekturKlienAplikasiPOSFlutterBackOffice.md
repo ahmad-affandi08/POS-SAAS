@@ -200,13 +200,13 @@ Aplikasi POS **bukan kumpulan layar**, melainkan **ruang kerja** tempat kasir be
 
 | Bagian | Isi | Catatan |
 |---|---|---|
-| **Bilah atas** | Logo tanda PAYOU, outlet · perangkat, nama kasir, jam, tombol **Kunci** | Ketuk nama kasir → ganti kasir (PIN) tanpa menutup shift |
-| **Rel navigasi** (kiri; di HP menjadi bilah bawah) | Jual (beranda) · Order tersimpan · Meja* · Riwayat transaksi · Kas · Pelanggan* · Shift · Pengaturan | Ikon + label, maksimal 8 item, item hanya muncul bila modul/izin aktif (*). Bisa diciutkan menjadi ikon saja |
+| **Bilah atas** | **Logo PAYOU di tengah**; outlet · perangkat di kiri; nama kasir, jam, tombol **Kunci** di kanan. Latar `BrandGelap`, isi putih (D-29) | Ketuk nama kasir → ganti kasir (PIN) tanpa menutup shift. Di HP (< 600dp) diringkas: ikon merek, kasir & kunci sebagai tombol ikon, tanpa jam |
+| **Rel navigasi** (kiri; di HP menjadi bilah bawah) | Jual (beranda) · Order tersimpan · Meja* · Riwayat transaksi · Kas · Pelanggan* · Shift · Pengaturan | Ikon + label, maksimal 8 item, item hanya muncul bila modul/izin aktif (*). Bisa diciutkan menjadi ikon saja. Latar `BrandGelap` sama dengan bilah atas, ikon & label putih, penanda aktif putih 18% (D-29) |
 | **Area kerja** | Layar aktif (Jual: katalog + keranjang, §17.2.3) | Tugas rutin (kas masuk/keluar, cari pelanggan, catatan item, diskon) dibuka sebagai **panel samping atau lembar** di atas area kerja, bukan pindah halaman, sehingga keranjang tidak hilang |
 | **Bilah status** (bawah) | Koneksi, transaksi tertunda sinkron, printer, shift (jam buka) | Selalu terlihat; ketuk untuk detail (§17.6.6) |
 
 **Prinsip elegan & mudah:**
-1. **Tenang untuk mata.** Latar netral `Latar`, panel `Permukaan`, pemisah garis tipis, satu warna brand hanya untuk aksi utama (BAYAR) dan penanda aktif. Tidak ada animasi berulang, banner berkedip, atau warna jenuh selain status.
+1. **Tenang untuk mata.** Latar netral `Latar`, panel `Permukaan`, pemisah garis tipis, satu warna brand hanya untuk aksi utama (BAYAR) dan penanda aktif. **Pengecualian D-29:** kulit aplikasi (bilah atas, rel navigasi/bilah bawah, dan panel merek layar masuk) berlatar `BrandGelap`; area kerja, katalog, keranjang, panel, dan dialog tetap netral. Tidak ada animasi berulang, banner berkedip, atau warna jenuh selain status.
 2. **Hierarki jelas dalam satu pandangan.** Yang terbesar selalu TOTAL, lalu tombol BAYAR, lalu isi keranjang. Ukuran dari token §17.5 (`Tampilan` untuk TOTAL & kembalian).
 3. **Ritme konsisten.** Kisi 8dp, radius 8 panel / 6 kontrol, tinggi baris keranjang tetap, ubin produk seragam (foto nyata atau inisial di atas latar netral bila tanpa foto).
 4. **Umpan balik halus tetapi pasti.** Tekan tombol berubah dalam < 100 ms; pindai berhasil/gagal ditandai suara pendek + getar (bisa dimatikan) dan sorot baris keranjang 150 ms; tidak ada toast untuk hal rutin.
@@ -224,6 +224,7 @@ Aplikasi POS **bukan kumpulan layar**, melainkan **ruang kerja** tempat kasir be
 - Satu widget bingkai `RuangKerja` di `Aplikasi/Kasir/lib/Tampilan/RuangKerja/` membungkus semua layar setelah masuk. Layar fitur hanya mengisi area kerja.
 - Komponen visual (ubin produk, baris keranjang, papan angka, panel samping, bilah status) dibuat di `Paket/SistemDesain` agar KDS dan mode Gudang memakai bahasa visual yang sama.
 - Setiap layar ruang kerja memiliki test widget di tiga lebar (360, 800, 1280 dp) dan golden test untuk layar Jual & Bayar.
+- Layar sebelum ruang kerja terbuka (aktivasi, pilih kasir, buka shift) memakai bingkai bersama `Tampilan/Komponen/BingkaiMasuk` (D-29), bukan `Scaffold` polos per layar.
 
 ### 17.3 Aplikasi Mobile Owner (Flutter, Android & iOS) — Keputusan D-04
 

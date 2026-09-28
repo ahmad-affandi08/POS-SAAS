@@ -5,6 +5,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Sesi/StafLokal.dart';
+import 'Komponen/BingkaiMasuk.dart';
 import 'Komponen/PapanPin.dart';
 import 'LayarAbsensi.dart';
 
@@ -47,89 +48,68 @@ class _LayarPilihKasirState extends ConsumerState<LayarPilihKasir> {
   Widget build(BuildContext context) {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
-    final identitas = ref.watch(penyediaIdentitas).value;
-    final staf = ref.watch(penyediaStaf);
+    final terpilih = _dipilih;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(identitas == null ? 'Kasir' : '${identitas.outlet} · ${identitas.perangkat}'),
-        actions: [
+    if (terpilih != null) {
+      return BingkaiMasuk(
+        judul: 'PIN ${terpilih.nama}',
+        keterangan: 'Masukkan PIN untuk mulai bertugas.',
+        lebarIsi: 380,
+        aksi: [
           TextButton(
-            onPressed: () => ref.read(penyediaSesi.notifier).SegarkanData(),
-            child: const Text('Perbarui data kasir'),
+            onPressed: _sibuk ? null : () => setState(() => _dipilih = null),
+            child: const Text('Ganti kasir'),
           ),
         ],
-      ),
-      body: Center(
-        child: _dipilih == null
-            ? staf.when(
-                loading: () => const CircularProgressIndicator(),
-                error: (galat, _) => Text('Data kasir tidak bisa dimuat: $galat'),
-                data: (daftar) => daftar.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'Belum ada kasir untuk outlet ini. Tambahkan pengguna di back-office, lalu ketuk "Perbarui data kasir".',
-                          textAlign: TextAlign.center,
-                          style: teks.bodyLarge,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Text('Siapa yang bertugas?', style: teks.headlineSmall),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              alignment: WrapAlignment.center,
-                              children: [
-                                for (final s in daftar)
-                                  SizedBox(
-                                    width: 200,
-                                    height: 64,
-                                    child: OutlinedButton(
-                                      onPressed: () => setState(() {
-                                        _dipilih = s;
-                                        _galat = null;
-                                      }),
-                                      child: Text(s.nama, textAlign: TextAlign.center),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            // F-18: absen masuk/keluar staf tanpa membuka sesi kasir.
-                            SizedBox(
-                              height: 48,
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute<void>(builder: (_) => const LayarAbsensi())),
-                                icon: const Icon(Icons.badge_outlined),
-                                label: const Text('Absen masuk/keluar'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+        isi: PapanPin(saatSelesai: _Masuk, sibuk: _sibuk, pesanGalat: _galat),
+      );
+    }
+
+    final staf = ref.watch(penyediaStaf);
+    return BingkaiMasuk(
+      judul: 'Siapa yang bertugas?',
+      keterangan: 'Pilih nama Anda, lalu masukkan PIN.',
+      lebarIsi: 480,
+      aksi: [
+        TextButton(
+          onPressed: () => ref.read(penyediaSesi.notifier).SegarkanData(),
+          child: const Text('Perbarui data kasir'),
+        ),
+        // F-18: absen masuk/keluar staf tanpa membuka sesi kasir.
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const LayarAbsensi())),
+          icon: const Icon(Icons.badge_outlined),
+          label: const Text('Absen masuk/keluar'),
+        ),
+      ],
+      isi: staf.when(
+        loading: () => const Center(
+          child: Padding(padding: EdgeInsets.all(TokenJarak.jarak24), child: CircularProgressIndicator()),
+        ),
+        error: (galat, _) =>
+            Text('Data kasir tidak bisa dimuat: $galat', style: teks.bodyMedium?.copyWith(color: warna.bahaya)),
+        data: (daftar) => daftar.isEmpty
+            ? Text(
+                'Belum ada kasir untuk outlet ini. Tambahkan pengguna di back-office, lalu ketuk "Perbarui data kasir".',
+                style: teks.bodyLarge,
               )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('PIN ${_dipilih!.nama}', style: teks.headlineSmall),
-                    const SizedBox(height: 16),
-                    PapanPin(saatSelesai: _Masuk, sibuk: _sibuk, pesanGalat: _galat),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: _sibuk ? null : () => setState(() => _dipilih = null),
-                      child: Text('Ganti kasir', style: TextStyle(color: warna.brand)),
+            : Wrap(
+                spacing: TokenJarak.jarak12,
+                runSpacing: TokenJarak.jarak12,
+                children: [
+                  for (final s in daftar)
+                    SizedBox(
+                      width: 200,
+                      height: 64,
+                      child: OutlinedButton(
+                        onPressed: () => setState(() {
+                          _dipilih = s;
+                          _galat = null;
+                        }),
+                        child: Text(s.nama, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      ),
                     ),
-                  ],
-                ),
+                ],
               ),
       ),
     );

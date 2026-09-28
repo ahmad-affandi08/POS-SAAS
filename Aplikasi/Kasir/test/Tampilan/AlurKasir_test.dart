@@ -56,6 +56,9 @@ void main() {
     await tester.pump();
     expect(find.widgetWithText(TextField, '250000'), findsOneWidget);
 
+    // Daftar pecahan yang terbuka membuat formulir lebih tinggi dari layar: gulir dulu seperti kasir sungguhan.
+    await tester.ensureVisible(find.text('Buka shift'));
+    await tester.pump();
     await tester.tap(find.text('Buka shift'));
     await Tunggu(tester, const Duration(seconds: 1));
 

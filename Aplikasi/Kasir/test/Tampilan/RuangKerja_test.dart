@@ -4,8 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Domain/Perangkat/PengaturanPerangkat.dart';
+import 'package:kasir/Tampilan/RuangKerja/BilahAtasRuangKerja.dart';
 import 'package:kasir/Tampilan/RuangKerja/LayarKunci.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
+import 'package:kasir/Tampilan/RuangKerja/TemaNavigasiRuangKerja.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Pendukung/LingkunganUji.dart';
@@ -54,11 +56,16 @@ void main() {
       final penjagaLayar = PenjagaLayarTiruan();
       final u = await MasukRuangKerja(tester, ukuran: ukuran, penjagaLayar: penjagaLayar);
 
-      // Bilah atas: outlet · perangkat, kasir, tombol kunci.
+      // Bilah atas: logo PAYOU di tengah, outlet · perangkat di kiri, kasir & tombol kunci di kanan.
+      // Di HP (< 600dp) bilahnya diringkas: nama kasir pindah ke petunjuk tombol (dan tetap ada di layar Shift),
+      // jam mengikuti jam sistem yang persis di atasnya — supaya logo bisa berada di tengah tanpa memotong
+      // nama outlet.
+      final lega = ukuran.width >= 600;
+      expect(find.byType(LogoMerek), findsOneWidget, reason: 'Logo PAYOU ada di bilah atas di setiap lebar.');
       expect(find.text('Kopi Senja Solo Baru · POS-001'), findsOneWidget);
-      expect(find.text('Rina Wulandari'), findsOneWidget);
       expect(find.byTooltip('Ganti kasir'), findsOneWidget);
-      expect(ukuran.width < 600 ? find.byTooltip('Kunci') : find.text('Kunci'), findsOneWidget);
+      expect(find.text('Rina Wulandari'), lega ? findsOneWidget : findsNothing);
+      expect(lega ? find.text('Kunci') : find.byTooltip('Kunci'), findsOneWidget);
 
       // Rel kiri di ≥ 600dp, bilah navigasi bawah di < 600dp. Beranda = Jual.
       expect(find.byType(NavigationRail), ukuran.width >= 600 ? findsOneWidget : findsNothing);
@@ -99,6 +106,54 @@ void main() {
 
       await Lepas(tester, u);
       expect(penjagaLayar.menyala, isFalse, reason: 'Penjaga layar dilepas saat ruang kerja ditutup.');
+    });
+  }
+
+  testWidgets('bingkai memakai warna merek: bilah atas, rel, dan bilah bawah; logo di tengah bilah atas', (
+    tester,
+  ) async {
+    final warna = TokenWarna.bawaan;
+
+    for (final (nama, ukuran) in [('1280', ukuranDesktop), ('800', ukuranTablet), ('360', ukuranHp)]) {
+      final u = await MasukRuangKerja(tester, ukuran: ukuran);
+
+      // Bilah atas: latar merek gelap dengan teks & ikon putih (kontras ±10:1).
+      final bilah = tester.widget<Material>(
+        find.descendant(of: find.byType(BilahAtasRuangKerja), matching: find.byType(Material)).first,
+      );
+      expect(bilah.color, warna.brandGelap, reason: 'Bilah atas memakai warna merek di lebar $nama.');
+
+      // Logo tepat di tengah lebar layar, apa pun panjang nama outlet dan tombol di kanannya.
+      final tengahLogo = tester.getCenter(find.byType(LogoMerek)).dx;
+      expect(
+        tengahLogo,
+        moreOrLessEquals(ukuran.width / 2, epsilon: 1),
+        reason: 'Logo di tengah bilah atas di lebar $nama.',
+      );
+
+      // Rel (≥ 600dp) atau bilah bawah (< 600dp) memakai warna merek yang sama, jadi bingkai terbaca satu kerangka.
+      if (ukuran.width >= 600) {
+        final temaRel = NavigationRailTheme.of(tester.element(find.byType(NavigationRail)));
+        expect(temaRel.backgroundColor, warna.brandGelap, reason: 'Rel memakai warna merek di lebar $nama.');
+        expect(temaRel.selectedIconTheme?.color, warna.permukaan);
+        expect(
+          temaRel.unselectedIconTheme?.color,
+          warna.permukaan.withValues(alpha: TemaNavigasiRuangKerja.opasitasPasif),
+        );
+      } else {
+        final temaBilah = NavigationBarTheme.of(tester.element(find.byType(NavigationBar)));
+        expect(temaBilah.backgroundColor, warna.brandGelap, reason: 'Bilah bawah memakai warna merek.');
+      }
+
+      await Lepas(tester, u);
+    }
+  });
+
+  for (final (nama, ukuran) in [('1280', ukuranDesktop), ('360', ukuranHp)]) {
+    testWidgets('golden bingkai ruang kerja di lebar $nama dp', (tester) async {
+      final u = await MasukRuangKerja(tester, ukuran: ukuran);
+      await expectLater(find.byType(RuangKerja), matchesGoldenFile('Golden/RuangKerja$nama.png'));
+      await Lepas(tester, u);
     });
   }
 
@@ -210,8 +265,10 @@ void main() {
     await Lepas(tester, u);
   });
 
+  // Di lebar lega, karena test ini memastikan nama kasir yang tampil di bilah atas ikut berganti; di HP bilahnya
+  // hanya menampilkan ikon (ganti kasir dari HP diuji lewat 'ganti kasir dari layar kunci').
   testWidgets('ketuk nama kasir → ganti kasir; bisa dibatalkan tanpa PIN', (tester) async {
-    final u = await MasukRuangKerja(tester, ukuran: ukuranHp);
+    final u = await MasukRuangKerja(tester);
     await tester.tap(find.byTooltip('Ganti kasir'));
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsOneWidget);

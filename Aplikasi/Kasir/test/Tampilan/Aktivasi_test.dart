@@ -94,4 +94,22 @@ void main() {
 
     await Lepas(tester, u);
   });
+
+  // Layar pertama yang dilihat pemilik toko saat memasang PAYOU: panel merek + kartu isian, dua kolom di layar
+  // lega dan satu kolom di HP (PRD §17.2.7, §17.6).
+  for (final (nama, ukuran) in [('1280', const Size(1280, 900)), ('360', const Size(360, 740))]) {
+    testWidgets('golden layar aktivasi di lebar $nama dp', (tester) async {
+      final u = LingkunganUji.Buat();
+      await PasangAplikasi(
+        tester,
+        u,
+        ukuran: ukuran,
+        pemindaiQr: PemindaiQrTiruan(hasil: 'A7K9M2QT'),
+      );
+
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('Golden/Aktivasi$nama.png'));
+
+      await Lepas(tester, u);
+    });
+  }
 }
