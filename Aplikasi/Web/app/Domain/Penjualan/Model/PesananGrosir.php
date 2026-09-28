@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Model;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use Illuminate\Database\Eloquent\Collection;
@@ -54,6 +55,7 @@ use LogicException;
  * @property Carbon|null $DibuatPada
  * @property Carbon|null $DiubahPada
  * @property-read Pelanggan $Pelanggan
+ * @property-read Outlet $Outlet
  * @property-read Collection<int, PesananGrosirDetail> $Detail
  */
 final class PesananGrosir extends ModelDasar
@@ -120,7 +122,17 @@ final class PesananGrosir extends ModelDasar
      */
     public function Pelanggan(): BelongsTo
     {
-        return $this->belongsTo(Pelanggan::class, 'IdPelanggan', 'Id')->withTrashed();
+        return $this->belongsTo(Pelanggan::class, 'IdPelanggan', 'Id');
+    }
+
+    /**
+     * Outlet penjual; kode kotanya menentukan tarif pajak daerah (PBJT) di `PenghitungGrosir`.
+     *
+     * @return BelongsTo<Outlet, $this>
+     */
+    public function Outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class, 'IdOutlet', 'Id');
     }
 
     /**
