@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -53,7 +54,7 @@ export default function HalamanReservasiPublik(props: PropsReservasiPublik) {
         return (
             <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-4 bg-latar px-4 py-8 text-isi text-teks-utama">
                 <Head title="Reservasi" />
-                <h1 className="text-judul font-bold">Reservasi online belum dibuka</h1>
+                <JudulHalaman>Reservasi online belum dibuka</JudulHalaman>
                 <p className="text-teks-sekunder">Hubungi toko langsung untuk membuat janji.</p>
             </main>
         );
@@ -64,7 +65,7 @@ export default function HalamanReservasiPublik(props: PropsReservasiPublik) {
             <Head title={`Reservasi ${props.Toko?.Nama ?? ''}`} />
             <header className="flex flex-col gap-1 border-b border-garis pb-3">
                 <p className="text-label text-teks-sekunder">Reservasi online</p>
-                <h1 className="text-judul font-bold break-words">{props.Toko?.Nama}</h1>
+                <JudulHalaman className="break-words">{props.Toko?.Nama}</JudulHalaman>
             </header>
             {galat.Umum ? <Pemberitahuan jenis="bahaya">{galat.Umum}</Pemberitahuan> : null}
             {layanan.length === 0 ? (

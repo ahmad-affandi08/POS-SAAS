@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
 import { Card, CardContent } from '@/Komponen/Ui/card';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -27,7 +28,7 @@ export default function TataLetakAutentikasi({ judul, keterangan, children, leba
                     <a href={props.UrlPemasaran ?? '/'} className="mb-4 self-start">
                         <LogoMerek nama={props.NamaAplikasi} />
                     </a>
-                    <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                    <JudulHalaman>{judul}</JudulHalaman>
                     {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}
                 </header>
                 {props.Kilat ? <Pemberitahuan jenis="info">{props.Kilat}</Pemberitahuan> : null}

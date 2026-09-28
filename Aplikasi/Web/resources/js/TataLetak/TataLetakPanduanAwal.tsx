@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { LogOutIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
 import { Button } from '@/Komponen/Ui/button';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -56,7 +57,7 @@ export default function TataLetakPanduanAwal({ judul, wajib, children }: PropsTa
                     </div>
                 </header>
                 <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-6 md:py-8">
-                    <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                    <JudulHalaman>{judul}</JudulHalaman>
                     {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}
                     {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
                     {children}

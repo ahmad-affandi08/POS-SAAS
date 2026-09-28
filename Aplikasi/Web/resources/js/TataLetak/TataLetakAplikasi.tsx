@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState, type MouseEvent, type ReactNode } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
 import { daftarPengaturan, type GrupPengaturan } from '@/Pustaka/DaftarPengaturan';
@@ -748,7 +749,7 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
                 </KepalaTataLetak>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
                     <JejakHalaman jejak={[...SusunJejak(url, namaInduk, menuTerlihat), ...jejak]} />
-                    <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                    <JudulHalaman>{judul}</JudulHalaman>
                     {props.Pengguna && !props.Pengguna.EmailTerverifikasi ? (
                         <Pemberitahuan jenis="peringatan" judul="Verifikasi email Anda">
                             <p>

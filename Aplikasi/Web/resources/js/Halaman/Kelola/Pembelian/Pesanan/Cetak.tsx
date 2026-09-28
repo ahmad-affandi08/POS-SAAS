@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import { Button } from '@/Komponen/Ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Komponen/Ui/table';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
@@ -32,7 +33,7 @@ export default function HalamanCetakPesanan({ Pesanan, Baris, Usaha }: PropsCeta
                     {Usaha.Npwp ? <p className="text-teks-sekunder">NPWP {Usaha.Npwp}</p> : null}
                 </div>
                 <div className="text-right">
-                    <h1 className="text-judul font-semibold">Pesanan Pembelian</h1>
+                    <JudulHalaman>Pesanan Pembelian</JudulHalaman>
                     <p className="font-mono">{Pesanan.Nomor}</p>
                     <p>Tanggal {FormatTanggal(Pesanan.Tanggal)}</p>
                     {Pesanan.PerkiraanTiba ? <p>Perkiraan tiba {FormatTanggal(Pesanan.PerkiraanTiba)}</p> : null}

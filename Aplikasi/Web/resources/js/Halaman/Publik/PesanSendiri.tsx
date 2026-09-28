@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { MinusIcon, PlusIcon, ShoppingBagIcon, Trash2Icon, WifiOffIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -246,7 +247,7 @@ export default function HalamanPesanSendiri({ Aktif, Toko, Meja, Token, Slug, Me
         return (
             <KerangkaPublik judul="QR meja tidak dikenal">
                 <section className="flex flex-col gap-2 py-10">
-                    <h1 className="text-subjudul font-semibold text-teks-utama">QR meja tidak dikenal</h1>
+                    <JudulHalaman skala="ringkas">QR meja tidak dikenal</JudulHalaman>
                     <p className="text-isi text-teks-sekunder">
                         QR ini sudah diganti atau tautannya salah. Minta QR terbaru ke staf, atau pesan langsung ke
                         staf.
@@ -262,7 +263,7 @@ export default function HalamanPesanSendiri({ Aktif, Toko, Meja, Token, Slug, Me
                 <p className="text-label text-teks-sekunder">
                     {Toko.Nama} · {Toko.NamaOutlet}
                 </p>
-                <h1 className="text-judul font-semibold text-teks-utama">Meja {Meja.Nama}</h1>
+                <JudulHalaman>Meja {Meja.Nama}</JudulHalaman>
             </header>
             {daring ? null : (
                 <div

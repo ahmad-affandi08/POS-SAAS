@@ -1,3 +1,4 @@
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import TeksKaya from '@/Komponen/Situs/TeksKaya';
 import { Separator } from '@/Komponen/Ui/separator';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -20,7 +21,7 @@ export default function HalamanDokumenLegalPublik({ Dokumen }: PropsDokumenLegal
     return (
         <TataLetakSitus judul={Dokumen.Label}>
             <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-10">
-                <h1 className="text-judul font-bold text-teks-utama">{Dokumen.Judul}</h1>
+                <JudulHalaman>{Dokumen.Judul}</JudulHalaman>
                 <p className="text-keterangan text-teks-sekunder">
                     Versi {Dokumen.Versi} · {Dokumen.Terjadwal ? 'akan berlaku mulai' : 'berlaku mulai'}{' '}
                     {FormatTanggal(Dokumen.BerlakuMulai)}

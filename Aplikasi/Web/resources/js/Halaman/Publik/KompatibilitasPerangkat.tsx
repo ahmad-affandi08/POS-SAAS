@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
@@ -55,7 +56,7 @@ export default function HalamanKompatibilitasPerangkatPublik({ Baris }: { Baris:
             <Head title="Kompatibilitas perangkat" />
             <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10">
                 <header className="flex flex-col gap-2">
-                    <h1 className="text-judul font-bold text-teks-utama">Perangkat & printer yang didukung</h1>
+                    <JudulHalaman>Perangkat &amp; printer yang didukung</JudulHalaman>
                     <p className="max-w-3xl text-isi text-teks-sekunder">
                         PAYOU berjalan di Android, iPad/iPhone, dan Windows, dengan printer thermal LAN/Wi-Fi,
                         Bluetooth, USB, atau printer bawaan mesin kasir. Daftar ini disusun dari hasil uji perangkat di

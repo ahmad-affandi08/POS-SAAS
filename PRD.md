@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.54 |
+| Versi | 2.55 |
 | Tanggal | 27 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -116,6 +116,7 @@
 | 2.52 | **D-28 primitif & token dijaga CI (§17.4.11)**, menutup temuan UI-04, UI-05, UI-12 & UI-15 audit frontend. `text-judul-kecil` (9 heading Pelanggan › Detail & Saldo sesi › Detail) dan `text-body` (Pembayaran › Gerbang) tidak pernah ada di `@theme` — Tailwind tidak mengeluh untuk kelas asing, jadi heading itu diam-diam turun ke ukuran warisan; keduanya kini memakai token yang sama dengan 80 heading lain. **52 tombol aksi bisnis di 25 berkas** pindah dari `Button` shadcn mentah ke `Komponen/Formulir/Tombol` (spinner, "Memproses…", `aria-busy`, `h-8 pointer-coarse:h-11`, `text-label font-semibold`), termasuk `DialogKonfirmasi` yang dipakai semua dialog konfirmasi. Sembilan bilah `fixed`/`sticky bottom-0` mendapat kelas `tepi-bawah-aman` (`env(safe-area-inset-bottom)` di bawah 640px) dan ketiga blade aplikasi memakai `viewport-fit=cover`, sehingga tombol "Simpan"/"Bayar" tidak lagi tertimpa indikator home iPhone. Tiga penjaga baru (`AturanTipografiTes`, `AturanTombolTes`, `TepiAmanTes`), masing-masing dibuktikan menangkap regresinya sebelum dipakai. Suite frontend penuh: 92 berkas, 589 test. |
 | 2.53 | **Dokumen legal tampil seperti dokumen (D-28, §17.4.11)**, menutup UI-01, UI-02, UI-03 & UI-11 audit frontend. `DokumenLegal.Isi` memang Markdown (§13.6) tetapi halaman publik merendernya sebagai teks mentah, jadi `#` dan `-` tampil sebagai tanda baca; sekarang memakai `Komponen/Situs/TeksKaya` — kontrak teks-kaya yang sudah dipakai artikel blog, tanpa HTML sama sekali — diperluas dengan `# ` → `h2`, `### ` → `h4`, dan daftar bernomor `1. ` (`## ` tetap `h3` supaya artikel yang sudah terbit tidak berubah). Halaman legal publik pindah ke `Halaman/Situs/DokumenLegal` + grup rute situs, jadi ia berada di dalam shell `payou.id` (kepala, kaki, jalan kembali) dan root view ber-meta SEO; menaruh `TataLetakSitus` di `Halaman/Publik/` justru akan mematikan halamannya karena bundle `Aplikasi` tidak pernah dibagikan prop `Situs`. `Textarea` shadcn memakai `field-sizing-content` sehingga `rows` tidak berpengaruh: editor legal (`rows={20}`) dan Tagihan › Detail (`rows={3}`) karena itu setinggi dua baris; editor legal kini memakai `BidangTeksPanjang` dengan prop `kode` baru. Tiga penjaga tambahan (`AturanBundelTes`, `AturanBidangTes`, kasus baru `SitusTes`), masing-masing dibuktikan menangkap regresinya. Suite frontend penuh: 94 berkas, 595 test. |
 | 2.54 | **Satu permukaan panel (D-28, §17.4.11)**, menutup UI-06 audit frontend. Pola panel ditulis ulang di tiga tempat: `PanelKatalog` (nama domain padahal dipakai 40 berkas di luar katalog) dan **fungsi `Panel` lokal** di `Komponen/Laporan/DasborPemilik` serta `Halaman/Pengelola/Tenant/Tampil` — struktur sama persis, hanya lupa `rounded-panel` & `shadow-none`. Ditambah **45 dari 96 `Card` mentah** yang memakai bawaan shadcn (`rounded-xl`, `shadow-sm`), sehingga halaman berfungsi serupa punya radius & elevasi berbeda. Ketiganya disatukan jadi `Komponen/Kelola/Panel` (judul opsional; tanpa judul hanya permukaan, dan `keterangan`/`aksi` dicegah tipe union supaya tidak hilang tanpa diketahui), dipakai **42 berkas**, dan 45 `Card` mentah diberi permukaan panel. Penjaga baru `Komponen/Kelola/PanelTes.tsx`: setiap `Card` wajib `rounded-panel` + `shadow-none`, dan dilarang ada komponen `Panel` tandingan; keduanya dibuktikan menangkap regresinya. Padding & kerapatan sengaja belum diseragamkan (perlu diperiksa mata di 27 berkas). Suite frontend penuh: 95 berkas, 599 test. |
+| 2.55 | **Token ukuran teks yang dibuang `cn`, judul halaman, & tepi bawah situs (D-28, §17.4.11)**, menutup UI-10 & UI-14 audit frontend plus satu bug yang tidak ada di audit. **(a)** `cn` (tailwind-merge) tidak bisa membedakan `text-<ukuran>` dari `text-<warna>` kecuali didaftarkan, dan **tujuh token skala situs** (`sorotan-besar`, `sorotan-besar-hp`, `sorotan`, `sorotan-hp`, `judul-bagian`, `judul-bagian-hp`, `pengantar`) yang ditambah untuk D-21/D-25 tidak pernah didaftarkan — jadi ukuran dasarnya **dibuang** dan judul hero & judul bagian situs pemasaran di HP turun ke ukuran warisan, sementara `sm:` di layar lebar tetap berlaku. Lolos uji 1280px, hanya terlihat di 360px. Ketujuhnya didaftarkan; `Gaya/TokenGabungKelasTes.ts` menurunkan daftarnya dari `Aplikasi.css`. **(b)** Semua `<h1>` lewat `Komponen/Umpan/JudulHalaman` (skala lewat prop `halaman`/`situs`/`ringkas`, bukan timpa `className`); sebelumnya QR meja & cetak pesanan `font-semibold` dan reservasi publik lupa `text-teks-utama`. Pengecualian tercatat: `BagianHero` memilih `h1`/`h2` menurut posisi blok. **(c)** Banner cookie `z-50 bottom-0` menutupi tombol WhatsApp melayang `z-30 bottom-4`; keduanya kini satu tumpukan tepi bawah dengan `pointer-events-none` pada wadahnya. Tiga penjaga baru, masing-masing dibuktikan menangkap regresinya. Suite frontend penuh: 97 berkas, 606 test. |
 | 2.28 | **Situs pemasaran bagian B** (§13.9): **blog** `/blog` & `/blog/{slug}` (tabel `ArtikelSitus`, konsol *Situs → Artikel*: tulis draf, terbitkan, tarik, hapus; kategori, penulis, sampul, SEO per artikel; `og:type article` + JSON-LD `BlogPosting`; artikel terbit masuk peta situs; 12 artikel per halaman, saring kategori, artikel terkait). Blok baru **Formulir kontak / minta demo** (`FormulirProspek`) → `POST /prospek` (persetujuan data wajib, perangkap bot, `throttle:5,1`, maks. 3 per nomor per 24 jam); tabel `ProspekSitus` (nomor & email terenkripsi, sidik HMAC nomor & IP, retensi: Spam 30 hari, lainnya 24 bulan lewat `situs:bersihkan-prospek` 03.30 WIB); email ke tim (`Prospek.EmailNotifikasi` atau email kontak) tanpa data kontak pengunjung; konsol *Situs → Prospek* (TabelData, cari nama/usaha/kota/nomor, saring status & jenis, ubah status + catatan tercatat audit; kontak utuh hanya `situs.kelola`); pengaturan **Google Analytics 4 & Meta Pixel** yang dimuat hanya setelah pengunjung menekan *Terima* di bilah persetujuan cookie (UU 27/2022 PDP). Jalur `prospek` & `blog` dicadangkan dari slug halaman. |
 | 2.27 | **Laporan anti-fraud** (F-14, OWN-09, BR-09.3): tab "Anti-fraud" di laporan penjualan per kasir: transaksi, void (nilai & void tunai ≤ 10 menit setelah bayar), retur, diskon, buka laci tanpa transaksi, kas kurang saat tutup shift, dan **skor risiko 0–100** yang bisa dijelaskan (alasan berteks, pembanding rata-rata kasir lain); ekspor CSV. Usulan grosir dicatat sebagai pertanyaan terbuka §25 no. 27 (menunggu keputusan pemilik). |
 | 2.26 | **Laundry bagian 2** (aplikasi kasir): baris "Tiket laundry" di keranjang (bila laundry aktif) membuka isian layanan reguler/express (perkiraan selesai otomatis), berat kg dan/atau item, parfum, catatan, nama & WhatsApp pemilik (tanpa pelanggan); blok `Laundry` ikut `Penjualan.Buat` dan tersimpan lokal (skema Drift 15, kolom `Penjualan.Laundry`) sehingga struk & cetak ulang memuat rincian cucian + QR lacak; Riwayat › Cucian (online): siap diambil/cari, maju status, tandai diambil, cetak nota ber-QR. |
@@ -4008,6 +4009,33 @@ Yang **belum** diseragamkan dan disengaja: padding & kerapatan (`p-4` vs `py-6` 
 `Card` yang dipakai langsung. Menyeragamkannya mengubah tata letak 27 berkas yang tidak bisa diperiksa mata di sesi
 ini, jadi yang diseragamkan dulu permukaannya — radius & elevasi, yang justru jadi sebab halaman terasa dari era
 berbeda. Padding ikut rapi sendiri saat halamannya pindah ke `Panel`.
+
+**Token ukuran teks yang dibuang `cn` (v2.55).** `cn` memakai tailwind-merge, yang tidak bisa membedakan
+`text-<ukuran>` dari `text-<warna>` kecuali diberi tahu — `Komponen/Ui/utils.ts` karena itu mendaftarkan token
+tipografi. Tetapi daftarnya hanya memuat skala back-office (`tampilan`, `judul`, `subjudul`, `isi`, `label`,
+`keterangan`); **tujuh token skala situs** yang ditambah untuk D-21/D-25 (`sorotan-besar`, `sorotan-besar-hp`,
+`sorotan`, `sorotan-hp`, `judul-bagian`, `judul-bagian-hp`, `pengantar`) tidak pernah didaftarkan. Akibatnya
+tailwind-merge menganggapnya warna teks dan **membuang ukurannya**:
+`cn('text-sorotan-besar-hp text-teks-utama sm:text-sorotan-besar')` keluar tanpa ukuran dasar sama sekali — jadi
+judul hero & judul bagian situs pemasaran di **HP** turun ke ukuran warisan, sementara ukuran `sm:` di layar lebar
+tetap berlaku. Bug ini lolos uji 1280px dan hanya terlihat di 360px (D-16). Ketujuh token didaftarkan, dan
+`Gaya/TokenGabungKelasTes.ts` menurunkan daftarnya langsung dari `Aplikasi.css`, jadi token baru yang lupa
+didaftarkan gagal di test.
+
+**Judul halaman & tepi bawah (v2.55).**
+
+8. **`<h1>` ditulis ulang per halaman (UI-14).** Kelima tata letak memakai `text-judul font-bold text-teks-utama`,
+   tetapi halaman yang berdiri sendiri menulis kombinasinya sendiri: QR meja & cetak pesanan `font-semibold`,
+   reservasi publik lupa `text-teks-utama` sehingga warnanya ikut warisan. Semua judul halaman kini lewat
+   `Komponen/Umpan/JudulHalaman` — satu-satunya tempat `<h1>` didefinisikan. Skalanya lewat prop eksplisit
+   (`halaman`, `situs`, `ringkas`), **bukan** ditimpa lewat `className`, karena menumpuk dua kelas ukuran membuat
+   hasilnya bergantung urutan CSS. Satu pengecualian tercatat: `Komponen/Situs/Bagian/BagianHero` memilih
+   `h1`/`h2` menurut posisi bloknya, dan tingkat yang bergantung posisi tidak bisa diungkapkan komponen itu.
+9. **Banner cookie menutupi tombol WhatsApp (UI-10).** Banner `fixed bottom-0 z-50` dan tombol WhatsApp melayang
+   `fixed bottom-4 z-30` memakai area bawah yang sama, jadi tombolnya tertutup sampai pengunjung memilih.
+   Keduanya kini satu tumpukan di tepi bawah, jadi tombolnya naik sendiri saat banner tampil — tanpa menebak
+   tinggi banner yang berubah mengikuti panjang teks & lebar layar. Wadahnya `pointer-events-none` supaya jalur
+   kosong di sebelah tombol tidak menelan klik ke isi halaman.
 
 ### 17.5 Tipografi (Keputusan D-08)
 

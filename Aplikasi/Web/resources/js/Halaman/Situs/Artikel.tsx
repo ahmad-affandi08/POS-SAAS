@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import KartuArtikel from '@/Komponen/Situs/Blog/KartuArtikel';
 import TautanSitus from '@/Komponen/Situs/TautanSitus';
 import TeksKaya from '@/Komponen/Situs/TeksKaya';
@@ -30,9 +31,9 @@ export default function Artikel() {
                         </>
                     ) : null}
                 </nav>
-                <h1 className="mt-4 text-judul-bagian-hp font-bold text-teks-utama sm:text-judul-bagian">
+                <JudulHalaman skala="situs" className="mt-4">
                     {artikel.Judul}
-                </h1>
+                </JudulHalaman>
                 <p className="mt-2 text-label text-teks-sekunder">
                     {[artikel.NamaPenulis, artikel.DiterbitkanPada ? FormatTanggal(artikel.DiterbitkanPada) : null]
                         .filter(Boolean)

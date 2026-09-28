@@ -154,18 +154,30 @@ export default function TataLetakSitus({ judul, children, pratinjau = false }: P
                 {children}
             </main>
             <KakiSitus situs={situs} />
-            {situs.WhatsAppMelayang && situs.Kontak.TautanWhatsApp ? (
-                <a
-                    href={situs.Kontak.TautanWhatsApp}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="fixed right-4 bottom-4 z-30 inline-flex min-h-12 items-center gap-2 rounded-full bg-sukses px-4 text-isi font-semibold text-permukaan hover:bg-sukses/90"
-                >
-                    <MessageCircle className="size-5" aria-hidden />
-                    <span>Chat WhatsApp</span>
-                </a>
-            ) : null}
-            {pratinjau ? null : <PersetujuanCookie analitik={situs.Analitik} />}
+            {/*
+             * Satu tumpukan di tepi bawah (D-28). Sebelumnya banner cookie `fixed bottom-0 z-50` dan tombol
+             * WhatsApp `fixed bottom-4 z-30` memakai area yang sama, jadi banner menutupi tombolnya sampai
+             * pengunjung memilih. Sekarang keduanya bertumpuk, jadi tombolnya naik sendiri saat banner tampil —
+             * tanpa menebak tinggi banner, yang berubah mengikuti panjang teks & lebar layar.
+             *
+             * Wadahnya `pointer-events-none` supaya jalur kosong di kiri tombol tidak menelan klik ke isi halaman.
+             */}
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 pb-4 tepi-bawah-aman">
+                {situs.WhatsAppMelayang && situs.Kontak.TautanWhatsApp ? (
+                    <div className="flex justify-end px-4">
+                        <a
+                            href={situs.Kontak.TautanWhatsApp}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-full bg-sukses px-4 text-isi font-semibold text-permukaan hover:bg-sukses/90"
+                        >
+                            <MessageCircle className="size-5" aria-hidden />
+                            <span>Chat WhatsApp</span>
+                        </a>
+                    </div>
+                ) : null}
+                {pratinjau ? null : <PersetujuanCookie analitik={situs.Analitik} />}
+            </div>
         </>
     );
 }

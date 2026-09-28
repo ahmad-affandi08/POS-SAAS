@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import { LogoMerek } from '@/Komponen/Merek/LogoMerek';
 import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
 import { Card, CardContent } from '@/Komponen/Ui/card';
@@ -27,7 +28,7 @@ export default function TataLetakAutentikasiPengelola({ judul, keterangan, child
                 <header className="flex flex-col gap-1">
                     <LogoMerek nama={props.NamaAplikasi} className="mb-2 self-start" />
                     <p className="text-label font-semibold text-teks-sekunder">Platform Pengelola</p>
-                    <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                    <JudulHalaman>{judul}</JudulHalaman>
                     {keterangan ? <p className="text-isi text-teks-sekunder">{keterangan}</p> : null}
                 </header>
                 {props.Kilat ? <Pemberitahuan jenis="info">{props.Kilat}</Pemberitahuan> : null}

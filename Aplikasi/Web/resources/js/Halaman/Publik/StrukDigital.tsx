@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import StatusLacakLaundry from '@/Komponen/Laundry/StatusLacakLaundry';
 import { PENUTUP_BAWAAN } from '@/Komponen/Struk/PratinjauStruk';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -71,7 +72,7 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
             <>
                 <Head title="Struk belum tersedia" />
                 <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-2 px-4 py-10">
-                    <h1 className="text-subjudul font-semibold text-teks-utama">Struk belum tersedia</h1>
+                    <JudulHalaman skala="ringkas">Struk belum tersedia</JudulHalaman>
                     <p className="text-isi text-teks-sekunder">
                         Struk ini belum terkirim dari kasir atau tautannya salah. Coba buka lagi beberapa saat kemudian.
                     </p>
@@ -90,7 +91,9 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
                     className="flex flex-col gap-3 rounded-kontrol border border-garis bg-permukaan p-4 font-mono text-keterangan text-teks-sekunder"
                 >
                     <header className="text-center">
-                        <h1 className="text-isi font-bold text-teks-utama">{Struk.NamaUsaha}</h1>
+                        <JudulHalaman skala="ringkas" className="text-isi">
+                            {Struk.NamaUsaha}
+                        </JudulHalaman>
                         {Struk.NamaOutlet ? <p>{Struk.NamaOutlet}</p> : null}
                         {Struk.Alamat ? <p>{Struk.Alamat}</p> : null}
                         {Struk.TeksKepala.map((teks) => (

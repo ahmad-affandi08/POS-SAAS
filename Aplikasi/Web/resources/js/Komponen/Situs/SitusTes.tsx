@@ -167,6 +167,23 @@ describe('Situs pemasaran D-21: tata letak & blok', () => {
         expect(screen.getByText(/© 2026 PAYOU/)).toBeTruthy();
     });
 
+    it('banner cookie & tombol WhatsApp satu tumpukan, jadi banner tidak menutupi tombolnya (D-28)', () => {
+        // Sebelumnya banner `fixed bottom-0 z-50` dan tombol `fixed bottom-4 z-30` memakai area yang sama, jadi
+        // tombolnya tertutup sampai pengunjung memilih. Sekarang keduanya berada di satu wadah tepi bawah.
+        situs = BuatSitus({ Analitik: { IdGoogleAnalytics: 'G-UJI1234', IdMetaPixel: null } });
+        render(<TataLetakSitus judul="Harga">isi</TataLetakSitus>);
+
+        const banner = screen.getByRole('region', { name: 'Persetujuan cookie' });
+        const tombol = screen.getByRole('link', { name: 'Chat WhatsApp' });
+        const tumpukan = banner.parentElement;
+
+        expect(tumpukan?.className).toContain('fixed');
+        expect(tumpukan?.contains(tombol)).toBe(true);
+        // Tidak ada elemen `fixed` kedua di tepi bawah yang bisa saling menimpa.
+        expect(tombol.className).not.toContain('fixed');
+        expect(banner.className).not.toContain('fixed');
+    });
+
     it('pratinjau menampilkan penanda draf; tanpa nomor WhatsApp tidak ada tombol melayang', () => {
         situs = BuatSitus({ WhatsAppMelayang: false, Pengumuman: null });
         render(

@@ -31,6 +31,7 @@ import {
     SidebarProvider,
     SidebarRail,
 } from '@/Komponen/Ui/sidebar';
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { IzinPengelola, PunyaIzin, type KunciIzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
@@ -147,7 +148,7 @@ export default function TataLetakPengelola({ judul, aksi, children }: PropsTataL
                 </div>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h1 className="text-judul font-bold text-teks-utama">{judul}</h1>
+                        <JudulHalaman>{judul}</JudulHalaman>
                         {aksi}
                     </div>
                     {props.PeringatanSuperAdmin ? (

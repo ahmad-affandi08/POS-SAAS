@@ -583,6 +583,33 @@ Yang **belum** diseragamkan dan disengaja: padding & kerapatan (`p-4` vs `py-6` 
 ini, jadi yang diseragamkan dulu permukaannya — radius & elevasi, yang justru jadi sebab halaman terasa dari era
 berbeda. Padding ikut rapi sendiri saat halamannya pindah ke `Panel`.
 
+**Token ukuran teks yang dibuang `cn` (v2.55).** `cn` memakai tailwind-merge, yang tidak bisa membedakan
+`text-<ukuran>` dari `text-<warna>` kecuali diberi tahu — `Komponen/Ui/utils.ts` karena itu mendaftarkan token
+tipografi. Tetapi daftarnya hanya memuat skala back-office (`tampilan`, `judul`, `subjudul`, `isi`, `label`,
+`keterangan`); **tujuh token skala situs** yang ditambah untuk D-21/D-25 (`sorotan-besar`, `sorotan-besar-hp`,
+`sorotan`, `sorotan-hp`, `judul-bagian`, `judul-bagian-hp`, `pengantar`) tidak pernah didaftarkan. Akibatnya
+tailwind-merge menganggapnya warna teks dan **membuang ukurannya**:
+`cn('text-sorotan-besar-hp text-teks-utama sm:text-sorotan-besar')` keluar tanpa ukuran dasar sama sekali — jadi
+judul hero & judul bagian situs pemasaran di **HP** turun ke ukuran warisan, sementara ukuran `sm:` di layar lebar
+tetap berlaku. Bug ini lolos uji 1280px dan hanya terlihat di 360px (D-16). Ketujuh token didaftarkan, dan
+`Gaya/TokenGabungKelasTes.ts` menurunkan daftarnya langsung dari `Aplikasi.css`, jadi token baru yang lupa
+didaftarkan gagal di test.
+
+**Judul halaman & tepi bawah (v2.55).**
+
+8. **`<h1>` ditulis ulang per halaman (UI-14).** Kelima tata letak memakai `text-judul font-bold text-teks-utama`,
+   tetapi halaman yang berdiri sendiri menulis kombinasinya sendiri: QR meja & cetak pesanan `font-semibold`,
+   reservasi publik lupa `text-teks-utama` sehingga warnanya ikut warisan. Semua judul halaman kini lewat
+   `Komponen/Umpan/JudulHalaman` — satu-satunya tempat `<h1>` didefinisikan. Skalanya lewat prop eksplisit
+   (`halaman`, `situs`, `ringkas`), **bukan** ditimpa lewat `className`, karena menumpuk dua kelas ukuran membuat
+   hasilnya bergantung urutan CSS. Satu pengecualian tercatat: `Komponen/Situs/Bagian/BagianHero` memilih
+   `h1`/`h2` menurut posisi bloknya, dan tingkat yang bergantung posisi tidak bisa diungkapkan komponen itu.
+9. **Banner cookie menutupi tombol WhatsApp (UI-10).** Banner `fixed bottom-0 z-50` dan tombol WhatsApp melayang
+   `fixed bottom-4 z-30` memakai area bawah yang sama, jadi tombolnya tertutup sampai pengunjung memilih.
+   Keduanya kini satu tumpukan di tepi bawah, jadi tombolnya naik sendiri saat banner tampil — tanpa menebak
+   tinggi banner yang berubah mengikuti panjang teks & lebar layar. Wadahnya `pointer-events-none` supaya jalur
+   kosong di sebelah tombol tidak menelan klik ke isi halaman.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

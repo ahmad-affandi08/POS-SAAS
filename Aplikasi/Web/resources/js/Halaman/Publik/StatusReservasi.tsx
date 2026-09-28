@@ -1,6 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -45,14 +46,14 @@ export default function HalamanStatusReservasi({ Ditemukan, Slug, Kode, Toko, Re
             <Head title="Status reservasi" />
             {!Ditemukan || !r ? (
                 <>
-                    <h1 className="text-judul font-bold">Reservasi tidak ditemukan</h1>
+                    <JudulHalaman>Reservasi tidak ditemukan</JudulHalaman>
                     <p className="text-teks-sekunder">Periksa kembali tautan dari toko.</p>
                 </>
             ) : (
                 <>
                     <header className="flex flex-col gap-1 border-b border-garis pb-3">
                         <p className="text-label text-teks-sekunder">{Toko?.Nama}</p>
-                        <h1 className="text-judul font-bold">Reservasi {r.Nomor}</h1>
+                        <JudulHalaman>Reservasi {r.Nomor}</JudulHalaman>
                     </header>
                     {props.Kilat ? <Pemberitahuan jenis="sukses">{props.Kilat}</Pemberitahuan> : null}
                     {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}

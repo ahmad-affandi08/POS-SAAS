@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import { Button } from '@/Komponen/Ui/button';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 
@@ -28,7 +29,7 @@ export default function HalamanQrMeja({ Outlet, NamaUsaha, PesanSendiriAktif, Me
                     >
                         Kembali ke outlet {Outlet.Nama}
                     </Link>
-                    <h1 className="text-judul font-semibold">QR pesan sendiri · {Outlet.Nama}</h1>
+                    <JudulHalaman>QR pesan sendiri · {Outlet.Nama}</JudulHalaman>
                 </div>
                 <Button onClick={() => window.print()} disabled={Meja.length === 0}>
                     Cetak atau simpan PDF

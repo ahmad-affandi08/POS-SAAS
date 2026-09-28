@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import KartuArtikel from '@/Komponen/Situs/Blog/KartuArtikel';
 import TautanSitus from '@/Komponen/Situs/TautanSitus';
 import TataLetakSitus from '@/TataLetak/TataLetakSitus';
@@ -34,7 +35,7 @@ export default function Blog() {
     return (
         <TataLetakSitus judul={Halaman.Seo.Judul}>
             <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
-                <h1 className="text-judul-bagian-hp font-bold text-teks-utama sm:text-judul-bagian">Blog</h1>
+                <JudulHalaman skala="situs">Blog</JudulHalaman>
                 <p className="mt-2 max-w-2xl text-pengantar text-teks-sekunder">{Halaman.Seo.Deskripsi}</p>
                 {Kategori.length > 0 ? (
                     <nav aria-label="Kategori artikel" className="mt-6 flex flex-wrap gap-2">
