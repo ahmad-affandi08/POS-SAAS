@@ -66,6 +66,8 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
 
     return IsiAreaKerja(
       judul: 'Pengaturan',
+      // Belasan bagian berdiri sendiri: di layar lebar dibagi dua kolom, bukan satu gulungan panjang.
+      kolomGanda: true,
       anak: [
         Bagian(
           'Printer struk',
