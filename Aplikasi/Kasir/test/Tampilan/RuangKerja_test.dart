@@ -11,6 +11,7 @@ import 'package:kasir/Tampilan/RuangKerja/TemaNavigasiRuangKerja.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/MuatFont.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
 /// Ruang Kerja Kasir (PRD §17.2.7, D-16): bingkai di 360/800/1280dp, panel tugas, kunci cepat & otomatis, ganti kasir
@@ -151,6 +152,7 @@ void main() {
 
   for (final (nama, ukuran) in [('1280', ukuranDesktop), ('360', ukuranHp)]) {
     testWidgets('golden bingkai ruang kerja di lebar $nama dp', (tester) async {
+      await MuatFontMerek();
       final u = await MasukRuangKerja(tester, ukuran: ukuran);
       await expectLater(find.byType(RuangKerja), matchesGoldenFile('Golden/RuangKerja$nama.png'));
       await Lepas(tester, u);

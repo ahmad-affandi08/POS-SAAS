@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/MuatFont.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
 /// F-02 langkah 5 di aplikasi kasir: kode aktivasi dipindai dari QR atau diketik.
@@ -99,6 +100,7 @@ void main() {
   // lega dan satu kolom di HP (PRD §17.2.7, §17.6).
   for (final (nama, ukuran) in [('1280', const Size(1280, 900)), ('360', const Size(360, 740))]) {
     testWidgets('golden layar aktivasi di lebar $nama dp', (tester) async {
+      await MuatFontMerek();
       final u = LingkunganUji.Buat();
       await PasangAplikasi(
         tester,
