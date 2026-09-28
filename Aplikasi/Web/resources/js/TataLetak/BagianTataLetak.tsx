@@ -29,7 +29,7 @@ import { cn } from '@/Komponen/Ui/utils';
  * teks putih tebal, hover memakai sorotan BrandGelap. Warna datang dari token --sidebar-* di Gaya/Aplikasi.css.
  */
 export const kelasTombolMenuSidebar =
-    'h-9 rounded-lg px-3 text-label transition-[width,height,padding,background-color,color] duration-200 ease-out group-data-[collapsible=icon]:rounded-md data-[active=true]:bg-sidebar-primary data-[active=true]:font-semibold data-[active=true]:text-sidebar-primary-foreground data-[active=true]:hover:bg-sidebar-primary data-[active=true]:hover:text-sidebar-primary-foreground';
+    'h-9 rounded-lg px-3 text-label transition-[width,height,padding,background-color,color] duration-200 ease-out group-data-[collapsible=icon]:rounded-md group-data-[collapsible=icon]:p-1! data-[active=true]:bg-sidebar-primary data-[active=true]:font-semibold data-[active=true]:text-sidebar-primary-foreground data-[active=true]:hover:bg-sidebar-primary data-[active=true]:hover:text-sidebar-primary-foreground';
 
 /** Tombol grup menu (pembuka sub-menu): tetap Brand saat aktif walau terbuka & disorot. */
 export const kelasTombolGrupSidebar =

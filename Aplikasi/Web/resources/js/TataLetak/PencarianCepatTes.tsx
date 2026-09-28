@@ -1,5 +1,4 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { PackageIcon } from 'lucide-react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { tiruanRouter, AturHalamanUji } from '@/Komponen/Katalog/TiruanInertia';
@@ -21,7 +20,7 @@ const sumber: SumberPencarian[] = [
         id: 'produk',
         label: 'Produk',
         alamat: '/kelola/produk',
-        ikon: PackageIcon,
+        ikon: 'Produk',
         AmbilHasil: (b) => ({ judul: String(b.Nama), keterangan: null, href: `/kelola/produk/${String(b.Uuid)}` }),
     },
 ];

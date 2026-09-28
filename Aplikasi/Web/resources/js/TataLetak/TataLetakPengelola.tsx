@@ -1,21 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    ActivityIcon,
-    BookOpenIcon,
-    GlobeIcon,
-    Building2Icon,
-    HouseIcon,
-    LayoutTemplateIcon,
-    LibraryIcon,
-    LifeBuoyIcon,
-    PlugIcon,
-    RocketIcon,
-    ReceiptIcon,
-    ScaleIcon,
-    ScrollTextIcon,
-    UsersRoundIcon,
-    type LucideIcon,
-} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import {
@@ -31,6 +14,7 @@ import {
     SidebarRail,
 } from '@/Komponen/Ui/sidebar';
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
+import IkonNavigasi, { type NamaIkonNavigasi } from '@/Komponen/Navigasi/IkonNavigasi';
 import PenandaLingkungan from '@/Komponen/Umpan/PenandaLingkungan';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { IzinPengelola, PunyaIzin, type KunciIzinPengelola, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
@@ -67,7 +51,7 @@ type ItemMenu = {
     label: string;
     href: string;
     izin: KunciIzinPengelola | null;
-    ikon: LucideIcon;
+    ikon: NamaIkonNavigasi;
     /**
      * Alamat lain yang dimiliki entri ini, untuk halaman sekeluarga yang alamatnya belum seragam
      * (`/flag-fitur`, `/kompatibilitas-perangkat` di bawah Rilis aplikasi). Tanpa ini menu tidak ikut menyala.
@@ -89,57 +73,62 @@ export const daftarMenuPengelola: GrupMenu[] = [
     {
         grup: 'Pekerjaan harian',
         item: [
-            { label: 'Beranda', href: '/', izin: null, ikon: HouseIcon },
+            { label: 'Beranda', href: '/', izin: null, ikon: 'Beranda' },
             // P-07 Siklus hidup tenant: subjek yang paling sering dibuka, jadi paling atas setelah Beranda.
-            { label: 'Tenant', href: '/tenant', izin: IzinPengelola.TenantLihat, ikon: Building2Icon },
+            { label: 'Tenant', href: '/tenant', izin: IzinPengelola.TenantLihat, ikon: 'Toko' },
             // P-08 Tagihan langganan & verifikasi transfer.
-            { label: 'Tagihan', href: '/tagihan', izin: IzinPengelola.TagihanLihat, ikon: ReceiptIcon },
+            { label: 'Tagihan', href: '/tagihan', izin: IzinPengelola.TagihanLihat, ikon: 'Tagihan' },
             // P-09
-            { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: LifeBuoyIcon },
+            { label: 'Dukungan', href: '/dukungan/tiket', izin: IzinPengelola.DukunganTiketLihat, ikon: 'Dukungan' },
             // P-11
-            { label: 'Operasional', href: '/operasional', izin: IzinPengelola.OperasionalLihat, ikon: ActivityIcon },
+            {
+                label: 'Operasional',
+                href: '/operasional',
+                izin: IzinPengelola.OperasionalLihat,
+                ikon: 'DaftarPeriksa',
+            },
         ],
     },
     {
         grup: 'Produk & pemasaran',
         item: [
-            { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat, ikon: BookOpenIcon },
+            { label: 'Katalog', href: '/katalog/paket', izin: IzinPengelola.KatalogLihat, ikon: 'Produk' },
             {
                 label: 'Template sektor',
                 href: '/template-sektor',
                 izin: IzinPengelola.TemplateLihat,
-                ikon: LayoutTemplateIcon,
+                ikon: 'Lapisan',
             },
             // P-10: rilis, flag fitur, dan HCL adalah satu subjek, jadi satu entri dengan tab halaman (TabRilis).
             {
                 label: 'Rilis aplikasi',
                 href: '/rilis',
                 izin: IzinPengelola.RilisLihat,
-                ikon: RocketIcon,
+                ikon: 'Retur',
                 alamatLain: ['/flag-fitur', '/kompatibilitas-perangkat'],
             },
             // D-21 Situs pemasaran (payou.id).
-            { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: GlobeIcon },
+            { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: 'Lokasi' },
         ],
     },
     {
         grup: 'Data platform',
         item: [
-            { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: PlugIcon },
+            { label: 'Integrasi', href: '/integrasi', izin: IzinPengelola.IntegrasiLihat, ikon: 'KodeQr' },
             {
                 label: 'Referensi',
                 href: '/referensi/tarif-pajak',
                 izin: IzinPengelola.ReferensiLihat,
-                ikon: LibraryIcon,
+                ikon: 'Akuntansi',
             },
-            { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat, ikon: ScaleIcon },
+            { label: 'Legal', href: '/legal', izin: IzinPengelola.LegalLihat, ikon: 'Keamanan' },
         ],
     },
     {
         grup: 'Internal',
         item: [
-            { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: UsersRoundIcon },
-            { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat, ikon: ScrollTextIcon },
+            { label: 'Tim internal', href: '/tim-internal', izin: IzinPengelola.TimAnggotaLihat, ikon: 'Pelanggan' },
+            { label: 'Log audit', href: '/log-audit', izin: IzinPengelola.AuditLihat, ikon: 'DaftarPeriksa' },
         ],
     },
 ];
@@ -183,8 +172,6 @@ export default function TataLetakPengelola({ judul, jejak = [], aksi, children }
                                     <SidebarMenu>
                                         {grup.item.map((menu) => {
                                             const aktif = CekMenuPengelolaAktif(menu.href, url, menu.alamatLain);
-                                            const Ikon = menu.ikon;
-
                                             return (
                                                 <SidebarMenuItem key={menu.href}>
                                                     <SidebarMenuButton
@@ -197,7 +184,7 @@ export default function TataLetakPengelola({ judul, jejak = [], aksi, children }
                                                             href={menu.href}
                                                             aria-current={aktif ? 'page' : undefined}
                                                         >
-                                                            <Ikon aria-hidden="true" />
+                                                            <IkonNavigasi nama={menu.ikon} />
                                                             <span>{menu.label}</span>
                                                         </Link>
                                                     </SidebarMenuButton>

@@ -1,9 +1,10 @@
 import { router } from '@inertiajs/react';
 import { useQueries } from '@tanstack/react-query';
-import { ArrowRightIcon, SearchIcon, type LucideIcon } from 'lucide-react';
+import { ArrowRightIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/Komponen/Ui/button';
+import IkonNavigasi, { type NamaIkonNavigasi } from '@/Komponen/Navigasi/IkonNavigasi';
 import {
     Command,
     CommandEmpty,
@@ -18,7 +19,12 @@ import { Kbd, KbdGroup } from '@/Komponen/Ui/kbd';
 import { KunciKueri } from '@/Pustaka/KunciKueri';
 
 /** Halaman yang bisa dibuka dari pencarian cepat (diturunkan dari menu yang boleh dilihat, bukan daftar terpisah). */
-export type HalamanPencarian = { label: string; href: string; grup: string | null; ikon?: LucideIcon | undefined };
+export type HalamanPencarian = {
+    label: string;
+    href: string;
+    grup: string | null;
+    ikon?: NamaIkonNavigasi | undefined;
+};
 
 export type HasilPencarian = { judul: string; keterangan: string | null; href: string };
 
@@ -31,7 +37,7 @@ export type SumberPencarian = {
     id: string;
     label: string;
     alamat: string;
-    ikon: LucideIcon;
+    ikon: NamaIkonNavigasi;
     AmbilHasil: (baris: Record<string, unknown>) => HasilPencarian;
 };
 
@@ -182,8 +188,6 @@ function IsiPencarianCepat({ halaman, sumber, Buka }: PropsIsiPencarianCepat) {
                     {halamanCocok.length > 0 ? (
                         <CommandGroup heading="Halaman">
                             {halamanCocok.map((h) => {
-                                const Ikon = h.ikon ?? ArrowRightIcon;
-
                                 return (
                                     <CommandItem
                                         key={h.href}
@@ -191,7 +195,11 @@ function IsiPencarianCepat({ halaman, sumber, Buka }: PropsIsiPencarianCepat) {
                                         onSelect={() => Buka(h.href)}
                                         className="gap-2 text-isi"
                                     >
-                                        <Ikon aria-hidden="true" className="text-teks-sekunder" />
+                                        {h.ikon ? (
+                                            <IkonNavigasi nama={h.ikon} />
+                                        ) : (
+                                            <ArrowRightIcon aria-hidden="true" className="text-teks-sekunder" />
+                                        )}
                                         <span className="truncate text-teks-utama">{h.label}</span>
                                         {h.grup ? (
                                             <span className="ml-auto truncate text-keterangan text-teks-sekunder">
@@ -205,8 +213,6 @@ function IsiPencarianCepat({ halaman, sumber, Buka }: PropsIsiPencarianCepat) {
                     ) : null}
                     {sumber.map((s, indeks) => {
                         const daftar = cariData ? (hasilData[indeks]?.data ?? []) : [];
-                        const Ikon = s.ikon;
-
                         if (daftar.length === 0) {
                             return null;
                         }
@@ -222,7 +228,7 @@ function IsiPencarianCepat({ halaman, sumber, Buka }: PropsIsiPencarianCepat) {
                                             onSelect={() => Buka(hasil.href)}
                                             className="gap-2 text-isi"
                                         >
-                                            <Ikon aria-hidden="true" className="text-teks-sekunder" />
+                                            <IkonNavigasi nama={s.ikon} />
                                             <span className="truncate text-teks-utama">{hasil.judul}</span>
                                             {hasil.keterangan ? (
                                                 <span className="ml-auto truncate text-keterangan text-teks-sekunder">

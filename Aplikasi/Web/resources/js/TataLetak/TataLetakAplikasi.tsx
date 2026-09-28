@@ -1,24 +1,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    BookOpenTextIcon,
-    LockIcon,
-    ChevronRightIcon,
-    ChartColumnIcon,
-    HouseIcon,
-    InboxIcon,
-    IdCardIcon,
-    LifeBuoyIcon,
-    PackageIcon,
-    ReceiptTextIcon,
-    SettingsIcon,
-    ShoppingCartIcon,
-    UsersRoundIcon,
-    WarehouseIcon,
-    type LucideIcon,
-} from 'lucide-react';
+import { ChevronRightIcon, LockIcon } from 'lucide-react';
 import { useState, type MouseEvent, type ReactNode } from 'react';
 
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
+import IkonNavigasi, { type NamaIkonNavigasi } from '@/Komponen/Navigasi/IkonNavigasi';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
 import { daftarPengaturan, type GrupPengaturan } from '@/Pustaka/DaftarPengaturan';
@@ -81,7 +66,7 @@ type ItemMenu = {
     label: string;
     href: string;
     izin: KunciIzinTenant | null;
-    ikon?: LucideIcon;
+    ikon?: NamaIkonNavigasi;
     fitur?: string;
     pemisah?: boolean;
 };
@@ -290,14 +275,14 @@ export function CariMenuProdukAktif(url: string): string | null {
  * Dijaga `AnggaranNavigasiTes`.
  */
 export const daftarMenu: (ItemMenu | GrupMenu)[] = [
-    { label: 'Beranda', href: '/kelola', izin: null, ikon: HouseIcon },
+    { label: 'Beranda', href: '/kelola', izin: null, ikon: 'Beranda' },
     // D-23 C: semua yang perlu ditindaklanjuti (butir disaring izin di server).
-    { label: 'Kotak tindakan', href: '/kelola/tindakan', izin: null, ikon: InboxIcon },
+    { label: 'Kotak tindakan', href: '/kelola/tindakan', izin: null, ikon: 'KotakMasuk' },
     {
         label: 'Penjualan & kasir',
         href: '/kelola/penjualan',
         izin: null,
-        ikon: ReceiptTextIcon,
+        ikon: 'Struk',
         labelSub: 'Menu penjualan & kasir',
         sub: menuPenjualan,
     },
@@ -306,7 +291,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Laporan',
         href: '/kelola/laporan/penjualan',
         izin: null,
-        ikon: ChartColumnIcon,
+        ikon: 'Laporan',
         labelSub: 'Menu laporan',
         sub: menuLaporan,
     },
@@ -314,7 +299,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Persediaan',
         href: '/kelola/persediaan/saldo',
         izin: null,
-        ikon: WarehouseIcon,
+        ikon: 'Gudang',
         labelSub: 'Menu persediaan',
         sub: menuPersediaan,
     },
@@ -322,7 +307,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Produk',
         href: '/kelola/produk',
         izin: IzinTenant.ProdukLihat,
-        ikon: PackageIcon,
+        ikon: 'Produk',
         labelSub: 'Menu produk',
         sub: menuProduk,
     },
@@ -331,7 +316,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Pembelian',
         href: '/kelola/pembelian/pesanan',
         izin: null,
-        ikon: ShoppingCartIcon,
+        ikon: 'Pembelian',
         labelSub: 'Menu pembelian',
         sub: menuPembelian,
     },
@@ -339,7 +324,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Pelanggan',
         href: '/kelola/pelanggan',
         izin: null,
-        ikon: UsersRoundIcon,
+        ikon: 'Pelanggan',
         labelSub: 'Menu pelanggan',
         sub: menuPelanggan,
     },
@@ -347,7 +332,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Karyawan',
         href: '/kelola/karyawan',
         izin: null,
-        ikon: IdCardIcon,
+        ikon: 'Karyawan',
         labelSub: 'Menu karyawan',
         sub: menuKaryawan,
     },
@@ -355,13 +340,13 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Akuntansi',
         href: '/kelola/akuntansi/jurnal',
         izin: null,
-        ikon: BookOpenTextIcon,
+        ikon: 'Akuntansi',
         labelSub: 'Menu akuntansi',
         sub: menuAkuntansi,
     },
     // Pemisah: di bawah sini bukan kerja harian lagi.
-    { label: 'Pengaturan', href: '/kelola/pengaturan', izin: null, ikon: SettingsIcon, pemisah: true },
-    { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: LifeBuoyIcon },
+    { label: 'Pengaturan', href: '/kelola/pengaturan', izin: null, ikon: 'Pengaturan', pemisah: true },
+    { label: 'Bantuan', href: '/kelola/bantuan', izin: IzinTenant.BantuanTiketLihat, ikon: 'Dukungan' },
 ];
 
 /**
@@ -373,7 +358,7 @@ const sumberPencarian: SumberPencarian[] = [
         id: 'produk',
         label: 'Produk',
         alamat: '/kelola/produk',
-        ikon: PackageIcon,
+        ikon: 'Produk',
         AmbilHasil: (b) => ({
             judul: String(b.Nama),
             keterangan: typeof b.Sku === 'string' ? b.Sku : null,
@@ -384,7 +369,7 @@ const sumberPencarian: SumberPencarian[] = [
         id: 'pelanggan',
         label: 'Pelanggan',
         alamat: '/kelola/pelanggan',
-        ikon: UsersRoundIcon,
+        ikon: 'Pelanggan',
         AmbilHasil: (b) => ({
             judul: String(b.Nama),
             keterangan: typeof b.NoHp === 'string' ? b.NoHp : null,
@@ -395,7 +380,7 @@ const sumberPencarian: SumberPencarian[] = [
         id: 'pemasok',
         label: 'Pemasok',
         alamat: '/kelola/pembelian/pemasok',
-        ikon: ShoppingCartIcon,
+        ikon: 'Pembelian',
         // Pemasok tidak punya halaman detail: buka daftarnya dengan pencarian nama ini.
         AmbilHasil: (b) => ({
             judul: String(b.Nama),
@@ -407,7 +392,7 @@ const sumberPencarian: SumberPencarian[] = [
         id: 'penjualan',
         label: 'Penjualan',
         alamat: '/kelola/penjualan',
-        ikon: ReceiptTextIcon,
+        ikon: 'Struk',
         AmbilHasil: (b) => ({
             judul: String(b.Nomor),
             keterangan: typeof b.NamaOutlet === 'string' ? b.NamaOutlet : null,
@@ -441,7 +426,7 @@ export function SusunPencarian(
                 label: item.label,
                 href: item.href,
                 grup: `Pengaturan › ${judul}`,
-                ikon: SettingsIcon,
+                ikon: 'Pengaturan',
             })),
     );
     // Menu samping menang bila alamatnya sama, supaya satu halaman tidak muncul dua kali di hasil pencarian.
@@ -558,8 +543,7 @@ function ItemMenuSidebar({
     const subAktif = labelSub === null ? null : CariSubMenuAktif(sub, url);
     const aktif = labelSub === null ? CekMenuAktif(menu.href, url) : subAktif !== null;
     const [terbuka, AturTerbuka] = useState(subAktif !== null);
-    const Ikon = menu.ikon;
-    const ikon = Ikon ? <Ikon aria-hidden="true" /> : null;
+    const ikon = menu.ikon ? <IkonNavigasi nama={menu.ikon} /> : null;
 
     if (labelSub === null) {
         return (
