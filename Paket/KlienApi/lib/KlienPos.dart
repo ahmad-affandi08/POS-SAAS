@@ -33,6 +33,7 @@ class KlienPos {
     http.Client? klien,
     this.batasWaktu = const Duration(seconds: 20),
     this.ambilJumlahOutbox,
+    this.saatPerangkatDitolak,
   }) : _klien = klien ?? http.Client();
 
   final Uri alamatDasar;
@@ -40,6 +41,15 @@ class KlienPos {
   final FutureOr<String?> Function() ambilToken;
   final Duration batasWaktu;
   final FutureOr<int?> Function()? ambilJumlahOutbox;
+
+  /// Dipanggil setiap kali server menolak **token perangkat ini** (`PerangkatDicabut` 403 atau
+  /// `TokenPerangkatTidakValid` 401) pada permintaan bertoken.
+  ///
+  /// Tanpa ini, pencabutan hanya ketahuan di alur sinkron & data awal: pemanggil lain (katalog, promo, data meja,
+  /// konfigurasi aplikasi) sengaja menelan `GalatApi` supaya galat server tidak mengganggu kasir, sehingga
+  /// perangkat yang sudah dicabut tetap bisa dipakai berjualan sampai aplikasi ditutup. Aktivasi tidak ikut
+  /// memicunya karena permintaannya tidak memakai token.
+  final void Function(GalatApi galat)? saatPerangkatDitolak;
   final http.Client _klien;
   final PembuatUlid _ulid = PembuatUlid();
 
@@ -81,7 +91,7 @@ class KlienPos {
       terima: 'image/*',
     );
     if (respons.statusCode >= 400) {
-      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+      throw _Galat(respons.statusCode, _UraiJson(respons.body), bertoken: true);
     }
     return respons.bodyBytes;
   }
@@ -93,7 +103,7 @@ class KlienPos {
       return null;
     }
     if (respons.statusCode >= 400) {
-      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+      throw _Galat(respons.statusCode, _UraiJson(respons.body), bertoken: true);
     }
     return respons.bodyBytes;
   }
@@ -167,7 +177,7 @@ class KlienPos {
       return null;
     }
     if (respons.statusCode >= 400) {
-      throw _BuatGalat(respons.statusCode, _UraiJson(respons.body));
+      throw _Galat(respons.statusCode, _UraiJson(respons.body), bertoken: true);
     }
     return SnapshotPesananTerbuka.DariJson(_UraiJson(respons.body), respons.headers['etag']);
   }
@@ -433,7 +443,7 @@ class KlienPos {
     final json = _UraiJson(respons.body);
 
     if (respons.statusCode >= 400) {
-      throw _BuatGalat(respons.statusCode, json);
+      throw _Galat(respons.statusCode, json, bertoken: pakaiToken);
     }
 
     return json;
@@ -502,6 +512,15 @@ class KlienPos {
     } on FormatException {
       return const <String, Object?>{};
     }
+  }
+
+  /// Bungkus [_BuatGalat] yang sekaligus melaporkan penolakan token perangkat ke [saatPerangkatDitolak].
+  GalatApi _Galat(int status, Map<String, Object?> json, {required bool bertoken}) {
+    final galat = _BuatGalat(status, json);
+    if (bertoken && galat.CekPerangkatDitolak()) {
+      saatPerangkatDitolak?.call(galat);
+    }
+    return galat;
   }
 
   static GalatApi _BuatGalat(int status, Map<String, Object?> json) {

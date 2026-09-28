@@ -95,6 +95,10 @@ final penyediaKlienPos = Provider<KlienPos>((ref) {
     klien: ref.watch(penyediaKlienHttp),
     // P-10 BR-P10.2: server tahu perangkat mana yang masih menyimpan transaksi belum terkirim.
     ambilJumlahOutbox: () => ref.read(penyediaRepositori).HitungJumlahTertunda(),
+    // BR-02.3: penolakan token perangkat mengakhiri sesi dari permintaan mana pun, bukan hanya alur sinkron &
+    // data awal. Katalog, promo, data meja, dan konfigurasi sengaja menelan galat server agar kasir tidak
+    // terganggu — tanpa kait ini perangkat yang sudah dicabut tetap bisa dipakai berjualan.
+    saatPerangkatDitolak: (galat) => ref.read(penyediaSesi.notifier).TanganiPenolakanPerangkat(galat.pesan),
   );
 });
 
@@ -864,6 +868,9 @@ class KeadaanSesi {
 
 /// Alur sesi kasir: belum aktif → pilih kasir & PIN → masuk (buka shift / shift berjalan).
 class PengaturSesi extends Notifier<KeadaanSesi> {
+  /// Penjaga agar pencabutan hanya ditangani sekali: kaitnya bisa terpicu beberapa permintaan sekaligus.
+  bool _sedangDicabut = false;
+
   @override
   KeadaanSesi build() {
     unawaited(_Muat());
@@ -880,6 +887,7 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
 
   Future<void> Aktifkan(String kode) async {
     await ref.read(penyediaLayananPerangkat).Aktifkan(kode);
+    _sedangDicabut = false;
     ref.invalidate(penyediaStaf);
     ref.invalidate(penyediaKaryawanPos);
     ref.invalidate(penyediaIdentitas);
@@ -892,6 +900,10 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
   Future<void> Masuk(StafLokal staf, String pin) async {
     final kasir = await ref.read(penyediaLayananMasuk).Masuk(staf, pin);
     state = KeadaanSesi(TahapSesi.Masuk, kasir: kasir);
+    // PIN diverifikasi lokal supaya kasir tetap bisa masuk tanpa internet (BR-06.3), jadi perangkat yang sudah
+    // dicabut tidak ketahuan saat masuk. Pemeriksaan ini berjalan di latar: online → sesi langsung berakhir dan
+    // kembali ke layar aktivasi; offline → kasir tetap bisa bekerja dan pencabutan ketahuan saat tersambung.
+    unawaited(SegarkanData());
   }
 
   void Keluar() => state = const KeadaanSesi(TahapSesi.PilihKasir);
@@ -985,6 +997,16 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
       await ref.read(penyediaKonfigurasiAplikasi.notifier).Periksa();
     }
     return hasil;
+  }
+
+  /// BR-02.3: server menolak token perangkat ini di permintaan mana pun (kait `KlienPos.saatPerangkatDitolak`).
+  /// Dipanggil dari dalam permintaan yang sedang gagal, jadi kerjanya dijadwalkan dan hanya sekali per sesi.
+  void TanganiPenolakanPerangkat(String pesan) {
+    if (_sedangDicabut || state.tahap == TahapSesi.BelumAktif) {
+      return;
+    }
+    _sedangDicabut = true;
+    unawaited(_TanganiDicabut(pesan));
   }
 
   /// Audit P0 F-01: perangkat dicabut. Kirim sisa outbox dulu (masa pemulihan), baru kembali ke aktivasi.

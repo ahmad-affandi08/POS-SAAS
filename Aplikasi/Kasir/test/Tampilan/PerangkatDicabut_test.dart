@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:inti/Inti.dart';
+import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
+
+import '../Pendukung/LingkunganUji.dart';
+import '../Pendukung/PasangAplikasi.dart';
+
+/// BR-02.3: perangkat yang dicabut dari back-office tidak boleh bisa dipakai lagi.
+///
+/// Dua celah yang ditutup di sini (laporan pemilik produk: "perangkat sudah dicabut, tapi masih bisa login"):
+/// 1. PIN diverifikasi lokal supaya kasir bisa masuk tanpa internet (BR-06.3), jadi masuk tidak pernah menyentuh
+///    server — perangkat dicabut baru ketahuan saat aplikasi dibuka ulang.
+/// 2. Pemanggil selain sinkron & data awal (katalog, promo, data meja, konfigurasi) sengaja menelan `GalatApi`
+///    agar galat server tidak mengganggu kasir, termasuk 403 `PerangkatDicabut`.
+void main() {
+  /// Jawaban server untuk perangkat yang sudah dicabut (`AutentikasiPerangkat`, 403).
+  Future<http.Response> Dicabut(http.Request _) async => JsonUji({
+    'Galat': {'Kode': 'PerangkatDicabut', 'Pesan': 'Perangkat ini sudah dicabut dari back-office.'},
+  }, 403);
+
+  testWidgets('dicabut saat aplikasi terbuka: kasir masuk dengan PIN, lalu langsung kembali ke layar aktivasi', (
+    tester,
+  ) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(u.SiapkanAktif);
+    // Perangkat dicabut saat aplikasi sedang terbuka dan sedang offline, jadi pemeriksaan awal tidak menemukannya.
+    u.server.penangan = (_) async => throw http.ClientException('offline');
+    await PasangAplikasi(tester, u);
+    expect(find.text('Siapa yang bertugas?'), findsOneWidget);
+
+    u.server.penangan = Dicabut;
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    await Tunggu(tester);
+
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
+    expect(find.textContaining('sudah dicabut dari back-office'), findsOneWidget);
+    expect(find.byType(RuangKerja), findsNothing);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('dicabut saat shift berjalan: perbarui katalog menutup sesi, bukan hanya gagal diam-diam', (
+    tester,
+  ) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(() async {
+      await u.SiapkanAktif();
+      await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
+    });
+    u.server.penangan = (_) async => throw http.ClientException('offline');
+    await PasangAplikasi(tester, u);
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    await Tunggu(tester);
+    expect(find.byType(RuangKerja), findsOneWidget);
+
+    // Perangkat dicabut di tengah shift; kasir menekan tombol perbarui katalog.
+    u.server.penangan = Dicabut;
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Perbarui katalog'));
+    await Tunggu(tester);
+
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
+    expect(find.byType(RuangKerja), findsNothing);
+    await Lepas(tester, u);
+  });
+}

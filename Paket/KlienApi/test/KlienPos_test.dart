@@ -838,4 +838,78 @@ void main() {
     expect(dikirim.last.url.path, '/api/pos/v1/penjualan/P1/kirim-struk');
     expect((await klien.AmbilPesanKeluar('M1')).pesanGalat, 'Nomor tidak terdaftar di WhatsApp.');
   });
+
+  group('BR-02.3 kait penolakan token perangkat', () {
+    http.Response DicabutJson() => Json({
+      'Galat': {'Kode': 'PerangkatDicabut', 'Pesan': 'Perangkat ini sudah dicabut dari back-office.'},
+    }, 403);
+
+    KlienPos BuatKlienBerkait(
+      Future<http.Response> Function(http.Request permintaan) penangan,
+      List<String> dilaporkan, {
+      String? token = 'Tkn',
+    }) => KlienPos(
+      alamatDasar: Uri.parse('https://kasir.contoh.id/'),
+      versiAplikasi: '0.1.0',
+      ambilToken: () => token,
+      klien: MockClient(penangan),
+      saatPerangkatDitolak: (galat) => dilaporkan.add(galat.kode),
+    );
+
+    test('permintaan bertoken yang ditolak melaporkan pencabutan, apa pun endpoint-nya', () async {
+      // Katalog & promo sengaja menelan GalatApi di pemanggilnya; tanpa kait ini pencabutan tidak pernah terdengar.
+      for (final panggil in <Future<Object?> Function(KlienPos)>[
+        (k) => k.AmbilKatalog(),
+        (k) => k.AmbilDataAwal(),
+        (k) => k.AmbilMeja(),
+        (k) => k.AmbilLogoStruk(),
+      ]) {
+        final dilaporkan = <String>[];
+        final klien = BuatKlienBerkait((_) async => DicabutJson(), dilaporkan);
+
+        await expectLater(panggil(klien), throwsA(isA<GalatApi>()));
+
+        expect(dilaporkan, ['PerangkatDicabut'], reason: 'Setiap permintaan bertoken melaporkan pencabutan.');
+      }
+    });
+
+    test('token tidak berlaku (401) juga dilaporkan', () async {
+      final dilaporkan = <String>[];
+      final klien = BuatKlienBerkait(
+        (_) async => Json({
+          'Galat': {'Kode': 'TokenPerangkatTidakValid', 'Pesan': 'Token tidak berlaku.'},
+        }, 401),
+        dilaporkan,
+      );
+
+      await expectLater(klien.AmbilDataAwal(), throwsA(isA<GalatApi>()));
+
+      expect(dilaporkan, ['TokenPerangkatTidakValid']);
+    });
+
+    test('aktivasi kode perangkat yang sudah dicabut tidak melaporkan apa pun', () async {
+      // Aktivasi tidak memakai token: galatnya milik kode yang diketik, bukan sesi perangkat ini. Kalau ikut
+      // dilaporkan, pesan galat di layar aktivasi tertimpa pesan pencabutan dan kodenya hilang dari isian.
+      final dilaporkan = <String>[];
+      final klien = BuatKlienBerkait((_) async => DicabutJson(), dilaporkan, token: null);
+
+      await expectLater(klien.AktifkanPerangkat(kode: 'A7K9M2QT', platform: 'android'), throwsA(isA<GalatApi>()));
+
+      expect(dilaporkan, isEmpty);
+    });
+
+    test('galat lain tidak melaporkan pencabutan', () async {
+      final dilaporkan = <String>[];
+      final klien = BuatKlienBerkait(
+        (_) async => Json({
+          'Galat': {'Kode': 'DataTidakValid', 'Pesan': 'Kursor tidak dikenal.'},
+        }, 422),
+        dilaporkan,
+      );
+
+      await expectLater(klien.AmbilDataAwal(), throwsA(isA<GalatApi>()));
+
+      expect(dilaporkan, isEmpty);
+    });
+  });
 }
