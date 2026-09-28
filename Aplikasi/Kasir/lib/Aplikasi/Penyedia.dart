@@ -1001,6 +1001,27 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     return hasil;
   }
 
+  /// BR-02.3: pemeriksaan keabsahan perangkat di latar, dipanggil berkala dan saat aplikasi kembali ke depan.
+  ///
+  /// Pencabutan harus mengembalikan aplikasi ke layar aktivasi tanpa menunggu kasir melakukan apa pun — shift
+  /// terbuka tetapi sepi, atau aplikasi hanya berdiri di layar pilih kasir, tetap terdeteksi.
+  ///
+  /// Hasil panggilannya sendiri tidak dipakai selain untuk status koneksi: sinyal pencabutan datang lewat kait
+  /// `KlienPos.saatPerangkatDitolak`, yang berjalan sebelum jawaban server sempat diurai. Karena itu jawaban aneh
+  /// dari server pun aman diabaikan di sini — bukan galat yang disembunyikan, melainkan galat yang memang bukan
+  /// urusan pemeriksaan ini.
+  Future<void> PeriksaPerangkat() async {
+    if (_sedangDicabut || state.tahap == TahapSesi.BelumAktif || state.tahap == TahapSesi.Memuat) {
+      return;
+    }
+    try {
+      final tersambung = await ref.read(penyediaLayananPerangkat).PeriksaMasihBerlaku();
+      ref.read(penyediaKoneksi.notifier).Tandai(tersambung ? StatusKoneksi.Online : StatusKoneksi.Offline);
+    } on Object {
+      return;
+    }
+  }
+
   /// BR-02.3: server menolak token perangkat ini di permintaan mana pun (kait `KlienPos.saatPerangkatDitolak`).
   /// Dipanggil dari dalam permintaan yang sedang gagal, jadi kerjanya dijadwalkan dan hanya sekali per sesi.
   void TanganiPenolakanPerangkat(String pesan) {

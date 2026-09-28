@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
+import 'package:kasir/Tampilan/GerbangKasir.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 
 import '../Pendukung/LingkunganUji.dart';
@@ -89,6 +90,42 @@ void main() {
 
     expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
     expect(find.byType(RuangKerja), findsNothing);
+    await Lepas(tester, u);
+  });
+
+  // Dua keadaan yang tidak punya pewaktu apa pun: ruang kerja belum terbuka, jadi pewaktu sinkron 30 detik
+  // miliknya tidak berjalan dan tidak ada yang akan menemukan pencabutan. Ini yang ditutup pemeriksaan berkala.
+  testWidgets('dicabut saat belum buka shift: kembali ke aktivasi sendiri, tanpa disentuh kasir', (tester) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(u.SiapkanAktif);
+    u.server.penangan = (_) async => throw http.ClientException('offline');
+    await PasangAplikasi(tester, u);
+    await tester.tap(find.text('Rina Wulandari'));
+    await tester.pump();
+    await KetikPin(tester, KasusPin(0)['Pin']! as String);
+    await Tunggu(tester);
+    expect(find.textContaining('Buka shift'), findsWidgets);
+
+    u.server.penangan = Dicabut;
+    await tester.pump(GerbangKasir.selangPeriksaPerangkat);
+    await Tunggu(tester);
+
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('dicabut saat berdiri di layar pilih kasir: kembali ke aktivasi sendiri', (tester) async {
+    final u = LingkunganUji.Buat();
+    await tester.runAsync(u.SiapkanAktif);
+    u.server.penangan = (_) async => throw http.ClientException('offline');
+    await PasangAplikasi(tester, u);
+    expect(find.text('Siapa yang bertugas?'), findsOneWidget);
+
+    u.server.penangan = Dicabut;
+    await tester.pump(GerbangKasir.selangPeriksaPerangkat);
+    await Tunggu(tester);
+
+    expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
     await Lepas(tester, u);
   });
 }

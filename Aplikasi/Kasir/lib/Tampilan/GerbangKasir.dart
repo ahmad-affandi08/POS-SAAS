@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,11 +15,47 @@ import 'Shift/LayarLaporanZ.dart';
 /// shift terbuka, termasuk layar kunci & ganti kasir; setelah tutup shift → Laporan Z → buka shift (F-11). Perangkat
 /// berjenis `Kds` langsung membuka layar dapur setelah aktif (F-10b; tanpa kasir & shift). Perangkat berjenis `Pelayan`
 /// (v2.00) masuk dengan PIN lalu langsung ke Ruang Kerja mode Pelayan tanpa shift.
-class GerbangKasir extends ConsumerWidget {
+class GerbangKasir extends ConsumerStatefulWidget {
   const GerbangKasir({super.key});
 
+  /// BR-02.3: selang pemeriksaan keabsahan perangkat. Tanpa ini pencabutan hanya ketahuan saat ada permintaan lain,
+  /// sehingga shift yang terbuka tetapi sepi bisa berjalan lama setelah perangkatnya dicabut.
+  static const Duration selangPeriksaPerangkat = Duration(minutes: 1);
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GerbangKasir> createState() => _GerbangKasirState();
+}
+
+class _GerbangKasirState extends ConsumerState<GerbangKasir> with WidgetsBindingObserver {
+  Timer? _pewaktuPerangkat;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _pewaktuPerangkat = Timer.periodic(
+      GerbangKasir.selangPeriksaPerangkat,
+      (_) => unawaited(ref.read(penyediaSesi.notifier).PeriksaPerangkat()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pewaktuPerangkat?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState keadaan) {
+    // Perangkat kasir sering ditinggal di latar; saat dibuka lagi pencabutan tidak perlu menunggu pewaktu.
+    if (keadaan == AppLifecycleState.resumed) {
+      unawaited(ref.read(penyediaSesi.notifier).PeriksaPerangkat());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final sesi = ref.watch(penyediaSesi);
     final jenis = ref.watch(penyediaJenisPerangkat).value;
     final kds = jenis == 'Kds';
