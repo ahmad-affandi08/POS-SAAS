@@ -303,7 +303,9 @@ dashboard.{{app}}.id           Semua rute di atas selain pemasaran (D-20, DOMAIN
 | modifier group / modifier | `KelompokPilihan` / `Pilihan` | recipe / production | `Resep` / `Produksi` |
 | price list / price history | `DaftarHarga` / `RiwayatHarga` | supplier | `Pemasok` |
 | customer | `Pelanggan` | purchase order | `PesananPembelian` |
-| sales order / pre-order (v1.68) | `PesananPenjualan` | down payment | `UangMuka` |
+| pre-order (v1.68; SO kasir ber-DP) | `PesananPenjualan` | down payment | `UangMuka` |
+| sales order grosir (v2.74) | `PesananGrosir` | delivery order / surat jalan | `SuratJalan` |
+| sales invoice grosir (v2.74) | `FakturPenjualan` | unbilled receivable (v2.74) | `PiutangBelumDifakturkan` |
 | promotion / voucher | `Promo` / `Voucher` | goods receipt | `PenerimaanBarang` |
 | loyalty points / deposit | `MutasiPoin` / `MutasiDeposit` | purchase invoice | `FakturPembelian` |
 | employee / attendance / commission | `Karyawan` / `Absensi` / `Komisi` | receivable / payable | `Piutang` / `Hutang` |
