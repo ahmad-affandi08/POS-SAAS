@@ -188,7 +188,7 @@ export default function Daftar({ Anggota, Undangan, Peran }: PropsDaftar) {
                               ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada anggota tim internal. Tambahkan anggota pertama.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada anggota tim internal. Tambahkan anggota pertama.' }}
             />
 
             <section className="flex flex-col gap-2">

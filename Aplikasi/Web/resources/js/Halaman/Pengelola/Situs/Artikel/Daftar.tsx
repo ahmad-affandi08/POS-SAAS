@@ -133,7 +133,7 @@ export default function HalamanDaftarArtikelSitus({
                     },
                 ]}
                 alamatDetail={(a) => `/situs/artikel/${a.Uuid}`}
-                kosong={{ judul: 'Belum ada artikel. Tulis artikel pertama untuk blog situs.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada artikel. Tulis artikel pertama untuk blog situs.' }}
             />
         </TataLetakPengelola>
     );

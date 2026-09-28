@@ -280,7 +280,7 @@ export default function HalamanDaftarKategori({ Kategori, OpsiStasiunDapur, Izin
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Produk',
+                    ilustrasi: true,
                     judul: 'Belum ada kategori. Tambah kategori agar produk mudah dicari di kasir.',
                 }}
             />

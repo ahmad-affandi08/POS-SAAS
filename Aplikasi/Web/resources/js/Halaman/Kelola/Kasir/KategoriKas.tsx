@@ -141,7 +141,7 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                     />
                 )}
                 kosong={{
-                    ilustrasi: 'Shift',
+                    ilustrasi: true,
                     judul: 'Belum ada kategori kas. Tambahkan minimal satu kategori kas keluar agar kasir bisa mencatat pengeluaran dari laci.',
                 }}
             />

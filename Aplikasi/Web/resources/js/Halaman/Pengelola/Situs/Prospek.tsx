@@ -170,6 +170,7 @@ export default function HalamanProspekSitus({ Prospek, PilihanStatus, PilihanJen
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada prospek. Tambahkan blok "Formulir prospek" di halaman Kontak agar pengunjung bisa mengirim pesan.',
                 }}
             />

@@ -116,7 +116,7 @@ export default function HalamanDaftarPaketSesi({ PaketSesi, Izin, FiturAktif }: 
                           ),
                       }
                     : {})}
-                kosong={{ ilustrasi: 'Produk', judul: 'Belum ada paket sesi.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada paket sesi.' }}
             />
         </TataLetakAplikasi>
     );

@@ -150,7 +150,7 @@ export default function HalamanDaftarStokAwal({
                 saring={saring}
                 alamatDetail={(dokumen) => `${AlamatStokAwal}/${dokumen.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Stok',
+                    ilustrasi: true,
                     judul: 'Belum ada stok awal. Isi stok awal agar saldo stok dan HPP benar sejak hari pertama.',
                     ...(Izin.Kelola ? {} : { aksi: <span>Minta pengelola persediaan mengisi stok awal.</span> }),
                 }}

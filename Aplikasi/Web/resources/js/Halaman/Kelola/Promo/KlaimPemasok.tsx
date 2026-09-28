@@ -145,7 +145,7 @@ export default function HalamanKlaimPemasok({ Terbuka, Penerimaan, OpsiAkunKasBa
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Tidak ada klaim promo yang belum diterima.' }}
+                kosong={{ ilustrasi: true, judul: 'Tidak ada klaim promo yang belum diterima.' }}
             />
             <h2 className="text-subjudul font-semibold text-teks-utama">Riwayat penerimaan</h2>
             <TabelData
@@ -156,7 +156,7 @@ export default function HalamanKlaimPemasok({ Terbuka, Penerimaan, OpsiAkunKasBa
                 ambilIdBaris={(p) => p.Uuid}
                 urutBawaan="-Tanggal"
                 cari="Cari pemasok"
-                kosong={{ judul: 'Belum ada pembayaran klaim dari pemasok.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada pembayaran klaim dari pemasok.' }}
             />
             {terima ? (
                 <FormTerima klaim={terima} opsiAkun={OpsiAkunKasBank} saatSelesai={() => AturTerima(null)} />

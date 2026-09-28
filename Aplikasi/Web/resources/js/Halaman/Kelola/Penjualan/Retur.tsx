@@ -245,7 +245,7 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
                 sumber={{ mode: 'lokal', data: Baris }}
                 ambilIdBaris={(b) => b.Uuid}
                 cari={false}
-                kosong={{ judul: 'Retur ini tidak punya baris.' }}
+                kosong={{ ilustrasi: true, judul: 'Retur ini tidak punya baris.' }}
             />
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Refund</h2>
@@ -256,7 +256,7 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
                 sumber={{ mode: 'lokal', data: Refund }}
                 ambilIdBaris={(b) => b.Uuid}
                 cari={false}
-                kosong={{ judul: 'Tanpa refund (nilai Rp 0).' }}
+                kosong={{ ilustrasi: true, judul: 'Tanpa refund (nilai Rp 0).' }}
             />
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Mutasi stok</h2>
@@ -267,9 +267,7 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
                 sumber={{ mode: 'lokal', data: MutasiStok }}
                 ambilIdBaris={(m) => m.Kunci}
                 cari={false}
-                kosong={{
-                    judul: 'Retur ini tidak mengembalikan stok (jasa atau produk tanpa stok).',
-                }}
+                kosong={{ ilustrasi: true, judul: 'Retur ini tidak mengembalikan stok (jasa atau produk tanpa stok).' }}
             />
         </TataLetakAplikasi>
     );

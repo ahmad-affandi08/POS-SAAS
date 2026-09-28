@@ -269,7 +269,7 @@ export default function HalamanHariLibur({
                               },
                           }
                         : {})}
-                    kosong={{ judul: `Belum ada hari libur ${Tahun}.` }}
+                    kosong={{ ilustrasi: true, judul: `Belum ada hari libur ${Tahun}.` }}
                 />
             )}
         </TataLetakPengelola>

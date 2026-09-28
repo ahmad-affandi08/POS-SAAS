@@ -223,7 +223,7 @@ export default function HalamanVoucherPromo({ Promo, Voucher, Ringkasan, JumlahM
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Promo',
+                    ilustrasi: true,
                     judul: 'Belum ada voucher. Buat kode massal untuk dibagikan ke pelanggan, atau satu kode untuk kampanye.',
                 }}
             />

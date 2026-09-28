@@ -199,7 +199,10 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
                           },
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada harga. Usulkan harga pertama agar paket bisa diaktifkan.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada harga. Usulkan harga pertama agar paket bisa diaktifkan.',
+                }}
             />
         </TataLetakPengelola>
     );

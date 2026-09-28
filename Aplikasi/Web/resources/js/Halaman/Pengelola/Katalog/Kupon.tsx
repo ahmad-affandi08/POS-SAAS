@@ -127,6 +127,7 @@ export default function HalamanKupon({ Kupon, Paket }: PropsKupon) {
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada kupon. Buat kupon untuk promo langganan, misal diskon 50% selama 3 bulan.',
                 }}
             />

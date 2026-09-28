@@ -151,7 +151,7 @@ export default function HalamanTierPelanggan({ Tier, FiturAktif, Izin }: PropsTi
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Pelanggan',
+                    ilustrasi: true,
                     judul: 'Belum ada tier. Contoh: Silver mulai Rp 1.000.000, Gold mulai Rp 5.000.000 per 12 bulan.',
                 }}
             />

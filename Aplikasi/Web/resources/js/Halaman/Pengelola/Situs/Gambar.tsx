@@ -114,7 +114,7 @@ export default function HalamanGambarSitus({ Gambar, Izin }: { Gambar: GambarPus
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada gambar. Unggah gambar untuk dipakai di halaman situs.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada gambar. Unggah gambar untuk dipakai di halaman situs.' }}
             />
         </TataLetakPengelola>
     );

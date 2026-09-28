@@ -112,7 +112,7 @@ export default function HalamanDaftarPreOrder({ Pesanan, OpsiStatus }: PropsDaft
                 saring={saring}
                 alamatDetail={(p) => `${AlamatPreOrder}/${p.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Penjualan',
+                    ilustrasi: true,
                     judul: 'Belum ada pre-order. Pre-order dibuat kasir di aplikasi dengan uang muka.',
                 }}
             />

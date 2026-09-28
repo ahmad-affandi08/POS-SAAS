@@ -154,7 +154,7 @@ export default function HalamanIsiDeposit({ IsiDeposit, Izin }: PropsIsiDeposit)
                               ) : null,
                       }
                     : {})}
-                kosong={{ ilustrasi: 'Pelanggan', judul: 'Belum ada isi deposit dari kasir.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada isi deposit dari kasir.' }}
             />
 
             {batal ? (

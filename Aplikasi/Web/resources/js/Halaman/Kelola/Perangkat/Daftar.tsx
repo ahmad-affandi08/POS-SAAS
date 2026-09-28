@@ -203,7 +203,10 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
                         />
                     ) : null
                 }
-                kosong={{ judul: 'Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada perangkat. Tambahkan perangkat kasir pertama untuk mulai berjualan.',
+                }}
             />
         </TataLetakAplikasi>
     );

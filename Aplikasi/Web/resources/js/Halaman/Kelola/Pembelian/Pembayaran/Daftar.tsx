@@ -59,7 +59,7 @@ export default function HalamanDaftarPembayaran({ Pembayaran, OpsiStatus, OpsiPe
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Pembelian',
+                    ilustrasi: true,
                     judul: 'Belum ada pembayaran hutang.',
                 }}
             />

@@ -138,6 +138,7 @@ export default function HalamanAddon({ Addon, Fitur, KolomBatas }: PropsAddon) {
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada add-on. Tambahkan add-on seperti outlet tambahan, self-order QR, atau kuota WhatsApp.',
                 }}
             />

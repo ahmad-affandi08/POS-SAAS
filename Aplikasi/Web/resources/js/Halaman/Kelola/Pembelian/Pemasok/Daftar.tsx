@@ -147,7 +147,7 @@ export default function HalamanDaftarPemasok({ Pemasok, Izin }: PropsDaftarPemas
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Pembelian',
+                    ilustrasi: true,
                     judul: 'Belum ada pemasok. Tambahkan pemasok agar bisa membuat pesanan pembelian.',
                 }}
             />

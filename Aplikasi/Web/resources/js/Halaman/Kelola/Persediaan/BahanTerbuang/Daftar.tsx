@@ -250,7 +250,7 @@ export default function HalamanBahanTerbuang({
                               ) : null,
                       }
                     : {})}
-                kosong={{ ilustrasi: 'Stok', judul: 'Belum ada bahan terbuang yang dicatat.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada bahan terbuang yang dicatat.' }}
             />
         </TataLetakAplikasi>
     );

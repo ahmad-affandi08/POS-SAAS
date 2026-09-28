@@ -250,7 +250,7 @@ export default function HalamanDaftarImpor({
                         },
                     ]}
                     alamatDetail={(impor) => `/kelola/produk/impor/${impor.Uuid}`}
-                    kosong={{ judul: 'Belum pernah mengimpor produk. Riwayat disimpan 30 hari.' }}
+                    kosong={{ ilustrasi: true, judul: 'Belum pernah mengimpor produk. Riwayat disimpan 30 hari.' }}
                 />
             </section>
         </TataLetakAplikasi>

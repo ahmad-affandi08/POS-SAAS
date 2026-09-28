@@ -142,7 +142,7 @@ export default function HalamanFlagFitur({ Aturan, OpsiKunci, OpsiPaket, OpsiTen
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada aturan. Semua fitur mengikuti paket langganan tenant.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada aturan. Semua fitur mengikuti paket langganan tenant.' }}
             />
             {dialog?.jenis === 'simpan' ? (
                 <FormAturan

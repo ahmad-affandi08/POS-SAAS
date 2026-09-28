@@ -224,7 +224,7 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Produk',
+                    ilustrasi: true,
                     judul: 'Belum ada produk. Impor dari Excel atau Tambah produk',
                     ...(Izin.Kelola ? {} : { aksi: <span>Minta pengelola produk menambahkan produk.</span> }),
                 }}

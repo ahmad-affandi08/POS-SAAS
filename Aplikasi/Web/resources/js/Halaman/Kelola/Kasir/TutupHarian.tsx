@@ -156,7 +156,7 @@ export default function HalamanTutupHarian({ Hari, Izin }: PropsTutupHarian) {
                               ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada outlet aktif.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada outlet aktif.' }}
             />
             {pilihan !== null ? (
                 <DialogKonfirmasi

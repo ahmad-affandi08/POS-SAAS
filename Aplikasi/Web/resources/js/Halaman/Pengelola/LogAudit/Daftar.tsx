@@ -96,7 +96,7 @@ export default function Daftar({ Log }: PropsDaftar) {
                 urutBawaan="-DibuatPada"
                 cari="Cari aksi, misal tenant.tangguhkan"
                 saring={[{ id: 'Tanggal', label: 'Tanggal', jenis: 'rentangTanggal' }]}
-                kosong={{ judul: 'Belum ada aktivitas yang tercatat.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada aktivitas yang tercatat.' }}
             />
         </TataLetakPengelola>
     );

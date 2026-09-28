@@ -142,7 +142,7 @@ export default function HalamanKasbon({ Kasbon, TotalSisa, OpsiKaryawan, OpsiAku
                               ) : null,
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada kasbon karyawan.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada kasbon karyawan.' }}
             />
             {dialog?.jenis === 'catat' ? (
                 <FormKasbon opsiKaryawan={OpsiKaryawan} opsiAkun={OpsiAkunKasBank} saatSelesai={Tutup} />

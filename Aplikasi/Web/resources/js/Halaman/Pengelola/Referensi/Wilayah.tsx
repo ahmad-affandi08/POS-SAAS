@@ -106,6 +106,7 @@ export default function HalamanWilayah({ Wilayah, PilihanTingkat, PilihanZonaWak
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada wilayah. Muat data resmi dengan perintah server: php artisan pengelola:impor-wilayah wilayah.csv',
                 }}
             />

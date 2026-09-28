@@ -298,7 +298,10 @@ export default function HalamanDaftarPengguna({
 
                     return aksi.length === 0 ? null : <ItemAksiBaris aksi={aksi} />;
                 }}
-                kosong={{ judul: 'Belum ada pengguna lain. Tambahkan kasir atau staf agar tim bisa ikut bekerja.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada pengguna lain. Tambahkan kasir atau staf agar tim bisa ikut bekerja.',
+                }}
             />
 
             <section className="flex flex-col gap-2" aria-labelledby="judul-undangan">
@@ -330,7 +333,7 @@ export default function HalamanDaftarPengguna({
                               ),
                           }
                         : {})}
-                    kosong={{ judul: 'Tidak ada undangan yang menunggu diterima.' }}
+                    kosong={{ ilustrasi: true, judul: 'Tidak ada undangan yang menunggu diterima.' }}
                 />
             </section>
         </TataLetakAplikasi>

@@ -354,7 +354,7 @@ function PemesananAktif({ alamat, token, menu, daring }: PropsPemesanan) {
             ) : null}
 
             {menu.Produk.length === 0 ? (
-                <KeadaanKosong judul="Menu belum tersedia" ilustrasi="Produk">
+                <KeadaanKosong judul="Menu belum tersedia" ilustrasi>
                     Belum ada menu yang bisa dipesan lewat QR. Silakan pesan langsung ke staf.
                 </KeadaanKosong>
             ) : (

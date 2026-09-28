@@ -121,7 +121,7 @@ export default function HalamanJadwalKasBank({ Jadwal, Izin }: PropsJadwalKasBan
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Akuntansi',
+                    ilustrasi: true,
                     judul: 'Belum ada transaksi berulang.',
                 }}
             />

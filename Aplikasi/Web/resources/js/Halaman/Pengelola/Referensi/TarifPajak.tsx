@@ -237,7 +237,10 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
                           },
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada tarif pajak. Buat draf tarif pertama, lalu ajukan untuk ditinjau.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada tarif pajak. Buat draf tarif pertama, lalu ajukan untuk ditinjau.',
+                }}
             />
         </TataLetakPengelola>
     );

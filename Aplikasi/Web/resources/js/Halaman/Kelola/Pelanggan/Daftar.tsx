@@ -197,7 +197,7 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                     />
                 )}
                 kosong={{
-                    ilustrasi: 'Pelanggan',
+                    ilustrasi: true,
                     judul: 'Belum ada pelanggan. Tambahkan di sini atau dari aplikasi kasir saat transaksi.',
                 }}
             />

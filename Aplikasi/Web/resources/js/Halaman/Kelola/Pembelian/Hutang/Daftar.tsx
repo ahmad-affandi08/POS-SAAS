@@ -140,7 +140,7 @@ export default function HalamanDaftarHutang({ Hutang, OpsiUmur, OpsiPemasok, Izi
                           ),
                       }
                     : {})}
-                kosong={{ ilustrasi: 'Pembelian', judul: 'Tidak ada hutang terbuka. Semua faktur sudah lunas.' }}
+                kosong={{ ilustrasi: true, judul: 'Tidak ada hutang terbuka. Semua faktur sudah lunas.' }}
             />
         </HalamanDaftarPembelian>
     );

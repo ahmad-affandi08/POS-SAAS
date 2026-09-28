@@ -111,7 +111,7 @@ export default function HalamanPin({ PinSayaDiatur, Anggota }: PropsPin) {
                         aksiBaris={(anggota) => (
                             <DropdownMenuItem onSelect={() => AturSunting(anggota)}>Atur ulang PIN</DropdownMenuItem>
                         )}
-                        kosong={{ judul: 'Belum ada anggota lain yang PIN-nya bisa Anda atur.' }}
+                        kosong={{ ilustrasi: true, judul: 'Belum ada anggota lain yang PIN-nya bisa Anda atur.' }}
                     />
                 </section>
             ) : null}

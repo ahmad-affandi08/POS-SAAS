@@ -134,6 +134,7 @@ export default function HalamanDaftarKelompokPajak(propsHalaman: PropsDaftarKelo
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada kelompok pajak. Tambah kelompok pajak sebelum menambah produk yang dijual.',
                 }}
             />

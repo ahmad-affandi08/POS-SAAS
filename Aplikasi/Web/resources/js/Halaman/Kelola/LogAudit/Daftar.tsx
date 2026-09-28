@@ -89,7 +89,7 @@ export default function HalamanLogAudit({ Log }: PropsDaftar) {
                 urutBawaan="-DibuatPada"
                 cari="Cari peristiwa, misal outlet atau sesi.masuk"
                 saring={[{ id: 'Tanggal', label: 'Tanggal', jenis: 'rentangTanggal' }]}
-                kosong={{ judul: 'Belum ada aktivitas yang tercatat.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada aktivitas yang tercatat.' }}
             />
         </TataLetakAplikasi>
     );

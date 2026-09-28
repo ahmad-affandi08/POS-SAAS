@@ -337,7 +337,7 @@ export default function HalamanHargaProduk({
                         },
                         { id: 'Tanggal', label: 'Tanggal', jenis: 'rentangTanggal' },
                     ]}
-                    kosong={{ judul: 'Belum ada perubahan harga.' }}
+                    kosong={{ ilustrasi: true, judul: 'Belum ada perubahan harga.' }}
                 />
             </Panel>
         </TataLetakAplikasi>

@@ -108,7 +108,7 @@ export default function HalamanRekapGaji({ Rekap, OpsiPeriode, OpsiStatus }: Pro
                 urutBawaan="-Periode"
                 cari="Cari periode, misal 2026-09"
                 saring={saring}
-                kosong={{ judul: 'Belum ada rekap gaji.', ilustrasi: 'Laporan' }}
+                kosong={{ judul: 'Belum ada rekap gaji.', ilustrasi: true }}
             />
             {buat ? <FormBuat opsiPeriode={OpsiPeriode} saatSelesai={() => AturBuat(false)} /> : null}
         </TataLetakAplikasi>

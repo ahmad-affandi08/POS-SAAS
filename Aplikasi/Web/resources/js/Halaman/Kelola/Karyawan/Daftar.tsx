@@ -154,6 +154,7 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada karyawan. Tambahkan di sini; staf yang absen di aplikasi kasir juga tercatat otomatis.',
                 }}
             />

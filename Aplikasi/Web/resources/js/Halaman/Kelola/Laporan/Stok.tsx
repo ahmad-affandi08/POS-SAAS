@@ -177,7 +177,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                             ambilIdBaris={(b) => b.Kunci}
                             urutBawaan="-Nilai"
                             cari={false}
-                            kosong={{ ilustrasi: 'Laporan', judul: 'Belum ada stok pada tanggal ini.' }}
+                            kosong={{ ilustrasi: true, judul: 'Belum ada stok pada tanggal ini.' }}
                         />
                     </section>
                     <section aria-labelledby="judul-per-kategori" className="flex flex-col gap-2">
@@ -192,7 +192,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                             ambilIdBaris={(b) => b.Kunci}
                             urutBawaan="-Nilai"
                             cari="Cari kategori"
-                            kosong={{ judul: 'Belum ada stok pada tanggal ini.' }}
+                            kosong={{ ilustrasi: true, judul: 'Belum ada stok pada tanggal ini.' }}
                         />
                     </section>
                 </>
@@ -216,6 +216,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                         cari="Cari produk"
                         alamatDetail={(b) => BuatUrlKartuStok(b.UuidProduk, b.UuidGudang)}
                         kosong={{
+                            ilustrasi: true,
                             judul: 'Tidak ada stok kritis. Semua produk berbatas minimum masih di atas batasnya.',
                         }}
                     />

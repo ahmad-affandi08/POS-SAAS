@@ -355,7 +355,7 @@ export default function HalamanKartuStok({
                                 </dl>
                             ) : null
                         }
-                        kosong={{ judul: 'Tidak ada mutasi stok di rentang tanggal ini.' }}
+                        kosong={{ ilustrasi: true, judul: 'Tidak ada mutasi stok di rentang tanggal ini.' }}
                     />
                 </Panel>
             )}

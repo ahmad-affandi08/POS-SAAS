@@ -279,7 +279,7 @@ export default function HalamanDaftarLaundry({ Tiket, OpsiStatus, OpsiOutlet, Pe
                         </>
                     )
                 }
-                kosong={{ ilustrasi: 'Penjualan', judul: 'Belum ada cucian.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada cucian.' }}
             />
             {dialog === 'pengaturan' ? (
                 <DialogPengaturan pengaturan={Pengaturan} saatTutup={() => AturDialog(null)} />

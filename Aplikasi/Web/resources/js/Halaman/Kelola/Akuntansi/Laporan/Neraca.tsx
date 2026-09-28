@@ -129,7 +129,7 @@ export default function HalamanNeraca({ Saring, Laporan, OpsiOutlet }: PropsNera
                 sumber={{ mode: 'lokal', data: Laporan.Baris }}
                 ambilIdBaris={(b) => b.Id}
                 cari={false}
-                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada jurnal sampai tanggal ini.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada jurnal sampai tanggal ini.' }}
             />
         </TataLetakAplikasi>
     );

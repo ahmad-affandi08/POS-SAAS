@@ -364,7 +364,7 @@ function RiwayatTagihan({ tagihan }: { tagihan: TagihanLangganan[] }) {
                 ambilIdBaris={(baris) => baris.Uuid}
                 urutBawaan="-JatuhTempoPada"
                 alamatDetail={(baris) => `/kelola/langganan/tagihan/${baris.Uuid}`}
-                kosong={{ judul: 'Belum ada tagihan.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada tagihan.' }}
             />
         </section>
     );

@@ -150,7 +150,7 @@ export default function AntreanTiket({ Tiket, PilihanStatus, PilihanPrioritas }:
                     { id: 'LewatSla', label: 'Lewat SLA', jenis: 'ya', labelAktif: 'Hanya lewat SLA' },
                 ]}
                 alamatDetail={(tiket) => `/dukungan/tiket/${tiket.Uuid}`}
-                kosong={{ judul: 'Tidak ada tiket yang masih terbuka.' }}
+                kosong={{ ilustrasi: true, judul: 'Tidak ada tiket yang masih terbuka.' }}
             />
         </TataLetakPengelola>
     );

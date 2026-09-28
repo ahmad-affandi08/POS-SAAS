@@ -243,6 +243,7 @@ export default function HalamanPajak({
                             sumber={{ mode: 'lokal', data: KelompokPajak }}
                             ambilIdBaris={(kelompok) => kelompok.Nama}
                             kosong={{
+                                ilustrasi: true,
                                 judul: 'Belum ada kelompok pajak. Terapkan template di langkah Jenis usaha & template untuk menyiapkannya.',
                             }}
                         />

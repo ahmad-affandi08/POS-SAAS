@@ -126,7 +126,10 @@ export default function HalamanDaftarTemplateSektor({ Template }: { Template: Ri
                         <DropdownMenuItem disabled>Belum ada versi</DropdownMenuItem>
                     )
                 }
-                kosong={{ judul: 'Belum ada template sektor. Buat template pertama, misal Retail umum (RTL-GEN).' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada template sektor. Buat template pertama, misal Retail umum (RTL-GEN).',
+                }}
             />
         </TataLetakPengelola>
     );

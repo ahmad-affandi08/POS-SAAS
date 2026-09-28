@@ -156,7 +156,7 @@ export default function HalamanDaftarVoidRetur({ VoidRetur, OpsiOutlet }: PropsD
                 saring={saring}
                 alamatDetail={(baris) => baris.Tautan}
                 kosong={{
-                    ilustrasi: 'Penjualan',
+                    ilustrasi: true,
                     judul: 'Belum ada void atau retur. Void dan retur dari aplikasi POS muncul di sini setelah perangkat tersinkron.',
                 }}
             />

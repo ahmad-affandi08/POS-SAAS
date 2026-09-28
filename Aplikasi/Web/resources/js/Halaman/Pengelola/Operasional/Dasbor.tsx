@@ -264,7 +264,7 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                     kolom={kolomAntrean}
                     sumber={{ mode: 'lokal', data: Antrean.PerAntrean }}
                     ambilIdBaris={(baris) => baris.Antrean}
-                    kosong={{ judul: 'Tidak ada job di antrean.' }}
+                    kosong={{ ilustrasi: true, judul: 'Tidak ada job di antrean.' }}
                 />
             </Bagian>
 
@@ -288,7 +288,7 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                         },
                     ]}
                     alamatDetail={(tugas) => `/operasional/tugas-gagal/${tugas.Uuid}`}
-                    kosong={{ judul: 'Tidak ada job gagal.' }}
+                    kosong={{ ilustrasi: true, judul: 'Tidak ada job gagal.' }}
                 />
             </Bagian>
 
@@ -338,7 +338,7 @@ export default function DasborOperasional({ Dasbor }: { Dasbor: Dasbor }) {
                                 ],
                             },
                         ]}
-                        kosong={{ judul: 'Belum ada catatan backup.' }}
+                        kosong={{ ilustrasi: true, judul: 'Belum ada catatan backup.' }}
                     />
                 ) : null}
                 {bolehKelola ? <FormCatatBackup /> : null}

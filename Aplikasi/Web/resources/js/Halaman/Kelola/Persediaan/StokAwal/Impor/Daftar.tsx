@@ -274,7 +274,7 @@ export default function HalamanDaftarImporStokAwal({
                         },
                     ]}
                     alamatDetail={(impor) => `${alamatImpor}/${impor.Uuid}`}
-                    kosong={{ judul: 'Belum pernah mengimpor stok awal. Riwayat disimpan 30 hari.' }}
+                    kosong={{ ilustrasi: true, judul: 'Belum pernah mengimpor stok awal. Riwayat disimpan 30 hari.' }}
                 />
             </section>
         </TataLetakAplikasi>

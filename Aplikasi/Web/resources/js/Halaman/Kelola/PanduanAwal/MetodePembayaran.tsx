@@ -230,7 +230,10 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
             kolom={kolom}
             sumber={{ mode: 'lokal', data: metodePembayaran }}
             ambilIdBaris={(metode) => metode.Uuid}
-            kosong={{ judul: 'Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.' }}
+            kosong={{
+                ilustrasi: true,
+                judul: 'Belum ada metode pembayaran yang tercatat. Tunai selalu tersedia di kasir.',
+            }}
         />
     );
 }

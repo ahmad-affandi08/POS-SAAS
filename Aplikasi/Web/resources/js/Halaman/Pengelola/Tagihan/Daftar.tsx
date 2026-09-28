@@ -173,7 +173,10 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Opsi
                     sumber={{ mode: 'lokal', data: Antrean }}
                     ambilIdBaris={(baris) => baris.Uuid}
                     alamatDetail={(baris) => (baris.UuidTagihan ? `/tagihan/${baris.UuidTagihan}` : '')}
-                    kosong={{ judul: 'Antrean kosong. Belum ada bukti transfer yang perlu diperiksa.' }}
+                    kosong={{
+                        ilustrasi: true,
+                        judul: 'Antrean kosong. Belum ada bukti transfer yang perlu diperiksa.',
+                    }}
                 />
             </section>
             <section aria-labelledby="judul-semua" className="flex flex-col gap-2">
@@ -198,7 +201,10 @@ export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, Opsi
                         { id: 'TerbitPada', label: 'Tanggal terbit', jenis: 'rentangTanggal' },
                     ]}
                     alamatDetail={(baris) => `/tagihan/${baris.Uuid}`}
-                    kosong={{ judul: 'Belum ada tagihan. Tagihan terbit otomatis saat tenant berlangganan paket.' }}
+                    kosong={{
+                        ilustrasi: true,
+                        judul: 'Belum ada tagihan. Tagihan terbit otomatis saat tenant berlangganan paket.',
+                    }}
                 />
             </section>
         </TataLetakPengelola>

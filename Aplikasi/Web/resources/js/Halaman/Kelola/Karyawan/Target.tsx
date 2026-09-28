@@ -166,7 +166,7 @@ export default function HalamanTargetPenjualan({
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada target penjualan untuk periode ini.', ilustrasi: 'Laporan' }}
+                kosong={{ judul: 'Belum ada target penjualan untuk periode ini.', ilustrasi: true }}
             />
             {dialog?.jenis === 'simpan' ? (
                 <FormTarget

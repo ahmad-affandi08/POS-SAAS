@@ -206,7 +206,7 @@ export default function HalamanDaftarPromo({ Promo, ModeResolusi, FiturAktif, Iz
                       }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Promo',
+                    ilustrasi: true,
                     judul: 'Belum ada promo. Contoh: happy hour 2 kopi Rp 30.000, beli 2 gratis 1, atau diskon 10% member Gold.',
                 }}
             />

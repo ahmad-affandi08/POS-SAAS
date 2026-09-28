@@ -159,6 +159,7 @@ export default function HalamanPerangkatPanduan({
                 ambilIdBaris={(baris) => baris.Uuid}
                 urutBawaan="Kode"
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada perangkat kasir di outlet ini. Tambahkan satu untuk mulai berjualan di aplikasi kasir.',
                 }}
             />

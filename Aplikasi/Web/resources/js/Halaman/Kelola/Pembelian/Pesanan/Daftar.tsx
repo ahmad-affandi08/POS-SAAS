@@ -88,7 +88,7 @@ export default function HalamanDaftarPesanan({ Pesanan, OpsiStatus, OpsiPemasok,
                 saring={BuatSaringPembelian(OpsiStatus, OpsiPemasok)}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Pembelian',
+                    ilustrasi: true,
                     judul: 'Belum ada pesanan pembelian.',
                 }}
             />

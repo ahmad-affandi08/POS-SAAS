@@ -207,7 +207,7 @@ export default function HalamanTutupBuku({ Periode, Tahun, Izin }: PropsTutupBuk
                               ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada periode.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada periode.' }}
             />
             <h2 className="mt-4 text-subjudul font-semibold text-teks-utama">Tutup tahun</h2>
             <p className="max-w-3xl text-isi text-teks-sekunder">
@@ -229,7 +229,7 @@ export default function HalamanTutupBuku({ Periode, Tahun, Izin }: PropsTutupBuk
                               ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada tahun buku.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada tahun buku.' }}
             />
             {tutupTahun !== null ? (
                 <DialogKonfirmasi

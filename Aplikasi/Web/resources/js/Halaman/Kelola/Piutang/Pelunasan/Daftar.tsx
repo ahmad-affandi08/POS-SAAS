@@ -83,7 +83,7 @@ export default function HalamanDaftarPelunasan({ Pelunasan, OpsiStatus, Izin }: 
                 saring={saring}
                 alamatDetail={(p) => `${alamat}/${p.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Pelanggan',
+                    ilustrasi: true,
                     judul: 'Belum ada pelunasan piutang.',
                 }}
             />

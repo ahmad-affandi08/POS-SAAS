@@ -160,7 +160,7 @@ export default function HalamanAbsensi({ Absensi, OpsiKaryawan, OpsiOutlet }: Pr
                 urutBawaan="-MasukPada"
                 cari="Cari nama karyawan"
                 saring={saring}
-                kosong={{ judul: 'Belum ada absensi. Karyawan absen dari aplikasi kasir di outlet.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada absensi. Karyawan absen dari aplikasi kasir di outlet.' }}
             />
         </TataLetakAplikasi>
     );

@@ -127,7 +127,7 @@ export default function HalamanDaftarPenyesuaianStok({
                 saring={saring}
                 alamatDetail={(p) => `${AlamatPenyesuaian}/${p.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Stok',
+                    ilustrasi: true,
                     judul: 'Belum ada penyesuaian stok.',
                     ...(tombolBuat ? {} : { aksi: <span>Minta pengelola persediaan mencatat penyesuaian.</span> }),
                 }}

@@ -289,7 +289,7 @@ export default function HalamanDaftarPiutangPelanggan({
                     ? { aksiBaris: (p: BarisPiutang) => <ItemAksiBaris aksi={AksiBaris(p)} /> }
                     : {})}
                 kosong={{
-                    ilustrasi: 'Pelanggan',
+                    ilustrasi: true,
                     judul: 'Tidak ada piutang terbuka. Semua penjualan tempo sudah lunas.',
                 }}
             />

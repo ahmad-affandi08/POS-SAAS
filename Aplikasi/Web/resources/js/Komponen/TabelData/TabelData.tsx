@@ -20,7 +20,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EllipsisIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
-import KeadaanKosong, { type JenisIlustrasiKosong } from '@/Komponen/Katalog/KeadaanKosong';
+import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import { Button } from '@/Komponen/Ui/button';
 import { Checkbox } from '@/Komponen/Ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/Komponen/Ui/dropdown-menu';
@@ -71,7 +71,7 @@ export type PropsTabelData<T> = {
     aksiMassal?: (konteks: KonteksAksiMassal<T>) => ReactNode;
     ekspor?: { alamat: string; label?: string };
     /** `ilustrasi` (D-18): ilustrasi subjek untuk daftar utama yang belum berisi data. */
-    kosong: { judul: string; aksi?: ReactNode; ilustrasi?: JenisIlustrasiKosong };
+    kosong: { judul: string; aksi?: ReactNode; ilustrasi?: boolean };
     aksiAlat?: ReactNode;
     /** Ringkasan di atas tabel dari hasil server terbaru (ikut berubah saat saring berubah). */
     ringkasan?: (hasil: HasilTabel<T> | undefined) => ReactNode;

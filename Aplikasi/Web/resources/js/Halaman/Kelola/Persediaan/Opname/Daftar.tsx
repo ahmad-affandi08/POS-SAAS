@@ -160,7 +160,7 @@ export default function HalamanDaftarStokOpname({
                 saring={saring}
                 alamatDetail={(o) => `${AlamatOpname}/${o.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Stok',
+                    ilustrasi: true,
                     judul: 'Belum ada stok opname.',
                     ...(tombolMulai ? {} : { aksi: <span>Minta pengelola persediaan memulai opname.</span> }),
                 }}

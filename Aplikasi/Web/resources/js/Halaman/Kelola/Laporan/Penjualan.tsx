@@ -298,7 +298,7 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
                     urutBawaan="-TotalDiskon"
                     cari="Cari nama kasir"
                     kosong={{
-                        ilustrasi: 'Laporan',
+                        ilustrasi: true,
                         judul: 'Belum ada penjualan berdiskon pada periode dan saring ini.',
                     }}
                 />
@@ -320,7 +320,7 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
                         urutBawaan="-Skor"
                         cari="Cari nama kasir"
                         kosong={{
-                            ilustrasi: 'Laporan',
+                            ilustrasi: true,
                             judul: 'Belum ada transaksi kasir pada periode dan saring ini.',
                         }}
                     />

@@ -67,7 +67,7 @@ export default function HalamanDaftarSaldoSesi({ SaldoSesi }: PropsDaftarSaldoSe
                 cari="Cari nama paket atau nomor penjualan"
                 saring={saring}
                 labelBaris={(s) => `paket ${s.NamaPaket}`}
-                kosong={{ ilustrasi: 'Pelanggan', judul: 'Belum ada paket sesi yang terjual.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada paket sesi yang terjual.' }}
             />
         </TataLetakAplikasi>
     );

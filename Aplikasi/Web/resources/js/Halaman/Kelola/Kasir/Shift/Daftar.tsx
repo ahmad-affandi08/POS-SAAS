@@ -146,7 +146,7 @@ export default function HalamanDaftarShift({ Shift, OpsiOutlet, OpsiStatus }: Pr
                 saring={saring}
                 alamatDetail={(baris) => `${alamat}/${baris.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Shift',
+                    ilustrasi: true,
                     judul: 'Belum ada shift. Shift muncul di sini setelah kasir membuka shift di aplikasi POS dan perangkatnya tersinkron.',
                 }}
             />

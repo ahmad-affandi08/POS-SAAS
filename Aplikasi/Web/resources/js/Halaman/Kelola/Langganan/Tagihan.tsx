@@ -381,7 +381,7 @@ function RiwayatPembayaran({ pembayaran }: { pembayaran: PembayaranLangganan[] }
                 sumber={{ mode: 'lokal', data: pembayaran }}
                 ambilIdBaris={(baris) => baris.Uuid}
                 urutBawaan="-DiunggahPada"
-                kosong={{ judul: 'Belum ada bukti transfer.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada bukti transfer.' }}
             />
         </section>
     );

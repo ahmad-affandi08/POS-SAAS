@@ -94,6 +94,7 @@ export default function Daftar({ Tenant, PilihanStatus, PilihanPenanda }: PropsD
                 ]}
                 alamatDetail={(tenant) => `/tenant/${tenant.Uuid}`}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada tenant. Tenant muncul di sini setelah calon pelanggan mendaftar dari halaman Daftar Gratis.',
                 }}
             />

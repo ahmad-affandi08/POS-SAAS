@@ -126,7 +126,7 @@ export default function HalamanDaftarTransferStok({ Transfer, OpsiGudang, OpsiSt
                 saring={saring}
                 alamatDetail={(t) => `${AlamatTransfer}/${t.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Stok',
+                    ilustrasi: true,
                     judul: 'Belum ada transfer stok.',
                     ...(tombolBuat ? {} : { aksi: <span>Minta pengelola persediaan membuat transfer.</span> }),
                 }}

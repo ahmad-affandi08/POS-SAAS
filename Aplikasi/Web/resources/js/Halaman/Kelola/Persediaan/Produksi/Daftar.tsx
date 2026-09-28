@@ -133,7 +133,7 @@ export default function HalamanDaftarOrderProduksi({ Order, OpsiGudang, OpsiStat
                 saring={saring}
                 alamatDetail={(o) => `${AlamatProduksi}/${o.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Stok',
+                    ilustrasi: true,
                     judul: 'Belum ada order produksi.',
                     ...(tombolBuat ? {} : { aksi: <span>Minta pengelola persediaan mencatat produksi.</span> }),
                 }}

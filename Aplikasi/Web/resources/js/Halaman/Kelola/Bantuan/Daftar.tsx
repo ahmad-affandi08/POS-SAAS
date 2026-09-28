@@ -106,7 +106,10 @@ export default function DaftarBantuan({ Tiket }: PropsDaftar) {
                     },
                 ]}
                 alamatDetail={(tiket) => `/kelola/bantuan/${tiket.Uuid}`}
-                kosong={{ judul: 'Tidak ada tiket yang masih terbuka. Buat tiket bila Anda butuh bantuan.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Tidak ada tiket yang masih terbuka. Buat tiket bila Anda butuh bantuan.',
+                }}
             />
         </TataLetakAplikasi>
     );

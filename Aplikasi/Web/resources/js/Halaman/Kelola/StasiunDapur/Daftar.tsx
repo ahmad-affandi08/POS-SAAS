@@ -115,7 +115,10 @@ export default function HalamanDaftarStasiunDapur({ Stasiun, Izin }: PropsDaftar
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada stasiun dapur. Toko tanpa dapur atau bar tidak perlu menambahkannya.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada stasiun dapur. Toko tanpa dapur atau bar tidak perlu menambahkannya.',
+                }}
             />
         </TataLetakAplikasi>
     );

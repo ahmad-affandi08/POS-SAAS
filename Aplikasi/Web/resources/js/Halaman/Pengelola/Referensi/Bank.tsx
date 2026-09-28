@@ -117,6 +117,7 @@ export default function HalamanBank({ Referensi, PilihanJenis }: PropsBank) {
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada referensi pembayaran. Tambahkan bank, dompet digital, jaringan EDC, atau penerbit QRIS yang bisa dipilih tenant.',
                 }}
             />

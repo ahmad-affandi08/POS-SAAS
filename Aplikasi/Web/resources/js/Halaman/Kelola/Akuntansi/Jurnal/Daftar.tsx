@@ -108,7 +108,7 @@ export default function HalamanDaftarJurnal({ Jurnal, OpsiJenisSumber }: PropsDa
                 saring={saring}
                 alamatDetail={(jurnal) => `${alamat}/${jurnal.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Akuntansi',
+                    ilustrasi: true,
                     judul: 'Belum ada jurnal. Jurnal terbentuk otomatis saat stok awal diposting.',
                     aksi: (
                         <Button asChild variant="outline">

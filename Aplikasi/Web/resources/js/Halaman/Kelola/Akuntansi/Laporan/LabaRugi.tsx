@@ -119,7 +119,7 @@ export default function HalamanLabaRugi({ Saring, Laporan, OpsiOutlet }: PropsLa
                 sumber={{ mode: 'lokal', data: Laporan.Baris }}
                 ambilIdBaris={(b) => b.Id}
                 cari={false}
-                kosong={{ ilustrasi: 'Akuntansi', judul: 'Belum ada jurnal pendapatan, HPP, atau beban.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada jurnal pendapatan, HPP, atau beban.' }}
             />
         </TataLetakAplikasi>
     );

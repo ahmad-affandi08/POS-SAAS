@@ -500,7 +500,7 @@ function TabelProduk({ produk, jumlahProduk }: { produk: PropsProdukPanduan['Pro
                 kolom={kolomProduk}
                 sumber={{ mode: 'lokal', data: produk }}
                 ambilIdBaris={(baris) => baris.Uuid}
-                kosong={{ judul: 'Belum ada produk. Tambah produk pertama Anda.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada produk. Tambah produk pertama Anda.' }}
             />
         </section>
     );

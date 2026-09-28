@@ -150,7 +150,7 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, BatasOutlet }: Prop
                 ]}
                 alamatDetail={(outlet) => `/kelola/outlet/${outlet.Uuid}`}
                 kosong={{
-                    ilustrasi: 'Outlet',
+                    ilustrasi: true,
                     judul: 'Belum ada outlet yang bisa Anda akses. Minta Owner menugaskan Anda ke outlet.',
                 }}
             />

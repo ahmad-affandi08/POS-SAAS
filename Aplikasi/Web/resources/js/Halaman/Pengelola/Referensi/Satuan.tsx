@@ -104,7 +104,10 @@ export default function HalamanSatuan({ Satuan }: { Satuan: Satuan[] }) {
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada satuan standar. Tambahkan satuan pertama, misal pcs atau kg.' }}
+                kosong={{
+                    ilustrasi: true,
+                    judul: 'Belum ada satuan standar. Tambahkan satuan pertama, misal pcs atau kg.',
+                }}
             />
         </TataLetakPengelola>
     );

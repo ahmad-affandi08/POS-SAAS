@@ -152,6 +152,7 @@ export default function HalamanKompatibilitasPerangkat({ Baris }: { Baris: Baris
                       }
                     : {})}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada hasil uji perangkat. Data muncul setelah kasir menjalankan Uji perangkat.',
                 }}
             />

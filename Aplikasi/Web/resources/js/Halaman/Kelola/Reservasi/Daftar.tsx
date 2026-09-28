@@ -571,7 +571,7 @@ export default function HalamanDaftarReservasi(props: PropsDaftarReservasi) {
                         ) : null}
                     </>
                 )}
-                kosong={{ ilustrasi: 'Pelanggan', judul: 'Belum ada reservasi.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada reservasi.' }}
             />
             {dialog?.jenis === 'catat' ? (
                 <DialogCatat

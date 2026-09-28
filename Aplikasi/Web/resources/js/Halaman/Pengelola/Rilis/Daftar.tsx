@@ -175,7 +175,7 @@ export default function HalamanRilis({ Rilis }: { Rilis: RilisAplikasi[] }) {
                           aksiBaris: (r: RilisAplikasi) => <AksiRilis rilis={r} buka={AturDialog} />,
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada rilis. Catat build pertama sebagai draf.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada rilis. Catat build pertama sebagai draf.' }}
             />
             {dialog?.jenis === 'draf' ? <FormDraf rilis={dialog.rilis} saatSelesai={Tutup} /> : null}
             {dialog?.jenis === 'terbitkan' || dialog?.jenis === 'rollout' ? (

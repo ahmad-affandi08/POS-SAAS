@@ -136,7 +136,7 @@ export default function HalamanDaftarHalamanSitus({
                               ) : null,
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada halaman. Buat halaman pertama untuk situs pemasaran.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada halaman. Buat halaman pertama untuk situs pemasaran.' }}
             />
         </TataLetakPengelola>
     );

@@ -184,6 +184,7 @@ export default function HalamanPaket({ Paket, Fitur, KolomBatas }: PropsPaket) {
                     </>
                 )}
                 kosong={{
+                    ilustrasi: true,
                     judul: 'Belum ada paket. Buat paket pertama; paket baru tersimpan sebagai draf sampai harganya terbit dan paket diaktifkan.',
                 }}
             />

@@ -235,7 +235,7 @@ export default function HalamanDaftarSatuan({ Satuan, Izin }: PropsDaftarSatuan)
                           ),
                       }
                     : {})}
-                kosong={{ judul: 'Belum ada satuan. Tambah satuan, misal pcs atau kg.' }}
+                kosong={{ ilustrasi: true, judul: 'Belum ada satuan. Tambah satuan, misal pcs atau kg.' }}
             />
         </TataLetakAplikasi>
     );
