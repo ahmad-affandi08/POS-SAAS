@@ -108,11 +108,11 @@ void main() {
       expect(tester.takeException(), isNull);
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
-      expect(tester.widget<PanelTugas>(find.byType(PanelTugas)).judul, 'Bayar');
-      expect(
-        tester.widget<PanelTugas>(find.byType(PanelTugas)).tataLetak,
-        ukuran.width >= 1024 ? TataLetakPanel.Samping : TataLetakPanel.Lembar,
-      );
+      // Pembayaran punya halaman sendiri: kepala berjudul + tombol kembali, dan katalog tidak ikut tampil.
+      // Kalau ini kembali jadi panel di atas keranjang, ubin katalog akan ikut ditemukan.
+      expect(find.byTooltip('Kembali ke keranjang'), findsOneWidget);
+      expect(find.byType(PanelTugas), findsNothing);
+      expect(Ubin('Americano Panas'), findsNothing, reason: 'Katalog tidak ikut tampil di halaman Bayar.');
       for (final metode in ['Tunai', 'QRIS', 'EDC BCA', 'Transfer BCA', 'GoPay']) {
         expect(find.widgetWithText(ChoiceChip, metode), findsOneWidget, reason: 'Metode $metode');
       }
@@ -328,13 +328,14 @@ void main() {
     await Tunggu(tester);
     expect(find.text('Keranjang · 4 item'), findsOneWidget, reason: 'Enter di kolom cari dengan satu hasil menambah.');
 
-    // F8 → panel Bayar; Esc → tutup panel.
+    // F8 → halaman Bayar; Esc → kembali ke keranjang.
     await tester.sendKeyEvent(LogicalKeyboardKey.f8);
     await Tunggu(tester);
-    expect(tester.widget<PanelTugas>(find.byType(PanelTugas)).judul, 'Bayar');
+    expect(find.byTooltip('Kembali ke keranjang'), findsOneWidget);
+    expect(Ubin('Americano Panas'), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await Tunggu(tester);
-    expect(find.byType(PanelTugas), findsNothing);
+    expect(Ubin('Americano Panas'), findsOneWidget, reason: 'Esc mengembalikan katalog & keranjang.');
 
     // Esc tanpa panel → hapus item terakhir (bukan batal transaksi, tanpa dialog).
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -355,7 +356,7 @@ void main() {
     expect((outbox.single['Ringkasan']! as Map<String, Object?>)['Kembalian'], '0.00');
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await Tunggu(tester);
-    expect(find.byType(PanelTugas), findsNothing, reason: 'Esc di layar selesai = transaksi baru.');
+    expect(Ubin('Americano Panas'), findsOneWidget, reason: 'Esc di halaman selesai = transaksi baru.');
 
     // F8 lalu F9 di dalam panel Bayar → tunai uang pas tersimpan.
     await Pindai(UuidUji.barcodeAmericano);
@@ -419,7 +420,7 @@ void main() {
     await Lepas(tester, u);
   });
 
-  testWidgets('golden: layar Jual berisi keranjang & panel Bayar tunai (1280dp)', (tester) async {
+  testWidgets('golden: layar Jual berisi keranjang & halaman Bayar tunai (1280dp)', (tester) async {
     await MuatFontMerek();
     final u = await MasukJual(tester);
     await Ketuk(tester, Ubin('Americano Panas'));
@@ -431,7 +432,12 @@ void main() {
     await Tunggu(tester);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
     await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Rp 100.000'));
-    await expectLater(find.byType(LayarJual), matchesGoldenFile('Golden/PanelBayar1280.png'));
+    await expectLater(find.byType(LayarJual), matchesGoldenFile('Golden/HalamanBayar1280.png'));
+
+    // Halaman hasil: langkah terakhir alur bayar, juga halaman sendiri.
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Tunggu(tester);
+    await expectLater(find.byType(LayarJual), matchesGoldenFile('Golden/HalamanSelesai1280.png'));
     await Lepas(tester, u);
   });
 }

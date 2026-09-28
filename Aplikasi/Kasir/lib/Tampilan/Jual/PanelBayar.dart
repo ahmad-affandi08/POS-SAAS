@@ -779,15 +779,14 @@ class TampilanSelesai extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(Icons.check_circle_outline, color: warna.sukses),
-              const SizedBox(width: TokenJarak.jarak8),
-              Expanded(child: Text('Pembayaran berhasil', style: teks.titleMedium)),
-            ],
-          ),
+          // Halaman hasil: tanda berhasil dibuat besar & ditengahkan supaya terbaca sekilas dari jarak berdiri.
+          Icon(Icons.check_circle_outline, color: warna.sukses, size: 56),
+          const SizedBox(height: TokenJarak.jarak8),
+          Text('Pembayaran berhasil', style: teks.headlineSmall, textAlign: TextAlign.center),
           const SizedBox(height: TokenJarak.jarak4),
-          TeksKode(hasil.nomor, gaya: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
+          Center(
+            child: TeksKode(hasil.nomor, gaya: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
+          ),
           const SizedBox(height: TokenJarak.jarak24),
           Text('Kembalian', style: teks.titleMedium),
           FittedBox(

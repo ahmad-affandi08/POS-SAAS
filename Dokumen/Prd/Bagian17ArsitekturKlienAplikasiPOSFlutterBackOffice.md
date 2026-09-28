@@ -202,7 +202,7 @@ Aplikasi POS **bukan kumpulan layar**, melainkan **ruang kerja** tempat kasir be
 |---|---|---|
 | **Bilah atas** | **Logo PAYOU di tengah**; outlet · perangkat di kiri; nama kasir, jam, tombol **Kunci** di kanan. Latar `BrandGelap`, isi putih (D-29) | Ketuk nama kasir → ganti kasir (PIN) tanpa menutup shift. Di HP (< 600dp) diringkas: ikon merek, kasir & kunci sebagai tombol ikon, tanpa jam |
 | **Rel navigasi** (kiri; di HP menjadi bilah bawah) | Jual (beranda) · Order tersimpan · Meja* · Riwayat transaksi · Kas · Pelanggan* · Shift · Pengaturan | Ikon + label, maksimal 8 item, item hanya muncul bila modul/izin aktif (*). Bisa diciutkan menjadi ikon saja. Latar `BrandGelap` sama dengan bilah atas, ikon & label putih, penanda aktif putih 18% (D-29) |
-| **Area kerja** | Layar aktif (Jual: katalog + keranjang, §17.2.3) | Tugas rutin (kas masuk/keluar, cari pelanggan, catatan item, diskon) dibuka sebagai **panel samping atau lembar** di atas area kerja, bukan pindah halaman, sehingga keranjang tidak hilang |
+| **Area kerja** | Layar aktif (Jual: katalog + keranjang, §17.2.3) | Tugas rutin (kas masuk/keluar, cari pelanggan, catatan item, diskon) dibuka sebagai **panel samping atau lembar** di atas area kerja, bukan pindah halaman, sehingga keranjang tidak hilang. **Kecuali langkah bayar (D-31):** Bayar, Transaksi selesai, dan Pre-order adalah halaman sendiri yang memakai seluruh area kerja |
 | **Bilah status** (bawah) | Koneksi, transaksi tertunda sinkron, printer, shift (jam buka) | Selalu terlihat; ketuk untuk detail (§17.6.6) |
 
 **Prinsip elegan & mudah:**

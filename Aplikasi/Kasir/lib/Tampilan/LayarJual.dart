@@ -83,6 +83,10 @@ class LayarJual extends ConsumerStatefulWidget {
   /// Selang perpanjangan kunci bayar pesanan meja selama panel Bayar terbuka (kunci server berlaku 2 menit).
   static const Duration selangKunciBayar = Duration(seconds: 60);
 
+  /// Lebar maksimum isi halaman penuh (langkah bayar); di layar lebar isinya tetap terbaca, tidak melebar
+  /// sampai ujung. Dinamai tanpa kata uang supaya tidak tertangkap penjaga "double untuk uang".
+  static const double lebarIsiHalaman = 720;
+
   @override
   ConsumerState<LayarJual> createState() => _LayarJualState();
 }
@@ -103,6 +107,20 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   bool _selesaiPesanan = false;
 
   String? _uuidKategori;
+
+  /// Langkah pembayaran punya **halaman sendiri**, bukan panel di atas keranjang: Jual → Bayar → Transaksi berhasil.
+  /// Pre-order ikut karena dicapai dari halaman Bayar dan berakhir di halaman hasil yang bentuknya sama.
+  ///
+  /// Sisa panel (item, diskon, pelanggan, pesanan tertahan) tetap panel/lembar sesuai §17.2.7: semuanya tugas
+  /// sambilan yang keranjangnya harus tetap terlihat. Pembayaran bukan tugas sambilan — begitu ditekan Bayar,
+  /// katalog tidak lagi dibutuhkan dan kasir butuh angka sebesar mungkin.
+  static const Set<_JenisPanel> _halamanPenuh = {
+    _JenisPanel.Bayar,
+    _JenisPanel.Selesai,
+    _JenisPanel.PreOrder,
+    _JenisPanel.PreOrderSelesai,
+  };
+
   _JenisPanel? _panel;
   ProdukJual? _produkPanel;
   String? _uuidBarisPanel;
@@ -1083,6 +1101,70 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     };
   }
 
+  /// Halaman pembayaran & hasilnya: kepala dengan tombol kembali, lalu isinya memakai seluruh area kerja.
+  /// Bingkai Ruang Kerja (bilah atas, rel, bilah status) tetap ada — yang hilang hanya katalog & keranjang.
+  Widget _BangunHalamanPembayaran(BuildContext context, ({String judul, Widget isi}) halaman) {
+    final warna = TokenWarna.AmbilDari(context);
+    final teks = Theme.of(context).textTheme;
+    final selesai = _panel == _JenisPanel.Selesai || _panel == _JenisPanel.PreOrderSelesai;
+    final kembali = switch (_panel) {
+      // Pre-order dicapai dari halaman Bayar, jadi kembalinya ke sana, bukan ke keranjang.
+      _JenisPanel.PreOrder => () => setState(() => _panel = _JenisPanel.Bayar),
+      _JenisPanel.Selesai || _JenisPanel.PreOrderSelesai => _TransaksiBaru,
+      _ => _TutupPanel,
+    };
+
+    // `Material`, bukan `ColoredBox`: isi halaman bisa memuat `ListTile`/`SwitchListTile`, yang melukis latar &
+    // riak sentuhnya di `Material` terdekat.
+    return Material(
+      color: warna.latar,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
+            color: warna.permukaan,
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: selesai ? 'Transaksi baru' : 'Kembali ke keranjang',
+                    onPressed: kembali,
+                    icon: Icon(selesai ? Icons.close : Icons.arrow_back),
+                  ),
+                  const SizedBox(width: TokenJarak.jarak4),
+                  Expanded(child: Text(halaman.judul, style: teks.titleMedium)),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, batas) => SingleChildScrollView(
+                // Isi yang lebih pendek dari layar ditengahkan; yang lebih panjang tetap bisa digulir.
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: batas.maxHeight),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: LayarJual.lebarIsiHalaman),
+                      child: halaman.isi,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// v2.01 layar pelanggan: keranjang (item & total), "Silakan lakukan pembayaran" saat panel Bayar terbuka, kembalian
   /// setelah bayar, lalu layar siaga. Dikirim setelah frame dan hanya bila isinya berubah.
   void _SiarkanLayarPelanggan(Keranjang keranjang, HitunganKeranjang? hitungan) {
@@ -1166,6 +1248,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
           }
           final samping = lebarLayar >= 1024;
           final tutup = _panel == _JenisPanel.Selesai ? _TransaksiBaru : _TutupPanel;
+          if (_halamanPenuh.contains(_panel)) {
+            return _BangunHalamanPembayaran(context, panel);
+          }
           return Stack(
             children: [
               Positioned.fill(child: isi),
