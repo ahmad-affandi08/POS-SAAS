@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -609,14 +610,14 @@ export default function HalamanFormulirPromo({
                     </div>
                 </Card>
 
-                <div className="flex flex-wrap gap-2">
+                <BilahAksiForm>
                     <Tombol type="submit" memproses={memproses}>
                         Simpan promo
                     </Tombol>
                     <Button asChild variant="outline">
                         <Link href={alamat}>Batal</Link>
                     </Button>
-                </div>
+                </BilahAksiForm>
             </form>
         </TataLetakAplikasi>
     );

@@ -2,6 +2,7 @@ import { Link, router, useForm } from '@inertiajs/react';
 import { ExternalLink } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -256,11 +257,11 @@ export default function HalamanUbahArtikelSitus({
                     />
                 </Card>
                 {Izin.Kelola ? (
-                    <div className="flex justify-end">
+                    <BilahAksiForm>
                         <Tombol type="submit" memproses={formulir.processing}>
                             {terbit ? 'Simpan & perbarui situs' : 'Simpan draf'}
                         </Tombol>
-                    </div>
+                    </BilahAksiForm>
                 ) : null}
             </form>
             <Card className="flex flex-col gap-3 px-6 py-6 rounded-panel shadow-none">

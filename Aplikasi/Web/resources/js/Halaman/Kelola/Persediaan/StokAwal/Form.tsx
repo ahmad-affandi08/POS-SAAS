@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -453,14 +454,14 @@ export default function HalamanFormStokAwal({
                     </div>
                 </Panel>
 
-                <div className="flex flex-wrap gap-2">
+                <BilahAksiForm>
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf
                     </Tombol>
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={kembali}>Batal</Link>
                     </Button>
-                </div>
+                </BilahAksiForm>
                 <p className="text-keterangan text-teks-sekunder">
                     Draf belum mengubah stok. Stok dan jurnal tercatat setelah draf diposting dari halaman detail.
                 </p>

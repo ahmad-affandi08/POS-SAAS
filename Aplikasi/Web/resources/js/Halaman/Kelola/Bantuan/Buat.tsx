@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import type { BatasLampiran } from '@/Komponen/Dukungan/StatusTiket';
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
@@ -86,14 +87,14 @@ export default function BuatTiketBantuan({ Kategori, Prioritas, Lampiran }: Prop
                         saatBerubah={(berkas) => formulir.setData('Lampiran', berkas)}
                         galat={galatLampiran}
                     />
-                    <div className="flex flex-wrap items-center gap-3">
+                    <BilahAksiForm>
                         <Tombol type="submit" memproses={formulir.processing}>
                             Kirim tiket
                         </Tombol>
                         <Button asChild variant="outline">
                             <Link href="/kelola/bantuan">Batal</Link>
                         </Button>
-                    </div>
+                    </BilahAksiForm>
                 </form>
             </Card>
         </TataLetakAplikasi>

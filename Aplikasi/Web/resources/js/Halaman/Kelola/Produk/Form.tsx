@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useId, useRef, useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -817,7 +818,7 @@ export default function HalamanFormProduk({
                         Satuan dasar tidak ditemukan. Pilih ulang satuan dasar.
                     </p>
                 ) : null}
-                <div className="flex flex-wrap gap-2">
+                <BilahAksiForm>
                     {bolehUbah ? (
                         <Tombol type="submit" memproses={formulir.processing} disabled={batasPenuh}>
                             {Mode === 'Buat' ? 'Simpan produk' : 'Simpan perubahan'}
@@ -826,7 +827,7 @@ export default function HalamanFormProduk({
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Mode === 'Buat' ? '/kelola/produk' : `/kelola/produk/${data.Uuid}`}>Batal</Link>
                     </Button>
-                </div>
+                </BilahAksiForm>
             </form>
         </TataLetakAplikasi>
     );

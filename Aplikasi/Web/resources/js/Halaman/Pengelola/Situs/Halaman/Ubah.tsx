@@ -2,6 +2,7 @@ import { Link, router, useForm } from '@inertiajs/react';
 import { ExternalLink, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -296,7 +297,7 @@ export default function HalamanUbahHalamanSitus({ Halaman: halaman, LabelBlok, S
                 </section>
                 {Izin.Kelola ? (
                     <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-2 border-t border-garis bg-latar py-3 tepi-bawah-aman">
-                        <div className="flex gap-2">
+                        <BilahAksiForm>
                             <Tombol type="submit" memproses={formulir.processing} disabled={!berubah}>
                                 Simpan draf
                             </Tombol>
@@ -305,7 +306,7 @@ export default function HalamanUbahHalamanSitus({ Halaman: halaman, LabelBlok, S
                                     Batalkan perubahan
                                 </Tombol>
                             ) : null}
-                        </div>
+                        </BilahAksiForm>
                         <div className="flex gap-2">
                             {halaman.Terbit && halaman.Slug !== 'beranda' ? (
                                 <Tombol

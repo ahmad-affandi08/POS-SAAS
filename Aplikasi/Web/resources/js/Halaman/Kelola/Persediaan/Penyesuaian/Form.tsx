@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -402,14 +403,14 @@ export default function HalamanFormPenyesuaianStok({
                     </ul>
                 </Panel>
 
-                <div className="sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0">
+                <BilahAksiForm>
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf penyesuaian
                     </Tombol>
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Penyesuaian === null ? alamat : `${alamat}/${Penyesuaian.Uuid}`}>Batal</Link>
                     </Button>
-                </div>
+                </BilahAksiForm>
             </form>
         </TataLetakAplikasi>
     );

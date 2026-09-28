@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KartuFormulir from '@/Komponen/Formulir/KartuFormulir';
@@ -135,14 +136,14 @@ export default function HalamanFormulirPaketSesi({ Paket, PilihanJasa, FiturAkti
                         nilai={isian.Aktif}
                         saatBerubah={(nilai) => Ubah({ Aktif: nilai })}
                     />
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <BilahAksiForm>
                         <Tombol type="button" varian="sekunder" onClick={() => router.visit(alamat)}>
                             Batal
                         </Tombol>
                         <Tombol type="submit" memproses={memproses} disabled={!FiturAktif}>
                             Simpan paket sesi
                         </Tombol>
-                    </div>
+                    </BilahAksiForm>
                 </form>
             </KartuFormulir>
         </TataLetakAplikasi>

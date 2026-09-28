@@ -629,6 +629,18 @@ didaftarkan gagal di test.
     `AksiHalamanTes` kini memindai `Halaman/Kelola` **dan** `Halaman/Pengelola`, plus aturan baru: halaman daftar
     konsol tidak boleh menitipkan aksi utama ke prop `aksi` tata letak.
 
+11. **Tombol utama menempel di bawah hanya di sebagian formulir (UI-08, v2.57).** §17.4.4 sudah menyatakan tombol
+    utama menempel di bawah pada layar sempit, tetapi polanya dirakit sendiri per halaman dengan **enam kombinasi
+    kelas berbeda**: dari 17 formulir satu halaman, hanya **3** yang benar-benar menempel, dan tiga halaman memakai
+    `justify-end` walau D-27 menetapkan tombol simpan di dalam `<form>` rata kiri. Jadi tindakan yang sama terasa
+    berbeda menurut modul — di Penyesuaian stok "Simpan" selalu terlihat, di Produk (833 baris) pengguna harus
+    menggulir sampai habis. Satu halaman bahkan menaruh "Batal" sebelum "Simpan".
+
+    Semua 17 formulir kini memakai `Komponen/Formulir/BilahAksiForm`: menempel di bawah di bawah 640px dengan
+    `tepi-bawah-aman`, kembali jadi baris biasa dari 640px, rata kiri, aksi utama dulu. Dijaga
+    `Komponen/Formulir/BilahAksiFormTes.tsx` — pembungkus terdekat sebelum `type="submit"` di berkas
+    `Form/Buat/Ubah/Formulir` wajib `BilahAksiForm`, bukan `<div>` rakitan sendiri.
+
 ### 17.5 Tipografi (Keputusan D-08)
 
 **Font resmi {{APP}}** untuk semua klien (Aplikasi POS, Aplikasi Owner, Back-office, Web Publik, Platform Pengelola):

@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -412,14 +413,14 @@ export default function HalamanFormOrderProduksi({
                     </ul>
                 </Panel>
 
-                <div className="flex justify-end gap-2">
-                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
-                        <Link href={Order === null ? AlamatProduksi : `${AlamatProduksi}/${Order.Uuid}`}>Batal</Link>
-                    </Button>
+                <BilahAksiForm>
                     <Tombol type="submit" memproses={memproses}>
                         Simpan draf
                     </Tombol>
-                </div>
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                        <Link href={Order === null ? AlamatProduksi : `${AlamatProduksi}/${Order.Uuid}`}>Batal</Link>
+                    </Button>
+                </BilahAksiForm>
             </form>
         </TataLetakAplikasi>
     );

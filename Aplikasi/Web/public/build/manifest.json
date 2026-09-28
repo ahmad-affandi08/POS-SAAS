@@ -203,6 +203,13 @@
       "_MasukanUang-BjmFlbJw.js"
     ]
   },
+  "_BilahAksiForm-CmJKzjxa.js": {
+    "file": "assets/BilahAksiForm-CmJKzjxa.js",
+    "name": "BilahAksiForm",
+    "imports": [
+      "_jsx-runtime-CcUZ1B9Z.js"
+    ]
+  },
   "_DaftarAlasanTinjauan-DH-YwBXV.js": {
     "file": "assets/DaftarAlasanTinjauan-DH-YwBXV.js",
     "name": "DaftarAlasanTinjauan",
@@ -1677,7 +1684,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-CXJgWz9B.js",
+    "file": "assets/Aplikasi-CKnZGXMb.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -2109,7 +2116,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Akuntansi/KasBank/Buat.tsx": {
-    "file": "assets/Buat-BPgsn2gr.js",
+    "file": "assets/Buat-DFVWcjXz.js",
     "name": "Buat",
     "src": "resources/js/Halaman/Kelola/Akuntansi/KasBank/Buat.tsx",
     "isDynamicEntry": true,
@@ -2120,6 +2127,7 @@
       "_Tombol-C5pn5rEr.js",
       "_BidangPilihan-PQsVJeIz.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangBerkas-x3IXDlWw.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
@@ -2279,7 +2287,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Bantuan/Buat.tsx": {
-    "file": "assets/Buat-QXrkq3e6.js",
+    "file": "assets/Buat-CaCHZoYW.js",
     "name": "Buat",
     "src": "resources/js/Halaman/Kelola/Bantuan/Buat.tsx",
     "isDynamicEntry": true,
@@ -2291,6 +2299,7 @@
       "_Tombol-C5pn5rEr.js",
       "_card-CnpeVvC_.js",
       "_BidangPilihan-PQsVJeIz.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangBerkas-x3IXDlWw.js",
       "_BidangTeksPanjang-c2CB0dBE.js"
     ]
@@ -3025,7 +3034,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/PaketSesi/Formulir.tsx": {
-    "file": "assets/Formulir-ChmDeisZ.js",
+    "file": "assets/Formulir-B0SH43Mz.js",
     "name": "Formulir",
     "src": "resources/js/Halaman/Kelola/PaketSesi/Formulir.tsx",
     "isDynamicEntry": true,
@@ -3036,6 +3045,7 @@
       "_BidangPilihan-PQsVJeIz.js",
       "_KotakCentang-DUOgS8ub.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_KartuFormulir-y-BmQJk3.js",
       "_GrupCentang-DFC2V0Mh.js",
       "_BidangJumlah-F3J9GC9u.js",
@@ -3415,7 +3425,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pembelian/Faktur/Form.tsx": {
-    "file": "assets/Form-BaLNR1ji.js",
+    "file": "assets/Form-BvoiknQq.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Pembelian/Faktur/Form.tsx",
     "isDynamicEntry": true,
@@ -3432,6 +3442,7 @@
       "_Format-D1Z2MPC0.js",
       "_KotakCentang-DUOgS8ub.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangBerkas-x3IXDlWw.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
@@ -3523,7 +3534,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pembelian/Pembayaran/Form.tsx": {
-    "file": "assets/Form-D4NOp_HF.js",
+    "file": "assets/Form-Cmik4IlU.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Pembelian/Pembayaran/Form.tsx",
     "isDynamicEntry": true,
@@ -3538,6 +3549,7 @@
       "_FormatWaktu-bKvj24HB.js",
       "_Format-D1Z2MPC0.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangBerkas-x3IXDlWw.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
@@ -3579,7 +3591,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pembelian/Penerimaan/Form.tsx": {
-    "file": "assets/Form-C6w6RzvS.js",
+    "file": "assets/Form-BzaLSIc9.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Pembelian/Penerimaan/Form.tsx",
     "isDynamicEntry": true,
@@ -3593,6 +3605,7 @@
       "_BidangPilihan-PQsVJeIz.js",
       "_Format-D1Z2MPC0.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangBerkas-x3IXDlWw.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
@@ -3673,7 +3686,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pembelian/Pesanan/Form.tsx": {
-    "file": "assets/Form-JLtpnhrO.js",
+    "file": "assets/Form-4ZiWucRV.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Pembelian/Pesanan/Form.tsx",
     "isDynamicEntry": true,
@@ -3687,6 +3700,7 @@
       "_BidangPilihan-PQsVJeIz.js",
       "_Format-D1Z2MPC0.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
       "_HitungDesimal-BR2WLmO-.js",
@@ -3729,7 +3743,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pembelian/Retur/Form.tsx": {
-    "file": "assets/Form-D8xGmelv.js",
+    "file": "assets/Form-B2qU_OMP.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Pembelian/Retur/Form.tsx",
     "isDynamicEntry": true,
@@ -3740,6 +3754,7 @@
       "_button-CyzfGIy6.js",
       "_Tombol-C5pn5rEr.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_HitungDesimal-BR2WLmO-.js",
       "_Panel-ugdoihLg.js",
@@ -4110,7 +4125,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/Penyesuaian/Form.tsx": {
-    "file": "assets/Form-B8x87kkB.js",
+    "file": "assets/Form-rjLjCwJa.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Persediaan/Penyesuaian/Form.tsx",
     "isDynamicEntry": true,
@@ -4125,6 +4140,7 @@
       "_Tombol-C5pn5rEr.js",
       "_BidangPilihan-PQsVJeIz.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_HitungDesimal-BR2WLmO-.js",
       "_Panel-ugdoihLg.js",
@@ -4177,7 +4193,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/Produksi/Form.tsx": {
-    "file": "assets/Form-CKj7VPYG.js",
+    "file": "assets/Form-CBOJ-ABC.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Persediaan/Produksi/Form.tsx",
     "isDynamicEntry": true,
@@ -4192,6 +4208,7 @@
       "_Tombol-C5pn5rEr.js",
       "_BidangPilihan-PQsVJeIz.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
       "_HitungDesimal-BR2WLmO-.js",
@@ -4271,7 +4288,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/StokAwal/Form.tsx": {
-    "file": "assets/Form-D9LzFZQd.js",
+    "file": "assets/Form--xJ7WVum.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Persediaan/StokAwal/Form.tsx",
     "isDynamicEntry": true,
@@ -4287,6 +4304,7 @@
       "_BidangPilihan-PQsVJeIz.js",
       "_table-BGcyiw2Y.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_HitungDesimal-BR2WLmO-.js",
       "_Panel-ugdoihLg.js",
@@ -4394,7 +4412,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/Transfer/Form.tsx": {
-    "file": "assets/Form-DVMp1fyf.js",
+    "file": "assets/Form-Bq1NktHx.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Persediaan/Transfer/Form.tsx",
     "isDynamicEntry": true,
@@ -4408,6 +4426,7 @@
       "_Tombol-C5pn5rEr.js",
       "_BidangPilihan-PQsVJeIz.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_HitungDesimal-BR2WLmO-.js",
       "_Panel-ugdoihLg.js",
@@ -4492,7 +4511,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Piutang/Pelunasan/Form.tsx": {
-    "file": "assets/Form-DspQnznJ.js",
+    "file": "assets/Form-F0vbrkBQ.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Piutang/Pelunasan/Form.tsx",
     "isDynamicEntry": true,
@@ -4507,6 +4526,7 @@
       "_FormatWaktu-bKvj24HB.js",
       "_Format-D1Z2MPC0.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_BidangUang-B3Fqy2TY.js",
       "_HitungDesimal-BR2WLmO-.js",
@@ -4601,7 +4621,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Produk/Form.tsx": {
-    "file": "assets/Form-5LwgphQ1.js",
+    "file": "assets/Form-PyGOCVEq.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Produk/Form.tsx",
     "isDynamicEntry": true,
@@ -4624,6 +4644,7 @@
       "_KotakCentang-DUOgS8ub.js",
       "_PesanHanyaLihat-LDEHYnS2.js",
       "_DaftarGalatServer-DF29oynt.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangUang-B3Fqy2TY.js",
       "_GrupRadio-BK0pvfxs.js",
       "_BantuanKatalog-SQKRuDUb.js",
@@ -4813,7 +4834,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Promo/Formulir.tsx": {
-    "file": "assets/Formulir-CtKps2Ns.js",
+    "file": "assets/Formulir-BHTxaTyq.js",
     "name": "Formulir",
     "src": "resources/js/Halaman/Kelola/Promo/Formulir.tsx",
     "isDynamicEntry": true,
@@ -4828,6 +4849,7 @@
       "_card-CnpeVvC_.js",
       "_BidangPilihan-PQsVJeIz.js",
       "_KotakCentang-DUOgS8ub.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangUang-B3Fqy2TY.js",
       "_GrupCentang-DFC2V0Mh.js",
       "_BidangJumlah-F3J9GC9u.js",
@@ -5512,7 +5534,7 @@
     ]
   },
   "resources/js/Halaman/Pengelola/Situs/Artikel/Ubah.tsx": {
-    "file": "assets/Ubah-7pnELJyr.js",
+    "file": "assets/Ubah-BWEgyqAz.js",
     "name": "Ubah",
     "src": "resources/js/Halaman/Pengelola/Situs/Artikel/Ubah.tsx",
     "isDynamicEntry": true,
@@ -5528,6 +5550,7 @@
       "_FormatWaktu-bKvj24HB.js",
       "_DialogKonfirmasi-ByJUdNhB.js",
       "_LabelStatus-DsSnRgI7.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_TeksKaya-CJ_HrI9k.js",
       "_TabSitus-DDs54DJ2.js"
@@ -5575,7 +5598,7 @@
     ]
   },
   "resources/js/Halaman/Pengelola/Situs/Halaman/Ubah.tsx": {
-    "file": "assets/Ubah-BkUsqP-V.js",
+    "file": "assets/Ubah-Bz5SjZEI.js",
     "name": "Ubah",
     "src": "resources/js/Halaman/Pengelola/Situs/Halaman/Ubah.tsx",
     "isDynamicEntry": true,
@@ -5597,6 +5620,7 @@
       "_KotakCentang-DUOgS8ub.js",
       "_DialogKonfirmasi-ByJUdNhB.js",
       "_LabelStatus-DsSnRgI7.js",
+      "_BilahAksiForm-CmJKzjxa.js",
       "_BidangTeksPanjang-c2CB0dBE.js",
       "_TabSitus-DDs54DJ2.js",
       "resources/js/Halaman/Pengelola/Situs/Halaman/Daftar.tsx",
@@ -5973,7 +5997,7 @@
     ]
   },
   "resources/js/Pengelola.tsx": {
-    "file": "assets/Pengelola-DTBxP8-i.js",
+    "file": "assets/Pengelola-C2TFeQP0.js",
     "name": "Pengelola",
     "src": "resources/js/Pengelola.tsx",
     "isEntry": true,

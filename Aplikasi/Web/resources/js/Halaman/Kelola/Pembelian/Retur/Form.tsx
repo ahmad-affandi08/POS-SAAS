@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -192,14 +193,14 @@ export default function HalamanFormRetur({ Penerimaan: p, Baris, HariIni }: Prop
                     {galat.Baris ? <p className="text-keterangan font-semibold text-bahaya">{galat.Baris}</p> : null}
                 </Panel>
 
-                <div className="flex flex-wrap gap-2">
+                <BilahAksiForm>
                     <Tombol type="submit" memproses={memproses} varian="bahaya">
                         Simpan retur
                     </Tombol>
                     <Button asChild variant="outline">
                         <Link href={`${AlamatPembelian}/penerimaan/${p.Uuid}`}>Batal</Link>
                     </Button>
-                </div>
+                </BilahAksiForm>
             </form>
         </TataLetakAplikasi>
     );

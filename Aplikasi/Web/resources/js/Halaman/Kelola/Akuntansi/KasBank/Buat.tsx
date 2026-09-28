@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -219,14 +220,14 @@ export default function HalamanBuatTransaksiKasBank({
                         saatBerubah={(nilai) => Ubah({ Ulangi: nilai })}
                         galat={galat.Ulangi}
                     />
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <BilahAksiForm>
                         <Tombol type="button" varian="sekunder" onClick={() => router.visit(alamat)}>
                             Batal
                         </Tombol>
                         <Tombol type="submit" memproses={memproses}>
                             Simpan & jurnal
                         </Tombol>
-                    </div>
+                    </BilahAksiForm>
                 </form>
             </KartuFormulir>
         </TataLetakAplikasi>
