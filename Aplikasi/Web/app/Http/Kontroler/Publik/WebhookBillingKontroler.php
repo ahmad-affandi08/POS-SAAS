@@ -29,10 +29,21 @@ final class WebhookBillingKontroler extends Kontroler
 {
     public function Terima(Request $permintaan, GerbangBillingPlatform $gerbang, TerimaNotifikasiBillingLangganan $terima): JsonResponse
     {
+        $nomor = (string) $permintaan->input('order_id');
+
+        // Uji coba notifikasi dari dasbor Midtrans (tombol "Test notification URL")
+        if ($nomor === '' || str_starts_with(strtolower($nomor), 'test') || str_starts_with(strtolower($nomor), 'sample')) {
+            return response()->json(['Diterima' => true, 'Pesan' => 'Endpoint webhook billing PAYOU siap menerima notifikasi.']);
+        }
+
+        if (! $gerbang->CekTandaTanganSah($permintaan)) {
+            return GalatApi::Buat('TandaTanganTidakSah', 'Tanda tangan notifikasi tidak sah.', 401);
+        }
+
         $notifikasi = $gerbang->UraiNotifikasi($permintaan);
 
         if ($notifikasi === null) {
-            return GalatApi::Buat('TandaTanganTidakSah', 'Tanda tangan notifikasi tidak sah.', 401);
+            return response()->json(['Diterima' => false]);
         }
 
         return response()->json(['Diterima' => $terima->Jalankan($notifikasi)]);

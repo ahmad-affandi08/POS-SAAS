@@ -108,11 +108,7 @@ final class GerbangBillingPlatform
         return $teks === [] ? 'transaksi tidak dibuat.' : implode('; ', $teks);
     }
 
-    /**
-     * Notifikasi HTTP Midtrans: `signature_key = SHA512(order_id + status_code + gross_amount + ServerKey)`.
-     * Tanda tangan tidak sah, nomor pesanan bukan milik PAYOU, atau gerbang belum aktif = null.
-     */
-    public function UraiNotifikasi(Request $permintaan): ?NotifikasiBilling
+    public function CekTandaTanganSah(Request $permintaan): bool
     {
         $kunci = $this->KunciServer();
         $nomor = (string) $permintaan->input('order_id');
@@ -120,13 +116,25 @@ final class GerbangBillingPlatform
         $jumlah = (string) $permintaan->input('gross_amount');
         $tanda = (string) $permintaan->input('signature_key');
 
-        if ($kunci === '' || $nomor === '') {
+        if ($kunci === '' || $nomor === '' || $tanda === '') {
+            return false;
+        }
+
+        return hash_equals(hash('sha512', $nomor.$kodeStatus.$jumlah.$kunci), $tanda);
+    }
+
+    /**
+     * Notifikasi HTTP Midtrans: `signature_key = SHA512(order_id + status_code + gross_amount + ServerKey)`.
+     * Tanda tangan tidak sah, nomor pesanan bukan milik PAYOU, atau gerbang belum aktif = null.
+     */
+    public function UraiNotifikasi(Request $permintaan): ?NotifikasiBilling
+    {
+        if (! $this->CekTandaTanganSah($permintaan)) {
             return null;
         }
 
-        if (! hash_equals(hash('sha512', $nomor.$kodeStatus.$jumlah.$kunci), $tanda)) {
-            return null;
-        }
+        $nomor = (string) $permintaan->input('order_id');
+        $jumlah = (string) $permintaan->input('gross_amount');
 
         $bagian = NomorPesananBilling::Urai($nomor);
 
