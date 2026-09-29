@@ -8,6 +8,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Integrasi\Billing\GerbangBillingPlatform;
 use App\Domain\Pajak\Kueri\TarifPajakBerlaku;
 use App\Domain\Tenant\Enum\JenisTagihanLangganan;
 use App\Domain\Tenant\Enum\SiklusTagihan;
@@ -30,7 +31,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Owner membuat tagihan langganan untuk upgrade dari Trial/Gratis, aktivasi ulang, atau perpanjangan (P-08, F-19
- * Fase 0: tagihan manual). Dalam satu transaksi dengan kunci `Langganan` tenant:
+ * Fase 0: tagihan manual, Fase 1: gerbang billing). Dalam satu transaksi dengan kunci `Langganan` tenant:
  * - hanya satu tagihan terbuka per tenant (klik ganda / dua tab tidak membuat tagihan ganda);
  * - harga dari `HargaPaketBerlaku` (grandfathering BR-P04.1), PPN dari `TarifPajak` Ppn terbit (tanpa hard-code);
  * - kupon dicatat di `KuponLanggananPemakaian` dengan kunci baris kupon agar kuota tidak terlampaui (BR-P04.7);
@@ -44,6 +45,7 @@ final class BuatTagihanLangganan
         private readonly HargaPaketBerlaku $hargaBerlaku,
         private readonly TarifPajakBerlaku $tarifBerlaku,
         private readonly RekeningTujuanPlatform $rekening,
+        private readonly GerbangBillingPlatform $gerbang,
         private readonly KalkulatorTagihanLangganan $kalkulator,
         private readonly PenomorTagihanLangganan $penomor,
         private readonly TagihanLanggananTenant $tagihanTenant,
@@ -87,7 +89,10 @@ final class BuatTagihanLangganan
                 throw new PelanggaranAturanBisnis('PaketTanpaBiaya', "Paket {$paket->Nama} tidak memerlukan tagihan.", 'KodePaket');
             }
 
-            if ($this->rekening->Ambil() === []) {
+            $adaRekening = $this->rekening->Ambil() !== [];
+            $adaGerbang = $this->gerbang->CekAktif();
+
+            if (! $adaRekening && ! $adaGerbang) {
                 throw new PelanggaranAturanBisnis('RekeningBelumDiatur', 'Pembayaran transfer belum dibuka karena rekening tujuan belum diatur. Hubungi tim kami.');
             }
 

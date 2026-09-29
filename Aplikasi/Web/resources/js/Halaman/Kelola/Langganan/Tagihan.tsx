@@ -105,7 +105,9 @@ export default function HalamanTagihanLangganan({
                     urlSnapJs={Gerbang.UrlSnapJs}
                 />
             ) : null}
-            {terbuka ? <DaftarRekening rekening={RekeningTujuan} total={Tagihan.Total} /> : null}
+            {terbuka && (RekeningTujuan.length > 0 || !BolehBayarOnline) ? (
+                <DaftarRekening rekening={RekeningTujuan} total={Tagihan.Total} />
+            ) : null}
             {BolehUnggah ? (
                 <div>
                     <DialogBukti tagihan={Tagihan} rekening={RekeningTujuan} ukuranMaksimalKb={UkuranBuktiMaksimalKb} />

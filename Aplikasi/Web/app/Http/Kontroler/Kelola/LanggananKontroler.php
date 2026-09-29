@@ -84,11 +84,13 @@ final class LanggananKontroler extends Kontroler
         $adaPembayaranMenunggu = $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Status === StatusPembayaranLangganan::Menunggu);
         $terbuka = $data->Status->CekTerbuka();
 
+        $daftarRekening = $rekening->Ambil();
+
         return Inertia::render('Kelola/Langganan/Tagihan', [
             'Tagihan' => TagihanLanggananTenant::PetakanTagihan($data),
             'Pembayaran' => array_values($pembayaran->map(fn (PembayaranLangganan $baris): array => TagihanLanggananTenant::PetakanPembayaran($baris))->all()),
-            'RekeningTujuan' => $rekening->Ambil(),
-            'BolehUnggah' => $terbuka && ! $adaBuktiManual,
+            'RekeningTujuan' => $daftarRekening,
+            'BolehUnggah' => $terbuka && ! $adaBuktiManual && count($daftarRekening) > 0,
             'BolehBayarOnline' => $terbuka && ! $adaBuktiManual && $gerbang->CekAktif(),
             'BolehBatalkan' => $terbuka && ! $adaPembayaranMenunggu,
             'Gerbang' => $gerbang->CekAktif() ? ['KunciKlien' => $gerbang->KunciKlien(), 'UrlSnapJs' => $gerbang->UrlSnapJs()] : null,
