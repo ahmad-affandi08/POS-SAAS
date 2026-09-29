@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 27 September 2026 (PRD v2.32). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 29 September 2026 (PRD v2.81). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -37,8 +37,8 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 2. ~~F-16d bagian 2 paket sesi~~ — **SELESAI**.
 3. ~~Mode jasa (booking, staf)~~, ~~laundry~~ — **SELESAI**; **wholesale** (SO/DO/invoice) MENUNGGU KEPUTUSAN (§25 no. 27).
 4. **Karyawan:** geofence absensi.
-5. ~~Laporan anti-fraud~~ — **SELESAI @ v2.27** (atribusi diperbaiki v2.32); persetujuan jarak jauh lengkap di Aplikasi Pemilik TERBUKA.
-6. **Push notification** (FCM/APNs).
+5. ~~Laporan anti-fraud~~ — **SELESAI @ v2.27** (atribusi diperbaiki v2.32); ~~persetujuan jarak jauh lengkap di Aplikasi Pemilik~~ — **SELESAI @ v2.81**.
+6. ~~**Push notification** (FCM/APNs) untuk Aplikasi Owner~~ — **SELESAI @ v2.81**. Konfigurasi aplikasi Firebase Android/iOS dan uji perangkat nyata tetap langkah rilis eksternal.
 7. **Gratis ongkir**, menunggu flow pesan-antar/toko online.
 8. Batch & kedaluwarsa, nomor seri (sudah di F-05a); ~~produksi~~ — **SELESAI @ v2.29**; bahan terbuang bagian 1 **SELESAI @ v2.30**.
 9. Harga per kanal ojol (input manual).

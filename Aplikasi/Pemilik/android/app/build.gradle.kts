@@ -7,6 +7,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Flavor dev/test tetap bisa dibangun tanpa kredensial. Saat google-services.json rilis dipasang, Firebase aktif.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Audit F-04: build rilis wajib ditandatangani kunci unggah produksi (Play App Signing), bukan kunci debug.
 // Sumber kunci: android/key.properties (tidak di-commit, lihat .gitignore) atau variabel lingkungan CI
 // PAYOU_KEYSTORE_FILE, PAYOU_KEYSTORE_PASSWORD, PAYOU_KEY_ALIAS, PAYOU_KEY_PASSWORD.

@@ -217,6 +217,53 @@ class PerangkatPemilik {
   );
 }
 
+class NotifikasiPemilik {
+  const NotifikasiPemilik({
+    required this.uuid,
+    required this.jenis,
+    required this.judul,
+    required this.isi,
+    required this.data,
+    required this.dibuatPada,
+    this.dibacaPada,
+  });
+
+  final String uuid;
+  final String jenis;
+  final String judul;
+  final String isi;
+  final Map<String, String> data;
+  final DateTime? dibacaPada;
+  final DateTime? dibuatPada;
+
+  bool get belumDibaca => dibacaPada == null;
+
+  static NotifikasiPemilik DariJson(Map<String, Object?> json) {
+    final mentah = UraiJson.AmbilPeta(json['Data']);
+    return NotifikasiPemilik(
+      uuid: UraiJson.AmbilTeks(json['Uuid']),
+      jenis: UraiJson.AmbilTeks(json['Jenis']),
+      judul: UraiJson.AmbilTeks(json['Judul']),
+      isi: UraiJson.AmbilTeks(json['Isi']),
+      data: {for (final MapEntry(:key, :value) in mentah.entries) key: '$value'},
+      dibacaPada: DateTime.tryParse(UraiJson.AmbilTeks(json['DibacaPada']))?.toLocal(),
+      dibuatPada: DateTime.tryParse(UraiJson.AmbilTeks(json['DibuatPada']))?.toLocal(),
+    );
+  }
+}
+
+class DaftarNotifikasiPemilik {
+  const DaftarNotifikasiPemilik({required this.notifikasi, required this.belumDibaca});
+
+  final List<NotifikasiPemilik> notifikasi;
+  final int belumDibaca;
+
+  static DaftarNotifikasiPemilik DariJson(Map<String, Object?> json) => DaftarNotifikasiPemilik(
+    notifikasi: [for (final n in UraiJson.AmbilDaftarPeta(json['Notifikasi'])) NotifikasiPemilik.DariJson(n)],
+    belumDibaca: UraiJson.AmbilBulat(json['BelumDibaca']),
+  );
+}
+
 /// Klien `/api/pemilik/v1` (PRD §16, OWN-01..08) dengan user token Sanctum + header `X-Tenant` (tenant aktif).
 /// Galat seragam `GalatApi`/`GalatJaringan` dari `klien_api`. 401 = token kedaluwarsa/dicabut → masuk ulang.
 class KlienPemilik {
@@ -288,6 +335,21 @@ class KlienPemilik {
   Future<List<PerangkatPemilik>> AmbilPerangkat() async {
     final json = await _Kirim('GET', 'perangkat', null);
     return [for (final p in UraiJson.AmbilDaftarPeta(json['Perangkat'])) PerangkatPemilik.DariJson(p)];
+  }
+
+  Future<DaftarNotifikasiPemilik> AmbilNotifikasi() async =>
+      DaftarNotifikasiPemilik.DariJson(await _Kirim('GET', 'notifikasi', null));
+
+  Future<void> TandaiNotifikasiDibaca({List<String> uuid = const [], bool semua = false}) async {
+    await _Kirim('PATCH', 'notifikasi', {'Uuid': uuid, 'Semua': semua});
+  }
+
+  Future<void> DaftarkanTokenNotifikasi({
+    required String token,
+    required String platform,
+    required String namaPerangkat,
+  }) async {
+    await _Kirim('POST', 'token-notifikasi', {'Token': token, 'Platform': platform, 'NamaPerangkat': namaPerangkat});
   }
 
   /// OWN-03 / X4: antrean persetujuan jarak jauh yang boleh diputuskan pengguna (terlama dulu).

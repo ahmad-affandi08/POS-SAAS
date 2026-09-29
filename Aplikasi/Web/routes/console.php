@@ -56,6 +56,9 @@ Schedule::command('kasir:tutup-harian-otomatis')->dailyAt('06:15')->timezone('As
 // D-23 D: ringkasan pagi Kotak Tindakan lewat email (setelah otomatisasi pagi di atas).
 Schedule::command('tindakan:kirim-ringkasan-harian')->dailyAt('07:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
+// OWN-03: push kondisi operasional penting; idempoten per pengguna, jenis, dan tanggal bisnis.
+Schedule::command('tindakan:buat-notifikasi-operasional')->hourlyAt(10)->withoutOverlapping();
+
 // D-23 D: pengingat piutang jatuh tempo ke pelanggan (jam wajar, bila tenant mengaktifkannya).
 Schedule::command('pelanggan:kirim-pengingat-piutang')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 

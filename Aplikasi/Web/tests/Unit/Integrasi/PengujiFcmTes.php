@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Integrasi\Push\Layanan\PengirimFcm;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
 use App\Domain\Pengelola\Integrasi\Penguji\PengujiFcm;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -84,4 +86,39 @@ it('penyedia Fcm terdaftar di jenis Push dengan satu bidang kredensial', functio
         ->and(PenyediaIntegrasi::Fcm->AmbilKelasPenguji())->toBe(PengujiFcm::class)
         // Push diatur di tingkat platform (satu proyek Firebase untuk semua tenant), bukan per tenant.
         ->and(JenisIntegrasi::AmbilJenisPlatform())->toContain(JenisIntegrasi::Push);
+});
+
+it('pengirim menukar token OAuth lalu mengirim pesan FCM HTTP v1', function (): void {
+    $akun = AkunLayananUji();
+    config(['integrasi.Push' => ['Kredensial' => ['AkunLayanan' => $akun]]]);
+    Cache::flush();
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response(['access_token' => 'ya29.kirim']),
+        'fcm.googleapis.com/*' => Http::response(['name' => 'projects/payou-uji/messages/1']),
+    ]);
+
+    $hasil = (new PengirimFcm)->Kirim('token-perangkat-yang-panjang', 'Perlu persetujuan', 'Kas keluar Rp100.000', [
+        'Tautan' => 'persetujuan',
+    ]);
+
+    expect($hasil->berhasil)->toBeTrue()->and($hasil->aktif)->toBeTrue();
+    Http::assertSent(fn ($permintaan): bool => str_contains($permintaan->url(), '/messages:send')
+        && $permintaan['message']['token'] === 'token-perangkat-yang-panjang'
+        && $permintaan['message']['data']['Tautan'] === 'persetujuan');
+});
+
+it('pengirim menandai token perangkat yang sudah dicabut FCM', function (): void {
+    config(['integrasi.Push' => ['Kredensial' => ['AkunLayanan' => AkunLayananUji()]]]);
+    Cache::flush();
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response(['access_token' => 'ya29.kirim']),
+        'fcm.googleapis.com/*' => Http::response([
+            'error' => ['details' => [['errorCode' => 'UNREGISTERED']]],
+        ], 404),
+    ]);
+
+    $hasil = (new PengirimFcm)->Kirim('token-perangkat-yang-panjang', 'Judul', 'Isi', []);
+
+    expect($hasil->berhasil)->toBeFalse()
+        ->and($hasil->tokenTidakBerlaku)->toBeTrue();
 });

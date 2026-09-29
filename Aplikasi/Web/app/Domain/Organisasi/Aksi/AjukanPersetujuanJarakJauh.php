@@ -13,6 +13,7 @@ use App\Domain\Organisasi\Enum\StatusPermintaanPersetujuan;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Organisasi\Model\PermintaanPersetujuan;
+use App\Domain\Organisasi\Tugas\BuatNotifikasiPersetujuanTugas;
 use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -99,6 +100,7 @@ final class AjukanPersetujuanJarakJauh
                     'Nilai' => $permintaan->Nilai,
                     'Perangkat' => $perangkat->Nama,
                 ], idPengguna: $pemohon->id);
+                BuatNotifikasiPersetujuanTugas::dispatch($permintaan->IdTenant, $permintaan->Id)->afterCommit();
 
                 return $permintaan;
             });

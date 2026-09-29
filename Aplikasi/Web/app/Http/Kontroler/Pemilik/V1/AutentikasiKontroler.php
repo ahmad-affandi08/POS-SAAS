@@ -6,6 +6,7 @@ namespace App\Http\Kontroler\Pemilik\V1;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Organisasi\Aksi\CabutTokenPengguna;
+use App\Domain\Organisasi\Aksi\DaftarkanPerangkatPengguna;
 use App\Domain\Organisasi\Aksi\TerbitkanTokenPengguna;
 use App\Domain\Organisasi\Aksi\VerifikasiDuaFaktorPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
@@ -111,9 +112,11 @@ final class AutentikasiKontroler extends Kontroler
         return $this->SelesaikanMasuk($permintaan, $pengguna);
     }
 
-    public function Keluar(Request $permintaan, CabutTokenPengguna $cabut): Response
+    public function Keluar(Request $permintaan, CabutTokenPengguna $cabut, DaftarkanPerangkatPengguna $perangkat): Response
     {
-        $cabut->Jalankan(AutentikasiPemilik::AmbilToken($permintaan), AutentikasiPemilik::AmbilPengguna($permintaan));
+        $token = AutentikasiPemilik::AmbilToken($permintaan);
+        $perangkat->NonaktifkanMilikTokenAkses($token);
+        $cabut->Jalankan($token, AutentikasiPemilik::AmbilPengguna($permintaan));
 
         return response()->noContent();
     }

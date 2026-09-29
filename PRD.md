@@ -6,7 +6,7 @@
 | Atribut | Nilai |
 |---|---|
 | Dokumen | Product Requirements Document (PRD) |
-| Versi | 2.80 |
+| Versi | 2.81 |
 | Tanggal | 29 September 2026 |
 | Status | Draf, menunggu review pemilik produk |
 | Pemilik produk | Ahmad Affandi |
@@ -20,6 +20,7 @@
 
 | Versi | Perubahan |
 |---|---|
+| 2.81 | **Push notification Aplikasi Owner selesai (OWN-03).** Token FCM per pemasangan didaftarkan dan dinonaktifkan saat keluar; token disimpan terenkripsi dan dikirim lewat FCM HTTP v1 melalui queue. Permintaan approval memberi push langsung dengan deep link, sedangkan selisih kas, stok kritis, perangkat offline, dan piutang lewat jatuh tempo diringkas idempoten oleh scheduler. Pusat notifikasi persisten menampilkan lencana belum dibaca serta aksi tandai satu/semua dibaca; kegagalan FCM tidak menghilangkan isi pusat notifikasi. Ditambah test pengiriman/token FCM, kontrak API, analyzer Flutter, dan test widget pusat notifikasi/persetujuan. |
 | 2.80 | **F-05b pemindai kamera modul Gudang selesai.** Tombol kamera pada penerimaan PO, transfer masuk, dan hitung opname membaca barcode produk, nomor batch, atau nomor seri melalui adaptor pemindai yang sama dengan aktivasi perangkat. Android/iOS menampilkan tombol saat kamera tersedia; Windows dan perangkat tanpa kamera tetap memakai pemindai USB/Bluetooth sebagai keyboard atau isian manual. Hasil kamera masuk ke jalur pencocokan yang sama, sehingga aturan jumlah, batch/seri, draf lokal, idempotensi, stok, dan jurnal tidak berubah. Dijaga test widget 360dp. Catatan utang §25 no. 26 tentang pindai kamera ditutup oleh versi ini. |
 | 1.0 | Draf awal: POS sebagai PWA (React) |
 | 1.1 | **Aplikasi POS (kasir, KDS, operasional gudang) dibangun dengan Flutter** untuk iOS, Android, dan Desktop. Back-office tetap web (Laravel + Inertia React). API sinkron POS berbasis token perangkat. Offline memakai SQLite (Drift). Integrasi hardware native. Mode LAN lokal ditambahkan. |
@@ -3245,7 +3246,8 @@ erDiagram
 | `ProgresPanduanAwal` | IdTenant (unik), IdOutlet, StatusLangkah JSON `{Langkah: {Status: Belum/Dilewati/Selesai, Pada}}`, SelesaiPada, IdPenggunaPenyelesai (F-01) |
 | `Gudang` | IdTenant, IdOutlet, Kode, Nama, Jenis (Toko/Dapur/Bar/Gudang/Rusak/DalamPerjalanan), Status (Aktif/Diarsipkan), DiarsipkanPada |
 | `Perangkat` | IdTenant, IdOutlet, Uuid, Kode (unik per tenant, tidak dipakai ulang), Nama, Jenis (Kasir/Kds/Gudang/Pelayan/Salesman), Platform (Android/Ios/Windows), VersiOs, VersiAplikasi, VersiSkemaSinkron, TokenPush, ProfilHardware JSON (printer, laci, layar kedua), HashToken (SHA-256 device token, F-02b), DiaktifkanPada, TerakhirAktifPada, JumlahOutboxTertunda, DicabutPada. KunciPinOffline (terenkripsi, F-06; dikosongkan saat dicabut) |
-| `PerangkatPengguna` | IdPengguna, IdTenant, Aplikasi (Owner/Pos), Platform (Android/Ios/Windows), TokenPush, VersiAplikasi, TerakhirAktifPada, DicabutPada |
+| `PerangkatPengguna` | IdPengguna, IdTokenAksesPengguna (nullable), Uuid, Nama, Platform (Android/Ios), Token (terenkripsi), HashToken (unik), Aktif, TerakhirTerdaftarPada. Milik akun lintas tenant; satu pemasangan Owner menerima notifikasi tenant aktif yang boleh diakses akun itu |
+| `NotifikasiPengguna` | IdTenant, IdPengguna, Uuid, Jenis (Persetujuan/SelisihKas/StokKritis/PerangkatOffline/PiutangJatuhTempo), Kunci idempotensi, Judul, Isi, Data JSON, DibacaPada, DikirimPada, GagalPada, PesanGalat; unik IdTenant+IdPengguna+Kunci |
 | `KodeAktivasi` | IdTenant, IdOutlet, IdPerangkat, HashKode (HMAC-SHA256), KedaluwarsaPada, DipakaiPada, DibatalkanPada, IdPenggunaPembuat. Data platform tanpa `MilikTenant` (dicari lewat `HashKode` sebelum tenant diketahui, F-02b) |
 | `RilisAplikasi` | Aplikasi (Pos/Pemilik), Platform, Kanal (Beta/Stabil), Versi, Build, Status (Draf/Aktif/Dihentikan), PersenRollout, UrlUnduh, CatatanRilis, VersiMinimum, VersiMinimumBerlakuPada, PerbaikanKeamanan, DiterbitkanPada, DihentikanPada, AlasanDihentikan, DibuatOleh (rincian v1.82) |
 | `OutletPengguna` | IdTenant, IdOutlet, IdPengguna, IdPeran (tidak dipakai untuk anggota `SemuaOutlet`) |
@@ -3811,7 +3813,8 @@ Aplikasi/Pemilik/                   # paket Dart: pemilik
 - **Konteks tenant:** header `X-Tenant: {UuidTenant}` diperiksa tiap permintaan (keanggotaan aktif, akses outlet anggota, 2FA wajib per paket → 403 `DuaFaktorWajib`); asing → 403 `TenantTidakDiizinkan`.
 - **Data:** `GET /dasbor` (izin `laporan.penjualan.lihat`): omzet bersih, transaksi, rata-rata, laba kotor (null tanpa `laporan.keuangan.lihat`), omzet kemarin & hari yang sama minggu lalu, per outlet, per jam (zona waktu outlet), 5 produk teratas, **perlu tindakan**: `SelisihKas` (shift ditutup dengan selisih), `PenjualanPerluTinjauan`, dan untuk hari ini `PerangkatTidakAktif` (> 30 menit) & `StokMenipis` (butuh `persediaan.lihat`). `GET /laporan/penjualan?dari&sampai&kelompok=Produk|Kategori|Kasir|Jam|Kanal` (maks. 31 hari, `RentangTerlaluPanjang`), `GET /shift?tanggal` (selisih hanya untuk shift tertutup), `GET /perangkat` (izin `perangkat.lihat`). Semua data dihitung langsung dari dokumen dengan definisi sama dengan dasbor back-office.
 - **Aplikasi Owner (Flutter):** masuk (+ kode 2FA), pilih usaha (langsung bila satu), bingkai dengan navigasi bawah **Beranda** (angka omzet besar + perbandingan, lalu perlu tindakan, per outlet, grafik per jam, produk terlaris), **Laporan** (pilih kelompok), **Shift** (selisih berwarna + teks), **Perangkat** (lama tidak tersambung, data belum terkirim, versi); saringan tanggal & outlet; token & tenant aktif di secure storage; keadaan memuat/galat/offline dengan "Coba lagi"; 401 → kembali ke layar masuk.
-- **Belum:** OTP WhatsApp, refresh token, kunci PIN/biometrik aplikasi, cache lokal Drift, notifikasi push, aksi cepat, cabut perangkat. (Persetujuan jarak jauh selesai v2.35, dengan pemantauan berkala 15 detik sampai push tersedia.)
+- **Push & pusat notifikasi (v2.81):** token FCM per pemasangan, deep link approval, lencana belum dibaca, tandai satu/semua dibaca, dan ringkasan terjadwal untuk selisih kas, stok kritis, perangkat offline, serta piutang lewat jatuh tempo. Polling approval 15 detik tetap dipakai sebagai fallback saat FCM terlambat/tidak tersedia.
+- **Belum:** OTP WhatsApp, refresh token, kunci PIN/biometrik aplikasi, cache lokal Drift, pengaturan notifikasi per jenis/outlet, aksi cepat, dan cabut perangkat.
 
 #### 17.3.5 Target Kualitas
 

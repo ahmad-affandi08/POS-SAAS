@@ -1,18 +1,21 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import '../Data/NotifikasiPush.dart';
 import 'LayarBeranda.dart';
 import 'LayarLaporan.dart';
+import 'LayarNotifikasi.dart';
 import 'LayarPerangkat.dart';
 import 'LayarPersetujuan.dart';
 import 'LayarShift.dart';
 
 /// Bingkai Aplikasi Owner: bilah atas (nama usaha, ganti usaha, keluar) dan navigasi bawah Beranda · Laporan ·
-/// Persetujuan (lencana jumlah menunggu) · Shift · Perangkat (mode kepadatan Nyaman, §17.6). Antrean persetujuan
-/// jarak jauh dimuat ulang tiap [penyediaSelangPantauPersetujuan] selama aplikasi terbuka (belum ada push).
+/// Persetujuan (lencana jumlah menunggu) · Shift · Perangkat (mode kepadatan Nyaman, §17.6), dengan pusat
+/// notifikasi dari ikon lonceng di bilah atas.
 class BingkaiPemilik extends ConsumerStatefulWidget {
   const BingkaiPemilik({super.key});
 
@@ -23,8 +26,10 @@ class BingkaiPemilik extends ConsumerStatefulWidget {
 class _BingkaiPemilikState extends ConsumerState<BingkaiPemilik> {
   var _indeks = 0;
   Timer? _pantau;
+  final List<StreamSubscription<Object?>> _langgananPush = [];
 
   static const int _indeksPersetujuan = 2;
+  static const int _indeksPerangkat = 4;
 
   static const _tujuan = [
     (Icons.home_outlined, Icons.home, 'Beranda'),
@@ -41,12 +46,79 @@ class _BingkaiPemilikState extends ConsumerState<BingkaiPemilik> {
     if (selang != null) {
       _pantau = Timer.periodic(selang, (_) => ref.invalidate(penyediaPersetujuan));
     }
+    unawaited(_SiapkanPush());
   }
 
   @override
   void dispose() {
     _pantau?.cancel();
+    for (final langganan in _langgananPush) {
+      unawaited(langganan.cancel());
+    }
     super.dispose();
+  }
+
+  Future<void> _SiapkanPush() async {
+    final push = ref.read(penyediaNotifikasiPush);
+    _langgananPush
+      ..add(push.tokenBerubah.listen((token) => unawaited(_DaftarkanToken(token))))
+      ..add(
+        push.pesanMasuk.listen((pesan) {
+          ref.invalidate(penyediaNotifikasi);
+          ref.invalidate(penyediaPersetujuan);
+          if (mounted && pesan.judul != null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan.judul!)));
+          }
+        }),
+      )
+      ..add(push.pesanDibuka.listen(_BukaPesan));
+
+    try {
+      final token = await push.AmbilToken();
+      if (token != null) await _DaftarkanToken(token);
+      final awal = await push.AmbilPesanAwal();
+      if (awal != null) _BukaPesan(awal);
+    } on Object {
+      // Push tidak menghalangi fungsi utama aplikasi saat layanan belum tersedia.
+    }
+  }
+
+  Future<void> _DaftarkanToken(String token) => ref
+      .read(penyediaKlien)
+      .DaftarkanTokenNotifikasi(
+        token: token,
+        platform: defaultTargetPlatform == TargetPlatform.iOS ? 'Ios' : 'Android',
+        namaPerangkat: PengaturSesi.namaPerangkat,
+      );
+
+  void _BukaPesan(PesanPush pesan) {
+    if (!mounted) return;
+    ref.invalidate(penyediaNotifikasi);
+    ref.invalidate(penyediaPersetujuan);
+    if (pesan.data['Tautan'] == 'notifikasi') {
+      _BukaNotifikasi();
+      return;
+    }
+    setState(() {
+      _indeks = switch (pesan.data['Tautan']) {
+        'persetujuan' => _indeksPersetujuan,
+        'perangkat' => _indeksPerangkat,
+        _ => _indeks,
+      };
+    });
+  }
+
+  void _BukaNotifikasi() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: const Text('Notifikasi')),
+            body: const LayarNotifikasi(),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -54,10 +126,18 @@ class _BingkaiPemilikState extends ConsumerState<BingkaiPemilik> {
     final sesi = ref.watch(penyediaSesi);
     final notifier = ref.read(penyediaSesi.notifier);
     final menunggu = ref.watch(penyediaPersetujuan).value?.length ?? 0;
+    final belumDibaca = ref.watch(penyediaNotifikasi).value?.belumDibaca ?? 0;
     return Scaffold(
       appBar: AppBar(
         title: Text(sesi.namaTenant ?? 'PAYOU Owner'),
         actions: [
+          IconButton(
+            tooltip: belumDibaca > 0 ? 'Notifikasi ($belumDibaca belum dibaca)' : 'Notifikasi',
+            onPressed: _BukaNotifikasi,
+            icon: belumDibaca > 0
+                ? Badge(label: Text('$belumDibaca'), child: const Icon(Icons.notifications_outlined))
+                : const Icon(Icons.notifications_outlined),
+          ),
           PopupMenuButton<String>(
             tooltip: 'Akun',
             icon: const Icon(Icons.account_circle_outlined),

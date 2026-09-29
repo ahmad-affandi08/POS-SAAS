@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
 
 import '../Data/KlienPemilik.dart';
+import '../Data/NotifikasiPush.dart';
 import '../Data/PenyimpanSesi.dart';
 import 'Lingkungan.dart';
 
@@ -14,6 +15,7 @@ final penyediaLingkungan = Provider<Lingkungan>((ref) => Lingkungan.Dev);
 final penyediaKlienHttp = Provider<http.Client>((ref) => http.Client());
 final penyediaPenyimpanSesi = Provider<PenyimpanSesi>((ref) => PenyimpanSesiAman());
 final penyediaJam = Provider<DateTime Function()>((ref) => DateTime.now);
+final penyediaNotifikasiPush = Provider<NotifikasiPush>((ref) => const NotifikasiPushTidakAda());
 
 final penyediaKlien = Provider<KlienPemilik>((ref) {
   final sesi = ref.watch(penyediaPenyimpanSesi);
@@ -259,6 +261,10 @@ final penyediaShift = FutureProvider.autoDispose<List<ShiftPemilik>>((ref) {
 
 final penyediaPerangkat = FutureProvider.autoDispose<List<PerangkatPemilik>>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPerangkat()),
+);
+
+final penyediaNotifikasi = FutureProvider.autoDispose<DaftarNotifikasiPemilik>(
+  (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilNotifikasi()),
 );
 
 /// OWN-03 / X4: antrean persetujuan jarak jauh.

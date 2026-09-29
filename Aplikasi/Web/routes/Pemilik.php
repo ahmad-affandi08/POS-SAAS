@@ -6,6 +6,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Pemilik\V1\AutentikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\DasborKontroler;
 use App\Http\Kontroler\Pemilik\V1\LaporanKontroler;
+use App\Http\Kontroler\Pemilik\V1\NotifikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pemilik\V1\PersetujuanKontroler;
 use App\Http\Perantara\AutentikasiPemilik;
@@ -45,6 +46,11 @@ Route::middleware(AutentikasiPemilik::class)->group(function () use ($izin): voi
             ->where('persetujuan', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('pemilik.persetujuan.setujui');
         Route::post('/persetujuan/{persetujuan}/tolak', [PersetujuanKontroler::class, 'Tolak'])
             ->where('persetujuan', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('pemilik.persetujuan.tolak');
+
+        // OWN-03: pusat notifikasi persisten + pendaftaran token FCM pemasangan Aplikasi Owner.
+        Route::get('/notifikasi', [NotifikasiKontroler::class, 'Daftar'])->name('pemilik.notifikasi');
+        Route::patch('/notifikasi', [NotifikasiKontroler::class, 'TandaiDibaca'])->name('pemilik.notifikasi.dibaca');
+        Route::post('/token-notifikasi', [NotifikasiKontroler::class, 'DaftarkanToken'])->name('pemilik.token-notifikasi');
 
         // OWN-08: status perangkat POS.
         Route::get('/perangkat', [PerangkatKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PerangkatLihat))->name('pemilik.perangkat');
