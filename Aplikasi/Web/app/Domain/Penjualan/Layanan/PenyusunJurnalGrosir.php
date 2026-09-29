@@ -21,6 +21,10 @@ use App\Domain\Bersama\Nilai\Uang;
  * Seimbang tanpa bergantung pembulatan: Total + Diskon = Subtotal + PajakEksklusif, dan Pendapatan = DPP + Diskon
  * = Subtotal − PajakInklusif, sehingga sisi debit dan kredit sama-sama Subtotal + PajakEksklusif.
  *
+ * **J-12.2 faktur penjualan** — penagihan, bukan penjualan baru: Dr `PiutangUsaha` / Cr `PiutangBelumDifakturkan`
+ * sebesar total faktur. Tidak ada pendapatan maupun PPN yang bergerak lagi, karena keduanya sudah diakui di penyerahan;
+ * itulah yang membuat faktur **tidak bisa menggandakan pendapatan**, betapa pun sering ditagihkan ulang.
+ *
  * **J-12.3 pembatalan** = seluruh baris J-12.1 dengan sisi terbalik (`pembalik: true`); perubahan persediaan tidak
  * dibalik di sini karena hasil mutasi pembalik sudah bertanda benar (stok masuk kembali).
  *
@@ -32,6 +36,22 @@ use App\Domain\Bersama\Nilai\Uang;
 final class PenyusunJurnalGrosir
 {
     public function __construct(private readonly PenyusunJurnalPenjualan $penyusunPenjualan) {}
+
+    /**
+     * J-12.2: reklasifikasi piutang saat faktur diterbitkan (`pembalik` = saat faktur dibatalkan).
+     *
+     * @return list<DataBarisJurnal>
+     */
+    public function BarisFaktur(Uang $total, ?int $idOutlet, bool $pembalik = false): array
+    {
+        $arah = fn (Uang $nilai): Uang => $pembalik ? Uang::Nol()->Kurangi($nilai) : $nilai;
+        $baris = [
+            DataBarisJurnal::DariSelisih(PeranAkun::PiutangUsaha, $arah($total), $idOutlet),
+            DataBarisJurnal::DariSelisih(PeranAkun::PiutangBelumDifakturkan, $arah(Uang::Nol()->Kurangi($total)), $idOutlet),
+        ];
+
+        return array_values(array_filter($baris, fn (?DataBarisJurnal $b): bool => $b !== null));
+    }
 
     /**
      * @param  array<string, Uang>  $pajak  kode jenis pajak → jumlah pajak dokumen

@@ -56,6 +56,8 @@ enum JenisSumberJurnal: string
     // Grosir (F-12, §9.7): surat jalan (J-12.1: HPP + Piutang Belum Difakturkan / persediaan + penjualan + PPN
     // keluaran) dan pembatalannya (J-12.3).
     case SuratJalan = 'SuratJalan';
+    // Grosir (F-12, §9.7): faktur penjualan (J-12.2, reklasifikasi Piutang Usaha) dan pembatalannya.
+    case FakturPenjualan = 'FakturPenjualan';
 
     public function AmbilLabel(): string
     {
@@ -87,6 +89,7 @@ enum JenisSumberJurnal: string
             self::OrderProduksi => 'Order produksi',
             self::BahanTerbuang => 'Bahan terbuang',
             self::SuratJalan => 'Surat jalan grosir',
+            self::FakturPenjualan => 'Faktur penjualan grosir',
         };
     }
 
@@ -123,8 +126,8 @@ enum JenisSumberJurnal: string
             self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             self::PemakaianSesi => '/kelola/pelanggan/pemakaian-sesi/'.$uuid,
             self::MutasiSesi => '/kelola/pelanggan/mutasi-sesi/'.$uuid,
-            // Grosir: halaman surat jalan back-office belum ada (bagian 1 baru lapisan domain).
-            self::SuratJalan => null,
+            self::SuratJalan => '/kelola/grosir/surat-jalan/'.$uuid,
+            self::FakturPenjualan => '/kelola/grosir/faktur/'.$uuid,
         };
     }
 }

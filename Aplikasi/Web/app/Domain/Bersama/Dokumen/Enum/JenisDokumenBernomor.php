@@ -42,6 +42,9 @@ enum JenisDokumenBernomor: string
     case PesananGrosir = 'PesananGrosir';
     // Grosir (F-12, §9.7, BR-12.2): surat jalan `SJ/{OUTLET}/{YYMM}/{SEQ4}`, juga lewat `PenomorGrosir`.
     case SuratJalan = 'SuratJalan';
+    // Grosir (F-12, §9.7, BR-12.4): faktur penjualan `FJ/{OUTLET}/{YYMM}/{SEQ4}`. Awalan `FB` sudah milik
+    // `FakturPembelian`, jadi sisi jual memakai `FJ`.
+    case FakturPenjualan = 'FakturPenjualan';
 
     public function AmbilAwalan(): string
     {
@@ -63,6 +66,7 @@ enum JenisDokumenBernomor: string
             self::OrderProduksi => 'PR',
             self::PesananGrosir => 'PG',
             self::SuratJalan => 'SJ',
+            self::FakturPenjualan => 'FJ',
         };
     }
 
@@ -72,7 +76,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi, self::PesananGrosir, self::SuratJalan => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan => 4,
         };
     }
 

@@ -68,8 +68,7 @@ enum JenisReferensiMutasi: string
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             // F-05e.
             self::Produksi => '/kelola/persediaan/produksi/'.$uuid,
-            // Grosir: halaman surat jalan back-office belum ada (bagian 1 baru lapisan domain).
-            self::SuratJalan => null,
+            self::SuratJalan => '/kelola/grosir/surat-jalan/'.$uuid,
             self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             default => null,
         };

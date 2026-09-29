@@ -12,9 +12,12 @@ use App\Domain\Pelanggan\Model\Piutang;
 use Carbon\CarbonImmutable;
 
 /**
- * Layanan publik domain Pelanggan untuk domain Penjualan (F-12): piutang penjualan tempo dicatat, dibatalkan (void),
- * dan dikurangi (retur) di transaksi DB yang sama dengan dokumen penjualannya. Jatuh tempo = tanggal bisnis + termin
- * pelanggan (bawaan 30 hari). Idempoten per penjualan.
+ * Layanan publik domain Pelanggan untuk domain Penjualan (F-12): piutang dicatat, dibatalkan (void), dan dikurangi
+ * (retur) di transaksi DB yang sama dengan dokumen sumbernya. Jatuh tempo = tanggal dokumen + termin pelanggan (bawaan
+ * 30 hari). Idempoten per dokumen sumber.
+ *
+ * Dua sumber (BR-12.5): **penjualan tempo** di kasir (`Catat*`) dan **faktur penjualan grosir** (`*Faktur`). Keduanya
+ * memakai satu tabel `Piutang` yang sama, sehingga aging, pengingat, dan pelunasan tidak perlu tahu asalnya.
  */
 final class PencatatPiutangPenjualan
 {
@@ -44,6 +47,66 @@ final class PencatatPiutangPenjualan
         $this->riwayat->Catat(Piutang::JENIS_DOKUMEN, $piutang->Id, null, StatusPiutang::BelumLunas->value, null);
 
         return $piutang;
+    }
+
+    /**
+     * Piutang dari faktur penjualan grosir (BR-12.5): jatuh tempo = tanggal faktur + `Pelanggan.TerminHari`. Terminnya
+     * dikirim pemanggil karena faktur sudah men-snapshot nilainya di kolomnya sendiri, sehingga jatuh tempo dokumen
+     * tidak bergeser bila termin pelanggan diubah kemudian.
+     */
+    public function CatatFaktur(int $idPelanggan, int $idFakturPenjualan, int $idOutlet, string $nomor, CarbonImmutable $tanggal, Uang $jumlah, int $terminHari): Piutang
+    {
+        $ada = Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->first();
+
+        if ($ada !== null) {
+            return $ada;
+        }
+
+        $piutang = Piutang::query()->create([
+            'IdPelanggan' => $idPelanggan,
+            'IdFakturPenjualan' => $idFakturPenjualan,
+            'IdOutlet' => $idOutlet,
+            'Nomor' => $nomor,
+            'TanggalBisnis' => $tanggal->toDateString(),
+            'JatuhTempo' => $tanggal->addDays(max(0, $terminHari))->toDateString(),
+            'Jumlah' => $jumlah->KeString(),
+            'Status' => StatusPiutang::BelumLunas,
+        ]);
+        $this->riwayat->Catat(Piutang::JENIS_DOKUMEN, $piutang->Id, null, StatusPiutang::BelumLunas->value, null);
+
+        return $piutang;
+    }
+
+    /** Pembatalan faktur hanya boleh bila piutangnya belum dibayar sedikit pun (null = boleh). */
+    public function PeriksaBisaBatalFaktur(int $idFakturPenjualan): ?string
+    {
+        $piutang = Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->first();
+
+        return $piutang !== null && ! Uang::Dari($piutang->JumlahDibayar)->BernilaiNol()
+            ? "Piutang {$piutang->Nomor} sudah dibayar sebagian. Batalkan pelunasannya dulu atau terbitkan nota kredit."
+            : null;
+    }
+
+    /** Pembatalan faktur: sisa piutangnya dikurangi habis dan statusnya Dibatalkan. */
+    public function BatalkanFaktur(int $idFakturPenjualan, int $idPengguna): void
+    {
+        $piutang = Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->lockForUpdate()->first();
+
+        if ($piutang === null || $piutang->Status === StatusPiutang::Dibatalkan) {
+            return;
+        }
+
+        $asal = $piutang->Status;
+        $piutang->JumlahDikurangi = Uang::Dari($piutang->JumlahDikurangi)->Tambah($piutang->AmbilSisa())->KeString();
+        $piutang->Status = StatusPiutang::Dibatalkan;
+        $piutang->save();
+        $this->riwayat->Catat(Piutang::JENIS_DOKUMEN, $piutang->Id, $asal->value, StatusPiutang::Dibatalkan->value, $idPengguna, 'Faktur penjualan dibatalkan');
+    }
+
+    /** Sisa piutang faktur (null = fakturnya belum berpiutang). */
+    public function AmbilSisaFaktur(int $idFakturPenjualan): ?Uang
+    {
+        return Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->first()?->AmbilSisa();
     }
 
     /** Sisa piutang penjualan (null = bukan penjualan tempo). */

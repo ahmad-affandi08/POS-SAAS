@@ -1,0 +1,132 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Penjualan\Aksi;
+
+use App\Domain\Akuntansi\Aksi\PostingJurnal;
+use App\Domain\Akuntansi\Data\DataJurnal;
+use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
+use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
+use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
+use App\Domain\Penjualan\Model\FakturPenjualan;
+use App\Domain\Penjualan\Model\SuratJalan;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Membatalkan faktur penjualan grosir (F-12, §9.7, J-12.2 pembalik). Dokumen tidak diedit dan tidak dihapus
+ * (CLAUDE.md #8): jurnal reklasifikasinya dibalik, piutangnya dibatalkan, dan surat jalannya **dilepas** sehingga bisa
+ * difakturkan ulang dengan benar.
+ *
+ * Yang **tidak** terjadi: pendapatan, HPP, dan PPN tidak tersentuh, karena faktur tidak pernah mengakuinya. Barangnya
+ * tetap terserah di pembeli dan nilainya kembali ke `PiutangBelumDifakturkan` — di situlah memang tempatnya selama
+ * belum ada tagihan yang sah.
+ *
+ * Ditolak bila piutangnya sudah dibayar walau sebagian (`PiutangSudahDibayar`): uang yang sudah masuk tidak boleh
+ * kehilangan dokumen dasarnya. Batalkan pelunasannya dulu, atau terbitkan nota kredit bila barangnya kembali.
+ */
+final class BatalkanFakturPenjualan
+{
+    public const PANJANG_ALASAN_MINIMAL = 5;
+
+    public function __construct(
+        private readonly PenyusunJurnalGrosir $penyusunJurnal,
+        private readonly PostingJurnal $postingJurnal,
+        private readonly PencatatPiutangPenjualan $pencatatPiutang,
+        private readonly PencatatRiwayatStatus $riwayat,
+        private readonly PencatatAudit $audit,
+    ) {}
+
+    /**
+     * @throws PelanggaranAturanBisnis AlasanBatalWajib, FakturTidakDitemukan, PiutangSudahDibayar
+     */
+    public function Jalankan(string $uuidFaktur, string $alasan, int $idPengguna): FakturPenjualan
+    {
+        $alasan = trim($alasan);
+
+        if (mb_strlen($alasan) < self::PANJANG_ALASAN_MINIMAL || mb_strlen($alasan) > 255) {
+            throw new PelanggaranAturanBisnis(
+                'AlasanBatalWajib',
+                'Alasan pembatalan wajib diisi, '.self::PANJANG_ALASAN_MINIMAL.' sampai 255 karakter.',
+                'Alasan',
+            );
+        }
+
+        return DB::transaction(
+            fn (): FakturPenjualan => $this->Batalkan($uuidFaktur, $alasan, $idPengguna),
+            max(1, (int) config('persediaan.PercobaanTransaksi', 3)),
+        );
+    }
+
+    private function Batalkan(string $uuid, string $alasan, int $idPengguna): FakturPenjualan
+    {
+        $faktur = FakturPenjualan::query()->where('Uuid', $uuid)->lockForUpdate()->first()
+            ?? throw new PelanggaranAturanBisnis('FakturTidakDitemukan', 'Faktur penjualan tidak ditemukan.');
+
+        if ($faktur->Status === StatusFakturPenjualan::Dibatalkan) {
+            return $faktur;
+        }
+
+        $halangan = $this->pencatatPiutang->PeriksaBisaBatalFaktur($faktur->Id);
+
+        if ($halangan !== null) {
+            throw new PelanggaranAturanBisnis('PiutangSudahDibayar', $halangan);
+        }
+
+        $tanggal = CarbonImmutable::parse($faktur->Tanggal->format('Y-m-d'));
+        $jurnal = $this->postingJurnal->Jalankan(new DataJurnal(
+            jenisSumber: JenisSumberJurnal::FakturPenjualan,
+            idSumber: $faktur->Id,
+            uuidSumber: $faktur->Uuid,
+            nomorSumber: $faktur->Nomor,
+            tanggal: $tanggal,
+            keterangan: mb_substr("Pembatalan faktur penjualan {$faktur->Nomor}", 0, 255),
+            baris: $this->penyusunJurnal->BarisFaktur($faktur->AmbilTotal(), $faktur->IdOutlet, pembalik: true),
+            idPengguna: $idPengguna,
+            kunciSumber: 'Pembatalan',
+            idJurnalDibalik: $faktur->IdJurnal,
+        ));
+
+        $this->pencatatPiutang->BatalkanFaktur($faktur->Id, $idPengguna);
+        $nomorSuratJalan = [];
+
+        foreach (SuratJalan::query()->where('IdFakturPenjualan', $faktur->Id)->lockForUpdate()->get() as $sj) {
+            $nomorSuratJalan[] = $sj->Nomor;
+            $sj->IdFakturPenjualan = null;
+            $sj->DiubahOleh = $idPengguna;
+            $sj->save();
+        }
+
+        $faktur->UbahStatus(StatusFakturPenjualan::Dibatalkan);
+        $faktur->fill([
+            'IdJurnalPembatalan' => $jurnal->idJurnal,
+            'AlasanBatal' => $alasan,
+            'DibatalkanOleh' => $idPengguna,
+            'DibatalkanPada' => CarbonImmutable::now(),
+            'DiubahOleh' => $idPengguna,
+        ])->save();
+
+        $this->riwayat->Catat(
+            FakturPenjualan::JENIS_DOKUMEN,
+            $faktur->Id,
+            StatusFakturPenjualan::Diposting->value,
+            StatusFakturPenjualan::Dibatalkan->value,
+            $idPengguna,
+            $alasan,
+        );
+        $this->audit->Catat('grosir.faktur-batalkan', $faktur, nilaiLama: ['Status' => StatusFakturPenjualan::Diposting->value], nilaiBaru: [
+            'Status' => StatusFakturPenjualan::Dibatalkan->value,
+            'Nomor' => $faktur->Nomor,
+            'Alasan' => $alasan,
+            'NomorJurnalPembatalan' => $jurnal->nomor,
+            'SuratJalanDilepas' => $nomorSuratJalan,
+        ], idPengguna: $idPengguna);
+
+        return $faktur;
+    }
+}

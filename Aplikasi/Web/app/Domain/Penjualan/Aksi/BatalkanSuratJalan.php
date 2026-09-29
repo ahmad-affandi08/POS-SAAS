@@ -118,8 +118,9 @@ final class BatalkanSuratJalan
         }
 
         // Urutan kunci konsisten (urut IdProduk) supaya tidak deadlock dengan dokumen lain (aturan AkuntansiStok).
+        $pasangan = array_values($pasangan);
         usort($pasangan, fn (array $a, array $b): int => $a <=> $b);
-        $this->pengunciSaldo->Kunci(array_values($pasangan));
+        $this->pengunciSaldo->Kunci($pasangan);
 
         $hasilMutasi = $this->catatMutasi->Jalankan(new DataDokumenMutasi(
             jenisReferensi: JenisReferensiMutasi::SuratJalan,

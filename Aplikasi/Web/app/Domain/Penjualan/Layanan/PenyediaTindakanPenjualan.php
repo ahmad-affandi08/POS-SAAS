@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Layanan;
 
+use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Tindakan\Data\DataButirTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
+use App\Domain\Bersama\Tindakan\Enum\TingkatTindakan;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan;
 use App\Domain\Bersama\Tindakan\Layanan\PembuatButirTinjauan;
+use App\Domain\Penjualan\Enum\StatusSuratJalan;
 use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\ReturPenjualan;
+use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Penjualan\Model\TagihanQris;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Kotak Tindakan domain Penjualan (D-23 C): penjualan, retur, dan isi deposit dari kasir yang diterima dengan
  * `PerluTinjauan` dan belum ditandai dicek (dibatasi outlet akses). Lihat: `laporan.penjualan.lihat` (isi deposit:
- * `pelanggan.lihat`). Audit P0 F-02: uang QRIS dinamis yang masuk setelah tagihan berstatus akhir/tidak pasti dan belum
- * dipakai penjualan mana pun.
+ * `pelanggan.lihat`; surat jalan grosir: `grosir.kelola`). Audit P0 F-02: uang QRIS dinamis yang masuk setelah tagihan berstatus akhir/tidak pasti dan belum
+ * dipakai penjualan mana pun. BR-12.4: surat jalan grosir yang sudah diserahkan tetapi belum difakturkan (butir
+ * pengingat yang selesai sendiri saat fakturnya dibuat, bukan butir "sudah dicek").
  */
 final class PenyediaTindakanPenjualan implements PenyediaTindakan
 {
@@ -76,7 +82,65 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
             );
         }
 
+        if ($konteks->CekIzin('grosir.kelola')) {
+            $butirGrosir = $this->ButirSuratJalanBelumDifakturkan($konteks->idOutletBoleh);
+
+            if ($butirGrosir !== null) {
+                $butir[] = $butirGrosir;
+            }
+        }
+
         return $butir;
+    }
+
+    /**
+     * BR-12.4: surat jalan terposting yang **belum difakturkan** dan bulan penyerahannya berjalan atau sudah lewat.
+     *
+     * Ini **peringatan kepatuhan, bukan syarat pembukuan**: pendapatan dan PPN-nya sudah dibukukan saat penyerahan
+     * (BR-12.2), jadi tutup bulan tidak diblokir olehnya. Yang terancam adalah batas waktu Faktur Pajak — UU PPN Pasal
+     * 13 ayat (2a) meminta faktur gabungan dibuat paling lama akhir bulan penyerahan — dan uang toko yang menganggur di
+     * `PiutangBelumDifakturkan` karena pembeli belum pernah ditagih.
+     *
+     * @param  list<int>|null  $idOutlet
+     */
+    private function ButirSuratJalanBelumDifakturkan(?array $idOutlet): ?DataButirTindakan
+    {
+        $kueri = SuratJalan::query()
+            ->where('Status', StatusSuratJalan::Diposting->value)
+            ->whereNull('IdFakturPenjualan')
+            ->where('Tanggal', '<=', now('Asia/Jakarta')->endOfMonth()->toDateString())
+            ->when($idOutlet !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutlet));
+        $jumlah = (clone $kueri)->count();
+
+        if ($jumlah === 0) {
+            return null;
+        }
+
+        $total = Uang::Nol();
+
+        foreach ((clone $kueri)->get(['Total']) as $sj) {
+            $total = $total->Tambah($sj->AmbilTotal());
+        }
+
+        return new DataButirTindakan(
+            'surat-jalan.belum-difakturkan',
+            'Penjualan',
+            TingkatTindakan::Perhatian,
+            'Surat jalan grosir belum difakturkan',
+            'Nilai '.$total->FormatRupiah().' sudah diserahkan tetapi belum ditagihkan. Faktur Pajak gabungan dibuat paling lama akhir bulan penyerahan (UU PPN Pasal 13 ayat 2a).',
+            $jumlah,
+            '/kelola/grosir/surat-jalan?saring[Difakturkan]=Belum',
+            'Buat faktur',
+            array_values((clone $kueri)->orderBy('Tanggal')->limit(DataButirTindakan::BATAS_RINCIAN)->get()->map(
+                fn (SuratJalan $sj): DataRincianTindakan => new DataRincianTindakan(
+                    $sj->Uuid,
+                    $sj->Nomor,
+                    $sj->AmbilTotal()->FormatRupiah().', diserahkan '.$sj->Tanggal->toDateString(),
+                    $sj->Tanggal->toDateString(),
+                    '/kelola/grosir/surat-jalan/'.$sj->Uuid,
+                ),
+            )->all()),
+        );
     }
 
     public function AmbilJenisDokumen(): array
