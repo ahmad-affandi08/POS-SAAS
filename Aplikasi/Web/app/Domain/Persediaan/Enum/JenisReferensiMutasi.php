@@ -23,6 +23,10 @@ enum JenisReferensiMutasi: string
     case BahanTerbuang = 'BahanTerbuang';
     case Konsinyasi = 'Konsinyasi';
 
+    // Grosir (F-12, §9.7, BR-12.2): penyerahan barang grosir lewat surat jalan; mutasinya `JenisMutasi::Penjualan`
+    // karena efek stoknya memang penjualan, yang membedakan dokumennya adalah jenis referensi ini.
+    case SuratJalan = 'SuratJalan';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -38,6 +42,7 @@ enum JenisReferensiMutasi: string
             self::Produksi => 'Produksi',
             self::BahanTerbuang => 'Bahan terbuang',
             self::Konsinyasi => 'Konsinyasi',
+            self::SuratJalan => 'Surat jalan grosir',
         };
     }
 
@@ -63,6 +68,8 @@ enum JenisReferensiMutasi: string
             self::ReturPembelian => '/kelola/pembelian/retur/'.$uuid,
             // F-05e.
             self::Produksi => '/kelola/persediaan/produksi/'.$uuid,
+            // Grosir: halaman surat jalan back-office belum ada (bagian 1 baru lapisan domain).
+            self::SuratJalan => null,
             self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             default => null,
         };

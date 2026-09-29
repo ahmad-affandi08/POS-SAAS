@@ -12,15 +12,14 @@ use App\Domain\Katalog\Model\Produk;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Baris sales order grosir. Nama produk, SKU, simbol satuan, konversi, dan harga di-**snapshot** saat baris dibuat,
- * sehingga dokumen tetap terbaca apa adanya walau produk, satuan, atau daftar harganya berubah kemudian.
- *
- * `JumlahTerkirim` diisi bertahap oleh surat jalan terposting; SO `Selesai` saat setiap baris terkirim penuh.
+ * Baris surat jalan grosir: jumlah yang benar-benar diserahkan, dengan harga & diskon disalin dari baris SO (diskon
+ * dialokasikan sebanding jumlah kirim) serta HPP hasil mutasi stok.
  *
  * @property int $Id
  * @property int $IdTenant
- * @property int $IdPesananGrosir
+ * @property int $IdSuratJalan
  * @property int $Urutan
+ * @property int $IdPesananGrosirDetail
  * @property int $IdProduk
  * @property string $NamaProduk
  * @property string|null $Sku
@@ -28,20 +27,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $SimbolSatuan
  * @property string $Konversi
  * @property string $Jumlah
- * @property string $JumlahTerkirim
+ * @property string $JumlahDasar
  * @property string $Harga
  * @property string $Diskon
  * @property string $Subtotal
  * @property bool|null $HargaTermasukPajak
  * @property int|null $IdKelompokPajak
+ * @property string $HppSatuan
+ * @property string $TotalHpp
  * @property-read Produk $Produk
- * @property-read PesananGrosir $PesananGrosir
+ * @property-read SuratJalan $SuratJalan
+ * @property-read PesananGrosirDetail $PesananGrosirDetail
  */
-final class PesananGrosirDetail extends ModelDasar
+final class SuratJalanDetail extends ModelDasar
 {
     use MilikTenant;
 
-    protected $table = 'PesananGrosirDetail';
+    protected $table = 'SuratJalanDetail';
 
     protected bool $pakaiUuid = false;
 
@@ -49,10 +51,11 @@ final class PesananGrosirDetail extends ModelDasar
     protected $attributes = [
         'Sku' => null,
         'IdProdukSatuan' => null,
-        'JumlahTerkirim' => '0.0000',
         'Diskon' => '0.00',
         'HargaTermasukPajak' => null,
         'IdKelompokPajak' => null,
+        'HppSatuan' => '0.000000',
+        'TotalHpp' => '0.00',
     ];
 
     public function AmbilJumlah(): Kuantitas
@@ -60,25 +63,14 @@ final class PesananGrosirDetail extends ModelDasar
         return Kuantitas::Dari($this->Jumlah);
     }
 
-    public function AmbilJumlahTerkirim(): Kuantitas
-    {
-        return Kuantitas::Dari($this->JumlahTerkirim);
-    }
-
-    /** Sisa yang belum diserahkan; nol berarti baris ini sudah terkirim penuh. */
-    public function AmbilSisaKirim(): Kuantitas
-    {
-        return $this->AmbilJumlah()->Kurangi($this->AmbilJumlahTerkirim());
-    }
-
     public function AmbilHarga(): Uang
     {
         return Uang::Dari($this->Harga);
     }
 
-    public function AmbilSubtotal(): Uang
+    public function AmbilDiskon(): Uang
     {
-        return Uang::Dari($this->Subtotal);
+        return Uang::Dari($this->Diskon);
     }
 
     /**
@@ -90,11 +82,19 @@ final class PesananGrosirDetail extends ModelDasar
     }
 
     /**
-     * @return BelongsTo<PesananGrosir, $this>
+     * @return BelongsTo<SuratJalan, $this>
      */
-    public function PesananGrosir(): BelongsTo
+    public function SuratJalan(): BelongsTo
     {
-        return $this->belongsTo(PesananGrosir::class, 'IdPesananGrosir', 'Id');
+        return $this->belongsTo(SuratJalan::class, 'IdSuratJalan', 'Id');
+    }
+
+    /**
+     * @return BelongsTo<PesananGrosirDetail, $this>
+     */
+    public function PesananGrosirDetail(): BelongsTo
+    {
+        return $this->belongsTo(PesananGrosirDetail::class, 'IdPesananGrosirDetail', 'Id');
     }
 
     /**
@@ -106,11 +106,13 @@ final class PesananGrosirDetail extends ModelDasar
             'Urutan' => 'integer',
             'Konversi' => 'decimal:4',
             'Jumlah' => 'decimal:4',
-            'JumlahTerkirim' => 'decimal:4',
+            'JumlahDasar' => 'decimal:4',
             'Harga' => 'decimal:2',
             'Diskon' => 'decimal:2',
             'Subtotal' => 'decimal:2',
             'HargaTermasukPajak' => 'boolean',
+            'HppSatuan' => 'decimal:6',
+            'TotalHpp' => 'decimal:2',
         ];
     }
 }

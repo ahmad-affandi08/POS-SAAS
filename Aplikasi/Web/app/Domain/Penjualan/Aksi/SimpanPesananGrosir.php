@@ -124,6 +124,7 @@ final class SimpanPesananGrosir
                     'Harga' => $satuBaris['HargaSatuan']->KeString(),
                     'Diskon' => $satuBaris['Diskon']->KeString(),
                     'Subtotal' => $satuBaris['HargaSatuan']->Kali($satuBaris['Jumlah']->KeString())->Kurangi($satuBaris['Diskon'])->KeString(),
+                    'HargaTermasukPajak' => $satuBaris['HargaTermasukPajak'],
                     'IdKelompokPajak' => $satuBaris['IdKelompokPajak'],
                 ]);
             }

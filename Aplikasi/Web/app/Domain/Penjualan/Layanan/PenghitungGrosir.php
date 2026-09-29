@@ -17,7 +17,9 @@ use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPotongan;
+use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
+use Carbon\CarbonImmutable;
 
 /**
  * Angka dokumen grosir (F-12, §9.7) dihitung dengan **mesin kalkulasi F-07a yang sama dengan kasir**, bukan rumus
@@ -45,15 +47,18 @@ final class PenghitungGrosir
 
     /**
      * @param  list<array{Jumlah: Kuantitas, HargaSatuan: Uang, Diskon: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null}>  $baris
+     * @param  CarbonImmutable|null  $tanggal  tanggal berlakunya tarif; null = tanggal bisnis outlet hari ini. Surat
+     *                                         jalan mengisinya dengan tanggal penyerahan, karena itulah saat PPN
+     *                                         terutang (UU PPN Pasal 11 ayat 1).
      */
-    public function Hitung(int $idOutlet, ?string $kodeKota, array $baris): HasilHitungGrosir
+    public function Hitung(int $idOutlet, ?string $kodeKota, array $baris, ?CarbonImmutable $tanggal = null): HasilHitungGrosir
     {
         if ($baris === []) {
             return new HasilHitungGrosir(Uang::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol());
         }
 
         $profil = $this->profilPajak->Ambil($idOutlet) ?? new DataProfilPajakOutlet(false, false, false, '0.00', false);
-        $tanggal = $this->tanggalBisnis->Hitung($idOutlet);
+        $tanggal ??= CarbonImmutable::parse($this->tanggalBisnis->Hitung($idOutlet)->format('Y-m-d'));
         $pajakKelompok = $this->kelompokPajak->AmbilJenisPajakPerKelompok(
             array_values(array_unique(array_filter(array_column($baris, 'IdKelompokPajak'), 'is_int'))),
         );
@@ -120,6 +125,7 @@ final class PenghitungGrosir
             tarifPpn: $ppn === null ? null : (string) $ppn->tarif,
             pengaliDppPembilang: $ppn?->pengaliDppPembilang,
             pengaliDppPenyebut: $ppn?->pengaliDppPenyebut,
+            rincianPajak: array_map(fn (HasilPajakKalkulasi $p): Uang => $p->jumlah, $hasil->pajak),
         );
     }
 

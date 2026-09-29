@@ -15,6 +15,9 @@ use App\Domain\Bersama\Nilai\Uang;
  */
 final readonly class HasilHitungGrosir
 {
+    /**
+     * @param  array<string, Uang>  $rincianPajak  kode jenis pajak → jumlah pajak dokumen (untuk baris jurnalnya)
+     */
     public function __construct(
         public Uang $subtotal,
         public Uang $diskon,
@@ -24,5 +27,6 @@ final readonly class HasilHitungGrosir
         public ?string $tarifPpn = null,
         public ?int $pengaliDppPembilang = null,
         public ?int $pengaliDppPenyebut = null,
+        public array $rincianPajak = [],
     ) {}
 }

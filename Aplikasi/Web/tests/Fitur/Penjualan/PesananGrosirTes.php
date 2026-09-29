@@ -21,6 +21,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
 use Tests\Pendukung\Katalog\BantuanHarga;
 use Tests\Pendukung\Katalog\BantuanKatalog;
+use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 /*
  * Grosir bagian 1 (F-12, §9.7, D-32): simpan draf, konfirmasi dengan BR-12.6 limit kredit, dan pembatalan.
@@ -34,6 +35,8 @@ use Tests\Pendukung\Katalog\BantuanKatalog;
 
 beforeEach(function (): void {
     Carbon::setTestNow('2026-09-27 03:00:00');
+    // Dokumen legal & pengaturan pendaftaran (BR-P06.2) harus ada sebelum tenant uji bisa didaftarkan.
+    BantuanPendaftaran::SiapkanPrasyarat();
     $this->t = BantuanKatalog::SiapkanTenantProduk('Grosir Sumber Pangan');
     $this->produk = BantuanKatalog::BuatProduk(
         ['Nama' => 'Gula Pasir Kemasan 1 kg', 'IdKelompokPajak' => $this->t['KelompokPajak']->Id],

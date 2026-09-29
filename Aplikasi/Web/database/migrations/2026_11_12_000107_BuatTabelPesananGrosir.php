@@ -80,6 +80,9 @@ return new class extends Migration
             $tabel->decimal('Diskon', 18, 2)->default(0);
             $tabel->decimal('Subtotal', 18, 2);
             // Pajak per baris mengikuti kelompok pajak produk, sama dengan kasir (inklusif/eksklusif).
+            // Snapshot inklusif/eksklusif pajak baris (null = ikut pengaturan outlet), supaya angka dokumen
+            // tidak bergeser bila pengaturan produk berubah setelah SO dibuat.
+            $tabel->boolean('HargaTermasukPajak')->nullable();
             $tabel->foreignId('IdKelompokPajak')->nullable()->constrained('KelompokPajak', 'Id', 'FkPesananGrosirDetailIdKelompokPajak')->nullOnDelete();
             $tabel->WaktuStandar();
             $tabel->index(['IdTenant', 'IdPesananGrosir', 'Urutan'], 'IdxPesananGrosirDetailIdTenantIdPesananUrutan');

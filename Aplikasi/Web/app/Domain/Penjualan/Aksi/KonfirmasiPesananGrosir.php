@@ -13,9 +13,11 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
+use App\Domain\Penjualan\Enum\StatusSuratJalan;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosirDetail;
+use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -28,17 +30,16 @@ use Illuminate\Support\Facades\DB;
  * bukan rumus kedua: satu tenant tidak boleh punya dua definisi "melebihi limit kredit". Bedanya hanya jumlah yang
  * diuji dan cara menyetujuinya:
  *
- * - **Jumlah yang diuji** = nilai SO ini + nilai baris SO lain yang sudah dikonfirmasi tetapi **belum terkirim**.
- *   Barang yang sudah terkirim tidak dihitung dua kali karena nilainya sudah pindah ke piutang (setelah difakturkan).
+ * - **Jumlah yang diuji** = nilai SO ini + nilai baris SO lain yang sudah dikonfirmasi tetapi **belum terkirim** +
+ *   nilai surat jalan yang **sudah diserahkan tetapi belum difakturkan**. Bucket ketiga itu penting: barang yang sudah
+ *   keluar gudang adalah uang toko yang sudah ada di tangan pembeli, tetapi `KreditPelanggan` baru melihatnya setelah
+ *   faktur terbit (piutang). Tanpa bucket ini, pembeli bisa menghabiskan limitnya dua kali dalam satu bulan hanya
+ *   karena fakturnya belum dibuat. Barang yang sudah difakturkan tidak dihitung lagi di sini — sudah jadi piutang.
  * - **Penyetujunya izin `grosir.setujui-kredit`**, bukan PIN kasir: SO dibuat di back-office oleh orang yang sudah
  *   masuk, jadi tidak ada gunanya meminta PIN lagi.
  *
  * Snapshot tarif PPN, pengali DPP, dan termin pelanggan diambil **di sini**, bukan saat draf dibuat, supaya angka
  * dokumen terikat pada saat kesepakatan dan tidak bergeser bila `TarifPajak` atau termin pelanggan berubah kemudian.
- *
- * Celah yang diketahui (ditutup di tahap berikutnya): barang yang sudah diserahkan tetapi **belum difakturkan**
- * bernilai di akun `PiutangBelumDifakturkan` dan belum ikut dihitung di paparan ini. Di bagian 1 belum ada surat jalan
- * sama sekali sehingga hasilnya masih tepat; begitu `SuratJalan` ada, bucket itu harus ditambahkan.
  */
 final class KonfirmasiPesananGrosir
 {
@@ -78,15 +79,18 @@ final class KonfirmasiPesananGrosir
                     'HargaSatuan' => $baris->AmbilHarga(),
                     'Diskon' => Uang::Dari($baris->Diskon),
                     'IdKelompokPajak' => $baris->IdKelompokPajak,
-                    // Harga baris sudah di-snapshot apa adanya; inklusif/eksklusif ikut pengaturan outlet.
-                    'HargaTermasukPajak' => null,
+                    // Snapshot inklusif/eksklusif baris (null = ikut pengaturan outlet): harus nilai yang sama dengan
+                    // saat draf dihitung, kalau tidak total konfirmasi bisa berbeda dari total yang dilihat pembeli.
+                    'HargaTermasukPajak' => $baris->HargaTermasukPajak,
                 ];
             }
 
             $hasil = $this->penghitung->Hitung($pesanan->IdOutlet, $pesanan->Outlet->KodeKota, $barisHitung);
 
             $hariIni = CarbonImmutable::parse($this->tanggalBisnis->Hitung($pesanan->IdOutlet)->toDateString());
-            $paparan = $hasil->total->Tambah($this->NilaiBelumTerkirimLain($pesanan));
+            $paparan = $hasil->total
+                ->Tambah($this->NilaiBelumTerkirimLain($pesanan))
+                ->Tambah($this->NilaiTerkirimBelumDifakturkan($pesanan->IdPelanggan));
             $alasanKredit = $this->kredit->Periksa(
                 $pesanan->IdPelanggan,
                 $paparan,
@@ -140,6 +144,25 @@ final class KonfirmasiPesananGrosir
 
             return $pesanan;
         });
+    }
+
+    /**
+     * Nilai surat jalan pelanggan ini yang sudah diserahkan tetapi belum masuk faktur penjualan — isi akun
+     * `PiutangBelumDifakturkan` untuk pelanggan itu (J-12.1 belum disusul J-12.2).
+     */
+    private function NilaiTerkirimBelumDifakturkan(int $idPelanggan): Uang
+    {
+        $nilai = Uang::Nol();
+
+        foreach (SuratJalan::query()
+            ->where('IdPelanggan', $idPelanggan)
+            ->where('Status', StatusSuratJalan::Diposting->value)
+            ->whereNull('IdFakturPenjualan')
+            ->get() as $suratJalan) {
+            $nilai = $nilai->Tambah($suratJalan->AmbilTotal());
+        }
+
+        return $nilai;
     }
 
     /**

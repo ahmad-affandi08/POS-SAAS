@@ -53,6 +53,9 @@ enum JenisSumberJurnal: string
     case OrderProduksi = 'OrderProduksi';
     // F-05f: bahan terbuang (J-05.4: Dr Susut & Barang Rusak, Cr persediaan) dan pembatalannya.
     case BahanTerbuang = 'BahanTerbuang';
+    // Grosir (F-12, §9.7): surat jalan (J-12.1: HPP + Piutang Belum Difakturkan / persediaan + penjualan + PPN
+    // keluaran) dan pembatalannya (J-12.3).
+    case SuratJalan = 'SuratJalan';
 
     public function AmbilLabel(): string
     {
@@ -83,6 +86,7 @@ enum JenisSumberJurnal: string
             self::MutasiSesi => 'Pengembalian/hangus paket sesi',
             self::OrderProduksi => 'Order produksi',
             self::BahanTerbuang => 'Bahan terbuang',
+            self::SuratJalan => 'Surat jalan grosir',
         };
     }
 
@@ -119,6 +123,8 @@ enum JenisSumberJurnal: string
             self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
             self::PemakaianSesi => '/kelola/pelanggan/pemakaian-sesi/'.$uuid,
             self::MutasiSesi => '/kelola/pelanggan/mutasi-sesi/'.$uuid,
+            // Grosir: halaman surat jalan back-office belum ada (bagian 1 baru lapisan domain).
+            self::SuratJalan => null,
         };
     }
 }
