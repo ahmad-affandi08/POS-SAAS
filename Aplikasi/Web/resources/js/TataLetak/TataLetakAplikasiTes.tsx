@@ -498,4 +498,27 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
 
         expect(screen.getByRole('region', { name: /^Notifikasi/ })).toBeTruthy();
     });
+
+    it('identitas usaha di bilah atas: logo dan nama usaha, nama tersembunyi di HP', () => {
+        propsHalaman = BuatProps(
+            {
+                Nama: 'Kopi Kenangan Senja',
+                TautanLogo: 'https://payou.test/storage/logo.png',
+            },
+            [],
+        );
+        const { container } = render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);
+
+        const tautanIdentitas = screen.getByRole('link', { name: /Kopi Kenangan Senja/ });
+        expect(tautanIdentitas.getAttribute('href')).toBe('/kelola');
+
+        // Teks nama usaha disembunyikan di HP (hidden sm:inline-block)
+        const teksNama = within(tautanIdentitas).getByText('Kopi Kenangan Senja');
+        expect(teksNama.className).toContain('hidden');
+        expect(teksNama.className).toContain('sm:inline-block');
+
+        // Logo usaha tampil di dalam avatar
+        const img = container.querySelector('header img[alt="Logo Kopi Kenangan Senja"]');
+        expect(img?.getAttribute('src')).toBe('https://payou.test/storage/logo.png');
+    });
 });

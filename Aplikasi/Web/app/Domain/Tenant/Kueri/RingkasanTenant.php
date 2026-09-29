@@ -13,7 +13,7 @@ final class RingkasanTenant
 {
     /**
      * @param  list<int>  $idTenant
-     * @return list<array{Id: int, Uuid: string, Nama: string, Slug: string}>
+     * @return list<array{Id: int, Uuid: string, Nama: string, Slug: string, PathLogo: string|null}>
      */
     public function Ambil(array $idTenant): array
     {
@@ -21,11 +21,17 @@ final class RingkasanTenant
             return [];
         }
 
-        return array_values(Tenant::query()->whereKey($idTenant)->orderBy('Nama')->get()->map(fn (Tenant $tenant): array => [
-            'Id' => $tenant->Id,
-            'Uuid' => $tenant->Uuid,
-            'Nama' => $tenant->Nama,
-            'Slug' => $tenant->Slug,
-        ])->all());
+        return array_values(Tenant::query()->whereKey($idTenant)->orderBy('Nama')->get()->map(function (Tenant $tenant): array {
+            $pengaturan = $tenant->Pengaturan ?? [];
+            $pathLogo = is_string($pengaturan['PathLogo'] ?? null) ? $pengaturan['PathLogo'] : null;
+
+            return [
+                'Id' => $tenant->Id,
+                'Uuid' => $tenant->Uuid,
+                'Nama' => $tenant->Nama,
+                'Slug' => $tenant->Slug,
+                'PathLogo' => $pathLogo,
+            ];
+        })->all());
     }
 }

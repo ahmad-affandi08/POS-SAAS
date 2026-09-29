@@ -13,7 +13,7 @@ import {
 import { Fragment, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
-import { Avatar, AvatarFallback } from '@/Komponen/Ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/Komponen/Ui/avatar';
 import { Badge } from '@/Komponen/Ui/badge';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -99,15 +99,28 @@ type PropsKepala = {
     gelap?: boolean;
     /** false bila pembungkusnya sudah sticky (misal bersama penanda lingkungan Pengelola). */
     lengket?: boolean;
+    /** Identitas usaha: logo dan nama usaha di bilah atas (di HP hanya logo). */
+    identitasUsaha?: {
+        nama: string;
+        tautanLogo?: string | null | undefined;
+    } | null;
     children?: ReactNode;
 };
 
-/** Bilah atas di samping bilah menu: tombol buka/tutup menu, remah roti, lalu menu akun. */
-export function KepalaTataLetak({ induk, judul, gelap = false, lengket = true, remah = true, children }: PropsKepala) {
+/** Bilah atas di samping bilah menu: tombol buka/tutup menu, logo & nama usaha, remah roti, lalu menu akun. */
+export function KepalaTataLetak({
+    induk,
+    judul,
+    gelap = false,
+    lengket = true,
+    remah = true,
+    identitasUsaha,
+    children,
+}: PropsKepala) {
     return (
         <header
             className={cn(
-                'flex min-h-14 flex-wrap items-center gap-2 border-b px-4 py-2',
+                'flex min-h-14 items-center gap-2 border-b px-3 sm:px-4 py-2',
                 lengket && 'sticky top-0 z-10',
                 gelap ? 'border-teks-utama bg-teks-utama text-permukaan' : 'border-garis bg-permukaan',
             )}
@@ -115,12 +128,38 @@ export function KepalaTataLetak({ induk, judul, gelap = false, lengket = true, r
             <SidebarTrigger
                 aria-label="Buka atau tutup menu samping"
                 title="Buka atau tutup menu samping (Ctrl+B)"
-                className={cn('-ml-1 size-9', gelap && 'hover:bg-permukaan/15 hover:text-permukaan')}
+                className={cn('-ml-1 size-9 shrink-0', gelap && 'hover:bg-permukaan/15 hover:text-permukaan')}
             />
             <Separator
                 orientation="vertical"
-                className={cn('mr-1 data-[orientation=vertical]:h-5', gelap ? 'bg-permukaan/40' : 'bg-garis')}
+                className={cn('mr-1 data-[orientation=vertical]:h-5 shrink-0', gelap ? 'bg-permukaan/40' : 'bg-garis')}
             />
+
+            {identitasUsaha ? (
+                <Link
+                    href="/kelola"
+                    className="flex items-center gap-2.5 min-w-0 hover:opacity-85 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand rounded-md p-1 -ml-1 shrink-0 max-w-[45%] sm:max-w-xs"
+                    title={identitasUsaha.nama}
+                >
+                    <span className="size-8 shrink-0 rounded-lg border border-garis bg-permukaan overflow-hidden flex items-center justify-center">
+                        {identitasUsaha.tautanLogo ? (
+                            <img
+                                src={identitasUsaha.tautanLogo}
+                                alt={`Logo ${identitasUsaha.nama}`}
+                                className="size-full object-contain p-0.5"
+                            />
+                        ) : (
+                            <span className="flex size-full items-center justify-center rounded-lg bg-brand-lembut text-brand font-bold text-xs uppercase">
+                                {AmbilInisial(identitasUsaha.nama)}
+                            </span>
+                        )}
+                    </span>
+                    <span className="hidden sm:inline-block truncate font-semibold text-label text-teks-utama">
+                        {identitasUsaha.nama}
+                    </span>
+                </Link>
+            ) : null}
+
             {remah ? (
                 <Breadcrumb aria-label="Remah roti" className="min-w-0 flex-1">
                     <BreadcrumbList className={cn('text-label', gelap ? 'text-permukaan/80' : 'text-teks-sekunder')}>
@@ -291,11 +330,19 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                 <DropdownMenuLabel className="p-2">
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar size="default" className="size-9 shrink-0">
-                                <AvatarFallback className="bg-brand-lembut text-label font-bold text-brand">
-                                    {AmbilInisial(tenant?.Nama ?? nama)}
-                                </AvatarFallback>
-                            </Avatar>
+                            <span className="size-9 shrink-0 rounded-lg overflow-hidden border border-garis bg-permukaan flex items-center justify-center">
+                                {tenant?.TautanLogo ? (
+                                    <img
+                                        src={tenant.TautanLogo}
+                                        alt={`Logo ${tenant.Nama}`}
+                                        className="size-full object-contain p-0.5"
+                                    />
+                                ) : (
+                                    <span className="flex size-full items-center justify-center rounded-lg bg-brand-lembut text-label font-bold text-brand">
+                                        {AmbilInisial(tenant?.Nama ?? nama)}
+                                    </span>
+                                )}
+                            </span>
                             <div className="flex flex-col min-w-0">
                                 <span className="truncate text-label font-bold text-teks-utama">
                                     {tenant?.Nama ?? nama}

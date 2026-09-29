@@ -19,6 +19,7 @@ export type TenantAktif = {
     KodePelanggan?: string;
     Nama: string;
     Slug?: string;
+    TautanLogo?: string | null;
     NamaPaket?: string;
     KodePaket?: string;
     StatusLangganan: StatusLanggananTenant | null;

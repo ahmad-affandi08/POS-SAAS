@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-C33xwjU7.js";import{t}from"./NavigasiTab-jn5L-vJ5.js";var n=e(),r=[{label:`Paket`,href:`/katalog/paket`},{label:`Add-on`,href:`/katalog/add-on`},{label:`Kupon`,href:`/katalog/kupon`},{label:`Fitur`,href:`/katalog/fitur`}];function i(){return(0,n.jsx)(t,{label:`Katalog`,daftarTab:r})}export{i as t};

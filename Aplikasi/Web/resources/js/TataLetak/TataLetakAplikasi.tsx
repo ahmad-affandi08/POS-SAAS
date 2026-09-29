@@ -747,7 +747,19 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
             </Sidebar>
             <div data-slot="sidebar-inset" className="relative flex w-full min-w-0 flex-1 flex-col bg-latar">
                 {/* D-27: remah roti pindah dari kepala ke atas judul halaman sebagai `JejakHalaman`. */}
-                <KepalaTataLetak induk={namaInduk} judul={judul} remah={false}>
+                <KepalaTataLetak
+                    induk={namaInduk}
+                    judul={judul}
+                    remah={false}
+                    identitasUsaha={
+                        tenantAktif
+                            ? {
+                                  nama: tenantAktif.Nama,
+                                  tautanLogo: tenantAktif.TautanLogo,
+                              }
+                            : null
+                    }
+                >
                     <PencarianCepat halaman={pencarian.halaman} sumber={pencarian.sumber} />
                     <MenuAkun
                         nama={props.Pengguna?.Nama}

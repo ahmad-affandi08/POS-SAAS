@@ -66,12 +66,17 @@ final class BagikanDataInertia extends Middleware
                 }
 
                 $langganan = $this->ringkasanLangganan->Ambil($tenant['Id']);
+                $pathLogo = $tenant['PathLogo'] ?? null;
+                $tautanLogo = $pathLogo !== null
+                    ? route('kelola.pengaturan.profil-usaha.logo', ['v' => substr(hash('sha256', (string) $pathLogo), 0, 12)])
+                    : null;
 
                 return [
                     'Id' => $tenant['Id'],
                     'KodePelanggan' => sprintf('#%07d', $tenant['Id']),
                     'Nama' => $tenant['Nama'],
                     'Slug' => $tenant['Slug'],
+                    'TautanLogo' => $tautanLogo,
                     'NamaPaket' => $langganan['NamaPaket'] ?? 'Dasar',
                     'KodePaket' => $langganan['KodePaket'] ?? '',
                     'StatusLangganan' => $langganan === null ? null : $langganan['Status']->value,
