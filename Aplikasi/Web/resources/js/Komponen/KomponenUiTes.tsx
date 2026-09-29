@@ -34,7 +34,8 @@ describe('komponen shadcn/ui', () => {
     });
 
     it('sakelar (Switch) menampilkan teks ON saat aktif dan OFF saat tidak aktif', () => {
-        const { rerender } = render(<Switch checked={true} aria-label="Saklar aktif" />);
+        // Alias PascalCase: aturan penamaan ESLint proyek ini berlaku juga untuk hasil destructuring.
+        const { rerender: RenderUlang } = render(<Switch checked={true} aria-label="Saklar aktif" />);
         const teksOn = screen.getByText('ON');
         const teksOff = screen.getByText('OFF');
 
@@ -47,7 +48,7 @@ describe('komponen shadcn/ui', () => {
         expect(teksOn.className).toContain('left-0.5');
         expect(teksOff.className).toContain('right-0.5');
 
-        rerender(<Switch checked={false} aria-label="Saklar nonaktif" />);
+        RenderUlang(<Switch checked={false} aria-label="Saklar nonaktif" />);
         expect(screen.getByRole('switch', { name: 'Saklar nonaktif' })).toBeTruthy();
     });
 
