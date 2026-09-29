@@ -168,7 +168,7 @@ final class KirimPesananGrosir
                 'JumlahDasar' => $satuBaris['JumlahDasar']->KeString(),
                 'Harga' => $satuBaris['Harga']->KeString(),
                 'Diskon' => $satuBaris['Diskon']->KeString(),
-                'Subtotal' => $satuBaris['Harga']->Kali($satuBaris['Jumlah']->KeString())->Kurangi($satuBaris['Diskon'])->KeString(),
+                'Subtotal' => $satuBaris['Harga']->Kali($satuBaris['Jumlah']->KeString())->KeString(),
                 'HargaTermasukPajak' => $satuBaris['HargaTermasukPajak'],
                 'IdKelompokPajak' => $satuBaris['IdKelompokPajak'],
             ]);

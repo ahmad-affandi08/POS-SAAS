@@ -15,6 +15,7 @@ import {
 } from '@/Komponen/Grosir/BagianDokumenGrosir';
 import Panel from '@/Komponen/Kelola/Panel';
 import { Button } from '@/Komponen/Ui/button';
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -55,7 +56,7 @@ export default function HalamanDetailFakturGrosir({
     return (
         <TataLetakAplikasi judul={`Faktur ${Faktur.Nomor}`}>
             <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-judul font-semibold break-all text-teks-utama">{Faktur.Nomor}</h1>
+                <JudulHalaman className="break-all">{Faktur.Nomor}</JudulHalaman>
                 <LabelStatusGrosir status={Faktur.Status} label={Faktur.LabelStatus} />
             </div>
 

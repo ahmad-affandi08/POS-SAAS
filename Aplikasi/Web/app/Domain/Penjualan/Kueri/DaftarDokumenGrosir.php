@@ -50,7 +50,7 @@ final class DaftarDokumenGrosir
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
-            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris));
+            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris->pluck('IdOutlet')->all()));
 
             return array_values($baris->map(fn (PesananGrosir $d): array => [
                 'Uuid' => $d->Uuid,
@@ -81,7 +81,7 @@ final class DaftarDokumenGrosir
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
-            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris));
+            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris->pluck('IdOutlet')->all()));
             $pesanan = PesananGrosir::query()->whereIn('Id', $baris->pluck('IdPesananGrosir')->all())->pluck('Nomor', 'Id');
             $faktur = FakturPenjualan::query()->whereIn('Id', $baris->pluck('IdFakturPenjualan')->filter()->all())->pluck('Nomor', 'Id');
 
@@ -111,7 +111,7 @@ final class DaftarDokumenGrosir
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total', 'JatuhTempo' => 'JatuhTempo'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
-            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris));
+            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris->pluck('IdOutlet')->all()));
             // Sisa tagihan adalah milik `Piutang` (BR-12.5); faktur tidak menyimpan salinannya.
             $piutang = $this->piutang->AmbilPiutangBanyakFaktur($baris->pluck('Id')->all());
 
@@ -135,12 +135,15 @@ final class DaftarDokumenGrosir
     }
 
     /**
-     * @param  Collection<int, Model>  $baris
+     * `Collection` PHPStan tidak kovarian atas TValue, jadi yang diterima di sini larik hasil `pluck`, bukan koleksi
+     * modelnya — supaya satu pembantu ini bisa dipakai ketiga daftar tanpa cast.
+     *
+     * @param  array<mixed>  $idOutlet
      * @return list<int>
      */
-    private function IdOutlet(Collection $baris): array
+    private function IdOutlet(array $idOutlet): array
     {
-        return array_values(array_unique(array_filter($baris->pluck('IdOutlet')->all(), 'is_int')));
+        return array_values(array_unique(array_filter($idOutlet, 'is_int')));
     }
 
     /**

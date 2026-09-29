@@ -73,8 +73,8 @@ final class BuatFakturPenjualan
             throw new PelanggaranAturanBisnis('SuratJalanTidakDitemukan', 'Ada surat jalan yang tidak ditemukan.', 'SuratJalan');
         }
 
-        $pertama = $suratJalan->first();
-        assert($pertama instanceof SuratJalan);
+        $pertama = $suratJalan->first()
+            ?? throw new PelanggaranAturanBisnis('SuratJalanTidakDitemukan', 'Ada surat jalan yang tidak ditemukan.', 'SuratJalan');
         $periode = $pertama->Tanggal->format('Y-m');
 
         foreach ($suratJalan as $sj) {

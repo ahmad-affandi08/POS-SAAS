@@ -280,14 +280,14 @@ describe('BatalkanPesananGrosir', function (): void {
         $galat = null;
 
         try {
-            app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, $this->t['Pemilik']->Id, 'x');
+            app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, 'x', $this->t['Pemilik']->Id);
         } catch (PelanggaranAturanBisnis $e) {
             $galat = $e;
         }
 
         expect($galat?->kode)->toBe('AlasanBatalWajib');
 
-        $hasil = app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, $this->t['Pemilik']->Id, 'Pembeli membatalkan pesanan');
+        $hasil = app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, 'Pembeli membatalkan pesanan', $this->t['Pemilik']->Id);
 
         expect($hasil->Status)->toBe(StatusPesananGrosir::Dibatalkan)
             ->and($hasil->AlasanBatal)->toBe('Pembeli membatalkan pesanan');
@@ -303,12 +303,12 @@ describe('BatalkanPesananGrosir', function (): void {
 
     it('pesanan yang sudah dibatalkan tidak bisa dibatalkan lagi', function (): void {
         $pesanan = SimpanGrosirUji($this, [['UuidProduk' => $this->produk->Uuid, 'Uuid' => $this->satuan->Uuid, 'Jumlah' => '10']]);
-        app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, $this->t['Pemilik']->Id, 'Salah input pelanggan');
+        app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, 'Salah input pelanggan', $this->t['Pemilik']->Id);
 
         $galat = null;
 
         try {
-            app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, $this->t['Pemilik']->Id, 'Salah input pelanggan');
+            app(BatalkanPesananGrosir::class)->Jalankan($pesanan->Uuid, 'Salah input pelanggan', $this->t['Pemilik']->Id);
         } catch (PelanggaranAturanBisnis $e) {
             $galat = $e;
         }
@@ -318,7 +318,7 @@ describe('BatalkanPesananGrosir', function (): void {
 
     it('nomor yang sudah terpakai tidak didaur ulang setelah pembatalan', function (): void {
         $batal = SimpanGrosirUji($this, [['UuidProduk' => $this->produk->Uuid, 'Uuid' => $this->satuan->Uuid, 'Jumlah' => '10']]);
-        app(BatalkanPesananGrosir::class)->Jalankan($batal->Uuid, $this->t['Pemilik']->Id, 'Salah input pelanggan');
+        app(BatalkanPesananGrosir::class)->Jalankan($batal->Uuid, 'Salah input pelanggan', $this->t['Pemilik']->Id);
 
         $berikutnya = SimpanGrosirUji($this, [['UuidProduk' => $this->produk->Uuid, 'Uuid' => $this->satuan->Uuid, 'Jumlah' => '10']]);
 

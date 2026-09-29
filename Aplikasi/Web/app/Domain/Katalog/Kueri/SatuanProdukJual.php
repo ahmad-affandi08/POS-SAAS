@@ -45,7 +45,7 @@ final class SatuanProdukJual
         foreach ($hasil as $id => $daftar) {
             usort($daftar, fn (array $x, array $y): int => ($y['DefaultJual'] <=> $x['DefaultJual'])
                 ?: (BigDecimal::of($y['Konversi'])->compareTo(BigDecimal::of($x['Konversi'])) ?: $x['Id'] <=> $y['Id']));
-            $hasil[$id] = array_values($daftar);
+            $hasil[$id] = $daftar;
         }
 
         return $hasil;

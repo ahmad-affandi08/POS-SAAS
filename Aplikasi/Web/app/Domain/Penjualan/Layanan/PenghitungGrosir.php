@@ -114,11 +114,20 @@ final class PenghitungGrosir
         ));
         $ppn = $this->CariPpn($pajakDokumen);
 
+        // `MesinKalkulasi::subtotal` sudah BERSIH dari diskon baris. Dokumen grosir menampilkan Subtotal kotor lalu
+        // Diskon sebagai baris tersendiri (bentuk faktur Indonesia), jadi yang disimpan Σ bruto baris — kalau nilai
+        // bersih itu yang dipakai, diskonnya terbaca dua kali di dokumen dan jurnalnya tidak seimbang.
+        $subtotalKotor = Uang::Nol();
+
+        foreach ($hasil->baris as $satuHasil) {
+            $subtotalKotor = $subtotalKotor->Tambah($satuHasil->bruto);
+        }
+
         return new HasilHitungGrosir(
-            subtotal: $hasil->subtotal,
+            subtotal: $subtotalKotor,
             diskon: $hasil->totalDiskon,
-            // DPP = subtotal setelah diskon, dikurangi pajak yang sudah termasuk harga bila harga inklusif.
-            dasarPengenaanPajak: $hasil->subtotal->Kurangi($hasil->totalDiskon)
+            // DPP = subtotal kotor − diskon, dikurangi pajak yang sudah termasuk harga bila harga inklusif.
+            dasarPengenaanPajak: $subtotalKotor->Kurangi($hasil->totalDiskon)
                 ->Kurangi($hasil->totalPajak->Kurangi($hasil->totalPajakEksklusif)),
             pajak: $hasil->totalPajak,
             total: $hasil->totalAkhir,

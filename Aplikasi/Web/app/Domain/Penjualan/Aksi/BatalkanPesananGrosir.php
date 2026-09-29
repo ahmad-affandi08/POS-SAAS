@@ -31,7 +31,7 @@ final class BatalkanPesananGrosir
         private readonly PencatatAudit $audit,
     ) {}
 
-    public function Jalankan(string $uuidPesanan, int $idPengguna, string $alasan): PesananGrosir
+    public function Jalankan(string $uuidPesanan, string $alasan, int $idPengguna): PesananGrosir
     {
         $alasanBersih = trim($alasan);
 

@@ -10,11 +10,13 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Aksi\BatalkanSuratJalan;
+use App\Domain\Penjualan\Aksi\BuatFakturPenjualan;
 use App\Domain\Penjualan\Aksi\KirimPesananGrosir;
 use App\Domain\Penjualan\Aksi\KonfirmasiPesananGrosir;
 use App\Domain\Penjualan\Aksi\SimpanPesananGrosir;
 use App\Domain\Penjualan\Data\DataBarisPesananGrosir;
 use App\Domain\Penjualan\Data\DataBarisSuratJalan;
+use App\Domain\Penjualan\Data\DataFakturPenjualan;
 use App\Domain\Penjualan\Data\DataPesananGrosir;
 use App\Domain\Penjualan\Data\DataSuratJalan;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
@@ -308,9 +310,10 @@ describe('BatalkanSuratJalan (J-12.3)', function (): void {
             ->and(RiwayatStatusDokumen::query()->where('JenisDokumen', SuratJalan::JENIS_DOKUMEN)->where('IdDokumen', $suratJalan->Id)->count())->toBe(1);
 
         $lain = KirimUji($this, $pesanan->refresh(), [[1, '100']]);
-        // Sampai faktur penjualan ada (tahap berikutnya), penautannya ditiru langsung di kolomnya.
-        $lain->IdFakturPenjualan = 12345;
-        $lain->save();
+        app(BuatFakturPenjualan::class)->Jalankan(
+            new DataFakturPenjualan([$lain->Uuid], CarbonImmutable::parse('2026-09-27')),
+            $this->k['Pemilik']->Id,
+        );
 
         try {
             app(BatalkanSuratJalan::class)->Jalankan($lain->Uuid, 'Pembeli membatalkan pesanan', $this->k['Pemilik']->Id);

@@ -15,6 +15,7 @@ import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
+import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
@@ -106,7 +107,7 @@ export default function HalamanDetailPesananGrosir({
     return (
         <TataLetakAplikasi judul={`Pesanan grosir ${Pesanan.Nomor}`}>
             <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-judul font-semibold break-all text-teks-utama">{Pesanan.Nomor}</h1>
+                <JudulHalaman className="break-all">{Pesanan.Nomor}</JudulHalaman>
                 <LabelStatusGrosir status={Pesanan.Status} label={Pesanan.LabelStatus} />
             </div>
 

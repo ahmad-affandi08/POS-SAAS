@@ -123,7 +123,8 @@ final class SimpanPesananGrosir
                     'Jumlah' => $satuBaris['Jumlah']->KeString(),
                     'Harga' => $satuBaris['HargaSatuan']->KeString(),
                     'Diskon' => $satuBaris['Diskon']->KeString(),
-                    'Subtotal' => $satuBaris['HargaSatuan']->Kali($satuBaris['Jumlah']->KeString())->Kurangi($satuBaris['Diskon'])->KeString(),
+                    // Kotor; diskonnya kolom tersendiri, supaya Σ baris = Subtotal dokumen dan Σ diskon = Diskon dokumen.
+                    'Subtotal' => $satuBaris['HargaSatuan']->Kali($satuBaris['Jumlah']->KeString())->KeString(),
                     'HargaTermasukPajak' => $satuBaris['HargaTermasukPajak'],
                     'IdKelompokPajak' => $satuBaris['IdKelompokPajak'],
                 ]);
