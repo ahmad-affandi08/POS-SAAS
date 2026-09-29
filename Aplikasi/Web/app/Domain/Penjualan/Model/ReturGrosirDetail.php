@@ -9,26 +9,29 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Katalog\Model\Produk;
+use App\Domain\Penjualan\Enum\KondisiBarangRetur;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Baris surat jalan grosir: jumlah yang benar-benar diserahkan, dengan harga & diskon disalin dari baris SO (diskon
- * dialokasikan sebanding jumlah kirim) serta HPP hasil mutasi stok.
+ * Baris retur grosir: berapa yang dikembalikan dari satu baris surat jalan, dalam kondisi apa, dan ke lokasi stok mana.
+ *
+ * Harga, diskon, dan HPP disalin dari baris surat jalan — yang dibalik adalah penyerahan yang sudah terjadi, jadi
+ * nilainya harus nilai saat itu, bukan harga atau HPP hari ini.
  *
  * @property int $Id
  * @property int $IdTenant
- * @property int $IdSuratJalan
+ * @property int $IdReturGrosir
  * @property int $Urutan
- * @property int $IdPesananGrosirDetail
+ * @property int $IdSuratJalanDetail
  * @property int $IdProduk
  * @property string $NamaProduk
  * @property string|null $Sku
- * @property int|null $IdProdukSatuan
  * @property string $SimbolSatuan
  * @property string $Konversi
  * @property string $Jumlah
- * @property string $JumlahDiretur
  * @property string $JumlahDasar
+ * @property KondisiBarangRetur $Kondisi
+ * @property int $IdGudang
  * @property string $Harga
  * @property string $Diskon
  * @property string $Subtotal
@@ -37,22 +40,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $HppSatuan
  * @property string $TotalHpp
  * @property-read Produk $Produk
- * @property-read SuratJalan $SuratJalan
- * @property-read PesananGrosirDetail $PesananGrosirDetail
+ * @property-read ReturGrosir $ReturGrosir
+ * @property-read SuratJalanDetail $SuratJalanDetail
  */
-final class SuratJalanDetail extends ModelDasar
+final class ReturGrosirDetail extends ModelDasar
 {
     use MilikTenant;
 
-    protected $table = 'SuratJalanDetail';
+    protected $table = 'ReturGrosirDetail';
 
     protected bool $pakaiUuid = false;
 
     /** @var array<string, mixed> */
     protected $attributes = [
         'Sku' => null,
-        'IdProdukSatuan' => null,
-        'JumlahDiretur' => '0.0000',
         'Diskon' => '0.00',
         'HargaTermasukPajak' => null,
         'IdKelompokPajak' => null,
@@ -65,15 +66,9 @@ final class SuratJalanDetail extends ModelDasar
         return Kuantitas::Dari($this->Jumlah);
     }
 
-    public function AmbilJumlahDiretur(): Kuantitas
+    public function AmbilJumlahDasar(): Kuantitas
     {
-        return Kuantitas::Dari($this->JumlahDiretur);
-    }
-
-    /** Sisa yang masih bisa diretur; nol berarti baris ini sudah diretur penuh (BR-12.7). */
-    public function AmbilSisaRetur(): Kuantitas
-    {
-        return $this->AmbilJumlah()->Kurangi($this->AmbilJumlahDiretur());
+        return Kuantitas::Dari($this->JumlahDasar);
     }
 
     public function AmbilHarga(): Uang
@@ -95,19 +90,19 @@ final class SuratJalanDetail extends ModelDasar
     }
 
     /**
-     * @return BelongsTo<SuratJalan, $this>
+     * @return BelongsTo<ReturGrosir, $this>
      */
-    public function SuratJalan(): BelongsTo
+    public function ReturGrosir(): BelongsTo
     {
-        return $this->belongsTo(SuratJalan::class, 'IdSuratJalan', 'Id');
+        return $this->belongsTo(ReturGrosir::class, 'IdReturGrosir', 'Id');
     }
 
     /**
-     * @return BelongsTo<PesananGrosirDetail, $this>
+     * @return BelongsTo<SuratJalanDetail, $this>
      */
-    public function PesananGrosirDetail(): BelongsTo
+    public function SuratJalanDetail(): BelongsTo
     {
-        return $this->belongsTo(PesananGrosirDetail::class, 'IdPesananGrosirDetail', 'Id');
+        return $this->belongsTo(SuratJalanDetail::class, 'IdSuratJalanDetail', 'Id');
     }
 
     /**
@@ -119,8 +114,8 @@ final class SuratJalanDetail extends ModelDasar
             'Urutan' => 'integer',
             'Konversi' => 'decimal:4',
             'Jumlah' => 'decimal:4',
-            'JumlahDiretur' => 'decimal:4',
             'JumlahDasar' => 'decimal:4',
+            'Kondisi' => KondisiBarangRetur::class,
             'Harga' => 'decimal:2',
             'Diskon' => 'decimal:2',
             'Subtotal' => 'decimal:2',

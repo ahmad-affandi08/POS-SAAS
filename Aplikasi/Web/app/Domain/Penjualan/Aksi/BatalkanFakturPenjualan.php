@@ -11,7 +11,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\SuratJalan;
@@ -68,7 +68,7 @@ final class BatalkanFakturPenjualan
         $faktur = FakturPenjualan::query()->where('Uuid', $uuid)->lockForUpdate()->first()
             ?? throw new PelanggaranAturanBisnis('FakturTidakDitemukan', 'Faktur penjualan tidak ditemukan.');
 
-        if ($faktur->Status === StatusFakturPenjualan::Dibatalkan) {
+        if ($faktur->Status === StatusDokumenGrosir::Dibatalkan) {
             return $faktur;
         }
 
@@ -102,7 +102,7 @@ final class BatalkanFakturPenjualan
             $sj->save();
         }
 
-        $faktur->UbahStatus(StatusFakturPenjualan::Dibatalkan);
+        $faktur->UbahStatus(StatusDokumenGrosir::Dibatalkan);
         $faktur->fill([
             'IdJurnalPembatalan' => $jurnal->idJurnal,
             'AlasanBatal' => $alasan,
@@ -114,13 +114,13 @@ final class BatalkanFakturPenjualan
         $this->riwayat->Catat(
             FakturPenjualan::JENIS_DOKUMEN,
             $faktur->Id,
-            StatusFakturPenjualan::Diposting->value,
-            StatusFakturPenjualan::Dibatalkan->value,
+            StatusDokumenGrosir::Diposting->value,
+            StatusDokumenGrosir::Dibatalkan->value,
             $idPengguna,
             $alasan,
         );
-        $this->audit->Catat('grosir.faktur-batalkan', $faktur, nilaiLama: ['Status' => StatusFakturPenjualan::Diposting->value], nilaiBaru: [
-            'Status' => StatusFakturPenjualan::Dibatalkan->value,
+        $this->audit->Catat('grosir.faktur-batalkan', $faktur, nilaiLama: ['Status' => StatusDokumenGrosir::Diposting->value], nilaiBaru: [
+            'Status' => StatusDokumenGrosir::Dibatalkan->value,
             'Nomor' => $faktur->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal->nomor,

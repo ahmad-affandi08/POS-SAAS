@@ -14,7 +14,7 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Data\DataFakturPenjualan;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenomorGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
@@ -170,7 +170,7 @@ final class BuatFakturPenjualan
 
     private function PastikanBisaDifakturkan(SuratJalan $sj, SuratJalan $pertama, string $periode): void
     {
-        if ($sj->Status !== StatusSuratJalan::Diposting) {
+        if ($sj->Status !== StatusDokumenGrosir::Diposting) {
             throw new PelanggaranAturanBisnis('SuratJalanTidakAktif', "Surat jalan {$sj->Nomor} sudah dibatalkan.", 'SuratJalan');
         }
 

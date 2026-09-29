@@ -20,7 +20,7 @@ use App\Domain\Penjualan\Data\DataBarisSuratJalan;
 use App\Domain\Penjualan\Data\DataFakturPenjualan;
 use App\Domain\Penjualan\Data\DataPesananGrosir;
 use App\Domain\Penjualan\Data\DataSuratJalan;
-use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\SuratJalan;
 use Carbon\CarbonImmutable;
@@ -118,7 +118,7 @@ describe('BuatFakturPenjualan (BR-12.4, J-12.2)', function (): void {
 
         $kode = mb_strtoupper($this->k['Outlet']->Kode);
         expect($faktur->Nomor)->toBe("FJ/{$kode}/2609/0001")
-            ->and($faktur->Status)->toBe(StatusFakturPenjualan::Diposting)
+            ->and($faktur->Status)->toBe(StatusDokumenGrosir::Diposting)
             ->and($faktur->Total)->toBe('3000000.00')
             ->and($faktur->PeriodePenyerahan)->toBe('2026-09')
             ->and($faktur->NomorFakturPajak)->toBe('0100002512345678')
@@ -221,7 +221,7 @@ describe('BatalkanFakturPenjualan', function (): void {
 
         $dibatalkan = app(BatalkanFakturPenjualan::class)->Jalankan($faktur->Uuid, 'Salah pelanggan di fakturnya', $this->k['Pemilik']->Id);
 
-        expect($dibatalkan->Status)->toBe(StatusFakturPenjualan::Dibatalkan)
+        expect($dibatalkan->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
             ->and($dibatalkan->IdJurnalPembatalan)->not->toBeNull();
 
         $idPembalik = (int) $dibatalkan->IdJurnalPembatalan;
@@ -272,7 +272,7 @@ describe('BatalkanFakturPenjualan', function (): void {
         app(BatalkanFakturPenjualan::class)->Jalankan($faktur->Uuid, 'Pembeli minta faktur diganti', $this->k['Pemilik']->Id);
         $ulang = app(BatalkanFakturPenjualan::class)->Jalankan($faktur->Uuid, 'Pembeli minta faktur diganti', $this->k['Pemilik']->Id);
 
-        expect($ulang->Status)->toBe(StatusFakturPenjualan::Dibatalkan)
+        expect($ulang->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
             ->and(BarisJurnalFakturUji((int) $ulang->IdJurnalPembatalan, PeranAkun::PiutangUsaha))->toBe(['Debit' => '0.00', 'Kredit' => '3000000.00']);
     });
 });

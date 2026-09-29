@@ -25,6 +25,11 @@ use App\Domain\Bersama\Nilai\Uang;
  * sebesar total faktur. Tidak ada pendapatan maupun PPN yang bergerak lagi, karena keduanya sudah diakui di penyerahan;
  * itulah yang membuat faktur **tidak bisa menggandakan pendapatan**, betapa pun sering ditagihkan ulang.
  *
+ * **J-12.4 retur grosir** — cermin J-12.1 yang dibalik sebagian, dengan dua beda yang disengaja: pendapatan yang
+ * dibalik masuk akun kontra `ReturPenjualan` (bukan mengurangi `Penjualan`, supaya retur terlihat di laporan alih-alih
+ * menghilang dari omzet), dan lawan kreditnya `PiutangUsaha` bila surat jalannya sudah difakturkan — itulah nota
+ * kreditnya — atau `PiutangBelumDifakturkan` bila belum.
+ *
  * **J-12.3 pembatalan** = seluruh baris J-12.1 dengan sisi terbalik (`pembalik: true`); perubahan persediaan tidak
  * dibalik di sini karena hasil mutasi pembalik sudah bertanda benar (stok masuk kembali).
  *
@@ -49,6 +54,54 @@ final class PenyusunJurnalGrosir
             DataBarisJurnal::DariSelisih(PeranAkun::PiutangUsaha, $arah($total), $idOutlet),
             DataBarisJurnal::DariSelisih(PeranAkun::PiutangBelumDifakturkan, $arah(Uang::Nol()->Kurangi($total)), $idOutlet),
         ];
+
+        return array_values(array_filter($baris, fn (?DataBarisJurnal $b): bool => $b !== null));
+    }
+
+    /**
+     * J-12.4: retur grosir (`pembalik` = saat returnya dibatalkan).
+     *
+     * `mengurangiPiutang` true = tagihannya sudah terbit, jadi yang berkurang `PiutangUsaha` beserta baris `Piutang`
+     * fakturnya; false = surat jalannya belum difakturkan, jadi yang berkurang `PiutangBelumDifakturkan`.
+     *
+     * @param  array<string, Uang>  $pajak  kode jenis pajak → pajak bagian retur
+     * @param  array<string, Uang>  $perubahanPersediaan  nilai `PeranAkun` persediaan → Σ TotalHpp mutasi (bertanda, masuk positif)
+     * @return list<DataBarisJurnal>
+     */
+    public function BarisReturGrosir(
+        Uang $total,
+        Uang $diskon,
+        Uang $pendapatan,
+        array $pajak,
+        array $perubahanPersediaan,
+        ?int $idOutlet,
+        bool $mengurangiPiutang,
+        bool $pembalik = false,
+    ): array {
+        $arah = fn (Uang $nilai): Uang => $pembalik ? Uang::Nol()->Kurangi($nilai) : $nilai;
+        $baris = [
+            DataBarisJurnal::DariSelisih(PeranAkun::ReturPenjualan, $arah($pendapatan), $idOutlet),
+            DataBarisJurnal::DariSelisih(PeranAkun::DiskonPenjualan, $arah(Uang::Nol()->Kurangi($diskon)), $idOutlet),
+            DataBarisJurnal::DariSelisih(
+                $mengurangiPiutang ? PeranAkun::PiutangUsaha : PeranAkun::PiutangBelumDifakturkan,
+                $arah(Uang::Nol()->Kurangi($total)),
+                $idOutlet,
+            ),
+        ];
+        $akunPajak = $this->penyusunPenjualan->TentukanAkunPajak(array_map('strval', array_keys($pajak)));
+
+        foreach ($pajak as $kode => $jumlah) {
+            $baris[] = DataBarisJurnal::DariSelisih($akunPajak[(string) $kode], $arah($jumlah), $idOutlet);
+        }
+
+        $totalPerubahan = Uang::Nol();
+
+        foreach ($perubahanPersediaan as $peran => $perubahan) {
+            $baris[] = DataBarisJurnal::DariSelisih(PeranAkun::from($peran), $perubahan, $idOutlet);
+            $totalPerubahan = $totalPerubahan->Tambah($perubahan);
+        }
+
+        $baris[] = DataBarisJurnal::DariSelisih(PeranAkun::Hpp, Uang::Nol()->Kurangi($totalPerubahan), $idOutlet);
 
         return array_values(array_filter($baris, fn (?DataBarisJurnal $b): bool => $b !== null));
     }

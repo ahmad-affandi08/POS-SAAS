@@ -11,7 +11,7 @@ use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
 use App\Domain\Bersama\Tindakan\Enum\TingkatTindakan;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan;
 use App\Domain\Bersama\Tindakan\Layanan\PembuatButirTinjauan;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\ReturPenjualan;
@@ -106,7 +106,7 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
     private function ButirSuratJalanBelumDifakturkan(?array $idOutlet): ?DataButirTindakan
     {
         $kueri = SuratJalan::query()
-            ->where('Status', StatusSuratJalan::Diposting->value)
+            ->where('Status', StatusDokumenGrosir::Diposting->value)
             ->whereNull('IdFakturPenjualan')
             ->where('Tanggal', '<=', now('Asia/Jakarta')->endOfMonth()->toDateString())
             ->when($idOutlet !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutlet));

@@ -16,8 +16,8 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Penjualan\Data\DataBarisSuratJalan;
 use App\Domain\Penjualan\Data\DataSuratJalan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
 use App\Domain\Penjualan\Layanan\PenomorGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
@@ -320,7 +320,7 @@ final class KirimPesananGrosir
 
         foreach (SuratJalanDetail::query()
             ->where('IdPesananGrosirDetail', $detail->Id)
-            ->whereIn('IdSuratJalan', SuratJalan::query()->where('Status', StatusSuratJalan::Diposting->value)->select('Id'))
+            ->whereIn('IdSuratJalan', SuratJalan::query()->where('Status', StatusDokumenGrosir::Diposting->value)->select('Id'))
             ->get() as $sudah) {
             $terpakai = $terpakai->Tambah($sudah->AmbilDiskon());
         }

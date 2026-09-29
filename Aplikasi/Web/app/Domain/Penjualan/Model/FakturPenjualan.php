@@ -9,7 +9,7 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pelanggan\Model\Pelanggan;
-use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,7 +29,7 @@ use LogicException;
  * @property int $IdOutlet
  * @property Carbon $Tanggal
  * @property Carbon $JatuhTempo
- * @property StatusFakturPenjualan $Status
+ * @property StatusDokumenGrosir $Status
  * @property int $TerminHari
  * @property string $PeriodePenyerahan
  * @property string|null $NomorFakturPajak
@@ -96,7 +96,7 @@ final class FakturPenjualan extends ModelDasar
     /**
      * @throws LogicException bila perpindahan status tidak diizinkan
      */
-    public function UbahStatus(StatusFakturPenjualan $tujuan): void
+    public function UbahStatus(StatusDokumenGrosir $tujuan): void
     {
         if (! $this->Status->BisaBerubahKe($tujuan)) {
             throw new LogicException("Status faktur penjualan {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
@@ -144,7 +144,7 @@ final class FakturPenjualan extends ModelDasar
         return [
             'Tanggal' => 'date',
             'JatuhTempo' => 'date',
-            'Status' => StatusFakturPenjualan::class,
+            'Status' => StatusDokumenGrosir::class,
             'TerminHari' => 'integer',
             'TarifPpn' => 'decimal:6',
             'PengaliDppPembilang' => 'integer',

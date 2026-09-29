@@ -12,8 +12,8 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosirDetail;
@@ -156,7 +156,7 @@ final class KonfirmasiPesananGrosir
 
         foreach (SuratJalan::query()
             ->where('IdPelanggan', $idPelanggan)
-            ->where('Status', StatusSuratJalan::Diposting->value)
+            ->where('Status', StatusDokumenGrosir::Diposting->value)
             ->whereNull('IdFakturPenjualan')
             ->get() as $suratJalan) {
             $nilai = $nilai->Tambah($suratJalan->AmbilTotal());

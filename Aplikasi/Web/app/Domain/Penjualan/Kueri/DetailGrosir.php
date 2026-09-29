@@ -12,7 +12,7 @@ use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosirDetail;
@@ -119,7 +119,7 @@ final class DetailGrosir
                 'UuidPesanan' => $pesanan?->Uuid,
                 'NomorFaktur' => $faktur?->Nomor,
                 'UuidFaktur' => $faktur?->Uuid,
-                'BolehDibatalkan' => $suratJalan->Status === StatusSuratJalan::Diposting && $suratJalan->IdFakturPenjualan === null,
+                'BolehDibatalkan' => $suratJalan->Status === StatusDokumenGrosir::Diposting && $suratJalan->IdFakturPenjualan === null,
             ],
             'Baris' => array_values($baris->map(fn (SuratJalanDetail $d): array => [
                 'Urutan' => $d->Urutan,

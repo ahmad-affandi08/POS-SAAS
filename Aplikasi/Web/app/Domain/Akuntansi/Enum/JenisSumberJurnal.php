@@ -58,6 +58,8 @@ enum JenisSumberJurnal: string
     case SuratJalan = 'SuratJalan';
     // Grosir (F-12, §9.7): faktur penjualan (J-12.2, reklasifikasi Piutang Usaha) dan pembatalannya.
     case FakturPenjualan = 'FakturPenjualan';
+    // Grosir bagian 2 (J-12.4): retur grosir & nota kredit, dan pembatalannya.
+    case ReturGrosir = 'ReturGrosir';
 
     public function AmbilLabel(): string
     {
@@ -90,6 +92,7 @@ enum JenisSumberJurnal: string
             self::BahanTerbuang => 'Bahan terbuang',
             self::SuratJalan => 'Surat jalan grosir',
             self::FakturPenjualan => 'Faktur penjualan grosir',
+            self::ReturGrosir => 'Retur grosir',
         };
     }
 
@@ -128,6 +131,7 @@ enum JenisSumberJurnal: string
             self::MutasiSesi => '/kelola/pelanggan/mutasi-sesi/'.$uuid,
             self::SuratJalan => '/kelola/grosir/surat-jalan/'.$uuid,
             self::FakturPenjualan => '/kelola/grosir/faktur/'.$uuid,
+            self::ReturGrosir => '/kelola/grosir/retur/'.$uuid,
         };
     }
 }

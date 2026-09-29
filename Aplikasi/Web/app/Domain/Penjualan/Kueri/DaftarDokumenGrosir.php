@@ -9,9 +9,8 @@ use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
@@ -73,7 +72,7 @@ final class DaftarDokumenGrosir
      */
     public function SuratJalan(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(SuratJalan::query(), $p, $idOutletBoleh, array_map(fn (StatusSuratJalan $s): string => $s->value, StatusSuratJalan::cases()));
+        $kueri = $this->Saring(SuratJalan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()));
         $difakturkan = $p->saring['Difakturkan'] ?? null;
         $kueri = $kueri
             ->when($difakturkan === 'Belum', fn ($q) => $q->whereNull('IdFakturPenjualan'))
@@ -107,7 +106,7 @@ final class DaftarDokumenGrosir
      */
     public function Faktur(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(FakturPenjualan::query(), $p, $idOutletBoleh, array_map(fn (StatusFakturPenjualan $s): string => $s->value, StatusFakturPenjualan::cases()), 'NomorFakturPajak');
+        $kueri = $this->Saring(FakturPenjualan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()), 'NomorFakturPajak');
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total', 'JatuhTempo' => 'JatuhTempo'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());

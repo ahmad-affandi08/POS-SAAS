@@ -137,6 +137,64 @@ final class PencatatPiutangPenjualan
         return $hasil;
     }
 
+    /**
+     * Nota kredit (BR-12.7): sisa piutang faktur grosir dikurangi sebesar nilai retur. Mengembalikan pesan penolakan
+     * bila sisanya tidak cukup, dan **tidak** mengubah apa pun dalam kasus itu.
+     *
+     * Kenapa ditolak alih-alih dipotong sebisanya: piutang bersisa negatif berarti toko berutang ke pembeli, dan itu
+     * refund kas — bukan nota kredit. Memotong sebisanya akan menyembunyikan kewajiban itu di dokumen yang salah.
+     */
+    public function KurangiFaktur(int $idFakturPenjualan, Uang $jumlah, int $idPengguna, string $alasan): ?string
+    {
+        $piutang = Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->lockForUpdate()->first();
+
+        if ($piutang === null) {
+            return 'Faktur ini belum punya piutang, jadi tidak ada tagihan yang bisa dikurangi.';
+        }
+
+        if ($piutang->Status === StatusPiutang::Dibatalkan) {
+            return "Piutang {$piutang->Nomor} sudah dibatalkan.";
+        }
+
+        if ($jumlah->Bandingkan($piutang->AmbilSisa()) > 0) {
+            return "Nilai retur {$jumlah->FormatRupiah()} melebihi sisa tagihan {$piutang->AmbilSisa()->FormatRupiah()} di piutang {$piutang->Nomor}. "
+                .'Fakturnya sudah (hampir) dibayar, jadi pengembaliannya berupa refund uang, bukan pengurangan tagihan.';
+        }
+
+        $asal = $piutang->Status;
+        $piutang->JumlahDikurangi = Uang::Dari($piutang->JumlahDikurangi)->Tambah($jumlah)->KeString();
+        $piutang->SelaraskanStatus();
+        $piutang->save();
+
+        if ($asal !== $piutang->Status) {
+            $this->riwayat->Catat(Piutang::JENIS_DOKUMEN, $piutang->Id, $asal->value, $piutang->Status->value, $idPengguna, $alasan);
+        }
+
+        return null;
+    }
+
+    /** Pembatalan nota kredit: pengurangan tagihan dikembalikan sebesar nilai retur yang dibatalkan. */
+    public function BatalkanPenguranganFaktur(int $idFakturPenjualan, Uang $jumlah, int $idPengguna, string $alasan): void
+    {
+        $piutang = Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->lockForUpdate()->first();
+
+        // Piutang yang sudah dibatalkan (fakturnya dibatalkan) tidak dihidupkan kembali dari sini: yang membatalkannya
+        // sudah menghapus seluruh sisanya, dan menambahkannya kembali akan membuat tagihan yang tidak ada dokumennya.
+        if ($piutang === null || $jumlah->BernilaiNol() || $piutang->Status === StatusPiutang::Dibatalkan) {
+            return;
+        }
+
+        $asal = $piutang->Status;
+        $sisaPengurangan = Uang::Dari($piutang->JumlahDikurangi)->Kurangi($jumlah);
+        $piutang->JumlahDikurangi = ($sisaPengurangan->BernilaiNegatif() ? Uang::Nol() : $sisaPengurangan)->KeString();
+        $piutang->SelaraskanStatus();
+        $piutang->save();
+
+        if ($asal !== $piutang->Status) {
+            $this->riwayat->Catat(Piutang::JENIS_DOKUMEN, $piutang->Id, $asal->value, $piutang->Status->value, $idPengguna, $alasan);
+        }
+    }
+
     /** Sisa piutang penjualan (null = bukan penjualan tempo). */
     public function AmbilSisa(int $idPenjualan): ?Uang
     {

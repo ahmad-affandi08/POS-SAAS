@@ -17,20 +17,25 @@ use Illuminate\Support\Carbon;
 use LogicException;
 
 /**
- * Surat jalan grosir `SJ/{OUTLET}/{YYMM}/{SEQ4}` (F-12, §9.7, BR-12.2): dokumen penyerahan barang, sekaligus titik
- * pengakuan HPP, pendapatan, dan PPN keluaran (J-12.1). Angkanya di-snapshot di sini, termasuk tarif PPN & pengali DPP
- * pada tanggal penyerahan.
+ * Retur grosir & nota kredit `RG/{OUTLET}/{YYMM}/{SEQ4}` (F-12, §9.7, BR-12.7, J-12.4): barang kembali dari pembeli
+ * grosir atas satu surat jalan, dengan pendapatan, PPN, dan HPP dibalik sebanding jumlah yang dikembalikan.
+ *
+ * `MengurangiPiutang` di-snapshot saat retur diposting: true = tagihannya sudah terbit sehingga yang berkurang
+ * `PiutangUsaha` beserta baris `Piutang` fakturnya; false = surat jalannya belum difakturkan sehingga yang berkurang
+ * `PiutangBelumDifakturkan`. Disimpan supaya pembatalannya membalik ke akun yang sama walau fakturnya berubah kemudian.
  *
  * @property int $Id
  * @property string $Uuid
  * @property int $IdTenant
  * @property string $Nomor
- * @property int $IdPesananGrosir
+ * @property int $IdSuratJalan
  * @property int $IdPelanggan
  * @property int $IdOutlet
- * @property int $IdGudang
+ * @property int|null $IdFakturPenjualan
  * @property Carbon $Tanggal
  * @property StatusDokumenGrosir $Status
+ * @property string $Alasan
+ * @property bool $MengurangiPiutang
  * @property string|null $TarifPpn
  * @property int|null $PengaliDppPembilang
  * @property int|null $PengaliDppPenyebut
@@ -41,11 +46,9 @@ use LogicException;
  * @property string $Total
  * @property array<string, string>|null $RincianPajak
  * @property string $TotalHpp
- * @property string|null $NamaPengirim
- * @property string|null $NomorKendaraan
- * @property string|null $NamaPenerima
  * @property string|null $Catatan
- * @property int|null $IdFakturPenjualan
+ * @property bool $PerluTinjauan
+ * @property string|null $AlasanTinjauan
  * @property int|null $IdJurnal
  * @property int|null $IdJurnalPembatalan
  * @property int|null $DibuatOleh
@@ -57,44 +60,39 @@ use LogicException;
  * @property Carbon|null $DiubahPada
  * @property-read Pelanggan $Pelanggan
  * @property-read Outlet $Outlet
- * @property-read PesananGrosir $PesananGrosir
- * @property-read Collection<int, SuratJalanDetail> $Detail
+ * @property-read SuratJalan $SuratJalan
+ * @property-read Collection<int, ReturGrosirDetail> $Detail
  */
-final class SuratJalan extends ModelDasar
+final class ReturGrosir extends ModelDasar
 {
     use JagaDokumenGrosir;
     use MilikTenant;
 
-    public const JENIS_DOKUMEN = 'SuratJalan';
+    public const JENIS_DOKUMEN = 'ReturGrosir';
 
     private const KOLOM_STATUS = [
         'Status', 'IdJurnalPembatalan', 'DibatalkanOleh', 'DibatalkanPada', 'AlasanBatal', 'DiubahOleh',
-        // Diisi saat surat jalan masuk faktur penjualan (J-12.2); bukan perubahan isi dokumen.
-        'IdFakturPenjualan',
-        // Hasil posting dokumen ini sendiri, di transaksi yang sama: HPP baru diketahui setelah mutasi stok dicatat
-        // (nilai HPP berjalan) dan nomor jurnal setelah jurnalnya diposting. Cermin `PenerimaanBarang`.
-        'IdJurnal', 'TotalHpp',
+        // Hasil posting dokumen ini sendiri, di transaksi yang sama.
+        'IdJurnal', 'TotalHpp', 'PerluTinjauan', 'AlasanTinjauan',
     ];
 
-    protected $table = 'SuratJalan';
+    protected $table = 'ReturGrosir';
 
     /** @var array<string, mixed> */
     protected $attributes = [
         'Status' => 'Diposting',
+        'IdFakturPenjualan' => null,
+        'MengurangiPiutang' => false,
         'TarifPpn' => null,
         'PengaliDppPembilang' => null,
         'PengaliDppPenyebut' => null,
         'RincianPajak' => null,
-        'NamaPengirim' => null,
-        'NomorKendaraan' => null,
-        'NamaPenerima' => null,
         'Catatan' => null,
-        'IdFakturPenjualan' => null,
+        'PerluTinjauan' => false,
+        'AlasanTinjauan' => null,
     ];
 
     /**
-     * Surat jalan tidak pernah diedit: begitu tersimpan, hanya kolom status & penautan faktur yang boleh bergerak.
-     *
      * @return list<string>
      */
     public function AmbilKolomBolehBerubah(): array
@@ -108,7 +106,7 @@ final class SuratJalan extends ModelDasar
     public function UbahStatus(StatusDokumenGrosir $tujuan): void
     {
         if (! $this->Status->BisaBerubahKe($tujuan)) {
-            throw new LogicException("Status surat jalan {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
+            throw new LogicException("Status retur grosir {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
         }
 
         $this->Status = $tujuan;
@@ -120,8 +118,6 @@ final class SuratJalan extends ModelDasar
     }
 
     /**
-     * Rincian pajak per kode jenis pajak sebagai `Uang`.
-     *
      * @return array<string, Uang>
      */
     public function AmbilRincianPajak(): array
@@ -130,11 +126,11 @@ final class SuratJalan extends ModelDasar
     }
 
     /**
-     * @return BelongsTo<PesananGrosir, $this>
+     * @return BelongsTo<SuratJalan, $this>
      */
-    public function PesananGrosir(): BelongsTo
+    public function SuratJalan(): BelongsTo
     {
-        return $this->belongsTo(PesananGrosir::class, 'IdPesananGrosir', 'Id');
+        return $this->belongsTo(SuratJalan::class, 'IdSuratJalan', 'Id');
     }
 
     /**
@@ -154,11 +150,11 @@ final class SuratJalan extends ModelDasar
     }
 
     /**
-     * @return HasMany<SuratJalanDetail, $this>
+     * @return HasMany<ReturGrosirDetail, $this>
      */
     public function Detail(): HasMany
     {
-        return $this->hasMany(SuratJalanDetail::class, 'IdSuratJalan', 'Id')->orderBy('Urutan');
+        return $this->hasMany(ReturGrosirDetail::class, 'IdReturGrosir', 'Id')->orderBy('Urutan');
     }
 
     /**
@@ -169,6 +165,7 @@ final class SuratJalan extends ModelDasar
         return [
             'Tanggal' => 'date',
             'Status' => StatusDokumenGrosir::class,
+            'MengurangiPiutang' => 'boolean',
             'TarifPpn' => 'decimal:6',
             'PengaliDppPembilang' => 'integer',
             'PengaliDppPenyebut' => 'integer',
@@ -179,6 +176,7 @@ final class SuratJalan extends ModelDasar
             'Total' => 'decimal:2',
             'RincianPajak' => 'array',
             'TotalHpp' => 'decimal:2',
+            'PerluTinjauan' => 'boolean',
             'DibatalkanPada' => 'datetime',
         ];
     }

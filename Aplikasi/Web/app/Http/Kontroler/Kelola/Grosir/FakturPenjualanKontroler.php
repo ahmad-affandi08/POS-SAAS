@@ -7,8 +7,7 @@ namespace App\Http\Kontroler\Kelola\Grosir;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Penjualan\Aksi\BatalkanFakturPenjualan;
 use App\Domain\Penjualan\Aksi\BuatFakturPenjualan;
-use App\Domain\Penjualan\Enum\StatusFakturPenjualan;
-use App\Domain\Penjualan\Enum\StatusSuratJalan;
+use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
@@ -34,7 +33,7 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenGrosir::KOLOM_URUT, DaftarDokumenGrosir::URUT_BAWAAN, DaftarDokumenGrosir::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Grosir/Faktur/Daftar', 'Faktur', fn (): array => $daftar->Faktur($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusFakturPenjualan::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenGrosir::class),
             'Izin' => $this->AmbilIzinGrosir(),
         ]);
     }
@@ -42,7 +41,7 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
     /** Pemilihan surat jalan yang belum difakturkan; batas satu pelanggan/outlet/bulan diperiksa saat diterbitkan. */
     public function Buat(Request $permintaan, DaftarDokumenGrosir $daftar): Response|JsonResponse
     {
-        $query = [...$permintaan->query(), 'saring' => [...(array) $permintaan->query('saring', []), 'Difakturkan' => 'Belum', 'Status' => StatusSuratJalan::Diposting->value]];
+        $query = [...$permintaan->query(), 'saring' => [...(array) $permintaan->query('saring', []), 'Difakturkan' => 'Belum', 'Status' => StatusDokumenGrosir::Diposting->value]];
         $tabel = DataPermintaanTabel::Dari($query, DaftarDokumenGrosir::KOLOM_URUT, DaftarDokumenGrosir::URUT_BAWAAN, DaftarDokumenGrosir::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Grosir/Faktur/Buat', 'SuratJalan', fn (): array => $daftar->SuratJalan($tabel, $this->IdOutletBoleh()), fn (): array => [
@@ -68,8 +67,8 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
             ...$detail->Faktur($dokumen),
             'Izin' => $izin,
             'Tindakan' => [
-                'Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusFakturPenjualan::Diposting,
-                'UbahNomorPajak' => $izin['Kelola'] && $dokumen->Status === StatusFakturPenjualan::Diposting,
+                'Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting,
+                'UbahNomorPajak' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting,
             ],
         ]);
     }
@@ -78,7 +77,7 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
     {
         $dokumen = $this->CariDokumen(FakturPenjualan::class, $faktur);
 
-        if ($dokumen->Status !== StatusFakturPenjualan::Diposting) {
+        if ($dokumen->Status !== StatusDokumenGrosir::Diposting) {
             return to_route('kelola.grosir.faktur.detail', ['faktur' => $dokumen->Uuid])
                 ->withErrors(['Umum' => 'Faktur yang sudah dibatalkan tidak bisa diubah.']);
         }
