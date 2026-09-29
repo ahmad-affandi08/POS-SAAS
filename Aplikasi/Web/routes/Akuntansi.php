@@ -8,6 +8,7 @@ use App\Http\Kontroler\Kelola\Akuntansi\JadwalKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\LaporanKeuanganKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\PemetaanAkunKontroler;
+use App\Http\Kontroler\Kelola\Akuntansi\PencairanKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\TransaksiKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\TutupBukuKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Route;
  * - F-05a jurnal (baca saja, DesainF05a D): `laporan.keuangan.lihat` (H-13: tidak ada `akuntansi.lihat`).
  * - F-13a bagan akun, pemetaan akun, transaksi kas & bank, laporan keuangan: lihat `laporan.keuangan.lihat`, ubah
  *   `akuntansi.kelola`.
+ * - F-08 BR-08.4 pencairan dana non-tunai (J-08.1): izin sama dengan transaksi kas & bank, karena dampaknya sejenis
+ *   (uang masuk rekening + beban biaya pembayaran).
  * Parameter ULID dicari lewat `MilikTenant` di kueri (data tenant lain = 404).
  */
 
@@ -43,6 +46,10 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     Route::get('/akuntansi/kas-bank/{transaksiKasBank}/lampiran', [TransaksiKasBankKontroler::class, 'Lampiran'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.lampiran');
 
     // F-13a: laporan keuangan dari jurnal + ekspor CSV.
+    // F-08 BR-08.4: pencairan dana non-tunai (daftar & detail).
+    Route::get('/akuntansi/pencairan', [PencairanKontroler::class, 'Daftar'])->name('kelola.akuntansi.pencairan.daftar');
+    Route::get('/akuntansi/pencairan/{pencairan}', [PencairanKontroler::class, 'Detail'])->where('pencairan', $ulid)->name('kelola.akuntansi.pencairan.detail');
+
     Route::get('/akuntansi/laporan/buku-besar', [LaporanKeuanganKontroler::class, 'BukuBesar'])->name('kelola.akuntansi.laporan.buku-besar');
     Route::get('/akuntansi/laporan/buku-besar/ekspor', [LaporanKeuanganKontroler::class, 'EksporBukuBesar'])->name('kelola.akuntansi.laporan.buku-besar.ekspor');
     Route::get('/akuntansi/laporan/neraca-saldo', [LaporanKeuanganKontroler::class, 'NeracaSaldo'])->name('kelola.akuntansi.laporan.neraca-saldo');
@@ -77,4 +84,10 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     Route::post('/akuntansi/tutup-buku/tahun/{tahun}/tutup', [TutupBukuKontroler::class, 'TutupTahun'])->where('tahun', '\d{4}')->name('kelola.akuntansi.tutup-buku.tutup-tahun');
 
     Route::post('/akuntansi/kas-bank/{transaksiKasBank}/pembalik', [TransaksiKasBankKontroler::class, 'Balikkan'])->where('transaksiKasBank', $ulid)->name('kelola.akuntansi.kas-bank.pembalik');
+
+    // F-08 BR-08.4: catat & batalkan pencairan. Rute `buat` didaftarkan sebelum `{pencairan}` agar tidak tertangkap
+    // pola ULID-nya (pola `where` sudah mencegahnya, urutan ini sekadar membuat maksudnya jelas).
+    Route::get('/akuntansi/pencairan/buat', [PencairanKontroler::class, 'Buat'])->name('kelola.akuntansi.pencairan.buat');
+    Route::post('/akuntansi/pencairan', [PencairanKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.pencairan.simpan');
+    Route::post('/akuntansi/pencairan/{pencairan}/batalkan', [PencairanKontroler::class, 'Batalkan'])->where('pencairan', $ulid)->name('kelola.akuntansi.pencairan.batalkan');
 });

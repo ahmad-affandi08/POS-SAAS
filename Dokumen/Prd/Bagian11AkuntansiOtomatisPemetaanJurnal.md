@@ -77,7 +77,7 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-07.3 | DP pre-order diterima | Kas | Uang Muka Pelanggan |
 | J-09.1 | Void | Pembalik penuh J-07.1 & J-07.2 | |
 | J-09.2 | Retur penjualan | Retur Penjualan + PPN/PB1 (kontra) ; Persediaan | Kas/Piutang/Nota Kredit ; HPP |
-| J-08.1 | Pencairan QRIS/EDC/gateway masuk rekening | Bank + Beban Biaya Pembayaran | Piutang Pencairan |
+| J-08.1 | Pencairan QRIS/EDC/gateway/ojol masuk rekening (BR-08.4) | Bank + Beban Biaya Pembayaran (potongan) | Piutang Pencairan / akun kliring metode ; Pendapatan Lain (bila setoran lebih besar dari nilai transaksi) |
 | J-06.1 | Kas keluar (beban; F-06: akun dari `KategoriKas`) | Beban terkait | Kas Outlet |
 | J-06.2 | Kas masuk non-penjualan (F-06) | Kas Outlet | Akun dari `KategoriKas` (pendapatan lain, ekuitas, dll.) |
 | J-11.1 | Selisih kas kurang | Beban Selisih Kas | Kas Outlet |

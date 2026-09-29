@@ -211,6 +211,9 @@ const menuAkuntansi: ItemMenu[] = [
         fitur: 'akuntansi.penuh',
     },
     { label: 'Kas & bank', href: '/kelola/akuntansi/kas-bank', izin: IzinTenant.LaporanKeuanganLihat },
+    // F-08 BR-08.4: pencairan dana non-tunai (J-08.1). Rumahnya di Akuntansi, bukan Penjualan, karena yang dikerjakan
+    // di sini pembukuan uang masuk rekening & beban biaya pembayaran — pekerjaan yang sama dengan Kas & bank.
+    { label: 'Pencairan dana', href: '/kelola/akuntansi/pencairan', izin: IzinTenant.LaporanKeuanganLihat },
     {
         label: 'Buku besar',
         href: '/kelola/akuntansi/laporan/buku-besar',

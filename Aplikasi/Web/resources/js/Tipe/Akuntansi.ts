@@ -297,3 +297,112 @@ export type PropsTutupBuku = {
     Tahun: BarisTahunBuku[];
     Izin: { Kelola: boolean };
 };
+
+/*
+ * F-08 BR-08.4 (J-08.1) pencairan dana non-tunai. Uang selalu **string desimal** dari server, tidak pernah number
+ * (CLAUDE.md #7). `Biaya` boleh bertanda minus: platform menyetor lebih besar daripada nilai transaksinya.
+ */
+
+export type StatusPencairan = 'Diposting' | 'Dibatalkan';
+
+export type OpsiMetodePencairan = {
+    Uuid: string;
+    Nama: string;
+    Jenis: string;
+    PersenBiaya: string;
+    BiayaTetap: string;
+};
+
+/** Isi akun kliring yang masih menunggu uang masuk rekening, per metode. */
+export type RingkasanBelumDicairkan = { Uuid: string; Nama: string; Jumlah: number; Total: string };
+
+export type BarisPencairan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NamaMetode: string;
+    KodeOutlet: string;
+    Status: StatusPencairan;
+    LabelStatus: string;
+    JumlahKotor: string;
+    JumlahBersih: string;
+    Biaya: string;
+    BiayaDiharapkan: string;
+    SelisihBiaya: string;
+    Referensi: string | null;
+};
+
+export type PropsDaftarPencairan = {
+    Pencairan: {
+        Data: BarisPencairan[];
+        Meta: { Halaman: number; PerHalaman: number; Total: number; JumlahHalaman: number };
+    };
+    BelumDicairkan: RingkasanBelumDicairkan[];
+    OpsiMetode: OpsiMetodePencairan[];
+    OpsiStatus: { Nilai: string; Label: string }[];
+    Izin: { Kelola: boolean };
+};
+
+/** Satu pembayaran yang belum dicairkan, pilihan di formulir. */
+export type BarisPembayaranBelumDicairkan = {
+    Uuid: string;
+    NomorPenjualan: string;
+    TanggalPenjualan: string;
+    StatusPenjualan: string;
+    LabelStatusPenjualan: string;
+    Jumlah: string;
+    Referensi: string | null;
+    RefEksternal: string | null;
+};
+
+export type PropsBuatPencairan = {
+    OpsiMetode: OpsiMetodePencairan[];
+    OpsiOutlet: { Uuid: string; Nama: string }[];
+    OpsiAkun: { Id: number; Uuid: string; Kode: string; Nama: string; Jenis: string }[];
+    Terpilih: { Metode: string; Outlet: string; Sampai: string };
+    Pembayaran: { Data: BarisPembayaranBelumDicairkan[]; Total: string; Terpotong: boolean };
+    HariIni: string;
+    MaksimalBaris: number;
+};
+
+export type PropsDetailPencairan = {
+    Pencairan: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Status: StatusPencairan;
+        LabelStatus: string;
+        NamaMetode: string;
+        JenisMetode: string;
+        KodeOutlet: string;
+        AkunTujuan: string;
+        /** Null = metode tanpa akun kliring sendiri; yang dikredit peran Piutang Pencairan. */
+        AkunKliring: string | null;
+        JumlahKotor: string;
+        JumlahBersih: string;
+        Biaya: string;
+        BiayaDiharapkan: string;
+        SelisihBiaya: string;
+        Referensi: string | null;
+        Catatan: string | null;
+        AlasanBatal: string | null;
+    };
+    Baris: {
+        Urutan: number;
+        NomorPenjualan: string;
+        TanggalPenjualan: string;
+        Jumlah: string;
+        RefEksternal: string | null;
+    }[];
+    Jurnal: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        KunciSumber: string;
+        TotalDebit: string;
+        TotalKredit: string;
+    }[];
+    Riwayat: { StatusKe: string; Oleh: string | null; Pada: string; Alasan: string | null }[];
+    Izin: { Kelola: boolean };
+    Tindakan: { Batalkan: boolean };
+};
