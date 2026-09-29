@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Model;
 
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
@@ -60,7 +61,7 @@ use LogicException;
  */
 final class PesananGrosir extends ModelDasar
 {
-    use JagaDokumenGrosir;
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'PesananGrosir';

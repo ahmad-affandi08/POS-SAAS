@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Kueri;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Pembelian\Enum\KelompokUmurHutang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
@@ -73,7 +73,7 @@ final class DaftarDokumenPembelian
      */
     public function Penerimaan(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(PenerimaanBarang::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenPembelian $s): string => $s->value, StatusDokumenPembelian::cases()), 'NomorSuratJalan');
+        $kueri = $this->Saring(PenerimaanBarang::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()), 'NomorSuratJalan');
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'TotalNilai'], function (Collection $baris): array {
             $pemasok = $this->peta->Pemasok($baris->pluck('IdPemasok')->all());
@@ -168,7 +168,7 @@ final class DaftarDokumenPembelian
      */
     public function Pembayaran(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(PembayaranHutang::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenPembelian $s): string => $s->value, StatusDokumenPembelian::cases()));
+        $kueri = $this->Saring(PembayaranHutang::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()));
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Jumlah'], function (Collection $baris): array {
             $pemasok = $this->peta->Pemasok($baris->pluck('IdPemasok')->all());
@@ -193,7 +193,7 @@ final class DaftarDokumenPembelian
      */
     public function Retur(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(ReturPembelian::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenPembelian $s): string => $s->value, StatusDokumenPembelian::cases()), 'Alasan');
+        $kueri = $this->Saring(ReturPembelian::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()), 'Alasan');
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'NilaiHutang'], function (Collection $baris): array {
             $pemasok = $this->peta->Pemasok($baris->pluck('IdPemasok')->all());

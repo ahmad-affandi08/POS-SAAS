@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\Piutang;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
@@ -95,7 +95,7 @@ describe('HTTP back-office grosir', function (): void {
         ])->assertSessionHasNoErrors()->assertRedirect();
 
         $suratJalan = SuratJalan::query()->sole();
-        expect($suratJalan->Status)->toBe(StatusDokumenGrosir::Diposting)
+        expect($suratJalan->Status)->toBe(StatusDokumenTerposting::Diposting)
             ->and($suratJalan->Total)->toBe('3000000.00')
             ->and($pesanan->refresh()->Status)->toBe(StatusPesananGrosir::Selesai);
 
@@ -115,7 +115,7 @@ describe('HTTP back-office grosir', function (): void {
         ])->assertSessionHasNoErrors()->assertRedirect();
 
         $faktur = FakturPenjualan::query()->sole();
-        expect($faktur->Status)->toBe(StatusDokumenGrosir::Diposting)
+        expect($faktur->Status)->toBe(StatusDokumenTerposting::Diposting)
             ->and($faktur->Total)->toBe('3000000.00')
             ->and($suratJalan->refresh()->IdFakturPenjualan)->toBe($faktur->Id)
             // BR-12.5: piutangnya memakai tabel yang sama dengan penjualan tempo.
@@ -164,7 +164,7 @@ describe('HTTP back-office grosir', function (): void {
 
         $this->post("/kelola/grosir/retur/{$retur->Uuid}/batalkan", ['Alasan' => 'Salah input, yang basah cuma lima sak.'])
             ->assertSessionHasNoErrors()->assertRedirect();
-        expect($retur->refresh()->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+        expect($retur->refresh()->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and(Piutang::query()->where('IdFakturPenjualan', $faktur->Id)->sole()->AmbilSisa()->KeString())->toBe('3000000.00')
             ->and($suratJalan->refresh()->Detail()->value('JumlahDiretur'))->toBe('0.0000');
     });

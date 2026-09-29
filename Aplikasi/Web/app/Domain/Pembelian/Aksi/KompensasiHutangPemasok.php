@@ -11,10 +11,10 @@ use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PenomorPembelian;
@@ -89,7 +89,7 @@ final class KompensasiHutangPemasok
                 'IdOutlet' => $outlet,
                 'Tanggal' => $tanggal->toDateString(),
                 'Jumlah' => $total->KeString(),
-                'Status' => StatusDokumenPembelian::Diposting,
+                'Status' => StatusDokumenTerposting::Diposting,
                 'Kompensasi' => true,
                 'Catatan' => mb_substr($catatan, 0, 500),
                 'DibuatOleh' => $idPengguna,
@@ -123,7 +123,7 @@ final class KompensasiHutangPemasok
             $pembayaran->IdJurnal = $jurnal->idJurnal;
             $pembayaran->save();
 
-            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenPembelian::Diposting->value, $idPengguna);
+            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenTerposting::Diposting->value, $idPengguna);
             $this->audit->Catat('pembayaran-hutang.kompensasi', $pembayaran, nilaiBaru: [
                 'Nomor' => $pembayaran->Nomor,
                 'Pemasok' => $pemasok->Nama,

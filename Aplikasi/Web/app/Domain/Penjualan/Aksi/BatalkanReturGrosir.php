@@ -8,13 +8,13 @@ use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\ReturGrosir;
 use App\Domain\Penjualan\Model\ReturGrosirDetail;
@@ -87,7 +87,7 @@ final class BatalkanReturGrosir
         $retur = ReturGrosir::query()->where('Uuid', $uuid)->lockForUpdate()->first()
             ?? throw new PelanggaranAturanBisnis('ReturTidakDitemukan', 'Retur grosir tidak ditemukan.');
 
-        if ($retur->Status === StatusDokumenGrosir::Dibatalkan) {
+        if ($retur->Status === StatusDokumenTerposting::Dibatalkan) {
             return $retur;
         }
 
@@ -185,7 +185,7 @@ final class BatalkanReturGrosir
             $detail->save();
         }
 
-        $retur->UbahStatus(StatusDokumenGrosir::Dibatalkan);
+        $retur->UbahStatus(StatusDokumenTerposting::Dibatalkan);
         $retur->fill([
             'IdJurnalPembatalan' => $jurnal->idJurnal,
             'AlasanBatal' => $alasan,
@@ -197,13 +197,13 @@ final class BatalkanReturGrosir
         $this->riwayat->Catat(
             ReturGrosir::JENIS_DOKUMEN,
             $retur->Id,
-            StatusDokumenGrosir::Diposting->value,
-            StatusDokumenGrosir::Dibatalkan->value,
+            StatusDokumenTerposting::Diposting->value,
+            StatusDokumenTerposting::Dibatalkan->value,
             $idPengguna,
             $alasan,
         );
-        $this->audit->Catat('grosir.retur-batalkan', $retur, nilaiLama: ['Status' => StatusDokumenGrosir::Diposting->value], nilaiBaru: [
-            'Status' => StatusDokumenGrosir::Dibatalkan->value,
+        $this->audit->Catat('grosir.retur-batalkan', $retur, nilaiLama: ['Status' => StatusDokumenTerposting::Diposting->value], nilaiBaru: [
+            'Status' => StatusDokumenTerposting::Dibatalkan->value,
             'Nomor' => $retur->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal->nomor,

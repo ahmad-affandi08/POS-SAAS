@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Kueri;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
 use App\Domain\Katalog\Kueri\SatuanProdukPembelian;
 use App\Domain\Organisasi\Kueri\InfoGudang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\Pemasok;
 use App\Domain\Pembelian\Model\PenerimaanBarangDetail;
@@ -202,7 +202,7 @@ final class KebutuhanBeliUlang
         $hasil = [];
         $terima = PenerimaanBarangDetail::query()
             ->join('PenerimaanBarang', 'PenerimaanBarang.Id', '=', 'PenerimaanBarangDetail.IdPenerimaanBarang')
-            ->where('PenerimaanBarang.Status', StatusDokumenPembelian::Diposting->value)
+            ->where('PenerimaanBarang.Status', StatusDokumenTerposting::Diposting->value)
             ->whereNotNull('PenerimaanBarang.IdPemasok')
             ->whereIn('PenerimaanBarangDetail.IdProduk', $idProduk)
             ->orderByDesc('PenerimaanBarang.Tanggal')

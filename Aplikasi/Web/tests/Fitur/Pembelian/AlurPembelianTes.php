@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Model\Jurnal;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
@@ -25,7 +26,6 @@ use App\Domain\Pembelian\Data\DataBarisReturPembelian;
 use App\Domain\Pembelian\Data\DataBelanjaStok;
 use App\Domain\Pembelian\Data\DataPembayaranHutang;
 use App\Domain\Pembelian\Data\DataReturPembelian;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
@@ -312,7 +312,7 @@ describe('F-04 faktur, hutang, pembayaran, retur, belanja stok, pembatalan', fun
         expect(KodeGalatPembelian(fn () => app(BatalkanFakturPembelian::class)->Jalankan($f1, 'Faktur salah input', $id)))->toBe('SudahDibayar');
         app(BatalkanPembayaranHutang::class)->Jalankan($p, 'Transfer ditolak bank', $id);
         expect($f1->refresh()->Status)->toBe(StatusFakturPembelian::BelumDibayar)->and($f2->refresh()->Status)->toBe(StatusFakturPembelian::BelumDibayar)
-            ->and($p->refresh()->Status)->toBe(StatusDokumenPembelian::Dibatalkan)
+            ->and($p->refresh()->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and(BantuanPembelian::PeriksaInvarian($t['Tenant']->Id))->toBe([]);
     });
 
@@ -364,7 +364,7 @@ describe('F-04 faktur, hutang, pembayaran, retur, belanja stok, pembatalan', fun
 
         $grn2 = BantuanPembelian::TerimaTanpaPo($pemasok, $t['Gudang'], [[$teh, '10', '6400']], $id);
         $batal = app(BatalkanPenerimaanBarang::class)->Jalankan($grn2, 'Salah pilih lokasi stok', $id);
-        expect($batal->Status)->toBe(StatusDokumenPembelian::Dibatalkan)
+        expect($batal->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and(Jurnal::query()->where('JenisSumber', 'PenerimaanBarang')->where('IdSumber', $grn2->Id)->where('KunciSumber', 'Pembatalan')->value('IdJurnalDibalik'))->toBe($grn2->IdJurnal)
             ->and(SaldoProduk($teh->Id, $t['Gudang']->Id)->JumlahTersedia)->toBe('29.0000')
             ->and(BantuanPembelian::PeriksaInvarian($t['Tenant']->Id))->toBe([]);

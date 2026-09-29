@@ -9,6 +9,7 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
@@ -18,7 +19,6 @@ use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturGrosir;
 use App\Domain\Penjualan\Data\DataReturGrosir;
 use App\Domain\Penjualan\Enum\KondisiBarangRetur;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
 use App\Domain\Penjualan\Layanan\PenomorGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
@@ -113,7 +113,7 @@ final class BuatReturGrosir
         $suratJalan = SuratJalan::query()->with('Outlet')->where('Uuid', $data->uuidSuratJalan)->lockForUpdate()->first()
             ?? throw new PelanggaranAturanBisnis('SuratJalanTidakDitemukan', 'Surat jalan tidak ditemukan.');
 
-        if ($suratJalan->Status !== StatusDokumenGrosir::Diposting) {
+        if ($suratJalan->Status !== StatusDokumenTerposting::Diposting) {
             throw new PelanggaranAturanBisnis(
                 'SuratJalanTidakAktif',
                 "Surat jalan {$suratJalan->Nomor} sudah dibatalkan, jadi tidak ada penyerahan yang bisa diretur.",
@@ -384,7 +384,7 @@ final class BuatReturGrosir
 
         foreach (ReturGrosirDetail::query()
             ->where('IdSuratJalanDetail', $detail->Id)
-            ->whereIn('IdReturGrosir', ReturGrosir::query()->where('Status', StatusDokumenGrosir::Diposting->value)->select('Id'))
+            ->whereIn('IdReturGrosir', ReturGrosir::query()->where('Status', StatusDokumenTerposting::Diposting->value)->select('Id'))
             ->get() as $sudah) {
             $terpakai = $terpakai->Tambah($sudah->AmbilDiskon());
         }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Model;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -25,7 +26,7 @@ use LogicException;
  * @property int|null $IdOutlet
  * @property Carbon $Tanggal
  * @property string $Jumlah
- * @property StatusDokumenPembelian $Status
+ * @property StatusDokumenTerposting $Status
  * @property bool $BelanjaStok
  * @property bool $Kompensasi
  * @property string|null $Catatan
@@ -45,7 +46,7 @@ use LogicException;
  */
 final class PembayaranHutang extends ModelDasar
 {
-    use JagaDokumenPembelian;
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'PembayaranHutang';
@@ -81,7 +82,7 @@ final class PembayaranHutang extends ModelDasar
     /**
      * @throws LogicException bila perpindahan status tidak diizinkan
      */
-    public function UbahStatus(StatusDokumenPembelian $tujuan): void
+    public function UbahStatus(StatusDokumenTerposting $tujuan): void
     {
         if (! $this->Status->BisaBerubahKe($tujuan)) {
             throw new LogicException("Status pembayaran hutang {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
@@ -105,7 +106,7 @@ final class PembayaranHutang extends ModelDasar
     {
         return [
             'Tanggal' => 'date',
-            'Status' => StatusDokumenPembelian::class,
+            'Status' => StatusDokumenTerposting::class,
             'BelanjaStok' => 'boolean',
             'Kompensasi' => 'boolean',
             'UkuranLampiran' => 'integer',

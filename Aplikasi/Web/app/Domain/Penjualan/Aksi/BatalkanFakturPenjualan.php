@@ -8,10 +8,10 @@ use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\SuratJalan;
@@ -68,7 +68,7 @@ final class BatalkanFakturPenjualan
         $faktur = FakturPenjualan::query()->where('Uuid', $uuid)->lockForUpdate()->first()
             ?? throw new PelanggaranAturanBisnis('FakturTidakDitemukan', 'Faktur penjualan tidak ditemukan.');
 
-        if ($faktur->Status === StatusDokumenGrosir::Dibatalkan) {
+        if ($faktur->Status === StatusDokumenTerposting::Dibatalkan) {
             return $faktur;
         }
 
@@ -102,7 +102,7 @@ final class BatalkanFakturPenjualan
             $sj->save();
         }
 
-        $faktur->UbahStatus(StatusDokumenGrosir::Dibatalkan);
+        $faktur->UbahStatus(StatusDokumenTerposting::Dibatalkan);
         $faktur->fill([
             'IdJurnalPembatalan' => $jurnal->idJurnal,
             'AlasanBatal' => $alasan,
@@ -114,13 +114,13 @@ final class BatalkanFakturPenjualan
         $this->riwayat->Catat(
             FakturPenjualan::JENIS_DOKUMEN,
             $faktur->Id,
-            StatusDokumenGrosir::Diposting->value,
-            StatusDokumenGrosir::Dibatalkan->value,
+            StatusDokumenTerposting::Diposting->value,
+            StatusDokumenTerposting::Dibatalkan->value,
             $idPengguna,
             $alasan,
         );
-        $this->audit->Catat('grosir.faktur-batalkan', $faktur, nilaiLama: ['Status' => StatusDokumenGrosir::Diposting->value], nilaiBaru: [
-            'Status' => StatusDokumenGrosir::Dibatalkan->value,
+        $this->audit->Catat('grosir.faktur-batalkan', $faktur, nilaiLama: ['Status' => StatusDokumenTerposting::Diposting->value], nilaiBaru: [
+            'Status' => StatusDokumenTerposting::Dibatalkan->value,
             'Nomor' => $faktur->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal->nomor,

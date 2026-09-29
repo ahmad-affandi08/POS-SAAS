@@ -7,10 +7,10 @@ namespace App\Domain\Pembelian\Kueri;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
 use App\Domain\Akuntansi\Kueri\JurnalSumber;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
 use App\Domain\Pembelian\Model\FakturPembelianDetail;
@@ -105,7 +105,7 @@ final class DetailPembelian
         $seriDiretur = [];
 
         foreach (ReturPembelianDetail::query()
-            ->whereIn('IdReturPembelian', ReturPembelian::query()->where('IdPenerimaanBarang', $grn->Id)->where('Status', StatusDokumenPembelian::Diposting->value)->select('Id'))
+            ->whereIn('IdReturPembelian', ReturPembelian::query()->where('IdPenerimaanBarang', $grn->Id)->where('Status', StatusDokumenTerposting::Diposting->value)->select('Id'))
             ->get(['IdPenerimaanBarangDetail', 'DaftarNomorSeri']) as $r) {
             $seriDiretur[$r->IdPenerimaanBarangDetail] = [...($seriDiretur[$r->IdPenerimaanBarangDetail] ?? []), ...($r->DaftarNomorSeri ?? [])];
         }
@@ -360,7 +360,7 @@ final class DetailPembelian
     {
         $grn = PenerimaanBarang::query()
             ->where('IdPemasok', $idPemasok)
-            ->where('Status', StatusDokumenPembelian::Diposting->value)
+            ->where('Status', StatusDokumenTerposting::Diposting->value)
             ->where('BelanjaStok', false)
             ->whereNull('IdFakturPembelian')
             ->when($idOutletBoleh !== null, fn ($q) => $q->whereIn('IdOutlet', $idOutletBoleh ?? []))

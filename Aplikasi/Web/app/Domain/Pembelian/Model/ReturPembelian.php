@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Model;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -28,7 +29,7 @@ use LogicException;
  * @property int|null $IdOutlet
  * @property Carbon $Tanggal
  * @property string $Alasan
- * @property StatusDokumenPembelian $Status
+ * @property StatusDokumenTerposting $Status
  * @property string $NilaiBarang
  * @property string $NilaiHutang
  * @property string $Pajak
@@ -44,7 +45,7 @@ use LogicException;
  */
 final class ReturPembelian extends ModelDasar
 {
-    use JagaDokumenPembelian;
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'ReturPembelian';
@@ -65,7 +66,7 @@ final class ReturPembelian extends ModelDasar
     /**
      * @throws LogicException bila perpindahan status tidak diizinkan
      */
-    public function UbahStatus(StatusDokumenPembelian $tujuan): void
+    public function UbahStatus(StatusDokumenTerposting $tujuan): void
     {
         if (! $this->Status->BisaBerubahKe($tujuan)) {
             throw new LogicException("Status retur pembelian {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
@@ -87,6 +88,6 @@ final class ReturPembelian extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['Tanggal' => 'date', 'Status' => StatusDokumenPembelian::class, 'DibatalkanPada' => 'datetime'];
+        return ['Tanggal' => 'date', 'Status' => StatusDokumenTerposting::class, 'DibatalkanPada' => 'datetime'];
     }
 }

@@ -8,8 +8,8 @@ use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Akuntansi\Model\PemetaanAkun;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Model\PembayaranHutang;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -257,7 +257,7 @@ describe('F-16c bagian 4b klaim promo pemasok', function (): void {
         $this->post("/kelola/pembelian/pembayaran/{$pembayaran->Uuid}/batalkan", ['Alasan' => 'Salah input pembayaran'])
             ->assertSessionHasErrors();
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-        expect($pembayaran->refresh()->Status)->toBe(StatusDokumenPembelian::Diposting);
+        expect($pembayaran->refresh()->Status)->toBe(StatusDokumenTerposting::Diposting);
     });
 
     it('formulir promo: bagian pemasok 0–100%, bagian > 0 wajib pemasok; tersimpan di promo', function (): void {

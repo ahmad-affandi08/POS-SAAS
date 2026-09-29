@@ -9,12 +9,12 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Data\DataFakturPenjualan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Layanan\PenomorGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
@@ -170,7 +170,7 @@ final class BuatFakturPenjualan
 
     private function PastikanBisaDifakturkan(SuratJalan $sj, SuratJalan $pertama, string $periode): void
     {
-        if ($sj->Status !== StatusDokumenGrosir::Diposting) {
+        if ($sj->Status !== StatusDokumenTerposting::Diposting) {
             throw new PelanggaranAturanBisnis('SuratJalanTidakAktif', "Surat jalan {$sj->Nomor} sudah dibatalkan.", 'SuratJalan');
         }
 

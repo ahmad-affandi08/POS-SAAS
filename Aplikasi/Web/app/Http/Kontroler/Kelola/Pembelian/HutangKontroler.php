@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Pembelian;
 
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pembelian\Aksi\BatalkanPembayaranHutang;
 use App\Domain\Pembelian\Aksi\SimpanPembayaranHutang;
 use App\Domain\Pembelian\Enum\KelompokUmurHutang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarPemasok;
 use App\Domain\Pembelian\Kueri\DetailPembelian;
@@ -51,7 +51,7 @@ final class HutangKontroler extends DasarPembelianKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenPembelian::KOLOM_URUT, DaftarDokumenPembelian::URUT_BAWAAN, DaftarDokumenPembelian::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Pembelian/Pembayaran/Daftar', 'Pembayaran', fn (): array => $daftar->Pembayaran($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusDokumenPembelian::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenTerposting::class),
             'OpsiPemasok' => $pemasok->AmbilPilihan(),
             'Izin' => $this->AmbilIzinPembelian(),
         ]);
@@ -94,7 +94,7 @@ final class HutangKontroler extends DasarPembelianKontroler
         return Inertia::render('Kelola/Pembelian/Pembayaran/Detail', [
             ...$detail->Pembayaran($p),
             'Izin' => $izin,
-            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $p->Status === StatusDokumenPembelian::Diposting && ! $p->BelanjaStok && ! $p->Kompensasi],
+            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $p->Status === StatusDokumenTerposting::Diposting && ! $p->BelanjaStok && ! $p->Kompensasi],
         ]);
     }
 

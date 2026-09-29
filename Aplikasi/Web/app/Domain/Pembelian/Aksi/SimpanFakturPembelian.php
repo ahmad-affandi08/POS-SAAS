@@ -11,6 +11,7 @@ use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -18,7 +19,6 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Pembelian\Data\DataBarisFakturPembelian;
 use App\Domain\Pembelian\Data\DataFakturPembelian;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PengalokasiNilai;
@@ -230,7 +230,7 @@ final class SimpanFakturPembelian
         }
 
         foreach ($grn as $g) {
-            if ($g->Status !== StatusDokumenPembelian::Diposting || $g->BelanjaStok || $g->IdFakturPembelian !== null || $g->IdPemasok !== $pemasok->Id) {
+            if ($g->Status !== StatusDokumenTerposting::Diposting || $g->BelanjaStok || $g->IdFakturPembelian !== null || $g->IdPemasok !== $pemasok->Id) {
                 throw new PelanggaranAturanBisnis('PenerimaanTidakValid', "Penerimaan {$g->Nomor} tidak bisa difakturkan: harus Diposting, dari {$pemasok->Nama}, dan belum difakturkan.", 'UuidPenerimaan');
             }
 

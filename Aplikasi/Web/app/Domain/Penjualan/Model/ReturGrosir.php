@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Model;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pelanggan\Model\Pelanggan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,7 +34,7 @@ use LogicException;
  * @property int $IdOutlet
  * @property int|null $IdFakturPenjualan
  * @property Carbon $Tanggal
- * @property StatusDokumenGrosir $Status
+ * @property StatusDokumenTerposting $Status
  * @property string $Alasan
  * @property bool $MengurangiPiutang
  * @property string|null $TarifPpn
@@ -65,7 +66,7 @@ use LogicException;
  */
 final class ReturGrosir extends ModelDasar
 {
-    use JagaDokumenGrosir;
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'ReturGrosir';
@@ -103,7 +104,7 @@ final class ReturGrosir extends ModelDasar
     /**
      * @throws LogicException bila perpindahan status tidak diizinkan
      */
-    public function UbahStatus(StatusDokumenGrosir $tujuan): void
+    public function UbahStatus(StatusDokumenTerposting $tujuan): void
     {
         if (! $this->Status->BisaBerubahKe($tujuan)) {
             throw new LogicException("Status retur grosir {$this->Status->value} tidak bisa berubah ke {$tujuan->value}.");
@@ -164,7 +165,7 @@ final class ReturGrosir extends ModelDasar
     {
         return [
             'Tanggal' => 'date',
-            'Status' => StatusDokumenGrosir::class,
+            'Status' => StatusDokumenTerposting::class,
             'MengurangiPiutang' => 'boolean',
             'TarifPpn' => 'decimal:6',
             'PengaliDppPembilang' => 'integer',

@@ -12,12 +12,12 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Pembelian\Data\DataPembayaranHutang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PenomorPembelian;
@@ -121,7 +121,7 @@ final class SimpanPembayaranHutang
             'IdOutlet' => $outlet,
             'Tanggal' => $data->tanggal->toDateString(),
             'Jumlah' => $total->KeString(),
-            'Status' => StatusDokumenPembelian::Diposting,
+            'Status' => StatusDokumenTerposting::Diposting,
             'Catatan' => $data->catatan === null || trim($data->catatan) === '' ? null : mb_substr(trim($data->catatan), 0, 500),
             'DibuatOleh' => $data->idPengguna,
             ...($berkas ?? []),
@@ -160,7 +160,7 @@ final class SimpanPembayaranHutang
         $pembayaran->IdJurnal = $jurnal->idJurnal;
         $pembayaran->save();
 
-        $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenPembelian::Diposting->value, $data->idPengguna);
+        $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenTerposting::Diposting->value, $data->idPengguna);
         $this->audit->Catat('pembayaran-hutang.posting', $pembayaran, nilaiBaru: [
             'Nomor' => $pembayaran->Nomor,
             'Pemasok' => $pemasok->Nama,

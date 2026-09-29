@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Grosir;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Penjualan\Aksi\BatalkanReturGrosir;
 use App\Domain\Penjualan\Aksi\BuatReturGrosir;
 use App\Domain\Penjualan\Enum\KondisiBarangRetur;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
 use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
@@ -36,7 +36,7 @@ final class ReturGrosirKontroler extends DasarGrosirKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenGrosir::KOLOM_URUT, DaftarDokumenGrosir::URUT_BAWAAN, DaftarDokumenGrosir::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Grosir/Retur/Daftar', 'Retur', fn (): array => $daftar->Retur($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusDokumenGrosir::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenTerposting::class),
             'Izin' => $this->AmbilIzinGrosir(),
         ]);
     }
@@ -46,7 +46,7 @@ final class ReturGrosirKontroler extends DasarGrosirKontroler
     {
         $dokumen = $this->CariDokumen(SuratJalan::class, $suratJalan);
 
-        if ($dokumen->Status !== StatusDokumenGrosir::Diposting) {
+        if ($dokumen->Status !== StatusDokumenTerposting::Diposting) {
             return to_route('kelola.grosir.surat-jalan.detail', ['suratJalan' => $dokumen->Uuid])
                 ->withErrors(['Umum' => 'Surat jalan yang sudah dibatalkan tidak punya penyerahan untuk diretur.']);
         }
@@ -77,7 +77,7 @@ final class ReturGrosirKontroler extends DasarGrosirKontroler
         return Inertia::render('Kelola/Grosir/Retur/Detail', [
             ...$detail->Retur($dokumen),
             'Izin' => $izin,
-            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting],
+            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenTerposting::Diposting],
         ]);
     }
 

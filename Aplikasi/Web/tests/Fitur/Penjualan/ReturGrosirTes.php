@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Model\JurnalDetail;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -25,7 +26,6 @@ use App\Domain\Penjualan\Data\DataPesananGrosir;
 use App\Domain\Penjualan\Data\DataReturGrosir;
 use App\Domain\Penjualan\Data\DataSuratJalan;
 use App\Domain\Penjualan\Enum\KondisiBarangRetur;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Model\ReturGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Penjualan\Model\SuratJalanDetail;
@@ -143,7 +143,7 @@ describe('BuatReturGrosir (BR-12.7, J-12.4)', function (): void {
 
         $kode = mb_strtoupper($this->k['Outlet']->Kode);
         expect($retur->Nomor)->toBe("RG/{$kode}/2609/0001")
-            ->and($retur->Status)->toBe(StatusDokumenGrosir::Diposting)
+            ->and($retur->Status)->toBe(StatusDokumenTerposting::Diposting)
             ->and($retur->Total)->toBe('750000.00')
             // HPP saat barang keluar (11.000), bukan HPP berjalan hari ini.
             ->and($retur->TotalHpp)->toBe('550000.00')
@@ -310,7 +310,7 @@ describe('BatalkanReturGrosir', function (): void {
 
         $dibatalkan = app(BatalkanReturGrosir::class)->Jalankan($retur->Uuid, 'Pembeli mengambil kembali barangnya', $this->k['Pemilik']->Id);
 
-        expect($dibatalkan->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+        expect($dibatalkan->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and($dibatalkan->IdJurnalPembatalan)->not->toBeNull()
             ->and(SisaStokReturUji($this))->toBe('800.0000');
 
@@ -324,7 +324,7 @@ describe('BatalkanReturGrosir', function (): void {
             ->and(SuratJalanDetail::query()->where('IdSuratJalan', $suratJalan->Id)->value('JumlahDiretur'))->toBe('0.0000');
 
         $ulang = app(BatalkanReturGrosir::class)->Jalankan($retur->Uuid, 'Pembeli mengambil kembali barangnya', $this->k['Pemilik']->Id);
-        expect($ulang->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+        expect($ulang->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and(SisaStokReturUji($this))->toBe('800.0000')
             ->and(RiwayatStatusDokumen::query()->where('JenisDokumen', ReturGrosir::JENIS_DOKUMEN)->where('IdDokumen', $retur->Id)->count())->toBe(1)
             ->and(PemeriksaInvarian::PeriksaSemua($this->k['Tenant']->Id))->toBe([]);

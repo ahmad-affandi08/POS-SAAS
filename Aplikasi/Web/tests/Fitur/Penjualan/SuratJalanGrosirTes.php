@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Model\JurnalDetail;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -19,7 +20,6 @@ use App\Domain\Penjualan\Data\DataBarisSuratJalan;
 use App\Domain\Penjualan\Data\DataFakturPenjualan;
 use App\Domain\Penjualan\Data\DataPesananGrosir;
 use App\Domain\Penjualan\Data\DataSuratJalan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosirDetail;
@@ -137,7 +137,7 @@ describe('KirimPesananGrosir: penyerahan sebagai titik pengakuan (BR-12.2, J-12.
 
         $kode = mb_strtoupper($this->k['Outlet']->Kode);
         expect($suratJalan->Nomor)->toBe("SJ/{$kode}/2609/0001")
-            ->and($suratJalan->Status)->toBe(StatusDokumenGrosir::Diposting)
+            ->and($suratJalan->Status)->toBe(StatusDokumenTerposting::Diposting)
             ->and($suratJalan->Total)->toBe('3000000.00')
             // HPP berjalan dari stok awal 11.000/pcs; harga jualnya 15.000 dan itu dua angka yang berbeda.
             ->and($suratJalan->TotalHpp)->toBe('2200000.00')
@@ -270,7 +270,7 @@ describe('BatalkanSuratJalan (J-12.3)', function (): void {
 
         $dibatalkan = app(BatalkanSuratJalan::class)->Jalankan($suratJalan->Uuid, 'Barang ditolak pembeli di lokasi', $this->k['Pemilik']->Id);
 
-        expect($dibatalkan->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+        expect($dibatalkan->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and($dibatalkan->AlasanBatal)->toBe('Barang ditolak pembeli di lokasi')
             ->and($dibatalkan->IdJurnalPembatalan)->not->toBeNull()
             ->and(SisaStokUji($this))->toBe('500.0000');
@@ -305,7 +305,7 @@ describe('BatalkanSuratJalan (J-12.3)', function (): void {
         $ulang = app(BatalkanSuratJalan::class)->Jalankan($suratJalan->Uuid, 'Salah kirim ke alamat cabang lain', $this->k['Pemilik']->Id);
 
         // Pemutaran ulang tidak membalik dua kali: stok dan riwayat tetap satu langkah.
-        expect($ulang->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+        expect($ulang->Status)->toBe(StatusDokumenTerposting::Dibatalkan)
             ->and(SisaStokUji($this))->toBe('500.0000')
             ->and(RiwayatStatusDokumen::query()->where('JenisDokumen', SuratJalan::JENIS_DOKUMEN)->where('IdDokumen', $suratJalan->Id)->count())->toBe(1);
 

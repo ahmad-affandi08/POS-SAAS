@@ -6,6 +6,7 @@ namespace App\Domain\Pembelian\Layanan;
 
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -18,7 +19,6 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pembelian\Data\DataBarisPenerimaanBarang;
 use App\Domain\Pembelian\Data\DataBarisTerhitung;
 use App\Domain\Pembelian\Data\DataPajakPembelian;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\Pemasok;
 use App\Domain\Pembelian\Model\PenerimaanBarang;
@@ -116,7 +116,7 @@ final class PemrosesPenerimaanBarang
             'IdGudang' => $gudang->id,
             'IdOutlet' => $gudang->idOutlet,
             'Tanggal' => $tanggal->toDateString(),
-            'Status' => StatusDokumenPembelian::Diposting,
+            'Status' => StatusDokumenTerposting::Diposting,
             'NomorSuratJalan' => self::Bersihkan($nomorSuratJalan, 60),
             'Catatan' => self::Bersihkan($catatan, 500),
             'TerminHari' => $po !== null ? $po->TerminHari : ($pemasok !== null ? $pemasok->TerminHari : 0),

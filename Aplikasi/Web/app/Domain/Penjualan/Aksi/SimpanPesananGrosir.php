@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\DB;
  * - **Cakupan bagian 1** (§25 no. 27d): hanya produk berjenis Stok tanpa pelacakan batch/seri. Resep, paket, jasa,
  *   dan produksi ditolak dengan galat yang menyebut alasannya, bukan diam-diam dihitung salah.
  * - Angka dokumen dihitung `PenghitungGrosir` (mesin kalkulasi F-07a yang sama dengan kasir).
- * - Hanya draf yang boleh diubah; setelah dikonfirmasi barisnya dikunci `JagaDokumenGrosir`.
+ * - Hanya draf yang boleh diubah; setelah dikonfirmasi barisnya dikunci `JagaDokumenTerposting`.
  */
 final class SimpanPesananGrosir
 {

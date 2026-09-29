@@ -11,6 +11,7 @@ use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -19,7 +20,6 @@ use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Pembelian\Data\DataReturPembelian;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PengalokasiNilai;
@@ -90,7 +90,7 @@ final class SimpanReturPembelian
         $this->pengaturanPersediaan->AmbilDenganKunciBaca();
         $grn = PenerimaanBarang::query()->where('Uuid', $data->uuidPenerimaan)->lockForUpdate()->first();
 
-        if ($grn === null || $grn->Status !== StatusDokumenPembelian::Diposting) {
+        if ($grn === null || $grn->Status !== StatusDokumenTerposting::Diposting) {
             throw new PelanggaranAturanBisnis('PenerimaanTidakValid', 'Penerimaan barang tidak ditemukan atau sudah dibatalkan.', 'UuidPenerimaan');
         }
 
@@ -186,7 +186,7 @@ final class SimpanReturPembelian
             'IdOutlet' => $grn->IdOutlet,
             'Tanggal' => $data->tanggal->toDateString(),
             'Alasan' => $alasan,
-            'Status' => StatusDokumenPembelian::Diposting,
+            'Status' => StatusDokumenTerposting::Diposting,
             'NilaiBarang' => $nilaiBarang->KeString(),
             'NilaiHutang' => $nilaiHutang->KeString(),
             'Pajak' => $pajak->KeString(),
@@ -272,7 +272,7 @@ final class SimpanReturPembelian
             }
         }
 
-        $this->riwayat->Catat(ReturPembelian::JENIS_DOKUMEN, $retur->Id, null, StatusDokumenPembelian::Diposting->value, $data->idPengguna);
+        $this->riwayat->Catat(ReturPembelian::JENIS_DOKUMEN, $retur->Id, null, StatusDokumenTerposting::Diposting->value, $data->idPengguna);
         $this->audit->Catat('retur-pembelian.posting', $retur, nilaiBaru: [
             'Nomor' => $retur->Nomor,
             'NomorPenerimaan' => $grn->Nomor,

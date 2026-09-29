@@ -10,13 +10,13 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PenyusunJurnalPembelian;
@@ -87,7 +87,7 @@ final class BatalkanPenerimaanBarang
         $po = $awal->IdPesananPembelian === null ? null : PesananPembelian::query()->whereKey($awal->IdPesananPembelian)->lockForUpdate()->firstOrFail();
         $dokumen = PenerimaanBarang::query()->whereKey($id)->lockForUpdate()->firstOrFail();
 
-        if ($dokumen->Status === StatusDokumenPembelian::Dibatalkan) {
+        if ($dokumen->Status === StatusDokumenTerposting::Dibatalkan) {
             return $dokumen;
         }
 
@@ -97,7 +97,7 @@ final class BatalkanPenerimaanBarang
             throw new PelanggaranAturanBisnis('SudahDifakturkan', "Penerimaan ini sudah difakturkan di {$faktur->Nomor}. Batalkan fakturnya dulu.");
         }
 
-        if (ReturPembelian::query()->where('IdPenerimaanBarang', $dokumen->Id)->where('Status', StatusDokumenPembelian::Diposting->value)->exists()) {
+        if (ReturPembelian::query()->where('IdPenerimaanBarang', $dokumen->Id)->where('Status', StatusDokumenTerposting::Diposting->value)->exists()) {
             throw new PelanggaranAturanBisnis('SudahDiretur', 'Penerimaan ini punya retur pembelian aktif. Batalkan returnya dulu.');
         }
 
@@ -158,12 +158,12 @@ final class BatalkanPenerimaanBarang
             $this->BatalkanBagianBelanja($faktur, $jurnal?->idJurnal, $alasan, $idPengguna);
         }
 
-        $dokumen->UbahStatus(StatusDokumenPembelian::Dibatalkan);
+        $dokumen->UbahStatus(StatusDokumenTerposting::Dibatalkan);
         $dokumen->fill(['IdJurnalPembatalan' => $jurnal?->idJurnal, 'AlasanBatal' => $alasan, 'DibatalkanOleh' => $idPengguna, 'DibatalkanPada' => now()])->save();
 
-        $this->riwayat->Catat(PenerimaanBarang::JENIS_DOKUMEN, $dokumen->Id, StatusDokumenPembelian::Diposting->value, StatusDokumenPembelian::Dibatalkan->value, $idPengguna, $alasan);
-        $this->audit->Catat('penerimaan-barang.batalkan', $dokumen, ['Status' => StatusDokumenPembelian::Diposting->value], [
-            'Status' => StatusDokumenPembelian::Dibatalkan->value,
+        $this->riwayat->Catat(PenerimaanBarang::JENIS_DOKUMEN, $dokumen->Id, StatusDokumenTerposting::Diposting->value, StatusDokumenTerposting::Dibatalkan->value, $idPengguna, $alasan);
+        $this->audit->Catat('penerimaan-barang.batalkan', $dokumen, ['Status' => StatusDokumenTerposting::Diposting->value], [
+            'Status' => StatusDokumenTerposting::Dibatalkan->value,
             'Nomor' => $dokumen->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal?->nomor,
@@ -234,14 +234,14 @@ final class BatalkanPenerimaanBarang
 
         $pembayaran = PembayaranHutang::query()
             ->whereIn('Id', PembayaranHutangAlokasi::query()->where('IdFakturPembelian', $faktur->Id)->select('IdPembayaranHutang'))
-            ->where('Status', StatusDokumenPembelian::Diposting->value)
+            ->where('Status', StatusDokumenTerposting::Diposting->value)
             ->lockForUpdate()
             ->get();
 
         foreach ($pembayaran as $p) {
-            $p->UbahStatus(StatusDokumenPembelian::Dibatalkan);
+            $p->UbahStatus(StatusDokumenTerposting::Dibatalkan);
             $p->fill(['IdJurnalPembatalan' => $idJurnal, 'AlasanBatal' => $alasan, 'DibatalkanOleh' => $idPengguna, 'DibatalkanPada' => now()])->save();
-            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $p->Id, StatusDokumenPembelian::Diposting->value, StatusDokumenPembelian::Dibatalkan->value, $idPengguna, $alasan);
+            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $p->Id, StatusDokumenTerposting::Diposting->value, StatusDokumenTerposting::Dibatalkan->value, $idPengguna, $alasan);
         }
     }
 

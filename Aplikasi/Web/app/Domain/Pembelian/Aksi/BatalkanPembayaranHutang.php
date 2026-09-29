@@ -7,11 +7,11 @@ namespace App\Domain\Pembelian\Aksi;
 use App\Domain\Akuntansi\Aksi\BalikkanJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
 use App\Domain\Pembelian\Model\PembayaranHutang;
 use App\Domain\Pembelian\Model\PembayaranHutangAlokasi;
@@ -49,7 +49,7 @@ final class BatalkanPembayaranHutang
             $faktur = FakturPembelian::query()->whereIn('Id', $alokasi->pluck('IdFakturPembelian')->all())->orderBy('Id')->lockForUpdate()->get()->keyBy('Id');
             $terkunci = PembayaranHutang::query()->whereKey($pembayaran->Id)->lockForUpdate()->firstOrFail();
 
-            if ($terkunci->Status === StatusDokumenPembelian::Dibatalkan) {
+            if ($terkunci->Status === StatusDokumenTerposting::Dibatalkan) {
                 return $terkunci;
             }
 
@@ -85,12 +85,12 @@ final class BatalkanPembayaranHutang
                 $idPengguna,
             );
 
-            $terkunci->UbahStatus(StatusDokumenPembelian::Dibatalkan);
+            $terkunci->UbahStatus(StatusDokumenTerposting::Dibatalkan);
             $terkunci->fill(['IdJurnalPembatalan' => $jurnal?->idJurnal, 'AlasanBatal' => $alasan, 'DibatalkanOleh' => $idPengguna, 'DibatalkanPada' => now()])->save();
 
-            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $terkunci->Id, StatusDokumenPembelian::Diposting->value, StatusDokumenPembelian::Dibatalkan->value, $idPengguna, $alasan);
-            $this->audit->Catat('pembayaran-hutang.batalkan', $terkunci, ['Status' => StatusDokumenPembelian::Diposting->value], [
-                'Status' => StatusDokumenPembelian::Dibatalkan->value,
+            $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $terkunci->Id, StatusDokumenTerposting::Diposting->value, StatusDokumenTerposting::Dibatalkan->value, $idPengguna, $alasan);
+            $this->audit->Catat('pembayaran-hutang.batalkan', $terkunci, ['Status' => StatusDokumenTerposting::Diposting->value], [
+                'Status' => StatusDokumenTerposting::Dibatalkan->value,
                 'Nomor' => $terkunci->Nomor,
                 'Alasan' => $alasan,
                 'NomorJurnalPembatalan' => $jurnal?->nomor,

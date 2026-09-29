@@ -10,13 +10,13 @@ use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PenyusunJurnalPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
@@ -81,7 +81,7 @@ final class BatalkanReturPembelian
         $faktur = $awal->IdFakturPembelian === null ? null : FakturPembelian::query()->whereKey($awal->IdFakturPembelian)->lockForUpdate()->firstOrFail();
         $retur = ReturPembelian::query()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
 
-        if ($retur->Status === StatusDokumenPembelian::Dibatalkan) {
+        if ($retur->Status === StatusDokumenTerposting::Dibatalkan) {
             return $retur;
         }
 
@@ -180,12 +180,12 @@ final class BatalkanReturPembelian
             }
         }
 
-        $retur->UbahStatus(StatusDokumenPembelian::Dibatalkan);
+        $retur->UbahStatus(StatusDokumenTerposting::Dibatalkan);
         $retur->fill(['IdJurnalPembatalan' => $jurnal->idJurnal, 'AlasanBatal' => $alasan, 'DibatalkanOleh' => $idPengguna, 'DibatalkanPada' => now()])->save();
 
-        $this->riwayat->Catat(ReturPembelian::JENIS_DOKUMEN, $retur->Id, StatusDokumenPembelian::Diposting->value, StatusDokumenPembelian::Dibatalkan->value, $idPengguna, $alasan);
-        $this->audit->Catat('retur-pembelian.batalkan', $retur, ['Status' => StatusDokumenPembelian::Diposting->value], [
-            'Status' => StatusDokumenPembelian::Dibatalkan->value,
+        $this->riwayat->Catat(ReturPembelian::JENIS_DOKUMEN, $retur->Id, StatusDokumenTerposting::Diposting->value, StatusDokumenTerposting::Dibatalkan->value, $idPengguna, $alasan);
+        $this->audit->Catat('retur-pembelian.batalkan', $retur, ['Status' => StatusDokumenTerposting::Diposting->value], [
+            'Status' => StatusDokumenTerposting::Dibatalkan->value,
             'Nomor' => $retur->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal->nomor,

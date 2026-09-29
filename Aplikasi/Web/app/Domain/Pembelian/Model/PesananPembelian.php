@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Model;
 
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
@@ -60,7 +61,7 @@ use LogicException;
  */
 final class PesananPembelian extends ModelDasar
 {
-    use JagaDokumenPembelian;
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'PesananPembelian';

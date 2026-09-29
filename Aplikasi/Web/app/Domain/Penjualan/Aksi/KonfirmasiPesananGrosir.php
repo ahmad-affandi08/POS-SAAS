@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
@@ -12,7 +13,6 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Kueri\KreditPelanggan;
 use App\Domain\Pelanggan\Model\Pelanggan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
@@ -156,7 +156,7 @@ final class KonfirmasiPesananGrosir
 
         foreach (SuratJalan::query()
             ->where('IdPelanggan', $idPelanggan)
-            ->where('Status', StatusDokumenGrosir::Diposting->value)
+            ->where('Status', StatusDokumenTerposting::Diposting->value)
             ->whereNull('IdFakturPenjualan')
             ->get() as $suratJalan) {
             $nilai = $nilai->Tambah($suratJalan->AmbilTotal());

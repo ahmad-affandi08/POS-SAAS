@@ -8,12 +8,12 @@ use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
@@ -94,7 +94,7 @@ final class BatalkanSuratJalan
         $pesanan = PesananGrosir::query()->whereKey($awal->IdPesananGrosir)->lockForUpdate()->firstOrFail();
         $suratJalan = SuratJalan::query()->whereKey($awal->Id)->lockForUpdate()->firstOrFail();
 
-        if ($suratJalan->Status === StatusDokumenGrosir::Dibatalkan) {
+        if ($suratJalan->Status === StatusDokumenTerposting::Dibatalkan) {
             return $suratJalan;
         }
 
@@ -177,7 +177,7 @@ final class BatalkanSuratJalan
 
         $this->KembalikanPesanan($pesanan, $suratJalan, $idPengguna, $alasan);
 
-        $suratJalan->UbahStatus(StatusDokumenGrosir::Dibatalkan);
+        $suratJalan->UbahStatus(StatusDokumenTerposting::Dibatalkan);
         $suratJalan->fill([
             'IdJurnalPembatalan' => $jurnal->idJurnal,
             'AlasanBatal' => $alasan,
@@ -189,13 +189,13 @@ final class BatalkanSuratJalan
         $this->riwayat->Catat(
             SuratJalan::JENIS_DOKUMEN,
             $suratJalan->Id,
-            StatusDokumenGrosir::Diposting->value,
-            StatusDokumenGrosir::Dibatalkan->value,
+            StatusDokumenTerposting::Diposting->value,
+            StatusDokumenTerposting::Dibatalkan->value,
             $idPengguna,
             $alasan,
         );
-        $this->audit->Catat('grosir.surat-jalan-batalkan', $suratJalan, nilaiLama: ['Status' => StatusDokumenGrosir::Diposting->value], nilaiBaru: [
-            'Status' => StatusDokumenGrosir::Dibatalkan->value,
+        $this->audit->Catat('grosir.surat-jalan-batalkan', $suratJalan, nilaiLama: ['Status' => StatusDokumenTerposting::Diposting->value], nilaiBaru: [
+            'Status' => StatusDokumenTerposting::Dibatalkan->value,
             'Nomor' => $suratJalan->Nomor,
             'Alasan' => $alasan,
             'NomorJurnalPembatalan' => $jurnal->nomor,

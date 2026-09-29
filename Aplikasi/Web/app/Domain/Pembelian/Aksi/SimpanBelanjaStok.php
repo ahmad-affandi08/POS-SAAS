@@ -12,13 +12,13 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\JenisDokumenBernomor;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Pembelian\Data\DataBelanjaStok;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PengalokasiNilai;
@@ -119,7 +119,7 @@ final class SimpanBelanjaStok
             'IdOutlet' => $gudang->idOutlet,
             'Tanggal' => $data->tanggal->toDateString(),
             'Jumlah' => $total->KeString(),
-            'Status' => StatusDokumenPembelian::Diposting,
+            'Status' => StatusDokumenTerposting::Diposting,
             'BelanjaStok' => true,
             'Catatan' => "Pelunasan belanja stok {$grn->Nomor}",
             'DibuatOleh' => $data->idPengguna,
@@ -149,9 +149,9 @@ final class SimpanBelanjaStok
         $pembayaran->IdJurnal = $jurnal->idJurnal;
         $pembayaran->save();
 
-        $this->riwayat->Catat(PenerimaanBarang::JENIS_DOKUMEN, $grn->Id, null, StatusDokumenPembelian::Diposting->value, $data->idPengguna);
+        $this->riwayat->Catat(PenerimaanBarang::JENIS_DOKUMEN, $grn->Id, null, StatusDokumenTerposting::Diposting->value, $data->idPengguna);
         $this->riwayat->Catat(FakturPembelian::JENIS_DOKUMEN, $faktur->Id, null, StatusFakturPembelian::Lunas->value, $data->idPengguna);
-        $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenPembelian::Diposting->value, $data->idPengguna);
+        $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenTerposting::Diposting->value, $data->idPengguna);
         $this->audit->Catat('belanja-stok.simpan', $grn, nilaiBaru: [
             'Nomor' => $grn->Nomor,
             'NomorFaktur' => $faktur->Nomor,

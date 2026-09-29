@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Model;
 
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
+use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
@@ -54,6 +55,7 @@ use LogicException;
  */
 final class Pencairan extends ModelDasar
 {
+    use JagaDokumenTerposting;
     use MilikTenant;
 
     public const JENIS_DOKUMEN = 'Pencairan';
@@ -77,22 +79,11 @@ final class Pencairan extends ModelDasar
     ];
 
     /**
-     * Penjaga aturan #8 (cermin `JagaDokumenGrosir`, sengaja tidak memakai traitnya karena trait itu milik dokumen
-     * grosir): dokumen tidak pernah dihapus, dan setelah diposting hanya `KOLOM_STATUS` yang boleh berubah.
+     * @return list<string>
      */
-    protected static function booted(): void
+    public function AmbilKolomBolehBerubah(): array
     {
-        self::updating(function (Pencairan $pencairan): void {
-            $terlarang = array_diff(array_keys($pencairan->getDirty()), [...self::KOLOM_STATUS, 'DiubahPada']);
-
-            if ($terlarang !== []) {
-                throw new LogicException('Pencairan yang sudah diposting tidak bisa diubah: '.implode(', ', $terlarang).'. Koreksi lewat pembatalan.');
-            }
-        });
-
-        self::deleting(function (): void {
-            throw new LogicException('Pencairan tidak pernah dihapus; koreksi lewat pembatalan (jurnal pembalik).');
-        });
+        return self::KOLOM_STATUS;
     }
 
     /**

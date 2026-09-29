@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Pembelian\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\PenerimaanBarang;
 use App\Domain\Pembelian\Model\PesananPembelian;
@@ -44,7 +44,7 @@ final class BatalkanPesananPembelian
                 return $terkunci;
             }
 
-            $adaPenerimaan = PenerimaanBarang::query()->where('IdPesananPembelian', $terkunci->Id)->where('Status', StatusDokumenPembelian::Diposting->value)->exists();
+            $adaPenerimaan = PenerimaanBarang::query()->where('IdPesananPembelian', $terkunci->Id)->where('Status', StatusDokumenTerposting::Diposting->value)->exists();
 
             if (! $tutup && $adaPenerimaan) {
                 throw new PelanggaranAturanBisnis('SudahAdaPenerimaan', 'Pesanan pembelian yang sudah menerima barang tidak bisa dibatalkan. Tutup pesanan bila sisa barang tidak akan datang.');

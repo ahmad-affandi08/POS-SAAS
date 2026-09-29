@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Pembelian;
 
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pembelian\Aksi\BatalkanPenerimaanBarang;
 use App\Domain\Pembelian\Aksi\SimpanBelanjaStok;
 use App\Domain\Pembelian\Aksi\TerimaBarang;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarPemasok;
 use App\Domain\Pembelian\Kueri\DetailPembelian;
@@ -39,7 +39,7 @@ final class PenerimaanBarangKontroler extends DasarPembelianKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenPembelian::KOLOM_URUT, DaftarDokumenPembelian::URUT_BAWAAN, DaftarDokumenPembelian::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Pembelian/Penerimaan/Daftar', 'Penerimaan', fn (): array => $daftar->Penerimaan($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusDokumenPembelian::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenTerposting::class),
             'OpsiPemasok' => $pemasok->AmbilPilihan(),
             'Izin' => $this->AmbilIzinPembelian(),
         ]);
@@ -114,7 +114,7 @@ final class PenerimaanBarangKontroler extends DasarPembelianKontroler
     {
         $grn = $this->CariDokumen(PenerimaanBarang::class, $penerimaan);
         $izin = $this->AmbilIzinPembelian();
-        $aktif = $grn->Status === StatusDokumenPembelian::Diposting;
+        $aktif = $grn->Status === StatusDokumenTerposting::Diposting;
 
         return Inertia::render('Kelola/Pembelian/Penerimaan/Detail', [
             ...$detail->Penerimaan($grn),

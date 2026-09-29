@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Pembelian;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pembelian\Aksi\BatalkanReturPembelian;
 use App\Domain\Pembelian\Aksi\SimpanReturPembelian;
-use App\Domain\Pembelian\Enum\StatusDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarPemasok;
 use App\Domain\Pembelian\Kueri\DetailPembelian;
@@ -30,7 +30,7 @@ final class ReturPembelianKontroler extends DasarPembelianKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenPembelian::KOLOM_URUT, DaftarDokumenPembelian::URUT_BAWAAN, DaftarDokumenPembelian::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Pembelian/Retur/Daftar', 'Retur', fn (): array => $daftar->Retur($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusDokumenPembelian::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenTerposting::class),
             'OpsiPemasok' => $pemasok->AmbilPilihan(),
             'Izin' => $this->AmbilIzinPembelian(),
         ]);
@@ -68,7 +68,7 @@ final class ReturPembelianKontroler extends DasarPembelianKontroler
         return Inertia::render('Kelola/Pembelian/Retur/Detail', [
             ...$detail->Retur($r),
             'Izin' => $izin,
-            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $r->Status === StatusDokumenPembelian::Diposting],
+            'Tindakan' => ['Batalkan' => $izin['Kelola'] && $r->Status === StatusDokumenTerposting::Diposting],
         ]);
     }
 

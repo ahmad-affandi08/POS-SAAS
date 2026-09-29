@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola\Grosir;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Penjualan\Aksi\BatalkanSuratJalan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
 use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
@@ -32,7 +32,7 @@ final class SuratJalanKontroler extends DasarGrosirKontroler
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarDokumenGrosir::KOLOM_URUT, DaftarDokumenGrosir::URUT_BAWAAN, DaftarDokumenGrosir::KOLOM_SARING);
 
         return ResponsTabel::Kirim($permintaan, 'Kelola/Grosir/SuratJalan/Daftar', 'SuratJalan', fn (): array => $daftar->SuratJalan($tabel, $this->IdOutletBoleh()), fn (): array => [
-            'OpsiStatus' => self::Opsi(StatusDokumenGrosir::class),
+            'OpsiStatus' => self::Opsi(StatusDokumenTerposting::class),
             'HariIni' => $this->HariIni(),
             'Izin' => $this->AmbilIzinGrosir(),
         ]);
@@ -47,7 +47,7 @@ final class SuratJalanKontroler extends DasarGrosirKontroler
             ...$detail->SuratJalan($dokumen),
             'Izin' => $izin,
             'Tindakan' => [
-                'Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting && $dokumen->IdFakturPenjualan === null,
+                'Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenTerposting::Diposting && $dokumen->IdFakturPenjualan === null,
             ],
         ]);
     }

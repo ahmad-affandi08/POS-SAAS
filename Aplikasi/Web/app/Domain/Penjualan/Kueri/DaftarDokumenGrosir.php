@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Kueri;
 
+use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
-use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
@@ -73,7 +73,7 @@ final class DaftarDokumenGrosir
      */
     public function SuratJalan(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(SuratJalan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()));
+        $kueri = $this->Saring(SuratJalan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()));
         $difakturkan = $p->saring['Difakturkan'] ?? null;
         $kueri = $kueri
             ->when($difakturkan === 'Belum', fn ($q) => $q->whereNull('IdFakturPenjualan'))
@@ -107,7 +107,7 @@ final class DaftarDokumenGrosir
      */
     public function Faktur(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(FakturPenjualan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()), 'NomorFakturPajak');
+        $kueri = $this->Saring(FakturPenjualan::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()), 'NomorFakturPajak');
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total', 'JatuhTempo' => 'JatuhTempo'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
@@ -140,7 +140,7 @@ final class DaftarDokumenGrosir
      */
     public function Retur(DataPermintaanTabel $p, ?array $idOutletBoleh): array
     {
-        $kueri = $this->Saring(ReturGrosir::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()));
+        $kueri = $this->Saring(ReturGrosir::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenTerposting $s): string => $s->value, StatusDokumenTerposting::cases()));
 
         return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total'], function (Collection $baris): array {
             $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
