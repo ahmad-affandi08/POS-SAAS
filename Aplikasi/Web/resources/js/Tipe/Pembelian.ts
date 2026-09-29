@@ -281,6 +281,7 @@ export type BarisPesananUntukPenerimaan = {
 export type PesananUntukPenerimaan = {
     Uuid: string;
     Nomor: string;
+    TanggalPenerimaan: string;
     NamaPemasok: string;
     UuidGudang: string;
     NamaGudang: string;

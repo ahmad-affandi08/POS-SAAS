@@ -109,6 +109,7 @@ describe('terima barang dari PO', function (): void {
 
         $grn = PenerimaanBarang::query()->sole();
         expect($grn->NomorSuratJalan)->toBe('SJ/SPN/2609/0142')
+            ->and($grn->Tanggal->toDateString())->toBe($po->AmbilTanggalPenerimaanBawaan()->toDateString())
             ->and($grn->DibuatOleh)->toBe($k['StafGudang']->Id);
 
         // Kirim ulang (respons hilang) dengan kunci sama = diputar ulang, bukan GRN kedua.

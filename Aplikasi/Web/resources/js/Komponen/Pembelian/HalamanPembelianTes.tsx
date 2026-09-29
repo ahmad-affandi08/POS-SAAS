@@ -358,13 +358,14 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
         );
     });
 
-    it('terima dari PO: jumlah bawaan = sisa, baris 0 tidak dikirim', () => {
+    it('terima dari PO: tanggal bawaan mundur sehari, jumlah bawaan = sisa, baris 0 tidak dikirim', () => {
         RenderUji(
             <HalamanFormPenerimaan
                 Mode="Penerimaan"
                 Pesanan={{
                     Uuid,
                     Nomor: 'PO/UTAMA/2609/0001',
+                    TanggalPenerimaan: '2026-09-29',
                     NamaPemasok: Pemasok.Nama,
                     UuidGudang: GudangUtama.Uuid,
                     NamaGudang: 'Toko Utama',
@@ -378,11 +379,12 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
                 OpsiPemasok={[Pemasok]}
                 OpsiGudang={[GudangUtama]}
                 OpsiAkun={[]}
-                HariIni="2026-09-24"
+                HariIni="2026-09-30"
                 Lampiran={{ Ekstensi: ['pdf', 'jpg'], UkuranMaksimalKb: 5120 }}
                 MaksimalBaris={500}
             />,
         );
+        expect((screen.getByLabelText('Tanggal terima') as HTMLInputElement).value).toBe('29/09/2026');
         expect((screen.getByLabelText('Diterima Minyak Goreng Sawit 2 L') as HTMLInputElement).value).toBe('14');
         UbahNilai(screen.getByLabelText('Diterima Gula Pasir 1 kg'), '0');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan penerimaan' }));
@@ -390,6 +392,7 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
             '/kelola/pembelian/penerimaan',
             expect.objectContaining({
                 UuidPesananPembelian: Uuid,
+                Tanggal: '2026-09-29',
                 Baris: [
                     { IdBarisPesanan: 11, Jumlah: '14', NomorBatch: null, TanggalKedaluwarsa: null, NomorSeri: [] },
                 ],

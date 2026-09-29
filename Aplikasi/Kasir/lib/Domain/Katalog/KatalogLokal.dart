@@ -99,6 +99,7 @@ class ProdukJual {
     required this.uuidKategori,
     required this.pelacakan,
     required this.hargaTermasukPajak,
+    required this.urlGambarKecil,
     required this.tampil,
     required this.satuan,
     required this.kelompokPilihan,
@@ -122,6 +123,7 @@ class ProdukJual {
 
   /// Null = ikut pengaturan pajak outlet.
   final bool? hargaTermasukPajak;
+  final String? urlGambarKecil;
 
   /// Aktif & tampil di POS.
   final bool tampil;
@@ -322,6 +324,7 @@ class KatalogLokal {
           uuidKategori: p.UuidKategori,
           pelacakan: p.Pelacakan,
           hargaTermasukPajak: p.HargaTermasukPajak,
+          urlGambarKecil: p.UrlGambarKecil,
           tampil: p.Aktif && p.TampilDiPos,
           satuan: satuanProduk[p.Uuid] ?? const [],
           kelompokPilihan: kelompokProduk[p.Uuid] ?? const [],

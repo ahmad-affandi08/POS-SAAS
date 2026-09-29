@@ -82,6 +82,26 @@ class KlienPos {
     ),
   );
 
+  /// Gambar kecil produk dari URL katalog. Host pada URL server sengaja tidak dipercaya: jalur POS dipasang kembali
+  /// ke [alamatDasar] perangkat agar instalasi dengan `APP_URL` internal tetap bisa diakses tablet/kasir.
+  Future<Uint8List?> AmbilGambarProduk(String url) async {
+    final alamat = Uri.tryParse(url);
+    const penanda = '/api/pos/v1/';
+    final posisi = alamat?.path.indexOf(penanda) ?? -1;
+    if (alamat == null || posisi < 0) {
+      throw const GalatJaringan('Alamat gambar produk tidak valid. Perbarui katalog lalu coba lagi.');
+    }
+    final jalur = alamat.path.substring(posisi + penanda.length) + (alamat.hasQuery ? '?${alamat.query}' : '');
+    final respons = await _KirimMentah('GET', jalur, null, terima: 'image/*');
+    if (respons.statusCode == 404) {
+      return null;
+    }
+    if (respons.statusCode >= 400) {
+      throw _Galat(respons.statusCode, _UraiJson(respons.body), bertoken: true);
+    }
+    return respons.bodyBytes;
+  }
+
   /// Gambar QRIS statis metode pembayaran (F-07b) sebagai bait gambar (PNG/JPEG) untuk ditampilkan di layar Bayar.
   Future<Uint8List> AmbilGambarQris(String uuidMetode) async {
     final respons = await _KirimMentah(

@@ -9,6 +9,7 @@ use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Model\PesananPembelian;
 use App\Domain\Pembelian\Model\PesananPembelianDetail;
+use Carbon\CarbonImmutable;
 
 /**
  * Modul Gudang aplikasi (POS-25, F-04 langkah 5 GRN): PO yang siap diterima (Disetujui/Diterima sebagian) di lokasi
@@ -80,15 +81,22 @@ final class PesananPembelianPos
     }
 
     /**
-     * Id baris PO per `Urutan` (untuk `TerimaBarang`); null bila PO tidak ada atau di luar [idGudang].
+     * Tanggal bawaan GRN dan Id baris PO per `Urutan`; null bila PO tidak ada atau di luar [idGudang].
      *
      * @param  list<int>  $idGudang
-     * @return array<int, int>|null
+     * @return array{TanggalPenerimaan: CarbonImmutable, IdBaris: array<int, int>}|null
      */
-    public function PetakanUrutan(string $uuid, array $idGudang): ?array
+    public function AmbilUntukPenerimaan(string $uuid, array $idGudang): ?array
     {
         $po = PesananPembelian::query()->where('Uuid', strtoupper($uuid))->whereIn('IdGudang', $idGudang)->first();
 
-        return $po === null ? null : PesananPembelianDetail::query()->where('IdPesananPembelian', $po->Id)->pluck('Id', 'Urutan')->map(fn ($id): int => (int) $id)->all();
+        if ($po === null) {
+            return null;
+        }
+
+        return [
+            'TanggalPenerimaan' => $po->AmbilTanggalPenerimaanBawaan(),
+            'IdBaris' => PesananPembelianDetail::query()->where('IdPesananPembelian', $po->Id)->pluck('Id', 'Urutan')->map(fn ($id): int => (int) $id)->all(),
+        ];
     }
 }

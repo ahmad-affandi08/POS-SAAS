@@ -749,7 +749,12 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
                 {/* D-27: remah roti pindah dari kepala ke atas judul halaman sebagai `JejakHalaman`. */}
                 <KepalaTataLetak induk={namaInduk} judul={judul} remah={false}>
                     <PencarianCepat halaman={pencarian.halaman} sumber={pencarian.sumber} />
-                    <MenuAkun nama={props.Pengguna?.Nama} email={props.Pengguna?.Email} />
+                    <MenuAkun
+                        nama={props.Pengguna?.Nama}
+                        email={props.Pengguna?.Email}
+                        tenant={tenantAktif}
+                        bolehKelolaLangganan={PunyaIzinTenant(props.Akses, IzinTenant.LanggananKelola)}
+                    />
                 </KepalaTataLetak>
                 <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
                     <JejakHalaman jejak={[...SusunJejak(url, namaInduk, menuTerlihat), ...jejak]} />

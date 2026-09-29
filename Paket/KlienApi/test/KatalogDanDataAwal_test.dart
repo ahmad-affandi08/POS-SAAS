@@ -538,6 +538,22 @@ void main() {
     expect(() => klien.AmbilGambarQris('M2'), throwsA(isA<GalatApi>()));
   });
 
+  test('AmbilGambarProduk memakai alamat perangkat + token; 404 → null', () async {
+    late http.Request dikirim;
+    final klien = BuatKlien((p) async {
+      dikirim = p;
+      return p.url.path.endsWith('/P1')
+          ? http.Response.bytes([137, 80, 78, 71], 200, headers: {'content-type': 'image/png'})
+          : Json({}, 404);
+    });
+    const urlInternal = 'http://web-internal/api/pos/v1/katalog/gambar/P1?ukuran=kecil&versi=V1';
+    expect(await klien.AmbilGambarProduk(urlInternal), [137, 80, 78, 71]);
+    expect(dikirim.url.toString(), 'https://kasir.contoh.id/api/pos/v1/katalog/gambar/P1?ukuran=kecil&versi=V1');
+    expect(dikirim.headers['Authorization'], 'Bearer Tkn');
+    expect(await klien.AmbilGambarProduk(urlInternal.replaceFirst('/P1?', '/P2?')), isNull);
+    expect(() => klien.AmbilGambarProduk('https://contoh.id/bukan-pos/P1'), throwsA(isA<GalatJaringan>()));
+  });
+
   test('PRD v1.46: Pajak[].Kategori (Ppn/Pbjt/Lainnya) dipetakan; nilai lain → null', () {
     PajakKelompokPos Urai(Object? kategori) => PajakKelompokPos.DariJson({
       'KodeJenisPajak': 'PbjtMakananMinuman',

@@ -7,12 +7,25 @@ export type PengumumanLegal = { Label: string; Versi: number; BerlakuMulai: stri
 /** F-00 (BR-00.7): status `Langganan` tenant aktif, untuk banner Tertunggak/Ditangguhkan. */
 export type StatusLanggananTenant = 'Trial' | 'Aktif' | 'Tertunggak' | 'Ditangguhkan' | 'Berhenti' | 'Gratis';
 
+export type TagihanTertundaTenant = {
+    Uuid: string;
+    Nomor: string;
+    Total: string;
+    JatuhTempoPada: string;
+};
+
 export type TenantAktif = {
+    Id?: number;
+    KodePelanggan?: string;
     Nama: string;
+    Slug?: string;
+    NamaPaket?: string;
+    KodePaket?: string;
     StatusLangganan: StatusLanggananTenant | null;
     PeriodeSelesai: string | null;
     /** Saat langganan Tertunggak akan ditangguhkan (akhir periode + masa tenggang). */
     BatasTenggangPada: string | null;
+    TagihanTertunda?: TagihanTertundaTenant | null;
 };
 
 export type PropsBersamaAplikasi = {

@@ -26,13 +26,19 @@ void main() {
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
   );
 
-  Future<http.Response> Function(http.Request) PenanganServer({Map<String, Object?>? dataAwal}) => (p) async {
+  Future<http.Response> Function(http.Request) PenanganServer({
+    Map<String, Object?>? dataAwal,
+    Map<String, Object?>? katalog,
+  }) => (p) async {
     final jalur = p.url.path;
     if (jalur.endsWith('/data-awal')) {
       return JsonUji(dataAwal ?? DataAwalUji());
     }
     if (jalur.endsWith('/katalog')) {
-      return JsonUji(KatalogUji());
+      return JsonUji(katalog ?? KatalogUji());
+    }
+    if (jalur.contains('/katalog/gambar/')) {
+      return BytesUji(pngQris);
     }
     if (jalur.endsWith('/gambar-qris')) {
       return http.Response.bytes(pngQris, 200, headers: {'content-type': 'image/png'});
@@ -45,13 +51,14 @@ void main() {
     WidgetTester tester, {
     Size ukuran = ukuranDesktop,
     Map<String, Object?>? dataAwal,
+    Map<String, Object?>? katalog,
   }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif(dataAwal: dataAwal);
       await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
     });
-    u.server.penangan = PenanganServer(dataAwal: dataAwal);
+    u.server.penangan = PenanganServer(dataAwal: dataAwal, katalog: katalog);
     await PasangAplikasi(tester, u, ukuran: ukuran);
     await Tunggu(tester, const Duration(milliseconds: 600));
     await tester.tap(find.text('Rina Wulandari'));
@@ -63,6 +70,22 @@ void main() {
   }
 
   Finder Ubin(String nama) => find.byWidgetPredicate((w) => w is UbinProduk && w.nama == nama);
+
+  testWidgets('ubin produk menampilkan gambar katalog yang diunduh dengan token perangkat', (tester) async {
+    final katalog = KatalogUji();
+    final produk = (katalog['Produk']! as List<Object?>).cast<Map<String, Object?>>();
+    produk.firstWhere((p) => p['Uuid'] == UuidUji.americano)['UrlGambarKecil'] =
+        'http://server-internal/api/pos/v1/katalog/gambar/${UuidUji.americano}?ukuran=kecil&versi=VERSI1';
+
+    final u = await MasukJual(tester, katalog: katalog);
+    final ubin = Ubin('Americano Panas');
+    expect(find.descendant(of: ubin, matching: find.byType(Image)), findsOneWidget);
+    final permintaanGambar = u.server.permintaan.firstWhere((p) => p.url.path.contains('/katalog/gambar/'));
+    expect(permintaanGambar.url.host, isNot('server-internal'));
+    expect(permintaanGambar.url.path, contains('/api/pos/v1/katalog/gambar/'));
+    expect(permintaanGambar.headers['Authorization'], startsWith('Bearer '));
+    await Lepas(tester, u);
+  });
 
   Future<void> Ketuk(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);

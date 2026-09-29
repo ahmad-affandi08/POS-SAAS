@@ -873,6 +873,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                         return UbinProduk(
                           key: ValueKey(p.uuid),
                           nama: p.nama,
+                          gambar: p.urlGambarKecil == null ? null : _GambarProduk(nama: p.nama, url: p.urlGambarKecil!),
                           harga: satuan == null
                               ? null
                               : layanan.TentukanHarga(
@@ -1298,6 +1299,54 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _GambarProduk extends ConsumerWidget {
+  const _GambarProduk({required this.nama, required this.url});
+
+  final String nama;
+  final String url;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final warna = TokenWarna.AmbilDari(context);
+    final teks = Theme.of(context).textTheme;
+    final gambar = ref.watch(penyediaGambarProduk(url));
+    final byte = gambar.value;
+
+    if (byte != null && byte.isNotEmpty) {
+      return Image.memory(
+        byte,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, _, _) => _InisialProduk(nama: nama),
+      );
+    }
+
+    return Center(
+      child: Text(
+        UbinProduk.AmbilInisial(nama),
+        style: teks.headlineSmall?.copyWith(color: warna.teksSekunder, fontFamily: fontMono),
+      ),
+    );
+  }
+}
+
+class _InisialProduk extends StatelessWidget {
+  const _InisialProduk({required this.nama});
+
+  final String nama;
+
+  @override
+  Widget build(BuildContext context) {
+    final warna = TokenWarna.AmbilDari(context);
+    return Center(
+      child: Text(
+        UbinProduk.AmbilInisial(nama),
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: warna.teksSekunder, fontFamily: fontMono),
       ),
     );
   }

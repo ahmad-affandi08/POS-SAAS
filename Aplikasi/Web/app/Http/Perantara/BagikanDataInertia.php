@@ -68,10 +68,16 @@ final class BagikanDataInertia extends Middleware
                 $langganan = $this->ringkasanLangganan->Ambil($tenant['Id']);
 
                 return [
+                    'Id' => $tenant['Id'],
+                    'KodePelanggan' => sprintf('#%07d', $tenant['Id']),
                     'Nama' => $tenant['Nama'],
+                    'Slug' => $tenant['Slug'],
+                    'NamaPaket' => $langganan['NamaPaket'] ?? 'Dasar',
+                    'KodePaket' => $langganan['KodePaket'] ?? '',
                     'StatusLangganan' => $langganan === null ? null : $langganan['Status']->value,
                     'PeriodeSelesai' => $langganan === null ? null : $langganan['PeriodeSelesai']?->toIso8601ZuluString(),
                     'BatasTenggangPada' => $langganan === null ? null : $langganan['BatasTenggangPada']?->toIso8601ZuluString(),
+                    'TagihanTertunda' => $langganan['TagihanTertunda'] ?? null,
                 ];
             },
             // BR-P06.5: banner di back-office selama masa pengumuman versi materiil, hanya untuk Owner tenant aktif.

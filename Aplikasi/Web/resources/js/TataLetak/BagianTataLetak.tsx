@@ -1,8 +1,23 @@
 import { Link, router } from '@inertiajs/react';
-import { ChevronDownIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react';
-import { Fragment, type ReactNode } from 'react';
+import {
+    ArrowUpRightIcon,
+    Building2Icon,
+    CheckIcon,
+    ChevronDownIcon,
+    CopyIcon,
+    CreditCardIcon,
+    LogOutIcon,
+    ShieldCheckIcon,
+    SparklesIcon,
+} from 'lucide-react';
+import { Fragment, useState, type ReactNode } from 'react';
+import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback } from '@/Komponen/Ui/avatar';
+import { Badge } from '@/Komponen/Ui/badge';
+import { FormatRupiah } from '@/Pustaka/Format';
+import { FormatTanggal } from '@/Pustaka/FormatWaktu';
+import type { StatusLanggananTenant, TenantAktif } from '@/Tipe/Aplikasi';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -174,14 +189,59 @@ export function JejakHalaman({ jejak }: { jejak: ButirJejak[] }) {
     );
 }
 
+function KelasStatusLangganan(status: StatusLanggananTenant | null): string {
+    switch (status) {
+        case 'Aktif':
+            return 'bg-sukses-lembut text-sukses border-sukses/30';
+        case 'Trial':
+            return 'bg-info-lembut text-info border-info/30';
+        case 'Tertunggak':
+            return 'bg-peringatan-lembut text-peringatan border-peringatan/30';
+        case 'Ditangguhkan':
+            return 'bg-bahaya-lembut text-bahaya border-bahaya/30';
+        case 'Gratis':
+            return 'bg-brand-lembut text-brand border-brand/30';
+        default:
+            return 'bg-latar text-teks-sekunder border-garis';
+    }
+}
+
+function TeksMasaAktif(tenant: TenantAktif): string {
+    if (tenant.StatusLangganan === 'Trial') {
+        return tenant.PeriodeSelesai ? `Trial s/d ${FormatTanggal(tenant.PeriodeSelesai)}` : 'Masa percobaan';
+    }
+    if (tenant.PeriodeSelesai) {
+        return `Berlaku s/d ${FormatTanggal(tenant.PeriodeSelesai)}`;
+    }
+    return 'Langganan aktif';
+}
+
 type PropsMenuAkun = {
     nama: string | undefined;
     email?: string | undefined;
     gelap?: boolean;
+    tenant?: TenantAktif | null;
+    bolehKelolaLangganan?: boolean;
 };
 
-/** Menu akun (DropdownMenu): nama & email pengguna, Keamanan akun (D-27), lalu Keluar (POST /keluar). */
-export function MenuAkun({ nama, email, gelap = false }: PropsMenuAkun) {
+/**
+ * Menu akun (DropdownMenu): profil usaha, kartu paket & langganan aktif (perpanjang, masa aktif,
+ * ID tenant copy, notifikasi tagihan pending), Keamanan akun (D-27), lalu Keluar.
+ */
+export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangganan = true }: PropsMenuAkun) {
+    const [sudahSalin, AturSudahSalin] = useState(false);
+
+    const SalinId = (teks: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        void navigator.clipboard.writeText(teks);
+        AturSudahSalin(true);
+        toast.success('ID Pelanggan berhasil disalin');
+        setTimeout(() => AturSudahSalin(false), 2000);
+    };
+
+    const adaTagihan = tenant?.TagihanTertunda !== null && tenant?.TagihanTertunda !== undefined;
+
     return (
         <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -189,33 +249,155 @@ export function MenuAkun({ nama, email, gelap = false }: PropsMenuAkun) {
                     variant="ghost"
                     aria-label={`Menu akun ${nama ?? ''}`.trim()}
                     className={cn(
-                        'h-8 pointer-coarse:h-11 gap-2 px-2 text-label font-semibold',
+                        'h-9 pointer-coarse:h-11 gap-2 px-2 text-label font-semibold',
                         gelap && 'text-permukaan hover:bg-permukaan/15 hover:text-permukaan',
                     )}
                 >
-                    <Avatar size="sm" aria-hidden="true">
-                        <AvatarFallback className="bg-brand-lembut text-keterangan font-semibold text-brand">
-                            {AmbilInisial(nama)}
-                        </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden max-w-48 truncate sm:inline">{nama}</span>
-                    <ChevronDownIcon aria-hidden="true" />
+                    <div className="relative shrink-0">
+                        <Avatar size="sm" aria-hidden="true">
+                            <AvatarFallback className="bg-brand-lembut text-keterangan font-semibold text-brand">
+                                {AmbilInisial(tenant?.Nama ?? nama)}
+                            </AvatarFallback>
+                        </Avatar>
+                        {adaTagihan ? (
+                            <span
+                                aria-label="Ada tagihan tertunda"
+                                className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-bahaya ring-2 ring-permukaan animate-pulse"
+                            />
+                        ) : null}
+                    </div>
+                    <div className="hidden flex-col items-start text-left sm:flex min-w-0">
+                        <span className="max-w-40 truncate text-label font-semibold text-teks-utama leading-tight">
+                            {tenant?.Nama ?? nama}
+                        </span>
+                        {tenant?.Nama ? (
+                            <span className="max-w-40 truncate text-[11px] font-normal text-teks-sekunder leading-tight">
+                                {nama}
+                            </span>
+                        ) : null}
+                    </div>
+                    {tenant?.NamaPaket ? (
+                        <Badge
+                            variant="outline"
+                            className="hidden md:inline-flex text-[10px] px-1.5 py-0 h-4 border-brand/30 bg-brand/5 text-brand font-semibold shrink-0"
+                        >
+                            {tenant.NamaPaket}
+                        </Badge>
+                    ) : null}
+                    <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
-                <DropdownMenuLabel className="flex flex-col gap-0.5">
-                    <span className="truncate text-label font-semibold text-teks-utama">{nama}</span>
-                    {email ? <span className="truncate text-keterangan text-teks-sekunder">{email}</span> : null}
+            <DropdownMenuContent align="end" className="w-80 p-2">
+                <DropdownMenuLabel className="p-2">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar size="default" className="size-9 shrink-0">
+                                <AvatarFallback className="bg-brand-lembut text-label font-bold text-brand">
+                                    {AmbilInisial(tenant?.Nama ?? nama)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                                <span className="truncate text-label font-bold text-teks-utama">
+                                    {tenant?.Nama ?? nama}
+                                </span>
+                                <span className="truncate text-keterangan text-teks-sekunder">
+                                    {email ?? nama}
+                                </span>
+                            </div>
+                        </div>
+                        {tenant?.KodePelanggan ? (
+                            <button
+                                type="button"
+                                onClick={(e) => SalinId(tenant.KodePelanggan!, e)}
+                                title="Salin ID Pelanggan"
+                                className="flex items-center gap-1 rounded bg-latar px-2 py-1 text-[11px] font-mono font-medium text-teks-sekunder hover:text-teks-utama hover:bg-garis transition cursor-pointer shrink-0"
+                            >
+                                <span>{tenant.KodePelanggan}</span>
+                                {sudahSalin ? (
+                                    <CheckIcon className="size-3 text-sukses shrink-0" />
+                                ) : (
+                                    <CopyIcon className="size-3 shrink-0" />
+                                )}
+                            </button>
+                        ) : null}
+                    </div>
                 </DropdownMenuLabel>
+
+                {tenant ? (
+                    <div className="mx-1 mb-2 rounded-lg border border-garis bg-permukaan-redup/70 p-3 flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <SparklesIcon className="size-4 shrink-0 text-brand" />
+                                <span className="truncate text-label font-bold text-teks-utama">
+                                    {tenant.NamaPaket ?? 'Paket Langganan'}
+                                </span>
+                                {tenant.StatusLangganan ? (
+                                    <Badge
+                                        variant="outline"
+                                        className={cn('text-[10px] px-1.5 py-0 font-medium', KelasStatusLangganan(tenant.StatusLangganan))}
+                                    >
+                                        {tenant.StatusLangganan}
+                                    </Badge>
+                                ) : null}
+                            </div>
+                            {bolehKelolaLangganan ? (
+                                <Link
+                                    href="/kelola/langganan"
+                                    className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline shrink-0"
+                                >
+                                    Perpanjang
+                                    <ArrowUpRightIcon className="size-3" />
+                                </Link>
+                            ) : null}
+                        </div>
+                        <p className="text-keterangan text-teks-sekunder">
+                            {TeksMasaAktif(tenant)}
+                        </p>
+
+                        {tenant.TagihanTertunda ? (
+                            <div className="flex items-center justify-between gap-2 rounded-md border border-bahaya/30 bg-bahaya-lembut/70 p-2 text-xs">
+                                <div className="min-w-0">
+                                    <p className="font-semibold text-bahaya">Tagihan {tenant.TagihanTertunda.Nomor}</p>
+                                    <p className="text-teks-utama tabular-nums font-medium">
+                                        {FormatRupiah(tenant.TagihanTertunda.Total)}
+                                    </p>
+                                </div>
+                                <Button asChild size="sm" variant="destructive" className="h-7 px-2.5 text-xs font-semibold shrink-0">
+                                    <Link href={`/kelola/langganan/tagihan/${tenant.TagihanTertunda.Uuid}`}>
+                                        Bayar
+                                    </Link>
+                                </Button>
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
+
                 <DropdownMenuSeparator />
-                {/* D-27: pindah dari footer menu samping ke sini, tempat orang mencari pengaturan akunnya. */}
-                <DropdownMenuItem asChild className="text-label">
+
+                {bolehKelolaLangganan && tenant ? (
+                    <DropdownMenuItem asChild className="text-label cursor-pointer">
+                        <Link href="/kelola/langganan">
+                            <CreditCardIcon aria-hidden="true" />
+                            Langganan & tagihan
+                        </Link>
+                    </DropdownMenuItem>
+                ) : null}
+                {tenant ? (
+                    <DropdownMenuItem asChild className="text-label cursor-pointer">
+                        <Link href="/kelola/pengaturan/profil-usaha">
+                            <Building2Icon aria-hidden="true" />
+                            Profil usaha
+                        </Link>
+                    </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem asChild className="text-label cursor-pointer">
                     <Link href="/kelola/keamanan">
                         <ShieldCheckIcon aria-hidden="true" />
                         Keamanan akun
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-label" onSelect={() => router.post('/keluar')}>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-label text-destructive focus:text-destructive cursor-pointer" onSelect={() => router.post('/keluar')}>
                     <LogOutIcon aria-hidden="true" />
                     Keluar
                 </DropdownMenuItem>

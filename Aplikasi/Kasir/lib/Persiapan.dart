@@ -24,6 +24,7 @@ Future<void> JalankanAplikasi(Lingkungan lingkungan) async {
     ProviderScope(
       overrides: [
         penyediaBasisData.overrideWithValue(basisData),
+        penyediaFolderAplikasi.overrideWithValue(folder),
         penyediaLingkungan.overrideWithValue(lingkungan),
         penyediaPlatform.overrideWithValue(AmbilPlatform()),
       ],

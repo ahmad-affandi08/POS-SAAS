@@ -94,7 +94,7 @@ export default function HalamanFormPenerimaan({
     const [pemasok, AturPemasok] = useState('');
     const [gudang, AturGudang] = useState(Pesanan?.UuidGudang ?? '');
     const [akun, AturAkun] = useState(OpsiAkun[0]?.Uuid ?? '');
-    const [tanggal, AturTanggal] = useState(HariIni);
+    const [tanggal, AturTanggal] = useState(Pesanan?.TanggalPenerimaan ?? HariIni);
     const [nomor, AturNomor] = useState('');
     const [ongkir, AturOngkir] = useState('');
     const [catatan, AturCatatan] = useState('');

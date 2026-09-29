@@ -80,6 +80,7 @@ final class IsianFormPembelian
         return [
             'Uuid' => $po->Uuid,
             'Nomor' => $po->Nomor,
+            'TanggalPenerimaan' => $po->AmbilTanggalPenerimaanBawaan()->format('Y-m-d'),
             'NamaPemasok' => $pemasok->Nama,
             'UuidGudang' => $gudang->uuid ?? '',
             'NamaGudang' => $gudang->nama ?? '',

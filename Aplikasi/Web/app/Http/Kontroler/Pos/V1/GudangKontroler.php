@@ -45,8 +45,9 @@ use Illuminate\Http\Request;
  * - `GET gudang/opname` opname berlangsung; `POST gudang/opname/{uuid}/hitung` simpan lembar hitung (izin
  *   `persediaan.kelola`); tinjau & setujui tetap di back-office.
  *
- * Tanggal dokumen = tanggal bisnis outlet saat ini. Kirim ulang aman lewat `Idempotency-Key` yang sama (perangkat
- * memakai kunci tetap per draf). Dokumen di luar lokasi outlet perangkat = 404.
+ * Tanggal GRN = satu hari sebelum tanggal PO; dokumen gudang lain memakai tanggal bisnis outlet saat ini. Kirim ulang
+ * aman lewat `Idempotency-Key` yang sama (perangkat memakai kunci tetap per draf). Dokumen di luar lokasi outlet
+ * perangkat = 404.
  */
 final class GudangKontroler extends Kontroler
 {
@@ -85,8 +86,9 @@ final class GudangKontroler extends Kontroler
         $perangkat = AutentikasiPerangkat::AmbilPerangkat($permintaan);
         $pelaku = $this->AmbilPelaku($perangkat, (string) $valid['UuidPengguna'], [IzinTenant::PembelianKelola, IzinTenant::PersediaanKelola], 'menerima barang');
         $uuidPo = strtoupper((string) $valid['UuidPesananPembelian']);
-        $idBaris = $kueri->PetakanUrutan($uuidPo, $this->AmbilIdGudang($permintaan));
-        abort_if($idBaris === null, 404);
+        $isianPo = $kueri->AmbilUntukPenerimaan($uuidPo, $this->AmbilIdGudang($permintaan));
+        abort_if($isianPo === null, 404);
+        $idBaris = $isianPo['IdBaris'];
 
         /** @var list<array<string, mixed>> $baris */
         $baris = array_values((array) $valid['Baris']);
@@ -116,7 +118,7 @@ final class GudangKontroler extends Kontroler
             $uuidPo,
             null,
             null,
-            $this->tanggalBisnis->Hitung($perangkat->IdOutlet),
+            $isianPo['TanggalPenerimaan'],
             self::Teks($valid['NomorSuratJalan'] ?? null),
             Uang::Nol(),
             self::Teks($valid['Catatan'] ?? null),

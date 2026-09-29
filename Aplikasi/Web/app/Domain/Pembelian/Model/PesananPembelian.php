@@ -8,6 +8,7 @@ use App\Domain\Bersama\Dokumen\Model\JagaDokumenTerposting;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -107,6 +108,12 @@ final class PesananPembelian extends ModelDasar
         }
 
         $this->Status = $tujuan;
+    }
+
+    /** Tanggal bawaan GRN dari PO selalu satu hari sebelum tanggal surat pesanan. */
+    public function AmbilTanggalPenerimaanBawaan(): CarbonImmutable
+    {
+        return CarbonImmutable::instance($this->Tanggal)->subDay();
     }
 
     /**

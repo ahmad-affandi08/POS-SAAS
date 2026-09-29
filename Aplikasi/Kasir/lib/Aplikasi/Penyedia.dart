@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
@@ -10,6 +11,7 @@ import 'package:mesin_kasir/MesinKasir.dart' show Uang;
 import 'package:sistem_desain/SistemDesain.dart' show TokenWarna;
 
 import '../Data/Printer/InfoPerangkatPlatform.dart';
+import '../Data/CacheGambarProduk.dart';
 import '../Data/KameraSwafotoPlatform.dart';
 import '../Data/PemindaiQrPlatform.dart';
 import '../Data/LayarPelanggan/PabrikLayarPelanggan.dart';
@@ -75,6 +77,7 @@ import 'Lingkungan.dart';
 /// Penyedia dependensi (Riverpod). Basis data, secure storage, dan klien HTTP di-override di `Persiapan.dart` dan
 /// di test.
 final penyediaBasisData = Provider<BasisDataKasir>((ref) => throw UnimplementedError('Override penyediaBasisData'));
+final penyediaFolderAplikasi = Provider<Directory?>((ref) => null);
 final penyediaRahasia = Provider<PenyimpanRahasia>((ref) => PenyimpanRahasiaAman());
 final penyediaKlienHttp = Provider<http.Client>((ref) => http.Client());
 final penyediaLingkungan = Provider<Lingkungan>((ref) => Lingkungan.Dev);
@@ -101,6 +104,14 @@ final penyediaKlienPos = Provider<KlienPos>((ref) {
     saatPerangkatDitolak: (galat) => ref.read(penyediaSesi.notifier).TanganiPenolakanPerangkat(galat.pesan),
   );
 });
+
+final penyediaCacheGambarProduk = Provider<CacheGambarProduk>(
+  (ref) => CacheGambarProduk(klien: ref.watch(penyediaKlienPos), folderAplikasi: ref.watch(penyediaFolderAplikasi)),
+);
+
+final penyediaGambarProduk = FutureProvider.family<Uint8List?, String>(
+  (ref, url) => ref.watch(penyediaCacheGambarProduk).Ambil(url),
+);
 
 final penyediaLayananPerangkat = Provider<LayananPerangkat>(
   (ref) => LayananPerangkat(

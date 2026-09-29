@@ -64,7 +64,10 @@ describe('F-04 HTTP pembelian', function (): void {
             ->component('Kelola/Pembelian/Pesanan/Cetak')->has('Baris', 1));
 
         $this->get("/kelola/pembelian/penerimaan/buat?pesanan={$po->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-            ->component('Kelola/Pembelian/Penerimaan/Form')->where('Mode', 'Penerimaan')->has('Pesanan.Baris', 1));
+            ->component('Kelola/Pembelian/Penerimaan/Form')
+            ->where('Mode', 'Penerimaan')
+            ->where('Pesanan.TanggalPenerimaan', $po->AmbilTanggalPenerimaanBawaan()->format('Y-m-d'))
+            ->has('Pesanan.Baris', 1));
         $idBaris = $po->Detail()->value('Id');
         $this->post('/kelola/pembelian/penerimaan', [
             'UuidPesananPembelian' => $po->Uuid, 'Tanggal' => BantuanPembelian::Hari()->format('Y-m-d'),
