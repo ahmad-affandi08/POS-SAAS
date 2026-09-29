@@ -389,6 +389,20 @@ class _LembarGudangState extends ConsumerState<LembarGudang> {
     );
   }
 
+  Future<void> _PindaiKamera() async {
+    final hasil = await ref
+        .read(penyediaPemindaiQr)
+        .Pindai(
+          context,
+          judul: 'Pindai barcode barang',
+          petunjuk: 'Arahkan kamera ke barcode produk, batch, atau nomor seri.',
+        );
+    if (!mounted || hasil == null) {
+      return;
+    }
+    _Pindai(hasil);
+  }
+
   void _TambahSeri(int urutan, String nomor) {
     final draf = _draf!;
     final p = draf.pelacakan.putIfAbsent(urutan, PelacakanDraf.new);
@@ -606,6 +620,7 @@ class _LembarGudangState extends ConsumerState<LembarGudang> {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final katalog = ref.watch(penyediaKatalog).value ?? KatalogLokal.kosong;
+    final adaPemindaiKamera = ref.watch(penyediaPemindaiQr).CekTersedia();
     return [
       Row(
         children: [
@@ -632,10 +647,17 @@ class _LembarGudangState extends ConsumerState<LembarGudang> {
         focusNode: _fokusPindai,
         autofocus: true,
         onSubmitted: _Pindai,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Pindai atau ketik barcode / SKU',
-          prefixIcon: Icon(Icons.qr_code_scanner),
-          border: OutlineInputBorder(),
+          prefixIcon: const Icon(Icons.qr_code_scanner),
+          suffixIcon: adaPemindaiKamera
+              ? IconButton(
+                  tooltip: 'Pindai barcode dengan kamera',
+                  onPressed: _mengirim ? null : () => unawaited(_PindaiKamera()),
+                  icon: const Icon(Icons.photo_camera_outlined),
+                )
+              : null,
+          border: const OutlineInputBorder(),
         ),
       ),
       if (_pesanPindai != null)

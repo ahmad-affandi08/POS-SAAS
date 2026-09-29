@@ -14,13 +14,24 @@ class PemindaiQrPlatform implements PemindaiQr {
   bool CekTersedia() => Platform.isAndroid || Platform.isIOS;
 
   @override
-  Future<String?> Pindai(BuildContext context) {
-    return Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const _LayarPindaiQr()));
+  Future<String?> Pindai(
+    BuildContext context, {
+    String judul = 'Pindai kode QR',
+    String petunjuk = 'Arahkan kamera ke kode QR di back-office.',
+  }) {
+    return Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => _LayarPindaiQr(judul: judul, petunjuk: petunjuk),
+      ),
+    );
   }
 }
 
 class _LayarPindaiQr extends StatefulWidget {
-  const _LayarPindaiQr();
+  const _LayarPindaiQr({required this.judul, required this.petunjuk});
+
+  final String judul;
+  final String petunjuk;
 
   @override
   State<_LayarPindaiQr> createState() => _LayarPindaiQrState();
@@ -58,7 +69,7 @@ class _LayarPindaiQrState extends State<_LayarPindaiQr> {
     final warna = TokenWarna.AmbilDari(context);
     final teks = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Pindai kode QR')),
+      appBar: AppBar(title: Text(widget.judul)),
       body: Stack(
         children: [
           MobileScanner(
@@ -70,7 +81,7 @@ class _LayarPindaiQrState extends State<_LayarPindaiQr> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Kamera tidak bisa dibuka. Tutup layar ini lalu ketik kode aktivasinya.',
+                    'Kamera tidak bisa dibuka. Tutup layar ini lalu ketik kodenya.',
                     textAlign: TextAlign.center,
                     style: teks.bodyLarge?.copyWith(color: warna.bahaya),
                   ),
@@ -83,7 +94,7 @@ class _LayarPindaiQrState extends State<_LayarPindaiQr> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Arahkan kamera ke kode QR di back-office.',
+                widget.petunjuk,
                 textAlign: TextAlign.center,
                 style: teks.bodyMedium?.copyWith(color: warna.permukaan),
               ),

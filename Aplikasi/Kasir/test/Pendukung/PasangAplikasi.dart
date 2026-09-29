@@ -139,7 +139,11 @@ class PemindaiQrTiruan implements PemindaiQr {
   bool CekTersedia() => tersedia;
 
   @override
-  Future<String?> Pindai(BuildContext context) async {
+  Future<String?> Pindai(
+    BuildContext context, {
+    String judul = 'Pindai kode QR',
+    String petunjuk = 'Arahkan kamera ke kode QR di back-office.',
+  }) async {
     dipanggil++;
     return hasil;
   }

@@ -42,7 +42,7 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 7. **Gratis ongkir**, menunggu flow pesan-antar/toko online.
 8. Batch & kedaluwarsa, nomor seri (sudah di F-05a); ~~produksi~~ — **SELESAI @ v2.29**; bahan terbuang bagian 1 **SELESAI @ v2.30**.
 9. Harga per kanal ojol (input manual).
-10. Modul Gudang di aplikasi (pindai GRN, transfer, opname).
+10. ~~Modul Gudang di aplikasi (penerimaan PO, transfer, opname, termasuk pindai kamera Android/iOS)~~ — **SELESAI @ v2.80**.
 11. **Fase 3:** toko online `/{slugTenant}` & kurir, Open API + webhook + portal developer, konsinyasi, landed cost, rekonsiliasi bank, aset tetap, bengkel, template sektor lengkap, e-Faktur/Coretax, Salesman, smart restock/forecast, mode LAN, portal mitra (P-12).
 12. Billing langganan semi-otomatis (gateway) di sisi platform (F-19 lanjutan).
 

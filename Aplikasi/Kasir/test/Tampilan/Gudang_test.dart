@@ -14,7 +14,7 @@ import '../Pendukung/PasangAplikasi.dart';
 /// POS-25 modul Gudang di ruang kerja: menu Stok › Gudang (izin `persediaan.kelola`), daftar dokumen online, pindai
 /// barcode/SKU menambah jumlah baris, konfirmasi lalu posting; di 360/800/1280 dp.
 void main() {
-  Future<LingkunganUji> Masuk(WidgetTester tester, Size ukuran) async {
+  Future<LingkunganUji> Masuk(WidgetTester tester, Size ukuran, {PemindaiQrTiruan? pemindaiQr}) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif();
@@ -59,7 +59,7 @@ void main() {
       }
       throw http.ClientException('offline');
     };
-    await PasangAplikasi(tester, u, ukuran: ukuran);
+    await PasangAplikasi(tester, u, ukuran: ukuran, pemindaiQr: pemindaiQr);
     await Tunggu(tester, const Duration(milliseconds: 600));
     await tester.tap(find.text('Budi Santoso'));
     await tester.pump();
@@ -170,6 +170,21 @@ void main() {
       {'UuidProduk': UuidUji.gulaAren, 'JumlahFisik': '1.0000'},
     ]);
     expect(find.textContaining('tersimpan 3'), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('kamera memindai barcode pada pekerjaan gudang', (tester) async {
+    final pemindai = PemindaiQrTiruan(hasil: 'CRS-01');
+    final u = await Masuk(tester, const Size(360, 740), pemindaiQr: pemindai);
+    await Ketuk(tester, find.text('Stok').last);
+    await Ketuk(tester, find.text('Transfer masuk').last);
+    await Ketuk(tester, find.text('TF/GDG-SLB/2609/0003'));
+
+    await Ketuk(tester, find.byTooltip('Pindai barcode dengan kamera'));
+
+    expect(pemindai.dipanggil, 1);
+    expect(find.textContaining('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo: 1 pcs'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });
 }

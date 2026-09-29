@@ -8,6 +8,10 @@ import 'package:flutter/widgets.dart';
 abstract class PemindaiQr {
   bool CekTersedia();
 
-  /// Membuka pemindai dan mengembalikan isi QR pertama yang terbaca; null = dibatalkan pengguna.
-  Future<String?> Pindai(BuildContext context);
+  /// Membuka pemindai dan mengembalikan isi barcode/QR pertama yang terbaca; null = dibatalkan pengguna.
+  Future<String?> Pindai(
+    BuildContext context, {
+    String judul = 'Pindai kode QR',
+    String petunjuk = 'Arahkan kamera ke kode QR di back-office.',
+  });
 }
