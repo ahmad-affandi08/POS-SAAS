@@ -21,6 +21,8 @@ type PropsBidangTeks = {
     keterangan?: string;
     jenis?: 'text' | 'email' | 'password';
     kode?: boolean;
+    /** Label hanya untuk pembaca layar, misal di dalam baris tabel yang judul kolomnya sudah ada. */
+    labelTersembunyi?: boolean;
 } & Pick<
     InputHTMLAttributes<HTMLInputElement>,
     'autoComplete' | 'autoFocus' | 'disabled' | 'inputMode' | 'maxLength' | 'required'
@@ -42,6 +44,7 @@ export default function BidangTeks({
     keterangan,
     jenis = 'text',
     kode = false,
+    labelTersembunyi = false,
     ...atribut
 }: PropsBidangTeks) {
     const id = useId();
@@ -57,6 +60,7 @@ export default function BidangTeks({
             type={kataSandi && terlihat ? 'text' : jenis}
             value={nilai}
             onChange={(peristiwa) => saatBerubah(peristiwa.target.value)}
+            aria-label={labelTersembunyi ? label : undefined}
             aria-invalid={galat ? true : undefined}
             aria-describedby={GabungDijelaskanOleh(keterangan && idKeterangan, galat && idGalat)}
             className={BuatKelasKontrol(
@@ -69,7 +73,7 @@ export default function BidangTeks({
 
     return (
         <KerangkaBidang galat={galat}>
-            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <LabelBidang htmlFor={id} tersembunyi={labelTersembunyi}>{label}</LabelBidang>
             {kataSandi ? (
                 <div className="relative">
                     {bidang}

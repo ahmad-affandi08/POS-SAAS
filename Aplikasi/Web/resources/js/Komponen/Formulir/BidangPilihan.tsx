@@ -13,6 +13,8 @@ type PropsBidangPilihan = {
     disabled?: boolean;
     /** Wajib diisi: label otomatis diberi tanda * merah. */
     required?: boolean;
+    /** Label hanya untuk pembaca layar, misal di dalam baris tabel yang judul kolomnya sudah ada. */
+    labelTersembunyi?: boolean;
 };
 
 /** Pilihan tunggal dengan kotak cari (`PilihanCari`), label & galat terhubung (PRD §17.6). */
@@ -25,12 +27,15 @@ export default function BidangPilihan({
     kosong,
     disabled,
     required,
+    labelTersembunyi = false,
 }: PropsBidangPilihan) {
     const id = useId();
 
     return (
         <KerangkaBidang galat={galat}>
-            <LabelBidang htmlFor={id}>{label}</LabelBidang>
+            <LabelBidang htmlFor={id} tersembunyi={labelTersembunyi}>
+                {label}
+            </LabelBidang>
             <PilihanCari
                 id={id}
                 label={label}
@@ -41,6 +46,7 @@ export default function BidangPilihan({
                 galat={galat}
                 disabled={disabled}
                 required={required}
+                aria-label={labelTersembunyi ? label : undefined}
                 aria-describedby={galat ? `${id}-galat` : undefined}
             />
             {galat ? <GalatBidang id={`${id}-galat`}>{galat}</GalatBidang> : null}

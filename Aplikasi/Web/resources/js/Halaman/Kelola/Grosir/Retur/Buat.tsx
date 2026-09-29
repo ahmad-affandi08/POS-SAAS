@@ -155,7 +155,8 @@ export default function HalamanBuatReturGrosir({ SuratJalan, Baris, OpsiKondisi,
                                         </TableCell>
                                         <TableCell className={kelasSel}>
                                             <BidangPilihan
-                                                label="Kondisi"
+                                                label={`Kondisi ${b.NamaProduk}`}
+                                                labelTersembunyi
                                                 nilai={nilai.Kondisi}
                                                 opsi={OpsiKondisi.map((o) => ({ Nilai: o.Nilai, Label: o.Label }))}
                                                 saatBerubah={(teks) => Ubah(b.Urutan, { Kondisi: teks })}

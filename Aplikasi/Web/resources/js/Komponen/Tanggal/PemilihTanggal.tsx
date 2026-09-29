@@ -29,6 +29,8 @@ export type PropsPemilihTanggal = {
     tanpaKosongkan?: boolean;
     /** Untuk `PemilihTanggalWaktu`: tempelan `TTTT-BB-HHTjj:mm` diteruskan utuh ke `saatBerubah`. */
     terimaTanggalWaktu?: boolean;
+    /** Label hanya untuk pembaca layar, misal di dalam baris tabel yang judul kolomnya sudah ada. */
+    labelTersembunyi?: boolean;
 };
 
 /** Pesan galat lokal ketikan (sebelum dikirim ke server). */
@@ -73,6 +75,7 @@ export default function PemilihTanggal({
     className,
     terimaTanggalWaktu = false,
     tanpaKosongkan = false,
+    labelTersembunyi = false,
 }: PropsPemilihTanggal) {
     const idOtomatis = useId();
     const idBidang = id ?? idOtomatis;
@@ -146,7 +149,10 @@ export default function PemilihTanggal({
 
     return (
         <div className={cn('flex flex-col gap-1', className)}>
-            <Label htmlFor={idBidang} className="text-label font-semibold text-teks-utama">
+            <Label
+                htmlFor={idBidang}
+                className={labelTersembunyi ? 'sr-only' : 'text-label font-semibold text-teks-utama'}
+            >
                 {label}
             </Label>
             <InputGroup className="h-8 border-garis-input bg-permukaan pointer-coarse:h-11">
@@ -159,6 +165,7 @@ export default function PemilihTanggal({
                     onChange={(peristiwa) => SaatKetik(peristiwa.target.value)}
                     onBlur={SaatKeluar}
                     onKeyDown={SaatTombol}
+                    aria-label={labelTersembunyi ? label : undefined}
                     aria-invalid={galatTampil ? true : undefined}
                     aria-describedby={dijelaskanOleh || undefined}
                     aria-required={required || undefined}

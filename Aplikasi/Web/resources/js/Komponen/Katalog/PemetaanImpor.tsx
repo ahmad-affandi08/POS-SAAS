@@ -161,6 +161,7 @@ export default function PemetaanImpor({
                                     <TableCell className="whitespace-normal">
                                         <BidangPilihan
                                             label={`Kolom untuk ${bidang.Label}`}
+                                            labelTersembunyi
                                             nilai={kolom === null ? '' : String(kolom)}
                                             kosong="Tidak diimpor"
                                             opsi={opsiKolom}

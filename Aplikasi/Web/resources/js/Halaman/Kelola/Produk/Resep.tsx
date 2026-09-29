@@ -198,19 +198,19 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                     <TableHead scope="col" className="pl-0 text-label text-teks-sekunder">
                                         Bahan
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
+                                    <TableHead scope="col" className="w-36 text-right text-label text-teks-sekunder">
                                         Jumlah bersih
                                     </TableHead>
-                                    <TableHead scope="col" className="text-label text-teks-sekunder">
+                                    <TableHead scope="col" className="w-28 text-label text-teks-sekunder">
                                         Satuan
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
+                                    <TableHead scope="col" className="w-28 text-right text-label text-teks-sekunder">
                                         Susut
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right text-label text-teks-sekunder">
+                                    <TableHead scope="col" className="w-36 text-right text-label text-teks-sekunder">
                                         Jumlah kotor
                                     </TableHead>
-                                    <TableHead scope="col" className="pr-0 text-label text-teks-sekunder">
+                                    <TableHead scope="col" className="w-16 pr-0 text-label text-teks-sekunder">
                                         <span className="sr-only">Aksi</span>
                                     </TableHead>
                                 </TableRow>
@@ -246,6 +246,7 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                             <TableCell className="whitespace-normal">
                                                 <BidangPilihan
                                                     label={`Satuan ${item.NamaBahan}`}
+                                                    labelTersembunyi
                                                     nilai={item.UuidSatuan}
                                                     opsi={item.OpsiSatuan.map((opsi) => ({
                                                         Nilai: opsi.Uuid,
@@ -276,9 +277,11 @@ export default function HalamanResepProduk({ Kepala, Resep, VersiTerbaru, Daftar
                                                 className="text-right whitespace-nowrap tabular-nums"
                                                 aria-describedby="rumus-susut"
                                             >
-                                                {kotor === null
-                                                    ? '—'
-                                                    : `${FormatMasukanJumlah(kotor)} ${satuan?.Simbol ?? ''}`}
+                                                <div className="flex h-8 pointer-coarse:h-11 items-center justify-end text-isi text-teks-utama">
+                                                    {kotor === null
+                                                        ? '—'
+                                                        : `${FormatMasukanJumlah(kotor)} ${satuan?.Simbol ?? ''}`}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="pr-0">
                                                 {bolehUbah ? (

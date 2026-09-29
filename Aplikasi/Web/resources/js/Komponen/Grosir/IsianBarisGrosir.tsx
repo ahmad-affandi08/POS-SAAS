@@ -147,7 +147,8 @@ export default function IsianBarisGrosir({
                                 </TableCell>
                                 <TableCell className={kelasSel}>
                                     <BidangJumlah
-                                        label="Jumlah"
+                                        label={`Jumlah ${b.NamaProduk}`}
+                                        labelTersembunyi
                                         nilai={b.Jumlah}
                                         saatBerubah={(nilai) => Ubah(b.Kunci, { Jumlah: nilai })}
                                         galat={
@@ -161,7 +162,8 @@ export default function IsianBarisGrosir({
                                 </TableCell>
                                 <TableCell className={kelasSel}>
                                     <BidangUang
-                                        label="Diskon"
+                                        label={`Diskon ${b.NamaProduk}`}
+                                        labelTersembunyi
                                         nilai={b.Diskon}
                                         saatBerubah={(nilai) => Ubah(b.Kunci, { Diskon: nilai })}
                                         galat={galatServer[`Baris.${String(indeks)}.Diskon`]}
