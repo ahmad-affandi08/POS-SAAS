@@ -121,6 +121,13 @@ const menuPembelian: ItemMenu[] = [
     { label: 'Pemasok', href: '/kelola/pembelian/pemasok', izin: IzinTenant.PembelianKelola },
 ];
 
+// Grosir (F-12, §9.7, D-32): tiga dokumen satu alur, cermin grup "Pembelian" di sisi beli.
+const menuGrosir: ItemMenu[] = [
+    { label: 'Pesanan grosir', href: '/kelola/grosir/pesanan', izin: IzinTenant.GrosirKelola },
+    { label: 'Surat jalan', href: '/kelola/grosir/surat-jalan', izin: IzinTenant.GrosirKelola },
+    { label: 'Faktur penjualan', href: '/kelola/grosir/faktur', izin: IzinTenant.GrosirKelola },
+];
+
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
 // F-16a/F-16b: data pelanggan, tier, pengaturan loyalti.
 const menuPelanggan: ItemMenu[] = [
@@ -319,6 +326,15 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         ikon: 'Pembelian',
         labelSub: 'Menu pembelian',
         sub: menuPembelian,
+    },
+    // Grosir: penjualan besar ke pengecer, bersebelahan dengan Pembelian karena bentuk dokumennya cermin.
+    {
+        label: 'Grosir',
+        href: '/kelola/grosir/pesanan',
+        izin: IzinTenant.GrosirKelola,
+        ikon: 'Pengiriman',
+        labelSub: 'Menu grosir',
+        sub: menuGrosir,
     },
     {
         label: 'Pelanggan',

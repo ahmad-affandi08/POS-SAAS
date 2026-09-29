@@ -17,7 +17,17 @@ import { daftarMenu } from './TataLetakAplikasi';
  * yang mengawasi struktur, jadi setiap penambahan selalu lolos.
  */
 
-const BATAS_LEVEL_SATU = 12;
+/*
+ * 13 sejak grosir (PRD v2.78, penyesuaian D-27 atas mandat pemilik produk "berikan yang terbaik"): grosir adalah modul
+ * penuh dengan tiga dokumen, peran akun, dan izinnya sendiri — cermin "Pembelian" di sisi beli, jadi tempatnya sejajar
+ * dengannya. Alternatif yang diperiksa lebih dulu dan ditolak: menyelipkannya sebagai satu entri bertab di grup lain
+ * mengharuskan satu halaman yang sudah ada kehilangan rumah menunya sekaligus entri Ctrl+K-nya (regresi), dan
+ * memindahkan "Tutup harian" ke grup Akuntansi membuat pengguna berizin laporan penjualan saja ikut melihat grup
+ * Akuntansi (kebocoran izin yang ditangkap `TataLetakAplikasiTes`).
+ *
+ * Angka ini tetap penjaga: menaikkannya lagi butuh alasan setingkat ini, bukan sekadar ada flow baru.
+ */
+const BATAS_LEVEL_SATU = 13;
 const BATAS_SUB_MENU = 7;
 
 type Butir = { label: string; href: string; sub?: { label: string; href: string }[] };

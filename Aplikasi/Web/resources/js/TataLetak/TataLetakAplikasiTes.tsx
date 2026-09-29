@@ -280,8 +280,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
     });
 
     it('F-05a: Pemilik melihat seluruh menu; urutannya dari yang paling sering dipakai (D-27)', () => {
-        // D-27: 12 entri, diurutkan per frekuensi pakai. Outlet, Perangkat, Pengguna & peran, Log audit, dan
-        // Langganan pindah ke Pengaturan; "Shift & kas" digabung ke "Penjualan & kasir".
+        // D-27: 13 entri sejak grosir (v2.78), diurutkan per frekuensi pakai. Outlet, Perangkat, Pengguna & peran,
+        // Log audit, dan Langganan pindah ke Pengaturan; "Shift & kas" digabung ke "Penjualan & kasir".
         expect(SaringMenuTerlihat({ Pemilik: true, Izin: [] }).map(({ menu }) => menu.label)).toEqual([
             'Beranda',
             'Kotak tindakan',
@@ -292,6 +292,8 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
             'Produk',
             // F-04: pembelian & hutang pemasok.
             'Pembelian',
+            // F-12 §9.7: grosir (pesanan, surat jalan, faktur penjualan) — cermin Pembelian di sisi jual.
+            'Grosir',
             // F-16a: data pelanggan.
             'Pelanggan',
             'Karyawan',
