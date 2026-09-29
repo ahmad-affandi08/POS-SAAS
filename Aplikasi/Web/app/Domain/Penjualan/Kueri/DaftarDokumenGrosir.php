@@ -13,13 +13,14 @@ use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
+use App\Domain\Penjualan\Model\ReturGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 /**
- * Daftar dokumen grosir untuk `TabelData` (F-12, §9.7): SO, surat jalan, dan faktur penjualan. Semua dibatasi outlet
+ * Daftar dokumen grosir untuk `TabelData` (F-12, §9.7): SO, surat jalan, faktur penjualan, dan retur (BR-12.7). Semua dibatasi outlet
  * yang boleh diakses pelaku (null = semua). Cari: nomor dokumen. Saring: `Status`, `Tanggal` (rentang), dan khusus
  * surat jalan `Difakturkan` (Belum/Sudah) — saringan itu yang dipakai butir Kotak Tindakan BR-12.4.
  *
@@ -129,6 +130,38 @@ final class DaftarDokumenGrosir
                 'Sisa' => $piutang[$d->Id]['Sisa'] ?? null,
                 'StatusPiutang' => $piutang[$d->Id]['Status'] ?? null,
                 'LabelStatusPiutang' => $piutang[$d->Id]['LabelStatus'] ?? null,
+            ])->all());
+        });
+    }
+
+    /**
+     * @param  list<int>|null  $idOutletBoleh
+     * @return array{Data: list<array<string, mixed>>, Meta: array{Halaman: int, PerHalaman: int, Total: int, JumlahHalaman: int}}
+     */
+    public function Retur(DataPermintaanTabel $p, ?array $idOutletBoleh): array
+    {
+        $kueri = $this->Saring(ReturGrosir::query(), $p, $idOutletBoleh, array_map(fn (StatusDokumenGrosir $s): string => $s->value, StatusDokumenGrosir::cases()));
+
+        return PenerapKueriTabel::Terapkan($kueri, $p, ['Tanggal' => 'Tanggal', 'Nomor' => 'Nomor', 'Total' => 'Total'], function (Collection $baris): array {
+            $pelanggan = $this->identitas->AmbilNamaBanyak($baris->pluck('IdPelanggan')->all());
+            $outlet = $this->petaOutlet->AmbilKode($this->IdOutlet($baris->pluck('IdOutlet')->all()));
+            $suratJalan = SuratJalan::query()->whereIn('Id', $baris->pluck('IdSuratJalan')->all())->pluck('Nomor', 'Id');
+            $faktur = FakturPenjualan::query()->whereIn('Id', $baris->pluck('IdFakturPenjualan')->filter()->all())->pluck('Nomor', 'Id');
+
+            return array_values($baris->map(fn (ReturGrosir $d): array => [
+                'Uuid' => $d->Uuid,
+                'Nomor' => $d->Nomor,
+                'Tanggal' => $d->Tanggal->format('Y-m-d'),
+                'NomorSuratJalan' => $suratJalan->get($d->IdSuratJalan),
+                'NomorFaktur' => $d->IdFakturPenjualan === null ? null : $faktur->get($d->IdFakturPenjualan),
+                'NamaPelanggan' => $pelanggan[$d->IdPelanggan]['Nama'] ?? '',
+                'KodeOutlet' => $outlet[$d->IdOutlet] ?? '',
+                'Status' => $d->Status->value,
+                'LabelStatus' => $d->Status->AmbilLabel(),
+                'Total' => $d->Total,
+                'MengurangiPiutang' => $d->MengurangiPiutang,
+                'PerluTinjauan' => $d->PerluTinjauan,
+                'Alasan' => $d->Alasan,
             ])->all());
         });
     }

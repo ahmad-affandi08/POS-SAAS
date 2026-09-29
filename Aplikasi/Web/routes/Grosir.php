@@ -6,13 +6,14 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Grosir\FakturPenjualanKontroler;
 use App\Http\Kontroler\Kelola\Grosir\PesananGrosirKontroler;
 use App\Http\Kontroler\Kelola\Grosir\ProdukGrosirKontroler;
+use App\Http\Kontroler\Kelola\Grosir\ReturGrosirKontroler;
 use App\Http\Kontroler\Kelola\Grosir\SuratJalanKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Rute back-office grosir (F-12, §9.7, D-32): pesanan grosir (SO), surat jalan, dan faktur penjualan. Didaftarkan dari
+ * Rute back-office grosir (F-12, §9.7, D-32): pesanan grosir (SO), surat jalan, faktur penjualan, dan retur (BR-12.7). Didaftarkan dari
  * routes/web.php di dalam grup `/kelola` (auth + IdentifikasiTenantSesi … BatasiTenantDitangguhkan). Semua rute memakai
  * `SiapkanAuditTenant` dan izin `grosir.kelola`; konfirmasi SO yang melewati limit kredit butuh `grosir.setujui-kredit`
  * (diperiksa di Aksi, BR-12.6, karena yang tahu paparannya hanya Aksi itu).
@@ -46,4 +47,10 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::GrosirKelola)])-
     Route::get('/faktur/{faktur}', [FakturPenjualanKontroler::class, 'Detail'])->where('faktur', $ulid)->name('kelola.grosir.faktur.detail');
     Route::put('/faktur/{faktur}/nomor-pajak', [FakturPenjualanKontroler::class, 'UbahNomorPajak'])->where('faktur', $ulid)->name('kelola.grosir.faktur.nomor-pajak');
     Route::post('/faktur/{faktur}/batalkan', [FakturPenjualanKontroler::class, 'Batalkan'])->where('faktur', $ulid)->name('kelola.grosir.faktur.batalkan');
+
+    Route::get('/retur', [ReturGrosirKontroler::class, 'Daftar'])->name('kelola.grosir.retur.daftar');
+    Route::get('/retur/buat/{suratJalan}', [ReturGrosirKontroler::class, 'Buat'])->where('suratJalan', $ulid)->name('kelola.grosir.retur.buat');
+    Route::post('/retur', [ReturGrosirKontroler::class, 'Simpan'])->name('kelola.grosir.retur.simpan');
+    Route::get('/retur/{retur}', [ReturGrosirKontroler::class, 'Detail'])->where('retur', $ulid)->name('kelola.grosir.retur.detail');
+    Route::post('/retur/{retur}/batalkan', [ReturGrosirKontroler::class, 'Batalkan'])->where('retur', $ulid)->name('kelola.grosir.retur.batalkan');
 });

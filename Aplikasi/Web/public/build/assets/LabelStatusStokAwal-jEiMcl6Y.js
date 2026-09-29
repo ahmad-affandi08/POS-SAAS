@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-B9fHysmv.js";import{t}from"./LabelStatus-auy1hB9E.js";import{t as n}from"./FormatPersediaan-D_llveu_.js";var r=e();function i({status:e,label:i}){return(0,r.jsx)(t,{jenis:n(e),teks:i})}export{i as t};

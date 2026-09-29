@@ -65,6 +65,22 @@ export type BarisDaftarSuratJalan = {
     TotalHpp: string;
 };
 
+export type BarisDaftarRetur = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NomorSuratJalan: string | null;
+    NomorFaktur: string | null;
+    NamaPelanggan: string;
+    KodeOutlet: string;
+    Status: StatusDokumenGrosir;
+    LabelStatus: string;
+    Total: string;
+    MengurangiPiutang: boolean;
+    PerluTinjauan: boolean;
+    Alasan: string;
+};
+
 export type BarisDaftarFaktur = {
     Uuid: string;
     Nomor: string;
@@ -106,6 +122,8 @@ export type BarisDetailSuratJalan = {
     Sku: string | null;
     SimbolSatuan: string;
     Jumlah: string;
+    JumlahDiretur: string;
+    SisaRetur: string;
     Harga: string;
     Diskon: string;
     Subtotal: string;
@@ -128,6 +146,12 @@ export type PropsDaftarSuratJalan = {
 
 export type PropsDaftarFaktur = {
     Faktur: Tabel<BarisDaftarFaktur>;
+    OpsiStatus: Opsi[];
+    Izin: IzinGrosir;
+};
+
+export type PropsDaftarRetur = {
+    Retur: Tabel<BarisDaftarRetur>;
     OpsiStatus: Opsi[];
     Izin: IzinGrosir;
 };
@@ -217,6 +241,15 @@ export type PropsDetailPesananGrosir = {
     Tindakan: { Ubah: boolean; Konfirmasi: boolean; Kirim: boolean; Batalkan: boolean };
 };
 
+export type ReturSuratJalan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Status: StatusDokumenGrosir;
+    LabelStatus: string;
+    Total: string;
+};
+
 export type PropsDetailSuratJalan = {
     SuratJalan: {
         Uuid: string;
@@ -246,6 +279,69 @@ export type PropsDetailSuratJalan = {
         BolehDibatalkan: boolean;
     };
     Baris: BarisDetailSuratJalan[];
+    Retur: ReturSuratJalan[];
+    Jurnal: JurnalGrosir[];
+    Riwayat: RiwayatGrosir[];
+    Izin: IzinGrosir;
+    Tindakan: { Batalkan: boolean };
+};
+
+export type PropsBuatRetur = {
+    SuratJalan: PropsDetailSuratJalan['SuratJalan'];
+    Baris: BarisDetailSuratJalan[];
+    Retur: ReturSuratJalan[];
+    Jurnal: JurnalGrosir[];
+    Riwayat: RiwayatGrosir[];
+    OpsiKondisi: Opsi[];
+    HariIni: string;
+    Izin: IzinGrosir;
+};
+
+export type BarisDetailRetur = {
+    Urutan: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Jumlah: string;
+    Kondisi: 'LayakJual' | 'Rusak';
+    LabelKondisi: string;
+    NamaGudang: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+    HppSatuan: string;
+    TotalHpp: string;
+};
+
+export type PropsDetailRetur = {
+    Retur: {
+        Uuid: string;
+        Nomor: string;
+        NamaPelanggan: string;
+        UuidPelanggan: string | null;
+        KodeOutlet: string;
+        Tanggal: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        Alasan: string;
+        MengurangiPiutang: boolean;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        TotalHpp: string;
+        Catatan: string | null;
+        PerluTinjauan: boolean;
+        AlasanTinjauan: string | null;
+        AlasanBatal: string | null;
+        NomorSuratJalan: string | null;
+        UuidSuratJalan: string | null;
+        NomorFaktur: string | null;
+        UuidFaktur: string | null;
+    };
+    Baris: BarisDetailRetur[];
     Jurnal: JurnalGrosir[];
     Riwayat: RiwayatGrosir[];
     Izin: IzinGrosir;

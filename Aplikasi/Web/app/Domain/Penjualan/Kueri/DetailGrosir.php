@@ -9,6 +9,7 @@ use App\Domain\Akuntansi\Kueri\JurnalSumber;
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
+use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Layanan\PencatatPiutangPenjualan;
@@ -16,6 +17,8 @@ use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
 use App\Domain\Penjualan\Model\PesananGrosirDetail;
+use App\Domain\Penjualan\Model\ReturGrosir;
+use App\Domain\Penjualan\Model\ReturGrosirDetail;
 use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Penjualan\Model\SuratJalanDetail;
 
@@ -31,6 +34,7 @@ final class DetailGrosir
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly JurnalSumber $jurnal,
         private readonly DaftarAnggota $anggota,
+        private readonly InfoGudang $infoGudang,
         private readonly KonteksTenant $konteks,
     ) {}
 
@@ -127,14 +131,80 @@ final class DetailGrosir
                 'Sku' => $d->Sku,
                 'SimbolSatuan' => $d->SimbolSatuan,
                 'Jumlah' => $d->Jumlah,
+                'JumlahDiretur' => $d->JumlahDiretur,
+                'SisaRetur' => $d->AmbilSisaRetur()->KeString(),
                 'Harga' => $d->Harga,
                 'Diskon' => $d->Diskon,
                 'Subtotal' => $d->Subtotal,
                 'HppSatuan' => $d->HppSatuan,
                 'TotalHpp' => $d->TotalHpp,
             ])->all()),
+            'Retur' => array_values(ReturGrosir::query()->where('IdSuratJalan', $suratJalan->Id)->orderBy('Id')->get()->map(
+                fn (ReturGrosir $r): array => [
+                    'Uuid' => $r->Uuid,
+                    'Nomor' => $r->Nomor,
+                    'Tanggal' => $r->Tanggal->format('Y-m-d'),
+                    'Status' => $r->Status->value,
+                    'LabelStatus' => $r->Status->AmbilLabel(),
+                    'Total' => $r->Total,
+                ],
+            )->all()),
             'Jurnal' => $this->jurnal->Ambil(JenisSumberJurnal::SuratJalan, $suratJalan->Id),
             'Riwayat' => $this->Riwayat(SuratJalan::JENIS_DOKUMEN, $suratJalan->Id),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function Retur(ReturGrosir $retur): array
+    {
+        $suratJalan = SuratJalan::query()->whereKey($retur->IdSuratJalan)->first();
+        $faktur = $retur->IdFakturPenjualan === null ? null : FakturPenjualan::query()->whereKey($retur->IdFakturPenjualan)->first();
+
+        return [
+            'Retur' => [
+                ...$this->Header($retur->Uuid, $retur->Nomor, $retur->IdPelanggan, $retur->IdOutlet),
+                'Tanggal' => $retur->Tanggal->format('Y-m-d'),
+                'Status' => $retur->Status->value,
+                'LabelStatus' => $retur->Status->AmbilLabel(),
+                'Alasan' => $retur->Alasan,
+                'MengurangiPiutang' => $retur->MengurangiPiutang,
+                'TarifPpn' => $retur->TarifPpn,
+                'Subtotal' => $retur->Subtotal,
+                'Diskon' => $retur->Diskon,
+                'DasarPengenaanPajak' => $retur->DasarPengenaanPajak,
+                'Pajak' => $retur->Pajak,
+                'Total' => $retur->Total,
+                'TotalHpp' => $retur->TotalHpp,
+                'Catatan' => $retur->Catatan,
+                'PerluTinjauan' => $retur->PerluTinjauan,
+                'AlasanTinjauan' => $retur->AlasanTinjauan,
+                'AlasanBatal' => $retur->AlasanBatal,
+                'NomorSuratJalan' => $suratJalan?->Nomor,
+                'UuidSuratJalan' => $suratJalan?->Uuid,
+                'NomorFaktur' => $faktur?->Nomor,
+                'UuidFaktur' => $faktur?->Uuid,
+            ],
+            'Baris' => array_values(ReturGrosirDetail::query()->where('IdReturGrosir', $retur->Id)->orderBy('Urutan')->get()->map(
+                fn (ReturGrosirDetail $d): array => [
+                    'Urutan' => $d->Urutan,
+                    'NamaProduk' => $d->NamaProduk,
+                    'Sku' => $d->Sku,
+                    'SimbolSatuan' => $d->SimbolSatuan,
+                    'Jumlah' => $d->Jumlah,
+                    'Kondisi' => $d->Kondisi->value,
+                    'LabelKondisi' => $d->Kondisi->AmbilLabel(),
+                    'NamaGudang' => $this->infoGudang->AmbilBanyak([$d->IdGudang])[$d->IdGudang]->nama ?? '',
+                    'Harga' => $d->Harga,
+                    'Diskon' => $d->Diskon,
+                    'Subtotal' => $d->Subtotal,
+                    'HppSatuan' => $d->HppSatuan,
+                    'TotalHpp' => $d->TotalHpp,
+                ],
+            )->all()),
+            'Jurnal' => $this->jurnal->Ambil(JenisSumberJurnal::ReturGrosir, $retur->Id),
+            'Riwayat' => $this->Riwayat(ReturGrosir::JENIS_DOKUMEN, $retur->Id),
         ];
     }
 

@@ -18,6 +18,7 @@ import { Button } from '@/Komponen/Ui/button';
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
+import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
@@ -44,6 +45,14 @@ const kolom: KolomTabel<BarisDetailSuratJalan>[] = [
         enableSorting: false,
         meta: { label: 'Jumlah diserahkan', angka: true, prioritas: 'penting' },
         cell: ({ row: { original: b } }) => FormatJumlahStok(b.Jumlah, b.SimbolSatuan),
+    },
+    {
+        id: 'Diretur',
+        header: 'Diretur',
+        enableSorting: false,
+        meta: { label: 'Jumlah diretur', angka: true, prioritas: 'rendah' },
+        cell: ({ row: { original: b } }) =>
+            BandingkanDesimal(b.JumlahDiretur, '0') === 0 ? '—' : FormatJumlahStok(b.JumlahDiretur, b.SimbolSatuan),
     },
     {
         id: 'Harga',
@@ -75,12 +84,15 @@ const kolom: KolomTabel<BarisDetailSuratJalan>[] = [
 export default function HalamanDetailSuratJalan({
     SuratJalan,
     Baris,
+    Retur,
     Jurnal,
     Riwayat,
     Izin,
     Tindakan,
 }: PropsDetailSuratJalan) {
     const [batalkan, AturBatalkan] = useState(false);
+    const bolehRetur =
+        Izin.Kelola && SuratJalan.Status === 'Diposting' && Baris.some((b) => BandingkanDesimal(b.SisaRetur, '0') > 0);
 
     return (
         <TataLetakAplikasi judul={`Surat jalan ${SuratJalan.Nomor}`}>
@@ -101,15 +113,22 @@ export default function HalamanDetailSuratJalan({
                 </Pemberitahuan>
             ) : null}
 
-            {Tindakan.Batalkan ? (
+            {Tindakan.Batalkan || bolehRetur ? (
                 <div className="flex flex-wrap gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => AturBatalkan(true)}
-                        className="h-8 text-bahaya pointer-coarse:h-11"
-                    >
-                        Batalkan surat jalan
-                    </Button>
+                    {bolehRetur ? (
+                        <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                            <Link href={`${AlamatGrosir}/retur/buat/${SuratJalan.Uuid}`}>Buat retur</Link>
+                        </Button>
+                    ) : null}
+                    {Tindakan.Batalkan ? (
+                        <Button
+                            variant="outline"
+                            onClick={() => AturBatalkan(true)}
+                            className="h-8 text-bahaya pointer-coarse:h-11"
+                        >
+                            Batalkan surat jalan
+                        </Button>
+                    ) : null}
                 </div>
             ) : null}
 
@@ -169,6 +188,25 @@ export default function HalamanDetailSuratJalan({
                     ]}
                 />
             </Panel>
+
+            {Retur.length > 0 ? (
+                <section aria-label="Retur" className="flex flex-col gap-2">
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Retur atas surat jalan ini</h2>
+                    <ul className="flex flex-col gap-1 text-isi">
+                        {Retur.map((r) => (
+                            <li key={r.Uuid} className="break-words text-teks-sekunder">
+                                <Link
+                                    href={`${AlamatGrosir}/retur/${r.Uuid}`}
+                                    className="font-mono font-semibold text-brand underline"
+                                >
+                                    {r.Nomor}
+                                </Link>{' '}
+                                · {FormatTanggal(r.Tanggal)} · {r.LabelStatus} · {FormatRupiah(r.Total)}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
 
             <JurnalDokumenGrosir jurnal={Jurnal} izin={Izin} />
             <RiwayatGrosirDokumen riwayat={Riwayat} />

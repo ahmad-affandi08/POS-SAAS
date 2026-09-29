@@ -9,6 +9,7 @@ use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
 use App\Domain\Penjualan\Model\PesananGrosir;
+use App\Domain\Penjualan\Model\ReturGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ use Tests\Pendukung\Persediaan\BantuanStokAwal;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 /*
- * Back-office grosir lewat rute (routes/Grosir.php, F-12 §9.7): alur lengkap SO → surat jalan → faktur, setiap halaman
+ * Back-office grosir lewat rute (routes/Grosir.php, F-12 §9.7): alur lengkap SO → surat jalan → faktur → retur, setiap halaman
  * Inertia ada di disk, TabelData JSON, izin `grosir.kelola`, dan isolasi tenant.
  *
  * Yang paling penting dijaga di sini adalah **harga tidak datang dari klien**: formulirnya memang tidak punya bidang
@@ -52,7 +53,7 @@ afterEach(function (): void {
 });
 
 describe('HTTP back-office grosir', function (): void {
-    it('alur lengkap lewat rute: draf SO, konfirmasi, kirim, faktur, nomor Faktur Pajak', function (): void {
+    it('alur lengkap lewat rute: draf SO, konfirmasi, kirim, faktur, nomor Faktur Pajak, retur', function (): void {
         BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
 
         $this->get('/kelola/grosir/pesanan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
@@ -128,6 +129,44 @@ describe('HTTP back-office grosir', function (): void {
         $this->put("/kelola/grosir/faktur/{$faktur->Uuid}/nomor-pajak", ['NomorFakturPajak' => '0100002512345678'])
             ->assertSessionHasNoErrors()->assertRedirect();
         expect($faktur->refresh()->NomorFakturPajak)->toBe('0100002512345678');
+
+        // Retur (BR-12.7): jumlah & kondisi saja yang dikirim; harga dan HPP-nya dari snapshot surat jalan.
+        $this->get("/kelola/grosir/retur/buat/{$suratJalan->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Retur/Buat')
+            ->where('Baris.0.SisaRetur', '200.0000')
+            ->has('OpsiKondisi', 2));
+        $this->post('/kelola/grosir/retur', [
+            'UuidSuratJalan' => $suratJalan->Uuid,
+            'Tanggal' => '2026-09-27',
+            'Alasan' => 'Sepuluh sak basah kena hujan di gudang pembeli.',
+            'Baris' => [['Urutan' => 1, 'Jumlah' => '10', 'Kondisi' => 'Rusak']],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $retur = ReturGrosir::query()->sole();
+        expect($retur->Total)->toBe('150000.00')
+            // Penyerahannya sudah difakturkan, jadi returnya menjadi nota kredit yang mengurangi piutang faktur itu.
+            ->and($retur->MengurangiPiutang)->toBeTrue()
+            ->and($retur->IdFakturPenjualan)->toBe($faktur->Id)
+            ->and(Piutang::query()->where('IdFakturPenjualan', $faktur->Id)->sole()->AmbilSisa()->KeString())->toBe('2850000.00')
+            ->and($suratJalan->refresh()->Detail()->value('JumlahDiretur'))->toBe('10.0000');
+
+        $this->get('/kelola/grosir/retur')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Retur/Daftar')->has('Retur.Data', 1)->where('Retur.Data.0.MengurangiPiutang', true));
+        $this->get("/kelola/grosir/retur/{$retur->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Retur/Detail')
+            ->where('Retur.Total', '150000.00')
+            ->where('Baris.0.LabelKondisi', 'Rusak')
+            ->has('Jurnal', 1));
+
+        // Sisa yang bisa diretur berkurang, dan returnya tampil di halaman surat jalannya.
+        $this->get("/kelola/grosir/surat-jalan/{$suratJalan->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Baris.0.SisaRetur', '190.0000')->has('Retur', 1));
+
+        $this->post("/kelola/grosir/retur/{$retur->Uuid}/batalkan", ['Alasan' => 'Salah input, yang basah cuma lima sak.'])
+            ->assertSessionHasNoErrors()->assertRedirect();
+        expect($retur->refresh()->Status)->toBe(StatusDokumenGrosir::Dibatalkan)
+            ->and(Piutang::query()->where('IdFakturPenjualan', $faktur->Id)->sole()->AmbilSisa()->KeString())->toBe('3000000.00')
+            ->and($suratJalan->refresh()->Detail()->value('JumlahDiretur'))->toBe('0.0000');
     });
 
     it('TabelData JSON & pencarian produk/pelanggan menjawab', function (): void {

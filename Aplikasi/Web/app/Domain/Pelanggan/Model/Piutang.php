@@ -23,7 +23,8 @@ use LogicException;
  * @property string $Uuid
  * @property int $IdTenant
  * @property int|null $IdPelanggan
- * @property int $IdPenjualan
+ * @property int|null $IdPenjualan
+ * @property int|null $IdFakturPenjualan
  * @property int $IdOutlet
  * @property string $Nomor
  * @property Carbon $TanggalBisnis
