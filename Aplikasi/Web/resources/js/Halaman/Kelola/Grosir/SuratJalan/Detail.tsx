@@ -113,24 +113,27 @@ export default function HalamanDetailSuratJalan({
                 </Pemberitahuan>
             ) : null}
 
-            {Tindakan.Batalkan || bolehRetur ? (
-                <div className="flex flex-wrap gap-2">
-                    {bolehRetur ? (
-                        <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
-                            <Link href={`${AlamatGrosir}/retur/buat/${SuratJalan.Uuid}`}>Buat retur</Link>
-                        </Button>
-                    ) : null}
-                    {Tindakan.Batalkan ? (
-                        <Button
-                            variant="outline"
-                            onClick={() => AturBatalkan(true)}
-                            className="h-8 text-bahaya pointer-coarse:h-11"
-                        >
-                            Batalkan surat jalan
-                        </Button>
-                    ) : null}
-                </div>
-            ) : null}
+            <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                    <a href={`${alamat}/${SuratJalan.Uuid}/cetak`} target="_blank" rel="noreferrer">
+                        Cetak surat jalan
+                    </a>
+                </Button>
+                {bolehRetur ? (
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                        <Link href={`${AlamatGrosir}/retur/buat/${SuratJalan.Uuid}`}>Buat retur</Link>
+                    </Button>
+                ) : null}
+                {Tindakan.Batalkan ? (
+                    <Button
+                        variant="outline"
+                        onClick={() => AturBatalkan(true)}
+                        className="h-8 text-bahaya pointer-coarse:h-11"
+                    >
+                        Batalkan surat jalan
+                    </Button>
+                ) : null}
+            </div>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{SuratJalan.NamaPelanggan}</KeteranganGrosir>

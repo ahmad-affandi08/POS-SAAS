@@ -11,8 +11,10 @@ use App\Domain\Penjualan\Enum\KondisiBarangRetur;
 use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
+use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
 use App\Domain\Penjualan\Model\ReturGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Permintaan\Kelola\Grosir\AlasanGrosirPermintaan;
 use App\Http\Permintaan\Kelola\Grosir\BuatReturGrosirPermintaan;
 use App\Http\Respons\ResponsTabel;
@@ -76,6 +78,15 @@ final class ReturGrosirKontroler extends DasarGrosirKontroler
             ...$detail->Retur($dokumen),
             'Izin' => $izin,
             'Tindakan' => ['Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting],
+        ]);
+    }
+
+    /** Cetak A4 nota kredit untuk pembeli. */
+    public function Cetak(string $retur, DokumenCetakGrosir $cetak, ProfilTenant $profil): Response
+    {
+        return Inertia::render('Kelola/Grosir/Retur/Cetak', [
+            ...$cetak->Retur($this->CariDokumen(ReturGrosir::class, $retur)),
+            'Usaha' => $this->Usaha($profil),
         ]);
     }
 

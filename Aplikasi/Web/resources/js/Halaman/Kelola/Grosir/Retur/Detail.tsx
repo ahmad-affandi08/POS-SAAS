@@ -112,8 +112,13 @@ export default function HalamanDetailReturGrosir({ Retur, Baris, Jurnal, Riwayat
                 </Pemberitahuan>
             ) : null}
 
-            {Tindakan.Batalkan ? (
-                <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                    <a href={`${alamat}/${Retur.Uuid}/cetak`} target="_blank" rel="noreferrer">
+                        {Retur.MengurangiPiutang ? 'Cetak nota kredit' : 'Cetak tanda terima retur'}
+                    </a>
+                </Button>
+                {Tindakan.Batalkan ? (
                     <Button
                         variant="outline"
                         onClick={() => AturBatalkan(true)}
@@ -121,8 +126,8 @@ export default function HalamanDetailReturGrosir({ Retur, Baris, Jurnal, Riwayat
                     >
                         Batalkan retur
                     </Button>
-                </div>
-            ) : null}
+                ) : null}
+            </div>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Retur.NamaPelanggan}</KeteranganGrosir>

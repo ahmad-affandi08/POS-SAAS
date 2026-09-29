@@ -169,6 +169,93 @@ describe('HTTP back-office grosir', function (): void {
             ->and($suratJalan->refresh()->Detail()->value('JumlahDiretur'))->toBe('0.0000');
     });
 
+    it('keempat halaman cetak menjawab, dan surat jalan & daftar ambil barang tidak memuat harga sama sekali', function (): void {
+        BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
+
+        $this->post('/kelola/grosir/pesanan', [
+            'UuidPelanggan' => $this->toko->Uuid,
+            'UuidOutlet' => $this->k['Outlet']->Uuid,
+            'Tanggal' => '2026-09-27',
+            'Baris' => [['UuidProduk' => $this->gula->Uuid, 'UuidProdukSatuan' => $this->satuan->Uuid, 'Jumlah' => '200']],
+        ])->assertSessionHasNoErrors();
+        $pesanan = PesananGrosir::query()->sole();
+        $this->post("/kelola/grosir/pesanan/{$pesanan->Uuid}/konfirmasi")->assertSessionHasNoErrors();
+
+        // Daftar ambil barang sebelum pengiriman: sisa = seluruh pesanan.
+        $this->get("/kelola/grosir/pesanan/{$pesanan->Uuid}/ambil-barang")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Pesanan/CetakAmbil')
+            ->where('Baris.0.SisaKirim', '200.0000')
+            ->where('Pesanan.Pelanggan.Nama', 'Toko Makmur Jaya')
+            ->has('Usaha.Nama')
+            // Tidak ada harga di daftar ambil barang: yang pegang kertas ini petugas gudang.
+            ->missing('Baris.0.Harga')
+            ->missing('Baris.0.Subtotal'));
+
+        // Kirim separuh, lalu daftar ambil barang hanya menyisakan yang belum dikirim.
+        $this->post("/kelola/grosir/pesanan/{$pesanan->Uuid}/kirim", [
+            'UuidGudang' => $this->k['Gudang']->Uuid,
+            'Tanggal' => '2026-09-27',
+            'Baris' => [['Urutan' => 1, 'Jumlah' => '120']],
+        ])->assertSessionHasNoErrors();
+        $this->get("/kelola/grosir/pesanan/{$pesanan->Uuid}/ambil-barang")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Baris.0.JumlahTerkirim', '120.0000')
+            ->where('Baris.0.SisaKirim', '80.0000'));
+
+        $suratJalan = SuratJalan::query()->sole();
+        $this->get("/kelola/grosir/surat-jalan/{$suratJalan->Uuid}/cetak")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/SuratJalan/Cetak')
+            ->where('SuratJalan.Nomor', $suratJalan->Nomor)
+            ->where('SuratJalan.Pelanggan.NoHp', '6281355550005')
+            ->where('Baris.0.Jumlah', '120.0000')
+            // Surat jalan dicetak tanpa harga: ini yang dibaca sopir & gudang pembeli.
+            ->missing('Baris.0.Harga')
+            ->missing('Baris.0.Subtotal')
+            ->missing('SuratJalan.Total'));
+
+        $this->post('/kelola/grosir/faktur', ['UuidSuratJalan' => [$suratJalan->Uuid], 'Tanggal' => '2026-09-27'])
+            ->assertSessionHasNoErrors();
+        $faktur = FakturPenjualan::query()->sole();
+
+        // Faktur justru wajib memuat uang, dan barisnya baris surat jalan yang ditautkan (BR-12.4).
+        $this->get("/kelola/grosir/faktur/{$faktur->Uuid}/cetak")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Faktur/Cetak')
+            ->where('Faktur.Total', '1800000.00')
+            ->where('Baris.0.NomorSuratJalan', $suratJalan->Nomor)
+            ->where('Baris.0.Harga', '15000.00')
+            ->has('SuratJalan', 1));
+
+        $this->post('/kelola/grosir/retur', [
+            'UuidSuratJalan' => $suratJalan->Uuid,
+            'Tanggal' => '2026-09-27',
+            'Alasan' => 'Dua puluh sak sobek saat bongkar di gudang pembeli.',
+            'Baris' => [['Urutan' => 1, 'Jumlah' => '20', 'Kondisi' => 'Rusak']],
+        ])->assertSessionHasNoErrors();
+        $retur = ReturGrosir::query()->sole();
+
+        // Sudah difakturkan, jadi kertasnya nota kredit.
+        $this->get("/kelola/grosir/retur/{$retur->Uuid}/cetak")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Grosir/Retur/Cetak')
+            ->where('Retur.MengurangiPiutang', true)
+            ->where('Retur.NomorFaktur', $faktur->Nomor)
+            ->where('Retur.Total', '300000.00')
+            ->where('Baris.0.LabelKondisi', 'Rusak'));
+
+        // Dibatalkan pun tetap bisa dibuka, supaya halamannya bisa menandainya DIBATALKAN.
+        $this->post("/kelola/grosir/retur/{$retur->Uuid}/batalkan", ['Alasan' => 'Salah hitung sak yang sobek.'])
+            ->assertSessionHasNoErrors();
+        $this->get("/kelola/grosir/retur/{$retur->Uuid}/cetak")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Retur.Status', 'Dibatalkan')
+            ->where('Retur.AlasanBatal', 'Salah hitung sak yang sobek.'));
+    });
+
+    it('halaman cetak ikut dijaga izin & batas outlet', function (): void {
+        BantuanKatalog::MasukSebagai($this, $this->k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/grosir/surat-jalan/'.strtoupper((string) Str::ulid()).'/cetak')->assertForbidden();
+
+        BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
+        $this->get('/kelola/grosir/faktur/'.strtoupper((string) Str::ulid()).'/cetak')->assertNotFound();
+    });
+
     it('TabelData JSON & pencarian produk/pelanggan menjawab', function (): void {
         BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
 

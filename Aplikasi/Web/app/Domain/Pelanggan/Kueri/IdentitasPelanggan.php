@@ -111,6 +111,20 @@ final class IdentitasPelanggan
     }
 
     /**
+     * F-12 §9.7: identitas penagihan untuk dokumen grosir yang dicetak (surat jalan, faktur, nota kredit). Nomor HP
+     * **tidak** disamarkan di sini, berbeda dengan `AmbilUntukPos`: dokumen ini dicetak untuk pembeli itu sendiri dan
+     * sopir yang mengantar, jadi nomor yang bisa dihubungi memang bagian isinya.
+     *
+     * @return array{Nama: string, Alamat: string|null, NoHp: string}|null
+     */
+    public function AmbilUntukCetak(int $id): ?array
+    {
+        $p = Pelanggan::query()->whereKey($id)->first(['Id', 'Nama', 'Alamat', 'NoHp']);
+
+        return $p === null ? null : ['Nama' => $p->Nama, 'Alamat' => $p->Alamat, 'NoHp' => $p->NoHp];
+    }
+
+    /**
      * F-12 bagian 2: identitas pelanggan pre-order untuk POS (nomor HP tersamar, tier untuk harga) per Id.
      *
      * @param  list<int>  $id

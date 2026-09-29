@@ -10,7 +10,9 @@ use App\Domain\Penjualan\Aksi\BuatFakturPenjualan;
 use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
+use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
 use App\Domain\Penjualan\Model\FakturPenjualan;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Permintaan\Kelola\Grosir\AlasanGrosirPermintaan;
 use App\Http\Permintaan\Kelola\Grosir\BuatFakturPenjualanPermintaan;
 use App\Http\Permintaan\Kelola\Grosir\NomorFakturPajakPermintaan;
@@ -87,6 +89,15 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
         $dokumen->save();
 
         return to_route('kelola.grosir.faktur.detail', ['faktur' => $dokumen->Uuid])->with('Kilat', 'Nomor Faktur Pajak disimpan.');
+    }
+
+    /** Cetak A4 tagihan untuk pembeli (BR-12.4: barisnya baris surat jalan yang ditautkan). */
+    public function Cetak(string $faktur, DokumenCetakGrosir $cetak, ProfilTenant $profil): Response
+    {
+        return Inertia::render('Kelola/Grosir/Faktur/Cetak', [
+            ...$cetak->Faktur($this->CariDokumen(FakturPenjualan::class, $faktur)),
+            'Usaha' => $this->Usaha($profil),
+        ]);
     }
 
     public function Batalkan(AlasanGrosirPermintaan $permintaan, string $faktur, BatalkanFakturPenjualan $batalkan): RedirectResponse

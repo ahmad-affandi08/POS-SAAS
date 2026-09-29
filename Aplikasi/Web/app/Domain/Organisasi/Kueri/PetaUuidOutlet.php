@@ -56,6 +56,28 @@ final class PetaUuidOutlet
     }
 
     /**
+     * F-12 §9.7: kode, nama, dan alamat outlet penjual untuk kepala dokumen grosir yang dicetak — alamat pengirimnya
+     * bagian dari surat jalan, bukan hiasan: itu yang dicocokkan pembeli saat barang datang.
+     *
+     * @param  list<int>  $idOutlet
+     * @return array<int, array{Kode: string, Nama: string, Alamat: string|null}>
+     */
+    public function AmbilIdentitas(array $idOutlet): array
+    {
+        if ($idOutlet === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (Outlet::query()->whereIn('Id', array_values(array_unique($idOutlet)))->get(['Id', 'Kode', 'Nama', 'Alamat']) as $outlet) {
+            $hasil[$outlet->Id] = ['Kode' => (string) $outlet->Kode, 'Nama' => $outlet->Nama, 'Alamat' => $outlet->Alamat];
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Outlet tenant aktif urut nama. `$idOutlet` null = semua; `$hanyaAktif` = tanpa outlet diarsipkan.
      *
      * @param  list<int>|null  $idOutlet

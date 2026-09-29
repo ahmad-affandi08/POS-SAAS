@@ -388,3 +388,129 @@ export type PropsDetailFaktur = {
     Izin: IzinGrosir;
     Tindakan: { Batalkan: boolean; UbahNomorPajak: boolean };
 };
+
+/*
+ * Halaman cetak A4 (F-12 §9.7 bagian 3). Surat jalan & daftar ambil barang sengaja tidak punya bidang harga sama
+ * sekali di tipenya — bukan sekadar tidak ditampilkan, memang tidak dikirim server (lihat `DokumenCetakGrosir`).
+ */
+
+export type UsahaCetak = { Nama: string | null; Npwp: string | null };
+
+export type PelangganCetak = { Nama: string; Alamat: string | null; NoHp: string };
+
+export type OutletCetak = { Kode: string; Nama: string; Alamat: string | null };
+
+export type BarisCetakTanpaHarga = {
+    Urutan: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Jumlah: string;
+};
+
+export type PropsCetakSuratJalan = {
+    SuratJalan: {
+        Nomor: string;
+        Pelanggan: PelangganCetak;
+        Outlet: OutletCetak;
+        Tanggal: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        AlasanBatal: string | null;
+        NamaGudang: string;
+        NomorPesanan: string | null;
+        NamaPengirim: string | null;
+        NomorKendaraan: string | null;
+        NamaPenerima: string | null;
+        Catatan: string | null;
+    };
+    Baris: BarisCetakTanpaHarga[];
+    Usaha: UsahaCetak;
+};
+
+export type PropsCetakFaktur = {
+    Faktur: {
+        Nomor: string;
+        Pelanggan: PelangganCetak;
+        Outlet: OutletCetak;
+        Tanggal: string;
+        JatuhTempo: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        AlasanBatal: string | null;
+        TerminHari: number;
+        PeriodePenyerahan: string;
+        NomorFakturPajak: string | null;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        Catatan: string | null;
+    };
+    SuratJalan: { Nomor: string; Tanggal: string; Total: string }[];
+    Baris: {
+        Kunci: string;
+        NomorSuratJalan: string;
+        NamaProduk: string;
+        Sku: string | null;
+        SimbolSatuan: string;
+        Jumlah: string;
+        Harga: string;
+        Diskon: string;
+        Subtotal: string;
+    }[];
+    Usaha: UsahaCetak;
+};
+
+export type PropsCetakRetur = {
+    Retur: {
+        Nomor: string;
+        Pelanggan: PelangganCetak;
+        Outlet: OutletCetak;
+        Tanggal: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        AlasanBatal: string | null;
+        Alasan: string;
+        MengurangiPiutang: boolean;
+        NomorSuratJalan: string | null;
+        TanggalSuratJalan: string | null;
+        NomorFaktur: string | null;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        Catatan: string | null;
+    };
+    Baris: {
+        Urutan: number;
+        NamaProduk: string;
+        Sku: string | null;
+        SimbolSatuan: string;
+        Jumlah: string;
+        LabelKondisi: string;
+        Harga: string;
+        Diskon: string;
+        Subtotal: string;
+    }[];
+    Usaha: UsahaCetak;
+};
+
+export type PropsCetakAmbilBarang = {
+    Pesanan: {
+        Nomor: string;
+        Pelanggan: PelangganCetak;
+        Outlet: OutletCetak;
+        Tanggal: string;
+        TanggalKirimDiminta: string | null;
+        Status: StatusPesananGrosir;
+        LabelStatus: string;
+        Catatan: string | null;
+    };
+    Baris: (BarisCetakTanpaHarga & { JumlahTerkirim: string; SisaKirim: string })[];
+    Usaha: UsahaCetak;
+};

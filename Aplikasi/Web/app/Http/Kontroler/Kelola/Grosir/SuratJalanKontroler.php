@@ -9,7 +9,9 @@ use App\Domain\Penjualan\Aksi\BatalkanSuratJalan;
 use App\Domain\Penjualan\Enum\StatusDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
+use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
 use App\Domain\Penjualan\Model\SuratJalan;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Permintaan\Kelola\Grosir\AlasanGrosirPermintaan;
 use App\Http\Respons\ResponsTabel;
 use Illuminate\Http\JsonResponse;
@@ -20,8 +22,8 @@ use Inertia\Response;
 
 /**
  * Surat jalan grosir (F-12, §9.7, `/kelola/grosir/surat-jalan`): daftar (termasuk saringan **Belum difakturkan** yang
- * dituju butir Kotak Tindakan BR-12.4), detail, dan pembatalan (J-12.3). Surat jalannya dibuat dari halaman SO, karena
- * yang diserahkan selalu barang milik satu pesanan.
+ * dituju butir Kotak Tindakan BR-12.4), detail, cetak, dan pembatalan (J-12.3). Surat jalannya dibuat dari halaman SO,
+ * karena yang diserahkan selalu barang milik satu pesanan.
  */
 final class SuratJalanKontroler extends DasarGrosirKontroler
 {
@@ -47,6 +49,15 @@ final class SuratJalanKontroler extends DasarGrosirKontroler
             'Tindakan' => [
                 'Batalkan' => $izin['Kelola'] && $dokumen->Status === StatusDokumenGrosir::Diposting && $dokumen->IdFakturPenjualan === null,
             ],
+        ]);
+    }
+
+    /** Cetak A4 (surat jalan yang dibawa sopir); tanpa harga, lihat `DokumenCetakGrosir`. */
+    public function Cetak(string $suratJalan, DokumenCetakGrosir $cetak, ProfilTenant $profil): Response
+    {
+        return Inertia::render('Kelola/Grosir/SuratJalan/Cetak', [
+            ...$cetak->SuratJalan($this->CariDokumen(SuratJalan::class, $suratJalan)),
+            'Usaha' => $this->Usaha($profil),
         ]);
     }
 

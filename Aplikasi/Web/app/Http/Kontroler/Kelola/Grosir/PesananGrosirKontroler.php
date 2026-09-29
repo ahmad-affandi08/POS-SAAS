@@ -13,8 +13,10 @@ use App\Domain\Penjualan\Aksi\SimpanPesananGrosir;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
+use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
 use App\Domain\Penjualan\Kueri\IsianFormGrosir;
 use App\Domain\Penjualan\Model\PesananGrosir;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Permintaan\Kelola\Grosir\AlasanGrosirPermintaan;
 use App\Http\Permintaan\Kelola\Grosir\KirimPesananGrosirPermintaan;
 use App\Http\Permintaan\Kelola\Grosir\KonfirmasiPesananGrosirPermintaan;
@@ -123,6 +125,18 @@ final class PesananGrosirKontroler extends DasarGrosirKontroler
 
         return to_route('kelola.grosir.surat-jalan.detail', ['suratJalan' => $suratJalan->Uuid])
             ->with('Kilat', "Surat jalan {$suratJalan->Nomor} diposting: stok keluar dan penjualannya diakui.");
+    }
+
+    /**
+     * Cetak A4 daftar ambil barang: sisa yang belum dikirim, tanpa harga (`DokumenCetakGrosir`). Dokumen tersendiri,
+     * bukan status draf surat jalan — §9.7 sudah memutuskan surat jalan tidak punya draf.
+     */
+    public function CetakAmbil(string $pesanan, DokumenCetakGrosir $cetak, ProfilTenant $profil): Response
+    {
+        return Inertia::render('Kelola/Grosir/Pesanan/CetakAmbil', [
+            ...$cetak->DaftarAmbil($this->CariDokumen(PesananGrosir::class, $pesanan)),
+            'Usaha' => $this->Usaha($profil),
+        ]);
     }
 
     public function Batalkan(AlasanGrosirPermintaan $permintaan, string $pesanan, BatalkanPesananGrosir $batalkan): RedirectResponse

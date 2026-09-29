@@ -6,13 +6,15 @@ namespace App\Http\Kontroler\Kelola\Grosir;
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Kontroler\Kelola\Persediaan\DasarPersediaanKontroler;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Bantuan bersama kontroler grosir (F-12, §9.7): dokumen lewat Uuid di dalam scope tenant dengan batas outlet pelaku
  * (dokumen di outlet di luar akses = 404), lokasi stok (dari `DasarPersediaanKontroler`, dipakai surat jalan), hari
- * bisnis, dan prop `Izin` (tipe FE `IzinGrosir`). Izin rute dijaga `WajibIzinTenant`; prop hanya untuk tampilan.
+ * bisnis, kepala surat dokumen cetak, dan prop `Izin` (tipe FE `IzinGrosir`). Izin rute dijaga `WajibIzinTenant`; prop
+ * hanya untuk tampilan.
  */
 abstract class DasarGrosirKontroler extends DasarPersediaanKontroler
 {
@@ -35,6 +37,19 @@ abstract class DasarGrosirKontroler extends DasarPersediaanKontroler
     protected function HariIni(): string
     {
         return app(TanggalBisnisOutlet::class)->Hitung(null)->format('Y-m-d');
+    }
+
+    /**
+     * Kepala surat dokumen cetak: nama usaha & NPWP saja, seperti cetak pesanan pembelian. Sengaja tidak mengirim
+     * seluruh `Pengaturan` tenant, yang isinya jauh lebih banyak daripada yang perlu tampil di kertas.
+     *
+     * @return array{Nama: string|null, Npwp: string|null}
+     */
+    protected function Usaha(ProfilTenant $profil): array
+    {
+        $usaha = $profil->Ambil($this->IdTenant());
+
+        return ['Nama' => $usaha['Nama'], 'Npwp' => $usaha['Npwp']];
     }
 
     /**

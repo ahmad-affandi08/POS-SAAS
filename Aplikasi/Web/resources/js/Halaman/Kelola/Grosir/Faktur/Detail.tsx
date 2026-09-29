@@ -66,8 +66,13 @@ export default function HalamanDetailFakturGrosir({
                 </Pemberitahuan>
             ) : null}
 
-            {Tindakan.Batalkan ? (
-                <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                    <a href={`${alamat}/${Faktur.Uuid}/cetak`} target="_blank" rel="noreferrer">
+                        Cetak faktur
+                    </a>
+                </Button>
+                {Tindakan.Batalkan ? (
                     <Button
                         variant="outline"
                         onClick={() => AturBatalkan(true)}
@@ -75,8 +80,8 @@ export default function HalamanDetailFakturGrosir({
                     >
                         Batalkan faktur
                     </Button>
-                </div>
-            ) : null}
+                ) : null}
+            </div>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Faktur.NamaPelanggan}</KeteranganGrosir>

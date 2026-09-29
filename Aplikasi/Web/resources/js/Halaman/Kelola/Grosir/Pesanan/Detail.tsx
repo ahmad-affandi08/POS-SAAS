@@ -138,6 +138,14 @@ export default function HalamanDetailPesananGrosir({
                         Kirim barang
                     </Button>
                 ) : null}
+                {/* Daftar ambil barang hanya berguna selama masih ada sisa yang belum dikirim. */}
+                {Tindakan.Kirim ? (
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                        <a href={`${alamat}/${Pesanan.Uuid}/ambil-barang`} target="_blank" rel="noreferrer">
+                            Cetak daftar ambil barang
+                        </a>
+                    </Button>
+                ) : null}
                 {Tindakan.Batalkan ? (
                     <Button
                         variant="outline"
