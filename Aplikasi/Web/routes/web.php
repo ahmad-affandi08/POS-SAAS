@@ -205,6 +205,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Promo.php'));
             // F-12 Piutang pelanggan & pelunasan.
             Route::group([], base_path('routes/Piutang.php'));
+            // Grosir (F-12, §9.7, D-32): pesanan grosir, surat jalan, faktur penjualan.
+            Route::group([], base_path('routes/Grosir.php'));
             // F-18 Karyawan, jadwal kerja, absensi.
             Route::group([], base_path('routes/Karyawan.php'));
             // F-07 mode service: reservasi layanan.

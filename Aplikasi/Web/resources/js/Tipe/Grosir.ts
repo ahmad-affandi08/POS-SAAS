@@ -1,0 +1,294 @@
+/*
+ * Tipe halaman back-office grosir (F-12, §9.7, D-32). Uang & jumlah selalu **string desimal** dari server, tidak
+ * pernah number: membacanya sebagai float di peramban akan menggeser angka Rupiah jutaan (CLAUDE.md #7).
+ */
+
+export type StatusPesananGrosir = 'Draf' | 'Dikonfirmasi' | 'SebagianDikirim' | 'Selesai' | 'Dibatalkan';
+
+export type StatusDokumenGrosir = 'Diposting' | 'Dibatalkan';
+
+export type IzinGrosir = {
+    Kelola: boolean;
+    SetujuiKredit: boolean;
+    LihatJurnal: boolean;
+    LihatPiutang: boolean;
+};
+
+export type Opsi = { Nilai: string; Label: string };
+
+export type OpsiOutletGrosir = { Uuid: string; Kode: string; Nama: string };
+
+export type OpsiGudangGrosir = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    Jenis: string;
+    NamaOutlet: string | null;
+    Aktif: boolean;
+};
+
+export type RiwayatGrosir = { StatusKe: string; Oleh: string | null; Pada: string; Alasan: string | null };
+
+export type JurnalGrosir = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    KunciSumber: string;
+    TotalDebit: string;
+    TotalKredit: string;
+};
+
+export type BarisDaftarPesananGrosir = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    TanggalKirimDiminta: string | null;
+    NamaPelanggan: string;
+    KodeOutlet: string;
+    Status: StatusPesananGrosir;
+    LabelStatus: string;
+    Total: string;
+    ButuhPersetujuan: boolean;
+};
+
+export type BarisDaftarSuratJalan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    NomorPesanan: string | null;
+    NomorFaktur: string | null;
+    NamaPelanggan: string;
+    KodeOutlet: string;
+    Status: StatusDokumenGrosir;
+    LabelStatus: string;
+    Total: string;
+    TotalHpp: string;
+};
+
+export type BarisDaftarFaktur = {
+    Uuid: string;
+    Nomor: string;
+    NomorFakturPajak: string | null;
+    Tanggal: string;
+    JatuhTempo: string;
+    PeriodePenyerahan: string;
+    NamaPelanggan: string;
+    KodeOutlet: string;
+    Status: StatusDokumenGrosir;
+    LabelStatus: string;
+    Total: string;
+    Sisa: string | null;
+    StatusPiutang: string | null;
+    LabelStatusPiutang: string | null;
+};
+
+export type Tabel<T> = {
+    Data: T[];
+    Meta: { Halaman: number; PerHalaman: number; Total: number; JumlahHalaman: number };
+};
+
+export type BarisDetailPesananGrosir = {
+    Urutan: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Jumlah: string;
+    JumlahTerkirim: string;
+    SisaKirim: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+};
+
+export type BarisDetailSuratJalan = {
+    Urutan: number;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Jumlah: string;
+    Harga: string;
+    Diskon: string;
+    Subtotal: string;
+    HppSatuan: string;
+    TotalHpp: string;
+};
+
+export type PropsDaftarPesananGrosir = {
+    Pesanan: Tabel<BarisDaftarPesananGrosir>;
+    OpsiStatus: Opsi[];
+    Izin: IzinGrosir;
+};
+
+export type PropsDaftarSuratJalan = {
+    SuratJalan: Tabel<BarisDaftarSuratJalan>;
+    OpsiStatus: Opsi[];
+    HariIni: string;
+    Izin: IzinGrosir;
+};
+
+export type PropsDaftarFaktur = {
+    Faktur: Tabel<BarisDaftarFaktur>;
+    OpsiStatus: Opsi[];
+    Izin: IzinGrosir;
+};
+
+export type PropsBuatFaktur = {
+    SuratJalan: Tabel<BarisDaftarSuratJalan>;
+    HariIni: string;
+    Izin: IzinGrosir;
+};
+
+export type IsianBarisFormGrosir = {
+    UuidProduk: string;
+    UuidProdukSatuan: string;
+    NamaProduk: string;
+    SimbolSatuan: string;
+    Jumlah: string;
+    Diskon: string;
+    Harga?: string;
+};
+
+export type IsianFormGrosir = {
+    Uuid: string;
+    Nomor: string;
+    UuidPelanggan: string | null;
+    NamaPelanggan: string;
+    UuidOutlet: string | null;
+    Tanggal: string;
+    TanggalKirimDiminta: string | null;
+    Catatan: string | null;
+    Baris: IsianBarisFormGrosir[];
+};
+
+export type PropsFormGrosir = {
+    Isian: IsianFormGrosir | null;
+    OpsiOutlet: OpsiOutletGrosir[];
+    OpsiGudang: OpsiGudangGrosir[];
+    HariIni: string;
+    Izin: IzinGrosir;
+};
+
+export type HasilCariProdukGrosir = {
+    Uuid: string;
+    Nama: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Satuan: { Uuid: string; Simbol: string; Nama: string; Konversi: string; DefaultJual: boolean }[];
+};
+
+export type PropsDetailPesananGrosir = {
+    Pesanan: {
+        Uuid: string;
+        Nomor: string;
+        NamaPelanggan: string;
+        UuidPelanggan: string | null;
+        KodeOutlet: string;
+        Tanggal: string;
+        TanggalKirimDiminta: string | null;
+        Status: StatusPesananGrosir;
+        LabelStatus: string;
+        TerminHari: number;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        Catatan: string | null;
+        AlasanPersetujuanKredit: string | null;
+        AlasanBatal: string | null;
+        BolehDiubah: boolean;
+        BolehDikirim: boolean;
+    };
+    Baris: BarisDetailPesananGrosir[];
+    SuratJalan: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        Total: string;
+        Difakturkan: boolean;
+    }[];
+    Riwayat: RiwayatGrosir[];
+    Izin: IzinGrosir;
+    OpsiGudang: OpsiGudangGrosir[];
+    HariIni: string;
+    Tindakan: { Ubah: boolean; Konfirmasi: boolean; Kirim: boolean; Batalkan: boolean };
+};
+
+export type PropsDetailSuratJalan = {
+    SuratJalan: {
+        Uuid: string;
+        Nomor: string;
+        NamaPelanggan: string;
+        UuidPelanggan: string | null;
+        KodeOutlet: string;
+        Tanggal: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        TotalHpp: string;
+        NamaPengirim: string | null;
+        NomorKendaraan: string | null;
+        NamaPenerima: string | null;
+        Catatan: string | null;
+        AlasanBatal: string | null;
+        NomorPesanan: string | null;
+        UuidPesanan: string | null;
+        NomorFaktur: string | null;
+        UuidFaktur: string | null;
+        BolehDibatalkan: boolean;
+    };
+    Baris: BarisDetailSuratJalan[];
+    Jurnal: JurnalGrosir[];
+    Riwayat: RiwayatGrosir[];
+    Izin: IzinGrosir;
+    Tindakan: { Batalkan: boolean };
+};
+
+export type PropsDetailFaktur = {
+    Faktur: {
+        Uuid: string;
+        Nomor: string;
+        NamaPelanggan: string;
+        UuidPelanggan: string | null;
+        KodeOutlet: string;
+        Tanggal: string;
+        JatuhTempo: string;
+        Status: StatusDokumenGrosir;
+        LabelStatus: string;
+        TerminHari: number;
+        PeriodePenyerahan: string;
+        NomorFakturPajak: string | null;
+        TarifPpn: string | null;
+        Subtotal: string;
+        Diskon: string;
+        DasarPengenaanPajak: string;
+        Pajak: string;
+        Total: string;
+        Catatan: string | null;
+        AlasanBatal: string | null;
+        SisaPiutang: string | null;
+        StatusPiutang: string | null;
+        LabelStatusPiutang: string | null;
+    };
+    SuratJalan: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Subtotal: string;
+        Diskon: string;
+        Pajak: string;
+        Total: string;
+    }[];
+    Jurnal: JurnalGrosir[];
+    Riwayat: RiwayatGrosir[];
+    Izin: IzinGrosir;
+    Tindakan: { Batalkan: boolean; UbahNomorPajak: boolean };
+};

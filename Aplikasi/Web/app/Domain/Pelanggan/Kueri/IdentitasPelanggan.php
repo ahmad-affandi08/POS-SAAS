@@ -41,6 +41,30 @@ final class IdentitasPelanggan
     }
 
     /** F-16d: pelanggan berstatus Aktif (bukan diarsipkan). */
+    /**
+     * Nama & Uuid pelanggan untuk daftar/detail dokumen domain lain (grosir F-12), supaya kueri domain itu tidak perlu
+     * membaca tabel `Pelanggan` sendiri.
+     *
+     * @param  array<mixed>  $id  nilai bukan int diabaikan
+     * @return array<int, array{Uuid: string, Nama: string}>
+     */
+    public function AmbilNamaBanyak(array $id): array
+    {
+        $id = array_values(array_unique(array_filter($id, 'is_int')));
+
+        if ($id === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (Pelanggan::query()->whereIn('Id', $id)->get(['Id', 'Uuid', 'Nama']) as $p) {
+            $hasil[$p->Id] = ['Uuid' => $p->Uuid, 'Nama' => $p->Nama];
+        }
+
+        return $hasil;
+    }
+
     public function CekAktif(int $id): bool
     {
         return Pelanggan::query()->whereKey($id)->where('Status', StatusPelanggan::Aktif->value)->exists();

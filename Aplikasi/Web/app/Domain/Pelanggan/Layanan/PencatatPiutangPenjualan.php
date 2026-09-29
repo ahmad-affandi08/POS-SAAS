@@ -109,6 +109,34 @@ final class PencatatPiutangPenjualan
         return Piutang::query()->where('IdFakturPenjualan', $idFakturPenjualan)->first()?->AmbilSisa();
     }
 
+    /**
+     * Sisa & status piutang beberapa faktur sekaligus, untuk daftar faktur grosir di back-office.
+     *
+     * @param  array<mixed>  $idFakturPenjualan  nilai bukan int diabaikan
+     * @return array<int, array{Sisa: string, Status: string, LabelStatus: string, JatuhTempo: string}>
+     */
+    public function AmbilPiutangBanyakFaktur(array $idFakturPenjualan): array
+    {
+        $id = array_values(array_unique(array_filter($idFakturPenjualan, 'is_int')));
+
+        if ($id === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (Piutang::query()->whereIn('IdFakturPenjualan', $id)->get() as $piutang) {
+            $hasil[(int) $piutang->IdFakturPenjualan] = [
+                'Sisa' => $piutang->AmbilSisa()->KeString(),
+                'Status' => $piutang->Status->value,
+                'LabelStatus' => $piutang->Status->AmbilLabel(),
+                'JatuhTempo' => $piutang->JatuhTempo->toDateString(),
+            ];
+        }
+
+        return $hasil;
+    }
+
     /** Sisa piutang penjualan (null = bukan penjualan tempo). */
     public function AmbilSisa(int $idPenjualan): ?Uang
     {
