@@ -55,14 +55,14 @@ it('kunci sandbox dipakai di mode produksi ditolak sebelum menghubungi Midtrans'
     Http::assertNothingSent();
 });
 
-it('kunci produksi dipakai di mode sandbox juga ditolak lebih dulu', function (): void {
-    Http::fake();
+it('kunci sandbox format baru berawalan Mid-server- diterima jika diizinkan endpoint sandbox', function (): void {
+    Http::fake(['api.sandbox.midtrans.com/*' => Http::response(['status_code' => '404', 'status_message' => "Transaction doesn't exist."], 404)]);
 
     $hasil = (new PengujiMidtransBilling)->Uji(['Mode' => 'Sandbox'], ['KunciServer' => KUNCI_PRODUKSI]);
 
-    expect($hasil->berhasil)->toBeFalse()
-        ->and($hasil->pesan)->toContain('bukan kunci Sandbox');
-    Http::assertNothingSent();
+    expect($hasil->berhasil)->toBeTrue()
+        ->and($hasil->pesan)->toContain('Sandbox');
+    Http::assertSent(fn ($permintaan): bool => str_starts_with($permintaan->url(), PengujiMidtransBilling::URL_SANDBOX));
 });
 
 it('server key kosong ditolak tanpa permintaan jaringan', function (): void {

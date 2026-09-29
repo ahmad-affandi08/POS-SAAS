@@ -38,16 +38,13 @@ final class PengujiMidtransBilling implements PengujiKoneksi
         $produksi = ($pengaturan['Mode'] ?? 'Sandbox') === 'Produksi';
         $dasar = $produksi ? self::URL_PRODUKSI : self::URL_SANDBOX;
 
-        // Server key sandbox diawali SB-Mid-server-; memakainya di mode Produksi (atau sebaliknya) selalu 401,
-        // dan pesan "kunci ditolak" saja akan menyesatkan.
-        $kunciSandbox = str_starts_with($kunci, 'SB-Mid-server-');
+        // Kunci dengan awalan SB-Mid-server- sudah pasti milik Sandbox; memakainya di mode Produksi selalu 401.
+        // Sebaliknya, akun Sandbox versi baru Midtrans juga bisa memakai awalan Mid-server- (tanpa SB-),
+        // sehingga keabsahan kunci di mode Sandbox diserahkan langsung ke API Midtrans.
+        $kunciPastiSandbox = str_starts_with($kunci, 'SB-Mid-server-');
 
-        if ($produksi && $kunciSandbox) {
+        if ($produksi && $kunciPastiSandbox) {
             return HasilUjiKoneksi::Gagal('Mode Produksi dipilih, tetapi server key-nya kunci Sandbox (diawali SB-Mid-server-).');
-        }
-
-        if (! $produksi && ! $kunciSandbox) {
-            return HasilUjiKoneksi::Gagal('Mode Sandbox dipilih, tetapi server key-nya bukan kunci Sandbox. Ambil kunci Sandbox di dasbor Midtrans.');
         }
 
         try {
