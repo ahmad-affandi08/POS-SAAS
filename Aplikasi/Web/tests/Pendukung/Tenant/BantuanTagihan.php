@@ -31,12 +31,11 @@ final class BantuanTagihan
             DB::table('TarifPajak')->update(['Status' => StatusDataMaster::Terbit->value, 'BerlakuMulai' => '2025-01-01']);
         }
 
-        config()->set('tagihan.RekeningTujuan', [[
-            'Kode' => 'UTAMA',
-            'NamaBank' => 'Bank Central Asia',
-            'NomorRekening' => '1234567890',
-            'AtasNama' => 'PT Kasir Nusantara Digital',
-        ]]);
+        config()->set('integrasi.GerbangBilling', [
+            'Penyedia' => 'MidtransBilling',
+            'Pengaturan' => ['Mode' => 'Sandbox', 'KunciKlien' => 'SB-Mid-client-uji'],
+            'Kredensial' => ['KunciServer' => 'SB-Mid-server-kunci-billing-uji'],
+        ]);
     }
 
     /**

@@ -16,7 +16,6 @@ use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Enum\StatusPaket;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Kueri\HargaPaketBerlaku;
-use App\Domain\Tenant\Kueri\RekeningTujuanPlatform;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
 use App\Domain\Tenant\Layanan\KalkulatorTagihanLangganan;
 use App\Domain\Tenant\Layanan\PenghitungPeriodeLangganan;
@@ -30,13 +29,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Owner membuat tagihan langganan untuk upgrade dari Trial/Gratis, aktivasi ulang, atau perpanjangan (P-08, F-19
- * Fase 0: tagihan manual, Fase 1: gerbang billing). Dalam satu transaksi dengan kunci `Langganan` tenant:
- * - hanya satu tagihan terbuka per tenant (klik ganda / dua tab tidak membuat tagihan ganda);
- * - harga dari `HargaPaketBerlaku` (grandfathering BR-P04.1), PPN dari `TarifPajak` Ppn terbit (tanpa hard-code);
- * - kupon dicatat di `KuponLanggananPemakaian` dengan kunci baris kupon agar kuota tidak terlampaui (BR-P04.7);
- * - nomor tagihan urut tanpa celah (BR-P08.1).
- * Ganti paket saat langganan Aktif butuh proration (F-19) dan ditunda: Owner diminta memperpanjang paket berjalan.
+ * Owner membuat tagihan langganan untuk upgrade dari Trial/Gratis, aktivasi ulang, atau perpanjangan.
+ * Pembayaran langganan platform diproses melalui gerbang pembayaran online.
  */
 final class BuatTagihanLangganan
 {
@@ -44,7 +38,6 @@ final class BuatTagihanLangganan
         private readonly KonteksTenant $konteks,
         private readonly HargaPaketBerlaku $hargaBerlaku,
         private readonly TarifPajakBerlaku $tarifBerlaku,
-        private readonly RekeningTujuanPlatform $rekening,
         private readonly GerbangBillingPlatform $gerbang,
         private readonly KalkulatorTagihanLangganan $kalkulator,
         private readonly PenomorTagihanLangganan $penomor,
@@ -89,11 +82,8 @@ final class BuatTagihanLangganan
                 throw new PelanggaranAturanBisnis('PaketTanpaBiaya', "Paket {$paket->Nama} tidak memerlukan tagihan.", 'KodePaket');
             }
 
-            $adaRekening = $this->rekening->Ambil() !== [];
-            $adaGerbang = $this->gerbang->CekAktif();
-
-            if (! $adaRekening && ! $adaGerbang) {
-                throw new PelanggaranAturanBisnis('RekeningBelumDiatur', 'Pembayaran transfer belum dibuka karena rekening tujuan belum diatur. Hubungi tim kami.');
+            if (! $this->gerbang->CekAktif()) {
+                throw new PelanggaranAturanBisnis('GerbangBelumAktif', 'Pembayaran tagihan belum dibuka karena gerbang pembayaran online belum diaktifkan. Hubungi tim kami.');
             }
 
             $tarif = null;

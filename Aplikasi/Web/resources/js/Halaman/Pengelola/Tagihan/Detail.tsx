@@ -36,7 +36,7 @@ export default function HalamanDetailTagihan({ Tagihan, Pembayaran }: PropsDetai
                     Pembayaran
                 </h2>
                 {Pembayaran.length === 0 ? (
-                    <p className="text-isi text-teks-sekunder">Tenant belum mengunggah bukti transfer.</p>
+                    <p className="text-isi text-teks-sekunder">Belum ada pembayaran.</p>
                 ) : (
                     Pembayaran.map((baris) => (
                         <KartuPembayaran
@@ -66,40 +66,50 @@ function KartuPembayaran({
             <Card className="gap-3 px-4 py-4 rounded-panel shadow-none">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <LabelStatus jenis={JenisLabelPembayaran(pembayaran.Status)} teks={pembayaran.LabelStatus} />
-                    <a
-                        href={`/tagihan/pembayaran/${pembayaran.Uuid}/bukti`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-label font-semibold underline"
-                    >
-                        Buka bukti transfer
-                    </a>
+                    {pembayaran.Metode === 'TransferManual' && (
+                        <a
+                            href={`/tagihan/pembayaran/${pembayaran.Uuid}/bukti`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-label font-semibold underline"
+                        >
+                            Buka bukti transfer
+                        </a>
+                    )}
                 </div>
                 <dl className="grid gap-x-6 gap-y-2 text-isi sm:grid-cols-3">
                     <div>
-                        <dt className="text-keterangan text-teks-sekunder">Jumlah menurut tenant</dt>
+                        <dt className="text-keterangan text-teks-sekunder">Jumlah</dt>
                         <dd className="tabular-nums">{FormatRupiah(pembayaran.Jumlah)}</dd>
                     </div>
                     <div>
-                        <dt className="text-keterangan text-teks-sekunder">Tanggal transfer</dt>
-                        <dd>{FormatTanggal(pembayaran.TanggalTransfer)}</dd>
+                        <dt className="text-keterangan text-teks-sekunder">Cara bayar</dt>
+                        <dd>{pembayaran.LabelMetode}</dd>
                     </div>
                     <div>
-                        <dt className="text-keterangan text-teks-sekunder">Diunggah</dt>
+                        <dt className="text-keterangan text-teks-sekunder">Waktu</dt>
                         <dd>{FormatTanggalWaktu(pembayaran.DiunggahPada)}</dd>
                     </div>
-                    <div>
-                        <dt className="text-keterangan text-teks-sekunder">Pengirim</dt>
-                        <dd>
-                            {pembayaran.BankPengirim} · {pembayaran.NamaPengirim}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className="text-keterangan text-teks-sekunder">Rekening tujuan</dt>
-                        <dd>
-                            {pembayaran.BankTujuan} <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
-                        </dd>
-                    </div>
+                    {pembayaran.Metode === 'TransferManual' ? (
+                        <>
+                            <div>
+                                <dt className="text-keterangan text-teks-sekunder">Tanggal transfer</dt>
+                                <dd>{FormatTanggal(pembayaran.TanggalTransfer)}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-keterangan text-teks-sekunder">Pengirim</dt>
+                                <dd>
+                                    {pembayaran.BankPengirim} · {pembayaran.NamaPengirim}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-keterangan text-teks-sekunder">Rekening tujuan</dt>
+                                <dd>
+                                    {pembayaran.BankTujuan} <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
+                                </dd>
+                            </div>
+                        </>
+                    ) : null}
                     {pembayaran.DiverifikasiPada ? (
                         <div>
                             <dt className="text-keterangan text-teks-sekunder">Diverifikasi</dt>
@@ -115,7 +125,7 @@ function KartuPembayaran({
                         </div>
                     ) : null}
                 </dl>
-                {pembayaran.Status === 'Menunggu' && bolehVerifikasi ? (
+                {pembayaran.Metode === 'TransferManual' && pembayaran.Status === 'Menunggu' && bolehVerifikasi ? (
                     <div className="grid gap-4 border-t border-garis pt-3 lg:grid-cols-2">
                         <FormTerima uuid={pembayaran.Uuid} total={total} />
                         <FormTolak uuid={pembayaran.Uuid} />

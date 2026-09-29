@@ -136,19 +136,17 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::put('/tindakan/ringkasan-email', [TindakanKontroler::class, 'UbahRingkasanEmail'])->middleware(SiapkanAuditTenant::class)->name('kelola.tindakan.ringkasan-email');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
-                // P-08 Langganan & tagihan (transfer manual + bukti). Izin `langganan.kelola` khusus Pemilik (§19.1).
+                // Langganan & tagihan (pembayaran online via gerbang billing). Izin `langganan.kelola` khusus Pemilik (§19.1).
                 Route::middleware($izin(IzinTenant::LanggananKelola))->group(function (): void {
                     Route::get('/langganan', [LanggananKontroler::class, 'Tampilkan'])->name('kelola.langganan.tampil');
                     Route::post('/langganan/tagihan', [LanggananKontroler::class, 'BuatTagihan'])->name('kelola.langganan.tagihan.buat');
                     // D-23: minta add-on dari dialog fitur terkunci (menjadi tiket dukungan).
                     Route::post('/langganan/addon', [LanggananKontroler::class, 'MintaAddon'])->middleware('throttle:10,1')->name('kelola.langganan.addon.minta');
                     Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
-                    Route::post('/langganan/tagihan/{tagihan}/pembayaran', [LanggananKontroler::class, 'UnggahBukti'])->name('kelola.langganan.tagihan.pembayaran.buat');
                     // BR-P08.11: buat transaksi Snap di gerbang billing platform. Dibatasi laju karena setiap klik
                     // membuat satu transaksi di Midtrans.
                     Route::post('/langganan/tagihan/{tagihan}/bayar-online', [LanggananKontroler::class, 'BayarOnline'])->middleware('throttle:10,1')->name('kelola.langganan.tagihan.bayar-online');
                     Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');
-                    Route::get('/langganan/pembayaran/{pembayaran}/bukti', [LanggananKontroler::class, 'LihatBukti'])->name('kelola.langganan.pembayaran.bukti');
                 });
 
                 // Auth tenant: keamanan akun (2FA) dan persetujuan ulang dokumen legal (BR-00.8, BR-P06.5).

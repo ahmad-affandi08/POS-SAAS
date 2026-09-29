@@ -41,31 +41,6 @@ function BuatTagihanUji(TestCase $tes, Pengguna $pengguna, Tenant $tenant, strin
     return TagihanLangganan::query()->withoutGlobalScopes()->where('IdTenant', $tenant->Id)->latest('Id')->firstOrFail();
 }
 
-/**
- * @param  array<string, mixed>  $ubah
- * @return array<string, mixed>
- */
-function IsianBuktiUji(string $jumlah, array $ubah = []): array
-{
-    return [
-        'Bukti' => UploadedFile::fake()->image('bukti transfer.jpg', 600, 900),
-        'Jumlah' => $jumlah,
-        'TanggalTransfer' => '2026-09-23',
-        'BankPengirim' => 'Bank Rakyat Indonesia',
-        'NamaPengirim' => 'Rina Wulandari',
-        'KodeRekeningTujuan' => 'UTAMA',
-        ...$ubah,
-    ];
-}
-
-/** UploadedFile dari berkas sungguhan sehingga MIME dibaca dari isi berkas, bukan dari nama. */
-function BerkasAsliUji(string $nama, string $isi): UploadedFile
-{
-    $path = tempnam(sys_get_temp_dir(), 'bukti');
-    file_put_contents($path, $isi);
-
-    return new UploadedFile($path, $nama, null, null, true);
-}
 
 function BuatKuponUji(string $kode, string $jenis, string $nilai, int $durasi, ?int $kuota = null, ?array $paket = null, ?string $berlakuSampai = null): KuponLangganan
 {
@@ -120,25 +95,21 @@ describe('Halaman langganan Owner (P-08, F-19 Fase 0)', function (): void {
 });
 
 describe('Log audit tenant langganan (§25 no. 17)', function (): void {
-    it('membuat tagihan, membatalkan, dan mengunggah bukti transfer tercatat dengan pelaku & IP', function (): void {
+    it('membuat tagihan dan membatalkan tercatat dengan pelaku & IP', function (): void {
         $pertama = BuatTagihanUji($this, $this->pemilik, $this->tenant);
         $this->post("/kelola/langganan/tagihan/{$pertama->Uuid}/batalkan", ['Alasan' => 'Salah pilih siklus'])->assertSessionHasNoErrors();
-        $kedua = BuatTagihanUji($this, $this->pemilik, $this->tenant, siklus: 'Tahunan');
-        $this->post("/kelola/langganan/tagihan/{$kedua->Uuid}/pembayaran", IsianBuktiUji($kedua->Total))->assertSessionHasNoErrors();
 
         $log = LogAudit::query()->withoutGlobalScopes()->where('IdTenant', $this->tenant->Id)
             ->where('Peristiwa', 'like', 'langganan.%')->orderBy('Id')->get();
 
         expect($log->pluck('Peristiwa')->all())->toBe([
-            'langganan.tagihan-buat', 'langganan.tagihan-batal', 'langganan.tagihan-buat', 'langganan.bukti-transfer-unggah',
+            'langganan.tagihan-buat', 'langganan.tagihan-batal',
         ])
             ->and($log->every(fn (LogAudit $baris) => $baris->IdPengguna === $this->pemilik->Id && $baris->Ip === '127.0.0.1'))->toBeTrue()
             ->and($log[0]->JenisObjek)->toBe('TagihanLangganan')
             ->and($log[0]->NilaiBaru)->toMatchArray(['Nomor' => $pertama->Nomor, 'Paket' => 'PRO', 'Siklus' => 'Bulanan', 'Total' => $pertama->Total])
             ->and($log[1]->NilaiLama)->toBe(['Status' => 'Terbit'])
-            ->and($log[1]->NilaiBaru)->toMatchArray(['Status' => 'Dibatalkan', 'Alasan' => 'Salah pilih siklus'])
-            ->and($log[3]->JenisObjek)->toBe('PembayaranLangganan')
-            ->and($log[3]->NilaiBaru)->toMatchArray(['NomorTagihan' => $kedua->Nomor, 'Jumlah' => $kedua->Total]);
+            ->and($log[1]->NilaiBaru)->toMatchArray(['Status' => 'Dibatalkan', 'Alasan' => 'Salah pilih siklus']);
     });
 });
 
@@ -167,8 +138,7 @@ describe('Membuat tagihan (BR-P08.1, BR-P04.1, BR-P04.7, §12.2)', function (): 
                 ->component('Kelola/Langganan/Tagihan')
                 ->where('Tagihan.Nomor', 'INV/2026/09/000001')
                 ->where('Tagihan.Total', '220889.00')
-                ->where('RekeningTujuan.0.NomorRekening', '1234567890')
-                ->where('BolehUnggah', true));
+                ->where('BolehBayarOnline', true));
     });
 
     it('tagihan tahunan dengan kupon 50% selama 3 bulan: diskon 3/12 bagian, pemakaian kupon tercatat', function (): void {
@@ -245,8 +215,8 @@ describe('Membuat tagihan (BR-P08.1, BR-P04.1, BR-P04.7, §12.2)', function (): 
             ->and($tagihan->Nomor)->toBe('INV/2026/09/000001');
     });
 
-    it('menolak bila rekening tujuan platform belum diatur', function (): void {
-        config()->set('tagihan.RekeningTujuan', [['Kode' => 'UTAMA', 'NamaBank' => '', 'NomorRekening' => '', 'AtasNama' => '']]);
+    it('menolak bila gerbang pembayaran platform belum aktif', function (): void {
+        config()->set('integrasi.GerbangBilling', null);
 
         BantuanTagihan::Masuk($this, $this->pemilik, $this->tenant)
             ->post('/kelola/langganan/tagihan', ['KodePaket' => 'PRO', 'Siklus' => 'Bulanan'])
@@ -320,70 +290,13 @@ describe('Kupon langganan (BR-P04.7)', function (): void {
     });
 });
 
-describe('Unggah bukti transfer (P-08 langkah 3)', function (): void {
-    it('bukti tersimpan privat dengan nama acak, pembayaran Menunggu, dan tidak bisa diunggah dua kali', function (): void {
-        $tagihan = BuatTagihanUji($this, $this->pemilik, $this->tenant);
-
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran", IsianBuktiUji('220889'))->assertSessionHasNoErrors();
-
-        $pembayaran = PembayaranLangganan::query()->withoutGlobalScopes()->sole();
-        expect($pembayaran->Status)->toBe(StatusPembayaranLangganan::Menunggu)
-            ->and($pembayaran->IdTenant)->toBe($this->tenant->Id)
-            ->and($pembayaran->Jumlah)->toBe('220889.00')
-            ->and($pembayaran->BankTujuan)->toBe('Bank Central Asia')
-            ->and($pembayaran->NomorRekeningTujuan)->toBe('1234567890')
-            ->and($pembayaran->EmailPemberitahuan)->toBe('rina@kopinusantara.id')
-            ->and($pembayaran->PathBukti)->toStartWith("tagihan-langganan/bukti/{$this->tenant->Id}/")
-            ->and($pembayaran->PathBukti)->not->toContain('bukti transfer');
-        Storage::disk('local')->assertExists((string) $pembayaran->PathBukti);
-
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran", IsianBuktiUji('220889'))
-            ->assertSessionHasErrors(['Umum' => 'Bukti transfer tagihan ini sedang diverifikasi. Tunggu hasilnya sebelum mengunggah lagi.']);
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/batalkan")->assertSessionHasErrors('Umum');
-
-        expect(PembayaranLangganan::query()->withoutGlobalScopes()->count())->toBe(1)
-            ->and(Storage::disk('local')->allFiles())->toHaveCount(1);
-
-        $this->get("/kelola/langganan/pembayaran/{$pembayaran->Uuid}/bukti")
-            ->assertOk()
-            ->assertHeader('X-Content-Type-Options', 'nosniff');
-    });
-
-    it('menolak jumlah berbeda dari total, jenis berkas palsu, berkas terlalu besar, dan tanggal di masa depan', function (array $ubah, string $bidang): void {
-        $tagihan = BuatTagihanUji($this, $this->pemilik, $this->tenant);
-
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran", IsianBuktiUji('220889', $ubah))->assertSessionHasErrors($bidang);
-
-        expect(PembayaranLangganan::query()->withoutGlobalScopes()->count())->toBe(0)
-            ->and(Storage::disk('local')->allFiles())->toBe([]);
-    })->with([
-        'kurang bayar' => [['Jumlah' => '220000'], 'Jumlah'],
-        // Berkas asli (bukan tiruan) agar jenisnya diperiksa dari isi: skrip PHP bernama .png ditolak.
-        'bukan gambar' => [['Bukti' => BerkasAsliUji('bukti.png', '<?php echo 1;')], 'Bukti'],
-        'terlalu besar' => [['Bukti' => UploadedFile::fake()->create('bukti.pdf', 6000, 'application/pdf')], 'Bukti'],
-        'masa depan' => [['TanggalTransfer' => '2026-09-24'], 'TanggalTransfer'],
-        'rekening asing' => [['KodeRekeningTujuan' => 'LAIN'], 'KodeRekeningTujuan'],
-    ]);
-
-    it('PDF diterima', function (): void {
-        $tagihan = BuatTagihanUji($this, $this->pemilik, $this->tenant);
-        $pdf = UploadedFile::fake()->createWithContent('bukti.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
-
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran", IsianBuktiUji('220889', ['Bukti' => $pdf]))->assertSessionHasNoErrors();
-        expect(PembayaranLangganan::query()->withoutGlobalScopes()->sole()->MimeBukti)->toBe('application/pdf');
-    });
-});
-
 describe('Isolasi tenant (CLAUDE.md #11)', function (): void {
-    it('tenant lain tidak bisa melihat tagihan, membuka bukti, mengunggah, atau membatalkan tagihan milik tenant A', function (): void {
+    it('tenant lain tidak bisa melihat atau membatalkan tagihan milik tenant A', function (): void {
         $tagihanA = BuatTagihanUji($this, $this->pemilik, $this->tenant);
-        $this->post("/kelola/langganan/tagihan/{$tagihanA->Uuid}/pembayaran", IsianBuktiUji('220889'));
-        $pembayaranA = PembayaranLangganan::query()->withoutGlobalScopes()->sole();
         ['Tenant' => $tenantB, 'Pengguna' => $pemilikB] = BantuanTagihan::DaftarTenant('budi@tokobudi.id', '081298765432', 'Toko Budi');
 
         BantuanTagihan::Masuk($this, $pemilikB, $tenantB);
         $this->get("/kelola/langganan/tagihan/{$tagihanA->Uuid}")->assertNotFound();
-        $this->get("/kelola/langganan/pembayaran/{$pembayaranA->Uuid}/bukti")->assertNotFound();
         $this->post("/kelola/langganan/tagihan/{$tagihanA->Uuid}/batalkan")->assertSessionHasErrors(['Umum' => 'Tagihan tidak ditemukan.']);
         $this->get('/kelola/langganan')->assertInertia(fn (AssertableInertia $halaman) => $halaman->has('Tagihan', 0));
 

@@ -15,30 +15,23 @@ use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Aksi\BatalkanTagihanLangganan;
 use App\Domain\Tenant\Aksi\BuatTagihanLangganan;
 use App\Domain\Tenant\Aksi\MulaiPembayaranGerbangLangganan;
-use App\Domain\Tenant\Aksi\UnggahBuktiTransfer;
-use App\Domain\Tenant\Enum\MetodePembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
-use App\Domain\Tenant\Kueri\RekeningTujuanPlatform;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Permintaan\Kelola\Langganan\BatalkanTagihanLanggananPermintaan;
 use App\Http\Permintaan\Kelola\Langganan\BuatTagihanLanggananPermintaan;
-use App\Http\Permintaan\Kelola\Langganan\UnggahBuktiTransferPermintaan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Langganan & tagihan di back-office tenant (P-08/F-19 Fase 0): lihat paket & status, buat tagihan, transfer
- * manual dengan unggah bukti, lihat status verifikasi. Rute dijaga `WajibIzinTenant` dengan izin `langganan.kelola`
- * (khusus Pemilik, §19.1).
+ * Langganan & tagihan di back-office tenant: lihat paket & status, buat tagihan,
+ * bayar online via gerbang billing. Rute dijaga `WajibIzinTenant` dengan izin `langganan.kelola`.
  */
 final class LanggananKontroler extends Kontroler
 {
@@ -66,35 +59,25 @@ final class LanggananKontroler extends Kontroler
         );
 
         return redirect()->route('kelola.langganan.tagihan.tampil', ['tagihan' => $tagihan->Uuid])
-            ->with('Kilat', "Tagihan {$tagihan->Nomor} dibuat. Transfer sesuai total, lalu unggah buktinya di halaman ini.");
+            ->with('Kilat', "Tagihan {$tagihan->Nomor} dibuat. Silakan selesaikan pembayaran online.");
     }
 
-    public function TampilkanTagihan(string $tagihan, RekeningTujuanPlatform $rekening, GerbangBillingPlatform $gerbang): Response
+    public function TampilkanTagihan(string $tagihan, GerbangBillingPlatform $gerbang): Response
     {
         $data = $this->kueri->CariTagihan($tagihan);
         abort_if($data === null, 404);
         $pembayaran = $data->Pembayaran->sortByDesc('Id')->values();
-        // Hanya bukti transfer yang sedang diverifikasi menutup kedua jalur bayar (BR-P08.8 "satu bukti Menunggu per
-        // tagihan"). Percobaan bayar online yang ditinggalkan tidak boleh ikut mengunci, karena tenant tidak punya
-        // cara menutupnya sendiri dan akan terjebak sampai transaksinya kedaluwarsa di gerbang (BR-P08.11).
-        $adaBuktiManual = $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Metode === MetodePembayaranLangganan::TransferManual
-            && $baris->Status === StatusPembayaranLangganan::Menunggu);
-        // Pembatalan tetap diblokir pembayaran `Menunggu` apa pun, termasuk percobaan bayar online: kalau tidak,
-        // tagihan bisa dibatalkan tepat saat uangnya sedang masuk (`BatalkanTagihanLangganan` menolaknya juga).
+        // Pembatalan tetap diblokir pembayaran `Menunggu` apa pun, termasuk transaksi gerbang yang sedang berjalan:
+        // kalau tidak, tagihan bisa dibatalkan tepat saat uangnya sedang masuk.
         $adaPembayaranMenunggu = $pembayaran->contains(fn (PembayaranLangganan $baris): bool => $baris->Status === StatusPembayaranLangganan::Menunggu);
         $terbuka = $data->Status->CekTerbuka();
-
-        $daftarRekening = $rekening->Ambil();
 
         return Inertia::render('Kelola/Langganan/Tagihan', [
             'Tagihan' => TagihanLanggananTenant::PetakanTagihan($data),
             'Pembayaran' => array_values($pembayaran->map(fn (PembayaranLangganan $baris): array => TagihanLanggananTenant::PetakanPembayaran($baris))->all()),
-            'RekeningTujuan' => $daftarRekening,
-            'BolehUnggah' => $terbuka && ! $adaBuktiManual && count($daftarRekening) > 0,
-            'BolehBayarOnline' => $terbuka && ! $adaBuktiManual && $gerbang->CekAktif(),
+            'BolehBayarOnline' => $terbuka && $gerbang->CekAktif(),
             'BolehBatalkan' => $terbuka && ! $adaPembayaranMenunggu,
             'Gerbang' => $gerbang->CekAktif() ? ['KunciKlien' => $gerbang->KunciKlien(), 'UrlSnapJs' => $gerbang->UrlSnapJs()] : null,
-            'UkuranBuktiMaksimalKb' => (int) config('tagihan.UkuranBuktiMaksimalKb'),
         ]);
     }
 
@@ -111,33 +94,11 @@ final class LanggananKontroler extends Kontroler
         return response()->json(['Token' => $hasil->token, 'UrlRedirect' => $hasil->urlRedirect]);
     }
 
-    public function UnggahBukti(string $tagihan, UnggahBuktiTransferPermintaan $permintaan, UnggahBuktiTransfer $unggah): RedirectResponse
-    {
-        $pengguna = $this->PenggunaMasuk();
-        $unggah->Jalankan($tagihan, $permintaan->AmbilData(), $pengguna->Id, $pengguna->Nama, (string) $pengguna->Email);
-
-        return back()->with('Kilat', 'Bukti transfer terkirim. Kami memverifikasinya pada hari kerja dan mengabari Anda lewat email.');
-    }
-
     public function Batalkan(string $tagihan, BatalkanTagihanLanggananPermintaan $permintaan, BatalkanTagihanLangganan $batalkan): RedirectResponse
     {
         $hasil = $batalkan->Jalankan($tagihan, $permintaan->AmbilAlasan());
 
         return redirect()->route('kelola.langganan.tampil')->with('Kilat', "Tagihan {$hasil->Nomor} dibatalkan.");
-    }
-
-    /** Bukti disajikan dari disk privat hanya ke pemegang `langganan.kelola` tenant pemiliknya (lingkup MilikTenant). */
-    public function LihatBukti(string $pembayaran): StreamedResponse
-    {
-        $data = $this->kueri->CariPembayaran($pembayaran);
-        $disk = Storage::disk((string) config('tagihan.DiskBukti'));
-        abort_if($data === null || $data->PathBukti === null || ! $disk->exists($data->PathBukti), 404);
-
-        return $disk->response($data->PathBukti, 'bukti-transfer.'.pathinfo($data->PathBukti, PATHINFO_EXTENSION), [
-            'Content-Type' => $data->MimeBukti ?? 'application/octet-stream',
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
     }
 
     /**
