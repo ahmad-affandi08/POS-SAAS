@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-pdi5PUOa.js";import{t}from"./LabelStatus-NftQPDg2.js";import{t as n}from"./FormatPersediaan-D_llveu_.js";var r=e();function i({status:e,label:i}){return(0,r.jsx)(t,{jenis:n(e),teks:i})}export{i as t};

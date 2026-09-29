@@ -15,6 +15,7 @@ import {
 } from '@/Komponen/Ui/pagination';
 import { Sheet, SheetContent, SheetTitle } from '@/Komponen/Ui/sheet';
 import { Spinner } from '@/Komponen/Ui/spinner';
+import { Switch } from '@/Komponen/Ui/switch';
 
 /*
  * Semua komponen shadcn/ui terpasang (Komponen/Ui) belum dipakai halaman mana pun, sehingga `vite build`
@@ -30,6 +31,24 @@ describe('komponen shadcn/ui', () => {
         for (const [path, modul] of daftar) {
             expect(Object.keys(modul).length, `${path} tidak mengekspor apa pun`).toBeGreaterThan(0);
         }
+    });
+
+    it('sakelar (Switch) menampilkan teks ON saat aktif dan OFF saat tidak aktif', () => {
+        const { rerender } = render(<Switch checked={true} aria-label="Saklar aktif" />);
+        const teksOn = screen.getByText('ON');
+        const teksOff = screen.getByText('OFF');
+
+        expect(teksOn).toBeTruthy();
+        expect(teksOff).toBeTruthy();
+        expect(teksOn.className).toContain('text-permukaan');
+        expect(teksOn.className).toContain('font-bold');
+        expect(teksOff.className).toContain('text-permukaan');
+        expect(teksOff.className).toContain('font-bold');
+        expect(teksOn.className).toContain('left-0.5');
+        expect(teksOff.className).toContain('right-0.5');
+
+        rerender(<Switch checked={false} aria-label="Saklar nonaktif" />);
+        expect(screen.getByRole('switch', { name: 'Saklar nonaktif' })).toBeTruthy();
     });
 
     it('tombol, lencana, dan kartu memakai utilitas token tema', () => {
