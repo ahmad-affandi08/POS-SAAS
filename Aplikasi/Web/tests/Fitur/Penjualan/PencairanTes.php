@@ -235,6 +235,10 @@ describe('BR-08.4 pencairan dana non-tunai', function (): void {
 
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [], '1000.00'), $k['Pemilik']->Id))
             ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('minimal satu pembayaran'));
+
+        // Setoran bertanggal besok belum terjadi.
+        expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, $uuid, '1000.00', '2026-09-30'), $k['Pemilik']->Id))
+            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('masa depan'));
     });
 
     it('pembayaran dari penjualan yang di-void ditolak karena jurnalnya sudah dibalik', function (): void {
@@ -299,6 +303,88 @@ describe('BR-08.4 pencairan dana non-tunai', function (): void {
         expect($pencairan->JumlahKotor)->toBe('150000.00')
             ->and(SaldoPeranPencairanUji(PeranAkun::PiutangPencairan, $k['Outlet']->Id))->toBe('0.00')
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+});
+
+describe('BR-08.4 pengingat & rekap potongan', function (): void {
+    it('butir Kotak Tindakan muncul hanya setelah lewat batas wajar menunggu, dan hilang setelah dicairkan', function (): void {
+        ['K' => $k, 'Metode' => $qris, 'Bank' => $bank] = SiapkanPencairanUji($this);
+        $tindakan = function () use ($k): ?array {
+            $butir = null;
+            $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id])
+                ->get('/kelola/tindakan')->assertOk()->assertInertia(function (AssertableInertia $h) use (&$butir) {
+                    foreach ($h->toArray()['props']['Butir'] as $b) {
+                        if ($b['Kunci'] === 'pencairan.belum-cair') {
+                            $butir = $b;
+                        }
+                    }
+
+                    return $h;
+                });
+
+            return $butir;
+        };
+
+        // Transaksinya hari ini (28 Sep): QRIS wajar menunggu 3 hari, jadi belum ada apa-apa untuk diperingatkan.
+        expect($tindakan())->toBeNull();
+
+        // Tiga hari kemudian uangnya masih belum masuk rekening.
+        Carbon::setTestNow('2026-10-01 04:00:00');
+        $butir = $tindakan();
+        expect($butir)->not->toBeNull()
+            ->and($butir['Tingkat'])->toBe('Penting')
+            ->and($butir['Jumlah'])->toBe(1)
+            // Butir pengingat: tidak ada dokumen yang ditandai "sudah dicek", selesai sendiri saat dicairkan.
+            ->and($butir['BolehTandai'])->toBeFalse()
+            ->and($butir['Rincian'][0]['Judul'])->toBe('QRIS Statis')
+            ->and($butir['Rincian'][0]['Keterangan'])->toContain('2 pembayaran')
+            ->and($butir['Rincian'][0]['Keterangan'])->toContain('wajar sampai 3 hari');
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        app(BuatPencairan::class)->Jalankan(
+            DataPencairanUji($k, $qris, $bank, UuidPembayaranUji($qris), '148950.00', '2026-10-01'),
+            $k['Pemilik']->Id,
+        );
+
+        expect($tindakan())->toBeNull();
+    });
+
+    it('rekap potongan per metode ikut saringan tabel dan hanya menghitung yang diposting', function (): void {
+        ['K' => $k, 'Metode' => $qris, 'Bank' => $bank] = SiapkanPencairanUji($this);
+        $uuid = UuidPembayaranUji($qris);
+        $pemilik = fn () => $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id]);
+
+        // Potongan 2.000 dari 100.000 = 2%, jauh di atas perkiraan 0,7% (700).
+        app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [$uuid[0]], '98000.00'), $k['Pemilik']->Id);
+        // Pencairan kedua di bulan berikutnya, supaya bisa dibuktikan saringan tanggalnya bekerja. Waktu uji ikut
+        // dimajukan karena setoran bertanggal masa depan memang ditolak.
+        Carbon::setTestNow('2026-10-05 04:00:00');
+        app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [$uuid[1]], '49650.00', '2026-10-05'), $k['Pemilik']->Id);
+
+        $pemilik()->getJson('/kelola/akuntansi/pencairan')->assertOk()
+            ->assertJsonPath('Ringkasan.0.Nama', 'QRIS Statis')
+            ->assertJsonPath('Ringkasan.0.Jumlah', 2)
+            ->assertJsonPath('Ringkasan.0.JumlahKotor', '150000.00')
+            ->assertJsonPath('Ringkasan.0.Biaya', '2350.00')
+            ->assertJsonPath('Ringkasan.0.BiayaDiharapkan', '1050.00')
+            ->assertJsonPath('Ringkasan.0.Selisih', '1300.00');
+
+        // Disaring ke September saja: tinggal pencairan pertama, dan persen efektifnya 2%.
+        $pemilik()->getJson('/kelola/akuntansi/pencairan?'.http_build_query(['saring' => ['Tanggal' => '2026-09-01..2026-09-30']]))
+            ->assertOk()
+            ->assertJsonPath('Ringkasan.0.Jumlah', 1)
+            ->assertJsonPath('Ringkasan.0.JumlahKotor', '100000.00')
+            ->assertJsonPath('Ringkasan.0.Biaya', '2000.00')
+            ->assertJsonPath('Ringkasan.0.PersenEfektif', '2.0000');
+
+        // Yang dibatalkan tidak ikut: jurnalnya sudah dibalik, jadi potongannya tidak pernah terjadi.
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $pertama = Pencairan::query()->orderBy('Id')->firstOrFail();
+        app(BatalkanPencairan::class)->Jalankan($pertama->Uuid, 'Salah metode, seharusnya EDC.', $k['Pemilik']->Id);
+
+        $pemilik()->getJson('/kelola/akuntansi/pencairan')->assertOk()
+            ->assertJsonPath('Ringkasan.0.Jumlah', 1)
+            ->assertJsonPath('Ringkasan.0.Biaya', '350.00');
     });
 });
 

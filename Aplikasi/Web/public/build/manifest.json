@@ -1731,7 +1731,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-Chm3VzYT.js",
+    "file": "assets/Aplikasi-BFvSkmlX.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -2442,7 +2442,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Akuntansi/Pencairan/Daftar.tsx": {
-    "file": "assets/Daftar-De_GibsL.js",
+    "file": "assets/Daftar-Buu2vfpb.js",
     "name": "Daftar",
     "src": "resources/js/Halaman/Kelola/Akuntansi/Pencairan/Daftar.tsx",
     "isDynamicEntry": true,

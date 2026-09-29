@@ -332,10 +332,22 @@ export type BarisPencairan = {
     Referensi: string | null;
 };
 
+/** Rekap potongan per metode untuk saringan yang sedang aktif (ikut di muatan tabel, bukan prop halaman). */
+export type RekapPotonganPencairan = {
+    Nama: string;
+    Jumlah: number;
+    JumlahKotor: string;
+    Biaya: string;
+    BiayaDiharapkan: string;
+    Selisih: string;
+    PersenEfektif: string;
+};
+
 export type PropsDaftarPencairan = {
     Pencairan: {
         Data: BarisPencairan[];
         Meta: { Halaman: number; PerHalaman: number; Total: number; JumlahHalaman: number };
+        Ringkasan?: RekapPotonganPencairan[];
     };
     BelumDicairkan: RingkasanBelumDicairkan[];
     OpsiMetode: OpsiMetodePencairan[];

@@ -13,6 +13,8 @@ use App\Domain\Penjualan\Model\PencairanDetail;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 
 /**
  * Pembayaran non-tunai yang **belum dicairkan** (F-08, BR-08.4): isi akun kliring yang masih menunggu uang masuk
@@ -27,6 +29,29 @@ final class PembayaranBelumDicairkan
 {
     /** Dibatasi supaya halaman tidak pernah memuat ribuan baris sekaligus; setoran dicatat per periode, bukan setahun. */
     public const MAKS_BARIS = 500;
+
+    /**
+     * Batas wajar menunggu pencairan, per jenis metode (hari kalender sejak tanggal transaksi).
+     *
+     * Satu angka untuk semua jenis akan salah dua kali: QRIS biasanya cair H+1 sehingga tiga hari sudah pantas
+     * ditanyakan, sedangkan platform ojol menyetor mingguan sehingga tiga hari cuma menghasilkan peringatan palsu
+     * setiap hari. Angka per jenis ini bawaan yang masuk akal, bukan kesepakatan dengan platform; kalau tenant perlu
+     * mengaturnya sendiri per metode, itu kolom baru di `MetodePembayaran` dan pekerjaan tersendiri.
+     *
+     * @return array<string, int>
+     */
+    public static function BatasHariMenunggu(): array
+    {
+        return [
+            JenisMetodePembayaran::QrisStatis->value => 3,
+            JenisMetodePembayaran::QrisDinamis->value => 3,
+            JenisMetodePembayaran::Edc->value => 5,
+            JenisMetodePembayaran::Ewallet->value => 3,
+            JenisMetodePembayaran::Transfer->value => 3,
+            // Ojol & marketplace umumnya menyetor mingguan.
+            JenisMetodePembayaran::Marketplace->value => 10,
+        ];
+    }
 
     /** Metode yang uangnya lewat akun kliring dan karena itu perlu dicairkan (BR-08.3). */
     public const JENIS_KLIRING = [
@@ -45,11 +70,7 @@ final class PembayaranBelumDicairkan
      */
     public function Metode(): array
     {
-        return array_values(MetodePembayaran::query()
-            ->whereIn('Jenis', array_map(fn (JenisMetodePembayaran $j): string => $j->value, self::JENIS_KLIRING))
-            ->orderBy('Urutan')
-            ->orderBy('Id')
-            ->get()
+        return array_values($this->MetodeModel()
             ->map(fn (MetodePembayaran $m): array => [
                 'Uuid' => $m->Uuid,
                 'Nama' => $m->Nama,
@@ -121,12 +142,7 @@ final class PembayaranBelumDicairkan
      */
     public function Ringkasan(?array $idOutletBoleh): array
     {
-        $metode = MetodePembayaran::query()
-            ->whereIn('Jenis', array_map(fn (JenisMetodePembayaran $j): string => $j->value, self::JENIS_KLIRING))
-            ->orderBy('Urutan')
-            ->orderBy('Id')
-            ->get();
-
+        $metode = $this->MetodeModel();
         $idPenjualan = Penjualan::query()
             ->where('Status', '!=', StatusPenjualan::Void->value)
             ->when($idOutletBoleh !== null, fn ($q) => $q->whereIn('IdOutlet', $idOutletBoleh ?? []))
@@ -161,9 +177,77 @@ final class PembayaranBelumDicairkan
         return $hasil;
     }
 
+    /**
+     * Metode yang pembayarannya **sudah menunggu terlalu lama** menurut `BatasHariMenunggu` per jenisnya — inilah tanda
+     * platform belum menyetor, dan satu-satunya cara toko mengetahuinya sebelum menutup buku.
+     *
+     * @param  list<int>|null  $idOutletBoleh
+     * @return list<array{Uuid: string, Nama: string, Jenis: string, Jumlah: int, Total: string, TanggalTerlama: string, UmurHari: int, BatasHari: int}>
+     */
+    public function MenungguTerlaluLama(?array $idOutletBoleh, CarbonImmutable $hariIni): array
+    {
+        $batas = self::BatasHariMenunggu();
+        $hasil = [];
+
+        foreach ($this->MetodeModel() as $metode) {
+            $batasHari = $batas[$metode->Jenis->value] ?? 3;
+            $sampai = $hariIni->subDays($batasHari);
+            $idPenjualan = Penjualan::query()
+                ->where('Status', '!=', StatusPenjualan::Void->value)
+                ->whereDate('TanggalBisnis', '<=', $sampai->toDateString())
+                ->when($idOutletBoleh !== null, fn ($q) => $q->whereIn('IdOutlet', $idOutletBoleh ?? []))
+                ->select('Id');
+
+            $pembayaran = PenjualanPembayaran::query()
+                ->where('IdMetodePembayaran', $metode->Id)
+                ->whereIn('IdPenjualan', $idPenjualan)
+                ->whereNotIn('Id', PencairanDetail::query()->whereNotNull('IdPembayaranAktif')->select('IdPembayaranAktif'))
+                ->orderBy('DibayarPada')
+                ->get(['Id', 'IdPenjualan', 'Jumlah', 'DibayarPada']);
+
+            if ($pembayaran->isEmpty()) {
+                continue;
+            }
+
+            $total = Uang::Nol();
+
+            foreach ($pembayaran as $satu) {
+                $total = $total->Tambah($satu->AmbilJumlah());
+            }
+
+            $terlama = Penjualan::query()->whereKey($pembayaran->first()?->IdPenjualan)->value('TanggalBisnis');
+            $tanggalTerlama = $terlama instanceof Carbon ? CarbonImmutable::parse($terlama->toDateString()) : $hariIni;
+
+            $hasil[] = [
+                'Uuid' => $metode->Uuid,
+                'Nama' => $metode->Nama,
+                'Jenis' => $metode->Jenis->value,
+                'Jumlah' => $pembayaran->count(),
+                'Total' => $total->KeString(),
+                'TanggalTerlama' => $tanggalTerlama->toDateString(),
+                'UmurHari' => (int) $tanggalTerlama->diffInDays($hariIni),
+                'BatasHari' => $batasHari,
+            ];
+        }
+
+        return $hasil;
+    }
+
     /** Jumlah pencairan yang sudah tercatat, untuk keadaan kosong halaman daftar. */
     public function CekAdaPencairan(): bool
     {
         return Pencairan::query()->exists();
+    }
+
+    /**
+     * @return Collection<int, MetodePembayaran>
+     */
+    private function MetodeModel(): Collection
+    {
+        return MetodePembayaran::query()
+            ->whereIn('Jenis', array_map(fn (JenisMetodePembayaran $j): string => $j->value, self::JENIS_KLIRING))
+            ->orderBy('Urutan')
+            ->orderBy('Id')
+            ->get();
     }
 }

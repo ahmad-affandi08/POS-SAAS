@@ -67,13 +67,7 @@ function Keterangan({ label, children }: { label: string; children: React.ReactN
  * Detail pencairan (F-08, BR-08.4, J-08.1). Dokumennya tidak bisa diedit: koreksinya lewat pembatalan yang menarik
  * kembali setorannya dari buku dan melepas pembayarannya supaya bisa dicairkan ulang di dokumen yang benar.
  */
-export default function HalamanDetailPencairan({
-    Pencairan,
-    Baris,
-    Jurnal,
-    Riwayat,
-    Tindakan,
-}: PropsDetailPencairan) {
+export default function HalamanDetailPencairan({ Pencairan, Baris, Jurnal, Riwayat, Tindakan }: PropsDetailPencairan) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const [batalkan, AturBatalkan] = useState(false);
     const [alasan, AturAlasan] = useState('');

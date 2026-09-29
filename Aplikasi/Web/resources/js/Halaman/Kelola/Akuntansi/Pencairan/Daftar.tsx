@@ -7,11 +7,11 @@ import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
-import { FormatRupiah } from '@/Pustaka/Format';
+import { FormatPersen, FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { BarisPencairan, PropsDaftarPencairan } from '@/Tipe/Akuntansi';
+import type { BarisPencairan, PropsDaftarPencairan, RekapPotonganPencairan } from '@/Tipe/Akuntansi';
 
 const alamat = '/kelola/akuntansi/pencairan';
 
@@ -99,6 +99,49 @@ const kolom: KolomTabel<BarisPencairan>[] = [
 ];
 
 /**
+ * Rekap potongan per metode untuk saringan yang sedang aktif. Inilah angka yang dibawa pemilik ke platform: berapa yang
+ * diserahkan, berapa yang dipotong, berapa yang seharusnya menurut kesepakatan, dan persen efektif yang sebenarnya
+ * terjadi. Ikut berubah saat rentang tanggalnya diganti, karena datang dari `Ringkasan` muatan tabel.
+ */
+function RekapPotongan({ rekap }: { rekap: RekapPotonganPencairan[] }) {
+    if (rekap.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-col gap-2 rounded-panel border border-garis p-3">
+            <h3 className="text-label font-semibold text-teks-sekunder">Potongan platform pada saringan ini</h3>
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {rekap.map((r) => {
+                    const menyimpang = BandingkanDesimal(r.Selisih, '0') !== 0;
+
+                    return (
+                        <li key={r.Nama} className="flex flex-col gap-0.5">
+                            <span className="font-semibold break-words text-teks-utama">{r.Nama}</span>
+                            <span className="text-keterangan text-teks-sekunder">
+                                {r.Jumlah} pencairan · diserahkan {FormatRupiah(r.JumlahKotor)}
+                            </span>
+                            <span className="text-isi tabular-nums text-teks-utama">
+                                dipotong {FormatRupiah(r.Biaya)} ({FormatPersen(r.PersenEfektif)})
+                            </span>
+                            {menyimpang ? (
+                                <span className="text-keterangan text-teks-sekunder">
+                                    perkiraan {FormatRupiah(r.BiayaDiharapkan)} · selisih{' '}
+                                    {FormatRupiah(r.Selisih.replace('-', ''))}{' '}
+                                    {BandingkanDesimal(r.Selisih, '0') > 0 ? 'lebih' : 'kurang'}
+                                </span>
+                            ) : (
+                                <span className="text-keterangan text-teks-sekunder">sesuai perkiraan</span>
+                            )}
+                        </li>
+                    );
+                })}
+            </ul>
+        </div>
+    );
+}
+
+/**
  * Daftar pencairan dana non-tunai (F-08, BR-08.4, J-08.1).
  *
  * Bagian **"Belum dicairkan"** di atas tabel adalah inti halaman ini: itu isi akun kliring yang masih menunggu uang
@@ -184,6 +227,7 @@ export default function HalamanDaftarPencairan({
                     },
                     { id: 'Tanggal', label: 'Tanggal', jenis: 'rentangTanggal' },
                 ]}
+                ringkasan={(hasil) => <RekapPotongan rekap={(hasil?.Ringkasan as RekapPotonganPencairan[]) ?? []} />}
                 alamatDetail={(d) => `${alamat}/${d.Uuid}`}
                 kosong={{ ilustrasi: true, judul: 'Belum ada pencairan yang dicatat.' }}
             />

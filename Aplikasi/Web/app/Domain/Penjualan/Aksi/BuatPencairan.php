@@ -24,6 +24,7 @@ use App\Domain\Penjualan\Model\Pencairan;
 use App\Domain\Penjualan\Model\PencairanDetail;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
+use App\Domain\Persediaan\Layanan\PemeriksaLokasiDokumen;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,7 @@ final class BuatPencairan
         private readonly PetaUuidOutlet $petaOutlet,
         private readonly DaftarAkunPilihan $akun,
         private readonly PenjagaKunciPeriode $penjagaPeriode,
+        private readonly PemeriksaLokasiDokumen $pemeriksaLokasi,
         private readonly PenomorDokumen $penomor,
         private readonly PenyusunJurnalPencairan $penyusunJurnal,
         private readonly PostingJurnal $postingJurnal,
@@ -85,7 +87,7 @@ final class BuatPencairan
      * @throws PelanggaranAturanBisnis MetodeTidakDikenal, OutletTidakDikenal, AkunKasBankWajib, PembayaranWajib,
      *                                 PembayaranTidakDitemukan, PembayaranBukanKliring, PembayaranBedaMetode,
      *                                 PembayaranBedaOutlet, PenjualanSudahVoid, PembayaranSudahDicairkan,
-     *                                 JumlahBersihTidakValid, PeriodeTerkunci
+     *                                 JumlahBersihTidakValid, TanggalMasaDepan, PeriodeTerkunci
      */
     public function Jalankan(DataPencairan $data, int $idPengguna): Pencairan
     {
@@ -115,6 +117,8 @@ final class BuatPencairan
         $idAkunTujuan = $this->akun->CariKasBankDariUuid($data->uuidAkunTujuan)['Id']
             ?? throw new PelanggaranAturanBisnis('AkunKasBankWajib', 'Pilih akun kas atau bank yang menerima setoran.', 'UuidAkunTujuan');
 
+        // Setoran bertanggal besok belum terjadi; mencatatnya akan membuat saldo bank di buku mendahului rekeningnya.
+        $this->pemeriksaLokasi->PastikanBukanMasaDepan($data->tanggal, $idOutlet);
         $this->penjagaPeriode->PastikanTerbuka($data->tanggal);
 
         return DB::transaction(

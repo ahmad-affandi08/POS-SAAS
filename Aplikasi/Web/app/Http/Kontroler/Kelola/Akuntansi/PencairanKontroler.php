@@ -57,11 +57,17 @@ final class PencairanKontroler extends DasarAkuntansiKontroler
         $uuidMetode = $permintaan->query('metode');
         $uuidOutlet = $permintaan->query('outlet');
         $sampai = $permintaan->query('sampai');
-        $outlet = is_string($uuidOutlet) && $uuidOutlet !== '' ? $this->CariOutlet($uuidOutlet) : null;
+        $opsiOutlet = $this->AmbilOpsiOutlet();
+        // Tautan dari Kotak Tindakan hanya membawa metodenya. Kalau tokonya cuma punya satu outlet, memilihnya sendiri
+        // membuat daftarnya langsung terisi alih-alih memaksa operator memilih hal yang tidak punya pilihan lain.
+        $uuidOutlet = is_string($uuidOutlet) && $uuidOutlet !== ''
+            ? $uuidOutlet
+            : (count($opsiOutlet) === 1 ? $opsiOutlet[0]['Uuid'] : '');
+        $outlet = $uuidOutlet === '' ? null : $this->CariOutlet($uuidOutlet);
 
         return Inertia::render('Kelola/Akuntansi/Pencairan/Buat', [
             'OpsiMetode' => $belum->Metode(),
-            'OpsiOutlet' => $this->AmbilOpsiOutlet(),
+            'OpsiOutlet' => $opsiOutlet,
             'OpsiAkun' => $akun->AmbilKasBank(),
             'Terpilih' => [
                 'Metode' => is_string($uuidMetode) ? $uuidMetode : '',

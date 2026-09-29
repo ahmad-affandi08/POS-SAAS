@@ -12,16 +12,24 @@ use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
 use App\Domain\Bersama\Tindakan\Enum\TingkatTindakan;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan;
+use App\Domain\Penjualan\Kueri\PembayaranBelumDicairkan;
 
 /**
- * Kotak Tindakan domain Akuntansi (D-23 C, izin `akuntansi.kelola`): mulai tanggal [TANGGAL_PENGINGAT] setiap bulan,
- * bulan lalu yang sudah ada jurnalnya tetapi belum ditutup buku (F-15). Selesai sendiri saat periodenya dikunci.
+ * Kotak Tindakan domain Akuntansi (D-23 C, izin `akuntansi.kelola`): transaksi rutin yang gagal dicatat otomatis
+ * (D-23 D), uang non-tunai yang belum cair dari platform (F-08 BR-08.4), dan — mulai tanggal [TANGGAL_PENGINGAT] setiap
+ * bulan — bulan lalu yang sudah ada jurnalnya tetapi belum ditutup buku (F-15). Semuanya butir pengingat yang selesai
+ * sendiri saat keadaannya berubah, jadi tidak ada yang perlu ditandai "sudah dicek".
+ *
+ * Pembayaran yang belum dicairkan dibaca lewat kueri publik domain Penjualan (aturan #14), bukan dengan membaca tabel
+ * penjualan dari sini.
  */
 final class PenyediaTindakanAkuntansi implements PenyediaTindakan
 {
     public const TANGGAL_PENGINGAT = 10;
 
     private const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+    public function __construct(private readonly PembayaranBelumDicairkan $belumDicairkan) {}
 
     public function Kumpulkan(DataKonteksTindakan $konteks): array
     {
@@ -48,6 +56,30 @@ final class PenyediaTindakanAkuntansi implements PenyediaTindakan
                 null,
             ))->all()),
         )];
+
+        // F-08 BR-08.4: uang non-tunai yang lewat batas wajar menunggu pencairan. Ini satu-satunya tempat yang bisa
+        // memberi tahu toko bahwa platform belum menyetor — akun kliring sendiri tidak berteriak.
+        $menunggu = $this->belumDicairkan->MenungguTerlaluLama($konteks->idOutletBoleh, $konteks->hariIni);
+
+        if ($menunggu !== []) {
+            $butir[] = new DataButirTindakan(
+                'pencairan.belum-cair',
+                'Keuangan',
+                TingkatTindakan::Penting,
+                'Uang belum cair dari platform',
+                'Nilainya masih tercatat di akun kliring, belum di rekening. Cocokkan dengan mutasi rekening, atau tanyakan ke platformnya.',
+                count($menunggu),
+                '/kelola/akuntansi/pencairan',
+                'Cairkan',
+                array_values(array_map(fn (array $m): DataRincianTindakan => new DataRincianTindakan(
+                    $m['Uuid'],
+                    $m['Nama'],
+                    "{$m['Jumlah']} pembayaran, tertua {$m['UmurHari']} hari (wajar sampai {$m['BatasHari']} hari)",
+                    $m['TanggalTerlama'],
+                    '/kelola/akuntansi/pencairan/buat?metode='.$m['Uuid'],
+                ), array_slice($menunggu, 0, DataButirTindakan::BATAS_RINCIAN))),
+            );
+        }
 
         if ($konteks->hariIni->day < self::TANGGAL_PENGINGAT) {
             return $butir;
