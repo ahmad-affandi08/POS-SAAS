@@ -465,6 +465,7 @@ class LayananPenjualan {
             dasarPengenaan: p.dasarPengenaan == DasarPengenaanPajak.SubtotalPlusLayanan.name
                 ? DasarPengenaanPajak.SubtotalPlusLayanan
                 : DasarPengenaanPajak.Subtotal,
+            kenaBiayaKirim: p.kenaBiayaKirim,
           ),
         );
       }
@@ -490,6 +491,8 @@ class LayananPenjualan {
       potonganPesanan: [if (keranjang.diskonPesanan != null) keranjang.diskonPesanan!.KePotongan()],
       tukarPoin: keranjang.tukarPoin?.nilai,
       pembayaran: pembayaran,
+      biayaKirim: keranjang.biayaKirim,
+      diskonKirim: keranjang.diskonKirim,
     );
     final hasilTanpaPromo = _mesin.Hitung(dasar);
     var hasil = hasilTanpaPromo;
@@ -1024,6 +1027,9 @@ class LayananPenjualan {
       'HargaTermasukPajak': k.profilPajak.hargaTermasukPajak,
       'PersenBiayaLayanan': k.AmbilPersenBiayaLayanan().toString(),
       'PembulatanTunai': pembulatan == null ? null : {'Kelipatan': pembulatan.kelipatan, 'Arah': pembulatan.arah.name},
+      // F-17 bagian 3: dikirim hanya bila ada ongkirnya, supaya muatan penjualan biasa tidak berubah sama sekali.
+      if (!keranjang.biayaKirim.BernilaiNol()) 'BiayaKirim': keranjang.biayaKirim.KeString(),
+      if (!keranjang.diskonKirim.BernilaiNol()) 'DiskonKirim': keranjang.diskonKirim.KeString(),
       'Pajak': [
         for (final p in hitungan.pajakDokumen)
           {
@@ -1032,6 +1038,7 @@ class LayananPenjualan {
             'PengaliDppPembilang': hitungan.tarifDipakai[p.kode]!.pembilang,
             'PengaliDppPenyebut': hitungan.tarifDipakai[p.kode]!.penyebut,
             'DasarPengenaan': p.dasarPengenaan.name,
+            'KenaBiayaKirim': p.kenaBiayaKirim,
           },
       ],
       'Baris': [

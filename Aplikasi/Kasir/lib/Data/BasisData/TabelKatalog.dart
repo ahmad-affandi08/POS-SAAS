@@ -47,6 +47,9 @@ class KelompokPajakDetail extends Table {
   /// `Ppn`, `Pbjt`, atau `Lainnya` dari atribut `JenisPajak` (skema 4, PRD v1.46); null = server lama.
   TextColumn get Kategori => text().nullable()();
 
+  /// F-17 bagian 3: ongkir yang ditagih ke pembeli ikut DPP pajak ini (skema 19); false = server lama.
+  BoolColumn get KenaBiayaKirim => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {UuidKelompokPajak, KodeJenisPajak};
 }

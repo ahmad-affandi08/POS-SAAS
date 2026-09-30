@@ -65,11 +65,14 @@ class KelompokPilihanJual {
 /// Jenis pajak kelompok pajak produk: kode jenis (`Ppn`, `PbjtMakananMinuman`, ...), dasar pengenaan, dan kategori
 /// jenis pajak (`Ppn`/`Pbjt`/`Lainnya`; null = server lama, lihat [AmbilKategori]).
 class PajakProduk {
-  const PajakProduk({required this.kode, required this.dasarPengenaan, this.kategori});
+  const PajakProduk({required this.kode, required this.dasarPengenaan, this.kategori, this.kenaBiayaKirim = false});
 
   final String kode;
   final String dasarPengenaan;
   final String? kategori;
+
+  /// F-17 bagian 3: ongkir yang ditagih ke pembeli ikut DPP pajak ini.
+  final bool kenaBiayaKirim;
 
   /// Kategori untuk syarat PKP/PBJT (PRD v1.46): dari atribut `JenisPajak` bila ada; bila absen, fallback ke kode lama
   /// (`Ppn` → `Ppn`, `PbjtMakananMinuman` → `Pbjt`, lainnya → `Lainnya`).
@@ -81,12 +84,18 @@ class PajakProduk {
         _ => PajakKelompokPos.kategoriLainnya,
       };
 
-  Map<String, Object?> KeJson() => {'Kode': kode, 'DasarPengenaan': dasarPengenaan, 'Kategori': kategori};
+  Map<String, Object?> KeJson() => {
+    'Kode': kode,
+    'DasarPengenaan': dasarPengenaan,
+    'Kategori': kategori,
+    'KenaBiayaKirim': kenaBiayaKirim,
+  };
 
   static PajakProduk DariJson(Map<String, Object?> json) => PajakProduk(
     kode: json['Kode'] is String ? json['Kode']! as String : '',
     dasarPengenaan: json['DasarPengenaan'] is String ? json['DasarPengenaan']! as String : 'Subtotal',
     kategori: json['Kategori'] is String ? json['Kategori']! as String : null,
+    kenaBiayaKirim: json['KenaBiayaKirim'] == true,
   );
 }
 
@@ -311,7 +320,14 @@ class KatalogLokal {
     for (final d in isi.kelompokPajakDetail) {
       pajakKelompok
           .putIfAbsent(d.UuidKelompokPajak, () => [])
-          .add(PajakProduk(kode: d.KodeJenisPajak, dasarPengenaan: d.DasarPengenaan, kategori: d.Kategori));
+          .add(
+            PajakProduk(
+              kode: d.KodeJenisPajak,
+              dasarPengenaan: d.DasarPengenaan,
+              kategori: d.Kategori,
+              kenaBiayaKirim: d.KenaBiayaKirim,
+            ),
+          );
     }
 
     final produk = [

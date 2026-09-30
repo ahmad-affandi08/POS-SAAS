@@ -14,8 +14,8 @@ import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
 /// F-17 di aplikasi kasir: Riwayat › Pesanan toko online menampilkan pesanan outlet ini, memuatnya ke keranjang kanal
-/// `Online`, lalu menagihnya dengan uang muka yang sudah dibayar pelanggan di web. Pesanan berongkir tidak bisa
-/// ditagih dari kasir karena `Penjualan` belum punya baris biaya kirim.
+/// `Online`, lalu menagihnya dengan uang muka yang sudah dibayar pelanggan di web. Pesanan berongkir ikut membawa
+/// ongkirnya ke keranjang (F-17 bagian 3), jadi totalnya sama dengan yang dilihat pembeli.
 void main() {
   Map<String, Object?> Daftar({String ongkir = '0.00', String nomor = 'ON/SLB/260930-0001'}) => {
     'Pesanan': [
@@ -28,7 +28,7 @@ void main() {
         'Status': 'Siap',
         'Subtotal': '28000.00',
         'Ongkir': ongkir,
-        'Total': '28000.00',
+        'Total': ongkir == '0.00' ? '28000.00' : '40000.00',
         'SudahDibayar': true,
         'SisaUangMuka': '28000.00',
         'Catatan': null,
@@ -135,13 +135,29 @@ void main() {
     });
   }
 
-  testWidgets('pesanan berongkir tampil dengan alasan dan tombol tagihnya mati', (tester) async {
+  testWidgets('F-17 bagian 3: pesanan kirim berongkir bisa ditagih, ongkirnya masuk keranjang & outbox', (
+    tester,
+  ) async {
     final u = await MasukJual(tester, const Size(1280, 900), ongkir: '12000.00');
     await BukaLembar(tester);
-    expect(find.textContaining('Ongkir Rp 12.000 belum bisa ditagih di kasir'), findsOneWidget);
     final tombol = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Tagih 0001'));
-    expect(tombol.onPressed, isNull);
-    expect(Wadah(tester).read(penyediaKeranjang).CekKosong, isTrue);
+    expect(tombol.onPressed, isNotNull, reason: 'Ongkir sudah bisa ditagih sejak F-17 bagian 3.');
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Tagih 0001'));
+
+    expect(Wadah(tester).read(penyediaKeranjang).biayaKirim, Uang.DariBulat(12000));
+    // Baris ongkir terbaca kasir di ringkasan keranjang, bukan hanya ikut di total.
+    expect(find.text('Ongkir'), findsOneWidget);
+
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').first);
+    await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    expect(find.text('Pembayaran berhasil'), findsOneWidget);
+
+    final jual = (await Outbox(tester, u, 'Penjualan.Buat')).single;
+    expect(jual['BiayaKirim'], '12000.00');
+    expect(jual.containsKey('DiskonKirim'), isFalse);
+    expect(jual['UuidPesananOnline'], '01K5PESANANONLINE000000001');
     expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });

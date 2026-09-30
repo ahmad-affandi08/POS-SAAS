@@ -420,6 +420,14 @@ abstract final class RingkasanTotal {
           ),
         ),
       if (!hasil.biayaLayanan.BernilaiNol()) Baris('Biaya layanan', hasil.biayaLayanan),
+      // F-17 bagian 3: ongkir & diskonnya dua baris terpisah supaya gratis ongkir terbaca sebagai potongan, bukan
+      // sebagai ongkir yang tidak pernah ada.
+      if (!hasil.biayaKirim.BernilaiNol()) Baris('Ongkir', hasil.biayaKirim),
+      if (!hasil.diskonKirim.BernilaiNol())
+        Baris(
+          hasil.diskonKirim.Bandingkan(hasil.biayaKirim) == 0 ? 'Gratis ongkir' : 'Diskon ongkir',
+          Uang.Nol().Kurangi(hasil.diskonKirim),
+        ),
       for (final p in hitungan.pajakDokumen)
         if (hasil.pajak[p.kode] != null && !hasil.pajak[p.kode]!.jumlah.BernilaiNol())
           Baris(

@@ -480,7 +480,8 @@ class LaundryKeranjang {
 /// Keranjang yang sedang dibangun kasir (belum tersimpan sebagai penjualan). [pesananMeja] terisi saat pesanan meja
 /// dibuka (F-07 mode meja): pembayarannya menutup pesanan terbuka itu.
 class Keranjang {
-  const Keranjang({
+  // Bukan `const`: `Uang.Nol()` sebagai bawaan `biayaKirim`/`diskonKirim` bukan ekspresi konstan (F-17 bagian 3).
+  Keranjang({
     this.baris = const [],
     this.diskonPesanan,
     this.penyetuju,
@@ -493,9 +494,12 @@ class Keranjang {
     this.reservasi,
     this.laundry,
     this.kanal,
-  });
+    Uang? biayaKirim,
+    Uang? diskonKirim,
+  }) : biayaKirim = biayaKirim ?? Uang.Nol(),
+       diskonKirim = diskonKirim ?? Uang.Nol();
 
-  static const Keranjang kosong = Keranjang();
+  static final Keranjang kosong = Keranjang();
 
   final List<ItemKeranjang> baris;
   final DiskonManual? diskonPesanan;
@@ -525,7 +529,15 @@ class Keranjang {
   /// `BawaPulang`); lihat `LayananPenjualan.AmbilKanal`.
   final KanalPenjualan? kanal;
 
+  /// F-17 bagian 3: ongkir yang ditagih ke pembeli (nol = tanpa ongkir) dan diskonnya (mis. gratis ongkir). Dipisah
+  /// supaya struk tetap bisa menulis ongkirnya beserta potongannya, bukan ongkir yang hilang.
+  final Uang biayaKirim;
+  final Uang diskonKirim;
+
   bool get CekKosong => baris.isEmpty;
+
+  /// Ongkir yang benar-benar ditagih (bisa nol karena gratis ongkir, meski [biayaKirim] tidak nol).
+  Uang HitungBiayaKirimNetto() => biayaKirim.Kurangi(diskonKirim);
 
   Kuantitas HitungJumlahItem() => baris.fold(Kuantitas.Nol(), (total, b) => total.Tambah(b.jumlah));
 
@@ -542,6 +554,8 @@ class Keranjang {
     ReservasiKeranjang? Function()? reservasi,
     LaundryKeranjang? Function()? laundry,
     KanalPenjualan? Function()? kanal,
+    Uang? biayaKirim,
+    Uang? diskonKirim,
   }) => Keranjang(
     baris: baris ?? this.baris,
     diskonPesanan: diskonPesanan == null ? this.diskonPesanan : diskonPesanan(),
@@ -555,6 +569,8 @@ class Keranjang {
     reservasi: reservasi == null ? this.reservasi : reservasi(),
     laundry: laundry == null ? this.laundry : laundry(),
     kanal: kanal == null ? this.kanal : kanal(),
+    biayaKirim: biayaKirim ?? this.biayaKirim,
+    diskonKirim: diskonKirim ?? this.diskonKirim,
   );
 
   Map<String, Object?> KeJson() => {
@@ -569,6 +585,8 @@ class Keranjang {
     'Reservasi': reservasi?.KeJson(),
     'Laundry': laundry?.KeJson(),
     'Kanal': kanal?.name,
+    'BiayaKirim': biayaKirim.KeString(),
+    'DiskonKirim': diskonKirim.KeString(),
   };
 
   static Keranjang DariJson(Map<String, Object?> json) => Keranjang(
@@ -587,5 +605,8 @@ class Keranjang {
     laundry: LaundryKeranjang.DariJson(json['Laundry']),
     // Kanal yang tidak dikenal aplikasi versi ini = bawaan.
     kanal: KanalPenjualan.values.where((k) => k.name == json['Kanal']).firstOrNull,
+    // Keranjang tertahan dari versi sebelum F-17 bagian 3 tidak punya kunci ini; tanpa ongkir.
+    biayaKirim: json['BiayaKirim'] is String ? Uang.Dari(json['BiayaKirim']! as String) : null,
+    diskonKirim: json['DiskonKirim'] is String ? Uang.Dari(json['DiskonKirim']! as String) : null,
   );
 }

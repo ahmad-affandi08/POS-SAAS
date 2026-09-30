@@ -472,6 +472,8 @@ void main() {
             'PengaliDppPembilang': 1,
             'PengaliDppPenyebut': 1,
             'DasarPengenaan': 'SubtotalPlusLayanan',
+            // F-17 bagian 3: bendera ongkir kena pajak ikut di snapshot pajak dokumen.
+            'KenaBiayaKirim': false,
           },
         ]);
         final baris = (data['Baris']! as List<Object?>).cast<Map<String, Object?>>();

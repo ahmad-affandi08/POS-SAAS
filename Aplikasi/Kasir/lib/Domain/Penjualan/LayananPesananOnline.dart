@@ -15,10 +15,9 @@ import 'LayananPenjualan.dart';
 /// `UuidPesananOnline`. Server memakai uang mukanya, menautkan penjualannya, dan menyelesaikan pesanan ambil sendiri
 /// dalam transaksi yang sama.
 ///
-/// **Ongkir belum bisa ditagih.** `Penjualan` tidak punya baris biaya kirim dan bagan akun belum punya peran
-/// pendapatan pengiriman, jadi pesanan kirim yang berongkir ditolak di sini alih-alih ditagih dengan total yang
-/// kurang — kalau dipaksa, uang muka pelanggan akan lebih besar daripada penjualannya dan menyisakan kewajiban yang
-/// harus diurus manual di setiap pesanan. Pesanan kirim dengan gratis ongkir tetap bisa ditagih.
+/// Ongkir pesanan (F-17 bagian 3) masuk keranjang sebagai `Keranjang.biayaKirim`, sehingga `TotalAkhir` penjualan sama
+/// dengan total pesanan yang dilihat pembeli dan pendapatan pengirimannya masuk buku (J-07.1). Mengosongkannya bukan
+/// pilihan yang aman: server membandingkannya dengan `PesananOnline.Ongkir` dan menandai selisihnya `OngkirBerbeda`.
 class LayananPesananOnline {
   LayananPesananOnline({required this.klien, required this.penjualan});
 
@@ -40,9 +39,6 @@ class LayananPesananOnline {
 
   /// Alasan pesanan belum bisa ditagih di kasir, atau null bila boleh.
   static String? AlasanBelumBisaDitagih(PesananOnlinePos pesanan) {
-    if (Uang.Dari(pesanan.ongkir).Bandingkan(Uang.Nol()) > 0) {
-      return 'Ongkir ${Uang.Dari(pesanan.ongkir).FormatRupiah()} belum bisa ditagih di kasir. Tagih lewat back-office.';
-    }
     if (pesanan.CekKirim && pesanan.status != 'Siap') {
       return 'Pesanan kirim ditagih setelah dikemas (status Siap).';
     }
@@ -100,6 +96,7 @@ class LayananPesananOnline {
       baris: baris,
       catatan: pesanan.catatan,
       kanal: KanalPenjualan.Online,
+      biayaKirim: Uang.Dari(pesanan.ongkir),
       praPesan: PraPesananKeranjang(
         uuid: pesanan.uuid,
         nomor: pesanan.nomor,

@@ -44,6 +44,7 @@ class PajakKelompokPos {
     required this.dasarPengenaan,
     required this.urutan,
     this.kategori,
+    this.kenaBiayaKirim = false,
   });
 
   static const String kategoriPpn = 'Ppn';
@@ -58,11 +59,15 @@ class PajakKelompokPos {
 
   /// `Subtotal` atau `SubtotalPlusLayanan`.
   final String dasarPengenaan;
+
+  /// F-17 bagian 3: ongkir yang ditagih ke pembeli ikut DPP pajak ini. False bila server lama tidak mengirimnya.
+  final bool kenaBiayaKirim;
   final int urutan;
 
   static PajakKelompokPos DariJson(Map<String, Object?> json) => PajakKelompokPos(
     kodeJenisPajak: UraiJson.AmbilTeks(json['KodeJenisPajak']),
     dasarPengenaan: UraiJson.AmbilTeks(json['DasarPengenaan'], 'Subtotal'),
+    kenaBiayaKirim: UraiJson.AmbilBenar(json['KenaBiayaKirim']),
     urutan: UraiJson.AmbilBulat(json['Urutan']),
     kategori: switch (json['Kategori']) {
       final String k when k == kategoriPpn || k == kategoriPbjt || k == kategoriLainnya => k,

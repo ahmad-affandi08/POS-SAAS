@@ -16,8 +16,8 @@ import '../../Pendukung/LingkunganUji.dart';
 
 /// F-17 di perangkat: pesanan toko online dimuat ke keranjang kanal `Online` dengan harga saat dipesan; pesanan yang
 /// sudah dibayar di muka membawa uang mukanya sehingga `Penjualan.Buat` memakai metode Uang Muka dan merujuk
-/// `UuidPesananOnline` (bukan `UuidPesananPenjualan`). Pesanan berongkir ditolak karena `Penjualan` belum punya
-/// baris biaya kirim.
+/// `UuidPesananOnline` (bukan `UuidPesananPenjualan`). Pesanan berongkir ikut membawa ongkirnya (F-17 bagian 3), jadi
+/// `TotalAkhir` penjualan sama dengan total pesanan yang dilihat pembeli.
 void main() {
   late LingkunganUji u;
   late StafLokal rina;
@@ -28,6 +28,7 @@ void main() {
     String jenisPemenuhan = 'AmbilSendiri',
     String ongkir = '0.00',
     String sisaUangMuka = '28000.00',
+    String total = '28000.00',
     bool sudahDibayar = true,
   }) => {
     'Uuid': '01K5PESANANONLINE000000001',
@@ -38,7 +39,7 @@ void main() {
     'Status': status,
     'Subtotal': '28000.00',
     'Ongkir': ongkir,
-    'Total': '28000.00',
+    'Total': total,
     'SudahDibayar': sudahDibayar,
     'SisaUangMuka': sisaUangMuka,
     'Catatan': 'Tolong tanpa gula',
@@ -166,17 +167,73 @@ void main() {
     expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
   });
 
-  test('pesanan berongkir dan yang belum Siap ditolak dengan alasan yang bisa dibaca kasir', () async {
+  test('F-17 bagian 3: pesanan kirim berongkir ditagih beserta ongkirnya, ongkir masuk total & outbox', () async {
     final katalog = await u.MuatKatalog();
     final k = await u.MuatKonteks();
 
-    u.server.penangan = (_) async => JsonUji(Balasan(Pesanan(jenisPemenuhan: 'Kirim', ongkir: '12000.00')));
-    final berongkir = await u.pesananOnline.AmbilAktif();
-    expect(LayananPesananOnline.AlasanBelumBisaDitagih(berongkir.pesanan.single), contains('Ongkir'));
-    expect(
-      () => u.pesananOnline.MuatKeKeranjang(berongkir.pesanan.single, berongkir, katalog, k),
-      throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', 'PesananBelumBisaDitagih')),
+    u.server.penangan = (_) async => JsonUji(
+      Balasan(Pesanan(jenisPemenuhan: 'Kirim', ongkir: '12000.00', sisaUangMuka: '40000.00', total: '40000.00')),
     );
+    final hasil = await u.pesananOnline.AmbilAktif();
+    expect(LayananPesananOnline.AlasanBelumBisaDitagih(hasil.pesanan.single), isNull);
+
+    final keranjang = u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k);
+    expect(keranjang.biayaKirim, Uang.DariBulat(12000));
+    expect(keranjang.diskonKirim, Uang.Nol());
+    expect(keranjang.HitungBiayaKirimNetto(), Uang.DariBulat(12000));
+    // Draf keranjang yang disimpan & dibaca ulang tidak boleh kehilangan ongkirnya.
+    expect(Keranjang.DariJson(keranjang.KeJson()).biayaKirim, Uang.DariBulat(12000));
+
+    final hitungan = u.penjualan.Hitung(keranjang, k);
+    // 2 x 14.000 barang + 2.800 pajak 10% atas barang + 12.000 ongkir. Ongkirnya TIDAK menambah DPP karena kelompok
+    // pajak katalog uji tidak berbendera KenaBiayaKirim — itu justru yang dijaga di sini.
+    expect(hitungan.hasil.subtotal, Uang.DariBulat(28000));
+    expect(hitungan.hasil.biayaKirim, Uang.DariBulat(12000));
+    expect(hitungan.hasil.totalPajak, Uang.DariBulat(2800));
+    expect(hitungan.hasil.totalAkhir, Uang.DariBulat(42800));
+
+    final uangMuka = LayananPreOrder.MetodeUangMuka(keranjang.praPesan!);
+    final sisa = keranjang.praPesan!.sisaUangMuka;
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [
+        PembayaranMasukan(metode: uangMuka, jumlah: sisa),
+        PembayaranMasukan(metode: tunai, jumlah: hitungan.hasil.totalAkhir.Kurangi(sisa)),
+      ],
+      kasir: rina,
+      k: k,
+    );
+    final data = await BacaOutboxTerakhir();
+    expect(data['BiayaKirim'], '12000.00');
+    expect(data.containsKey('DiskonKirim'), isFalse, reason: 'Tanpa diskon ongkir, kuncinya tidak dikirim.');
+    expect((data['Ringkasan']! as Map<String, Object?>)['TotalAkhir'], '42800.00');
+    expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
+  });
+
+  test('pesanan tanpa ongkir tidak mengirim kunci ongkir sama sekali; pesanan yang belum Siap ditolak', () async {
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+
+    u.server.penangan = (_) async => JsonUji(Balasan(Pesanan()));
+    final hasil = await u.pesananOnline.AmbilAktif();
+    final keranjang = u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k);
+    expect(keranjang.biayaKirim, Uang.Nol());
+    final total = u.penjualan.Hitung(keranjang, k).hasil.totalAkhir;
+    final sisa = keranjang.praPesan!.sisaUangMuka;
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [
+        PembayaranMasukan(metode: LayananPreOrder.MetodeUangMuka(keranjang.praPesan!), jumlah: sisa),
+        PembayaranMasukan(metode: tunai, jumlah: total.Kurangi(sisa)),
+      ],
+      kasir: rina,
+      k: k,
+    );
+    final data = await BacaOutboxTerakhir();
+    expect(data.containsKey('BiayaKirim'), isFalse);
+    expect(data.containsKey('DiskonKirim'), isFalse);
 
     u.server.penangan = (_) async => JsonUji(Balasan(Pesanan(status: 'Dikonfirmasi')));
     final belumSiap = await u.pesananOnline.AmbilAktif();

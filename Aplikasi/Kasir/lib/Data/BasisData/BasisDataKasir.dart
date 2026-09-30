@@ -201,9 +201,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (tier pelanggan lokal); 9 = F-12 (posisi kredit pelanggan lokal); 10 = F-18 (absensi lokal); 11 = F-12 bagian 2
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
-  /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol).
+  /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
+  /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak).
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -350,6 +351,18 @@ class BasisDataKasir extends _$BasisDataKasir {
         if (kolom == 0) {
           await m.addColumn(metodePembayaran, metodePembayaran.Kanal);
         }
+      }
+      // Skema 19 (F-17 bagian 3): ongkir ikut DPP pajak. Tabel kelompok pajak dari skema < 2 sudah berkolom lengkap.
+      // Kursor katalog dihapus supaya sinkron berikutnya memuat ulang kelompok pajak beserta bendera barunya; tanpa itu
+      // seluruh kelompok yang sudah ada akan tetap `false` sampai kelompoknya kebetulan diubah di back-office.
+      if (dari >= 2 && dari < 19) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('KelompokPajakDetail') WHERE name = 'KenaBiayaKirim'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(kelompokPajakDetail, kelompokPajakDetail.KenaBiayaKirim);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
     },
     beforeOpen: (detail) async {
