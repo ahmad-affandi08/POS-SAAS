@@ -42,6 +42,7 @@ final class PenjualanPajak extends ModelDasar
             'PengaliDppPembilang' => 'integer',
             'PengaliDppPenyebut' => 'integer',
             'DasarPengenaan' => DasarPengenaanPajak::class,
+            'KenaBiayaKirim' => 'boolean',
             'Dpp' => 'decimal:2',
             'Jumlah' => 'decimal:2',
         ];

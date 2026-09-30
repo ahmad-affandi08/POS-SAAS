@@ -37,6 +37,9 @@ enum PeranAkun: string
     case ReturPenjualan = 'ReturPenjualan';
     case PendapatanJasa = 'PendapatanJasa';
     case PendapatanBiayaLayanan = 'PendapatanBiayaLayanan';
+    // F-17 bagian 3: ongkir yang ditagih ke pembeli; pendapatan tersendiri, bukan bagian `Penjualan`, supaya
+    // margin barang tidak tercampur jasa antar (dan supaya biaya kurirnya bisa dibandingkan dengan pendapatannya).
+    case PendapatanPengiriman = 'PendapatanPengiriman';
     case PendapatanLain = 'PendapatanLain';
     case Hpp = 'Hpp';
     case SelisihHpp = 'SelisihHpp';
@@ -98,7 +101,7 @@ enum PeranAkun: string
             self::PendapatanDiterimaDimuka => TipeAkun::Kewajiban,
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
-            self::PendapatanBiayaLayanan, self::PendapatanLain => TipeAkun::Pendapatan,
+            self::PendapatanBiayaLayanan, self::PendapatanPengiriman, self::PendapatanLain => TipeAkun::Pendapatan,
             self::Hpp, self::SelisihHpp, self::SusutPersediaan, self::OverheadProduksiDibebankan => TipeAkun::Hpp,
             self::BebanBiayaPembayaran, self::BebanSelisihKas => TipeAkun::Beban,
         };
@@ -169,6 +172,7 @@ enum PeranAkun: string
             self::ReturPenjualan => 'Retur penjualan',
             self::PendapatanJasa => 'Pendapatan jasa',
             self::PendapatanBiayaLayanan => 'Pendapatan biaya layanan',
+            self::PendapatanPengiriman => 'Pendapatan pengiriman (ongkir ditagih ke pembeli)',
             self::PendapatanLain => 'Pendapatan lain (selisih kas lebih, pembulatan)',
             self::Hpp => 'Harga pokok penjualan',
             self::SelisihHpp => 'Selisih HPP / penyesuaian persediaan',

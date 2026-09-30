@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $IdJenisPajak
  * @property int|null $IdTarifPajak
  * @property DasarPengenaanPajak $DasarPengenaan
+ * @property bool $KenaBiayaKirim ongkir ikut DPP pajak ini (F-17 bagian 3); bendera terpisah dari `DasarPengenaan`
  * @property int $Urutan
  * @property-read JenisPajak $JenisPajak
  */
@@ -47,6 +48,6 @@ final class KelompokPajakDetail extends ModelDasar
      */
     protected function casts(): array
     {
-        return ['DasarPengenaan' => DasarPengenaanPajak::class, 'Urutan' => 'integer'];
+        return ['DasarPengenaan' => DasarPengenaanPajak::class, 'KenaBiayaKirim' => 'boolean', 'Urutan' => 'integer'];
     }
 }

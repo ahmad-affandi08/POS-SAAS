@@ -11,7 +11,12 @@ use InvalidArgumentException;
 /**
  * Satu jenis pajak dokumen untuk mesin kalkulasi F-07a: kode unik (misal `PPN`, `PB1`), tarif dalam persen (dari
  * `TarifPajak` bertanggal berlaku, tidak pernah di-hard-code), pengali DPP `pembilang/penyebut` (DPP nilai lain,
- * misal 11/12; bawaan 1/1), dan dasar pengenaan (`SubtotalPlusLayanan` = biaya layanan ikut DPP).
+ * misal 11/12; bawaan 1/1), dasar pengenaan (`SubtotalPlusLayanan` = biaya layanan ikut DPP), dan `kenaBiayaKirim`
+ * (ongkir ikut DPP, F-17 bagian 3).
+ *
+ * `kenaBiayaKirim` bendera tersendiri, bukan case baru `DasarPengenaanPajak`: dengan/tanpa layanan x dengan/tanpa kirim
+ * akan menjadi empat case pada enum yang nilainya tersimpan di DB dan dibaca Dart, FE, serta template sektor. Dua
+ * pertanyaan yang berdiri sendiri lebih baik diwakili dua bendera.
  */
 final readonly class DataPajakKalkulasi
 {
@@ -23,6 +28,9 @@ final readonly class DataPajakKalkulasi
         public DasarPengenaanPajak $dasarPengenaan = DasarPengenaanPajak::Subtotal,
         public int $pengaliDppPembilang = 1,
         public int $pengaliDppPenyebut = 1,
+        // Ditaruh paling akhir dengan sengaja: empat pemanggil mengirim pengali DPP secara posisional, jadi menyisipkan
+        // parameter di tengah akan membuat int masuk ke bool (TypeError, karena berkasnya `strict_types=1`).
+        public bool $kenaBiayaKirim = false,
     ) {
         if (trim($kode) === '') {
             throw new InvalidArgumentException('Kode pajak wajib diisi.');

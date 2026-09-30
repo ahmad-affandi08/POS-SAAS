@@ -38,6 +38,7 @@ use LogicException;
  * @property string $JumlahDiskon
  * @property string $JumlahDiskonPesanan
  * @property string $BiayaLayanan
+ * @property string $BiayaKirim bagian ongkir netto yang dialokasikan ke baris ini (dasar pajaknya)
  * @property string $JumlahPajak
  * @property string $PajakEksklusif
  * @property string $TotalBaris
@@ -71,6 +72,7 @@ final class PenjualanDetail extends ModelDasar
             'JumlahDiskon' => 'decimal:2',
             'JumlahDiskonPesanan' => 'decimal:2',
             'BiayaLayanan' => 'decimal:2',
+            'BiayaKirim' => 'decimal:2',
             'JumlahPajak' => 'decimal:2',
             'PajakEksklusif' => 'decimal:2',
             'TotalBaris' => 'decimal:2',

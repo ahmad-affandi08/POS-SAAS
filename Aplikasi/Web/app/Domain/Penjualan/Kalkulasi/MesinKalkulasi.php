@@ -22,8 +22,14 @@ use Brick\Math\RoundingMode;
  * 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal; lalu `DiskonPoin` = nilai tukar
  *    poin (F-16b) dibatasi sisa Subtotal dan ditambahkan ke diskon pesanan; dialokasikan sebanding Netto.
  * 5. `BiayaLayanan` = bulat(persen × (Subtotal − DiskonPesanan)), dialokasikan sebanding Netto akhir.
- * 6. Pajak per baris eksak: eksklusif `DPP = (NettoAkhir + [layanan bila SubtotalPlusLayanan]) × p/q`; inklusif
- *    `Dasar = NettoAkhir ÷ (1 + Σ tarif × p/q)`, `DPP = Dasar × p/q`, pajak atas biaya layanan selalu ditambahkan.
+ * 5b. `BiayaKirimNetto` = `BiayaKirim − DiskonKirim` (F-17 bagian 3), dialokasikan sebanding Netto akhir seperti biaya
+ *    layanan — bukan karena kemiripan bentuk, tetapi karena pajak dihitung **per baris**: kode pajak boleh berbeda antar
+ *    baris, jadi ongkir harus punya bagian per baris agar DPP-nya benar. Bila seluruh Netto akhir nol (pesanan habis
+ *    didiskon) ongkirnya dibagi **rata**, sebab alokasi sebanding bobot nol mengembalikan nol semua dan Σ baris tidak
+ *    lagi sama dengan dokumennya.
+ * 6. Pajak per baris eksak: eksklusif `DPP = (NettoAkhir + [layanan bila SubtotalPlusLayanan] + [kirim bila
+ *    kenaBiayaKirim]) × p/q`; inklusif `Dasar = NettoAkhir ÷ (1 + Σ tarif × p/q)`, `DPP = Dasar × p/q`, pajak atas biaya
+ *    layanan dan ongkir selalu ditambahkan sebagai bagian eksklusif (keduanya di luar harga barang).
  * 7. Pembulatan per dokumen per kode pajak, terpisah bagian eksklusif dan inklusif; dialokasikan ke baris.
  * 8. Pembulatan tunai hanya bila ada pembayaran tunai dan sisa tunai > 0; `TotalAkhir` & `Kembalian`.
  */
@@ -70,6 +76,10 @@ final class MesinKalkulasi
         );
         $daftarBiayaLayanan = $this->pengalokasi->AlokasikanSebanding($biayaLayanan, $daftarNettoAkhir);
 
+        // Langkah 5b: ongkir netto.
+        $biayaKirimNetto = $data->biayaKirim->Kurangi($data->diskonKirim);
+        $daftarBiayaKirim = $this->AlokasikanBiayaKirim($biayaKirimNetto, $daftarNettoAkhir);
+
         // Langkah 6–7: pajak.
         $daftarPajakEksklusif = array_fill(0, $jumlahBaris, Uang::Nol());
         $daftarPajakInklusif = array_fill(0, $jumlahBaris, Uang::Nol());
@@ -103,14 +113,18 @@ final class MesinKalkulasi
                 $dppLayanan = $pajak->dasarPengenaan === DasarPengenaanPajak::SubtotalPlusLayanan
                     ? $this->UbahKeRasional($daftarBiayaLayanan[$indeks])->multipliedBy($pengali)
                     : BigRational::zero();
+                $dppKirim = $pajak->kenaBiayaKirim
+                    ? $this->UbahKeRasional($daftarBiayaKirim[$indeks])->multipliedBy($pengali)
+                    : BigRational::zero();
+                $dppLuarBarang = $dppLayanan->plus($dppKirim);
                 $dppBarang = $daftarDasar[$indeks]->multipliedBy($pengali);
-                $dpp = $dpp->plus($dppBarang)->plus($dppLayanan);
+                $dpp = $dpp->plus($dppBarang)->plus($dppLuarBarang);
 
                 if ($baris->hargaTermasukPajak ?? $data->hargaTermasukPajak) {
                     $tepatInklusif[$indeks] = $dppBarang->multipliedBy($tarif);
-                    $tepatEksklusif[$indeks] = $dppLayanan->multipliedBy($tarif);
+                    $tepatEksklusif[$indeks] = $dppLuarBarang->multipliedBy($tarif);
                 } else {
-                    $tepatEksklusif[$indeks] = $dppBarang->plus($dppLayanan)->multipliedBy($tarif);
+                    $tepatEksklusif[$indeks] = $dppBarang->plus($dppLuarBarang)->multipliedBy($tarif);
                 }
             }
 
@@ -133,7 +147,7 @@ final class MesinKalkulasi
         }
 
         // Langkah 8: pembulatan tunai, total akhir, kembalian.
-        $totalSebelumPembulatan = $subtotal->Kurangi($diskonPesanan)->Tambah($biayaLayanan)->Tambah($totalPajakEksklusif);
+        $totalSebelumPembulatan = $subtotal->Kurangi($diskonPesanan)->Tambah($biayaLayanan)->Tambah($biayaKirimNetto)->Tambah($totalPajakEksklusif);
         $nonTunai = Uang::Nol();
         $adaTunai = false;
 
@@ -158,7 +172,8 @@ final class MesinKalkulasi
                 $daftarBiayaLayanan[$indeks],
                 $daftarPajakEksklusif[$indeks]->Tambah($daftarPajakInklusif[$indeks]),
                 $daftarPajakEksklusif[$indeks],
-                $daftarNettoAkhir[$indeks]->Tambah($daftarBiayaLayanan[$indeks])->Tambah($daftarPajakEksklusif[$indeks]),
+                $daftarNettoAkhir[$indeks]->Tambah($daftarBiayaLayanan[$indeks])->Tambah($daftarBiayaKirim[$indeks])->Tambah($daftarPajakEksklusif[$indeks]),
+                $daftarBiayaKirim[$indeks],
             );
         }
 
@@ -176,6 +191,8 @@ final class MesinKalkulasi
             $rincianPajak,
             $hasilBaris,
             $diskonPoin,
+            $data->biayaKirim,
+            $data->diskonKirim,
         );
     }
 
@@ -221,6 +238,39 @@ final class MesinKalkulasi
      *
      * @param  list<string>  $kodeBaris
      */
+    /**
+     * Alokasi ongkir netto ke baris, sebanding Netto akhir.
+     *
+     * Bila **seluruh** Netto akhir nol — pesanan yang habis didiskon, atau seluruh barisnya gratis — alokasi sebanding
+     * mengembalikan nol semua (`PengalokasiSisaTerbesar`: "bobot nol semua = semua nol"). Itu benar untuk diskon dan
+     * biaya layanan, yang ikut nol saat dasarnya nol, tetapi **salah untuk ongkir**: ongkirnya nominal dan tetap
+     * ditagih, sehingga Σ baris tidak lagi sama dengan dokumennya dan DPP-nya hilang. Dalam keadaan itu ongkir dibagi
+     * **rata** antar baris.
+     *
+     * @param  list<Uang>  $nettoAkhir
+     * @return list<Uang>
+     */
+    private function AlokasikanBiayaKirim(Uang $biayaKirimNetto, array $nettoAkhir): array
+    {
+        if ($nettoAkhir === []) {
+            return [];
+        }
+
+        $adaBobot = false;
+
+        foreach ($nettoAkhir as $satu) {
+            if (! $satu->BernilaiNol()) {
+                $adaBobot = true;
+
+                break;
+            }
+        }
+
+        $bobot = $adaBobot ? $nettoAkhir : array_fill(0, count($nettoAkhir), Uang::Dari('1'));
+
+        return $this->pengalokasi->AlokasikanSebanding($biayaKirimNetto, $bobot);
+    }
+
     private function HitungDasarPajakBaris(Uang $nettoAkhir, array $kodeBaris, DataKalkulasi $data, bool $termasukPajak): BigRational
     {
         $netto = $this->UbahKeRasional($nettoAkhir);

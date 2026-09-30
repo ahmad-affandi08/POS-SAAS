@@ -252,6 +252,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "4-9000",
                         "Nama": "Pendapatan Lain",
                         "Tipe": "Pendapatan",
@@ -363,7 +370,8 @@
                     "SelisihHpp": "5-1100",
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
-                    "UangMukaPelanggan": "2-1400"
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100"
                 },
                 "Kategori": [
                     "Sembako",
@@ -777,6 +785,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "4-9000",
                         "Nama": "Pendapatan Lain",
                         "Tipe": "Pendapatan",
@@ -888,7 +903,8 @@
                     "SelisihHpp": "5-1100",
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
-                    "UangMukaPelanggan": "2-1400"
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100"
                 },
                 "Kategori": [
                     "Kopi",
@@ -1300,6 +1316,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "4-9000",
                         "Nama": "Pendapatan Lain",
                         "Tipe": "Pendapatan",
@@ -1411,7 +1434,8 @@
                     "SelisihHpp": "5-1100",
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
-                    "UangMukaPelanggan": "2-1400"
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100"
                 },
                 "Kategori": [
                     "Makanan",

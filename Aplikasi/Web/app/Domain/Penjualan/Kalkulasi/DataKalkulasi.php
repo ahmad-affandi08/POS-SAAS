@@ -14,10 +14,18 @@ use InvalidArgumentException;
  *
  * `tukarPoin` (F-16b, J-16.4) = nilai Rupiah penukaran poin loyalti: potongan pesanan sebelum pajak yang diterapkan
  * setelah potongan pesanan lain dan dibatasi sisa Subtotal.
+ *
+ * `biayaKirim` (F-17 bagian 3) = ongkir yang ditagih ke pembeli, **nominal** bukan persen karena datang dari tarif
+ * kurir/jarak. `diskonKirim` (mis. promo gratis ongkir F-16c) dipisah supaya gratis ongkir tetap terlihat: ongkir yang
+ * langsung ditulis nol tidak bisa dibedakan dari "tidak ada ongkir".
  */
 final readonly class DataKalkulasi
 {
     public BigDecimal $persenBiayaLayanan;
+
+    public Uang $biayaKirim;
+
+    public Uang $diskonKirim;
 
     /**
      * @param  list<DataBarisKalkulasi>  $baris
@@ -34,7 +42,22 @@ final readonly class DataKalkulasi
         public array $potonganPesanan = [],
         public array $pembayaran = [],
         public ?Uang $tukarPoin = null,
+        ?Uang $biayaKirim = null,
+        ?Uang $diskonKirim = null,
     ) {
+        $this->biayaKirim = $biayaKirim ?? Uang::Nol();
+        $this->diskonKirim = $diskonKirim ?? Uang::Nol();
+
+        if ($this->biayaKirim->BernilaiNegatif() || $this->diskonKirim->BernilaiNegatif()) {
+            throw new InvalidArgumentException('Biaya kirim dan diskon kirim tidak boleh negatif.');
+        }
+
+        // Diskon ongkir yang melebihi ongkirnya akan membuat ongkir netto negatif, dan itu bukan gratis ongkir
+        // melainkan toko membayar pembeli untuk dikirimi barang.
+        if ($this->diskonKirim->Bandingkan($this->biayaKirim) > 0) {
+            throw new InvalidArgumentException("Diskon kirim {$this->diskonKirim->KeString()} melebihi biaya kirim {$this->biayaKirim->KeString()}.");
+        }
+
         $this->persenBiayaLayanan = BigDecimal::of($persenBiayaLayanan);
 
         if ($this->persenBiayaLayanan->isNegative() || $this->persenBiayaLayanan->isGreaterThan(100)) {

@@ -46,6 +46,8 @@ use LogicException;
  * @property string $DiskonPoin
  * @property string $TotalDiskon
  * @property string $BiayaLayanan
+ * @property string $BiayaKirim ongkir yang ditagih ke pembeli (F-17 bagian 3)
+ * @property string $DiskonKirim potongan ongkir, mis. promo gratis ongkir F-16c; dipisah agar tetap terlihat di laporan
  * @property string $TotalPajak
  * @property string $TotalPajakEksklusif
  * @property string $Pembulatan
@@ -120,6 +122,8 @@ final class Penjualan extends ModelDasar
             'DiskonPoin' => 'decimal:2',
             'TotalDiskon' => 'decimal:2',
             'BiayaLayanan' => 'decimal:2',
+            'BiayaKirim' => 'decimal:2',
+            'DiskonKirim' => 'decimal:2',
             'TotalPajak' => 'decimal:2',
             'TotalPajakEksklusif' => 'decimal:2',
             'Pembulatan' => 'decimal:2',
