@@ -321,6 +321,8 @@ export type PropsDaftarKelompokPajak = {
             NamaJenisPajak: string;
             DasarPengenaan: string;
             LabelDasarPengenaan: string;
+            /** F-17 bagian 3: ongkir yang ditagih ke pembeli ikut DPP pajak ini. */
+            KenaBiayaKirim: boolean;
         }[];
         JumlahProduk: number;
     })[];
@@ -330,7 +332,7 @@ export type PropsDaftarKelompokPajak = {
     Izin: IzinKatalog;
 };
 export type PropsBuatKelompokPajak = Omit<PropsDaftarKelompokPajak, 'KelompokPajak' | 'Izin'>;
-// Form { Nama; Kategori: KategoriPajakProduk; Pajak: { KodeJenisPajak; DasarPengenaan }[] } → POST /kelola/kelompok-pajak, PUT /kelola/kelompok-pajak/{uuid}.
+// Form { Nama; Kategori: KategoriPajakProduk; Pajak: { KodeJenisPajak; DasarPengenaan; KenaBiayaKirim }[] } → POST /kelola/kelompok-pajak, PUT /kelola/kelompok-pajak/{uuid}.
 
 // E.9 Halaman Tim 3.
 export type FormPilihan = {

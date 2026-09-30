@@ -130,7 +130,7 @@ final class PenghitungPesanSendiri
                     $kode[] = $jenis['Kode'];
                 }
 
-                $pajakDokumen[$jenis['Kode']] ??= new DataPajakKalkulasi($jenis['Kode'], $tarif->tarif, $jenis['DasarPengenaan'], $tarif->pengaliDppPembilang, $tarif->pengaliDppPenyebut);
+                $pajakDokumen[$jenis['Kode']] ??= new DataPajakKalkulasi($jenis['Kode'], $tarif->tarif, $jenis['DasarPengenaan'], $tarif->pengaliDppPembilang, $tarif->pengaliDppPenyebut, $jenis['KenaBiayaKirim']);
                 $namaPajak[$jenis['Kode']] ??= $jenis['Nama'];
             }
 

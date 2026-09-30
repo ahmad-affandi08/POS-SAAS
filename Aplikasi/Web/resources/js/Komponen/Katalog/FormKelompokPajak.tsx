@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import { Button } from '@/Komponen/Ui/button';
@@ -13,7 +14,7 @@ type KelompokPajak = PropsDaftarKelompokPajak['KelompokPajak'][number];
 type IsianKelompokPajak = {
     Nama: string;
     Kategori: KategoriPajakProduk;
-    Pajak: { KodeJenisPajak: string; DasarPengenaan: string }[];
+    Pajak: { KodeJenisPajak: string; DasarPengenaan: string; KenaBiayaKirim: boolean }[];
 };
 
 const kodePpn = 'Ppn';
@@ -66,6 +67,7 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
             kelompok?.Pajak.map((item) => ({
                 KodeJenisPajak: item.KodeJenisPajak,
                 DasarPengenaan: item.DasarPengenaan,
+                KenaBiayaKirim: item.KenaBiayaKirim,
             })) ?? [],
     });
     const data = formulir.data;
@@ -148,52 +150,62 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                         transaksi.
                     </FieldDescription>
                     {data.Pajak.map((pajak, indeks) => (
-                        <div
-                            key={indeks}
-                            className="grid items-end gap-2 border-t border-garis pt-3 sm:grid-cols-[1fr_1fr_auto]"
-                        >
-                            <BidangPilihan
-                                label={`Jenis pajak ${String(indeks + 1)}`}
-                                nilai={pajak.KodeJenisPajak}
-                                kosong="Pilih jenis pajak"
-                                opsi={props.JenisPajak.map((item) => ({
-                                    Nilai: item.Kode,
-                                    Label: `${item.Nama} (${item.Cakupan})`,
-                                }))}
+                        <div key={indeks} className="border-t border-garis pt-3">
+                            <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                                <BidangPilihan
+                                    label={`Jenis pajak ${String(indeks + 1)}`}
+                                    nilai={pajak.KodeJenisPajak}
+                                    kosong="Pilih jenis pajak"
+                                    opsi={props.JenisPajak.map((item) => ({
+                                        Nilai: item.Kode,
+                                        Label: `${item.Nama} (${item.Cakupan})`,
+                                    }))}
+                                    saatBerubah={(nilai) =>
+                                        AturPajak(
+                                            data.Pajak.map((item, i) =>
+                                                i === indeks ? { ...item, KodeJenisPajak: nilai } : item,
+                                            ),
+                                        )
+                                    }
+                                    galat={galat[`Pajak.${String(indeks)}.KodeJenisPajak`]}
+                                    required
+                                />
+                                <BidangPilihan
+                                    label={`Dasar pengenaan ${String(indeks + 1)}`}
+                                    nilai={pajak.DasarPengenaan}
+                                    kosong="Pilih dasar pengenaan"
+                                    opsi={props.DasarPengenaan}
+                                    saatBerubah={(nilai) =>
+                                        AturPajak(
+                                            data.Pajak.map((item, i) =>
+                                                i === indeks ? { ...item, DasarPengenaan: nilai } : item,
+                                            ),
+                                        )
+                                    }
+                                    galat={galat[`Pajak.${String(indeks)}.DasarPengenaan`]}
+                                    required
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => AturPajak(data.Pajak.filter((_, i) => i !== indeks))}
+                                    className="h-8 pointer-coarse:h-11 text-destructive"
+                                    aria-label={`Hapus pajak ${String(indeks + 1)}`}
+                                >
+                                    Hapus
+                                </Button>
+                            </div>
+                            <KotakCentang
+                                label={`Ongkir kena pajak ${String(indeks + 1)}`}
+                                nilai={pajak.KenaBiayaKirim}
                                 saatBerubah={(nilai) =>
                                     AturPajak(
                                         data.Pajak.map((item, i) =>
-                                            i === indeks ? { ...item, KodeJenisPajak: nilai } : item,
+                                            i === indeks ? { ...item, KenaBiayaKirim: nilai } : item,
                                         ),
                                     )
                                 }
-                                galat={galat[`Pajak.${String(indeks)}.KodeJenisPajak`]}
-                                required
                             />
-                            <BidangPilihan
-                                label={`Dasar pengenaan ${String(indeks + 1)}`}
-                                nilai={pajak.DasarPengenaan}
-                                kosong="Pilih dasar pengenaan"
-                                opsi={props.DasarPengenaan}
-                                saatBerubah={(nilai) =>
-                                    AturPajak(
-                                        data.Pajak.map((item, i) =>
-                                            i === indeks ? { ...item, DasarPengenaan: nilai } : item,
-                                        ),
-                                    )
-                                }
-                                galat={galat[`Pajak.${String(indeks)}.DasarPengenaan`]}
-                                required
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => AturPajak(data.Pajak.filter((_, i) => i !== indeks))}
-                                className="h-8 pointer-coarse:h-11 text-destructive"
-                                aria-label={`Hapus pajak ${String(indeks + 1)}`}
-                            >
-                                Hapus
-                            </Button>
                         </div>
                     ))}
                     <p>
@@ -203,7 +215,11 @@ export default function FormKelompokPajak({ kelompok, props, saatSelesai, saatBa
                             onClick={() =>
                                 AturPajak([
                                     ...data.Pajak,
-                                    { KodeJenisPajak: '', DasarPengenaan: props.DasarPengenaan[0]?.Nilai ?? '' },
+                                    {
+                                        KodeJenisPajak: '',
+                                        DasarPengenaan: props.DasarPengenaan[0]?.Nilai ?? '',
+                                        KenaBiayaKirim: false,
+                                    },
                                 ])
                             }
                         >

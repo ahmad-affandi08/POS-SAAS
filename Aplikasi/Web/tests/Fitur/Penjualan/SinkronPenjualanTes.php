@@ -135,7 +135,7 @@ describe('F-07b penjualan lewat sinkron (Penjualan.Buat): diterima & tersimpan',
             ->and($detail[0]->TotalBaris)->toBe('85470.00')
             ->and($detail[0]->HppSatuan)->toBe('30000.000000')
             ->and($detail[0]->TotalHpp)->toBe('60000.00')
-            ->and($detail[0]->SnapshotPajak)->toEqual([['Kode' => 'Ppn', 'Tarif' => '12.000000', 'PengaliDppPembilang' => 11, 'PengaliDppPenyebut' => 12, 'DasarPengenaan' => 'Subtotal']])
+            ->and($detail[0]->SnapshotPajak)->toEqual([['Kode' => 'Ppn', 'Tarif' => '12.000000', 'PengaliDppPembilang' => 11, 'PengaliDppPenyebut' => 12, 'DasarPengenaan' => 'Subtotal', 'KenaBiayaKirim' => false]])
             ->and($detail[1]->JumlahPajak)->toBe('1100.00')
             ->and($detail[1]->TotalHpp)->toBe('0.00');
 
@@ -202,6 +202,132 @@ describe('F-07b penjualan lewat sinkron (Penjualan.Buat): diterima & tersimpan',
             ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::PendapatanBiayaLayanan, $o))->toBe('-'.$p->BiayaLayanan)
             ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::HutangPbjt, $o))->toBe('-'.$p->TotalPajak)
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('F-17 bagian 3 ongkir Rp 25.000 ikut DPP PPN (KenaBiayaKirim): kolom BiayaKirim/DiskonKirim & bagian ongkir per baris tersimpan, Cr Pendapatan Pengiriman kotor, jurnal seimbang', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanPanduanAwal::TerbitkanTarif('Ppn', null, '12.000000');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Beras Premium Kemasan Karung 5 Kilogram', '10', '60000', '75000.00');
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Minyak Goreng Kelapa Sawit Kemasan 2 Liter', '10', '40000', '50000.00');
+        BantuanPenjualan::AturProfilPajak($k, pkp: true);
+        BantuanPenjualan::PasangKelompokPajak('Uji kasir: ongkir kena PPN', ['Ppn' => ['Subtotal', true]], $beras, $minyak);
+
+        // Sama dengan vektor bersama RTL-ONGKIR-PPN-001: DPP (200.000 + 25.000) x 11/12 = 206.250, PPN 24.750.
+        $item = BantuanPenjualan::Item($k, [
+            'Pajak' => [['Ppn', '12.000000', 11, 12, 'Subtotal', true]],
+            'BiayaKirim' => '25000.00',
+            'DiskonKirim' => '0.00',
+            'Baris' => [
+                ['Produk' => $beras, 'Jumlah' => '2', 'Harga' => '75000.00'],
+                ['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '50000.00'],
+            ],
+            'Pembayaran' => [['Metode' => $k['Tunai'], 'Jumlah' => '250000.00']],
+        ]);
+
+        expect($item['Data']['Ringkasan'])->toBe(['Subtotal' => '200000.00', 'TotalPajak' => '24750.00', 'Pembulatan' => '0.00', 'TotalAkhir' => '249750.00', 'Kembalian' => '250.00']);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+        $detail = PenjualanDetail::query()->where('IdPenjualan', $p->Id)->orderBy('Urutan')->get();
+        $j = (int) $p->IdJurnal;
+        $o = $k['Outlet']->Id;
+
+        expect($p->BiayaKirim)->toBe('25000.00')
+            ->and($p->DiskonKirim)->toBe('0.00')
+            ->and($p->TotalAkhir)->toBe('249750.00')
+            ->and($p->PerluTinjauan)->toBeFalse()
+            // Ongkir dibagi sebanding netto 3:1, dan ikut TotalBaris.
+            ->and($detail->pluck('BiayaKirim')->all())->toBe(['18750.00', '6250.00'])
+            ->and($detail->pluck('TotalBaris')->all())->toBe(['187312.50', '62437.50'])
+            ->and(PenjualanPajak::query()->where('IdPenjualan', $p->Id)->value('Dpp'))->toBe('206250.00')
+            ->and(PenjualanPajak::query()->where('IdPenjualan', $p->Id)->value('KenaBiayaKirim'))->toBeTrue()
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::KasOutlet, $o))->toBe('249750.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::PendapatanPengiriman, $o))->toBe('-25000.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::Penjualan, $o))->toBe('-200000.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::PpnKeluaran, $o))->toBe('-24750.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::DiskonPenjualan, $o))->toBe('0.00')
+            ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('F-17 bagian 3 gratis ongkir: DiskonKirim = BiayaKirim, ongkir netto nol tidak menambah DPP, ongkir tetap kotor di Pendapatan Pengiriman dan diskonnya di Diskon Penjualan', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanPanduanAwal::TerbitkanTarif('Ppn', null, '12.000000');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Beras Premium Kemasan Karung 5 Kilogram', '10', '60000', '75000.00');
+        BantuanPenjualan::AturProfilPajak($k, pkp: true);
+        BantuanPenjualan::PasangKelompokPajak('Uji kasir: ongkir kena PPN', ['Ppn' => ['Subtotal', true]], $beras);
+
+        $item = BantuanPenjualan::Item($k, [
+            'Pajak' => [['Ppn', '12.000000', 11, 12, 'Subtotal', true]],
+            'BiayaKirim' => '25000.00',
+            'DiskonKirim' => '25000.00',
+            'Baris' => [['Produk' => $beras, 'Jumlah' => '2', 'Harga' => '75000.00']],
+            'Pembayaran' => [['Metode' => $k['Tunai'], 'Jumlah' => '166500.00']],
+        ]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+        $j = (int) $p->IdJurnal;
+        $o = $k['Outlet']->Id;
+
+        expect($p->BiayaKirim)->toBe('25000.00')
+            ->and($p->DiskonKirim)->toBe('25000.00')
+            // 150.000 x 11/12 x 12% = 16.500: ongkir netto nol tidak masuk DPP.
+            ->and($p->TotalPajak)->toBe('16500.00')
+            ->and($p->TotalAkhir)->toBe('166500.00')
+            ->and(PenjualanDetail::query()->where('IdPenjualan', $p->Id)->value('BiayaKirim'))->toBe('0.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::PendapatanPengiriman, $o))->toBe('-25000.00')
+            ->and(SaldoPeranJurnalPenjualan($j, PeranAkun::DiskonPenjualan, $o))->toBe('25000.00')
+            ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('F-17 bagian 3 ongkir tanpa KenaBiayaKirim: ongkir masuk TotalAkhir tetapi tidak menambah DPP pajak', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanPanduanAwal::TerbitkanTarif('Ppn', null, '12.000000');
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Beras Premium Kemasan Karung 5 Kilogram', '10', '60000', '75000.00');
+        BantuanPenjualan::AturProfilPajak($k, pkp: true);
+        BantuanPenjualan::PasangKelompokPajak('Uji kasir: ongkir bebas PPN', ['Ppn' => 'Subtotal'], $beras);
+
+        $item = BantuanPenjualan::Item($k, [
+            'Pajak' => [['Ppn', '12.000000', 11, 12]],
+            'BiayaKirim' => '25000.00',
+            'Baris' => [['Produk' => $beras, 'Jumlah' => '2', 'Harga' => '75000.00']],
+            'Pembayaran' => [['Metode' => $k['Tunai'], 'Jumlah' => '191500.00']],
+        ]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+
+        expect($p->TotalPajak)->toBe('16500.00')
+            ->and($p->TotalAkhir)->toBe('191500.00')
+            ->and($p->BiayaKirim)->toBe('25000.00')
+            ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('F-17 bagian 3: perangkat versi lama tanpa BiayaKirim tetap diterima dengan ongkir nol (CLAUDE.md #16); DiskonKirim melebihi BiayaKirim = DataTidakValid', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+
+        $lama = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $beras, 'Jumlah' => '1', 'Harga' => '38500.00']]]);
+        expect(array_key_exists('BiayaKirim', $lama['Data']))->toBeFalse();
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$lama]))->toBe([['Diterima', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(Penjualan::query()->where('Uuid', $lama['Uuid'])->value('BiayaKirim'))->toBe('0.00');
+
+        $tidakSah = BantuanPenjualan::Item($k, [
+            'BiayaKirim' => '10000.00',
+            'Baris' => [['Produk' => $beras, 'Jumlah' => '1', 'Harga' => '38500.00']],
+        ], ['DiskonKirim' => '15000.00']);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$tidakSah]))->toBe([['Gagal', 'DataTidakValid']]);
     });
 });
 

@@ -262,6 +262,8 @@ final class MesinPromo
             $potonganPesanan,
             $dasar->pembayaran,
             $dasar->tukarPoin,
+            $dasar->biayaKirim,
+            $dasar->diskonKirim,
         );
     }
 

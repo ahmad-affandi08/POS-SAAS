@@ -196,6 +196,8 @@ final class MesinPromo {
     ],
     pembayaran: dasar.pembayaran,
     tukarPoin: dasar.tukarPoin,
+    biayaKirim: dasar.biayaKirim,
+    diskonKirim: dasar.diskonKirim,
   );
 }
 

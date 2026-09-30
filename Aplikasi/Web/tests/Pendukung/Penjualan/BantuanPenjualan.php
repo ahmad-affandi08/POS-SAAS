@@ -129,8 +129,9 @@ final class BantuanPenjualan
 
     /**
      * Kelompok pajak tenant konteks aktif berisi jenis pajak (kode → dasar pengenaan), lalu dipasang ke produk.
+     * Nilai boleh `[dasar, kenaBiayaKirim]` untuk menandai ongkir ikut DPP pajak itu (F-17 bagian 3).
      *
-     * @param  array<string, string>  $pajak  kode jenis pajak → `Subtotal`|`SubtotalPlusLayanan`
+     * @param  array<string, string|array{0: string, 1: bool}>  $pajak  kode jenis pajak → `Subtotal`|`SubtotalPlusLayanan`
      */
     public static function PasangKelompokPajak(string $nama, array $pajak, Produk ...$produk): KelompokPajak
     {
@@ -138,11 +139,14 @@ final class BantuanPenjualan
         $kelompok = KelompokPajak::query()->create(['Nama' => $nama]);
         $urutan = 0;
 
-        foreach ($pajak as $kode => $dasar) {
+        foreach ($pajak as $kode => $nilai) {
+            [$dasar, $kenaBiayaKirim] = is_array($nilai) ? $nilai : [$nilai, false];
+
             KelompokPajakDetail::query()->create([
                 'IdKelompokPajak' => $kelompok->Id,
                 'IdJenisPajak' => JenisPajak::query()->where('Kode', $kode)->value('Id'),
                 'DasarPengenaan' => DasarPengenaanPajak::from($dasar),
+                'KenaBiayaKirim' => $kenaBiayaKirim,
                 'Urutan' => ++$urutan,
             ]);
         }
@@ -189,7 +193,8 @@ final class BantuanPenjualan
 
     /**
      * Item outbox `Penjualan.Buat` lengkap. `opsi`: `Baris`, `Pembayaran`, `Pajak` (list `[Kode, Tarif, Pembilang,
-     * Penyebut, DasarPengenaan?]`), `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`
+     * Penyebut, DasarPengenaan?, KenaBiayaKirim?]`), `BiayaKirim`, `DiskonKirim` (F-17 bagian 3),
+     * `HargaTermasukPajak`, `PersenBiayaLayanan`, `PembulatanTunai`
      * (`[Kelipatan, Arah]`), `DiskonManualPesanan`, `TukarPoin` (`['Poin' => 50, 'Nilai' => '5000']`), `Promo`
      * (`[['Promo' => Promo, 'Baris' => [indeks => '7700.00'], 'Pesanan' => '0.00']]`, potongan promo perangkat), `Kasir` (Pengguna), `Penyetuju` (Pengguna), `DibuatPada`; `timpa` =
      * kunci `Data` yang ditimpa setelah dihitung (misal `Ringkasan` palsu).
@@ -211,7 +216,10 @@ final class BantuanPenjualan
             'PengaliDppPembilang' => $p[2] ?? 1,
             'PengaliDppPenyebut' => $p[3] ?? 1,
             'DasarPengenaan' => $p[4] ?? DasarPengenaanPajak::Subtotal->value,
+            'KenaBiayaKirim' => (bool) ($p[5] ?? false),
         ], $opsi['Pajak'] ?? []));
+        $biayaKirim = isset($opsi['BiayaKirim']) ? (string) $opsi['BiayaKirim'] : null;
+        $diskonKirim = isset($opsi['DiskonKirim']) ? (string) $opsi['DiskonKirim'] : null;
 
         $baris = [];
 
@@ -245,7 +253,7 @@ final class BantuanPenjualan
         $tukarPoin = $opsi['TukarPoin'] ?? null;
         /** @var list<array{Promo: Promo, Baris?: array<int, string>, Pesanan?: string}> $promo */
         $promo = $opsi['Promo'] ?? [];
-        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan, $tukarPoin['Nilai'] ?? null, $promo);
+        $hasil = self::Hitung($hargaTermasukPajak, $persenLayanan, $pembulatan, $pajak, $baris, $opsi['DiskonManualPesanan'] ?? null, $pembayaranMasukan, $tukarPoin['Nilai'] ?? null, $promo, $biayaKirim, $diskonKirim);
         $pembayaran = [];
 
         foreach ($pembayaranMasukan as $p) {
@@ -266,7 +274,7 @@ final class BantuanPenjualan
             fn (array $p, array $b): array => ['Metode' => $p['Metode'], 'Jumlah' => $b['Jumlah']],
             $pembayaranMasukan,
             $pembayaran,
-        ), $tukarPoin['Nilai'] ?? null, $promo);
+        ), $tukarPoin['Nilai'] ?? null, $promo, $biayaKirim, $diskonKirim);
 
         /** @var Pengguna $kasir */
         $kasir = $opsi['Kasir'] ?? $k['Kasir'];
@@ -286,6 +294,8 @@ final class BantuanPenjualan
                 'PersenBiayaLayanan' => $persenLayanan,
                 'PembulatanTunai' => $pembulatan === null ? null : ['Kelipatan' => $pembulatan[0], 'Arah' => $pembulatan[1]],
                 'Pajak' => $pajak,
+                ...($biayaKirim === null ? [] : ['BiayaKirim' => $biayaKirim]),
+                ...($diskonKirim === null ? [] : ['DiskonKirim' => $diskonKirim]),
                 'Baris' => $baris,
                 'DiskonManualPesanan' => $opsi['DiskonManualPesanan'] ?? null,
                 'UuidPenyetujuDiskon' => $penyetuju?->Uuid,
@@ -451,7 +461,7 @@ final class BantuanPenjualan
      * @param  list<array{Promo: Promo, Baris?: array<int, string>, Pesanan?: string}>  $promo
      * @return array{Subtotal: Uang, TotalPajak: Uang, Pembulatan: Uang, TotalAkhir: Uang, Kembalian: Uang}
      */
-    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran, ?string $tukarPoin = null, array $promo = []): array
+    private static function Hitung(bool $termasukPajak, string $persenLayanan, ?array $pembulatan, array $pajak, array $baris, ?array $diskonPesanan, array $pembayaran, ?string $tukarPoin = null, array $promo = [], ?string $biayaKirim = null, ?string $diskonKirim = null): array
     {
         foreach ($promo as $p) {
             foreach ($p['Baris'] ?? [] as $i => $jumlah) {
@@ -478,6 +488,7 @@ final class BantuanPenjualan
                 DasarPengenaanPajak::from((string) $p['DasarPengenaan']),
                 (int) $p['PengaliDppPembilang'],
                 (int) $p['PengaliDppPenyebut'],
+                (bool) ($p['KenaBiayaKirim'] ?? false),
             ), $pajak),
             persenBiayaLayanan: $persenLayanan,
             pembulatanTunai: $pembulatan === null ? null : new DataPembulatanTunai($pembulatan[0], ArahPembulatan::from($pembulatan[1])),
@@ -490,6 +501,8 @@ final class BantuanPenjualan
                 ($p['Jumlah'] ?? null) === null ? null : Uang::Dari((string) $p['Jumlah']),
             ), $pembayaran),
             tukarPoin: $tukarPoin === null ? null : Uang::Dari($tukarPoin),
+            biayaKirim: $biayaKirim === null ? null : Uang::Dari($biayaKirim),
+            diskonKirim: $diskonKirim === null ? null : Uang::Dari($diskonKirim),
         ));
 
         return [

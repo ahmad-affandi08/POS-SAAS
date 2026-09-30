@@ -24,9 +24,13 @@ use Carbon\CarbonImmutable;
  * - Cr Penjualan / Pendapatan Jasa per baris = bruto − pajak inklusif baris.
  * - Cr Pendapatan Biaya Layanan; Cr pajak menurut kategori `JenisPajak` (PRD v1.46): kategori Ppn → PPN Keluaran,
  *   Pbjt & lainnya → Hutang PB1/PBJT (kode jenis pajak tidak dibaca sebagai string tetap).
+ * - Cr Pendapatan Pengiriman sebesar `BiayaKirim` **kotor** dan Dr Diskon Penjualan sebesar `DiskonKirim`
+ *   (F-17 bagian 3), bukan selisihnya: promo gratis ongkir adalah biaya promo yang harus terlihat di laporan, bukan
+ *   pendapatan yang tidak pernah dicatat.
  * - Pembulatan tunai ke Pendapatan Lain (kredit bila positif, debit bila negatif).
  * - J-07.2: Dr HPP / Cr persediaan per peran akun persediaan (dari hasil mutasi stok).
- * Seimbang karena TotalAkhir + TotalDiskon = Σ Bruto + BiayaLayanan + PajakEksklusif + Pembulatan.
+ * Seimbang karena TotalAkhir + TotalDiskon + DiskonKirim
+ * = Σ Bruto + BiayaLayanan + BiayaKirim + PajakEksklusif + Pembulatan.
  */
 final class PenyusunJurnalPenjualan
 {
@@ -54,6 +58,8 @@ final class PenyusunJurnalPenjualan
         }
 
         $baris[] = DataBarisJurnal::Kredit(PeranAkun::PendapatanBiayaLayanan, Uang::Dari($penjualan->BiayaLayanan), $idOutlet);
+        $baris[] = DataBarisJurnal::Kredit(PeranAkun::PendapatanPengiriman, Uang::Dari($penjualan->BiayaKirim), $idOutlet, 'Ongkir');
+        $baris[] = DataBarisJurnal::Debit(PeranAkun::DiskonPenjualan, Uang::Dari($penjualan->DiskonKirim), $idOutlet, 'Diskon ongkir');
 
         $akunPajak = $this->TentukanAkunPajak(array_map('strval', array_keys($pajak)));
 

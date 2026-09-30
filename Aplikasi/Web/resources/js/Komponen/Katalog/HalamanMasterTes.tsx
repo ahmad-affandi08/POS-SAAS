@@ -282,6 +282,7 @@ describe('Kelola/KelompokPajak (E.8)', () => {
                         NamaJenisPajak: 'PBJT makanan & minuman',
                         DasarPengenaan: 'SubtotalPlusLayanan',
                         LabelDasarPengenaan: 'Subtotal + biaya layanan',
+                        KenaBiayaKirim: false,
                     },
                 ],
                 JumlahProduk: 12,

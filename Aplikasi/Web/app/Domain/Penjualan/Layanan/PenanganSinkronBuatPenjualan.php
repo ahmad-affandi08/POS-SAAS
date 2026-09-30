@@ -30,7 +30,8 @@ use Illuminate\Validation\Rule;
 /**
  * Item outbox `Penjualan.Buat` (F-07b, PRD "Rincian F-07b"): penjualan lunas dari perangkat. Bentuk `Data`:
  * `{UuidShift, UuidPengguna, Nomor, Kanal?, DibuatPada, HargaTermasukPajak, PersenBiayaLayanan, PembulatanTunai
- * {Kelipatan, Arah}|null, Pajak [{Kode, Tarif, PengaliDppPembilang, PengaliDppPenyebut, DasarPengenaan}], Baris [{Uuid,
+ * {Kelipatan, Arah}|null, BiayaKirim?, DiskonKirim?, Pajak [{Kode, Tarif, PengaliDppPembilang, PengaliDppPenyebut,
+ * DasarPengenaan, KenaBiayaKirim?}], Baris [{Uuid,
  * UuidProduk, UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}],
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
@@ -82,6 +83,9 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'DibuatPada' => ['required', 'string', 'regex:'.ValidasiItemSinkron::POLA_WAKTU, 'date'],
             'HargaTermasukPajak' => ['required', 'boolean'],
             'PersenBiayaLayanan' => ['required', 'string', $persen],
+            // F-17 bagian 3: ongkir & diskonnya, `sometimes` supaya perangkat versi lama tetap diterima.
+            'BiayaKirim' => ['sometimes', 'nullable', 'string', $uang],
+            'DiskonKirim' => ['sometimes', 'nullable', 'string', $uang],
             'PembulatanTunai' => ['sometimes', 'nullable', 'array'],
             'PembulatanTunai.Kelipatan' => ['required_with:PembulatanTunai', 'integer', 'min:1', 'max:1000'],
             'PembulatanTunai.Arah' => ['required_with:PembulatanTunai', 'string', Rule::enum(ArahPembulatan::class)],
@@ -91,6 +95,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Pajak.*.PengaliDppPembilang' => ['required', 'integer', 'min:1', 'max:1000'],
             'Pajak.*.PengaliDppPenyebut' => ['required', 'integer', 'min:1', 'max:1000'],
             'Pajak.*.DasarPengenaan' => ['required', 'string', Rule::enum(DasarPengenaanPajak::class)],
+            // F-17 bagian 3: `sometimes` supaya perangkat versi lama yang belum mengirimnya tetap diterima.
+            'Pajak.*.KenaBiayaKirim' => ['sometimes', 'nullable', 'boolean'],
             'Baris' => ['required', 'array', 'min:1', 'max:500'],
             'Baris.*.Uuid' => ['required', 'string', 'ulid', 'distinct'],
             'Baris.*.UuidProduk' => ['required', 'string', 'ulid'],
@@ -182,6 +188,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 (int) $p['PengaliDppPembilang'],
                 (int) $p['PengaliDppPenyebut'],
                 DasarPengenaanPajak::from((string) $p['DasarPengenaan']),
+                (bool) ($p['KenaBiayaKirim'] ?? false),
             ), (array) ($valid['Pajak'] ?? []))),
             baris: self::AmbilBaris((array) $valid['Baris']),
             diskonManualPesanan: self::AmbilDiskon($valid['DiskonManualPesanan'] ?? null, 'DiskonManualPesanan'),
@@ -212,6 +219,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             uuidPesananOnline: is_string($valid['UuidPesananOnline'] ?? null) ? strtoupper($valid['UuidPesananOnline']) : null,
             uuidReservasi: is_string($valid['UuidReservasi'] ?? null) ? strtoupper($valid['UuidReservasi']) : null,
             laundry: is_array($valid['Laundry'] ?? null) ? self::AmbilLaundry($valid['Laundry']) : null,
+            biayaKirim: is_string($valid['BiayaKirim'] ?? null) ? Uang::Dari($valid['BiayaKirim']) : null,
+            diskonKirim: is_string($valid['DiskonKirim'] ?? null) ? Uang::Dari($valid['DiskonKirim']) : null,
         ));
     }
 

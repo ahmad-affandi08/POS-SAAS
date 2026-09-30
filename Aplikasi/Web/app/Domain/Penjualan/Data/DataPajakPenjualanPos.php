@@ -19,10 +19,13 @@ final readonly class DataPajakPenjualanPos
         public int $pengaliDppPembilang,
         public int $pengaliDppPenyebut,
         public DasarPengenaanPajak $dasarPengenaan,
+        // F-17 bagian 3: ongkir ikut DPP pajak ini. Paling akhir dan berbawaan supaya perangkat versi lama yang belum
+        // mengirimnya tetap diterima (CLAUDE.md #16).
+        public bool $kenaBiayaKirim = false,
     ) {}
 
     /**
-     * @return array{Kode: string, Tarif: string, PengaliDppPembilang: int, PengaliDppPenyebut: int, DasarPengenaan: string}
+     * @return array{Kode: string, Tarif: string, PengaliDppPembilang: int, PengaliDppPenyebut: int, DasarPengenaan: string, KenaBiayaKirim: bool}
      */
     public function KeLarik(): array
     {
@@ -32,6 +35,7 @@ final readonly class DataPajakPenjualanPos
             'PengaliDppPembilang' => $this->pengaliDppPembilang,
             'PengaliDppPenyebut' => $this->pengaliDppPenyebut,
             'DasarPengenaan' => $this->dasarPengenaan->value,
+            'KenaBiayaKirim' => $this->kenaBiayaKirim,
         ];
     }
 }

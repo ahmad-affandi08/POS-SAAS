@@ -39,7 +39,7 @@ final class SimpanKelompokPajak
     ) {}
 
     /**
-     * @param  list<array{KodeJenisPajak: string, DasarPengenaan: DasarPengenaanPajak}>  $pajak
+     * @param  list<array{KodeJenisPajak: string, DasarPengenaan: DasarPengenaanPajak, KenaBiayaKirim?: bool}>  $pajak
      */
     public function Jalankan(?KelompokPajak $kelompok, string $nama, KategoriPajakProduk $kategori, array $pajak): KelompokPajak
     {
@@ -76,8 +76,8 @@ final class SimpanKelompokPajak
             }
 
             $detailLama = KelompokPajakDetail::query()->where('IdKelompokPajak', $kelompok->Id)->orderBy('Urutan')->get()
-                ->map(fn (KelompokPajakDetail $detail): array => [$detail->IdJenisPajak, $detail->DasarPengenaan->value, $detail->Urutan])->all();
-            $detailBerubah = $detailLama !== array_map(fn (array $detail): array => [$detail['IdJenisPajak'], $detail['DasarPengenaan']->value, $detail['Urutan']], $detailBaru);
+                ->map(fn (KelompokPajakDetail $detail): array => [$detail->IdJenisPajak, $detail->DasarPengenaan->value, $detail->KenaBiayaKirim, $detail->Urutan])->all();
+            $detailBerubah = $detailLama !== array_map(fn (array $detail): array => [$detail['IdJenisPajak'], $detail['DasarPengenaan']->value, $detail['KenaBiayaKirim'], $detail['Urutan']], $detailBaru);
 
             if ($detailBerubah) {
                 KelompokPajakDetail::query()->where('IdKelompokPajak', $kelompok->Id)->delete();
@@ -104,8 +104,8 @@ final class SimpanKelompokPajak
     }
 
     /**
-     * @param  list<array{KodeJenisPajak: string, DasarPengenaan: DasarPengenaanPajak}>  $pajak
-     * @return list<array{IdJenisPajak: int, DasarPengenaan: DasarPengenaanPajak, Urutan: int}>
+     * @param  list<array{KodeJenisPajak: string, DasarPengenaan: DasarPengenaanPajak, KenaBiayaKirim?: bool}>  $pajak
+     * @return list<array{IdJenisPajak: int, DasarPengenaan: DasarPengenaanPajak, KenaBiayaKirim: bool, Urutan: int}>
      */
     private function SiapkanDetail(KategoriPajakProduk $kategori, array $pajak): array
     {
@@ -124,7 +124,7 @@ final class SimpanKelompokPajak
                 throw new PelanggaranAturanBisnis('KelompokPajakTidakSesuai', 'Jenis pajak yang sama tidak boleh dipilih dua kali.', "Pajak.{$i}.KodeJenisPajak");
             }
 
-            $hasil[] = ['IdJenisPajak' => $id, 'DasarPengenaan' => $detail['DasarPengenaan'], 'Urutan' => $i + 1];
+            $hasil[] = ['IdJenisPajak' => $id, 'DasarPengenaan' => $detail['DasarPengenaan'], 'KenaBiayaKirim' => (bool) ($detail['KenaBiayaKirim'] ?? false), 'Urutan' => $i + 1];
         }
 
         $adaPpn = in_array(self::KODE_PPN, $kode, true);
@@ -144,14 +144,14 @@ final class SimpanKelompokPajak
     }
 
     /**
-     * @return array{Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, DasarPengenaan: string}>}
+     * @return array{Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, DasarPengenaan: string, KenaBiayaKirim: bool}>}
      */
     private function Ringkas(KelompokPajak $kelompok): array
     {
         $pajak = [];
 
         foreach (KelompokPajakDetail::query()->where('IdKelompokPajak', $kelompok->Id)->with('JenisPajak')->orderBy('Urutan')->get() as $detail) {
-            $pajak[] = ['KodeJenisPajak' => $detail->JenisPajak->Kode, 'DasarPengenaan' => $detail->DasarPengenaan->value];
+            $pajak[] = ['KodeJenisPajak' => $detail->JenisPajak->Kode, 'DasarPengenaan' => $detail->DasarPengenaan->value, 'KenaBiayaKirim' => $detail->KenaBiayaKirim];
         }
 
         return ['Nama' => $kelompok->Nama, 'Kategori' => $kelompok->Kategori?->value, 'Pajak' => $pajak];

@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-3r379PkU.js";import{t}from"./PemilihTanggal-DGEM2CCX.js";var n=e();function r(e){return(0,n.jsx)(t,{...e})}export{r as t};

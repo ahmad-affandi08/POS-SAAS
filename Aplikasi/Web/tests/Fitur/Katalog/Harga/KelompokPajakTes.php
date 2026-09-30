@@ -102,7 +102,7 @@ describe('F-03 SimpanKelompokPajak (§12.2)', function (): void {
 
         $audit = LogAudit::query()->where('Peristiwa', 'kelompok-pajak.ubah')->sole();
         expect($audit->NilaiLama)->toEqual(['Nama' => 'Barang dagang', 'Kategori' => 'NonPajak', 'Pajak' => []])
-            ->and($audit->NilaiBaru)->toEqual(['Nama' => 'Barang kena PPN', 'Kategori' => 'KenaPpn', 'Pajak' => [['KodeJenisPajak' => 'Ppn', 'DasarPengenaan' => 'Subtotal']]]);
+            ->and($audit->NilaiBaru)->toEqual(['Nama' => 'Barang kena PPN', 'Kategori' => 'KenaPpn', 'Pajak' => [['KodeJenisPajak' => 'Ppn', 'DasarPengenaan' => 'Subtotal', 'KenaBiayaKirim' => false]]]);
     });
 
     it('perubahan detail saja memperbarui DiubahPada kelompok (untuk katalog POS delta)', function (): void {

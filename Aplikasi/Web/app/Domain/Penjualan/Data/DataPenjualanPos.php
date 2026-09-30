@@ -20,6 +20,7 @@ use Carbon\CarbonImmutable;
  * `uuidPesananPenjualan` (F-12 bagian 2): pre-order yang diambil lewat penjualan ini (DP dipakai lewat metode Uang Muka).
  * `uuidPesananOnline` (F-17 bagian 2): pesanan toko online yang sudah dibayar di muka lewat QRIS web dan ditagihkan
  * lewat penjualan ini; uang mukanya juga dipakai lewat metode Uang Muka. Salah satu dari keduanya, tidak pernah dua.
+ * `biayaKirim`/`diskonKirim` (F-17 bagian 3): ongkir yang ditagih ke pembeli dan diskonnya, keduanya kotor.
  */
 final readonly class DataPenjualanPos
 {
@@ -63,5 +64,9 @@ final readonly class DataPenjualanPos
         // NamaPelanggan?, NoHp?}` yang dibuat bersama penjualan ini.
         /** @var array{JenisLayanan: string, Berat?: string|null, Item?: list<array{Nama: string, Jumlah: int}>|null, Parfum?: string|null, Catatan?: string|null, EstimasiSelesaiPada?: string|null, NamaPelanggan?: string|null, NoHp?: string|null}|null */
         public ?array $laundry = null,
+        // F-17 bagian 3: ongkir yang ditagih ke pembeli dan diskonnya (mis. promo gratis ongkir); bawaan nol supaya
+        // perangkat versi lama tetap diterima (CLAUDE.md #16).
+        public ?Uang $biayaKirim = null,
+        public ?Uang $diskonKirim = null,
     ) {}
 }

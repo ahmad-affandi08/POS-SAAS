@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Aksi;
 use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
+use App\Domain\Akuntansi\Layanan\PenyediaAkunPeran;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
@@ -158,6 +159,7 @@ final class TerimaPenjualanPos
         private readonly PenautTagihanQrisPenjualan $penautQris,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
+        private readonly PenyediaAkunPeran $penyediaAkun,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -563,6 +565,13 @@ final class TerimaPenjualanPos
             $pajak[$kode] = $rincian->jumlah;
         }
 
+        // F-17 bagian 3: Pendapatan Pengiriman ditambahkan setelah banyak tenant menerapkan template sektornya, jadi
+        // akun & pemetaannya dipastikan ada sebelum dipakai — hanya bila memang ada ongkir, supaya penjualan biasa
+        // tidak menyentuh tabel akun sama sekali.
+        if (! Uang::Dari($penjualan->BiayaKirim)->BernilaiNol()) {
+            $this->penyediaAkun->Pastikan(PeranAkun::PendapatanPengiriman, '4-3100', 'Pendapatan Pengiriman');
+        }
+
         $jurnal = $this->penyusunJurnal->Susun($penjualan, $pendapatan, $pajak, $bersih, $perubahanPersediaan);
         $adaNilai = array_filter($jurnal->baris, fn ($b): bool => ! $b->debit->BernilaiNol() || ! $b->kredit->BernilaiNol()) !== [];
 
@@ -791,6 +800,7 @@ final class TerimaPenjualanPos
                     $p->dasarPengenaan,
                     $p->pengaliDppPembilang,
                     $p->pengaliDppPenyebut,
+                    $p->kenaBiayaKirim,
                 ), $data->pajak)),
                 persenBiayaLayanan: $data->persenBiayaLayanan,
                 pembulatanTunai: $data->pembulatanTunai,
@@ -800,6 +810,8 @@ final class TerimaPenjualanPos
                     $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tunai,
                     $b->jumlah,
                 ), $data->pembayaran)),
+                biayaKirim: $data->biayaKirim,
+                diskonKirim: $data->diskonKirim,
             );
             $hasilDasar = $this->mesin->Hitung($dasar);
             $hasil = $this->mesin->Hitung(MesinPromo::SusunData($dasar, $promoPerangkat));
@@ -1014,6 +1026,8 @@ final class TerimaPenjualanPos
             'DiskonPoin' => $hasil->diskonPoin->KeString(),
             'TotalDiskon' => $hasil->totalDiskon->KeString(),
             'BiayaLayanan' => $hasil->biayaLayanan->KeString(),
+            'BiayaKirim' => $hasil->biayaKirim->KeString(),
+            'DiskonKirim' => $hasil->diskonKirim->KeString(),
             'TotalPajak' => $hasil->totalPajak->KeString(),
             'TotalPajakEksklusif' => $hasil->totalPajakEksklusif->KeString(),
             'Pembulatan' => $hasil->pembulatan->KeString(),
@@ -1070,6 +1084,7 @@ final class TerimaPenjualanPos
                 'JumlahDiskon' => $h->diskon->KeString(),
                 'JumlahDiskonPesanan' => $h->diskonPesanan->KeString(),
                 'BiayaLayanan' => $h->biayaLayanan->KeString(),
+                'BiayaKirim' => $h->biayaKirim->KeString(),
                 'JumlahPajak' => $h->pajak->KeString(),
                 'PajakEksklusif' => $h->pajakEksklusif->KeString(),
                 'TotalBaris' => $h->totalBaris->KeString(),
@@ -1094,6 +1109,7 @@ final class TerimaPenjualanPos
                 'PengaliDppPembilang' => $p->pengaliDppPembilang,
                 'PengaliDppPenyebut' => $p->pengaliDppPenyebut,
                 'DasarPengenaan' => $p->dasarPengenaan,
+                'KenaBiayaKirim' => $p->kenaBiayaKirim,
                 'Dpp' => $rincian->dpp->KeString(),
                 'Jumlah' => $rincian->jumlah->KeString(),
             ]);

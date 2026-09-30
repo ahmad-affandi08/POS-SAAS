@@ -19,7 +19,7 @@ use Carbon\CarbonImmutable;
 final class DaftarKelompokPajak
 {
     /**
-     * @return list<array{Nama: string, Pajak: list<array{KodeJenisPajak: string, NamaJenisPajak: string, DasarPengenaan: string, LabelDasarPengenaan: string}>}>
+     * @return list<array{Nama: string, Pajak: list<array{KodeJenisPajak: string, NamaJenisPajak: string, DasarPengenaan: string, LabelDasarPengenaan: string, KenaBiayaKirim: bool}>}>
      */
     public function Ambil(): array
     {
@@ -30,6 +30,7 @@ final class DaftarKelompokPajak
                 'NamaJenisPajak' => $detail->JenisPajak->Nama,
                 'DasarPengenaan' => $detail->DasarPengenaan->value,
                 'LabelDasarPengenaan' => $detail->DasarPengenaan->AmbilLabel(),
+                'KenaBiayaKirim' => $detail->KenaBiayaKirim,
             ])->all()),
         ])->all());
     }
@@ -73,6 +74,7 @@ final class DaftarKelompokPajak
                     'NamaJenisPajak' => $detail->JenisPajak->Nama,
                     'DasarPengenaan' => $detail->DasarPengenaan->value,
                     'LabelDasarPengenaan' => $detail->DasarPengenaan->AmbilLabel(),
+                    'KenaBiayaKirim' => $detail->KenaBiayaKirim,
                 ])->all()),
                 'JumlahProduk' => $jumlahProduk[$k->Id] ?? 0,
             ])->all()),
@@ -101,7 +103,10 @@ final class DaftarKelompokPajak
      * `DiubahPada` kelompoknya). Kelompok pajak tidak pernah dihapus. `Pajak[].Kategori` (PRD v1.46, kunci tambahan)
      * = kategori jenis pajak `Ppn`/`Pbjt`/`Lainnya` untuk syarat profil pajak outlet di aplikasi.
      *
-     * @return list<array{Uuid: string, Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, Kategori: string, DasarPengenaan: string, Urutan: int}>}>
+     * `Pajak[].KenaBiayaKirim` (F-17 bagian 3) = ongkir ikut DPP pajak itu; kunci tambahan, perangkat versi lama yang
+     * belum membacanya tetap jalan (CLAUDE.md #16).
+     *
+     * @return list<array{Uuid: string, Nama: string, Kategori: string|null, Pajak: list<array{KodeJenisPajak: string, Kategori: string, DasarPengenaan: string, KenaBiayaKirim: bool, Urutan: int}>}>
      */
     public function AmbilUntukPos(?CarbonImmutable $sejak): array
     {
@@ -118,6 +123,7 @@ final class DaftarKelompokPajak
                     'KodeJenisPajak' => $detail->JenisPajak->Kode,
                     'Kategori' => $detail->JenisPajak->Kategori->value,
                     'DasarPengenaan' => $detail->DasarPengenaan->value,
+                    'KenaBiayaKirim' => $detail->KenaBiayaKirim,
                     'Urutan' => $detail->Urutan,
                 ])->all()),
             ])->all());
@@ -196,7 +202,7 @@ final class DaftarKelompokPajak
      * pesan sendiri) = nama jenis pajak dan dasar pengenaan detail kelompok.
      *
      * @param  list<int>  $idKelompok
-     * @return array<int, list<array{Kode: string, Kategori: KategoriJenisPajak, Nama: string, DasarPengenaan: DasarPengenaanPajak}>>
+     * @return array<int, list<array{Kode: string, Kategori: KategoriJenisPajak, Nama: string, DasarPengenaan: DasarPengenaanPajak, KenaBiayaKirim: bool}>>
      */
     public function AmbilJenisPajakPerKelompok(array $idKelompok): array
     {
@@ -213,7 +219,7 @@ final class DaftarKelompokPajak
             ->get();
 
         foreach ($detail as $d) {
-            $hasil[$d->IdKelompokPajak][] = ['Kode' => $d->JenisPajak->Kode, 'Kategori' => $d->JenisPajak->Kategori, 'Nama' => $d->JenisPajak->Nama, 'DasarPengenaan' => $d->DasarPengenaan];
+            $hasil[$d->IdKelompokPajak][] = ['Kode' => $d->JenisPajak->Kode, 'Kategori' => $d->JenisPajak->Kategori, 'Nama' => $d->JenisPajak->Nama, 'DasarPengenaan' => $d->DasarPengenaan, 'KenaBiayaKirim' => $d->KenaBiayaKirim];
         }
 
         return $hasil;
