@@ -1,49 +1,120 @@
-import { router } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { Link, router } from '@inertiajs/react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 
+import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import Panel from '@/Komponen/Kelola/Panel';
+import { TautanEkspor } from '@/Komponen/Laporan/NavigasiTab';
+import TabKartuStok from '@/Komponen/Persediaan/TabKartuStok';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { Input } from '@/Komponen/Ui/input';
 import { Label } from '@/Komponen/Ui/label';
+import { AmbilJenisLabelStatusNomorSeri } from '@/Pustaka/FormatPersediaan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { BarisRiwayatNomorSeri, PropsNomorSeri, UnitNomorSeri } from '@/Tipe/Persediaan';
 
-const alamat = '/kelola/persediaan/nomor-seri';
+const alamat = '/kelola/persediaan/kartu-stok/nomor-seri';
 
-const kolomUnit: KolomTabel<UnitNomorSeri>[] = [
-    {
-        id: 'Nomor',
-        accessorKey: 'Nomor',
-        header: 'Nomor seri',
-        meta: { label: 'Nomor seri', prioritas: 'utama', wajib: true },
-        cell: ({ row }) => <span className="font-mono">{row.original.Nomor}</span>,
-    },
-    {
-        id: 'NamaProduk',
-        accessorKey: 'NamaProduk',
-        header: 'Produk',
-        meta: { label: 'Produk', prioritas: 'utama' },
-    },
-    {
-        id: 'LabelStatus',
-        accessorKey: 'LabelStatus',
-        header: 'Status',
-        meta: { label: 'Status', prioritas: 'penting' },
-    },
-    {
-        id: 'Keterangan',
-        header: 'Keterangan',
-        enableSorting: false,
-        meta: { label: 'Keterangan', prioritas: 'rendah' },
-        cell: ({ row: { original: u } }) =>
-            u.Status === 'Terjual' && u.NomorPenjualan
-                ? `Terjual ${u.TanggalJual ? FormatTanggal(u.TanggalJual) : ''} · ${u.NomorPenjualan}`
-                : (u.NamaGudang ?? '—'),
-    },
-];
+/** Query halaman dari saringan yang terisi saja (URL bersih, bisa dibagikan). */
+export function BuatQueryNomorSeri(saring: {
+    Cari?: string;
+    Status?: string;
+    Produk?: string;
+    Unit?: string;
+}): Record<string, string> {
+    const query: Record<string, string> = {};
+
+    if (saring.Cari) {
+        query.cari = saring.Cari;
+    }
+
+    if (saring.Status) {
+        query.status = saring.Status;
+    }
+
+    if (saring.Produk) {
+        query.produk = saring.Produk;
+    }
+
+    if (saring.Unit) {
+        query.unit = saring.Unit;
+    }
+
+    return query;
+}
+
+/** "Terjual 7 Oktober 2026 · INV/…" untuk unit terjual, selain itu lokasi stok. */
+function KeteranganUnit(u: UnitNomorSeri): string {
+    if (u.Status === 'Terjual' && u.NomorPenjualan) {
+        return `Terjual ${u.TanggalJual ? FormatTanggal(u.TanggalJual) : ''} · ${u.NomorPenjualan}`.replace('  ', ' ');
+    }
+
+    return u.NamaGudang ?? '—';
+}
+
+function LabelStatusUnit({ unit }: { unit: UnitNomorSeri }) {
+    return <LabelStatus jenis={AmbilJenisLabelStatusNomorSeri(unit.Status)} teks={unit.LabelStatus} />;
+}
+
+function LabelGaransi({ unit }: { unit: UnitNomorSeri }) {
+    if (unit.GaransiSampai === null || unit.StatusGaransi === null) {
+        return <span className="text-teks-sekunder">—</span>;
+    }
+
+    return (
+        <span className="inline-flex flex-wrap items-center gap-2">
+            <span>{FormatTanggal(unit.GaransiSampai)}</span>
+            <LabelStatus
+                jenis={unit.StatusGaransi === 'Aktif' ? 'sukses' : 'bahaya'}
+                teks={unit.StatusGaransi === 'Aktif' ? 'Masih berlaku' : 'Sudah berakhir'}
+            />
+        </span>
+    );
+}
+
+function BuatKolomUnit(): KolomTabel<UnitNomorSeri>[] {
+    return [
+        {
+            id: 'Nomor',
+            accessorKey: 'Nomor',
+            header: 'Nomor seri',
+            meta: { label: 'Nomor seri', prioritas: 'utama', wajib: true },
+            cell: ({ row }) => <span className="font-mono">{row.original.Nomor}</span>,
+        },
+        {
+            id: 'NamaProduk',
+            accessorKey: 'NamaProduk',
+            header: 'Produk',
+            meta: { label: 'Produk', prioritas: 'utama' },
+        },
+        {
+            id: 'LabelStatus',
+            accessorKey: 'LabelStatus',
+            header: 'Status',
+            meta: { label: 'Status', prioritas: 'penting' },
+            cell: ({ row }) => <LabelStatusUnit unit={row.original} />,
+        },
+        {
+            id: 'Keterangan',
+            header: 'Keterangan',
+            enableSorting: false,
+            meta: { label: 'Keterangan', prioritas: 'penting' },
+            cell: ({ row }) => KeteranganUnit(row.original),
+        },
+        {
+            id: 'GaransiSampai',
+            accessorKey: 'GaransiSampai',
+            header: 'Garansi sampai',
+            meta: { label: 'Garansi sampai', prioritas: 'rendah' },
+            cell: ({ row }) => <LabelGaransi unit={row.original} />,
+        },
+    ];
+}
+
+const kolomUnit = BuatKolomUnit();
 
 const kolomRiwayat: KolomTabel<BarisRiwayatNomorSeri>[] = [
     {
@@ -80,20 +151,65 @@ const kolomRiwayat: KolomTabel<BarisRiwayatNomorSeri>[] = [
     },
 ];
 
+function Butir({ judul, children }: { judul: string; children: ReactNode }) {
+    return (
+        <div className="min-w-0">
+            <dt className="text-label text-teks-sekunder">{judul}</dt>
+            <dd className="text-teks-utama wrap-anywhere">{children}</dd>
+        </div>
+    );
+}
+
+const tautanKelas = 'font-semibold text-brand underline';
+
 /**
- * F-05h: cari nomor seri/IMEI (potongan nomor cukup) lalu pilih satu unit untuk melihat riwayatnya, dari masuk ke
- * stok sampai terjual atau diretur. Dibaca dari buku stok.
+ * F-05h (PRD v3.13): cari nomor seri/IMEI atau produk berseri, saring status, lalu lihat satu unit: produk, lokasi atau
+ * penjualan & pembelinya, garansi, dan riwayatnya dari masuk ke stok sampai terjual atau diretur. Dibaca dari buku stok.
+ * Satu hasil langsung dibuka (alur pindai IMEI → Enter). Rumah menunya tab di "Kartu stok" (D-27).
  */
-export default function HalamanNomorSeri({ Saring, Hasil, Detail, BatasHasil }: PropsNomorSeri) {
+export default function HalamanNomorSeri({
+    Saring,
+    Produk,
+    Hasil,
+    TotalHasil,
+    Detail,
+    BatasHasil,
+    OpsiStatus,
+    Izin,
+}: PropsNomorSeri) {
     const [cari, AturCari] = useState(Saring.Cari);
+    const [status, AturStatus] = useState(Saring.Status);
+    const petaDetail = useRef<HTMLDivElement>(null);
+    const uuidDetail = Detail?.Unit.Uuid ?? '';
+    const adaSaring = Saring.Cari !== '' || Saring.Produk !== '';
+
+    // Saat satu unit dibuka (klik baris atau hasil tunggal), bawa pandangan ke riwayatnya: di layar sempit ia di bawah tabel.
+    useEffect(() => {
+        if (uuidDetail !== '') {
+            petaDetail.current?.scrollIntoView?.({ block: 'start' });
+        }
+    }, [uuidDetail]);
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
-        router.get(alamat, cari.trim() === '' ? {} : { cari: cari.trim() }, { preserveScroll: true });
+        router.get(alamat, BuatQueryNomorSeri({ Cari: cari.trim(), Status: status, Produk: Saring.Produk }), {
+            preserveScroll: true,
+        });
     };
 
+    const queryEkspor = BuatQueryNomorSeri({ Cari: Saring.Cari, Status: Saring.Status, Produk: Saring.Produk });
+    const unit = Detail?.Unit;
+    const queryKartuStok = unit
+        ? new URLSearchParams({
+              produk: unit.UuidProduk,
+              ...(unit.UuidGudang ? { gudang: unit.UuidGudang } : {}),
+          }).toString()
+        : '';
+
     return (
-        <TataLetakAplikasi judul="Nomor seri">
+        <TataLetakAplikasi judul="Kartu stok">
+            <TabKartuStok aktif="nomor-seri" uuidProduk={Saring.Produk || null} />
+
             <form
                 onSubmit={Kirim}
                 className="flex flex-wrap items-end gap-2"
@@ -102,32 +218,72 @@ export default function HalamanNomorSeri({ Saring, Hasil, Detail, BatasHasil }: 
             >
                 <div className="flex min-w-64 flex-1 flex-col gap-1">
                     <Label htmlFor="cari-nomor-seri" className="text-label font-semibold text-teks-utama">
-                        Nomor seri / IMEI
+                        Nomor seri / IMEI atau nama produk
                     </Label>
                     <Input
                         id="cari-nomor-seri"
                         value={cari}
                         onChange={(e) => AturCari(e.target.value)}
-                        placeholder="Ketik atau pindai sebagian nomor"
+                        placeholder="Pindai atau ketik sebagian nomor, atau nama produk"
                         autoFocus
+                        autoComplete="off"
+                    />
+                </div>
+                <div className="w-full sm:w-52">
+                    <BidangPilihan
+                        label="Status"
+                        nilai={status}
+                        kosong="Semua status"
+                        opsi={[
+                            { Nilai: '', Label: 'Semua status' },
+                            ...OpsiStatus.map((o) => ({ Nilai: o.Nilai, Label: o.Label })),
+                        ]}
+                        saatBerubah={AturStatus}
                     />
                 </div>
                 <Tombol type="submit">Cari</Tombol>
             </form>
 
-            {Saring.Cari === '' ? (
+            {Produk ? (
+                <p className="flex flex-wrap items-center gap-2 text-label text-teks-sekunder">
+                    Hanya unit produk{' '}
+                    <span className="font-semibold text-teks-utama">
+                        {Produk.Nama}
+                        {Produk.Sku ? ` (${Produk.Sku})` : ''}
+                    </span>
+                    .
+                    <Link
+                        href={alamat}
+                        data={BuatQueryNomorSeri({ Cari: Saring.Cari, Status: Saring.Status })}
+                        className={tautanKelas}
+                    >
+                        Tampilkan semua produk
+                    </Link>
+                </p>
+            ) : null}
+
+            {!adaSaring ? (
                 <p className="text-label text-teks-sekunder">
-                    Masukkan nomor seri atau IMEI untuk melihat status dan riwayatnya: kapan masuk, kapan dijual, dan
-                    apakah pernah diretur.
+                    Masukkan nomor seri atau IMEI untuk melihat status dan riwayatnya: kapan masuk, kapan dijual, kepada
+                    siapa, sampai kapan garansinya, dan apakah pernah diretur. Nama produk menampilkan semua unitnya;
+                    sempitkan dengan status, misalnya hanya yang tersedia.
                 </p>
             ) : (
                 <section aria-labelledby="judul-hasil-seri" className="flex flex-col gap-2">
-                    <h2 id="judul-hasil-seri" className="text-subjudul font-semibold text-teks-utama">
-                        Hasil pencarian ({String(Hasil.length)})
-                    </h2>
-                    {Hasil.length >= BatasHasil ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 id="judul-hasil-seri" className="text-subjudul font-semibold text-teks-utama">
+                            Hasil pencarian ({String(TotalHasil)})
+                        </h2>
+                        {TotalHasil > 0 ? (
+                            <span className="ml-auto">
+                                <TautanEkspor alamat={`${alamat}/ekspor`} query={queryEkspor} label="Ekspor CSV" />
+                            </span>
+                        ) : null}
+                    </div>
+                    {TotalHasil > BatasHasil ? (
                         <p className="text-label text-teks-sekunder">
-                            Menampilkan {String(BatasHasil)} nomor pertama. Persempit pencarian untuk hasil lain.
+                            Menampilkan {String(BatasHasil)} dari {String(TotalHasil)} nomor. Persempit pencarian atau
+                            saring status untuk hasil lain; ekspor CSV memuat lebih banyak.
                         </p>
                     ) : null}
                     <TabelData
@@ -138,45 +294,89 @@ export default function HalamanNomorSeri({ Saring, Hasil, Detail, BatasHasil }: 
                         ambilIdBaris={(u) => u.Uuid}
                         cari={false}
                         alamatDetail={(u) =>
-                            `${alamat}?${new URLSearchParams({ cari: Saring.Cari, unit: u.Uuid }).toString()}`
+                            `${alamat}?${new URLSearchParams(BuatQueryNomorSeri({ ...Saring, Unit: u.Uuid })).toString()}`
                         }
                         kosong={{ ilustrasi: true, judul: 'Nomor seri tidak ditemukan.' }}
                     />
                 </section>
             )}
 
-            {Detail ? (
-                <Panel judul={`Riwayat ${Detail.Unit.Nomor}`}>
-                    <dl className="grid gap-3 sm:grid-cols-3">
-                        <div>
-                            <dt className="text-label text-teks-sekunder">Produk</dt>
-                            <dd className="text-teks-utama">{Detail.Unit.NamaProduk}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-label text-teks-sekunder">Status</dt>
-                            <dd className="text-teks-utama">{Detail.Unit.LabelStatus}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-label text-teks-sekunder">
-                                {Detail.Unit.Status === 'Terjual' ? 'Terjual' : 'Lokasi stok'}
-                            </dt>
-                            <dd className="text-teks-utama">
-                                {Detail.Unit.Status === 'Terjual' && Detail.Unit.NomorPenjualan
-                                    ? `${Detail.Unit.TanggalJual ? FormatTanggal(Detail.Unit.TanggalJual) : ''} · ${Detail.Unit.NomorPenjualan}`
-                                    : (Detail.Unit.NamaGudang ?? '—')}
-                            </dd>
-                        </div>
-                    </dl>
-                    <TabelData
-                        id="riwayat-nomor-seri"
-                        label="Riwayat nomor seri"
-                        kolom={kolomRiwayat}
-                        sumber={{ mode: 'lokal', data: Detail.Riwayat }}
-                        ambilIdBaris={(b) => `${b.Tanggal}-${b.Jenis}-${b.NomorDokumen ?? ''}-${b.Arah}`}
-                        cari={false}
-                        kosong={{ ilustrasi: true, judul: 'Belum ada riwayat.' }}
-                    />
-                </Panel>
+            {Detail && unit ? (
+                <div ref={petaDetail} className="scroll-mt-20">
+                    <Panel
+                        judul={`Riwayat ${unit.Nomor}`}
+                        aksi={<LabelStatusUnit unit={unit} />}
+                        keterangan={unit.Sku ? `${unit.NamaProduk} · ${unit.Sku}` : unit.NamaProduk}
+                    >
+                        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <Butir judul="Produk">
+                                {Izin.Produk ? (
+                                    <Link href={`/kelola/produk/${unit.UuidProduk}`} className={tautanKelas}>
+                                        {unit.NamaProduk}
+                                    </Link>
+                                ) : (
+                                    unit.NamaProduk
+                                )}
+                            </Butir>
+                            <Butir judul={unit.Status === 'Terjual' ? 'Terjual' : 'Lokasi stok'}>
+                                {unit.Status === 'Terjual' && unit.NomorPenjualan ? (
+                                    <>
+                                        {unit.TanggalJual ? `${FormatTanggal(unit.TanggalJual)} · ` : ''}
+                                        {Izin.Penjualan && unit.UuidPenjualan ? (
+                                            <Link
+                                                href={`/kelola/penjualan/${unit.UuidPenjualan}`}
+                                                className={`${tautanKelas} font-mono`}
+                                            >
+                                                {unit.NomorPenjualan}
+                                            </Link>
+                                        ) : (
+                                            <span className="font-mono">{unit.NomorPenjualan}</span>
+                                        )}
+                                    </>
+                                ) : (
+                                    (unit.NamaGudang ?? '—')
+                                )}
+                            </Butir>
+                            {unit.Status === 'Terjual' ? (
+                                <Butir judul="Pembeli">
+                                    {unit.NamaPelanggan ? (
+                                        Izin.Pelanggan && unit.UuidPelanggan ? (
+                                            <Link
+                                                href={`/kelola/pelanggan/${unit.UuidPelanggan}`}
+                                                className={tautanKelas}
+                                            >
+                                                {unit.NamaPelanggan}
+                                            </Link>
+                                        ) : (
+                                            unit.NamaPelanggan
+                                        )
+                                    ) : (
+                                        <span className="text-teks-sekunder">Tanpa data pelanggan</span>
+                                    )}
+                                </Butir>
+                            ) : null}
+                            {unit.Status === 'Terjual' && unit.MasaGaransiBulan !== null ? (
+                                <Butir judul={`Garansi ${String(unit.MasaGaransiBulan)} bulan`}>
+                                    <LabelGaransi unit={unit} />
+                                </Butir>
+                            ) : null}
+                        </dl>
+                        <TabelData
+                            id="riwayat-nomor-seri"
+                            label="Riwayat nomor seri"
+                            kolom={kolomRiwayat}
+                            sumber={{ mode: 'lokal', data: Detail.Riwayat }}
+                            ambilIdBaris={(b) => `${b.Tanggal}-${b.Jenis}-${b.NomorDokumen ?? ''}-${b.Arah}`}
+                            cari={false}
+                            kosong={{ ilustrasi: true, judul: 'Belum ada riwayat.' }}
+                        />
+                        <p className="text-label text-teks-sekunder">
+                            <Link href={`/kelola/persediaan/kartu-stok?${queryKartuStok}`} className={tautanKelas}>
+                                Lihat kartu stok produk ini
+                            </Link>
+                        </p>
+                    </Panel>
+                </div>
             ) : null}
         </TataLetakAplikasi>
     );

@@ -1,1 +1,0 @@
-import{o as e,t}from"./jsx-runtime-3r379PkU.js";import{t as n}from"./TabTautan-Bv7QRAh2.js";var r=t();function i({label:t,daftarTab:i}){let{url:a}=e();return(0,r.jsx)(n,{label:t,tab:i.map(e=>({...e,aktif:a.startsWith(e.href)}))})}export{i as t};

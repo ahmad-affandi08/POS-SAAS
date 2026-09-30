@@ -108,4 +108,28 @@ describe('Pencarian cepat di kepala halaman', () => {
         // Tidak ada alamat kembar walau halaman Pengaturan juga ada di menu samping.
         expect(alamat.filter((href, i) => alamat.indexOf(href) !== i)).toEqual([]);
     });
+    it('riwayat nomor seri (tab Kartu stok) ikut Ctrl+K selama Kartu stok terlihat, lengkap dengan sumber data nomor', () => {
+        const aksesStok = { Pemilik: false, Izin: ['persediaan.lihat'] };
+        const { halaman, sumber } = SusunPencarian(SaringMenuTerlihat(aksesStok), aksesStok);
+
+        expect(halaman.find((h) => h.href === '/kelola/persediaan/kartu-stok/nomor-seri')?.label).toBe(
+            'Riwayat nomor seri / IMEI',
+        );
+
+        const nomorSeri = sumber.find((s) => s.id === 'nomor-seri');
+
+        expect(
+            nomorSeri?.AmbilHasil({ Uuid: 'U1', Nomor: 'IMEI-1', NamaProduk: 'Ponsel', LabelStatus: 'Tersedia' }),
+        ).toEqual({
+            judul: 'IMEI-1',
+            keterangan: 'Ponsel · Tersedia',
+            href: '/kelola/persediaan/kartu-stok/nomor-seri?cari=IMEI-1&unit=U1',
+        });
+
+        const aksesKosong = { Pemilik: false, Izin: [] };
+        const tanpaIzin = SusunPencarian(SaringMenuTerlihat(aksesKosong), aksesKosong);
+
+        expect(tanpaIzin.halaman.some((h) => h.href === '/kelola/persediaan/kartu-stok/nomor-seri')).toBe(false);
+        expect(tanpaIzin.sumber.map((s) => s.id)).not.toContain('nomor-seri');
+    });
 });

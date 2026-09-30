@@ -4,7 +4,7 @@
  */
 import { FormatRupiah } from '@/Pustaka/Format';
 import { BulatkanDesimal, CekDesimalValid } from '@/Pustaka/HitungDesimal';
-import type { MetodeHpp, OpsiGudang, PelacakanProduk, StatusStokAwal } from '@/Tipe/Persediaan';
+import type { MetodeHpp, OpsiGudang, PelacakanProduk, StatusNomorSeri, StatusStokAwal } from '@/Tipe/Persediaan';
 
 const polaDesimal = /^(-?)(\d+)(?:\.(\d+))?$/;
 
@@ -75,6 +75,18 @@ export function AmbilJenisLabelStatusStokAwal(status: StatusStokAwal): JenisLabe
         Diposting: 'sukses',
         Dibatalkan: 'bahaya',
         Dibuang: 'netral',
+    };
+
+    return peta[status];
+}
+
+/** Warna label status nomor seri; teks label tetap dari server (`LabelStatus`). Tersedia = sukses, dalam perjalanan = perlu perhatian. */
+export function AmbilJenisLabelStatusNomorSeri(status: StatusNomorSeri): JenisLabel {
+    const peta: Record<StatusNomorSeri, JenisLabel> = {
+        Tersedia: 'sukses',
+        DalamPerjalanan: 'peringatan',
+        Terjual: 'netral',
+        Keluar: 'netral',
     };
 
     return peta[status];

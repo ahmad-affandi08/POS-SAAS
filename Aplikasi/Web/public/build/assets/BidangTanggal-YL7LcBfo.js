@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CoZ4gtJP.js";import{t}from"./PemilihTanggal-5Xquhowh.js";var n=e();function r(e){return(0,n.jsx)(t,{...e})}export{r as t};

@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CoZ4gtJP.js";import{t}from"./NavigasiTab-BO_jQZfn.js";var n=e(),r=[{label:`Versi aplikasi`,href:`/rilis`},{label:`Flag fitur`,href:`/flag-fitur`},{label:`Kompatibilitas perangkat`,href:`/kompatibilitas-perangkat`}];function i(){return(0,n.jsx)(t,{label:`Rilis aplikasi`,daftarTab:r})}export{i as t};

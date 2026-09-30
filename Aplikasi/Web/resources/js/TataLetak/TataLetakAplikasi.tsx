@@ -414,6 +414,19 @@ const sumberPencarian: SumberPencarian[] = [
         }),
     },
     {
+        id: 'nomor-seri',
+        label: 'Nomor seri / IMEI',
+        alamat: '/kelola/persediaan/kartu-stok/nomor-seri',
+        ikon: 'Gudang',
+        // Hasil membuka riwayat unitnya langsung (`?unit=`), bukan daftar pencarian.
+        AmbilHasil: (b) => ({
+            judul: String(b.Nomor),
+            keterangan:
+                [b.NamaProduk, b.LabelStatus].filter((x): x is string => typeof x === 'string').join(' · ') || null,
+            href: `/kelola/persediaan/kartu-stok/nomor-seri?${new URLSearchParams({ cari: String(b.Nomor), unit: String(b.Uuid) }).toString()}`,
+        }),
+    },
+    {
         id: 'penjualan',
         label: 'Penjualan',
         alamat: '/kelola/penjualan',
@@ -423,6 +436,20 @@ const sumberPencarian: SumberPencarian[] = [
             keterangan: typeof b.NamaOutlet === 'string' ? b.NamaOutlet : null,
             href: `/kelola/penjualan/${String(b.Uuid)}`,
         }),
+    },
+];
+
+/**
+ * Halaman yang berumah sebagai tab di halaman lain (D-27: satu rumah menu, grup sudah di batas sub-menu). Ia tidak
+ * punya entri menu, tetapi Ctrl+K harus tetap menemukannya; hanya muncul bila halaman induknya terlihat (izin sama).
+ */
+const halamanTurunan: (HalamanPencarian & { induk: string })[] = [
+    {
+        induk: '/kelola/persediaan/kartu-stok',
+        label: 'Riwayat nomor seri / IMEI',
+        href: '/kelola/persediaan/kartu-stok/nomor-seri',
+        grup: 'Persediaan',
+        ikon: 'Gudang',
     },
 ];
 
@@ -454,8 +481,12 @@ export function SusunPencarian(
                 ikon: 'Pengaturan',
             })),
     );
+    // Halaman yang rumahnya tab di halaman lain (bukan entri menu sendiri) ikut Ctrl+K selama induknya terlihat.
+    const turunan = halamanTurunan.flatMap(({ induk, ...halamanTurunanItem }): HalamanPencarian[] =>
+        menu.some((ada) => ada.href === induk) ? [halamanTurunanItem] : [],
+    );
     // Menu samping menang bila alamatnya sama, supaya satu halaman tidak muncul dua kali di hasil pencarian.
-    const halaman = [...menu, ...pengaturan.filter((item) => !menu.some((ada) => ada.href === item.href))];
+    const halaman = [...menu, ...turunan, ...pengaturan.filter((item) => !menu.some((ada) => ada.href === item.href))];
     const alamatTerlihat = new Set(halaman.map((h) => h.href));
 
     return { halaman, sumber: sumberPencarian.filter((s) => alamatTerlihat.has(s.alamat)) };

@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-3r379PkU.js";var t=e();function n({children:e}){return(0,t.jsx)(`div`,{className:`sticky bottom-0 flex flex-wrap gap-2 bg-latar py-2 tepi-bawah-aman sm:static sm:bg-transparent sm:py-0`,children:e})}export{n as t};

@@ -7,6 +7,7 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KeadaanKosong from '@/Komponen/Katalog/KeadaanKosong';
 import Panel from '@/Komponen/Kelola/Panel';
 import KerangkaMemuat from '@/Komponen/Persediaan/KerangkaMemuat';
+import TabKartuStok from '@/Komponen/Persediaan/TabKartuStok';
 import PemilihProdukStok from '@/Komponen/Persediaan/PemilihProdukStok';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -224,12 +225,7 @@ export default function HalamanKartuStok({
     return (
         <TataLetakAplikasi judul="Kartu stok">
             <DaftarGalatServer galat={props.errors} />
-            <p className="text-label text-teks-sekunder">
-                Mencari satu unit bernomor seri atau IMEI?{' '}
-                <Link href="/kelola/persediaan/nomor-seri" className="font-semibold underline">
-                    Cari riwayat nomor seri
-                </Link>
-            </p>
+            <TabKartuStok aktif="produk" uuidProduk={Produk?.Uuid ?? null} />
 
             <Card className="gap-0 rounded-panel p-4 shadow-none">
                 <form

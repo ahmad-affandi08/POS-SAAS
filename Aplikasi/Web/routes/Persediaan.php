@@ -45,8 +45,11 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     // Saldo, kartu stok, pengaturan persediaan (Tim F).
     Route::get('/persediaan/saldo', [SaldoStokKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.persediaan.saldo');
     Route::get('/persediaan/kartu-stok', [KartuStokKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.kartu-stok');
-    // F-05h: cari nomor seri/IMEI dan riwayatnya.
-    Route::get('/persediaan/nomor-seri', [NomorSeriKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.nomor-seri');
+    // F-05h: cari nomor seri/IMEI dan riwayatnya. Rumahnya entri menu "Kartu stok" (D-27), maka beralamat di bawahnya;
+    // alamat lama dialihkan supaya tautan tersimpan tetap bekerja.
+    Route::get('/persediaan/kartu-stok/nomor-seri', [NomorSeriKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.nomor-seri');
+    Route::get('/persediaan/kartu-stok/nomor-seri/ekspor', [NomorSeriKontroler::class, 'Ekspor'])->middleware($lihat)->name('kelola.persediaan.nomor-seri.ekspor');
+    Route::get('/persediaan/nomor-seri', [NomorSeriKontroler::class, 'Alihkan'])->middleware($lihat)->name('kelola.persediaan.nomor-seri.alihkan');
     Route::get('/persediaan/pengaturan', [PengaturanPersediaanKontroler::class, 'Tampilkan'])->middleware($izin(IzinTenant::AkuntansiKelola))->name('kelola.persediaan.pengaturan');
     Route::put('/persediaan/pengaturan', [PengaturanPersediaanKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::AkuntansiKelola))->name('kelola.persediaan.pengaturan.simpan');
 });

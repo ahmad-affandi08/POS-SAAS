@@ -44,6 +44,7 @@
 **Rincian F-05h nomor seri/IMEI bagian 1 (v3.03):**
 - Kontrak: `Penjualan.Buat` `Baris[].NomorSeri` (list teks), `ReturPenjualan.Buat` `Baris[].NomorSeri` (list teks, opsional). Kode galat baru: `NomorSeriTidakSesuai`, `NomorSeriGanda`; tinjauan baru `SerialBermasalah`.
 - Server: `Persediaan\Kueri\InfoNomorSeri` (cari tersedia, nomor dari Id, unit terjual per baris), `PelacakNomorSeri::TautkanPenjualanDetail`; penjualan, void, dan retur memakai mutasi satu unit lewat buku stok (`idNomorSeri` keluar, `nomorSeriMasuk` kembali).
+- **Halaman riwayat nomor seri/IMEI (v3.05, v3.13):** `/kelola/persediaan/kartu-stok/nomor-seri`, tab "Per nomor seri / IMEI" pada Kartu stok (satu rumah menu, D-27; alamat lama dialihkan 301). Cari potongan nomor atau nama/SKU produk, saring status & produk, ekspor CSV; satu hasil atau nomor persis langsung dibuka. Rincian unit: produk, lokasi atau penjualan + pembeli, garansi sampai (Masih berlaku/Sudah berakhir), dan riwayat dari masuk sampai terjual/diretur dari buku stok. Pembeli & tautan penjualan dijaga izin `pelanggan.lihat`/`laporan.penjualan.lihat`. Ctrl+K: halaman turunan + sumber data nomor seri.
 - **Belum**: aplikasi kasir (ketik/pindai nomor), `Produk.MasaGaransiBulan` dan kartu garansi di struk, halaman riwayat nomor seri (pencarian dari masuk sampai garansi), pesanan grosir bernomor seri, modul servis (§9.10).
 
 **Rincian F-05g batch & kedaluwarsa bagian 1 (v3.02):**

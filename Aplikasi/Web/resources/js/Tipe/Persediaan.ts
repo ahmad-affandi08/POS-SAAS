@@ -302,18 +302,29 @@ export type PropsDetailImporStokAwal = {
     OpsiGudang: OpsiGudang[];
 };
 
-/** F-05h: riwayat nomor seri/IMEI (`/kelola/persediaan/nomor-seri`). */
+/** F-05h: riwayat nomor seri/IMEI (`/kelola/persediaan/kartu-stok/nomor-seri`). */
+export type StatusNomorSeri = 'Tersedia' | 'DalamPerjalanan' | 'Terjual' | 'Keluar';
+
 export type UnitNomorSeri = {
     Uuid: string;
     Nomor: string;
     UuidProduk: string;
     NamaProduk: string;
     Sku: string | null;
-    Status: 'Tersedia' | 'DalamPerjalanan' | 'Terjual' | 'Keluar';
+    Status: StatusNomorSeri;
     LabelStatus: string;
+    UuidGudang: string | null;
     NamaGudang: string | null;
+    /** Uuid penjualan hanya bila pelaku boleh melihat laporan penjualan. */
+    UuidPenjualan: string | null;
     NomorPenjualan: string | null;
     TanggalJual: string | null;
+    /** Pembeli hanya bila pelaku boleh melihat pelanggan. */
+    UuidPelanggan: string | null;
+    NamaPelanggan: string | null;
+    MasaGaransiBulan: number | null;
+    GaransiSampai: string | null;
+    StatusGaransi: 'Aktif' | 'Berakhir' | null;
 };
 
 export type BarisRiwayatNomorSeri = {
@@ -325,8 +336,14 @@ export type BarisRiwayatNomorSeri = {
 };
 
 export type PropsNomorSeri = {
-    Saring: { Cari: string; Unit: string };
+    Saring: { Cari: string; Status: string; Produk: string; Unit: string };
+    /** Produk yang sedang disaring (`?produk=`); null bila tanpa saring produk. */
+    Produk: { Uuid: string; Nama: string; Sku: string | null } | null;
     Hasil: UnitNomorSeri[];
+    /** Jumlah seluruh hasil sesuai saring (Hasil dibatasi `BatasHasil`). */
+    TotalHasil: number;
     Detail: { Unit: UnitNomorSeri; Riwayat: BarisRiwayatNomorSeri[] } | null;
     BatasHasil: number;
+    OpsiStatus: { Nilai: StatusNomorSeri; Label: string }[];
+    Izin: { Pelanggan: boolean; Penjualan: boolean; Produk: boolean };
 };
