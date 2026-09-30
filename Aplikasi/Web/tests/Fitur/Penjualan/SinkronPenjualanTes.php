@@ -432,7 +432,7 @@ describe('F-07b aturan penolakan', function (): void {
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
     });
 
-    it('produk: bahan baku, induk varian, konsinyasi = ProdukTidakBisaDijual; seri (juga sebagai bahan resep) = PelacakanBelumDidukung, batch diterima (F-05g, tanpa stok batch = ditinjau BatchTidakCukup); produk diarsipkan/dihapus setelah dijual offline tetap diterima (dihapus: stok tidak dikurangi, ditinjau)', function (): void {
+    it('produk: bahan baku, induk varian, konsinyasi = ProdukTidakBisaDijual; seri langsung tanpa nomor seri = NomorSeriTidakSesuai (F-05h) dan seri sebagai bahan resep = PelacakanBelumDidukung, batch diterima (F-05g, tanpa stok batch = ditinjau BatchTidakCukup); produk diarsipkan/dihapus setelah dijual offline tetap diterima (dihapus: stok tidak dikurangi, ditinjau)', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         $semua = BantuanPersediaan::BuatProdukSemuaJenis(BantuanKomposisi::Satuan('Pieces', 'pcs', false), BantuanKomposisi::Satuan('Kilogram', 'kg'));
         $induk = BantuanKatalog::BuatProduk(['Nama' => 'Kaos Polos Katun Combed 30s', 'Jenis' => JenisProduk::IndukVarian]);
@@ -463,7 +463,7 @@ describe('F-07b aturan penolakan', function (): void {
             ['Ditolak', 'ProdukTidakBisaDijual'],
             ['Ditolak', 'ProdukTidakBisaDijual'],
             ['Diterima', null],
-            ['Ditolak', 'PelacakanBelumDidukung'],
+            ['Ditolak', 'NomorSeriTidakSesuai'],
             ['Diterima', null],
             ['Ditolak', 'PelacakanBelumDidukung'],
             ['Diterima', null],

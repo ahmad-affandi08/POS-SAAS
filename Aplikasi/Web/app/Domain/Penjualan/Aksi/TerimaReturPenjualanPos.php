@@ -51,6 +51,7 @@ use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
 use App\Domain\Persediaan\Kueri\InfoBatchStok;
+use App\Domain\Persediaan\Kueri\InfoNomorSeri;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
@@ -107,6 +108,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
         private readonly InfoBatchStok $infoBatch,
+        private readonly InfoNomorSeri $infoSeri,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -457,7 +459,7 @@ final class TerimaReturPenjualanPos
      *
      * @param  list<PenjualanDetail>  $detail
      * @param  array<int, DataSudahDiretur>  $sudah
-     * @return list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>
+     * @return list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null, IdNomorSeri: int|null}>
      */
     private function RencanakanStok(DataReturPenjualanPos $data, array $detail, array $sudah, ?int $idGudangRusak): array
     {
@@ -482,7 +484,29 @@ final class TerimaReturPenjualanPos
 
             $bagianBatch = self::BagiKeBatch($mutasi[$d->Id] ?? [], $sebelum, $sesudah, $jual, $terakhir);
 
+            // F-05h: produk bernomor seri kembali per unit (nomor yang dipilih kasir, atau berurutan bila tidak disebut).
+            $barisSeri = array_values(array_filter($mutasi[$d->Id] ?? [], fn (array $m): bool => $m['IdNomorSeri'] !== null));
+
+            foreach ($barisSeri === [] ? [] : $this->PilihSeriRetur($barisSeri, $baris, $d->Id, $indeks) as $m) {
+                $rusak = $baris->kondisi === KondisiBarangRetur::Rusak && $idGudangRusak !== null;
+                $rencana[] = [
+                    'Indeks' => $indeks,
+                    'KunciBaris' => $baris->uuid.'/'.$m['Id'],
+                    'IdProduk' => $m['IdProduk'],
+                    'IdGudang' => $rusak ? (int) $idGudangRusak : $m['IdGudang'],
+                    'Jumlah' => Kuantitas::Dari('1'),
+                    'Nilai' => Uang::Dari(BigDecimal::of($m['TotalHpp'])->abs()),
+                    'HppSatuan' => BigDecimal::of($m['HppSatuan'])->abs(),
+                    'IdBatchStok' => null,
+                    'IdNomorSeri' => $m['IdNomorSeri'],
+                ];
+            }
+
             foreach ($mutasi[$d->Id] ?? [] as $m) {
+                if ($m['IdNomorSeri'] !== null) {
+                    continue;
+                }
+
                 if ($m['IdBatchStok'] !== null) {
                     [$jumlah, $nilai] = $bagianBatch[$m['Id']];
                 } else {
@@ -509,6 +533,7 @@ final class TerimaReturPenjualanPos
                     'Nilai' => Uang::Dari($nilai),
                     'HppSatuan' => BigDecimal::of($m['HppSatuan'])->abs(),
                     'IdBatchStok' => $m['IdBatchStok'],
+                    'IdNomorSeri' => null,
                 ];
             }
         }
@@ -519,7 +544,7 @@ final class TerimaReturPenjualanPos
     /**
      * @param  list<DataNilaiReturBaris>  $nilai
      * @param  array<string, MetodePembayaran>  $metode
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null, IdNomorSeri: int|null}>  $rencana
      * @param  list<string>  $tinjauan
      */
     private function SimpanRetur(
@@ -585,7 +610,7 @@ final class TerimaReturPenjualanPos
     /**
      * @param  list<PenjualanDetail>  $detail
      * @param  list<DataNilaiReturBaris>  $nilai
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null, IdNomorSeri: int|null}>  $rencana
      * @return list<int> Id baris retur, urutan sama dengan baris masukan
      */
     private function SimpanDetail(DataReturPenjualanPos $data, ReturPenjualan $retur, array $detail, array $nilai, array $rencana): array
@@ -642,7 +667,7 @@ final class TerimaReturPenjualanPos
     /**
      * Mutasi `ReturPenjualan` (masuk, nilai ditentukan HPP snapshot) lalu perubahan nilai per peran akun persediaan.
      *
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null, IdNomorSeri: int|null}>  $rencana
      * @param  list<int>  $idDetailRetur
      * @return array<string, Uang> nilai PeranAkun persediaan → nilai stok yang kembali
      */
@@ -654,6 +679,7 @@ final class TerimaReturPenjualanPos
 
         // F-05g: barang ber-batch kembali ke batch asalnya (pecahan FEFO saat dijual dikembalikan sebanding).
         $batch = $this->infoBatch->AmbilBanyak(array_values(array_filter(array_map(fn (array $r): ?int => $r['IdBatchStok'], $rencana))));
+        $nomorSeri = $this->infoSeri->AmbilNomor(array_values(array_filter(array_map(fn (array $r): ?int => $r['IdNomorSeri'], $rencana))));
 
         $hasil = $this->catatMutasi->Jalankan(new DataDokumenMutasi(
             jenisReferensi: JenisReferensiMutasi::ReturPenjualan,
@@ -674,6 +700,7 @@ final class TerimaReturPenjualanPos
                 hppSatuan: $r['HppSatuan'],
                 idReferensiDetail: $idDetailRetur[$r['Indeks']],
                 batchMasuk: $r['IdBatchStok'] === null ? null : $batch[$r['IdBatchStok']],
+                nomorSeriMasuk: $r['IdNomorSeri'] === null ? null : $nomorSeri[$r['IdNomorSeri']],
             ), $rencana),
         ));
 
@@ -786,6 +813,45 @@ final class TerimaReturPenjualanPos
     private static function Bagian(BigDecimal $nilai, BigDecimal $bagian, BigDecimal $total, int $skala): BigDecimal
     {
         return $nilai->multipliedBy($bagian)->dividedBy($total, $skala, RoundingMode::HalfUp);
+    }
+
+    /**
+     * F-05h: unit bernomor seri yang diretur di satu baris. Nomor yang disebut kasir harus unit penjualan ini yang belum
+     * diretur/di-void dan jumlahnya sama dengan jumlah retur; tanpa nomor, unit yang belum diretur diambil berurutan.
+     * Unit penjualan yang dulu tidak tercatat mengurangi stok (`SerialBermasalah`) tidak punya mutasi, jadi tidak ikut kembali.
+     *
+     * @param  list<array<string, mixed>>  $barisSeri  ringkasan mutasi penjualan bernomor seri untuk baris itu
+     * @return list<array<string, mixed>>
+     */
+    private function PilihSeriRetur(array $barisSeri, DataBarisReturPenjualanPos $baris, int $idDetail, int $indeks): array
+    {
+        $belum = $this->infoSeri->AmbilTerjualDiBaris($idDetail);
+        $tersisa = array_values(array_filter($barisSeri, fn (array $m): bool => isset($belum[$m['IdNomorSeri']])));
+        $jumlah = $baris->jumlah->KeDesimal()->toScale(0, RoundingMode::Down);
+
+        if ($baris->nomorSeri === []) {
+            return array_slice($tersisa, 0, $jumlah->toInt());
+        }
+
+        if (count($baris->nomorSeri) !== $jumlah->toInt() || ! $baris->jumlah->KeDesimal()->isEqualTo($jumlah)) {
+            throw new PelanggaranAturanBisnis('NomorSeriTidakSesuai', "Retur {$jumlah} unit bernomor seri wajib menyebut {$jumlah} nomor seri, bukan ".count($baris->nomorSeri).'.', "Baris.{$indeks}.NomorSeri");
+        }
+
+        $dipilih = [];
+
+        foreach ($baris->nomorSeri as $nomor) {
+            foreach ($tersisa as $m) {
+                if (mb_strtoupper($belum[$m['IdNomorSeri']]) === mb_strtoupper($nomor) && ! isset($dipilih[$m['Id']])) {
+                    $dipilih[$m['Id']] = $m;
+
+                    continue 2;
+                }
+            }
+
+            throw new PelanggaranAturanBisnis('NomorSeriTidakSesuai', "Nomor seri {$nomor} bukan bagian dari penjualan ini atau sudah diretur.", "Baris.{$indeks}.NomorSeri");
+        }
+
+        return array_values($dipilih);
     }
 
     /**

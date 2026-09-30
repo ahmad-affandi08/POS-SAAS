@@ -11,6 +11,10 @@ use App\Domain\Penjualan\Enum\KondisiBarangRetur;
  * Satu baris item outbox `ReturPenjualan.Buat` (F-09 fase 1): baris penjualan asal, jumlah retur (satuan jual), dan
  * kondisi barang.
  */
+/**
+ * `nomorSeri` (F-05h, opsional): nomor seri/IMEI unit yang diretur untuk produk bernomor seri; kosong = unit yang belum
+ * diretur berurutan sesuai penjualan.
+ */
 final readonly class DataBarisReturPenjualanPos
 {
     public function __construct(
@@ -18,5 +22,7 @@ final readonly class DataBarisReturPenjualanPos
         public string $uuidPenjualanDetail,
         public Kuantitas $jumlah,
         public KondisiBarangRetur $kondisi,
+        /** @var list<string> */
+        public array $nomorSeri = [],
     ) {}
 }

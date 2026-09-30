@@ -130,13 +130,13 @@ describe('F-05g penjualan produk ber-batch (FEFO di server)', function (): void 
             ->and(SisaBatchJual($susu))->toBe(['B-LAMA' => '4.0000', 'X-LEWAT' => '0.0000']);
     });
 
-    it('produk bernomor seri tetap ditolak PelacakanBelumDidukung', function (): void {
+    it('produk bernomor seri tanpa nomor seri yang dicatat ditolak NomorSeriTidakSesuai (penjualannya dicakup PenjualanSerialTes)', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $seri = BantuanKatalog::BuatProduk(['Nama' => 'Rice Cooker Digital 1,8 Liter', 'Pelacakan' => PelacakanProduk::Seri], '675000.00');
         $item = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $seri, 'Jumlah' => '1', 'Harga' => '675000.00']]]);
 
-        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Ditolak', 'PelacakanBelumDidukung']])
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Ditolak', 'NomorSeriTidakSesuai']])
             ->and(Penjualan::query()->where('Uuid', $item['Uuid'])->exists())->toBeFalse();
     });
 });

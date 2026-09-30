@@ -18,6 +18,7 @@ final readonly class DataBarisPenjualanPos
      * @param  list<array{UuidPilihan: string, Nama: string, Harga: string}>  $pilihan
      * @param  list<string>|null  $kodePajak
      * @param  list<string>  $uuidKaryawan
+     * @param  list<string>  $nomorSeri  F-05h: nomor seri/IMEI yang dijual (produk `Pelacakan=Seri`), satu per unit
      */
     public function __construct(
         public string $uuid,
@@ -32,5 +33,6 @@ final readonly class DataBarisPenjualanPos
         public ?DataDiskonManual $diskonManual,
         public ?string $catatan,
         public array $uuidKaryawan = [],
+        public array $nomorSeri = [],
     ) {}
 }

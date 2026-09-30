@@ -41,6 +41,11 @@
 - **Pembatalan**: draf dibatalkan tanpa efek stok. Order terposting dibatalkan dengan alasan 5–255 karakter di tanggal bisnis hari ini: mutasi pembalik (hasil keluar, bahan masuk kembali pada nilai asal) + jurnal pembalik (`KunciSumber` Pembatalan); ditolak `StokSudahTerpakai` bila hasil sudah terjual/berpindah (saldo, batch, atau lapisan FIFO tidak utuh).
 - Back-office *Persediaan › Produksi*: daftar (TabelData, saring status & lokasi), formulir draf, detail (standar vs aktual, nilai bahan, nilai & HPP hasil, jurnal, riwayat). Aplikasi kasir/gudang, rencana produksi harian dari pre-order, dan akun terpisah *Persediaan Barang Jadi* menyusul (usulan §25).
 
+**Rincian F-05h nomor seri/IMEI bagian 1 (v3.03):**
+- Kontrak: `Penjualan.Buat` `Baris[].NomorSeri` (list teks), `ReturPenjualan.Buat` `Baris[].NomorSeri` (list teks, opsional). Kode galat baru: `NomorSeriTidakSesuai`, `NomorSeriGanda`; tinjauan baru `SerialBermasalah`.
+- Server: `Persediaan\Kueri\InfoNomorSeri` (cari tersedia, nomor dari Id, unit terjual per baris), `PelacakNomorSeri::TautkanPenjualanDetail`; penjualan, void, dan retur memakai mutasi satu unit lewat buku stok (`idNomorSeri` keluar, `nomorSeriMasuk` kembali).
+- **Belum**: aplikasi kasir (ketik/pindai nomor), `Produk.MasaGaransiBulan` dan kartu garansi di struk, halaman riwayat nomor seri (pencarian dari masuk sampai garansi), pesanan grosir bernomor seri, modul servis (§9.10).
+
 **Rincian F-05g batch & kedaluwarsa bagian 1 (v3.02):**
 - **Penjualan POS** (`TerimaPenjualanPos`): produk `Pelacakan=Batch` dijual tanpa kasir memilih batch; server mengalokasikan FEFO dari `BatchStok.JumlahSisa > 0` per (produk, lokasi stok Toko outlet), urutan `TanggalKedaluwarsa` (kosong paling akhir), `NomorBatch`, `Id`; beberapa baris produk yang sama berbagi sisa yang terus berkurang. Hasil per pecahan masuk `MutasiStok.IdBatchStok` (HPP berjalan seperti biasa, J-07.1 tidak berubah).
 - **Stok kurang / kedaluwarsa** tidak menolak penjualan (§18.3): `BatchTidakCukup` (bagian tak tertutup tidak mengurangi stok, HPP baris hanya dari bagian yang teralokasi) dan `BatchKedaluwarsa` (batch yang kedaluwarsanya < tanggal bisnis) muncul di alasan tinjauan.

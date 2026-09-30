@@ -245,6 +245,8 @@ final class BantuanPenjualan
                 'Catatan' => $b['Catatan'] ?? null,
                 // F-18: staf yang melayani baris (Uuid karyawan).
                 ...(isset($b['Staf']) ? ['Staf' => $b['Staf']] : []),
+                // F-05h: nomor seri/IMEI unit yang dijual.
+                ...(isset($b['NomorSeri']) ? ['NomorSeri' => $b['NomorSeri']] : []),
             ];
         }
 
@@ -405,6 +407,7 @@ final class BantuanPenjualan
                 'UuidPenjualanDetail' => $d->Uuid,
                 'Jumlah' => (string) $jumlah,
                 'Kondisi' => $b['Kondisi'] ?? 'LayakJual',
+                ...(isset($b['NomorSeri']) ? ['NomorSeri' => $b['NomorSeri']] : []),
             ];
         }
 

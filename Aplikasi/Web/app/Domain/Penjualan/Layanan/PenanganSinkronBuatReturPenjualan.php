@@ -58,6 +58,8 @@ final class PenanganSinkronBuatReturPenjualan implements PenanganItemSinkron
             'Baris.*.UuidPenjualanDetail' => ['required', 'string', 'ulid', 'distinct'],
             'Baris.*.Jumlah' => ['required', 'string', 'regex:'.self::POLA_JUMLAH],
             'Baris.*.Kondisi' => ['required', 'string', Rule::enum(KondisiBarangRetur::class)],
+            'Baris.*.NomorSeri' => ['sometimes', 'nullable', 'array', 'max:200'],
+            'Baris.*.NomorSeri.*' => ['string', 'min:1', 'max:100', 'distinct'],
             'Refund' => ['present', 'array', 'max:5'],
             'Refund.*.Uuid' => ['required', 'string', 'ulid', 'distinct'],
             'Refund.*.UuidMetodePembayaran' => ['required', 'string', 'ulid'],
@@ -111,6 +113,7 @@ final class PenanganSinkronBuatReturPenjualan implements PenanganItemSinkron
                 strtoupper((string) $b['UuidPenjualanDetail']),
                 $jumlah,
                 KondisiBarangRetur::from((string) $b['Kondisi']),
+                is_array($b['NomorSeri'] ?? null) ? array_values(array_map(fn ($n): string => trim((string) $n), $b['NomorSeri'])) : [],
             );
         }
 

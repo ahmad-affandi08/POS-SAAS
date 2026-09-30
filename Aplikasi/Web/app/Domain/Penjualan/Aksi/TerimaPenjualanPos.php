@@ -77,7 +77,9 @@ use App\Domain\Persediaan\Data\HasilBarisMutasi;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
+use App\Domain\Persediaan\Kueri\InfoNomorSeri;
 use App\Domain\Persediaan\Layanan\AlokatorBatchFefo;
+use App\Domain\Persediaan\Layanan\PelacakNomorSeri;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
@@ -125,6 +127,9 @@ final class TerimaPenjualanPos
     /** F-05g: percobaan membuat ulang rencana FEFO bila batch keburu diambil penjualan lain. */
     private const PERCOBAAN_BATCH = 3;
 
+    /** F-05h: percobaan memilih ulang nomor seri bila keburu diambil penjualan lain. */
+    private const PERCOBAAN_SERI = 3;
+
     private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku, JenisProduk::Konsinyasi];
 
     public function __construct(
@@ -166,6 +171,8 @@ final class TerimaPenjualanPos
         private readonly PencatatSesiPenjualan $sesi,
         private readonly PenyediaAkunPeran $penyediaAkun,
         private readonly AlokatorBatchFefo $alokatorBatch,
+        private readonly InfoNomorSeri $infoSeri,
+        private readonly PelacakNomorSeri $pelacakSeri,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -1188,6 +1195,8 @@ final class TerimaPenjualanPos
         $infoPerKunci = [];
         $indeksPerKunci = [];
         $permintaanBatch = [];
+        $permintaanSeri = [];
+        $nomorDipakai = [];
 
         foreach ($data->baris as $indeks => $baris) {
             $jumlahDasar = Kuantitas::Dari($detail[$indeks]->JumlahDasar);
@@ -1215,7 +1224,8 @@ final class TerimaPenjualanPos
 
             foreach ($daftar as [$k, $dasar]) {
                 /** @var DataKebutuhanStok $k */
-                $this->PastikanBahanBisaDikurangi($k, $indeks);
+                $langsung = $k->idProduk === $produk[$baris->uuidProduk]->id && $k->pembilang->isEqualTo($k->penyebut);
+                $this->PastikanBahanBisaDikurangi($k, $indeks, $langsung);
 
                 if ($k->dihapus) {
                     // Produk hanya bisa dihapus bila belum pernah dipakai (BR-03.2): tidak punya stok untuk dikurangi.
@@ -1234,6 +1244,30 @@ final class TerimaPenjualanPos
                 $kunci = $baris->uuid.'/'.$urutan;
                 $infoPerKunci[$kunci] = $k;
                 $indeksPerKunci[$kunci] = $indeks;
+
+                if ($k->pelacakan === PelacakanProduk::Seri) {
+                    // F-05h: satu unit = satu nomor seri yang dicatat kasir; server memvalidasi ketersediaannya (CatatStokSeri).
+                    $nomor = $baris->nomorSeri;
+                    $bulat = $jumlah->toScale(0, RoundingMode::Down);
+
+                    if (! $jumlah->isEqualTo($bulat) || count($nomor) !== $bulat->toInt()) {
+                        throw new PelanggaranAturanBisnis('NomorSeriTidakSesuai', "{$k->nama} memakai nomor seri: isi {$bulat} nomor seri (satu per unit), bukan ".count($nomor).'.', "Baris.{$indeks}.NomorSeri");
+                    }
+
+                    foreach ($nomor as $no) {
+                        $tanda = $k->idProduk.'|'.mb_strtoupper($no);
+
+                        if (isset($nomorDipakai[$tanda])) {
+                            throw new PelanggaranAturanBisnis('NomorSeriGanda', "Nomor seri {$no} dipakai dua kali di penjualan ini.", "Baris.{$indeks}.NomorSeri");
+                        }
+
+                        $nomorDipakai[$tanda] = true;
+                    }
+
+                    $permintaanSeri[$kunci] = [$nomor, $detail[$indeks]->Id];
+
+                    continue;
+                }
 
                 if ($k->pelacakan === PelacakanProduk::Batch) {
                     // F-05g: batch dipilih FEFO di server (dirinci di CatatStokBatch), bukan oleh kasir.
@@ -1254,7 +1288,7 @@ final class TerimaPenjualanPos
             }
         }
 
-        if ($barisMutasi === [] && $permintaanBatch === []) {
+        if ($barisMutasi === [] && $permintaanBatch === [] && $permintaanSeri === []) {
             return [$tinjauan, []];
         }
 
@@ -1284,16 +1318,24 @@ final class TerimaPenjualanPos
             }
         }
 
-        if ($permintaanBatch !== []) {
-            [$hasilBatch, $asalKunci, $tinjauanBatch] = $this->CatatStokBatch($data, $penjualan, $idKasir, $idGudang, $permintaanBatch, $infoPerKunci);
+        $tambahan = [];
 
-            foreach ($hasilBatch as $kunciBaru => $b) {
+        if ($permintaanBatch !== []) {
+            $tambahan[] = $this->CatatStokBatch($data, $penjualan, $idKasir, $idGudang, $permintaanBatch, $infoPerKunci);
+        }
+
+        if ($permintaanSeri !== []) {
+            $tambahan[] = $this->CatatStokSeri($data, $penjualan, $idKasir, $idGudang, $permintaanSeri, $infoPerKunci);
+        }
+
+        foreach ($tambahan as [$hasilTambahan, $asalKunci, $tinjauanTambahan]) {
+            foreach ($hasilTambahan as $kunciBaru => $b) {
                 $hasilBaris[$kunciBaru] = $b;
                 $infoPerKunci[$kunciBaru] = $infoPerKunci[$asalKunci[$kunciBaru]];
                 $indeksPerKunci[$kunciBaru] = $indeksPerKunci[$asalKunci[$kunciBaru]];
             }
 
-            $tinjauan = [...$tinjauan, ...$tinjauanBatch];
+            $tinjauan = [...$tinjauan, ...$tinjauanTambahan];
         }
 
         $this->IsiHppBaris($hasilBaris, $detail, $indeksPerKunci);
@@ -1419,14 +1461,90 @@ final class TerimaPenjualanPos
         return [$hasilBaris, $asalKunci, $tinjauan];
     }
 
-    private function PastikanBahanBisaDikurangi(DataKebutuhanStok $k, int $indeks): void
+    /**
+     * F-05h: penjualan produk bernomor seri. Kasir mencatat nomor seri/IMEI tiap unit (ketik atau pindai); server hanya
+     * memvalidasi ketersediaannya di lokasi stok Toko. Nomor yang tidak `Tersedia` (belum pernah diterima, sudah terjual,
+     * di lokasi lain) tidak ditolak (barangnya sudah di tangan pembeli, §18.3): unit itu tidak mengurangi stok dan penjualan
+     * ditandai `SerialBermasalah` untuk dikoreksi pemilik. Nomor yang tersedia dicatat sebagai mutasi satu unit (`{kunci}#{n}`),
+     * status `Terjual`, dan ditautkan ke baris penjualan (riwayat & garansi). Nomor yang keburu diambil penjualan lain
+     * saat penguncian memicu pemilihan ulang dari data terkini (savepoint, ≤ 3 percobaan).
+     *
+     * @param  array<string, array{0: list<string>, 1: int}>  $permintaan  kunci → [nomor seri, Id baris penjualan]
+     * @param  array<string, DataKebutuhanStok>  $infoPerKunci
+     * @return array{0: array<string, HasilBarisMutasi>, 1: array<string, string>, 2: array<string, string>} [hasil per kunci pecahan, kunci pecahan → kunci asal, tinjauan]
+     */
+    private function CatatStokSeri(DataPenjualanPos $data, Penjualan $penjualan, int $idKasir, int $idGudang, array $permintaan, array $infoPerKunci): array
+    {
+        for ($percobaan = 1; ; $percobaan++) {
+            $barisMutasi = [];
+            $asalKunci = [];
+            $bermasalah = [];
+
+            foreach ($permintaan as $kunci => [$nomor, $idDetail]) {
+                $tersedia = $this->infoSeri->CariTersedia($infoPerKunci[$kunci]->idProduk, $idGudang, $nomor, $percobaan > 1);
+
+                foreach (array_values($nomor) as $n => $no) {
+                    if (! isset($tersedia[mb_strtoupper($no)])) {
+                        $bermasalah[] = $infoPerKunci[$kunci]->nama.' '.$no;
+
+                        continue;
+                    }
+
+                    $kunciBaru = $kunci.'#'.($n + 1);
+                    $asalKunci[$kunciBaru] = $kunci;
+                    $barisMutasi[] = new DataBarisMutasi(
+                        kunciBaris: $kunciBaru,
+                        idProduk: $infoPerKunci[$kunci]->idProduk,
+                        idGudang: $idGudang,
+                        jenisMutasi: JenisMutasi::Penjualan,
+                        jumlah: Kuantitas::Dari('-1'),
+                        modeNilai: ModeNilaiMutasi::Berjalan,
+                        idReferensiDetail: $idDetail,
+                        idNomorSeri: $tersedia[mb_strtoupper($no)],
+                    );
+                }
+            }
+
+            $hasilBaris = [];
+
+            if ($barisMutasi !== []) {
+                try {
+                    $hasilBaris = DB::transaction(fn (): array => $this->catatMutasi->Jalankan($this->BuatDokumenMutasi($data, $penjualan, $idKasir, $barisMutasi, abaikanBatasMinus: false))->baris);
+                } catch (PelanggaranAturanBisnis $e) {
+                    if (in_array($e->kode, ['NomorSeriTidakTersedia', 'NomorSeriSudahAda'], true) && $percobaan < self::PERCOBAAN_SERI) {
+                        continue;
+                    }
+
+                    throw $e;
+                }
+            }
+
+            break;
+        }
+
+        $detailPerKunci = [];
+
+        foreach ($hasilBaris as $kunciBaru => $b) {
+            $detailPerKunci[$permintaan[$asalKunci[$kunciBaru]][1]][] = (int) $b->idNomorSeri;
+        }
+
+        foreach ($detailPerKunci as $idDetail => $idSeri) {
+            $this->pelacakSeri->TautkanPenjualanDetail($idSeri, $idDetail);
+        }
+
+        $tinjauan = $bermasalah === [] ? [] : ['SerialBermasalah' => 'SerialBermasalah: '.implode(', ', $bermasalah).'; nomor itu tidak tercatat tersedia di stok, stok tidak dikurangi'];
+
+        return [$hasilBaris, $asalKunci, $tinjauan];
+    }
+
+    private function PastikanBahanBisaDikurangi(DataKebutuhanStok $k, int $indeks, bool $langsung): void
     {
         if ($k->jenis === JenisProduk::Konsinyasi) {
             throw new PelanggaranAturanBisnis('ProdukTidakBisaDijual', "{$k->nama} ({$k->jalur}) adalah barang konsinyasi yang belum bisa dijual di POS.", "Baris.{$indeks}.UuidProduk");
         }
 
-        if ($k->pelacakan === PelacakanProduk::Seri) {
-            throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "{$k->nama} ({$k->jalur}) memakai {$k->pelacakan->AmbilLabel()}; penjualan produk bernomor seri belum didukung.", "Baris.{$indeks}.UuidProduk");
+        if ($k->pelacakan === PelacakanProduk::Seri && ! $langsung) {
+            throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "{$k->nama} ({$k->jalur}) memakai {$k->pelacakan->AmbilLabel()}; nomor seri hanya bisa dijual sebagai barang langsung, bukan bahan resep, komponen paket, atau bahan pilihan.", "Baris.{$indeks}.UuidProduk");
         }
     }
 

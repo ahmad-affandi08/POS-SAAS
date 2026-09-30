@@ -118,6 +118,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             // F-18: staf yang melayani baris (komisi).
             'Baris.*.Staf' => ['sometimes', 'nullable', 'array', 'max:'.PencatatKomisiPenjualan::MAKS_STAF_PER_BARIS],
             'Baris.*.Staf.*' => ['string', 'ulid', 'distinct'],
+            'Baris.*.NomorSeri' => ['sometimes', 'nullable', 'array', 'max:200'],
+            'Baris.*.NomorSeri.*' => ['string', 'min:1', 'max:100', 'distinct'],
             'DiskonManualPesanan' => ['sometimes', 'nullable', 'array'],
             'DiskonManualPesanan.Persen' => ['sometimes', 'nullable', 'string', $persenDiskon],
             'DiskonManualPesanan.Jumlah' => ['sometimes', 'nullable', 'string', $uang],
@@ -290,6 +292,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 diskonManual: self::AmbilDiskon($b['DiskonManual'] ?? null, "Baris.{$indeks}.DiskonManual"),
                 catatan: self::AmbilTeks($b['Catatan'] ?? null),
                 uuidKaryawan: is_array($b['Staf'] ?? null) ? array_values(array_map(fn ($u): string => strtoupper((string) $u), $b['Staf'])) : [],
+                nomorSeri: is_array($b['NomorSeri'] ?? null) ? array_values(array_map(fn ($n): string => trim((string) $n), $b['NomorSeri'])) : [],
             );
         }
 

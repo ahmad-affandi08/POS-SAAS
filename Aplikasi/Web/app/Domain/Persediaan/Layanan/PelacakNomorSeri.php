@@ -109,4 +109,19 @@ final class PelacakNomorSeri
         $seri->IdGudang = null;
         $seri->save();
     }
+
+    /**
+     * F-05h: menautkan nomor seri yang baru `Terjual` ke baris penjualannya (riwayat & garansi). `TandaiMasuk`
+     * (void/retur) mengosongkannya lagi.
+     *
+     * @param  list<int>  $idNomorSeri
+     */
+    public function TautkanPenjualanDetail(array $idNomorSeri, int $idPenjualanDetail): void
+    {
+        if ($idNomorSeri === []) {
+            return;
+        }
+
+        NomorSeri::query()->whereIn('Id', $idNomorSeri)->where('Status', StatusNomorSeri::Terjual->value)->update(['IdPenjualanDetail' => $idPenjualanDetail]);
+    }
 }
