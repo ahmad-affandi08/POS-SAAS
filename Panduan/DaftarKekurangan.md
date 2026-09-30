@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 29 September 2026 (PRD v2.81). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 30 September 2026 (PRD v2.88). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -21,6 +21,11 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 | A10 | Pencadangan otomatis database & file belum diatur di hosting | Risiko kehilangan data | Aktifkan backup harian hPanel + catat di konsol (`pengelola:catat-backup`) |
 | A13 | **SELESAI @ v2.38**: pemindai QR kode aktivasi di aplikasi kasir (`PemindaiQr` + `PemindaiQrPlatform`, paket `mobile_scanner`). `mobile_scanner` tidak mendukung Windows, jadi tombol Pindai hanya muncul bila `CekTersedia()` true dan isian manual tetap jalur utama di semua platform | Di Windows kode aktivasi tetap diketik manual | Uji di perangkat Android & iOS nyata (izin kamera, perangkat POS tanpa kamera) |
 | A11 | Satu test (`EksporVarianTes` round-trip) kadang gagal saat seluruh suite dijalankan, lolos bila dijalankan sendiri | Indikasi test tidak stabil (urutan/data) | Selidiki penyebabnya, jangan dilewati |
+| A14 | TERBUKA: test F-17 bagian 1 & 2 **belum pernah dijalankan** di mesin pengembangan ini — MySQL lokal aktif tetapi user & database test (`pos_saas` / `PosSaasTes` dari `Aplikasi/Web/phpunit.xml`) belum ada, dan `root` memakai `auth_socket` | Perilaku toko online (termasuk jalur uang J-17.1/J-17.2) baru dijamin oleh `phpstan`, `pint`, `tsc`, `eslint`, dan `CekKonvensi`, bukan oleh test yang hijau | Jalankan sekali di terminal sendiri: `sudo mysql -e "CREATE DATABASE IF NOT EXISTS PosSaasTes …; CREATE USER 'pos_saas'@'localhost' IDENTIFIED BY '…'; GRANT ALL ON PosSaasTes.* TO …"`, lalu `composer tes:cepat` |
+| A16 | **SELESAI @ v2.88**: layar Riwayat › Pesanan toko online di aplikasi Kasir (muat ke keranjang kanal Online, baris bayar Uang muka dengan `UuidPesananOnline`, 5 test domain + 3 test widget) | — | `PengaturanTokoOnline.QrisAktif` boleh dinyalakan untuk pesanan **ambil sendiri** dan kirim bergratis ongkir; pesanan kirim berongkir masih tertahan butir A17 |
+| A17 | TERBUKA: **ongkir belum punya rumah di `Penjualan`** — tidak ada baris biaya kirim dan tidak ada peran akun pendapatan pengiriman di bagan akun | Pesanan toko online **kirim yang berongkir tidak bisa ditagih** di kasir maupun back-office, jadi pesanan itu tidak pernah menjadi `Penjualan`. Lubang bagian 1, terlihat saat membangun layar kasir | Tambahkan baris biaya kirim ke mesin kalkulasi (PHP & Dart + test vector bersama) dan peran akun `PendapatanPengiriman`, lalu izinkan penagihannya. Sampai itu ada: jangan aktifkan pengiriman berongkir untuk pesanan yang akan ditagih di kasir |
+| A18 | TERBUKA: dua golden test Flutter (`GoldenRuangKerja_test.dart` 1280dp, `RuangKerja_test.dart` 1280dp) gagal **di mesin ini** dengan diff 0,03% (288px); sudah gagal di `HEAD` tanpa perubahan apa pun (diperiksa dengan `git stash`) | Suite Flutter tidak pernah hijau penuh di lingkungan pengembangan ini | Selidiki perbedaan rendering font/mesin antara CI dan mesin lokal. **Jangan** membuat ulang golden-nya untuk menutup diff: itu menghapus pembanding yang justru sedang bekerja |
+| A15 | TERBUKA: `composer analisis` **sudah merah di `main`** sebelum v2.87 (19 galat PHPStan + 2 berkas Pint), `npx tsc` gagal karena bug salin-tempel di `Kelola/TokoOnline/Daftar.tsx`, dan `KontrakApiTes` merah karena dua rute POS pesanan online tidak ada di baseline | Gerbang CI utama tidak pernah hijau, jadi bug nyata (mis. `PenjualanPembayaran::AmbilJumlah()` yang tidak ada → pencairan 500) lolos ke produksi | Ketiganya sudah diperbaiki (v2.87–v2.88); pastikan job `Cek Kepatuhan` wajib hijau di branch protection (butir D1) supaya tidak terulang |
 
 ## A2. Perbaikan teknis yang ditunda (diminta pemilik produk: dikerjakan setelah fitur C)
 
@@ -35,16 +40,17 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 
 1. ~~Situs pemasaran bagian B~~ — **SELESAI @ v2.28**.
 2. ~~F-16d bagian 2 paket sesi~~ — **SELESAI**.
-3. ~~Mode jasa (booking, staf)~~, ~~laundry~~ — **SELESAI**; **wholesale** (SO/DO/invoice) MENUNGGU KEPUTUSAN (§25 no. 27).
+3. ~~Mode jasa (booking, staf)~~, ~~laundry~~, ~~grosir (SO/surat jalan/faktur/retur/cetak dokumen)~~ — **SELESAI**; keputusan grosir ditutup v2.74 dan implementasi lengkap sampai v2.82.
 4. **Karyawan:** geofence absensi.
 5. ~~Laporan anti-fraud~~ — **SELESAI @ v2.27** (atribusi diperbaiki v2.32); ~~persetujuan jarak jauh lengkap di Aplikasi Pemilik~~ — **SELESAI @ v2.81**.
 6. ~~**Push notification** (FCM/APNs) untuk Aplikasi Owner~~ — **SELESAI @ v2.81**. Konfigurasi aplikasi Firebase Android/iOS dan uji perangkat nyata tetap langkah rilis eksternal.
-7. **Gratis ongkir**, menunggu flow pesan-antar/toko online.
+7. **Gratis ongkir — SELESAI v2.86:** ambang gratis per zona kode pos dihitung ulang server dari subtotal katalog.
 8. Batch & kedaluwarsa, nomor seri (sudah di F-05a); ~~produksi~~ — **SELESAI @ v2.29**; bahan terbuang bagian 1 **SELESAI @ v2.30**.
-9. Harga per kanal ojol (input manual).
+9. ~~Harga per kanal ojol (input manual)~~ — **SELESAI @ v2.36**; integrasi API resmi ojol tetap fase lanjut.
 10. ~~Modul Gudang di aplikasi (penerimaan PO, transfer, opname, termasuk pindai kamera Android/iOS)~~ — **SELESAI @ v2.80**.
-11. **Fase 3:** toko online `/{slugTenant}` & kurir, Open API + webhook + portal developer, konsinyasi, landed cost, rekonsiliasi bank, aset tetap, bengkel, template sektor lengkap, e-Faktur/Coretax, Salesman, smart restock/forecast, mode LAN, portal mitra (P-12).
-12. Billing langganan semi-otomatis (gateway) di sisi platform (F-19 lanjutan).
+11. **Toko online `/{slugTenant}` & kurir — bagian 1 SELESAI v2.86, bagian 2 SELESAI v2.87, layar kasir SELESAI v2.88:** bagian 1 = katalog, varian/modifier, keranjang hitung server, checkout multi-outlet ambil/kirim, bayar saat ambil/COD, zona ongkir + gratis ongkir, pesanan back-office/POS, fulfillment kurir, status publik, kedaluwarsa otomatis, dan butir Kotak Tindakan. Bagian 2 = bayar di muka lewat QRIS web (`TagihanQris` tanpa perangkat, idempoten per pesanan), jurnal uang muka J-17.1, penagihan kasir lewat metode Uang muka + pemulihan saat void, dan pengembalian uang J-17.2 + butir Kotak Tindakan-nya. **Bagian 3 TERBUKA:** baris biaya kirim di `Penjualan` + peran akun pendapatan pengiriman (butir A17, prasyarat pesanan kirim berongkir), shift virtual BR-17.1 + penjualan yang dibuat server sendiri (ditunda karena `Penjualan.IdShift` tidak boleh null, jadi menyentuh `TutupShift`/`TutupHarianOtomatis`/`ShiftBelumDitutup`/laporan X-Z), refund otomatis ke gerbang, reservasi stok, akun pelanggan, voucher berkode, tandai habis/86 BR-17.2, push POS BR-17.3, pembaruan status dari aplikasi POS, aplikasi kurir, dan agregator ongkir.
+12. ~~Billing langganan semi-otomatis lewat Midtrans~~ — **SELESAI @ v2.72–v2.73** (bayar online, webhook, pelunasan idempoten). Otomatisasi penerbitan tagihan berulang penuh tetap F-19 lanjutan.
+13. **Fase 3 lainnya:** Open API + webhook + portal developer, konsinyasi, landed cost, rekonsiliasi bank, aset tetap, bengkel, template sektor lengkap, e-Faktur/Coretax, Salesman, smart restock/forecast, mode LAN, portal mitra (P-12).
 
 ## C. Keputusan yang menunggu pemilik produk
 

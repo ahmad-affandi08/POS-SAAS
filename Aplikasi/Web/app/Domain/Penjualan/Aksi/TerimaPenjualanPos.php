@@ -61,6 +61,7 @@ use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
 use App\Domain\Penjualan\Layanan\PenautTagihanQrisPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
+use App\Domain\Penjualan\Layanan\PenutupUangMukaPesananOnline;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -151,6 +152,7 @@ final class TerimaPenjualanPos
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
+        private readonly PenutupUangMukaPesananOnline $penutupUangMukaOnline,
         private readonly SelesaikanReservasiPenjualan $reservasi,
         private readonly PencatatLaundryPenjualan $laundry,
         private readonly PenautTagihanQrisPenjualan $penautQris,
@@ -296,6 +298,10 @@ final class TerimaPenjualanPos
         // F-12 bagian 2: pre-order yang diambil (dikunci sebelum penjualan dibuat). Masalah = diterima + tinjauan.
         [$praPesan, $masalahUangMuka] = $this->penutupPraPesan->Cari($data->uuidPesananPenjualan, $outlet->idOutlet);
 
+        // F-17 bagian 2: pesanan toko online berbayar yang ditagihkan lewat penjualan ini (dikunci bersama).
+        [$pesananOnline, $masalahOnline] = $this->penutupUangMukaOnline->Cari($data->uuidPesananOnline, $outlet->idOutlet);
+        $masalahUangMuka = [...$masalahUangMuka, ...$masalahOnline];
+
         // F-16a: pelanggan dari POS (Uuid atau alias). Belum dikenal = penjualan tetap diterima tanpa pelanggan.
         $idPelanggan = $data->uuidPelanggan === null ? null : $this->identitasPelanggan->CariId($data->uuidPelanggan);
 
@@ -348,6 +354,10 @@ final class TerimaPenjualanPos
 
         if ($praPesan !== null) {
             $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupPraPesan->Tandai($praPesan, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
+        }
+
+        if ($pesananOnline !== null) {
+            $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupUangMukaOnline->Tandai($pesananOnline, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
         }
 
         if ($masalahUangMuka !== []) {
@@ -906,8 +916,13 @@ final class TerimaPenjualanPos
             throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh memakai uang muka satu kali.', 'Pembayaran');
         }
 
-        if ($jumlahUangMuka === 1 && $data->uuidPesananPenjualan === null) {
-            throw new PelanggaranAturanBisnis('UangMukaTanpaPesanan', 'Pembayaran uang muka wajib merujuk pre-order yang diambil.', 'UuidPesananPenjualan');
+        if ($jumlahUangMuka === 1 && $data->uuidPesananPenjualan === null && $data->uuidPesananOnline === null) {
+            throw new PelanggaranAturanBisnis('UangMukaTanpaPesanan', 'Pembayaran uang muka wajib merujuk pre-order atau pesanan online yang ditagihkan.', 'UuidPesananPenjualan');
+        }
+
+        // Dua sumber uang muka dalam satu penjualan tidak bisa dibagi adil: `UangMuka` hanya satu baris.
+        if ($data->uuidPesananPenjualan !== null && $data->uuidPesananOnline !== null) {
+            throw new PelanggaranAturanBisnis('UangMukaDuaSumber', 'Satu penjualan tidak bisa memakai uang muka pre-order dan pesanan online sekaligus.', 'UuidPesananOnline');
         }
 
         if ($jumlahTempo > 1) {

@@ -86,6 +86,9 @@ enum IzinTenant: string
     case GrosirKelola = 'grosir.kelola';
     // BR-12.6: mengonfirmasi SO grosir yang melampaui limit kredit atau pelanggannya punya piutang lewat jatuh tempo.
     case GrosirSetujuiKredit = 'grosir.setujui-kredit';
+    // F-17/F-10c: kanal toko online dan operasional pengiriman.
+    case TokoOnlineKelola = 'toko-online.kelola';
+    case PengirimanKelola = 'pengiriman.kelola';
 
     public function AmbilLabel(): string
     {
@@ -139,6 +142,8 @@ enum IzinTenant: string
             self::PersediaanTerbuangCatat => 'Mencatat bahan/menu terbuang (waste) dari kasir, dapur, atau back-office',
             self::GrosirKelola => 'Mengelola pesanan grosir, surat jalan, dan faktur penjualan',
             self::GrosirSetujuiKredit => 'Menyetujui pesanan grosir yang melampaui limit kredit',
+            self::TokoOnlineKelola => 'Mengelola toko online, zona ongkir, dan pesanan online',
+            self::PengirimanKelola => 'Mengelola kurir dan status pengiriman pesanan',
         };
     }
 
@@ -155,7 +160,8 @@ enum IzinTenant: string
             self::PembelianKelola, self::PembelianPoSetujui => 'Persediaan & pembelian',
             self::PenjualanBuat, self::PenjualanVoid, self::PenjualanDiskonManual, self::KasKeluarSetujui,
             self::PenjualanDiskonSetujui, self::PenjualanTempoSetujui, self::ShiftSelisihSetujui, self::PesananMejaCatat,
-            self::ReservasiKelola, self::LaundryKelola, self::GrosirKelola, self::GrosirSetujuiKredit => 'Penjualan',
+            self::ReservasiKelola, self::LaundryKelola, self::GrosirKelola, self::GrosirSetujuiKredit,
+            self::TokoOnlineKelola, self::PengirimanKelola => 'Penjualan',
             self::LaporanPenjualanLihat, self::LaporanKeuanganLihat, self::AkuntansiKelola, self::TindakanTinjau => 'Keuangan & laporan',
             self::LanggananKelola => 'Langganan',
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',

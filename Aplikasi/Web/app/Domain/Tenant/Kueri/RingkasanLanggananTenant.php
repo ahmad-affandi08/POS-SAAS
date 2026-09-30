@@ -51,8 +51,8 @@ final class RingkasanLanggananTenant
             'BatasTenggangPada' => $langganan->Status === StatusLangganan::Tertunggak && $periodeSelesai !== null
                 ? $periodeSelesai->addDays((int) config('tagihan.HariMasaTenggang'))
                 : null,
-            'NamaPaket' => $langganan->Paket?->Nama ?? 'Dasar',
-            'KodePaket' => $langganan->Paket?->Kode ?? '',
+            'NamaPaket' => $langganan->Paket->Nama ?? 'Dasar',
+            'KodePaket' => $langganan->Paket->Kode ?? '',
             'TagihanTertunda' => $tagihanTerbuka === null ? null : [
                 'Uuid' => $tagihanTerbuka->Uuid,
                 'Nomor' => $tagihanTerbuka->Nomor,

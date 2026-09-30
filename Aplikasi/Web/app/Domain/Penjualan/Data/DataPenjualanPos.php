@@ -18,6 +18,8 @@ use Carbon\CarbonImmutable;
  * `uuidPenyetujuTempo` (F-12, BR-12.1): pemberi PIN untuk tempo di atas limit / piutang lewat jatuh tempo.
  * `kodeVoucher` (F-16c bagian 2): voucher yang dipesan online kasir untuk penjualan ini.
  * `uuidPesananPenjualan` (F-12 bagian 2): pre-order yang diambil lewat penjualan ini (DP dipakai lewat metode Uang Muka).
+ * `uuidPesananOnline` (F-17 bagian 2): pesanan toko online yang sudah dibayar di muka lewat QRIS web dan ditagihkan
+ * lewat penjualan ini; uang mukanya juga dipakai lewat metode Uang Muka. Salah satu dari keduanya, tidak pernah dua.
  */
 final readonly class DataPenjualanPos
 {
@@ -54,6 +56,7 @@ final readonly class DataPenjualanPos
         public ?string $uuidPenyetujuTempo = null,
         public ?string $kodeVoucher = null,
         public ?string $uuidPesananPenjualan = null,
+        public ?string $uuidPesananOnline = null,
         // F-07 mode service bagian 2: reservasi yang dibayar lewat penjualan ini (diselesaikan & ditautkan).
         public ?string $uuidReservasi = null,
         // Laundry (§9.9): blok tiket laundry `{JenisLayanan, Berat?, Item?, Parfum?, Catatan?, EstimasiSelesaiPada?,

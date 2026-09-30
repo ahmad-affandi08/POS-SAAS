@@ -403,6 +403,7 @@ class DataAwal {
     this.struk,
     this.deposit = const DepositPos(),
     this.laundry = const LaundryPos(),
+    this.tokoOnlineAktif = false,
   });
 
   static const String batasDiskonManualBawaan = '10';
@@ -468,6 +469,10 @@ class DataAwal {
   /// Laundry (§9.9): isian tiket laundry di kasir & awalan tautan lacak; server lama = tidak aktif.
   final LaundryPos laundry;
 
+  /// F-17: toko online melayani outlet perangkat ini, jadi kasir menampilkan menu Pesanan toko online.
+  /// Server lama tanpa kunci `TokoOnline` = tidak aktif.
+  final bool tokoOnlineAktif;
+
   static DataAwal DariJson(Map<String, Object?> json) {
     final pengaturan = _Peta(json['Pengaturan']);
     final pin = _Peta(json['PinOffline']);
@@ -499,6 +504,7 @@ class DataAwal {
       struk: StrukPos.DariJson(json['Struk']),
       deposit: DepositPos.DariJson(json['Deposit']),
       laundry: LaundryPos.DariJson(json['Laundry']),
+      tokoOnlineAktif: UraiJson.AmbilBenar(UraiJson.AmbilPeta(json['TokoOnline'])['Aktif']),
     );
   }
 }

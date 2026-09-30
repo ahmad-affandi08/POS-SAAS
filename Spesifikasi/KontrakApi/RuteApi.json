@@ -298,5 +298,15 @@
         "Metode": "POST",
         "Jalur": "api/pemilik/v1/token-notifikasi",
         "Nama": "pemilik.token-notifikasi"
+    },
+    "GET api/pos/v1/pesanan-online": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesanan-online",
+        "Nama": "pos.pesanan-online"
+    },
+    "POST api/pos/v1/pesanan-online/{pesananOnline}/tautkan": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/pesanan-online/{pesananOnline}/tautkan",
+        "Nama": "pos.pesanan-online.tautkan"
     }
 }

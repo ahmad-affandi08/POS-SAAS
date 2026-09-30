@@ -60,9 +60,9 @@ final class PenghitungPesanSendiri
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
      * @return array{Baris: list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, Jumlah: Kuantitas, HargaSatuan: Uang, HargaPilihan: Uang, Total: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>, Subtotal: Uang, Perkiraan: array{Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}}
      */
-    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris): array
+    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
     {
-        $berharga = $this->menu->HitungBaris($konteks->idOutlet, $baris);
+        $berharga = $this->menu->HitungBaris($konteks->idOutlet, $baris, $kanal, $tampilOnline);
         $hasil = [];
         $subtotal = Uang::Nol();
 
@@ -73,7 +73,7 @@ final class PenghitungPesanSendiri
             $hasil[] = [...$b, 'Jumlah' => $jumlah, 'Total' => $total];
         }
 
-        return ['Baris' => $hasil, 'Subtotal' => $subtotal, 'Perkiraan' => $this->HitungPerkiraan($konteks, $hasil, $subtotal)];
+        return ['Baris' => $hasil, 'Subtotal' => $subtotal, 'Perkiraan' => $this->HitungPerkiraan($konteks, $hasil, $subtotal, $kanal)];
     }
 
     /**
@@ -98,7 +98,7 @@ final class PenghitungPesanSendiri
      * @param  list<array{UuidProduk: string, Jumlah: Kuantitas, HargaSatuan: Uang, HargaPilihan: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>  $baris
      * @return array{Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}
      */
-    private function HitungPerkiraan(DataKonteksPesanSendiri $konteks, array $baris, Uang $subtotal): array
+    private function HitungPerkiraan(DataKonteksPesanSendiri $konteks, array $baris, Uang $subtotal, KanalPenjualan $kanal): array
     {
         if ($baris === []) {
             return ['Diskon' => Uang::Nol(), 'BiayaLayanan' => Uang::Nol(), 'Pajak' => [], 'PajakTermasukHarga' => Uang::Nol(), 'Pembulatan' => Uang::Nol(), 'Total' => $subtotal];
@@ -149,7 +149,7 @@ final class PenghitungPesanSendiri
             pajak: array_values($pajakDokumen),
             persenBiayaLayanan: $profil->biayaLayananAktif ? $profil->persenBiayaLayanan : '0',
         );
-        $hasil = $this->TerapkanPromo($konteks, $dasar, $baris);
+        $hasil = $this->TerapkanPromo($konteks, $dasar, $baris, $kanal);
 
         return [
             'Diskon' => $hasil->totalDiskon,
@@ -171,7 +171,7 @@ final class PenghitungPesanSendiri
      *
      * @param  list<array{UuidProduk: string, UuidKategori: string|null}>  $baris
      */
-    private function TerapkanPromo(DataKonteksPesanSendiri $konteks, DataKalkulasi $dasar, array $baris): HasilKalkulasi
+    private function TerapkanPromo(DataKonteksPesanSendiri $konteks, DataKalkulasi $dasar, array $baris, KanalPenjualan $kanal): HasilKalkulasi
     {
         $definisi = $this->promo->AmbilDefinisi();
 
@@ -189,7 +189,7 @@ final class PenghitungPesanSendiri
                 $sekarang->utc(),
                 $sekarang->setTimezone($konteks->zonaWaktu),
                 $konteks->uuidOutlet === '' ? null : $konteks->uuidOutlet,
-                KanalPenjualan::MakanDiTempat,
+                $kanal,
             ),
             $this->promo->AmbilMode(),
         )->hasil;

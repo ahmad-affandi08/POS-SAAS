@@ -22,6 +22,7 @@ import '../LembarBukaLaci.dart';
 import '../LembarMutasiKas.dart';
 import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarAmbilPreOrder.dart';
+import '../Penjualan/LembarPesananOnline.dart';
 import '../Penjualan/LembarCucian.dart';
 import '../Penjualan/LembarReservasi.dart';
 import '../Penjualan/LembarRetur.dart';
@@ -262,6 +263,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
       saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
+      saatPesananOnline: ref.watch(penyediaKonteksPenjualan).value?.tokoOnlineAktif == true
+          ? () => _BukaPanelPenjualan(const _PanelPenjualan(pesananOnline: true))
+          : null,
       saatReservasi: () => _BukaPanelPenjualan(const _PanelPenjualan(reservasi: true)),
       saatCucian: ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif == true
           ? () => _BukaPanelPenjualan(const _PanelPenjualan(cucian: true))
@@ -405,6 +409,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarReservasi(
           key: const ValueKey('Reservasi'),
           kasir: widget.kasir,
+          saatDimuat: () {
+            _TutupPanel();
+            _Buka(TujuanRuangKerja.Jual);
+          },
+        ) as Widget,
+      ),
+      (_, _, _PanelPenjualan(pesananOnline: true)) => (
+        LembarPesananOnline.judul,
+        LembarPesananOnline(
+          key: const ValueKey('PesananOnline'),
           saatDimuat: () {
             _TutupPanel();
             _Buka(TujuanRuangKerja.Jual);
@@ -601,6 +615,7 @@ class _PanelPenjualan {
   const _PanelPenjualan({
     this.uuidPenjualanVoid,
     this.ambilPreOrder = false,
+    this.pesananOnline = false,
     this.reservasi = false,
     this.cucian = false,
   });
@@ -609,6 +624,9 @@ class _PanelPenjualan {
 
   /// F-12 bagian 2: cari & ambil pre-order.
   final bool ambilPreOrder;
+
+  /// F-17: pesanan toko online yang menunggu ditagihkan.
+  final bool pesananOnline;
 
   /// F-07 mode service: antrian reservasi hari ini.
   final bool reservasi;

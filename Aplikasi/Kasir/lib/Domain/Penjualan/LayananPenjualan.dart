@@ -797,7 +797,8 @@ class LayananPenjualan {
     }
   }
 
-  /// F-12 bagian 2: uang muka hanya dipakai saat mengambil pre-order, sekali, dan tidak melebihi sisa DP.
+  /// F-12 bagian 2 & F-17 bagian 2: uang muka hanya dipakai saat menagih dokumen yang punya DP, sekali, dan tidak
+  /// melebihi sisanya.
   static void ValidasiUangMuka(Keranjang keranjang, List<PembayaranMasukan> pembayaran) {
     final dp = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.uangMuka).toList();
     if (dp.isEmpty) {
@@ -805,7 +806,10 @@ class LayananPenjualan {
     }
     final praPesan = keranjang.praPesan;
     if (praPesan == null || dp.length > 1) {
-      throw const GalatKasir('UangMukaTanpaPesanan', 'Uang muka hanya dipakai sekali saat mengambil pre-order.');
+      throw const GalatKasir(
+        'UangMukaTanpaPesanan',
+        'Uang muka hanya dipakai sekali saat menagih pre-order atau pesanan online.',
+      );
     }
     if (dp.single.jumlah.Bandingkan(praPesan.sisaUangMuka) > 0) {
       throw GalatKasir(
@@ -1071,7 +1075,7 @@ class LayananPenjualan {
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
       'UuidPenyetujuTempo': ?uuidPenyetujuTempo,
       'Voucher': ?keranjang.voucher?.kode,
-      'UuidPesananPenjualan': ?keranjang.praPesan?.uuid,
+      if (keranjang.praPesan case final praPesan?) praPesan.sumber.KunciOutbox: praPesan.uuid,
       'UuidReservasi': ?keranjang.reservasi?.uuid,
       'Laundry': ?keranjang.laundry?.KeJson(),
       // Cetak struk bagian 4c: penjualan langsung di outlet berstasiun dapur dikirim ke dapur (mode cepat, bayar dulu).

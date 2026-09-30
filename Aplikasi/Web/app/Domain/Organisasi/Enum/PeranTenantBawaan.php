@@ -108,6 +108,8 @@ enum PeranTenantBawaan: string
                 // sejajar dengan PenjualanTempoSetujui untuk penjualan tempo di kasir.
                 IzinTenant::GrosirKelola,
                 IzinTenant::GrosirSetujuiKredit,
+                IzinTenant::TokoOnlineKelola,
+                IzinTenant::PengirimanKelola,
             ],
             self::Supervisor => [
                 IzinTenant::ProdukLihat,
@@ -131,10 +133,12 @@ enum PeranTenantBawaan: string
                 // diberikan bawaan — itu keputusan atas risiko piutang usaha, bukan kelonggaran satu transaksi seperti
                 // diskon atau selisih kas. Owner bisa menambahkannya lewat peran kustom bila memang diinginkan.
                 IzinTenant::GrosirKelola,
+                IzinTenant::TokoOnlineKelola,
+                IzinTenant::PengirimanKelola,
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],
-            self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola, IzinTenant::PersediaanTerbuangCatat],
+            self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola, IzinTenant::PersediaanTerbuangCatat, IzinTenant::PengirimanKelola],
             self::StafPembelian => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PembelianKelola],
             self::Akuntan => [
                 IzinTenant::OutletLihat,

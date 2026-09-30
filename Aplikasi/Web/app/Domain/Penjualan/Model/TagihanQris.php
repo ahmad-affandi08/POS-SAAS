@@ -7,17 +7,23 @@ namespace App\Domain\Penjualan\Model;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Penjualan\Enum\StatusTagihanQris;
+use App\Domain\Penjualan\Enum\SumberTagihanQris;
 use Illuminate\Support\Carbon;
 
 /**
  * Tagihan QRIS dinamis dari gerbang pembayaran aktif (F-08, BR-08.5). Dibuat POS lewat `POST /api/pos/v1/qris`,
  * dilunasi webhook gerbang atau cek status, dipakai sebagai `Referensi` pembayaran `QrisDinamis` di `Penjualan.Buat`.
  *
+ * F-17 bagian 2: tagihan ber-`Sumber` `TokoOnline` dibuat pelanggan dari web untuk satu `PesananOnline`. Tagihan itu
+ * **tanpa perangkat** (`IdPerangkat` null) dan pelunasannya membukukan uang muka (J-17.1), bukan penjualan.
+ *
  * @property int $Id
  * @property string $Uuid
  * @property int $IdTenant
  * @property int $IdOutlet
- * @property int $IdPerangkat
+ * @property int|null $IdPerangkat
+ * @property SumberTagihanQris $Sumber
+ * @property int|null $IdPesananOnline
  * @property int $IdMetodePembayaran
  * @property string $NomorPesanan
  * @property string $Penyedia
@@ -49,6 +55,9 @@ final class TagihanQris extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = [
+        'IdPerangkat' => null,
+        'Sumber' => SumberTagihanQris::Pos->value,
+        'IdPesananOnline' => null,
         'IdReferensi' => null,
         'HalamanBayar' => false,
         'Keterangan' => null,
@@ -71,6 +80,7 @@ final class TagihanQris extends ModelDasar
             'HalamanBayar' => 'boolean',
             'Jumlah' => 'decimal:2',
             'JumlahDiterima' => 'decimal:2',
+            'Sumber' => SumberTagihanQris::class,
             'Status' => StatusTagihanQris::class,
             'KedaluwarsaPada' => 'datetime',
             'LunasPada' => 'datetime',

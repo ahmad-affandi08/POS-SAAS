@@ -12,8 +12,10 @@ use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
 use App\Domain\Bersama\Tindakan\Enum\TingkatTindakan;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan;
 use App\Domain\Bersama\Tindakan\Layanan\PembuatButirTinjauan;
+use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Model\IsiDeposit;
 use App\Domain\Penjualan\Model\Penjualan;
+use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Penjualan\Model\TagihanQris;
@@ -24,7 +26,9 @@ use Illuminate\Database\Eloquent\Builder;
  * `PerluTinjauan` dan belum ditandai dicek (dibatasi outlet akses). Lihat: `laporan.penjualan.lihat` (isi deposit:
  * `pelanggan.lihat`; surat jalan grosir: `grosir.kelola`). Audit P0 F-02: uang QRIS dinamis yang masuk setelah tagihan berstatus akhir/tidak pasti dan belum
  * dipakai penjualan mana pun. BR-12.4: surat jalan grosir yang sudah diserahkan tetapi belum difakturkan (butir
- * pengingat yang selesai sendiri saat fakturnya dibuat, bukan butir "sudah dicek").
+ * pengingat yang selesai sendiri saat fakturnya dibuat, bukan butir "sudah dicek"). F-17: pesanan toko online yang
+ * masih menunggu konfirmasi staf (`toko-online.kelola`), juga butir pengingat karena selesai sendiri begitu pesanan
+ * dikonfirmasi, ditolak, atau hangus.
  */
 final class PenyediaTindakanPenjualan implements PenyediaTindakan
 {
@@ -80,6 +84,22 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
                 '/kelola/pelanggan/isi-deposit?saring[PerluTinjauan]=Ya',
                 fn (IsiDeposit $i): DataRincianTindakan => new DataRincianTindakan($i->Uuid, $i->Nomor, $i->AlasanTinjauan, $i->TanggalBisnis->toDateString(), '/kelola/pelanggan/isi-deposit?cari='.rawurlencode($i->Nomor)),
             );
+        }
+
+        if ($konteks->CekIzin('toko-online.kelola')) {
+            $butirPesanan = $this->ButirPesananOnlineBaru($konteks->idOutletBoleh);
+
+            if ($butirPesanan !== null) {
+                $butir[] = $butirPesanan;
+            }
+        }
+
+        if ($konteks->CekIzin('akuntansi.kelola')) {
+            $butirRefund = $this->ButirUangMukaOnlineBelumKembali($konteks->idOutletBoleh);
+
+            if ($butirRefund !== null) {
+                $butir[] = $butirRefund;
+            }
         }
 
         if ($konteks->CekIzin('grosir.kelola')) {
@@ -138,6 +158,95 @@ final class PenyediaTindakanPenjualan implements PenyediaTindakan
                     $sj->AmbilTotal()->FormatRupiah().', diserahkan '.$sj->Tanggal->toDateString(),
                     $sj->Tanggal->toDateString(),
                     '/kelola/grosir/surat-jalan/'.$sj->Uuid,
+                ),
+            )->all()),
+        );
+    }
+
+    /**
+     * F-17: pesanan toko online yang masih `MenungguKonfirmasi`. Pelanggan sudah menunggu kabar, jadi butirnya
+     * `Penting` begitu ada yang menunggu lebih dari sepuluh menit dan `Perhatian` selama masih segar.
+     *
+     * @param  list<int>|null  $idOutlet
+     */
+    private function ButirPesananOnlineBaru(?array $idOutlet): ?DataButirTindakan
+    {
+        $kueri = PesananOnline::query()
+            ->where('Status', StatusPesananOnline::MenungguKonfirmasi->value)
+            ->when($idOutlet !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutlet));
+        $jumlah = (clone $kueri)->count();
+
+        if ($jumlah === 0) {
+            return null;
+        }
+
+        $tertua = (clone $kueri)->min('DibuatPada');
+        $menit = $tertua === null ? 0 : (int) now()->diffInMinutes($tertua, true);
+
+        return new DataButirTindakan(
+            'pesanan-online.menunggu-konfirmasi',
+            'Penjualan',
+            $menit >= 10 ? TingkatTindakan::Penting : TingkatTindakan::Perhatian,
+            'Pesanan toko online menunggu konfirmasi',
+            $jumlah.' pesanan belum dijawab; yang tertua sudah '.$menit.' menit. Pesanan yang tidak dikonfirmasi sampai batas waktu toko akan hangus sendiri.',
+            $jumlah,
+            '/kelola/toko-online',
+            'Buka pesanan',
+            array_values((clone $kueri)->orderBy('DibuatPada')->limit(DataButirTindakan::BATAS_RINCIAN)->get()->map(
+                fn (PesananOnline $p): DataRincianTindakan => new DataRincianTindakan(
+                    $p->Uuid,
+                    $p->Nomor,
+                    $p->JenisPemenuhan->AmbilLabel().', '.$p->AmbilTotal()->FormatRupiah(),
+                    $p->DibuatPada?->setTimezone('Asia/Jakarta')->toDateString(),
+                    '/kelola/toko-online?cari='.rawurlencode($p->Nomor),
+                ),
+            )->all()),
+        );
+    }
+
+    /**
+     * F-17 bagian 2: pesanan online yang **sudah dibayar** tetapi tidak akan pernah diserahkan (ditolak, dibatalkan,
+     * atau hangus) dan uangnya belum dikembalikan. Butir `Penting`, bukan `Perhatian`: ini uang pelanggan yang
+     * ditahan toko tanpa dasar, dan saldo `Uang Muka Pelanggan` akan terus menunjukkannya sampai dikembalikan.
+     *
+     * @param  list<int>|null  $idOutlet
+     */
+    private function ButirUangMukaOnlineBelumKembali(?array $idOutlet): ?DataButirTindakan
+    {
+        $kueri = PesananOnline::query()
+            ->whereNotNull('DibayarPada')
+            ->whereNull('DikembalikanPada')
+            ->whereIn('Status', [StatusPesananOnline::Ditolak->value, StatusPesananOnline::Dibatalkan->value, StatusPesananOnline::Kedaluwarsa->value])
+            ->when($idOutlet !== null, fn ($k) => $k->whereIn('IdOutlet', $idOutlet));
+        $pesanan = (clone $kueri)->orderBy('DibayarPada')->get();
+        $perlu = $pesanan->filter(fn (PesananOnline $p): bool => $p->AmbilSisaUangMuka()->Bandingkan(Uang::Nol()) > 0)->values();
+
+        if ($perlu->isEmpty()) {
+            return null;
+        }
+
+        $total = Uang::Nol();
+
+        foreach ($perlu as $satu) {
+            $total = $total->Tambah($satu->AmbilSisaUangMuka());
+        }
+
+        return new DataButirTindakan(
+            'pesanan-online.uang-muka-belum-kembali',
+            'Penjualan',
+            TingkatTindakan::Penting,
+            'Uang pelanggan belum dikembalikan',
+            'Nilai '.$total->FormatRupiah().' sudah dibayar pelanggan untuk pesanan yang tidak jadi. Kembalikan uangnya lalu catat pengembaliannya.',
+            $perlu->count(),
+            '/kelola/toko-online',
+            'Catat pengembalian',
+            array_values($perlu->take(DataButirTindakan::BATAS_RINCIAN)->map(
+                fn (PesananOnline $p): DataRincianTindakan => new DataRincianTindakan(
+                    $p->Uuid,
+                    $p->Nomor,
+                    $p->AmbilSisaUangMuka()->FormatRupiah().', '.$p->Status->AmbilLabel(),
+                    $p->DibayarPada?->setTimezone('Asia/Jakarta')->toDateString(),
+                    '/kelola/toko-online?cari='.rawurlencode($p->Nomor),
                 ),
             )->all()),
         );

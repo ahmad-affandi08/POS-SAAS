@@ -39,6 +39,7 @@ use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 /**
  * Retur grosir & nota kredit (F-12, §9.7, **BR-12.7**, J-12.4): barang kembali dari pembeli grosir.
@@ -275,7 +276,8 @@ final class BuatReturGrosir
         ));
 
         foreach ($baris as $satuBaris) {
-            $detail = $detailKirim[$satuBaris['Urutan']];
+            $detail = $detailKirim[$satuBaris['Urutan']]
+                ?? throw new LogicException("Baris surat jalan urutan {$satuBaris['Urutan']} hilang setelah disusun.");
             $detail->JumlahDiretur = $detail->AmbilJumlahDiretur()->Tambah($satuBaris['Jumlah'])->KeString();
             $detail->save();
         }

@@ -30,6 +30,9 @@ abstract final class KunciPengaturan {
 
   /// F-16c: JSON `DataPromoPos` (promo aktif + mode resolusi) dari `GET /api/pos/v1/promo`.
   static const String promo = 'Promo';
+
+  /// F-17: `1` bila toko online melayani outlet perangkat ini (menu Pesanan toko online di kasir).
+  static const String tokoOnlineAktif = 'TokoOnlineAktif';
   static const String kodeOutlet = 'KodeOutlet';
   static const String jamTutupBuku = 'JamTutupBuku';
 
@@ -216,6 +219,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
     await SimpanPengaturan(KunciPengaturan.deposit, jsonEncode(data.deposit.KeJson()));
     await SimpanPengaturan(KunciPengaturan.laundry, jsonEncode(data.laundry.KeJson()));
+    await SimpanPengaturan(KunciPengaturan.tokoOnlineAktif, data.tokoOnlineAktif ? '1' : '0');
     final outlet = data.outlet;
     if (outlet != null) {
       await SimpanPengaturan(KunciPengaturan.uuidOutlet, outlet.uuid);

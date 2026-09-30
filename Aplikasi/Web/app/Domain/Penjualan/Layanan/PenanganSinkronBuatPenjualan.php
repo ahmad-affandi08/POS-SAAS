@@ -35,10 +35,10 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidReservasi?, Laundry?}`.
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?}`.
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
- * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
+ * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananOnline` (F-17 bagian 2) = pesanan toko online berbayar yang ditagihkan; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
  * diambil (DP dipakai lewat pembayaran bermetode Uang Muka). Uang & jumlah
  * string desimal. `UuidPesananTerbuka` (mode meja) menutup pesanan terbuka; `KirimDapur` (mode cepat) membuat tiket dapur.
  */
@@ -137,6 +137,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'UuidPenyetujuTempo' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Voucher' => ['sometimes', 'nullable', 'string', 'max:30'],
             'UuidPesananPenjualan' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'UuidPesananOnline' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidReservasi' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Laundry' => ['sometimes', 'nullable', 'array'],
             'Laundry.JenisLayanan' => ['required_with:Laundry', 'string', 'in:Reguler,Express'],
@@ -208,6 +209,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             uuidPenyetujuTempo: is_string($valid['UuidPenyetujuTempo'] ?? null) ? strtoupper($valid['UuidPenyetujuTempo']) : null,
             kodeVoucher: self::AmbilTeks($valid['Voucher'] ?? null),
             uuidPesananPenjualan: is_string($valid['UuidPesananPenjualan'] ?? null) ? strtoupper($valid['UuidPesananPenjualan']) : null,
+            uuidPesananOnline: is_string($valid['UuidPesananOnline'] ?? null) ? strtoupper($valid['UuidPesananOnline']) : null,
             uuidReservasi: is_string($valid['UuidReservasi'] ?? null) ? strtoupper($valid['UuidReservasi']) : null,
             laundry: is_array($valid['Laundry'] ?? null) ? self::AmbilLaundry($valid['Laundry']) : null,
         ));

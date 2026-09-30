@@ -189,7 +189,12 @@ const menuKaryawan: ItemMenu[] = [
  */
 const menuPenjualan: ItemMenu[] = [
     { label: 'Daftar penjualan', href: '/kelola/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
-    { label: 'Void & retur', href: '/kelola/penjualan/void-retur', izin: IzinTenant.LaporanPenjualanLihat },
+    {
+        label: 'Toko online & pengiriman',
+        href: '/kelola/toko-online',
+        izin: IzinTenant.TokoOnlineKelola,
+        fitur: 'kanal.toko-online',
+    },
     { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
     // F-15: tutup harian (End of Day) per outlet.
     { label: 'Tutup harian', href: '/kelola/kasir/tutup-harian', izin: IzinTenant.LaporanPenjualanLihat },

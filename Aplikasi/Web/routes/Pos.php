@@ -17,6 +17,7 @@ use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pos\V1\PersetujuanJarakJauhKontroler;
+use App\Http\Kontroler\Pos\V1\PesananOnlineKontroler;
 use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PesananTerbukaKontroler;
 use App\Http\Kontroler\Pos\V1\PesanKeluarKontroler;
@@ -151,6 +152,10 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.terima');
         Route::post('/pesan-sendiri/{pesananSendiri}/tolak', [PesanSendiriKontroler::class, 'Tolak'])
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.tolak');
+        // F-17 toko online: muat pesanan aktif ke POS; setelah penjualan lunas tersinkron, tautkan secara idempoten.
+        Route::get('/pesanan-online', [PesananOnlineKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesanan-online');
+        Route::post('/pesanan-online/{pesananOnline}/tautkan', [PesananOnlineKontroler::class, 'Tautkan'])
+            ->middleware('throttle:pos-60')->where('pesananOnline', $ulid)->name('pos.pesanan-online.tautkan');
         // K3: kirim struk digital ke WhatsApp/email pelanggan (wajib online, penjualan sudah tersinkron), diantrekan;
         // status kiriman ditarik aplikasi. Maksimal 5 kiriman per penjualan (aksi) + 20/menit per perangkat.
         Route::post('/penjualan/{uuidPenjualan}/kirim-struk', [PesanKeluarKontroler::class, 'KirimStruk'])

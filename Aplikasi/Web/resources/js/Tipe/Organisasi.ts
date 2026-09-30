@@ -54,6 +54,8 @@ export const IzinTenant = {
     // Grosir (F-12, §9.7, D-32): kelola pesanan/surat jalan/faktur, dan menembus limit kredit saat konfirmasi SO.
     GrosirKelola: 'grosir.kelola',
     GrosirSetujuiKredit: 'grosir.setujui-kredit',
+    TokoOnlineKelola: 'toko-online.kelola',
+    PengirimanKelola: 'pengiriman.kelola',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

@@ -11,6 +11,7 @@ use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Pencairan;
+use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -94,7 +95,7 @@ final class DaftarPencairan
             return '0.0000';
         }
 
-        return (string) $biaya->KeDesimal()->multipliedBy(100)->dividedBy($kotor->KeDesimal(), 4, RoundingMode::HalfUp);
+        return (string) BigDecimal::of($biaya->KeString())->multipliedBy(100)->dividedBy(BigDecimal::of($kotor->KeString()), 4, RoundingMode::HalfUp);
     }
 
     /**

@@ -63,6 +63,9 @@ enum JenisSumberJurnal: string
     // F-08 BR-08.4 (J-08.1): pencairan dana non-tunai ke rekening toko, dan pembatalannya.
     case Pencairan = 'Pencairan';
 
+    // F-17 toko online bagian 2: uang muka pesanan online diterima (J-17.1) dan dikembalikan (J-17.2).
+    case PesananOnline = 'PesananOnline';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -96,6 +99,7 @@ enum JenisSumberJurnal: string
             self::FakturPenjualan => 'Faktur penjualan grosir',
             self::ReturGrosir => 'Retur grosir',
             self::Pencairan => 'Pencairan dana',
+            self::PesananOnline => 'Uang muka pesanan online',
         };
     }
 
@@ -136,6 +140,7 @@ enum JenisSumberJurnal: string
             self::FakturPenjualan => '/kelola/grosir/faktur/'.$uuid,
             self::ReturGrosir => '/kelola/grosir/retur/'.$uuid,
             self::Pencairan => '/kelola/akuntansi/pencairan/'.$uuid,
+            self::PesananOnline => '/kelola/toko-online?cari='.$uuid,
         };
     }
 }

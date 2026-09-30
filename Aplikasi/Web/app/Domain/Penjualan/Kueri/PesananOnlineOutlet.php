@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Penjualan\Kueri;
+
+use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Model\MetodePembayaran;
+use App\Domain\Penjualan\Model\PesananOnline;
+use App\Domain\Penjualan\Model\PesananOnlineDetail;
+
+/**
+ * Pesanan online aktif untuk dimuat kasir ke keranjang POS; belum menyentuh stok/jurnal.
+ *
+ * F-17 bagian 2: `SisaUangMuka` adalah uang pelanggan yang sudah diterima (J-17.1) dan belum dipakai penjualan mana
+ * pun. Kasir memakainya sebagai baris bayar **Uang muka** dengan `UuidPesananOnline`, persis seperti pre-order F-12,
+ * sehingga pesanan berbayar tidak ditagihkan dua kali.
+ */
+final class PesananOnlineOutlet
+{
+    /**
+     * @return array{Pesanan: list<array<string, mixed>>, MetodeUangMuka: array{Uuid: string, Nama: string}|null}
+     */
+    public function AmbilAktif(int $idOutlet): array
+    {
+        $daftar = PesananOnline::query()->with('Detail')->where('IdOutlet', $idOutlet)
+            ->whereIn('Status', [StatusPesananOnline::Dikonfirmasi->value, StatusPesananOnline::Diproses->value, StatusPesananOnline::Siap->value])
+            ->whereNull('IdPenjualan')->orderBy('DibuatPada')->get();
+        $hasil = [];
+
+        foreach ($daftar as $p) {
+            $hasil[] = [
+                'Uuid' => $p->Uuid, 'Nomor' => $p->Nomor, 'NamaPelanggan' => $p->NamaPelanggan,
+                'JenisPemenuhan' => $p->JenisPemenuhan->value, 'MetodePembayaran' => $p->MetodePembayaran->value,
+                'Status' => $p->Status->value, 'Subtotal' => $p->Subtotal, 'Ongkir' => $p->Ongkir, 'Total' => $p->Total,
+                'Catatan' => $p->Catatan, 'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),
+                'SudahDibayar' => $p->DibayarPada !== null, 'SisaUangMuka' => $p->AmbilSisaUangMuka()->KeString(),
+                'Baris' => $p->Detail->map(fn (PesananOnlineDetail $d): array => [
+                    'UuidProduk' => $d->UuidProduk, 'UuidProdukSatuan' => $d->UuidProdukSatuan,
+                    'NamaProduk' => $d->NamaProduk, 'Jumlah' => $d->Jumlah, 'HargaSatuan' => $d->HargaSatuan,
+                    'HargaPilihan' => $d->HargaPilihan, 'Pilihan' => $d->Pilihan ?? [], 'Catatan' => $d->Catatan,
+                ])->values()->all(),
+            ];
+        }
+
+        $metode = MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::UangMuka->value)->first(['Uuid', 'Nama']);
+
+        return [
+            'Pesanan' => $hasil,
+            'MetodeUangMuka' => $metode === null ? null : ['Uuid' => $metode->Uuid, 'Nama' => $metode->Nama],
+        ];
+    }
+}

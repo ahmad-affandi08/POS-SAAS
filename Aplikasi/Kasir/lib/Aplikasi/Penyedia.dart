@@ -46,6 +46,7 @@ import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Penjualan/LayananLaundry.dart';
+import '../Domain/Penjualan/LayananPesananOnline.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
 import '../Domain/Penjualan/LayananReservasi.dart';
 import '../Domain/Penjualan/LayananQrisDinamis.dart';
@@ -406,6 +407,11 @@ final penyediaLayananSesi = Provider<LayananSesi>(
     repositoriKasir: ref.watch(penyediaRepositori),
     jam: ref.watch(penyediaJam),
   ),
+);
+
+/// F-17: pesanan toko online yang ditagihkan kasir.
+final penyediaLayananPesananOnline = Provider<LayananPesananOnline>(
+  (ref) => LayananPesananOnline(klien: ref.watch(penyediaKlienPos), penjualan: ref.watch(penyediaLayananPenjualan)),
 );
 
 final penyediaLayananPreOrder = Provider<LayananPreOrder>(

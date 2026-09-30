@@ -20,6 +20,7 @@ import 'Model/ModelPreOrder.dart';
 import 'Model/ModelPromo.dart';
 import 'Model/ModelReservasi.dart';
 import 'Model/ModelRetur.dart';
+import 'Model/ModelTokoOnline.dart';
 import 'Model/UraiJson.dart';
 
 /// Klien `/api/pos/v1` (PRD §16.1, §16.3) dengan device token (`Authorization: Bearer`), `X-Versi-Aplikasi`, dan
@@ -382,6 +383,17 @@ class KlienPos {
     'pesan-sendiri/${Uri.encodeComponent(uuid)}/tolak',
     {'UuidPengguna': uuidPengguna, 'Alasan': alasan},
   );
+
+  /// F-17 toko online: pesanan aktif outlet perangkat yang belum ditagihkan, beserta metode sistem "Uang muka (DP)"
+  /// untuk pesanan yang sudah dibayar di muka (QRIS web). Perlu online.
+  Future<HasilPesananOnline> AmbilPesananOnline() async =>
+      HasilPesananOnline.DariJson(await _Kirim('GET', 'pesanan-online', null));
+
+  /// Tautkan pesanan online [uuid] ke penjualan yang sudah lunas di server. Idempoten; pesanan yang sudah ditautkan ke
+  /// penjualan lain → `GalatApi` ber-kode `SudahDitautkan` (409), pesanan ambil sendiri yang belum `Siap` →
+  /// `PesananBelumSiap` (409).
+  Future<void> TautkanPesananOnline(String uuid, {required String uuidPenjualan}) =>
+      _Kirim('POST', 'pesanan-online/${Uri.encodeComponent(uuid)}/tautkan', {'UuidPenjualan': uuidPenjualan});
 
   /// F-08 QRIS dinamis (v2.05): buat tagihan lewat gerbang aktif platform; idempoten per [uuid]. Gerbang belum aktif
   /// → `GalatApi` `GerbangBelumAktif` (409); gerbang menolak → `GerbangGagal` (502 dipetakan ke `GalatJaringan`).

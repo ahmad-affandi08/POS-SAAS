@@ -94,10 +94,11 @@ final class PembayaranBelumDicairkan
             return ['Data' => [], 'Total' => '0.00', 'Terpotong' => false];
         }
 
+        $batasTanggal = $sampai?->toDateString();
         $idPenjualan = Penjualan::query()
             ->where('IdOutlet', $idOutlet)
             ->where('Status', '!=', StatusPenjualan::Void->value)
-            ->when($sampai !== null, fn ($q) => $q->whereDate('TanggalBisnis', '<=', $sampai->toDateString()))
+            ->when($batasTanggal !== null, fn ($q) => $q->whereDate('TanggalBisnis', '<=', $batasTanggal))
             ->select('Id');
 
         $pembayaran = PenjualanPembayaran::query()
@@ -120,8 +121,8 @@ final class PembayaranBelumDicairkan
             $total = $total->Tambah($satu->AmbilJumlah());
             $data[] = [
                 'Uuid' => $satu->Uuid,
-                'NomorPenjualan' => $dokumen?->Nomor ?? '',
-                'TanggalPenjualan' => ($dokumen?->TanggalBisnis ?? $satu->DibayarPada)->format('Y-m-d'),
+                'NomorPenjualan' => $dokumen->Nomor ?? '',
+                'TanggalPenjualan' => ($dokumen->TanggalBisnis ?? $satu->DibayarPada)->format('Y-m-d'),
                 'StatusPenjualan' => $dokumen?->Status->value ?? '',
                 'LabelStatusPenjualan' => $dokumen?->Status->AmbilLabel() ?? '',
                 'Jumlah' => $satu->Jumlah,
@@ -215,7 +216,7 @@ final class PembayaranBelumDicairkan
                 $total = $total->Tambah($satu->AmbilJumlah());
             }
 
-            $terlama = Penjualan::query()->whereKey($pembayaran->first()?->IdPenjualan)->value('TanggalBisnis');
+            $terlama = Penjualan::query()->whereKey($pembayaran->first()->IdPenjualan)->value('TanggalBisnis');
             $tanggalTerlama = $terlama instanceof Carbon ? CarbonImmutable::parse($terlama->toDateString()) : $hariIni;
 
             $hasil[] = [

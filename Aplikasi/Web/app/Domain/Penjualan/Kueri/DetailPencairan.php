@@ -47,7 +47,7 @@ final class DetailPencairan
                 'Tanggal' => $pencairan->Tanggal->format('Y-m-d'),
                 'Status' => $pencairan->Status->value,
                 'LabelStatus' => $pencairan->Status->AmbilLabel(),
-                'NamaMetode' => $metode?->Nama ?? '',
+                'NamaMetode' => $metode->Nama ?? '',
                 'JenisMetode' => $metode?->Jenis->value ?? '',
                 'KodeOutlet' => $this->petaOutlet->AmbilKode([$pencairan->IdOutlet])[$pencairan->IdOutlet] ?? '',
                 'AkunTujuan' => self::Label($akun[$pencairan->IdAkunTujuan] ?? null),

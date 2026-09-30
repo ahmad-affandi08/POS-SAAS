@@ -38,6 +38,9 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $ProfilPajak
  * @property StatusOrganisasi $Status
  * @property bool $PesanSendiriAktif F-17: tamu boleh memesan lewat QR meja (juga butuh fitur `kanal.self-order`)
+ * @property bool $TokoOnlineAktif
+ * @property bool $AmbilSendiriAktif
+ * @property bool $KirimAktif
  * @property Carbon|null $KodeDikunciPada
  * @property Carbon|null $DiarsipkanPada
  * @property-read Merek $Merek
@@ -61,6 +64,9 @@ final class Outlet extends ModelDasar
         'ProfilPajak' => null,
         'Status' => 'Aktif',
         'PesanSendiriAktif' => false,
+        'TokoOnlineAktif' => false,
+        'AmbilSendiriAktif' => true,
+        'KirimAktif' => false,
         'KodeDikunciPada' => null,
         'DiarsipkanPada' => null,
     ];
@@ -90,6 +96,9 @@ final class Outlet extends ModelDasar
             'ProfilPajak' => 'array',
             'Status' => StatusOrganisasi::class,
             'PesanSendiriAktif' => 'boolean',
+            'TokoOnlineAktif' => 'boolean',
+            'AmbilSendiriAktif' => 'boolean',
+            'KirimAktif' => 'boolean',
             'KodeDikunciPada' => 'datetime',
             'DiarsipkanPada' => 'datetime',
             'TemplateSektorDiterapkanPada' => 'datetime',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use Illuminate\Support\Carbon;
@@ -36,6 +37,11 @@ final class PenjualanPembayaran extends ModelDasar
     public const STATUS_DITERIMA = 'Diterima';
 
     protected $table = 'PenjualanPembayaran';
+
+    public function AmbilJumlah(): Uang
+    {
+        return Uang::Dari($this->Jumlah);
+    }
 
     /**
      * @return array<string, string>

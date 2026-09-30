@@ -24,12 +24,18 @@ use InvalidArgumentException;
  * - Tagihan kedaluwarsa/gagal/dibatalkan/tidak pasti yang ternyata dibayar tetap menjadi `Lunas` (uang nyata
  *   diterima) dan ditandai `PerluTinjauan` untuk Kotak Tindakan (audit P0 F-02).
  * Setiap perubahan dicatat di `RiwayatStatusDokumen` (tanpa pengguna; sumber di alasan).
+ *
+ * F-17 bagian 2: tagihan milik `PesananOnline` yang menjadi `Lunas` langsung membukukan uang mukanya (J-17.1) lewat
+ * `PenerapPembayaranPesananOnline` **di transaksi yang sama** (aturan #10). Pesanan yang sudah berstatus akhir
+ * (hangus/dibatalkan) tetap dibukukan tanpa dihidupkan kembali: uangnya nyata diterima dan harus terlihat sebagai
+ * kewajiban sampai dikembalikan.
  */
 final class PenerapStatusTagihanQris
 {
     public function __construct(
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PenerapPembayaranPesananOnline $pembayaranOnline,
     ) {}
 
     public function Terapkan(int $idTagihan, StatusPembayaranGerbang $statusGerbang, ?string $jumlahGerbang, string $sumber): TagihanQris
@@ -95,6 +101,10 @@ final class PenerapStatusTagihanQris
             }
 
             $this->audit->Catat('tagihan-qris.status', $tagihan, ['Status' => $asal->value], ['Status' => $tujuan->value, 'Sumber' => $sumber], idTenant: $tagihan->IdTenant);
+
+            if ($tujuan === StatusTagihanQris::Lunas) {
+                $this->pembayaranOnline->Terapkan($tagihan);
+            }
 
             return $tagihan;
         });

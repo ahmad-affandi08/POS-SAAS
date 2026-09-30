@@ -17,6 +17,7 @@ use App\Domain\Pelanggan\Kueri\PengaturanDepositTenant;
 use App\Domain\Pemenuhan\Kueri\PengaturanLaundryTenant;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
+use App\Domain\Penjualan\Kueri\StatusTokoOnlineOutlet;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use App\Domain\Tenant\Kueri\PengaturanStrukTenant;
@@ -56,6 +57,7 @@ final class DataAwalKasir
         private readonly PengaturanStrukTenant $pengaturanStruk,
         private readonly PengaturanDepositTenant $deposit,
         private readonly PengaturanLaundryTenant $laundry,
+        private readonly StatusTokoOnlineOutlet $statusTokoOnline,
     ) {}
 
     /**
@@ -112,6 +114,8 @@ final class DataAwalKasir
             // F-16d bagian 1: deposit pelanggan (fitur paket, batas isi per transaksi Rupiah bulat).
             'Deposit' => $this->deposit->KeLarik(),
             'Laundry' => $this->AmbilLaundry($perangkat->IdTenant),
+            // F-17: kasir hanya menampilkan menu Pesanan toko online bila outlet ini memang melayaninya.
+            'TokoOnline' => ['Aktif' => $this->statusTokoOnline->CekAktif($outlet?->idOutlet)],
             'ProfilPajak' => [
                 'Pkp' => $profil->pkp ?? false,
                 'PungutPbjt' => $profil->pungutPbjt ?? false,

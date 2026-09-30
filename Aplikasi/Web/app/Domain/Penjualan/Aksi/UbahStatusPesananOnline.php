@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Penjualan\Aksi;
+
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
+use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Pemenuhan\Enum\StatusPengirimanPesanan;
+use App\Domain\Pemenuhan\Model\PengirimanPesanan;
+use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
+use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Layanan\PemeriksaPenyelesaianPesananOnline;
+use App\Domain\Penjualan\Model\PesananOnline;
+use App\Domain\Penjualan\Model\ZonaPengiriman;
+use Illuminate\Support\Facades\DB;
+
+final class UbahStatusPesananOnline
+{
+    public function __construct(private readonly PencatatRiwayatStatus $riwayat, private readonly PencatatAudit $audit, private readonly PemeriksaPenyelesaianPesananOnline $selesai) {}
+
+    public function Jalankan(PesananOnline $pesanan, StatusPesananOnline $status, int $idPengguna, ?string $alasan = null): void
+    {
+        if ($status === StatusPesananOnline::Selesai && ! $this->selesai->CekSudahDibayar($pesanan)) {
+            throw new PelanggaranAturanBisnis('PenjualanBelumLunas', 'Pesanan baru dapat diselesaikan setelah ditautkan ke penjualan yang lunas.', 'Status');
+        }
+        $pengiriman = $pesanan->JenisPemenuhan === JenisPemenuhanOnline::Kirim
+            ? PengirimanPesanan::query()->where('IdPesananOnline', $pesanan->Id)->first()
+            : null;
+        if ($status === StatusPesananOnline::Selesai && $pesanan->JenisPemenuhan === JenisPemenuhanOnline::Kirim
+            && $pengiriman?->Status !== StatusPengirimanPesanan::Diterima) {
+            throw new PelanggaranAturanBisnis('PengirimanBelumDiterima', 'Pesanan kirim selesai otomatis setelah pengiriman diterima.', 'Status');
+        }
+        if ($status === StatusPesananOnline::Dibatalkan && in_array($pengiriman?->Status, [StatusPengirimanPesanan::Dikirim, StatusPengirimanPesanan::Diterima], true)) {
+            throw new PelanggaranAturanBisnis('PengirimanSudahBerjalan', 'Pesanan tidak dapat dibatalkan setelah kurir berangkat.', 'Status', 409);
+        }
+        DB::transaction(function () use ($pesanan, $pengiriman, $status, $idPengguna, $alasan): void {
+            $dari = $pesanan->Status;
+            $pesanan->UbahStatus($status);
+            $pesanan->DiubahOleh = $idPengguna;
+            $pesanan->Alasan = $alasan;
+            if ($status === StatusPesananOnline::Dikonfirmasi) {
+                $pesanan->DikonfirmasiOleh = $idPengguna;
+                $pesanan->DikonfirmasiPada = now();
+                if ($pesanan->JenisPemenuhan === JenisPemenuhanOnline::Kirim) {
+                    $maksHari = $pesanan->IdZonaPengiriman === null ? 0 : (ZonaPengiriman::query()->whereKey($pesanan->IdZonaPengiriman)->value('EstimasiHariMaks') ?? 0);
+                    PengirimanPesanan::query()->firstOrCreate(['IdPesananOnline' => $pesanan->Id], [
+                        'IdOutlet' => $pesanan->IdOutlet,
+                        'Status' => StatusPengirimanPesanan::SiapKemas,
+                        'PerkiraanTibaPada' => now()->addDays((int) $maksHari),
+                    ]);
+                }
+            }
+            if ($status === StatusPesananOnline::Selesai) {
+                $pesanan->SelesaiPada = now();
+            }
+            if ($status === StatusPesananOnline::Dibatalkan && $pengiriman instanceof PengirimanPesanan
+                && $pengiriman->Status->BisaBerubahKe(StatusPengirimanPesanan::Dibatalkan)) {
+                $dariPengiriman = $pengiriman->Status;
+                $pengiriman->UbahStatus(StatusPengirimanPesanan::Dibatalkan);
+                $pengiriman->Alasan = $alasan;
+                $pengiriman->DiubahOleh = $idPengguna;
+                $pengiriman->save();
+                $this->riwayat->Catat('PengirimanPesanan', $pengiriman->Id, $dariPengiriman->value, StatusPengirimanPesanan::Dibatalkan->value, $idPengguna, $alasan);
+            }
+            $pesanan->save();
+            $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $dari->value, $status->value, $idPengguna, $alasan);
+            $this->audit->Catat('pesanan-online.status', $pesanan, ['Status' => $dari->value], ['Status' => $status->value, 'Alasan' => $alasan], idPengguna: $idPengguna);
+        });
+    }
+}

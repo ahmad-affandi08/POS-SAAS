@@ -43,11 +43,11 @@ final class MenuPesanSendiri
      * @param  string  $dasarGambar  URL gambar dengan penanda `{uuid}`
      * @return array{Kategori: list<array{Uuid: string, Nama: string}>, Produk: list<array<string, mixed>>}
      */
-    public function Ambil(int $idOutlet, string $dasarGambar): array
+    public function Ambil(int $idOutlet, string $dasarGambar, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
     {
-        $produk = $this->KueriProduk()->orderBy('Nama')->get();
+        $produk = $this->KueriProduk($tampilOnline)->orderBy('Nama')->get();
         $idInduk = array_values($produk->filter(fn (Produk $p): bool => $p->Jenis === JenisProduk::IndukVarian)->map(fn (Produk $p): int => $p->Id)->all());
-        $anak = $idInduk === [] ? new Collection : $this->KueriAnak()->whereIn('IdInduk', $idInduk)->orderBy('Id')->get();
+        $anak = $idInduk === [] ? new Collection : $this->KueriAnak($tampilOnline)->whereIn('IdInduk', $idInduk)->orderBy('Id')->get();
         $satuan = $this->AmbilSatuanJual(collect([...$produk->all(), ...$anak->all()]));
         $anakPerInduk = $anak->groupBy('IdInduk');
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
@@ -71,7 +71,7 @@ final class MenuPesanSendiri
                 foreach ($anakPerInduk->get($p->Id, new Collection) as $a) {
                     $sa = $satuan[$a->Id] ?? null;
                     $hargaAnak = $sa instanceof ProdukSatuan
-                        ? $this->harga->Tentukan($a, $sa, Kuantitas::Dari(1), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)?->harga
+                        ? $this->harga->Tentukan($a, $sa, Kuantitas::Dari(1), $idOutlet, $kanal, null, $waktu)?->harga
                         : null;
                     $varian[] = [
                         'Uuid' => $a->Uuid,
@@ -87,7 +87,7 @@ final class MenuPesanSendiri
                 }
             } else {
                 $hargaKartu = $s instanceof ProdukSatuan
-                    ? $this->harga->Tentukan($p, $s, Kuantitas::Dari(1), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)?->harga
+                    ? $this->harga->Tentukan($p, $s, Kuantitas::Dari(1), $idOutlet, $kanal, null, $waktu)?->harga
                     : null;
             }
 
@@ -140,12 +140,12 @@ final class MenuPesanSendiri
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
      * @return list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, HargaSatuan: Uang, HargaPilihan: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>
      */
-    public function HitungBaris(int $idOutlet, array $baris): array
+    public function HitungBaris(int $idOutlet, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
     {
         $uuid = array_values(array_unique(array_column($baris, 'UuidProduk')));
         $uuidVarian = array_values(array_unique(array_filter(array_map(fn (array $b): ?string => $b['UuidVarian'] ?? null, $baris), 'is_string')));
-        $produk = $this->KueriProduk()->whereIn('Uuid', $uuid)->get()->keyBy('Uuid');
-        $anak = $uuidVarian === [] ? new Collection : $this->KueriAnak()->whereIn('Uuid', $uuidVarian)->get()->keyBy('Uuid');
+        $produk = $this->KueriProduk($tampilOnline)->whereIn('Uuid', $uuid)->get()->keyBy('Uuid');
+        $anak = $uuidVarian === [] ? new Collection : $this->KueriAnak($tampilOnline)->whereIn('Uuid', $uuidVarian)->get()->keyBy('Uuid');
         $semua = collect([...$produk->values()->all(), ...$anak->values()->all()]);
         $satuan = $this->AmbilSatuanJual($semua);
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
@@ -165,7 +165,7 @@ final class MenuPesanSendiri
             $varian = $dijual !== $p;
             $s = $satuan[$dijual->Id] ?? null;
             $harga = $s instanceof ProdukSatuan
-                ? $this->harga->Tentukan($dijual, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, KanalPenjualan::MakanDiTempat, null, $waktu)
+                ? $this->harga->Tentukan($dijual, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, $kanal, null, $waktu)
                 : null;
 
             if (! $s instanceof ProdukSatuan || $harga === null) {
@@ -201,19 +201,19 @@ final class MenuPesanSendiri
     }
 
     /** Produk menu dengan gambar (untuk rute gambar publik, termasuk induk varian); null bila bukan menu. */
-    public function CariProduk(string $uuid): ?Produk
+    public function CariProduk(string $uuid, bool $tampilOnline = false): ?Produk
     {
-        return $this->KueriProduk()->where('Uuid', $uuid)->first();
+        return $this->KueriProduk($tampilOnline)->where('Uuid', $uuid)->first();
     }
 
     /**
      * @return Builder<Produk>
      */
-    private function KueriProduk(): Builder
+    private function KueriProduk(bool $tampilOnline = false): Builder
     {
         return Produk::query()
             ->where('Aktif', true)
-            ->where('TampilDiPos', true)
+            ->where($tampilOnline ? 'TampilOnline' : 'TampilDiPos', true)
             ->whereNull('IdInduk')
             ->whereNotIn('Jenis', self::JenisTidakDijual(JenisProduk::IndukVarian));
     }
@@ -223,11 +223,11 @@ final class MenuPesanSendiri
      *
      * @return Builder<Produk>
      */
-    private function KueriAnak(): Builder
+    private function KueriAnak(bool $tampilOnline = false): Builder
     {
         return Produk::query()
             ->where('Aktif', true)
-            ->where('TampilDiPos', true)
+            ->where($tampilOnline ? 'TampilOnline' : 'TampilDiPos', true)
             ->whereNotNull('IdInduk')
             ->whereNotIn('Jenis', self::JenisTidakDijual());
     }

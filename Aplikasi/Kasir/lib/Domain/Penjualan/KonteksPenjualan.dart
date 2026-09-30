@@ -130,6 +130,7 @@ class KonteksPenjualan {
     this.kirimDapurLangsung = false,
     this.deposit = const DepositPos(),
     this.laundry = const LaundryPos(),
+    this.tokoOnlineAktif = false,
   });
 
   final String? uuidOutlet;
@@ -169,6 +170,9 @@ class KonteksPenjualan {
 
   /// Laundry (§9.9): isian tiket laundry di keranjang, durasi estimasi, parfum, awalan tautan lacak.
   final LaundryPos laundry;
+
+  /// F-17: toko online melayani outlet ini, jadi menu Pesanan toko online ditampilkan.
+  final bool tokoOnlineAktif;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -245,6 +249,7 @@ class KonteksPenjualan {
       kirimDapurLangsung: (await RuteDapur.Muat(repositori)).stasiun.isNotEmpty,
       deposit: await MuatDeposit(repositori),
       laundry: await MuatLaundry(repositori),
+      tokoOnlineAktif: await repositori.AmbilPengaturan(KunciPengaturan.tokoOnlineAktif) == '1',
     );
   }
 

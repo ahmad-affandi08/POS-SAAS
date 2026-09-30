@@ -98,6 +98,8 @@ Ekstensi sektor, contoh: F&B menambah `4-1010 Penjualan Makanan`, `4-1020 Penjua
 | J-16.7 | Klaim promo dipotong dari hutang pemasok (v1.94) | Hutang Usaha | Piutang Klaim Promosi Pemasok (klaim sebelum v1.93: HPP) |
 | J-16.8 | Sisa paket sesi dikembalikan ke pelanggan (v2.12) | Pendapatan Diterima Dimuka | Kas/Bank |
 | J-16.9 | Sisa paket sesi hangus (masa berlaku lewat / dihanguskan, v2.12) | Pendapatan Diterima Dimuka | Pendapatan Lain-lain |
+| J-17.1 | Uang muka pesanan toko online diterima lewat QRIS web (v2.87) | akun kliring metode gerbang / Piutang Pencairan | Uang Muka Pelanggan |
+| J-17.2 | Uang muka pesanan toko online dikembalikan ke pelanggan (v2.87) | Uang Muka Pelanggan | Kas/Bank |
 | J-18.1 | Kasbon karyawan | Piutang Karyawan | Kas |
 | J-18.2 | Bayar rekap gaji | Beban Gaji & Komisi (gaji kotor) | Piutang Karyawan (potongan kasbon), Pendapatan Lain (potongan lain), Kas/Bank (gaji bersih) |
 | J-15.1 | Tutup tahun | Semua akun Pendapatan | Semua akun Beban & HPP, selisih ke Laba Ditahan |

@@ -71,7 +71,7 @@ final class PencairanKontroler extends DasarAkuntansiKontroler
             'OpsiAkun' => $akun->AmbilKasBank(),
             'Terpilih' => [
                 'Metode' => is_string($uuidMetode) ? $uuidMetode : '',
-                'Outlet' => $outlet?->Uuid ?? '',
+                'Outlet' => $outlet->Uuid ?? '',
                 'Sampai' => is_string($sampai) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $sampai) === 1 ? $sampai : '',
             ],
             'Pembayaran' => is_string($uuidMetode) && $uuidMetode !== '' && $outlet !== null

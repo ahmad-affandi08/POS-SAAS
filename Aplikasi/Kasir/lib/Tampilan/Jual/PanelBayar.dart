@@ -94,7 +94,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   @override
   void initState() {
     super.initState();
-    // F-12 bagian 2: mengambil pre-order → uang muka tersisa langsung menjadi pembayaran pertama.
+    // F-12 bagian 2 & F-17 bagian 2: menagih pre-order / pesanan online → uang muka tersisa langsung menjadi
+    // pembayaran pertama. Nol (mis. pesanan online COD) tidak menambah baris apa pun.
     final keranjang = ref.read(penyediaKeranjangEfektif);
     final praPesan = keranjang.praPesan;
     final k = ref.read(penyediaKonteksPenjualan).value;
@@ -640,7 +641,12 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           if (keranjang.praPesan case final praPesan?)
             Padding(
               padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text('Mengambil pre-order ${praPesan.nomor}', style: teks.bodySmall),
+              child: Text(
+                praPesan.sumber == SumberUangMuka.pesananOnline
+                    ? 'Menagih pesanan online ${praPesan.nomor}'
+                    : 'Mengambil pre-order ${praPesan.nomor}',
+                style: teks.bodySmall,
+              ),
             ),
           if (keranjang.laundry case final laundry?)
             Padding(

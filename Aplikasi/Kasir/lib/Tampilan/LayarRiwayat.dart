@@ -38,6 +38,7 @@ class LayarRiwayat extends ConsumerWidget {
     this.saatVoid,
     this.saatRetur,
     this.saatAmbilPreOrder,
+    this.saatPesananOnline,
     this.saatReservasi,
     this.saatCucian,
   });
@@ -50,6 +51,9 @@ class LayarRiwayat extends ConsumerWidget {
 
   /// F-12 bagian 2: buka lembar cari & ambil pre-order.
   final VoidCallback? saatAmbilPreOrder;
+
+  /// F-17: pesanan toko online yang menunggu ditagihkan.
+  final VoidCallback? saatPesananOnline;
 
   /// F-07 mode service: buka lembar antrian reservasi hari ini.
   final VoidCallback? saatReservasi;
@@ -131,6 +135,15 @@ class LayarRiwayat extends ConsumerWidget {
                   onPressed: saatAmbilPreOrder,
                   icon: const Icon(Icons.event_available_outlined),
                   label: const Text('Ambil pre-order'),
+                ),
+              ),
+            if (saatPesananOnline != null)
+              SizedBox(
+                height: TokenJarak.targetSentuh,
+                child: OutlinedButton.icon(
+                  onPressed: saatPesananOnline,
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                  label: const Text('Pesanan toko online'),
                 ),
               ),
             if (saatReservasi != null)

@@ -13,15 +13,12 @@ use App\Domain\Tenant\Enum\JenisKupon;
 use App\Domain\Tenant\Enum\JenisTagihanLangganan;
 use App\Domain\Tenant\Enum\SiklusTagihan;
 use App\Domain\Tenant\Enum\StatusLangganan;
-use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Model\KuponLangganan;
 use App\Domain\Tenant\Model\KuponLanggananPemakaian;
 use App\Domain\Tenant\Model\Langganan;
-use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -40,7 +37,6 @@ function BuatTagihanUji(TestCase $tes, Pengguna $pengguna, Tenant $tenant, strin
 
     return TagihanLangganan::query()->withoutGlobalScopes()->where('IdTenant', $tenant->Id)->latest('Id')->firstOrFail();
 }
-
 
 function BuatKuponUji(string $kode, string $jenis, string $nilai, int $durasi, ?int $kuota = null, ?array $paket = null, ?string $berlakuSampai = null): KuponLangganan
 {

@@ -50,6 +50,12 @@ final class OutletPenjualan
         );
     }
 
+    /** F-17: sakelar toko online outlet ini (kolom `Outlet.TokoOnlineAktif`). */
+    public function CekTokoOnlineAktif(int $idOutlet): bool
+    {
+        return Outlet::query()->whereKey($idOutlet)->value('TokoOnlineAktif') === 1;
+    }
+
     /**
      * F-09 retur: lokasi stok jenis `Rusak` pertama outlet (aktif didahulukan, lalu Id terkecil), null bila tidak ada.
      */

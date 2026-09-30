@@ -26,6 +26,7 @@ use App\Http\Kontroler\Publik\ProspekSitusKontroler;
 use App\Http\Kontroler\Publik\ReservasiPublikKontroler;
 use App\Http\Kontroler\Publik\SitusKontroler;
 use App\Http\Kontroler\Publik\StrukDigitalKontroler;
+use App\Http\Kontroler\Publik\TokoOnlineKontroler;
 use App\Http\Perantara\ArahkanDomainAplikasi;
 use App\Http\Perantara\BagikanDataInertia;
 use App\Http\Perantara\BagikanDataSitus;
@@ -211,6 +212,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Reservasi.php'));
             // Laundry (§9.9): tiket & status proses cucian.
             Route::group([], base_path('routes/Laundry.php'));
+            // F-17/F-10c: toko online, pesanan, zona ongkir, kurir, dan pengiriman.
+            Route::group([], base_path('routes/TokoOnline.php'));
         });
     });
 
@@ -249,6 +252,21 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 ->withoutMiddleware(ValidateCsrfToken::class)
                 ->middleware('throttle:pesan-sendiri-20')
                 ->name('publik.pesan-sendiri.pesan');
+        });
+
+    // F-17/F-10c: toko online tenant, checkout bayar saat ambil/COD, dan status pesanan publik.
+    Route::prefix('/{slugTenant}')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
+        ->group(function (): void {
+            Route::get('/gambar/{produk}', [TokoOnlineKontroler::class, 'Gambar'])->where('produk', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->middleware('throttle:300,1')->name('publik.toko-online.gambar');
+            Route::post('/keranjang/hitung', [TokoOnlineKontroler::class, 'Hitung'])->withoutMiddleware(ValidateCsrfToken::class)->middleware('throttle:60,1')->name('publik.toko-online.hitung');
+            Route::post('/pesan', [TokoOnlineKontroler::class, 'Pesan'])->withoutMiddleware(ValidateCsrfToken::class)->middleware('throttle:20,1')->name('publik.toko-online.pesan');
+            Route::get('/pesanan/{kodeAkses}', [TokoOnlineKontroler::class, 'Status'])->where('kodeAkses', '[A-Za-z0-9]{16}')->middleware('throttle:60,1')->name('publik.toko-online.status');
+            Route::post('/pesanan/{kodeAkses}/bayar', [TokoOnlineKontroler::class, 'Bayar'])->where('kodeAkses', '[A-Za-z0-9]{16}')
+                ->withoutMiddleware(ValidateCsrfToken::class)->middleware('throttle:20,1')->name('publik.toko-online.bayar');
+            Route::get('/pesanan/{kodeAkses}/status-bayar', [TokoOnlineKontroler::class, 'StatusBayar'])->where('kodeAkses', '[A-Za-z0-9]{16}')
+                ->middleware('throttle:120,1')->name('publik.toko-online.status-bayar');
+            Route::get('/', [TokoOnlineKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.toko-online');
         });
 });
 

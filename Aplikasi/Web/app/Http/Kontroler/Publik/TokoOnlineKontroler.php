@@ -1,0 +1,230 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Kontroler\Publik;
+
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Katalog\Kueri\MenuPesanSendiri;
+use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
+use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Pemenuhan\Model\Kurir;
+use App\Domain\Pemenuhan\Model\PengirimanPesanan;
+use App\Domain\Penjualan\Aksi\BuatPesananOnline;
+use App\Domain\Penjualan\Aksi\BuatTagihanQrisPesananOnline;
+use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
+use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Enum\StatusTagihanQris;
+use App\Domain\Penjualan\Layanan\PembuatQrTagihanQris;
+use App\Domain\Penjualan\Layanan\PenentuKonteksTokoOnline;
+use App\Domain\Penjualan\Layanan\PenghitungPesanSendiri;
+use App\Domain\Penjualan\Layanan\PenghitungTokoOnline;
+use App\Domain\Penjualan\Model\PengaturanTokoOnline;
+use App\Domain\Penjualan\Model\PesananOnline;
+use App\Domain\Penjualan\Model\TagihanQris;
+use App\Domain\Tenant\Kueri\ProfilTenant;
+use App\Http\Kontroler\Kontroler;
+use App\Http\Permintaan\Publik\TokoOnlinePermintaan;
+use Closure;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+final class TokoOnlineKontroler extends Kontroler
+{
+    public function __construct(
+        private readonly KonteksTenant $konteks,
+        private readonly ProfilTenant $profil,
+        private readonly PenentuKonteksTokoOnline $penentu,
+    ) {}
+
+    public function Tampilkan(string $slugTenant, Request $request, MenuPesanSendiri $menu): SymfonyResponse
+    {
+        $uuidDipilih = is_string($request->query('outlet')) ? strtoupper($request->query('outlet')) : null;
+        $props = $this->DalamTenant($slugTenant, function (int $idTenant) use ($slugTenant, $uuidDipilih, $menu): ?array {
+            $k = $this->penentu->Cari($uuidDipilih) ?? $this->penentu->Cari();
+            if ($k === null) {
+                return null;
+            }
+            $outlet = Outlet::query()->findOrFail($k->idOutlet);
+            $atur = PengaturanTokoOnline::query()->first() ?? new PengaturanTokoOnline;
+            $daftarOutlet = Outlet::query()->where('Status', 'Aktif')->where('TokoOnlineAktif', true)->orderBy('Nama')->get(['Uuid', 'Nama']);
+            // QRIS bisa dipakai untuk ambil sendiri maupun kirim, jadi sakelarnya menghidupkan keduanya.
+            $bisaAmbil = $outlet->AmbilSendiriAktif && ($atur->BayarSaatAmbilAktif || $atur->QrisAktif);
+            $bisaKirim = $outlet->KirimAktif && ($atur->CodAktif || $atur->QrisAktif);
+
+            return [
+                'Aktif' => $k->aktif && ($bisaAmbil || $bisaKirim),
+                'Slug' => $slugTenant,
+                'Toko' => ['Nama' => $this->profil->Ambil($idTenant)['Nama'], 'NamaOutlet' => $k->namaOutlet, 'Alamat' => $outlet->Alamat],
+                'Outlet' => $daftarOutlet->map(fn (Outlet $o): array => ['Uuid' => $o->Uuid, 'Nama' => $o->Nama])->values()->all(),
+                'OutletDipilih' => $outlet->Uuid,
+                'Pemenuhan' => ['AmbilSendiri' => $bisaAmbil, 'Kirim' => $bisaKirim],
+                'Pembayaran' => ['BayarSaatAmbil' => $atur->BayarSaatAmbilAktif, 'Cod' => $atur->CodAktif, 'QrisOnline' => $atur->QrisAktif],
+                'MinimalPesanan' => $atur->MinimalPesanan,
+                'PesanTutup' => $atur->PesanTutup,
+                'Menu' => $k->aktif && ($bisaAmbil || $bisaKirim) ? $menu->Ambil($k->idOutlet, url("/{$slugTenant}/gambar/{uuid}"), KanalPenjualan::Online, true) : ['Kategori' => [], 'Produk' => []],
+            ];
+        }, fn (): null => null);
+
+        return Inertia::render('Publik/TokoOnline', $props ?? [
+            'Aktif' => false, 'Slug' => $slugTenant, 'Toko' => null,
+            'Outlet' => [], 'OutletDipilih' => '',
+            'Pemenuhan' => ['AmbilSendiri' => false, 'Kirim' => false],
+            'Pembayaran' => ['BayarSaatAmbil' => false, 'Cod' => false, 'QrisOnline' => false],
+            'MinimalPesanan' => '0.00', 'PesanTutup' => null, 'Menu' => ['Kategori' => [], 'Produk' => []],
+        ])->toResponse(request())->setStatusCode($props === null ? 404 : 200);
+    }
+
+    public function Hitung(string $slugTenant, TokoOnlinePermintaan $permintaan, PenghitungTokoOnline $penghitung): JsonResponse
+    {
+        return $this->DalamTenant($slugTenant, function () use ($permintaan, $penghitung): JsonResponse {
+            $jenis = JenisPemenuhanOnline::from((string) $permintaan->validated('JenisPemenuhan'));
+            $hasil = $penghitung->Hitung($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->AmbilBaris(), $jenis, $permintaan->validated('KodePos'));
+
+            return response()->json([
+                'Baris' => array_map(fn (array $b): array => ['UuidProduk' => $b['UuidProduk'], 'NamaProduk' => $b['NamaProduk'], 'Jumlah' => $b['Jumlah']->KeString(), 'Total' => $b['Total']->KeString()], $hasil['Baris']),
+                'Subtotal' => $hasil['Subtotal']->KeString(), ...PenghitungPesanSendiri::KeLarik($hasil['Perkiraan']),
+                'Ongkir' => $hasil['Ongkir']->KeString(), 'Total' => $hasil['Total']->KeString(),
+                'Zona' => $hasil['Zona'] === null ? null : ['Nama' => $hasil['Zona']->Nama, 'EstimasiHariMin' => $hasil['Zona']->EstimasiHariMin, 'EstimasiHariMaks' => $hasil['Zona']->EstimasiHariMaks],
+            ]);
+        });
+    }
+
+    public function Pesan(string $slugTenant, TokoOnlinePermintaan $permintaan, BuatPesananOnline $buat): JsonResponse
+    {
+        $hashIp = hash_hmac('sha256', (string) $permintaan->ip(), (string) config('app.key'));
+
+        return $this->DalamTenant($slugTenant, function () use ($permintaan, $buat, $hashIp): JsonResponse {
+            [$pesanan, $baru] = $buat->Jalankan($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->validated(), $hashIp);
+
+            return response()->json([
+                'KodeAkses' => $pesanan->KodeAkses, 'Nomor' => $pesanan->Nomor,
+                'Status' => $pesanan->Status->value, 'UrlStatus' => url('/'.request()->route('slugTenant').'/pesanan/'.$pesanan->KodeAkses),
+            ], $baru ? 201 : 200);
+        });
+    }
+
+    public function Status(string $slugTenant, string $kodeAkses): SymfonyResponse
+    {
+        $props = $this->DalamTenant($slugTenant, function (int $idTenant) use ($kodeAkses): ?array {
+            $pesanan = PesananOnline::query()->with('Detail')->where('KodeAkses', strtoupper($kodeAkses))->first();
+            if (! $pesanan instanceof PesananOnline) {
+                return null;
+            }
+            $pengiriman = PengirimanPesanan::query()->where('IdPesananOnline', $pesanan->Id)->first();
+            $namaKurir = $pengiriman?->IdKurir === null ? null : Kurir::query()->whereKey($pengiriman->IdKurir)->value('Nama');
+
+            return [
+                'Toko' => ['Nama' => $this->profil->Ambil($idTenant)['Nama']],
+                'Pesanan' => [
+                    'Nomor' => $pesanan->Nomor, 'NamaPelanggan' => $pesanan->NamaPelanggan,
+                    'JenisPemenuhan' => $pesanan->JenisPemenuhan->AmbilLabel(), 'Status' => $pesanan->Status->value,
+                    'LabelStatus' => $pesanan->Status->AmbilLabel(), 'Total' => $pesanan->Total,
+                    'Ongkir' => $pesanan->Ongkir, 'DibuatPada' => $pesanan->DibuatPada?->toIso8601String(),
+                    'MetodePembayaran' => $pesanan->MetodePembayaran->AmbilLabel(),
+                    'PerluBayar' => $pesanan->Status === StatusPesananOnline::MenungguPembayaran,
+                    'SudahDibayar' => $pesanan->DibayarPada !== null,
+                    'JumlahDibayar' => $pesanan->JumlahDibayar,
+                    'Baris' => $pesanan->Detail->map(fn ($d): array => ['Nama' => $d->NamaProduk, 'Jumlah' => $d->Jumlah, 'Total' => $d->TotalBaris])->values()->all(),
+                    'Pengiriman' => $pengiriman === null ? null : [
+                        'Status' => $pengiriman->Status->value,
+                        'LabelStatus' => $pengiriman->Status->AmbilLabel(),
+                        'NomorResi' => $pengiriman->NomorResi,
+                        'Kurir' => is_string($namaKurir) ? $namaKurir : $pengiriman->NamaPenyedia,
+                        'PerkiraanTibaPada' => $pengiriman->PerkiraanTibaPada?->toIso8601String(),
+                    ],
+                ],
+            ];
+        }, fn (): null => null);
+
+        return Inertia::render('Publik/StatusPesananOnline', ['Ditemukan' => $props !== null, 'Slug' => $slugTenant, 'KodeAkses' => strtoupper($kodeAkses), ...($props ?? [])])
+            ->toResponse(request())->setStatusCode($props === null ? 404 : 200);
+    }
+
+    /**
+     * Pelanggan meminta QRIS untuk pesanannya sendiri. Idempoten per pesanan: memuat ulang halaman bayar tidak pernah
+     * membuat tagihan kedua, jadi satu pesanan tidak bisa dibayar dua kali.
+     */
+    public function Bayar(string $slugTenant, string $kodeAkses, BuatTagihanQrisPesananOnline $buat, PembuatQrTagihanQris $qr): JsonResponse
+    {
+        return $this->DalamTenant($slugTenant, function () use ($kodeAkses, $buat, $qr): JsonResponse {
+            $this->penentu->WajibAktif();
+            [$tagihan, $baru] = $buat->Jalankan($this->WajibPesanan($kodeAkses));
+
+            return response()->json(self::TagihanKeLarik($tagihan, $qr), $baru ? 201 : 200);
+        });
+    }
+
+    /** Dipantau halaman bayar tiap beberapa detik; webhook gerbang yang memindahkan statusnya, bukan halaman ini. */
+    public function StatusBayar(string $slugTenant, string $kodeAkses): JsonResponse
+    {
+        return $this->DalamTenant($slugTenant, function () use ($kodeAkses): JsonResponse {
+            $pesanan = $this->WajibPesanan($kodeAkses);
+            $tagihan = TagihanQris::query()->where('IdPesananOnline', $pesanan->Id)->orderByDesc('Id')->first();
+
+            return response()->json([
+                'Status' => $pesanan->Status->value,
+                'LabelStatus' => $pesanan->Status->AmbilLabel(),
+                'SudahDibayar' => $pesanan->DibayarPada !== null,
+                'StatusTagihan' => $tagihan?->Status->value,
+                'KedaluwarsaPada' => $tagihan?->KedaluwarsaPada->toIso8601String(),
+            ]);
+        });
+    }
+
+    public function Gambar(string $slugTenant, string $produk, Request $permintaan, MenuPesanSendiri $menu, PenyimpanGambarProduk $penyimpan): StreamedResponse
+    {
+        return $this->DalamTenant($slugTenant, function () use ($produk, $permintaan, $menu, $penyimpan): StreamedResponse {
+            $this->penentu->WajibAktif();
+            $baris = $menu->CariProduk(strtoupper($produk), true);
+            abort_if($baris === null, 404);
+
+            return $penyimpan->Unduh($baris, $permintaan->query('ukuran') === 'besar' ? 'besar' : 'kecil');
+        });
+    }
+
+    private function WajibPesanan(string $kodeAkses): PesananOnline
+    {
+        return PesananOnline::query()->where('KodeAkses', strtoupper($kodeAkses))->first()
+            ?? throw new PelanggaranAturanBisnis('PesananTidakDitemukan', 'Pesanan tidak ditemukan.', 'Umum', 404);
+    }
+
+    /**
+     * Gerbang yang memakai halaman bayar sendiri mengirim URL di `IsiQr`, bukan muatan QRIS; halaman bayar
+     * mengarahkan pelanggan ke sana alih-alih menggambar QR yang tidak bisa dipindai.
+     *
+     * @return array<string, mixed>
+     */
+    private static function TagihanKeLarik(TagihanQris $tagihan, PembuatQrTagihanQris $qr): array
+    {
+        $lunas = $tagihan->Status === StatusTagihanQris::Lunas;
+
+        return [
+            'Jumlah' => $tagihan->Jumlah,
+            'Status' => $tagihan->Status->value,
+            'SudahDibayar' => $lunas,
+            'KedaluwarsaPada' => $tagihan->KedaluwarsaPada->toIso8601String(),
+            'UrlBayar' => $tagihan->HalamanBayar ? $tagihan->IsiQr : null,
+            'Qr' => $tagihan->HalamanBayar || $lunas ? null : $qr->BuatSvg($tagihan->IsiQr),
+        ];
+    }
+
+    private function DalamTenant(string $slugTenant, Closure $kerja, ?Closure $tidakDikenal = null): mixed
+    {
+        $idTenant = $this->profil->CariIdDariSlug($slugTenant);
+        if ($idTenant === null) {
+            return $tidakDikenal !== null ? $tidakDikenal() : throw new PelanggaranAturanBisnis('TokoTidakDitemukan', 'Toko tidak ditemukan.', 'Umum', 404);
+        }
+        $this->konteks->Atur($idTenant);
+        try {
+            return $kerja($idTenant);
+        } finally {
+            $this->konteks->Kosongkan();
+        }
+    }
+}

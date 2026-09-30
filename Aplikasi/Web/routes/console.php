@@ -70,3 +70,6 @@ Schedule::command('situs:bersihkan-prospek')->dailyAt('03:30')->timezone('Asia/J
 
 // Audit P0 F-02: tagihan QRIS dinamis yang hasil pembuatannya di gerbang tidak pasti direkonsiliasi (bukan dihapus).
 Schedule::command('penjualan:rekonsiliasi-qris')->everyTenMinutes()->withoutOverlapping();
+
+// F-17 toko online: pesanan yang tidak pernah dikonfirmasi staf dihanguskan sesuai batas waktu toko.
+Schedule::command('pesanan-online:kedaluwarsa')->everyFiveMinutes()->withoutOverlapping();

@@ -209,8 +209,8 @@ final class BuatPencairan
                 'IdPenjualanPembayaran' => $satu->Id,
                 'IdPembayaranAktif' => $satu->Id,
                 'IdPenjualan' => $satu->IdPenjualan,
-                'NomorPenjualan' => $dokumen?->Nomor ?? '',
-                'TanggalPenjualan' => ($dokumen?->TanggalBisnis ?? $satu->DibayarPada)->format('Y-m-d'),
+                'NomorPenjualan' => $dokumen->Nomor ?? '',
+                'TanggalPenjualan' => ($dokumen->TanggalBisnis ?? $satu->DibayarPada)->format('Y-m-d'),
                 'Jumlah' => $satu->AmbilJumlah()->KeString(),
                 'RefEksternal' => $satu->RefEksternal,
             ]);

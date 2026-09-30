@@ -33,6 +33,8 @@ enum JenisDokumenBernomor: string
     // F-17: pesanan QR meja `QR/{OUTLET}/{YYMMDD}-{SEQ4}` disusun `BuatPesananSendiri`; urutnya per outlet per hari
     // (periode harian `YYYY-MM-DD`, `PenomorDokumen::AmbilBerikutnyaHarian`).
     case PesananSendiri = 'PesananSendiri';
+    // F-17 toko online: `ON/2026/09/0001` per tenant.
+    case PesananOnline = 'PesananOnline';
     // F-07 mode service: reservasi layanan `RS/{YYYY}/{MM}/{SEQ4}` per tenant.
     case Reservasi = 'Reservasi';
     // F-05e: order produksi `PR/{LOKASI}/{YYMM}/{SEQ4}` disusun `PenomorDokumenPersediaan`.
@@ -68,6 +70,7 @@ enum JenisDokumenBernomor: string
             self::ReturPembelian => 'RB',
             self::PembayaranPiutang => 'BP',
             self::PesananSendiri => 'QR',
+            self::PesananOnline => 'ON',
             self::Reservasi => 'RS',
             self::OrderProduksi => 'PR',
             self::PesananGrosir => 'PG',
@@ -84,7 +87,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan => 4,
         };
     }
 

@@ -27,6 +27,7 @@ use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaPelakuPascaPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
+use App\Domain\Penjualan\Layanan\PenutupUangMukaPesananOnline;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
 use App\Domain\Penjualan\Model\VoidPenjualan;
@@ -86,6 +87,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatPemakaianPromo $pemakaianPromo,
         private readonly PencatatKlaimPromoPemasok $klaimPemasok,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
+        private readonly PenutupUangMukaPesananOnline $penutupUangMukaOnline,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
         private readonly PencatatLaundryPenjualan $laundry,
@@ -233,6 +235,9 @@ final class TerimaVoidPenjualanPos
         // F-12 bagian 2: pre-order yang diambil lewat penjualan ini kembali Siap dengan DP-nya (jurnal pembalik sudah
         // mengkredit Uang Muka Pelanggan).
         $this->penutupPraPesan->Batalkan($penjualan->Id, $kasir->id);
+        // F-17 bagian 2: pesanan online yang ditagihkan lewat penjualan ini bisa ditagihkan ulang, uang mukanya utuh
+        // kembali (jurnal pembalik sudah mengkredit Uang Muka Pelanggan).
+        $this->penutupUangMukaOnline->Batalkan($penjualan->Id, $kasir->id);
         // Laundry (§9.9): tiket laundry penjualan yang di-void dibatalkan (kecuali sudah diambil).
         $this->laundry->Batalkan($penjualan->Id, $kasir->id);
 
