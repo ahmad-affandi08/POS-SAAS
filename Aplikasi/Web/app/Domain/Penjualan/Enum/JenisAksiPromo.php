@@ -7,7 +7,8 @@ namespace App\Domain\Penjualan\Enum;
 /**
  * Aksi promo F-16c bagian 1. `*Item`, `HargaSpesial`, `BeliXGratisY`, dan `BundelHargaTetap` memotong baris barang
  * yang memenuhi kondisi; `*Pesanan` memotong pesanan (sebelum pajak). Bagian 4: `PoinBerlipat` tidak memotong harga,
- * tetapi mengalikan poin loyalti yang diperoleh transaksi (F-16b) dengan `Pengali`.
+ * tetapi mengalikan poin loyalti yang diperoleh transaksi (F-16b) dengan `Pengali`. `GratisOngkir` (F-17 bagian 3) juga
+ * tidak memotong harga barang: ia mengisi `DiskonKirim` sebesar ongkir, dibatasi `Jumlah` bila diisi.
  */
 enum JenisAksiPromo: string
 {
@@ -19,6 +20,7 @@ enum JenisAksiPromo: string
     case BeliXGratisY = 'BeliXGratisY';
     case BundelHargaTetap = 'BundelHargaTetap';
     case PoinBerlipat = 'PoinBerlipat';
+    case GratisOngkir = 'GratisOngkir';
 
     public function CekPesanan(): bool
     {
@@ -36,6 +38,7 @@ enum JenisAksiPromo: string
             self::BeliXGratisY => 'Beli X gratis Y',
             self::BundelHargaTetap => 'Bundel harga tetap',
             self::PoinBerlipat => 'Poin berlipat',
+            self::GratisOngkir => 'Gratis ongkir',
         };
     }
 }

@@ -146,4 +146,18 @@ final class DataKalkulasi {
   /// Diskon ongkir, misal promo gratis ongkir (F-16c; bawaan 0, tidak boleh melebihi [biayaKirim]). Dipisah supaya
   /// gratis ongkir tetap terlihat: ongkir yang langsung ditulis nol tidak bisa dibedakan dari "tidak ada ongkir".
   final Uang diskonKirim;
+
+  /// Salinan dengan [diskonKirim] diganti (promo gratis ongkir, F-17 bagian 3); seluruh bidang lain sama.
+  DataKalkulasi DenganDiskonKirim(Uang diskonKirim) => DataKalkulasi(
+    hargaTermasukPajak: hargaTermasukPajak,
+    baris: baris,
+    persenBiayaLayanan: persenBiayaLayanan,
+    pembulatanTunai: pembulatanTunai,
+    pajak: pajak,
+    potonganPesanan: potonganPesanan,
+    pembayaran: pembayaran,
+    tukarPoin: tukarPoin,
+    biayaKirim: biayaKirim,
+    diskonKirim: diskonKirim,
+  );
 }

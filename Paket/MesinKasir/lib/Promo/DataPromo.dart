@@ -20,6 +20,10 @@ enum JenisAksiPromo {
 
   /// Bagian 4: tidak memotong harga; poin loyalti transaksi dikalikan [DefinisiPromo.pengali].
   PoinBerlipat,
+
+  /// F-17 bagian 3: tidak memotong harga barang; mengisi `diskonKirim` sebesar ongkir, dibatasi [DefinisiPromo.jumlah]
+  /// bila diisi.
+  GratisOngkir,
 }
 
 /// Cara memilih promo yang berlaku bersamaan: `Terbaik` = kombinasi dengan potongan terbesar untuk pelanggan (semua
@@ -278,11 +282,19 @@ final class PromoTerpakai {
 
 /// Hasil `MesinPromo`: promo terpakai (urut evaluasi), masukan kalkulasi yang sudah berisi potongan promo, dan hasil
 /// mesin kalkulasi atas masukan itu. Bagian 4: [poinBerlipat] = promo poin berlipat dengan pengali terbesar yang
-/// berlaku (null = tidak ada); tidak memengaruhi harga.
+/// berlaku (null = tidak ada); tidak memengaruhi harga. F-17 bagian 3: [gratisOngkir] = promo gratis ongkir yang
+/// dipilih (potongan ongkir terbesar; null = tidak ada), potongannya sudah masuk `diskonKirim` di [data] dan [hasil].
 final class HasilPromo {
-  const HasilPromo({required this.terpakai, required this.data, required this.hasil, this.poinBerlipat});
+  const HasilPromo({
+    required this.terpakai,
+    required this.data,
+    required this.hasil,
+    this.poinBerlipat,
+    this.gratisOngkir,
+  });
 
   final DefinisiPromo? poinBerlipat;
+  final DefinisiPromo? gratisOngkir;
 
   final List<PromoTerpakai> terpakai;
   final DataKalkulasi data;

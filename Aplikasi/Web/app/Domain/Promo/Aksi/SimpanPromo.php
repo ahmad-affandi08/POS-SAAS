@@ -197,6 +197,17 @@ final class SimpanPromo
                 $aksi['Pengali'] = (string) $data->pengali->strippedOfTrailingZeros();
 
                 break;
+            case JenisAksiPromo::GratisOngkir:
+                // F-17 bagian 3: `Jumlah` opsional = batas potongan ongkir (subsidi sebagian); kosong = seluruh ongkir.
+                if ($data->jumlah !== null) {
+                    if ($data->jumlah->Bandingkan(Uang::Nol()) <= 0) {
+                        throw new PelanggaranAturanBisnis('JumlahTidakValid', 'Batas potongan ongkir harus lebih dari Rp 0, atau kosongkan untuk gratis seluruh ongkir.', 'Jumlah');
+                    }
+
+                    $aksi['Jumlah'] = $data->jumlah->KeString();
+                }
+
+                break;
         }
 
         $bertingkat = in_array($data->aksi, [JenisAksiPromo::BeliXGratisY, JenisAksiPromo::BundelHargaTetap], true);

@@ -43,7 +43,22 @@ final class MesinPromo {
         poinBerlipat = p;
       }
     }
-    final berlaku = semua.where((p) => p.aksi != JenisAksiPromo.PoinBerlipat).toList();
+    // F-17 bagian 3: gratis ongkir juga jalur sendiri. Potongan = min(biayaKirim, jumlah bila diisi); potongan terbesar
+    // menang (seri: urutan prioritas). Hasilnya max(diskonKirim masukan, potongan), bukan penjumlahan, supaya masukan yang
+    // sudah memuat potongan promo ini dihitung ulang ke angka yang sama.
+    DefinisiPromo? gratisOngkir;
+    var potonganOngkir = Uang.Nol();
+    for (final p in semua.where((p) => p.aksi == JenisAksiPromo.GratisOngkir)) {
+      final jumlah = p.jumlah;
+      final nilai = jumlah != null && jumlah.Bandingkan(dasar.biayaKirim) < 0 ? jumlah : dasar.biayaKirim;
+      if (nilai.Bandingkan(potonganOngkir) > 0) {
+        gratisOngkir = p;
+        potonganOngkir = nilai;
+      }
+    }
+    final berlaku = semua
+        .where((p) => p.aksi != JenisAksiPromo.PoinBerlipat && p.aksi != JenisAksiPromo.GratisOngkir)
+        .toList();
 
     List<PromoTerpakai> terpilih;
     if (mode == ModeResolusiPromo.PrioritasKetat) {
@@ -75,8 +90,17 @@ final class MesinPromo {
       }
     }
 
-    final data = SusunData(dasar, terpilih);
-    return HasilPromo(terpakai: terpilih, data: data, hasil: _mesin.Hitung(data), poinBerlipat: poinBerlipat);
+    var data = SusunData(dasar, terpilih);
+    if (potonganOngkir.Bandingkan(data.diskonKirim) > 0) {
+      data = data.DenganDiskonKirim(potonganOngkir);
+    }
+    return HasilPromo(
+      terpakai: terpilih,
+      data: data,
+      hasil: _mesin.Hitung(data),
+      poinBerlipat: poinBerlipat,
+      gratisOngkir: gratisOngkir,
+    );
   }
 
   static int BandingkanUrutan(DefinisiPromo a, DefinisiPromo b) {
@@ -307,6 +331,7 @@ final class _Keadaan {
       case JenisAksiPromo.DiskonPersenPesanan:
       case JenisAksiPromo.DiskonTetapPesanan:
       case JenisAksiPromo.PoinBerlipat:
+      case JenisAksiPromo.GratisOngkir:
         break;
     }
     return hasil;

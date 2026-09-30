@@ -1,0 +1,52 @@
+{
+  "Id": "PRM-GRATIS-ONGKIR-SYARAT-001",
+  "Keterangan": "Gratis ongkir memakai syarat promo yang sama: subtotal Rp 80.000 belum mencapai minimal Rp 100.000, jadi tidak berlaku dan ongkir Rp 15.000 ditagih penuh.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "Online",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-BERAS",
+      "Kategori": "K-SEMBAKO",
+      "Jumlah": "1",
+      "HargaSatuan": "80000"
+    }
+  ],
+  "BiayaKirim": "15000",
+  "Promo": [
+    {
+      "Uuid": "PR-ONGKIR-100K",
+      "Kode": "ONGKIR-100K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MinimalSubtotal": "100000",
+        "Aksi": {
+          "Jenis": "GratisOngkir"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [],
+    "Subtotal": "80000.00",
+    "BiayaKirim": "15000.00",
+    "DiskonKirim": "0.00",
+    "TotalPajak": "0.00",
+    "TotalAkhir": "95000.00"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "Id": "PRM-GRATIS-ONGKIR-ULANG-001",
+  "Keterangan": "Dihitung ulang tidak memotong dua kali: masukan sudah memuat DiskonKirim Rp 10.000 (misalnya penjualan kasir dari pesanan online yang sebagian ongkirnya sudah disubsidi) dan promo gratis ongkir penuh berlaku. Hasilnya max(10.000, 15.000) = Rp 15.000, bukan 25.000, sehingga DiskonKirim tidak pernah melebihi BiayaKirim.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "Online",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-BERAS",
+      "Kategori": "K-SEMBAKO",
+      "Jumlah": "1",
+      "HargaSatuan": "120000"
+    }
+  ],
+  "BiayaKirim": "15000",
+  "DiskonKirim": "10000",
+  "Promo": [
+    {
+      "Uuid": "PR-ONGKIR-100K",
+      "Kode": "ONGKIR-100K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MinimalSubtotal": "100000",
+        "Aksi": {
+          "Jenis": "GratisOngkir"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [],
+    "GratisOngkir": {
+      "Kode": "ONGKIR-100K"
+    },
+    "Subtotal": "120000.00",
+    "BiayaKirim": "15000.00",
+    "DiskonKirim": "15000.00",
+    "TotalPajak": "0.00",
+    "TotalAkhir": "120000.00"
+  }
+}

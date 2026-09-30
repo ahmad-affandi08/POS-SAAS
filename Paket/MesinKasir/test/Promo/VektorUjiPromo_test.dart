@@ -57,6 +57,7 @@ DataKalkulasi BacaDasar(Map<String, Object?> vektor) {
           tarif: Decimal.parse(pajak['Tarif']! as String),
           pengaliDpp: BacaPecahan((pajak['PengaliDpp'] as String?) ?? '1/1'),
           dasarPengenaan: DasarPengenaanPajak.values.byName((pajak['DasarPengenaan'] as String?) ?? 'Subtotal'),
+          kenaBiayaKirim: (pajak['KenaBiayaKirim'] as bool?) ?? false,
         ),
     ],
     baris: [
@@ -69,6 +70,8 @@ DataKalkulasi BacaDasar(Map<String, Object?> vektor) {
         ),
     ],
     potonganPesanan: [?BacaPotongan(vektor['DiskonManualPesanan'])],
+    biayaKirim: vektor['BiayaKirim'] == null ? null : Uang.Dari(vektor['BiayaKirim']! as String),
+    diskonKirim: vektor['DiskonKirim'] == null ? null : Uang.Dari(vektor['DiskonKirim']! as String),
     pembayaran: [
       for (final item in daftarBayar)
         DataPembayaranKalkulasi(
@@ -92,6 +95,8 @@ Map<String, Object?> UbahHasilKePeta(HasilKalkulasi hasil) => {
   'DiskonPesanan': hasil.diskonPesanan.KeString(),
   'TotalDiskon': hasil.totalDiskon.KeString(),
   'BiayaLayanan': hasil.biayaLayanan.KeString(),
+  'BiayaKirim': hasil.biayaKirim.KeString(),
+  'DiskonKirim': hasil.diskonKirim.KeString(),
   'TotalPajak': hasil.totalPajak.KeString(),
   'TotalPajakEksklusif': hasil.totalPajakEksklusif.KeString(),
   'Pembulatan': hasil.pembulatan.KeString(),
@@ -189,9 +194,16 @@ void main() {
         harapan['PoinBerlipat'],
         reason: 'PoinBerlipat',
       );
+      // F-17 bagian 3: promo gratis ongkir terpilih (tanpa kunci = tidak ada).
+      final gratisOngkir = hasil.gratisOngkir;
+      expect(
+        gratisOngkir == null ? null : {'Kode': gratisOngkir.kode},
+        harapan['GratisOngkir'],
+        reason: 'GratisOngkir',
+      );
       final aktual = UbahHasilKePeta(hasil.hasil);
       for (final MapEntry(:key, :value) in harapan.entries.where(
-        (e) => e.key != 'PromoTerpakai' && e.key != 'PoinBerlipat',
+        (e) => e.key != 'PromoTerpakai' && e.key != 'PoinBerlipat' && e.key != 'GratisOngkir',
       )) {
         expect(aktual[key], value, reason: 'Harapan.$key');
       }

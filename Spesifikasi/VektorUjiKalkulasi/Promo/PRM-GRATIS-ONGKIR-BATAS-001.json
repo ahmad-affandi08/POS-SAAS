@@ -1,0 +1,70 @@
+{
+  "Id": "PRM-GRATIS-ONGKIR-BATAS-001",
+  "Keterangan": "Subsidi ongkir sebagian: dua promo gratis ongkir berlaku bersamaan (batas Rp 5.000 dan Rp 10.000) dan yang dipilih potongan terbesar, bukan jumlahnya. Ongkir Rp 15.000 dipotong Rp 10.000, sisa Rp 5.000 ditagih.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "Online",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [],
+  "Baris": [
+    {
+      "Sku": "P-BERAS",
+      "Kategori": "K-SEMBAKO",
+      "Jumlah": "1",
+      "HargaSatuan": "50000"
+    }
+  ],
+  "BiayaKirim": "15000",
+  "Promo": [
+    {
+      "Uuid": "PR-ONGKIR-5RB",
+      "Kode": "ONGKIR-SUBSIDI-5RB",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "GratisOngkir",
+          "Jumlah": "5000"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-ONGKIR-10RB",
+      "Kode": "ONGKIR-SUBSIDI-10RB",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "GratisOngkir",
+          "Jumlah": "10000"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [],
+    "GratisOngkir": {
+      "Kode": "ONGKIR-SUBSIDI-10RB"
+    },
+    "Subtotal": "50000.00",
+    "BiayaKirim": "15000.00",
+    "DiskonKirim": "10000.00",
+    "TotalPajak": "0.00",
+    "TotalAkhir": "55000.00"
+  }
+}

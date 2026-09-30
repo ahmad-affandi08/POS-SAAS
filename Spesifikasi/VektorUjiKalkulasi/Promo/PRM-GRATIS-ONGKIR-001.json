@@ -1,0 +1,92 @@
+{
+  "Id": "PRM-GRATIS-ONGKIR-001",
+  "Keterangan": "Gratis ongkir (F-17 bagian 3) tidak bersaing dengan promo harga: diskon pesanan 10% tetap dipakai dan ongkir Rp 15.000 digratiskan seluruhnya karena subtotal Rp 120.000 memenuhi minimal Rp 100.000. Ongkir netto nol tidak masuk DPP PPN (KenaBiayaKirim), jadi DPP hanya barang setelah diskon: 108.000 x 11/12 = 99.000.",
+  "Mode": "Terbaik",
+  "Konteks": {
+    "Waktu": "2026-10-05T05:00:00Z",
+    "WaktuLokal": "2026-10-05T12:00:00",
+    "UuidOutlet": "O-SLO",
+    "Kanal": "Online",
+    "Tier": null
+  },
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "0",
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal",
+      "KenaBiayaKirim": true
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "P-BERAS",
+      "Kategori": "K-SEMBAKO",
+      "Jumlah": "2",
+      "HargaSatuan": "60000"
+    }
+  ],
+  "BiayaKirim": "15000",
+  "Promo": [
+    {
+      "Uuid": "PR-ONGKIR-100K",
+      "Kode": "ONGKIR-100K",
+      "Prioritas": 0,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "MinimalSubtotal": "100000",
+        "Aksi": {
+          "Jenis": "GratisOngkir"
+        }
+      }
+    },
+    {
+      "Uuid": "PR-DISKON-10",
+      "Kode": "HEMAT10",
+      "Prioritas": 1,
+      "Eksklusif": false,
+      "MulaiPada": null,
+      "SelesaiPada": null,
+      "KuotaTersisa": null,
+      "Definisi": {
+        "Aksi": {
+          "Jenis": "DiskonPersenPesanan",
+          "Persen": "10"
+        }
+      }
+    }
+  ],
+  "Harapan": {
+    "PromoTerpakai": [
+      {
+        "Kode": "HEMAT10",
+        "DiskonBaris": {},
+        "DiskonPesanan": "12000.00"
+      }
+    ],
+    "GratisOngkir": {
+      "Kode": "ONGKIR-100K"
+    },
+    "Subtotal": "120000.00",
+    "DiskonPesanan": "12000.00",
+    "BiayaKirim": "15000.00",
+    "DiskonKirim": "15000.00",
+    "TotalPajak": "11880.00",
+    "TotalPajakEksklusif": "11880.00",
+    "TotalAkhir": "119880.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "99000.00",
+        "Jumlah": "11880.00"
+      }
+    }
+  }
+}

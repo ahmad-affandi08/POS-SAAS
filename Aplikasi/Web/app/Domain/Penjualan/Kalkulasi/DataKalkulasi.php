@@ -86,4 +86,23 @@ final readonly class DataKalkulasi
             }
         }
     }
+
+    /**
+     * Salinan dengan `diskonKirim` diganti (promo gratis ongkir, F-17 bagian 3); seluruh bidang lain sama.
+     */
+    public function DenganDiskonKirim(Uang $diskonKirim): self
+    {
+        return new self(
+            $this->hargaTermasukPajak,
+            $this->baris,
+            $this->pajak,
+            $this->persenBiayaLayanan,
+            $this->pembulatanTunai,
+            $this->potonganPesanan,
+            $this->pembayaran,
+            $this->tukarPoin,
+            $this->biayaKirim,
+            $diskonKirim,
+        );
+    }
 }

@@ -27,6 +27,11 @@ use InvalidArgumentException;
  *    sisa subtotal). Semua potongan menjadi nominal lalu dihitung `MesinKalkulasi`.
  * 4. Bagian 4: promo `PoinBerlipat` tidak ikut resolusi potongan (tidak bersaing dengan promo harga, `Eksklusif`-nya
  *    diabaikan); dari yang berlaku dipilih pengali terbesar (seri: urutan prioritas), tidak dikalikan bertumpuk.
+ * 5. F-17 bagian 3: promo `GratisOngkir` diperlakukan sama (jalur sendiri, tidak bersaing dengan promo harga): potongan
+ *    = min(`BiayaKirim`, `Jumlah` bila diisi); promo tanpa ongkir atau berpotongan nol tidak berlaku. Dipilih potongan
+ *    terbesar (seri: urutan prioritas). `DiskonKirim` hasil = max(`DiskonKirim` masukan, potongan promo), bukan
+ *    penjumlahan: masukan yang sudah memuat potongan promo ini (penjualan kasir dari pesanan online yang sudah
+ *    bergratis ongkir) dihitung ulang ke angka yang sama, tidak dipotong dua kali.
  */
 final class MesinPromo
 {
@@ -62,7 +67,23 @@ final class MesinPromo
             }
         }
 
-        $berlaku = array_values(array_filter($berlaku, fn (DefinisiPromo $p): bool => $p->aksi !== JenisAksiPromo::PoinBerlipat));
+        $gratisOngkir = null;
+        $potonganOngkir = Uang::Nol();
+
+        foreach ($berlaku as $p) {
+            if ($p->aksi !== JenisAksiPromo::GratisOngkir) {
+                continue;
+            }
+
+            $nilai = $p->jumlah !== null && $p->jumlah->Bandingkan($dasar->biayaKirim) < 0 ? $p->jumlah : $dasar->biayaKirim;
+
+            if ($nilai->Bandingkan($potonganOngkir) > 0) {
+                $gratisOngkir = $p;
+                $potonganOngkir = $nilai;
+            }
+        }
+
+        $berlaku = array_values(array_filter($berlaku, fn (DefinisiPromo $p): bool => $p->aksi !== JenisAksiPromo::PoinBerlipat && $p->aksi !== JenisAksiPromo::GratisOngkir));
         $evaluasi = fn (array $daftar): array => $this->Evaluasi(array_values($daftar), $dasar, $barisPromo, $sisaAwal, $bruto);
 
         if ($mode === ModeResolusiPromo::PrioritasKetat) {
@@ -107,7 +128,11 @@ final class MesinPromo
 
         $data = self::SusunData($dasar, $terpilih);
 
-        return new HasilPromo($terpilih, $data, $this->mesin->Hitung($data), $poinBerlipat);
+        if ($potonganOngkir->Bandingkan($data->diskonKirim) > 0) {
+            $data = $data->DenganDiskonKirim($potonganOngkir);
+        }
+
+        return new HasilPromo($terpilih, $data, $this->mesin->Hitung($data), $poinBerlipat, $gratisOngkir);
     }
 
     public static function BandingkanUrutan(DefinisiPromo $a, DefinisiPromo $b): int
@@ -414,6 +439,7 @@ final class MesinPromo
             case JenisAksiPromo::DiskonPersenPesanan:
             case JenisAksiPromo::DiskonTetapPesanan:
             case JenisAksiPromo::PoinBerlipat:
+            case JenisAksiPromo::GratisOngkir:
                 break;
         }
 

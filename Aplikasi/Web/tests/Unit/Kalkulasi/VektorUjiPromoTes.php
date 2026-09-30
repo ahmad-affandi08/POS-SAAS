@@ -46,7 +46,7 @@ function BacaDasarVektorPromo(array $vektor): DataKalkulasi
 {
     /** @var array{HargaTermasukPajak: bool, PersenBiayaLayanan?: string, PembulatanTunai?: array{Kelipatan: int, Arah: string}|null} $pengaturan */
     $pengaturan = $vektor['Pengaturan'];
-    /** @var list<array{Kode: string, Tarif: string, PengaliDpp?: string, DasarPengenaan?: string}> $daftarPajak */
+    /** @var list<array{Kode: string, Tarif: string, PengaliDpp?: string, DasarPengenaan?: string, KenaBiayaKirim?: bool}> $daftarPajak */
     $daftarPajak = $vektor['Pajak'] ?? [];
     /** @var list<array{Sku: string, Jumlah: string, HargaSatuan: string, HargaPilihan?: string, DiskonManual?: array<string, string>}> $daftarBaris */
     $daftarBaris = $vektor['Baris'];
@@ -70,12 +70,14 @@ function BacaDasarVektorPromo(array $vektor): DataKalkulasi
         array_map(function (array $pajak): DataPajakKalkulasi {
             [$pembilang, $penyebut] = explode('/', $pajak['PengaliDpp'] ?? '1/1');
 
-            return new DataPajakKalkulasi($pajak['Kode'], $pajak['Tarif'], DasarPengenaanPajak::from($pajak['DasarPengenaan'] ?? 'Subtotal'), (int) $pembilang, (int) $penyebut);
+            return new DataPajakKalkulasi($pajak['Kode'], $pajak['Tarif'], DasarPengenaanPajak::from($pajak['DasarPengenaan'] ?? 'Subtotal'), (int) $pembilang, (int) $penyebut, $pajak['KenaBiayaKirim'] ?? false);
         }, $daftarPajak),
         $pengaturan['PersenBiayaLayanan'] ?? '0',
         $pembulatan === null ? null : new DataPembulatanTunai($pembulatan['Kelipatan'], ArahPembulatan::from($pembulatan['Arah'])),
         array_values(array_filter([BacaPotonganVektorPromo($manualPesanan)])),
         array_map(fn (array $b): DataPembayaranKalkulasi => new DataPembayaranKalkulasi($b['Metode'] === 'Tunai', isset($b['Jumlah']) ? Uang::Dari($b['Jumlah']) : null), $daftarPembayaran),
+        biayaKirim: isset($vektor['BiayaKirim']) ? Uang::Dari((string) $vektor['BiayaKirim']) : null,
+        diskonKirim: isset($vektor['DiskonKirim']) ? Uang::Dari((string) $vektor['DiskonKirim']) : null,
     );
 }
 
@@ -144,10 +146,14 @@ describe('test vector promo', function () use ($berkasVektorPromo): void {
             $poin = $hasil->poinBerlipat === null ? null : ['Kode' => $hasil->poinBerlipat->kode, 'Pengali' => (string) $hasil->poinBerlipat->AmbilPengali()];
             expect($poin)->toBe($harapan['PoinBerlipat'] ?? null);
 
+            // F-17 bagian 3: promo gratis ongkir terpilih (tanpa kunci = tidak ada).
+            $gratisOngkir = $hasil->gratisOngkir === null ? null : ['Kode' => $hasil->gratisOngkir->kode];
+            expect($gratisOngkir)->toBe($harapan['GratisOngkir'] ?? null);
+
             $aktual = $hasil->hasil->KeLarik();
 
             foreach ($harapan as $kunci => $nilai) {
-                if ($kunci === 'PromoTerpakai' || $kunci === 'PoinBerlipat') {
+                if ($kunci === 'PromoTerpakai' || $kunci === 'PoinBerlipat' || $kunci === 'GratisOngkir') {
                     continue;
                 }
 
