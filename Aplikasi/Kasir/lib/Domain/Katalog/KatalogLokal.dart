@@ -117,6 +117,7 @@ class ProdukJual {
     required this.kelompokPilihan,
     required this.pajak,
     this.jumlahSesiPaket,
+    this.masaGaransiBulan,
     this.aktif = true,
     this.satuanDasar,
   });
@@ -128,6 +129,9 @@ class ProdukJual {
 
   /// F-16d bagian 2: jumlah sesi bila produk paket sesi (wajib pelanggan, jumlah bulat, tidak bisa diretur).
   final int? jumlahSesiPaket;
+
+  /// F-05h: masa garansi standar (bulan) produk bernomor seri; di-snapshot ke baris penjualan untuk struk.
+  final int? masaGaransiBulan;
 
   bool get paketSesi => jumlahSesiPaket != null;
   final String? uuidKategori;
@@ -346,6 +350,7 @@ class KatalogLokal {
           kelompokPilihan: kelompokProduk[p.Uuid] ?? const [],
           pajak: p.UuidKelompokPajak == null ? const [] : pajakKelompok[p.UuidKelompokPajak] ?? const [],
           jumlahSesiPaket: p.JumlahSesiPaket,
+          masaGaransiBulan: p.MasaGaransiBulan,
           aktif: p.Aktif,
           satuanDasar: switch (satuan[p.UuidSatuanDasar]) {
             final s? => SatuanJual(

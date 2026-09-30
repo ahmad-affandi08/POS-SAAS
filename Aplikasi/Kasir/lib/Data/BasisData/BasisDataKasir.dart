@@ -204,7 +204,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
   /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak).
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -333,6 +333,22 @@ class BasisDataKasir extends _$BasisDataKasir {
         if (!await Ada('PenjualanDetail', 'NomorSeri')) {
           await m.addColumn(penjualanDetail, penjualanDetail.NomorSeri);
         }
+      }
+      // Skema 21 (F-05h): masa garansi di produk (katalog) dan snapshot di detail penjualan lokal. Kursor katalog dihapus
+      // supaya produk bernomor seri yang garansinya sudah diatur ikut termuat pada sinkron berikutnya.
+      if (dari >= 2 && dari < 21) {
+        Future<bool> Ada(String tabel, String kolom) async =>
+            await customSelect("SELECT COUNT(*) AS Jumlah FROM pragma_table_info('$tabel') WHERE name = '$kolom'")
+                .map((r) => r.read<int>('Jumlah'))
+                .getSingle() >
+            0;
+        if (!await Ada('Produk', 'MasaGaransiBulan')) {
+          await m.addColumn(produk, produk.MasaGaransiBulan);
+        }
+        if (!await Ada('PenjualanDetail', 'MasaGaransiBulan')) {
+          await m.addColumn(penjualanDetail, penjualanDetail.MasaGaransiBulan);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
       // Skema 15 (laundry §9.9): blok tiket laundry di penjualan lokal (nota & cetak ulang offline). Aditif; outbox utuh.
       if (dari >= 2 && dari < 15) {

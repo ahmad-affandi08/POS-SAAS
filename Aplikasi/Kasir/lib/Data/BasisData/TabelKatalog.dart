@@ -74,6 +74,9 @@ class Produk extends Table {
   /// F-16d bagian 2: jumlah sesi bila produk paket sesi; null = bukan paket sesi.
   IntColumn get JumlahSesiPaket => integer().nullable()();
 
+  /// Skema 21 (F-05h): masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi.
+  IntColumn get MasaGaransiBulan => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

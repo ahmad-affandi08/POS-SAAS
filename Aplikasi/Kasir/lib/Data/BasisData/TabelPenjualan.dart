@@ -67,6 +67,9 @@ class PenjualanDetail extends Table {
   /// Skema 20 (F-05h): JSON daftar nomor seri/IMEI yang dijual; null = produk tanpa nomor seri.
   TextColumn get NomorSeri => text().nullable()();
 
+  /// Skema 21 (F-05h): snapshot masa garansi (bulan) saat dijual, untuk "Garansi sampai" di struk cetak ulang.
+  IntColumn get MasaGaransiBulan => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

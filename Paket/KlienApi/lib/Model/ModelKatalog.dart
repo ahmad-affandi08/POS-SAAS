@@ -110,6 +110,7 @@ class ProdukPos {
     required this.aktif,
     required this.dihapus,
     this.jumlahSesiPaket,
+    this.masaGaransiBulan,
   });
 
   final String uuid;
@@ -120,6 +121,9 @@ class ProdukPos {
   /// F-16d bagian 2: jumlah sesi bila produk ini paket sesi (wajib pelanggan, jumlah bulat, tidak bisa diretur); null =
   /// bukan paket sesi.
   final int? jumlahSesiPaket;
+
+  /// F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi (atau server lama).
+  final int? masaGaransiBulan;
 
   /// `Stok`, `IndukVarian`, `Resep`, `Produksi`, `Paket`, `Jasa`, `NonStok`, `BahanBaku`, `Konsinyasi`.
   final String jenis;
@@ -155,6 +159,7 @@ class ProdukPos {
     aktif: UraiJson.AmbilBenar(json['Aktif'], true),
     dihapus: UraiJson.AmbilBenar(json['Dihapus']),
     jumlahSesiPaket: UraiJson.AmbilBulatAtauNull(UraiJson.AmbilPetaAtauNull(json['PaketSesi'])?['JumlahSesi']),
+    masaGaransiBulan: UraiJson.AmbilBulatAtauNull(json['MasaGaransiBulan']),
   );
 }
 

@@ -983,6 +983,7 @@ class LayananPenjualan {
           k: k,
           sekarang: sekarang,
           uuidPenyetujuTempo: uuidPenyetujuTempo,
+          katalog: katalog,
         );
       },
     );
@@ -1068,6 +1069,7 @@ class LayananPenjualan {
     required KonteksPenjualan k,
     required DateTime sekarang,
     String? uuidPenyetujuTempo,
+    KatalogLokal? katalog,
   }) {
     final hasil = hitungan.hasil;
     final kembalian = hasil.kembalian ?? Uang.Nol();
@@ -1211,6 +1213,11 @@ class LayananPenjualan {
             TotalBaris: hasil.baris[i].totalBaris.KeString(),
             Catatan: Value(keranjang.baris[i].catatan),
             NomorSeri: Value(keranjang.baris[i].nomorSeri.isEmpty ? null : jsonEncode(keranjang.baris[i].nomorSeri)),
+            MasaGaransiBulan: Value(
+              keranjang.baris[i].nomorSeri.isEmpty
+                  ? null
+                  : katalog?.CariProduk(keranjang.baris[i].uuidProduk)?.masaGaransiBulan,
+            ),
           ),
       ],
       pembayaran: [

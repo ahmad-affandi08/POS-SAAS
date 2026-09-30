@@ -270,7 +270,7 @@ Map<String, Object?> KatalogPonselUji() {
   final katalog = KatalogUji();
   katalog['Produk'] = [
     ...(katalog['Produk']! as List<Object?>),
-    ProdukUji(ponsel, 'Ponsel Android 8/256 GB Hitam', sku: 'HP-8256', pelacakan: 'Seri'),
+    {...ProdukUji(ponsel, 'Ponsel Android 8/256 GB Hitam', sku: 'HP-8256', pelacakan: 'Seri'), 'MasaGaransiBulan': 12},
   ];
   katalog['ProdukSatuan'] = [
     ...(katalog['ProdukSatuan']! as List<Object?>),

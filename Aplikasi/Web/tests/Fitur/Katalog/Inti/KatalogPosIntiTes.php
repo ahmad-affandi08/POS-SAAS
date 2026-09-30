@@ -112,3 +112,16 @@ describe('F-03 bagian katalog POS Tim 1 (D.3)', function (): void {
             ->and(Produk::query()->count())->toBe(2);
     });
 });
+
+describe('F-05h katalog POS: masa garansi produk bernomor seri', function (): void {
+    it('Produk membawa MasaGaransiBulan (null = tanpa garansi) supaya struk cetak kasir bisa memuat garansi', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk();
+        $hp = BantuanKatalog::BuatProduk(['Nama' => 'Ponsel Android 8/256 GB Hitam', 'Pelacakan' => 'Seri', 'MasaGaransiBulan' => 12, 'IdKelompokPajak' => $t['KelompokPajak']->Id], null, $t['Pcs']);
+        $biasa = BantuanKatalog::BuatProduk(['Nama' => 'Casing Silikon Bening', 'IdKelompokPajak' => $t['KelompokPajak']->Id], null, $t['Pcs']);
+
+        $produk = collect(AmbilBagianPosUji($t['Tenant']->Id, $t['Outlet']->Id, null)['Produk'])->keyBy('Uuid');
+
+        expect($produk[$hp->Uuid]['MasaGaransiBulan'])->toBe(12)
+            ->and($produk[$biasa->Uuid]['MasaGaransiBulan'])->toBeNull();
+    });
+});

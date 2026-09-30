@@ -126,6 +126,10 @@ abstract final class PenyusunStrukPenjualan {
           : (jsonDecode(d.NomorSeri!) as List<Object?>).whereType<String>();
       if (nomorSeri.isNotEmpty) {
         baris.add(BarisTeks('  No. seri: ${nomorSeri.join(', ')}'));
+        final garansi = d.MasaGaransiBulan;
+        if (garansi != null) {
+          baris.add(BarisTeks('  Garansi sampai ${_TanggalGaransi(jual.TanggalBisnis, garansi)}'));
+        }
       }
       final catatan = d.Catatan?.trim();
       if (catatan != null && catatan.isNotEmpty) {
@@ -276,6 +280,18 @@ abstract final class PenyusunStrukPenjualan {
   static (String, String) TanggalJam(DateTime waktu) {
     final lokal = waktu.toLocal();
     return ('${lokal.day} ${_bulan[lokal.month - 1]} ${lokal.year}', '${_Dua(lokal.hour)}.${_Dua(lokal.minute)}');
+  }
+
+  /// F-05h: tanggal garansi berakhir = tanggal bisnis (`YYYY-MM-DD`) + [bulan] bulan kalender, hari dipangkas ke akhir
+  /// bulan bila perlu (31 Jan + 1 bulan = 28/29 Feb), sama dengan `addMonthsNoOverflow` di server. Format `20 Sep 2027`.
+  static String _TanggalGaransi(String tanggalBisnis, int bulan) {
+    final bagian = tanggalBisnis.split('-').map(int.parse).toList();
+    final indeks = bagian[0] * 12 + (bagian[1] - 1) + bulan;
+    final tahun = indeks ~/ 12;
+    final bulanBaru = indeks % 12 + 1;
+    final hariTerakhir = DateTime(tahun, bulanBaru + 1, 0).day;
+    final hari = bagian[2] > hariTerakhir ? hariTerakhir : bagian[2];
+    return '$hari ${_bulan[bulanBaru - 1]} $tahun';
   }
 
   /// `Rp 18.000` → `18.000` (baris rincian).

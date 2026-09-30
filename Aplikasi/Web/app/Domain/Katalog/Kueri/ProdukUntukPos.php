@@ -72,6 +72,8 @@ final class ProdukUntukPos implements BagianKatalogPos
                 'Merek' => $p->Merek,
                 'UuidSatuanDasar' => $uuidSatuan->get($p->IdSatuanDasar),
                 'Pelacakan' => $p->Pelacakan->value,
+                // F-05h: masa garansi standar (bulan) produk bernomor seri, untuk kartu garansi di struk cetak.
+                'MasaGaransiBulan' => $p->MasaGaransiBulan,
                 'UuidKelompokPajak' => $p->IdKelompokPajak === null ? null : ($uuidKelompokPajak[$p->IdKelompokPajak] ?? null),
                 'HargaTermasukPajak' => $p->HargaTermasukPajak,
                 'BolehMinus' => $p->BolehMinus,

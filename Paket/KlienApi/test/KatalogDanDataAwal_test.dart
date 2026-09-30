@@ -149,6 +149,7 @@ void main() {
               'Jenis': 'Jasa',
               'PaketSesi': {'JumlahSesi': 10, 'MasaBerlakuHari': 90, 'Aktif': true},
             },
+            {'Uuid': 'P3', 'Nama': 'Ponsel', 'Pelacakan': 'Seri', 'MasaGaransiBulan': 12},
           ],
           'Terhapus': [
             {'Entitas': 'ProdukBarcode', 'Uuid': 'B1'},
@@ -161,7 +162,9 @@ void main() {
       expect(dikirim.url.queryParameters['sejak'], 'a+b/c=');
       expect(katalog.lengkap, isFalse);
       expect(katalog.produk.first.dihapus, isTrue);
-      expect(katalog.produk.last.jumlahSesiPaket, 10);
+      expect(katalog.produk[1].jumlahSesiPaket, 10);
+      expect(katalog.produk.last.masaGaransiBulan, 12);
+      expect(katalog.produk[1].masaGaransiBulan, isNull, reason: 'Server lama atau produk tanpa garansi.');
       expect(katalog.terhapus.single.entitas, 'ProdukBarcode');
     });
 

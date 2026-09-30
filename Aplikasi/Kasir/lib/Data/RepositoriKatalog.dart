@@ -159,6 +159,7 @@ class RepositoriKatalog {
             UrlGambarKecil: Value(x.urlGambarKecil),
             Aktif: x.aktif,
             JumlahSesiPaket: Value(x.jumlahSesiPaket),
+            MasaGaransiBulan: Value(x.masaGaransiBulan),
           ),
       ]);
       b.insertAllOnConflictUpdate(db.produkSatuan, [
