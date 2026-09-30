@@ -71,6 +71,7 @@ class PanelKeranjang extends StatelessWidget {
     for (final p in b.pilihan) p.harga.BernilaiNol() ? p.nama : '${p.nama} +${p.harga.FormatRupiah()}',
     if (b.diskon != null)
       b.diskon!.persen != null ? b.diskon!.AmbilLabel() : 'Diskon ${b.diskon!.jumlah!.FormatRupiah()}',
+    if (b.nomorSeri.isNotEmpty) 'No. seri: ${b.nomorSeri.join(', ')}',
     if (b.catatan != null) 'Catatan: ${b.catatan}',
   ];
 

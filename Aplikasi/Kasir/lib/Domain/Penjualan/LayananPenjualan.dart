@@ -270,6 +270,7 @@ class LayananPenjualan {
     String? catatan,
     KanalPenjualan kanal = KanalPenjualan.BawaPulang,
     String? tierPelanggan,
+    List<String> nomorSeri = const [],
   }) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
@@ -280,7 +281,10 @@ class LayananPenjualan {
       throw GalatKasir('SatuanTidakAda', '"${produk.nama}" belum punya satuan jual. Atur di back-office menu Produk.');
     }
     ValidasiPilihan(produk, pilihan);
-    final qty = jumlah ?? Kuantitas.DariBulat(1);
+    // F-05h: produk bernomor seri = satu unit per nomor; jumlahnya ditentukan banyaknya nomor.
+    final qty = produk.bernomorSeri && nomorSeri.isNotEmpty
+        ? Kuantitas.DariBulat(nomorSeri.length)
+        : jumlah ?? Kuantitas.DariBulat(1);
     final harga = TentukanHarga(
       katalog,
       k,
@@ -311,6 +315,7 @@ class LayananPenjualan {
       catatan: rapi == null || rapi.isEmpty ? null : rapi,
       hargaTermasukPajak: produk.hargaTermasukPajak,
       pajak: produk.pajak,
+      nomorSeri: produk.bernomorSeri ? nomorSeri : const [],
     );
   }
 
@@ -350,6 +355,12 @@ class LayananPenjualan {
       return HapusBaris(keranjang, uuidBaris);
     }
     return _UbahBaris(keranjang, uuidBaris, (b) {
+      if (b.nomorSeri.isNotEmpty && jumlah != Kuantitas.DariBulat(b.nomorSeri.length)) {
+        throw GalatKasir(
+          'NomorSeriTidakSesuai',
+          'Jumlah "${b.nama}" mengikuti banyaknya nomor seri. Ketuk item untuk menambah atau mengurangi nomor seri.',
+        );
+      }
       if (!b.bolehDesimal && jumlah.KeDesimal() != jumlah.KeDesimal().truncate()) {
         throw GalatKasir('JumlahTidakValid', 'Jumlah ${b.namaSatuan ?? 'satuan ini'} harus bilangan bulat.');
       }
@@ -396,6 +407,27 @@ class LayananPenjualan {
       hargaSatuan: harga,
     );
   });
+
+  /// F-05h: ganti nomor seri baris produk bernomor seri; jumlah mengikuti banyaknya nomor (kosong = hapus baris).
+  Keranjang AturNomorSeri(
+    Keranjang keranjang,
+    String uuidBaris,
+    List<String> nomorSeri,
+    KatalogLokal katalog,
+    KonteksPenjualan k,
+  ) {
+    final rapi = [for (final n in nomorSeri) n.trim()].where((n) => n.isNotEmpty).toList();
+    if (rapi.isEmpty) {
+      return HapusBaris(keranjang, uuidBaris);
+    }
+    final asal = keranjang.baris.firstWhere((b) => b.uuid == uuidBaris);
+    final sementara = _UbahBaris(keranjang, uuidBaris, (b) => b.Salin(nomorSeri: const []));
+    return _UbahBaris(
+      UbahJumlah(sementara, asal.uuid, Kuantitas.DariBulat(rapi.length), katalog, k),
+      uuidBaris,
+      (b) => b.Salin(nomorSeri: rapi),
+    );
+  }
 
   Keranjang AturPilihan(Keranjang keranjang, String uuidBaris, ProdukJual produk, List<PilihanTerpilih> pilihan) {
     ValidasiPilihan(produk, pilihan);
@@ -822,6 +854,32 @@ class LayananPenjualan {
     }
   }
 
+  /// F-05h: baris produk bernomor seri wajib membawa tepat satu nomor per unit (jumlah bulat) tanpa nomor ganda di
+  /// keranjang, sama dengan validasi server (`NomorSeriTidakSesuai`/`NomorSeriGanda`).
+  static void ValidasiNomorSeri(Keranjang keranjang, KatalogLokal? katalog) {
+    if (katalog == null) {
+      return;
+    }
+    final dipakai = <String>{};
+    for (final b in keranjang.baris) {
+      if (katalog.CariProduk(b.uuidProduk)?.bernomorSeri != true) {
+        continue;
+      }
+      if (b.jumlah.KeDesimal() != b.jumlah.KeDesimal().truncate() ||
+          b.nomorSeri.length != b.jumlah.KeDesimal().toBigInt().toInt()) {
+        throw GalatKasir(
+          'NomorSeriTidakSesuai',
+          '"${b.nama}" memakai nomor seri: isi ${b.jumlah.KeDesimal().truncate()} nomor seri (satu per unit), baru ${b.nomorSeri.length}.',
+        );
+      }
+      for (final no in b.nomorSeri) {
+        if (!dipakai.add('${b.uuidProduk}|${no.toUpperCase()}')) {
+          throw GalatKasir('NomorSeriGanda', 'Nomor seri $no dipakai dua kali di keranjang ini.');
+        }
+      }
+    }
+  }
+
   /// F-16d bagian 2: baris paket sesi wajib berpelanggan (saldo sesinya milik pelanggan itu) dan jumlahnya bulat.
   static void ValidasiPaketSesi(Keranjang keranjang, KatalogLokal? katalog) {
     if (katalog == null) {
@@ -896,6 +954,7 @@ class LayananPenjualan {
     ValidasiUangMuka(keranjang, pembayaran);
     ValidasiDeposit(keranjang, pembayaran, saldoDeposit);
     ValidasiPaketSesi(keranjang, katalog);
+    ValidasiNomorSeri(keranjang, katalog);
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
@@ -1057,6 +1116,7 @@ class LayananPenjualan {
             'DiskonManual': keranjang.baris[i].diskon?.KeJson(),
             'Catatan': keranjang.baris[i].catatan,
             if (keranjang.baris[i].staf.isNotEmpty) 'Staf': keranjang.baris[i].staf,
+            if (keranjang.baris[i].nomorSeri.isNotEmpty) 'NomorSeri': keranjang.baris[i].nomorSeri,
           },
       ],
       'DiskonManualPesanan': keranjang.diskonPesanan?.KeJson(),

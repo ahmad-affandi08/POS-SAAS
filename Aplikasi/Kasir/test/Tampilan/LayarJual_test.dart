@@ -177,6 +177,48 @@ void main() {
     });
   }
 
+  testWidgets(
+    'F-05h produk bernomor seri: panel nomor seri (Enter menambah), jumlah = banyaknya nomor, terkirim di outbox',
+    (tester) async {
+      final u = await MasukJual(tester, katalog: KatalogPonselUji());
+
+      await Ketuk(tester, Ubin('Ponsel Android 8/256 GB Hitam'));
+      expect(find.text('Nomor seri / IMEI'), findsOneWidget);
+      expect(find.text('Jumlah'), findsNothing, reason: 'Jumlah mengikuti banyaknya nomor seri.');
+
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Tambah ke keranjang'));
+      expect(find.text('Isi minimal satu nomor seri.'), findsOneWidget);
+
+      Future<void> TambahSeri(String nomor) async {
+        await tester.enterText(find.widgetWithText(TextField, 'Ketik atau pindai nomor seri'), nomor);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await Tunggu(tester);
+      }
+
+      await TambahSeri('IMEI-0001');
+      await TambahSeri('IMEI-0002');
+      await TambahSeri('imei-0001');
+      expect(find.text('Nomor seri imei-0001 sudah ada di keranjang ini.'), findsOneWidget);
+      expect(find.text('2 unit'), findsOneWidget);
+
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Tambah ke keranjang'));
+      expect(find.textContaining('No. seri: IMEI-0001, IMEI-0002'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
+      await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      expect(find.text('Pembayaran berhasil'), findsOneWidget);
+
+      final outbox = await AmbilOutboxPenjualan(tester, u);
+      final baris = (outbox.single['Baris']! as List<Object?>).cast<Map<String, Object?>>().single;
+      expect(baris['Jumlah'], '2.0000');
+      expect(baris['NomorSeri'], ['IMEI-0001', 'IMEI-0002']);
+      await Lepas(tester, u);
+    },
+  );
+
   testWidgets('pilihan wajib & opsional lewat panel item; produk induk varian ditolak dengan pesan jelas', (
     tester,
   ) async {

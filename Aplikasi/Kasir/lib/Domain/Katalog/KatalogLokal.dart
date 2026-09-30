@@ -6,13 +6,16 @@ import 'package:mesin_kasir/MesinKasir.dart';
 import '../../Data/BasisData/BasisDataKasir.dart' hide BarisProdukHarga;
 import '../../Data/RepositoriKatalog.dart';
 
-/// Jenis & pelacakan produk yang belum bisa dijual di POS fase 1 (Rincian F-07b langkah 5).
+/// Jenis & pelacakan produk. Induk varian, bahan baku, dan konsinyasi belum bisa dijual di POS (Rincian F-07b langkah 5);
+/// produk ber-batch dijual tanpa pilihan batch (server memilih FEFO, F-05g) dan produk bernomor seri wajib membawa nomor
+/// serinya (F-05h).
 abstract final class JenisProdukKasir {
   static const String indukVarian = 'IndukVarian';
   static const String bahanBaku = 'BahanBaku';
   static const String konsinyasi = 'Konsinyasi';
   static const String jasa = 'Jasa';
   static const String pelacakanTidak = 'Tidak';
+  static const String pelacakanSeri = 'Seri';
 }
 
 /// Satuan jual produk (baris `ProdukSatuan` + nama satuan).
@@ -155,14 +158,11 @@ class ProdukJual {
     return satuan.isEmpty ? null : satuan.first;
   }
 
+  /// F-05h: produk ini dijual dengan nomor seri/IMEI per unit (kasir mengetik atau memindai).
+  bool get bernomorSeri => pelacakan == JenisProdukKasir.pelacakanSeri;
+
   /// Alasan produk tidak bisa dijual di POS fase 1 (null = bisa dijual) beserta kode galat server padanannya.
   ({String kode, String pesan})? AmbilAlasanTidakBisaDijual() {
-    if (pelacakan != JenisProdukKasir.pelacakanTidak) {
-      return (
-        kode: 'PelacakanBelumDidukung',
-        pesan: '"$nama" memakai pelacakan ${pelacakan.toLowerCase()} dan belum bisa dijual di aplikasi kasir.',
-      );
-    }
     return switch (jenis) {
       JenisProdukKasir.indukVarian => (
         kode: 'ProdukTidakBisaDijual',

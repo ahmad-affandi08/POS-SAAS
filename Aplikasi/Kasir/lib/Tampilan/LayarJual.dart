@@ -300,7 +300,8 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _TampilPesan(alasan.pesan);
       return;
     }
-    if (produk.kelompokPilihan.isNotEmpty) {
+    // Produk berpilihan dan produk bernomor seri (F-05h) butuh panel: pilihan / nomor seri per unit.
+    if (produk.kelompokPilihan.isNotEmpty || produk.bernomorSeri) {
       setState(() {
         _pesan = null;
         _panel = _JenisPanel.Item;

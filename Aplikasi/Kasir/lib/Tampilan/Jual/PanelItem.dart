@@ -42,10 +42,16 @@ class _PanelItemState extends ConsumerState<PanelItem> {
 
   /// F-18: staf yang melayani baris ini (urutan pilih dipertahankan).
   late final List<String> _staf = [...?widget.baris?.staf];
+
+  /// F-05h: nomor seri/IMEI tiap unit (produk bernomor seri). Jumlah baris = banyaknya nomor.
+  late final List<String> _nomorSeri = [...?widget.baris?.nomorSeri];
+  final TextEditingController _isianSeri = TextEditingController();
   String? _galat;
   String? _galatDiskon;
 
   bool get _modeUbah => widget.baris != null;
+
+  bool get _bernomorSeri => widget.produk?.bernomorSeri ?? (widget.baris?.nomorSeri.isNotEmpty ?? false);
 
   bool get _bolehDesimal => _satuan?.bolehDesimal ?? widget.baris?.bolehDesimal ?? false;
 
@@ -53,10 +59,14 @@ class _PanelItemState extends ConsumerState<PanelItem> {
   void dispose() {
     _jumlah.dispose();
     _catatan.dispose();
+    _isianSeri.dispose();
     super.dispose();
   }
 
   Kuantitas? _AmbilJumlah() {
+    if (_bernomorSeri) {
+      return Kuantitas.DariBulat(_nomorSeri.length);
+    }
     final nilai = FormatAngka.UraiDesimal(_jumlah.text);
     if (nilai == null || nilai.scale > Kuantitas.skala) {
       return null;
@@ -71,6 +81,86 @@ class _PanelItemState extends ConsumerState<PanelItem> {
       return;
     }
     setState(() => _jumlah.text = FormatAngka.FormatJumlah(baru));
+  }
+
+  /// Tambah satu nomor seri (ketik lalu Enter, atau hasil pindai pemindai keyboard). Nomor yang sama di baris lain
+  /// keranjang juga ditolak karena satu unit tidak bisa dijual dua kali.
+  void _TambahSeri() {
+    final nomor = _isianSeri.text.trim();
+    if (nomor.isEmpty) {
+      return;
+    }
+    final kunci = nomor.toUpperCase();
+    final uuidProduk = widget.produk?.uuid ?? widget.baris?.uuidProduk;
+    final dipakaiBarisLain = ref
+        .read(penyediaKeranjang)
+        .baris
+        .where((b) => b.uuid != widget.baris?.uuid && b.uuidProduk == uuidProduk)
+        .any((b) => b.nomorSeri.any((n) => n.toUpperCase() == kunci));
+    setState(() {
+      if (nomor.length > 100) {
+        _galat = 'Nomor seri maksimal 100 karakter.';
+      } else if (dipakaiBarisLain || _nomorSeri.any((n) => n.toUpperCase() == kunci)) {
+        _galat = 'Nomor seri $nomor sudah ada di keranjang ini.';
+      } else {
+        _galat = null;
+        _nomorSeri.add(nomor);
+        _isianSeri.clear();
+      }
+    });
+  }
+
+  List<Widget> _BangunNomorSeri(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    return [
+      Text('Nomor seri / IMEI', style: teks.labelLarge),
+      const SizedBox(height: TokenJarak.jarak8),
+      Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _isianSeri,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _TambahSeri(),
+              decoration: const InputDecoration(
+                labelText: 'Ketik atau pindai nomor seri',
+                helperText: 'Satu nomor per unit. Tekan Enter untuk menambah.',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          const SizedBox(width: TokenJarak.jarak8),
+          IconButton.filled(
+            tooltip: 'Tambah nomor seri',
+            onPressed: _TambahSeri,
+            icon: const Icon(Icons.add),
+            constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+          ),
+        ],
+      ),
+      const SizedBox(height: TokenJarak.jarak8),
+      if (_nomorSeri.isEmpty)
+        Text('Belum ada nomor seri. Tambahkan satu nomor untuk tiap unit.', style: teks.bodySmall)
+      else ...[
+        Text('${_nomorSeri.length} unit', style: teks.bodySmall),
+        const SizedBox(height: TokenJarak.jarak4),
+        Wrap(
+          spacing: TokenJarak.jarak8,
+          runSpacing: TokenJarak.jarak8,
+          children: [
+            for (final n in _nomorSeri)
+              InputChip(
+                label: Text(n),
+                onDeleted: () => setState(() {
+                  _galat = null;
+                  _nomorSeri.remove(n);
+                }),
+              ),
+          ],
+        ),
+      ],
+    ];
   }
 
   void _Pilih(KelompokPilihanJual kelompok, PilihanJual pilihan) => setState(() {
@@ -94,7 +184,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
   Future<void> _Simpan() async {
     final jumlah = _AmbilJumlah();
     if (jumlah == null || jumlah.Bandingkan(Kuantitas.Nol()) <= 0) {
-      setState(() => _galat = 'Isi jumlah lebih dari 0.');
+      setState(() => _galat = _bernomorSeri ? 'Isi minimal satu nomor seri.' : 'Isi jumlah lebih dari 0.');
       return;
     }
     final katalog = await ref.read(penyediaKatalog.future);
@@ -114,6 +204,7 @@ class _PanelItemState extends ConsumerState<PanelItem> {
           catatan: _catatan.text,
           kanal: LayananPenjualan.AmbilKanal(keranjang),
           tierPelanggan: keranjang.pelanggan?.kodeTier,
+          nomorSeri: _nomorSeri,
         );
         pengatur.Ganti(layanan.TambahBaris(keranjang, baris.Salin(staf: List.of(_staf)), katalog, k));
         widget.saatSelesai();
@@ -124,9 +215,12 @@ class _PanelItemState extends ConsumerState<PanelItem> {
       final produk = widget.produk;
       if (produk != null) {
         keranjang = layanan.AturPilihan(keranjang, uuid, produk, _AmbilPilihan());
-        if (_satuan != null && _satuan!.uuid != widget.baris!.uuidProdukSatuan) {
+        if (_satuan != null && _satuan!.uuid != widget.baris!.uuidProdukSatuan && !_bernomorSeri) {
           keranjang = layanan.GantiSatuan(keranjang, uuid, _satuan!, katalog, k);
         }
+      }
+      if (_bernomorSeri) {
+        keranjang = layanan.AturNomorSeri(keranjang, uuid, _nomorSeri, katalog, k);
       }
       keranjang = layanan.UbahJumlah(keranjang, uuid, jumlah, katalog, k);
       keranjang = layanan.AturCatatan(keranjang, uuid, _catatan.text);
@@ -249,39 +343,43 @@ class _PanelItemState extends ConsumerState<PanelItem> {
             ),
             const SizedBox(height: TokenJarak.jarak16),
           ],
-          Text('Jumlah', style: teks.labelLarge),
-          const SizedBox(height: TokenJarak.jarak8),
-          Row(
-            children: [
-              IconButton.outlined(
-                tooltip: 'Kurangi jumlah',
-                onPressed: () => _Geser(-1),
-                icon: const Icon(Icons.remove),
-                constraints: const BoxConstraints.tightFor(width: 56, height: 56),
-              ),
-              const SizedBox(width: TokenJarak.jarak8),
-              Expanded(
-                child: TextField(
-                  controller: _jumlah,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.numberWithOptions(decimal: _bolehDesimal),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(_bolehDesimal ? r'[0-9.,]' : r'[0-9]')),
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  style: teks.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
+          if (_bernomorSeri)
+            ..._BangunNomorSeri(context)
+          else ...[
+            Text('Jumlah', style: teks.labelLarge),
+            const SizedBox(height: TokenJarak.jarak8),
+            Row(
+              children: [
+                IconButton.outlined(
+                  tooltip: 'Kurangi jumlah',
+                  onPressed: () => _Geser(-1),
+                  icon: const Icon(Icons.remove),
+                  constraints: const BoxConstraints.tightFor(width: 56, height: 56),
                 ),
-              ),
-              const SizedBox(width: TokenJarak.jarak8),
-              IconButton.outlined(
-                tooltip: 'Tambah jumlah',
-                onPressed: () => _Geser(1),
-                icon: const Icon(Icons.add),
-                constraints: const BoxConstraints.tightFor(width: 56, height: 56),
-              ),
-            ],
-          ),
+                const SizedBox(width: TokenJarak.jarak8),
+                Expanded(
+                  child: TextField(
+                    controller: _jumlah,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.numberWithOptions(decimal: _bolehDesimal),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(_bolehDesimal ? r'[0-9.,]' : r'[0-9]')),
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    style: teks.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                  ),
+                ),
+                const SizedBox(width: TokenJarak.jarak8),
+                IconButton.outlined(
+                  tooltip: 'Tambah jumlah',
+                  onPressed: () => _Geser(1),
+                  icon: const Icon(Icons.add),
+                  constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+                ),
+              ],
+            ),
+          ],
           for (final kelompok in produk?.kelompokPilihan ?? const <KelompokPilihanJual>[]) ...[
             const SizedBox(height: TokenJarak.jarak16),
             Text(

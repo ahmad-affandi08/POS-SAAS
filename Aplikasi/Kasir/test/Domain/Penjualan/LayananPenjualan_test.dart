@@ -125,17 +125,20 @@ void main() {
       expect(hasil.subtotal, Uang.DariBulat(23000));
     });
 
-    test('produk induk varian, bahan baku, dan berpelacakan batch ditolak dengan pesan jelas', () async {
-      await Siapkan(bukaShift: false);
-      expect(() => u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.kaos)), GalatDengan('ProdukTidakBisaDijual'));
-      expect(() => u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.gulaAren)), GalatDengan('ProdukTidakBisaDijual'));
-      expect(() => u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.susuUht)), GalatDengan('PelacakanBelumDidukung'));
-      try {
-        u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.kaos));
-      } on GalatKasir catch (galat) {
-        expect(galat.pesan, contains('Pilih salah satu variannya'));
-      }
-    });
+    test(
+      'produk induk varian dan bahan baku ditolak dengan pesan jelas; produk ber-batch kini bisa dijual (F-05g)',
+      () async {
+        await Siapkan(bukaShift: false);
+        expect(() => u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.kaos)), GalatDengan('ProdukTidakBisaDijual'));
+        expect(() => u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.gulaAren)), GalatDengan('ProdukTidakBisaDijual'));
+        expect(u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.susuUht)).jumlah, Kuantitas.DariBulat(1));
+        try {
+          u.penjualan.BuatBaris(katalog, k, Produk(UuidUji.kaos));
+        } on GalatKasir catch (galat) {
+          expect(galat.pesan, contains('Pilih salah satu variannya'));
+        }
+      },
+    );
 
     test('harga lewat PenentuHarga: bertingkat saat jumlah naik, ganti satuan ke lusin, cari barcode & SKU', () async {
       await Siapkan(bukaShift: false);

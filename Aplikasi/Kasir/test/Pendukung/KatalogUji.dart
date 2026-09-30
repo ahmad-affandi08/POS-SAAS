@@ -261,3 +261,24 @@ Map<String, Object?> KatalogOjolUji() {
   ]);
   return katalog;
 }
+
+const String ponsel = '01K5PRD0000000000000PONSEL01';
+const String psPonsel = '01K5PS0000000000000PONSEL01';
+
+/// Katalog uji + satu produk bernomor seri (ponsel).
+Map<String, Object?> KatalogPonselUji() {
+  final katalog = KatalogUji();
+  katalog['Produk'] = [
+    ...(katalog['Produk']! as List<Object?>),
+    ProdukUji(ponsel, 'Ponsel Android 8/256 GB Hitam', sku: 'HP-8256', pelacakan: 'Seri'),
+  ];
+  katalog['ProdukSatuan'] = [
+    ...(katalog['ProdukSatuan']! as List<Object?>),
+    SatuanProdukUji(psPonsel, ponsel, UuidUji.satuanPcs),
+  ];
+  katalog['ProdukHarga'] = [
+    ...(katalog['ProdukHarga']! as List<Object?>),
+    HargaUji('01K5HRG000000000000PONSEL01', ponsel, psPonsel, '6500000.00'),
+  ];
+  return katalog;
+}
