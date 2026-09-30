@@ -194,6 +194,75 @@ it('kasir menagih pesanan berbayar dengan metode Uang muka; void mengembalikan u
         ->and($pesanan->Status)->toBe(StatusPesananOnline::Siap);
 });
 
+it('F-17 bagian 3: kasir menagih pesanan kirim beserta ongkirnya, ongkir masuk Pendapatan Pengiriman dan pesanan kirim belum Selesai', function (): void {
+    $status = 'pending';
+    PalsukanGerbangOnline($status);
+    $k = SiapkanBayarOnline($this);
+    [$pesanan] = PesanBayarQris($this, $k, 'Kirim');
+    expect($pesanan->Ongkir)->toBe('12000.00');
+    $this->postJson("/{$k['Slug']}/pesanan/{$pesanan->KodeAkses}/bayar")->assertCreated();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    WebhookBayarOnline($this, $k, TagihanQris::query()->sole()->NomorPesanan, $pesanan->Total)->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $uangMuka = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::UangMuka, 'Uang muka (DP)');
+    $produk = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+    $pesanan->refresh()->forceFill(['Status' => StatusPesananOnline::Siap])->save();
+
+    $item = BantuanPenjualan::Item($k, [
+        'BiayaKirim' => '12000.00',
+        'Baris' => [['Produk' => $produk, 'Jumlah' => '1', 'Harga' => '60000.00']],
+        'Pembayaran' => [['Metode' => $uangMuka, 'Jumlah' => '72000.00']],
+    ], ['UuidPesananOnline' => $pesanan->Uuid]);
+    expect($item['Data']['Ringkasan']['TotalAkhir'])->toBe('72000.00');
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $penjualan = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+    $o = $k['Outlet']->Id;
+
+    expect($penjualan->BiayaKirim)->toBe('12000.00')
+        ->and($penjualan->DiskonKirim)->toBe('0.00')
+        ->and($penjualan->TotalAkhir)->toBe('72000.00')
+        // Yang diuji di sini ongkirnya, jadi yang dipastikan adalah tidak ada OngkirBerbeda — bukan tinjauan kosong,
+        // supaya test ini tidak ikut gagal bila kelak fixture-nya memicu alasan tinjauan lain.
+        ->and($penjualan->AlasanTinjauan ?? '')->not->toContain('OngkirBerbeda')
+        ->and(SaldoPeranOnline((int) $penjualan->IdJurnal, PeranAkun::PendapatanPengiriman, $o))->toBe('-12000.00')
+        // Pesanan kirim baru Selesai setelah kurirnya menyerahkan barang, bukan saat ditagih.
+        ->and($pesanan->refresh()->Status)->toBe(StatusPesananOnline::Siap)
+        ->and($pesanan->IdPenjualan)->toBe($penjualan->Id);
+});
+
+it('F-17 bagian 3: perangkat versi lama menagih pesanan kirim tanpa ongkir = diterima + tinjauan OngkirBerbeda, bukan ditolak', function (): void {
+    $status = 'pending';
+    PalsukanGerbangOnline($status);
+    $k = SiapkanBayarOnline($this);
+    [$pesanan] = PesanBayarQris($this, $k, 'Kirim');
+    $this->postJson("/{$k['Slug']}/pesanan/{$pesanan->KodeAkses}/bayar")->assertCreated();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    WebhookBayarOnline($this, $k, TagihanQris::query()->sole()->NomorPesanan, $pesanan->Total)->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $uangMuka = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::UangMuka, 'Uang muka (DP)');
+    $produk = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+    $pesanan->refresh()->forceFill(['Status' => StatusPesananOnline::Siap])->save();
+
+    $item = BantuanPenjualan::Item($k, [
+        'Baris' => [['Produk' => $produk, 'Jumlah' => '1', 'Harga' => '60000.00']],
+        'Pembayaran' => [['Metode' => $uangMuka, 'Jumlah' => '60000.00']],
+    ], ['UuidPesananOnline' => $pesanan->Uuid]);
+    expect(array_key_exists('BiayaKirim', $item['Data']))->toBeFalse();
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $penjualan = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+
+    expect($penjualan->BiayaKirim)->toBe('0.00')
+        ->and($penjualan->PerluTinjauan)->toBeTrue()
+        ->and($penjualan->AlasanTinjauan)->toContain('OngkirBerbeda')
+        ->and($penjualan->AlasanTinjauan)->toContain('12.000');
+});
+
 it('pesanan berbayar yang ditolak muncul di Kotak Tindakan dan pengembaliannya dibukukan sekali (J-17.2)', function (): void {
     $status = 'pending';
     PalsukanGerbangOnline($status);

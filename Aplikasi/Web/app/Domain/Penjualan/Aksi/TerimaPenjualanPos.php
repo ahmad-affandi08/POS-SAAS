@@ -360,6 +360,13 @@ final class TerimaPenjualanPos
 
         if ($pesananOnline !== null) {
             $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupUangMukaOnline->Tandai($pesananOnline, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
+            // F-17 bagian 3: ongkir pesanan yang tidak ditagih kasir berarti uang yang tidak pernah masuk. Ditandai,
+            // tidak ditolak (§18.3): uangnya sudah diterima, dan yang salah harus diperiksa orang.
+            $bedaOngkir = $this->penutupUangMukaOnline->PeriksaOngkir($pesananOnline, $hasil->biayaKirim);
+
+            if ($bedaOngkir !== null) {
+                $tinjauan['OngkirBerbeda'] = "OngkirBerbeda: {$bedaOngkir}";
+            }
         }
 
         if ($masalahUangMuka !== []) {
